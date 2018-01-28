@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informatie over de url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Provider">
+<!ENTITY aboutUrlClassifier.provider                    "Provider">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Tijdstip van laatste update">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Tijdstip van volgende update">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-offtijd">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Status van laatste update">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Bijwerken">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Buffer">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Vernieuwen">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Wissen">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabelnaam">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Aantal negatieve-buffervermeldingen">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Aantal positieve-buffervermeldingen">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Vermeldingen tonen">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Buffervermeldingen">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Verloop van negatieve buffer">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Volledige hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Verloop van positieve buffer">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debuggen">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Logmodules instellen">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Logbestand instellen">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS-registratie instellen">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Logmodules van Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugModules                "Huidige logmodules">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS-registratie van Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugFile                   "Huidige logbestand">

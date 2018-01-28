@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; feilige modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Yn feilige modus starte">
+<!ENTITY refreshProfile.label         "&brandShortName; opfrisse">
+
+<!ENTITY safeModeDescription3.label   "Feilige modus is in spesjale modus fan &brandShortName; om problemen te ûndersykjen.">
+<!ENTITY safeModeDescription4.label   "Jo add-ons en persoanlike ynstellingen wurde tydlik útskeakele.">
+
+<!ENTITY refreshProfileInstead.label  "As jo probleemoplossing oerslaan wolle, kinne jo probearje &brandShortName; op te frissen.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; is ûnferwachts sluten wylst it starten. Dit kin feroarsake wurde troch add-ons of oare problemen. Jo kinne probearje dit op te lossen troch in oplossing te sykjen yn feilige modus.">

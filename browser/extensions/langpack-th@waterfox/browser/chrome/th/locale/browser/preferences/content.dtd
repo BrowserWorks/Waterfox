@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "การอนุญาต">
+
+<!ENTITY  blockPopups.label           "ปิดกั้นหน้าต่างป๊อปอัป">
+<!ENTITY  blockPopups.accesskey       "ป">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "เรียนรู้เพิ่มเติม">
+<!ENTITY  notificationsPolicyDesc3.label       "เลือกว่าไซต์ใดที่อนุญาตให้ส่งการแจ้งเตือนมาให้คุณ">
+<!ENTITY  notificationsPolicyButton.accesskey  "ล">
+<!ENTITY  notificationsPolicyButton.label      "เลือก…">
+<!ENTITY  notificationsDoNotDisturb.label      "ห้ามรบกวนฉัน">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "ห">
+<!ENTITY  notificationsDoNotDisturbDetails.value "การแจ้งเตือนจะไม่ถูกแสดงจนกว่าคุณจะเริ่มการทำงาน &brandShortName; ใหม่">
+
+<!ENTITY  popupExceptions.label       "ข้อยกเว้น…">
+<!ENTITY  popupExceptions.accesskey   "ข">
+
+<!ENTITY  fontsAndColors.label        "แบบอักษรและสี">
+
+<!ENTITY  defaultFont2.label          "แบบอักษรเริ่มต้น">
+<!ENTITY  defaultFont2.accesskey      "บ">
+<!ENTITY  defaultSize2.label          "ขนาด">
+<!ENTITY  defaultSize2.accesskey      "ข">
+
+<!ENTITY  advancedFonts.label         "ขั้นสูง…">
+<!ENTITY  advancedFonts.accesskey     "น">
+
+<!ENTITY  colors.label                "สี…">
+<!ENTITY  colors.accesskey            "ส">
+
+
+<!ENTITY language2.label              "ภาษา">
+<!ENTITY chooseLanguage.label         "เลือกภาษาที่คุณต้องการในการแสดงผลหน้า">
+<!ENTITY chooseButton.label           "เลือก…">
+<!ENTITY chooseButton.accesskey       "ล">
+
+<!ENTITY translateWebPages.label      "แปลเนื้อหาเว็บ">
+<!ENTITY translateWebPages.accesskey  "ป">
+<!ENTITY translateExceptions.label    "ข้อยกเว้น…">
+<!ENTITY translateExceptions.accesskey "อ">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "แปลโดย">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "เนื้อหา Digital Rights Management (DRM)">
+
+<!ENTITY  playDRMContent2.label          "เล่นเนื้อหาที่ถูกควบคุมโดย DRM">
+<!ENTITY  playDRMContent2.accesskey      "ล">
+<!ENTITY  playDRMContent.learnMore.label "เรียนรู้เพิ่มเติม">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

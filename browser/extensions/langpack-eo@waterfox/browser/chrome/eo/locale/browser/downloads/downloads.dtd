@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!-- LOCALIZATION NOTE (downloads.title):
+     Used by screen readers to describe the Downloads Panel.
+     -->
+<!ENTITY downloads.title                  "Elŝutoj">
+
+<!-- LOCALIZATION NOTE (downloadDetails.width):
+     Width of details for a Downloads Panel item (which directly influences the
+     width of the Downloads Panel) expressed using a CSS unit. The longest
+     labels that should fit in the item width are usually those of in-progress
+     downloads and those of blocked downloads.
+
+     A good rule of thumb is to try to determine the longest string possible
+     that an in-progress download could display, and use that value in ch
+     units.
+
+     For example, in English, a long string would be:
+
+     59m 59s left - 1022 of 1023 KB (120.5 KB/sec)
+
+     Since Downloads Panel is redesigned to show the detail string including
+     the hovering case for an item or an action button.
+     Bug 1328519 is for discussing the detail rule of `downloadDetails.width`.
+     -->
+<!ENTITY downloadDetails.width            "65ch">
+
+<!-- LOCALIZATION NOTE (downloadsSummary.minWidth2):
+     Minimum width for the main description of the downloads summary,
+     which is displayed at the bottom of the Downloads Panel if the
+     number of downloads exceeds the limit that the panel can display.
+
+     A good rule of thumb here is to look at the otherDownloads3 string
+     in downloads.properties, and make a reasonable estimate of its
+     maximum length. For English, this seems like a reasonable limit:
+
+     999 files downloading
+
+     that's 21 characters, so we set the minimum width to 21ch.
+     -->
+<!ENTITY downloadsSummary.minWidth2       "24ch">
+
+<!ENTITY cmd.pause.label                  "Paŭzigi">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "Daŭrigi">
+<!ENTITY cmd.resume.accesskey             "D">
+<!ENTITY cmd.cancel.label                 "Nuligi">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                   "Malfermi entenantan dosierujon">
+<!ENTITY cmd.show.accesskey               "E">
+<!ENTITY cmd.showMac.label                "Montri en dosierserĉilo">
+<!ENTITY cmd.showMac.accesskey            "M">
+<!ENTITY cmd.retry.label                  "Klopodi denove">
+<!ENTITY cmd.goToDownloadPage.label       "Iri al la paĝo de elŝuto">
+<!ENTITY cmd.goToDownloadPage.accesskey   "I">
+<!ENTITY cmd.copyDownloadLink.label       "Kopii la elŝutan ligilon">
+<!ENTITY cmd.copyDownloadLink.accesskey   "L">
+<!ENTITY cmd.removeFromHistory.label      "Forigi el la historio">
+<!ENTITY cmd.removeFromHistory.accesskey  "h">
+<!ENTITY cmd.clearList2.label             "Viŝi antaŭvidan panelon">
+<!ENTITY cmd.clearList2.accesskey         "a">
+<!ENTITY cmd.clearDownloads.label         "Viŝi elŝutojn">
+<!ENTITY cmd.clearDownloads.accesskey     "e">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Permesi elŝuton">
+<!ENTITY cmd.unblock2.accesskey           "P">
+<!-- LOCALIZATION NOTE (cmd.removeFile.label):
+     This is the tooltip of the action button shown when malware is blocked.
+     -->
+<!ENTITY cmd.removeFile.label             "Forigi dosieron">
+<!-- LOCALIZATION NOTE (cmd.chooseUnblock.tooltip):
+     This is the tooltip of the action button shown when potentially unwanted
+     downloads are blocked. This opens a dialog where the user can choose
+     whether to unblock or remove the download. Removing is the default option.
+     -->
+<!ENTITY cmd.chooseUnblock.label          "Forigi dosieron aŭ permesi elŝuton">
+<!-- LOCALIZATION NOTE (cmd.chooseOpen.tooltip):
+     This is the tooltip of the action button shown when uncommon downloads are
+     blocked.This opens a dialog where the user can choose whether to open the
+     file or remove the download. Opening is the default option.
+     -->
+<!ENTITY cmd.chooseOpen.label             "Malfermi aŭ forigi dosieron">
+
+<!-- LOCALIZATION NOTE (showMoreInformation.label):
+     Displayed when hovering a blocked download, indicates that it's possible to
+     show more information for user to take the next action.
+     -->
+<!ENTITY showMoreInformation.label        "Montri pli da informo">
+
+<!-- LOCALIZATION NOTE (openFile.label):
+     Displayed when hovering a complete download, indicates that it's possible to
+     open the file using an app available in the system.
+     -->
+<!ENTITY openFile.label                   "Malfermi dosieron">
+
+<!-- LOCALIZATION NOTE (retryDownload.label):
+     Displayed when hovering a download which is able to be retried by users,
+     indicates that it's possible to download this file again.
+     -->
+<!ENTITY retryDownload.label              "Reprovi elŝuton">
+
+<!-- LOCALIZATION NOTE (cancelDownload.label):
+     Displayed when hovering a download which is able to be cancelled by users,
+     indicates that it's possible to cancel and stop the download.
+     -->
+<!ENTITY cancelDownload.label             "Nuligi elŝuton">
+
+<!-- LOCALIZATION NOTE (blocked.label):
+     Shown as a tag before the file name for some types of blocked downloads.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+<!ENTITY blocked.label                    "BLOKITA">
+
+<!-- LOCALIZATION NOTE (learnMore.label):
+     Shown as a text link for some types of blocked downloads, for example
+     malware, when there is an associated explanation page on the Mozilla site.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+<!ENTITY learnMore.label                  "Pli da informo">
+
+<!-- LOCALIZATION NOTE (downloadsHistory.label, downloadsHistory.accesskey):
+     This string is shown at the bottom of the Downloads Panel when all the
+     downloads fit in the available space, or when there are no downloads in
+     the panel at all.
+     -->
+<!ENTITY downloadsHistory.label           "Montri ĉiujn elŝutojn">
+<!ENTITY downloadsHistory.accesskey       "M">
+
+<!ENTITY openDownloadsFolder.label       "Malfermi dosierujon de elŝutoj">
+
+<!ENTITY clearDownloadsButton.label       "Viŝi elŝutojn">
+<!ENTITY clearDownloadsButton.tooltip     "Viŝi finintajn, nuligitajn kaj malsukcesajn elŝutojn">
+
+<!-- LOCALIZATION NOTE (downloadsListEmpty.label):
+     This string is shown when there are no items in the Downloads view, when it
+     is displayed inside a browser tab.
+     -->
+<!ENTITY downloadsListEmpty.label         "Estas neniu elŝuto.">
+
+<!-- LOCALIZATION NOTE (downloadsPanelEmpty.label):
+     This string is shown when there are no items in the Downloads Panel.
+     -->
+<!ENTITY downloadsPanelEmpty.label        "Neniu elŝuto por tiu ĉi seanco.">
+
+<!-- LOCALIZATION NOTE (downloadsListNoMatch.label):
+     This string is shown when some search terms are specified, but there are no
+     results in the Downloads view.
+     -->
+<!ENTITY downloadsListNoMatch.label       "Neniu kongrua elŝuto.">

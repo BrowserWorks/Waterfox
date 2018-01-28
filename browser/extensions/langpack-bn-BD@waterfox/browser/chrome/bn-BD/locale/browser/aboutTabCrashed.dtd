@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "এই ট্যাবটি বন্ধ করুন">
+<!ENTITY tabCrashed.restoreTab "এই ট্যাবটি পুনরুদ্ধার করুন">
+<!ENTITY tabCrashed.restoreAll "ক্র্যা করা সমস্ত ট্যাব পুনরুদ্ধার করুন">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "আহ! আপনার ট্যাব ক্রাশ করেছে।">
+<!ENTITY tabCrashed.offerHelp "আমরা আপনাকে সাহায্য করতে পারি!">
+<!ENTITY tabCrashed.single.offerHelpMessage "পাতার কন্টেন্ট রিলোড করতে &tabCrashed.restoreTab; পছন্দ করুন।">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "পাতার কন্টেন্ট রিলোড করতে &tabCrashed.restoreTab; অথবা &tabCrashed.restoreAll; পছন্দ করুন।">
+<!ENTITY tabCrashed.requestHelp "আপনি কি আমাদের সাহায্য করবেন?">
+<!ENTITY tabCrashed.requestHelpMessage "ক্রাশ রিপোর্ট আমাদের সমস্যা নির্ণয় ও সমাধানে সহায়তা করবে এবং &brandShortName; কে আরো ভাল করবে।">
+<!ENTITY tabCrashed.requestReport "ট্যাবকে রিপোর্ট করুন">
+<!ENTITY tabCrashed.sendReport2 "আপনি যে ট্যাবটি দেখছেন সেটার জন্য ক্র্যাশ রিপোর্ট পাঠান">
+<!ENTITY tabCrashed.commentPlaceholder2 "ঐচ্ছিক মন্তব্য (মন্তব্যগুলো সবাই দেখতে পাবে)">
+<!ENTITY tabCrashed.includeURL2 "ক্র্যাশ রিপোর্টের সাথে পাতার URL অন্তর্ভূক্ত করুন">
+<!ENTITY tabCrashed.emailPlaceholder "এখানে আপনার ইমেইল ঠিকানা দিন">
+<!ENTITY tabCrashed.emailMe "আমাকে ইমেইল করুন যখন আরও তথ্য পাওয়া যাবে">
+<!ENTITY tabCrashed.reportSent "ক্র্যাশ রিপোর্ট ইতিমধ্যে জমা হয়ে গেছে; ধন্যবাদ &brandShortName; বানাতে সাহায্য করবার জন্য এবং আরও ভালো করবার জন্য!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "ব্যাকগ্রাউন্ড ট্যাব রিপোর্ট করুন">
+<!ENTITY tabCrashed.autoSubmit2 "এই সেশন বা ভবিষ্যত সেশনে ক্র‍্যাশ করা ব্যাকগ্রাউন্ড ট্যাবের রিপোর্ট সহ স্বয়ংক্রিয় ক্র‍্যাশ রিপোর্ট পাঠাতে আপনার পছন্দ হালনাগাদ করুন">

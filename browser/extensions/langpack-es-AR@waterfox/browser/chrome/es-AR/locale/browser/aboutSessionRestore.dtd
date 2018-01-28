@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restaurar sesión previa">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Bueno, esto es vergonzoso.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; tiene problemas recuperando sus ventanas y pestañas. Ésto es causado usualmente por una página web abierta recientemente.">
+<!ENTITY restorepage.tryThis        "Puede intentar:">
+<!ENTITY restorepage.restoreSome    "Eliminar una o más pestañas que piense que puedan estar causando el problema">
+<!ENTITY restorepage.startNew       "Iniciar una sesión de navegación completamente nueva">
+
+<!ENTITY restorepage.tryagainButton "Restaurar">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Cerrar">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Restaurar">
+<!ENTITY restorepage.listHeader     "Ventanas y pestañas">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ventana &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "¡Vamos!">
+<!ENTITY welcomeback2.restoreButton.access "V">
+
+<!ENTITY welcomeback2.tabtitle      "¡Éxito!">
+
+<!ENTITY welcomeback2.pageTitle     "¡Éxito!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; está listo.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Restaurar todas las ventanas &amp; pestañas">
+<!ENTITY welcomeback2.restoreSome.label "Restaurar solo las que quiere">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Los complementos y personalizaciones han sido eliminados y la configuración del navegador ha sido restaurada a sus valores predeterminados. Si esto no corrige el problema, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "conozca más acerca de lo que puede hacer.">
+

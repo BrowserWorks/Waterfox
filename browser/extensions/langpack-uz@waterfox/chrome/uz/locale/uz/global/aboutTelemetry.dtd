@@ -1,0 +1,103 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetiya ma`lumotlari">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping ma’lumotlar markazi:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Joriy ping ma’lumotlari">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arxivlangan ping ma’lumotlari">
+
+<!ENTITY aboutTelemetry.raw "JSON qatori">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Quyi seans ma’lumotlarini ko‘rsatish">
+
+<!ENTITY aboutTelemetry.choosePing "Ping’ni tanlash:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Hech qachon ping yuborilmasin">
+
+<!ENTITY aboutTelemetry.showOlderPing "Eski ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Hafta">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Umumiy ma’lumot">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Muhit ma’lumotlari">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "Telemetriya ma’lumoti">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Sekin SQL ma`lumotlari">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Brauzer osilishlari">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Osilib turgan mavzular">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skalyarlar">
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  Gistogrammalar">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Kalitlangan gistogrammarl">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Oddiy oʻlchamlar">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Qoʻchimcha dastur ma`lumotlari">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Soʻnggi yozuvlar">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "Tizim ma’lumoti">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTE: Sekin SQL nosozlikni hal qilish - yoqilgan. Toʻliq SQL qatorlari pastda ko‘rsatilishi mumkin, ammo ular telemetriyaga joʻnatilmaydi.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Filter (qatorlar yoki /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Foydali ish koeffitsenti">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

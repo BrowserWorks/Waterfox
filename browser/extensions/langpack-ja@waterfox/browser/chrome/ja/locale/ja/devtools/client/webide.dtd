@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label				"プロジェクト">
+<!ENTITY projectMenu_accesskey				"P">
+<!ENTITY projectMenu_newApp_label			"新しいアプリ...">
+<!ENTITY projectMenu_newApp_accesskey			"N">
+<!ENTITY projectMenu_importPackagedApp_label		"パッケージ型アプリを開く...">
+<!ENTITY projectMenu_importPackagedApp_accesskey	"P">
+<!ENTITY projectMenu_importHostedApp_label		"ホスト型アプリを開く...">
+<!ENTITY projectMenu_importHostedApp_accesskey		"H">
+<!ENTITY projectMenu_selectApp_label			"アプリを開く...">
+<!ENTITY projectMenu_selectApp_accesskey		"O">
+<!ENTITY projectMenu_play_label				"インストールして実行">
+<!ENTITY projectMenu_play_accesskey			"I">
+<!ENTITY projectMenu_stop_label				"アプリを停止">
+<!ENTITY projectMenu_stop_accesskey			"S">
+<!ENTITY projectMenu_debug_label			"アプリをデバッグ">
+<!ENTITY projectMenu_debug_accesskey			"D">
+<!ENTITY projectMenu_remove_label			"プロジェクトを削除">
+<!ENTITY projectMenu_remove_accesskey			"R">
+<!ENTITY projectMenu_showPrefs_label			"設定">
+<!ENTITY projectMenu_showPrefs_accesskey		"e">
+<!ENTITY projectMenu_manageComponents_label		"追加のコンポーネントを管理">
+<!ENTITY projectMenu_manageComponents_accesskey		"M">
+<!ENTITY projectMenu_refreshTabs_label			"タブをリフレッシュ">
+
+<!ENTITY runtimeMenu_label				"ランタイム">
+<!ENTITY runtimeMenu_accesskey				"R">
+<!ENTITY runtimeMenu_disconnect_label			"切断">
+<!ENTITY runtimeMenu_disconnect_accesskey		"D">
+<!ENTITY runtimeMenu_takeScreenshot_label		"スクリーンショット撮影">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey		"S">
+<!ENTITY runtimeMenu_showDetails_label			"ランタイム情報">
+<!ENTITY runtimeMenu_showDetails_accesskey		"E">
+<!ENTITY runtimeMenu_showMonitor_label			"モニター">
+<!ENTITY runtimeMenu_showMonitor_accesskey		"M">
+<!ENTITY runtimeMenu_showDevicePrefs_label		"端末の設定">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey		"D">
+<!ENTITY runtimeMenu_showSettings_label			"端末オプション">
+<!ENTITY runtimeMenu_showSettings_accesskey		"s">
+
+<!ENTITY viewMenu_label					"表示">
+<!ENTITY viewMenu_accesskey				"V">
+<!ENTITY viewMenu_zoomin_label				"拡大">
+<!ENTITY viewMenu_zoomin_accesskey			"I">
+<!ENTITY viewMenu_zoomout_label				"縮小">
+<!ENTITY viewMenu_zoomout_accesskey			"O">
+<!ENTITY viewMenu_resetzoom_label			"拡大/縮小をリセット">
+<!ENTITY viewMenu_resetzoom_accesskey			"R">
+
+<!ENTITY projectButton_label				"アプリを開く">
+<!ENTITY runtimeButton_label				"ランタイムを選択">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit					"W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel				"O">
+<!-- reload app -->
+<!ENTITY key_play					"R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox				"VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin					"+">
+<!ENTITY key_zoomin2					"=">
+<!ENTITY key_zoomout					"-">
+<!ENTITY key_resetzoom					"0">
+
+<!ENTITY projectPanel_myProjects			"マイプロジェクト">
+<!ENTITY projectPanel_runtimeApps			"ランタイムアプリ">
+<!ENTITY projectPanel_tabs				"タブ">
+<!ENTITY runtimePanel_usb				"USB デバイス">
+<!ENTITY runtimePanel_wifi				"Wi-Fi デバイス">
+<!ENTITY runtimePanel_simulator				"シミュレータ">
+<!ENTITY runtimePanel_other				"その他">
+<!ENTITY runtimePanel_installsimulator			"シミュレータをインストール">
+<!ENTITY runtimePanel_noadbhelper			"ADB Helper をインストール">
+<!ENTITY runtimePanel_nousbdevice			"端末が見つかりませんか？">
+<!ENTITY runtimePanel_refreshDevices_label		"端末をリフレッシュ">
+
+<!-- Lense -->
+<!ENTITY details_valid_header				"有効">
+<!ENTITY details_warning_header				"警告">
+<!ENTITY details_error_header				"エラー">
+<!ENTITY details_description				"説明">
+<!ENTITY details_location				"場所">
+<!ENTITY details_manifestURL				"App ID">
+<!ENTITY details_removeProject_button			"プロジェクトを削除">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle				"新しいアプリ">
+<!ENTITY newAppHeader					"テンプレートを選択">
+<!ENTITY newAppLoadingTemplate				"テンプレートを読み込み中...">
+<!ENTITY newAppProjectName				"プロジェクト名:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close					"閉じる">
+
+<!-- Addons -->
+<!ENTITY addons_title					"追加のコンポーネント">
+<!ENTITY addons_aboutaddons				"アドオンマネージャーを開く">
+
+<!-- Prefs -->
+<!ENTITY prefs_title					"設定">
+<!ENTITY prefs_editor_title				"エディター">
+<!ENTITY prefs_general_title				"一般">
+<!ENTITY prefs_restore					"既定値に戻す">
+<!ENTITY prefs_manage_components			"追加のコンポーネントを管理">
+<!ENTITY prefs_options_autoconnectruntime		"前回のランタイムに再接続">
+<!ENTITY prefs_options_autoconnectruntime_tooltip	"WebIDE の起動時に前回のランタイムに再接続します">
+<!ENTITY prefs_options_rememberlastproject		"最後に選択したプロジェクトを記録">
+<!ENTITY prefs_options_rememberlastproject_tooltip	"WebIDE の起動時に前回開いたプロジェクトを自動的に選択します">
+<!ENTITY prefs_options_templatesurl			"テンプレート URL">
+<!ENTITY prefs_options_templatesurl_tooltip		"利用可能なテンプレートの一覧です">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title				"ランタイム情報">
+<!ENTITY runtimedetails_adbIsRoot			"ADB は root です: ">
+<!ENTITY runtimedetails_summonADBRoot			"root 端末">
+<!ENTITY runtimedetails_ADBRootWarning			"(ロック解除されたブートローダが必要です)">
+<!ENTITY runtimedetails_unrestrictedPrivileges		"開発ツールの権限の制限解除: ">
+<!ENTITY runtimedetails_requestPrivileges		"上位の権限を要求">
+<!ENTITY runtimedetails_privilegesWarning		"(端末が再起動されます。root アクセス権限が必要です。)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean				"真偽値">
+<!ENTITY device_typenumber				"整数値">
+<!ENTITY device_typestring				"文字列">
+<!ENTITY device_typeobject				"オブジェクト">
+<!ENTITY device_typenone				"種類を選択">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title				"端末の設定">
+<!ENTITY devicepreference_search			"設定値を検索">
+<!ENTITY devicepreference_newname			"新しい設定名">
+<!ENTITY devicepreference_newtext			"設定値">
+<!ENTITY devicepreference_addnew			"新しい設定値を追加">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title				"端末オプション">
+<!ENTITY devicesetting_search				"設定値を検索">
+<!ENTITY devicesetting_newname				"新しい設定名">
+<!ENTITY devicesetting_newtext				"設定値">
+<!ENTITY devicesetting_addnew				"新しい設定値を追加">
+
+<!-- Monitor -->
+<!ENTITY monitor_title					"モニター">
+<!ENTITY monitor_help					"ヘルプ">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header				"クライアント証明書">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request				"接続先がこの接続を認証するために、より多くの情報を必要としています。お持ちの別の端末で QR コードをスキャンしてください。">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner				"QR スキャナがない">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner				"QR スキャナを使う">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request			"別の端末が QR コードのスキャンの代わりにトークンを要求する場合は、以下の値をその端末にコピーしてください:">
+<!ENTITY wifi_auth_qr_size_note				"QR コードの表示が小さすぎて接続できない場合は、拡大するかウィンドウを大きくしてください。">
+
+<!-- Logs panel -->
+<!ENTITY logs_title					"パッケージング前のコマンドログ">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title				"シミュレータのオプション">
+<!ENTITY simulator_remove				"シミュレータを削除">
+<!ENTITY simulator_reset				"既定値に戻す">
+<!ENTITY simulator_name					"名前">
+<!ENTITY simulator_software				"ソフトウェア">
+<!ENTITY simulator_version				"バージョン">
+<!ENTITY simulator_profile				"プロファイル">
+<!ENTITY simulator_hardware				"ハードウェア">
+<!ENTITY simulator_device				"デバイス">
+<!ENTITY simulator_screenSize				"スクリーン">
+<!ENTITY simulator_pixelRatio				"ピクセル比">
+<!ENTITY simulator_tv_data				"TV シミュレーション">
+<!ENTITY simulator_tv_data_open				"設定データ">
+<!ENTITY simulator_tv_data_open_button			"設定ディレクトリーを開く...">

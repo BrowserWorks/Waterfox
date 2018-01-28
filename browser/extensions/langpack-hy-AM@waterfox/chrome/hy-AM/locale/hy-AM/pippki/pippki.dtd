@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Փոխել Հիմնական Գաղտնաբառը">
+<!ENTITY setPassword.tokenName.label "Անվտանգության Սարք">
+<!ENTITY setPassword.oldPassword.label "Առկա Գաղտնաբառը.">
+<!ENTITY setPassword.newPassword.label "Նոր Գաղտնաբառը.">
+<!ENTITY setPassword.reenterPassword.label "Նոր Գաղտնաբառը (նորից).">
+<!ENTITY setPassword.meter.label "Գաղտնաբառի ապահովությունը">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Վերադարձնել">
+<!ENTITY resetPassword.title  "Մաքրել Հիմնական Գաղտնաբառը">
+<!ENTITY resetPassword.text  "Եթե մաքրեք Ձեր հիմնական գաղտնաբառը, ապա բոլոր պահպանված Վեբ և Էլ-Փոստ գաղտնաբառերը, ձեվերի տվյալները, անհատական արտոնաթղթերը, անձնական բանալիները կմոռացվեն: Համո՞զված եք, որ ցանկանում եք հիմնական գաղտնաբառը մաքրել:">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Բեռնավորում եմ Վկայագիրը">
+<!ENTITY downloadCert.message1 "Դուք հայց եք ստացել մի նոր Վկայագրի լիազորման (CA) համար:">
+<!ENTITY downloadCert.trustSSL "Վստահել այս CA-ին՝ վեբ հանգույցների նույնացման համար:">
+<!ENTITY downloadCert.trustEmail "Վստահել այս CA-ին՝ վէլ. փոստերի նույնացման համար:">
+<!ENTITY downloadCert.trustObjSign "Վստահել այս CA-ին՝ ծրագրերի նույնացման համար:">
+<!ENTITY downloadCert.message3 "Նախքան ՎԱ (CA)-ին որևէ նպատակով վստահելը, պիտի ուսումնասիրեք նրա Վկայագիրը, դրույթներն ու գործառույթները (եթե առկա են):">
+<!ENTITY downloadCert.viewCert.label "Տեսք">
+<!ENTITY downloadCert.viewCert.text "Ոսումնասիրել ԱՀ (CA) Վկայագիրը">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Օգտվողի Նույնացման Հարցում">
+<!ENTITY clientAuthAsk.message1 "Այս հանգույց պահանջում է, որ դուք Ձեր Վկայագիրը ներկայացնեք.">
+<!ENTITY clientAuthAsk.message2 "Ընտրեք թվային ինքնությունը ներկայացնող Վկայագիրը.">
+<!ENTITY clientAuthAsk.message3 "Ընտրված Վկայագրի մանրամասները.">
+
+<!ENTITY pkcs12.setpassword.title  "Նշեք Վկայագրի Կրկնօրինակի Գաղտնաբառը">
+<!ENTITY pkcs12.setpassword.message  "Վկայագրի կրկնօրինակի համար նշվող գաղտնաբառը պաշտպանում է ստեղծվող կրկնօրինակը: Կրկնօրինակումը շարունակելու համար պիտի գաղտնաբառ նշեք:">
+<!ENTITY pkcs12.setpassword.label1 "Վկայագրի Կրկնօրինակի Գաղտնաբառը.">
+<!ENTITY pkcs12.setpassword.label2 "Վկայագրի Կրկնօրինակի Գաղտնաբառը (նորից).">
+<!ENTITY pkcs12.setpassword.reminder "Կարևոր է. Եթե մոռանաք ձեր Վկայագրի կրկնօրինակի գաղտնաբառը. ի վիճակի չեք լինի այս կրկնօրինակն օգտագործել: Խնդրեմ, այն գրի առեք և ապահով տեղ պահեք:">
+
+<!ENTITY chooseToken.title  "Հայտանիշի Ընտրության Երկխոսություն">
+<!ENTITY chooseToken.message1 "Խնդրեմ ընտրեք մի հայտանիշ:">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Ստեղծում եմ Անձնական Բանալի">
+<!ENTITY createCertInfo.msg1 "Ստողծում եմ բանալի…Սա կարող է որոշ ժամանակ խլել…">
+<!ENTITY createCertInfo.msg2 "Խնդրեմ սպասեք…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Պահպանված Նույնականացման Նշան">
+<!ENTITY protectedAuth.msg "Խնդրում ենք նույնականացնել թոկենի հետ.Նույնականացման մեթոդը կախված է Ձեր թոկենի տեսակից.">
+<!ENTITY protectedAuth.tokenName.label "Թոկեն`">

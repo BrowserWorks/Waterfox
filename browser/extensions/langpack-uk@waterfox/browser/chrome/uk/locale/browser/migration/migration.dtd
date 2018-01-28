@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Майстер імпорту">
+
+<!ENTITY importFrom.label               "Імпортувати налаштування, закладки, історію, паролі та інші дані з:">
+<!ENTITY importFromUnix.label           "Імпортувати налаштування, закладки, історію, паролі та інші дані з:">
+<!ENTITY importFromBookmarks.label      "Імпорт закладок з:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Не імпортувати нічого">
+<!ENTITY importFromNothing.accesskey    "Н">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Не знайдено жодної програми із закладками, історією чи паролями.">
+
+<!ENTITY importSource.title             "Імпорт налаштувань і даних">
+<!ENTITY importItems.title              "Об’єкти для імпорту">
+<!ENTITY importItems.label              "Виберіть об’єкти для імпорту:">
+
+<!ENTITY migrating.title                "Триває імпорт…">
+<!ENTITY migrating.label                "Зараз імпортуються наступні об’єкти…">
+
+<!ENTITY selectProfile.title            "Вибір профілю">
+<!ENTITY selectProfile.label            "Імпорт можна провести з наступних профілів:">
+
+<!ENTITY done.title                     "Імпорт успішно завершений">
+<!ENTITY done.label                     "Наступні об’єкти успішно імпортовані:">
+
+<!ENTITY closeSourceBrowser.label       "Перед продовженням переконайтеся, що вибраний браузер закрито.">

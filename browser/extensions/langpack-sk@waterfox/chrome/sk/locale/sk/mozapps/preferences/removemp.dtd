@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title "Odstrániť hlavné heslo">
+<!ENTITY removeInfo.label "Ak chcete pokračovať, je potrebné zadať hlavné heslo:">
+<!ENTITY removeWarning1.label "Hlavné heslo chráni citlivé údaje, napríklad heslá webových stránok.">
+<!ENTITY removeWarning2.label "Ak odstránite hlavné heslo, súkromné údaje nebude možné v prípade prieniku do počítača chrániť.">
+<!ENTITY setPassword.oldPassword.label "Aktuálne heslo:">

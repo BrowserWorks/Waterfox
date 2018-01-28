@@ -1,0 +1,133 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrija">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Podatkovni vir pinga:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Trenutni podatki pinga
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Arhivirani podatki pinga
+">
+
+<!ENTITY aboutTelemetry.raw "Neobdelan JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Prikaži podatke podseje
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Izberite ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Novejši ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Starejši ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Teden
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Vrsta pinga
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Danes
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Včeraj
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Starejše
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Splošni podatki
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Podatki o okolju">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Dnevnik telemetrije
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Počasni stavki SQL
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Sesutja brskalnika
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Sesutja niti
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Zajeti skladi">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalarji">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Skalarji s ključi">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrami
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histogrami s ključi
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Dogodki">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Enostavne meritve
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Podrobnosti dodatkov
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Poznejša pisanja
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "Podatki o seji">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  Opomba: Vključeno je razhroščevanje počasnega SQL. Spodaj se lahko pojavijo celotni nizi SQL, vendar ne bodo poslani telemetriji.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Zbiraj imena funkcij za sklade">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Prikaži neobdelane podatke sklada">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtriraj (nizi ali /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Koristna vsebina">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Sayfa Yapısı">
+
+<!ENTITY basic.tab           "Biçim ve seçenekler">
+
+<!ENTITY formatGroup.label   "Biçim">
+
+<!ENTITY orientation.label   "Yönlendirme:">
+<!ENTITY portrait.label      "Dikey">
+<!ENTITY portrait.accesskey  "k">
+<!ENTITY landscape.label     "Yatay">
+<!ENTITY landscape.accesskey "t">
+
+<!ENTITY scale.label         "Ölçek:">
+<!ENTITY scale.accesskey     "Ö">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Sayfa boyutuna sığdır">
+<!ENTITY shrinkToFit.accesskey "d">
+
+<!ENTITY optionsGroup.label  "Seçenekler">
+
+<!ENTITY printBG.label       "Arka planı yazdır (renkler ve resimler)">
+<!ENTITY printBG.accesskey   "k">
+
+<!ENTITY advanced.tab        "Kenarlar ve üst bilgi / alt bilgi">
+
+<!ENTITY marginGroup.label   "Kenarlar (#1)">
+<!ENTITY marginUnits.inches  "inç">
+<!ENTITY marginUnits.metric  "milimetre">
+<!ENTITY marginTop.label     "Üst:">
+<!ENTITY marginTop.accesskey "t">
+<!ENTITY marginBottom.label  "Alt:">
+<!ENTITY marginBottom.accesskey "A">
+<!ENTITY marginLeft.label    "Sol:">
+<!ENTITY marginLeft.accesskey "l">
+<!ENTITY marginRight.label   "Sağ:">
+<!ENTITY marginRight.accesskey "S">
+
+<!ENTITY headerFooter.label  "Üst bilgiler ve alt bilgiler">
+
+<!ENTITY hfLeft.label        "Sol:">
+<!ENTITY hfCenter.label      "Merkez:">
+<!ENTITY hfRight.label       "Sağ:">
+<!ENTITY headerLeft.tip      "Sol üst bilgi">
+<!ENTITY headerCenter.tip    "Orta üst bilgi">
+<!ENTITY headerRight.tip     "Sağ üst bilgi">
+<!ENTITY footerLeft.tip      "Sol alt bilgi">
+<!ENTITY footerCenter.tip    "Orta alt bilgi">
+<!ENTITY footerRight.tip     "Sağ alt bilgi">
+
+<!ENTITY hfTitle             "Başlık">
+<!ENTITY hfURL               "Adres">
+<!ENTITY hfDateAndTime       "Tarih/Saat">
+<!ENTITY hfPage              "Sayfa #">
+<!ENTITY hfPageAndTotal      "Sayfa # / #">
+<!ENTITY hfBlank             "--boş--">
+<!ENTITY hfCustom            "Özel…">
+
+<!ENTITY customPrompt.title  "Özel…">
+<!ENTITY customPrompt.prompt "Özel üst bilgi/alt bilgi metninizi yazın">

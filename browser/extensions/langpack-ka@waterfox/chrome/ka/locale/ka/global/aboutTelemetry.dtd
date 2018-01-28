@@ -1,0 +1,139 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ტელემეტრიის მონაცემები">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+პინგის მონაცემების წყარო:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+პინგის მიმდინარე მონაცემები">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+პინგის არქივირებული მონაცემები">
+
+<!ENTITY aboutTelemetry.raw "
+ნედლი JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+ქვესეანსის მონაცემების ჩვენება
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+პინგის არჩევა:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; შედარებით ახალი პინგი
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+შედარებით ძველი პინგი &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+კვირა
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+პინგის ტიპი
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+პინგი
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+დღეს
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+გუშინ
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+უფრო ძველი
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  ზოგადი მონაცემები
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  გარემოს მონაცემები
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  ტელემეტრიის ჟურნალი
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  ნელი SQL-ს განცხადებები
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  ბრაუზერის გაშეშებები
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  ნაკადის გაშეშებები
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  დაფიქსირებული სტეკები
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  სკალარები
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  დაშიფრული სკალარები
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  ჰისტოგრამები
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  გასაღებებიანი ჰისტოგრამები
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  მოვლენები
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  მარტივი განსაზღვრებები
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  დამატების მონაცემები
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  გვიანი ჩაწერები">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  სეანსის ინფორმაცია
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  შენიშვნა: ნელი SQL-ს გამართვა ჩართულია. შესაძლოა ქვემოთ სრული SQL სტრიქონები გამოჩნდეს, მაგრამ ისინი არ გადაეგზავნებიან ტელემეტრიას.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  ფუნქციების სახელების გადმოტანა სტეკებითვის
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  სტეკების ნედლი მონაცემების ჩვენება
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  ფილტრი (სტრიქონები ან /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  მარგი დატვირთვა">

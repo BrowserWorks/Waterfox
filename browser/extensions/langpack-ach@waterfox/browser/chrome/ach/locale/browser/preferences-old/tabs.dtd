@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab wire ikin dirica matino i kit ma ki tiyo kwedgi cokki">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Yab dirica manyen iyie dirica matidi manyen aye">
+<!ENTITY newWindowsAsTabs.accesskey   "e">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Niangi kace tye ka loro dirica matino mapol">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Niangi ka ce yabo dirica matino mapol dwoko dwiro pa &brandShortName; piny">
+<!ENTITY warnOnOpenManyTabs.accesskey   "p">
+
+<!ENTITY switchLinksToNewTabs.label        "Ka iyabo kakube iyie dirica manyen, lokke iye cut">
+<!ENTITY switchLinksToNewTabs.accesskey    "a">
+
+<!ENTITY showTabsInTaskbar.label          "Nyut nen me dirica matino iye gintic me Dirica">
+<!ENTITY showTabsInTaskbar.accesskey      "t">
+<!ENTITY tabsGroup.label          "Dirica matino">

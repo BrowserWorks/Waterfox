@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Information om url-klassificeraren">
+<!ENTITY aboutUrlClassifier.providerTitle               "Leverantör">
+<!ENTITY aboutUrlClassifier.provider                    "Leverantör">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Senast uppdaterad">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Nästa uppdatering">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off tid">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Senaste uppdateringsstatus">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Uppdatera">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Uppdatera">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Rensa">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabellnamn">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Antalet negativa cacheposter">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Antalet positiva cacheposter">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Visa poster">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cacheposter">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Förfallodatum negativ cache">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Fullständig hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Förfallodatum positiv cache">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Felsök">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Ange loggmoduler">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Ange loggfil">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Ange JS-logg">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Loggmoduler för säker surfning">
+<!ENTITY aboutUrlClassifier.debugModules                "Aktuella loggmoduler">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS-logg för säker surfning">
+<!ENTITY aboutUrlClassifier.debugFile                   "Aktuell loggfil">

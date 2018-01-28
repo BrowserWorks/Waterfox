@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "장치 관리자">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "보안 모듈 및 장치">
+<!ENTITY devmgr.details.title                   "상세 정보">
+<!ENTITY devmgr.details.title2                  "값">
+
+<!ENTITY devmgr.button.login.label              "로그인">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "로그아웃">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "암호 변경">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "장착하기">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "분리하기">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "추가하고자 하는 모듈에 대한 정보를 입력하십시오.">
+<!ENTITY loaddevice.modname                     "모듈 이름:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "새 PKCS #11 모듈">
+<!ENTITY loaddevice.filename                    "모듈 파일 이름:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "찾아보기…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 장치 드라이버 로드">

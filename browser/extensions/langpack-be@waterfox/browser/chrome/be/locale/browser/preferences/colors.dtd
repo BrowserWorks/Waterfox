@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Колеры">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Замяняць колеры старонкі на выбраныя вамі вышэй:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "З">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Заўсёды">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Толькі з высокакантраснымі тэмамі">
+<!ENTITY  overrideDefaultPageColors.never.label  "Ніколі">
+
+<!ENTITY  color                           "Тэкст і фон">
+<!ENTITY  textColor.label                 "Тэкст:">
+<!ENTITY  textColor.accesskey             "Т">
+<!ENTITY  backgroundColor.label           "Фон:">
+<!ENTITY  backgroundColor.accesskey       "Ф">
+<!ENTITY  useSystemColors.label           "Карыстацца сістэмнымі колерамі">
+<!ENTITY  useSystemColors.accesskey       "с">
+
+<!ENTITY  underlineLinks.label            "Падкрэсліваць спасылкі">
+<!ENTITY  underlineLinks.accesskey        "П">
+<!ENTITY  links                           "Колеры спасылак">
+<!ENTITY  linkColor.label                 "Ненаведаныя спасылкі:">
+<!ENTITY  linkColor.accesskey             "с">
+<!ENTITY  visitedLinkColor.label          "Наведаныя спасылкі:">
+<!ENTITY  visitedLinkColor.accesskey      "Н">

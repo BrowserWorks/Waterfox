@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "הדפסה…">
+<!ENTITY print.accesskey      "ד">
+<!ENTITY pageSetup.label      "הגדרות עמוד...">
+<!ENTITY pageSetup.accesskey  "ה">
+<!ENTITY page.label           "עמוד:">
+<!ENTITY page.accesskey       "ע">
+<!ENTITY of.label             "מתוך">
+<!ENTITY scale.label          "קנה מידה:">
+<!ENTITY scale.accesskey      "מ">
+<!ENTITY portrait.label       "לאורך">
+<!ENTITY portrait.accesskey   "א">
+<!ENTITY landscape.label      "לרוחב">
+<!ENTITY landscape.accesskey  "ר">
+<!ENTITY close.label          "סגירה">
+<!ENTITY close.accesskey      "ס">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "התאמה אישית...">
+<!ENTITY ShrinkToFit.label    "כווץ להתאמה">
+<!ENTITY customPrompt.title   "קנה מידה מותאם אישית...">
+<!ENTITY simplifyPage.label   "פישוט העמוד">
+<!ENTITY simplifyPage.accesskey "פ">
+<!ENTITY simplifyPage.enabled.tooltip  "החלפת הפריסה להקלה על הקריאה">
+<!ENTITY simplifyPage.disabled.tooltip "לא ניתן לפשט עמוד זה באופן אוטומטי">
+
+<!ENTITY homearrow.tooltip    "דף ראשון">
+<!ENTITY endarrow.tooltip     "דף אחרון">
+<!ENTITY nextarrow.tooltip    "דף הבא">
+<!ENTITY previousarrow.tooltip "דף קודם">

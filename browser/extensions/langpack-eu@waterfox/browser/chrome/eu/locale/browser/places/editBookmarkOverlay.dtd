@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Izena:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "n">
+<!ENTITY editBookmarkOverlay.location.label                  "Helbidea:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "l">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Jarioaren helbidea:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "J">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Gunearen kokapena:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "G">
+<!ENTITY editBookmarkOverlay.folder.label                    "Karpeta:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Ikusi laster-marka karpeta guztiak">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Ezkutatu">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etiketak:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "t">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Banandu etiketak komaz.">
+<!ENTITY editBookmarkOverlay.description.label               "Azalpena:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "A">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Gako-hitza:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "k">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Ikusi etiketa guztiak">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Kargatu laster-marka alboko barran">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "a">
+<!ENTITY editBookmarkOverlay.choose.label                    "Aukeratu…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Karpeta berria">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "b">

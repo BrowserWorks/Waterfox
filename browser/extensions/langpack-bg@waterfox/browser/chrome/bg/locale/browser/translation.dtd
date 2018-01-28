@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "Тази страница е на">
+<!ENTITY translation.translateThisPage.label    "език. Превеждане на страницата?">
+<!ENTITY translation.translate.button           "Превеждане">
+<!ENTITY translation.notNow.button              "Не сега">
+
+<!ENTITY translation.translatingContent.label   "Превеждане съдържанието на страницата…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "Тази страница е преведена от">
+<!ENTITY translation.translatedTo.label         "на">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Показване на оригинала">
+<!ENTITY translation.showTranslation.button     "Показване на превода">
+
+<!ENTITY translation.errorTranslating.label     "Възникна проблем при превода на страницата.">
+<!ENTITY translation.tryAgain.button            "Нов опит">
+
+<!ENTITY translation.serviceUnavailable.label   "Превеждането е недостъпно в момента. Моля, опитайте по-късно.">
+
+<!ENTITY translation.options.menu               "Настройки">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Без превод на този сайт">
+<!ENTITY translation.options.neverForSite.accesskey "с">
+<!ENTITY translation.options.preferences.label  "Настройки на преводите">
+<!ENTITY translation.options.preferences.accesskey "Н">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Превод от">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.poweredByYandex,
+                        translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  translation.options.attribution.poweredByYandex is displayed instead of
+  -  the other two strings when yandex translation engine is preferred by the
+  -  user.
+  -->
+<!ENTITY translation.options.attribution.yandexTranslate "С помощта на Yandex.Translate">

@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Trang ưa thích (m)">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "Các tab đang mở">
+<!ENTITY engine.history.label       "Lịch sử (r)">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Các phiên đăng nhập">
+<!ENTITY engine.prefs.label         "Tùy chỉnh">
+<!ENTITY engine.prefs.accesskey     "y">
+<!ENTITY engine.addons.label        "Tiện ích">
+<!ENTITY engine.addons.accesskey    "T">
+<!ENTITY engine.addresses.label     "Địa chỉ">
+<!ENTITY engine.creditcards.label   "Thẻ tín dụng">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Tên thiết bị">
+<!ENTITY changeSyncDeviceName.label "Thay đổi tên thiết bị…">
+<!ENTITY cancelChangeSyncDeviceName.label "Hủy bỏ">
+<!ENTITY saveChangeSyncDeviceName.label "Lưu">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Điều khoản Dịch vụ">
+<!ENTITY fxaPrivacyNotice.link.label "Chính sách Riêng tư">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "chưa được kiểm tra.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Xin hãy đăng nhập để kết nối lại">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Bạn chưa đăng nhập.">
+<!ENTITY signIn.label                "Đăng nhập">
+<!ENTITY profilePicture.tooltip      "Đổi hình hồ sơ">
+<!ENTITY verifiedManage.label        "Quản lý tài khoản">
+<!ENTITY disconnect.label            "Ngắt kết nối…">
+<!ENTITY verify.label                "Xác minh email">
+<!ENTITY forget.label                "Quên email này">
+
+<!ENTITY signedOut.caption            "Mang trang web theo bạn">
+<!ENTITY signedOut.description        "Đồng bộ trang đánh dấu, lịch sử, thẻ, mật khẩu, tiện ích và tùy chỉnh tới tất cả các thiết bị của bạn.">
+<!ENTITY signedOut.accountBox.create  "Tạo tài khoản">
+<!ENTITY signedOut.accountBox.signin  "Đăng nhập">
+
+<!ENTITY signedIn.engines.label       "Đồng bộ mọi thiết bị">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Tải Waterfox cho ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " hoặc ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " để đồng bị với thiết bị di động của bạn.">
+
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedOut.accountBox.title   "Connect with a &syncBrand.fxAccount.label;">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verify.accesskey            "V">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "ความปลอดภัย">
+<!ENTITY  phishingProtection.label       "การป้องกันฟิชชิ่ง">
+
+<!ENTITY  warnOnAddonInstall.label        "เตือนคุณเมื่อไซต์พยายามจะติดตั้งส่วนเสริม">
+<!ENTITY  warnOnAddonInstall.accesskey    "ต">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "ปิดกั้นเนื้อหาที่อันตรายและหลอกลวง">
+<!ENTITY  enableSafeBrowsing.accesskey    "ป">
+
+<!ENTITY  blockDownloads.label            "ปิดกั้นการดาวน์โหลดที่อันตราย">
+<!ENTITY  blockDownloads.accesskey        "อ">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "เตือนคุณเกี่ยวกับซอฟต์แวร์ไม่พึงประสงค์และไม่ปกติ">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "น">
+
+<!ENTITY  addonExceptions.label         "ข้อยกเว้น…">
+<!ENTITY  addonExceptions.accesskey     "ข">
+
+
+<!ENTITY  formsAndPasswords.label       "แบบฟอร์มและรหัสผ่าน">
+
+<!ENTITY  rememberLogins1.label          "จดจำการเข้าสู่ระบบและรหัสผ่านสำหรับไซต์">
+<!ENTITY  rememberLogins1.accesskey      "ด">
+<!ENTITY  passwordExceptions.label      "ข้อยกเว้น…">
+<!ENTITY  passwordExceptions.accesskey  "อ">
+
+<!ENTITY  useMasterPassword.label        "ใช้รหัสผ่านหลัก">
+<!ENTITY  useMasterPassword.accesskey    "ช">
+<!ENTITY  changeMasterPassword.label     "เปลี่ยนรหัสผ่านหลัก…">
+<!ENTITY  changeMasterPassword.accesskey "ล">
+
+<!ENTITY  savedLogins.label              "การเข้าสู่ระบบที่บันทึกไว้…">
+<!ENTITY  savedLogins.accesskey          "ก">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

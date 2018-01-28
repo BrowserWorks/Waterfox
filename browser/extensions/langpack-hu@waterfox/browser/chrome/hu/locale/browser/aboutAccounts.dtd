@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Üdvözli a &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Jelentkezzen be a lapok, könyvjelzők, jelszavak és sok más szinkronizálásához.">
+<!ENTITY aboutAccountsConfig.startButton.label "Kezdő lépések">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync beállításai">
+<!ENTITY aboutAccounts.noConnection.title "Nincs kapcsolat">
+<!ENTITY aboutAccounts.noConnection.description "Csatlakoznia kell az internetre a bejelentkezéshez.">
+<!ENTITY aboutAccounts.noConnection.retry "Próbálja újra">
+<!ENTITY aboutAccounts.badConfig.title "Hibás beállítás">
+<!ENTITY aboutAccounts.badConfig.description "A Waterfox fiók kiszolgálóbeállítások nem határozhatóak meg. Próbálkozzon később.">

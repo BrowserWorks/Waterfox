@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Bu kafolatni buzishi mumkin!">
+<!ENTITY aboutWarningText.label "Qoʻshimcha moslamalarni oʻzgartirish ushbu ilova dasturning ishonchliligi, xavfsizligi  va ishlashiga zarar yetkazishi mumkin. Agar nima qilayotganingizni aniq bilsangiz, davom ettiring.">
+<!ENTITY aboutWarningButton2.label "Xavfga roziman!">
+<!ENTITY aboutWarningCheckbox.label "Ushbu ogohlantirish keyingi safar koʻrsatilsin">
+
+<!ENTITY searchPrefs.label "Izlash">
+<!ENTITY searchPrefs.accesskey "I">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Moslash nomi">
+<!ENTITY lockColumn.label "Holati">
+<!ENTITY typeColumn.label "Turi">
+<!ENTITY valueColumn.label "Qiymat">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Saralash uchun bosing"> 
+<!ENTITY columnChooser.tooltip "Ustunlarni ko‘rsatish uchun tanlab, bosing"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Nusxa olish">
+<!ENTITY copyPref.accesskey "N">
+<!ENTITY copyName.label "Nomidan nusxa olish">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Qiymatdan nusxa olish">
+<!ENTITY copyValue.accesskey "Q">
+<!ENTITY modify.label "O‘zgartirish">
+<!ENTITY modify.accesskey "O">
+<!ENTITY toggle.label "Oʻtish">
+<!ENTITY toggle.accesskey "O">
+<!ENTITY reset.label "Tiklash">
+<!ENTITY reset.accesskey "T">
+<!ENTITY new.label "Yangi">
+<!ENTITY new.accesskey "Y">
+<!ENTITY string.label "Qator">
+<!ENTITY string.accesskey "Q">
+<!ENTITY integer.label "Butun son">
+<!ENTITY integer.accesskey "B">
+<!ENTITY boolean.label "Mantiqiy">
+<!ENTITY boolean.accesskey "M">

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Minimum">
+<!ENTITY bringAllToFront.label    "Bawa Semua ke Hadapan">
+<!ENTITY zoomWindow.label         "Zum">
+<!ENTITY windowMenu.label         "Tetingkap">
+
+<!ENTITY helpMenu.label           "Bantuan"> 
+<!ENTITY helpMenu.accesskey       "n"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Bantuan"> 
+<!ENTITY helpMenuWin.accesskey    "a">
+<!ENTITY aboutProduct2.label      "Perihal &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "Bantuan &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Pintasan Papan Kekunci">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "Mula semula dengan Add-ons Dinyahdayakan…">
+<!ENTITY helpSafeMode.accesskey   "u">
+<!ENTITY helpSafeMode.stop.label       "Mula semula dengan Add-ons Didayakan">
+<!ENTITY helpSafeMode.stop.accesskey   "d">
+
+<!ENTITY healthReport2.label      "Laporan Kesihatan &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Maklumat Pencarisilapan">
+<!ENTITY helpTroubleshootingInfo.accesskey  "a">
+
+<!ENTITY helpFeedbackPage.label      "Hantar Maklum balas…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "Teroka &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Keutamaan…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Perkhidmatan">
+
+<!ENTITY hideThisAppCmdMac2.label       "Sorok &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Sorok Lain-lain">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Papar Semua">

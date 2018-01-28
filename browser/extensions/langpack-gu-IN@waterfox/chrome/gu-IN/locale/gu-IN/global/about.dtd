@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY about.version                "આવૃત્તિ">
+<!-- LOCALIZATION NOTE (about.credits.beforeLink): note that there is no space between this phrase and the linked about.credits.linkTitle phrase, so if your locale needs a space between words, add it at the end of this entity. -->
+
+<!ENTITY about.credits.beforeLink     "ની યાદીને જુઓ ">
+<!ENTITY about.credits.linkTitle      "ફાળકો">
+<!-- LOCALIZATION NOTE (about.credits.afterLink): note that there is no space between the linked about.credits.linkTitle phrase and this phrase, so if your locale needs a space between words, add it at the start of this entity. -->
+<!ENTITY about.credits.afterLink      "Mozilla પ્રોજેક્ટ માટે.">
+<!-- LOCALIZATION NOTE (about.license.beforeTheLink): note that there is no space between this phrase and the linked about.license.linkTitle phrase, so if your locale needs a space between words, add it at the end of this entity. -->
+
+<!ENTITY about.license.beforeTheLink  "વાંચો">
+<!ENTITY about.license.linkTitle      "માટે લાઇસન્સીંગ જાણકારીને">
+<!-- LOCALIZATION NOTE (about.license.afterTheLink): note that there is no space between the linked about.license.linkTitle phrase and this phrase, so if your locale needs a space between words, add it at the start of this entity. -->
+<!ENTITY about.license.afterTheLink   "આ પ્રોડક્ટ માટે.">
+<!-- LOCALIZATION NOTE (about.relnotes.beforeTheLink): note that there is no space between this phrase and the linked about.relnotes.linkTitle phrase, so if your locale needs a space between words, add it at the end of this entity. -->
+
+<!ENTITY about.relnotes.beforeTheLink "વાંચો">
+<!ENTITY about.relnotes.linkTitle     "પ્રકાશન નોંધો">
+<!-- LOCALIZATION NOTE (about.relnotes.afterTheLink): note that there is no space between the linked about.relnotes.linkTitle phrase and this phrase, so if your locale needs a space between words, add it at the start of this entity. -->
+<!ENTITY about.relnotes.afterTheLink  "આ આવૃત્તિ માટે.">
+<!-- LOCALIZATION NOTE (about.buildconfig.beforeTheLink): note that there is no space between this phrase and the linked about.buildconfig.linkTitle phrase, so if your locale needs a space between words, add it at the end of this entity. -->
+
+<!ENTITY about.buildconfig.beforeTheLink "જુઓ ">
+<!ENTITY about.buildconfig.linkTitle     "વાપરેલ બિલ્ડ જાણકારીને">
+<!-- LOCALIZATION NOTE (about.buildconfig.afterTheLink): note that there is no space between the linked about.buildconfig.linkTitle phrase and this phrase, so if your locale needs a space between words, add it at the start of this entity. -->
+<!ENTITY about.buildconfig.afterTheLink  " આ આવૃત્તિ માટે વાપરેલ છે.">
+
+<!ENTITY about.buildIdentifier        "બિલ્ડ ઓળખનાર: ">

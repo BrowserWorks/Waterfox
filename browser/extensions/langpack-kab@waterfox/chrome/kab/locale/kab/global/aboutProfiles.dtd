@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Talɣut ɣef imaɣna">
+<!ENTITY aboutProfiles.subtitle "Asebter-a a k-d-yefk tallalt i usefrek n imeɣna-inek. Yal ameɣnu d amaḍal i yiman-is i igebren amazray-ines, ticraḍ-ines n isebtar, iɣawwaṛen-ines d izegrar-ines.">
+<!ENTITY aboutProfiles.create "Rnu amaɣnu amaynut">
+<!ENTITY aboutProfiles.restart.title "Ales asenker">
+<!ENTITY aboutProfiles.restart.inSafeMode "Ales asenker s urermed n izegrar…">
+<!ENTITY aboutProfiles.restart.normal "Ales asenker s wudem amagnu…">

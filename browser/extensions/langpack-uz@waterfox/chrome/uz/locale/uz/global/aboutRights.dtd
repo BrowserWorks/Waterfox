@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Huqularingiz haqida">
+<!ENTITY rights.intro "&brandFullName; butun dunyo boʻyicha minglab jamoalar hissasini qoʻshib, tuzilgan erkin va ochiq kodli dasturiy ta`minot. Bu yerda bilishingiz kerak boʻlgan ba`zi narsalar bor:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ">
+<!ENTITY rights.intro-point1b "&quot;Mozilla Public License&quot; (Mozilla ochiq litsenziyasi) shartlari boʻyicha mavjud.">
+<!ENTITY rights.intro-point1c ". Bu degani siz &brandShortName;dan foydalanishingiz, nusxa koʻchirishingiz va boshqalarga tarqatishingiz mumkin. Shuningdek, kerak boʻlsa &brandShortName;ning kodlarini oʻzgartirishingiz ham mumkin. &quot;The Mozilla Public License&quot; (Mozilla ochiq litsenziyasi) sizga kodlari oʻzgartiriglan versiyalarini tarqatish huquqini ham beradi.">
+
+<!ENTITY rights.intro-point2-a "Mozilla jamiyati tomonidan birorta ham savdo belgisi litsenziyalari yoki huquqlar bilan kafolat berilmaydi  yoki Waterfox nomi yoki belgisi cheklovi qoʻshilgan birorta tarafga ham kafolat bermaydi. Savdo boʻyicha qoʻshimcha ma`lumotlarni ">
+<!ENTITY rights.intro-point2-b "bu yerdan topishingiz mumkin">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName;ning ba`zi xususiyatlari, masalan, &quot;Nosozlik xabar bergichi&quot; &vendorShortName;ga mulohazalar joʻnatish imkonini beradi. Mulohaza joʻnatishni tanlab, &vendorShortName;ga mahsulotlarini yaxshilashda, tavsiyalarni oʻzining saytida e`lon qilishda va fikrlarni tarqatishda mulohazalardan foydalanish huquqini berasiz..">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "&vendorShortName;ga &brandShortName; orqali joʻnatgan mulohazalaringiz va shaxsiy ma`lumotlaringizdan qanday qilib foydalanishimiz  ">
+<!ENTITY rights2.intro-point3b "&quot;&brandShortName; &quot;Maxfiylik nazorati&quot;da yozilgan">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Ushbu mahsulot uchun har qanday xavfsizlik nazoratini qoʻllash bu yerdagi roʻyxatda keltirilgan boʻlishi kerak.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Ba`zi &brandShortName; xossalari internetga asoslangan ma`lumot xizmatlaridan foydalanadi, shunday ekan, biz ularning 100&#037; xatolardan holi ekanligiga kafolat bera olmaymiz. Ushbu xizmatlardan foydalanish xossasini oʻchirib qoʻyish haqidagi va boshqa koʻplab ma`lumotlarni ">
+<!ENTITY rights.intro-point4b "xizmat shartlaridan olishingiz mumkin">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Agar ushbu mahsulot veb xizmatlar bilan bogʻliq boʻlsa, ushbu xizmat(lar) uchun har qanday qabul qilinadigan shartlar ">
+<!ENTITY rights.intro-point4b-unbranded "Veb sayt xizmatlari">
+<!ENTITY rights.intro-point4c-unbranded " boʻlimida keltirilgan boʻlishi kerak.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; internetga asoslangan ma`lumot berish xizmatlari">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Aniq bir turdagi video fayllarni ijro etish uchun &brandShortName; uchinchi tomondan kerakli kontent ta’rifi modullarini yuklab oladi.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; internetga asoslangan ma`lumot xizmatlari (&quot;Xizmatlar&quot;)dan &brandShortName;ning quyida keltirilgan shartlar ostidagi ushbu ikkilik versiyasidan foydalanishda ba`zi xususiyatlarini ta`minlash uchun foydalanadi.Agar &quot;Xizmatlar&quot;dan biri yoki bir nechtasidan foydalanishni xohlamasangiz yoki pastdagi shartlarni qoʻllab boʻlmasa, xususiyatlar yoki &quot;Xizmatlar&quot;ni oʻchirib qoʻyishingiz mumkin. Ba`zi xususiyatlarni yoki &quot;Xizmatlar&quot;ni qanday qilib oʻchirish boʻyicha koʻrsatmani  ">
+<!ENTITY rights2.webservices-b "bu yerdan topishingiz mumkin">
+<!ENTITY rights3.webservices-c ". Boshqa xususiyatlar va &quot;Xizmatlar&quot;ni ilova dasturlar moslamalaridan oʻchirib qoʻyish mumkin.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "&quot;Xavfsiz koʻrish&quot; xususiyatini oʻchirib qoʻyish tavsiya qilinmaydi, chunki siz xavfli saytlarga kirib qolishingiz mumkin.  Agar siz ushbu xususiyatni butunlay, oʻchirmoqchi boʻlsangiz quyidagi bosqichlardan oʻtishingiz kerak:">
+<!ENTITY rights.safebrowsing-term1 "Ilova dastur moslamalarini oching">
+<!ENTITY rights.safebrowsing-term2 "&quot;Xavfsizlikni tanlash&quot;ni tanlang">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot;dan belgini olib tashlang">
+<!ENTITY rights.safebrowsing-term4 "&quot;Xavfsiz koʻrish&quot; - hozir oʻchirib qoʻyilgan">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Manzilni bilib internetni koʻrish:">
+<!ENTITY rights.locationawarebrowsing-b "- doimiy tanlov. Manzil ma`lumotlari ruxsatingizsiz umuman joʻnatilmaydi. Agar ushbu xususiyatni butunlay oʻchirib qoʻymoqchi boʻlsangiz, quyidagi bosqichlardan oʻtishingiz kerak:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL paneliga yozing ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled deb yozing">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled moslamalari ustiga ikki marta bosing">
+<!ENTITY rights.locationawarebrowsing-term4 "Manzilni bilib internetni koʻrish - oʻchirib qoʻyilgan">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Veb saytlar ma`lumotlarini koʻrib chiqish xizmati mahsulotga ularni qanday oʻchirish boʻyicha koʻrsatmalar qoʻshilgan, agar bu talab qilinsa, bu yerga qoʻshilishi kerak.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Ushbu mahsuloat uchun ba`zi qabul qilingan xizmat shartlari bu yerda koʻrsatilgan boʻlishi kerak.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName;  va uning hissa qoʻshuvchilari, litsenziyachilari hamda hamkorlari  &quot;Xizmatlar&quot; orqali eng aniq va yangi ma`lumotlarni berish uchun bor kuchlari bilan harakat qilishadi, lekin ushbu ma`lumotlarni toʻliq va xatolardan holi ekanligiga kafolat bera olmaymiz.  Masalan, &quot;Xavfsiz koʻrish&quot; xizmati ba`zi xavfli saytlarni xavfsiz, ba`zi xavfsiz saytlarni esa xato tufayli xavfli deb koʻrsatishi mumkin, shuningdek, &quot;Manzilni aniqlash xizmati&quot;ga qaytariladigan barcha joylashgan manzillar aniq boʻlmasligi mumkin, biz ham xizmat koʻrsatuvchilarimiz ham bu manzillar aniqligiga 100&#037; kafolat bera olmaymiz.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; ehtiyotkorlik uchun &quot;Xizmarlar&quot; koʻrsatishni toʻxtatishi yoki uni oʻzgartirishi mumkin.">
+<!ENTITY rights2.webservices-term3 "Siz ushbu &quot;Xizmatlar&quot;dan &brandShortName;ning mavjud versiyasi bilan birga foydalanishingiz mumkin, &vendorShortName; ushbu huquqlar boʻyicha foydalanish imkonini beradi. &vendorShortName; va uning litsenziyachilari barcha boshqa huquqlarni &quot;Xizmatlar&quot;ga saqlaydi.  Ushbu shartlar &brandShortName;da qoʻllanadigan  ochiq kod litsenziyalari ostidagi kafolatlangan huquqlarni va &brandShortName; versiyalari manba kodini oʻzgartirishni cheklamaydi.">
+<!ENTITY rights.webservices-term4 "Ushbu xizmat &quot;boricha&quot; koʻrsatiladi.  &vendorShortName;, uning dasturchilar, litsenziya egalari va tarqatuvchilari barcha kafolatlarni rad etishadi (tezlik yoki biror narsaga tegishli, shaxsiy maqsadlarda foydalanish yoki savdo maqsadidagi xizmatlarda).  Xizmatlar ijrosi va sifatiga munosabatda va maqsadlaringiz uchun xizmat tanlash bilan siz butun xavf-xatarni o‘z zimmangizga olasiz. Bir nechta huquqiy hujjatlar istisno yoki kafolatga ta’sir qiladigan cheklovlarga ruxsat bermaydi, shunday ekan ushbu rad qilishning sizga aloqasi yo‘q.">
+<!ENTITY rights.webservices-term5 "Istisno holatlarda qonun qiyidagilarni talab qiladi, &vendorShortName;, uning ishchilar, litsenziya beruvchilar va tarqatuvchilar noto‘g‘ri, maxsus, tasodifiy, davom etadigan yoki  jarima to‘lanadigan yoki zarar uchun jazolash, &brandShortName;dan foydalanishda ishdan chiqish va xizmatlar uchun javob bermaydi.  Ushbu shartlarga muvofiq ish jamoasi javobgarligi  $500 (besh yuz dollar)dan oshmasligi kerak. Ba’zi huquqiy qonunlar istisnoga yoki aniqlangan zararni cheklashga ruxsat bermaydi, shuning uchun hozirgi istisno va cheklovlarning sizga aloqasi yo‘q.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; kerak boʻlganda vaqti-vaqti bilan oʻzining shartlarini yangilashi mumkin. Ushbu shartlarni &vendorShortName;ning yozma roziligisiz oʻzgartirish va bekor qilish mumkin emas.">
+<!ENTITY rights.webservices-term7 "Ushbu shartlar AQSH va Kaliforniya shtatlari qonunlari (qonunga toʻgʻri kelmaydiganlaridan boshqalari) tomonidan boshqariladi. Ushbu shartlardan biror qismi huquqiy amalda bo‘lmasa yoki bajarib bo‘lmasa, qolgan qismi to‘liq o‘zining huquqiy kuchini saqlab qoladi. Ushbu shartlarning tarjima qilingan va ingliz tilidagi asl manbalari o‘rtasida ziddiyatlar paydo bo‘lsa, ingliz tilidagi versiyasiga amal qilish kerak bo‘ladi.">

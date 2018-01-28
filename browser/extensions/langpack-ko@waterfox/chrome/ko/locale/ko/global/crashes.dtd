@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "충돌 보고서">
+<!ENTITY crashesUnsubmitted.label   "보내지 않은 충돌 보고서">
+<!ENTITY crashesSubmitted.label     "보낸 충돌 보고서">
+<!ENTITY id.heading                 "보고서 ID">
+<!ENTITY dateCrashed.heading        "데이타 충돌됨">
+<!ENTITY dateSubmitted.heading      "데이터 보내짐">
+<!ENTITY noReports.label            "전송한 충돌 보고서가 없습니다.">
+<!ENTITY noConfig.label             "이 프로그램은 충돌 보고서 표시 기능이 설정되어 있지 않습니다. <code>breakpad.reportURL</code> 값을 설정해 주십시오.">
+<!ENTITY clearAllReports.label      "보고서 모두 삭제">

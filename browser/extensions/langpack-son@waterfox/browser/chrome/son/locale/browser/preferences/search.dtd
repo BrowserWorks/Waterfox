@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Tilasu ceecijinay">
+
+
+<!ENTITY provideSearchSuggestions.label        "Ceeci honnandiyaney noo">
+<!ENTITY provideSearchSuggestions.accesskey    "C">
+
+
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Ceeci honnandiyaney ši cebe gorodoo zuu hunyaney ra zama war na &brandShortName; hanse a ma ši honga taariki kul.">
+
+<!ENTITY oneClickSearchEngines.label           "Cee-foo naaguyan ceecijinawey">
+
+
+<!ENTITY engineNameColumn.label                "Ceecijinay">
+<!ENTITY engineKeywordColumn.label             "Kufalkalima">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Tilasu ceecijinawey willi">
+<!ENTITY restoreDefaultSearchEngines.accesskey "T">
+
+<!ENTITY removeEngine.label                    "Kaa">
+<!ENTITY removeEngine.accesskey                "K">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

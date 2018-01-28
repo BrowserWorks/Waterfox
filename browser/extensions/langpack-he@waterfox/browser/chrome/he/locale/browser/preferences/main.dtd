@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "הפעלה">
+
+<!ENTITY startupPage2.label        "כאשר &brandShortName; מופעל">
+<!ENTITY startupPage2.accesskey    "כ">
+<!ENTITY startupUserHomePage.label "יוצג דף הבית">
+<!ENTITY startupBlankPage.label    "יוצג דף ריק">
+<!ENTITY startupPrevSession.label  "יוצגו החלונות והלשוניות מהפעם האחרונה">
+
+<!ENTITY homepage2.label           "דף הבית">
+<!ENTITY homepage2.accesskey       "ב">
+<!ENTITY useCurrentPage.label      "שימוש בדף הנוכחי">
+<!ENTITY useCurrentPage.accesskey  "נ">
+<!ENTITY useMultiple.label         "שימוש בדפים הנוכחיים">
+<!ENTITY chooseBookmark.label      "שימוש בסימנייה…">
+<!ENTITY chooseBookmark.accesskey  "ס">
+<!ENTITY restoreDefault.label      "שחזור לבררת המחדל">
+<!ENTITY restoreDefault.accesskey  "ש">
+
+<!ENTITY downloads.label     "הורדות">
+
+<!ENTITY saveTo.label "שמירת קבצים אל">
+<!ENTITY saveTo.accesskey "ק">
+<!ENTITY chooseFolderWin.label        "עיון…">
+<!ENTITY chooseFolderWin.accesskey    "י">
+<!ENTITY chooseFolderMac.label        "בחירה…">
+<!ENTITY chooseFolderMac.accesskey    "ב">
+<!ENTITY alwaysAskWhere.label         "לשאול תמיד היכן לשמור קבצים">
+<!ENTITY alwaysAskWhere.accesskey     "ק">
+
+<!ENTITY alwaysCheckDefault2.label        "תמיד לבדוק אם &brandShortName; הוא דפדפן בררת מחדל">
+<!ENTITY alwaysCheckDefault2.accesskey    "ת">
+<!ENTITY setAsMyDefaultBrowser3.label     "הגדרה כדפדפן בררת המחדל…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "ב">
+<!ENTITY isDefault.label                  "&brandShortName; הוא כרגע דפדפן בררת המחדל שלך">
+<!ENTITY isNotDefault.label               "&brandShortName; אינו דפדפן בררת המחדל שלך">
+
+<!ENTITY separateProfileMode.label        "לאפשר ל־&brandShortName; ול־Waterfox לרוץ במקביל">
+<!ENTITY useWaterfoxSync.label             "טיפ: פעולה זו מתאפשרת תודות ליצירה של שני פרופילים נפרדים. ניתן להשתמש ב־Sync כדי לסנכרן נתונים בניהם.">
+<!ENTITY getStarted.notloggedin.label     "התחברות אל &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "פתיחת מסך ההעדפות של &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "הפעלת &brandShortName; במצב ריבוי תהליכים">

@@ -1,0 +1,162 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<!-- LOCALIZATION NOTE (downloads.title):
+     Used by screen readers to describe the Downloads Panel.
+     -->
+
+<!ENTITY downloads.title                  "Aflaaie">
+<!-- LOCALIZATION NOTE (downloadDetails.width):
+     Width of details for a Downloads Panel item (which directly influences the
+     width of the Downloads Panel) expressed using a CSS unit. The longest
+     labels that should fit in the item width are usually those of in-progress
+     downloads and those of blocked downloads.
+
+     A good rule of thumb is to try to determine the longest string possible
+     that an in-progress download could display, and use that value in ch
+     units.
+
+     For example, in English, a long string would be:
+
+     59m 59s left - 1022 of 1023 KB (120.5 KB/sec)
+
+     Since Downloads Panel is redesigned to show the detail string including
+     the hovering case for an item or an action button.
+     Bug 1328519 is for discussing the detail rule of `downloadDetails.width`.
+     -->
+<!-- LOCALIZATION NOTE (downloadsSummary.minWidth2):
+     Minimum width for the main description of the downloads summary,
+     which is displayed at the bottom of the Downloads Panel if the
+     number of downloads exceeds the limit that the panel can display.
+
+     A good rule of thumb here is to look at the otherDownloads3 string
+     in downloads.properties, and make a reasonable estimate of its
+     maximum length. For English, this seems like a reasonable limit:
+
+     999 files downloading
+
+     that's 21 characters, so we set the minimum width to 21ch.
+     -->
+
+<!ENTITY cmd.pause.label                  "Laat wag">
+<!ENTITY cmd.pause.accesskey              "L">
+<!ENTITY cmd.resume.label                 "Hervat">
+<!ENTITY cmd.resume.accesskey             "H">
+<!ENTITY cmd.cancel.label                 "Kanselleer">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                   "Open houervouer">
+<!ENTITY cmd.show.accesskey               "v">
+<!ENTITY cmd.showMac.label                "Wys in 'Finder'">
+<!ENTITY cmd.showMac.accesskey            "F">
+<!ENTITY cmd.retry.label                  "Probeer weer">
+<!ENTITY cmd.goToDownloadPage.label       "Gaan na aflaaibladsy">
+<!ENTITY cmd.goToDownloadPage.accesskey   "G">
+<!ENTITY cmd.copyDownloadLink.label       "Kopieer aflaaiskakel">
+<!ENTITY cmd.copyDownloadLink.accesskey   "s">
+<!ENTITY cmd.removeFromHistory.label      "Verwyder uit geskiedenis">
+<!ENTITY cmd.removeFromHistory.accesskey  "e">
+<!ENTITY cmd.clearList2.label             "Maak voorskoupaneel skoon">
+<!ENTITY cmd.clearList2.accesskey         "a">
+<!ENTITY cmd.clearDownloads.label         "Maak aflaailys skoon">
+<!ENTITY cmd.clearDownloads.accesskey     "M">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Laat aflaai toe">
+<!ENTITY cmd.unblock2.accesskey           "o">
+<!-- LOCALIZATION NOTE (cmd.removeFile.label):
+     This is the tooltip of the action button shown when malware is blocked.
+     -->
+<!ENTITY cmd.removeFile.label             "Verwyder lêer">
+<!-- LOCALIZATION NOTE (cmd.chooseUnblock.tooltip):
+     This is the tooltip of the action button shown when potentially unwanted
+     downloads are blocked. This opens a dialog where the user can choose
+     whether to unblock or remove the download. Removing is the default option.
+     -->
+<!ENTITY cmd.chooseUnblock.label          "Verwyder lêer of laat aflaai toe">
+<!-- LOCALIZATION NOTE (cmd.chooseOpen.tooltip):
+     This is the tooltip of the action button shown when uncommon downloads are
+     blocked.This opens a dialog where the user can choose whether to open the
+     file or remove the download. Opening is the default option.
+     -->
+<!ENTITY cmd.chooseOpen.label             "Open of verwyder lêer">
+<!-- LOCALIZATION NOTE (showMoreInformation.label):
+     Displayed when hovering a blocked download, indicates that it's possible to
+     show more information for user to take the next action.
+     -->
+
+<!ENTITY showMoreInformation.label        "Wys meer inligting">
+<!-- LOCALIZATION NOTE (openFile.label):
+     Displayed when hovering a complete download, indicates that it's possible to
+     open the file using an app available in the system.
+     -->
+
+<!ENTITY openFile.label                   "Open lêer">
+<!-- LOCALIZATION NOTE (retryDownload.label):
+     Displayed when hovering a download which is able to be retried by users,
+     indicates that it's possible to download this file again.
+     -->
+
+<!ENTITY retryDownload.label              "Probeer weer om af te laai">
+<!-- LOCALIZATION NOTE (cancelDownload.label):
+     Displayed when hovering a download which is able to be cancelled by users,
+     indicates that it's possible to cancel and stop the download.
+     -->
+
+<!ENTITY cancelDownload.label             "Kanselleer aflaai">
+<!-- LOCALIZATION NOTE (blocked.label):
+     Shown as a tag before the file name for some types of blocked downloads.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+
+<!ENTITY blocked.label                    "GEBLOK">
+<!-- LOCALIZATION NOTE (learnMore.label):
+     Shown as a text link for some types of blocked downloads, for example
+     malware, when there is an associated explanation page on the Mozilla site.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+
+<!ENTITY learnMore.label                  "Meer inligting">
+<!-- LOCALIZATION NOTE (downloadsHistory.label, downloadsHistory.accesskey):
+     This string is shown at the bottom of the Downloads Panel when all the
+     downloads fit in the available space, or when there are no downloads in
+     the panel at all.
+     -->
+
+<!ENTITY downloadsHistory.label           "Wys alle aflaaie">
+<!ENTITY downloadsHistory.accesskey       "s">
+<!-- LOCALIZATION NOTE (openDownloadsFolder.label):
+     This command is not currently available in the user interface, but the
+     string was preserved by bug 1362207 to be used in a future version.
+     -->
+
+<!ENTITY openDownloadsFolder.label        "Open aflaaigids">
+
+<!ENTITY clearDownloadsButton.label       "Maak aflaailys skoon">
+<!ENTITY clearDownloadsButton.tooltip     "Verwyder voltooide, gekanselleerde en mislukte aflaaie">
+<!-- LOCALIZATION NOTE (downloadsListEmpty.label):
+     This string is shown when there are no items in the Downloads view, when it
+     is displayed inside a browser tab.
+     -->
+
+<!ENTITY downloadsListEmpty.label         "Daar is niks afgelaai nie">
+<!-- LOCALIZATION NOTE (downloadsPanelEmpty.label):
+     This string is shown when there are no items in the Downloads Panel.
+     -->
+
+<!ENTITY downloadsPanelEmpty.label        "Niks afgelaai in hierdie sessie nie.">
+<!-- LOCALIZATION NOTE (downloadsListNoMatch.label):
+     This string is shown when some search terms are specified, but there are no
+     results in the Downloads view.
+     -->
+
+<!ENTITY downloadsListNoMatch.label       "Kon nie enige passende aflaaie vind nie.">
+
+<!ENTITY downloadDetails.width            "50ch">
+
+<!ENTITY downloadsSummary.minWidth2       "21ch">
+

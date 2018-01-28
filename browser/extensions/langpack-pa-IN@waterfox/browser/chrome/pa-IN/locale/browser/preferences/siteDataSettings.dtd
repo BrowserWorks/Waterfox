@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "ਸੈਟਿੰਗਾਂ - ਸਾਈਟ ਡਾਟਾ">
+<!ENTITY     hostCol.label                 "ਸਾਈਟ">
+<!ENTITY     statusCol.label               "ਹਾਲਤ">
+<!ENTITY     usageCol.label                "ਸਟੋਰੇਜ਼">
+<!ENTITY     searchTextboxPlaceHolder             "ਖੋਜ ਵੈੱਬਸਾਈਟ">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "ਚੁਣੇ ਨੂੰ ਹਟਾਓ">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "ਤਬਦੀਲੀਆਂ ਨੂੰ ਸੰਭਾਲੋ">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "ਰੱਦ ਕਰੋ">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "ਸਾਈਟ ਡਾਟੇ ਨੂੰ ਹਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ">
+<!ENTITY     siteTree.label                "ਅੱਗੇ ਦਿੱਤੇ ਵੈੱਬਸਾਈਟ ਕੂਕੀਜ਼ ਨੂੰ ਹਟਾਇਆ ਜਾਵੇਗਾ:">
+
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "새 탭">
+<!ENTITY newtab.customize.classic "자주 방문한 사이트 보기">
+<!ENTITY newtab.customize.cog.enhanced "추천 사이트도 같이 보기">
+<!ENTITY newtab.customize.cog.title2 "새 탭 바꾸기">
+<!ENTITY newtab.customize.cog.learn "새 탭에 대해 알아보기">
+<!ENTITY newtab.customize.title "나만의 새 탭 페이지 만들기">
+<!ENTITY newtab.customize.blank2 "빈 페이지 보기">
+<!ENTITY newtab.undo.removedLabel "미리보기가 삭제되었습니다.">
+<!ENTITY newtab.undo.undoButton "취소합니다.">
+<!ENTITY newtab.undo.restoreButton "모두 복원합니다.">
+<!ENTITY newtab.undo.closeTooltip "숨기기">

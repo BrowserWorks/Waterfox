@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Tschertgar la proxima posiziun da l'expressiun">
+<!ENTITY previous.tooltip "Tschertgar la posiziun precedenta da l'expressiun">
+<!ENTITY findCloseButton.tooltip "Serrar la trav da tschertgar">
+<!ENTITY highlightAll.label "Relevar tut">
+<!ENTITY highlightAll.accesskey "t">
+<!ENTITY highlightAll.tooltiptext "Relevar il term dapertut nua ch'el cumpara">
+<!ENTITY caseSensitive.label "Resguardar maiusclas/minusclas">
+<!ENTITY caseSensitive.accesskey "r">
+<!ENTITY caseSensitive.tooltiptext "Tschertgar cun resguardar maiusclas/minusclas">
+<!ENTITY entireWord.label "Pleds entirs">
+<!ENTITY entireWord.accesskey "P">
+<!ENTITY entireWord.tooltiptext "Be tschertgar entirs pleds">

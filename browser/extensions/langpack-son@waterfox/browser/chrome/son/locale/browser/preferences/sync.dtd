@@ -1,0 +1,99 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Doo-šilbawey">
+<!ENTITY engine.bookmarks.accesskey "D">
+<!ENTITY engine.tabs.label2         "Kanjey feeri">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Taariki">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Huruyan maaɲey">
+<!ENTITY engine.logins.accesskey    "H">
+<!ENTITY engine.prefs.label         "Ibaayey">
+<!ENTITY engine.prefs.accesskey     "I">
+<!ENTITY engine.addons.label        "Tontoney">
+<!ENTITY engine.addons.accesskey    "T">
+
+
+
+
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Jinay maa">
+<!ENTITY changeSyncDeviceName2.label "Jinay maa barmay…">
+<!ENTITY changeSyncDeviceName2.accesskey "J">
+<!ENTITY cancelChangeSyncDeviceName.label "Naŋ">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "N">
+<!ENTITY saveChangeSyncDeviceName.label "Gaabu">
+<!ENTITY saveChangeSyncDeviceName.accesskey "b">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Goy kalima-izey">
+<!ENTITY fxaPrivacyNotice.link.label "Sutura laasaabay">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "mana korosandi.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "War maa hantum ka ciya koyne">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "War mana huru.">
+<!ENTITY signIn.label                "Huru">
+<!ENTITY signIn.accesskey            "H">
+<!ENTITY profilePicture.tooltip      "Alhaali bii barmay">
+
+
+<!ENTITY disconnect3.label           "Ciyari dunbu…">
+<!ENTITY disconnect3.accesskey       "d">
+<!ENTITY verify.label                "Bataga aderesu koroši">
+<!ENTITY verify.accesskey            "k">
+<!ENTITY forget.label                "Dirŋa bataga aderesoo woo">
+<!ENTITY forget.accesskey            "D">
+
+<!ENTITY signedOut.caption            "War internetoo kanbe war bande">
+<!ENTITY signedOut.description        "War doo-šilbawey, taariki, kanji, šennikufaley, tontoney nda ibaayey hangandi cere war jinawey kul ga.">
+<!ENTITY signedOut.accountBox.title   "Ciya nda &syncBrand.fxAccount.label; foo">
+<!ENTITY signedOut.accountBox.create  "Kontu tee">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Huru">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Sync kayandiyaney">
+<!ENTITY signedIn.settings.description "Suuba woo kaŋ ga hangandi war jinawey ga nda &brandShortName;.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Waterfox zumandi ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " wala ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " ka hangandi nda war kanbe jinaa.">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verifiedManage.label        "Manage account">

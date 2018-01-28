@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Ciya">
+<!ENTITY header     "Jinay moorante cee">
+<!ENTITY host       "Zunbudoo:">
+<!ENTITY port       "Kotay-mee:">
+<!ENTITY connect    "Ciya">
+<!ENTITY connecting "Goo ma ciya…">
+<!ENTITY availableAddons "Nor loku moorey kaŋ ga bara:">
+<!ENTITY availableTabs "Nor loku moorante barantey:">
+<!ENTITY availableProcesses "Koyjineyan moorante barantey:">
+<!ENTITY connectionError "Firka:">
+<!ENTITY errorTimeout "Firka: waatoo ben.">
+<!ENTITY errorRefused "Firka: ciyaroo wanjandi.">
+<!ENTITY errorUnexpected "Firka kaŋ mana naatandi.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox cinakaw goyjinawey ga hin ka jinay moorey hanse (sanda Waterfox Android se nda Waterfox OS). Alhakiika kaŋ war na 'Hanseyan mooray' suubaroo tunandi jinay mooraa ga. Ka bay ka tonton, caw ne ">
+<!ENTITY remoteDocumentation "fahamandi tiira">
+<!ENTITY remoteHelpSuffix ".">
+

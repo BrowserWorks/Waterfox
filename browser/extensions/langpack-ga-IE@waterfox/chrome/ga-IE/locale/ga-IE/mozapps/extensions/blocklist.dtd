@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "D'fhéadfadh breiseáin a bheith freagrach as fadhbanna">
+<!ENTITY blocklist.style             "width: 50em; height: 34em">
+<!ENTITY blocklist.summary           "Tá sé dearbhaithe ag &brandShortName; go bhfuil na breiseáin seo a leanas freagrach as fadhbanna slándála nó cobhsaíochta:">
+<!ENTITY blocklist.softblocked       "Ar mhaithe le do chosaint, moltar go láidir atosú agus na breiseáin seo a bheith díchumasaithe.">
+<!ENTITY blocklist.hardblocked       "Tá baol mór ann gur chúis fadhbanna slándála nó cobhsaíochta iad na breiseáin seo agus cuireadh cosc orthu dá bharr, ach ní mór atosú chun iad a dhíchumasú go hiomlán.">
+<!ENTITY blocklist.softandhard       "Tá cosc curtha ar na breiseáin a ghabhann baol mór d'fhadhbanna slándála nó cobhsaíochta leo. Tá baol níos lú ag gabháil leis na cinn eile, ach moltar atosú agus iad díchumasaithe.">
+<!ENTITY blocklist.moreinfo          "Tuilleadh eolais">
+
+<!ENTITY blocklist.accept.label      "Atosaigh &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "A">
+
+<!ENTITY blocklist.blocked.label     "Coiscthe">
+<!ENTITY blocklist.checkbox.label    "Díchumasaigh">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "„&brandShortName;“ naujinimas">
+
+<!ENTITY  offline.title                   "Programa „&brandShortName;“ atjungta nuo tinklo">
+<!ENTITY  offline.description             "Reikia programą „&brandShortName;“ prijungti prie tinklo, norint pamatyti, ar yra priedų naujinimų, suderinančių juos su turima jos laida.">
+<!ENTITY  offline.toggleOffline.label     "Atjungti nuo tinklo dabar.">
+<!ENTITY  offline.toggleOffline.accesskey "A">
+
+<!ENTITY  mismatch.win.title              "Nesuderinami priedai">
+<!ENTITY  mismatch.top.label              "Šie priedai buvo išjungti, nes jie nėra suderinami su esama „&brandShortName;“ versija:">
+<!ENTITY  mismatch.bottom.label           "„&brandShortName;“ gali patikrinti, ar yra suderinamų šių priedų versijų.">
+
+<!ENTITY  checking.wizard.title           "Suderinamų priedų paieška">
+<!ENTITY  checking.top.label              "Ieškoma naujinimų nesuderinamiems priedams…">
+<!ENTITY  checking.status                 "Prašom palaukti…">
+
+<!ENTITY  found.wizard.title               "Rasta suderinamų priedų">
+<!ENTITY  found.top.label                 "Pažymėkite priedus, kuriuos norite įdiegti:">
+<!ENTITY  found.disabledXPinstall.label   "Naujinimų negalima įdiegti dėl to, kad išjungta naujinimo funkcija. Šią nuostatą galima pakeisti žemiau.">
+<!ENTITY  found.enableXPInstall.label     "Įjungti naujinimo funkciją">
+<!ENTITY  found.enableXPInstall.accesskey "n">
+
+<!ENTITY  installing.wizard.title         "Naujinimų įdiegimas">
+<!ENTITY  installing.top.label            "Atsiunčiami ir įdiegiami priedų naujinimai…">
+
+<!ENTITY  noupdates.wizard.title          "Naujinimų nerasta">
+<!ENTITY  noupdates.intro.desc            "„&brandShortName;“ nepavyko rasti naujinimų nesuderinamiems papildiniams.">
+<!ENTITY  noupdates.error.desc            "Ieškant naujinimų įvyko klaida.">
+<!ENTITY  noupdates.checkEnabled.desc     "„&brandShortName;“ periodiškai ieškos papildinių naujinimų ir jų radusi informuos.">
+
+<!ENTITY  finished.wizard.title           "Naujinimas baigtas">
+<!ENTITY  finished.top.label              "„&brandShortName;“ įdiegė atnaujinimų jūsų priedams.">
+<!ENTITY  finished.checkDisabled.desc     "„&brandShortName;“ gali periodiškai tikrinti, ar yra priedų naujinimų ir jų radusi informuoti.">
+<!ENTITY  finished.checkEnabled.desc      "„&brandShortName;“ periodiškai tikrins, ar yra priedų naujinimų ir jų radusi informuos.">
+
+<!ENTITY  adminDisabled.wizard.title      "Atnaujinimų ieškoti neleidžiama">
+<!ENTITY  adminDisabled.warning.label     "Nėra galimybės patikrinti, ar yra naujinimų nebetinkamiems priedams, nes programos „&brandShortName;“ priedų diegimo funkcija išjungta. Prašom kreiptis į sistemos administratorių, kad įjungtų.">
+
+<!ENTITY  versioninfo.wizard.title        "Priedų suderinamumo tikrinimas">
+<!ENTITY  versioninfo.top.label           "Tikrinamas priedų suderinamumas su įdiegta programos „&brandShortName;“ laida.">
+<!ENTITY  versioninfo.waiting             "Prašom palaukti…">
+
+<!ENTITY  installerrors.wizard.title      "Naujinimo nesklandumai">
+<!ENTITY  installerrors.intro.label       "Diegiant kai kurių priedų naujinimus „&brandShortName;“ susidūrė su nesklandumais.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Spustelėkite mygtuką „Baigti“, kad būtų tęsiamas „&brandShortName;“ vykdymas.">
+<!ENTITY  clickFinish.labelMac            "Spustelėkite mygtuką „Baigti“, kad būtų tęsiamas „&brandShortName;“ vykdymas.">
+<!ENTITY  enableChecking.label            "Nurodyti programai „&brandShortName;“, kad tikrintų, ar yra naujinimų.">

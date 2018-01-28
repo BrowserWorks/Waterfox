@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "విజార్డు దిగుమతిచేయి">
+
+<!ENTITY importFrom.label               "ఎంపికలు, బుక్మార్క్లు, చరిత్ర, పాస్వర్డ్లు మరియు ఇతర డేటాను దిగుమతి చేయండి:">
+<!ENTITY importFromUnix.label           "అభిరుచులను, ఇష్టాంశాలను, చరిత్రను, సంకేతపదాలను, ఇతర డాటాను దిగుమతి చేయి:">
+<!ENTITY importFromBookmarks.label      "ఇష్టాంశములను నుండి దిగుమతిచేయి:">
+
+<!ENTITY importFromIE.label             "మైక్రోసాఫ్ట్ ఇంటర్నెట్‌ ఎక్స్‌ప్లోరర్">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "దేనిని దిగుమతి చేయవద్దు">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 సెక్యూర్ బ్రౌజర్">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "ఇష్టాంశములు, చరిత్ర లేదా సంకేతపద డాటాను కలిగివున్న ప్రొగ్రాము కనుగొనబడలేదు.">
+
+<!ENTITY importSource.title             "డాటాను మరియు అమరికలను దిగుమతిచేయి">
+<!ENTITY importItems.title              "దిగుమతి కావడానికి అంశములు">
+<!ENTITY importItems.label              "ఏ అంశములు దిగుమతి కావాలో ఎంచుకొనుము:">
+
+<!ENTITY migrating.title                "దిగుమతవుతున్నది...">
+<!ENTITY migrating.label                "ఈ క్రింది అంశములు ప్రస్తుతం దిగుమతవుతున్నవి...">
+
+<!ENTITY selectProfile.title            "ప్రొఫైల్ ఎంచుకొనుము">
+<!ENTITY selectProfile.label            "ఈ క్రింది ప్రొఫైల్సు దిగుమతికి అందుబాటులో వున్నాయి నుండి:">
+
+<!ENTITY done.title                     "పూర్తిగా దిగుమతిచేయి">
+<!ENTITY done.label                     "ఈ క్రింది అంశములు సమర్ధంగా దిగుమతైనవి:">
+
+<!ENTITY closeSourceBrowser.label       "కొనసాగే ముందు ఎంచుకున్న విహారిణి మూసివుందని నిర్ధారించుకోండి.">

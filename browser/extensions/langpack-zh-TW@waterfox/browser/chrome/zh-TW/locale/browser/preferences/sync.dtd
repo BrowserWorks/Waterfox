@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "書籤">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "開啟分頁">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "瀏覽紀錄">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "登入資訊">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "偏好設定">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "附加元件">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "地址">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "信用卡">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "裝置名稱">
+<!ENTITY changeSyncDeviceName2.label "更改裝置名稱…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "取消">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "儲存">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "服務條款">
+<!ENTITY fxaPrivacyNotice.link.label "隱私權公告">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "未驗證。">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "請登入以重新連線">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "您尚未登入。">
+<!ENTITY signIn.label                "登入">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "更改個人資料照片">
+<!ENTITY verifiedManage.label        "管理帳號">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect3.label           "斷線…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY verify.label                "驗證電子郵件地址">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "忘記此電子郵件地址">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "把 Web 隨身帶著走">
+<!ENTITY signedOut.description        "在您所有裝置間同步書籤、歷史紀錄、分頁、密碼、附加元件與偏好設定。">
+<!ENTITY signedOut.accountBox.title   "連線到 &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "建立帳號">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "登入">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "同步設定">
+<!ENTITY signedIn.settings.description "選擇要同步哪些資料到您其他使用 &brandShortName; 的裝置上。">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "下載 Waterfox for">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         "或">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              "以與您的行動裝置同步。">

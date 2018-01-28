@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "620">
+<!ENTITY  pageInfoWindow.height "600">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Көшіріп алу">
+<!ENTITY  copy.accesskey        "К">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Барлығын ерекшелеу">
+<!ENTITY  selectall.accesskey   "Б">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Жалпы">
+<!ENTITY  generalTab.accesskey  "Ж">
+<!ENTITY  generalTitle          "Атауы:">
+<!ENTITY  generalURL            "Адрес:">
+<!ENTITY  generalType           "Түрі:">
+<!ENTITY  generalMode           "Визуализация түрі:">
+<!ENTITY  generalSize           "Өлшемі:">
+<!ENTITY  generalReferrer       "Сілтейтін URL:">
+<!ENTITY  generalSource         "Кэштеу көзі:">
+<!ENTITY  generalModified       "Соңғы өзгерту:">
+<!ENTITY  generalEncoding2      "Мәтін кодталуы:">
+<!ENTITY  generalMetaName       "Аты">
+<!ENTITY  generalMetaContent    "Құрамасы">
+
+<!ENTITY  mediaTab              "Мультимедиа">
+<!ENTITY  mediaTab.accesskey    "М">
+<!ENTITY  mediaLocation         "Орналасуы:">
+<!ENTITY  mediaText             "Байланысқан мәтін:">
+<!ENTITY  mediaAltHeader        "Балама мәтін">
+<!ENTITY  mediaAddress          "Адрес">
+<!ENTITY  mediaType             "Түрі">
+<!ENTITY  mediaSize             "Өлшемі">
+<!ENTITY  mediaCount            "Саны">
+<!ENTITY  mediaDimension        "Өлшемдер:">
+<!ENTITY  mediaLongdesc         "Толық сипаттамасы:">
+<!ENTITY  mediaBlockImage.accesskey "б">
+<!ENTITY  mediaSaveAs           "Қалайша сақтау…">
+<!ENTITY  mediaSaveAs.accesskey "с">
+<!ENTITY  mediaSaveAs2.accesskey "а">
+<!ENTITY  mediaPreview          "Мультимедианы алдын-ала қарау:">
+
+<!ENTITY  feedTab               "Жаңалықтар таспалары">
+<!ENTITY  feedTab.accesskey     "Ж">
+<!ENTITY  feedSubscribe         "Жазылу">
+<!ENTITY  feedSubscribe.accesskey "з">
+
+<!ENTITY  permTab               "Рұқсаттар">
+<!ENTITY  permTab.accesskey     "Р">
+<!ENTITY  permUseDefault        "Негізгісін қолдану">
+<!ENTITY  permAskAlways         "Әрқашан сұрау">
+<!ENTITY  permAllow             "Рұқсат ету">
+<!ENTITY  permAllowSession      "Тек осы сессия үшін рұқсат ету">
+<!ENTITY  permBlock             "Блоктау">
+<!ENTITY  permissionsFor        "Келесі үшін рұқсаттар:">
+<!ENTITY  permPlugins           "Плагиндерді белсендіру">
+
+<!ENTITY  permClearStorage           "Қорды тазарту">
+<!ENTITY  permClearStorage.accesskey "з">
+
+<!ENTITY  securityTab           "Қауіпсіздік">
+<!ENTITY  securityTab.accesskey "а">
+<!ENTITY  securityView.certView "Сертификатты қарау">
+<!ENTITY  securityView.accesskey "ф">
+<!ENTITY  securityView.unknown   "Белгісіз">
+
+
+<!ENTITY  securityView.identity.header   "Веб-сайттың шындылығы">
+<!ENTITY  securityView.identity.owner    "Иесі:">
+<!ENTITY  securityView.identity.domain   "Веб-сайт:">
+<!ENTITY  securityView.identity.verifier "Растаған:">
+<!ENTITY  securityView.identity.validity "Мерзімі аяқталады:">
+
+<!ENTITY  securityView.privacy.header                   "Жекешелік пен Тарихы">
+<!ENTITY  securityView.privacy.history                  "Бұл сайтта бүгінге дейін болдым ба?">
+<!ENTITY  securityView.privacy.cookies                  "Осы сайт компьютерімде ақпаратты (cookies) сақтап отыр ма?">
+<!ENTITY  securityView.privacy.viewCookies              "Cookies қарау">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "а">
+<!ENTITY  securityView.privacy.passwords                "Осы веб-сайт үшін парольдерімді сақтадым ба?">
+<!ENTITY  securityView.privacy.viewPasswords            "Сақталып тұрған парольдерді қарау">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "т">
+
+<!ENTITY  securityView.technical.header                 "Техникалық ақпарат">
+
+<!ENTITY  helpButton.label                              "Көмек">

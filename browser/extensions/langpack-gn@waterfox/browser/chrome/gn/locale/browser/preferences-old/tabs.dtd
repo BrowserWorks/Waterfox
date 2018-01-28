@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab cycles tendayke rupive eipuru ramovévape">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Eike ovetã pyahúpe peteĩ tendayke pyahúpe">
+<!ENTITY newWindowsAsTabs.accesskey   "w">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Ehechakuaa embotykuévo heta tendayke">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Emomarandúrõ eiketaha heta tendayképe ikatu omombegue down &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Eikévo peteĩ joajuha ovetã pyahúpe, eho pépe pya'eterei">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "Ehechauka chéve tendayke ra'ãnga'i Windows rembiaporã rendápe.">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Tendayke">

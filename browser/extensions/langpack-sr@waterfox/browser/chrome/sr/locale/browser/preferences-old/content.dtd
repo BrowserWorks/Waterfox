@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Искачући прозори">   
+   
+<!ENTITY  blockPopups.label           "Блокирај искачуће прозоре">
+<!ENTITY  blockPopups.accesskey       "ч">
+
+<!ENTITY  notificationsPolicy.label            "Обавештења">
+<!ENTITY  notificationsPolicyLearnMore.label   "Сазнајте више">
+<!ENTITY  notificationsPolicyDesc3.label       "Изаберите сајтове којима је дозвољено да вам шаљу обавештења">
+<!ENTITY  notificationsPolicyButton.accesskey  "И">
+<!ENTITY  notificationsPolicyButton.label      "Избор…">
+<!ENTITY  notificationsDoNotDisturb.label      "Не узнемиравај ме">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "Н">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Обавештења неће бити приказана док не рестартујете &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Изузеци">
+<!ENTITY  popupExceptions.accesskey   "И">
+
+<!ENTITY  fontsAndColors.label        "Фонт и боје">
+
+<!ENTITY  defaultFont.label           "Подразумевани фонт:">
+<!ENTITY  defaultFont.accesskey       "ф">
+<!ENTITY  defaultSize.label           "Величина:">
+<!ENTITY  defaultSize.accesskey       "В">
+
+<!ENTITY  advancedFonts.label         "Напредна…">
+<!ENTITY  advancedFonts.accesskey     "Н">
+
+<!ENTITY  colors.label                "Боје…">
+<!ENTITY  colors.accesskey            "Б">
+
+
+<!ENTITY languages.label              "Језици">
+<!ENTITY chooseLanguage.label         "Изаберите омиљени језик за приказ страница">
+<!ENTITY chooseButton.label           "Избор…">
+<!ENTITY chooseButton.accesskey       "з">
+
+<!ENTITY translateWebPages.label      "Преведи садржај">
+<!ENTITY translateWebPages.accesskey  "с">
+<!ENTITY translateExceptions.label    "Изузеци…">
+<!ENTITY translateExceptions.accesskey "ц">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Превео је">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM садржај">
+
+<!ENTITY  playDRMContent.label         "Пусти DRM садржај">
+<!ENTITY  playDRMContent.accesskey     "П">
+<!ENTITY  playDRMContent.learnMore.label "Сазнајте више">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

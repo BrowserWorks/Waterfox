@@ -1,0 +1,198 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label		"ページ読み込みエラー"><!-- (^^; タイトルバーやタブに表示されるので簡潔に -->
+<!ENTITY retry.label			"再試行">
+<!ENTITY returnToPreviousPage.label	"戻る">
+<!ENTITY advanced.label			"エラー内容">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title	"正常に接続できませんでした">
+<!ENTITY connectionFailure.longDesc	"&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title		"このアドレスへの接続は制限されています">
+<!ENTITY deniedPortAccess.longDesc	"">
+
+<!ENTITY dnsNotFound.title		"サーバーが見つかりませんでした">
+<!ENTITY dnsNotFound.longDesc		"
+<ul>
+  <li><strong>www</strong>.example.com を間違えて <strong>ww</strong>.example.com と入力するなど、アドレスを間違って入力していないか確認してください。</li>
+  <li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li>
+  <li>ファイアーウォールやプロキシでネットワークが保護されている場合、&brandShortName; によるウェブアクセスが許可されているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title		"ファイルが見つかりませんでした">
+<!ENTITY fileNotFound.longDesc		"
+<ul>
+  <li>アドレスに大文字/小文字の違い、その他の間違いがないか確認してください。</li>
+  <li>ファイルの名前が変更、削除、または移動している可能性があります。</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title		"ファイルへのアクセスが拒否されました">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>ファイルが削除または移動されているかファイルの許可属性によりアクセスが拒否された可能性があります。</li>
+</ul>
+">
+
+<!ENTITY generic.title			"リクエストを正常に完了できませんでした">
+<!ENTITY generic.longDesc		"
+<p>何らかの理由により &brandShortName; はこのページを正常に読み込めませんでした。</p>
+">
+
+<!ENTITY captivePortal.title		"ネットワークにログイン">
+<!ENTITY captivePortal.longDesc2 "
+<p>インターネットへ接続するには、このネットワークにログインする必要があります。</p>
+">
+
+<!ENTITY openPortalLoginPage.label2	"ネットワークのログインページを開く">
+
+<!ENTITY malformedURI.title		"アドレスの書式が正しくありません">
+<!ENTITY malformedURI.longDesc		"
+<ul>
+  <li>ウェブのアドレスは通常 <strong>http://www.example.com/</strong> のようなものになります。</li>
+  <li>円記号やバックスラッシュ (<strong>\</strong>) ではなく、スラッシュ (<strong>/</strong>) が使われているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title		"接続が中断されました">
+<!ENTITY netInterrupt.longDesc		"&sharedLongDesc;">
+
+<!ENTITY notCached.title		"ドキュメントが有効期限切れです">
+<!ENTITY notCached.longDesc		"<p>リクエストされた &brandShortName; のキャッシュ内のドキュメントは、利用できません。</p><ul><li>安全対策のため、&brandShortName; は注意を要するドキュメントを自動的に再リクエストしません。</li><li>&quot;再試行&quot; ボタンをクリックしてドキュメントをウェブサイトから読み込んでください。</li></ul>">
+
+<!ENTITY netOffline.title		"オフラインモードです">
+<!ENTITY netOffline.longDesc2	"
+<ul>
+  <li>&quot;再試行&quot; ボタンを押してブラウザーをオンラインモードに切り替え、ページを再読み込みしてください。</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title	"内容符号化 (Content-Encoding) に問題があります">
+<!ENTITY contentEncodingError.longDesc	"
+<ul>
+  <li>この問題をウェブサイトの管理者に報告してください。</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title	"安全でないファイルタイプ">
+<!ENTITY unsafeContentType.longDesc	"
+<ul>
+  <li>この問題をウェブサイトの管理者に報告してください。</li>
+</ul>
+">
+
+<!ENTITY netReset.title			"接続がリセットされました">
+<!ENTITY netReset.longDesc		"&sharedLongDesc;">
+
+<!ENTITY netTimeout.title		"接続がタイムアウトしました">
+<!ENTITY netTimeout.longDesc		"&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title	"アドレスのプロトコルが不明です">
+<!ENTITY unknownProtocolFound.longDesc	"
+<ul>
+  <li>このプロトコルを使用するアドレスを開くには、別のソフトウェアをインストールする必要があるかもしれません。</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title	"プロキシサーバーへの接続を拒否されました">
+<!ENTITY proxyConnectFailure.longDesc	"
+<ul>
+  <li>プロキシ設定が正しいか確認してください。</li>
+  <li>プロキシサーバーが正常に動作しているかネットワーク管理者に問い合わせてください。</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title	"プロキシサーバーが見つかりませんでした">
+<!ENTITY proxyResolveFailure.longDesc	"
+<ul>
+  <li>プロキシ設定が正しいか確認してください。</li>
+  <li>コンピューターが有効なネットワークに接続されているか確認してください。</li>
+  <li>ファイアーウォールやプロキシでネットワークが保護されている場合、&brandShortName; によるウェブアクセスが許可されているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title		"ページの自動転送設定が正しくありません">
+<!ENTITY redirectLoop.longDesc		"
+<ul>
+  <li>Cookie を無効化したり拒否していることにより、この問題が発生している可能性もあります。</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title	"サーバーの応答が不正です">
+<!ENTITY unknownSocketType.longDesc	"
+<ul>
+  <li>コンピューターにパーソナルセキュリティマネージャーがインストールされているか確認してください。</li>
+  <li>サーバーの設定が間違っていることにより、この問題が発生している可能性もあります。</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title		"安全な接続ができませんでした">
+<!ENTITY nssFailure2.longDesc2		"
+<ul>
+  <li>受信したデータの真正性を検証できなかったため、このページは表示できませんでした。</li>
+  <li>この問題をウェブサイトの管理者に連絡してください。</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1	"安全な接続ではありません">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara		"<span class='hostname'/> の所有者によるウェブサイトの設定が不適切です。あなたの情報が盗まれることを防ぐため、このウェブサイトへの接続は確立されません。">
+
+<!ENTITY sharedLongDesc			"
+<ul>
+  <li>このサイトが一時的に利用できなくなっていたり、サーバーの負荷が高すぎて接続できなくなっている可能性があります。しばらくしてから再度試してください。</li>
+  <li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li>
+  <li>ファイアーウォールやプロキシでネットワークが保護されている場合、&brandShortName; によるウェブアクセスが許可されているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title		"コンテンツセキュリティポリシーによりブロックされました">
+<!ENTITY cspBlocked.longDesc		"<p>セキュリティポリシーにより読み込みが禁止されたコンテンツが含まれているため、このページの読み込みを中止しました。</p>">
+
+<!ENTITY corruptedContentErrorv2.title	"コンテンツデータ破損エラー">
+<!ENTITY corruptedContentErrorv2.longDesc	"<p>このページは、データの伝送中にエラーが検出されたため表示できません。</p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel	"例外を追加...">
+
+<!ENTITY errorReporting.automatic2	"エラーを報告すると、悪意のあるサイトの特定とブロックに役立ちます">
+<!ENTITY errorReporting.learnMore	"詳細...">
+
+<!ENTITY remoteXUL.title		"リモート XUL">
+<!ENTITY remoteXUL.longDesc		"<p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul></p>">
+
+<!ENTITY sslv3Used.title		"安全な接続を確保できません">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2		"高度な情報: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p>&brandShortName; は <span id='wrongSystemTime_URL'/> に接続しませんでした。このコンピューターの時刻が正しくないため安全な接続が妨げられています。</p> <p>このコンピューターの時刻は <span id='wrongSystemTime_systemDate'/> となっていますが、正しい時刻は <span id='wrongSystemTime_actualDate'/> です。問題を解決するには、コンピューターの日付と時刻を正しく設定してください。</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; は <span id='wrongSystemTimeWithoutReference_URL'/> に接続しませんでした。このコンピューターの時刻が正しくないため安全な接続が妨げられています。</p> <p>このコンピューターの時刻は <span id='wrongSystemTimeWithoutReference_systemDate'/> となっています。問題を解決するには、コンピューターの日付と時刻を正しく設定してください。</p>">
+
+<!ENTITY certerror.pagetitle1			"安全ではない接続">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation	"このサイトでは、暗号化された通信のみで接続するよう &brandShortName; に指定する HTTP Strict Transport Security (HSTS) が使われています。そのため、この証明書を例外に追加することはできません。">
+
+
+
+<!ENTITY certerror.copyToClipboard.label	"テキストをクリップボードにコピー">
+
+<!ENTITY inadequateSecurityError.title		"接続が安全ではありません">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc	"<p><span class='hostname'></span> は攻撃に対して脆弱な古いセキュリティ技術を使用しています。攻撃者は保護された情報を簡単に暴露できます。サイトを安全に訪れるには、このウェブサイトの管理者にサーバーの問題を修正してもらう必要があります。</p><p>エラーコード: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc			"ネットワークセキュリティの設定がこの問題の原因になっている可能性があります。既定値に戻しますか？">
+<!ENTITY prefReset.label			"既定値に戻す">

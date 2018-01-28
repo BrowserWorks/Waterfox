@@ -1,0 +1,14 @@
+locale alerts te te/locale/te/alerts/
+locale autoconfig te te/locale/te/autoconfig/
+locale global te te/locale/te/global/
+locale global-platform te te/locale/te/global-platform/mac/ os=Darwin
+locale global-platform te te/locale/te/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform te te/locale/te/global-platform/win/ os=WINNT
+locale mozapps te te/locale/te/mozapps/
+locale necko te te/locale/te/necko/
+locale passwordmgr te te/locale/te/passwordmgr/
+locale pipnss te te/locale/te/pipnss/
+locale pippki te te/locale/te/pippki/
+locale places te te/locale/te/places/
+locale pluginproblem te te/locale/te/pluginproblem/
+locale weave te te/locale/te/services/

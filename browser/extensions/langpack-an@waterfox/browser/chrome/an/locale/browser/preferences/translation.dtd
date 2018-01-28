@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Excepcions - Traducción">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "No s'ofrirá garra traducción t'as luengas siguients:">
+<!ENTITY treehead.languageName.label      "Luengas">
+<!ENTITY removeLanguage.label             "Borrar luenga">
+<!ENTITY removeLanguage.accesskey         "r">
+<!ENTITY removeAllLanguages.label         "Borrar todas as luengas">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "No s'ofrirá garra traducción en os puestos siguients:">
+
+<!ENTITY removeSite.label                 "Eliminar o puesto">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Borrar totz os puestos">
+<!ENTITY removeAllSites.accesskey         "B">
+
+<!ENTITY button.close.label               "Zarrar">
+<!ENTITY button.close.accesskey           "Z">
+
+<!ENTITY treehead.siteName2.label         "Websites">

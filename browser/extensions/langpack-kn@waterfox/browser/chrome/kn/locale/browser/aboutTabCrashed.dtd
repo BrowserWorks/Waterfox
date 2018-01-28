@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "ಈ ಹಾಳೆ ಮುಚ್ಚು">
+<!ENTITY tabCrashed.restoreTab "ಈ ಹಾಳೆ ಮರುಹೊಂದಿಸು">
+<!ENTITY tabCrashed.restoreAll "ಕ್ರಿಯಾವೈಫಲ್ಯಗೊಂಡ ಎಲ್ಲ ಹಾಳೆಗಳನ್ನು ಮರುಹೊಂದಿಸು">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "ಛೆ. ನಿಮ್ಮ ಟ್ಯಾಬ್ ಈಗ ತಾನೆ ಕ್ರಾಶ್ ಆಗಿದೆ.">
+<!ENTITY tabCrashed.offerHelp "ನಾವು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದು!">
+<!ENTITY tabCrashed.requestHelp "ನೀವು ನಮಗೆ ಸಹಾಯ ಮಡುತ್ತೀರಾ?">
+<!ENTITY tabCrashed.requestReport "ಈ ಟ್ಯಾಬ್‌ಅನ್ನು ವರದಿಮಾಡು">
+<!ENTITY tabCrashed.commentPlaceholder2 "ಕಡ್ಡಾಯವಲ್ಲದ ಪ್ರತಿಕ್ರಿಯೆ‍ಗಳು (ಪ್ರತಿಕ್ರಿಯೆ‍ಗಳು ಸಾರ್ವಜನಿಕವಾಗಿ ಕಾಣಿಸುತ್ತವೆ)‍">
+<!ENTITY tabCrashed.emailPlaceholder "ನಿಮ್ಮ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ಇಲ್ಲಿ ದಾಖಲಿಸಿ">
+<!ENTITY tabCrashed.emailMe "ಇನ್ನಷ್ಟು ಮಾಹಿತಿ ಲಭ್ಯವಾದೊಡನೆ ನನಗೆ ಇಮೇಲ್ ಮಾಡು">
+<!ENTITY tabCrashed.reportSent "ಕ್ರಿಯಾವೈಫಲ್ಯ ವರದಿ ಈಗಾಗಲೇ ಕಳಿಸಲಾಗಿದೆ; &brandShortName; ಉತ್ತಮವಾಗಿಸಲು ಸಹಾಯ ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು!">
+
+<!ENTITY tabCrashed.autoSubmit2 "Update preferences to automatically send crash reports, including reports for crashed background tabs from this session and future sessions">
+<!ENTITY tabCrashed.includeURL2 "Include page URL with this crash report">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Choose &tabCrashed.restoreTab; or &tabCrashed.restoreAll; to reload page content.">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Report background tabs">
+<!ENTITY tabCrashed.requestHelpMessage "Crash reports help us diagnose problems and make &brandShortName; better.">
+<!ENTITY tabCrashed.sendReport2 "Send a crash report for the tab you are viewing">
+<!ENTITY tabCrashed.single.offerHelpMessage "Choose &tabCrashed.restoreTab; to reload page content.">

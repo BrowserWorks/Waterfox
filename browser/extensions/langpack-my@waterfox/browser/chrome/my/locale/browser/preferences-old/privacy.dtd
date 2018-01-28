@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "ခြေရာခံ ကာကွယ်မှုကို အသုံးပြုပါ">
+<!ENTITY  trackingProtectionAlways.label       "အမြဲတမ်း">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "သီးသန့်ဝင်းဒိုးများတွင်သာလျှင်">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "ဘယ်တော့မှ">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "ပိုမိုလေ့လာရန်">
+<!ENTITY  trackingProtectionExceptions.label   "ခြွင်းချက်များ…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "ခြေရာခံခြင်း">
+<!ENTITY trackingProtectionPBM5.label         "ခြေရာခံခြင်း ကာကွယ်မှုကို သီးသန့် ဝင်းဒိုးများတွင် အသုံးပြုပါ">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "ပိုမိုလေ့လာရန်">
+<!ENTITY changeBlockList.label          "ပိတ်ပင်ထားသည့် စာရင်းကို ပြင်ရန်">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "သင်သည်">
+<!ENTITY  doNotTrack.settings.label     "ခြေရာမခံပါနှင့် အပြင်အဆင်များကို စီမံနိုင်ပါသည်">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "မှတ်တမ်း">
+
+<!ENTITY  locationBar.label             "တည်နေရာ အတန်း">
+
+<!ENTITY  locbar.suggest.label          "တည်နေရာဘားတန်းကို အသုံးပြုပါက အကြံပေးလိုပါသည်၊">
+<!ENTITY  locbar.history.label          "မှတ်တမ်း">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "စာမှတ်များ">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "ဖွင့်ထားသည့် စာမျက်နှာများ">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "မူသေ ရှာဖွေရေးအင်ဂျင်မှ ဆက်စပ်သည့် ရှာဖွေမှုများ">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "ရှာဖွေရေးအင်ဂျင်၏ အကြံပေးချက်များအတွက် အပြင်အဆင်ကို ပြောင်းလဲရန်…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies.label           "ဝဘ်ဆိုက်များထံမှ ကွတ်ကီးများကို လက်ခံပါ">
+<!ENTITY  acceptCookies.accesskey       "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "ကြားခံဝန်ဆောင်မှုများထံမှ ကွတ်ကီးများကို လက်ခံပါ">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "အမြဲတမ်း">
+<!ENTITY  acceptThirdParty.never.label    "ဘယ်တော့မှ">
+<!ENTITY  acceptThirdParty.visited.label  "ကြည့်ရှုထားသည့် နေ့မှစ၍">
+
+<!ENTITY  keepUntil.label               "ထိုအချိန်ထိ သိမ်းထားပါ">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "သက်တမ်းစေ့လျှင်">
+<!ENTITY  close.label                   "&brandShortName; ကို ပိတ်မည်">
+
+<!ENTITY  cookieExceptions.label        "ခြွင်းချက်များ…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "ကွတ်ကီးများကို ​ပြသပါ...">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; သည်">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "မှတ်တမ်းကို မှတ်ထားမည်">
+<!ENTITY  historyHeader.dontremember.label "မှတ်တမ်းကို ဘယ်တော့မှ မမှတ်ထားပါ">
+<!ENTITY  historyHeader.custom.label       "မှတ်တမ်းအတွက် စိတ်ကြိုက်အပြင်အဆင်ကို အသုံးပြုမည်">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; သည် ကြည့်ရှုမှတ်တမ်း၊ ဆွဲချချက်များ၊ ဖောင်များ၊ ရှာဖွေမှတ်တမ်းကို မှတ်ထားမည်ဖြစ်ပြီး ကြည့်ရှုထားသော ဝဘ်ဆိုက်များ၏ ကွတ်ကီးများကိုလည်း သိမ်းထားမည် ဖြစ်သည်။">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "သင်အလိုရှိနိုင်တာက">
+<!ENTITY  rememberActions.clearHistory.label  "ရှာဖွေရေး မှတ်တမ်းကို ရှင်းလင်းပါ">
+<!ENTITY  rememberActions.middle.label        "၊ (သို့)">
+<!ENTITY  rememberActions.removeCookies.label "သီးခြား ကွတ်ကီးများကို ဖယ်ရှားပါ">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; က တူညီတဲ့ အပြင်အဆင်များကို သီးသန့် လှော်လှန်မှုအဖြစ် သုံးစွဲမှာ ဖြစ်ပြီး၊ ကွန်ရက်ကို သင်လှော်လှန်နေစဉ် ဘယ် မှတ်တမ်းကိုမှ မှတ်သားထားမှာ မဟုတ်ဘူး။">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "သင်လည်း အလိုရှိနိုင်တာက">
+<!ENTITY  dontrememberActions.clearHistory.label "ရှာဖွေရေး မှတ်တမ်းကို ရှင်းလင်းပါ">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "သီးသန့်ကြည့်ရှုခြင်းကို အမြဲ အသုံးပြုမည်">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "ကြည့်ရှုမှတ်တမ်းနှင့် ဆွဲချချက်မှတ်တမ်းကို မှတ်ထားပါ">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "ရှာဖွေမှတ်တမ်းနှင့် ဖောင်ဖြည့်မှတ်တမ်းကို မှတ်ထားပါ">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; ကို ပိတ်သောအခါတွင် မှတ်တမ်းကို ရှင်းလင်းပါ">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "အပြင်အဆင်များ...">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "ကွန်တိန်နာတပ်ဗ်များ">
+<!ENTITY  browserContainersLearnMore.label      "ပိုမိုလေ့လာရန်">
+<!ENTITY  browserContainersEnabled.label        "ကွန်တိန်နာတပ်ဗ်များအသုံးပြုခြင်းကို ဖွင့်ရန်">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "အပြင်အဆင်များ…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

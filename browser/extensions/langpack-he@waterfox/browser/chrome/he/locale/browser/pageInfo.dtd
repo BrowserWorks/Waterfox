@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "העתקה">
+<!ENTITY  copy.accesskey        "ה">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "בחירת הכול">
+<!ENTITY  selectall.accesskey   "ב">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "כללי">
+<!ENTITY  generalTab.accesskey  "כ">
+<!ENTITY  generalTitle          "כותרת:">
+<!ENTITY  generalURL            "כתובת:">
+<!ENTITY  generalType           "סוג:">
+<!ENTITY  generalMode           "מצב ציור:">
+<!ENTITY  generalSize           "גודל:">
+<!ENTITY  generalReferrer       "כתובת קודמת:">
+<!ENTITY  generalSource         "מקור מטמון:">
+<!ENTITY  generalModified       "שינוי אחרון:">
+<!ENTITY  generalEncoding2      "קידוד טקסט:">
+<!ENTITY  generalMetaName       "שם">
+<!ENTITY  generalMetaContent    "תוכן">
+
+<!ENTITY  mediaTab              "מדיה">
+<!ENTITY  mediaTab.accesskey    "מ">
+<!ENTITY  mediaLocation         "מיקום:">
+<!ENTITY  mediaText             "מלל משויך:">
+<!ENTITY  mediaAltHeader        "מלל חלופי">
+<!ENTITY  mediaAddress          "כתובת">
+<!ENTITY  mediaType             "סוג">
+<!ENTITY  mediaSize             "גודל">
+<!ENTITY  mediaCount            "כמות">
+<!ENTITY  mediaDimension        "ממדים:">
+<!ENTITY  mediaLongdesc         "תיאור:">
+<!ENTITY  mediaBlockImage.accesskey "ח">
+<!ENTITY  mediaSaveAs           "שמירה בשם…">
+<!ENTITY  mediaSaveAs.accesskey "ש">
+<!ENTITY  mediaSaveAs2.accesskey "ב">
+<!ENTITY  mediaPreview          "תצוגה מקדימה:">
+
+<!ENTITY  feedTab               "הזנות">
+<!ENTITY  feedTab.accesskey     "ה">
+<!ENTITY  feedSubscribe         "הירשם">
+<!ENTITY  feedSubscribe.accesskey "ה">
+
+<!ENTITY  permTab               "הרשאות">
+<!ENTITY  permTab.accesskey     "ר">
+<!ENTITY  permUseDefault        "בררת מחדל">
+<!ENTITY  permAskAlways         "שאל תמיד">
+<!ENTITY  permAllow             "אפשר">
+<!ENTITY  permAllowSession      "אפשר להפעלה זו">
+<!ENTITY  permBlock             "חסום">
+<!ENTITY  permissionsFor        "הרשאות עבור:">
+<!ENTITY  permPlugins           "הפעלת תוספים חיצוניים">
+
+<!ENTITY  permClearStorage           "מחיקת אחסון">
+<!ENTITY  permClearStorage.accesskey "מ">
+
+<!ENTITY  securityTab           "אבטחה">
+<!ENTITY  securityTab.accesskey "א">
+<!ENTITY  securityView.certView "הצגת אישור">
+<!ENTITY  securityView.accesskey "ה">
+<!ENTITY  securityView.unknown   "לא ידוע">
+
+
+<!ENTITY  securityView.identity.header   "זהות האתר">
+<!ENTITY  securityView.identity.owner    "בעלים: ">
+<!ENTITY  securityView.identity.domain   "אתר: ">
+<!ENTITY  securityView.identity.verifier "גורם מאמת: ">
+
+<!ENTITY  securityView.privacy.header                   "פרטיות והיסטוריה">
+<!ENTITY  securityView.privacy.history                  "האם ביקרתי באתר זה בעבר?">
+<!ENTITY  securityView.privacy.cookies                  "האם אתר זה שומר מידע (עוגיות) על המחשב שלי?">
+<!ENTITY  securityView.privacy.viewCookies              "הצגת עוגיות">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "ע">
+<!ENTITY  securityView.privacy.passwords                "האם שמרתי ססמאות עבור אתר זה?">
+<!ENTITY  securityView.privacy.viewPasswords            "הצגת ססמאות שמורות">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "ס">
+
+<!ENTITY  securityView.technical.header                 "פירוט טכני">
+
+<!ENTITY  helpButton.label                              "עזרה">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title "Connessione">
+<!ENTITY header "Connessione a dispositivo remoto">
+<!ENTITY host "Server:">
+<!ENTITY port "Porta:">
+<!ENTITY connect "Connetti">
+<!ENTITY connecting "Connessione…">
+<!ENTITY availableAddons "Componenti agg. remoti disponibili:">
+<!ENTITY availableTabs "Schede remote disponibili:">
+<!ENTITY availableProcesses "Processi remoti disponibili:">
+<!ENTITY connectionError "Errore:">
+<!ENTITY errorTimeout "Errore: tempo esaurito per la connessione.">
+<!ENTITY errorRefused "Errore: connessione rifiutata.">
+<!ENTITY errorUnexpected "Errore imprevisto.">
+<!ENTITY remoteHelp "Gli strumenti di sviluppo di Waterfox consentono di effettuare il debug su dispositivi remoti (ad esempio Waterfox per Android o Waterfox OS). Assicurarsi di aver attivato l’opzione “Debug remoto” sul dispositivo remoto. Per ulteriori informazioni consultare la ">
+<!ENTITY remoteDocumentation "documentazione">
+<!ENTITY remoteHelpSuffix ".">

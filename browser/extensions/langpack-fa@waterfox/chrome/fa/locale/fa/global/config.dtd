@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "به کجا چنین شتابان؟!">
+<!ENTITY aboutWarningText.label "تغییر این تنظیمات پیشرفته ممکن است اثر بدی در پایداری، امنیت، و سرعت این برنامه بگذارند.  تنها در صورتی باید ادامه دهید که از کاری که می‌خواهید انجام دهید اطمینان داشته باشید.">
+<!ENTITY aboutWarningButton2.label "ریسک‌اش را می‌پذیرم!">
+<!ENTITY aboutWarningCheckbox.label "دفعهٔ بعدی هم این هشدار نمایش داده شود">
+
+<!ENTITY searchPrefs.label "جست‌وجو:">
+<!ENTITY searchPrefs.accesskey "و">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "نام ترجیحات">
+<!ENTITY lockColumn.label "وضعیت">
+<!ENTITY typeColumn.label "نوع">
+<!ENTITY valueColumn.label "مقدار">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "برای مرتب‌سازی کلیک کنید"> 
+<!ENTITY columnChooser.tooltip "برای انتخاب ستون‌هایی که می‌خواهید نمایش داده‌شوند، ‌کلیک کنید"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "رونوشت برداشتن">
+<!ENTITY copyPref.accesskey "ن">
+<!ENTITY copyName.label "رونوشت برداشتن از نام">
+<!ENTITY copyName.accesskey "ن">
+<!ENTITY copyValue.label "رونوشت برداشتن از مقدار">
+<!ENTITY copyValue.accesskey "م">
+<!ENTITY modify.label "تغییر">
+<!ENTITY modify.accesskey "ت">
+<!ENTITY toggle.label "تعویض">
+<!ENTITY toggle.accesskey "ع">
+<!ENTITY reset.label "مقدار اولیه">
+<!ENTITY reset.accesskey "م">
+<!ENTITY new.label "جدید">
+<!ENTITY new.accesskey "ج">
+<!ENTITY string.label "رشته">
+<!ENTITY string.accesskey "ر">
+<!ENTITY integer.label "عدد صحیح">
+<!ENTITY integer.accesskey "ع">
+<!ENTITY boolean.label "بولی">
+<!ENTITY boolean.accesskey "ب">

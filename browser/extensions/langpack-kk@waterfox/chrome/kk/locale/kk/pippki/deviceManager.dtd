@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Құрылғылар менеджері">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Қауіпсіздік модульдері мен құрылғылар">
+<!ENTITY devmgr.details.title                   "Көбірек білу">
+<!ENTITY devmgr.details.title2                  "Мәні">
+
+<!ENTITY devmgr.button.login.label              "Сеансты бастау">
+<!ENTITY devmgr.button.login.accesskey          "б">
+<!ENTITY devmgr.button.logout.label             "Сеансты аяқтау">
+<!ENTITY devmgr.button.logout.accesskey         "я">
+<!ENTITY devmgr.button.changepw.label           "Парольді ауыстыру">
+<!ENTITY devmgr.button.changepw.accesskey       "ы">
+<!ENTITY devmgr.button.load.label               "Жүктеу">
+<!ENTITY devmgr.button.load.accesskey           "к">
+<!ENTITY devmgr.button.unload.label             "Жүктелуден босату">
+<!ENTITY devmgr.button.unload.accesskey         "б">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Модуль туралы қосқыңыз келетін ақпаратты енгізіңіз.">
+<!ENTITY loaddevice.modname                     "Модуль аты:">
+<!ENTITY loaddevice.modname.accesskey           "ь">
+<!ENTITY loaddevice.modname.default             "Жаңа PKCS#11 модулі">
+<!ENTITY loaddevice.filename                    "Модуль файлының аты:">
+<!ENTITY loaddevice.filename.accesskey          "ф">
+<!ENTITY loaddevice.browse                      "Қарап шығу…">
+<!ENTITY loaddevice.browse.accesskey            "ш">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 құрылғы драйверін жүктеу">

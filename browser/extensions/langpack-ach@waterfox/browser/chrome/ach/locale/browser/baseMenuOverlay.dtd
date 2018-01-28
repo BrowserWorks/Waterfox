@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Kan piny">
+<!ENTITY bringAllToFront.label    "Kel gi Weng Anyim">
+<!ENTITY zoomWindow.label         "Kwoti">
+<!ENTITY windowMenu.label         "Dirica">
+
+<!ENTITY helpMenu.label           "Kony"> 
+<!ENTITY helpMenu.accesskey       "K"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Kony"> 
+<!ENTITY helpMenuWin.accesskey    "K">
+<!ENTITY aboutProduct2.label      "Ikom &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "I">
+<!ENTITY productHelp2.label       "Kony me &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "K">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Yo macego me kadiyo coc">
+<!ENTITY helpKeyboardShortcuts.accesskey "k">
+
+<!ENTITY helpSafeMode.label       "Cak odoco ki med-ikome gi ma kijuko woko…">
+<!ENTITY helpSafeMode.accesskey   "C">
+<!ENTITY helpSafeMode.stop.label       "Cak odoco kun nongo kicako med-ikome">
+<!ENTITY helpSafeMode.stop.accesskey   "C">
+
+<!ENTITY healthReport2.label      "Ripot me yot kom me &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "i">
+
+<!ENTITY helpTroubleshootingInfo.label      "Ngec me yubu bal">
+<!ENTITY helpTroubleshootingInfo.accesskey  "N">
+
+<!ENTITY helpFeedbackPage.label      "Cwal adwogi ne…">
+<!ENTITY helpFeedbackPage.accesskey  "C">
+
+<!ENTITY helpShowTour2.label            "Wot me &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Ter…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Tic">
+
+<!ENTITY hideThisAppCmdMac2.label       "Kan &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Kan mukene">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Nyut weng">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label		"Ctrl+Tab で最近使用した順にタブを切り替える">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey	"T">
+
+<!ENTITY newWindowsAsTabs.label			"新しいウィンドウではなく新しいタブで開く">
+<!ENTITY newWindowsAsTabs.accesskey		"w">
+
+<!ENTITY warnOnCloseMultipleTabs.label		"同時に複数のタブを閉じるときは確認する">
+<!ENTITY warnOnCloseMultipleTabs.accesskey	"m">
+
+<!ENTITY warnOnOpenManyTabs.label		"同時に複数のタブを開いて &brandShortName; の動作が遅くなるときは確認する">
+<!ENTITY warnOnOpenManyTabs.accesskey		"d">
+
+<!ENTITY switchLinksToNewTabs.label		"リンクを新しいタブで開いたとき、すぐにそのタブに切り替える">
+<!ENTITY switchLinksToNewTabs.accesskey		"h">
+
+<!ENTITY showTabsInTaskbar.label		"タスクバーにタブのプレビューを表示する">
+<!ENTITY showTabsInTaskbar.accesskey		"k">
+<!ENTITY tabsGroup.label			"タブグループ">

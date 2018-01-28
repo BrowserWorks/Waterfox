@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Asenker">
+
+<!ENTITY startupPage2.label        "Deg tnekra n &brandShortName;">
+<!ENTITY startupPage2.accesskey    "m">
+<!ENTITY startupUserHomePage.label "Sken asebter-iw agejdan ">
+<!ENTITY startupBlankPage.label    "Sken asebter ilem">
+<!ENTITY startupPrevSession.label  "Sken iccaren ineggura akked isfuyla yettusqedcen ">
+
+<!ENTITY homepage2.label           "Asebter agejdan">
+<!ENTITY homepage2.accesskey       "R">
+<!ENTITY useCurrentPage.label      "Asebter amiran">
+<!ENTITY useCurrentPage.accesskey  "s">
+<!ENTITY useMultiple.label         "Isebtar imiranen">
+<!ENTITY chooseBookmark.label      "Ticraḍ n isebtar…">
+<!ENTITY chooseBookmark.accesskey  "T">
+<!ENTITY restoreDefault.label      "Err-d tawila n tazwara">
+<!ENTITY restoreDefault.accesskey  "E">
+
+<!ENTITY downloads.label     "Isidar">
+
+<!ENTITY saveTo.label "Sekles ifuyla ɣer">
+<!ENTITY saveTo.accesskey "S">
+<!ENTITY chooseFolderWin.label        "Ḍum…">
+<!ENTITY chooseFolderWin.accesskey    "u">
+<!ENTITY chooseFolderMac.label        "Fren…">
+<!ENTITY chooseFolderMac.accesskey    "F">
+<!ENTITY alwaysAskWhere.label         "Suter yal tikelt anida ad ttwakelsen ifuyla ">
+<!ENTITY alwaysAskWhere.accesskey     "S">
+
+<!ENTITY alwaysCheckDefault2.label        "Senqed yal tikelt ma yella &brandShortName; d iminig-ik amezwar">
+<!ENTITY alwaysCheckDefault2.accesskey    "S">
+<!ENTITY setAsMyDefaultBrowser3.label     "Sbadut d amezwar…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "G">
+<!ENTITY isDefault.label                  "&brandShortName; d iminig-inek amezwar">
+<!ENTITY isNotDefault.label               "&brandShortName; mačči d iminig-inek amezwer">
+
+<!ENTITY separateProfileMode.label        "Sireg &brandShortName; ed Waterfox ad selkmen s wudem anmaway">
+<!ENTITY useWaterfoxSync.label             "Taxbalut: Imaɣnuten yemgaraden ttusqedcen. Tzemreḍ ad tfaṛseḍ seg Sync i beṭṭu n isefka-inek gar-asen.">
+<!ENTITY getStarted.notloggedin.label     "Qqen ɣer &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Ldi ismenyifen n &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Rmed agetakala n &brandShortName;">

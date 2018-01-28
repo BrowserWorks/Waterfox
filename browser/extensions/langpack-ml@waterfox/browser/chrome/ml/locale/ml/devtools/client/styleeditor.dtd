@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Style Editor window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : The correct localization of this file might be to keep
+     it in English, or another language commonly spoken among web developers.
+     You want to make that choice consistent across the developer tools.
+     A good criteria is the language in which you'd find the best documentation
+     on web development on the web. -->
+
+
+<!ENTITY newButton.label            "പുതിയ">
+<!ENTITY newButton.tooltip          "രേഖയിലേക്കു് പുതിയൊരു സ്റ്റൈല്‍ ഷീറ്റ് തയ്യാറാക്കി ചേര്‍ക്കുക">
+<!ENTITY newButton.accesskey        "N">
+
+<!ENTITY importButton.label         "ഇംപോര്‍ട്ട് ചെയ്യുക…">
+<!ENTITY importButton.tooltip       "രേഖയിലേക്കു് നിലവിലുള്ളൊരു സ്റ്റൈല്‍ ഷീറ്റ് ഇംപോര്‍ട്ട് ചെയ്തു് ചേര്‍ക്കുക">
+<!ENTITY importButton.accesskey     "I">
+
+<!ENTITY visibilityToggle.tooltip   "സ്റ്റൈല്‍ ഷീറ്റ് കാഴ്ച മാറ്റുക">
+
+<!ENTITY saveButton.label           "സൂക്ഷിയ്ക്കുക">
+<!ENTITY saveButton.tooltip         "ഒരു ഫയലിലേക്കു് ഈ സ്റ്റൈല്‍ ഷീറ്റ് സൂക്ഷിയ്ക്കുക">
+<!ENTITY saveButton.accesskey       "S">
+
+<!ENTITY optionsButton.tooltip      "സ്റ്റൈല്‍ എഡിറ്റര്‍ ഐച്ഛികങ്ങള്‍">
+<!-- LOCALIZATION NOTE  (showOriginalSources.label): This is the label on the context
+     menu item to toggle showing original sources in the editor. -->
+
+<!ENTITY showOriginalSources.label     "യഥാര്‍ത്ഥ ശ്രോതസ്സുകള്‍ കാണിയ്ക്കുക">
+<!-- LOCALIZATION NOTE  (showOriginalSources.accesskey): This is the access key for
+     the menu item to toggle showing original sources in the editor. -->
+
+<!ENTITY showOriginalSources.accesskey  "ക">
+<!-- LOCALIZATION NOTE  (showMediaSidebar.label): This is the label on the context
+     menu item to toggle showing @media rule shortcuts in a sidebar. -->
+
+<!ENTITY showMediaSidebar.label     "@media സൈഡ്ബാര്‍ കാണിയ്ക്കുക">
+<!-- LOCALIZATION NOTE  (showMediaSidebar.accesskey): This is the access key for
+     the menu item to toggle showing the @media sidebar. -->
+
+<!ENTITY showMediaSidebar.accesskey     "m">
+<!-- LOCALICATION NOTE  (mediaRules.label): This is shown above the list of @media rules
+     in each stylesheet editor sidebar. -->
+
+<!ENTITY mediaRules.label           "@media നിയമങ്ങള്‍">
+
+<!ENTITY editorTextbox.placeholder  "ഇവിടെ സിഎസ്എസ് ടൈപ്പ് ചെയ്യുക.">
+<!-- LOCALICATION NOTE  (noStyleSheet.label): This is shown when a page has no
+     stylesheet. -->
+
+<!ENTITY noStyleSheet.label         "ഈ താളിനു് സ്റ്റൈല്‍ ഷീറ്റ് ലഭ്യമല്ല.">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-start.label): This is the start of a
+     tip sentence shown when there is no stylesheet. It suggests to create a new
+     stylesheet and provides an action link to do so. -->
+
+<!ENTITY noStyleSheet-tip-start.label  "നിങ്ങള്‍ക്കു് ഒരു പക്ഷേ ">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-action.label): This is text for the
+     link that triggers creation of a new stylesheet. -->
+<!ENTITY noStyleSheet-tip-action.label "ഒരു പുതിയ സ്റ്റൈല്‍ ഷീറ്റ് ചേര്‍ക്കണമോ">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-end.label): End of the tip sentence -->
+<!ENTITY noStyleSheet-tip-end.label    "?">
+<!-- LOCALIZATION NOTE (openLinkNewTab.label): This is the text for the
+     context menu item that opens a stylesheet in a new tab -->
+
+<!ENTITY openLinkNewTab.label     "ലിങ്ക്പുതിയ റ്റാബില്‍ തുറക്കുക">

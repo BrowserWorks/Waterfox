@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "تباہی رپورٹ کریں">
+<!ENTITY crashesUnsubmitted.label   "غیر جمع شدہ تباہ رپورٹیں">
+<!ENTITY crashesSubmitted.label     "ارسال شدہ کریش رپورٹیں">
+<!ENTITY id.heading                 "رپورٹ شناخت">
+<!ENTITY dateCrashed.heading        "تاریخ تباہ ہوگئی">
+<!ENTITY dateSubmitted.heading      "ارسال کردہ تاریخ">
+<!ENTITY noReports.label            "کوی تباہ رپورٹ ارسال نہی کی گی۔">
+<!ENTITY noConfig.label             "یہ ایپلی کیشن تباہ کردہ رپورٹس کو دکھانے کے لیے تشکیل کردہ نہں کی گیی. ترجیح کردہ <code>breakpad.reportURL</code> ضرور سیٹ ہونا چاہیے. ">
+<!ENTITY clearAllReports.label      "تمام رپورٹیں کو ہٹائیں">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Змена галоўнага пароля">
+<!ENTITY setPassword.tokenName.label       "Прылада бяспекі">
+<!ENTITY setPassword.oldPassword.label     "Цяперашні пароль:">
+<!ENTITY setPassword.newPassword.label     "Увядзіце новы пароль:">
+<!ENTITY setPassword.reenterPassword.label "Увядзіце новы пароль ізноў:">
+<!ENTITY setPassword.meter.label           "Вымяральнік якасці пароля">
+<!ENTITY setPassword.meter.loading         "Загрузка">
+<!ENTITY masterPasswordDescription.label   "Галоўны пароль выкарыстоўваецца для абароны асабістай інфармацыі, такой, як паролі на сайты.  Пасля стварэння галоўнага пароля вам трэба будзе ўводзіць яго адзін раз за сесію, калі &brandShortName; запатрабуе інфармацыю, абароненую паролем.">
+<!ENTITY masterPasswordWarning.label       "Упэўніцеся, калі ласка, што вы помніце прызначаны вамі галоўны пароль.  Калі вы забудзеце ваш галоўны пароль, вы не здолееце атрымаць доступ да звестак, якія абараняюцца ім.">

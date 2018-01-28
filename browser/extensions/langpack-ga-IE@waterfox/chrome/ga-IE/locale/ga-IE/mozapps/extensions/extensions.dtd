@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Bainisteoir na mBreiseán">
+
+<!ENTITY search.placeholder                   "Cuardaigh na breiseáin go léir">
+<!ENTITY search.buttonlabel                   "Cuardach">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Á Luchtú…">
+<!ENTITY listEmpty.installed.label            "Níl aon bhreiseán den chineál seo suiteáilte agat">
+<!ENTITY listEmpty.availableUpdates.label     "Ní bhfuarthas nuashonruithe">
+<!ENTITY listEmpty.recentUpdates.label        "Ní raibh aon bhreiseáin nuashonraithe agat le déanaí">
+<!ENTITY listEmpty.findUpdates.label          "Lorg Nuashonruithe">
+<!ENTITY listEmpty.search.label               "Níor aimsíodh aon bhreiseáin chomhoiriúnacha">
+<!ENTITY listEmpty.button.label               "Tuilleadh eolais faoi bhreiseáin">
+<!ENTITY installAddonFromFile.label           "Suiteáil Breiseán Ó Chomhad…">
+<!ENTITY installAddonFromFile.accesskey       "S">
+<!ENTITY toolsMenu.tooltip                    "Uirlisí le haghaidh gach breiseán">
+
+<!ENTITY getThemes.description                "Ar mhaith leat cuma phearsanta a chur ar do bhrabhsálaí?">
+<!ENTITY getThemes.learnMore                  "Is leatsa an rogha as na mílte téama atá ar fáil.">
+
+<!ENTITY cmd.back.tooltip                     "Leathanach amháin siar">
+<!ENTITY cmd.forward.tooltip                  "Leathanach amháin ar aghaidh">
+
+<!ENTITY showUnsignedExtensions.button.label  "Níorbh fhéidir roinnt eisínteachtaí a fhíorú">
+<!ENTITY showAllExtensions.button.label       "Taispeáin na heisínteachtaí go léir">
+<!ENTITY debugAddons.label                    "Dífhabhtaigh Breiseáin">
+<!ENTITY debugAddons.accesskey                "b">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Tá gach Breiseán díchumasaithe sa Mhód Sábháilteachta.">
+<!ENTITY warning.checkcompatibility.label          "Tá seiceáil chomhoiriúnacht na mBreiseán díchumasaithe. D'fhéadfadh Breiseáin neamh-chomhoiriúnacha a bheith agat.">
+<!ENTITY warning.checkcompatibility.enable.label   "Cumasaigh">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Cumasaigh seiceáil chomhoiriúnacht na mbreiseán">
+<!ENTITY warning.updatesecurity.label              "Tá seiceáil shlándáil na mbreiseán díchumasaithe. D'fhéadfadh nuashonruithe dochar a dhéanamh.">
+<!ENTITY warning.updatesecurity.enable.label       "Cumasaigh">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Cumasaigh seiceáil slándála nuashonrú na mbreiseán">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Cuardaigh">
+<!ENTITY view.discover.label                  "Faigh Breiseáin">
+<!ENTITY view.recentUpdates.label             "Nuashonruithe Le Déanaí">
+<!ENTITY view.availableUpdates.label          "Nuashonruithe Ar Fáil">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Lorg Nuashonruithe">
+<!ENTITY updates.checkForUpdates.accesskey    "L">
+<!ENTITY updates.viewUpdates.label            "Féach ar Nuashonruithe Le Déanaí">
+<!ENTITY updates.viewUpdates.accesskey        "F">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Nuashonraigh Breiseáin go hUathoibríoch">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "B">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Athshocraigh nuashonrú uathoibríoch na mbreiseán">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "r">
+<!ENTITY updates.resetUpdatesToManual.label          "Athshocraigh nuashonrú láimhe na mbreiseán">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "r">
+<!ENTITY updates.updating.label               "Breiseáin á nuashonrú">
+<!ENTITY updates.installed.label              "Nuashonraíodh do chuid breiseán.">
+<!ENTITY updates.downloaded.label             "Íoslódáladh nuashonruithe na mbreiseán.">
+<!ENTITY updates.restart.label                "Atosaigh anois chun an tsuiteáil a chur i gcrích">
+<!ENTITY updates.noneFound.label              "Ní bhfuarthas nuashonruithe">
+<!ENTITY updates.manualUpdatesFound.label     "Féach ar Nuashonruithe Ar Fáil">
+<!ENTITY updates.updateSelected.label         "Suiteáil Nuashonruithe">
+<!ENTITY updates.updateSelected.tooltip       "Suiteáil na nuashonruithe atá ar fáil sa liosta seo">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Taispeáin Tuilleadh Eolais">
+<!ENTITY cmd.showDetails.accesskey            "T">
+<!ENTITY cmd.findUpdates.label                "Aimsigh Nuashonruithe">
+<!ENTITY cmd.findUpdates.accesskey            "A">
+<!ENTITY cmd.preferencesWin.label             "Roghanna">
+<!ENTITY cmd.preferencesWin.accesskey         "R">
+<!ENTITY cmd.preferencesUnix.label            "Sainroghanna">
+<!ENTITY cmd.preferencesUnix.accesskey        "S">
+<!ENTITY cmd.about.label                      "Maidir Leis">
+<!ENTITY cmd.about.accesskey                  "M">
+
+<!ENTITY cmd.enableAddon.label                "Cumasaigh">
+<!ENTITY cmd.enableAddon.accesskey            "C">
+<!ENTITY cmd.disableAddon.label               "Díchumasaigh">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "Úsáid an téama">
+<!ENTITY cmd.enableTheme.accesskey            "t">
+<!ENTITY cmd.disableTheme.label               "Ná húsáid an téama a thuilleadh">
+<!ENTITY cmd.disableTheme.accesskey           "N">
+<!ENTITY cmd.askToActivate.label              "Fiafraigh díom roimh ghníomhachtú">
+<!ENTITY cmd.askToActivate.tooltip            "Fiafraigh díom faoin mbreiseán seo gach uair">
+<!ENTITY cmd.alwaysActivate.label             "Gníomhachtaigh i gCónaí">
+<!ENTITY cmd.alwaysActivate.tooltip           "Úsáid an breiseán i gcónaí">
+<!ENTITY cmd.neverActivate.label              "Ná Gníomhachtaigh Riamh">
+<!ENTITY cmd.neverActivate.tooltip            "Ná húsáid an breiseán seo riamh">
+<!ENTITY cmd.stateMenu.tooltip                "Athraigh nuair a ritheann an breiseán seo">
+<!ENTITY cmd.installAddon.label               "Suiteáil">
+<!ENTITY cmd.installAddon.accesskey           "S">
+<!ENTITY cmd.uninstallAddon.label             "Bain">
+<!ENTITY cmd.uninstallAddon.accesskey         "B">
+<!ENTITY cmd.showPreferencesWin.label         "Roghanna">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Athraigh roghanna an bhreiseáin seo">
+<!ENTITY cmd.showPreferencesUnix.label        "Sainroghanna">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Athraigh sainroghanna an bhreiseáin seo">
+<!ENTITY cmd.contribute.label                 "Glac Páirt">
+<!ENTITY cmd.contribute.accesskey             "c">
+<!ENTITY cmd.contribute.tooltip               "Glac páirt i bhforbairt an bhreiseáin seo">
+
+<!ENTITY cmd.showReleaseNotes.label           "Taispeáin na Nótaí Eisiúna">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Taispeáin na nótaí eisiúna don nuashonrú seo">
+<!ENTITY cmd.hideReleaseNotes.label           "Folaigh na Nótaí Eisiúna">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Folaigh na nótaí eisiúna don nuashonrú seo">
+<!ENTITY cmd.findReplacement.label            "Aimsigh Ionadaí">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Cad is Breiseán ann?">
+<!ENTITY discover.description2                "Is feidhmchláir iad na breiseáin a chuireann ar do chumas &brandShortName; a oiriúnú duit féin le feidhmeanna nó stíleanna breise. Bain triail as barra taoibh a spárálann am, fogróir aimsire, nó cuma de réir téama chun do &brandShortName; féin a chruthú.">
+<!ENTITY discover.footer                      "Nuair a bhíonn tú ceangailte leis an Idirlíon, taispeántar cuid de na breiseáin is fearr agus is mó éilimh orthu sa phána seo.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Leagan">
+<!ENTITY detail.lastupdated.label             "Nuashonraithe">
+<!ENTITY detail.creator.label                 "Forbróir">
+<!ENTITY detail.homepage.label                "Leathanach Baile">
+<!ENTITY detail.numberOfDownloads.label       "Íoslódálacha">
+
+<!ENTITY detail.contributions.description     "Tacaigh le forbairt leanúnach an bhreiseáin seo trí dheontas beag a thabhairt don fhorbróir.">
+
+<!ENTITY detail.updateType                    "Nuashonruithe Uathoibríocha">
+<!ENTITY detail.updateDefault.label           "Réamhshocrú">
+<!ENTITY detail.updateDefault.tooltip         "Suiteáil nuashonruithe go huathoibríoch más é sin an réamhshocrú">
+<!ENTITY detail.updateAutomatic.label         "Ann">
+<!ENTITY detail.updateAutomatic.tooltip       "Suiteáil nuashonruithe go huathoibríoch">
+<!ENTITY detail.updateManual.label            "As">
+<!ENTITY detail.updateManual.tooltip          "Ná suiteáil nuashonruithe go huathoibríoch">
+<!ENTITY detail.home                          "Leathanach Baile">
+<!ENTITY detail.repository                    "Próifíl an Bhreiseáin">
+<!ENTITY detail.size                          "Méid">
+
+<!ENTITY detail.checkForUpdates.label         "Lorg Nuashonruithe">
+<!ENTITY detail.checkForUpdates.accesskey     "L">
+<!ENTITY detail.checkForUpdates.tooltip       "Lorg nuashonruithe le haghaidh an bhreiseáin seo">
+<!ENTITY detail.showPreferencesWin.label      "Roghanna">
+<!ENTITY detail.showPreferencesWin.accesskey  "R">
+<!ENTITY detail.showPreferencesWin.tooltip    "Athraigh roghanna an bhreiseáin seo">
+<!ENTITY detail.showPreferencesUnix.label     "Sainroghanna">
+<!ENTITY detail.showPreferencesUnix.accesskey "S">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Athraigh sainroghanna an bhreiseáin seo">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Rátáil">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Cuir ar Sos">
+<!ENTITY progress.cancel.tooltip              "Cealaigh">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Ainm">
+<!ENTITY sort.name.tooltip                    "Sórtáil de réir ainm">
+<!ENTITY sort.dateUpdated.label               "Nuashonruithe">
+<!ENTITY sort.dateUpdated.tooltip             "Sórtáil de réir dáta nuashonraithe">
+<!ENTITY sort.relevance.label                 "Is comhoiriúnaí">
+<!ENTITY sort.relevance.tooltip               "Sórtáil de réir ábharthachta">
+<!ENTITY sort.price.label                     "Praghas">
+<!ENTITY sort.price.tooltip                   "Sórtáil de réir praghais">
+
+<!ENTITY search.filter2.label                 "Cuardaigh:">
+<!ENTITY search.filter2.installed.label       "Mo Chuid Breiseán">
+<!ENTITY search.filter2.installed.tooltip     "Taispeáin breiseáin shuiteáilte">
+<!ENTITY search.filter2.available.label       "Breiseáin le fáil">
+<!ENTITY search.filter2.available.tooltip     "Taispeáin na breiseáin is féidir suiteáil">
+
+<!ENTITY addon.homepage                       "Leathanach Baile">
+<!ENTITY addon.details.label                  "Tuilleadh">
+<!ENTITY addon.details.tooltip                "Taispeáin tuilleadh eolais faoin bhreiseán seo">
+<!ENTITY addon.unknownDate                    "Anaithnid">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "OIDHREACHT">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(díchumasaithe)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Nuashonrú">
+<!ENTITY addon.undoAction.label               "Cealaigh">
+<!ENTITY addon.undoAction.tooltip             "Cealaigh an gníomh seo">
+<!ENTITY addon.undoRemove.label               "Cealaigh">
+<!ENTITY addon.undoRemove.tooltip             "Coinnigh an breiseán seo suiteáilte">
+<!ENTITY addon.restartNow.label               "Atosaigh anois">
+<!ENTITY addon.install.label                  "Suiteáil">
+<!ENTITY addon.install.tooltip                "Suiteáil an breiseán seo">
+<!ENTITY addon.updateNow.label                "Nuashonraigh Anois">
+<!ENTITY addon.updateNow.tooltip              "Suiteáil an nuashonrú don bhreiseán seo">
+<!ENTITY addon.includeUpdate.label            "Cuir san áireamh sa nuashonrú">
+<!ENTITY addon.updateAvailable.label          "Tá nuashonrú ar fáil">
+<!ENTITY addon.checkingForUpdates.label       "Nuashonruithe á lorg…">
+<!ENTITY addon.releaseNotes.label             "Nótaí Eisiúna:">
+<!ENTITY addon.loadingReleaseNotes.label      "Á Luchtú…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Tá brón orm, ach tharla earráid agus na nótaí eisiúna á lódáil.">
+
+<!ENTITY addon.createdBy.label                "Le ">
+
+<!ENTITY eula.title                           "Comhaontú Ceadúnais">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Glac Leis agus Suiteáil…">
+
+<!ENTITY settings.path.button.label           "Brabhsáil…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Cad é seo? Suiteálfaidh agus rithfidh Telemetry turgnaimh anois is arís.">
+<!ENTITY experiment.info.learnmore "Tuilleadh Eolais">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Socruithe Telemetry">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Tuilleadh Eolais…">
+
+<!ENTITY disabledUnsigned.heading "Díchumasaíodh roinnt breiseán">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Níl na breiseáin seo a leanas fíoraithe le húsáid in &brandShortName;. Is féidir leat ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "ionadaithe a aimsiú">
+<!ENTITY disabledUnsigned.description.end " nó iarr ar an bhforbróir iad a chur tríd an bpróiseas fíoraithe.">
+<!ENTITY disabledUnsigned.learnMore "Tuilleadh eolais faoi na rudaí a dhéanaimid chun tú a choinneáil slán sábháilte ar líne.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Más forbróir thú, foghlaim conas is féidir breiseán a fhíorú inár ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "lámhleabhar">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Rud éigin ar iarraidh? Ní thacaíonn &brandShortName; le roinnt forlíontán a thuilleadh.">
+<!ENTITY pluginDeprecation.learnMore "Tuilleadh Eolais.">
+
+<!ENTITY legacyWarning.description "Rud éigin ar iarraidh? Ní thacaíonn &brandShortName; le roinnt eisínteachtaí a thuilleadh.">
+<!ENTITY legacyWarning.showLegacy "Taispeáin seaneisínteachtaí">
+<!ENTITY legacyExtensions.title "Seaneisínteachtaí">
+<!ENTITY legacyExtensions.description "Ní chloíonn na heisínteachtaí seo le caighdeáin &brandShortName; a thuilleadh agus dhíchumasaíomar iad.">
+<!ENTITY legacyExtensions.learnMore "Foghlaim faoi na hathruithe ar bhreiseáin">

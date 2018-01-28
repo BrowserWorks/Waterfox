@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Mbrojtje Nga Gjurmimet">
+<!ENTITY  trackingProtection.description       "Gjurmim është kur kompanitë grumbullojnë të dhëna rreth jush, për të ndërtuar një profil dhe për t&apos;ju shfaqur lëndë bazuar në shfletimin dhe të dhënat tuaja personale.">
+<!ENTITY  trackingProtection.radioGroupLabel   "Blloko shfalqe lënde nga kompani të njohura për gjurmim">
+<!ENTITY  trackingProtectionAlways.label       "Përherë">
+<!ENTITY  trackingProtectionAlways.accesskey   "h">
+<!ENTITY  trackingProtectionPrivate.label      "Vetëm në dritare private">
+<!ENTITY  trackingProtectionPrivate.accesskey  "v">
+<!ENTITY  trackingProtectionNever.label        "Kurrë">
+<!ENTITY  trackingProtectionNever.accesskey    "u">
+<!ENTITY  trackingProtectionLearnMore.label    "Mësoni më tepër">
+<!ENTITY  trackingProtectionExceptions.label   "Përjashtime…">
+<!ENTITY  trackingProtectionExceptions.accesskey "a">
+
+<!ENTITY tracking.label                 "Gjurmim">
+<!ENTITY trackingProtectionPBM5.label         "Përdore Mbrojtjen Nga Gjurmimet në Dritare Private">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Mësoni më tepër">
+<!ENTITY changeBlockList.label          "Ndryshoni Listë Bllokimesh">
+<!ENTITY changeBlockList.accesskey      "N">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Mundeni edhe ">
+<!ENTITY  doNotTrack.settings.label     "të administroni rregullimet tuaja për Mos Më Gjurmoni">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historik">
+
+<!ENTITY  locationBar.label             "Shtyllë Vendesh">
+
+<!ENTITY  locbar.suggest2.label         "Kur përdoret shtylla e vendeve, jep sugjerime nga">
+<!ENTITY  locbar.history.label          "Historiku">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Faqerojtësit">
+<!ENTITY  locbar.bookmarks.accesskey    "F">
+<!ENTITY  locbar.openpage.label         "Skeda të hapura">
+<!ENTITY  locbar.openpage.accesskey     "S">
+<!ENTITY  locbar.searches.label         "Kërkime të afërta, nga motori parazgjedhje i kërkimeve">
+<!ENTITY  locbar.searches.accesskey     "p">
+
+<!ENTITY  suggestionSettings2.label     "Ndryshoni parapëlqimet mbi këshillime motorësh kërkimi">
+
+<!ENTITY  acceptCookies.label           "Prano cookies prej sajtesh">
+<!ENTITY  acceptCookies.accesskey       "s">
+
+<!ENTITY  acceptThirdParty.pre.label      "Prano cookies palësh të treta:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "l">
+<!ENTITY  acceptThirdParty.always.label   "Përherë">
+<!ENTITY  acceptThirdParty.never.label    "Kurrë">
+<!ENTITY  acceptThirdParty.visited.label  "Nga të vizituarit">
+
+<!ENTITY  keepUntil.label               "Mbaji:">
+<!ENTITY  keepUntil.accesskey           "a">
+
+<!ENTITY  expire.label                  "deri sa të skadojnë">
+<!ENTITY  close.label                   "deri sa të mbyll &brandShortName;-in">
+
+<!ENTITY  cookieExceptions.label        "Përjashtime…">
+<!ENTITY  cookieExceptions.accesskey    "P">
+
+<!ENTITY  showCookies.label             "Shfaqni Cookie…">
+<!ENTITY  showCookies.accesskey         "C">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName;-i">
+<!ENTITY  historyHeader2.pre.accesskey     "d">
+<!ENTITY  historyHeader.remember.label     "Do ta mbajë mend historikun">
+<!ENTITY  historyHeader.dontremember.label "Nuk do ta mbajë mend historikun">
+<!ENTITY  historyHeader.custom.label       "Do të përdorë rregullime vetjake për historikun">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName;-i do të mbajë mend historikun e shfletimeve, shkarkimeve, kërkimeve dhe formularëve tuaj, dhe do të depozitojë cookies prej sajteve që vizitoni.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Mund të dëshironi të ">
+<!ENTITY  rememberActions.clearHistory.label  "pastroni historikun tuaj së fundi">
+<!ENTITY  rememberActions.middle.label        ", ose ">
+<!ENTITY  rememberActions.removeCookies.label "hiqni cookies individuale">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName;-i do të përdorë të njëjtat rregullime si të shfletimit privat, dhe nuk do të mbajë mend ndonjë historik, teksa shfletoni në Web.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Mund të doni po ashtu të ">
+<!ENTITY  dontrememberActions.clearHistory.label "pastroni krejt historikun tuaj të tanishëm">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Përdor përherë mënyrën shfletim privat">
+<!ENTITY  privateBrowsingPermanent2.accesskey "v">
+
+<!ENTITY  rememberHistory2.label      "Mba mend historikun tim të shfletimit dhe shkarkimeve">
+<!ENTITY  rememberHistory2.accesskey  "t">
+
+<!ENTITY  rememberSearchForm.label       "Mba mend historik kërkimesh dhe formularësh">
+<!ENTITY  rememberSearchForm.accesskey   "e">
+
+<!ENTITY  clearOnClose.label             "Pastroje historikun, kur mbyllet &brandShortName;-i">
+<!ENTITY  clearOnClose.accesskey         "y">
+
+<!ENTITY  clearOnCloseSettings.label     "Rregullime…">
+<!ENTITY  clearOnCloseSettings.accesskey "R">
+
+<!ENTITY  browserContainersHeader.label         "Skeda Kontejneri">
+<!ENTITY  browserContainersLearnMore.label      "Mësoni më tepër">
+<!ENTITY  browserContainersEnabled.label        "Aktivizoni Skeda Kontejneri">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Rregullime…">
+<!ENTITY  browserContainersSettings.accesskey    "R">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

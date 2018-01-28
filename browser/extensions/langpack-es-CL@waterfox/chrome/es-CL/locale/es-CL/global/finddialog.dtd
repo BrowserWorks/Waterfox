@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY findDialog.title "Buscar en Esta Página">
+<!ENTITY findField.label "Buscar:">
+<!ENTITY findField.accesskey "B">
+<!ENTITY caseSensitiveCheckbox.label "Coincidir mayús./minús.">
+<!ENTITY caseSensitiveCheckbox.accesskey "C">
+<!ENTITY wrapCheckbox.label "Ajustar">
+<!ENTITY wrapCheckbox.accesskey "A">
+<!ENTITY findButton.label "Buscar Siguiente">
+<!ENTITY findButton.accesskey "B">
+<!ENTITY cancelButton.label "Cancelar">
+<!ENTITY closeButton.label "Cerrar">
+<!ENTITY up.label "Arriba">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "Abajo">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "Dirección">

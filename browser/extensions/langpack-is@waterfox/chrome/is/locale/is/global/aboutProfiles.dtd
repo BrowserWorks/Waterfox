@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Um notendur">
+<!ENTITY aboutProfiles.subtitle "Þessi síða hjálpar þér að sýsla með notendastillingar. Hver notandi er með sérstakar stillingar sem inniheldur sér feril, bókamerki, stillingar og viðbætur.">
+<!ENTITY aboutProfiles.create "Stofna nýjan notanda">
+<!ENTITY aboutProfiles.restart.title "Endurræsa">
+<!ENTITY aboutProfiles.restart.inSafeMode "Endurræsa með viðbætur óvirkar…">
+<!ENTITY aboutProfiles.restart.normal "Venjuleg endurræsing…">

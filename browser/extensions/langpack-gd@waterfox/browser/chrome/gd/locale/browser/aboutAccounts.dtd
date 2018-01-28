@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Fàilte gu &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Clàraich a-steach gus na tabaichean, comharran-lìn, faclan-faire ⁊ mòran a bharrachd a shioncronachadh.">
+<!ENTITY aboutAccountsConfig.startButton.label "Toiseach tòiseachaidh">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Roghainnean sioncronachaidh">
+<!ENTITY aboutAccounts.noConnection.title "Chan eil ceangal ann">
+<!ENTITY aboutAccounts.noConnection.description "Feumaidh ceangal ris an eadar-lìon a bhith agad mus urrainn dhut clàradh a-steach.">
+<!ENTITY aboutAccounts.noConnection.retry "Feuch ris a-rithist">
+<!ENTITY aboutAccounts.badConfig.title "Droch-rèiteachadh">
+<!ENTITY aboutAccounts.badConfig.description "Chan urrainn dhuinn rèiteachadh frithealaiche a’ chunntais Waterfox fhiosrachadh. Feuch ris a-rithist an ceann greis.">

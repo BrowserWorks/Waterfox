@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "பக்கத்தை ஏற்றுவதில் சிக்கல்">
+<!ENTITY retry.label "மீண்டும் முயற்சிக்கவும்">
+<!ENTITY returnToPreviousPage.label "பின்செல்">
+<!ENTITY advanced.label "மேம்பட்ட">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "இணைக்க முடியவில்லை">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "இந்த முகவரி தடுக்கப்பட்டுள்ளது">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "சேவையகத்தை அணுக முடியவில்லை">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>உள்ளிட்ட இணைய முகவரியில் <strong>ww</strong>.example.com <strong>www</strong>.example.com போன்ற பிழை ஏதும் இருக்கா</li> <li>உங்களால் பக்கங்களை ஏற்ற முடியாவிட்டால் உங்கள் பிணைய இணைப்பைச் சரிப்பாருங்கள்.</li> <li>ஒருவேளை உங்களின் கணினி (அ) பிணையம் தீச்சுவர் (அ) பதிலாளால் தடுக்கப்பட்டிருந்தால் &brandShortName; உலாவியால் இணையத்தை அணுக முடியாது.</li> </ul>">
+
+<!ENTITY fileNotFound.title "கோப்பைக் காணவில்லை">
+<!ENTITY fileNotFound.longDesc "<ul> <li> தவறாக (அ) பெரிய எழுத்ததுடன் உள்ளிட்டிருந்தால் அதைச் சரிச் செய்யவும்.</li> <li>கோப்பு நகர்த்தப்பட்டதா (அ) மறுபெயரிடப்பட்டதா (அ) அழிக்கப்பட்டதா எனச் சரி பார்க்கவும.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "கோப்பு அணுகல் மறுக்கப்பட்டது">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>கோப்பு நீக்கப்பட்டிருக்கலாம், நகர்த்தப்பட்டிருக்கலாம் அல்லது அனுமதி மறுக்கப்பட்டிருக்கலாம்</li> </ul>">
+
+<!ENTITY generic.title "அச்சச்சோ.">
+<!ENTITY generic.longDesc "<p>சில காரணங்களால் &brandShortName; உலாவியால் இப்பக்கத்தை ஏற்ற முடியவில்லை.</p>">
+
+<!ENTITY captivePortal.title "பிணையத்தினுள் புகுபதிகை">
+<!ENTITY captivePortal.longDesc2 "<p>இணையத்தை அணுகுவதற்கு முன் இந்தப் பிணைத்தில் நீங்கள் கட்டாயமாக உள்நுழைய வேண்டும்.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "பிணையப் புகுபதிகை பக்கத்தைத் திற">
+
+<!ENTITY malformedURI.title "இந்த முகவரி தவறானது">
+<!ENTITY malformedURI.longDesc "<ul> <li>இணைய முகவரி கீழ்காணுமாறு இருக்கும் <strong>http://www.example.com/</strong></li><li>நீங்க / பயன்படுத்தினீர்களா என பார்க்கவும் (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "இணைப்பில் தடங்கல் உள்ளது">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "ஆவணம் காலாவதியாகிவிட்டது">
+<!ENTITY notCached.longDesc "<p>கோரப்பட்ட ஆவணம் &brandShortName; இன் தேக்ககத்தில் கிடைக்கவில்லை.</p><ul><li>பாதுகாப்பு எச்சரிக்கைக்காக, &brandShortName; ஆனது முக்கியமான ஆவணங்களை மறுமுறை கோராதபடி அமைக்கப்பட்டுள்ளது.</li><li>வலைத்தளத்திலிருந்து ஆவணத்தை மீண்டும் கோர மீண்டும் முயற்சிக்கவும் என்பதைக் கிளிக் செய்யவும்.</li></ul>">
+
+<!ENTITY netOffline.title "இணைப்பில்லாத முறைமை">
+<!ENTITY netOffline.longDesc2 "<ul> <li>ஆன்லைன் பயன்முறைக்கு மாற &quot;மீண்டும் முயற்சிக்கவும்&quot; என்பதை அழுத்தி, பிறகு பக்கத்தை மீண்டும் ஏற்றவும்.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "உள்ளடக்க குறிமுறை பிழை">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>இந்தச் சிக்கல் குறித்து தெரிவிக்க இணையதள உரிமையாளர்களைத் தொடர்பு கொள்க.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "பாதுகாப்பில்லாத கோப்பு வகை">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>இந்தச் சிக்கல் குறித்து தெரிவிக்க இணையதள உரிமையாளர்களைத் தொடர்பு கொள்க.</li> </ul>">
+
+<!ENTITY netReset.title "இணைப்பு மீட்டமைக்கப்பட்டது">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "இணைப்பு நேரம் முடிந்தது">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "முகவரியை புரிந்து கொள்ள முடியவில்லை">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>இந்த இணைய முகவரியைத் திறக்க மற்ற மென்பொருளை நிறுவ வேண்டியருக்கும்.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "பதிலாள் சேவையகம் இணைப்பை மறுக்கிறது">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>பதிலாள் அமைவுகள் சரிதானா எனப் பார்க்கவும்.</li> <li>.</li>பிணைய நிர்வாகியை அணுகி பதிலாள் சேவகன் வேலைச் செய்கிறதா என உறுதிச்செய்யுங்கள்.</ul>">
+
+<!ENTITY proxyResolveFailure.title "பதிலி சேவையகத்தைக் கண்டறிய முடியவில்லை">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Check the proxy settings to make sure that they are correct.</li> <li>Check to make sure your computer has a working network connection.</li> <li>If your computer or network is protected by a firewall or proxy, make sure that &brandShortName; is permitted to access the Web.</li> </ul>">
+
+<!ENTITY redirectLoop.title "பக்கத்தை ஒழுங்காகத் திருப்பிவிடவில்லை">
+<!ENTITY redirectLoop.longDesc "<ul> <li>சில நேரங்களில் நினைவிகளை ஏற்க மறுத்தாலோ (அ) செயலற்று இருந்தாலோ இந்தச் சிக்கல் ஏற்படும்.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "சேவையகத்திலிருந்து எதிர்பாராத பதில்">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Check to make sure your system has the Personal Security Manager installed.</li> <li>This might be due to a non-standard configuration on the server.</li> </ul>">
+
+<!ENTITY nssFailure2.title "பாதுகாப்பான இணைப்பு முறிந்தது">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>பெறப்பட்ட தரவின் அங்கீகாரத்தன்மையைச் சரிபார்க்க முடியாததால், நீங்கள் காண முயற்சிக்கும் பக்கத்தைக் காண்பிக்க முடியாது.</li> <li>வலைத்தள உரிமையாளர்களைத் தொடர்புகொண்டு இந்தச் சிக்கலைத் தெரிவிக்கவும்.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "உங்கள் இணைப்பு பாதுகாப்பற்றது">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/> களத்தின் உரிமையாளர் தளத்தை முறையின்றி கட்டமைத்துள்ளார். உங்கள் தகவலைத் திருடாமல் இருக்க, &brandShortName; வலைத்தளத்துடன் இணைக்கவில்லை.">
+
+<!ENTITY sharedLongDesc "<ul> <li>வலைப்பக்கம் தற்காலிகமாக கிடைக்கவில்லை. பிறகு முயற்சிக்கவும்.</li> <li>பக்கத்தை ஏற்ற இயலவில்லையெனில், உங்களின் இணைய இணைப்பைச் சரிபாருங்கள்.</li> <li>உங்களின் கணினி (அ) பிணைய தீச்சுவர் (அ) பதிலாளால் தடுக்கப்பட்டிருப்பின் அதைச் சரிப்படுத்தி &brandShortName; உலாவிக்கு இணையத்தை கிடைக்கச் செய்யவும்.</li></ul>">
+
+<!ENTITY cspBlocked.title "உள்ளடக்க பாதுகாப்பு கொள்கையால் தடுக்கப்பட்டது">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; இந்தப் பக்கம் இவ்வழியில் ஏற்றப்படுவதை தடுத்தது ஏனெனில் இந்தப் பக்கம் ஒரு உள்ளடக்கப் பாதுகாப்பு கொள்கைக்கு முரனாக உள்ளது.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "சிதைந்த உள்ளடக்கப் பிழை">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>தரவு பரிமாற்றத்தில் ஒரு பிழை கண்டறியப்பட்டுள்ளதால், நீங்கள் காண முயற்சிக்கும் பக்கத்தைக் காண்பிக்க முடியாது.</p><ul><li>பிரச்சனைகுறித்து தெரிவிக்கவும்.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "விதிவிலக்காகச் சேர்...">
+
+<!ENTITY errorReporting.automatic2 "இதுப் போன்ற பாதுகாப்பற்ற தளங்களை முடக்க மொசில்லாவிடம் முறையிடு">
+<!ENTITY errorReporting.learnMore "மேலும் அறிக...">
+
+<!ENTITY remoteXUL.title "தொலைநிலை XUL">
+<!ENTITY remoteXUL.longDesc "<p> <ul> <li> இந்தப் பிரச்சனை குறித்து இணையதளத்தில் உரிமையாளர்களை தொடர்பு கொள்க. </li></ul></p>">
+
+<!ENTITY sslv3Used.title "பாதுகாப்பாக இணைக்க இயலவில்லை">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "கூடுதல் தகவல்: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; உலாவி <span id='wrongSystemTime_URL'/> இணைக்கவில்லை ஏனெனில் உங்கள் கணினியின் கடிகாரம் தவறான நேரத்தை காட்டுவதால் பாதுகாப்பான இணைப்பைத் தடுக்கிறது.</p> <p>உங்கள் கணினி <span id='wrongSystemTime_systemDate'/> என எண்ணுகிறது, ஆனால் <span id='wrongSystemTime_actualDate'/> என இருக்க வேண்டும். இப்பிரச்சனையை சரிசெய்ய, சரியான நேரத்திற்கு பொருந்துமாறு உங்கள் தேதியையும் நேரத்தையும் மாற்றி அமைக்கவும்.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> &brandShortName; உலாவி <span id='wrongSystemTimeWithoutReference_URL'/> இணைக்கவில்லை ஏனெனில் உங்கள் கணினியின் கடிகாரம் தவறான நேரத்தை காட்டுவதால் பாதுகாப்பான இணைப்பைத் தடுக்கிறது.</p> <p>உங்கள் கணினி <span id='wrongSystemTimeWithoutReference_systemDate'/> என எண்ணுகிறது. இப்பிரச்சனையை சரிசெய்ய, சரியான நேரத்திற்கு பொருந்துமாறு உங்கள் கடிகாரத்தை மாற்றி அமைக்கவும்.</p>">
+
+<!ENTITY certerror.pagetitle1  "பாதுகாப்பற்ற இணைப்பு">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "இத்தளம் &brandShortName; மட்டுமே பாதுகாப்பாக இணைக்கலாம் என்பதைக் குறிக்க HTTP Strict Transport Security (HSTS) என்பதினை பயன்படுத்துகிறது. இதன் விளைவாக, இந்தச் சான்றிதழுக்கு விதிவிலக்கு வழங்குவது சாத்தியமில்லை.">
+<!ENTITY certerror.copyToClipboard.label "உரையை ஒட்டுப்பலகைக்கு நகலெடு">
+
+<!ENTITY inadequateSecurityError.title "உங்கள் இணைப்பு பாதுகாப்பற்றது">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> பழமையான பாதுகாப்பு தொழில்நுட்பத்தைக் கொண்டிருப்பதால் பாதிப்பு ஏற்படும். இணைய திருடர்கள் பாதுகாப்பற்ற தரவுகளை வெளியாக்கலாம். நீங்கள் தளத்தைப் பார்வையிடும் முன் இந்தச் சேவகனை நிர்வகிப்பவர் தளத்தைச் சரி செய்தல் வேண்டும்.</p><p>பிழைக் குறியீடு: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "உங்கள் பிணையப் பாதுகாப்பு அமைவுகள் இதற்குக் காரணமாக இருக்கலாம். முன்னிருப்பை மீட்டு வைக்கவா?">
+<!ENTITY prefReset.label "முன்னிருப்பு அமைவுகளை மீட்டுவை">

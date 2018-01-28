@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label "Krátky nadpis">
+<!ENTITY message.label "Toto je vzorový text.">
+<!ENTITY editfield0.label "Používateľ:">
+<!ENTITY editfield1.label "Heslo:">
+<!ENTITY checkbox.label "Overiť">
+<!ENTITY copyCmd.label    "Kopírovať">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY selectAllCmd.label "Vybrať všetko">
+<!ENTITY selectAllCmd.accesskey "a">

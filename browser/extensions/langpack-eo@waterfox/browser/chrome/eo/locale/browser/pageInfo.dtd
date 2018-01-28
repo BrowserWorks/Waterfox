@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopii">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Elekti ĉion">
+<!ENTITY  selectall.accesskey   "E">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Ĝenerala">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Titolo:">
+<!ENTITY  generalURL            "Adreso:">
+<!ENTITY  generalType           "Tipo:">
+<!ENTITY  generalMode           "Reĝimo de elmontrado:">
+<!ENTITY  generalSize           "Grando:">
+<!ENTITY  generalReferrer       "Referencanta URL:">
+<!ENTITY  generalSource         "Fonto en staplo:">
+<!ENTITY  generalModified       "Modifita:">
+<!ENTITY  generalEncoding2      "Teksta enkodigo:">
+<!ENTITY  generalMetaName       "Nomo">
+<!ENTITY  generalMetaContent    "Enhavo">
+
+<!ENTITY  mediaTab              "Komunikrimedoj">
+<!ENTITY  mediaTab.accesskey    "K">
+<!ENTITY  mediaLocation         "Retadreso:">
+<!ENTITY  mediaText             "Teksto asociita:">
+<!ENTITY  mediaAltHeader        "Alternativa teksto">
+<!ENTITY  mediaAddress          "Adreso">
+<!ENTITY  mediaType             "Tipo">
+<!ENTITY  mediaSize             "Grando">
+<!ENTITY  mediaCount            "Nombro">
+<!ENTITY  mediaDimension        "Dimensioj:">
+<!ENTITY  mediaLongdesc         "Longa priskribo:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Konservi kiel…">
+<!ENTITY  mediaSaveAs.accesskey "n">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Antaŭvidi komunikrimedon:">
+
+<!ENTITY  feedTab               "Informfontoj">
+<!ENTITY  feedTab.accesskey     "I">
+<!ENTITY  feedSubscribe         "Aboni">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Permesoj">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Uzi ĉefan">
+<!ENTITY  permAskAlways         "Ĉiam demandi">
+<!ENTITY  permAllow             "Permesi">
+<!ENTITY  permAllowSession      "Permesi dum la seanco">
+<!ENTITY  permBlock             "Bloki">
+<!ENTITY  permissionsFor        "Permesoj por:">
+<!ENTITY  permPlugins           "Aktivigi komprogramojn">
+
+<!ENTITY  permClearStorage           "Malplenigi memoron">
+<!ENTITY  permClearStorage.accesskey "M">
+
+<!ENTITY  securityTab           "Sekureco">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Vidi atestilon">
+<!ENTITY  securityView.accesskey "a">
+<!ENTITY  securityView.unknown   "Nekonata">
+
+
+<!ENTITY  securityView.identity.header   "Identeco de retejo">
+<!ENTITY  securityView.identity.owner    "Posedanto:">
+<!ENTITY  securityView.identity.domain   "Retejo:">
+<!ENTITY  securityView.identity.verifier "Kontrolita de:">
+<!ENTITY  securityView.identity.validity "Eksvalidiĝas je:">
+
+<!ENTITY  securityView.privacy.header                   "Privateco kaj historio">
+<!ENTITY  securityView.privacy.history                  "Ĉu mi vizitis tiun ĉi retejon antaŭ ol hodiaŭ?">
+<!ENTITY  securityView.privacy.cookies                  "Ĉu tiu ĉi retejo konservas datumon (kuketojn) en mia komputilo?">
+<!ENTITY  securityView.privacy.viewCookies              "Vidi kuketojn">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ĉu mi konservis pasvortojn por tiu ĉi retejo?">
+<!ENTITY  securityView.privacy.viewPasswords            "Vidi konservitajn pasvortojn">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "v">
+
+<!ENTITY  securityView.technical.header                 "Teĥnikaj detaloj">
+
+<!ENTITY  helpButton.label                              "Helpo">

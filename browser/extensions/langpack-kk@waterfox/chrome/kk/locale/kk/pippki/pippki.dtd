@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Мастер-парольді ауыстыру">
+<!ENTITY setPassword.tokenName.label "Қорғаныс құрылғысы">
+<!ENTITY setPassword.oldPassword.label "Ағымдағы пароль:">
+<!ENTITY setPassword.newPassword.label "Жаңа пароль:">
+<!ENTITY setPassword.reenterPassword.label "Жаңа пароль (қайтадан):">
+<!ENTITY setPassword.meter.label "Пароль сапасы">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Тастау">
+<!ENTITY resetPassword.title  "Мастер-парольді тастау">
+<!ENTITY resetPassword.text  "Мастер-пароліңізді тастасаңыз, сақталған электронды пошта парольдері, жеке сертификаттар және жеке кілттер жоғалып кетеді. Мастер-пароліңізді тастауды шынымен қалайсыз ба?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Сертификатты жүктеу">
+<!ENTITY downloadCert.message1 "Сізден жаңа Сертификаттау Орталығына (CA) сену сұранды.">
+<!ENTITY downloadCert.trustSSL "Веб-сайттарды идентификациялауда осы CA сену.">
+<!ENTITY downloadCert.trustEmail "Электронды пошта пайдаланушыларын идентификациялауда осы CA сену.">
+<!ENTITY downloadCert.trustObjSign "Бағдарламаларды жасаушыларды идентификациялауда осы CA сену.">
+<!ENTITY downloadCert.message3 "Осы сертификаттау орталығына (CA) әр мақсаттарға сену алдында, оның сертификатын тексеруіңіз керек (мүмкін болса).">
+<!ENTITY downloadCert.viewCert.label "Қарап шығу">
+<!ENTITY downloadCert.viewCert.text "CA сертификатын тексеру">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Пайдаланушыны идентификациялаұ сұранымы">
+<!ENTITY clientAuthAsk.message1 "Сайт сізден өзіңізді сертификат арқылы анықтауды сұрап тұр:">
+<!ENTITY clientAuthAsk.message2 "Өзіңізді анықтайтын сертификатты таңдаңыз:">
+<!ENTITY clientAuthAsk.message3 "Таңдалған сертификат ақпараты:">
+
+<!ENTITY pkcs12.setpassword.title  "Сертификатты қалмына келтіру паролі">
+<!ENTITY pkcs12.setpassword.message  "Сертификаттың көшірме жасау паролі осы көшірмені қорғау үшін арналған. Жалғастырар алдында осы парольді орнатуыңыз керек.">
+<!ENTITY pkcs12.setpassword.label1 "Сертификатты қалпына келтіру паролі:">
+<!ENTITY pkcs12.setpassword.label2 "Сертификатты қалпына келтіру паролі(қайтадан):">
+<!ENTITY pkcs12.setpassword.reminder "Маңызды: Егер сертификатты қалпана келтіру паролін жоғалтсаңыз, кейін оны қалпына келтіре алмайсыз.  Паролді қауіпсіз жерге жазыңыз.">
+
+<!ENTITY chooseToken.title  "Токен таңдау">
+<!ENTITY chooseToken.message1 "Токен таңдаңыз.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Жабық кілтті генерациялау">
+<!ENTITY createCertInfo.msg1 "Кілттер генерациялауда… Бірнеше минут алуы мүмкін…">
+<!ENTITY createCertInfo.msg2 "Күте тұрыңыз…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Қорғалған токен аутентификациясы">
+<!ENTITY protectedAuth.msg "Токен үшін аутентификация керек. Оның түрі токен түріне байланысты.">
+<!ENTITY protectedAuth.tokenName.label "Токен:">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "පිළිබඳ:මානකරණය">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "මෙයින් ඔබේ වගකීම් සහතිකය අවලංගු වීමට ඉඩ ඇත!">
+<!ENTITY aboutWarningText.label "මේ උසස් සැකසුම් වෙනස් කිරීම මේ යෙදුමෙහි ස්ථායීබවට, ආරක්ෂාවට හා ක්‍රියාකාරීත්වයට හානිකර වීමට පුළුවන. ඔබ සිදු කරමින් සිටින්නේ කුමක්දැයි හරිහැටි දන්නේ නම් පමණක් ඉදිරියට යන්න.">
+<!ENTITY aboutWarningButton2.label "මම අවධානම භාරගනිමි!">
+<!ENTITY aboutWarningCheckbox.label "මෙම ආවවාදය මීලඟ වතාවේදි දර්ශනය කරන්න">
+
+<!ENTITY searchPrefs.label "සෙවීම:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "මනාප නමය">
+<!ENTITY lockColumn.label "තත්ත්වය">
+<!ENTITY typeColumn.label "ආකාරය">
+<!ENTITY valueColumn.label "අගය">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "අනුපිළිවෙළට සැකසීමට ක්ලික් කරන්න"> 
+<!ENTITY columnChooser.tooltip "පෙන්වීම සඳහා තීරු තේරීමට ක්ලික් කරන්න"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "පිටපත් කරන්න">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "නම පිටපත් කරන්න">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "අගය පිටපත් කරන්න">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "වෙනස් කරන්න">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "අමුණනය">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "යළි සැකසීම">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "නව">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "String">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Integer">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "බූලීය">
+<!ENTITY boolean.accesskey "B">

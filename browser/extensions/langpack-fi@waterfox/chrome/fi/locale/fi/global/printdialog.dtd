@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label  "Tulosta">
+
+<!ENTITY printDialog.title  "Tulosta">
+
+<!ENTITY fpDialog.title  "Tallenna tiedosto">
+
+<!ENTITY fileCheck.label  "Tulosta tiedostoon">
+<!ENTITY fileCheck.accesskey "T">
+<!ENTITY propertiesButton.label "Ominaisuudet…">
+<!ENTITY propertiesButton.accesskey "O">
+<!ENTITY descText.label "Tulostimen kuvaus:">
+<!ENTITY printer.label "Tulostin">
+<!ENTITY printerInput.label "Tulostin:">
+<!ENTITY printerInput.accesskey "u">
+
+<!ENTITY printrangeGroup.label "Tulostusalue">
+<!ENTITY allpagesRadio.label "Kaikki sivut">
+<!ENTITY allpagesRadio.accesskey "K">
+<!ENTITY rangeRadio.label  "Sivut">
+<!ENTITY rangeRadio.accesskey  "S">
+<!ENTITY frompageInput.label  "sivulta">
+<!ENTITY frompageInput.accesskey  "i">
+<!ENTITY topageInput.label  "sivulle">
+<!ENTITY topageInput.accesskey  "e">
+<!ENTITY selectionRadio.label "Valinta">
+<!ENTITY selectionRadio.accesskey "V">
+
+<!ENTITY copies.label  "Kopioita">
+<!ENTITY numCopies.label  "Kopioiden määrä:">
+<!ENTITY numCopies.accesskey "m">
+
+<!ENTITY printframeGroup.label  "Tulosta kehykset">
+<!ENTITY aslaidoutRadio.label  "Asettelu kuten ruudulla">
+<!ENTITY aslaidoutRadio.accesskey "A">
+<!ENTITY selectedframeRadio.label   "Valittu kehys">
+<!ENTITY selectedframeRadio.accesskey  "h">
+<!ENTITY eachframesepRadio.label   "Jokainen kehys erikseen">
+<!ENTITY eachframesepRadio.accesskey  "J">

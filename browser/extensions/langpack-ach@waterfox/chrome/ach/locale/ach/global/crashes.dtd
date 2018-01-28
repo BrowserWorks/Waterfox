@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Ripot me poto">
+<!ENTITY crashesUnsubmitted.label   "Ngec me poto ma pe kicwalo">
+<!ENTITY crashesSubmitted.label     "Omiyo ngec me poto">
+<!ENTITY id.heading                 "Cwal ngec me ID">
+<!ENTITY dateCrashed.heading        "Nino dwe opoto woko">
+<!ENTITY dateSubmitted.heading      "Kicwalo Nino dwe">
+<!ENTITY noReports.label            "Pe kicwalo ngec me opoto.">
+<!ENTITY noConfig.label             "Purugram man pe kicano me yaro ka maleng ngec me poto. En ma imito <code>breakpad.reportURL</code> myero kiter.">
+<!ENTITY clearAllReports.label      "Kwany Ngec Woko Weng">

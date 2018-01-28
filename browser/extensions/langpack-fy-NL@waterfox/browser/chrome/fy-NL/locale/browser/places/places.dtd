@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Biblioteek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Oarderje">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Jo blêdwizers oarderje">
+
+<!ENTITY file.close.label               "Slute">
+<!ENTITY file.close.accesskey           "S">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Byld">
+<!ENTITY views.accesskey                "B">
+<!ENTITY views.tooltip                  "Jo werjefte wizigje">
+<!ENTITY view.columns.label             "Kolommen toane">
+<!ENTITY view.columns.accesskey         "T">
+<!ENTITY view.sort.label                "Sortearje">
+<!ENTITY view.sort.accesskey            "s">
+<!ENTITY view.unsorted.label            "Net sortearre">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Sortearfolchoarder A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sortearfolchoarder Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Ymportearje blêdwizers út HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "Y">
+<!ENTITY exportBookmarksToHTML.label       "Eksportearje blêdwizers nei HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Ymportearje gegevens út in oare browser…">
+<!ENTITY importOtherBrowser.accesskey      "o">
+
+<!ENTITY cmd.backup.label               "Reservekopy meitsje…">
+<!ENTITY cmd.backup.accesskey           "R">
+<!ENTITY cmd.restore2.label             "Werom bringe">
+<!ENTITY cmd.restore2.accesskey         "W">
+<!ENTITY cmd.restoreFromFile.label      "Bestân kieze…">
+<!ENTITY cmd.restoreFromFile.accesskey  "B">
+
+<!ENTITY cmd.deleteDomainData.label     "Dizze website ferjitte">
+<!ENTITY cmd.deleteDomainData.accesskey "f">
+
+<!ENTITY cmd.open.label                  "Iepenje">
+<!ENTITY cmd.open.accesskey              "I">
+<!ENTITY cmd.open_window.label           "Iepenje yn in nij finster">
+<!ENTITY cmd.open_window.accesskey       "f">
+<!ENTITY cmd.open_private_window.label     "Iepenje yn in nij priveefinster">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Iepenje yn in nij ljepblêd">
+<!ENTITY cmd.open_tab.accesskey          "l">
+<!ENTITY cmd.open_all_in_tabs.label      "Iepenje alles yn ljepblêden">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "a">
+
+<!ENTITY cmd.properties.label      "Eigenskippen">
+<!ENTITY cmd.properties.accesskey  "E">
+
+<!ENTITY cmd.sortby_name.label              "Sortearje op namme">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "S">
+
+<!ENTITY cmd.new_bookmark.label            "Nije blêdwizer…">
+<!ENTITY cmd.new_bookmark.accesskey        "b">
+<!ENTITY cmd.new_folder.label              "Nije map…">
+<!ENTITY cmd.new_folder.accesskey          "m">
+<!ENTITY cmd.context_new_folder.accesskey  "m">
+<!ENTITY cmd.new_separator.label           "Nij skiedingsteken">
+<!ENTITY cmd.new_separator.accesskey       "s">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Liveblêdwizer opnij lade">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "L">
+
+<!ENTITY cmd.moveBookmarks.label                  "Ferpleatse…">
+<!ENTITY cmd.moveBookmarks.accesskey              "F">
+
+<!ENTITY col.name.label          "Namme">
+<!ENTITY col.tags.label          "Labels">
+<!ENTITY col.url.label           "Lokaasje">
+<!ENTITY col.mostrecentvisit.label "Meast resinte besite">
+<!ENTITY col.visitcount.label    "Besykteller">
+<!ENTITY col.description.label   "Beskriuwing">
+<!ENTITY col.dateadded.label     "Tafoege">
+<!ENTITY col.lastmodified.label  "Lêst wizige">
+
+<!ENTITY search.placeholder  "Sykje">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Ymportearje en reservekopy meitsje">
+<!ENTITY maintenance.accesskey  "Y">
+<!ENTITY maintenance.tooltip    "Jo blêdwizers ymportearje en reservekopy meitsje">
+
+<!ENTITY backButton.tooltip  "Gean tebek">
+
+<!ENTITY forwardButton.tooltip  "Gean foarút">
+
+<!ENTITY detailsPane.more.label "Mear">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Minder">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "Selektearje in item om te besjen en de eigenskippen te bewurkjen">
+
+<!ENTITY view.label               "Byld">
+<!ENTITY view.accesskey           "B">
+<!ENTITY byDate.label             "Op datum">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Op website">
+<!ENTITY bySite.accesskey         "w">
+<!ENTITY byMostVisited.label      "Op meast besocht">
+<!ENTITY byMostVisited.accesskey  "m">
+<!ENTITY byLastVisited.label      "Op lêst besocht">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "Op datum en website">
+<!ENTITY byDayAndSite.accesskey   "e">

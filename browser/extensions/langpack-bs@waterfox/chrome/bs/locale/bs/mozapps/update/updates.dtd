@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Update softvera">
+
+<!ENTITY  checking.title                  "Provjeravam za update">
+<!ENTITY  updateCheck.label               "Tražim noviju verziju &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Nijedan update nije pronađen">
+<!ENTITY  noupdatesautoenabled.intro      "Nema dostupnih updatea. &brandShortName; će povremeno provjeravati za update.">
+<!ENTITY  noupdatesautodisabled.intro     "Nema dostupnih updatea. Molimo provjerite ponovo poslije ili omogućite da &brandShortName; automatski provjerava postojanje updatea.">
+
+<!ENTITY  manualUpdate.title              "Update nije moguć">
+<!ENTITY  manualUpdate.desc               "Preporučeni update sigurnosti i stabilnosti je dostupan, ali vi nemate sistemske dozvole potrebne za instaliranje. Obratite se svom sistemskom administratoru, ili pokušajte ponovo sa korisničkog računa koji ima dozvole da instalira softver na ovaj računar.">
+<!ENTITY  manualUpdate.space.desc         "Preporučeni update za stabilnost i sigurnost je dostupan, ali vi nemate dovoljno prostora za instalaciju.">
+<!ENTITY  manualUpdateGetMsg.label        "Uvijek možete nabaviti najnoviju verziju &brandShortName;a na:">
+
+<!ENTITY  unsupported.title               "Nepodržani sistem">
+<!ENTITY  unsupported.label               "Vaš &brandShortName; je zastario, ali najnovija verzija nije podržana na vašem sistemu. Molimo nadogradite vaš sistem, a zatim pokušajte ponovo. Ovu napomenu nećete više vidjeti, ali možete">
+<!ENTITY  unsupportedLink.label           "saznati više.">
+
+<!ENTITY  clickHere.label                 "Pogledajte više informacija o ovom updateu">
+
+<!ENTITY  evangelism.desc                 "Toplo preporučujemo da primjenite ovaj update za &brandShortName; čim prije.">
+
+<!ENTITY  downloadPage.title              "Preuzimam &brandShortName;">
+<!ENTITY  downloading.intro               "Preuzimam update…">
+<!ENTITY  connecting.label                "Povezujem se na server za update…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; nije uspio provjeriti integritet inkrementalnog updatea kojeg je preuzeo, pa stoga preuzima cjelokupan paket za update.">
+
+<!ENTITY  viewDetails.tooltip             "Prikaži detalje za ovaj update">
+
+<!ENTITY  details.link                    "Detalji">
+
+<!ENTITY  error.title                     "Update neuspješan">
+
+<!ENTITY  error.label                     "Pojavili su se problemi pri provjeravanju, preuzimanju ili instaliranju ovog updatea. &brandShortName; nije mogao instalirati update zbog:">
+                                           
+<!ENTITY  errorManual.label               "Možete izvršiti update &brandShortName;a ručno ako posjetite ovu adresu i preuzmete najnoviju verziju:">
+                                           
+<!ENTITY  errorpatching.intro             "Parcijalna nadogradnja nije mogla biti primjenjena. &brandShortName; će pokušati ponovo preuzimanjem cjelokupnog updatea.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ne može utvrditi da li postoji dostupan update. Molimo da provjerite da li imate posljednju verziju &brandShortName;-a sa:">
+
+<!ENTITY  finishedPage.title              "Update spreman za instalaciju">
+<!ENTITY  finishedPage.text               "Update će biti instaliran sljedeći put kada se &brandShortName; pokrene. Vi možete restartovati &brandShortName; odmah, ili nastaviti sa radom i restartovati kasnije.">
+
+<!ENTITY  finishedBackgroundPage.text     "Update vezan za sigurnost i stabilnost za &brandShortName; je preuzet i spreman za instalaciju.">
+<!ENTITY  finishedBackground.name         "Update:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Update će biti instaliran sljedeći put kada se &brandShortName; pokrene. Vi možete restartovati &brandShortName; odmah, ili nastaviti sa radom i restartovati poslije.">
+<!ENTITY  finishedBackground.moreElevated "Ova nadogradnja zahtijeva administratorske ovlasti. Nadogradnja će biti instalirana prilikom sljedećeg &brandShortName; pokretanja. Možete restartovati &brandShortName; odmah, nastaviti raditi i restartovati kasnije ili odustati od nadogradnje.">
+
+<!ENTITY  update.details.label            "Detalji">
+<!ENTITY  update.installedOn.label        "Instalirano na:">
+<!ENTITY  update.status.label             "Status:">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Pšawa">
+
+<!ENTITY  blockPopups.label           "Wuskokujuce wokno blokěrowaś">
+<!ENTITY  blockPopups.accesskey       "k">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Dalšne informacije">
+<!ENTITY  notificationsPolicyDesc4.label       "Wubjeŕśo, kótare sedła směju wam powěźeńki pósłaś">
+<!ENTITY  notificationsPolicyButton.accesskey  "u">
+<!ENTITY  notificationsPolicyButton.label      "Wubraś…">
+<!ENTITY  notificationsDoNotDisturb.label      "Njemólśo">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "m">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Žedna powěźeńka se njepokazujo, až &brandShortName; znowego njestartujośo">
+
+<!ENTITY  popupExceptions.label       "Wuwześa…">
+<!ENTITY  popupExceptions.accesskey   "W">
+
+<!ENTITY  fontsAndColors.label        "Pisma a barwy">
+
+<!ENTITY  defaultFont2.label          "Standardne pismo">
+<!ENTITY  defaultFont2.accesskey      "S">
+<!ENTITY  defaultSize2.label          "Wjelikosć">
+<!ENTITY  defaultSize2.accesskey      "l">
+
+<!ENTITY  advancedFonts.label         "Rozšyrjony…">
+<!ENTITY  advancedFonts.accesskey     "o">
+
+<!ENTITY  colors.label                "Barwy…">
+<!ENTITY  colors.accesskey            "B">
+
+
+<!ENTITY language2.label              "Rěc">
+<!ENTITY chooseLanguage.label         "Wubjeŕśo swóju preferěrowanu rěc za zwobraznjenje bokow">
+<!ENTITY chooseButton.label           "Wubraś…">
+<!ENTITY chooseButton.accesskey       "u">
+
+<!ENTITY translateWebPages.label      "Webwopśimjeśe pśełožowaś">
+<!ENTITY translateWebPages.accesskey  "W">
+<!ENTITY translateExceptions.label    "Wuwześa…">
+<!ENTITY translateExceptions.accesskey "W">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Pśełožki wót">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Wopśimjeśe Digital Right Management (DRM)">
+
+<!ENTITY  playDRMContent2.label          "Wopśimjeśe wóźony pśez DRM wótgraś">
+<!ENTITY  playDRMContent2.accesskey      "m">
+<!ENTITY  playDRMContent.learnMore.label "Dalšne informacije">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  history.title             "Historie aktualizací">
+<!ENTITY  history.intro             "Byly nainstalovány následující aktualizace:">
+<!ENTITY  closebutton.label         "Zavřít">
+                                     
+<!ENTITY  noupdates.label           "Doposud nebyly nainstalovány žádné aktualizace.">
+
+<!ENTITY  name.header               "Jméno aktualizace">
+<!ENTITY  date.header               "Datum instalace">
+<!ENTITY  type.header               "Typ">
+<!ENTITY  state.header              "Stav">
+

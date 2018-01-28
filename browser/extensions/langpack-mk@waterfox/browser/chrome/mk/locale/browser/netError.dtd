@@ -1,0 +1,201 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Проблем со вчитувањето на страницата">
+<!ENTITY retry.label "Обиди се повторно">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Врската не може да се воспостави">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Оваа адреса е забранета">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Серверот не е пронајден">
+<!ENTITY dnsNotFound.longDesc "<ul> 
+<li>Проверете дали во адресата имате печатни грешки како 
+<strong>ww</strong>.example.com наместо 
+<strong>www</strong>.example.com</li> 
+<li>Ако не можете да вчитате никакви страници, проверете ја мрежната врска на 
+Вашиот компјутер.</li> 
+<li>Ако Вашиот компјутер или мрежа се заштитени со огнен ѕид или посредник, 
+проверете дали &brandShortName; има дозвола да пристапи на Интернет.</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "Датотеката не е пронајдена">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>Проверете дали во името има големи букви или други печатни грешки.</li> 
+<li>Проверете дали датотеката е преместена, преименувана или избришана.</li></ul>">
+
+
+<!ENTITY generic.title "Упс.">
+<!ENTITY generic.longDesc "<p>Поради некоја причина &brandShortName; не може да ја вчита оваа страница.</p>">
+
+
+
+<!ENTITY malformedURI.title "Адресата не е важечка">
+<!ENTITY malformedURI.longDesc "<ul> 
+<li>Адресите на страниците најчесто се напишани како 
+<strong>http://www.example.com/</strong></li> 
+<li>Проверете дали користите точни коси црти (т.е. 
+<strong>/</strong>).</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "Врската беше прекината">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Документот е застарен">
+<!ENTITY notCached.longDesc "<p>Бараниот документ не е достапен во кешот на &brandShortName;. 
+</p><ul><li>Заради безбедност &brandShortName; автоматски не 
+побарува осетливи документи.</li><li>Кликнете на „Обиди се повторно“ за повторно да го побарате документот од мрежното место.</li></ul>">
+
+<!ENTITY netOffline.title "Локален режим">
+<!ENTITY netOffline.longDesc2 "<ul> 
+<li>Притиснете на „Обиди се повторно“ за да преминете во мрежен режим и 
+да ја превчитате страницата.</li> 
+</ul>">
+
+<!ENTITY contentEncodingError.title "Грешка во кодната страница на содржината">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>Контактирајте со сопствениците на страницата за да ги информирате за овој проблем.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "Небезбеден тип на датотека">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>Контактирајте со сопствениците на страницата за да ги информирате за овој проблем.</li> 
+</ul>">
+
+<!ENTITY netReset.title "Врската беше ресетирана">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Времето за врската истече">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+
+<!ENTITY proxyConnectFailure.title "Серверот посредник одбива врски">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>Проверете дали поставките за посредник се точни.</li> 
+<li>Контактирајте со Вашиот мрежен администратор за да проверите дали серверот 
+посредник работи.</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "Серверот посредник не може да се пронајде">
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>Проверете дали поставките за посредник се точни.</li> 
+<li>Проверете дали мрежната врска на Вашиот компјутер работи</li> 
+<li>Ако Вашиот компјутер или мрежа се заштитени со огнен ѕид или посредник, 
+проверете дали &brandShortName; има дозвола да пристапи на Интернет.</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "Страницата не пренасочува точно">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>Овој проблем некогаш може да биде предизвикан од оневозможување или 
+одбивање на колачиња.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Неочекуван одговор од серверот">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>Проверете дали на Вашиот систем е инсталиран менаџерот за лична безбедност.</li> 
+<li>Ова може да се случува поради нестандардна конфигурација на серверот.</li></ul>">
+
+<!ENTITY nssFailure2.title "Безбедната врска не успеа">
+
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>Можеби местото е привремено недостапно или зафатено. Обидете се повторно по неколку секунди.</li> 
+<li>Ако не можете да вчитате никакви страници, проверете ја мрежната врска 
+на Вашиот компјутер.</li>  <li>Ако Вашиот компјутер или мрежа се заштитени со огнен 
+ѕид или посредник, проверете дали &brandShortName; има дозвола да пристапи на Интернет.</li> 
+</ul>">
+
+
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Додај исклучок..">
+
+
+<!ENTITY remoteXUL.title "Мрежен XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Контактирајте со сопствениците на страницата за да 
+ги информирате за овој проблем.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+
+<!ENTITY advanced.label "Advanced">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.copyToClipboard.label "Copy text to clipboard">
+
+<!ENTITY certerror.introPara "The owner of <span class='hostname'/> has configured their website improperly.  To protect your information from being stolen, &brandShortName; has not connected to this website.">
+
+<!ENTITY certerror.longpagetitle1 "Your connection is not secure">
+<!ENTITY certerror.pagetitle1  "Insecure Connection">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "This site uses HTTP
+Strict Transport Security (HSTS) to specify that &brandShortName; may only connect
+to it securely. As a result, it is not possible to add an exception for this
+certificate.">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>The page you are trying to view cannot be shown because an error in the data transmission was detected.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+
+<!ENTITY corruptedContentErrorv2.title "Corrupted Content Error">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY errorReporting.automatic2 "Report errors like this to help Mozilla identify and block malicious sites">
+<!ENTITY errorReporting.learnMore "Learn more…">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>It may have been removed, moved, or file permissions may be preventing access.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>The page you are trying to view cannot be shown because the authenticity of the received data could not be verified.</li>
+  <li>Please contact the website owners to inform them of this problem.</li>
+</ul>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+
+<!ENTITY prefReset.label "Restore default settings">
+<!ENTITY prefReset.longDesc "It looks like your network security settings might be causing this. Do you want the default settings to be restored?">
+<!ENTITY returnToPreviousPage.label "Go Back">
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY sslv3Used.title "Unable to Connect Securely">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>You might need to install other software to open this address.</li>
+</ul>
+">
+
+<!ENTITY unknownProtocolFound.title "The address wasn’t understood">

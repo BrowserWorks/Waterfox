@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informasjon om url-klassifiseraren">
+<!ENTITY aboutUrlClassifier.providerTitle               "Leverandør">
+<!ENTITY aboutUrlClassifier.provider                    "Leverandør">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Sist oppdatert">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Neste oppdatering">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off tid">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Siste oppdateringsstatus">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Oppdater">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Snøgglager">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Oppdater">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Tøm">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabellnamn">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Tal på negative snøgglageroppføringar">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Tal på positive snøgglageroppføringar">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Vis oppføringar">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Snøgglageroppføringar">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negativ snøgglagerutløp">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Fullstendig hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positiv snøgglagerutløp">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Feilretting">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Spesifiser loggmodular">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Spesifiser loggfil">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Spesifiser JS-logg">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Loggmodular for trygg nettlesing">
+<!ENTITY aboutUrlClassifier.debugModules                "Aktuelle loggmodular">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS-logg for trygg nettlesing">
+<!ENTITY aboutUrlClassifier.debugFile                   "Gjeldande loggfil">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "მოდული შესაძლოა სახიფათო აღმოჩნდეს">
+<!ENTITY blocklist.style             "width: 54em; height: 36em">
+<!ENTITY blocklist.summary           "&brandShortName; პროგრამამ დაადგინა, რომ შემდეგი მოდულები ცნობილია როგორც სახიფათო სტაბილობისა და უსაფრთხოებისთვის:">
+<!ENTITY blocklist.softblocked       "თქვენი უსაფრთხოებისთვის, მკაცრად რეკომენდებულია ამორთოთ ეს დამატებები და ხელახლა გაუშვათ ბრაუზერი.">
+<!ENTITY blocklist.hardblocked       "ეს დამატებები დიდი ალბათობით საფრთხეს შეუქმნის მდგრადობას და უსაფრთხოებას, რის გამოც შეიზღუდება, თუმცა მათ სრულად გამოსართავად აუცილებელია ხელახლა გაშვება.">
+<!ENTITY blocklist.softandhard       "დამატებები, რომლებიც უსაფრთხოებას და მდგრადობას საფრთხეს უქმნიან, შეზღუდულია. დანარჩენები, ნაკლებად სახიფათოა, მაგრამ მკაცრად რეკომენდებულია მათი გამორთვა და პროგრამის ხელახლა გაშვება.">
+<!ENTITY blocklist.moreinfo          "ვრცლად">
+
+<!ENTITY blocklist.accept.label      "&brandShortName;-ს ხელახლა გაშვება">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "შეზღუდულია">
+<!ENTITY blocklist.checkbox.label    "ამორთვა">

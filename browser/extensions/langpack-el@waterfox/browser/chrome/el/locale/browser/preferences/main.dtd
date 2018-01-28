@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Εκκίνηση">
+
+<!ENTITY startupPage2.label        "Κατά την εκκίνηση του &brandShortName;">
+<!ENTITY startupPage2.accesskey    "ε">
+<!ENTITY startupUserHomePage.label "Εμφάνιση αρχικής σελίδας">
+<!ENTITY startupBlankPage.label    "Εμφάνιση κενής σελίδας">
+<!ENTITY startupPrevSession.label  "Εμφάνιση παραθύρων και καρτελών από την τελευταία φορά">
+
+<!ENTITY homepage2.label           "Αρχική σελίδα">
+<!ENTITY homepage2.accesskey       "Σ">
+<!ENTITY useCurrentPage.label      "Χρήση τρέχουσας σελίδας">
+<!ENTITY useCurrentPage.accesskey  "Τ">
+<!ENTITY useMultiple.label         "Χρήση τρεχουσών σελίδων">
+<!ENTITY chooseBookmark.label      "Χρήση σελιδοδείκτη…">
+<!ENTITY chooseBookmark.accesskey  "σ">
+<!ENTITY restoreDefault.label      "Επαναφορά προεπιλογής">
+<!ENTITY restoreDefault.accesskey  "ρ">
+
+<!ENTITY downloads.label     "Λήψεις">
+
+<!ENTITY saveTo.label "Αποθήκευση αρχείων σε">
+<!ENTITY saveTo.accesskey "θ">
+<!ENTITY chooseFolderWin.label        "Περιήγηση…">
+<!ENTITY chooseFolderWin.accesskey    "ζ">
+<!ENTITY chooseFolderMac.label        "Επιλογή…">
+<!ENTITY chooseFolderMac.accesskey    "π">
+<!ENTITY alwaysAskWhere.label         "Να γίνεται πάντα ερώτηση για την τοποθεσία αποθήκευσης αρχείων">
+<!ENTITY alwaysAskWhere.accesskey     "α">
+
+<!ENTITY alwaysCheckDefault2.label        "Να γίνεται πάντα έλεγχος για το αν το &brandShortName; είναι το προεπιλεγμένο πρόγραμμα περιήγησής σας">
+<!ENTITY alwaysCheckDefault2.accesskey    "Π">
+<!ENTITY setAsMyDefaultBrowser3.label     "Ορισμός ως προεπιλογή…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "Π">
+<!ENTITY isDefault.label                  "Αυτήν τη στιγμή, το &brandShortName; είναι το προεπιλεγμένο πρόγραμμα περιήγησής σας">
+<!ENTITY isNotDefault.label               "Το &brandShortName; δεν είναι το προεπιλεγμένο πρόγραμμα περιήγησής σας">
+
+<!ENTITY separateProfileMode.label        "Να επιτρέπεται στο &brandShortName; και στο Waterfox η ταυτόχρονη εκτέλεση">
+<!ENTITY useWaterfoxSync.label             "Συμβουλή: Θα γίνεται χρήση ξεχωριστών προφίλ. Χρησιμοποιήστε το Sync για κοινή χρήση δεδομένων.">
+<!ENTITY getStarted.notloggedin.label     "Σύνδεση στο &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Άνοιγμα προτιμήσεων του &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Ενεργοποίηση πολυδιεργασίας του &brandShortName;">

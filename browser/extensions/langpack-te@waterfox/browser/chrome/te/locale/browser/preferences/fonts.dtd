@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "ఫాంట్లు">
+
+<!ENTITY  language.label                          "వీటికి ఫాంట్లు:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "పరిమాణం:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "అనుపాత:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "సెరిఫ్:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "సాన్స్-సెరీఫ్:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "మోనోస్పేస్:">
+<!ENTITY  monospace.accesskey                     "M">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "లాటిన్">
+<!ENTITY  font.langGroup.japanese                 "జపనీ">
+<!ENTITY  font.langGroup.trad-chinese             "సంప్రదాయ చైనీ (తైవాన్)">
+<!ENTITY  font.langGroup.simpl-chinese            "సరళీకృత చైనీ">
+<!ENTITY  font.langGroup.trad-chinese-hk          "సంప్రదాయ చైనీ (హాంకాంగ్)">
+<!ENTITY  font.langGroup.korean                   "కొరియన్">
+<!ENTITY  font.langGroup.cyrillic                 "సిరిల్లిక్">
+<!ENTITY  font.langGroup.el                       "గ్రీకు">
+<!ENTITY  font.langGroup.other                    "ఇతర లిపి వ్యవస్థలు">
+<!ENTITY  font.langGroup.thai                     "థాయి">
+<!ENTITY  font.langGroup.hebrew                   "హీబ్రూ">
+<!ENTITY  font.langGroup.arabic                   "అరబిక్">
+<!ENTITY  font.langGroup.devanagari               "దేవనాగరి">
+<!ENTITY  font.langGroup.tamil                    "తమిళం">
+<!ENTITY  font.langGroup.armenian                 "ఆర్మేనియన్">
+<!ENTITY  font.langGroup.bengali                  "బెంగాలి">
+<!ENTITY  font.langGroup.canadian                 "యూనిఫైడ్ కెనడియన్ సిల్లబరి">
+<!ENTITY  font.langGroup.ethiopic                 "ఇథియోపిక్">
+<!ENTITY  font.langGroup.georgian                 "జోర్జియన్">
+<!ENTITY  font.langGroup.gujarati                 "గుజరాతి">
+<!ENTITY  font.langGroup.gurmukhi                 "గుర్ముఖి">
+<!ENTITY  font.langGroup.khmer                    "ఖెమెర్">
+<!ENTITY  font.langGroup.malayalam                "మలయాళం">
+<!ENTITY  font.langGroup.math                     "గణితం">
+<!ENTITY  font.langGroup.odia                     "ఒడియా">
+<!ENTITY  font.langGroup.telugu                   "తెలుగు ">
+<!ENTITY  font.langGroup.kannada                  "కన్నడ">
+<!ENTITY  font.langGroup.sinhala                  "సింహళం">
+<!ENTITY  font.langGroup.tibetan                  "టిబెటన్">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "కనీస ఫాంటు పరిమాణం:">
+<!ENTITY minSize.accesskey                        "o">
+<!ENTITY minSize.none                             "ఏదీకాదు">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "సెరీఫ్">
+<!ENTITY  useDefaultFontSansSerif.label           "సాన్స్ సెరీఫ్">
+
+<!ENTITY  allowPagesToUseOwn.label                "పైన మీ ఎంపికలకు బదులుగా, పేజీలు వాటి స్వంత ఫాంట్లను ఎంచుకోవడానికి అనుమతించు">
+<!ENTITY  allowPagesToUseOwn.accesskey            "A">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "సంక్రమిత కాంటెంట్ కొరకు పాఠ్యపు ఎన్‌కోడింగు">
+<!ENTITY languages.customize.Fallback2.label      "ఆసరా పాఠ్యపు ఎన్‌కోడింగు:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "ఏదైనా సంక్రమిత పాఠ్యం దాని ఎన్‌కోడింగును వెల్లడిచేయనప్పుడు ఈ ఎన్‌కోడింగు వాడబడుతుంది.">
+
+<!ENTITY languages.customize.Fallback.auto        "ప్రస్తుత స్థానికపు అప్రమేయం">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "అరబిక్">
+<!ENTITY languages.customize.Fallback.baltic      "బాల్టిక్">
+<!ENTITY languages.customize.Fallback.ceiso       "సెంట్రల్ యూరోపియన్, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "సెంట్రల్ యూరోపియన్, మైక్రోసాఫ్ట్">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "చైనీస్, సింప్లిఫైడ్">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "చైనీస్, ట్రెడిషనల్">
+<!ENTITY languages.customize.Fallback.cyrillic    "సిరిల్లిక్">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "గ్రీకు">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "హీబ్రూ">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "జపనీ">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "కొరియన్">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "థాయి">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "టర్కిష్">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "వియత్నామీస్">
+<!ENTITY languages.customize.Fallback.other       "ఇతర (పశ్చిమ యూరోపియనుతో కలిపి)">

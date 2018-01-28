@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY id.heading                 "වාර්තා අංකය">
+<!ENTITY dateSubmitted.heading      "යොමුකල දිනය">
+<!ENTITY noReports.label            "බිඳවැටීම් වාර්තා කිසිවක් ඉදිරිපත් කර නැත.">
+<!ENTITY noConfig.label             "මේ යෙදුම බිඳවැටීම් වාර්තා පෙන්නුම් කළ හැකි පරිදි සකසා නැත. <code>breakpad.reportURL</code> යන අභිප්‍රේතය යෙදිය යුතු ය.">
+<!ENTITY clearAllReports.label      "සියළු වාර්තා ඉවත් කරන්න">
+
+<!ENTITY crashReports.title         "Crash Reports">
+<!ENTITY crashesSubmitted.label     "Submitted Crash Reports">
+<!ENTITY crashesUnsubmitted.label   "Unsubmitted Crash Reports">
+<!ENTITY dateCrashed.heading        "Date Crashed">

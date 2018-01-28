@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "ਪਰਿੰਟਰ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY paperInput.label "ਪੇਪਰ ਸਾਈਜ਼:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "ਜੌਬ ਟਾਈਟਲ:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "ਰੰਗ:">
+<!ENTITY grayRadio.label "ਗਰੇ-ਸਕੇਲ">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "ਰੰਗ">
+<!ENTITY colorRadio.accesskey "C">
+
+
+<!ENTITY edgeMarginInput.label "ਪੇਪਰ ਦੇ ਪਾਸੇ ਤੋਂ ਹਾਸ਼ੀਆ">
+<!ENTITY topInput.label "ਉੱਤੇ:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "ਹੇਠ:">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "ਖੱਬੇ:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "ਸੱਜੇ:">
+<!ENTITY rightInput.accesskey "R">

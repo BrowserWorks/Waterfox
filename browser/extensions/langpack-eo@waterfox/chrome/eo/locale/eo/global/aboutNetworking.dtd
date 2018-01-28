@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Pri retkonektado">
+<!ENTITY aboutNetworking.warning               "Tio ĉi estas tre prova. Ne uzu sen superrigado de plenkreskulo.">
+<!ENTITY aboutNetworking.showNextTime          "Montri tiun ĉi averton venontfoje">
+<!ENTITY aboutNetworking.ok                    "Akcepti">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Konektingo">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Teksaĵaj konektingoj">
+<!ENTITY aboutNetworking.refresh               "Refreŝigi">
+<!ENTITY aboutNetworking.autoRefresh           "Aŭtomata refreŝigado ĉiun trian sekundon">
+<!ENTITY aboutNetworking.hostname              "Nomo de servilo">
+<!ENTITY aboutNetworking.port                  "Pordo">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktiva">
+<!ENTITY aboutNetworking.idle                  "Senokupa">
+<!ENTITY aboutNetworking.host                  "Servilo">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Sendita">
+<!ENTITY aboutNetworking.received              "Ricevita">
+<!ENTITY aboutNetworking.family                "Familio">
+<!ENTITY aboutNetworking.addresses             "Adresoj">
+<!ENTITY aboutNetworking.expires               "Senvalidiĝo (sekundoj)">
+<!ENTITY aboutNetworking.messagesSent          "Senditaj mesaĝoj">
+<!ENTITY aboutNetworking.messagesReceived      "Ricevitaj mesaĝoj">
+<!ENTITY aboutNetworking.bytesSent             "Oktetoj senditaj">
+<!ENTITY aboutNetworking.bytesReceived         "Oktetoj ricevitaj">
+<!ENTITY aboutNetworking.logging               "Registrado">
+<!ENTITY aboutNetworking.logTutorial           "Instrukcioj pri la uzo de tiu ĉi ilo troveblas en <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Registrado de HTTP</a>.">
+<!ENTITY aboutNetworking.currentLogFile        "Nuna registra dosiero:">
+<!ENTITY aboutNetworking.currentLogModules     "Nunaj registraj moduloj:">
+<!ENTITY aboutNetworking.setLogFile            "Elekti registran dosieron">
+<!ENTITY aboutNetworking.setLogModules         "Elekti registrajn modulojn">
+<!ENTITY aboutNetworking.startLogging          "Komenci registri">
+<!ENTITY aboutNetworking.stopLogging           "Fini registri">
+<!ENTITY aboutNetworking.dnsLookup             "Serĉo en DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Trovi adreson">
+<!ENTITY aboutNetworking.dnsDomain             "Nomregno">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP adresoj">
+<!ENTITY aboutNetworking.rcwn                  "Statisktikoj de RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Stato de RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Nombro de venkoj de staplo">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Nombro de venkon de la reto">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Tuta nombro de retaj petoj">
+<!ENTITY aboutNetworking.rcwnOperation         "Operacioj de staplo">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Malfermi">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Legi">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Skribi">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Registro malfermita">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Mallonga mezumo">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Longa mezumo">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Longa norma devio">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Nombro de malrapida staplaj aliroj">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Nombro de ne malrapidaj staplaj aliroj">

@@ -1,0 +1,118 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrijas dati">
+
+<!ENTITY aboutTelemetry.changeDataChoices "  Mainīt">
+
+<!ENTITY aboutTelemetry.uploadEnabled "  FHR datu ielāde ir <span>aktivēta</span>.">
+
+<!ENTITY aboutTelemetry.uploadDisabled "  FHR datu ielāde ir <span>deaktivēta</span>.">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "  Paplašinātās telemetrijas ierakstīšana ir <span>aktivēta</span>.">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "  Paplašinātās telemetrijas ierakstīšana ir <span>deaktivēta</span>.">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping datu avots:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Aktuālie ping dati">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arhivētie ping dati">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "Ping dati:">
+
+<!ENTITY aboutTelemetry.structured "Strukturēts">
+
+<!ENTITY aboutTelemetry.raw "Neapstrādāts JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Rādīt apakšsesiju datus">
+
+<!ENTITY aboutTelemetry.choosePing "Izvēlieties ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; jaunāki ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Vecāki ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.rawPingData "Neapstrādāti ping dati ...">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Nedēļa">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Vispārējie dati">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Vides dati">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetrijas žurnāls">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Lēnie SQL vaicājumi">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Pārlūka ieķeršanās">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Pavedienu uzkāršanās">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Notverti steki
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalāri
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Apkopotie skalārie
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogrammas">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Atzīmētās histogrammas">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Notikumi
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Vienkārši mērījumi">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Papildinājumu informācija">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Vēlie rakstījumi">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Sistēmas informācija">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "  Papildinājumu apkopotās histogrammas">
+
+<!ENTITY aboutTelemetry.toggle "  Klikšķiniet lai pārslēgtu izvēli">
+
+<!ENTITY aboutTelemetry.emptySection "  (Nav datu)">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  Piezīme: Ir aktivizēta lēno SQL vaicājumu uzskaite. Pilnu SQL vaicājumu sarakstu var attēlot zemāk, taču tie netiks nosūtīti Telemetrijas sistēmai.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Iegūt funkciju nosaukumus kopām">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Rādīt neapstrādātus steka datus">
+
+<!ENTITY aboutTelemetry.filterText "  Filtrs (virkne vai /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Saturs">
+
+<!ENTITY aboutTelemetry.rawPayload "  Neapstrādāti dati">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

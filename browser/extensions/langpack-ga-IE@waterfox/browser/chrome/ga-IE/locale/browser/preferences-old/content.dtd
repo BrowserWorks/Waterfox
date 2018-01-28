@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Preabfhuinneoga">
+
+<!ENTITY  blockPopups.label           "Cuir Cosc ar Phreabfhuinneoga">
+<!ENTITY  blockPopups.accesskey       "C">
+
+<!ENTITY  notificationsPolicy.label            "Fógraí">
+<!ENTITY  notificationsPolicyLearnMore.label   "Tuilleadh eolais">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "o">
+<!ENTITY  notificationsPolicyButton.label      "Roghnaigh…">
+<!ENTITY  notificationsDoNotDisturb.label      "Ná cuir isteach orm">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "N">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Ní thaispeánfar aon fhógra go dtí go n-atosóidh tú &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Eisceachtaí…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "Clófhoirne agus Dathanna">
+
+<!ENTITY  defaultFont.label           "Cló réamhshocraithe:">
+<!ENTITY  defaultFont.accesskey       "r">
+<!ENTITY  defaultSize.label           "Méid:">
+<!ENTITY  defaultSize.accesskey       "M">
+
+<!ENTITY  advancedFonts.label         "Casta…">
+<!ENTITY  advancedFonts.accesskey     "t">
+
+<!ENTITY  colors.label                "Dathanna…">
+<!ENTITY  colors.accesskey            "D">
+
+
+<!ENTITY languages.label              "Teangacha">
+<!ENTITY chooseLanguage.label         "Roghnaigh an teanga is fearr leat le taispeáint leathanach">
+<!ENTITY chooseButton.label           "Roghnaigh…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "Aistrigh leathanaigh Ghréasáin">
+<!ENTITY translateWebPages.accesskey  "A">
+<!ENTITY translateExceptions.label    "Eisceachtaí…">
+<!ENTITY translateExceptions.accesskey "s">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Aistrithe ag">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Ábhar DRM">
+
+<!ENTITY  playDRMContent.label         "Seinn ábhar DRM">
+<!ENTITY  playDRMContent.accesskey     "S">
+<!ENTITY  playDRMContent.learnMore.label "Tuilleadh eolais">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

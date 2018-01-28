@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "UMphathi wezongezelelo">
+
+<!ENTITY search.placeholder                   "Khangela zonke izongezelelo">
+<!ENTITY search.buttonlabel                   "Khangela">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Kuyalayishwa…">
+<!ENTITY listEmpty.installed.label            "Akunazo izongezelelo zolu didi ezifakelweyo">
+<!ENTITY listEmpty.availableUpdates.label     "Akukho zihlaziyi zifumanekayo">
+<!ENTITY listEmpty.recentUpdates.label        "Akuhlaziyanga naziphi na izongezelelo kutshanje">
+<!ENTITY listEmpty.findUpdates.label          "Khangela iZihlaziyi">
+<!ENTITY listEmpty.search.label               "Ayifumani naziphi na izongezelelo ezihambelanayo">
+<!ENTITY listEmpty.button.label               "Funda ngokungaphezulu ngezongezelelo">
+<!ENTITY installAddonFromFile.label           "Fakela izongezelelo ezisuka kule fayile…">
+<!ENTITY installAddonFromFile.accesskey       "F">
+<!ENTITY toolsMenu.tooltip                    "Izixhobo zazo zonke izongezelelo">
+
+<!ENTITY getThemes.description                "Ufuna ukuphesonalayiza ibhrawza?">
+<!ENTITY getThemes.learnMore                  "Khetha amawakawaka emixholo.">
+
+<!ENTITY cmd.back.tooltip                     "Buya umva ngekhasi elinye">
+<!ENTITY cmd.forward.tooltip                  "Yiya phambili ngekhasi elinye">
+
+<!ENTITY showUnsignedExtensions.button.label  "Ezinye izongezelelo azinaku ukuqinisekiswa">
+<!ENTITY showAllExtensions.button.label       "Bonisa zonke izandiso">
+<!ENTITY debugAddons.label                    "Khuphaibhagi Kwizongezelelo">
+<!ENTITY debugAddons.accesskey                "i">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Zonke izongezelelo ziqhwalelisiwe ngemo ekhuselekileyo.">
+<!ENTITY warning.checkcompatibility.label          "Isongezelelo sokukhangela uhambelwanosiqhwalelisiwe. Usenokuba nezongezelelo ezingahambelaniyo.">
+<!ENTITY warning.checkcompatibility.enable.label   "Vumela">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Vumela isongezelelo sokukhangela uhambelwano">
+<!ENTITY warning.updatesecurity.label              "Uhlaziyo lwesongezelelo sokukhangela ukhuseleko luqhwalelisiwe. Ungahlangatyezwa luhlaziyo.">
+<!ENTITY warning.updatesecurity.enable.label       "Vumela">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Vumela uhlaziyo lwesongezelelo sokukhangela ukhuseleko">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Khangela">
+<!ENTITY view.discover.label                  "Fumana izongezelelo">
+<!ENTITY view.recentUpdates.label             "Uhlaziyo lwakutshanje">
+<!ENTITY view.availableUpdates.label          "Uhlaziyo olufumanekayo">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Khangela iZihlaziyi">
+<!ENTITY updates.checkForUpdates.accesskey    "K">
+<!ENTITY updates.viewUpdates.label            "Jonga uhlaziyo lwakutshanje">
+<!ENTITY updates.viewUpdates.accesskey        "J">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Uhlaziyo nezongezelelo ngokuzenzekelayo">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "n">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Seta kwakhona zonke izongezelelo zihlaziye ngokuzenzekelayo">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "S">
+<!ENTITY updates.resetUpdatesToManual.label          "Seta kwakhona zonke izongezelelo zihlaziywe ngesandla">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "S">
+<!ENTITY updates.updating.label               "Ihlaziya izongezelelo">
+<!ENTITY updates.installed.label              "Izongezelelo zakho zihlaziyiwe.">
+<!ENTITY updates.downloaded.label             "Uhlaziyo lwezongezelelo zakho zikhutshelwe.">
+<!ENTITY updates.restart.label                "Qalisa kwakhona ukugqibezela ufakelo">
+<!ENTITY updates.noneFound.label              "Akukho zihlaziyi zifumanekayo">
+<!ENTITY updates.manualUpdatesFound.label     "Jonga uhlaziyo olufumanekayo">
+<!ENTITY updates.updateSelected.label         "Fakela iZihlaziyi">
+<!ENTITY updates.updateSelected.tooltip       "Fakela uhlaziyo olufumanekayo kolu ludwe">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Bonisa inkcazelo engaphezulu">
+<!ENTITY cmd.showDetails.accesskey            "B">
+<!ENTITY cmd.findUpdates.label                "Fumana iZihlaziyi">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "Ekunokukhethwa kuko">
+<!ENTITY cmd.preferencesWin.accesskey         "E">
+<!ENTITY cmd.preferencesUnix.label            "Izikhethwa">
+<!ENTITY cmd.preferencesUnix.accesskey        "I">
+<!ENTITY cmd.about.label                      "Malunga">
+<!ENTITY cmd.about.accesskey                  "M">
+
+<!ENTITY cmd.enableAddon.label                "Vumela">
+<!ENTITY cmd.enableAddon.accesskey            "V">
+<!ENTITY cmd.disableAddon.label               "Qhwalelisa">
+<!ENTITY cmd.disableAddon.accesskey           "Q">
+<!ENTITY cmd.enableTheme.label                "Umxholo wokuguga">
+<!ENTITY cmd.enableTheme.accesskey            "w">
+<!ENTITY cmd.disableTheme.label               "Nqumamisa umxholo wokuguga">
+<!ENTITY cmd.disableTheme.accesskey           "w">
+<!ENTITY cmd.askToActivate.label              "Cela ukuba uyenze isebenze">
+<!ENTITY cmd.askToActivate.tooltip            "Cela ukuba isebenzise esi songezelelo ixesha ngalinye">
+<!ENTITY cmd.alwaysActivate.label             "Soloko Uyenza Isebenze">
+<!ENTITY cmd.alwaysActivate.tooltip           "Soloko usebenzisa esi songezelelo">
+<!ENTITY cmd.neverActivate.label              "Ungaze Usenze Sisebenze">
+<!ENTITY cmd.neverActivate.tooltip            "Ungaze usebenzise esi songezelelo">
+<!ENTITY cmd.stateMenu.tooltip                "Tshintsha xa esi songezelelo sisebenza">
+<!ENTITY cmd.installAddon.label               "Fakela">
+<!ENTITY cmd.installAddon.accesskey           "F">
+<!ENTITY cmd.uninstallAddon.label             "Susa">
+<!ENTITY cmd.uninstallAddon.accesskey         "S">
+<!ENTITY cmd.showPreferencesWin.label         "Ekunokukhethwa kuko">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Tshintsha okunokukhethwa kuko kwesongezelelo">
+<!ENTITY cmd.showPreferencesUnix.label        "Iipriferensi">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Tshintsha iipriferensi zesongezelelo">
+<!ENTITY cmd.contribute.label                 "Yenza igalelo">
+<!ENTITY cmd.contribute.accesskey             "Y">
+<!ENTITY cmd.contribute.tooltip               "Yenza igalelo kuphuhliso lwesi songezelelo">
+
+<!ENTITY cmd.showReleaseNotes.label           "Bonisa amanqaku okukhulula">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Bonisa amanqaku okukhulula olu hlaziyo">
+<!ENTITY cmd.hideReleaseNotes.label           "Fihla amanqaku okukhulula">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Fihla amanqaku okukhulula olu hlaziyo">
+<!ENTITY cmd.findReplacement.label            "Fumana eza kuThath' Indawo">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Yintoni izongezelelo?">
+<!ENTITY discover.description2                "Izongezelelo ziiaplikheshini ezenza ukwazi ukufaka iinkcukacha zakho ze-&brandShortName; ngokusebenza okanye isimbo esithe kratya. Zama ibha yasecaleni engachithi xesha, isazisi semozulu okanye inkangeleko enomxholo ukwenza i-&brandShortName; ibe yeyakho.">
+<!ENTITY discover.footer                      "Xa ukwi-intanethi, le pheyini iya kubonakalisa izongezelelo ezingcono nezibalulekileyo ukuba ulinge zona.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Uguqulelo">
+<!ENTITY detail.lastupdated.label             "Uhlaziyo lokuGqibela">
+<!ENTITY detail.creator.label                 "Umphuhlisi">
+<!ENTITY detail.homepage.label                "Ikhasi lasekhaya">
+<!ENTITY detail.numberOfDownloads.label       "Okukhutshelwayo">
+
+<!ENTITY detail.contributions.description     "Umphuhlisi wesi songezelelo ucela ukuba uxhase uphuhliso lwaso oluqhubayo ngokwenza igalelo elincinane.">
+
+<!ENTITY detail.updateType                    "IZihlaziyi ezizenzekelayo">
+<!ENTITY detail.updateDefault.label           "Isiseko">
+<!ENTITY detail.updateDefault.tooltip         "Fakela uhlaziyo ngokuzenzekela kuphela ukuba oko kusisiseko">
+<!ENTITY detail.updateAutomatic.label         "Ivulile">
+<!ENTITY detail.updateAutomatic.tooltip       "Fakela uhlaziyo ngokuzenzekela">
+<!ENTITY detail.updateManual.label            "Icimile">
+<!ENTITY detail.updateManual.tooltip          "Ungalufakeli uhlaziyo ngokuzenzekelayo">
+<!ENTITY detail.home                          "Ikhasi lasekhaya">
+<!ENTITY detail.repository                    "Iprofayile yesongezelelo">
+<!ENTITY detail.size                          "Ubungakanani">
+
+<!ENTITY detail.checkForUpdates.label         "Khangela iZihlaziyi">
+<!ENTITY detail.checkForUpdates.accesskey     "i">
+<!ENTITY detail.checkForUpdates.tooltip       "Khangela uhlaziyo lwesi songezelelo">
+<!ENTITY detail.showPreferencesWin.label      "Ekunokukhethwa kuko">
+<!ENTITY detail.showPreferencesWin.accesskey  "E">
+<!ENTITY detail.showPreferencesWin.tooltip    "Tshintsha okunokukhethwa kuko kwesongezelelo">
+<!ENTITY detail.showPreferencesUnix.label     "Izikhethwa">
+<!ENTITY detail.showPreferencesUnix.accesskey "I">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Tshintsha iipriferensi zesongezelelo">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Ukulinganisa umyinge">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Isiqabu">
+<!ENTITY progress.cancel.tooltip              "Rhoxisa">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Igama">
+<!ENTITY sort.name.tooltip                    "Lungisa ngegama">
+<!ENTITY sort.dateUpdated.label               "Uhlaziyo lokuGqibela">
+<!ENTITY sort.dateUpdated.tooltip             "Landelelanisa ngokomhla wohlaziyo">
+<!ENTITY sort.relevance.label                 "Uhambelwano olungcono">
+<!ENTITY sort.relevance.tooltip               "Landelelanisa ngokokufaneleka">
+<!ENTITY sort.price.label                     "Ixabiso">
+<!ENTITY sort.price.tooltip                   "Landelelanisa ngokwexabiso">
+
+<!ENTITY search.filter2.label                 "Khangela:">
+<!ENTITY search.filter2.installed.label       "Izongezelelo zam">
+<!ENTITY search.filter2.installed.tooltip     "Bonisa izongezelelo ezifakelweyo">
+<!ENTITY search.filter2.available.label       "Izongezelelo ezifumanekayo">
+<!ENTITY search.filter2.available.tooltip     "Bonisa izongezelelo ezifumanekayo ukuba zingafakelwa">
+
+<!ENTITY addon.homepage                       "Ikhasi lasekhaya">
+<!ENTITY addon.details.label                  "Ngaphezulu">
+<!ENTITY addon.details.tooltip                "Bonisa iinkcukacha ezingaphezulu ngesi songezelelo">
+<!ENTITY addon.unknownDate                    "Akwaziwa">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ISIKHOKELO">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(kuqhwalelisiwe)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Hlaziya">
+<!ENTITY addon.undoAction.label               "Qhaqha okwenzileyo">
+<!ENTITY addon.undoAction.tooltip             "Rhoxisa eli nyathelo">
+<!ENTITY addon.undoRemove.label               "Qhaqha okwenzileyo">
+<!ENTITY addon.undoRemove.tooltip             "Gcina esi songezelelo sifakelwe">
+<!ENTITY addon.restartNow.label               "Qalisa kwakhona ngoku">
+<!ENTITY addon.install.label                  "Fakela">
+<!ENTITY addon.install.tooltip                "Fakela esi songezelelo">
+<!ENTITY addon.updateNow.label                "Hlaziya ngoku">
+<!ENTITY addon.updateNow.tooltip              "Fakela uhlaziyo kwesi songezelelo">
+<!ENTITY addon.includeUpdate.label            "Quka kuhlaziyo">
+<!ENTITY addon.updateAvailable.label          "Uhlaziyo luyafumaneka">
+<!ENTITY addon.checkingForUpdates.label       "Ikhangela izihlaziyi…">
+<!ENTITY addon.releaseNotes.label             "Khulula Iingongoma:">
+<!ENTITY addon.loadingReleaseNotes.label      "Kuyalayishwa…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Uxolo, kwenzeke imposiso ekulayishweni kwamanqaku okukhulula.">
+
+<!ENTITY addon.createdBy.label                "Ngu ">
+
+<!ENTITY eula.title                           "Sisivumelwano selayisensi yomsebenzisi">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Yamnkela uze ufakele…">
+
+<!ENTITY settings.path.button.label           "Bhrawuza…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Yintoni le? Ithelemetri isenokufakela ize ihambise imiboniso amaxesha ngamaxesha.">
+<!ENTITY experiment.info.learnmore "Funda ngaphezulu">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Iisethingi zethelemetri">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Funda ngaphezulu...">
+
+<!ENTITY disabledUnsigned.heading "Ezinye izongezelelo zenziwe azasebenza">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Izongezelelo ezilandelayo ziqinisekisiwe ukusetyenziswa kwe-&brandShortName;. Unganako">
+<!ENTITY disabledUnsigned.description.findAddonsLink "fumana izinto zokutshintsha ">
+<!ENTITY disabledUnsigned.description.end "  okanye cela umenzi ukufumana ukuba baqinisekiswe.">
+<!ENTITY disabledUnsigned.learnMore "Funda okuninzi malunga neenzane zethu ukukunceda uhlale ukhuselekile kuqhagamshelwano lwe-intanethi.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Abenzi abanomdla ekufumaneni izongezelelo zabo ukuba ziqinisekiswe kungaqhubeka ngokufunda zethu">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "Ukwenza ngaphandle komatshini">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Ngaba kukho into engekhoyo? Ezinye iiplagini azisaxhaswa yi-&brandShortName;">
+<!ENTITY pluginDeprecation.learnMore "Funda Okungakumbi">
+
+<!ENTITY legacyWarning.description "Ngaba kukho into engekhoyo? Ezinye izongezelelo azisaxhaswa yi-&brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Bonisa izongezelelo ezizizikhokelo">
+<!ENTITY legacyExtensions.title "IZongezelelo zeziKhokelo">
+<!ENTITY legacyExtensions.description "Ezi zongezelelo azidibani nemilinganiselo ye&brandShortName; ekhoyo ngoko iye yayekiswa.">
+<!ENTITY legacyExtensions.learnMore "Funda ngotshintsho kwizongezelelo">

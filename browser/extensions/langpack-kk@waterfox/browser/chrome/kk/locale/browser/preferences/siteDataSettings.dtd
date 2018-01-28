@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Баптаулар - Сайт деректері">
+<!ENTITY     hostCol.label                 "Сайт">
+<!ENTITY     statusCol.label               "Қалып-күйі">
+<!ENTITY     usageCol.label                "Сақтауыш">
+<!ENTITY     searchTextboxPlaceHolder             "Сайттардан іздеу">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "с">
+<!ENTITY     removeSelected.label          "Таңдалғанды өшіру">
+<!ENTITY     removeSelected.accesskey      "р">
+<!ENTITY     save.label                    "Өзгерістерді сақтау">
+<!ENTITY     save.accesskey                "с">
+<!ENTITY     cancel.label                  "Бас тарту">
+<!ENTITY     cancel.accesskey              "а">
+<!ENTITY     removingDialog.title          "Сайт деректерін өшіру">
+<!ENTITY     removingSelected.description  "Сайт деректерін өшіру нәтижесінде сәйкес cookies және желіден тыс веб құрамасы өшірілетін болады. Нәтижесінде сіз сайттардан шығуыңыз мүмкін. Өзгерістерді іске асыруды шынымен қалайсыз ба?">
+<!ENTITY     siteTree.label                "Келесі веб сайттар cookies өшірілетін болады:">

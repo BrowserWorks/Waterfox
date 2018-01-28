@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "ตัวจัดการใบรับรอง">
+
+<!ENTITY certmgr.tab.mine                     "ใบรับรองของคุณ">
+<!ENTITY certmgr.tab.others2                  "ผู้คน">
+<!ENTITY certmgr.tab.websites3                "เซิร์ฟเวอร์">
+<!ENTITY certmgr.tab.ca                       "หน่วยงาน">
+<!ENTITY certmgr.tab.orphan2                  "อื่น ๆ">
+
+<!ENTITY certmgr.mine                         "คุณมีใบรับรองจากองค์กรเหล่านี้ที่ระบุตัวตนคุณ:">
+<!ENTITY certmgr.others                       "คุณมีใบรับรองบนไฟล์ที่ระบุตัวตนผู้คนเหล่านี้:">
+<!ENTITY certmgr.websites2                    "คุณมีใบรับรองบนไฟล์ที่ระบุตัวตนเซิร์ฟเวอร์เหล่านี้:">
+<!ENTITY certmgr.cas                          "คุณมีใบรับรองบนไฟล์ที่ระบุตัวตนหน่วยงานเหล่านี้:">
+<!ENTITY certmgr.orphans                      "คุณมีใบรับรองบนไฟล์ที่ไม่เข้ากับหมวดหมู่ใด ๆ:">
+
+<!ENTITY certmgr.detail.general_tab.title     "ทั่วไป">
+<!ENTITY certmgr.detail.general_tab.accesskey "ท">
+<!ENTITY certmgr.detail.prettyprint_tab.title "รายละเอียด">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "ร">
+
+<!ENTITY certmgr.pending.label                "กำลังตรวจสอบใบรับรอง…">
+<!ENTITY certmgr.subjectinfo.label            "ออกให้">
+<!ENTITY certmgr.issuerinfo.label             "ออกโดย">
+<!ENTITY certmgr.periodofvalidity.label       "ระยะเวลาที่มีผล" >
+<!ENTITY certmgr.fingerprints.label           "ลายนิ้วมือ">
+<!ENTITY certmgr.certdetail.title             "รายละเอียดใบรับรอง">
+<!ENTITY certmgr.certdetail.cn                "ชื่อสามัญ (CN)">
+<!ENTITY certmgr.certdetail.o                 "องค์กร (O)">
+<!ENTITY certmgr.certdetail.ou                "หน่วยงาน (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "หมายเลขอนุกรม">
+<!ENTITY certmgr.certdetail.sha256fingerprint "ลายนิ้วมือ SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "ลายนิ้วมือ SHA1">
+
+<!ENTITY certmgr.editcacert.title             "แก้ไขการตั้งค่าความน่าเชื่อถือของใบรับรอง CA">
+<!ENTITY certmgr.editcert.edittrust           "แก้ไขการตั้งค่าความน่าเชื่อถือ :">
+<!ENTITY certmgr.editcert.trustssl            "ใบรับรองนี้สามารถระบุตัวตนของเว็บไซต์">
+<!ENTITY certmgr.editcert.trustemail          "ใบรับรองนี้สามารถระบุตัวตนของผู้ใช้จดหมาย">
+<!ENTITY certmgr.editcert.trustobjsign        "ใบรับรองนี้สามารถระบุตัวตนของผู้สร้างโปรแกรม">
+
+<!ENTITY certmgr.deletecert.title             "ลบใบรับรอง">
+
+<!ENTITY certmgr.certname                     "ชื่อใบรับรอง">
+<!ENTITY certmgr.certserver                   "เซิร์ฟเวอร์">
+<!ENTITY certmgr.override_lifetime            "อายุการใช้งาน">
+<!ENTITY certmgr.tokenname                    "อุปกรณ์ความปลอดภัย">
+<!ENTITY certmgr.begins                       "เริ่มเมื่อ">
+<!ENTITY certmgr.expires                      "หมดอายุเมื่อ">
+<!ENTITY certmgr.email                        "ที่อยู่อีเมล">
+<!ENTITY certmgr.serial                       "หมายเลขอนุกรม">
+
+<!ENTITY certmgr.close.label                  "ปิด">
+<!ENTITY certmgr.close.accesskey              "ป">
+<!ENTITY certmgr.view2.label                  "ดู…">
+<!ENTITY certmgr.view2.accesskey              "ด">
+<!ENTITY certmgr.edit3.label                  "แก้ไขการเชื่อถือ…">
+<!ENTITY certmgr.edit3.accesskey              "ก">
+<!ENTITY certmgr.export.label                 "ส่งออก…">
+<!ENTITY certmgr.export.accesskey             "ส">
+<!ENTITY certmgr.delete2.label                "ลบ…">
+<!ENTITY certmgr.delete2.accesskey            "ล">
+<!ENTITY certmgr.delete_builtin.label         "ลบหรือเลิกเชื่อถือ…">
+<!ENTITY certmgr.delete_builtin.accesskey     "ถ">
+<!ENTITY certmgr.backup2.label                "สำรองข้อมูล…">
+<!ENTITY certmgr.backup2.accesskey            "ร">
+<!ENTITY certmgr.backupall2.label             "สำรองข้อมูลทั้งหมด…">
+<!ENTITY certmgr.backupall2.accesskey         "อ">
+<!ENTITY certmgr.restore2.label               "นำเข้า…">
+<!ENTITY certmgr.restore2.accesskey           "น">
+<!ENTITY certmgr.details.label                "ข้อมูลใบรับรอง">
+<!ENTITY certmgr.details.accesskey            "ข">
+<!ENTITY certmgr.fields.label                 "ค่า">
+<!ENTITY certmgr.fields.accesskey             "ค">
+<!ENTITY certmgr.hierarchy.label              "ลำดับชั้นใบรับรอง">
+<!ENTITY certmgr.hierarchy.accesskey2         "ล">
+<!ENTITY certmgr.addException.label           "เพิ่มข้อยกเว้น…">
+<!ENTITY certmgr.addException.accesskey       "ย">
+
+<!ENTITY exceptionMgr.title                   "เพิ่มข้อยกเว้นความปลอดภัย">
+<!ENTITY exceptionMgr.exceptionButton.label   "ยืนยันข้อยกเว้นความปลอดภัย">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "ย">
+<!ENTITY exceptionMgr.supplementalWarning     "ธนาคาร, ห้างร้าน และเว็บไซต์สาธารณะที่ถูกกฎหมายจะไม่ให้คุณทำเช่นนี้">
+<!ENTITY exceptionMgr.certlocation.caption2   "เซิร์ฟเวอร์">
+<!ENTITY exceptionMgr.certlocation.url        "ตำแหน่งที่ตั้ง:">
+<!ENTITY exceptionMgr.certlocation.download   "รับใบรับรอง">
+<!ENTITY exceptionMgr.certlocation.accesskey  "ร">
+<!ENTITY exceptionMgr.certstatus.caption      "สถานะใบรับรอง">
+<!ENTITY exceptionMgr.certstatus.viewCert     "ดู…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "ด">
+<!ENTITY exceptionMgr.permanent.label         "จัดเก็บข้อยกเว้นนี้อย่างถาวร">
+<!ENTITY exceptionMgr.permanent.accesskey     "ถ">

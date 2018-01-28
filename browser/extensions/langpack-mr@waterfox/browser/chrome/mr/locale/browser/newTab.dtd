@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "नवीन टॅब">
+<!ENTITY newtab.customize.classic "आपल्या अव्वल साईट्स दर्शवा">
+<!ENTITY newtab.customize.cog.enhanced "सुचवलेल्या साईट्स समाविष्ट करा">
+<!ENTITY newtab.customize.cog.title2 "नवीन टॅब कंट्रोल्स">
+<!ENTITY newtab.customize.cog.learn "नवीन टॅब संबंधी जाणून घ्या">
+<!ENTITY newtab.customize.title "नवीन टॅब पृष्ठ सानुकूल करा">
+<!ENTITY newtab.customize.blank2 "रिक्त पृष्ठ दाखवा">
+<!ENTITY newtab.undo.removedLabel "थंबनेल काढून टाकले.">
+<!ENTITY newtab.undo.undoButton "पूर्ववत् करा.">
+<!ENTITY newtab.undo.restoreButton "सर्व पूर्वस्थितीत आणा.">
+<!ENTITY newtab.undo.closeTooltip "लपवा">

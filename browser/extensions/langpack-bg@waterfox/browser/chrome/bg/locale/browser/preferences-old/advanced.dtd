@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Основни">
+
+<!ENTITY accessibility.label             "Достъпност">
+
+<!ENTITY useCursorNavigation.label       "Използване на каретка за придвижване в страниците">
+<!ENTITY useCursorNavigation.accesskey   "к">
+<!ENTITY searchOnStartTyping.label       "Търсене на текст при започване на въвеждане">
+<!ENTITY searchOnStartTyping.accesskey   "Т">
+<!ENTITY blockAutoReload.label           "Предупреждаване, когато страница се опитва да пренасочи или презареди">
+<!ENTITY blockAutoReload.accesskey       "П">
+<!ENTITY useOnScreenKeyboard.label       "Показване на клавиатура за докосване, при необходимост">
+<!ENTITY useOnScreenKeyboard.accesskey   "д">
+
+<!ENTITY browsing.label                  "Сърфиране">
+
+<!ENTITY useAutoScroll.label             "Автоматично плъзгане">
+<!ENTITY useAutoScroll.accesskey         "А">
+<!ENTITY useSmoothScrolling.label        "Плавно плъзгане">
+<!ENTITY useSmoothScrolling.accesskey    "л">
+<!ENTITY checkUserSpelling.label         "Проверяване на правописа при въвеждане">
+<!ENTITY checkUserSpelling.accesskey     "в">
+
+<!ENTITY dataChoicesTab.label            "Данни">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Докладването да данни е изключено за тази конфигурация на изданието">
+
+<!ENTITY healthReportDesc.label          "Помага за разбирането на производителността на браузъра и поделя данни с &vendorShortName; за изправността му">
+<!ENTITY enableHealthReport.label        "Включване на Доклада за изправност на &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "и">
+<!ENTITY healthReportLearnMore.label     "Научете повече">
+
+<!ENTITY telemetryDesc.label             "Споделя данни за използването, производителността, хардуера, настройките на браузъра ви с &vendorShortName; за да ни помогне да направим &brandShortName; по-добър">
+<!ENTITY enableTelemetryData.label       "Споделяне на допълнителни данни (напр. Телеметрия)">
+<!ENTITY enableTelemetryData.accesskey   "С">
+<!ENTITY telemetryLearnMore.label        "Научете повече">
+
+<!ENTITY crashReporterDesc2.label         "Докладите за сривове помагат на &vendorShortName; да отстранява проблеми и да направи браузъра по-стабилен и по-сигурен">
+<!ENTITY alwaysSubmitCrashReports.label   "Разрешаване на &brandShortName; да изпраща от ваше име предишни доклади за срив">
+<!ENTITY alwaysSubmitCrashReports.accesskey "д">
+<!ENTITY crashReporterLearnMore.label     "Научете повече">
+
+<!ENTITY networkTab.label                "Мрежа">
+
+<!ENTITY connection.label                "Свързване">
+
+<!ENTITY connectionDesc.label            "Настройване на начина, по който &brandShortName; достъпва Мрежата">
+<!ENTITY connectionSettings.label        "Настройки…">
+<!ENTITY connectionSettings.accesskey    "Н">
+
+<!ENTITY httpCache.label                 "Кеширано уеб съдържание">
+
+<!ENTITY offlineStorage2.label           "Уеб съдържание при работа извън мрежа и потребителски данни">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Данни на сайтове">
+<!ENTITY clearSiteData.label             "Изчистване на всички">
+<!ENTITY clearSiteData.accesskey         "в">
+<!ENTITY siteDataSettings.label          "Настройки…">
+<!ENTITY siteDataSettings.accesskey      "н">
+<!ENTITY siteDataLearnMoreLink.label     "Научете повече">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Ограничаване на кеша до">
+<!ENTITY limitCacheSizeBefore.accesskey  "О">
+<!ENTITY limitCacheSizeAfter.label       "МБ пространство">
+<!ENTITY clearCacheNow.label             "Изчистване">
+<!ENTITY clearCacheNow.accesskey         "И">
+<!ENTITY clearOfflineAppCacheNow.label   "Изчистване">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ч">
+<!ENTITY overrideSmartCacheSize.label    "Незачитане на автоматичното управление на кеша">
+<!ENTITY overrideSmartCacheSize.accesskey "Н">
+
+<!ENTITY updateTab.label                 "Обновяване">
+
+<!ENTITY updateApplication.label         "Обновявания на &brandShortName;">
+<!ENTITY updateAuto1.label               "Автоматично инсталиране на обновявания (препоръчано: подобрява защитата)">
+<!ENTITY updateAuto1.accesskey           "А">
+<!ENTITY updateCheckChoose.label         "Проверка за обновявания, но показване на избор дали да бъдат инсталирани">
+<!ENTITY updateCheckChoose.accesskey     "П">
+<!ENTITY updateManual.label              "Никога да не се проверява за обновявания (не е препоръчано: риск за безопасността)">
+<!ENTITY updateManual.accesskey          "Н">
+
+<!ENTITY updateHistory.label             "История на обновяванията">
+<!ENTITY updateHistory.accesskey         "о">
+
+<!ENTITY useService.label                "Използване на услуга на заден план за инсталиране на обновявания">
+<!ENTITY useService.accesskey            "у">
+
+<!ENTITY autoUpdateOthers.label          "Автоматично обновяване">
+<!ENTITY enableSearchUpdate.label        "Търсещи машини">
+<!ENTITY enableSearchUpdate.accesskey    "Т">
+
+<!ENTITY offlineStorageNotify.label               "Предупреждение, при опит на сайт да запазва информация за работа извън мрежата">
+<!ENTITY offlineStorageNotify.accesskey           "П">
+<!ENTITY offlineStorageNotifyExceptions.label     "Изключения…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "з">
+
+<!ENTITY offlineAppsList2.label          "На следните сайтове е позволено да съхраняват информация за работа извън мрежата:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Изчистване…">
+<!ENTITY offlineAppsListRemove.accesskey "И">
+<!ENTITY offlineAppRemove.confirm        "Изчистване на данните за работа извън мрежата">
+
+<!ENTITY certificateTab.label            "Сертификати">
+<!ENTITY certPersonal.label              "Заявки">
+<!ENTITY certPersonal.description        "Когато сървър изисква вашият личен сертификат:">
+<!ENTITY selectCerts.auto                "Автоматично избиране на някой">
+<!ENTITY selectCerts.auto.accesskey      "а">
+<!ENTITY selectCerts.ask                 "Питане всеки път">
+<!ENTITY selectCerts.ask.accesskey       "п">
+<!ENTITY enableOCSP.label                "Заявка към сървър OCSP responder за потвърждаване валидността на сертификатите">
+<!ENTITY enableOCSP.accesskey            "З">
+<!ENTITY viewCerts.label                 "Показване на сертификатите">
+<!ENTITY viewCerts.accesskey             "с">
+<!ENTITY viewSecurityDevices.label       "Устройства по безопасността">
+<!ENTITY viewSecurityDevices.accesskey   "У">
+
+<!ENTITY performance.label               "Производителност">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Използване на препоръчителните настройки на производителността">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Тези настройки са съобразени с хардуера и операционната система на компютъра.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "п">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Научете повече">
+<!ENTITY limitContentProcessOption.label "Процеси за обработка на съдържание">
+<!ENTITY limitContentProcessOption.description
+                                         "Допълнителни процеси за обработка съдържание може да направят &brandShortName; по-отзивчив, при използване на повече раздели за сметка на повече използвана памет.">
+<!ENTITY limitContentProcessOption.accesskey   "с">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Променянето на броя на процесите за съдържание е възможно само при многопроцесен &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Научете как да проверите дали многопроцесността е включена">
+<!ENTITY allowHWAccel.label              "Използване на хардуерно ускоряване, ако е налично">
+<!ENTITY allowHWAccel.accesskey          "х">

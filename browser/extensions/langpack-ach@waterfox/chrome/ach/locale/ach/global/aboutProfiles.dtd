@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Ikom propwail">
+<!ENTITY aboutProfiles.subtitle "Potbuk man konyi me loono propwail mamegi. Propwail acelacel tye i lobo ne kene ma tye ki gin mukato, alamabuk, ter ki med-ikome ne kene.">
+<!ENTITY aboutProfiles.create "Cwe propwail manyen">
+<!ENTITY aboutProfiles.restart.title "Cak odoco">
+<!ENTITY aboutProfiles.restart.inSafeMode "Cak odoco ki Med-ikome ma kijuko woko…">
+<!ENTITY aboutProfiles.restart.normal "Cak odoco kit ma jwi…">

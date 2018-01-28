@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "ស្ដារ​សម័យ">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "នេះ​គួរ​ឲ្យ​ខ្មាសអៀន​ណាស់។">
+<!ENTITY restorepage.problemDesc    "&brandShortName; មាន​បញ្ហា​ក្នុង​ការ​សង្គ្រោះ​បង្អួច និង​ផ្ទាំង​របស់​អ្នក។ នេះ​អាច​បង្ក​ឡើង​ដោយ​ទំព័រ​តំបន់​បណ្ដាញ​ដែល​បើក​ថ្មីៗ។">
+<!ENTITY restorepage.tryThis        "អ្នក​អាច​សាកល្បង៖">
+<!ENTITY restorepage.restoreSome    "លុប​ផ្ទាំង​​មួយ ឬ​ច្រើន ដែល​អ្នក​គិត​ថា​អាច​បង្ក​បញ្ហា">
+<!ENTITY restorepage.startNew       "ចាប់ផ្ដើម​សម័យ​រក​មើល​ថ្មី​មួយ​ទាំងស្រុង">
+
+<!ENTITY restorepage.tryagainButton "ស្ដារ">
+<!ENTITY restorepage.restore.access "">
+<!ENTITY restorepage.closeButton    "បិទ">
+<!ENTITY restorepage.close.access   "">
+
+<!ENTITY restorepage.restoreHeader  "ស្ដារ">
+<!ENTITY restorepage.listHeader     "បង្អួច និង​ផ្ទាំង">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "បង្អួច &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "តោះ​ចាប់ផ្ដើម!">
+<!ENTITY welcomeback2.restoreButton.access "">
+
+<!ENTITY welcomeback2.tabtitle      "ជោគជ័យ!">
+
+<!ENTITY welcomeback2.pageTitle     "ជោគជ័យ!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; អាច​ចាប់ផ្ដើម​បាន។">
+
+<!ENTITY welcomeback2.label.restoreAll  "ស្ដារ​បង្អួច និង​ផ្ទាំង​ទាំងអស់">
+<!ENTITY welcomeback2.label.restoreSome "ស្ដារ​តែ​អ្វី​ដែល​ចង់បាន​ប៉ុណ្ណោះ">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "ផ្នែក​បន្ថែម​របស់​អ្នក និង​ការ​កំណត់​ផ្ទាល់ខ្លួន​ត្រូវ​បាន​លុប​ចេញ ហើយ​ការ​កំណត់​កម្មវិធី​អ៊ីនធឺណិត​របស់​អ្នក​នឹង​ត្រូវ​បាន​ស្ដារ​ទៅ​លំនាំដើម។ បើ​វា​មិន​បាន​កែ​បញ្ហា​របស់​អ្នក​ទេ ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "ស្វែងយល់​បន្ថែម​អំពី​អ្វី​ដែល​អ្នក​អាច​ធ្វើ​បាន។">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">
+<!ENTITY welcomeback2.restoreSome.label "Restore only the ones you want">
+
+

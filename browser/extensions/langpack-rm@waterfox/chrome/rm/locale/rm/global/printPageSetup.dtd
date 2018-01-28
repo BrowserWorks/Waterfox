@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Organisar la pagina">
+
+<!ENTITY basic.tab           "Format &amp; opziuns">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Direcziun:">
+<!ENTITY portrait.label      "Format vertical">
+<!ENTITY portrait.accesskey  "v">
+<!ENTITY landscape.label     "Format orizontal">
+<!ENTITY landscape.accesskey "o">
+
+<!ENTITY scale.label         "Scalaziun:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Adattar a la grondezza da la pagina">
+<!ENTITY shrinkToFit.accesskey "A">
+
+<!ENTITY optionsGroup.label  "Opziuns">
+
+<!ENTITY printBG.label       "Stampar il fund davos (colurs e graficas)">
+<!ENTITY printBG.accesskey   "S">
+
+<!ENTITY advanced.tab        "Urs &amp; chaus-pagina/pes-pagina">
+
+<!ENTITY marginGroup.label   "Urs (#1)">
+<!ENTITY marginUnits.inches  "Poleschs">
+<!ENTITY marginUnits.metric  "Millimeters">
+<!ENTITY marginTop.label     "Sura:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Sut:">
+<!ENTITY marginBottom.accesskey "S">
+<!ENTITY marginLeft.label    "A sanestra:">
+<!ENTITY marginLeft.accesskey "A">
+<!ENTITY marginRight.label   "A dretga:">
+<!ENTITY marginRight.accesskey "r">
+
+<!ENTITY headerFooter.label  "Chaus-pagina &amp; pes-pagina">
+
+<!ENTITY hfLeft.label        "A sanestra:">
+<!ENTITY hfCenter.label      "Centrà:">
+<!ENTITY hfRight.label       "A dretga:">
+<!ENTITY headerLeft.tip      "Chau-pagina sanester">
+<!ENTITY headerCenter.tip    "Chau-pagina centrà">
+<!ENTITY headerRight.tip     "Chau-pagina dretg">
+<!ENTITY footerLeft.tip      "Pe-pagina sanester">
+<!ENTITY footerCenter.tip    "Pe-pagina centrà">
+<!ENTITY footerRight.tip     "Pe-pagina dretg">
+
+<!ENTITY hfTitle             "Titel">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Data/temp">
+<!ENTITY hfPage              "Pagina #">
+<!ENTITY hfPageAndTotal      "Pagina # da(d) #">
+<!ENTITY hfBlank             "--vid--">
+<!ENTITY hfCustom            "Definì da l'utilisader...">
+
+<!ENTITY customPrompt.title  "Definì da l'utilisader...">
+<!ENTITY customPrompt.prompt "Endatescha tes agen text per il chau-pagina ed il pe-pagina">

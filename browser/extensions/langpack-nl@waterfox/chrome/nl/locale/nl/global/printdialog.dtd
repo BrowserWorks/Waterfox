@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Afdrukken">
+
+<!ENTITY printDialog.title "Afdrukken">
+
+<!ENTITY fpDialog.title "Bestand opslaan">
+
+<!ENTITY fileCheck.label "Afdrukken naar bestand">
+<!ENTITY fileCheck.accesskey "b">
+<!ENTITY propertiesButton.label "Eigenschappen…">
+<!ENTITY propertiesButton.accesskey "E">
+<!ENTITY descText.label "Printerbeschrijving:">
+<!ENTITY printer.label "Printer">
+<!ENTITY printerInput.label "Printernaam:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Afdrukbereik">
+<!ENTITY allpagesRadio.label "Alle pagina’s">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "Pagina’s">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "van">
+<!ENTITY frompageInput.accesskey  "v">
+<!ENTITY topageInput.label  "tot">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "Selectie">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "Aantal">
+<!ENTITY numCopies.label "Aantal exemplaren:">
+<!ENTITY numCopies.accesskey "x">
+
+<!ENTITY printframeGroup.label "Deelvensters afdrukken">
+<!ENTITY aslaidoutRadio.label "Zoals getoond op het scherm">
+<!ENTITY aslaidoutRadio.accesskey "r">
+<!ENTITY selectedframeRadio.label  "Het geselecteerde deelvenster">
+<!ENTITY selectedframeRadio.accesskey  "d">
+<!ENTITY eachframesepRadio.label  "Elk deelvenster afzonderlijk">
+<!ENTITY eachframesepRadio.accesskey  "f">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Správy o zlyhaní">
+<!ENTITY crashesUnsubmitted.label   "Neodoslané správy o zlyhaní">
+<!ENTITY crashesSubmitted.label     "Odoslané správy o zlyhaní">
+<!ENTITY id.heading                 "Identifikátor správy">
+<!ENTITY dateCrashed.heading        "Dátum zlyhania">
+<!ENTITY dateSubmitted.heading      "Dátum odoslania">
+<!ENTITY noReports.label            "Neboli odoslané žiadne správy o zlyhaní.">
+<!ENTITY noConfig.label             "Táto aplikácia nebola nastavená na zobrazovanie správ o zlyhaní. Musí byť nastavená predvoľba <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Odstrániť všetky správy">

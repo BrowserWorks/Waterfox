@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Cruthan-clò">
+
+<!ENTITY  language.label                          "Cruthan-clò airson:">
+<!ENTITY  language.accesskey                      "C">
+
+<!ENTITY  size.label                              "Meud:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "Co-rèireach:">
+<!ENTITY  proportional.accesskey                  "o">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Clò aon-leud:">
+<!ENTITY  monospace.accesskey                     "l">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Laideann">
+<!ENTITY  font.langGroup.japanese                 "Seapanais">
+<!ENTITY  font.langGroup.trad-chinese             "Sìneach tradaiseanta (Taidh-Bhàn)">
+<!ENTITY  font.langGroup.simpl-chinese            "Sìnis shimplichte">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Sìneach tradaiseanta (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Coirèanais">
+<!ENTITY  font.langGroup.cyrillic                 "Cirilis">
+<!ENTITY  font.langGroup.el                       "Greugais">
+<!ENTITY  font.langGroup.other                    "Siostaman sgrìobhaidh eile">
+<!ENTITY  font.langGroup.thai                     "Tàidh">
+<!ENTITY  font.langGroup.hebrew                   "Eabhra">
+<!ENTITY  font.langGroup.arabic                   "Arabais">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Taimil">
+<!ENTITY  font.langGroup.armenian                 "Airmeinis">
+<!ENTITY  font.langGroup.bengali                  "Beangailis">
+<!ENTITY  font.langGroup.canadian                 "Lidire Aonaichte Canadach">
+<!ENTITY  font.langGroup.ethiopic                 "Amtharais">
+<!ENTITY  font.langGroup.georgian                 "Cairtbheilis">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Cmèar">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matamataig">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibeitis">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Meud as lugha a' chrutha-chlò:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Chan eil gin">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Leig le duilleagan na cruthan-clò aca fhèin a thaghadh seach na thagh thu gu h-àrd">
+<!ENTITY  allowPagesToUseOwn.accesskey            "a">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Còdachadh teacsa airson susbaint dhìleabach">
+<!ENTITY languages.customize.Fallback2.label      "Còdachadh teacsa fallback:">
+<!ENTITY languages.customize.Fallback2.accesskey  "f">
+<!ENTITY languages.customize.Fallback2.desc       "Thèid an còdachadh teacsa seo a chleachdadh airson susbaint dhìleabach nach eil a’ cur an cèill dè còdachadh a chleachdas e.">
+
+<!ENTITY languages.customize.Fallback.auto        "A' bhun-roghainn airson an sgeama ionadail làithrich">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabais">
+<!ENTITY languages.customize.Fallback.baltic      "Baltach">
+<!ENTITY languages.customize.Fallback.ceiso       "Meadhan-Eòrpach, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Meadhan-Eòrpach, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Sìnis shimplichte">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Sìnis thradaiseanta">
+<!ENTITY languages.customize.Fallback.cyrillic    "Cirilis">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Greugais">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Eabhra">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Seapanais">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Coirèanais">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Tàidh">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turcais">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Bhiet-Namais">
+<!ENTITY languages.customize.Fallback.other       "Eile (a' gabhail a-steach feadhainn na Roinn-Eòrpa an Iar)">

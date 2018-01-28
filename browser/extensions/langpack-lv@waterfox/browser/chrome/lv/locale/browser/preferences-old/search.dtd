@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Noklusētais meklētājs">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Izvēlieties noklusēto meklētāju, ko &brandShortName; izmantos, lai meklētu adreses joslā un meklēšanas laukā.">
+
+<!ENTITY provideSearchSuggestions.label        "Piedāvāt meklēšanas ieteikumus">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Rādīt meklēšanas ieteikumus atrašanās vietas joslas rezultātos">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Meklēšanas ieteikumi netiks parādīti adreses joslā, jo &brandShortName; ir nokonfigurēts neatcerēties vēsturi.">
+
+<!ENTITY oneClickSearchEngines.label           "Viena klikšķa meklētāji">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Meklēšanas joslā var būt vairāki meklētāji. Izvēlieties, kurus attēlot šajā joslā.">
+
+<!ENTITY engineNameColumn.label                "Meklētāji">
+<!ENTITY engineKeywordColumn.label             "Atslēgas vārds">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Atjaunot sākotnējos meklētājus">
+<!ENTITY restoreDefaultSearchEngines.accesskey "t">
+
+<!ENTITY removeEngine.label                    "Aizvākt">
+<!ENTITY removeEngine.accesskey                "z">
+
+<!ENTITY addMoreSearchEngines.label            "Pievienot meklētājus…">

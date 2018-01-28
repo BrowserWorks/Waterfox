@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Yazdır…">
+<!ENTITY print.accesskey      "Y">
+<!ENTITY pageSetup.label      "Sayfa düzeni…">
+<!ENTITY pageSetup.accesskey  "S">
+<!ENTITY page.label           "Sayfa:">
+<!ENTITY page.accesskey       "f">
+<!ENTITY of.label             "/">
+<!ENTITY scale.label          "Ölçek:">
+<!ENTITY scale.accesskey      "Ö">
+<!ENTITY portrait.label       "Dikey">
+<!ENTITY portrait.accesskey   "k">
+<!ENTITY landscape.label      "Yatay">
+<!ENTITY landscape.accesskey  "t">
+<!ENTITY close.label          "Kapat">
+<!ENTITY close.accesskey      "K">
+<!ENTITY p30.label            "&#037;30">
+<!ENTITY p40.label            "&#037;40">
+<!ENTITY p50.label            "&#037;50">
+<!ENTITY p60.label            "&#037;60">
+<!ENTITY p70.label            "&#037;70">
+<!ENTITY p80.label            "&#037;80">
+<!ENTITY p90.label            "&#037;90">
+<!ENTITY p100.label           "&#037;100">
+<!ENTITY p125.label           "&#037;125">
+<!ENTITY p150.label           "&#037;150">
+<!ENTITY p175.label           "&#037;175">
+<!ENTITY p200.label           "&#037;200">
+<!ENTITY Custom.label         "Özel…">
+<!ENTITY ShrinkToFit.label    "Sayfaya sığdır">
+<!ENTITY customPrompt.title   "Özel ölçek…">
+<!ENTITY simplifyPage.label   "Sayfayı basitleştir">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "Daha kolay okuma için sayfa düzenini değiştir">
+<!ENTITY simplifyPage.disabled.tooltip "Bu sayfa otomatik olarak basitleştirilemez">
+
+<!ENTITY homearrow.tooltip    "İlk sayfa">
+<!ENTITY endarrow.tooltip     "Son sayfa">
+<!ENTITY nextarrow.tooltip    "Sonraki sayfa">
+<!ENTITY previousarrow.tooltip "Önceki sayfa">

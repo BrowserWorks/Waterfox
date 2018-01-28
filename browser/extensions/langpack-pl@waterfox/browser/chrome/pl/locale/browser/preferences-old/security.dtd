@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY general.label "Ogólne">
+
+<!ENTITY warnOnAddonInstall2.label "Ostrzeganie, gdy witryny próbują instalować dodatki">
+<!ENTITY warnOnAddonInstall2.accesskey "O">
+
+<!ENTITY enableSafeBrowsing.label "Blokowanie niebezpiecznych i podejrzanych treści">
+<!ENTITY enableSafeBrowsing.accesskey "B">
+<!ENTITY blockDownloads.label "Blokowanie możliwości pobierania niebezpiecznych plików">
+<!ENTITY blockDownloads.accesskey "e">
+<!ENTITY blockUncommonAndUnwanted.label "Ostrzeganie przed niepożądanym i nietypowym oprogramowaniem">
+<!ENTITY blockUncommonAndUnwanted.accesskey "n">
+
+<!ENTITY addonExceptions.label "Wyjątki…">
+<!ENTITY addonExceptions.accesskey "W">
+
+<!ENTITY logins.label "Dane logowania">
+
+<!ENTITY rememberLogins2.label "Zachowywanie danych logowania do witryn">
+<!ENTITY rememberLogins2.accesskey "l">
+
+<!ENTITY useMasterPassword.label "Hasło główne">
+<!ENTITY useMasterPassword.accesskey "H">
+
+<!ENTITY passwordExceptions.label "Wyjątki…">
+<!ENTITY passwordExceptions.accesskey "i">
+<!ENTITY changeMasterPassword.label "Zmień hasło główne">
+<!ENTITY changeMasterPassword.accesskey "Z">
+<!ENTITY savedLogins.label "Zachowane dane logowania…">
+<!ENTITY savedLogins.accesskey "d">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "მთავარი პაროლის შეცვლა">
+<!ENTITY setPassword.tokenName.label "უსაფრთხოების მოწყობილობა">
+<!ENTITY setPassword.oldPassword.label "მიმდინარე პაროლი:">
+<!ENTITY setPassword.newPassword.label "ახალი პაროლი:">
+<!ENTITY setPassword.reenterPassword.label "ხალი პაროლი (კვლავ):">
+<!ENTITY setPassword.meter.label "პაროლის ხარისხის მზომი">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "აღდგენა">
+<!ENTITY resetPassword.title  "მთავარი პაროლის განულება">
+<!ENTITY resetPassword.text  "მთავარი პაროლის განულების შემთხვევაში, დაიკარგება ყველა თქვენს მიერ შენახული ელფოსტის პაროლები, ველების მონაცემები, პერსონალური სერთიფიკატები. ნამდვილად გსურთ მთავარი პაროლის განულება?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "სერთიფიკატის გადმოწერა">
+<!ENTITY downloadCert.message1 "თქვენ გთხოვენ თქვენთვის ახალი სერთიფიკატების სააგენტოს (CA) ნდობას.">
+<!ENTITY downloadCert.trustSSL "ვებსაიტების დამოწმების ამ CA-სთვის ნდობა.">
+<!ENTITY downloadCert.trustEmail "ამ სააგენტოს ნდობა ელფოსტის კლიენტთა იდენტიფიცირებისათვის.">
+<!ENTITY downloadCert.trustObjSign "ამ სააგენტოს ნდობა პროგრამების შემქმნელთა იდენტიფიცირებისათვის.">
+<!ENTITY downloadCert.message3 "სანამ CA-ს ნდობას გამოუცხადებთ, ჯერ შეამოწმეთ მისი სერთიფიკატი, პირობები და პროცედურები (თუ გააჩნია).">
+<!ENTITY downloadCert.viewCert.label "ჩვენება">
+<!ENTITY downloadCert.viewCert.text "სააგენტოს სერთიფიკატის შემოწმება">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "კლიენტის იდენტიფიცირების მოთხოვნა">
+<!ENTITY clientAuthAsk.message1 "ეს საიტი თქვენი სერთიფიკატის წარდგენას ითხოვს:">
+<!ENTITY clientAuthAsk.message2 "წარსადგენი სერთიფიკატის არჩევა:">
+<!ENTITY clientAuthAsk.message3 "არჩეული სერთიფიკატის მონაცემები:">
+
+<!ENTITY pkcs12.setpassword.title  "სერთიფიკატის დუბლირების პაროლის არჩევა">
+<!ENTITY pkcs12.setpassword.message  "თქვენი მითითებული სერთიფიკატის დუბლირების პაროლი დაიცავს ასლს.  ამ პაროლის მითითება დუბლირებისათვის აუცილებელია.">
+<!ENTITY pkcs12.setpassword.label1 "სერთიფიკატის დუბლირების პაროლი:">
+<!ENTITY pkcs12.setpassword.label2 "სერთიფიკატის დუბლირების პაროლი (კვლავ):">
+<!ENTITY pkcs12.setpassword.reminder "მნიშვნელოვანია: თუ სერთიფიკატის დუბლირების პაროლი დაგავიწყდათ, დუბლიკატის აღდგენას ვეღარ შეძლებთ.  გთხოვთ საიმედოდ შეინახოთ იგი.">
+
+<!ENTITY chooseToken.title  "ტალონის არჩევა">
+<!ENTITY chooseToken.message1 "გთხოვთ აირჩიოთ ტალონი">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "პირადი გასაღების შექმნა">
+<!ENTITY createCertInfo.msg1 "მიმდინარეობს გასაღების შექმნა… შესაძლოა რამდენიმე წუთი დასჭირდეს…">
+<!ENTITY createCertInfo.msg2 "შეიცადეთ…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "დაცული ავტორიზაცია ტალონით">
+<!ENTITY protectedAuth.msg "გთხოვთ გაიაროთ ავტორიაცია ტალონის გამოყენებით. ავტორიზაციის მეთოდი ტალონის ტიპზეა დამოკიდებული.">
+<!ENTITY protectedAuth.tokenName.label "ტალონი:">

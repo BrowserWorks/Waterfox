@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "প্রধান পাসওয়ার্ড পরিবর্তন করুন">
+<!ENTITY setPassword.tokenName.label       "নিরাপত্তা ডিভাইস">
+<!ENTITY setPassword.oldPassword.label     "বর্তমান পাসওয়ার্ড:">
+<!ENTITY setPassword.newPassword.label     "নতুন পাসওয়ার্ড লিখুন:">
+<!ENTITY setPassword.reenterPassword.label "পাসওয়ার্ড পুনরায় লিখুন:">
+<!ENTITY setPassword.meter.label           "পাসওয়ার্ডের গুণমানসুচক">
+<!ENTITY setPassword.meter.loading         "লোড করা হচ্ছে">
+<!ENTITY masterPasswordDescription.label   "সংবেদনশীল তথ্য যেমন সাইট পাসওয়ার্ড সুরক্ষিত রাখতে প্রধানপাসওয়ার্ড ব্যবহৃত হয়।  আপনি যদি প্রধান পাসওয়ার্ড নির্মাণ করে থাকেন তাহলে &brandShortName; ঐ পাসওয়ার্ডের দ্বারা সুরক্ষিত কোনো তথ্য আহরণ করার প্রচেষ্টা করা হলে প্রতি সেশনে আপনাকে অন্তত একবার এটি পূরণ করতে অনুরোধ জানানো হবে ।">
+<!ENTITY masterPasswordWarning.label       "অনুগ্রহ করে আপনার নির্ধারিত প্রধান পাসওয়ার্ডটি সুরক্ষতি রাখুন। প্রধান পাসওয়ার্ড ভুলে গেলে আপনি এর দ্বারা সুরক্ষিত কোনো তথ্য উদ্ধার করতে পারবেন না।">

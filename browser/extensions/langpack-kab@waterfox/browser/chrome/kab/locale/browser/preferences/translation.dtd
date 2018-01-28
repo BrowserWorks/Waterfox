@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Tisuraf - Tasuqilt">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Ur d-tettwasumar ara tsuqilt i tutlayin-a:">
+<!ENTITY treehead.languageName.label      "Tutlayin">
+<!ENTITY removeLanguage.label             "Kkes tutlayin">
+<!ENTITY removeLanguage.accesskey         "K">
+<!ENTITY removeAllLanguages.label         "Kkes akk tutlayin">
+<!ENTITY removeAllLanguages.accesskey     "a">
+
+<!ENTITY noTranslationForSites.label      "Ur d-tettwasumar ara tsuqilt i yismal-a:">
+<!ENTITY treehead.siteName2.label         "Ismal web">
+<!ENTITY removeSite.label                 "Kkes asmel">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Kkes akk ismal">
+<!ENTITY removeAllSites.accesskey         "k">
+
+<!ENTITY button.close.label               "Mdel">
+<!ENTITY button.close.accesskey           "M">

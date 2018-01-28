@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "İzlənmə Qoruması">
+<!ENTITY  trackingProtection2.description      "İzləmə saytlar arası səyahət məlumatlarının toplanmasıdır. İzləmə səyahətiniz və şəxsi məlumatlarınızı yığmaqla profilinizi hazırlamaq və sizə reklam məzmunları göstərmək üçün işlədilə bilər.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Bilinən izləyiciləri bloklamaq üçün İzlənmə Qorumasını işlədin">
+<!ENTITY  trackingProtectionAlways.label       "Həmişə">
+<!ENTITY  trackingProtectionAlways.accesskey   "H">
+<!ENTITY  trackingProtectionPrivate.label      "Ancaq Məxfi Pəncərələrdə">
+<!ENTITY  trackingProtectionPrivate.accesskey  "n">
+<!ENTITY  trackingProtectionNever.label        "Heç vaxt">
+<!ENTITY  trackingProtectionNever.accesskey    "v">
+<!ENTITY  trackingProtectionLearnMore.label    "Ətraflı öyrən">
+<!ENTITY  trackingProtectionExceptions.label   "İstisnalar…">
+<!ENTITY  trackingProtectionExceptions.accesskey "a">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Məxfi Pəncərələrdə İzlənmə Qoruması istifadə et">
+<!ENTITY trackingProtectionPBM5.accesskey     "P">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Bilinən izləyiciləri bloklamaq üçün Məxfi Səyahətdə İzlənmə Qorumasını işlədin">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Ətraflı öyrən">
+<!ENTITY changeBlockList.label          "Qara Siyahını Dəyiş">
+<!ENTITY changeBlockList.accesskey      "D">
+
+<!ENTITY  doNotTrack.description        'Saytlara "Məni İzləmə" siqnalı göndərərək izlənmək istəmədiyinizi bildirin'>
+<!ENTITY  doNotTrack.learnMore.label    "Ətraflı öyrən">
+<!ENTITY  doNotTrack.default.label      "Ancaq İzlənmə Qoruması işlədərkən">
+<!ENTITY  doNotTrack.always.label       "Həmişə">
+
+<!ENTITY  history.label                 "Tarixçə">
+<!ENTITY  permissions.label             "İcazələr">
+
+<!ENTITY  addressBar.label              "Ünvan Sətri">
+<!ENTITY  addressBar.suggest.label      "Ünvan sətrindən istifadə edərkən bunları təklif et:">
+<!ENTITY  locbar.history.label          "Tarixçə">
+<!ENTITY  locbar.history.accesskey      "T">
+<!ENTITY  locbar.bookmarks.label        "Əlfəcinlər">
+<!ENTITY  locbar.bookmarks.accesskey    "l">
+<!ENTITY  locbar.openpage.label         "Açıq vərəqlər">
+<!ENTITY  locbar.openpage.accesskey     "A">
+<!ENTITY  locbar.searches.label         "Əsas axtarış mühərrikindən uyğun axtarışlar">
+<!ENTITY  locbar.searches.accesskey     "y">
+
+<!ENTITY  suggestionSettings2.label     "Axtarış mühərriyi təklifləri üçün nizamlamaları dəyiş">
+
+<!ENTITY  acceptCookies.label           "Saytlardan çərəzləri qəbul et">
+<!ENTITY  acceptCookies.accesskey       "e">
+
+<!ENTITY  acceptThirdParty.pre.label      "Üçüncü tərəf çərəzlərini qəbul et:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "l">
+<!ENTITY  acceptThirdParty.always.label   "Həmişə">
+<!ENTITY  acceptThirdParty.never.label    "Heç vaxt">
+<!ENTITY  acceptThirdParty.visited.label  "Baxılanlardan">
+
+<!ENTITY  keepUntil.label               "Saxlama limiti:">
+<!ENTITY  keepUntil.accesskey           "t">
+
+<!ENTITY  expire.label                  "vaxtı bitənədək">
+<!ENTITY  close.label                   "&brandShortName; qapatanadək">
+
+<!ENTITY  cookieExceptions.label        "İstisnalar…">
+<!ENTITY  cookieExceptions.accesskey    "a">
+
+<!ENTITY  showCookies.label             "Çərəzləri Göstər…">
+<!ENTITY  showCookies.accesskey         "G">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; səyyahı">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "Tarixçəni xatırlayacaq">
+<!ENTITY  historyHeader.dontremember.label "Tarixçəni heç vaxt xatırlamayacaq">
+<!ENTITY  historyHeader.custom.label       "Tarixçə üçün fərdi tənzimləmələri işlət">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; sizin səyahət, endirmə, forma və axtarış tarixçənizi xatırlayacaq, və daxil olduğunuz veb saytlardan çərəzləri saxlayacaq.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "İstəsəniz ">
+<!ENTITY  rememberActions.clearHistory.label  "yaxın tarixçənizi">
+<!ENTITY  rememberActions.middle.label        " və ya ">
+<!ENTITY  rememberActions.removeCookies.label "fərdi çərəzləri silə">
+<!ENTITY  rememberActions.post.label          " bilərsiz.">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; gizli baxışdakı nizamlamalardan istifadə edəcək və siz Web-də gəzərkən keçmişlə bağlı heçnə xatırlamayacaq.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Əlavə olaraq">
+<!ENTITY  dontrememberActions.clearHistory.label "bütün keçmişinizi də silə bilirsiniz">
+<!ENTITY  dontrememberActions.post.label         "açıqlanmışdır.">
+
+<!ENTITY  privateBrowsingPermanent2.label "Həmişə gizli baxış rejimindən istifadə et">
+<!ENTITY  privateBrowsingPermanent2.accesskey "g">
+
+<!ENTITY  rememberHistory2.label      "Endirmə və Tarixçəmi yadda saxla">
+<!ENTITY  rememberHistory2.accesskey  "l">
+
+<!ENTITY  rememberSearchForm.label       "Axtarış və form keçmişini xatırla">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; bağlananda tarixçəni sil">
+<!ENTITY  clearOnClose.accesskey         "s">
+
+<!ENTITY  clearOnCloseSettings.label     "Nizamlar…">
+<!ENTITY  clearOnCloseSettings.accesskey "a">
+
+<!ENTITY  browserContainersLearnMore.label      "Ətraflı öyrən">
+<!ENTITY  browserContainersEnabled.label        "Konteyner Vərəqlərini Aktivləşdir">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Tənzimləmələr…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Ynstellingen – Websitegegevens">
+<!ENTITY     hostCol.label                 "Website">
+<!ENTITY     statusCol.label               "Steat">
+<!ENTITY     usageCol.label                "Unthâld">
+<!ENTITY     searchTextboxPlaceHolder             "Websites trochsykje">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "W">
+<!ENTITY     removeSelected.label          "Selektearre fuortsmite">
+<!ENTITY     removeSelected.accesskey      "f">
+<!ENTITY     save.label                    "Wizigingen bewarje">
+<!ENTITY     save.accesskey                "W">
+<!ENTITY     cancel.label                  "Annulearje">
+<!ENTITY     cancel.accesskey              "A">
+<!ENTITY     removingDialog.title          "Websitegegevens fuortsmite">
+<!ENTITY     removingSelected.description  "It fuortsmiten fan websitegegevens smyt ek relatearre cookies en offline-webynhâld fuort. Dit kin jo by websites ôfmelde. Binne jo wis dat jo de wizigingen oanbringe wolle?">
+<!ENTITY     siteTree.label                "De folgjende websitecookies sille fuortsmiten wurde:">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "ବ୍ୟତିକ୍ରମଗୁଡ଼ିକ">
+
+
+<!ENTITY treehead.status.label        "ଅବସ୍ଥିତି">
+
+
+
+
+<!ENTITY address.label                "ୱେବ ସାଇଟର ଠିକଣା:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "ବ୍ଲକ">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "ଅଧିବେଶନ ପାଇଁ ଅନୁମତି ଦିଅନ୍ତୁ">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "ଅନୁମତି ଦିଅନ୍ତୁ">
+<!ENTITY allow.accesskey              "A">
+<!ENTITY windowClose.key              "w">
+
+
+
+
+
+
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.cancel.label          "Cancel">
+<!ENTITY button.ok.accesskey          "S">
+
+<!ENTITY button.ok.label              "Save Changes">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">
+<!ENTITY window.width                 "45em">
+

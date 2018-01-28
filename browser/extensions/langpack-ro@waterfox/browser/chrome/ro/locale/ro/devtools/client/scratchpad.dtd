@@ -1,0 +1,216 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+<!ENTITY fileMenu.label               "Fișier">
+<!ENTITY fileMenu.accesskey           "F">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- + is above this key on many keyboards -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+
+
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "Ajutor">
+<!ENTITY helpMenu.accesskey           "H">
+<!ENTITY helpMenuWin.label            "Ajutor">
+<!ENTITY helpMenuWin.accesskey        "H">
+
+
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+
+
+<!ENTITY browserContext.accesskey     "B">
+
+<!ENTITY browserContext.label         "Browser">
+<!ENTITY closeCmd.accesskey           "C">
+
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.label               "Close">
+<!ENTITY contentContext.accesskey     "C">
+
+<!ENTITY contentContext.label         "Content">
+<!ENTITY display.accesskey            "D">
+<!ENTITY display.key                  "l">
+
+<!ENTITY display.label                "Display">
+<!ENTITY documentationLink.accesskey  "D">
+
+
+<!ENTITY documentationLink.label      "Scratchpad Help on MDN">
+<!ENTITY editMenu.accesskey           "E">
+
+<!ENTITY editMenu.label               "Edit">
+<!ENTITY environmentMenu.accesskey    "N">
+
+
+<!ENTITY environmentMenu.label        "Environment">
+<!ENTITY errorConsoleCmd.commandkey   "j">
+
+<!ENTITY evalFunction.accesskey "v">
+<!ENTITY evalFunction.key "e">
+<!ENTITY evalFunction.label "Evaluate Current Function">
+<!ENTITY executeMenu.accesskey        "X">
+
+<!ENTITY executeMenu.label            "Execute">
+<!ENTITY highlightTrailingSpace.accesskey "H">
+
+<!ENTITY highlightTrailingSpace.label     "Highlight Trailing Space">
+<!ENTITY inspect.accesskey            "I">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY inspect.label                "Inspect">
+<!ENTITY largerFont.accesskey         "a">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> 
+<!ENTITY largerFont.label             "Larger Font">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY lineNumbers.label             "Show Line Numbers">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY newWindowCmd.label           "New Window">
+<!ENTITY normalSize.accesskey         "N">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY normalSize.label             "Normal Size">
+<!ENTITY openFileCmd.accesskey        "O">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openFileCmd.label            "Open File…">
+<!ENTITY openRecentMenu.accesskey     "R">
+
+<!ENTITY openRecentMenu.label         "Open Recent">
+<!ENTITY pprint.accesskey             "P">
+
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.label                 "Pretty Print">
+<!ENTITY reloadAndRun.accesskey       "E">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY reloadAndRun.label           "Reload And Run">
+<!ENTITY resetContext2.accesskey      "T">
+
+<!ENTITY resetContext2.label          "Reset Variables">
+<!ENTITY revertCmd.accesskey          "t">
+
+<!ENTITY revertCmd.label              "Revert…">
+<!ENTITY run.accesskey                "R">
+<!ENTITY run.key                      "r">
+
+<!ENTITY run.label                    "Run">
+<!ENTITY saveFileAsCmd.accesskey      "A">
+
+<!ENTITY saveFileAsCmd.label          "Save As…">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileCmd.label            "Save">
+<!ENTITY smallerFont.accesskey        "M">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY smallerFont.label            "Smaller Font">
+<!ENTITY viewMenu.accesskey           "V">
+
+<!ENTITY viewMenu.label               "View">
+<!ENTITY window.title                 "Scratchpad">
+
+<!ENTITY wordWrap.accesskey            "W">
+
+<!ENTITY wordWrap.label                "Wrap Text">

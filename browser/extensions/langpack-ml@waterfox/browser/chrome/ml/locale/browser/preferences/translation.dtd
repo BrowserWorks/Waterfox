@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "അല്ലാത്തവ - തര്‍ജ്ജമ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ഈ ഭാഷകള്‍ക്ക്, തര്‍ജ്ജമ ലഭ്യമല്ല:">
+<!ENTITY treehead.languageName.label      "ഭാഷകള്‍">
+<!ENTITY removeLanguage.label             "ഭാഷ നീക്കം ചെയ്യുക">
+<!ENTITY removeLanguage.accesskey         "ക">
+<!ENTITY removeAllLanguages.label         "എല്ലാ ഭാഷകളും നീക്കം ചെയ്യുക">
+<!ENTITY removeAllLanguages.accesskey     "ക">
+
+<!ENTITY noTranslationForSites.label      "ഈ സൈറ്റുകള്‍ക്ക് തര്‍ജ്ജമ ലഭ്യമല്ല:">
+
+<!ENTITY removeSite.label                 "സൈറ്റ് നീക്കം ചെയ്യുക">
+<!ENTITY removeSite.accesskey             "സ">
+<!ENTITY removeAllSites.label             "എല്ലാ സൈറ്റുകളും നീക്കം ചെയ്യുക">
+<!ENTITY removeAllSites.accesskey         "ക">
+
+<!ENTITY button.close.label               "അടയ്ക്കുക">
+<!ENTITY button.close.accesskey           "അ">
+
+<!ENTITY treehead.siteName2.label         "Websites">

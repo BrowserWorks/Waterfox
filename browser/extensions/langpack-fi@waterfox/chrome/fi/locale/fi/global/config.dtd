@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Huomio, vaarallinen sivu edessä!">
+<!ENTITY aboutWarningText.label "Tällä sivulla olevien asetusten muuttamisella voi olla vahingollisia vaikutuksia tämän ohjelman turvallisuuteen, vakauteen ja suorituskykyyn. Älä koske näihin asetuksiin ellet tiedä tarkalleen, mitä olet tekemässä.">
+<!ENTITY aboutWarningButton2.label "Otan riskin!">
+<!ENTITY aboutWarningCheckbox.label "Näytä varoitus myös ensi kerralla">
+
+<!ENTITY searchPrefs.label "Etsi:">
+<!ENTITY searchPrefs.accesskey "E">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Asetuksen nimi">
+<!ENTITY lockColumn.label "Tila">
+<!ENTITY typeColumn.label "Tyyppi">
+<!ENTITY valueColumn.label "Arvo">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Napsauta järjestääksesi"> 
+<!ENTITY columnChooser.tooltip "Valitse näkyvät sarakkeet"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopioi">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopioi nimi">
+<!ENTITY copyName.accesskey "o">
+<!ENTITY copyValue.label "Kopioi arvo">
+<!ENTITY copyValue.accesskey "a">
+<!ENTITY modify.label "Muuta">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Vaihda tilaa">
+<!ENTITY toggle.accesskey "V">
+<!ENTITY reset.label "Palauta oletusarvo">
+<!ENTITY reset.accesskey "P">
+<!ENTITY new.label "Uusi">
+<!ENTITY new.accesskey "U">
+<!ENTITY string.label "Merkkijono">
+<!ENTITY string.accesskey "M">
+<!ENTITY integer.label "Kokonaisluku">
+<!ENTITY integer.accesskey "K">
+<!ENTITY boolean.label "Totuusarvo">
+<!ENTITY boolean.accesskey "T">

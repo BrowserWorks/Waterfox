@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Camudar contraseña maestra">
+<!ENTITY setPassword.tokenName.label "Preséu de seguranza">
+<!ENTITY setPassword.oldPassword.label "Contraseña actual:">
+<!ENTITY setPassword.newPassword.label "Nueva contraseña:">
+<!ENTITY setPassword.reenterPassword.label "Nueva contraseña (confirmar):">
+<!ENTITY setPassword.meter.label "Mididor de calidá de la contraseña">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Restablecer">
+<!ENTITY resetPassword.title  "Restablecer la contraseña maestra">
+<!ENTITY resetPassword.text  "Si restableces la contraseña maestra, escaeceránse toles contraseñes web y de corréu electrónicu guardaes, los datos de los formularios, certificaos personales y claves privaes. ¿Daveres que quies restablecer la contraseña maestra?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Descargando certificáu">
+<!ENTITY downloadCert.message1 "Pidiste l'enfotu nuna nueva Autoridá Certificadora (CA).">
+<!ENTITY downloadCert.trustSSL "Enfotase nesta CA pa identificar sitios web.">
+<!ENTITY downloadCert.trustEmail "Enfotase nesta CA pa identificar usuarios de corréu.">
+<!ENTITY downloadCert.trustObjSign "Enfotase nesta CA pa identificar desendolcadores de software.">
+<!ENTITY downloadCert.message3 "Enantes d'enfotase nesta CA pa cualesquier propósitu, tienes de desaminar el certificáu, política y procedimientos de la CA (si tán disponibles).">
+<!ENTITY downloadCert.viewCert.label "Ver">
+<!ENTITY downloadCert.viewCert.text "Desaminar certificáu de CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Petición d'identificación d'usuariu">
+<!ENTITY clientAuthAsk.message1 "El siguiente sitiu pidió que t'identifiques con un certificáu:">
+<!ENTITY clientAuthAsk.message2 "Escueyi un certificáu pa presentalu como identificación:">
+<!ENTITY clientAuthAsk.message3 "Detalles del certificáu esbilláu:">
+
+<!ENTITY pkcs12.setpassword.title  "Escoyer una contraseña de respaldu pal certificáu">
+<!ENTITY pkcs12.setpassword.message  "La contraseña del certificáu de respaldu que pongas equí protexerá'l ficheru de respaldu que tas a piques de crear. Tienes de poner esta contraseña pa proceder cola copia de respaldu.">
+<!ENTITY pkcs12.setpassword.label1 "Contraseña de respaldu del certificáu:">
+<!ENTITY pkcs12.setpassword.label2 "Contraseña de respaldu del certificáu (confirmar):">
+<!ENTITY pkcs12.setpassword.reminder "Importante: si escaeces la contraseña de respaldu del certificáu, nun podrás restaurar esta copia de respaldu más sero. Por favor, guárdala nun llugar seguru.">
+
+<!ENTITY chooseToken.title  "Diálogu de seleición d'oxetu">
+<!ENTITY chooseToken.message1 "Por favor, escueyi un oxetu.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Xenerando una clave privada">
+<!ENTITY createCertInfo.msg1 "Xeneración de la clave en progresu… Esto pue llevar unos minutos…">
+<!ENTITY createCertInfo.msg2 "Por favor, aguarda…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Identificación protexida por token">
+<!ENTITY protectedAuth.msg "Por favor, identifícate col token. El métodu d'identificación depende del tipu del token.">
+<!ENTITY protectedAuth.tokenName.label "Identificador:">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Bei Strg+Tab die Tabs nach letzter Nutzung in absteigender Reihenfolge anzeigen">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "z">
+
+<!ENTITY newWindowsAsTabs.label       "Statt neuem Fenster neuen Tab öffnen">
+<!ENTITY newWindowsAsTabs.accesskey   "F">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Warnen, wenn mehrere Tabs geschlossen werden">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Warnen, wenn das gleichzeitige Öffnen mehrerer Tabs &brandShortName; verlangsamen könnte">
+<!ENTITY warnOnOpenManyTabs.accesskey   "c">
+
+<!ENTITY switchLinksToNewTabs.label        "Tabs im Vordergrund öffnen">
+<!ENTITY switchLinksToNewTabs.accesskey    "V">
+
+<!ENTITY showTabsInTaskbar.label          "Tab-Vorschauen in der Windows-Taskleiste anzeigen">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Tabs">

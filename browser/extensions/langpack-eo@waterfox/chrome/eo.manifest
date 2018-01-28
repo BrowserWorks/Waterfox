@@ -1,0 +1,14 @@
+locale alerts eo eo/locale/eo/alerts/
+locale autoconfig eo eo/locale/eo/autoconfig/
+locale global eo eo/locale/eo/global/
+locale global-platform eo eo/locale/eo/global-platform/mac/ os=Darwin
+locale global-platform eo eo/locale/eo/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform eo eo/locale/eo/global-platform/win/ os=WINNT
+locale mozapps eo eo/locale/eo/mozapps/
+locale necko eo eo/locale/eo/necko/
+locale passwordmgr eo eo/locale/eo/passwordmgr/
+locale pipnss eo eo/locale/eo/pipnss/
+locale pippki eo eo/locale/eo/pippki/
+locale places eo eo/locale/eo/places/
+locale pluginproblem eo eo/locale/eo/pluginproblem/
+locale weave eo eo/locale/eo/services/

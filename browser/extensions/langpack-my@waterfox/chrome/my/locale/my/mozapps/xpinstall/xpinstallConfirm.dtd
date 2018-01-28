@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "ဆော့ဗ်ဝဲ တပ်ဆင်မှု">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "ပေါင်းထည့်ချက်များကို သင်စိတ်ချတဲ့ ရေးသားသူများ ထံမှသာ ​တပ်ဆင်ပါ။">
+<!ENTITY warningSecondary.label  "အန္တရယ်ရှိ ဆော့ဗ်ဝဲက သင့်ကွန်ပြူတာကို ထိခိုက်စေနိုင်ပြီး သင့်ရဲ့ သီးခြားရပ်တည်မှကို ချိုးဖေါက်နိုင်တယ်။">
+
+<!ENTITY from.label "မှ -">
+

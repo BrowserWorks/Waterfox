@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "পপ-আপ উইন্ডো ব্লক করা হবে B">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "বিস্তারিত জানুন">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "C">
+<!ENTITY  notificationsPolicyButton.label      "বেছে নিন… C">
+<!ENTITY  notificationsDoNotDisturb.label      "আমাকে বিরক্ত করবেন না n">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName; পুনরায় চালু না করা পর্যন্ত কোনো বার্তা প্রদর্শিত হবে না">
+
+<!ENTITY  popupExceptions.label       "ব্যতিক্রম... E">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "ফন্ট এবং রং">
+
+<!ENTITY  defaultFont2.label          "ডিফল্ট ফন্ট">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "আকার">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "A উচ্চপর্যায়ের...">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "রং... C">
+<!ENTITY  colors.accesskey            "C">
+
+<!ENTITY chooseLanguage.label         "পাতা প্রদর্শনে পছন্দসই ভাষা নির্বাচন করুন">
+<!ENTITY chooseButton.label           "নির্বাচন… o">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "ওয়েব বিষয়বস্তু অনুবাদ করুন T">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "ব্যতিক্রম... x">
+<!ENTITY translateExceptions.accesskey "x">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "অনুবাদ করেছেন">
+<!ENTITY translation.options.attribution.afterLogo "‍">
+
+
+
+<!ENTITY  playDRMContent.learnMore.label "আরও জানুন">
+
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

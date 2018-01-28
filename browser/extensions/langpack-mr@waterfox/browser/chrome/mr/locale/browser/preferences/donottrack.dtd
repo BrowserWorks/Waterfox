@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "मागोवा घेऊ नका">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "कधीच मागोवा घेऊ नका">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "जेव्हा मागोवा संरक्षण चालू असेल तेव्हा &brandShortName; आपल्याला आपला मागोवा घेतला जात नाही आहे ह्याची सांकेतिक खूण पाठवेल.">
+<!ENTITY doNotTrackLearnMore.label    "अधिक जाणून घ्या">

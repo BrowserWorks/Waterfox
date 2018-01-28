@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "একটি কন্টেইনার যোগ করুন">
+<!ENTITY addButton.accesskey  "A">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; গোপনীয়তাতে ফিরে যান">
+
+<!ENTITY window.title         "নতুন কন্টেইনার যোগ করুন">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "নাম:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY icon.label           "আইকন:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "রঙ:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "হয়ে গেছে">
+<!ENTITY button.ok.accesskey  "D">
+
+
+<!ENTITY name.placeholder     "Enter a container name">
+<!ENTITY preferencesButton.label "Preferences">
+<!ENTITY removeButton.label   "Remove">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "পাতার সেটআপ">
+
+<!ENTITY basic.tab           "বিন্যাস ও অপশন">
+
+<!ENTITY formatGroup.label   "বিন্যাস">
+
+<!ENTITY orientation.label   "স্থিতিবিন্যাস:">
+<!ENTITY portrait.label      "লম্বালম্বি (P)">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "আড়াআড়ি (L)">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "আকার পরিবর্তন: (S)">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "পাতার প্রস্থের সাথে মানানসই করার জন্য সংকোচন করা হবে">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "অপশন">
+
+<!ENTITY printBG.label       "ব্যাকগ্রাউন্ড প্রিন্ট করুন (রং ও ছবি) B">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "মার্জিন ও শীর্ষচরণ/পাদচরণ">
+
+<!ENTITY marginGroup.label   "মার্জিন (#1)">
+<!ENTITY marginUnits.inches  "ইঞ্চি">
+<!ENTITY marginUnits.metric  "মিলিমিটার">
+<!ENTITY marginTop.label     "শীর্ষ: (T)">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "নিম্ন: (B)">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "বাম: (L)">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "ডান: (R)">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "শীর্ষচরণ ও পাদচরণ">
+
+<!ENTITY hfLeft.label        "বাম:">
+<!ENTITY hfCenter.label      "কেন্দ্র:">
+<!ENTITY hfRight.label       "ডান:">
+<!ENTITY headerLeft.tip      "বামদিকের শীর্ষচরণ">
+<!ENTITY headerCenter.tip    "কেন্দ্রস্থিত শীর্ষচরণ">
+<!ENTITY headerRight.tip     "ডানদিকের শীর্ষচরণ">
+<!ENTITY footerLeft.tip      "বামদিকের পাদচরণ">
+<!ENTITY footerCenter.tip    "কেন্দ্রস্থিত পাদচরণ">
+<!ENTITY footerRight.tip     "ডানদিকের পাদচরণ">
+
+<!ENTITY hfTitle             "শিরোনাম">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "তারিখ/সময়">
+<!ENTITY hfPage              "পাতা #">
+<!ENTITY hfPageAndTotal      "পাতা # সর্বমোট পাতা #">
+<!ENTITY hfBlank             "--ফাঁকা--">
+<!ENTITY hfCustom            "স্বনির্ধারিত…">
+
+<!ENTITY customPrompt.title  "স্বনির্ধারিত…">
+<!ENTITY customPrompt.prompt "শীর্ষচরণ/পাদচরণের জন্য আপনার পছন্দসই পাঠ্য লিখুন">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "অাপনি বর্তমানে কোনো গোপন উইন্ডোতে নেই।">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "একটি প্রাইভেট উইন্ডো খুলুল">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "ব্যক্তিগত ব্রাউজিং">
+<!ENTITY privateBrowsing.title.tracking                  "ট্র্যাকিং সুরক্ষা ব্যক্তিগত ব্রাউজিং-এর সাথে">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "যখন আপনি একটি ব্যাক্তিগত উইন্ডোতে ব্রাউজ করেন, Waterfox">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "সংরক্ষণ করবে না">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "পরিদর্শিত পেজ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "অনুসন্ধান">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "কুকিজ">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "অস্থায়ী ফাইল">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "সংরক্ষণ করা হবে">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " আপনার:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ডাউনলোডসমূহ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "বুকমার্ক">
+<!ENTITY aboutPrivateBrowsing.note.before                "ব্যক্তিগত ব্রাউজিং">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "আপনাকে অজানা করবে না">
+<!ENTITY aboutPrivateBrowsing.note.after                 "আপনার নিয়োগকর্তা বা ইন্টারনেট পরিষেবা প্রদানকারী এখনও আপনার পরিদর্শন করা পৃষ্ঠা ট্র্যাক করতে পারেন দয়া করে নোট করুন |">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "আরও জানুন ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "ব্যক্তিগত ব্রাউজিং">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ট্র্যাকিং সুরক্ষা">
+<!ENTITY trackingProtection.description2                 "কিছু ওয়েবসাইট ট্র্যাকার ব্যবহার করে যা ইন্টারনেটে আপনার কার্যকলাপ দেখতে পারে। ট্র্যাকিং সুরক্ষার সাথে Waterfox অনেক ট্র্যাকারকে ব্লক করবে যা আপনার ব্রাউজিং কার্যকলাপ সম্পর্কে তথ্য সংগ্রহ করবে।">
+<!ENTITY trackingProtection.startTour1                   "এটিই কিভাবে কাজ করে দেখুন">

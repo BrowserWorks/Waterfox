@@ -1,0 +1,164 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "சிக்கல்தீர்த்தல் தகவல்">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  இந்த பக்கமானது ஒரு பிரச்சனைக்கு தீர்வு காணும் பொருட்டு தேவைப்படும் நுட்ப தகவல்களை கொண்டிருக்கலாம். ஒருவேளை தாங்கள் பொதுவான பதிலுக்கு எதிர்பார்த்தால் &brandShortName; பற்றிய, எங்களின் பக்கத்தை பாருங்கள் <a id='supportLink'>இணையத்தள உதவி</a>.">
+
+<!ENTITY aboutSupport.crashes.title "செயலிழப்பு அறிக்கைகள்">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "அறிக்கை ID">
+<!ENTITY aboutSupport.crashes.sendDate "சமர்பிக்கப்பட்டது">
+<!ENTITY aboutSupport.crashes.allReports "அனைத்து செயலிழப்பு அறிக்கைகள்">
+<!ENTITY aboutSupport.crashes.noConfig "இந்த நிரல் சிதைவு அறிக்கைகளை காண்பிக்க கட்டமைப்பு செய்யப்படவில்லை.">
+
+<!ENTITY aboutSupport.extensionsTitle "நீட்சிகள்">
+<!ENTITY aboutSupport.extensionName "பெயர்">
+<!ENTITY aboutSupport.extensionEnabled "செயல்படுத்தப்பட்டது">
+<!ENTITY aboutSupport.extensionVersion "பதிப்பு">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; அம்சங்கள்">
+<!ENTITY aboutSupport.featureName "பெயர்">
+<!ENTITY aboutSupport.featureVersion "பதிப்பு">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "பரிசோதனையிலுள்ள வசதிகள்">
+<!ENTITY aboutSupport.experimentName "பெயர்">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "விளக்கம்">
+<!ENTITY aboutSupport.experimentActive "செயலில் உள்ளது">
+<!ENTITY aboutSupport.experimentEndDate "முடியும் தேதி">
+<!ENTITY aboutSupport.experimentHomepage "முதன்மை பக்கம்">
+<!ENTITY aboutSupport.experimentBranch "கிளை">
+
+<!ENTITY aboutSupport.appBasicsTitle "பயன்பாடு அடிப்படைகள்">
+<!ENTITY aboutSupport.appBasicsName "பெயர்">
+<!ENTITY aboutSupport.appBasicsVersion "பதிப்பு">
+<!ENTITY aboutSupport.appBasicsBuildID "உருவாக்கி அ,எண்">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "அலைவரிசையைப் புதுப்பி">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "புதுப்பித்தல் வரலாறு">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "புதுப்பித்தல் வரலாற்றைக் காட்டு">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "சுயவிவர அடைவு">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "சுயவிவரம் கோப்புறை">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "செயல்படுத்தப்பட்ட செருகிகள்">
+<!ENTITY aboutSupport.appBasicsBuildConfig "உருவாக்க கட்டமைப்பு">
+<!ENTITY aboutSupport.appBasicsUserAgent "பயனர் முகவர்">
+<!ENTITY aboutSupport.appBasicsOS "இயங்கு தளம்">
+<!ENTITY aboutSupport.appBasicsMemoryUse "நினைவகப் பயனளவு">
+<!ENTITY aboutSupport.appBasicsPerformance "செயல்திறன்">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "பதிவு செய்யப்பட்ட சேவை பணியாளர்கள்">
+
+<!ENTITY aboutSupport.appBasicsProfiles "விவரத்தொகுப்பு">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "பன்செயல் சாளரங்கள்">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "வலை உள்ளடக்க செயல்பாடுகள்">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "கூகுள் திறவகோல்ஹ">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "மொசில்லா புவியிடச்சேவைச் சாவி">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "பாதுகாப்பான முறைமை">
+
+<!ENTITY aboutSupport.showDir.label "கோப்பகத்தைத் திற">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "தேடியில் காட்டு">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "அடைவினைத் திற">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "மாற்றியமைக்கப்பட்ட முக்கியமான முன்னுரிமைகள்">
+<!ENTITY aboutSupport.modifiedPrefsName "பெயர்">
+<!ENTITY aboutSupport.modifiedPrefsValue "மதிப்பு">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js முன்னுரிமைகள்">
+<!ENTITY aboutSupport.userJSDescription "உங்கள் சுயவிவரக் கோப்புறையில் <a id='prefs-user-js-link'>user.js file</a> உள்ளது, அதில் &brandShortName; உருவாக்காத முன்னுரிமைகளும் உள்ளன.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "பூட்டிய முக்கிய முன்னுரிமைகள்">
+<!ENTITY aboutSupport.lockedPrefsName "பெயர்">
+<!ENTITY aboutSupport.lockedPrefsValue "மதிப்பு">
+
+<!ENTITY aboutSupport.graphicsTitle "வரைகலை">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "இடத் தரவுத்தளம்">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "ஒருமைப்பாடு">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "ஒருமைப்பாட்டை சரிபார்">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "பெருகும் GC">
+
+<!ENTITY aboutSupport.a11yTitle "அணுகக்கூடியது">
+<!ENTITY aboutSupport.a11yActivated "செயல்படுத்தப்படுகிறது">
+<!ENTITY aboutSupport.a11yForceDisabled "அணுகல்தன்மையை தடுக்கவும்">
+<!ENTITY aboutSupport.a11yHandlerUsed "அணுகல் கையாளி பாவிக்கப்பட்டது">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "தரவக பதிப்புகள்">
+
+<!ENTITY aboutSupport.installationHistoryTitle "நிறுவல் வரலாறு">
+<!ENTITY aboutSupport.updateHistoryTitle "புதுப்பித்தல் வரலாறு">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "உரையை ஒட்டுப்பலகைக்கு நகலெடு">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "அசல் தரவை ஒட்டுப்பலகைக்கு நகலெடு">
+
+<!ENTITY aboutSupport.sandboxTitle "ஸ்சேன்டுபாக்ஸ்">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "தவிர்க்கப்பட்ட அமைவக அழைப்புகள்">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "வினாடிகளுக்கு முன்">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "செயல்பாடு வகை">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "தருமதிப்புகள்">
+
+<!ENTITY aboutSupport.safeModeTitle "பாதுகாப்பு முறைமையை முயற்சி">
+<!ENTITY aboutSupport.restartInSafeMode.label "நீட்சிகளை நீக்கிவிட்டு மீள் துவக்கு.">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "வசதிகள்">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "பகுப்பாய்வுகள்">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "தோல்வி பற்றிய பதிவு">
+<!ENTITY aboutSupport.graphicsGPU1Title "ஜிபியு #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "ஜிபியு #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "முடிவுப்பதிவு">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "நொறுக்கல் பாதுகாப்பு முடக்கிய வசதிகள்">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "சுற்றுவேலைகள்">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

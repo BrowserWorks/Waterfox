@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Затвори овај језичак">
+<!ENTITY tabCrashed.restoreTab "Обнови овај језичак">
+<!ENTITY tabCrashed.restoreAll "Обнови све срушене језичке">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Језичак се срушио.">
+<!ENTITY tabCrashed.offerHelp "Можемо вам помоћи!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Изаберите &tabCrashed.restoreTab; да поново учитате садржај са странице.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Изаберите &tabCrashed.restoreTab; или &tabCrashed.restoreAll; да поново учитате садржај са странице.">
+<!ENTITY tabCrashed.requestHelp "Желите да нам помогнете?">
+<!ENTITY tabCrashed.requestHelpMessage "Извештаји о рушењу нам могу помоћи да откријемо проблеме и учинимо &brandShortName; бољим.">
+<!ENTITY tabCrashed.requestReport "Пријави овај језичак">
+<!ENTITY tabCrashed.sendReport2 "Пошаљи извештај о рушењу тренутног језичака којег гледате">
+<!ENTITY tabCrashed.commentPlaceholder2 "Опциони коментари (коментари су свима видљиви)">
+<!ENTITY tabCrashed.includeURL2 "Укључи URL странице у извештај о рушењу">
+<!ENTITY tabCrashed.emailPlaceholder "Унесите адресу е-поште овде">
+<!ENTITY tabCrashed.emailMe "Пошаљи ми е-пошту када су информације доступне">
+<!ENTITY tabCrashed.reportSent "Извештај о рушењу је већ поднет; хвала вам што сте нам помогли да учинимо &brandShortName; бољим!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Пријави позадинске језичке">
+<!ENTITY tabCrashed.autoSubmit2 "Ажурирајте поставке да аутоматски шаље извештаје о рушењу, укључуући извештаје за срушене позадинске језичке из ове и будућих сесија">

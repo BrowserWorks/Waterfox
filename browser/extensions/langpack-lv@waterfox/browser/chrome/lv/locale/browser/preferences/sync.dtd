@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Grāmatzīmes">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "Atvērtās cilnes">
+<!ENTITY engine.tabs.accesskey      "C">
+<!ENTITY engine.history.label       "Vēsturi">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Lietotājvārdi">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "Iestatījumus">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "Papildinājumus">
+<!ENTITY engine.addons.accesskey    "a">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Ierīces nosaukums">
+<!ENTITY changeSyncDeviceName2.label "Mainīt ierīces nosaukumu…">
+<!ENTITY changeSyncDeviceName2.accesskey "n">
+<!ENTITY cancelChangeSyncDeviceName.label "Atcelt">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "Saglabāt">
+<!ENTITY saveChangeSyncDeviceName.accesskey "r">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Lietošanas noteikumi">
+<!ENTITY fxaPrivacyNotice.link.label "Privātuma piezīme">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "nav apstiprināts.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Lūdzu pieslēdzieties, lai atjaunotu savienojumu">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Jūs neesat pieslēdzies.">
+<!ENTITY signIn.label                "Pieslēgties">
+<!ENTITY signIn.accesskey            "p">
+<!ENTITY profilePicture.tooltip      "Mainīt profila attēlu">
+<!ENTITY verifiedManage.label        "Pārvaldīt kontu">
+<!ENTITY verifiedManage.accesskey    "a">
+<!ENTITY disconnect3.label           "Atslēgties…">
+<!ENTITY disconnect3.accesskey       "T">
+<!ENTITY verify.label                "Apstiprināt epastu">
+<!ENTITY verify.accesskey            "p">
+<!ENTITY forget.label                "Aizmirst šo epastu">
+<!ENTITY forget.accesskey            "a">
+
+<!ENTITY signedOut.caption            "Paņem tīmekli sev līdz">
+<!ENTITY signedOut.description        "Sinhronizējiet vēsturi, grāmatzīmes, paroles, papildinājumus un iestatījumus visās jūsu izmantotajās ierīcēs.">
+<!ENTITY signedOut.accountBox.title   "Pieslēdzieties ar &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Izveidot kontu">
+<!ENTITY signedOut.accountBox.create.accesskey  "I">
+<!ENTITY signedOut.accountBox.signin  "Pieslēgties">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Sync iestatījumi">
+<!ENTITY signedIn.settings.description "Izvēlēties, ko sinhronizēt ierīcē, izmantojot uz &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Lejupielādēt Waterfox ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " vai ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " lai sinhronizētos ar mobilajām ierīcēm.">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "کاٹیں">
+<!ENTITY cutCmd.accesskey "ک">
+<!ENTITY copyCmd.label "نقل کریں">
+<!ENTITY copyCmd.accesskey "ن">
+<!ENTITY pasteCmd.label "جوڑیں">
+<!ENTITY pasteCmd.accesskey "ج">
+<!ENTITY undoCmd.label "کالعدم کریں">
+<!ENTITY undoCmd.accesskey "ک">
+<!ENTITY selectAllCmd.label "تمام منتخب کریں">
+<!ENTITY selectAllCmd.accesskey "ت">
+<!ENTITY deleteCmd.label "حذف کریں">
+<!ENTITY deleteCmd.accesskey "ح">
+
+<!ENTITY spellAddToDictionary.label "لغت میں اضافہ کریں">
+<!ENTITY spellAddToDictionary.accesskey "م">
+<!ENTITY spellUndoAddToDictionary.label "لغت میں ڈالیں کلعدم کریں">
+<!ENTITY spellUndoAddToDictionary.accesskey "ک">
+<!ENTITY spellCheckToggle.label "ہجے چیک کریں">
+<!ENTITY spellCheckToggle.accesskey "ہ">
+<!ENTITY spellNoSuggestions.label "(کوئی ہجے کی تجاویز نہیں)">
+<!ENTITY spellDictionaries.label "زبانیں">
+<!ENTITY spellDictionaries.accesskey "ز">
+
+<!ENTITY searchTextBox.clear.label "صاف کریں">
+
+<!ENTITY fillLoginMenu.label          "لاگ ان بھریں">
+<!ENTITY fillLoginMenu.accesskey      "ب">
+<!ENTITY fillPasswordMenu.label       "پاس ورڈ بھریں">
+<!ENTITY fillPasswordMenu.accesskey   "ب">
+<!ENTITY fillUsernameMenu.label       "صارف بھریں">
+<!ENTITY fillUsernameMenu.accesskey   "ب">
+<!ENTITY noLoginSuggestions.label     "(کوئی ہجے کی تجاویز نہیں)">
+<!ENTITY viewSavedLogins.label        "محفوظ شدہ لاگ ان دکھائے">

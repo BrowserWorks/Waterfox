@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Ffontiau">
+
+<!ENTITY  language.label                          "Ffont:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "Maint:">
+<!ENTITY  sizeProportional.accesskey              "M">
+<!ENTITY  sizeMonospace.accesskey                 "a">
+
+<!ENTITY  proportional.label                      "Cyfrannol:">
+<!ENTITY  proportional.accesskey                  "y">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "a">
+<!ENTITY  monospace.label                         "Monospace:">
+<!ENTITY  monospace.accesskey                     "o">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Lladin">
+<!ENTITY  font.langGroup.japanese                 "Japanëeg">
+<!ENTITY  font.langGroup.trad-chinese             "Tsieinëeg Traddodiadol (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Tsieinëeg Syml">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tsieinëeg Traddodiadol (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Corëeg">
+<!ENTITY  font.langGroup.cyrillic                 "Cyrilig">
+<!ENTITY  font.langGroup.el                       "Groeg">
+<!ENTITY  font.langGroup.other                    "Systemau Ysgrifennu Eraill">
+<!ENTITY  font.langGroup.thai                     "Thai">
+<!ENTITY  font.langGroup.hebrew                   "Hebraeg">
+<!ENTITY  font.langGroup.arabic                   "Arabaidd">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamileg">
+<!ENTITY  font.langGroup.armenian                 "Armeneg">
+<!ENTITY  font.langGroup.bengali                  "Bengaleg">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Syllabary">
+<!ENTITY  font.langGroup.ethiopic                 "Ethiopeg">
+<!ENTITY  font.langGroup.georgian                 "Georgeg">
+<!ENTITY  font.langGroup.gujarati                 "Gwjarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malaialam">
+<!ENTITY  font.langGroup.math                     "Mathemateg">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibeteg">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Lleiafswm maint ffont:">
+<!ENTITY minSize.accesskey                        "L">
+<!ENTITY minSize.none                             "Dim">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Caniatáu i dudalennau ddewis eu ffont eu hun, yn lle fy newis i uchod">
+<!ENTITY  allowPagesToUseOwn.accesskey            "C">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Amgodiad Nod ar gyfer Hen Gynnwys">
+<!ENTITY languages.customize.Fallback2.label      "Amgodiad Testun Eilradd:">
+<!ENTITY languages.customize.Fallback2.accesskey  "E">
+<!ENTITY languages.customize.Fallback2.desc       "Mae'r amgodiad nod hwn yn cael ei defnyddio ar gyfer hen gynnwys nad yw'n datgan ei amgodiad.">
+
+<!ENTITY languages.customize.Fallback.auto        "Y Rhagosodedig ar gyfer y Locale Cyfredol">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabaidd">
+<!ENTITY languages.customize.Fallback.baltic      "Baltig">
+<!ENTITY languages.customize.Fallback.ceiso       "Canol Ewropeaidd, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Canol Ewrop, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Tsieineeg Symledig">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Tsieinëeg Traddodiadol">
+<!ENTITY languages.customize.Fallback.cyrillic    "Cyrilig">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Groeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebraeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japanëeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Corëeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Thai">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Twrcaidd">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Fietnameg">
+<!ENTITY languages.customize.Fallback.other       "Eraill (gan gynnwys Gorllewin Ewrop)">

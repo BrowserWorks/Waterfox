@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "ವೀಕ್ಷಕ ಉಪಕರಣಪಟ್ಟಿ ತೆರೆಯುವಲ್ಲಿ ದೋಷವುಂಟಾಗಿದೆ:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "ಸುಧಾರಿತ ಸಂಯೋಜನೆಗಳು:">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "ಪರೀಕ್ಷಕ">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "ಜಾಲವೀಕ್ಷಕದ ಶೈಲಿಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY options.showUserAgentStyles.tooltip "ಇದನ್ನು ಸಕ್ರಿಯವಾಗಿಸುವುದರಿಂದ ಜಾಲವೀಕ್ಷಕದಿಂದ ಲೋಡ್ ಮಾಡಲಾಗುವ ಪೂರ್ವನಿಯೋಜಿತ ಶೈಲಿಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "DOM ಗುಣವಿಶೇಷಗಳನ್ನು ಕಿರಿದಾಗಿಸಿ">
+<!ENTITY options.collapseAttrs.tooltip "ಪರಿಶೀಲಕನಲ್ಲಿ ಉದ್ದ ಗುಣವಿಶೇಷಗಳನ್ನು ಕಿರಿದಾಗಿಸಿ">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "ಪೂರ್ವನಿಯೋಜಿತ ಬಣ್ಣದ ಘಟಕ">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "u">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "‍ಆಗಿ ರಚಿಸಲಾಗಿದೆ">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "ಹೆಕ್ಸ್">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "ಬಣ್ಣದ ಹೆಸರುಗಳು">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* ಪ್ರಸಕ್ತ ಅಧಿವೇಶನ ಮಾತ್ರ, ಪುಟವನ್ನು ಮರಳಿ ಲೋಡ್ ಮಾಡುತ್ತದೆ">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "ಕ್ರೋಮ್ ಬ್ರೌಸರ್ ಮತ್ತು ಡೀಬಗ್ಗಿಂಗ್ ಉಪಕರಣ ಚೌಕ ಆಡ್‌-ಅನ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸು">
+<!ENTITY options.enableChrome.tooltip3  "ಈ ಆಯ್ಕೆಯನ್ನು ಆನ್ ಮಾಡುವುದರಿಂದನೀವು ಅನೇಕ ಡೆವೆಲಪರ್ ಉಪಕರಣಗಳನ್ನು ಬ್ರೌಸರ್ ಬಳಸುವ ಸಂದರ್ಭದಲ್ಲಿ (ಉಪಕರಣಗಳು > ವೆಬ್ ಡೆವೆಲಪರ್ > ಬ್ರೌಸರ್ ಉಪಕರಣಪೆಟ್ಟಿಗೆ) ಮತ್ತು ಆಡ್-ಆನ್‌ ವ್ಯವಸ್ಥಾಪಕದ ಮೂಲಕ ಆಡ್-ಆನ್‌ಗಳನ್ನು ದೋಷನಿದಾನಕ್ಕೆ ಅಣಿಮಾಡಲು ಅನುಮತಿ ಪಡೆಯುತ್ತೀರಿ">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "ದೂರದಿಂದಲೆ ಡೀಬಗ್‌ ಮಾಡುವುದನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "JavaScript * ಅನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸು">
+<!ENTITY options.disableJavaScript.tooltip   "ಈ ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುವುದರಿಂದ ಪ್ರಸಕ್ತ ಟ್ಯಾಬ್‌ಗಾಗಿ JavaScript ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸದಂತಾಗುತ್ತದೆ. ಟ್ಯಾಬ್ ಅಥವ ಉಪಕರಣಪಟ್ಟಿಯನ್ನು ಮುಚ್ಚಿದಲ್ಲಿ ಈ ಸಿದ್ಧತೆಯನ್ನು ಅಳಿಸಲಾಗುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "HTTP ಕ್ಯಾಶೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸು (ಉಪಕರಣಪೆಟ್ಟಿಗೆಯು ತೆರೆದಾಗ)">
+<!ENTITY options.disableHTTPCache.tooltip   "‍ಈ ಆಯ್ಕೆಯನ್ನು ಆನ್ ಮಾಡುವುದರಿಂದ ಟೂಲ್‌ಬಾಕ್ಸ್ ತೆರೆದಿರುವ ಎಲ್ಲಾ ಟ್ಯಾಬ್‌ಗಳಲ್ಲಿ HTTP ಕ್ಯಾಶೆ ನಿಷ್ಕ್ರಿಯಗೊಳ್ಳುತ್ತವೆ. ‍ಸರ್ವೀಸ್ ವರ್ಕರ್‌ಗಳು ಈ ಆಯ್ಕೆಯಿಂದ ತೊಂದರೆಗೊಳಗಾಗುವುದಿಲ್ಲ.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "HTTP ನ ಮೇಲೆ ಸೇವಾ ವರ್ಕರ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸು (ಉಪಕರಣಪೆಟ್ಟಿಗೆ ತೆರೆದಿದ್ದಾಗ)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "ಈ ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುವುದರಿಂದ ಉಪಕರಣಪೆಟ್ಟಿಗೆಯನ್ನು ಯಾವ ಎಲ್ಲಾ ಟ್ಯಾಬ್‌ಗಳಲ್ಲಿ ತೆರೆಯಲಾಗಿದೆಯೊ ಅವುಗಳಿಗೆ HTTP ಮೂಲಕ ಸೇವಾ ವರ್ಕರ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "ಆಡ್‌-ಆನ್‌ಗಳಿಂದ ಅನುಸ್ಥಾಪಿಸಲಾದ ವಿಕಸನೆಗಾರ ಉಪಕರಣಗಳು">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "ಲಭ್ಯವಿರುವ ಉಪಕರಣಪೆಟ್ಟಿಗೆ ಗುಂಡಿಗಳು">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* ಪ್ರಸಕ್ತ ಉಪಕರಣಪೆಟ್ಟಿಗೆ ಗುರಿಯಿಂದ ಬೆಂಬಲಿತವಾಗಿಲ್ಲ">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "ಥೀಮ್‌ಗಳು">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "ಡೆವೆಲಪರ್ ಸಂಪಾದನೆಯ ವೀಕ್ಷಕ ಥೀಮ್ ಬಳಸಿ">
+<!ENTITY options.usedeveditiontheme.tooltip "ಡೆವೆಲಪರ್ ಸಂಪಾದನೆಯ ವೀಕ್ಷಕ ಥೀಮ್‌ಗೆ ಅಂತರಣಗೊಳಿಸುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "ಜಾಲ ಕನ್ಸೋಲ್">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "ಸಮಯಮುದ್ರೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸು">
+<!ENTITY options.timestampMessages.tooltip    "ನೀವು ಈ ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿದಲ್ಲಿ ಜಾಲ ಕನ್ಸೋಲ್‌ನಲ್ಲಿನ ಆದೇಶಗಳು ಮತ್ತು ಔಟ್‌ಪುಟ್‌ ಒಂದು ಸಮಯಮುದ್ರೆಯನ್ನು ತೋರಿಸುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "ಶೈಲಿ ಸಂಪಾದಕ">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "ಮೂಲ ಆಕರಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "ಶೈಲಿ ಸಂಪಾದಕ ಮತ್ತು ಪರೀಕ್ಷಕದಲ್ಲಿ ಮೂಲ ಆಕರಗಳನ್ನು ತೋರಿಸು (ಉದಾ. Sass ಕಡತಗಳು)">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "CSS ಅನ್ನು ಸ್ವಯಂಪೂರ್ಣಗೊಳಿಸು">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "ನೀವು ನಮೂದಿಸಿದಂತೆಲ್ಲಾ, ಶೈಲಿ ಸಂಪಾದಕದಲ್ಲಿ CSS ಗುಣಗಳು, ಮೌಲ್ಯಗಳು ಮತ್ತು ಆಯ್ಕೆಗಾರಗಳನ್ನು ಸ್ವಯಂಪೂರ್ಣಗೊಳಿಸಲಾಗುತ್ತದೆ">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "ಸಾಮಾನ್ಯ ಆದ್ಯತೆಗಳು">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "ಸ್ಥಿರವಾದ ಲಾಗ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸು">
+<!ENTITY options.enablePersistentLogs.tooltip  "ನೀವು ಈ ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿದಲ್ಲಿ ಜಾಲ ಕನ್ಸೋಲ್ ಮತ್ತು ಜಾಲಬಂಧ ಮೇಲ್ವಿಚಾರಕವು ನೀವು ಪ್ರತಿ ಬಾರಿಯೂ ಒಂದು ಹೊಸ ಪುಟಕ್ಕೆ ಹೋದಾಗ ಔಟ್‌ಪುಟ್ ಅನ್ನು ತೆರವುಗೊಳಿಸುವುದಿಲ್ಲ">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Gecko ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ದತ್ತಾಂಶವನ್ನು ತೋರಿಸು">
+<!ENTITY options.showPlatformData.tooltip  "ನೀವು ಈ ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿದಲ್ಲಿ JavaScript ಪ್ರೊಫೈಲರ್ ವರದಿಗಳು Gecko  ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಸಂಕೇತಗಳನ್ನು ಹೊಂದಿರುತ್ತದೆ">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "ಸಂಪಾದಕದ ಆದ್ಯತೆಗಳು">
+<!ENTITY options.sourceeditor.detectindentation.label   "ಇಂಡೆಂಟೇಶನ್ ಅನ್ನು ಗುರುತಿಸು">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "ಆಕರದ ಕಂಟೆಂಟ್‌ ಆಧಾರದಲ್ಲಿ ಇಂಡೆಂಟೇಶನ್ ಅನ್ನು ಊಹಿಸು">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "ಆವರಣ ಚಿಹ್ನೆಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮುಚ್ಚು">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "ಮುಚ್ಚುವ ಆವರಣ ಚಿಹ್ನೆಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸೇರಿಸು">
+<!ENTITY options.sourceeditor.expandtab.label           "ಖಾಲಿಜಾಗಗಳನ್ನು ಬಳಸಿಕೊಂಡು ಇಂಡೆಂಟ್ ಮಾಡು">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "ಟ್ಯಾಬ್ ಚಿಹ್ನೆಯ ಬದಲಿಗೆ ಖಾಲಿ ಜಾಗಗಳನ್ನು ಬಳಸು">
+<!ENTITY options.sourceeditor.tabsize.label             "ಟ್ಯಾಬ್‌ನ ಗಾತ್ರ">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "ಕೀಲಿಬೈಂಡಿಂಗ್‌ಗಳು">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "ಪೂರ್ವನಿಯೋಜಿತ">
+
+<!ENTITY options.debugger.label            "Debugger">
+
+<!ENTITY options.enableRemote.tooltip2  "Turning this option on will allow the developer tools to debug a remote instance like Waterfox OS">
+
+<!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
+<!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!ENTITY options.screenshot.clipboard.label      "Screenshot to clipboard">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saves to the screenshot directly to the clipboard">
+
+<!ENTITY options.screenshot.label            "Screenshot Behavior">
+
+<!ENTITY options.selectDefaultTools.label2    "Default Developer Tools">
+
+<!ENTITY options.sourceMaps.label      "Enable Source Maps">
+<!ENTITY options.sourceMaps.tooltip    "If you enable this option sources will be mapped in the Debugger and Console.">
+

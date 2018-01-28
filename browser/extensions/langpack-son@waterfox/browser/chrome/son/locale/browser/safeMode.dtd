@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; saajaw alhaali">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Tunandi saajaw alhaali ra">
+<!ENTITY refreshProfile.label         "&brandShortName; yeeti">
+
+<!ENTITY safeModeDescription3.label   "Saajaw alhaali ti &brandShortName; alhaali cerecerante kaŋ ga hin ka tee karkahattayan misey se.">
+<!ENTITY safeModeDescription4.label   "War tontoney nda alaada kayandiyaney ga kay waati foo se.">
+
+<!ENTITY refreshProfileInstead.label  "War ga hin ka karkahattayan sar nda ceeci ka &brandShortName; yaynandi.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; daaba bila nda yaamar kaŋ a ga tun. Woo ašsiloo ga hin ka tee tontoni wala šenday tanayaŋ. War ga hin ka ceeci ka hasaraa hanse nda karkahattayan saajaw alhaali ra.">

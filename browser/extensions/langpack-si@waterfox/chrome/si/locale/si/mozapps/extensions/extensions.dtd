@@ -1,0 +1,263 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "ඇඩෝන කළමනාකරු">
+
+<!ENTITY search.placeholder                   "සියළු ඇඩෝන සොයන්න">
+<!ENTITY search.buttonlabel                   "සොයන්න">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "පූරණය වේ…">
+<!ENTITY listEmpty.installed.label            "මේ ආකාරයේ කිසිඳු ඇඩෝනයක් ඔබ ස්ථාපනය කර නැත">
+<!ENTITY listEmpty.availableUpdates.label     "යාවත්කාලීන හමු නොවීය">
+<!ENTITY listEmpty.recentUpdates.label        "ඔබ කිසිඳු ඇඩෝනයක් මෑතකදී යාවත්කාලීන කර නැත">
+<!ENTITY listEmpty.findUpdates.label          "යාවත්කාලීන සඳහා පරීක්ෂා කරන්න">
+<!ENTITY listEmpty.search.label               "ගැලපෙන ඇඩෝන කිසිවක් හමු නොවීය">
+<!ENTITY listEmpty.button.label               "ඇඩෝන පිළිබඳව වැඩිදුරටත් දැනගන්න">
+<!ENTITY installAddonFromFile.label           "ඇඩෝන ගොනුවෙන් ස්ථාපනය කරන්න…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "සියළු ඇඩෝන සඳහා මෙවලම්">
+
+<!ENTITY getThemes.learnMore                  "තේමා දහස් ගණනකින් තෝරාගන්න.">
+
+<!ENTITY cmd.back.tooltip                     "පිටුවක් පසුපසට යන්න">
+<!ENTITY cmd.forward.tooltip                  "පිටුවක් ඉදිරියට යන්න">
+
+<!ENTITY showUnsignedExtensions.button.label  "ඇතැම් දිගු තහවුරු කළ නොහැක">
+<!ENTITY showAllExtensions.button.label       "සියළු දිගු පෙන්වන්න">
+<!ENTITY debugAddons.label                    "ඇඩෝන දෝශ නිරාකරණය">
+<!ENTITY debugAddons.accesskey                "B">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "ආරක්ෂිත මාදිලිය (safe mode) විසින් සියළු ඇඩෝන කර ඇත.">
+<!ENTITY warning.checkcompatibility.label          "ඇඩෝන අනුකූලතා පරීක්ෂාව අබල (disable) කර ඇත. මෙහි අනුකූල නොවන ඇඩෝන තිබිය හැකිය.">
+<!ENTITY warning.checkcompatibility.enable.label   "බලැති (Enable) කරන්න">
+<!ENTITY warning.checkcompatibility.enable.tooltip "ඇඩෝන අනුකූලතා පරීක්ෂාව බලැති (Enable) කරන්න">
+<!ENTITY warning.updatesecurity.label              "Add-on update security checking is disabled. You may be compromised by updates.">
+<!ENTITY warning.updatesecurity.enable.label       "බලැති (Enable) කරන්න">
+<!ENTITY warning.updatesecurity.enable.tooltip     "ඇඩෝන යාවත්කාලීන කිරීමේ ආරක්ෂක සැකසුම් බලැතා (Enable) කරන්න">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "සොයන්න">
+<!ENTITY view.discover.label                  "ඇඩෝන ලබා ගන්න">
+<!ENTITY view.recentUpdates.label             "මෑතකාලීන යාවත්කාලීන">
+<!ENTITY view.availableUpdates.label          "පවතින යාවත්කාලීන">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "යාවත්කාලීන සඳහා පරීක්ෂා කරන්න">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "මෑතකාලීන යාවත්කාලීන පෙන්වන්න">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "ස්වයංක්‍රීයව ඇඩෝන යාවත්කාලීන කරන්න">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "ස්වයංක්‍රීයව යාවත්කාලීන කිරීමට සියළු ඇඩෝන ප්‍රත්‍යාරම්භ (Restart) කරන්න">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "Reset All Add-ons to Update Manually">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "ඇඩෝන යාවත්කාලීන කිරීම">
+<!ENTITY updates.installed.label              "ඔබගේ ඇඩෝන යාවත්කාලීන නර ඇත.">
+<!ENTITY updates.downloaded.label             "ඔබගේ ඇඩෝන යාවත්කාලීන බාගත කර ඇත.">
+<!ENTITY updates.restart.label                "ස්ථාපනය සම්පූර්ණ වීමට දැන් යළි-ආරම්භ කරන්න">
+<!ENTITY updates.noneFound.label              "යාවත්කාලීන හමු නොවීය">
+<!ENTITY updates.manualUpdatesFound.label     "පවතින යාවත්කාලීන පෙන්වන්න">
+<!ENTITY updates.updateSelected.label         "යාවත්කාලීන ස්ථාපනය කරන්න">
+<!ENTITY updates.updateSelected.tooltip       "මෙම ලැයිස්තුවේ පවතින යාවත්කාලීන ස්ථාපනය කරන්න">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "තවත් තොරතුරු පෙන්වන්න">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "යාවත්කාලීන සොයන්න">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "විකල්ප">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "මනාපයන්">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "පිළිබඳ">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "බලැති (Enable) කරන්න">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "අබල කරන්න">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "තේමාව දමන්න">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "තේමාව දැමීම නවතන්න">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "සක්‍රීය කිරීමට විමසන්න">
+<!ENTITY cmd.askToActivate.tooltip            "සෑම විටම මෙම ඇඩෝනය භාවිත කිරීමට විමසන්න">
+<!ENTITY cmd.alwaysActivate.label             "සැමවිටම සක්‍රීය">
+<!ENTITY cmd.alwaysActivate.tooltip           "සැමවිටම මෙම ඇඩෝනය භාවිත කරන්න">
+<!ENTITY cmd.neverActivate.label              "කිසිවිට සක්‍රීය නොකරන්න">
+<!ENTITY cmd.neverActivate.tooltip            "කිසිවිට මෙම ඇඩෝනය භාවිත නොකරන්න">
+<!ENTITY cmd.stateMenu.tooltip                "ඇඩෝනය ක්‍රියාකරන විට වෙනස් කරන්න">
+<!ENTITY cmd.installAddon.label               "ස්ථාපනය කරන්න">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "ඉවත් කරන්න">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "විකල්ප">
+<!ENTITY cmd.showPreferencesWin.tooltip       "මෙම ඇඩෝනයේ විකල්ප වෙනස් කරන්න">
+<!ENTITY cmd.showPreferencesUnix.label        "මනාපයන්">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "මෙම ඇඩෝනයේ මනාපයන් වෙනස් කරන්න">
+<!ENTITY cmd.contribute.label                 "දායකවන්න">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "මෙම ඇඩෝනයේ සංවර්ධනය වෙනුවෙන් දායකවන්න">
+
+<!ENTITY cmd.showReleaseNotes.label           "නිකුතු සටහන් පෙන්වන්න">
+<!ENTITY cmd.showReleaseNotes.tooltip         "මෙම යාවත්කාලීනය සඳහා නිකුතු සටහන් පෙන්වන්න">
+<!ENTITY cmd.hideReleaseNotes.label           "නිකුතු සටහන් සඟවන්න">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "මෙම යාවත්කාලීනයේ නිකුතු සටහන් සඟවන්න">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "ඇඩෝන මොනවාද?">
+<!ENTITY discover.description2                "Add-ons are applications that let you personalize &brandShortName; with 
+extra functionality or style. Try a time-saving sidebar, a weather notifier, or a themed look to make &brandShortName; 
+your own.">
+<!ENTITY discover.footer                      "ඔබ අන්තර්ජාලයට සම්බන්ධව සිටින විට, මෙය වඩාත් ජනප්‍රිය සහ ප්‍රයෝජනවත්  
+ඇඩෝන ඔබට උත්සාහ කර බැලීම පිණිස මෙහි දක්වනු ඇත.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "න්කුතුව">
+<!ENTITY detail.lastupdated.label             "අවසන් වරට යාවත්කාලීන කළේ">
+<!ENTITY detail.creator.label                 "සංවර්ධකයා">
+<!ENTITY detail.homepage.label                "නිවෙස් පිටුව">
+<!ENTITY detail.numberOfDownloads.label       "බාගත කරන්න">
+
+<!ENTITY detail.contributions.description     "මෙම ඇඩෝන සංවර්ධකයා එහි අඛණ්ඩ සංවර්ධනය වෙනුවෙන් ඔබගේ දායකත්වය ඉල්ලා සිටියි.">
+
+<!ENTITY detail.updateType                    "ස්වයංක්‍රීය යාවත්කාලීන">
+<!ENTITY detail.updateDefault.label           "පෙරනිමි">
+<!ENTITY detail.updateDefault.tooltip         "එය පෙරනිමියෙන් පමණක් නම්, ස්වයංක්‍රීයව ඇඩෝන යාවත්කාලීන කරන්නA">
+<!ENTITY detail.updateAutomatic.label         "On">
+<!ENTITY detail.updateAutomatic.tooltip       "ස්වයංක්‍රීයව යාවත්කාලීන ස්ථාපනය කරන්න">
+<!ENTITY detail.updateManual.label            "Off">
+<!ENTITY detail.updateManual.tooltip          "ස්වයංක්‍රීයව යාවත්කාලීන ස්ථාපනය නොකරන්න">
+<!ENTITY detail.home                          "මුල්පිටුව">
+<!ENTITY detail.repository                    "Add-on Profile">
+<!ENTITY detail.size                          "විශාලත්වය">
+
+<!ENTITY detail.checkForUpdates.label         "යාවත්කාලීන සඳහා පරීක්ෂා කරන්න">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "මෙම ඇඩෝනය සඳහා යාවත්කාලීන පරීක්ෂා කරන්න">
+<!ENTITY detail.showPreferencesWin.label      "විකල්ප">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "මෙම ඇඩෝනයේ විකල්ප වෙනස් කරන්න">
+<!ENTITY detail.showPreferencesUnix.label     "මනාපයන්">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "මෙම ඇඩෝනයේ මනාපයන් වෙනස් කරන්න">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "ඇගැයුම (Rating)">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "නවතන්න">
+<!ENTITY progress.cancel.tooltip              "එපා">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Name">
+<!ENTITY sort.name.tooltip                    "නම අනුව පිළිවෙළට">
+<!ENTITY sort.dateUpdated.label               "අවසන් වරට යාවත්කාලීන කළේ">
+<!ENTITY sort.dateUpdated.tooltip             "යාවත්කාලීන කළ දිනය අනුව පිළිවෙළට">
+<!ENTITY sort.relevance.label                 "වඩාත්ම හොඳින් ගැලපෙන">
+<!ENTITY sort.relevance.tooltip               "අදාලත්වය අනුව පිළිවෙළට">
+<!ENTITY sort.price.label                     "මිල">
+<!ENTITY sort.price.tooltip                   "මිල අනුව පිළිවෙළට">
+
+<!ENTITY search.filter2.label                 "සොයන්න:">
+<!ENTITY search.filter2.installed.label       "මගේ ඇඩෝන">
+<!ENTITY search.filter2.installed.tooltip     "ස්ථාපනය කළ ඇඩෝන පෙන්වන්න">
+<!ENTITY search.filter2.available.label       "තිබෙන ඇඩෝන">
+<!ENTITY search.filter2.available.tooltip     "ස්ථාපනයට ඇති ඇඩෝන පෙන්වන්න">
+
+<!ENTITY addon.homepage                       "මුල්පිටුව">
+<!ENTITY addon.details.label                  "More">
+<!ENTITY addon.details.tooltip                "මෙම ඇඩෝන ගැන වැඩි විස්තර පෙන්වන්න">
+<!ENTITY addon.unknownDate                    "නොදන්නා">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(අබලැති-disabled)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "යාවත්කාලීන කරන්න">
+<!ENTITY addon.undoAction.label               "අහොස් කරන්න">
+<!ENTITY addon.undoAction.tooltip             "මෙම ක්‍රියාව අහෝසි කරන්න">
+<!ENTITY addon.undoRemove.label               "අහෝසි කරන්න">
+<!ENTITY addon.undoRemove.tooltip             "මෙම ඇඩෝනය ස්ථාපනය කර තබන්න">
+<!ENTITY addon.restartNow.label               "දැන් ප්‍රත්‍යාරම්භ (Restart) කරන්න">
+<!ENTITY addon.install.label                  "ස්ථාපනය කරන්න">
+<!ENTITY addon.install.tooltip                "මෙම ඇඩෝනය ස්ථාපනය කරන්න">
+<!ENTITY addon.updateNow.label                "දැන් යාවත්කාලීන කරන්න">
+<!ENTITY addon.updateNow.tooltip              "මෙම ඇඩෝනයේ යාවත්කාලීන ස්ථාපනය කරන්න">
+<!ENTITY addon.includeUpdate.label            "යාවත්කාලීන තුළ ඇතුළත් කරන්න">
+<!ENTITY addon.updateAvailable.label          "යාවත්කාලීන ඇත">
+<!ENTITY addon.checkingForUpdates.label       "යාවත්කාලීන සඳහා පරීක්ෂා කරයි…">
+<!ENTITY addon.releaseNotes.label             "නිකුතු සටහන්:">
+<!ENTITY addon.loadingReleaseNotes.label      "පූරණය වේ…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "කණගාටුයි, නිකුතු සටහන් පූරණය කිරීමේදී දෝෂයකි.">
+
+<!ENTITY addon.createdBy.label                "By ">
+
+<!ENTITY eula.title                           "අවසන් පරිශීලක බලපත්‍ර ගිවිසුම">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "පිළිගැනීම සහ ස්ථාපනය…">
+
+<!ENTITY settings.path.button.label           "ගවේෂණය…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "මේ කුමක්ද? දූරමිතිය වරින් වර ස්ථාපනය වී පරීක්ෂණ සිදු කළ හැක.">
+<!ENTITY experiment.info.learnmore "වැඩිදුරටත් දැනුවත්වන්න">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "දූරමිති සැකසුම්">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "වැඩිදුර ඉගෙනගන්න...">
+
+<!ENTITY disabledUnsigned.heading "ඇතැම් ඇඩෝන අක්‍රීය කර ඇත">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "පහත ඇඩෝන &brandShortName; හි භාවිතයට තහවුරු කර නොමැත. ඔබට හැක්කේ ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "ප්‍රතිස්ථාපනයන් සොයන්න">
+<!ENTITY disabledUnsigned.description.end " හෝ තහවුරු කිරීම සඳහා සංවර්දකයාගෙන් විමසන්න.">
+<!ENTITY disabledUnsigned.learnMore "ඔබව මාර්ගගතව ආරක්ෂිතව තැබීම සඳහා අපගේ උත්සාහයන් පිළිබඳ දැනගන්න.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "මෙය කියවීම මගින් තම ඇඩෝන තහවුරු කරගැනීමට කැමති සංවර්ධකයන් ඉදිරියට යන්න ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "ශ්‍රමික">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.learnMore "තවත් දැනගන්න.">
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY getThemes.description                "Looking to personalize your browser?">
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">
+<!ENTITY pluginDeprecation.description "Missing something? Some plugins are no longer supported by &brandShortName;.">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Vind die volgende voorkoms van die frase">
+<!ENTITY previous.tooltip "Vind die vorige voorkoms van die frase">
+<!ENTITY findCloseButton.tooltip "Sluit soekbalk">
+<!ENTITY highlightAll.label "Verlig almal">
+<!ENTITY highlightAll.accesskey "a">
+<!ENTITY highlightAll.tooltiptext "Verlig alle voorkomste van die frase">
+<!ENTITY caseSensitive.label "Kassensitief">
+<!ENTITY caseSensitive.accesskey "s">
+<!ENTITY caseSensitive.tooltiptext "Soek met in inagneming van hoof- en kleinletters">
+<!ENTITY entireWord.label "Hele woorde">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "Soek slegs vir hele woorde">

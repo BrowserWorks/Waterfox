@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "ইয়াৰ বাবে আপোনাৰ ৱাৰেন্টি নোহোৱা হব পাৰে!">
+<!ENTITY aboutWarningText.label "এই উন্নত সংহতিসমূহ সলনি কৰাটো স্থিৰতা,সুৰক্ষা আৰু এই এপ্লিকেচনৰ কাৰ্য্যক্ষমতাৰ কাৰণে ক্ষতিকৰ হ'ব পাৰে। আপুনি যি কৰি আছে তাৰ বিষয়ে সুনিশ্চিত হৈ আগবাঢ়িব।">
+
+<!ENTITY aboutWarningCheckbox.label "পিছৰ বাৰ এই সকিয়নি দেখুৱাব">
+
+<!ENTITY searchPrefs.label "সন্ধান কৰক:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "পছন্দৰ নাম">
+<!ENTITY lockColumn.label "অৱস্থা">
+<!ENTITY typeColumn.label "ধৰণ">
+<!ENTITY valueColumn.label "মান">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "বাছিবলৈ টিপক"> 
+<!ENTITY columnChooser.tooltip "প্ৰদৰ্শনৰ বাবে স্তম্ভ নিৰ্বাচন কৰিবলৈ টিপক"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "কপি কৰক">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "নাম কপি কৰক">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "মান কপি কৰক">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "সলনি কৰক">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "টগল কৰক">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "পুনৰ সংহতি কৰক">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "নতুন">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "স্ট্ৰিং">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "পূৰ্ণ সংখ্যা">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "বুলিয়েন">
+<!ENTITY boolean.accesskey "B">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">
+<!ENTITY focusSearch2.key "f">
+

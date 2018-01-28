@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - izvēlieties lietotāja profilu">
+
+<!ENTITY            profilename.label      "Profila nosaukums:">
+
+<!ENTITY            start.label            "Sākt &brandShortName;">
+<!ENTITY            exit.label             "Iziet">
+
+<!ENTITY            availprofiles.label    "Pieejamie profili">
+
+<!ENTITY            newButton.label        "Izveidot profilu...">
+<!ENTITY            newButton.accesskey    "I">
+<!ENTITY            renameButton.label     "Pārdēvēt profilu...">
+<!ENTITY            renameButton.accesskey "r">
+<!ENTITY            deleteButton.label     "Dzēst profilu...">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; jūsu profilā glabā iestatījumus, izvēles un citu lietotāja informāciju.">
+
+<!ENTITY            offlineState.label    "Strādāt bezsaistē">
+<!ENTITY            offlineState.accesskey "b">
+
+<!ENTITY            useSelected.label       "Izmantot izvēlēto profilu, nejautājot ielādes laikā">
+<!ENTITY            useSelected.accesskey   "s">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "முதன்மை கடவுச்சொல் நீக்கு">
+<!ENTITY removeInfo.label                  "தொடர உங்கள் நடப்பு கடவுச்சொல்லை உள்ளிட வேண்டும்:">
+<!ENTITY removeWarning1.label              "உங்கள் முதன்மை கடவுச்சொல் முக்கியமான தகவல்களான இணைய தள கடவுச்சொற்களை பாதுகாக்கிறது.">
+<!ENTITY removeWarning2.label              "நீங்கள் உங்கள் முதன்மை கடவுச்சொல்லை நீக்கினால் உங்கள் கணினியை பாதுகாக்காது.">
+<!ENTITY setPassword.oldPassword.label     "நடப்பு கடவுச்சொல்:">
+

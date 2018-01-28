@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Fejlrapporter">
+<!ENTITY crashesUnsubmitted.label   "Ikke-sendte fejlrapporter">
+<!ENTITY crashesSubmitted.label     "Sendte fejlrapporter">
+<!ENTITY id.heading                 "Rapport-ID">
+<!ENTITY dateCrashed.heading        "Nedbrudsdato">
+<!ENTITY dateSubmitted.heading      "Indsendelsesdato">
+<!ENTITY noReports.label            "Du har ikke indsendt nogle fejlrapporter.">
+<!ENTITY noConfig.label             "Dette program er ikke konfigureret til at vise fejlrapporter. Indstillingen <code>breakpad.reportURL</code> skal være sat.">
+<!ENTITY clearAllReports.label      "Fjern alle fejlrapporter">

@@ -1,0 +1,165 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Fabhtcheartú">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Ar an leathanach seo tá eolas teicniúil a d'fhéadfadh a bheith úsáideach agus tú ag iarraidh fadhb a réiteach. Má tá freagraí á lorg agat ar cheisteanna coitianta maidir le &brandShortName;, féach ar ár <a id='supportLink'>suíomh tacaíochta</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Tuairiscí Tuairteála">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Aitheantas na Tuairisce">
+<!ENTITY aboutSupport.crashes.sendDate "Seolta">
+<!ENTITY aboutSupport.crashes.allReports "Gach Tuairisc Tuairteála">
+<!ENTITY aboutSupport.crashes.noConfig "Ní raibh an feidhmchlár seo cumraithe le tuairiscí tuairteála a thaispeáint.">
+
+<!ENTITY aboutSupport.extensionsTitle "Eisínteachtaí">
+<!ENTITY aboutSupport.extensionName "Ainm">
+<!ENTITY aboutSupport.extensionEnabled "Cumasaithe">
+<!ENTITY aboutSupport.extensionVersion "Leagan">
+<!ENTITY aboutSupport.extensionId "Aitheantas">
+
+<!ENTITY aboutSupport.featuresTitle "Gnéithe &brandShortName;">
+<!ENTITY aboutSupport.featureName "Ainm">
+<!ENTITY aboutSupport.featureVersion "Leagan">
+<!ENTITY aboutSupport.featureId "Aitheantas">
+
+<!ENTITY aboutSupport.experimentsTitle "Gnéithe Turgnamhacha">
+<!ENTITY aboutSupport.experimentName "Ainm">
+<!ENTITY aboutSupport.experimentId "Aitheantas">
+<!ENTITY aboutSupport.experimentDescription "Cur Síos">
+<!ENTITY aboutSupport.experimentActive "Gníomhach">
+<!ENTITY aboutSupport.experimentEndDate "Dáta Deiridh">
+<!ENTITY aboutSupport.experimentHomepage "Leathanach Baile">
+<!ENTITY aboutSupport.experimentBranch "Craobh">
+
+<!ENTITY aboutSupport.appBasicsTitle "Buntús an Fheidhmchláir">
+<!ENTITY aboutSupport.appBasicsName "Ainm">
+<!ENTITY aboutSupport.appBasicsVersion "Leagan">
+<!ENTITY aboutSupport.appBasicsBuildID "Aitheantas Tógála">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Nuashonraigh an Cainéal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Stair na Nuashonruithe">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Taispeáin Stair na Nuashonruithe">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Comhadlann Phróifíle">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Fillteán Próifíle">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Forlíontáin Chumasaithe">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Cumraíocht an Leagain">
+<!ENTITY aboutSupport.appBasicsUserAgent "Gníomhaire Úsáideora">
+<!ENTITY aboutSupport.appBasicsOS "CO">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Úsáid Chuimhne">
+<!ENTITY aboutSupport.appBasicsPerformance "Feidhmíocht">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Oibrithe Seirbhíse Cláraithe">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Próifílí">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Fuinneoga Ilphróisis">
+
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Eochair Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Eochair Sheirbhís Geoshuite Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mód Slán">
+
+<!ENTITY aboutSupport.showDir.label "Oscail Comhadlann">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Taispeáin san Aimsitheoir">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Oscail an Fillteán">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Sainroghanna Tábhachtacha Athraithe">
+<!ENTITY aboutSupport.modifiedPrefsName "Ainm">
+<!ENTITY aboutSupport.modifiedPrefsValue "Luach">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Sainroghanna user.js">
+<!ENTITY aboutSupport.userJSDescription "Tá <a id='prefs-user-js-link'>comhad user.js</a> i do fhillteán próifíle, ina bhfuil sainroghanna nach raibh cruthaithe ag &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Sainroghanna Tábhachtacha Faoi Ghlas">
+<!ENTITY aboutSupport.lockedPrefsName "Ainm">
+<!ENTITY aboutSupport.lockedPrefsValue "Luach">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafaic">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Bunachar Sonraí Áiteanna">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Sláine">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Deimhnigh an tSláine">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Bailitheoir Dramhaíola Incriminteach">
+
+<!ENTITY aboutSupport.a11yTitle "Inrochtaineacht">
+<!ENTITY aboutSupport.a11yActivated "Gníomhachtaithe">
+<!ENTITY aboutSupport.a11yForceDisabled "Coisc Inrochtaineacht">
+<!ENTITY aboutSupport.a11yHandlerUsed "Úsáideadh an Láimhseálaí Inrochtana">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Leaganacha Leabharlann">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Stair Suiteála">
+<!ENTITY aboutSupport.updateHistoryTitle "Stair na Nuashonruithe">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Cóipeáil an téacs go dtí an ghearrthaisce">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Cóipeáil amhshonraí go dtí an ghearrthaisce">
+
+<!ENTITY aboutSupport.sandboxTitle "Bosca gainimh">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Glaonna Córais Diúltaithe">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Soicind ó shin">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Cineál an Phróisis">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Glao ar an gcóras">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argóintí">
+
+<!ENTITY aboutSupport.safeModeTitle "Bain triail as an Mód Slán">
+<!ENTITY aboutSupport.restartInSafeMode.label "Atosaigh gan aon bhreiseáin…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Gnéithe">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnóisic">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Logchomhad Clistí">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Logchomhad Cinntí">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Gnéithe Díchumasaithe ag an gCosantóir Tuairteála">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Seifteanna">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

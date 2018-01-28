@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Flluska">
+
+<!ENTITY  blockPopups.label           "Blloko dritare flluska">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "Njoftime">
+<!ENTITY  notificationsPolicyLearnMore.label   "Mësoni më tepër">
+<!ENTITY  notificationsPolicyDesc3.label       "Zgjidhni cilëve sajte u lejohet t&apos;ju dërgojnë njoftime">
+<!ENTITY  notificationsPolicyButton.accesskey  "c">
+<!ENTITY  notificationsPolicyButton.label      "Zgjidhni…">
+<!ENTITY  notificationsDoNotDisturb.label      "Mos më shqetësoni">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "M">
+<!ENTITY  notificationsDoNotDisturbDetails.value "S&apos;do të shfaqen njoftime, pa rinisur &brandShortName;-in">
+
+<!ENTITY  popupExceptions.label       "Përjashtime…">
+<!ENTITY  popupExceptions.accesskey   "P">
+
+<!ENTITY  fontsAndColors.label        "Shkronja &amp; Ngjyra">
+
+<!ENTITY  defaultFont2.label          "Shkronja parazgjedhje">
+<!ENTITY  defaultFont2.accesskey      "p">
+<!ENTITY  defaultSize2.label          "Madhësi">
+<!ENTITY  defaultSize2.accesskey      "M">
+
+<!ENTITY  advancedFonts.label         "Të mëtejshme…">
+<!ENTITY  advancedFonts.accesskey     "t">
+
+<!ENTITY  colors.label                "Ngjyra…">
+<!ENTITY  colors.accesskey            "y">
+
+
+<!ENTITY languages.label              "Gjuhë">
+<!ENTITY chooseLanguage.label         "Zgjidhni gjuhën tuaj të parapëlqyer për shfaqje faqesh">
+<!ENTITY chooseButton.label           "Zgjidhni…">
+<!ENTITY chooseButton.accesskey       "z">
+
+<!ENTITY translateWebPages.label      "Përktheni lëndë web">
+<!ENTITY translateWebPages.accesskey  "P">
+<!ENTITY translateExceptions.label    "Përjashtime…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Përkthime nga">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Lëndë DRM">
+
+<!ENTITY  playDRMContent.label         "Luani lëndë DRM">
+<!ENTITY  playDRMContent.accesskey     "L">
+<!ENTITY  playDRMContent.learnMore.label "Mësoni më tepër">
+
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Velg brukerprofil">
+
+<!ENTITY            profilename.label      "Profilnavn:">
+
+<!ENTITY            start.label            "Start &brandShortName;">
+<!ENTITY            exit.label             "Avslutt">
+
+<!ENTITY            availprofiles.label    "Tilgjengelige profiler">
+
+<!ENTITY            newButton.label        "Lag ny profil …">
+<!ENTITY            newButton.accesskey    "L">
+<!ENTITY            renameButton.label     "Endre navn …">
+<!ENTITY            renameButton.accesskey "E">
+<!ENTITY            deleteButton.label     "Slett profil …">
+<!ENTITY            deleteButton.accesskey "S">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; lagrer innstillinger og annen brukerdata i brukerprofilen.">
+
+<!ENTITY            offlineState.label    "Arbeid frakoblet">
+<!ENTITY            offlineState.accesskey "A">
+
+<!ENTITY            useSelected.label       "Bruk den valgte profilen uten å spørre ved oppstart">
+<!ENTITY            useSelected.accesskey   "B">

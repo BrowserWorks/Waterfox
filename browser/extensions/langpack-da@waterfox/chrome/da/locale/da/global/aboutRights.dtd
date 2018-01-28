@@ -1,0 +1,87 @@
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Om dine rettigheder">
+<!ENTITY rights.intro "&brandFullName; er software med fri og åben kildekode, skabt af en sammenslutning af tusindvis af mennesker over hele kloden. Der er et par ting, som du bør vide:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; gøres tilgængelig for dig under retningslinjerne i ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Dette betyder at du må bruge, kopiere og videregive &brandShortName; til andre. Du er er også velkommen til at ændre i kildekoden til &brandShortName; for at opfylde dine behov. Mozilla Public License tildeler dig også retten til at videregive dine ændrede versioner.">
+
+<!ENTITY rights.intro-point2-a "Du tildeles ikke nogen rettigheder eller licens til varemærker tilhørende Waterfox eller tredjepartier, herunder (uden undtagelse) produktet Waterfox og dets tilhørende logo. Yderligere information om varemærker kan findes ">
+<!ENTITY rights.intro-point2-b "her">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Nogle funktioner i &brandShortName;, såsom Fejlrapportør, giver dig mulighed for at give feedback til  &vendorShortName;. Ved at vælge at sende feedback giver du &vendorShortName; tilladelse til at bruge de givne informationer til at forbedre deres produkter, offenliggøre disse på deres webside(r) samt at videredistribuere disse frit.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Hvordan vi bruger dine personlige oplysninger og indsendt feedback til &vendorShortName; med  &brandShortName; er beskrevet i ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Privatlivspolitik">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Alle relevante privatlivspolitikker for dette produkt bør være beskrevet her.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Nogle &brandShortName; funktioner gør brug af webbaserede informationstjenester, men vi kan ikke garantere at de er 100&#37; korrekte eller fejlfrie. Yderligere detaljer, inklusiv information om at deaktivere disse tjenester, kan findes under punktet ">
+<!ENTITY rights.intro-point4b "tjenstevilkår">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Hvis dette produkt bruger webbaserede tjenester skal alle vedkommende vilkår for tjenesterne linkes til under afsnittet ">
+<!ENTITY rights.intro-point4b-unbranded "Webbaserede tjenester">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "&brandFullName; webbaserede informationstjenester">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "For at kunne afspille visse typer af video skal &brandShortName; hente dekrypteringsmoduler fra tredjepart.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; bruger webbaserede informationstjenester (&quot;Tjenester&quot;) som gøres tilgængelig for dig ved brug af denne binære version af &brandShortName; som beskrevet i de nedenstående vilkår. Hvis du ikke ænsker at bruge en eller flere af disse tjenester, eller hvis du ikke kan tilslutte dig de nedenstående vilkår, kan du deaktivere funktionen eller tjenesten. Instruktioner til at deaktivere en given funktion eller tjeneste kan findes ">
+<!ENTITY rights2.webservices-b "her">
+<!ENTITY rights3.webservices-c ". Andre funktioner og tjenester kan deaktiveres i indstillingerne.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Deaktivering af Safe Browsing funktionen er ikke anbefalet da det kan resultere i at du besøger usikre websteder. Hvis du ønsker at deaktivere denne funktion fuldstændigt, kan dette gøres ved følgene trin:">
+<!ENTITY rights.safebrowsing-term1 "Åbn programmets indstillinger">
+<!ENTITY rights.safebrowsing-term2 "Vælg gruppen Sikkerhed">
+<!ENTITY rights2.safebrowsing-term3 "Fjern markeringen for at &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing er nu deaktiveret">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Positionsbevidst browsing: ">
+<!ENTITY rights.locationawarebrowsing-b "Du bliver altid spurgt om du ønsker at dele din position. Din position bliver aldrig sendt uden dit samtykke. Hvis du ønsker at deaktivere denne funktion fuldstændigt kan det gøres ved følgende trin:">
+<!ENTITY rights.locationawarebrowsing-term1a "Skriv følgende i adresselinjen ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Tast geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Dobbeltklik på geo.enabled præferencen">
+<!ENTITY rights.locationawarebrowsing-term4 "Positionsbevidt browsing er nu deaktiveret">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Et overblik over de webbaserede tjenester, produktet bruger, samt instruktioner om, hvordan de deaktiveres (hvis muligt), skal inkluderes her.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Alle vedkommende tjenestevilkår for dette produkt bør optegnes her.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; og dets bidragydere, licensholdere og forretningspartnere arbejder på at yde de mest korrekte og ajourførte tjenester. Vi kan dog ikke garantere at denne information er fyldestgørende eller fejlfri. Eksempelvis kan Safe Browsing-tjenesten ikke altid identificere risikofyldte websteder og kan tillige fejlagtigt blokere for sikre websteder. Ved positionsbevidst browsing vil positioner returneret af vores tjenesteudbydere kun være omtrentlige og vi garanterer ikke for præcisionen.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; kan afslutte eller ændre tjenesten når de ønsker dette.">
+<!ENTITY rights2.webservices-term3 "Det står dig frit for at bruge de i &brandShortName; medfølgende tjenester og &vendorShortName; giver dig rettighed til dette. &vendorShortName; og dets licensholdere forbeholder sig alle andre rettigheder vedrørende disse tjenester. Disse vilkår er ikke tiltænkt at begrænse rettigheder under åben kildekode licenser vedrørende &brandShortName; og de tilhørende kildekode versioner af &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Tjensten leveres &quot;som den fremstår.&quot; &vendorShortName;, dets bidragydere, licensholdere og distributører fraskriver sig alle garantier, udtrykt eller indforstået, inklusive garantier om hvorvidt tjenesten er handelsgyldig eller passer til dit formål. Du bærer den fulde risiko ved at bruge tjenesten til dine formål samt kvaliteten og ydelsen, som tjenesten leverer. Nogle retskredse tillader ikke eksklusion eller begrænsning af indforståede garantier, så denne fraskrivelse af garanti kan i visse tilfælde ikke berøre dig.">
+<!ENTITY rights.webservices-term5 "Undtaget som lovpåkrævet vil &vendorShortName;, dets bidragydere, licensholdere og distributører ikke hæfte for nogle indirekte, specielle, incidentale, afledte, strafmæssige eller statutmæssige krav som opstår af, eller på nogen måde er relateret til brugen af &brandShortName; og dets tjenester. Den samlede hæfte under disse vilkår kan ikke overstige $500 (Femhundrede dollars USD). Nogle retskredse tillader ikke eksklusion eller begrænsning af hæfte/krav, så denne fraskrivelse af hæfte kan i visse tilfælde ikke berøre dig.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; må fra tid til anden opdatere disse vilkår efter behov. Disse vilkår må ikke ændres eller annulleres uden skriftlig aftale med &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Disse vilkår styres af loven i Californien, U.S.A., dets conflict of law provisioner. Hvis dele af disse vilkår ikke har gyldighed eller kan opretholdes vil den resterende del stadig være fuld ud gyldig og vedstående. I tilfælde af tvist mellem en oversat version af disse vilkår og den engelske version skal den engelske version være den gældende.">

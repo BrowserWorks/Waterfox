@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Əlavəni yüklə">
+<!ENTITY intro           "Kompüterinizdəki başqa bir proqram
+                          &brandShortName; səyyahını bu əlavə ilə dəyişdirmək istəyir:">
+<!ENTITY warning         "Sadəcə inandığınız əlavə yazanların əlavələri qurun.">
+<!ENTITY allow           "Bu quraşdırmaya icazə ver">
+<!ENTITY later           "Əlavə İdarəçisinə girərək istədiyiniz vaxt fikirinizi dəyişə bilərsiniz.">
+<!ENTITY continue        "İrəli">
+<!ENTITY restartMessage  "Əlavə quraşdırmasının tamamlanması üçün &brandShortName; yenidən başladılmalıdır.">
+<!ENTITY restartButton   "&brandShortName; yenidən başlasın">
+<!ENTITY cancelButton    "ləğv et">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Az Ön jogai">
+<!ENTITY rights.intro "A &brandFullName; ingyenes és nyílt forrású szoftver, amelyet világszerte több ezer ember fejleszt. Néhány dologról tudnia kell:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "A &brandShortName; a ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c " feltételei szerint lett közreadva. Ez azt jelenti, hogy a  &brandShortName; használható, másolható és terjeszthető. A &brandShortName; forráskódjának igény szerinti módosítása szintén megengedett. A Mozilla Public License megadja a jogot a módosított verziók terjesztésére is.">
+
+<!ENTITY rights.intro-point2-a "Ön nem kapott jogot vagy felhatalmazást a védjegyek használatára sem a Waterfoxtől, sem mástól, beleértve – de nem csak erre korlátozva – a Waterfox nevet és logót. A védjegyekről további információ ">
+<!ENTITY rights.intro-point2-b "itt">
+<!ENTITY rights.intro-point2-c " olvasható.">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "A &brandShortName; egyes funkciói, például a Hibajelentő, lehetőséget ad a visszajelzésre a &vendorShortName; felé. A visszajelzés elküldésével Ön engedélyt ad a &vendorShortName; részére, hogy a visszajelzést a termékei fejlesztésére használja fel, a visszajelzést közzétegye a webhelyein, valamint a visszajelzést terjessze.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "A &vendorShortName; részére a &brandShortName; által beküldött személyes adatokat és visszajelzéseket a ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Adatvédelmi Irányelvek">
+<!ENTITY rights.intro-point3c " szerint kezeljük.">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Itt kell felsorolni a termékben alkalmazott adatvédelmi irányelveket.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "A &brandShortName; webalapú információs szolgáltatásokat is nyújt, mindazonáltal nem garantálható, hogy ezek 100&#037;-osan pontosak és hibamentesek. A szolgáltatások letiltásáról szóló információk a ">
+<!ENTITY rights.intro-point4b "szolgáltatás feltételei">
+<!ENTITY rights.intro-point4c " dokumentumban olvashatók.">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Ha ez a termék webes szolgáltatásokat is tartalmaz, akkor ezen szolgáltatások feltételei a ">
+<!ENTITY rights.intro-point4b-unbranded "Webhely-információs szolgáltatások">
+<!ENTITY rights.intro-point4c-unbranded " szakaszban vannak hivatkozva.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; webalapú információs szolgáltatások">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Bizonyos típusú videotartalmak lejátszásához a &brandShortName; tartalom-visszafejtési modulokat tölt le külső szolgáltatóktól.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "A &brandFullName; webalapú információs szolgáltatásokat („Szolgáltatások”) használ egyes funkciók megvalósítására. Ezek a Szolgáltatások a &brandShortName; bináris verziójával együtt érhetők el az alább leírt módon. Ha nem akarja használni a Szolgáltatásokat, illetve az alábbi feltételek elfogadhatatlanok, letilthatja a funkciót vagy a Szolgáltatásokat. Egy adott funkció vagy Szolgáltatás letiltásáról ">
+<!ENTITY rights2.webservices-b "itt">
+<!ENTITY rights3.webservices-c " található információ. Más funkciók és szolgáltatások az alkalmazás beállításaiban kapcsolhatók ki.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "A Safe Browsing (biztonságos böngészés) funkciót nem ajánlott letiltani, mert akkor nem biztonságos webhelyekre is eljuthat. Ha teljesen le akarja tiltani a funkciót, kövesse az alábbi lépéseket:">
+<!ENTITY rights.safebrowsing-term1 "Nyissa meg az alkalmazás beállítópaneljét.">
+<!ENTITY rights.safebrowsing-term2 "Válassza a Biztonság csoportot.">
+<!ENTITY rights2.safebrowsing-term3 "Törölje a „&enableSafeBrowsing.label;” beállítást">
+<!ENTITY rights.safebrowsing-term4 "A Safe Browsing most le van tiltva.">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Location Aware Browsing: ">
+<!ENTITY rights.locationawarebrowsing-b "A helyfüggő böngészés nincs alapból bekapcsolva. Az engedélye nélkül nem kerül elküldésre semmilyen adat a tartózkodási helyéről. Ha teljesen le akarja tiltani a funkciót, kövesse az alábbi lépéseket:">
+<!ENTITY rights.locationawarebrowsing-term1a "A címsávba írja be: ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Írja be: geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Kattintson duplán a geo.enabled beállításon.">
+<!ENTITY rights.locationawarebrowsing-term4 "A Location-Aware Browsing most le van tiltva.">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Itt kell megadni az információkat a termékbe beépített webhely-információs szolgáltatásokról, beleértve letiltásuk módját.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Itt kell megadni a termékre vonatkozó szolgáltatási feltételeket.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "A &vendorShortName;, a közreműködők, a licencadók és a partnerek azon dolgoznak, hogy a lehető legpontosabb és legfrissebb Szolgáltatásokat nyújtsák. Mindazonáltal nem garantáljuk, hogy ez az információ teljes és hibamentes. Például a Safe Browsing szolgáltatás nem feltétlenül azonosít egyes kockázatos webhelyeket, vagy tévedésből biztonságos webhelyre nem enged be, valamint a Location Aware szolgáltatás által visszaadott tartózkodási helyet a szolgáltatóink közlik, ezek csak becslések, és sem mi, sem a szolgáltatóink nem garantáljuk a megadott tartózkodási hely pontosságát.">
+<!ENTITY rights.webservices-term2 "A &vendorShortName; saját hatáskörében megszüntetheti vagy módosíthatja a Szolgáltatásokat.">
+<!ENTITY rights2.webservices-term3 "Ön igénybe veheti ezeket a Szolgáltatásokat a &brandShortName; mellékelt verziójával, a &vendorShortName; ehhez minden jogot megad. A &vendorShortName; és licencadói minden más jogot fenntartanak a Szolgáltatásokkal kapcsolatban. Ezek a feltételek nem korlátozzák a &brandShortName; programra és a &brandShortName; forráskódjára alkalmazott nyílt forrású licencek által biztosított jogokat.">
+<!ENTITY rights.webservices-term4 "A Szolgáltatások „olyanok, amilyenek”. A &vendorShortName;, a közreműködők, a licencadók és a terjesztők minden garanciát elutasítanak, legyen az kifejezett vagy vélelmezett, beleértve, de nem erre korlátozva azt, hogy a Szolgáltatások hasznosak és megfelelnek a felhasználó céljainak. Teljes egészében a felhasználó viseli annak kockázatát, hogy a Szolgáltatásokat saját céljára igénybe veszi, és hogy a Szolgáltatások az adott minőségben és teljesítménnyel működnek. Egyes jogrendszerek nem teszik lehetővé a vélelmezett garanciák kizárását vagy korlátozását, tehát ez az elutasítás lehet, hogy Önre nem vonatkozik.">
+<!ENTITY rights.webservices-term5 "Ha a törvény másképp nem rendelkezik, a &vendorShortName;, a közreműködők, a licencadók és a terjesztők nem felelnek semmilyen közvetlen, különleges, következményes, büntetőjogi vagy példamutató kárért, amely a &brandShortName; és a Szolgáltatások használatából következett, vagy azzal bármilyen módon összefüggésbe hozható. A kollektív felelősség ezen feltételek szerint nem haladja meg az 500 (ötszáz) USA-dollárt. Egyes jogrendszerek nem teszik lehetővé bizonyos károk kizárását vagy korlátozását, tehát ez a kizárás és korlátozás lehet, hogy Önre nem vonatkozik.">
+<!ENTITY rights.webservices-term6 "A &vendorShortName; időről időre frissítheti ezeket a feltételeket, ha szükségesnek látja. Ezek a feltételek nem módosíthatók vagy érvényteleníthetők a &vendorShortName; írásos beleegyezése nélkül.">
+<!ENTITY rights.webservices-term7 "A feltételekre Kalifornia (USA) állam törvényei vonatkoznak, kivéve ha ütközik helyi jogszabályokkal. Ha a feltételek egyes részei érvénytelenek vagy nem kikényszeríthetők, a többi rész attól még teljes mértékben érvényes és hatályos. Ha a feltételek lefordított változata ellentmond az angol változatnak, akkor az angol változat az irányadó.">

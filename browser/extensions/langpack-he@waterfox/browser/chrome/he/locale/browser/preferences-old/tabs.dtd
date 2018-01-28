@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab מחליף את הלשוניות לפי סדר השימוש בהן">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "ל">
+
+<!ENTITY newWindowsAsTabs.label       "פתיחת חלונות חדשים כלשוניות">
+<!ENTITY newWindowsAsTabs.accesskey   "ח">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "הזהרה בעת סגירת מספר לשוניות">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "ז">
+
+<!ENTITY warnOnOpenManyTabs.label       "הזהרה בעת פתיחה של מספר לשוניות שעשויה להאט את &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "פ">
+
+<!ENTITY switchLinksToNewTabs.label        "מעבר מיידי בפתיחה של קישור בלשונית חדשה">
+<!ENTITY switchLinksToNewTabs.accesskey    "מ">
+
+<!ENTITY showTabsInTaskbar.label          "הצגת תצוגה מקדימה של לשוניות בסרגל המשימות של Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "ת">
+<!ENTITY tabsGroup.label          "לשוניות">

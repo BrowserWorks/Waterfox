@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copïo">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Dewis Popeth">
+<!ENTITY  selectall.accesskey   "P">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Cyffredinol">
+<!ENTITY  generalTab.accesskey  "C">
+<!ENTITY  generalTitle          "Teitl:">
+<!ENTITY  generalURL            "Cyfeiriad:">
+<!ENTITY  generalType           "Math:">
+<!ENTITY  generalMode           "Modd Llunio:">
+<!ENTITY  generalSize           "Maint:">
+<!ENTITY  generalReferrer       "URL cyfeirio:">
+<!ENTITY  generalSource         "Storfa Ffynhonnell:">
+<!ENTITY  generalModified       "Newidiwyd:">
+<!ENTITY  generalEncoding2      "Amgodiad Testun:">
+<!ENTITY  generalMetaName       "Enw">
+<!ENTITY  generalMetaContent    "Cynnwys">
+
+<!ENTITY  mediaTab              "Cyfrwng">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Lleoliad:">
+<!ENTITY  mediaText             "Testun Cysylltiedig:">
+<!ENTITY  mediaAltHeader        "Testun Arall">
+<!ENTITY  mediaAddress          "Cyfeiriad">
+<!ENTITY  mediaType             "Math">
+<!ENTITY  mediaSize             "Maint">
+<!ENTITY  mediaCount            "Cyfrif">
+<!ENTITY  mediaDimension        "Maint:">
+<!ENTITY  mediaLongdesc         "Disgrifiad Hir:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Cadw Fel…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Rhagolwg Cyfrwng:">
+
+<!ENTITY  feedTab               "Llif">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Tanysgrifio">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Caniatâd">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Defnyddio'r Rhagosodedig">
+<!ENTITY  permAskAlways         "Gofyn bob tro">
+<!ENTITY  permAllow             "Caniatáu">
+<!ENTITY  permAllowSession      "Caniatáu ar gyfer y Sesiwn">
+<!ENTITY  permBlock             "Rhwystro">
+<!ENTITY  permissionsFor        "Caniatâd ar gyfer:">
+<!ENTITY  permPlugins           "Gweithredu'r Ategion">
+
+<!ENTITY  permClearStorage           "Clirio'r Storfa">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Diogelwch">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Darllen y Dystysgrif">
+<!ENTITY  securityView.accesskey "D">
+<!ENTITY  securityView.unknown   "Anhysbys">
+
+
+<!ENTITY  securityView.identity.header   "Enw Gwefan">
+<!ENTITY  securityView.identity.owner    "Perchennog:">
+<!ENTITY  securityView.identity.domain   "Gwefan:">
+<!ENTITY  securityView.identity.verifier "Gwirio gan:">
+<!ENTITY  securityView.identity.validity "Daw i ben ar:">
+
+<!ENTITY  securityView.privacy.header                   "Preifatrwydd a Hanes">
+<!ENTITY  securityView.privacy.history                  "A ydw i wedi ymweld â'r wefan hon cyn heddiw?">
+<!ENTITY  securityView.privacy.cookies                  "A yw'r wefan yma'n cadw gwybodaeth (cwcis) ar fy nghyfrifiadur?">
+<!ENTITY  securityView.privacy.viewCookies              "Gweld y Cwcis">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "C">
+<!ENTITY  securityView.privacy.passwords                "A ydw i wedi cadw unrhyw gyfrineiriau ar gyfer y wefan yma?">
+<!ENTITY  securityView.privacy.viewPasswords            "Gweld y Cyfrineiriau wedi eu Cadw">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Manylion Technegol">
+
+<!ENTITY  helpButton.label                              "Cymorth">

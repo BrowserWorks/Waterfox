@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Norma serĉilo">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Elektu vian norman serĉilon. &brandShortName; uzas ĝin en la adresstrio, serĉostrio kaj eka paĝo.">
+
+<!ENTITY provideSearchSuggestions.label        "Montri serĉajn sugestojn">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Montri sugestojn de serĉiloj en la rezultoj de la adresa strio">
+<!ENTITY showURLBarSuggestions.accesskey       "a">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Sugestoj de serĉiloj ne aperos en la rezultoj de la adresa strio ĉar vi petis al &brandShortName; neniam memori la historion.">
+
+<!ENTITY oneClickSearchEngines.label           "Serĉiloj per unu alklako">
+
+<!ENTITY chooseWhichOneToDisplay.label         "La serĉa strio permesas al vi rekte serĉi per malsamaj serĉiloj. Elektu la montrotajn.">
+
+<!ENTITY engineNameColumn.label                "Serĉilo">
+<!ENTITY engineKeywordColumn.label             "Ŝlosilvorto">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Remeti la normajn serĉilojn">
+<!ENTITY restoreDefaultSearchEngines.accesskey "n">
+
+<!ENTITY removeEngine.label                    "Forigi">
+<!ENTITY removeEngine.accesskey                "F">
+
+<!ENTITY addMoreSearchEngines.label            "Aldoni pli da serĉiloj…">

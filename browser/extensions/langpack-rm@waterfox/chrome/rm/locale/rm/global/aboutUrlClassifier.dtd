@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Infurmaziuns davart l'url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Purschider">
+<!ENTITY aboutUrlClassifier.provider                    "Purschider">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Ultima actualisaziun">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Proxima actualisaziun">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Perioda d'interrupziun">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Status da l'ultima actualisaziun">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Actualisaziun">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Actualisar">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Stizzar">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Num da la tabella">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Dumber d'endataziuns negativas en il cache">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Dumber d'endataziuns positivas en il cache">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Mussar las endataziuns">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Endataziuns en il cache">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Scadenza da cache negativa">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Hash cumplet">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Scadenza da cache positiva">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debugar">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Activar ils moduls da protocol">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Definir la datoteca da protocol">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Activar il protocol da JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Moduls da protocol per Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugModules                "Moduls da protocol actuals">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Protocol JS da Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugFile                   "Datoteca da protocol actuala">

@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "북마크">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "탭 열기">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "방문 기록">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "로그인">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "환경 설정">
+<!ENTITY engine.prefs.accesskey     "S">
+<!ENTITY engine.addons.label        "부가 기능">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "주소">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "신용카드">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "기기 이름">
+<!ENTITY changeSyncDeviceName2.label "기기 이름 바꾸기…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "취소">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "저장">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "서비스 약관">
+<!ENTITY fxaPrivacyNotice.link.label "개인 정보 보호 정책">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "은 아직 인증되지 않았습니다.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "">
+<!ENTITY signedInLoginFailure.aftername.label "으로 로그인을 해서 다시 연결해 주십시오">
+
+<!ENTITY notSignedIn.label           "로그인이 되어있지 않습니다.">
+<!ENTITY signIn.label                "로그인">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "프로필 사진 변경">
+<!ENTITY verifiedManage.label        "계정 관리">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect3.label           "연결 끊기…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY verify.label                "이메일 인증">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "이 이메일 없애기">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "웹과 함께 하세요.">
+<!ENTITY signedOut.description        "북마크, 방문 기록, 탭, 비밀번호 부가기능, 설정을 모든 기기에 걸쳐 동기화 하세요.">
+<!ENTITY signedOut.accountBox.title   "&syncBrand.fxAccount.label;와 연결">
+<!ENTITY signedOut.accountBox.create  "계정 생성">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "로그인">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "동기화 설정">
+<!ENTITY signedIn.settings.description "&brandShortName;를 사용 중인 기기에서 동기화할 내용을 선택하세요.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "모바일 기기와 동기화하기 위해서 Waterfox ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " 또는 ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              "를 다운로드 합니다.">

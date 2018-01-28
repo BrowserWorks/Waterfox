@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; trygg modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Start i trygg modus">
+<!ENTITY refreshProfile.label         "Tilbakestill &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Trygg Modus er ein spesiell modus i &brandShortName; som kan brukast for å feilsøke problem.">
+<!ENTITY safeModeDescription4.label   "Utvidingar og tilpassa innstillingar vil mellombels slåast av.">
+
+<!ENTITY refreshProfileInstead.label  "Du kan også hoppe over feilsøkinga og prøve å friske opp &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; avslutta uventa under oppstart. Det kan vere ei utviding som er årsak til dette, eller andre problem. Du kan prøve å rette opp problemet med å feilsøke i Trygg modus.">

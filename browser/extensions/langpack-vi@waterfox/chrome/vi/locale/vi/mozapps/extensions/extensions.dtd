@@ -1,0 +1,267 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Quản lí tiện ích">
+
+<!ENTITY search.placeholder                   "Tìm tất cả các tiện ích">
+<!ENTITY search.buttonlabel                   "Tìm kiếm">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Đang mở…">
+<!ENTITY listEmpty.installed.label            "Bạn không có tiện ích nào thuộc kiểu này được cài đặt">
+<!ENTITY listEmpty.availableUpdates.label     "Không tìm thấy cập nhật">
+<!ENTITY listEmpty.recentUpdates.label        "Bạn chưa cập nhật tiện ích nào gần đây">
+<!ENTITY listEmpty.findUpdates.label          "Kiểm tra cập nhật">
+<!ENTITY listEmpty.search.label               "Không thể tìm thấy tiện ích phù hợp">
+<!ENTITY listEmpty.button.label               "Tìm hiểu thêm về tiện ích">
+<!ENTITY installAddonFromFile.label           "Cài đặt tiện ích từ tập tin…">
+<!ENTITY installAddonFromFile.accesskey       "i">
+<!ENTITY toolsMenu.tooltip                    "Công cụ cho tất cả tiện ích">
+
+
+
+<!ENTITY cmd.back.tooltip                     "Trở lại trang trước">
+<!ENTITY cmd.forward.tooltip                  "Tiến tới trang sau">
+
+<!ENTITY showUnsignedExtensions.button.label  "Không thể xác thực một số tiện ích">
+<!ENTITY showAllExtensions.button.label       "Hiện tất cả các tiện ích">
+
+
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Tất cả tiện ích đã bị vô hiệu hóa bởi chế độ an toàn.">
+<!ENTITY warning.checkcompatibility.label          "Việc kiểm tra tính tương thích của tiện ích đã bị vô hiệu hóa. Có thể bạn đang dùng các tiện ích không còn tương thích nữa.">
+<!ENTITY warning.checkcompatibility.enable.label   "Bật">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Kích hoạt kiểm tra tính tương thích của tiện ích">
+<!ENTITY warning.updatesecurity.label              "Việc kiểm tra tính an toàn của các cập nhật tiện ích đã bị vô hiệu hóa. Bạn có thể bị tổn hại nếu cập nhật.">
+<!ENTITY warning.updatesecurity.enable.label       "Bật">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Kích hoạt kiểm tra tính bảo mật của cập nhật cho tiện ích">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Tìm kiếm">
+<!ENTITY view.discover.label                  "Tải thêm tiện ích">
+<!ENTITY view.recentUpdates.label             "Cập nhật gần đây">
+<!ENTITY view.availableUpdates.label          "Có thể cập nhật">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Kiểm tra cập nhật">
+<!ENTITY updates.checkForUpdates.accesskey    "c">
+<!ENTITY updates.viewUpdates.label            "Xem các cập nhật gần đây">
+<!ENTITY updates.viewUpdates.accesskey        "X">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Tự động cập nhật tiện ích">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "c">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Thiết lập cập nhật tự động tất cả các tiện ích">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "t">
+<!ENTITY updates.resetUpdatesToManual.label          "Thiết lập cập nhật thủ công tất cả các tiện ích">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "c">
+<!ENTITY updates.updating.label               "Đang cập nhật tiện ích">
+<!ENTITY updates.installed.label              "Các tiện ích đã được cập nhật.">
+<!ENTITY updates.downloaded.label             "Các cập nhật tiện ích đã được tải xuống.">
+<!ENTITY updates.restart.label                "Khởi động lại ngay để hoàn tất cài đặt">
+<!ENTITY updates.noneFound.label              "Không tìm thấy cập nhật">
+<!ENTITY updates.manualUpdatesFound.label     "Xem các cập nhật hiện có">
+<!ENTITY updates.updateSelected.label         "Cài đặt cập nhật">
+<!ENTITY updates.updateSelected.tooltip       "Cài đặt các cập nhật trong danh sách này">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Hiện thêm thông tin">
+<!ENTITY cmd.showDetails.accesskey            "H">
+<!ENTITY cmd.findUpdates.label                "Tìm bản cập nhật">
+<!ENTITY cmd.findUpdates.accesskey            "T">
+<!ENTITY cmd.preferencesWin.label             "Tùy chọn">
+<!ENTITY cmd.preferencesWin.accesskey         "y">
+<!ENTITY cmd.preferencesUnix.label            "Tùy chỉnh">
+<!ENTITY cmd.preferencesUnix.accesskey        "y">
+<!ENTITY cmd.about.label                      "Giới thiệu">
+<!ENTITY cmd.about.accesskey                  "G">
+
+<!ENTITY cmd.enableAddon.label                "Bật">
+<!ENTITY cmd.enableAddon.accesskey            "B">
+<!ENTITY cmd.disableAddon.label               "Vô hiệu hóa">
+<!ENTITY cmd.disableAddon.accesskey           "V">
+<!ENTITY cmd.enableTheme.label                "Sử dụng giao diện">
+<!ENTITY cmd.enableTheme.accesskey            "S">
+<!ENTITY cmd.disableTheme.label               "Dừng sử dụng giao diện">
+<!ENTITY cmd.disableTheme.accesskey           "D">
+<!ENTITY cmd.askToActivate.label              "Hỏi trước khi kích hoạt">
+<!ENTITY cmd.askToActivate.tooltip            "Hỏi mỗi khi dùng tiện ích này">
+<!ENTITY cmd.alwaysActivate.label             "Luôn kích hoạt">
+<!ENTITY cmd.alwaysActivate.tooltip           "Luôn sử dụng tiện ích này">
+<!ENTITY cmd.neverActivate.label              "Không bao giờ kích hoạt">
+<!ENTITY cmd.neverActivate.tooltip            "Không bao giờ sử dụng tiện ích này">
+<!ENTITY cmd.stateMenu.tooltip                "Thay đổi khi tiện ích này chạy">
+<!ENTITY cmd.installAddon.label               "Cài đặt">
+<!ENTITY cmd.installAddon.accesskey           "i">
+<!ENTITY cmd.uninstallAddon.label             "Xóa">
+<!ENTITY cmd.uninstallAddon.accesskey         "X">
+<!ENTITY cmd.showPreferencesWin.label         "Tùy chọn">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Thay đổi tùy chọn của tiện ích này">
+<!ENTITY cmd.showPreferencesUnix.label        "Tùy chỉnh">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Thay đổi tùy chỉnh của tiện ích này">
+<!ENTITY cmd.contribute.label                 "Đóng góp">
+<!ENTITY cmd.contribute.accesskey             "g">
+<!ENTITY cmd.contribute.tooltip               "Đóng góp vào sự phát triển của tiện ích này">
+
+<!ENTITY cmd.showReleaseNotes.label           "Hiển thị ghi chú phát hành">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Hiển thị ghi chú phát hành của cập nhật này">
+<!ENTITY cmd.hideReleaseNotes.label           "Ẩn ghi chú phát hành">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Ẩn ghi chú phát hành của cập nhật này">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Tiện ích là gì?">
+<!ENTITY discover.description2                "Tiện ích là những ứng dụng cho phép bạn cá nhân hóa &brandShortName; bằng kiểu dáng hoặc chức năng phụ. Hãy thử một thanh lề tiết kiệm thời gian, một trình báo thời tiết, hoặc một giao diện để biến &brandShortName; thành của riêng bạn.">
+<!ENTITY discover.footer                      "Khi bạn kết nối mạng, bảng này sẽ giới thiệu một số tiện ích tốt nhất và thông dụng nhất để bạn thử.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Phiên bản">
+<!ENTITY detail.lastupdated.label             "Cập nhật cuối">
+<!ENTITY detail.creator.label                 "Nhà phát triển">
+<!ENTITY detail.homepage.label                "Trang chủ">
+<!ENTITY detail.numberOfDownloads.label       "Lượt tải">
+
+<!ENTITY detail.contributions.description     "Nhà phát triển tiện ích này đề nghị bạn hỗ trợ một khoản tài chính nhỏ cho việc phát triển.">
+
+<!ENTITY detail.updateType                    "Cập nhật tự động">
+<!ENTITY detail.updateDefault.label           "Mặc định">
+<!ENTITY detail.updateDefault.tooltip         "Chỉ tự động cài đặt cập nhật khi đó là mặc định">
+<!ENTITY detail.updateAutomatic.label         "Bật">
+<!ENTITY detail.updateAutomatic.tooltip       "Tự động cài đặt cập nhật">
+<!ENTITY detail.updateManual.label            "Tắt">
+<!ENTITY detail.updateManual.tooltip          "Không tự động cài đặt cập nhật">
+<!ENTITY detail.home                          "Trang chủ">
+<!ENTITY detail.repository                    "Hồ sơ tiện ích">
+<!ENTITY detail.size                          "Dung lượng">
+
+<!ENTITY detail.checkForUpdates.label         "Kiểm tra cập nhật">
+<!ENTITY detail.checkForUpdates.accesskey     "K">
+<!ENTITY detail.checkForUpdates.tooltip       "Kiểm tra cập nhật cho tiện ích này">
+<!ENTITY detail.showPreferencesWin.label      "Tùy chọn">
+<!ENTITY detail.showPreferencesWin.accesskey  "y">
+<!ENTITY detail.showPreferencesWin.tooltip    "Thay đổi tùy chọn của tiện ích này">
+<!ENTITY detail.showPreferencesUnix.label     "Tùy chỉnh">
+<!ENTITY detail.showPreferencesUnix.accesskey "y">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Thay đổi tùy chỉnh của tiện ích này">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Xếp hạng">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Tạm dừng">
+<!ENTITY progress.cancel.tooltip              "Hủy bỏ">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Tên">
+<!ENTITY sort.name.tooltip                    "Sắp xếp theo tên">
+<!ENTITY sort.dateUpdated.label               "Cập nhật cuối">
+<!ENTITY sort.dateUpdated.tooltip             "Sắp xếp theo ngày cập nhật">
+<!ENTITY sort.relevance.label                 "Phù hợp nhất">
+<!ENTITY sort.relevance.tooltip               "Sắp xếp theo tính phù hợp">
+<!ENTITY sort.price.label                     "Giá">
+<!ENTITY sort.price.tooltip                   "Sắp xếp theo giá">
+
+<!ENTITY search.filter2.label                 "Tìm:">
+<!ENTITY search.filter2.installed.label       "Tiện ích của tôi">
+<!ENTITY search.filter2.installed.tooltip     "Hiển thị tiện ích đã cài">
+<!ENTITY search.filter2.available.label       "Tiện ích có thể cài thêm">
+<!ENTITY search.filter2.available.tooltip     "Hiển thị các tiện ích hiện có để cài đặt">
+
+<!ENTITY addon.homepage                       "Trang chủ">
+<!ENTITY addon.details.label                  "Chi tiết thêm">
+<!ENTITY addon.details.tooltip                "Hiện thêm chi tiết về tiện ích này">
+<!ENTITY addon.unknownDate                    "Không rõ">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(đã tắt)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Cập nhật">
+<!ENTITY addon.undoAction.label               "Hoàn tác">
+<!ENTITY addon.undoAction.tooltip             "Hoàn tác thao tác này">
+<!ENTITY addon.undoRemove.label               "Hoàn tác">
+<!ENTITY addon.undoRemove.tooltip             "Giữ nguyên tiện ích này">
+<!ENTITY addon.restartNow.label               "Khởi động lại ngay">
+<!ENTITY addon.install.label                  "Cài đặt">
+<!ENTITY addon.install.tooltip                "Cài đặt tiện ích này">
+<!ENTITY addon.updateNow.label                "Cập nhật ngay">
+<!ENTITY addon.updateNow.tooltip              "Cài đặt bản cập nhật cho tiện ích này">
+<!ENTITY addon.includeUpdate.label            "Bao gồm trong cập nhật">
+<!ENTITY addon.updateAvailable.label          "Có một cập nhật cài đặt được">
+<!ENTITY addon.checkingForUpdates.label       "Đang kiểm tra cập nhật…">
+<!ENTITY addon.releaseNotes.label             "Ghi chú phát hành:">
+<!ENTITY addon.loadingReleaseNotes.label      "Đang mở…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Xin lỗi, nhưng có một lỗi khi mở ghi chú phát hành.">
+
+<!ENTITY addon.createdBy.label                "Bởi ">
+
+<!ENTITY eula.title                           "Thỏa thuận Giấy phép Người dùng cuối">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Đồng ý và cài đặt…">
+
+<!ENTITY settings.path.button.label           "Chọn…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Đây là gì? Thỉnh thoảng, Telemetry có thể sẽ cài đặt và chạy một số thử nghiệm.">
+<!ENTITY experiment.info.learnmore "Tìm hiểu thêm">
+<!ENTITY experiment.info.learnmore.accesskey "T">
+<!ENTITY experiment.info.changetelemetry "Thiết lập Telemetry">
+<!ENTITY experiment.info.changetelemetry.accesskey "L">
+
+<!ENTITY setting.learnmore "Tìm hiểu thêm…">
+
+<!ENTITY disabledUnsigned.heading "Một số tiện ích đã bị vô hiệu hóa">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Những tiện ích sau chưa được kiểm tra tương thích với &brandShortName;. Bạn có thể ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "tìm tiện ích thay thế">
+<!ENTITY disabledUnsigned.description.end " hoặc chờ nhà phát triển cập nhật bản mới.">
+<!ENTITY disabledUnsigned.learnMore "Tìm hiểu về nỗ lực đảm bảo an toàn trên mạng cho bạn của chúng tôi.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Nếu bạn là lập trình viên và muốn tiện ích của mình được kiểm tra thì có thể đọc ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "tài liệu hướng dẫn">
+<!ENTITY disabledUnsigned.devInfo.end " của chúng tôi.">
+
+
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY debugAddons.accesskey                "B">
+
+<!ENTITY debugAddons.label                    "Debug Add-ons">
+<!ENTITY getThemes.description                "Looking to personalize your browser?">
+<!ENTITY getThemes.learnMore                  "Choose from thousands of themes.">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">
+<!ENTITY pluginDeprecation.description "Missing something? Some plugins are no longer supported by &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Learn More.">
+

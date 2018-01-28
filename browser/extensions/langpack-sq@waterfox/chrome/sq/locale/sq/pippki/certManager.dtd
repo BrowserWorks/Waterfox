@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.cas "Keni në kartelë dëshmi që identifikojnë këta autoritete dëshmish:">
+<!ENTITY certmgr.certdetail.cn "Emër i Rëndomtë (ER)">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Shenja gishtash SHA-256">
+<!ENTITY certmgr.certdetail.o "Organizëm (O)">
+<!ENTITY certmgr.certdetail.ou "Njësi Organizative (OU)">
+<!ENTITY certmgr.certdetail.serialnumber "Numër Serie">
+<!ENTITY certmgr.certdetail.sha1fingerprint "Shenja gishtash SHA1">
+<!ENTITY certmgr.certdetail.title "Hollësi Dëshmie">
+<!ENTITY certmgr.certname "Emër Dëshmie">
+<!ENTITY certmgr.close.label "Mbylle">
+<!ENTITY certmgr.deletecert.title "Fshini Dëshmi">
+<!ENTITY certmgr.detail.general_tab.title "Të përgjithshme">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Hollësi">
+<!ENTITY certmgr.details.label "Fusha Dëshmie">
+<!ENTITY certmgr.edit3.label                  "Përpunojini Besueshmërinë…">
+<!ENTITY certmgr.edit3.accesskey              "P">
+<!ENTITY certmgr.editcacert.title "Përpunoni rregullime besueshmërie dëshmish AD-sh">
+<!ENTITY certmgr.editcert.edittrust "Përpunoni rregullime besueshmërie:">
+<!ENTITY certmgr.editcert.trustemail "Kjo dëshmi mund të identifikojë përdorues poste.">
+<!ENTITY certmgr.editcert.trustobjsign "Kjo dëshmi mund të identifikojë prodhues programesh.">
+<!ENTITY certmgr.editcert.trustssl "Kjo dëshmi mund të identifikojë sajte.">
+<!ENTITY certmgr.email "Adresë Email">
+<!ENTITY certmgr.expires "Skadon Më">
+<!ENTITY certmgr.fields.label "Vlerë Fushe">
+<!ENTITY certmgr.fingerprints.label "Shenja gishtash">
+<!ENTITY certmgr.hierarchy.label "Hierarki Dëshmish">
+<!ENTITY certmgr.issuerinfo.label "Lëshuar Nga">
+<!ENTITY certmgr.mine "Keni dëshmi prej këtyre organizmave që ju identifikojnë:">
+<!ENTITY certmgr.others "Keni në kartelë dëshmi që identifikojnë këta persona:">
+<!ENTITY certmgr.serial "Numër Serie">
+<!ENTITY certmgr.subjectinfo.label "Lëshuar Për">
+<!ENTITY certmgr.tab.ca "Autoritete">
+<!ENTITY certmgr.tab.mine "Dëshmitë Tuaja">
+<!ENTITY certmgr.tab.others2 "Persona">
+<!ENTITY certmgr.tab.websites3 "Shërbyes">
+<!ENTITY certmgr.title "Përgjegjës Dëshmish">
+<!ENTITY certmgr.tokenname "Pajisje Sigurie">
+<!ENTITY certmgr.periodofvalidity.label       "Periudhë Vlefshmërie" >
+<!ENTITY certmgr.view2.label "Shihni…">
+<!ENTITY certmgr.websites2 "Në kartelë keni dëshmi që identifikojnë këta shërbyes:">
+<!ENTITY certmgr.close.accesskey              "M">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.accesskey2          "H">
+<!ENTITY certmgr.tab.orphan2                  "Të tjera">
+<!ENTITY certmgr.pending.label                "Po verifikohet dëshmia…">
+<!ENTITY certmgr.export.label                 "Eksportoni…">                      
+<!ENTITY certmgr.export.accesskey             "E">                              
+<!ENTITY certmgr.delete2.label                 "Fshini…">
+<!ENTITY certmgr.delete_builtin.label         "Fshijeni ose Mos e Besoni…">
+<!ENTITY certmgr.delete_builtin.accesskey     "M">
+<!ENTITY certmgr.backup2.label                 "Kopjeruani…">
+<!ENTITY certmgr.backupall2.label              "Kopjeruajini të Tëra…">
+<!ENTITY certmgr.restore2.label                "Importoni…">    
+<!ENTITY certmgr.addException.label           "Shtoni Përjashtim…">
+<!ENTITY certmgr.addException.accesskey       "o">
+<!ENTITY exceptionMgr.title                   "Shtoni Përjashtime Sigurie">
+
+<!ENTITY exceptionMgr.exceptionButton.label   "Ripohoni Përjashtime Sigurie">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "R">
+
+<!ENTITY exceptionMgr.supplementalWarning     "Banka, dyqane të ligjshme, dhe sajte të tjerë publikë nuk do t&apos;ju kërkojnë ta bëni këtë.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Shërbyes">
+<!ENTITY exceptionMgr.certlocation.url        "Vend:">
+<!ENTITY exceptionMgr.certlocation.download   "Merrni Dëshmi">
+<!ENTITY exceptionMgr.certlocation.accesskey  "b">
+<!ENTITY exceptionMgr.certstatus.caption      "Gjendje Dëshmie">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Shiheni…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "S">
+<!ENTITY exceptionMgr.permanent.label         "Depozitoje përgjithmonë këtë përjashtim">
+<!ENTITY exceptionMgr.permanent.accesskey     "D">
+<!ENTITY certmgr.view2.accesskey              "s">
+<!ENTITY certmgr.restore2.accesskey           "I">
+<!ENTITY certmgr.override_lifetime            "Jetëgjatësi">
+<!ENTITY certmgr.orphans                      "Në kartelë keni dëshmi që nuk hyjnë në ndonjë nga kategoritë e tjera:">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "H">
+<!ENTITY certmgr.detail.general_tab.accesskey "T">
+<!ENTITY certmgr.delete2.accesskey            "F">
+<!ENTITY certmgr.certserver                   "Shërbyes">
+<!ENTITY certmgr.backupall2.accesskey         "T">
+<!ENTITY certmgr.backup2.accesskey            "K">
+<!ENTITY certmgr.begins                       "Fillon Më">

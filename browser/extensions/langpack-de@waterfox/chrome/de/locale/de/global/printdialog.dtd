@@ -1,0 +1,41 @@
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Drucken">
+
+<!ENTITY printDialog.title "Drucken">
+
+<!ENTITY fpDialog.title "Datei speichern">
+
+<!ENTITY fileCheck.label "Ausgabe in Datei umleiten">
+<!ENTITY fileCheck.accesskey "u">
+<!ENTITY propertiesButton.label "Eigenschaften…">
+<!ENTITY propertiesButton.accesskey "E">
+<!ENTITY descText.label "Drucker-Beschreibung:">
+<!ENTITY printer.label "Drucker">
+<!ENTITY printerInput.label "Druckername:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Druckbereich">
+<!ENTITY allpagesRadio.label "Alle Seiten">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "Seiten">
+<!ENTITY rangeRadio.accesskey  "S">
+<!ENTITY frompageInput.label  "von">
+<!ENTITY frompageInput.accesskey  "v">
+<!ENTITY topageInput.label  "bis">
+<!ENTITY topageInput.accesskey  "b">
+<!ENTITY selectionRadio.label "Auswahl">
+<!ENTITY selectionRadio.accesskey "h">
+
+<!ENTITY copies.label "Kopien">
+<!ENTITY numCopies.label "Anzahl der Kopien:">
+<!ENTITY numCopies.accesskey "K">
+
+<!ENTITY printframeGroup.label "Frames drucken">
+<!ENTITY aslaidoutRadio.label "Wie am Bildschirm angezeigt">
+<!ENTITY aslaidoutRadio.accesskey "W">
+<!ENTITY selectedframeRadio.label  "Ausgewählten Frame">
+<!ENTITY selectedframeRadio.accesskey  "F">
+<!ENTITY eachframesepRadio.label  "Jeden Frame separat">
+<!ENTITY eachframesepRadio.accesskey  "J">
+

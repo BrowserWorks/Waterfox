@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Kapcsolódás">
+<!ENTITY header     "Kapcsolódás távoli eszközhöz">
+<!ENTITY host       "Gép:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Kapcsolódás">
+<!ENTITY connecting "Csatlakozás…">
+<!ENTITY availableAddons "Elérhető távoli kiegészítők:">
+<!ENTITY availableTabs "Elérhető távoli lapok:">
+<!ENTITY availableProcesses "Elérhető távoli folyamatok:">
+<!ENTITY connectionError "Hiba:">
+<!ENTITY errorTimeout "Hiba: időtúllépés a kapcsolatban.">
+<!ENTITY errorRefused "Hiba: Kapcsolat elutasítva.">
+<!ENTITY errorUnexpected "Váratlan hiba">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "A Waterfox fejlesztői eszközökkel távoli eszközökön (például Waterfox for Android és Waterfox OS) végezhet hibakeresést. Győződjön meg róla, hogy bekapcsolta a „Távoli hibakeresés” beállítást a távoli eszközön. További információkért lásd a ">
+<!ENTITY remoteDocumentation "dokumentációt">
+<!ENTITY remoteHelpSuffix ".">
+

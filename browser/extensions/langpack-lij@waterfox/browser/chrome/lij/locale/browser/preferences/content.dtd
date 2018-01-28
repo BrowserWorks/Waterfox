@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Barcon de pop-up">
+
+<!ENTITY  blockPopups.label           "Blòcca i barcoin de pop-up">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "Notifiche">
+<!ENTITY  notificationsPolicyLearnMore.label   "Atre informaçioin">
+<!ENTITY  notificationsPolicyDesc3.label       "Çerni di sciti aotorizæ a mandâ notifiche">
+<!ENTITY  notificationsPolicyButton.accesskey  "e">
+<!ENTITY  notificationsPolicyButton.label      "Çerni…">
+<!ENTITY  notificationsDoNotDisturb.label      "No ronpime">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "N">
+<!ENTITY  notificationsDoNotDisturbDetails.value "No saiâ mostrâ nisciunn-a notifica fin a quande arvi torna &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Eceçioin…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "Coî e testo">
+
+<!ENTITY  defaultFont2.label          "Caratere predefinio">
+<!ENTITY  defaultFont2.accesskey      "C">
+<!ENTITY  defaultSize2.label          "Dimenscion">
+<!ENTITY  defaultSize2.accesskey      "D">
+
+<!ENTITY  advancedFonts.label         "Avansæ…">
+<!ENTITY  advancedFonts.accesskey     "n">
+
+<!ENTITY  colors.label                "Coi…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "Lengoe">
+<!ENTITY chooseLanguage.label         "Çerni a lengoa preferia pe-e pagine">
+<!ENTITY chooseButton.label           "Çerni…">
+<!ENTITY chooseButton.accesskey       "i">
+
+<!ENTITY translateWebPages.label      "Traduxi contegnui web">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Eceçioin…">
+<!ENTITY translateExceptions.accesskey "z">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Traduçioin a cura de">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Contegnui con DRM">
+
+<!ENTITY  playDRMContent.label         "Riproduci contegnui con DRM">
+<!ENTITY  playDRMContent.accesskey     "R">
+<!ENTITY  playDRMContent.learnMore.label "Atre informaçioin">
+
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "ဖန်တီးထားသူ:">
+<!ENTITY  developers.label            "တည်ဆောက်ပြုပြင်သူများ -">
+<!ENTITY  translators.label           "ဘာသာပြန်ဆိုသူများ -">
+<!ENTITY  contributors.label          "ကူညီပံ့ပိုးသူများ -">
+<!ENTITY  homepage.label              "ပင်မစာမျက်နှာကို လည်ပတ်ပါ">

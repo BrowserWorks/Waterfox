@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Om dina rättigheter">
+<!ENTITY rights.intro "&brandFullName; är fri programvara baserad på öppen källkod, byggd av en community av tusentals personer över hela världen. Det finns några saker du bör känna till:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; görs tillgänglig enligt villkoren i ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Det betyder att du får använda, kopiera och distribuera &brandShortName; till andra. Du får också modifiera källkoden i &brandShortName; för att bättre passa dina behov. Mozilla Public License ger dig även rätt att distribuera de modifierade versionerna.">
+
+<!ENTITY rights.intro-point2-a "Du ges ingen rätt till varumärken eller licenser till varumärken tillhörande Waterfox eller annan part, detta inkluderar utan undantag namnet Waterfox eller dess logotyp. Ytterligare information om varumärkena hittar du ">
+<!ENTITY rights.intro-point2-b "här">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Vissa funktioner i &brandShortName;, såsom Kraschrapportören, ger dig möjlighet att ge feedback till &vendorShortName;. Genom att skicka in feedback ger du &vendorShortName; tillstånd att använda den för att förbättra sina produkter, publicera denna feedback på sina webbplatser och att distribuera den.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Hur vi använder dina personliga uppgifter och din feedback som du skickar till &vendorShortName; genom &brandShortName; finns beskrivet i ">
+<!ENTITY rights2.intro-point3b "&brandShortName; sekretesspolicy">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Tillämpliga sekretesspolicyer för denna produkt bör listas här.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Vissa funktioner i &brandShortName; använder webbaserade informationstjänster, men vi kan dock inte garantera att dessa är till 100 &#037; felfria. Fler detaljer, med information om hur du inaktiverar de funktioner som använder dessa tjänster hittar du i ">
+<!ENTITY rights.intro-point4b "tjänstevillkoren">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Om den här produkten innehåller integrerade webbtjänster bör tillämpliga villkor för tjänsterna länkas till sektionen ">
+<!ENTITY rights.intro-point4b-unbranded "webbplatstjänster">
+<!ENTITY rights.intro-point4c-unbranded " .">
+
+<!ENTITY rights2.webservices-header "&brandFullName; webbaserade informationstjänster">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "För att spela upp vissa typer av videoinnehåll, &brandShortName;hämtar innehåll från vissa dekrypteringsmoduler från tredje part.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; använder webbaserade informationstjänster (”Tjänster”) för vissa funktioner i den här binära versionen av &brandShortName;. Villkoren för dessa beskrivs nedan. Om du inte vill använda en eller flera av dessa Tjänster eller om nedanstående villkor är oacceptabla, kan du inaktivera funktionen eller tjänsten. Instruktioner om hur du inaktiverar en särskild funktion eller tjänst finns ">
+<!ENTITY rights2.webservices-b "här">
+<!ENTITY rights3.webservices-c ". Andra funktioner och tjänster kan inaktiveras i programinställningarna.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Säker surfning: ">
+<!ENTITY rights.safebrowsing-b "Inaktivering av funktionen Säker surfning rekommenderas inte eftersom det kan leda till att du kommer till osäkra webbplatser.  Om du helt vill inaktivera funktionen, följ dessa steg:">
+<!ENTITY rights.safebrowsing-term1 "Öppna programmets inställningar">
+<!ENTITY rights.safebrowsing-term2 "Välj sektionen Säkerhet">
+<!ENTITY rights2.safebrowsing-term3 "Avmarkera alternativet &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Säker surfning är nu inaktiverad">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Positionsberoende surfning: ">
+<!ENTITY rights.locationawarebrowsing-b "kräver alltid ditt medgivande.  Ingen positionsinformation skickas utan ditt tillstånd.  Om du helt vill inaktivera funktionen, följ dessa steg:">
+<!ENTITY rights.locationawarebrowsing-term1a "I Adressfältet, skriv in ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Skriv geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Dubbelklicka på inställningen geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Positionsberoende surfning är nu inaktiverad">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "En översikt av de webbplatstjänster som är integrerade i produkten samt instruktioner om hur man om möjligt kan inaktivera dem bör finnas här.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Tillämpliga tjänstevillkor för denna produkt bör listas här.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; och dess medarbetare, licensgivare och partners arbetar för att förmedla de mest korrekta och aktuella Tjänsterna. Vi kan dock inte garantera att dessa uppgifter är fullständiga och felfria. Till exempel kanske Säker surfning inte identifierar en del riskabla webbplatser medan andra säkra webbplatser felaktigt pekas ut. För Positionsberoende surfning kommer alla positioner som våra tjänsteleverantörer returnerar endast att vara uppskattningar och varken vi eller våra tjänsteleverantörer garanterar precisionen i de förmedlade positionerna.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; förbehåller sig rätten att efter eget gottfinnande upphöra med eller modifiera dessa tjänster.">
+<!ENTITY rights2.webservices-term3 "Du är fri att använda dessa Tjänster med den medföljande versionen av &brandShortName;, och &vendorShortName; ger dig rättigheten att göra det. &vendorShortName; och dess licensgivare förbehåller sig alla andra rättigheter i Tjänsterna. Dessa villkor är inte avsedda att begränsa några rättigheter givna enligt licenser för öppen källkod som tillämpas på &brandShortName; och motsvarande källkodsversioner av &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Tjänsterna tillhandahålls i ”befintligt skick”.  &vendorShortName; och dess medarbetare, licensgivare och distributörer, frånsäger sig alla garantier, uttryckliga såväl som underförstådda, inklusive några garantier att Tjänsterna är funktionella och ändamålsenliga för dina syften. Du bär själv hela ansvaret för valet att använda Tjänsterna för dina syften och för kvalitén och prestandan i Tjänsterna. Vissa jurisdiktioner tillåter inte uteslutande eller begränsningar av underförstådda garantier, så denna ansvarsbegränsning är kanske inte tillämplig i ditt fall.">
+<!ENTITY rights.webservices-term5 "Förutom vad som krävs av lagar är &vendorShortName; och dess medarbetare, licensgivare och distributörer inte ansvariga för några indirekta, speciella, tillfälliga, påföljande, straffrättsliga eller preventiva skadestånd till följd av eller i samband med användandet av &brandShortName; och Tjänsterna. Den samlade skadeståndsskyldigheten under dessa villkor överskrider inte $500 (femhundra dollar). Vissa jurisdiktioner tillåter inte uteslutande eller begränsningar av underförstådda garantier, så denna ansvarsbegränsning är kanske inte tillämplig i ditt fall.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; kan vid behov uppdatera dessa villkor. Dessa villkor får inte modifieras eller annulleras utan &vendorShortName;s skriftliga medgivande.">
+<!ENTITY rights.webservices-term7 "Dessa villkor regleras enligt lagar i staten Kalifornien, USA, med undantag för bestämmelserna om motstridig lagstiftning. Om någon del av dessa villkor befinns vara ogiltig eller omöjlig att tillämpa skall de övriga delarna fortsätta gälla i full utsträckning. I händelse av en konflikt mellan en översatt version av dessa villkor och den engelskspråkiga versionen har den engelskspråkiga versionen företräde.">

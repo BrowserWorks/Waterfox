@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Assistente de novo perfil">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "O &brandShortName; armazena informações sobre suas preferências no perfil pessoal.">
+<!ENTITY profileCreationExplanation_2.text  "Caso compartilhe o &brandShortName; com outra(s) pessoa(s), você pode usar perfis para manter separadas as informações de cada usuário. Cada um pode criar o seu próprio perfil.">
+<!ENTITY profileCreationExplanation_3.text  "Se é a única pessoa usando esta cópia do &brandShortName;, você deve ter pelo menos um perfil. Se quiser, pode criar outros perfis para uso próprio e armazenar diferentes conjuntos de configurações e preferências. Por exemplo, pode ter perfis separados para uso pessoal e profissional.">
+<!ENTITY profileCreationExplanation_4.text  "Para começar a criar o seu perfil, clique em “Avançar”.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Para começar a criar o seu perfil, clique em “Continuar”.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Para começar a criar o seu perfil, clique em “Avançar”.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Se você criar vários perfis, pode diferenciá-los através do nome. Você pode usar o nome sugerido aqui ou escolher outro.">
+<!ENTITY profilePrompt.label            "Forneça o nome do novo perfil:">
+<!ENTITY profilePrompt.accesskey        "F">
+<!ENTITY profileDirectoryExplanation.text   "Suas configurações, preferências e dados relacionados serão armazenados em:">
+<!ENTITY profileDefaultName             "Novo perfil">
+<!ENTITY button.choosefolder.label      "Pasta…">
+<!ENTITY button.choosefolder.accesskey  "P">
+<!ENTITY button.usedefault.label        "Usar a pasta padrão">
+<!ENTITY button.usedefault.accesskey    "U">

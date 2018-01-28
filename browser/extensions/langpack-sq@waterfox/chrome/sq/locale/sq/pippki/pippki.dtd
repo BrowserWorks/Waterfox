@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title "Ndryshoni Fjalëkalimin e Përgjithshëm">
+<!ENTITY setPassword.tokenName.label "Pajisje Sigurie">
+<!ENTITY setPassword.oldPassword.label "Fjalëkalimi i tanishëm:">
+<!ENTITY setPassword.newPassword.label "Fjalëkalimi i ri:">
+<!ENTITY setPassword.reenterPassword.label "Fjalëkalimi i ri (sërish):">
+<!ENTITY setPassword.meter.label "Matës cilësie fjalëkalimesh">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Ricaktoje">
+<!ENTITY resetPassword.title "Ricaktoni Fjalëkalimin e Përgjithshëm">
+<!ENTITY resetPassword.text "Nëse ricaktoni fjalëkalimin tuaj të përgjithshëm, tërë fjalëkalimet tuaj të ruajtur për web dhe email, të dhëna formularësh, dëshmi vetjake, dhe kyçe private do të harrohen. Jeni i sigurt se doni të ricaktoni fjalëkalimin tuaj të përgjithshëm?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Shkarkim Dëshmie">
+<!ENTITY downloadCert.message1 "Ju është kërkuar të besoni një Autoritet të ri Dëshmish (AD).">
+<!ENTITY downloadCert.trustSSL "Beso këtë AD në identifikim sajtesh.">
+<!ENTITY downloadCert.trustEmail "Beso këtë AD për identifikim përdoruesish email.">
+<!ENTITY downloadCert.trustObjSign "Beso këtë AD për identifikim zhvilluesish software-i.">
+<!ENTITY downloadCert.message3 "Para se të besohet ky AD për çfarëdo qëllimi, duhet të shqyrtoni dëshminë e tij dhe rregullat e procedurat (nëse janë të mundshme).">
+<!ENTITY downloadCert.viewCert.label "Shfaqje">
+<!ENTITY downloadCert.viewCert.text "Shqyrtoni dëshmi AD-je">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Kërkesë Identifikimi Përdoruesi">
+<!ENTITY clientAuthAsk.message1 "Ky sajt ka kërkuar që të identifikoni vetveten përmes një dëshmie:">
+<!ENTITY clientAuthAsk.message2 "Zgjidhni një dëshmi për ta paraqitur si identifikim:">
+<!ENTITY clientAuthAsk.message3 "Hollësi të dëshmisë së përzgjedhur:">
+
+<!-- Strings for the cert picker dialog -->
+
+<!ENTITY pkcs12.setpassword.title "Zgjidhni një Fjalëkalim Kopjeruajtjeje Dëshmish">
+<!ENTITY pkcs12.setpassword.message "Fjalëkalimi për kopjeruajtje dëshmish që caktoni këtu, mbron kartelën kopjeruajtje që jeni duke krijuar. Duhet të caktoni këtë fjalëkalim për të vazhduar më tej me kopjeruajtjen.">
+<!ENTITY pkcs12.setpassword.label1 "Fjalëkalim kopjeruajtjeje dëshmish:">
+<!ENTITY pkcs12.setpassword.label2 "Fjalëkalim kopjeruajtjeje dëshmish (sërish):">
+<!ENTITY pkcs12.setpassword.reminder "E rëndësishme: Nëse harroni fjalëkalim kopjeruajtjeje dëshmish, nuk do të jeni në gjendje të riktheni më vonë këtë kopjeruajtje. Ju lutemi, regjistrojeni në një vend të parrezik.">
+
+<!ENTITY chooseToken.title "Zgjidhni Dialog Tokeni">
+<!ENTITY chooseToken.message1 "Ju lutemi, zgjidhni një token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Po prodhohet një Kyç Privat">
+<!ENTITY createCertInfo.msg1 "Prodhim Kyçi në përmbushje e sipër… Mund të dojë pak minuta…">
+<!ENTITY createCertInfo.msg2 "Ju lutemi, prisni…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Mirëfilltësim me Token të Mbrojtur">
+<!ENTITY protectedAuth.msg "Ju lutemi, kryeni mirëfilltësimin kundrejt tokenit. Metoda e mirëfilltësimit varet nga lloji i tokenit tuaj.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

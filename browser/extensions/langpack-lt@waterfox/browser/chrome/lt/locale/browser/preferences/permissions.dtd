@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Išimtys">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Svetainė">
+<!ENTITY treehead.status.label        "Leidimas">
+<!ENTITY removepermission2.label      "Pašalinti svetainę">
+<!ENTITY removepermission2.accesskey  "P">
+<!ENTITY removeallpermissions2.label  "Pašalinti visas svetaines">
+<!ENTITY removeallpermissions2.accesskey "v">
+<!ENTITY address.label                "Svetainės adresas:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Neleisti">
+<!ENTITY block.accesskey              "N">
+<!ENTITY session.label                "Leisti vienam seansui">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Leisti">
+<!ENTITY allow.accesskey              "L">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Atsisakyti">
+<!ENTITY button.cancel.accesskey      "A">
+<!ENTITY button.ok.label              "Įrašyti pakeitimus">
+<!ENTITY button.ok.accesskey          "r">
+

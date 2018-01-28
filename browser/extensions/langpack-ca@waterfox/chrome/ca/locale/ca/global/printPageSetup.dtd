@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Configuració de la pàgina">
+
+<!ENTITY basic.tab           "Format i opcions">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Orientació:">
+<!ENTITY portrait.label      "Vertical">
+<!ENTITY portrait.accesskey  "V">
+<!ENTITY landscape.label     "Apaïsat">
+<!ENTITY landscape.accesskey "A">
+
+<!ENTITY scale.label         "Escala:">
+<!ENTITY scale.accesskey     "s">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Encongeix per ajustar a l'amplada de la pàgina">
+<!ENTITY shrinkToFit.accesskey "g">
+
+<!ENTITY optionsGroup.label  "Opcions">
+
+<!ENTITY printBG.label       "Imprimeix el fons (colors i imatges)">
+<!ENTITY printBG.accesskey   "f">
+
+<!ENTITY advanced.tab        "Marges i capçalera/peu de pàgina">
+
+<!ENTITY marginGroup.label   "Marges (#1)">
+<!ENTITY marginUnits.inches  "polzades">
+<!ENTITY marginUnits.metric  "mil·límetres">
+<!ENTITY marginTop.label     "Part superior:">
+<!ENTITY marginTop.accesskey "s">
+<!ENTITY marginBottom.label  "Part inferior:">
+<!ENTITY marginBottom.accesskey "i">
+<!ENTITY marginLeft.label    "Esquerra:">
+<!ENTITY marginLeft.accesskey "E">
+<!ENTITY marginRight.label   "Dreta:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Capçaleres i peus de pàgina">
+
+<!ENTITY hfLeft.label        "Esquerra:">
+<!ENTITY hfCenter.label      "Centre:">
+<!ENTITY hfRight.label       "Dreta:">
+<!ENTITY headerLeft.tip      "Capçalera esquerra">
+<!ENTITY headerCenter.tip    "Capçalera central">
+<!ENTITY headerRight.tip     "Capçalera dreta">
+<!ENTITY footerLeft.tip      "Peu de pàgina esquerre">
+<!ENTITY footerCenter.tip    "Peu de pàgina central">
+<!ENTITY footerRight.tip     "Peu de pàgina dret">
+
+<!ENTITY hfTitle             "Títol">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Data/Hora">
+<!ENTITY hfPage              "Pàgina #">
+<!ENTITY hfPageAndTotal      "Pàgina # de #">
+<!ENTITY hfBlank             "--en blanc--">
+<!ENTITY hfCustom            "Personalitza…">
+
+<!ENTITY customPrompt.title  "Personalitza…">
+<!ENTITY customPrompt.prompt "Introduïu el vostre text de capçalera/peu de pàgina">

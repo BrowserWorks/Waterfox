@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Dathan">
+<!ENTITY  window.width                    "46em">
+<!ENTITY  window.macWidth                 "49em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Cleachd na dathan a thagh thu gu h-àrd an àite na feadhainn a shònraich an duilleag:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "u">
+
+<!ENTITY  overrideDefaultPageColors.always.label "An-còmhnaidh">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Le ùrlaran àrd-iomsgaraidh a-mhàin">
+<!ENTITY  overrideDefaultPageColors.never.label  "Chan ann idir">
+
+<!ENTITY  color                           "Teacsa is cùlaibh">
+<!ENTITY  textColor.label                 "Teacsa:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Cùlaibh:">
+<!ENTITY  backgroundColor.accesskey       "b">
+<!ENTITY  useSystemColors.label           "Cleachd dathan an t-siostaim">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Cuir loidhne fo cheanglaichean">
+<!ENTITY  underlineLinks.accesskey        "u">
+<!ENTITY  links                           "Dathan nan ceangal">
+<!ENTITY  linkColor.label                 "Ceanglaichean gun tadhal orra:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Ceanglaichean a thadhladh orra:">
+<!ENTITY  visitedLinkColor.accesskey      "n">

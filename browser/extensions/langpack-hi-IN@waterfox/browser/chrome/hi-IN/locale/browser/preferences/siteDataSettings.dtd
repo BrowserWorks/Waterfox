@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "सेटिंग - साइट आँकड़ा">
+<!ENTITY     hostCol.label                 "साइट">
+<!ENTITY     statusCol.label               "स्थिति">
+<!ENTITY     usageCol.label                "भंडारण">
+<!ENTITY     searchTextboxPlaceHolder             "वेबसाइट खोजें">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "चयनित हटाएँ">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "परिवर्तन सहेजें">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "रद्द करें">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "साइट आँकड़ा हटाया जा रहा है">
+<!ENTITY     siteTree.label                "निम्नलिखित वेबसाइट कुकीज़ निकाल दिए जाएँगे:">
+
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">

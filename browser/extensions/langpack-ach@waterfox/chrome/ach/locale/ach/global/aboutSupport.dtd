@@ -1,0 +1,181 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Kwedo bal me Ngec">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Pot buk man tye ki ngec matek me tic cing ma pire twero bedo tek ka itye ka temo cobo peko. Ka ce itye kamoyo pi lagam me lapeny ma ngene ikom &brandShortName;, rot <a id='supportLink'>support web site</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Ripot me poto">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Cwal ngec me ID">
+<!ENTITY aboutSupport.crashes.sendDate "Kicwalo">
+<!ENTITY aboutSupport.crashes.allReports "Ripot me poto weng">
+<!ENTITY aboutSupport.crashes.noConfig "Purugram man pe kicano me yaro ripot me poto.">
+
+<!ENTITY aboutSupport.extensionsTitle "Lamed">
+<!ENTITY aboutSupport.extensionName "Nying">
+<!ENTITY aboutSupport.extensionEnabled "Matyero">
+<!ENTITY aboutSupport.extensionVersion "Cik">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Jami me &brandShortName;">
+<!ENTITY aboutSupport.featureName "Nying">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Kit me atema">
+<!ENTITY aboutSupport.experimentName "Nying">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Lok ikome">
+<!ENTITY aboutSupport.experimentActive "Tye katic">
+<!ENTITY aboutSupport.experimentEndDate "Nino dwe me giko">
+<!ENTITY aboutSupport.experimentHomepage "Pot buk me acaki">
+<!ENTITY aboutSupport.experimentBranch "Jang">
+
+<!ENTITY aboutSupport.appBasicsTitle "Tic mapire tego">
+<!ENTITY aboutSupport.appBasicsName "Nying">
+<!ENTITY aboutSupport.appBasicsVersion "Cik">
+<!ENTITY aboutSupport.appBasicsBuildID "ID me gedo">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Yoo me ngec manyen">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Gin mukato me ngec manyen">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Nyut gin mukato me ngec manyen">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Lacim me Ngec ikome">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Boc me lok ikome">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Keto ite ma kimino">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Yub Cano">
+<!ENTITY aboutSupport.appBasicsUserAgent "Lukony Lutic kwede">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Tic pa Lapo wic">
+<!ENTITY aboutSupport.appBasicsPerformance "Tic">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers ma kicoyo">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Propwail">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Dirica me tic mapol">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Kit maber">
+
+<!ENTITY aboutSupport.showDir.label "Yab Boc">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Nyut i Gin manongo">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Yab Boc">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Ter mapire tek ma kiyubu gi">
+<!ENTITY aboutSupport.modifiedPrefsName "Nying">
+<!ENTITY aboutSupport.modifiedPrefsValue "Wel">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js Ter">
+<!ENTITY aboutSupport.userJSDescription "Boc me profile mamegi tye ki<a id='prefs-user-js-link'>pwail me user.js</a>, ma tye ki ma imaro ma pe kicweyo ki &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Ter mapire tek ma kiloro gi">
+<!ENTITY aboutSupport.lockedPrefsName "Nying">
+<!ENTITY aboutSupport.lockedPrefsValue "Wel">
+
+<!ENTITY aboutSupport.graphicsTitle "Cal">
+
+
+
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC ma kimedo">
+
+<!ENTITY aboutSupport.a11yTitle "Kite me nongo">
+<!ENTITY aboutSupport.a11yActivated "Tye katic">
+<!ENTITY aboutSupport.a11yForceDisabled "Geng Donyo iye">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Cik pa kagwoko jami">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Stori mo Kato">
+<!ENTITY aboutSupport.updateHistoryTitle "Gin mukato me ngec manyen">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Lok coc i bao coc">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Lok data manumu i bao coc">
+
+<!ENTITY aboutSupport.sandboxTitle "Lapok kin purugram">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Ceken angec">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "Tem kit maber">
+<!ENTITY aboutSupport.restartInSafeMode.label "Cak odoco ma nongo kijuko med-ikome…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Jami">
+
+
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Rikod pi moko tam">
+
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Yoo me loyo ne">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostics">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Failure Log">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verify Integrity">
+
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">

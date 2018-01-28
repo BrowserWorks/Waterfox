@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:robots page, which ties in with the
+     robots theme used in the Waterfox 3 Beta 2/3 first run pages.
+     They're just meant to be fun and whimsical, with references to some geeky
+     but well-known robots in movies and books. Be creative with translations! -->
+<!-- Nonsense line from the movie "The Day The Earth Stood Still". No translation needed. -->
+
+
+<!ENTITY robots.pagetitle  "Горт! Клаату барада никто!">
+<!-- Movie: Logan's Run... Box (cybog): "Welcome Humans! I am ready for you." -->
+<!ENTITY robots.errorTitleText "Добре дошли, хора!">
+<!-- Movie: The Day The Earth Stood Still. Spoken by Klaatu. -->
+<!ENTITY robots.errorShortDescText "Дойдохме с мир и добра воля!">
+<!-- Various books by Isaac Asimov. http://en.wikipedia.org/wiki/Three_Laws_of_Robotics -->
+<!ENTITY robots.errorLongDesc1 "Роботите не могат да наранят човешко същество или чрез бездействие да причинят вреда на човешко същество.">
+<!-- Movie: Blade Runner. Batty: "I've seen things you people wouldn’t believe..." -->
+<!ENTITY robots.errorLongDesc2 "Роботите са виждали неща, които вие хората не бихте повярвали.">
+<!-- Book: Hitchhiker’s Guide To The Galaxy. What the Sirius Cybernetics Corporation calls robots. -->
+<!ENTITY robots.errorLongDesc3 "Роботите са вашият пластмасов приятел, с който е забавно да си заедно.">
+<!-- TV: Futurama. Bender's first line is "Bite my shiny metal ass." -->
+<!ENTITY robots.errorLongDesc4 "Роботите имат блестящо метално седалище, което не е за ухапване.">
+<!-- TV: Battlestar Galactica (2004 series). From the opening text. -->
+<!ENTITY robots.errorTrailerDescText "И те имаха план.">
+<!-- TV: Battlestar Galactica (2004 series). Common expletive referring to Cylons. -->
+<!ENTITY robots.imgtitle "Раздрънкани тостери">
+<!-- Book: Hitchhiker's Guide To The Galaxy. Arthur presses a button and it warns him. -->
+<!ENTITY robots.dontpress "Моля, повече не натискай този бутон.">

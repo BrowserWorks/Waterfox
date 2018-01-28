@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "پایانه وب">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "باز کردن پیوند در زبانهٔ جدید">
+<!ENTITY openURL.accesskey "ز">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "شبکه">
+<!ENTITY btnPageNet.tooltip "ثبت وقایع دسترسی به شبکه">
+<!ENTITY btnPageNet.accesskey "ش">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "ثبت وقایع خطاها و هشدارهای CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "ثبت وقایع خطاهای جاوا اسکریپت">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "امنیت">
+<!ENTITY btnPageSecurity.tooltip "ثبت وقایع خطاها و هشدارهای امنیتی">
+<!ENTITY btnPageSecurity.accesskey "م">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "وقایع">
+<!ENTITY btnPageLogging.tooltip "وقایع ارسال شده به window.console">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "خطاها">
+<!ENTITY btnConsoleInfo         "اطلاعات">
+<!ENTITY btnConsoleWarnings     "اخطارها">
+<!ENTITY btnConsoleLog          "وقایع">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "فروکشی‌ها">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "کارگزار">
+<!ENTITY btnServerLogging.tooltip     "ثبت وقایع پیام‌های ارسال شده توسط کارگزار وب">
+<!ENTITY btnServerLogging.accesskey   "ک">
+<!ENTITY btnServerErrors              "خطاها">
+<!ENTITY btnServerInfo                "اطلاعات">
+<!ENTITY btnServerWarnings            "اخطارها">
+<!ENTITY btnServerLog                 "وقایع">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "Workerهای مشترک">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "‏Service Workerها">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "افزودنی یا Chrome Workerها">
+
+<!ENTITY filterOutput.placeholder "خروجی فیلتر">
+<!ENTITY btnClear.label        "پاک کردن">
+<!ENTITY btnClear.tooltip      "پاک کردن خروجی پایانه وب">
+<!ENTITY btnClear.accesskey    "ک">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "رونوشت از مکان پیوند">
+<!ENTITY copyURLCmd.accesskey "م">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "بازکردن در «نما متغیرها»">
+<!ENTITY openInVarViewCmd.accesskey "م">
+<!ENTITY storeAsGlobalVar.label "ذخیره به عنوان متغیر سراسری">
+<!ENTITY storeAsGlobalVar.accesskey "ذ">

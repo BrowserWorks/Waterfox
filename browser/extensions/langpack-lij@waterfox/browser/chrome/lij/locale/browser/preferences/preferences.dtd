@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Inpostaçioin">
+<!ENTITY  prefWindow.title        "Preferense">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Preferense de &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 49.5em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "Exiti da riçerca">
+<!ENTITY  paneGeneral.title             "Generale">
+<!ENTITY  paneFilesApplications.title   "File e Aplicaçioin">
+<!ENTITY  panePrivacySecurity.title     "Privacy e Seguessa">
+<!ENTITY  paneContainers.title          "Contegnitô di feuggi">
+<!ENTITY  paneUpdates.title             "Agiornamenti">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Account Waterfox">
+
+<!ENTITY  helpButton2.label        "Sopòrto de &brandShortName;">
+
+<!ENTITY  searchInput.label        "Çerca">
+
+<!ENTITY  browserPrivacy.label          "Browser Privacy">
+
+<!ENTITY  filesAndApplications.label    "Files and Applications">
+<!ENTITY  languageAndAppearance.label   "Language and Appearance">
+<!ENTITY  paneSearch.title              "Search">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Aktuálně nepracujete s anonymním oknem.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Otevřít anonymní okno">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "a">
+
+<!ENTITY privateBrowsing.title                           "Anonymní prohlížení">
+<!ENTITY privateBrowsing.title.tracking                  "Anonymní prohlížení s ochranou proti sledování">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Při použití anonymního okna Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "neukládá">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "Navštívené stránky">
+<!ENTITY aboutPrivateBrowsing.info.searches              "Vyhledávání">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "Dočasné soubory">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "bude ukládat">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " vaše:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "Stahování">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "Záložky">
+<!ENTITY aboutPrivateBrowsing.note.before                "Ani s funkcí anonymního prohlížení ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ale nebudete na internetu zcela neviditelní.">
+<!ENTITY aboutPrivateBrowsing.note.after                 " Váš zaměstnavatel nebo poskytovatel internetu mohou stále zjistit, jaké stránky navštěvujete.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Zjistit více o ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "anonymním prohlížení">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Ochrana proti sledování">
+<!ENTITY trackingProtection.description2                 "Některé webové stránky používají prvky, které vás mohou sledovat napříč internetem. S ochranou proti sledování bude Waterfox blokovat mnohé sledovací prvky, které o vás mohou sbírat informace.">
+<!ENTITY trackingProtection.startTour1                   "Jak to funguje">

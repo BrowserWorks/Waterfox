@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Siirry pois sivulta">
+<!ENTITY safeb.palm.decline.label "Ohita tämä varoitus">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Tämä ei ole petollinen sivusto…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "p">
+<!ENTITY safeb.palm.reportPage.label "Miksi tämä sivu on estetty?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Varoituksen antoi <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Ilmoitettu hyökkäyssivu!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Tämän sivun osoitteessa <span id='malware_sitename'/> on ilmoitettu olevan hyökkäyssivu ja sen avaaminen on turvallisuusasetuksiesi mukaisesti estetty.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Hyökkäyssivut yrittävät asentaa tietokoneellesi ohjelmia, jotka keräävät henkilötietoja, käyttävät tietokonettasi toisiin tietokoneisiin kohdistuviin hyökkäyksiin tai muuten vahingoittavat tietokonettasi.</p><p>Joidenkin sivujen tarkoituksena on levittää tällaisia vahingollisia ohjelmia, mutta useat sivut on valjastettu tähän ilman sivun omistajien tietoa tai lupaa.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Ilmoitettu ei-haluttuja sovelluksia jakeleva sivusto!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Sivuston <span id='unwanted_sitename'/> on ilmoitettu yrittävän asentaa sovelluksia pyytämättä ja sen avaaminen on estetty turvallisuusasetuksiesi perusteella.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Sivustot, jotka jakelevat ei-toivottuja sovelluksia, yrittävät asentaa tietokoneellesi sovelluksia, jotka ovat petollisia tai vaikuttavat järjestelmään odottamattomalla tavalla.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Petollinen sivusto!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Tämän sivuston osoitteessa <span id='phishing_sitename'/> on ilmoitettu olevan petollinen sivusto ja sen avaaminen on turvallisuusasetuksiesi mukaisesti estetty.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Petolliset sivustot on suunniteltu saamaan sinut tekemään jotain vaarallista, kuten asentamaan ohjelmia tai paljastamaan henkilötietojasi, kuten salasanoja, puhelinnumeroita tai luottokorttitietoja.</p><p>Tietojen kirjoittaminen tälle sivulle voi johtaa identiteettivarkauteen tai johonkin muuhun petokseen.</p>">
+

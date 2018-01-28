@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Консоль налаштувань (about:config)">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Будьте обережні, інакше можете залишитись без гарантії!">
+<!ENTITY aboutWarningText.label "Зміна цих розширених налаштувань може зашкодити стабільності, безпеці та швидкодії цієї програми. Вам слід продовжувати лише в тому випадку, якщо ви впевнені в тому, що робите.">
+<!ENTITY aboutWarningButton2.label "Я приймаю ризик!">
+<!ENTITY aboutWarningCheckbox.label "Показувати це попередження наступного разу">
+
+<!ENTITY searchPrefs.label "Пошук:">
+<!ENTITY searchPrefs.accesskey "ш">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Назва налаштування">
+<!ENTITY lockColumn.label "Стан">
+<!ENTITY typeColumn.label "Тип">
+<!ENTITY valueColumn.label "Значення">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Натисніть для впорядкування"> 
+<!ENTITY columnChooser.tooltip "Натисніть, щоб вибрати колонки для відображення"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Копіювати">
+<!ENTITY copyPref.accesskey "К">
+<!ENTITY copyName.label "Копіювати назву">
+<!ENTITY copyName.accesskey "о">
+<!ENTITY copyValue.label "Копіювати значення">
+<!ENTITY copyValue.accesskey "о">
+<!ENTITY modify.label "Змінити">
+<!ENTITY modify.accesskey "і">
+<!ENTITY toggle.label "Перемкнути">
+<!ENTITY toggle.accesskey "е">
+<!ENTITY reset.label "Скинути">
+<!ENTITY reset.accesskey "и">
+<!ENTITY new.label "Створити">
+<!ENTITY new.accesskey "о">
+<!ENTITY string.label "Рядок">
+<!ENTITY string.accesskey "я">
+<!ENTITY integer.label "Ціле">
+<!ENTITY integer.accesskey "і">
+<!ENTITY boolean.label "Логічне">
+<!ENTITY boolean.accesskey "о">

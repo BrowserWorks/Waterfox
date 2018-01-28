@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Përjashtime - Përkthim">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Nuk do të ofrohen përkthime për gjuhët vijuese:">
+<!ENTITY treehead.languageName.label      "Gjuhë">
+<!ENTITY removeLanguage.label             "Hiqe Gjuhën">
+<!ENTITY removeLanguage.accesskey         "H">
+<!ENTITY removeAllLanguages.label         "Hiqni Krejt Gjuhët">
+<!ENTITY removeAllLanguages.accesskey     "K">
+
+<!ENTITY noTranslationForSites.label      "Nuk do të ofrohen përkthime për sajtet vijues:">
+<!ENTITY treehead.siteName.label          "Sajte">
+<!ENTITY removeSite.label                 "Hiqe Sajtin">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Hiqni Krejt Sajtet">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Mbylle">
+<!ENTITY button.close.accesskey           "M">
+
+<!ENTITY treehead.siteName2.label         "Websites">

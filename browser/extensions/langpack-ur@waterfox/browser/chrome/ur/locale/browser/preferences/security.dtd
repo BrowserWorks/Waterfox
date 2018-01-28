@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "سلامتی">
+
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "خطرناک اور دھوکہ دینے والے مواد کو بلاک کریں">
+<!ENTITY  enableSafeBrowsing.accesskey    "ب">
+
+<!ENTITY  blockDownloads.label            "خطرناک ڈاؤن لوڈز کو بلاک کریں">
+<!ENTITY  blockDownloads.accesskey        "خ">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "غیر عمومی سافٹ ویئر کے متعلق مجھیں خبردار کریں">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "و">
+
+<!ENTITY  addonExceptions.label         "استثنیات…">
+<!ENTITY  addonExceptions.accesskey     "ا">
+
+
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "استثنیات…">
+<!ENTITY  passwordExceptions.accesskey  "ا">
+
+<!ENTITY  useMasterPassword.label        "ماسٹر پاس ورڈ استعمال کریں">
+<!ENTITY  useMasterPassword.accesskey    "ا">
+<!ENTITY  changeMasterPassword.label     "ماسٹر پاس ورڈ تبدیل کریں…">
+<!ENTITY  changeMasterPassword.accesskey "م">
+
+<!ENTITY  savedLogins.label              "محفوظ شدہ لاگ ان…">
+<!ENTITY  savedLogins.accesskey          "ل">
+
+<!ENTITY  formsAndPasswords.label       "Forms &amp; Passwords">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

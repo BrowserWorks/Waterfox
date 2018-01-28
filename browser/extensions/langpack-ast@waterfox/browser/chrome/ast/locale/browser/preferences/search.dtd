@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Guetador por defeutu">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Escueyi'l to guetador por defeutu. &brandShortName; úsalu na barra d'allugamientos, barra de gueta y páxina d'aniciu.">
+
+<!ENTITY provideSearchSuggestions.label        "Apurrir suxerencies de gueta">
+<!ENTITY provideSearchSuggestions.accesskey    "D">
+
+<!ENTITY showURLBarSuggestions.label           "Amosar suxerencies de gueta nos resultaos de la barra d'allugamientos">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Les suxerencies de gueta nun van amosase nos resultaos de la barra de direiciones porque configurasti &brandShortName; pa que nun recuerde l'historial.">
+
+<!ENTITY oneClickSearchEngines.label           "Motores de gueta nun clic">
+
+<!ENTITY chooseWhichOneToDisplay.label         "La barra de gueta déxate guetar direutamente en guetadores alternativos. Escueyi cuálos amosar.">
+
+<!ENTITY engineNameColumn.label                "Guetador">
+<!ENTITY engineKeywordColumn.label             "Pallabra clave">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Reafitar motores de gueta por defeutu">
+<!ENTITY restoreDefaultSearchEngines.accesskey "R">
+
+<!ENTITY removeEngine.label                    "Desaniciar">
+<!ENTITY removeEngine.accesskey                "D">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

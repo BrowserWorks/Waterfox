@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Dane telemetrii">
+
+<!ENTITY aboutTelemetry.pingDataSource "Źródło danych ping:">
+<!ENTITY aboutTelemetry.showCurrentPingData "Bieżące">
+<!ENTITY aboutTelemetry.showArchivedPingData "Archiwum">
+<!ENTITY aboutTelemetry.raw "Nieprzetworzony JSON">
+<!ENTITY aboutTelemetry.showSubsessionData "Dane podsesji">
+<!ENTITY aboutTelemetry.choosePing "Pingi:">
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nowsze">
+<!ENTITY aboutTelemetry.showOlderPing "Starsze &gt;&gt;">
+<!ENTITY aboutTelemetry.archiveWeekHeader "Tydzień">
+<!ENTITY aboutTelemetry.archivePingType "Typ">
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Dzisiaj">
+<!ENTITY aboutTelemetry.optionGroupYesterday "Wczoraj">
+<!ENTITY aboutTelemetry.optionGroupOlder "Starsze">
+
+<!ENTITY aboutTelemetry.generalDataSection "Ogólne">
+<!ENTITY aboutTelemetry.environmentDataSection "Dane środowiska">
+<!ENTITY aboutTelemetry.telemetryLogSection "Dziennik telemetrii">
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Powolne polecenia SQL
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Zawieszenia przeglądarki
+">
+<!ENTITY aboutTelemetry.threadHangStatsSection "Zawieszenia wątków">
+<!ENTITY aboutTelemetry.capturedStacksSection "Przechwycone stosy">
+<!ENTITY aboutTelemetry.scalarsSection "Skalary">
+<!ENTITY aboutTelemetry.keyedScalarsSection "Keyed scalars">
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogramy
+">
+<!ENTITY aboutTelemetry.keyedHistogramsSection "Indeksowane histogramy">
+<!ENTITY aboutTelemetry.eventsSection "Zdarzenia">
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Proste pomiary
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "Szczegóły dodatków">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Późne zapisy
+">
+<!ENTITY aboutTelemetry.sessionInfoSection "Informacje o sesji">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  UWAGA: Debugowanie powolnych poleceń SQL jest włączone. Pełne ciągi SQL mogą być widoczne poniżej, ale nie
+  zostaną przesłane do Telemetrii.
+">
+<!ENTITY aboutTelemetry.fetchStackSymbols "Pobierz nazwy funkcji dla stosów">
+<!ENTITY aboutTelemetry.hideStackSymbols "Wyświetl nieprzetworzone dane dla stosów">
+<!ENTITY aboutTelemetry.filterText "Filtruj (tekst lub /regexp/)">
+<!ENTITY aboutTelemetry.payloadChoiceHeader "Zawartość">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Cerca la següent coincidència de l'expressió">
+<!ENTITY previous.tooltip "Cerca l'anterior coincidència de l'expressió">
+<!ENTITY findCloseButton.tooltip "Tanca la barra de cerca">
+<!ENTITY highlightAll.label "Ressalta-ho tot">
+<!ENTITY highlightAll.accesskey "a">
+<!ENTITY highlightAll.tooltiptext "Ressalta totes les ocurrències de la frase">
+<!ENTITY caseSensitive.label "Distingeix entre majúscules i minúscules">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "Cerca distingint entre majúscules i minúscules">
+<!ENTITY entireWord.label "Paraules senceres">
+<!ENTITY entireWord.accesskey "P">
+<!ENTITY entireWord.tooltiptext "Cerca només paraules senceres">

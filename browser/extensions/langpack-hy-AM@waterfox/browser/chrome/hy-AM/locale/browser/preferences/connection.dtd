@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Միացման կարգավորումներ">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Կարգավորել համացանցին միանալու միջնորդներ">
+<!ENTITY  noProxyTypeRadio.label        "Առանց միջնորդի">
+<!ENTITY  noProxyTypeRadio.accesskey    "ի">
+<!ENTITY  systemTypeRadio.label         "Օգտագործել համակարգի միջնորդի կարգավորումները">
+<!ENTITY  systemTypeRadio.accesskey     "Օ">
+<!ENTITY  WPADTypeRadio.label           "Ինքնաբացահայտել միջնորդի կազմաձեվումն այս ցանցի համար">
+<!ENTITY  WPADTypeRadio.accesskey       "ն">
+<!ENTITY  manualTypeRadio.label         "Միջնորդն անձամբ կազմաձևել.">
+<!ENTITY  manualTypeRadio.accesskey     "Մ">
+<!ENTITY  autoTypeRadio.label           "Միջնորդ սպասարկիչի ինքնաբար կազմաձևման URL-ն.">
+<!ENTITY  autoTypeRadio.accesskey       "ջ">
+<!ENTITY  reload.label                  "Վերբեռնել">
+<!ENTITY  reload.accesskey              "ե">
+<!ENTITY  ftp.label                     "FTP միջնորդ.">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP միջնորդ.">
+<!ENTITY  http.accesskey                "ն">
+<!ENTITY  ssl.label                     "SSL միջնորդ.">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS հոսթ.">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS տ4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS տ5">
+<!ENTITY  socks5.accesskey              "տ">
+<!ENTITY  socksRemoteDNS.label2         "Պրոքսի DNS՝ SOCKS v5 օգտագործելիս">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Դարպաս.">
+<!ENTITY  HTTPport.accesskey            "Դ">
+<!ENTITY  SSLport.accesskey             "ա">
+<!ENTITY  FTPport.accesskey             "ր">
+<!ENTITY  SOCKSport.accesskey           "պ">
+<!ENTITY  noproxy.label                 "Չմիջնորդավորել՝">
+<!ENTITY  noproxy.accesskey             "Չ">
+<!ENTITY  noproxyExplain.label          "Օրինակ՝ .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Օգտագործել նույն միջնորդը բոլոր աշխատակարգերի համար">
+<!ENTITY  shareproxy.accesskey          "գ">
+<!ENTITY  autologinproxy.label          "Գաղտնաբառը պահելիս վավերացում չհարցնել">
+<!ENTITY  autologinproxy.accesskey      "ր">
+<!ENTITY  autologinproxy.tooltip        "Այս ընտրանքը լռությամբ իսկորոշում է պրոքսիները, երբ պահպանում եք դրանց հավաստագրերը: Ձախողման դեպքում Ձեզ հարցում կկատարվի:">

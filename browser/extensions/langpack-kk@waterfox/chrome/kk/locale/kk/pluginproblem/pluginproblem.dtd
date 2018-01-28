@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Бұл сайт &brandShortName; жұмысын тежей алатын плагинді қолданады.">
+<!ENTITY tapToPlayPlugin                                     "Плагинді белсендіру үшін осында шертіңіз.">
+<!ENTITY clickToActivatePlugin                               "Плагинді белсендіру.">
+<!ENTITY checkForUpdates                                     "Жаңартуларға тексеру…">
+<!ENTITY blockedPlugin.label                                 "Бұл плагин сіздің қауіпсіздігіңіз мақсатында өшірілген.">
+<!ENTITY hidePluginBtn.label                                 "Плагинді жасыру">
+<!ENTITY managePlugins                                       "Плагиндерді басқару…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Қайталау үшін бұл парақты">
+<!ENTITY reloadPlugin.post                                   " жаңартыңыз.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Құлау жөнінде хабарламаны жіберу">
+<!ENTITY report.submitting                                   "Хабарлама жіберілуде…">
+<!ENTITY report.submitted                                    "Құлау жөнінде хабарлама жіберілді.">
+<!ENTITY report.disabled                                     "Құлау жөнінде хабарлау сөндірілген.">
+<!ENTITY report.failed                                       "Жіберу сәтсіз.">
+<!ENTITY report.unavailable                                  "Қолжетерлік хабарламалар жоқ.">
+<!ENTITY report.comment                                      "Түсініктеме қосу (түсініктеме әркімге көрінеді)">
+<!ENTITY report.pageURL                                      "Парақ сілтемесін қосып жіберу">
+
+<!ENTITY plugin.file                                         "Файл">
+<!ENTITY plugin.mimeTypes                                    "MIME түрлері">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash қорғалған режимін іске қосу">
+<!ENTITY plugin.enableBlocklists.label                       "Қауіпті және зиянкес Flash құрамасын блоктау">

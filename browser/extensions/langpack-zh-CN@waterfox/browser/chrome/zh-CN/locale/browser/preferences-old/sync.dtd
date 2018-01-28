@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "书签">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "打开的标签页">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "历史记录">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "登录信息">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "首选项">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "附加组件">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "地址">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "信用卡">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "设备名称">
+<!ENTITY changeSyncDeviceName.label "更改设备名称…">
+<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "取消">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "保存">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "服务条款">
+<!ENTITY fxaPrivacyNotice.link.label "隐私声明">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "未验证。">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "请登录以重新连接">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "您尚未登录。">
+<!ENTITY signIn.label                "登录">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "更改头像">
+<!ENTITY verifiedManage.label        "管理账户">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect.label            "断开…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY verify.label                "验证邮箱">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "忘记此邮箱">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "让您个性化的网络体验随身相伴">
+<!ENTITY signedOut.description        "在您的各种设备间同步您的书签、历史记录、标签页、密码、附加组件与首选项。">
+<!ENTITY signedOut.accountBox.title   "使用 &syncBrand.fxAccount.label; 登录，开启同步功能">
+<!ENTITY signedOut.accountBox.create  "创建账户">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "登录">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.engines.label       "在所有设备上同步">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "在 ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " 或者 ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " 上安装 Waterfox，让您的个性体验随身相伴。">

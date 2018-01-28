@@ -1,0 +1,14 @@
+locale alerts vi vi/locale/vi/alerts/
+locale autoconfig vi vi/locale/vi/autoconfig/
+locale global vi vi/locale/vi/global/
+locale global-platform vi vi/locale/vi/global-platform/mac/ os=Darwin
+locale global-platform vi vi/locale/vi/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform vi vi/locale/vi/global-platform/win/ os=WINNT
+locale mozapps vi vi/locale/vi/mozapps/
+locale necko vi vi/locale/vi/necko/
+locale passwordmgr vi vi/locale/vi/passwordmgr/
+locale pipnss vi vi/locale/vi/pipnss/
+locale pippki vi vi/locale/vi/pippki/
+locale places vi vi/locale/vi/places/
+locale pluginproblem vi vi/locale/vi/pluginproblem/
+locale weave vi vi/locale/vi/services/

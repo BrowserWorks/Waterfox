@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Stanpa">
+
+<!ENTITY printDialog.title "Stanpa">
+
+<!ENTITY fpDialog.title "Sarva File">
+
+<!ENTITY fileCheck.label "Stanpa in sciô file">
+<!ENTITY fileCheck.accesskey "f">
+<!ENTITY propertiesButton.label "Propietæ…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Descriçion da machina de stanpe">
+<!ENTITY printer.label "Machina de stanpe">
+<!ENTITY printerInput.label "Nomme da machina de stanpe:">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "Cöse stanpâ">
+<!ENTITY allpagesRadio.label "Tutte e pagine">
+<!ENTITY allpagesRadio.accesskey "a">
+<!ENTITY rangeRadio.label  "Pagine">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "da">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "a">
+<!ENTITY topageInput.accesskey  "a">
+<!ENTITY selectionRadio.label "Seleçion">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "Còpie">
+<!ENTITY numCopies.label "Numero de còpie:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "Stanpa riquaddri">
+<!ENTITY aslaidoutRadio.label "Comme tò-u veddi in sciô schermo">
+<!ENTITY aslaidoutRadio.accesskey "C">
+<!ENTITY selectedframeRadio.label  "O riquaddro seleçionou">
+<!ENTITY selectedframeRadio.accesskey  "O">
+<!ENTITY eachframesepRadio.label  "Ògni riquaddro separou">
+<!ENTITY eachframesepRadio.accesskey  "e">
+

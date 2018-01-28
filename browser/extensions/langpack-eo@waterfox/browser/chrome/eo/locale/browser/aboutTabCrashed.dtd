@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Fermi tiun ĉi langeton">
+<!ENTITY tabCrashed.restoreTab "Restarigi tiun ĉi langeton">
+<!ENTITY tabCrashed.restoreAll "Restarigi ĉiujn paneintajn langetojn">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Via langeto ĵus paneis.">
+<!ENTITY tabCrashed.offerHelp "Ni povas helpi vin!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Elektu &tabCrashed.restoreTab; por reŝargi la enhavon de la paĝo.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Elektu &tabCrashed.restoreTab; aŭ &tabCrashed.restoreAll; por reŝargi la enhavon de la paĝo.">
+<!ENTITY tabCrashed.requestHelp "Ĉu vi helpos nin?">
+<!ENTITY tabCrashed.requestHelpMessage "Raportoj pri paneoj helpas nin diagnozi problemojn kaj plibonigi &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Raporti tiun ĉi langeton">
+<!ENTITY tabCrashed.sendReport2 "Sendi raporton pri paneo por la langeto, kiun vi nun vidas">
+<!ENTITY tabCrashed.commentPlaceholder2 "Nedevigaj komentoj (komentoj estas publike videblaj)">
+<!ENTITY tabCrashed.includeURL2 "Inkluzivi la adreson de la paĝon en tiu ĉi raporto pri paneo">
+<!ENTITY tabCrashed.emailPlaceholder "Tajpu vian retpoŝtan adreson ĉi tie">
+<!ENTITY tabCrashed.emailMe "Sendi retpoŝton kiam pli da informo estas havebla">
+<!ENTITY tabCrashed.reportSent "Raporto pri paneo sendita, dankon, vi helpas nin plibonigi &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Raporti fonajn langetojn">
+<!ENTITY tabCrashed.autoSubmit2 "Modifi preferojn por aŭtomate sendi raportojn pri paneo, kiuj inkluzivas ankaŭ raportojn pri paneo de fonaj langetoj, en tiu ĉi seanco kaj en la venontaj.">

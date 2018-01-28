@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Чаробњак за прављење профила">
+<!ENTITY window.size                  "width: 50em; height: 35em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; чува податке о вашим поставкама, подешавањима итд. у вашем профилу.">
+<!ENTITY profileCreationExplanation_2.text  "Ако делите овај примерак програма &brandShortName; са другим корисницима, можете да користите профиле како бисте податке свих корисника чували засебно. Да би ово било могуће, сваки корисник мора да направи сопствени профил.">
+<!ENTITY profileCreationExplanation_3.text  "Ако сте једина особа која користи овај примерак програма &brandShortName;, морате да имате бар један профил. Ако желите, можете да направите више профила за себе како бисте у њима чували различита подешавања и поставке. На пример, можете да раздвојите профиле за личну и пословну употребу.">
+<!ENTITY profileCreationExplanation_4.text  "Како бисте почели са састављањем свог профила, притисните „Даље‟.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Како бисте почели са састављањем свог профила, притисните Даље">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Како бисте почели са састављањем свог профила, притисните „Даље‟.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Ако направите неколико профила, можете их разликовати по имену. Можете користити овде наведено име профила или можете уписати своје.">
+<!ENTITY profilePrompt.label            "Унесите име новог профила:">
+<!ENTITY profilePrompt.accesskey        "У">
+<!ENTITY profileDirectoryExplanation.text   "Ваша корисничка подешавања, поставке и остали подаци биће чувани у:">
+<!ENTITY profileDefaultName             "Подразумевани корисник">
+<!ENTITY button.choosefolder.label      "Избор фасцикле…">
+<!ENTITY button.choosefolder.accesskey  "И">
+<!ENTITY button.usedefault.label        "Користи изворну фасциклу">
+<!ENTITY button.usedefault.accesskey    "К">

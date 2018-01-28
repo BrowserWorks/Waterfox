@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "32em">
+
+<!ENTITY languages.customize.Header                     "Limbi">
+<!ENTITY languages.customize.description                "Paginile web sunt oferite uneori în mai multe limbi. Selectează limbile pentru afișarea acestor pagini web, în ordinea preferințelor:">
+<!ENTITY languages.customize.moveUp.label               "Mută în sus">
+<!ENTITY languages.customize.moveUp.accesskey           "u">
+<!ENTITY languages.customize.moveDown.label             "Mută în jos">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "Elimină">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.selectLanguage.label       "Selectează o limbă pentru adăugare…">
+<!ENTITY languages.customize.addButton.label            "Adaugă">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

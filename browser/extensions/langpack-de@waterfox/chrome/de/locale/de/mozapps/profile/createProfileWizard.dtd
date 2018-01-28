@@ -1,0 +1,21 @@
+<!ENTITY newprofile.title             "Profil-Assistent">
+<!ENTITY window.size                  "width: 45em; height: 36em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; speichert alle Einstellungen und Daten in Ihrem persönlichen Profil.">
+<!ENTITY profileCreationExplanation_2.text  "Wenn Sie diese Kopie von &brandShortName; mit anderen Anwendern gemeinsam verwenden, können Sie verschiedene Profile nutzen, um die persönlichen Daten jedes Benutzers getrennt zu verwalten. Dazu sollte jeder Anwender sein eigenes Profil erstellen.">
+<!ENTITY profileCreationExplanation_3.text  "Auch wenn Sie der einzige Anwender sind, der diese Kopie von &brandShortName; verwendet, müssen Sie zumindest ein Profil erstellen. Wenn Sie möchten, können Sie mehrere Profile für sich selbst erstellen, um Ihre Daten getrennt zu verwalten (z. B.: privat und beruflich).">
+<!ENTITY profileCreationExplanation_4.text  "Um nun ein Profil zu erstellen, klicken Sie auf &quot;Weiter&quot;.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Um nun ein Profil zu erstellen, klicken Sie auf &quot;Fortsetzen&quot;.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Um nun ein Profil zu erstellen, klicken Sie auf &quot;Weiter&quot;.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Verschiedene Profile können durch ihre Namen unterschieden werden. Sie können den vorgegebenen oder einen eigenen Namen verwenden.">
+<!ENTITY profilePrompt.label            "Geben Sie den neuen Profilnamen ein:">
+<!ENTITY profilePrompt.accesskey        "G">
+<!ENTITY profileDirectoryExplanation.text   "Ihre persönlichen Einstellungen und Daten werden gespeichert in:">
+<!ENTITY profileDefaultName             "Standard-Benutzer">
+<!ENTITY button.choosefolder.label      "Ordner wählen…">
+<!ENTITY button.choosefolder.accesskey  "w">
+<!ENTITY button.usedefault.label        "Standardordner verwenden">
+<!ENTITY button.usedefault.accesskey    "v">

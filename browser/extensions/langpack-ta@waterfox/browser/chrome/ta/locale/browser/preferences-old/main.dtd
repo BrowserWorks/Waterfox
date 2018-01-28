@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "துவக்கம்">
+
+<!ENTITY startupPage.label         "&brandShortName; துவக்கப்படும் போது:">
+<!ENTITY startupPage.accesskey     "த">
+<!ENTITY startupUserHomePage.label "உங்களுடைய முகப்புப் பக்கத்தைக் காட்டவும்">
+<!ENTITY startupBlankPage.label    "ஒரு வெற்று பக்கத்தைக் காட்டு">
+<!ENTITY startupPrevSession.label  "கடைசி நேரத்திலிருந்த உங்களுடைய சாளரங்கள் மற்றும் கீற்றுகளைக் காட்டவும்">
+
+<!ENTITY homepage.label            "முகப்பு பக்கம்:">
+<!ENTITY homepage.accesskey        "ப">
+<!ENTITY useCurrentPage.label      "நடப்பு பக்கத்தை பயன்படுத்து">
+<!ENTITY useCurrentPage.accesskey  "ப">
+<!ENTITY useMultiple.label         "நடப்பு பக்கங்களை பயன்படுத்து">
+<!ENTITY chooseBookmark.label      "புத்தககுறியை பயன்படுத்தவும்...">
+<!ENTITY chooseBookmark.accesskey  "ப">
+<!ENTITY restoreDefault.label      "முன்னிருப்புக்கு மீட்டமை">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "பதிவிறக்கங்கள்">
+
+<!ENTITY saveTo.label "கோப்புகளை இங்கு சேமி">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "உலாவு...">
+<!ENTITY chooseFolderWin.accesskey    "ல">
+<!ENTITY chooseFolderMac.label        "தேர்ந்தெடு...">
+<!ENTITY chooseFolderMac.accesskey    "த">
+<!ENTITY alwaysAskWhere.label         "எங்கே கோப்புகளை சேமிக்க வேண்டுமென எப்போதும் என்னிடம் கேள்">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "துவக்கத்தில் எப்போதும் &brandShortName; முன்னிருப்பு உலாவியாக இருக்கிறதா என சரி பார்">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "முன்னிருப்பாக்கு">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; தற்போது உங்களுடைய இயல்புநிலை உலாவியாக உள்ளது">
+<!ENTITY isNotDefault.label               "&brandShortName; உங்களுடைய முன்னிருப்பு உலாவியாக இல்லை">
+
+<!ENTITY separateProfileMode.label        "பயர்பாக்ஸ்சும் &brandShortName; ம் ஒரே நேரத்தில் இயங்க அனுமதி">
+<!ENTITY useWaterfoxSync.label             "குறிப்பு: தனித்தனி சுயவிவரங்களைப் பயன்படுத்துகிறது. ஒத்திசைவு மூலம் அவைகளுக்கிடையே தரவை பகிரவும்.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; என்பதற்கு புகுபதிக…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; முன்னுரிமைகளைத் திற">
+
+<!ENTITY e10sEnabled.label                "பற்செயல்பாடுகளை &brandShortName; செயல்படுத்து">

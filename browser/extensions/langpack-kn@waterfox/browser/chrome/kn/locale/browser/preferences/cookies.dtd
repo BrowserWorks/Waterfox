@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "ಈ ಕೆಳಗಿನ ಕುಕಿಗಳು ನಿಮ್ಮ ಗಣಕದಲ್ಲಿ ಶೇಖರಿತಗೊಂಡಿವೆ:">
+<!ENTITY     cookiename.label               "ಕುಕಿಯ ಹೆಸರು">
+<!ENTITY     cookiedomain.label             "ತಾಣ">
+
+<!ENTITY     props.name.label               "ಹೆಸರು:">
+<!ENTITY     props.value.label              "ವಿಷಯ:">
+<!ENTITY     props.domain.label             "ಅತಿಥೇಯ:">
+<!ENTITY     props.path.label               "ಮಾರ್ಗ:">
+<!ENTITY     props.secure.label             "ಇಲ್ಲಿಗೆ ಕಳಿಸಲಾಗಿದೆ:">
+<!ENTITY     props.expires.label            "ಅವಧಿ ಅಂತ್ಯಗೊಳ್ಳುವುದು:">
+<!ENTITY     props.container.label          "ಕಂಟೈನರ್:">
+
+<!ENTITY     window.title                   "ಕುಕಿಗಳು">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+
+
+<!ENTITY     button.close.label             "ಮುಚ್ಚು">
+<!ENTITY     button.close.accesskey         "C">
+
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     searchFilter.label             "Search">

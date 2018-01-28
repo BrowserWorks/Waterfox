@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Modo de segurança do &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Iniciar no modo de segurança">
+<!ENTITY refreshProfile.label         "Restaurar o &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "O modo de segurança é um modo especial do &brandShortName; que pode ser usado para resolver problemas.">
+<!ENTITY safeModeDescription4.label   "Suas extensões e preferências serão temporariamente desativadas.">
+
+<!ENTITY refreshProfileInstead.label  "Você também pode pular a solução de problemas e tentar atualizar o &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "O &brandShortName; fechou inesperadamente ao iniciar. Isso pode ser causado por extensões ou outros problemas. Você pode tentar resolver o problema, usando o modo de segurança.">

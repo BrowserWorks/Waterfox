@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Extensões podem estar causando problemas">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "O &brandShortName; identificou estas extensões como causas de problemas de segurança ou estabilidade:">
+<!ENTITY blocklist.softblocked       "Para sua proteção, é altamente recomendado que reinicie com estes complementos desabilitados.">
+<!ENTITY blocklist.hardblocked       "Estas extensões representam riscos elevados para a segurança ou estabilidade e foram bloqueados, mas será necessário reiniciar para desabilitá-las completamente.">
+<!ENTITY blocklist.softandhard       "As extensões que representam riscos elevados para a segurança ou estabilidade foram bloqueadas. As demais são de menor risco, mas é altamente recomendado desabilitá-las e reiniciar.">
+<!ENTITY blocklist.moreinfo          "Mais informações">
+
+<!ENTITY blocklist.accept.label      "Reiniciar o &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Bloqueado">
+<!ENTITY blocklist.checkbox.label    "Desativar">

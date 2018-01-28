@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "ટ્રૅકિંગ સંરક્ષણ વાપારો">
+<!ENTITY  trackingProtectionAlways.label       "હંમેશા">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "ફકત ખાનગી વિન્ડો માં જ">
+<!ENTITY  trackingProtectionPrivate.accesskey  "I">
+<!ENTITY  trackingProtectionNever.label        "ક્યારેય નહિં">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "વધુ શીખો">
+<!ENTITY  trackingProtectionExceptions.label   "અપવાદો…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "ટ્રૅક કરી રહ્યા છે">
+<!ENTITY trackingProtectionPBM5.label         "ખાનગી વિન્ડોઝમાં ટ્રેકિંગ પ્રોટેક્શનનો ઉપયોગ કરો">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "વધુ શીખો">
+<!ENTITY changeBlockList.label          "બ્લોક સૂચિ બદલો">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "તમે પણ કરી શકો છો ">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "ઇતિહાસ">
+
+<!ENTITY  locationBar.label             "સ્થાન પટ્ટી">
+
+<!ENTITY  locbar.history.label          "ઇતિહાસ">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "બુકમાર્કો">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "ટૅબ ખોલો">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "હંમેશા">
+<!ENTITY  acceptThirdParty.never.label    "ક્યારેય નહિં">
+<!ENTITY  acceptThirdParty.visited.label  "મુલાકાત લીધેલ">
+
+<!ENTITY  keepUntil.label               "સાચવો:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "જ્યાં સુધી સમયસમાપ્ત નહિં થાય">
+<!ENTITY  close.label                   "હું &brandShortName; બંધ કરું છું">
+
+<!ENTITY  cookieExceptions.label        "અપવાદો...">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "કુકીઓ બતાવો...">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; કરશે:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "ઇતિહાસ યાદ રાખો">
+<!ENTITY  historyHeader.dontremember.label "ક્યારેય ઇતિહાસ યાદ રાખશો નહિં">
+<!ENTITY  historyHeader.custom.label       "ઇતિહાસ માટે વૈવિધ્યપૂર્ણ સેટીંગ વાપરો">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; તમે બ્રાઉઝ કરતાં જે વેબ સાઉટોની મુલાકાત લો તેમાંથી, ડાઉનલોડ, ફોર્મ અને શોધ ઇતિહાસ, અને કુકીઓને યાદ રાખશે.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "તમે ">
+<!ENTITY  rememberActions.clearHistory.label  "તમારો છેલ્લે ઇતિહાસ સાફ કરવા">
+<!ENTITY  rememberActions.middle.label        ", અથવા ">
+<!ENTITY  rememberActions.removeCookies.label "વ્યક્તિગત કુકીઓ દૂર કરવા માંગતા હશો">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ખાનગી બ્રાઉઝીંગની જેમ જ સેટીંગ વાપરશે, અને તમે જેમ વેબ બ્રાઉઝ કરો તેમ ઇતિહાસ યાદ રાખશે નહિં.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "તમે ">
+<!ENTITY  dontrememberActions.clearHistory.label "બધો વર્તમાન ઇતિહાસ પણ સાફ કરવા માંગતા હશો">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "હંમેશા ખાનગી બ્રાઉઝીંગ સ્થિતિ વાપરો">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "મારુ બ્રાઉઝીંગ અને ડાઉનલોડ ઇતિહાસને યાદ રાખો">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "શોધ અને ફોર્મ ઇતિહાસ યાદ રાખો">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "જ્યારે &brandShortName; બંધ થાય ત્યારે ઇતિહાસ સાફ કરો">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "સેટીંગ…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "કન્ટેઈનર ટેબ્સ">
+<!ENTITY  browserContainersLearnMore.label      "વધુ શીખો">
+<!ENTITY  browserContainersEnabled.label        "કન્ટેઈનર ટેબ્સ સક્ષમ કરો">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "સેટીંગ…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  doNotTrack.settings.label     "manage your Do Not Track settings">
+<!ENTITY  locbar.searches.label         "Related searches from the default search engine">
+<!ENTITY  locbar.suggest.label          "When using the location bar, suggest:">
+<!ENTITY  suggestionSettings.label      "Change preferences for search engine suggestions…">

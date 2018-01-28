@@ -1,0 +1,265 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Lisäosien hallinta">
+
+<!ENTITY search.placeholder                   "Hae lisäosista">
+<!ENTITY search.buttonlabel                   "Hae">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Ladataan…">
+<!ENTITY listEmpty.installed.label            "Tämäntyyppisiä lisäosia ei ole asennettuna">
+<!ENTITY listEmpty.availableUpdates.label     "Päivityksiä ei löytynyt">
+<!ENTITY listEmpty.recentUpdates.label        "Et ole viime aikoina hakenut päivityksiä lisäosiin">
+<!ENTITY listEmpty.findUpdates.label          "Etsi päivityksiä">
+<!ENTITY listEmpty.search.label               "Ei löytynyt täsmääviä lisäosia">
+<!ENTITY listEmpty.button.label               "Lue lisää lisäosista">
+<!ENTITY installAddonFromFile.label           "Asenna lisäosa tiedostosta…">
+<!ENTITY installAddonFromFile.accesskey       "A">
+<!ENTITY toolsMenu.tooltip                    "Työkaluja kaikille lisäosille">
+
+<!ENTITY getThemes.description                "Mietitkö, miten muokata selaimesta omanlaisesi?">
+<!ENTITY getThemes.learnMore                  "Valitse tuhansista teemoista.">
+
+<!ENTITY cmd.back.tooltip                     "Edellinen sivu">
+<!ENTITY cmd.forward.tooltip                  "Seuraava sivu">
+
+<!ENTITY showUnsignedExtensions.button.label  "Joitain laajennuksia ei voitu varmentaa">
+<!ENTITY showAllExtensions.button.label       "Näytä kaikki laajennukset">
+<!ENTITY debugAddons.label                    "Jäljitä lisäosien virheitä">
+<!ENTITY debugAddons.accesskey                "J">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Kaikki lisäosat on poistettu käytöstä vikasietotilassa.">
+<!ENTITY warning.checkcompatibility.label          "Lisäosien yhteensopivuuden tarkistus on otettu pois päältä. Osa lisäosista voi olla epäyhteensopivia.">
+<!ENTITY warning.checkcompatibility.enable.label   "Ota käyttöön">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Ota lisäosien yhteensopivuuden tarkistus käyttöön">
+<!ENTITY warning.updatesecurity.label              "Lisäosien päivitysten turvallisuustarkistus ei ole käytössä. Päivitykset voivat saastuttaa koneesi.">
+<!ENTITY warning.updatesecurity.enable.label       "Ota käyttöön">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Ota lisäosien päivitysten turvallisuustarkistus käyttöön">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Etsi">
+<!ENTITY view.discover.label                  "Lataa lisäosia">
+<!ENTITY view.recentUpdates.label             "Tuoreet päivitykset">
+<!ENTITY view.availableUpdates.label          "Saatavilla olevat päivitykset">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Hae päivityksiä">
+<!ENTITY updates.checkForUpdates.accesskey    "H">
+<!ENTITY updates.viewUpdates.label            "Näytä viimeiset päivitykset">
+<!ENTITY updates.viewUpdates.accesskey        "N">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Päivitä lisäosat automaattisesti">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "u">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Aseta kaikki lisäosat päivittymään automaattisesti">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "P">
+<!ENTITY updates.resetUpdatesToManual.label          "Aseta kaikki lisäosat päivittymään vain käsin">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "k">
+<!ENTITY updates.updating.label               "Päivitetään lisäosia">
+<!ENTITY updates.installed.label              "Lisäosat on päivitetty.">
+<!ENTITY updates.downloaded.label             "Lisäosien päivitykset on ladattu.">
+<!ENTITY updates.restart.label                "Käynnistä uudestaan viimeistelläksesi asennuksen">
+<!ENTITY updates.noneFound.label              "Päivityksiä ei löytynyt">
+<!ENTITY updates.manualUpdatesFound.label     "Näytä saatavilla olevat päivitykset">
+<!ENTITY updates.updateSelected.label         "Asenna päivitykset">
+<!ENTITY updates.updateSelected.tooltip       "Asenna tämän listan saatavilla olevat päivitykset">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Näytä lisätietoja">
+<!ENTITY cmd.showDetails.accesskey            "N">
+<!ENTITY cmd.findUpdates.label                "Etsi päivityksiä">
+<!ENTITY cmd.findUpdates.accesskey            "E">
+<!ENTITY cmd.preferencesWin.label             "Asetukset">
+<!ENTITY cmd.preferencesWin.accesskey         "A">
+<!ENTITY cmd.preferencesUnix.label            "Asetukset">
+<!ENTITY cmd.preferencesUnix.accesskey        "A">
+<!ENTITY cmd.about.label                      "Tietoja">
+<!ENTITY cmd.about.accesskey                  "T">
+
+<!ENTITY cmd.enableAddon.label                "Ota käyttöön">
+<!ENTITY cmd.enableAddon.accesskey            "O">
+<!ENTITY cmd.disableAddon.label               "Poista käytöstä">
+<!ENTITY cmd.disableAddon.accesskey           "P">
+<!ENTITY cmd.enableTheme.label                "Käytä teemaa">
+<!ENTITY cmd.enableTheme.accesskey            "t">
+<!ENTITY cmd.disableTheme.label               "Lopeta teeman käyttö">
+<!ENTITY cmd.disableTheme.accesskey           "l">
+<!ENTITY cmd.askToActivate.label              "Kysy käynnistetäänkö">
+<!ENTITY cmd.askToActivate.tooltip            "Kysy aina käytetäänkö liitännäistä">
+<!ENTITY cmd.alwaysActivate.label             "Käynnistä aina">
+<!ENTITY cmd.alwaysActivate.tooltip           "Käytä aina liitännäistä">
+<!ENTITY cmd.neverActivate.label              "Älä käynnistä koskaan">
+<!ENTITY cmd.neverActivate.tooltip            "Älä koskaan käytä liitännäistä">
+<!ENTITY cmd.stateMenu.tooltip                "Muokkaa liitännäisen käynnistysasetuksia">
+<!ENTITY cmd.installAddon.label               "Asenna">
+<!ENTITY cmd.installAddon.accesskey           "A">
+<!ENTITY cmd.uninstallAddon.label             "Poista">
+<!ENTITY cmd.uninstallAddon.accesskey         "o">
+<!ENTITY cmd.showPreferencesWin.label         "Asetukset">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Muokkaa tämän lisäosan asetuksia">
+<!ENTITY cmd.showPreferencesUnix.label        "Asetukset">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Muokkaa tämän lisäosan asetuksia">
+<!ENTITY cmd.contribute.label                 "Auta">
+<!ENTITY cmd.contribute.accesskey             "A">
+<!ENTITY cmd.contribute.tooltip               "Auta lisäosan kehitystyössä">
+
+<!ENTITY cmd.showReleaseNotes.label           "Näytä julkaisutiedot">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Näytä tämän päivityksen julkaisutiedot">
+<!ENTITY cmd.hideReleaseNotes.label           "Piilota julkaisutiedot">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Piilota tämän päivityksen julkaisutiedot">
+<!ENTITY cmd.findReplacement.label            "Etsi korvaaja">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Mitä lisäosat ovat?">
+<!ENTITY discover.description2                "Lisäosat ovat ohjelmia, joiden avulla voit lisätä &brandShortName;iin 
+  kaipaamiasi toimintoja tai muuttaa ohjelman ulkonäköä. Kokeile vaikka aikaa säästävää sivupaneelia, säätilan kertovaa lisäosaa tai tuoretta 
+  ulkonäköä muuttavaa teemaa ja tee &brandShortName;ista omasi.">
+<!ENTITY discover.footer                      "Kun verkkoyhteys on muodostettu voit kokeilla tällä paneelilla esiteltäviä suosituimpia
+  ja parhaimpia lisäosia.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Versio">
+<!ENTITY detail.lastupdated.label             "Päivitetty viimeksi">
+<!ENTITY detail.creator.label                 "Kehittäjä">
+<!ENTITY detail.homepage.label                "Kotisivu">
+<!ENTITY detail.numberOfDownloads.label       "Latauksia">
+
+<!ENTITY detail.contributions.description     "Tämän lisäosan kehittäjä toivoo, että tukisit lisäosan kehitystyötä pienellä summalla.">
+
+<!ENTITY detail.updateType                    "Automaattinen päivitys">
+<!ENTITY detail.updateDefault.label           "Oletus">
+<!ENTITY detail.updateDefault.tooltip         "Asenna päivitykset automaattisesti vain jos se on oletusasetus">
+<!ENTITY detail.updateAutomatic.label         "Päällä">
+<!ENTITY detail.updateAutomatic.tooltip       "Asenna päivitykset automaattisesti">
+<!ENTITY detail.updateManual.label            "Pois päältä">
+<!ENTITY detail.updateManual.tooltip          "Älä asenna päivityksiä automaattisesti">
+<!ENTITY detail.home                          "Kotisivu">
+<!ENTITY detail.repository                    "Lisäosan profiili">
+<!ENTITY detail.size                          "Koko">
+
+<!ENTITY detail.checkForUpdates.label         "Hae päivityksiä">
+<!ENTITY detail.checkForUpdates.accesskey     "H">
+<!ENTITY detail.checkForUpdates.tooltip       "Hae päivityksiä lisäosaan">
+<!ENTITY detail.showPreferencesWin.label      "Asetukset">
+<!ENTITY detail.showPreferencesWin.accesskey  "A">
+<!ENTITY detail.showPreferencesWin.tooltip    "Muokkaa tämän lisäosan asetuksia">
+<!ENTITY detail.showPreferencesUnix.label     "Asetukset">
+<!ENTITY detail.showPreferencesUnix.accesskey "A">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Muokkaa tämän lisäosan asetuksia">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Arvosana:">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Pysäytä">
+<!ENTITY progress.cancel.tooltip              "Peruuta">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Nimi">
+<!ENTITY sort.name.tooltip                    "Järjestä nimen mukaan">
+<!ENTITY sort.dateUpdated.label               "Viimeisin päivitys">
+<!ENTITY sort.dateUpdated.tooltip             "Järjestä viimeisimmän päivityksen mukaan">
+<!ENTITY sort.relevance.label                 "Paras osuma">
+<!ENTITY sort.relevance.tooltip               "Järjestä haun vastaavuuden mukaan">
+<!ENTITY sort.price.label                     "Hinta">
+<!ENTITY sort.price.tooltip                   "Järjestä hinnan mukaan">
+
+<!ENTITY search.filter2.label                 "Etsi:">
+<!ENTITY search.filter2.installed.label       "Lisäosani">
+<!ENTITY search.filter2.installed.tooltip     "Näytä asennetut lisäosat">
+<!ENTITY search.filter2.available.label       "Asennettavissa olevat lisäosat">
+<!ENTITY search.filter2.available.tooltip     "Näytä lisäosat, jotka ovat asennettavissa">
+
+<!ENTITY addon.homepage                       "Kotisivu">
+<!ENTITY addon.details.label                  "Lisää">
+<!ENTITY addon.details.tooltip                "Näytä lisätietoja lisäosasta">
+<!ENTITY addon.unknownDate                    "Tuntematon">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "PERINTEINEN">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(pois käytöstä)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Päivitä">
+<!ENTITY addon.undoAction.label               "Kumoa">
+<!ENTITY addon.undoAction.tooltip             "Kumoa tämä toiminto">
+<!ENTITY addon.undoRemove.label               "Kumoa">
+<!ENTITY addon.undoRemove.tooltip             "Säilytä tämä lisäosa asennettuna">
+<!ENTITY addon.restartNow.label               "Käynnistä uudelleen">
+<!ENTITY addon.install.label                  "Asenna">
+<!ENTITY addon.install.tooltip                "Asenna lisäosa">
+<!ENTITY addon.updateNow.label                "Päivitä">
+<!ENTITY addon.updateNow.tooltip              "Asenna lisäosan päivitys">
+<!ENTITY addon.includeUpdate.label            "Sisällytä päivitykseen">
+<!ENTITY addon.updateAvailable.label          "Päivitys on saatavilla">
+<!ENTITY addon.checkingForUpdates.label       "Haetaan päivityksiä…">
+<!ENTITY addon.releaseNotes.label             "Julkaisutiedot:">
+<!ENTITY addon.loadingReleaseNotes.label      "Ladataan…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Tapahtui virhe ladatessa julkaisutietoja. Pahoittelemme..">
+
+<!ENTITY addon.createdBy.label                "Tekijänä ">
+
+<!ENTITY eula.title                           "Loppukäyttäjän lisenssi">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Hyväksy ja asenna…">
+
+<!ENTITY settings.path.button.label           "Selaa…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Mikä tämä on? Kaukomittaus voi asentaa ja suorittaa testejä aika ajoin.">
+<!ENTITY experiment.info.learnmore "Lue lisää">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Kaukomittauksen asetukset">
+<!ENTITY experiment.info.changetelemetry.accesskey "K">
+
+<!ENTITY setting.learnmore "Lue lisää…">
+
+<!ENTITY disabledUnsigned.heading "Jotkin lisäosat on otettu pois päältä">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Seuraavia lisäosia ei ole varmennettu käytettäväksi &brandShortName;issa. Voit ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "etsiä korvaavia lisäosia">
+<!ENTITY disabledUnsigned.description.end " tai pyytää kehittäjää varmentamaan ne.">
+<!ENTITY disabledUnsigned.learnMore "Lue lisää tavoista, joilla yritämme auttaa sinua pysymään turvassa verkossa.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Kehittäjät, joita kiinnostaa lisäosansa varmentaminen voivat lukea ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "käsikirjamme">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Puuttuuko jotain? &brandShortName; ei enää tue joitain liitännäisiä.">
+<!ENTITY pluginDeprecation.learnMore "Lue lisää.">
+
+<!ENTITY legacyWarning.description "Puuttuuko jotain? &brandShortName; ei tue enää joitain laajennuksia.">
+<!ENTITY legacyWarning.showLegacy "Näytä perinteiset laajennukset">
+<!ENTITY legacyExtensions.title "Perinteiset laajennukset">
+<!ENTITY legacyExtensions.description "Nämä laajennukset eivät täytä &brandShortName;in nykyisiä vaatimuksia, joten ne on poistettu käytöstä.">
+<!ENTITY legacyExtensions.learnMore "Lue lisää muutoksista lisäosiin">

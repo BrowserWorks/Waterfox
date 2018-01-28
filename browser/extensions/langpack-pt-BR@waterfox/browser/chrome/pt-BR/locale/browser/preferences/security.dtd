@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Segurança">
+<!ENTITY  phishingProtection.label       "Proteção contra phishing">
+
+<!ENTITY  warnOnAddonInstall2.label       "Avisar quando sites tentarem instalar extensões">
+<!ENTITY  warnOnAddonInstall2.accesskey   "A">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Bloquear conteúdo perigoso e malicioso">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloquear downloads perigosos">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Avisar sobre softwares indesejados e incomuns">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "c">
+
+<!ENTITY  addonExceptions.label         "Exceções…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "Formulários e Senhas">
+
+<!ENTITY  rememberLogins2.label         "Memorizar contas de acesso e senhas de sites">
+<!ENTITY  rememberLogins2.accesskey     "M">
+<!ENTITY  passwordExceptions.label      "Exceções…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "Usar uma senha mestra">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "Alterar senha mestra…">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Contas de acesso salvas…">
+<!ENTITY  savedLogins.accesskey          "l">

@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Използване на защитата от проследяване">
+<!ENTITY  trackingProtectionAlways.label       "Винаги">
+<!ENTITY  trackingProtectionAlways.accesskey   "В">
+<!ENTITY  trackingProtectionPrivate.label      "Само в поверителни прозорци">
+<!ENTITY  trackingProtectionPrivate.accesskey  "С">
+<!ENTITY  trackingProtectionNever.label        "Никога">
+<!ENTITY  trackingProtectionNever.accesskey    "Н">
+<!ENTITY  trackingProtectionLearnMore.label    "Научете повече">
+<!ENTITY  trackingProtectionExceptions.label   "Изключения…">
+<!ENTITY  trackingProtectionExceptions.accesskey "з">
+
+<!ENTITY tracking.label                 "Проследяване">
+<!ENTITY trackingProtectionPBM5.label         "Използване на защитата от проследяване в поверителните прозорци">
+<!ENTITY trackingProtectionPBM5.accesskey     "п">
+<!ENTITY trackingProtectionPBMLearnMore.label "Научете повече">
+<!ENTITY changeBlockList.label          "Промяна списъка за блокиране">
+<!ENTITY changeBlockList.accesskey      "б">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Може също ">
+<!ENTITY  doNotTrack.settings.label     "да управлявате настройките на Без проследяване">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "История">
+
+<!ENTITY  locationBar.label             "Адресна лента">
+
+<!ENTITY  locbar.suggest.label          "При въвеждане в адресната лента, подсказване с:">
+<!ENTITY  locbar.history.label          "История">
+<!ENTITY  locbar.history.accesskey      "И">
+<!ENTITY  locbar.bookmarks.label        "Отметки">
+<!ENTITY  locbar.bookmarks.accesskey    "О">
+<!ENTITY  locbar.openpage.label         "Отворени раздели">
+<!ENTITY  locbar.openpage.accesskey     "р">
+<!ENTITY  locbar.searches.label         "Подобни търсения от стандартната търсеща машина">
+<!ENTITY  locbar.searches.accesskey     "П">
+
+<!ENTITY  suggestionSettings.label      "Промяна настройките на подсказките от търсещите машини…">
+<!ENTITY  suggestionSettings.accesskey  "р">
+
+<!ENTITY  acceptCookies2.label          "Разрешаване на бисквитките">
+<!ENTITY  acceptCookies2.accesskey      "б">
+
+<!ENTITY  acceptThirdParty.pre.label      "Разрешаване на бисквитки от трети страни:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "т">
+<!ENTITY  acceptThirdParty.always.label   "Винаги">
+<!ENTITY  acceptThirdParty.never.label    "Никога">
+<!ENTITY  acceptThirdParty.visited.label  "От посетените">
+
+<!ENTITY  keepUntil.label               "Пазене до:">
+<!ENTITY  keepUntil.accesskey           "П">
+
+<!ENTITY  expire.label                  "загуба на валидност">
+<!ENTITY  close.label                   "затваряне на &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Изключения…">
+<!ENTITY  cookieExceptions.accesskey    "И">
+
+<!ENTITY  showCookies.label             "Показване на бисквитките…">
+<!ENTITY  showCookies.accesskey         "б">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; ще:">
+<!ENTITY  historyHeader.pre.accesskey      "щ">
+<!ENTITY  historyHeader.remember.label     "Помни история">
+<!ENTITY  historyHeader.dontremember.label "Не помни история">
+<!ENTITY  historyHeader.custom.label       "Използва потребителски настройки">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ще помни историята на сърфирането, изтеглянията, формулярите и търсенията и ще съхранява бисквитките на страниците, които посещавате.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Вероятно желаете да ">
+<!ENTITY  rememberActions.clearHistory.label  "изчистите скорошната история">
+<!ENTITY  rememberActions.middle.label        ", или ">
+<!ENTITY  rememberActions.removeCookies.label "да премахнете отделни бисквитки">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ще използва същите настройки като при поверително разглеждане и няма да помни никаква история, докато сте в интернет.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Може също да искате да">
+<!ENTITY  dontrememberActions.clearHistory.label "изчистите цялата настояща история">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Винаги включено поверително разглеждане">
+<!ENTITY  privateBrowsingPermanent2.accesskey "п">
+
+<!ENTITY  rememberHistory2.label      "Запазване на история на разглеждане и изтегляния">
+<!ENTITY  rememberHistory2.accesskey  "З">
+
+<!ENTITY  rememberSearchForm.label       "Запазване на история на търсения и формуляри">
+<!ENTITY  rememberSearchForm.accesskey   "ф">
+
+<!ENTITY  clearOnClose.label             "Изчистване на история при изход от &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "И">
+
+<!ENTITY  clearOnCloseSettings.label     "Настройки…">
+<!ENTITY  clearOnCloseSettings.accesskey "Н">
+
+<!ENTITY  browserContainersHeader.label         "Изолирани раздели">
+<!ENTITY  browserContainersLearnMore.label      "Научете повече">
+<!ENTITY  browserContainersEnabled.label        "Включване на изолатора на раздели">
+<!ENTITY  browserContainersEnabled.accesskey    "к">
+<!ENTITY  browserContainersSettings.label        "Настройки…">
+<!ENTITY  browserContainersSettings.accesskey    "а">

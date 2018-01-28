@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Izinxaxhi - Inguqulelo">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Akukho nguqulelo iya kwenziwa kwezi lwimi zilandelayo:">
+<!ENTITY treehead.languageName.label      "Iilwimi">
+<!ENTITY removeLanguage.label             "Shenxisa ulwimi">
+<!ENTITY removeLanguage.accesskey         "S">
+<!ENTITY removeAllLanguages.label         "Shenxisa zonke iilwimi">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Akukho nguqulelo iya kwenziwa kwezi sayithi zilandelayo:">
+
+<!ENTITY removeSite.label                 "Shenxisa isayithi">
+<!ENTITY removeSite.accesskey             "i">
+<!ENTITY removeAllSites.label             "Shenxisa zonke iisayithi">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Vala">
+<!ENTITY button.close.accesskey           "V">
+
+<!ENTITY treehead.siteName2.label         "Websites">

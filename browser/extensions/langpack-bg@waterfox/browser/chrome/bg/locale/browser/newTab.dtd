@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Нов раздел">
+<!ENTITY newtab.customize.classic "Най-посещавани страници">
+<!ENTITY newtab.customize.cog.enhanced "Вкл. предложени страници">
+<!ENTITY newtab.customize.cog.title2 "ПРИ НОВ РАЗДЕЛ">
+<!ENTITY newtab.customize.cog.learn "Научете за новия раздел">
+<!ENTITY newtab.customize.title "Настройване на Нов раздел">
+<!ENTITY newtab.customize.blank2 "Празна страница">
+<!ENTITY newtab.undo.removedLabel "Миниатюрата беше премахната.">
+<!ENTITY newtab.undo.undoButton "Отмяна.">
+<!ENTITY newtab.undo.restoreButton "Възстановяване на всички.">
+<!ENTITY newtab.undo.closeTooltip "Скриване">

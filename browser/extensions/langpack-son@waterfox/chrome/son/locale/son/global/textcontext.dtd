@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Dunbu">
+<!ENTITY cutCmd.accesskey "D">
+<!ENTITY copyCmd.label "Berandi">
+<!ENTITY copyCmd.accesskey "B">
+<!ENTITY pasteCmd.label "Dobu">
+<!ENTITY pasteCmd.accesskey "D">
+<!ENTITY undoCmd.label "Taafeeri">
+<!ENTITY undoCmd.accesskey "T">
+<!ENTITY selectAllCmd.label "Kul suuba">
+<!ENTITY selectAllCmd.accesskey "K">
+<!ENTITY deleteCmd.label "Tuusu">
+<!ENTITY deleteCmd.accesskey "T">
+
+<!ENTITY spellAddToDictionary.label "Tonton kamasu ga">
+<!ENTITY spellAddToDictionary.accesskey "g">
+<!ENTITY spellUndoAddToDictionary.label "Tonton kamasu ga taafeeri">
+<!ENTITY spellUndoAddToDictionary.accesskey "t">
+<!ENTITY spellCheckToggle.label "Boŋhantum koroši">
+<!ENTITY spellCheckToggle.accesskey "B">
+<!ENTITY spellNoSuggestions.label "(Boŋhantum honnandi šii)">
+<!ENTITY spellDictionaries.label "Šenney">
+<!ENTITY spellDictionaries.accesskey "n">
+
+<!ENTITY searchTextBox.clear.label "Tuusu">
+
+<!ENTITY fillLoginMenu.label          "Huruyan maa dam">
+<!ENTITY fillLoginMenu.accesskey      "d">
+<!ENTITY fillPasswordMenu.label       "Šennikufal dam">
+<!ENTITY fillPasswordMenu.accesskey   "d">
+<!ENTITY fillUsernameMenu.label       "Goykaw maa dam">
+<!ENTITY fillUsernameMenu.accesskey   "d">
+<!ENTITY noLoginSuggestions.label     "(Huruyan maa honnandiyan kul šii)">
+<!ENTITY viewSavedLogins.label        "Huruyan maa gaabuntey guna">

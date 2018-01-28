@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Dún an Cluaisín Seo">
+<!ENTITY tabCrashed.restoreTab "Athchóirigh an Cluaisín Seo">
+<!ENTITY tabCrashed.restoreAll "Athchóirigh Gach Cluaisín Tuairteáilte">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Monuar! Tá do chluaisín go díreach tar éis tuairteála.">
+<!ENTITY tabCrashed.offerHelp "Táimid in ann cuidiú leat!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Roghnaigh &tabCrashed.restoreTab; chun ábhar an leathanaigh a athlódáil.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Roghnaigh &tabCrashed.restoreTab; nó &tabCrashed.restoreAll; chun ábhar an leathanaigh a athlódáil.">
+<!ENTITY tabCrashed.requestHelp "An mbeifeá sásta cabhrú linn?">
+<!ENTITY tabCrashed.requestHelpMessage "Cuidíonn tuairiscí tuairteála linn fadhbanna a aithint agus &brandShortName; a fheabhsú.">
+<!ENTITY tabCrashed.requestReport "Déan tuairisc ar an gcluaisín seo">
+<!ENTITY tabCrashed.sendReport2 "Seol tuairisc tuairteála don chluaisín a bhfuil tú ag breathnú air">
+<!ENTITY tabCrashed.commentPlaceholder2 "Nótaí roghnacha (beidh na nótaí infheicthe go poiblí)">
+<!ENTITY tabCrashed.includeURL2 "Cuir URL an leathanaigh leis an tuairisc tuairteála seo">
+<!ENTITY tabCrashed.emailPlaceholder "Cuir isteach do sheoladh ríomhphoist anseo">
+<!ENTITY tabCrashed.emailMe "Seol ríomhphost chugam nuair a bheidh tuilleadh eolais ar fáil">
+<!ENTITY tabCrashed.reportSent "Seoladh an tuairisc faoin tuairteáil cheana; go raibh maith agat as cabhrú linn feabhas a chur ar &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Déan tuairisc ar chluaisíní sa chúlra">
+<!ENTITY tabCrashed.autoSubmit2 "Nuashonraigh do chuid sainroghanna le go seolfar tuairisc tuairteála go huathoibríoch, agus bíodh tuairiscí leis do chluaisíní tuairteáilte sa chúlra ón seisiún seo agus ó sheisiúin eile.">

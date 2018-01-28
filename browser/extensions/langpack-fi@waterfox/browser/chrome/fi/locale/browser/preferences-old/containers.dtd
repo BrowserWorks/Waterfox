@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Lisää uusi luokitus">
+<!ENTITY addButton.accesskey  "L">
+<!ENTITY preferencesButton.label "Asetukset">
+<!ENTITY removeButton.label   "Poista">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Takaisin Tietosuoja-sivulle">
+
+<!ENTITY window.title         "Lisää uusi luokitus">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nimi:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Kirjoita luokituksen nimi">
+<!ENTITY icon.label           "Kuvake:">
+<!ENTITY icon.accesskey       "K">
+<!ENTITY color.label          "Väri:">
+<!ENTITY color.accesskey      "r">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Valmis">
+<!ENTITY button.ok.accesskey  "V">
+

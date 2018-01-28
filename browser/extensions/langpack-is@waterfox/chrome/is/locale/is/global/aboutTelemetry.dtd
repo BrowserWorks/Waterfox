@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Fjarmælingargögn">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping gagnastaðsetning:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Núverandi ping gögn">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Vistuð ping gögn">
+
+<!ENTITY aboutTelemetry.raw "Hrátt JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Sýna subsession gögn">
+
+<!ENTITY aboutTelemetry.choosePing "Velja ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nýrra ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Eldra ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Vika">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Í gær">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Eldra">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Almenn gögn">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Umhverfisgögn">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Atburðaskrá fjarmælingar">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Sýna hægar SQL tengingar">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Vafrahrun">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Hangandi þræðir">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Vistaðir staflar">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Kvarðar">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Keyed Scalars">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Súlurit">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Lyklaðar mælingar">
+
+<!ENTITY aboutTelemetry.eventsSection "  Atburðir">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Einfaldar mælingar">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Upplýsingar um viðbót">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Skrifað seint">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Lotuupplýsingar">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  ATHUGIÐ: Hægvirk SQL aflúsun er virk. Heildar SQL strengir gætu birst hér fyrir neðan en þeir verða ekki sendir á fjarmælingu.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Ná í nöfn falla fyrir stafla">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Sýna hrá staflagögn">
+
+<!ENTITY aboutTelemetry.filterText "  Sía (strengir eða /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Innihald">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+

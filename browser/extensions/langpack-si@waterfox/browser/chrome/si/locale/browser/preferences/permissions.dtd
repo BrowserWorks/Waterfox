@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "හැරදැමීම්">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename.label      "අඩවිය">
+<!ENTITY treehead.status.label        "තත්ත්වය">
+<!ENTITY removepermission.label       "අඩවිය ඉවත් කරන්න">
+<!ENTITY removepermission.accesskey   "R">
+<!ENTITY removeallpermissions.label   "සියලු අඩවීන් ඉවත් කරන්න">
+<!ENTITY removeallpermissions.accesskey "e">
+<!ENTITY address.label                "වෙබ් අඩවි ලිපිනය:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "වලකන්න">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "සැසියට ඉඩදෙන්න">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "ඉඩ දෙන්න">
+<!ENTITY allow.accesskey              "A">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "අවලංගු කරන්න">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "වෙනස්කම් සුරකින්න">
+<!ENTITY button.ok.accesskey          "S">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

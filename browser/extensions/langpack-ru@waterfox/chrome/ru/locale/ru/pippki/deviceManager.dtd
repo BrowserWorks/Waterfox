@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Управление устройствами">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Модули и устройства защиты">
+<!ENTITY devmgr.details.title                   "Подробности">
+<!ENTITY devmgr.details.title2                  "Значение">
+
+<!ENTITY devmgr.button.login.label              "Начать сеанс">
+<!ENTITY devmgr.button.login.accesskey          "ч">
+<!ENTITY devmgr.button.logout.label             "Закончить сеанс">
+<!ENTITY devmgr.button.logout.accesskey         "о">
+<!ENTITY devmgr.button.changepw.label           "Сменить пароль">
+<!ENTITY devmgr.button.changepw.accesskey       "а">
+<!ENTITY devmgr.button.load.label               "Загрузить">
+<!ENTITY devmgr.button.load.accesskey           "г">
+<!ENTITY devmgr.button.unload.label             "Выгрузить">
+<!ENTITY devmgr.button.unload.accesskey         "ы">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Введите информацию о модуле, который вы хотите добавить.">
+<!ENTITY loaddevice.modname                     "Имя модуля:">
+<!ENTITY loaddevice.modname.accesskey           "м">
+<!ENTITY loaddevice.modname.default             "New PKCS#11 Module">
+<!ENTITY loaddevice.filename                    "Имя файла модуля:">
+<!ENTITY loaddevice.filename.accesskey          "ф">
+<!ENTITY loaddevice.browse                      "Обзор…">
+<!ENTITY loaddevice.browse.accesskey            "б">
+
+<!ENTITY loaddevice.title2                      "Загрузить драйвер устройства PKCS#11">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "இந்த செய்தியை மூடவும்">
+
+<!ENTITY checkForUpdates "மேம்படுத்தல்கள் உள்ளதா என காண்க...">
+
+<!ENTITY learnMore "மேலும் அறிக...">
+
+<!ENTITY defaultButton.label "சரி!">
+<!ENTITY defaultButton.accesskey "O">

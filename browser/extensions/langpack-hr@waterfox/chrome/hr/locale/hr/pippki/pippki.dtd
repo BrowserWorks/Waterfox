@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Promijeni glavnu lozinku">
+<!ENTITY setPassword.tokenName.label "Sigurnosni uređaj">
+<!ENTITY setPassword.oldPassword.label "Trenutna lozinka:">
+<!ENTITY setPassword.newPassword.label "Nova lozinka:">
+<!ENTITY setPassword.reenterPassword.label "Ponovno upišite novu lozinku:">
+<!ENTITY setPassword.meter.label "Mjerač kvalitete lozinke">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Poništi">
+<!ENTITY resetPassword.title  "Poništi glavnu lozinku">
+<!ENTITY resetPassword.text  "Ako poništite glavnu lozinku, sve spremljene lozinke web stranica i e-pošte, te spremljeni formulari, osobni certifikati i privatni ključevi bit će zaboravljeni. Jeste li sigurni da želite poništiti vašu glavnu lozinku?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Preuzimanje certifikata">
+<!ENTITY downloadCert.message1 "Upitani ste za vjerovanje novoj agenciji certifikata (CA).">
+<!ENTITY downloadCert.trustSSL "Vjeruj ovom CA-u za identifikaciju web stranica.">
+<!ENTITY downloadCert.trustEmail "Vjeruj ovom CA-u za identifikaciju korisnika e-pošte.">
+<!ENTITY downloadCert.trustObjSign "Vjeruj ovom CA-u za identifikaciju proizvođača softvera.">
+<!ENTITY downloadCert.message3 "Prije vjerovanju ovom CA-u za bilo koju svrhu, trebali biste ispitati njegov certifikat, politiku i procedure (ako je dostupno).">
+<!ENTITY downloadCert.viewCert.label "Pogled">
+<!ENTITY downloadCert.viewCert.text "Ispitaj CA-ov certifikat">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Zahtjev identifikacije korisnika">
+<!ENTITY clientAuthAsk.message1 "Ova stranica je zatražila da se identificirate s certifikatom:">
+<!ENTITY clientAuthAsk.message2 "Odaberite certifikat za identifikaciju:">
+
+
+<!ENTITY pkcs12.setpassword.title  "Odaberi sigurnosnu kopiju lozinke certifikata">
+<!ENTITY pkcs12.setpassword.message  "Sigurnosna kopija lozinke certifikata koju ćete ovdje postaviti štiti sigurnosnu kopiju datoteke koju ćete upravo stvoriti. Da biste nastaviti s izradom sigurnosne kopije, morate upisati lozinku.">
+<!ENTITY pkcs12.setpassword.label1 "Sigurnosna kopija lozinke certifikata:">
+<!ENTITY pkcs12.setpassword.label2 "Sigurnosna kopija lozinke certifikata (opet):">
+<!ENTITY pkcs12.setpassword.reminder "Važno: ako zaboravite svoju sigurnosnu kopiju lozinke certifikata, kasnije nećete moći vratiti ovu sigurnosnu kopiju. Molim spremite lozinku na sigurno mjesto.">
+
+<!ENTITY chooseToken.title  "Prozor odabira tokena">
+<!ENTITY chooseToken.message1 "Molim odaberite token.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Generiranje privatnog ključa">
+<!ENTITY createCertInfo.msg1 "Generiranje ključa je u tijeku... Ovo može potrajati nekoliko minuta...">
+<!ENTITY createCertInfo.msg2 "Molim pričekajte...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Zaštićena token autentifikacija">
+<!ENTITY protectedAuth.msg "Molim, autentificirajte se tokenu. Metoda autentifikacije ovisi o tipu vašeg tokena.">
+<!ENTITY protectedAuth.tokenName.label "Token:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

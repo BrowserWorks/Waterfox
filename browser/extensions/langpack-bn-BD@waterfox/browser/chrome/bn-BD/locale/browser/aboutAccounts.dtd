@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; এ স্বাগতম">
+
+<!ENTITY aboutAccountsConfig.description "আপনার ট্যাব, বুকমার্ক, পাসওয়ার্ডসহ আরও অনেক কিছু সিঙ্ক করতে সাইন ইন করুন।">
+<!ENTITY aboutAccountsConfig.startButton.label "আসুন শুরু করি">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "সিঙ্ক পছন্দসমূহ">
+<!ENTITY aboutAccounts.noConnection.title "কোনো সংযোগ নেই">
+<!ENTITY aboutAccounts.noConnection.description "আপনি সাইন ইন করার জন্য ইন্টারনেটের সাথে সংযুক্ত করা আবশ্যক।">
+<!ENTITY aboutAccounts.noConnection.retry "পুনরায় চেষ্টা করুন">
+<!ENTITY aboutAccounts.badConfig.title "খারাপ কনফিগারেশন">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox Account সার্ভারের কনফিগারেশন নির্ণয় করতে অক্ষম। অনুগ্রহ করে আবার চেষ্টা করুন।">

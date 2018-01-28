@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "పేరు:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "స్థానము:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "ఫీడ్ స్థానము:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "సైటు స్థానము:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "సంచయం:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "అన్ని ఇష్టాంశముల సంచయాలను చూపించు">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "దాచిపెట్టు">
+<!ENTITY editBookmarkOverlay.tags.label                      "ట్యాగ్ లు:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "ట్యాగులను కామాలతో వేరుచేయి">
+<!ENTITY editBookmarkOverlay.description.label               "వివరణ:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "కీ పదము:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "అన్ని ట్యాగులను చూపించు">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "ఈ ఇష్టాంశమును ప్రక్కపట్టీలో లోడ్‌చేయి">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "ఎంచుకో…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "కొత్త సంచయం">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

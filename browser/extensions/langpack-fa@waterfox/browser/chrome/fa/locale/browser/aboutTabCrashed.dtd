@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "بستن این زبانه">
+<!ENTITY tabCrashed.restoreTab "بازگرداندن این زبانه">
+<!ENTITY tabCrashed.restoreAll "برگرداندن همه زبانه‌های از کار افتاده">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "اوپس، زبانه شما خراب شد.">
+<!ENTITY tabCrashed.offerHelp "ما می‌توانیم به شما کمک کنیم!">
+<!ENTITY tabCrashed.single.offerHelpMessage "&tabCrashed.restoreTab; را برای بازآوردن اطلاعات صفحه خود انتخاب کنید.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "&tabCrashed.restoreTab; یا &tabCrashed.restoreAll; برای بازآوری اطلاعات محتویات صفحات خود انتخاب کنید.">
+<!ENTITY tabCrashed.requestHelp "آیا شما به ما کمک خواهید کرد؟">
+<!ENTITY tabCrashed.requestHelpMessage "گزارش خرابی به عیب یابی و بهتر کردن مشکلات و &brandShortName; کمک می کند.">
+<!ENTITY tabCrashed.requestReport "این زبانه را گزارش کنید">
+<!ENTITY tabCrashed.sendReport2 "ارسال یک گزارش خرابی برای زبانه ای که شما مشاهده می کنید.">
+<!ENTITY tabCrashed.commentPlaceholder2 "افزودن یک توضیح (توضیحات در دسترس عموم قرار خواهند گرفت)">
+<!ENTITY tabCrashed.includeURL2 "افزودن آدرس این صفحه به گزارش خرابی">
+<!ENTITY tabCrashed.emailPlaceholder "نشانی پست الکترونیکی خود را اینجا وارد کنید">
+<!ENTITY tabCrashed.emailMe "در صورت در دسترس بودن اطلاعات بیشتر به من نامه‌الکترونیکی ارسال شود.">
+<!ENTITY tabCrashed.reportSent "گزارش‌ خرابی جهت ارسال آماده است;از شما به خاطر کمک‌کردن به بهتر شدن این &brandShortName; تشکر می‌کنیم!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "گزارش زبانه‌های پس‌زمینه">
+<!ENTITY tabCrashed.autoSubmit2 "بروزرسانی ترجیحات برای ارسال خودکار خرابی ‌ها ،‌شامل گزارش خرابی های زبانه های پس زمینه برای این جلسه و جلسه آینده">

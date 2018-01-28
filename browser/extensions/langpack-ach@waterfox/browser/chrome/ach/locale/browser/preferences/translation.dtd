@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Ma kiweko woko - Kobo">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Pe ki bimiyo kob pi leb magi:">
+<!ENTITY treehead.languageName.label      "Leb">
+<!ENTITY removeLanguage.label             "Kwany leb">
+<!ENTITY removeLanguage.accesskey         "K">
+<!ENTITY removeAllLanguages.label         "Kwany leb weng">
+<!ENTITY removeAllLanguages.accesskey     "w">
+
+<!ENTITY noTranslationForSites.label      "Pe ki bimiyo kob pi kakube magi:">
+
+<!ENTITY removeSite.label                 "Kwany kakube">
+<!ENTITY removeSite.accesskey             "k">
+<!ENTITY removeAllSites.label             "Kwany kakube weng">
+<!ENTITY removeAllSites.accesskey         "a">
+
+<!ENTITY button.close.label               "Lor">
+<!ENTITY button.close.accesskey           "L">
+
+<!ENTITY treehead.siteName2.label         "Websites">

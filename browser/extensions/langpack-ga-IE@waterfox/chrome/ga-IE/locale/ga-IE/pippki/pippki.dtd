@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Athraigh an Príomhfhocal Faire">
+<!ENTITY setPassword.tokenName.label "Gléas Slándála">
+<!ENTITY setPassword.oldPassword.label "Focal Faire Reatha:">
+<!ENTITY setPassword.newPassword.label "Focal Faire Nua:">
+<!ENTITY setPassword.reenterPassword.label "Focal Faire Nua (Arís):">
+<!ENTITY setPassword.meter.label "Tomhais ar cháilíocht fhocail faire">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Bánaigh">
+<!ENTITY resetPassword.title  "Bánaigh an Príomhfhocal Faire">
+<!ENTITY resetPassword.text  "Má bhánaíonn tú do Phríomhfhocal Faire, caillfear na focail faire ríomhphoist agus Gréasáin a stóráil tú, na sonraí ó fhoirmeacha, do theastais phearsanta, agus d'eochracha príobháideacha. An bhfuil tú cinnte gur mian leat do Phríomhfhocal Faire a bhánú?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Teastas á íoslódáil">
+<!ENTITY downloadCert.message1 "Iarrtar ort muinín a bheith agat as Údarás Deimhniúcháin nua.">
+<!ENTITY downloadCert.trustSSL "Tá muinín agat as an údarás deimhniúcháin seo chun suímh Ghréasáin a shainaithint.">
+<!ENTITY downloadCert.trustEmail "Tá muinín agat as an údarás deimhniúcháin seo chun úsáideoirí ríomhphoist a shainaithint.">
+<!ENTITY downloadCert.trustObjSign "Tá muinín agat as an údarás deimhniúcháin seo chun déantóirí bogearraí a shainaithint.">
+<!ENTITY downloadCert.message3 "Sula gcuireann tú muinín san údarás deimhniúcháin seo, ba cheart duit a theastas, a pholasaithe agus a mhodhanna oibre a scrúdú má tá fáil orthu.">
+<!ENTITY downloadCert.viewCert.label "Amharc">
+<!ENTITY downloadCert.viewCert.text "Scrúdaigh Teastas an Údaráis Deimhniúcháin">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Iarratas Aitheantais Úsáideora">
+<!ENTITY clientAuthAsk.message1 "Iarann an suíomh seo ort tú féin a shainaithint le teastas:">
+<!ENTITY clientAuthAsk.message2 "Roghnaigh teastas le taispeáint mar aitheantas:">
+<!ENTITY clientAuthAsk.message3 "Mionsonraí an teastais roghnaithe:">
+
+<!ENTITY pkcs12.setpassword.title  "Roghnaigh Focal Faire an Chúltaca Teastais">
+<!ENTITY pkcs12.setpassword.message  "Cosnaíonn focal faire an chúltaca teastais a shocraíonn tú anseo an comhad cúltaca atá á chruthú agat. Is gá an focal faire seo a shocrú roimh leanúint ar aghaidh.">
+<!ENTITY pkcs12.setpassword.label1 "Focal faire an chúltaca teastais:">
+<!ENTITY pkcs12.setpassword.label2 "Focal faire an chúltaca teastais (arís):">
+<!ENTITY pkcs12.setpassword.reminder "Tábhachtach: má dhéanann tú dearmad ar an bhfocal faire don chúltaca teastais ní bheidh tú in ann an cúltaca seo a chur ar ais. Breac síos tuairisc de in áit shlán.">
+
+<!ENTITY chooseToken.title  "Dialóg Roghnaithe Ceadchomhartha">
+<!ENTITY chooseToken.message1 "Roghnaigh ceadchomhartha le do thoil.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Eochair phríobháideach á déanamh">
+<!ENTITY createCertInfo.msg1 "Tá na heochracha á gcruthú. D'fhéadfadh seo leanadh ar feadh tamaillín…">
+<!ENTITY createCertInfo.msg2 "Fan go fóill, le do thoil…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Fíordheimhniú le Comhartha Cosanta">
+<!ENTITY protectedAuth.msg "Fíordheimhnigh leis an gcomhartha le do thoil. Braitheann an modh fíordheimhnithe ar chineál do chomhartha.">
+<!ENTITY protectedAuth.tokenName.label "Ceadchomhartha:">

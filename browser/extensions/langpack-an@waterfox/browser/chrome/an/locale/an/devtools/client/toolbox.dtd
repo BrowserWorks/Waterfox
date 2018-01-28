@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "D">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Error en ubrir a Caixa de ferramientas d'o navegador:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Achustes abanzaus">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Inspector">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Amostrar os estilos d'o navegador">
+<!ENTITY options.showUserAgentStyles.tooltip "Activando ista opción amostrará os estilos por defecto cargaus por o navegador">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Truncar atributos DOM">
+<!ENTITY options.collapseAttrs.tooltip "Truncar atributos largos en o inspector">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Unidat de color predeterminada">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "U">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Como s'ha creyau">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Hex">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Nombres de colors">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* esviella a pachina nomás ta ista sesión">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Activa as caixas de ferramientas de depuración d'o crome d'o navegador y complementos">
+<!ENTITY options.enableChrome.tooltip3  "En activar ista opción se premitirá l'uso de diversas ferramientas ta desembolicadors en o contexto d'o navegador (fendo Ferramientas > Desembolicador web > Caixa de Ferramientas) y depurar complementos dende o Chestor de complementos.">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Activar a depuración remota">
+<!ENTITY options.enableRemote.tooltip2  "Activar ista opción permitirá a las ferramientas de desembolicador depurar instancias remotas de Waterfox, como Waterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Desactivar JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Activando ista opción se desactivará JavaScript en a pestanya actual. Si a pestanya u caixa de ferramientas de zarra alavez iste achuste se descartará.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Desactivar la caché HTTP (quan a caixa de ferramientas ye ubierta)">
+<!ENTITY options.disableHTTPCache.tooltip   "Activar ista opción desactiva la caché HTTP en totas las pestanyas que tienen la caixa de ferramientas ubierta. Los Service Workers no son afectaus por ista opción.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Activar os Service Workers sobre HTTP (quan a caixa de ferramientas siga ubierta)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "En activar ista opción s'habilitarán os service workers sobre HTTP pa todas as pestanyas que tienen a caixa de ferramientas ubierta.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Ferramientas de desenvolvimiento por defecto">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Ferramientas de desembolicador instaladas por complementos">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Botons disposables en a caixa de ferramientas">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Incompatible con l'elemento actual d'a caixa de ferramientas">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Temas">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Fer servir o tema d'o navegador Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Cambia o tema d'o navegador Developer Edition">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Consola web">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Activar as marcas de tiempo">
+<!ENTITY options.timestampMessages.tooltip    "Si activa ista opción as ordens y as suyas salidas amostrarán una marca de tiempo">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Depurador">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Habilitar los mapas fuent">
+<!ENTITY options.sourceMaps.tooltip    "Si habilita ista opción las fuents serán mapiadas en o depurador y la consola.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Editor de estilo">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Amostrar as fuents orichinals">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Amostrar as fuents orichinals (os fichers Sass, por eixemplo) en l'editor de estilos y l'inspector">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "Completar automaticament as CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Completar automaticament as propiedatz, as valuras y os selectors CSS en l'editor de estilos mientres a escritura">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Comportamiento de captura de pantalla">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Capturar de pantalla en o portafuellas">
+<!ENTITY options.screenshot.clipboard.tooltip    "Alza la captura de pantalla directament ta lo portafuellas">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Reproducir lo soniu d'obturador d'a camara">
+<!ENTITY options.screenshot.audio.tooltip    "Activa lo soniu d'a camara quan se captura la pantalla">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Preferencias comuns">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Activar a conservación d'o rechistro">
+<!ENTITY options.enablePersistentLogs.tooltip  "Si activa ista opción, no s'escoscará a salida d'a consola web ni d'o monitor de ret cada vegada que navegue en una nueva pachina">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Amostrar os datos d'a plataforma Gecko">
+<!ENTITY options.showPlatformData.tooltip  "Si activa ista opción, os informes d'o perfilador JavaScript incluirán os simbolos d'a plataforma Gecko">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Preferencias d'o editor">
+<!ENTITY options.sourceeditor.detectindentation.label   "Detectar sangría">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Deducir sangría a partir d'o conteniu d'o codigo fuent">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Zarrar automaticament os gafetz">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Insertar gafetz de zarrau automaticament">
+<!ENTITY options.sourceeditor.expandtab.label           "Fer sangría con espacios">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Faiga servir espacios en cuenta d'o caracter pestanya">
+<!ENTITY options.sourceeditor.tabsize.label             "Mida d'a pestanya">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "M">
+<!ENTITY options.sourceeditor.keybinding.label          "Combinaciones de teclas">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "C">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Predeterminau">

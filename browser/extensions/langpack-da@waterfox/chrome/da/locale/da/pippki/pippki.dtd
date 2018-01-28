@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Skift hovedadgangskode">
+<!ENTITY setPassword.tokenName.label "Sikkerhedsenhed">
+<!ENTITY setPassword.oldPassword.label "Nuværende adgangskode:">
+<!ENTITY setPassword.newPassword.label "Ny adgangskode:">
+<!ENTITY setPassword.reenterPassword.label "Ny adgangskode (igen):">
+<!ENTITY setPassword.meter.label "Kvalitetsmåler for adgangskode">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Nulstil">
+<!ENTITY resetPassword.title  "Nulstil hovedadgangskode">
+<!ENTITY resetPassword.text  "Hvis du nulstiller din hovedadgangskode, vil alle dine gemte web- og mail-adgangskoder, formulardata, personlige certifikater og private nøgler blive glemt. Er du sikker på, at du vil nulstille din hovedadgangskode?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Henter certifikat">
+<!ENTITY downloadCert.message1 "Du er blevet bedt om at stole på en ny certifikatautoritet (CA).">
+<!ENTITY downloadCert.trustSSL "Stol på denne CA til at identificere websteder.">
+<!ENTITY downloadCert.trustEmail "Stol på denne CA til at identificere mailbrugere.">
+<!ENTITY downloadCert.trustObjSign "Stol på denne CA til at identificere programudviklere.">
+<!ENTITY downloadCert.message3 "Før du bruger denne CA til noget som helst, bør du undersøge dens certifikat, dens holdninger og fremgangsmåder (hvis de findes).">
+<!ENTITY downloadCert.viewCert.label "Vis">
+<!ENTITY downloadCert.viewCert.text "Undersøg CA-certifikat">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Vælg brugeridentifikation">
+<!ENTITY clientAuthAsk.message1 "Dette websted har bedt om, at du identificerer dig selv med et certifikat:">
+<!ENTITY clientAuthAsk.message2 "Vælg et certifikat, der skal vises som identifikation:">
+<!ENTITY clientAuthAsk.message3 "Detaljer for det valgte certifikat:">
+
+<!ENTITY pkcs12.setpassword.title  "Vælg en adgangskode for certifikatsikkerhedskopi">
+<!ENTITY pkcs12.setpassword.message  "Adgangskoden, du vælger til din certifikatsikkerhedskopi, beskytter den sikkerhedskopi du er ved at oprette.  Du skal angive denne adgangskode for at fortsætte sikkerhedskopieringen.">
+<!ENTITY pkcs12.setpassword.label1 "Adgangskode for certifikatsikkerhedskopi:">
+<!ENTITY pkcs12.setpassword.label2 "Adgangskode for certifikatsikkerhedskopi (igen):">
+<!ENTITY pkcs12.setpassword.reminder "Vigtigt: Hvis du glemmer din adgangskode vil du ikke kunne gendanne denne sikkerhedskopi senere.  Gem den et sikkert sted.">
+
+<!ENTITY chooseToken.title  "Vælg token">
+<!ENTITY chooseToken.message1 "Vælg venligst et token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Generer en privat nøgle">
+<!ENTITY createCertInfo.msg1 "Nøglegenerering i gang. Dette kan tage er par minutter…">
+<!ENTITY createCertInfo.msg2 "Vent venligst…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Beskyttet token-godkendelse">
+<!ENTITY protectedAuth.msg "Identificer dig selv over for denne token. Godkendelsesmetoden afhænger af typen af dit token.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

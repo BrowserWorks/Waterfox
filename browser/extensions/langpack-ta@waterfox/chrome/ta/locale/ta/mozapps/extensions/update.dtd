@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; புதுப்பிப்பு">
+
+<!ENTITY  offline.title                   "&brandShortName; இணைய இணைப்பில்லாமல் வேலை செய்கிறது">
+<!ENTITY  offline.description             "&brandShortName; மேம்படுத்தல்களை அறிய இணைய இணைப்பு தேவைப்படுகிறது. அவற்றுக்கு கூடுதல் இணைப்புகள் இருந்தால் அதனை பார்க்கலாம்.">
+<!ENTITY  offline.toggleOffline.label     "இப்போது ஆன்லைட் செல்.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "பொருந்தாத கூடுதல் இணைப்பு">
+<!ENTITY  mismatch.top.label              "பின்வரும் துணை நிரல்கள் &brandShortName; உலாவியின் மதப்பிற்கு ஏற்றதாக இல்லை மற்றும் முடக்கப்பட்டது:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ஏற்ற பதிப்புகள் இந்த கூடுதல் இணைப்புகளுக்கு இருந்தால் சரிபார்க்கிறது.">
+
+<!ENTITY  checking.wizard.title           "ஏற்ற கூடுதல் இணைப்பை சரிபார்க்கிறது">
+<!ENTITY  checking.top.label              "உங்கள் பொருந்தாத கூடுதல் இணைப்புகளுக்கு மேம்படுத்தலை சரிபார்க்கிறது...">
+<!ENTITY  checking.status                 "இதற்கு சில நிமிடங்கள் எடுக்கும்...">
+
+<!ENTITY  found.wizard.title               "ஏற்ற கூடுதல் இணைப்பு கண்டுபிடிக்கப்பட்டது">
+<!ENTITY  found.top.label                 "நீங்கள் நிறுவ விரும்பும் கூடுதல் இணைப்புகளை தேர்ந்தெடுக்கவும்:">
+<!ENTITY  found.disabledXPinstall.label   "இந்த மேம்படுத்தல்களை நிறுவ முடியவில்லை ஏனெனில் மென்பொருள் நிறுவல் தற்போது செயல்நீக்கப்பட்டுள்ளது. இந்த அமைவுகளை கீழே மாற்றலாம்.">
+<!ENTITY  found.enableXPInstall.label     "இணைய தளங்களை மென்பொருட்களை நிறுவ அனுமதிக்கவும்">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "ஏற்ற கூடுதல் இணைப்புகளை நிறுவுகிறது">
+<!ENTITY  installing.top.label            "உங்கள் கூடுதல் இணைப்பின் மேம்படுத்தலை பதிவிறக்க நிறுவுகிறது...">
+
+<!ENTITY  noupdates.wizard.title          "பொருத்தமற்ற துணை நிரல்கள் காணப்படவில்லை">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; உங்கள் பொருந்தாத கூடுதல் இணைப்புகளுக்கு மேம்படுத்தலை பெற முடியவில்லை.">
+<!ENTITY  noupdates.error.desc            "மேம்படுத்தலை தேடும் போது சில் சிக்கல்களை ஏற்பட்டுள்ளது.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; கால அளவில் சரிபார்த்து உங்களிடம் அதற்கு ஏற்ற மேம்படுத்தல்கள் இருக்கும் போது தெரிவிக்கும்.">
+
+<!ENTITY  finished.wizard.title           "பொருந்தும் துணை நிரல்கள் நிறுவப்பட்டன">
+<!ENTITY  finished.top.label              "&brandShortName; உங்கள் கூடுதல் இணைப்புக்களுக்கு மேம்படுத்தல்களை நிறுவியது.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; கால அளவில் சரிபார்த்து உங்களிடம் அதற்கு ஏற்ற மேம்படுத்தல்கள் இருக்கும் போது தெரிவிக்கும்.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; கால அளவில் சரிபார்த்து உங்களிடம் அதற்கு ஏற்ற மேம்படுத்தல்கள் இருக்கும் போது தெரிவிக்கும்.">
+
+<!ENTITY  adminDisabled.wizard.title      "மேம்படுத்தல்களை சரிபார்க்க முடியவில்லை">
+<!ENTITY  adminDisabled.warning.label     "பொருந்தாத கூடுதல் இணைப்புகளுக்கு மேம்படுத்தலை சரிபார்க்க வாய்ப்பில்லை, ஏனெனில் மென்பொருள் நிறுவல் &brandShortName;க்கு செயல்நீக்கப்பட்டுள்ளது. உங்கள் கணினி நிர்வாகியை உதவிக்கு அணுகவும்.">
+
+<!ENTITY  versioninfo.wizard.title        "துணை நிரல்கள் பொருந்துமா எனச் சரி பார்க்கிறது">
+<!ENTITY  versioninfo.top.label           "உங்கள் கூடுதல் இணைப்புகளின் பொருத்தத்தை இந்த பதிப்பு &brandShortName;உடன் சரிபார்த்தல்.">
+<!ENTITY  versioninfo.waiting             "இதற்கு சில நிமிடங்கள் எடுக்கிறது...">
+
+<!ENTITY  installerrors.wizard.title      "மேம்படுத்தலை நிறுவுவதில் சிக்கல்கள்">
+<!ENTITY  installerrors.intro.label       "உங்கள் கூடுதல் இணைப்புகளை மேம்படுத்தம் போது &brandShortName;யில் சிக்கல் ஏற்பட்டுள்ளது.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "முடிவு என்பதை சொடுக்கி &brandShortName;ஐ துவக்குவதை தொடரவும்.">
+<!ENTITY  clickFinish.labelMac            "முடிந்தது என்பதை சொடுக்கி &brandShortName;ஐ துவக்குவதை தொடரவும்.">
+<!ENTITY  enableChecking.label            "&brandShortName; ஐ மேம்படுத்தலை சரிபார்க்க அனுமதிக்கவும்.">

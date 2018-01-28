@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Nuk'unel wachb'äl">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Ruxaq Ajk'amaya'l">
+<!ENTITY treehead.status.label        "B'anikil:">
+<!ENTITY removepermission2.label      "Tiyuj Ruxaq Ajk'amaya'l">
+<!ENTITY removepermission2.accesskey  "T">
+<!ENTITY removeallpermissions2.label  "Keyuj el konojel ri Taq Ruxaq Ajk'amaya'l">
+<!ENTITY removeallpermissions2.accesskey "y">
+<!ENTITY address.label                "Rochochib'al ri ruxaq k'amaya'l:">
+<!ENTITY address.accesskey            "o">
+<!ENTITY block.label                  "Tiq'eleb'ëx">
+<!ENTITY block.accesskey              "T">
+<!ENTITY session.label                "Tiya' q'ij pa re molojri'ïl re'">
+<!ENTITY session.accesskey            "m">
+<!ENTITY allow.label                  "Tiya' q'ij">
+<!ENTITY allow.accesskey              "T">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Tiq'at">
+<!ENTITY button.cancel.accesskey      "T">
+<!ENTITY button.ok.label              "Keyak taq jaloj">
+<!ENTITY button.ok.accesskey          "K">
+

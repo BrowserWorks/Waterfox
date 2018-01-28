@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "سافٹ ویئر تازہ کاریاں">
+
+<!ENTITY  checking.title                  "تازہ کاریوں کے لیے پڑتال کر رہا ہے">
+<!ENTITY  updateCheck.label               "&brandShortName; کی نئی ورژن کے لیے تلاش کر رہا ہے...">
+
+<!ENTITY  noupdatesfound.title            "کوئی تازہ کاریاں نہیں ملیں">
+<!ENTITY  noupdatesautoenabled.intro      "کوئی تازہ کاری کریاں دستیاب نہیں۔ &brandShortName; معیادی طور پر تازہ کاریوں کے لیے چیک کرے گا۔">
+<!ENTITY  noupdatesautodisabled.intro     "کوئی تازہ کاریاں دستیاب نہیں۔ آپ کچھ دیر بعد پھر چیک کر لیں یا &brandShortName; کی خودکار تازہ کاری چیکنگ اہل بنا دیں۔">
+
+<!ENTITY  manualUpdate.title              "تازہ کرنے میں ناکام">
+<!ENTITY  manualUpdate.desc               "تجویز کردہ سلامتی اور سٹیبلیٹی تازہ کاری دستیاب ہے، لیکن آپ کے پاس اس کو تنصیب کرنے کی نظام اجازتیں نہیں ہیں۔ اپنے نظام منتظم سے رابطہ کریں، یا ایسے اکاؤنٹ سے پھر کوشش کریں جسے اس کمپیوٹر پر سافٹ ویئر تنصیب کرنے کی اجازت ہے۔">
+<!ENTITY  manualUpdate.space.desc         "تجویز کردہ سلامتی اور سٹیبلیٹی تازہ کاری دستیاب ہے، لیکن آپ کے پاس اسے تنصیب کرنے کی جگہ دستیاب نہیں۔">
+<!ENTITY  manualUpdateGetMsg.label        "آپ کسی بھی وقت &brandShortName; کا تازہ ترین ورژن یہاں سے لے سکتے ہیں:">
+
+<!ENTITY  unsupported.title               "نظام غیر معاون ">
+<!ENTITY  unsupported.label               "                 آپ کا &brandShortName; متروک ہو چکا ہے، لیکن نیا ورژن اپ کے نظام پر معاونت شدہ نہیں ہے۔ اپنے نظام کو درجہ افزوں کریں، اور پھر کوشش کریں۔آپ یہ اطلاع نامہ دوبارہ نہں دیکھیں گے، پر اپ">
+<!ENTITY  unsupportedLink.label           "اور سیکھیں.">
+
+<!ENTITY  clickHere.label                 "اس تازہ کاری کے متعلق مزید معلومات نظارہ کریں">
+
+<!ENTITY  evangelism.desc                 "یہ پرزور طور سے تجویز کردہ ہے کہ آپ یہ تازہ کاری &brandShortName; کے لیے جلد سے جلد لگائیں۔">
+
+<!ENTITY  downloadPage.title              "&brandShortName; ڈاؤن لوڈ کر رہا ہے">
+<!ENTITY  downloading.intro               "تازہ کاری ڈاؤن لوڈ کر رہا ہے...">
+<!ENTITY  connecting.label                "تازہ کاری پیش کار کے ساتھ جڑ رہا ہے...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ڈاؤن لوڈ کی گئی بہ اضافہ تازہ کاری کی تکمیلیت توثیق نہیں کر سکا، اس لیے یہ اب مکمل تازہ کاری پیکیج ڈاؤن لوڈ کر رہا ہے۔">
+
+<!ENTITY  viewDetails.tooltip             "اس تازہ کاری کے لیے تفاصیل نظارہ کریں">
+
+<!ENTITY  details.link                    "تفصیلات">
+
+<!ENTITY  error.title                     "تازہ کاری ناکام ہو گئی">
+
+<!ENTITY  error.label                     "اس تازہ کاری کے لیے چیک، ڈاون لوڈ یا تنصیب کرنے میں مسائل تھے۔ &brandShortName; تازہ نہیں ہو سکا کیونکہ:">
+                                           
+<!ENTITY  errorManual.label               "آپ اس ربط پر جا کر نیا ورژن ڈاؤن لوڈ کر کے  &brandShortName; کو دستی طور پر تازہ کر سکتے ہیں:">
+                                           
+<!ENTITY  errorpatching.intro             "جزوی تازہ کاری لاگو نہیں ہو سکی۔ &brandShortName; ایک مکمل تازہ کاری ڈاؤن لوڈ کر کے پھر کوشش کرے گا۔">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; تعین نہیں کر سکا کہ کوئی تازہ کاری دستیاب ہے۔ چیک کریں کہ آپ کے پاس &brandShortName; کا تازہ تریں ورژن ہے، از: ">
+
+<!ENTITY  finishedPage.title              "تازہ کاری تنصیب کے لیے تیار ہے">
+<!ENTITY  finishedPage.text               "&brandShortName; کے اگلی بار چلنے پر تازہ کاری تنصیب ہو جائے گی۔ آپ &brandShortName; کو ابھی پھر چلا سکتے ہیں، یا اپنا کام جاری رکھ کر بعد میں پھر چلا سکتے ہیں۔">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; کے لیے ایک سلامتی اور سٹبلٹی تازہ کاری ڈاؤن لوڈ ہو چکی ہے اور تنصیب کے لیے تیار ہے۔">
+<!ENTITY  finishedBackground.name         "تازہ کاری:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "یہ تازہ کاری &brandShortName; کے اگلی بار چلنے پر تنصیب کی جائے گی۔ آپ &brandShortName; کو ابھی پھر چلا سکتے ہیں، یا کام جاری رکھ کر بعد میں پھر چلا سکتے ہیں۔">
+<!ENTITY  finishedBackground.moreElevated "اس تازہ کاری کومنتظم کی استحقاق درکار ہے۔ تازہ کاری کی تنصیب اگلی مرتبہ ہو جائے گی جب &brandShortName; شروع ہوگا۔ آپ &brandShortName; کو ابھِی دوباره شروع کرسکتے ہیں، کام جاری رکھیں اور بعد میں دوبارہ شروع کریں، یا یہ تازہ کاری سے انکار کر دیں۔">
+
+<!ENTITY  update.details.label            "تفصیلات">
+<!ENTITY  update.installedOn.label        "تنصیب شدہ از:">
+<!ENTITY  update.status.label             "حالت:">

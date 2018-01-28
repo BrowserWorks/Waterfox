@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Şu anda gizli bir pencerede değilsiniz.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Gizli pencere aç">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "G">
+
+<!ENTITY privateBrowsing.title                           "Gizli Gezinti">
+<!ENTITY privateBrowsing.title.tracking                  "İzlenme Koruması ile Gizli Gezinti">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Gizli Pencere’yi kullanırken Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "şunları kaydetmez">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "ziyaret ettiğiniz sayfalar">
+<!ENTITY aboutPrivateBrowsing.info.searches              "aramalar">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "çerezler">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "geçici dosyalar">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox şunları kaydetmeye ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "devam eder">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "indirdiğiniz dosyalar">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "yer imleri">
+<!ENTITY aboutPrivateBrowsing.note.before                "Gizli Gezinti sizi internette ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "anonim yapmaz.">
+<!ENTITY aboutPrivateBrowsing.note.after                 " İşvereniniz veya internet servis sağlayıcınız hâlâ ziyaret ettiğiniz sayfaları takip edebilir.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Gizli Gezinti">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           " hakkında daha fazla bilgi alın.">
+
+<!ENTITY trackingProtection.title                        "İzlenme Koruması">
+<!ENTITY trackingProtection.description2                 "Bazı web siteleri, siteler arasında gezinirken etkinliğinizi izleyebilecek takipçiler kullanır. Waterfox’un İzlenme Koruması,  gezinme davranışlarınız hakkında bilgi toplayabilecek takipçilerin çoğunu engeller.">
+<!ENTITY trackingProtection.startTour1                   "Nasıl çalıştığını görün">

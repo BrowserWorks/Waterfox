@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "ဝတ်စာမျက်နှာအပြင်အဆင်">
+
+<!ENTITY basic.tab           "အမျိုးအစားများ နှင့် ရွေးစရာများ">
+
+<!ENTITY formatGroup.label   "အမျိုးအစား">
+
+<!ENTITY orientation.label   "တည်နေရာ -">
+<!ENTITY portrait.label      "ထောင်လိုက်">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "အလှဲလိုက်">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "အချိုးကျ -">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "စာမျက်နှာ အကျယ်နဲ့ ကိုက်ညီဖို့ ကျုံ့ပါ">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "ရွေးစရာများ">
+
+<!ENTITY printBG.label       "ပုံနှိုပ်ချက် Bနောက်ခံ (အရောင်များ နှင့် ရုပ်ပုံများ)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "ဘေးမျဉ်းများ နှင့် ခေါင်းစည်းမှတ်ချက်/အောက်ခြေမှတ်ချက်">
+
+<!ENTITY marginGroup.label   "မာဂျင် (#1)">
+<!ENTITY marginUnits.inches  "လက်မများ">
+<!ENTITY marginUnits.metric  "မီလီမီတာများ">
+<!ENTITY marginTop.label     "ထိပ် -">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "အောက်ခြေ -">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "ဘယ်ဘက် -">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "ညာဘက် -">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "ခေါင်းစီး​​​​​​​​​​​​စာတန်းများ နှင့် အောက်ခြေစာတမ်းများ">
+
+<!ENTITY hfLeft.label        "ဘယ်ဘက် -">
+<!ENTITY hfCenter.label      "အလယ်ဗဟို -">
+<!ENTITY hfRight.label       "ညာဘက် -">
+<!ENTITY headerLeft.tip      "ဘယ်ဘက်ခေါင်းစဥ်">
+<!ENTITY headerCenter.tip    "အလယ်ဗဟို ခေါင်းစီး​​​​​​​​​​​​စာတန်း">
+<!ENTITY headerRight.tip     "ညာဖက် ခေါင်းစီး​​​​​​​​​​​​စာတန်း">
+<!ENTITY footerLeft.tip      "ဘယ်ဖက် အောက်ခြေစာတမ်း">
+<!ENTITY footerCenter.tip    "အောက်ခြေ၏ အလယ်">
+<!ENTITY footerRight.tip     "ညာဖက် အောက်ခြေစာတမ်း">
+
+<!ENTITY hfTitle             "ခေါင်းစဉ်">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "နေ့စွဲ/အချိန်">
+<!ENTITY hfPage              "စာမျက်နှာ #">
+<!ENTITY hfPageAndTotal      "စာမျက်နှာ # မှ #">
+<!ENTITY hfBlank             "--ကွတ်လပ်--">
+<!ENTITY hfCustom            "စိတ်ကြိုက် ဖန်တီးပါ...">
+
+<!ENTITY customPrompt.title  "စိတ်ကြိုက် ဖန်တီးပါ...">
+<!ENTITY customPrompt.prompt "သင်နှစ်သက်တဲ့ ခေါင်းစီး/အောက်ခြေ စာသားကို ရေးထည့်ပါ">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Croeso i &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Mewngofnodwch i gydweddu eich tabiau, nodau tudalen, cyfrineiriau a mwy.">
+<!ENTITY aboutAccountsConfig.startButton.label "Cychwyn arni">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Dewisiadau cydweddu">
+<!ENTITY aboutAccounts.noConnection.title "Dim cysylltiad">
+<!ENTITY aboutAccounts.noConnection.description "Rhaid eich bod wedi cysylltu i'r Rhyngrwyd i fewngofnodi.">
+<!ENTITY aboutAccounts.noConnection.retry "Ceisiwch eto">
+<!ENTITY aboutAccounts.badConfig.title "Ffurfweddiad gwael">
+<!ENTITY aboutAccounts.badConfig.description "Methu dyfalu ffurfweddiad gweinydd eich cyfrif Waterfox. Ceisiwch eto yn ddiweddarach.">

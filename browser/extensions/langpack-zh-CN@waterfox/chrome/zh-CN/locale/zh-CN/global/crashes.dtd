@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "崩溃报告">
+<!ENTITY crashesUnsubmitted.label   "未提交的崩溃报告">
+<!ENTITY crashesSubmitted.label     "已提交的崩溃报告">
+<!ENTITY id.heading                 "报告 ID">
+<!ENTITY dateCrashed.heading        "崩溃时间">
+<!ENTITY dateSubmitted.heading      "提交时间">
+<!ENTITY noReports.label            "没有提交过崩溃报告。">
+<!ENTITY noConfig.label             "此应用程序尚未配置为显示崩溃报告。必须对首选项 <code>breakpad.reportURL</code> 进行设置。">
+<!ENTITY clearAllReports.label      "移除全部报告">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; स्वागत अछि ">
+
+<!ENTITY aboutAccountsConfig.description "अपन टैब, बुकमार्क, कूटशब्द आओर आन सिंक करबाक लेल साइन इन करू.">
+<!ENTITY aboutAccountsConfig.startButton.label "प्रारंभ करू">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "वरीयता सिंक करू">
+<!ENTITY aboutAccounts.noConnection.title "कनेक्शन नहि अछि">
+<!ENTITY aboutAccounts.noConnection.description "साइन इन कलेल अहाँक इंटरनेट से जुड़ल होनाए जरूरी अछि ">
+<!ENTITY aboutAccounts.noConnection.retry "फेर कोशिश करू ">
+
+
+
+<!ENTITY aboutAccounts.badConfig.description "Unable to determine your Waterfox Account server configuration. Please try again later.">
+<!ENTITY aboutAccounts.badConfig.title "Bad configuration">

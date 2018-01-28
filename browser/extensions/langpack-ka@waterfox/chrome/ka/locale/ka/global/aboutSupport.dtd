@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "მონაცემები გაუმართაობის მოსაგვარებლად">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  ეს გვერდი შეიცავს ტექნიკურ ინფორმაციას, რომელიც შესაძლოა წარმოქმნილი პრობლემის
+  მოგვარებაში დაგეხმაროთ. თუ &brandShortName;-ის შესახებ ხშირად დასმულ კითხვებზე
+  ეძებთ პასუხს, ეწვიეთ ჩვენს <a id='supportLink'>მხარდაჭერის გვერდს</a>.">
+
+<!ENTITY aboutSupport.crashes.title "ავარიული დახურვის მოხსენებები">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ანგარიშგების ID">
+<!ENTITY aboutSupport.crashes.sendDate "გადაიგზავნა">
+<!ENTITY aboutSupport.crashes.allReports "ავარიული დახურვის ყველა მოხსენება">
+<!ENTITY aboutSupport.crashes.noConfig "ეს პროგრამა ავარიული დახურვის მოხსენებების საჩვენებლად არაა გამართული.">
+
+<!ENTITY aboutSupport.extensionsTitle "გაფართოებები">
+<!ENTITY aboutSupport.extensionName "სახელი">
+<!ENTITY aboutSupport.extensionEnabled "ჩართულია">
+<!ENTITY aboutSupport.extensionVersion "ვერსია">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; -ის შესაძლებლობები">
+<!ENTITY aboutSupport.featureName "სახელი">
+<!ENTITY aboutSupport.featureVersion "ვერსია">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "საცდელი ფუნქციები">
+<!ENTITY aboutSupport.experimentName "სახელი">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "აღწერილობა">
+<!ENTITY aboutSupport.experimentActive "აქტიური">
+<!ENTITY aboutSupport.experimentEndDate "დასრულების თარიღი">
+<!ENTITY aboutSupport.experimentHomepage "მთავარი გვერდი">
+<!ENTITY aboutSupport.experimentBranch "განშტოება">
+
+<!ENTITY aboutSupport.appBasicsTitle "პროგრამის ძირითადი მონაცემები">
+<!ENTITY aboutSupport.appBasicsName "სახელი">
+<!ENTITY aboutSupport.appBasicsVersion "ვერსია">
+<!ENTITY aboutSupport.appBasicsBuildID "ანაწყობის ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "განახლების არხი">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "განახლების ისტორია">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "განახლების ისტორიის ჩვენება">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "პროფილის საქაღალდე">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "პროფილის საქაღალდე">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "ჩართული მოდულები">
+<!ENTITY aboutSupport.appBasicsBuildConfig "ანაწყობის კონფიგურაცია">
+<!ENTITY aboutSupport.appBasicsUserAgent "მომხმარებლის აგენტი">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "გამოყენებული მეხსიერება">
+<!ENTITY aboutSupport.appBasicsPerformance "წარმადობა">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "რეგისტრირებული Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "პროფილები">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "მრავალპროცესიანი ფანჯრები">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "ვებშიგთავსის პროცესები">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google გასაღები">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla მდებარეობის განსაზღვრის გასაღები">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "უსაფრთხო რეჟიმი">
+
+<!ENTITY aboutSupport.showDir.label "დირექტორიის გახსნა">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "ჩვენება Finder-ში">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "საქაღალდის გახსნა">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ჩასწორებული მნიშვნელოვანი პარამეტრები">
+<!ENTITY aboutSupport.modifiedPrefsName "სახელი">
+<!ENTITY aboutSupport.modifiedPrefsValue "მნიშვნელობა">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js პარამეტრები">
+<!ENTITY aboutSupport.userJSDescription "თქვენი პროფილის საქაღალდე შეიცავს <a id='prefs-user-js-link'>user.js ფაილს</a>, რომელიც ისეთ მითითებებს შეიცავს, რაც &brandShortName;-ს არ შეუქმნია.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "მნიშვნელოვანი ჩაკეტილი პარამეტრები">
+<!ENTITY aboutSupport.lockedPrefsName "სახელი">
+<!ENTITY aboutSupport.lockedPrefsValue "მნიშვნელობა">
+
+<!ENTITY aboutSupport.graphicsTitle "გრაფიკები">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Places მონაცემთა ბაზა">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "მთლიანობა">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "მთლიანობის გადამოწმება">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "თანმიმდევრული GC">
+
+<!ENTITY aboutSupport.a11yTitle "დამხმარე საშუალებები">
+<!ENTITY aboutSupport.a11yActivated "აქტივირებული">
+<!ENTITY aboutSupport.a11yForceDisabled "დამხმარე საშუალებების აკრძალვა">
+<!ENTITY aboutSupport.a11yHandlerUsed "გამოყენებულია ხელმისაწვდომი დამმუშავებელი">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "ბიბლიოთეკის ვერსიები">
+
+<!ENTITY aboutSupport.installationHistoryTitle "დაყენების ისტორია">
+<!ENTITY aboutSupport.updateHistoryTitle "განახლების ისტორია">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "დატექსტის ბუფერში კოპირება">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ნედლი მონაცემების ბუფერში დაკოპირება">
+
+<!ENTITY aboutSupport.sandboxTitle "იზოლირებული გარემო">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "სისტემის უარყოფილი გამოძახებები">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "წამის წინ">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "პროცესის ტიპი">
+<!ENTITY aboutSupport.sandboxSyscallNumber "სისტემური გამოძახება">
+<!ENTITY aboutSupport.sandboxSyscallArgs "არგუმენტები">
+
+<!ENTITY aboutSupport.safeModeTitle "სცადეთ უსაფრთხო რეჟიმი">
+<!ENTITY aboutSupport.restartInSafeMode.label "ხელახლა გაშვება გამორთული დამატებებით...">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "ფუნქციები">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "დიაგნოსტიკა">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "აღრიცხული ხარვეზები">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "გადაწყვეტილებების ჟურნალი">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "ავარიული დახურვის დაცვის მიერ გამორთული ფუნქციები">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "შემოვლითი გზები">
+
+<!ENTITY aboutSupport.mediaTitle "მედია">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "გამოტანის მოწყობილობები">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "შეტანის მოწყობილობები">
+<!ENTITY aboutSupport.mediaDeviceName "სახელი">
+<!ENTITY aboutSupport.mediaDeviceGroup "ჯგუფი">
+<!ENTITY aboutSupport.mediaDeviceVendor "მწარმოებელი">
+<!ENTITY aboutSupport.mediaDeviceState "მდგომარეობა">
+<!ENTITY aboutSupport.mediaDevicePreferred "უპირატესი">
+<!ENTITY aboutSupport.mediaDeviceFormat "ფორმატი">
+<!ENTITY aboutSupport.mediaDeviceChannels "არხები">
+<!ENTITY aboutSupport.mediaDeviceRate "სიხშირე">
+<!ENTITY aboutSupport.mediaDeviceLatency "დაყოვნება">

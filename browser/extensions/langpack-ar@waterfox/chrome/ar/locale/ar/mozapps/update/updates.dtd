@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "تحديث البرمجيات">
+
+<!ENTITY  checking.title                  "يجري التماس التحديثات">
+<!ENTITY  updateCheck.label               "يجري البحث عن إصدارات أحدث من &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "لم يُعثر على تحديثات">
+<!ENTITY  noupdatesautoenabled.intro      "لا تحديثات جديدة. سوف يلتمس &brandShortName; التحديثات بشكل دوري.">
+<!ENTITY  noupdatesautodisabled.intro     "لا توجد تحديثات متاحة. رجاءً تحقق ثانيةً في وقت لاحق أو فعّل التماس &brandShortName; للتحديث التلقائي.">
+
+<!ENTITY  manualUpdate.title              "تعذر التحديث">
+<!ENTITY  manualUpdate.desc               "هناك تحديث أمن وثبات متاح، ولكنك لا تملك صلاحيات النظام اللازمة لتنصيبه. الرجاء التواصل مع مدير نظامك، أو حاول مجددًا باستخدام حساب يملك الصلاحيات لتنصيب البرنامج على هذا الحاسوب.">
+<!ENTITY  manualUpdate.space.desc         "هناك تحديث أمني و ثباتي متاح، و لكنك لا تملك مساحة كافية لتنصيبه.">
+<!ENTITY  manualUpdateGetMsg.label        "يمكنك دائمًا الحصول على أحدث نسخة من &brandShortName; في:">
+
+<!ENTITY  unsupported.title               "النظام غير مدعوم">
+<!ENTITY  unsupported.label               "نسختك من &brandShortName; غير مُحدّثة، لكن أحدث نسخة ليست مدعومة على نظامك. من فضل رقِّ نظامك ثم أعد المحاولة.لن ترى هذا التنبيه مرة أخرى، لكن تستطيع">
+<!ENTITY  unsupportedLink.label           "الاطلاع على المزيد.">
+
+<!ENTITY  clickHere.label                 "اعرض المزيد من التّفاصيل عن هذا التّحديث">
+
+<!ENTITY  evangelism.desc                 "يُنصح بشدة أن تطّبق هذا التحديث على &brandShortName; في أقرب وقت ممكن.">
+
+<!ENTITY  downloadPage.title              "ينزّل &brandShortName;">
+<!ENTITY  downloading.intro               "يُنزّل التحديثات…">
+<!ENTITY  connecting.label                "يتّصل بخادوم التحديثات…">
+<!ENTITY  verificationFailedText.label    "لم يتمكّن &brandShortName; من التّحقق من تكامل التحديث المتزايد الذي نزّله، لذلك فإنّه ينزّل تحديثا كاملا الآن.">
+
+<!ENTITY  viewDetails.tooltip             "اعرض تفاصيل هذا التحديث">
+
+<!ENTITY  details.link                    "التفاصيل">
+
+<!ENTITY  error.title                     "فشل التحديث">
+
+<!ENTITY  error.label                     "كان هناك مشاكل في فحص، تنزيل أو تنصيب هذا التحديث. &brandShortName; لا يمكن تحديثه لأن:">
+                                           
+<!ENTITY  errorManual.label               "يمكنك تحديث &brandShortName; يدويّا بزيارة هذا الرابط و تنزيل أحدث إصدار:">
+                                           
+<!ENTITY  errorpatching.intro             "تعذّر تطبيق التّحديث الجزئي. سيحاول &brandShortName; مرّة أخرى بتنزيل كلّ التّحديث.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; غير قادر على معرفة إذا كان هناك تحديث متاح. رجاءً تأكد من أن لديك آخر نسخة من &brandShortName; من:">
+
+<!ENTITY  finishedPage.title              "التحديث جاهز للتنصيب">
+<!ENTITY  finishedPage.text               "سوف يُنصّب التحديث في المرة المقبلة التي يبدأ &brandShortName; فيها. يمكنك إعادة تشغيل &brandShortName; الآن، أو متابعة العمل و إعادة تشغيله لاحقًا.">
+
+<!ENTITY  finishedBackgroundPage.text     "انتهى تنزيل تحديث أمن و ثبات ل‍ &brandShortName; و هو جاهز للتنصيب.">
+<!ENTITY  finishedBackground.name         "تحديث:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "سوف يُنصّب التحديث في المرة المقبلة التي يبدأ &brandShortName; فيها. يمكنك إعادة تشغيل &brandShortName; الآن، أو متابعة العمل و إعادة تشغيله لاحقًا.">
+<!ENTITY  finishedBackground.moreElevated "يتطلب هذا التحديث صلاحيات مدير النظام. سوف يُنصّب التحديث في المرة المقبلة التي يبدأ &brandShortName; فيها. يمكنك إعادة تشغيل &brandShortName; الآن، أو متابعة العمل و إعادة تشغيله لاحقًا، أو رفض هذا التحديث.">
+
+<!ENTITY  update.details.label            "التفاصيل">
+<!ENTITY  update.installedOn.label        "منصّب في:">
+<!ENTITY  update.status.label             "الحالة:">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "প্ৰিন্টাৰৰ বৈশিষ্ট">
+
+<!ENTITY paperInput.label "কাগজৰ আকাৰ:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "কাৰ্য্যৰ শীৰ্ষক:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "ৰং:">
+<!ENTITY grayRadio.label "ধূসৰ">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "ৰং">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "কাগজৰ কাষৰ পৰা প্ৰান্তলৈ ৰিক্ত স্থান">
+<!ENTITY topInput.label "ওপৰ:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "তল:">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "বাওঁ:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "সোঁ:">
+<!ENTITY rightInput.accesskey "R">

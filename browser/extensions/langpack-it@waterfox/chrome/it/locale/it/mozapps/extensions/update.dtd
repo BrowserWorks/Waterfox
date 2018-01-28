@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY updateWizard.title "Aggiornamento di &brandShortName;">
+<!ENTITY offline.title "&brandShortName; è in modalità non in linea">
+<!ENTITY offline.description "È necessario un collegamento a Internet per verificare se sono disponibili aggiornamenti per i componenti aggiuntivi da rendere compatibili con questa versione.">
+<!ENTITY offline.toggleOffline.label "Passa alla modalità in linea adesso.">
+<!ENTITY offline.toggleOffline.accesskey "P">
+<!ENTITY mismatch.win.title "Componenti incompatibili">
+<!ENTITY mismatch.top.label "I seguenti componenti aggiuntivi non sono compatibili con questa versione di &brandShortName; e sono stati disattivati:">
+<!ENTITY mismatch.bottom.label "È possibile controllare se esistono versioni compatibili di questi componenti aggiuntivi.">
+<!ENTITY checking.wizard.title "Ricerca di componenti compatibili">
+<!ENTITY checking.top.label "Ricerca di aggiornamenti per i componenti non compatibili in corso…">
+<!ENTITY checking.status "Potrebbero essere necessari alcuni minuti…">
+<!ENTITY found.wizard.title "Componenti aggiuntivi compatibili trovati">
+<!ENTITY found.top.label "Selezionare i componenti aggiuntivi da installare:">
+<!ENTITY found.disabledXPinstall.label "Questi aggiornamenti non possono essere installati poiché l’installazione di software è stata disattivata. È possibile modificare questa impostazione qui sotto.">
+<!ENTITY found.enableXPInstall.label "Consenti ai siti web di installare software">
+<!ENTITY found.enableXPInstall.accesskey "C">
+<!ENTITY installing.wizard.title "Installazione dei componenti aggiuntivi compatibili in corso">
+<!ENTITY installing.top.label "Download e installazione degli aggiornamenti per i componenti aggiuntivi…">
+<!ENTITY noupdates.wizard.title "Nessun componente compatibile trovato">
+<!ENTITY noupdates.intro.desc "Impossibile trovare aggiornamenti per i componenti aggiuntivi incompatibili.">
+<!ENTITY noupdates.error.desc "Si sono verificati dei problemi nella ricerca di nuovi aggiornamenti.">
+<!ENTITY noupdates.checkEnabled.desc "&brandShortName; cercherà periodicamente aggiornamenti di compatibilità per questi componenti aggiuntivi e ne segnalerà la disponibilità.">
+<!ENTITY finished.wizard.title "Componenti aggiuntivi compatibili installati">
+<!ENTITY finished.top.label "&brandShortName; ha installato gli aggiornamenti per i componenti aggiuntivi.">
+<!ENTITY finished.checkDisabled.desc "&brandShortName; può cercare periodicamente aggiornamenti per i componenti aggiuntivi e segnalarne la disponibilità.">
+<!ENTITY finished.checkEnabled.desc "&brandShortName; cercherà periodicamente aggiornamenti di compatibilità per questi componenti aggiuntivi e ne segnalerà la disponibilità.">
+<!ENTITY adminDisabled.wizard.title "Impossibile verificare gli aggiornamenti">
+<!ENTITY adminDisabled.warning.label "Non è possibile aggiornare i componenti aggiuntivi incompatibili poiché l’installazione di software in &brandShortName; è stata disattivata. Contattare il proprio amministratore di sistema per ricevere assistenza.">
+<!ENTITY versioninfo.wizard.title "Controllo compatibilità componenti aggiuntivi">
+<!ENTITY versioninfo.top.label "Controllo di compatibilità dei componenti aggiuntivi con questa versione di &brandShortName;.">
+<!ENTITY versioninfo.waiting "Potrebbero essere necessari alcuni minuti di attesa…">
+<!ENTITY installerrors.wizard.title "Problemi nell’installazione degli aggiornamenti">
+<!ENTITY installerrors.intro.label "Si sono verificati dei problemi durante l’aggiornamento di alcuni componenti.">
+<!ENTITY clickFinish.label "Fare clic su Fine per avviare &brandShortName;.">
+<!ENTITY clickFinish.labelMac "Fare clic su Fatto per avviare &brandShortName;.">
+<!ENTITY enableChecking.label "Consenti a &brandShortName; di cercare aggiornamenti.">

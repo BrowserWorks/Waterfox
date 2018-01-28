@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Pengurus Peranti">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Modul Sekuriti dan Peranti">
+<!ENTITY devmgr.details.title                   "Butiran">
+<!ENTITY devmgr.details.title2                  "Nilai">
+
+<!ENTITY devmgr.button.login.label              "Log Masuk">
+<!ENTITY devmgr.button.login.accesskey          "u">
+<!ENTITY devmgr.button.logout.label             "Log Keluar">
+<!ENTITY devmgr.button.logout.accesskey         "K">
+<!ENTITY devmgr.button.changepw.label           "Tukar Kata laluan">
+<!ENTITY devmgr.button.changepw.accesskey       "a">
+<!ENTITY devmgr.button.load.label               "Muatkan">
+<!ENTITY devmgr.button.load.accesskey           "M">
+<!ENTITY devmgr.button.unload.label             "Nyahmuat">
+<!ENTITY devmgr.button.unload.accesskey         "N">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Masukkan maklumat untuk modul yang anda ingin tambah.">
+<!ENTITY loaddevice.modname                     "Nama Modul:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Modul PKCS#11 Baru">
+<!ENTITY loaddevice.filename                    "Nama fail modul:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Layari…">
+<!ENTITY loaddevice.browse.accesskey            "L">
+
+<!ENTITY loaddevice.title2                      "Muatkan Pemacu Peranti PKCS#11">

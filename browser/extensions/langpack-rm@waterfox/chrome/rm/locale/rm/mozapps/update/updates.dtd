@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Actualisaziun da la software">
+
+<!ENTITY  checking.title                  "Tschertgar actualisaziuns disponiblas">
+<!ENTITY  updateCheck.label               "Tschertgar novas versiuns da &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Naginas actualisaziuns disponiblas">
+<!ENTITY  noupdatesautoenabled.intro      "Naginas actualisaziuns novas disponiblas. &brandShortName; vegn a controllar regularmain,                               schebain actualisaziuns stattan a disposiziun.">
+<!ENTITY  noupdatesautodisabled.intro     "Naginas actualisaziuns novas disponiblas. Emprova per plaschair pli tard anc ina giada                                           u activescha l'opziun da tschertgar automaticamain actualisaziuns da &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "Impussibel d'actualisar">
+<!ENTITY  manualUpdate.desc               "In'actualisaziun che vegn recumandada ed è relevanta per la segirezza e per la stabilitad è disponibla, ma ti n'has betg ils dretgs necessaris sin quest sistem per l'installar. Contactescha per plaschair l'administratur da tes sistem u emprova anc ina giada cun t'annunziar sco utilisader che ha ils dretgs d'installar programs sin quest computer.">
+<!ENTITY  manualUpdate.space.desc         "Ina actualisaziun da segirtad e stabilitad recumandada è disponibla, ma tes computer n'ha betg avunda capacitad da memorisar per installar ella.">
+<!ENTITY  manualUpdateGetMsg.label        "Ti obtegnas adina la pli nova versiun da &brandShortName; sut:">
+
+<!ENTITY  unsupported.title               "Sistem betg sustegnì">
+<!ENTITY  unsupported.label               "Tes &brandShortName; è antiquà, ma la versiun pli nova na vegn betg
+                                           pli sustegnida da tes sistem. Actualisescha tes sistem ed emprova anc 
+                                           ina giada. Quest messadi na vegn betg pli mussa, ti pos dentant">
+<!ENTITY  unsupportedLink.label           "retschaiver dapli infurmaziuns.">
+
+<!ENTITY  clickHere.label                 "Vesair ulteriuras infurmaziuns davart questa actualisaziun">
+
+<!ENTITY  evangelism.desc                 "I vegn recumandà urgentamain d'installar questa actualisaziun da &brandShortName; il pli spert pussaivel.">
+
+<!ENTITY  downloadPage.title              "Telechargiar &brandShortName;">
+<!ENTITY  downloading.intro               "L'actualisaziun vegn telechargiada…">
+<!ENTITY  connecting.label                "Colliar cun il server d'actualisaziuns…">
+<!ENTITY  verificationFailedText.label    "I n'è betg stà pussaivel da garantir l'integritad da l'actualisaziun incrementala ch'è vegnida telechargiada. Per quest motiv vegn ussa telechargià l'entir pachet d'actualisaziun.">
+
+<!ENTITY  viewDetails.tooltip             "Vesair detagls da questa actualisaziun">
+
+<!ENTITY  details.link                    "Detagls">
+
+<!ENTITY  error.title                     "Errur cun l'actualisaziun">
+
+<!ENTITY  error.label                     "Problems cun tschertgar, telechargiar u installar actualisaziuns. Impussibel d'actualisar &brandShortName; per il suandant motiv:">
+                                           
+<!ENTITY  errorManual.label               "Ti pos era actualisar manualmain &brandShortName;. Visita per quest intent la suandanta colliaziun e telechargia la versiun actuala:">
+                                           
+<!ENTITY  errorpatching.intro             "Impussibel d'installar l'actualisaziun incrementala per &brandShortName;. I vegn uss empruvà da telechargiar il pachet d'actualisaziun cumplet.">
+
+<!ENTITY  genericBackgroundError.label    "Impussibel per &brandShortName; da tschertgar actualisaziuns. Controllescha che ti hajas installà l'ultima versiun da &brandShortName; da qua:">
+
+<!ENTITY  finishedPage.title              "L'actualisaziun è pronta per l'installaziun">
+<!ENTITY  finishedPage.text               "L'actualisaziun vegn installada la proxima giada che &brandShortName; vegn avià. Ti pos ussa reaviar &brandShortName; u cuntinuar a lavurar e reaviar pli tard.">
+
+<!ENTITY  finishedBackgroundPage.text     "In'actualisaziun relevanta per la segirezza e la stabilitad da &brandShortName; è vegnida telechargiada ed è pronta per l'installaziun.">
+<!ENTITY  finishedBackground.name         "Actualisaziun:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "L'actualisaziun vegn installada la proxima giada che &brandShortName; vegn avià. Ti pos ussa reaviar &brandShortName; u cuntinuar a lavurar e reaviar pli tard.">
+<!ENTITY  finishedBackground.moreElevated "Questa actualisaziun pretenda dretgs d'administratur. L'actualisaziun vegn
+                                           installada la proxima giada che &brandShortName; vegn avià. Ti pos ussa reaviar
+                                           &brandShortName;, cuntinuar cun la lavur e reaviar pli tard u refusar questa
+                                           actualisaziun.">
+
+<!ENTITY  update.details.label            "Detagls">
+<!ENTITY  update.installedOn.label        "Installà ils:">
+<!ENTITY  update.status.label             "Status:">

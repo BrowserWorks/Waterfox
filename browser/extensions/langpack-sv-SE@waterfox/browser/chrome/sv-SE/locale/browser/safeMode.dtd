@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; felsäkert läge">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Starta i felsäkert läge">
+<!ENTITY refreshProfile.label         "Återställ &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Felsäkert läge är ett speciellt läge i &brandShortName; som kan användas vid felsökning.">
+<!ENTITY safeModeDescription4.label   "Dina tillägg och anpassade inställningar kommer tillfälligt att inaktiveras.">
+
+<!ENTITY refreshProfileInstead.label  "Du kan också hoppa över felsökningen och pröva att starta om &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; stängdes oväntat under start. Detta kan orsakas av tillägg eller av andra problem. Du kan försöka lösa problemet genom att söka efter felet i felsäkert läge.">

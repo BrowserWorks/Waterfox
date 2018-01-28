@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Asistanto de kreado de profilo">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; konservas informon pri viaj agordoj kaj preferoj en via persona dosiero.">
+<!ENTITY profileCreationExplanation_2.text  "Se vi dividas tiun ĉi kopion de &brandShortName; kun aliaj uzantoj vi povas uzi profilojn por teni aparte la informon de ĉiu uzanto. Se vi faras tion ĉiu uzanto devus krei sian propran profilon.">
+<!ENTITY profileCreationExplanation_3.text  "Se vi estas la ununura persono kiu uzas tiun ĉi kopion de &brandShortName; vi devas almenaŭ havi unu profilon. Se vi volas, vi povas krei malsamajn profilojn por vi mem, por konservi malsamajn arojn de agordoj kaj preferoj. Ekzempe, vi eble volas havi du apartajn profilojn por negoca kaj persona uzado.">
+<!ENTITY profileCreationExplanation_4.text  "Por eki la kreadon de via profilo alklaku Sekvanta.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Por komenci la kreadon de via profilo alklaku Daŭrigi.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Por eki la kreadon de via profilo alklaku Sekvanta.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Se vi kreas multajn profilojn vi povas identigi ilin pere de la nomoj de la profiloj.  Vi povas uzi la donitan nomon aŭ elekti propran.">
+<!ENTITY profilePrompt.label            "Tajpu novan nomon por profilo:">
+<!ENTITY profilePrompt.accesskey        "T">
+<!ENTITY profileDirectoryExplanation.text   "Viaj agordoj, preferoj kaj aliaj datumoj rilataj estos konservitaj en:">
+<!ENTITY profileDefaultName             "Ĉefa uzanto">
+<!ENTITY button.choosefolder.label      "Elekti dosierujon…">
+<!ENTITY button.choosefolder.accesskey  "E">
+<!ENTITY button.usedefault.label        "Uzi normalan dosierujon">
+<!ENTITY button.usedefault.accesskey    "U">

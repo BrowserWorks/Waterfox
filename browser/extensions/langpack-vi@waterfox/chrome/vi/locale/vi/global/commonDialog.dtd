@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Tiêu đề Ngắn gọn"> 
+<!ENTITY message.label    "Một vài Văn bản mẫu để tại đây.">
+<!ENTITY editfield0.label "Tên đăng nhập:"> 
+<!ENTITY editfield1.label "Mật khẩu:"> 
+<!ENTITY checkbox.label   "chọn">
+<!ENTITY copyCmd.label    "Chép">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "Chọn Toàn Bộ">
+<!ENTITY selectAllCmd.accesskey "B">

@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Wuskakowace wokna">
+
+<!ENTITY  blockPopups.label           "Wuskakowace wokno blokować">
+<!ENTITY  blockPopups.accesskey       "k">
+
+<!ENTITY  notificationsPolicy.label            "Zdźělenja">
+<!ENTITY  notificationsPolicyLearnMore.label   "Dalše informacije">
+<!ENTITY  notificationsPolicyDesc4.label       "Wubjerće, kotre sydła smědźa wam zdźělenki pósłać">
+<!ENTITY  notificationsPolicyButton.accesskey  "u">
+<!ENTITY  notificationsPolicyButton.label      "Wubrać…">
+<!ENTITY  notificationsDoNotDisturb.label      "Njemylće">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "m">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Doniž &brandShortName; znowa njestartujeće, so žana zdźělenka njepokazuje">
+
+<!ENTITY  popupExceptions.label       "Wuwzaća…">
+<!ENTITY  popupExceptions.accesskey   "W">
+
+<!ENTITY  fontsAndColors.label        "Pisma a barby">
+
+<!ENTITY  defaultFont.label           "Standardne pismo:">
+<!ENTITY  defaultFont.accesskey       "S">
+<!ENTITY  defaultSize.label           "Wulkosć:">
+<!ENTITY  defaultSize.accesskey       "l">
+
+<!ENTITY  advancedFonts.label         "Rozšěrjeny…">
+<!ENTITY  advancedFonts.accesskey     "o">
+
+<!ENTITY  colors.label                "Barby…">
+<!ENTITY  colors.accesskey            "B">
+
+
+<!ENTITY languages.label              "Rěče">
+<!ENTITY chooseLanguage.label         "Wubjerće swoju preferowanu rěč za zwobraznjenje stronow">
+<!ENTITY chooseButton.label           "Wubrać…">
+<!ENTITY chooseButton.accesskey       "u">
+
+<!ENTITY translateWebPages.label      "Webwobsah přełožować">
+<!ENTITY translateWebPages.accesskey  "W">
+<!ENTITY translateExceptions.label    "Wuwzaća…">
+<!ENTITY translateExceptions.accesskey "u">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Přełožki wot">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM-wobsah">
+
+<!ENTITY  playDRMContent.label         "DRM-wobsah wothrać">
+<!ENTITY  playDRMContent.accesskey     "h">
+<!ENTITY  playDRMContent.learnMore.label "Dalše informacije">

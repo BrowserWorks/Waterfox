@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Xacha' richin najäq">
+<!ENTITY  from.label                  "aj:">
+<!ENTITY  actionQuestion.label        "¿Achike k'o chi nub'än &brandShortName; rik'in re yakb'äl re'?">
+
+<!ENTITY  openWith.label              "Tijaq rik'in">
+<!ENTITY  openWith.accesskey          "T">
+<!ENTITY  other.label                 "Juley chik…">
+
+<!ENTITY  saveFile.label              "Tiyak yakb'äl">
+<!ENTITY  saveFile.accesskey          "T">
+
+<!ENTITY  rememberChoice.label        "Tikamulüx re na'oj re' wakami junelïk chi ke re ruwäch taq yakb'äl re'.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "ri jun:">
+
+<!ENTITY  chooseHandlerMac.label      "Ticha'…">
+<!ENTITY  chooseHandlerMac.accesskey  "T">
+<!ENTITY  chooseHandler.label         "Tinik'öx…">
+<!ENTITY  chooseHandler.accesskey     "T">
+
+<!ENTITY  unknownPromptText.label     "¿La nawajo' nayäk re yakb'äl re'?">

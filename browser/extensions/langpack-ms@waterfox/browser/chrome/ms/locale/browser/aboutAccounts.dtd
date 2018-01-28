@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Selamat Datang ke &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Daftar masuk untuk sync tab, tandabuku, kata laluan &amp; serta ciri yang lain.">
+<!ENTITY aboutAccountsConfig.startButton.label "Mari mulakan">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync keutamaan">
+<!ENTITY aboutAccounts.noConnection.title "Tiada sambungan">
+<!ENTITY aboutAccounts.noConnection.description "Anda mesti ada sambungan Internet untuk mendaftar masuk.">
+<!ENTITY aboutAccounts.noConnection.retry "Cuba lagi">
+<!ENTITY aboutAccounts.badConfig.title "Konfigurasi rosak">
+<!ENTITY aboutAccounts.badConfig.description "Tidak dapat memastikan konfigurasi pelayan Akaun Waterfox anda. Sila cuba lagi nanti.">

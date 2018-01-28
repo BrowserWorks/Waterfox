@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Sa pole praegu privaatses aknas.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Ava privaatne aken">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privaatne veebilehitsemine">
+<!ENTITY privateBrowsing.title.tracking                  "Privaatne veebilehitsemine jälitamisvastase kaitsega">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Kui sa lehitsed veebi privaatses aknas, siis Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ei salvesta">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "külastatud lehti">
+<!ENTITY aboutPrivateBrowsing.info.searches              "otsinguid">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "küpsiseid">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ajutisi faile">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "salvestab">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "allalaadimised">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "järjehoidjad">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privaatne veebilehitsemine ei muuda sind internetis ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "anonüümseks">
+<!ENTITY aboutPrivateBrowsing.note.after                 ". Sinu interneti teenusepakkuja või tööandja võib siiski sinu poolt külastatavaid lehti jälgida.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Rohkem teavet ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "privaatse veebilehitsemise kohta">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Jälitamisvastane kaitse">
+<!ENTITY trackingProtection.description2                 "Mõned saidid kasutavad jälitamistehnoloogiaid, mis võivad jälitada sinu tegevust üle terve interneti. Waterfoxi jälitamisvastane kaitse tõkestab paljudel sellistel jälitajatel sinu kohta info kogumise.">
+<!ENTITY trackingProtection.startTour1                   "Vaata, kuidas see töötab">

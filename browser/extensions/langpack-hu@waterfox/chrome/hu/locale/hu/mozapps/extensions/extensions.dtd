@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Kiegészítőkezelő">
+
+<!ENTITY search.placeholder                   "Keresés a kiegészítők között">
+<!ENTITY search.buttonlabel                   "Keresés">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Betöltés…">
+<!ENTITY listEmpty.installed.label            "Nincs ilyen típusú kiegészítője">
+<!ENTITY listEmpty.availableUpdates.label     "Nem találhatók frissítések">
+<!ENTITY listEmpty.recentUpdates.label        "Mostanában nem frissített kiegészítőket">
+<!ENTITY listEmpty.findUpdates.label          "Frissítések keresése">
+<!ENTITY listEmpty.search.label               "Nem található ilyen kiegészítő">
+<!ENTITY listEmpty.button.label               "További tudnivalók a kiegészítőkről">
+<!ENTITY installAddonFromFile.label           "Kiegészítő telepítése fájlból…">
+<!ENTITY installAddonFromFile.accesskey       "f">
+<!ENTITY toolsMenu.tooltip                    "Eszközök minden kiegészítőhöz">
+
+<!ENTITY getThemes.description                "Szeretné testreszabni böngészőjét?">
+<!ENTITY getThemes.learnMore                  "Válogasson több ezer téma közül.">
+
+<!ENTITY cmd.back.tooltip                     "Ugrás az előző oldalra">
+<!ENTITY cmd.forward.tooltip                  "Ugrás a következő oldalra">
+
+<!ENTITY showUnsignedExtensions.button.label  "Néhány kiegészítő nem ellenőrizhető">
+<!ENTITY showAllExtensions.button.label       "Minden kiegészítő megjelenítése">
+<!ENTITY debugAddons.label                    "Kiegészítők hibakeresése">
+<!ENTITY debugAddons.accesskey                "h">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Minden kiegészítő tiltva van a csökkentett mód miatt.">
+<!ENTITY warning.checkcompatibility.label          "A kiegészítők kompatibilitásának vizsgálata tiltva van. Előfordulhat, hogy nem kompatibilis kiegészítői vannak.">
+<!ENTITY warning.checkcompatibility.enable.label   "Engedélyezés">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Kiegészítők kompatibilitási ellenőrzésének engedélyezése">
+<!ENTITY warning.updatesecurity.label              "A kiegészítők biztonsági vizsgálata tiltva van. A frissítések biztonsági kockázatot hordoznak.">
+<!ENTITY warning.updatesecurity.enable.label       "Engedélyezés">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Kiegészítők frissítésekor a biztonsági ellenőrzés engedélyezése">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Keresés">
+<!ENTITY view.discover.label                  "Kiegészítők letöltése">
+<!ENTITY view.recentUpdates.label             "Legutóbbi frissítések">
+<!ENTITY view.availableUpdates.label          "Elérhető frissítések">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Frissítések keresése">
+<!ENTITY updates.checkForUpdates.accesskey    "F">
+<!ENTITY updates.viewUpdates.label            "A legutóbbi frissítések megtekintése">
+<!ENTITY updates.viewUpdates.accesskey        "A">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Kiegészítők automatikus frissítése">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "K">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Minden kiegészítő automatikus frissítése">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "M">
+<!ENTITY updates.resetUpdatesToManual.label          "Minden kiegészítő kézi frissítése">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "k">
+<!ENTITY updates.updating.label               "Kiegészítők frissítése">
+<!ENTITY updates.installed.label              "A kiegészítői frissítve lettek.">
+<!ENTITY updates.downloaded.label             "A kiegészítőfrissítések letöltődtek.">
+<!ENTITY updates.restart.label                "A telepítés befejezéséhez újra kell indítani">
+<!ENTITY updates.noneFound.label              "Nem találhatók frissítések">
+<!ENTITY updates.manualUpdatesFound.label     "Az elérhető frissítések megtekintése">
+<!ENTITY updates.updateSelected.label         "Frissítések telepítése">
+<!ENTITY updates.updateSelected.tooltip       "A listán szereplő frissítések telepítése">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "További adatok megjelenítése">
+<!ENTITY cmd.showDetails.accesskey            "T">
+<!ENTITY cmd.findUpdates.label                "Frissítések keresése">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "Beállítások">
+<!ENTITY cmd.preferencesWin.accesskey         "B">
+<!ENTITY cmd.preferencesUnix.label            "Beállítások">
+<!ENTITY cmd.preferencesUnix.accesskey        "B">
+<!ENTITY cmd.about.label                      "Névjegy">
+<!ENTITY cmd.about.accesskey                  "N">
+
+<!ENTITY cmd.enableAddon.label                "Engedélyezés">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "Letiltás">
+<!ENTITY cmd.disableAddon.accesskey           "L">
+<!ENTITY cmd.enableTheme.label                "Téma alkalmazása">
+<!ENTITY cmd.enableTheme.accesskey            "T">
+<!ENTITY cmd.disableTheme.label               "Téma levétele">
+<!ENTITY cmd.disableTheme.accesskey           "l">
+<!ENTITY cmd.askToActivate.label              "Rákérdezés az aktiválásra">
+<!ENTITY cmd.askToActivate.tooltip            "Mindig kérdezzen rá a kiterjesztés használatára">
+<!ENTITY cmd.alwaysActivate.label             "Mindig aktiválja">
+<!ENTITY cmd.alwaysActivate.tooltip           "Mindig használja a kiterjesztést">
+<!ENTITY cmd.neverActivate.label              "Soha ne aktiválja">
+<!ENTITY cmd.neverActivate.tooltip            "Soha ne használja a kiterjesztést">
+<!ENTITY cmd.stateMenu.tooltip                "A kiegészítő futásának módosítása">
+<!ENTITY cmd.installAddon.label               "Telepítés">
+<!ENTITY cmd.installAddon.accesskey           "T">
+<!ENTITY cmd.uninstallAddon.label             "Eltávolítás">
+<!ENTITY cmd.uninstallAddon.accesskey         "l">
+<!ENTITY cmd.showPreferencesWin.label         "Beállítások">
+<!ENTITY cmd.showPreferencesWin.tooltip       "A kiegészítő beállításainak módosítása">
+<!ENTITY cmd.showPreferencesUnix.label        "Beállítások">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "A kiegészítő beállításainak módosítása">
+<!ENTITY cmd.contribute.label                 "Támogatás">
+<!ENTITY cmd.contribute.accesskey             "T">
+<!ENTITY cmd.contribute.tooltip               "A kiegészítő fejlesztésének támogatása">
+
+<!ENTITY cmd.showReleaseNotes.label           "Kiadási megjegyzések megjelenítése">
+<!ENTITY cmd.showReleaseNotes.tooltip         "A frissítés kiadási megjegyzéseinek megjelenítése">
+<!ENTITY cmd.hideReleaseNotes.label           "Kiadási megjegyzések elrejtése">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "A frissítés kiadási megjegyzéseinek elrejtése">
+<!ENTITY cmd.findReplacement.label            "Helyettesítő keresése">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Mik azok a kiegészítők?">
+<!ENTITY discover.description2                "A kiegészítők olyan alkalmazások, amelyekkel személyre szabható a &brandShortName; akár többletfunkciókkal, akár eltérő kinézettel. Próbáljon ki egy oldalsávot, amellyel gyorsabb a munka, nézze meg, milyen az időjárás, vagy öltöztesse a &brandShortName; programot olyan ruhába, amilyen tetszik.">
+<!ENTITY discover.footer                      "Ha csatlakozva van az internetre, ezen a panelen megjelennek a legjobb és legnépszerűbb kiegészítők, amelyeket kipróbálhat.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Verzió">
+<!ENTITY detail.lastupdated.label             "Utoljára frissítve">
+<!ENTITY detail.creator.label                 "Fejlesztő">
+<!ENTITY detail.homepage.label                "Honlap">
+<!ENTITY detail.numberOfDownloads.label       "Letöltések">
+
+<!ENTITY detail.contributions.description     "A kiegészítő fejlesztője azt kéri, hogy egy csekély összeggel támogassa a további fejlesztést.">
+
+<!ENTITY detail.updateType                    "Automatikus frissítések">
+<!ENTITY detail.updateDefault.label           "Alapértelmezett">
+<!ENTITY detail.updateDefault.tooltip         "Frissítések automatikus telepítése csak akkor, ha ez az alapbeállítás">
+<!ENTITY detail.updateAutomatic.label         "Be">
+<!ENTITY detail.updateAutomatic.tooltip       "Frissítések automatikus telepítése">
+<!ENTITY detail.updateManual.label            "Ki">
+<!ENTITY detail.updateManual.tooltip          "Ne legyenek automatikus frissítések">
+<!ENTITY detail.home                          "Honlap">
+<!ENTITY detail.repository                    "Kiegészítő profilja">
+<!ENTITY detail.size                          "Méret">
+
+<!ENTITY detail.checkForUpdates.label         "Frissítések keresése">
+<!ENTITY detail.checkForUpdates.accesskey     "F">
+<!ENTITY detail.checkForUpdates.tooltip       "Frissítések keresése ehhez a kiegészítőhöz">
+<!ENTITY detail.showPreferencesWin.label      "Beállítások">
+<!ENTITY detail.showPreferencesWin.accesskey  "B">
+<!ENTITY detail.showPreferencesWin.tooltip    "A kiegészítő beállításainak módosítása">
+<!ENTITY detail.showPreferencesUnix.label     "Beállítások">
+<!ENTITY detail.showPreferencesUnix.accesskey "B">
+<!ENTITY detail.showPreferencesUnix.tooltip   "A kiegészítő beállításainak módosítása">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Értékelés">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Szünet">
+<!ENTITY progress.cancel.tooltip              "Mégse">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Név">
+<!ENTITY sort.name.tooltip                    "Rendezés név szerint">
+<!ENTITY sort.dateUpdated.label               "Utoljára frissítve">
+<!ENTITY sort.dateUpdated.tooltip             "Rendezés a frissítés ideje szerint">
+<!ENTITY sort.relevance.label                 "Legjobb egyezés">
+<!ENTITY sort.relevance.tooltip               "Rendezés fontosság szerint">
+<!ENTITY sort.price.label                     "Ár">
+<!ENTITY sort.price.tooltip                   "Rendezés ár szerint">
+
+<!ENTITY search.filter2.label                 "Keresés:">
+<!ENTITY search.filter2.installed.label       "Saját kiegészítők">
+<!ENTITY search.filter2.installed.tooltip     "Telepített kiegészítők megjelenítése">
+<!ENTITY search.filter2.available.label       "Elérhető kiegészítők">
+<!ENTITY search.filter2.available.tooltip     "Telepíthető kiegészítők megjelenítése">
+
+<!ENTITY addon.homepage                       "Honlap">
+<!ENTITY addon.details.label                  "Tovább">
+<!ENTITY addon.details.tooltip                "További részletek erről a kiegészítőről">
+<!ENTITY addon.unknownDate                    "Ismeretlen">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "HAGYOMÁNYOS">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(letiltva)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Frissítés">
+<!ENTITY addon.undoAction.label               "Visszavonás">
+<!ENTITY addon.undoAction.tooltip             "A művelet visszavonása">
+<!ENTITY addon.undoRemove.label               "Visszavonás">
+<!ENTITY addon.undoRemove.tooltip             "Maradjon telepítve ez a kiegészítő">
+<!ENTITY addon.restartNow.label               "Újraindítás most">
+<!ENTITY addon.install.label                  "Telepítés">
+<!ENTITY addon.install.tooltip                "Ennek a kiegészítőnek a telepítése">
+<!ENTITY addon.updateNow.label                "Frissítés">
+<!ENTITY addon.updateNow.tooltip              "A frissítés telepítése ehhez a kiegészítőhöz">
+<!ENTITY addon.includeUpdate.label            "Belevétel a frissítésbe">
+<!ENTITY addon.updateAvailable.label          "Frissítés áll rendelkezésre">
+<!ENTITY addon.checkingForUpdates.label       "Frissítések keresése…">
+<!ENTITY addon.releaseNotes.label             "Kiadási megjegyzések:">
+<!ENTITY addon.loadingReleaseNotes.label      "Betöltés…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Sajnáljuk, de hiba történt a kiadási megjegyzések betöltésekor.">
+
+<!ENTITY addon.createdBy.label                "Szerző: ">
+
+<!ENTITY eula.title                           "Végfelhasználói licencszerződés">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Elfogadás és telepítés…">
+
+<!ENTITY settings.path.button.label           "Tallózás…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Mi ez? A telemetria időről időre kísérleteket telepíthet és futtathat.">
+<!ENTITY experiment.info.learnmore "További tudnivalók">
+<!ENTITY experiment.info.learnmore.accesskey "T">
+<!ENTITY experiment.info.changetelemetry "Telemetria beállításai">
+<!ENTITY experiment.info.changetelemetry.accesskey "b">
+
+<!ENTITY setting.learnmore "További tudnivalók…">
+
+<!ENTITY disabledUnsigned.heading "Néhány kiterjesztés letiltásra került">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "A következő kiegészítők nem lettek ellenőrizve a &brandShortName;ban való használatra. Lehetősége van ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "helyettesítőket keresni">
+<!ENTITY disabledUnsigned.description.end " vagy megkérni a fejlesztőt az ellenőriztetésre.">
+<!ENTITY disabledUnsigned.learnMore "Tudjon meg többet erőfeszítéseinkről az online biztonsága fenntartásáért.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "A kiegészítőik ellenőriztetése iránt érdeklődő fejlesztők folytathatják a ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "kézikönyv">
+<!ENTITY disabledUnsigned.devInfo.end " elolvasásával.">
+
+<!ENTITY pluginDeprecation.description "Hiányzik valami? Néhány bővítményt már nem támogat a &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "További tudnivalók.">
+
+<!ENTITY legacyWarning.description "Hiányzik valami? Néhány kiegészítőt már nem támogat a &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Örökölt kiegészítők megjelenítése">
+<!ENTITY legacyExtensions.title "Örökölt kiegészítők">
+<!ENTITY legacyExtensions.description "Ezek a kiegészítők nem felelnek meg a &brandShortName; aktuális elvárásainak, emiatt le lettek tiltva.">
+<!ENTITY legacyExtensions.learnMore "További tudnivalók a kiegészítők módosulásáról">

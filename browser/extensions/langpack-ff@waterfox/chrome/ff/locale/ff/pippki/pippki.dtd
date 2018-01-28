@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Waylu Finnde Baabaare">
+<!ENTITY setPassword.tokenName.label "Kaɓirɗi Kisal">
+<!ENTITY setPassword.oldPassword.label "Finnde woodnde:">
+<!ENTITY setPassword.newPassword.label "Finnde hesere:">
+<!ENTITY setPassword.reenterPassword.label "Finnde hesere (goɗngol):">
+<!ENTITY setPassword.meter.label "Ɓetirɗe moƴƴugol finnde">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Firlit">
+<!ENTITY resetPassword.title  "Finnde maa waklitaama">
+<!ENTITY resetPassword.text  "So a waklitii finnde maa baabaare, finndeeji maa geese e iimeel, porme keɓe, seedamfaaje keeriiɗe, e kele suturo maa njejjite. Aɗa yenanaa yiɗde waklitde finnde baabaare maa?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Aawto Seedamfaagu">
+<!ENTITY downloadCert.message1 "A naamnaama yo a hoolo Kohowo Seedamfaagu keso (CA).">
+<!ENTITY downloadCert.trustSSL "Hoolo oo CA e keftingol lowe geese.">
+<!ENTITY downloadCert.trustEmail "Hoolo oo CA e keftingol huutorɓe iimeel.">
+<!ENTITY downloadCert.trustObjSign "Hoolo oo CA e keftingol topayɓe topirɗe.">
+<!ENTITY downloadCert.message3 "Hade maa hoolaade oo CA e fannu kala, aɗa foti ƴeewtaade seedamfaagu makko e dawirgol makko e laabi makko (so ena woodi).">
+<!ENTITY downloadCert.viewCert.label "Hollir">
+<!ENTITY downloadCert.viewCert.text "Ƴeewto seedamfaagu CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Ɗaɓɓitannde Innitol Kuutoro">
+<!ENTITY clientAuthAsk.message1 "Ndee lowre ɗaɓɓitii yo a innito huutoraade seedamfaagu:">
+<!ENTITY clientAuthAsk.message2 "Suɓo seedamfaagu ngam wonande ma innitol:">
+<!ENTITY clientAuthAsk.message3 "Cariiɗe sertifika cuɓaaɗo:">
+
+<!ENTITY pkcs12.setpassword.title  "Suɓo Finnde Dannditol Seedamfaagu">
+<!ENTITY pkcs12.setpassword.message  "Finnde dannditol seedamfaagu nde labi-ɗaa ɗoo ndee suurat fiilde dannditol nde ngon-ɗaa e sosde ndee. Aɗa foti suɓaade finnde ngam jokkude e dannditol ngol.">
+<!ENTITY pkcs12.setpassword.label1 "Finnde dannditol seedamfaagu:">
+<!ENTITY pkcs12.setpassword.label2 "Finnde dannditol seedamfaagu (ɗimmit):">
+<!ENTITY pkcs12.setpassword.reminder "Teeŋtuɗum: So a hettii finnde dannditol  seedamfaagua, a waawoytaa arrtirde ngol dannditol so a artii. Tiiɗno mooftu finnde ndee e nokku cuuriiɗo.">
+
+<!ENTITY chooseToken.title  "Kaaldol Suɓo Token">
+<!ENTITY chooseToken.message1 "Tiiɗno suɓo token.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Nana yaltina Kelal Suturo">
+<!ENTITY createCertInfo.msg1 "Woni ko e yaltinde kelal… Ena waawi juutde seeɗa noon….">
+<!ENTITY createCertInfo.msg2 "Tiiɗno sabbo…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Goongɗitingol Token Cuuraaɗo">
+<!ENTITY protectedAuth.msg "Tiiɗno goongɗitin to token oo. Feere oongɗitingol fawii ko e fannu token maa.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

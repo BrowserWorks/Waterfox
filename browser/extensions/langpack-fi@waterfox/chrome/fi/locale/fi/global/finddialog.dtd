@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title  "Etsi tältä sivulta">
+<!ENTITY findField.label  "Etsi:">
+<!ENTITY findField.accesskey  "E">
+<!ENTITY caseSensitiveCheckbox.label  "Huomioi kirjainkoko">
+<!ENTITY caseSensitiveCheckbox.accesskey  "H">
+<!ENTITY wrapCheckbox.label  "Kierrä ympäri">
+<!ENTITY wrapCheckbox.accesskey  "y">
+<!ENTITY findButton.label  "Etsi seuraava">
+<!ENTITY findButton.accesskey  "s">
+<!ENTITY cancelButton.label  "Peruuta">
+<!ENTITY closeButton.label  "Sulje">
+<!ENTITY up.label  "Ylös">
+<!ENTITY up.accesskey  "Y">
+<!ENTITY down.label  "Alas">
+<!ENTITY down.accesskey  "A">
+<!ENTITY direction.label  "Etsimissuunta">

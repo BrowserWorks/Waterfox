@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Canvia la contrasenya mestra">
+<!ENTITY setPassword.tokenName.label       "Dispositiu de seguretat">
+<!ENTITY setPassword.oldPassword.label     "Contrasenya actual:">
+<!ENTITY setPassword.newPassword.label     "Introduïu una contrasenya nova:">
+<!ENTITY setPassword.reenterPassword.label "Torneu a introduir la contrasenya:">
+<!ENTITY setPassword.meter.label           "Mesura de la qualitat de la contrasenya">
+<!ENTITY setPassword.meter.loading         "S'està carregant">
+<!ENTITY masterPasswordDescription.label   "Una contrasenya mestra s'utilitza per protegir informació confidencial, com ara les contrasenyes dels llocs. Si creeu una contrasenya mestra, se us demanarà que la introduïu una vegada a cada sessió quan el &brandShortName; reculli informació desada protegida per contrasenya.">
+<!ENTITY masterPasswordWarning.label       "Assegureu-vos que recordeu la contrasenya mestra que heu definit. Si l'oblideu, no podreu accedir a cap informació que protegeixi.">

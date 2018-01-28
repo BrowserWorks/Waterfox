@@ -1,0 +1,14 @@
+locale alerts sk sk/locale/sk/alerts/
+locale autoconfig sk sk/locale/sk/autoconfig/
+locale global sk sk/locale/sk/global/
+locale global-platform sk sk/locale/sk/global-platform/mac/ os=Darwin
+locale global-platform sk sk/locale/sk/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform sk sk/locale/sk/global-platform/win/ os=WINNT
+locale mozapps sk sk/locale/sk/mozapps/
+locale necko sk sk/locale/sk/necko/
+locale passwordmgr sk sk/locale/sk/passwordmgr/
+locale pipnss sk sk/locale/sk/pipnss/
+locale pippki sk sk/locale/sk/pippki/
+locale places sk sk/locale/sk/places/
+locale pluginproblem sk sk/locale/sk/pluginproblem/
+locale weave sk sk/locale/sk/services/

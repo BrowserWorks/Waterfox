@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Uusi välilehti">
+<!ENTITY newtab.customize.classic "Näytä eniten vieraillut sivustot">
+<!ENTITY newtab.customize.cog.enhanced "Näytä sivustoehdotuksia">
+<!ENTITY newtab.customize.cog.title2 "UUDEN VÄLILEHDEN ASETUKSET">
+<!ENTITY newtab.customize.cog.learn "Lue lisää Uusi välilehti -sivusta">
+<!ENTITY newtab.customize.title "Muokkaa Uusi välilehti -sivua">
+<!ENTITY newtab.customize.blank2 "Näytä tyhjä sivu">
+<!ENTITY newtab.undo.removedLabel "Välilehti poistettiin.">
+<!ENTITY newtab.undo.undoButton "Kumoa.">
+<!ENTITY newtab.undo.restoreButton "Palauta kaikki.">
+<!ENTITY newtab.undo.closeTooltip "Piilota">

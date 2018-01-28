@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Startować">
+
+<!ENTITY startupPage2.label        "Hdyž &brandShortName; so startuje">
+<!ENTITY startupPage2.accesskey    "H">
+<!ENTITY startupUserHomePage.label "Wašu startowu stronu pokazać">
+<!ENTITY startupBlankPage.label    "Prózdnu stronu pokazać">
+<!ENTITY startupPrevSession.label  "Wokna a rajtarki wot poslednjeho raza pokazać">
+
+<!ENTITY homepage2.label           "Startowa strona">
+<!ENTITY homepage2.accesskey       "S">
+<!ENTITY useCurrentPage.label      "Aktualnu stronu wužiwać">
+<!ENTITY useCurrentPage.accesskey  "A">
+<!ENTITY useMultiple.label         "Aktualne strony wužiwać">
+<!ENTITY chooseBookmark.label      "Zapołožku wužiwać…">
+<!ENTITY chooseBookmark.accesskey  "Z">
+<!ENTITY restoreDefault.label      "Standard wobnowić">
+<!ENTITY restoreDefault.accesskey  "b">
+
+<!ENTITY downloads.label     "Sćehnjenja">
+
+<!ENTITY saveTo.label "Dataje składować do">
+<!ENTITY saveTo.accesskey "k">
+<!ENTITY chooseFolderWin.label        "Přepytać…">
+<!ENTITY chooseFolderWin.accesskey    "e">
+<!ENTITY chooseFolderMac.label        "Wubrać…">
+<!ENTITY chooseFolderMac.accesskey    "u">
+<!ENTITY alwaysAskWhere.label         "Přeco so prašeć, hdźež dataje maja so składować">
+<!ENTITY alwaysAskWhere.accesskey     "c">
+
+<!ENTITY alwaysCheckDefault2.label        "Přeco kontrolować, hač &brandShortName; je waš standardny wobhladowak">
+<!ENTITY alwaysCheckDefault2.accesskey    "c">
+<!ENTITY setAsMyDefaultBrowser3.label     "K standardej činić…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "t">
+<!ENTITY isDefault.label                  "&brandShortName; je tuchwilu waš standardny wobhladowak">
+<!ENTITY isNotDefault.label               "&brandShortName; tuchwilu waš standardny wobhladowak njeje">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; a Waterfox dowolić, w samsnym času běžeć">
+<!ENTITY useWaterfoxSync.label             "Pokiw: To separatne profile wužiwa. Wužiwajće Sync, zo byšće daty mjez nimi dźělił.">
+<!ENTITY getStarted.notloggedin.label     "So pola &amp;syncBrand.shortName.label přizjewić…">
+<!ENTITY getStarted.configured.label      "Nastajenja &syncBrand.shortName.label; wočinić">
+
+<!ENTITY e10sEnabled.label                "Wjaceprocesowy &brandShortName; zmóžnić">

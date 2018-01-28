@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Undantekningar - Þýðingar">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Ekki verður boðið upp á þýðingu fyrir eftirfarandi tungumál:">
+<!ENTITY treehead.languageName.label      "Tungumál">
+<!ENTITY removeLanguage.label             "Fjarlægja tungumál">
+<!ENTITY removeLanguage.accesskey         "r">
+<!ENTITY removeAllLanguages.label         "Fjarlægja öll tungumál">
+<!ENTITY removeAllLanguages.accesskey     "F">
+
+<!ENTITY noTranslationForSites.label      "Ekki verður boðið upp á þýðingu fyrir eftirfarandi vefsvæði:">
+
+<!ENTITY removeSite.label                 "Fjarlægja vefsvæði">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Fjarlægja öll vefsvæði">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Loka">
+<!ENTITY button.close.accesskey           "L">
+
+<!ENTITY treehead.siteName2.label         "Websites">

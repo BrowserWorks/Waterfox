@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; పునఃతాజాకరణ">
+<!ENTITY refreshProfile.dialog.description1  "సమస్యలను పరిష్కరించి పనితనాన్ని తిరిగిపొందడానికి తాజాగా మొదలుపెట్టండి.">
+<!ENTITY refreshProfile.dialog.description2  "దీనివల్ల:">
+<!ENTITY refreshProfile.dialog.items.label1  "మీ పొడిగింతలు, అభిమత కూర్పులు తీసివేయబడతాయి">
+<!ENTITY refreshProfile.dialog.items.label2  "మీ విహారిణి అమరికలు వాటి అప్రమేయాలకు పునరుద్ధరించబడతాయి">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName;‌ను తాజాపరచు">
+
+<!ENTITY refreshProfile.title                "&brandShortName;‌ను ట్యూన్ చేసుకోండి">
+<!ENTITY refreshProfile.button.label         "&brandShortName;‌‌ను తాజాపరచు…">
+
+<!ENTITY refreshProfile.cleaning.description "దాదాపు పూర్తయింది…">

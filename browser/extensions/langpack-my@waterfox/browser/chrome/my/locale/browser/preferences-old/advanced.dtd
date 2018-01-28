@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "အထွေထွေ">
+
+<!ENTITY accessibility.label             "အသုံးပြုခွင့်ရစေခြင်း">
+
+<!ENTITY useCursorNavigation.label       "စာမျက်နှာအတွင်း ကူးသန်းရွှေ့ပြောင်းရန် ကာဆာခလုတ်ကို အမြဲ အသုံးပြုပါ">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "စာစရိုက်သည်နှင့် စရှာပါ">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY blockAutoReload.label           "ဝဘ်ဆိုက်များသည် အခြားသို့ ပြန်လည်ညွှန်းရန် သို့မဟုတ် ပြန်ဖွင့်ရန် ကြိုးစားမည်ဆိုပါက သတိပေးပါ">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "လိုအပ်လျှင် တို့ထိကီးဘုတ်ကို ပြပါ">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "ကြည့်ရှုခြင်း">
+
+<!ENTITY useAutoScroll.label             "အလိုအလျောက် အပေါ်အောက်ရွှေ့သည့်စနစ်ကို အသုံးပြုပါ">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "ချောမောလွယ်ကူသော အပေါ်အောက်ရွှေ့သည့်စနစ်ကို အသုံးပြုပါ">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "စာရိုက်နေစဉ် စာလုံးပေါင်းများကို စစ်ဆေးပါ">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "ဒေတာအသုံးပြုခြင်း ရွေးချယ်မှုများ">
+
+<!ENTITY healthReportDesc.label          "သင့်ဘယောက်ဆာ ၏ ကျန်းမာရေးအကြောင်း အား &vendorShortName; မှ မည်သို့မျှဝေ သုံးသပ်သည် ကိုနားလည်အောင် ကူညီပေးသည်">
+<!ENTITY enableHealthReport.label        "&brandShortName; ကျန်းမာရေး အစီရင်ခံစာကို လုပ်ဆောင်စေပါ">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "ပိုမိုလေ့လာရန်">
+
+<!ENTITY telemetryDesc.label             "လုပ်ဆောင်ချက်များ ၊ ဟတ်ဒ်ဝဲနှင့် ပြင်ဆင်မှူအချက်အလက်များအား &vendorShortName; အားမျှဝေပေးခြင်း အားဖြင့် &brandShortName; အားပိုကောင်းအောင်လုပ်ရန်ကူညီပါ။">
+<!ENTITY enableTelemetryData.label       "အခြားအချက်အလက်များကို မျှဝေရန် (နမူနာ၊ တယ်လီမတြီ T)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "ပိုမိုလေ့လာရန်">
+
+<!ENTITY crashReporterDesc2.label         "ပျက်စီးမှုအစီရင်ခံစာများသည် &vendorShortName; က ပြဿနာများကို ဖြေရှင်းရာတွင် အထောက်အကူပြုသည်။ ထို့ပြင် ဘရောင်ဇာကို ပိုမိုတည်ငြိမ် ကောင်းမွန်စေရန်နှင့် လုံခြုံစေရန် အထောက်အကူပြုသည်။">
+<!ENTITY alwaysSubmitCrashReports.label   "မတင်ပို့ရသေးသော ပျက်စီးမှုအစီရင်ခံစာများကို ကိုယ်စားပေးပို့ရန် &brandShortName; ကို ခွင့်ပေးပါ။">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "ပိုမိုလေ့လာရန်">
+
+<!ENTITY networkTab.label                "ကွန်ရက်">
+
+<!ENTITY connection.label                "ဆက်ကြောင်း">
+
+<!ENTITY connectionDesc.label            "&brandShortName; ၏ အင်တာနက်ချိတ်ဆက်မှုကို ပြင်ဆင်သတ်မှတ်ရန်">
+<!ENTITY connectionSettings.label        "အပြင်အဆင်များ...">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "သိမ်းထားသော ဝဘ်ဆိုက်ယာယီဖိုင်">
+
+<!ENTITY offlineStorage2.label           "ချိတ်ဆက်မဲ့ ဝဘ်အကြောင်းအရာနှင့် အသုံးပြုသူဆိုင်ရာ ဒေတာ">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "ဝဘ်ဆိုက်ဒေတာ">
+<!ENTITY clearSiteData.label             "ဒေတာများကို ရှင်းလင်းပါ">
+<!ENTITY clearSiteData.accesskey         "I">
+<!ENTITY siteDataSettings.label          "အပြင်အဆင်များ…">
+<!ENTITY siteDataSettings.accesskey      "I">
+<!ENTITY siteDataLearnMoreLink.label     "ပိုမိုလေ့လာရန်">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "ယာယီဖိုင်အရွယ်အစားကို ကန့်သတ်ရန်">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB (ရနိုင်သော ပမာဏ၏)">
+<!ENTITY clearCacheNow.label             "ယခုပင် ရှင်းလင်းပါ">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "ယခုပင် ရှင်းလင်းပါ">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "အလိုအလျောက် အရန်သိမ်းဆည်းမှု စီမံခန့်ခွဲခြင်းကို ကျော်လွန်ပြုလုပ်ပါ">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "မွမ်းမံချက်">
+
+<!ENTITY updateApplication.label         "&brandShortName; မွမ်းမံမှုများ">
+<!ENTITY updateAuto1.label               "နောက်ဆုံးပေါ် ပြုပြင်ချက်များကို အလိုအလျောက် တပ်ဆင်ပါ (အကြံပြုပါသည်၊ လုံခြုံမှုကို ကောင်းမွန်စေသည်)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "နောက်ဆုံးပေါ် ပြုပြင်ချက်များ ရှိ/မရှိ စစ်ဆေးပါ။ သို့သော် တပ်ဆင်မည်ဆိုပါက ရွေးချယ်ခွင့်ပေးပါ။">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateManual.label              "နောက်ဆုံးပေါ် ပြုပြင်ချက်များကို မစစ်ဆေးပါနှင့်။ (အကြံမပြုလိုပါ၊ အန္တရာယ်များစေသည်)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "မြှင့်တင်မှုမှတ်တမ်းကို ပြပါ">
+<!ENTITY updateHistory.accesskey         "p">
+
+<!ENTITY useService.label                "နောက်ဆုံးပေါ် ပြုပြင်မှုများကို တပ်ဆင်ပါက နောက်ကွယ်လုပ်ငန်းစဉ်ကို အသုံးပြုပါ">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY autoUpdateOthers.label          "အလိုအလျောက် အဆင့်မြှင့်ပါ">
+<!ENTITY enableSearchUpdate.label        "ရှာဖွေရေး ယန္တရားများ">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+<!ENTITY offlineStorageNotify.label               "ဝတ်ဆိုဒ်တစ်ခုမှ အင်တာနက်မဲ့သုံးအချက်အလက် သိမ်းလိုပါက သင့်အား အသိပေးမည်">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "ခြွင်းချက်များ…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "အော့ဖ်လိုင်း အသုံးပြုနိုင်ဖို့အတွက် အောက်ပါ ဝက်ဘ်ဆိုက်များမှာ ဒေတာတွေကို သိုလှောင်ခွင့်ပြုတယ်။">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "ဖယ်ရှားပါ…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "ချိတ်ဆက်မဲ့ အချက်အလက်ကြမ်းကို ဖယ်ရှားပါ">
+
+<!ENTITY certificateTab.label            "အသိအမှတ်ပြုလက်မှတ်များ">
+<!ENTITY certPersonal.label              "တောင်းဆိုချက်များ">
+<!ENTITY certPersonal.description        "ဆာဗာ မှသင့်ကိုယ်ရေးအချက်အလက်အား တောင်းဆိုသောအခါ -">
+<!ENTITY selectCerts.auto                "တစ်ခုကို အလိုအလျောက် ရွေးပါ">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "အကြိမ်တိုင်း မေးပါ">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "လက်ရှိအထောက်အထားများ၏ ခိုင်လုံမှုကို အတည်ပြုရန် OSCP responder servers များကို ဆွဲထုတ်ပါ Q">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts.label                 "အထောက်အထားများကို ကြည့်ရန်">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "လုံခြုံရေး ကိရိယာများ">
+<!ENTITY viewSecurityDevices.accesskey   "D">
+
+<!ENTITY allowHWAccel.label              "ဖြစ်နိုင်လျှင် စက်ကိရိယာဖြင့် အရှိန်မြှင့်တင်ခြင်းကို အသုံးပြုပါ">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

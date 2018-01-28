@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopiera">
+<!ENTITY  copy.accesskey        "o">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Markera allt">
+<!ENTITY  selectall.accesskey   "M">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Allmänt">
+<!ENTITY  generalTab.accesskey  "A">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "Adress:">
+<!ENTITY  generalType           "Typ:">
+<!ENTITY  generalMode           "Renderingsläge:">
+<!ENTITY  generalSize           "Storlek:">
+<!ENTITY  generalReferrer       "Anvisande URL:">
+<!ENTITY  generalSource         "Cachekälla:">
+<!ENTITY  generalModified       "Ändrad:">
+<!ENTITY  generalEncoding2      "Teckenkodning:">
+<!ENTITY  generalMetaName       "Namn">
+<!ENTITY  generalMetaContent    "Innehåll">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adress:">
+<!ENTITY  mediaText             "Tillhörande text:">
+<!ENTITY  mediaAltHeader        "Alternativ text">
+<!ENTITY  mediaAddress          "Adress">
+<!ENTITY  mediaType             "Typ">
+<!ENTITY  mediaSize             "Storlek">
+<!ENTITY  mediaCount            "Antal gånger">
+<!ENTITY  mediaDimension        "Dimension:">
+<!ENTITY  mediaLongdesc         "Lång beskrivning:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Spara som…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "p">
+<!ENTITY  mediaPreview          "Förhandsgranskning:">
+
+<!ENTITY  feedTab               "RSS">
+<!ENTITY  feedTab.accesskey     "R">
+<!ENTITY  feedSubscribe         "Prenumerera">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Rättigheter">
+<!ENTITY  permTab.accesskey     "t">
+<!ENTITY  permUseDefault        "Använd standard">
+<!ENTITY  permAskAlways         "Fråga alltid">
+<!ENTITY  permAllow             "Tillåt">
+<!ENTITY  permAllowSession      "Tillåt för sessionen">
+<!ENTITY  permBlock             "Blockera">
+<!ENTITY  permissionsFor        "Rättigheter för:">
+<!ENTITY  permPlugins           "Aktivera insticksmoduler">
+
+<!ENTITY  permClearStorage           "Rensa lagring">
+<!ENTITY  permClearStorage.accesskey "R">
+
+<!ENTITY  securityTab           "Säkerhet">
+<!ENTITY  securityTab.accesskey "ä">
+<!ENTITY  securityView.certView "Visa certifikat">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Okänt">
+
+
+<!ENTITY  securityView.identity.header   "Webbplatsens identitet">
+<!ENTITY  securityView.identity.owner    "Ägare:">
+<!ENTITY  securityView.identity.domain   "Webbplats:">
+<!ENTITY  securityView.identity.verifier "Verifierad av:">
+<!ENTITY  securityView.identity.validity "Upphör:">
+
+<!ENTITY  securityView.privacy.header                   "Sekretess och historik">
+<!ENTITY  securityView.privacy.history                  "Har jag besökt den här webbplatsen tidigare dagar?">
+<!ENTITY  securityView.privacy.cookies                  "Lagrar den här webbplatsen information (kakor) på min dator?">
+<!ENTITY  securityView.privacy.viewCookies              "Visa kakor">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Har jag sparat några lösenord för den här webbplatsen?">
+<!ENTITY  securityView.privacy.viewPasswords            "Visa sparade lösenord">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "ö">
+
+<!ENTITY  securityView.technical.header                 "Tekniska detaljer">
+
+<!ENTITY  helpButton.label                              "Hjälp">

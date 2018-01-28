@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Tlačiť">
+
+<!ENTITY printDialog.title "Tlač">
+
+<!ENTITY fpDialog.title "Uložiť súbor">
+
+<!ENTITY fileCheck.label "Tlačiť do súboru">
+<!ENTITY fileCheck.accesskey "T">
+<!ENTITY propertiesButton.label "Vlastnosti…">
+<!ENTITY propertiesButton.accesskey "a">
+<!ENTITY descText.label "Popis tlačiarne:">
+<!ENTITY printer.label "Tlačiareň">
+<!ENTITY printerInput.label "Tlačiareň:">
+<!ENTITY printerInput.accesskey "T">
+
+<!ENTITY printrangeGroup.label "Rozsah tlače">
+<!ENTITY allpagesRadio.label "Všetky strany">
+<!ENTITY allpagesRadio.accesskey "V">
+<!ENTITY rangeRadio.label "Strany">
+<!ENTITY rangeRadio.accesskey  "S">
+<!ENTITY frompageInput.label "od">
+<!ENTITY frompageInput.accesskey  "o">
+<!ENTITY topageInput.label "do">
+<!ENTITY topageInput.accesskey  "d">
+<!ENTITY selectionRadio.label "Výber">
+<!ENTITY selectionRadio.accesskey "b">
+
+<!ENTITY copies.label "Kópie">
+<!ENTITY numCopies.label "Počet kópií:">
+<!ENTITY numCopies.accesskey "k">
+
+<!ENTITY printframeGroup.label "Tlač rámcov">
+<!ENTITY aslaidoutRadio.label "Tak, ako sú umiestnené na obrazovke">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label "Iba vybraný rámec">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label "Každý rámec zvlášť">
+<!ENTITY eachframesepRadio.accesskey  "e">

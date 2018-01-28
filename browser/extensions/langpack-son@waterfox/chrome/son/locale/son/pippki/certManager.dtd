@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Tabatiyan-tiira juwalkaw">
+
+<!ENTITY certmgr.tab.mine                     "War tabatiyan-tiirawey">
+<!ENTITY certmgr.tab.others2                  "Borey">
+<!ENTITY certmgr.tab.websites3                "Feršikey">
+<!ENTITY certmgr.tab.ca                       "Hiney">
+<!ENTITY certmgr.tab.orphan2                  "Waaney">
+
+<!ENTITY certmgr.mine                         "War ga tabatiyan-tiirayaŋ may goykondawey wey kaŋ war tammaasa:">
+<!ENTITY certmgr.others                       "War ga tabatiyan-tiira jisantayaŋ may kaŋ ka borey wey tammaasa:">
+<!ENTITY certmgr.websites2                    "War ga tabatiyan-tiira jisantayaŋ may kaŋ ka feršikey wey tammaasa:">
+<!ENTITY certmgr.cas                          "War ga tabatiyan-tiira jisantayaŋ may kaŋ ka tabatiyan-tiira hiney wey tammaasa:">
+<!ENTITY certmgr.orphans                      "War ga tabatiyan-tiira jisantayaŋ may kaŋyaŋ ši tenji nda kuray cindey affoo kul:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Hankul">
+<!ENTITY certmgr.detail.general_tab.accesskey "H">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Šilbayhayey">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "b">
+
+<!ENTITY certmgr.pending.label                "Goo ma tabatiyan-tiiraa koroši sohõda…">
+<!ENTITY certmgr.subjectinfo.label            "Wallafi woo še">
+<!ENTITY certmgr.issuerinfo.label             "Woo n'a wallafi">
+<!ENTITY certmgr.periodofvalidity.label       "Booriyan waati" >
+<!ENTITY certmgr.fingerprints.label           "Kabežeerey">
+<!ENTITY certmgr.certdetail.title             "Tabatiyan-tiira šilbayhayey">
+<!ENTITY certmgr.certdetail.cn                "Hankul maa (CN)">
+<!ENTITY certmgr.certdetail.o                 "Goykonda (O)">
+<!ENTITY certmgr.certdetail.ou                "Goykonda izefoo (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Fannu lanba">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 kabežeeri">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 kabežeeri">
+
+<!ENTITY certmgr.editcacert.title             "Tabatiyan-tiira hini naanay kayandiyaney fasal">
+<!ENTITY certmgr.editcert.edittrust           "Naanay kayandiyaney fasal:">
+<!ENTITY certmgr.editcert.trustssl            "Tabatiyan-tiiraa woo ga hin ka Interneti nungey tammaasa.">
+<!ENTITY certmgr.editcert.trustemail          "Tabatiyan-tiiraa woo ka hin ka bataga goykey tammaasa.">
+<!ENTITY certmgr.editcert.trustobjsign        "Tabatiyan-tiiraa woo ka hin ka goyjinay teekey tammaasa.">
+
+<!ENTITY certmgr.deletecert.title             "Tabatiyan-tiiraa woo tuusu">
+
+<!ENTITY certmgr.certname                     "Tabatiyan-tiira maa">
+<!ENTITY certmgr.certserver                   "Feršikaw">
+<!ENTITY certmgr.override_lifetime            "Hundimee">
+<!ENTITY certmgr.tokenname                    "Saajaw jinay">
+<!ENTITY certmgr.begins                       "Šintin hane">
+<!ENTITY certmgr.expires                      "Waati ben han">
+<!ENTITY certmgr.email                        "Bataga aderesu">
+<!ENTITY certmgr.serial                       "Fannu lanba">
+
+<!ENTITY certmgr.close.label                  "Daabu">
+<!ENTITY certmgr.close.accesskey              "D">
+<!ENTITY certmgr.view2.label                  "Gunari…">
+<!ENTITY certmgr.view2.accesskey              "G">
+<!ENTITY certmgr.edit3.label                  "Fasal naanay…">
+<!ENTITY certmgr.edit3.accesskey              "F">
+<!ENTITY certmgr.export.label                 "Kaataray…">
+<!ENTITY certmgr.export.accesskey             "K">
+<!ENTITY certmgr.delete2.label                "Tuusu…">
+<!ENTITY certmgr.delete2.accesskey            "T">
+<!ENTITY certmgr.delete_builtin.label         "Tuusu wala ma ši naanay…">
+<!ENTITY certmgr.delete_builtin.accesskey     "T">
+<!ENTITY certmgr.backup2.label                "Banda-gaabu…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "Kul banda-gaabu…">
+<!ENTITY certmgr.backupall2.accesskey         "b">
+<!ENTITY certmgr.restore2.label               "Cendi ka dam…">
+<!ENTITY certmgr.restore2.accesskey           "C">
+<!ENTITY certmgr.details.label                "Tabatiyan-tiira faarey">
+<!ENTITY certmgr.details.accesskey            "f">
+<!ENTITY certmgr.fields.label                 "Faari alkadar">
+<!ENTITY certmgr.fields.accesskey             "a">
+<!ENTITY certmgr.hierarchy.label              "Tabatiyan-tiira kanandi">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Hasaraw tonton…">
+<!ENTITY certmgr.addException.accesskey       "H">
+
+<!ENTITY exceptionMgr.title                   "Saajaw hasaraw tonton">
+<!ENTITY exceptionMgr.exceptionButton.label   "Saajaw hasaraw tabatandi">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "b">
+<!ENTITY exceptionMgr.supplementalWarning     "Bankey, bitijey nda baytal nungu alhakiika tanawey ši war hãa ka woo tee.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Feršikaw">
+<!ENTITY exceptionMgr.certlocation.url        "Gorodoo:">
+<!ENTITY exceptionMgr.certlocation.download   "Tabatiyan-tiira zaa">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Tabatiyan-tiira assariya">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Gunari…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Hasaraa woo tee jiširi duumante">
+<!ENTITY exceptionMgr.permanent.accesskey     "d">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Pozor, nebezpečenstvo poškodenia!">
+<!ENTITY aboutWarningText.label "Zmena týchto pokročilých nastavení môže nepriaznivo ovplyvniť stabilitu, bezpečnosť a výkon tejto aplikácie. Pokračovať by ste mali len v prípade, že viete, čo robíte.">
+<!ENTITY aboutWarningButton2.label "Rozumiem rizikám!">
+<!ENTITY aboutWarningCheckbox.label "Toto upozornenie zobraziť aj nabudúce">
+
+<!ENTITY searchPrefs.label "Hľadať:">
+<!ENTITY searchPrefs.accesskey "H">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Názov predvoľby">
+<!ENTITY lockColumn.label "Stav">
+<!ENTITY typeColumn.label "Typ">
+<!ENTITY valueColumn.label "Hodnota">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Kliknutím zoradíte"> 
+<!ENTITY columnChooser.tooltip "Kliknutím vyberte stĺpce, ktoré sa majú zobraziť"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopírovať">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopírovať názov">
+<!ENTITY copyName.accesskey "n">
+<!ENTITY copyValue.label "Kopírovať hodnotu">
+<!ENTITY copyValue.accesskey "h">
+<!ENTITY modify.label "Upraviť">
+<!ENTITY modify.accesskey "U">
+<!ENTITY toggle.label "Prepnúť">
+<!ENTITY toggle.accesskey "P">
+<!ENTITY reset.label "Obnoviť predvolenú hodnotu">
+<!ENTITY reset.accesskey "b">
+<!ENTITY new.label "Nové">
+<!ENTITY new.accesskey "o">
+<!ENTITY string.label "Reťazec">
+<!ENTITY string.accesskey "R">
+<!ENTITY integer.label "Celé číslo">
+<!ENTITY integer.accesskey "C">
+<!ENTITY boolean.label "Logická">
+<!ENTITY boolean.accesskey "L">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Witajśo k &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Zregistrěrujśo se, aby swóje rejtarki, cytańske znamjenja, gronidła a dalšne synchronizěrował.">
+<!ENTITY aboutAccountsConfig.startButton.label "Prědne kšace">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Synchronizěrowańske nastajenja">
+<!ENTITY aboutAccounts.noConnection.title "Žeden zwisk">
+<!ENTITY aboutAccounts.noConnection.description "Musyśo z internetom zwězany byś, aby se pśizjawił.">
+<!ENTITY aboutAccounts.noConnection.retry "Hyšći raz wopytaś">
+<!ENTITY aboutAccounts.badConfig.title "Špatna konfiguracija">
+<!ENTITY aboutAccounts.badConfig.description "Konfiguracija serwera wašogo konta Waterfox njedajo se zwěsćiś. Pšosym wopytajśo pózdźej hyšći raz.">

@@ -1,0 +1,126 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Dæti telemetria">
+
+<!ENTITY aboutTelemetry.changeDataChoices "Cangia">
+
+<!ENTITY aboutTelemetry.uploadEnabled "A spediçion di dæti FHR a l'é <span>ativa</span>.">
+
+<!ENTITY aboutTelemetry.uploadDisabled "A spediçion di dæti FHR a l'é <span>dizativa</span>.">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "A registraçion da telemetria esteza a l'é <span>ativa</span>.">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "A registraçion da telemetria esteza a l'é <span>dizativa</span>.">
+
+<!ENTITY aboutTelemetry.pingDataSource "Sorgente ping dæti:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Ping dæti corente">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Ping dæti archiviæ">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "
+Ping dæti mostræ:
+">
+
+<!ENTITY aboutTelemetry.structured "
+Strutorou
+">
+
+<!ENTITY aboutTelemetry.raw "
+JSON sgreuzzo
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Fanni vedde dæti sottasescion">
+
+<!ENTITY aboutTelemetry.choosePing "Çerni ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping ciù neuvo">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping ciù vegio &gt;&gt;">
+
+<!ENTITY aboutTelemetry.rawPingData "Dæti ping no elaboræ…">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Setemann-a">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.generalDataSection "Dæti generali">
+
+<!ENTITY aboutTelemetry.environmentDataSection "Dæti anbiente">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "Registro telemetria">
+
+<!ENTITY aboutTelemetry.slowSqlSection "Istruçioin SQL lente">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "Blòcchi do navegatô">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "Blòcchi di thread">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Stack caturou
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalari
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Scalari tastea
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "Istogrammi">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "Istogrammi con ciave">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Eventi
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "Mizuaçioin senplici">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "Detalli conp. azonto">
+
+<!ENTITY aboutTelemetry.lateWritesSection "Scritue ritardæ">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "Informaçion in sciâ sescion">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "Istogrammi arecogeiti da conponenti azonti">
+
+<!ENTITY aboutTelemetry.toggle "Sciacca pe vedde/asconde a seçion">
+
+<!ENTITY aboutTelemetry.emptySection "(nisciun dæto arecogeito)">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "ATENÇION: o contròllo de istruçioin SQL lente o l'é ativo. Porieiva ese mostrou de stringhe SQL conplete ma queste informaçioin no saian trasmisse da-a telemetria.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Repiggia i nommi de fonçioin pe stack">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Fanni vedde stack dæti sgreuzzi">
+
+<!ENTITY aboutTelemetry.filterText "Filtra (stringhe ò esprescioin regolari)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "Payload">
+
+<!ENTITY aboutTelemetry.rawPayload "
+  Carego sgreuzzo
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

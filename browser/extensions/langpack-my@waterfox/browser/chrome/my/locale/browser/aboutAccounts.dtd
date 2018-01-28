@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; မှ ကြိုဆိုပါသည်">
+
+<!ENTITY aboutAccountsConfig.description "သင့် တပ်ဗ်များ၊ မှတ်တမ်းများ၊ စကားဝှက်များ နှင့် အခြားမှတ်ထားသည်တို့ကို တစ်ပြေးညီဖြစ်စေရန် လက်မှတ်ထိုးဝင်ရောက်ပါ။">
+<!ENTITY aboutAccountsConfig.startButton.label "စတင်ကြမည်">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "နှစ်သက်ရာအပြင်အဆင်များကို တစ်ပြေးညီလုပ်ရန်">
+<!ENTITY aboutAccounts.noConnection.title "ချိတ်ဆက်မှု မရှိပါ">
+<!ENTITY aboutAccounts.noConnection.description "လက်မှတ်ထိုးဝင်ရောက်ရန် အင်တာနက်နှင့် ချိတ်ဆက်ထားရပါမည်။">
+<!ENTITY aboutAccounts.noConnection.retry "နောက်တစ်ကြိမ် ပြုလုပ်ကြည့်ပါ">
+<!ENTITY aboutAccounts.badConfig.title "မှားယွင်းနေသော အထိုင်ချမှု">
+<!ENTITY aboutAccounts.badConfig.description "သင့် Waterfox အကောင့်ဆာဗာအပြင်အဆင်ကို မသိရှိရပါ။ ကျေးဇူးပြု၍ နောင်တွင် ပြန်စမ်းကြည့်ပါ။">

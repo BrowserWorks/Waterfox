@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "இந்த கீற்றை மூடவும்">
+<!ENTITY tabCrashed.restoreTab "இந்த கீற்றை மீட்கவும்">
+<!ENTITY tabCrashed.restoreAll "செயலிழந்த அனைத்து கீற்றுகளையும் மீட்கவும்">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "ஆகா. உங்கள் கீற்று சேதமடைந்தது.">
+<!ENTITY tabCrashed.offerHelp "நாங்கள் உங்களுக்கு உதவ முடியும்!">
+<!ENTITY tabCrashed.single.offerHelpMessage "பக்கத்தை மீளேற்ற &tabCrashed.restoreTab; என்பதைத் தேர்ந்தெடு.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "பக்கத்தை மீளேற்ற &tabCrashed.restoreTab; அல்லது &tabCrashed.restoreAll; ஐத் தேர்ந்தெடு.">
+<!ENTITY tabCrashed.requestHelp "நீங்கள் எங்களுக்கு உதவுவீர்களா?">
+<!ENTITY tabCrashed.requestHelpMessage "பிரச்சனைகளைக் கண்டறிந்து &brandShortName; ஐ மேம்படுத்த சிதைவறிக்கைகள் எங்களுக்கு உதவுகிறது.">
+<!ENTITY tabCrashed.requestReport "இந்தக் கீற்று குறித்து புகாரளி">
+<!ENTITY tabCrashed.sendReport2 "நீங்கள் பார்த்துகொண்டிருக்கும் கீற்றின் சிதைவு அறிக்கையை அனுப்பவும்">
+<!ENTITY tabCrashed.commentPlaceholder2 "விருப்புரிமை கருத்துகள் (அனைவரும் காண முடியும்)">
+<!ENTITY tabCrashed.includeURL2 "இச்சிதைவறிக்கையுடன் பக்கத்தின் URL இனைச் சேர்">
+<!ENTITY tabCrashed.emailPlaceholder "மின்னஞ்சல் முகவரியை உள்ளிடவும்">
+<!ENTITY tabCrashed.emailMe "கூடுதல் தகவல் கிடைக்கும்பொழுது எனக்கு மின்னஞ்சல் செய்யவும்">
+<!ENTITY tabCrashed.reportSent "சிதைவு அறிக்கையை ஏற்கனவே அனுப்பியாயிற்று. &brandShortName; சிறக்க உதவியமைக்கு நன்றி!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "பின்னணிக் கீற்றுகளை அறிவி.">
+<!ENTITY tabCrashed.autoSubmit2 "இந்த அமர்விலிருந்து மற்றும் எதிர்கால அமர்வுகளில் நொறுங்கும் பின்னணிக் கீற்றுகளின் அறிக்கைகளை உள்ளடக்கிய நொறுக்கு அறிக்கைகளைத் தானாக அனுப்புமாறு முன்னுரிமைகளை மாற்றவும்">

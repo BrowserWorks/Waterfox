@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Miret eo bet an toupinoù da heul war hoc'h urzhiataer :">
+<!ENTITY     cookiename.label               "Anv an toupin">
+<!ENTITY     cookiedomain.label             "Lec'hienn">
+
+<!ENTITY     props.name.label               "Anv :">
+<!ENTITY     props.value.label              "Endalc'had :">
+<!ENTITY     props.domain.label             "Ostiz :">
+<!ENTITY     props.path.label               "Treug :">
+<!ENTITY     props.secure.label             "Kaset evit :">
+<!ENTITY     props.expires.label            "Termenañ a ra :">
+<!ENTITY     props.container.label          "Endalc'her:">
+
+<!ENTITY     window.title                   "Toupinoù">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Klask">
+<!ENTITY     searchFilter.accesskey         "K">
+
+<!ENTITY     button.close.label             "Serriñ">
+<!ENTITY     button.close.accesskey         "S">

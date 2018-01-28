@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Копирај">
+<!ENTITY  copy.accesskey        "К">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Избери сè">
+<!ENTITY  selectall.accesskey   "е">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Општо">
+<!ENTITY  generalTab.accesskey  "О">
+<!ENTITY  generalURL            "Адреса:">
+<!ENTITY  generalType           "Тип:">
+<!ENTITY  generalMode           "Режим на рендерирање:">
+<!ENTITY  generalSize           "Големина:">
+<!ENTITY  generalReferrer       "Референтно URL:">
+<!ENTITY  generalSource         "Извор за кеш:">
+<!ENTITY  generalModified       "Изменета:">
+<!ENTITY  generalMetaName       "Име">
+<!ENTITY  generalMetaContent    "Содржина">
+
+<!ENTITY  mediaTab              "Медиум">
+<!ENTITY  mediaTab.accesskey    "М">
+<!ENTITY  mediaLocation         "Локација:">
+<!ENTITY  mediaText             "Поврзан текст:">
+<!ENTITY  mediaAltHeader        "Постојан текст">
+<!ENTITY  mediaAddress          "Адреса">
+<!ENTITY  mediaType             "Тип">
+<!ENTITY  mediaSize             "Големина">
+<!ENTITY  mediaCount            "Број">
+<!ENTITY  mediaDimension        "Димензии:">
+<!ENTITY  mediaLongdesc         "Долг опис:">
+<!ENTITY  mediaBlockImage.accesskey "Б">
+<!ENTITY  mediaSaveAs           "Сними како…">
+<!ENTITY  mediaSaveAs.accesskey "С">
+<!ENTITY  mediaSaveAs2.accesskey "н">
+<!ENTITY  mediaPreview          "Преглед на медиум:">
+
+<!ENTITY  feedTab               "Канали">
+<!ENTITY  feedTab.accesskey     "К">
+<!ENTITY  feedSubscribe         "Претплати се">
+<!ENTITY  feedSubscribe.accesskey "р">
+
+<!ENTITY  permTab               "Дозвола">
+<!ENTITY  permTab.accesskey     "Д">
+<!ENTITY  permUseDefault        "Основни поставки">
+<!ENTITY  permAskAlways         "Прашувај секогаш">
+<!ENTITY  permAllow             "Дозволи">
+<!ENTITY  permAllowSession      "Дозволи само сега">
+<!ENTITY  permBlock             "Блокирај">
+<!ENTITY  permissionsFor        "Дозвола за:">
+<!ENTITY  permPlugins           "Активирај приклучоци">
+
+<!ENTITY  permClearStorage           "Исчисти го складот">
+<!ENTITY  permClearStorage.accesskey "с">
+
+<!ENTITY  securityTab           "Безбедност">
+<!ENTITY  securityTab.accesskey "с">
+<!ENTITY  securityView.certView "Прикажи сертификат">
+<!ENTITY  securityView.accesskey "ф">
+<!ENTITY  securityView.unknown   "Непознато">
+
+
+<!ENTITY  securityView.identity.header   "Идентитет на мрежно место">
+<!ENTITY  securityView.identity.owner    "Сопственик:">
+<!ENTITY  securityView.identity.domain   "Мрежно место:">
+<!ENTITY  securityView.identity.verifier "Проверено од:">
+
+<!ENTITY  securityView.privacy.header                   "Приватност и историја">
+<!ENTITY  securityView.privacy.history                  "Сум го посетил ли ова мрежно место пред денес?">
+<!ENTITY  securityView.privacy.cookies                  "Дали оваа страница складира информации (колачиња) на мојот компјутер?">
+<!ENTITY  securityView.privacy.viewCookies              "Прикажи колачиња">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "к">
+<!ENTITY  securityView.privacy.passwords                "Дали снимив некои лозинки за оваа страница?">
+<!ENTITY  securityView.privacy.viewPasswords            "Прикажи снимени лозинки">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "р">
+
+<!ENTITY  securityView.technical.header                 "Технички детали">
+
+
+<!ENTITY  generalEncoding2      "Text Encoding:">
+<!ENTITY  generalTitle          "Title:">
+<!ENTITY  helpButton.label                              "Help">
+<!ENTITY  securityView.identity.validity "Expires on:">
+

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Управление сертификатами">
+
+<!ENTITY certmgr.tab.mine                     "Ваши сертификаты">
+<!ENTITY certmgr.tab.others2                  "Люди">
+<!ENTITY certmgr.tab.websites3                "Серверы">
+<!ENTITY certmgr.tab.ca                       "Центры сертификации">
+<!ENTITY certmgr.tab.orphan2                  "Другие">
+
+<!ENTITY certmgr.mine                         "У вас хранятся сертификаты от следующих организаций, служащие для вашей идентификации:">
+<!ENTITY certmgr.others                       "У вас хранятся сертификаты, служащие для идентификации следующих лиц:">
+<!ENTITY certmgr.websites2                    "У вас хранятся сертификаты, служащие для идентификации следующих серверов:">
+<!ENTITY certmgr.cas                          "У вас хранятся сертификаты, служащие для идентификации следующих центров сертификации:">
+<!ENTITY certmgr.orphans                      "У вас хранятся сертификаты, не подошедшие под какие-либо другие категории:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Основное">
+<!ENTITY certmgr.detail.general_tab.accesskey "О">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Подробности">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "П">
+
+<!ENTITY certmgr.pending.label                "Идёт проверка сертификата…">
+<!ENTITY certmgr.subjectinfo.label            "Кому выдано">
+<!ENTITY certmgr.issuerinfo.label             "Кем выдано">
+<!ENTITY certmgr.periodofvalidity.label       "Срок действия" >
+<!ENTITY certmgr.fingerprints.label           "Отпечатки">
+<!ENTITY certmgr.certdetail.title             "Информация о сертификате">
+<!ENTITY certmgr.certdetail.cn                "Общее имя (CN)">
+<!ENTITY certmgr.certdetail.o                 "Организация (O)">
+<!ENTITY certmgr.certdetail.ou                "Подразделение (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Серийный номер">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Отпечаток SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Отпечаток SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Изменение степени доверия сертификату CA">
+<!ENTITY certmgr.editcert.edittrust           "Изменить степень доверия:">
+<!ENTITY certmgr.editcert.trustssl            "Этот сертификат может служить для идентификации веб-сайтов.">
+<!ENTITY certmgr.editcert.trustemail          "Этот сертификат может служить для идентификации пользователей электронной почты.">
+<!ENTITY certmgr.editcert.trustobjsign        "Этот сертификат может служить для идентификации программного обеспечения.">
+
+<!ENTITY certmgr.deletecert.title             "Удаление сертификата">
+
+<!ENTITY certmgr.certname                     "Имя сертификата">
+<!ENTITY certmgr.certserver                   "Сервер">
+<!ENTITY certmgr.override_lifetime            "Срок действия">
+<!ENTITY certmgr.tokenname                    "Устройство защиты">
+<!ENTITY certmgr.begins                       "Действителен с">
+<!ENTITY certmgr.expires                      "Действителен по">
+<!ENTITY certmgr.email                        "Адрес электронной почты">
+<!ENTITY certmgr.serial                       "Серийный номер">
+
+<!ENTITY certmgr.close.label                  "Закрыть">
+<!ENTITY certmgr.close.accesskey              "а">
+<!ENTITY certmgr.view2.label                  "Просмотреть…">
+<!ENTITY certmgr.view2.accesskey              "о">
+<!ENTITY certmgr.edit3.label                  "Изменить доверие…">
+<!ENTITY certmgr.edit3.accesskey              "е">
+<!ENTITY certmgr.export.label                 "Экспортировать…">
+<!ENTITY certmgr.export.accesskey             "п">
+<!ENTITY certmgr.delete2.label                "Удалить…">
+<!ENTITY certmgr.delete2.accesskey            "д">
+<!ENTITY certmgr.delete_builtin.label         "Удалить или не доверять…">
+<!ENTITY certmgr.delete_builtin.accesskey     "л">
+<!ENTITY certmgr.backup2.label                "Сохранить копию…">
+<!ENTITY certmgr.backup2.accesskey            "х">
+<!ENTITY certmgr.backupall2.label             "Сохранить все…">
+<!ENTITY certmgr.backupall2.accesskey         "в">
+<!ENTITY certmgr.restore2.label               "Импортировать…">
+<!ENTITY certmgr.restore2.accesskey           "м">
+<!ENTITY certmgr.details.label                "Поля сертификатов">
+<!ENTITY certmgr.details.accesskey            "я">
+<!ENTITY certmgr.fields.label                 "Значение поля">
+<!ENTITY certmgr.fields.accesskey             "ч">
+<!ENTITY certmgr.hierarchy.label              "Иерархия сертификатов">
+<!ENTITY certmgr.hierarchy.accesskey2         "х">
+<!ENTITY certmgr.addException.label           "Добавить исключение…">
+<!ENTITY certmgr.addException.accesskey       "ю">
+
+<!ENTITY exceptionMgr.title                   "Добавить исключение безопасности">
+<!ENTITY exceptionMgr.exceptionButton.label   "Подтвердить исключение безопасности">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "т">
+<!ENTITY exceptionMgr.supplementalWarning     "Серьёзные банки, магазины и другие публичные сайты не будут просить вас делать это.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Сервер">
+<!ENTITY exceptionMgr.certlocation.url        "Адрес:">
+<!ENTITY exceptionMgr.certlocation.download   "Получить сертификат">
+<!ENTITY exceptionMgr.certlocation.accesskey  "е">
+<!ENTITY exceptionMgr.certstatus.caption      "Статус сертификата">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Просмотреть…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "с">
+<!ENTITY exceptionMgr.permanent.label         "Постоянно хранить это исключение">
+<!ENTITY exceptionMgr.permanent.accesskey     "т">

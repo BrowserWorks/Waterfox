@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage          "Tuccḍa deg ulday n tnaka n ifecka n iminig:">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings "Iγewwaṛen leqqayen">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector "Amaswaḍ">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label "Sken iminig n iɣunab">
+<!ENTITY options.showUserAgentStyles.tooltip "Armad n uɣewwaṛ-agi ad d-yesken iɣunab imezwar i d-yessuli iminig.">
+
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+<!ENTITY options.collapseAttrs.label "Gzem imyerren DOM">
+<!ENTITY options.collapseAttrs.tooltip "Gzem imyerren iɣezfanen ɣef umaswaḍ">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label "Aferdis amezwer i teɣma">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey "A">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.authored "Yura">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex "asedamrawan">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name "Ismawen initen">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh  "* Tiɣimit-agi, ad isali tikelt nniḍen asebter">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5    "Rmed tanaka n ifecka n teseɣtit n chrome n iminig d izegrar ">
+<!ENTITY options.enableChrome.tooltip3  "Armad n uɣewwaṛ-agi ad k-yeǧǧ ad tesqedceḍ ifecka n tneflit deg umnaḍ n iminig (s Ifecka > Taneflit web > Tanaka n ifecka n iminig) wa d yessireg taseɣtit n izegrar seg umsefrak n izegrar ">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3    "Rmed taseɣtit tanmeggagt">
+<!ENTITY options.enableRemote.tooltip2  "Armad n uɣewwaṛ-agi ad k-yeǧǧ ad tesqedceḍ ifecka n tneflit di tseɣtit n tummant tanmeggagt am Waterfox OS">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "Rmen tasertit worker (di tneflit)">
+<!ENTITY options.enableWorkers.tooltip  "Ma tremdeḍ asfren-a. Aya ad isireg ifecka n tneflit akken ad seɣtin inmahalen">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label     "Ssens JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Armad n uɣewwaṛ-agi ad irermed JavaScript i yiccer amiran. Aɣewwaṛ-agi ad ittwattu ticki tmedleḍ iccer neɣ tanaka n ifecka.">
+
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+<!ENTITY options.disableHTTPCache.label     "Arurmid uffir HTTP ( ma telddi Tanaka n ifecka )">
+<!ENTITY options.disableHTTPCache.tooltip   "Armed n weɣewwaṛ-agi ad irurmed Uffir HTTP i yakk iccaren i yesɛan Tanaka n ifecka yeldin. Tinafutin ur ttwarurmdent ara s uɣewwaṛ-agi.">
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label     "Rmed tanaka Workers s HTTP (ticki tanaka n ifecka teldi)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Armad n uɣewwaṛ-agi ad isireg ameẓlu Workers s HTTP i yiccaren anda tanaka n ifecka teldi.">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!ENTITY options.selectDefaultTools.label2    "Ifecka n tneflit imezwar">
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label  "Ifecka n teflit isbedden i zegrar">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label     "Tiqeffalin n tnaka n ifecka yellan">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label  "* Ur iţusefrak ara i wesaḍas amiran n tnaka n ifecka">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2   "Isental">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label   "Seqdec asentel n iminig Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Rmed/Ssens asentel n n iminig Developer Edition.">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label            "Tadiwent web">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label      "Rmed asragemz">
+<!ENTITY options.timestampMessages.tooltip    "Ma tremdeḍ asefren-agi, tiludna d tuffɣa di tdiwent Web a d-isken akud azemzan">
+
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!ENTITY options.debugger.label            "Tamseɣtayt">
+
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+<!ENTITY options.sourceMaps.label      "Rmed aɣbalu n tifelwiyi ">
+<!ENTITY options.sourceMaps.tooltip    "Ma tremdeḍ aɣewwaṛ-agi, iɣbula ad ttwaqqnen di temseɣtayt akked tdiwent.">
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label            "Amaẓrag n uɣanib">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "Sken tiɣbula tinezliyin">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Sken ti qbula tinezliyin (amedya: ifuyla Sass) deg umaẓrag n uɣanib d umaswaḍ">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label      "Semmed s twurmant CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Ččaṛ s twurmant taɣaṛa, azalen, imsefranen CSS deg umaẓrag n uɣanib ticki t-ţruḍ">
+
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!ENTITY options.screenshot.label            "Tikli n tuṭṭfa n ugdil">
+
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+<!ENTITY options.screenshot.clipboard.label      "Si tuṭṭfa n ugdil ɣer &quot;ɣef afus&quot;">
+<!ENTITY options.screenshot.clipboard.tooltip    "Ad isekles tuṭṭfa n ugdil s srid ɣer &quot;ɣef afus&quot;">
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+<!ENTITY options.screenshot.audio.label      "Γeṛ ameslaw n tkamirat">
+<!ENTITY options.screenshot.audio.tooltip    "Ad irmed amesalw n tkamirat m'ara ad teṭfeḍ agdil">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "Ismentifen imatuten">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "Rmed asniɣmes yezgan">
+<!ENTITY options.enablePersistentLogs.tooltip  "Ma tremdeḍ aɣewwar-agi, tadiwent web d asekrak n uẓeṭṭa ur isfaḍ ara inekcam yal tikelt ad tinigeḍ ɣeṛ usebter amaynut">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label    "Sken isefka n telɣubliṭ Gecko">
+<!ENTITY options.showPlatformData.tooltip  "Ma tremdeḍ asefren-agi, ineqqisen n umaɣnay JavaScript ad seddun izamulen n telɣubliṭ Gecko">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label                     "Ismenyifen n umaẓrag">
+<!ENTITY options.sourceeditor.detectindentation.label   "Kkes arigel">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Sumer arigel akken illa ugbur aɣbalu">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Mdel s twurmant ticciwin d ">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Ger s wudem awurman ticcewt tumdilt">
+<!ENTITY options.sourceeditor.expandtab.label           "Rigel s useqdec n tallunt">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Seqdec tafinaɣt tilemt deg umḍiq n tfinaɣt n trigla">
+<!ENTITY options.sourceeditor.tabsize.label             "Teɣzi n yiccer">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "z">
+<!ENTITY options.sourceeditor.keybinding.label          "Inegzumen n unasiw">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "I">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Amezwer">

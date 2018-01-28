@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Затваряне на раздел">
+<!ENTITY tabCrashed.restoreTab "Възстановяване">
+<!ENTITY tabCrashed.restoreAll "Възстановяване на всички сринали се раздели">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ееее. Разделът току-що се срина.">
+<!ENTITY tabCrashed.offerHelp "Можем да помогнем!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Изберете &tabCrashed.restoreTab; за презареждане на съдържанието.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Изберете &tabCrashed.restoreTab; или &tabCrashed.restoreAll; за презареждане на съдържанието.">
+<!ENTITY tabCrashed.requestHelp "Бихте ли ни помогнали?">
+<!ENTITY tabCrashed.requestHelpMessage "Докладите за сривове ни помагат да откриваме проблеми и да подобряваме &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Докладване на раздел">
+<!ENTITY tabCrashed.sendReport2 "Изпращане на доклад за срив на текущия раздел">
+<!ENTITY tabCrashed.commentPlaceholder2 "Коментар по желание (коментарите са общодостъпни)">
+<!ENTITY tabCrashed.includeURL2 "Добавяне на URL-адрес на страницата в доклада">
+<!ENTITY tabCrashed.emailPlaceholder "Въведете адреса на своята ел. поща">
+<!ENTITY tabCrashed.emailMe "Изпращане на имейл, когато има повече информация">
+<!ENTITY tabCrashed.reportSent "Докладът за срив е изпратен. Благодарим ви, че помагате да направим &brandShortName; по-добър!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Докладване на раздели във фонов режим">
+<!ENTITY tabCrashed.autoSubmit2 "Променяне на настройките, така че доклади за сривове да бъдат изпращани автоматично, включително и на раздели във фонов режим за тази и бъдещи сесии">

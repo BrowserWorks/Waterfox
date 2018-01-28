@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab সাম্প্রতিক ব্যবহৃত ট্যাবগুলোর মধ্যে ক্রমান্বয়ে ঘুড়বে।">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "নতুন উইন্ডোগুলো, নতুন ট্যাব-এ খোলা হবে">
+<!ENTITY newWindowsAsTabs.accesskey   "w">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "যখন একাধিক ট্যাব বন্ধ করার চেষ্টা করা হলে আপনাকে সর্তক করা হবে।">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "একাধিক ট্যাব খোলার ফলে &brandShortName; ধীর হয়ে যাবার সম্ভবনা থাকলে সতর্ক করা হবে।">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "একটি নতুন ট্যাবে একটি লিঙ্ক খুলার পর তা সাথে সাথে পরিবতিত হবে">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "উইন্ডোর টাস্কবারে ট্যাবের প্রাকদর্শন প্রদর্শিত হবে k">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "ট্যাব">

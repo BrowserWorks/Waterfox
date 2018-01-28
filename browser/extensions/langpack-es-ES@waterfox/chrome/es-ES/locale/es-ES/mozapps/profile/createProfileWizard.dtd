@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title "Asistente de creación de perfiles">
+<!ENTITY window.size "width: 45em; height: 32em;">
+<!ENTITY profileCreationExplanation_1.text "&brandShortName; guarda información sobre su configuración y preferencias en su perfil personal.">
+<!ENTITY profileCreationExplanation_2.text "Si comparte esta copia de &brandShortName; con otros usuarios, puede usar perfiles para mantener separada la información de cada usuario. Para ello, cada usuario debe crear su propio perfil.">
+<!ENTITY profileCreationExplanation_3.text "Si es la única persona que usa esta copia de &brandShortName;, debe tener al menos un perfil. Si lo desea, puede crear múltiples perfiles con el fin de guardar diferentes conjuntos de configuraciones y preferencias. Por ejemplo, puede querer tener perfiles separados para uso personal y uso profesional.">
+<!ENTITY profileCreationExplanation_4.text "Para comenzar a crear su perfil, haga clic en Siguiente.">
+<!ENTITY profileCreationExplanation_4Mac.text "Para comenzar a crear su perfil, haga clic en Continuar.">
+<!ENTITY profileCreationExplanation_4Gnome.text "Para comenzar a crear su perfil, haga clic en Siguiente.">
+<!ENTITY profileCreationIntro.text "Si crea distintos perfiles puede distinguirlos por sus nombres. Puede usar el nombre proporcionado aquí o escoger uno usted mismo.">
+<!ENTITY profilePrompt.label "Introduzca nombre del nuevo perfil:">
+<!ENTITY profilePrompt.accesskey "E">
+<!ENTITY profileDirectoryExplanation.text "Su configuración de usuario, preferencias y otros datos relativos al usuario se guardarán en:">
+<!ENTITY profileDefaultName "Usuario predeterminado">
+<!ENTITY button.choosefolder.label "Elegir carpeta…">
+<!ENTITY button.choosefolder.accesskey "C">
+<!ENTITY button.usedefault.label "Usar carpeta predeterminada">
+<!ENTITY button.usedefault.accesskey "U">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "ចាប់ផ្ដើម​ឡើង">
+
+<!ENTITY startupPage2.label        "នៅពេល &brandShortName; ចាប់ផ្ដើម">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "បង្ហាញ​ទំព័រ​ដើម​របស់​អ្នក">
+<!ENTITY startupBlankPage.label    "បង្ហាញ​ទំព័រ​ទទេ">
+<!ENTITY startupPrevSession.label  "បង្ហាញ​បង្អួច និង​ផ្ទាំង​របស់​ខ្ញុំ​កាល​ពី​មុន">
+
+<!ENTITY homepage2.label           "ទំព័រ​ដើម">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "ប្រើ​ទំព័រ​បច្ចុប្បន្ន">
+<!ENTITY useCurrentPage.accesskey  "ប">
+<!ENTITY useMultiple.label         "ប្រើ​ទំព័រ​បច្ចុប្បន្ន">
+<!ENTITY chooseBookmark.label      "ប្រើ​ចំណាំ…">
+<!ENTITY chooseBookmark.accesskey  "ច">
+<!ENTITY restoreDefault.label      "ស្ដារ​ទៅ​លំនាំ​ដើម">
+<!ENTITY restoreDefault.accesskey  "ស">
+
+<!ENTITY downloads.label     "ទាញ​យក">
+
+<!ENTITY saveTo.label "រក្សា​ទុក​ឯកសារ​ទៅ">
+<!ENTITY saveTo.accesskey "ក">
+<!ENTITY chooseFolderWin.label        "រក​មើល…">
+<!ENTITY chooseFolderWin.accesskey    "ល">
+<!ENTITY chooseFolderMac.label        "ជ្រើស…">
+<!ENTITY chooseFolderMac.accesskey    "ស">
+<!ENTITY alwaysAskWhere.label         "តែងតែ​សួរ​​រក​កន្លែង​ដែល​ត្រូវរក្សាទុក​ឯកសារ">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "ពិនិត្យជានិច្ច ថា &brandShortName; ជា​កម្មវិធី​អ៊ីនធឺណិត​លំនាំដើម">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "ធ្វើឲ្យជា​លំនាំដើម">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "ជ">
+<!ENTITY isDefault.label                  "&brandShortName; បច្ចុប្បន្ន​ជា​កម្មវិធី​រុករក​លំនាំដើម​របស់​អ្នក">
+<!ENTITY isNotDefault.label               "&brandShortName; វា​មិន​មែន​ជា​កម្មវិធី​រុករក​លំនាំដើម​របស់​អ្នក">
+
+<!ENTITY separateProfileMode.label        "អនុញ្ញាត​ឲ្យ &brandShortName; និង Waterfox ដំណើរការ​ក្នុង​ពេល​ដូចគ្នា">
+<!ENTITY useWaterfoxSync.label             "ព័ត៌មាន​ជំនួយ៖ វា​ប្រើ​បវត្តិរូប​ដាច់ដោយឡែក។ ប្រើ​ការ​ធ្វើ​សមកាលកម្ម​ដើម្បី​ចែករំលែក​ទិន្នន័យ​រវាង​ពួកគេ។">
+<!ENTITY getStarted.notloggedin.label     "ចូល &syncBrand.shortName.label; ...">
+<!ENTITY getStarted.configured.label      "បើក​ចំណូលចិត្ត &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "អនុញ្ញាត​ &brandShortName; ដំណើរការ​ច្រើន​ប្រភេទ​​">
+
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

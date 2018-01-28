@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "অ্যাড-অন সম্ভবত সমস্যা করছে">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "স্থায়ীত্ব বা নিরাপত্তাজনিত সমস্যা তৈরি করার জন্য &brandShortName; নিম্নলিখিত অ্যাড-অনগুলোকে চিহ্নিত করেছে:">
+<!ENTITY blocklist.softblocked       "আপনার সুরক্ষার জন্য, এই অ্যাড-অনগুলো নিষ্ক্রিয় করে পুনরায় শুরু করার পরামর্শ দেয়া হচ্ছে।">
+<!ENTITY blocklist.hardblocked       "এই অ্যাড-অনগুলো ব্যবহার করলে স্থায়ীত্ব বা নিরাপত্তার ঝুঁকি থাকে, ফলে এগুলো প্রতিরোধ করা হয়েছে, কিন্তু এদেরকে পুরোপুরি নিষ্ক্রিয় করতে পুনরায় শুরু করা প্রয়োজন।">
+<!ENTITY blocklist.softandhard       "যেসব অ্যাড-অনের স্থায়ীত্ব বা নিরাপত্তার বেশি ঝুঁকি আছে সেগুলো প্রতিরোধ করা হয়েছে। অন্যগুলো কম ঝুঁকিপূর্ণ, কিন্তু সেগুলো নিষ্ক্রিয় করে পুনরায় আরম্ভ করার জন্য পরামর্শ দেয়া হচ্ছে।">
+<!ENTITY blocklist.moreinfo          "আরও তথ্য">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; পুনরায় শুরু করা হবে (R)">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "ব্লককৃত">
+<!ENTITY blocklist.checkbox.label    "নিষ্ক্রিয়">

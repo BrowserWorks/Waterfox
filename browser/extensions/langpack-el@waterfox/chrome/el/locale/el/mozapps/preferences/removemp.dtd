@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Αφαίρεση κύριου κωδικού πρόσβασης">
+<!ENTITY removeInfo.label                  "Θα πρέπει να εισάγετε τον κύριο κωδικό σας για να συνεχίσετε:">
+<!ENTITY removeWarning1.label              "Ο Κύριος κωδικός χρησιμοποιείται για την προστασία ευαίσθητων δεδομένων όπως οι κωδικοί σελίδων.">
+<!ENTITY removeWarning2.label              "Αν απομακρύνετε τον Κύριο κωδικό, δεν θα υπάρχει προστασία των προσωπικών σας πληροφοριών.">
+<!ENTITY setPassword.oldPassword.label     "Τρέχων κωδικός:">
+

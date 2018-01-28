@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Generale">
+
+<!ENTITY accessibility.label             "Acesibilitæ">
+
+<!ENTITY useCursorNavigation.label       "Adeuvia de longo i pomelli de direçion pe navegâ in sce pagine">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Çerca tanto che son derê a scrive">
+<!ENTITY searchOnStartTyping.accesskey   "s">
+<!ENTITY blockAutoReload.label           "Avizime quande o scito o preuva a ridireçionâ ò recaregâ a pagina">
+<!ENTITY blockAutoReload.accesskey       "q">
+<!ENTITY useOnScreenKeyboard.label       "Mostra a tastea da tocâ quande a serve">
+<!ENTITY useOnScreenKeyboard.accesskey   "t">
+
+<!ENTITY browsing.label                  "Çerca">
+
+<!ENTITY useAutoScroll.label             "Adeuvia rebelamento aotomatico">
+<!ENTITY useAutoScroll.accesskey         "d">
+<!ENTITY useSmoothScrolling.label        "Adeuvia rebelamento regolâ">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "Contròlla l'òrtografia quande scrivo">
+<!ENTITY checkUserSpelling.accesskey     "l">
+
+<!ENTITY dataChoicesTab.label            "Dæti çernûi">
+
+<!ENTITY healthReportDesc.label          "Analizza e prestaçioin do navegatô e condividdi informaçioin con &vendorShortName; in sciô stæto d'integritæ do software">
+<!ENTITY enableHealthReport.label        "Ativa valutaçion d'integritæ de &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "v">
+<!ENTITY healthReportLearnMore.label     "Atre informaçioin">
+
+<!ENTITY telemetryDesc.label             "Condividdi con &vendorShortName; informaçioin in sce prestaçioin, uzo, hardware e personalizaçioin do navegatô pe contribuî a-o megioamento de &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Condividdi atri dæti (telemetria)">
+<!ENTITY enableTelemetryData.accesskey   "t">
+<!ENTITY telemetryLearnMore.label        "Atre informaçioin">
+
+<!ENTITY crashReporterDesc2.label         "I report di cianti agiutan &vendorShortName; a scistemâ problemi e fâ 'n navegatô ciù stabile e seguo">
+<!ENTITY alwaysSubmitCrashReports.label   "Permetti a &brandShortName; de mandâ in backgroud di report a-o teu pòsto">
+<!ENTITY alwaysSubmitCrashReports.accesskey "m">
+<!ENTITY crashReporterLearnMore.label     "Atre informaçioin">
+
+<!ENTITY networkTab.label                "Ræ de lou">
+
+<!ENTITY connection.label                "Conescion">
+
+<!ENTITY connectionDesc.label            "Definisci comme &brandShortName; o se conette a Internet">
+<!ENTITY connectionSettings.label        "Inpostaçioin…">
+<!ENTITY connectionSettings.accesskey    "I">
+
+<!ENTITY httpCache.label                 "Contegnuo Web inta cache">
+
+<!ENTITY offlineStorage2.label           "Contegnuo web e dæti utente feua linia">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Dæti di scito">
+<!ENTITY clearSiteData.label             "Scancella tutti i dæti">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Inpostaçioin…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Pe saveine de ciù">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Limita a cache a">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB de spaçio">
+<!ENTITY clearCacheNow.label             "Scancelâ Oua">
+<!ENTITY clearCacheNow.accesskey         "c">
+<!ENTITY clearOfflineAppCacheNow.label   "Scancelâ Oua">
+<!ENTITY clearOfflineAppCacheNow.accesskey "n">
+<!ENTITY overrideSmartCacheSize.label    "Ignòra a gestion aotomatica da cache">
+<!ENTITY overrideSmartCacheSize.accesskey "o">
+
+<!ENTITY updateTab.label                 "Agiorna">
+
+<!ENTITY updateApplication.label         "Agiornamenti de &brandShortName;">
+<!ENTITY updateAuto1.label               "Installa i agiornamenti in aotomatico (racomandou: ciù seguessa)">
+<!ENTITY updateAuto1.accesskey           "s">
+<!ENTITY updateCheckChoose.label         "Contròlla se gh'é agiornamenti, ma famme decidde a mi se instalali">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateManual.label              "No çercâ mai i agiornamenti (no racomandou: reizego de seguessa)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Fanni vedde a stöia di agiornamenti">
+<!ENTITY updateHistory.accesskey         "F">
+
+<!ENTITY useService.label                "Uzâ 'n serviçio ascozo pe instalâ i agiornamenti">
+<!ENTITY useService.accesskey            "z">
+
+<!ENTITY autoUpdateOthers.label          "Agiornamenti outomatichi">
+<!ENTITY enableSearchUpdate.label        "Motô de riçerca">
+<!ENTITY enableSearchUpdate.accesskey    "M">
+
+<!ENTITY offlineStorageNotify.label               "Dimme quando un scito o veu sarvâ di dæti da êse adeuviæ feua linia">
+<!ENTITY offlineStorageNotify.accesskey           "D">
+<!ENTITY offlineStorageNotifyExceptions.label     "Eceçioin…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "c">
+
+<!ENTITY offlineAppsList2.label          "Sti sciti chi peuan sarvâ dæti pe l'uzo feua linia:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Leva da mezo…">
+<!ENTITY offlineAppsListRemove.accesskey "L">
+<!ENTITY offlineAppRemove.confirm        "Leva da mezo i dæti feua linia">
+
+<!ENTITY certificateTab.label            "Certificati">
+<!ENTITY certPersonal.label              "Domanda">
+<!ENTITY certPersonal.description        "Quande 'n server o domanda o teu certificato personale:">
+<!ENTITY selectCerts.auto                "Seleçionn-a un in outomatico">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Domandimòu tutte e vòtte">
+<!ENTITY selectCerts.ask.accesskey       "D">
+<!ENTITY enableOCSP.label                "Domanda a-i risponditoî OCSP pe confermâ a validitæ di certificati oua">
+<!ENTITY enableOCSP.accesskey            "o">
+<!ENTITY viewCerts.label                 "Fanni vedde certificati">
+<!ENTITY viewCerts.accesskey             "F">
+<!ENTITY viewSecurityDevices.label       "Aparati">
+<!ENTITY viewSecurityDevices.accesskey   "p">
+
+<!ENTITY allowHWAccel.label              "Adeuvia l'aceleraçion hardware se a gh'é">
+<!ENTITY allowHWAccel.accesskey          "h">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

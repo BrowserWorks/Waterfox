@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Կարգավորումներ (about:config)">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Սա կարող է վնասել ձեր երաշխիքը!">
+<!ENTITY aboutWarningText.label "Լրացուցիչ կարգավորումների փոփոխումը կարող է լինել վտանգել այս ծրագրի կայունությունը, անվտանգությունը և աշխատանքի որակը: Դուք պետք է շարունակեք միայն այն դեպքում, երբ վստահ գիտեք թե ինչ էք անում:">
+<!ENTITY aboutWarningButton2.label "Ես հասկանում եմ ռիսկը:">
+<!ENTITY aboutWarningCheckbox.label "Ցուցադրել այս զգուշացումը հաջորդ անգամ">
+
+<!ENTITY searchPrefs.label "Որոնում.">
+<!ENTITY searchPrefs.accesskey "ւ">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Նախընտրանքի անունը">
+<!ENTITY lockColumn.label "Կարգավիճակ">
+<!ENTITY typeColumn.label "Տեսակը">
+<!ENTITY valueColumn.label "Արժեքը">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Սեղմեք՝ խմբավորելու համար"> 
+<!ENTITY columnChooser.tooltip "Սեղմեք ցուցադրվող սյուներն ընտրելու համար"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Պատճենել">
+<!ENTITY copyPref.accesskey "Պ">
+<!ENTITY copyName.label "Պատճենել անունը">
+<!ENTITY copyName.accesskey "ա">
+<!ENTITY copyValue.label "Պատճենել արժեքը ">
+<!ENTITY copyValue.accesskey "ա">
+<!ENTITY modify.label "Ձևափոխել">
+<!ENTITY modify.accesskey "Ձ">
+<!ENTITY toggle.label "Հակառակը">
+<!ENTITY toggle.accesskey "Հ">
+<!ENTITY reset.label "Վերակայել">
+<!ENTITY reset.accesskey "Վ">
+<!ENTITY new.label "Նոր">
+<!ENTITY new.accesskey "ր">
+<!ENTITY string.label "Տողը">
+<!ENTITY string.accesskey "Տ">
+<!ENTITY integer.label "Ամբողջ">
+<!ENTITY integer.accesskey "Ա">
+<!ENTITY boolean.label "Բուլյան">
+<!ENTITY boolean.accesskey "Բ">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Motor de căutare implicit">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Alege motorul de căutare implicit. &brandShortName; îl folosește în bara de adresă, bara de căutare și pagina de start.">
+
+<!ENTITY provideSearchSuggestions.label        "Furnizează sugestii de căutare">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Afișează sugestiile de căutare în rezultatele din bara de locație">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Sugestiile de căutare nu vor fi afișate în rezultatele din bara de adrese deoarece ai configurat &brandShortName; ca să nu țină minte niciodată istoricul.">
+
+<!ENTITY oneClickSearchEngines.label           "Motoare de căutare la un clic distanță">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Bara de căutare îți permite să cauți direct cu diferite motoare de căutare. Alege motoarele de căutare cu care să cauți.">
+
+<!ENTITY engineNameColumn.label                "Motor de căutare">
+<!ENTITY engineKeywordColumn.label             "Cuvânt cheie">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaurează motoarele de căutare implicite">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "Elimină">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "Adaugă mai multe motoare de căutare…">

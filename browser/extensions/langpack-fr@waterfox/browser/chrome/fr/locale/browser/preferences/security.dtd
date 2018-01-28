@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Sécurité">
+<!ENTITY  phishingProtection.label       "Protection contre le hameçonnage">
+
+<!ENTITY  warnOnAddonInstall2.label       "Prévenir lorsque les sites essaient d’installer des modules complémentaires">
+<!ENTITY  warnOnAddonInstall2.accesskey   "P">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Bloquer les contenus dangereux ou trompeurs">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloquer les téléchargements dangereux">
+<!ENTITY  blockDownloads.accesskey        "D">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Signaler la présence de logiciels indésirables ou peu communs">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "n">
+
+<!ENTITY  addonExceptions.label         "Exceptions…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "Formulaires et mots de passe">
+
+<!ENTITY  rememberLogins2.label         "Enregistrer les identifiants et les mots de passe pour les sites web">
+<!ENTITY  rememberLogins2.accesskey     "s">
+<!ENTITY  passwordExceptions.label      "Exceptions…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "Utiliser un mot de passe principal">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "Changer le mot de passe principal…">
+<!ENTITY  changeMasterPassword.accesskey "C">
+
+<!ENTITY  savedLogins.label              "Identifiants enregistrés…">
+<!ENTITY  savedLogins.accesskey          "I">

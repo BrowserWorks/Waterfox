@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "မူသေ ရှာဖွေရေး ယန္တရား">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "မူသေ ရှာဖွေရေးယန္တရားကို ရွေးပါ။ &brandShortName; သည် ၄င်းကို ရှာဖွေကြည့်ရှုခြင်းဘား၊ ရှာဖွေရေးဘားနှင့် အစ စာမျက်နှာတွင် အသုံးပြုပါသည်။">
+
+<!ENTITY provideSearchSuggestions.label        "ရှာဖွေရေး အကြံပြုချက်များကို ပြပါ">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "ရှာဖွေကြည့်ရှုရေး ဘား၏ ရလဒ်စာရင်းတွင် ရှာဖွေရေး အကြံပြုချက်များကို ပြပါ">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "ရှာဖွေရေးဘားတွင် ရှာဖွေမှု အကြံပြုချက်များကို ပြသမည်မဟုတ်ပါ။ မှတ်တမ်းများ မှတ်မထားရန် &brandShortName; ကို သတ်မှတ်ထားသောကြောင့် ဖြစ်သည်။">
+
+<!ENTITY oneClickSearchEngines.label           "ကလစ် တစ်ချက်နှိပ် ရှာဖွေရေးယန္တရားများ">
+
+<!ENTITY chooseWhichOneToDisplay.label         "ရှာဖွေရေးဘားသည် ရှာဖွေရေးယန္တရားကို တိုက်ရိုက်ရှာဖွေနိုင်စေသည်။ မည်သည့်တစ်ခု အသုံးပြုမည်ကို ရွေးပါ။">
+
+<!ENTITY engineNameColumn.label                "ရှာဖွေရေးယန္တရား">
+<!ENTITY engineKeywordColumn.label             "သော့ချက် စာလုံး">
+
+<!ENTITY restoreDefaultSearchEngines.label     "ရှာဖွေရေးယန္တရားများကို မူလအတိုင်း ပြန်ထားပါ">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "ဖယ်ရှားပါ">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines2.label           "ရှာဖွေရေးယန္တရားများကို ထပ်ထည့်ပါ">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

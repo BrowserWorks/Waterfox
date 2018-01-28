@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Kinuk'samajel taq tz'aqat">
+
+<!ENTITY search.placeholder                   "Kekanöx taq tz'aqat">
+<!ENTITY search.buttonlabel                   "Tikanöx">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "p">
+
+<!ENTITY loading.label                        "Tajin nusamajib'ej…">
+<!ENTITY listEmpty.installed.label            "Man ayakon ta re ruwäch tz'aqat re'">
+<!ENTITY listEmpty.availableUpdates.label     "Majun taq k'exoj ruwäch xe'ilitäj ">
+<!ENTITY listEmpty.recentUpdates.label        "Majun k'ak'a' k'exoj ab'anon chi ke ri taq tz'aqat">
+<!ENTITY listEmpty.findUpdates.label          "Kekanöx taq jaloj">
+<!ENTITY listEmpty.search.label               "Man xe'ilitäj ta taq tz'aqat ri nikixïm ki'">
+<!ENTITY listEmpty.button.label               "Tetamäx ch'aqa' chik chi kij ri taq tz'aqat">
+<!ENTITY installAddonFromFile.label           "Tiyak ri tz'aqat rik'in ri yakb'äl…">
+<!ENTITY installAddonFromFile.accesskey       "T">
+<!ENTITY toolsMenu.tooltip                    "Taq kisamajib'al konojel ri taq tz'aqat">
+
+<!ENTITY getThemes.description                "¿La tajin natojtob'ej nawichinaj ri awokik'amaya'l?">
+<!ENTITY getThemes.learnMore                  "Tacha' chi kikojol jalajöj taq wachinïk.">
+
+<!ENTITY cmd.back.tooltip                     "Titzolïx jun ruxaq">
+<!ENTITY cmd.forward.tooltip                  "Jun chik ruxaq">
+
+<!ENTITY showUnsignedExtensions.button.label  "Jujun taq k'amal man tikirel ta yenik'öx">
+<!ENTITY showAllExtensions.button.label       "Kek'ut pe konojel ri taq ruk'amal">
+<!ENTITY debugAddons.label                    "Kechojmirisäx taq tz'aqat">
+<!ENTITY debugAddons.accesskey                "c">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Konojel ri taq tz'aqat xechup pa ri ütz rub'eyal.">
+<!ENTITY warning.checkcompatibility.label          "Chupül ri runuk'oxik richin we nikik'äm ki' ri taq tz'aqat. Rik'in jub'a' k'o jujun taq tz'aqat, ri man nikik'äm ta ki'.">
+<!ENTITY warning.checkcompatibility.enable.label   "Titzij">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Titzij ri runik'oxik richin chi nikik'äm ki' ri taq tz'aqat.">
+<!ENTITY warning.updatesecurity.label              "Chupül ri runik'oxik chajinïk richin kik'exoj taq tz'aqat. Rik'in jub'a' k'o pa k'ayewal ri awokik'amaya'l kuma ri taq k'exoj.">
+<!ENTITY warning.updatesecurity.enable.label       "Titzij">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Titzij ri ya'öl retal chajinïk richin nik'ex ri tz'aqat">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Tikanöx">
+<!ENTITY view.discover.label                  "Kek'ulutäj ri taq tz'aqat">
+<!ENTITY view.recentUpdates.label             "K'ak'a' taq k'exoj">
+<!ENTITY view.availableUpdates.label          "Taq k'exoj e k'o">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Kekanöx taq k'exoj">
+<!ENTITY updates.checkForUpdates.accesskey    "K">
+<!ENTITY updates.viewUpdates.label            "Ketz'et k'ak'a' taq k'exoj">
+<!ENTITY updates.viewUpdates.accesskey        "K">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "kek'ex taq tz'aqat pa kiyonil">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "k">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Titzolïx chi kij konojel ri taq tz'aqat richin kek'ex pa kiyonil">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "T">
+<!ENTITY updates.resetUpdatesToManual.label          "Titzolïx chi kij konojel ri taq tz'aqat richin kek'ex pa chi q'ab'aj.">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "T">
+<!ENTITY updates.updating.label               "Tajin yek'ex ri taq tz'aqat">
+<!ENTITY updates.installed.label              "Xek'extäj re taq atz'aqat re'.">
+<!ENTITY updates.downloaded.label             "Xeq'at ri kik'exoj ri taq atz'aqat.">
+<!ENTITY updates.restart.label                "Tatikirisaj chik wakami richin natz'aqatisaj ri yakoj">
+<!ENTITY updates.noneFound.label              "Majun taq k'exoj ruwäch xe'ilitäj ">
+<!ENTITY updates.manualUpdatesFound.label     "Ketz'et ri taq k'exoj e k'o">
+<!ENTITY updates.updateSelected.label         "Keyak taq k'exoj">
+<!ENTITY updates.updateSelected.tooltip       "Keyak ri taq k'exoj e k'o pa re rucholajem re'">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Kek'ut pe ch'aqa' chik rutzijol">
+<!ENTITY cmd.showDetails.accesskey            "K">
+<!ENTITY cmd.findUpdates.label                "Kekanöx taq k'exoj">
+<!ENTITY cmd.findUpdates.accesskey            "K">
+<!ENTITY cmd.preferencesWin.label             "Taq cha'oj">
+<!ENTITY cmd.preferencesWin.accesskey         "c">
+<!ENTITY cmd.preferencesUnix.label            "Taq ajowab'äl">
+<!ENTITY cmd.preferencesUnix.accesskey        "T">
+<!ENTITY cmd.about.label                      "Chi rij">
+<!ENTITY cmd.about.accesskey                  "C">
+
+<!ENTITY cmd.enableAddon.label                "Titzij">
+<!ENTITY cmd.enableAddon.accesskey            "T">
+<!ENTITY cmd.disableAddon.label               "Tichup">
+<!ENTITY cmd.disableAddon.accesskey           "T">
+<!ENTITY cmd.enableTheme.label                "Tokisäx wachinel">
+<!ENTITY cmd.enableTheme.accesskey            "T">
+<!ENTITY cmd.disableTheme.label               "Tiq'at rokisaxik wachinel">
+<!ENTITY cmd.disableTheme.accesskey           "r">
+<!ENTITY cmd.askToActivate.label              "Tik'utüx richin nitzij">
+<!ENTITY cmd.askToActivate.tooltip            "Tik'utüx pe richin toq xtokisäx re tz'aqat re'">
+<!ENTITY cmd.alwaysActivate.label             "Junelïk tzijïl">
+<!ENTITY cmd.alwaysActivate.tooltip           "Junelïk tokisäx re tz'aqat re'">
+<!ENTITY cmd.neverActivate.label              "Majub'ey titzij">
+<!ENTITY cmd.neverActivate.tooltip            "Majub'ey tokisäx re tz'aqat re'">
+<!ENTITY cmd.stateMenu.tooltip                "Tijal toq re tz'aqat re' tzijïl">
+<!ENTITY cmd.installAddon.label               "Tiyak">
+<!ENTITY cmd.installAddon.accesskey           "T">
+<!ENTITY cmd.uninstallAddon.label             "Telesäx">
+<!ENTITY cmd.uninstallAddon.accesskey         "s">
+<!ENTITY cmd.showPreferencesWin.label         "Taq cha'oj">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Kejal ri taq rucha'oj re tz'aqat re'">
+<!ENTITY cmd.showPreferencesUnix.label        "Taq ajowab'äl">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Kejal ri taq rajowaxik re tz'aqat re'">
+<!ENTITY cmd.contribute.label                 "Kito'on">
+<!ENTITY cmd.contribute.accesskey             "K">
+<!ENTITY cmd.contribute.tooltip               "Kito'on chi rusamajixik re tz'aqat re'">
+
+<!ENTITY cmd.showReleaseNotes.label           "Kek'ut pe ri ch'utaq rutzijol re ruwäch">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Kek'ut ri taq rutzijol re ruwäch chi k'exoj re'">
+<!ENTITY cmd.hideReleaseNotes.label           "Ke'ewäx taq rutziol ri ruwäch">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Ke'ewäx ri taq rutzijol re ruwäch chi k'exoj re'">
+<!ENTITY cmd.findReplacement.label            "Tikanöx jun richin nijal">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "¿Atux ri taq tz'aqat?">
+<!ENTITY discover.description2                "Ri taq tz'aqat taq e chokoy, ri nikiya' q'ij chawe richin nawichinaj &brandShortName; rik'in rutz'aqat rusamaj o rub'anikil. Tatojtob'ej rik'in rukajtz'ik ruchi' richin nayäk aramaj, jun rutzijonel rub'anikil ri q'ij o tatz'eta' konojel ri taq na'oj richin naya' kan &brandShortName; achi'el arayib'al.">
+<!ENTITY discover.footer                      "Toq atokinäq pa k'amaya'l, re pas re' xtiwachin pe jujun chi ke ri e ütz chuqa' ri konojel yekanon ri taq tz'aqat ri', richin ye'atojtob'ej.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Ruwäch">
+<!ENTITY detail.lastupdated.label             "Ruk'isib'äl k'exoj">
+<!ENTITY detail.creator.label                 "Nuk'unel">
+<!ENTITY detail.homepage.label                "Ruxaq tikirib'äl">
+<!ENTITY detail.numberOfDownloads.label       "Taq qasa'n">
+
+<!ENTITY detail.contributions.description     "Ri runuk'unel re tz'aqat re', nuk'utüj chawe chi tato' rik'in rub'anik, rik'in naya' jun ko'öl ato'ik.">
+
+<!ENTITY detail.updateType                    "K'exoj pa kiyonil">
+<!ENTITY detail.updateDefault.label           "Jikib'an wi">
+<!ENTITY detail.updateDefault.tooltip         "Pa kiyonil keyak ri taq k'exoj, xa xe we kan e k'o wi">
+<!ENTITY detail.updateAutomatic.label         "Titzij">
+<!ENTITY detail.updateAutomatic.tooltip       "Kiyonïl keyak ri taq k'exoj">
+<!ENTITY detail.updateManual.label            "Tichup">
+<!ENTITY detail.updateManual.tooltip          "Man keyak pa kiyonil ri taq k'exoj">
+<!ENTITY detail.home                          "Ruxaq tikirib'äl">
+<!ENTITY detail.repository                    "Ruwäch rub'i' tz'aqat">
+<!ENTITY detail.size                          "Nimilem">
+
+<!ENTITY detail.checkForUpdates.label         "Kekanöx taq k'exoj">
+<!ENTITY detail.checkForUpdates.accesskey     "t">
+<!ENTITY detail.checkForUpdates.tooltip       "Kekanöx taq kik'exoj re taq tz'aqat re'">
+<!ENTITY detail.showPreferencesWin.label      "Taq cha'oj">
+<!ENTITY detail.showPreferencesWin.accesskey  "T">
+<!ENTITY detail.showPreferencesWin.tooltip    "Kejal ri taq rucha'oj re tz'aqat re'">
+<!ENTITY detail.showPreferencesUnix.label     "Taq ajowab'äl">
+<!ENTITY detail.showPreferencesUnix.accesskey "a">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Kejal ri taq rajowaxik re tz'aqat re'">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Kijachik">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Tuxlan">
+<!ENTITY progress.cancel.tooltip              "Tiq'at">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "B'i'aj">
+<!ENTITY sort.name.tooltip                    "Kenuk' chi b'i'aj">
+<!ENTITY sort.dateUpdated.label               "Ruk'isib'äl k'exoj">
+<!ENTITY sort.dateUpdated.tooltip             "Ticholajíx chi ruq'ijul xk'ex">
+<!ENTITY sort.relevance.label                 "Chuq'utz'ib'anem">
+<!ENTITY sort.relevance.tooltip               "Ticholajïx chi ruq'ij">
+<!ENTITY sort.price.label                     "Rajil">
+<!ENTITY sort.price.tooltip                   "Tinuk' chi rajil">
+
+<!ENTITY search.filter2.label                 "Tikanöx:">
+<!ENTITY search.filter2.installed.label       "Taq nutz'aqat">
+<!ENTITY search.filter2.installed.tooltip     "Kek'ut pe ri taq tz'aqat eyakon">
+<!ENTITY search.filter2.available.label       "Taq tz'aqat ri e k'o">
+<!ENTITY search.filter2.available.tooltip     "Kek'ut pe ri taq tz'aqat e k'o richin yeyak">
+
+<!ENTITY addon.homepage                       "Ruxaq tikirib'äl">
+<!ENTITY addon.details.label                  "Ch'aqa' chik">
+<!ENTITY addon.details.tooltip                "Titz'et ch'aqa' chik taq rub'anikil re tz'aqat re'">
+<!ENTITY addon.unknownDate                    "Man etaman ta ruwäch">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "B'ANOB'ÄL">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(chupül)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Tik'ex">
+<!ENTITY addon.undoAction.label               "Titzolïx">
+<!ENTITY addon.undoAction.tooltip             "Titzolïx chi rij re jun samaj re'">
+<!ENTITY addon.undoRemove.label               "Titzolïx">
+<!ENTITY addon.undoRemove.tooltip             "Tib'än chi tiyake' re rutz'aqat re'">
+<!ENTITY addon.restartNow.label               "Titzij chik wakami">
+<!ENTITY addon.install.label                  "Tiyak">
+<!ENTITY addon.install.tooltip                "Tiyak re tz'aqat re'">
+<!ENTITY addon.updateNow.label                "Tik'ex wakami">
+<!ENTITY addon.updateNow.tooltip              "Tiyak ri ruk'exoj re tz'aqat re'">
+<!ENTITY addon.includeUpdate.label            "Tiya' pa ri k'exoj">
+<!ENTITY addon.updateAvailable.label          "K'o jun k'exoj">
+<!ENTITY addon.checkingForUpdates.label       "Tajin yekanöx taq k'exoj ruwäch…">
+<!ENTITY addon.releaseNotes.label             "Ruch'utitzijol re ruwäch re'">
+<!ENTITY addon.loadingReleaseNotes.label      "Tajin nusamajib'ej…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Takuyu' qamak, xa xk'ulwachitäj jun sachoj toq tajin nok pa ch'utaq rutzijol ri ko'öl wuj.">
+
+<!ENTITY addon.createdBy.label                "Ruma">
+
+<!ENTITY eula.title                           "Taq rutzij ya'öl q'ij kichin ri ruk'isib'äl winäq okisanel">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Ütz chuqa' tiyak…">
+
+<!ENTITY settings.path.button.label           "Tinik'öx…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "¿Achike re re'? Ri Telemetry nitikïr yeruyäk chuqa' yerusamajij jujun taq solna'oj. ">
+<!ENTITY experiment.info.learnmore "Tetamäx ch'aqa' chik">
+<!ENTITY experiment.info.learnmore.accesskey "K">
+<!ENTITY experiment.info.changetelemetry "Taq rajowab'äl Telemetry">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Tetamäx ch'aqa' chik…">
+
+<!ENTITY disabledUnsigned.heading "Jujun taq tz'aqat xechup">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Re taq tz'aqat re' man xenik'öx ta richin ye'okisáx pa &brandShortName;. Tatikïr ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "Ke'ilitäj taq jalwachinïk">
+<!ENTITY disabledUnsigned.description.end " tik'utüx chi re ri nuk'unel chi kerunik'oj.">
+<!ENTITY disabledUnsigned.learnMore "Tetamäx ch'aqa' chik pa ruwi' ri qarayib'al richin yatqato' chi k'o achajinik pa k'amab'ey.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Nuk'unela' nikajo' yekinik'oj ri taq kitz'aqat, tikirel tikisik'ij ri qichin ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "etamawuj">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "¿La k'o nanataj? Jujun taq nak'ab'äl man nikixïm ta chik ki' ruma &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Tetamäx ch'aqa' chik.">
+
+<!ENTITY legacyWarning.description "¿La k'o nanataj? Jujun taq k'amal man nikixïm ta chik ki' ruma &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Kek'ut pe ri kochin taq k'amal">
+<!ENTITY legacyExtensions.title "Kochin taq k'amaya'l">
+<!ENTITY legacyExtensions.description "Re taq k'amal re' man nikik'äm ta ki' rik'in current &brandShortName; taq rub'eyal richin chi xechuputäj.">
+<!ENTITY legacyExtensions.learnMore "Tetamäx chi kij ri kijaloj taq tzaqät">

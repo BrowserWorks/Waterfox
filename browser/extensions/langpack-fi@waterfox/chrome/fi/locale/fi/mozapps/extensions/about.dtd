@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label                "Tekijä:">
+<!ENTITY  developers.label            "Kehittäjät:">
+<!ENTITY  translators.label           "Kääntäjät:">
+<!ENTITY  contributors.label           "Avustajat:">
+<!ENTITY  homepage.label               "Avaa kotisivu">
+
+

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Rhaglenni">
+<!ENTITY  applications.description "Dewis sut mae &brandShortName; yn trin y ffeiliau rydych wedi eu llwytho i lawr o'r We neu'r rhaglenni rydych yn eu defnyddio wrth bori.">
+
+<!ENTITY  typeColumn.label        "Math o Gynnwys">
+<!ENTITY  typeColumn.accesskey    "M">
+
+<!ENTITY  actionColumn2.label     "Gweithred">
+<!ENTITY  actionColumn2.accesskey "G">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Chwilio'r mathau o ffeil neu raglenni">

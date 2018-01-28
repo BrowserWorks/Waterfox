@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Endra hovudpassord">
+<!ENTITY setPassword.tokenName.label "Tryggingseining">
+<!ENTITY setPassword.oldPassword.label "Gjeldande passord:">
+<!ENTITY setPassword.newPassword.label "Nytt passord:">
+<!ENTITY setPassword.reenterPassword.label "Nytt passord (igjen):">
+<!ENTITY setPassword.meter.label "Kvalitetsmåling av passord">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Still tilbake">
+<!ENTITY resetPassword.title  "Still tilbake hovudpassord">
+<!ENTITY resetPassword.text  "Dersom du stiller tilbake hovudpassordet, vil alle nett- og e-post-passord, skjemadata, personlege sertifikat og private nøklar som er lagra gå tapt. Vil du stilla tilbake hovudpassordet?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Lastar ned sertifikat">
+<!ENTITY downloadCert.message1 "Du har vorte beden om å stola på ei ny sertifikat-fullmakt (CA)">
+<!ENTITY downloadCert.trustSSL "Stol på denne CA-en til å identifisere nettsider.">
+<!ENTITY downloadCert.trustEmail "Stol på denne CA-en til å identifisere e-postbrukarar.">
+<!ENTITY downloadCert.trustObjSign "Stol på denne CA-en til å identifisere programutviklarar.">
+<!ENTITY downloadCert.message3 "Før du vel å ha tillit til denne sertifikat-fullmakta (CA), bør du undersøkja fullmakta sitt sertifikat, framgangsmåtar og prosedyrar.">
+<!ENTITY downloadCert.viewCert.label "Vis">
+<!ENTITY downloadCert.viewCert.text "Undersøk CA-sertifikat">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Førespurnad om brukaridentifikasjon">
+<!ENTITY clientAuthAsk.message1 "Denne nettstaden har bede om at du identifiserer deg sjølv med eit sertifikat:">
+<!ENTITY clientAuthAsk.message2 "Vel sertifikat som du vil bruka som identifikasjon:">
+<!ENTITY clientAuthAsk.message3 "Detaljar om valt sertifikat:">
+
+<!ENTITY pkcs12.setpassword.title  "Vel passord for tryggingskopi av sertifikat">
+<!ENTITY pkcs12.setpassword.message  "Passordet for tryggingskopien du vel her, vil verna tryggingskopi-fila du lagar no. Du må skriva inn dette passordet for å halda fram med tryggingskopieringa.">
+<!ENTITY pkcs12.setpassword.label1 "Passord for tryggingskopi:">
+<!ENTITY pkcs12.setpassword.label2 "Passord for tryggingskopi (igjen):">
+<!ENTITY pkcs12.setpassword.reminder "Viktig: Dersom du gløymer passordet til tryggingskopien, vil du ikkje kunna få tilbake innhaldet i tryggingskopien seinare. Skriv det ned på ein trygg stad.">
+
+<!ENTITY chooseToken.title  "Vel symbol">
+<!ENTITY chooseToken.message1 "Vel symbol.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Genererer ein privat nykel">
+<!ENTITY createCertInfo.msg1 "Opprettar nykel… Dette kan ta litt tid…">
+<!ENTITY createCertInfo.msg2 "Ver snill og vent …">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Godkjenning med verna symbol">
+<!ENTITY protectedAuth.msg "Gjer vel og godkjenn symbolet. Godkjenningsmetoden er avhengig av type signeringseining">
+<!ENTITY protectedAuth.tokenName.label "Symbol:">

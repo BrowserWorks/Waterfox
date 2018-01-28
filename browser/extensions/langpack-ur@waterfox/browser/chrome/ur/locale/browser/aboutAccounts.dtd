@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; میں خوش آمدید">
+
+<!ENTITY aboutAccountsConfig.description "اپنے ٹیب، نشانیاں، پاس ورڈ اور مزید ہمہ وقت ساز بنانے کے لیے سائن ان کریں۔">
+<!ENTITY aboutAccountsConfig.startButton.label "شروع کریں">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ہمہ وقت ساز ترجیحات">
+<!ENTITY aboutAccounts.noConnection.title "کوئی کنکشن نہیں">
+<!ENTITY aboutAccounts.noConnection.description "سائن ان کرنے لیے ضروری ہے کہ آپ انٹرنیٹ سے جڑیں ہوں۔">
+<!ENTITY aboutAccounts.noConnection.retry "دوبارہ کوشش کریں">
+<!ENTITY aboutAccounts.badConfig.title "بری تشکیل">
+<!ENTITY aboutAccounts.badConfig.description "آپ کے Waterfox اکاؤنٹ کے پیش کار کی تشکیل کا تعین کرنے میں ناکام رھے۔ برائے محربانی کچھ دیر بعد پھر کوشش کریں۔">

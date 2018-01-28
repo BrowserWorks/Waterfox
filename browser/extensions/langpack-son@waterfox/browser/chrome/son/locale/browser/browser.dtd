@@ -1,0 +1,1037 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Sutura naarumi)">
+
+<!ENTITY appmenu.tooltip                     "Šilbayboŋ feeri">
+<!ENTITY navbarOverflow.label                "Goyjinay tontoney…">
+<!-- Tab context menu -->
+
+<!ENTITY  reloadTab.label                    "Kanjoo dam taaga">
+<!ENTITY  reloadTab.accesskey                "d">
+<!ENTITY  reloadAllTabs.label                "Kanjey kul dam taaga">
+<!ENTITY  reloadAllTabs.accesskey            "k">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Kanji gumey daabu">
+<!ENTITY  closeTabsToTheEnd.accesskey        "g">
+<!ENTITY  closeOtherTabs.label               "Kanji taney daabu">
+<!ENTITY  closeOtherTabs.accesskey           "j">
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+
+<!ENTITY  pinTab.label                       "Kanji koli">
+<!ENTITY  pinTab.accesskey                   "k">
+<!ENTITY  unpinTab.label                     "Nor loku bukandi">
+<!ENTITY  unpinTab.accesskey                 "b">
+<!ENTITY  sendTabToDevice.label              "Kanjoo sanba jinaa ga">
+<!ENTITY  sendTabToDevice.accesskey          "j">
+<!ENTITY  sendPageToDevice.label             "Moɲoo sanba jinaa ga">
+<!ENTITY  sendPageToDevice.accesskey         "j">
+<!ENTITY  sendLinkToDevice.label             "Dobu sanba jinaa do">
+<!ENTITY  sendLinkToDevice.accesskey         "j">
+<!ENTITY  moveToNewWindow.label              "Ganandi zanfun taagaa ra">
+<!ENTITY  moveToNewWindow.accesskey          "z">
+<!ENTITY  bookmarkAllTabs.label              "Kanjey kul šilbay…">
+<!ENTITY  bookmarkAllTabs.accesskey          "j">
+<!ENTITY  undoCloseTab.label                 "Kanji daabuyan taafeeri">
+<!ENTITY  undoCloseTab.accesskey             "t">
+<!ENTITY  closeTab.label                     "Kanjoo daabu">
+<!ENTITY  closeTab.accesskey                 "d">
+
+<!ENTITY  listAllTabs.label      "Kanjey kul šeedandi">
+
+<!ENTITY tabCmd.label "Kanji taaga">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Gorodoo feeri…">
+<!ENTITY openFileCmd.label "Tuku feeri…">
+<!ENTITY openFileCmd.accesskey "T">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Moo kayandiyan">
+<!ENTITY printSetupCmd.accesskey "k">
+<!ENTITY printPreviewCmd.label "Moo-fur ka kar">
+<!ENTITY printPreviewCmd.accesskey "f">
+<!ENTITY printCmd.label "Kar…">
+<!ENTITY printCmd.accesskey "K">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Goy bila nda cinari">
+<!ENTITY goOfflineCmd.accesskey "G">
+
+<!ENTITY menubarCmd.label "Šilbayboŋ žeeri">
+<!ENTITY menubarCmd.accesskey "r">
+<!ENTITY navbarCmd.label "Naaruyan goyjinay zuu">
+<!ENTITY personalbarCmd.label "Doo-šilbawey goyjinay žeeri">
+<!ENTITY personalbarCmd.accesskey "D">
+<!ENTITY bookmarksToolbarItem.label "Doo-šilbawey goyjinay žeeri hayiizey">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Kanjey kul dam taaga">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "k">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Kanjey kul šilbay…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "e">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Kanji daabuyan taafeeri">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "t">
+
+<!ENTITY pageSourceCmd.label "Moo aššil">
+<!ENTITY pageSourceCmd.accesskey "a">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Moo alhabar">
+<!ENTITY pageInfoCmd.accesskey "a">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Diji kanji">
+<!ENTITY mirrorTabCmd.accesskey "D">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Huru dijikul alhaali ra">
+<!ENTITY enterFullScreenCmd.accesskey "d">
+<!ENTITY exitFullScreenCmd.label "Dijikul alhaali naŋ">
+<!ENTITY exitFullScreenCmd.accesskey "D">
+<!ENTITY fullScreenCmd.label "Dijikul">
+<!ENTITY fullScreenCmd.accesskey "D">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Kanjey kul cebe">
+<!ENTITY showAllTabsCmd.accesskey "K">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Huru &syncBrand.shortName.label; ra">
+<!ENTITY fxaSignedIn.tooltip "&syncBrand.shortName.label; ibaayey feeri">
+<!ENTITY fxaSignInError.label "Huru &syncBrand.shortName.label; ra taaga">
+<!ENTITY fxaUnverified.label "War kontoo koroši">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Kaccandi">
+<!ENTITY fullScreenRestore.tooltip "Bere taka jinaa ga">
+<!ENTITY fullScreenClose.tooltip "Daabu">
+<!ENTITY fullScreenAutohide.label "Goyjinay žeerey tugu">
+<!ENTITY fullScreenAutohide.accesskey "t">
+<!ENTITY fullScreenExit.label "Dijikul alhaali naŋ">
+<!ENTITY fullScreenExit.accesskey "D">
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "dijikul cebeyan sohõ">
+<!ENTITY fullscreenWarning.generic.label "Takaddaa woo ga cebe dijikul ga sohõ">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+
+<!ENTITY exitDOMFullscreen.button "Fatta dijikul ra (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Fatta dijikul ra (esc)">
+<!ENTITY leaveDOMFullScreen.label "Dijikul alhaali naŋ">
+<!ENTITY leaveDOMFullScreen.accesskey "D">
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ga war cebejiyoo juwal. Esc naagu ka juwaloo taa koyne.">
+<!ENTITY pointerlockWarning.generic.label "Takaddaa woo ga war cebejiyoo juwal. Esc naagu ka juwaloo taa koyne.">
+
+<!ENTITY closeWindow.label "Zanfunoo daabu">
+<!ENTITY closeWindow.accesskey "d">
+
+<!ENTITY bookmarksMenu.label "Doo-šilbawey">
+<!ENTITY bookmarksMenu.accesskey "b">
+<!ENTITY bookmarkThisPageCmd.label "Moɲoo woo šilbay">
+<!ENTITY editThisBookmarkCmd.label "Doo-šilbaa woo fasal">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Žemna goymee tontoney ceeci…">
+<!ENTITY sharePageCmd.label "Moɲoo woo žemna">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "e">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Doboo woo žemna">
+<!ENTITY shareLink.accesskey "e">
+<!ENTITY shareImage.label "Biyoo woo žemna">
+<!ENTITY shareImage.accesskey "e">
+<!ENTITY shareSelect.label "Suubaroo woo žemna">
+<!ENTITY shareSelect.accesskey "e">
+<!ENTITY shareVideo.label "Widewo woo žemna">
+<!ENTITY shareVideo.accesskey "e">
+<!ENTITY feedsMenu2.label "Boŋ-maa hantum moɲoo woo ga">
+<!ENTITY subscribeToPageMenupopup.label "Boŋ-maa hantum moɲoo woo ga">
+<!ENTITY subscribeToPageMenuitem.label "Boŋ-maa hantum moɲoo woo ga…">
+<!ENTITY addCurPagesCmd.label "Kanjey kul doo-šilbay…">
+<!ENTITY showAllBookmarks2.label "Doo-šilbawey kul cebe">
+<!ENTITY recentBookmarks.label "Kokor doo-šilbantey">
+<!ENTITY otherBookmarksCmd.label "Doo-šilbay taaney">
+<!ENTITY mobileBookmarksCmd.label "Doo-šilbay dirantey">
+<!ENTITY bookmarksToolbarChevron.tooltip "Doo-šilbay tontoney cebe">
+<!ENTITY showRecentlyBookmarked.label     "Kokor doo-šilbantey cebe">
+<!ENTITY showRecentlyBookmarked.accesskey "e">
+<!ENTITY hideRecentlyBookmarked.label     "Kokor doo-šilbantey tugu">
+<!ENTITY hideRecentlyBookmarked.accesskey "t">
+
+<!ENTITY backCmd.label                "Banda">
+<!ENTITY backButton.tooltip           "Yee moo foo banda">
+<!ENTITY forwardCmd.label             "Jine">
+<!ENTITY forwardButton.tooltip        "Koy moo foo jine">
+<!ENTITY backForwardButtonMenu.tooltip "Kanbe guma naagu wala cendi ganda ka taariki cebe">
+<!ENTITY backForwardButtonMenuMac.tooltip "Cendi ganda ka taariki cebe">
+<!ENTITY reloadCmd.label              "Dam taaga">
+<!ENTITY stopCmd.label                "Kay">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Koy aderesoo do gorodoo žeeroo ga">
+<!ENTITY printButton.label            "Kar">
+<!ENTITY printButton.tooltip          "Moɲoo woo kar">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Nungu alhabar guna">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Alhabar fasaldoo feeri">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Gorodoo hãayan fasaldoo feeri">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Tontoni sinjiyan alhabar fasaldoo feeri">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Bila nda interneti jišiyan alhabar fasaldoo feeri">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Šennikufal gaabu alhabar fasaldoo feeri">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Sukari goyyan juwal">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Barmay wala war ga hin ka duu bangandiyaney nungoo ga">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Bayhayey jiši jišiyan duumante ra">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Ceecijaw goo juwal moora cire">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "War bii nda/wala jindezaahaya žemnayanoo nda nungoo juwal">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "War jindezaahayaa žemnayanoo nda nungoo juwal">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "War zanfuney nda dijey žemnayanoo nda nungoo juwal">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Sinjiyan alhabar fasaldoo feeri">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Moɲoo woo berandi">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Moo berandiyano juwal">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "DRM goyjinay juwal alhakey juwal">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "War na war biizaahayaa gagay interneti nungoo woo se.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "War na war mikrowoo gagay interneti nungoo woo se.">
+<!ENTITY urlbar.screenBlocked.tooltip            "War na interneti nungoo woo gagay nd'a ma war dijoo zemni.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "War na gorodoo alhabar gagay interneti nungoo woo se.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "War na bayhaya jišiyan gagay interneti nungoo woo se.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "War na bangandiyaney gagay interneti nungoo woo se.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "War na bayhaya jišiyan duumante gagay interneti nungoo woo se.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Taariki cebe">
+
+<!ENTITY searchItem.title             "Ceeci">
+<!-- Toolbar items -->
+
+<!ENTITY homeButton.label             "Šintin">
+
+<!ENTITY bookmarksButton.label          "Doo-šilbawey">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Doo-šilbawey">
+<!ENTITY bookmarksMenuButton.other.label "Doo-šilbay taaney">
+<!ENTITY bookmarksMenuButton.mobile.label "Doo-šilbay dirantey">
+<!ENTITY viewBookmarksSidebar2.label        "Doo-šilbawey goyjinay zuu">
+<!ENTITY viewBookmarksToolbar.label         "Doo-šilbawey goyjinay žeeri">
+<!ENTITY searchBookmarks.label              "Doo-šilbawey ceeci">
+
+<!ENTITY containersMenu.label "Diikey">
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Taariki">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Goyjinawey">
+<!ENTITY toolsMenu.accesskey          "G"> 
+
+<!ENTITY keywordfield.label           "Kufalkalima foo tonton ceeciroo woo se…">
+<!ENTITY keywordfield.accesskey       "K">
+
+<!ENTITY downloads.label              "Zumandiyaney">
+<!ENTITY downloads.accesskey          "Z">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Tontoney">
+<!ENTITY addons.accesskey             "T">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Tataaru cinakaw">
+<!ENTITY webDeveloperMenu.accesskey   "T">
+
+<!ENTITY inspectContextMenu.label     "Haya-ize koroši">
+<!ENTITY inspectContextMenu.accesskey "Q">
+
+<!ENTITY fileMenu.label         "Tuku"> 
+<!ENTITY fileMenu.accesskey       "T">
+<!ENTITY newUserContext.label             "Diikaw kanji taaga">
+<!ENTITY newUserContext.accesskey         "k">
+<!ENTITY newNavigatorCmd.label        "Zanfun taaga">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "Z">
+<!ENTITY newPrivateWindow.label     "Sutura zanfun taaga">
+<!ENTITY newPrivateWindow.accesskey "z">
+<!ENTITY newNonRemoteWindow.label   "Manti-e10s zanfun taaga">
+
+<!ENTITY editMenu.label         "Fasal"> 
+<!ENTITY editMenu.accesskey       "F"> 
+<!ENTITY undoCmd.label            "Taafeeri">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "T"> 
+<!ENTITY redoCmd.label            "Tee taaga">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "T"> 
+<!ENTITY cutCmd.label           "Dunbu">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "D"> 
+<!ENTITY copyCmd.label            "Berandi">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "B"> 
+<!ENTITY pasteCmd.label           "Dobu">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "D"> 
+<!ENTITY deleteCmd.label          "Tuusu">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "T"> 
+<!ENTITY selectAllCmd.label         "Kul suuba">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "K"> 
+<!ENTITY preferencesCmd2.label       "Suubarey">
+<!ENTITY preferencesCmd2.accesskey     "S">
+<!ENTITY preferencesCmdUnix.label       "Ibaayey">
+<!ENTITY preferencesCmdUnix.accesskey     "I"> 
+
+<!ENTITY clearRecentHistory.label               "Taariki kokorante tuusu…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Gunari"> 
+<!ENTITY viewMenu.accesskey       "G"> 
+<!ENTITY viewToolbarsMenu.label       "Goyjinay žeerey"> 
+<!ENTITY viewToolbarsMenu.accesskey     "G"> 
+<!ENTITY viewSidebarMenu.label "Cerawžeeri">
+<!ENTITY viewSidebarMenu.accesskey "C">
+<!ENTITY viewCustomizeToolbar.label       "Hanse war boŋ se…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "H">
+
+
+
+<!ENTITY historyMenu.label "Taariki">
+<!ENTITY historyMenu.accesskey "T">
+<!ENTITY historyUndoMenu.label "Kanjey kaŋ kokor ka daaba">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Zanfun kokor daabantey">
+<!ENTITY historyRestoreLastSession.label "Goywaati bisantaa yeeti">
+
+<!ENTITY showAllHistoryCmd2.label "Taarikoo kul cebe">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Hanse war boŋ se">
+<!ENTITY appMenuCustomize.tooltip "Šilbayboŋ nda goyjinay zuu hanse war boŋse">
+<!ENTITY appMenuCustomizeExit.label "Hanse-boŋse naŋ">
+<!ENTITY appMenuCustomizeExit.tooltip "Hanse-boŋse benandi">
+<!ENTITY appMenuHistory.label "Taariki">
+<!ENTITY appMenuHistory.showAll.label "Taarikoo kul cebe">
+<!ENTITY appMenuHistory.clearRecent.label "Taariki kokorantaa tuusu…">
+<!ENTITY appMenuHistory.restoreSession.label "Goywaati bisantaa yeeti">
+<!ENTITY appMenuHistory.viewSidebar.label "Taariki ceraw zuu cebe">
+
+<!ENTITY appMenuHelp.label "Faaba">
+<!ENTITY appMenuHelp.tooltip "Faaba šilbayboŋ feeri">
+
+<!ENTITY appMenuRemoteTabs.label "Kanji hangantey">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Kanji kul ši feeri">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Cebe ka tonton">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Kanji taney cebe jinaa woo ga">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Ikul cebe">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Kanjey kul cebe jinaa woo ga">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Kanji hangandiyan tunandi ka dii kanjey maašeede jinay taney ga.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Kanjiyaŋ kul mana hangandi jina!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Ga boona ka dii war jinay taney kanjey ne wala?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Ibaayey hangandi">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Huru ka dii kanji maašeede foo war jinay taney ga.">
+<!ENTITY appMenuRemoteTabs.signin.label "Huru Sync ra">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Goyey juwal…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Kanji hangantey ceraw-zuwoo guna">
+
+<!ENTITY customizeMenu.addToToolbar.label "Goyjinay zuu tonton">
+<!ENTITY customizeMenu.addToToolbar.accesskey "o">
+<!ENTITY customizeMenu.addToPanel.label "Tonton šilbayboŋ ga">
+<!ENTITY customizeMenu.addToPanel.accesskey "b">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+
+<!ENTITY customizeMenu.moveToToolbar.label "Bere goyjinay zuu ga">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "e">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Bere šilbayboŋ zuu ga">
+<!ENTITY customizeMenu.moveToPanel.accesskey "e">
+
+
+
+
+<!ENTITY customizeMenu.removeFromToolbar.label "Kaataray goyjinay zuu ra">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "r">
+<!ENTITY customizeMenu.removeFromMenu.label "Kaataray šilbayboŋoo ra">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Hayizeyaŋ tonton…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "a">
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Ceeci wala aderesu dam">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Dobuyan:">
+<!ENTITY urlbar.switchToTab.label     "Bere kanjoo ga:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "War ga boona ka war ceeciyan goyoo boryandi nda honnandiyaney?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Bay ka tonton…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "l">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Kalaa">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ayyo">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "y">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+
+
+
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+
+<!ENTITY contentSearchInput.label     "Ceeci hãayan">
+<!ENTITY contentSearchSubmit.tooltip  "Ceeciyan sanba">
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+
+<!ENTITY searchFor.label              "Ceeci ">
+<!ENTITY searchWith.label             " nda:">
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+
+<!ENTITY search.label                 "Ceeci ">
+<!ENTITY searchAfter.label            "">
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+
+<!ENTITY searchWithHeader.label       "Ceeci nda:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Ceeciyan kayandiyaney barmay">
+<!ENTITY changeSearchSettings.tooltip "Ceeciyan kayandiyaney barmay">
+
+<!ENTITY searchInNewTab.label         "Ceeci kanji taaga ra">
+<!ENTITY searchInNewTab.accesskey     "t">
+<!ENTITY searchSetAsDefault.label     "Kayandi sanda tilasu ceecijinay">
+<!ENTITY searchSetAsDefault.accesskey "t">
+
+<!ENTITY openLinkCmdInTab.label       "Doboo feeri kanji taaga ra">
+<!ENTITY openLinkCmdInTab.accesskey   "k">
+<!ENTITY openLinkCmd.label            "Doboo feeri zanfun taaga ra">
+<!ENTITY openLinkCmd.accesskey        "z">
+<!ENTITY openLinkInPrivateWindowCmd.label "Doboo feeri zanfun taaga ra">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "z">
+<!ENTITY openLinkCmdInCurrent.label     "Dobu feeri">
+<!ENTITY openLinkCmdInCurrent.accesskey "f">
+<!ENTITY openFrameCmdInTab.label      "Feeri kanji taaga ra">
+<!ENTITY openFrameCmdInTab.accesskey  "k">
+<!ENTITY openFrameCmd.label           "Kunga feeri zanfun taaga ra">
+<!ENTITY openFrameCmd.accesskey       "z">
+<!ENTITY openLinkCmdInContainerTab.label "Dobu feeri sun kanji taaga ra">
+<!ENTITY openLinkCmdInContainerTab.accesskey "a">
+<!ENTITY showOnlyThisFrameCmd.label     "Kungaa woo de cebe">
+<!ENTITY showOnlyThisFrameCmd.accesskey "c">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Kungaa dam taaga">
+<!ENTITY reloadFrameCmd.accesskey     "d">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Suubari aššil guna">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML Source guna">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Moo aššil guna">
+<!ENTITY viewPageSourceCmd.accesskey  "g">
+<!ENTITY viewFrameSourceCmd.label     "Kunga aššil guna">
+<!ENTITY viewFrameSourceCmd.accesskey "g">
+<!ENTITY viewPageInfoCmd.label        "Moo alhabar guna">
+<!ENTITY viewPageInfoCmd.accesskey    "a">
+<!ENTITY viewFrameInfoCmd.label       "Kunga alhabar guna">
+<!ENTITY viewFrameInfoCmd.accesskey   "a">
+<!ENTITY reloadImageCmd.label         "Bii dam taaga">
+<!ENTITY reloadImageCmd.accesskey     "B">
+<!ENTITY viewImageCmd.label           "Bii guna">
+<!ENTITY viewImageCmd.accesskey       "B">
+<!ENTITY viewImageInfoCmd.label       "Bii alhabar guna">
+<!ENTITY viewImageInfoCmd.accesskey   "B">
+<!ENTITY viewImageDescCmd.label       "Šilbayyan guna">
+<!ENTITY viewImageDescCmd.accesskey   "D">
+<!ENTITY viewVideoCmd.label           "Widewo guna">
+<!ENTITY viewVideoCmd.accesskey       "W">
+<!ENTITY viewBGImageCmd.label         "Bandafaari bii guna">
+<!ENTITY viewBGImageCmd.accesskey     "B">
+<!ENTITY setDesktopBackgroundCmd.label      "Suuba goytaabal bandafaari se…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "S">
+<!ENTITY bookmarkPageCmd2.label       "Moɲoo woo šilbay">
+<!ENTITY bookmarkThisLinkCmd.label      "Doboo woo šilbay">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "D">
+<!ENTITY bookmarkThisFrameCmd.label      "Kungaa woo šilbay">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "K">
+
+<!ENTITY emailPageCmd.label           "Bataga dobu…">
+<!ENTITY emailPageCmd.accesskey       "a">
+<!ENTITY savePageCmd.label            "Moɲoo gaabu sanda…">
+<!ENTITY savePageCmd.accesskey        "s">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "P">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Kunga gaabu sanda…">
+<!ENTITY saveFrameCmd.accesskey       "K">
+<!ENTITY printFrameCmd.label          "Kunga kar…">
+<!ENTITY printFrameCmd.accesskey      "K">
+<!ENTITY saveLinkCmd.label            "Doboo gaabu sanda…">
+<!ENTITY saveLinkCmd.accesskey        "D">
+<!ENTITY saveImageCmd.label           "Biyoo gaabu sanda…">
+<!ENTITY saveImageCmd.accesskey       "b">
+<!ENTITY saveVideoCmd.label           "Widewo gaabu sanda…">
+<!ENTITY saveVideoCmd.accesskey       "g">
+<!ENTITY saveAudioCmd.label           "Jindetukoo gaabu sanda…">
+<!ENTITY saveAudioCmd.accesskey       "b">
+<!ENTITY emailImageCmd.label          "Bataga bii…">
+<!ENTITY emailImageCmd.accesskey      "g">
+<!ENTITY emailVideoCmd.label          "Widewo sanba bataga ra…">
+<!ENTITY emailVideoCmd.accesskey      "a">
+<!ENTITY castVideoCmd.label           "Widewo sanba jinaa do">
+<!ENTITY castVideoCmd.accesskey       "a">
+<!ENTITY emailAudioCmd.label          "Jinde tukoo sanba…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "Sukaroo woo tunandi">
+<!ENTITY playPluginCmd.accesskey      "a">
+<!ENTITY hidePluginCmd.label          "Sukaroo woo tugu">
+<!ENTITY hidePluginCmd.accesskey      "k">
+<!ENTITY copyLinkCmd.label            "Doboo dogoo berandi">
+<!ENTITY copyLinkCmd.accesskey        "D">
+<!ENTITY copyImageCmd.label           "Biyoo dogoo berandi">
+<!ENTITY copyImageCmd.accesskey       "b">
+<!ENTITY copyImageContentsCmd.label   "Biyoo berandi">
+<!ENTITY copyImageContentsCmd.accesskey  "b"> 
+<!ENTITY copyVideoURLCmd.label        "Widewo dogoo berandi">
+<!ENTITY copyVideoURLCmd.accesskey    "b">
+<!ENTITY copyAudioURLCmd.label        "Jindetukoo dogoo berandi">
+<!ENTITY copyAudioURLCmd.accesskey    "b">
+<!ENTITY copyEmailCmd.label           "Bataga aderesoo berandi">
+<!ENTITY copyEmailCmd.accesskey       "a">
+<!ENTITY thisFrameMenu.label              "Kungaa woo">
+<!ENTITY thisFrameMenu.accesskey          "w">
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+
+<!ENTITY mediaPlay.label             "Hẽenandi">
+<!ENTITY mediaPlay.accesskey         "H">
+<!ENTITY mediaPause.label            "Hunanzam">
+<!ENTITY mediaPause.accesskey        "H">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Jinde daabu">
+<!ENTITY mediaMute.accesskey         "J">
+<!ENTITY mediaUnmute.label           "Jinde feeri">
+<!ENTITY mediaUnmute.accesskey       "J">
+<!ENTITY mediaPlaybackRate2.label     "Hẽenandiyan cahãri">
+<!ENTITY mediaPlaybackRate2.accesskey "i">
+<!ENTITY mediaPlaybackRate050x2.label "Mosso (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "s">
+
+
+<!ENTITY mediaPlaybackRate125x2.label "Cahã (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "C">
+<!ENTITY mediaPlaybackRate150x2.label "Cahã ka tonton (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "a">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Haarayhaya (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "r">
+<!ENTITY mediaLoop.label             "Kunkuni">
+<!ENTITY mediaLoop.accesskey         "K">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Dabarey cebe">
+<!ENTITY mediaShowControls.accesskey "D">
+<!ENTITY mediaHideControls.label     "Dabarey tugu">
+<!ENTITY mediaHideControls.accesskey "D">
+<!ENTITY videoFullScreen.label       "Dijikul">
+<!ENTITY videoFullScreen.accesskey   "D">
+<!ENTITY videoSaveImage.label        "Zaafoo-bii gaabu sanda...">
+<!ENTITY videoSaveImage.accesskey    "g">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Teera hinnawey cebe">
+<!ENTITY videoShowStats.accesskey    "h">
+<!ENTITY videoHideStats.label        "Teera hinnawey tugu">
+<!ENTITY videoHideStats.accesskey    "h">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomEnlargeCmd.label       "Bebbeerandi">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "B">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Nakasandi">
+<!ENTITY fullZoomReduceCmd.accesskey    "N">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Yeeri">
+<!ENTITY fullZoomResetCmd.accesskey     "Y">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Kalimaɲaa kuroo hinne bebbeerandi">
+<!ENTITY fullZoomToggleCmd.accesskey    "K">
+<!ENTITY fullZoom.label                 "Bebbeerandi">
+<!ENTITY fullZoom.accesskey             "B">
+
+<!ENTITY sidebarCloseButton.tooltip     "Ceraw-zuu daabu">
+
+
+<!ENTITY quitApplicationCmdWin2.label       "Fatta">
+<!ENTITY quitApplicationCmdWin2.accesskey   "F">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Fatta &brandShorterName; ra">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Fatta"> 
+<!ENTITY quitApplicationCmd.accesskey   "F">
+<!ENTITY quitApplicationCmdMac2.label   "Fatta &brandShorterName; ra">
+
+
+<!ENTITY closeCmd.label                 "Daabu">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "D">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Moo fasal">
+<!ENTITY pageStyleMenu.accesskey "f">
+<!ENTITY pageStyleNoStyle.label "Fasal kul ši">
+<!ENTITY pageStyleNoStyle.accesskey "F">
+<!ENTITY pageStylePersistentOnly.label "Moo fasal faala">
+<!ENTITY pageStylePersistentOnly.accesskey "f">
+
+<!ENTITY pageReportIcon.tooltip            "Biiboŋ bata kayandiyaney barmay Interneti nungoo woo se">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Biiboŋ bata gagayyan ibaayey fasal…">
+<!ENTITY editPopupSettings.label "Biiboŋ bata gagayyan suubarey fasal…">
+<!ENTITY editPopupSettings.accesskey "B">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Moo tenjaroo barmay">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "D">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Kalimaɲaa kuru tenjaroo barmay">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "K">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Moɲoo woo ceeci…">
+<!ENTITY findOnCmd.accesskey "e">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Ceeci koyne">
+<!ENTITY findAgainCmd.accesskey "k">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Kamasey tonton…">
+<!ENTITY spellAddDictionaries.accesskey "t">
+
+<!ENTITY editBookmark.removeBookmark.accessKey       "R">
+
+<!ENTITY identity.connectionSecure "Ciyari moora">
+<!ENTITY identity.connectionNotSecure "Ciyaroo manti saajante">
+<!ENTITY identity.connectionFile "Moɲoo woo n' ka jisandii war ordinateroo ga.">
+<!ENTITY identity.connectionVerified2 "War dobu nda saajaw nungoo woo ga, kaŋ maykaa ti:">
+<!ENTITY identity.connectionInternal "Woo ti &brandShortName; moo saajante.">
+
+<!ENTITY identity.insecureLoginForms2 "Huruyan šilbawey kaŋ goo moɲoo woo ši hima saajante.">
+<!-- Strings for connection state warnings. -->
+
+<!ENTITY identity.activeBlocked "&brandShortName; na moɲoo woo doo fooyaŋ kaŋ ši saajaw gagay.">
+<!ENTITY identity.passiveLoaded "Moɲoo woo doo fooyaŋ ši saajaw (sanda biiyaŋ).">
+<!ENTITY identity.activeLoaded "War na jejebuyanoo kaa moɲoo woo ga.">
+<!ENTITY identity.weakEncryption "Moɲoo woo tuguyan dabaroo ga yalaafu.">
+<!-- Strings for connection state warnings in the subview. -->
+
+<!ENTITY identity.description.insecure "War dobuyanoo moɲoo woo ga ši sutura. Boro taney ga hin ka dii šilbawey kaŋ war n'i sanba (sanda šennikufal, toonandiyan, garaw katta, nda tana).">
+<!ENTITY identity.description.insecureLoginForms "War huruyan šilbaa kaŋ war g'a dam moɲoo woo ga manti saajante nd'a hin ka fukkar.">
+<!ENTITY identity.description.weakCipher "War dobuyanoo moɲoo woo tuguyan dabaroo ga yalaafu nd'a ši sutura.">
+<!ENTITY identity.description.weakCipher2 "Boro taney ga hin ka dii war alhabarey wal'i ma nungoo aladaboo barmay.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; na moɲoo woo doo fooyaŋ kaŋ ši saajaw gagay.">
+<!ENTITY identity.description.passiveLoaded "War dobuyano ši sutura nda boro taney ga hin ka dii alhabarey kaŋ war n'i žemna nda nungoo.">
+<!ENTITY identity.description.passiveLoaded2 "Nungoo goo nda gundekuna kaŋ manti saajante (sanda biiyaŋ).">
+<!ENTITY identity.description.passiveLoaded3 "Baa kaŋ &brandShortName; ga gundekuna jere gagay, gundekuna cindi moɲoo ga kaŋ manti saajante (sanda biiyaŋ).">
+<!ENTITY identity.description.activeLoaded "Nungoo woo goo nda gundekuna kaŋ manti saajante (sanda šigira dumiyaŋ) nda dobuyanoo ši sutura.">
+<!ENTITY identity.description.activeLoaded2 "Boro taney ga hin ka dii alhabar kaŋ war g'a žemna nda nungoo woo (sanda šennikufal, tooonandiyan, garaw katta, nda tana).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Jejebuyan tunandi">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "e">
+<!ENTITY identity.disableMixedContentBlocking.label "Jejebu kaa sohõ se">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Bay ka tonton">
+
+<!ENTITY identity.removeCertException.label "Hasaraw kaa">
+<!ENTITY identity.removeCertException.accesskey "k">
+
+<!ENTITY identity.moreInfoLinkText2 "Alhabar tontoni">
+
+<!ENTITY identity.permissions "Duɲeyaney">
+<!ENTITY identity.permissionsEmpty "War mana cerecere duɲeyan kul noo nungoo woo se.">
+<!ENTITY identity.permissionsReloadHint "War ma moɲoo zumandi taaga ka barmawey kanandi.">
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+
+<!ENTITY tabsToolbar.label "Ceecikaw kanjey">
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+
+<!ENTITY syncTabsMenu3.label     "Kanji hangantey">
+
+<!ENTITY syncedTabs.sidebar.label              "Kanji hangantey">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Huru Waterfox ra war jinay taney ga ka dii war kanjey ne.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Kanji hangante… kul šii jina!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Mar ga boona ka dii war jinay taney kanjey ne?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Huru ka dii kanji maašeede foo war jinay taney ga.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Kanji feerante kul šii">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "&syncBrand.shortName.label; ibaayey feeri">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Kanji hangandiyan tunandi ka dii kanjey maašeede jinay taney ga.">
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+
+<!ENTITY syncedTabs.context.open.label                       "Feeri">
+<!ENTITY syncedTabs.context.open.accesskey                   "F">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Feeri kanji taaga ra">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "t">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Doboo feeri zanfun taaga ra">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "z">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Doboo feeri zanfun taaga ra">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "z">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Moɲoo woo šilbay">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "l">
+<!ENTITY syncedTabs.context.copy.label                       "Berandi">
+<!ENTITY syncedTabs.context.copy.accesskey                   "B">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Kul feeri kanjey ra">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "f">
+<!ENTITY syncedTabs.context.managedevices.label              "Jinawey juwal…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "D">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Huru &syncBrand.shortName.label; ra…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Sync sohõ">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Ciya &syncBrand.shortName.label;… sekoyne">
+<!ENTITY syncReAuthItem.accesskey     "R">
+<!ENTITY syncToolbarButton.label      "Hangandi">
+
+<!ENTITY social.addons.label "Goyey juwal…">
+
+<!ENTITY social.directory.label "Dirandiyan fooloɲaa">
+<!ENTITY social.directory.text "War ga hin ka žemna goymiɲey dirandi ka hun fooloɲaŋoo ga.">
+<!ENTITY social.directory.button "Ay zaa noodin!">
+<!ENTITY social.directory.introText "Goymee naagu k'a tonton &brandShortName; ga.">
+<!ENTITY social.directory.viewmore.text "Guna ka tonton">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Goyjinay nda alhaaliyaŋ tonton">
+<!ENTITY customizeMode.menuAndToolbars.empty "Ga jinay ka tonton?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Suuba tontoni ženberyaŋ ra">
+<!ENTITY customizeMode.restoreDefaults "Taka jina tilasu">
+
+<!ENTITY customizeMode.titlebar "Maa zuu">
+
+<!ENTITY customizeMode.lwthemes "Furarey">
+<!ENTITY customizeMode.lwthemes.myThemes "Ay furarey">
+<!ENTITY customizeMode.lwthemes.recommended "Yaamarante">
+<!ENTITY customizeMode.lwthemes.menuManage "Juwal">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "M">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Furari tontoney guna">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "G">
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+
+
+
+
+<!ENTITY getUserMedia.selectCamera.label "Biizaahaya žemna:">
+<!ENTITY getUserMedia.selectCamera.accesskey "z">
+<!ENTITY getUserMedia.selectMicrophone.label "Jindezaahaya kaŋ ka žemna:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "m">
+<!ENTITY getUserMedia.audioCapture.label "Jinde kaŋ hun kanjoo woo ga mma žemnandi.">
+<!ENTITY getUserMedia.allWindowsShared.message "Zanfun kaŋ ga banga war dijoo ga kul ga žemnandi.">
+
+<!ENTITY trackingProtection.title "Ganayan jejebuyan">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; ga moɲoo dooyaŋ gagay kaŋ ga hin ka war ceeciyanoo gana.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Hayayaŋ goo moɲoo woo ra kaŋ ga hin ka war ceeciyanoo gana. War na jejebu kaa.">
+<!ENTITY trackingProtection.notDetected3 "Ganayan haya kul mana maatandi moɲoo woo ga.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Jejebu kaa moɲoo woo se">
+<!ENTITY trackingProtection.unblock.accesskey "a">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Jejebu kaa moɲoo woo se">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "a">
+<!ENTITY trackingProtection.block2.label "Jejebu tunandi">
+<!ENTITY trackingProtection.block2.accesskey "e">
+
+<!ENTITY trackingContentBlocked.message "Kuryan">
+<!ENTITY trackingContentBlocked.moreinfo "Ir na moo-kunawey kaŋyaŋ ga war monno interneti bande gagay.">
+<!ENTITY trackingContentBlocked.learnMore "Bay ka tonton">
+<!ENTITY trackingContentBlocked.options "Suubarey">
+<!ENTITY trackingContentBlocked.unblock2.label "Jejeboo kaa moɲoo woo se">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "a">
+<!ENTITY trackingContentBlocked.block.label "Jejebuyan tunandi">
+<!ENTITY trackingContentBlocked.block.accesskey "e">
+<!ENTITY trackingContentBlocked.disabled.message "Monnoyan jejebu n' ka kay">
+
+<!ENTITY pluginNotification.showAll.label "Ikul cebe">
+<!ENTITY pluginNotification.showAll.accesskey "c">
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+
+<!ENTITY pluginActivateNow.label "Noo fondo sohõ">
+<!ENTITY pluginActivateAlways.label "Noo fondo nda hongu">
+<!ENTITY pluginBlockNow.label "Sukari gagay">
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Daabu">
+
+<!ENTITY appMenuSidebars.label         "Cerawžeerey">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+
+<!ENTITY panicButton.view.mainTimeframeDesc       "Dirŋa ikoraa:">
+<!ENTITY panicButton.view.5min                    "Miniti guu">
+<!ENTITY panicButton.view.2hr                     "Guuru hinka">
+<!ENTITY panicButton.view.day                     "Guuru 24">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+
+<!ENTITY panicButton.view.mainActionDesc          "Koyjineyan ga:">
+<!ENTITY panicButton.view.deleteCookies           "<html:strong>Aleewa</html:strong> korawey tuusu">
+<!ENTITY panicButton.view.deleteHistory           " <html:strong>Taariki</html:strong> koraa tuusu">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "<html:strong>Kanjey</html:strong> nda <html:strong>Zanfuney</html:strong> kul tuusu">
+<!ENTITY panicButton.view.openNewWindow           "Zanfun henanante taaga feeri">
+
+<!ENTITY panicButton.view.undoWarning             "Teeraa woo ši hin ka taafeeri.">
+<!ENTITY panicButton.view.forgetButton            "Dirŋa!">
+
+<!ENTITY panicButton.thankyou.msg1                "War taariki koraa n' ka tuusandi.">
+<!ENTITY panicButton.thankyou.msg2                "Ceeciyan saajante!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Foo nda goy!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Bay ka tonton DRM ga…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "War &brandShorterName; taagandi haya kul itejey cahãri nda sutura ra.">
+<!ENTITY updateAvailable.whatsnew.label "Dii haya taagey.">
+<!ENTITY updateAvailable.header.message "&brandShorterName; taagandiri taaga foo ga bara.">
+<!ENTITY updateAvailable.acceptButton.label "Taagandiri zumandi">
+<!ENTITY updateAvailable.acceptButton.accesskey "d">
+<!ENTITY updateAvailable.cancelButton.label "Manti sohõ">
+<!ENTITY updateAvailable.cancelButton.accesskey "M">
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; taagandiroo zumandi">
+
+<!ENTITY updateManual.message "Nda war ga &brandShorterName; dumi teji foo zumandi, ir ga war faaba k'a sinji.">
+<!ENTITY updateManual.whatsnew.label "Dii haya taagey.">
+<!ENTITY updateManual.header.message "&brandShorterName; ši hin ka taagandi dumi kokorantaa se.">
+<!ENTITY updateManual.acceptButton.label "&brandShorterName; zumandi">
+<!ENTITY updateManual.acceptButton.accesskey "d">
+<!ENTITY updateManual.cancelButton.label "Manti sohõ">
+<!ENTITY updateManual.cancelButton.accesskey "n">
+<!ENTITY updateManual.panelUI.label "&brandShorterName; dumi teji foo zumandi">
+
+<!ENTITY updateRestart.message "Tunandiyan cahãnte banda ga, &brandShorterName; ga war kanji nda zanfun feerantey kul yeeri.">
+<!ENTITY updateRestart.header.message2 "Tunandi taaga ka &brandShorterName; taagandi.">
+<!ENTITY updateRestart.acceptButton.label "Tunandi taaga nda yeeri">
+<!ENTITY updateRestart.acceptButton.accesskey "T">
+<!ENTITY updateRestart.cancelButton.label "Manti sohõ">
+<!ENTITY updateRestart.cancelButton.accesskey "n">
+
+
+<!ENTITY pageActionButton.tooltip "Moo goyey">
+
+
+
+
+
+<!ENTITY appMenuHistory.recentHistory.label "Recent History">
+<!ENTITY copyURLCmd.label             "Copy URL">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.addToOverflowMenu.label "Add to Overflow Menu">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "P">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Pin to Overflow Menu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Unpin from Overflow Menu">
+<!ENTITY customizeMode.done "Done">
+<!ENTITY customizeMode.emptyOverflowList.description "Drag and drop items here to keep them within reach but out of your toolbar…">
+<!ENTITY customizeMode.toolbars2 "Toolbars">
+<!ENTITY customizeMode.uidensity "Density">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Use Touch for Tablet Mode">
+
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "C">
+<!ENTITY customizeMode.uidensity.menuCompact.label "Compact">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Compact">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normal">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "T">
+<!ENTITY customizeMode.uidensity.menuTouch.label "Touch">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Touch">
+<!ENTITY editBookmark.done.label                     "Done">
+<!ENTITY identity.extensionPage "This page is loaded from an extension.">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate100x2.label "Normal">
+<!ENTITY moreMenu.label "More">
+
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY overflowCustomizeToolbar.label       "Customize Toolbar…">
+<!ENTITY pageAction.addToUrlbar.label "Add to Address Bar">
+<!ENTITY pageAction.removeFromUrlbar.label "Remove from Address Bar">
+
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY searchIcon.tooltip           "Search">
+
+<!ENTITY searchInput.placeholder      "Search">
+<!ENTITY sendToDevice.label2 "Send to Device">
+<!ENTITY sendToDevice.syncNotReady.label "Syncing Devices…">
+<!ENTITY sidebarMenuClose.label         "Close Sidebar">
+
+<!ENTITY updateRestart.panelUI.label2 "Restart to update &brandShorterName;">
+
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Change Preferences…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "C">
+
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Change Options…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "C">
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Get help finding things! Look for the &#x1F50E; next to search suggestions.">
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tip:">

@@ -1,0 +1,14 @@
+locale alerts kab kab/locale/kab/alerts/
+locale autoconfig kab kab/locale/kab/autoconfig/
+locale global kab kab/locale/kab/global/
+locale global-platform kab kab/locale/kab/global-platform/mac/ os=Darwin
+locale global-platform kab kab/locale/kab/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform kab kab/locale/kab/global-platform/win/ os=WINNT
+locale mozapps kab kab/locale/kab/mozapps/
+locale necko kab kab/locale/kab/necko/
+locale passwordmgr kab kab/locale/kab/passwordmgr/
+locale pipnss kab kab/locale/kab/pipnss/
+locale pippki kab kab/locale/kab/pippki/
+locale places kab kab/locale/kab/places/
+locale pluginproblem kab kab/locale/kab/pluginproblem/
+locale weave kab kab/locale/kab/services/

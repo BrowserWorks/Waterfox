@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Zure eskubideei buruz">
+<!ENTITY rights.intro "&brandFullName; kode irekiko software librea da, mundu osoko milaka pertsonek osatutako komunitate batek eraikia. Badira jakin beharko zenituzkeen gauza batzuk:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; zure eskura dago ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c " lizentziaren baldintzapean. Honek esan nahi du, &brandShortName; erabili, kopiatu eta besteei bana diezaiokezula. Era berean, &brandShortName;(r)en iturburu-kodea alda dezakezu zure beharrizanetara moldatzeko. Egindako aldaketak banatzeko eskubidea ematen dizu Mozilla Public License-k.">
+
+<!ENTITY rights.intro-point2-a "Ez zaizu ematen Mozilla Fundazioaren edo edozein alderdiren erregistratutako marken eskubiderik ezta hauen gaineko lizentziarik ere, Waterfox izena edo logoak barne. Erregistratutako marken gaineko informazio gehiago ">
+<!ENTITY rights.intro-point2-b "hemen">
+<!ENTITY rights.intro-point2-c " topa daiteke.">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName;(e)ko hainbat funtzionaltasunek, hala nola hutsegiteen berriemaileak, &vendorShortName;ri iritzia emateko aukera ematen dizute. Iritzia bidaltzea aukeratuz gero, &vendorShortName;ri baimena ematen diozu iritzi hori erabiltzeko bere produktuak hobetzeko, bere webguneetan eta banatzeko.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "&brandShortName; bidez &vendorShortName;ri bidalitako zure informazio pertsonala eta iritzia nola erabiltzen dugun ">
+<!ENTITY rights2.intro-point3b "&brandShortName;(r)en pribatutasun-politika">
+<!ENTITY rights.intro-point3c "n deskribatzen da.">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Produktu honi aplika dakioken edozein pribatutasun-politika hemen agertu beharko litzateke.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "&brandShortName;(r)en zenbait funtzionaltasunek web bidezko informazio-zerbitzuak erabiltzen dituzte; halere, ezin dugu ziurtatu &#037;100ean errorerik gabeak direnik. Xehetasun gehiago, funtzionaltasunak desgaitzearen ingurukoa barne, ">
+<!ENTITY rights.intro-point4b "zerbitzuaren baldintzetan">
+<!ENTITY rights.intro-point4c " aurki daiteke.">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Produktu honek web zerbitzuak badakartza, aplika dakizkioken zerbitzuaren baldintzak ">
+<!ENTITY rights.intro-point4b-unbranded "Webguneen Zerbitzuak atalean">
+<!ENTITY rights.intro-point4c-unbranded " azaldu behar litzake.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; web bidezko informazio-zerbitzuak">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Zenbait bideo-eduki mota erreproduzitu ahal izateko, &brandShortName;(e)k edukien deszifratze-modulu zehatz batzuk deskargatzen ditu hirugarrengoengatik.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName;(e)k web bidezko informazio-zerbitzuak erabiltzen ditu (&quot;Zerbitzuak&quot;) &brandShortName;(r)en bertsio bitar honetako funtzionaltasun batzuk hornitzeko, azpian zehaztutako baldintzapean. Ez baduzu Zerbitzu bat edo gehiago erabili nahi edo azpiko baldintzak onargaitzak badira, funtzionaltasuna edo Zerbitzua(k) desgai dezakezu/ditzakezu. Funtzionaltasun konkretuak edo Zerbitzuak desgaitzeko argibideak">
+<!ENTITY rights2.webservices-b "hemen">
+<!ENTITY rights3.webservices-c " aurki daitezke. Beste eginbide eta zerbitzuak aplikazioaren hobespenetan desgaitu daitezke.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Nabigatze segurua:">
+<!ENTITY rights.safebrowsing-b "Nabigatze seguruaren funtzionaltasuna desgaitzea ez da gomendatzen, gune ez seguruetara joatea ekar lezakeelako. Funtzionaltasuna erabat desgaitu nahi baduzu, jarraitu ondorengo urratsak:">
+<!ENTITY rights.safebrowsing-term1 "Ireki aplikazioaren hobespenak">
+<!ENTITY rights.safebrowsing-term2 "Hautatu 'Segurtasuna' hautapena">
+<!ENTITY rights2.safebrowsing-term3 "Desmarkatu &quot;&enableSafeBrowsing.label;&quot; aukera">
+<!ENTITY rights.safebrowsing-term4 "Nabigatze segurua desgaituta dago orain">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Kokalekuaren araberako nabigatzea:">
+<!ENTITY rights.locationawarebrowsing-b "aukerazkoa da beti. Inoiz ez da kokalekuaren inguruko informaziorik bidaliko zure baimenik gabe. Funtzionaltasuna erabat desgaitu nahi baduzu, jarraitu ondorengo urratsak:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL barran, idatzi">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Idatzi geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Egin klik bikoitza geo.enabled hobespenean">
+<!ENTITY rights.locationawarebrowsing-term4 "Kokalekuaren araberako nabigatzea desgaituta dago orain">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Produktuak dakartzan webguneen zerbitzuen ikuspegi orokorra, hauek ezgaitzeko azalpenekin batera agertu behar lirateke hemen.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Produktuari aplika lekizkioken edozein baldintza hemen agertu behar lirateke.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName;k eta bere laguntzaile, legelari eta bazkideek ahalik eta Zerbitzurik zehatz eta eguneratuenak eskaintzeko lan egiten dute. Halere, ezin dugu ziurtatu informazio hau zehatza eta errorerik gabea denik. Adibidez, nabigatze seguruaren Zerbitzuak ezin ditu zenbait gune arriskutsu identifikatu eta beste batzuk identifika litzake errorez. Kokalekuaren araberako Zerbitzuak itzultzen dituen kokalekuak hornitzaileek emandako estimazioak dira bakarrik eta ez guk ez hornitzaileek ez dugu bermatzen emandako kokalekuen zehaztasuna.">
+<!ENTITY rights.webservices-term2 "&vendorShortName;(e)k nahieran alda edo geldiaraz ditzake Zerbitzuak.">
+<!ENTITY rights2.webservices-term3 "Ongi etorria zara Zerbitzu hauek &brandShortName;(r)ekin batera erabiltzeko eta &vendorShortName;k horretarako eskubideak ematen dizkizu. &vendorShortName; eta bere legelariek gordeta dituzte Zerbitzuaren bestelako eskubideak. Baldintza hauen helburua ez da beste lizentzia askeek emandako eskubideak &brandShortName;(e)ra (eta honen ondorengo bertsioetara) murriztea.">
+<!ENTITY rights.webservices-term4 "Zerbitzuak bere horretan eskaintzen dira. &vendorShortName;(e)k, bere laguntzaileek, legelariek eta banatzaileek ez dute inolako bermerik ematen, espreski edo zeharka, Zerbitzuak zure beharretara moldatuak direnik. Zure esku daude Zerbitzuak erabiltzearen arriskuak, hala nola hauen kalitate eta errendimendua. Zenbait eskumenek ez dute onartzen zeharkako bermeen mugatze edo baztertzea, beraz ezespen honek ez dizu eragingo.">
+<!ENTITY rights.webservices-term5 "Legeak eskatuta ez bada, &vendorShortName;, bere laguntzaile, legelari eta banatzaileak ez dira erantzule egingo &brandShortName; eta Zerbitzuak erabiltzeak sor litzakeen edozein zeharkako, berezi, bigarren mailako, ondoriozko edo zigortzeko kalteengatik. Baldintza hauen peko zigor komunak ez ditu 500$ gaindituko (bostehun dolar). Zenbait eskumenek ez dute kalte zehatz batzuen bazterketa baimentzen, beraz, bazterketa eta muga honek ez dizu eragingo.">
+<!ENTITY rights.webservices-term6 "&vendorShortName;(e)k baldintza hauek egunera ditzake beharrezko izanez gero aldian-aldian. Baldintza hauek ezingo dira aldatu edo ezeztatu &vendorShortName;(r)en idatzizko onarpenarekin ez bada.">
+<!ENTITY rights.webservices-term7 "Baldintza hauek AEBtako Kaliforniako estatuaren legeek zuzenduta daude, legearen xedapenen gatazkak baztertuz. Baldintza hauen edozein zati baliogabea edo ezin betearazlea bada, gainerako zatiak indarrean jarraituko dute. Gatazkaren bat egongo balitz baldintza hauek itzulitako bertsioaren eta bertsio ingelesaren artean, bertsio ingelesak aginduko du.">

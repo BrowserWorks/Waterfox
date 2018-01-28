@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Pozicio:">
+<!ENTITY tile.label                 "Tegoli">
+<!ENTITY center.label               "Centre">
+<!ENTITY stretch.label              "Etendi">
+<!ENTITY fill.label                 "Plenigi">
+<!ENTITY fit.label                  "Adapti">
+<!ENTITY preview.label              "Antaŭvidi">
+<!ENTITY color.label                "Koloro:">
+<!ENTITY setDesktopBackground.title "Difini labortablan fonon">
+<!ENTITY openDesktopPrefs.label     "Malfermi preferojn de labortablo">
+<!ENTITY closeWindow.key            "w">

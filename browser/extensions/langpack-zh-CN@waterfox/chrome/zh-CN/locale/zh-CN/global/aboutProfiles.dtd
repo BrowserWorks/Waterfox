@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "关于配置文件">
+<!ENTITY aboutProfiles.subtitle "此页面有助您管理您的配置文件。每个配置文件都是一个独立的空间，其中存放着各自的历史记录、书签、设置及附加组件。">
+<!ENTITY aboutProfiles.create "创建新配置文件">
+<!ENTITY aboutProfiles.restart.title "重新启动">
+<!ENTITY aboutProfiles.restart.inSafeMode "重新启动并禁用附加组件…">
+<!ENTITY aboutProfiles.restart.normal "正常重新启动…">

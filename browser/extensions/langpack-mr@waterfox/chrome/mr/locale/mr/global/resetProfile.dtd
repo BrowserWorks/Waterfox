@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName;ला पूर्ववत् करा">
+<!ENTITY refreshProfile.dialog.description1  "समस्या सोडवण्यासाठी आणि कार्यप्रदर्शन पुनर्संचयित करण्यासाठी आपण पुन्हा प्रारंभ करा.">
+<!ENTITY refreshProfile.dialog.description2  "हे करेल:">
+<!ENTITY refreshProfile.dialog.items.label1  "आपले ॲड-ऑन्स् आणि आपण केलेले बदल काढून टाका">
+<!ENTITY refreshProfile.dialog.items.label2  "आपले ब्राऊझर सेटिंग्ज डीफॉल्ट सारखे पूर्ववत केले जातील">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName;ला पूर्ववत् करा">
+
+<!ENTITY refreshProfile.title                "&brandShortName; ला एक ट्यून अप द्या">
+<!ENTITY refreshProfile.button.label         "&brandShortName;ला मूळस्थितीत आणा…">
+
+<!ENTITY refreshProfile.cleaning.description "जवळपास झाले आहे...">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Esceptoj - Traduko">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Tradukoj ne estos proponitaj por la jenaj lingvoj:">
+<!ENTITY treehead.languageName.label      "Lingvoj">
+<!ENTITY removeLanguage.label             "Forigi lingvon">
+<!ENTITY removeLanguage.accesskey         "F">
+<!ENTITY removeAllLanguages.label         "Forigi ĉiujn lingvojn">
+<!ENTITY removeAllLanguages.accesskey     "l">
+
+<!ENTITY noTranslationForSites.label      "Tradukoj ne estos proponitaj por la jenaj retejoj:">
+<!ENTITY treehead.siteName2.label         "Retejoj">
+<!ENTITY removeSite.label                 "Forigi retejon">
+<!ENTITY removeSite.accesskey             "r">
+<!ENTITY removeAllSites.label             "Forigi ĉiujn retejojn">
+<!ENTITY removeAllSites.accesskey         "e">
+
+<!ENTITY button.close.label               "Fermi">
+<!ENTITY button.close.accesskey           "F">

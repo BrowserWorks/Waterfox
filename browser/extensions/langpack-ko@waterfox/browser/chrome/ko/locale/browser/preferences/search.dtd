@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "기본 검색 사이트">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "주소바와 검색바에서 사용할 기본 검색 엔진을 선택하세요.">
+
+<!ENTITY provideSearchSuggestions.label        "검색어 자동 완성 쓰기">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.label           "주소바 결과에 검색 추천 보임">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "&brandShortName;가 탐색 목록을 저장하지 않도록 설정했기 때문에 주소창 결과에 검색 추천이 나오지 않을 것입니다.">
+
+<!ENTITY oneClickSearchEngines.label           "원클릭 검색 사이트">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "단어 입력을 시작했을 때 주소바와 검색바 아래에 나타날 대체 검색 엔진을 선택하세요.">
+
+<!ENTITY engineNameColumn.label                "검색 사이트">
+<!ENTITY engineKeywordColumn.label             "키워드">
+
+<!ENTITY restoreDefaultSearchEngines.label     "기본 검색 사이트 되돌리기">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "지우기">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY findMoreSearchEngines.label           "더 많은 검색 엔진 찾기">

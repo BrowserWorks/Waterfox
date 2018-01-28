@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "මෘදුකාංග යාවත්කාල කිරීම">
+
+<!ENTITY  checking.title                  "යාවත්කාල කිරීම් සඳහා පරික්ෂා කිරීම">
+<!ENTITY  updateCheck.label               "&brandShortName; හි නවතම වෙමක් සොයමින්…">
+
+<!ENTITY  noupdatesfound.title            "යාවත්කාල කිරීම් හමු නොවුනි">
+<!ENTITY  noupdatesautoenabled.intro      "යාවත් කිරීමට කිසිවක් නොමැත. &brandShortName; වරින් වර 
+යාවත් කිරීම් ඇත් දැයි සොයනු ඇත.">
+<!ENTITY  noupdatesautodisabled.intro     "යාවත් කිරීමට කිසිවක් නොමැත. කරුණාකර පසුව පරික්‍ෂා කරන්න 
+ හෝ &brandShortName; හි ස්වයංක්‍රීය යාවත් කිරීම් පරික්‍ෂාව සක්‍රීය කරන්න.">
+
+<!ENTITY  manualUpdate.title              "යාවත් කළ නොහැක">
+<!ENTITY  manualUpdate.desc               "A recommended security and stability update is available, but you do 
+not have the system permissions required to install it. Please contact your 
+system administrator, or try again from an account that has permission to 
+install software on this computer.">
+<!ENTITY  manualUpdate.space.desc         "නිර්දේශිත ආරක්ෂිත හා ස්ථායි යාවත්කාලීන කිරීම් ඇති නමුත් ස්ථාපනය සඳහා 
+ඔබ සතුව ප්‍රමාණවත් හිස් ඉඩක් නැත.">
+<!ENTITY  manualUpdateGetMsg.label        "You can always get the latest version of &brandShortName; at:">
+
+<!ENTITY  unsupported.title               "පද්ධතිය සහය නොදක්වයි">
+<!ENTITY  unsupported.label               "ඔබේ &brandShortName; කල් ඉකුත්වී ඇත, නමුත් නවතම සංස්කරණය සඳහා   
+ඔබේ පද්ධතිය සහය නොදක්වයි. කරුණාකර ඔබේ පද්ධතිය යාවත් කර නැවත  
+උත්සහ කරන්න. මෙම දැන්වීම නැවත නොපෙන්වන නමුත්">
+<!ENTITY  unsupportedLink.label           "තවත් දැනගන්න.">
+
+<!ENTITY  clickHere.label                 "මෙම යාවත්කාල කිරීම පිළිබද තවත් තොරතුරු දක්වන්න">
+
+<!ENTITY  evangelism.desc                 "&brandShortName; සඳහා මෙම යාවත් කිරීම හැකි ඉක්මනින් 
+යොදන ලෙස තරයේ අවවාද කරයි.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; බාගත කිරීම">
+<!ENTITY  downloading.intro               "යාවත්කාල කිරීම භාගත වේ...">
+<!ENTITY  connecting.label                "යාවත්කාල කිරීම් සේවාදායකය වෙත සම්බන්ධ වෙමින් පවතී...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; හී බාගත කල වෘද්ධි යාවත්කාල කිරීම් 
+සම්පූර්ණත්වය ස්ථීර කරගත නොහැක, 
+එනිසා සම්පූර්ණ යාවත්කාල කිරීමේ පැකේජය බාගත වේ.">
+
+<!ENTITY  viewDetails.tooltip             "මෙම යාවත් කිරීම සඳහා විස්තර පෙන්වන්න">
+
+<!ENTITY  details.link                    "තොරතුරු">
+
+<!ENTITY  error.title                     "යාවත්කාලීනය අසාර්ථක විය">
+
+<!ENTITY  error.label                     "මෙම යාවත්කාල කිරීම බාගත කිරීමේ හෝ ස්ථාපනයේ දෝෂ පරික්ෂාව සඳහා. 
+&brandShortName; යාවත්කාල කල නොහැක මන්දයත්:">
+                                           
+<!ENTITY  errorManual.label               "හස්තීයව මෙම පුරුක වෙත්න් නවතම වෙළුම බාගත කරගැනීමේන්ඔබට &brandShortName; 
+යාවත්කාල කිරීම් කල හැක :">
+                                           
+<!ENTITY  errorpatching.intro             "අඩ යාවත්කාල කිරීම් යෙදවිය නොහැක. 
+&brandShortName; සම්පූර්ණ වෙළුම බාගත කරගැනීමෙන් පසු නැවත උත්සහ කරන්න.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; හට යාවත් කාලයක් පවතීදැයි හඳුනාගත නොහැක. කරුණාකර
+                                          ඔබ සතුව &brandShortName; නවතම නිකුතුව පවතී දැයි බලන්න:">
+
+<!ENTITY  finishedPage.title              "යාවත් කිරීම ස්ථාපනයට සූදානම්">
+<!ENTITY  finishedPage.text               "යාවත් කිරීම් ස්ථාපනය &brandShortName; මීළඟට ආරම්භ වූ විට සිදු වේ. ඔබට දැන් 
+ &brandShortName; යළි ආරම්භ කළ හැක, හෝ දැනට වැඩ කරමින් පසුව යළි අරඹන්න.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; සඳහා ආරක්‍ෂණ සහ ස්ථායි යාවත් කිරිම ලබාගෙන 
+ එය ස්ථාපනය සඳහා සූදානම්.">
+<!ENTITY  finishedBackground.name         "යාවත්කාල කිරීම:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "යාවත් කිරීම් ස්ථාපනය &brandShortName; මීළඟට ආරම්භ වූ විට සිදු වේ. ඔබට දැන් 
+ &brandShortName; යළි ආරම්භ කළ හැක, හෝ දැනට වැඩ කරමින් පසුව යළි අරඹන්න.">
+<!ENTITY  finishedBackground.moreElevated "මෙම යාවත්කාලයට පාලක වරප්‍රසාද අවශ්‍යය වෙයි. යාවත්කාලය &brandShortName; ආරම්භවන ඊළඟ අවස්ථාවේ ස්ථාපනය වනු ඇත. ඔබට දැන් &brandShortName; ප්‍රතිපණගැන්වීමට, වැඩ දිගටම කරගෙනගොස් පසුව ප්‍රතිපණගැන්වීමට හෝ මෙම යාවත්කාලය ප්‍රතික්ෂේප කිරීමට හැක.">
+
+<!ENTITY  update.details.label            "තොරතුරු">
+<!ENTITY  update.installedOn.label        "ස්ථාපිත දිනය:">
+<!ENTITY  update.status.label             "තත්වය:">

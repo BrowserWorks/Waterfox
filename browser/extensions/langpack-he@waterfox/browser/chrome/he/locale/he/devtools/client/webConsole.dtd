@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "מסוף רשת">
+<!ENTITY browserConsole.title "מסוף דפדפן">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "פתיחת כתובת בלשונית חדשה">
+<!ENTITY openURL.accesskey "פ">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "רשת">
+<!ENTITY btnPageNet.tooltip "רישום גישה לרשת">
+<!ENTITY btnPageNet.accesskey "ר">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "ה">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "רישום שגיאות פענוח CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "רישום חריגות JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "אבטחה">
+<!ENTITY btnPageSecurity.tooltip "רישום שגיאות אבטחה ואזהרות">
+<!ENTITY btnPageSecurity.accesskey "א">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "רישום">
+<!ENTITY btnPageLogging.tooltip "רישום הודעות שנשלחות לעצם window.console">
+<!ENTITY btnPageLogging.accesskey3 "ר">
+<!ENTITY btnConsoleErrors       "שגיאות">
+<!ENTITY btnConsoleInfo         "מידע">
+<!ENTITY btnConsoleWarnings     "אזהרות">
+<!ENTITY btnConsoleLog          "רישום">
+<!ENTITY btnConsoleXhr          "XHR">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "שרת">
+<!ENTITY btnServerLogging.tooltip     "הודעות רישום התקבלו מהשרת">
+<!ENTITY btnServerLogging.accesskey   "ש">
+<!ENTITY btnServerErrors              "שגיאות">
+<!ENTITY btnServerInfo                "מידע">
+<!ENTITY btnServerWarnings            "אזהרות">
+<!ENTITY btnServerLog                 "רישום">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+
+<!ENTITY filterOutput.placeholder "סינון פלט">
+<!ENTITY btnClear.label        "מחיקה">
+<!ENTITY btnClear.tooltip      "מחיקת פלט מסוף הרשת">
+<!ENTITY btnClear.accesskey    "מ">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "העתקת מיקום קישור">
+<!ENTITY copyURLCmd.accesskey "ע">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "פתיחה בתצוגת משתנים">
+<!ENTITY openInVarViewCmd.accesskey "צ">
+<!ENTITY storeAsGlobalVar.label "אחסון כמשתנה גלובלי">
+<!ENTITY storeAsGlobalVar.accesskey "ג">
+
+<!ENTITY btnConsoleReflows      "Reflows">
+
+<!ENTITY btnConsoleWindowlessWorkers "Add-on or Chrome Workers">
+

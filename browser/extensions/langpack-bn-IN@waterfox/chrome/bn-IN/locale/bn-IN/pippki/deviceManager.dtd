@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ডিভাইস পরিচালন ব্যবস্থা">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "নিরাপত্তা মডিউল ও ডিভাইস">
+<!ENTITY devmgr.details.title                   "বিবরণ">
+<!ENTITY devmgr.details.title2                  "মান">
+
+<!ENTITY devmgr.button.login.label              "লগ-ইন">
+<!ENTITY devmgr.button.login.accesskey          "ল">
+<!ENTITY devmgr.button.logout.label             "লগ আউট">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "পাসওয়ার্ড পরিবর্তন">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "লোড করুন">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "আন-লোড করুন">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "আপনি যে মডিউলটি যোগ করতে ইচ্ছুক সেটি সম্পর্কে তথ্য জ্ঞাপন করুন।">
+<!ENTITY loaddevice.modname                     "মডিউলের নাম:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "নতুন PKCS#11 মডিউল">
+<!ENTITY loaddevice.filename                    "মডিউল ফাইলের নাম:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "ব্রাউজ করুন...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key			"W">
+<!ENTITY toggleToolbox.key		"I">
+<!ENTITY toggleToolboxF12.keycode	"VK_F12">
+<!ENTITY toggleToolboxF12.keytext	"F12">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage	"ブラウザーツールボックスを開いた時のエラーを通知:">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings	"詳細設定">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector		"調査">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label	"ブラウザー CSS を表示">
+<!ENTITY options.showUserAgentStyles.tooltip	"このオプションを有効にすると、ブラウザーが読み込んだ既定のスタイルを表示します。">
+
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+<!ENTITY options.collapseAttrs.label		"DOM 属性値を省略">
+<!ENTITY options.collapseAttrs.tooltip		"値の長い属性を省略します">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label		"既定の色単位">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey	"U">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.authored	"記述通りの単位">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex		"16 進数">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl		"HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb		"RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name		"色の名前">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh	"* 現在のセッションのみ有効。再読み込みで復帰">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5		"ブラウザーとアドオンのデバッガーを有効化">
+<!ENTITY options.enableChrome.tooltip3		"さまざまな開発ツールがブラウザーコンテキスト (ツール > ウェブ開発 > ブラウザーツールボックス) とアドオンマネージャーからのアドオンデバッグで使えるようになります">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3		"リモートデバッガーを有効化">
+<!ENTITY options.enableRemote.tooltip2		"Waterfox OS などのリモート Waterfox インスタンスを開発ツールでデバッグできるようにします">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label	"JavaScript を無効化 *">
+<!ENTITY options.disableJavaScript.tooltip	"このオプションを有効にすると、現在のタブの JavaScript を無効にします。タブまたはツールボックスを閉じると、この設定は元に戻されます">
+
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+<!ENTITY options.disableHTTPCache.label		"HTTP キャッシュを無効化 (ツールボックスを開いているとき)">
+<!ENTITY options.disableHTTPCache.tooltip	"このオプションを有効にすると、ツールボックスを開いているときはすべてのタブの HTTP キャッシュを無効にします。ただし、Service Worker はこのオプションに影響されません">
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label	"HTTP による Service Worker を有効化 (ツールボックスを開いたとき)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip	"このオプションを有効にすると、ツールボックスを開いているすべてのタブで HTTP による Service Worker を有効にします">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!ENTITY options.selectDefaultTools.label2	"標準の開発ツール">
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label	"開発ツールのアドオン">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label	"利用可能なツールボックスのボタン">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label		"* 現在のツールボックスには対応していません">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2	"テーマ">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label	"Developer Edition テーマを使用">
+<!ENTITY options.usedeveditiontheme.tooltip	"Developer Edition テーマに切り替えます">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label		"ウェブコンソール">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label	"タイムスタンプを表示">
+<!ENTITY options.timestampMessages.tooltip	"このオプションを有効にすると、ウェブコンソールにタイムスタンプを表示します">
+
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!ENTITY options.debugger.label			"デバッガー">
+
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+<!ENTITY options.sourceMaps.label		"ソースマップを有効化">
+<!ENTITY options.sourceMaps.tooltip		"このオプションを有効にすると、ソースがデバッガーとコンソールにマッピングされます">
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label		"スタイルエディター">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label	"元のソースを表示">
+<!ENTITY options.stylesheetSourceMaps.tooltip	"スタイルエディターとインスペクターで元のソースを表示します (例: Sass ファイル)">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label		"CSS 自動補完">
+<!ENTITY options.stylesheetAutocompletion.tooltip	"スタイルエディターで CSS プロパティ、値、セレクター入力時に自動補完します">
+
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!ENTITY options.screenshot.label			"スクリーンショットの動作">
+
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+<!ENTITY options.screenshot.clipboard.label		"スクリーンショットをクリップボードへコピー">
+<!ENTITY options.screenshot.clipboard.tooltip		"スクリーンショットをクリップボードに直接保存します">
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+<!ENTITY options.screenshot.audio.label			"カメラのシャッター音を再生">
+<!ENTITY options.screenshot.audio.tooltip		"スクリーンショット撮影時のカメラ音声を有効にします">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label		"共通設定">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label	"ログ出力を残す">
+<!ENTITY options.enablePersistentLogs.tooltip	"このオプションを有効にすると、新しいページに誘導させられた場合でもウェブコンソールとネットワークモニターの出力を消去しないようになります">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label		"Gecko プラットフォームのデータを表示">
+<!ENTITY options.showPlatformData.tooltip	"このオプションを有効にすると、JavaScript プロファイラの出力に Gecko プラットフォームのシンボルが含まれるようになります">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label			"エディター設定">
+<!ENTITY options.sourceeditor.detectindentation.label	"インデントを検知">
+<!ENTITY options.sourceeditor.detectindentation.tooltip	"ソースの内容からインデントを推測します">
+<!ENTITY options.sourceeditor.autoclosebrackets.label	"閉じ括弧自動入力">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip	"閉じ括弧を自動的に入力します">
+<!ENTITY options.sourceeditor.expandtab.label		"インデントにスペース文字を使う">
+<!ENTITY options.sourceeditor.expandtab.tooltip		"タブ文字の代わりにスペース文字を使います">
+<!ENTITY options.sourceeditor.tabsize.label		"タブ幅">
+<!ENTITY options.sourceeditor.tabsize.accesskey		"T">
+<!ENTITY options.sourceeditor.keybinding.label		"キー割り当て">
+<!ENTITY options.sourceeditor.keybinding.accesskey	"K">
+<!ENTITY options.sourceeditor.keybinding.default.label	"既定">

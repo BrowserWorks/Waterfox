@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Információk az url-classifierről">
+<!ENTITY aboutUrlClassifier.providerTitle               "Szolgáltató">
+<!ENTITY aboutUrlClassifier.provider                    "Szolgáltató">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Legutóbbi frissítés ideje">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Következő frissítés ideje">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Visszatartási idő">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Legutóbbi frissítés állapota">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Frissítés">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Gyorsítótár">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Frissítés">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Törlés">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tábla neve">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Negatív gyorsítótár-bejegyzések száma">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Pozitív gyorsítótár-bejegyzések száma">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Bejegyzések megjelenítése">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Gyorsítótár-bejegyzések">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Előtag">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negatív gyorsítótár lejárata">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Teljes hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Pozitív gyorsítótár lejárata">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Hibakeresés">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Naplómodulok beállítása">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Naplófájl beállítása">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS napló beállítása">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Biztonságos böngészés naplómodulok">
+<!ENTITY aboutUrlClassifier.debugModules                "Jelenlegi naplómodulok">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Biztonságos böngészés JS napló">
+<!ENTITY aboutUrlClassifier.debugFile                   "Jelenlegi naplófájl">

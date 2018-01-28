@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Ticraḍ n isebtar">
+<!ENTITY engine.bookmarks.accesskey "T">
+<!ENTITY engine.tabs.label2         "Lddi icarren">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Amazray">
+<!ENTITY engine.history.accesskey   "A">
+<!ENTITY engine.logins.label        "Inekcam">
+<!ENTITY engine.logins.accesskey    "Y">
+<!ENTITY engine.prefs.label         "Imsenyifen">
+<!ENTITY engine.prefs.accesskey     "y">
+<!ENTITY engine.addons.label        "Izegrar">
+<!ENTITY engine.addons.accesskey    "z">
+<!ENTITY engine.addresses.label     "Tansiwin">
+<!ENTITY engine.addresses.accesskey "w">
+<!ENTITY engine.creditcards.label   "Tikarḍiwin n usmad">
+<!ENTITY engine.creditcards.accesskey "G">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Isem n wallal">
+<!ENTITY changeSyncDeviceName2.label "Snifel isem n yibenk…">
+<!ENTITY changeSyncDeviceName2.accesskey "q">
+<!ENTITY cancelChangeSyncDeviceName.label "Sefsex">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "x">
+<!ENTITY saveChangeSyncDeviceName.label "Sekles">
+<!ENTITY saveChangeSyncDeviceName.accesskey "l">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Tiwtilin n useqdec">
+<!ENTITY fxaPrivacyNotice.link.label "Tasertit n tbaḍnit">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "ur ittusenqed ara.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Ma ulac aɣilif sesteb akken ad tkecmeḍ">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Ur teqqineḍ ara.">
+<!ENTITY signIn.label                "Qqen">
+<!ENTITY signIn.accesskey            "Q">
+<!ENTITY profilePicture.tooltip      "Snifel tugna n umaɣnu">
+<!ENTITY verifiedManage.label        "Sefrek imiḍanen">
+<!ENTITY verifiedManage.accesskey    "m">
+<!ENTITY disconnect3.label           "Tuffγa…">
+<!ENTITY disconnect3.accesskey       "k">
+<!ENTITY verify.label                "Senqed tansa imayl">
+<!ENTITY verify.accesskey            "e">
+<!ENTITY forget.label                "Ttu tansa-a imayl">
+<!ENTITY forget.accesskey            "y">
+
+<!ENTITY signedOut.caption            "Awi web-inek yid-k">
+<!ENTITY signedOut.description        "Semtawi ticraḍ-inek n isebtar, amazray, awalen uffiren, izegrar, d ismenyifen akked ibenkan-inek akk.">
+<!ENTITY signedOut.accountBox.title   "Qqen ɣer &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Rnu amiḍan">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Kcem">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Iγewwaṛen n umtawi">
+<!ENTITY signedIn.settings.description "Fren ayen ad temtawiḍ deg ibenk inek s useqdec n &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Sider Waterfox i ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " neɣ ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOs">
+
+<!ENTITY mobilePromo3.end              " akken ad temtawiḍ d ibenkan-ik n ufus.">

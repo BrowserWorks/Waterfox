@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label            "Prindi">
+
+<!ENTITY printDialog.title            "Printimine">
+
+<!ENTITY fpDialog.title               "Faili salvestamine">
+
+<!ENTITY fileCheck.label              "Salvestamine failina">
+<!ENTITY fileCheck.accesskey          "S">
+<!ENTITY propertiesButton.label       "Omadused...">
+<!ENTITY propertiesButton.accesskey   "O">
+<!ENTITY descText.label               "Printeri kirjeldus:">
+<!ENTITY printer.label                "Printer">
+<!ENTITY printerInput.label           "Printeri nimi:">
+<!ENTITY printerInput.accesskey       "P">
+
+<!ENTITY printrangeGroup.label        "Trükiala">
+<!ENTITY allpagesRadio.label          "Kõik">
+<!ENTITY allpagesRadio.accesskey      "K">
+<!ENTITY rangeRadio.label             "Lehed">
+<!ENTITY rangeRadio.accesskey         "L">
+<!ENTITY frompageInput.label          "alates">
+<!ENTITY frompageInput.accesskey      "a">
+<!ENTITY topageInput.label            "kuni">
+<!ENTITY topageInput.accesskey        "k">
+<!ENTITY selectionRadio.label         "Valik">
+<!ENTITY selectionRadio.accesskey     "V">
+
+<!ENTITY copies.label                 "Eksemplarid">
+<!ENTITY numCopies.label              "Eksemplaride arv:">
+<!ENTITY numCopies.accesskey          "E">
+
+<!ENTITY printframeGroup.label        "Paneelide printimine">
+<!ENTITY aslaidoutRadio.label         "Nii nagu ekraanil">
+<!ENTITY aslaidoutRadio.accesskey     "N">
+<!ENTITY selectedframeRadio.label     "Valitud paneel">
+<!ENTITY selectedframeRadio.accesskey "V">
+<!ENTITY eachframesepRadio.label      "Iga paneel eraldi">
+<!ENTITY eachframesepRadio.accesskey  "I">

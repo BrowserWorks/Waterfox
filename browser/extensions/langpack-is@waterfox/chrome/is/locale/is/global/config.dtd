@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Breytingar hér gætu haft afleiðingar!">
+<!ENTITY aboutWarningText.label "Ef þú breytir ítarlegum stillingum getur það haft áhrif á stöðugleika, öryggi, og afköst þessa forrits. Þú ættir því aðeins að halda áfram ef þú veist hvað þú ert að gera.">
+<!ENTITY aboutWarningButton2.label "Ég samþykki áhættuna!">
+<!ENTITY aboutWarningCheckbox.label "Sýna aðvörun næst">
+
+<!ENTITY searchPrefs.label "Leita:">
+<!ENTITY searchPrefs.accesskey "L">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Stillinganafn">
+<!ENTITY lockColumn.label "Staða">
+<!ENTITY typeColumn.label "Tegund">
+<!ENTITY valueColumn.label "Gildi">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Smelltu til að raða"> 
+<!ENTITY columnChooser.tooltip "Smelltu til að velja hvaða dálka á að sýna"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Afrita">
+<!ENTITY copyPref.accesskey "A">
+<!ENTITY copyName.label "Afrita nafn">
+<!ENTITY copyName.accesskey "f">
+<!ENTITY copyValue.label "Afrita gildi">
+<!ENTITY copyValue.accesskey "g">
+<!ENTITY modify.label "Breyta">
+<!ENTITY modify.accesskey "B">
+<!ENTITY toggle.label "Víxla">
+<!ENTITY toggle.accesskey "V">
+<!ENTITY reset.label "Endursetja">
+<!ENTITY reset.accesskey "r">
+<!ENTITY new.label "Nýtt">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Strengur">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Heiltala">
+<!ENTITY integer.accesskey "i">
+<!ENTITY boolean.label "Boole gildi">
+<!ENTITY boolean.accesskey "B">

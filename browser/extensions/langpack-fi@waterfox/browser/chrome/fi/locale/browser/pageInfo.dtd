@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopioi">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Valitse kaikki">
+<!ENTITY  selectall.accesskey   "V">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Yleiset">
+<!ENTITY  generalTab.accesskey  "Y">
+<!ENTITY  generalTitle          "Otsikko:">
+<!ENTITY  generalURL            "Osoite:">
+<!ENTITY  generalType           "Tyyppi:">
+<!ENTITY  generalMode           "Mallinnustila:">
+<!ENTITY  generalSize           "Koko:">
+<!ENTITY  generalReferrer       "Viittaava URL:">
+<!ENTITY  generalSource         "Välimuistilähde:">
+<!ENTITY  generalModified       "Muokattu:">
+<!ENTITY  generalEncoding2      "Merkistökoodaus:">
+<!ENTITY  generalMetaName       "Nimi">
+<!ENTITY  generalMetaContent    "Sisältö">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Osoite:">
+<!ENTITY  mediaText             "Liittyvä teksti:">
+<!ENTITY  mediaAltHeader        "Vaihtoehtoinen teksti">
+<!ENTITY  mediaAddress          "Osoite">
+<!ENTITY  mediaType             "Tyyppi">
+<!ENTITY  mediaSize             "Koko">
+<!ENTITY  mediaCount            "Lukumäärä">
+<!ENTITY  mediaDimension        "Mitat:">
+<!ENTITY  mediaLongdesc         "Pitkä kuvaus:">
+<!ENTITY  mediaBlockImage.accesskey "E">
+<!ENTITY  mediaSaveAs           "Tallenna nimellä…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "l">
+<!ENTITY  mediaPreview          "Median esikatselu:">
+
+<!ENTITY  feedTab               "Syötteet">
+<!ENTITY  feedTab.accesskey     "S">
+<!ENTITY  feedSubscribe         "Tilaa">
+<!ENTITY  feedSubscribe.accesskey "i">
+
+<!ENTITY  permTab               "Oikeudet">
+<!ENTITY  permTab.accesskey     "O">
+<!ENTITY  permUseDefault        "Oletus">
+<!ENTITY  permAskAlways         "Kysy aina">
+<!ENTITY  permAllow             "Salli">
+<!ENTITY  permAllowSession      "Salli istunnon ajaksi">
+<!ENTITY  permBlock             "Estä">
+<!ENTITY  permissionsFor        "Oikeudet sivustolle:">
+<!ENTITY  permPlugins           "Käynnistä liitännäiset">
+
+<!ENTITY  permClearStorage           "Tyhjennä tietovarasto">
+<!ENTITY  permClearStorage.accesskey "T">
+
+<!ENTITY  securityTab           "Turvallisuus">
+<!ENTITY  securityTab.accesskey "T">
+<!ENTITY  securityView.certView "Näytä varmenne">
+<!ENTITY  securityView.accesskey "N">
+<!ENTITY  securityView.unknown   "Tuntematon">
+
+
+<!ENTITY  securityView.identity.header   "Sivuston identiteetti">
+<!ENTITY  securityView.identity.owner    "Omistaja:">
+<!ENTITY  securityView.identity.domain   "WWW-sivusto:">
+<!ENTITY  securityView.identity.verifier "Varmentaja:">
+<!ENTITY  securityView.identity.validity "Vanhenee:">
+
+<!ENTITY  securityView.privacy.header                   "Tietosuoja ja sivuhistoria">
+<!ENTITY  securityView.privacy.history                  "Onko sivustolla käyty ennen tätä päivää?">
+<!ENTITY  securityView.privacy.cookies                  "Tallentaako sivusto tietoja (evästeitä) tietokoneelle?">
+<!ENTITY  securityView.privacy.viewCookies              "Näytä evästeet">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "e">
+<!ENTITY  securityView.privacy.passwords                "Onko sivuston salasanoja tallennettu?">
+<!ENTITY  securityView.privacy.viewPasswords            "Näytä tallennetut salasanat">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "u">
+
+<!ENTITY  securityView.technical.header                 "Tekniset tiedot">
+
+<!ENTITY  helpButton.label                              "Ohje">

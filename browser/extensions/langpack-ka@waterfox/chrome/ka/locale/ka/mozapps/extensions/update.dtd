@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; - განახლება">
+
+<!ENTITY  offline.title                   "&brandShortName; კავშირგარეშე რეჟიმშია">
+<!ENTITY  offline.description             "&brandShortName; საჭიროებს კავშირის რეჟიმში გადასვლას რათა შეამოწმოს 
+თქვენი მოდულების შესაძლო განახლებები თქვენს მიმდინარე ვერსიასთან 
+თავსებადობის უზრუნველსაყოფად.">
+<!ENTITY  offline.toggleOffline.label     "კავშირის რეჟიმი.">
+<!ENTITY  offline.toggleOffline.accesskey "კ">
+
+<!ENTITY  mismatch.win.title              "არათავსებადი დამატებები">
+<!ENTITY  mismatch.top.label              "შემდეგი მოდულები არათავსებადია &brandShortName; პროგრამის მიმდინარე ვერსიასთან 
+და ამოირთო:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName;-ს შეუძლია შეამოწმოს, არის თუ არა ამ დამატებების
+                                           თავსებადი ვერსიები ხელმისაწვდომი.">
+
+<!ENTITY  checking.wizard.title           "თავსებადი დამატებების შემოწმება">
+<!ENTITY  checking.top.label              "არათავსებადი დამატებების შემოწმება განახლებებზე…">
+<!ENTITY  checking.status                 "ამას შესაძლოა რამდენიმე წუთი დასჭირდეს…">
+
+<!ENTITY  found.wizard.title               "თავსებადი დამატებები მოძიებულია">
+<!ENTITY  found.top.label                 "ჩადგმისთვის სასურველი მოდულის არჩევა:">
+<!ENTITY  found.disabledXPinstall.label   "ეს განახლებები ვერ ჩაიდგმება, რადგან პროგრამების ჩადგმა ამჟამად ამორთულია. 
+ამ პარამეტრის შეცვლა შეგიძლიათ ქვემოთ.">
+<!ENTITY  found.enableXPInstall.label     "ვებსაიტისთვის პროგრამის ჩადგმაზე ნების დართვა">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "თავსებადი დამატებების ჩადგმა">
+<!ENTITY  installing.top.label            "დამატებების განახლებების ჩამოტვირთვა და დაყენება…">
+
+<!ENTITY  noupdates.wizard.title          "თავსებადი განახლებები ვერ მოიძებნა">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; ვერ ახერხებს განახლებების მოძიებას ამ
+                                           არათავსებადი დამატებებისთვის.">
+<!ENTITY  noupdates.error.desc            "განახლებების პოვნის მცდელობისას პრობლემები წარმოიქმნა.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; დროდადრო შეამოწმებს და გაცნობებთ 
+თუ როდის მოიძებნება ამ მოდულის თავსებადი განახლება.">
+
+<!ENTITY  finished.wizard.title           "ჩადგმული თავსებადი დამატებები">
+<!ENTITY  finished.top.label              "&brandShortName;-მა განაახლა თქვენი დამატებები.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; დროდადრო შეამოწმებს და გაცნობებთ 
+როცა თქვენი მოდულის განახლება მოიძებნება.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; დროდადრო შეამოწმებს და გაცნობებთ 
+როცა თქვენი მოდულის განახლება მოიძებნება.">
+
+<!ENTITY  adminDisabled.wizard.title      "განახლებების შემოწმება ვერ ხერხდება">
+<!ENTITY  adminDisabled.warning.label     "არათავსებადი დამატებების განახლებებზე შემოწმება, ვერ ხერხდება
+                                           რადგან, &brandShortName;-ზე პროგრამის დაყენება შეზღუდულია.
+                                           გთხოვთ, დასახმარებლად მიმართოთ სისტემის ადმინისტრატორს.">
+
+<!ENTITY  versioninfo.wizard.title        "დამატებების თავსებადობის შემოწმება">
+<!ENTITY  versioninfo.top.label           "თქვენი მოდულების თავსებადობის შემოწმება 
+                                           &brandShortName;-ის ამ ვერსიასთან.">
+<!ENTITY  versioninfo.waiting             "ამას შესაძლოა რამდენიმე წუთი დასჭირდეს…">
+
+<!ENTITY  installerrors.wizard.title      "პრობლემა განახლებების ჩადგმისას">
+<!ENTITY  installerrors.intro.label       "&brandShortName; პროგრამას პრობლემები გაუჩნდა თქვენი 
+ზოგიერთი მოდულის განახლებისას.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "დააწკაპეთ დასრულებაზე &brandShortName;-ით გასაგრძელებლად.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; პროგრამის გასახსნელად დააწკაპეთ - მზადაა.">
+<!ENTITY  enableChecking.label            "&brandShortName; პროგრამისთვის განახლებების შემოწმების ნებართვა.">

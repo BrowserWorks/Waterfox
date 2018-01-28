@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "പ്രധാന പാസ്‌വേഡ്‌ നീക്കം ചെയ്യുക">
+<!ENTITY removeInfo.label                  "തുടരുന്നതിനായി നിങ്ങളുടെ ഇപ്പോഴത്തെ പാസ്‌വേഡ്‌ എന്റര്‍ ചെയ്യേണം:">
+<!ENTITY removeWarning1.label              "സൈറ്റ്‌ പാസ്‌വേഡുകള്‍ പോലെയുള്ള വളരെ പ്രധാന വിവരങ്ങള്‍ സംരക്ഷിക്കുന്നതിനായി പ്രധാന പാസ്‌വേഡ്‌ ഉപയോഗിക്കുന്നു.">
+<!ENTITY removeWarning2.label              "പ്രധാന പാസ്‌വേഡ്‌ മായിച്ചാല്‍ നിങ്ങളുടെ കമ്പ്യൂട്ടര്‍ കോംപ്രമൈസ്‌ ചെയ്യപ്പെട്ടതാണെങ്കില്‍, നിങ്ങളുടെ വിവരങ്ങള്‍ സുരക്ഷിതമായിരിക്കില്ല.">
+<!ENTITY setPassword.oldPassword.label     "ഇപ്പോഴത്തെ പാസ്‌വേഡ്‌ :">
+

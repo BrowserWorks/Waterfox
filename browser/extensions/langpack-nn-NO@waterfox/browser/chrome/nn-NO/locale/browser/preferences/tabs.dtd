@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab vekslar mellom faner i nyleg brukt-rekkjefølgje">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Opne nytt vindauge i faner i staden">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Åtvar meg ved lukking av fleire faner">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "Å">
+
+<!ENTITY warnOnOpenManyTabs.label       "Åtvar meg når opning av mange faner samstundes kan gjere &brandShortName; treg">
+<!ENTITY warnOnOpenManyTabs.accesskey   "a">
+
+<!ENTITY switchLinksToNewTabs.label        "Når du opnar ei lenke i ei ny fane, byt til fana med ein gong">
+<!ENTITY switchLinksToNewTabs.accesskey    "N">
+
+<!ENTITY showTabsInTaskbar.label          "Vis førehandsvising av faner i Windows-oppgåvelinja">
+<!ENTITY showTabsInTaskbar.accesskey      "s">
+<!ENTITY tabsGroup.label          "Faner">

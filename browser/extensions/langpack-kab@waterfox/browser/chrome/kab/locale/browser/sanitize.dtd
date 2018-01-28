@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Iɣewwaṛen n usfaḍ n umazray">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "34em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+
+<!ENTITY sanitizeDialog2.title         "Sfeḍ amazray n melmi kan">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "Ticki ffɣeɣ seg &brandShortName;, kkes iferdisen-a s twurmant:">
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "Azilal a tsefḍeḍ: ">
+<!ENTITY clearTimeDuration.accesskey      "A">
+<!ENTITY clearTimeDuration.lastHour       "Asrag aneggaru">
+<!ENTITY clearTimeDuration.last2Hours     "Sin isragen ineggura">
+<!ENTITY clearTimeDuration.last4Hours     "Kuz isragen ineggura">
+<!ENTITY clearTimeDuration.today          "Assa">
+<!ENTITY clearTimeDuration.everything     "Merra">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!ENTITY clearTimeDuration.dateColumn     "Azemz n tirza">
+<!ENTITY clearTimeDuration.nameColumn     "Isem">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "Aglam leqqayen">
+<!ENTITY detailsProgressiveDisclosure.accesskey "A">
+
+<!ENTITY historySection.label         "Amazray">
+<!ENTITY dataSection.label            "Isefka">
+
+<!ENTITY itemHistoryAndDownloads.label     "Amazray n tunigin d isidar">
+<!ENTITY itemHistoryAndDownloads.accesskey "A">
+<!ENTITY itemFormSearchHistory.label       "Amazray n tferkit d unadi">
+<!ENTITY itemFormSearchHistory.accesskey   "m">
+<!ENTITY itemCookies.label                 "Inagan n tuqqna">
+<!ENTITY itemCookies.accesskey             "I">
+<!ENTITY itemCache.label                   "Tuffirt">
+<!ENTITY itemCache.accesskey               "u">
+<!ENTITY itemOfflineApps.label             "Isefka war tuqqna n usmel web">
+<!ENTITY itemOfflineApps.accesskey         "q">
+<!ENTITY itemActiveLogins.label            "Tuqqniwin turmidin">
+<!ENTITY itemActiveLogins.accesskey        "q">
+<!ENTITY itemSitePreferences.label         "Ismenyifen n usmel web">
+<!ENTITY itemSitePreferences.accesskey     "I">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "Ulac tuɣalin ɣer deffir.">

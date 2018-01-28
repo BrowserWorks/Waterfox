@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "ಪ್ಲೇ ಮಾಡು">
+<!ENTITY playButton.pauseLabel "ವಿರಮಿಸು">
+<!ENTITY muteButton.muteLabel "ಮೂಕಗೊಳಿಸು">
+<!ENTITY muteButton.unmuteLabel "ಮೂಕಗೊಳಿಸದಿರು">
+<!ENTITY fullscreenButton.enterfullscreenlabel "ಪೂರ್ಣ ತೆರೆ">
+<!ENTITY fullscreenButton.exitfullscreenlabel "ಪೂರ್ಣ ತೆರೆಯಿಂದ ನಿರ್ಗಮಿಸು">
+<!ENTITY castingButton.castingLabel "ತೆರೆಗೆ ಕ್ಯಾಸ್ಟ್ ಮಾಡು">
+<!ENTITY closedCaption.off "ನಿಷ್ಕ್ರಿಯ">
+
+<!ENTITY stats.media "ಮಾಧ್ಯಮ">
+<!ENTITY stats.size "ಗಾತ್ರ">
+<!ENTITY stats.activity "ಚಟುವಟಿಕೆ">
+<!ENTITY stats.activityPaused "ವಿರಮಿಸಿದೆ">
+<!ENTITY stats.activityPlaying "ಚಾಲನೆಯಲ್ಲಿದೆ">
+<!ENTITY stats.activityEnded "ಅಂತ್ಯಗೊಂಡಿದೆ">
+<!ENTITY stats.activitySeeking "(ಕೋರಲಾಗುತ್ತಿದೆ)">
+<!ENTITY stats.volume "ಧ್ವನಿಪ್ರಮಾಣ">
+<!ENTITY stats.framesParsed "ಪಾರ್ಸ್ ಮಾಡಲಾದ ಚೌಕಟ್ಟುಗಳು">
+<!ENTITY stats.framesDecoded "ಡಿಕೋಡ್ ಮಾಡಲಾದ ಚೌಕಟ್ಟುಗಳು">
+<!ENTITY stats.framesPresented "ಒದಗಿಸಲಾದ ಚೌಕಟ್ಟುಗಳು">
+<!ENTITY stats.framesPainted "ಬಣ್ಣಹಚ್ಚಲಾದ ಚೌಕಟ್ಟುಗಳು">
+
+<!ENTITY error.aborted "ವೀಡಿಯೊ ಲೋಡ್ ಆಗುವುದು ನಿಂತಿದೆ.">
+<!ENTITY error.network "ಜಾಲಬಂಧದ ದೋಷದ ಕಾರಣ ವೀಡಿಯೊ ಚಾಲನೆಯು ನಿಂತಿದೆ.">
+<!ENTITY error.decode "ಕಡತವು ಹಾಳಾಗಿರುವ ಕಾರಣದಿಂದ ವೀಡಿಯೊ ಚಾಲನೆಯನ್ನು ನಡೆಸಲು ಸಾಧ್ಯವಿಲ್ಲ.">
+<!ENTITY error.srcNotSupported "ವೀಡಿಯೊ ವಿನ್ಯಾಸ ಅಥವ MIME ಬಗೆಗೆ ಬೆಂಬಲವಿಲ್ಲ.">
+<!ENTITY error.noSource2 "ಬೆಂಬಲಿತವಾದ ವಿನ್ಯಾಸ ಮತ್ತು MIME ಬಗೆಯೊಂದಿಗೆ ಯಾವುದೆ ವಿಡಿಯೊ ಕಂಡುಬಂದಿಲ್ಲ.">
+<!ENTITY error.generic "ಅಜ್ಞಾತ ಕಾರಣದಿಂದಾಗಿ ವಿಡಿಯೊ ಚಾಲನೆಯು ನಿಂತುಹೋಗಿದೆ.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#2 ರಲ್ಲಿ #1 ಮುಗಿದಿದೆ">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

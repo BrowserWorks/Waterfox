@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle       "検索の設定の復元">
+
+<!ENTITY searchreset.pageTitle      "検索の設定をもとに戻しますか？">
+
+<!ENTITY searchreset.pageInfo1      "あなたの検索の設定は期限切れのようです。既定の設定に戻すことができます。">
+
+
+<!-- LOCALIZATION NOTE (searchreset.selector.label): this string is
+followed by a dropdown of all the built-in search engines. -->
+<!ENTITY searchreset.selector.label "次の検索エンジンを既定に設定します: ">
+
+<!-- LOCALIZATION NOTE (searchreset.beforelink.pageInfo,
+searchreset.afterlink.pageInfo): these two string are used respectively
+before and after the "Settings page" link (searchreset.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language. -->
+<!ENTITY searchreset.beforelink.pageInfo2 "これらの設定は ">
+<!ENTITY searchreset.afterlink.pageInfo2  " でいつでも変更できます。">
+
+<!ENTITY searchreset.link.pageInfo2       "設定ページ">
+
+<!ENTITY searchreset.noChangeButton        "変更しない">
+<!ENTITY searchreset.noChangeButton.access "D">
+
+<!ENTITY searchreset.changeEngineButton        "検索エンジンを変更">
+<!ENTITY searchreset.changeEngineButton.access "C">

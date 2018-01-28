@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox-WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Neue App…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Gepackte App öffnen…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "p">
+<!ENTITY projectMenu_importHostedApp_label "Gehostete App öffnen…">
+<!ENTITY projectMenu_importHostedApp_accesskey "h">
+<!ENTITY projectMenu_selectApp_label "App öffnen…">
+<!ENTITY projectMenu_selectApp_accesskey "f">
+<!ENTITY projectMenu_play_label "Installieren und ausführen">
+<!ENTITY projectMenu_play_accesskey "s">
+<!ENTITY projectMenu_stop_label "App beenden">
+<!ENTITY projectMenu_stop_accesskey "b">
+<!ENTITY projectMenu_debug_label "App untersuchen">
+<!ENTITY projectMenu_debug_accesskey "u">
+<!ENTITY projectMenu_remove_label "Projekt entfernen">
+<!ENTITY projectMenu_remove_accesskey "r">
+<!ENTITY projectMenu_showPrefs_label "Einstellungen">
+<!ENTITY projectMenu_showPrefs_accesskey "E">
+<!ENTITY projectMenu_manageComponents_label "Zusätzliche Komponenten verwalten">
+<!ENTITY projectMenu_manageComponents_accesskey "Z">
+<!ENTITY projectMenu_refreshTabs_label "Tabs neu laden">
+
+<!ENTITY runtimeMenu_label "Laufzeitumgebung">
+<!ENTITY runtimeMenu_accesskey "L">
+<!ENTITY runtimeMenu_disconnect_label "Trennen">
+<!ENTITY runtimeMenu_disconnect_accesskey "T">
+<!ENTITY runtimeMenu_takeScreenshot_label "Screenshot">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Informationen zur Laufzeitumgebung">
+<!ENTITY runtimeMenu_showDetails_accesskey "n">
+<!ENTITY runtimeMenu_showMonitor_label "Diagramme">
+<!ENTITY runtimeMenu_showMonitor_accesskey "D">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Einstellungen der Geräteplattform">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "E">
+<!ENTITY runtimeMenu_showSettings_label "Einstellungen der Apps auf dem Gerät">
+<!ENTITY runtimeMenu_showSettings_accesskey "A">
+
+<!ENTITY viewMenu_label "Ansicht">
+<!ENTITY viewMenu_accesskey "A">
+<!ENTITY viewMenu_zoomin_label "Vergrößern">
+<!ENTITY viewMenu_zoomin_accesskey "g">
+<!ENTITY viewMenu_zoomout_label "Verkleinern">
+<!ENTITY viewMenu_zoomout_accesskey "k">
+<!ENTITY viewMenu_resetzoom_label "Normal">
+<!ENTITY viewMenu_resetzoom_accesskey "N">
+
+<!ENTITY projectButton_label "App öffnen">
+<!ENTITY runtimeButton_label "Laufzeitumgebung auswählen">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Meine Projekte">
+<!ENTITY projectPanel_runtimeApps "Apps in Laufzeitumgebung">
+<!ENTITY projectPanel_tabs "Tabs">
+<!ENTITY runtimePanel_usb "USB-Geräte">
+<!ENTITY runtimePanel_wifi "WLAN-Geräte">
+<!ENTITY runtimePanel_simulator "Simulatoren">
+<!ENTITY runtimePanel_other "Sonstige">
+<!ENTITY runtimePanel_installsimulator "Simulator installieren">
+<!ENTITY runtimePanel_noadbhelper "ADB Helper installieren">
+<!ENTITY runtimePanel_nousbdevice "Wird Ihr Gerät nicht angezeigt?">
+<!ENTITY runtimePanel_refreshDevices_label "Geräte neu erkennen">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "gültig">
+<!ENTITY details_warning_header "Warnungen">
+<!ENTITY details_error_header "Fehler">
+<!ENTITY details_description "Beschreibung">
+<!ENTITY details_location "Adresse">
+<!ENTITY details_manifestURL "App-ID">
+<!ENTITY details_removeProject_button "Projekt entfernen">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Neue App">
+<!ENTITY newAppHeader "Vorlage auswählen">
+<!ENTITY newAppLoadingTemplate "Vorlagen werden geladen…">
+<!ENTITY newAppProjectName "Projektname:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Schließen">
+
+<!-- Addons -->
+<!ENTITY addons_title "Zusätzliche Komponenten">
+<!ENTITY addons_aboutaddons "Add-ons-Verwaltung öffnen">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Einstellungen">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Allgemein">
+<!ENTITY prefs_restore "Standard wiederherstellen">
+<!ENTITY prefs_manage_components "Zusätzliche Komponenten verwalten">
+<!ENTITY prefs_options_autoconnectruntime "Mit vorheriger Lauftzeitumgebung verbinden">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Beim Start vom WebIDE mit zuletzt genutzter Lauftzeitumgebung verbinden">
+<!ENTITY prefs_options_rememberlastproject "Letztes Projekt merken">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Beim Start von WebIDE zuletzt geöffnetes Projekt laden">
+<!ENTITY prefs_options_templatesurl "Vorlagenadresse">
+<!ENTITY prefs_options_templatesurl_tooltip "Liste verfügbarer Vorlagen">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Informationen zur Laufzeitumgebung">
+<!ENTITY runtimedetails_adbIsRoot "ADB ist Root: ">
+<!ENTITY runtimedetails_summonADBRoot "Gerät rooten">
+<!ENTITY runtimedetails_ADBRootWarning "(erfordert entsperrten Bootloader)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Uneingeschränkte Entwicklerwerkzeug-Berechtigungen: ">
+<!ENTITY runtimedetails_requestPrivileges "Höhere Berechtigungen anfordern">
+<!ENTITY runtimedetails_privilegesWarning "(Wird Gerät neu starten und benötigt Root-Zugriff.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typestring "String">
+<!ENTITY device_typeobject "Objekt">
+<!ENTITY device_typenone "Typ auswählen">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Einstellungen der Geräteplattform">
+<!ENTITY devicepreference_search "Einstellungen durchsuchen">
+<!ENTITY devicepreference_newname "Name der neuen Einstellung">
+<!ENTITY devicepreference_newtext "Wert der Einstellung">
+<!ENTITY devicepreference_addnew "Neue Einstellung hinzufügen">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Einstellungen der Apps des Geräts">
+<!ENTITY devicesetting_search "Einstellungen durchsuchen">
+<!ENTITY devicesetting_newname "Name der neuen Einstellung">
+<!ENTITY devicesetting_newtext "Wert der Einstellung">
+<!ENTITY devicesetting_addnew "Neue Einstellung hinzufügen">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Diagramme">
+<!ENTITY monitor_help "Hilfe">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Client-Identifikation">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Der Endpunkt, mit dem eine Verbindung aufgebaut wird, benötigt weitere Informationen zum Authentifizieren der Verbindung. Bitte scannen Sie den unten angezeigten QR-Code mit der Eingabe auf Ihrem anderen Gerät.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Keine QR-Scanner-Abfrage?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR-Scanner-Abfrage wird angezeigt">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Falls das andere Gerät nach einem Code statt einem QR-Code fragt,  so geben Sie bitte folgenden Wert auf dem anderen Gerät ein:">
+<!ENTITY wifi_auth_qr_size_note "Falls der QR-Code zu klein für eine erfolgreiche Verbindungsherstellung dargestellt wird, so vergrößern Sie den Code oder das ihn enthaltende Fenster.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Protokolle der Prozesse vor dem Packen">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Simulator-Einstellungen">
+<!ENTITY simulator_remove "Simulator entfernen">
+<!ENTITY simulator_reset "Standard wiederherstellen">
+<!ENTITY simulator_name "Name">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_version "Version">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_device "Gerät">
+<!ENTITY simulator_screenSize "Bildschirm">
+<!ENTITY simulator_pixelRatio "Pixel-Verhältnis">
+<!ENTITY simulator_tv_data "TV-Simulation">
+<!ENTITY simulator_tv_data_open "Einstellungsdaten">
+<!ENTITY simulator_tv_data_open_button "Einstellungsordner öffnen…">

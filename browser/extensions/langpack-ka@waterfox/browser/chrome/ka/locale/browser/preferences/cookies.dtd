@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "42em">
+
+<!ENTITY     cookiesonsystem.label          "თქვენს კომპიუტერში ინახება შემდეგი ფუნთუშები:">
+<!ENTITY     cookiename.label               "ფუნთუშის სახელი">
+<!ENTITY     cookiedomain.label             "საიტი">
+
+<!ENTITY     props.name.label               "სახელი:">
+<!ENTITY     props.value.label              "შიგთავსი:">
+<!ENTITY     props.domain.label             "სერვერი:">
+<!ENTITY     props.path.label               "მდებარეობა:">
+<!ENTITY     props.secure.label             "გაგზავნა:">
+<!ENTITY     props.expires.label            "ვადა:">
+<!ENTITY     props.container.label          "სათავსი:">
+
+<!ENTITY     window.title                   "ფუნთუშები">
+<!ENTITY     windowClose.key                "ფ">
+<!ENTITY     focusSearch1.key               "ძ">
+<!ENTITY     focusSearch2.key               "ბ">
+
+<!ENTITY     searchFilter.label             "ძიება">
+<!ENTITY     searchFilter.accesskey         "ძ">
+
+<!ENTITY     button.close.label             "დახურვა">
+<!ENTITY     button.close.accesskey         "დ">

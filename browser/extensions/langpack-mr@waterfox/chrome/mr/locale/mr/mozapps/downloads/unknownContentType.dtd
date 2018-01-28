@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "आपण उघडायचे, असे निश्चित केले आहे:">
+<!ENTITY  from.label                  "पासून:">
+<!ENTITY  actionQuestion.label        "&brandShortName; नी या फाइलशी काय करावे?">
+
+<!ENTITY  openWith.label              "यासह उघडा">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "इतर...">
+
+<!ENTITY  saveFile.label              "फाइल साठवा">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "आत्तापासून यापुढे ह्या फाइल्सकरिता असेच आपोआप करा.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "जे आहे:">
+
+<!ENTITY  chooseHandlerMac.label      "निवडा…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "चाळा…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "आपणास ही फाइल संचयीत करायची?">

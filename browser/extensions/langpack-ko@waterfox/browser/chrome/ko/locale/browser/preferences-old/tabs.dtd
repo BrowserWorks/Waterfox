@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab으로 최근 사용한 순서대로 탭 순환">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "새 창 대신 새 탭으로 열기">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "여러 개의 탭을 동시에 닫으려고 할 때 알려주기">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "여러개의 탭을 열어서 &brandShortName;가 느려질 수 있으면 알려주기">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "링크를 새 탭으로 열면 해당 탭으로 전환">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "Windows 작업표시줄에 탭 미리 보기 표시">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "탭">

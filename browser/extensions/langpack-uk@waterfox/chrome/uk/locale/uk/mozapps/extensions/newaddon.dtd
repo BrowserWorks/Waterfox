@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Встановлення додатку">
+<!ENTITY intro           "Інша програма на вашому комп’ютері хоче модифікувати
+                          &brandShortName; наступним додатком:">
+<!ENTITY warning         "Встановлюйте додатки лише від тих авторів, котрим довіряєте.">
+<!ENTITY allow           "Дозволити встановлення">
+<!ENTITY later           "Ви можете будь-коли змінити свою думку, перейшовши
+                           до менеджера додатків.">
+<!ENTITY continue        "Продовжити">
+<!ENTITY restartMessage  "Ви мусите перезапустити &brandShortName; щоб завершити встановлення цього додатку.">
+<!ENTITY restartButton   "Перезапустити &brandShortName;">
+<!ENTITY cancelButton    "Скасувати">

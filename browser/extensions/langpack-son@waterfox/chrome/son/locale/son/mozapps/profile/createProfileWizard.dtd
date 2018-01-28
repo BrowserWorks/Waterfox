@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Bida alhal tee">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; ga alhabar jiši war kayandiyaney nda ibaayey še war boŋ alhaaloo ra.">
+<!ENTITY profileCreationExplanation_2.text  "Nda war ga &brandShortName; berandoo woo žemni goykaw fooyaŋ game, war ga hin ka alhaaley zaa k'i gaabu boro foo kul alhabar bataa ra. Ka woo tee, goykaw foo kul ga hima ka nga boŋ alhaaloo tee.">
+<!ENTITY profileCreationExplanation_3.text  "Nda war ti boro follokaa kaŋ ga goy nda &brandShortName; berandoo woo; adiši war ga hima ka alhal foo tee. Nda war ga baa, war ga hin ka alhaal booboyaŋ tee war boŋ še ka kayandi dumiyaŋ nda ibaayiyaŋ jiši. Sanda, nda war ga baa alhaali waani-waaniyaŋ tee war goydoo nda hugay misey še.">
+<!ENTITY profileCreationExplanation_4.text  "Ka sintin ka war alhaaloo tee, Jine naagu.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Ka šintin ka war alhaaloo tee, Koy jine naagu.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Ka šintin ka war alhaaloo tee, Jine naagu.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Nda war baa ka alhaali booboyaŋ tee war ga hin k'i fay nda maaɲey. War ga hin ka ne maawoo zaa wala war boŋ maaɲoo dam.">
+<!ENTITY profilePrompt.label            "Alhal taaga maa dam:">
+<!ENTITY profilePrompt.accesskey        "A">
+<!ENTITY profileDirectoryExplanation.text   "War goykaw kayandiyaney, ibaayey nda goy-mise bayhayey ga jisandi ne ra:">
+<!ENTITY profileDefaultName             "Tilasu goykaw">
+<!ENTITY button.choosefolder.label      "Foolo suuba…">
+<!ENTITY button.choosefolder.accesskey  "F">
+<!ENTITY button.usedefault.label        "Tilasu foolo goyandi">
+<!ENTITY button.usedefault.accesskey    "T">

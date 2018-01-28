@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Nova kartica">
+
+<!ENTITY newtab.customize.cog.enhanced "Uključi predložene stranice">
+<!ENTITY newtab.customize.cog.title2 "KONTROLE NOVE KARTICE">
+<!ENTITY newtab.customize.cog.learn "Saznajte više o novoj kartici">
+<!ENTITY newtab.customize.title "Prilagodite stranicu nove kartice">
+<!ENTITY newtab.customize.blank2 "Prikaži praznu stranicu">
+<!ENTITY newtab.undo.removedLabel "Sličica uklonjena.">
+<!ENTITY newtab.undo.undoButton "Poništi.">
+<!ENTITY newtab.undo.restoreButton "Vrati sve.">
+<!ENTITY newtab.undo.closeTooltip "Sakrij">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

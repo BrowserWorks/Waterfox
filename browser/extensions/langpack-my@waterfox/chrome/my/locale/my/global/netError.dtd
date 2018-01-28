@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "စာမျက်နှာ ဖွင့်လှစ်မှု အမှား">
+<!ENTITY retry.label "ထပ်ကြိုးစားပါ">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "ချိတ်ဆက်မှု မအောင်မြင်ပါ">
+<!ENTITY connectionFailure.longDesc "<p>Though the site seems valid, the browser was unable to establish a connection.</p><ul><li>Could the site be temporarily unavailable? Try again later.</li><li>Are you unable to browse other sites? Check the computer's network connection.</li><li>Is your computer or network protected by a firewall or proxy? Incorrect settings can interfere with Web browsing.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "လုံခြုံရေး ကိစ္စများကြောင့်တားမြစ်ထားတဲ့ Port">
+<!ENTITY deniedPortAccess.longDesc "<p>ဖွင့်ကြည့်လိုသောလိပ်စာသည် Port တစ်ခုအား ညွှန်းနေသည် (ဥပမာ <q>mozilla.org:80</q> သည် port 80ဖြင့်မော်ဇီလာဝတ်ဆိုဒ်အားဖွင့်ရန်ဖြစ်ပြီး) များသောအားဖြင့်၎င်းသည် ဝတ်ဆိုဒ်ကြည့်ရှူခြင်းထက်<em>ပိုသော</em>အသုံးချခြင်းအတွက်သုံးသည်။ဘယောင်ဆာသည်သင်၏ တောင်းဆိုလိပ်စာအား လုံခြုံရေးနှင့်စိတ်ချရရေးအတွက်ပြုလုပ်မပေးနိုင်ပါ</p>">
+
+<!ENTITY dnsNotFound.title "ကွန်ရက် လိပ်စာ မတွေ့ရပါ">
+<!ENTITY dnsNotFound.longDesc "<p>The browser could not find the host server for the provided address.</p><ul><li>Did you make a mistake when typing the domain? (e.g. <q><strong>ww</strong>.mozilla.org</q> instead of <q><strong>www</strong>.mozilla.org</q>)</li><li>Are you certain this domain address exists?  Its registration may have expired.</li><li>Are you unable to browse other sites?  Check your network connection and DNS server settings.</li><li>Is your computer or network protected by a firewall or proxy?  Incorrect settings can interfere with Web browsing.</li></ul>">
+
+<!ENTITY fileNotFound.title "ဖိုင် မတွေ့ရပါ">
+<!ENTITY fileNotFound.longDesc "<ul><li>သင်ရှည်သည့်ပစ္စည်းအားအမည်ပြောင်းလိုက်ခြင်းသော်လည်ကောင်းရွေးလိုက်ခြင်းသော်လည်းကောင်းလုပ်လိုက်သေးလား။</li><li>လိပ်စာရေးရာတွင်စာလုံးပေါင်းအကြီးအသေးသို့မဟုတ်တိုက်ပိုအမှားများရှိနေလား</li><li>သို့မဟုတ်သင့်မှာ လုံလောက်သောခွင့်ပြုချက်ရရှိထားပါသလား</li></ul>">
+
+<!ENTITY fileAccessDenied.title "ဖိုင်အသုံးပြုခြင်းကို တားမြစ်ထားသည်">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>၎င်းကို ဖျက်ထားခြင်း၊ ရွှေ့ထားခြင်း သို့မဟုတ် ဖိုင်အသုံးပြုမှုဆိုင်ရာမူဝါဒများက အသုံးမပြုနိုင်စေရန် တားမြစ်နေခြင်း ဖြစ်နိုင်ပါသည်။</li> </ul>">
+
+<!ENTITY generic.title "တောင်းဆိုချက်ကို ပြီးဆုံးသည်အထိ မဆောင်ရွက်နိုင်ပါ">
+<!ENTITY generic.longDesc "<p>ယခုပြဿနာအတွက် နောက်ထပ် ဆက်လက်လေ့လာရန် အချက်အလက်များ မရှိသေးပါ။</p>">
+
+<!ENTITY malformedURI.title "မှားနေသော လိပ်စာ">
+<!ENTITY malformedURI.longDesc "<p>ပေးထားသောလိပ်စာသည် သတ်မှတ်ထားသော ပုံစံမျိုးဖြင့်မဟုတ်ပါ။ ကျေးဇူးပြုပြီး ရှာဖွေရေးဘားကို စစ်ဆေးပြီး ထပ်မံ ဆောင်ရွက်ကြည့်ပါ။</p>">
+
+<!ENTITY netInterrupt.title "ဒေတာ အလွှဲအ​ပြောင်း အဟန့်အတား ရှိတယ်">
+<!ENTITY netInterrupt.longDesc "<p>ဘယောင်ဆာသည်အောင်မြင်စွာချိတ်ဆက်သွားနိုင်သော်လည်းအချက်အလက်များ ကူးပြောင်းယူနေစဉ်အတွင်းချိတ်ဆက်မှူနှောက်ယှက်ခံရသည်။ကျေးဇူးပြုပြီးထပ်လုပ်ပါ</p><ul><li>ဝတ်ဆိုက်အားကြည့်ရှူမရပါကသင်၏ကွန်ပျူတာ နက်ဝပ်ချိတ်ဆက်မှူအားစစ်ဆေးကြည့်ပါ</li><li>ပြသာနကြုံနေဆဲလား။ကျေးဇူးပြုပြီးသင်၏နက်ဝပ် အတ်ဒမင်သို့မဟုတ်အင်တာနက်ဆားဗစ်ပေးသူထံသို့အကူအညီတောင်းဆိုပါ</li></ul>">
+
+<!ENTITY notCached.title "စာမျက်နှာသည် သတ်မှတ်ချိန် ကျော်လွန်သွားသည်">
+<!ENTITY notCached.longDesc "<p>The requested document is not available in the browser's cache.</p><ul><li>As a security precaution, the browser does not automatically re-request sensitive documents.</li><li>Click Try Again to re-request the document from the website.</li></ul>">
+
+<!ENTITY netOffline.title "အော့ဖ်လိုင်း စနစ်">
+<!ENTITY netOffline.longDesc2 "<p>ဘယောင်ဆာသည်အင်တာနက်မဲ့အခြေအနေဖြင့်လုပ်ဆောင်နေသဖြင့်တောင်းဆိုထားသောအရာအားမရယူနိုင်ပါ။</p><ul><li>ဤကွန်ပျူတာအား ကွန်ယက်တစ်ခုသို့ချိတ်ဆက်ထားပါသလား။</li><li>&quot;Try Again&quot; အားနှိပ်ပြီး ချိတ်ဆက်လုပ်ဆောင်မှူစတင်ပြီးစာမျက်နှာအားပြန်ခေါ်ပါ။</li></ul>">
+
+<!ENTITY contentEncodingError.title "အကြောင်းအရာ စာဝှက်ရေးသားမှု အမှား">
+<!ENTITY contentEncodingError.longDesc "<p>သင်ကြည့်ရှူရန်ကြိုးစားနေသောစာမျက်နှာသည်ထောက့်ပံ့ပေးမထားသောပုံစံအားအသုံးပြုထားသဖြင့်ကြည့်ရှူမရနိုင်ပါ</p><ul><li>ကျေးဇူးပြုပြီးဝတ်ဆိုဒ်ပိုင်ရှင်အားဤပြသာနာနှင့်ပတ်သတ်ပြီးဆက်သွယ်အကြောင်းကြားပေးပါ</li></ul>">
+
+<!ENTITY unsafeContentType.title "အန္တရာယ်မကင်းသော ဖိုင်အမျိုးအစား">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Please contact the website owners to inform them of this problem.</li> </ul>">
+
+<!ENTITY netReset.title "ချိတ်ဆက်မှု နှောက်ယှက်ခံသည်">
+<!ENTITY netReset.longDesc "<p>ဆက်သွယ်ရေးလိုင်း တခု တည်ဆောက်နေစဉ် ကွန်ရက် အချိတ်အဆက် အဟန့်အတား ရှိနေတယ်။ ထပ်ကြိုးစားကြည့်ပါ။</p>">
+
+<!ENTITY netTimeout.title "ကွန်ရက် ချိတ်ဆက်ရန် အချိန် ကျော်လွန်သွားသည်">
+<!ENTITY netTimeout.longDesc "<p>တောင်းဆိုထားသောစာမျက်နှာသည် ဘယောင်ဆာမှ တုန့်ပြန်မှူစောင့်နေရင်းချိတ်ဆက်မှူပြုတ်သွားသောကြောင့် ရယူနိုင်ခြင်းမရှိပါ။</p><ul><li>ဆာဗာများတောင်းဆိုမှူများနေသောကြောင့်လေးလံနေခြင်းများလား ? နောက်ထပ် ထပ်ပြီးတော့ကြိုးစားကြည့်ပါ။</li><li>အခြားဝတ်ဆိုက်များအားကြည့်ရှူလို့ရပါသလား?မရပါက ကွန်ပျူတာ ချိတ်ဆက်မှူကို စစ်ဆေးကြည့်ပါ။</li><li>သင့်ကွန်ပျူတာအား ဖိုင်းယားဝေါသို့တစ်ခုခုဖြင့်ကာကွယ်ထားပါသလား?သို့အင်တာနက်ကြည့်ရှူအပြင်အဆင်မှားယွင်းနေပါသလား။</li><li>ဆက်ပြီးပြသာနက်တွေ့နေရပါသေးလား?သင့်ချိတ်ဆက်မှူကွန်ယက်ထိန်းချုပ်သူအား အကြောင်းကြားခြင်းသို့အင်တာနက်ဆားဗစ်ပေးသူအားဆက်သွယ်ခြင်းပြုလုပ်ပါ။</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "အမျိုးအမည်မသိတဲ့ ပရိုတိုကိုးလ်">
+<!ENTITY unknownProtocolFound.longDesc "<p>လိပ်စာသည်ပရိုတိုကောအတိအကျ(e.g. <q>wxyz://</q>)အား မသတ်မှတ်ထားပါ ထို့ကြောင့်ဘယောင်ဆာသည်ဝတ်ဆိုက်အားကောင်းစွာမချိတ်ဆက်နိုင်ပါ။</p><ul><li>သင်အခြားမီဒီယာတွေ စာမပါ ဆားဗစ်တွေအား တောင်းဆိုနေတာလား ? ဝတ်ဆိုက်အားအခြားလိုအပ်ချက်များအတွက်စစ်ဆေးပါ။</li><li>အချို့သောပရိုတိုကောများသည် Third-party ဆော့ဝဲများထည့်သွင်းပြီးမှ ဘယောက်ဆာတွင်အလုပ်လုပ်နိုင်မည်ဖြစ်သည်။</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "ကြားခံဆာဗာသည် ချိတ်ဆက်မှုကို ငြင်းဆန်ထားသည်">
+<!ENTITY proxyConnectFailure.longDesc "<p>ဘယောက်ဆာအားပရောစီဆာဗာသုံးရန်ပြင်ဆင်ထားသော်လည်းချိတ်ဆက်မှူငြင်းဆိုနေပါသည်။</p><ul><li>ပရောဆီအပြင်အဆင်မှားနေသလား?အပြင်အဆင်အားနောက်တစ်ကြိမ်ထပ်ကြိုးစားကြည့်ပါ။</li><li>ပရောဆီဆားဗစ်သည်ကွန်ယက်အားချိတ်ဆက်ထားပါသလား?</li><li>ပြသာနာဆက်တွေ့သေးပါလား?သင့်အင်တာနက်ဆားဗစ်ပေးသူအားဆက်သွယ်ပါ။</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "ကြားခံဆာဗာကို မတွေ့ရပါ">
+<!ENTITY proxyResolveFailure.longDesc "<p>ဤဘယောက်ဆာသည် ပရောက်ဆီသုံးရန်ပြုပြင်ထားသော်လည်း ပရောက်ဆီအားရှာမတွေ့ပါ။</p><ul><li>ပရောက်ဆီအပြင်အဆင်တွေမှန်ပါသလား?အပြင်အဆင်များကိုစစ်ဆေးပြီးတစ်ခေါက်ပြန်လုပ်ကြည့်ပါ။</li><li>ကွန်ပျူတာအားကွန်ယက်တစ်ခုသို့ချိတ်ဆက်ထားပါသလား?</li><li>စစ်ဆေးပြီးသော်လည်းအခက်အခဲရှိနေပါကသင်၏ကွန်ယက် ခန့်ခွဲသူထံသို့အကူအညီတောင်းရန်ဆက်သွယ်ပါ။</li></ul>">
+
+<!ENTITY redirectLoop.title "လမ်းညွှန် လည်ထွက်မှု">
+<!ENTITY redirectLoop.longDesc "<p>The browser has stopped trying to retrieve the requested item. The site is redirecting the request in a way that will never complete.</p><ul><li>Have you disabled or blocked cookies required by this site?</li><li><em>NOTE</em>: If accepting the site's cookies does not resolve the problem, it is likely a server configuration issue and not your computer.</li></ul>">
+
+<!ENTITY unknownSocketType.title "မမှန်ကန်သော တုန့်ပြန်ချက်">
+<!ENTITY unknownSocketType.longDesc "<p>ဤယခုဝတ်ဆိုဒ်သည်မျှော်လင့်ထားသောနည်းလမ်းဖြင့် ပြန်လည်မတုန့်ပြန်လာသဖြင့်ဘယောက်ဆာမှဆက်လက်မလုပ်ဆောင်နိုင်တော့ပါ။</p>">
+
+<!ENTITY nssFailure2.title "လုံခြုံသော ချိတ်ဆက်မှု မအောင်မြင်ခဲ့ပါ">
+<!ENTITY nssFailure2.longDesc2 "<p>The page you are trying to view can not be shown because the authenticity of the received data could not be verified.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+<!ENTITY nssBadCert.title "လုံခြုံသော ချိတ်ဆက်မှု မအောင်မြင်ခဲ့ပါ">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>This could be a problem with the server's configuration, or it could be someone trying to impersonate the server.</li> <li>If you have connected to this server successfully in the past, the error may be temporary, and you can try again later.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "သို့မဟုတ် ခြွင်းချက်တစ်ခုအနေနှင့် ထားနိုင်ပါသည်…">
+<!ENTITY securityOverride.warningContent "<p>သင်အသုံးပြုနေသော အင်တာနက်ချိတ်ဆက်မှုကို လုံးဝယုံကြည်စိတ်ချမှု မရှိပါက သို့မဟုတ် ဒီဆာဗာမှ သတိပေးချက်ပေးချက်ကို မြင်တွေ့ရလေ့မရှိပါက သင်သည် ခြွင်းချက်အနေဖြင့် မထားသင့်ပါ။</p> <p>ဒီဆိုက်ကို ခြွင်းချက်ထားချင်သေးပါက သင်၏ အဆင့်မြင့်စာဝှက်ခြင်းအပြင်အဆင်များထဲတွင် ဆောင်ရွက်နိုင်ပါသည်။</p>">
+
+<!ENTITY cspBlocked.title "Content Security Policy အရ ပိတ်ပင်ထားသည်">
+<!ENTITY cspBlocked.longDesc "<p>လုံခြုံရေးမူဝါဒအရဤစာမျက်နှာအား ယခုကဲ့သို့သောနည်းလမ်းဖြင့်ဖွင့်လှစ်ခြင်းအားတားမြစ်ထားသည်</p>">
+
+<!ENTITY corruptedContentErrorv2.title "အကြောင်းအရာ မစုံလင်သော အမှား">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>အချက်အလက်ကူးယူပြောင်းခြင်းပြသာနာကြောင့်၀တ်ဆိုက်အားမပြသနိုင်ပါ။</p><ul><li>၀တ်ဆိုက်ပိုင်ရှင်များဤပြသာနာအားအသိပေးရန်ကျေးဇူးပြုပြီးဆက်သွယ်ပေးပါ။</li></ul>">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>၀တ်ဆိုက်ပိုင်ရှင်အားဤပြသာနားအားတင်ပြရန်ဆက်သွယ်ပါ</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "ချိတ်ဆက်မှုသည် မလုံခြုံပါ">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>သည် အိုဟောင်းပြီး တိုက်ခိုက်ရန်လွယ်ကူသည့် လုံခြုံရေးနည်းပညာကို အသုံးပြုထားသည်။ တိုက်ခိုက်သူသည် သင်လုံခြုံသည်ဟုထင်သည့် အချက်အလက်များကို လွယ်ကူစွာ ဖော်ထုတ်နိုင်ပါလိမ့်မည်။ သင်လာရောက်မလည်ပတ်မီ ဝဘ်ဆိုဒ်စီမံခန့်ခွဲသူသည် ဆာဗာကို အရင်ဆုံး ပြုပြင်ဖြေရှင်းရန် လိုအပ်သည်။</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

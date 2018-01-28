@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Iaith">
+<!ENTITY languages.customize.description                "Mae tudalennau gwe weithiau'n cael eu cynnig mewn mwy nag un iaith. Dewiswch ieithoedd i'w harddangos, yn nhrefn dewis:">
+<!ENTITY languages.customize.moveUp.label               "Symud i Fyny">
+<!ENTITY languages.customize.moveUp.accesskey           "F">
+<!ENTITY languages.customize.moveDown.label             "Symud i Lawr">
+<!ENTITY languages.customize.moveDown.accesskey         "L">
+<!ENTITY languages.customize.deleteButton.label         "Tynnu">
+<!ENTITY languages.customize.deleteButton.accesskey     "T">
+<!ENTITY languages.customize.selectLanguage.label       "Dewis iaith i'w hychwanegu…">
+<!ENTITY languages.customize.addButton.label            "Ychwanegu">
+<!ENTITY languages.customize.addButton.accesskey        "Y">
+

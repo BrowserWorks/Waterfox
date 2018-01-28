@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ಸಾಧನ ವ್ಯವಸ್ಥಾಪಕ">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "ಸುರಕ್ಷತಾ ಘಟಕಗಳು( ಮಾಡ್ಯೂಲ್ಸ್‍) ಹಾಗು ಸಾಧನಗಳು">
+<!ENTITY devmgr.details.title                   "ವಿವರಣೆಗಳು">
+<!ENTITY devmgr.details.title2                  "ಮೌಲ್ಯ">
+
+<!ENTITY devmgr.button.login.label              "ಒಳಗೆ ಪ್ರವೇಶಿಸು">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "ಹೊರಗೆ ತೆರಳು">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸು">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "ಲೋಡ್‍ ಮಾಡು">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "ಅನ್‍ಲೋಡ್ ಮಾಡು">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "ನೀವು ಸೇರಿಸಲು ಬಯಸುವ ಘಟಕಕ್ಕೆ ಮಾಹಿತಿಯನ್ನು ದಾಖಲಿಸಿ.">
+<!ENTITY loaddevice.modname                     "ಘಟಕದ ಹೆಸರು:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "ಹೊಸ PKCS#11 ಘಟಕ">
+<!ENTITY loaddevice.filename                    "ಘಟಕ ಕಡತ ಹೆಸರು:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "ನೋಡು...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

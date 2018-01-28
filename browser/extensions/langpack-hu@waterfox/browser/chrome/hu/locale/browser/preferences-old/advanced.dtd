@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Általános">
+
+<!ENTITY accessibility.label             "Kisegítő lehetőségek">
+
+<!ENTITY useCursorNavigation.label       "Kurzorbillentyűk használata az oldalon belüli navigációhoz">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Szöveg keresése a keresett szó beírásának elkezdésétől">
+<!ENTITY searchOnStartTyping.accesskey   "d">
+<!ENTITY blockAutoReload.label           "Figyelmeztetés, ha a webhely átirányítja vagy frissíti az oldalt">
+<!ENTITY blockAutoReload.accesskey       "w">
+<!ENTITY useOnScreenKeyboard.label       "Érintőbillentyűzet megjelenítése, ha szükséges">
+<!ENTITY useOnScreenKeyboard.accesskey   "r">
+
+<!ENTITY browsing.label                  "Böngészés">
+
+<!ENTITY useAutoScroll.label             "Automatikus görgetés">
+<!ENTITY useAutoScroll.accesskey         "u">
+<!ENTITY useSmoothScrolling.label        "Finom görgetés">
+<!ENTITY useSmoothScrolling.accesskey    "F">
+<!ENTITY checkUserSpelling.label         "Helyesírás-ellenőrzés beírás közben">
+<!ENTITY checkUserSpelling.accesskey     "H">
+
+<!ENTITY dataChoicesTab.label            "Adatküldések">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Az adatjelentést letiltották ehhez a binárishoz">
+
+<!ENTITY healthReportDesc.label          "Segít megérteni a böngésző teljesítményét és adatokat oszt meg a &vendorShortName;val a böngésző állapotáról">
+<!ENTITY enableHealthReport.label        "A &brandShortName; állapotjelentés bekapcsolása">
+<!ENTITY enableHealthReport.accesskey    "b">
+<!ENTITY healthReportLearnMore.label     "További tudnivalók">
+
+<!ENTITY telemetryDesc.label             "Adatokat küld a &vendorShortName;nak a böngésző teljesítményéről, a hardverről, a felhasználásról és az egyéni beállításokról, hogy a &brandShortName; jobb lehessen.">
+<!ENTITY enableTelemetryData.label       "További adatok (például Telemetria) megosztása">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "További tudnivalók">
+
+<!ENTITY crashReporterDesc2.label         "Az összeomlási jelentések segítenek abban, hogy a &vendorShortName; javítsa a problémákat, és a böngésző stabilabb és biztonságosabb legyen">
+<!ENTITY alwaysSubmitCrashReports.label   "A &brandShortName; a háttérben küldhet összeomlási jelentéseket az Ön nevében">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "További tudnivalók">
+
+<!ENTITY networkTab.label                "Hálózat">
+
+<!ENTITY connection.label                "Kapcsolat">
+
+<!ENTITY connectionDesc.label            "A &brandShortName; internetkapcsolatának megadása">
+<!ENTITY connectionSettings.label        "Beállítások…">
+<!ENTITY connectionSettings.accesskey    "B">
+
+<!ENTITY httpCache.label                 "Gyorsítótárazott webtartalom">
+
+<!ENTITY offlineStorage2.label           "Offline webtartalom és felhasználói adatok">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Oldal adatai">
+<!ENTITY clearSiteData.label             "Minden adat törlése">
+<!ENTITY clearSiteData.accesskey         "d">
+<!ENTITY siteDataSettings.label          "Beállítások…">
+<!ENTITY siteDataSettings.accesskey      "B">
+<!ENTITY siteDataLearnMoreLink.label     "További tudnivalók">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Gyorsítótár korlátozása">
+<!ENTITY limitCacheSizeBefore.accesskey  "G">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "Törlés most">
+<!ENTITY clearCacheNow.accesskey         "T">
+<!ENTITY clearOfflineAppCacheNow.label   "Törlés most">
+<!ENTITY clearOfflineAppCacheNow.accesskey "m">
+<!ENTITY overrideSmartCacheSize.label    "Az automatikus gyorsítótár-kezelés felülbírálása">
+<!ENTITY overrideSmartCacheSize.accesskey "a">
+
+<!ENTITY updateTab.label                 "Frissítés">
+
+<!ENTITY updateApplication.label         "&brandShortName; frissítések">
+<!ENTITY updateAuto1.label               "Frissítések automatikus telepítése (ez ajánlott a maximális biztonság érdekében)">
+<!ENTITY updateAuto1.accesskey           "a">
+<!ENTITY updateCheckChoose.label         "Frissítések keresése, de a telepítés kézzel történik">
+<!ENTITY updateCheckChoose.accesskey     "k">
+<!ENTITY updateManual.label              "Ne legyen frissítve (nem ajánlott a biztonsági kockázat miatt">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Frissítési előzmények megjelenítése">
+<!ENTITY updateHistory.accesskey         "z">
+
+<!ENTITY useService.label                "Háttérben futó szolgáltatás intézze a frissítést">
+<!ENTITY useService.accesskey            "H">
+
+<!ENTITY autoUpdateOthers.label          "Automatikus frissítés">
+<!ENTITY enableSearchUpdate.label        "Keresőszolgáltatások">
+<!ENTITY enableSearchUpdate.accesskey    "e">
+
+<!ENTITY offlineStorageNotify.label               "Figyelmeztetés, ha a webhely adatokat akar tárolni kapcsolat nélküli használatra">
+<!ENTITY offlineStorageNotify.accesskey           "w">
+<!ENTITY offlineStorageNotifyExceptions.label     "Kivételek…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "K">
+
+<!ENTITY offlineAppsList2.label          "A következő webhelyek tárolhatnak adatokat kapcsolat nélküli használatra:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Eltávolítás…">
+<!ENTITY offlineAppsListRemove.accesskey "E">
+<!ENTITY offlineAppRemove.confirm        "Kapcsolat nélküli adatok eltávolítása">
+
+<!ENTITY certificateTab.label            "Tanúsítványok">
+<!ENTITY certPersonal.label              "Kérések">
+<!ENTITY certPersonal.description        "Ha a kiszolgáló elkéri a személyes tanúsítványt:">
+<!ENTITY selectCerts.auto                "Automatikus választás">
+<!ENTITY selectCerts.auto.accesskey      "A">
+<!ENTITY selectCerts.ask                 "Megerősítés minden alkalommal">
+<!ENTITY selectCerts.ask.accesskey       "M">
+<!ENTITY enableOCSP.label                "Az OCSP válaszoló kiszolgálók lekérdezése a tanúsítványok érvényességének megerősítéséhez">
+<!ENTITY enableOCSP.accesskey            "C">
+<!ENTITY viewCerts.label                 "Tanúsítványkezelő">
+<!ENTITY viewCerts.accesskey             "T">
+<!ENTITY viewSecurityDevices.label       "Adatvédelmi eszközök">
+<!ENTITY viewSecurityDevices.accesskey   "d">
+
+<!ENTITY performance.label               "Teljesítmény">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Javasolt teljesítménybeállítások használata">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Ezek a beállítások a számítógép hardveréhez és operációs rendszeréhez lettek szabva.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "h">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "További tudnivalók">
+<!ENTITY limitContentProcessOption.label "Tartalom folyamatok korlátja">
+<!ENTITY limitContentProcessOption.description
+                                         "A további tartalom folyamatok növelhetik a teljesítményt, ha több lapot használ, de több memóriát is használnak.">
+<!ENTITY limitContentProcessOption.accesskey   "k">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "A tartalom folyamatok számának módosítása csak többfolyamatos &brandShortName; esetén lehetséges.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Ismerje meg, hogyan lehet ellenőrizni, hogy a többfolyamatos működés engedélyezve van-e">
+<!ENTITY allowHWAccel.label              "Hardveres gyorsítás használata, ha lehetséges">
+<!ENTITY allowHWAccel.accesskey          "r">

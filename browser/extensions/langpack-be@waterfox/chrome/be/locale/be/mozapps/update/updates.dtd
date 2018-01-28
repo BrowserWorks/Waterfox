@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Абнаўленне праграм">
+
+<!ENTITY  checking.title                  "Праверка абнаўленняў">
+<!ENTITY  updateCheck.label               "Шукаюцца навейшыя версіі &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Абнаўленні не знойдзены">
+<!ENTITY  noupdatesautoenabled.intro      "Няма даступных абнаўленняў. &brandShortName; будзе правяраць
+                                           час ад часу, ці з'явіліся яны.">
+<!ENTITY  noupdatesautodisabled.intro     "Няма даступных абнаўленняў. Праверце, калі ласка, пазней, ці дазвольце
+                                           &brandShortName;'s рабіць праверку аўтаматычна.">
+
+<!ENTITY  manualUpdate.title              "Абнаўленне немагчыма">
+<!ENTITY  manualUpdate.desc               "Даступна рэкамендаванае абнаўленне ўстойлівасці і бяспекі, аднак вы
+                                           не маеце сістэмных дазволаў, неабходных для ўсталявання. Звяжыцеся, калі ласка, з вашым
+                                           сістэмным адміністратара ці паспрабуйце зноў, выкарыстаўшы рахунак, які мае дазвол на
+                                           ўсталяванне праграм на гэтым камп'ютары.">
+<!ENTITY  manualUpdate.space.desc         "Даступна рэкамендаванае абнаўленне бяспекі і стабільнасці, але
+                                           ў вас няма месца ўсталяваць яго.">
+<!ENTITY  manualUpdateGetMsg.label        "Вы заўсёды можаце атрымаць апошнюю версію &brandShortName; на:">
+
+<!ENTITY  unsupported.title               "Непадтрыманая сістэма">
+<!ENTITY  unsupported.label               "Ваш &brandShortName; састарэў, але навейшая версія не падтрымліваецца на вашай сістэме. Узніміце, калі ласка, вашу сістэму і тады паспрабуйце зноў. Вы не пабачыце гэтае папярэджанне зноў, але вы можаце">
+<!ENTITY  unsupportedLink.label           "даведацца больш.">
+
+<!ENTITY  clickHere.label                 "Паглядзець больш падрабязныя звесткі пра гэта абнаўленне">
+
+<!ENTITY  evangelism.desc                 "Настойліва рэкамендуецца ўсталяваць гэта 
+                                           абнаўленне &brandShortName; як мага хутчэй.">
+
+<!ENTITY  downloadPage.title              "Сцягванне &brandShortName;">
+<!ENTITY  downloading.intro               "Сцягванне абнаўлення…">
+<!ENTITY  connecting.label                "Злучэнне з серверам абнаўленняў…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; не здолеў праверыць цэласнасць загружанага ўздымнага абнаўлення, таму ён загружае поўны пакет абнаўлення.">
+
+<!ENTITY  viewDetails.tooltip             "Прагляд падрабязнасцяў гэтага абнаўлення">
+
+<!ENTITY  details.link                    "Падрабязнасці">
+
+<!ENTITY  error.title                     "Няўдача абнаўлення">
+
+<!ENTITY  error.label                     "Здарыліся праблемы ў час праверкі, сцягвання або ўсталявання гэтага 
+                                           абнаўлення. &brandShortName; не можа абнавіцца з прычыны:">
+                                           
+<!ENTITY  errorManual.label               "Вы можаце абнавіць &brandShortName; уручную. Дзеля гэтага наведайце гэтую спасылку і загрузіце апошнюю версію:">
+                                           
+<!ENTITY  errorpatching.intro             "Частковае абнаўленне не выканана. &brandShortName; паспрабуе зрабіць яго зноў, загрузіўшы абнаўленне цалкам.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; не здольны вызначыць, ці існуюць даступныя абнаўленні. Упэўніцеся, калі ласка, што вы маеце апошнюю версію &brandShortName; з:">
+
+<!ENTITY  finishedPage.title              "Абнаўленне гатова для ўсталявання">
+<!ENTITY  finishedPage.text               "Абнаўленне будзе ўсталявана наступным разам, пры запуску &brandShortName;. Вы можаце перазапусціць &brandShortName; зараз ці працягнуць працаваць і перазапусціць яго пазней.">
+
+<!ENTITY  finishedBackgroundPage.text     "Абнаўленне бяспекі і ўстойлівасці &brandShortName; загружана і гатова для ўсталявання.">
+<!ENTITY  finishedBackground.name         "Абнаўленне:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Абнаўленне будзе ўсталявана наступным разам, пры запуску &brandShortName;. Вы можаце перазапусціць &brandShortName; зараз ці працягнуць працаваць і перазапусціць яго пазней.">
+<!ENTITY  finishedBackground.moreElevated "Для гэтага абнаўлення неабходны правы адміністратара. 
+                                           Абнаўленне будзе ўсталявана падчас наступнага запуску &brandShortName;.
+                                           Вы можаце перазапусціць &brandShortName; зараз, працягнуць працу і
+                                           перазапусціць яго пазней, або адмовіцца ад гэтага абнаўлення.">
+
+<!ENTITY  update.details.label            "Падрабязнасці">
+<!ENTITY  update.installedOn.label        "Усталявана ў:">
+<!ENTITY  update.status.label             "Статус:">

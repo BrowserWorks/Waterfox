@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "સોફ્ટવેર સ્થાપન">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "માત્ર એવા જ ઍડ-ઑન સ્થાપિત કરો જેમના લેખકો પર તમને વિશ્વાસ હોય.">
+<!ENTITY warningSecondary.label  "મલીન સોફ્ટવેર તમારા કમ્પ્યૂટરને બગાડી શકે છે અથવા તમારા ખાનગીપણાને પણ ગુમાવી શકે છે.">
+
+<!ENTITY from.label "તરફથી:">
+

@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Veldu notanda">
+
+<!ENTITY            profilename.label      "Nafn notanda:">
+
+<!ENTITY            start.label            "Ræsa &brandShortName;">
+<!ENTITY            exit.label             "Hætta">
+
+<!ENTITY            availprofiles.label    "Tiltækir notendur">
+
+<!ENTITY            newButton.label        "Búa til notanda…">
+<!ENTITY            newButton.accesskey    "B">
+<!ENTITY            renameButton.label     "Endurnefna notanda…">
+<!ENTITY            renameButton.accesskey "r">
+<!ENTITY            deleteButton.label     "Eyða notanda…">
+<!ENTITY            deleteButton.accesskey "E">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; geymir fyrir þig upplýsingar um stillingar, og aðra hluti í notandastillingum.">
+
+<!ENTITY            offlineState.label    "Vinna án nettengingar">
+<!ENTITY            offlineState.accesskey "n">
+
+<!ENTITY            useSelected.label       "Notað valdan reikning án þess að spyrja í ræsingu">
+<!ENTITY            useSelected.accesskey   "s">

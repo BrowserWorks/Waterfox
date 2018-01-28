@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Užverti šią kortelę">
+<!ENTITY tabCrashed.restoreTab "Atkurti šią kortelę">
+<!ENTITY tabCrashed.restoreAll "Atkurti visas užstrigusias korteles">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ech. Jūsų kortelė tik ką užstrigo.">
+<!ENTITY tabCrashed.offerHelp "Mes galime jums padėti!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Pasirinkite „&tabCrashed.restoreTab;“ norėdami iš naujo įkelti tinklalapio turinį.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Pasirinkite „&tabCrashed.restoreTab;“ arba „&tabCrashed.restoreAll;“ norėdami iš naujo įkelti tinklalapio turinį.">
+<!ENTITY tabCrashed.requestHelp "Ar padėsite mums?">
+<!ENTITY tabCrashed.requestHelpMessage "Strigčių pranešimai mums padeda nustatyti problemas ir tobulinti „&brandShortName;“.">
+<!ENTITY tabCrashed.requestReport "Pranešti apie šią kortelę">
+<!ENTITY tabCrashed.sendReport2 "Nusiųskite šios kortelės strigties pranešimą">
+<!ENTITY tabCrashed.commentPlaceholder2 "Papildomi komentarai (komentarai bus matomi viešai)">
+<!ENTITY tabCrashed.includeURL2 "Įtraukti tinklalapio adresą į pranešimą">
+<!ENTITY tabCrashed.emailPlaceholder "Čia įveskite savo el. pašto adresą">
+<!ENTITY tabCrashed.emailMe "Atsiųsti man el. laišką kai bus žinoma daugiau informacijos">
+<!ENTITY tabCrashed.reportSent "Strigties pranešimas jau nusiųstas – ačiū jums už pagalbą tobulinant „&brandShortName;“!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Pranešti apie fonines korteles">
+<!ENTITY tabCrashed.autoSubmit2 "Atnaujinkite nuostatas, kad strigčių pranešimai būtų siunčiami automatiškai, įtraukiant pranešimus iš užstrigusių foninių šio seanso ir tolesnių seansų kortelių">

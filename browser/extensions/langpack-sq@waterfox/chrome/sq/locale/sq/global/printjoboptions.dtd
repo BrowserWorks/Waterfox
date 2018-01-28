@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Veti Shtypësi">
+
+<!ENTITY paperInput.label "Madhësi Letre:">
+<!ENTITY paperInput.accesskey "L">
+
+<!ENTITY jobTitleInput.label "Titull Akti:">
+<!ENTITY jobTitleInput.accesskey "T">
+
+<!ENTITY colorGroup.label "Ngjyrë:">
+<!ENTITY grayRadio.label "Shkallë të Grisë">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "Ngjyrë">
+<!ENTITY colorRadio.accesskey "N">
+
+<!ENTITY edgeMarginInput.label "Hapësirë nga buza e letrës te Mënjana">
+<!ENTITY topInput.label "Krye:">
+<!ENTITY topInput.accesskey "K">
+<!ENTITY bottomInput.label "Fund:">
+<!ENTITY bottomInput.accesskey "F">
+<!ENTITY leftInput.label "Majtas:">
+<!ENTITY leftInput.accesskey "M">
+<!ENTITY rightInput.label "Djathtas:">
+<!ENTITY rightInput.accesskey "D">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "आपण सध्या खाजगी पटलात नाही.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "एक खाजगी पटल उघडा">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "खाजगी ब्राउझिंग">
+<!ENTITY privateBrowsing.title.tracking                  "ट्रॅकिंग संरक्षणा सहित खाजगी ब्राउझिंग">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "आपण एका खाजगी विंडोत, ब्राऊझ करताना, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "साठवू नका">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "भेट दिलेली पृष्ठे">
+<!ENTITY aboutPrivateBrowsing.info.searches              "शोध">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "कुकिज">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "तात्पुरत्या फाइल्स">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "साठविले जाईल">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " आपल्या:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "डाउनलोड्स">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "वाचनखूणा">
+<!ENTITY aboutPrivateBrowsing.note.before                "खाजगी ब्राउझिंग ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "आपणास निनावी बनवीत नाही">
+<!ENTITY aboutPrivateBrowsing.note.after                 " इंटरनेट वर. आपला नियोक्त्याला किंवा इंटरनेट सेवा प्रदात्याला आपण भेट दिलेल्या पृष्ठांची माहिती असते.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "याबाबत अधिक जाणून घ्या">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "खाजगी ब्राउझिंग">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "मागोवा सुरक्षा">
+<!ENTITY trackingProtection.description2                 "काही वेबसाइट्स ट्रॅकर्सचा वापर करून इंटरनेटवरच्या आपल्या गतिविधींचे निरीक्षण करू शकतात. ट्रॅकिंग संरक्षण वापरल्यास Waterfox अनेक trackers अवरोधित करेल जे आपल्या ब्राउझिंग वर्तनाची माहिती गोळा करतात.">
+<!ENTITY trackingProtection.startTour1                   "हे कसे काम करते ते पहा">

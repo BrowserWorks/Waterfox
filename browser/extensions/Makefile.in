@@ -1,0 +1,945 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include $(topsrcdir)/config/rules.mk
+
+$(FINAL_TARGET)/chrome/langpack-ach@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ach@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ach@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ach@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ach@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ach@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-af@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-af@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-af@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-af@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-af@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-af@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-an@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-an@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-an@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-an@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-an@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-an@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ar@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ar@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ar@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ar@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ar@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ar@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-as@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-as@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-as@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-as@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-as@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-as@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ast@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ast@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ast@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ast@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ast@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ast@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-az@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-az@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-az@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-az@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-az@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-az@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-be@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-be@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-be@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-be@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-be@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-be@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-bg@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-bg@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-bg@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-bg@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-bg@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-bg@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-bn-BD@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-bn-BD@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-bn-BD@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-bn-BD@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-bn-BD@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-bn-BD@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-bn-IN@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-bn-IN@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-bn-IN@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-bn-IN@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-bn-IN@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-bn-IN@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-br@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-br@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-br@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-br@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-br@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-br@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-bs@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-bs@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-bs@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-bs@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-bs@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-bs@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ca@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ca@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ca@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ca@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ca@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ca@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-cak@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-cak@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-cak@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-cak@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-cak@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-cak@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-cs@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-cs@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-cs@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-cs@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-cs@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-cs@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-cy@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-cy@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-cy@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-cy@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-cy@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-cy@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-da@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-da@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-da@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-da@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-da@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-da@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-de@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-de@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-de@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-de@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-de@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-de@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-dsb@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-dsb@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-dsb@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-dsb@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-dsb@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-dsb@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-el@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-el@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-el@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-el@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-el@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-el@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-en-GB@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-en-GB@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-en-GB@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-en-GB@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-en-GB@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-en-GB@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-en-ZA@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-en-ZA@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-en-ZA@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-en-ZA@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-en-ZA@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-en-ZA@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-eo@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-eo@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-eo@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-eo@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-eo@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-eo@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-es-AR@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-es-AR@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-es-AR@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-es-AR@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-es-AR@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-es-AR@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-es-CL@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-es-CL@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-es-CL@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-es-CL@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-es-CL@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-es-CL@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-es-ES@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-es-ES@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-es-ES@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-es-ES@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-es-ES@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-es-ES@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-es-MX@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-es-MX@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-es-MX@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-es-MX@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-es-MX@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-es-MX@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-et@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-et@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-et@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-et@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-et@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-et@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-eu@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-eu@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-eu@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-eu@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-eu@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-eu@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-fa@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-fa@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-fa@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-fa@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-fa@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-fa@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ff@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ff@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ff@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ff@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ff@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ff@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-fi@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-fi@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-fi@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-fi@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-fi@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-fi@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-fr@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-fr@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-fr@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-fr@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-fr@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-fr@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-fy-NL@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-fy-NL@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-fy-NL@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-fy-NL@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-fy-NL@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-fy-NL@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ga-IE@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ga-IE@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ga-IE@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ga-IE@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ga-IE@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ga-IE@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-gd@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-gd@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-gd@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-gd@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-gd@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-gd@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-gl@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-gl@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-gl@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-gl@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-gl@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-gl@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-gn@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-gn@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-gn@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-gn@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-gn@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-gn@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-gu-IN@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-gu-IN@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-gu-IN@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-gu-IN@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-gu-IN@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-gu-IN@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-he@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-he@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-he@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-he@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-he@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-he@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-hi-IN@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-hi-IN@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-hi-IN@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-hi-IN@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-hi-IN@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-hi-IN@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-hr@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-hr@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-hr@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-hr@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-hr@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-hr@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-hsb@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-hsb@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-hsb@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-hsb@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-hsb@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-hsb@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-hu@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-hu@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-hu@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-hu@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-hu@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-hu@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-hy-AM@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-hy-AM@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-hy-AM@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-hy-AM@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-hy-AM@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-hy-AM@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-id@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-id@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-id@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-id@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-id@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-id@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-is@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-is@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-is@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-is@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-is@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-is@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-it@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-it@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-it@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-it@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-it@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-it@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ja@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ja@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ja@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ja@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ja@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ja@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ka@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ka@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ka@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ka@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ka@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ka@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-kab@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-kab@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-kab@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-kab@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-kab@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-kab@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-kk@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-kk@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-kk@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-kk@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-kk@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-kk@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-km@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-km@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-km@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-km@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-km@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-km@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-kn@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-kn@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-kn@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-kn@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-kn@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-kn@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ko@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ko@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ko@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ko@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ko@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ko@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-lij@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-lij@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-lij@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-lij@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-lij@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-lij@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-lt@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-lt@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-lt@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-lt@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-lt@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-lt@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-lv@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-lv@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-lv@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-lv@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-lv@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-lv@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-mai@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-mai@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-mai@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-mai@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-mai@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-mai@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-mk@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-mk@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-mk@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-mk@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-mk@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-mk@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ml@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ml@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ml@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ml@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ml@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ml@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-mr@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-mr@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-mr@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-mr@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-mr@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-mr@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ms@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ms@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ms@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ms@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ms@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ms@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-my@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-my@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-my@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-my@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-my@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-my@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-nb-NO@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-nb-NO@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-nb-NO@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-nb-NO@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-nb-NO@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-nb-NO@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-nl@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-nl@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-nl@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-nl@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-nl@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-nl@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-nn-NO@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-nn-NO@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-nn-NO@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-nn-NO@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-nn-NO@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-nn-NO@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-or@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-or@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-or@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-or@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-or@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-or@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-pa-IN@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-pa-IN@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-pa-IN@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-pa-IN@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-pa-IN@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-pa-IN@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-pl@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-pl@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-pl@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-pl@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-pl@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-pl@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-pt-BR@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-pt-BR@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-pt-BR@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-pt-BR@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-pt-BR@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-pt-BR@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-pt-PT@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-pt-PT@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-pt-PT@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-pt-PT@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-pt-PT@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-pt-PT@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-rm@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-rm@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-rm@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-rm@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-rm@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-rm@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ro@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ro@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ro@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ro@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ro@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ro@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ru@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ru@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ru@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ru@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ru@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ru@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-si@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-si@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-si@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-si@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-si@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-si@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-sk@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-sk@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-sk@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-sk@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-sk@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-sk@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-sl@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-sl@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-sl@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-sl@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-sl@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-sl@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-son@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-son@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-son@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-son@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-son@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-son@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-sq@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-sq@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-sq@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-sq@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-sq@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-sq@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-sr@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-sr@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-sr@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-sr@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-sr@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-sr@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-sv-SE@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-sv-SE@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-sv-SE@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-sv-SE@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-sv-SE@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-sv-SE@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ta@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ta@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ta@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ta@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ta@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ta@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-te@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-te@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-te@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-te@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-te@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-te@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-th@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-th@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-th@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-th@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-th@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-th@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-tr@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-tr@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-tr@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-tr@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-tr@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-tr@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-uk@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-uk@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-uk@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-uk@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-uk@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-uk@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-ur@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-ur@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-ur@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-ur@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-ur@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-ur@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-uz@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-uz@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-uz@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-uz@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-uz@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-uz@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-vi@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-vi@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-vi@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-vi@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-vi@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-vi@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-xh@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-xh@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-xh@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-xh@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-xh@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-xh@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-zh-CN@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-zh-CN@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-zh-CN@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-zh-CN@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-zh-CN@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-zh-CN@waterfox.manifest')
+	
+$(FINAL_TARGET)/chrome/langpack-zh-TW@waterfox.manifest: $(GLOBAL_DEPS)
+	printf 'manifest langpack-zh-TW@waterfox/chrome.manifest' > $@
+
+libs:: $(FINAL_TARGET)/chrome/langpack-zh-TW@waterfox.manifest
+	$(PYTHON) $(topsrcdir)/config/nsinstall.py \
+	  $(srcdir)/langpack-zh-TW@waterfox \
+          $(foreach exclude,$(exclude_files), -X $(srcdir)/langpack-zh-TW@waterfox/$(exclude)) \
+          $(FINAL_TARGET)/chrome
+	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest 'manifest chrome/langpack-zh-TW@waterfox.manifest')

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                        "Certificatenbeheerder">
+
+<!ENTITY certmgr.tab.mine                     "Uw certificaten">
+<!ENTITY certmgr.tab.others2                  "Personen">
+<!ENTITY certmgr.tab.websites3                "Servers">
+<!ENTITY certmgr.tab.ca                       "Organisaties">
+<!ENTITY certmgr.tab.orphan2                  "Overige">
+
+<!ENTITY certmgr.mine                         "U hebt certificaten van deze organisaties, die u identificeren:">
+<!ENTITY certmgr.others                       "U hebt certificaten gearchiveerd die deze personen identificeren:">
+<!ENTITY certmgr.websites2                    "U hebt certificaten gearchiveerd die deze servers identificeren:">
+<!ENTITY certmgr.cas                          "U hebt certificaten gearchiveerd die deze certificaatautoriteiten identificeren:">
+<!ENTITY certmgr.orphans                      "U hebt certificaten gearchiveerd die niet in een van de andere categorieën passen:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Algemeen">
+<!ENTITY certmgr.detail.general_tab.accesskey "A">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Details">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Certificaat wordt geverifieerd…">
+<!ENTITY certmgr.subjectinfo.label            "Uitgegeven aan">
+<!ENTITY certmgr.issuerinfo.label             "Uitgegeven door">
+<!ENTITY certmgr.periodofvalidity.label       "Geldigheidsduur" >
+<!ENTITY certmgr.fingerprints.label           "Vingerafdrukken">
+<!ENTITY certmgr.certdetail.title             "Detail van certificaat">
+<!ENTITY certmgr.certdetail.cn                "Algemene naam (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organisatie (O)">
+<!ENTITY certmgr.certdetail.ou                "Organisatorische eenheid (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Serienummer">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256-vingerafdruk">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1-vingerafdruk">
+
+<!ENTITY certmgr.editcacert.title             "CA-certificaat-vertrouwensinstellingen bewerken">
+<!ENTITY certmgr.editcert.edittrust           "Vertrouwensinstellingen bewerken:">
+<!ENTITY certmgr.editcert.trustssl            "Dit certificaat kan websites identificeren.">
+<!ENTITY certmgr.editcert.trustemail          "Dit certificaat kan e-mailgebruikers identificeren.">
+<!ENTITY certmgr.editcert.trustobjsign        "Dit certificaat kan softwaremakers identificeren.">
+
+<!ENTITY certmgr.deletecert.title             "Certificaat verwijderen">
+
+<!ENTITY certmgr.certname                     "Certificaatnaam">
+<!ENTITY certmgr.certserver                   "Server">
+<!ENTITY certmgr.override_lifetime            "Levensduur">
+<!ENTITY certmgr.tokenname                    "Beveiligingsapparaat">
+<!ENTITY certmgr.begins                       "Begint op">
+<!ENTITY certmgr.expires                      "Verloopt op">
+<!ENTITY certmgr.email                        "E-mailadres">
+<!ENTITY certmgr.serial                       "Serienummer">
+
+<!ENTITY certmgr.close.label                  "Sluiten">
+<!ENTITY certmgr.close.accesskey              "S">
+<!ENTITY certmgr.view2.label                  "Weergeven…">
+<!ENTITY certmgr.view2.accesskey              "W">
+<!ENTITY certmgr.edit3.label                  "Vertrouwen bewerken…">
+<!ENTITY certmgr.edit3.accesskey              "b">
+<!ENTITY certmgr.export.label                 "Exporteren…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Verwijderen…">
+<!ENTITY certmgr.delete2.accesskey            "V">
+<!ENTITY certmgr.delete_builtin.label         "Verwijderen of wantrouwen…">
+<!ENTITY certmgr.delete_builtin.accesskey     "V">
+<!ENTITY certmgr.backup2.label                "Reservekopie maken…">
+<!ENTITY certmgr.backup2.accesskey            "R">
+<!ENTITY certmgr.backupall2.label             "Reservekopie van alle maken…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "Importeren…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Certificaatvelden">
+<!ENTITY certmgr.details.accesskey            "f">
+<!ENTITY certmgr.fields.label                 "Veldwaarde">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "Certificaathiërarchie">
+<!ENTITY certmgr.hierarchy.accesskey2         "C">
+<!ENTITY certmgr.addException.label           "Uitzondering toevoegen…">
+<!ENTITY certmgr.addException.accesskey       "U">
+
+<!ENTITY exceptionMgr.title                   "Beveiligingsuitzondering toevoegen">
+<!ENTITY exceptionMgr.exceptionButton.label   "Beveiligingsuitzondering bevestigen">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "b">
+<!ENTITY exceptionMgr.supplementalWarning     "Legitieme banken, winkels en andere publieke websites zullen dit niet vragen.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Server">
+<!ENTITY exceptionMgr.certlocation.url        "Locatie:">
+<!ENTITY exceptionMgr.certlocation.download   "Certificaat ophalen">
+<!ENTITY exceptionMgr.certlocation.accesskey  "o">
+<!ENTITY exceptionMgr.certstatus.caption      "Certificaatstatus">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Weergeven…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "W">
+<!ENTITY exceptionMgr.permanent.label         "Deze uitzondering voor altijd opslaan">
+<!ENTITY exceptionMgr.permanent.accesskey     "a">

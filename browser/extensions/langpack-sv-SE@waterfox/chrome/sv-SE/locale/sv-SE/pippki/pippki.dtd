@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Ändra huvudlösenord">
+<!ENTITY setPassword.tokenName.label "Säkerhetsenhet">
+<!ENTITY setPassword.oldPassword.label "Nuvarande lösenord:">
+<!ENTITY setPassword.newPassword.label "Nytt lösenord:">
+<!ENTITY setPassword.reenterPassword.label "Nytt lösenord (bekräftas):">
+<!ENTITY setPassword.meter.label "Kvalitetsmätare för lösenord">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Ta bort">
+<!ENTITY resetPassword.title  "Ta bort huvudlösenord">
+<!ENTITY resetPassword.text  "Om du tar bort ditt huvudlösenord kommer alla dina lagrade webb- och e-postlösenord, formulärdata, personliga certifikat och hemliga nycklar att tas bort. Är du säker på att du vill ta bort ditt huvudlösenord?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Hämtar certifikat">
+<!ENTITY downloadCert.message1 "En ny Certifikatutfärdare(CA) vill ha ditt godkännande.">
+<!ENTITY downloadCert.trustSSL "Lita på denna CA för identifiering av webbplatser.">
+<!ENTITY downloadCert.trustEmail "Lita på denna CA för identifiering av e-postanvändare.">
+<!ENTITY downloadCert.trustObjSign "Lita på denna CA för identifiering av programutvecklare.">
+<!ENTITY downloadCert.message3 "Innan du litar på denna CA för något syfte bör du undersöka dess certifikat, policy och tillvägagångssätt (om möjligt).">
+<!ENTITY downloadCert.viewCert.label "Visa">
+<!ENTITY downloadCert.viewCert.text "Undersök CA-certifikat">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Begäran om användaridentifikation">
+<!ENTITY clientAuthAsk.message1 "Denna plats har begärt att du identifierar dig med ett certifikat:">
+<!ENTITY clientAuthAsk.message2 "Välj ett certifikat att ange som identifikation:">
+<!ENTITY clientAuthAsk.message3 "Detaljer om valt certifikat:">
+
+<!ENTITY pkcs12.setpassword.title  "Välj ett lösenord för certifikatets säkerhetskopia">
+<!ENTITY pkcs12.setpassword.message  "Det lösenord för certifikatets säkerhetskopia som du anger här skyddar säkerhetskopian som du håller på att skapa. Du måste ange detta lösenord för att kunna fortsätta.">
+<!ENTITY pkcs12.setpassword.label1 "Lösenord för certifikatets säkerhetskopia:">
+<!ENTITY pkcs12.setpassword.label2 "Lösenord för certifikatets säkerhetskopia (bekräftas):">
+<!ENTITY pkcs12.setpassword.reminder "Viktigt: Om du glömmer detta lösenord kommer du inte att kunna återställa denna säkerhetskopia senare. Lagra detta lösenord på en säker plats.">
+
+<!ENTITY chooseToken.title  "Välj informationsbärare">
+<!ENTITY chooseToken.message1 "Välj informationsbärare.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Genererar en hemlig nyckel">
+<!ENTITY createCertInfo.msg1 "Nyckelgenerering pågår… Detta kan ta ett par minuter…">
+<!ENTITY createCertInfo.msg2 "Var god vänta…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Skyddad informationsbärarautentisering">
+<!ENTITY protectedAuth.msg "Var god autentisera till informationsbäraren. Autentiseringsmetoden beror på informationsbärarens typ.">
+<!ENTITY protectedAuth.tokenName.label "Informationsbärare:">

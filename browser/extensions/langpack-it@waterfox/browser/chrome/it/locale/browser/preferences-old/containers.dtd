@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label "Aggiungi nuovo contenitore">
+<!ENTITY addButton.accesskey "A">
+<!ENTITY preferencesButton.label "Preferenze">
+<!ENTITY removeButton.label "Elimina">
+<!ENTITY backLink.label "&#171; Ritorna a Privacy">
+<!ENTITY window.title "Aggiungi nuovo contenitore">
+<!ENTITY window.width "45em">
+<!ENTITY name.label "Nome:">
+<!ENTITY name.accesskey "N">
+<!ENTITY name.placeholder "Inserire il nome del contenitore">
+<!ENTITY icon.label "Icona:">
+<!ENTITY icon.accesskey "I">
+<!ENTITY color.label "Colore:">
+<!ENTITY color.accesskey "C">
+<!ENTITY windowClose.key "w">
+<!ENTITY button.ok.label "Fatto">
+<!ENTITY button.ok.accesskey "F">

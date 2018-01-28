@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  typeColumn.label        "مواد قسم">
+<!ENTITY  typeColumn.accesskey    "م">
+
+<!ENTITY  actionColumn2.label     "عمل">
+<!ENTITY  actionColumn2.accesskey "ع">
+
+<!ENTITY  focusSearch1.key        "ف">
+<!ENTITY  focusSearch2.key        "و">
+
+
+<!ENTITY  applications.description "Choose how &brandShortName; handles the files you download from the web or the applications you use while browsing.">
+
+<!ENTITY  applications.label       "Applications">
+<!ENTITY  filter2.emptytext        "Search file types or applications">

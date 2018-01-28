@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Hiqeni Fjalëkalimin e Përgjithshëm">
+<!ENTITY removeInfo.label                  "Duhet të jepni fjalëkalimin tuaj të tanishëm për të vazhduar:">
+<!ENTITY removeWarning1.label              "Fjalëkalimi juaj i Përgjithshëm përdoret për të mbrojtur të dhëna të rezervuara si p.sh. fjalëkalime sajtesh.">
+<!ENTITY removeWarning2.label              "Nëse hiqni Fjalëkalimin tuaj të Përgjithshëm, të dhënat tuaja nuk do të jenë të mbrojtura në rast komprometimi të kompjuterit tuaj.">
+<!ENTITY setPassword.oldPassword.label     "Fjalëkalimi i tanishëm:">
+

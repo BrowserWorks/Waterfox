@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY permissions.label "Uprawnienia">
+
+<!ENTITY blockPopups.label "Blokowanie wyskakujących okien">
+<!ENTITY blockPopups.accesskey "">
+
+<!ENTITY notificationsPolicyLearnMore.label "Więcej informacji">
+<!ENTITY notificationsPolicyDesc4.label "Wybierz witryny mogące wyświetlać powiadomienia.">
+<!ENTITY notificationsPolicyButton.label "Wybierz…">
+<!ENTITY notificationsPolicyButton.accesskey "">
+<!ENTITY notificationsDoNotDisturb.label "Nie przeszkadzać">
+<!ENTITY notificationsDoNotDisturb.accesskey "">
+<!ENTITY notificationsDoNotDisturbDetails.value "Powiadomienia nie będą wyświetlane do czasu ponownego uruchomienia programu &brandShortName;">
+
+<!ENTITY popupExceptions.label "Wyjątki…">
+<!ENTITY popupExceptions.accesskey "">
+
+<!ENTITY fontsAndColors.label "Czcionki i kolory">
+<!ENTITY defaultFont2.label "Domyślna czcionka:">
+<!ENTITY defaultFont2.accesskey "">
+<!ENTITY defaultSize2.label "Rozmiar:">
+<!ENTITY defaultSize2.accesskey "">
+
+<!ENTITY advancedFonts.label "Zaawansowane…">
+<!ENTITY advancedFonts.accesskey "">
+
+<!ENTITY colors.label "Kolory…">
+<!ENTITY colors.accesskey "">
+
+<!ENTITY language2.label "Język">
+<!ENTITY chooseLanguage.label         "Wybierz preferowany język, w jakim mają być wyświetlane strony">
+<!ENTITY chooseButton.label           "Wybierz…">
+<!ENTITY chooseButton.accesskey "">
+
+<!ENTITY translateWebPages.label "Tłumaczenie stron WWW">
+<!ENTITY translateWebPages.accesskey "">
+<!ENTITY translateExceptions.label "Wyjątki…">
+<!ENTITY translateExceptions.accesskey "">
+<!ENTITY translation.options.attribution.beforeLogo "Tłumaczeń dostarcza">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY drmContent2.label "Treści DRM (Digital Rights Management)">
+<!ENTITY playDRMContent2.label "Odtwarzanie treści chronionych przez DRM.">
+<!ENTITY playDRMContent2.accesskey "">
+<!ENTITY playDRMContent.learnMore.label "Więcej informacji">

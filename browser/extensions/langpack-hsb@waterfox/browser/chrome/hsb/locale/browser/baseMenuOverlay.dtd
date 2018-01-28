@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Miniměrować">
+<!ENTITY bringAllToFront.label    "Wšitko do prědka přinjesć">
+<!ENTITY zoomWindow.label         "Skalować">
+<!ENTITY windowMenu.label         "Wokno">
+
+<!ENTITY helpMenu.label           "Pomoc"> 
+<!ENTITY helpMenu.accesskey       "P"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Pomoc"> 
+<!ENTITY helpMenuWin.accesskey    "P">
+<!ENTITY aboutProduct2.label      "Wo &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "W">
+<!ENTITY productHelp2.label       "&brandShorterName; - Pomoc">
+<!ENTITY productHelp2.accesskey   "m">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Tastowe skrótšenki">
+<!ENTITY helpKeyboardShortcuts.accesskey "T">
+
+<!ENTITY helpSafeMode.label       "Ze znjemóžnjenymi přidatkami znowa startować…">
+<!ENTITY helpSafeMode.accesskey   "Z">
+<!ENTITY helpSafeMode.stop.label       "Ze zmóžnjenymi přidatkami znowa startować">
+<!ENTITY helpSafeMode.stop.accesskey   "Z">
+
+<!ENTITY healthReport2.label      "&brandShorterName; - Statusowa rozprawa">
+<!ENTITY healthReport2.accesskey  "S">
+
+<!ENTITY helpTroubleshootingInfo.label      "Informacije za rozrisowanje problemow">
+<!ENTITY helpTroubleshootingInfo.accesskey  "I">
+
+<!ENTITY helpFeedbackPage.label      "Posudk pósłać…">
+<!ENTITY helpFeedbackPage.accesskey  "P">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; - Tura">
+<!ENTITY helpShowTour2.accesskey        "u">
+
+<!ENTITY preferencesCmdMac.label        "Nastajenja…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Słužby">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName;me; schować">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Druhe schować">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Wšitke pokazać">

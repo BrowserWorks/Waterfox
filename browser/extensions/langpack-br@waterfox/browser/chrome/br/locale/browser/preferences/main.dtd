@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Loc'hañ">
+
+
+<!ENTITY startupUserHomePage.label "Diskouez ma fennbajennad">
+<!ENTITY startupBlankPage.label    "Diskouez ur bajenn wenn">
+<!ENTITY startupPrevSession.label  "Diskouez ma frenestroù hag ivinelloù evel ar wech diwezhañ">
+
+
+<!ENTITY useCurrentPage.label      "Arverañ ar bajenn vremanel">
+<!ENTITY useCurrentPage.accesskey  "A">
+<!ENTITY useMultiple.label         "Arverañ ar pajennoù bremanel">
+<!ENTITY chooseBookmark.label      "Arverañ ur sined…">
+<!ENTITY chooseBookmark.accesskey  "r">
+<!ENTITY restoreDefault.label      "Assav an arventennoù dre ziouer">
+<!ENTITY restoreDefault.accesskey  "z">
+
+<!ENTITY downloads.label     "Pellgargadurioù">
+
+<!ENTITY saveTo.label "Enrollañ restroù e-barzh">
+<!ENTITY saveTo.accesskey "o">
+<!ENTITY chooseFolderWin.label        "Furchal…">
+<!ENTITY chooseFolderWin.accesskey    "F">
+<!ENTITY chooseFolderMac.label        "Diuzañ…">
+<!ENTITY chooseFolderMac.accesskey    "D">
+<!ENTITY alwaysAskWhere.label         "Atav goulenn diganin pelec'h enrollañ restroù">
+<!ENTITY alwaysAskWhere.accesskey     "t">
+
+<!ENTITY alwaysCheckDefault2.label        "Gwiriañ atav ma'z eo &brandShortName; ho merdeer dre ziouer">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+
+
+<!ENTITY isDefault.label                  "Ho merdeer dre ziouer eo &brandShortName;">
+<!ENTITY isNotDefault.label               "N'eo ket &brandShortName; ho merdeer dre ziouer">
+
+<!ENTITY separateProfileMode.label        "Aotren &brandShortName; ha Waterfox da erounit war un dro">
+<!ENTITY useWaterfoxSync.label             "Tun : arveret e vo aeladoù disheñvel. Arverit Sync evit rannañ roadennoù etrezo.">
+
+
+
+<!ENTITY e10sEnabled.label                "Gweredekaat lies-araezad &brandShortName;">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">

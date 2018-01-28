@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Återställ &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Starta om från början för att åtgärda problem och återställa prestanda.">
+<!ENTITY refreshProfile.dialog.description2  "Detta kommer:">
+<!ENTITY refreshProfile.dialog.items.label1  "Ta bort dina tillägg och anpassningar">
+<!ENTITY refreshProfile.dialog.items.label2  "Återställa inställningarna för webbläsaren till standardinställningarna">
+<!ENTITY refreshProfile.dialog.button.label  "Återställ &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Ge &brandShortName; en finjustering">
+<!ENTITY refreshProfile.button.label         "Återställ &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Nästan färdig…">

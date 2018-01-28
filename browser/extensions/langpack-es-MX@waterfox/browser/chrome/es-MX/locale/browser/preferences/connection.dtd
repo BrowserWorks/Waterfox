@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Configuración de conexión">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Configurar proxies para el acceso a Internet">
+<!ENTITY  noProxyTypeRadio.label        "Sin proxy">
+<!ENTITY  noProxyTypeRadio.accesskey    "S">
+<!ENTITY  systemTypeRadio.label         "Usar la configuración de proxy del sistema">
+<!ENTITY  systemTypeRadio.accesskey     "l">
+<!ENTITY  WPADTypeRadio.label           "Autodetectar configuración del proxy para esta red">
+<!ENTITY  WPADTypeRadio.accesskey       "r">
+<!ENTITY  manualTypeRadio.label         "Configuración manual del proxy:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "URL para la configuración automática del proxy:">
+<!ENTITY  autoTypeRadio.accesskey       "a">
+<!ENTITY  reload.label                  "Recargar">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "Proxy FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Proxy HTTP:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "Proxy SSL:">
+<!ENTITY  ssl.accesskey                 "x">
+<!ENTITY  socks.label                   "Servidor SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS cuando uses SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "D">
+<!ENTITY  port.label                    "Puerto:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "u">
+<!ENTITY  FTPport.accesskey             "t">
+<!ENTITY  SOCKSport.accesskey           "o">
+<!ENTITY  noproxy.label                 "No usar proxy para:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "Ejemplo: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Usar el mismo proxy globalmente">
+<!ENTITY  shareproxy.accesskey          "g">
+<!ENTITY  autologinproxy.label          "No pedir identificación si la contraseña está guardada">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Esta opción te identifica silenciosamente con los proxys cuando has guardado credenciales para ellos. Serás requerido si la identificación falla.">

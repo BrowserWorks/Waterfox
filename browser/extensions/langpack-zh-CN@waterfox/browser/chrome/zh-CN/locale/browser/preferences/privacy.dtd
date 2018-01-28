@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "跟踪保护">
+<!ENTITY  trackingProtection2.description      "足迹指的是您在各个网站留下的浏览数据。足迹可被用来刻画您的形象，并基于您的浏览数据和个人隐私向您展示内容。">
+<!ENTITY  trackingProtection2.radioGroupLabel  "使用跟踪保护拦截已知的跟踪器">
+<!ENTITY  trackingProtectionAlways.label       "始终">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "只在隐私窗口中">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "永不">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "详细了解">
+<!ENTITY  trackingProtectionExceptions.label   "例外…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "在隐私窗口中使用跟踪保护">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "在隐私浏览模式中使用跟踪保护拦截已知的跟踪器">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "详细了解">
+<!ENTITY changeBlockList2.label               "更换拦截列表…">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY  doNotTrack.description        "向网站发出“请勿跟踪”信号，示明您不想被跟踪">
+<!ENTITY  doNotTrack.learnMore.label    "详细了解">
+<!ENTITY  doNotTrack.default.label      "仅在使用跟踪保护时">
+<!ENTITY  doNotTrack.always.label       "始终">
+
+<!ENTITY  history.label                 "历史记录">
+<!ENTITY  permissions.label             "权限">
+
+<!ENTITY  addressBar.label              "地址栏">
+<!ENTITY  addressBar.suggest.label      "在使用地址栏时为我提供建议">
+<!ENTITY  locbar.history2.label         "浏览历史">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.bookmarks.label        "书签">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "已打开的标签页">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "默认搜索引擎提供的相关搜索">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "更改搜索引擎建议的首选项">
+
+<!ENTITY  acceptCookies2.label          "接受来自网站的 Cookie">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "接受第三方 Cookie：">
+<!ENTITY  acceptThirdParty.pre.accesskey  "C">
+<!ENTITY  acceptThirdParty.always.label   "总是">
+<!ENTITY  acceptThirdParty.never.label    "总不">
+<!ENTITY  acceptThirdParty.visited.label  "来自访问过的网站">
+
+<!ENTITY  keepUntil.label               "保存，直到：">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "它们过期">
+<!ENTITY  close.label                   "我退出 &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "例外…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "显示 Cookie…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; 将">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "记录历史">
+<!ENTITY  historyHeader.dontremember.label "不记录历史">
+<!ENTITY  historyHeader.custom.label       "使用自定义设置">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; 将会记录您的浏览、下载、表单和搜索历史，并保留您已访问网站的 Cookie。">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "您也许想">
+<!ENTITY  rememberActions.clearHistory.label  "清空近期历史记录">
+<!ENTITY  rememberActions.middle.label        "，或者">
+<!ENTITY  rememberActions.removeCookies.label "移除特定网站的 Cookie">
+<!ENTITY  rememberActions.post.label          "。">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; 将采用与“隐私浏览模式”相同的设置，不会记录您浏览网络的历史。">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "您也许想">
+<!ENTITY  dontrememberActions.clearHistory.label "清除现存的所有历史记录">
+<!ENTITY  dontrememberActions.post.label         "。">
+
+<!ENTITY  privateBrowsingPermanent2.label "始终使用隐私浏览模式">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "记住我的浏览和下载历史">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "记录搜索和表单记录">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "在 &brandShortName; 关闭时清除历史记录">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "设置…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "详细了解">
+<!ENTITY  browserContainersEnabled.label        "启用身份标签页">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "设置…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Atjaunināšanas vēsture">
+<!ENTITY  history.intro             "Ir instalēti šādi atjauninājumi:">
+<!ENTITY  closebutton.label         "Aizvērt">
+                                     
+<!ENTITY  noupdates.label           "Vēl nav instalēts neviens atjauninājums">
+
+<!ENTITY  name.header               "Atjauninājuma nosaukums">
+<!ENTITY  date.header               "Instalēšanas datums">
+<!ENTITY  type.header               "Tips">
+<!ENTITY  state.header              "Stāvoklis">
+

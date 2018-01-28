@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "మినహాయింపులు">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "వెబ్‌సైట్">
+<!ENTITY treehead.status.label        "స్థితి">
+<!ENTITY removepermission2.label      "వెబ్సైటును తీసివేయి">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removeallpermissions2.label  "అన్ని వెబ్సైట్లను తీసివేయి">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY address.label                "వెబ్‌సైట్ చిరునామా:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "నిరోధించు">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "భాగము కొరకు అనుమతించు">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "అనుమతించు">
+<!ENTITY allow.accesskey              "A">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "రద్దుచేయి">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "మార్పులను భద్రపరచు">
+<!ENTITY button.ok.accesskey          "S">
+

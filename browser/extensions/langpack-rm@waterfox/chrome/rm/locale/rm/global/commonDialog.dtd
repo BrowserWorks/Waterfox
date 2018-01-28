@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Titel curt"> 
+<!ENTITY message.label    "Qua cumpara in text d'exempel.">
+<!ENTITY editfield0.label "Num d'utilisader:"> 
+<!ENTITY editfield1.label "Pled-clav:"> 
+<!ENTITY checkbox.label   "controllar">
+<!ENTITY copyCmd.label    "Copiar">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "Selecziunar tut">
+<!ENTITY selectAllCmd.accesskey "a">

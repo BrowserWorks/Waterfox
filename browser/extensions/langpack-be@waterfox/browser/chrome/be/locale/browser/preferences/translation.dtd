@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Выключэнні - Пераклад">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "у">
+
+<!ENTITY noTranslationForLanguages.label  "Пераклад не будзе прапанаваны для наступных моў:">
+<!ENTITY treehead.languageName.label      "Мовы">
+<!ENTITY removeLanguage.label             "Выдаліць мову">
+<!ENTITY removeLanguage.accesskey         "В">
+<!ENTITY removeAllLanguages.label         "Выдаліць усе мовы">
+<!ENTITY removeAllLanguages.accesskey     "в">
+
+<!ENTITY noTranslationForSites.label      "Пераклад не будзе прапанаваны для наступных сайтаў:">
+<!ENTITY treehead.siteName2.label         "Вэб-сайты">
+<!ENTITY removeSite.label                 "Выдаліць сайт">
+<!ENTITY removeSite.accesskey             "С">
+<!ENTITY removeAllSites.label             "Выдаліць усе сайты">
+<!ENTITY removeAllSites.accesskey         "і">
+
+<!ENTITY button.close.label               "Закрыць">
+<!ENTITY button.close.accesskey           "З">

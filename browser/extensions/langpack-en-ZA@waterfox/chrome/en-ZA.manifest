@@ -1,0 +1,14 @@
+locale alerts en-ZA en-ZA/locale/en-ZA/alerts/
+locale autoconfig en-ZA en-ZA/locale/en-ZA/autoconfig/
+locale global en-ZA en-ZA/locale/en-ZA/global/
+locale global-platform en-ZA en-ZA/locale/en-ZA/global-platform/mac/ os=Darwin
+locale global-platform en-ZA en-ZA/locale/en-ZA/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform en-ZA en-ZA/locale/en-ZA/global-platform/win/ os=WINNT
+locale mozapps en-ZA en-ZA/locale/en-ZA/mozapps/
+locale necko en-ZA en-ZA/locale/en-ZA/necko/
+locale passwordmgr en-ZA en-ZA/locale/en-ZA/passwordmgr/
+locale pipnss en-ZA en-ZA/locale/en-ZA/pipnss/
+locale pippki en-ZA en-ZA/locale/en-ZA/pippki/
+locale places en-ZA en-ZA/locale/en-ZA/places/
+locale pluginproblem en-ZA en-ZA/locale/en-ZA/pluginproblem/
+locale weave en-ZA en-ZA/locale/en-ZA/services/

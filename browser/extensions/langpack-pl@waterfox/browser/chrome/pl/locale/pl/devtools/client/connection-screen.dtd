@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title "Połącz">
+<!ENTITY header "Połącz ze zdalnym urządzeniem">
+<!ENTITY host "Host:">
+<!ENTITY port "Port:">
+<!ENTITY connect "Połącz">
+<!ENTITY connecting "Łączenie…">
+<!ENTITY availableAddons "Dostępne zdalne dodatki:">
+<!ENTITY availableTabs "Dostępne zdalne karty:">
+<!ENTITY availableProcesses "Dostępne zdalne procesy:">
+<!ENTITY connectionError "Błąd:">
+<!ENTITY errorTimeout "Błąd: przekroczono limit czasu połączenia.">
+<!ENTITY errorRefused "Błąd: połączenie odrzucone.">
+<!ENTITY errorUnexpected "Niespodziewany błąd.">
+<!ENTITY remoteHelp "Narzędzia dla programistów wbudowane w Firefoksa są w stanie debugować zdalne urządzenia (przykładowo Firefoksa dla Androida lub Waterfox OS). Upewnij się, że opcja „Zdalne debugowanie” jest zaznaczona na zdalnym urządzeniu. Więcej szczegółów można znaleźć w ">
+<!ENTITY remoteDocumentation "dokumentacji">
+<!ENTITY remoteHelpSuffix ".">

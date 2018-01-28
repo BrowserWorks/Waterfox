@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Дадзеныя тэлеметрыі">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Крыніца дадзеных пінга:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Дадзеныя бягучага пінга
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Дадзеныя архіўнага пінга
+">
+
+<!ENTITY aboutTelemetry.raw "
+Неапрацаваны JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Адлюстроўваць дадзеныя падсесіі
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Выберыце пінг:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Больш новы пінг
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Больш стары пінг &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Тыдзень
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Тып пінгу
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Пінг
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Сёння
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Учора
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Раней
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Агульныя дадзеныя
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Дадзеныя асяроддзя
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Лог тэлеметрыі
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Паказ чыннікаў SQL">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Завісанні браўзера
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Нізкі завісанняў">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Захопленыя стэкі
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Скаляры
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Ключавыя скаляры
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Гістаграмы">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Ключавыя гістаграмы
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Падзеі
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Простыя вымярэнні">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Падрабязнасці дадатка">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Апошнія запісы">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Інфармацыя сесіі
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  УВАГА: дазволена марудная наладка SQL. Поўныя радкі SQL могуць адлюстроўвацца ніжэй, але яны не будуць падавацца тэлеметрыі.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Атрымаць імёны функцый для стэкаў
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Паказаць сырыя дадзеныя стэка">
+
+<!ENTITY aboutTelemetry.filterText "
+  Фільтр (радкі або /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Нагрузка
+">

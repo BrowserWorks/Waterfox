@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Ruxe'el ruk'u'x rutzij ri: ">
+
+<!ENTITY fileMenu.label "Yakb'äl">
+<!ENTITY fileMenu.accesskey "Y">
+<!ENTITY savePageCmd.label "Tiyak ruxaq achi'el…">
+<!ENTITY savePageCmd.accesskey "a">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Tinuk'samajïx ruxaq…">
+<!ENTITY pageSetupCmd.accesskey "s">
+<!ENTITY printPreviewCmd.label "Nab'ey tz'etoj">
+<!ENTITY printPreviewCmd.accesskey "o">
+<!ENTITY printCmd.label "Titz'ajb'äx…">
+<!ENTITY printCmd.accesskey "T">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Titz'apïx">
+<!ENTITY closeCmd.accesskey "T">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "B'enam pa ri cholaj…">
+<!ENTITY goToLineCmd.accesskey "B">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Tz'etoj">
+<!ENTITY viewMenu.accesskey       "T">
+<!ENTITY reloadCmd.label "Kamulokem">
+<!ENTITY reloadCmd.accesskey "K">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Kenuk' ri yuquyäq taq cholaj"> 
+<!ENTITY menu_wrapLongLines.accesskey "K">
+<!ENTITY menu_highlightSyntax.label "Tiya' retal ri cholb'ab'">
+<!ENTITY menu_highlightSyntax.accesskey "c">
+<!ENTITY menu_textSize.label "Runimilem ri rucholajem tzij">
+<!ENTITY menu_textSize.accesskey "R">
+<!ENTITY menu_textEnlarge.label "Tinimirisäx">
+<!ENTITY menu_textEnlarge.accesskey "T">
+<!ENTITY menu_textReduce.label "Tich'utinirisäx">
+<!ENTITY menu_textReduce.accesskey "T">
+<!ENTITY menu_textReset.label "Kan ke ri'">
+<!ENTITY menu_textReset.accesskey "K">
+
+<!ENTITY findOnCmd.label     "Rukanoxik pa re ruxaq…">
+<!ENTITY findOnCmd.accesskey "R">
+<!ENTITY findOnCmd.commandkey "p">
+<!ENTITY findAgainCmd.label  "Rukamuluxik ri rukanoxik">
+<!ENTITY findAgainCmd.accesskey "k">
+<!ENTITY findAgainCmd.commandkey "w">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Chi rij">
+<!ENTITY backCmd.accesskey "C">
+<!ENTITY forwardCmd.label "Jun chik">
+<!ENTITY forwardCmd.accesskey "J">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Tiwachib'ëx rochochib'äl ximonel tzij">
+<!ENTITY copyLinkCmd.accesskey "x">
+<!ENTITY copyEmailCmd.label "Tiwachib'ëx rochochib'al taqoya'l">
+<!ENTITY copyEmailCmd.accesskey "t">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Amsedday n unadi amezwer">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Fren amsedday n unadi amezwer ad tesqedceḍ di ufeggag n tansa akked deg ufeggag n unadi.">
+
+<!ENTITY provideSearchSuggestions.label        "Sken isumar n unadi">
+<!ENTITY provideSearchSuggestions.accesskey    "S">
+
+<!ENTITY showURLBarSuggestions2.label           "Sken isumar n unadi deg ugmuḍ n ufeggag n tansa">
+<!ENTITY showURLBarSuggestions2.accesskey       "u">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Anadi n isumar ur d ittwaskan ara deg yigmaḍ n ufeggag n tansa acku tsewleḍ &brandShortName; akken ur iḥerrez ara amazray.">
+
+<!ENTITY oneClickSearchEngines.label           "Imseddayen n unadi ara tkecmeḍ s yiwen n usiti ">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Fren imseddayen n unadi nniḍen ad d-ibanen daw ufeggag n tansa akked ufeggag n unadi m'ara ad tebduḍ ad tsekcameḍ awal n tsarut.">
+
+<!ENTITY engineNameColumn.label                "Amsedday n unadi">
+<!ENTITY engineKeywordColumn.label             "Awal tasarut">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Err-d imseddayen n unadi amezwer">
+<!ENTITY restoreDefaultSearchEngines.accesskey "E">
+
+<!ENTITY removeEngine.label                    "Kkes">
+<!ENTITY removeEngine.accesskey                "K">
+
+<!ENTITY findMoreSearchEngines.label           "Af ugar n yimseddayen n unadi">

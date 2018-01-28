@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Ծրագրի Թարմացում">
+
+<!ENTITY  checking.title                  "Ստուգվում են թարմացումները">
+<!ENTITY  updateCheck.label               "Փնտրվում է &brandShortName;-ի նոր տարբերակը…">
+
+<!ENTITY  noupdatesfound.title            "Թարմացումներ չկան">
+<!ENTITY  noupdatesautoenabled.intro      "Գոյություն չունեն հասանելի թարմացումներ: &brandShortName;-ը պարբերաբար  կստուգի թարմացումների առկայությունը:">
+<!ENTITY  noupdatesautodisabled.intro     "Չկան հասանելի թարմացումներ: Ստուգեք ավելի ուշ կամ ակտիվացրեք  &brandShortName;-ի թարմացումների ինքնաշխատ ստուգումը:">
+
+<!ENTITY  manualUpdate.title              "Չի ստացվում թարմացնել">
+<!ENTITY  manualUpdate.desc               "Անվտանգության և կայունության ցանկալի թարմացումները հասանելի են, սակայն ձեր  օպերացիոն համակարգում տեղադրելու համար դուք չունեք համապատասխան  թույլտվություն: Կապնվեք ձեր համակարգի ադմինիստրատորին կամ փորձեք կրկին մեկ այլ  օգտագործողի հաշվից, որը համակարգում ունի ծրագրեր տեղադրելու իրավունք:">
+<!ENTITY  manualUpdate.space.desc         "Անվտանգության և կայունության թարմացումը առկա է, սակայն դուք չունեք բավարար ազատ տարածք այն տեղադրելու համար:">
+<!ENTITY  manualUpdateGetMsg.label        "Դուք միշտ կարող էք ներբեռնել &brandShortName;-ի վերջին տարբերակը այստեղից`">
+
+<!ENTITY  unsupported.title               "Համակարգը չի աջակցվում">
+<!ENTITY  unsupported.label               "Ձեր &brandShortName;-ը հնացել է, բայց վերջին տարբերակը չիաջակցվում ձեր համակարգի կողմից: Թարմացրեք համակարգը, ապա կրկին փորձել:Այլևս չեք տեսնի այս հուշումը, բայց կարող եք">
+<!ENTITY  unsupportedLink.label           "իմանալ ավելին:">
+
+<!ENTITY  clickHere.label                 "Մանրամասներ այս թարմացման մասին">
+
+<!ENTITY  evangelism.desc                 "Խստիվ խորհուրդ է տրվում կիրառել &brandShortName;-ի այս  թարմացումը, որքան հնարավոր է շուտ:">
+
+<!ENTITY  downloadPage.title              "&brandShortName;-ի ներբեռնում">
+<!ENTITY  downloading.intro               "Բեռնավորում է թարմացումը…">
+<!ENTITY  connecting.label                "Կապակցում թարմացման սպասարկչին…">
+<!ENTITY  verificationFailedText.label    "&brandShortName;-ը չկարողացավ հավաստել բեռնավորված թարմացման մասնակի ֆայլի ամբողջականությունը, ուստի հիմա բեռնավորում է ամբողջական թարմացման փաթեթը:">
+
+<!ENTITY  viewDetails.tooltip             "Դիտել տեղեկություններ այս թարմացման մասին">
+
+<!ENTITY  details.link                    "Մանրամասներ">
+
+<!ENTITY  error.title                     "Թարմացումը Խափանվեց">
+
+<!ENTITY  error.label                     "Խնդիրներ առաջացան թարմացումների առկայությունը ստուգելիս, այն ներբեռնելիս կամ տեղադրելիս: &brandShortName;-ը չի կարող թարմացվել, որովհետև՝">
+                                           
+<!ENTITY  errorManual.label               "Կարող եք ինքներդ թարմացնել &brandShortName;-ը, եթե սեղմեք այս հղումը և ներբեռնեք առկա ամենավերջին տարբերակը:">
+                                           
+<!ENTITY  errorpatching.intro             "Անհնար է կիրառել մասնակի Թարմացումը: &brandShortName;-ն այժմ կփորձի բեռնավորել ամբողջական Թարմացումը:">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; չի կարողանում ստուգել արդյոք կա թարմացում: Խնդրեմ ստուգեք և համոզվեք որ դուք օգտագործում էք &brandShortName;-ի վերջին տարբերակը:">
+
+<!ENTITY  finishedPage.title              "Թարմացումը Պատրաստ է Տեղադրման">
+<!ENTITY  finishedPage.text               "Թարմացումը կտեղադրվի &brandShortName;-ը հաջորդ անգամ բացելիս: Դուք կարող եք վերամեկնարկել &brandShortName;-ը հիմա կամ շարունակել աշխատանքը և վերամեկնարկել ավելի ուշ:">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName;-ի անվտանգության և կայունության թարմացումը  բեռնված է և պատրաստ է տեղադրման:">
+<!ENTITY  finishedBackground.name         "Թարմացնել.">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Թարմացումը կտեղադրվի &brandShortName;-ը հաջորդ անգամ բացելիս: Դուք կարող եք վերամեկնարկել &brandShortName;-ը հիմա կամ շարունակել աշխատանքը և վերամեկնարկել ավելի ուշ:">
+<!ENTITY  finishedBackground.moreElevated "Այս թարմացումը պահանջում է վարիչի արտոնություն: Թարմացումը կտեղադրվի հաջորդ անգամ &brandShortName;-ը բացելիս: Կարող եք հիմա վերամեկնարկել &brandShortName;-ը կամ շարունակել աշխատանքը և վերամեկնարկել հետո, կամ էլ մերժել այս թարմացումը:">
+
+<!ENTITY  update.details.label            "Մանրամասներ">
+<!ENTITY  update.installedOn.label        "Տեղադրված է.">
+<!ENTITY  update.status.label             "Վիճակը.">

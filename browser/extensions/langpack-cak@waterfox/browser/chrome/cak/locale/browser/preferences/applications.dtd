@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Taq chokoy">
+<!ENTITY  applications.description "Tacha' achi'el rub'eyal &brandShortName; yerusamajij ri taq yakb'äl ye'aqasaj pan ajk'amaya'l o ri taq chokoy ye'awokisaj toq atokinäq pa k'amaya'l.">
+
+<!ENTITY  typeColumn.label        "Ruwäch rupam">
+<!ENTITY  typeColumn.accesskey    "R">
+
+<!ENTITY  actionColumn2.label     "B'anoj">
+<!ENTITY  actionColumn2.accesskey "B">
+
+<!ENTITY  focusSearch1.key        "p">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Kekanöx ruwäch chi yakb'äl o taq chokoy">

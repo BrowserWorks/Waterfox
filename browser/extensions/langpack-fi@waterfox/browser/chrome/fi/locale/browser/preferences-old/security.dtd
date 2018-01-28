@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Yleiset">
+
+<!ENTITY  warnOnAddonInstall2.label       "Varoita, kun sivustot yrittävät asentaa lisäosia">
+<!ENTITY  warnOnAddonInstall2.accesskey   "V">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Estä vaarallinen ja petollinen sisältö">
+<!ENTITY  enableSafeBrowsing.accesskey    "s">
+
+<!ENTITY  blockDownloads.label            "Estä vaaralliset lataukset">
+<!ENTITY  blockDownloads.accesskey        "a">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Varoita ei-halutuista ja epätavallisista ohjelmista">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "r">
+
+<!ENTITY  addonExceptions.label         "Poikkeukset…">
+<!ENTITY  addonExceptions.accesskey     "P">
+
+
+<!ENTITY  logins.label                  "Kirjautumistiedot">
+
+<!ENTITY  rememberLogins2.label         "Tallenna kirjautumistiedot">
+<!ENTITY  rememberLogins2.accesskey     "T">
+<!ENTITY  passwordExceptions.label      "Poikkeukset…">
+<!ENTITY  passwordExceptions.accesskey  "e">
+
+<!ENTITY  useMasterPassword.label        "Käytä pääsalasanaa">
+<!ENTITY  useMasterPassword.accesskey    "K">
+<!ENTITY  changeMasterPassword.label     "Muuta pääsalasanaa…">
+<!ENTITY  changeMasterPassword.accesskey "M">
+
+<!ENTITY  savedLogins.label              "Tallennetut kirjautumistiedot…">
+<!ENTITY  savedLogins.accesskey          "k">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informations concernant l’url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Fournisseurs">
+<!ENTITY aboutUrlClassifier.provider                    "Fournisseur">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Dernière mise à jour">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Prochaine mise à jour">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Période d’interruption">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Dernier état de mise à jour">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Mise à jour">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Actualiser">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Effacer">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Nom du tableau">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Nombre d’entrées négatives du cache">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Nombre d’entrées positives du cache">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Afficher les entrées">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Entrées du cache">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Préfixe">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Expiration de cache négative">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Empreinte complète">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Expiration de cache positive">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Débogage">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Activer les modules de journalisation">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Définir un fichier de journalisation">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Activer la journalisation JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Modules de journalisation pour le blocage de sites malveillants">
+<!ENTITY aboutUrlClassifier.debugModules                "Modules de journalisation actuels">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Journal JS du blocage de sites malveillants">
+<!ENTITY aboutUrlClassifier.debugFile                   "Fichier de journalisation actuel">

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Tentang Jaringan">
+<!ENTITY aboutNetworking.warning               "Ini sangat eksperimental. Jangan gunakan tanpa pengawasan orang dewasa.">
+<!ENTITY aboutNetworking.showNextTime          "Papar amaran ini pada waktu lain">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Soket">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSocket">
+<!ENTITY aboutNetworking.refresh               "Segarkan">
+<!ENTITY aboutNetworking.autoRefresh           "Segarkan secara automatik setiap 3 saat">
+<!ENTITY aboutNetworking.hostname              "Nama hos">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktif">
+<!ENTITY aboutNetworking.idle                  "Melahu">
+<!ENTITY aboutNetworking.host                  "Hos">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Dihantar">
+<!ENTITY aboutNetworking.received              "Diterima">
+<!ENTITY aboutNetworking.family                "Keluarga">
+<!ENTITY aboutNetworking.addresses             "Alamat">
+<!ENTITY aboutNetworking.expires               "Luput (Saat)">
+<!ENTITY aboutNetworking.messagesSent          "Mesej Dihantar">
+<!ENTITY aboutNetworking.messagesReceived      "Mesej Diterima">
+<!ENTITY aboutNetworking.bytesSent             "Bait Dihantar">
+<!ENTITY aboutNetworking.bytesReceived         "Bait Diterima">
+<!ENTITY aboutNetworking.logging               "Menglog">
+<!ENTITY aboutNetworking.logTutorial           "Rujuk <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Menglog</a> untuk arahan cara menggunakan alatan ini.">
+<!ENTITY aboutNetworking.currentLogFile        "Fail Log Semasa:">
+<!ENTITY aboutNetworking.currentLogModules     "Modul Log Semasa:">
+<!ENTITY aboutNetworking.setLogFile            "Set Fail Log">
+<!ENTITY aboutNetworking.setLogModules         "Set Modul Log">
+<!ENTITY aboutNetworking.startLogging          "Mulakan Menglog">
+<!ENTITY aboutNetworking.stopLogging           "Hentikan Menglog">
+<!ENTITY aboutNetworking.dnsLookup             "Carian DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Uraikan">
+<!ENTITY aboutNetworking.dnsDomain             "Domain">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Jumlah bilangan permintaan rangkaian">
+<!ENTITY aboutNetworking.rcwnOperation         "Operasi Cache">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Buka">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Baca">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Tulis">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entri Terbuka">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Purata Pendek">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Purata Panjang">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Sisihan Piawai Panjang">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Kiraan perlahan cache">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Kiraan tidak perlahan cache">

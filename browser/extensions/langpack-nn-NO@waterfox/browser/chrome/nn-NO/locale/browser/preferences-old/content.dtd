@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Sprettoppvindauge">
+
+<!ENTITY  blockPopups.label           "Blokker sprettoppvindauge">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "Varsel">
+<!ENTITY  notificationsPolicyLearnMore.label   "Les meir">
+<!ENTITY  notificationsPolicyDesc4.label       "Vel kva for nettsider som har løyve til å sende deg varsel">
+<!ENTITY  notificationsPolicyButton.accesskey  "V">
+<!ENTITY  notificationsPolicyButton.label      "Vel…">
+<!ENTITY  notificationsDoNotDisturb.label      "Ikkje forstyrr meg">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "k">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Ingen varsel vil visast før du startar &brandShortName; på nytt">
+
+<!ENTITY  popupExceptions.label       "Unntak…">
+<!ENTITY  popupExceptions.accesskey   "U">
+
+<!ENTITY  fontsAndColors.label        "Skrifttypar og fargar">
+
+<!ENTITY  defaultFont.label           "Standard skrifttype:">
+<!ENTITY  defaultFont.accesskey       "d">
+<!ENTITY  defaultSize.label           "Storleik:">
+<!ENTITY  defaultSize.accesskey       "S">
+
+<!ENTITY  advancedFonts.label         "Avansert…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "Fargar…">
+<!ENTITY  colors.accesskey            "F">
+
+
+<!ENTITY languages.label              "Språk">
+<!ENTITY chooseLanguage.label         "Vel føretrekt språk på nettsider">
+<!ENTITY chooseButton.label           "Vel…">
+<!ENTITY chooseButton.accesskey       "V">
+
+<!ENTITY translateWebPages.label      "Omset webinnhald">
+<!ENTITY translateWebPages.accesskey  "O">
+<!ENTITY translateExceptions.label    "Unntak…">
+<!ENTITY translateExceptions.accesskey "n">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Omsettingar av">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM-innhald">
+
+<!ENTITY  playDRMContent.label         "Spel av DRM-innhald">
+<!ENTITY  playDRMContent.accesskey     "S">
+<!ENTITY  playDRMContent.learnMore.label "Les meir">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title "Asistente para crear perfiles">
+<!ENTITY window.size "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text "&brandShortName; guarda información acerca de sus opciones y preferencias en su perfil personal.">
+<!ENTITY profileCreationExplanation_2.text "Si está compartiendo &brandShortName; con otras personas bajo la misma cuenta de usuario de computadora, puede crear perfiles diferentes para mantener separada la información de cada persona. Para hacer esto, cada quien debería crear su propio perfil.">
+<!ENTITY profileCreationExplanation_3.text "Si usted es la única persona que utiliza &brandShortName; bajo esta misma cuenta de usuario de computadora, debe tener al menos un perfil. De todas maneras, si así lo desea, puede crear múltiples perfiles para guardar diferentes configuraciones y preferencias. Por ejemplo, quizás le interese tener perfiles separados para uso personal y comercial.">
+<!ENTITY profileCreationExplanation_4.text "Para comenzar a crear su perfil, haga clic en Siguiente.">
+<!ENTITY profileCreationExplanation_4Mac.text "Para comenzar a crear su perfil, haga clic en Continuar.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Para comenzar a crear su perfil, haga clic en Siguiente.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text "Si desea crear varios perfiles puede separarlos por su nombre. Puede usar el nombre provisto aquí o usar uno propio.">
+<!ENTITY profilePrompt.label "Ingrese nuevo nombre de perfil:">
+<!ENTITY profilePrompt.accesskey "e">
+<!ENTITY profileDirectoryExplanation.text   "Sus opciones de usuario, preferencias, marcadores y otros datos de usuario se guardarán en:">
+<!ENTITY profileDefaultName "Usuario por defecto">
+<!ENTITY button.choosefolder.label "Seleccionar carpeta…">
+<!ENTITY button.choosefolder.accesskey "c">
+<!ENTITY button.usedefault.label "Usar carpeta predeterminada">
+<!ENTITY button.usedefault.accesskey "U">

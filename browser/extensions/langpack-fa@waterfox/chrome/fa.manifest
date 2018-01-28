@@ -1,0 +1,14 @@
+locale alerts fa fa/locale/fa/alerts/
+locale autoconfig fa fa/locale/fa/autoconfig/
+locale global fa fa/locale/fa/global/
+locale global-platform fa fa/locale/fa/global-platform/mac/ os=Darwin
+locale global-platform fa fa/locale/fa/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform fa fa/locale/fa/global-platform/win/ os=WINNT
+locale mozapps fa fa/locale/fa/mozapps/
+locale necko fa fa/locale/fa/necko/
+locale passwordmgr fa fa/locale/fa/passwordmgr/
+locale pipnss fa fa/locale/fa/pipnss/
+locale pippki fa fa/locale/fa/pippki/
+locale places fa fa/locale/fa/places/
+locale pluginproblem fa fa/locale/fa/pluginproblem/
+locale weave fa fa/locale/fa/services/

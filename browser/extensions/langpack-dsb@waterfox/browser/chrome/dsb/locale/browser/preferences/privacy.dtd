@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Slědowański šćit">
+<!ENTITY  trackingProtection2.description      "Slědowanje jo gromaźenje wašych pśeglědowańskich datow pśez někotare websedła. Slědowanje dajo se wužywaś, aby profil twóriło a wopśimjeśe na zakłaźe wašych pśeglědowańskich a wósobinskich datow pokazało.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Slědowański šćit wužywaś, aby znate pśeslědowarje blokěrował">
+<!ENTITY  trackingProtectionAlways.label       "Pśecej">
+<!ENTITY  trackingProtectionAlways.accesskey   "c">
+<!ENTITY  trackingProtectionPrivate.label      "Jano w priwatnych woknach">
+<!ENTITY  trackingProtectionPrivate.accesskey  "o">
+<!ENTITY  trackingProtectionNever.label        "Nigda">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Dalšne informacije">
+<!ENTITY  trackingProtectionExceptions.label   "Wuwześa…">
+<!ENTITY  trackingProtectionExceptions.accesskey "u">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Slědowański šćit w priwatnych woknach wužywaś">
+<!ENTITY trackingProtectionPBM5.accesskey     "r">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Slědowański šćit w priwatnem modusu wužywaś, aby znate pśeslědowarje blokěrował">
+<!ENTITY trackingProtectionPBM6.accesskey     "r">
+<!ENTITY trackingProtectionPBMLearnMore.label "Dalšne informacije">
+<!ENTITY changeBlockList2.label               "Blokěrowańsku lisćinu změniś…">
+<!ENTITY changeBlockList2.accesskey           "z">
+
+<!ENTITY  doNotTrack.description        "Websedłam signal “Njeslědowaś” pósłaś, až njocośo, až wóne was slěduju">
+<!ENTITY  doNotTrack.learnMore.label    "Dalšne informacije">
+<!ENTITY  doNotTrack.default.label      "Jano, gaž se slědowański šćit wužywa">
+<!ENTITY  doNotTrack.always.label       "Pśecej">
+
+<!ENTITY  history.label                 "Historija">
+<!ENTITY  permissions.label             "Pšawa">
+
+<!ENTITY  addressBar.label              "Adresowe pólo">
+<!ENTITY  addressBar.suggest.label      "Pśi wužywanju adresowego póla ma se naraźiś">
+<!ENTITY  locbar.history2.label         "Pśeglědowańska historija">
+<!ENTITY  locbar.history2.accesskey     "g">
+<!ENTITY  locbar.bookmarks.label        "Cytańske znamjenja">
+<!ENTITY  locbar.bookmarks.accesskey    "C">
+<!ENTITY  locbar.openpage.label         "Wócynjone rejtarki">
+<!ENTITY  locbar.openpage.accesskey     "r">
+<!ENTITY  locbar.searches.label         "Pśiswójźbne pytanja ze standardneju pytnicu">
+<!ENTITY  locbar.searches.accesskey     "s">
+
+<!ENTITY  suggestionSettings2.label     "Nastajenja za naraźenja pytnice změniś">
+
+<!ENTITY  acceptCookies2.label          "Cookieje ze sedłow akceptěrowaś">
+<!ENTITY  acceptCookies2.accesskey      "c">
+
+<!ENTITY  acceptThirdParty.pre.label      "Cookieje tśeśich póbitowarjow akceptěrowaś:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Pśecej">
+<!ENTITY  acceptThirdParty.never.label    "Nigda">
+<!ENTITY  acceptThirdParty.visited.label  "Jano wót woglědanych tśeśich">
+
+<!ENTITY  keepUntil.label               "Wobchowaś:">
+<!ENTITY  keepUntil.accesskey           "b">
+
+<!ENTITY  expire.label                  "až njepśepadnu">
+<!ENTITY  close.label                   "až &brandShortName; se njezacynijo">
+
+<!ENTITY  cookieExceptions.label        "Wuwześa…">
+<!ENTITY  cookieExceptions.accesskey    "W">
+
+<!ENTITY  showCookies.label             "Cookieje pokazaś…">
+<!ENTITY  showCookies.accesskey         "C">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; buźo">
+<!ENTITY  historyHeader2.pre.accesskey     "b">
+<!ENTITY  historyHeader.remember.label     "Se historiju spomnjeś">
+<!ENTITY  historyHeader.dontremember.label "Se historiju nigda njespomnjeś">
+<!ENTITY  historyHeader.custom.label       "Swójske nastajenja za historiju wužywaś">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; buźo se wobglědowańsku, ześěgnjeńsku, formularnu a pytańsku historiju markowaś a wobchowajo cookieje z websedłow, ku kótarymž se woglědujuśo.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Cośo snaź ">
+<!ENTITY  rememberActions.clearHistory.label  "swóju nejnowšu historiju wuprozniś">
+<!ENTITY  rememberActions.middle.label        " abo ">
+<!ENTITY  rememberActions.removeCookies.label "jadnotliwe cookieje wuprozniś">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; buźo te samske nastajenja ako w priwatnem modusu wužywaś a njebuźo se historiju markowaś, gaž Web pśeglědujośo.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Cośo snaź ">
+<!ENTITY  dontrememberActions.clearHistory.label "wšu tuchylnu historiju wuprozniś">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Pśecej priwatny modus wužywaś">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Se pśeglědowańsku a ześěgnjeńsku historiju spomnjeś">
+<!ENTITY  rememberHistory2.accesskey  "l">
+
+<!ENTITY  rememberSearchForm.label       "Pytańsku a formularnu historiju se spomnjeś">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Historiju wuprozniś, gaž &brandShortName; se zacynja">
+<!ENTITY  clearOnClose.accesskey         "H">
+
+<!ENTITY  clearOnCloseSettings.label     "Nastajenja…">
+<!ENTITY  clearOnCloseSettings.accesskey "N">
+
+<!ENTITY  browserContainersLearnMore.label      "Dalšne informacije">
+<!ENTITY  browserContainersEnabled.label        "Kontejnerowe rejtarki zmóžniś">
+<!ENTITY  browserContainersEnabled.accesskey    "m">
+<!ENTITY  browserContainersSettings.label        "Nastajenja…">
+<!ENTITY  browserContainersSettings.accesskey    "s">

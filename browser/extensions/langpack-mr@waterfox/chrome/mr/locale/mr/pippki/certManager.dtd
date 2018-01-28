@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "प्रमाणपत्र व्यवस्थापक">
+
+<!ENTITY certmgr.tab.mine                     "आपले प्रमाणपत्र">
+<!ENTITY certmgr.tab.others2                  "व्यक्ति">
+<!ENTITY certmgr.tab.websites3                "सर्व्हर्स">
+<!ENTITY certmgr.tab.ca                       "अधिप्रमाणन">
+<!ENTITY certmgr.tab.orphan2                  "इतर">
+
+<!ENTITY certmgr.mine                         "आपल्याकडे अशा संघटनांचे प्रमाणपत्र आहेत जी तुम्हची ओळख पटवूण देतात:">
+<!ENTITY certmgr.others                       "आपल्याकडे फाइलवरील अशा प्रमाणपत्र आहेत जी ह्या लोकांना ओळखते:">
+<!ENTITY certmgr.websites2                    "सर्व्हर ओळखण्याकरीता फाइलवरील प्रमाणपत्र उपलब्ध असतात:">
+<!ENTITY certmgr.cas                          "आपल्याकडे फाइलवरील अशा प्रमाणपत्र आहेत जी ह्या प्रमाणित अधिप्रमाणनांना ओळखते:">
+<!ENTITY certmgr.orphans                      "फाइलवरील काहिक प्रमाणपत्र अन्य विभागात घट्ट बसत नाही:">
+
+<!ENTITY certmgr.detail.general_tab.title     "सर्वसाधारण">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "तपशील">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "सद्या प्रमाणपत्र तपासत आहे…">
+<!ENTITY certmgr.subjectinfo.label            "प्रति">
+<!ENTITY certmgr.issuerinfo.label             "प्रषेक">
+<!ENTITY certmgr.periodofvalidity.label       "वैधता कालावधी" >
+<!ENTITY certmgr.fingerprints.label           "ठसा">
+<!ENTITY certmgr.certdetail.title             "प्रमाणपत्र तपशील">
+<!ENTITY certmgr.certdetail.cn                "सर्वसाधारण नाव (CN)">
+<!ENTITY certmgr.certdetail.o                 "संघटना">
+<!ENTITY certmgr.certdetail.ou                "संघटनात्मक घटक (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "क्रमांक">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 ठसा">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 ठसा">
+
+<!ENTITY certmgr.editcacert.title             "CA प्रमाणपत्र विश्वासर्ह सेटींग्स संपादित करा">
+<!ENTITY certmgr.editcert.edittrust           "विश्वासर्ह सेटींग्स संपादित करा:">
+<!ENTITY certmgr.editcert.trustssl            "हे प्रमाणपत्र संकेत स्थळं ओळखू शकते.">
+<!ENTITY certmgr.editcert.trustemail          "हे प्रमाणपत्र मेल वापरकर्त्यांना ओळखू शकते.">
+<!ENTITY certmgr.editcert.trustobjsign        "हे प्रमाणपत्र सॉफ्टवेअर निर्मात्यांना ओळखू शकते.">
+
+<!ENTITY certmgr.deletecert.title             "प्रमाणपत्र नष्ट करा">
+
+<!ENTITY certmgr.certname                     "प्रमाणपत्राचे नाव">
+<!ENTITY certmgr.certserver                   "सर्व्हर">
+<!ENTITY certmgr.override_lifetime            "कार्यकाळ">
+<!ENTITY certmgr.tokenname                    "सुरक्षा साधन">
+<!ENTITY certmgr.begins                       "यावेळी सुरू">
+<!ENTITY certmgr.expires                      "यावेळी वेळ समाप्त">
+<!ENTITY certmgr.email                        "ई-मेल पत्ता">
+<!ENTITY certmgr.serial                       "क्रमांक">
+
+<!ENTITY certmgr.close.label                  "बंद करा">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                  "दृश्य…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "विश्वास संपादित करा…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "एक्सपोर्ट करा…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "काढून टाका…">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete_builtin.label         "नष्ट करा किंवा विश्वास करू नका…">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "बॅकअप…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "सर्व बॅकअप करा…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "आयात करा…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "प्रमाणपत्र क्षेत्र">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.label                 "क्षेत्र मूल्य">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "प्रमाणपत्र श्रेणी">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "अपवाद समाविष्ट करा…">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "सुरक्षा अपवाद जोडा">
+<!ENTITY exceptionMgr.exceptionButton.label   "सुरक्षा अपवादाची खात्री करा">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "अधिकृत बँक, दुकान, व अन्य सार्वजणीक स्थळ हे करण्यास विचारणार नाही.">
+<!ENTITY exceptionMgr.certlocation.caption2   "सर्व्हर">
+<!ENTITY exceptionMgr.certlocation.url        "स्थान:">
+<!ENTITY exceptionMgr.certlocation.download   "प्रमाणपत्र प्राप्त करा">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "प्रमाणपत्र स्थिती">
+<!ENTITY exceptionMgr.certstatus.viewCert     "दृश्य…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "नेहमीकरीता हे अपवाद साठवा">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

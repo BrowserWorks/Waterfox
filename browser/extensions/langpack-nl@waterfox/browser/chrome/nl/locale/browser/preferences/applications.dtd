@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Toepassingen">
+<!ENTITY  applications.description "Kiezen hoe &brandShortName; omgaat met de bestanden die u van het web downloadt of de toepassingen die u tijdens het surfen gebruikt.">
+
+<!ENTITY  typeColumn.label        "Inhoudstype">
+<!ENTITY  typeColumn.accesskey    "t">
+
+<!ENTITY  actionColumn2.label     "Actie">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Bestandstypen of toepassingen zoeken">

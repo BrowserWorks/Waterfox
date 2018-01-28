@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Quản lí thiết bị">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "Các Module và Thiết bị Bảo mật">
+<!ENTITY devmgr.details.title                   "Chi tiết">
+<!ENTITY devmgr.details.title2                  "Giá trị">
+
+<!ENTITY devmgr.button.login.label              "Đăng Nhập">
+<!ENTITY devmgr.button.login.accesskey          "N">
+<!ENTITY devmgr.button.logout.label             "Đăng Xuất">
+<!ENTITY devmgr.button.logout.accesskey         "X">
+<!ENTITY devmgr.button.changepw.label           "Thay đổi Mật khẩu">
+<!ENTITY devmgr.button.changepw.accesskey       "M">
+<!ENTITY devmgr.button.load.label               "Nạp">
+<!ENTITY devmgr.button.load.accesskey           "p">
+<!ENTITY devmgr.button.unload.label             "Không Nạp">
+<!ENTITY devmgr.button.unload.accesskey         "K">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Nhập thông tin cho module bạn muốn thêm.">
+<!ENTITY loaddevice.modname                     "Tên Module:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Module PKCS#11 Mới">
+<!ENTITY loaddevice.filename                    "Tên tập tin module:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Duyệt…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "តភ្ជាប់">
+<!ENTITY header     "តភ្ជាប់​ទៅ​កាន់​ឧបករណ៍​ពី​ចម្ងាយ">
+<!ENTITY host       "ម៉ាស៊ីន ៖">
+<!ENTITY port       "ច្រក ៖">
+<!ENTITY connect    "តភ្ជាប់">
+<!ENTITY connecting "កំពុង​តភ្ជាប់…">
+<!ENTITY availableAddons "កម្មវិធី​បន្ថែម​ពី​ចម្ងាយ​ដែល​មាន៖">
+<!ENTITY availableTabs "ផ្ទាំង​ពី​ចម្ងាយ​ដែល​មាន ៖">
+<!ENTITY availableProcesses "អាច​​​ចូល​ដំណើរការ​​ពី​ចម្ងាយ៖​​​​">
+<!ENTITY connectionError "កំហុស ៖">
+<!ENTITY errorTimeout "កំហុស ៖ អស់​ពេល​តភ្ជាប់ ។">
+<!ENTITY errorRefused "កំហុស ៖ បាន​បដិសេធ​ការ​តភ្ជាប់ ។">
+<!ENTITY errorUnexpected "កំហុស​ដែល​មិន​បាន​រំពឹង ។">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "ឧបករណ៍​អ្នក​អភិវឌ្ឍន៍ Waterfox អាច​បំបាត់​កំហុស​ឧបករណ៍​ពី​ចម្ងាយ​ (Waterfox សម្រាប់ Android និង Waterfox OS)។ សូម​ប្រាកដ​ថា​អ្នក​បាន​បើក​ជម្រើស 'ការ​បំបាត់​កំហុស​ពី​ចម្ងាយ' នៅ​ក្នុង​ឧបករណ៍​ពី​ចម្ងាយ។ សម្រាប់​ព័ត៌មាន​បន្ថែម សូម​មើល">
+<!ENTITY remoteDocumentation "ឯកសារ">
+<!ENTITY remoteHelpSuffix ".">
+

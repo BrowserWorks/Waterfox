@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab टैब्स के द्वारा हाल ही में उपयोग किये गये अनुक्रम में घूमता है ">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "नई विंडो को नए टैब में खोलें">
+<!ENTITY newWindowsAsTabs.accesskey   "w">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "आपको चेताएँ जब कई टैब बंद करते हैं">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "आपको चेताएँ जब कई टैब का खोला जाना &brandShortName; को धीमा करता हो">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "जब आप नये टैब में कड़ी खोलते हैं, इसमें तत्काल जाएँ">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "विंडो कार्यपट्टी में टैब पूर्वावलोकन दिखाएँ">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "टैब">

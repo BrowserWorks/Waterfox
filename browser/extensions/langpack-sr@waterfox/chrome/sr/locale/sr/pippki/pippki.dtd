@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Промена главне лозинке">
+<!ENTITY setPassword.tokenName.label "Безбедносни уређај">
+<!ENTITY setPassword.oldPassword.label "Тренутна лозинка:">
+<!ENTITY setPassword.newPassword.label "Нова лозинка:">
+<!ENTITY setPassword.reenterPassword.label "Нова лозинка (још једном):">
+<!ENTITY setPassword.meter.label "Ниво квалитета лозинке">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Ресетуј">
+<!ENTITY resetPassword.title  "Ресетуј главну лозинку">
+<!ENTITY resetPassword.text  "Ако ресетујете главну лозинку, све сачуване лозинке за интернет и е-пошту, садржаји формулара, лични сертификати и кључеви биће &quot;изгубљени&quot;. Да ли заиста желите ресетовати своју главну лозинку?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Пријем сертификата">
+<!ENTITY downloadCert.message1 "Тражено је да верујете новом сертификационом телу (СА).">
+<!ENTITY downloadCert.trustSSL "Веруј овом сертификационом телу (CA) да идентификује веб сајтова.">
+<!ENTITY downloadCert.trustEmail "Веруј овом сертификационом телу (CA) да идентификује е-поште корисника.">
+<!ENTITY downloadCert.trustObjSign "Веруј овом сертификационом телу (CA) да идентификује програмере.">
+<!ENTITY downloadCert.message3 "Пре указивања поверења овој компанији за било коју намену испитајте њен сертификат и њене полисе и процедуре (ако постоје).">
+<!ENTITY downloadCert.viewCert.label "Преглед">
+<!ENTITY downloadCert.viewCert.text "Испитај сертификат сертификационог тела">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Захтев за идентификацију корисника">
+<!ENTITY clientAuthAsk.message1 "Овај веб сајт је тражио да се идентификујете помоћу сертификата:">
+<!ENTITY clientAuthAsk.message2 "Изаберите сертификат који ће служити за идентификацију:">
+<!ENTITY clientAuthAsk.message3 "Детаљи о изабраном сертификату:">
+
+<!ENTITY pkcs12.setpassword.title  "Изаберите резервну лозинку за сертификат">
+<!ENTITY pkcs12.setpassword.message  "Резервна лозинка за сертификат, коју изаберете овде, штитиће датотеку која ће бити направљена. За исте наставили морате поставити лозинку.">
+<!ENTITY pkcs12.setpassword.label1 "Резервна лозинка за сертификат:">
+<!ENTITY pkcs12.setpassword.label2 "Резервна лозинка за сертификат (опет):">
+<!ENTITY pkcs12.setpassword.reminder "Важно: ако заборавите лозинку за резервну лозинку сертификата, нећете моћи да касније вратите сертификат.  Лозинку сачувајте на безбедно место.">
+
+<!ENTITY chooseToken.title  "Изабери знак">
+<!ENTITY chooseToken.message1 "Изаберите знак.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Прављење приватног кључа">
+<!ENTITY createCertInfo.msg1 "Кључ се генерише… Ово може да потраје неколико минута…">
+<!ENTITY createCertInfo.msg2 "Сачекајте…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Потврда идентитета заштићеним знаком">
+<!ENTITY protectedAuth.msg "Пријавите се са знаком распознавања (token). Врста потврде идентитета зависи од врсте знака распознавања.">
+<!ENTITY protectedAuth.tokenName.label "Знак:">

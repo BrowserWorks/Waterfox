@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Wuwześa - Pśełožowanje">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Pśełožowanje njepóbitujo se za slědujuce rěcy:">
+<!ENTITY treehead.languageName.label      "Rěcy">
+<!ENTITY removeLanguage.label             "Rěc wótpóraś">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "Wšykne rěcy wótpóraś">
+<!ENTITY removeAllLanguages.accesskey     "W">
+
+<!ENTITY noTranslationForSites.label      "Pśełožowanje njepóbitujo se za slědujuce sedła:">
+<!ENTITY treehead.siteName2.label         "Websedła">
+<!ENTITY removeSite.label                 "Sedło wótpóraś">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Wšykne sedła wótpóraś">
+<!ENTITY removeAllSites.accesskey         "t">
+
+<!ENTITY button.close.label               "Zacyniś">
+<!ENTITY button.close.accesskey           "Z">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "색상">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "위에 선택한 색상으로 페이지에서 선택한 색상 덮어씀:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "항상">
+<!ENTITY  overrideDefaultPageColors.auto.label   "고대비 테마에서만">
+<!ENTITY  overrideDefaultPageColors.never.label  "하지 않음">
+
+<!ENTITY  color                           "글자와 배경">
+<!ENTITY  textColor.label                 "글자:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "배경:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "시스템 색상 사용">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "밑줄 링크">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "링크 색상">
+<!ENTITY  linkColor.label                 "방문하지 않은 링크:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "방문한 링크:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

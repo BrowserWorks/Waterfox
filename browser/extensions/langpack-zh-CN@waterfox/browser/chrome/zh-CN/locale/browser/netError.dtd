@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "页面载入出错">
+<!ENTITY retry.label "重试">
+<!ENTITY returnToPreviousPage.label "后退">
+<!ENTITY advanced.label "高级">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "连接失败">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "此网址已被限制">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "找不到服务器">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>也许网址输错了？比如将<q><strong>www</strong>.example.com</q>输成<q><strong>ww</strong>.example.com</q></li><li>如果您无法载入任何网页，请检查您计算机的网络连接状态。</li><li>如果您的计算机或网络受到防火墙或者代理服务器的保护，请确认 &brandShortName; 已被授权访问网络。</li></ul>">
+
+<!ENTITY fileNotFound.title "找不到文件">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>请检查文件名是否大小写输错，或者有其他输入错误。</li> 
+<li>请检查文件是否已被移动，重命名或删除。</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "对该文件的访问请求被拒绝">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>文件可能已被删除、移动，或者因文件权限问题被拒绝访问。</li>
+</ul>
+">
+
+<!ENTITY generic.title "哎呀。">
+<!ENTITY generic.longDesc "<p>&brandShortName; 因某些不明原因无法载入此页面。</p>">
+
+<!ENTITY captivePortal.title "请登录网络">
+<!ENTITY captivePortal.longDesc2 "
+<p>您必须先登录此网络才能访问互联网。</p>">
+
+<!ENTITY openPortalLoginPage.label2 "打开网络登录页面">
+
+<!ENTITY malformedURI.title "无效的地址">
+<!ENTITY malformedURI.longDesc "<ul>
+  <li>网址通常长得像 
+    <strong>http://www.example.com/</strong></li> 
+  <li>请确认您使用的是正斜杠（即
+    <strong>/</strong>）。</li>
+</ul>">
+
+<!ENTITY netInterrupt.title "连接被中断">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "文档已过期">
+<!ENTITY notCached.longDesc "<p>您请求的文档已无法在 &brandShortName; 的缓存中找到。</p><ul><li>出于安全考虑，&brandShortName; 不会自动重新获取敏感文档。</li><li>您可以点击“重试”来重新请求从网站获取该文档。</li></ul>">
+
+<!ENTITY netOffline.title "脱机模式">
+<!ENTITY netOffline.longDesc2 "<ul>
+  
+  <li>请按“重试”切换到在线模式并重新载入此页面。</li>
+</ul>">
+
+<!ENTITY contentEncodingError.title "内容编码错误">
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li>建议向此网站的管理员反馈这个问题。</li></ul>">
+
+<!ENTITY unsafeContentType.title "不安全的文件类型">
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li>建议向此网站的管理员反馈这个问题。</li> </ul>">
+
+<!ENTITY netReset.title "连接被重置">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "连接超时">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "无法理解该地址">
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li>您可能需要安装其他软件才能打开此地址。</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "代理服务器拒绝连接">
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>请检查浏览器的代理服务器设置是否正确。</li><li>请联系您的网络管理员以确认代理服务器工作正常。</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "无法找到代理服务器">
+<!ENTITY proxyResolveFailure.longDesc "<ul><li>请检查浏览器的代理服务器设置是否正确。</li><li>请检查确认您的计算机能正常连上网。</li><li>如果您的计算机或网络受到防火墙或者代理服务器的保护，请确认 &brandShortName; 已被授权访问网络。</li></ul>">
+
+<!ENTITY redirectLoop.title "此页面不能正确地重定向">
+<!ENTITY redirectLoop.longDesc "<ul><li>有时候禁用或拒绝接受 Cookie 会导致此问题。</li></ul>">
+
+<!ENTITY unknownSocketType.title "意外的服务器响应">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>请检查您的系统是否安装了个人安全管理器（PSM）。</li> 
+<li>这可能是由服务器端的非标准配置所致。</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "建立安全连接失败">
+<!ENTITY nssFailure2.longDesc2 "<ul> 
+<li>由于不能验证所收到的数据是否可信，无法显示您想要查看的页面。</li> 
+<li>建议向此网站的管理员反馈这个问题。</li> 
+</ul>">
+
+<!ENTITY certerror.longpagetitle1 "您的连接并不安全">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/> 的管理员没有正确配置好此网站。为避免您的信息失窃，&brandShortName; 并未与此网站建立连接。">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>此站点暂时无法使用或者太过忙碌。请过几分钟后再试。</li> 
+<li>如果您无法载入任何网页，请检查您计算机的网络连接状态。</li> 
+<li>如果您的计算机或网络受到防火墙或者代理服务器的保护，请确认 &brandShortName; 已被授权访问网络。</li>
+<li>此网站可能受管制，不必重试。</li>
+</ul>">
+
+<!ENTITY cspBlocked.title "已依内容安全策略拦截">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; 已依照该页面的内容安全策略阻止了它以这种方式载入。</p>">
+
+<!ENTITY corruptedContentErrorv2.title "内容损坏错误">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>由于检测到在数据传输过程中存在错误，无法显示您正要查看的页面。</p><ul><li>建议向此网站的管理员反馈这个问题。</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "添加例外…">
+
+<!ENTITY errorReporting.automatic2 "反馈此类错误，帮助 Mozilla 识别并拦截恶意网站">
+<!ENTITY errorReporting.learnMore "详细了解…">
+
+<!ENTITY remoteXUL.title "远程 XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>建议向此网站的管理员反馈这个问题。</li></ul></p>">
+
+<!ENTITY sslv3Used.title "无法安全地进行连接">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "高级信息: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p>您的系统时间似乎不正确，因此 &brandShortName; 无法与 <span id='wrongSystemTime_URL'/> 建立安全连接。</p> <p>您的计算机时间目前被设置为 <span id='wrongSystemTime_systemDate'/>，但正确的时间应是 <span id='wrongSystemTime_actualDate'/>。请更正您的日期和时间设置来修复此问题。</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>您的系统时间似乎不正确，因此 &brandShortName; 无法与 <span id='wrongSystemTimeWithoutReference_URL'/> 建立安全连接。</p> <p>您的计算机时间目前被设置为 <span id='wrongSystemTimeWithoutReference_systemDate'/>。请更正您的日期和时间设置来修复此问题。</p>">
+
+<!ENTITY certerror.pagetitle1  "不安全的连接">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "此网站采用了 HTTP 严格传输安全（HSTS）机制，要求 &brandShortName; 只能与其建立安全连接。正因如此，您也不能将此证书加入例外列表。">
+<!ENTITY certerror.copyToClipboard.label "复制文本到剪贴板">
+
+<!ENTITY inadequateSecurityError.title "您的连接不安全">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> 使用了过时的安全技术，较容易遭受攻击。攻击者可以轻易窃取您的信息。该网站的管理员修正服务器后您才能访问该网站。</p><p>错误代码：NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "看来可能是您的网络安全设置造成了此问题。您想还原到默认设置吗？">
+<!ENTITY prefReset.label "恢复默认设置">

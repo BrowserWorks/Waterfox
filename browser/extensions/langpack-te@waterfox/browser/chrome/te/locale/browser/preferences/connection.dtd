@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "అనుసంధాన అమరికలు">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "అంతర్జాలాన్ని వాడుకోడానికి ప్రాక్సీల అమర్పు">
+<!ENTITY  noProxyTypeRadio.label        "ప్రాక్సీ ఏమీలేదు">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "సిస్టమ్ ప్రాక్సీ అమరికలు వాడు">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "ఈ నెట్‌వర్క్ ప్రాక్సీ అమరికలను స్వయంచాలకంగా గుర్తించు">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "మానవీయ ప్రాక్సీ అమర్పు:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "స్వయంచాలక ప్రాక్సీ అమర్పు URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "మళ్ళీ లోడుచేయి">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP ప్రాక్సీ:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP ప్రాక్సీ:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL ప్రాక్సీ:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS హోస్టు:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "SOCKS v5 వాడేటప్పుడు ప్రాక్సీ DNS">
+<!ENTITY  socksRemoteDNS.accesskey      "D">
+<!ENTITY  port.label                    "పోర్టు:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "వీటికి ప్రాక్సీ వద్దు:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "ఉదాహరణ: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "అన్ని ప్రొటోకాల్లకు ఈ ప్రాక్సీని వాడు">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "సంకేతపదం భద్రమైవుంటే అధీకరణకై అడుగకు">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "మీ ప్రాక్సీ ప్రవేశ వివరాలు భద్రపరచివుంటే ఈ ఎంపిక మిమ్మల్ని నిశ్శబ్దంగా ప్రాక్సీలకు అధీకరిస్తుంది. అధీకరణ విఫలమైనప్పుడు మిమ్మల్ని అడుగుతుంది.">

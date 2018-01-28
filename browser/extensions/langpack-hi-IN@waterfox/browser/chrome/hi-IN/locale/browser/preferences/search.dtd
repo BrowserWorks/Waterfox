@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "तयशुदा खोज इंजिन">
+
+
+<!ENTITY provideSearchSuggestions.label        "खोज सुझाव प्रदान करें">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.label           "पता पट्टी परिणाम में खोज सुझाव दिखाएँ">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "खोज सुझाव स्थान पट्टी में दिखाएँ नहीं जायेंगे क्योंकी आपने &brandShortName; को कभी भी इतिहास याद न रखने क लिए कॉन्फ़िगर करा है ">
+
+<!ENTITY oneClickSearchEngines.label           "एकल-क्लिक सर्च इंजन">
+
+
+<!ENTITY engineNameColumn.label                "खोज इंजन">
+<!ENTITY engineKeywordColumn.label             "बीजशब्द">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Default सर्च इंजन पुनर्स्थापित करें">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "हटाएँ">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY findMoreSearchEngines.label           "अधिक खोज इंजन पाएँ">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+

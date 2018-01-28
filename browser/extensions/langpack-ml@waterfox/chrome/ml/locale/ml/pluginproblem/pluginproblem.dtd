@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "പ്ലഗിന്‍ സജീവമാക്കുന്നതിനായി ഇവിടെ അമര്‍ത്തുക.">
+<!ENTITY clickToActivatePlugin                               "പ്ലഗിന്‍ സജീവമാക്കുക.">
+<!ENTITY checkForUpdates                                     "പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിയ്ക്കുക…">
+<!ENTITY blockedPlugin.label                                 "താങ്കളുടെ സുരക്ഷയ്ക്കായി ഈ പ്ലഗ്ഗിന്‍ തടഞ്ഞിരിക്കുന്നു.">
+<!ENTITY hidePluginBtn.label                                 "പ്ലഗിന്‍ അദൃശ്യമാക്കുക">
+<!ENTITY managePlugins                                       "പ്ലഗിനുകള്‍ കൈകാര്യം ചെയ്യുക…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "‌">
+<!ENTITY reloadPlugin.middle                                 "താള്‍ വീണ്ടും ലഭ്യമാക്കുക">
+<!ENTITY reloadPlugin.post                                   " വീണ്ടും ശ്രമിക്കാന്‍.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "തകരാറിനെപ്പറ്റിയുള്ള അറിയിപ്പ് അയയ്ക്കുക">
+<!ENTITY report.submitting                                   "അറിയിപ്പ് അയയ്ക്കുന്നു…">
+<!ENTITY report.submitted                                    "തകരാറിനെപ്പറ്റിയുള്ള അറിയിപ്പ് അയച്ചു.">
+<!ENTITY report.disabled                                     "തകാരാറു് രേഖപ്പെടുത്തുന്നതു് പ്രവര്‍ത്തനരഹിതമാണു്.">
+<!ENTITY report.failed                                       "സമര്‍പ്പിയ്ക്കല്‍ പരാജയപ്പെട്ടു.">
+<!ENTITY report.unavailable                                  "അറിയിപ്പ് ലഭ്യമല്ല.">
+<!ENTITY report.comment                                      "ഒരു അഭിപ്രായം ചേര്‍ക്കുക (അഭിപ്രായങ്ങള്‍ എല്ലാവര്‍ക്കുവാന്‍ കാണുവാന്‍ സാധിക്കുന്നു)">
+<!ENTITY report.pageURL                                      "താളിന്റെ യുആര്‍എല്‍ ഉള്‍പ്പെടുത്തുക">
+
+<!ENTITY plugin.file                                         "ഫയല്‍">
+<!ENTITY plugin.mimeTypes                                    "MIME തരങ്ങള്‍">
+<!ENTITY plugin.flashProtectedMode.label                     "അഡോബി ഫ്ലാഷ് സംരക്ഷിത രീതി പ്രവര്‍ത്തനസജ്ജമാക്കുക">
+
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

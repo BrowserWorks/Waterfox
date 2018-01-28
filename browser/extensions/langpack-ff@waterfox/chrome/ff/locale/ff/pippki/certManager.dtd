@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Toppitorde Seedamfaaje">
+
+<!ENTITY certmgr.tab.mine                     "Seedamfaaje Maa">
+<!ENTITY certmgr.tab.others2                  "Yimɓe">
+<!ENTITY certmgr.tab.websites3                "Carworɗe">
+<!ENTITY certmgr.tab.ca                       "Hohowɓe">
+<!ENTITY certmgr.tab.orphan2                  "Woɗɓe">
+
+<!ENTITY certmgr.mine                         "Won seedamfaagu iwɗe e ɗee pelle keftin-maa:">
+<!ENTITY certmgr.others                       "Aɗa jogii seedamfaagu e fiilde keftinooje ɓee yimɓe:">
+<!ENTITY certmgr.websites2                    "Aɗa jogii seedamfaagu e fiilde keftinooje ɗee carworɗe:">
+<!ENTITY certmgr.cas                          "Aɗa jogii seedamfaagu e fiilde keftinooje ɓee hohowɓe seedamfaagu:">
+<!ENTITY certmgr.orphans                      "Aɗa jogii seedamfaagu e fiilde ɗe njeyaaka hay wootere e pelle goɗɗe ɗee:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Kuuɓal">
+<!ENTITY certmgr.detail.general_tab.accesskey "K">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Cariiɗe">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "C">
+
+<!ENTITY certmgr.pending.label                "Woni jooni ko e ƴeewtaade seedamfaaje…">
+<!ENTITY certmgr.subjectinfo.label            "Hucci ko e">
+<!ENTITY certmgr.issuerinfo.label             "Feewni ko">
+<!ENTITY certmgr.periodofvalidity.label       "Dumunna Moƴƴugol" >
+<!ENTITY certmgr.fingerprints.label           "Temmbelle">
+<!ENTITY certmgr.certdetail.title             "Cariiɗe Seedamfaagu">
+<!ENTITY certmgr.certdetail.cn                "Innde (CN)">
+<!ENTITY certmgr.certdetail.o                 "Fedde (O)">
+<!ENTITY certmgr.certdetail.ou                "Goomu Yuɓɓinirgu (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Tonngoode dewindol">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Temmbelol SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Temmbelol SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Taƴto teelte koolnol seedamfaagu CA">
+<!ENTITY certmgr.editcert.edittrust           "Taƴto teelte koolnol:">
+<!ENTITY certmgr.editcert.trustssl            "Seedamfaagu nguu ena waawi heftinde lowe.">
+<!ENTITY certmgr.editcert.trustemail          "Seedamfaagu nguu ena waawi heftinde joom iimeel en.">
+<!ENTITY certmgr.editcert.trustobjsign        "Seedamfaagu nguu ena waawi heftinde topayɓe topirɗe.">
+
+<!ENTITY certmgr.deletecert.title             "Momtu Seedamfaagu">
+
+<!ENTITY certmgr.certname                     "Innde Seedamfaagu">
+<!ENTITY certmgr.certserver                   "Sarworde">
+<!ENTITY certmgr.override_lifetime            "Nguurndam">
+<!ENTITY certmgr.tokenname                    "Kaɓirgol Kisal">
+<!ENTITY certmgr.begins                       "Fuɗɗotoo ko Ñalnde">
+<!ENTITY certmgr.expires                      "Gasata ko ñalnde">
+<!ENTITY certmgr.email                        "Ñiiɓirde Iimeel">
+<!ENTITY certmgr.serial                       "Tonngoode Dewindol">
+
+<!ENTITY certmgr.close.label                  "Uddu">
+<!ENTITY certmgr.close.accesskey              "U">
+<!ENTITY certmgr.view2.label                  "Hollu…">
+<!ENTITY certmgr.view2.accesskey              "H">
+<!ENTITY certmgr.edit3.label                  "Taƴto Koolnol…">
+<!ENTITY certmgr.edit3.accesskey              "T">
+<!ENTITY certmgr.export.label                 "Jiggito…">
+<!ENTITY certmgr.export.accesskey             "i">
+<!ENTITY certmgr.delete2.label                "Momtu…">
+<!ENTITY certmgr.delete2.accesskey            "M">
+<!ENTITY certmgr.delete_builtin.label         "Momtu walla Hoolkiso…">
+<!ENTITY certmgr.delete_builtin.accesskey     "M">
+<!ENTITY certmgr.backup2.label                "Dannditol…">
+<!ENTITY certmgr.backup2.accesskey            "D">
+<!ENTITY certmgr.backupall2.label             "Danndit Fof…">
+<!ENTITY certmgr.backupall2.accesskey         "d">
+<!ENTITY certmgr.restore2.label               "Jiggo…">
+<!ENTITY certmgr.restore2.accesskey           "g">
+<!ENTITY certmgr.details.label                "Galli Seedamfaagu">
+<!ENTITY certmgr.details.accesskey            "G">
+<!ENTITY certmgr.fields.label                 "Kiisol Gallol">
+<!ENTITY certmgr.fields.accesskey             "K">
+<!ENTITY certmgr.hierarchy.label              "Leemto sertifikaaji">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Ɓeydu Faltoore…">
+<!ENTITY certmgr.addException.accesskey       "a">
+
+<!ENTITY exceptionMgr.title                   "Ɓeydu Faltoore Kisal">
+<!ENTITY exceptionMgr.exceptionButton.label   "Teeŋtin Faltoore Kisal">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "T">
+<!ENTITY exceptionMgr.supplementalWarning     "Baŋke dewɗe laawol, bitikaaji e lowe peñcu goɗɗe naamnotaako-ma yo a waɗ ɗum.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Sarworde">
+<!ENTITY exceptionMgr.certlocation.url        "Nokkuure:">
+<!ENTITY exceptionMgr.certlocation.download   "Heɓ Seedamfaagu">
+<!ENTITY exceptionMgr.certlocation.accesskey  "H">
+<!ENTITY exceptionMgr.certstatus.caption      "Ngonka Seedamfaagu">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Hollu…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "H">
+<!ENTITY exceptionMgr.permanent.label         "Mooftu ndee faltoore haa badaa">
+<!ENTITY exceptionMgr.permanent.accesskey     "M">

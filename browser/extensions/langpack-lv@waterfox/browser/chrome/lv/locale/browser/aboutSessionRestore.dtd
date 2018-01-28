@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Atjaunot sesiju">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Ar nožēlu jāatzīst.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ir grūtības atgūt jūsu logus un cilnes. To parasti izraisa nesen atvērta mājas lapa.">
+<!ENTITY restorepage.tryThis        "Jūs varat mēģināt:">
+<!ENTITY restorepage.restoreSome    "Aizvākt vienu vai vairākas cilnes, kuras jūsuprāt varētu radīt problēmu">
+<!ENTITY restorepage.startNew       "Sākt jaunu pārlūkošanas sesiju">
+
+<!ENTITY restorepage.tryagainButton "Atjaunot">
+<!ENTITY restorepage.restore.access "A">
+<!ENTITY restorepage.closeButton    "Aizvērt">
+<!ENTITY restorepage.close.access   "A">
+
+<!ENTITY restorepage.restoreHeader  "Atjaunot">
+<!ENTITY restorepage.listHeader     "Logus un cilnes">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Logs &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Lai notiek!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Veiksme!">
+
+<!ENTITY welcomeback2.pageTitle     "Veiksme!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; ir gatavs darbam.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Atjaunot visus logus un cilnes">
+<!ENTITY welcomeback2.restoreSome.label "Atjaunot tikai atlasītos">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Jūsu papildinājumu un pārlūka pielāgojumi ir novākti. Iestatījumi ir atjaunoti uz noklusētajiem. Ja šis nav atrisinājis problēmu, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "uzziniet ko vēl jūs varat darīt.">
+

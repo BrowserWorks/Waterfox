@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Indstillinger for websteds-data">
+<!ENTITY     hostCol.label                 "Websted">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Anvendt plads">
+<!ENTITY     searchTextboxPlaceHolder             "Søg efter websteder">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Fjern det valgte">
+<!ENTITY     removeSelected.accesskey      "f">
+<!ENTITY     save.label                    "Gem ændringer">
+<!ENTITY     save.accesskey                "e">
+<!ENTITY     cancel.label                  "Fortryd">
+<!ENTITY     cancel.accesskey              "o">
+<!ENTITY     removingDialog.title          "Fjerner websteds-data">
+<!ENTITY     removingSelected.description  "Ved at fjerne websteds-data, fjerner du også relaterede cookies og offline webindhold. Dette kan logge dig ud fra websteder. Er du sikker på, at du vil foretage ændringerne?">
+<!ENTITY     siteTree.label                "Følgende cookies vil blive fjernet:">

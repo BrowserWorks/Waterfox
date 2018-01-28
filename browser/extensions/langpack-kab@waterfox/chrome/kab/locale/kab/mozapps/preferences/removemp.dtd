@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Kkes awal uffir agejdan">
+<!ENTITY removeInfo.label                  "Issefk ad muddeḍ awal ik uffir agejdan akken ad tedduḍ ɣer zdat:">
+<!ENTITY removeWarning1.label              "Awal-ik uffir agejdan iţuseqdac i weḥraz n telɣut tabaḍnit am awalen uffiren iţuseqdacen ɣef isemlen web.">
+<!ENTITY removeWarning2.label              "Ma yella tekkseḍ awal-ik uffir agejdan, talɣut-inek ur tettummestan ara ma yella aselkin-inek ur uerkid ara.">
+<!ENTITY setPassword.oldPassword.label     "Awal uffir aqbuṛ:">
+

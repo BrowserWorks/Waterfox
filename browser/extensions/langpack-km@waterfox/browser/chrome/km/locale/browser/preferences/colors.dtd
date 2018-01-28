@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "ពណ៌">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "48.38em">
+
+<!ENTITY  overrideDefaultPageColors.label        "ផាត់ចោល​ពណ៌​ដែល​បាន​បញ្ជាក់​ដោយ​ទំព័រ​ជាមួយ​ពណ៌​ដែល​អ្នក​ជ្រើសរើស​ខាងលើ៖">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "ជានិច្ចកាល">
+<!ENTITY  overrideDefaultPageColors.auto.label   "បាន​តែ​ជាមួយ​រចនាប័ទ្ម​​ដែល​មាន​កម្រិត​ពណ៌​ខ្លាំង">
+<!ENTITY  overrideDefaultPageColors.never.label  "កុំ​ឲ្យសោះ">
+
+<!ENTITY  color                           "អត្ថបទ និង​ផ្ទៃខាងក្រោយ">
+<!ENTITY  textColor.label                 "អត្ថបទ ៖">
+<!ENTITY  textColor.accesskey             "ទ">
+<!ENTITY  backgroundColor.label           "ផ្ទៃ​ខាង​ក្រោយ ៖">
+<!ENTITY  backgroundColor.accesskey       "ខ">
+<!ENTITY  useSystemColors.label           "​ប្រើពណ៌​របស់​ប្រព័ន្ធ">
+<!ENTITY  useSystemColors.accesskey       "ប">
+
+<!ENTITY  underlineLinks.label            "​គូស​បន្ទាត់​ក្រោម​តំណ">
+<!ENTITY  underlineLinks.accesskey        "ស">
+<!ENTITY  links                           "ពណ៌​តំណ">
+<!ENTITY  linkColor.label                 "​តំណ​ដែល​មិន​បាន​មើល ៖">
+<!ENTITY  linkColor.accesskey             "ន">
+<!ENTITY  visitedLinkColor.label          "​តំណ​ដែល​បាន​មើល ៖">
+<!ENTITY  visitedLinkColor.accesskey      "ណ">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "启动">
+
+<!ENTITY startupPage2.label        "在 &brandShortName; 启动时">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "显示您的主页">
+<!ENTITY startupBlankPage.label    "显示空白页">
+<!ENTITY startupPrevSession.label  "显示您上次的窗口和标签页">
+
+<!ENTITY homepage2.label           "主页">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "使用当前页面">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "使用当前的多个页面">
+<!ENTITY chooseBookmark.label      "使用书签…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "恢复默认设置">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "下载">
+
+<!ENTITY saveTo.label "保存文件至">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "浏览…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "选择…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "总是询问您保存文件的位置">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "始终检查 &brandShortName; 是否是您的默认浏览器">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+<!ENTITY setAsMyDefaultBrowser3.label     "设为默认…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; 目前是您的默认浏览器">
+<!ENTITY isNotDefault.label               "&brandShortName; 目前不是您的默认浏览器">
+
+<!ENTITY separateProfileMode.label        "允许 &brandShortName; 和 Waterfox 同时运行">
+<!ENTITY useWaterfoxSync.label             "提示：这将使用单独的配置文件。使用“同步”在它们之间同步数据。">
+<!ENTITY getStarted.notloggedin.label     "登录到 &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "打开&syncBrand.shortName.label;服务首选项">
+
+<!ENTITY e10sEnabled.label                "启用多进程的 &brandShortName;">

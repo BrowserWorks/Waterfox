@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle "Restaurar sesión">
+<!ENTITY restorepage.errorTitle "Bueno, esto es embarazoso.">
+<!ENTITY restorepage.problemDesc "&brandShortName; ha tenido un problema al recuperar las ventanas y las pestañas. Puede estar causado por una página web abierta recientemente.">
+<!ENTITY restorepage.tryThis "Puede intentar:">
+<!ENTITY restorepage.restoreSome "Eliminar una o más pestañas que crea que puedan estar causando el problema">
+<!ENTITY restorepage.startNew "Comenzar una nueva sesión de navegación">
+<!ENTITY restorepage.tryagainButton "Restaurar">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton "Cerrar">
+<!ENTITY restorepage.close.access "C">
+<!ENTITY restorepage.restoreHeader "Restaurar">
+<!ENTITY restorepage.listHeader "Ventanas y pestañas">
+<!ENTITY restorepage.windowLabel "Ventana &#037;S">
+<!ENTITY welcomeback2.restoreButton "¡Vamos!">
+<!ENTITY welcomeback2.restoreButton.access "V">
+<!ENTITY welcomeback2.tabtitle "¡Éxito!">
+<!ENTITY welcomeback2.pageTitle "¡Éxito!">
+<!ENTITY welcomeback2.pageInfo1 "&brandShortName; está listo para continuar.">
+<!ENTITY welcomeback2.restoreAll.label "Restaurar todas las ventanas y pestañas">
+<!ENTITY welcomeback2.restoreSome.label "Restaurar solo las que desee">
+<!ENTITY welcomeback2.beforelink.pageInfo2 "Sus complementos y personalizaciones han sido eliminados y la configuración de su navegador se ha restaurado a los valores por defecto. Si esto no arregla su problema, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2 "">
+<!ENTITY welcomeback2.link.pageInfo2 "lea más sobre lo que puede hacer.">

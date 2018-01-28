@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Kthehu Mbrapsht">
+<!ENTITY  button-back-mac.accesskey    "M">
+<!ENTITY  button-next-mac.label        "Vazhdo">
+<!ENTITY  button-next-mac.accesskey    "V">
+<!ENTITY  button-finish-mac.label      "U krye">
+<!ENTITY  button-cancel-mac.label      "Anuloje">
+
+<!ENTITY  button-back-unix.label       "Mbrapsht">
+<!ENTITY  button-back-unix.accesskey   "M">
+<!ENTITY  button-next-unix.label       "Pasuesi">
+<!ENTITY  button-next-unix.accesskey   "P">
+<!ENTITY  button-finish-unix.label     "Përfundoje">
+<!ENTITY  button-cancel-unix.label     "Anuloje">
+
+<!ENTITY  button-back-win.label        "&lt; Mbrapsht">
+<!ENTITY  button-back-win.accesskey    "M">
+<!ENTITY  button-next-win.label        "Pasuesi &gt;">
+<!ENTITY  button-next-win.accesskey    "P">
+<!ENTITY  button-finish-win.label      "Përfundoje">
+<!ENTITY  button-cancel-win.label      "Anuloje">

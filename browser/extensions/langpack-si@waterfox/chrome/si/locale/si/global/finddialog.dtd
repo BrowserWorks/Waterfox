@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "මේ පිටුවේ සොයන්න">
+<!ENTITY findField.label "සොයන්නේ කුමක්ද:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "අකුරු ගලපන්න">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "පේළි කඩන්න">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY findButton.label "ඊලග ගැලපුම">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "එපා">
+<!ENTITY closeButton.label "වසන්න">
+<!ENTITY up.label "ඉහලට">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "පහලට">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "දිශාව">

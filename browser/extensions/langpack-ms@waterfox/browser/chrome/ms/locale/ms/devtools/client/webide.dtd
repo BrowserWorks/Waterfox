@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projek">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "App Baru…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Buka Pakej App…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Buka App Hos…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Buka App…">
+<!ENTITY projectMenu_selectApp_accesskey "B">
+<!ENTITY projectMenu_play_label "Pasang dan Buka">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Hentikan App">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "App Nyahpepijat">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Buang Projek">
+<!ENTITY projectMenu_remove_accesskey "B">
+<!ENTITY projectMenu_showPrefs_label "Keutamaan">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Urus Komponen Tambahan">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "Muat semula Tab">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Memutuskan">
+<!ENTITY runtimeMenu_disconnect_accesskey "M">
+<!ENTITY runtimeMenu_takeScreenshot_label "Skrinsyot">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Maklumat Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Keutamaan Peranti">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "Tetapan Peranti">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "Papar">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "Zum Masuk">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "Zum Keluar">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "Set semula Zoom">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "Buka App">
+<!ENTITY runtimeButton_label "Pilih Runtime">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Projek Saya">
+<!ENTITY projectPanel_runtimeApps "Aplikasi Runtime">
+<!ENTITY projectPanel_tabs "Tab">
+<!ENTITY runtimePanel_usb "Peranti USB">
+<!ENTITY runtimePanel_wifi "Peranti Wi-Fi">
+<!ENTITY runtimePanel_simulator "Pensimulasi">
+<!ENTITY runtimePanel_other "Lain-lain">
+<!ENTITY runtimePanel_installsimulator "Pasang Simulasi">
+<!ENTITY runtimePanel_noadbhelper "Pasangkan Pembantu ADB">
+<!ENTITY runtimePanel_nousbdevice "Tidak nampak peranti anda?">
+<!ENTITY runtimePanel_refreshDevices_label "Muat Semula Peranti">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "sah">
+<!ENTITY details_warning_header "amaran">
+<!ENTITY details_error_header "ralat">
+<!ENTITY details_description "Huraian">
+<!ENTITY details_location "Lokasi">
+<!ENTITY details_manifestURL "ID App">
+<!ENTITY details_removeProject_button "Buang Projek">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "App Baru">
+<!ENTITY newAppHeader "Pilih templat">
+<!ENTITY newAppLoadingTemplate "Memuat templat…">
+<!ENTITY newAppProjectName "Nama Projek:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Tutup">
+
+<!-- Addons -->
+<!ENTITY addons_title "Komponen Tambahan">
+<!ENTITY addons_aboutaddons "Buka Pengurus Add-ons">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Keutamaan">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Umum">
+<!ENTITY prefs_restore "Pulih Piawai">
+<!ENTITY prefs_manage_components "Urus Komponen Tambahan">
+<!ENTITY prefs_options_autoconnectruntime "Sambung semula runtime sebelum ini">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Sambung semula runtime sebelum ini apabila WebIDE bermula">
+<!ENTITY prefs_options_rememberlastproject "Ingat projek lepas">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Pulih projek sebelum ini apabila WebIDE bermula">
+<!ENTITY prefs_options_templatesurl "Templat URL">
+<!ENTITY prefs_options_templatesurl_tooltip "Indeks template yang disediakan">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Maklumat Runtime">
+<!ENTITY runtimedetails_adbIsRoot "ADB ialah root: ">
+<!ENTITY runtimedetails_summonADBRoot "root peranti">
+<!ENTITY runtimedetails_ADBRootWarning "(perlukan bootloader yang tidak berkunci)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Keistemewaan DevTools tanpa had: ">
+<!ENTITY runtimedetails_requestPrivileges "meminta keistimewaan yang lebih tinggi">
+<!ENTITY runtimedetails_privilegesWarning "(Akan but semula peranti. Memerlukan akses root.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typestring "Rentetan">
+<!ENTITY device_typeobject "Objek">
+<!ENTITY device_typenone "Pilih jenis yang">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Keutamaan Peranti">
+<!ENTITY devicepreference_search "Cari keutamaan">
+<!ENTITY devicepreference_newname "Nama keutamaan baru">
+<!ENTITY devicepreference_newtext "Keutamaan nilai">
+<!ENTITY devicepreference_addnew "Tambah keutamaan baru">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Tetapan Peranti">
+<!ENTITY devicesetting_search "Tetapan carian">
+<!ENTITY devicesetting_newname "Nama tetapan baru">
+<!ENTITY devicesetting_newtext "Nilai tetapan">
+<!ENTITY devicesetting_addnew "Tambah tetapan baru">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Bantuan">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Pengenalan Klien">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Titik akhir yang sedang anda berhubungan perlukan lebih banyak maklumat untuk mengesahkan sambungan internet ini.  Sila imbas kod QR di bawah ini via prom pada peranti anda yang lain.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Tiada prom pengimbas QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Ada prom pengimbas QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Jika pranti anda meminta token yang sepatutnya mengimbas kod QR, sila salin nilai di bawah pada peranti tersebut:">
+<!ENTITY wifi_auth_qr_size_note "Jika kod QR kelihatan terlalu kecil untuk mendapatkan sambungan, cuba zum atau besarkan tetingkap.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Log Arahan Pra-pakej">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Tetapan Pensimulasi">
+<!ENTITY simulator_remove "Buang Simulator">
+<!ENTITY simulator_reset "Pulih Piawai">
+<!ENTITY simulator_name "Nama">
+<!ENTITY simulator_software "Perisian">
+<!ENTITY simulator_version "Versi">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Perkakasan">
+<!ENTITY simulator_device "Peranti">
+<!ENTITY simulator_screenSize "Skrin">
+<!ENTITY simulator_pixelRatio "Nisbah Piksel">
+<!ENTITY simulator_tv_data "Simulasi TV">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Buka Direktori Config…">

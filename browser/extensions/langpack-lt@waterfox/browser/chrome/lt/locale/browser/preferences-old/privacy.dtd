@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Naudoti apsaugą nuo stebėjimo">
+<!ENTITY  trackingProtectionAlways.label       "Visada">
+<!ENTITY  trackingProtectionAlways.accesskey   "V">
+<!ENTITY  trackingProtectionPrivate.label      "Tik privačiojo naršymo languose">
+<!ENTITY  trackingProtectionPrivate.accesskey  "T">
+<!ENTITY  trackingProtectionNever.label        "Niekada">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Sužinoti daugiau">
+<!ENTITY  trackingProtectionExceptions.label   "Išimtys…">
+<!ENTITY  trackingProtectionExceptions.accesskey "I">
+
+<!ENTITY tracking.label                 "Stebėjimas">
+<!ENTITY trackingProtectionPBM5.label         "Naudoti apsaugą nuo stebėjimo privačiuosiuose languose">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Sužinoti daugiau">
+<!ENTITY changeBlockList.label          "Keisti blokavimo sąrašą">
+<!ENTITY changeBlockList.accesskey      "K">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Jūs taip pat galite ">
+<!ENTITY  doNotTrack.settings.label     "tvarkyti savo „Do Not Track“ nuostatas">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Žurnalas">
+
+<!ENTITY  locationBar.label             "Adreso laukas">
+
+<!ENTITY  locbar.suggest.label          "Rašant adreso lauke, siūlyti tinklalapius iš:">
+<!ENTITY  locbar.history.label          "Žurnalas">
+<!ENTITY  locbar.history.accesskey      "Ž">
+<!ENTITY  locbar.bookmarks.label        "Adresynas">
+<!ENTITY  locbar.bookmarks.accesskey    "y">
+<!ENTITY  locbar.openpage.label         "Atverti korteles">
+<!ENTITY  locbar.openpage.accesskey     "v">
+<!ENTITY  locbar.searches.label         "Susiję paieškos iš numatytosios ieškyklės">
+<!ENTITY  locbar.searches.accesskey     "j">
+
+<!ENTITY  suggestionSettings.label      "Keisti ieškyklių siūlymų nuostatas…">
+<!ENTITY  suggestionSettings.accesskey  "e">
+
+<!ENTITY  acceptCookies2.label          "Priimti slapukus iš svetainių">
+<!ENTITY  acceptCookies2.accesskey      "P">
+
+<!ENTITY  acceptThirdParty.pre.label      "Leisti trečiųjų šalių slapukus:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "visada">
+<!ENTITY  acceptThirdParty.never.label    "niekada">
+<!ENTITY  acceptThirdParty.visited.label  "tik lankytoms svetainėms">
+
+<!ENTITY  keepUntil.label               "Laikyti iki:">
+<!ENTITY  keepUntil.accesskey           "k">
+
+<!ENTITY  expire.label                  "jų galiojimo laiko pabaigos">
+<!ENTITY  close.label                   "„&brandShortName;“ seanso pabaigos">
+
+<!ENTITY  cookieExceptions.label        "Išimtys…">
+<!ENTITY  cookieExceptions.accesskey    "I">
+
+<!ENTITY  showCookies.label             "Rodyti slapukus…">
+<!ENTITY  showCookies.accesskey         "R">
+
+<!ENTITY  historyHeader.pre.label          "„&brandShortName;“ privalo:">
+<!ENTITY  historyHeader.pre.accesskey      "p">
+<!ENTITY  historyHeader.remember.label     "vesti žurnalą">
+<!ENTITY  historyHeader.dontremember.label "niekada nevesti žurnalo">
+<!ENTITY  historyHeader.custom.label       "laikytis tinkintų žurnalo vedimo nuostatų">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "„&brandShortName;“ įsimins jūsų naršytus tinklalapius, parsiųstus failus, įvestas formų ir paieškos laukų reikšmes bei laikys lankomų svetainių slapukus.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Taip pat galbūt norite ">
+<!ENTITY  rememberActions.clearHistory.label  "išvalyti žurnalą">
+<!ENTITY  rememberActions.middle.label        " arba ">
+<!ENTITY  rememberActions.removeCookies.label "pašalinti kai kuriuos slapukus">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "„&brandShortName;“ visą laiką laikysis privačiojo naršymo seanso nuostatų ir nepildys naršymo žurnalo.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Taip pat galbūt norite ">
+<!ENTITY  dontrememberActions.clearHistory.label "visiškai išvalyti žurnalą">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Visada naršyti privačiojo naršymo veiksenoje">
+<!ENTITY  privateBrowsingPermanent2.accesskey "V">
+
+<!ENTITY  rememberHistory2.label      "Įsiminti lankytus tinklalapius ir parsiųstus failus">
+<!ENTITY  rememberHistory2.accesskey  "m">
+
+<!ENTITY  rememberSearchForm.label       "Įsiminti įvestas formų ir paieškos laukų reiškmes">
+<!ENTITY  rememberSearchForm.accesskey   "o">
+
+<!ENTITY  clearOnClose.label             "Išvalyti žurnalą baigiant „&brandShortName;“ darbą">
+<!ENTITY  clearOnClose.accesskey         "b">
+
+<!ENTITY  clearOnCloseSettings.label     "Nuostatos…">
+<!ENTITY  clearOnCloseSettings.accesskey "u">
+
+<!ENTITY  browserContainersHeader.label         "Sudėtinio rodinio kortelės">
+<!ENTITY  browserContainersLearnMore.label      "Sužinoti daugiau">
+<!ENTITY  browserContainersEnabled.label        "Įjungti sudėtinio rodinio korteles">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Nuostatos…">
+<!ENTITY  browserContainersSettings.accesskey    "u">

@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Pilih Profil Pengguna">
+
+<!ENTITY            profilename.label      "Nama Profil:">
+
+<!ENTITY            start.label            "Mulakan &brandShortName;">
+<!ENTITY            exit.label             "Keluar">
+
+<!ENTITY            availprofiles.label    "Profil Yang Ada">
+
+<!ENTITY            newButton.label        "Mencipta Profil…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Menamakan Profil…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "Buang Profil…">
+<!ENTITY            deleteButton.accesskey "B">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; menyimpan maklumat perihal tetapan anda, keutamaan, dan item pengguna lain dalam profil pengguna anda.">
+
+<!ENTITY            offlineState.label    "Bekerja Luar Talian">
+<!ENTITY            offlineState.accesskey "B">
+
+<!ENTITY            useSelected.label       "Mengunakan profil yang dipilih tanpa meminta pada permulaan">
+<!ENTITY            useSelected.accesskey   "u">

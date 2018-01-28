@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Roghainnean a chum glanadh na h-eachdraidh">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "45em">
+<!ENTITY sanitizePrefs2.column.width   "30em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "50em">
+<!ENTITY sanitizePrefs2.inContent.column.width "32em">
+
+<!ENTITY sanitizeDialog2.title         "Glan an eachdraidh faisg ort">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "45em">
+
+<!ENTITY clearDataSettings2.label     "Nuair a dh'fhàgas mi &brandShortName;, glanaidh e seo leis fhèin:">
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "Raon ama ri ghlanadh: ">
+<!ENTITY clearTimeDuration.accesskey      "R">
+<!ENTITY clearTimeDuration.lastHour       "An uair a thìde seo chaidh">
+<!ENTITY clearTimeDuration.last2Hours     "An 2 uair a thìde seo chaidh">
+<!ENTITY clearTimeDuration.last4Hours     "Na 4 uairean a thìde seo chaidh">
+<!ENTITY clearTimeDuration.today          "An-diugh">
+<!ENTITY clearTimeDuration.everything     "A h-uile rud">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "Mion-fhiosrachadh">
+<!ENTITY detailsProgressiveDisclosure.accesskey "M">
+
+<!ENTITY historySection.label         "Eachdraidh">
+<!ENTITY dataSection.label            "Dàta">
+
+<!ENTITY itemHistoryAndDownloads.label     "An eachdraidh brabhsaidh ⁊ na chaidh a luchdadh a-nuas">
+<!ENTITY itemHistoryAndDownloads.accesskey "b">
+<!ENTITY itemFormSearchHistory.label       "Eachdraidh nam foirmean ⁊ nan lorg">
+<!ENTITY itemFormSearchHistory.accesskey   "f">
+<!ENTITY itemCookies.label                 "Na briosgaidean">
+<!ENTITY itemCookies.accesskey             "b">
+<!ENTITY itemCache.label                   "An tasgadan">
+<!ENTITY itemCache.accesskey               "a">
+<!ENTITY itemOfflineApps.label             "Dàta làraichean far loidhne">
+<!ENTITY itemOfflineApps.accesskey         "o">
+<!ENTITY itemActiveLogins.label            "Logadh a-steach beò sam bith">
+<!ENTITY itemActiveLogins.accesskey        "L">
+<!ENTITY itemSitePreferences.label         "Roghainnean na làraich">
+<!ENTITY itemSitePreferences.accesskey     "R">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "Chan urrainn dhut an gnìomh seo a neo-dhèanamh.">

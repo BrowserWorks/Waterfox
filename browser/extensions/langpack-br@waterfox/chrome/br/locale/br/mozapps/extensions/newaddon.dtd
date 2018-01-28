@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Staliañ an askouezh">
+<!ENTITY intro           "Fellout a ra d'ur goulev all war hoc'h urzhiataer kemmañ &brandShortName; gant an askouezh da heul :">
+<!ENTITY warning         "Stailhit askouezhioù savet gant aozerion hoc'h eus fiziañs enno.">
+<!ENTITY allow           "Aotren ar staliañ-mañ">
+<!ENTITY later           "Distreiñ diwar ho meno a c'hallit ne vern pegoulz dre arverañ ardoer an askouezhioù.">
+<!ENTITY continue        "Kenderc'hel">
+<!ENTITY restartMessage  "Ret eo deoc'h adloc'hañ &brandShortName; a-benn peurechuiñ staliañ an askouezh-mañ.">
+<!ENTITY restartButton   "Adloc'hañ &brandShortName;">
+<!ENTITY cancelButton    "Dilezel">

@@ -1,0 +1,89 @@
+<!-- # This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.-->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopier">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Marker alt">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Generelt">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "Adresse:">
+<!ENTITY  generalType           "Type:">
+<!ENTITY  generalMode           "Visningstilstand:">
+<!ENTITY  generalSize           "Størrelse:">
+<!ENTITY  generalReferrer       "Henvisende URL:">
+<!ENTITY  generalSource         "Kildekode:">
+<!ENTITY  generalModified       "Ændret:">
+<!ENTITY  generalEncoding2     "Tegnkodning:">
+<!ENTITY  generalMetaName       "Navn">
+<!ENTITY  generalMetaContent    "Indhold">
+
+<!ENTITY  mediaTab              "Medieindhold">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adresse:">
+<!ENTITY  mediaText             "Associeret tekst:">
+<!ENTITY  mediaAltHeader        "Alternativ tekst">
+<!ENTITY  mediaAddress          "Adresse">
+<!ENTITY  mediaType             "Type">
+<!ENTITY  mediaSize             "Størrelse">
+<!ENTITY  mediaCount            "Antal">
+<!ENTITY  mediaDimension        "Dimensioner:">
+<!ENTITY  mediaLongdesc         "Udvidet beskrivelse:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Gem som…">
+<!ENTITY  mediaSaveAs.accesskey  "e">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Forhåndsvisning:">
+
+<!ENTITY  feedTab               "Feeds">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Abonner">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Tilladelser">
+<!ENTITY  permTab.accesskey     "T">
+<!ENTITY  permUseDefault        "Brug standard">
+<!ENTITY  permAskAlways         "Spørg altid">
+<!ENTITY  permAllow             "Tillad">
+<!ENTITY  permAllowSession      "Tillad for sessionen">
+<!ENTITY  permBlock             "Bloker">
+<!ENTITY  permissionsFor        "Tilladelser for:">
+<!ENTITY  permPlugins           "Aktivere plugins">
+
+<!ENTITY  permClearStorage           "Ryd lager">
+<!ENTITY  permClearStorage.accesskey "R">
+
+<!ENTITY  securityTab           "Sikkerhed">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Vis certifikat">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Ukendt">
+
+
+<!ENTITY  securityView.identity.header   "Identitet for websted">
+<!ENTITY  securityView.identity.owner    "Ejer: ">
+<!ENTITY  securityView.identity.domain   "Websted: ">
+<!ENTITY  securityView.identity.verifier "Bekræftet af: ">
+<!ENTITY  securityView.identity.validity "Udløber:">
+
+<!ENTITY  securityView.privacy.header                   "Privatliv &amp; Historik">
+<!ENTITY  securityView.privacy.history                  "Har jeg besøgt dette websted før?">
+<!ENTITY  securityView.privacy.cookies                  "Gemmer dette websted informationer (cookies) på min computer?">
+<!ENTITY  securityView.privacy.viewCookies              "Vis cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "c">
+<!ENTITY  securityView.privacy.passwords                "Har jeg gemt nogle adgangskoder til dette websted?">
+<!ENTITY  securityView.privacy.viewPasswords            "Vis gemte adgangskoder">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "a">
+
+<!ENTITY  securityView.technical.header                 "Tekniske detaljer">
+
+<!ENTITY  helpButton.label                              "Hjælp">

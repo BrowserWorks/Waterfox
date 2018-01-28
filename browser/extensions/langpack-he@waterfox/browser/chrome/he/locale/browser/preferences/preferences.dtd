@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "אפשרויות">
+<!ENTITY  prefWindow.title        "העדפות">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "העדפות של &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "תוצאות חיפוש">
+<!ENTITY  paneGeneral.title             "כללי">
+<!ENTITY  paneSearch.title              "חיפוש">
+<!ENTITY  paneFilesApplications.title   "קבצים ויישומים">
+<!ENTITY  panePrivacySecurity.title     "פרטיות ואבטחה">
+<!ENTITY  paneContainers.title          "מגירת לשוניות">
+<!ENTITY  paneUpdates.title             "עדכונים">
+
+<!ENTITY  languageAndAppearance.label   "שפה ותצוגה">
+<!ENTITY  filesAndApplications.label    "קבצים ויישומים">
+<!ENTITY  browserPrivacy.label          "פרטיות דפדפן">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "חשבון Waterfox">
+
+<!ENTITY  helpButton2.label        "תמיכה ב־&brandShortName;">

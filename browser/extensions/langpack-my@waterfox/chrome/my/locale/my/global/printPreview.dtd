@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "ပုံနှိပ်ရန် …">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "စာမျက်နှာ ပြင်ဆင်ခြင်း…">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "စာမျက်နှာ -">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "ရဲ့">
+<!ENTITY scale.label          "အရွယ်အစား/အချိုး -">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "ဒေါင်လိုက်">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "အလှဲလိုက်">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "ပိတ်ရန်">
+<!ENTITY close.accesskey      "C">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "စိတ်ကြိုက် ဖန်တီးပါ...">
+<!ENTITY ShrinkToFit.label    "အံကိုက်ဖို့ စိတ်ကြိုက်ဖန်တီးပါ">
+<!ENTITY customPrompt.title   "အချိုးကျ စိတ်ကြိုက်ဖန်တီးပါ...">
+<!ENTITY simplifyPage.label   "စာမျက်နှာကို ရိုးရှင်းအောင်ပြုလုပ်ပါ">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "ပိုမိုလွယ်ကူစွာ ဖတ်ရှုနိုင်ရန် အထားအသိုပြောင်းလဲပါ">
+<!ENTITY simplifyPage.disabled.tooltip "ဒီစာမျက်နှာကို ရိုးရှင်းစေရန် အလိုအလျောက် မပြုလုပ်နိုင်ခဲ့ပါ">
+
+<!ENTITY homearrow.tooltip    "ပထမ စာမျက်နှာ">
+<!ENTITY endarrow.tooltip     "နောက်ဆုံး စာမျက်နှာ">
+<!ENTITY nextarrow.tooltip    "နောက် စာမျက်နှာ">
+<!ENTITY previousarrow.tooltip "အရင် စာမျက်နှာ">

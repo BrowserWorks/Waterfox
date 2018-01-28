@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "ਭਾਸ਼ਾ">
+<!ENTITY languages.customize.description                "ਵੈੱਬ ਸਫ਼ੇ ਕਈ ਵਾਰ ਇੱਕ ਤੋਂ ਵੱਧ ਭਾਸ਼ਾ ਦਿੰਦੇ ਹਨ। ਇਹਨਾਂ ਵੈੱਬ ਸਫ਼ਿਆਂ ਉੱਤੇ ਵਿਖਾਉਣ ਲਈ ਭਾਸ਼ਾ ਕ੍ਰਮ ਵਿੱਚ ਚੁਣੋ:">
+<!ENTITY languages.customize.moveUp.label               "ਉੱਤੇ">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "ਹੇਠਾਂ">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "ਹਟਾਓ">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.selectLanguage.label       "ਜੋੜਨ ਲਈ ਭਾਸ਼ਾ">
+<!ENTITY languages.customize.addButton.label            "ਜੋੜੋ">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

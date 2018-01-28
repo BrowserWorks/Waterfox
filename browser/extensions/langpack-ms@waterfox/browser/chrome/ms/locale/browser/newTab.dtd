@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Tab Baru">
+<!ENTITY newtab.customize.classic "Papar laman teratas anda">
+<!ENTITY newtab.customize.cog.enhanced "Sertakan laman yang dicadangkan">
+<!ENTITY newtab.customize.cog.title2 "KAWALAN TAB BARU">
+<!ENTITY newtab.customize.cog.learn "Ketahu lebih lanjut mengenai Tab Baru">
+<!ENTITY newtab.customize.title "Sesuaikan halaman Tab Baru anda">
+<!ENTITY newtab.customize.blank2 "Papar halaman kosong">
+<!ENTITY newtab.undo.removedLabel "Imej kecil dibuang.">
+<!ENTITY newtab.undo.undoButton "Batal.">
+<!ENTITY newtab.undo.restoreButton "Pulih Semua.">
+<!ENTITY newtab.undo.closeTooltip "Sorok">

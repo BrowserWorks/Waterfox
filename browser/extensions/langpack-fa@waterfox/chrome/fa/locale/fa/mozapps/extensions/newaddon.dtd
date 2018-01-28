@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "نصب افزودنی">
+<!ENTITY intro           "یک برنامهٔ دیگر در رایانهٔ شما مایل است با افزودنی زیر در &brandShortName; تغییراتی ایجاد کند:">
+<!ENTITY warning         "فقط افزونه‌هایی را نصب کن که به سازندهٔ آن اعتماد دارید.">
+<!ENTITY allow           "اجازه نصب">
+<!ENTITY later           "شما همیشه می توانید تصمیم خود را با رفتن به مدیریت افزودنی‌ها تغییر دهید.">
+<!ENTITY continue        "ادامه">
+<!ENTITY restartMessage  "برای پایان نصب این افزونه، باید &brandShortName; را دوباره راه‌اندازی کنید.">
+<!ENTITY restartButton   "راه‌اندازی مجدد &brandShortName;">
+<!ENTITY cancelButton    "انصراف">

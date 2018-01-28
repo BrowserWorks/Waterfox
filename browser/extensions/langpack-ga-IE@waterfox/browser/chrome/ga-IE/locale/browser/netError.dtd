@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Fadhb i rith lódáil an leathanaigh">
+<!ENTITY retry.label "Déan Iarracht Arís">
+<!ENTITY returnToPreviousPage.label "Siar">
+<!ENTITY advanced.label "Ardroghanna">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Ní féidir ceangal">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Tá an seoladh seo srianta">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Freastalaí gan aimsiú">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Scrúdaigh an seoladh le haghaidh botún cosúil le <strong>ww</strong>.example.com in áit <strong>www</strong>.example.com</li> <li>Mura bhfuil tú in ann leathanach ar bith a lódáil, déan seiceáil ar cheangal líonra do ríomhaire.</li> <li>Má tá do ríomhaire nó do líonra á chosaint ag balla dóiteáin nó seachfhreastalaí, cinntigh go bhfuil cead ag &brandShortName; an Gréasán a rochtain.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Comhad gan aimsiú">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Scrúdaigh an t-ainm comhaid le haghaidh botúin chlóscríofa sna litreacha móra srl.</li> <li>Féach an bhfuil an comhad bogtha, athainmnithe nó scriosta.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Diúltaíodh rochtain ar an gcomhad">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Seans nach bhfuil an comhad ann a thuilleadh, nó b'fhéidir nach bhfuil cead agat é a rochtain.</li> </ul>">
+
+<!ENTITY generic.title "Úps.">
+<!ENTITY generic.longDesc "<p>Ní féidir le &brandShortName; an leathanach seo a lódáil ar fáth éigin.</p>">
+
+<!ENTITY captivePortal.title "Logáil isteach sa líonra">
+<!ENTITY captivePortal.longDesc2 "<p>Caithfidh tú logáil isteach sa líonra sular féidir leat teacht ar an Idirlíon.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Logáil Isteach i Líonra">
+
+<!ENTITY malformedURI.title "Níl an seoladh bailí">
+<!ENTITY malformedURI.longDesc "<ul> <li>De ghnáth scríobhtar seoltaí Gréasáin mar seo <strong>http://www.example.com/</strong></li> <li>Bí cinnte gur tulslaiseanna atá agat (.i. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Idirbhriseadh an ceangal">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Cáipéis As Feidhm">
+<!ENTITY notCached.longDesc "<p>Níl an cháipéis iarrtha ar fáil i dtaisce &brandShortName;.</p><ul><li>Mar gheall ar chúrsaí slándála, ní dhéanfaidh &brandShortName; iarracht eile aon cháipéis íogair a fháil go huathoibríoch.</li><li>Cliceáil 'Déan Iarracht Eile' chun an cháipéis a iarraidh ón suíomh arís.</li></ul>">
+
+<!ENTITY netOffline.title "Mód as líne">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Brúigh &quot;Déan Iarracht Arís&quot; chun dul ar líne agus an leathanach a lódáil arís.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Earráid Ionchódaithe Inneachair">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Téigh i dteagmháil le húinéirí an tsuímh ghréasáin leis an bhfadhb a chur in iúl dóibh, le do thoil.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Cineál Comhaid Baolach">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Téigh i dteagmháil le húinéirí an tsuímh ghréasáin leis an bhfadhb a chur in iúl dóibh, le do thoil.</li> </ul>">
+
+<!ENTITY netReset.title "Athshocraíodh an ceangal">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Ceangal imithe thar am">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Níor tuigeadh an seoladh">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>B'fhéidir go mbeidh ort bogearraí eile a shuiteáil leis an seoladh seo a oscailt.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Tá an seachfhreastalaí ag diúltú le ceangail">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Cinntigh go bhfuil na socruithe seachfhreastalaí ceart.</li> <li>Téigh i dteagmháil le do riarthóir líonra le bheith cinnte go bhfuil an seachfhreastalaí ag obair.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Ní féidir an seachfhreastalaí a aimsiú">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Cinntigh go bhfuil na socruithe seachfhreastalaí ceart.</li> <li>Cinntigh go bhfuil ceangal líonra do ríomhaire ag obair.</li> <li>Má tá do ríomhaire nó do líonra á chosaint ag balla dóiteáin nó seachfhreastalaí, cinntigh go bhfuil cead ag &brandShortName; an Gréasán a rochtain.</li></ul>">
+
+<!ENTITY redirectLoop.title "Níl an leathanach ag atreorú i gceart">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Uaireanta tarlaíonn an fhadhb seo de bharr fianáin a bheith díchumasaithe nó bheith ag diúltú leo.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Freagra nach rabhthas ag súil leis ón bhfreastalaí">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Cinntigh go bhfuil an Bainisteoir Pearsanta Slándála suiteáilte ar do ríomhaire.</li> <li>D'fhéadfadh seo tarlú de dheasca cumraíocht neamhchaighdeánach an fhreastalaí.</li></ul>">
+
+<!ENTITY nssFailure2.title "Níorbh Fhéidir Ceangal Slán a Bhunú">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Ní féidir an leathanach atá tú ag iarraidh amharc air a thaispeáint toisc nach féidir fírinne na sonraí a fuarthas a fhíordheimhniú.</li> <li>Téigh i dteagmháil le húinéirí an tsuímh Ghréasáin leis an fhadhb seo a chur in iúl dóibh le do thoil.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Níl do cheangal slán">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Níor chumraigh úinéir <span class='hostname'/> an suíomh mar is ceart.  Níor cheangail &brandShortName; leis an suíomh seo chun do chuid faisnéise a chosaint.">
+
+<!ENTITY sharedLongDesc "<ul> <li>D'fhéadfadh an suíomh bheith gan fáil nó ró-ghnóthach go sealadach. Bain triail eile as ar ball beag.</li> <li>Mura bhfuil tú in ann leathanach ar bith a lódáil, déan seiceáil ar cheangal líonra do ríomhaire.</li> <li>Má tá do ríomhaire nó do líonra á chosaint ag balla dóiteáin nó seachfhreastalaí, cinntigh go bhfuil cead ag &brandShortName; an Gréasán a rochtain.</li></ul>">
+
+<!ENTITY cspBlocked.title "Bactha ag an Polasaí Slándala Inneachair">
+<!ENTITY cspBlocked.longDesc "<p>Chuir &brandShortName; stad ar lódáil an leathanaigh seo toisc go bhfuil polasaí slándála inneachair ag an leathanach a dhícheadaíonn é.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Earráid: Ábhar Truaillithe">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>An leathanach atá tú ag iarraidh a amharc, ní féidir é a thaispeáint toisc gur tharla earráid agus na sonraí á seoladh.</p><ul><li>Téigh i dteagmháil le húinéir an tsuímh agus inis dóibh faoin fhadhb seo.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Cruthaigh Eisceacht…">
+
+<!ENTITY errorReporting.automatic2 "Tuairiscigh earráidí cosúil leis seo chun cuidiú le Mozilla suíomhanna mailíseacha a aithint agus a chosc">
+<!ENTITY errorReporting.learnMore "Tuilleadh eolais…">
+
+<!ENTITY remoteXUL.title "XUL Cianda">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Téigh i dteagmháil le húinéir an tsuímh agus inis dóibh faoin fhadhb seo.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Ní féidir ceangal slán a bhunú">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Ardeolas: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> Níorbh fhéidir le &brandShortName; ceangal a bhunú le <span id='wrongSystemTime_URL'/> toisc go bhfuil clog do ríomhaire ag taispeáint an t-am mícheart, agus ní féidir ceangal slán a bhunú dá bhrí sin.</p> <p>Is é <span id='wrongSystemTime_systemDate'/> an t-am ar do ríomhaire, ach is é <span id='wrongSystemTime_actualDate'/> an t-am ceart. Chun an fhadhb seo a réiteach, ceartaigh an dáta agus an t-am ar do ríomhaire.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>Níorbh fhéidir le &brandShortName; ceangal a bhunú le <span id='wrongSystemTimeWithoutReference_URL'/> toisc go bhfuil clog do ríomhaire ag taispeáint an t-am mícheart, agus ní féidir ceangal slán a bhunú dá bhrí sin.</p> <p>Is é <span id='wrongSystemTimeWithoutReference_systemDate'/> an t-am ar do ríomhaire. Chun an fhadhb seo a réiteach, ceartaigh an dáta agus an t-am ar do ríomhaire.</p>">
+
+<!ENTITY certerror.pagetitle1  "Ceangal Neamhshlán">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Úsáideann an suíomh seo HTTP Strict Transport Security (HSTS) le cinntiú go gceanglaíonn &brandShortName; leis trí cheangal slán. Dá bharr seo, ní féidir eisceacht a chruthú don teastas seo.">
+<!ENTITY certerror.copyToClipboard.label "Cóipeáil an téacs go dtí an ghearrthaisce">
+
+<!ENTITY inadequateSecurityError.title "Níl do cheangal slán">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>Úsáideann <span class='hostname'></span> teicneolaíocht slándála atá as dáta agus leochaileach ar ionsaithe. D'fhéadfadh ionsaitheoir eolas a nochtadh áit ar shíl tú go raibh sé slán. Beidh ar riarthóir an tsuímh gréasáin an freastalaí a dheisiú sula mbeidh tú ábalta cuairt a thabhairt ar an suíomh. </p><p> Cód Earráide: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "De réir cosúlachta, is éard atá cúis leis seo ná do chuid socruithe slándála líonra. An bhfuil fonn ort filleadh ar na réamhshocruithe?">
+<!ENTITY prefReset.label "Athchóirigh na réamhshocruithe">

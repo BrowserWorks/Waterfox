@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title "Ustawienia czyszczenia historii">
+<!ENTITY sanitizePrefs2.modal.width "44em">
+<!ENTITY sanitizePrefs2.column.width "24em">
+<!ENTITY sanitizePrefs2.inContent.dialog.width "45em">
+<!ENTITY sanitizePrefs2.inContent.column.width "34em">
+<!ENTITY sanitizeDialog2.title        "Wyczyść historię przeglądania">
+<!ENTITY sanitizeDialog2.width "30em">
+
+<!ENTITY clearDataSettings2.label     "Podczas zamykania programu &brandShortName; powinny zostać usunięte następujące elementy:">
+
+<!ENTITY clearTimeDuration.label          "Okres do wyczyszczenia: ">
+<!ENTITY clearTimeDuration.accesskey      "O">
+<!ENTITY clearTimeDuration.lastHour       "ostatnia godzina">
+<!ENTITY clearTimeDuration.last2Hours     "ostatnie dwie godziny">
+<!ENTITY clearTimeDuration.last4Hours     "ostatnie cztery godziny">
+<!ENTITY clearTimeDuration.today          "dzisiaj">
+<!ENTITY clearTimeDuration.everything     "wszystko">
+<!ENTITY clearTimeDuration.suffix         "">
+<!ENTITY detailsProgressiveDisclosure.label     "Szczegóły">
+<!ENTITY detailsProgressiveDisclosure.accesskey "S">
+
+<!ENTITY historySection.label         "Historia">
+<!ENTITY dataSection.label            "Dane">
+
+<!ENTITY itemHistoryAndDownloads.label     "Historia przeglądanych stron i pobranych plików">
+<!ENTITY itemHistoryAndDownloads.accesskey "H">
+<!ENTITY itemFormSearchHistory.label       "Dane formularzy i historia wyszukiwania">
+<!ENTITY itemFormSearchHistory.accesskey   "f">
+<!ENTITY itemCookies.label                 "Ciasteczka">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "Pamięć podręczna">
+<!ENTITY itemCache.accesskey               "m">
+<!ENTITY itemOfflineApps.label             "Dane witryn trybu offline">
+<!ENTITY itemOfflineApps.accesskey         "D">
+<!ENTITY itemActiveLogins.label            "Aktywne zalogowania">
+<!ENTITY itemActiveLogins.accesskey        "A">
+<!ENTITY itemSitePreferences.label         "Ustawienia witryn">
+<!ENTITY itemSitePreferences.accesskey     "U">
+
+<!ENTITY sanitizeEverythingUndoWarning "Tej czynności nie można cofnąć.">

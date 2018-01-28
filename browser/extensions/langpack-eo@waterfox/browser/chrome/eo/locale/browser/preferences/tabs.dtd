@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Stir+Tabo rondiras inter langetoj ordigitaj laŭ ĵuseco">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Malfermi novajn fenestrojn en novaj langetoj anstataŭe">
+<!ENTITY newWindowsAsTabs.accesskey   "f">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Averti min antaŭ ol fermi plurajn langetojn">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "p">
+
+<!ENTITY warnOnOpenManyTabs.label       "Averti min kiam malfermo de pluraj langetoj povas malrapigi &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "l">
+
+<!ENTITY switchLinksToNewTabs.label        "Kiam mi malfermas ligilon en nova langeto, tuj iri al ĝi">
+<!ENTITY switchLinksToNewTabs.accesskey    "t">
+
+<!ENTITY showTabsInTaskbar.label          "Montri antaŭvidon de miaj langetoj en la taskstrio de Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Langetoj">

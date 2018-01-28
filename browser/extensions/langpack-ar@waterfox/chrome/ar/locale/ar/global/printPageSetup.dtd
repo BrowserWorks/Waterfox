@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "إعداد الصّفحة">
+
+<!ENTITY basic.tab           "التنسيق و الخصائص">
+
+<!ENTITY formatGroup.label   "التنسيق">
+
+<!ENTITY orientation.label   "الاتّجاه:">
+<!ENTITY portrait.label      "طولي">
+<!ENTITY portrait.accesskey  "ط">
+<!ENTITY landscape.label     "عرضي">
+<!ENTITY landscape.accesskey "ع">
+
+<!ENTITY scale.label         "المقياس:">
+<!ENTITY scale.accesskey     "م">
+<!ENTITY scalePercent        "٪">
+
+<!ENTITY shrinkToFit.label   "قلص ليناسب عرض الصّفحة">
+<!ENTITY shrinkToFit.accesskey "ص">
+
+<!ENTITY optionsGroup.label  "الخيارات">
+
+<!ENTITY printBG.label       "اطبع الخلفيّة (الألوان و الصّور)">
+<!ENTITY printBG.accesskey   "خ">
+
+<!ENTITY advanced.tab        "الهوامش و التّرويسة/التّذييل">
+
+<!ENTITY marginGroup.label   "الهوامش (#1)">
+<!ENTITY marginUnits.inches  "بوصة">
+<!ENTITY marginUnits.metric  "ملي متر">
+<!ENTITY marginTop.label     "أعلى:">
+<!ENTITY marginTop.accesskey "ى">
+<!ENTITY marginBottom.label  "أسفل:">
+<!ENTITY marginBottom.accesskey "ف">
+<!ENTITY marginLeft.label    "يسار:">
+<!ENTITY marginLeft.accesskey "س">
+<!ENTITY marginRight.label   "يمين:">
+<!ENTITY marginRight.accesskey "ي">
+
+<!ENTITY headerFooter.label  "التّرويسات و التّذييلات">
+
+<!ENTITY hfLeft.label        "يسار:">
+<!ENTITY hfCenter.label      "وسط:">
+<!ENTITY hfRight.label       "يمين:">
+<!ENTITY headerLeft.tip      "ترويسة اليسار">
+<!ENTITY headerCenter.tip    "ترويسة الوسط">
+<!ENTITY headerRight.tip     "ترويسة اليمين">
+<!ENTITY footerLeft.tip      "تذييل اليسار">
+<!ENTITY footerCenter.tip    "تذييل الوسط">
+<!ENTITY footerRight.tip     "تذييل اليمين">
+
+<!ENTITY hfTitle             "العنوان">
+<!ENTITY hfURL               "المسار">
+<!ENTITY hfDateAndTime       "التاريخ/الوقت">
+<!ENTITY hfPage              "صفحة #">
+<!ENTITY hfPageAndTotal      "صفحة # من #">
+<!ENTITY hfBlank             "--فارغ--">
+<!ENTITY hfCustom            "مخصص…">
+
+<!ENTITY customPrompt.title  "مخصص…">
+<!ENTITY customPrompt.prompt "أدخل نصّ التّرويسة/التّذييل المخصّص">

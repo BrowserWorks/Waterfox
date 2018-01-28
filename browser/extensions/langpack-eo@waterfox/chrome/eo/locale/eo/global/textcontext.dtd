@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Eltondi">
+<!ENTITY cutCmd.accesskey "t">
+<!ENTITY copyCmd.label "Kopii">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Alglui">
+<!ENTITY pasteCmd.accesskey "A">
+<!ENTITY undoCmd.label "Malfari">
+<!ENTITY undoCmd.accesskey "M">
+<!ENTITY selectAllCmd.label "Elekti ĉion">
+<!ENTITY selectAllCmd.accesskey "E">
+<!ENTITY deleteCmd.label "Forviŝi">
+<!ENTITY deleteCmd.accesskey "F">
+
+<!ENTITY spellAddToDictionary.label "Aldoni al vortaro">
+<!ENTITY spellAddToDictionary.accesskey "d">
+<!ENTITY spellUndoAddToDictionary.label "Malfari aldonadon al vortaro">
+<!ENTITY spellUndoAddToDictionary.accesskey "d">
+<!ENTITY spellCheckToggle.label "Kontroli literumadon">
+<!ENTITY spellCheckToggle.accesskey "o">
+<!ENTITY spellNoSuggestions.label "(Neniu sugesto pri literumado)">
+<!ENTITY spellDictionaries.label "Lingvoj">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "Viŝi">
+
+<!ENTITY fillLoginMenu.label          "Plenigi akreditilon">
+<!ENTITY fillLoginMenu.accesskey      "P">
+<!ENTITY fillPasswordMenu.label       "Plenigi pasvorton">
+<!ENTITY fillPasswordMenu.accesskey   "P">
+<!ENTITY fillUsernameMenu.label       "Plenigi uzantonomon">
+<!ENTITY fillUsernameMenu.accesskey   "P">
+<!ENTITY noLoginSuggestions.label     "(Neniu sugesto de akreditilo)">
+<!ENTITY viewSavedLogins.label        "Vidi konservitajn akreditilojn">

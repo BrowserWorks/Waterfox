@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "Softwarearen instalazioa">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Instala itzazu soilik konfiantzazko garatzaileen gehigarriak.">
+<!ENTITY warningSecondary.label  "Software maltzurrak zure ordenagailua hondatu edo zure pribatutasuna bortxa dezake.">
+
+<!ENTITY from.label "nondik:">
+

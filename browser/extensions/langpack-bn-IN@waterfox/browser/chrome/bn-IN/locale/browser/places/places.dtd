@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "লাইব্রেরি">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "সংগঠিত">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "বুকমার্ক সুবিন্যস্ত করুন">
+
+<!ENTITY file.close.label               "বন্ধ করুন">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "প্রদর্শন">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "প্রদর্শন পরিবর্তন করুন">
+<!ENTITY view.columns.label             "কলাম প্রদর্শন করা হবে">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "ক্রমবিন্যাস">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "অবিন্যাস্ত">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "ছোট থেকে বড়">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A ক্রমবিন্যাস">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML থেকে বুকমার্ক ইম্পোর্ট করুন…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "HTML-এ বুকমার্ক এক্সপোর্ট করুন…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "অন্য ব্রাউজার থেকে তথ্য ইম্পোর্ট করুন…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "ব্যাক-আপ করুন…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "পুনরুদ্ধার">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ফাইল নির্বাচন করুন…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY cmd.deleteDomainData.label     "এই সাইট সম্বন্ধে তথ্য সংরক্ষণ করা হবে না">
+<!ENTITY cmd.deleteDomainData.accesskey "F">
+
+<!ENTITY cmd.open.label                  "খুলুন">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.open_window.label           "নতুন উইন্ডোর মধ্যে খোলা হবে">
+<!ENTITY cmd.open_window.accesskey       "N">
+<!ENTITY cmd.open_private_window.label     "নতুন এবং গোপন উইন্ডোর মধ্যে খুলুন">
+<!ENTITY cmd.open_private_window.accesskey "P">
+<!ENTITY cmd.open_tab.label              "নতুন ট্যাবের মধ্যে খোলা হবে">
+<!ENTITY cmd.open_tab.accesskey          "ন">
+<!ENTITY cmd.open_all_in_tabs.label      "ট্যাবের মধ্যে সকল প্রদর্শন করা হবে">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "O">
+
+<!ENTITY cmd.properties.label      "বিবিধ বৈশিষ্ট্য">
+<!ENTITY cmd.properties.accesskey  "ব">
+
+<!ENTITY cmd.sortby_name.label              "নাম অনুসারে সুবিন্যস্ত করুন">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "নতুন বুকমার্ক…">
+<!ENTITY cmd.new_bookmark.accesskey        "B">
+<!ENTITY cmd.new_folder.label              "নতুন ফোল্ডার…">
+<!ENTITY cmd.new_folder.accesskey          "ন">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "নতুন বিভাজনরেখা">
+<!ENTITY cmd.new_separator.accesskey       "S">
+
+<!ENTITY cmd.reloadLivebookmark.label      "লাইভ বুকমার্ক পুনরায় লোড করুন">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY cmd.moveBookmarks.label                  "স্থানান্তরণ">
+<!ENTITY cmd.moveBookmarks.accesskey              "M">
+
+<!ENTITY col.name.label          "নাম">
+<!ENTITY col.tags.label          "ট্যাগ">
+<!ENTITY col.url.label           "অবস্থান">
+<!ENTITY col.mostrecentvisit.label "সাম্প্রতিক ভিজিট">
+<!ENTITY col.visitcount.label    "পরিদর্শনের সংখ্যা">
+<!ENTITY col.description.label   "বর্ণনা">
+<!ENTITY col.dateadded.label     "যোগ হওয়ার তারিখ">
+<!ENTITY col.lastmodified.label  "সর্বশেষ পরিবর্তনের সময়">
+
+<!ENTITY search.label                              "অনুসন্ধান:">
+<!ENTITY search.accesskey                          "S">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "ইমপোর্ট ও ব্যাক-আপ করুন">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "বুকমার্ক ইম্পোর্ট ও ব্যাক-আপ করুন">
+
+<!ENTITY backButton.tooltip  "পূর্ববর্তী স্থানে চলুন">
+
+<!ENTITY forwardButton.tooltip  "পরবর্তী স্থানে এগিয়ে চলুন">
+
+<!ENTITY detailsPane.more.label "অধিক">
+<!ENTITY detailsPane.more.accesskey "অ">
+<!ENTITY detailsPane.less.label "আড়াল">
+<!ENTITY detailsPane.less.accesskey "আ">
+<!ENTITY detailsPane.selectAnItemText.description "কোনো বস্তু প্রদর্শন করার জন্য ও সেটির বৈশিষ্ট্য পরিবর্তের উদ্দেশ্যে নির্বাচন করুন">
+
+<!ENTITY find.label               "অনুসন্ধান:">
+<!ENTITY find.accesskey           "S">
+<!ENTITY view.label               "প্রদর্শন">
+<!ENTITY view.accesskey           "প">
+<!ENTITY byDate.label             "তারিখ অনুযায়ী">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "সাইট অনুযায়ী">
+<!ENTITY bySite.accesskey         "S">
+<!ENTITY byMostVisited.label      "সর্বাধিক পরিদর্শন অনুযায়ী">
+<!ENTITY byMostVisited.accesskey  "V">
+<!ENTITY byLastVisited.label      "সর্বশেষ পরিদর্শন অনুযায়ী">
+<!ENTITY byLastVisited.accesskey  "L">
+<!ENTITY byDayAndSite.label       "তারিখ ও সাইট অনুযায়ী">
+<!ENTITY byDayAndSite.accesskey   "ত">
+
+<!ENTITY search.placeholder  "Search">
+

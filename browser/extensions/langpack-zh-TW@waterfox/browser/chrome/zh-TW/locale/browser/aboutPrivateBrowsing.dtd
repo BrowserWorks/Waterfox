@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "您目前不在隱私瀏覽視窗當中。">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "開啟隱私視窗">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "隱私瀏覽模式">
+<!ENTITY privateBrowsing.title.tracking                  "含追蹤保護功能的隱私瀏覽">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "當您在隱私視窗中瀏覽時，Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "將不會儲存">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "造訪過的頁面紀錄">
+<!ENTITY aboutPrivateBrowsing.info.searches              "搜尋紀錄">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "暫存檔案">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       " 將會儲存">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "您的:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "下載項目">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "書籤">
+<!ENTITY aboutPrivateBrowsing.note.before                "隱私瀏覽">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "不會讓您完全在網路上匿蹤。">
+<!ENTITY aboutPrivateBrowsing.note.after                 "您的雇主或網路業者還是能知道您看過哪些網站。">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "了解">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "隱私瀏覽">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           "的更多資訊。">
+
+<!ENTITY trackingProtection.title                        "追蹤保護">
+<!ENTITY trackingProtection.description2                 "某些網站會使用可在不同網站間監控您的追蹤器。透過追蹤保護功能，Waterfox 將封鎖大部分會收集您的上網行為的追蹤器。">
+<!ENTITY trackingProtection.startTour1                   "看看原理是什麼">

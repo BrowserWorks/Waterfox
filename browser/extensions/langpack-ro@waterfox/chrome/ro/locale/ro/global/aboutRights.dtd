@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Despre drepturile dumneavoastră">
+<!ENTITY rights.intro "&brandFullName; este un program liber și cu sursă deschisă, construit de o comunitate de mii de oameni din lumea întreagă. Sunt câteva lucruri pe care ar trebui să le știți:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; este disponibil sub termenii ">
+<!ENTITY rights.intro-point1b "Licenței publice Mozilla">
+<!ENTITY rights.intro-point1c ". Acest lucru înseamnă că puteți folosi, copia și distribui &brandShortName; altora. Sunteți, de asemenea, binevenit să modificați codul sursă al &brandShortName;, cum doriți, pentru a răspunde nevoilor dumneavoastră. Licența publică Mozilla vă oferă și dreptul de a vă distribui versiunile modificate.">
+
+<!ENTITY rights.intro-point2-a "Nu vi se acordă niciun drept asupra mărcii comerciale sau asupra licențelor referitor la mărcile comerciale ale Waterfox sau ale oricărei părți, inclusiv, dar fără a se limita la numele Waterfox sau logo. Informații suplimentare privind mărcile comerciale pot fi găsite ">
+<!ENTITY rights.intro-point2-b "aici">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Unele funcționalități din &brandShortName;, cum ar fi Raportorul de defecțiuni vă oferă posibilitatea să furnizați feedback la &vendorShortName;. Alegând să trimiteți feedback, îi dați permisiunea lui &vendorShortName; să folosească feedbackurile pentru a-și îmbunătăți produsele, să publice feedbackurile pe propriile site-uri web și să distribuie feedbackurile.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Modul în care folosim informațiile dumneavoastră personale și feedbackul trimis la &vendorShortName; prin &brandShortName; este descris în ">
+<!ENTITY rights2.intro-point3b "Politica de confidențialitate &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Orice politică aplicabilă confidențialității datelor în timp ce folosiți acest produs ar trebui listată aici.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Unele funcționalități din &brandShortName; se folosesc de servicii de informații bazate pe web, totuși, noi nu putem garanta că acestea sunt 100&#037; exacte sau lipsite de erori. Mai multe detalii, inclusiv informații despre cum să dezactivați funcționalitățile care folosesc aceste servicii, se pot găsi în ">
+<!ENTITY rights.intro-point4b "Termenii de utilizare a serviciului">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Dacă produsul acesta include servicii web, orice termeni aplicabili serviciilor ar trebui să fie accesibili în secțiunea ">
+<!ENTITY rights.intro-point4b-unbranded "Servicii ale site-urilor web">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "Servicii de informare bazate pe web folosite în &brandFullName;">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Pentru a reda anumite tipuri de conținut video, &brandShortName; descarcă anumite module de decriptare de la terți.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; utilizează servicii de informare bazate pe web („Servicii”) pentru a vă oferi unele funcționalități furnizate pentru uzul dumneavoastră cu această copie binară de &brandShortName; sub termenii descriși mai jos. Dacă nu doriți să utilizați unul sau mai multe dintre Servicii sau termenii de mai jos sunt inacceptabili, puteți dezactiva funcționalitatea sau serviciul(le) respectiv(e). Instrucțiuni pentru dezactivarea fiecărei funcționalități sau serviciu în parte pot fi găsite ">
+<!ENTITY rights2.webservices-b "aici">
+<!ENTITY rights3.webservices-c ". Alte funcționalități și Servicii pot fi dezactivate în preferințele aplicației.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Navigare în siguranță: ">
+<!ENTITY rights.safebrowsing-b "Dezactivarea funcționalității Navigare în siguranță nu este recomandată deoarece ar putea avea ca rezultat accesarea de site-uri nesigure.  Dacă doriți să dezactivați această funcționalitate, urmați acești pași:">
+<!ENTITY rights.safebrowsing-term1 "Deschide preferințele aplicației">
+<!ENTITY rights.safebrowsing-term2 "Selectați secțiunea Securitate">
+<!ENTITY rights2.safebrowsing-term3 "Deselectează opțiunea „&enableSafeBrowsing.label;”">
+<!ENTITY rights.safebrowsing-term4 "Navigarea în siguranță este acum dezactivată">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Navigare conștientă de locație: ">
+<!ENTITY rights.locationawarebrowsing-b "este întotdeauna opțională.  Nu sunt transmise informații referitoare la locație niciodată fără permisiunea ta.  Dacă dorești să dezactivezi această funcționalitate complet, urmează acești pași:">
+<!ENTITY rights.locationawarebrowsing-term1a "În bara de adrese tastați ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Tastați geo.enabled în câmpul de căutare">
+<!ENTITY rights.locationawarebrowsing-term3 "Clic dublu pe preferința geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Navigarea conștientă de locație este acum dezactivată">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "O privire de ansamblu a serviciilor de informare asupra site-urilor pe care acest produs le include împreună cu instrucțiuni cum pot fi dezactivate, dacă e cazul, ar trebui incluse aici.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Aici ar trebui listați orice termeni aplicabili serviciului pentru acest produs.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; și contribuitorii, licențiatorii și partenerii săi lucrează pentru a oferi cele mai precise și actualizate Servicii.  Totuși, nu putem garanta că aceste informații sunt complete sau lipsite de erori. De exemplu, serviciul Navigare în siguranță ar putea să nu identifice unele site-uri riscante și ar putea identifica greșit unele site-uri sigure ca fiind riscante, iar locațiile furnizate de serviciul conștient de locație sunt doar estimative și nici noi, nici furnizorii noștri nu garantează acuratețea locațiilor oferite.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; poate întrerupe sau modifica Serviciile la discreția sa.">
+<!ENTITY rights2.webservices-term3 "Sunteți binevenit să folosiți aceste Servicii împreună cu versiunea însoțită de &brandShortName;, iar &vendorShortName; vă oferă acest drept.  &vendorShortName; și licențiatorii își rezervă toate drepturile asupra Serviciilor.  Acești termeni nu au ca scop limitarea oricăror drepturi garantate de licențele cu sursă deschisă („open source”) aplicabile pentru &brandShortName; sau versiunilor corespunzătoare de cod sursă ale &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Serviciile sunt furnizate „ca atare”.  &vendorShortName;, contribuitorii, licențiatorii și distribuitorii săi declină toate garanțiile, explicite ori implicite, incluzând, fără a se limita la acestea, garanțiile conform cărora Serviciile sunt comercializabile și potrivite scopurilor dumneavoastră particulare.  Suportați în intregime riscul legat de selectarea Serviciilor pentru scopurile dumneavoastră și calitatea și performanța Serviciilor.  Unele jurisdicții nu permit excluderea sau limitarea garanțiilor implicite, astfel încât este posibil ca declinarea responsabilității să nu se aplice în cazul dumneavoastră.">
+<!ENTITY rights.webservices-term5 "Cu excepția situațiilor prevăzute de lege, &vendorShortName;, contribuitorii, licențiatorii și distribuitorii săi nu pot fi trași la răspundere pentru pagube indirecte, speciale, accidentale, consecutive, punitive sau exemplare ce decurg sau pot fi atribuite în vreun fel utilizării &brandShortName; și a Serviciilor.  Răspunderea colectivă în baza prezenților termeni nu va depăși 500 $ (cinci sute de dolari). Unele jurisdicții nu permit excluderea sau limitarea anumitor pagube, astfel încât este posibil ca această excludere și limitare să nu se aplice în cazul dumneavoastră.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; poate actualiza acești termeni periodic după caz. Acești termeni nu pot fi modificați sau anulați fără acordul scris al &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Acești termeni sunt reglementați de legislația statului California, S.U.A., cu excepția normelor privind conflictul de legi. Dacă o prevedere a acestor Termeni este considerată nulă sau inaplicabilă, acest fapt nu va afecta aplicabilitatea celorlalte prevederi. În cazul conflictului dintre o versiune tradusă a acestor Termeni și versiunea în limba engleză, versiunea în limba engleză va avea prioritate.">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Gestionnaire de périphériques">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Modules et périphériques de sécurité">
+<!ENTITY devmgr.details.title                   "Détails">
+<!ENTITY devmgr.details.title2                  "Valeur">
+
+<!ENTITY devmgr.button.login.label              "Connexion">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Déconnexion">
+<!ENTITY devmgr.button.logout.accesskey         "D">
+<!ENTITY devmgr.button.changepw.label           "Changer le mot de passe">
+<!ENTITY devmgr.button.changepw.accesskey       "m">
+<!ENTITY devmgr.button.load.label               "Charger">
+<!ENTITY devmgr.button.load.accesskey           "g">
+<!ENTITY devmgr.button.unload.label             "Décharger">
+<!ENTITY devmgr.button.unload.accesskey         "h">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Saisissez les informations sur le module que vous voulez ajouter.">
+<!ENTITY loaddevice.modname                     "Nom du module :">
+<!ENTITY loaddevice.modname.accesskey           "o">
+<!ENTITY loaddevice.modname.default             "Nouveau module PKCS#11">
+<!ENTITY loaddevice.filename                    "Nom de fichier du module :">
+<!ENTITY loaddevice.filename.accesskey          "i">
+<!ENTITY loaddevice.browse                      "Parcourir…">
+<!ENTITY loaddevice.browse.accesskey            "P">
+
+<!ENTITY loaddevice.title2                      "Charger le pilote du périphérique PKCS#11">

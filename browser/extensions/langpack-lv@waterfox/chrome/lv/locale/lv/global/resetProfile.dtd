@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; atjaunošana">
+<!ENTITY refreshProfile.dialog.description1  "Sāciet no tīras vietas, lai salabotu problēmas un atjaunotu ātrdarbību.">
+<!ENTITY refreshProfile.dialog.description2  "Šis:">
+<!ENTITY refreshProfile.dialog.items.label1  "Aizvāks jūsu papildinājumus un pielāgojumus">
+<!ENTITY refreshProfile.dialog.items.label2  "Atjaunos pārlūka iestatījumus uz noklusētajiem">
+<!ENTITY refreshProfile.dialog.button.label  "Atjaunot &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Uzlabo &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Atjaunot &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Gandrīz gatavs…">

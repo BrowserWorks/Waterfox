@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "ภาษา">
+<!ENTITY languages.customize.description                "บางครั้งหน้าเว็บอาจนำเสนอมากกว่าหนึ่งภาษา เลือกภาษาสำหรับการแสดงผลหน้าเว็บเหล่านี้ ตามลำดับที่ต้องการ">
+<!ENTITY languages.customize.moveUp.label               "เลื่อนขึ้น">
+<!ENTITY languages.customize.moveUp.accesskey           "ล">
+<!ENTITY languages.customize.moveDown.label             "เลื่อนลง">
+<!ENTITY languages.customize.moveDown.accesskey         "อ">
+<!ENTITY languages.customize.deleteButton.label         "เอาออก">
+<!ENTITY languages.customize.deleteButton.accesskey     "ก">
+<!ENTITY languages.customize.selectLanguage.label       "เลือกภาษาที่จะเพิ่ม…">
+<!ENTITY languages.customize.addButton.label            "เพิ่ม">
+<!ENTITY languages.customize.addButton.accesskey        "พ">
+

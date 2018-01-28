@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Atgal">
+<!ENTITY  button-back-mac.accesskey    "A">
+<!ENTITY  button-next-mac.label        "Toliau">
+<!ENTITY  button-next-mac.accesskey    "T">
+<!ENTITY  button-finish-mac.label      "Baigti">
+<!ENTITY  button-cancel-mac.label      "Atsisakyti">
+
+<!ENTITY  button-back-unix.label       "Atgal">
+<!ENTITY  button-back-unix.accesskey   "A">
+<!ENTITY  button-next-unix.label       "Toliau">
+<!ENTITY  button-next-unix.accesskey   "T">
+<!ENTITY  button-finish-unix.label     "Baigti">
+<!ENTITY  button-cancel-unix.label     "Atsisakyti">
+
+<!ENTITY  button-back-win.label        "&lt; Atgal">
+<!ENTITY  button-back-win.accesskey    "A">
+<!ENTITY  button-next-win.label        "Toliau &gt;">
+<!ENTITY  button-next-win.accesskey    "T">
+<!ENTITY  button-finish-win.label      "Baigti">
+<!ENTITY  button-cancel-win.label      "Atsisakyti">

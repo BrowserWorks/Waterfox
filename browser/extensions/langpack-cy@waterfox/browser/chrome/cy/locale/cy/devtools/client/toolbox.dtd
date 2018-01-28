@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Gwall wrth agor Blwch Offer y Porwr:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Gosodiadau uwch">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Archwiliwr">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Dangos Arddulliau Porwr">
+<!ENTITY options.showUserAgentStyles.tooltip "Bydd cychwyn hwn yn dangos yr arddulliau rhagosodedig sy'n cael eu llwytho gan y porwr.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Tocio priodoleddau DOM">
+<!ENTITY options.collapseAttrs.tooltip "Tocio'r priodoleddau hir yn yr arolygydd">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Uned lliw rhagnodedig">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "U">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Fel ei Awduro">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Hecs">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Enw Lliwiau">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Sesiwn gyfredol yn unig, ail-lwytho'r dudalen">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Galluogi chrome y porwr ac ychwanegion blychau offer dadfygio">
+<!ENTITY options.enableChrome.tooltip3  "Bydd cychwyn y dewis hwn yn caniatáu i chi ddefnyddio offer datblygwyr amrywiol o fewn cyd-destun porwr (drwy Offer > Datblygwr Gwe > Blwch Offer y Porwr) a dadfygio ychwanegion o'r Rheolwr Ychwanegion">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Galluogi dadfygio pell">
+<!ENTITY options.enableRemote.tooltip2  "Bydd cychwyn y dewis hwn yn caniatáu i chi ddefnyddio offer datblygu i ddadfygio enghreifftiau o Waterfox pell megis Waterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Analluogi JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Bydd cychwyn y nodwedd hon yn analluogi JavaScript yn y tab cyfredol. Os fydd y tab neu’r blwch offer yn cael eu cau yna bydd y gosodiad hwn yn cael ei anghofio.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Analluogi Storfa HTTP (pan mae'r blwch offer ar agor)">
+<!ENTITY options.disableHTTPCache.tooltip   "Bydd cychwyn y dewis hwn yn analluogi storfa'r HTTP ar gyfer pob tab sydd a' r blwch offer ar agor. Nid yw Service Workers yn cael eu heffeithio gan y dewis hwn.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Galluogi Service Workers dros HTTP (pan fydd y blwch offer ar agor)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Bydd cychwyn y dewis wn yn caniatáu i nodwedd service workers dros HTTP ar gyfer pob tab sydd â blwch offer ar agor.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Offer Datblygu Waterfox Rhagosodedig">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Offer Datblygu wedi eu gosod gan ychwanegion">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Botymau Blwch Offer sydd ar Gael">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Dim cefnogaeth ar gyfer targed y blwch offer cyfredol">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Themâu">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Defnyddio thema porwr Datblygwyr">
+<!ENTITY options.usedeveditiontheme.tooltip "Toglo'r thema Datblygwyr.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Consol Gwe">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Galluogi stamp amser">
+<!ENTITY options.timestampMessages.tooltip    "Os ydych wedi galluogi'r gorchmyniona bydd allbynnau yn y Consol Gwe yn dangos stamp amser">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Dadfygiwr">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Galluogi Mapiau Ffynhonnell">
+<!ENTITY options.sourceMaps.tooltip    "Os ydych wedi galluogi'r dewis hwn bydd ffynonellau'n cael eu mapio yn y Dadfygiwr a'r Consol.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Golygydd Arddull">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Dangos y ffynonellau gwreiddiol">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Dangos ffynonellau gwreiddiol (e.e. ffeiliau Sass) yn y Golygydd Steil a'r Archwiliwr">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "Awtogwblhau CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Awtogwblhau priodweddau CSS, gwerthoedd a dewiswyr yn y Golygydd Steil wrth i chi deipio">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Ymddygiad Llun Sgrin">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Llun sgrin i'r clipfwrdd">
+<!ENTITY options.screenshot.clipboard.tooltip    "Yn cadw i'r llun sgrin yn uniongyrchol i'r clipfwrdd">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Chwarae sain caead camera">
+<!ENTITY options.screenshot.audio.tooltip    "Galluogi sain camera wrth gymryd llun sgrin">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Dewisiadau Cyffredin">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Galluogi cofnodion parhaus">
+<!ENTITY options.enablePersistentLogs.tooltip  "Os ydych wedi galluogi'r dewis hwn ni fydd y Consol Gwe a'r Monitor Rhwydwaith yn clirio'r allbwn bob tro fyddwch yn symud i dudalen newydd">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Dangos data platfform Gecko">
+<!ENTITY options.showPlatformData.tooltip  "Os ydych wedi galluogi'r dewis hwn bydd adroddiadau Proffiliwr JavaScript yn cynnwys symbolau platfform Gecko">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Dewisiadau Golygu">
+<!ENTITY options.sourceeditor.detectindentation.label   "Canfod mewnoliad">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Dyfalu mewnoliad ar sail cynnwys y ffynhonnell">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Cau bracedi'n awtomatig">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Gosod bracedi cau yn awtomatig">
+<!ENTITY options.sourceeditor.expandtab.label           "Mewnoli gan ddefnyddio bylchau">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Defnyddio bylchau yn lle nod tab">
+<!ENTITY options.sourceeditor.tabsize.label             "Maint tab">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "t">
+<!ENTITY options.sourceeditor.keybinding.label          "Rhwymwyr allwedd">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "R">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Rhagosodiad">

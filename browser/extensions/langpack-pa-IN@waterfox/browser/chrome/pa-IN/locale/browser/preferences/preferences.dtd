@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "ਚੋਣਾਂ">
+<!ENTITY  prefWindow.title        "ਮੇਰੀ ਪਸੰਦ">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; ਪਸੰਦ">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "ਖੋਜ ਨਤੀਜੇ">
+<!ENTITY  paneGeneral.title             "ਆਮ">
+<!ENTITY  paneSearch.title              "ਖੋਜ">
+<!ENTITY  paneFilesApplications.title   "ਫਾਈਲਾਂ ਤੇ ਐਪਲੀਕੇਸ਼ਨ">
+<!ENTITY  panePrivacySecurity.title     "ਪਰਦੇਦਾਰੀ ਤੇ ਸੁਰੱਖਿਆ">
+<!ENTITY  paneContainers.title          "ਕਨਟੇਨਰ ਟੈਬਾਂ">
+<!ENTITY  paneUpdates.title             "ਅੱਪਡੇਟ">
+
+<!ENTITY  languageAndAppearance.label   "ਭਾਸ਼ਾ ਤੇ ਦਿੱਖ">
+<!ENTITY  filesAndApplications.label    "ਫਾਈਲਾਂ ਅਤੇ ਐਪਲੀਕੇਸ਼ਨਾਂ">
+<!ENTITY  browserPrivacy.label          "ਬਰਾਊਜ਼ਰ ਪਰਦੇਦਾਰੀ">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "ਫਾਇਰਫਾਕਸ ਖਾਤਾ">
+
+<!ENTITY  helpButton2.label        "&brandShortName; ਸਹਿਯੋਗ">

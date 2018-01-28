@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Toś ten rejtark zacyniś">
+<!ENTITY tabCrashed.restoreTab "Toś ten rejtark wótnowiś">
+<!ENTITY tabCrashed.restoreAll "Wšykne wowalone rejtarki wótnowiś">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ojejko. Waš rejtark jo se wowalił.">
+<!ENTITY tabCrashed.offerHelp "Móžomy wam pomagaś!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Wubjeŕśo &tabCrashed.restoreTab;, aby wopśimjeśe boka znowego zacytał.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Wubjeŕśo &tabCrashed.restoreTab; abo &tabCrashed.restoreAll;, aby wopśimjeśe boka znowego zacytał.">
+<!ENTITY tabCrashed.requestHelp "Buźośo nam pomagaś?">
+<!ENTITY tabCrashed.requestHelpMessage "Rozpšawy wó wowalenjach nam pomagaju, problemy diagnosticěrowaś a &brandShortName; pólěpšaś.">
+<!ENTITY tabCrashed.requestReport "Toś ten rejtark k wěsći daś">
+<!ENTITY tabCrashed.sendReport2 "Rozpšawu wó wowalenju za rejtark słaś, kótaryž se rowno woglědujośo">
+<!ENTITY tabCrashed.commentPlaceholder2 "Opcionalne komentary (komentary su zjawnje widobne)">
+<!ENTITY tabCrashed.includeURL2 "URL boka z rozpšawu wó toś tom wowalenju zapśimjeś">
+<!ENTITY tabCrashed.emailPlaceholder "Zapódajśo how swóju e-mailowu adresu">
+<!ENTITY tabCrashed.emailMe "Pósćelśo mě mejlku, gaž dalšne informacije stoje k dispoziciji">
+<!ENTITY tabCrashed.reportSent "Rozpšawa wó wowalenjach jo se južo wótpósłała; wjeliki źěk, až sćo pomógał, &brandShortName; pólěpšyś!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Slězynowe rejtarki k wěsći daś">
+<!ENTITY tabCrashed.autoSubmit2 "Aktualizěrowańske nastajenja za awtomatiske słanje rozpšawow wó wowalenjach, inkluziwnje rozpšawy za wowalone slězynowe rejtarki z toś togo póseźenja a pśiducych pósejźenjow">

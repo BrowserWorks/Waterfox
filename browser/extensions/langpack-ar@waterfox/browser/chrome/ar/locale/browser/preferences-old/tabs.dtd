@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "‏Ctrl+Tab يتنقّل عبر الألسنة حسب ترتيب آخر استخدام">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "افتح النوافذ الجديدة في ألسنة بدل النوافذ">
+<!ENTITY newWindowsAsTabs.accesskey   "ذ">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "نبّهني عند محاولة إغلاق عدّة ألسنة">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "ة">
+
+<!ENTITY warnOnOpenManyTabs.label       "نبّهني عند فتح عدة ألسنة أن هذا قد يبطئ &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "ف">
+
+<!ENTITY switchLinksToNewTabs.label        "عند فتح رابط في لسان جديد، انتقل إليه مباشرة">
+<!ENTITY switchLinksToNewTabs.accesskey    "ط">
+
+<!ENTITY showTabsInTaskbar.label          "أظهِر معاينات للألسنة في شريط مهام ويندوز">
+<!ENTITY showTabsInTaskbar.accesskey      "و">
+<!ENTITY tabsGroup.label          "الألسنة">

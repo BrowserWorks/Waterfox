@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ข้อมูลการวัดและส่งข้อมูลทางไกล">
+
+<!ENTITY aboutTelemetry.changeDataChoices "  เปลี่ยน">
+
+<!ENTITY aboutTelemetry.uploadEnabled "  การอัปโหลดข้อมูล FHR <span>ถูกเปิดใช้งาน</span>">
+
+<!ENTITY aboutTelemetry.uploadDisabled "  การอัปโหลดข้อมูล FHR <span>ถูกปิดใช้งาน</span>">
+
+
+
+
+
+
+
+
+<!ENTITY aboutTelemetry.raw "JSON ดิบ">
+
+
+
+
+
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "สัปดาห์">
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  ข้อมูลทั่วไป">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  ข้อมูลสภาพแวดล้อม">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  บันทึกการวัดและส่งข้อมูลทางไกล">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  คำสั่ง SQL ที่ทำงานช้า">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  เบราว์เซอร์ค้าง">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  เธรดที่ค้าง">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  ฮิสโทแกรม">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Keyed Histograms">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  ค่าที่วัดได้อย่างง่าย">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  รายละเอียดของส่วนเสริม">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  การเขียนทีหลัง">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  ข้อมูลวาระ">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "  ฮิสโทแกรมที่เก็บโดยส่วนเสริม">
+
+<!ENTITY aboutTelemetry.toggle "
+  คลิกเพื่อเปิด/ปิดส่วน
+">
+
+<!ENTITY aboutTelemetry.emptySection "  (ไม่มีข้อมูลถูกเก็บ)">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  หมายเหตุ: การดีบั๊ก SQL ที่ทำงานช้าถูกเปิดใช้งาน คำสั่ง SQL แบบเต็มอาจถูกแสดงไว้ด้านล่างแต่จะไม่ถูกส่งออกไป">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  ตัวกรอง (สตริงหรือ /regexp/)">
+
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Choose ping:
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping data source:
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Archived ping data
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Current ping data
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Newer ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Older ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Show subsession data
+">
+

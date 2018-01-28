@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "ಜಾಲ ಕನ್ಸೋಲ್">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "ಹೊಸ Tab ನಲ್ಲಿ URL ತೆರೆ">
+<!ENTITY openURL.accesskey "T">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "ಜಾಲ">
+<!ENTITY btnPageNet.tooltip "ಜಾಲಬಂಧ ನಿಲುಕಿನ ಲಾಗ್">
+<!ENTITY btnPageNet.accesskey "N">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "CSS ದೋಷಗಳು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳನ್ನು ಲಾಗ್ ಮಾಡು">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "JavaScript ವಿನಾಯಿತಿಗಳನ್ನು ಲಾಗ್ ಮಾಡು">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "ಸುರಕ್ಷತೆ">
+<!ENTITY btnPageSecurity.tooltip "ಸುರಕ್ಷತಾ ದೋಷಗಳು ಮತ್ತು ಎಚ್ಚರಿಕೆಗಳನ್ನು ಲಾಗ್ ಮಾಡಿ">
+<!ENTITY btnPageSecurity.accesskey "u">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "ಲಾಗ್ ಮಾಡುವಿಕೆ">
+<!ENTITY btnPageLogging.tooltip "window.console ಆಬ್ಜೆಕ್ಟ್‌ಗಾಗಿ ಕಳುಹಿಸಲಾದ ಲಾಗ್ ಸಂದೇಶಗಳು">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "ದೋಷಗಳು">
+<!ENTITY btnConsoleInfo         "ಮಾಹಿತಿ">
+<!ENTITY btnConsoleWarnings     "ಎಚ್ಚರಿಕೆಗಳು">
+<!ENTITY btnConsoleLog          "ದಾಖಲೆ">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "ಮರುಹರಿವುಗಳು">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "ಸರ್ವರ್">
+<!ENTITY btnServerLogging.tooltip     "ವೆಬ್ ಸರ್ವರ್ ನಿಂದ ಪಡೆಯಲಾದ ದಿನಚರಿ ಸಂದೇಶಗಳು">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerErrors              "ದೋಷಗಳು">
+<!ENTITY btnServerInfo                "ಮಾಹಿತಿ">
+<!ENTITY btnServerWarnings            "ಎಚ್ಚರಿಕೆಗಳು">
+<!ENTITY btnServerLog                 "ದಾಖಲೆ">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "ಹಂಚಲಾದ ಕೆಲಸಗಾರರು">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "ಸೇವಾ ಕೆಲಸಗಾರರು">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "ಆಡ್-ಆನ್ ಅಥವಾ ಕ್ರೋಮ್ ಕೆಲಸಗಾರರು">
+
+<!ENTITY filterOutput.placeholder "ಫಿಲ್ಟರ್ ಔಟ್‌ಪುಟ್">
+<!ENTITY btnClear.label        "ಅಳಿಸು">
+<!ENTITY btnClear.tooltip      "ಜಾಲ ಕನ್ಸೋಲ್ ಔಟ್‌ಪುಟ್ ಅನ್ನು ಅಳಿಸಿ">
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "ತಾಣದ ವಿಳಾಸವನ್ನು (ಲಿಂಕ್ ಲೋಕೇಶನ್) ಪ್ರತಿ ಮಾಡು">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Variables ನೋಟದಲ್ಲಿ ತೆರೆಯಿರಿ">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "ಜಾಗತಿಕ ಚರಾಂಶವಾಗಿ ಶೇಖರಿಸಿ">
+<!ENTITY storeAsGlobalVar.accesskey "S">

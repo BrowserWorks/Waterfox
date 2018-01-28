@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Almennt">
+
+<!ENTITY accessibility.label             "Auðveldað aðgengi">
+
+<!ENTITY useCursorNavigation.label       "Alltaf nota örvalykla til að ferðast á síðum">
+<!ENTITY useCursorNavigation.accesskey   "ö">
+<!ENTITY searchOnStartTyping.label       "Leita í texta þegar byrjað er að slá inn orð">
+<!ENTITY searchOnStartTyping.accesskey   "L">
+<!ENTITY blockAutoReload.label           "Vara við þegar vefsvæði reyna að endurbeina eða endurnýja síðuna">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Sýna snertilyklaborð þegar það er nauðsynlegt">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Leit">
+
+<!ENTITY useAutoScroll.label             "Nota sjálfvirka skrunun">
+<!ENTITY useAutoScroll.accesskey         "o">
+<!ENTITY useSmoothScrolling.label        "Nota fíngerða skrunun">
+<!ENTITY useSmoothScrolling.accesskey    "f">
+<!ENTITY checkUserSpelling.label         "Athuga stafsetningu um leið og texti er sleginn inn">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Meðhöndlun gagna">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Gagna skýrsla er óvirk í þessari útgáfu">
+
+<!ENTITY healthReportDesc.label          "Hjálpar þér að fá betri yfirsýn yfir afköst vafra og deilir gögnum um afköst vafra með &vendorShortName;">
+<!ENTITY enableHealthReport.label        "Virkja &brandShortName; ástandsskoðun">
+<!ENTITY enableHealthReport.accesskey    "r">
+<!ENTITY healthReportLearnMore.label     "Fræðast meira">
+
+<!ENTITY telemetryDesc.label             "Deilir afköstum, notkun, vélbúnaðarupplýsingum og sérsniði vafra með &vendorShortName; svo hægt sé að betrumbæta &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Deila öðrum gögnum (t.d., Fjarmælingum)">
+<!ENTITY enableTelemetryData.accesskey   "F">
+<!ENTITY telemetryLearnMore.label        "Fræðast meira">
+
+<!ENTITY crashReporterDesc2.label         "Hrunskýrslur hjálpa &vendorShortName; að laga vandamál og gera vafrann betri og öruggari">
+<!ENTITY alwaysSubmitCrashReports.label   "Leyfa &brandShortName; að senda hrunskýrslu í bakgrunni í þínu nafni">
+<!ENTITY alwaysSubmitCrashReports.accesskey "h">
+<!ENTITY crashReporterLearnMore.label     "Fræðast meira">
+
+<!ENTITY networkTab.label                "Netkerfi">
+
+<!ENTITY connection.label                "Tenging">
+
+<!ENTITY connectionDesc.label            "Stilla hvernig &brandShortName; tengist við Internetið">
+<!ENTITY connectionSettings.label        "Stillingar…">
+<!ENTITY connectionSettings.accesskey    "S">
+
+<!ENTITY httpCache.label                 "Vefgögn í flýtiminni">
+
+<!ENTITY offlineStorage2.label           "Ótengd vefgögn og notandagögn">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Gögn vefsvæðis">
+<!ENTITY clearSiteData.label             "Hreinsa öll gögn">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Stillingar…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Fræðast meira">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Takmarka skyndiminni við">
+<!ENTITY limitCacheSizeBefore.accesskey  "T">
+<!ENTITY limitCacheSizeAfter.label       "MB af plássi">
+<!ENTITY clearCacheNow.label             "Hreinsa núna">
+<!ENTITY clearCacheNow.accesskey         "r">
+<!ENTITY clearOfflineAppCacheNow.label   "Hreinsa núna">
+<!ENTITY clearOfflineAppCacheNow.accesskey "n">
+<!ENTITY overrideSmartCacheSize.label    "Hunsa sjálfvirka umsýslu skyndiminnis">
+<!ENTITY overrideSmartCacheSize.accesskey "u">
+
+<!ENTITY updateTab.label                 "Uppfærslur">
+
+<!ENTITY updateApplication.label         "&brandShortName; uppfærslur">
+<!ENTITY updateAuto1.label               "Setja sjálfvirkt inn uppfærslur (mælt með: eykur öryggi)">
+<!ENTITY updateAuto1.accesskey           "a">
+<!ENTITY updateCheckChoose.label         "Athuga með uppfærslur, en leyfa mér að velja hvenær á að setja þær upp">
+<!ENTITY updateCheckChoose.accesskey     "t">
+<!ENTITY updateManual.label              "Aldrei athuga með uppfærslur (ekki mælt með: öryggisáhætta)">
+<!ENTITY updateManual.accesskey          "l">
+
+<!ENTITY updateHistory.label             "Sýna uppfærslusögu">
+<!ENTITY updateHistory.accesskey         "p">
+
+<!ENTITY useService.label                "Nota bakgrunnsþjónustu til að setja inn uppfærslur">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY autoUpdateOthers.label          "Uppfæra sjálfvirkt">
+<!ENTITY enableSearchUpdate.label        "Leitarvélar">
+<!ENTITY enableSearchUpdate.accesskey    "e">
+
+<!ENTITY offlineStorageNotify.label               "Láta vita þegar vefsvæði biður um að geyma gögn fyrir ónettengda notkun">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Undanþágur…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "d">
+
+<!ENTITY offlineAppsList2.label          "Eftirfarandi vefsvæði hafa leyfi til að geyma gögn fyrir notkun án nettengingar:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Fjarlægja…">
+<!ENTITY offlineAppsListRemove.accesskey "r">
+<!ENTITY offlineAppRemove.confirm        "Fjarlægja utankerfis gögn">
+
+<!ENTITY certificateTab.label            "Skilríki">
+<!ENTITY certPersonal.label              "Beiðnir">
+<!ENTITY certPersonal.description        "Þegar netþjónn biður um mitt skilríki:">
+<!ENTITY selectCerts.auto                "Velja eitt sjálfvirkt">
+<!ENTITY selectCerts.auto.accesskey      "s">
+<!ENTITY selectCerts.ask                 "Spyrja í hvert skipti">
+<!ENTITY selectCerts.ask.accesskey       "S">
+<!ENTITY enableOCSP.label                "Senda fyrirspurn á OCSP þjóna til að staðfesta hvort núverandi skírteini séu gild">
+<!ENTITY enableOCSP.accesskey            "S">
+<!ENTITY viewCerts.label                 "Skoða skilríki">
+<!ENTITY viewCerts.accesskey             "S">
+<!ENTITY viewSecurityDevices.label       "Öryggistæki">
+<!ENTITY viewSecurityDevices.accesskey   "y">
+
+<!ENTITY performance.label               "Afköst">
+<!ENTITY useRecommendedPerformanceSettings.label "Nota afkastastillingar sem er mælt með">
+<!ENTITY useRecommendedPerformanceSettings.description "Þessar stillingar eru sérsniðnar fyrir þinn vélbúnað og stýrikerfi.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "N">
+<!ENTITY performanceSettingsLearnMore.label "Fræðast meira">
+<!ENTITY limitContentProcessOption.label "Takmarka þræði fyrir efni">
+<!ENTITY limitContentProcessOption.description "Fleiri þræðir fyrir efni getur aukið afköst þegar verið er að nota marga flipa, en tekur upp meira minni.">
+<!ENTITY limitContentProcessOption.accesskey   "þ">
+<!ENTITY limitContentProcessOption.disabledDescription "Aðeins er hægt að breyta fjölda efnisþráða með &brandShortName; sem inniheldur fjölgjörvavinnslu.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Sjáðu hvernig þú athugar hvort fjölgjörvavinnsla er virk">
+<!ENTITY allowHWAccel.label              "Nota vélbúnaðarhröðun ef mögulegt">
+<!ENTITY allowHWAccel.accesskey          "b">

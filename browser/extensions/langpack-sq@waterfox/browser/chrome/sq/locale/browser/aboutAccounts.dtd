@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Mirë se vini te &syncBrand.shortName.label;-u">
+
+<!ENTITY aboutAccountsConfig.description "Bëni hyrjen, që të njëkohësoni skedat, faqerojtësit, fjalëkalimet tuaja &amp; etj.">
+<!ENTITY aboutAccountsConfig.startButton.label "Fillojani">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Parapëlqime mbi Sync-un">
+<!ENTITY aboutAccounts.noConnection.title "Pa lidhje">
+<!ENTITY aboutAccounts.noConnection.description "Duhet të jeni i lidhur në Internet, që të bëni hyrjen.">
+<!ENTITY aboutAccounts.noConnection.retry "Riprovoni">
+<!ENTITY aboutAccounts.badConfig.title "Formësim i gabuar">
+<!ENTITY aboutAccounts.badConfig.description "S&apos;arrihet të përcaktohet formësimi i shërbyesit të Llogarisë tuaj Waterfox. Ju lutemi, riprovoni më vonë.">

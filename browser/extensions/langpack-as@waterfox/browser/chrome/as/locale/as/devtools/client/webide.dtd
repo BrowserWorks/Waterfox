@@ -1,0 +1,243 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "প্ৰকল্প">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "নতুন এপ…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "পেকেইজ্ড এপ খোলক…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "হস্টেড এপ খোলক…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "এপ খোলক…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "ইনস্টল কৰক আৰু চলাওক">
+
+<!ENTITY projectMenu_stop_label "এপ বন্ধ কৰক">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "এপ ডিবাগ কৰক">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "প্ৰকল্প আতৰাওক">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "পছন্দসমূহ">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+
+
+
+
+<!ENTITY runtimeMenu_label "চলনসময়">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "বিচ্ছিন্ন কৰক">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "স্ক্ৰিনশ্বট">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "চলনসময় তথ্য">
+
+<!ENTITY runtimeMenu_showMonitor_label "মনিটৰ">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+
+
+
+
+
+<!ENTITY viewMenu_label "দৰ্শন কৰক">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "জুম ইন">
+
+<!ENTITY viewMenu_zoomout_label "জুম আউট">
+
+
+
+
+<!ENTITY projectButton_label "এপ খোলক">
+<!ENTITY runtimeButton_label "চলনসময় বাছক">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+
+
+
+
+<!ENTITY projectPanel_myProjects "মোৰ প্ৰকল্পসমূহ">
+<!ENTITY projectPanel_runtimeApps "চলনসময় এপসমূহ">
+
+<!ENTITY runtimePanel_usb "USB ডিভাইচসমূহ">
+<!ENTITY runtimePanel_wifi "Wi-Fi ডিভাইচসমূহ">
+<!ENTITY runtimePanel_simulator "চিমুলেটৰসমূহ">
+<!ENTITY runtimePanel_other "অন্য">
+<!ENTITY runtimePanel_installsimulator "চিমুলেটৰ ইনস্টল কৰক">
+<!ENTITY runtimePanel_noadbhelper "ADB সহায়ক ইনস্টল কৰক">
+<!ENTITY runtimePanel_nousbdevice "আপোনাৰ ডিভাইচ দেখি পোৱা নাই?">
+
+<!-- Lense -->
+
+<!ENTITY details_valid_header "বৈধ">
+<!ENTITY details_warning_header "সতৰ্কবাৰ্তাসমূহ">
+<!ENTITY details_error_header "ত্ৰুটিসমূহ">
+<!ENTITY details_description "বিৱৰণ">
+<!ENTITY details_location "অৱস্থান">
+<!ENTITY details_manifestURL "এপ ID">
+<!ENTITY details_removeProject_button "প্ৰকল্প আতৰাওক">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "নতুন এপ">
+<!ENTITY newAppHeader "টেমপ্লেইট বাছক">
+<!ENTITY newAppLoadingTemplate "টেমপ্লেইটসমূহ ল'ড কৰা হৈছে…">
+<!ENTITY newAppProjectName "প্ৰকল্পৰ নাম:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "বন্ধ কৰক">
+<!-- Addons -->
+
+<!ENTITY addons_title "অতিৰিক্ত উপাদানসমূহ">
+<!ENTITY addons_aboutaddons "এড-অনসমূহ ব্যৱস্থাপক খোলক">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "পছন্দসমূহ">
+<!ENTITY prefs_editor_title "সম্পাদক">
+<!ENTITY prefs_general_title "সাধাৰণ">
+
+
+
+
+<!ENTITY prefs_options_rememberlastproject "সৰ্বশেষ প্ৰকল্প মনত ৰাখক">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE আৰম্ভ হওতে পূৰ্বৱৰ্তী প্ৰকল্পক পুনৰুদ্ধাৰ কৰিব">
+<!ENTITY prefs_options_templatesurl "টেমপ্লেইটসমূহ URL">
+<!ENTITY prefs_options_templatesurl_tooltip "উপলব্ধ টেমপ্লেইটসমূহৰ সূচী">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "চলনসময় তথ্য">
+<!ENTITY runtimedetails_adbIsRoot "ADB ৰুট হয়: ">
+<!ENTITY runtimedetails_summonADBRoot "ৰুট ডিভাইচ">
+<!ENTITY runtimedetails_ADBRootWarning "(আনলক্ড বুটল'ডাৰৰ প্ৰয়োজন)">
+
+<!ENTITY runtimedetails_requestPrivileges "উচ্চ সূবিধাসমূহ অনুৰোধ কৰক">
+<!ENTITY runtimedetails_privilegesWarning "(ডিবাইচক পুনাৰম্ভ কৰিব। ৰুট অভিগমৰ প্ৰয়োজন।)">
+<!-- Device Preferences and Settings -->
+
+
+<!ENTITY device_typeobject "বস্তু">
+
+<!-- Device Preferences -->
+
+
+
+
+<!-- Device Settings -->
+
+
+
+
+<!-- Monitor -->
+
+<!ENTITY monitor_title "মনিটৰ">
+<!ENTITY monitor_help "সহায়">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+
+<!-- Logs panel -->
+<!-- Simulator Options -->
+
+
+
+
+<!ENTITY simulator_version "সংস্কৰণ">
+
+
+<!ENTITY simulator_device "ডিভাইচ">
+
+
+
+
+
+
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenone "Select a type">
+
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typestring "String">
+<!ENTITY devicepreference_addnew "Add new preference">
+
+<!ENTITY devicepreference_newname "New preference name">
+<!ENTITY devicepreference_newtext "Preference value">
+<!ENTITY devicepreference_search "Search preferences">
+<!ENTITY devicepreference_title "Device Preferences">
+<!ENTITY devicesetting_addnew "Add new setting">
+
+<!ENTITY devicesetting_newname "New setting name">
+<!ENTITY devicesetting_newtext "Setting value">
+<!ENTITY devicesetting_search "Search settings">
+<!ENTITY devicesetting_title "Device Settings">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY logs_title "Pre-packaging Command Logs">
+
+<!ENTITY prefs_manage_components "Manage Extra Components">
+<!ENTITY prefs_options_autoconnectruntime "Reconnect to previous runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Reconnect to previous runtime when WebIDE starts">
+<!ENTITY prefs_restore "Restore Defaults">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_manageComponents_label "Manage Extra Components">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_refreshTabs_label "Refresh Tabs">
+
+<!ENTITY projectPanel_tabs "Tabs">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Device Preferences">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY runtimeMenu_showSettings_label "Device Settings">
+<!ENTITY runtimePanel_refreshDevices_label "Refresh Devices">
+
+<!ENTITY runtimedetails_unrestrictedPrivileges "Unrestricted DevTools privileges: ">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_name "Name">
+<!ENTITY simulator_pixelRatio "Pixel Ratio">
+<!ENTITY simulator_profile "Profile">
+<!ENTITY simulator_remove "Delete Simulator">
+<!ENTITY simulator_reset "Restore Defaults">
+<!ENTITY simulator_screenSize "Screen">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_title "Simulator Options">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Open Config Directory…">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY viewMenu_resetzoom_label "Reset Zoom">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY wifi_auth_header "Client Identification">
+<!ENTITY wifi_auth_no_scanner "No QR scanner prompt?">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+
+<!ENTITY wifi_auth_scan_request "The endpoint you are connecting to needs more information to authenticate this connection.  Please scan the QR code below via the prompt on your other device.">
+<!ENTITY wifi_auth_token_request "If your other device asks for a token instead of scanning a QR code, please copy the value below to the other device:">
+<!ENTITY wifi_auth_yes_scanner "Have a QR scanner prompt?">

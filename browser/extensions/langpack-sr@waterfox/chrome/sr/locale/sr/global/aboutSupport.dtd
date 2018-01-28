@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Подаци о решавању проблема">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Ова страница садржи техничке податке који могу бити корисни када 
+  покушавате да решите неки проблем. Ако вам требају одговори на често постављана питања
+  о програму &brandShortName;, прегледајте наш <a id='supportLink'>веб сајт за подршку</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Извештаји о рушењу">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID извештаја">
+<!ENTITY aboutSupport.crashes.sendDate "Поднесено">
+<!ENTITY aboutSupport.crashes.allReports "Сви извештаји о рушењу">
+<!ENTITY aboutSupport.crashes.noConfig "Ова апликација није подешена да приказује извештаје о рушењу.">
+
+<!ENTITY aboutSupport.extensionsTitle "Екстензије">
+<!ENTITY aboutSupport.extensionName "Назив">
+<!ENTITY aboutSupport.extensionEnabled "Укључен">
+<!ENTITY aboutSupport.extensionVersion "Издање">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; могућности">
+<!ENTITY aboutSupport.featureName "Назив">
+<!ENTITY aboutSupport.featureVersion "Издање">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Експерименталне могућности">
+<!ENTITY aboutSupport.experimentName "Име">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Опис">
+<!ENTITY aboutSupport.experimentActive "Активна">
+<!ENTITY aboutSupport.experimentEndDate "До кад">
+<!ENTITY aboutSupport.experimentHomepage "Почетна страница">
+<!ENTITY aboutSupport.experimentBranch "Грана">
+
+<!ENTITY aboutSupport.appBasicsTitle "Основе апликације">
+<!ENTITY aboutSupport.appBasicsName "Назив">
+<!ENTITY aboutSupport.appBasicsVersion "Издање">
+<!ENTITY aboutSupport.appBasicsBuildID "ID издања">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Канал за ажурирање">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Историја ажурирања">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Прикажи историјат ажурирања">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Фасцикла профила">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Фасцикла профила">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Активирани прикључци">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Конфигурација изградње">
+<!ENTITY aboutSupport.appBasicsUserAgent "Корисник">
+<!ENTITY aboutSupport.appBasicsOS "ОС">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Меморија">
+<!ENTITY aboutSupport.appBasicsPerformance "Перформансе">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Регистровани Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Профили">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Вишепроцесорски прозори">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Процеси веб садржаја">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google кључ">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Кључ Mozilla сервиса за локацију">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Безбедни режим">
+
+<!ENTITY aboutSupport.showDir.label "Отвори фасциклу">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Прикажи у Finder-у">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Отвори фасциклу">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Важне измењене поставке">
+<!ENTITY aboutSupport.modifiedPrefsName "Назив">
+<!ENTITY aboutSupport.modifiedPrefsValue "Вредност">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js подешавања">
+<!ENTITY aboutSupport.userJSDescription "Ваша Фасцикла профила садржи  <a id='prefs-user-js-link'>user.js датотеку</a>, која садржи подешавања која нису направљена од стране &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Увези закључана подешавања">
+<!ENTITY aboutSupport.lockedPrefsName "Име">
+<!ENTITY aboutSupport.lockedPrefsValue "Вредност">
+
+<!ENTITY aboutSupport.graphicsTitle "Графика">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "База података локација">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Интегритет">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Потврди интегритет">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Инкрементални GC">
+
+<!ENTITY aboutSupport.a11yTitle "Приступачност">
+<!ENTITY aboutSupport.a11yActivated "Активирана">
+<!ENTITY aboutSupport.a11yForceDisabled "Спречи приступачност">
+<!ENTITY aboutSupport.a11yHandlerUsed "Приступни управљач искоришћен">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Издања библиотека">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Историјат инсталација">
+<!ENTITY aboutSupport.updateHistoryTitle "Историјат ажурирања">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Копирај текст у бележницу">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Копирај податке у бележницу">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Одбијени системски позиви">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Пре неколико секунди">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Тип процеса">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Системски позив">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Аргументи">
+
+<!ENTITY aboutSupport.safeModeTitle "Покушај безбедни режим">
+<!ENTITY aboutSupport.restartInSafeMode.label "Рестартуј са онемогућеним додацима…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Могућности">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Дијагностика">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Дневник неуспеха">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Дневник одлука">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Онемогућене могућности чувара рушења">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Алтернативна решења">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

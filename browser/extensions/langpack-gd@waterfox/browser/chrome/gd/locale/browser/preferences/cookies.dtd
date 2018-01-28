@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "42em">
+
+<!ENTITY     cookiesonsystem.label          "Tha na briosgaidean a leanas air an stòradh air a' choimpiutair agad:">
+<!ENTITY     cookiename.label               "Ainm na briosgaid">
+<!ENTITY     cookiedomain.label             "Seòladh">
+
+<!ENTITY     props.name.label               "Ainm:">
+<!ENTITY     props.value.label              "Susbaint:">
+<!ENTITY     props.domain.label             "Òstair:">
+<!ENTITY     props.path.label               "Slighe:">
+<!ENTITY     props.secure.label             "Seòl airson:">
+<!ENTITY     props.expires.label            "Falbhaidh an ùine air:">
+<!ENTITY     props.container.label          "Soitheach:">
+
+<!ENTITY     window.title                   "Briosgaidean">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Lorg">
+<!ENTITY     searchFilter.accesskey         "L">
+
+<!ENTITY     button.close.label             "Dùin">
+<!ENTITY     button.close.accesskey         "n">

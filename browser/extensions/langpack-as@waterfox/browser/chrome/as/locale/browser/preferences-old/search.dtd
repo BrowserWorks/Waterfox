@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "অবিকল্পিত সন্ধান ইঞ্জিন">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "আপোনাৰ অবিকল্পিত সন্ধান ইঞ্জিন বাছক। &brandShortName; এ ইয়াক অৱস্থান বাৰ, সন্ধান বাৰ, আৰু আৰম্ভণি পৃষ্ঠাত ব্যৱহাৰ কৰে।">
+
+<!ENTITY provideSearchSuggestions.label        "সন্ধানৰ পৰামৰ্শসমূহ দিয়ক">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+
+
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "সন্ধান বাৰে আপোনাক বৈকল্পিক ইঞ্জিনসমূহক প্ৰত্যক্ষভাৱে সন্ধান কৰাৰ অনুমতি দিয়ে। কোনবোৰ দেখুৱা হব বাছক।">
+
+<!ENTITY engineNameColumn.label                "সন্ধান ইঞ্জিন">
+<!ENTITY engineKeywordColumn.label             "কিৱাৰ্ড">
+
+<!ENTITY restoreDefaultSearchEngines.label     "অবিকল্পিত সন্ধান ইঞ্জিন পুনৰুদ্ধাৰ কৰক">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "আতৰাওক">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "অধিক সন্ধান ইঞ্জিন প্ৰাপ্ত কৰক…">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY showURLBarSuggestions.label           "Show search suggestions in location bar results">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Search suggestions will not be shown in location bar results because you have configured &brandShortName; to never remember history.">
+

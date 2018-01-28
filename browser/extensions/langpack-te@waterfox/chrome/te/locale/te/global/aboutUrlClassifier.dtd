@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "url-classifier గురించి సమాచారం">
+<!ENTITY aboutUrlClassifier.providerTitle               "సమర్పకులు">
+<!ENTITY aboutUrlClassifier.provider                    "ప్రొవైడర్">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "చివరిగా నవీకరించిన సమయం">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "తరువాత నవీకరించు సమయం">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "బ్యాక్-ఆఫ్ సమయం">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "చివరి నవీకరణ స్థితి">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "తాజాకరించు">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "క్యాషె">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "తాజాపరుచు">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "శుభ్రపరుచు">
+<!ENTITY aboutUrlClassifier.cacheTableName              "పట్టిక పేరు">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "ఉపసర్గ">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "అనుకూల క్యాషె గడువు పూర్తి">
+<!ENTITY aboutUrlClassifier.debugTitle                  "డీబగ్">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "లాగ్ మాడ్యూలు సెట్ చేయి">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "లాగ్ ఫైల్ సెట్ చేయి">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS లాగ్ ఫైలు సెట్ చేయి">
+<!ENTITY aboutUrlClassifier.debugSBModules              "సురక్షిత బ్రౌజింగ్ లాగ్ మాడ్యూళ్ళు">
+<!ENTITY aboutUrlClassifier.debugModules                "ప్రస్తుత లాగ్ మాడ్యూళ్ళు">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "సురక్షిత బ్రౌజింగ్ JS లాగ్">
+<!ENTITY aboutUrlClassifier.debugFile                   "ప్రస్తుత లాగ్ ఫైలు">
+
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cache Entries">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Number of negative cache entries">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Number of positive cache entries">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Show entries">

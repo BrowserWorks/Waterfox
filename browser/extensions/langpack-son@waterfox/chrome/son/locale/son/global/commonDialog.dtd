@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Tiiramaa duura"> 
+<!ENTITY message.label    "Cebeyan-se kalimaɲaa kuru ga huru ne.">
+<!ENTITY editfield0.label "Goykaw maa:"> 
+<!ENTITY editfield1.label "Šennikufal:"> 
+<!ENTITY checkbox.label   "koroši">
+<!ENTITY copyCmd.label    "Berandi">
+<!ENTITY copyCmd.accesskey "B">
+<!ENTITY selectAllCmd.label "Kul suuba">
+<!ENTITY selectAllCmd.accesskey "K">

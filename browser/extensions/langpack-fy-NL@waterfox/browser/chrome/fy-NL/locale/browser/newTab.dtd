@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Nij ljepblêd">
+<!ENTITY newtab.customize.classic "Jo topwebsites toane">
+<!ENTITY newtab.customize.cog.enhanced "Ynklusyf foarstelde websites">
+<!ENTITY newtab.customize.cog.title2 "NIJ-LJEPBLÊDYNSTELLINGEN">
+<!ENTITY newtab.customize.cog.learn "Ynfo oer Nij ljepblêd">
+<!ENTITY newtab.customize.title "Jo side foar nije ljepblêden oanpasse">
+<!ENTITY newtab.customize.blank2 "Lege side toane">
+<!ENTITY newtab.undo.removedLabel "Miniatuer fuortsmite.">
+<!ENTITY newtab.undo.undoButton "Ungedien meitsje">
+<!ENTITY newtab.undo.restoreButton "Alles werom bringe">
+<!ENTITY newtab.undo.closeTooltip "Ferstopje">

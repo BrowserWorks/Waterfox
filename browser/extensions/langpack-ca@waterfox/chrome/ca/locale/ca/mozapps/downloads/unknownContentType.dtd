@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Heu triat obrir:">
+<!ENTITY  from.label                  "des de:">
+<!ENTITY  actionQuestion.label        "Què hauria de fer el &brandShortName; amb aquest fitxer?">
+
+<!ENTITY  openWith.label              "Obre amb">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Altres…">
+
+<!ENTITY  saveFile.label              "Desa el fitxer">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Fes-ho automàticament per a fitxers com aquests a partir d'ara.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "que és:">
+
+<!ENTITY  chooseHandlerMac.label      "Trieu…">
+<!ENTITY  chooseHandlerMac.accesskey  "T">
+<!ENTITY  chooseHandler.label         "Navega…">
+<!ENTITY  chooseHandler.accesskey     "N">
+
+<!ENTITY  unknownPromptText.label     "Voleu desar aquest fitxer?">

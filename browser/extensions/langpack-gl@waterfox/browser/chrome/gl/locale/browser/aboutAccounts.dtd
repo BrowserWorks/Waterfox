@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Benvida ao &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Acceda para sincronizar as súas lapelas, marcadores, contrasinais e moito máis.">
+<!ENTITY aboutAccountsConfig.startButton.label "Comezar">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferencias de Sync">
+<!ENTITY aboutAccounts.noConnection.title "Sen conexión">
+<!ENTITY aboutAccounts.noConnection.description "É necesario estar conectado á Internet para identificarse.">
+<!ENTITY aboutAccounts.noConnection.retry "Tentar de novo">
+
+<!ENTITY aboutAccounts.badConfig.description "Unable to determine your Waterfox Account server configuration. Please try again later.">
+<!ENTITY aboutAccounts.badConfig.title "Bad configuration">

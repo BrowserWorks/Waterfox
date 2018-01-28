@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Aviar">
+
+<!ENTITY startupPage2.label        "Cura che &brandShortName; vegn avià">
+<!ENTITY startupPage2.accesskey    "a">
+<!ENTITY startupUserHomePage.label "Mussar la pagina da partenza">
+<!ENTITY startupBlankPage.label    "Mussar ina pagina vida">
+<!ENTITY startupPrevSession.label  "Mussar las fanestras ed ils tabs da l'ultima sesida">
+
+<!ENTITY homepage2.label           "Pagina da partenza">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "Utilisar la pagina actuala">
+<!ENTITY useCurrentPage.accesskey  "g">
+<!ENTITY useMultiple.label         "Utilisar las paginas actualas">
+<!ENTITY chooseBookmark.label      "Utilisar segnapaginas…">
+<!ENTITY chooseBookmark.accesskey  "l">
+<!ENTITY restoreDefault.label      "Restaurar il standard">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "Telechargiadas">
+
+<!ENTITY saveTo.label "Memorisar las datotecas en il suandant ordinatur:">
+<!ENTITY saveTo.accesskey "o">
+<!ENTITY chooseFolderWin.label        "Tschertgar en…">
+<!ENTITY chooseFolderWin.accesskey    "T">
+<!ENTITY chooseFolderMac.label        "Tscherner…">
+<!ENTITY chooseFolderMac.accesskey    "T">
+<!ENTITY alwaysAskWhere.label         "Adina dumandar nua ch'ina datoteca duai vegnir memorisada">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "Adina controllar sche &brandShortName; è il navigatur da standard">
+<!ENTITY alwaysCheckDefault2.accesskey    "d">
+<!ENTITY setAsMyDefaultBrowser3.label     "Definir sco standard…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; è actualmain il navigatur da standard">
+<!ENTITY isNotDefault.label               "&brandShortName; n'è betg il navigatur da standard">
+
+<!ENTITY separateProfileMode.label        "Permetter che &brandShortName; e Waterfox èn activs a medem temp">
+<!ENTITY useWaterfoxSync.label             "Tip: Quai funcziunescha cun profils separads. Utilisescha Sync per sincronisar las datas tranter quels.">
+<!ENTITY getStarted.notloggedin.label     "S'annunziar tar &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Avrir las preferenzas da &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Exequir la versiun multiprocessuala da &brandShortName;">

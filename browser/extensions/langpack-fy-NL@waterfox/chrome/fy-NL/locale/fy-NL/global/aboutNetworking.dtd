@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Oer netwurken">
+<!ENTITY aboutNetworking.warning               "Dit is hiel eksperimenteel. Brûk dit net sûnder âlderlik tafersjoch.">
+<!ENTITY aboutNetworking.showNextTime          "Dizze warskôging de folgjende kear toane">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Opnij lade">
+<!ENTITY aboutNetworking.autoRefresh           "Elke 3 sekonden opnij lade">
+<!ENTITY aboutNetworking.hostname              "Hostnamme">
+<!ENTITY aboutNetworking.port                  "Poarte">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktyf">
+<!ENTITY aboutNetworking.idle                  "Wachtet">
+<!ENTITY aboutNetworking.host                  "Host">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Ferstjoerd">
+<!ENTITY aboutNetworking.received              "Untfongen">
+<!ENTITY aboutNetworking.family                "Famylje">
+<!ENTITY aboutNetworking.addresses             "Adressen">
+<!ENTITY aboutNetworking.expires               "Ferrint (sekonden)">
+<!ENTITY aboutNetworking.messagesSent          "Berjochten ferstjoerd">
+<!ENTITY aboutNetworking.messagesReceived      "Berjochten ûntfongen">
+<!ENTITY aboutNetworking.bytesSent             "Bytes ferstjoerd">
+<!ENTITY aboutNetworking.bytesReceived         "Bytes ûntfongen">
+<!ENTITY aboutNetworking.logging               "Logboekregistraasje">
+<!ENTITY aboutNetworking.logTutorial           "Sjoch op <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP-Logging</a> foar ynstruksjes oer hoe dit ark te brûken.">
+<!ENTITY aboutNetworking.currentLogFile        "Aktuele lochbestân:">
+<!ENTITY aboutNetworking.currentLogModules     "Aktuele lochmodules:">
+<!ENTITY aboutNetworking.setLogFile            "Lochbestân ynstelle">
+<!ENTITY aboutNetworking.setLogModules         "Lochodules ynstelle">
+<!ENTITY aboutNetworking.startLogging          "Loggen starte">
+<!ENTITY aboutNetworking.stopLogging           "Loggen stopje">
+<!ENTITY aboutNetworking.dnsLookup             "DNS-sykaksje">
+<!ENTITY aboutNetworking.dnsLookupButton       "Omsette">
+<!ENTITY aboutNetworking.dnsDomain             "Domein">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-adressen">
+<!ENTITY aboutNetworking.rcwn                  "RCWN-statistiken">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN-steat">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Oantal wûn troch buffer">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Oantal wûn troch netwurk">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Totale oantal netwurkoanfragen">
+<!ENTITY aboutNetworking.rcwnOperation         "Bufferbewurking">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Iepenje">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Lêze">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Skriuwe">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Fermelding iepenje">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Koart gemiddelde">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Lang gemiddelde">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Lange standertdeviaasje">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Oantal trage buffers">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Oantal net-trage buffers">

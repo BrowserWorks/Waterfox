@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "재생">
+<!ENTITY playButton.pauseLabel "정지">
+<!ENTITY muteButton.muteLabel "음소거">
+<!ENTITY muteButton.unmuteLabel "소리 켜기">
+<!ENTITY fullscreenButton.enterfullscreenlabel "전체 화면 표시">
+<!ENTITY fullscreenButton.exitfullscreenlabel "전체 화면 표시 해제">
+<!ENTITY castingButton.castingLabel "화면으로 출력">
+<!ENTITY closedCaption.off "끔">
+
+<!ENTITY stats.media "미디어">
+<!ENTITY stats.size "크기">
+<!ENTITY stats.activity "활동">
+<!ENTITY stats.activityPaused "중단">
+<!ENTITY stats.activityPlaying "재생중">
+<!ENTITY stats.activityEnded "완료">
+<!ENTITY stats.activitySeeking "(찾는 중)">
+<!ENTITY stats.volume "음량">
+<!ENTITY stats.framesParsed "파싱된 프레임">
+<!ENTITY stats.framesDecoded "디코딩 프레임">
+<!ENTITY stats.framesPresented "제시된 프레임">
+<!ENTITY stats.framesPainted "색상 프레임">
+
+<!ENTITY error.aborted "동영상의 읽기를 중지했습니다.">
+<!ENTITY error.network "네트워크 오류가 발생했기 때문에 동영상의 재생을 중지했습니다.">
+<!ENTITY error.decode "파일이 깨져서 동영상을 재생할 수 없습니다.">
+<!ENTITY error.srcNotSupported "이 동영상의 파일 형식 또는 MIME 타입을 지원하지 않습니다.">
+<!ENTITY error.noSource2 "지원 파일 형식 및 MIME 타입의 동영상을 발견하지 못했습니다.">
+<!ENTITY error.generic "알 수 없는 오류가 발생했기 때문에 동영상의 재생을 중지했습니다.">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "#1 / #2">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

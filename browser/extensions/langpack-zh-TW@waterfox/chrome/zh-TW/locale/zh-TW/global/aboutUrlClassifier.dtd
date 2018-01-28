@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "url-classifier 的相關資訊">
+<!ENTITY aboutUrlClassifier.providerTitle               "提供者">
+<!ENTITY aboutUrlClassifier.provider                    "提供者">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "上次更新時間">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "下次更新時間">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "上次更新狀態">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "更新">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "快取">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "重新整理">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "清除">
+<!ENTITY aboutUrlClassifier.cacheTableName              "表格名稱">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "負向快取項目數量">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "正向快取項目數量">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "顯示項目">
+<!ENTITY aboutUrlClassifier.cacheEntries                "快取項目">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "前綴">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "負向快取過期時間">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "完整雜湊">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "正向快取過期時間">
+<!ENTITY aboutUrlClassifier.debugTitle                  "除錯">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "設定記錄模組">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "設定記錄檔">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "設定 JS 紀錄">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Safe Browsing 記錄模組">
+<!ENTITY aboutUrlClassifier.debugModules                "目前的記錄模組">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Safe Browsing JS 記錄">
+<!ENTITY aboutUrlClassifier.debugFile                   "目前記錄檔">

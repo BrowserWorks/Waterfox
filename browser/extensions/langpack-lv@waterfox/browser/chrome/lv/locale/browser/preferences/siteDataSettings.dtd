@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Iestatījumi - Lapas dati">
+<!ENTITY     hostCol.label                 "Lapa">
+<!ENTITY     statusCol.label               "Statuss">
+<!ENTITY     usageCol.label                "Krātuve">
+<!ENTITY     searchTextboxPlaceHolder             "Meklēt lapas">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Izņemt izvēlēto">
+<!ENTITY     removeSelected.accesskey      "I">
+<!ENTITY     save.label                    "Saglabāt izmaiņas">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Atcelt">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Noņem vietņu datus">
+<!ENTITY     removingSelected.description  "Vietnes datu noņemšanu noņems arī saistītās sīkdatnes un bezsaistes saturu. Tas var pārtraukt jūsu autorizācijas sesiju. Vai tiešām vēlaties veikt izmaiņas?">
+<!ENTITY     siteTree.label                "Tiks noņemtas sekojošu lapu sīkdatnes:">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "连接">
+<!ENTITY header     "连接到远程设备">
+<!ENTITY host       "主机名：">
+<!ENTITY port       "端口：">
+<!ENTITY connect    "连接">
+<!ENTITY connecting "正在连接…">
+<!ENTITY availableAddons "可用的远程附加组件：">
+<!ENTITY availableTabs "可用的远程标签页：">
+<!ENTITY availableProcesses "可用的远程进程：">
+<!ENTITY connectionError "错误：">
+<!ENTITY errorTimeout "错误：连接超时。">
+<!ENTITY errorRefused "错误：连接被拒绝。">
+<!ENTITY errorUnexpected "意外错误。">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox 开发者工具可以调试远程设备（例如 Waterfox for Android 和 Waterfox OS）。请确保您开启了远程设备中的“远程调试”选项。更多信息请参阅">
+<!ENTITY remoteDocumentation "文档">
+<!ENTITY remoteHelpSuffix "。">
+

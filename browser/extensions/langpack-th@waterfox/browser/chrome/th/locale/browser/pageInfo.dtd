@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "คัดลอก">
+<!ENTITY  copy.accesskey        "ค">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "เลือกทั้งหมด">
+<!ENTITY  selectall.accesskey   "ล">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "ทั่วไป">
+<!ENTITY  generalTab.accesskey  "ท">
+<!ENTITY  generalTitle          "ชื่อ:">
+<!ENTITY  generalURL            "ที่อยู่:">
+<!ENTITY  generalType           "ชนิด:">
+<!ENTITY  generalMode           "โหมดการเรนเดอร์:">
+<!ENTITY  generalSize           "ขนาด:">
+<!ENTITY  generalReferrer       "URL อ้างอิง:">
+<!ENTITY  generalSource         "ที่มาแคช:">
+<!ENTITY  generalModified       "เปลี่ยนแปลงเมื่อ:">
+<!ENTITY  generalEncoding2      "รหัสอักขระ:">
+<!ENTITY  generalMetaName       "ชื่อ">
+<!ENTITY  generalMetaContent    "เนื้อหา">
+
+<!ENTITY  mediaTab              "สื่อ">
+<!ENTITY  mediaTab.accesskey    "ส">
+<!ENTITY  mediaLocation         "ตำแหน่งที่ตั้ง:">
+<!ENTITY  mediaText             "ข้อความที่เกี่ยวข้อง:">
+<!ENTITY  mediaAltHeader        "ข้อความแทนภาพ">
+<!ENTITY  mediaAddress          "ที่อยู่">
+<!ENTITY  mediaType             "ชนิด">
+<!ENTITY  mediaSize             "ขนาด">
+<!ENTITY  mediaCount            "จำนวน">
+<!ENTITY  mediaDimension        "มิติ:">
+<!ENTITY  mediaLongdesc         "คำอธิบายแบบยาว:">
+<!ENTITY  mediaBlockImage.accesskey "ป">
+<!ENTITY  mediaSaveAs           "บันทึกเป็น…">
+<!ENTITY  mediaSaveAs.accesskey "บ">
+<!ENTITY  mediaSaveAs2.accesskey "บ">
+<!ENTITY  mediaPreview          "แสดงตัวอย่างสื่อ:">
+
+<!ENTITY  feedTab               "ฟีด">
+<!ENTITY  feedTab.accesskey     "ฟ">
+<!ENTITY  feedSubscribe         "บอกรับ">
+<!ENTITY  feedSubscribe.accesskey "บ">
+
+<!ENTITY  permTab               "การอนุญาต">
+<!ENTITY  permTab.accesskey     "ก">
+<!ENTITY  permUseDefault        "ใช้ค่าเริ่มต้น">
+<!ENTITY  permAskAlways         "ถามเสมอ">
+<!ENTITY  permAllow             "อนุญาต">
+<!ENTITY  permAllowSession      "อนุญาตในวาระ">
+<!ENTITY  permBlock             "ปิดกั้น">
+<!ENTITY  permissionsFor        "การอนุญาตสำหรับ:">
+<!ENTITY  permPlugins           "เปิดใช้งานปลั๊กอิน">
+
+<!ENTITY  permClearStorage           "ล้างที่เก็บข้อมูล">
+<!ENTITY  permClearStorage.accesskey "ล">
+
+<!ENTITY  securityTab           "ความปลอดภัย">
+<!ENTITY  securityTab.accesskey "ค">
+<!ENTITY  securityView.certView "ดูใบรับรอง">
+<!ENTITY  securityView.accesskey "บ">
+<!ENTITY  securityView.unknown   "ไม่ทราบ">
+
+
+<!ENTITY  securityView.identity.header   "อัตลักษณ์เว็บไซต์">
+<!ENTITY  securityView.identity.owner    "เจ้าของ:">
+<!ENTITY  securityView.identity.domain   "เว็บไซต์:">
+<!ENTITY  securityView.identity.verifier "ยืนยันโดย:">
+<!ENTITY  securityView.identity.validity "หมดอายุเมื่อ:">
+
+<!ENTITY  securityView.privacy.header                   "ความเป็นส่วนตัวและประวัติ">
+<!ENTITY  securityView.privacy.history                  "ฉันเคยเยี่ยมชมเว็บไซต์นี้ก่อนหน้าวันนี้หรือไม่?">
+<!ENTITY  securityView.privacy.cookies                  "เว็บไซต์นี้จัดเก็บข้อมูล (คุกกี้) ลงในคอมพิวเตอร์ของฉันหรือไม่?">
+<!ENTITY  securityView.privacy.viewCookies              "ดูคุกกี้">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "ด">
+<!ENTITY  securityView.privacy.passwords                "ฉันเคยบันทึกรหัสผ่านใด ๆ สำหรับเว็บไซต์นี้หรือไม่?">
+<!ENTITY  securityView.privacy.viewPasswords            "ดูรหัสผ่านที่บันทึกไว้">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "ร">
+
+<!ENTITY  securityView.technical.header                 "รายละเอียดทางเทคนิค">
+
+<!ENTITY  helpButton.label                              "ช่วยเหลือ">

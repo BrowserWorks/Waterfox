@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Redare">
+<!ENTITY playButton.pauseLabel "Pauză">
+<!ENTITY muteButton.muteLabel "Dezactivează sunetul">
+<!ENTITY muteButton.unmuteLabel "Activează sunetul">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Ecran complet">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Ieși din modul ecran complet">
+<!ENTITY castingButton.castingLabel "Proiectează pe ecran">
+<!ENTITY closedCaption.off "Dezactivează">
+
+<!ENTITY stats.media "Multimedia">
+<!ENTITY stats.size "Dimensiune">
+<!ENTITY stats.activity "Activitate">
+<!ENTITY stats.activityPaused "Pus pe pauză">
+<!ENTITY stats.activityPlaying "Redare">
+<!ENTITY stats.activityEnded "Terminat">
+<!ENTITY stats.activitySeeking "(căutare)">
+<!ENTITY stats.volume "Volum">
+<!ENTITY stats.framesParsed "Cadre analizate">
+<!ENTITY stats.framesDecoded "Cadre decodate">
+<!ENTITY stats.framesPresented "Cadre prezentate">
+<!ENTITY stats.framesPainted "Cadre pictate">
+
+<!ENTITY error.aborted "Încărcarea videoclipului a fost oprită.">
+<!ENTITY error.network "Redarea videoclipului a fost abandonată datorită unei erori de rețea.">
+<!ENTITY error.decode "Videoclipul nu poate fi redat deoarece fișierul este corupt.">
+<!ENTITY error.srcNotSupported "Formatul videoclipului sau tipul MIME nu este suportat.">
+<!ENTITY error.noSource2 "Nu s-a găsit niciun videoclip cu format sau tip MIME suportat.">
+<!ENTITY error.generic "Redarea videoclipului a fost abandonată datorită unei erori necunoscute.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "s-a redat #1 din #2">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

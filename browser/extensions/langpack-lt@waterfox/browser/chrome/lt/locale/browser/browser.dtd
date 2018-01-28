@@ -1,0 +1,996 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(privatusis naršymas)">
+
+<!ENTITY appmenu.tooltip                     "Atverti meniu">
+<!ENTITY navbarOverflow.label                "Daugiau priemonių…">
+<!-- Tab context menu -->
+
+<!ENTITY  reloadTab.label                    "Atsiųsti kortelės tinklalapį iš naujo">
+<!ENTITY  reloadTab.accesskey                "n">
+<!ENTITY  reloadAllTabs.label                "Atsiųsti visų kortelių tinklalapius iš naujo">
+<!ENTITY  reloadAllTabs.accesskey            "A">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Užverti korteles dešinėje">
+<!ENTITY  closeTabsToTheEnd.accesskey        "d">
+<!ENTITY  closeOtherTabs.label               "Užverti kitas korteles">
+<!ENTITY  closeOtherTabs.accesskey           "k">
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+
+<!ENTITY  pinTab.label                       "Įsegti kortelę kairėje">
+<!ENTITY  pinTab.accesskey                   "s">
+<!ENTITY  unpinTab.label                     "Išsegti kortelę">
+<!ENTITY  unpinTab.accesskey                 "s">
+<!ENTITY  sendTabToDevice.label              "Nusiųsti kortelę į įrenginį">
+<!ENTITY  sendTabToDevice.accesskey          "r">
+<!ENTITY  sendPageToDevice.label             "Nusiųsti tinklalapį į įrenginį">
+<!ENTITY  sendPageToDevice.accesskey         "r">
+<!ENTITY  sendLinkToDevice.label             "Nusiųsti saitą į įrenginį">
+<!ENTITY  sendLinkToDevice.accesskey         "r">
+<!ENTITY  moveToNewWindow.label              "Perkelti į naują langą">
+<!ENTITY  moveToNewWindow.accesskey          "l">
+<!ENTITY  bookmarkAllTabs.label              "Įrašyti į adresyną visas korteles…">
+<!ENTITY  bookmarkAllTabs.accesskey          "v">
+<!ENTITY  undoCloseTab.label                 "Atšaukti kortelės užvėrimą">
+<!ENTITY  undoCloseTab.accesskey             "š">
+<!ENTITY  closeTab.label                     "Užverti kortelę">
+<!ENTITY  closeTab.accesskey                 "U">
+
+<!ENTITY  listAllTabs.label      "Pateikti visas korteles">
+
+<!ENTITY tabCmd.label "Nauja kortelė">
+<!ENTITY tabCmd.accesskey "k">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Atverti adresą…">
+<!ENTITY openFileCmd.label "Atverti…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Puslapio nuostatos…">
+<!ENTITY printSetupCmd.accesskey "n">
+<!ENTITY printPreviewCmd.label "Spaudinio peržiūra">
+<!ENTITY printPreviewCmd.accesskey "ž">
+<!ENTITY printCmd.label "Spausdinti…">
+<!ENTITY printCmd.accesskey "S">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Atsijungti nuo tinklo">
+<!ENTITY goOfflineCmd.accesskey "t">
+
+<!ENTITY menubarCmd.label "Meniu juosta">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "Naršymo juosta">
+<!ENTITY personalbarCmd.label "Adresyno juosta">
+<!ENTITY personalbarCmd.accesskey "A">
+<!ENTITY bookmarksToolbarItem.label "Adresyno juostos elementai">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Iš naujo įkelti visas korteles">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "v">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Visas korteles įtraukti į adresyną…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "k">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Atšaukti kortelės užvėrimą">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "š">
+
+<!ENTITY pageSourceCmd.label "Pirminis tekstas">
+<!ENTITY pageSourceCmd.accesskey "t">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Informacija apie tinklalapį">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Kopijuoti kortelę">
+<!ENTITY mirrorTabCmd.accesskey "K">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Rodyti visame ekrane">
+<!ENTITY enterFullScreenCmd.accesskey "v">
+<!ENTITY exitFullScreenCmd.label "Grįžti iš viso ekrano">
+<!ENTITY exitFullScreenCmd.accesskey "v">
+<!ENTITY fullScreenCmd.label "Visas ekranas">
+<!ENTITY fullScreenCmd.accesskey "V">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Rodyti visas korteles">
+<!ENTITY showAllTabsCmd.accesskey "k">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Jungtis prie „&syncBrand.shortName.label;“">
+<!ENTITY fxaSignedIn.tooltip "Atverti „&syncBrand.shortName.label;“ nuostatas">
+<!ENTITY fxaSignInError.label "Iš naujo jungtis prie „&syncBrand.shortName.label;“">
+<!ENTITY fxaUnverified.label "Patvirtinkite savo paskyrą">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Suskleisti">
+<!ENTITY fullScreenRestore.tooltip "Normalioji veiksena">
+<!ENTITY fullScreenClose.tooltip "Užverti">
+<!ENTITY fullScreenAutohide.label "Slėpti priemonių juostas">
+<!ENTITY fullScreenAutohide.accesskey "S">
+<!ENTITY fullScreenExit.label "Grįžti iš viso ekrano veiksenos">
+<!ENTITY fullScreenExit.accesskey "v">
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "dabar yra visame ekrane">
+<!ENTITY fullscreenWarning.generic.label "Šis dokumentas dabar yra visame ekrane">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+
+<!ENTITY exitDOMFullscreen.button "Grįžti iš viso ekrano (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Grįžti iš viso ekrano (esc)">
+<!ENTITY leaveDOMFullScreen.label "Grįžti iš viso ekrano">
+<!ENTITY leaveDOMFullScreen.accesskey "G">
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "valdo jūsų žymeklį. Spustelėkite Esc, norėdami atgauti valdymą.">
+<!ENTITY pointerlockWarning.generic.label "Šis dokumentas valdo jūsų žymeklį. Spustelėkite Esc, norėdami atgauti valdymą.">
+
+<!ENTITY closeWindow.label "Užverti langą">
+<!ENTITY closeWindow.accesskey "g">
+
+<!ENTITY bookmarksMenu.label "Adresynas">
+<!ENTITY bookmarksMenu.accesskey "A">
+<!ENTITY bookmarkThisPageCmd.label "Įrašyti į adresyną">
+<!ENTITY editThisBookmarkCmd.label "Taisyti adresyno įrašą">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Rasti daugiau dalinimosi tarnybų...">
+<!ENTITY sharePageCmd.label "Dalytis šiuo tinklalapiu">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "D">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Dalytis šiuo saitu">
+<!ENTITY shareLink.accesskey "D">
+<!ENTITY shareImage.label "Dalintis šiuo paveikslu">
+<!ENTITY shareImage.accesskey "a">
+<!ENTITY shareSelect.label "Dalintis pažymėjimu">
+<!ENTITY shareSelect.accesskey "a">
+<!ENTITY shareVideo.label "Dalintis šiuo vaizdo įrašu">
+<!ENTITY shareVideo.accesskey "a">
+<!ENTITY feedsMenu2.label "Prenumeruoti šio tinklalapio naujienas">
+<!ENTITY subscribeToPageMenupopup.label "Prenumeruoti šio tinklalapio naujienas">
+<!ENTITY subscribeToPageMenuitem.label "Prenumeruoti šio tinklalapio naujienas…">
+<!ENTITY addCurPagesCmd.label "Įrašyti į adresyną visas korteles…">
+<!ENTITY showAllBookmarks2.label "Rodyti visą adresyną">
+<!ENTITY recentBookmarks.label "Paskiausiai įtraukti į adresyną">
+<!ENTITY otherBookmarksCmd.label "Kiti adresai">
+<!ENTITY mobileBookmarksCmd.label "Mobilusis adresynas">
+<!ENTITY bookmarksToolbarChevron.tooltip "Kiti adresai">
+<!ENTITY showRecentlyBookmarked.label     "Rodyti paskiausiai įtrauktus į adresyną">
+<!ENTITY showRecentlyBookmarked.accesskey "o">
+<!ENTITY hideRecentlyBookmarked.label     "Slėpti paskiausiai įtrauktus į adresyną">
+<!ENTITY hideRecentlyBookmarked.accesskey "l">
+
+<!ENTITY backCmd.label                "Atgal">
+<!ENTITY backButton.tooltip           "Vienu tinklalapiu atgal">
+<!ENTITY forwardCmd.label             "Pirmyn">
+<!ENTITY forwardButton.tooltip        "Vienu tinklalapiu pirmyn">
+<!ENTITY backForwardButtonMenu.tooltip "Spustelėję dešiniu pelės mygtuku arba palaikę nuspaustą kairįjį, pamatysite kortelės žurnalą">
+<!ENTITY backForwardButtonMenuMac.tooltip "Palaikę nuspaustą pelės mygtuką, pamatysite kortelės žurnalą">
+<!ENTITY reloadCmd.label              "Atsiųsti iš naujo">
+<!ENTITY stopCmd.label                "Stabdyti">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Eiti į adreso lauke surinktą adresą">
+<!ENTITY printButton.label            "Spausdinti">
+<!ENTITY printButton.tooltip          "Spausdinti šį tinklalapį">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Peržiūrėti svetainės informaciją">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Atverti pranešimo skydelį">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Atverti buvimo vietos nustatymo skydelį">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Atverti priedo diegimo pranešimo skydelį">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Atverti duomenų darbui neprisijungus pranešimo skydelį">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Atverti slaptažodžio įrašymo pranešimo skydelį">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Valdyti papildinių naudojimą">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Pasirinkite, ar norite gauti pranešimus iš šios svetainės">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Saugoti duomenis išliekančioje atmintyje">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Naršyklė valdoma per nuotolį">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Tvarkyti kameros ir mikrofono naudojimą svetainėje">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Tvarkyti mikrofono naudojimą svetainėje">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Tvarkyti langų ar viso ekrano bendrinimą su svetaine">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Atverti diegimo pranešimo skydelį">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Išversti šį tinklalapį">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Tvarkyti tinklalapio vertimą">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Tvarkyti DRM programinės įrangos naudojimą">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Šioje svetainėje esate užblokavę savo kamerą.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Šioje svetainėje esate užblokavę savo mikrofoną.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Šiai svetainei neleidžiate dalintis ekrano vaizdu.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Šioje svetainėje esate užblokavę buvimo vietos informaciją.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Šioje svetainėje esate užblokavę duomenų saugojimą.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Šioje svetainėje esate užblokavę pranešimus.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Šioje svetainėje esate užblokavę išliekančių duomenų saugojimą.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Rodyti žurnalą">
+
+<!ENTITY searchItem.title             "Paieška">
+<!-- Toolbar items -->
+
+<!ENTITY homeButton.label             "Pradžios tinklalapis">
+
+<!ENTITY bookmarksButton.label          "Adresynas">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Adresynas">
+<!ENTITY bookmarksMenuButton.other.label "Kiti adresai">
+<!ENTITY bookmarksMenuButton.mobile.label "Mobilusis adresynas">
+<!ENTITY viewBookmarksSidebar2.label        "Rodyti adresyną parankinėje">
+<!ENTITY viewBookmarksToolbar.label         "Rodyti adresyno juostą">
+<!ENTITY searchBookmarks.label              "Ieškoti adresyne">
+
+<!ENTITY containersMenu.label "Sudėtinės kortelės">
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Žurnalas">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Priemonės">
+<!ENTITY toolsMenu.accesskey          "P"> 
+
+<!ENTITY keywordfield.label           "Įdėti šios paieškos reikšminį žodį…">
+<!ENTITY keywordfield.accesskey       "p">
+
+<!ENTITY downloads.label              "Atsiuntimai">
+<!ENTITY downloads.accesskey          "s">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Priedai">
+<!ENTITY addons.accesskey             "P">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Saityno kūrėjams">
+<!ENTITY webDeveloperMenu.accesskey   "k">
+
+<!ENTITY inspectContextMenu.label     "Tirti elementą">
+<!ENTITY inspectContextMenu.accesskey "T">
+
+<!ENTITY fileMenu.label         "Failas"> 
+<!ENTITY fileMenu.accesskey       "F">
+<!ENTITY newUserContext.label             "Nauja sudėtinė kortelė">
+<!ENTITY newUserContext.accesskey         "s">
+<!ENTITY newNavigatorCmd.label        "Naujas langas">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "l">
+<!ENTITY newPrivateWindow.label     "Naujas privataus naršymo langas">
+<!ENTITY newPrivateWindow.accesskey "p">
+<!ENTITY newNonRemoteWindow.label   "Naujas ne „e10s“ langas">
+
+<!ENTITY editMenu.label         "Taisa"> 
+<!ENTITY editMenu.accesskey       "T"> 
+<!ENTITY undoCmd.label            "Atšaukti">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "A"> 
+<!ENTITY redoCmd.label            "Atstatyti">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "t"> 
+<!ENTITY cutCmd.label           "Iškirpti">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "r"> 
+<!ENTITY copyCmd.label            "Kopijuoti">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "K"> 
+<!ENTITY pasteCmd.label           "Įdėti">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "d"> 
+<!ENTITY deleteCmd.label          "Pašalinti">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "š"> 
+<!ENTITY selectAllCmd.label         "Pažymėti viską">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "v"> 
+<!ENTITY preferencesCmd2.label       "Nuostatos">
+<!ENTITY preferencesCmd2.accesskey     "N">
+<!ENTITY preferencesCmdUnix.label       "Nuostatos">
+<!ENTITY preferencesCmdUnix.accesskey     "N"> 
+
+<!ENTITY clearRecentHistory.label               "Valyti žurnalą…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Rodymas"> 
+<!ENTITY viewMenu.accesskey       "R"> 
+<!ENTITY viewToolbarsMenu.label       "Priemonių juostos"> 
+<!ENTITY viewToolbarsMenu.accesskey     "j"> 
+<!ENTITY viewSidebarMenu.label "Parankinė">
+<!ENTITY viewSidebarMenu.accesskey "P">
+<!ENTITY viewCustomizeToolbar.label       "Tvarkyti…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "T">
+<!ENTITY overflowCustomizeToolbar.label       "Tvarkyti priemonių juostą…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "T">
+
+<!ENTITY historyMenu.label "Žurnalas">
+<!ENTITY historyMenu.accesskey "u">
+<!ENTITY historyUndoMenu.label "Paskiausiai užvertos kortelės">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Paskiausiai užverti langai">
+<!ENTITY historyRestoreLastSession.label "Atkurti paskiausiąjį seansą">
+
+<!ENTITY showAllHistoryCmd2.label "Rodyti visą žurnalą">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Tvarkyti">
+<!ENTITY appMenuCustomize.tooltip "Tvarkyti meniu ir priemonių juostas">
+<!ENTITY appMenuCustomizeExit.label "Baigti tvarkymą">
+<!ENTITY appMenuCustomizeExit.tooltip "Užbaigti tvarkymą">
+<!ENTITY appMenuHistory.label "Žurnalas">
+<!ENTITY appMenuHistory.showAll.label "Rodyti visą žurnalą">
+<!ENTITY appMenuHistory.clearRecent.label "Valyti žurnalą…">
+<!ENTITY appMenuHistory.restoreSession.label "Atkurti paskiausiąjį seansą">
+<!ENTITY appMenuHistory.viewSidebar.label "Rodyti žurnalo parankinę">
+<!ENTITY appMenuHistory.recentHistory.label "Žurnalas">
+<!ENTITY appMenuHelp.label "Žinynas">
+<!ENTITY appMenuHelp.tooltip "Atverti žinyno meniu">
+
+<!ENTITY appMenuRemoteTabs.label "Sinchronizuotos kortelės">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Nėra atvertų kortelių">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Rodyti daugiau">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Rodyti daugiau kortelių iš šio įrenginio">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Rodyti visas">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Rodyti visas korteles iš šio įrenginio">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Įjunkite kortelių sinchronizavimą, norėdami peržiūrėti kituose įrenginiuose esančias korteles.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Nėra sinchronizuotų kortelių… Kol kas!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Norite matyti savo korteles iš kitų įrenginių čia?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Sinchronizavimo nuostatos">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Prisijunkite norėdami peržiūrėti kituose įrenginiuose esančias korteles.">
+<!ENTITY appMenuRemoteTabs.signin.label "Prisijungti prie „Sync“">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Tvarkyti įrenginius…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Rodyti sinchronizuotų kortelių parankinę">
+
+<!ENTITY customizeMenu.addToToolbar.label "Pridėti į priemonių juostą">
+<!ENTITY customizeMenu.addToToolbar.accesskey "P">
+<!ENTITY customizeMenu.addToPanel.label "Pridėti į meniu">
+<!ENTITY customizeMenu.addToPanel.accesskey "m">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Pridėti į perpildymo meniu">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.moveToToolbar.label "Perkelti į priemonių juostą">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "P">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Perkelti į meniu">
+<!ENTITY customizeMenu.moveToPanel.accesskey "P">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Įsegti į perpildymo meniu">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "s">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Išsegti iš perpildymo meniu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "I">
+<!ENTITY customizeMenu.removeFromToolbar.label "Pašalinti iš priemonių juostos">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "š">
+<!ENTITY customizeMenu.removeFromMenu.label "Pašalinti iš meniu">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "š">
+<!ENTITY customizeMenu.addMoreItems.label "Pridėti daugiau elementų…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "d">
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY moreMenu.label "Daugiau">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Įveskite adresą arba paieškos žodžius">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Priedas:">
+<!ENTITY urlbar.switchToTab.label     "Pereiti į kortelę:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Ar norėtumėte paieškos metu matyti siūlymus?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Sužinoti daugiau…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "s">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Ne">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Taip">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "t">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Patarimas:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Gaukite pagalbos ieškant! Prie paieškos siūlymų matysite &#x1F50E;.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Keisti nuostatas…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "t">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Keisti nuostatas…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "t">
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+
+<!ENTITY contentSearchInput.label     "Paieškos užklausa">
+<!ENTITY contentSearchSubmit.tooltip  "Išsiųsti paiešką">
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!ENTITY searchInput.placeholder      "Ieškoti">
+<!ENTITY searchIcon.tooltip           "Paieška">
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+
+<!ENTITY searchFor.label              "Ieškoti ">
+<!ENTITY searchWith.label             " su:">
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+
+<!ENTITY search.label                 "Ieškoti su ">
+<!ENTITY searchAfter.label            "">
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+
+<!ENTITY searchWithHeader.label       "Ieškoti per:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Keisti paieškos nuostatas">
+<!ENTITY changeSearchSettings.tooltip "Keisti paieškos nuostatas">
+
+<!ENTITY searchInNewTab.label         "Ieškoti naujoje kortelėje">
+<!ENTITY searchInNewTab.accesskey     "k">
+<!ENTITY searchSetAsDefault.label     "Laikyti numatytąja ieškykle">
+<!ENTITY searchSetAsDefault.accesskey "m">
+
+<!ENTITY openLinkCmdInTab.label       "Atverti saitą naujoje kortelėje">
+<!ENTITY openLinkCmdInTab.accesskey   "k">
+<!ENTITY openLinkCmd.label            "Atverti saitą naujame lange">
+<!ENTITY openLinkCmd.accesskey        "l">
+<!ENTITY openLinkInPrivateWindowCmd.label "Atverti saitą naujame privačiojo naršymo lange">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "p">
+<!ENTITY openLinkCmdInCurrent.label     "Atverti saitą">
+<!ENTITY openLinkCmdInCurrent.accesskey "A">
+<!ENTITY openFrameCmdInTab.label      "Atverti kadrą naujoje kortelėje">
+<!ENTITY openFrameCmdInTab.accesskey  "k">
+<!ENTITY openFrameCmd.label           "Atverti kadrą naujame lange">
+<!ENTITY openFrameCmd.accesskey       "l">
+<!ENTITY openLinkCmdInContainerTab.label "Atverti saitą naujoje sudėtinėje kortelėje">
+<!ENTITY openLinkCmdInContainerTab.accesskey "k">
+<!ENTITY showOnlyThisFrameCmd.label     "Rodyti tik šį kadrą">
+<!ENTITY showOnlyThisFrameCmd.accesskey "t">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Atsiųsti kadrą iš naujo">
+<!ENTITY reloadFrameCmd.accesskey     "n">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Rodyti atrankos pirminį tekstą">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Rodyti „MathML“ pirminį tekstą">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "d">
+<!ENTITY viewPageSourceCmd.label      "Pirminis tekstas">
+<!ENTITY viewPageSourceCmd.accesskey  "t">
+<!ENTITY viewFrameSourceCmd.label     "Kadro pirminis tekstas">
+<!ENTITY viewFrameSourceCmd.accesskey "m">
+<!ENTITY viewPageInfoCmd.label        "Informacija apie tinklalapį">
+<!ENTITY viewPageInfoCmd.accesskey    "I">
+<!ENTITY viewFrameInfoCmd.label       "Informacija apie kadrą">
+<!ENTITY viewFrameInfoCmd.accesskey   "I">
+<!ENTITY reloadImageCmd.label         "Atsiųsti paveikslą iš naujo">
+<!ENTITY reloadImageCmd.accesskey     "n">
+<!ENTITY viewImageCmd.label           "Rodyti paveikslą">
+<!ENTITY viewImageCmd.accesskey       "y">
+<!ENTITY viewImageInfoCmd.label       "Rodyti paveikslo savybes">
+<!ENTITY viewImageInfoCmd.accesskey   "s">
+<!ENTITY viewImageDescCmd.label       "Rodyti aprašą">
+<!ENTITY viewImageDescCmd.accesskey   "o">
+<!ENTITY viewVideoCmd.label           "Rodyti vaizdo įrašą">
+<!ENTITY viewVideoCmd.accesskey       "y">
+<!ENTITY viewBGImageCmd.label         "Rodyti fono piešinį">
+<!ENTITY viewBGImageCmd.accesskey     "f">
+<!ENTITY setDesktopBackgroundCmd.label      "Naudoti kaip darbastalio fono piešinį…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "d">
+<!ENTITY bookmarkPageCmd2.label       "Įrašyti į adresyną">
+<!ENTITY bookmarkThisLinkCmd.label      "Įtraukti saitą į adresyną">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "d">
+<!ENTITY bookmarkThisFrameCmd.label      "Įtraukti kadrą į adresyną">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "d">
+<!ENTITY copyURLCmd.label             "Kopijuoti URL">
+<!ENTITY emailPageCmd.label           "Išsiųsti saitą el. paštu…">
+<!ENTITY emailPageCmd.accesskey       "ų">
+<!ENTITY savePageCmd.label            "Įrašyti kaip…">
+<!ENTITY savePageCmd.accesskey        "r">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "p">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Įrašyti kadrą kaip…">
+<!ENTITY saveFrameCmd.accesskey       "r">
+<!ENTITY printFrameCmd.label          "Spausdinti kadrą…">
+<!ENTITY printFrameCmd.accesskey      "S">
+<!ENTITY saveLinkCmd.label            "Įrašyti saistomą objektą kaip…">
+<!ENTITY saveLinkCmd.accesskey        "Į">
+<!ENTITY saveImageCmd.label           "Įrašyti paveikslą kaip…">
+<!ENTITY saveImageCmd.accesskey       "r">
+<!ENTITY saveVideoCmd.label           "Įrašyti vaizdą kaip…">
+<!ENTITY saveVideoCmd.accesskey       "r">
+<!ENTITY saveAudioCmd.label           "Įrašyti garsą kaip…">
+<!ENTITY saveAudioCmd.accesskey       "r">
+<!ENTITY emailImageCmd.label          "Išsiųsti paveikslą el. paštu…">
+<!ENTITY emailImageCmd.accesskey      "s">
+<!ENTITY emailVideoCmd.label          "Išsiųsti vaizdo įrašą el. paštu…">
+<!ENTITY emailVideoCmd.accesskey      "s">
+<!ENTITY castVideoCmd.label           "Siųsti vaizdo įrašą į įrenginį">
+<!ENTITY castVideoCmd.accesskey       "i">
+<!ENTITY emailAudioCmd.label          "Išsiųsti garso įrašą el. paštu…">
+<!ENTITY emailAudioCmd.accesskey      "s">
+<!ENTITY playPluginCmd.label          "Aktyvinti šį papildinį">
+<!ENTITY playPluginCmd.accesskey      "A">
+<!ENTITY hidePluginCmd.label          "Slėpti šį papildinį">
+<!ENTITY hidePluginCmd.accesskey      "S">
+<!ENTITY copyLinkCmd.label            "Kopijuoti saito adresą">
+<!ENTITY copyLinkCmd.accesskey        "a">
+<!ENTITY copyImageCmd.label           "Kopijuoti paveikslo adresą">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyImageContentsCmd.label   "Kopijuoti paveikslą">
+<!ENTITY copyImageContentsCmd.accesskey  "p"> 
+<!ENTITY copyVideoURLCmd.label        "Kopijuoti vaizdo adresą">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Kopijuoti garso adresą">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "Kopijuoti el. pašto adresą">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label              "Kadras">
+<!ENTITY thisFrameMenu.accesskey          "K">
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+
+<!ENTITY mediaPlay.label             "Groti">
+<!ENTITY mediaPlay.accesskey         "G">
+<!ENTITY mediaPause.label            "Pristabdyti">
+<!ENTITY mediaPause.accesskey        "P">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Išjungti garsą">
+<!ENTITY mediaMute.accesskey         "r">
+<!ENTITY mediaUnmute.label           "Įjungti garsą">
+<!ENTITY mediaUnmute.accesskey       "r">
+<!ENTITY mediaPlaybackRate2.label     "Atkūrimo greitis">
+<!ENTITY mediaPlaybackRate2.accesskey "e">
+<!ENTITY mediaPlaybackRate050x2.label "Lėtas (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "L">
+<!ENTITY mediaPlaybackRate100x2.label "Normalus">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate125x2.label "Greitas (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "G">
+<!ENTITY mediaPlaybackRate150x2.label "Greitesnis (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "r">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Pasiutęs (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "P">
+<!ENTITY mediaLoop.label             "Kartoti">
+<!ENTITY mediaLoop.accesskey         "K">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Rodyti mygtukus">
+<!ENTITY mediaShowControls.accesskey "m">
+<!ENTITY mediaHideControls.label     "Nerodyti mygtukų">
+<!ENTITY mediaHideControls.accesskey "m">
+<!ENTITY videoFullScreen.label       "Visame ekrane">
+<!ENTITY videoFullScreen.accesskey   "V">
+<!ENTITY videoSaveImage.label        "Įrašyti kadrą kaip…">
+<!ENTITY videoSaveImage.accesskey    "k">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Rodyti statistiką">
+<!ENTITY videoShowStats.accesskey    "s">
+<!ENTITY videoHideStats.label        "Nerodyti statistikos">
+<!ENTITY videoHideStats.accesskey    "s">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomEnlargeCmd.label       "Padidinti">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "d">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Sumažinti">
+<!ENTITY fullZoomReduceCmd.accesskey    "m">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Originalus">
+<!ENTITY fullZoomResetCmd.accesskey     "O">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Keisti tik teksto dydį">
+<!ENTITY fullZoomToggleCmd.accesskey    "t">
+<!ENTITY fullZoom.label                 "Mastelis">
+<!ENTITY fullZoom.accesskey             "M">
+
+<!ENTITY sidebarCloseButton.tooltip     "Užverti parankinę">
+<!ENTITY sidebarMenuClose.label         "Užverti parankinę">
+
+<!ENTITY quitApplicationCmdWin2.label       "Baigti darbą">
+<!ENTITY quitApplicationCmdWin2.accesskey   "B">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Baigti „&brandShorterName;“ darbą">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Baigti darbą"> 
+<!ENTITY quitApplicationCmd.accesskey   "B">
+<!ENTITY quitApplicationCmdMac2.label   "Baigti „&brandShorterName;“ darbą">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Užverti">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "U">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Tinklalapio stilius">
+<!ENTITY pageStyleMenu.accesskey "k">
+<!ENTITY pageStyleNoStyle.label "Nėra">
+<!ENTITY pageStyleNoStyle.accesskey "N">
+<!ENTITY pageStylePersistentOnly.label "Pagrindinis tinklalapio stilius">
+<!ENTITY pageStylePersistentOnly.accesskey "P">
+
+<!ENTITY pageReportIcon.tooltip            "Pakeisti šios svetainės iškylančiųjų langų blokavimo nuostatas">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Iškylančiųjų langų valdymas…">
+<!ENTITY editPopupSettings.label "Iškylančiųjų langų valdymas…">
+<!ENTITY editPopupSettings.accesskey "v">
+<!ENTITY dontShowMessage.accesskey "n">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Pakeisti puslapio kryptį">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "a">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Pakeisti teksto kryptį">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "k">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Ieškoti šiame tinklalapyje…">
+<!ENTITY findOnCmd.accesskey "I">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Ieškoti toliau">
+<!ENTITY findAgainCmd.accesskey "o">
+<!ENTITY findAgainCmd.commandkey "o">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Daugiau žodynų…">
+<!ENTITY spellAddDictionaries.accesskey "D">
+
+<!ENTITY editBookmark.done.label                     "Atlikta">
+<!ENTITY editBookmark.removeBookmark.accessKey       "š">
+
+<!ENTITY identity.connectionSecure "Saugus ryšys">
+<!ENTITY identity.connectionNotSecure "Ryšys nėra saugus">
+<!ENTITY identity.connectionFile "Šis tinklalapis yra įrašytas jūsų kompiuteryje.">
+<!ENTITY identity.connectionVerified2 "Esate saugiai prisijungę prie šios svetainės, kurią valdo:">
+<!ENTITY identity.connectionInternal "Tai yra saugus „&brandShortName;“ tinklalapis.">
+<!ENTITY identity.extensionPage "Šis tinklalapis yra įkeltas iš priedo.">
+<!ENTITY identity.insecureLoginForms2 "Šiame tinklalapyje įvesti prisijungimo duomenys gali būti perimti.">
+<!-- Strings for connection state warnings. -->
+
+<!ENTITY identity.activeBlocked "„&brandShortName;“ užblokavo nesaugias šio tinklalapio dalis.">
+<!ENTITY identity.passiveLoaded "Kai kurios šio tinklalapio dalys nėra saugios (pvz., paveikslai).">
+<!ENTITY identity.activeLoaded "Šiame tinklalapyje esate išjungę apsaugą.">
+<!ENTITY identity.weakEncryption "Šis tinklalapis naudoja silpną šifravimą.">
+<!-- Strings for connection state warnings in the subview. -->
+
+<!ENTITY identity.description.insecure "Jūsų ryšys su šia svetaine nėra privatus. Jūsų pateikta informacija gali būti peržiūrėta kitų (pvz., slaptažodžiai, žinutės, banko kortelės, kita).">
+<!ENTITY identity.description.insecureLoginForms "Šiame tinklalapyje jūsų įvesti prisijungimo duomenys nebus saugūs ir gali būti perimti.">
+<!ENTITY identity.description.weakCipher "Jūsų ryšys su šia svetaine naudoja silpną šifravimą ir nėra privatus.">
+<!ENTITY identity.description.weakCipher2 "Pašaliniai asmenys gali matyti jūsų duomenis ar keisti svetainės elgseną.">
+<!ENTITY identity.description.activeBlocked "„&brandShortName;“ užblokavo nesaugias šio tinklalapio dalis.">
+<!ENTITY identity.description.passiveLoaded "Jūsų ryšys nėra privatus, tad šiai svetainei pateikta informacija gali būti peržiūrėta kitų.">
+<!ENTITY identity.description.passiveLoaded2 "Šioje svetainėje yra nesaugaus turinio (pvz., paveikslų).">
+<!ENTITY identity.description.passiveLoaded3 "Nors „&brandShortName;“ užblokavo dalį turinio, šiame tinklalapyje vis dar yra nesaugaus turinio (pvz., paveikslų).">
+<!ENTITY identity.description.activeLoaded "Šioje svetainėje yra nesaugaus turinio (pvz., scenarijų), be to, jūsų ryšys su ja nėra privatus.">
+<!ENTITY identity.description.activeLoaded2 "Šiai svetainei pateikta informacija gali būti peržiūrėta kitų (pvz., slaptažodžiai, žinutės, banko kortelės, kita).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Įjungti apsaugą">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "Į">
+<!ENTITY identity.disableMixedContentBlocking.label "Laikinai išjungti apsaugą">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "L">
+<!ENTITY identity.learnMore "Sužinoti daugiau">
+
+<!ENTITY identity.removeCertException.label "Panaikinti išimtį">
+<!ENTITY identity.removeCertException.accesskey "n">
+
+<!ENTITY identity.moreInfoLinkText2 "Daugiau informacijos">
+
+<!ENTITY identity.permissions "Leidimai">
+<!ENTITY identity.permissionsEmpty "Šiai svetainei nesate suteikę jokių ypatingų leidimų.">
+<!ENTITY identity.permissionsReloadHint "Kad būtų pritaikyti pakeitimai, tinklalapį galimai reikia atsiųsti iš naujo.">
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+
+<!ENTITY tabsToolbar.label "Kortelių juosta">
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+
+<!ENTITY syncTabsMenu3.label     "Sinchronizuotos kortelės">
+
+<!ENTITY syncedTabs.sidebar.label              "Sinchronizuotos kortelės">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Prisijunkite prie „Waterfox“ iš kitų įrenginių, norėdami jų korteles matyti čia.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Nėra sinchronizuotų kortelių… Kol kas!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Norite matyti savo korteles iš kitų įrenginių čia?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Prisijunkite norėdami peržiūrėti kituose įrenginiuose esančias korteles.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Nėra atvertų kortelių">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Atverti „&syncBrand.shortName.label;“ nuostatas">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Įjunkite kortelių sinchronizavimą, norėdami peržiūrėti kituose įrenginiuose esančias korteles.">
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+
+<!ENTITY syncedTabs.context.open.label                       "Atverti">
+<!ENTITY syncedTabs.context.open.accesskey                   "A">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Atverti naujoje kortelėje">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "o">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Atverti naujame lange">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "l">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Atverti naujame privačiojo naršymo lange">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "p">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Įtraukti kortelę į adresyną…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "t">
+<!ENTITY syncedTabs.context.copy.label                       "Kopijuoti">
+<!ENTITY syncedTabs.context.copy.accesskey                   "K">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Atverti viską kortelėse">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "A">
+<!ENTITY syncedTabs.context.managedevices.label              "Tvarkyti įrenginius…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "r">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Jungtis prie „&syncBrand.shortName.label;“…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Sinchronizuoti dabar">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Iš naujo jungtis prie „&syncBrand.shortName.label;“…">
+<!ENTITY syncReAuthItem.accesskey     "n">
+<!ENTITY syncToolbarButton.label      "Sinchronizuoti">
+
+<!ENTITY social.addons.label "Tvarkyti tarnybas…">
+
+<!ENTITY social.directory.label "Aktyvinimų aplankas">
+<!ENTITY social.directory.text "Dalinimosi tarnybas galite aktyvinti iš aplanko.">
+<!ENTITY social.directory.button "Noriu ten!">
+<!ENTITY social.directory.introText "Spustelėkite ant tarnybos, norėdami ją pridėti į „&brandShortName;“.">
+<!ENTITY social.directory.viewmore.text "Žiūrėti daugiau">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Papildomos priemonės ir funkcijos">
+<!ENTITY customizeMode.menuAndToolbars.empty "Norite daugiau priemonių?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Pasirinkite jas iš tūkstančių priedų">
+<!ENTITY customizeMode.restoreDefaults "Grąžinti numatytąją struktūrą">
+<!ENTITY customizeMode.done "Atlikta">
+<!ENTITY customizeMode.titlebar "Antraštės juosta">
+<!ENTITY customizeMode.toolbars2 "Priemonių juostos">
+<!ENTITY customizeMode.lwthemes "Grafiniai apvalkalai">
+<!ENTITY customizeMode.lwthemes.myThemes "Įdiegti apvalkalai">
+<!ENTITY customizeMode.lwthemes.recommended "Rekomenduojami">
+<!ENTITY customizeMode.lwthemes.menuManage "Tvarkyti">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "M">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Gauti daugiau temų">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "G">
+<!ENTITY customizeMode.emptyOverflowList.description "Nutempkite elementus čia, kad jie būtų pasiekiami, tačiau neužimtų vietos įrankinėje…">
+<!ENTITY customizeMode.uidensity "Tankis">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normalus">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "&amp;Normalus">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Kompaktiškas">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Kompaktiškas">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "K">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Lietimui">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Lietimui">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "L">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Naudoti „lietimui“ planšetės veiksenoje">
+
+<!ENTITY getUserMedia.selectCamera.label "Kamera, kurią leisite pasiekti:">
+<!ENTITY getUserMedia.selectCamera.accesskey "K">
+<!ENTITY getUserMedia.selectMicrophone.label "Mikrofonas, kurį leisite pasiekti:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Bus pasiekiamas kortelės garsas.">
+<!ENTITY getUserMedia.allWindowsShared.message "Bus leidžiama matyti visus jūsų ekrane matomus langus.">
+
+<!ENTITY trackingProtection.title "Apsauga nuo stebėjimo">
+<!ENTITY trackingProtection.detectedBlocked3 "„&brandShortName;“ blokuoja jūsų naršymą galinčias stebėti šio tinklalapio dalis.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Šiame tinklalapyje yra jūsų naršymą galinčių stebėti elementų. Jūsų apsauga yra išjungta.">
+<!ENTITY trackingProtection.notDetected3 "Tinklalapyje nerasta stebėjimui naudojamų elementų.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Išjungti apsaugą šioje svetainėje">
+<!ENTITY trackingProtection.unblock.accesskey "I">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Išjungti apsaugą šiam seansui">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "I">
+<!ENTITY trackingProtection.block2.label "Įjungti apsaugą">
+<!ENTITY trackingProtection.block2.accesskey "Į">
+
+<!ENTITY trackingContentBlocked.message "Stebėjimas">
+<!ENTITY trackingContentBlocked.moreinfo "Tinklalapio dalys, stebinčios jūsų veiksmus internete, buvo užblokuotos.">
+<!ENTITY trackingContentBlocked.learnMore "Sužinoti daugiau">
+<!ENTITY trackingContentBlocked.options "Nuostatos">
+<!ENTITY trackingContentBlocked.unblock2.label "Išjungti apsaugą šioje svetainėje">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "I">
+<!ENTITY trackingContentBlocked.block.label "Įjungti apsaugą">
+<!ENTITY trackingContentBlocked.block.accesskey "Į">
+<!ENTITY trackingContentBlocked.disabled.message "Apsauga nuo stebėjimo yra išjungta">
+
+<!ENTITY pluginNotification.showAll.label "Rodyti visus">
+<!ENTITY pluginNotification.showAll.accesskey "v">
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+
+<!ENTITY pluginActivateNow.label "Leisti šį kartą">
+<!ENTITY pluginActivateAlways.label "Leisti visada">
+<!ENTITY pluginBlockNow.label "Neleisti">
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Užverti">
+
+<!ENTITY appMenuSidebars.label         "Parankinė">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+
+<!ENTITY panicButton.view.mainTimeframeDesc       "Pašalinti įrašus:">
+<!ENTITY panicButton.view.5min                    "penkių minučių">
+<!ENTITY panicButton.view.2hr                     "dviejų valandų">
+<!ENTITY panicButton.view.day                     "24 valandų">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+
+<!ENTITY panicButton.view.mainActionDesc          "Jeigu tęsite, bus:">
+<!ENTITY panicButton.view.deleteCookies           "pašalinti paskiausi <html:strong>slapukai</html:strong>">
+<!ENTITY panicButton.view.deleteHistory           "išvalyti <html:strong>naršymo žurnalo</html:strong> įrašai">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "užvertos visos <html:strong>kortelės</html:strong> ir <html:strong>langai</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "atvertas naujas tuščias naršyklės langas">
+
+<!ENTITY panicButton.view.undoWarning             "Atlikus šį veiksmą, jo atšaukti neįmanoma.">
+<!ENTITY panicButton.view.forgetButton            "Valyti!">
+
+<!ENTITY panicButton.thankyou.msg1                "Paskiausi žurnalo įrašai išvalyti.">
+<!ENTITY panicButton.thankyou.msg2                "Saugaus naršymo!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Ačiū!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Sužinokite daugiau apie DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Atnaujinę „&brandShorterName;“ turėsite paskiausius greičio ir privatumo patobulinimus.">
+<!ENTITY updateAvailable.whatsnew.label "Susipažinkite su naujovėmis.">
+<!ENTITY updateAvailable.header.message "Yra galimas „&brandShorterName;“ naujinimas.">
+<!ENTITY updateAvailable.acceptButton.label "Parsiųsti naujinimą">
+<!ENTITY updateAvailable.acceptButton.accesskey "P">
+<!ENTITY updateAvailable.cancelButton.label "Ne dabar">
+<!ENTITY updateAvailable.cancelButton.accesskey "N">
+<!ENTITY updateAvailable.panelUI.label "Parsiųsti „&brandShorterName;“ naujinimą">
+
+<!ENTITY updateManual.message "Parsisiųskite šviežią „&brandShorterName;“ kopiją, o mes jums padėsime ją įsidiegti.">
+<!ENTITY updateManual.whatsnew.label "Susipažinkite su naujovėmis.">
+<!ENTITY updateManual.header.message "„&brandShorterName;“ naujinimas nepavyko.">
+<!ENTITY updateManual.acceptButton.label "Parsiųsti „&brandShorterName;“">
+<!ENTITY updateManual.acceptButton.accesskey "P">
+<!ENTITY updateManual.cancelButton.label "Ne dabar">
+<!ENTITY updateManual.cancelButton.accesskey "N">
+<!ENTITY updateManual.panelUI.label "Parsiųsti šviežią „&brandShorterName;“ kopiją">
+
+<!ENTITY updateRestart.message "Po greito perleidimo, „&brandShorterName;“ atkurs visas jūsų atviras korteles ir langus.">
+<!ENTITY updateRestart.header.message2 "Perleiskite, norėdami atnaujinti „&brandShorterName;“">
+<!ENTITY updateRestart.acceptButton.label "Perleisti ir atkurti">
+<!ENTITY updateRestart.acceptButton.accesskey "P">
+<!ENTITY updateRestart.cancelButton.label "Ne dabar">
+<!ENTITY updateRestart.cancelButton.accesskey "N">
+<!ENTITY updateRestart.panelUI.label2 "Perleiskite, norėdami atnaujinti „&brandShorterName;“">
+
+<!ENTITY pageActionButton.tooltip "Tinklalapio veiksmai">
+<!ENTITY pageAction.addToUrlbar.label "Pridėti į adreso juosta">
+<!ENTITY pageAction.removeFromUrlbar.label "Pašalinti iš adreso juostos">
+
+<!ENTITY sendToDevice.label2 "Siųsti į įrenginį">
+<!ENTITY sendToDevice.syncNotReady.label "Sinchronizuojami įrenginiai…">

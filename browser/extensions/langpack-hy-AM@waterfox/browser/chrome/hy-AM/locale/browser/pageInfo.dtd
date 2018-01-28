@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Պատճենել">
+<!ENTITY  copy.accesskey        "Պ">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Նշել բոլորը">
+<!ENTITY  selectall.accesskey   "բ">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Ընդհանուր">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Վերնագիր․">
+<!ENTITY  generalURL            "Հասցեն.">
+<!ENTITY  generalType           "Տեսակը. ">
+<!ENTITY  generalMode           "Ցուցադրման Եղանակը.">
+<!ENTITY  generalSize           "Չափը.">
+<!ENTITY  generalReferrer       "Հղվող URL-ն.">
+<!ENTITY  generalSource         "Աղբյուրը.">
+<!ENTITY  generalModified       "Փոփոխված է.">
+<!ENTITY  generalEncoding2      "Տեքստի կոդավորումը.">
+<!ENTITY  generalMetaName       "Անվանումը">
+<!ENTITY  generalMetaContent    "Բովանդակություն">
+
+<!ENTITY  mediaTab              "Մեդիա">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Տեղը.">
+<!ENTITY  mediaText             "Կապակցված Տեքստ`">
+<!ENTITY  mediaAltHeader        "Այլնտրանք. ՏԵքստ">
+<!ENTITY  mediaAddress          "Հասցեն">
+<!ENTITY  mediaType             "Տեսակը ">
+<!ENTITY  mediaSize             "Չափը">
+<!ENTITY  mediaCount            "Քանակը">
+<!ENTITY  mediaDimension        "Չափերը`">
+<!ENTITY  mediaLongdesc         "Երկար Նկարագրություն.">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Պահպանել որպես…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Մեդիայի նախադիտում.">
+
+<!ENTITY  feedTab               "Նորությունների շղթա">
+<!ENTITY  feedTab.accesskey     "Ն">
+<!ENTITY  feedSubscribe         "Բաժանորդագրվել">
+<!ENTITY  feedSubscribe.accesskey "Բ">
+
+<!ENTITY  permTab               "Իրավունքներ">
+<!ENTITY  permTab.accesskey     "Ի">
+<!ENTITY  permUseDefault        "Օգտ. լռելյայն">
+<!ENTITY  permAskAlways         "Միշտ հարցնել">
+<!ENTITY  permAllow             "Թույլատրել">
+<!ENTITY  permAllowSession      "Թույլատրել այս անգամ">
+<!ENTITY  permBlock             "Արգելել">
+<!ENTITY  permissionsFor        "Թույլատրելիությունները `">
+<!ENTITY  permPlugins           "Ակտիվացնել բաղադրիչները">
+
+<!ENTITY  permClearStorage           "Մաքրել պահոցը">
+<!ENTITY  permClearStorage.accesskey "Մ">
+
+<!ENTITY  securityTab           "Անվտանգություն">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Զննել Արտոնաթուղթը">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Անհայտ">
+
+
+<!ENTITY  securityView.identity.header   "Վեբ Կայքի ինքնությունը">
+<!ENTITY  securityView.identity.owner    "Սեփականատեր`">
+<!ENTITY  securityView.identity.domain   "Վեբ Կայք`">
+<!ENTITY  securityView.identity.verifier "Ստուգվել է`">
+
+
+<!ENTITY  securityView.privacy.header                   "Գաղտնիությունը և պատմությունը">
+<!ENTITY  securityView.privacy.history                  "Ես այցելե՞լ էմ այս կայք մինչև այսօր">
+<!ENTITY  securityView.privacy.cookies                  "Այս վեբ կայքը պահո՞ւմ է տեղեկություն (քուկի) իմ համակարգչում">
+<!ENTITY  securityView.privacy.viewCookies              "Դիտել Cookie-ները">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Պահպանե՞լ եմ արդյոք գաղտնաբառեր այս կայքի համար">
+<!ENTITY  securityView.privacy.viewPasswords            "Դիտել Հիշած Գաղտնաբառերը">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Տեխնիկական Մանրամասնություններ">
+
+<!ENTITY  helpButton.label                              "Օգնություն">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

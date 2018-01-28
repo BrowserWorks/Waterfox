@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Reproducir">
+<!ENTITY playButton.pauseLabel "Pausar">
+<!ENTITY muteButton.muteLabel "Silenciar">
+<!ENTITY muteButton.unmuteLabel "Restaurar sonido">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Pantalla completa">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Salir de pantalla completa">
+<!ENTITY castingButton.castingLabel "Enviar a pantalla">
+<!ENTITY closedCaption.off "No">
+<!ENTITY stats.media "Medios">
+<!ENTITY stats.size "Tamaño">
+<!ENTITY stats.activity "Actividad">
+<!ENTITY stats.activityPaused "En pausa">
+<!ENTITY stats.activityPlaying "Reproduciendo">
+<!ENTITY stats.activityEnded "Finalizado">
+<!ENTITY stats.activitySeeking "(buscando)">
+<!ENTITY stats.volume "Volumen">
+<!ENTITY stats.framesParsed "Imágenes procesadas">
+<!ENTITY stats.framesDecoded "Imágenes decodificadas">
+<!ENTITY stats.framesPresented "Imágenes presentadas">
+<!ENTITY stats.framesPainted "Imágenes mostradas">
+<!ENTITY error.aborted "Se ha detenido la carga del vídeo.">
+<!ENTITY error.network "La reproducción del vídeo se ha interrumpido por un error de red.">
+<!ENTITY error.decode "No se puede reproducir el vídeo porque el archivo está dañado.">
+<!ENTITY error.srcNotSupported "El formato o tipo MIME del vídeo no se admite.">
+<!ENTITY error.noSource2 "No se ha encontrado ningún vídeo que tenga un formato y tipo MIME compatibles.">
+<!ENTITY error.generic "La reproducción del vídeo se ha interrumpido por un error desconocido.">
+<!ENTITY scrubberScale.nameFormat "Transcurridos #1 de #2">
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

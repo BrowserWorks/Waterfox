@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Modules complémentaires pouvant causer des problèmes">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; a déterminé que les modules complémentaires suivants sont connus pour causer des problèmes de stabilité ou de sécurité :">
+<!ENTITY blocklist.softblocked       "Par mesure de sécurité, il est fortement recommandé de désactiver ces modules complémentaires et de redémarrer.">
+<!ENTITY blocklist.hardblocked       "Ces modules complémentaires présentent un grand risque d’instabilité et de sécurité et ont été bloqués, mais un redémarrage est nécessaire pour les désactiver complètement.">
+<!ENTITY blocklist.softandhard       "Les modules complémentaires présentant un grand risque d’instabilité et de sécurité ont été bloqués. Les autres sont moins risqués mais il est fortement recommandé de les désactiver et de redémarrer.">
+<!ENTITY blocklist.moreinfo          "Plus d’informations">
+
+<!ENTITY blocklist.accept.label      "Redémarrer &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Bloqué">
+<!ENTITY blocklist.checkbox.label    "Désactivé">

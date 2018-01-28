@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; ஐ புதுப்பி">
+<!ENTITY refreshProfile.dialog.description1  "புதுசா தொடங்கி பிரச்சனைகளை முடிக்கவும் செயல்திறனை மீட்டமைக்கவும்.">
+<!ENTITY refreshProfile.dialog.description2  "இதுச் செய்யும்:">
+<!ENTITY refreshProfile.dialog.items.label1  "உங்கள் நீட்சிகளையும் தனிப்பயனாக்கங்களையும் நீக்கவும்">
+<!ENTITY refreshProfile.dialog.items.label2  "உங்கள் உலாவி அமைவுகளை அவற்றின் இயல்புநிலைக்கு மீட்டமை">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; ஐ புதுப்பி">
+
+<!ENTITY refreshProfile.title                "&brandShortName; க்கு ஒரு தூக்கலைக் கொடுக்கவும்">
+<!ENTITY refreshProfile.button.label         "&brandShortName; ஐ புதுப்பி…">
+
+<!ENTITY refreshProfile.cleaning.description "ஏறக்குறைய முடிந்தது...">

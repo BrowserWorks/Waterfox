@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Bainisteoir na nGléasanna">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 74em; height: 35em;">
+
+<!ENTITY devmgr.devlist.label                   "Modúil agus Gléasanna Slándála">
+<!ENTITY devmgr.details.title                   "Mionsonraí">
+<!ENTITY devmgr.details.title2                  "Luach">
+
+<!ENTITY devmgr.button.login.label              "Logáil Isteach">
+<!ENTITY devmgr.button.login.accesskey          "g">
+<!ENTITY devmgr.button.logout.label             "Logáil Amach">
+<!ENTITY devmgr.button.logout.accesskey         "m">
+<!ENTITY devmgr.button.changepw.label           "Athraigh an Focal Faire">
+<!ENTITY devmgr.button.changepw.accesskey       "F">
+<!ENTITY devmgr.button.load.label               "Luchtaigh">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Dílódáil">
+<!ENTITY devmgr.button.unload.accesskey         "D">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Cuir isteach an fhaisnéis maidir leis an modúl a theastaíonn uait cur leis.">
+<!ENTITY loaddevice.modname                     "Ainm an Mhodúil:">
+<!ENTITY loaddevice.modname.accesskey           "A">
+<!ENTITY loaddevice.modname.default             "Modúl PKCS#11 Nua">
+<!ENTITY loaddevice.filename                    "Ainm chomhad an mhodúil:">
+<!ENTITY loaddevice.filename.accesskey          "c">
+<!ENTITY loaddevice.browse                      "Brabhsáil…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Luchtaigh Tiománaí Gléis PKCS#11">

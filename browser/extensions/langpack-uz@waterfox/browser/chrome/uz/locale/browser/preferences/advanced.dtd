@@ -1,0 +1,163 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Umumiy">
+
+<!ENTITY useCursorNavigation.label       "Doimo koʻrsatkich tugmalaridan sahifani kuzatish uchun foydalanish ">
+<!ENTITY useCursorNavigation.accesskey   "k">
+<!ENTITY searchOnStartTyping.label       "Yozishni boshlaganimda, matn izlansin">
+<!ENTITY searchOnStartTyping.accesskey   "n">
+<!ENTITY useOnScreenKeyboard.label       "Kerak bo‘lganda terish uchun klaviaturani ko‘rsatish">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Koʻrish">
+
+<!ENTITY useAutoScroll.label             "Avtosiljitishdan foydalanish">
+<!ENTITY useAutoScroll.accesskey         "A">
+<!ENTITY useSmoothScrolling.label        "Bir tekisda siljitishdan foydalanish">
+<!ENTITY useSmoothScrolling.accesskey    "e">
+<!ENTITY checkUserSpelling.label         "Yozganimda imlo tekshirilsin">
+<!ENTITY checkUserSpelling.accesskey     "Y">
+
+<!ENTITY dataChoicesTab.label            "Tanlangan ma`lumot">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Ma’lumotlar hisoboti moslama uchun o‘chirib qo‘yilgan">
+
+
+<!ENTITY healthReportLearnMore.label     "Batafsil ma’lumot">
+
+
+
+
+
+<!ENTITY crashReporterLearnMore.label    "Batafsil ma’lumot">
+
+<!ENTITY networkTab.label                "Tarmoq">
+
+
+<!ENTITY connectionDesc.label            "&brandShortName;ni internetga ulashni moslash">
+<!ENTITY connectionSettings.label        "Parametrlar…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Keshga yuklangan veb kontentlar">
+
+<!ENTITY offlineStorage2.label           "Oflayn veb kontent va foydalanuvchi ma`lumotlari">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Sayt ma’lumotlari">
+<!ENTITY clearSiteData.label             "Barcha ma’lumotarni tozalash">
+<!ENTITY clearSiteData.accesskey         "t">
+<!ENTITY siteDataSettings.label          "Moslamalar…">
+<!ENTITY siteDataSettings.accesskey      "l">
+<!ENTITY siteDataLearnMoreLink.label     "Batafsil ma’lumot">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Keshni cheklash:">
+<!ENTITY limitCacheSizeBefore.accesskey  "c">
+<!ENTITY limitCacheSizeAfter.label       "Diskda MB">
+<!ENTITY clearCacheNow.label             "Hozir tozalash">
+<!ENTITY clearCacheNow.accesskey         "t">
+<!ENTITY clearOfflineAppCacheNow.label   "Hozir tozalash">
+<!ENTITY clearOfflineAppCacheNow.accesskey "H">
+<!ENTITY overrideSmartCacheSize.label    "Avtomatik kesh menejmentni almashtirish">
+<!ENTITY overrideSmartCacheSize.accesskey "a">
+
+<!ENTITY updateTab.label                 "Yangilash">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; yangilanishlari">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "Versiyasi">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName;">
+
+
+<!ENTITY updateCheckChoose2.label        "Yangilanishlar uchun tekshirsin, ammo foydalanuvchining o‘zi tanlab oʻrnatsin">
+<!ENTITY updateCheckChoose2.accesskey    "t">
+<!ENTITY updateManual2.label             "Yangilanishlar uchun hech qachon tekshirmasin (tavsiya qilinmaydi)">
+<!ENTITY updateManual2.accesskey         "h">
+
+<!ENTITY updateHistory2.label            "Yangilash tarixini koʻrsatish…">
+<!ENTITY updateHistory2.accesskey        "n">
+
+<!ENTITY useService.label                "Yangilanishlarni oʻrnatish uchun orqa fon xizmatidan foydalanish">
+<!ENTITY useService.accesskey            "o">
+
+<!ENTITY enableSearchUpdate2.label       "Qidiruv tizimlarini avtomatik yangilasin">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Sayt oflayn foydalanishingiz uchun ma’lumotlarni joylashtirishni soʻrasa, menga xabar berilsin">
+<!ENTITY offlineStorageNotify.accesskey           "x">
+<!ENTITY offlineStorageNotifyExceptions.label     "Istisnolar...">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "s">
+
+<!ENTITY offlineAppsList2.label          "Quyidagi vebsaytlar ma`lumotlarni oflayn foydalanish uchun saqlashga ruxsat bergan:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Oʻchirish…">
+<!ENTITY offlineAppsListRemove.accesskey "O">
+<!ENTITY offlineAppRemove.confirm        "Oflayn ma`lumotlarni oʻchirish">
+
+<!ENTITY certificateTab.label            "Sertifikatlar">
+<!ENTITY certPersonal2.description       "Server mening shaxsiy sertifikatimni soʻraganda">
+<!ENTITY selectCerts.auto                "Avtomatik bittasini tanlash">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Har doim so‘ralsin">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "so‘rovi OCSP javob berish serverlari sertifikatlarning joriy yaroqliligini tasdiqlash uchun">
+<!ENTITY enableOCSP.accesskey            "s">
+
+
+
+
+
+<!ENTITY performance.label               "Samaradorlik">
+<!ENTITY useRecommendedPerformanceSettings2.label "Tavsiya qilingan samaradorlik moslamalaridan foydalansin">
+<!ENTITY useRecommendedPerformanceSettings2.description "Bu moslamalar kompyuteringizning qurilmasi va operatsion tizimiga moslanadi.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "f">
+<!ENTITY performanceSettingsLearnMore.label "Batafsil ma’lumot">
+<!ENTITY limitContentProcessOption.label "Kontent jarayoni cheklovi">
+<!ENTITY limitContentProcessOption.description "Bir nechta ichki oynalardan foydalanilganda qo‘shimcha kontent jarayoni samaradorlikni oshiradi, ammo ko‘proq xotiradan foydalanadi.">
+<!ENTITY limitContentProcessOption.accesskey   "c">
+<!ENTITY limitContentProcessOption.disabledDescription "Kontent jarayoni miqdorini o‘zgartirish faqatgina &brandShortName; multijarayonlari bilan mavjud. ">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Multijarayonlar yoqilganda tekshirish usuli">
+<!ENTITY allowHWAccel.label              "Uskuna aniqlanganda, tez chaqirishdan foydalanish">
+<!ENTITY allowHWAccel.accesskey          "k">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

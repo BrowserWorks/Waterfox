@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Invoerslimmerd">
+
+<!ENTITY importFrom.label               "Voer opsies, boekmerke, geskiedenis, wagwoorde en ander data in vanaf:">
+<!ENTITY importFromUnix.label           "Voer voorkeure, boekmerke, geskiedenis, wagwoorde en ander data in vanaf:">
+<!ENTITY importFromBookmarks.label      "Voer boekmerke in vanaf:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Moenie enigiets invoer nie">
+<!ENTITY importFromNothing.accesskey    "M">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Geen programme wat boekmerke, geskiedenis of wagwoorddata bevat, kon gevind word nie.">
+
+<!ENTITY importSource.title             "Voer opstelling en data in">
+<!ENTITY importItems.title              "Items om in te voer">
+<!ENTITY importItems.label              "Merk watter items ingevoer moet word:">
+
+<!ENTITY migrating.title                "Voer tans in…">
+<!ENTITY migrating.label                "Die volgende items word tans ingevoer…">
+
+<!ENTITY selectProfile.title            "Kies profiel">
+<!ENTITY selectProfile.label            "Die volgende profiele kan ingevoer word vanaf:">
+
+<!ENTITY done.title                     "Invoer afgehandel">
+<!ENTITY done.label                     "Die volgende items is suksesvol ingevoer:">
+
+<!ENTITY closeSourceBrowser.label       "Maak seker dat die gekose blaaier toe is voordat u voortgaan.">

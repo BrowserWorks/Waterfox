@@ -1,0 +1,265 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Менеджар дадаткаў">
+
+<!ENTITY search.placeholder                   "Пошук усіх дадаткаў">
+<!ENTITY search.buttonlabel                   "Пошук">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Загрузка…">
+<!ENTITY listEmpty.installed.label            "У вас няма ніводнага ўсталяванага дадатку гэтага тыпу">
+<!ENTITY listEmpty.availableUpdates.label     "Абнаўленні не знойдзеныя">
+<!ENTITY listEmpty.recentUpdates.label        "Нядаўна вы не абнаўлялі ніякіх дадаткаў">
+<!ENTITY listEmpty.findUpdates.label          "Знайсці абнаўленні">
+<!ENTITY listEmpty.search.label               "Немагчыма знайсці адпаведныя дадаткі">
+<!ENTITY listEmpty.button.label               "Падрабязней пра дадаткі">
+<!ENTITY installAddonFromFile.label           "Усталяваць дадатак з файла…">
+<!ENTITY installAddonFromFile.accesskey       "У">
+<!ENTITY toolsMenu.tooltip                    "Прылады для ўсіх дадаткаў">
+
+<!ENTITY getThemes.description                "Жадаеце наладзіць пад сябе свой браўзер?">
+<!ENTITY getThemes.learnMore                  "Выберыце сярод тысяч тэм.">
+
+<!ENTITY cmd.back.tooltip                     "Папярэдняя старонка">
+<!ENTITY cmd.forward.tooltip                  "Наступная старонка">
+
+<!ENTITY showUnsignedExtensions.button.label  "Некаторыя пашырэнні не могуць быць правераны">
+<!ENTITY showAllExtensions.button.label       "Паказаць усе пашырэнні">
+<!ENTITY debugAddons.label                    "Адладка дадаткаў">
+<!ENTITY debugAddons.accesskey                "А">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Усе дадаткі адключаны бяспечным рэжымам.">
+<!ENTITY warning.checkcompatibility.label          "Праверка сумяшчальнасці дадаткаў адключана. Вы можаце мець несумяшчальныя дадаткі.">
+<!ENTITY warning.checkcompatibility.enable.label   "Уключыць">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Уключыць праверку сумяшчальнасці дадаткаў">
+<!ENTITY warning.updatesecurity.label              "Праверка бяспечнасці дадаткаў адключана. Вы можаце быць падведзены пад рызыку абнаўленнямі.">
+<!ENTITY warning.updatesecurity.enable.label       "Уключыць">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Уключыць праверку бяспечнасці абнаўленняў дадаткаў">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Пошук">
+<!ENTITY view.discover.label                  "Атрымаць дадаткі">
+<!ENTITY view.recentUpdates.label             "Нядаўнія абнаўленні">
+<!ENTITY view.availableUpdates.label          "Даступныя абнаўленні">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Праверка існавання абнаўленняў">
+<!ENTITY updates.checkForUpdates.accesskey    "і">
+<!ENTITY updates.viewUpdates.label            "Пабачыць нядаўнія абнаўленні">
+<!ENTITY updates.viewUpdates.accesskey        "б">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Аўтаматычна абнаўляць дадаткі">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "А">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Наладзіць усе дадаткі абнаўляцца самастойна">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "Н">
+<!ENTITY updates.resetUpdatesToManual.label          "Наладзіць усе дадаткі на ручное абнаўленне">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "Н">
+<!ENTITY updates.updating.label               "Абнаўленне дадаткаў">
+<!ENTITY updates.installed.label              "Вашы дадаткі абноўленыя.">
+<!ENTITY updates.downloaded.label             "Вашы дадаткі загружаны.">
+<!ENTITY updates.restart.label                "Перазапусціць зараз, каб скончыць усталяванне">
+<!ENTITY updates.noneFound.label              "Абнаўленні не знойдзеныя">
+<!ENTITY updates.manualUpdatesFound.label     "Пабачыць даступныя абнаўленні">
+<!ENTITY updates.updateSelected.label         "Усталяваць абнаўленні">
+<!ENTITY updates.updateSelected.tooltip       "Усталяваць даступныя абнаўленні з гэтага спісу">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Паказаць больш звестак">
+<!ENTITY cmd.showDetails.accesskey            "П">
+<!ENTITY cmd.findUpdates.label                "Знайсці абнаўленні">
+<!ENTITY cmd.findUpdates.accesskey            "З">
+<!ENTITY cmd.preferencesWin.label             "Налады">
+<!ENTITY cmd.preferencesWin.accesskey         "Н">
+<!ENTITY cmd.preferencesUnix.label            "Налады">
+<!ENTITY cmd.preferencesUnix.accesskey        "Н">
+<!ENTITY cmd.about.label                      "Пра">
+<!ENTITY cmd.about.accesskey                  "П">
+
+<!ENTITY cmd.enableAddon.label                "Уключыць">
+<!ENTITY cmd.enableAddon.accesskey            "У">
+<!ENTITY cmd.disableAddon.label               "Выключыць">
+<!ENTITY cmd.disableAddon.accesskey           "В">
+<!ENTITY cmd.enableTheme.label                "Ужыць тэму">
+<!ENTITY cmd.enableTheme.accesskey            "У">
+<!ENTITY cmd.disableTheme.label               "Спыніць ужыванне тэмы">
+<!ENTITY cmd.disableTheme.accesskey           "у">
+<!ENTITY cmd.askToActivate.label              "Спытаць для задзейнічання">
+<!ENTITY cmd.askToActivate.tooltip            "Запытваць дазвол на выкарыстанне гэтага дадатка кожны раз">
+<!ENTITY cmd.alwaysActivate.label             "Заўсёды задейнічаць">
+<!ENTITY cmd.alwaysActivate.tooltip           "Заўсёды ўжываць гэты дадатак">
+<!ENTITY cmd.neverActivate.label              "Ніколі не задзейнічаць">
+<!ENTITY cmd.neverActivate.tooltip            "Ніколі не ўжываць гэты дадатак">
+<!ENTITY cmd.stateMenu.tooltip                "Змяніць падчас выканання гэтаг дадатка">
+<!ENTITY cmd.installAddon.label               "Усталяваць">
+<!ENTITY cmd.installAddon.accesskey           "У">
+<!ENTITY cmd.uninstallAddon.label             "Выдаліць">
+<!ENTITY cmd.uninstallAddon.accesskey         "В">
+<!ENTITY cmd.showPreferencesWin.label         "Налады">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Змяненне налад гэтага дадатка">
+<!ENTITY cmd.showPreferencesUnix.label        "Налады">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Змяненне налад гэтага дадатка">
+<!ENTITY cmd.contribute.label                 "Ахвяраваць">
+<!ENTITY cmd.contribute.accesskey             "А">
+<!ENTITY cmd.contribute.tooltip               "Ахвяраваць сродкі на распрацоўку гэтага дадатку">
+
+<!ENTITY cmd.showReleaseNotes.label           "Пабачыць заўвагі пра выданне">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Паказаць заўвагі пра выданне гэтага абнаўлення">
+<!ENTITY cmd.hideReleaseNotes.label           "Схаваць заўвагі пра выданне">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Схаваць заўвагі пра выданне гэтага абнаўлення">
+<!ENTITY cmd.findReplacement.label            "Знайсці замену">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Што такое дадаткі?">
+<!ENTITY discover.description2                "Дадаткі – гэта праграмы, якія дазваляюць вам дадаць &brandShortName; іншую 
+  функцыянальнасць або стыль. Паспрабуйце бакавую палічку, якая зберажэ ваш час, паказальнік надвор'я або новую тэму выгляду, каб пабудаваць ваш асабісты &brandShortName;
+  .">
+<!ENTITY discover.footer                      "Калі вы злучаны з інтэрнэтам, гэта панэль будзе паказваць
+  лепшыя і найбольш папулярныя дадаткі, якімі вы можаце карыстацца.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Версія">
+<!ENTITY detail.lastupdated.label             "Апошняе абнаўленне">
+<!ENTITY detail.creator.label                 "Распрацаўнік">
+<!ENTITY detail.homepage.label                "Хатняя старонка">
+<!ENTITY detail.numberOfDownloads.label       "Сцягванні">
+
+<!ENTITY detail.contributions.description     "Распрацоўца гэтага дадатка просіць падтрымаць яго распрацоўку невялікім ахвяраваннем.">
+
+<!ENTITY detail.updateType                    "Аўтаматычныя абнаўленні">
+<!ENTITY detail.updateDefault.label           "Прадвызначана">
+<!ENTITY detail.updateDefault.tooltip         "Самастойна ўсталёўваць абнаўленні, калі гэта прадвызначана">
+<!ENTITY detail.updateAutomatic.label         "Укл.">
+<!ENTITY detail.updateAutomatic.tooltip       "Аўтаматычна ўсталёўваць абнаўленні">
+<!ENTITY detail.updateManual.label            "Выкл.">
+<!ENTITY detail.updateManual.tooltip          "Не ўсталёўваць абнаўленні аўтаматычна">
+<!ENTITY detail.home                          "Хатняя старонка">
+<!ENTITY detail.repository                    "Профіль дадатка">
+<!ENTITY detail.size                          "Памер">
+
+<!ENTITY detail.checkForUpdates.label         "Знайсці абнаўленні">
+<!ENTITY detail.checkForUpdates.accesskey     "н">
+<!ENTITY detail.checkForUpdates.tooltip       "Праверыць, ці існуюць абнаўленні гэтага дадатку">
+<!ENTITY detail.showPreferencesWin.label      "Налады">
+<!ENTITY detail.showPreferencesWin.accesskey  "Н">
+<!ENTITY detail.showPreferencesWin.tooltip    "Змяненне налад гэтага дадатка">
+<!ENTITY detail.showPreferencesUnix.label     "Налады">
+<!ENTITY detail.showPreferencesUnix.accesskey "Н">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Змяненне налад гэтага дадатка">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Ацэнка">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Прыпыніць">
+<!ENTITY progress.cancel.tooltip              "Скасаваць">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Назва">
+<!ENTITY sort.name.tooltip                    "Размеркаваць па імям">
+<!ENTITY sort.dateUpdated.label               "Апошняе абнаўленне">
+<!ENTITY sort.dateUpdated.tooltip             "Размеркаваць па даце абнаўлення">
+<!ENTITY sort.relevance.label                 "Лепшае супадзенне">
+<!ENTITY sort.relevance.tooltip               "Размеркаваць па дарэчнасці">
+<!ENTITY sort.price.label                     "Цана">
+<!ENTITY sort.price.tooltip                   "Размеркаваць па цане">
+
+<!ENTITY search.filter2.label                 "Пошук:">
+<!ENTITY search.filter2.installed.label       "Мае дадаткі">
+<!ENTITY search.filter2.installed.tooltip     "Паказаць усталяваныя дадаткі">
+<!ENTITY search.filter2.available.label       "Даступныя дадаткі">
+<!ENTITY search.filter2.available.tooltip     "Паказаць даступныя для ўсталявання дадаткі ">
+
+<!ENTITY addon.homepage                       "Хатняя старонка">
+<!ENTITY addon.details.label                  "Больш">
+<!ENTITY addon.details.tooltip                "Паказаць больш падрабязнасцяў пра гэты дадатак">
+<!ENTITY addon.unknownDate                    "Невядомая">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "САСТАРЭЛАЕ">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(адключана)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Абнавіць">
+<!ENTITY addon.undoAction.label               "Адмяніць">
+<!ENTITY addon.undoAction.tooltip             "Адмяніць гэтае дзеянне">
+<!ENTITY addon.undoRemove.label               "Адмяніць">
+<!ENTITY addon.undoRemove.tooltip             "Трымаць гэты дадатак усталяваным">
+<!ENTITY addon.restartNow.label               "Перазапусціць зараз">
+<!ENTITY addon.install.label                  "Усталяваць">
+<!ENTITY addon.install.tooltip                "Усталяваць гэты дадатак">
+<!ENTITY addon.updateNow.label                "Абнавіць зараз">
+<!ENTITY addon.updateNow.tooltip              "Усталяваць абнаўленне гэтага дадатка">
+<!ENTITY addon.includeUpdate.label            "Уключыць у абнаўленне">
+<!ENTITY addon.updateAvailable.label          "Даступна абнаўленне">
+<!ENTITY addon.checkingForUpdates.label       "Праверка існавання абнаўленняў…">
+<!ENTITY addon.releaseNotes.label             "Заўвагі пра выданне:">
+<!ENTITY addon.loadingReleaseNotes.label      "Загрузка…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Прабачце, здарылася памылка падчас загрузкі заўвагаў пра выданне.">
+
+<!ENTITY addon.createdBy.label                "Ад ">
+
+<!ENTITY eula.title                           "Ліцэнзійнае Пагадненне канчатковага карыстальніка">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Пагадзіцца і ўсталяваць…">
+
+<!ENTITY settings.path.button.label           "Агляд…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Што гэта? Тэлеметрыя можа ўсталёўваць і выконваць доследы час ад часу.">
+<!ENTITY experiment.info.learnmore "Падрабязней">
+<!ENTITY experiment.info.learnmore.accesskey "д">
+<!ENTITY experiment.info.changetelemetry "Параметры тэлеметрыі">
+<!ENTITY experiment.info.changetelemetry.accesskey "т">
+
+<!ENTITY setting.learnmore "Падрабязней…">
+
+<!ENTITY disabledUnsigned.heading "Некаторыя дадаткі былі адключаны">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Праца наступных дадаткаў у &brandShortName; не была праверана. Вы можаце ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "знайсці ім замену">
+<!ENTITY disabledUnsigned.description.end " або папрасіць распрацоўшчыка правесці іх праверку.">
+<!ENTITY disabledUnsigned.learnMore "Даведайцеся больш пра нашы намаганні ў забеспячэнні вашай бяспекі ў інтэрнэце.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Распрацоўшчыкі, зацікаўленыя ў праверцы сваіх дадаткаў, могуць прачытаць наш ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "дапаможнік">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Нешта адсутнічае? &brandShortName; больш не падтрымлівае некаторыя плагіны.">
+<!ENTITY pluginDeprecation.learnMore "Падрабязней.">
+
+<!ENTITY legacyWarning.description "Чагосьці не хапае? Некаторыя пашырэнні больш не падтрымліваюцца ў &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Паказаць састарэлыя пашырэнні">
+<!ENTITY legacyExtensions.title "Састарэлыя пашырэнні">
+<!ENTITY legacyExtensions.description "Гэтыя пашырэнні не адпавядаюць бягучым стандартам &brandShortName;, таму яны былі выключаны.">
+<!ENTITY legacyExtensions.learnMore "Даведацца аб зменах у дадатках">

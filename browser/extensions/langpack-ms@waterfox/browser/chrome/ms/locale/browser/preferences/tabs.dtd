@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Pusingan Ctrl+Tab mengikut tertib tab yang baru digunakan">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Buka tetingkap dalam tab baru">
+<!ENTITY newWindowsAsTabs.accesskey   "a">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Beri amaran apabila menutup bebilang tab">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "b">
+
+<!ENTITY warnOnOpenManyTabs.label       "Beri amaran apabila membuka berbilang tab yang mungkin memperlahankan &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "p">
+
+<!ENTITY switchLinksToNewTabs.label        "Apabila anda membuka pautan dalam tetingkap baharu, tukar terus kepadanya">
+<!ENTITY switchLinksToNewTabs.accesskey    "r">
+
+<!ENTITY showTabsInTaskbar.label          "Papar previu tab dalam Tetingkap bar tugasan">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Tab">

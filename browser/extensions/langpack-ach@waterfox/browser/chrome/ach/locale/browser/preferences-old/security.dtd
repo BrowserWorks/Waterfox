@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Lumuku">
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Geng jami maraco ki me bwola">
+<!ENTITY  enableSafeBrowsing.accesskey    "G">
+
+<!ENTITY  blockDownloads.label            "Geng gam maraco">
+<!ENTITY  blockDownloads.accesskey        "a">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Niangi ikom purugram ma pe mite ki ma pe nonge ata">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "a">
+
+<!ENTITY  addonExceptions.label         "Ma kiweko woko…">
+<!ENTITY  addonExceptions.accesskey     "M">
+
+
+<!ENTITY  logins.label                  "Donyo iyie">
+
+
+<!ENTITY  passwordExceptions.label      "Ma kiweko woko…">
+<!ENTITY  passwordExceptions.accesskey  "a">
+
+<!ENTITY  useMasterPassword.label        "Tii ki mung me donyo madit">
+<!ENTITY  useMasterPassword.accesskey    "T">
+<!ENTITY  changeMasterPassword.label     "Lok mung me donyo madit…">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Donyo iyie ma kigwoko…">
+<!ENTITY  savedLogins.accesskey          "D">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

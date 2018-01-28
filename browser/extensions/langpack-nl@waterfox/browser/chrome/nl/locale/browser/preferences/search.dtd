@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standaardzoekmachine">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Kies de standaardzoekmachine die u in de adresbalk en zoekbalk wilt gebruiken.">
+
+<!ENTITY provideSearchSuggestions.label        "Zoeksuggesties geven">
+<!ENTITY provideSearchSuggestions.accesskey    "Z">
+
+<!ENTITY showURLBarSuggestions2.label           "Zoeksuggesties in adresbalkresultaten tonen">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Zoeksuggesties worden niet in locatiebalkresultaten getoond, omdat u &brandShortName; hebt geconfigureerd om nooit geschiedenis te onthouden.">
+
+<!ENTITY oneClickSearchEngines.label           "Eén-klik-zoekmachines">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Kies de alternatieve zoekmachines die onder de adresbalk en zoekbalk verschijnen als u een sleutelwoord begint in te voeren.">
+
+<!ENTITY engineNameColumn.label                "Zoekmachine">
+<!ENTITY engineKeywordColumn.label             "Sleutelwoord">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Standaardzoekmachines terugzetten">
+<!ENTITY restoreDefaultSearchEngines.accesskey "S">
+
+<!ENTITY removeEngine.label                    "Verwijderen">
+<!ENTITY removeEngine.accesskey                "V">
+
+<!ENTITY findMoreSearchEngines.label           "Meer zoekmachines zoeken">

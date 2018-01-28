@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Εξαιρέσεις">
+<!ENTITY window.width                 "47em">
+
+<!ENTITY treehead.sitename2.label     "Ιστοσελίδα">
+<!ENTITY treehead.status.label        "Κατάσταση">
+<!ENTITY removepermission2.label      "Αφαίρεση Ιστοσελίδας">
+<!ENTITY removepermission2.accesskey  "φ">
+<!ENTITY removeallpermissions2.label  "Αφαίρεση όλων των Ιστοσελίδων">
+<!ENTITY removeallpermissions2.accesskey "λ">
+<!ENTITY address.label                "Διεύθυνση ιστοσελίδας:">
+<!ENTITY address.accesskey            "ι">
+<!ENTITY block.label                  "Φραγή">
+<!ENTITY block.accesskey              "Φ">
+<!ENTITY session.label                "Να επιτραπεί για τη συνεδρία">
+<!ENTITY session.accesskey            "Σ">
+<!ENTITY allow.label                  "Επιτρέπεται">
+<!ENTITY allow.accesskey              "Ε">
+<!ENTITY windowClose.key              "α">
+
+<!ENTITY button.cancel.label          "Ακύρωση">
+<!ENTITY button.cancel.accesskey      "Κ">
+<!ENTITY button.ok.label              "Αποθήκευση αλλαγών">
+<!ENTITY button.ok.accesskey          "Π">
+

@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "علاماتي">
+<!ENTITY engine.bookmarks.accesskey "م">
+<!ENTITY engine.tabs.label2         "الألسنة المفتوحة">
+<!ENTITY engine.tabs.accesskey      "س">
+<!ENTITY engine.history.label       "تأريخي">
+<!ENTITY engine.history.accesskey   "خ">
+<!ENTITY engine.logins.label        "جلسات الولوج">
+<!ENTITY engine.logins.accesskey    "س">
+<!ENTITY engine.prefs.label         "تفضيلاتي">
+<!ENTITY engine.prefs.accesskey     "ض">
+<!ENTITY engine.addons.label        "الإضافات">
+<!ENTITY engine.addons.accesskey    "ض">
+<!ENTITY engine.addresses.label     "العناوين">
+<!ENTITY engine.addresses.accesskey "ع">
+<!ENTITY engine.creditcards.label   "بطاقات الائتمان">
+<!ENTITY engine.creditcards.accesskey "ق">
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "اسم الجهاز">
+<!ENTITY changeSyncDeviceName2.label "غيّر اسم الجهاز…">
+<!ENTITY changeSyncDeviceName2.accesskey "ه">
+<!ENTITY cancelChangeSyncDeviceName.label "ألغِ">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "ل">
+<!ENTITY saveChangeSyncDeviceName.label "احفظ">
+<!ENTITY saveChangeSyncDeviceName.accesskey "ح">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "بنود الخدمة">
+<!ENTITY fxaPrivacyNotice.link.label "تنويه الخصوصية">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "​">
+<!ENTITY signedInUnverified.aftername.label "ليس مؤكّدًا.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "من فضلك لج لإعادة التوصيل">
+<!ENTITY signedInLoginFailure.aftername.label "​">
+
+<!ENTITY notSignedIn.label           "لست والجًا.">
+<!ENTITY signIn.label                "لج">
+<!ENTITY signIn.accesskey            "ل">
+<!ENTITY profilePicture.tooltip      "غيّر صورة الحساب">
+<!ENTITY verifiedManage.label        "أدِر الحساب">
+<!ENTITY verifiedManage.accesskey    "س">
+<!ENTITY disconnect3.label           "اقطع الاتصال…">
+<!ENTITY disconnect3.accesskey       "ط">
+<!ENTITY verify.label                "أكّد البريد">
+<!ENTITY verify.accesskey            "ك">
+<!ENTITY forget.label                "انس هذا البريد">
+<!ENTITY forget.accesskey            "ن">
+
+<!ENTITY signedOut.caption            "خُذ الوِب معك">
+<!ENTITY signedOut.description        "زامن علاماتك، و تأريخك، و ألسنتك، و كلمات سرك، و إضافاتك و التفضيلات بين كل أجهزتك.">
+<!ENTITY signedOut.accountBox.title   "اتصل باستخدام &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "أنشئ حسابًا">
+<!ENTITY signedOut.accountBox.create.accesskey  "ن">
+<!ENTITY signedOut.accountBox.signin  "لِج">
+<!ENTITY signedOut.accountBox.signin.accesskey  "ل">
+
+<!ENTITY signedIn.settings.label       "إعدادات المزامنة">
+<!ENTITY signedIn.settings.description "اختر مالذي تريد مزامنته على أجهزتك باستخدام &brandShortName;.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "نزّل فيرفكس ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "أندرويد">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " أو ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "آي أو إس">
+
+<!ENTITY mobilePromo3.end              " للمزامنة مع هاتفك المحمول.">

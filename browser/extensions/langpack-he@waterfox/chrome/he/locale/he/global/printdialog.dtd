@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "הדפסה">
+
+<!ENTITY printDialog.title "הדפסה">
+
+<!ENTITY fpDialog.title "שמירת קובץ">
+
+<!ENTITY fileCheck.label "הדפס לקובץ">
+<!ENTITY fileCheck.accesskey "ק">
+<!ENTITY propertiesButton.label "מאפיינים…">
+<!ENTITY propertiesButton.accesskey "מ">
+<!ENTITY descText.label "תיאור מדפסת:">
+<!ENTITY printer.label "מדפסת">
+<!ENTITY printerInput.label "שם מדפסת:">
+<!ENTITY printerInput.accesskey "ש">
+
+<!ENTITY printrangeGroup.label "טווח הדפסה">
+<!ENTITY allpagesRadio.label "כל העמודים">
+<!ENTITY allpagesRadio.accesskey "כ">
+<!ENTITY rangeRadio.label  "עמודים">
+<!ENTITY rangeRadio.accesskey  "ד">
+<!ENTITY frompageInput.label  "מעמוד">
+<!ENTITY frompageInput.accesskey  "מ">
+<!ENTITY topageInput.label  "עד עמוד">
+<!ENTITY topageInput.accesskey  "ע">
+<!ENTITY selectionRadio.label "קטע נבחר">
+<!ENTITY selectionRadio.accesskey "נ">
+
+<!ENTITY copies.label "עותקים">
+<!ENTITY numCopies.label "מספר עותקים:">
+<!ENTITY numCopies.accesskey "ס">
+
+<!ENTITY printframeGroup.label "הדפס מסגרות">
+<!ENTITY aslaidoutRadio.label "כמו הפריסה על המסך">
+<!ENTITY aslaidoutRadio.accesskey "כ">
+<!ENTITY selectedframeRadio.label  "המסגרת שנבחרה">
+<!ENTITY selectedframeRadio.accesskey  "ב">
+<!ENTITY eachframesepRadio.label  "כל מסגרת בנפרד">
+<!ENTITY eachframesepRadio.accesskey  "נ">

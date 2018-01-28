@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Yksityinen selaus)">
+
+<!ENTITY appmenu.tooltip                     "Avaa valikko">
+<!ENTITY navbarOverflow.label                "Lisää työkaluja…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Päivitä välilehti">
+<!ENTITY  reloadTab.accesskey                "P">
+<!ENTITY  reloadAllTabs.label                "Päivitä kaikki välilehdet">
+<!ENTITY  reloadAllTabs.accesskey            "ä">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Sulje välilehdet oikealla">
+<!ENTITY  closeTabsToTheEnd.accesskey        "o">
+<!ENTITY  closeOtherTabs.label               "Sulje muut välilehdet">
+<!ENTITY  closeOtherTabs.accesskey           "m">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Kiinnitä välilehti">
+<!ENTITY  pinTab.accesskey                   "K">
+<!ENTITY  unpinTab.label                     "Irrota välilehti">
+<!ENTITY  unpinTab.accesskey                 "I">
+<!ENTITY  sendTabToDevice.label              "Lähetä välilehti laitteeseen">
+<!ENTITY  sendTabToDevice.accesskey          "L">
+<!ENTITY  sendPageToDevice.label             "Lähetä sivu laitteeseen">
+<!ENTITY  sendPageToDevice.accesskey         "L">
+<!ENTITY  sendLinkToDevice.label             "Lähetä linkki laitteeseen">
+<!ENTITY  sendLinkToDevice.accesskey         "L">
+<!ENTITY  moveToNewWindow.label              "Siirrä uuteen ikkunaan">
+<!ENTITY  moveToNewWindow.accesskey          "S">
+<!ENTITY  bookmarkAllTabs.label              "Lisää välilehdet kirjanmerkkeihin…">
+<!ENTITY  bookmarkAllTabs.accesskey          "i">
+<!ENTITY  undoCloseTab.label                 "Kumoa välilehden sulkeminen">
+<!ENTITY  undoCloseTab.accesskey             "u">
+<!ENTITY  closeTab.label                     "Sulje välilehti">
+<!ENTITY  closeTab.accesskey                 "S">
+
+<!ENTITY  listAllTabs.label      "Listaa kaikki välilehdet">
+
+<!ENTITY tabCmd.label "Uusi välilehti">
+<!ENTITY tabCmd.accesskey "v">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Avaa kohde…">
+<!ENTITY openFileCmd.label "Avaa tiedosto…">
+<!ENTITY openFileCmd.accesskey "d">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Sivun asetukset…">
+<!ENTITY printSetupCmd.accesskey "e">
+<!ENTITY printPreviewCmd.label "Tulostuksen esikatselu">
+<!ENTITY printPreviewCmd.accesskey "k">
+<!ENTITY printCmd.label "Tulosta…">
+<!ENTITY printCmd.accesskey "o">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Työskentele yhteydettömässä tilassa">
+<!ENTITY goOfflineCmd.accesskey "y">
+
+<!ENTITY menubarCmd.label "Valikkopalkki">
+<!ENTITY menubarCmd.accesskey "V">
+<!ENTITY navbarCmd.label "Navigointipalkki">
+<!ENTITY personalbarCmd.label "Kirjanmerkkipalkki">
+<!ENTITY personalbarCmd.accesskey "K">
+<!ENTITY bookmarksToolbarItem.label "Kirjanmerkkipalkin linkit">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Päivitä kaikki välilehdet">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "ä">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Lisää välilehdet kirjanmerkkeihin…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "t">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Kumoa välilehden sulkeminen">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "m">
+
+<!ENTITY pageSourceCmd.label "Sivun lähdekoodi">
+<!ENTITY pageSourceCmd.accesskey "n">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Tietoja sivusta">
+<!ENTITY pageInfoCmd.accesskey "T">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Peilaa välilehti">
+<!ENTITY mirrorTabCmd.accesskey "P">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Siirry kokoruututilaan">
+<!ENTITY enterFullScreenCmd.accesskey "S">
+<!ENTITY exitFullScreenCmd.label "Poistu kokoruututilasta">
+<!ENTITY exitFullScreenCmd.accesskey "P">
+<!ENTITY fullScreenCmd.label "Kokoruututila">
+<!ENTITY fullScreenCmd.accesskey "K">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Näytä kaikki välilehdet">
+<!ENTITY showAllTabsCmd.accesskey "N">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Kirjaudu sisään &syncBrand.shortName.label;-palveluun">
+<!ENTITY fxaSignedIn.tooltip "Avaa &syncBrand.shortName.label;-asetukset">
+<!ENTITY fxaSignInError.label "Palauta yhteys &syncBrand.shortName.label;-palveluun">
+<!ENTITY fxaUnverified.label "Vahvista tilisi">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Pienennä ikkuna">
+<!ENTITY fullScreenRestore.tooltip "Palauta">
+<!ENTITY fullScreenClose.tooltip "Sulje">
+<!ENTITY fullScreenAutohide.label "Piilota työkalupalkit">
+<!ENTITY fullScreenAutohide.accesskey "P">
+<!ENTITY fullScreenExit.label "Poistu kokoruututilasta">
+<!ENTITY fullScreenExit.accesskey "o">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "on nyt kokoruututilassa">
+<!ENTITY fullscreenWarning.generic.label "Dokumentti on nyt kokoruututilassa">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Poistu kokoruututilasta (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Poistu kokoruututilasta (esc)">
+<!ENTITY leaveDOMFullScreen.label "Poistu kokoruututilasta">
+<!ENTITY leaveDOMFullScreen.accesskey "P">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "Sivusto">
+<!ENTITY pointerlockWarning.afterDomain.label "hallitsee hiiren osoitinta. Voit ottaa osoittimen hallintaasi painamalla Esc.">
+<!ENTITY pointerlockWarning.generic.label "Tämä sivu hallitsee hiiren osoitinta. Voit ottaa osoittimen hallintaasi painamalla Esc.">
+
+<!ENTITY closeWindow.label "Sulje ikkuna">
+<!ENTITY closeWindow.accesskey "i">
+
+<!ENTITY bookmarksMenu.label "Kirjanmerkit">
+<!ENTITY bookmarksMenu.accesskey "K">
+<!ENTITY bookmarkThisPageCmd.label "Lisää sivu kirjanmerkkeihin">
+<!ENTITY editThisBookmarkCmd.label "Muokkaa kirjanmerkkiä">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Hae muita jakamispalveluja…">
+<!ENTITY sharePageCmd.label "Jaa sivu">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "J">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Jaa linkki">
+<!ENTITY shareLink.accesskey "l">
+<!ENTITY shareImage.label "Jaa kuva">
+<!ENTITY shareImage.accesskey "k">
+<!ENTITY shareSelect.label "Jaa valinta">
+<!ENTITY shareSelect.accesskey "a">
+<!ENTITY shareVideo.label "Jaa video">
+<!ENTITY shareVideo.accesskey "v">
+<!ENTITY feedsMenu2.label "Tilaa sivu">
+<!ENTITY subscribeToPageMenupopup.label "Tilaa sivu">
+<!ENTITY subscribeToPageMenuitem.label "Tilaa sivu…">
+<!ENTITY addCurPagesCmd.label "Lisää välilehdet kirjanmerkkeihin…">
+<!ENTITY showAllBookmarks2.label "Näytä kaikki kirjanmerkit">
+<!ENTITY recentBookmarks.label "Viimeksi lisätyt">
+<!ENTITY otherBookmarksCmd.label "Muut kirjanmerkit">
+<!ENTITY mobileBookmarksCmd.label "Kannettavan laitteen kirjanmerkit">
+<!ENTITY bookmarksToolbarChevron.tooltip "Näytä lisää kirjanmerkkejä">
+<!ENTITY showRecentlyBookmarked.label     "Näytä viimeksi lisätyt">
+<!ENTITY showRecentlyBookmarked.accesskey "v">
+<!ENTITY hideRecentlyBookmarked.label     "Piilota viimeksi lisätyt">
+<!ENTITY hideRecentlyBookmarked.accesskey "v">
+
+<!ENTITY backCmd.label                "Edellinen">
+<!ENTITY backButton.tooltip           "Siirry sivu taaksepäin">
+<!ENTITY forwardCmd.label             "Seuraava">
+<!ENTITY forwardButton.tooltip        "Siirry sivu eteenpäin">
+<!ENTITY backForwardButtonMenu.tooltip "Napsauta hiiren toisella painikkeella tai vedä alaspäin nähdäksesi sivuhistorian">
+<!ENTITY backForwardButtonMenuMac.tooltip "Vedä alaspäin nähdäksesi sivuhistorian">
+<!ENTITY reloadCmd.label              "Päivitä">
+<!ENTITY stopCmd.label                "Pysäytä">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Siirry osoitepalkissa olevaan osoitteeseen">
+<!ENTITY printButton.label            "Tulosta">
+<!ENTITY printButton.tooltip          "Tulosta sivu">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Näytä sivuston tiedot">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Avaa viestipaneeli">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Avaa paikannustietojen pyyntöpaneeli">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Avaa lisäosan asentamisen viestipaneeli">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Avaa verkkoyhteydettömän tilan tietovaraston viestipaneeli">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Avaa salasanan tallentamisen viestipaneeli">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Hallinnoi liitännäisen käyttöä">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Muuta sitä, voitko saada ilmoituksia tältä sivustolta">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Tallenna tietoja pysyvään tallennustilaan">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Selain on kauko-ohjauksessa">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Hallinnoi kameran tai mikrofonin jakamista sivustolle">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Hallinnoi mikrofonin jakamista sivustolle">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Hallinnoi ikkunoiden tai näytön jakamista sivustolle">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Avaa asentamisen viestipaneeli">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Käännä sivu">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Hallinnoi sivun kääntämistä toiselle kielelle">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Hallinnoi DRM-ohjelmiston käyttöä">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Olet estänyt kameran tältä sivustolta.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Olet estänyt mikrofonin tältä sivustolta.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Olet estänyt tämän sivuston jakamasta näyttöäsi.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Olet estänyt sijaintitiedot tältä sivustolta.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Olet estänyt tietojen tallentamisen tietovarastoon tältä sivustolta.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Olet estänyt ilmoitukset tältä sivustolta.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Olet estänyt pysyvän tallennustilan käytön tältä sivustolta.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Avaa sivuhistoria">
+
+<!ENTITY searchItem.title             "Etsi">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Aloitussivu">
+
+<!ENTITY bookmarksButton.label          "Kirjanmerkit">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Kirjanmerkit">
+<!ENTITY bookmarksMenuButton.other.label "Muut kirjanmerkit">
+<!ENTITY bookmarksMenuButton.mobile.label "Kannettavan laitteen kirjanmerkit">
+<!ENTITY viewBookmarksSidebar2.label        "Näytä kirjanmerkkien sivupaneeli">
+<!ENTITY viewBookmarksToolbar.label         "Näytä kirjanmerkkipalkki">
+<!ENTITY searchBookmarks.label              "Etsi kirjanmerkeistä">
+
+<!ENTITY containersMenu.label "Luokitukset">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Sivuhistoria">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Työkalut">
+<!ENTITY toolsMenu.accesskey          "y"> 
+
+<!ENTITY keywordfield.label           "Lisää pikakomento tälle haulle…">
+<!ENTITY keywordfield.accesskey       "L">
+
+<!ENTITY downloads.label              "Lataukset">
+<!ENTITY downloads.accesskey          "L">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Lisäosat">
+<!ENTITY addons.accesskey             "o">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Web-työkalut (englanninkielisiä)">
+<!ENTITY webDeveloperMenu.accesskey   "W">
+
+<!ENTITY inspectContextMenu.label     "Inspect Element">
+<!ENTITY inspectContextMenu.accesskey "Q">
+
+<!ENTITY fileMenu.label         "Tiedosto"> 
+<!ENTITY fileMenu.accesskey       "T">
+<!ENTITY newUserContext.label             "Uusi luokiteltu välilehti">
+<!ENTITY newUserContext.accesskey         "l">
+<!ENTITY newNavigatorCmd.label        "Uusi ikkuna">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "U">
+<!ENTITY newPrivateWindow.label     "Uusi yksityinen ikkuna">
+<!ENTITY newPrivateWindow.accesskey "y">
+<!ENTITY newNonRemoteWindow.label   "Uusi ei-e10s ikkuna">
+
+<!ENTITY editMenu.label         "Muokkaa"> 
+<!ENTITY editMenu.accesskey       "M"> 
+<!ENTITY undoCmd.label            "Kumoa">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "m"> 
+<!ENTITY redoCmd.label            "Tee uudelleen">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "T"> 
+<!ENTITY cutCmd.label           "Leikkaa">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "L"> 
+<!ENTITY copyCmd.label            "Kopioi">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "K"> 
+<!ENTITY pasteCmd.label           "Liitä">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "i"> 
+<!ENTITY deleteCmd.label          "Poista">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "o"> 
+<!ENTITY selectAllCmd.label         "Valitse kaikki">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "V"> 
+<!ENTITY preferencesCmd2.label       "Asetukset">
+<!ENTITY preferencesCmd2.accesskey     "A">
+<!ENTITY preferencesCmdUnix.label       "Asetukset">
+<!ENTITY preferencesCmdUnix.accesskey     "A"> 
+
+<!ENTITY clearRecentHistory.label               "Poista historiatietoja…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Näytä"> 
+<!ENTITY viewMenu.accesskey       "N"> 
+<!ENTITY viewToolbarsMenu.label       "Työkalupalkit"> 
+<!ENTITY viewToolbarsMenu.accesskey     "T"> 
+<!ENTITY viewSidebarMenu.label "Sivupaneeli">
+<!ENTITY viewSidebarMenu.accesskey "p">
+<!ENTITY viewCustomizeToolbar.label       "Muokkaa…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "M">
+<!ENTITY overflowCustomizeToolbar.label       "Muokkaa työkalupalkkia…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "M">
+
+<!ENTITY historyMenu.label "Sivuhistoria">
+<!ENTITY historyMenu.accesskey "S">
+<!ENTITY historyUndoMenu.label "Suljetut välilehdet">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Suljetut ikkunat">
+<!ENTITY historyRestoreLastSession.label "Palauta edellinen istunto">
+
+<!ENTITY showAllHistoryCmd2.label "Näytä sivuhistoria">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Muokkaa">
+<!ENTITY appMenuCustomize.tooltip "Muokkaa valikkoa ja työkalupalkkeja">
+<!ENTITY appMenuCustomizeExit.label "Lopeta muokkaus">
+<!ENTITY appMenuCustomizeExit.tooltip "Lopeta muokkaus">
+<!ENTITY appMenuHistory.label "Sivuhistoria">
+<!ENTITY appMenuHistory.showAll.label "Näytä täydellinen sivuhistoria">
+<!ENTITY appMenuHistory.clearRecent.label "Poista viimeaikaisia historiatietoja…">
+<!ENTITY appMenuHistory.restoreSession.label "Palauta edellinen istunto">
+<!ENTITY appMenuHistory.viewSidebar.label "Näytä sivuhistoriapaneeli">
+<!ENTITY appMenuHistory.recentHistory.label "Viimeaikainen historia">
+<!ENTITY appMenuHelp.label "Ohje">
+<!ENTITY appMenuHelp.tooltip "Avaa ohjevalikko">
+
+<!ENTITY appMenuRemoteTabs.label "Synkronoidut välilehdet">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Ei avoimia välilehtiä">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Näytä lisää">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Näytä lisää välilehtiä tältä laitteelta">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Näytä kaikki">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Näytä kaikki välilehdet tältä laitteelta">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ota välilehtien synkronointi käyttöön, jotta voit katsella listaa muiden laitteidesi välilehdistä.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Ei synkronoituja välilehtiä… vielä!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Haluatko nähdä muiden laitteiden välilehdet tässä?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Sync-palvelun asetukset">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Kirjaudu sisään, jotta voit katsella listaa muiden laitteidesi välilehdistä.">
+<!ENTITY appMenuRemoteTabs.signin.label "Kirjaudu Sync-palveluun">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Hallitse laitteita…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Synkronoitujen välilehtien sivupaneeli">
+
+<!ENTITY customizeMenu.addToToolbar.label "Lisää työkalupalkkiin">
+<!ENTITY customizeMenu.addToToolbar.accesskey "L">
+<!ENTITY customizeMenu.addToPanel.label "Lisää valikkoon">
+<!ENTITY customizeMenu.addToPanel.accesskey "v">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Lisää ylivuotovalikkoon">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "v">
+<!ENTITY customizeMenu.moveToToolbar.label "Siirrä työkalupalkkiin">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "S">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Siirrä valikkoon">
+<!ENTITY customizeMenu.moveToPanel.accesskey "a">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Kiinnitä ylivuotovalikkoon">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "y">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Poista ylivuotovalikosta">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "o">
+<!ENTITY customizeMenu.removeFromToolbar.label "Poista työkalupalkista">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "P">
+<!ENTITY customizeMenu.removeFromMenu.label "Poista valikosta">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "o">
+<!ENTITY customizeMenu.addMoreItems.label "Lisää toimintoja…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "t">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Lisää komentoja">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Kirjoita osoite tai hakutermi">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Laajennus:">
+<!ENTITY urlbar.switchToTab.label     "Siirry välilehteen:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Näytetäänkö hakuja tehdessä hakuehdotuksia?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Lue lisää…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "L">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Ei">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "E">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Kyllä">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "K">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Vinkki:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Saa apua asioiden löytämiseen! Hakuehdotukset tunnistat niiden vieressä olevasta &#x1F50E;-kuvakkeesta.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Muokkaa asetuksia…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "M">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Muokkaa asetuksia…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "M">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Hakutermit">
+<!ENTITY contentSearchSubmit.tooltip  "Lähetä haku">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Haku">
+<!ENTITY searchIcon.tooltip           "Haku">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Hae ">
+<!ENTITY searchWith.label             " palvelusta:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Hae palvelusta ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Hae palvelusta:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Muuta hakuasetuksia">
+<!ENTITY changeSearchSettings.tooltip "Muuta hakuasetuksia">
+
+<!ENTITY searchInNewTab.label         "Etsi uudessa välilehdessä">
+<!ENTITY searchInNewTab.accesskey     "E">
+<!ENTITY searchSetAsDefault.label     "Aseta oletushakukoneeksi">
+<!ENTITY searchSetAsDefault.accesskey "A">
+
+<!ENTITY openLinkCmdInTab.label       "Avaa uuteen välilehteen">
+<!ENTITY openLinkCmdInTab.accesskey   "v">
+<!ENTITY openLinkCmd.label            "Avaa uuteen ikkunaan">
+<!ENTITY openLinkCmd.accesskey        "i">
+<!ENTITY openLinkInPrivateWindowCmd.label "Avaa uuteen yksityiseen ikkunaan">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "y">
+<!ENTITY openLinkCmdInCurrent.label     "Avaa">
+<!ENTITY openLinkCmdInCurrent.accesskey "A">
+<!ENTITY openFrameCmdInTab.label      "Avaa kehys uuteen välilehteen">
+<!ENTITY openFrameCmdInTab.accesskey  "v">
+<!ENTITY openFrameCmd.label           "Avaa kehys uuteen ikkunaan">
+<!ENTITY openFrameCmd.accesskey       "A">
+<!ENTITY openLinkCmdInContainerTab.label "Avaa uuteen luokiteltuun välilehteen">
+<!ENTITY openLinkCmdInContainerTab.accesskey "u">
+<!ENTITY showOnlyThisFrameCmd.label     "Näytä vain tämä kehys">
+<!ENTITY showOnlyThisFrameCmd.accesskey "N">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Päivitä kehys">
+<!ENTITY reloadFrameCmd.accesskey     "ä">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Näytä valinnan lähdekoodi">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Näytä MathML-lähdekoodi">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "n">
+<!ENTITY viewPageSourceCmd.label      "Näytä sivun lähdekoodi">
+<!ENTITY viewPageSourceCmd.accesskey  "k">
+<!ENTITY viewFrameSourceCmd.label     "Näytä kehyksen lähdekoodi">
+<!ENTITY viewFrameSourceCmd.accesskey "ä">
+<!ENTITY viewPageInfoCmd.label        "Näytä sivun tiedot">
+<!ENTITY viewPageInfoCmd.accesskey    "o">
+<!ENTITY viewFrameInfoCmd.label       "Näytä kehyksen tiedot">
+<!ENTITY viewFrameInfoCmd.accesskey   "o">
+<!ENTITY reloadImageCmd.label         "Lataa kuva">
+<!ENTITY reloadImageCmd.accesskey     "L">
+<!ENTITY viewImageCmd.label           "Näytä kuva">
+<!ENTITY viewImageCmd.accesskey       "N">
+<!ENTITY viewImageInfoCmd.label       "Näytä kuvan tiedot">
+<!ENTITY viewImageInfoCmd.accesskey   "d">
+<!ENTITY viewImageDescCmd.label       "Näytä kuvaus">
+<!ENTITY viewImageDescCmd.accesskey   "u">
+<!ENTITY viewVideoCmd.label           "Näytä video">
+<!ENTITY viewVideoCmd.accesskey       "N">
+<!ENTITY viewBGImageCmd.label         "Näytä taustakuva">
+<!ENTITY viewBGImageCmd.accesskey     "a">
+<!ENTITY setDesktopBackgroundCmd.label      "Aseta työpöydän taustakuvaksi…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "A">
+<!ENTITY bookmarkPageCmd2.label       "Lisää sivu kirjanmerkkeihin">
+<!ENTITY bookmarkThisLinkCmd.label      "Lisää kohde kirjanmerkkeihin">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "A">
+<!ENTITY bookmarkThisFrameCmd.label      "Lisää kehyssivu kirjanmerkkeihin">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "A">
+<!ENTITY copyURLCmd.label             "Kopioi osoite">
+<!ENTITY emailPageCmd.label           "Lähetä linkki…">
+<!ENTITY emailPageCmd.accesskey       "L">
+<!ENTITY savePageCmd.label            "Tallenna sivu nimellä…">
+<!ENTITY savePageCmd.accesskey        "n">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "s">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Tallenna kehys nimellä…">
+<!ENTITY saveFrameCmd.accesskey       "T">
+<!ENTITY printFrameCmd.label          "Tulosta kehys…">
+<!ENTITY printFrameCmd.accesskey      "u">
+<!ENTITY saveLinkCmd.label            "Tallenna kohde levylle…">
+<!ENTITY saveLinkCmd.accesskey        "T">
+<!ENTITY saveImageCmd.label           "Tallenna kuva nimellä…">
+<!ENTITY saveImageCmd.accesskey       "e">
+<!ENTITY saveVideoCmd.label           "Tallenna video nimellä…">
+<!ENTITY saveVideoCmd.accesskey       "e">
+<!ENTITY saveAudioCmd.label           "Tallenna äänite nimellä…">
+<!ENTITY saveAudioCmd.accesskey       "e">
+<!ENTITY emailImageCmd.label          "Lähetä kuva…">
+<!ENTITY emailImageCmd.accesskey      "L">
+<!ENTITY emailVideoCmd.label          "Lähetä video…">
+<!ENTITY emailVideoCmd.accesskey      "L">
+<!ENTITY castVideoCmd.label           "Siirrä video laitteelle">
+<!ENTITY castVideoCmd.accesskey       "e">
+<!ENTITY emailAudioCmd.label          "Lähetä äänite…">
+<!ENTITY emailAudioCmd.accesskey      "L">
+<!ENTITY playPluginCmd.label          "Käynnistä liitännäinen">
+<!ENTITY playPluginCmd.accesskey      "K">
+<!ENTITY hidePluginCmd.label          "Piilota liitännäinen">
+<!ENTITY hidePluginCmd.accesskey      "o">
+<!ENTITY copyLinkCmd.label            "Kopioi linkin osoite">
+<!ENTITY copyLinkCmd.accesskey        "K">
+<!ENTITY copyImageCmd.label           "Kopioi kuvan osoite">
+<!ENTITY copyImageCmd.accesskey       "p">
+<!ENTITY copyImageContentsCmd.label   "Kopioi kuva">
+<!ENTITY copyImageContentsCmd.accesskey  "u"> 
+<!ENTITY copyVideoURLCmd.label        "Kopioi videon osoite">
+<!ENTITY copyVideoURLCmd.accesskey    "p">
+<!ENTITY copyAudioURLCmd.label        "Kopioi äänitteen sijainti">
+<!ENTITY copyAudioURLCmd.accesskey    "p">
+<!ENTITY copyEmailCmd.label           "Kopioi sähköpostiosoite">
+<!ENTITY copyEmailCmd.accesskey       "s">
+<!ENTITY thisFrameMenu.label              "Tämä kehys">
+<!ENTITY thisFrameMenu.accesskey          "ä">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Toista">
+<!ENTITY mediaPlay.accesskey         "o">
+<!ENTITY mediaPause.label            "Pysäytä">
+<!ENTITY mediaPause.accesskey        "y">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Mykistä ääni">
+<!ENTITY mediaMute.accesskey         "M">
+<!ENTITY mediaUnmute.label           "Palauta ääni">
+<!ENTITY mediaUnmute.accesskey       "ä">
+<!ENTITY mediaPlaybackRate2.label     "Toistonopeus">
+<!ENTITY mediaPlaybackRate2.accesskey "u">
+<!ENTITY mediaPlaybackRate050x2.label "Hidas (0,5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "H">
+<!ENTITY mediaPlaybackRate100x2.label "Normaali">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate125x2.label "Nopea (1,25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "o">
+<!ENTITY mediaPlaybackRate150x2.label "Nopeampi (1,5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "p">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Älytön (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "Ä">
+<!ENTITY mediaLoop.label             "Jatkuva toisto">
+<!ENTITY mediaLoop.accesskey         "J">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Näytä säätimet">
+<!ENTITY mediaShowControls.accesskey "s">
+<!ENTITY mediaHideControls.label     "Piilota säätimet">
+<!ENTITY mediaHideControls.accesskey "s">
+<!ENTITY videoFullScreen.label       "Kokoruutu">
+<!ENTITY videoFullScreen.accesskey   "K">
+<!ENTITY videoSaveImage.label        "Tallenna ruutukaappaus nimellä…">
+<!ENTITY videoSaveImage.accesskey    "T">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Näytä tilastot">
+<!ENTITY videoShowStats.accesskey    "i">
+<!ENTITY videoHideStats.label        "Piilota tilastot">
+<!ENTITY videoHideStats.accesskey    "i">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Suurenna">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "S">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Pienennä">
+<!ENTITY fullZoomReduceCmd.accesskey    "P">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Palauta">
+<!ENTITY fullZoomResetCmd.accesskey     "a">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Muuta vain tekstin kokoa">
+<!ENTITY fullZoomToggleCmd.accesskey    "M">
+<!ENTITY fullZoom.label                 "Sivun suurennus">
+<!ENTITY fullZoom.accesskey             "S">
+
+<!ENTITY sidebarCloseButton.tooltip     "Sulje sivupaneeli">
+<!ENTITY sidebarMenuClose.label         "Sulje sivupaneeli">
+
+<!ENTITY quitApplicationCmdWin2.label       "Sulje">
+<!ENTITY quitApplicationCmdWin2.accesskey   "S">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Sulje &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "Ö">
+<!ENTITY goForwardCmd.commandKey "Ä">
+<!ENTITY quitApplicationCmd.label       "Sulje"> 
+<!ENTITY quitApplicationCmd.accesskey   "S">
+<!ENTITY quitApplicationCmdMac2.label   "Sulje &brandShorterName;">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Sulje">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "S">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Sivun tyylit">
+<!ENTITY pageStyleMenu.accesskey "v">
+<!ENTITY pageStyleNoStyle.label "Ei tyylimäärittelyjä">
+<!ENTITY pageStyleNoStyle.accesskey "E">
+<!ENTITY pageStylePersistentOnly.label "Oletustyyli">
+<!ENTITY pageStylePersistentOnly.accesskey "O">
+
+<!ENTITY pageReportIcon.tooltip            "Muuta tämän sivuston ponnahdusikkuna-asetuksia">
+
+<!ENTITY allowPopups.accesskey "S">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Muokkaa ponnahdusikkunoiden eston asetuksia…">
+<!ENTITY editPopupSettings.label "Muokkaa ponnahdusikkunoiden eston asetuksia…">
+<!ENTITY editPopupSettings.accesskey "M">
+<!ENTITY dontShowMessage.accesskey "Ä">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Vaihda sivun suuntaa">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "V">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Vaihda tekstin suuntaa">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "a">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Etsi tältä sivulta…">
+<!ENTITY findOnCmd.accesskey "E">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Etsi seuraava">
+<!ENTITY findAgainCmd.accesskey "s">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Hae sanastoja…">
+<!ENTITY spellAddDictionaries.accesskey "H">
+
+<!ENTITY editBookmark.done.label                     "Valmis">
+<!ENTITY editBookmark.removeBookmark.accessKey       "P">
+
+<!ENTITY identity.connectionSecure "Suojattu yhteys">
+<!ENTITY identity.connectionNotSecure "Yhteys ei ole suojattu">
+<!ENTITY identity.connectionFile "Sivu on tallennettu tietokoneellesi.">
+<!ENTITY identity.connectionVerified2 "Yhteys sivustoon on suojattu ja sivuston omistaa:">
+<!ENTITY identity.connectionInternal "Tämä on suojattu &brandShortName;-sivu.">
+<!ENTITY identity.extensionPage "Tämän sivun latasi laajennus.">
+<!ENTITY identity.insecureLoginForms2 "Tälle sivulle kirjoitettujen kirjautumistietojen turvallisuus voi vaarantua.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; on estänyt suojaamattoman sisällön näyttämisen.">
+<!ENTITY identity.passiveLoaded "Tällä sivulla on suojaamatonta sisältöä (kuten kuvia).">
+<!ENTITY identity.activeLoaded "Suojaamattoman sisällön estäminen on otettu pois päältä sivustolla.">
+<!ENTITY identity.weakEncryption "Sivusto käyttää heikkoa salausta.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Yhteytesi verkkosivustoon ei ole yksityinen. Sivullisten on mahdollista tarkastella antamiasi tietoja (esim. salasanoja, viestejä, luottokorttitietoja).">
+<!ENTITY identity.description.insecureLoginForms "Kirjautumistiedot, jotka kirjoitat tälle sivulle, eivät ole suojassa ja voidaan murtaa.">
+<!ENTITY identity.description.weakCipher "Yhteytesi verkkosivustoon käyttää heikkoa salausta eikä sen takia ole yksityinen.">
+<!ENTITY identity.description.weakCipher2 "Sivullisten on mahdollista tarkastella antamiasi tietoja tai vaikuttaa sivuston toimintaan.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; on estänyt suojaamattoman sisällön näyttämisen.">
+<!ENTITY identity.description.passiveLoaded "Yhteytesi verkkosivustoon ei ole yksityinen ja sivullisten on mahdollista tarkastella tietoja, joita lähetät sivustolle.">
+<!ENTITY identity.description.passiveLoaded2 "Tällä sivulla on suojaamatonta sisältöä (kuten kuvia).">
+<!ENTITY identity.description.passiveLoaded3 "Vaikka &brandShortName; on osaksi estänyt suojaamattoman sisällön, mutta osa näkyvästä sisällöstä on edelleen suojaamatonta (kuten kuvat).">
+<!ENTITY identity.description.activeLoaded "Tällä sivulla on suojaamatonta sisältöä (kuten komentosarjoja) eikä yhteytesi sivustoon ei ole yksityinen.">
+<!ENTITY identity.description.activeLoaded2 "Sivullisten on mahdollista tarkastella antamiasi tietoja (esim. salasanoja, viestejä, luottokorttitietoja).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Ota suojaus käyttöön">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "O">
+<!ENTITY identity.disableMixedContentBlocking.label "Poista suojaus käytöstä">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "P">
+<!ENTITY identity.learnMore "Lue lisää">
+
+<!ENTITY identity.removeCertException.label "Poista poikkeus">
+<!ENTITY identity.removeCertException.accesskey "s">
+
+<!ENTITY identity.moreInfoLinkText2 "Lisätietoja">
+
+<!ENTITY identity.permissions "Oikeudet">
+<!ENTITY identity.permissionsEmpty "Sivustolle ei ole myönnetty mitään erityisoikeuksia.">
+<!ENTITY identity.permissionsReloadHint "Sivu tarvitsee ehkä päivittää, jotta muutokset tulevat voimaan.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Selaimen välilehdet">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Synkronoidut välilehdet">
+
+<!ENTITY syncedTabs.sidebar.label              "Synkronoidut välilehdet">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Kirjaudu Waterfoxiin muilla laitteillasi, jotta voit katsella niiden välilehtiä tästä.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Ei synkronoituja välilehtiä… vielä!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Haluatko nähdä muiden laitteiden välilehdet tässä?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Kirjaudu sisään, jotta voit katsella listaa muiden laitteidesi välilehdistä.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Ei avoimia välilehtiä">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Avaa &syncBrand.shortName.label;-asetukset">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Ota välilehtien synkronointi käyttöön, jotta voit katsella listaa muiden laitteidesi välilehdistä.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Avaa">
+<!ENTITY syncedTabs.context.open.accesskey                   "A">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Avaa uuteen välilehteen">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "v">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Avaa uuteen ikkunaan">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "i">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Avaa uuteen yksityiseen ikkunaan">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "y">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Luo tästä välilehdestä kirjanmerkki…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "L">
+<!ENTITY syncedTabs.context.copy.label                       "Kopioi">
+<!ENTITY syncedTabs.context.copy.accesskey                   "K">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Avaa kaikki välilehtiin">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "A">
+<!ENTITY syncedTabs.context.managedevices.label              "Hallitse laitteita…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "H">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Kirjaudu &syncBrand.shortName.label;-palveluun…">
+<!ENTITY syncSignIn.accesskey         "K">
+<!ENTITY syncSyncNowItem.label        "Synkronoi">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Palauta yhteys &syncBrand.shortName.label;-palveluun…">
+<!ENTITY syncReAuthItem.accesskey     "P">
+<!ENTITY syncToolbarButton.label      "Synkronoi">
+
+<!ENTITY social.addons.label "Muokkaa palveluita…">
+
+<!ENTITY social.directory.label "Aktivointihakemisto">
+<!ENTITY social.directory.text "Voit ottaa jakopalveluja käyttöön hakemistosta.">
+<!ENTITY social.directory.button "Siirry hakemistoon">
+<!ENTITY social.directory.introText "Lisää palvelu &brandShortName;iin napsauttamalla.">
+<!ENTITY social.directory.viewmore.text "Näytä lisää">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Lisää työkaluja ja ominaisuuksia">
+<!ENTITY customizeMode.menuAndToolbars.empty "Haluatko muita työkaluja?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Valitse tuhansista lisäosista">
+<!ENTITY customizeMode.restoreDefaults "Palauta oletukset">
+<!ENTITY customizeMode.done "Valmis">
+<!ENTITY customizeMode.titlebar "Otsikkopalkki">
+<!ENTITY customizeMode.toolbars2 "Työkalupalkit">
+<!ENTITY customizeMode.lwthemes "Teemat">
+<!ENTITY customizeMode.lwthemes.myThemes "Omat teemat">
+<!ENTITY customizeMode.lwthemes.recommended "Suositellut">
+<!ENTITY customizeMode.lwthemes.menuManage "Muokkaa">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "M">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Lataa lisää teemoja">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "L">
+<!ENTITY customizeMode.emptyOverflowList.description "Vedä ja pudota kohteita tänne pitääksesi ne käden ulottuvissa mutta poissa työkalupalkista…">
+<!ENTITY customizeMode.uidensity "Tiiviys">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Tavallinen">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Tavallinen">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "T">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Tiivis">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Tiivis">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "v">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Kosketusoptimoitu">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Kosketusoptimoitu">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "K">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Käytä kosketusoptimoitua tablettitilassa">
+
+<!ENTITY getUserMedia.selectCamera.label "Jaettava kamera:">
+<!ENTITY getUserMedia.selectCamera.accesskey "k">
+<!ENTITY getUserMedia.selectMicrophone.label "Jaettava mikrofoni:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "m">
+<!ENTITY getUserMedia.audioCapture.label "Välilehden äänet jaetaan.">
+<!ENTITY getUserMedia.allWindowsShared.message "Kaikki näkyvissä olevat ikkunat jaetaan.">
+
+<!ENTITY trackingProtection.title "Seurannan suojaus">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; estää sivusta osia, jotka saattavat seurata selaamistasi.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Sivusto sisältää osia, jotka saattavat seurata sinua. Seurannan suojaus on pois päältä.">
+<!ENTITY trackingProtection.notDetected3 "Sivulta ei löytynyt seuraavia osia.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Poista suojaus tältä sivustolta">
+<!ENTITY trackingProtection.unblock.accesskey "s">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Poista suojaus tästä istunnosta">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "i">
+<!ENTITY trackingProtection.block2.label "Ota suojaus käyttöön">
+<!ENTITY trackingProtection.block2.accesskey "O">
+
+<!ENTITY trackingContentBlocked.message "Seuranta">
+<!ENTITY trackingContentBlocked.moreinfo "Sivun sinua verkossa seuraavat osat estettiin.">
+<!ENTITY trackingContentBlocked.learnMore "Lue lisää">
+<!ENTITY trackingContentBlocked.options "Asetukset">
+<!ENTITY trackingContentBlocked.unblock2.label "Poista suojaus tältä sivustolta">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "P">
+<!ENTITY trackingContentBlocked.block.label "Ota suojaus käyttöön">
+<!ENTITY trackingContentBlocked.block.accesskey "O">
+<!ENTITY trackingContentBlocked.disabled.message "Seurannan suojaus on pois päältä">
+
+<!ENTITY pluginNotification.showAll.label "Näytä kaikki">
+<!ENTITY pluginNotification.showAll.accesskey "N">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "Salli nyt">
+<!ENTITY pluginActivateAlways.label "Salli ja muista valinta">
+<!ENTITY pluginBlockNow.label "Estä liitännäinen">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Sulje">
+
+<!ENTITY appMenuSidebars.label         "Sivupalkit">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Unohda viimeiset:">
+<!ENTITY panicButton.view.5min                    "Viisi minuuttia">
+<!ENTITY panicButton.view.2hr                     "Kaksi tuntia">
+<!ENTITY panicButton.view.day                     "24 tuntia">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Toiminnon suorittaminen:">
+<!ENTITY panicButton.view.deleteCookies           "Poistaa kertyneet <html:strong>evästeet</html:strong>">
+<!ENTITY panicButton.view.deleteHistory           "Poistaa kertyneen <html:strong>sivuhistorian</html:strong>">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Sulkee kaikki avatut <html:strong>välilehdet</html:strong> ja <html:strong>ikkunat</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "Avaa uuden puhtaan ikkunan">
+
+<!ENTITY panicButton.view.undoWarning             "Tätä toimintoa ei voi perua.">
+<!ENTITY panicButton.view.forgetButton            "Unohda!">
+
+<!ENTITY panicButton.thankyou.msg1                "Tapahtumahistoria on poistettu.">
+<!ENTITY panicButton.thankyou.msg2                "Turvallista selaamista!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Kiitos!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Lue lisää DRM-suojauksesta…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Päivitä &brandShorterName;, niin pysyt vauhdissa ja turvassa.">
+<!ENTITY updateAvailable.whatsnew.label "Lue, mikä on uutta.">
+<!ENTITY updateAvailable.header.message "Uusi &brandShorterName;-päivitys on saatavilla.">
+<!ENTITY updateAvailable.acceptButton.label "Lataa päivitys">
+<!ENTITY updateAvailable.acceptButton.accesskey "L">
+<!ENTITY updateAvailable.cancelButton.label "Ei nyt">
+<!ENTITY updateAvailable.cancelButton.accesskey "E">
+<!ENTITY updateAvailable.panelUI.label "Lataa &brandShorterName;-päivitys">
+
+<!ENTITY updateManual.message "Lataa uusi &brandShorterName;-kopio, niin autamme sen asentamisessa.">
+<!ENTITY updateManual.whatsnew.label "Lue, mikä on uutta.">
+<!ENTITY updateManual.header.message "&brandShorterName; ei voi päivittyä uusimpaan versioon.">
+<!ENTITY updateManual.acceptButton.label "Lataa &brandShorterName;">
+<!ENTITY updateManual.acceptButton.accesskey "L">
+<!ENTITY updateManual.cancelButton.label "Ei nyt">
+<!ENTITY updateManual.cancelButton.accesskey "E">
+<!ENTITY updateManual.panelUI.label "Lataa uusi &brandShorterName;-kopio">
+
+<!ENTITY updateRestart.message "Nopean uudelleenkäynnistyksen jälkeen &brandShorterName; palauttaa kaikki auki olevat välilehdet ja ikkunat.">
+<!ENTITY updateRestart.header.message2 "Päivitä &brandShorterName; käynnistämällä se uudestaan.">
+<!ENTITY updateRestart.acceptButton.label "Käynnistä uudestaan ja palauta">
+<!ENTITY updateRestart.acceptButton.accesskey "K">
+<!ENTITY updateRestart.cancelButton.label "Ei nyt">
+<!ENTITY updateRestart.cancelButton.accesskey "E">
+<!ENTITY updateRestart.panelUI.label2 "Päivitä käynnistämällä &brandShorterName; uudestaan">
+
+<!ENTITY pageActionButton.tooltip "Sivun toiminnot">
+<!ENTITY pageAction.addToUrlbar.label "Lisää osoitepalkkiin">
+<!ENTITY pageAction.removeFromUrlbar.label "Poista osoitepalkista">
+
+<!ENTITY sendToDevice.label2 "Lähetä laitteeseen">
+<!ENTITY sendToDevice.syncNotReady.label "Synkronoidaan laitteita…">

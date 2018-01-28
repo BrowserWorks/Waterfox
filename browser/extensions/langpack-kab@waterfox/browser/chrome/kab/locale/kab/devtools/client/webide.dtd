@@ -1,0 +1,193 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Asenfaṛ">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Asnas amaynut…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Ldi asnas ikemsen…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Ldi asnas uzdiɣ…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Ldi asnas…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Sebded u selkem">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Seḥbes asnas">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "Seɣti asnas">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Kkes asenfaṛ">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Ismenyifen">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Sefrek isuddas isemmadanen">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "Smiren iccaren">
+
+<!ENTITY runtimeMenu_label "Tawennaṭ">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Ffeɣ">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "Tuṭṭfa n wegdil">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Talɣut ɣef Tawennaṭ">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Asefrak">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Ismenyifen n yibenk">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "Iɣewwaṛen n yibenk">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "Askan">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "Semɣeṛ">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "Semẓi">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "Wennez aswir n usemɣer/asemẓi">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "Ldi asnas">
+<!ENTITY runtimeButton_label "Fren tawennaṭ">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Isenfaṛ-iw">
+<!ENTITY projectPanel_runtimeApps "Isnasen n twennaṭ">
+<!ENTITY projectPanel_tabs "Tibzimin">
+<!ENTITY runtimePanel_usb "Ibenkan USB">
+<!ENTITY runtimePanel_wifi "Ibenkan Wi-Fi">
+<!ENTITY runtimePanel_simulator "Iserwassen">
+<!ENTITY runtimePanel_other "Wiyaḍ">
+<!ENTITY runtimePanel_installsimulator "Sebded aserwas">
+<!ENTITY runtimePanel_noadbhelper "Sebded ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Ur tezmireḍ ara ad twaliḍ ibenk-inek?">
+<!ENTITY runtimePanel_refreshDevices_label "Smiren ibenkan">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "ameɣtu">
+<!ENTITY details_warning_header "imɣuten">
+<!ENTITY details_error_header "tuccḍiwin">
+<!ENTITY details_description "Aglam">
+<!ENTITY details_location "Adeg">
+<!ENTITY details_manifestURL "Asulay n usnas">
+<!ENTITY details_removeProject_button "Kkes asenfaṛ">
+<!ENTITY details_showPrepackageLog_button "Sken aɣmis ukemmus uzwir">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Asnas amaynut">
+<!ENTITY newAppHeader "Fren taneɣruft">
+<!ENTITY newAppLoadingTemplate "Asali n tneɣrufin…">
+<!ENTITY newAppProjectName "Isem n usenfaṛ:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Mdel">
+
+<!-- Addons -->
+<!ENTITY addons_title "Isuddas isemmadanen">
+<!ENTITY addons_aboutaddons "Ldi amsefrak n izegrar">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Ismenyifen">
+<!ENTITY prefs_editor_title "Amaẓrag">
+<!ENTITY prefs_general_title "Amatu">
+<!ENTITY prefs_restore "Err-d iɣewwaṛen imezwar">
+<!ENTITY prefs_manage_components "Sefrek isuddas isemmadanen">
+<!ENTITY prefs_options_autoconnectruntime "Qqen tikelt nniḍen ɣer twennaṭ taneggarut">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Qqen tikelt nniḍen ɣer twennaṭ taneggarut deg tnekra n WebIDE">
+<!ENTITY prefs_options_rememberlastproject "Cfu ɣef usenfaṛ aneggaru">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Err-d asenfaṛ aneggaru deg tnekra n WebIDE">
+<!ENTITY prefs_options_templatesurl "URL n tneɣrufin">
+<!ENTITY prefs_options_templatesurl_tooltip "Amatar n tneɣrufin yellan">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Talɣut ɣef twennaṭ">
+<!ENTITY runtimedetails_adbIsRoot "ADB ɣur-s taseglut n unebdal.">
+<!ENTITY runtimedetails_summonADBRoot "Ibenkan s tseglut n unebdal">
+<!ENTITY runtimedetails_ADBRootWarning "(yesra bootloader yettwaserḥen)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Tisegluyin n ifecka n tenfalit war tilisa : ">
+<!ENTITY runtimedetails_requestPrivileges "suter ugar n izerfan">
+<!ENTITY runtimedetails_privilegesWarning "(ad isenker ibenk tikelt nniḍen. Isra taseglut n unebdal)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Abulan">
+<!ENTITY device_typenumber "Ummid">
+<!ENTITY device_typestring "Azrir">
+<!ENTITY device_typeobject "Ta Γawsa">
+<!ENTITY device_typenone "Fren tawsit">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Ismenyifen n yibenk">
+<!ENTITY devicepreference_search "Nadi ismenyifen">
+<!ENTITY devicepreference_newname "Isem n usmenyaf amaynut">
+<!ENTITY devicepreference_newtext "Azal n usmenyaf">
+<!ENTITY devicepreference_addnew "Rnu asmenyaf amaynut">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Iɣewwaṛen n yibenk">
+<!ENTITY devicesetting_search "Nadi ismenyifen">
+<!ENTITY devicesetting_newname "Isem n uɣewwar amaynut">
+<!ENTITY devicesetting_newtext "Azal n uɣewwaṛ">
+<!ENTITY devicesetting_addnew "Rnu aɣewwaṛ amaynut">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Asefrak">
+<!ENTITY monitor_help "Tallalt">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Asulu n umsaɣ">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Taneqqiṭ n tagara anida ara tetteqqneḍ tessutu talɣut nniḍen n usesteb n tuqqna-yagi. Ma ulac aɣkif, sekcem ajiṭun daw-a seg  ufentay yettwaseknen ɣef yibenk nniḍen.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Ulac afentay akken ad tesnirmeḍ tangalt QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Ɣur-k afentay akken ad tesnirmeḍ tangalt QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Ma yella ibenk niḍḍen yessuter ajiṭun deg umdiq n tengalt QR, nɣel ma ulac aɣilif, azal n daw-a ɣer yibenk nniḍen.">
+<!ENTITY wifi_auth_qr_size_note "Ma yella tangalt QR meẓẓiyeḍ i tuqqna akken ad tettwag akken iwata, ɛreḍ asemɣeṛ neɣ asihrew n usfaylu.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Iɣmisen n tludna n ukmas uzwir">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Iɣewwaṛen n serwas">
+<!ENTITY simulator_remove "Kkes aserwas">
+<!ENTITY simulator_reset "Err-ed iɣewwaṛen imezwar">
+<!ENTITY simulator_name "Isem">
+<!ENTITY simulator_software "Aseɣẓan">
+<!ENTITY simulator_version "Lqem">
+<!ENTITY simulator_profile "Amaɣnu">
+<!ENTITY simulator_hardware "Arrum">
+<!ENTITY simulator_device "Allal">
+<!ENTITY simulator_screenSize "Agdil">
+<!ENTITY simulator_pixelRatio "Afmiḍi n ipiksilen">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Isefka n uswel">
+<!ENTITY simulator_tv_data_open_button "Ldi akaram n uswel…">

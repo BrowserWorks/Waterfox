@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Kurmital">
+
+<!ENTITY startupPage2.label        "So &brandShortName; fokkitii">
+<!ENTITY startupPage2.accesskey    "o">
+<!ENTITY startupUserHomePage.label "Hollu hello maa jaɓɓorgo">
+<!ENTITY startupBlankPage.label    "Hollu hello meho">
+<!ENTITY startupPrevSession.label  "Hollit kenorɗe maa ɗee e tabbe cakkitiiɗe">
+
+
+<!ENTITY useCurrentPage.label      "Huutoro Hello Wonaango">
+<!ENTITY useCurrentPage.accesskey  "W">
+<!ENTITY useMultiple.label         "Huutoro Kelle Gonaaɗe Ɗee">
+<!ENTITY chooseBookmark.label      "Huutoro Maantorol…">
+<!ENTITY chooseBookmark.accesskey  "M">
+<!ENTITY restoreDefault.label      "Artir e Goowaaɗo">
+<!ENTITY restoreDefault.accesskey  "A">
+
+<!ENTITY downloads.label     "Gaawte">
+
+<!ENTITY saveTo.label "Danndu piille to">
+<!ENTITY saveTo.accesskey "n">
+<!ENTITY chooseFolderWin.label        "Yiylo…">
+<!ENTITY chooseFolderWin.accesskey    "y">
+<!ENTITY chooseFolderMac.label        "Suɓo…">
+<!ENTITY chooseFolderMac.accesskey    "o">
+<!ENTITY alwaysAskWhere.label         "Kala sahaa naamno mi ɗo piille ndaɗndetee">
+<!ENTITY alwaysAskWhere.accesskey     "K">
+
+<!ENTITY alwaysCheckDefault2.label        "Ƴeewto sahaa kala so &brandShortName; ko wanngorde maa woowaande">
+<!ENTITY alwaysCheckDefault2.accesskey    "t">
+
+
+<!ENTITY isDefault.label                  "&brandShortName; ko wanngoraade maa woowaande oo sahaa">
+<!ENTITY isNotDefault.label               "&brandShortName; wonaa wanngoraade maa woowaande">
+
+<!ENTITY separateProfileMode.label        "Yamir &brandShortName; e Waterfox yoo kurmu kañje ɗiɗi kala">
+<!ENTITY useWaterfoxSync.label             "Ƴoƴel: Ɗuum huutorto ko keftinirɗe ceertuɗe. Huutoro Sync ngam lollinde keɓe hakkunde majje.">
+<!ENTITY getStarted.notloggedin.label     "Seŋo to &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Uddit Cuɓoraaɗe &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Yamir keewal cili &brandShortName;">
+
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

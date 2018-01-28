@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Vertaling sal nie aangebied word in die volgende tale nie:">
+<!ENTITY treehead.languageName.label      "Tale">
+<!ENTITY removeLanguage.label             "Verwyder taal">
+<!ENTITY removeLanguage.accesskey         "r">
+<!ENTITY removeAllLanguages.label         "Verwyder alle tale">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Vertaling sal nie aangebied word by die volgende werwe nie:">
+
+<!ENTITY removeSite.label                 "Verwyder werf">
+<!ENTITY removeSite.accesskey             "w">
+<!ENTITY removeAllSites.label             "Verwyder alle werwe">
+<!ENTITY removeAllSites.accesskey         "r">
+
+<!ENTITY button.close.label               "Sluit">
+<!ENTITY button.close.accesskey           "S">
+
+<!ENTITY treehead.siteName2.label         "Websites">
+<!ENTITY window.title                     "Exceptions - Translation">

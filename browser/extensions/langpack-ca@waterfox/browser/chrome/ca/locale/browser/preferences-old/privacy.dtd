@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Utilitza la protecció contra el seguiment">
+<!ENTITY  trackingProtectionAlways.label       "Sempre">
+<!ENTITY  trackingProtectionAlways.accesskey   "S">
+<!ENTITY  trackingProtectionPrivate.label      "Només en finestres privades">
+<!ENTITY  trackingProtectionPrivate.accesskey  "N">
+<!ENTITY  trackingProtectionNever.label        "Mai">
+<!ENTITY  trackingProtectionNever.accesskey    "M">
+<!ENTITY  trackingProtectionLearnMore.label    "Més informació">
+<!ENTITY  trackingProtectionExceptions.label   "Excepcions…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Seguiment">
+<!ENTITY trackingProtectionPBM5.label         "Utilitza la protecció contra el seguiment en les finestres privades">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Més informació">
+<!ENTITY changeBlockList.label          "Canvia la llista de bloquejos">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "També podeu ">
+<!ENTITY  doNotTrack.settings.label     "gestionar els paràmetres de «No vull ser seguit»">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historial">
+
+<!ENTITY  locationBar.label             "Barra d'ubicació">
+
+<!ENTITY  locbar.suggest.label          "Quan s'utilitzi la barra d'ubicació, suggereix:">
+<!ENTITY  locbar.history.label          "Historial">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Adreces d'interès">
+<!ENTITY  locbar.bookmarks.accesskey    "d">
+<!ENTITY  locbar.openpage.label         "Pestanyes obertes">
+<!ENTITY  locbar.openpage.accesskey     "P">
+<!ENTITY  locbar.searches.label         "Cerques relacionades del motor de cerca per defecte">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Canvia les preferències dels suggeriments de motors de cerca…">
+<!ENTITY  suggestionSettings.accesskey  "v">
+
+<!ENTITY  acceptCookies2.label          "Accepta galetes dels llocs web">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Accepta galetes de tercers:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "Sempre">
+<!ENTITY  acceptThirdParty.never.label    "Mai">
+<!ENTITY  acceptThirdParty.visited.label  "De llocs visitats">
+
+<!ENTITY  keepUntil.label               "Conserva-les fins:">
+<!ENTITY  keepUntil.accesskey           "v">
+
+<!ENTITY  expire.label                  "que vencin">
+<!ENTITY  close.label                   "que tanqui el &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Excepcions…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Mostra les galetes…">
+<!ENTITY  showCookies.accesskey         "s">
+
+<!ENTITY  historyHeader.pre.label          "El &brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "l">
+<!ENTITY  historyHeader.remember.label     "Recordarà l'historial">
+<!ENTITY  historyHeader.dontremember.label "No recordarà mai l'historial">
+<!ENTITY  historyHeader.custom.label       "Utilitza els paràmetres personalitzats de l'historial">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "El &brandShortName; recordarà el vostre historial, baixades, formularis i historial de cerca, i conservarà les galetes dels llocs web que visiteu.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Podeu voler ">
+<!ENTITY  rememberActions.clearHistory.label  "netejar el vostre historial recent">
+<!ENTITY  rememberActions.middle.label        ", o ">
+<!ENTITY  rememberActions.removeCookies.label "suprimir les galetes individualment">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "El &brandShortName; utilitzarà els mateixos paràmetres de la navegació privada, i no mantindrà cap historial mentre navegueu.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "També podeu voler ">
+<!ENTITY  dontrememberActions.clearHistory.label "netejar tot l'historial actual">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Utilitza sempre el mode de navegació privada">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Recorda el meu historial de navegació i baixades">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Recorda l'historial de cerca i formularis">
+<!ENTITY  rememberSearchForm.accesskey   "m">
+
+<!ENTITY  clearOnClose.label             "Neteja l'historial quan es tanqui el &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "q">
+
+<!ENTITY  clearOnCloseSettings.label     "Paràmetres…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Pestanyes de contenidor">
+<!ENTITY  browserContainersLearnMore.label      "Més informació">
+<!ENTITY  browserContainersEnabled.label        "Habilita les pestanyes de contenidor">
+<!ENTITY  browserContainersEnabled.accesskey    "H">
+<!ENTITY  browserContainersSettings.label        "Paràmetres…">
+<!ENTITY  browserContainersSettings.accesskey    "t">

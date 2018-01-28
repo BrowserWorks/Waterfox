@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "O umrežavanju">
+<!ENTITY aboutNetworking.warning               "Ovo je eksperimentalno. Nemojte koristiti bez nadzora odrasle osobe.">
+<!ENTITY aboutNetworking.showNextTime          "Pokaži ovo upozorenje sljedeći put">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Osvježi">
+<!ENTITY aboutNetworking.autoRefresh           "Automatski osvježi svake 3 sekunde">
+<!ENTITY aboutNetworking.hostname              "Naziv hosta">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktivno">
+<!ENTITY aboutNetworking.idle                  "Neaktivan">
+<!ENTITY aboutNetworking.host                  "Host">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Poslano">
+<!ENTITY aboutNetworking.received              "Primljeno">
+<!ENTITY aboutNetworking.family                "Familija">
+<!ENTITY aboutNetworking.addresses             "Adrese">
+<!ENTITY aboutNetworking.expires               "Ističe (sekunde)">
+<!ENTITY aboutNetworking.messagesSent          "Poruka poslano">
+<!ENTITY aboutNetworking.messagesReceived      "Poruka primljeno">
+<!ENTITY aboutNetworking.bytesSent             "Bajta poslano">
+<!ENTITY aboutNetworking.bytesReceived         "Bajta primljeno">
+<!ENTITY aboutNetworking.logging               "Zapisujem">
+<!ENTITY aboutNetworking.logTutorial           "Pogledajte <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> za instrukcije kako koristiti ovaj alat.">
+<!ENTITY aboutNetworking.currentLogFile        "Trenutni fajl zapisnika:">
+<!ENTITY aboutNetworking.currentLogModules     "Trenutni moduli zapisnika:">
+<!ENTITY aboutNetworking.setLogFile            "Postavi fajl zapisnika">
+<!ENTITY aboutNetworking.setLogModules         "Postavi module zapisnika">
+<!ENTITY aboutNetworking.startLogging          "Počni zapisivanje">
+<!ENTITY aboutNetworking.stopLogging           "Zaustavi zapisivanje">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Lookup">
+<!ENTITY aboutNetworking.dnsLookupButton       "Riješi">
+<!ENTITY aboutNetworking.dnsDomain             "Domena">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP adrese">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

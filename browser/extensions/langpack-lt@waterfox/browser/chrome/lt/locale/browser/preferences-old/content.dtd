@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Iškylantieji langai">
+
+<!ENTITY  blockPopups.label           "Neleisti iškylančiųjų langų">
+<!ENTITY  blockPopups.accesskey       "N">
+
+<!ENTITY  notificationsPolicy.label            "Pranešimai">
+<!ENTITY  notificationsPolicyLearnMore.label   "Sužinoti daugiau">
+<!ENTITY  notificationsPolicyDesc4.label       "Pasirinkite, kurioms svetainėms leidžiate jums siųsti pranešimus">
+<!ENTITY  notificationsPolicyButton.accesskey  "r">
+<!ENTITY  notificationsPolicyButton.label      "Pasirinkti…">
+<!ENTITY  notificationsDoNotDisturb.label      "Netrukdyti manęs">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "N">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Kol nepaleisite „&brandShortName;“ iš naujo, nebus rodomas nė vienas pranešimas.">
+
+<!ENTITY  popupExceptions.label       "Išimtys">
+<!ENTITY  popupExceptions.accesskey   "I">
+
+<!ENTITY  fontsAndColors.label        "Šriftai ir spalvos">
+
+<!ENTITY  defaultFont.label           "Numatytasis šriftas:">
+<!ENTITY  defaultFont.accesskey       "u">
+<!ENTITY  defaultSize.label           "Numatytasis dydis:">
+<!ENTITY  defaultSize.accesskey       "d">
+
+<!ENTITY  advancedFonts.label         "Kitkas…">
+<!ENTITY  advancedFonts.accesskey     "t">
+
+<!ENTITY  colors.label                "Spalvos…">
+<!ENTITY  colors.accesskey            "S">
+
+
+<!ENTITY languages.label              "Kalbos">
+<!ENTITY chooseLanguage.label         "Pasirinkite kalbą, kuria pageidaujate matyti tinklalapių turinį.">
+<!ENTITY chooseButton.label           "Pasirinkti…">
+<!ENTITY chooseButton.accesskey       "P">
+
+<!ENTITY translateWebPages.label      "Versti tinklalapių turinį">
+<!ENTITY translateWebPages.accesskey  "V">
+<!ENTITY translateExceptions.label    "Išimtys…">
+<!ENTITY translateExceptions.accesskey "š">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Vertimą teikia">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM turinys">
+
+<!ENTITY  playDRMContent.label         "Atkurti DRM turinį">
+<!ENTITY  playDRMContent.accesskey     "k">
+<!ENTITY  playDRMContent.learnMore.label "Sužinoti daugiau">

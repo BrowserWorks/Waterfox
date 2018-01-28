@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Athchóirigh an Seisiún">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Bhuel, cuireann sé seo náire orainn.">
+<!ENTITY restorepage.problemDesc    "Tá deacrachtaí ag &brandShortName; agus do chuid fuinneoga agus cluaisíní á n-athshlánú. De ghnáth is leathanach Gréasáin a osclaíodh le gairid a bhíonn freagrach as seo.">
+<!ENTITY restorepage.tryThis        "B'fhéidir leat:">
+<!ENTITY restorepage.restoreSome    "Cluaisín(í) a bhaint má mheasann tú go bhféadfadh sé/siad a bheith freagrach as an bhfadhb.">
+<!ENTITY restorepage.startNew       "Seisiún úrnua brabhsála a thosú">
+
+<!ENTITY restorepage.tryagainButton "Athchóirigh">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Dún">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Athchóirigh">
+<!ENTITY restorepage.listHeader     "Fuinneoga agus Cluaisíní">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Fuinneog &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Ar aghaidh linn!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "D'éirigh linn!">
+
+<!ENTITY welcomeback2.pageTitle     "D'éirigh linn!">
+<!ENTITY welcomeback2.pageInfo1     "Tá &brandShortName; réidh anois.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Athchóirigh na fuinneoga agus na cluaisíní go léir">
+<!ENTITY welcomeback2.restoreSome.label "Athchóirigh cinn áirithe amháin">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Baineadh do chuid breiseán agus gnéithe saincheaptha, agus cuireadh réamhshocruithe an bhrabhsálaí i bhfeidhm arís. Má tá fadhb agat fós, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "is féidir leat tuilleadh eolais a fháil anseo.">
+

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "시작 페이지">
+
+<!ENTITY startupPage2.label        "&brandShortName; 가 시작될 때">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "홈 페이지 보기">
+<!ENTITY startupBlankPage.label    "빈 페이지 보기">
+<!ENTITY startupPrevSession.label  "지난번 창과 탭 보기">
+
+<!ENTITY homepage2.label           "홈 페이지">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "현재 페이지">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "현재 탭">
+<!ENTITY chooseBookmark.label      "북마크 사용…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "초기 설정">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "다운로드">
+
+<!ENTITY saveTo.label "저장 위치">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "찾아보기…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "선택…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "파일 저장 위치 항상 묻기">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "&brandShortName;가 기본 브라우저인지 항상 확인">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+<!ENTITY setAsMyDefaultBrowser3.label     "기본값으로…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "현재 &brandShortName;가 기본 브라우저입니다.">
+<!ENTITY isNotDefault.label               "&brandShortName;가 기본 브라우저가 아닙니다.">
+
+<!ENTITY separateProfileMode.label        "&brandShortName;과 Waterfox 같이 돌리기">
+<!ENTITY useWaterfoxSync.label             "귀띔: 이렇게 하면 프로필을 따로 쓰게 됩니다. 동기화를 써서 데이터를 공유하십시오.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label;에 로그인…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; 설정 열기">
+
+<!ENTITY e10sEnabled.label                "&brandShortName;를 멀티 프로세스로 돌리기">

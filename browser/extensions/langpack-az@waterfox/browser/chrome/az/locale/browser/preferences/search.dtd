@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Əsas axtarış mühərriyi">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Ünvan və axtarış sətrində işlətmək üçün əsas axtarış mühərriyini seçin.">
+
+<!ENTITY provideSearchSuggestions.label        "Axtarış təkliflərini göstər">
+<!ENTITY provideSearchSuggestions.accesskey    "t">
+
+<!ENTITY showURLBarSuggestions2.label           "Ünvan sətri nəticələrində axtarış təkliflərini göstər">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "&brandShortName; səyyahını keçmişi xatırlamayacaq şəkildə nizamladığınız üçün ünvan sətri nəticələrində axtarış təklifləri göstərilməyəcək.">
+
+<!ENTITY oneClickSearchEngines.label           "Tək klikli axtarış mühərrikləri">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Ünvan və axtarış sətrinə söz daxil etdiyinizdə gələn axtarış mühərriklərini seçin.">
+
+<!ENTITY engineNameColumn.label                "Axtarış Mühərriyi">
+<!ENTITY engineKeywordColumn.label             "Açar söz">
+
+<!ENTITY restoreDefaultSearchEngines.label     "İlkin axtarış nizamlarını bərpa et">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Sil">
+<!ENTITY removeEngine.accesskey                "S">
+
+<!ENTITY findMoreSearchEngines.label           "Daha çox axtarış mühərriyi tap">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; লৈ স্বাগতম">
+
+<!ENTITY aboutAccountsConfig.description "আপোনাৰ টেবসমূহ, পত্ৰচিহ্নসমূহ, পাছৱৰ্ডসমূহ আৰু অধিক সংমিহলি কৰিবলৈ ছাইন ইন কৰক।">
+<!ENTITY aboutAccountsConfig.startButton.label "আৰম্ভ কৰক">
+
+
+
+
+
+
+
+<!ENTITY aboutAccounts.badConfig.description "Unable to determine your Waterfox Account server configuration. Please try again later.">
+<!ENTITY aboutAccounts.badConfig.title "Bad configuration">
+<!ENTITY aboutAccounts.noConnection.description "You must be connected to the Internet to sign in.">
+<!ENTITY aboutAccounts.noConnection.retry "Try again">
+<!ENTITY aboutAccounts.noConnection.title "No connection">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync preferences">

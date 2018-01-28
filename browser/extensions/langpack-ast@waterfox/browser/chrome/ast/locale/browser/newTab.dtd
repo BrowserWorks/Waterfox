@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Llingüeta nueva">
+<!ENTITY newtab.customize.classic "Amosar los sitios preferíos">
+<!ENTITY newtab.customize.cog.enhanced "Incluyir sitios suxeríos">
+<!ENTITY newtab.customize.cog.title2 "CONTROLES DE LLINGÜETA NUEVA">
+<!ENTITY newtab.customize.cog.learn "Deprendi tocante a Llingüeta Nueva">
+<!ENTITY newtab.customize.title "Personalizar la páxina Llingüeta nueva">
+<!ENTITY newtab.customize.blank2 "Amosar páxina balera">
+<!ENTITY newtab.undo.removedLabel "Miniatura desaniciada.">
+<!ENTITY newtab.undo.undoButton "Desfacer.">
+<!ENTITY newtab.undo.restoreButton "Restaurar toes.">
+<!ENTITY newtab.undo.closeTooltip "Anubrir">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Nastavenie tlače">
+
+<!ENTITY basic.tab           "Formát a možnosti">
+
+<!ENTITY formatGroup.label   "Formát">
+
+<!ENTITY orientation.label   "Orientácia:">
+<!ENTITY portrait.label      "na výšku">
+<!ENTITY portrait.accesskey  "n">
+<!ENTITY landscape.label     "na šírku">
+<!ENTITY landscape.accesskey "a">
+
+<!ENTITY scale.label         "Mierka:">
+<!ENTITY scale.accesskey     "M">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Zúžiť na šírku strany">
+<!ENTITY shrinkToFit.accesskey "Z">
+
+<!ENTITY optionsGroup.label  "Možnosti">
+
+<!ENTITY printBG.label       "Tlačiť pozadie (farby a obrázky)">
+<!ENTITY printBG.accesskey   "T">
+
+<!ENTITY advanced.tab        "Okraje, hlavička a päta">
+
+<!ENTITY marginGroup.label   "Okraje (#1)">
+<!ENTITY marginUnits.inches  "palce">
+<!ENTITY marginUnits.metric  "milimetre">
+<!ENTITY marginTop.label     "Hore:">
+<!ENTITY marginTop.accesskey "H">
+<!ENTITY marginBottom.label  "Dole:">
+<!ENTITY marginBottom.accesskey "D">
+<!ENTITY marginLeft.label    "Vľavo:">
+<!ENTITY marginLeft.accesskey "V">
+<!ENTITY marginRight.label   "Vpravo:">
+<!ENTITY marginRight.accesskey "r">
+
+<!ENTITY headerFooter.label  "Hlavička a päta">
+
+<!ENTITY hfLeft.label        "Vľavo:">
+<!ENTITY hfCenter.label      "V strede:">
+<!ENTITY hfRight.label       "Vpravo:">
+<!ENTITY headerLeft.tip      "Hlavička na ľavo">
+<!ENTITY headerCenter.tip    "Hlavička v strede">
+<!ENTITY headerRight.tip     "Hlavička na pravo">
+<!ENTITY footerLeft.tip      "Päta na ľavo">
+<!ENTITY footerCenter.tip    "Päta v strede">
+<!ENTITY footerRight.tip     "Päta na pravo">
+
+<!ENTITY hfTitle             "Titulok">
+<!ENTITY hfURL               "Adresa URL">
+<!ENTITY hfDateAndTime       "Dátum a čas">
+<!ENTITY hfPage              "Strana #">
+<!ENTITY hfPageAndTotal      "Strana # z #">
+<!ENTITY hfBlank             "--prázdne--">
+<!ENTITY hfCustom            "Vlastné…">
+
+<!ENTITY customPrompt.title  "Vlastné…">
+<!ENTITY customPrompt.prompt "Zadajte vlastný text hlavičky/päty">

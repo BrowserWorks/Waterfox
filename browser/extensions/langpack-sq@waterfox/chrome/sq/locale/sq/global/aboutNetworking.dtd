@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Rreth Punimit të Rrjetit">
+<!ENTITY aboutNetworking.warning               "Kjo është shumë eksperimentale. Mos e përdorni pa mbikëqyrej nga të rriturit.">
+<!ENTITY aboutNetworking.showNextTime          "Shfaqe këtë sinjalizim herës tjetër">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Socket-e">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Socket-e Web">
+<!ENTITY aboutNetworking.refresh               "Rifreskoje">
+<!ENTITY aboutNetworking.autoRefresh           "Vetërifreskohu çdo 3 sekonda">
+<!ENTITY aboutNetworking.hostname              "Strehëemër">
+<!ENTITY aboutNetworking.port                  "Portë">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktiv">
+<!ENTITY aboutNetworking.idle                  "I plogësht">
+<!ENTITY aboutNetworking.host                  "Strehë">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Të dërguara">
+<!ENTITY aboutNetworking.received              "Të marra">
+<!ENTITY aboutNetworking.family                "Familje">
+<!ENTITY aboutNetworking.addresses             "Adresa">
+<!ENTITY aboutNetworking.expires               "Skadon (Sekonda)">
+<!ENTITY aboutNetworking.messagesSent          "Mesazhe të Dërguar">
+<!ENTITY aboutNetworking.messagesReceived      "Mesazhe të Marrë">
+<!ENTITY aboutNetworking.bytesSent             "Bajte të Dërguar">
+<!ENTITY aboutNetworking.bytesReceived         "Bajte të Marrë">
+<!ENTITY aboutNetworking.logging               "Regjistrim">
+<!ENTITY aboutNetworking.logTutorial           "Për udhëzime se si të përdoret ky mjet, shihni <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a>.">
+<!ENTITY aboutNetworking.currentLogFile        "Kartela Regjistër e Tanishme:">
+<!ENTITY aboutNetworking.currentLogModules     "Module të Tanishëm Regjistrimi:">
+<!ENTITY aboutNetworking.setLogFile            "Caktoni Kartelë Regjistër">
+<!ENTITY aboutNetworking.setLogModules         "Caktoni Module Regjistrimi">
+<!ENTITY aboutNetworking.startLogging          "Filloje Regjistrimin">
+<!ENTITY aboutNetworking.stopLogging           "Ndal Regjistrimin">
+<!ENTITY aboutNetworking.dnsLookup             "Kërkim DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Kryeje">
+<!ENTITY aboutNetworking.dnsDomain             "Përkatësi">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-ra">
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

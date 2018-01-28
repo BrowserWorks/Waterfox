@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Els complements poden estar provocant problemes">
+<!ENTITY blocklist.style             "width: 50em; height: 30em">
+<!ENTITY blocklist.summary           "El &brandShortName; ha determinat que els complements següents estan provocant problemes d'estabilitat o seguretat:">
+<!ENTITY blocklist.softblocked       "Per a la vostra protecció, és molt recomanable que reinicieu el navegador amb aquests complements inhabilitats.">
+<!ENTITY blocklist.hardblocked       "Aquests complements tenen un alt risc de provocar problemes d'estabilitat o seguretat i s'han blocat; però cal reiniciar per inhabilitar-los completament.">
+<!ENTITY blocklist.softandhard       "S'han blocat els complements que tenen un alt risc de provocar problemes d'estabilitat o seguretat. Els altres tenen un risc menor, però és molt recomanable que reinicieu el navegador havent-los inhabilitat abans.">
+<!ENTITY blocklist.moreinfo          "Més informació">
+
+<!ENTITY blocklist.accept.label      "Reinicia el &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Blocat">
+<!ENTITY blocklist.checkbox.label    "Inhabilita">

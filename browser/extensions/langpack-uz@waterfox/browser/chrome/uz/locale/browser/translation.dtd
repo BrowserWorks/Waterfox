@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+
+<!ENTITY translation.thisPageIsIn.label         "Ushbu sahifa tili:">
+<!ENTITY translation.translateThisPage.label    "Bu sahifa tarjima qilinsinmi?">
+<!ENTITY translation.translate.button           "Tarjima qilish">
+<!ENTITY translation.notNow.button              "Hozir emas">
+
+<!ENTITY translation.translatingContent.label   "Sahifa tarkibi tarjima qilinmoqda…">
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+
+<!ENTITY translation.translatedFrom.label       "Sahifaning asl tili:">
+<!ENTITY translation.translatedTo.label         "ushbu tilga">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Asl holatini ko‘rsatish">
+<!ENTITY translation.showTranslation.button     "Tarjimani ko‘rsatish">
+
+<!ENTITY translation.errorTranslating.label     "Ushbu sahifani tarjima qilishda xato yuz berdi.">
+<!ENTITY translation.tryAgain.button            "Yana urinib ko‘rish">
+
+<!ENTITY translation.serviceUnavailable.label   "Tarjima ayni lahzalarda mavjud emas. Keyinroq urinib ko‘ring.">
+
+<!ENTITY translation.options.menu               "Moslamalar">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Bu sayt hech qachon tarjima qilinmasin">
+<!ENTITY translation.options.neverForSite.accesskey "h">
+<!ENTITY translation.options.preferences.label  "Tarjima parametrlari">
+<!ENTITY translation.options.preferences.accesskey "T">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Tarjimon:">
+<!ENTITY translation.options.attribution.afterLogo "">
+<!-- LOCALIZATION NOTE (translation.options.attribution.poweredByYandex,
+                        translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  translation.options.attribution.poweredByYandex is displayed instead of
+  -  the other two strings when yandex translation engine is preferred by the
+  -  user.
+  -->
+
+<!ENTITY translation.options.attribution.yandexTranslate "Yandex.Translate tomonidan amalga oshirilgan">

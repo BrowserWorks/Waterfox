@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetridata">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping datakälla:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Aktuell ping-data">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arkiverad ping-data">
+
+<!ENTITY aboutTelemetry.raw "Rå JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Visa undersessionsdata">
+
+<!ENTITY aboutTelemetry.choosePing "Välj ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nyare ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Äldre ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Vecka">
+
+<!ENTITY aboutTelemetry.archivePingType "Ping-typ">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Idag">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Igår">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Äldre">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Allmän data">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Miljödata">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetri-logg">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Långsamma SQL-satser">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Hängningar i webbläsaren">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Hängningar i trådar">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Fångade stackar
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skalärer">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Nyckelbaserade skalärer">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogram">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Nyckelhistogram">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Händelser
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Enkla mätningar">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Tilläggsdetaljer">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Sena skrivningar">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Sessionsinformation">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  OBS: Långsam SQL-avlusning är aktiverad. Fullständiga SQL-strängar kan visas nedan men de kommer inte att skickas in av Telemetri.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Hämta funktionsnamn för stackar
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Visa rå stackdata
+">
+
+<!ENTITY aboutTelemetry.filterText "  Filter (strängar eller /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Nyttolast">

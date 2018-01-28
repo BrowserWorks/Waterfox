@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Назва:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "Н">
+<!ENTITY editBookmarkOverlay.location.label                  "Адрас:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "А">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Адрас канала:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "к">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Адрас сайта:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "с">
+<!ENTITY editBookmarkOverlay.folder.label                    "Папка:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Паказаць усе папкі закладак">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Схаваць">
+<!ENTITY editBookmarkOverlay.tags.label                      "Тэгі:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "Т">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Аддзяляйце тэгі коскамі">
+<!ENTITY editBookmarkOverlay.description.label               "Апісанне:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "А">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Ключавое слова:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "К">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Паказаць усе тэгі">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Загрузіць гэтую закладку на бакавую панэль">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "З">
+<!ENTITY editBookmarkOverlay.choose.label                    "Выбар…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Новая папка">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "о">

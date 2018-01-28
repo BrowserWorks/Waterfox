@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "البيانات المُؤقتة">
+
+<!ENTITY aboutTelemetry.pingDataSource "مصدر بيانات الطرْق:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "بيانات الطرْق الحالية">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "بيانات الطرْق المحفوظة">
+
+<!ENTITY aboutTelemetry.raw "JSON خام">
+
+<!ENTITY aboutTelemetry.showSubsessionData "اعرض بيانات الإرسال">
+
+<!ENTITY aboutTelemetry.choosePing "اختر الطرْق:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; أحدث طرْق">
+
+<!ENTITY aboutTelemetry.showOlderPing "أقدم طرْق &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "أسبوع">
+
+<!ENTITY aboutTelemetry.archivePingType "نوع الطرْق">
+
+<!ENTITY aboutTelemetry.archivePingHeader "طرْق">
+
+<!ENTITY aboutTelemetry.optionGroupToday "اليوم">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "أمس">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "أقدم">
+
+<!ENTITY aboutTelemetry.generalDataSection "  بيانات عامة">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  بيانات البيئة">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  سجل تليمتري">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  استعلامات SQL بطيئة">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  تعليقات المتصفح">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  تعليقات الخيوط">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  المكدسات المُلتقطة">
+
+<!ENTITY aboutTelemetry.scalarsSection "  الكميات القياسية">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  الكميات القياسية المفتاحية">
+
+<!ENTITY aboutTelemetry.histogramsSection "  رسوم بيانية">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  رسوم بيانية مفتاحية">
+
+<!ENTITY aboutTelemetry.eventsSection "  الأحداث">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  قياسات بسيطة">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  تفاصيل الإضافة">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  كتابات متأخرّة">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  معلومات الجلسة">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  ملاحظة: تنقيح SQL البطيء مُفعّل. قد تظهر نصوص SQL كاملة أدناه، لكن لن تُرسل إلى تليمتري.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  اجلب أسماء الدوال للمكدّسات">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  اعرض بيانات المكدس الخام">
+
+<!ENTITY aboutTelemetry.filterText "  مرشح (نصوص أو /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  الحمولة">

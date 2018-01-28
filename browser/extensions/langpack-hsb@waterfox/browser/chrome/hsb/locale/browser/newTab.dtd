@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Nowy rajtark">
+<!ENTITY newtab.customize.classic "Waše najlubše sydła pokazać">
+<!ENTITY newtab.customize.cog.enhanced "Namjetowane sydła zapřijeć">
+<!ENTITY newtab.customize.cog.title2 "ELEMENTY za NOWY RAJTARK">
+<!ENTITY newtab.customize.cog.learn "Informujće so wo Nowym rajtarku">
+<!ENTITY newtab.customize.title "Stronu wašeho noweho rajtarka přiměrić">
+<!ENTITY newtab.customize.blank2 "Prózdnu stronu pokazać">
+<!ENTITY newtab.undo.removedLabel "Miniaturka wotstronjena.">
+<!ENTITY newtab.undo.undoButton "Cofnyć.">
+<!ENTITY newtab.undo.restoreButton "Wšě wobnowić.">
+<!ENTITY newtab.undo.closeTooltip "Schować">

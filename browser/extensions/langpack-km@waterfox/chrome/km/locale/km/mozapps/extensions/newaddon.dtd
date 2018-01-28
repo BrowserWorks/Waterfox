@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "ដំឡើង​កម្មវិធី​បន្ថែម">
+<!ENTITY intro           "កម្មវិធី​មួយ​ផ្សេងទៀត​នៅ​ក្នុង​កុំព្យូទ័រ​របស់​អ្នក​ចង់​ធ្វើ​ការ​កែប្រែ &brandShortName; ដោយ​ប្រើ​កម្មវិធី​បន្ថែម​ដូច​ខាងក្រោម ៖">
+<!ENTITY warning         "ដំឡើង​កម្មវិធី​បន្ថែម​តែ​ពី​អ្នក​និពន្ធ​ដែល​អ្នក​ទុកចិត្ត ។">
+<!ENTITY allow           "អនុញ្ញាត​ការ​ដំឡើង​នេះ">
+<!ENTITY later           "ជានិច្ចកាល អ្នក​អាច​ផ្លាស់ប្ដូរ​គំនិត​របស់​អ្នក​បាន​នៅ​ពេលណា​មួយ ដោយ​ចូល​ ទៅ​កាន់​កម្មវិធី​គ្រប់គ្រង​កម្មវិធី​បន្ថែម ។">
+<!ENTITY continue        "បន្ត">
+<!ENTITY restartMessage  "អ្នក​ត្រូវតែ​ចាប់ផ្ដើម &brandShortName; ឡើងវិញ​ដើម្បី​បញ្ចប់​ការ​ដំឡើង​កម្មវិធី​បន្ថែម ។">
+<!ENTITY restartButton   "ចាប់ផ្ដើម &brandShortName; ឡើង​វិញ">
+<!ENTITY cancelButton    "បោះបង់">

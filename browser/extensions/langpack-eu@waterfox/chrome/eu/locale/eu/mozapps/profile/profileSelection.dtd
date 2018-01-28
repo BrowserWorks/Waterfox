@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Aukeratu erabiltzailearen profila">
+
+<!ENTITY            profilename.label      "Profilaren izena:">
+
+<!ENTITY            start.label            "Abiarazi &brandShortName;">
+<!ENTITY            exit.label             "Irten">
+
+<!ENTITY            availprofiles.label    "Profil erabilgarriak">
+
+<!ENTITY            newButton.label        "Sortu profila…">
+<!ENTITY            newButton.accesskey    "S">
+<!ENTITY            renameButton.label     "Aldatu profilaren izena…">
+<!ENTITY            renameButton.accesskey "A">
+<!ENTITY            deleteButton.label     "Ezabatu profila…">
+<!ENTITY            deleteButton.accesskey "E">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName;(e)k zure ezarpen, hobespen eta erabiltzaileari buruzko informazioa gordetzen du profil pertsonalean.">
+
+<!ENTITY            offlineState.label    "Lan egin lineaz kanpo">
+<!ENTITY            offlineState.accesskey "L">
+
+<!ENTITY            useSelected.label       "Erabili hautatutako profila abioan galdetu gabe">
+<!ENTITY            useSelected.accesskey   "r">

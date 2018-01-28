@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopa">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Khetha Konke">
+<!ENTITY  selectall.accesskey   "K">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Jikelele">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Umxholo">
+<!ENTITY  generalURL            "Idilesi:">
+<!ENTITY  generalType           "Chwetheza:">
+<!ENTITY  generalMode           "Imo Yokunikela:">
+<!ENTITY  generalSize           "Ubukhulu:">
+<!ENTITY  generalReferrer       "I-URL Ebhekisayo:">
+<!ENTITY  generalSource         "Umthombo kavimba wethutyana:">
+<!ENTITY  generalModified       "Uhlengahlengisiwe:">
+<!ENTITY  generalEncoding2      "Umbhalo Onekhowudi:">
+<!ENTITY  generalMetaName       "Igama">
+<!ENTITY  generalMetaContent    "Isiqulatho">
+
+<!ENTITY  mediaTab              "Izilondolozi">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Indawo:">
+<!ENTITY  mediaText             "Umbhalo onxulumeneyo:">
+<!ENTITY  mediaAltHeader        "Isiqendu Esisesinye">
+<!ENTITY  mediaAddress          "Idilesi">
+<!ENTITY  mediaType             "Chwetheza">
+<!ENTITY  mediaSize             "Ubukhulu">
+<!ENTITY  mediaCount            "Bala">
+<!ENTITY  mediaDimension        "Imilinganiselo:">
+<!ENTITY  mediaLongdesc         "Inkcazelo Ende:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Gcina Kanje…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Ukujonga Phambi Kolondolozo:">
+
+<!ENTITY  feedTab               "Iifidi">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Nikela Ngomrhumo">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Iimvume">
+<!ENTITY  permTab.accesskey     "I">
+<!ENTITY  permUseDefault        "Sebenzisa isisesko">
+<!ENTITY  permAskAlways         "Buza qho">
+<!ENTITY  permAllow             "Vumela">
+<!ENTITY  permAllowSession      "Vumela Iseshoni">
+<!ENTITY  permBlock             "Nqanda">
+<!ENTITY  permissionsFor        "Imvume ye-:">
+<!ENTITY  permPlugins           "Yenza iisoftwe ezincedisayo zisebenze">
+
+<!ENTITY  permClearStorage           "Susa ugcino">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Ukhuseleko">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Isatifikethi Sokujonwa">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Akwaziwa">
+
+
+<!ENTITY  securityView.identity.header   "Isazisi sewebhusayithi">
+<!ENTITY  securityView.identity.owner    "Umnini:">
+<!ENTITY  securityView.identity.domain   "Iwebhusayithi:">
+<!ENTITY  securityView.identity.verifier "Iqinisekiswe ngu:">
+
+
+<!ENTITY  securityView.privacy.header                   "Ubungasese nembali">
+<!ENTITY  securityView.privacy.history                  "Ndikhe ndayityelela le webhusayithi phambi kwanamhlanje?">
+<!ENTITY  securityView.privacy.cookies                  "Ingaba le webhusayithi igcina inkcazelo (iikhukhi) kwikhompyutha yam?">
+<!ENTITY  securityView.privacy.viewCookies              "Bona iiKhukisi">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ndiyigcinile ipasiwedi yam yale webhusayithi?">
+<!ENTITY  securityView.privacy.viewPasswords            "Jonga Amagama Okugqithisa Agciniweyo">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Iinkcukacha zobuchwepheshe">
+
+<!ENTITY  helpButton.label                              "Uncedo">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

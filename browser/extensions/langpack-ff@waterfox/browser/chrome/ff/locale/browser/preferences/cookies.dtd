@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Ɗee-ɗoo kujiije ko mooftiiɗe e nder ordinateer maa:">
+<!ENTITY     cookiename.label               "Innde Kukii">
+<!ENTITY     cookiedomain.label             "Lowre">
+
+<!ENTITY     props.name.label               "Innde:">
+<!ENTITY     props.value.label              "Loowdi:">
+<!ENTITY     props.domain.label             "Koɗol:">
+<!ENTITY     props.path.label               "Laawol:">
+<!ENTITY     props.secure.label             "Neldan:">
+<!ENTITY     props.expires.label            "Maa gaas:">
+<!ENTITY     props.container.label          "Mooftirde:">
+
+<!ENTITY     window.title                   "Kukiije">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Yiylo">
+<!ENTITY     searchFilter.accesskey         "Y">
+
+<!ENTITY     button.close.label             "Uddu">
+<!ENTITY     button.close.accesskey         "U">

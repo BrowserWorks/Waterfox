@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Инсталиране на добавка">
+<!ENTITY intro           "Друга програма от компютъра променя &brandShortName; чрез следната добавка:">
+<!ENTITY warning         "Инсталирайте добавки само от автори, на които вярвате.">
+<!ENTITY allow           "Разрешаване на тази инсталация">
+<!ENTITY later           "Може по всяко време да промените решението си в Управление на добавки.">
+<!ENTITY continue        "Продължаване">
+<!ENTITY restartMessage  "За да завършите инсталацията на тази добавка трябва да рестартирате &brandShortName;.">
+<!ENTITY restartButton   "Рестартиране на &brandShortName;">
+<!ENTITY cancelButton    "Прекъсване">

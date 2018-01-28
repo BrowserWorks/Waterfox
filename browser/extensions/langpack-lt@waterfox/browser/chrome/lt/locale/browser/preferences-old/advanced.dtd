@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Bendrosios">
+
+<!ENTITY accessibility.label             "Valdymas">
+
+<!ENTITY useCursorNavigation.label       "Naršymui tinklalapyje naudoti rodyklių klavišus">
+<!ENTITY useCursorNavigation.accesskey   "r">
+<!ENTITY searchOnStartTyping.label       "Pradėti paiešką pradėjus rinkti tekstą">
+<!ENTITY searchOnStartTyping.accesskey   "P">
+<!ENTITY blockAutoReload.label           "Įspėti, jei svetainė bando nukreipti kitur arba atsiųsti tinklalapį iš naujo">
+<!ENTITY blockAutoReload.accesskey       "n">
+<!ENTITY useOnScreenKeyboard.label       "Rodyti jutiklinę klaviatūrą kai reikia">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Naršymas">
+
+<!ENTITY useAutoScroll.label             "Automatiškai slinkti dokumentą">
+<!ENTITY useAutoScroll.accesskey         "u">
+<!ENTITY useSmoothScrolling.label        "Slinkti tolygiai">
+<!ENTITY useSmoothScrolling.accesskey    "t">
+<!ENTITY checkUserSpelling.label         "Tikrinti rašybą renkant tekstą">
+<!ENTITY checkUserSpelling.accesskey     "k">
+
+<!ENTITY dataChoicesTab.label            "Duomenų siuntimas">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Duomenų siuntimas šiai darinio sąrankai yra išjungtas">
+
+<!ENTITY healthReportDesc.label          "Padeda jums įvertinti naršyklės našumą ir siunčia „&vendorShortName;i“ duomenis apie naršyklės techninę būklę">
+<!ENTITY enableHealthReport.label        "Įgalinti „&brandShortName;“ sveikatos būklės ataskaitas">
+<!ENTITY enableHealthReport.accesskey    "s">
+<!ENTITY healthReportLearnMore.label     "Sužinoti daugiau">
+
+<!ENTITY telemetryDesc.label             "Naršyklės „&brandShortName;“ tobulinimo tikslais siunčia „&vendorShortName;i“ duomenis apie naršyklės našumą, naudojamas funkcijas, tinkinimą ir kompiuterio aparatinę įrangą">
+<!ENTITY enableTelemetryData.label       "Dalintis papildomais duomenimis (pvz., telemetrija)">
+<!ENTITY enableTelemetryData.accesskey   "t">
+<!ENTITY telemetryLearnMore.label        "Sužinoti daugiau">
+
+<!ENTITY crashReporterDesc2.label         "Strigčių pranešimai padeda „&vendorShortName;i“ spręsti problemas bei gerinti naršyklės stabilumą ir saugumą.">
+<!ENTITY alwaysSubmitCrashReports.label   "Leisti „&brandShortName;“ siųsti sukauptus strigčių pranešimus jūsų vardu">
+<!ENTITY alwaysSubmitCrashReports.accesskey "k">
+<!ENTITY crashReporterLearnMore.label     "Sužinoti daugiau">
+
+<!ENTITY networkTab.label                "Tinklas">
+
+<!ENTITY connection.label                "Ryšys">
+
+<!ENTITY connectionDesc.label            "Parinkite „&brandShortName;“ ryšio su internetu nuostatas.">
+<!ENTITY connectionSettings.label        "Nuostatos…">
+<!ENTITY connectionSettings.accesskey    "N">
+
+<!ENTITY httpCache.label                 "Saityno podėlis">
+
+<!ENTITY offlineStorage2.label           "Duomenys darbui neprisijungus ir naudotojo duomenys">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Svetainės duomenys">
+<!ENTITY clearSiteData.label             "Išvalyti visus duomenis">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Nuostatos…">
+<!ENTITY siteDataSettings.accesskey      "N">
+<!ENTITY siteDataLearnMoreLink.label     "Sužinoti daugiau">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Riboti podėlio dydį iki">
+<!ENTITY limitCacheSizeBefore.accesskey  "R">
+<!ENTITY limitCacheSizeAfter.label       "MB disko atminties">
+<!ENTITY clearCacheNow.label             "Išvalyti dabar">
+<!ENTITY clearCacheNow.accesskey         "v">
+<!ENTITY clearOfflineAppCacheNow.label   "Išvalyti darbar">
+<!ENTITY clearOfflineAppCacheNow.accesskey "d">
+<!ENTITY overrideSmartCacheSize.label    "Neleisti automatinio podėlio dydžio valdymo">
+<!ENTITY overrideSmartCacheSize.accesskey "a">
+
+<!ENTITY updateTab.label                 "Atnaujinimas">
+
+<!ENTITY updateApplication.label         "„&brandShortName;“ naujinimai">
+<!ENTITY updateAuto1.label               "Automatiškai įdiegti naujinimus (rekomenduojama – didesnis saugumas)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "Tikrinti, ar yra naujinimų, bet atsiklausti prieš juos įdiegiant">
+<!ENTITY updateCheckChoose.accesskey     "T">
+<!ENTITY updateManual.label              "Netikrinti, ar yra naujinimų (nerekomenduojama – galimos saugumo problemos)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Rodyti atnaujinimo žurnalą">
+<!ENTITY updateHistory.accesskey         "R">
+
+<!ENTITY useService.label                "Naujinimams įdiegti naudoti fone veikiančią tarnybą">
+<!ENTITY useService.accesskey            "f">
+
+<!ENTITY autoUpdateOthers.label          "Atnaujinti automatiškai">
+<!ENTITY enableSearchUpdate.label        "ieškykles">
+<!ENTITY enableSearchUpdate.accesskey    "e">
+
+<!ENTITY offlineStorageNotify.label               "Pranešti, kai svetainė prašo leidimo kompiuteryje įrašyti duomenis, reikalingus darbui neprisijungus prie tinklo">
+<!ENTITY offlineStorageNotify.accesskey           "P">
+<!ENTITY offlineStorageNotifyExceptions.label     "Išimtys…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "I">
+
+<!ENTITY offlineAppsList2.label          "Šioms svetainėms leista įrašyti darbui neprisijungus prie tinklo reikalingų duomenų:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Pašalinti…">
+<!ENTITY offlineAppsListRemove.accesskey "š">
+<!ENTITY offlineAppRemove.confirm        "Pašalinti darbui neprisijungus skirtus duomenis">
+
+<!ENTITY certificateTab.label            "Liudijimai">
+<!ENTITY certPersonal.label              "Užklausos">
+<!ENTITY certPersonal.description        "Svetainei paprašius jūsų asmeninio liudijimo:">
+<!ENTITY selectCerts.auto                "parinkti jį automatiškai">
+<!ENTITY selectCerts.auto.accesskey      "e">
+<!ENTITY selectCerts.ask                 "visada klausti">
+<!ENTITY selectCerts.ask.accesskey       "v">
+<!ENTITY enableOCSP.label                "Tikrinti liudijimų galiojimą, užklausiant OCSP atsakiklių">
+<!ENTITY enableOCSP.accesskey            "O">
+<!ENTITY viewCerts.label                 "Liudijimų peržiūra">
+<!ENTITY viewCerts.accesskey             "L">
+<!ENTITY viewSecurityDevices.label       "Saugumo priemonės">
+<!ENTITY viewSecurityDevices.accesskey   "S">
+
+<!ENTITY performance.label               "Našumas">
+<!ENTITY useRecommendedPerformanceSettings.label "Naudoti rekomenduojamas našumo nuostatas">
+<!ENTITY useRecommendedPerformanceSettings.description "Šios nuostatos yra pritaikytos atsižvelgiant į jūsų kompiuterio techninę įrangą bei operacinę sistemą.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "u">
+<!ENTITY performanceSettingsLearnMore.label "Sužinoti daugiau">
+<!ENTITY limitContentProcessOption.label "Turinio procesų riba">
+<!ENTITY limitContentProcessOption.description "Papildomi turinio procesai gali paspartinti veikimą kai naudojama daugiau kortelių, tačiau taip pat naudos daugiau atminties.">
+<!ENTITY limitContentProcessOption.accesskey   "r">
+<!ENTITY limitContentProcessOption.disabledDescription "Turinio procesų skaičiaus keitimas galimas tik daugiaprocesėje „&brandShortName;“.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Sužinokite kaip patikrinti, ar daugiaprocesė veiksena įjungta">
+<!ENTITY allowHWAccel.label              "Naudoti aparatinį spartinimą, jei tai įmanoma">
+<!ENTITY allowHWAccel.accesskey          "a">

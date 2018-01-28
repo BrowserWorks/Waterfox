@@ -1,0 +1,11 @@
+locale branding ga-IE ga-IE/locale/branding/
+locale browser ga-IE ga-IE/locale/browser/
+locale browser-region ga-IE ga-IE/locale/browser-region/
+locale devtools ga-IE ga-IE/locale/ga-IE/devtools/client/
+locale devtools-shared ga-IE ga-IE/locale/ga-IE/devtools/shared/
+locale formautofill ga-IE ga-IE/locale/ga-IE/
+locale pdf.js ga-IE ga-IE/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

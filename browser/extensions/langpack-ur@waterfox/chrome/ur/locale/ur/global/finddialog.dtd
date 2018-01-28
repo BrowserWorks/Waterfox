@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "اس صفحے میں ڈھونڈیں">
+<!ENTITY findField.label "کیا ڈھونڈیں:">
+<!ENTITY findField.accesskey "ڈ">
+<!ENTITY caseSensitiveCheckbox.label "کیس میچ کریں">
+<!ENTITY caseSensitiveCheckbox.accesskey "ک">
+<!ENTITY wrapCheckbox.label "ملفوف کریں">
+<!ENTITY wrapCheckbox.accesskey "م">
+<!ENTITY findButton.label "اگلا ڈھونڈیں">
+<!ENTITY findButton.accesskey "ا">
+<!ENTITY cancelButton.label "منسوخ کریں">
+<!ENTITY closeButton.label "بند کریں">
+<!ENTITY up.label "اوپر">
+<!ENTITY up.accesskey "ا">
+<!ENTITY down.label "نیچے">
+<!ENTITY down.accesskey "ن">
+<!ENTITY direction.label "سمت">

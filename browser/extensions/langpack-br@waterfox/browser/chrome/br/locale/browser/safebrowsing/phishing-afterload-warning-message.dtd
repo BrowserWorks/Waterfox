@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Lamit kuit ac'hanon deus amañ !">
+<!ENTITY safeb.palm.decline.label "Chom hep derc'hel kont">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "N'eo ket ul lec’hienn dagus…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "Perak eo bet harzet ar bajenn-mañ?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "Pajenn dagus marilhet !">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Marilhet eo bet ar bajenn-mañ e <span id='malware_sitename'/> evel ur bajenn dagus ha harzet eo bet gant ho kwellvezioù diogelroez.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Ar pajennoù tagus a glask staliañ goulevioù da laerezh titouroù personel, da arverañ hoc'h urzhiataer evit tagañ urzhiataerioù all pe da vekaat ho reizhiad.</p> <p> Ul lod eus ar pajennoù-tagus-mañ a zasparzh meziantoù pistrius koulskoude ez eo diefedus un darn vras anezho hep gouiziegezh pe aotre o ferc'hennerion.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Marilhet ar bajenn meziantoù dic'hoantaet !">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Marilhet eo bet ar bajenn-mañ e <span id='unwanted_sitename'/> evel ur bajenn oc'h enderc'hel meziantoù dic'hoantaet ha harzet eo bet gant ho kwellvezioù diogelroez.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Pajennoù meziantoù dic'hoantaet a glask staliañ meziantoù a c'hell bezañ touellus ha tizhout ho reizhad e doareoù dic'hortoz.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Lec'hienn dagus!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Marilhet eo bet ar bajenn-mañ e <span id='phishing_sitename'/> evel ur bajenn c'hwiberezh ha harzet eo bet gant ho kwellvezioù diogelroez.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Savet eo al lec'hiennoù tagus evit touellañ ac'hanoc'h hag ober traoù dañjerus, staliañ meziantoù pe lenn ho roadennoù personel (gerioù-tremen, niverennoù pellgomz, kartennoù kred, hag all)</p><p>Gallout a rafec'h bezañ tizhet gant ul laeroñsi pivelezh pe kudennoù all ma roit titouroù d'ar bajenn-mañ.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

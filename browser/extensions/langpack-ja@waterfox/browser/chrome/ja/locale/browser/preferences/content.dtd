@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label		"許可設定">
+
+<!ENTITY  blockPopups.label		"ポップアップウィンドウをブロックする">
+<!ENTITY  blockPopups.accesskey		"B">
+
+<!ENTITY  notificationsPolicyLearnMore.label	"詳細">
+<!ENTITY  notificationsPolicyDesc4.label	"通知の送信を許可するウェブサイトを選択します">
+<!ENTITY  notificationsPolicyButton.accesskey	"h">
+<!ENTITY  notificationsPolicyButton.label	"選択...">
+<!ENTITY  notificationsDoNotDisturb.label	"通知しない">
+<!ENTITY  notificationsDoNotDisturb.accesskey	"n">
+<!ENTITY  notificationsDoNotDisturbDetails.value	"&brandShortName; を再起動するまで通知を表示しません">
+
+<!ENTITY  popupExceptions.label		"許可サイト..."><!-- en-US: Exceptions -->
+<!ENTITY  popupExceptions.accesskey	"E">
+
+<!ENTITY  fontsAndColors.label		"フォントと配色">
+
+<!ENTITY  defaultFont2.label		"既定のフォント">
+<!ENTITY  defaultFont2.accesskey	"D">
+<!ENTITY  defaultSize2.label		"サイズ">
+<!ENTITY  defaultSize2.accesskey	"S">
+
+<!ENTITY  advancedFonts.label		"詳細設定...">
+<!ENTITY  advancedFonts.accesskey	"A">
+
+<!ENTITY  colors.label			"配色設定...">
+<!ENTITY  colors.accesskey		"C">
+
+
+<!ENTITY language2.label		"言語">
+<!ENTITY chooseLanguage.label		"ウェブページの表示に使用する言語の優先順位を設定できます。">
+<!ENTITY chooseButton.label		"言語設定...">
+<!ENTITY chooseButton.accesskey		"o">
+
+<!ENTITY translateWebPages.label	"ウェブページを翻訳">
+<!ENTITY translateWebPages.accesskey	"T">
+<!ENTITY translateExceptions.label	"例外...">
+<!ENTITY translateExceptions.accesskey	"x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo	"翻訳: ">
+<!ENTITY translation.options.attribution.afterLogo	"">
+
+<!ENTITY  drmContent2.label			"デジタル著作権管理 (DRM) コンテンツ">
+
+<!ENTITY  playDRMContent2.label			"DRM 制御のコンテンツを再生">
+<!ENTITY  playDRMContent2.accesskey		"P">
+<!ENTITY  playDRMContent.learnMore.label	"詳細">

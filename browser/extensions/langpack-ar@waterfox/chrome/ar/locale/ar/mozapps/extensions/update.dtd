@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "تحديث &brandShortName;">
+
+<!ENTITY  offline.title                   "يعمل &brandShortName; في وضع دون اتصال">
+<!ENTITY  offline.description             "يحتاج &brandShortName; أن يتصل ليبحث عن تحديثات لإضافاتك و يجعلها متوافقة مع هذا الإصدار.">
+<!ENTITY  offline.toggleOffline.label     "اتصل الآن.">
+<!ENTITY  offline.toggleOffline.accesskey "ص">
+
+<!ENTITY  mismatch.win.title              "إضافات غير متوافقة">
+<!ENTITY  mismatch.top.label              "الإضافات التالية غير متوافقة من هذا الإصدار من &brandShortName; ولذلك عُطّلت:">
+<!ENTITY  mismatch.bottom.label           "يستطيع &brandShortName; أن يلتمس وجود إصدارات متوافقة من هذه الإضافات.">
+
+<!ENTITY  checking.wizard.title           "التمس إضافات متوافقة">
+<!ENTITY  checking.top.label              "يلتمس تحديثات لإضافاتك غير المتوافقة…">
+<!ENTITY  checking.status                 "قد يستغرق هذا بضع دقائق…">
+
+<!ENTITY  found.wizard.title               "وجدت إضافات متوافقة">
+<!ENTITY  found.top.label                 "اختر الإضافات التي تريد تنصيبها:">
+<!ENTITY  found.disabledXPinstall.label   "تعذّر تحديث الإضافات لأن تنصيب البرمجيات معطّل. يمكن تغيير ذلك في الأسفل.">
+<!ENTITY  found.enableXPInstall.label     "اسمح للمواقع بتنصيب برمجيات">
+<!ENTITY  found.enableXPInstall.accesskey "س">
+
+<!ENTITY  installing.wizard.title         "يجري تنصيب الإضافات المتوافقة">
+<!ENTITY  installing.top.label            "ينزّل و ينصّب تحديثات لإضافاتك…">
+
+<!ENTITY  noupdates.wizard.title          "لا توجد إضافات متوافقة">
+<!ENTITY  noupdates.intro.desc            "لم يجد &brandShortName; تحديثات لإضافاتك غير المتوافقة.">
+<!ENTITY  noupdates.error.desc            "حدثت مشاكل عند محاولة البحث عن تحديثات.">
+<!ENTITY  noupdates.checkEnabled.desc     "سيفحص &brandShortName; دوريا و يعلمك عن توفر تحديثات متوافقة للإضافات.">
+
+<!ENTITY  finished.wizard.title           "الإضافات المتوافقة المنصّبة">
+<!ENTITY  finished.top.label              "نصّبَ &brandShortName; تحديثات لإضافاتك.">
+<!ENTITY  finished.checkDisabled.desc     "يستطيع &brandShortName; أن يلتمس دوريا و يعلمك عن توفر تحديثات للإضافات.">
+<!ENTITY  finished.checkEnabled.desc      "سيلتمس &brandShortName; دوريا و يعلمك عن توفر تحديثات للإضافات.">
+
+<!ENTITY  adminDisabled.wizard.title      "تعذّر التماس التحديثات">
+<!ENTITY  adminDisabled.warning.label     "تعذّر التماس تحديثات للإضافات غير المتوافقة لأن تنصيب برمجيات &brandShortName; معطل. رجاءً اتصل بمدير نظامك للمساعدة.">
+
+<!ENTITY  versioninfo.wizard.title        "يجري فحص توافقية الإضافات">
+<!ENTITY  versioninfo.top.label           "يجري فحص توافقية إضافاتك مع هذا الإصدار من &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "قد يستغرق هذا بضع دقائق…">
+
+<!ENTITY  installerrors.wizard.title      "حدثت أخطاء أثناء تنصيب التحديثات">
+<!ENTITY  installerrors.intro.label       "واجه &brandShortName; مشاكل أثناء تحديث بعض إضافاتك.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "اضغط ”أنهِ“ لمتابعة تشغيل &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "انقر ”تمّ“ لمتابعة &brandShortName;.">
+<!ENTITY  enableChecking.label            "اسمح ل&brandShortName; بالبحث عن تحديثات.">

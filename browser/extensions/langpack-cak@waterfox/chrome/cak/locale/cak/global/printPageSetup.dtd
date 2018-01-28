@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Runuk'ulem ruxaq">
+
+<!ENTITY basic.tab           "B'anikil chuqa' taq cha'oj">
+
+<!ENTITY formatGroup.label   "B'anikil">
+
+<!ENTITY orientation.label   "Ya'öl na'oj:">
+<!ENTITY portrait.label      "Palem">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Kotz'olem">
+<!ENTITY landscape.accesskey "l">
+
+<!ENTITY scale.label         "Xakb'äl:">
+<!ENTITY scale.accesskey     "X">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Tich'utinirisäx k'a nunük' na qa ri' chuwäch ruwa ri ruxaq">
+<!ENTITY shrinkToFit.accesskey "T">
+
+<!ENTITY optionsGroup.label  "Taq cha'oj">
+
+<!ENTITY printBG.label       "Titz'ajb'äx rupam (taq b'onil chuqa' taq wachib'äl)">
+<!ENTITY printBG.accesskey   "r">
+
+<!ENTITY advanced.tab        "Taq ruchi' chuqa' taq rujub'i'aj/kamulun tzij">
+
+<!ENTITY marginGroup.label   "Taq ruchi' (#1)">
+<!ENTITY marginUnits.inches  "ruwi' q'ab'aj">
+<!ENTITY marginUnits.metric  "Taq puyaj">
+<!ENTITY marginTop.label     "Ajsik:">
+<!ENTITY marginTop.accesskey "A">
+<!ENTITY marginBottom.label  "Chuxe':">
+<!ENTITY marginBottom.accesskey "C">
+<!ENTITY marginLeft.label    "Xokon:">
+<!ENTITY marginLeft.accesskey "X">
+<!ENTITY marginRight.label   "Ajkiq'a':">
+<!ENTITY marginRight.accesskey "A">
+
+<!ENTITY headerFooter.label  "Taq rujub'i'aj chuqa' taq kamulun tzij">
+
+<!ENTITY hfLeft.label        "Xokon:">
+<!ENTITY hfCenter.label      "Runik'ajal">
+<!ENTITY hfRight.label       "Ajkiq'a':">
+<!ENTITY headerLeft.tip      "Xokon chi rujub'i'aj">
+<!ENTITY headerCenter.tip    "Ruk'u'x rujub'i'aj">
+<!ENTITY headerRight.tip     "Ajkiq'a' rujub'i'aj">
+<!ENTITY footerLeft.tip      "Ajxokon aqanaj">
+<!ENTITY footerCenter.tip    "Ruk'u'x retal">
+<!ENTITY footerRight.tip     "Ajkiq'a' aqanaj">
+
+<!ENTITY hfTitle             "B'i'aj">
+<!ENTITY hfURL               "JAY">
+<!ENTITY hfDateAndTime       "Q'ijul/ramaj">
+<!ENTITY hfPage              "Ruxaq #">
+<!ENTITY hfPageAndTotal      "Ruxaq # richin #">
+<!ENTITY hfBlank             "--majun--">
+<!ENTITY hfCustom            "Ichinan…">
+
+<!ENTITY customPrompt.title  "Ichinan…">
+<!ENTITY customPrompt.prompt "Tatz'ib'aj ri ichinan rucholajem tzij richin ri rujub'i'aj/kamulun tzij">

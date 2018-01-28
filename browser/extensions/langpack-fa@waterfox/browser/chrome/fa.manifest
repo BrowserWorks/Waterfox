@@ -1,0 +1,11 @@
+locale branding fa fa/locale/branding/
+locale browser fa fa/locale/browser/
+locale browser-region fa fa/locale/browser-region/
+locale devtools fa fa/locale/fa/devtools/client/
+locale devtools-shared fa fa/locale/fa/devtools/shared/
+locale formautofill fa fa/locale/fa/
+locale pdf.js fa fa/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

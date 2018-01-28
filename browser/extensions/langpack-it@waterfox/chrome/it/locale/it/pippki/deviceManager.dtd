@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title "Gestione dispositivi">
+<!ENTITY devmgr.style2 "width: 70em; height: 33em;">
+<!ENTITY devmgr.devlist.label "Moduli e dispositivi di sicurezza">
+<!ENTITY devmgr.details.title "Dettagli">
+<!ENTITY devmgr.details.title2 "Valore">
+<!ENTITY devmgr.button.login.label "Accedi">
+<!ENTITY devmgr.button.login.accesskey "A">
+<!ENTITY devmgr.button.logout.label "Esci">
+<!ENTITY devmgr.button.logout.accesskey "E">
+<!ENTITY devmgr.button.changepw.label "Modifica la password">
+<!ENTITY devmgr.button.changepw.accesskey "p">
+<!ENTITY devmgr.button.load.label "Carica">
+<!ENTITY devmgr.button.load.accesskey "C">
+<!ENTITY devmgr.button.unload.label "Scarica">
+<!ENTITY devmgr.button.unload.accesskey "S">
+<!ENTITY devmgr.button.fips.accesskey "F">
+<!ENTITY loaddevice.info "Inserire le informazioni per il modulo che si vuole aggiungere.">
+<!ENTITY loaddevice.modname "Nome modulo:">
+<!ENTITY loaddevice.modname.accesskey "N">
+<!ENTITY loaddevice.modname.default "Nuovo modulo PKCS#11">
+<!ENTITY loaddevice.filename "Nome file modulo:">
+<!ENTITY loaddevice.filename.accesskey "f">
+<!ENTITY loaddevice.browse "Sfoglia…">
+<!ENTITY loaddevice.browse.accesskey "o">
+<!ENTITY loaddevice.title2 "Carica driver dispositivo PKCS#11">

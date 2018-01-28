@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title "Ripristino di &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1 "Riparti da zero per risolvere i problemi e ritornare alle prestazioni originali.">
+<!ENTITY refreshProfile.dialog.description2 "Questo comporta:">
+<!ENTITY refreshProfile.dialog.items.label1 "Eliminazione dei componenti aggiuntivi e delle personalizzazioni">
+<!ENTITY refreshProfile.dialog.items.label2 "Ripristino delle impostazioni predefinite del browser">
+<!ENTITY refreshProfile.dialog.button.label "Ripristina &brandShortName;">
+<!ENTITY refreshProfile.title "Esegui una messa a punto di &brandShortName;">
+<!ENTITY refreshProfile.button.label "Ripristina &brandShortName;…">
+<!ENTITY refreshProfile.cleaning.description "Quasi completato…">
+

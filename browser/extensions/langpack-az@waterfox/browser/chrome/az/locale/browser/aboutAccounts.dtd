@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; -a Xoş Gəldiniz">
+
+<!ENTITY aboutAccountsConfig.description "Vərəq, əlfəcin, parol və daha bir çox məlumatlarınızı sinxronlaşdırmaq üçün daxil olun.">
+<!ENTITY aboutAccountsConfig.startButton.label "Başla">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync nizamlamaları">
+<!ENTITY aboutAccounts.noConnection.title "Bağlantı yoxdur">
+<!ENTITY aboutAccounts.noConnection.description "Daxil olmaq üçün internetə bağlı olmalısınız.">
+<!ENTITY aboutAccounts.noConnection.retry "Təkrar yoxla">
+<!ENTITY aboutAccounts.badConfig.title "Səhv konfiqurasiya">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox Hesabınızın server konfiqurasiyası təyin edilə bilmədi. Lütfən daha sonra təkrar yoxlayın.">

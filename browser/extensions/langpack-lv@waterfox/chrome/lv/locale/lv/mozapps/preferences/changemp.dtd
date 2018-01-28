@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Mainīt galveno paroli">
+<!ENTITY setPassword.tokenName.label       "Drošības ierīce">
+<!ENTITY setPassword.oldPassword.label     "Pašreizējā parole:">
+<!ENTITY setPassword.newPassword.label     "Ievadiet jaunu paroli:">
+<!ENTITY setPassword.reenterPassword.label "Vēlreiz ievadiet paroli:">
+<!ENTITY setPassword.meter.label           "Paroles kvalitātes mērītājs">
+<!ENTITY setPassword.meter.loading         "Ielādē">
+<!ENTITY masterPasswordDescription.label   "Galveno paroli izmanto svarīgas informācijas, piemēram, vietņu paroļu, aizsargāšanai. Ja izveidosiet galveno paroli, reizi sesijā jums tā būs jāievada, kad &brandShortName; pirmoreiz ielādēs ar to aizsargātu informāciju.">
+<!ENTITY masterPasswordWarning.label       "Lūdzu, atcerieties šeit ievadīto galveno paroli. Ja aizmirsīsiet to, nevarēsiet piekļūt informācijai, ko tā aizsargā.">

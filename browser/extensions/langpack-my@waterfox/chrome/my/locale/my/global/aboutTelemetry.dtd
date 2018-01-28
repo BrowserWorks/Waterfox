@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry Data">
+
+<!ENTITY aboutTelemetry.changeDataChoices "  ပြောင်းလဲရန်">
+
+<!ENTITY aboutTelemetry.uploadEnabled "  FHR ဒေတာပို့လွှတ်မှုကို <span>ဖွင့်ထားသည်</span>။">
+
+<!ENTITY aboutTelemetry.uploadDisabled "  FHR ဒေတာပို့လွှတ်မှုကို <span>ပိတ်ထားသည်</span>။">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "  Extended Telemetry ရုပ်/သံသွင်းခြင်းကို <span>ဖွင့်ထားသည်</span>။">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "  Extended Telemetry ရုပ်/သံသွင်းခြင်းကို <span>ပိတ်ထားသည်</span>။">
+
+<!ENTITY aboutTelemetry.pingDataSource "ကွန်ယက်စာတို(ပင်းန်) ဒေတာရင်းမြစ်။">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "လက်ရှိ ပင်းန် ဒေတာ">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "သိမ်းထားသည့် ပင်းန် ဒေတာ">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "Ping အချက်အလက်ပြသမှု။:">
+
+<!ENTITY aboutTelemetry.structured "ဖွဲ့စည်းထားသော">
+
+<!ENTITY aboutTelemetry.raw "JSON အကြမ်းထည်">
+
+<!ENTITY aboutTelemetry.showSubsessionData "အချိန်ခွဲသိမ်း ဒေတာကို ပြပါ">
+
+<!ENTITY aboutTelemetry.choosePing "ပင်းန်ကို ရွေးရန်။">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; ပင်းန် အသစ်">
+
+<!ENTITY aboutTelemetry.showOlderPing "ပင်းန် အဟောင်း &gt;&gt;">
+
+<!ENTITY aboutTelemetry.rawPingData "အကြမ်းထည် Ping အချက်အလက်…">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "ရက်သတ္တပတ်">
+
+<!ENTITY aboutTelemetry.archivePingHeader "ပင်းန်">
+
+<!ENTITY aboutTelemetry.generalDataSection "  အထွေထွေ အချက်အလက်">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Environment Data">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetry မှတ်တမ်း">
+
+<!ENTITY aboutTelemetry.slowSqlSection " Slow SQL Statements">
+
+<!ENTITY aboutTelemetry.chromeHangsSection " Browser Hangs">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Thread Hangs">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  
+  Scalars
+  ">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histograms">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  ကီးများဖြင့် ဇယားကွက်">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "   ရိုးရှင်းသော တိုင်းတာချက်များ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "   Add-on Details">
+
+<!ENTITY aboutTelemetry.lateWritesSection "နောက်ကျသောရေးသားချက်">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  အသုံးပြုမှုကာလအချက်အလက်">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "   Histograms Collected by Add-ons">
+
+<!ENTITY aboutTelemetry.toggle "  Click to toggle section">
+
+<!ENTITY aboutTelemetry.emptySection "  (No data collected)">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTE: Slow SQL debugging is enabled. Full SQL strings may be displayed below but they will not be submitted to Telemetry.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+ အကန့်များထဲမှ လုပ်ဆောင်ချက်အမည်များအာ:ဆွဲထုတ်ပါ">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+ မူရင်းမှတ်သားချက်များအားပြပါ">
+
+<!ENTITY aboutTelemetry.filterText "  Filter (strings or /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  ကုန်">
+
+<!ENTITY aboutTelemetry.rawPayload "  ကုန်ကြမ်း">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

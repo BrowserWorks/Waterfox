@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Abioa">
+
+<!ENTITY startupPage.label         "&brandShortName; abiatzean:">
+<!ENTITY startupPage.accesskey     "z">
+<!ENTITY startupUserHomePage.label "Erakutsi hasiera-orria">
+<!ENTITY startupBlankPage.label    "Erakutsi orri hutsa">
+<!ENTITY startupPrevSession.label  "Berreskuratu azken saioko fitxak eta leihoak">
+
+<!ENTITY homepage.label            "Hasiera-orria:">
+<!ENTITY homepage.accesskey        "H">
+<!ENTITY useCurrentPage.label      "Erabili uneko orria">
+<!ENTITY useCurrentPage.accesskey  "u">
+<!ENTITY useMultiple.label         "Erabili uneko orriak">
+<!ENTITY chooseBookmark.label      "Erabili laster-marka…">
+<!ENTITY chooseBookmark.accesskey  "b">
+<!ENTITY restoreDefault.label      "Berrezarri lehenetsiak">
+<!ENTITY restoreDefault.accesskey  "r">
+
+<!ENTITY downloads.label     "Deskargak">
+
+<!ENTITY saveTo.label "Gorde fitxategiak hemen: ">
+<!ENTITY saveTo.accesskey "G">
+<!ENTITY chooseFolderWin.label        "Arakatu…">
+<!ENTITY chooseFolderWin.accesskey    "A">
+<!ENTITY chooseFolderMac.label        "Aukeratu…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Galdetu beti non gorde fitxategiak">
+<!ENTITY alwaysAskWhere.accesskey     "n">
+
+<!ENTITY alwaysCheckDefault2.label        "Egiaztatu beti ea &brandShortName; nabigatzaile lehenetsia den">
+<!ENTITY alwaysCheckDefault2.accesskey    "E">
+<!ENTITY setAsMyDefaultBrowser2.label     "Lehenetsi">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "L">
+<!ENTITY isDefault.label                  "&brandShortName; nabigatzaile lehenetsia da une honetan">
+<!ENTITY isNotDefault.label               "&brandShortName; ez da zure nabigatzaile lehenetsia">
+
+<!ENTITY separateProfileMode.label        "Baimendu &brandShortName; eta Waterfox aldi berean exekutatzea">
+<!ENTITY useWaterfoxSync.label             "Aholkua: bereizitako profilak erabiltzen ditu honek. Erabili Sync hauen artean datuak partekatzeko.">
+<!ENTITY getStarted.notloggedin.label     "Hasi saioa &syncBrand.shortName.label;(e)n…">
+<!ENTITY getStarted.configured.label      "Ireki &syncBrand.shortName.label; hobespenak">
+
+<!ENTITY e10sEnabled.label                "Gaitu multiprozesu moduko &brandShortName;">

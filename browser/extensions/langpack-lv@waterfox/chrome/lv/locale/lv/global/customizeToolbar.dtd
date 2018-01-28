@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Pielāgot rīkjoslu">
+<!ENTITY dialog.dimensions        "width: 94ch; height: 40em;">
+<!ENTITY instructions.description "Jūs varat pievienot vai noņemt vienumus, velkot tos uz vai no rīkjoslām.">
+<!ENTITY show.label               "Rādīt:">
+<!ENTITY iconsAndText.label       "Ikonas un tekstu">
+<!ENTITY icons.label              "Ikonas">
+<!ENTITY text.label               "Tekstu">
+<!ENTITY useSmallIcons.label      "Lietot mazas ikonas">
+<!ENTITY restoreDefaultSet.label  "Atjaunot noklusēto saturu">
+<!ENTITY addNewToolbar.label      "Pievienot jaunu rīkjoslu">
+<!ENTITY saveChanges.label        "Beigt">
+<!ENTITY undoChanges.label        "Atsaukt izmaiņas">

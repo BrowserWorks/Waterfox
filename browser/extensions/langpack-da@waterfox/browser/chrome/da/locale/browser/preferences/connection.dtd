@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY connectionsDialog.title       "Forbindelsesindstillinger">
+<!ENTITY  window.width2                 "44em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY proxyTitle.label              "Konfigurer proxier til at tilgå internettet">
+<!ENTITY noProxyTypeRadio.label        "Ingen proxy">
+<!ENTITY noProxyTypeRadio.accesskey    "I">
+<!ENTITY systemTypeRadio.label         "Brug systemets proxy-indstillinger">
+<!ENTITY systemTypeRadio.accesskey     "B">
+<!ENTITY WPADTypeRadio.label           "Auto-detekter proxy-indstillinger for dette netværk">
+<!ENTITY WPADTypeRadio.accesskey       "A">
+<!ENTITY manualTypeRadio.label         "Manuel proxy-konfiguration:">
+<!ENTITY manualTypeRadio.accesskey     "M">
+<!ENTITY autoTypeRadio.label           "Automatisk proxy-konfigurations-URL:">
+<!ENTITY autoTypeRadio.accesskey       "U">
+<!ENTITY reload.label                  "Genindlæs">
+<!ENTITY reload.accesskey              "e">
+<!ENTITY ftp.label                     "FTP-proxy:">
+<!ENTITY ftp.accesskey                 "F">
+<!ENTITY http.label                    "HTTP-proxy:">
+<!ENTITY http.accesskey                "T">
+<!ENTITY ssl.label                     "SSL-proxy:">
+<!ENTITY ssl.accesskey                 "S">
+<!ENTITY socks.label                   "SOCKS-vært:">
+<!ENTITY socks.accesskey               "O">
+<!ENTITY socks4.label                  "SOCKS v4">
+<!ENTITY socks4.accesskey              "4">
+<!ENTITY socks5.label                  "SOCKS v5">
+<!ENTITY socks5.accesskey              "5">
+<!ENTITY socksRemoteDNS.label2         "Proxy-DNS ved brug af SOCKS v5">
+<!ENTITY socksRemoteDNS.accesskey      "d">
+<!ENTITY port.label                    "Port:">
+<!ENTITY HTTPport.accesskey            "">
+<!ENTITY SSLport.accesskey             "">
+<!ENTITY FTPport.accesskey             "">
+<!ENTITY SOCKSport.accesskey           "">
+<!ENTITY noproxy.label                 "Ingen proxy for:">
+<!ENTITY noproxy.accesskey             "n">
+<!ENTITY noproxyExplain.label          "Fx .mozilla.org, .net.dk, 192.168.1.0/24">
+<!ENTITY shareproxy.label              "Brug denne proxy-server for alle protokoller">
+<!ENTITY shareproxy.accesskey          "r">
+<!ENTITY  autologinproxy.label          "Spørg ikke efter godkendelse, hvis adgangskoden er gemt">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Denne indstilling godkender dig automatisk overfor proxy-servere, når du har gemt login-informationer til dem. Du bliver spurgt, hvis godkendelsen slår fejl.">

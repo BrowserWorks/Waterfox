@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Siyakwamkela kwi&syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Ngena ukungqamanisa iithebhu zakho, iibhukhmakhi, iipasiwedi nokunye.">
+<!ENTITY aboutAccountsConfig.startButton.label "Qalisa">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Ngqamanisa iipreferensi">
+<!ENTITY aboutAccounts.noConnection.title "Akukho luqhagamshelo">
+<!ENTITY aboutAccounts.noConnection.description "Umele ube uqhagamshele kwi-Intanethi ukuze usayine ungene.">
+<!ENTITY aboutAccounts.noConnection.retry "Zama kwakhona">
+<!ENTITY aboutAccounts.badConfig.title "Ubumbeko olungelulo">
+<!ENTITY aboutAccounts.badConfig.description "Asikwazi kufumanisa ubumbeko lweseva yeAkhawunti yeWaterfox yakho. Nceda uphinde uzame kamva.">

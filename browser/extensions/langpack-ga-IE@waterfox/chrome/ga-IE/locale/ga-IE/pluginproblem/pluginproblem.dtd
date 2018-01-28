@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Úsáideann an suíomh seo forlíontán a chuireann moill ar &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Tapáil anseo chun an forlíontán a chur i ngníomh.">
+<!ENTITY clickToActivatePlugin                               "Gníomhachtaigh an forlíontán.">
+<!ENTITY checkForUpdates                                     "Lorg nuashonruithe…">
+<!ENTITY blockedPlugin.label                                 "Tá cosc curtha ar an bhforlíontán seo le tú a chosaint.">
+<!ENTITY hidePluginBtn.label                                 "Cuir an forlíontán i bhfolach">
+<!ENTITY managePlugins                                       "Bainistigh forlíontáin…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Athlódáil an leathanach">
+<!ENTITY reloadPlugin.post                                   " chun triail eile a bhaint as.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Seol tuairisc tuairteála">
+<!ENTITY report.submitting                                   "Tuairisc á seoladh…">
+<!ENTITY report.submitted                                    "Seoladh an tuairisc tuairteála.">
+<!ENTITY report.disabled                                     "Tuairiscí tuairteála díchumasaithe.">
+<!ENTITY report.failed                                       "Theip ar sheoladh.">
+<!ENTITY report.unavailable                                  "Níl aon tuairisc ann.">
+<!ENTITY report.comment                                      "Cuir nóta leis (tá nótaí infheicthe go poiblí)">
+<!ENTITY report.pageURL                                      "Cuir URL an leathanaigh san áireamh">
+
+<!ENTITY plugin.file                                         "Comhad">
+<!ENTITY plugin.mimeTypes                                    "Cineálacha MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Cumasaigh mód cosanta Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Cuir cosc ar ábhar Flash atá contúirteach nó treallúsach">

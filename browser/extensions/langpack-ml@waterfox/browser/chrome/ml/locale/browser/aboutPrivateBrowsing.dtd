@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "നിങ്ങള്‍ നിലവില്‍ ഒരു സ്വകാര്യ ജാലകത്തിലല്ല.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "ഒരു സ്വകാര്യ ജാലകം തുറക്കുക">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "ക">
+
+<!ENTITY privateBrowsing.title                           "സ്വകാര്യ ബ്രൗസിങ്">
+<!ENTITY privateBrowsing.title.tracking                  "നിരീക്ഷണ സംരക്ഷണത്തോടെ സ്വകാര്യ ബ്രൗസിങ്">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "നിങ്ങള്‍ സ്വകാര്യ ജാലകത്തില്‍ ബ്രൗസ് ചെയ്യുമ്പോള്‍, ഫയര്‍ഫോക്സ് ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "സൂക്ഷിക്കുന്നില്ല">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "സന്ദര്‍ശിച്ച താളുകള്‍">
+<!ENTITY aboutPrivateBrowsing.info.searches              "തെരയലുകള്‍">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "കുക്കികള്‍ ">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "താല്‍കാലിക ഫയലുകള്‍">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "ഫയര്‍ഫോക്സ് ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "സൂക്ഷിക്കും">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " നിങ്ങളുടെ:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ഡൗണ്‍ലോഡുകള്‍">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "അടയാളക്കുറിപ്പുകള്‍">
+<!ENTITY aboutPrivateBrowsing.note.before                "സ്വകാര്യ ബ്രൗസിങ് ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "നിങ്ങളെ അജ്ഞാതനാക്കുന്നില്ല">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ഇന്റര്‍നെറ്റില്‍. നിങ്ങളുടെ സ്ഥാപത്തിനോ അല്ലെങ്കില്‍ ഇന്റര്‍നെറ്റ് സേവന ദാതാവിനോ നിങ്ങള്‍ സന്ദര്‍ശിക്കുന്ന പേജുകള്‍ കാണാം എന്ന് ഓര്‍മ്മിക്കുക.">
+
+
+
+
+<!ENTITY trackingProtection.title                        "പിന്തുടരല്‍ സംരക്ഷണം">
+<!ENTITY trackingProtection.description2                 "ചില വെബ്സൈറ്റുകള്‍ നിങ്ങളുടെ ഇന്റര്‍നെറ്റ് പ്രവര്‍ത്തനങ്ങള്‍ നിരീക്ഷിക്കാനുതകുന്ന ട്രാക്കറുകള്‍ ഉപയോഗിക്കുന്നുണ്ട്. ഫയര്‍ഫോക്സിലെ നിരീക്ഷണ സംരക്ഷണം നിങ്ങളുടെ ബ്രൗസിങ്ങ് പെരുമാറ്റത്തെ കുറിച്ചുള്ള വിവരങ്ങള്‍ ശേഖരിക്കുന്ന ട്രാക്കറുകളെ തടയും.">
+<!ENTITY trackingProtection.startTour1                   "എങ്ങനെ ഇത് പ്രവര്‍ത്തിക്കുന്നു എന്ന് കാണുക">
+
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Learn more about ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Private Browsing">

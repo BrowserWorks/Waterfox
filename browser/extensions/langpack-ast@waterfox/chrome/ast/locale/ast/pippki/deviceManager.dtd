@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Xestor de preseos">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Módulos de seguridá y preseos">
+<!ENTITY devmgr.details.title                   "Detalles">
+<!ENTITY devmgr.details.title2                  "Valor">
+
+<!ENTITY devmgr.button.login.label              "Entamar sesión">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Finar sesión">
+<!ENTITY devmgr.button.logout.accesskey         "F">
+<!ENTITY devmgr.button.changepw.label           "Camudar contraseña">
+<!ENTITY devmgr.button.changepw.accesskey       "C">
+<!ENTITY devmgr.button.load.label               "Cargar">
+<!ENTITY devmgr.button.load.accesskey           "g">
+<!ENTITY devmgr.button.unload.label             "Descargar">
+<!ENTITY devmgr.button.unload.accesskey         "D">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Introduza la información pal módulo que quier amestar.">
+<!ENTITY loaddevice.modname                     "Nome del módulu:">
+<!ENTITY loaddevice.modname.accesskey           "m">
+<!ENTITY loaddevice.modname.default             "Nuevu módulu PKCS#11">
+<!ENTITY loaddevice.filename                    "Ficheru del módulu:">
+<!ENTITY loaddevice.filename.accesskey          "i">
+<!ENTITY loaddevice.browse                      "Agüeyar…">
+<!ENTITY loaddevice.browse.accesskey            "A">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

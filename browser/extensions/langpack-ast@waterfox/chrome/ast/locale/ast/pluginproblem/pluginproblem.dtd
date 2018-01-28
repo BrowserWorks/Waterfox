@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Calca equí p'activar la estensión.">
+<!ENTITY clickToActivatePlugin                               "Activar estensión.">
+<!ENTITY checkForUpdates                                     "Comprobar anovamientos…">
+<!ENTITY blockedPlugin.label                                 "Bloquióse esta estensicón pa la to proteición.">
+<!ENTITY hidePluginBtn.label                                 "Anubrir estensión">
+<!ENTITY managePlugins                                       "Xestionar estensiones…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Recargar páxina">
+<!ENTITY reloadPlugin.post                                   " pa tentalo de nueves.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Unviar informe de casque">
+<!ENTITY report.submitting                                   "Unviando informe…">
+<!ENTITY report.submitted                                    "Unvióse l'informe de casque.">
+<!ENTITY report.disabled                                     "Deshabilitóse l'informe de casques.">
+<!ENTITY report.failed                                       "Falló l'unviu.">
+<!ENTITY report.unavailable                                  "Nun hai informes disponibles.">
+<!ENTITY report.comment                                      "Amiesta un comentariu (los comentarios son públicos)">
+<!ENTITY report.pageURL                                      "Incluyir URL de páxina">
+
+<!ENTITY plugin.file                                         "Ficheru">
+<!ENTITY plugin.mimeTypes                                    "Tribes MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Habilitar mou protexíu d'Adobe Flash">
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

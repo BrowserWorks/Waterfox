@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "پراجیکٹ">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "نیا اپلی کیشن…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "پیکیجڈ اپلی کیشن کھولیں…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "مءیزبان ایپلیکیشن… کھولیں">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "ایپلیکیشن… کھولیں">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "تنصیب کریں اور چلائے">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "ایپلی کیشن رکیں">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "ایپلی کیشن ٹھیک کریں">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "پراجیکٹ ہٹائیں">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "ترجیحات">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "فالتوجزوبندوبست کریں">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "ٹیب تازہ کریں">
+
+<!ENTITY runtimeMenu_label "چلنے کی">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "منقطع کریں">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "سکرین شوٹ">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "چلنے کی معلومات">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "مانیٹر">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "آلہ ترجیحات">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "آلہ کی سیٹکگیں">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "نظارہ">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "اندر زوم کریں">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "باہر زوم کریں">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "زوم پھر سیٹ کریں">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "کھولیں ایپلی کیشن">
+<!ENTITY runtimeButton_label "منتخب کریں چلنے کی">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "میرے منصوبے">
+<!ENTITY projectPanel_runtimeApps "چلنے کی ایپلیکیشن">
+<!ENTITY projectPanel_tabs "ٹیبیں">
+<!ENTITY runtimePanel_usb "USB کے الات">
+<!ENTITY runtimePanel_wifi "وائی فائی آلات">
+<!ENTITY runtimePanel_simulator "سمیلیٹرز">
+<!ENTITY runtimePanel_other "دیگر">
+<!ENTITY runtimePanel_installsimulator "سمیولیٹر کو تنصیب کریں">
+<!ENTITY runtimePanel_noadbhelper "ADB مددگار تنصیب کریں">
+<!ENTITY runtimePanel_nousbdevice "آپ کے آلے کو نہیں دیکھ سکتے؟">
+<!ENTITY runtimePanel_refreshDevices_label " الات تازہ کریں">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "جائز">
+<!ENTITY details_warning_header "تنبیہات">
+<!ENTITY details_error_header "نقائص">
+<!ENTITY details_description "تصریح">
+<!ENTITY details_location "محل وقوع">
+<!ENTITY details_manifestURL "اپلی کیشن آئی ڈی">
+<!ENTITY details_removeProject_button "پراجیکٹ ہٹائیں">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "نیا اپلی کیشن">
+<!ENTITY newAppHeader "سانچا منتخب کریں">
+<!ENTITY newAppLoadingTemplate "سانچا لوڈ ہو رہا  ہے…">
+<!ENTITY newAppProjectName "پراجیکٹ کا نام">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "بند کریں">
+
+<!-- Addons -->
+<!ENTITY addons_title "فالتو اجزاء">
+<!ENTITY addons_aboutaddons "ایڈ اون مینیجر کھولیں">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "ترجیحات">
+<!ENTITY prefs_editor_title "تدوین کار">
+<!ENTITY prefs_general_title "عمومی">
+<!ENTITY prefs_restore "طےشدہ بحال کریں">
+<!ENTITY prefs_manage_components "فالتو جزو بندوبست کریں">
+<!ENTITY prefs_options_autoconnectruntime "پچھلے رن ٹائم سے دوبارہ مربوط">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "پچھلے چلنے کی سے پھر جڑیں جب ویبIDE  شروع  ہو">
+<!ENTITY prefs_options_rememberlastproject "آخری منصوبے یاد رکھیں">
+<!ENTITY prefs_options_rememberlastproject_tooltip "گزشتہ منصوبے کو بحال کریں جب ویب ائ ڈی ای شروع ہوتا ہے">
+<!ENTITY prefs_options_templatesurl "یو آر ال سانچے">
+<!ENTITY prefs_options_templatesurl_tooltip "دستیاب سانچوں کے اشارے">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "چلنے کے وقت معلومات">
+<!ENTITY runtimedetails_adbIsRoot "ADB کی جڑ ہے:">
+<!ENTITY runtimedetails_summonADBRoot "جڑ آلہ">
+<!ENTITY runtimedetails_ADBRootWarning "(کھلے بوٹلوڈر کی طلب ہے)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "غیر محدود DevTools استحقاق:">
+<!ENTITY runtimedetails_requestPrivileges "اعلی استحقاق کی درخواست کریں">
+<!ENTITY runtimedetails_privilegesWarning "(آلہ دوبارہ شروع کرے گا. جڑ تک رسائی کی طلب ہے.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "بولیائی">
+<!ENTITY device_typenumber "سالم عدد">
+<!ENTITY device_typestring "سٹرنگ">
+<!ENTITY device_typeobject "آبجیکٹ">
+<!ENTITY device_typenone "ایک قسم منتخب کریں">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "آلہ ترجیحات">
+<!ENTITY devicepreference_search "ترجیحات تلاش کریں">
+<!ENTITY devicepreference_newname "نیا ترجیح کا نام">
+<!ENTITY devicepreference_newtext "ترجیح کی قدر">
+<!ENTITY devicepreference_addnew "نئے ترجیح میں اضافہ کریں">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "آلہ سیٹکگیں">
+<!ENTITY devicesetting_search "تلاش کی سیٹکگیں">
+<!ENTITY devicesetting_newname "نیا سیٹگ کا نام">
+<!ENTITY devicesetting_newtext "سیٹنگ قدر">
+<!ENTITY devicesetting_addnew "نئی سیٹ کے لئے اضافہ کریں">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "مانیٹر">
+<!ENTITY monitor_help "مدد">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "کلائنٹ کی شناخت">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "نقطہ اختتام سے آپ کے لئے منسلک کر رہے ہیں اس سلسلے کی توثیق کرنے کو مزید معلومات درکار. آپ کی دوسری ڈیوائس پر فوری طور پر کے ذریعے ذیل میں QR کوڈ کو اسکین کریں.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "کوئی QR سکینر کی ترغیب نہیں؟">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "ایک QR سکینر کی ترغیب؟">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "اپنے دوسرے آلہ کے بجائے ایک QR کوڈ کو سکین کا ٹوکن مانگے تو دوسرے آلہ کے لئے ذیل میں قدر کو کاپی کریں براہ مہربانی:">
+<!ENTITY wifi_auth_qr_size_note "اگر کنکشن کی کامیابی کے لیئے QR کوڈ بہت چھوٹا نظر آئے تو زوم کرنے کی کوشش کریں تاکہ دریچہ بڑا ہو.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "پری پیکیجنگ حکم لاگز">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "سملیٹر اختیارات">
+<!ENTITY simulator_remove "سملیٹر حذف کریں">
+<!ENTITY simulator_reset "طےشدہ بحال کریں">
+<!ENTITY simulator_name "نام">
+<!ENTITY simulator_software "سافٹ ویئر">
+<!ENTITY simulator_version "ورژن">
+<!ENTITY simulator_profile "پروفائل">
+<!ENTITY simulator_hardware "ہاڑڈویئر">
+<!ENTITY simulator_device "آلہ">
+<!ENTITY simulator_screenSize "سکرین">
+<!ENTITY simulator_pixelRatio "دانہ کا تناسب">
+<!ENTITY simulator_tv_data "ٹی وی تخروپن">
+<!ENTITY simulator_tv_data_open "موافقت پذیری ڈیٹا">
+<!ENTITY simulator_tv_data_open_button "کھولیں تشکیل ڈائرکٹری ...">

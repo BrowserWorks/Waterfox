@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "翻新 &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "从头开始，以修复问题、恢复性能。">
+<!ENTITY refreshProfile.dialog.description2  "这将：">
+<!ENTITY refreshProfile.dialog.items.label1  "移除您的附加组件和个性化调整">
+<!ENTITY refreshProfile.dialog.items.label2  "恢复您的浏览器设置至初始状态">
+<!ENTITY refreshProfile.dialog.button.label  "翻新 &brandShortName;">
+
+<!ENTITY refreshProfile.title                "保养一下 &brandShortName;">
+<!ENTITY refreshProfile.button.label         "翻新 &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "即将完成…">

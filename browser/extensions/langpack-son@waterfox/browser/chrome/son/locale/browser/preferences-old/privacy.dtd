@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Goy nda ganayan jejebu">
+<!ENTITY  trackingProtectionAlways.label       "Waati kul">
+<!ENTITY  trackingProtectionAlways.accesskey   "i">
+<!ENTITY  trackingProtectionPrivate.label      "Sutura zanfuney hinne ra">
+<!ENTITY  trackingProtectionPrivate.accesskey  "i">
+<!ENTITY  trackingProtectionNever.label        "Abada">
+<!ENTITY  trackingProtectionNever.accesskey    "b">
+<!ENTITY  trackingProtectionLearnMore.label    "Bay ka tonton">
+<!ENTITY  trackingProtectionExceptions.label   "Hasarawey…">
+<!ENTITY  trackingProtectionExceptions.accesskey "H">
+
+<!ENTITY tracking.label                 "Kuryan">
+<!ENTITY trackingProtectionPBM5.label         "Goy nda ganayan jejebu sutura zanfuney ra">
+<!ENTITY trackingProtectionPBM5.accesskey     "s">
+<!ENTITY trackingProtectionPBMLearnMore.label "Bay ka tonton">
+<!ENTITY changeBlockList.label          "Gagayyan maašeede barmay">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "War ga hin ka da ">
+<!ENTITY  doNotTrack.settings.label     "war Ma ši ay gana kayandiyaney juwal">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Taariki">
+
+<!ENTITY  locationBar.label             "Gorodoo žeeri">
+
+<!ENTITY  locbar.suggest.label          "Nda war ga gorodoo zuwoo ka goy, honnandi:">
+<!ENTITY  locbar.history.label          "Taariki">
+<!ENTITY  locbar.history.accesskey      "T">
+<!ENTITY  locbar.bookmarks.label        "Doo-šilbay">
+<!ENTITY  locbar.bookmarks.accesskey    "i">
+<!ENTITY  locbar.openpage.label         "Nor lokey feeri">
+<!ENTITY  locbar.openpage.accesskey     "f">
+<!ENTITY  locbar.searches.label         "Ceeciyan kondantey ka hun tilasu ceecijinaa ga">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Ibaayey barmay ceecijinay honnandiyaney se…">
+<!ENTITY  suggestionSettings.accesskey  "y">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Doo-waaney aleewawey taa:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "Waati kul">
+<!ENTITY  acceptThirdParty.never.label    "Abada">
+<!ENTITY  acceptThirdParty.visited.label  "Kaŋ gunandi">
+
+<!ENTITY  keepUntil.label               "Gaabu hala:">
+<!ENTITY  keepUntil.accesskey           "h">
+
+<!ENTITY  expire.label                  "ngi waatoo ga ben">
+<!ENTITY  close.label                   "Ay ga &brandShortName; daabu">
+
+<!ENTITY  cookieExceptions.label        "Hasarawey…">
+<!ENTITY  cookieExceptions.accesskey    "H">
+
+<!ENTITY  showCookies.label             "Aleewawey cebe…">
+<!ENTITY  showCookies.accesskey         "c">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; ga:">
+<!ENTITY  historyHeader.pre.accesskey      "g">
+<!ENTITY  historyHeader.remember.label     "Hongu taarikoo">
+<!ENTITY  historyHeader.dontremember.label "Ma ši honga taarikoo abada">
+<!ENTITY  historyHeader.custom.label       "Hanse bonse taariku se goyandi">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ga honga war naaru, zumandi, takari nda ceeciyan taariki, nd'a ga aleewawey kaŋ hun war Interneti nungey ra gaabu.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Nda war ga baa ka ">
+<!ENTITY  rememberActions.clearHistory.label  "war taariki kokorantaa koonandi">
+<!ENTITY  rememberActions.middle.label        "wala ">
+<!ENTITY  rememberActions.removeCookies.label "aleewa fowey kaa">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ga goy nda kayandiyan follokey kaŋ goo nda sutura ceeciyan, amma a ši taariku gaabu war tataaru ceeciroo waate.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Nda war ga baa da ka ">
+<!ENTITY  dontrememberActions.clearHistory.label "taariki taagante kul koonandi">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Wa goy sutura naarumi alhaali ra waati kul">
+<!ENTITY  privateBrowsingPermanent2.accesskey "s">
+
+<!ENTITY  rememberHistory2.label      "Ay naaruyan nda zumandiyan taarikoo gaabu">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Honga ceeci nda takari taariku">
+<!ENTITY  rememberSearchForm.accesskey   "t">
+
+<!ENTITY  clearOnClose.label             "Taariku koonandi waati kaŋ &brandShortName; ga daaba">
+<!ENTITY  clearOnClose.accesskey         "k">
+
+<!ENTITY  clearOnCloseSettings.label     "Kayandiyaney…">
+<!ENTITY  clearOnCloseSettings.accesskey "n">
+
+<!ENTITY  browserContainersHeader.label         "Diikey kanjey">
+<!ENTITY  browserContainersLearnMore.label      "Bay ka tonton">
+<!ENTITY  browserContainersEnabled.label        "Diikey kanjey tunandi">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Kayandiyaney…">
+<!ENTITY  browserContainersSettings.accesskey    "n">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

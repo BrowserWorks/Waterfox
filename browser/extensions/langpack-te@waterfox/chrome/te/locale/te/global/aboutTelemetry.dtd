@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "టెలీమెట్రీ సమాచారం">
+
+<!ENTITY aboutTelemetry.pingDataSource "పింగ్ డేటా మూలం :">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "ప్రస్తుత పింగ్ డేటా">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "బధ్రపరిచారు పింగ్ డేటా">
+
+<!ENTITY aboutTelemetry.raw "ముడి JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "ఉప సెషన్ డేటా చూపించు">
+
+<!ENTITY aboutTelemetry.choosePing "పింగ్ ఎంచుకోండి:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; క్రొత్త పింగ్">
+
+<!ENTITY aboutTelemetry.showOlderPing "పాత పింగ్ &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "వారం">
+
+<!ENTITY aboutTelemetry.archivePingType "పింగ్ రకం">
+
+<!ENTITY aboutTelemetry.archivePingHeader "పింగ్">
+
+<!ENTITY aboutTelemetry.optionGroupToday "నేడు">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "నిన్న">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "పాతవి">
+
+<!ENTITY aboutTelemetry.generalDataSection "సాధారణ దత్తాంశం">
+
+<!ENTITY aboutTelemetry.environmentDataSection "పర్యావరణ దత్తాంశం">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "టెలీమెట్రీ చిట్టా">
+
+<!ENTITY aboutTelemetry.slowSqlSection "నిదానమైన SQL వాక్యాలు">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "బ్రౌజర్ స్థంబనలు">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "థ్రెడ్ హ్యాంగులు">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  పట్టుబడిన స్టాక్స్">
+
+<!ENTITY aboutTelemetry.scalarsSection "స్కేలార్ లు">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "హిస్టోగ్రామ్స్">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "కీ ఇవ్వబడిన హిస్టోగ్రాములు">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  చర్యలు">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "మాదిరి కొలతలు">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "పొడిగింత వివరాలు">
+
+<!ENTITY aboutTelemetry.lateWritesSection "లేట్ వ్రైట్స్">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "సెషేన్ యొక్క సమాచారం">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "గమనిక: నిదానమైన SQL డీబగ్గింగ్ చేతనమైంది. పూర్తి SQL స్ట్రింగ్స్ కిందన ప్రదర్శించవచ్చు అయితే అవి టెలీమెట్రీకు సమర్పించబడవు.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "స్టాక్స్ కొరకు ఫంక్షన్ పేర్లను వెతికితెమ్ము">
+
+
+<!ENTITY aboutTelemetry.filterText "వడపోత (పదబంధం లేక /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "పేలోడ్">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+

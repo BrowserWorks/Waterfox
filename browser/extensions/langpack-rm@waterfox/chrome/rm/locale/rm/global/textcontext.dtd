@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Tagliar ora">
+<!ENTITY cutCmd.accesskey "a">
+<!ENTITY copyCmd.label "Copiar">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "Encollar">
+<!ENTITY pasteCmd.accesskey "E">
+<!ENTITY undoCmd.label "Revocar">
+<!ENTITY undoCmd.accesskey "R">
+<!ENTITY selectAllCmd.label "Selecziunar tut">
+<!ENTITY selectAllCmd.accesskey "t">
+<!ENTITY deleteCmd.label "Stizzar">
+<!ENTITY deleteCmd.accesskey "S">
+
+<!ENTITY spellAddToDictionary.label "Agiuntar al dicziunari da l'utilisader">
+<!ENTITY spellAddToDictionary.accesskey "z">
+<!ENTITY spellUndoAddToDictionary.label "Puspè allontanar il pled agiuntà al dicziunari">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Controllar l'ortografia">
+<!ENTITY spellCheckToggle.accesskey "r">
+<!ENTITY spellNoSuggestions.label "(Naginas propostas per correcturas)">
+<!ENTITY spellDictionaries.label "Linguas">
+<!ENTITY spellDictionaries.accesskey "s">
+
+<!ENTITY searchTextBox.clear.label "Svidar">
+
+<!ENTITY fillLoginMenu.label          "Emplenir las datas d'annunzia">
+<!ENTITY fillLoginMenu.accesskey      "E">
+<!ENTITY fillPasswordMenu.label       "Emplenir il pled-clav">
+<!ENTITY fillPasswordMenu.accesskey   "E">
+<!ENTITY fillUsernameMenu.label       "Emplenir il num d'utilisader">
+<!ENTITY fillUsernameMenu.accesskey   "E">
+<!ENTITY noLoginSuggestions.label     "(Naginas propostas per datas d'annunzia)">
+<!ENTITY viewSavedLogins.label        "Mussar las datas d'annunzia memorisadas">

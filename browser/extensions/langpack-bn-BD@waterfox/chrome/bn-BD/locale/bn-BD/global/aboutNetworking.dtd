@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "নেটওয়ার্কিং সম্পর্কিত">
+<!ENTITY aboutNetworking.warning               "এটি সম্পূর্ন পরীক্ষাধীন। প্রাপ্ত বয়স্কের সহায়তা ব্যতিত এটি ব্যবহার করবেন না।">
+<!ENTITY aboutNetworking.showNextTime          "পরবর্তী সময়ে এই সতর্কীকরণ প্রদর্শন করা হবে">
+<!ENTITY aboutNetworking.ok                    "ঠিক আছে">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "সকেট">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "রিফ্রেশ">
+<!ENTITY aboutNetworking.autoRefresh           "প্রতি ৩ সেকেন্ড এ স্বয়ংক্রিয়ভাবে রিফ্রেশ করুন">
+<!ENTITY aboutNetworking.hostname              "হোস্টনেম">
+<!ENTITY aboutNetworking.port                  "পোর্ট">
+
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "সক্রিয়">
+<!ENTITY aboutNetworking.idle                  "নিষ্ক্রিয়">
+<!ENTITY aboutNetworking.host                  "হোস্ট">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "প্রেরিত">
+<!ENTITY aboutNetworking.received              "গৃহীত">
+<!ENTITY aboutNetworking.family                "সংকলন">
+<!ENTITY aboutNetworking.addresses             "ঠিকানাগুলি">
+<!ENTITY aboutNetworking.expires               "মেয়াদপূর্তী (সেকেন্ড)">
+<!ENTITY aboutNetworking.messagesSent          "বার্তা প্রেরিত হয়েছে">
+<!ENTITY aboutNetworking.messagesReceived      "বার্তা গৃহীত হয়েছে">
+<!ENTITY aboutNetworking.bytesSent             "প্রেরিত বাইট">
+<!ENTITY aboutNetworking.bytesReceived         "প্রাপ্ত বাইট">
+<!ENTITY aboutNetworking.logging               "লগিং">
+<!ENTITY aboutNetworking.logTutorial           "টুলটি ব্যবহারের নিয়ম জানতে <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> দেখুন।">
+<!ENTITY aboutNetworking.currentLogFile        "বর্তমান লগ ফাইল:">
+<!ENTITY aboutNetworking.currentLogModules     "বর্তমান লগ মডিউল:">
+<!ENTITY aboutNetworking.setLogFile            "লগ ফাইল সেট করুন">
+<!ENTITY aboutNetworking.setLogModules         "লগ মডিউল সেট করুন">
+<!ENTITY aboutNetworking.startLogging          "লগিং শুরু করুন">
+<!ENTITY aboutNetworking.stopLogging           "লগিং থামাও">
+<!ENTITY aboutNetworking.dnsLookup             "ডিএনএস লুকআপ">
+<!ENTITY aboutNetworking.dnsLookupButton       "রিজলভ">
+<!ENTITY aboutNetworking.dnsDomain             "ডোমেইন">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "আইপি সমূহ">
+<!ENTITY aboutNetworking.rcwn                  "RCWN পরিসংখ্যান">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN অবস্থা">
+
+
+
+
+<!ENTITY aboutNetworking.rcwnPerfOpen          "খুলুন">
+<!ENTITY aboutNetworking.rcwnPerfRead          "পড়ুন">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "লিখুন">
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

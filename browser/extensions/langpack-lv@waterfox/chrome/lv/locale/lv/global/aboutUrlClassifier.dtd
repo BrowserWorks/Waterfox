@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informāciju par url klasifikatoru">
+<!ENTITY aboutUrlClassifier.providerTitle               "Piegādātājs">
+<!ENTITY aboutUrlClassifier.provider                    "Piegādātājs">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Pēdējās atjaunināšanas laiks">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Pēdējās atjaunināšanas laiks">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Pēdējās atjaunināšanas statuss">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Atjauninājums">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Kešatmiņa">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Atjaunināt">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Notīrīt">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabulas nosaukums">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Negatīvu kešatmiņas ierakstu skaits">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Pozitīvu kešatmiņas ierakstu skaits">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Rādīt ierakstus">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Kešatmiņas ieraksti">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefikss">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negatīvs kešatmiņas derīguma termiņš">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Pilna hešatslēga">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Pozitīvs kešatmiņas derīguma termiņš">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Atkļūdošana">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Iestatīt reģistrēšanas moduli">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Iestatīt reģistrēšanas failu">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Iestatīt JS reģistrēšanu">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Drošās pārlūkošanas reģistrēšanas moduļi">
+<!ENTITY aboutUrlClassifier.debugModules                "Pašreizējais reģistrācijas modulis">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Drošās pārlūkošanas JS ieraksti">
+<!ENTITY aboutUrlClassifier.debugFile                   "Pašreizējais reģistrācijas fails">
+
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">

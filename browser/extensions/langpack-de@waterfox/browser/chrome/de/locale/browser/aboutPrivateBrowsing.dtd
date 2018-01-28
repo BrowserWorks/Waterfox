@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate       "Sie befinden sich derzeit nicht in einem privaten Fenster.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label "Neues privates Fenster öffnen">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "F">
+
+<!ENTITY privateBrowsing.title                 "Privates Surfen">
+<!ENTITY privateBrowsing.title.tracking                  "Privates Surfen mit Schutz vor Aktivitätenverfolgung">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Wenn Sie in einem privaten Fenster surfen, so wird Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "Folgendes nicht speichern">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "Besuchte Seiten">
+<!ENTITY aboutPrivateBrowsing.info.searches    "Suchanfragen">
+<!ENTITY aboutPrivateBrowsing.info.cookies     "Cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles "Temporäre Dateien">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox wird ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "Folgendes speichern">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads   "Downloads">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks   "Lesezeichen">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privates Surfen ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "anonymisiert Sie nicht">
+<!ENTITY aboutPrivateBrowsing.note.after                 " im Internet. Ihr Arbeitgeber oder Ihr Internetanbieter können weiterhin verfolgen, welche Seiten Sie besuchen.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Weitere Informationen zu ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "privatem Surfen">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title              "Schutz vor Aktivitätenverfolgung">
+<!ENTITY trackingProtection.description2                 "Einige Websites verwenden Seiteninhalte, um Ihre Aktivitäten durch das ganze Internet zu verfolgen. Beim Schutz vor Aktivitätenverfolgung blockiert Waterfox viele dieser verfolgenden Seiteninhalte, welche Informationen über Ihre Internetaktivitäten aufzeichnen könnten.">
+<!ENTITY trackingProtection.startTour1         "Wie es funktioniert">

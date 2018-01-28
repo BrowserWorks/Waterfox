@@ -1,0 +1,194 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemeetriaandmed">
+
+<!ENTITY aboutTelemetry.changeDataChoices "
+  Muuda
+">
+
+<!ENTITY aboutTelemetry.uploadEnabled "
+  Terviseraporti andmete saatmine on <span>lubatud</span>.
+">
+
+<!ENTITY aboutTelemetry.uploadDisabled "
+  Terviseraporti andmete saatmine on <span>keelatud</span>.
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "
+  Põhjalikuma telemeetria kogumine on <span>lubatud</span>.
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "
+  Põhjalikuma telemeetria kogumine on <span>keelatud</span>.
+">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Andmete allikas:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Praegused andmed
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Arhiveeritud andmed
+">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "
+Pingi andmed kuvatakse:
+">
+
+<!ENTITY aboutTelemetry.structured "
+struktureeritult
+">
+
+<!ENTITY aboutTelemetry.raw "
+algse JSONina
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Kuvatakse alamseansside andmeid
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Vali ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Uuem ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Vanem ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.rawPingData "
+Pingi algandmed…
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Nädal
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Üldandmed
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Keskkonna andmed
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemeetria logi
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Aeglased SQL-päringud
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Brauseri hangumised
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Lõimede hangumised
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalaarid
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Võtmepõhised skalaarid
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrammid
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Võtmepõhised histogrammid
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Sündmused
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Lihtsad mõõdistused
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Lisade üksikasjad
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Hilised kirjutamised
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Seansi teave
+">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "
+  Lisade poolt kogutud histogrammid
+">
+
+<!ENTITY aboutTelemetry.toggle "
+  Sektsiooni laiendamiseks/ahendamiseks klõpsa
+">
+
+<!ENTITY aboutTelemetry.emptySection "
+  (andmeid pole kogutud)
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  MÄRKUS: Aeglase SQLi debugimine on lubatud. Allpool võidakse kuvada täielikke SQL-päringuid, aga neid ei saadeta telemeetria kaudu edasi.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtreeri (stringide või /regulaaravaldistega/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Last
+">
+
+<!ENTITY aboutTelemetry.rawPayload "
+  Eeltöötlemata last
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Обновяване на &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; работи извън мрежата">
+<!ENTITY  offline.description             "&brandShortName; се нуждае от достъп до интернет, за да направи проверка за обновявания за съвместимост на добавките с тази версия.">
+<!ENTITY  offline.toggleOffline.label     "Работа в мрежа.">
+<!ENTITY  offline.toggleOffline.accesskey "м">
+
+<!ENTITY  mismatch.win.title              "Несъвместими добавки">
+<!ENTITY  mismatch.top.label              "Следните добавки не са съвместими с тази версия на &brandShortName; и бяха изключени:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; може да провери дали има съвместими версии на тези добавки.">
+
+<!ENTITY  checking.wizard.title           "Проверка за съвместими добавки">
+<!ENTITY  checking.top.label              "Проверка за обновявания на несъвместимите добавки…">
+<!ENTITY  checking.status                 "Това може да отнеме няколко минути…">
+
+<!ENTITY  found.wizard.title               "Намерени съвместими добавки">
+<!ENTITY  found.top.label                 "Изберете добавките, които искате да инсталирате:">
+<!ENTITY  found.disabledXPinstall.label   "Тези обновявания не могат да бъдат инсталирани, защото в момента инсталирането на софтуер е изключено. По-долу може да промените това.">
+<!ENTITY  found.enableXPInstall.label     "Разрешаване на сайтове да инсталират софтуер">
+<!ENTITY  found.enableXPInstall.accesskey "Р">
+
+<!ENTITY  installing.wizard.title         "Инсталиране на съвместими добавки">
+<!ENTITY  installing.top.label            "Изтегляне и инсталиране обновяванията на добавките…">
+
+<!ENTITY  noupdates.wizard.title          "Няма съвместими добавки">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; не намери обновявания на несъвместимите добавки.">
+<!ENTITY  noupdates.error.desc            "Възникнаха се проблеми при опит за намиране на обновявания.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; периодично ще проверява за обновявания и ще ви информира, когато се появят съвместими версии.">
+
+<!ENTITY  finished.wizard.title           "Инсталирани съвместими добавки">
+<!ENTITY  finished.top.label              "Добавките на &brandShortName; са обновени.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; може да проверява за обновявания на добавките и да ви информира за това.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ще проверява за обновявания на добавките и да ви информира за това.">
+
+<!ENTITY  adminDisabled.wizard.title      "Невъзможна проверка за обновявания">
+<!ENTITY  adminDisabled.warning.label     "Невъзможно е да бъде направена проверка за обновявания нанесъвместимите добавки, защото инсталирането на софтуер за&brandShortName; е изключено. За помощ се свържете със системния администратор.">
+
+<!ENTITY  versioninfo.wizard.title        "Проверяване съвместимостта на добавките">
+<!ENTITY  versioninfo.top.label           "Проверка съвместимостта на добавките с тази версия на &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Това може да отнеме няколко минути…">
+
+<!ENTITY  installerrors.wizard.title      "Проблеми при инсталиране на обновявания">
+<!ENTITY  installerrors.intro.label       "&brandShortName; срещна проблеми при обновяване на някоя от добавките.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Натиснете „Завършване“, за да стартирате &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Натиснете „Готово“, за да стартирате &brandShortName;.">
+<!ENTITY  enableChecking.label            "Разрешаване на &brandShortName; да проверява за обновявания.">

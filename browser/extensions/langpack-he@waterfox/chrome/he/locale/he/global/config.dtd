@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "פעולה זו עשויה לבטל את האחריות!">
+<!ENTITY aboutWarningText.label "שינוי ערכי בררת המחדל של הגדרות מתקדמות אלו יכול להזיק ליציבות, אבטחה, והביצועים של ישום זה. מוטב להמשיך רק אם השלכות מעשיך ברורות לך לחלוטין.">
+<!ENTITY aboutWarningButton2.label "הסיכון מקובל עלי!">
+<!ENTITY aboutWarningCheckbox.label "הצגת אזהרה זו בפעם הבאה">
+
+<!ENTITY searchPrefs.label "חיפוש:">
+<!ENTITY searchPrefs.accesskey "ח">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "שם העדפה">
+<!ENTITY lockColumn.label "מצב">
+<!ENTITY typeColumn.label "סוג">
+<!ENTITY valueColumn.label "ערך">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "לחץ לסידור"> 
+<!ENTITY columnChooser.tooltip "לחץ לבחירת עמודות לתצוגה"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "העתקה">
+<!ENTITY copyPref.accesskey "ה">
+<!ENTITY copyName.label "העתקת שם">
+<!ENTITY copyName.accesskey "ע">
+<!ENTITY copyValue.label "העתקת ערך">
+<!ENTITY copyValue.accesskey "ר">
+<!ENTITY modify.label "שינוי">
+<!ENTITY modify.accesskey "ש">
+<!ENTITY toggle.label "החלף">
+<!ENTITY toggle.accesskey "ה">
+<!ENTITY reset.label "אתחול">
+<!ENTITY reset.accesskey "א">
+<!ENTITY new.label "חדש">
+<!ENTITY new.accesskey "ח">
+<!ENTITY string.label "מחרוזת">
+<!ENTITY string.accesskey "ח">
+<!ENTITY integer.label "מספר שלם">
+<!ENTITY integer.accesskey "ס">
+<!ENTITY boolean.label "בוליאני">
+<!ENTITY boolean.accesskey "ב">

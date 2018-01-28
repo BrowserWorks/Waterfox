@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Momichĩ">
+<!ENTITY bringAllToFront.label    "Jeguerupa tenonde gotyo">
+<!ENTITY zoomWindow.label         "Tuichakue">
+<!ENTITY windowMenu.label         "Ovetã">
+
+<!ENTITY helpMenu.label           "Pytyvõ"> 
+<!ENTITY helpMenu.accesskey       "P"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Pytyvõ"> 
+<!ENTITY helpMenuWin.accesskey    "P">
+<!ENTITY aboutProduct2.label      "&brandShorterName; rehegua">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; Oipytyvõ">
+<!ENTITY productHelp2.accesskey   "O">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Tairenda mbopya'eha">
+<!ENTITY helpKeyboardShortcuts.accesskey "T">
+
+<!ENTITY helpSafeMode.label       "Moĩmbaha oguepyréva moñepyrũjey…">
+<!ENTITY helpSafeMode.accesskey   "M">
+<!ENTITY helpSafeMode.stop.label       "Moĩmbaha oguepyréva moñepyrũjey">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "Mba'éichapa oĩhína &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Marandu apañuãi myatyrõrã">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "Temiandu mondo…">
+<!ENTITY helpFeedbackPage.accesskey  "T">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; rehe jeguata">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Jerohoryvéva…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Mba'epytyvõrã">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; moñemi">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ambuéva moñemi">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Techaukapaite">

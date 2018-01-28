@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "ઘટાડવા">
+<!ENTITY bringAllToFront.label    "બધાને આગળ લાવો">
+<!ENTITY zoomWindow.label         "મોટું">
+<!ENTITY windowMenu.label         "વિન્ડો">
+
+<!ENTITY helpMenu.label           "મદદ"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "મદદ"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "&brandShorterName; વિશે">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; મદત">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "કીબોર્ડ શૉર્ટકટ્સ">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "નિષ્ક્રિય થયેલ ઍડ-ઑન સાથે પુન:શરૂ કરો…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "અડ-ઓન્સ સક્ષમ કારી અને પુનઃ પ્રારંભ કરો">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "&brandShorterName; આરોગ્ય અહેવાલ">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "મુશ્કેલીનિવારણ જાણકારી">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "પ્રતિસાદને ઉમેરો…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; શોધ">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "પસંદગીઓ...">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "સેવાઓ">
+
+<!ENTITY hideThisAppCmdMac2.label       "છુપાવો &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "અન્યને છુપાવો">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "બધું બતાવો">

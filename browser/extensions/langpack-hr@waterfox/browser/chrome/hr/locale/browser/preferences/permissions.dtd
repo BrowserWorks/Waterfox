@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Iznimke">
+<!ENTITY window.width                 "41em">
+
+<!ENTITY treehead.status.label        "Stanje">
+
+
+
+
+<!ENTITY address.label                "Adresa web stranice:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Blokiraj">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Dopusti za sesiju">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Dopusti">
+<!ENTITY allow.accesskey              "D">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Odustani">
+<!ENTITY button.cancel.accesskey      "O">
+<!ENTITY button.ok.label              "Spremi promjene">
+<!ENTITY button.ok.accesskey          "S">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

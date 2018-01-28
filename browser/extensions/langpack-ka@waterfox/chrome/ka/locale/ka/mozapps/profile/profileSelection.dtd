@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - პროფილის არჩევა">
+
+<!ENTITY            profilename.label      "პროფილის სახელი:">
+
+<!ENTITY            start.label            "&brandShortName;-ის გაშვება">
+<!ENTITY            exit.label             "გასვლა">
+
+<!ENTITY            availprofiles.label    "არსებული პროფილები">
+
+<!ENTITY            newButton.label        "პროფილის შექმნა…">
+<!ENTITY            newButton.accesskey    "შ">
+<!ENTITY            renameButton.label     "პროფილის გადარქმევა…">
+<!ENTITY            renameButton.accesskey "გ">
+<!ENTITY            deleteButton.label     "პროფილის წაშლა…">
+<!ENTITY            deleteButton.accesskey "წ">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; მონაცემებს თქვენი პარამეტრების, მახასიათებლებისა და სხვა ელემენტების შესახებ თქვენს პროფილში ინახავს.">
+
+<!ENTITY            offlineState.label    "კავშირგარეშე რეჟიმი">
+<!ENTITY            offlineState.accesskey "კ">
+
+<!ENTITY            useSelected.label       "მონიშნული პროფილის გამოყენება ყოველი ჩართვისას">
+<!ENTITY            useSelected.accesskey   "მ">

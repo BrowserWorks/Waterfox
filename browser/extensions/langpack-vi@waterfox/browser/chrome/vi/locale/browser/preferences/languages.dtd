@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Ngôn ngữ">
+<!ENTITY languages.customize.description                "Thỉnh thoảng các trang web cung cấp nhiều hơn một ngôn ngữ. Chọn ngôn ngữ để hiển thị các trang web này, theo thứ tự ưu tiên:">
+<!ENTITY languages.customize.moveUp.label               "Chuyển Lên">
+<!ENTITY languages.customize.moveUp.accesskey           "L">
+<!ENTITY languages.customize.moveDown.label             "Chuyển Xuống">
+<!ENTITY languages.customize.moveDown.accesskey         "g">
+<!ENTITY languages.customize.deleteButton.label         "Xóa">
+<!ENTITY languages.customize.deleteButton.accesskey     "X">
+<!ENTITY languages.customize.selectLanguage.label       "Chọn một ngôn ngữ để thêm…">
+<!ENTITY languages.customize.addButton.label            "Thêm">
+<!ENTITY languages.customize.addButton.accesskey        "T">
+

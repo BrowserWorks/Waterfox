@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "欢迎使用&syncBrand.shortName.label;服务">
+
+<!ENTITY aboutAccountsConfig.description "登录即可同步您的标签页、书签等信息。">
+<!ENTITY aboutAccountsConfig.startButton.label "新手上路">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "同步服务首选项">
+<!ENTITY aboutAccounts.noConnection.title "无连接">
+<!ENTITY aboutAccounts.noConnection.description "您必须联网才能登录。">
+<!ENTITY aboutAccounts.noConnection.retry "重试">
+<!ENTITY aboutAccounts.badConfig.title "配置有误">
+<!ENTITY aboutAccounts.badConfig.description "无法确定您的 Waterfox 账户服务器配置。请稍后重试。">

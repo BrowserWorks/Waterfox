@@ -1,0 +1,14 @@
+locale alerts ach ach/locale/ach/alerts/
+locale autoconfig ach ach/locale/ach/autoconfig/
+locale global ach ach/locale/ach/global/
+locale global-platform ach ach/locale/ach/global-platform/mac/ os=Darwin
+locale global-platform ach ach/locale/ach/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform ach ach/locale/ach/global-platform/win/ os=WINNT
+locale mozapps ach ach/locale/ach/mozapps/
+locale necko ach ach/locale/ach/necko/
+locale passwordmgr ach ach/locale/ach/passwordmgr/
+locale pipnss ach ach/locale/ach/pipnss/
+locale pippki ach ach/locale/ach/pippki/
+locale places ach ach/locale/ach/places/
+locale pluginproblem ach ach/locale/ach/pluginproblem/
+locale weave ach ach/locale/ach/services/

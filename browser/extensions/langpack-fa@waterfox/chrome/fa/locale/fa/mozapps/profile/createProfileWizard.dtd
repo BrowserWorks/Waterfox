@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "راهنمای گام‌به‌گام ایجاد مجموعه تنظیمات">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; اطلاعات مربوط به تنظبمات و ترجیحات شما را در یک مجوعه تنظیمات نگه‌داری می‌کند.">
+<!ENTITY profileCreationExplanation_2.text  "اگر شما از این نسخه از &brandShortName; با کاربران دیگر به صورت اشتراکی استفاده می‌کنید، می‌توانید برای نگه‌داری تنظیمات هر کاربر به صورت جداگانه از مجموعه تنظیمات استفاده کنید. برای این کار، هر کاربری باید مجموعه تنظیمات خود را ایجاد کند.">
+<!ENTITY profileCreationExplanation_3.text  "اگر شما تنها کسی هستید که از این نسخه از &brandShortName; استفاده می‌کنید، باید حداقل یک مجموعه تنظیمات داشته باشید. اگر مایل باشید، می‌توانید به تنهایی چندین مجموعه تنظیمات داشته باشید و از هر کدام برای نگهداری تنظیمات خاصی استفاده کنید. مثلاً ممکن است بخواهید مجموعه تنظیمات مجزایی برای استفادهٔ شخصی و کاری داشته باشید.">
+<!ENTITY profileCreationExplanation_4.text  "برای آغاز ایجاد مجموعه تنظیمات خود، بعدی را کلیک کنید.">
+<!ENTITY profileCreationExplanation_4Mac.text  "برای آغاز ایجاد مجموعه تنظیمات خود، ادامه را کلیک کنید.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "برای آغاز ایجاد مجموعه تنظیمات خود، بعدی را کلیک کنید.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "اگر چندین مجموعه تنظیمات ایجاد کنید، می‌توانید آن‌ها را توسط نام از یکدیگر تشخیص دهید. می‌توانید از اسم موجود در اینجا و یا اسم دلخواه خود استفاده کنید.">
+<!ENTITY profilePrompt.label            "نام مجموعه تنظیمات جدید را وارد کنید:">
+<!ENTITY profilePrompt.accesskey        "ن">
+<!ENTITY profileDirectoryExplanation.text   "تنظیمات، ترجیحات و دیگر اطلاعات مربوط به کاربرتان در این مکان ذخیره خواهد شد:">
+<!ENTITY profileDefaultName             "کاربر پیش‌فرض">
+<!ENTITY button.choosefolder.label      "انتخاب پوشه…">
+<!ENTITY button.choosefolder.accesskey  "خ">
+<!ENTITY button.usedefault.label        "استفاده از پوشهٔ پیش‌فرض">
+<!ENTITY button.usedefault.accesskey    "پ">

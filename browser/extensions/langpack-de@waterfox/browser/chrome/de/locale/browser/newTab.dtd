@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Neuer Tab">
+<!ENTITY newtab.customize.classic "Meistbesuchte Seiten anzeigen">
+<!ENTITY newtab.customize.cog.enhanced "Vorschläge einbeziehen">
+<!ENTITY newtab.customize.cog.title2 "Neuer Tab - Einstellungen">
+<!ENTITY newtab.customize.cog.learn "Über Neuer Tab">
+<!ENTITY newtab.customize.title "Neuer-Tab-Seite anpassen">
+<!ENTITY newtab.customize.blank2 "Leere Seite anzeigen">
+<!ENTITY newtab.undo.removedLabel "Miniaturansicht entfernt">
+<!ENTITY newtab.undo.undoButton "Rückgängig">
+<!ENTITY newtab.undo.restoreButton "Alle wiederherstellen">
+<!ENTITY newtab.undo.closeTooltip "Ausblenden">

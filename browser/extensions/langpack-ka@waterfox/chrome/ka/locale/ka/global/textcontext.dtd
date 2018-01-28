@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "ამოჭრა">
+<!ENTITY cutCmd.accesskey "ა">
+<!ENTITY copyCmd.label "დაკოპირება">
+<!ENTITY copyCmd.accesskey "კ">
+<!ENTITY pasteCmd.label "ჩასმა">
+<!ENTITY pasteCmd.accesskey "ჩ">
+<!ENTITY undoCmd.label "დაბრუნება">
+<!ENTITY undoCmd.accesskey "დ">
+<!ENTITY selectAllCmd.label "ყველაფრის მონიშვნა">
+<!ENTITY selectAllCmd.accesskey "ყ">
+<!ENTITY deleteCmd.label "წაშლა">
+<!ENTITY deleteCmd.accesskey "წ">
+
+<!ENTITY spellAddToDictionary.label "ლექსიკონში დამატება">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "ლექსიკონში დამატების გაუქმება">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "მართლწერის შემოწმება">
+<!ENTITY spellCheckToggle.accesskey "თ">
+<!ENTITY spellNoSuggestions.label "(მართლწერის შემოთავაზებები არაა)">
+<!ENTITY spellDictionaries.label "ენები">
+<!ENTITY spellDictionaries.accesskey "ე">
+
+<!ENTITY searchTextBox.clear.label "გასუფთავება">
+
+<!ENTITY fillLoginMenu.label          "შესვლის მონაცემების შევსება">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "პაროლის შევსება">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "მომხმარებლის სახელის შევსება">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(შესვლის შემოთავაზებები არაა)">
+<!ENTITY viewSavedLogins.label        "შენახული შესვლების ნახვა">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label "Dodaj kontekst">
+<!ENTITY addButton.accesskey "">
+<!ENTITY preferencesButton.label "Preferencje">
+<!ENTITY removeButton.label "Usuń">
+<!ENTITY backLink2.label "« Powrót">
+
+<!ENTITY window.title "Dodawanie kontekstu">
+<!ENTITY window.width "45em">
+
+<!ENTITY name.label "Nazwa:">
+<!ENTITY name.accesskey "">
+<!ENTITY name.placeholder "Nazwa kontekstu">
+<!ENTITY icon.label "Ikona:">
+<!ENTITY icon.accesskey "">
+<!ENTITY color.label "Kolor:">
+<!ENTITY color.accesskey "">
+<!ENTITY windowClose.key "w">
+
+<!ENTITY button.ok.label "Gotowe">
+<!ENTITY button.ok.accesskey "">

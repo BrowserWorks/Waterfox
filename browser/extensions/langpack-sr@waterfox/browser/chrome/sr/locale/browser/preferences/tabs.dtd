@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab се креће кроз недавно коришћене језичке">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "ч">
+
+<!ENTITY newWindowsAsTabs.label       "Нове прозоре отвори у новом језичку">
+<!ENTITY newWindowsAsTabs.accesskey   "ј">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Упозори ме при затварању више језичака">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "у">
+
+<!ENTITY warnOnOpenManyTabs.label       "Упозори ме када отварање више језичака може да успори &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "в">
+
+<!ENTITY switchLinksToNewTabs.label        "Када отворим везу у новом језичку, одмах се пребаци на њега">
+<!ENTITY switchLinksToNewTabs.accesskey    "њ">
+
+<!ENTITY showTabsInTaskbar.label          "Прикажи преглед језичка у Windows траци задатака">
+<!ENTITY showTabsInTaskbar.accesskey      "р">
+<!ENTITY tabsGroup.label          "Језичци">

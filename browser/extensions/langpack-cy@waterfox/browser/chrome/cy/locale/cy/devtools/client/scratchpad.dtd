@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "Scratchpad">
+
+<!ENTITY fileMenu.label               "Ffeil">
+<!ENTITY fileMenu.accesskey           "F">
+
+<!ENTITY newWindowCmd.label           "Ffenestr Newydd">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Agor Ffeil…">
+<!ENTITY openFileCmd.accesskey        "o">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Agor y Diweddar">
+<!ENTITY openRecentMenu.accesskey     "D">
+
+<!ENTITY revertCmd.label              "Dychwelyd…">
+<!ENTITY revertCmd.accesskey          "D">
+
+<!ENTITY saveFileCmd.label            "Cadw">
+<!ENTITY saveFileCmd.accesskey        "C">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Cadw Fel…">
+<!ENTITY saveFileAsCmd.accesskey      "a">
+
+<!ENTITY closeCmd.label               "Cau">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "u">
+
+<!ENTITY viewMenu.label               "Golwg">
+<!ENTITY viewMenu.accesskey           "G">
+
+<!ENTITY lineNumbers.label             "Dangos Rhifau Llinell">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY wordWrap.label                "Amlapio testun">
+<!ENTITY wordWrap.accesskey            "A">
+
+<!ENTITY highlightTrailingSpace.label     "Amlygu Bwlch Dilynol">
+<!ENTITY highlightTrailingSpace.accesskey "A">
+
+<!ENTITY largerFont.label             "Ffont Mwy">
+<!ENTITY largerFont.accesskey         "M">
+<!ENTITY largerFont.commandkey        "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY largerFont.commandkey2       "="> 
+
+<!ENTITY smallerFont.label            "Ffont Llai">
+<!ENTITY smallerFont.accesskey        "L">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "Maint Arferol">
+<!ENTITY normalSize.accesskey         "A">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Golygu">
+<!ENTITY editMenu.accesskey           "G">
+
+<!ENTITY run.label                    "Rhedeg">
+<!ENTITY run.accesskey                "R">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "Arsylwi">
+<!ENTITY inspect.accesskey            "i">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Dangos">
+<!ENTITY display.accesskey            "D">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Argraffu Del">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "A">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "Amgylchedd">
+<!ENTITY environmentMenu.accesskey    "A">
+
+
+<!ENTITY contentContext.label         "Cynnwys">
+<!ENTITY contentContext.accesskey     "C">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "Porwr">
+<!ENTITY browserContext.accesskey     "P">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "Cymorth">
+<!ENTITY helpMenu.accesskey           "C">
+<!ENTITY helpMenuWin.label            "Cymorth">
+<!ENTITY helpMenuWin.accesskey        "C">
+
+<!ENTITY documentationLink.label      "Cymorth Scratchpad ar MDN">
+<!ENTITY documentationLink.accesskey  "D">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "Ailosod Amrywolion">
+<!ENTITY resetContext2.accesskey      "A">
+
+<!ENTITY reloadAndRun.label           "Ail-lwytho a Rhedeg">
+<!ENTITY reloadAndRun.accesskey       "A">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Gweithredu">
+<!ENTITY executeMenu.accesskey        "G">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+<!ENTITY evalFunction.label "Cloriannu'r Swyddogaeth Gyfredol">
+<!ENTITY evalFunction.accesskey "S">
+<!ENTITY evalFunction.key "e">

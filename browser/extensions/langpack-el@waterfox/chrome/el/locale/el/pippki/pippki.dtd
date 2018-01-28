@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Αλλαγή κύριου κωδικού">
+<!ENTITY setPassword.tokenName.label "Συσκευή ασφάλειας">
+<!ENTITY setPassword.oldPassword.label "Παλαιός κωδικός">
+<!ENTITY setPassword.newPassword.label "Εισάγετε ένα νέο κωδικό">
+<!ENTITY setPassword.reenterPassword.label "Εισάγετε τον κωδικό ξανά">
+<!ENTITY setPassword.meter.label "Μέτρηση ποιότητας πιστοποιητικού">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Αρχικοποίηση">
+<!ENTITY resetPassword.title  "Αρχικοποίηση κυρίου κωδικού">
+<!ENTITY resetPassword.text  "Αν αρχικοποιήσετε τον κύριο κωδικό σας όλοι οι αποθηκευμένοι κωδικοί και προσωπικά κλειδιά θα ξεχαστούν. Είστε σίγουροι ότι θέλετε να αρχικοποιήσετε τον κύριο κωδικό;">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Λήψη πιστοποιητικού">
+<!ENTITY downloadCert.message1 "Σας ζητήθηκε να εμπιστευθείτε μια νέα Αρχή Πιστοποίησης (CA).">
+<!ENTITY downloadCert.trustSSL "Να είναι έμπιστη αυτή η CA για την πιστοποίηση ιστοσελίδων.">
+<!ENTITY downloadCert.trustEmail "Να είναι έμπιστη αυτή η CA για την πιστοποίηση χρηστών email">
+<!ENTITY downloadCert.trustObjSign "Να είναι έμπιστη αυτή η CA για την πιστοποίηση κατασκευαστών λογισμικού.">
+<!ENTITY downloadCert.message3 "Πριν να εμπιστευθείτε αυτήν την Αρχή Πιστοποίησης για οποιοδήποτε σκοπό, θα πρέπει να εξετάσετε το πιστοποιητικό και τις διαδικασίες και τις πολιτικές του (αν  είναι διαθέσιμες).">
+<!ENTITY downloadCert.viewCert.label "Προβολή">
+<!ENTITY downloadCert.viewCert.text "Εξέταση CA πιστοποιητικού">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Ειδοποίηση Αναγνώρισης Χρήστη">
+<!ENTITY clientAuthAsk.message1 "Η ιστοσελίδα ζήτησε να πιστοποιήσετε τον εαυτό σας με ένα πιστοποιητικό ασφάλειας:">
+<!ENTITY clientAuthAsk.message2 "Επιλέξτε ένα πιστοποιητικό για να το παρουσιάσετε ως ταυτότητα:">
+<!ENTITY clientAuthAsk.message3 "Λεπτομέρειες επιλεγμένου πιστοποιητικού:">
+
+<!ENTITY pkcs12.setpassword.title  "Επιλογή κωδικού αντιγράφου ασφαλείας πιστοποιητικού">
+<!ENTITY pkcs12.setpassword.message  "Ο κωδικός αντιγράφου ασφάλειας πιστοποιητικού προστατεύει το αντίγραφο που πρόκειται να δημιουργήσετε. Θα πρέπει να καθορίσετε αυτόν τον κωδικό ώστε να προχωρήσει η διαδικασία ">
+<!ENTITY pkcs12.setpassword.label1 "Κωδικός αντιγράφου ασφάλειας πιστοποιητικού:">
+<!ENTITY pkcs12.setpassword.label2 "Κωδικός αντιγράφου ασφάλειας πιστοποιητικού (ξανά):">
+<!ENTITY pkcs12.setpassword.reminder "Προειδοποίηση: Αν ξεχάσετε τον κωδικό ασφάλειας, δεν θα μπορείτε να ανακτήσετε αυτό το αντίγραφο αργότερα. Φυλάξτε το σε ασφαλή τοποθεσία.">
+
+<!ENTITY chooseToken.title  "Διάλογος επιλογής διακριτικού">
+<!ENTITY chooseToken.message1 "Παρακαλώ επιλέξτε ένα διακριτικό.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Δημιουργία ιδιωτικού κλειδιού">
+<!ENTITY createCertInfo.msg1 "Δημιουργία κλειδιού σε εξέλιξη...αυτό μπορεί να διαρκέσει μερικά λεπτά....">
+<!ENTITY createCertInfo.msg2 "Παρακαλώ περιμένετε...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Προστατευμένη πιστοποίηση με διακριτικό">
+<!ENTITY protectedAuth.msg "Παρακαλώ πιστοποιήστε το διακριτικό. Η μέθοδος πιστοποίησης εξαρτάται από το είδος του διακριτικού.">
+<!ENTITY protectedAuth.tokenName.label "Διακριτικό:">

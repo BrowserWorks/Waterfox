@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "650">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopírovať">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Vybrať všetko">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Všeobecné">
+<!ENTITY  generalTab.accesskey  "V">
+<!ENTITY  generalTitle          "Názov:">
+<!ENTITY  generalURL            "Adresa:">
+<!ENTITY  generalType           "Typ:">
+<!ENTITY  generalMode           "Spôsob vykreslenia:">
+<!ENTITY  generalSize           "Veľkosť:">
+<!ENTITY  generalReferrer       "Odkazujúca adresa URL:">
+<!ENTITY  generalSource         "Zdroj:">
+<!ENTITY  generalModified       "Upravená:">
+<!ENTITY  generalEncoding2      "Kódovanie textu:">
+<!ENTITY  generalMetaName       "Názov">
+<!ENTITY  generalMetaContent    "Obsah">
+
+<!ENTITY  mediaTab              "Médiá">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adresa:">
+<!ENTITY  mediaText             "Priradený text:">
+<!ENTITY  mediaAltHeader        "Alternatívny text">
+<!ENTITY  mediaAddress          "Adresa">
+<!ENTITY  mediaType             "Typ">
+<!ENTITY  mediaSize             "Veľkosť">
+<!ENTITY  mediaCount            "Počet">
+<!ENTITY  mediaDimension        "Rozmery:">
+<!ENTITY  mediaLongdesc         "Dlhý popis:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Uložiť ako…">
+<!ENTITY  mediaSaveAs.accesskey "U">
+<!ENTITY  mediaSaveAs2.accesskey "a">
+<!ENTITY  mediaPreview          "Ukážka:">
+
+<!ENTITY  feedTab               "Kanály">
+<!ENTITY  feedTab.accesskey     "K">
+<!ENTITY  feedSubscribe         "Odoberať">
+<!ENTITY  feedSubscribe.accesskey "O">
+
+<!ENTITY  permTab               "Povolenia">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Použiť predvolené">
+<!ENTITY  permAskAlways         "Vždy sa opýtať">
+<!ENTITY  permAllow             "Povoliť">
+<!ENTITY  permAllowSession      "Povoliť pre reláciu">
+<!ENTITY  permBlock             "Blokovať">
+<!ENTITY  permissionsFor        "Povolenia pre:">
+<!ENTITY  permPlugins           "Aktivácia zásuvných modulov">
+
+<!ENTITY  permClearStorage           "Vymazať úložisko">
+<!ENTITY  permClearStorage.accesskey "V">
+
+<!ENTITY  securityTab           "Zabezpečenie">
+<!ENTITY  securityTab.accesskey "Z">
+<!ENTITY  securityView.certView "Zobraziť certifikát">
+<!ENTITY  securityView.accesskey "c">
+<!ENTITY  securityView.unknown   "neznámy">
+
+
+<!ENTITY  securityView.identity.header   "Identita webovej stránky">
+<!ENTITY  securityView.identity.owner    "Vlastník:">
+<!ENTITY  securityView.identity.domain   "Webová stránka:">
+<!ENTITY  securityView.identity.verifier "Overená:">
+<!ENTITY  securityView.identity.validity "Koniec platnosti:">
+
+<!ENTITY  securityView.privacy.header                   "Súkromie a história">
+<!ENTITY  securityView.privacy.history                  "Navštívil som túto stránku v minulosti?">
+<!ENTITY  securityView.privacy.cookies                  "Ukladá táto stránka informácie (cookies) na mojom počítači?">
+<!ENTITY  securityView.privacy.viewCookies              "Zobraziť súbory cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "s">
+<!ENTITY  securityView.privacy.passwords                "Uložil som pre túto stránku nejaké heslá?">
+<!ENTITY  securityView.privacy.viewPasswords            "Zobraziť uložené heslá">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "u">
+
+<!ENTITY  securityView.technical.header                 "Technické detaily">
+
+<!ENTITY  helpButton.label                              "Pomocník">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "परवानग्या">
+
+<!ENTITY  blockPopups.label           "पॉपअप विंडो अडवा">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "आणखी शिका">
+<!ENTITY  notificationsPolicyDesc4.label       "कोणत्या संकेतस्थळाने आपल्याला सुचना पाठवाव्या ते निवडा">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "निवडा…">
+<!ENTITY  notificationsDoNotDisturb.label      "व्यत्यय आणू नका">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName; आपण पुन्हा सुरू करे पर्यंत कोणत्याही सूचना दर्शविल्या जाणार नाहीत;">
+
+<!ENTITY  popupExceptions.label       "अपवाद…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "टंक आणि रंग">
+
+<!ENTITY  defaultFont2.label          "पूर्वनिर्धारित फॉन्ट">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "आकार">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "प्रगत…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "रंग…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY language2.label              "भाषा">
+<!ENTITY chooseLanguage.label         "पृष्ठ दाखवण्याकरिता सूचविलेली भाषा निवडा">
+<!ENTITY chooseButton.label           "निवडा…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "वेब अंतर्भुत माहिती भाषांतरीत करा">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "अपवाद…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "तर्फे भाषांतरीत">
+<!ENTITY translation.options.attribution.afterLogo "‌">
+
+<!ENTITY  drmContent2.label              "डिजिटल हक्क व्यवस्थापन (डीआरएम) मजकूर">
+
+<!ENTITY  playDRMContent2.label          "डीआरएम-नियंत्रित मजकूर चालवा">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent.learnMore.label "आणखी शिका">

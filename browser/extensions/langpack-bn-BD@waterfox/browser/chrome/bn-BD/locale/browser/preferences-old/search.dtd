@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "ডিফল্ট সার্চ ইঞ্জিন">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "আপনার ডিফল্ট সার্চ ইঞ্জিন নির্বাচন করুন । &brandShortName; লোকেশন বার, সার্চ বার এবং প্রথম পাতায় এটা ব্যবহার করে">
+
+<!ENTITY provideSearchSuggestions.label        "অনুসন্ধান পরামর্শ প্রদান করুন s">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "লোকেশন বার রেসাল্টে অনুসন্ধান পরামর্শগুলো দেখান l">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "&brandShortName; এর কনফিগারেশনে ইতিহাস মনে না রাখতে বলার কারনে লোকেশন বারে অনুসন্ধান পরামর্শ দেখাবে না।">
+
+<!ENTITY oneClickSearchEngines.label           "এক ক্লিক সার্চ ইঞ্জিন">
+
+<!ENTITY chooseWhichOneToDisplay.label         "সার্চ বার আপনাকে বিকল্প সার্চ ইঞ্জিনে সরাসরি সার্চ করতে দেয় । কোনটি দেখাবে টা নির্বাচন করুন ।">
+
+<!ENTITY engineNameColumn.label                "অনুসন্ধানী ইঞ্জিন">
+<!ENTITY engineKeywordColumn.label             "কীওয়ার্ড">
+
+<!ENTITY restoreDefaultSearchEngines.label     "ডিফল্ট সার্চ ইঞ্জিন পুনরুদ্ধার">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "অপসারণ করুন R">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "আরও ইনজিন অনুসন্ধান...">

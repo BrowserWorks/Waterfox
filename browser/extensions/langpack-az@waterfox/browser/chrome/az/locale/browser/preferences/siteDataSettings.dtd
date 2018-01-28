@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nizamlamalar - Sayt məlumatları">
+<!ENTITY     hostCol.label                 "Sayt">
+<!ENTITY     statusCol.label               "Vəziyyət">
+<!ENTITY     usageCol.label                "Saxlama yeri">
+<!ENTITY     searchTextboxPlaceHolder             "Saytlarda axtar">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Seçiləni Sil">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Dəyişiklikləri Yadda Saxla">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Ləğv et">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Sayt məlumatları silinir">
+<!ENTITY     removingSelected.description  "Sayt məlumatlarını silmə həmçinin əlaqəli çərəz və oflayn məzmunları siləcək. Bu saytlardan çıxmağınıza səbəb ola bilər. Bunu etmək istədiyinizə əminsiniz?">
+<!ENTITY     siteTree.label                "Aşağıdakı saytların çərəzləri silinəcək:">

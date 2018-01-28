@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "الخيارات">
+<!ENTITY  prefWindow.title        "التفضيلات">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "تفضيلات &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "نتائج البحث">
+<!ENTITY  paneGeneral.title             "عام">
+<!ENTITY  paneSearch.title              "البحث">
+<!ENTITY  paneFilesApplications.title   "الملفات و التطبيقات">
+<!ENTITY  panePrivacySecurity.title     "الخصوصية و الأمان">
+<!ENTITY  paneContainers.title          "الألسنة الحاوية">
+<!ENTITY  paneUpdates.title             "التحديثات">
+
+<!ENTITY  languageAndAppearance.label   "اللغة و المظهر">
+<!ENTITY  filesAndApplications.label    "الملفات و التطبيقات">
+<!ENTITY  browserPrivacy.label          "خصوصية المتصفح">
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+
+<!ENTITY  paneSync1.title          "حساب فَيَرفُكس">
+
+<!ENTITY  helpButton2.label        "دعم &brandShortName;">

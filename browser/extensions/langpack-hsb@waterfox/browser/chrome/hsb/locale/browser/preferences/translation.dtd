@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Wuwzaća - Přełožowanje">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Přełožowanje so za slědowace rěče njeposkićuje:">
+<!ENTITY treehead.languageName.label      "Rěče">
+<!ENTITY removeLanguage.label             "Rěč wotstronić">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "Wšě rěče wotstronić">
+<!ENTITY removeAllLanguages.accesskey     "W">
+
+<!ENTITY noTranslationForSites.label      "Přełožowanje so za slědowace sydła njeposkićuje:">
+<!ENTITY treehead.siteName2.label         "Websydła">
+<!ENTITY removeSite.label                 "Sydło wotstronić">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Wšě sydła wotstronić">
+<!ENTITY removeAllSites.accesskey         "t">
+
+<!ENTITY button.close.label               "Začinić">
+<!ENTITY button.close.accesskey           "Z">

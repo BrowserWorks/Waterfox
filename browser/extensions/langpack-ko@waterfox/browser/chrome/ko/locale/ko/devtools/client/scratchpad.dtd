@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY window.title                 "스크래치패드">
+
+<!ENTITY fileMenu.label               "파일">
+<!ENTITY fileMenu.accesskey           "F">
+
+<!ENTITY newWindowCmd.label           "새 창">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "파일 열기">
+<!ENTITY openFileCmd.accesskey        "O">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "최근 파일 열기">
+<!ENTITY openRecentMenu.accesskey     "R">
+
+<!ENTITY revertCmd.label              "되돌리기…">
+<!ENTITY revertCmd.accesskey          "t">
+
+<!ENTITY saveFileCmd.label            "저장">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "다른 이름으로 저장…">
+<!ENTITY saveFileAsCmd.accesskey      "A">
+
+<!ENTITY closeCmd.label               "닫기">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "C">
+
+<!ENTITY viewMenu.label               "보기">
+<!ENTITY viewMenu.accesskey           "V">
+
+<!ENTITY lineNumbers.label             "줄번호 보기">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY wordWrap.label                "긴 줄 여러 줄로 보기">
+<!ENTITY wordWrap.accesskey            "W">
+
+<!ENTITY highlightTrailingSpace.label     "줄 끝 빈칸 강조">
+<!ENTITY highlightTrailingSpace.accesskey "H">
+
+<!ENTITY largerFont.label             "글자를 크게">
+<!ENTITY largerFont.accesskey         "a">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> <!-- + is above this key on many keyboards -->
+
+<!ENTITY smallerFont.label            "글자를 작게">
+<!ENTITY smallerFont.accesskey        "M">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "원래 크기로">
+<!ENTITY normalSize.accesskey         "N">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "편집">
+<!ENTITY editMenu.accesskey           "E">
+
+<!ENTITY run.label                    "실행">
+<!ENTITY run.accesskey                "R">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "검사">
+<!ENTITY inspect.accesskey            "I">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "표시">
+<!ENTITY display.accesskey            "D">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "예쁘게 보기">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "P">
+
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+<!ENTITY environmentMenu.label        "실행 환경">
+<!ENTITY environmentMenu.accesskey    "N">
+
+
+<!ENTITY contentContext.label         "웹 페이지">
+<!ENTITY contentContext.accesskey     "C">
+
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+<!ENTITY browserContext.label         "브라우저">
+<!ENTITY browserContext.accesskey     "B">
+
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+<!ENTITY helpMenu.label               "도움말">
+<!ENTITY helpMenu.accesskey           "H">
+<!ENTITY helpMenuWin.label            "도움말">
+<!ENTITY helpMenuWin.accesskey        "H">
+
+<!ENTITY documentationLink.label      "스크래치패드 도움말(MDN)">
+<!ENTITY documentationLink.accesskey  "D">
+
+
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+<!ENTITY resetContext2.label          "변수 재설정">
+<!ENTITY resetContext2.accesskey      "T">
+
+<!ENTITY reloadAndRun.label           "새로고침하고 실행">
+<!ENTITY reloadAndRun.accesskey       "E">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "실행">
+<!ENTITY executeMenu.accesskey        "X">
+
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+<!ENTITY errorConsoleCmd.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+<!ENTITY evalFunction.label "현재 함수 평가">
+<!ENTITY evalFunction.accesskey "v">
+<!ENTITY evalFunction.key "e">

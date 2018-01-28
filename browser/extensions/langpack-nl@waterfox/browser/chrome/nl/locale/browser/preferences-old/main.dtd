@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Opstarten">
+
+<!ENTITY startupPage.label         "Als &brandShortName; start:">
+<!ENTITY startupPage.accesskey     "a">
+<!ENTITY startupUserHomePage.label "Uw startpagina tonen">
+<!ENTITY startupBlankPage.label    "Een lege pagina tonen">
+<!ENTITY startupPrevSession.label  "Uw vensters en tabbladen van de vorige keer tonen">
+
+<!ENTITY homepage.label            "Startpagina:">
+<!ENTITY homepage.accesskey        "p">
+<!ENTITY useCurrentPage.label      "Huidige pagina gebruiken">
+<!ENTITY useCurrentPage.accesskey  "u">
+<!ENTITY useMultiple.label         "Huidige pagina’s gebruiken">
+<!ENTITY chooseBookmark.label      "Bladwijzer gebruiken…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "Standaard herstellen">
+<!ENTITY restoreDefault.accesskey  "S">
+
+<!ENTITY downloads.label     "Downloads">
+
+<!ENTITY saveTo.label                 "Bestanden opslaan in">
+<!ENTITY saveTo.accesskey             "o">
+<!ENTITY chooseFolderWin.label        "Bladeren…">
+<!ENTITY chooseFolderWin.accesskey    "d">
+<!ENTITY chooseFolderMac.label        "Kiezen…">
+<!ENTITY chooseFolderMac.accesskey    "z">
+<!ENTITY alwaysAskWhere.label         "Altijd vragen waar bestanden moeten worden opgeslagen">
+<!ENTITY alwaysAskWhere.accesskey     "r">
+
+<!ENTITY alwaysCheckDefault2.label        "Altijd controleren of &brandShortName; uw standaardbrowser is">
+<!ENTITY alwaysCheckDefault2.accesskey    "c">
+<!ENTITY setAsMyDefaultBrowser2.label     "Standaard maken">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "m">
+<!ENTITY isDefault.label                  "&brandShortName; is momenteel uw standaardbrowser">
+<!ENTITY isNotDefault.label               "&brandShortName; is niet uw standaardbrowser">
+
+<!ENTITY separateProfileMode.label        "Tegelijkertijd uitvoeren van &brandShortName; en Waterfox toestaan">
+<!ENTITY useWaterfoxSync.label             "Tip: dit gebruikt aparte profielen. Gebruik Sync om gegevens ertussen te delen.">
+<!ENTITY getStarted.notloggedin.label     "Aanmelden bij &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label;-voorkeuren openen">
+
+<!ENTITY e10sEnabled.label                "Multiprocess in &brandShortName; inschakelen">

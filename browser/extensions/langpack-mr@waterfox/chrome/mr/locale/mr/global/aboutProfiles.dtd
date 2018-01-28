@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "प्रोफाइल्स बद्दल">
+<!ENTITY aboutProfiles.subtitle "हे पृष्ठ आपल्याला प्रोफाइल व्यवस्थापनात मदत करेल. प्रत्येक प्रोफाइल हे एक वेगळं जग आहे ज्यात इतिहास, वाचनखूण, सेटिंग्स आणि ॲड-ऑन्स स्वतंत्र असतात.">
+<!ENTITY aboutProfiles.create "एक नवीन प्रोफाइल बनवा">
+<!ENTITY aboutProfiles.restart.title "पुनःसुरु">
+<!ENTITY aboutProfiles.restart.inSafeMode "ॲड-ऑन्स निष्क्रिय करुन पुनःसुरू करा…">
+<!ENTITY aboutProfiles.restart.normal "साधारणरित्या पुनःसुरु करा…">

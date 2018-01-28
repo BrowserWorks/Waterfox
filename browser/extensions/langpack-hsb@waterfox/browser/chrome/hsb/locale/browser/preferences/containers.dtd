@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Nowy kontejner přidać">
+<!ENTITY addButton.accesskey  "k">
+<!ENTITY preferencesButton.label "Nastajenja">
+<!ENTITY removeButton.label   "Wotstronić">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Wróćo">
+
+<!ENTITY window.title         "Nowy kontejner přidać">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Mjeno:">
+<!ENTITY name.accesskey       "M">
+<!ENTITY name.placeholder     "Zapodajće kontejnerowe mjeno">
+<!ENTITY icon.label           "Symbol:">
+<!ENTITY icon.accesskey       "S">
+<!ENTITY color.label          "Barba:">
+<!ENTITY color.accesskey      "B">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Hotowo">
+<!ENTITY button.ok.accesskey  "H">
+

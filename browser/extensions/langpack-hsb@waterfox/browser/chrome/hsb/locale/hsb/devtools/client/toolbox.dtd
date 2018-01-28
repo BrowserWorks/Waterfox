@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Zmylk při wočinjenju gratoweho kašćika wobhladowaka:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Rozšěrjene nastajenja">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Inspektor">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Wobhladowakowe stile pokazać">
+<!ENTITY options.showUserAgentStyles.tooltip "Jeli to zapinaće, so standardne stile pokazaja, kotrež wobhladowak začituje.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "DOM-atributy wottřihać">
+<!ENTITY options.collapseAttrs.tooltip "Dołhe atributy w Inspektorje wottřihać">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Standardna barbowa jednotka">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "S">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Kaž spisany">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Heksadecimalny">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Barbowe mjena">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Jenož aktualne posedźenje, strona so znowa začituje">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Gratowe kašćiki pytanja zmylkow powjercha wobhladowaka a přidatkow zmóžnić">
+<!ENTITY options.enableChrome.tooltip3  "Hdyž tute nastajenje zmóžniće, móžeće wšelake wuwiwarske nastroje w konteksće wobhladowaka (přez Nastroje > Webwuwiwar > Gratowy kašćik) wužiwać a přidatki ze zrjadowaka přidatkow za zmylkami přepytować">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Zdalene pytanje za zmylkami">
+<!ENTITY options.enableRemote.tooltip2  "Zmóžnjenje tutoho nastajenja dowoli wuwiwarskim nastrojam, zdalenu instancu Waterfox kaž Waterfox OS za zmylkami přepytać">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "JavaScript znjemóžnić *">
+<!ENTITY options.disableJavaScript.tooltip   "Zmóžnjenje tutoho nastajenja JavaScript za aktualny rajtark znjemóžni. Jeli rajtark abo gratowy kašćik so začini, da tute nastajenje so zabudźe.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "HTTP-pufrowak znjemóžnić (hdyž gratowy kašćik je wočinjeny)">
+<!ENTITY options.disableHTTPCache.tooltip   "Hdyž so tute nastajenje zmóžnja, so HTTP-pufrowak za wšě rajtarki znjemóžni, kotrež maja gratowy kašćik wočinjene. Service workerls njejsu přez tute nastajenje potrjechene.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Service worker přez HTTP zmóžnić (hdyž gratowy kašćik je wočinjeny)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Tute nastajenje zmóžni service workers přez HTTP za wšě rajtarki wužiwać, za kotrež gratowy kašćik je wočinjeny.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Standardne wuwiwarske nastroje">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Wuwiwarske nastroje instalowane přez přidatki">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "K dispoziciji stejace tłóčatka gratoweho kašćika">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Za aktualny zaměr gratoweho kašćika njepodpěrany">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Drasty">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Drastu wobhladowaka wuwiwarskeje edicije wužiwać">
+<!ENTITY options.usedeveditiontheme.tooltip "Přešaltuje drastu wobhladowaka wuwiwarskeje edicije.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Webkonsola">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Časowe kołki zmóžnić">
+<!ENTITY options.timestampMessages.tooltip    "Jeli tute nastajenje zmóžniš, přikazy a wudaće we webkonsoli časowy kołk pokazuja">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Pytanje za zmylkami">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Žórłowe karty zmóžnić">
+<!ENTITY options.sourceMaps.tooltip    "Jeli tute nastajenje zmóžnjeće, so žórła w pytanju za zmylkami a w konsoli kartěruja.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Stilowy editor">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Originalne žórła pokazać">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Originalne žórła (na př. Sass-dataje) w stilowym editorje a Inspektorje pokazać">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "CSS awtomatisce wudospołnić">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "CSS-kajkosće, hódnoty a selektory w stilowym editorje při pisanju awtomatisce wudospołnić">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Zadźerženje fota wobrazowki">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Foto wobrazowki do mjezyskłada">
+<!ENTITY options.screenshot.clipboard.tooltip    "Składuje foto wobrazowki direktnje do mjazyskłada">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Zahibanski zynk kamery wothrać">
+<!ENTITY options.screenshot.audio.tooltip    "Zmóžnja awdiozynk kamery, hdyž so foto wobrazowki čini">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Zhromadne nastajenja">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Wobstajne protokole zmóžnić">
+<!ENTITY options.enablePersistentLogs.tooltip  "Jeli tute nastajenje zmóžniće, njezhašetej webkonsola a syćowy monitor wudaće kóždy raz, hdyž nowu stronu wopytujeće">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Platformowe daty Gecko pokazać">
+<!ENTITY options.showPlatformData.tooltip  "Jeli tute nastajenje zmóžniće, budu rozprawy JavaScriptoweje analyzy běžneho časa platformowe symbole Gecko wobsahować">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Editorowe nastajenja">
+<!ENTITY options.sourceeditor.detectindentation.label   "Zasunjenje namakać">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Zasunjenje ńa zakładźe wobsaha žórłeje dataje zhódać">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Róžkate spinki awtomatisce začinić">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Začinjace róžkate spinki awtomatisce zasadźić">
+<!ENTITY options.sourceeditor.expandtab.label           "Z pomocu mjezerow zasunyć">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Mjezery město tabulatora wužiwać">
+<!ENTITY options.sourceeditor.tabsize.label             "Wulkosć tabulatora">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "t">
+<!ENTITY options.sourceeditor.keybinding.label          "Tastowe wjazanja">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "T">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Standard">

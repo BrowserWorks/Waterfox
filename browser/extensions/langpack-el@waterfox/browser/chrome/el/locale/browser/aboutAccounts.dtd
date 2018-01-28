@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Καλώς ήλθατε στο &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Συνδεθείτε για να συγχρονίσετε τις καρτέλες, τους σελιδοδείκτες, τους κωδικούς πρόσβασής σας &amp; πολλά άλλα.">
+<!ENTITY aboutAccountsConfig.startButton.label "Ξεκινήστε">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Προτιμήσεις Sync">
+<!ENTITY aboutAccounts.noConnection.title "Καμία σύνδεση">
+<!ENTITY aboutAccounts.noConnection.description "Πρέπει να έχετε πρόσβαση στο διαδίκτυο για να συνδεθείτε.">
+<!ENTITY aboutAccounts.noConnection.retry "Δοκιμή ξανά">
+<!ENTITY aboutAccounts.badConfig.title "Κακή διαμόρφωση">
+<!ENTITY aboutAccounts.badConfig.description "Αδυναμία προσδιορισμού διαμόρφωσης διακομιστή του λογαριασμού Waterfox σας. Παρακαλώ δοκιμάστε ξανά αργότερα.">

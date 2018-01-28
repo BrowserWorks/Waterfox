@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Une honetan ez zaude leiho pribatu batean.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Ireki leiho pribatua">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "h">
+
+<!ENTITY privateBrowsing.title                           "Nabigatze pribatua">
+<!ENTITY privateBrowsing.title.tracking                  "Jarraipenaren babesdun nabigatze pribatua">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Leiho pribatu batean nabigatzen duzunean, Waterfoxek ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ez ditu gordeko">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "bisitatutako orriak">
+<!ENTITY aboutPrivateBrowsing.info.searches              "bilaketak">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookieak">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "behin-behineko fitxategiak">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfoxek ondorengoak ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "gordeko ditu">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "deskargak">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "laster-markak">
+<!ENTITY aboutPrivateBrowsing.note.before                "Nabigatze pribatuak ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ez zaitu anonimo egiten">
+<!ENTITY aboutPrivateBrowsing.note.after                 " Interneten nabigatzean. Kontuan izan zure enplegatzaileak edo Interneteko zerbitzu-hornitzaileak zein orri bisitatzen dituzun jakin dezakeela.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Argibide gehiago: ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Nabigatze pribatua">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Jarraipenaren babesa">
+<!ENTITY trackingProtection.description2                 "Zenbait webgunek zure jarraipena egin eta Interneten zehar duzun jarduera monitoriza dezakete. Jarraipenaren babesarekin, zure nabigatze-portaerari buruzko informazioa biltzea blokeatuko du Waterfoxek.">
+<!ENTITY trackingProtection.startTour1                   "Ikusi nola dabilen">

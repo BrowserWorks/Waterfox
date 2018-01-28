@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ruto'onel k'amoj">
+
+<!ENTITY importFrom.label               "Kejik' taq cha'oj, taq yaketal, natab'äl, ewan taq tzij chuqa' juley chik taq rutzij:">
+<!ENTITY importFromUnix.label           "Kejik' taq cha'oj, taq yaketal, natab'äl, ewan taq tzij chuqa' juley chik taq rutzij:">
+<!ENTITY importFromBookmarks.label      "Kek'am taq ch'aoj pa:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Majun tijik' pe">
+<!ENTITY importFromNothing.accesskey    "M">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Ütz chi K'amaya'l">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Man tikirel ta xe'ilitäj taq cholkema' ri k'o taq yaketal, natab'äl o taq ruwäch ewan taq tzij.">
+
+<!ENTITY importSource.title             "Kek'am runuk'ulem chuqa' taq tzij">
+<!ENTITY importItems.title              "Taq ruch'akulal xkek'am">
+<!ENTITY importItems.label              "Ke'acha' achike taq ruch'akulal xekek'am:">
+
+<!ENTITY migrating.title                "Tajin nik'am…">
+<!ENTITY migrating.label                "Tajin nik'am re taq ruch'akulal re'…">
+
+<!ENTITY selectProfile.title            "Tichax rub'anikil">
+<!ENTITY selectProfile.label            "Tikirel yek'am taq tzij chi kikojol re taq rub'anikil re':">
+
+<!ENTITY done.title                     "Xtz'aqät ruk'amik">
+<!ENTITY done.label                     "Pa rub'eyal xek'am re jujun taq ruch'akulal re'">
+
+<!ENTITY closeSourceBrowser.label       "Tab'ana' utzil, tajikib'a' awi' chi ri okik'amaya'l xacha' k'o chi tz'apäl chuwäch xtachäp chik samaj.">

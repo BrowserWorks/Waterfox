@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Siz hozirda maxfiy oynada emassiz.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Maxfiy oynani ochish">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "M">
+
+<!ENTITY privateBrowsing.title                           "Maxfiy ko‘rish">
+<!ENTITY privateBrowsing.title.tracking                  "Kuzatishdan himoyalangan maxfiy ko‘rish">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Maxfiy oynada saytlarni ochsangiz, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "quyidagilarni saqlab qolmaydi">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "kirilgan sahifalar">
+<!ENTITY aboutPrivateBrowsing.info.searches              "qidiruvlar">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "kukilar">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "vaqtinchalik fayllar">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "quyidagilarni">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "saqlab qoladi:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "yuklab olingan fayllar">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "xatcho‘plar">
+<!ENTITY aboutPrivateBrowsing.note.before                "Maxfiy ko‘rish orqali">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "siz internetda butunlay ko‘rinmas bo‘la olmaysiz.">
+<!ENTITY aboutPrivateBrowsing.note.after                 " aylanmaysiz. Ish beruvchingiz yoki internet ta’minotchisi siz kirgan sahifalarni kuzata oladi.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Batafsil ma’lumot:">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Maxfiy ko‘rish">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Kuzatishdan himoyalanish">
+<!ENTITY trackingProtection.description2                 "Ba’zi saytlar internetdagi faoliyatingizni nazorat qilish uchun kuzatkichlardan foydalanishi mumkin. Kuzatishdan himoyalanish xususiyati yordamida Waterfox kuzatkichlarni bloklab qo‘yadi. Kuzatkichlar internetdagi faoliyatingiz haqida ma’lumot to‘plashi mumkin.">
+<!ENTITY trackingProtection.startTour1                   "Qanday ishlashi haqida tanishing">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "เอารหัสผ่านหลักออก">
+<!ENTITY removeInfo.label                  "คุณต้องป้อนรหัสผ่านปัจจุบันของคุณเพื่อดำเนินการต่อ:">
+<!ENTITY removeWarning1.label              "รหัสผ่านหลักของคุณใช้ป้องกันข้อมูลอ่อนไหวอย่างรหัสผ่านเว็บไซต์">
+<!ENTITY removeWarning2.label              "หากคุณเอารหัสผ่านหลักของคุณออก ข้อมูลของคุณจะไม่ถูกป้องกันหากคอมพิวเตอร์ของคุณถูกบุกรุก">
+<!ENTITY setPassword.oldPassword.label     "รหัสผ่านปัจจุบัน:">
+

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "កុំ​តាមដាន">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "អនុវត្ត «មិន​តាមដាន» ជានិច្ច">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; នឹង​បញ្ជូន​សញ្ញា «ខ្ញុំ​មិន​ចង់​ឲ្យ​គេ​តាមដាន» នៅ​ពេល​ដែល​​មុខងារ ការពារ​ការ​តាម​ដាន ត្រូវ​បាន​បើក។">
+<!ENTITY doNotTrackLearnMore.label    "ស្វែងយល់​​បន្ថែម">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Profillar haqida">
+<!ENTITY aboutProfiles.subtitle "Bu sahifa profillaringizni tahrirlashga yordam beradi. Har bir profil o‘zida alohida tarix, xatcho‘p, sozlamalar va qo‘shimcha dasturlarni jamlagan alohida dunyo.">
+<!ENTITY aboutProfiles.create "Yangi profil yaratish">
+<!ENTITY aboutProfiles.restart.title "Qayta ishga tushirish">
+<!ENTITY aboutProfiles.restart.inSafeMode "Qo‘sh. dasturlarsiz qayta ishga tushirish…">
+<!ENTITY aboutProfiles.restart.normal "Odatdagidek qayta ishga tushirish…">

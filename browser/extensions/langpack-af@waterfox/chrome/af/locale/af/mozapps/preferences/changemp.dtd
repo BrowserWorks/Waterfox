@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Wysig meesterwagwoord">
+<!ENTITY setPassword.tokenName.label       "Sekuriteitstoestel">
+<!ENTITY setPassword.oldPassword.label     "Huidige wagwoord:">
+<!ENTITY setPassword.newPassword.label     "Tik nuwe wagwoord in:">
+<!ENTITY setPassword.reenterPassword.label "Tik nuwe wagwoord weer in:">
+<!ENTITY setPassword.meter.label           "Wagwoord-gehaltemeter">
+<!ENTITY setPassword.meter.loading         "Laai">
+<!ENTITY masterPasswordDescription.label   "'n Meesterwagwoord word gebruik om sensitiewe inligting soos werfwagwoorde te beskerm.  As u 'n meesterwagwoord skep, sal u een maal per sessie gevra word om dit in te tik wanneer &brandShortName; gestoorde inligting wat deur die wagwoord beskerm word, wil herwin.">
+<!ENTITY masterPasswordWarning.label       "Maak seker dat u die meesterwagwoord onthou wat u gestel het.  Indien u die meesterwagwoord vergeet, sal u nie toegang tot enige van die inligting wat daardeur beskerm word, kan verkry nie.">

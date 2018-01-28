@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Bainisteoir na dTeastas">
+
+<!ENTITY certmgr.tab.mine                     "Do Theastais">
+<!ENTITY certmgr.tab.others2                  "Daoine">
+<!ENTITY certmgr.tab.websites3                "Freastalaithe">
+<!ENTITY certmgr.tab.ca                       "Údaráis">
+<!ENTITY certmgr.tab.orphan2                  "Cinn Eile">
+
+<!ENTITY certmgr.mine                         "Tá teastais agat ó na heagrais seo a shainaithníonn tusa:">
+<!ENTITY certmgr.others                       "Tá teastais agat a shainaithníonn na daoine seo:">
+<!ENTITY certmgr.websites2                    "Tá teastais agat a shainaithníonn na freastalaithe seo:">
+<!ENTITY certmgr.cas                          "Tá teastais agat a shainaithníonn na húdaráis deimhniúcháin seo:">
+<!ENTITY certmgr.orphans                      "Tá teastais agat nach féidir iad a chur i gcatagóir ar bith eile:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Ginearálta">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Sonraí">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "S">
+
+<!ENTITY certmgr.pending.label                "Tá an teastas á fhíorú faoi láthair…">
+<!ENTITY certmgr.subjectinfo.label            "Eisithe Go">
+<!ENTITY certmgr.issuerinfo.label             "Eisithe Ag">
+<!ENTITY certmgr.periodofvalidity.label       "Tréimhse Bhailíochta" >
+<!ENTITY certmgr.fingerprints.label           "Méarloirg">
+<!ENTITY certmgr.certdetail.title             "Sonraí an teastais">
+<!ENTITY certmgr.certdetail.cn                "Ainm Coiteann (Common Name, CN)">
+<!ENTITY certmgr.certdetail.o                 "Eagras (Organization, O)">
+<!ENTITY certmgr.certdetail.ou                "Aonad an Eagrais (Organizational Unit, OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Sraithuimhir">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Méarlorg SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Méarlorg SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Cuir socruithe muiníne do theastais na nÚdarás Deimhniúcháin in eagar">
+<!ENTITY certmgr.editcert.edittrust           "Cuir socruithe muiníne in eagar:">
+<!ENTITY certmgr.editcert.trustssl            "Is féidir leis an teastas seo suímh Ghréasáin a shainaithint.">
+<!ENTITY certmgr.editcert.trustemail          "Is féidir leis an teastas seo úsáideoirí ríomhphoist a shainaithint.">
+<!ENTITY certmgr.editcert.trustobjsign        "Is féidir leis an teastas seo déantóirí bogearraí a shainaithint.">
+
+<!ENTITY certmgr.deletecert.title             "Scrios Teastas">
+
+<!ENTITY certmgr.certname                     "Ainm an Teastais">
+<!ENTITY certmgr.certserver                   "Freastalaí">
+<!ENTITY certmgr.override_lifetime            "Saolré">
+<!ENTITY certmgr.tokenname                    "Gléas Slándála">
+<!ENTITY certmgr.begins                       "Le tosú">
+<!ENTITY certmgr.expires                      "Le síothlú">
+<!ENTITY certmgr.email                        "Seoladh Ríomhphoist">
+<!ENTITY certmgr.serial                       "Sraithuimhir">
+
+<!ENTITY certmgr.close.label                  "Dún">
+<!ENTITY certmgr.close.accesskey              "D">
+<!ENTITY certmgr.view2.label                  "Amharc…">
+<!ENTITY certmgr.view2.accesskey              "A">
+<!ENTITY certmgr.edit3.label                  "Cuir Muinín in Eagar…">
+<!ENTITY certmgr.edit3.accesskey              "M">
+<!ENTITY certmgr.export.label                 "Easpórtáil…">
+<!ENTITY certmgr.export.accesskey             "s">
+<!ENTITY certmgr.delete2.label                "Scrios…">
+<!ENTITY certmgr.delete2.accesskey            "S">
+<!ENTITY certmgr.delete_builtin.label         "Scrios nó bí mímhuiníneach as…">
+<!ENTITY certmgr.delete_builtin.accesskey     "S">
+<!ENTITY certmgr.backup2.label                "Cúltaca…">
+<!ENTITY certmgr.backup2.accesskey            "C">
+<!ENTITY certmgr.backupall2.label             "Cúltaca de gach rud…">
+<!ENTITY certmgr.backupall2.accesskey         "t">
+<!ENTITY certmgr.restore2.label               "Iompórtáil…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Réimsí Teastais">
+<!ENTITY certmgr.details.accesskey            "R">
+<!ENTITY certmgr.fields.label                 "Luach Réimse">
+<!ENTITY certmgr.fields.accesskey             "L">
+<!ENTITY certmgr.hierarchy.label              "Ordlathas na dTeastas">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Cuir Eisceacht Leis…">
+<!ENTITY certmgr.addException.accesskey       "s">
+
+<!ENTITY exceptionMgr.title                   "Cuir Eisceacht Slándála Leis">
+<!ENTITY exceptionMgr.exceptionButton.label   "Dearbhaigh an Eisceacht Slándála">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "D">
+<!ENTITY exceptionMgr.supplementalWarning     "Ní iarrfaidh bainc, siopaí agus suíomhanna dlisteanacha poiblí eile ort é seo a dhéanamh.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Freastalaí">
+<!ENTITY exceptionMgr.certlocation.url        "Suíomh:">
+<!ENTITY exceptionMgr.certlocation.download   "Faigh Teastas">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Stádas an Teastais">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Amharc…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "A">
+<!ENTITY exceptionMgr.permanent.label         "Glac leis an eisceacht seo go buan">
+<!ENTITY exceptionMgr.permanent.accesskey     "G">

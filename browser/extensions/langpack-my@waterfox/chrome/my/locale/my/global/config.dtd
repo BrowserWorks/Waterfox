@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "ဒီအရာက သင့် အာမခံချက်ကို ပျက်ပြယ်စေနိုင်တယ်။">
+<!ENTITY aboutWarningText.label "အဆင့်မြင့်တဲ့ အပြင်အဆင်များကို ပြောင်းလဲခြင်းဟာ ဒီလုပ်ငန်းသုံး ကိရိယာရဲ့ ကြံ့ခိုင်မှု၊ လုံခြုံမှုနဲ့ ဆောင်ရွတ်ချက်ကို အ​န္တရယ် ပြုနိုင်တယ်။ သင် ဘာလုပ်နေတယ် ဆိုတာ သေချာမှ သင်ဆက်သွားသင့်တယ်။">
+<!ENTITY aboutWarningButton2.label "အကျိုးဆက်ကိုလက်ခံနိုင်ပါတယ်!">
+<!ENTITY aboutWarningCheckbox.label "ဒီသတိပေးချက်ကို နောက်တခါ ဖေါ်ပြပါ">
+
+<!ENTITY searchPrefs.label "ရှာဖွေပါ၊">
+<!ENTITY searchPrefs.accesskey "ရ">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "ဦးစားပေးတဲ့ အမည်">
+<!ENTITY lockColumn.label "လက်ရှိအခြေအနေ">
+<!ENTITY typeColumn.label "အမျိုးအစား">
+<!ENTITY valueColumn.label "တန်ဖိုး">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "မျိုးတူစုဖို့ နှိုပ်ပါ"> 
+<!ENTITY columnChooser.tooltip "ကော်လံများ ရွေးချယ်ပြီး ပြသဖို့ နှိုပ်ပါ"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Cကူး">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "နာမည်Nကူး">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Vတန်ဖိုးကူးယူ">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "Mပြုပြင်">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Tအထိန်းခုံ">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "Rပြန်ချိန်">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "wအသစ်">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "Sစာတန်း">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Iကိန်းပြည့်">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

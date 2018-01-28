@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefWindow.titleWin "Opcje">
+<!ENTITY prefWindow.title "Preferencje">
+<!ENTITY prefWindow.titleGNOME "Preferencje programu &brandShortName;">
+
+<!ENTITY prefWinMinSize.styleWin2 "width: 47em; min-height: 37.5em;">
+<!ENTITY prefWinMinSize.styleMac "width: 50em; min-height: 40em;">
+<!ENTITY prefWinMinSize.styleGNOME "width: 51.5em; min-height: 40.5em;">
+
+<!ENTITY paneSearchResults.title "Wyniki wyszukiwania">
+<!ENTITY paneGeneral.title "Ogólne">
+<!ENTITY paneSearch.title "Wyszukiwanie">
+<!ENTITY paneFilesApplications.title "Pliki i aplikacje">
+<!ENTITY panePrivacySecurity.title "Prywatność i bezpieczeństwo">
+<!ENTITY paneContainers.title "Karty z kontekstem">
+<!ENTITY paneUpdates.title "Aktualizacje">
+<!ENTITY languageAndAppearance.label "Język i wygląd">
+<!ENTITY filesAndApplications.label "Pliki i aplikacje">
+<!ENTITY browserPrivacy.label "Prywatność">
+<!ENTITY paneSync1.title "Konto Firefoksa">
+
+<!ENTITY helpButton2.label "Wsparcie programu &brandShortName;">

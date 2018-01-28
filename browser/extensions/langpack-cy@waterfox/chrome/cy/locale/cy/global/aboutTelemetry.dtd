@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Data Telemetreg">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ffynhonnell data ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Data ping cyfredol">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Data ping wedi ei archifo">
+
+<!ENTITY aboutTelemetry.raw "JSON bras">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Dangos data is-sesiwn">
+
+<!ENTITY aboutTelemetry.choosePing "Dewis ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping mwy diweddar">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping hŷn &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Wythnos">
+
+<!ENTITY aboutTelemetry.archivePingType "Math Ping">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Heddiw">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Ddoe">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Hŷn">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Data Cyffredinol">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Data'r Amgylchedd">
+
+<!ENTITY aboutTelemetry.telemetryLogSection " Cofnod Telemetreg">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Datganiadau SQL Araf">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Oedi Porwr">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Trywydd Crog">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Staciau wedi eu Cipio">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Scalarau">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Graddfeydd Allweddedig">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramau">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histogramau Allweddol">
+
+<!ENTITY aboutTelemetry.eventsSection "  Digwyddiadau">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Mesuriadau Syml">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Manylion Ychwanegyn">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Ysgrifennu Hwyr">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Manylion Sesiwn">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  SYLW: Mae dadfygio SQL araf wedi ei alluogi. Gall llinynnau SQL llawn gael eu dangos isod ond ni fyddant yn cael eu trosglwyddo i'r Telemetreg.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Estyn enwau swyddogaethau ar gyfer pentyrrau">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Dangos data pentwr bras">
+
+<!ENTITY aboutTelemetry.filterText "  Hidl (llinyn neu /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Llwyth">

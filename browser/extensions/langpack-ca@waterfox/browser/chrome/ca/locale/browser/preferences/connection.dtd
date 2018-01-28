@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Paràmetres de connexió">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Configura els servidors intermediaris per accedir a Internet">
+<!ENTITY  noProxyTypeRadio.label        "Sense servidor intermediari">
+<!ENTITY  noProxyTypeRadio.accesskey    "v">
+<!ENTITY  systemTypeRadio.label         "Utilitza els paràmetres de servidor intermediari del sistema">
+<!ENTITY  systemTypeRadio.accesskey     "z">
+<!ENTITY  WPADTypeRadio.label           "Detecta automàticament els paràmetres del servidor intermediari per a aquesta xarxa">
+<!ENTITY  WPADTypeRadio.accesskey       "i">
+<!ENTITY  manualTypeRadio.label         "Configuració manual del servidor intermediari:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "URL de configuració automàtica del servidor intermediari:">
+<!ENTITY  autoTypeRadio.accesskey       "a">
+<!ENTITY  reload.label                  "Actualitza">
+<!ENTITY  reload.accesskey              "z">
+<!ENTITY  ftp.label                     "Servidor intermediari d'FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Servidor intermediari d'HTTP:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "Servidor intermediari de SSL:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "Ordinador central SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Servidor intermediari DNS en utilitzar SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Sense servidor intermediari per a:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Exemple: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Utilitza aquest servidor intermediari per a tots els protocols">
+<!ENTITY  shareproxy.accesskey          "l">
+<!ENTITY  autologinproxy.label          "No sol·licitis autenticació si la contrasenya està desada">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Aquesta opció us autentica automàticament en els servidors intermediaris dels quals heu desat les credencials. Si l'autenticació falla, se us sol·licitaran les credencials.">

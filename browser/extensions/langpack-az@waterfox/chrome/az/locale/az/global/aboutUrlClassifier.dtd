@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Url-classifier haqqında məlumat">
+<!ENTITY aboutUrlClassifier.providerTitle               "Təminatçı">
+<!ENTITY aboutUrlClassifier.provider                    "Təminatçı">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Son yenilənmə vaxtı">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Sonrakı yenilənmə vaxtı">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Geri qayırma vaxtı">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Son yenilənmə vəziyyəti">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Yenilə">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Keş">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Yenilə">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Təmizlə">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Cədvəl adı">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Mənfi keş elementlərinin sayısı">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Pozitiv keş elementlərinin sayısı">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Elementləri göstər">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Keş elementləri">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Mənfi keş vaxtı keçmə">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Tam hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Pozitiv keş vaxtı keçmə">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Sazla">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Gündəlik Modullarını Qur">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Gündəlik Faylını Qur">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS Gündəliyini Qur">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Təhlükəsiz Səyahət gündəliyi modulları">
+<!ENTITY aboutUrlClassifier.debugModules                "Hazırki gündəlik modulları">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Təhlükəsiz Səyahət JS gündəliyi">
+<!ENTITY aboutUrlClassifier.debugFile                   "Hazırki gündəlik faylı">

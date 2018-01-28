@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "အမည်၊">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "နေရာတစ်ခု - ">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "ပေးပို့ချက် တည်နေရာ၊">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "ကွန်ရက် တည်နေရာ၊">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "ဖိုင်တွဲ၊">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "မှတ်သားချက်များ ဖိုင်တွဲများ အားလုံးကို ပြသပါ">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "ဖျောက်ထားပါ">
+<!ENTITY editBookmarkOverlay.tags.label                      "စာအမှတ်များ၊">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "စာအမှတ်များကို ပုဒ်ရပ်သ​​​​ကေင်္တနဲ့ ခွဲခြားပါ">
+<!ENTITY editBookmarkOverlay.description.label               "ဖေါ်ပြချက်၊">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "အဓိက​ သော့ချက်၊">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "စာအမှတ်အားလုံးကို ပြသပါ">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "ဘေးတန်းမှာ ဒီမှတ်သားချက်ကို ဖွင့်ပါ">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ဒ">
+<!ENTITY editBookmarkOverlay.choose.label                    "ရွေးပါ...">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "ဖိုင်တွဲ အသစ်">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "ဖ">

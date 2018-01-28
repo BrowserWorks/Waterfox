@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Colors">
+<!ENTITY  window.width                    "48em">
+<!ENTITY  window.macWidth                 "49em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Sobrescribir las colors especificadas por a pachina con as mías seleccions d'alto:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Siempre">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Nomás con temas d'alto contraste">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nunca">
+
+<!ENTITY  color                           "Texto y fundo">
+<!ENTITY  textColor.label                 "Texto:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Fundo:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Utilizar as colors d'o sistema">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Subrayar os vinclos">
+<!ENTITY  underlineLinks.accesskey        "b">
+<!ENTITY  links                           "Color d'os vinclos">
+<!ENTITY  linkColor.label                 "Vinclos no visitaus:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Vinclos visitaus:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

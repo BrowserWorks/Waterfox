@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title "ਸਰਟੀਫਕੇਟ ਮੈਨੇਜਰ">
+
+<!ENTITY certmgr.tab.mine "ਤੁਹਾਡਾ ਸਰਟੀਫਕੇਟ">
+<!ENTITY certmgr.tab.others2                  "ਲੋਕ">
+<!ENTITY certmgr.tab.websites3                "ਸਰਵਰ">
+<!ENTITY certmgr.tab.ca "ਅਥਾਰਟੀ">
+<!ENTITY certmgr.tab.orphan2                  "ਹੋਰ">
+
+<!ENTITY certmgr.mine "ਤੁਹਾਡੇ ਕੋਲ ਇਹਨਾਂ ਸੰਸਥਾਵਾਂ ਵਲੋਂ ਸਰਟੀਫਿਕੇਟ ਹਨ, ਜੋ ਕਿ ਤੁਹਾਨੂੰ ਪਛਾਣਦੇ ਹਨ:">
+<!ENTITY certmgr.others "ਤੁਹਾਡੇ ਕੋਲ ਫਾਈਲ ਲਈ ਸਰਟੀਫਿਕੇਟ ਹਨ, ਜੋ ਕਿ ਇਹਨਾਂ ਵਿਅਕਤੀਆਂ ਨੂੰ ਪਛਾਣਦੇ ਹਨ:">
+<!ENTITY certmgr.websites2                    "ਤੁਹਾਡੇ ਕੋਲ ਫਾਈਲ ਉੱਤੇ ਸਰਟੀਫਿਕੇਟ ਹਨ, ਜੋ ਕਿ ਇਹ ਸਰਵਰਾਂ ਨੂੰ ਪਛਾਣਦੇ ਹਨ:">
+<!ENTITY certmgr.cas "ਫਾਈਲ ਵਿੱਚ ਤੁਹਾਡੇ ਕੋਲ ਸਰਟੀਫਿਕੇਟ ਹਨ, ਜੋ ਕਿ ਇਹਨਾਂ ਸਰਟੀਫਿਕੇਟ ਪ੍ਰਮਾਣਕਿਤਾਂ ਨੂੰ ਪਛਾਣਦੇ ਹਨ:">
+<!ENTITY certmgr.orphans                      "ਤੁਹਾਡੇ ਕੋਲ ਫਾਈਲ ਵਿੱਚ ਸਰਟੀਫਿਕੇਟ ਹਨ, ਜੋ ਕਿ ਹੋਰ ਕੈਟਾਗਰੀਆਂ 'ਚ ਫਿੱਟ ਨਹੀਂ ਆਉਦੇ:">
+
+<!ENTITY certmgr.detail.general_tab.title     "ਆਮ">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "ਵੇਰਵਾ">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "ਹੁਣ ਸਰਟੀਫਿਕੇਟ ਦੀ ਜਾਂਚ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ...">
+<!ENTITY certmgr.subjectinfo.label "ਇਸ ਨੂੰ ਜਾਰੀ">
+<!ENTITY certmgr.issuerinfo.label "ਇਸ ਵਲੋਂ ਜਾਰੀ">
+<!ENTITY certmgr.periodofvalidity.label       "ਵੈਧਤਾ ਦਾ ਅੰਤਰਾਲ" >
+<!ENTITY certmgr.fingerprints.label "ਫਿੰਗਰਪਰਿੰਟ">
+<!ENTITY certmgr.certdetail.title "ਸਰਟੀਫਕੇਟ ਵੇਰਵਾ">
+<!ENTITY certmgr.certdetail.cn "ਆਮ ਨਾਂ (CN)">
+<!ENTITY certmgr.certdetail.o "ਸੰਗਠਨ (O)">
+<!ENTITY certmgr.certdetail.ou "ਸੰਗਠਨ ਯੂਨਿਟ (OU)">
+<!ENTITY certmgr.certdetail.serialnumber "ਸੀਰੀਅਲ ਨੰਬਰ">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 ਫਿੰਗਰਪਰਿੰਟ">
+<!ENTITY certmgr.certdetail.sha1fingerprint "SHA1 ਫਿੰਗਰਪਰਿੰਟ">
+
+<!ENTITY certmgr.editcacert.title "CA ਸਰਟੀਫਿਕੇਟ ਟਰੱਸਟ ਸੈਟਿੰਗ ਸੋਧ">
+<!ENTITY certmgr.editcert.edittrust "ਟਰੱਸਟ ਸੈਟਿੰਗਾਂ ਨੂੰ ਸੋਧੋ:">
+<!ENTITY certmgr.editcert.trustssl "ਇਹ ਸਰਟੀਫਿਕੇਟ ਵੈੱਬ ਸਾਇਟਾਂ ਦੀ ਪਛਾਣ ਕਰ ਸਕਦਾ ਹੈ।">
+<!ENTITY certmgr.editcert.trustemail "ਇਹ ਸਰਟੀਫਿਕੇਟ ਮੇਲ ਯੂਜ਼ਰਾਂ ਨੂੰ ਪਛਾਣ ਸਕਦਾ ਹੈ।">
+<!ENTITY certmgr.editcert.trustobjsign "ਇਹ ਸਰਟੀਫਿਕੇਟ ਸਾਫਟਵੇਅਰ ਨਿਰਮਾਤਾ ਨੂੰ ਪਛਾਣ ਸਕਦਾ ਹੈ।">
+
+<!ENTITY certmgr.deletecert.title "ਸਰਟੀਫਕੇਟ ਨੂੰ ਹਟਾਓ">
+
+<!ENTITY certmgr.certserver                   "ਸਰਵਰ">
+<!ENTITY certmgr.override_lifetime            "ਲਾਇਫ-ਟਾਈਮ">
+<!ENTITY certmgr.certname                     "ਸਰਟੀਫਿਕੇਟ ਨਾਂ">
+<!ENTITY certmgr.tokenname                    "ਸੁਰੱਖਿਆ ਜੰਤਰ">
+
+<!ENTITY certmgr.begins                       "ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ">
+<!ENTITY certmgr.expires                      "ਮਿਆਦ">
+<!ENTITY certmgr.email                        "ਈਮੇਲ ਐਡਰੈੱਸ">
+<!ENTITY certmgr.serial                       "ਸੀਰੀਅਲ ਨੰਬਰ">
+
+<!ENTITY certmgr.close.label                  "ਬੰਦ ਕਰੋ">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                   "… ਨੂੰ ਵੇਖੋ">
+<!ENTITY certmgr.view2.accesskey               "V">
+<!ENTITY certmgr.edit3.label                  "ਭਰੋਸੇ ਨੂੰ ਸੋਧ…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+
+<!ENTITY certmgr.export.label                 "…ਨੂੰ ਐਕਸਪੋਰਟ">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                 "…ਨੂੰ ਹਟਾਓ">
+<!ENTITY certmgr.delete2.accesskey             "D">
+<!ENTITY certmgr.delete_builtin.label         "…ਹਟਾਓ ਜਾਂ ਗ਼ੈਰ-ਭਰੋਸੇਯੋਗ">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                 "…ਬੈਕਅੱਪ">
+<!ENTITY certmgr.backup2.accesskey             "B">
+<!ENTITY certmgr.backupall2.label              "…ਸਭ ਬੈਕਅੱਪ">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label                "…ਨੂੰ ਇੰਪੋਰਟ">
+<!ENTITY certmgr.restore2.accesskey            "m">
+<!ENTITY certmgr.details.label                "ਸਰਟੀਫਿਕੇਟ ਖੇਤਰ">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.label                 "ਖੇਤਰ ਮੁੱਲ">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "ਸਰਟੀਫਿਕੇਟ ਲੜੀ">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "…ਨੂੰ ਛੋਟ ਦਿਓ">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "ਸੁਰੱਖਿਆ ਛੋਟ ਨੂੰ ਸ਼ਾਮਲ ਕਰੋ">
+<!ENTITY exceptionMgr.exceptionButton.label   "ਸੁਰੱਖਿਆ ਛੋਟ ਨੂੰ ਤਸਦੀਕ ਕਰੋ">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "ਉੱਚਿਤ ਬੈਕਾਂ, ਸਟੋਰ ਅਤੇ ਹੋਰ ਪਬਲਿਕ ਸਾਈਟਾਂ ਤੁਹਾਨੂੰ ਇਹ ਕਰਨ ਲਈ ਨਹੀਂ ਪੁੱਛਣਗੀਆਂ।">
+<!ENTITY exceptionMgr.certlocation.caption2   "ਸਰਵਰ">
+<!ENTITY exceptionMgr.certlocation.url        "ਟਿਕਾਣਾ:">
+<!ENTITY exceptionMgr.certlocation.download   "ਸਰਟੀਫਿਕੇਟ ਲਵੋ">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "ਸਰਟੀਫਿਕੇਟ ਹਾਲਤ">
+<!ENTITY exceptionMgr.certstatus.viewCert     "…ਵੇਖੋ">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "ਇਹ ਛੋਟ ਹਮੇਸ਼ਾ ਲਈ ਸਟੋਰ ਕਰੋ">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Yee banda">
+<!ENTITY  button-back-mac.accesskey    "b">
+<!ENTITY  button-next-mac.label        "Koy jine">
+<!ENTITY  button-next-mac.accesskey    "K">
+<!ENTITY  button-finish-mac.label      "Tee ka ben">
+<!ENTITY  button-cancel-mac.label      "Naŋ">
+
+<!ENTITY  button-back-unix.label       "Banda">
+<!ENTITY  button-back-unix.accesskey   "B">
+<!ENTITY  button-next-unix.label       "Jine">
+<!ENTITY  button-next-unix.accesskey   "J">
+<!ENTITY  button-finish-unix.label     "Ben">
+<!ENTITY  button-cancel-unix.label     "Naŋ">
+
+<!ENTITY  button-back-win.label        "&lt; Banda">
+<!ENTITY  button-back-win.accesskey    "B">
+<!ENTITY  button-next-win.label        "Jine &gt;">
+<!ENTITY  button-next-win.accesskey    "J">
+<!ENTITY  button-finish-win.label      "Ben">
+<!ENTITY  button-cancel-win.label      "Naŋ">

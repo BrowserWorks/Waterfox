@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "ਸਾਫਟਵੇਅਰ ਅੱਪਡੇਟ">
+
+<!ENTITY  checking.title                  "ਅੱਪਡੇਟ ਲਈ ਚੈੱਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ">
+<!ENTITY  updateCheck.label               "&brandShortName; ਦੇ ਨਵੇਂ ਵਰਜਨਾਂ ਲਈ ਖੋਜ ਜਾਰੀ…">
+
+<!ENTITY  noupdatesfound.title            "ਕੋਈ ਅੱਪਡੇਟ ਨਹੀਂ ਮਿਲਿਆ ਹੈ">
+<!ENTITY  noupdatesautoenabled.intro      "ਕੋਈ ਅੱਪਡੇਟ ਉਪਲੱਬਧ ਨਹੀਂ ਹੈ। &brandShortName; ਅੱਪਡੇਟ ਲਈ ਲਗਾਤਾਰ ਚੈੱਕ ਕਰਦਾ ਰਹੇਗਾ।">
+<!ENTITY  noupdatesautodisabled.intro     "ਕੋਈ ਵੀ ਅੱਪਡੇਟ ਉਪਲੱਬਧ ਨਹੀਂ ਹੈ। ਜਾਂ ਤਾਂ ਬਾਅਦ ਵਿੱਚ ਚੈੱਕ ਕਰੋ ਜਾਂ 
+                                           &brandShortName; ਦੇ ਆਟੋਮੈਟਿਕ ਅੱਪਡੇਟ ਦੀ ਚੋਣ ਕਰੋ।">
+
+<!ENTITY  manualUpdate.title              "ਅੱਪਡੇਟ ਕਰਨ ਲਈ ਅਸਮੱਰਥ">
+<!ENTITY  manualUpdate.desc               "ਇੱਕ ਸਿਫਾਰਸ਼ੀ ਸੁਰੱਖਿਆ ਅਤੇ ਸਥਿਰਤਾ ਅੱਪਡੇਟ ਉਪਲੱਬਧ ਹੈ, ਪਰ ਇਹ ਇੰਸਟਾਲ ਕਰਨ ਲਈ ਤੁਹਾਨੂੰ ਸਿਸਟਮ-ਅਧਿਕਾਰਾਂ ਦੀ ਲੋੜ ਹੈ। ਆਪਣੇ ਸਿਸਟਮ ਪਰਸ਼ਾਸ਼ਕ ਨਾਲ ਸੰਪਰਕ ਕਰੋ ਜਾਂ ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਸਾਫਟਵੇਅਰ ਇੰਸਟਾਲ ਕਰਨਯੋਗ ਅਧਿਕਾਰਾਂ ਵਾਲੇ ਖਾਤੇ ਨਾਲ ਮੁੜ-ਕੋਸ਼ਿਸ਼ ਕਰੋ ਜੀ।">
+<!ENTITY  manualUpdate.space.desc         "ਸਿਫਾਰਸ਼ੀ ਤੇ ਸਥਿਰਤਾ ਅੱਪਡੇਟ ਉਪਲੱਬਧ ਹੈ, ਪਰ ਤੁਹਾਡੇ ਕੋਲ ਇਹ ਇੰਸਟਾਲ ਕਰਨ ਲਈ ਲੋੜੀਦੀ ਥਾਂ ਨਹੀਂ ਹੈ।">
+<!ENTITY  manualUpdateGetMsg.label        "ਤੁਸੀਂ &brandShortName; ਨਵਾਂ ਵਰਜਨ ਹਮੇਸ਼ਾਂ ਇੱਥੋ ਲੈ ਸਕਦੇ ਹੋ:">
+
+<!ENTITY  unsupported.title               "ਸਿਸਟਮ ਗੈਰ-ਸਹਾਇਕ">
+<!ENTITY  unsupported.label               "ਤੁਹਾਡਾ &brandShortName; ਪੁਰਾਣਾ ਹੈ, ਪਰ ਨਵਾਂ ਵਰਜਨ ਤੁਹਾਡੇ ਸਿਸਟਮ ਲਈ ਸਹਾਇਕ ਨਹੀਂ ਹੈ। ਆਪਣਾ ਸਿਸਟਮ ਅੱਪਡੇਟ ਕਰੋ ਅਤੇ ਫੇਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ ਜੀ।
+                                           ਤੁਹਾਨੂੰ ਇਹ ਸੂਚਨਾ ਫੇਰ ਨਹੀਂ ਵੇਖਾਈ ਦੇਵੇਗੀ, ਪਰ ਤੁਸੀਂ">
+<!ENTITY  unsupportedLink.label           "ਹੋਰ ਜਾਣ ਸਕਦੇ ਹੋ।">
+
+<!ENTITY  clickHere.label                 "ਇਸ ਅੱਪਡੇਟ ਬਾਰੇ ਹੋਰ ਜਾਣਕਾਰੀ ਪਰਾਪਤ ਕਰਨ ਲਈ ਇੱਥੇ ਦਬਾਓ">
+
+<!ENTITY  evangelism.desc                 "ਇਹ ਜ਼ੋਰਦਾਰ ਸਿਫਾਰਸ਼ ਕੀਤੀ ਜਾਂਦੀ ਹੈ ਕਿ ਤੁਸੀਂ 
+                                           &brandShortName; ਲਈ ਇਹ ਅੱਪਡੇਟ ਜਿੰਨਾ ਛੇਤੀ ਹੋ ਸਕੇ ਲਾਗੂ ਕਰੋ।">
+
+<!ENTITY  downloadPage.title              "&brandShortName; ਡਾਊਨਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ">
+<!ENTITY  downloading.intro               "…ਅੱਪਡੇਟ ਡਾਊਨਲੋਡ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ">
+<!ENTITY  connecting.label                "…ਅੱਪਡੇਟ ਸਰਵਰ ਨਾਲ ਕੁਨੈਕਟ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ਇਸ ਰਾਹੀਂ ਡਾਊਨਲੋਡ ਕੀਤੇ ਲਗਾਤਾਰ ਅੱਪਡੇਟ ਦੀ ਇਕਸਾਰਤਾ ਚੈਕ ਕਰਨ ਲਈ ਫੇਲ੍ਹ ਹੋਇਆ ਹੈ, ਸੋ ਹੁਣ ਪੂਰਾ ਅੱਪਡੇਟ ਪੈਕੇਜ ਡਾਊਨਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ।">
+
+<!ENTITY  viewDetails.tooltip             "ਇਸ ਅੱਪਡੇਟ ਲਈ ਵੇਰਵਾ ਵੇਖੋ">
+
+<!ENTITY  details.link                    "ਵੇਰਵੇ">
+
+<!ENTITY  error.title                     "ਅੱਪਡੇਟ ਫੇਲ੍ਹ ਹੋਇਆ">
+
+<!ENTITY  error.label                     "ਇਸ ਅੱਪਡੇਟ ਨੂੰ ਇੰਸਟਾਲ ਕਰਨ ਦੌਰਾਨ ਗਲਤੀ ਹੈ। &brandShortName; ਨੂੰ ਅੱਪਡੇਟ ਨਹੀਂ ਕੀਤਾ ਸਕਿਆ ਹੈ, 
+                                           ਕਿਉਕਿ:">
+                                           
+<!ENTITY  errorManual.label               "ਤੁਸੀਂ &brandShortName; ਨੂੰ ਖੁਦ ਇਹ ਲਿੰਕ ਖੋਲ੍ਹ ਕੇ ਕਰ ਸਕਦੇ ਹੋ ਅਤੇ ਨਵਾਂ ਵਰਜਨ ਡਾਊਨਲੋਡ ਕਰ ਸਕਦੇ ਹੋ:">
+                                           
+<!ENTITY  errorpatching.intro             "ਅਧੂਰੇ ਅੱਪਡੇਟ ਨੂੰ ਲਾਗੂ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ ਹੈ। 
+                                            &brandShortName; ਪੂਰੇ ਅੱਪਡੇਟ ਨੂੰ ਮੁੜ ਲੋਡ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ ਕਰੇਗਾ।">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ਜਾਣਨ ਲਈ ਅਸਮਰੱਥ ਹੈ ਕਿ ਕੋਈ ਅੱਪਡੇਟ ਉਪਲੱਬਧ ਹੈ। ਯਕੀਨੀ ਬਣਾਉ ਕਿ ਤੁਹਾਡੇ ਕੋਲ 
+                                           &brandShortName; ਦਾ ਸਭ ਤੋਂ ਨਵਾਂ ਵਰਜਨ ਹੈ ਤੇ ਉਹ ਇੱਥੋਂ ਲਿਆ ਹੈ:">
+
+<!ENTITY  finishedPage.title              "ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਹੋਣ ਲਈ ਤਿਆਰ ਹੈ">
+<!ENTITY  finishedPage.text               "ਅੱਪਡੇਟ ਅਗਲੀ ਵਾਰ &brandShortName; ਸ਼ੁਰੂ ਹੋਣ ਉੱਤੇ ਇੰਸਟਾਲ ਹੋਵੇਗਾ। ਤੁਸੀਂ ਹੁਣ 
+                                           &brandShortName; ਮੁੜ-ਚਾਲੂ ਕਰ ਸਕਦੇ ਹੋ ਜਾਂ ਆਪਣਾ ਕੰਮ ਜਾਰੀ ਰੱਖ ਸਕਦੇ ਹੋ ਅਤੇ ਬਾਅਦ ਵਿੱਚ ਮੁੜ-ਚਾਲੂ ਕਰ ਸਕਦੇ ਹੋ।">
+
+<!ENTITY  finishedBackgroundPage.text     "ਸੁਰੱਖਿਆ ਅਤੇ ਸਥਿਰਤਾ ਅੱਪਡੇਟ  &brandShortName; ਲਈ ਡਾਊਨਲੋਡ ਕੀਤਾ ਗਿਆ ਹੈ ਅਤੇ ਇੰਸਟਾਲ ਹੋਣ ਲਈ ਤਿਆਰ ਹੈ।">
+<!ENTITY  finishedBackground.name         "ਅੱਪਡੇਟ:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "ਅੱਪਡੇਟ ਨੂੰ ਅਗਲੀ ਵਾਰ &brandShortName; ਚਾਲੂ ਹੋਣ ਉੱਤੇ ਇੰਸਟਾਲ ਕੀਤਾ ਜਾਵੇਗਾ। ਤੁਸੀਂ
+                                            &brandShortName; ਨੂੰ ਹੁਣ ਮੁੜ-ਚਾਲੂ ਕਰ ਸਕਦੇ ਹੋ ਜਾਂ ਆਪਣਾ ਕੰਮ ਜਾਰੀ ਰੱਖ ਸਕਦੇ ਹੋ ਅਤੇ ਬਾਅਦ ਵਿੱਚ ਮੁੜ-ਚਾਲੂ ਕਰ ਸਕਦੇ ਹੋ।">
+<!ENTITY  finishedBackground.moreElevated "ਇਸ ਅੱਪਡੇਟ ਲਈ ਪਰਸ਼ਾਸ਼ਕ ਅਧਿਕਾਰਾਂ ਦੀ ਲੋੜ ਹੈ। ਅੱਪਡੇਟ ਨੂੰ ਅਗਲੀ ਵਾਰ &brandShortName; ਸ਼ੁਰੂ ਹੋਣ ਉੱਤੇ ਇੰਸਟਾਲ ਕੀਤਾ ਜਾਵੇਗਾ। ਤੁਸੀਂ ਹੁਣੇ 
+                                           &brandShortName; ਨੂੰ ਮੁੜ-ਚਾਲੂ ਕਰ ਸਕਦੇ ਹੋ, ਕੰਮ ਜਾਰੀ ਰੱਖ ਸਕਦੇ ਤੇ ਬਾਅਦ ਵਿੱਚ ਮੁੜ-ਚਾਲੂ ਕਰ ਸਕਦੇ ਹੋ ਜਾਂ ਇਸ ਅੱਪਡੇਟ ਨੂੰ
+                                           ਰੱਦ ਵੀ ਕਰ ਸਕਦੇ ਹੋ।">
+
+<!ENTITY  update.details.label            "ਵੇਰਵੇ">
+<!ENTITY  update.installedOn.label        "ਇੰਸਟਾਲ ਕੀਤੇ:">
+<!ENTITY  update.status.label             "ਹਾਲਤ:">

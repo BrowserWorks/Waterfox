@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "veiviser for ny profil">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; lagrer innstillinger og annen brukerdata i din personlige profil.">
+<!ENTITY profileCreationExplanation_2.text  "Dersom du deler denne kopien av &brandShortName; med andre brukere, kan du bruke profilene for å skille brukernes egen informasjon. For å gjøre dette må hver bruker opprette sin egen profil.">
+<!ENTITY profileCreationExplanation_3.text  "Dersom du er den eneste personen som bruker denne kopien av &brandShortName; må du ha minst en profil. Om du vil kan du opprette flere profiler for å skille mellom ulike sett av innstillinger og brukerdata. Du kan for eksempel ha forskjellige profiler for jobb og personlig bruk.">
+<!ENTITY profileCreationExplanation_4.text  "Trykk «Neste» for å opprette en ny profil.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Trykk «Fortsett» for å begynne opprette profilen.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Trykk «Neste» for å begynne opprette profilen.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Dersom du oppretter flere profiler, kan du skille dem fra hverandre med profilnavnet. Du kan bruke navnet foreslått her, eller du kan bruke et annet.">
+<!ENTITY profilePrompt.label            "Skriv inn nytt profilnavn:">
+<!ENTITY profilePrompt.accesskey        "p">
+<!ENTITY profileDirectoryExplanation.text   "Innstillinger og andre brukerdata lagres i:">
+<!ENTITY profileDefaultName             "Standardbruker">
+<!ENTITY button.choosefolder.label      "Velg mappe …">
+<!ENTITY button.choosefolder.accesskey  "m">
+<!ENTITY button.usedefault.label        "Bruk standard mappe">
+<!ENTITY button.usedefault.accesskey    "B">

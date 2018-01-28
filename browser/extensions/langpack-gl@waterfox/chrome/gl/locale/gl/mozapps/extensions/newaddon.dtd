@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instalar complemento">
+<!ENTITY intro           "Outro aplicativo no computador desexa modificar o
+			  &brandShortName; co seguinte complemento:">
+<!ENTITY warning         "Instale só complementos de autores de confianza.">
+<!ENTITY allow           "Permitir esta instalación">
+<!ENTITY later           "En calquera momento pode cambiar de opinión a través
+                          do Xestor de complementos.">
+<!ENTITY continue        "Continuar">
+<!ENTITY restartMessage  "Debe reiniciar o &brandShortName; para rematar a instalación deste complemento.">
+<!ENTITY restartButton   "Reiniciar &brandShortName;">
+<!ENTITY cancelButton    "Cancelar">

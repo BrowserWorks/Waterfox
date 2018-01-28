@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "एम">
+<!ENTITY minimizeWindow.label     "न्यूनतम करें">
+<!ENTITY bringAllToFront.label    "सभी को सामने लाएँ">
+<!ENTITY zoomWindow.label         "बड़ा-छोटा करें">
+<!ENTITY windowMenu.label         "विंडो">
+
+<!ENTITY helpMenu.label           "सहायता"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "मदद"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "About &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; मदद">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "कुंजीपट शॉर्टकट‌‌">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "निष्क्रिय सहयुक्तियों के साथ फिर ‌आरंभ करें…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "सक्षम सहयुक्तियों के साथ फिर आरंभ करें">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "&brandShorterName; स्वास्थ्य विवरण">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "विघ्ननिवारण सूचना">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "प्रतिक्रिया जमा करें...">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; दौरा">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "वरीयताएँ…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "सेवाएँ‌">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; छिपाएँ‌">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "अन्य छिपा‌एँ">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "सभी दिखाएँ">

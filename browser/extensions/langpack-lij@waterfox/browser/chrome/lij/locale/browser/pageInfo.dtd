@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Còpia">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Seleçionn-a tutto">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Generale">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Titolo:">
+<!ENTITY  generalURL            "Indirisso:">
+<!ENTITY  generalType           "Tipo:">
+<!ENTITY  generalMode           "Mòddo de prezentaçion:">
+<!ENTITY  generalSize           "Dimenscion:">
+<!ENTITY  generalReferrer       "Riferio a l'indirisso:">
+<!ENTITY  generalSource         "Sorgente cache:">
+<!ENTITY  generalModified       "Cangiou">
+<!ENTITY  generalEncoding2      "Codifica testo:">
+<!ENTITY  generalMetaName       "Nomme">
+<!ENTITY  generalMetaContent    "Contegnuo">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Indirisso">
+<!ENTITY  mediaText             "Testo asociou:">
+<!ENTITY  mediaAltHeader        "Testo alternativo">
+<!ENTITY  mediaAddress          "Indirisso">
+<!ENTITY  mediaType             "Tipo">
+<!ENTITY  mediaSize             "Dimenscion">
+<!ENTITY  mediaCount            "Numero">
+<!ENTITY  mediaDimension        "Dimenscion:">
+<!ENTITY  mediaLongdesc         "Descriçion longa:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Sarva co-o nomme…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Anteprimma do media">
+
+<!ENTITY  feedTab               "Feed">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Abon-ite">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Permissi">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Adeuvia predefinio">
+<!ENTITY  permAskAlways         "Domanda de longo">
+<!ENTITY  permAllow             "Permetti">
+<!ENTITY  permAllowSession      "Permetti pe sta sescion">
+<!ENTITY  permBlock             "Blòcco">
+<!ENTITY  permissionsFor        "Permisso pe:">
+<!ENTITY  permPlugins           "Ativa i Plugin">
+
+<!ENTITY  permClearStorage           "Scancella o sarvataggio">
+<!ENTITY  permClearStorage.accesskey "c">
+
+<!ENTITY  securityTab           "Seguessa">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Fanni vedde o certificato">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "no conosciuo">
+
+
+<!ENTITY  securityView.identity.header   "Identitæ do scito">
+<!ENTITY  securityView.identity.owner    "Propietaio:">
+<!ENTITY  securityView.identity.domain   "Scito:">
+<!ENTITY  securityView.identity.verifier "Verificou da:">
+
+<!ENTITY  securityView.privacy.header                   "Privacy &amp; stöia">
+<!ENTITY  securityView.privacy.history                  "T'æ za vixitou sto scito primma de ancheu?">
+<!ENTITY  securityView.privacy.cookies                  "Sto scito web o sarva informaçioin (cookie) in sciô mæ computer?">
+<!ENTITY  securityView.privacy.viewCookies              "Fanni vedde i cookie">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Gh'ò de paròlle segrete sarvæ pe sto scito?">
+<!ENTITY  securityView.privacy.viewPasswords            "Fanni vedde e paròlle segrete sarvæ">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "v">
+
+<!ENTITY  securityView.technical.header                 "Detalli Tecnichi">
+
+<!ENTITY  helpButton.label                              "Goidda">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

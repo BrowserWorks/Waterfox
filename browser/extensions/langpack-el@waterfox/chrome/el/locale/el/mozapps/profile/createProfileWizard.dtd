@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Οδηγός δημιουργίας προφίλ">
+<!ENTITY window.size                  "width: 52em; height: 35em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "Το &brandShortName; αποθηκεύει πληροφορίες σχετικά με τις ρυθμίσεις και τις προτιμήσεις σας στο προσωπικό σας προφίλ.">
+<!ENTITY profileCreationExplanation_2.text  "Αν μοιράζεστε αυτό το αντίγραφο του &brandShortName; με άλλους χρήστες, μπορείτε να χρησιμοποιήσετε τα προφίλ για να έχει ο κάθε χρήστης ξεχωριστές πληροφορίες. Για να το κάνετε αυτό, ο κάθε χρήστης θα πρέπει να δημιουργήσει το δικό του προφίλ.">
+<!ENTITY profileCreationExplanation_3.text  "Αν είστε ο μόνος χρήστης αυτού του αντιγράφου του &brandShortName;, θα πρέπει να δημιουργήσετε τουλάχιστον ένα προφίλ. Αν θέλετε, μπορείτε να δημιουργήσετε πολλαπλά προφίλ για τον εαυτό σας, ώστε να αποθηκεύετε διαφορετικά σύνολα ρυθμίσεων και προτιμήσεων. Για παράδειγμα, ίσως να θέλετε να έχετε ξεχωριστά προφίλ για προσωπική και επαγγελματική χρήση.">
+<!ENTITY profileCreationExplanation_4.text  "Για να ξεκινήσετε τη δημιουργία του προφίλ σας, κάντε κλικ στο Επόμενο.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Για να ξεκινήσετε τη δημιουργία του προφίλ σας, κάντε κλικ στο Συνέχεια.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Για να ξεκινήσετε τη δημιουργία του προφίλ σας, κάντε κλικ στο Επόμενο.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Αν δημιουργήσετε πολλά προφίλ, μπορείτε να τα ξεχωρίζετε από το όνομά τους. Μπορείτε να επιλέξτε το προεπιλεγμένο όνομα ή να δημιουργήσετε το δικό σας.">
+<!ENTITY profilePrompt.label            "Εισάγετε το όνομα του νέου προφίλ:">
+<!ENTITY profilePrompt.accesskey        "Ε">
+<!ENTITY profileDirectoryExplanation.text   "Οι ρυθμίσεις, οι προτιμήσεις, οι σελιδοδείκτες και άλλα σχετικά δεδομένα χρήστη θα αποθηκευτούν εδώ:">
+<!ENTITY profileDefaultName             "Προεπιλεγμένος χρήστης">
+<!ENTITY button.choosefolder.label      "Επιλογή φακέλου…">
+<!ENTITY button.choosefolder.accesskey  "λ">
+<!ENTITY button.usedefault.label        "Χρήση προεπιλεγμένου φακέλου">
+<!ENTITY button.usedefault.accesskey    "ρ">

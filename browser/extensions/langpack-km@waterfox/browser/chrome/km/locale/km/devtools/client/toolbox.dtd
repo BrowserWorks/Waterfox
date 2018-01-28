@@ -1,0 +1,232 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key  "ល">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage          "មាន​កំហុស​ពេល​បើក​ប្រអប់​​ឧបករណ៍​កម្មវិធី​​អ៊ីនធឺណិត៖">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings "ការ​កំណត់​កម្រិត​ខ្ពស់">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector "កម្មវិធី​ត្រួតពិនិត្យ">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label "បង្ហាញ​រចនាប័ទ្ម​​សម្រាប់​កម្មវិធី​អ៊ីនធឺណិត">
+<!ENTITY options.showUserAgentStyles.tooltip "ការ​បិទ​វា​នឹង​បង្ហាញ​រចនាប័ទ្ម​លំនាំដើម​ដែល​ត្រូវ​បាន​ផ្ទុក​ឡើង​​តាម​រយៈ​កម្មវិធី​អ៊ីនធឺណិត។">
+
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label "ឯកតា​ពណ៌លំនាំដើម">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey "ល">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex "Hex">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name "ឈ្មោះ​ពណ៌">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh  "តែ​សម័យ​ប៉ុណ្ណោះ ផ្ទុក​ទំព័រ​​ឡើយ​វិញ">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5    "បើក​ប្រអប់​ឧបករណ៍​កែ​កំហុស​កម្មវិធី​ផ្នែក​បន្ថែម និង​កម្មវិធី​អ៊ីនធឺណិត Chrome">
+<!ENTITY options.enableChrome.tooltip3  "ការ​បើក​ជម្រើស​នេះ​​នឹង​អនុញ្ញាត​ឲ្យ​អ្នក​ប្រើ​ឧបករណ៍​អ្នក​អភិវឌ្ឍ​ជា​ច្រើន​នៅ​ក្នុង​បរិបទ​កម្មវិធី​អ៊ីនធឺណិត (តាម ឧបករណ៍ > អ្នក​អភិវឌ្ឍ​បណ្ដាញ > ប្រអប់​ឧបករណ៍​កម្មវិធី​អ៊ីនធឺណិត) និង​កែ​កំហុស​កម្មវិធី​ផ្នែក​បន្ថែម​ពី​កម្មវិធី​គ្រប់គ្រង​ផ្នែក​បន្ថែម">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3    "បើក​ការ​បំបាត់​កំហុស​ពី​ចម្ងាយ">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "បើក​ការ​កែ​កំហុស Worker (នៅ​ក្នុង​ការ​អភិវឌ្ឍ)">
+<!ENTITY options.enableWorkers.tooltip  "ការ​បើក​ជម្រើស​នេះ​​នឹង​អនុញ្ញាត​ឲ្យ​ឧបករណ៍​អ្នក​អភិវឌ្ឍ​ធ្វើការ​កែ​កំហុស​ Workers">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label     "បិទ JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "ប្ដូរ​ជម្រើស​នេះ​នឹង​បិទ JavaScript សម្រាប់​ផ្ទាំង​បច្ចុប្បន្ន។ ប្រសិនបើ​ផ្ទាំង ឬ​ប្រអប់​ឧបករណ៍​ត្រូវ​បាន​បិទ បន្ទាប់​ការ​កំណត់​នេះ​នឹង​ត្រូវ​បាន​បំភ្លេច។">
+
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label     "បើក Service Workers តាម HTTP (នៅ​ពេល​ប្រអប់​ឧបករណ៍​បើក)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "ការ​បើក​ជម្រើស​នេះ​​នឹង​អនុញ្ញាត​ Service Workers តាម HTTP សម្រាប់​ផ្ទាំង​ទាំងអស់​ដែល​​បាន​បើក​ប្រអប់​ឧបករណ៍។">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label  "ឧបករណ៍​របស់​អ្នក​អភិវឌ្ឍន៍​ដែល​បាន​ដំឡើង​​ដោយ​កម្មវិធី​បន្ថែម">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label     "ប៊ូតុង​ប្រអប់​ឧបករណ៍​​ដែល​មាន">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label  "* មិន​ត្រូវ​បាន​គាំទ្រ​សម្រាប់​គោលដៅ​ប្រអប់​ឧបករណ៍​បច្ចុប្បន្ន">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2   "រូបរាង">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label   "ប្រើ​រូបរាង​កម្មវិធី​អ៊ីនធឺណិត​ការ​កែសម្រួល​របស់​អ្នក​អភិវឌ្ឍ">
+<!ENTITY options.usedeveditiontheme.tooltip "បិទ/បើក​រូបរាង​កម្មវិធី​អ៊ីនធឺណិត​ការ​កែសម្រួល​របស់​អ្នក​អភិវឌ្ឍ">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label            "កុងសូល​បណ្ដាញ">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label      "អនុញ្ញាត​​​ត្រា​ពេលវេលា​">
+<!ENTITY options.timestampMessages.tooltip    "Alt-Down">
+
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label            "កម្មវិធី​កែ​សម្រួល​រចនា​ប័ទ្ម">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "បង្ហាញ​ប្រភព​ដើម">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "បង្ហាញ​ប្រភព​ដើម (ឧ. ឯកសារ Sass) ក្នុង​កម្មវិធី​ពិនិត្យមើល និង​កម្មវិធី​កែ​រចនាសម្ព័ន្ធ">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label      "CSS  បំពេញ​ស្វ័យប្រវត្តិ">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "លក្ខណសម្បត្តិ​ CSS បំពេញ​ស្វ័យប្រវត្តិ, តម្លៃ និង​កម្មវិធី​ជ្រើស​ក្នុង​កម្មវិធី​កែ​រចនាប័ទ្ម​​ដូច​ដែល​អ្នក​វាយ">
+
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "ចំណូលចិត្ត​ទូទៅ">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "បើក​កំណត់​ហេតុ persistent">
+<!ENTITY options.enablePersistentLogs.tooltip  "ប្រសិនបើ​អ្នក​បើក​ជម្រើស​នេះ​កុង​សូល​វេបសាយ និង​កម្មវិធី​គ្រប់គ្រង​បណ្ដាញ​នឹង​មិន​សម្អាត​ពេលវេលា​នីមួយៗ​​ដែល​អ្នក​បាន​រក​មើល​នៅ​ទំព័រ​ថ្មី">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label    "បង្ហាញ​ទិន្នន័យ​កម្មវិធី Gecko">
+<!ENTITY options.showPlatformData.tooltip  "បើ​អ្នក​បិទ​ជម្រើស​នេះ របាយការណ៍​កម្មវិធី​បង្កើត​ប្រវត្តិរូប​របស់ JavaScript នឹង​រួម​បញ្ចូល និមិត្តសញ្ញា​កម្មវិធី Gecko">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label                     "ចំណូលចិត្ត​កម្មវិធី​កែ">
+<!ENTITY options.sourceeditor.detectindentation.label   "រក​ឃើញ​ការ​ចូល​បន្ទាត់">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "ស្មាន​ការ​បញ្ចូល​បន្ទាត់​ផ្អែកលើ​មាតិកា​ប្រភព">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "វង់​ក្រចក​បិទ​ស្វ័យប្រវត្តិ">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "បញ្ចូល​វង់ក្រចក​បិទ​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY options.sourceeditor.expandtab.label           "ចូល​បន្ទាត់​ដោយ​ប្រើ​ចន្លោះ">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "ប្រើ​ចន្លោះ​មិន​ឃើញ​ជំនួស​តួអក្សរ​ថេប">
+<!ENTITY options.sourceeditor.tabsize.label             "ទំហំ​ថេប">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "បន្សំ​គ្រាប់​ចុច">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "លំនាំ​ដើម">
+
+<!ENTITY options.collapseAttrs.label "Truncate DOM attributes">
+<!ENTITY options.collapseAttrs.tooltip "Truncate long attributes in the inspector">
+
+<!ENTITY options.debugger.label            "Debugger">
+
+<!ENTITY options.defaultColorUnit.authored "As Authored">
+
+<!ENTITY options.disableHTTPCache.label     "Disable HTTP Cache (when toolbox is open)">
+<!ENTITY options.disableHTTPCache.tooltip   "Turning this option on will disable the HTTP cache for all tabs that have the toolbox open. Service Workers are not affected by this option.">
+
+<!ENTITY options.enableRemote.tooltip2  "Turning this option on will allow the developer tools to debug a remote instance like Waterfox OS">
+
+<!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
+<!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!ENTITY options.screenshot.clipboard.label      "Screenshot to clipboard">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saves to the screenshot directly to the clipboard">
+
+<!ENTITY options.screenshot.label            "Screenshot Behavior">
+
+<!ENTITY options.selectDefaultTools.label2    "Default Developer Tools">
+
+<!ENTITY options.sourceMaps.label      "Enable Source Maps">
+<!ENTITY options.sourceMaps.tooltip    "If you enable this option sources will be mapped in the Debugger and Console.">
+

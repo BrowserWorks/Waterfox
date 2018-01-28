@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Gune honek &brandShortName; makal lezaken plugin bat darabil.">
+<!ENTITY tapToPlayPlugin                                     "Sakatu hemen plugina aktibatzeko.">
+<!ENTITY clickToActivatePlugin                               "Aktibatu plugina.">
+<!ENTITY checkForUpdates                                     "Bilatu eguneraketak…">
+<!ENTITY blockedPlugin.label                                 "Plugin hau zure babeserako blokeatu egin da.">
+<!ENTITY hidePluginBtn.label                                 "Ezkutatu plugina">
+<!ENTITY managePlugins                                       "Kudeatu pluginak…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Berritu orria">
+<!ENTITY reloadPlugin.post                                   " berriro saiatzeko.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Bidali hutsegite-txostena">
+<!ENTITY report.submitting                                   "Txostena bidaltzen…">
+<!ENTITY report.submitted                                    "Hutsegite-txostena bidali da.">
+<!ENTITY report.disabled                                     "Hutsegiteen berriematea desgaituta.">
+<!ENTITY report.failed                                       "Bidalketak huts egin du.">
+<!ENTITY report.unavailable                                  "Ez dago txostenik erabilgarri.">
+<!ENTITY report.comment                                      "Gehitu iruzkina (iruzkinak publikoki ikus daitezke)">
+<!ENTITY report.pageURL                                      "Sartu orriaren URLa">
+
+<!ENTITY plugin.file                                         "Fitxategia">
+<!ENTITY plugin.mimeTypes                                    "MIME motak">
+<!ENTITY plugin.flashProtectedMode.label                     "Gaitu Adobe Flash-en modu babestua">
+<!ENTITY plugin.enableBlocklists.label                       "Blokeatu Flash eduki arriskutsu eta intrusiboa">

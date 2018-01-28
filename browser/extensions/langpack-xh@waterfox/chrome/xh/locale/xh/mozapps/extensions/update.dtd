@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "I-&brandShortName; Hlaziya">
+
+<!ENTITY  offline.title                   "I-&brandShortName; isebenza ngaphandle kweintanethi">
+<!ENTITY  offline.description             "I-&brandShortName; idinga ukuya kwi-intanethi ukuze ibone ukuba ingaba izihlaziyi ziyafumaneka na kwizongezelelo zakho ukwenza zihambelane nolu hlelo.">
+<!ENTITY  offline.toggleOffline.label     "Go kwi-intanethi ngoku.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "Izongezelelo ezingahambelaniyo">
+<!ENTITY  mismatch.top.label              "Izongezelelo ezilandelayo azihambelani nolu hleloi-&brandShortName; kwaye yenziwe ayasebenza:">
+<!ENTITY  mismatch.bottom.label           "I-&brandShortName; ingakhangela ukuba kukho iintlelo ezihambelanayo na zezi zongezelelo zifumanekayo.">
+
+<!ENTITY  checking.wizard.title           "Ikhangela iZongezelelo zoHambelwano">
+<!ENTITY  checking.top.label              "Ikhangela izongezelelo zakho zokungahambelani ukwenzela uhlaziyo…">
+<!ENTITY  checking.status                 "Oku kunokuthatha imizuzu embalwa…">
+
+<!ENTITY  found.wizard.title               "Ifumene iZongezelelo zoHambelwano">
+<!ENTITY  found.top.label                 "Khetha izongezelelo ongathanda ukuzifakela:">
+<!ENTITY  found.disabledXPinstall.label   "Ezi zihlaziyi azinakufakelwa ngenxa yokuba ufakelo lwesoftwe lweziwe alwasebenza ngokunje. Ungayitshintsha le setingi ingaphantsi.">
+<!ENTITY  found.enableXPInstall.label     "Vumela iiwebhusayithi ukufakela isoftwe">
+<!ENTITY  found.enableXPInstall.accesskey "V">
+
+<!ENTITY  installing.wizard.title         "Ifakela iZongezelelo zoHambelwano">
+<!ENTITY  installing.top.label            "Ikhuphela kwaye ifakela izihlaziyi kwizongezelelo zakho…">
+
+<!ENTITY  noupdates.wizard.title          "Akukho Zongezelelo zoHambelwano zifunyenweyo">
+<!ENTITY  noupdates.intro.desc            "I-&brandShortName; ayikwazanga ukuzifumana izihlaziyi kwizongezelelo zakho ezingahambelaniyo.">
+<!ENTITY  noupdates.error.desc            "Ezinye iingxaki kuhlangatyenwe nazo xa bekuzanywa ukufumana izihlaziyi.">
+<!ENTITY  noupdates.checkEnabled.desc     "I-&brandShortName; iya kukhangela amaxesha ngamaxesha ize ikwazise xa izihlaziyi zohambelwano zezi zongezelelo zifumaneka.">
+
+<!ENTITY  finished.wizard.title           "IZongezelelo zoHambelwano ziFakelwe">
+<!ENTITY  finished.top.label              "I-&brandShortName; ifakele izihlaziyi kwizongezelelo zakho.">
+<!ENTITY  finished.checkDisabled.desc     "I-&brandShortName; inokukhangela amaxesha ngamaxesha ize ikwazise xa izihlaziyi zohambelwano zezi zongezelelo zifumaneka.">
+<!ENTITY  finished.checkEnabled.desc      "I-&brandShortName; iya kukhangela amaxesha ngamaxesha ize ikwazise xa izihlaziyi zohambelwano zezi zongezelelo zifumaneka.">
+
+<!ENTITY  adminDisabled.wizard.title      "Ayikwazi ukuKhangela iziHlaziyi">
+<!ENTITY  adminDisabled.warning.label     "Akukwazeki ukukhangela izihlaziyi kwizongezelelo ezingahambelaniyo ngenxa yokuba ufakelo lwesoftwe ye-&brandShortName; lwenziwe alwasebenza. Nceda uqhagamshelane noMlawuli weSistim yakho ukufumana uncedo.">
+
+<!ENTITY  versioninfo.wizard.title        "Ikhangela iZongezelelo zoHambelwano">
+<!ENTITY  versioninfo.top.label           "Ikhangela izongezelelo zakho zohambelwano ngolu hlelo lwe-&brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Oku kunokuthatha imizuzu embalwa…">
+
+<!ENTITY  installerrors.wizard.title      "Iingxaki zokuFakela iziHlaziyi">
+<!ENTITY  installerrors.intro.label       "I-&brandShortName; ihlangabezene neengxaki xa ihlaziya ezinye zezongezelelo zakho.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Cofa ku-Kugqityiwe ukuqhubeka nokuqalisa i-&brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Cofa ku-Kugqityiwe ukuqhubeka nokuqalisa i-&brandShortName;.">
+<!ENTITY  enableChecking.label            "Vumela i-&brandShortName; ijongisise uhlaziyo.">

@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Etamab'äl richin yesol taq k'ayewal">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Pa re ruxaq re' k'o samajel etamab'äl chupam, ri nito'on we nawajo' nasöl jun k'ayewal. Richin nawïl kitzijol relik taq k'utunïk chi rij &brandShortName;, kab'etz'eton pa qa <a id='supportLink'>ruxaq k'amaya'l richin to'ïk</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Rutzijol taq sachoj">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Nimaläj rub'i' ri rutzijol">
+<!ENTITY aboutSupport.crashes.sendDate "Taqon">
+<!ENTITY aboutSupport.crashes.allReports "Konojel ri taq rutzijol sachoj">
+<!ENTITY aboutSupport.crashes.noConfig "Re samajel re' man nuk'un ta richin yeruk'üt pe taq rutzijol sachoj.">
+
+<!ENTITY aboutSupport.extensionsTitle "Taq k'amal">
+<!ENTITY aboutSupport.extensionName "B'i'aj">
+<!ENTITY aboutSupport.extensionEnabled "Tzijon">
+<!ENTITY aboutSupport.extensionVersion "Ruwäch">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Taq rub'anikil">
+<!ENTITY aboutSupport.featureName "B'i'aj">
+<!ENTITY aboutSupport.featureVersion "Ruwäch">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Soltojtob'enel taq rub'anikil">
+<!ENTITY aboutSupport.experimentName "B'i'aj">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Cholonem">
+<!ENTITY aboutSupport.experimentActive "Tzijïl">
+<!ENTITY aboutSupport.experimentEndDate "Ruq'ijul nik'is">
+<!ENTITY aboutSupport.experimentHomepage "Ruxaq tikirib'äl">
+<!ENTITY aboutSupport.experimentBranch "Ruq'a' b'anïk">
+
+<!ENTITY aboutSupport.appBasicsTitle "Ri najowäx richin runuk'ulem ri chokoy">
+<!ENTITY aboutSupport.appBasicsName "B'i'aj">
+<!ENTITY aboutSupport.appBasicsVersion "Ruwäch">
+<!ENTITY aboutSupport.appBasicsBuildID "Nimaläj rub'i' molïk">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Rub'ey taq k'exoj ruwäch">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Kinatab'al taq k'exoj ruwäch">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Tik'ut pe ri kinatab'al taq k'exoj ruwäch">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Rucholb'äl Ruwäch B'i'aj">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Rumolwuj Ruwäch B'i'aj">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Tzijon taq nak'ab'äl">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Runuk'ulem Molïk">
+<!ENTITY aboutSupport.appBasicsUserAgent "Rub'anel ri winäq">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Rokisaxik rupam rujolom">
+<!ENTITY aboutSupport.appBasicsPerformance "Rub'eyal nisamäj">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Samajela' pa samaj tz'ib'an kib'i'">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Taq ruwäch b'i'aj">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Rutzuwach k'ïy tajin">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Rutajinik Rupam Ajk'amaya'l">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google pitz'b'äl">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla k'ojlib'äl ewan rutzij samaj">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Ütz rub'anikil">
+
+<!ENTITY aboutSupport.showDir.label "Tijaq ri cholb'äl">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Tik'ut pe pan ilonel">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Tijaq yakwuj">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "K'exon nimaläj taq ajowanïk">
+<!ENTITY aboutSupport.modifiedPrefsName "B'i'aj">
+<!ENTITY aboutSupport.modifiedPrefsValue "Retal">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "taq Ajowanïk pa user.js">
+<!ENTITY aboutSupport.userJSDescription "Ri amolyakb'äl ruwäch b'i'aj k'o jun <a id='prefs-user-js-link'>archivo user.js</a> chupam, ri rachib'ilan taq ajowanïk man enuk'un ta ruma ri &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Q'eleb'en kisamaj ri nimaläj taq ajowanïk">
+<!ENTITY aboutSupport.lockedPrefsName "B'i'aj">
+<!ENTITY aboutSupport.lockedPrefsValue "Retal">
+
+<!ENTITY aboutSupport.graphicsTitle "Taq wachib'äl">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Taq kik'ojlem cholxe'el tzij">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Ch'ajch'ojri'ïl">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Tinik'öx ch'ajch'ojri'ïl">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Rusik'ik k'iyirisan q'ayïs">
+
+<!ENTITY aboutSupport.a11yTitle "Okel">
+<!ENTITY aboutSupport.a11yActivated "Tzijïl">
+<!ENTITY aboutSupport.a11yForceDisabled "Tichajïx apo ri okel">
+<!ENTITY aboutSupport.a11yHandlerUsed "Handler Etz'ab'al Okisan">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Taq ruwäch richin wujb'äl">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Runatab'al yakïk chupam">
+<!ENTITY aboutSupport.updateHistoryTitle "Kinatab'al taq k'exoj ruwäch">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Tiwachib'ëx ri rucholajem tzij pa molwuj">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kewachib'ëx kikuta'm taq tzij pa molwuj">
+
+<!ENTITY aboutSupport.sandboxTitle "Tzayanib'äl">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Xutun ri kiq'inoj taq oyonïk">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "K'a jujun nich'ramaj">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Ruwa tajinïk">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Taq rutzijol">
+
+<!ENTITY aboutSupport.safeModeTitle "Titojtob'ëx ütz rub'anikil">
+<!ENTITY aboutSupport.restartInSafeMode.label "Titikirisäx chik kik'in ri chupül taq tz'aqat…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Taq b'anikil">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Nik'oxïk">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Majun taq tz'ib'anïk">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Runa'oj tz'ib'anïk">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Tzaqoj Chajïy q'ajon taq b'anikil">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Tz'aqat taq soloj">
+
+<!ENTITY aboutSupport.mediaTitle "Q'ojom">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Elem taq Okisaxel">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Okib'äl taq Okisaxel">
+<!ENTITY aboutSupport.mediaDeviceName "B'i'aj">
+<!ENTITY aboutSupport.mediaDeviceGroup "Molaj">
+<!ENTITY aboutSupport.mediaDeviceVendor "K'ayinel">
+<!ENTITY aboutSupport.mediaDeviceState "Amaq'">
+<!ENTITY aboutSupport.mediaDevicePreferred "Ichinanel">
+<!ENTITY aboutSupport.mediaDeviceFormat "B'anikil">
+<!ENTITY aboutSupport.mediaDeviceChannels "Taq b'ey">
+<!ENTITY aboutSupport.mediaDeviceRate "Rajil">
+<!ENTITY aboutSupport.mediaDeviceLatency "Rub'anikil k'o wi">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Athnuaigh &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Tosaigh as an nua chun fadhbanna a réiteach agus luas a fheabhsú.">
+<!ENTITY refreshProfile.dialog.description2  "Má dhéanann tú athnuachan:">
+<!ENTITY refreshProfile.dialog.items.label1  "Bainfear do chuid breiseán agus gnéithe saincheaptha">
+<!ENTITY refreshProfile.dialog.items.label2  "Cuirfear an brabhsálaí ar ais go dtí na réamhshocruithe">
+<!ENTITY refreshProfile.dialog.button.label  "Athnuaigh &brandShortName;">
+
+<!ENTITY refreshProfile.title                "&brandShortName; a thiúnadh">
+<!ENTITY refreshProfile.button.label         "Athnuaigh &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Beagnach críochnaithe…">

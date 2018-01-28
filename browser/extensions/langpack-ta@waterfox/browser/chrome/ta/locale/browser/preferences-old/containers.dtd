@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "புதிய கலன்களைச் சேர்">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "முன்னுரிமைகள்">
+<!ENTITY removeButton.label   "நீக்கு">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; தனியுரிமைக்குச் செல்">
+
+<!ENTITY window.title         "புதிய கலனைச் சேர்">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "பெயர்:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "ஒரு கலனின் பெயரை இடுக">
+<!ENTITY icon.label           "சின்னம்:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "நிறம்:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "முடிந்தது">
+<!ENTITY button.ok.accesskey  "D">
+

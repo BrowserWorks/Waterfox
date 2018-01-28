@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Vaikeotsingumootor">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Vali vaikeotsingumootor. &brandShortName; kasutab seda asukoharibal, otsinguribal ja avalehel.">
+
+<!ENTITY provideSearchSuggestions.label        "Pakutakse otsingusoovitusi">
+<!ENTITY provideSearchSuggestions.accesskey    "P">
+
+<!ENTITY showURLBarSuggestions.label           "Asukohariba tulemustes kuvatakse otsingusoovitusi">
+<!ENTITY showURLBarSuggestions.accesskey       "A">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Otsingusoovitusi asukohariba tulemuste seas ei kuvata, sest &brandShortName; ei ole häälestatud ajalugu säilitama.">
+
+<!ENTITY oneClickSearchEngines.label           "Ühe klõpsu otsingumootorid">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Otsinguriba võimaldab kasutada alternatiivseid otsingumootoreid koheselt. Vali kuvatavad otsingumootorid.">
+
+<!ENTITY engineNameColumn.label                "Otsingumootor">
+<!ENTITY engineKeywordColumn.label             "Võtmesõna">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Lähtesta vaikeotsingumootorid">
+<!ENTITY restoreDefaultSearchEngines.accesskey "L">
+
+<!ENTITY removeEngine.label                    "Eemalda">
+<!ENTITY removeEngine.accesskey                "E">
+
+<!ENTITY addMoreSearchEngines.label            "Lisa veel otsingumootoreid…">

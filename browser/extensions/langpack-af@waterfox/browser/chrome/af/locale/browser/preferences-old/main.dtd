@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Begin">
+
+<!ENTITY startupPage.label         "Wanneer &brandShortName; begin:">
+<!ENTITY startupPage.accesskey     "b">
+<!ENTITY startupUserHomePage.label "Wys my tuisblad">
+<!ENTITY startupBlankPage.label    "Wys 'n leë bladsy">
+<!ENTITY startupPrevSession.label  "Wys die vensters en oortjies van laas keer">
+
+<!ENTITY homepage.label            "Tuisblad:">
+<!ENTITY homepage.accesskey        "b">
+<!ENTITY useCurrentPage.label      "Gebruik huidige bladsy">
+<!ENTITY useCurrentPage.accesskey  "G">
+<!ENTITY useMultiple.label         "Gebruik huidige bladsye">
+<!ENTITY chooseBookmark.label      "Gebruik boekmerk…">
+<!ENTITY chooseBookmark.accesskey  "b">
+<!ENTITY restoreDefault.label      "Stel terug na verstek">
+<!ENTITY restoreDefault.accesskey  "S">
+
+<!ENTITY downloads.label     "Aflaaie">
+
+<!ENTITY saveTo.label "Stoor lêers na">
+<!ENTITY saveTo.accesskey "o">
+<!ENTITY chooseFolderWin.label        "Blaai…">
+<!ENTITY chooseFolderWin.accesskey    "a">
+<!ENTITY chooseFolderMac.label        "Kies…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Vra altyd waar om lêers te stoor">
+<!ENTITY alwaysAskWhere.accesskey     "V">
+
+<!ENTITY alwaysCheckDefault2.label        "Kontroleer altyd of &brandShortName; die verstekblaaier is">
+<!ENTITY alwaysCheckDefault2.accesskey    "K">
+<!ENTITY setAsMyDefaultBrowser2.label     "Maak verstek">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "v">
+<!ENTITY isDefault.label                  "&brandShortName; is tans die verstekblaaier">
+<!ENTITY isNotDefault.label               "&brandShortName; is nie die verstekblaaier nie">
+
+<!ENTITY separateProfileMode.label        "Laat &brandShortName; en Waterfox toe om gelyktydig te loop">
+<!ENTITY useWaterfoxSync.label             "Wenk: Dit gebruik aparte profiele. Gebruik Sync om data tussen hulle te deel.">
+
+
+
+<!ENTITY e10sEnabled.label                "Aktiveer veelvuldige prosesse in &brandShortName;">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">

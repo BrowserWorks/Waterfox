@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Leikkaa">
+<!ENTITY cutCmd.accesskey "L">
+<!ENTITY copyCmd.label "Kopioi">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Liitä">
+<!ENTITY pasteCmd.accesskey "i">
+<!ENTITY undoCmd.label "Kumoa">
+<!ENTITY undoCmd.accesskey "m">
+<!ENTITY selectAllCmd.label "Valitse kaikki">
+<!ENTITY selectAllCmd.accesskey "V">
+<!ENTITY deleteCmd.label "Poista">
+<!ENTITY deleteCmd.accesskey "o">
+
+<!ENTITY spellAddToDictionary.label "Lisää sanastoon">
+<!ENTITY spellAddToDictionary.accesskey "s">
+<!ENTITY spellUndoAddToDictionary.label "Kumoa lisää sanastoon">
+<!ENTITY spellUndoAddToDictionary.accesskey "u">
+<!ENTITY spellCheckToggle.label "Oikolue">
+<!ENTITY spellCheckToggle.accesskey "O">
+<!ENTITY spellNoSuggestions.label "(Ei ehdotuksia)">
+<!ENTITY spellDictionaries.label "Kielet">
+<!ENTITY spellDictionaries.accesskey "K">
+
+<!ENTITY searchTextBox.clear.label "Tyhjennä">
+
+<!ENTITY fillLoginMenu.label          "Täytä kirjautumiskenttä">
+<!ENTITY fillLoginMenu.accesskey      "T">
+<!ENTITY fillPasswordMenu.label       "Täytä salasana">
+<!ENTITY fillPasswordMenu.accesskey   "T">
+<!ENTITY fillUsernameMenu.label       "Täytä käyttäjätunnus">
+<!ENTITY fillUsernameMenu.accesskey   "T">
+<!ENTITY noLoginSuggestions.label     "(Ei tallennettuja kirjautumisia)">
+<!ENTITY viewSavedLogins.label        "Näytä tallennetut kirjautumistiedot">

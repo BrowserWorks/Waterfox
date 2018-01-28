@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label "Umístění:">
+<!ENTITY tile.label "Dlaždice">
+<!ENTITY center.label "Na střed">
+<!ENTITY stretch.label "Roztáhnout">
+<!ENTITY fill.label "Vyplnit">
+<!ENTITY fit.label "Přizpůsobit">
+<!ENTITY preview.label "Náhled">
+<!ENTITY color.label "Barva:">
+<!ENTITY setDesktopBackground.title "Nastavit pozadí plochy">
+<!ENTITY openDesktopPrefs.label "Otevřít nastavení plochy">
+<!ENTITY closeWindow.key "w">

@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "追蹤保護">
+<!ENTITY  trackingProtection2.description      "「網路追蹤」就是在您瀏覽不同網站時，收集您的上網資料，以用來建立您的個人喜好輪廓，並依照您的瀏覽紀錄與個人資訊來投放廣告。">
+<!ENTITY  trackingProtection2.radioGroupLabel  "使用追蹤保護功能，封鎖已知的追蹤器">
+<!ENTITY  trackingProtectionAlways.label       "總是">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "僅在隱私瀏覽視窗">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "永不">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "詳細資訊">
+<!ENTITY  trackingProtectionExceptions.label   "例外網站…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "在隱私瀏覽視窗中使用追蹤保護功能">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "在隱私瀏覽模式使用追蹤保護功能，封鎖已知的追蹤器">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "詳細資訊">
+<!ENTITY changeBlockList2.label               "變更封鎖清單…">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY  doNotTrack.description        "傳送 “Do Not Track” 訊號，告訴網站您不想被追蹤">
+<!ENTITY  doNotTrack.learnMore.label    "了解更多">
+<!ENTITY  doNotTrack.default.label      "只在使用追蹤保護功能時">
+<!ENTITY  doNotTrack.always.label       "總是">
+
+<!ENTITY  history.label                 "瀏覽紀錄">
+<!ENTITY  permissions.label             "權限">
+
+<!ENTITY  addressBar.label              "網址列">
+<!ENTITY  addressBar.suggest.label      "在使用網址列時提供建議">
+<!ENTITY  locbar.history2.label         "瀏覽紀錄">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.bookmarks.label        "書籤">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "開啟分頁">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "預設搜尋引擎的相關搜尋結果">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "修改搜尋建議偏好設定">
+
+<!ENTITY  acceptCookies2.label          "允許網站設定 Cookie">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "接受來自第三方的 Cookie:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "總是">
+<!ENTITY  acceptThirdParty.never.label    "永不">
+<!ENTITY  acceptThirdParty.visited.label  "造訪過的網站">
+
+<!ENTITY  keepUntil.label               "保留 Cookie 直到:">
+<!ENTITY  keepUntil.accesskey           "k">
+
+<!ENTITY  expire.label                  "Cookie 過期">
+<!ENTITY  close.label                   "關閉 &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "例外網站…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "顯示 Cookie…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; 將">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "保留所有歷史記錄">
+<!ENTITY  historyHeader.dontremember.label "不保留歷史記錄">
+<!ENTITY  historyHeader.custom.label       "使用自訂的設定">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; 會儲存您的瀏覽記錄、下載清單、在表單與搜尋列輸入的內容，並且保留您瀏覽的網站所設定的 Cookie。">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "您或許會想要 ">
+<!ENTITY  rememberActions.clearHistory.label  "清除最近的歷史記錄">
+<!ENTITY  rememberActions.middle.label        "，或 ">
+<!ENTITY  rememberActions.removeCookies.label "清除特定網站設定的 Cookie">
+<!ENTITY  rememberActions.post.label          "。">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; 不會儲存任何瀏覽記錄，如同在隱私瀏覽狀態下執行。">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "您或許會想要 ">
+<!ENTITY  dontrememberActions.clearHistory.label "清除現存的歷史記錄">
+<!ENTITY  dontrememberActions.post.label         "。">
+
+<!ENTITY  privateBrowsingPermanent2.label "總是使用隱私瀏覽模式">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "保留我的瀏覽與下載記錄">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "保留我的搜尋列與表單輸入的內容">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "結束 &brandShortName; 時清除歷史記錄">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "設定…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "詳細資訊">
+<!ENTITY  browserContainersEnabled.label        "開啟容器分頁">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "設定…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

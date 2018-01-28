@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "കണക്ഷന്‍ സെറ്റിങ്ങുകള്‍">
+
+
+
+<!ENTITY  proxyTitle.label              "ഇന്റര്‍നെറ്റ്‌ ആക്സസ്‌ ചെയ്യുവാന്‍ പ്രോക്സികള്‍ കോണ്‍ഫിഗര്‍ ചെയ്യുക">
+<!ENTITY  noProxyTypeRadio.label        "പ്രോക്സി ലഭ്യമല്ല">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "സിസ്റ്റമിനുള്ള പ്രോക്സി സജ്ജീകരണങ്ങള്‍ ഉപയോഗിക്കുക">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "ഈ നെറ്റ്വൊര്‍ക്കില്‍ പ്രൊക്സി സെറ്റിങ്ങുകള്‍ തനിയെ കണ്ടെത്തുക">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "സ്വന്തമായി പ്രോക്സി കോണ്‍ഫിഗര്‍ ചെയ്യുവാന്‍:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "ഓട്ടോമാറ്റിക്കായി പ്രോക്സി ചെയ്യുവാനുള്ള URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "പുതുക്കുക ">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP പ്രോക്‌സി ">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP പ്രോക്‌സി ">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL പ്രോക്സി:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS  ഹോസ്റ്റ്:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+
+
+<!ENTITY  port.label                    "പോര്‍ട്ട്‌:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "ഇതിനു് പ്രോക്‌സി ഇല്ല:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "ഉദാഹരണം: .mozilla.org, .net.nz, 192.168.1.0/24 ">
+<!ENTITY  shareproxy.label              "എല്ലാ പ്രോട്ടോകോളുകള്‍ക്കും ഈ പ്രോക്സി സെര്‍വര്‍ ഉപയോഗിക്കുക ">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "രഹസ്യവാക്ക് സൂക്ഷിച്ചിട്ടുണ്ടെങ്കില്‍, ആധികാരികത ഉറപ്പാക്കുവാന്‍ ആവശ്യപ്പെടരുത്">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "പ്രോക്സികള്‍ക്ക് അനുമതികള്‍ സൂക്ഷിയ്ക്കുമ്പോള്‍ ഈ ഐച്ഛികം നിങ്ങളെ പ്രോക്സികളിലേക്ക് പ്രവേശിപ്പിയ്ക്കുന്നു. ആധികാരികത ഉറപ്പാക്കല്‍ പരാജയപ്പെട്ടാല്‍ നിങ്ങളെ അറിയിയ്ക്കുന്നു.">
+
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS when using SOCKS v5">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  window.width2                 "49em">

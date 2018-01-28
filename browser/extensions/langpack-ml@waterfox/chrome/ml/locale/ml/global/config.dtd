@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "കോണ്‍ഫിഗിനെ കുറിച്ച്‌">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "ഇതു് നിങ്ങളുടെ വാറന്റി നഷ്ടപ്പെടുത്തുന്നു!">
+<!ENTITY aboutWarningText.label "അധികമായ ആ ക്രമികരണങ്ങളില്‍ മാറ്റം വരുത്തുന്നതു് ഈ പ്രയോഗത്തിന്റെ സുരക്ഷയേയും പ്രവര്‍ത്തനത്തേയും ബാധിക്കുന്നു. നിങ്ങള്‍ ചെയ്യുന്ന കാര്യങ്ങളെപ്പറ്റി ഉറപ്പുണ്ടെങ്കില്‍ മാത്രം തുടരുക.">
+
+<!ENTITY aboutWarningCheckbox.label "ഈ മുന്നറിയിപ്പു് അടുത്ത തവണ കാണിക്കുക">
+
+<!ENTITY searchPrefs.label "തെരയുക:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "മുന്‍ഗണനയുടെ പേര്‌">
+<!ENTITY lockColumn.label "സ്ഥിതി ">
+<!ENTITY typeColumn.label "ഏതു് തരം">
+<!ENTITY valueColumn.label "മൂല്ല്യം">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "ക്രമത്തിലാക്കുന്നതിനായി ക്ലിക്ക് ചെയ്യുക"> 
+<!ENTITY columnChooser.tooltip "പ്രദര്‍ശനത്തിനുള്ള നിരകള്‍ക്കായി ക്ലിക്ക് ചെയ്യുക"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "പകര്‍ത്തുക">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "പേര്‌ പകര്‍ത്തുക">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "മൂല്ല്യം പകര്‍ത്തുക">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "നവീകരിക്കുക ">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "ടൊഗിള്‍ ചെയ്യുക">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "പുനഃക്രമീകരിക്കുക">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "പുതിയത്‌">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label " സ്ട്രിങ്">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "ഇന്റിജര്‍">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "ബൂളിയന്‍">
+<!ENTITY boolean.accesskey "B">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">

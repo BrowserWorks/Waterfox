@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "Redakti">
+<!ENTITY editMenu.accesskey        "R">
+<!ENTITY undoCmd.label             "Malfari">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "M">
+<!ENTITY redoCmd.label             "Refari">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "R">
+<!ENTITY cutCmd.label              "Eltondi">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "t">
+<!ENTITY copyCmd.label             "Kopii">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "K">
+<!ENTITY pasteCmd.label            "Alglui">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "A">
+<!ENTITY deleteCmd.label           "Forviŝi">
+<!ENTITY deleteCmd.accesskey       "F">
+<!ENTITY selectAllCmd.label        "Elekti ĉion">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "E">
+<!ENTITY findCmd.label             "Serĉi">
+<!ENTITY findCmd.key               "M">
+<!ENTITY findCmd.accesskey         "S">
+<!ENTITY findAgainCmd.label        "Serĉi denove">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "n">
+<!ENTITY findPreviousCmd.label     "Serĉi antaŭan">
+<!ENTITY findPreviousCmd.accesskey "a">

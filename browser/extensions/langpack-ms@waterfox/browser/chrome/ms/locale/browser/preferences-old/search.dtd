@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Enjin Carian Piawai">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Pilih enjin carian piawai anda. &brandShortName; menggunakannya dalam bar lokasi, bar carian, dan halaman utama.">
+
+<!ENTITY provideSearchSuggestions.label        "Sediakan cadangan carian">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Papar cadangan carian dalam keputusan bar lokasi">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Cadangan carian tidak akan dipaparkan dalam keputusan bar lokasi kerana anda telah mengkonfigurasi &brandShortName; untuk tidak mengingati sejarah.">
+
+<!ENTITY oneClickSearchEngines.label           "Enjin carian klik-tunggal">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Bar carian membolehkan anda mencari enjin alternatif secara terus. Pilih yang mana untuk dipaparkan.">
+
+<!ENTITY engineNameColumn.label                "Enjin Carian">
+<!ENTITY engineKeywordColumn.label             "Kata kunci">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Pulih Enjin Carian Piawai">
+<!ENTITY restoreDefaultSearchEngines.accesskey "w">
+
+<!ENTITY removeEngine.label                    "Buang">
+<!ENTITY removeEngine.accesskey                "u">
+
+<!ENTITY addMoreSearchEngines.label            "Dapatkan lebih lagi enjin carian...">

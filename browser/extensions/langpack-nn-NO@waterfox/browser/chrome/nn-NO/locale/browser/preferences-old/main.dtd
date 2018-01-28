@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Startside">
+
+<!ENTITY startupPage.label         "Når &brandShortName; startar:">
+<!ENTITY startupPage.accesskey     "N">
+<!ENTITY startupUserHomePage.label "Vis startsida">
+<!ENTITY startupBlankPage.label    "Vis ei tom side">
+<!ENTITY startupPrevSession.label  "Vis vindauge og faner som vart brukte sist">
+
+<!ENTITY homepage.label            "Startside:">
+<!ENTITY homepage.accesskey        "a">
+<!ENTITY useCurrentPage.label      "Bruk open nettside">
+<!ENTITY useCurrentPage.accesskey  "B">
+<!ENTITY useMultiple.label         "Bruk opne nettsider">
+<!ENTITY chooseBookmark.label      "Bruk bokmerke…">
+<!ENTITY chooseBookmark.accesskey  "u">
+<!ENTITY restoreDefault.label      "Still tilbake til standard">
+<!ENTITY restoreDefault.accesskey  "s">
+
+<!ENTITY downloads.label     "Nedlastingar">
+
+<!ENTITY saveTo.label "Lagre filer i">
+<!ENTITY saveTo.accesskey "L">
+<!ENTITY chooseFolderWin.label        "Bla gjennom…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "Vel…">
+<!ENTITY chooseFolderMac.accesskey    "V">
+<!ENTITY alwaysAskWhere.label         "Spør alltid kvar eg vil lagre filer">
+<!ENTITY alwaysAskWhere.accesskey     "a">
+
+<!ENTITY alwaysCheckDefault2.label        "Kontroller alltid om &brandShortName; er standard-nettlesar">
+<!ENTITY alwaysCheckDefault2.accesskey    "a">
+<!ENTITY setAsMyDefaultBrowser2.label     "Bruk som standard">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "B">
+<!ENTITY isDefault.label                  "&brandShortName; er standard nettlesar">
+<!ENTITY isNotDefault.label               "&brandShortName; er ikkje standard nettlesar">
+
+<!ENTITY separateProfileMode.label        "Tillat &brandShortName; og Waterfox å køyre samstundes">
+<!ENTITY useWaterfoxSync.label             "Tips: Dei brukar eigne profilar. Bruk Sync for å dele data mellom dei.">
+<!ENTITY getStarted.notloggedin.label     "Logg inn på &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Opne innstillingar for &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Slå på multi-prosess &brandShortName;">

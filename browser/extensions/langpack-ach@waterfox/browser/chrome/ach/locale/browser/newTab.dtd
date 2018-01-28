@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Dirica matidi manyen">
+<!ENTITY newtab.customize.classic "Nyut kakube ni maloyo">
+<!ENTITY newtab.customize.cog.enhanced "Ket kakube ma kimiyo me tam">
+<!ENTITY newtab.customize.cog.title2 "TER ME DIRICA MATIDI MANYEN">
+<!ENTITY newtab.customize.cog.learn "Nong ngec ikom dirica matidi manyen">
+<!ENTITY newtab.customize.title "Yik pot bukki manyen me dirica matidi">
+<!ENTITY newtab.customize.blank2 "Nyut pot buk ma tye nono">
+<!ENTITY newtab.undo.removedLabel "Kikwanyo cal matidi ni.">
+<!ENTITY newtab.undo.undoButton "Gony.">
+<!ENTITY newtab.undo.restoreButton "Dwok weng.">
+<!ENTITY newtab.undo.closeTooltip "Kan">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Tetapan - Data Laman">
+<!ENTITY     hostCol.label                 "Laman">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Simpanan">
+<!ENTITY     searchTextboxPlaceHolder             "Carian laman web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "C">
+<!ENTITY     removeSelected.label          "Buang Pilihan">
+<!ENTITY     removeSelected.accesskey      "u">
+<!ENTITY     save.label                    "Simpan Perubahan">
+<!ENTITY     save.accesskey                "i">
+<!ENTITY     cancel.label                  "Batal">
+<!ENTITY     cancel.accesskey              "B">
+<!ENTITY     removingDialog.title          "Mengalihkeluar Data Laman">
+<!ENTITY     removingSelected.description  "Membuang data laman turut akan memadam kuki yang berkaitan dan kandungan web luar talian. Ini boleh menyebabkan anda log keluar daripada laman web. Adakah anda pasti mahu membuat perubahan?">
+<!ENTITY     siteTree.label                "Kuki laman web berikut akan dibuang:">

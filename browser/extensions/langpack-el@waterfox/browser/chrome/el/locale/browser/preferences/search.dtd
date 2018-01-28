@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Προεπιλεγμένη μηχανή αναζήτησης">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Επιλέξτε την προεπιλεγμένη μηχανή αναζήτησης για χρήση στη γραμμή διευθύνσεων και στη γραμμή αναζήτησης.">
+
+<!ENTITY provideSearchSuggestions.label        "Παροχή προτάσεων αναζήτησης">
+<!ENTITY provideSearchSuggestions.accesskey    "Π">
+
+<!ENTITY showURLBarSuggestions2.label           "Εμφάνιση προτάσεων αναζήτησης στα αποτελέσματα της γραμμής διευθύνσεων">
+<!ENTITY showURLBarSuggestions2.accesskey       "τ">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Οι προτάσεις αναζήτησης δεν θα εμφανίζονται στη γραμμή διευθύνσεων, καθώς έχετε ρυθμίσει το &brandShortName; ώστε να μην διατηρεί ποτέ το ιστορικό.">
+
+<!ENTITY oneClickSearchEngines.label           "Μηχανές αναζήτησης με ένα κλικ">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Επιλέξτε τις εναλλακτικές μηχανές αναζήτησης που εμφανίζονται κάτω από τη γραμμή διευθύνσεων και τη γραμμή αναζήτησης όταν αρχίσετε να πληκτρολογείτε μια λέξη-κλειδί.">
+
+<!ENTITY engineNameColumn.label                "Μηχανή αναζήτησης">
+<!ENTITY engineKeywordColumn.label             "Λέξη-κλειδί">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Επαναφορά προεπιλεγμένων μηχανών αναζήτησης">
+<!ENTITY restoreDefaultSearchEngines.accesskey "φ">
+
+<!ENTITY removeEngine.label                    "Αφαίρεση">
+<!ENTITY removeEngine.accesskey                "Α">
+
+<!ENTITY findMoreSearchEngines.label           "Εύρεση περισσότερων μηχανών αναζήτησης">

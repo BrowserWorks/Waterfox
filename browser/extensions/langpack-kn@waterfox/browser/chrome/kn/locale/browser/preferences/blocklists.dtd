@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "‌‍ನಿಬಂಧಿಸಿದ ಪಟ್ಟಿಗಳು">
+<!ENTITY window.width                 "55em">
+
+<!ENTITY treehead.list.label          "ಪಟ್ಟಿ">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "ರದ್ದುಗೊಳಿಸು">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸು">
+<!ENTITY button.ok.accesskey          "S">

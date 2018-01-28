@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "आप फिलहाल एक निजी विंडो में नहीं हैं.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "निजी विंडो खोलें">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "निजी ब्राउज़िंग">
+<!ENTITY privateBrowsing.title.tracking                  "प्राइवेट ब्राउज़िंग के साथ-साथ ट्रैकिंग सुरक्षा">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "जब आप निजी विंडो में ब्राउज करते हैं, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "नहीं सहेजा है">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "‌देखे गए पृष्ठ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "खोज">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "कुकीज़">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "अस्थायी फाइलें">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "सहेज दिया जायेगा">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "आपका:‌">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "डाउनलोड्स">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "बुकमार्क">
+<!ENTITY aboutPrivateBrowsing.note.before                "निजी ब्राउज़िंग ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "आपको अज्ञात नहीं बनाता है">
+<!ENTITY aboutPrivateBrowsing.note.after                 "इंटरनेट पर. आपका नियोक्ता या इन्टरनेट सेवा प्रदाता आपके देखे गए पृष्ठ पर नज़र रख सकते हैं.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "के बारे में और अधिक जानें">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "निजी ब्राउज़िंग">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ट्रैकिंग सुरक्षा">
+<!ENTITY trackingProtection.description2                 "कुछ वेबसिट्स ट्रैकर्स का इस्तेमाल कर इंटरनेट पर आपकी गतिविधि को मॉनिटर करती हैं. ट्रैकिंग प्रोटेक्शन का इस्तेमाल कर Waterfox इन वेबसाइट ट्रैकर्स को ब्लॉक करता है.">
+<!ENTITY trackingProtection.startTour1                   "देखें यह कैसे काम करता है">

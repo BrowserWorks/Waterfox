@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Excepcions - Traducció">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "No s'oferirà traducció per a les llengües següents:">
+<!ENTITY treehead.languageName.label      "Llengües">
+<!ENTITY removeLanguage.label             "Elimina la llengua">
+<!ENTITY removeLanguage.accesskey         "E">
+<!ENTITY removeAllLanguages.label         "Elimina totes les llengües">
+<!ENTITY removeAllLanguages.accesskey     "l">
+
+<!ENTITY noTranslationForSites.label      "No s'oferirà traducció per als llocs següents:">
+<!ENTITY treehead.siteName2.label         "Llocs web">
+<!ENTITY removeSite.label                 "Elimina el lloc">
+<!ENTITY removeSite.accesskey             "l">
+<!ENTITY removeAllSites.label             "Elimina tots els llocs">
+<!ENTITY removeAllSites.accesskey         "t">
+
+<!ENTITY button.close.label               "Tanca">
+<!ENTITY button.close.accesskey           "T">

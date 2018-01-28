@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Utilizar proteção contra monitorização">
+<!ENTITY  trackingProtectionAlways.label       "Sempre">
+<!ENTITY  trackingProtectionAlways.accesskey   "r">
+<!ENTITY  trackingProtectionPrivate.label      "Apenas em janelas privadas">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Nunca">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Saber mais">
+<!ENTITY  trackingProtectionExceptions.label   "Exceções…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Monitorização da navegação">
+<!ENTITY trackingProtectionPBM5.label         "Utilizar proteção contra monitorização em janelas privadas">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Saber mais">
+<!ENTITY changeBlockList.label          "Alterar lista de bloqueio">
+<!ENTITY changeBlockList.accesskey      "A">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Pode também ">
+<!ENTITY  doNotTrack.settings.label     "gerir as suas definições Do Not Track">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Histórico">
+
+<!ENTITY  locationBar.label             "Barra de localização">
+
+<!ENTITY  locbar.suggest.label          "Ao usar a barra de localização, sugerir:">
+<!ENTITY  locbar.history.label          "Histórico">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Marcadores">
+<!ENTITY  locbar.bookmarks.accesskey    "M">
+<!ENTITY  locbar.openpage.label         "Separadores abertos">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Pesquisas relacionadas do motor de pesquisa predefinido">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Alterar preferências para as sugestões de motores de pesquisa…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "Aceitar cookies dos websites">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Aceitar cookies de terceiros:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "Sempre">
+<!ENTITY  acceptThirdParty.never.label    "Nunca">
+<!ENTITY  acceptThirdParty.visited.label  "Dos visitados">
+
+<!ENTITY  keepUntil.label               "Manter até:">
+<!ENTITY  keepUntil.accesskey           "M">
+
+<!ENTITY  expire.label                  "expirarem">
+<!ENTITY  close.label                   "eu fechar o &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Exceções…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Mostrar cookies…">
+<!ENTITY  showCookies.accesskey         "s">
+
+<!ENTITY  historyHeader.pre.label          "O &brandShortName; irá:">
+<!ENTITY  historyHeader.pre.accesskey      "i">
+<!ENTITY  historyHeader.remember.label     "Memorizar histórico">
+<!ENTITY  historyHeader.dontremember.label "Nunca memorizar histórico">
+<!ENTITY  historyHeader.custom.label       "Utilizar definições personalizadas para o histórico">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "O &brandShortName; irá memorizar o seu histórico de navegação, de descargas, de formulários e de pesquisa, e irá manter os cookies dos websites que visitar.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Pode ">
+<!ENTITY  rememberActions.clearHistory.label  "limpar o seu histórico">
+<!ENTITY  rememberActions.middle.label        " ou ">
+<!ENTITY  rememberActions.removeCookies.label "remover cookies individualmente">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "O &brandShortName; irá utilizar as mesmas definições da navegação privada e não irá memorizar qualquer histórico enquanto navega na Web.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Também pode ">
+<!ENTITY  dontrememberActions.clearHistory.label "limpar todo o histórico">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Utilizar sempre o modo de navegação privada">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Memorizar o meu histórico de navegação e de descargas">
+<!ENTITY  rememberHistory2.accesskey  "h">
+
+<!ENTITY  rememberSearchForm.label       "Memorizar histórico de pesquisas e de formulários">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Limpar o histórico quando o &brandShortName; for fechado">
+<!ENTITY  clearOnClose.accesskey         "i">
+
+<!ENTITY  clearOnCloseSettings.label     "Definições…">
+<!ENTITY  clearOnCloseSettings.accesskey "e">
+
+<!ENTITY  browserContainersHeader.label         "Separadores contentores">
+<!ENTITY  browserContainersLearnMore.label      "Saber mais">
+<!ENTITY  browserContainersEnabled.label        "Ativar separadores contentores">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Definições…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

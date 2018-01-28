@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Зараз ви не у приватному вікні.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Відкрити приватне вікно">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "п">
+
+<!ENTITY privateBrowsing.title                           "Приватний перегляд">
+<!ENTITY privateBrowsing.title.tracking                  "Приватний перегляд із захистом від стеження">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Коли ви користуєтесь приватним вікном, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "не зберігає">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "відвідані сторінки">
+<!ENTITY aboutPrivateBrowsing.info.searches              "пошукові запити">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "куки">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "тимчасові файли">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "буде зберігати">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ваші:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "завантаження">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "закладки">
+<!ENTITY aboutPrivateBrowsing.note.before                "Приватний перегляд ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "не робить вас анонімним">
+<!ENTITY aboutPrivateBrowsing.note.after                 " в Інтернеті. Ваш роботодавець чи постачальник послуг Інтернету все одно може дізнатися про відвідані вами сторінки.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Докладніше про ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Приватний перегляд">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Захист від стеження">
+<!ENTITY trackingProtection.description2                 "Деякі веб-сайти використовують елементи стеження, які можуть спостерігати за вашою діяльністю всюди в Інтернеті. Із функцією захисту від стеження Waterfox буде блокувати багато подібних елементів, які можуть збирати інформацію про вашу поведінку в мережі.">
+<!ENTITY trackingProtection.startTour1                   "Подивитись, як це працює">

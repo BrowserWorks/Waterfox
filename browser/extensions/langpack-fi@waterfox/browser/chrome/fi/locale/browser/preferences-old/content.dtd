@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Ponnahdusikkunat">
+
+<!ENTITY  blockPopups.label           "Estä ponnahdusikkunat">
+<!ENTITY  blockPopups.accesskey       "E">
+
+<!ENTITY  notificationsPolicy.label            "Ilmoitukset">
+<!ENTITY  notificationsPolicyLearnMore.label   "Lue lisää">
+<!ENTITY  notificationsPolicyDesc4.label       "Valitse, mitkä sivustot saavat lähettää sinulle ilmoituksia">
+<!ENTITY  notificationsPolicyButton.accesskey  "V">
+<!ENTITY  notificationsPolicyButton.label      "Valitse…">
+<!ENTITY  notificationsDoNotDisturb.label      "Älä häiritse minua">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "Ä">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Ilmoituksia ei näytetä ennen kuin käynnistät &brandShortName;in uudestaan">
+
+<!ENTITY  popupExceptions.label       "Poikkeukset…">
+<!ENTITY  popupExceptions.accesskey   "P">
+
+<!ENTITY  fontsAndColors.label        "Kirjasinlajit ja värit">
+
+<!ENTITY  defaultFont.label           "Oletuskirjasinlaji:">
+<!ENTITY  defaultFont.accesskey       "t">
+<!ENTITY  defaultSize.label           "Koko:">
+<!ENTITY  defaultSize.accesskey       "K">
+
+<!ENTITY  advancedFonts.label         "Lisäasetukset…">
+<!ENTITY  advancedFonts.accesskey     "a">
+
+<!ENTITY  colors.label                "Värit…">
+<!ENTITY  colors.accesskey            "ä">
+
+
+<!ENTITY languages.label              "Kielet">
+<!ENTITY chooseLanguage.label         "Valitse kielet, joilla sivut näytetään">
+<!ENTITY chooseButton.label           "Valitse…">
+<!ENTITY chooseButton.accesskey       "V">
+
+<!ENTITY translateWebPages.label      "Käännä sivustojen sisältö">
+<!ENTITY translateWebPages.accesskey  "n">
+<!ENTITY translateExceptions.label    "Poikkeukset…">
+<!ENTITY translateExceptions.accesskey "i">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Sivujen kääntäjä">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM-sisältö">
+
+<!ENTITY  playDRMContent.label         "Toista DRM-sisältöä">
+<!ENTITY  playDRMContent.accesskey     "D">
+<!ENTITY  playDRMContent.learnMore.label "Lue lisää">

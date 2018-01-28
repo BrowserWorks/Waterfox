@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Nauja kortelė">
+<!ENTITY newtab.customize.classic "Rodyti jūsų lankomiausias svetaines">
+<!ENTITY newtab.customize.cog.enhanced "Įtraukti siūlomas svetaines">
+<!ENTITY newtab.customize.cog.title2 "NAUJOS KORTELĖS PARINKTYS">
+<!ENTITY newtab.customize.cog.learn "Sužinokite daugiau apie naują kortelę">
+<!ENTITY newtab.customize.title "Tinkinti naujos kortelės tinklalapį">
+<!ENTITY newtab.customize.blank2 "Rodyti tuščią puslapį">
+<!ENTITY newtab.undo.removedLabel "Miniatiūra pašalinta.">
+<!ENTITY newtab.undo.undoButton "Atšaukti.">
+<!ENTITY newtab.undo.restoreButton "Atkurti visas.">
+<!ENTITY newtab.undo.closeTooltip "Nerodyti">

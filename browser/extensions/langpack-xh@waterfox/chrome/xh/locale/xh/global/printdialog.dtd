@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Printa">
+
+<!ENTITY printDialog.title "Shicilela">
+
+<!ENTITY fpDialog.title "Gcina Ifayile">
+
+<!ENTITY fileCheck.label "Printela kwiFayile">
+<!ENTITY fileCheck.accesskey "k">
+<!ENTITY propertiesButton.label "Iipropati…">
+<!ENTITY propertiesButton.accesskey "p">
+<!ENTITY descText.label "Inkcazo Ngeprinta:">
+<!ENTITY printer.label "Iprinta">
+<!ENTITY printerInput.label "Igama lePrinta:">
+<!ENTITY printerInput.accesskey "I">
+
+<!ENTITY printrangeGroup.label "Uluhlu Lokuprinta">
+<!ENTITY allpagesRadio.label "Onke amakhasi">
+<!ENTITY allpagesRadio.accesskey "O">
+<!ENTITY rangeRadio.label  "Amaphepha">
+<!ENTITY rangeRadio.accesskey  "A">
+<!ENTITY frompageInput.label  "ukususela">
+<!ENTITY frompageInput.accesskey  "k">
+<!ENTITY topageInput.label  "ukuya">
+<!ENTITY topageInput.accesskey  "u">
+<!ENTITY selectionRadio.label "Ukhetho">
+<!ENTITY selectionRadio.accesskey "U">
+
+<!ENTITY copies.label "Iikopi">
+<!ENTITY numCopies.label "Inani leekopi:">
+<!ENTITY numCopies.accesskey "k">
+
+<!ENTITY printframeGroup.label "Iifreyim zokuprinta">
+<!ENTITY aslaidoutRadio.label "Njengoko ichazwe eskrinini">
+<!ENTITY aslaidoutRadio.accesskey "i">
+<!ENTITY selectedframeRadio.label  "Ifreyim ekhethiweyo">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "Isakhelo ngasinye sihambe sodwa">
+<!ENTITY eachframesepRadio.accesskey  "I">

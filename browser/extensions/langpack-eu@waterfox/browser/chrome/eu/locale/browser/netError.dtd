@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Arazoa orria kargatzerakoan">
+<!ENTITY retry.label "Saiatu berriro">
+<!ENTITY returnToPreviousPage.label "Joan atzera">
+<!ENTITY advanced.label "Aurreratua">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Ezin da konektatu">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Helbide hau murriztuta dago">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Zerbitzaria ez da aurkitu">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Helbidea ondo begiratu mota honetako erroreak ekiditeko: <strong>ww</strong>.adibidea.eus <strong>www</strong>.adibidea.eus-en ordez</li> <li>Ezin baduzu inolako orririk kargatu, begiratu zure ordenagailuaren sareko konexioa.</li> <li>Zure ordenagailua edo sarea firewall edo proxy baten bitartez babestuta badago, ziurtatu &brandShortName;(e)k weba nabigatzeko baimenik daukan.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fitxategia ez da aurkitu">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Egiaztatu fitxategi-izenaren kapitalizazioa edo bestelako idazketa-erroreak.</li> <li>Egiaztatu ea fitxategia lekuz aldatu, berrizendatu edo ezabatu egin den.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Fitxategi-atzipena ukatu egin da">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Kendua edo lekuz aldatua egon liteke, edo fitxategi-baimenek sarrera eragotz lezakete.</li> </ul>">
+
+<!ENTITY generic.title "Iepa.">
+<!ENTITY generic.longDesc "<p>&brandShortName;(e)k ezin du orria kargatu.</p>">
+
+<!ENTITY captivePortal.title "Hasi saioa sarean">
+<!ENTITY captivePortal.longDesc2 "<p>Internetera sartu ahal izateko saioa hasi behar duzu sare honetan.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Ireki sarearen saio-hasiera orria">
+
+<!ENTITY malformedURI.title "Helbidea ez da baliozkoa">
+<!ENTITY malformedURI.longDesc "<ul> <li>Web helbideak normalean <strong>http://www.adibidea.eus/</strong> formatukoak dira</li> <li>Ziurtatu aurrerako barrak erabiltzen dituzula (<strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Konexioa eten egin da">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumentua iraungita">
+<!ENTITY notCached.longDesc "<p>Eskatutako dokumentua ez dago &brandShortName;(r)en cache memorian.</p><ul><li>Segurtasun-neurri gisa, &brandShortName;(e)k ez ditu berriro automatikoki eskatzen informazio pertsonala izan dezaketen dokumentuak.</li><li>Egin klik 'Saiatu berriro' botoian webguneko dokumentua berriro eskatzeko.</li></ul>">
+
+<!ENTITY netOffline.title "Lineaz kanpo">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Sakatu &quot;Saiatu berriro&quot; linean jarri eta orria berritzeko.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Edukien kodeketa-errorea">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Jarri harremanetan webgunearen jabeekin arazo honen berri emateko.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Fitxategi mota EZ-segurua">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Jarri harremanetan webgunearen jabeekin arazo honen berri emateko.</li> </ul>">
+
+<!ENTITY netReset.title "Konexioa berrezarri egin da">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Konexioaren denbora-muga gainditu da">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Ez da helbidea ulertu">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Agian bestelako softwarea instalatu behar duzu helbide hau irekitzeko.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy-zerbitzaria konexioak ukatzen ari da">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Egiaztatu proxyaren konexioaren ezarpenak.</li> <li>Jarri harremanetan sare-kudeatzailearekin proxy-zerbitzaria martxan dagoela ziurtatzeko.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxy-zerbitzaria ezin da aurkitu">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Egiaztatu proxyaren konexioaren ezarpenak.</li> <li>Egiaztatu zure ordenagailuak sareko konexioa duela.</li> <li> Ordenagailua edo sarea firewall edo proxy baten bidez babestuta badaude, egiaztatu &brandShortName;(e)k webera irteteko baimena daukala.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Orriak ez du birbideraketa ondo egiten">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Arazo hau baliteke cookieak desgaituta eduki edo ez onartzeagatik izatea.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Zerbitzariaren erantzuna ez zen espero">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Egiaztatu zure sistemak Personal Security Manager delakoa instalatuta duela.</li> <li>Baliteke zerbitzariaren konfigurazio ez-estandar batengatik izatea.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Konexio seguruak huts egin du">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Ikusten saiatzen ari zaren orria ezin da erakutsi jasotako datuen egiazkotasuna ezin delako egiaztatu.</li> <li>Mesedez jarri harremanetan webgunearen jabeekin arazoaren berri emateko.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Zure konexioa ez da segurua">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/> gunearen jabeak webgunea gaizki konfiguratu du. Zure informazioa lapurtzea saihesteko, &brandShortName; ez da webgune honetara konektatu.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Gunea une batez desgaituta edo oso lanpetuta egon daiteke. Saiatu berriro minutu batzuen buruan.</li> <li>Beste inolako orririk ezin baduzu kargatu, egiaztatu ordenagailuaren sareko konexioa.</li> <li>Ordenagailua edo sarea firewall edo proxy baten bidez babestuta badaude, egiaztatu &brandShortName;(e)k webera irteteko baimena daukala.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Edukien segurtasun-politikak blokeatuta">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;(e)k orri hau modu honetan kargatzea eragotzi du edukien segurtasun-politikak baimentzen ez duelako.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Hondatutako edukiaren errorea">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ikusten saiatzen ari zaren orria ezin da erakutsi errore bat detektatu delako datu-transmisioan.</p><ul><li>Jar zaitez harremanetan webgunearen jabeekin arazo honen berri emateko.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Gehitu salbuespena…">
+
+<!ENTITY errorReporting.automatic2 "Eman honen gisako erroreen berri Mozillari asmo txarreko guneak identifikatzen eta blokeatzen laguntzeko">
+<!ENTITY errorReporting.learnMore "Argibide gehiago…">
+
+<!ENTITY remoteXUL.title "Urruneko XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Jar zaitez webgunearen jabeekin harremanetan arazo honen berri emateko.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Ezin da modu seguruan konektatu">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informazio aurreratua: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; ezin da <span id='wrongSystemTime_URL'/> ostalarira konektatu zure ordulariak okerreko ordua erakusten duela dirudielako eta honek konexio segurua eragozten duelako.</p> <p>Zure ordenagailuak uste du <span id='wrongSystemTime_systemDate'/> dela baina <span id='wrongSystemTime_actualDate'/> izan behar luke. Arazo hau konpontzeko, aldatu zure data- eta ordu-ezarpenak ordu egokira.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; ezin da <span id='wrongSystemTimeWithoutReference_URL'/> ostalarira konektatu zure ordulariak okerreko ordua erakusten duela dirudielako eta honek konexio segurua eragozten duelako.</p> <p>Zure ordenagailuak dio <span id='wrongSystemTimeWithoutReference_systemDate'/> dela. Arazo hau konpontzeko, aldatu zure data- eta ordu-ezarpenak ordu egokira.</p>">
+
+<!ENTITY certerror.pagetitle1  "Konexio ez-segurua">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Gune honek HTTP Strict Transport Security (HSTS) erabiltzen du &brandShortName; modu seguruan soilik konekta litekeela zehazteko. Ondorioz, ezin da salbuespenik gehitu ziurtagiri honentzat.">
+<!ENTITY certerror.copyToClipboard.label "Kopiatu testua arbelean">
+
+<!ENTITY inadequateSecurityError.title "Zure konexioa ez da segurua">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ostalariak zaharkituta dagoen eta erasoen aurrean babesik ez duen segurtasun-teknologia erabiltzen du. Segurua zela uste zenuen informazioa erraz agerraraz lezake erasotzaile batek. Zuk gunea bisitatu ahal izan aurretik zerbitzaria konpondu behar du webgunearen kudeatzaileak.</p><p>Errore-kodea: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Badirudi zure sareko segurtasun-ezarpenek eragiten dutela hau. Ezarpen lehenetsiak berrezarri nahi dituzu?">
+<!ENTITY prefReset.label "Berrezarri ezarpen lehenetsiak">

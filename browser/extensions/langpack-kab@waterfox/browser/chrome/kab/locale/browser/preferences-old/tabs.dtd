@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab yessezray-d iccaren n umizzwer yettwasqedcen melmi kan">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Ldi asfaylu amaynut deg yiccer nniḍen ">
+<!ENTITY newWindowsAsTabs.accesskey   "d">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Lɣu ticki medlen deqs n yiccaren">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "L">
+
+<!ENTITY warnOnOpenManyTabs.label       "Lɣu-yid ticki ilukkez &brandShortName; ma ldin aṭas n yiccaren ">
+<!ENTITY warnOnOpenManyTabs.accesskey   "L">
+
+<!ENTITY switchLinksToNewTabs.label        "Ticki ad ldiɣ aseɣwen deg iccer amaynut, ddu ɣur-s imir ">
+<!ENTITY switchLinksToNewTabs.accesskey    "T">
+
+<!ENTITY showTabsInTaskbar.label          "Sken taskant n yiccaren deg ufeggag n twira n Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "S">
+<!ENTITY tabsGroup.label          "Iccaren">

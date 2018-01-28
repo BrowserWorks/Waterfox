@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Tutón rajtark začinić">
+<!ENTITY tabCrashed.restoreTab "Tutón rajtark wobnowić">
+<!ENTITY tabCrashed.restoreAll "Wšě spadnjene rajtarki wobnowić">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ow jej. Waš rajtark je spadnył.">
+<!ENTITY tabCrashed.offerHelp "Móžemy wam pomhać!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Wubjerće &tabCrashed.restoreTab;, zo byšće wobsah strony znowa začitał.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Wubjerće &tabCrashed.restoreTab; abo &tabCrashed.restoreAll;, zo byšće wobsah strony znowa začitał.">
+<!ENTITY tabCrashed.requestHelp "Budźeće nam pomhać?">
+<!ENTITY tabCrashed.requestHelpMessage "Rozprawy wo spadach nam pomhaja, problemy diagnosticěrować a &brandShortName; polěpšeć.">
+<!ENTITY tabCrashed.requestReport "Tutón rajtark zdźělić">
+<!ENTITY tabCrashed.sendReport2 "Rozprawu wo spadźe za rajtark słać, kotryž sej runje wobhladujeće">
+<!ENTITY tabCrashed.commentPlaceholder2 "Opcionalne komentary (komentary su zjawnje widźomne)">
+<!ENTITY tabCrashed.includeURL2 "URL strony z rozprawu wo tutym spadźe zapřijeć">
+<!ENTITY tabCrashed.emailPlaceholder "Zapisajće tu swoju e-mejlowu adresu">
+<!ENTITY tabCrashed.emailMe "Pósćelće mi e-mejlku, hdyž dalše informacije k dispoziciji steja">
+<!ENTITY tabCrashed.reportSent "Rozprawa wo spadach je so hižo wotpósłała; wulki dźak, zo sće pomhał, &brandShortName; polěpšić!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Pozadkowe rajtarki zdźělić">
+<!ENTITY tabCrashed.autoSubmit2 "Aktualizowanske nastajenja za awtomatiske słanje rozprawow wo spadach, inkluziwnje rozprawy za spadnjene pozadkowe rajtarki z tutoho posedźenja a přichodnych posedźenjow">

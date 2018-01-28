@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Adfer y Sesiwn">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Wel, mae hyn yn anffodus.">
+<!ENTITY restorepage.problemDesc    "Mae &brandShortName; yn cael trafferth adfer eich ffenestri a'ch tabiau. Mae hyn fel arfer oherwydd tudalen gwe sydd wedi ei hagor yn ddiweddar.">
+<!ENTITY restorepage.tryThis        "Gallwch geisio:">
+<!ENTITY restorepage.restoreSome    "Tynnu un neu fwy o dabiau rydych yn meddwl gall achosi'r broblem">
+<!ENTITY restorepage.startNew       "Cychwyn sesiwn pori gwbl newydd">
+
+<!ENTITY restorepage.tryagainButton "Adfer">
+<!ENTITY restorepage.restore.access "A">
+<!ENTITY restorepage.closeButton    "Cau">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Adfer">
+<!ENTITY restorepage.listHeader     "Ffenestri a Thabiau">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ffenestr &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Ffwrdd â ni!">
+<!ENTITY welcomeback2.restoreButton.access "F">
+
+<!ENTITY welcomeback2.tabtitle      "Llwyddiant!">
+
+<!ENTITY welcomeback2.pageTitle     "Llwyddiant!">
+<!ENTITY welcomeback2.pageInfo1     "Mae &brandShortName; yn barod i fynd.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Adfer pob ffenestr a thab">
+<!ENTITY welcomeback2.restoreSome.label "Adfer dim ond y rhai rydych eu heisiau">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Mae eich ychwanegion a'ch cyfaddasu wedi eu tynnu ac mae gosodiadau eich porwr wedi eu hadfer i'w rhagosodiad. Os nad yw hyn wedi trwsio eich anhawster, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "dysgu rhagor am beth fedrwch ei wneud.">
+

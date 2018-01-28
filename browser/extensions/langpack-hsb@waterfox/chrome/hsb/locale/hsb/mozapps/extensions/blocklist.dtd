@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Přidatki móža problemy zawinować">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; je postajił, zo slědowace přidatki su za to znate, zo problemy stabilnosće abo wěstoty zawinuja:">
+<!ENTITY blocklist.softblocked       "Za waš škit poruča so jara, zo tute přidatki su při nowym startowanju znjemóžnjene.">
+<!ENTITY blocklist.hardblocked       "Tute přidatki maja wysoke riziko, zo zawinuja problemy stabilnosće a wěstoty a buchu zablokowane, ale nowy start je trěbny, zo bychu so dospołnje znjemóžnili.">
+<!ENTITY blocklist.softandhard       "Přidatki, kotrež maja wysoke riziko, zo zawinuja problemy stabilnosće abo wěstoty, buchu zablokowane. Druhe maja niše riziko, ale poruča so jara, zo su při nowym startowanju znjemóžnjene.">
+<!ENTITY blocklist.moreinfo          "Dalše informacije">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; znowa startować">
+<!ENTITY blocklist.accept.accesskey  "z">
+
+<!ENTITY blocklist.blocked.label     "Zablokowany">
+<!ENTITY blocklist.checkbox.label    "Znjemóžnić">

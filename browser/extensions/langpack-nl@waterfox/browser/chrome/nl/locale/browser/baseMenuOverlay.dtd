@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Minimaliseren">
+<!ENTITY bringAllToFront.label    "Alles naar voren brengen">
+<!ENTITY zoomWindow.label         "Zoom">
+<!ENTITY windowMenu.label         "Venster">
+
+<!ENTITY helpMenu.label           "Help"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Help"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "Over &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "F">
+<!ENTITY productHelp2.label       "&brandShorterName; Help">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Sneltoetsen">
+<!ENTITY helpKeyboardShortcuts.accesskey "t">
+
+<!ENTITY helpSafeMode.label       "Herstarten met uitgeschakelde add-ons…">
+<!ENTITY helpSafeMode.accesskey   "r">
+<!ENTITY helpSafeMode.stop.label       "Herstarten met ingeschakelde add-ons">
+<!ENTITY helpSafeMode.stop.accesskey   "r">
+
+<!ENTITY healthReport2.label      "&brandShorterName;-statusrapport">
+<!ENTITY healthReport2.accesskey  "s">
+
+<!ENTITY helpTroubleshootingInfo.label      "Probleemoplossingsinformatie">
+<!ENTITY helpTroubleshootingInfo.accesskey  "P">
+
+<!ENTITY helpFeedbackPage.label      "Feedback verzenden…">
+<!ENTITY helpFeedbackPage.accesskey  "v">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName;-rondleiding">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Voorkeuren…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Voorzieningen">
+
+<!ENTITY hideThisAppCmdMac2.label       "Verberg &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Verberg andere">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Toon alles">

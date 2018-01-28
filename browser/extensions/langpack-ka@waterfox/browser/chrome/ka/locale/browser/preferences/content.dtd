@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "უფლებები">
+
+<!ENTITY  blockPopups.label           "ამომხტომი ფირნიშების შეზღუდვა">
+<!ENTITY  blockPopups.accesskey       "დ">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "შეიტყვეთ მეტი">
+<!ENTITY  notificationsPolicyDesc4.label       "საიტები, რომელთაგანაც შეტყობინებების მიღება დაშვებულია">
+<!ENTITY  notificationsPolicyButton.accesskey  "რ">
+<!ENTITY  notificationsPolicyButton.label      "არჩევა…">
+<!ENTITY  notificationsDoNotDisturb.label      "არ შემაწუხოთ">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "წ">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName;-ის ხელახლა ჩართვამდე შეტყობინებები არ გამოჩნდება">
+
+<!ENTITY  popupExceptions.label       "გამონაკლისები…">
+<!ENTITY  popupExceptions.accesskey   "გ">
+
+<!ENTITY  fontsAndColors.label        "შრიფტები &amp; ფერები">
+
+<!ENTITY  defaultFont2.label          "ნაგულისხმევი შრიფტი">
+<!ENTITY  defaultFont2.accesskey      "ნ">
+<!ENTITY  defaultSize2.label          "ზომა">
+<!ENTITY  defaultSize2.accesskey      "ზ">
+
+<!ENTITY  advancedFonts.label         "დამატებითი…">
+<!ENTITY  advancedFonts.accesskey     "დ">
+
+<!ENTITY  colors.label                "ფერები…">
+<!ENTITY  colors.accesskey            "ფ">
+
+
+<!ENTITY language2.label              "ენა">
+<!ENTITY chooseLanguage.label         "მიუთითეთ სასურველი ენა გვერდების საჩვენებლად">
+<!ENTITY chooseButton.label           "არჩევა…">
+<!ENTITY chooseButton.accesskey       "ა">
+
+<!ENTITY translateWebPages.label      "ვებშიგთავსის გადათარგმნა">
+<!ENTITY translateWebPages.accesskey  "გ">
+<!ENTITY translateExceptions.label    "გამონაკლისები…">
+<!ENTITY translateExceptions.accesskey "ნ">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "თარგმანი ეკუთვნის">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "ციფრული უფლებების მართვის (DRM) შიგთავსი">
+
+<!ENTITY  playDRMContent2.label          "DRM-ით რეგულირებული შიგთავსის გაშვება">
+<!ENTITY  playDRMContent2.accesskey      "D">
+<!ENTITY  playDRMContent.learnMore.label "შეიტყვეთ მეტი">

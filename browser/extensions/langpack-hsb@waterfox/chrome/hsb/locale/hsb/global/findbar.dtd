@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Přichodne wustupjenje frazy namakać">
+<!ENTITY previous.tooltip "Předchadne wustupjenje frazy namakać">
+<!ENTITY findCloseButton.tooltip "Pytansku lajstu zawrěć">
+<!ENTITY highlightAll.label "Wšě wuzběhnyć">
+<!ENTITY highlightAll.accesskey "z">
+<!ENTITY highlightAll.tooltiptext "Wšě wustupowanja frazy wuzběhnyć">
+<!ENTITY caseSensitive.label "Na wulkopisanje dźiwać">
+<!ENTITY caseSensitive.accesskey "u">
+<!ENTITY caseSensitive.tooltiptext "Za pytanje na wulkopisanje dźiwać">
+<!ENTITY entireWord.label "Cyłe słowa">
+<!ENTITY entireWord.accesskey "C">
+<!ENTITY entireWord.tooltiptext "Jenož cyłe słowa pytać">

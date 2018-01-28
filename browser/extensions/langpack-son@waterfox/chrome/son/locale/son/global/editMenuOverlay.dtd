@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "Fasal">
+<!ENTITY editMenu.accesskey        "F">
+<!ENTITY undoCmd.label             "Taafeeri">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "T">
+<!ENTITY redoCmd.label             "Tee taaga">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "T">
+<!ENTITY cutCmd.label              "Dunbu">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "D">
+<!ENTITY copyCmd.label             "Berandi">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "B">
+<!ENTITY pasteCmd.label            "Dobu">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "D">
+<!ENTITY deleteCmd.label           "Tuusu">
+<!ENTITY deleteCmd.accesskey       "T">
+<!ENTITY selectAllCmd.label        "Kul suuba">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "K">
+<!ENTITY findCmd.label             "Ceeci">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "C">
+<!ENTITY findAgainCmd.label        "Ceeci koyne">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "k">
+<!ENTITY findPreviousCmd.label     "Bisante ceeci">
+<!ENTITY findPreviousCmd.accesskey "B">

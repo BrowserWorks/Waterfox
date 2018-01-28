@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label;விற்கு வருக">
+
+<!ENTITY aboutAccountsConfig.description "உங்களுடைய கீற்றுகள் , புத்தகக்குறிகள், கடவுச்சொற்க்கள் போன்றவற்றை ஒத்திசைக்க உள்நுழையவும்.">
+<!ENTITY aboutAccountsConfig.startButton.label "தொடங்கு">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ஒத்திசைவு முன்னுரிமைகள்">
+<!ENTITY aboutAccounts.noConnection.title "இணைப்பு இல்லை">
+<!ENTITY aboutAccounts.noConnection.description "உள்நுழைய நீங்கள் கட்டாயம் இணையத்துடன் இணைந்திருக்க வேண்டும்.">
+<!ENTITY aboutAccounts.noConnection.retry "மீண்டும் முயற்சிக்கவும்">
+<!ENTITY aboutAccounts.badConfig.title "மோசமான கட்டமைவு">
+<!ENTITY aboutAccounts.badConfig.description "உங்கள் பயர்பாக்ஸ் கணக்கின் சேவையக கட்டமைப்பைத் தீர்மானிக்க முடியவில்லை. பின்னர் முயற்சிக்கவும்.">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashesSubmitted.label     "জমা দিয়া ক্ৰেশ্ব সংবাদসমূহ">
+<!ENTITY id.heading                 "সংবাদ ID">
+
+<!ENTITY dateSubmitted.heading      "জমা দিয়াৰ তাৰিখ">
+<!ENTITY noReports.label            "কোনো ক্ৰেশ্ব সংবাদ জমা দিয়া হোৱা নাই।">
+<!ENTITY noConfig.label             "ক্ৰেশ্ব সংবাদ দেখুৱাবলৈ এই এপ্লিকেচনক সংৰূপণ কৰা হোৱা নাই। পছন্দ <code>breakpad.reportURL</code> নিৰ্ধাৰণ কৰিব লাগিব।">
+<!ENTITY clearAllReports.label      "সকলো সংবাদ আঁতৰাওক">
+
+<!ENTITY crashReports.title         "Crash Reports">
+<!ENTITY crashesUnsubmitted.label   "Unsubmitted Crash Reports">
+<!ENTITY dateCrashed.heading        "Date Crashed">

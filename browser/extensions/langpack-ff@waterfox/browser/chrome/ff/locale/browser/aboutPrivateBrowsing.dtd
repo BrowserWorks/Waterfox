@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "A wonaani e henorde suuriinde e oo sahaa.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Uddit Henorde Suuriinde">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "S">
+
+<!ENTITY privateBrowsing.title                           "Banngagol Suturo">
+<!ENTITY privateBrowsing.title.tracking                  "Banngagol Suturo kañum e Ndeenka Dewindol">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "So aɗa feeroo e Henorde Suuriinde, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "danndataa">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "kelle jillaaɗe">
+<!ENTITY aboutPrivateBrowsing.info.searches              "njiylawuuji">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "kukiije">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "piille cabborɗe">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "maa danndu">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ɗee geɗe:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "gaawte">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "maantore">
+<!ENTITY aboutPrivateBrowsing.note.before                "Banngagol Suturo ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "waɗataama cuuɗiiɗo">
+<!ENTITY aboutPrivateBrowsing.note.after                 " e enternet. Gollinoowo-ma e Carwinoowo Enternet maa ena njiya haa jooni kelle ɗe njilloto-ɗaa.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Ɓeydu humpito baɗte">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Banngagol Keeringol">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Ndeenka Dewindol">
+<!ENTITY trackingProtection.description2                 "Won e lowe kuutortoo ko dewindorɗe baawɗe ñukkindaade dille maa e nder enternet. So a waɗii ndeenka Dewindol Waterfox maa falo keewɗe e majje baawɗe roɓindaande humpito baɗte sifaa peeragol maa.">
+<!ENTITY trackingProtection.startTour1                   "Yiy no yahrata">

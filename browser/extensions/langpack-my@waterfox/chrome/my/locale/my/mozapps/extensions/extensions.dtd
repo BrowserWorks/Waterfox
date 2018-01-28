@@ -1,0 +1,260 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Add-ons Manager">
+
+<!ENTITY search.placeholder                   "အက်အွန်အားလုံးကိုရှာပါ">
+<!ENTITY search.buttonlabel                   "ရှာဖွေရန်">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "ပွင့်လာနေတယ်...">
+<!ENTITY listEmpty.installed.label            "သင့်ဆီတွင်ဤအမျိုးအစားအတ်အွန်ထည့်သွင်းထားခြင်းမရှိပါ။">
+<!ENTITY listEmpty.availableUpdates.label     "အသစ်မတွေ့ပါ">
+<!ENTITY listEmpty.recentUpdates.label        "သင်သည်ယခုလတ်တလောမည်သည့်အတ်အွန်မှအဆင့်မြှင့်တင်ခြင်းမပြုလုပ်ထားပါ။">
+<!ENTITY listEmpty.findUpdates.label          "လုပ္ေဆာင္ခ်က္သစ္အတြက္စစ္ေဆးျခင္း">
+<!ENTITY listEmpty.search.label               "သင့်လျော်သော အက်အွန်အား မတွေ့ပါ">
+<!ENTITY listEmpty.button.label               "အက်အွန်တွေ အကြောင်း လေ့လာကြမယ်">
+<!ENTITY installAddonFromFile.label           "အက်အွန်တွေ ကို ဖိုင်မှတဆင့် သွင်းပါ">
+<!ENTITY installAddonFromFile.accesskey       "အ">
+<!ENTITY toolsMenu.tooltip                    "အတ်အွန်အားလုံးအတွက် အသုံးချပစ္စည်းများ">
+
+<!ENTITY getThemes.description                "စိတ်ကြိုက်ဆောင်ရွက်နိုင်မည့် ဘရောင်ဇာကို ရှာဖွေနေပါသလား။">
+<!ENTITY getThemes.learnMore                  "အခင်းအကျင်း အသွင်အပြင်ပေါင်း ထောင်ပေါင်းများစွာထဲမှ ရွေးချယ်အသုံးပြုပါ။">
+
+<!ENTITY cmd.back.tooltip                     "နောက် တမျက်နှာ သွားပါ">
+<!ENTITY cmd.forward.tooltip                  "ရှေ့ တမျက်နှာ သွားပါ">
+
+<!ENTITY showUnsignedExtensions.button.label  "နောက်တွဲ ပရိုဂရမ်တချို့ကို အတည်မပြုနိုင်ပါ">
+<!ENTITY showAllExtensions.button.label       "နောက်တွဲ ပရိုဂရမ်အားလုံးကို ပြပါ">
+<!ENTITY debugAddons.label                    "အတ်အွန်များကို အမှားရှာရန်">
+<!ENTITY debugAddons.accesskey                "b">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "လုံခြုံရေးအပြင်အဆင်အရအတ်အွန်အားလုံးအားပိတ်သိမ်းထားသည်။">
+<!ENTITY warning.checkcompatibility.label          "အတ်အွန် အဆင့်မှီမမှီ စစ်ဆေးသော လုပ်ဆောင်ချက် အား ပိတ်ထားသည်။ သင့်တွင် အသုံးမဝင်တော့သော မသစ်တော့သော အတ်အွန်များ ရှိနိုင်သည်။">
+<!ENTITY warning.checkcompatibility.enable.label   "လုပ်ဆောင်နိုင်စေမည်။">
+<!ENTITY warning.checkcompatibility.enable.tooltip "အက်အွန် ကိုက်ညီမှု စစ်ဆေးခြင်းကို ဖွင့်ထားမယ်">
+<!ENTITY warning.updatesecurity.label              "အတ်အွန် အဆင့်မြှင့်တင်ခြင်းလုံခြုံရေးစစ်ဆေးချက်အားပိတ်ထားသည်။သင်သည် အဆင့်မြှင့်တင်ခြင်းများနှင့်ပတ်သတ်ပြီးအံအားသင့်နိုင်သည်။">
+<!ENTITY warning.updatesecurity.enable.label       "လုပ်ဆောင်နိုင်စေမည်။">
+<!ENTITY warning.updatesecurity.enable.tooltip     "အက်အွန် အပ်ဒိပ် လုံခြုံရေး စစ်ဆေးခြင်းကို ဖွင့်ထားမယ်">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "ရှာဖွေရန်">
+<!ENTITY view.discover.label                  "အက်အွန်ရယူပါ">
+<!ENTITY view.recentUpdates.label             "လက်ရှိ အသစ်">
+<!ENTITY view.availableUpdates.label          "ရရှိနိုင်သော အဆင့်မြင်တင်မှု">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "အဆင့်မြှင့်တင်ရန်လိုအပ်နေလားစစ်ကြည့်မည်။">
+<!ENTITY updates.checkForUpdates.accesskey    "အ">
+<!ENTITY updates.viewUpdates.label            "လတ်တလော အပ်ဒိပ်များကို ကြည့်ပါ">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "အက်အွန်အား အလိုအလျောက် အဆင့်မြင်တင်ပါ">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "အတ်အွန်အားလုံးအား အလိုအလျှောက် အဆင့်မြှင့်တင်ရန် ပြုလုပ်လိုက်မည်။">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "အတ်အွန်အားလုံးအား ထိန်းချုပ်အဆင့်မြှင့်တင်ရန် ပြုလုပ်လိုက်မည်။">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "အက်အွန်တွေကို အသစ်ပြန်တင်မယ်">
+<!ENTITY updates.installed.label              "သင့်၏အက်အွန်အား အဆင့်မြင့်တင်ပြီးပါပြီ">
+<!ENTITY updates.downloaded.label             "သင်၏ အက်အွန် အဆင့်မြင်တင်မှုအား download ချထားပြီးပါပြီ။">
+<!ENTITY updates.restart.label                "တပ်ဆင်ခြင်းပြီးမြောက်သွားအောင် Restart လုပ်လိုက်ပါ">
+<!ENTITY updates.noneFound.label              "အသစ်မတွေ့ပါ">
+<!ENTITY updates.manualUpdatesFound.label     "ရရှိနိုင်သော အဆင့်မြင်တင်မှုအား ကြည့်ရှုပါ">
+<!ENTITY updates.updateSelected.label         "လုပ်ဆောင်ချက် အသစ်ထည့်ခြင်း">
+<!ENTITY updates.updateSelected.tooltip       "စာရင်းထဲတွင် ပြထားသော အဆင့်မြှင့်တင်မှူများ ကိုပြုလုပ်မည်။">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "အချက်အလက်များထပ်ပြပါ။">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "အဆင့်မြှင့်တင်မှူများကိုရှာပါ။">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "ရွေးစရာများ">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "ဦးစားပေး အချက်များ">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "အကြောင်းအရာ">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "လုပ်ဆောင်နိုင်စေမည်။">
+<!ENTITY cmd.enableAddon.accesskey            "လ">
+<!ENTITY cmd.disableAddon.label               "ပိတ်ထားသည်">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "ဒီဇိုင်းပုံစံအားပြောင်းမည်။">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "အထူးအပြင်အဆင်တပ်ဆင်ထားခြင်းအားရပ်မည်">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "အသုံးပြုရန်မေး">
+<!ENTITY cmd.askToActivate.tooltip            "ယခုဆော့ဝဲအားသုံးရန်အခေါက်တိုင်းမေး">
+<!ENTITY cmd.alwaysActivate.label             "အမြဲတမ်းသုံးမည်">
+<!ENTITY cmd.alwaysActivate.tooltip           "ယခုဆော့ဝဲအားအမြဲသုံးမည်">
+<!ENTITY cmd.neverActivate.label              "ဘယ်တော့မှမသုံး">
+<!ENTITY cmd.neverActivate.tooltip            "ယခုဆော့ဝဲအားပိတ်ထားမည်">
+<!ENTITY cmd.stateMenu.tooltip                "ယခုဆော့ဝဲစတင်သောအခါပြောင်းရန်">
+<!ENTITY cmd.installAddon.label               "တပ်ဆင်ပါ">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "ဖယ်ရှားပါ ">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "ရွေးစရာများ">
+<!ENTITY cmd.showPreferencesWin.tooltip       "ယခုအက်အွန်၏ ရွေးချယ်ပိုင်ခွင့်အား ပြုပြင်ပါ">
+<!ENTITY cmd.showPreferencesUnix.label        "ဦးစားပေး အချက်များ">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "ယခုအက်အွန်၏ preferences ကိုပြောင်းပါ">
+<!ENTITY cmd.contribute.label                 "ပူးပေါင်း ပါ၀င် ဆောင်ရွက်ခြင်း">
+<!ENTITY cmd.contribute.accesskey             "ပ">
+<!ENTITY cmd.contribute.tooltip               "ယခု အက်အွန်ထုတ်လုပ်မှုတွင် ကူညီပါ၀င်ဆောင်ရွက်ခြင်း">
+
+<!ENTITY cmd.showReleaseNotes.label           "ထုပ်လုပ်သည့် အချက်အလက်ကို ပြပါ။">
+<!ENTITY cmd.showReleaseNotes.tooltip         "ယခု အဆင့်မြင့်တင်မှု အတွက် ထုတ်လုပ်မှု စာတမ်းအား ဖော်ပြပါ။">
+<!ENTITY cmd.hideReleaseNotes.label           "ထုပ်လုပ်သည့် အချက်အလက်ကို မဖော်ပြပါ။">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "ယခု ထုတ်လုပ်မှု၏ အကြောင်းအရာ အား ဖျောက်ထားပေးပါ">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "အက်အွန်ဆိုတာဘာလဲ?">
+<!ENTITY discover.description2                "အတ်အွန်များ သည် သင်၏ &brandShortName; အားတစ်ကိုယ်ရေသုံးဆန်စေရန် ပြုလုပ်ပေးသော ထပ်တိုးလုပ်ဆောင်ချက်များနှင့် အက်ပလီကေးရှင်းများဖြစ်သည်။ ဘေးဘက်ဘား သို့ ရာသီဥတုအချက်ပေးအစီအစဉ် သို့ သမ်းပုံစုံတစ်ခုခုကို သုံးပြီး &brandShortName; အားသင့်ပုံစံအဖြစ်ပြောင်းလဲပါ။">
+<!ENTITY discover.footer                      "သင့်ကွန်ပျူတာ အင်တာနက်နဲ့ ချိတ်ဆက်မှုရတဲ့အခါ၊ ဒီဘက်ခြမ်းမှာ သင့်အတွက် အကောင်းဆုံးနဲ့ အကျော်ကြားဆုံးသော အက်အွန်အချို့ကို စမ်းသပ်ကြည့်နိုင်ဖို့ ဖော်ပြပေးထားပါမယ်။">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "မူအဆင့်">
+<!ENTITY detail.lastupdated.label             "နောက်ဆုံး အသစ်">
+<!ENTITY detail.creator.label                 "Developer">
+<!ENTITY detail.homepage.label                "မူလအစ">
+<!ENTITY detail.numberOfDownloads.label       "ဆွဲချချက်များ">
+
+<!ENTITY detail.contributions.description     "ယခုအက်အွန်၏ Developer က သေးငယ်သော ထုတ်လုပ်မှုများတွင် သင်ပါ၀င် ကူညီဆောင်ရွက်နိုင်မလားဟု မေးမြန်းထားပါသည်။">
+
+<!ENTITY detail.updateType                    "အလိုအလျောက် လုပ်ဆောင်ချက်အသစ်">
+<!ENTITY detail.updateDefault.label           "မူရင်းအခြေအနေ">
+<!ENTITY detail.updateDefault.tooltip         "အဆင့်မြှင့်တင်ခြင်း အား နဂိုမူလသတ်မှတ် ထားသည်အတိုင်းသာ အလိုအလျှောက်ပြုလုပ်ရန်">
+<!ENTITY detail.updateAutomatic.label         "ဖွင့်ပါ">
+<!ENTITY detail.updateAutomatic.tooltip       "အဆင့်မြင်တင်မှုများအား အလိုအလျောက် သွင်းပါ">
+<!ENTITY detail.updateManual.label            "ပိတ်ပါ">
+<!ENTITY detail.updateManual.tooltip          "အဆင့်မြင်တင်မှုများအား အလိုအလျောက် မသွင်းပါနှင့်">
+<!ENTITY detail.home                          "မူလအစ">
+<!ENTITY detail.repository                    "အက်အွန်၏ အကြာင်း">
+<!ENTITY detail.size                          "အရွယ်အ​စား">
+
+<!ENTITY detail.checkForUpdates.label         "အဆင့်မြှင့်တင်ရန်လိုအပ်နေလားစစ်ကြည့်မည်။">
+<!ENTITY detail.checkForUpdates.accesskey     "အ">
+<!ENTITY detail.checkForUpdates.tooltip       "ယခုအက်အွန်အတွက် အဆင့်မြင်တင်မှုများအား စစ်ဆေးပါ">
+<!ENTITY detail.showPreferencesWin.label      "ရွေးစရာများ">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "ယခုအက်အွန်၏ ရွေးချယ်ပိုင်ခွင့်အား ပြုပြင်ပါ">
+<!ENTITY detail.showPreferencesUnix.label     "ဦးစားပေး အချက်များ">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "ယခုအက်အွန်၏ preferences ကိုပြောင်းပါ">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "အဆင့်">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "ခေတ္တရပ်တန့်တယ်">
+<!ENTITY progress.cancel.tooltip              "ပယ်​ဖျက်ပါ">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "အမည်">
+<!ENTITY sort.name.tooltip                    "နာမည်အလိုက် စီပါ">
+<!ENTITY sort.dateUpdated.label               "နောက်ဆုံး အသစ်">
+<!ENTITY sort.dateUpdated.tooltip             "နေ့စွဲအလိုက် လုပ်ဆောင်ချက် အသစ်ကို စီစဥ်ခြင်း">
+<!ENTITY sort.relevance.label                 "အသင့်တော်ဆုံး">
+<!ENTITY sort.relevance.tooltip               "ဆက်စက်မှုဖြင့် စီပါ">
+<!ENTITY sort.price.label                     "စျေးနှုန်းများ">
+<!ENTITY sort.price.tooltip                   "စျေးနှုန်းအလိုက်စီပါ">
+
+<!ENTITY search.filter2.label                 "ရှာဖွေပါ -">
+<!ENTITY search.filter2.installed.label       "သင့်ရဲ့ အက်အွန်">
+<!ENTITY search.filter2.installed.tooltip     "သွင်းထားသော အက်အွန်များကိုဖော်ပြပါ">
+<!ENTITY search.filter2.available.label       "ရရှိနိုင်သော အက်အွန်">
+<!ENTITY search.filter2.available.tooltip     "သွင်း၍ ရနိုင်သော အက်အွန်များကိုဖော်ပြပါ">
+
+<!ENTITY addon.homepage                       "မူလအစ">
+<!ENTITY addon.details.label                  "ပိုမို၍">
+<!ENTITY addon.details.tooltip                "ယခု အက်အွန်နှင့်ပတ်သတ်၍ အသေးစိတ်ဖော်ပြပါ">
+<!ENTITY addon.unknownDate                    "မသိသော">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "ပိတ်ထားပါ">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "မွမ်းမံချက်">
+<!ENTITY addon.undoAction.label               "ပြန်ဖြည်ပါ">
+<!ENTITY addon.undoAction.tooltip             "ယခုလုပ်ဆောင်ချက်အား ပြန်လည်ပြုပြင်ပါ">
+<!ENTITY addon.undoRemove.label               "ပြန်ဖြည်ပါ">
+<!ENTITY addon.undoRemove.tooltip             "ယခုအက်အွန်ကို ဆက်လက် သွင်းပါ">
+<!ENTITY addon.restartNow.label               "ယခု Restart ချပါ">
+<!ENTITY addon.install.label                  "တပ်ဆင်ပါ">
+<!ENTITY addon.install.tooltip                "ယခုအက်အွန်ကို သွင်းပါ">
+<!ENTITY addon.updateNow.label                "ယခုအဆင့်မြှင့်တင်ပါ">
+<!ENTITY addon.updateNow.tooltip              "ယခု အက်အွန် အတွက် အဆင့်မြင်တင်မှုအား သွင်းပါ">
+<!ENTITY addon.includeUpdate.label            "အဆင့်မြင်တင်မှုတွင် ပါ၀င်ပါသည်။">
+<!ENTITY addon.updateAvailable.label          "အဆင့်မြင်တင်မှု တွေ့ရှိပါသည်။">
+<!ENTITY addon.checkingForUpdates.label       "အသစ်ပြုပြင်ခြင်းများရှိနေပြီလားစစ်ဆေးနေပါသည်။">
+<!ENTITY addon.releaseNotes.label             "ထုတ်ဝေမှု မှတ်စုများ">
+<!ENTITY addon.loadingReleaseNotes.label      "ပွင့်လာနေတယ်...">
+<!ENTITY addon.errorLoadingReleaseNotes.label "ထုတ်လုပ်မှူမှတ်ချက်များအားရယူနေစဉ်အတွင်းအမှားအယွင်းနည်းနည်းရှိခဲ့ပါသည်။">
+
+<!ENTITY addon.createdBy.label                "ဖြင့်">
+
+<!ENTITY eula.title                           "သုံးစွဲသူ ခွင့်ပြုမှု သဘောတူညီချက်">
+<!ENTITY eula.width                           "600px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "လက်ခံပြီး တပ်ဆင်ပါ...">
+
+<!ENTITY settings.path.button.label           "ဖွင့်ရှာကြည့်ပါ။">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "ဒါဘာလဲ? Telemetry ဟာ စမ်းသပ်ချက်များ ကို တပ်ဆင်ပြီး လုပ်ဆောင်ကောင်းလုပ်နေလိမ့်မည်">
+<!ENTITY experiment.info.learnmore "ဆက်လက်ဖတ်ရှူရန်">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetry အပြင်အဆင်များ">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "ပိုမို လေ့လာရန်…">
+
+<!ENTITY disabledUnsigned.heading "အတ်အွန်တချို့ကို ပိတ်ထားသည်">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "&brandShortName; တွင် အသုံးပြုရန်အတွက် အောက်ပါ အတ်အွန်များကို အတည်မပြုရသေးပါ။">
+<!ENTITY disabledUnsigned.description.findAddonsLink "သင်သည် အစားထိုးမှု ပြုလုပ်နိုင်သည်">
+<!ENTITY disabledUnsigned.description.end "သို့မဟုတ် အတ်အွန်များကို အတည်ပြုပြီးဖြစ်စေရန် ဖန်တီးသူကို တောင်းဆိုနိုင်သည်။">
+<!ENTITY disabledUnsigned.learnMore "သင့်ကို အွန်လိုင်းတွင် အမြဲလုံခြုံစေရန် ကျွန်တော်တို့၏ အားထုတ်မှုများကို ပိုမို လေ့လာနိုင်ပါသည်။">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "ဖန်တီးသူများသည် သူတို့၏ အတ်အွန်များ အတည်ပြုပြီးခြင်းကို လိုလားသည်။ ကျွန်တော်တို့၏">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "အသုံးပြုသူလက်စွဲကို ဖတ်ခြင်းဖြင့် ဆက်လက်ဆောင်ရွက်နိုင်သည်။">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "တစ်စုံတစ်ရာကို မတွေ့မိဘူးလား။ အချို့သောပလက်အင်များကို &brandShortName; က မထောက်ပံ့တော့ပါ။">
+<!ENTITY pluginDeprecation.learnMore "ပိုမိုလေ့လာရန်။">
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">

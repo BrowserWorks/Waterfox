@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Цей сайт використовує плагін, що може сповільнювати роботу &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Торкніться тут для активації плагіна.">
+<!ENTITY clickToActivatePlugin                               "Активувати плагін.">
+<!ENTITY checkForUpdates                                     "Перевірити оновлення…">
+<!ENTITY blockedPlugin.label                                 "Цей плагін був блокований задля вашого захисту.">
+<!ENTITY hidePluginBtn.label                                 "Приховати плагін">
+<!ENTITY managePlugins                                       "Керувати плагінами…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Перезавантажити сторінку">
+<!ENTITY reloadPlugin.post                                   " щоб спробувати знову.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Надіслати звіт про збій">
+<!ENTITY report.submitting                                   "Надсилання звіту…">
+<!ENTITY report.submitted                                    "Звіт про збій надіслано.">
+<!ENTITY report.disabled                                     "Звіти про збої вимкнено.">
+<!ENTITY report.failed                                       "Надсилання не вдалося.">
+<!ENTITY report.unavailable                                  "Немає доступного звіту.">
+<!ENTITY report.comment                                      "Додати коментар (коментарі бачать всі)">
+<!ENTITY report.pageURL                                      "Включити адресу URL сторінки">
+
+<!ENTITY plugin.file                                         "Файл">
+<!ENTITY plugin.mimeTypes                                    "Типи MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Увімкнути захищений режим Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Блокувати небезпечний і нав'язливий Flash вміст">

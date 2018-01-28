@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+
+<!ENTITY abouthome.pageTitle "Strona startowa programu &brandFullName;">
+
+<!ENTITY abouthome.defaultSnippet1.v1 "Dziękujemy za wybranie Firefoksa! Aby jak najlepiej wykorzystać przeglądarkę, zapoznaj się z jej <a>najnowszymi możliwościami</a>.">
+<!ENTITY abouthome.defaultSnippet2.v1 "Dopasowanie Firefoksa do własnych upodobań jest bardzo łatwe. <a>Wybierz spośród tysięcy dodatków</a>.">
+<!ENTITY abouthome.rightsSnippet "&brandFullName; jest oprogramowaniem open-source, tworzonym przez Waterfox, organizację non-profit. <a>Poznaj swoje prawa…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "Zakładki">
+<!ENTITY abouthome.historyButton.label "Historia">
+<!ENTITY abouthome.preferencesButtonWin.label "Opcje">
+<!ENTITY abouthome.preferencesButtonUnix.label "Preferencje">
+<!ENTITY abouthome.addonsButton.label "Dodatki">
+<!ENTITY abouthome.downloadsButton.label "Pobrane">
+<!ENTITY abouthome.syncButton.label "Synchronizacja">
+<!ENTITY abouthome.aboutMozilla.label "O Mozilli">

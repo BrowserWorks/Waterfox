@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Biblioteka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizacija">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organizirajte svoje zabilješke">
+
+<!ENTITY file.close.label               "Zatvori">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Pogledi">
+<!ENTITY views.accesskey                "P">
+<!ENTITY views.tooltip                  "Promijenite prikaz">
+<!ENTITY view.columns.label             "Prikaži stupce">
+<!ENTITY view.columns.accesskey         "s">
+<!ENTITY view.sort.label                "Sortiraj">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Nesortirano">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "A > Z poredak">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A poredak">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Uvezi zabilješke iz HTML-a…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Izvezi zabilješke u HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "e">
+<!ENTITY importOtherBrowser.label          "Uvezi podatke iz drugog web preglednika…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Kopija…">
+<!ENTITY cmd.backup.accesskey           "K">
+<!ENTITY cmd.restore2.label             "Vrati">
+<!ENTITY cmd.restore2.accesskey         "r">
+<!ENTITY cmd.restoreFromFile.label      "Odaberite datoteku…">
+<!ENTITY cmd.restoreFromFile.accesskey  "O">
+
+<!ENTITY cmd.deleteDomainData.label     "Zaboravi ovu stranicu">
+<!ENTITY cmd.deleteDomainData.accesskey "Z">
+
+<!ENTITY cmd.open.label                  "Otvori">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.open_window.label           "Otvori u novom prozoru">
+<!ENTITY cmd.open_window.accesskey       "p">
+<!ENTITY cmd.open_private_window.label     "Otvori u novom privatnom prozoru">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Otvori u novoj kartici">
+<!ENTITY cmd.open_tab.accesskey          "k">
+<!ENTITY cmd.open_all_in_tabs.label      "Otvori sve u karticama">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "s">
+
+<!ENTITY cmd.properties.label      "Svojstva">
+<!ENTITY cmd.properties.accesskey  "S">
+
+<!ENTITY cmd.sortby_name.label              "Sortiraj prema imenu">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Nova zabilješka…">
+<!ENTITY cmd.new_bookmark.accesskey        "z">
+<!ENTITY cmd.new_folder.label              "Nova mapa…">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "m">
+<!ENTITY cmd.new_separator.label           "Novi razdjelnik">
+<!ENTITY cmd.new_separator.accesskey       "r">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Ponovo učitaj žive zabilješke">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "u">
+
+<!ENTITY cmd.moveBookmarks.label                  "Premjesti…">
+<!ENTITY cmd.moveBookmarks.accesskey              "P">
+
+<!ENTITY col.name.label          "Ime">
+<!ENTITY col.tags.label          "Oznake">
+<!ENTITY col.url.label           "Lokacija">
+<!ENTITY col.mostrecentvisit.label "Posljednja posjeta">
+<!ENTITY col.visitcount.label    "Broj posjeta">
+<!ENTITY col.description.label   "Opis">
+<!ENTITY col.dateadded.label     "Dodano">
+<!ENTITY col.lastmodified.label  "Zadnje izmijenjeno">
+
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Unos i sigurnosne kopije">
+<!ENTITY maintenance.accesskey  "U">
+<!ENTITY maintenance.tooltip    "Unesite ili izvezite svoje zabilješke">
+
+<!ENTITY backButton.tooltip  "Idi natrag">
+
+<!ENTITY forwardButton.tooltip  "Idi naprijed">
+
+<!ENTITY detailsPane.more.label "Više">
+<!ENTITY detailsPane.more.accesskey "V">
+<!ENTITY detailsPane.less.label "Manje">
+<!ENTITY detailsPane.less.accesskey "M">
+<!ENTITY detailsPane.selectAnItemText.description "Odaberite stavku za pregled i ureživanje njenih svojstava">
+
+<!ENTITY view.label               "Prikaz">
+<!ENTITY view.accesskey           "i">
+<!ENTITY byDate.label             "Prema datumu">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Prema stranici">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "Prema posjećenosti">
+<!ENTITY byMostVisited.accesskey  "e">
+<!ENTITY byLastVisited.label      "Prema zadnjem posjetu">
+<!ENTITY byLastVisited.accesskey  "r">
+<!ENTITY byDayAndSite.label       "Prema datumu i stranici">
+<!ENTITY byDayAndSite.accesskey   "t">
+
+<!ENTITY search.placeholder  "Search">
+

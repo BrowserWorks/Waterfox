@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Indítás">
+
+<!ENTITY startupPage2.label        "A &brandShortName; indításakor">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Kezdőlap megjelenítése">
+<!ENTITY startupBlankPage.label    "Üres oldal megjelenítése">
+<!ENTITY startupPrevSession.label  "A legutóbbi ablakok és lapok megjelenítése">
+
+<!ENTITY homepage2.label           "Kezdőlap">
+<!ENTITY homepage2.accesskey       "K">
+<!ENTITY useCurrentPage.label      "Aktuális oldal használata">
+<!ENTITY useCurrentPage.accesskey  "A">
+<!ENTITY useMultiple.label         "Aktuális oldalak használata">
+<!ENTITY chooseBookmark.label      "Könyvjelző használata…">
+<!ENTITY chooseBookmark.accesskey  "n">
+<!ENTITY restoreDefault.label      "Alapértelmezés">
+<!ENTITY restoreDefault.accesskey  "p">
+
+<!ENTITY downloads.label     "Letöltések">
+
+<!ENTITY saveTo.label "Fájlok mentése">
+<!ENTITY saveTo.accesskey "m">
+<!ENTITY chooseFolderWin.label        "Tallózás…">
+<!ENTITY chooseFolderWin.accesskey    "T">
+<!ENTITY chooseFolderMac.label        "Tallózás…">
+<!ENTITY chooseFolderMac.accesskey    "T">
+<!ENTITY alwaysAskWhere.label         "Mindig kérdezzen rá a fájlok letöltési helyére">
+<!ENTITY alwaysAskWhere.accesskey     "r">
+
+<!ENTITY alwaysCheckDefault2.label        "Mindig ellenőrizze, hogy a &brandShortName;-e az alapértelmezett böngésző">
+<!ENTITY alwaysCheckDefault2.accesskey    "M">
+<!ENTITY setAsMyDefaultBrowser3.label     "Beállítás alapértelmezettként…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "a">
+<!ENTITY isDefault.label                  "Jelenleg a &brandShortName; az alapértelmezett böngésző.">
+<!ENTITY isNotDefault.label               "A &brandShortName; nem az alapértelmezett böngésző">
+
+<!ENTITY separateProfileMode.label        "A &brandShortName; és a Waterfox futhat egyszerre">
+<!ENTITY useWaterfoxSync.label             "Tipp: Ez külön profilokat használ. A Sync segítségével adatokat oszthat meg közöttük.">
+<!ENTITY getStarted.notloggedin.label     "Bejelentkezés a &syncBrand.shortName.label;be">
+<!ENTITY getStarted.configured.label      "A &syncBrand.shortName.label; beállításainak megnyitása">
+
+<!ENTITY e10sEnabled.label                "Párhuzamosított &brandShortName; engedélyezése">

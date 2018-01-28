@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Toestelbestuurder">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "Sekuriteitsmodules en -toestelle">
+<!ENTITY devmgr.details.title                   "Besonderhede">
+<!ENTITY devmgr.details.title2                  "Waarde">
+
+<!ENTITY devmgr.button.login.label              "Meld aan">
+<!ENTITY devmgr.button.login.accesskey          "a">
+<!ENTITY devmgr.button.logout.label             "Meld af">
+<!ENTITY devmgr.button.logout.accesskey         "M">
+<!ENTITY devmgr.button.changepw.label           "Verander wagwoord">
+<!ENTITY devmgr.button.changepw.accesskey       "w">
+<!ENTITY devmgr.button.load.label               "Laai">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Ontlaai">
+<!ENTITY devmgr.button.unload.accesskey         "O">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Tik die inligting in vir die module wat u wil byvoeg.">
+<!ENTITY loaddevice.modname                     "Modulenaam:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Nuwe PKCS#11-module">
+<!ENTITY loaddevice.filename                    "Lêernaam van module:">
+<!ENTITY loaddevice.filename.accesskey          "L">
+<!ENTITY loaddevice.browse                      "Blaai…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Laai PKCS#11-toestelaandrywer">
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+

@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; -Fren amaɣnu n useqdac">
+
+<!ENTITY            profilename.label      "Isem n umaɣnu:">
+
+<!ENTITY            start.label            "Senker &brandShortName;">
+<!ENTITY            exit.label             "Ffeɣ">
+
+<!ENTITY            availprofiles.label    "Imeɣnuten yellan">
+
+<!ENTITY            newButton.label        "Rnu amaɣnu">
+<!ENTITY            newButton.accesskey    "R">
+<!ENTITY            renameButton.label     "Snifel isem n umaɣnu…">
+<!ENTITY            renameButton.accesskey "n">
+<!ENTITY            deleteButton.label     "Kkes amaɣnu…">
+<!ENTITY            deleteButton.accesskey "K">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; ad iḥrez talɣut n iɣewwaṛen-ik usligen d isme,yifen-ik ɣef umaɣnu-ik.">
+
+<!ENTITY            offlineState.label    "Mahel war tuqqna">
+<!ENTITY            offlineState.accesskey "M">
+
+<!ENTITY            useSelected.label       "Seqdec s umezwar amaɣnu ifernen">
+<!ENTITY            useSelected.accesskey   "S">

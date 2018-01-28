@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Следующие дополнения могут вызывать проблемы">
+<!ENTITY blocklist.style             "width: 55em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; определил, что следующие дополнения вызывают проблемы со стабильностью или безопасностью:">
+<!ENTITY blocklist.softblocked       "В целях безопасности мы настоятельно рекомендуем перезапустить программу, оставив эти дополнения отключёнными.">
+<!ENTITY blocklist.hardblocked       "Эти дополнения несут высокий риск возникновения проблем со стабильностью или безопасностью, поэтому они были заблокированы. Для их полного отключения требуется перезапуск.">
+<!ENTITY blocklist.softandhard       "Дополнения, несущие высокий риск возникновения проблем со стабильностью или безопасностью, были заблокированы. Риск использования других ниже, но мы настоятельно рекомендуем перезапустить программу, оставив эти дополнения отключёнными.">
+<!ENTITY blocklist.moreinfo          "Подробная информация">
+
+<!ENTITY blocklist.accept.label      "Перезапустить &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "р">
+
+<!ENTITY blocklist.blocked.label     "Заблокировано">
+<!ENTITY blocklist.checkbox.label    "Отключить">

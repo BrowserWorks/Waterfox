@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "نیٹ ورکنگ کے بارے میں">
+<!ENTITY aboutNetworking.warning               "یہ محض تجرباتی ہے- صرف کسی بڑے کی موجودگی میں استعمال کریں-">
+<!ENTITY aboutNetworking.showNextTime          "اگلی بار یہ تنبیہ نمائش کریں">
+<!ENTITY aboutNetworking.ok                    "ٹھیک ہے">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "ساکٹس">
+<!ENTITY aboutNetworking.dns                   "ڈی این ایس">
+<!ENTITY aboutNetworking.websockets            "ویب ساکٹس">
+<!ENTITY aboutNetworking.refresh               "تازہ کریں">
+<!ENTITY aboutNetworking.autoRefresh           "خودبخود, ہر ٣ سیکنڈ کے بعد تازہ کریں     ">
+<!ENTITY aboutNetworking.hostname              "ہوسٹ نیم">
+<!ENTITY aboutNetworking.port                  "پورٹ">
+
+<!ENTITY aboutNetworking.ssl                   "ایس ایس ایل">
+<!ENTITY aboutNetworking.active                "فعال">
+<!ENTITY aboutNetworking.idle                  "بیکار">
+<!ENTITY aboutNetworking.host                  "ہوسٹ">
+<!ENTITY aboutNetworking.tcp                   "ٹی سی پی">
+<!ENTITY aboutNetworking.sent                  "بھیجا گیا">
+<!ENTITY aboutNetworking.received              "وصولا گیا">
+<!ENTITY aboutNetworking.family                "خاندان">
+<!ENTITY aboutNetworking.addresses             "پتے">
+<!ENTITY aboutNetworking.expires               "مدت ختم ہوتی ہے (سیکنڈ)">
+<!ENTITY aboutNetworking.messagesSent          "پیغامات بھیج دئیے گیے">
+<!ENTITY aboutNetworking.messagesReceived      "پیغامات وصولے گیے">
+<!ENTITY aboutNetworking.bytesSent             "بائیٹس بھیج دئیے گیے">
+<!ENTITY aboutNetworking.bytesReceived         "بائیٹس وصولے گیے">
+<!ENTITY aboutNetworking.logging               "لاگینگ">
+<!ENTITY aboutNetworking.logTutorial           "اس ٹول کو کس طرح استعمال کرنا ہے اسکے لئے دیکھیں <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a>۔">
+<!ENTITY aboutNetworking.currentLogFile        "موجودہ لاگ مسل">
+<!ENTITY aboutNetworking.currentLogModules     "موجودہ لاگ ماڈیول">
+<!ENTITY aboutNetworking.setLogFile            "لاگ مسل سیٹ کریں">
+<!ENTITY aboutNetworking.setLogModules         "لاگ ماڈیول سیٹ کریں">
+<!ENTITY aboutNetworking.startLogging          "لاگنگ شروع کریں">
+<!ENTITY aboutNetworking.stopLogging           "لاگنگ رکیں">
+<!ENTITY aboutNetworking.dnsLookup             "DNS تلاش کریں">
+<!ENTITY aboutNetworking.dnsLookupButton       "حل کریں">
+<!ENTITY aboutNetworking.dnsDomain             "عمل داری">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

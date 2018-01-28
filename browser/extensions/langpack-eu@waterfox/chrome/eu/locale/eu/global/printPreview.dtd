@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Inprimatu...">
+<!ENTITY print.accesskey      "p">
+<!ENTITY pageSetup.label      "Prestatu orria...">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "Orria:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "-">
+<!ENTITY scale.label          "Eskala:">
+<!ENTITY scale.accesskey      "s">
+<!ENTITY portrait.label       "Bertikala">
+<!ENTITY portrait.accesskey   "t">
+<!ENTITY landscape.label      "Horizontala">
+<!ENTITY landscape.accesskey  "l">
+<!ENTITY close.label          "Itxi">
+<!ENTITY close.accesskey      "I">
+<!ENTITY p30.label            "&#037;30">
+<!ENTITY p40.label            "&#037;40">
+<!ENTITY p50.label            "&#037;50">
+<!ENTITY p60.label            "&#037;60">
+<!ENTITY p70.label            "&#037;70">
+<!ENTITY p80.label            "&#037;80">
+<!ENTITY p90.label            "&#037;90">
+<!ENTITY p100.label           "&#037;100">
+<!ENTITY p125.label           "&#037;125">
+<!ENTITY p150.label           "&#037;150">
+<!ENTITY p175.label           "&#037;175">
+<!ENTITY p200.label           "&#037;200">
+<!ENTITY Custom.label         "Pertsonalizatua...">
+<!ENTITY ShrinkToFit.label    "Eskalatu sar dadin">
+<!ENTITY customPrompt.title   "Eskala pertsonalizatua...">
+<!ENTITY simplifyPage.label   "Sinplifikatu orria">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "Aldatu diseinua errazago irakur dadin">
+<!ENTITY simplifyPage.disabled.tooltip "Ezin da orri hau automatikoki sinplifikatu">
+
+<!ENTITY homearrow.tooltip    "Lehen orria">
+<!ENTITY endarrow.tooltip     "Azken orria">
+<!ENTITY nextarrow.tooltip    "Hurrengo orria">
+<!ENTITY previousarrow.tooltip "Aurreko orria">

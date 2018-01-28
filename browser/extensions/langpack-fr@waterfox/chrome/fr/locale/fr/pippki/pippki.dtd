@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Définir le mot de passe principal">
+<!ENTITY setPassword.tokenName.label "Périphérique de sécurité ">
+<!ENTITY setPassword.oldPassword.label "Ancien mot de passe">
+<!ENTITY setPassword.newPassword.label "Saisissez le nouveau mot de passe">
+<!ENTITY setPassword.reenterPassword.label "Saisissez-le à nouveau">
+<!ENTITY setPassword.meter.label "Mesure de la qualité du mot de passe :">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Effacer">
+<!ENTITY resetPassword.title  "Effacer le mot de passe principal">
+<!ENTITY resetPassword.text  "Si vous effacez votre mot de passe principal, tous vos mots de passe web et courrier, vos données de formulaires, vos certificats personnels et vos clés privées seront oubliés. Voulez-vous vraiment supprimer le mot de passe principal ?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Téléchargement du certificat">
+<!ENTITY downloadCert.message1 "On vous a demandé de confirmer une nouvelle autorité de certification (AC).">
+<!ENTITY downloadCert.trustSSL "Confirmer cette AC pour identifier des sites web.">
+<!ENTITY downloadCert.trustEmail "Confirmer cette AC pour identifier les utilisateurs de courrier.">
+<!ENTITY downloadCert.trustObjSign "Confirmer cette AC pour identifier les développeurs de logiciels.">
+<!ENTITY downloadCert.message3 "Avant de confirmer cette AC pour quelque raison que ce soit, vous devriez l’examiner elle, ses méthodes et ses procédures (si possible).">
+<!ENTITY downloadCert.viewCert.label "Voir">
+<!ENTITY downloadCert.viewCert.text "Examiner le certificat d’AC">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Requête d’identification d’utilisateur">
+<!ENTITY clientAuthAsk.message1 "Ce site vous demande de vous identifier avec un certificat de sécurité :">
+<!ENTITY clientAuthAsk.message2 "Choisir un certificat à présenter comme identification :">
+<!ENTITY clientAuthAsk.message3 "Détails du certificat sélectionné :">
+
+<!ENTITY pkcs12.setpassword.title  "Choisir un mot de passe de sauvegarde du certificat">
+<!ENTITY pkcs12.setpassword.message  "Le mot de passe de sauvegarde du certificat que vous venez de définir protège le fichier de sauvegarde que vous allez créer. Vous devez donner le mot de passe pour commencer cette sauvegarde.">
+<!ENTITY pkcs12.setpassword.label1 "Mot de passe de sauvegarde du certificat :">
+<!ENTITY pkcs12.setpassword.label2 "Mot de passe de sauvegarde du certificat (encore) :">
+<!ENTITY pkcs12.setpassword.reminder "Important : si vous avez oublié votre mot de passe de sécurité, vous ne pourrez plus importer cette sauvegarde plus tard. Veuillez le conserver en un lieu sûr.">
+
+<!ENTITY chooseToken.title  "Choix d’un jeton">
+<!ENTITY chooseToken.message1 "Veuillez choisir un jeton.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Génération d’une clé privée">
+<!ENTITY createCertInfo.msg1 "Génération de la clé en cours… Cette opération peut prendre plusieurs minutes…">
+<!ENTITY createCertInfo.msg2 "Veuillez patienter…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Authentification protégée par jeton">
+<!ENTITY protectedAuth.msg "Veuillez vous authentifier au jeton. La méthode d’authentification dépend du type de votre jeton.">
+<!ENTITY protectedAuth.tokenName.label "Jeton :">

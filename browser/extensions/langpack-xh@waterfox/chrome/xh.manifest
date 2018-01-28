@@ -1,0 +1,14 @@
+locale alerts xh xh/locale/xh/alerts/
+locale autoconfig xh xh/locale/xh/autoconfig/
+locale global xh xh/locale/xh/global/
+locale global-platform xh xh/locale/xh/global-platform/mac/ os=Darwin
+locale global-platform xh xh/locale/xh/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform xh xh/locale/xh/global-platform/win/ os=WINNT
+locale mozapps xh xh/locale/xh/mozapps/
+locale necko xh xh/locale/xh/necko/
+locale passwordmgr xh xh/locale/xh/passwordmgr/
+locale pipnss xh xh/locale/xh/pipnss/
+locale pippki xh xh/locale/xh/pippki/
+locale places xh xh/locale/xh/places/
+locale pluginproblem xh xh/locale/xh/pluginproblem/
+locale weave xh xh/locale/xh/services/

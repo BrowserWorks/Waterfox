@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "सहयुक्ति समस्या उत्पन्न कए सकैत अछि ">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; निर्धारित कएने अछि जे निम्नलिखित सहयुक्ति स्थायित्व आ सुरक्षा समस्या उत्पन्न करबाक लेल जानल जाएत अछि :">
+<!ENTITY blocklist.softblocked       "अहाँक सुरक्षाक लेल, एकटा अनुशंसा अछि जे अहाँ ई निष्क्रिय सहयुक्तिसँ शुरू करू .">
+<!ENTITY blocklist.hardblocked       "ई सहयुक्तिमे स्थायित्व आ सुरक्षा संबंधी समस्या उत्पन्न करबाक बहुत बेसी जोखिम अछि आओर रोकल जाए रहल अछि,  मुदा हुनका निष्क्रिय करबाक लेल फेर आरंभ कएल जएनाइ जरूरी अछि .">
+<!ENTITY blocklist.softandhard       "स्थायित्व आ सुरक्षा संबंधी समस्याक बेसी जोखिम राखैबला सहयुक्तिकेँ रोक देल गेल अछि. शेष दोसरक सँग कम जोखिम अछि,  मुदा  एकटा सलाह अछि जे अहा हुनका निष्क्रिय रूपेँ फेर आरंभ करू.">
+<!ENTITY blocklist.moreinfo          " बेसी  सूचना">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; फेर आरंभ करू ">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "रोकल गेल">
+<!ENTITY blocklist.checkbox.label    "निष्क्रिय करू ">

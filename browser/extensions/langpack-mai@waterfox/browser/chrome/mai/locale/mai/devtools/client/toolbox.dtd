@@ -1,0 +1,223 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "ब्राउजर टूलबॉक्स खोलबा मे त्रुटि:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "उन्नत सेटिंग">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "इंस्पेक्टर">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "ब्राउज़र शैली देखाबू">
+<!ENTITY options.showUserAgentStyles.tooltip "ई चालू कएनाइ तयशुदा शैली देखाएत जे ब्राउज़र केर द्वारा लोड कएल अछि.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "तयशुदा रंग इकाई (u)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "u">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "लेखक जेना">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "हेक्स">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "रंग नाम">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* वर्तमान सत्र केवल, फिनु सँ पृष्ठ लोड करैत अछि">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "ब्राउज़र क्रोम आओर सहयुक्ति डिबगिंग टूलबॉक्स सक्रिय करू">
+<!ENTITY options.enableChrome.tooltip3  "एहि विकल्प कए चालू केनाइ अहाँक ब्राउज़र संदर्भ मे कैकटा डेवलपर टूल कए उपयोग करबाकक स्वीकृति देत (via Tools > Web Developer > Browser Toolbox) आओर सहयुक्ति प्रबंधक स हुनका डिबग करताह">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "दूरस्थ डिबगिंग सक्रिय करू">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "जावास्क्रिप्ट अक्षम करू*">
+<!ENTITY options.disableJavaScript.tooltip   "ई विकल्प केँ बंद कएनाइ जावास्क्रिप्ट केँ निष्क्रिय कए देत मोजुदा टैब कलेल. जँ ओ टैब अथवा अओज़ारपेटी बन्न अछि तँ ई सेटिंग विस्मृत कए देल जाएत.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "HTTP पर वर्कर सेवा सक्षम करू (जखन औजारपेटी खुलल होए)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "एहि विकल्प कए सक्रिय करबा स HTTP पर वर्कर सेवा सक्रिय भए जाएत  ओ सभटा टैब क लेल जेकरा मे औजारपेटी खुजल होएत |">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "डेवलेपर टूल एड-ऑन द्वारा संस्थापित कएल गेल">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "उपलब्ध अओजार बक्सा बटन">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* मोजुदा अओज़ारपेटी लक्ष्य कलेल समर्थित नहि">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "प्रसंग">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "डेवलपर संस्करण ब्राउज प्रसंग केर उपयोग करू">
+<!ENTITY options.usedeveditiontheme.tooltip "डेवलेपर संस्करण ब्राउजर थीम टॉगल करू.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "वेबक कंसोल">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "टाइमस्टैंप्स सक्षम करू">
+<!ENTITY options.timestampMessages.tooltip    "जँ अहाँ एहि विकल्प कमांड केँ सक्रिय करैत छी आओर वेब कंसोल मे आउटपुट कोनो टाइपस्टैंप केँ देखओताह">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "शैली संपादक">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "मूल स्रोत देखाउ">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "मूल स्रोत देखाबू (उदाहरण Sass फ़ाइल) शैली संपादक आओर निरीक्षक मे">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "स्वतःपूर्ण CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "स्वतःपूर्ण CSS विशेषता, मान आओर शैली संपादक मे चयनक अहाँक टाइप करए केर दौरान">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "सामान्य वरीयतासभ">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "स्थिर लॉग सक्रिय करू">
+<!ENTITY options.enablePersistentLogs.tooltip  "जँ अहाँ एहि विकल्प केँ सक्रिय कएनाइ चाहैत छी तँ वेब कंसोल आओर संजाल मॉनिटर सभ बेर आउटपुट केँ साफ नहि करताह जखन अहाँ कोनो नवीन पन्ना केँ संचरित करैत अछि">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "देखाबू गेक्को मंच डेटा">
+<!ENTITY options.showPlatformData.tooltip  "अहाँ एहि विकल्प केँ सक्षम जावास्क्रिप्ट प्रोफाइलर रिपोर्टों गेक्को मंच प्रतीक शामिल हाएब.">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "संपादक वरीयता">
+<!ENTITY options.sourceeditor.detectindentation.label   "हाशिया जाँचू">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "स्रोत सामग्री केर आधार पर हाशिया क अनुमान करू">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "कोष्ठक स्वतःबंद">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "बन्न कोष्ठक स्वतः डालू">
+<!ENTITY options.sourceeditor.expandtab.label           "स्थान केर उपयोग सँ हाशिया">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "टैब वर्ण केर बदला स्थान केर उपयोग करू">
+<!ENTITY options.sourceeditor.tabsize.label             "टैब आकार (T)">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "कीबाइंडिंग (K)">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "पूर्वनिर्धारित">
+
+<!ENTITY options.collapseAttrs.label "Truncate DOM attributes">
+<!ENTITY options.collapseAttrs.tooltip "Truncate long attributes in the inspector">
+
+<!ENTITY options.debugger.label            "Debugger">
+
+<!ENTITY options.disableHTTPCache.label     "Disable HTTP Cache (when toolbox is open)">
+<!ENTITY options.disableHTTPCache.tooltip   "Turning this option on will disable the HTTP cache for all tabs that have the toolbox open. Service Workers are not affected by this option.">
+
+<!ENTITY options.enableRemote.tooltip2  "Turning this option on will allow the developer tools to debug a remote instance like Waterfox OS">
+
+<!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
+<!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!ENTITY options.screenshot.clipboard.label      "Screenshot to clipboard">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saves to the screenshot directly to the clipboard">
+
+<!ENTITY options.screenshot.label            "Screenshot Behavior">
+
+<!ENTITY options.selectDefaultTools.label2    "Default Developer Tools">
+
+<!ENTITY options.sourceMaps.label      "Enable Source Maps">
+<!ENTITY options.sourceMaps.tooltip    "If you enable this option sources will be mapped in the Debugger and Console.">
+

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Új konténer hozzáadása">
+<!ENTITY addButton.accesskey  "a">
+<!ENTITY preferencesButton.label "Beállítások">
+<!ENTITY removeButton.label   "Eltávolítás">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Vissza a privát módba">
+
+<!ENTITY window.title         "Új konténer hozzáadása">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Név:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Adjon meg egy konténernevet">
+<!ENTITY icon.label           "Ikon:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Szín:">
+<!ENTITY color.accesskey      "z">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Kész">
+<!ENTITY button.ok.accesskey  "K">
+

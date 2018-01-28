@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "სერთიფიკატების მმართველი">
+
+<!ENTITY certmgr.tab.mine                     "თქვენი სერთიფიკატები">
+<!ENTITY certmgr.tab.others2                  "ხალხი">
+<!ENTITY certmgr.tab.websites3                "სერვერები">
+<!ENTITY certmgr.tab.ca                       "სააგენტოები">
+<!ENTITY certmgr.tab.orphan2                  "სხვა">
+
+<!ENTITY certmgr.mine                         "თქვენ გაქვთ თქვენი სერთიფიკატები ამ ორგანიზაციებიდან:">
+<!ENTITY certmgr.others                       "თქვენ გაქვთ სერთიფიკატები რომელიც ეხება შემდეგ პირებს:">
+<!ENTITY certmgr.websites2                    "თქვენ გაქვთ სერთიფიკატები რომელიც შემდეგ სერვერებს ეხება:">
+<!ENTITY certmgr.cas                          "თქვენ გაქვთ სერთიფიკატები რომელიც ეხება შემდეგ გამომცემლებს:">
+<!ENTITY certmgr.orphans                      "თქვენი სერთიფიკატის ფაილი არც ერთ სხვა კატეგორიას არ შეესაბამება:">
+
+<!ENTITY certmgr.detail.general_tab.title     "ძირითადი">
+<!ENTITY certmgr.detail.general_tab.accesskey "ძ">
+<!ENTITY certmgr.detail.prettyprint_tab.title "ვრცლად">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "ვ">
+
+<!ENTITY certmgr.pending.label                "მიმდინარეობს სერთიფიკატების შემოწმება…">
+<!ENTITY certmgr.subjectinfo.label            "ვისზეა გაცემული">
+<!ENTITY certmgr.issuerinfo.label             "ვისგანაა გაცემული">
+<!ENTITY certmgr.periodofvalidity.label       "მოქმედების ვადა" >
+<!ENTITY certmgr.fingerprints.label           "ანაბეჭდები">
+<!ENTITY certmgr.certdetail.title             "სერთიფიკატის მონაცემები">
+<!ENTITY certmgr.certdetail.cn                "საერთო სახელი (CN)">
+<!ENTITY certmgr.certdetail.o                 "ორგანიზაცია (O)">
+<!ENTITY certmgr.certdetail.ou                "ორგანიზაციული ერთეული (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "სერიული ნომერი">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 ანაბეჭდი">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 ანაბეჭდი">
+
+<!ENTITY certmgr.editcacert.title             "სერთიფიკატორების ნდობის პარამეტრების ჩასწორება">
+<!ENTITY certmgr.editcert.edittrust           "სერთიფიკატის ნდობის პარამეტრების ჩასწორება:">
+<!ENTITY certmgr.editcert.trustssl            "ამ სერთიფიკატს შეუძლია ვებსაიტების იდენტიფიცირება">
+<!ENTITY certmgr.editcert.trustemail          "ამ სერთიფიკატით შესაძლებელია ელფოსტის კლიენტთა იდენტიფიცირება.">
+<!ENTITY certmgr.editcert.trustobjsign        "ამ სერთიფიკატით შესაძლებელია პროგრამების შემქმნელთა იდენტიფიცირება.">
+
+<!ENTITY certmgr.deletecert.title             "სერთიფიკატის წაშლა">
+
+<!ENTITY certmgr.certname                     "სერთიფიკატის სახელი">
+<!ENTITY certmgr.certserver                   "საიტი">
+<!ENTITY certmgr.override_lifetime            "ვადა">
+<!ENTITY certmgr.tokenname                    "უსაფრთხოების მოწყობილობა">
+<!ENTITY certmgr.begins                       "ამოქმედების თარიღი">
+<!ENTITY certmgr.expires                      "ვადის გასვლის თარიღი">
+<!ENTITY certmgr.email                        "ელფოსტის მისამართი">
+<!ENTITY certmgr.serial                       "სერიული ნომერი">
+
+<!ENTITY certmgr.close.label                  "დახურვა">
+<!ENTITY certmgr.close.accesskey              "დ">
+<!ENTITY certmgr.view2.label                  "ნახვა...">
+<!ENTITY certmgr.view2.accesskey              "ნ">
+<!ENTITY certmgr.edit3.label                  "ნდობის რედაქტირება…">
+<!ENTITY certmgr.edit3.accesskey              "რ">
+<!ENTITY certmgr.export.label                 "გატანა…">
+<!ENTITY certmgr.export.accesskey             "გ">
+<!ENTITY certmgr.delete2.label                "წაშლა…">
+<!ENTITY certmgr.delete2.accesskey            "წ">
+<!ENTITY certmgr.delete_builtin.label         "წაშლა ან უნდობლობა…">
+<!ENTITY certmgr.delete_builtin.accesskey     "უ">
+<!ENTITY certmgr.backup2.label                "დამარქაფება...">
+<!ENTITY certmgr.backup2.accesskey            "მ">
+<!ENTITY certmgr.backupall2.label             "ყველას დამარქაფება...">
+<!ENTITY certmgr.backupall2.accesskey         "ყ">
+<!ENTITY certmgr.restore2.label               "შემოტანა...">
+<!ENTITY certmgr.restore2.accesskey           "ტ">
+<!ENTITY certmgr.details.label                "სერთიფიკატის ველები">
+<!ENTITY certmgr.details.accesskey            "ვ">
+<!ENTITY certmgr.fields.label                 "ველის მნიშვნელობა">
+<!ENTITY certmgr.fields.accesskey             "მ">
+<!ENTITY certmgr.hierarchy.label              "სერთიფიკატის იერარქია">
+<!ENTITY certmgr.hierarchy.accesskey2         "ქ">
+<!ENTITY certmgr.addException.label           "გამონაკლისის დამატება…">
+<!ENTITY certmgr.addException.accesskey       "კ">
+
+<!ENTITY exceptionMgr.title                   "უსაფრთხოების გამონაკლისის დამატება">
+<!ENTITY exceptionMgr.exceptionButton.label   "უსაფრთხოების გამონაკლისის დასტური">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "დ">
+<!ENTITY exceptionMgr.supplementalWarning     "ლეგიტიმური ბანკები, მაღაზიები და სხვა საზოგადო საიტები ამის გაკეთებას არ მოგთხოვენ.">
+<!ENTITY exceptionMgr.certlocation.caption2   "სერვერი">
+<!ENTITY exceptionMgr.certlocation.url        "მისამართი:">
+<!ENTITY exceptionMgr.certlocation.download   "სერთიფიკატის მიღება">
+<!ENTITY exceptionMgr.certlocation.accesskey  "ღ">
+<!ENTITY exceptionMgr.certstatus.caption      "სერთიფიკატის მდგომარეობა">
+<!ENTITY exceptionMgr.certstatus.viewCert     "ჩვენება…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "ჩ">
+<!ENTITY exceptionMgr.permanent.label         "ამ გამონაკლისის მუდმივად შენახვა">
+<!ENTITY exceptionMgr.permanent.accesskey     "მ">

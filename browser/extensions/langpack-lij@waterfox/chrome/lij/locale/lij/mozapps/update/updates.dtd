@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Agiornamento de l'aplicaçion">
+
+<!ENTITY  checking.title                  "Contròllo i agiornamenti">
+<!ENTITY  updateCheck.label               "Çerco neuve verscion de &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "No ò trovou i agiornamenti">
+<!ENTITY  noupdatesautoenabled.intro      "No gh'é di agiornamenti. &brandShortName; contròlia
+                                           periòdicamente pe-i agiornamenti.">
+<!ENTITY  noupdatesautodisabled.intro     "No gh'é di agiornamenti. Pe piaxei contròlla ancon dòppo ò abilita
+                                           o contròllo aotomatico di agiornamenti de &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "No riescio a agiornâ">
+<!ENTITY  manualUpdate.desc               "Gh'é un agiornamento racomandou de seguessa e stabilitæ, ma ti no ti gh'æ
+                                           i permissi de scistema pe instala. Pe piaxei ciamma
+                                           o teu aministratô de scistema ò preuva ancon from co-in atro account che gh'à o permisso de
+                                           instalâ aplicaçioin in sto computer.">
+<!ENTITY  manualUpdate.space.desc         "Gh'é un agiornamento racomandou de seguessa e stabilitæ,
+                                           ma ti no ti gh'æ de spaçio pe instalalo.">
+<!ENTITY  manualUpdateGetMsg.label        "ti peu de longo pigiâ l'urtima verscion de &brandShortName; in:">
+
+<!ENTITY  unsupported.title               "Scistema no soportou">
+<!ENTITY  unsupported.label               "Sta verscion de &brandShortName; a l'é vegia, purtròppo l'urtima verscion a no l'é conpatibile co-o scistema òperativo in uzo. Agiornâ o scistema e provâ torna. St'avizo o no saiâ ciù mostrou ma l'é poscibile avei">
+<!ENTITY  unsupportedLink.label           "atre informaçioin.">
+
+<!ENTITY  clickHere.label                 "Fanni vedde ciù informaçioin in sce l'agiornamento">
+
+<!ENTITY  evangelism.desc                 "L'é racomandou che ti ativi sti 
+                                           agiornamenti pe &brandShortName; ciù fito che ti peu.">
+
+<!ENTITY  downloadPage.title              "Descarego &brandShortName;">
+<!ENTITY  downloading.intro               "Descarego l'agiornamento…">
+<!ENTITY  connecting.label                "Me conetto a-o server di agiornamenti…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; o no l'é riescio a verificâ l'agiornamento che vegne aomentou cian cianin, coscì oua descarega quello conpleto.">
+
+<!ENTITY  viewDetails.tooltip             "Fanni vedde i detalli pe sto agiornamento">
+
+<!ENTITY  details.link                    "Detalli">
+
+<!ENTITY  error.title                     "Agiornamento no riescio">
+
+<!ENTITY  error.label                     "Gh'é stæto un problema a descaregâ ò instalâ sto 
+                                           agiornamento. &brandShortName; no peu ese agiornou perche:">
+                                           
+<!ENTITY  errorManual.label               "Ti ti peu agiornâ &brandShortName; a man vixitando sto colegamento
+                                           e descaregando l'urtima verscion:">
+                                           
+<!ENTITY  errorpatching.intro             "L'agiornamento parçiale o no va ben. 
+                                           O &brandShortName; o proviâ torna a descaregâ l'agiornamento conpleto.">
+
+<!ENTITY  genericBackgroundError.label    "O &brandShortName; o no l'ariesce a capî se gh'é di agiornamenti. Pe piaxei
+                                           te peu miga amiâ se ti gh'æ l'urtima verscion de &brandShortName; da:">
+
+<!ENTITY  finishedPage.title              "Agiornamento pronto da Instalâ">
+<!ENTITY  finishedPage.text               "L'agiornamento o saiâ instalou a-a pròscima avertua de &brandShortName;. Ti ti 
+                                           peu arvî torna &brandShortName; oua ò ti peu continoâ a louâ e arvî torna dòppo.">
+
+<!ENTITY  finishedBackgroundPage.text     "Un agiornamento de seguessa e stabilitæ pe &brandShortName; o l'é stæto
+                                           descaregou e o l'é pronto pe l'instalaçion.">
+<!ENTITY  finishedBackground.name         "Agiornamenti:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "L'agiornamento o saiâ instalou a pròscima vòtta che ti lansi o
+                                           &brandShortName;. Ti peu arvî torna &brandShortName; oua ò continoâ a louâ e arvî torna dòppo.">
+<!ENTITY  finishedBackground.moreElevated "Sto agiornamento o veu i privilegi de aministraçion. L'agiornamento saiâ
+                                           instalou a proscima vòtta che &brandShortName; o s'arve. Ti peu arvî torna
+                                           &brandShortName; oua, continoâ a travagiâ e arvî dòppo, ò refuâ sto
+                                           agiornamento.">
+
+<!ENTITY  update.details.label            "Detalli">
+<!ENTITY  update.installedOn.label        "Instalou o:">
+<!ENTITY  update.status.label             "Stato:">

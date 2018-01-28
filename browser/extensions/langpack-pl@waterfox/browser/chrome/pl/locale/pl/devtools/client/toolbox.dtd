@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeCmd.key "W">
+<!ENTITY toggleToolbox.key "I">
+<!ENTITY toggleToolboxF12.keycode "VK_F12">
+<!ENTITY toggleToolboxF12.keytext "F12">
+
+<!ENTITY browserToolboxErrorMessage "Błąd otwierania narzędzi przeglądarki:">
+
+<!ENTITY options.toolNotSupported.label "* Nieobsługiwane dla bieżącego celu narzędzi">
+<!ENTITY options.context.triggersPageRefresh "* Tylko bieżąca sesja, przeładowuje stronę">
+
+<!ENTITY options.selectDefaultTools.label2 "Domyślne narzędzia dla programistów">
+<!ENTITY options.selectAdditionalTools.label "Narzędzia dla programistów zainstalowane przez dodatki">
+<!ENTITY options.selectEnabledToolboxButtons.label "Przyciski narzędzi dla programistów">
+
+<!ENTITY options.selectDevToolsTheme.label2 "Motyw">
+<!ENTITY options.usedeveditiontheme.label "Motyw Waterfox Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Przełącza motyw Waterfox Developer Edition przeglądarki">
+
+<!ENTITY options.commonPrefs.label "Ogólne">
+<!ENTITY options.enablePersistentLogs.label "Trwałe dzienniki">
+<!ENTITY options.enablePersistentLogs.tooltip "Po włączeniu tej opcji konsola www oraz monitor sieci nie będą czyścić wyjścia po przejściu do kolejnej strony">
+
+<!ENTITY options.context.inspector "Inspektor">
+<!ENTITY options.showUserAgentStyles.label "Wyświetlanie stylów przeglądarki">
+<!ENTITY options.showUserAgentStyles.tooltip "Włączenie tej opcji spowoduje wyświetlanie domyślnych stylów wczytywanych przez przeglądarkę">
+
+<!ENTITY options.collapseAttrs.label "Skracanie atrybutów DOM">
+<!ENTITY options.collapseAttrs.tooltip "Skracanie długich nazw atrybutów DOM w inspektorze">
+
+<!ENTITY options.defaultColorUnit.label "Domyślny model przestrzeni barw">
+<!ENTITY options.defaultColorUnit.accesskey "D">
+<!ENTITY options.defaultColorUnit.hex "Hex">
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!ENTITY options.defaultColorUnit.name "Nazwy kolorów">
+<!ENTITY options.defaultColorUnit.authored "Jak w oryginale">
+
+<!ENTITY options.webconsole.label "Konsola WWW">
+<!ENTITY options.timestampMessages.label "Znaczniki czasu">
+<!ENTITY options.timestampMessages.tooltip "Po włączeniu tej opcji polecenia i ich wyjście w konsoli WWW będą wyświetlane obok znaczników czasu">
+
+<!ENTITY options.debugger.label "Debuger">
+
+<!ENTITY options.sourceMaps.label "Mapy źródeł">
+<!ENTITY options.sourceMaps.tooltip "Po włączeniu tej funkcji, źródła będą mapowane w debugerze i konsoli">
+
+<!ENTITY options.styleeditor.label "Edytor stylów">
+<!ENTITY options.stylesheetSourceMaps.label "Oryginalne źródła">
+<!ENTITY options.stylesheetSourceMaps.tooltip "Pokazuj oryginalne źródła (np. pliki Saas) w edytorze stylów i inspektorze">
+<!ENTITY options.stylesheetAutocompletion.label "Automatyczne uzupełnianie CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip "Podczas pisania uzupełniaj automatycznie wartości, własności i selektory CSS w edytorze stylów">
+
+<!ENTITY options.screenshot.label "Zapisywanie obrazu strony">
+<!ENTITY options.screenshot.clipboard.label "Zachowywanie w schowku">
+<!ENTITY options.screenshot.clipboard.tooltip "Zachowywanie bezpośrednio w schowku zrobionych zrzutów stron">
+<!ENTITY options.screenshot.audio.label "Odgłos migawki">
+<!ENTITY options.screenshot.audio.tooltip "Odtwarzanie dźwięku podczas robienia zrzutu">
+
+<!ENTITY options.showPlatformData.label "Informacje platformy Gecko">
+<!ENTITY options.showPlatformData.tooltip "Po włączeniu tej opcji Profiler JavaScript będzie raportował symbole platformy Gecko">
+
+<!ENTITY options.sourceeditor.label "Edytor">
+<!ENTITY options.sourceeditor.detectindentation.label "Wykrywanie wcięć">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Odgadywanie głębokości wcięć w oparciu o treść źródła">
+<!ENTITY options.sourceeditor.autoclosebrackets.label "Domykanie nawiasów">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Automatyczne wstawianie znaków zamknięcia nawiasu">
+<!ENTITY options.sourceeditor.expandtab.label "Wcinanie spacjami">
+<!ENTITY options.sourceeditor.expandtab.tooltip "Spacje zamiast znaków tabulacji">
+<!ENTITY options.sourceeditor.tabsize.label "Szerokość tabulacji:">
+<!ENTITY options.sourceeditor.tabsize.accesskey "S">
+<!ENTITY options.sourceeditor.keybinding.label "Skróty klawiaturowe:">
+<!ENTITY options.sourceeditor.keybinding.accesskey "k">
+<!ENTITY options.sourceeditor.keybinding.default.label "domyślne">
+
+<!ENTITY options.context.advancedSettings "Zaawansowane">
+<!ENTITY options.enableChrome.label5 "Narzędzia debugowania chrome przeglądarki i dodatków">
+<!ENTITY options.enableChrome.tooltip3 "Włączenie tej opcji pozwoli na używanie wielu narzędzi dla programistów w kontekście przeglądarki (poprzez Narzędzia > Dla twórców witryn > Narzędzia przeglądarki) i debugowanie dodatków z menedżera dodatków">
+<!ENTITY options.enableRemote.label3 "Debugowanie zdalne">
+<!ENTITY options.enableRemote.tooltip2 "Włączenie tej opcji pozwoli na debugowanie zdalnych instancji, takich jak Waterfox OS, z poziomu narzędzi dla programistów">
+<!ENTITY options.disableJavaScript.label "Wyłącz JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip "Wyłącza JavaScript w bieżącej karcie. Jeśli karta lub narzędzia zostaną zamknięte, ustawienie zostanie zapomniane.">
+<!ENTITY options.disableHTTPCache.label "Wyłącz pamięć podręczną HTTP (gdy otworzone są narzędzia)">
+<!ENTITY options.disableHTTPCache.tooltip "Wyłącza pamięć podręczną dla żądań HTTP we wszystkich kartach, dla których narzędzia są otwarte. To ustawienie nie ma wpływu na wątki usługowe.">
+
+<!ENTITY options.enableServiceWorkersHTTP.label "Wątki usługowe przez HTTP (gdy narzędzia są otwarte)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip "Kontroluje dostępność wątków usługowych przez HTTP w kartach z otwartymi narzędziami">

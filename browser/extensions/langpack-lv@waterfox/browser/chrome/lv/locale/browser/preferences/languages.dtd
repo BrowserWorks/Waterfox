@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Valodas">
+<!ENTITY languages.customize.description                "Tīmekļa lappuses dažreiz tiek piedāvātas vairākās valodās. Izvēlēties šo tīmekļa lappušu rādīšanas valodu izvēles kārtību:">
+<!ENTITY languages.customize.moveUp.label               "Pārvietot augšup">
+<!ENTITY languages.customize.moveUp.accesskey           "a">
+<!ENTITY languages.customize.moveDown.label             "Pārvietot lejup">
+<!ENTITY languages.customize.moveDown.accesskey         "l">
+<!ENTITY languages.customize.deleteButton.label         "Aizvākt">
+<!ENTITY languages.customize.deleteButton.accesskey     "A">
+<!ENTITY languages.customize.selectLanguage.label       "Pievienot valodu...">
+<!ENTITY languages.customize.addButton.label            "Pievienot">
+<!ENTITY languages.customize.addButton.accesskey        "P">
+

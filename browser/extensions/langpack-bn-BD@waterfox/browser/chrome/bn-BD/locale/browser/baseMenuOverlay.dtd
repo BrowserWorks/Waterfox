@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "ছোট করা">
+<!ENTITY bringAllToFront.label    "সব সামনে আনা হবে">
+<!ENTITY zoomWindow.label         "বড় আকারে প্রদর্শন">
+<!ENTITY windowMenu.label         "উইন্ডো">
+
+<!ENTITY helpMenu.label           "সহায়তা"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "সহায়তা"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "About &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; সহায়তা">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "কীবোর্ড শর্টকাট">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "নিস্ক্রিয় অ্যাড-অনসহ পুনরায় শুরু…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "অ্যাড-অন সক্রিয় করে পুনরায় চালু করুন">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "&brandShorterName; Health Report">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "সমাধান করার তথ্য">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "মন্তব্য প্রদান…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; ট্যুর">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "পছন্দসমূহ…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "সেবা">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; আড়াল কর">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "অন্যান্য উইন্ডো আড়াল করা হবে">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "সব প্রদর্শন">

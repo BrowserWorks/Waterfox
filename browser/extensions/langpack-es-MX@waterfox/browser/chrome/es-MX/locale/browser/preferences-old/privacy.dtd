@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Usar protección de rastreo">
+<!ENTITY  trackingProtectionAlways.label       "Siempre">
+<!ENTITY  trackingProtectionAlways.accesskey   "e">
+<!ENTITY  trackingProtectionPrivate.label      "Solo en ventanas privadas">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Nunca">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Saber más">
+<!ENTITY  trackingProtectionExceptions.label   "Excepciones…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Rastreo">
+<!ENTITY trackingProtectionPBM5.label         "Usar protección de rastreo en Ventanas Privadas">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Saber más">
+<!ENTITY changeBlockList.label          "Cambiar lista de bloqueos">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "También puedes ">
+<!ENTITY  doNotTrack.settings.label     "administrar la configuración de No rastrear">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historial">
+
+<!ENTITY  locationBar.label             "Barra de ubicación">
+
+<!ENTITY  locbar.suggest.label          "Cuando se usa la barra de ubicación, sugerir:">
+<!ENTITY  locbar.history.label          "Historial">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Marcadores">
+<!ENTITY  locbar.bookmarks.accesskey    "M">
+<!ENTITY  locbar.openpage.label         "Abrir pestañas">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Búsquedas relacionadas desde el buscador predeterminado">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Cambiar preferencias para sugerencias de motores de búsqueda…">
+<!ENTITY  suggestionSettings.accesskey  "a">
+
+<!ENTITY  acceptCookies2.label          "Aceptar cookies de los sitios web">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Aceptar cookies de terceros">
+<!ENTITY  acceptThirdParty.pre.accesskey  "d">
+<!ENTITY  acceptThirdParty.always.label   "Siempre">
+<!ENTITY  acceptThirdParty.never.label    "Nunca">
+<!ENTITY  acceptThirdParty.visited.label  "Visitado">
+
+<!ENTITY  keepUntil.label               "Mantener hasta que:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "caduquen">
+<!ENTITY  close.label                   "cierre &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Excepciones…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Mostrar cookies…">
+<!ENTITY  showCookies.accesskey         "M">
+
+<!ENTITY  historyHeader.pre.label          "Quiero que &brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "Q">
+<!ENTITY  historyHeader.remember.label     "Recuerde el historial">
+<!ENTITY  historyHeader.dontremember.label "No guarde el historial">
+<!ENTITY  historyHeader.custom.label       "Utilice configuraciones personalizadas para el historial">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; recordará tu historial de navegación, descargas, formularios y búsquedas, y guardará las cookies de los sitios web que visites.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Tal vez quieras ">
+<!ENTITY  rememberActions.clearHistory.label  "borrar tu historial reciente">
+<!ENTITY  rememberActions.middle.label        ", o ">
+<!ENTITY  rememberActions.removeCookies.label "borrar cookies individualmente">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; usará la misma configuración de la navegación privada, es decir, no guardará ningún historial de tu navegación.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "También puedes ">
+<!ENTITY  dontrememberActions.clearHistory.label "borrar todo el historial">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Siempre usar modo de navegación privada">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Recordar mi historial de navegación y decargas">
+<!ENTITY  rememberHistory2.accesskey  "R">
+
+<!ENTITY  rememberSearchForm.label       "Recordar el historial de búsquedas y formularios">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Borrar el historial al cerrar &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "B">
+
+<!ENTITY  clearOnCloseSettings.label     "Configuración…">
+<!ENTITY  clearOnCloseSettings.accesskey "C">
+
+<!ENTITY  browserContainersHeader.label         "Pestañas contenedoras">
+<!ENTITY  browserContainersLearnMore.label      "Saber más">
+<!ENTITY  browserContainersEnabled.label        "Habilitar pestañas contenedoras">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Configuración…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

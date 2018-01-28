@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Sporingsvern">
+<!ENTITY  trackingProtection2.description      "Sporing er ei samling av dine nettlesardata frå fleire nettsider. Sporing kan brukast til å byggje ein profil, og å vise innhald basert på nettlesinga di og din eigen personlege informasjon.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Bruk sporingsvern til å blokkere kjende sporfølgjarar">
+<!ENTITY  trackingProtectionAlways.label       "Alltid">
+<!ENTITY  trackingProtectionAlways.accesskey   "l">
+<!ENTITY  trackingProtectionPrivate.label      "Berre i private vindauge">
+<!ENTITY  trackingProtectionPrivate.accesskey  "B">
+<!ENTITY  trackingProtectionNever.label        "Aldri">
+<!ENTITY  trackingProtectionNever.accesskey    "A">
+<!ENTITY  trackingProtectionLearnMore.label    "Lær meir">
+<!ENTITY  trackingProtectionExceptions.label   "Unntak…">
+<!ENTITY  trackingProtectionExceptions.accesskey "U">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Bruk sporingsvern i private vindauge">
+<!ENTITY trackingProtectionPBM5.accesskey     "u">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Bruk sporingsvern i Privat nettlesing for å blokkere kjende sporfølgjarar">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Les meir">
+<!ENTITY changeBlockList2.label               "Endre blokkeringsliste…">
+<!ENTITY changeBlockList2.accesskey           "b">
+
+<!ENTITY  doNotTrack.description        "Send nettsider eit «Ikkje spor»-signal om at du ikkje vil bli spora">
+<!ENTITY  doNotTrack.learnMore.label    "Les meir">
+<!ENTITY  doNotTrack.default.label      "Berre når eg brukar Sporingsvern">
+<!ENTITY  doNotTrack.always.label       "Alltid">
+
+<!ENTITY  history.label                 "Historikk">
+<!ENTITY  permissions.label             "Løyve">
+
+<!ENTITY  addressBar.label              "Adresselinje">
+<!ENTITY  addressBar.suggest.label      "Når du brukar adresselinja, føreslå">
+<!ENTITY  locbar.history2.label         "Nettlesarhistorikk">
+<!ENTITY  locbar.history2.accesskey     "h">
+<!ENTITY  locbar.bookmarks.label        "Bokmerke">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Opne faner">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Liknande søk frå standardsøkemotoren">
+<!ENTITY  locbar.searches.accesskey     "L">
+
+<!ENTITY  suggestionSettings2.label     "Endre innstillingar for søkjeforslag">
+
+<!ENTITY  acceptCookies2.label          "Godta infokapslar frå nettsider">
+<!ENTITY  acceptCookies2.accesskey      "G">
+
+<!ENTITY  acceptThirdParty.pre.label      "Tillat infokapslar frå tredjepart:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "T">
+<!ENTITY  acceptThirdParty.always.label   "Alltid">
+<!ENTITY  acceptThirdParty.never.label    "Aldri">
+<!ENTITY  acceptThirdParty.visited.label  "Frå besøkte">
+
+<!ENTITY  keepUntil.label               "Behald dei til:">
+<!ENTITY  keepUntil.accesskey           "B">
+
+<!ENTITY  expire.label                  "dei går ut på dato">
+<!ENTITY  close.label                   "eg avsluttar &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Unntak…">
+<!ENTITY  cookieExceptions.accesskey    "U">
+
+<!ENTITY  showCookies.label             "Vis infokapslar…">
+<!ENTITY  showCookies.accesskey         "V">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; vil">
+<!ENTITY  historyHeader2.pre.accesskey     "v">
+<!ENTITY  historyHeader.remember.label     "Hugse historikk">
+<!ENTITY  historyHeader.dontremember.label "Aldri hugse historikk">
+<!ENTITY  historyHeader.custom.label       "Bruke eigne innstillingar for historikk">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; vil hugse nettlesing, nedlasting, skjema og søkehistorikk, og ta vare på infokapslar frå nettsider du besøker.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Du kan velje å ">
+<!ENTITY  rememberActions.clearHistory.label  "fjerne nyleg historikk">
+<!ENTITY  rememberActions.middle.label        ", eller ">
+<!ENTITY  rememberActions.removeCookies.label "fjerne enkelte infokapslar">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; vil bruke dei same innstillingane som privat nettlesing og vil ikkje hugse historikk medan du brukar nettet.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Du kan velje å ">
+<!ENTITY  dontrememberActions.clearHistory.label "fjerne all historikk">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Alltid bruke privat nettlesing-modus">
+<!ENTITY  privateBrowsingPermanent2.accesskey "A">
+
+<!ENTITY  rememberHistory2.label      "Hugse nettlesar- og nedlastingshistorikk">
+<!ENTITY  rememberHistory2.accesskey  "H">
+
+<!ENTITY  rememberSearchForm.label       "Hugse søke- og skjemahistorikk">
+<!ENTITY  rememberSearchForm.accesskey   "ø">
+
+<!ENTITY  clearOnClose.label             "Slette historikk når &brandShortName; avsluttar">
+<!ENTITY  clearOnClose.accesskey         "S">
+
+<!ENTITY  clearOnCloseSettings.label     "Innstillingar…">
+<!ENTITY  clearOnCloseSettings.accesskey "I">
+
+<!ENTITY  browserContainersLearnMore.label      "Les meir">
+<!ENTITY  browserContainersEnabled.label        "Aktiver innehaldsfaner">
+<!ENTITY  browserContainersEnabled.accesskey    "k">
+<!ENTITY  browserContainersSettings.label        "Innstillingar…">
+<!ENTITY  browserContainersSettings.accesskey    "I">

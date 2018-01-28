@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Start">
+
+<!ENTITY startupPage2.label        "Wenn &brandShortName; gestartet wird">
+<!ENTITY startupPage2.accesskey    "W">
+<!ENTITY startupUserHomePage.label "Startseite anzeigen">
+<!ENTITY startupBlankPage.label    "Leere Seite anzeigen">
+<!ENTITY startupPrevSession.label  "Fenster und Tabs der letzten Sitzung anzeigen">
+
+<!ENTITY homepage2.label           "Startseite">
+<!ENTITY homepage2.accesskey       "S">
+<!ENTITY useCurrentPage.label      "Aktuelle Seite verwenden">
+<!ENTITY useCurrentPage.accesskey  "A">
+<!ENTITY useMultiple.label         "Aktuelle Seiten verwenden">
+<!ENTITY chooseBookmark.label      "Lesezeichen verwenden…">
+<!ENTITY chooseBookmark.accesskey  "L">
+<!ENTITY restoreDefault.label      "Standard wiederherstellen">
+<!ENTITY restoreDefault.accesskey  "t">
+
+<!ENTITY downloads.label     "Downloads">
+
+<!ENTITY saveTo.label "Alle Dateien in folgendem Ordner abspeichern:">
+<!ENTITY saveTo.accesskey "e">
+<!ENTITY chooseFolderWin.label        "Durchsuchen…">
+<!ENTITY chooseFolderWin.accesskey    "D">
+<!ENTITY chooseFolderMac.label        "Auswählen…">
+<!ENTITY chooseFolderMac.accesskey    "u">
+<!ENTITY alwaysAskWhere.label         "Jedes Mal nachfragen, wo eine Datei gespeichert werden soll">
+<!ENTITY alwaysAskWhere.accesskey     "n">
+
+<!ENTITY alwaysCheckDefault2.label        "Immer überprüfen, ob &brandShortName; der Standardbrowser ist">
+<!ENTITY alwaysCheckDefault2.accesskey    "p">
+<!ENTITY setAsMyDefaultBrowser3.label     "Als Standard festlegen…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "g">
+<!ENTITY isDefault.label                  "&brandShortName; ist derzeit der Standardbrowser">
+<!ENTITY isNotDefault.label               "&brandShortName; ist nicht Ihr Standardbrowser">
+
+<!ENTITY separateProfileMode.label        "Gleichzeitiges Ausführen von &brandShortName; und Waterfox erlauben">
+<!ENTITY useWaterfoxSync.label             "Tipp: Dabei werden getrennte Profile verwendet. Verwenden Sie Sync, um Daten zwischen diesen zu synchronisieren.">
+<!ENTITY getStarted.notloggedin.label     "Bei &syncBrand.shortName.label; anmelden…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label;-Einstellungen öffnen">
+
+<!ENTITY e10sEnabled.label                "&brandShortName; mit mehreren Prozessen ausführen">

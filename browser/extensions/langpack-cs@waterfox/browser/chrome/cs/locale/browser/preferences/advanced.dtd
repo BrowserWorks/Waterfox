@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Obecné">
+
+<!ENTITY useCursorNavigation.label       "Používat kurzorové šipky pro pohyb po stránce">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Psaním vyhledávat text na stránce">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "V případě potřeby zobrazit dotykovou klávesnici">
+<!ENTITY useOnScreenKeyboard.accesskey   "d">
+
+<!ENTITY browsing.label                  "Prohlížení">
+
+<!ENTITY useAutoScroll.label             "Použít automatické posouvání">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Použít plynulé posouvání">
+<!ENTITY useSmoothScrolling.accesskey    "l">
+<!ENTITY checkUserSpelling.label         "Při psaní kontrolovat pravopis">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Možnosti hlášení">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Odesílání dat je zakázáno konfigurací tohoto sestavení">
+
+<!ENTITY enableHealthReport1.label       "Povolit aplikaci &brandShortName; automaticky odesílat Mozille technická data a data o interakcích">
+<!ENTITY enableHealthReport1.accesskey   "z">
+<!ENTITY healthReportLearnMore.label     "Zjistit více">
+
+<!ENTITY dataCollection.label            "Sběr a používání dat o aplikaci &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Co se týče dat, dáváme vám vždy na výběr. Také sbíráme jen ta data, která nám pomohou aplikaci &brandShortName; dále zlepšovat. Před odesíláním osobních dat vždy žádáme o váš souhlas.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Zásady ochrany soukromí">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Odesílat Mozille hlášení o pádech aplikace &brandShortName;">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "Zjistit více">
+
+<!ENTITY networkTab.label                "Síť">
+
+<!ENTITY networkProxy.label              "Nastavení připojení">
+
+<!ENTITY connectionDesc.label            "Konfigurovat připojení aplikace &brandShortName; k internetu">
+<!ENTITY connectionSettings.label        "Nastavení…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Mezipaměť webových stránek">
+
+<!ENTITY offlineStorage2.label           "Offline obsah a uživatelská data">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Data stránek">
+<!ENTITY clearSiteData.label             "Vymazat data">
+<!ENTITY clearSiteData.accesskey         "V">
+<!ENTITY siteDataSettings.label          "Nastavení…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Zjistit více">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Omezit velikost mezipaměti na disku na">
+<!ENTITY limitCacheSizeBefore.accesskey  "t">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "Vymazat">
+<!ENTITY clearCacheNow.accesskey         "V">
+<!ENTITY clearOfflineAppCacheNow.label   "Vymazat">
+<!ENTITY clearOfflineAppCacheNow.accesskey "y">
+<!ENTITY overrideSmartCacheSize.label    "Nepoužívat automatickou správu mezipaměti">
+<!ENTITY overrideSmartCacheSize.accesskey "N">
+
+<!ENTITY updateTab.label                 "Aktualizace">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "Aktualizace aplikace &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Pro nejvyšší rychlost, stabilitu a bezpečnost udržujte aplikaci &brandShortName; stále aktuální.">
+<!ENTITY updateApplication.version.pre   "Verze ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Povolit aplikaci &brandShortName;">
+<!ENTITY updateAuto3.label               "Instalovat aktualizace automaticky (doporučeno)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "Vyhledávat aktualizace, ale zeptat se na jejich instalaci">
+<!ENTITY updateCheckChoose2.accesskey    "c">
+<!ENTITY updateManual2.label             "Nikdy nevyhledávat aktualizace (nedoporučeno)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Zobrazit historii aktualizací…">
+<!ENTITY updateHistory2.accesskey        "h">
+
+<!ENTITY useService.label                "K instalaci aktualizací použít službu na pozadí">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Automaticky aktualizovat vyhledávací moduly">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Upozornit, pokud server chce uložit offline obsah">
+<!ENTITY offlineStorageNotify.accesskey           "U">
+<!ENTITY offlineStorageNotifyExceptions.label     "Výjimky…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "k">
+
+<!ENTITY offlineAppsList2.label          "Následující servery mají povoleno ukládat offline obsah:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Odebrat…">
+<!ENTITY offlineAppsListRemove.accesskey "d">
+<!ENTITY offlineAppRemove.confirm        "Smazat offline obsah">
+
+<!ENTITY certificateTab.label            "Certifikáty">
+<!ENTITY certPersonal2.description       "Pokud server vyžaduje váš osobní certifikát">
+<!ENTITY selectCerts.auto                "Vybrat jeden automaticky">
+<!ENTITY selectCerts.auto.accesskey      "j">
+<!ENTITY selectCerts.ask                 "Vždy se zeptat">
+<!ENTITY selectCerts.ask.accesskey       "e">
+<!ENTITY enableOCSP.label                "Aktuální platnost certifikátů ověřovat na serverech OCSP">
+<!ENTITY enableOCSP.accesskey            "o">
+<!ENTITY viewCerts2.label                "Zobrazit certifikáty…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "Bezpečnostní zařízení…">
+<!ENTITY viewSecurityDevices2.accesskey  "B">
+
+<!ENTITY performance.label               "Výkon">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Použít doporučené nastavení výkonu">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Tato nastavení jsou ušita na míru podle hardwaru a operačního systému vašeho počítače.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "u">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Zjistit více">
+<!ENTITY limitContentProcessOption.label "Omezit počet procesů pro obsah na">
+<!ENTITY limitContentProcessOption.description
+                                         "Další procesy pro obsah mohou zlepšit výkon s více otevřenými panely, ale spotřebují také více paměti.">
+<!ENTITY limitContentProcessOption.accesskey   "b">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Počet procesů pro obsah lze upravit pouze při použití multiprocesového režimu aplikace &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Podívejte se, jak stav multiprocesového režimu zkontrolovat">
+<!ENTITY allowHWAccel.label              "Použít hardwarovou akceleraci, je-li dostupná">
+<!ENTITY allowHWAccel.accesskey          "h">

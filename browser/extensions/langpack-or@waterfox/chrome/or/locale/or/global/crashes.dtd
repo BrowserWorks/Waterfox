@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashesSubmitted.label     "ଦାଖଲ କରାଯାଇଥିବା ଅଚଳ ବିବରଣୀ">
+<!ENTITY id.heading                 "ବିବରଣୀ ପରିଚୟ">
+
+<!ENTITY dateSubmitted.heading      "ଦାଖଲ କରାଯାଇଥିବା ତାରିଖ">
+<!ENTITY noReports.label            "କୌଣସି ଅଚଳ ବିବରଣୀ ଦାଖଲ ହୋଇନାହିଁ.">
+<!ENTITY noConfig.label             "ଏହି ପ୍ରୟୋଗଟି  ଅଚଳ ବିବରଣୀ ଦାଖଲ କରିବାକୁ ବିନ୍ୟାସିତ ହୋଇନାହିଁ. <code>breakpad.reportURL</code> ପସନ୍ଦକୁ ସେଟକରିବା ଉଚିତ.">
+<!ENTITY clearAllReports.label      "ସମସ୍ତ ବିବରଣୀଗୁଡ଼ିକୁ କାଢ଼ିଦିଅନ୍ତୁ">
+
+<!ENTITY crashReports.title         "Crash Reports">
+<!ENTITY crashesUnsubmitted.label   "Unsubmitted Crash Reports">
+<!ENTITY dateCrashed.heading        "Date Crashed">

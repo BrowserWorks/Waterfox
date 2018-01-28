@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Şəbəkə haqqında">
+<!ENTITY aboutNetworking.warning               "Bu çox eksperimentaldır. Yetişkin nəzarəti olmadan istifadə etməyin.">
+<!ENTITY aboutNetworking.showNextTime          "Bu xəbərdarlığı növbəti dəfə göstər">
+<!ENTITY aboutNetworking.ok                    "Tamam">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Soketlər">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Web-Soketlər">
+<!ENTITY aboutNetworking.refresh               "Yenilə">
+<!ENTITY aboutNetworking.autoRefresh           "Hər 3 saniyədən bir avtoyenilə">
+<!ENTITY aboutNetworking.hostname              "Host adı">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktiv">
+<!ENTITY aboutNetworking.idle                  "Fəaliyyətsiz">
+<!ENTITY aboutNetworking.host                  "Host">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Göndərildi">
+<!ENTITY aboutNetworking.received              "Alındı">
+<!ENTITY aboutNetworking.family                "Ailə">
+<!ENTITY aboutNetworking.addresses             "Ünvanlar">
+<!ENTITY aboutNetworking.expires               "Vaxtı keçir (saniyələr)">
+<!ENTITY aboutNetworking.messagesSent          "Göndərilən mesajlar">
+<!ENTITY aboutNetworking.messagesReceived      "Alınan mesajlar">
+<!ENTITY aboutNetworking.bytesSent             "Bayt gondərildi">
+<!ENTITY aboutNetworking.bytesReceived         "Bayt qəbul edildi">
+<!ENTITY aboutNetworking.logging               "Qeydiyyat">
+<!ENTITY aboutNetworking.logTutorial           "Bu aləti necə istifadə edəcəyinizi öyrənmək üçün <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Qeyd Aparma</a> səhifəsinə baxın.">
+<!ENTITY aboutNetworking.currentLogFile        "Hazırki Qeydiyyat Faylı:">
+<!ENTITY aboutNetworking.currentLogModules     "Hazırki Qeydiyyat Modulları:">
+<!ENTITY aboutNetworking.setLogFile            "Qeydiyyat Faylını Qur">
+<!ENTITY aboutNetworking.setLogModules         "Qeydiyyat Modullarını Qur">
+<!ENTITY aboutNetworking.startLogging          "Qeydiyyatı Başlat">
+<!ENTITY aboutNetworking.stopLogging           "Qeydiyyatı Dayandır">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Baxış">
+<!ENTITY aboutNetworking.dnsLookupButton       "Qərarlaşdır">
+<!ENTITY aboutNetworking.dnsDomain             "Domen">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-lər">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Statistikaları">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Statusu">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Keşin qazanma sayısı">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Şəbəkənin qazanma sayısı">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Toplam şəbəkə istək sayısı">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Aç">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Oxu">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Yaz">
+
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">

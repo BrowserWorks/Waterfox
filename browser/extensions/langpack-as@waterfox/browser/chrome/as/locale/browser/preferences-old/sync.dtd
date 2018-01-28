@@ -1,0 +1,125 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "পত্ৰচিহ্নসমূহ">
+<!ENTITY engine.bookmarks.accesskey "m">
+
+
+<!ENTITY engine.history.label       "ইতিহাস">
+<!ENTITY engine.history.accesskey   "r">
+
+
+<!ENTITY engine.prefs.label         "পছন্দসমূহ">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "এড-অনসমূহ">
+<!ENTITY engine.addons.accesskey    "A">
+
+
+
+
+<!-- Device Settings -->
+
+
+
+
+
+
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "সেৱাৰ চুক্তিসমূহ">
+<!ENTITY fxaPrivacyNotice.link.label "গোপনীয়তা ঘোষণা">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "আপোনাৰ ইমেইল ঠিকনা">
+<!ENTITY signedInUnverified.aftername.label "সতা সত্য নিৰূপিত নহয়।">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "পুনৰ সংযোগ কৰিবলৈ অনুগ্ৰহ কৰি ছাইন ইন কৰক">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "আপুনি ছাইন্ড ইন নহয়।">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+
+
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY cancelChangeSyncDeviceName.label "Cancel">
+<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY changeSyncDeviceName.label "Change Device Name…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY disconnect.label            "Disconnect…">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.tabs.label2         "Open Tabs">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY forget.label                "Forget this Email">
+<!ENTITY fxaSyncDeviceName.label       "Device Name">
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!ENTITY mobilePromo3.end              " to sync with your mobile device.">
+<!ENTITY mobilePromo3.iOSBefore         " or ">
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.start            "Download Waterfox for ">
+<!ENTITY profilePicture.tooltip      "Change profile picture">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!ENTITY saveChangeSyncDeviceName.label "Save">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY signIn.label                "Sign in">
+<!ENTITY signedIn.engines.label       "Sync Across All Devices">
+
+<!ENTITY signedOut.accountBox.create  "Create Account">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Sign In">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedOut.accountBox.title   "Connect with a &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.caption            "Take Your Web With You">
+<!ENTITY signedOut.description        "Synchronize your bookmarks, history, tabs, passwords, add-ons, and preferences across all your devices.">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verifiedManage.label        "Manage Account">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY verify.label                "Verify Email">

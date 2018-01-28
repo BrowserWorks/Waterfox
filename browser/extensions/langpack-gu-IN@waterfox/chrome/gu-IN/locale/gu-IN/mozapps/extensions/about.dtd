@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "બનાવનાર:">
+<!ENTITY  developers.label            "વિકાસકર્તાઓ:">
+<!ENTITY  translators.label           "અનુવાદરો:">
+<!ENTITY  contributors.label          "ફાળો આપનારાઓ:">
+<!ENTITY  homepage.label              "ઘર પાનાંની મુલાકાત લો">

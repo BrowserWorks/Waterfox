@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "வெட்டு">
+<!ENTITY cutCmd.accesskey "ட">
+<!ENTITY copyCmd.label "நகலெடு">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "ஒட்டு">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "மறை">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY selectAllCmd.label "அனைத்தையும் தேர்ந்தெடு">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY deleteCmd.label "அழி">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "அகராதியில் சேர்">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "அகராதியில் சேர்த்ததை செயல்தவிர்">
+<!ENTITY spellUndoAddToDictionary.accesskey "அ">
+<!ENTITY spellCheckToggle.label "எழுத்துக்கூட்டு சரிபார்">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(எழுத்துப்பிழை கருத்து இல்லை)">
+<!ENTITY spellDictionaries.label "மொழி">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "துடை">
+
+<!ENTITY fillLoginMenu.label          "புகுபதிகையை நிரப்பு">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "கடவுச்சொல்லை நிரப்புக">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "பயனர்பெயரை நிரப்பு">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(புகுபதிகைப் பரிந்துரைகள் இல்லை)">
+<!ENTITY viewSavedLogins.label        "சேமிக்கப்பட்ட புகுபதிகைகளைப் பார்">

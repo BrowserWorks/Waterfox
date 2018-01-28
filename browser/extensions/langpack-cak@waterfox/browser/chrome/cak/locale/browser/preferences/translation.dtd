@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Taq man relik ta - Tzalq'omanïk">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Man xtiya' ta kitzalq'omixik re taq ch'ab'äl re':">
+<!ENTITY treehead.languageName.label      "Taq ch'ab'äl">
+<!ENTITY removeLanguage.label             "Telesäx el ch'ab'äl">
+<!ENTITY removeLanguage.accesskey         "T">
+<!ENTITY removeAllLanguages.label         "Keyuj el konojel ri taq ch'ab'äl">
+<!ENTITY removeAllLanguages.accesskey     "y">
+
+<!ENTITY noTranslationForSites.label      "Man xketzalq'omïx ta re taq ruxaq k'amaya'l re':">
+<!ENTITY treehead.siteName2.label         "Ruxaq Ajk'amaya'l">
+<!ENTITY removeSite.label                 "Telesäx el ruxaq k'amaya'l">
+<!ENTITY removeSite.accesskey             "k">
+<!ENTITY removeAllSites.label             "Ke'elesäx el konojel ri taq ruxaq k'amaya'l">
+<!ENTITY removeAllSites.accesskey         "x">
+
+<!ENTITY button.close.label               "Titz'apïx">
+<!ENTITY button.close.accesskey           "T">

@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry-gegevens">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping-gegevensboarne:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Aktuele ping-gegevens
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Argivearre ping-gegevens
+">
+
+<!ENTITY aboutTelemetry.raw "
+Net bewurke JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Subsesjegegevens toane
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Ping kieze:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Nijere ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Aldere ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Wike
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Pingtype
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Hjoed
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Juster
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Alder
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Algemiene gegevens
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Omjouwingsgegevens
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry-lochboek
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Trage SQL Statements
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Browser fêstrinners
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Konversaasjefêstrinners
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Opnommen stacks
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalars
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrammen
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Kaaihistogrammen
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Eveneminten
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Ienfâldige mjittingen
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Add-on-details
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Lêste add-ons 
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Sesjeynformaasje
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOTE: Trage SQL-debugging is ynskeakele. Folsleine SQL-strings kinne hjirûnder toand wurde, mar se sille net ferstjoerd wurde nei Telemetry.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Krij funksjenammen foar stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Toan rûge stackgegevens
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filter (rigels of /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Nettolading
+">

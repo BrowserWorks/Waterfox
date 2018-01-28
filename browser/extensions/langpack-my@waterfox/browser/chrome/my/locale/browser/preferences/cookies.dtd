@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "သင့်ကွန်ပျူတာထဲမှာ အောက်ပါ ကွတ်ကီးများကို သိုထားတယ်၊">
+<!ENTITY     cookiename.label               "ကွတ်ကီး အမည်">
+<!ENTITY     cookiedomain.label             "ကွန်ရက်">
+
+<!ENTITY     props.name.label               "အမည်၊">
+<!ENTITY     props.value.label              "အကြောင်းအရာ၊">
+<!ENTITY     props.domain.label             "အခြေစိုက်ရာ၊">
+<!ENTITY     props.path.label               "လမ်းကြောင်း">
+<!ENTITY     props.secure.label             "ပို့ရမဲ့အရာ၊">
+<!ENTITY     props.expires.label            "သက်တမ်းကုန်တယ်၊">
+<!ENTITY     props.container.label          "ကွန်တိန်နာ။ ။">
+
+<!ENTITY     window.title                   "ကွတ်ကီးများ">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "ရှာပါ">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "Cပိတ်ပါ ">
+<!ENTITY     button.close.accesskey         "C">

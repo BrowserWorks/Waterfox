@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Esceptoj">
+<!ENTITY window.width                 "36em">
+
+<!ENTITY treehead.sitename2.label     "Retejo">
+<!ENTITY treehead.status.label        "Stato">
+<!ENTITY removepermission2.label      "Forigi retejon">
+<!ENTITY removepermission2.accesskey  "F">
+<!ENTITY removeallpermissions2.label  "Forigi ĉiujn retejojn">
+<!ENTITY removeallpermissions2.accesskey "r">
+<!ENTITY address.label                "Adreso de retejo:">
+<!ENTITY address.accesskey            "r">
+<!ENTITY block.label                  "Bloki">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Permesi dum la seanco">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "Permesi">
+<!ENTITY allow.accesskey              "P">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Nuligi">
+<!ENTITY button.cancel.accesskey      "N">
+<!ENTITY button.ok.label              "Konservi ŝanĝojn">
+<!ENTITY button.ok.accesskey          "K">
+

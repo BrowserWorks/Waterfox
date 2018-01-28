@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "प्रारंभीकरण">
+
+<!ENTITY startupPage.label         "&brandShortName; सुरू होते तेंव्हा:">
+<!ENTITY startupPage.accesskey     "s">
+<!ENTITY startupUserHomePage.label "माझे मुख्य पृष्ठ दाखवा">
+<!ENTITY startupBlankPage.label    "रिक्त पृष्ठ दाखवा">
+<!ENTITY startupPrevSession.label  "शेवटच्या वेळे पासून माझ्या विंडोज आणि टॅब्स दाखवा">
+
+<!ENTITY homepage.label            "मुख्य पृष्ठ:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "सध्याच्या पृष्ठाचे वापर करा">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "सध्याच्या पृष्ठांचा वापर करा">
+<!ENTITY chooseBookmark.label      "वाचनखूणाचा वापर करा…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "पूर्वनिर्धारित स्थितीत आणा">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "डाउनलोड्ज">
+
+<!ENTITY saveTo.label "फाइल्स येथे साठवा">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "चाळा…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "निवडा…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "फाइल कुठे साठवायची ते नेहमी मला विचारा">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "नेहमी &brandShortName; पूर्वनिर्धारित ब्राउझर आहे याची खात्री करा">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "पूर्वनिर्धारित ब्राउजर बनवा">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; सध्या आपले पूर्वनिर्धारित ब्राउझर आहे">
+<!ENTITY isNotDefault.label               "&brandShortName; सध्या आपले पूर्वनिर्धारित ब्राउझर नाही आहे">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; आणि Waterfox एकाच वेळी चालविण्याची परवानगी द्यावी">
+<!ENTITY useWaterfoxSync.label             "टीप: हे स्वतंत्र प्रोफाइलचा वापर करते. त्यांच्या दरम्यान डाटा शेअर करण्यासाठी सींक वापरा.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; मध्ये साईन इन करा…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; प्राधान्यता उघडा">
+
+<!ENTITY e10sEnabled.label                "बहु-प्रक्रिया &brandShortName; सक्षम करा">

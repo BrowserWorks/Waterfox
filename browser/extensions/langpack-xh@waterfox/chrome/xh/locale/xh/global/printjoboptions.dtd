@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Iinkcazelo Ngeempawu Zezishicileli">
+
+<!ENTITY paperInput.label "Ubungakanani bePhepha:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "Isihloko somsebenzi:">
+<!ENTITY jobTitleInput.accesskey "s">
+
+<!ENTITY colorGroup.label "Umbala:">
+<!ENTITY grayRadio.label "IGreysikali">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "Umbala">
+<!ENTITY colorRadio.accesskey "U">
+
+<!ENTITY edgeMarginInput.label "Isithuba ukusuka ekupheleni kwephepha ukuya kuMda">
+<!ENTITY topInput.label "Phezulu:">
+<!ENTITY topInput.accesskey "P">
+<!ENTITY bottomInput.label "Phantsi:">
+<!ENTITY bottomInput.accesskey "P">
+<!ENTITY leftInput.label "Ekhohlo:">
+<!ENTITY leftInput.accesskey "E">
+<!ENTITY rightInput.label "Ekunene:">
+<!ENTITY rightInput.accesskey "E">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "เปลี่ยนรหัสผ่านหลัก">
+<!ENTITY setPassword.tokenName.label       "อุปกรณ์ความปลอดภัย">
+<!ENTITY setPassword.oldPassword.label     "รหัสผ่านปัจจุบัน:">
+<!ENTITY setPassword.newPassword.label     "ป้อนรหัสผ่านใหม่:">
+<!ENTITY setPassword.reenterPassword.label "ป้อนรหัสผ่านใหม่อีกครั้ง:">
+<!ENTITY setPassword.meter.label           "มาตรวัดคุณภาพรหัสผ่าน">
+<!ENTITY setPassword.meter.loading         "กำลังโหลด">
+<!ENTITY masterPasswordDescription.label   "รหัสผ่านหลักใช้ป้องกันข้อมูลที่อ่อนไหวอย่างรหัสผ่านเว็บไซต์  ถ้าคุณสร้างรหัสผ่านหลัก คุณจะต้องใส่รหัสผ่านหนึ่งครั้งต่อหนึ่งวาระเมื่อ &brandShortName; เรียกข้อมูลที่ป้องกันโดยรหัสผ่าน">
+<!ENTITY masterPasswordWarning.label       "กรุณาแน่ใจว่าคุณจำรหัสผ่านหลักที่คุณกำหนดได้ หากคุณลืมรหัสผ่านหลัก คุณจะไม่สามารถเข้าถึงข้อมูลใด ๆ ที่ปัองกันไว้">

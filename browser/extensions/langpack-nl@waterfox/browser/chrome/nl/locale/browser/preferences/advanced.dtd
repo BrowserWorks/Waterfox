@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Algemeen">
+
+<!ENTITY useCursorNavigation.label       "Altijd de pijltoetsen gebruiken om binnen pagina’s te navigeren">
+<!ENTITY useCursorNavigation.accesskey   "o">
+<!ENTITY searchOnStartTyping.label       "Naar tekst zoeken wanneer u begint met typen">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY useOnScreenKeyboard.label       "Een schermtoetsenbord tonen wanneer nodig">
+<!ENTITY useOnScreenKeyboard.accesskey   "c">
+
+<!ENTITY browsing.label                  "Navigeren">
+
+<!ENTITY useAutoScroll.label             "Automatisch scrollen gebruiken">
+<!ENTITY useAutoScroll.accesskey         "m">
+<!ENTITY useSmoothScrolling.label        "Vloeiend scrollen gebruiken">
+<!ENTITY useSmoothScrolling.accesskey    "e">
+<!ENTITY checkUserSpelling.label         "Uw spelling controleren tijdens het typen">
+<!ENTITY checkUserSpelling.accesskey     "s">
+
+<!ENTITY dataChoicesTab.label            "Gegevenskeuzes">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Gegevensrapportage is uitgeschakeld voor deze buildconfiguratie">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName; toestaan om automatisch technische en interactiegegevens naar Mozilla te verzenden">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Meer info">
+
+<!ENTITY dataCollection.label            "&brandShortName;-gegevensverzameling en -gebruik">
+<!ENTITY dataCollectionDesc.label        "We streven ernaar u keuzes te bieden en alleen te verzamelen wat we nodig hebben om &brandShortName; voor iedereen beschikbaar te maken en te verbeteren. We vragen altijd toestemming voordat we persoonlijke gegevens ontvangen.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacyverklaring">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName; toestaan om crashrapporten naar Mozilla te verzenden">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "Meer info">
+
+<!ENTITY networkTab.label                "Netwerk">
+
+<!ENTITY networkProxy.label              "Netwerkproxy">
+
+<!ENTITY connectionDesc.label            "Configureren hoe &brandShortName; verbinding maakt met het internet">
+<!ENTITY connectionSettings.label        "Instellingen…">
+<!ENTITY connectionSettings.accesskey    "I">
+
+<!ENTITY httpCache.label                 "Gebufferde webinhoud">
+
+<!ENTITY offlineStorage2.label           "Offline webinhoud en gebruikersgegevens">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Websitegegevens">
+<!ENTITY clearSiteData.label             "Alle gegevens wissen">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Instellingen…">
+<!ENTITY siteDataSettings.accesskey      "s">
+<!ENTITY siteDataLearnMoreLink.label     "Meer info">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Buffer beperken tot">
+<!ENTITY limitCacheSizeBefore.accesskey  "B">
+<!ENTITY limitCacheSizeAfter.label       "MB ruimte">
+<!ENTITY clearCacheNow.label             "Nu wissen">
+<!ENTITY clearCacheNow.accesskey         "w">
+<!ENTITY clearOfflineAppCacheNow.label   "Nu wissen">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "Automatisch bufferbeheer negeren">
+<!ENTITY overrideSmartCacheSize.accesskey "A">
+
+<!ENTITY updateTab.label                 "Update">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName;-updates">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+ <!ENTITY updateApplicationDescription.label
+                                         "Houd &brandShortName; up-to-date voor de beste prestaties, stabiliteit en beveiliging.">
+<!ENTITY updateApplication.version.pre   "Versie ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName; mag">
+<!ENTITY updateAuto3.label               "Updates automatisch installeren (aanbevolen)">
+<!ENTITY updateAuto3.accesskey           "U">
+<!ENTITY updateCheckChoose2.label        "Controleren op updates, maar u laten kiezen of u deze wilt installeren">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "Nooit controleren op updates (niet aanbevolen)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Updategeschiedenis tonen…">
+<!ENTITY updateHistory2.accesskey        "d">
+
+<!ENTITY useService.label                "Een achtergrondservice gebruiken om updates te installeren">
+<!ENTITY useService.accesskey            "a">
+
+<!ENTITY enableSearchUpdate2.label       "Zoekmachines automatisch bijwerken">
+<!ENTITY enableSearchUpdate2.accesskey   "Z">
+
+<!ENTITY offlineStorageNotify.label               "Vertellen wanneer een website vraagt gegevens op te slaan voor offlinegebruik">
+<!ENTITY offlineStorageNotify.accesskey           "e">
+<!ENTITY offlineStorageNotifyExceptions.label     "Uitzonderingen…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "U">
+
+<!ENTITY offlineAppsList2.label          "De volgende websites hebben toestemming om gegevens op te slaan voor offlinegebruik:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Verwijderen…">
+<!ENTITY offlineAppsListRemove.accesskey "V">
+<!ENTITY offlineAppRemove.confirm        "Offlinegegevens verwijderen">
+
+<!ENTITY certificateTab.label            "Certificaten">
+<!ENTITY certPersonal2.description       "Wanneer een server om uw persoonlijke certificaat vraagt">
+<!ENTITY selectCerts.auto                "Er automatisch een selecteren">
+<!ENTITY selectCerts.auto.accesskey      "a">
+<!ENTITY selectCerts.ask                 "Elke keer vragen">
+<!ENTITY selectCerts.ask.accesskey       "E">
+<!ENTITY enableOCSP.label                "OCSP-responderservers vragen om de huidige geldigheid van certificaten te bevestigen">
+<!ENTITY enableOCSP.accesskey            "v">
+<!ENTITY viewCerts2.label                "Certificaten bekijken…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "Beveiligingsapparaten…">
+<!ENTITY viewSecurityDevices2.accesskey  "B">
+
+<!ENTITY performance.label               "Prestaties">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Aanbevolen prestatie-instellingen gebruiken">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Deze instellingen zijn afgestemd op de hardware en het besturingssysteem van uw computer.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "A">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Meer info">
+<!ENTITY limitContentProcessOption.label "Limiet van inhoudsprocessen">
+<!ENTITY limitContentProcessOption.description
+                                         "Extra inhoudsprocessen kunnen de prestaties bij het gebruik van meerdere tabbladen verbeteren, maar zullen ook meer geheugen gebruiken.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Aanpassen van het aantal inhoudsprocessen is alleen mogelijk met multiprocess-&brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Informatie over het controleren of multiprocess is ingeschakeld">
+<!ENTITY allowHWAccel.label              "Hardwareversnelling gebruiken wanneer beschikbaar">
+<!ENTITY allowHWAccel.accesskey          "v">

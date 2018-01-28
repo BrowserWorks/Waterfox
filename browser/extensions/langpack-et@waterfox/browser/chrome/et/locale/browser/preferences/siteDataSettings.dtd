@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Sätted - saidi andmed">
+<!ENTITY     hostCol.label                 "Sait">
+<!ENTITY     statusCol.label               "Olek">
+<!ENTITY     usageCol.label                "Kasutus">
+<!ENTITY     searchTextboxPlaceHolder             "Otsi saite">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "O">
+<!ENTITY     removeSelected.label          "Kustuta valitud">
+<!ENTITY     removeSelected.accesskey      "K">
+<!ENTITY     save.label                    "Salvesta muudatused">
+<!ENTITY     save.accesskey                "S">
+<!ENTITY     cancel.label                  "Loobu">
+<!ENTITY     cancel.accesskey              "L">
+<!ENTITY     removingDialog.title          "Saidi andmete kustutamine">
+<!ENTITY     removingSelected.description  "Saidi andmete kustutamine kustutab ka seotud küpsised ja võrguta režiimis kasutamiseks mõeldud andmed. See tegevus võib põhjustada saitidest väljalogimise. Kas oled kindel, et soovid teha need muudatused?">
+<!ENTITY     siteTree.label                "Järgnevad küpsised kustutatakse:">

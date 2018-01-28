@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Gosodiad Tudalen">
+
+<!ENTITY basic.tab           "Fformatio a Dewisiadau">
+
+<!ENTITY formatGroup.label   "Fformat">
+
+<!ENTITY orientation.label   "Cyfeiriadaeth:">
+<!ENTITY portrait.label      "Portread">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Tirwedd">
+<!ENTITY landscape.accesskey "T">
+
+<!ENTITY scale.label         "Graddfa:">
+<!ENTITY scale.accesskey     "r">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Cywasgu i Led y Dudalen">
+<!ENTITY shrinkToFit.accesskey "L">
+
+<!ENTITY optionsGroup.label  "Dewisiadau">
+
+<!ENTITY printBG.label       "Argraffu Lliwiau'r Cefndir (lliwiau a delweddau)">
+<!ENTITY printBG.accesskey   "A">
+
+<!ENTITY advanced.tab        "Ymylon a Phennyn/Troedyn">
+
+<!ENTITY marginGroup.label   "Ymylon (#1)">
+<!ENTITY marginUnits.inches  "modfedd">
+<!ENTITY marginUnits.metric  "milimetr">
+<!ENTITY marginTop.label     "Brig:">
+<!ENTITY marginTop.accesskey "B">
+<!ENTITY marginBottom.label  "Gwaelod:">
+<!ENTITY marginBottom.accesskey "G">
+<!ENTITY marginLeft.label    "Chwith:">
+<!ENTITY marginLeft.accesskey "C">
+<!ENTITY marginRight.label   "De:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Penynnau a Throedynnau">
+
+<!ENTITY hfLeft.label        "Chwith:">
+<!ENTITY hfCenter.label      "Canoli:">
+<!ENTITY hfRight.label       "De:">
+<!ENTITY headerLeft.tip      "Pennyn chwith">
+<!ENTITY headerCenter.tip    "Pennyn canol">
+<!ENTITY headerRight.tip     "Pennyn de">
+<!ENTITY footerLeft.tip      "Troedyn chwith">
+<!ENTITY footerCenter.tip    "Troedyn canol">
+<!ENTITY footerRight.tip     "Troedyn de">
+
+<!ENTITY hfTitle             "Teitl">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Dyddiad/Amser">
+<!ENTITY hfPage              "Tudalen #">
+<!ENTITY hfPageAndTotal      "Tudalen # o #">
+<!ENTITY hfBlank             "--gwag--">
+<!ENTITY hfCustom            "Cyfaddasu…">
+
+<!ENTITY customPrompt.title  "Cyfaddasu…">
+<!ENTITY customPrompt.prompt "Rhowch destun pennyn /troedyn cyfaddas">

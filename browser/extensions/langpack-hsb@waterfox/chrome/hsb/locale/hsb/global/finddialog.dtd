@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Na tutej stronje pytać">
+<!ENTITY findField.label "Tekst pytać:">
+<!ENTITY findField.accesskey "T">
+<!ENTITY caseSensitiveCheckbox.label "Na wulkopisanje dźiwać">
+<!ENTITY caseSensitiveCheckbox.accesskey "u">
+<!ENTITY wrapCheckbox.label "Łamać">
+<!ENTITY wrapCheckbox.accesskey "m">
+<!ENTITY findButton.label "Dale pytać">
+<!ENTITY findButton.accesskey "l">
+<!ENTITY cancelButton.label "Přetorhnyć">
+<!ENTITY closeButton.label "Začinić">
+<!ENTITY up.label "Horje">
+<!ENTITY up.accesskey "H">
+<!ENTITY down.label "Dele">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "Směr">

@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Folosește protecția față de urmărire">
+<!ENTITY  trackingProtectionAlways.label       "Întotdeauna">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "Doar în ferestrele private">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Niciodată">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Află mai multe">
+<!ENTITY  trackingProtectionExceptions.label   "Excepții…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Urmărire">
+<!ENTITY trackingProtectionPBM5.label         "Folosește protecția față de urmărire în ferestre private">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Află mai multe">
+<!ENTITY changeBlockList.label          "Schimbă lista de blocări">
+<!ENTITY changeBlockList.accesskey      "c">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Poți și ">
+<!ENTITY  doNotTrack.settings.label     "să gestionezi setările Nu mă urmări">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Istoric">
+
+<!ENTITY  locationBar.label             "Bară de adresă">
+
+<!ENTITY  locbar.suggest.label          "Când se folosește bara de adresă, sugerează:">
+<!ENTITY  locbar.history.label          "Istoric">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Marcaje">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "File deschise">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Căutări similare de la motorul de căutare implicit">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Schimbă preferințele pentru sugestiile motoarelor de căutare…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Acceptă cookie-uri terțe:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "Întotdeauna">
+<!ENTITY  acceptThirdParty.never.label    "Niciodată">
+<!ENTITY  acceptThirdParty.visited.label  "De la site-urile vizitate">
+
+<!ENTITY  keepUntil.label               "Păstrează-le până când:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "expiră">
+<!ENTITY  close.label                   "închid &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Excepții…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Afișează cookie-urile…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "Va memora istoricul">
+<!ENTITY  historyHeader.dontremember.label "Nu va memora istoricul niciodată">
+<!ENTITY  historyHeader.custom.label       "Va folosi setări personalizate pentru istoric">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; va memora istoricul navigării, descărcărilor, formularelor și căutărilor și va păstra cookie-urile de la site-urile web pe care le vizitezi.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Poate dorești ">
+<!ENTITY  rememberActions.clearHistory.label  "să ștergi istoricul recent">
+<!ENTITY  rememberActions.middle.label        " sau ">
+<!ENTITY  rememberActions.removeCookies.label "să ștergi anumite cookie-uri">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; va folosi aceleași setări ca navigarea privată și nu va memora niciun istoric pe măsură ce navighezi pe web.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Ai putea dori și să ">
+<!ENTITY  dontrememberActions.clearHistory.label "ștergi tot istoricul recent">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Folosește mereu modul de navigare privată">
+<!ENTITY  privateBrowsingPermanent2.accesskey "m">
+
+<!ENTITY  rememberHistory2.label      "Memorează istoricul navigării și al descărcărilor">
+<!ENTITY  rememberHistory2.accesskey  "g">
+
+<!ENTITY  rememberSearchForm.label       "Memorează istoricul formularelor și al căutărilor">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Curăță istoricul când &brandShortName; este închis">
+<!ENTITY  clearOnClose.accesskey         "C">
+
+<!ENTITY  clearOnCloseSettings.label     "Setări…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "File container">
+<!ENTITY  browserContainersLearnMore.label      "Află mai multe">
+<!ENTITY  browserContainersEnabled.label        "Activează filele container">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Setări…">
+<!ENTITY  browserContainersSettings.accesskey    "t">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

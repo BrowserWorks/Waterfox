@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title  "Tulostimen ominaisuudet">
+
+<!ENTITY paperInput.label  "Sivun koko:">
+<!ENTITY paperInput.accesskey "k">
+
+<!ENTITY jobTitleInput.label  "Työn nimi:">
+<!ENTITY jobTitleInput.accesskey "y">
+
+<!ENTITY colorGroup.label  "Väri:">
+<!ENTITY grayRadio.label  "Harmaasävy">
+<!ENTITY grayRadio.accesskey "H">
+<!ENTITY colorRadio.label "Väri">
+<!ENTITY colorRadio.accesskey "ä">
+
+<!ENTITY edgeMarginInput.label  "Etäisyys paperin reunasta marginaaliin (tuumia)">
+<!ENTITY topInput.label  "Ylä:">
+<!ENTITY topInput.accesskey "Y">
+<!ENTITY bottomInput.label  "Ala:">
+<!ENTITY bottomInput.accesskey "A">
+<!ENTITY leftInput.label  "Vasen:">
+<!ENTITY leftInput.accesskey "V">
+<!ENTITY rightInput.label  "Oikea:">
+<!ENTITY rightInput.accesskey "O">

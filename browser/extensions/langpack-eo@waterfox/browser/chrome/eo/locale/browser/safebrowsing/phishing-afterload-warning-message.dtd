@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Mi volas foriri de ĉi tie!">
+<!ENTITY safeb.palm.decline.label "Ignori tiun ĉi atentigon">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Tiu ĉi ne estas trompa retejo…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "t">
+<!ENTITY safeb.palm.reportPage.label "Kial tiu ĉi retejo estis blokita?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Informo provizita de <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Denuncita ataka retejo!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "La retejo ĉe <span id='malware_sitename'/> estis denuncita kiel ataka retejo, kaj ĝi estis blokita surbaze de viaj sekurecaj preferoj.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Atakaj retejoj klopodas instali programojn kiuj ŝtelas privatajn informojn, uzas vian komputilon por ataki aliajn aŭ difektas vian sistemon.</p><p>Kelkaj retejoj intence distribuas difektan programaron, sed multaj estas uzataj sen la scio aŭ permeso de ĝiaj posedantoj.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Denuncita programtruda paĝo!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Raporto indikas ke tiu ĉi retpaĝo ĉe <span id='unwanted_sitename'/> enhavas nedeziritan programaron, kaj ĝi estis blokita surbaze de viaj sekurecaj preferoj.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Paĝoj kun nedezirita programaro klopodas instali programaron kiu povas esti trompa kaj neantaŭvideble ekfiki sur via sistemo.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Trompa retejo!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Tiu ĉi retpaĝo ĉe <span id='phishing_sitename'/> estis denuncita kiel trompa retejo kaj ĝi estis blokita surbaze de viaj sekurecaj preferoj.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Trompaj retejoj estas fasonitaj por trompe igi vin fari ion danĝeran, kiel instali programon aŭ diskonigi personajn informojn kiel pasvortojn, telefonnumerojn aŭ kreditkartojn.</p><p>Tajpado de informo en tiu ĉi retepaĝo povas okazigi ŝtelon de identeco aŭ aliajn trompŝtelojn.</p>">
+

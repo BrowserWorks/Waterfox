@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "مددگار پروفائل بنائیں">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; آپ کی سیٹکگیں اور ترجیحات کی معلومات آپ کی ذاتی پروفائل میں ذخیرہ کرتا ہے۔">
+<!ENTITY profileCreationExplanation_2.text  "اگر آپ دیگر صارفین کے ساتھ &brandShortName; کی اس نقل کی حصہ داری کر رہے ہیں تو آپ ہر صارف کی معلومات الگ رکھنے کے لیے پروفائل استعمال کر سکتے ہیں۔ ایسا کرنے کے لیے، ہر صارف کو اپنی ذاتی پروفائل بنانی چاہیے۔">
+<!ENTITY profileCreationExplanation_3.text  "اگر آپ &brandShortName; کی اس نقل کو استعمال کرنے والے اکیلے فرد ہیں تو آپ کے پاس کم از کم ایک پروفائل ہونی چاہیے۔ اگر آپ چاہیں، تو آپ سیٹنگوں کے مختلف سیٹ اور ترجیحات کو ذخیرہ کرنے کے لیے اپنے لیے کثیر پروفائلیں بنا سکتے ہیں۔ مثلاً آپ کاروبار اور ذاتی استعمال کے لیے علیحدہ پروفائلیں رکھ سکتے ہیں۔">
+<!ENTITY profileCreationExplanation_4.text  "اپنی پروفائل بنانے کی شروعات کرنے کے لیے، اگلا پر کلک کریں۔">
+<!ENTITY profileCreationExplanation_4Mac.text  "اپنی پروفائل بنانے کی شروعات کرنے کے لیے جاری رکھیی پر کلک کریں۔">
+<!ENTITY profileCreationExplanation_4Gnome.text  "اپنی پروفائل بنانا شروع کرنے کے لیے، اگلا پر کلک کریں۔">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "اگر آپ متعدد پروفائل بناتے ہیں تو آپ پروفائل ناموں کے ذریعے ان میں فرق کر سکتے ہیں۔ آپ یہاں مہیا کیا گیا نام استعمال کرسکتے ہیں یا اپنا کوئی نام استعمال کرسکتے ہیں۔">
+<!ENTITY profilePrompt.label            "نیا پروفائل نام داخل کریں:">
+<!ENTITY profilePrompt.accesskey        "د">
+<!ENTITY profileDirectoryExplanation.text   "آپ کی سیٹنگس، ترجیحات اور دیگر متعلقہ کوائف اس جگح محفوظ ہوں گی:">
+<!ENTITY profileDefaultName             "طے شدہ صارف">
+<!ENTITY button.choosefolder.label      "پوشہ انتخاب کریں…">
+<!ENTITY button.choosefolder.accesskey  "ا">
+<!ENTITY button.usedefault.label        "طے شدہ پوشہ استعمال کریں">
+<!ENTITY button.usedefault.accesskey    "ا">

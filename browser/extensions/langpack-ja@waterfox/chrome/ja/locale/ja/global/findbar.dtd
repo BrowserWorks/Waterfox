@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip				"指定文字列に一致する次の部分を検索します">
+<!ENTITY previous.tooltip			"指定文字列に一致する 1 つ前の部分を検索します">
+<!ENTITY findCloseButton.tooltip		"検索バーを閉じます">
+<!ENTITY highlightAll.label			"すべて強調表示">
+<!ENTITY highlightAll.accesskey			"l">
+<!ENTITY highlightAll.tooltiptext		"指定に一致するすべての部分を強調表示します">
+<!ENTITY caseSensitive.label			"大文字/小文字を区別">
+<!ENTITY caseSensitive.accesskey		"c">
+<!ENTITY caseSensitive.tooltiptext		"大文字/小文字を区別して検索します">
+<!ENTITY entireWord.label			"完全一致">
+<!ENTITY entireWord.accesskey			"w">
+<!ENTITY entireWord.tooltiptext			"指定文字列に完全一致する単語だけを検索します">

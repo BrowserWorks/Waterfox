@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "650">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copier">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Tout sélectionner">
+<!ENTITY  selectall.accesskey   "T">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Général">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Titre :">
+<!ENTITY  generalURL            "Adresse (URL) :">
+<!ENTITY  generalType           "Type :">
+<!ENTITY  generalMode           "Mode de rendu :">
+<!ENTITY  generalSize           "Taille :">
+<!ENTITY  generalReferrer       "URL de provenance :">
+<!ENTITY  generalSource         "Source du cache :">
+<!ENTITY  generalModified       "Modifiée le :">
+<!ENTITY  generalEncoding2      "Encodage du texte :">
+<!ENTITY  generalMetaName       "Nom">
+<!ENTITY  generalMetaContent    "Contenu">
+
+<!ENTITY  mediaTab              "Médias">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Emplacement :">
+<!ENTITY  mediaText             "Texte associé :">
+<!ENTITY  mediaAltHeader        "Texte alternatif">
+<!ENTITY  mediaAddress          "Adresse">
+<!ENTITY  mediaType             "Type">
+<!ENTITY  mediaSize             "Taille">
+<!ENTITY  mediaCount            "Nombre">
+<!ENTITY  mediaDimension        "Dimensions :">
+<!ENTITY  mediaLongdesc         "Description longue :">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Enregistrer sous…">
+<!ENTITY  mediaSaveAs.accesskey "s">
+<!ENTITY  mediaSaveAs2.accesskey "E">
+<!ENTITY  mediaPreview          "Aperçu du média :">
+
+<!ENTITY  feedTab               "Flux">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "S’abonner">
+<!ENTITY  feedSubscribe.accesskey "S">
+
+<!ENTITY  permTab               "Permissions">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Permissions par défaut">
+<!ENTITY  permAskAlways         "Toujours demander">
+<!ENTITY  permAllow             "Autoriser">
+<!ENTITY  permAllowSession      "Autoriser pour la session">
+<!ENTITY  permBlock             "Bloquer">
+<!ENTITY  permissionsFor        "Permissions pour :">
+<!ENTITY  permPlugins           "Activer les plugins">
+
+<!ENTITY  permClearStorage           "Supprimer les données">
+<!ENTITY  permClearStorage.accesskey "d">
+
+<!ENTITY  securityTab           "Sécurité">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Afficher le certificat">
+<!ENTITY  securityView.accesskey "A">
+<!ENTITY  securityView.unknown   "Inconnu">
+
+
+<!ENTITY  securityView.identity.header   "Identité du site web">
+<!ENTITY  securityView.identity.owner    "Propriétaire : ">
+<!ENTITY  securityView.identity.domain   "Site web : ">
+<!ENTITY  securityView.identity.verifier "Vérifiée par : ">
+<!ENTITY  securityView.identity.validity "Expire le :">
+
+<!ENTITY  securityView.privacy.header                   "Vie privée et historique">
+<!ENTITY  securityView.privacy.history                  "Ai-je déjà visité ce site web auparavant ?">
+<!ENTITY  securityView.privacy.cookies                  "Ce site web collecte-t-il des informations (cookies) sur mon ordinateur ?">
+<!ENTITY  securityView.privacy.viewCookies              "Voir les cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ai-je un mot de passe enregistré pour ce site web ?">
+<!ENTITY  securityView.privacy.viewPasswords            "Voir les mots de passe enregistrés">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "V">
+
+<!ENTITY  securityView.technical.header                 "Détails techniques">
+
+<!ENTITY  helpButton.label                              "Aide">

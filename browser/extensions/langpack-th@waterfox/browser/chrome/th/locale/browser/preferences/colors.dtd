@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "สี">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "เขียนทับสีที่ระบุโดยหน้าด้วยที่คุณเลือกไว้ด้านบน:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "ย">
+
+<!ENTITY  overrideDefaultPageColors.always.label "เสมอ">
+<!ENTITY  overrideDefaultPageColors.auto.label   "เฉพาะกับชุดตกแต่งความคมชัดสูง">
+<!ENTITY  overrideDefaultPageColors.never.label  "ไม่เลย">
+
+<!ENTITY  color                           "ตัวอักษรและพื้นหลัง">
+<!ENTITY  textColor.label                 "ตัวอักษร:">
+<!ENTITY  textColor.accesskey             "ต">
+<!ENTITY  backgroundColor.label           "พื้นหลัง:">
+<!ENTITY  backgroundColor.accesskey       "พ">
+<!ENTITY  useSystemColors.label           "ใช้สีของระบบ">
+<!ENTITY  useSystemColors.accesskey       "ส">
+
+<!ENTITY  underlineLinks.label            "ขีดเส้นใต้ลิงก์">
+<!ENTITY  underlineLinks.accesskey        "ข">
+<!ENTITY  links                           "สีลิงก์">
+<!ENTITY  linkColor.label                 "ลิงก์ที่ยังไม่เคยเยี่ยมชม:">
+<!ENTITY  linkColor.accesskey             "ล">
+<!ENTITY  visitedLinkColor.label          "ลิงก์ที่เยี่ยมชมแล้ว:">
+<!ENTITY  visitedLinkColor.accesskey      "ง">

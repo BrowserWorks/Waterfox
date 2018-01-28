@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Información sobre lo clasificador-url">
+<!ENTITY aboutUrlClassifier.providerTitle               "Furnidor">
+<!ENTITY aboutUrlClassifier.provider                    "Furnidor">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Zaguer tiempo d'actualización">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Nuevo tiempo d'actualización">
+
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Zaguero estau d'actualización">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Actualización">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Caché">
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutUrlClassifier.debugTitle                  "Depurar">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Determinar los modulos de rechistro">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Determinar lo fichero de rechistro">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Achustar lo log de JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Modulos de log de navegación segura">
+<!ENTITY aboutUrlClassifier.debugModules                "Modulos de log actuals">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Log JS de navegación segura">
+<!ENTITY aboutUrlClassifier.debugFile                   "Fichero de rechistro actual">
+
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Clear">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cache Entries">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Number of negative cache entries">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Number of positive cache entries">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positive cache expiry">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Refresh">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Show entries">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Table name">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">

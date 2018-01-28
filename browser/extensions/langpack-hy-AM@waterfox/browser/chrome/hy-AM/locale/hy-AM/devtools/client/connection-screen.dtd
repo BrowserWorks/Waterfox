@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Միանալ">
+<!ENTITY header     "Միանալ հեռակա նպատակակետին">
+<!ENTITY host       "Հանգույցը`">
+<!ENTITY port       "Դարպաս.">
+<!ENTITY connect    "Միանալ">
+<!ENTITY connecting "Միանում է...">
+<!ENTITY availableAddons "Հասանելի հեռակա ներդիրները.">
+<!ENTITY availableTabs "Հասանելի հեռադիր ներդիրները.">
+<!ENTITY availableProcesses "Հասանելի հեռադիր ընթացքը.">
+<!ENTITY connectionError "Սխալ.">
+<!ENTITY errorTimeout "Սխալ. միացման ժ-ը լրացել է">
+<!ENTITY errorRefused "Սխալ. կապակցումը մերժվել է:">
+<!ENTITY errorUnexpected "Անսպասելի սխալ:">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox-ի Ծրագրավորողի Գործիքները կարող են վրիպազերծել հեռակա սարքերը (Waterfox-ը Android-ի համար և Waterfox OS): Համոզվեք, որ միացրել եք 'Հեռակա վրիպազերծում' ընտրանքը հեռակա սարքում: Մանրամասները՝">
+<!ENTITY remoteDocumentation "փաստաթղթերը">
+<!ENTITY remoteHelpSuffix ".">
+

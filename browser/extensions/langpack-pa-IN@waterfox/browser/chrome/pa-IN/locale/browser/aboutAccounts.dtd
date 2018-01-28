@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; ਵਲੋਂ ਜੀ ਆਇਆਂ ਨੂੰ">
+
+<!ENTITY aboutAccountsConfig.description "ਆਪਣੀਆਂ ਟੈਬਾਂ, ਬੁੱਕਮਾਰਕਾਂ, ਪਾਸਵਰਡਾ ਤੇ ਹੋਰਾਂ ਨੂੰ ਸਿੰਕ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।">
+<!ENTITY aboutAccountsConfig.startButton.label "ਸ਼ੁਰੂ ਕਰੀਏ">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ਸਿੰਕ ਲਈ ਪਸੰਦਾਂ">
+<!ENTITY aboutAccounts.noConnection.title "ਕਨੈਕਸ਼ਨ ਨਹੀਂ ਹੈ">
+<!ENTITY aboutAccounts.noConnection.description "ਸਾਈਨ ਇਨ ਕਰਨ ਲਈ ਤੁਹਾਨੂੰ ਇੰਟਰਨੈੱਟ ਨਾਲ ਕਨੈਕਟ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।">
+<!ENTITY aboutAccounts.noConnection.retry "ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ">
+<!ENTITY aboutAccounts.badConfig.title "ਖ਼ਰਾਬ ਸੰਰਚਨਾ">
+<!ENTITY aboutAccounts.badConfig.description "Unable to determine your Waterfox Account server configuration. Please try again later.">

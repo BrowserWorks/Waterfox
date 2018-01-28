@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "सॉफ्टवेअर अद्ययावत">
+
+<!ENTITY  checking.title                  "अद्ययावताकरीता तपासत आहे">
+<!ENTITY  updateCheck.label               "&brandShortName; च्या ननिन आवृत्ती करीता तपास करीत आहे…">
+
+<!ENTITY  noupdatesfound.title            "अद्ययावत आढळले नाही">
+<!ENTITY  noupdatesautoenabled.intro      "अद्ययावत उपलब्ध नाही. &brandShortName; नियमीतपणे अद्ययावत करीता तपास करेल.">
+<!ENTITY  noupdatesautodisabled.intro     "अद्ययावत उपलब्ध नाही. कृपया पुन्हा तपासणी करा किंवा &brandShortName; चे आपोआप अद्ययावत तपासणी कार्यान्वीत करा.">
+
+<!ENTITY  manualUpdate.title              "अद्ययावत करण्यास अपयशी">
+<!ENTITY  manualUpdate.desc               "सूचविलेले सुरक्षा व स्थिरता अद्ययावत उपलब्ध आहे, परंतु इंस्टॉलेशनकरिता आपल्याकडे आवश्यक प्रणाली परवानगी नाही. कृपया आपल्या प्रणाली प्रशासकाशी संपर्क करा, किंवा योग्य परवानगी सक्षम खातेचा वापर करूण संगणकावर सॉफ्टवेअर पुन्हा प्रतिष्ठापीत करण्याचा प्रयत्न करा.">
+<!ENTITY  manualUpdate.space.desc         "शिफारसीय सुरक्षा व स्थिरता सुधारणा उपलब्ध आहे, परंतु इंस्टॉलेशनकरिता अतिरिक्त जागा उपलब्ध नाही.">
+<!ENTITY  manualUpdateGetMsg.label        "आपण &brandShortName; ची सर्वात अलिकडील आवृत्ती येथून प्राप्त करू शकता:">
+
+<!ENTITY  unsupported.title               "प्रणाली असमर्थीत">
+<!ENTITY  unsupported.label               "आपले &brandShortName; कालबाह्य आहे, पण नवीन आवृत्ती आपल्या प्रणालीवरसमर्थीत नाही. कृपया आपली सिस्टीम सुधारित करा, आणि परत प्रयत्न करा. आपणाला हे परत दिसणार नाही, पण आपण">
+<!ENTITY  unsupportedLink.label           "आणखी शिका.">
+
+<!ENTITY  clickHere.label                 "ह्या अद्ययावताविषयी अधिक माहिती पहा">
+
+<!ENTITY  evangelism.desc                 "&brandShortName; करीता हे अद्ययावत आपण त्वरीत लागू करा असे सूचविले जाते.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; डाउनलोड करत आहे">
+<!ENTITY  downloading.intro               "अद्ययावत डाउनलोड करीत आहे...">
+<!ENTITY  connecting.label                "अद्ययावत सर्व्हरशी जुळवणी होत आहे...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; डाउनलोड केलेल्या वाढीव अद्ययावताची एकाग्रता तपासू शकला नाही, त्यामुळे आता पूर्ण अद्ययावत संकुलाचे डाउनलोड करत आहे.">
+
+<!ENTITY  viewDetails.tooltip             "या अद्ययावत करीता तपशील पहा">
+
+<!ENTITY  details.link                    "तपशील">
+
+<!ENTITY  error.title                     "सुधारणा अपयशी">
+
+<!ENTITY  error.label                     "ह्या अद्ययावतकरिता तपास करतेवेळी, डाउनलोड करतेवेळी किंवा इंस्टॉलेशनवेळी अडचणी आढळले. &brandShortName; खालील कारणास्तव अद्ययावत होऊ शकले नाही:">
+                                           
+<!ENTITY  errorManual.label               "ह्या लिंक वर भेट देऊन व अलिकडील आवृत्ती डाउनलोड करुन आपण &brandShortName; स्वतः अद्ययावत करू शकता:">
+                                           
+<!ENTITY  errorpatching.intro             "अशंतः अद्ययावत कार्यान्वित केल्या जाऊ शकले नाही. पूर्ण अद्ययावत डाउनलोड करून &brandShortName; पुन्हा प्रयत्न करेल.">
+
+<!ENTITY  genericBackgroundError.label    "सुधारणा उपलब्ध आहे याची ओळख करण्यास &brandShortName; अशक्य. कृपया आपल्याकडे &brandShortName; ची नुकतीच आवृत्ती आहे याची खात्री करा:">
+
+<!ENTITY  finishedPage.title              "अद्ययावत आधिपासूनच प्रतिष्ठापीत आहे">
+<!ENTITY  finishedPage.text               "&brandShortName; पुढच्यावेळी सुरू झाल्यावर अद्ययावत प्रतिष्ठापीत होईल. आपण आता &brandShortName; ला पुन्हप्रारंभ करू शकता, किंवा कार्य चालू ठेवून पुढे पुन्हप्रारंभ करू शकता.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; करीता सुरक्षा व स्थिरता अद्ययावत डाऊनलोड करून झाले आहे व प्रतिष्ठापन करीता सज्ज आहे.">
+<!ENTITY  finishedBackground.name         "अद्ययावत :">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "&brandShortName; पुढच्यावेळी सुरू झाल्यावर अद्ययावत प्रतिष्ठापीत होईल. आपण आता &brandShortName; ला पुन्हप्रारंभ करू शकता, किंवा कार्य चालू ठेवून पुढे पुन्हप्रारंभ करू शकता.">
+<!ENTITY  finishedBackground.moreElevated "ह्या सुधारणेसाठी प्रशासक अधिकार गरजेचे आहेत. पुढच्या वेळी जेव्हा &brandShortName; सुरु होईल तेव्हा ही सुधारणा प्रस्थापित केली जाईल. तुम्ही आता &brandShortName; पुनःसुरु करू शकता, काम चालू ठेऊन पुनःसुरु करू शकता किंवा ही सुधारणा नाकारू शकता.">
+
+<!ENTITY  update.details.label            "तपशील">
+<!ENTITY  update.installedOn.label        "यावेळी प्रतिष्ठापित केले:">
+<!ENTITY  update.status.label             "स्थिती:">

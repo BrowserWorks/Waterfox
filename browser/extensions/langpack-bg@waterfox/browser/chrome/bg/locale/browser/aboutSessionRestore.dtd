@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Възстановяване на сесия">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Извинявайте за невъзстановената предишна сесия.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; не можа да възстанови предишните ви прозорци и раздели. Обикновено причината е в последната отворена страница.">
+<!ENTITY restorepage.tryThis        "Може да опитате:">
+<!ENTITY restorepage.restoreSome    "Да затворите един или повече раздели, които смятате, че причиняват проблема">
+<!ENTITY restorepage.startNew       "Да започнете нова сесия">
+
+<!ENTITY restorepage.tryagainButton "Възстановяване">
+<!ENTITY restorepage.restore.access "В">
+<!ENTITY restorepage.closeButton    "Затваряне">
+<!ENTITY restorepage.close.access   "З">
+
+<!ENTITY restorepage.restoreHeader  "Възстановяване">
+<!ENTITY restorepage.listHeader     "Прозорци и раздели">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Прозорец №&#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Напред!">
+<!ENTITY welcomeback2.restoreButton.access "Н">
+
+<!ENTITY welcomeback2.tabtitle      "Успяхме!">
+
+<!ENTITY welcomeback2.pageTitle     "Успяхме!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; е готов.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Възстановяване на всички прозорци и раздели">
+<!ENTITY welcomeback2.restoreSome.label "Възстановяване само на избраните">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Добавките и персонализирането бяха премахнати, а настройките на браузъра бяха върнати до стандартните. Ако това не оправи проблема, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "научете повече, какво може да направите.">
+

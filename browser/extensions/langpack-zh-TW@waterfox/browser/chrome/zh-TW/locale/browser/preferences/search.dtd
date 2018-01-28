@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "預設搜尋引擎">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "選擇在網址列與搜尋列搜尋時預設使用的搜尋引擎。">
+
+<!ENTITY provideSearchSuggestions.label        "提供搜尋建議">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.label           "在網址列結果中顯示搜尋建議">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "由於您已經設定 &brandShortName; 不要記住瀏覽紀錄，網址列中將不會顯示建議搜尋結果。">
+
+<!ENTITY oneClickSearchEngines.label           "快捷搜尋引擎清單">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "請選擇當您在網址列與搜尋列輸入關鍵字時，可選用的其他瀏覽器。">
+
+<!ENTITY engineNameColumn.label                "搜尋引擎">
+<!ENTITY engineKeywordColumn.label             "關鍵字">
+
+<!ENTITY restoreDefaultSearchEngines.label     "還原預設搜尋引擎">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "移除">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY findMoreSearchEngines.label           "尋找更多搜尋引擎">

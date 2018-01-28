@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Gebruikersprofiel kiezen">
+
+<!ENTITY            profilename.label      "Profielnaam:">
+
+<!ENTITY            start.label            "&brandShortName; starten">
+<!ENTITY            exit.label             "Afsluiten">
+
+<!ENTITY            availprofiles.label    "Beschikbare profielen">
+
+<!ENTITY            newButton.label        "Profiel aanmaken…">
+<!ENTITY            newButton.accesskey    "a">
+<!ENTITY            renameButton.label     "Profiel hernoemen…">
+<!ENTITY            renameButton.accesskey "h">
+<!ENTITY            deleteButton.label     "Profiel verwijderen…">
+<!ENTITY            deleteButton.accesskey "v">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; slaat informatie over uw instellingen, voorkeuren en andere gebruikersitems op in uw gebruikersprofiel.">
+
+<!ENTITY            offlineState.label     "Offline werken">
+<!ENTITY            offlineState.accesskey "O">
+
+<!ENTITY            useSelected.label       "Geselecteerde profiel gebruiken zonder te vragen bij het opstarten">
+<!ENTITY            useSelected.accesskey   "r">

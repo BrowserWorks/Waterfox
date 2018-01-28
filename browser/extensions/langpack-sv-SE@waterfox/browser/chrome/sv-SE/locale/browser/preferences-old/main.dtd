@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Vid start">
+
+<!ENTITY startupPage.label         "När &brandShortName; startar:">
+<!ENTITY startupPage.accesskey     "N">
+<!ENTITY startupUserHomePage.label "Visa din startsida">
+<!ENTITY startupBlankPage.label    "Visa en tom sida">
+<!ENTITY startupPrevSession.label  "Visa dina fönster och flikar från förra gången">
+
+<!ENTITY homepage.label            "Startsida:">
+<!ENTITY homepage.accesskey        "S">
+<!ENTITY useCurrentPage.label      "Använd aktuell sida">
+<!ENTITY useCurrentPage.accesskey  "u">
+<!ENTITY useMultiple.label         "Använd aktuella sidor">
+<!ENTITY chooseBookmark.label      "Använd bokmärke…">
+<!ENTITY chooseBookmark.accesskey  "d">
+<!ENTITY restoreDefault.label      "Återställ standard">
+<!ENTITY restoreDefault.accesskey  "Å">
+
+<!ENTITY downloads.label     "Filhämtningar">
+
+<!ENTITY saveTo.label "Spara filer till">
+<!ENTITY saveTo.accesskey "a">
+<!ENTITY chooseFolderWin.label        "Bläddra…">
+<!ENTITY chooseFolderWin.accesskey    "B">
+<!ENTITY chooseFolderMac.label        "Välj…">
+<!ENTITY chooseFolderMac.accesskey    "V">
+<!ENTITY alwaysAskWhere.label         "Fråga alltid var jag vill spara filerna">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "Kontrollera alltid om &brandShortName; är din standardwebbläsare">
+<!ENTITY alwaysCheckDefault2.accesskey    "a">
+<!ENTITY setAsMyDefaultBrowser2.label     "Gör till standard">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "s">
+<!ENTITY isDefault.label                  "&brandShortName; är redan standardwebbläsare">
+<!ENTITY isNotDefault.label               "&brandShortName; är redan standardwebbläsare">
+
+<!ENTITY separateProfileMode.label        "Tillåt &brandShortName; och Waterfox att köra samtidigt">
+<!ENTITY useWaterfoxSync.label             "Tips: Detta använder separata profiler. Använd Sync för att dela data mellan dem.">
+<!ENTITY getStarted.notloggedin.label     "Logga in till &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Öppna inställningar för &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Aktivera multi-process &brandShortName;">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Stampar">
+
+<!ENTITY printDialog.title "Stampar">
+
+<!ENTITY fpDialog.title "Memorisar la datoteca">
+
+<!ENTITY fileCheck.label "Cumbinar ad ina datoteca">
+<!ENTITY fileCheck.accesskey "C">
+<!ENTITY propertiesButton.label "Caracteristicas...">
+<!ENTITY propertiesButton.accesskey "C">
+<!ENTITY descText.label "Descripziun dal stampader:">
+<!ENTITY printer.label "Stampader">
+<!ENTITY printerInput.label "Num dal stampader:">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "Sectur da stampa">
+<!ENTITY allpagesRadio.label "Tut las paginas">
+<!ENTITY allpagesRadio.accesskey "a">
+<!ENTITY rangeRadio.label  "Paginas">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "da">
+<!ENTITY frompageInput.accesskey  "d">
+<!ENTITY topageInput.label  "fin">
+<!ENTITY topageInput.accesskey  "f">
+<!ENTITY selectionRadio.label "Tscherna">
+<!ENTITY selectionRadio.accesskey "s">
+
+<!ENTITY copies.label "Copias">
+<!ENTITY numCopies.label "Dumber da copias:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "Stampar ils frames">
+<!ENTITY aslaidoutRadio.label "Sco mussà al visur">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label  "Frame tschernì">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "Mintga frame separadamain">
+<!ENTITY eachframesepRadio.accesskey  "e">

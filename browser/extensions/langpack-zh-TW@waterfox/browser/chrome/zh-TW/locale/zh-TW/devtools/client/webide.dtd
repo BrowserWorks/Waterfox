@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "專案">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "新增應用程式…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "開啟封裝的應用程式…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "開啟架設的應用程式…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "開啟應用程式…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "安裝並執行">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "停止應用程式">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "除錯應用程式">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "移除專案">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "偏好設定">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "管理其他元件">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "重新整理分頁">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "取消連線">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "擷圖">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Runtime 資訊">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "監控">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "裝置偏好設定">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "裝置設定">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "檢視">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "切換編輯器">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "放大">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "縮小">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "重設縮放">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "開啟應用程式">
+<!ENTITY runtimeButton_label "選擇 Runtime">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "我的專案">
+<!ENTITY projectPanel_runtimeApps "Runtime 應用程式">
+<!ENTITY projectPanel_tabs "分頁">
+<!ENTITY runtimePanel_usb "USB 裝置">
+<!ENTITY runtimePanel_wifi "Wi-Fi 裝置">
+<!ENTITY runtimePanel_simulator "模擬器">
+<!ENTITY runtimePanel_other "其他">
+<!ENTITY runtimePanel_installsimulator "安裝模擬器">
+<!ENTITY runtimePanel_noadbhelper "安裝 ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "看不到您的裝置嗎？">
+<!ENTITY runtimePanel_refreshDevices_label "重新整理裝置">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "有效">
+<!ENTITY details_warning_header "警告">
+<!ENTITY details_error_header "錯誤">
+<!ENTITY details_description "描述">
+<!ENTITY details_location "位置">
+<!ENTITY details_manifestURL "應用程式 ID">
+<!ENTITY details_removeProject_button "移除專案">
+<!ENTITY details_showPrepackageLog_button "顯示封裝前紀錄">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "新增應用程式">
+<!ENTITY newAppHeader "選擇範本">
+<!ENTITY newAppLoadingTemplate "正在載入範本…">
+<!ENTITY newAppProjectName "專案名稱:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "關閉">
+
+<!-- Addons -->
+<!ENTITY addons_title "額外元件">
+<!ENTITY addons_aboutaddons "開啟附加元件管理員">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "偏好設定">
+<!ENTITY prefs_editor_title "編輯器">
+<!ENTITY prefs_general_title "一般">
+<!ENTITY prefs_restore "回復為預設值">
+<!ENTITY prefs_manage_components "管理其他元件">
+<!ENTITY prefs_options_autoconnectruntime "重新連線至上一個 runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "啟動 WebIDE 時重新連線至上一個 runtime">
+<!ENTITY prefs_options_rememberlastproject "記住上一個專案">
+<!ENTITY prefs_options_rememberlastproject_tooltip "在 WebIDE 啟動時還原先前的專案">
+<!ENTITY prefs_options_templatesurl "範本網址">
+<!ENTITY prefs_options_templatesurl_tooltip "可用範本索引">
+<!ENTITY prefs_options_showeditor "顯示編輯器">
+<!ENTITY prefs_options_showeditor_tooltip "顯示內部編輯器">
+<!ENTITY prefs_options_tabsize "Tab 大小">
+<!ENTITY prefs_options_expandtab "Soft tab">
+<!ENTITY prefs_options_expandtab_tooltip "使用空白而不使用 tab 符號">
+<!ENTITY prefs_options_detectindentation "自動縮排">
+<!ENTITY prefs_options_detectindentation_tooltip "依照原始內容猜測縮排長度">
+<!ENTITY prefs_options_autocomplete "自動完成">
+<!ENTITY prefs_options_autocomplete_tooltip "啟用程式碼自動完成">
+<!ENTITY prefs_options_autoclosebrackets "自動關閉括號">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "自動插入結尾括號">
+<!ENTITY prefs_options_keybindings "Keybinding">
+<!ENTITY prefs_options_keybindings_default "預設">
+<!ENTITY prefs_options_autosavefiles "自動儲存檔案">
+<!ENTITY prefs_options_autosavefiles_tooltip "執行專案前自動儲存已編輯的檔案">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Runtime 資訊">
+<!ENTITY runtimedetails_adbIsRoot "ADB 已取得 root 權限:">
+<!ENTITY runtimedetails_summonADBRoot "root 裝置">
+<!ENTITY runtimedetails_ADBRootWarning "（需要已解鎖的 bootloader）">
+<!ENTITY runtimedetails_unrestrictedPrivileges "未受限的開發者工具權限:">
+<!ENTITY runtimedetails_requestPrivileges "需要較高權限">
+<!ENTITY runtimedetails_privilegesWarning "（將重開裝置，需要 root 權限。）">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "布林（Boolean）值">
+<!ENTITY device_typenumber "整數">
+<!ENTITY device_typestring "字串">
+<!ENTITY device_typeobject "物件">
+<!ENTITY device_typenone "選擇類型">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "裝置偏好設定">
+<!ENTITY devicepreference_search "搜尋偏好設定">
+<!ENTITY devicepreference_newname "新增偏好設定名稱">
+<!ENTITY devicepreference_newtext "偏好設定值">
+<!ENTITY devicepreference_addnew "新增偏好設定">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "裝置設定">
+<!ENTITY devicesetting_search "搜尋設定">
+<!ENTITY devicesetting_newname "新設定名稱">
+<!ENTITY devicesetting_newtext "設定值">
+<!ENTITY devicesetting_addnew "新增設定值">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "監控">
+<!ENTITY monitor_help "說明">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "驗證客戶端">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "您連線的端點需要更多資訊才能驗證此連線。請用您的另一台裝置掃描下面的 QR 碼。">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "沒有 QR 碼掃描器提示？">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "有 QR 碼掃描器提示？">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "若您的另一個裝置要求掃描 QR 碼取得 token，請複製下面的值到該裝置中:">
+<!ENTITY wifi_auth_qr_size_note "若 QR 碼太小，無法成功建立連線，請嘗試放大網頁或拉大視窗。">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "封裝前指令紀錄">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "模擬器選項">
+<!ENTITY simulator_remove "刪除模擬器">
+<!ENTITY simulator_reset "回復為預設值">
+<!ENTITY simulator_name "名稱">
+<!ENTITY simulator_software "軟體">
+<!ENTITY simulator_version "版本">
+<!ENTITY simulator_profile "設定檔">
+<!ENTITY simulator_hardware "硬體">
+<!ENTITY simulator_device "裝置">
+<!ENTITY simulator_screenSize "畫面">
+<!ENTITY simulator_pixelRatio "像素比例">
+<!ENTITY simulator_tv_data "電視模擬">
+<!ENTITY simulator_tv_data_open "設定資料">
+<!ENTITY simulator_tv_data_open_button "開啟設定目錄…">

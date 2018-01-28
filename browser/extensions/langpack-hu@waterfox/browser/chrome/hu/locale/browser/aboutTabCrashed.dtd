@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Lap bezárása">
+<!ENTITY tabCrashed.restoreTab "Lap visszaállítása">
+<!ENTITY tabCrashed.restoreAll "Minden összeomlott lap visszaállítása">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Puff. A lap összeomlott.">
+<!ENTITY tabCrashed.offerHelp "Segíthetünk!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Válassza a „&tabCrashed.restoreTab;” lehetőséget az oldaltartalom újratöltéséhez.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Válassza a „&tabCrashed.restoreTab;” vagy „&tabCrashed.restoreAll;” lehetőséget a laptartalom újratöltéséhez.">
+<!ENTITY tabCrashed.requestHelp "Segít nekünk?">
+<!ENTITY tabCrashed.requestHelpMessage "A hibajelentések segítenek felismerni a problémák okait, és jobbá tenni a &brandShortName;ot.">
+<!ENTITY tabCrashed.requestReport "A lap jelentése">
+<!ENTITY tabCrashed.sendReport2 "Hibajelentés küldése a megtekintett lapról">
+<!ENTITY tabCrashed.commentPlaceholder2 "Választható hozzászólások (a hozzászólások nyilvánosak)">
+<!ENTITY tabCrashed.includeURL2 "Az oldal URL hozzáadása ehhez a hibajelentéshez">
+<!ENTITY tabCrashed.emailPlaceholder "Írja be az e-mail címét">
+<!ENTITY tabCrashed.emailMe "Értesítő e-mailt kérek a további információkról">
+<!ENTITY tabCrashed.reportSent "A hibajelentés már be lett küldve, köszönjük segítségét a &brandShortName; jobbá tételéhez!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Háttérben lévő lapok jelentése">
+<!ENTITY tabCrashed.autoSubmit2 "A beállítások módosítása, hogy a hibajelentések automatikusan elküldésre kerüljenek – a háttérben lévő lapok esetén is, ebben, illetve a jövőbeni munkamenetekben.">

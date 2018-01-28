@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Priemonių juostų tvarkymas">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Nuvilkite mygtukus ir elementus į programos lango priemonių juostas.">
+<!ENTITY show.label               "Ant mygtukų rodyti:">
+<!ENTITY iconsAndText.label       "piktogramas ir tekstą">
+<!ENTITY icons.label              "piktogramas">
+<!ENTITY text.label               "tekstą">
+<!ENTITY useSmallIcons.label      "Mažos piktogramos">
+<!ENTITY restoreDefaultSet.label  "Numatytoji struktūra">
+<!ENTITY addNewToolbar.label      "Nauja juosta">
+<!ENTITY saveChanges.label        "Gerai">
+<!ENTITY undoChanges.label        "Atšaukti pakeitimus">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Cicluri de Ctrl+Tab printre file în ordinea celor mai folosite recent">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Deschide ferestrele noi mai degrabă într-o filă nouă">
+<!ENTITY newWindowsAsTabs.accesskey   "w">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avertizează la închiderea filelor multiple">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Te avertizează atunci când deschiderea mai multor file ar putea încetini &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Când se deschide un link într-o nouă filă, comută la aceasta imediat">
+<!ENTITY switchLinksToNewTabs.accesskey    "C">
+
+<!ENTITY showTabsInTaskbar.label          "Arată miniaturi ale filelor în bara de activități din Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "A">
+<!ENTITY tabsGroup.label          "File">

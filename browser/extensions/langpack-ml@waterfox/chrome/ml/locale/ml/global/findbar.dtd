@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "വാചകം വീണ്ടും ആവര്‍ത്തിക്കുന്നത്‌ കണ്ടെത്തുക ">
+<!ENTITY previous.tooltip "വാചകം ഇതിനു മുന്‍പ്‌ ആവര്‍ത്തിച്ചത്‌ കണ്ടെത്തുക ">
+<!ENTITY findCloseButton.tooltip "തിരച്ചിലിനുള്ള പട്ട അടക്കുക">
+
+
+<!ENTITY highlightAll.tooltiptext "വാചകത്തിന്റെ എല്ലാ ആവര്‍ത്തനങ്ങളും അടയാളപ്പെടുത്തുക ">
+<!ENTITY caseSensitive.label "അക്ഷരങ്ങള്‍ ഒത്തുനോക്കുക">
+<!ENTITY caseSensitive.accesskey "ഒ">
+<!ENTITY caseSensitive.tooltiptext "കേസ് സെന്‍സിറ്റിവിറ്റി ഉപയോഗിച്ചു് തെരയുക">
+
+
+
+
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.label "Whole Words">
+<!ENTITY entireWord.tooltiptext "Search whole words only">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.label "Highlight All">

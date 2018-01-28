@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Alapértelmezett keresőszolgáltatás">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Válassza ki a címsávban és a keresősávban alapértelmezetten használandó keresőszolgáltatást.">
+
+<!ENTITY provideSearchSuggestions.label        "Keresési javaslatok">
+<!ENTITY provideSearchSuggestions.accesskey    "K">
+
+<!ENTITY showURLBarSuggestions2.label           "Keresési javaslatok megjelenítése a címsáv találataiban">
+<!ENTITY showURLBarSuggestions2.accesskey       "c">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "A keresési javaslatok nem jelennek meg a címsáv találatai között, mert a &brandShortName; nem jegyzi meg az előzményeket.">
+
+<!ENTITY oneClickSearchEngines.label           "Egy kattintásos keresőszolgáltatások">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Válassza ki a címsáv alatt és a keresősávban gépeléskor megjelenő alternatív keresőszolgáltatatásokat.">
+
+<!ENTITY engineNameColumn.label                "Keresőszolgáltatás">
+<!ENTITY engineKeywordColumn.label             "Kulcsszó">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Alapértelmezett keresőszolgáltatások visszaállítása">
+<!ENTITY restoreDefaultSearchEngines.accesskey "v">
+
+<!ENTITY removeEngine.label                    "Eltávolítás">
+<!ENTITY removeEngine.accesskey                "E">
+
+<!ENTITY findMoreSearchEngines.label           "További keresőszolgáltatások felvétele">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Εγκατάσταση προσθέτου">
+<!ENTITY intro           "Ένα άλλο πρόγραμμα από τον υπολογιστή σας θέλει να τροποποιήσει τον
+                          &brandShortName; με το ακόλουθο πρόσθετο:">
+<!ENTITY warning         "Να εγκαταστείτε πρόσθετα μόνο από δημιουργούς που εμπιστεύεστε.">
+<!ENTITY allow           "Να επιτραπεί αυτή η εγκατάσταση">
+<!ENTITY later           "Μπορείτε να αλλάξετε τις προτιμήσεις σας
+                          μέσω της Διαχείρισης προσθέτων.">
+<!ENTITY continue        "Συνέχεια">
+<!ENTITY restartMessage  "Θα πρέπει να επανεκκίνησετε τον &brandShortName; για να ολοκληρώσετε την εγκατάσταση αυτού του προσθέτου.">
+<!ENTITY restartButton   "Επανεκκίνηση &brandShortName;">
+<!ENTITY cancelButton    "Ακύρωση">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<!ENTITY blocklist.title             "ਸ਼ਾਇਦ ਐਡ-ਆਨ ਸਮੱਸਿਆ ਪੈਦਾ ਕਰ ਰਹੀ ਹੈ">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; ਨੂੰ ਲੱਗਦਾ ਹੈ ਕਿ ਹੇਠ ਦਿੱਤੀਆਂ ਐਡ-ਆਨ ਸਥਿਰਤਾ ਜਾਂ ਸੁਰੱਖਿਆ ਸਮੱਸਿਆਵਾਂ ਪੈਦਾ ਕਰ ਰਹੀਆਂ ਹਨ:">
+<!ENTITY blocklist.softblocked       "ਤੁਹਾਡੀ ਸੁਰੱਖਿਆ ਲਈ, ਤੁਹਾਨੂੰ ਇਹ ਪਲੱਗਇਨ ਆਯੋਗ ਕਰਕੇ ਮੁੜ-ਚਾਲੂ ਕਰਨ ਦੀ ਸਿਫਾਰਸ਼ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।">
+<!ENTITY blocklist.hardblocked       "ਇਹ ਪਲੱਗਇਨ ਸਥਿਰਤਾ ਲਈ ਭਾਰੀ ਖਤਰਾ ਜਾਂ ਸੁਰੱਖਿਆ ਲਈ ਪੈਦਾ ਕਰ ਰਹੀਆਂ ਹਨ, ਪਰ ਇਨ੍ਹਾਂ ਨੂੰ ਪੂਰੀ ਤਰ੍ਹਾਂ ਆਯੋਗ ਕਰਨ ਲਈ ਮੁੜ-ਚਾਲੂ ਕਰਨ ਦੀ ਲੋੜ ਹੈ।">
+<!ENTITY blocklist.softandhard       "ਪਲੱਗਇਨ, ਜਿੰਨ੍ਹਾਂ ਵਲੋਂ ਸਥਿਰਤਾ ਲਈ ਭਾਰੀ ਖਤਰਾ ਹੈ ਜਂ ਸੁਰੱਖਿਆ ਲਈ ਖਤਰਾ ਸੀ, ਨੂੰ ਬਲਾਕ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਹੋਰ ਤੋਂ ਖਤਰਾ ਘੱਟ ਹੈ, ਪਰ ਤਾਂ ਵੀ ਤੁਹਾਨੂੰ ਉਨ੍ਹਾਂ ਨੂੰ ਆਯੋਗ ਕਰਕੇ ਮੁੜ ਚਾਲੂ ਕਰਨ ਦੀ ਸਿਫਾਰਸ਼ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।">
+<!ENTITY blocklist.moreinfo          "ਹੋਰ ਜਾਣਕਾਰੀ">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; ਮੁੜ-ਚਾਲੂ ਕਰੋ">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "ਪਾਬੰਦੀਸ਼ੁਦਾ">
+<!ENTITY blocklist.checkbox.label    "ਬੰਦ ਹੈ">

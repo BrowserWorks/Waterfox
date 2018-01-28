@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.header2 "Mince, l’onglet a planté…">
+<!ENTITY tabCrashed.offerHelp "Nous pouvons vous aider !">
+<!ENTITY tabCrashed.single.offerHelpMessage "Choisissez &tabCrashed.restoreTab; pour recharger le contenu de la page.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Choisissez &tabCrashed.restoreTab; ou &tabCrashed.restoreAll; pour recharger le contenu de la page.">
+<!ENTITY tabCrashed.requestHelp "Nous aiderez-vous ?">
+<!ENTITY tabCrashed.requestHelpMessage "Les rapports de plantage nous aident à diagnostiquer les problèmes et à améliorer &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Rapport de plantage pour cet onglet">
+<!ENTITY tabCrashed.sendReport2 "Envoyer un rapport de plantage pour cet onglet">
+<!ENTITY tabCrashed.includeURL2 "Inclure l’adresse de la page dans ce rapport de plantage">
+<!ENTITY tabCrashed.commentPlaceholder2 "Commentaires facultatifs (les commentaires sont visibles par tout le monde)">
+<!ENTITY tabCrashed.emailPlaceholder "Saisissez votre adresse électronique ici">
+<!ENTITY tabCrashed.emailMe "M’envoyer un message électronique lorsque des informations supplémentaires sont disponibles">
+<!ENTITY tabCrashed.reportSent "Rapport de plantage déjà envoyé. Nous vous remercions de contribuer à l’amélioration de &brandShortName;.">
+<!ENTITY tabCrashed.closeTab "Fermer cet onglet">
+<!ENTITY tabCrashed.restoreTab "Restaurer cet onglet">
+<!ENTITY tabCrashed.restoreAll "Restaurer tous les onglets plantés">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Envoyer les rapports pour les onglets non actifs">
+<!ENTITY tabCrashed.autoSubmit2 "Modifier les préférences pour envoyer automatiquement les rapports de plantage, y compris les rapports pour les onglets non actifs qui ont planté au cours de cette session ou des prochaines">

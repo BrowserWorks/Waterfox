@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Einstellungen - Websitedaten">
+<!ENTITY     hostCol.label                 "Website">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Speicher">
+<!ENTITY     searchTextboxPlaceHolder             "Websites suchen">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "s">
+<!ENTITY     removeSelected.label          "Ausgewählte entfernen">
+<!ENTITY     removeSelected.accesskey      "g">
+<!ENTITY     save.label                    "Änderungen speichern">
+<!ENTITY     save.accesskey                "p">
+<!ENTITY     cancel.label                  "Abbrechen">
+<!ENTITY     cancel.accesskey              "b">
+<!ENTITY     removingDialog.title          "Websitedaten entfernen">
+<!ENTITY     removingSelected.description  "Das Entfernen von Websitedaten löscht auch relevante Cookies und offline verfügbare Webinhalte. Dadurch werden Sie eventuell von Websites abgemeldet. Sollen die Änderungen wirklich durchgeführt werden?">
+<!ENTITY     siteTree.label                "Die folgenden Cookies werden gelöscht:">

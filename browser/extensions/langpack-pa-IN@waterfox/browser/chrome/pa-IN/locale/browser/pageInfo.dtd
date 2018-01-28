@@ -1,0 +1,95 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "ਕਾਪੀ ਕਰੋ">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "ਸਭ ਚੁਣੋ">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "ਆਮ">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Title:">
+<!ENTITY  generalURL            "ਐਡਰੈੱਸ:">
+<!ENTITY  generalType           "ਕਿਸਮ:">
+<!ENTITY  generalMode           "ਰੈਂਡਰ ਮੋਡ:">
+<!ENTITY  generalSize           "ਆਕਾਰ:">
+<!ENTITY  generalReferrer       "ਰੈਡਰਿੰਗ URL:">
+<!ENTITY  generalSource         "ਕੈਸ਼ ਸਰੋਤ:">
+<!ENTITY  generalModified       "ਸੋਧਿਆ:">
+<!ENTITY  generalEncoding2      "ਟੈਕਸਟ ਇੰਕੋਡਿੰਗ:">
+<!ENTITY  generalMetaName       "ਨਾਂ">
+<!ENTITY  generalMetaContent    "ਸਮੱਗਰੀ">
+
+<!ENTITY  mediaTab              "ਮੀਡਿਆ">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "ਟਿਕਾਣਾ:">
+<!ENTITY  mediaText             "ਸਬੰਧਿਤ ਟੈਕਸਟ:">
+<!ENTITY  mediaAltHeader        "ਬਦਲਵਾਂ ਟੈਕਸਟ">
+<!ENTITY  mediaAddress          "ਐਡਰੈੱਸ">
+<!ENTITY  mediaType             "ਟਾਈਪ">
+<!ENTITY  mediaSize             "ਆਕਾਰ">
+<!ENTITY  mediaCount            "ਗਿਣਤੀ">
+<!ENTITY  mediaDimension       "ਮਾਪ:">
+
+<!ENTITY  mediaLongdesc         "ਲੰਮਾ ਵੇਰਵਾ:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "… ਵਜੋਂ ਸੰਭਾਲੋ">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "ਮੀਡਿਆ ਝਲਕ:">
+
+<!ENTITY  feedTab               "ਫੀਡ">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "ਮੈਂਬਰੀ">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "ਅਧਿਕਾਰ">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "ਡਿਫਾਲਟ ਵਰਤੋਂ">
+<!ENTITY  permAskAlways         "ਹਮੇਸ਼ਾ ਪੁੱਛੋ">
+<!ENTITY  permAllow             "ਮਨਜ਼ੂਰ">
+<!ENTITY  permAllowSession      "ਸ਼ੈਸ਼ਨ ਲਈ ਮਨਜ਼ੂਰ ਕਰੋ">
+<!ENTITY  permBlock             "ਪਾਬੰਦੀ ਲਾਓ">
+<!ENTITY  permissionsFor        "ਅਧਿਕਾਰ:">
+<!ENTITY  permPlugins           "ਪਲੱਗਇਨ ਐਕਟੀਵੇਟ ਕਰੋ">
+
+<!ENTITY  permClearStorage           "ਸਟੋਰੇਜ਼ ਸਾਫ਼ ਕਰੋ">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "ਸੁਰੱਖਿਆ">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "ਸਰਟੀਫਿਕੇਟ ਵੇਖੋ">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "ਅਣਜਾਣ">
+
+
+<!ENTITY  securityView.identity.header   "ਵੈੱਬ ਸਾਇਟ ਪਛਾਣ">
+<!ENTITY  securityView.identity.owner    "ਮਾਲਕ: ">
+<!ENTITY  securityView.identity.domain   "ਵੈੱਬ ਸਾਇਟ: ">
+<!ENTITY  securityView.identity.verifier "ਜਾਂਚ ਕਰਤਾ: ">
+
+<!ENTITY  securityView.privacy.header                   "ਪਰਦੇਦਾਰੀ ਤੇ ਅਤੀਤ">
+<!ENTITY  securityView.privacy.history                  "ਕੀ ਮੈਂ ਇਹ ਵੈੱਬਸਾਇਟ ਅੱਜ ਤੋਂ ਪਹਿਲਾਂ ਵੇਖੀ ਹੈ?">
+<!ENTITY  securityView.privacy.cookies                  "ਕੀ ਇਸ ਵੈੱਬ ਸਾਇਟ ਨੇ ਮੇਰੇ ਕੰਪਿਊਟਰ ਉੱਤੇ ਜਾਣਕਾਰੀ (ਕੂਕੀਜ਼) ਸਟੋਰ ਕੀਤੀ ਹੈ?">
+<!ENTITY  securityView.privacy.viewCookies              "ਕੂਕੀਜ਼ ਵੇਖੋ">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "ਕੀ ਇਸ ਵੈੱਬ ਸਾਇਟ ਲਈ ਮੈਂ ਕੋਈ ਪਾਸਵਰਡ ਸੰਭਾਲੇ ਹਨ?">
+<!ENTITY  securityView.privacy.viewPasswords            "ਸੰਭਾਲੇ ਪਾਸਵਰਡ ਵੇਖੋ">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "ਤਕਨੀਕੀ ਵੇਰਵਾ">
+
+<!ENTITY  helpButton.label                              "ਮਦਦ">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

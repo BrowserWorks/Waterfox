@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "ಹೊಸ ಪ್ರೊಫೈಲ್‌ ಗಾರುಡಿ">
+<!ENTITY window.size                  "width: 45em; height: 34em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; ನಿಮ್ಮ  ವೈಯಕ್ತಿಕ ಸಿದ್ಧತೆಗಳ ಹಾಗು ಆದ್ಯತೆಗಳ ಬಗೆಗಿನ ಮಾಹಿತಿಯನ್ನು ಒಂದು ಖಾಸಗಿ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಇರಿಸುತ್ತದೆ.">
+<!ENTITY profileCreationExplanation_2.text  "ಈ  &brandShortName; ನೀವೊಬ್ಬರಲ್ಲದೆ ಇತರರೂ ಬಳಸುವಂತಿದ್ದರೆ, ಎಲ್ಲರ ಮಾಹಿತಿಯನ್ನು ಬೇರೆಯಾಗಿ ಇಡಲು ಪ್ರೊಫೈಲುಗಳನ್ನು ಬಳಸಬಹುದು.ಹೀಗೆ ಮಾಡಲು, ಒಬ್ಬೊಬ್ಬರೂ ತಮ್ಮದೇ ಆದ ಪ್ರೊಫೈಲ್ ಸೇರಿಸಬೇಕು.">
+<!ENTITY profileCreationExplanation_3.text  "ಒಂದುವೇಳೆ, ಈ &brandShortName; ನೀವೊಬ್ಬರೆ ಬಳಸುವುದಾದರೆ, ನಿಮ್ಮಲ್ಲಿ ಕಡೇಪಕ್ಷ ಒಂದು ಪ್ರೊಫೈಲ್ ಇರಬೇಕು. ನೀವು ಇಚ್ಚಿಸಿದಲ್ಲಿ, ಸಿದ್ಧತೆ ಹಾಗಿ ಆದ್ಯತೆಗಳನ್ನು ಉಳಿಸಲು ಒಂದಲ್ಲದೆ ಹೆಚ್ಚಿನ ಸೆಟ್ಟುಗಳನ್ನೂ ಸೇರಿಸಬಹುದು. ಉದಾ, ಸ್ವಂತಕ್ಕೊಂದು ಪ್ರೊಫೈಲ್, ವ್ಯವಹಾರಕ್ಕೆ ಬೇರೆಯ ಮತ್ತೊಂದು ಪ್ರೊಫೈಲ್ ಹೀಗೆ.">
+<!ENTITY profileCreationExplanation_4.text  "ಹೊಸ ಪ್ರೊಫೈಲ್ ಒಂದನ್ನು ಸೇರಿಸಲು , 'ಮುಂದಕ್ಕೆ' ಅನ್ನು ಕ್ಲಿಕ್ಕಿಸಿ.">
+<!ENTITY profileCreationExplanation_4Mac.text  "ಹೊಸ ಪ್ರೊಫೈಲ್‌ ಒಂದನ್ನು ಸೇರಿಸುವುದನ್ನು ಆರಂಭಿಸಲು , 'ಮುಂದುವರೆ' ಅನ್ನು ಕ್ಲಿಕ್ಕಿಸಿ.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "ನಿಮ್ಮ ಪ್ರೊಫೈಲ್‌ ಅನ್ನು ರಚಿಸುವುದನ್ನು ಆರಂಭಿಸಲು, ಮುಂದಕ್ಕೆ ಅನ್ನು ಕ್ಲಿಕ್ಕಿಸಿ.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "ನೀವು ಅನೇಕ ಪ್ರೊಫೈಲ್‌ ಅನ್ನು ರಚಿಸಿದಲ್ಲಿ ಅವುಗಳ ಹೆಸರುಗಳ ಮೂಲಕ ಪ್ರತ್ಯೇಕವಾಗಿ ಉಲ್ಲೇಖಿಸಬಹುದು. ಇಲ್ಲಿ ಒದಗಿಸಲಾದ ಹೆಸರನ್ನು ಬಳಸಬಹುದು ಅಥವ ನಿಮ್ಮ ಸ್ವಂತದ್ದೇ ಆದಂತಹ ಹೆಸರನ್ನು ಬಳಸಬಹುದು.">
+<!ENTITY profilePrompt.label            "ಹೊಸ ಪ್ರೊಫೈಲ್‌ನ ಹೆಸರನ್ನು ನಮೂದಿಸಿ:">
+<!ENTITY profilePrompt.accesskey        "E">
+<!ENTITY profileDirectoryExplanation.text   "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಸಿದ್ಧತೆಗಳು, ಆದ್ಯತೆಗಳು ಹಾಗು ಇತರೆ ಬಳಕೆದಾರ-ಸಂಬಂಧಿತ ಮಾಹಿತಿಯು ಇಲ್ಲಿ ಶೇಖರಿಸಲ್ಪಡುತ್ತದೆ:">
+<!ENTITY profileDefaultName             "ಡೀಫಾಲ್ಟ್‍ ಬಳಕೆದಾರ">
+<!ENTITY button.choosefolder.label      "ಕೋಶವನ್ನು ಮುಚ್ಚು...">
+<!ENTITY button.choosefolder.accesskey  "C">
+<!ENTITY button.usedefault.label        "ಡೀಫಾಲ್ಟ್‍  ಕೋಶವನ್ನು ಬಳಸು">
+<!ENTITY button.usedefault.accesskey    "U">

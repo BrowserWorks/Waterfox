@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Modificar o contrasinal principal">
+<!ENTITY setPassword.tokenName.label       "Dispositivo de seguranza">
+<!ENTITY setPassword.oldPassword.label     "Contrasinal actual:">
+<!ENTITY setPassword.newPassword.label     "Introducir novo contrasinal:">
+<!ENTITY setPassword.reenterPassword.label "Introducir de novo o contrasinal:">
+<!ENTITY setPassword.meter.label           "Medidor de calidade de contrasinais">
+<!ENTITY setPassword.meter.loading         "Cargando">
+<!ENTITY masterPasswordDescription.label   "Os contrasinais principais utilízanse para protexer información delicada como contrasinais de sitios web. Se crea un contrasinal principal terá que introducilo cada vez que inicie sesión cando &brandShortName; recupere información gardada protexida por contrasinal.">
+<!ENTITY masterPasswordWarning.label       "Teña a certeza de memorizar o contrasinal principal definido. Se o esquece non poderá acceder a información que protexe.">

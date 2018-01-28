@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Kaccandi">
+<!ENTITY bringAllToFront.label    "Kul kate jinehere">
+<!ENTITY zoomWindow.label         "Bebbeerandi">
+<!ENTITY windowMenu.label         "Zanfun">
+
+<!ENTITY helpMenu.label           "Faaba"> 
+<!ENTITY helpMenu.accesskey       "F"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Faaba"> 
+<!ENTITY helpMenuWin.accesskey    "F">
+<!ENTITY aboutProduct2.label      "&brandShorterName; ga">
+<!ENTITY aboutProduct2.accesskey  "a">
+<!ENTITY productHelp2.label       "&brandShorterName; faaba">
+<!ENTITY productHelp2.accesskey   "f">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Walha dunbandiyaney">
+<!ENTITY helpKeyboardShortcuts.accesskey "W">
+
+<!ENTITY helpSafeMode.label       "Tunandi taaga kaŋ tontoney kayandi…">
+<!ENTITY helpSafeMode.accesskey   "u">
+<!ENTITY helpSafeMode.stop.label       "Tunandi taaga kaŋ tontoney ga kayandi">
+<!ENTITY helpSafeMode.stop.accesskey   "u">
+
+<!ENTITY healthReport2.label      "&brandShorterName; baani bayrandikaw">
+<!ENTITY healthReport2.accesskey  "a">
+
+<!ENTITY helpTroubleshootingInfo.label      "Karkahattayan alhabar">
+<!ENTITY helpTroubleshootingInfo.accesskey  "K">
+
+<!ENTITY helpFeedbackPage.label      "Furari sanba…">
+<!ENTITY helpFeedbackPage.accesskey  "s">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; wanga">
+<!ENTITY helpShowTour2.accesskey        "w">
+
+<!ENTITY preferencesCmdMac.label        "Ibaayey…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Goyey">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; tugu">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Tanawey tugu">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Kul cebe">

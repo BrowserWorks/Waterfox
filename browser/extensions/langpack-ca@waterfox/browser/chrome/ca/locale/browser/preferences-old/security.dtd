@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "General">
+
+<!ENTITY  warnOnAddonInstall2.label       "Avisa quan els llocs web intentin instal·lar complements">
+<!ENTITY  warnOnAddonInstall2.accesskey   "i">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Bloqueja el contingut perillós i maliciós">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloqueja les baixades perilloses">
+<!ENTITY  blockDownloads.accesskey        "l">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Avisa en baixar programari indesitjable i poc habitual">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "c">
+
+<!ENTITY  addonExceptions.label         "Excepcions…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  logins.label                  "Inicis de sessió">
+
+<!ENTITY  rememberLogins2.label         "Recorda les dades d'inici de sessió dels llocs web">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "Excepcions…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "Utilitza una contrasenya mestra">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "Canvia la contrasenya mestra…">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Inicis de sessió desats…">
+<!ENTITY  savedLogins.accesskey          "I">

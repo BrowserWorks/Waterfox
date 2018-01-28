@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Aithisgean tuislidh">
+<!ENTITY crashesUnsubmitted.label   "Aithisgean air tuislidhean nach deach an cur">
+<!ENTITY crashesSubmitted.label     "Aithisgean air tuislidhean coimpiutair a chaidh a chur">
+<!ENTITY id.heading                 "ID na h-aithisge">
+<!ENTITY dateCrashed.heading        "Ceann-là an tuislidh">
+<!ENTITY dateSubmitted.heading      "Ceann-là a chaidh a chur">
+<!ENTITY noReports.label            "Cha deach aithisg air tuisleadh a chur.">
+<!ENTITY noConfig.label             "Cha deach an aplacaid seo a rèiteachadh gus aithisgean tuislidh a shealltainn. Feumaidh tu an roghainn <code>breakpad.reportURL</code> a shuidheachadh.">
+<!ENTITY clearAllReports.label      "Thoir air falbh gach aithisg">

@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Errorea nabigatzailearen tresna-kutxa irekitzean">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Ezarpen aurreratuak">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Ikuskatzailea">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Erakutsi nabigatzaile-estiloak">
+<!ENTITY options.showUserAgentStyles.tooltip "Ezarrita badago, nabigatzaileak kargatzen dituen estilo lehenetsiak erakutsiko dira.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Moztu DOM atributuak">
+<!ENTITY options.collapseAttrs.tooltip "Moztu ikuskatzaileko atributu luzeak">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Koloreen unitate lehenetsia">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "u">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Sortu bezala">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Hamaseitarra">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Koloreen izenak">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Uneko saioa soilik, orria berritzen du">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Gaitu nabigatzailearen interfazea eta gehigarriak arazteko tresna-kutxak">
+<!ENTITY options.enableChrome.tooltip3  "Ezarrita badago, hainbat garatzaile-tresna nabigatzailearen testuinguruan erabili (Tresnak > Web garapena > Nabigatzailearen tresna-kutxa bidez) eta gehigarrien kudeatzailetik araztu ahal izango dituzu">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Gaitu urruneko arazketa">
+<!ENTITY options.enableRemote.tooltip2  "Ezarrita badago, garatzaile-tresnekin urruneko instantziak araztu ahal izango dira, adibidez Waterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Desgaitu JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Ezarrita badago, JavaScript desgaituko da uneko fitxan. Fitxa edo tresna-kutxa itxita badaude, ezarpen hau ahaztu egingo da.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Desgaitu HTTP cachea (tresna-kutxa irekita dagoenean)">
+<!ENTITY options.disableHTTPCache.tooltip   "Ezarrita badago, Ezarrita badago, HTTP cachea desgaitu egingo da tresna-kutxa zabalik duten fitxa guztietan. Aukera honek ez die zerbitzu-langileei eragiten.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Gaitu zerbitzu-langileak HTTP bidez (tresna-kutxa irekita dagoenean)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Ezarrita badago, zerbitzu-langileak HTTP bidez erabilgarri egongo dira tresna-kutxa zabalik duten fitxa guztietan.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Garatzaile-tresna lehenetsiak">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Gehigarriek instalatutako garatzaile-tresnak">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Tresna-kutxako botoi erabilgarriak">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Ez da onartzen tresna-kutxaren uneko helbururako">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Itxurak">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Erabili garatzaile-edizioko nabigatzailearen itxura">
+<!ENTITY options.usedeveditiontheme.tooltip "Garatzaile-edizioko nabigatzailearen itxura txandakatzen du.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Web kontsola">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Gaitu denbora-markak">
+<!ENTITY options.timestampMessages.tooltip    "Aukera hau gaituz gero, web kontsolako komandoek eta irteerak denbora-marka bistaratuko dute">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Araztailea">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Gaitu iturburu-mapak">
+<!ENTITY options.sourceMaps.tooltip    "Aukera hau gaituz gero, iturburuak mapeatu egingo dira araztailean eta kontsolan.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Estilo-editorea">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Erakutsi jatorrizko iturburuak">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Erakutsi jatorrizko iturburuak (adib. Sass fitxategiak) estiloen editorean eta ikuskatzailean">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "CSSaren osatze automatikoa">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Osatu automatikoki idatzi ahala CSS propietateak, balioak eta hautatzaileak estiloen editorean">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Pantaila-argazkiaren portaera">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Pantaila-argazkia arbelera">
+<!ENTITY options.screenshot.clipboard.tooltip    "Pantaila-argazkia zuzenean arbelean gordetzen du">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Erreproduzitu kamera-obturadorearen soinua">
+<!ENTITY options.screenshot.audio.tooltip    "Kameraren audio-soinua gaitzen du pantaila-argazkia hartzerakoan">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Partekatutako hobespenak">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Gaitu erregistro iraunkorra">
+<!ENTITY options.enablePersistentLogs.tooltip  "Aukera hau gaituz gero, web kontsolak ez du irteera garbituko orri berri batera nabigatzen duzun bakoitzean">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Erakutsi Gecko plataformaren datuak">
+<!ENTITY options.showPlatformData.tooltip  "Aukera hau gaituz gero, JavaScript analizatzailearen txostenek Gecko plataformaren sinboloak izango dituzte">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Editorearen hobespenak">
+<!ENTITY options.sourceeditor.detectindentation.label   "Detektatu koska">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Saiatu koska igartzen iturburuaren edukian oinarrituta">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Autoitxi kortxeteak">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Txertatu automatikoki ixteko kortxeteak">
+<!ENTITY options.sourceeditor.expandtab.label           "Koska zuriuneak erabiliz">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Erabili zuriune-karaktereak tabulazio-karakterearen ordez">
+<!ENTITY options.sourceeditor.tabsize.label             "Tabulazioaren tamaina">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "Tekla-konbinazioak">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "T">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Lehenetsia">

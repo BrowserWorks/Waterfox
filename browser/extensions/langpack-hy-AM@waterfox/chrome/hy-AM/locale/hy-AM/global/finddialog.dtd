@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Գտնել Այս Էջում">
+<!ENTITY findField.label "Ի՞նչ գտնել.">
+<!ENTITY findField.accesskey "չ">
+<!ENTITY caseSensitiveCheckbox.label "Հաշվի առնել Մեծ(փոքր)ատառը">
+<!ENTITY caseSensitiveCheckbox.accesskey "Մ">
+<!ENTITY wrapCheckbox.label "Տողադարձ">
+<!ENTITY wrapCheckbox.accesskey "Տ">
+<!ENTITY findButton.label "Գտնել Հաջորդը ">
+<!ENTITY findButton.accesskey "Գ">
+<!ENTITY cancelButton.label "Չեղարկել">
+<!ENTITY closeButton.label "Փակել">
+<!ENTITY up.label "Վեր">
+<!ENTITY up.accesskey "Վ">
+<!ENTITY down.label "Վար">
+<!ENTITY down.accesskey "Վ">
+<!ENTITY direction.label "Ուղղությունը">

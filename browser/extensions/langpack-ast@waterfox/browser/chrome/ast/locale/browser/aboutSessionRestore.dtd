@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restaurar Sesión">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Bono, esto ye vergoñoso.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ta teniendo problemes recuperando les tos llingüetes y ventanes. Esto cáusalo davezu una páxina abierta apocayá.">
+<!ENTITY restorepage.tryThis        "Pues tentar de:">
+<!ENTITY restorepage.restoreSome    "Desaniciar una o más llingüetes que camientes que quiciabes causen el problema">
+<!ENTITY restorepage.startNew       "Aniciar una sesión nueva del restolador">
+
+<!ENTITY restorepage.tryagainButton "Restaurar">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Zarrar">
+<!ENTITY restorepage.close.access   "Z">
+
+<!ENTITY restorepage.restoreHeader  "Restaurar">
+<!ENTITY restorepage.listHeader     "Ventanes y llingüetes">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ventana &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "¡Vamos!">
+<!ENTITY welcomeback2.restoreButton.access "g">
+
+<!ENTITY welcomeback2.tabtitle      "¡Ésitu!">
+
+<!ENTITY welcomeback2.pageTitle     "¡Ésitu!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; ta preparáu pa siguir.">
+
+<!ENTITY welcomeback2.label.restoreAll  "Restaurar toles ventanes y llingüetes">
+<!ENTITY welcomeback2.label.restoreSome "Restaurar namái les que quies">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Desaniciáronse los complementos y personalizaciones amás de reafitar los axustes de restolar. Si esto nun igua'l to problema, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "deprendi más tocante a lo que pues facer.">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">
+<!ENTITY welcomeback2.restoreSome.label "Restore only the ones you want">
+
+

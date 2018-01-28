@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Kesish">
+<!ENTITY cutCmd.accesskey "K">
+<!ENTITY copyCmd.label "Nusxa olish">
+<!ENTITY copyCmd.accesskey "N">
+<!ENTITY pasteCmd.label "Qoʻyish">
+<!ENTITY pasteCmd.accesskey "Q">
+<!ENTITY undoCmd.label "Amalni bekor qilish">
+<!ENTITY undoCmd.accesskey "b">
+<!ENTITY selectAllCmd.label "Barchasini belgilash">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Oʻchirish">
+<!ENTITY deleteCmd.accesskey "O">
+
+<!ENTITY spellAddToDictionary.label "Lugʻatga qoʻshish">
+<!ENTITY spellAddToDictionary.accesskey "L">
+<!ENTITY spellUndoAddToDictionary.label "Lugʻatga qoʻshishni bekor qilish">
+<!ENTITY spellUndoAddToDictionary.accesskey "e">
+<!ENTITY spellCheckToggle.label "Imloni tekshirish">
+<!ENTITY spellCheckToggle.accesskey "i">
+<!ENTITY spellNoSuggestions.label "(Imlo tavsiyalari yoʻq)">
+<!ENTITY spellDictionaries.label "Tillar">
+<!ENTITY spellDictionaries.accesskey "T">
+
+<!ENTITY searchTextBox.clear.label "Tozalash">
+
+<!ENTITY fillLoginMenu.label          "Taxallusni kiritish">
+<!ENTITY fillLoginMenu.accesskey      "k">
+<!ENTITY fillPasswordMenu.label       "Parolni kiritish">
+<!ENTITY fillPasswordMenu.accesskey   "k">
+<!ENTITY fillUsernameMenu.label       "Foydalanuvchi nomini kiritish">
+<!ENTITY fillUsernameMenu.accesskey   "k">
+<!ENTITY noLoginSuggestions.label     "(Taxallus tavsiyalari yo‘q)">
+<!ENTITY viewSavedLogins.label        "Saqlangan taxalluslarni ko‘rish">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Tämä ei ole yksityinen selausikkuna.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Avaa yksityinen ikkuna">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "A">
+
+<!ENTITY privateBrowsing.title                           "Yksityinen selaus">
+<!ENTITY privateBrowsing.title.tracking                  "Yksityinen selaus seurannan suojauksen kanssa">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Kun selaat yksityisessä ikkunassa, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ei tallenna">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        "">
+<!ENTITY aboutPrivateBrowsing.info.visited               "vierailtuja sivuja">
+<!ENTITY aboutPrivateBrowsing.info.searches              "hakuja">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "evästeitä">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "väliaikaistiedostoja.">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "tallentaa">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "lataukset.">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "kirjanmerkit">
+<!ENTITY aboutPrivateBrowsing.note.before                "Yksityinen selaus ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ei tee sinusta anonyymiä">
+<!ENTITY aboutPrivateBrowsing.note.after                 " Internetissä. Työnantajasi tai Internet-palveluntarjoajasi voi edelleen tietää, millä sivuilla on vierailtu.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Lue lisää ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "yksityisestä selauksesta">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Seurannan suojaus">
+<!ENTITY trackingProtection.description2                 "Jotkin sivustot käyttävät seurantamenetelmiä, joiden avulla ne voivat tarkkailla, mitä teet Internetissä. Seurannan suojauksen avulla Waterfox estää monia seurantamenetelmiä, jotka keräävät tietoa selaamisestasi.">
+<!ENTITY trackingProtection.startTour1                   "Lue, kuinka tämä toimii">

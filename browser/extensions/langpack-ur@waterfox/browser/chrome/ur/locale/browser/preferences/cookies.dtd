@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "مندرجہ ذیل کوکیاں آپ کے کمپیوٹر پر ذخیرہ ہیں:">
+<!ENTITY     cookiename.label               "نام کوکی">
+<!ENTITY     cookiedomain.label             "سائٹ">
+
+<!ENTITY     props.name.label               "نام:">
+<!ENTITY     props.value.label              "مشمول:">
+<!ENTITY     props.domain.label             "میزبان:">
+<!ENTITY     props.path.label               "راہ:">
+<!ENTITY     props.secure.label             "بھیجیں برائے:">
+<!ENTITY     props.expires.label            "مدت ختم ہوتی ہے:">
+<!ENTITY     props.container.label          "حامل:">
+
+<!ENTITY     window.title                   "کوکیاں">
+<!ENTITY     windowClose.key                "د">
+<!ENTITY     focusSearch1.key               "ف">
+<!ENTITY     focusSearch2.key               "ک">
+
+<!ENTITY     searchFilter.label             "تلاش کریں">
+<!ENTITY     searchFilter.accesskey         "ت">
+
+<!ENTITY     button.close.label             "بند کریں">
+<!ENTITY     button.close.accesskey         "ب">

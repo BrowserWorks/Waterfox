@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Šigirawey">
+
+<!ENTITY  language.label                          "Šigirawey se:">
+<!ENTITY  language.accesskey                      "Š">
+
+<!ENTITY  size.label                              "Adadu:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "Hangande:">
+<!ENTITY  proportional.accesskey                  "H">
+
+<!ENTITY  serif.label                             "Delbu šigira:">
+<!ENTITY  serif.accesskey                         "D">
+<!ENTITY  sans-serif.label                        "Šigira šerrante:">
+<!ENTITY  sans-serif.accesskey                    "r">
+<!ENTITY  monospace.label                         "Hayrifoo:">
+<!ENTITY  monospace.accesskey                     "H">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Lateŋ">
+<!ENTITY  font.langGroup.japanese                 "Žaapoŋ">
+<!ENTITY  font.langGroup.trad-chinese             "Lasal šin (Taywan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Šin faalante">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Lasal šin (Hoŋkoŋ)">
+<!ENTITY  font.langGroup.korean                   "Koore">
+<!ENTITY  font.langGroup.cyrillic                 "Siril">
+<!ENTITY  font.langGroup.el                       "Gereki">
+<!ENTITY  font.langGroup.other                    "Šigiri dumi tanayaŋ">
+<!ENTITY  font.langGroup.thai                     "Taayi">
+<!ENTITY  font.langGroup.hebrew                   "Ebere">
+<!ENTITY  font.langGroup.arabic                   "Laaraw">
+<!ENTITY  font.langGroup.devanagari               "Dewanagari">
+<!ENTITY  font.langGroup.tamil                    "Taamil">
+<!ENTITY  font.langGroup.armenian                 "Armeeni">
+<!ENTITY  font.langGroup.bengali                  "Bengaali">
+<!ENTITY  font.langGroup.canadian                 "Kanada šigira margante">
+<!ENTITY  font.langGroup.ethiopic                 "Ecoopi">
+<!ENTITY  font.langGroup.georgian                 "Žorži">
+<!ENTITY  font.langGroup.gujarati                 "Gujaraati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmuuki">
+<!ENTITY  font.langGroup.khmer                    "Kimer">
+<!ENTITY  font.langGroup.malayalam                "Maalayalam">
+<!ENTITY  font.langGroup.math                     "Kabubayray">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannaada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibeeti">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Šigira kayyan kul ikaccaa:">
+<!ENTITY minSize.accesskey                        "g">
+<!ENTITY minSize.none                             "Baffoo">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Delbu šigira">
+<!ENTITY  useDefaultFontSansSerif.label           "Šigira šerrante">
+
+<!ENTITY  allowPagesToUseOwn.label                "Moɲey noo fondo ka ngi boŋ šigirawey suuba, manti ay boŋ beene suubari">
+<!ENTITY  allowPagesToUseOwn.accesskey            "M">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Harfu hawyan gundekuna žeena se">
+<!ENTITY languages.customize.Fallback2.label      "Yeebanda nda harfu hawyan:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "Harfu hawyanoo woo ga tee gundekuna žeena se kaŋ mongo ka nda hawaroo har.">
+
+<!ENTITY languages.customize.Fallback.auto        "Tilasu sohõ nungu se">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Laaraw">
+<!ENTITY languages.customize.Fallback.baltic      "Balti">
+<!ENTITY languages.customize.Fallback.ceiso       "Eropu gam (ISO)">
+<!ENTITY languages.customize.Fallback.cewindows   "Eropu gam, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Šin faalante">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Šin lasal">
+<!ENTITY languages.customize.Fallback.cyrillic    "Siril">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Gereki">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Ebere">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Žaapoŋ">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Koore">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Taayi">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turki">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Wiyetinam">
+<!ENTITY languages.customize.Fallback.other       "Tana (nda Eropu dangay)">

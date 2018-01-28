@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.providerTitle               "পরিষেবা প্রদানকারী">
+<!ENTITY aboutUrlClassifier.provider                    "পরিষেবা প্রদানকারী">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "সর্বশেষ হালনাগাদের সময়">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "পরবর্তি হালনাগাদের সময়">
+
+
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "হালনাগাদ">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "ক্যাশে">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "রিফ্রেশ">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "পরিষ্কার">
+<!ENTITY aboutUrlClassifier.cacheTableName              "টেবিলের নাম">
+
+
+
+
+
+
+
+
+<!ENTITY aboutUrlClassifier.debugTitle                  "ডিবাগ">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "লগ মডিউল সেট করুন">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "লগ ফাইল সেট করুন">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS লগ সেট করুন">
+<!ENTITY aboutUrlClassifier.debugSBModules              "নিরাপদ ব্রাউজিং লগ মডিউল">
+<!ENTITY aboutUrlClassifier.debugModules                "বর্তমান লগ মডিউল">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "নিরাপদ ব্রাউজিং JS লগ">
+<!ENTITY aboutUrlClassifier.debugFile                   "বর্তমান লগ ফাইল">
+
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cache Entries">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Number of negative cache entries">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Number of positive cache entries">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positive cache expiry">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Show entries">
+<!ENTITY aboutUrlClassifier.pageTitle                   "Information about the url-classifier">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Last update status">

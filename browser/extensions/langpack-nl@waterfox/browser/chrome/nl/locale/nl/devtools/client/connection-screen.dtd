@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Verbinden">
+<!ENTITY header     "Verbinden met extern apparaat">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Poort:">
+<!ENTITY connect    "Verbinden">
+<!ENTITY connecting "Verbinden…">
+<!ENTITY availableAddons "Beschikbare externe add-ons:">
+<!ENTITY availableTabs "Beschikbare externe tabbladen:">
+<!ENTITY availableProcesses "Beschikbare externe processen:">
+<!ENTITY connectionError "Fout:">
+<!ENTITY errorTimeout "Fout: time-out van verbinding.">
+<!ENTITY errorRefused "Fout: verbinding geweigerd.">
+<!ENTITY errorUnexpected "Onverwachte fout.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Ontwikkelaarshulpmiddelen van Waterfox kunnen fouten opsporen in externe apparaten (zoals Waterfox voor Android en Waterfox OS). Zorg ervoor dat u de optie ‘Remote debugging’ in het externe apparaat hebt aangezet. Bekijk de ">
+<!ENTITY remoteDocumentation "documentatie">
+<!ENTITY remoteHelpSuffix " voor meer info.">

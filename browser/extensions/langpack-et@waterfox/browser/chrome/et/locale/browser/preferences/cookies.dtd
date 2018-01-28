@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Arvutisse on salvestatud järgnevad küpsised:">
+<!ENTITY     cookiename.label               "Küpsise nimi">
+<!ENTITY     cookiedomain.label             "Veebileht">
+
+<!ENTITY     props.name.label               "Nimi:">
+<!ENTITY     props.value.label              "Sisu:">
+<!ENTITY     props.domain.label             "Masin:">
+<!ENTITY     props.path.label               "Asukoht:">
+<!ENTITY     props.secure.label             "Saadetud:">
+<!ENTITY     props.expires.label            "Aegub:">
+<!ENTITY     props.container.label          "Konteiner:">
+
+<!ENTITY     window.title                   "Küpsised">
+<!ENTITY     windowClose.key                "W">
+<!ENTITY     focusSearch1.key               "F">
+<!ENTITY     focusSearch2.key               "K">
+
+<!ENTITY     searchFilter.label             "Otsi">
+<!ENTITY     searchFilter.accesskey         "O">
+
+<!ENTITY     button.close.label             "Sulge">
+<!ENTITY     button.close.accesskey         "u">

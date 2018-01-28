@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Reposte">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizar">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organice os suyos marcapachinas">
+
+<!ENTITY file.close.label               "Zarrar">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vistas">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Cambee a suya anvista">
+<!ENTITY view.columns.label             "Amostrar as columnas">
+<!ENTITY view.columns.accesskey         "A">
+<!ENTITY view.sort.label                "Ordenar">
+<!ENTITY view.sort.accesskey            "r">
+<!ENTITY view.unsorted.label            "Sin ordenar">
+<!ENTITY view.unsorted.accesskey        "S">
+<!ENTITY view.sortAscending.label       "Ordenar A> Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordenar Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importar marcapachinas de un HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportar marcapachinas en HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importar datos de…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Fer una copia de seguranza…">
+<!ENTITY cmd.backup.accesskey           "c">
+<!ENTITY cmd.restore2.label             "Restaurar">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Trigar fichero…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY cmd.deleteDomainData.label     "Xublidar iste puesto web">
+<!ENTITY cmd.deleteDomainData.accesskey "X">
+
+<!ENTITY cmd.open.label                  "Ubrir">
+<!ENTITY cmd.open.accesskey              "U">
+<!ENTITY cmd.open_window.label           "Ubrir en una finestra nueva">
+<!ENTITY cmd.open_window.accesskey       "b">
+<!ENTITY cmd.open_private_window.label     "Ubrir en una nueva finestra privada">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Ubrir en una pestanya nueva">
+<!ENTITY cmd.open_tab.accesskey          "v">
+<!ENTITY cmd.open_all_in_tabs.label      "Ubrir tot en pestanyas">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "o">
+
+<!ENTITY cmd.properties.label      "Propiedatz">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Ordenar por nombre">
+<!ENTITY cmd.sortby_name.accesskey          "n">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Adhibir un nuevo marcapachinas…">
+<!ENTITY cmd.new_bookmark.accesskey        "n">
+<!ENTITY cmd.new_folder.label              "Creyar una nueva carpeta…">
+<!ENTITY cmd.new_folder.accesskey          "u">
+<!ENTITY cmd.context_new_folder.accesskey  "c">
+<!ENTITY cmd.new_separator.label           "Adhibir un nuevo separador">
+<!ENTITY cmd.new_separator.accesskey       "v">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Recargar os marcadors dinamicos">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY cmd.moveBookmarks.label                  "Mover…">
+<!ENTITY cmd.moveBookmarks.accesskey              "M">
+
+<!ENTITY col.name.label          "Nombre">
+<!ENTITY col.tags.label          "Etiquetas">
+<!ENTITY col.url.label           "Adreza">
+<!ENTITY col.mostrecentvisit.label "Visita mas recient">
+<!ENTITY col.visitcount.label    "Numero de visitas">
+<!ENTITY col.description.label   "Descripción">
+<!ENTITY col.dateadded.label     "Calendata d'adición">
+<!ENTITY col.lastmodified.label  "Zaguera modificación">
+
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importación y copia de seguranza">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importar y exportar os suyos marcapachinas">
+
+<!ENTITY backButton.tooltip  "Ir enta zaga">
+
+<!ENTITY forwardButton.tooltip  "Ir ta debant">
+
+<!ENTITY detailsPane.more.label "Mas">
+<!ENTITY detailsPane.more.accesskey "M">
+<!ENTITY detailsPane.less.label "Menos">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "Seleccione un elemento ta veyer y editar as suyas propiedatz">
+
+<!ENTITY view.label               "Veyer">
+<!ENTITY view.accesskey           "r">
+<!ENTITY byDate.label             "Por calendata">
+<!ENTITY byDate.accesskey         "P">
+<!ENTITY bySite.label             "Por puesto">
+<!ENTITY bySite.accesskey         "p">
+<!ENTITY byMostVisited.label      "Por numero de visitas">
+<!ENTITY byMostVisited.accesskey  "v">
+<!ENTITY byLastVisited.label      "Por calendata d'a zaguera visita">
+<!ENTITY byLastVisited.accesskey  "g">
+<!ENTITY byDayAndSite.label       "Por calendata y sitio">
+<!ENTITY byDayAndSite.accesskey   "t">
+
+<!ENTITY search.placeholder  "Search">
+

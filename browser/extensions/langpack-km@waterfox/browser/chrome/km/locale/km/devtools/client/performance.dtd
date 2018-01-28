@@ -1,0 +1,139 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "ម្ចាស់ប្រវត្តិរូបរក្សានូវគំរូក្នុងបាសហ្វើរង្វិលជុំ ហើយនៅពេលដែលបាសហ្វើឈានដល់កម្រិតកំណត់សម្រាប់ការថត គំរូថ្មីៗចាប់ផ្តើមសរសេរជាន់គំរូនៅពេលចាប់ផ្តើមថតដំបូង។">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+<!ENTITY performanceUI.disabledRealTime.nonE10SBuild "បានបិទទិន្នន័យដែលថតក្នុងពេលជាក់ស្តែង នៅលើ Waterfox ដែលគ្មានដំណើរការច្រើន">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "បើកWaterfox មានដំណើរការច្រើននៅក្នុងចំណូលចិត្តសម្រាប់សម្រួលទិន្នន័យដែលថតក្នុងពេលជាក់ស្តែង">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "បាសហ្វើពេញ។​ គំរូចាស់ៗត្រូវបានសរសេរជាន់">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "ការ​កត់ត្រា​​ទម្រង់​អ្នកប្រើ​មិន​អាច​ធ្វើ​បាន​ទេ​នៅ​ពេល​នេះ។ សូម​បិទ​បង្អួច​រុករក​ជា​ឯកជន​ទាំងអស់ និង​ព្យាយាម​ម្ដង​ទៀត។">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "កំពុង​ផ្ទុក…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "ទឹកធ្លាក់">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "បង្ហាញ​ដំណើរការ​ផ្សេងៗ​ដែល​កម្មវិធី​អ៊ីនធឺណិត​កំពុង​អនុវត្ត​ខណៈ​កំពុង​កត់ត្រា រៀប​តាម​លំដាប់លំដោយ​​ដូច​ជា​ទឹកធ្លាក់។">
+<!ENTITY performanceUI.toolbar.js-calltree "មែកធាងការហៅ">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "រំលេច​អនុគមន៍ JavaScript ដែល​កម្មវិធី​អ៊ីនធឺណិត​​បាន​ចំណាយ​ពេល​ច្រើន​ខណៈ​ដែល​កំពុង​កត់ត្រា។">
+<!ENTITY performanceUI.toolbar.memory-calltree "ការបែងចែក">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "បង្ហាញ​កន្លែង​ដែល​​អង្គ​ចងចាំ​​ត្រូវ​បាន​លៃ​តម្រូវ​ខណៈ​ដែល​កំពុង​កត់ត្រា។">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS Flame Chart">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "បង្ហាញ​គំនរ​ការ​ហៅ​ JavaScript លើ​វគ្គ​នៃ​ការ​កត់ត្រា។">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "ការបែងចែកគំនូសតាងផ្កាភ្លើង">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "រយៈពេល​សរុប">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "ចំនួន​ពេលវេលា​ដែល​បាន​ចំណាយ​ក្នុង​មុខងារ​នេះ​​ និង​មុខងារ​ការហៅ​របស់​វា​">
+<!ENTITY performanceUI.table.selfDuration             "រយៈពេល​ផ្ទាល់ខ្លួន">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "ចំនួន​ពេលវេលា​បាន​ចំណាយ​សម្រាប់​តែ​មុខងារ​នេះ​។">
+<!ENTITY performanceUI.table.totalPercentage          "ថ្លៃ​ដើម​សរុប">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "ភាគរយ​នៃ​ពេលវេលា​បាន​ចំណាយ​ក្នុង​មុខងារ​នេះ​ និង​​មុខងារ​ផ្សេងៗ​ដែល​វា​បាន​ហៅ​។​">
+<!ENTITY performanceUI.table.selfPercentage           "ថ្លៃ​ដើម​ផ្ទាល់ខ្លួន">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "ភាគរយ​នៃ​ពេលវេលា​បាន​ចំណាយ​សម្រាប់​តែ​ក្នុង​មុខងារ​នេះ​។​">
+<!ENTITY performanceUI.table.samples                  "គំរូ">
+<!ENTITY performanceUI.table.samples.tooltip          "ចំនួន​នៃ​ពេលវេលា​ដែល​មុខងារ​នេះ​បាន​ស្ថិត​នៅ​ជា​ជង់​នៅពេល​ម្ចាស់ប្រវត្តិរូប​យក​ជា​គំរូ​។​">
+<!ENTITY performanceUI.table.function                 "​អនុគមន៍">
+<!ENTITY performanceUI.table.function.tooltip         "ឈ្មោះ និង​ទីតាំង​ប្រភព​នៃ​មុខងារ​គំរូ។">
+<!ENTITY performanceUI.table.totalAlloc               "ការបែងចែក​គំរូសរុប">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "ចំនួន​សរុប​ការ​បែងចែក​វត្ថុ​​ដែល​បាន​ធ្វើ​ជា​គំរូ​នៅ​​ទីតាំង​នេះ និង​​ក្នុង​អ្នក​ហៅ។">
+<!ENTITY performanceUI.table.selfAlloc                "ការបែងចែក​គំរូ​ផ្ទាល់ខ្លួន​">
+<!ENTITY performanceUI.table.selfAlloc.tooltip        "ចំនួន​នៃ​ការបែងចែក​វត្ថុ​នៅ​ទីតាំង​នេះ​។">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "ជ្រើសរើស​ទិន្នន័យ​អ្វី​ត្រូវ​បង្ហាញ​ក្នុង​កាលប្រវត្តិ​">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "កំណត់​រចនាសម្ព័ន្ធ​ចំណូលចិត្ត​ដំណើរការ។">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "បម្លែង​មែកធាង​ការ​ហៅ">
+<!ENTITY performanceUI.invertTree.tooltiptext "ការ​បម្លែង​មែកធាង​ការ​ហៅ​បង្ហាញ​ពី​ផ្លូវ​ប្រវត្តិ​ការ​ហៅ​ដោយ​ចាប់ផ្ដើម​ពី​ស៊ុម​ថ្មី​បំផុត រហូត​ដល់​ស៊ុម​ដែល​ចាស់​បំផុត។">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Invert Flame Chart">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "ការ​បម្លែង​តារាង​អណ្ដាត​ភ្លើង​បង្ហាញ​ពី​ប្រវត្តិ​ការ​ហៅ​ដោយ​ចាប់ផ្ដើម​ពី​ស៊ុម​ថ្មី​បំផុត រហូត​ដល់​ស៊ុម​ដែល​ចាស់​បំផុត។">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "បង្ហាញ​ទិន្នន័យ​កម្មវិធី Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "ការ​បង្ហាញ​ទិន្នន័យ​កម្មវិធី អនុញ្ញាត​កម្មវិធី​បង្កើត​ប្រវត្តិរូប JavaScript រាយការណ៍​ដោយ​រួមបញ្ចូល​និមិត្តសញ្ញា​កម្មវិធី Gecko ។">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "ធ្វើឲ្យ​មែកធាង​ការ​ហៅ​ខ្លួនឯង​រាបស្មើ">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "ធ្វើឲ្យ​ការ​ហៅ​ខ្លួនឯង​រាប​ស្មើ​ពេល​ពិនិត្យ​មុខងារ។">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "កត់ត្រា​អង្គ​ចងចាំ">
+<!ENTITY performanceUI.enableMemory.tooltiptext "កត់ត្រា​ការ​ប្រើប្រាស់​អង្គ​ចងចាំ​ពេល​ធ្វើ​ប្រវត្តិរូប។">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "ការ​បែងចែក​កំណត់ត្រា">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "កត់ត្រា​ការបែងចែក​វត្ថុ​ពេល​ធ្វើ​ប្រវត្តិរូប​។​">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "កត់ត្រា​អត្រា​ស៊ុម">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "កត់ត្រា​អត្រា​ស៊ុម​ពេល​ធ្វើ​ប្រវត្តិរូប។">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "កត់ត្រា​បច្ចុប្បន្ន​តាម">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "ឈប់​កត់ត្រា​ទុក​ដោយ​​ការ​បញ្ចូល">
+<!ENTITY performanceUI.console.stopCommandEnd   "ទៅ​ក្នុង​កុងសូល។">
+
+<!ENTITY performanceUI.showJITOptimizations             "Show JIT Optimizations">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Show JIT optimization data sampled in each JavaScript frame.">
+

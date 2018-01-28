@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Taic le duilgheadasan">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Tha fiosrachadh teicnigeach air an duilleag seo a dh'fhaodadh a bhith feumail dhut ann am fuasgladh dhuilgheadasan. Ma tha ceist neo-theicnigeach agad mu &brandShortName;, cuir sùil air an <a id='supportLink'>làrach-taice</a> againn.">
+
+<!ENTITY aboutSupport.crashes.title "Aithisgean tuislidh">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID na h-aithisge">
+<!ENTITY aboutSupport.crashes.sendDate "Air a chur">
+<!ENTITY aboutSupport.crashes.allReports "Gach aithisg tuislidh">
+<!ENTITY aboutSupport.crashes.noConfig "Cha deach an aplacaid seo a rèiteachadh fhathast is chan urrainn dha aithisgean tuislidh a shealltainn.">
+
+<!ENTITY aboutSupport.extensionsTitle "Leudachain">
+<!ENTITY aboutSupport.extensionName "Ainm">
+<!ENTITY aboutSupport.extensionEnabled "Air a chur an comas">
+<!ENTITY aboutSupport.extensionVersion "Tionndadh">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Gleusan &brandShortName;">
+<!ENTITY aboutSupport.featureName "Ainm">
+<!ENTITY aboutSupport.featureVersion "Tionndadh">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Gleusan deuchainneach">
+<!ENTITY aboutSupport.experimentName "Ainm">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Tuairisgeul">
+<!ENTITY aboutSupport.experimentActive "Gnìomhach">
+<!ENTITY aboutSupport.experimentEndDate "Ceann-là crìochnachaidh">
+<!ENTITY aboutSupport.experimentHomepage "Duilleag-dhachaigh">
+<!ENTITY aboutSupport.experimentBranch "Meur">
+
+<!ENTITY aboutSupport.appBasicsTitle "Bun-tùs na h-aplacaid">
+<!ENTITY aboutSupport.appBasicsName "Ainm">
+<!ENTITY aboutSupport.appBasicsVersion "Tionndadh">
+<!ENTITY aboutSupport.appBasicsBuildID "Build ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Ùraich an t-seanail">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Eachdraidh nan ùrachaidhean">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Seall eachdraidh nan ùrachaidhean">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Pasgan nam pròifilean">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Pasgan na pròifil">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Plugain a tha an comas">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Rèiteachadh na togalach">
+<!ENTITY aboutSupport.appBasicsUserAgent "UserAgent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Cleachdadh na cuimhne">
+<!ENTITY aboutSupport.appBasicsPerformance "Dèanadas">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Obraichean seirbheise clàraichte">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Pròifilean">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Uinneagan ioma-phròiseasaidh">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Pròiseasan susbaint-lìn">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Iuchair seirbheis nan ionad aig Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Am modh tèarainte">
+
+<!ENTITY aboutSupport.showDir.label "Fosgail am pasgan">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Seall san lorgair">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Fosgail pasgan">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Roghainnean cudromach a chaidh atharrachadh">
+<!ENTITY aboutSupport.modifiedPrefsName "Ainm">
+<!ENTITY aboutSupport.modifiedPrefsValue "Luach">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Roghainnean user.js">
+<!ENTITY aboutSupport.userJSDescription "Tha faidhle air a bheil <a id='prefs-user-js-link'>user.js</a> ann am pasgan na pròifil agad agus gheibh thu roghainnean 'na bhroinn nach deach an cruthachadh le &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Roghainnean cudromach a tha glaiste">
+<!ENTITY aboutSupport.lockedPrefsName "Ainm">
+<!ENTITY aboutSupport.lockedPrefsValue "Luach">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafaigean">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Stòr-dàta nan àitichean">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Treibhdhireas">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Dearbh an treibhdhireas">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC ceum air cheum">
+
+<!ENTITY aboutSupport.a11yTitle "Inntrigeachd">
+<!ENTITY aboutSupport.a11yActivated "Air gnìomhachadh">
+<!ENTITY aboutSupport.a11yForceDisabled "Casg air so-inntrigeachd">
+<!ENTITY aboutSupport.a11yHandlerUsed "Làimhsichear na so-inntrigeachd a chaidh a chleachdadh">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Tionndaidhean leabharlainn">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Eachdraidh stàlaidh">
+<!ENTITY aboutSupport.updateHistoryTitle "Eachdraidh nan ùrachaidhean">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Cuir lethbhreac dhen teacsa air an stòr-bhòrd">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Cuir lethbhreac dhen dàta lom dhan stòr-bhòrd">
+
+<!ENTITY aboutSupport.sandboxTitle "Bogsa-gainmhich">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Gairmean siostaim a chaidh a dhiùltadh">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Diogan air ais">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Seòrsa a’ phròiseis">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argamaidean">
+
+<!ENTITY aboutSupport.safeModeTitle "Feuch am modh tèarainte">
+<!ENTITY aboutSupport.restartInSafeMode.label "Ath-thòisich leis na tuilleadan air an cur à comas…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Gleusan">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnosachd">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Loga nam fàilligidhean">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Loga nan co-dhùnaidhean">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Gleusan a chuir freiceadan nan tuislidhean à comas">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaTitle "Meadhanan">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Uidheaman às-chuir">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Uidheaman ion-chuir">
+<!ENTITY aboutSupport.mediaDeviceName "Ainm">
+<!ENTITY aboutSupport.mediaDeviceGroup "Buidheann">
+<!ENTITY aboutSupport.mediaDeviceVendor "Reiceadair">
+<!ENTITY aboutSupport.mediaDeviceState "Staid">
+<!ENTITY aboutSupport.mediaDevicePreferred "As fhearr">
+<!ENTITY aboutSupport.mediaDeviceFormat "Fòrmat">
+<!ENTITY aboutSupport.mediaDeviceChannels "Seanailean">
+<!ENTITY aboutSupport.mediaDeviceRate "Reat">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">

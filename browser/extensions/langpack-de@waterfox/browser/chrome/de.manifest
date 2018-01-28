@@ -1,0 +1,11 @@
+locale branding de de/locale/branding/
+locale browser de de/locale/browser/
+locale browser-region de de/locale/browser-region/
+locale devtools de de/locale/de/devtools/client/
+locale devtools-shared de de/locale/de/devtools/shared/
+locale formautofill de de/locale/de/
+locale pdf.js de de/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

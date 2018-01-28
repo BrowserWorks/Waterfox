@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Tocante a los tos drechos">
+<!ENTITY rights.intro "&brandFullName; ye llibre y de códigu abiertu, fechu por una comunidá de millares de persones de tol mundu. Hai delles coses que tendríes de saber:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; faise pa ti baxo los términos de la ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Esto quier dicir que puedes usar, copiar y distribuyir &brandShortName; a otres persones. Tamién puedes camudar el códigu fonte de &brandShortName; tolo que te pete p'adautalu a les tos necesidaes. La Llicencia Pública de Mozilla date drechu a distribuyir les versiones camudaes.">
+
+<!ENTITY rights.intro-point2-a "Nun se da dengún drechu nin llicencia sobre les marques comerciales de Waterfox o les sos filiales, incluyendo ensin llimitación el nome y logu de Waterfox. Pue alcontrase información adicional sobre les marques comerciales ">
+<!ENTITY rights.intro-point2-b "equí">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Delles carauterístiques en &brandShortName;, como por exemplu l'informador de casques, dante la opción d'apurrir feedback a &vendorShortName;. Escoyendo unvialu, das-y a &vendorShortName; permisu pa usar el feedback p'ameyorar los sos productos, pa espublizalu nos sos sitios web y pa distribuyilu.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "La manera na qu'usamos la to información personal y les opiniones unviaes a &vendorShortName; a traviés de &brandShortName; descríbese na ">
+<!ENTITY rights2.intro-point3b "Política de privacidá de &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Toles polítiques de privacidá aplicables a esti productu tienen qu'apaecer enumberaes equí.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Dalgunes carauterístiques de &brandShortName; faen usu uso de servicios d'información basaos en web; sicasí, nun podemos garantizar que seyan 100&#037; precisos nin llibres d'errores. Pues alcontrar más detalles, incluyendo información tocante a cómo desactivar les carauterístiques qu'usen estos servicios, nos ">
+<!ENTITY rights.intro-point4b "términos del serviciu">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Si esti productu incorpora servicios web, cualesquier términu de serviciu aplicable al serviciu (o servicios) tendrán d'enllazase en ">
+<!ENTITY rights.intro-point4b-unbranded "Servicios de sitiu web">
+<!ENTITY rights.intro-point4c-unbranded " seición.">
+
+<!ENTITY rights2.webservices-header "Servicios d'información de &brandFullName; basaos en web">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Pa reproducir ciertes tribes de conteníu de videu. &brandShortName; baxa ciertos módulos de descifráu de conteníu dende terceres partes.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName;&brandFullName; usa servicios d'información basaos na web («Servicios») pa fornir delles carauterístiques apurríes pol to usu con esta versión binaria de &brandShortName; so los términos descritos embaxo. Si nun quies usar ún o más de los Servicios, o los términos d'embaxo son inaceutables, quiciabes quieras deshabilitar la carauterística Serviciu(os). Quciabes alcuentres les instrucciones en cómo deshabilitar la carauterística o Serviciu ">
+<!ENTITY rights2.webservices-b "equí">
+<!ENTITY rights3.webservices-c ". Otres carauterístiques y servicios puen desactivase nes preferencies de l'aplicación.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Navegación segura:">
+<!ENTITY rights.safebrowsing-b "Desactivar la carauterística de navegación segura nun se recomienda porque pue dar como resultáu que visites sitios non seguros. Si quies desactivar la carauterística dafechu, sigui estos pasos:">
+<!ENTITY rights.safebrowsing-term1 "Abri les preferencies de l'aplicación">
+<!ENTITY rights.safebrowsing-term2 "Esbilla'l panel de Seguranza">
+<!ENTITY rights2.safebrowsing-term3 "Nun conseñes la opción a «&enableSafeBrowsing.label;»">
+<!ENTITY rights.safebrowsing-term4 "Agora la navegación segura ta desactivada">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Restolar según l'allugamientu: ">
+<!ENTITY rights.locationawarebrowsing-b "siempre son a eleición del usuariu. Enxamás s'unvia información tocante a la llocalización ensin el to permiso. Si quies desactivar la carauterística por completu, sigui estos pasos:">
+<!ENTITY rights.locationawarebrowsing-term1a "Na barra de direiciones, escribi ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Escribi geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Fai dible clic na preferencia geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Agora'l restolar según l'allugamientu ta deshabilitáu">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Equí tien qu'incluyise un repasu de los servicios de sitiu web qu'incorpora'l productu, xunto con instrucciones sobre como deshabilitalos, de ser posible.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Tolos términos de serviciu aplicables a esti productu tienen d'enumberase equí.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; y los sos collaboradores, llicenciatarios y socios trabayen p'apurrir los servicios más precisos y anovaos. Sicasí, nun podemos garantizar qu'esta información seya completa y tea llibre d'errores. Por exemplu, el serviciu de navegación segura pue que nun identifique dalgunos sitios peligrosos y pue qu'identifique dalgunos sitios seguros por error y les direiciones devueltes polos nuesos fornidores del serviciu de navegación basada na llocalización son namái estimaciones y nin nosotros nin los nuesos fornidores garantizamos la exactitú de les llocalizaciones proporcionaes.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; pue dexar de suministrar, o camudar, los Servicios a discreción.">
+<!ENTITY rights2.webservices-term3 "Pues usar estos servicios cola versión correspondiente de &brandShortName;, y &vendorShortName; date derechos pa facelo. &vendorShortName; y los sos llicenciatarios resérvense'l restu de derechos de los servicios. Estos términos nun llimiten dengún derechu dau poles llicencies de códigu abiertu aplicables a &brandShortName; y les versiones del códigu fonte correspondiente de &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Los Servicios proporciónense &quot;tal cual&quot;. &vendorShortName;, los sos contribuyentes, llicenciadores y distribuidores refuguen toa responsabilidá, explícita o implícita, incluyendo (ensin llimitación) la garantía de que los Servicios son comerciales y s'adauten a los tos envises particulares. Tú lleves la totalidá del riesgu al seleicionar los Servicios pa los tos envises y sobre la calidá y les prestaciones de los Servicios. Dalgunes xurisdicciones nun permiten la exclusión o llimitación de les garantíes implícites, polo que ye dable qu'esta renuncia de responsabilidá nun seya d'aplicación nel to casu.">
+<!ENTITY rights.webservices-term5 "Coles esceiciones espresaes pola llei, nin &vendorShortName;, nin los sos contribuyentes, llicenciadores y distribuidores fáense responsables de dengún dañu indireutu, especial, incidental, consecuente, punitivu o exemplar darréu de, o de dalguna forma rellacionao col usu de &brandShortName; y los Servicios. La responsabilidá colectiva sobre estos términos nun escederán de $500 (quinientos dólares). Dalgunes xurisdicciones nun permiten la exclusión o llimitación de ciertos daños, polo que pue qu'esta exclusión y llimitación nun seya d'aplicación nel to casu.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; pue anovar estos términos dalcuando, de precisalo. Quiciabes nun se modifiquen o encaboxen ensin l'alcuerdu escritu de &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Estos términos tán regulaos poles lleis del Estáu de California, EE.UU., a esceición de les disposiciones llegales coles qu'entre en conflictu. Si dalguna parte d'estos términos se consideren non válidos o inaplicables, les partes restantes caltendrán tola so potencia y efeutos. el casu d'un conflictu ente una versión traducía d'estos términos y la versión en llingua inglesa, esta cabera, tendrá prioridá.">
+
+<!ENTITY rights.title "About Your Rights">

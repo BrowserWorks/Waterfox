@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "استثناها - ترجمه">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "W">
+
+<!ENTITY noTranslationForLanguages.label  "ترجمه برای زبانهای زیر ارایه نمیشود:">
+<!ENTITY treehead.languageName.label      "زبان‌ها">
+<!ENTITY removeLanguage.label             "حذف زبان">
+<!ENTITY removeLanguage.accesskey         "ح">
+<!ENTITY removeAllLanguages.label         "حذف تمام زبانها">
+<!ENTITY removeAllLanguages.accesskey     "ذ">
+
+<!ENTITY noTranslationForSites.label      "ترجمه برای وبسایتهای زیر ارایه نمیشود:">
+<!ENTITY treehead.siteName2.label         "پایگاه های اینترنتی">
+<!ENTITY removeSite.label                 "حذف سایت">
+<!ENTITY removeSite.accesskey             "ح">
+<!ENTITY removeAllSites.label             "حذف همه سایت‌ها">
+<!ENTITY removeAllSites.accesskey         "ه">
+
+<!ENTITY button.close.label               "بستن‌">
+<!ENTITY button.close.accesskey           "ب">

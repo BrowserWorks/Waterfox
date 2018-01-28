@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informoj por solvado de problemoj">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Tiu ĉi paĝo enhavas teĥnikajn informojn kiuj povas esti utilaj kiam vi klopodas solvi problemon. Se vi serĉas respondojn al oftaj demandoj pri  &brandShortName;, bonvolu viziti nian <a id='supportLink'>helporetejon</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Raportoj pri paneoj">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Identigilo de raporto">
+<!ENTITY aboutSupport.crashes.sendDate "Sendita">
+<!ENTITY aboutSupport.crashes.allReports "Ĉiuj raportoj pri paneo">
+<!ENTITY aboutSupport.crashes.noConfig "Tiu ĉi programo ne estis agordita por montri raportojn pri paneo.">
+
+<!ENTITY aboutSupport.extensionsTitle "Etendoprogramoj">
+<!ENTITY aboutSupport.extensionName "Nomo">
+<!ENTITY aboutSupport.extensionEnabled "Aktiva">
+<!ENTITY aboutSupport.extensionVersion "Versio">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Trajtoj de &brandShortName;">
+<!ENTITY aboutSupport.featureName "Nomo">
+<!ENTITY aboutSupport.featureVersion "Versio">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperimentaj trajtoj">
+<!ENTITY aboutSupport.experimentName "Nomo">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Priskribo">
+<!ENTITY aboutSupport.experimentActive "Aktiva">
+<!ENTITY aboutSupport.experimentEndDate "Fina dato">
+<!ENTITY aboutSupport.experimentHomepage "Ĉefpaĝo">
+<!ENTITY aboutSupport.experimentBranch "Branĉo">
+
+<!ENTITY aboutSupport.appBasicsTitle "Bazaj programaj informoj">
+<!ENTITY aboutSupport.appBasicsName "Nomo">
+<!ENTITY aboutSupport.appBasicsVersion "Versio">
+<!ENTITY aboutSupport.appBasicsBuildID "Identigilo de konstruo">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Kanalo de ĝisdatigo">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Historio de ĝisdatigoj">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Montri historion de ĝisdatigoj">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Dosierujo de profiloj">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Dosierujo de profiloj">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Aktivaj kromprogramoj">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Agordoj de konstruado">
+<!ENTITY aboutSupport.appBasicsUserAgent "Agento de uzanto">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Uzado de memoro">
+<!ENTITY aboutSupport.appBasicsPerformance "Efikeco">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registritaj Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiloj">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Plurprocezaj fenestroj">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Teksaĵaj enhavaj taskoj">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Ŝlosilo de Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Ŝlosilo de la servo de pozicio de Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Sekura reĝimo">
+
+<!ENTITY aboutSupport.showDir.label "Malfermi dosierujon">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Montri en dosierserĉilo">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Malfermi dosierujon">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Modifitaj preferoj">
+<!ENTITY aboutSupport.modifiedPrefsName "Nomo">
+<!ENTITY aboutSupport.modifiedPrefsValue "Valoro">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Preferoj de user.js">
+<!ENTITY aboutSupport.userJSDescription "La dosierujo de via profilo enhavas <a id='prefs-user-js-link'>dosieron nomita user.js</a>, kiu havas preferojn kiuj ne estis kreitaj de &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Gravaj blokitaj preferoj">
+<!ENTITY aboutSupport.lockedPrefsName "Nomo">
+<!ENTITY aboutSupport.lockedPrefsValue "Valoro">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafikoj">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Datumbazo de lokoj">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integreco">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Kontroli integrecon">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Poioma GC">
+
+<!ENTITY aboutSupport.a11yTitle "Alirebleco">
+<!ENTITY aboutSupport.a11yActivated "Aktiva">
+<!ENTITY aboutSupport.a11yForceDisabled "Eviti alireblon">
+<!ENTITY aboutSupport.a11yHandlerUsed "Alirebleca pelilo uzita">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Versioj de bibliotekoj">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Historio de instalado">
+<!ENTITY aboutSupport.updateHistoryTitle "Ĝisdatigi historion">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopii tekston al tondujo">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopii krudajn datumojn al tondujo">
+
+<!ENTITY aboutSupport.sandboxTitle "Izolejo">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rifuzitaj sistemaj vokoj">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "sekundoj antaŭe">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Tipo de procezo">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Sistema voko">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Parametroj">
+
+<!ENTITY aboutSupport.safeModeTitle "Provi la sekuran reĝimon">
+<!ENTITY aboutSupport.restartInSafeMode.label "Restartigi kun ĉiuj aldonaĵoj malaktivaj…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Trajtoj">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnozoj">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Registro de misoj">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Registro de decidoj">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Trajtoj malŝaltitaj de la protekto kontraŭ paneoj">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Provizoraj solvoj">
+
+<!ENTITY aboutSupport.mediaTitle "Aŭdvidaĵo">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Eligaj aparatoj">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Enigaj aparatoj">
+<!ENTITY aboutSupport.mediaDeviceName "Nomo">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grupo">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendisto">
+<!ENTITY aboutSupport.mediaDeviceState "Stato">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferata">
+<!ENTITY aboutSupport.mediaDeviceFormat "Formo">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanaloj">
+<!ENTITY aboutSupport.mediaDeviceRate "Frekvenco">
+<!ENTITY aboutSupport.mediaDeviceLatency "Prokrasto">

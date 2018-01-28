@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Rapoarte de defecțiuni">
+<!ENTITY crashesUnsubmitted.label   "Rapoarte de defecțiuni netrimise">
+<!ENTITY crashesSubmitted.label     "Rapoarte de defecțiuni trimise">
+<!ENTITY id.heading                 "ID-ul raportului">
+<!ENTITY dateCrashed.heading        "Data defecțiunii">
+<!ENTITY dateSubmitted.heading      "Data trimiterii">
+<!ENTITY noReports.label            "Nu s-au trimis rapoarte de defecțiuni.">
+<!ENTITY noConfig.label             "Această aplicație nu a fost configurată să afișeze rapoartele de defecțiuni. Preferința <code>breakpad.reportURL</code> trebuie setată.">
+<!ENTITY clearAllReports.label      "Elimină toate rapoartele">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab siglia dad in tab a l'auter en la successiun da l'ultima utilisaziun">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Avrir novas fanestras en in nov tab">
+<!ENTITY newWindowsAsTabs.accesskey   "f">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avertir, sch'ina fanestra cun plirs tabs vegn serrada">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "f">
+
+<!ENTITY warnOnOpenManyTabs.label       "Avertir, sche &brandShortName; vegniss retardà cun avrir plirs tabs">
+<!ENTITY warnOnOpenManyTabs.accesskey   "s">
+
+<!ENTITY switchLinksToNewTabs.label        "Midar directamain a la pagina sch'ina colliaziun vegn averta en in nov tab">
+<!ENTITY switchLinksToNewTabs.accesskey    "t">
+
+<!ENTITY showTabsInTaskbar.label          "Mussar previstas dals tabs en la taskbar da Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Tabs">

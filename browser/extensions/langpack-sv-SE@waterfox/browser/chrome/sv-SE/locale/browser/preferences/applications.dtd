@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Program">
+<!ENTITY  applications.description "Välj hur &brandShortName; hanterar filer du hämtar från webben eller de program du använder när du surfar.">
+
+<!ENTITY  typeColumn.label        "Typ av innehåll">
+<!ENTITY  typeColumn.accesskey    "T">
+
+<!ENTITY  actionColumn2.label     "Åtgärd">
+<!ENTITY  actionColumn2.accesskey "Å">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Sök filtyper eller program">

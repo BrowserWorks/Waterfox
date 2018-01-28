@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Opcions">
+<!ENTITY  prefWindow.title        "Preferències">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Preferències del &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 50em; min-height: 44em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 54em; min-height: 45em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 50em; min-height: 44.5em;">
+
+<!ENTITY  paneSearchResults.title       "Resultats de la cerca">
+<!ENTITY  paneGeneral.title             "General">
+<!ENTITY  paneSearch.title              "Cerca">
+<!ENTITY  paneFilesApplications.title   "Fitxers i aplicacions">
+<!ENTITY  panePrivacySecurity.title     "Privadesa i seguretat">
+<!ENTITY  paneContainers.title          "Pestanyes de contenidor">
+<!ENTITY  paneUpdates.title             "Actualitzacions">
+
+<!ENTITY  languageAndAppearance.label   "Llengua i aparença">
+<!ENTITY  filesAndApplications.label    "Fitxers i aplicacions">
+<!ENTITY  browserPrivacy.label          "Privadesa del navegador">
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+
+<!ENTITY  paneSync1.title          "Compte del Waterfox">
+
+<!ENTITY  helpButton2.label        "Assistència del &brandShortName;">

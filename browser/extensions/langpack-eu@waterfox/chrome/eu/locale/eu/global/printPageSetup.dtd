@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Prestatu orria">
+
+<!ENTITY basic.tab           "Formatu eta aukerak">
+
+<!ENTITY formatGroup.label   "Formatua">
+
+<!ENTITY orientation.label   "Orientazioa:">
+<!ENTITY portrait.label      "Bertikala">
+<!ENTITY portrait.accesskey  "B">
+<!ENTITY landscape.label     "Horizontala">
+<!ENTITY landscape.accesskey "H">
+
+<!ENTITY scale.label         "Eskala:">
+<!ENTITY scale.accesskey     "s">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Txikitu orriaren zabaleran sar dadin">
+<!ENTITY shrinkToFit.accesskey "z">
+
+<!ENTITY optionsGroup.label  "Aukerak">
+
+<!ENTITY printBG.label       "Inprimatu atzeko planoa (koloreak eta irudiak)">
+<!ENTITY printBG.accesskey   "p">
+
+<!ENTITY advanced.tab        "Marjinak eta buru/oinak">
+
+<!ENTITY marginGroup.label   "Marjinak (#1)">
+<!ENTITY marginUnits.inches  "hazbeteak">
+<!ENTITY marginUnits.metric  "milimetroak">
+<!ENTITY marginTop.label     "Goian:">
+<!ENTITY marginTop.accesskey "G">
+<!ENTITY marginBottom.label  "Behean:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "Ezkerra:">
+<!ENTITY marginLeft.accesskey "z">
+<!ENTITY marginRight.label   "Eskuina:">
+<!ENTITY marginRight.accesskey "s">
+
+<!ENTITY headerFooter.label  "Buru eta oinak">
+
+<!ENTITY hfLeft.label        "Ezkerra:">
+<!ENTITY hfCenter.label      "Zentroa:">
+<!ENTITY hfRight.label       "Eskuina:">
+<!ENTITY headerLeft.tip      "Ezker goiburua">
+<!ENTITY headerCenter.tip    "Erdiko goiburua">
+<!ENTITY headerRight.tip     "Eskuin goiburua">
+<!ENTITY footerLeft.tip      "Ezker oina">
+<!ENTITY footerCenter.tip    "Erdiko oina">
+<!ENTITY footerRight.tip     "Eskuin oina">
+
+<!ENTITY hfTitle             "Izenburua">
+<!ENTITY hfURL               "URLa">
+<!ENTITY hfDateAndTime       "Data/ordua">
+<!ENTITY hfPage              "Orria #">
+<!ENTITY hfPageAndTotal      "# orria #-tik">
+<!ENTITY hfBlank             "--zuria--">
+<!ENTITY hfCustom            "Pertsonalizatua...">
+
+<!ENTITY customPrompt.title  "Pertsonalizatua...">
+<!ENTITY customPrompt.prompt "Idatzi zure goiburu/oinaren testu pertsonalizatua">

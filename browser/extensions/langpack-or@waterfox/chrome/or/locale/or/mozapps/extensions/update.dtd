@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; ଅଦ୍ୟତନ">
+
+<!ENTITY  offline.title                   "&brandShortName; ଅଫଲାଇନରେ କାର୍ଯ୍ୟ କରୁଅଛି">
+<!ENTITY  offline.description             "&brandShortName; needs to go online in order to see if updates are available for your add-ons to make them compatible with this version.">
+<!ENTITY  offline.toggleOffline.label     "ବର୍ତ୍ତମାନ ଅନଲାଇନ ଯାଆନ୍ତୁ।">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "ଅସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକ">
+<!ENTITY  mismatch.top.label              "ନିମ୍ନଲିଖିତ ଏଡ଼-ଅନଗୁଡ଼ିକ  &brandShortName;ର ଏହି ସଂସ୍କରଣ ସହିତ ସୁସଂଗତ ନୁହଁ ଏବଂ ତେଣୁ ନିଷ୍କ୍ରିୟ କରାଯାଇଛି:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ଯାଞ୍ଚ କରିପାରେ ଯଦି ସେଠାରେ ଏହି ଏଡ଼-ଅନଗୁଡ଼ିକର ସୁସଂଗତ  ସଂସ୍କରଣ ଉପଲବ୍ଧ।">
+
+<!ENTITY  checking.wizard.title           "ସୁସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକ ପାଇଁ ଯାଞ୍ଚ କରୁଅଛି">
+<!ENTITY  checking.top.label              "ଅଦ୍ୟତନଗୁଡ଼ିକ ପାଇଁ ଆପଣଙ୍କର ଅସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକୁ ଯାଞ୍ଚ କରୁଅଛି…">
+<!ENTITY  checking.status                 "ଏହା କିଛି ସମୟ ନେଇପାରେ…">
+
+<!ENTITY  found.wizard.title               "ସୁସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକ ମିଳିଲା">
+<!ENTITY  found.top.label                 "ଆପଣ ସ୍ଥାପନ କରିବାକୁ ଚାହୁଁଥିବା ଏଡ଼-ଅନଗୁଡ଼ିକୁ ସ୍ଥାପନ କରନ୍ତୁ:">
+<!ENTITY  found.disabledXPinstall.label   "ଏହି ଅଦ୍ୟତନଗୁଡ଼ିକୁ ସ୍ଥାପନ କରାଯାଇପାରିବ ନାହିଁ କାରଣ ସଫ୍ଟୱେର ସ୍ଥାପନକୁ ବର୍ତ୍ତମାନ ନିଷ୍କ୍ରିୟ କରାଯାଇଛି। ତଳେ ଆପଣ ଏହି ବିନ୍ୟାସକୁ ପରିବର୍ତ୍ତନ କରିପାରିବେ।">
+<!ENTITY  found.enableXPInstall.label     "ସଫ୍ଟୱେର ସ୍ଥାପନ କରିବାକୁ ୱେବସାଇଟଗୁଡ଼ିକୁ ଅନୁମତି ଦିଅନ୍ତୁ">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "ସୁସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକୁ ସ୍ଥାପନ କରାଯାଉଛି">
+<!ENTITY  installing.top.label            "ଆପଣଙ୍କର ଏଡ଼-ଅନଗୁଡ଼ିକରେ ଅଦ୍ୟତନଗୁଡ଼ିକୁ ଆହରଣ ଏବଂ ସ୍ଥାପନ କରାଯାଉଛି…">
+
+<!ENTITY  noupdates.wizard.title          "କୌଣସି ସୁସଂଗତ ଏଡ଼-ଅନ ମିଳୁନାହିଁ">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; ଆପଣଙ୍କର ଅସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକ ପାଇଁ ଅଦ୍ୟତନ ଖୋଜିବାରେ ଅସମର୍ଥ।">
+<!ENTITY  noupdates.error.desc            "ଅଦ୍ୟତନଗୁଡ଼ିକୁ ଖୋଜିବା ସମୟରେ କିଛି ସମସ୍ୟାର ସମ୍ମୁଖିନ ହୋଇଥିଲା।">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; ନିୟମିତ ରୂପେ ଯାଞ୍ଚ କରିବ ଏବଂ ଏହି ଏଡ଼-ଅନଗୁଡ଼ିକର ସୁସଂଗତ ଅଦ୍ୟତନ ମିଳିଲା ପରେ ସୂଚିତ କରିବ।">
+
+<!ENTITY  finished.wizard.title           "ସୁସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକ ସ୍ଥାପିତ ହୋଇଛି">
+<!ENTITY  finished.top.label              "&brandShortName; ଆପଣଙ୍କର ଏଡ଼-ଅନଗୁଡ଼ିକରେ ଅଦ୍ୟତନଗୁଡ଼ିକୁ ସ୍ଥାପନ କରିଅଛି।">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName;ନିୟମିତ ରୂପେ ଯାଞ୍ଚ କରିବ ଏବଂ ଏହି ଏଡ଼-ଅନଗୁଡ଼ିକର ସୁସଂଗତ  ଅଦ୍ୟତନ ମିଳିଲା ପରେ ସୂଚିତ କରିବ।">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ନିୟମିତ ରୂପେ ଯାଞ୍ଚ କରିବ ଏବଂ ଏହି ଏଡ଼-ଅନଗୁଡ଼ିକର ସୁସଂଗତ  ଅଦ୍ୟତନ ମିଳିଲା ପରେ ସୂଚିତ କରିବ।">
+
+<!ENTITY  adminDisabled.wizard.title      "ଅଦ୍ୟତନଗୁଡ଼ିକ ପାଇଁ ଯାଞ୍ଚ କରିବାରେ ଅସମର୍ଥ">
+<!ENTITY  adminDisabled.warning.label     "ଅସଂଗତ ଏଡ଼-ଅନଗୁଡ଼ିକର ଅଦ୍ୟତନଗୁଡ଼ିକୁ ଯାଞ୍ଚ କରିବା ସମ୍ଭବ ନୁହଁ କାରଣ &brandShortName; ପାଇଁ ସଫ୍ଟୱେର ସ୍ଥାପନକୁ ନିଷ୍କ୍ରିୟ କରାଯାଇଛି। ସହାୟତା ପାଁଇ ଆପଣଙ୍କର ତନ୍ତ୍ର ପ୍ରଶାସକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।">
+
+<!ENTITY  versioninfo.wizard.title        "ଏଡ଼-ଅନଗୁଡ଼ିକର ସୁସଂଗତି ଯାଞ୍ଚ କରୁଅଛି">
+<!ENTITY  versioninfo.top.label           "ଆପଣଙ୍କର ଏଡ଼-ଅନଗୁଡ଼ିକୁ &brandShortName;ର ଏହି ସଂସ୍କରଣ ପାଇଁ ସୁସଂଗତତା ଯାଞ୍ଚ କରୁଅଛି।">
+<!ENTITY  versioninfo.waiting             "ଏହା କିଛି ସମୟ ନେଇପାରେ…">
+
+<!ENTITY  installerrors.wizard.title      "ଅଦ୍ୟତନଗୁଡ଼ିକୁ ସ୍ଥାପନ କରିବାରେ ସମସ୍ୟା">
+<!ENTITY  installerrors.intro.label       "ଆପଣଙ୍କର କିଛି ଏଡ଼-ଅନଗୁଡ଼ିକୁ ଅଦ୍ୟତନ କରିବା ସମୟରେ &brandShortName; ସମସ୍ୟାର ସମ୍ମୁଖିନ ହୋଇଥିଲା।">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName;କୁ ଆରମ୍ଭ କରିବା ପାଇଁ ସମାପ୍ତ କରନ୍ତୁକୁ କ୍ଲିକ କରନ୍ତୁ।">
+<!ENTITY  clickFinish.labelMac            "&brandShortName;କୁ ଆରମ୍ଭ କରିବା ପାଇଁ ସମାପ୍ତ କ୍ଲିକ କରନ୍ତୁ।">
+<!ENTITY  enableChecking.label            "ଅଦ୍ୟତନଗୁଡ଼ିକୁ ଯାଞ୍ଚ କରିବା ପାଇଁ &brandShortName;କୁ ଅନୁମତି ଦିଅନ୍ତୁ।">

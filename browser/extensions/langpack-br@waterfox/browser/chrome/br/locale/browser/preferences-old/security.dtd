@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Hollek">
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Stankañ endalc'hadoù arvarus pe touellus">
+<!ENTITY  enableSafeBrowsing.accesskey    "S">
+
+<!ENTITY  blockDownloads.label            "Stankañ pellgargadurioù arvarus">
+<!ENTITY  blockDownloads.accesskey        "p">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Kelaouiñ ac'hanon a-zivout meziantoù dic'hoantaet ha divoutin">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "m">
+
+<!ENTITY  addonExceptions.label         "Nemedennoù">
+<!ENTITY  addonExceptions.accesskey     "N">
+
+
+<!ENTITY  logins.label                  "Titouroù kennaskañ">
+
+
+<!ENTITY  passwordExceptions.label      "Nemedennoù…">
+<!ENTITY  passwordExceptions.accesskey  "m">
+
+<!ENTITY  useMasterPassword.label        "Arverañ ur ger-tremen mestr">
+<!ENTITY  useMasterPassword.accesskey    "A">
+<!ENTITY  changeMasterPassword.label     "Kemmañ ar ger-tremen mestr…">
+<!ENTITY  changeMasterPassword.accesskey "K">
+
+<!ENTITY  savedLogins.label              "Titouroù kennaskañ enrollet...">
+<!ENTITY  savedLogins.accesskey          "k">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

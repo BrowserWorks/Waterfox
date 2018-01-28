@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrijne daty">
+
+<!ENTITY aboutTelemetry.pingDataSource "Žórło pingdatow:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Aktualne pingdaty">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Archiwowane pingdaty">
+
+<!ENTITY aboutTelemetry.raw "Hruby JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Daty podposedźenja pokazać">
+
+<!ENTITY aboutTelemetry.choosePing "Ping wubrać:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nowši ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Starši ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Tydźeń">
+
+<!ENTITY aboutTelemetry.archivePingType "Ping-typ">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Dźensa">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Wčera">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Starši">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Powšitkowne daty">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Wokolinowe daty">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetrijowy protokol">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Pomałe SQL-přikazy">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Wisanja wobhladowaka">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Wisanja nitkow">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Natočene štaple">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skalary">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Indizierte Skalare">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramy">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Kodowane histogramy">
+
+<!ENTITY aboutTelemetry.eventsSection "  Podawki">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Jednore měrjenja">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Podrobnosće přidatka">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Pózdnje pisanske procesy">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Posedźenske informacije">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  KEDŹBU: Pytanje za zmylkami za pomałe SQL-přikazy je zmóžnjene. Dospołne znamješkowe rjećazki SQL hodźa so deleka zwobraznić, ale njebudu so do telemetrije přenošować.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Funkciske mjena za staple wotwołać">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Hrube staplowe daty pokazać">
+
+<!ENTITY aboutTelemetry.filterText "  Filter (znamješkowe rjećazki abo /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Wužitna ćeža">

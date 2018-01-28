@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - foydalanuvchi profilingizni tanlang">
+
+<!ENTITY            profilename.label      "Profil nomi:">
+
+<!ENTITY            start.label            "&brandShortName;ni ishga tushirish">
+<!ENTITY            exit.label             "Chiqish">
+
+<!ENTITY            availprofiles.label    "Mavjud profillar">
+
+<!ENTITY            newButton.label        "Profil yaratish">
+<!ENTITY            newButton.accesskey    "y">
+<!ENTITY            renameButton.label     "Profil nomini oʻzgartirish">
+<!ENTITY            renameButton.accesskey "o">
+<!ENTITY            deleteButton.label     "Profilni oʻchirish">
+<!ENTITY            deleteButton.accesskey "o">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; moslamalaringiz haqidagi va boshqa foydalanuvchi bilan bogʻliq ma`lumotlarni profilingizga joylashtiradi.">
+
+<!ENTITY            offlineState.label    "Oflayn ishlash">
+<!ENTITY            offlineState.accesskey "O">
+
+<!ENTITY            useSelected.label       "Ishga tushish vaqtida so‘ramasdan tanlangan profildan foydalanish">
+<!ENTITY            useSelected.accesskey   "s">

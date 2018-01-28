@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Podatki o url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Ponudnik">
+<!ENTITY aboutUrlClassifier.provider                    "Ponudnik">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Čas zadnje posodobitve">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Čas naslednje posodobitve">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Čas umika">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Stanje zadnje posodobitve">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Posodobi">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Predpomnilnik">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Osveži">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Počisti">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Ime tabele">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Število vnosov v negativni predpomnilnik">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Število vnosov v pozitivni predpomnilnik">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Prikaži vnose">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Vnosi v predpomnilnik">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Predpona">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Rok trajanja negativnega predpomnilnika">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Polna razpršena vrednost">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Rok trajanja pozitivnega predpomnilnika">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Razhroščevanje">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Nastavi dnevniške module">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Nastavi dnevniško datoteko">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Nastavi dnevnik JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Dnevniški moduli varnega brskanja">
+<!ENTITY aboutUrlClassifier.debugModules                "Trenutni dnevniški moduli">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Dnevnik JS varnega brskanja">
+<!ENTITY aboutUrlClassifier.debugFile                   "Trenutna dnevniška datoteka">

@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Iifestile ezizivelelayo">
+
+<!ENTITY  blockPopups.label           "Thintela iifestile ezizivelelayo">
+<!ENTITY  blockPopups.accesskey       "T">
+
+<!ENTITY  notificationsPolicy.label            "Izaziso">
+<!ENTITY  notificationsPolicyLearnMore.label   "Funda okungakumbi">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "Khetha…">
+<!ENTITY  notificationsDoNotDisturb.label      "Musa ukundiphazamisa">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "u">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Akukho saziso siya kuboniswa de uphinde uqale i-&brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Izinxaxhi…">
+<!ENTITY  popupExceptions.accesskey   "I">
+
+<!ENTITY  fontsAndColors.label        "Iifonti neMibala">
+
+<!ENTITY  defaultFont.label           "Ifonti esisiseko:">
+<!ENTITY  defaultFont.accesskey       "I">
+<!ENTITY  defaultSize.label           "Isayizi:">
+<!ENTITY  defaultSize.accesskey       "I">
+
+<!ENTITY  advancedFonts.label         "Kwangaphambili…">
+<!ENTITY  advancedFonts.accesskey     "K">
+
+<!ENTITY  colors.label                "Imibala…">
+<!ENTITY  colors.accesskey            "I">
+
+
+<!ENTITY languages.label              "Iilwimi">
+<!ENTITY chooseLanguage.label         "Khetha ulwimi oluthandayo lokubonisa amaphepha">
+<!ENTITY chooseButton.label           "Khetha…">
+<!ENTITY chooseButton.accesskey       "e">
+
+<!ENTITY translateWebPages.label      "Guqulela isiqulatho sewebhu">
+<!ENTITY translateWebPages.accesskey  "G">
+<!ENTITY translateExceptions.label    "Izinxaxhi…">
+<!ENTITY translateExceptions.accesskey "n">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Iinguqulelo ngu">
+<!ENTITY translation.options.attribution.afterLogo "​‌‌">
+
+<!ENTITY  drmContent.label             "Isiqulatho se-DRM">
+
+<!ENTITY  playDRMContent.label         "Dlala isiqulatho se-DRM">
+<!ENTITY  playDRMContent.accesskey     "D">
+<!ENTITY  playDRMContent.learnMore.label "Funda okungakumbi">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

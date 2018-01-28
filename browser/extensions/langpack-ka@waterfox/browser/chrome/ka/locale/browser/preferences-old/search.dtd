@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "ნაგულისხმევი საძიებო სისტემა">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "აირჩიეთ თქვენი ნაგულისხმევი საძიებო სისტემა. &brandShortName; მას იყენებს მისამართების ზოლში, ძიების ზოლში და საწყის გვერდზე.">
+
+<!ENTITY provideSearchSuggestions.label        "ძიების შემოთავაზებები">
+<!ENTITY provideSearchSuggestions.accesskey    "ძ">
+
+<!ENTITY showURLBarSuggestions.label           "ძიების შემოთავაზებები მისამართების ზოლის შედეგებში">
+<!ENTITY showURLBarSuggestions.accesskey       "ზ">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "მდებარეობის ზოლში ძიების შემოთავაზებები არ გამოჩნდება, ვინაიდან &brandShortName;-ს მითითებული აქვს, რომ ისტორია არასდროს დაიმახსოვროს.">
+
+<!ENTITY oneClickSearchEngines.label           "ერთ-წკაპიანი საძიებო სისტემები">
+
+<!ENTITY chooseWhichOneToDisplay.label         "საძიებო ზოლი პირდაპირ სხვა სისტემებში ძიების საშუალებას გაძლევთ. აირჩიეთ, მათგან რომელი გამოჩნდეს.">
+
+<!ENTITY engineNameColumn.label                "საძიებო სისტემა">
+<!ENTITY engineKeywordColumn.label             "საკვანძო სიტყვა">
+
+<!ENTITY restoreDefaultSearchEngines.label     "ნაგულისხმევი საძიებო სისტემების აღდგენა">
+<!ENTITY restoreDefaultSearchEngines.accesskey "ნ">
+
+<!ENTITY removeEngine.label                    "ამოღება">
+<!ENTITY removeEngine.accesskey                "ა">
+
+<!ENTITY addMoreSearchEngines.label            "მეტი საძიებო სისტემის დამატება…">

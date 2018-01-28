@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Obnovení aplikace &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Začnutím odznovu opravíte problémy a obnovíte výkonnost prohlížeče.">
+<!ENTITY refreshProfile.dialog.description2  "Tím provedete:">
+<!ENTITY refreshProfile.dialog.items.label1  "Odebraní svých doplňků a vlastního přizpůsobení">
+<!ENTITY refreshProfile.dialog.items.label2  "Obnovení nastavení svého prohlížeče do výchozí podoby">
+<!ENTITY refreshProfile.dialog.button.label  "Obnovit aplikaci &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Vyladění aplikace &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Obnovit &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Téměř hotovo…">

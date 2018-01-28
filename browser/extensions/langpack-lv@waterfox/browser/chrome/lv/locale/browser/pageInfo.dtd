@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopēt">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Iezīmēt visu">
+<!ENTITY  selectall.accesskey   "v">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Vispārējā">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Virsraksts:">
+<!ENTITY  generalURL            "Adrese:">
+<!ENTITY  generalType           "Tips:">
+<!ENTITY  generalMode           "Renderēšanas režīms:">
+<!ENTITY  generalSize           "Izmērs:">
+<!ENTITY  generalReferrer       "Nosūtītāja URL:">
+<!ENTITY  generalSource         "Kešatmiņas avots:">
+<!ENTITY  generalModified       "Mainīts:">
+<!ENTITY  generalEncoding2      "Teksta kodējums:">
+<!ENTITY  generalMetaName       "Nosaukums">
+<!ENTITY  generalMetaContent    "Saturs">
+
+<!ENTITY  mediaTab              "Multivide">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adrese:">
+<!ENTITY  mediaText             "Piesaistītais teksts:">
+<!ENTITY  mediaAltHeader        "Alternatīvais teksts">
+<!ENTITY  mediaAddress          "Adrese">
+<!ENTITY  mediaType             "Tips">
+<!ENTITY  mediaSize             "Faila izmērs">
+<!ENTITY  mediaCount            "Skaits">
+<!ENTITY  mediaDimension        "Izmēri:">
+<!ENTITY  mediaLongdesc         "Garais apraksts:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Saglabāt kā...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Paraugs:">
+
+<!ENTITY  feedTab               "Barotnes">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Pierakstīties">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Atļaujas">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Izmantot noklusētās">
+<!ENTITY  permAskAlways         "Jautāt katru reizi">
+<!ENTITY  permAllow             "Atļaut">
+<!ENTITY  permAllowSession      "Atļaut šai sesijai">
+<!ENTITY  permBlock             "Bloķēt">
+<!ENTITY  permissionsFor        "Atļaujas lapai:">
+<!ENTITY  permPlugins           "Aktivizēt spraudņus">
+
+<!ENTITY  permClearStorage           "Iztīrīt glabātuvi">
+<!ENTITY  permClearStorage.accesskey "z">
+
+<!ENTITY  securityTab           "Drošība">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Skatīt sertifikātu">
+<!ENTITY  securityView.accesskey "f">
+<!ENTITY  securityView.unknown   "Nezināms">
+
+
+<!ENTITY  securityView.identity.header   "Mājas lapas identitāte">
+<!ENTITY  securityView.identity.owner    "Īpašnieks: ">
+<!ENTITY  securityView.identity.domain   "Mājas lapa: ">
+<!ENTITY  securityView.identity.verifier "Pārbaudījis: ">
+<!ENTITY  securityView.identity.validity "Derīgs līdz:">
+
+<!ENTITY  securityView.privacy.header                   "Privātums un vēsture">
+<!ENTITY  securityView.privacy.history                  "Vai es šo lapu šodien jau esmu apmeklējis?">
+<!ENTITY  securityView.privacy.cookies                  "Vai šī vietne glabā kādu informāciju (sīkdatnes) manā datorā?">
+<!ENTITY  securityView.privacy.viewCookies              "Skatīt sīkdatnes">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Vai man ir saglabātas paroles šai lapai?">
+<!ENTITY  securityView.privacy.viewPasswords            "Skatīt saglabātās paroles">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "p">
+
+<!ENTITY  securityView.technical.header                 "Tehniskā informācija">
+
+<!ENTITY  helpButton.label                              "Palīdzība">

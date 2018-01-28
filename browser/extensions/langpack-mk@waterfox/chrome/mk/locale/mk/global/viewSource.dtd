@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Код од: ">
+
+<!ENTITY fileMenu.label "Датотека">
+<!ENTITY fileMenu.accesskey "Д">
+<!ENTITY savePageCmd.label "Сними ја страницата како…">
+<!ENTITY savePageCmd.accesskey "а">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Поставување на страницата…">
+<!ENTITY pageSetupCmd.accesskey "у">
+<!ENTITY printPreviewCmd.label "Преглед за печатење">
+<!ENTITY printPreviewCmd.accesskey "г">
+<!ENTITY printCmd.label "Печати…">
+<!ENTITY printCmd.accesskey "П">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Затвори">
+<!ENTITY closeCmd.accesskey "З">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Оди до линијата…">
+<!ENTITY goToLineCmd.accesskey "О">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Поглед">
+<!ENTITY viewMenu.accesskey       "г">
+<!ENTITY reloadCmd.label "Превчитај">
+<!ENTITY reloadCmd.accesskey "р">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Скрати ги долгите линии"> 
+<!ENTITY menu_wrapLongLines.accesskey "к">
+<!ENTITY menu_highlightSyntax.label "Означување на синтакса">
+<!ENTITY menu_highlightSyntax.accesskey "н">
+<!ENTITY menu_textSize.label "Големина на текст">
+<!ENTITY menu_textSize.accesskey "к">
+<!ENTITY menu_textEnlarge.label "Зголеми">
+<!ENTITY menu_textEnlarge.accesskey "о">
+<!ENTITY menu_textReduce.label "Намали">
+<!ENTITY menu_textReduce.accesskey "а">
+<!ENTITY menu_textReset.label "Нормална">
+<!ENTITY menu_textReset.accesskey "о">
+
+<!ENTITY findOnCmd.label     "Пронајди во оваа страница…">
+<!ENTITY findOnCmd.accesskey "р">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Пронајди повторно">
+<!ENTITY findAgainCmd.accesskey "а">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+
+<!ENTITY backCmd.label "Назад">
+<!ENTITY backCmd.accesskey "з">
+<!ENTITY forwardCmd.label "Напред">
+<!ENTITY forwardCmd.accesskey "п">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Копирај ја локацијата на врската">
+<!ENTITY copyLinkCmd.accesskey "л">
+<!ENTITY copyEmailCmd.label "Копирај ја адресата за е-пошта">
+<!ENTITY copyEmailCmd.accesskey "е">
+
+<!ENTITY findSelectionCmd.commandkey "e">
+

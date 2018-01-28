@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "ముఖ్య సంకేతపదాన్ని తీసివేయండి">
+<!ENTITY removeInfo.label                  "కొనసాగించుటకు మీరు మీ ప్రస్తుత సంకేతపదాన్ని ప్రవేశపెట్టాలి:">
+<!ENTITY removeWarning1.label              "మీ ముఖ్య సంకేతపదం సైటు సంకేతపదాలవంటి సున్నితమైన సమాచారాన్నిరక్షించుటకు ఉపయోగపడుతుంది.">
+<!ENTITY removeWarning2.label              "ఒకవేళ మీ కంప్యూటర్ రాజీఅవ్వవలిసివస్తే మీరు మీ ముఖ్య సంకేతపదాన్నితీసివేసినట్లైతే మీ సమాచారం రక్షించబడదు.">
+<!ENTITY setPassword.oldPassword.label     "ప్రస్తుత సంకేతపదం:">
+

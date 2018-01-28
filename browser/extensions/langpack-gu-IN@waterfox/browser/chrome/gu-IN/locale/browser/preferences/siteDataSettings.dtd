@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "સેટિંગ્સ - સાઇટ ડેટા">
+<!ENTITY     hostCol.label                 "સાઈટ">
+<!ENTITY     statusCol.label               "સ્થિતિ">
+<!ENTITY     usageCol.label                "સંગ્રહ">
+<!ENTITY     searchTextboxPlaceHolder             "વેબસાઇટ્સ શોધો">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "પસંદ કરેલું દૂર કરો">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "પરિવર્તનો સાચવો">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "રદ કરો">
+<!ENTITY     cancel.accesskey              "C">
+
+<!ENTITY     removingDialog.title          "Removing Site Data">
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">
+<!ENTITY     siteTree.label                "The following website cookies will be removed:">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "కొత్త ట్యాబ్">
+<!ENTITY newtab.customize.classic "మీ మేటి సైట్లను చూపించు">
+<!ENTITY newtab.customize.cog.enhanced "సూచించిన సైట్లను చూపించు">
+<!ENTITY newtab.customize.cog.title2 "కొత్త ట్యాబ్ నియంత్రికలు">
+<!ENTITY newtab.customize.cog.learn "కొత్త ట్యాబ్ గురించి తెలుసుకోండి">
+<!ENTITY newtab.customize.title "మీ కొత్త ట్యాబ్ పేజీను మలచుకోండి">
+<!ENTITY newtab.customize.blank2 "ఖాళీ పేజీని చూపించు">
+<!ENTITY newtab.undo.removedLabel "థంబ్‌నెయిల్ తీసివేయబడింది.">
+<!ENTITY newtab.undo.undoButton "చేయవద్దు.">
+<!ENTITY newtab.undo.restoreButton "అన్నిటినీ పునరుద్ధరించు.">
+<!ENTITY newtab.undo.closeTooltip "దాచు">

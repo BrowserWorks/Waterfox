@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; - ažuriranje">
+
+<!ENTITY  offline.title                   "&brandShortName; radi izvanmrežno">
+<!ENTITY  offline.description             "&brandShortName; mora otići u mrežni način rada da bi provjerio jesu li dopune za vaše dodatke dostupne, kako bi bile usklađene s ovom inačicom.">
+<!ENTITY  offline.toggleOffline.label     "Poveži se odmah.">
+<!ENTITY  offline.toggleOffline.accesskey "o">
+
+<!ENTITY  mismatch.win.title              "Nekompatibilni dodaci">
+<!ENTITY  mismatch.top.label              "Sljedeći dodaci nisu kompatibilni s ovom inačicom &brandShortName;a stoga su onemogućeni:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; može provjeriti jesu li dostupne kompatibilne inačice ovih dodataka.">
+
+<!ENTITY  checking.wizard.title           "Provjera kompatibilnih dodataka">
+<!ENTITY  checking.top.label              "Provjera dopune za vaše nekompatibilne dodatke...">
+<!ENTITY  checking.status                 "Ovo može potrajati nekoliko minuta...">
+
+<!ENTITY  found.wizard.title               "Pronađeni nekompatibilni dodaci">
+<!ENTITY  found.top.label                 "Odaberite dodatke koje biste htjeli instalirati:">
+<!ENTITY  found.disabledXPinstall.label   "Ove dodatke nije moguće instalirati jer je instalacija programa trenutno onemogućena. Ovu postavku možete promijeniti niže.">
+<!ENTITY  found.enableXPInstall.label     "Dopusti web stranicama da instaliraju programe">
+<!ENTITY  found.enableXPInstall.accesskey "a">
+
+<!ENTITY  installing.wizard.title         "Instalacija kompatibilnih dodataka">
+<!ENTITY  installing.top.label            "Preuzimanje i instalacija dopuna vaših dodataka...">
+
+<!ENTITY  noupdates.wizard.title          "Nije pronađen nijedan kompatibilni dodatak">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; nije uspio pronaći dopune za vaše nekompatibilne dodatke.">
+<!ENTITY  noupdates.error.desc            "Došlo je do nekih problema pri potrazi za dopunama.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; će povremeno provjeravati i obavijestiti vas kada budu pronađene kompatibilne dopune za ove dodatke.">
+
+<!ENTITY  finished.wizard.title           "Kompatibilni dodaci su instalirani">
+<!ENTITY  finished.top.label              "&brandShortName; je instalirao dopune za vaše dodatke.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; može povremeno provjeravati i obavještavati vas kada su dopune za dodatke dostupne.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; će povremeno provjeravati i obavještavati vas kada su pronađene dopune za dodatke.">
+
+<!ENTITY  adminDisabled.wizard.title      "Provjera za dopunama nije moguća">
+<!ENTITY  adminDisabled.warning.label     "Nije moguće provjeriti dostupnost dopuna za kompatibilne dodatke jer je instalacija programa za &brandShortName; onemogućena. Molim kontaktirajte administratora vašeg sustava za pomoć.">
+
+<!ENTITY  versioninfo.wizard.title        "Provjera kompatibilnosti dodataka">
+<!ENTITY  versioninfo.top.label           "Provjera kompatibilnosti vaših dodataka i ove &brandShortName; inačice.">
+<!ENTITY  versioninfo.waiting             "Ovo može potrajati nekoliko minuta...">
+
+<!ENTITY  installerrors.wizard.title      "Problemi pri instalaciji dopuna">
+<!ENTITY  installerrors.intro.label       "&brandShortName; je naišao na probleme kod ažuriranja nekih vaših dodataka.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Kliknite na Završi da biste nastavili pokretanje &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Kliknite Završi za nastavak pokretanja &brandShortName;.">
+<!ENTITY  enableChecking.label            "Dopusti da &brandShortName; provjerava dostupnost dopuna.">

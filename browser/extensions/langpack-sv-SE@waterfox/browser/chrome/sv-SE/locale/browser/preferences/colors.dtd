@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Färger">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Överskrid färgerna som specificerats på sidan med dina val ovan:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "v">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Alltid">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Endast med teman med hög kontrast">
+<!ENTITY  overrideDefaultPageColors.never.label  "Aldrig">
+
+<!ENTITY  color                           "Text och bakgrund">
+<!ENTITY  textColor.label                 "Text:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Bakgrund:">
+<!ENTITY  backgroundColor.accesskey       "d">
+<!ENTITY  useSystemColors.label           "Använd systemfärgerna">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Stryk under länkar">
+<!ENTITY  underlineLinks.accesskey        "u">
+<!ENTITY  links                           "Länkfärger">
+<!ENTITY  linkColor.label                 "Obesökta länkar:">
+<!ENTITY  linkColor.accesskey             "O">
+<!ENTITY  visitedLinkColor.label          "Besökta länkar:">
+<!ENTITY  visitedLinkColor.accesskey      "B">

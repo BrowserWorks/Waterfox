@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Hitta nästa förekomst av frasen">
+<!ENTITY previous.tooltip "Hitta föregående förekomst av frasen">
+<!ENTITY findCloseButton.tooltip "Stäng Sökfältet">
+<!ENTITY highlightAll.label "Markera alla">
+<!ENTITY highlightAll.accesskey "M">
+<!ENTITY highlightAll.tooltiptext "Markera alla förekomster av frasen">
+<!ENTITY caseSensitive.label "Matcha VERSALER/gemener">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "Sök skiftlägeskänsligt">
+<!ENTITY entireWord.label "Hela ord">
+<!ENTITY entireWord.accesskey "H">
+<!ENTITY entireWord.tooltiptext "Sök endast hela ord">

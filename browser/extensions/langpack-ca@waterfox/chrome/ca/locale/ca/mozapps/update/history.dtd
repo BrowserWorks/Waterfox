@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Historial d'actualitzacions">
+<!ENTITY  history.intro             "S'han instal·lat les següents actualitzacions:">
+<!ENTITY  closebutton.label         "Tanca">
+                                     
+<!ENTITY  noupdates.label           "Encara no s'ha instal·lat cap actualització">
+
+<!ENTITY  name.header               "Nom de l'actualització">
+<!ENTITY  date.header               "Data de la instal·lació">
+<!ENTITY  type.header               "Tipus">
+<!ENTITY  state.header              "Estat">
+

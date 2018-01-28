@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Administrador de imágenes">
+<!ENTITY window.width "49em">
+<!ENTITY treehead.sitename2.label "Sitio web">
+<!ENTITY treehead.status.label "Estado">
+<!ENTITY removepermission2.label "Eliminar sitio web">
+<!ENTITY removepermission2.accesskey "E">
+<!ENTITY removeallpermissions2.label "Eliminar todos los sitios web">
+<!ENTITY removeallpermissions2.accesskey "a">
+<!ENTITY address.label "Dirección del sitio web:">
+<!ENTITY address.accesskey "d">
+<!ENTITY block.label "Bloquear">
+<!ENTITY block.accesskey "B">
+<!ENTITY session.label "Permitir en esta sesión">
+<!ENTITY session.accesskey "S">
+<!ENTITY allow.label "Permitir">
+<!ENTITY allow.accesskey "P">
+<!ENTITY windowClose.key "w">
+<!ENTITY button.cancel.label "Cancelar">
+<!ENTITY button.cancel.accesskey "C">
+<!ENTITY button.ok.label "Guardar cambios">
+<!ENTITY button.ok.accesskey "G">

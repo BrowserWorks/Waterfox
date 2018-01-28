@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY  history.title             "ਅੱਪਡੇਟ ਦਾ ਅਤੀਤ">
+<!ENTITY  history.intro             "ਹੇਠ ਦਿੱਤੇ ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਹਨ:">
+<!ENTITY  closebutton.label         "ਬੰਦ ਕਰੋ">
+
+<!ENTITY  noupdates.label           "ਹਾਲੇ ਕੋਈ ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਨਹੀਂ ਹੈ।">
+
+<!ENTITY  name.header               "ਅੱਪਡੇਟ ਦਾ ਨਾਂ">
+<!ENTITY  date.header               "ਇੰਸਟਾਲ ਹੋਣ ਦੀ ਮਿਤੀ">
+<!ENTITY  type.header               "ਕਿਸਮ">
+<!ENTITY  state.header              "ਹਾਲਤ">
+

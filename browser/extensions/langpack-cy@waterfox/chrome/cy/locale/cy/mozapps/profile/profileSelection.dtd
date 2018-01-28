@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Dewiswch Broffil Defnyddiwr">
+
+<!ENTITY            profilename.label      "Enw Proffil:">
+
+<!ENTITY            start.label            "Cychwyn &brandShortName;">
+<!ENTITY            exit.label             "Gadael">
+
+<!ENTITY            availprofiles.label    "Proffiliau sydd ar Gael">
+
+<!ENTITY            newButton.label        "Creu Proffil…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Ailenwi Profil…">
+<!ENTITY            renameButton.accesskey "r">
+<!ENTITY            deleteButton.label     "Dileu Proffil…">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "Mae &brandShortName; yn storio gwybodaeth am eich gosodiadau, dewisiadau ac eitemau defnyddiwr arall yn eich proffil defnyddiwr.">
+
+<!ENTITY            offlineState.label    "Gweithio All-lein">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "Defnyddio'r proffil penodol heb ofyn wrth gychwyn">
+<!ENTITY            useSelected.accesskey   "p">

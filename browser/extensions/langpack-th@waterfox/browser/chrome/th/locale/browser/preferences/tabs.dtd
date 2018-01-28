@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab เพื่อสลับเปลี่ยนแท็บตามลำดับที่ใช้ล่าสุด">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "เปิดหน้าต่างใหม่ในแท็บใหม่แทน">
+<!ENTITY newWindowsAsTabs.accesskey   "ป">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "เตือนคุณเมื่อกำลังจะปิดหลายแท็บ">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "เตือนคุณเมื่อการเปิดหลายแท็บอาจทำให้ &brandShortName; ช้าลง">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "เมื่อคุณเปิดลิงก์ในแท็บใหม่ สลับไปที่แท็บนั้นทันที">
+<!ENTITY switchLinksToNewTabs.accesskey    "ง">
+
+<!ENTITY showTabsInTaskbar.label          "แสดงตัวอย่างแท็บในแถบงาน Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "ด">
+<!ENTITY tabsGroup.label          "แท็บ">

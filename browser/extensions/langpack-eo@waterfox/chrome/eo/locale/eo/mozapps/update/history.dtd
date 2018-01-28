@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Ĝisdatigi historion">
+<!ENTITY  history.intro             "La jenaj ĝisdatigoj estis instalitaj:">
+<!ENTITY  closebutton.label         "Fermi">
+                                     
+<!ENTITY  noupdates.label           "Neniu ĝisdatigo instalita ĝis nun">
+
+<!ENTITY  name.header               "Nomo de ĝisdatigo">
+<!ENTITY  date.header               "Dato de ĝisdatigo">
+<!ENTITY  type.header               "Tipo">
+<!ENTITY  state.header              "ŝtato">
+

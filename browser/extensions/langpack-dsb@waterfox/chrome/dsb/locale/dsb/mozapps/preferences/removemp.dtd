@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Głowne gronidło wótpóraś">
+<!ENTITY removeInfo.label                  "Musyśo swójo tuchylne gronidło zapisaś, aby pókšacował:">
+<!ENTITY removeWarning1.label              "Waše głowne gronidło se wužywa, aby se diskretne informacije kaž sedłowe gronidła šćitali.">
+<!ENTITY removeWarning2.label              "Jolic wótpórajośo swójo głowne gronidło, njebudu se waše informacije šćitaś, jolic wašo licadło se wobgrozujo.">
+<!ENTITY setPassword.oldPassword.label     "Aktualne gronidło:">
+

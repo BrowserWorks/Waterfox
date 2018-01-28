@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Ponte">
+
+<!ENTITY  language.label                          "Ponte:">
+<!ENTITY  language.accesskey                      "P">
+
+<!ENTITY  size.label                              "Ɓetol:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "Pottondirɗe:">
+<!ENTITY  proportional.accesskey                  "t">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Saa-serif:">
+<!ENTITY  sans-serif.accesskey                    "a">
+<!ENTITY  monospace.label                         "Monospace:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Lateŋ">
+<!ENTITY  font.langGroup.japanese                 "Saponeere">
+<!ENTITY  font.langGroup.trad-chinese             "Traditional Chinese (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Cayniire weeɓtunde">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Cayniire Ganni (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreyaŋkoore">
+<!ENTITY  font.langGroup.cyrillic                 "Sirillik">
+<!ENTITY  font.langGroup.el                       "Gerek">
+<!ENTITY  font.langGroup.other                    "Juɓɓe Binndol Goɗɗe">
+<!ENTITY  font.langGroup.thai                     "Taayaŋkoore">
+<!ENTITY  font.langGroup.hebrew                   "Hebruŋkoore">
+<!ENTITY  font.langGroup.arabic                   "Aarabeere">
+<!ENTITY  font.langGroup.devanagari               "Dewanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamiliŋkoore">
+<!ENTITY  font.langGroup.armenian                 "Armeniire">
+<!ENTITY  font.langGroup.bengali                  "Benngali">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Sillabari">
+<!ENTITY  font.langGroup.ethiopic                 "Ecioppiŋkoore">
+<!ENTITY  font.langGroup.georgian                 "Gergoriŋkoore">
+<!ENTITY  font.langGroup.gujarati                 "Gujaratiŋkoore">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukki">
+<!ENTITY  font.langGroup.khmer                    "Kemer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Hiisiwal">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Teluguŋkoore">
+<!ENTITY  font.langGroup.kannada                  "Kannadaŋkoore">
+<!ENTITY  font.langGroup.sinhala                  "Sinhalaa">
+<!ENTITY  font.langGroup.tibetan                  "Tibetaŋkoore">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Ɓetol fontere lesol:">
+<!ENTITY minSize.accesskey                        "o">
+<!ENTITY minSize.none                             "Ndiga">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "San Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Yamir kelle yo kuutoro ponte mum en keeriiɗe waasa wonde ɗe am dow ɗoo ɗee">
+<!ENTITY  allowPagesToUseOwn.accesskey            "Y">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Dokkitannde binndol Loowdi Gaadanteeri">
+<!ENTITY languages.customize.Fallback2.label      "Dokkitannde Binndol Ɓartorde:">
+<!ENTITY languages.customize.Fallback2.accesskey  "Ɓ">
+<!ENTITY languages.customize.Fallback2.desc       "Ndee dokkitannde binndol huutortee ko e loowdi gaadanteeri korotoondi hollitde dokkitannde mum.">
+
+<!ENTITY languages.customize.Fallback.auto        "Goowaaɗo Lokaalde Wonaande">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Aarabeere">
+<!ENTITY languages.customize.Fallback.baltic      "Baltiire">
+<!ENTITY languages.customize.Fallback.ceiso       "Orop Hakkndeewo">
+<!ENTITY languages.customize.Fallback.cewindows   "Orop Hakkundeewo, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Sinuwaare Weeɓtinaande">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Sinuwaare Ganniire">
+<!ENTITY languages.customize.Fallback.cyrillic    "Sirillik">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Gerek">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebruŋkoore">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Saponeere">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Koreyaŋkoore">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Taayiŋkoore">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turkeere">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Wiyetnamiire">
+<!ENTITY languages.customize.Fallback.other       "Goɗɗe (wonndude e Orop Hirnaange)">

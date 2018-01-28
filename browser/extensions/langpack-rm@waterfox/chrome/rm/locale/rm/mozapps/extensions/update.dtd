@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Actualisaziun da software">
+
+<!ENTITY  offline.title                   "&brandShortName; è offline">
+<!ENTITY  offline.description             "&brandShortName; sto ir online per tschertgar actualisaziuns disponiblas da tes supplements cumpatiblas cun questa versiun">
+<!ENTITY  offline.toggleOffline.label     "Uss ir online">
+<!ENTITY  offline.toggleOffline.accesskey "U">
+
+<!ENTITY  mismatch.win.title              "Supplements incumpatibels">
+<!ENTITY  mismatch.top.label              "Ils suandants supplements n'èn betg cumpatibels cun questa versiun da &brandShortName; ed èn vegnids deactivads:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; po controllar, sche versiuns cumpatiblas da quests supplements èn disponiblas.">
+
+<!ENTITY  checking.wizard.title           "Tschertgar supplements cumpatibels">
+<!ENTITY  checking.top.label              "Tschertgar actualisaziuns dals supplements incumpatibels…">
+<!ENTITY  checking.status                 "Quai po durar in pèr minutas…">
+
+<!ENTITY  found.wizard.title               "Actualisaziuns cumpatiblas per supplements èn disponiblas">
+<!ENTITY  found.top.label                 "Tscherna las actualisaziuns che duain vegnir installadas:">
+<!ENTITY  found.disabledXPinstall.label   "Questas actualisaziuns na pon betg vegnir installadas, perquai che l'installaziun da software è deactivada per il mument. Ti pos midar quai parameter sutvart.">
+<!ENTITY  found.enableXPInstall.label     "Permetter a questas websites d'installar supplements">
+<!ENTITY  found.enableXPInstall.accesskey "w">
+
+<!ENTITY  installing.wizard.title         "Actualisaziuns vegnan installadas">
+<!ENTITY  installing.top.label            "Actualisaziuns vegnan telechargiadas ed installadas…">
+
+<!ENTITY  noupdates.wizard.title          "Impussibel da chattar actualisaziuns cumpatiblas">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; n'ha betg pudì chattar actualisaziuns per supplements incumpatibels.">
+<!ENTITY  noupdates.error.desc            "Problems cun tschertgar actualisaziuns.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; vegn a tschertgar regularmain actualisaziuns e t'infurmar uschespert che versiuns cumpatiblas dals supplements èn disponiblas.">
+
+<!ENTITY  finished.wizard.title           "Supplements cumpatibels èn vegnids installads">
+<!ENTITY  finished.top.label              "&brandShortName; ha installà las actualisaziuns disponiblas. Ti duessas reaviar &brandShortName; per activar tut las actualisaziuns.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; po tschertgar regularmain actualisaziuns ed infurmar tai uschespert che actualisaziuns per supplements èn disponiblas.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; vegn a tschertgar regularmain actualisaziuns ed ad infurmar tai uschespert che actualisaziuns per supplements èn disponiblas.">
+
+<!ENTITY  adminDisabled.wizard.title      "Impussibel da tschertgar actualisaziuns">
+<!ENTITY  adminDisabled.warning.label     "Impussibel d'actualisar ils supplements incumpatibels, perquai che l'installaziun da software da &brandShortName; è deactivada. Contactescha l'administratur dal sistem per survegnir agid.">
+
+<!ENTITY  versioninfo.wizard.title        "Controllar la cumpatibilitad dals supplements">
+<!ENTITY  versioninfo.top.label           "Controllar la cumpatibilitad dals supplements installads cun questa versiun da &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Quai po durar in pèr minutas…">
+
+<!ENTITY  installerrors.wizard.title      "Problems cun installar las actualisaziuns">
+<!ENTITY  installerrors.intro.label       "&brandShortName; ha constatà problems durant l'actualisaziun. Per quest motiv èsi stà impussibel d'actualisar tut ils supplements.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Clicca sin Terminar per aviar &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Clicca sin Terminar per aviar &brandShortName;.">
+<!ENTITY  enableChecking.label            "Permetter a &brandShortName; da tschertgar actualisaziuns.">

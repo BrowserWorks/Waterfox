@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "سابقات اپڈیٹ کریں">
+<!ENTITY  history.intro             "مندرجہ ذیل تازہ کاریاں تنصیب ہو گئی ہیں:">
+<!ENTITY  closebutton.label         "بند کریں">
+                                     
+<!ENTITY  noupdates.label           "کوئی تجدیدات نصب نہیں ہیں">
+
+<!ENTITY  name.header               "نام تازہ کریں">
+<!ENTITY  date.header               "تنصیب کی تاریخ">
+<!ENTITY  type.header               "قسم">
+<!ENTITY  state.header              "ریاست">
+

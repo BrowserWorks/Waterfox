@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "گزارش‌های خرابی">
+<!ENTITY crashesUnsubmitted.label   "خرابی گزارش نشده">
+<!ENTITY crashesSubmitted.label     "فروپاشی‌های گزارش شده">
+<!ENTITY id.heading                 "شناسهٔ گزارش">
+<!ENTITY dateCrashed.heading        "تاریخ خرابی">
+<!ENTITY dateSubmitted.heading      "تاریخ ارسال">
+<!ENTITY noReports.label            "هیچ گزارش فروپاشی‌ای ارسال نشده است.">
+<!ENTITY noConfig.label             "این برنامه برای نمایش گزارش‌های فروپاشی پیکربندی نشده است.  مقدار ترجیح <code>breakpad.reportURL</code> باید تنظیم شود.">
+<!ENTITY clearAllReports.label      "حذف همهٔ گزارش‌ها">

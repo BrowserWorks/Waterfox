@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Ierīču pārvaldnieks">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Drošības moduļi un ierīces">
+<!ENTITY devmgr.details.title                   "Sīkāka informācija">
+<!ENTITY devmgr.details.title2                  "Vērtība">
+
+<!ENTITY devmgr.button.login.label              "Pieteikties">
+<!ENTITY devmgr.button.login.accesskey          "i">
+<!ENTITY devmgr.button.logout.label             "Atteikties">
+<!ENTITY devmgr.button.logout.accesskey         "A">
+<!ENTITY devmgr.button.changepw.label           "Mainīt paroli">
+<!ENTITY devmgr.button.changepw.accesskey       "p">
+<!ENTITY devmgr.button.load.label               "Ielādēt">
+<!ENTITY devmgr.button.load.accesskey           "l">
+<!ENTITY devmgr.button.unload.label             "Izlādēt">
+<!ENTITY devmgr.button.unload.accesskey         "z">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Ievadiet informāciju par moduli, ko vēlaties pievienot.">
+<!ENTITY loaddevice.modname                     "Moduļa nosaukums:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Jauns PKCS#11 modulis">
+<!ENTITY loaddevice.filename                    "Moduļa faila nosaukums:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Pārlūkot...">
+<!ENTITY loaddevice.browse.accesskey            "P">
+
+<!ENTITY loaddevice.title2                      "Ielādēt PKCS#11 ierīci">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "مدير الأجهزة">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "وحدات الأمن وأجهزته">
+<!ENTITY devmgr.details.title                   "التفاصيل">
+<!ENTITY devmgr.details.title2                  "القيمة">
+
+<!ENTITY devmgr.button.login.label              "لُج">
+<!ENTITY devmgr.button.login.accesskey          "ل">
+<!ENTITY devmgr.button.logout.label             "اخرج">
+<!ENTITY devmgr.button.logout.accesskey         "خ">
+<!ENTITY devmgr.button.changepw.label           "غيّر كلمة السرّ">
+<!ENTITY devmgr.button.changepw.accesskey       "غ">
+<!ENTITY devmgr.button.load.label               "حمِّل">
+<!ENTITY devmgr.button.load.accesskey           "ح">
+<!ENTITY devmgr.button.unload.label             "ألغِ التّحميل">
+<!ENTITY devmgr.button.unload.accesskey         "غ">
+<!ENTITY devmgr.button.fips.accesskey           "م">
+
+<!ENTITY loaddevice.info                        "أدخل معلومات الوحدة التي تريد إضافتها.">
+<!ENTITY loaddevice.modname                     "اسم الوحدة:">
+<!ENTITY loaddevice.modname.accesskey           "د">
+<!ENTITY loaddevice.modname.default             "وحدة PKCS#11 جديدة">
+<!ENTITY loaddevice.filename                    "اسم ملفّ الوحدة:">
+<!ENTITY loaddevice.filename.accesskey          "م">
+<!ENTITY loaddevice.browse                      "تصفّح…">
+<!ENTITY loaddevice.browse.accesskey            "ص">
+
+<!ENTITY loaddevice.title2                      "حمِّل مشغّل جهاز PKCS#11">

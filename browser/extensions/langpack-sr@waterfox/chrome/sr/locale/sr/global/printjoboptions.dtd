@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Својства штампача">
+
+<!ENTITY paperInput.label "Величина папира:">
+<!ENTITY paperInput.accesskey "В">
+
+<!ENTITY jobTitleInput.label "Назив посла:">
+<!ENTITY jobTitleInput.accesskey "Н">
+
+<!ENTITY colorGroup.label "Боја:">
+<!ENTITY grayRadio.label "Сиви тонови">
+<!ENTITY grayRadio.accesskey "С">
+<!ENTITY colorRadio.label "Боја">
+<!ENTITY colorRadio.accesskey "Б">
+
+<!ENTITY edgeMarginInput.label "Размак од ивице папира до маргине">
+<!ENTITY topInput.label "Горњe:">
+<!ENTITY topInput.accesskey "Г">
+<!ENTITY bottomInput.label "Доњe:">
+<!ENTITY bottomInput.accesskey "Д">
+<!ENTITY leftInput.label "Левe:">
+<!ENTITY leftInput.accesskey "Л">
+<!ENTITY rightInput.label "Деснe:">
+<!ENTITY rightInput.accesskey "е">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Nome">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Direición:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "c">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Allugamientu de feed:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "n">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Allugamientu del sitiu:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "z">
+<!ENTITY editBookmarkOverlay.folder.label                    "Carpeta">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Amosar toles carpetes de marcadores">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Anubrir">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etiquetes:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "t">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Separta les etiquetes con comes">
+<!ENTITY editBookmarkOverlay.description.label               "Descripción">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Pallabra clave:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "b">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Amosar toles etiquetes">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Cargar esti marcador na barra llateral">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "m">
+<!ENTITY editBookmarkOverlay.choose.label                    "Escoyer…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Carpeta nueva">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "n">

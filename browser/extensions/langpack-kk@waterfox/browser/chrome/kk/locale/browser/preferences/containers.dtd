@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Жаңа контейнерді қосу">
+<!ENTITY addButton.accesskey  "а">
+<!ENTITY preferencesButton.label "Баптаулар">
+<!ENTITY removeButton.label   "Өшіру">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Артқа">
+
+<!ENTITY window.title         "Жаңа контейнерді қосу">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Атауы:">
+<!ENTITY name.accesskey       "А">
+<!ENTITY name.placeholder     "Контейнер атауын енгізіңіз">
+<!ENTITY icon.label           "Таңбашасы:">
+<!ENTITY icon.accesskey       "Т">
+<!ENTITY color.label          "Түсі:">
+<!ENTITY color.accesskey      "с">
+<!ENTITY windowClose.key      "ж">
+
+<!ENTITY button.ok.label      "Дайын">
+<!ENTITY button.ok.accesskey  "Д">
+

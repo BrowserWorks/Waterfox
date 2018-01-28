@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY setPassword.title                 "ਮਾਸਟਰ ਪਾਸਵਰਡ ਦਿਓ">
+<!ENTITY setPassword.tokenName.label       "'ਸੁਰੱਖਿਆ ਡਿਵਾਈਸ">
+<!ENTITY setPassword.oldPassword.label     "ਮੌਜੂਦਾ ਪਾਸਵਰਡ:">
+<!ENTITY setPassword.newPassword.label     "ਨਵਾਂ ਪਾਸਵਰਡ ਦਿਓ:">
+<!ENTITY setPassword.reenterPassword.label "ਨਵਾਂ ਪਾਸਵਰਡ ਮੁੜ ਦਿਓ:">
+<!ENTITY setPassword.meter.label           "ਪਾਸਵਰਡ ਕੁਆਲਟੀ ਮੀਟਰ">
+<!ENTITY setPassword.meter.loading         "ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ">
+<!ENTITY masterPasswordDescription.label   "ਮਾਸਟਰ ਪਾਸਵਰਡ ਸੰਵੇਦਨਸ਼ੀਲ ਜਾਣਕਾਰੀ, ਜਿਵੇਂ ਕਿ ਸਾਇਟ ਪਾਸਵਰਡ ਆਦਿ ਨੂੰ ਸੰਭਾਲਣ ਲਈ ਵਰਤਿਆ ਜਾਦਾ ਹੈ। ਜੇਕਰ ਤੁਸੀਂ ਮਾਸਟਰ ਪਾਸਵਰਡ ਬਣਾਇਆ ਤਾਂ ਤੁਹਾਨੂੰ ਹਰੇਕ ਸ਼ੈਸ਼ਨ ਵਿੱਚ ਇੱਕ ਵਾਰ ਇਹ ਭਰਨ ਲਈ ਕਿਹਾ ਜਾਵੇਗਾ, ਜਦੋਂ &brandShortName; ਪਾਸਵਰਡ ਨਾਲ ਸੁਰੱਖਿਅਤ ਜਾਣਕਾਰੀ ਪ੍ਰਾਪਤ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ ਕਰੇਗਾ।">
+<!ENTITY masterPasswordWarning.label       "ਇਹ ਯਕੀਨੀ ਬਣਾਉ ਕਿ ਤੁਹਾਨੂੰ ਆਪਣਾ ਮਾਸਟਰ ਪਾਸਵਰਡ ਯਾਦ ਹੈ। ਜੇਕਰ ਤੁਸੀਂ ਇਸ ਨੂੰ ਭੁੱਲ ਗਏ ਤਾਂ ਤੁਸੀਂ ਇਸ ਨਾਲ ਸੁਰੱਖਿਅਤ ਜਾਣਕਾਰੀ ਨੂੰ ਕਦੇ ਵੀ ਪ੍ਰਾਪਤ ਜਾਂ ਤਬਦੀਲ ਨਹੀਂ ਕਰ ਸਕਦੇ ਹੋ।">

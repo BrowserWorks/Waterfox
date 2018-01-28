@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle "Informazioni su url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle "Fornitore">
+<!ENTITY aboutUrlClassifier.provider "Fornitore">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime "Ultimo aggiornamento">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime "Prossimo aggiornamento">
+<!ENTITY aboutUrlClassifier.providerBackOffTime "Tempo di back-off">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus "Stato aggiornamento">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn "Aggiorna">
+<!ENTITY aboutUrlClassifier.cacheTitle "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn "Aggiorna">
+<!ENTITY aboutUrlClassifier.cacheClearBtn "Svuota">
+<!ENTITY aboutUrlClassifier.cacheTableName "Nome tabella">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries "Numero di elementi in cache negativa">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries "Numero di elementi in cache positiva">
+<!ENTITY aboutUrlClassifier.cacheShowEntries "Mostra elementi">
+<!ENTITY aboutUrlClassifier.cacheEntries "Elementi cache">
+<!ENTITY aboutUrlClassifier.cachePrefix "Prefisso">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry "Scadenza cache negativa">
+<!ENTITY aboutUrlClassifier.cacheFullhash "Hash completo">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry "Scadenza cache positiva">
+<!ENTITY aboutUrlClassifier.debugTitle "Debug">
+<!ENTITY aboutUrlClassifier.debugModuleBtn "Imposta moduli di log">
+<!ENTITY aboutUrlClassifier.debugFileBtn "Imposta file di log">
+<!ENTITY aboutUrlClassifier.debugJSLogChk "Imposta JS Log">
+<!ENTITY aboutUrlClassifier.debugSBModules "Imposta moduli di log per Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugModules "Moduli di log correnti">
+<!ENTITY aboutUrlClassifier.debugSBJSModules "Safe Browsing JS log">
+<!ENTITY aboutUrlClassifier.debugFile "File di log corrente">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "துணை நிரலை நிறுவு">
+<!ENTITY intro           "உங்கள் கணினியிலுள்ள மற்றொரு நிரல் &brandShortName; ஐ பின்வரும் துணை நிரலைக் கொண்டு மாற்றியமைக்க விரும்புகிறது:">
+<!ENTITY warning         "நீங்கள் நம்பும் உருவாக்குநர்களிடமிருந்து பெறும் துணை நிரல்களை மட்டும் நிறுவவும்.">
+<!ENTITY allow           "இந்த நிறுவலையை அனுமதி">
+<!ENTITY later           "எப்போது விரும்பினாலும் நீங்கள் துணை நிரல்கள் மேலாளருக்குச் சென்று உங்கள் முடிவை மாற்றிக்கொள்ளலாம்.">
+<!ENTITY continue        "தொடரவும்">
+<!ENTITY restartMessage  "இந்த துணை நிரலின் நிறுவலை நிறைவு செய்ய நீங்கள் &brandShortName; ஐ மறுதுவக்கியாக வேண்டும்.">
+<!ENTITY restartButton   "&brandShortName; ஐ மறுதுவக்கு">
+<!ENTITY cancelButton    "விடு">

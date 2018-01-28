@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key        "m">
+<!ENTITY minimizeWindow.label      "Pienennä ikkuna">
+<!ENTITY bringAllToFront.label     "Näytä kaikki">
+<!ENTITY zoomWindow.label          "Suurenna ikkunaa">
+<!ENTITY windowMenu.label          "Ikkuna">
+
+<!ENTITY helpMenu.label            "Ohje">
+<!ENTITY helpMenu.accesskey        "O">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label         "Ohje">
+<!ENTITY helpMenuWin.accesskey     "O">
+<!ENTITY aboutProduct2.label      "Tietoja &brandShorterName;ista">
+<!ENTITY aboutProduct2.accesskey  "T">
+<!ENTITY productHelp2.label       "&brandShorterName;in ohje">
+<!ENTITY productHelp2.accesskey   "o">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Näppäinkomennot">
+<!ENTITY helpKeyboardShortcuts.accesskey "N">
+
+<!ENTITY helpSafeMode.label       "Käynnistä uudelleen ilman lisäosia…">
+<!ENTITY helpSafeMode.accesskey   "K">
+<!ENTITY helpSafeMode.stop.label       "Käynnistä uudelleen lisäosat päällä">
+<!ENTITY helpSafeMode.stop.accesskey   "K">
+
+<!ENTITY healthReport2.label      "&brandShorterName;in terveydentilaraportti">
+<!ENTITY healthReport2.accesskey  "r">
+
+<!ENTITY helpTroubleshootingInfo.label      "Tietoja ongelmatilanteisiin">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "Anna palautetta…">
+<!ENTITY helpFeedbackPage.accesskey  "A">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName;in esittely">
+<!ENTITY helpShowTour2.accesskey        "e">
+
+<!ENTITY preferencesCmdMac.label        "Asetukset…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Palvelut">
+
+<!ENTITY hideThisAppCmdMac2.label       "Kätke &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Kätke muut">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Näytä kaikki">

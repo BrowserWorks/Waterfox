@@ -1,0 +1,141 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  trackingProtectionAlways.label       "Luôn luôn">
+<!ENTITY  trackingProtectionAlways.accesskey   "n">
+<!ENTITY  trackingProtectionPrivate.label      "Chỉ trong cửa sổ riêng tư">
+<!ENTITY  trackingProtectionPrivate.accesskey  "r">
+<!ENTITY  trackingProtectionNever.label        "Không bao giờ">
+<!ENTITY  trackingProtectionNever.accesskey    "K">
+
+<!ENTITY  trackingProtectionExceptions.label   "Ngoại lệ…">
+<!ENTITY  trackingProtectionExceptions.accesskey "g">
+
+<!ENTITY tracking.label                 "Theo dõi">
+<!ENTITY trackingProtectionPBM5.label         "Sử dụng cơ chế chống theo dõi trong cửa sổ riêng tư">
+<!ENTITY trackingProtectionPBM5.accesskey     "r">
+
+<!ENTITY changeBlockList.label          "Thay đổi danh sách chặn">
+<!ENTITY changeBlockList.accesskey      "T">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Bạn cũng có thể ">
+<!ENTITY  doNotTrack.settings.label     "quản lý các thiết lập không theo dõi của bạn">
+
+
+<!ENTITY  history.label                 "Lược sử">
+
+<!ENTITY  locationBar.label             "Thanh Địa Chỉ">
+
+<!ENTITY  locbar.history.label          "Lược sử">
+<!ENTITY  locbar.history.accesskey      "L">
+<!ENTITY  locbar.bookmarks.label        "Trang đánh dấu">
+<!ENTITY  locbar.bookmarks.accesskey    "d">
+<!ENTITY  locbar.openpage.label         "Thẻ đang mở">
+<!ENTITY  locbar.openpage.accesskey     "T">
+<!ENTITY  locbar.searches.label         "Tìm kiếm liên quan từ công cụ tìm kiếm mặc định">
+<!ENTITY  locbar.searches.accesskey     "a">
+
+
+<!ENTITY  acceptCookies.label           "Cho phép cookie từ các trang">
+<!ENTITY  acceptCookies.accesskey       "C">
+
+
+<!ENTITY  acceptThirdParty.always.label   "Luôn luôn">
+<!ENTITY  acceptThirdParty.never.label    "Không bao giờ">
+<!ENTITY  acceptThirdParty.visited.label  "Từ các trang đã truy cập">
+
+<!ENTITY  keepUntil.label               "Lưu cho tới khi:">
+<!ENTITY  keepUntil.accesskey           "k">
+
+<!ENTITY  expire.label                  "chúng hết hạn">
+<!ENTITY  close.label                   "tôi thoát &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Ngoại trừ…">
+<!ENTITY  cookieExceptions.accesskey    "N">
+
+<!ENTITY  showCookies.label             "Hiện Cookie…">
+<!ENTITY  showCookies.accesskey         "e">
+
+
+<!ENTITY  historyHeader.remember.label     "Ghi nhớ lược sử">
+<!ENTITY  historyHeader.dontremember.label "Không bao giờ ghi nhớ lược sử">
+<!ENTITY  historyHeader.custom.label       "Sử dụng thiết lập tùy biến cho lược sử">
+<!ENTITY  historyHeader.post.label         "Sử dụng thiết lập tùy biến cho lịch sử">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; sẽ ghi nhớ việc duyệt web, tải xuống, lược sử biểu mẫu và tìm kiếm, và giữ lại cookie của những trang Web mà bạn đã vào.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Bạn có thể sẽ muốn ">
+<!ENTITY  rememberActions.clearHistory.label  "xóa các lược sử gần đây của bạn">
+<!ENTITY  rememberActions.middle.label        ", hoặc ">
+<!ENTITY  rememberActions.removeCookies.label "xóa các cookie riêng lẻ">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; sẽ dùng thiết lập giống như chế độ duyệt web riêng tư, và sẽ không ghi nhớ lược sử khi bạn duyệt Web.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Bạn có thể cũng sẽ muốn ">
+<!ENTITY  dontrememberActions.clearHistory.label "xóa toàn bộ lược sử hiện tại">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Luôn luôn dùng chế độ duyệt web riêng tư">
+<!ENTITY  privateBrowsingPermanent2.accesskey "y">
+
+<!ENTITY  rememberHistory2.label      "Ghi nhớ lịch sử truy cập và tải về của tôi">
+<!ENTITY  rememberHistory2.accesskey  "n">
+
+<!ENTITY  rememberSearchForm.label       "Ghi nhớ lược sử biểu mẫu và tìm kiếm">
+<!ENTITY  rememberSearchForm.accesskey   "b">
+
+<!ENTITY  clearOnClose.label             "Xóa lược sử khi &brandShortName; đóng">
+<!ENTITY  clearOnClose.accesskey         "l">
+
+<!ENTITY  clearOnCloseSettings.label     "Thiết lập…">
+<!ENTITY  clearOnCloseSettings.accesskey "p">
+
+
+<!ENTITY  browserContainersEnabled.label        "Bật thẻ ngăn chứa">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY  browserContainersLearnMore.label      "Learn more">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; will">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  suggestionSettings2.label     "Change preferences for search engine suggestions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY  trackingProtectionHeader2.label      "Tracking Protection">
+<!ENTITY  trackingProtectionLearnMore.label    "Learn more">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">
+<!ENTITY trackingProtectionPBMLearnMore.label "Learn more">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Yiya Emva">
+<!ENTITY  button-back-mac.accesskey    "E">
+<!ENTITY  button-next-mac.label        "Qhuba">
+<!ENTITY  button-next-mac.accesskey    "Q">
+<!ENTITY  button-finish-mac.label      "Kwenziwe">
+<!ENTITY  button-cancel-mac.label      "Rhoxisa">
+
+<!ENTITY  button-back-unix.label       "Emva">
+<!ENTITY  button-back-unix.accesskey   "E">
+<!ENTITY  button-next-unix.label       "Okulandelayo">
+<!ENTITY  button-next-unix.accesskey   "O">
+<!ENTITY  button-finish-unix.label     "Gqiba">
+<!ENTITY  button-cancel-unix.label     "Rhoxisa">
+
+<!ENTITY  button-back-win.label        "&lt; Emva">
+<!ENTITY  button-back-win.accesskey    "E">
+<!ENTITY  button-next-win.label        "Okulandelayo &gt;">
+<!ENTITY  button-next-win.accesskey    "O">
+<!ENTITY  button-finish-win.label      "Gqiba">
+<!ENTITY  button-cancel-win.label      "Rhoxisa">

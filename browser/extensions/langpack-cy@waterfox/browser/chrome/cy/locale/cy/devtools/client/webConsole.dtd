@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "Consol Gwe">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Agor URL mewn Tab Newydd">
+<!ENTITY openURL.accesskey "T">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Gwe">
+<!ENTITY btnPageNet.tooltip "Cofnodi mynediad gwe">
+<!ENTITY btnPageNet.accesskey "G">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "m">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Cofnodi gwallau a rhybuddion CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Cofnodi eithriadau JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Diogelwch">
+<!ENTITY btnPageSecurity.tooltip "Cofnodi gwallau a rhybuddion diogelwch">
+<!ENTITY btnPageSecurity.accesskey "D">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "Cofnodi">
+<!ENTITY btnPageLogging.tooltip "Anfonwyd negeseuon cofnod at gwrthrych window.console">
+<!ENTITY btnPageLogging.accesskey3 "o">
+<!ENTITY btnConsoleErrors       "Gwallau">
+<!ENTITY btnConsoleInfo         "Gwybodaeth">
+<!ENTITY btnConsoleWarnings     "Rhybuddion">
+<!ENTITY btnConsoleLog          "Cofnod">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Eil-lifau">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "Gweinydd">
+<!ENTITY btnServerLogging.tooltip     "Cofnodi negeseuon derbyniwyd gan y gweinydd gwe">
+<!ENTITY btnServerLogging.accesskey   "G">
+<!ENTITY btnServerErrors              "Gwallau">
+<!ENTITY btnServerInfo                "Gwybodaeth">
+<!ENTITY btnServerWarnings            "Rhybuddion">
+<!ENTITY btnServerLog                 "Cofnod">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Ychwanegyn neu Chrome Workers">
+
+<!ENTITY filterOutput.placeholder "Allbwn hidl">
+<!ENTITY btnClear.label        "Clirio">
+<!ENTITY btnClear.tooltip      "Clirio allbwn y Consol Gwe">
+<!ENTITY btnClear.accesskey    "l">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Copïo Lleoliad Dolen">
+<!ENTITY copyURLCmd.accesskey "C">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Agor yn Ngolwg Newidiolion">
+<!ENTITY openInVarViewCmd.accesskey "N">
+<!ENTITY storeAsGlobalVar.label "Cadw fel amrywiolyn eang">
+<!ENTITY storeAsGlobalVar.accesskey "C">

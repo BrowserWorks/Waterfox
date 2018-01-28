@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "ಆರಂಭಿಕ">
+
+<!ENTITY startupPage.label         "&brandShortName;ವು ಆರಂಭಗೊಂಡಾಗ:">
+<!ENTITY startupPage.accesskey     "s">
+<!ENTITY startupUserHomePage.label "ನನ್ನ ನೆಲೆ ತಾಣವನ್ನು ತೋರಿಸು">
+<!ENTITY startupBlankPage.label    "ಒಂದು ಖಾಲಿ ಪುಟವನ್ನು ತೋರಿಸು">
+<!ENTITY startupPrevSession.label  "ಹಿಂದಿನ ಬಾರಿಯ ನಿನ್ನ ಕಿಟಕಿ ಹಾಗು ಟ್ಯಾಬ್‌ಗಳನ್ನು ತೋರಿಸು">
+
+<!ENTITY homepage.label            "ನೆಲೆ ಪುಟ:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "ಈಗಿನ ಪುಟವನ್ನು ಬಳಸು">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "ಈಗಿನ ಪುಟಗಳನ್ನು ಬಳಸು ">
+<!ENTITY chooseBookmark.label      "ಪುಟಗುರುತನ್ನು ಬಳಸು…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "ಪೂರ್ವನಿಯೋಜಿತಕ್ಕೆ ಮರಳಿಸು">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "ಡೌನ್‍ಲೋಡ್‍ಗಳು">
+
+<!ENTITY saveTo.label "ಕಡತಗಳನ್ನು ಇಲ್ಲಿ ಉಳಿಸು">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ನೋಡು...">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "ಆರಿಸು...">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "ಎಲ್ಲಿ ಉಳಿಸಬೇಕೆಂದು ಪ್ರತಿ ಬಾರಿಯೂ ನನ್ನನ್ನು ಕೇಳು">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "ಯಾವಾಗಲೂ &brandShortName; ನಿಮ್ಮ ಪೂರ್ವನಿಯೋಜಿತ ವೀಕ್ಷಕವಾಗಿದೆಯೆ ಎಂದು ಪರೀಕ್ಷಿಸಿ">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "ಮಾಡು Default">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; ಎನ್ನುವುದು ಪ್ರಸ್ತುತ ನಿಮ್ಮ ಪೂರ್ವನಿಯೋಜಿತ ಜಾಲವೀಕ್ಷಕವಾಗಿದೆ">
+<!ENTITY isNotDefault.label               "&brandShortName; ಪ್ರಸ್ತುತ ನಿಮ್ಮ ಪೂರ್ವನಿಯೋಜಿತ ವೀಕ್ಷಕವಾಗಿಲ್ಲ">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; ಅನ್ನು ಮತ್ತು Waterfox ಅನ್ನು ಏಕಕಾಲಕ್ಕೆ ಚಲಾಯಿತಗೊಳ್ಳಲು ಅನುಮತಿಸಿ">
+<!ENTITY useWaterfoxSync.label             "ಸೂಚನೆ: ಇದು ಪ್ರತ್ಯೇಕ ಪ್ರೊಫೈಲ್‌ಗಳನ್ನು ಬಳಸುತ್ತದೆ. ಅವುಗಳ ನಡುವೆ ದತ್ತಾಂಶವನ್ನು ಹಂಚಿಕೊಳ್ಳಲು ಸಿಂಕ್ ಅನ್ನು ಬಳಸಿ.">
+
+
+
+<!ENTITY e10sEnabled.label                "ಹೆಚ್ಚು ಪ್ರಕ್ರಿಯೆಗಳ  &brandShortName; ಸಕ್ರಿಯಗೊಳಿಸು">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">

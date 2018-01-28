@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Mdel iccer-a">
+<!ENTITY tabCrashed.restoreTab "Err-d iccer-a">
+<!ENTITY tabCrashed.restoreAll "Err-d akk iccaren yeɣlin">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ihuh. Akken kan yeɣli yiccer-inek.">
+<!ENTITY tabCrashed.offerHelp "Nezmer ak-d-nefk afus!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Fren &tabCrashed.restoreTab; akken ad d-saliḍ agbur n usebter .">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Fren &tabCrashed.restoreTab; neɣ &tabCrashed.restoreAll; akken ad d-saliḍ agbur n usebter.">
+<!ENTITY tabCrashed.requestHelp "Aɣ-d-muddeḍ afus?">
+<!ENTITY tabCrashed.requestHelpMessage "Aneqqis n uɣelluy ad aɣ-d-ifek tallalt i wakken ad neg tawassna u daɣen ad nseggem &brandShortName;">
+<!ENTITY tabCrashed.requestReport "Azen iccer-a">
+<!ENTITY tabCrashed.sendReport2 "Azen aneqqis n uɣelluy n yiccer i tettwaliḍ akka tura">
+<!ENTITY tabCrashed.commentPlaceholder2 "Iwenniten ifrayanen (Iwenniten ad ten-walin akk yemdanen)">
+<!ENTITY tabCrashed.includeURL2 "Seddu aneqqis n uɣelluy deg tansa URL n usebter ">
+<!ENTITY tabCrashed.emailPlaceholder "Sekcem da tansa n yimayl-inek">
+<!ENTITY tabCrashed.emailMe "Azen i-yid imayl ticki yella ugar n telɣut">
+<!ENTITY tabCrashed.reportSent "Tuzneḍ-d yakan aneqqis n uɣelluy; tanemmirt-ik ɣef uttekki deg usnerni n &brandShortName;.">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Asuter n iccaren nugilal ">
+<!ENTITY tabCrashed.autoSubmit2 "Snifel ismentifen akken ad tazned ineqqisen s wudem awurman, ula d ineqqisen n uɣelluy n yiccaren n tɣimit-a neɣ tiɣimiyin d-itteddun">

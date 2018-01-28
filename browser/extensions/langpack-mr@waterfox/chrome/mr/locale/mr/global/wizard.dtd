@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "मागे जा">
+<!ENTITY  button-back-mac.accesskey    "B">
+<!ENTITY  button-next-mac.label        "सुरू ठेवा">
+<!ENTITY  button-next-mac.accesskey    "C">
+<!ENTITY  button-finish-mac.label      "समाप्त">
+<!ENTITY  button-cancel-mac.label      "रद्द करा">
+
+<!ENTITY  button-back-unix.label       "मागे">
+<!ENTITY  button-back-unix.accesskey   "B">
+<!ENTITY  button-next-unix.label       "पुढील">
+<!ENTITY  button-next-unix.accesskey   "N">
+<!ENTITY  button-finish-unix.label     "समाप्त">
+<!ENTITY  button-cancel-unix.label     "रद्द करा">
+
+<!ENTITY  button-back-win.label        "&lt; मागे">
+<!ENTITY  button-back-win.accesskey    "B">
+<!ENTITY  button-next-win.label        "पुढे &gt;">
+<!ENTITY  button-next-win.accesskey    "N">
+<!ENTITY  button-finish-win.label      "समाप्त">
+<!ENTITY  button-cancel-win.label      "रद्द करा">

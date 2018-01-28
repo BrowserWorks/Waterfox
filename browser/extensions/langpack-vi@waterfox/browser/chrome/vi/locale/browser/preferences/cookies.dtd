@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Những cookie sau đây được lưu trữ trên máy của bạn:">
+<!ENTITY     cookiename.label               "Tên Cookie">
+<!ENTITY     cookiedomain.label             "Trang">
+
+<!ENTITY     props.name.label               "Tên:">
+<!ENTITY     props.value.label              "Nội dung:">
+<!ENTITY     props.domain.label             "Máy chủ:">
+<!ENTITY     props.path.label               "Đường dẫn:">
+<!ENTITY     props.secure.label             "Gửi cho:">
+<!ENTITY     props.expires.label            "Hết hạn:">
+<!ENTITY     props.container.label          "Ngăn chứa:">
+
+<!ENTITY     window.title                   "Cookie">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Tìm kiếm">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "Đóng">
+<!ENTITY     button.close.accesskey         "g">

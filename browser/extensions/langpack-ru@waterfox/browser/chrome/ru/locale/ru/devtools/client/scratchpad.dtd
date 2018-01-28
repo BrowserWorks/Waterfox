@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY window.title                 "Простой редактор JavaScript">
+
+<!ENTITY fileMenu.label               "Файл">
+<!ENTITY fileMenu.accesskey           "Ф">
+
+<!ENTITY newWindowCmd.label           "Новое окно">
+<!ENTITY newWindowCmd.accesskey       "е">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Открыть файл…">
+<!ENTITY openFileCmd.accesskey        "к">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Открыть недавние">
+<!ENTITY openRecentMenu.accesskey     "ы">
+
+<!ENTITY revertCmd.label              "Откатить…">
+<!ENTITY revertCmd.accesskey          "и">
+
+<!ENTITY saveFileCmd.label            "Сохранить">
+<!ENTITY saveFileCmd.accesskey        "х">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Сохранить как…">
+<!ENTITY saveFileAsCmd.accesskey      "н">
+
+<!ENTITY closeCmd.label               "Закрыть">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "а">
+
+<!ENTITY viewMenu.label               "Вид">
+<!ENTITY viewMenu.accesskey           "и">
+
+<!ENTITY lineNumbers.label             "Показывать номера строк">
+<!ENTITY lineNumbers.accesskey         "о">
+
+<!ENTITY wordWrap.label                "Переносить текст">
+<!ENTITY wordWrap.accesskey            "е">
+
+<!ENTITY highlightTrailingSpace.label     "Подсвечивать пробелы после текста">
+<!ENTITY highlightTrailingSpace.accesskey "в">
+
+<!ENTITY largerFont.label             "Увеличить шрифт">
+<!ENTITY largerFont.accesskey         "л">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> <!-- + is above this key on many keyboards -->
+
+<!ENTITY smallerFont.label            "Уменьшить шрифт">
+<!ENTITY smallerFont.accesskey        "м">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "Обычный размер">
+<!ENTITY normalSize.accesskey         "ы">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Правка">
+<!ENTITY editMenu.accesskey           "р">
+
+<!ENTITY run.label                    "Запустить">
+<!ENTITY run.accesskey                "у">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "Исследовать">
+<!ENTITY inspect.accesskey            "л">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Отобразить">
+<!ENTITY display.accesskey            "з">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Красивая печать">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "я">
+
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+<!ENTITY environmentMenu.label        "Окружение">
+<!ENTITY environmentMenu.accesskey    "н">
+
+
+<!ENTITY contentContext.label         "Содержимое">
+<!ENTITY contentContext.accesskey     "ж">
+
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+<!ENTITY browserContext.label         "Браузер">
+<!ENTITY browserContext.accesskey     "у">
+
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+<!ENTITY helpMenu.label               "Справка">
+<!ENTITY helpMenu.accesskey           "в">
+<!ENTITY helpMenuWin.label            "Справка">
+<!ENTITY helpMenuWin.accesskey        "в">
+
+<!ENTITY documentationLink.label      "Справка по редактору на MDN">
+<!ENTITY documentationLink.accesskey  "D">
+
+
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+<!ENTITY resetContext2.label          "Сбросить переменные">
+<!ENTITY resetContext2.accesskey      "м">
+
+<!ENTITY reloadAndRun.label           "Перезагрузить и запустить">
+<!ENTITY reloadAndRun.accesskey       "г">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Выполнить">
+<!ENTITY executeMenu.accesskey        "п">
+
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+<!ENTITY errorConsoleCmd.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+<!ENTITY evalFunction.label "Выполнить текущую функцию">
+<!ENTITY evalFunction.accesskey "о">
+<!ENTITY evalFunction.key "e">

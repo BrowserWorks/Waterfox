@@ -1,0 +1,13 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+narrate = Leggi ad alta voce
+back = Indietro
+start = Avvia
+stop = Interrompi
+forward = Avanti
+speed = Velocità
+selectvoicelabel = Voce:
+defaultvoice = Predefinita
+voiceLabel = %S (%S)

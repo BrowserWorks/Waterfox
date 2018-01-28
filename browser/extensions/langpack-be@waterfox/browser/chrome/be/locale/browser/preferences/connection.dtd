@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Параметры злучэння">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Наладка проксі дзеля доступу ў Інтэрнэт">
+<!ENTITY  noProxyTypeRadio.label        "Без проксі">
+<!ENTITY  noProxyTypeRadio.accesskey    "з">
+<!ENTITY  systemTypeRadio.label         "Ужываць сістэмныя налады проксі">
+<!ENTITY  systemTypeRadio.accesskey     "У">
+<!ENTITY  WPADTypeRadio.label           "Самавызначэнне налад проксі для гэтай сеткі">
+<!ENTITY  WPADTypeRadio.accesskey       "с">
+<!ENTITY  manualTypeRadio.label         "Ручная наладка проксі:">
+<!ENTITY  manualTypeRadio.accesskey     "Р">
+<!ENTITY  autoTypeRadio.label           "URL аўтаматычнай наладкі проксі:">
+<!ENTITY  autoTypeRadio.accesskey       "с">
+<!ENTITY  reload.label                  "Абнавіць">
+<!ENTITY  reload.accesskey              "А">
+<!ENTITY  ftp.label                     "FTP проксі:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP проксі:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL проксі:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "Трымальнік SOCKS:">
+<!ENTITY  socks.accesskey               "S">
+<!ENTITY  socks4.label                  "SOCKS в4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS в5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "Праксіраваць DNS-запыты пры выкарыстанні SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "з">
+<!ENTITY  port.label                    "Порт:">
+<!ENTITY  HTTPport.accesskey            "п">
+<!ENTITY  SSLport.accesskey             "о">
+<!ENTITY  FTPport.accesskey             "р">
+<!ENTITY  SOCKSport.accesskey           "т">
+<!ENTITY  noproxy.label                 "Без проксі для:">
+<!ENTITY  noproxy.accesskey             "Б">
+<!ENTITY  noproxyExplain.label          "Прыклад: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Ужываць адзін проксі для ўсіх пратаколаў">
+<!ENTITY  shareproxy.accesskey          "ў">
+<!ENTITY  autologinproxy.label          "Не запытваць апазнаванне, калі ёсць захаваны пароль">
+<!ENTITY  autologinproxy.accesskey      "Н">
+<!ENTITY  autologinproxy.tooltip        "Гэтая налада без запытаў выконвае апазнаванне вас на проксі, калі вы маеце захаваныя для іх уліковыя запісы. Запыт адбудзецца толькі падчас няўдачы апазнавання.">

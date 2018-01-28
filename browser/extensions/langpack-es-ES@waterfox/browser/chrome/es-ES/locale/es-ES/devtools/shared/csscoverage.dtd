@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY csscoverage.backButton "Atrás">
+<!ENTITY csscoverage.unused "Reglas no usadas">
+<!ENTITY csscoverage.noMatches "No hay coincidencias para las siguientes reglas:">
+<!ENTITY csscoverage.optimize.header "Páginas optimizables">
+<!ENTITY csscoverage.optimize.body1 "A veces puede optimizar la carga moviendo las etiquetas">
+<!ENTITY csscoverage.optimize.body2 "a la parte inferior de la página y creando un nuevo elemento">
+<!ENTITY csscoverage.optimize.body3 "en línea con los estilos necesarios antes del evento ’load’ en la parte superior. Aquí están los bloques de estilos que necesita:">
+<!ENTITY csscoverage.optimize.bodyX "Todas las reglas son en línea.">
+<!ENTITY csscoverage.footer1 "Vea">
+<!ENTITY csscoverage.footer2a "https://developer.mozilla.org/docs/Tools/CSS_Coverage">
+<!ENTITY csscoverage.footer3 "el artículo en MDN sobre la herramienta de cobertura CSS">
+<!ENTITY csscoverage.footer4 "para conocer advertencias en la creación de este informe.">

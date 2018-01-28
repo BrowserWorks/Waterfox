@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "ক্র্যাশ রিপোর্ট">
+<!ENTITY crashesUnsubmitted.label   "জমা না দেয়া ক্র্যাশ প্রতিবেদনসমূহ">
+<!ENTITY crashesSubmitted.label     "জমা দেয়া ক্র্যাশ প্রতিবেদনসমূহ">
+<!ENTITY id.heading                 "প্রতিবেদন আইডি">
+<!ENTITY dateCrashed.heading        "ক্র‍্যাশের তারিখ">
+<!ENTITY dateSubmitted.heading      "জমা দেয়ার তারিখ">
+<!ENTITY noReports.label            "কোনো ক্র্যাশ প্রতিবেদন জমা দেয়া হয়নি।">
+<!ENTITY noConfig.label             "এই অ্যাপ্লিকেশনটি ক্র্যাশ প্রতিবেদন দেখানোর জন্য কনফিগার করা হয়নি। <code>breakpad.reportURL</code> নির্ধারণ করা আবশ্যক।">
+<!ENTITY clearAllReports.label      "সব প্রতিবেদন অপসারণ">

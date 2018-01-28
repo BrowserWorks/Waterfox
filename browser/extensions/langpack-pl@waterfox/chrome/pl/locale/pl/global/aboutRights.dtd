@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "O prawach użytkownika">
+<!ENTITY rights.intro "&brandFullName; to wolne oprogramowanie o otwartym kodzie źródłowym (open source), stworzone przez społeczność tysięcy ludzi z całego świata. Jest kilka zagadnień związanych z tym programem, o których należy wiedzieć:">
+
+<!ENTITY rights.intro-point1a "Program &brandShortName; został udostępniony użytkownikowi na warunkach licencji ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Oznacza to, że użytkownik ma prawo używać, kopiować i rozpowszechniać program &brandShortName;. Może on też modyfikować kod źródłowy programu &brandShortName;, by dostosować go do swoich potrzeb. Licencja MPL (Mozilla Public License) daje użytkownikowi także prawo do rozpowszechniania zmodyfikowanych wersji.">
+
+<!ENTITY rights.intro-point2-a "Nie otrzymujesz żadnych licencji ani praw do znaków towarowych Waterfox i innych podmiotów, w tym w szczególności do nazwy i logotypu Waterfox. Więcej informacji na ten temat znajdziesz ">
+<!ENTITY rights.intro-point2-b "tutaj">
+<!ENTITY rights.intro-point2-c ".">
+
+<!ENTITY rights.intro-point2.5 "Niektóre funkcje programu &brandShortName;, takie jak zgłaszanie awarii, umożliwiają przesyłanie opinii do dostawcy oprogramowania (&vendorShortName;). Przesyłając takie opinie, wyrażasz zgodę na używanie przez dostawcę oprogramowania (&vendorShortName;) przesłanych opinii do celów ulepszenia jego produktów, publikowania tych opinii na stronach internetowych i do ich rozpowszechniania.">
+
+<!ENTITY rights2.intro-point3a "Informacje o tym, jak wykorzystujemy dane osobiste i opinie przesłane do dostawcy oprogramowania (&vendorShortName;) przez program &brandShortName; zostały przedstawione w ">
+<!ENTITY rights2.intro-point3b "zasadach ochrony prywatności programu &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!ENTITY rights2.intro-point4a "Niektóre funkcje programu &brandShortName; umożliwiają korzystanie z internetowych usług informacyjnych, jednakże nie możemy zagwarantować ich stuprocentowej dokładności ani bezbłędności. Szczegółowe informacje, w tym opis wyłączenia tych usług, można znaleźć w ">
+<!ENTITY rights.intro-point4b "warunkach korzystania z tych usług">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.intro-point4a-unbranded "Jeśli ten produkt zawiera usługi WWW, odnośniki do wszelkich warunków korzystania z nich powinny znajdować się w sekcji ">
+<!ENTITY rights.intro-point4b-unbranded "Usługi WWW">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights.intro-point3-unbranded "W tym miejscu powinny być wypisane wszelkie zbiory zasad ochrony prywatności związane z tym produktem.">
+
+<!ENTITY rights2.webservices-header "Usługi informacyjne WWW programu &brandFullName;">
+
+<!ENTITY rights.intro-point5 "Aby odtwarzać niektóre treści wideo, &brandShortName; pobiera pewne moduły deszyfrowania treści od zewnętrznych podmiotów.">
+
+<!ENTITY rights2.webservices-a "W tej wersji program &brandFullName; wykorzystuje niektóre usługi informacyjne WWW, zwane dalej „usługami” i udostępnia je na zasadach przedstawionych poniżej. Jeśli nie chcesz korzystać z tych usług lub nie akceptujesz poniższych zasad, możesz wyłączyć daną funkcję lub usługę. Instrukcje, jak wyłączyć konkretną funkcję lub usługę znajdują się ">
+<!ENTITY rights2.webservices-b "tutaj">
+<!ENTITY rights3.webservices-c ". Inne funkcje i usługi można wyłączyć w preferencjach programu.">
+
+<!ENTITY rights.safebrowsing-a "Usługa „Bezpieczne przeglądanie”: ">
+<!ENTITY rights.safebrowsing-b "Nie zaleca się wyłączania funkcji „Bezpieczne przeglądanie”, ponieważ wówczas podczas próby otworzenia niebezpiecznej witryny nie będzie emitowane stosowne ostrzeżenie. Aby wyłączyć tę funkcję całkowicie:">
+<!ENTITY rights.safebrowsing-term1 "Otwórz opcje programu">
+<!ENTITY rights.safebrowsing-term2 "Przejdź do panelu Bezpieczeństwo">
+<!ENTITY rights2.safebrowsing-term3 "Odznacz opcję „&enableSafeBrowsing.label;”">
+<!ENTITY rights.safebrowsing-term4 "Funkcja „Bezpieczne przeglądanie” zostanie wówczas wyłączona">
+
+<!ENTITY rights.locationawarebrowsing-a "Udostępnianie witrynom położenia użytkownika: ">
+<!ENTITY rights.locationawarebrowsing-b "Ta funkcja przesyła dane tylko za zgodą użytkownika. Bez wyrażenia zgody żadne informacje geolokalizacyjne nie są przesyłane. Aby całkowicie wyłączyć tę funkcję:">
+<!ENTITY rights.locationawarebrowsing-term1a "W pasku adresu wprowadź: ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "W polu filtru wpisz: „geo.enabled”">
+<!ENTITY rights.locationawarebrowsing-term3 "Kliknij dwukrotnie opcję „geo.enabled”">
+<!ENTITY rights.locationawarebrowsing-term4 "Udostępnianie położenia geograficznego zostanie wyłączone">
+
+<!ENTITY rights.webservices-unbranded "W tym miejscu powinien znaleźć się opis usług WWW powiązanych z tym produktem, wraz z instrukcją ich wyłączenia, o ile jest potrzebna.">
+
+<!ENTITY rights.webservices-term1-unbranded "W tym miejscu powinny zostać wymienione wszelkie mające zastosowanie dla tego produktu zasady korzystania z usług.">
+
+<!ENTITY rights2.webservices-term1 "Dostawca oprogramowania (&vendorShortName;) i jego współpracownicy, licencjodawcy i partnerzy pracują, by dostarczyć najwłaściwszych i najbardziej aktualnych usług. Jednakże nie możemy zagwarantować, że udostępnione przez te usługi informacje będą bezbłędne i kompletne. Na przykład, niektóre niebezpieczne witryny mogą nie zostać zidentyfikowane przez funkcję „Bezpieczne przeglądanie”, a niektóre bezpieczne strony mogą być przez nią błędnie oznaczone jako niebezpieczne. Ponadto położenia geolokalizacyjne wyznaczone przez naszych dostawców usług są tylko szacunkowe – ani my, ani nasi dostawcy usług nie jesteśmy w stanie zagwarantować dokładności dostarczonych danych lokalizacyjnych.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; może przerwać lub zmienić funkcjonowanie usług według własnego uznania.">
+<!ENTITY rights2.webservices-term3 "Możesz korzystać z tych usług za pomocą wersji programu &brandShortName;, w której zostały one zaimplementowane i masz wszelkie niezbędne do tego prawa. &vendorShortName; i licencjodawcy zastrzegają sobie wszelkie inne prawa związane z usługami. Zasady te nie mają na celu ograniczenia żadnych praw gwarantowanych w ramach licencji dla oprogramowania o otwartym kodzie źródłowym mających zastosowanie do programu &brandShortName;, jak i analogicznych wersji jego kodu źródłowego.">
+<!ENTITY rights.webservices-term4 "Usługi dostarczane są w stanie, „w jakim są”. &vendorShortName;, współpracownicy, licencjodawcy i dystrybutorzy nie udzielają żadnych gwarancji, zarówno wyraźnych, jak i domniemanych, że usługi te spełniają twoje oczekiwania. Ponosisz zatem całkowite ryzyko w kwestii wyboru usług odpowiednich dla twoich celów, jak też w kwestii ich jakości i wydajności. Niektóre systemy prawne nie zezwalają na takie wyłączenie lub ograniczenie domniemanych gwarancji, tak więc to zaprzeczenie może nie obowiązywać.">
+<!ENTITY rights.webservices-term5 "Z wyjątkiem wymogów prawnych, &vendorShortName;, współpracownicy, licencjodawcy ani dystrybutorzy nie ponoszą odpowiedzialności za żadne szkody - pośrednie, wyjątkowe, przypadkowe, będące skutkiem czegoś, karne, moralne, czy wyjątkowe szkody wynikłe z lub w jakikolwiek sposób powiązane z korzystaniem z programu &brandShortName; i usług. Zgodnie z tymi zasadami łączna odpowiedzialność nie może przekroczyć wartości 500 (pięciuset) dolarów amerykańskich. Niektóre systemy prawne nie zezwalają na takie wyłączenie lub ograniczenie niektórych szkód, tak więc to wyłączenie i ograniczenie może nie obowiązywać.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; może co jakiś czas aktualizować niniejsze warunki. Warunki te nie mogą być zmieniane ani anulowane, o ile &vendorShortName; nie wyrazi pisemnej zgody.">
+<!ENTITY rights.webservices-term7 "Niniejsze warunki powinny być rozpatrywane zgodnie z prawem stanu Kalifornia (Stany Zjednoczone Ameryki), z wyłączeniem konfliktu postanowień prawnych. Jeśli jakakolwiek część niniejszych warunków zostanie uznana za nieprawidłową lub niewykonalną, pozostałe części pozostaną w mocy. W przypadku różnic między przetłumaczoną wersją niniejszych warunków a oryginalną angielską wersją językową, obowiązujące są postanowienia angielskiej wersji językowej.">

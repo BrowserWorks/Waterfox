@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Hjálpaðu mér héðan út!">
+<!ENTITY safeb.palm.decline.label "Hunsa aðvörun">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Þetta er ekki svindlsvæði…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "Af hverju var lokað á þessa síðu?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "Tilkynnt árásarsíða!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Vefsíðan á <span id='malware_sitename'/> hefur verið tilkynnt sem árásarsíða og lokað var á síðuna vegna öryggisstillinga.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Árásarsíður reyna að setja inn forrit sem stela persónulegum gögnum, nota tölvuna þína til að gera árásir á aðra, eða eyðileggja tölvuna.</p><p>Sumar síður breiða út hættulegan hugbúnað af ásettu ráði, en mörg þeirra hafa verið yfirtekin án vitneskju eða leyfi eiganda þeirra.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Tilkynna óæskilegan hugbúnað!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Tilkynnt hefur verið að vefsíðan á <span id='unwanted_sitename'/> hefur innihaldi óæskilegan hugbúnað og lokað var á síðuna vegna öryggisstillinga.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Síður sem innihalda óæskilegan hugbúnað reyna að setja inn hugbúnað sem getur verið villandi og haft áhrif á tölvuna þína á ýmsa vegu.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Svindlsvæði!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Tilkynnt hefur verið að síðan <span id='phishing_sitename'/> sé svindlsíða og lokað var á síðuna vegna öryggisstillinga.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Svindlsvæði eru gerð til að plata þig í að gera eitthvað varhugavert, eins og setja inn hugbúnað, eða opinbera persónulegar upplýsingar, eins og lykilorð, símanúmer eða kortanúmer.</p><p>Ef þú slærð inn einhverjar upplýsingar á þetta vefsvæði gæti það leitt til þess að auðkenni þínu væri stolið eða annað svindl.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

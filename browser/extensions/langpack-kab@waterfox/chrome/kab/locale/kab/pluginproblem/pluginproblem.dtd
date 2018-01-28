@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Asmel-agi iseqdac izegrar izemren ad saẓayen &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Sit d-agi akken ad tremded azegrir.">
+<!ENTITY clickToActivatePlugin                               "Rmed azegrir.">
+<!ENTITY checkForUpdates                                     "Senqed ileqman…">
+<!ENTITY blockedPlugin.label                                 "Azegrir-agi amernan ad ittusewḥel i ummesten-inek.">
+<!ENTITY hidePluginBtn.label                                 "Ffer azegrir-agi">
+<!ENTITY managePlugins                                       "Sefrek izegrar imernan…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Smiren asebter">
+<!ENTITY reloadPlugin.post                                   " i weɛraḍ tikelt nniḍen.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Azen aneqqis n uɣelluy">
+<!ENTITY report.submitting                                   "Tuzzna n ussaɣ…">
+<!ENTITY report.submitted                                    "Aneqqis n uɣelluy yettwazen.">
+<!ENTITY report.disabled                                     "Aneqqis n uɣelluy ireremed.">
+<!ENTITY report.failed                                       "Tuzzna ur tiddi ara.">
+<!ENTITY report.unavailable                                  "Ulac aneqqis.">
+<!ENTITY report.comment                                      "Rnu awennit (Iwenniten aten-walin akk yemdanen)">
+<!ENTITY report.pageURL                                      "Seddu URL n usebter">
+
+<!ENTITY plugin.file                                         "Afaylu">
+<!ENTITY plugin.mimeTypes                                    "Tiwsiyin MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Rmed askar amestan n Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Sewḥel yir agbur neɣ flac iweɛṛen">

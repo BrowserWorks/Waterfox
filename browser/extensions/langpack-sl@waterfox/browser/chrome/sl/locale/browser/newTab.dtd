@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Nov zavihek">
+<!ENTITY newtab.customize.classic "Prikaži glavne strani">
+<!ENTITY newtab.customize.cog.enhanced "Vključi predlagane strani">
+<!ENTITY newtab.customize.cog.title2 "NASTAVITVE NOVEGA ZAVIHKA">
+<!ENTITY newtab.customize.cog.learn "Več o novem zavihku">
+<!ENTITY newtab.customize.title "Prilagodite stran novega zavihka">
+<!ENTITY newtab.customize.blank2 "Prikaži prazno stran">
+<!ENTITY newtab.undo.removedLabel "Sličica odstranjena.">
+<!ENTITY newtab.undo.undoButton "Razveljavi.">
+<!ENTITY newtab.undo.restoreButton "Obnovi vse.">
+<!ENTITY newtab.undo.closeTooltip "Skrij">

@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Iwdi: ">
+
+<!ENTITY fileMenu.label "Fiilde">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "Danndu Hello e Innde…">
+<!ENTITY savePageCmd.accesskey "I">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Teeltagol Hello…">
+<!ENTITY pageSetupCmd.accesskey "o">
+<!ENTITY printPreviewCmd.label "Jiytindagol Winndito">
+<!ENTITY printPreviewCmd.accesskey "n">
+<!ENTITY printCmd.label "Winndito…">
+<!ENTITY printCmd.accesskey "W">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Uddu">
+<!ENTITY closeCmd.accesskey "U">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Yah to Gorol…">
+<!ENTITY goToLineCmd.accesskey "Y">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Hollir">
+<!ENTITY viewMenu.accesskey       "H">
+<!ENTITY reloadCmd.label "Hesɗitin">
+<!ENTITY reloadCmd.accesskey "H">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Dottu Gori Juutɗi"> 
+<!ENTITY menu_wrapLongLines.accesskey "D">
+<!ENTITY menu_highlightSyntax.label "Jalbingol Lelngo Konngi">
+<!ENTITY menu_highlightSyntax.accesskey "L">
+<!ENTITY menu_textSize.label "Ɓetol Binndol">
+<!ENTITY menu_textSize.accesskey "B">
+<!ENTITY menu_textEnlarge.label "Ɓeydu">
+<!ENTITY menu_textEnlarge.accesskey "Ɓ">
+<!ENTITY menu_textReduce.label "Ustu">
+<!ENTITY menu_textReduce.accesskey "U">
+<!ENTITY menu_textReset.label "Potɗum">
+<!ENTITY menu_textReset.accesskey "P">
+
+<!ENTITY findOnCmd.label     "Yiylo e Ngoo Hello…">
+<!ENTITY findOnCmd.accesskey "Y">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Yiylo Kadi">
+<!ENTITY findAgainCmd.accesskey "d">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Caggal">
+<!ENTITY backCmd.accesskey "C">
+<!ENTITY forwardCmd.label "Yeeso">
+<!ENTITY forwardCmd.accesskey "Y">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Natto Nokkuure Jokkol">
+<!ENTITY copyLinkCmd.accesskey "J">
+<!ENTITY copyEmailCmd.label "Natto Ñiiɓirde Iimeel">
+<!ENTITY copyEmailCmd.accesskey "I">

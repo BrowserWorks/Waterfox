@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "रंग">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "अपने उपरोक्त चयन के साथ पृष्ठ द्वारा निर्दिष्ट रंगों को अधिरोहित करें:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "हमेशा">
+<!ENTITY  overrideDefaultPageColors.auto.label   "केवल उच्च विरोधी प्रसंग">
+<!ENTITY  overrideDefaultPageColors.never.label  "कभी न ">
+
+<!ENTITY  color                           "पाठ व पृष्ठभूमि">
+<!ENTITY  textColor.label                 "पाठ:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "पृष्ठभूमि:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "सिस्टम रंग का प्रयोग करें">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "रेखांकित कड़ी">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "रंग कड़ीबद्ध करें">
+<!ENTITY  linkColor.label                 "अनदेखी कड़ियाँ:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "देखी कड़ियाँ:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

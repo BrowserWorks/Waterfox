@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Postavke - Podaci stranice">
+<!ENTITY     hostCol.label                 "Stranica">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Spremište">
+<!ENTITY     searchTextboxPlaceHolder             "Pretraži web stranice">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Ukloni izabrano">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Spasi promjene">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Otkaži">
+<!ENTITY     cancel.accesskey              "O">
+<!ENTITY     removingDialog.title          "Uklanjam podatke stranice">
+<!ENTITY     removingSelected.description  "Uklanjanje podataka stranice će također ukloniti i pripadajuće im kolačiće. Ovo vas može odjaviti sa stranica. Da li ste sigurni da želite načiniti promjene?">
+<!ENTITY     siteTree.label                "Sljedeći web kolačići će biti uklonjeni:">

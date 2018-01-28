@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Haklarınız Hakkında">
+<!ENTITY rights.intro "&brandFullName;, dünya çapındaki binlerce kişiden oluşan bir topluluk tarafından geliştirilen özgür ve açık kaynaklı bir yazılımdır. Bilmeniz gereken birkaç şey var:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; ">
+<!ENTITY rights.intro-point1b "Mozilla Kamu Lisansı">
+<!ENTITY rights.intro-point1c " altında dağıtılmaktadır. Yani &brandShortName; serbestçe kullanılabilir, kopyalanabilir ve başkalarına dağıtılabilir. Ayrıca ihtiyaçlarınıza göre &brandShortName; kaynak kodlarını değiştirmekte de özgürsünüz. Mozilla Kamu Lisansı, değiştirdiğiniz sürümleri dağıtma hakkını da size vermektedir.">
+
+<!ENTITY rights.intro-point2-a "Mozilla Vakfı veya başka bir kurumun herhangi bir ticari markasını veya hakkını (Waterfox logosu ve adı da dâhil olmak üzere) kullanma hakkına sahip değilsiniz. Ticari markalarla ilgili ayrıntılı bilgi ">
+<!ENTITY rights.intro-point2-b "burada bulunabilir">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "&brandShortName; tarayıcısındaki Çökme Habercisi gibi bazı özellikler size &vendorShortName;'ya geri bildirimde bulunma seçeneği sunar. Geri bildirimde bulunmayı tercih ederseniz, &vendorShortName;'ya ürünlerini geliştirmek için bu geri bildirimi kullanma, geri bildirimi web sitelerinde yayımlama ve geri bildirimi dağıtma izni vermiş olursunuz.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Kişisel bilgilerinizi ve &brandShortName; üzerinden &vendorShortName;'ya gönderdiğiniz geri bildirimleri nasıl kullandığımız ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Gizlilik İlkelerinde">
+<!ENTITY rights.intro-point3c " açıklanmıştır.">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Bu ürünle ilgili tüm gizlilik ilkeleri burada listelenmelidir.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Bazı &brandShortName; özellikleri web tabanlı bilgi hizmetlerinden yararlanır, ancak bunların tamamen doğru ve hatasız olduklarını garanti edemeyiz. Bu hizmetleri kullanan özelliklerin devre dışı bırakılmasıyla ilgili daha fazla bilgiyi ">
+<!ENTITY rights.intro-point4b "hizmet koşulları">
+<!ENTITY rights.intro-point4c " sayfasında bulabilirsiniz.">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Bu ürün web hizmetleriyle bağlantı kuruyorsa, hizmet(ler) ile ilgili tüm hizmet koşulları ">
+<!ENTITY rights.intro-point4b-unbranded "Web Sitesi Hizmetleri">
+<!ENTITY rights.intro-point4c-unbranded " bölümüne bağlanmalıdır.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; Web Tabanlı Bilgi Hizmetleri">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Bazı video türlerini oynatabilmek için &brandShortName; üçüncü taraflara ait bazı içerik çözme modüllerini indirir.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; bu ikili &brandShortName; sürümünde kullanımınıza sunulan bazı özellikler için, aşağıdaki açıklanan koşullar kapsamında web tabanlı bilgi hizmetlerinden (&quot;Hizmetler&quot;) yararlanır. Hizmetlerden birini veya birkaçını kullanmak istemiyorsanız veya aşağıdaki koşulları kabul etmiyorsanız ilgili özelliği ve Hizmet(ler)i devre dışı bırakabilirsiniz. Özellik veya Hizmetleri devre dışı bırakmanız için izleyebileceğiniz yönergeler ">
+<!ENTITY rights2.webservices-b "burada">
+<!ENTITY rights3.webservices-c " bulunabilir. Diğer özellikler ve Hizmetler uygulama tercihlerinde devre dışı bırakılabilir.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "GüvenliTarama: ">
+<!ENTITY rights.safebrowsing-b "Güvenli Tarama özelliğini devre dışı bırakmanız güvensiz siteleri ziyaret etmenizle sonuçlanabileceği için tavsiye edilmez. Bu özelliği tamamen devre dışı bırakmak istiyorsanız şu adımları izleyin:">
+<!ENTITY rights.safebrowsing-term1 "Uygulama tercihlerini açın">
+<!ENTITY rights.safebrowsing-term2 "Güvenlik bölümünü seçin">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot; seçeneğinin işaretini kaldırın">
+<!ENTITY rights.safebrowsing-term4 "Güvenli Tarama artık devre dışıdır">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Konuma Duyarlı Tarama: ">
+<!ENTITY rights.locationawarebrowsing-b "her zaman sizin isteğinizle çalışır. Sizin izniniz alınmadan asla konum bilgisi gönderilmez. Bu özelliği tamamen devre dışı bırakmak istiyorsanız şu adımlar izleyin:">
+<!ENTITY rights.locationawarebrowsing-term1a "Adres çubuğuna şunu yazın: ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled yazın">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled tercihine çift tıklayın">
+<!ENTITY rights.locationawarebrowsing-term4 "Konuma Duyarlı Tarama artık devre dışıdır">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Ürünün içerdiği web sitesi hizmetlerine genel bakış ve varsa devre dışı bırakma yönergeleri buraya eklenmelidir.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Bu ürünle ilgili tüm hizmet koşulları burada listelenmelidir.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; ve ona katkıda bulunanlar, lisans sahipleri ve iş ortakları en eksiksiz ve güncel Hizmetleri sunmak için birlikte çalışmaktadır. Buna rağmen bu bilgilerin kapsamlı ve hatasız olduğunu garanti edemeyiz. Örneğin, Güvenli Tarama Hizmeti bazı riskli siteleri tanımayabilir ve bazı güvenli siteleri hatalı tanıyabilir. Konuma Duyarlı Hizmet'te hizmet sağlayıcılarımız tarafından döndürülen tüm konumlar yalnızca tahmindir ve ne biz ne de hizmet sağlayıcılarımız bu konumların doğruluğunu garanti etmemekteyiz.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; kendi isteğiyle Hizmetleri durdurabilir veya değiştirebilir.">
+<!ENTITY rights2.webservices-term3 "Bu Hizmetleri uyumlu &brandShortName; sürümüyle kullanmakta özgürsünüz ve &vendorShortName; size bu hakları sunmaktadır. &vendorShortName; ve lisans sahipleri Hizmetler üzerindeki diğer tüm haklara sahiptir.  Bu koşullar &brandShortName; ve ilgili &brandShortName; kaynak kodu sürümlerinde geçerli olan açık kaynak lisansı haklarınızı hiçbir şekilde kısıtlamaz.">
+<!ENTITY rights.webservices-term4 "Hizmetler &quot;oldukları gibi&quot; sağlanmaktadır.  &vendorShortName;, ona katkıda bulunanlar, lisans sahipleri ve dağıtıcılar; Hizmetlerin ticari değeri olduğu ve ihtiyaçlarınıza uygun olacağı konusunda yazılı veya sözlü herhangi bir garantide bulunmaz.  İhtiyaçlarınızı karşılamak için Hizmetleri tercih ederseniz kalite ve performansa dair tüm risk size aittir. Bazı yasalar garantilerin hariç tutulmasına veya kısıtlanmasına izin vermiyor olabilir. Bu durumda bu koşullar sizin için geçerli olmayacaktır.">
+<!ENTITY rights.webservices-term5 "Kanun gereksinimleri dışında; &vendorShortName;, ona katkıda bulunanlar, lisans sahipleri ve dağıtıcıları &brandShortName; ürünün ve Hizmetlerin kullanımından doğabilecek herhangi bir dolaylı, özel, rastlantısal, cezai veya örnek teşkil edici hasardan sorumlu tutulamaz.  Bu şartlar altındaki toplu sorumluluk tutarı 500 $'ı (beş yüz dolar) geçemez. Bazı yargı hükümleri belli hasarların istisnai tutulmasına veya kısıtlanmasına izin vermeyebilir, bu durumda bu istisna ve kısıtlama sizin için geçerli olmayabilir.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; gerekli gördüğünde bu şartları zaman zaman güncelleyebilir. Bu şartlar &vendorShortName;'nın yazılı onayı olmadan değiştirilemez veya iptal edilemez.">
+<!ENTITY rights.webservices-term7 "Bu koşullar, kanun ihtilafi hükümleri hariç olmak üzere, ABD California eyalet yasalarıyla korunur. Bu koşulların herhangi bir kısmının hükümsüz veya uygulanamaz olması hâlinde, geri kalan kısımlar geçerli ve etkili olmaya devam edecektir. Bu koşulların çeviri sürümüyle İngilizce sürümü arasında bir çelişki olması hâlinde İngilizce sürüm geçerli sayılacaktır.">

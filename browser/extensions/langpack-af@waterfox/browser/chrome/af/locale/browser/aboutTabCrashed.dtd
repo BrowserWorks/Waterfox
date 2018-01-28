@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Sluit dié oortjie">
+<!ENTITY tabCrashed.restoreTab "Herstel dié oortjie">
+<!ENTITY tabCrashed.restoreAll "Herstel alle oortjies wat omgeval het">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Gits! Daar val die oortjie om.">
+<!ENTITY tabCrashed.offerHelp "Ons kan help!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Kies &tabCrashed.restoreTab; om die bladsy te herlaai.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Kies &tabCrashed.restoreTab; of &tabCrashed.restoreAll; om bladsyinhoud te herlaai.">
+<!ENTITY tabCrashed.requestHelp "Is u bereid om ons te help?">
+<!ENTITY tabCrashed.requestHelpMessage "Omvalverslae help ons om probleme te diagnoseer en &brandShortName; beter te maak.">
+<!ENTITY tabCrashed.requestReport "Rapporteer dié oortjie">
+<!ENTITY tabCrashed.sendReport2 "Stuur 'n omvalverslag vir die oortjie wat oop is">
+<!ENTITY tabCrashed.commentPlaceholder2 "Opsionele kommentaar (kommentaar is sigbaar in die openbaar)">
+<!ENTITY tabCrashed.includeURL2 "Sluit bladsy se URL in by die omvalverslag">
+<!ENTITY tabCrashed.emailPlaceholder "Tik u e-posadres hier in">
+<!ENTITY tabCrashed.emailMe "E-pos my wanneer meer inligting beskikbaar is">
+<!ENTITY tabCrashed.reportSent "Omvalverslag reeds ingedien. Dankie dat u help om &brandShortName; te verbeter!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Rapporteer agtergrondoortjies">
+<!ENTITY tabCrashed.autoSubmit2 "Verander voorkeure om outomaties omvalverslae te stuur, insluitend verslae van agtergrondoortjies wat omval in hierdie en toekomstige sessies">

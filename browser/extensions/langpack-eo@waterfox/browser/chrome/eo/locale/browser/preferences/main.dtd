@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Starto">
+
+<!ENTITY startupPage2.label        "Kiam &brandShortName; startas">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Montri vian ekan paĝon">
+<!ENTITY startupBlankPage.label    "Montri malplenan paĝon">
+<!ENTITY startupPrevSession.label  "Montri viajn lastajn fenestrojn kaj langetojn">
+
+<!ENTITY homepage2.label           "Eka paĝo">
+<!ENTITY homepage2.accesskey       "E">
+<!ENTITY useCurrentPage.label      "Uzi la nunan paĝon">
+<!ENTITY useCurrentPage.accesskey  "U">
+<!ENTITY useMultiple.label         "Uzi nunajn paĝojn">
+<!ENTITY chooseBookmark.label      "Uzi legosignon…">
+<!ENTITY chooseBookmark.accesskey  "s">
+<!ENTITY restoreDefault.label      "Norma paĝo">
+<!ENTITY restoreDefault.accesskey  "N">
+
+<!ENTITY downloads.label     "Elŝutoj">
+
+<!ENTITY saveTo.label "Konservi dosierojn en">
+<!ENTITY saveTo.accesskey "d">
+<!ENTITY chooseFolderWin.label        "Esplori…">
+<!ENTITY chooseFolderWin.accesskey    "l">
+<!ENTITY chooseFolderMac.label        "Elekti…">
+<!ENTITY chooseFolderMac.accesskey    "l">
+<!ENTITY alwaysAskWhere.label         "Ĉiam demandi, kie konservi dosierojn">
+<!ENTITY alwaysAskWhere.accesskey     "d">
+
+<!ENTITY alwaysCheckDefault2.label        "Ĉiam kontroli ĉu &brandShortName; estas via ĉefa retumilo">
+<!ENTITY alwaysCheckDefault2.accesskey    "i">
+<!ENTITY setAsMyDefaultBrowser3.label     "Elekti kiel norman…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "E">
+<!ENTITY isDefault.label                  "&brandShortName; estas nuntempe via ĉefa retumilo">
+<!ENTITY isNotDefault.label               "&brandShortName; ne estas via ĉefa retumilo">
+
+<!ENTITY separateProfileMode.label        "Permesi ke &brandShortName; kaj Waterfox funkciu samtempe">
+<!ENTITY useWaterfoxSync.label             "Konsileto: tio ĉi uzas apartajn profilojn. Uzu Speguli por dividi datumojn inter ili.">
+<!ENTITY getStarted.notloggedin.label     "Komenci seancon en &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Malfermi preferojn de &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Aktivigi plurprocezan &brandShortName;">

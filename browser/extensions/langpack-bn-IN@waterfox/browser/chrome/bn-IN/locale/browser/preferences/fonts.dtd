@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "ফন্ট">
+
+<!ENTITY  language.label                          "চিহ্নিত এনকোডিং-র ফন্ট:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "মাপ:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "অনুপাত অনুযায়ী:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "সেরিফ:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "সান্স-সেরিফ (Sans-serif):">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "মোনোস্পেস:">
+<!ENTITY  monospace.accesskey                     "M">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "লাতিন">
+<!ENTITY  font.langGroup.japanese                 "জাপানি">
+<!ENTITY  font.langGroup.trad-chinese             "পারম্পরিক চীনা (তাইওয়ান)">
+<!ENTITY  font.langGroup.simpl-chinese            "সরলীকৃত চীনা">
+<!ENTITY  font.langGroup.trad-chinese-hk          "পারম্পরিক চীনা (হং কং)">
+<!ENTITY  font.langGroup.korean                   "কোরিয়ান">
+<!ENTITY  font.langGroup.cyrillic                 "সিরিলিক">
+<!ENTITY  font.langGroup.el                       "গ্রিক">
+<!ENTITY  font.langGroup.other                    "অন্যান্য লেখার সিস্টেম">
+<!ENTITY  font.langGroup.thai                     "থাই">
+<!ENTITY  font.langGroup.hebrew                   "হিব্রু">
+<!ENTITY  font.langGroup.arabic                   "আরবি">
+<!ENTITY  font.langGroup.devanagari               "দেবনাগরী">
+<!ENTITY  font.langGroup.tamil                    "তামিল">
+<!ENTITY  font.langGroup.armenian                 "আর্মেনিয়ান">
+<!ENTITY  font.langGroup.bengali                  "বাংলা">
+<!ENTITY  font.langGroup.canadian                 "ইউনিফায়েড ক্যানাডিয়ান সিলেবারি">
+<!ENTITY  font.langGroup.ethiopic                 "ইথিওপিক">
+<!ENTITY  font.langGroup.georgian                 "জর্জিয়ান">
+<!ENTITY  font.langGroup.gujarati                 "গুজরাতি">
+<!ENTITY  font.langGroup.gurmukhi                 "গুরুমুখি">
+<!ENTITY  font.langGroup.khmer                    "খমের">
+<!ENTITY  font.langGroup.malayalam                "মালায়ালম">
+<!ENTITY  font.langGroup.math                     "গণিত">
+<!ENTITY  font.langGroup.odia                     "ওড়িয়া">
+<!ENTITY  font.langGroup.telugu                   "তেলুগু">
+<!ENTITY  font.langGroup.kannada                  "কন্নড়">
+<!ENTITY  font.langGroup.sinhala                  "সিংহালা">
+<!ENTITY  font.langGroup.tibetan                  "তিব্বতি">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "ফন্টের সর্বনিম্ন মাপ:">
+<!ENTITY minSize.accesskey                        "ফ">
+<!ENTITY minSize.none                             "শূণ্য">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "সেরিফ (Serif)">
+<!ENTITY  useDefaultFontSansSerif.label           "সান্স-সেরিফ (Sans Serif)">
+
+
+<!ENTITY languages.customize.Fallback2.grouplabel "লিগ্যাসি সামগ্রীর জন্য ক্যারেক্টার এনকোডিং">
+<!ENTITY languages.customize.Fallback2.label      "ফলব্যাক টেক্সট এনকোডিং:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "এই অক্ষর এনকোডিং সেই সমস্ত লিগ্যাসি বিষয়বস্তুর জন্য ব্যবহার করা হয় যেগুলি নিজেদের এনকোডিং সম্বন্ধিয় তথ্য ঘোষণা করতে ব্যর্থ হয়।">
+
+<!ENTITY languages.customize.Fallback.auto        "বর্তমান ডিফল্ট লোকেল">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "আরবি">
+<!ENTITY languages.customize.Fallback.baltic      "বল্টিক">
+<!ENTITY languages.customize.Fallback.ceiso       "মধ্য ইউরোপিয়, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "মধ্য ইউরোপিয়, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "সরলিকৃত চীনা">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "পারম্পরিক চীনা">
+<!ENTITY languages.customize.Fallback.cyrillic    "সিরিলিক">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "গ্রিক">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "হিব্রু">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "জাপানি">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "কোরিয়ান">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "থাই">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "তুর্কি">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "ভিয়েতনামিস">
+<!ENTITY languages.customize.Fallback.other       "অন্যান্য (incl. পশ্চিম ইউরোপীয়)">
+
+<!ENTITY  allowPagesToUseOwn.accesskey            "A">
+
+<!ENTITY  allowPagesToUseOwn.label                "Allow pages to choose their own fonts, instead of your selections above">

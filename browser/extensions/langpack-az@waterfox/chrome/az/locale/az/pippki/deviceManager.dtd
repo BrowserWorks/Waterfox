@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Cihaz idarəçisi">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Təhlükəsizlik Parçaları və Cihazları">
+<!ENTITY devmgr.details.title                   "Ətraflı məlumat">
+<!ENTITY devmgr.details.title2                  "Dəyər">
+
+<!ENTITY devmgr.button.login.label              "Giriş yap">
+<!ENTITY devmgr.button.login.accesskey          "p">
+<!ENTITY devmgr.button.logout.label             "Hesabdan çıx">
+<!ENTITY devmgr.button.logout.accesskey         "x">
+<!ENTITY devmgr.button.changepw.label           "Şifrəni dəyiş">
+<!ENTITY devmgr.button.changepw.accesskey       "Ş">
+<!ENTITY devmgr.button.load.label               "Yükle">
+<!ENTITY devmgr.button.load.accesskey           "l">
+<!ENTITY devmgr.button.unload.label             "Boşalt">
+<!ENTITY devmgr.button.unload.accesskey         "B">
+<!ENTITY devmgr.button.fips.accesskey           "S">
+
+<!ENTITY loaddevice.info                        "Əlavə etmək istədiyiniz modulla bağlı məlumatı daxil edin.">
+<!ENTITY loaddevice.modname                     "Modulun Adı:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Yeni PKCS#11 Modülü">
+<!ENTITY loaddevice.filename                    "Modul faylı:">
+<!ENTITY loaddevice.filename.accesskey          "d">
+<!ENTITY loaddevice.browse                      "Bax…">
+<!ENTITY loaddevice.browse.accesskey            "G">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 cihaz sürücüsünü yüklə">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "ಪೂರ್ವನಿಯೋಜಿತ ಹುಡುಕು ಎಂಜಿನ್">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "ನಿಮ್ಮ ಪೂರ್ವನಿಯೋಜಿತ ಹುಡುಕು ಯಂತ್ರ ಆಯ್ಕೆ ಮಾಡು. &brandShortName; ಅದನ್ನು ಸ್ಥಳ ಪಟ್ಟಿ, ಹುಡುಕು ಪಟ್ಟಿ, ಮತ್ತು ಪ್ರಾರಂಭ ಪುಟದಲ್ಲಿ ಬಳಸುತ್ತದೆ.">
+
+<!ENTITY provideSearchSuggestions.label        "search ಸಲಹೆಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "ಹುಡುಕಲು ಸಲಹೆಗಳನ್ನು ಸ್ಥಳದ ಪಟ್ಟಿಯಲ್ಲಿ ತೋರಿಸು">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "ಎಂದಿಗೂ ಸಹ ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬೇಡ ಎಂದು ನೀವು &brandShortName; ಅನ್ನು ಸಂರಚಿಸಿರುವುದರಿಂದ ಹುಡುಕುವಾಗ ಸ್ಥಳದ ಪಟ್ಟಿಯ ಫಲಿತಾಂಶಗಳಲ್ಲಿ ಯಾವುದೆ ಸಲಹೆಗಳನ್ನು ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.">
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "ಹುಡುಕು ಪಟ್ಟಿಯು ಪರ್ಯಾಯ ಎಂಜಿನ್‌ಗಳನ್ನು ಹುಡುಕಲು ನಿಮಗೆ ನೆರವಾಗುತ್ತವೆ. ಯಾವುದನ್ನು ತೋರಿಸಬೇಕು ಎಂಬುದನ್ನು ಆರಿಸಿ.">
+
+<!ENTITY engineNameColumn.label                "ಹುಡುಕು ಎಂಜಿನ್‌">
+<!ENTITY engineKeywordColumn.label             "ಸೂಚಕ ಪದ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Default ಹುಡುಕು ಎಂಜಿನ್‌ಗಳನ್ನು ಮರುಹೊಂದಿಸು">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Remove">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "ಇನ್ನಷ್ಟು ಹುಡುಕು ಎಂಜಿನ್‌ಗಳನ್ನು ಸೇರಿಸು...">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+

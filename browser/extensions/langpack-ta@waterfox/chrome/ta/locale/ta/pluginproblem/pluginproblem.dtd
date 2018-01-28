@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "இத்தளம் மெதுவான செருகியைப் பாவிப்பதால் &brandShortName; மெவாக்குகிறது.">
+<!ENTITY tapToPlayPlugin                                     "செருகுநிரலைச் செயல்படுத்த இங்கு தட்டவும்.">
+<!ENTITY clickToActivatePlugin                               "செருகுநிரலைச் செயல்படுத்து.">
+<!ENTITY checkForUpdates                                     "மேம்படுத்தல்கள் உள்ளதா எனக் காண்க…">
+<!ENTITY blockedPlugin.label                                 "உங்கள் பாதுகாப்புக்காக இந்தச் செருகுநிரல் தடுக்கப்பட்டுள்ளது.">
+<!ENTITY hidePluginBtn.label                                 "செருகுநிரலை மறை">
+<!ENTITY managePlugins                                       "செருகுநிரல்களை நிர்வகி…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "பக்கத்தை மீளேற்ற">
+<!ENTITY reloadPlugin.post                                   " மீண்டும் முயற்சிக்கவும்.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "சிதைவு அறிக்கையை அனுப்பு">
+<!ENTITY report.submitting                                   "அறிக்கையை அனுப்புகிறது…">
+<!ENTITY report.submitted                                    "சிதைவு அறிக்கை அனுப்பப்பட்டது.">
+<!ENTITY report.disabled                                     "சிதைவு அறிக்கையிடுதல் செயல்நீக்கப்பட்டது.">
+<!ENTITY report.failed                                       "சமர்ப்பித்தல் தோல்வியுற்றது.">
+<!ENTITY report.unavailable                                  "அறிக்கை எதுவும் இல்லை.">
+<!ENTITY report.comment                                      "ஒரு கருத்தைச் சேர்க்கவும் (அனைவரும் காண முடியும்)">
+<!ENTITY report.pageURL                                      "பக்கத்தின் URL ஐச் சேர்க்கவும்">
+
+<!ENTITY plugin.file                                         "கோப்பு">
+<!ENTITY plugin.mimeTypes                                    "MIME வகைகள்">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash ஐ பாதுகாப்பு முறைமையைச் செயற்படுத்து">
+<!ENTITY plugin.enableBlocklists.label                       "ஆபத்தான ஊடுருவக்கூடிய அசைவூட்ட உள்ளடக்கத்தைத் தடு">

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Plejetigi">
+<!ENTITY bringAllToFront.label    "Malfonigi ĉiujn">
+<!ENTITY zoomWindow.label         "Pligrandigilo">
+<!ENTITY windowMenu.label         "Fenestro">
+
+<!ENTITY helpMenu.label           "Helpo"> 
+<!ENTITY helpMenu.accesskey       "e"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Helpo"> 
+<!ENTITY helpMenuWin.accesskey    "e">
+<!ENTITY aboutProduct2.label      "Pri &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "P">
+<!ENTITY productHelp2.label       "Helpo por &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Alirklavoj">
+<!ENTITY helpKeyboardShortcuts.accesskey "A">
+
+<!ENTITY helpSafeMode.label       "Rekomenci kun aldonaĵoj malaktivaj…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "Restartigi kun aldonaĵoj aktivaj">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "Sanraporto de &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "S">
+
+<!ENTITY helpTroubleshootingInfo.label      "Informoj por solvado de problemoj">
+<!ENTITY helpTroubleshootingInfo.accesskey  "I">
+
+<!ENTITY helpFeedbackPage.label      "Sendi opiniojn…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "Prezento de &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "r">
+
+<!ENTITY preferencesCmdMac.label        "Preferoj…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Servoj">
+
+<!ENTITY hideThisAppCmdMac2.label       "Kaŝi &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Kaŝi aliajn">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Montri ĉion">

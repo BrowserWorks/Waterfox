@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Isem:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "I">
+<!ENTITY editBookmarkOverlay.location.label                  "Tansa:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "T">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Tansa n usuddem:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "n">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Tansa n usmel:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "a">
+<!ENTITY editBookmarkOverlay.folder.label                    "Akaram:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Sken akk ikaramen n tecraḍ n isebtar">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Ffer">
+<!ENTITY editBookmarkOverlay.tags.label                      "Tabzimt:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "m">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Tibzimin ibrezen s ticcar">
+<!ENTITY editBookmarkOverlay.description.label               "Aglam:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "m">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Awal n tsaruţAwalrutt">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "s">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Sken akk tibzimin">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Sali-d tacreṭ-a n usebter ɣef ugalis adisan">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "g">
+<!ENTITY editBookmarkOverlay.choose.label                    "Fren...">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Rnu Akaram">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "k">

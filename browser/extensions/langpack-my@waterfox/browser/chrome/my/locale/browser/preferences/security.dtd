@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "လုံခြုံရေး">
+
+<!ENTITY  warnOnAddonInstall.label        "ဝဘ်ဆိုက်များက အတ်အွန်များ တပ်ဆင်လိုသည့်အခါ သတိပေးပါ">
+<!ENTITY  warnOnAddonInstall.accesskey    "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "အန္တရာယ်ရှိသည့် အကြောင်းအရာတုများကို တားဆီးပါ">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "အန္တရာယ်ရှိသည့် ဆွဲယူထားသည့်ဖိုင်များကို တားဆီးပါ">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "မလိုအပ်သော၊ ပုံမှန်မဟုတ်သော ဆော့ဖ်ဝဲလ်များ တွေ့ရှိပါက သတိပေးပါ">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "C">
+
+<!ENTITY  addonExceptions.label         "ခြွင်းချက်များ...">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "ဖောင်များ &amp; စကားဝှက်များ">
+
+<!ENTITY  rememberLogins1.label          "ဆိုက်များအတွက် ဝင်ရောက်မှုများနှင့် စကားဝှက်များကို မှတ်ထားပါ">
+<!ENTITY  rememberLogins1.accesskey      "R">
+<!ENTITY  passwordExceptions.label      "ခြွင်းချက်များ...">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "အဓိကစကားဝှက်တစ်ခု အသုံးပြုပါ">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "အဓိကစကားဝှက်ကို ပြောင်းလဲရန်…">
+<!ENTITY  changeMasterPassword.accesskey "M">
+
+<!ENTITY  savedLogins.label              "သိမ်းထားသည့် ဝင်ရောက်မှု အချက်အလက်များ…">
+<!ENTITY  savedLogins.accesskey          "L">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

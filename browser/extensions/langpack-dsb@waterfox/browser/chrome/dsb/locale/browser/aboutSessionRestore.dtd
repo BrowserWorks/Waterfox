@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Pósejźenje wótnowiś">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "No, to jo njepśijazne.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ma śěžkosći waše wokna a rejtarki wótnowiś. To zawinujo se zwětšego pśez nowo wócynjony webbok.">
+<!ENTITY restorepage.tryThis        "Móžośo wopytaś:">
+<!ENTITY restorepage.restoreSome    "Jaden rejtark abo někotare rejtarki wótpóraś, kótarež snaź zawinuju ten problem">
+<!ENTITY restorepage.startNew       "Cele nowe pśeglědowańske pósejźenje startowaś">
+
+<!ENTITY restorepage.tryagainButton "Wótnowiś">
+<!ENTITY restorepage.restore.access "n">
+<!ENTITY restorepage.closeButton    "Zacyniś">
+<!ENTITY restorepage.close.access   "Z">
+
+<!ENTITY restorepage.restoreHeader  "Wótnowiś">
+<!ENTITY restorepage.listHeader     "Wokna a rejtarki">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Wokno &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Zachopmy!">
+<!ENTITY welcomeback2.restoreButton.access "o">
+
+<!ENTITY welcomeback2.tabtitle      "Wuspěch!">
+
+<!ENTITY welcomeback2.pageTitle     "Wuspěch!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; móžo zachopiś.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Wšykne wokna a rejtarki wótnowiś">
+<!ENTITY welcomeback2.restoreSome.label "Jano witane wótnowiś">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Waše dodanki a pśiměrjenja su se wótpórali a nastajenja wašogo wobglědowaka su se na standardne gódnoty slědk stajili. Jolic to njejo waš problem rozwězał, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "wěcej wó tom zgóniś, což móžośo cyniś.">
+

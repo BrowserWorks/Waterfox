@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Смяна на главната парола">
+<!ENTITY setPassword.tokenName.label       "Устройство по безопасността">
+<!ENTITY setPassword.oldPassword.label     "Текуща парола:">
+<!ENTITY setPassword.newPassword.label     "Нова парола:">
+<!ENTITY setPassword.reenterPassword.label "Нова парола отново:">
+<!ENTITY setPassword.meter.label           "Качество на паролата">
+<!ENTITY setPassword.meter.loading         "Зареждане">
+<!ENTITY masterPasswordDescription.label   "Главната парола се използва за защитаване на чувствителна информация като пароли за страници. Ако създадете главна парола, когато &brandShortName; извлича защитената с нея информация ще трябва да я въвеждате, еднократно за сесията.">
+<!ENTITY masterPasswordWarning.label       "Моля, погрижете се да запомните главната парола. Ако я забравите няма да имате достъп до защитената с нея информация.">

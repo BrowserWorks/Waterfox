@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Ayvu reñoiha pe: ">
+
+<!ENTITY fileMenu.label "Marandurenda">
+<!ENTITY fileMenu.accesskey "M">
+<!ENTITY savePageCmd.label "Kuatiarogue Pyahu Ñongatu…">
+<!ENTITY savePageCmd.accesskey "P">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Kuatairogue Mboheko…">
+<!ENTITY pageSetupCmd.accesskey "h">
+<!ENTITY printPreviewCmd.label "Hecha Ñepyrũ">
+<!ENTITY printPreviewCmd.accesskey "p">
+<!ENTITY printCmd.label "Mbokuatia…">
+<!ENTITY printCmd.accesskey "M">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Mboty">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Tairendápe jeho…">
+<!ENTITY goToLineCmd.accesskey "G">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Hecha">
+<!ENTITY viewMenu.accesskey       "H">
+<!ENTITY reloadCmd.label "Jehupi jey">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Emoĩporã tairenda pukúva"> 
+<!ENTITY menu_wrapLongLines.accesskey "W">
+<!ENTITY menu_highlightSyntax.label "Ñe'ẽjoajungatu rechaukaha">
+<!ENTITY menu_highlightSyntax.accesskey "H">
+<!ENTITY menu_textSize.label "Moñe'ẽrã tuichakue">
+<!ENTITY menu_textSize.accesskey "z">
+<!ENTITY menu_textEnlarge.label "Mbotuicha">
+<!ENTITY menu_textEnlarge.accesskey "I">
+<!ENTITY menu_textReduce.label "Momichĩ">
+<!ENTITY menu_textReduce.accesskey "D">
+<!ENTITY menu_textReset.label "Hekoitépeva">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Eheka ko toguépe">
+<!ENTITY findOnCmd.accesskey "E">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Eheka jey">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Tapykuevegua">
+<!ENTITY backCmd.accesskey "T">
+<!ENTITY forwardCmd.label "Tenondeve">
+<!ENTITY forwardCmd.accesskey "T">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Joajuha rape mbohasarã">
+<!ENTITY copyLinkCmd.accesskey "L">
+<!ENTITY copyEmailCmd.label "Ehai ñandutiveve réra">
+<!ENTITY copyEmailCmd.accesskey "E">

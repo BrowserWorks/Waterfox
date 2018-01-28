@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label	"&brandShortName; - ユーザープロファイルの選択">
+
+<!ENTITY profilename.label	"プロファイル名:">
+
+<!ENTITY start.label		"&brandShortName; を起動">
+<!ENTITY exit.label		"終了">
+
+<!ENTITY availprofiles.label	"プロファイル一覧">
+
+<!ENTITY newButton.label	"新しいプロファイルを作成...">
+<!ENTITY newButton.accesskey	"C">
+<!ENTITY renameButton.label	"プロファイル名を変更...">
+<!ENTITY renameButton.accesskey	"R">
+<!ENTITY deleteButton.label	"プロファイルを削除...">
+<!ENTITY deleteButton.accesskey	"D">
+
+<!-- manager entities -->
+<!ENTITY pmDescription.label	"ユーザーの設定やデータなどはユーザープロファイルに保存されます。">
+
+<!ENTITY offlineState.label	"オフライン作業">
+<!ENTITY offlineState.accesskey	"o">
+
+<!ENTITY useSelected.label	"今後このプロファイルを使用する">
+<!ENTITY useSelected.accesskey	"s">

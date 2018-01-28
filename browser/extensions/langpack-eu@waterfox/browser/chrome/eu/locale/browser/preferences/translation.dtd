@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Salbuespenak - Itzulpena">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Ez da itzulpenik eskainiko ondorengo hizkuntzetarako:">
+<!ENTITY treehead.languageName.label      "Hizkuntzak">
+<!ENTITY removeLanguage.label             "Kendu hizkuntza">
+<!ENTITY removeLanguage.accesskey         "K">
+<!ENTITY removeAllLanguages.label         "Kendu hizkuntza guztiak">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Ez da itzulpenik eskainiko ondorengo guneetarako:">
+<!ENTITY treehead.siteName2.label         "Webguneak">
+<!ENTITY removeSite.label                 "Kendu gunea">
+<!ENTITY removeSite.accesskey             "n">
+<!ENTITY removeAllSites.label             "Kendu gune guztiak">
+<!ENTITY removeAllSites.accesskey         "g">
+
+<!ENTITY button.close.label               "Itxi">
+<!ENTITY button.close.accesskey           "I">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "आरंभन">
+
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "आपका होम पेज दिखाएँ">
+<!ENTITY startupBlankPage.label    "खाली पृष्ठ दिखाएँ">
+<!ENTITY startupPrevSession.label  "पिछले समय से आपके विंडोज़ और टैब्स दिखाएँ">
+
+<!ENTITY homepage2.label           "होमपेज">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "मौजूदा पृष्ठ का उपयोग करें">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "मौजूदा पृष्ठों का उपयोग करें">
+<!ENTITY chooseBookmark.label      "पुस्तचिह्न का उपयोग करें…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "डिफ़ॉल्ट पुनर्स्थापित करें">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "डाउनलोड">
+
+<!ENTITY saveTo.label "यहाँ फ़ाइल सहेजें">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ब्राउज करें…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "चुनें…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "हमेशा आपसे पूछें कि फ़ाइल कहाँ सहेजनी है">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "जाँच कीजिए &brandShortName; आपका तयशुदा ब्राउज़र है">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser3.label     "तयशुदा बनाएँ…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; अभी आपका तयशुदा ब्राउज़र है">
+<!ENTITY isNotDefault.label               "&brandShortName; अभी आपका तयशुदा ब्राउज़र है">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; और Waterfox को एक ही समय में चलने के लिए स्वीकारें">
+<!ENTITY useWaterfoxSync.label             "संकेत: यह अलग प्रोफाइल का उपयोग करता है. उनके बीच आँकड़ा साझा करने के लिए सिंक का उपयोग करें.">
+
+<!ENTITY e10sEnabled.label                "बहु-प्रक्रिया को सक्रिय करें &brandShortName;">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">

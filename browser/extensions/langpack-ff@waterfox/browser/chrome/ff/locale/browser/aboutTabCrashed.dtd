@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Uddu ndee Tabbere">
+<!ENTITY tabCrashed.restoreTab "Artir ndee Tabbere">
+<!ENTITY tabCrashed.restoreAll "Artir Tabbe Kookɗe ɗee Fof">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ndo. Tabbere maa hookii.">
+<!ENTITY tabCrashed.offerHelp "Amin mbaawi wallude-ma!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Suɓo &tabCrashed.restoreTab; ngam loowtude loowdi hello.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Suɓo &tabCrashed.restoreTab; walla &tabCrashed.restoreAll; ngam loowtude loowdi hello.">
+<!ENTITY tabCrashed.requestHelp "Aɗa waawi wallude min?">
+<!ENTITY tabCrashed.requestHelpMessage "Jaŋte kooke ena mballa min yiytude caɗe tee ɓeyda &brandShortName; yuɓɓude.">
+<!ENTITY tabCrashed.requestReport "Jaŋto ndee tabbere">
+<!ENTITY tabCrashed.sendReport2 "Neldu jaŋtol hookre tabbere nde ngon-ɗaa ndee">
+<!ENTITY tabCrashed.commentPlaceholder2 "Jowe ɗe mbaɗɗaaki (jowe ena njiyee e peñcu)">
+<!ENTITY tabCrashed.includeURL2 "Waɗdu URL hello ngoo e jaŋtol hookre">
+<!ENTITY tabCrashed.emailPlaceholder "Naatnu ñiiɓirde maa iimeel ɗoo">
+<!ENTITY tabCrashed.emailMe "Neldam iimeel so humpito woɗngo heɓaama">
+<!ENTITY tabCrashed.reportSent "Jaŋtol hookre naatnaama kisa; a jaaraama e wallude &brandShortName; no haanirta!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Jaŋto tabbe cakkitol">
+<!ENTITY tabCrashed.autoSubmit2 "Hesɗitin ɗoon e ɗoon ɓurɗine ɗee ngam neldude ciimti rimto wondude e ciimti riimto cakkal tabbe wonande ndee rogere kam e doge paaɗe">

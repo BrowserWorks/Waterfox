@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Nusxa olish">
+<!ENTITY  copy.accesskey        "N">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Barchasini belgilash">
+<!ENTITY  selectall.accesskey   "B">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Umumiy">
+<!ENTITY  generalTab.accesskey  "G">
+
+<!ENTITY  generalURL            "Manzil:">
+<!ENTITY  generalType           "Turi:">
+<!ENTITY  generalMode           "Render usuli:">
+<!ENTITY  generalSize           "Hajmi:">
+<!ENTITY  generalReferrer       "Keltirilgan URL:">
+<!ENTITY  generalSource         "Kesh manbasi:">
+<!ENTITY  generalModified       "O‘zgartirilgan:">
+<!ENTITY  generalEncoding2      "Matnni kodlash usuli:">
+<!ENTITY  generalMetaName       "Nomi">
+<!ENTITY  generalMetaContent    "Tarkibi">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Manzili:">
+<!ENTITY  mediaText             "Bog‘langan matn:">
+<!ENTITY  mediaAltHeader        "Muqobil matn">
+<!ENTITY  mediaAddress          "Manzil">
+<!ENTITY  mediaType             "Turi">
+<!ENTITY  mediaSize             "Hajmi">
+<!ENTITY  mediaCount            "Miqdori">
+<!ENTITY  mediaDimension        "O‘lchami:">
+<!ENTITY  mediaLongdesc         "Uzun ta’rif:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Saqlash…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Mediani oldindan ko‘rish">
+
+<!ENTITY  feedTab               "Tasmalar">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Obuna bo‘lish">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Ruxsatlar">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Standart foydalanish">
+<!ENTITY  permAskAlways         "Doimo so‘ralsin">
+<!ENTITY  permAllow             "Ruxsat berish">
+<!ENTITY  permAllowSession      "Seans uchun ruxsat berish">
+<!ENTITY  permBlock             "Bloklash">
+<!ENTITY  permissionsFor        "Ruxsatlar:">
+<!ENTITY  permPlugins           "Plaginlarni faollashtirish">
+
+<!ENTITY  permClearStorage           "Omborni tozalash">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Xavfsizlik">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Sertifikatni ko‘rish">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Noma’lum">
+
+
+<!ENTITY  securityView.identity.header   "Vebsaytni tasdiqdan oʻtkazish">
+<!ENTITY  securityView.identity.owner    "Egasi:">
+<!ENTITY  securityView.identity.domain   "Veb sayt:">
+<!ENTITY  securityView.identity.verifier "Tekshiruvchi:">
+
+
+<!ENTITY  securityView.privacy.header                   "Maxfiylik va tarix">
+<!ENTITY  securityView.privacy.history                  "Bugun ushbu sahifaga tashrif buyurdimmi?">
+<!ENTITY  securityView.privacy.cookies                  "Ushbu veb sayt ma’lumotlar (kukilar)ni kompyuterimga joylashtiryaptimi?">
+<!ENTITY  securityView.privacy.viewCookies              "Kukilarni ko‘rish">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ushbu sahifa uchun parollarni saqladimmi?">
+<!ENTITY  securityView.privacy.viewPasswords            "Saqlangan parollarni ko‘rish">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Texnik ma’lumotlar">
+
+<!ENTITY  helpButton.label                              "Yordam">
+
+<!ENTITY  generalTitle          "Title:">
+<!ENTITY  securityView.identity.validity "Expires on:">
+

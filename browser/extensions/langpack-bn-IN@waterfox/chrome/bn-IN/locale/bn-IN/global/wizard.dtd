@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "পূর্ববর্তী">
+<!ENTITY  button-back-mac.accesskey    "B">
+<!ENTITY  button-next-mac.label        "পরবর্তী">
+<!ENTITY  button-next-mac.accesskey    "C">
+<!ENTITY  button-finish-mac.label      "সমাপ্ত">
+<!ENTITY  button-cancel-mac.label      "বাতিল">
+
+<!ENTITY  button-back-unix.label       "পূর্ববর্তী">
+<!ENTITY  button-back-unix.accesskey   "B">
+<!ENTITY  button-next-unix.label       "পরবর্তী">
+<!ENTITY  button-next-unix.accesskey   "N">
+<!ENTITY  button-finish-unix.label     "সমাপ্ত">
+<!ENTITY  button-cancel-unix.label     "বাতিল">
+
+<!ENTITY  button-back-win.label        "&lt; পূর্ববর্তী">
+<!ENTITY  button-back-win.accesskey    "B">
+<!ENTITY  button-next-win.label        "পরবর্তী &gt;">
+<!ENTITY  button-next-win.accesskey    "N">
+<!ENTITY  button-finish-win.label      "সমাপ্ত">
+<!ENTITY  button-cancel-win.label      "বাতিল">

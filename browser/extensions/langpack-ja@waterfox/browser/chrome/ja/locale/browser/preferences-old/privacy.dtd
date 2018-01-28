@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label	"サイトによるトラッキングをブロックする">
+<!ENTITY  trackingProtectionAlways.label	"常に">
+<!ENTITY  trackingProtectionAlways.accesskey	"y">
+<!ENTITY  trackingProtectionPrivate.label	"プライベートウィンドウのみ">
+<!ENTITY  trackingProtectionPrivate.accesskey	"l">
+<!ENTITY  trackingProtectionNever.label		"ブロックしない">
+<!ENTITY  trackingProtectionNever.accesskey	"n">
+<!ENTITY  trackingProtectionLearnMore.label	"詳細">
+<!ENTITY  trackingProtectionExceptions.label	"例外...">
+<!ENTITY  trackingProtectionExceptions.accesskey	"x">
+
+<!ENTITY tracking.label				"トラッキング (行動追跡)">
+<!ENTITY trackingProtectionPBM5.label		"プライベートウィンドウでサイトによるトラッキングをブロックする">
+<!ENTITY trackingProtectionPBM5.accesskey	"v">
+<!ENTITY trackingProtectionPBMLearnMore.label	"詳細">
+<!ENTITY changeBlockList.label			"ブロックリストを変更">
+<!ENTITY changeBlockList.accesskey		"C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label			"">
+<!ENTITY  doNotTrack.settings.label		"Do Not Track の設定を管理">
+<!ENTITY  doNotTrack.post.label			"することもできます。">
+
+<!ENTITY  history.label				"履歴">
+
+<!ENTITY  locationBar.label			"ロケーションバー">
+
+<!ENTITY  locbar.suggest.label			"ロケーションバーには次の中から候補を表示する:">
+<!ENTITY  locbar.history.label			"履歴">
+<!ENTITY  locbar.history.accesskey		"H">
+<!ENTITY  locbar.bookmarks.label		"ブックマーク">
+<!ENTITY  locbar.bookmarks.accesskey		"k">
+<!ENTITY  locbar.openpage.label			"開いているタブ">
+<!ENTITY  locbar.openpage.accesskey		"O">
+<!ENTITY  locbar.searches.label			"既定の検索エンジンからの関連候補">
+<!ENTITY  locbar.searches.accesskey		"d">
+
+<!ENTITY  suggestionSettings.label		"検索エンジンの検索候補の設定を変更...">
+<!ENTITY  suggestionSettings.accesskey		"g">
+
+<!ENTITY  acceptCookies2.label			"ウェブサイトから送られてきた Cookie を保存する">
+<!ENTITY  acceptCookies2.accesskey		"A">
+
+<!ENTITY  acceptThirdParty.pre.label		"サードパーティ Cookie の保存:">
+<!ENTITY  acceptThirdParty.pre.accesskey	"y">
+<!ENTITY  acceptThirdParty.always.label		"常に許可">
+<!ENTITY  acceptThirdParty.never.label		"常に拒否">
+<!ENTITY  acceptThirdParty.visited.label	"訪問したサイトのみ許可">
+
+<!ENTITY  keepUntil.label			"Cookie を保存する期間:">
+<!ENTITY  keepUntil.accesskey			"u">
+
+<!ENTITY  expire.label				"サイトが指定した期限まで">
+<!ENTITY  close.label				"&brandShortName; を終了するまで">
+
+<!ENTITY  cookieExceptions.label		"例外サイト...">
+<!ENTITY  cookieExceptions.accesskey		"E">
+
+<!ENTITY  showCookies.label			"Cookie を表示...">
+<!ENTITY  showCookies.accesskey			"S">
+
+<!ENTITY  historyHeader.pre.label		"&brandShortName; に">
+<!ENTITY  historyHeader.pre.accesskey		"w">
+<!ENTITY  historyHeader.remember.label		"履歴を記憶させる">
+<!ENTITY  historyHeader.dontremember.label	"履歴を一切記憶させない">
+<!ENTITY  historyHeader.custom.label		"記憶させる履歴を詳細設定する">
+<!ENTITY  historyHeader.post.label		"">
+
+<!ENTITY  rememberDescription.label		"&brandShortName; は表示したページの履歴、ファイルのダウンロード履歴、検索やフォームの入力履歴、ウェブサイトから送られてきた Cookie を保存します。">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label		"">
+<!ENTITY  rememberActions.clearHistory.label	"最近の履歴を消去">
+<!ENTITY  rememberActions.middle.label		" あるいは ">
+<!ENTITY  rememberActions.removeCookies.label	"Cookie を個別に削除">
+<!ENTITY  rememberActions.post.label		" できます。">
+
+<!ENTITY  dontrememberDescription.label		"&brandShortName; はプライベートブラウジング中と同様に、表示したページの履歴などのプライバシーデータを一切保存しません。">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label		"">
+<!ENTITY  dontrememberActions.clearHistory.label	"現在の履歴をすべて消去">
+<!ENTITY  dontrememberActions.post.label	" できます。">
+
+<!ENTITY  privateBrowsingPermanent2.label	"常にプライベートブラウジングモード">
+<!ENTITY  privateBrowsingPermanent2.accesskey	"p">
+
+<!ENTITY  rememberHistory2.label		"表示したページとファイルのダウンロードの履歴を残す">
+<!ENTITY  rememberHistory2.accesskey		"b">
+
+<!ENTITY  rememberSearchForm.label		"検索やフォームの入力履歴を記憶させる">
+<!ENTITY  rememberSearchForm.accesskey		"f">
+
+<!ENTITY  clearOnClose.label			"&brandShortName; の終了時に履歴を消去する">
+<!ENTITY  clearOnClose.accesskey		"r">
+
+<!ENTITY  clearOnCloseSettings.label		"設定...">
+<!ENTITY  clearOnCloseSettings.accesskey	"t">
+
+<!ENTITY  browserContainersHeader.label         "コンテナータブ">
+<!ENTITY  browserContainersLearnMore.label      "詳細">
+<!ENTITY  browserContainersEnabled.label        "コンテナータブを有効にする">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "設定...">
+<!ENTITY  browserContainersSettings.accesskey    "i">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title "Změna hlavního hesla">
+<!ENTITY setPassword.tokenName.label "Bezpečnostní zařízení">
+<!ENTITY setPassword.oldPassword.label "Současné heslo:">
+<!ENTITY setPassword.newPassword.label "Vložte nové heslo:">
+<!ENTITY setPassword.reenterPassword.label "Zopakujte heslo:">
+<!ENTITY setPassword.meter.label "Kvalita hesla">
+<!ENTITY setPassword.meter.loading "Načítání">
+<!ENTITY masterPasswordDescription.label "Hlavní heslo se používá k ochraně citlivých informací, jako jsou například hesla stránek. Pokud si vytvoříte hlavní heslo, budete na něj dotázáni jednou během každé relace, pokud &brandShortName; bude potřebovat pracovat s uloženými informacemi chráněnými tímto heslem.">
+<!ENTITY masterPasswordWarning.label "Ujistěte se, že si toto hlavní heslo opravdu pamatujete. Bez jeho znalosti nebudete moci přistupovat k uloženým informacím chráněným tímto heslem.">

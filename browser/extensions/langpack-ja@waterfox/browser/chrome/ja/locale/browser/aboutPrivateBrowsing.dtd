@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "これはプライベートウィンドウではありません。">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "プライベートウィンドウを開く">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "プライベートブラウジング">
+<!ENTITY privateBrowsing.title.tracking                  "プライベートブラウジング (トラッキング保護)">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "プライベートブラウジング中は">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "保存しません">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "表示したページ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "検索履歴">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "一時ファイル">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "保存します">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ダウンロードファイル">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ブックマーク編集">
+<!ENTITY aboutPrivateBrowsing.note.before                "プライベートブラウジングで">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "匿名化はできません。">
+<!ENTITY aboutPrivateBrowsing.note.after                 "ネットワーク管理者やインターネットサービスプロバイダは、依然としてあなたが訪れたページを追跡できます。">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "プライベートブラウジング">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           "の詳細情報">
+
+<!ENTITY trackingProtection.title                        "トラッキング保護">
+<!ENTITY trackingProtection.description2                 "いくつかのウェブサイトはインターネット上でのあなたの足跡を追跡しています。Waterfox のトラッキング保護機能を使うと、あなたの閲覧状況の収集をブロックできる可能性があります。">
+<!ENTITY trackingProtection.startTour1                   "動作の仕組みを見る">

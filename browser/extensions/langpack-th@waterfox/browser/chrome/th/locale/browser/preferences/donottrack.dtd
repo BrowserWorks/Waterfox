@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "อย่าตามรอย">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "ใช้งานอย่าตามรอยเสมอ">
+<!ENTITY doNotTrackCheckbox2.accesskey "ช">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; จะส่งสัญญาณว่าคุณไม่ต้องการให้ถูกตามรอยเมื่อใดก็ตามที่การป้องกันการตามรอยเปิดอยู่">
+<!ENTITY doNotTrackLearnMore.label    "เรียนรู้เพิ่มเติม">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "అనువర్తనాలు">
+
+<!ENTITY  typeColumn.label        "విషయాంశ రకం">
+<!ENTITY  typeColumn.accesskey    "T">
+
+<!ENTITY  actionColumn2.label     "చర్య">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "ఫైలు రకాన్ని లేదా అనువర్తనాలను శోధించండి">
+
+<!ENTITY  applications.description "Choose how &brandShortName; handles the files you download from the web or the applications you use while browsing.">
+

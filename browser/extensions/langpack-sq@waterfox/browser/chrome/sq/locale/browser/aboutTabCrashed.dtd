@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Mbylle Këtë Skedë">
+<!ENTITY tabCrashed.restoreTab "Riktheje Këtë Skedë">
+<!ENTITY tabCrashed.restoreAll "Riktheji Krejt Skedat e Vithisura">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Oh! Skeda juaj u vithis.">
+<!ENTITY tabCrashed.offerHelp "Mund t&apos;ju ndihmojmë!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Zgjidhni &tabCrashed.restoreTab; që të ringarkohet lënda e faqes.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Zgjidhni &tabCrashed.restoreTab; ose &tabCrashed.restoreAll; që të ringarkohet lënda e faqes.">
+<!ENTITY tabCrashed.requestHelp "A do të na ndihmoni?">
+<!ENTITY tabCrashed.requestHelpMessage "Njoftimet e vithisjeve na ndihmojnë të diagnostikojmë probleme dhe ta përmirësojmë &brandShortName;-in.">
+<!ENTITY tabCrashed.requestReport "Njoftoni për këtë skedë">
+<!ENTITY tabCrashed.sendReport2 "Dërgoni një njoftim vithisjeje për skedën që po shihnit">
+<!ENTITY tabCrashed.commentPlaceholder2 "Komente opsionale (komentet janë të dukshëm publikisht)">
+<!ENTITY tabCrashed.includeURL2 "Përfshi në këtë njoftim URL-në e faqes">
+<!ENTITY tabCrashed.emailPlaceholder "Jepni këtu adresën tuaj email">
+<!ENTITY tabCrashed.emailMe "Dërgomëni email kur të ketë më tepër të dhëna">
+<!ENTITY tabCrashed.reportSent "Njoftimi i vithisjes u parashtrua; faleminderit që ndihmoni në përmirësimin e &brandShortName;-it!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Njoftoni për skeda prapaskenë">
+<!ENTITY tabCrashed.autoSubmit2 "Përditësojini parapëlqimet që njoftimet e vithisjeve të regjistruara, përfshi njoftime nga skeda të vithisura në prapaskenë, nga ky sesion dhe sesione të ardhshëm, të parashtrohen vetvetiu">

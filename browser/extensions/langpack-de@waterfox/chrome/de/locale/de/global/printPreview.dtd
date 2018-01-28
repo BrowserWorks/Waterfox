@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Drucken…">
+<!ENTITY print.accesskey      "D">
+<!ENTITY pageSetup.label      "Seite einrichten…">
+<!ENTITY pageSetup.accesskey  "e">
+<!ENTITY page.label           "Seite:">
+<!ENTITY page.accesskey       "S">
+<!ENTITY of.label             "von">
+<!ENTITY scale.label          "Skalierung:">
+<!ENTITY scale.accesskey      "k">
+<!ENTITY portrait.label       "Hochformat">
+<!ENTITY portrait.accesskey   "H">
+<!ENTITY landscape.label      "Querformat">
+<!ENTITY landscape.accesskey  "Q">
+<!ENTITY close.label          "Schließen">
+<!ENTITY close.accesskey      "c">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Benutzerdefiniert…">
+<!ENTITY ShrinkToFit.label    "Auf Seitengröße verkleinern">
+<!ENTITY customPrompt.title   "Benutzerdefinierte Skalierung…">
+<!ENTITY simplifyPage.label   "Seite vereinfachen">
+<!ENTITY simplifyPage.accesskey "v">
+<!ENTITY simplifyPage.enabled.tooltip  "Bessere Darstellung für einfacheres Lesen">
+<!ENTITY simplifyPage.disabled.tooltip "Diese Seite kann nicht automatisch vereinfacht werden.">
+
+<!ENTITY homearrow.tooltip    "Erste Seite">
+<!ENTITY endarrow.tooltip     "Letzte Seite">
+<!ENTITY nextarrow.tooltip    "Nächste Seite">
+<!ENTITY previousarrow.tooltip "Vorherige Seite">

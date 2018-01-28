@@ -1,0 +1,118 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Cosaint ar Lorgaireacht">
+<!ENTITY  trackingProtection2.description      "Bailíonn lorgairí do chuid sonraí brabhsála ó shuíomh go suíomh ar an nGréasán. Baintear úsáid as an lorgaireacht chun próifíl díot a thógáil, ansin ábhar a thaispeáint duit bunaithe ar do chuid sonraí brabhsála agus ar fhaisnéis phearsanta.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Úsáid Cosaint ar Lorgaireacht chun cosc a chur ar lorgairí aitheanta">
+<!ENTITY  trackingProtectionAlways.label       "I gCónaí">
+<!ENTITY  trackingProtectionAlways.accesskey   "I">
+<!ENTITY  trackingProtectionPrivate.label      "I bhfuinneog phríobháideach amháin">
+<!ENTITY  trackingProtectionPrivate.accesskey  "b">
+<!ENTITY  trackingProtectionNever.label        "Choíche">
+<!ENTITY  trackingProtectionNever.accesskey    "C">
+<!ENTITY  trackingProtectionLearnMore.label    "Tuilleadh eolais">
+<!ENTITY  trackingProtectionExceptions.label   "Eisceachtaí…">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Úsáid Cosaint ar Lorgaireacht i bhFuinneoga Príobháideacha">
+<!ENTITY trackingProtectionPBM5.accesskey     "b">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Úsáid Cosaint ar Lorgaireacht i mBrabhsáil Phríobháideach chun cosc a chur ar lorgairí aitheanta">
+<!ENTITY trackingProtectionPBM6.accesskey     "b">
+<!ENTITY trackingProtectionPBMLearnMore.label "Tuilleadh eolais">
+<!ENTITY changeBlockList2.label               "Athraigh an Liosta Coiscthe…">
+<!ENTITY changeBlockList2.accesskey           "A">
+
+<!ENTITY  doNotTrack.description        "Inis do shuímh “Ná Lorgaítear Mé” mura bhfuil tú ag iarraidh go lorgófaí thú">
+<!ENTITY  doNotTrack.learnMore.label    "Tuilleadh eolais">
+<!ENTITY  doNotTrack.default.label      "Agus Cosaint ar Lorgaireacht ar siúl amháin">
+<!ENTITY  doNotTrack.always.label       "I gCónaí">
+
+<!ENTITY  history.label                 "Stair">
+<!ENTITY  permissions.label             "Ceadanna">
+
+<!ENTITY  addressBar.label              "Barra Suímh">
+<!ENTITY  addressBar.suggest.label      "Agus an barra suímh in úsáid, mol">
+<!ENTITY  locbar.history2.label         "Stair bhrabhsála">
+<!ENTITY  locbar.history2.accesskey     "h">
+<!ENTITY  locbar.bookmarks.label        "Leabharmharcanna">
+<!ENTITY  locbar.bookmarks.accesskey    "L">
+<!ENTITY  locbar.openpage.label         "Cluaisíní oscailte">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Cuardaigh ghaolmhara ón inneall cuardaigh réamhshocraithe">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "Roghanna a bhaineann le moltaí cuardaigh">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Glac le fianáin tríú páirtí:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "I gCónaí">
+<!ENTITY  acceptThirdParty.never.label    "Riamh">
+<!ENTITY  acceptThirdParty.visited.label  "Ó shuímh fheicthe">
+
+<!ENTITY  keepUntil.label               "Coinnigh:">
+<!ENTITY  keepUntil.accesskey           "o">
+
+<!ENTITY  expire.label                  "go dtí go mbeidh siad caite">
+<!ENTITY  close.label                   "go dtí go ndúnaim &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Eisceachtaí…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Taispeáin Fianáin…">
+<!ENTITY  showCookies.accesskey         "s">
+
+<!ENTITY  historyHeader2.pre.label         "Cad is mian leat &brandShortName; a dhéanamh?">
+<!ENTITY  historyHeader2.pre.accesskey     "C">
+<!ENTITY  historyHeader.remember.label     "Meabhraigh an stair">
+<!ENTITY  historyHeader.dontremember.label "Ná meabhraigh an stair riamh">
+<!ENTITY  historyHeader.custom.label       "Úsáid socruithe saincheaptha don stair">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "Meabhróidh &brandShortName; do stair bhrabhsála, íoslódála, fhoirme agus chuardaigh, agus coimeádfaidh sé fianáin ó na suímh Gréasáin a dtugann tú cuairt orthu.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "B'fhéidir leat ">
+<!ENTITY  rememberActions.clearHistory.label  "an stair is déanaí a ghlanadh">
+<!ENTITY  rememberActions.middle.label        ", nó ">
+<!ENTITY  rememberActions.removeCookies.label "fianáin aonair a scriosadh">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "Úsáidfidh &brandShortName; na socruithe céanna mar a úsáidtear sa bhrabhsáil phríobháideach, agus ní mheabhróidh sé stair ar bith agus tú ag brabhsáil an Ghréasáin.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "B'fhéidir leat freisin ">
+<!ENTITY  dontrememberActions.clearHistory.label "an stair reatha go léir a ghlanadh">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Bain úsáid as Brabhsáil Phríobháideach i gcónaí">
+<!ENTITY  privateBrowsingPermanent2.accesskey "P">
+
+<!ENTITY  rememberHistory2.label      "Meabhraigh mo stair bhrabhsála agus íoslódála">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Meabhraigh an stair chuardaigh agus fhoirme">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Glan an stair agus &brandShortName; á dhúnadh">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Socruithe…">
+<!ENTITY  clearOnCloseSettings.accesskey "c">
+
+<!ENTITY  browserContainersLearnMore.label      "Tuilleadh eolais">
+<!ENTITY  browserContainersEnabled.label        "Cumasaigh Cluaisíní Coimeádáin">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Socruithe…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

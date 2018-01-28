@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Actualizare &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; e în modul offline">
+<!ENTITY  offline.description             "&brandShortName; trebuie să se conecteze online pentru a vedea dacă sunt actualizări disponibile pentru suplimentele tale pentru a le face compatibile cu această versiune.">
+<!ENTITY  offline.toggleOffline.label     "Mergeți online acum.">
+<!ENTITY  offline.toggleOffline.accesskey "g">
+
+<!ENTITY  mismatch.win.title              "Suplimente incompatibile">
+<!ENTITY  mismatch.top.label              "Următoarele suplimente nu sunt compatibile cu noua versiune de &brandShortName; și au fost dezactivate:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; poate verifica dacă sunt disponibile versiuni noi, compatibile, ale acestor suplimente.">
+
+<!ENTITY  checking.wizard.title           "Se caută suplimente compatibile">
+<!ENTITY  checking.top.label              "Se caută actualizări pentru suplimentele incompatibile…">
+<!ENTITY  checking.status                 "Aceasta poate dura câteva minute">
+
+<!ENTITY  found.wizard.title               "S-au găsit suplimente compatibile">
+<!ENTITY  found.top.label                 "Selectează suplimentele pe care dorești să le instalezi:">
+<!ENTITY  found.disabledXPinstall.label   "Aceste actualizări nu pot fi instalate deoarece instalarea de programe este în prezent dezactivată. Puteți schimba această setare mai jos.">
+<!ENTITY  found.enableXPInstall.label     "Permite site-urilor web să instaleze programe">
+<!ENTITY  found.enableXPInstall.accesskey "a">
+
+<!ENTITY  installing.wizard.title         "Instalare suplimente compatibile">
+<!ENTITY  installing.top.label            "Se descarcă și se instalează actualizările suplimentelor…">
+
+<!ENTITY  noupdates.wizard.title          "Nu s-au găsit suplimente compatibile">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; nu a putut găsi actualizări pentru suplimentele tale incompatibile.">
+<!ENTITY  noupdates.error.desc            "Au apărut niște probleme în timpul încercării de a găsi actualizări.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; va verifica periodic și vă va informa când sunt găsite actualizări compatibile pentru aceste suplimente.">
+
+<!ENTITY  finished.wizard.title           "Suplimente compatibile instalate">
+<!ENTITY  finished.top.label              "&brandShortName; a instalat actualizările suplimentelor pe care le aveți instalate.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; poate verifica periodic și să vă informeze când sunt găsite actualizări pentru suplimente.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; va verifica periodic și vă va informa când sunt găsite actualizări pentru suplimente.">
+
+<!ENTITY  adminDisabled.wizard.title      "Nu se pot căuta actualizări">
+<!ENTITY  adminDisabled.warning.label     "Nu se pot căuta actualizări pentru suplimentele incompatibile deoarece instalarea software pentru &brandShortName; a fost dezactivată. Vă rugăm să contactați administratorul sistemului pentru asistență.">
+
+<!ENTITY  versioninfo.wizard.title        "Verificare compatibilitate suplimente">
+<!ENTITY  versioninfo.top.label           "Se verifică compatibilitatea suplimentelor instalate cu această versiune de &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Aceasta poate dura câteva minute…">
+
+<!ENTITY  installerrors.wizard.title      "Probleme la instalarea actualizărilor">
+<!ENTITY  installerrors.intro.label       "&brandShortName; a întâlnit probleme în timp ce actualiza unele suplimente.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Clic pe Încheiere pentru a continua pornirea &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Clic pe „Terminat” pentru a continua pornirea &brandShortName;.">
+<!ENTITY  enableChecking.label            "Permite &brandShortName; să verifice dacă există actualizări.">

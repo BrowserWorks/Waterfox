@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Gzem">
+<!ENTITY cutCmd.accesskey "G">
+<!ENTITY copyCmd.label "Nɣel">
+<!ENTITY copyCmd.accesskey "N">
+<!ENTITY pasteCmd.label "Senteḍ">
+<!ENTITY pasteCmd.accesskey "t">
+<!ENTITY undoCmd.label "Sefsex">
+<!ENTITY undoCmd.accesskey "S">
+<!ENTITY selectAllCmd.label "Ffren imaṛṛa">
+<!ENTITY selectAllCmd.accesskey "F">
+<!ENTITY deleteCmd.label "Kkes">
+<!ENTITY deleteCmd.accesskey "K">
+
+<!ENTITY spellAddToDictionary.label "Rnu amawal">
+<!ENTITY spellAddToDictionary.accesskey "w">
+<!ENTITY spellUndoAddToDictionary.label "Sefsex timerna n umawal">
+<!ENTITY spellUndoAddToDictionary.accesskey "r">
+<!ENTITY spellCheckToggle.label "Senqed taɣdira">
+<!ENTITY spellCheckToggle.accesskey "S">
+<!ENTITY spellNoSuggestions.label "(ulac awalrn iţwasumren)">
+<!ENTITY spellDictionaries.label "Tutlayin">
+<!ENTITY spellDictionaries.accesskey "u">
+
+<!ENTITY searchTextBox.clear.label "Sfeḍ">
+
+<!ENTITY fillLoginMenu.label          "Ččaṛ aseqdac">
+<!ENTITY fillLoginMenu.accesskey      "a">
+<!ENTITY fillPasswordMenu.label       "Ččaṛ awal uffir">
+<!ENTITY fillPasswordMenu.accesskey   "w">
+<!ENTITY fillUsernameMenu.label       "Čaṛ isem n useqdad">
+<!ENTITY fillUsernameMenu.accesskey   "s">
+<!ENTITY noLoginSuggestions.label     "(ulac aseqdac iţusumren)">
+<!ENTITY viewSavedLogins.label        "Sken iseqdacen iţwakelsen">

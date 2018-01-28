@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Luengas">
+<!ENTITY languages.customize.description                "As pachinas s'ofreixen en ocasions en mas d'un idioma. Trigue os idiomas pa amostrar ixas pachinas web, en orden de preferencia:">
+<!ENTITY languages.customize.moveUp.label               "Puyar">
+<!ENTITY languages.customize.moveUp.accesskey           "u">
+<!ENTITY languages.customize.moveDown.label             "Baixar">
+<!ENTITY languages.customize.moveDown.accesskey         "B">
+<!ENTITY languages.customize.deleteButton.label         "Eliminar">
+<!ENTITY languages.customize.deleteButton.accesskey     "r">
+<!ENTITY languages.customize.selectLanguage.label       "Trigue un idioma a adhibir…">
+<!ENTITY languages.customize.addButton.label            "Adhibir">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

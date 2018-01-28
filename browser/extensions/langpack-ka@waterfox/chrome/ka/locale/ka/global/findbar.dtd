@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "ფრაზის შემდეგი კონტექსტის პოვნა">
+<!ENTITY previous.tooltip "ფრაზის წინა კონტექსტის პოვნა">
+<!ENTITY findCloseButton.tooltip "ძიების ზოლის დახურვა">
+<!ENTITY highlightAll.label "ყველას მონიშვნა">
+<!ENTITY highlightAll.accesskey "ყ">
+<!ENTITY highlightAll.tooltiptext "ფრაზის ყველა კონტექსტის გამოკვეთა">
+<!ENTITY caseSensitive.label "მთავრულის გათვალისწინებით">
+<!ENTITY caseSensitive.accesskey "რ">
+<!ENTITY caseSensitive.tooltiptext "ძიება მთავრულის გათვალისწინებით">
+<!ENTITY entireWord.label "მთლიანი სიტყვები">
+<!ENTITY entireWord.accesskey "მ">
+<!ENTITY entireWord.tooltiptext "მხოლოდ მთლიანი სიტყვების ძიება">

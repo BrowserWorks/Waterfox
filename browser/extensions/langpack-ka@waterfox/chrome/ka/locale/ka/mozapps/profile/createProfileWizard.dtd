@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "პროფილის შექმნის ოსტატი">
+<!ENTITY window.size                  "width: 55em; height: 40em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; ინახავს მონაცემებს თქვენი პარამეტრების, მახასიათებლების და სანიშნეების შესახებ თქვენს პირად პროფილში.">
+<!ENTITY profileCreationExplanation_2.text  "თუ თქვენ &brandShortName;–ს სხვა მომხმარებლებთან საზიაროდ იყენებთ, შეგიძლიათ პროფილების გამოყენება თითოეულის პარამეტრების ცალკე შესანახად.  ამისთვის თითოეულმა მომხმარებელმა საკუთარი პროფილი უნდა შექმნას.">
+<!ENTITY profileCreationExplanation_3.text  "თუ თქვენ &brandShortName;–ს ერთადერთი მომხმარებელი ხართ, უნდა გაგაჩნდეთ ერთი პროფილი მაინც.  სურვილისამებრ შეგიძლიათ შექმნათ სხვადასხვა პროფილებიც განსხვავებული პარამეტრებით.  მაგალითად, სამუშაოდ და პირადი სარგებლობისთვის.">
+<!ENTITY profileCreationExplanation_4.text  "პროფილის შექმნის დასაწყებად დააწკაპეთ 'შემდეგს'.">
+<!ENTITY profileCreationExplanation_4Mac.text  "თქვენი პროფილის შესაქმნელად დააწკაპეთ 'გაგრძელებას'.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "თქვენი პროფილის შესაქმნელად დააწკაპეთ 'შემდეგს'.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "რამდენიმე პროფილის შექმნის შემთხვევაში მათ სხვადასხვა სახელი უნდა მიანიჭოთ. შეგიძლიათ გამოიყენოთ ქვემოთ მოყვანილი ან მოიფიქროთ და დაარქვათ თქვენ თვითონ.">
+<!ENTITY profilePrompt.label            "მიუთითეთ პროფილის ახალი სახელი:">
+<!ENTITY profilePrompt.accesskey        "მ">
+<!ENTITY profileDirectoryExplanation.text   "თქვენი პარამეტრები და დანარჩენი მონაცემები აქ შეინახება:">
+<!ENTITY profileDefaultName             "ნაგულისხმევი მომხმარებელი">
+<!ENTITY button.choosefolder.label      "საქაღალდის არჩევა…">
+<!ENTITY button.choosefolder.accesskey  "ს">
+<!ENTITY button.usedefault.label        "ნაგულისხმევი საქაღალდის გამოყენება">
+<!ENTITY button.usedefault.accesskey    "ნ">

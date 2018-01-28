@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "¡Salir de aquí!">
+<!ENTITY safeb.palm.decline.label "Ignorar esta advertencia">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Este no es un sitio engañoso…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "¿Por qué está bloqueda esta página?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Publicidad patrocinada por <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "¡Página reportada como atacante!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Esta página hospedada en <span id='malware_sitename'/> ha sido reportada como atacante y se bloqueó con base en tus preferencias de seguridad.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Las páginas atacantes intentan instalar programas para robarte información privada, usar tu equipo para atacar a otros o dañar tu sistema.</p><p>Algunas distribuyen intencionalmente programas dañinos y otras fueron comprometidas sin el conocimiento de sus dueños.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "¡Sitio reportado con software malicioso!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Esta página ubicada en <span id='unwanted_sitename'/> ha sido reportada que tienen software no deseado y ha sido bloqueada basándonos en tu preferencias de seguridad.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Páginas de software no deseadas intentan instalar software que puede ser engañoso y afectar tu sistema de maneras inesperadas.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "¡Sitio engañoso!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Esta página <span id='phishing_sitename'/> ha sido reportada como una falsificación y se bloqueó con base en tus preferencias de seguridad.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Los sitios fraudulentos están diseñados para engañarte y hacer algo peligroso, como instalar software, o revelar tu información personal, como contraseñas, números de teléfono o tarjetas de crédito.</p><p>Ingresando cualquier información en esta página web puede resultar en robo de identidad u otro fraude.</p>">
+

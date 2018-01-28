@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "ପୃଷ୍ଠା ଧାରଣ ତ୍ରୁଟି">
+<!ENTITY retry.label "ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "ସଂଯୋଗ କରିବାରେ ବିଫଳ">
+<!ENTITY connectionFailure.longDesc "<p>ଯଦିଚ ସେହି ସାଇଟଟି ବୈଧ ଲାଗୁଛି, ବ୍ରାଉଜର ସଂଯୋଗ ସ୍ଥାପନ କରିବାରେ ଅସମର୍ଥ ହୋଇଛି।</p><ul><li>ସେହି ସାଇଟଟି ଅସ୍ଥାୟୀ ଭାବରେ ଉପଲବ୍ଧ ହୋଇ ନପାରେ? ପରେ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।</li><li>ଆପଣ ଅନ୍ୟାନ୍ୟ ସାଇଟଗୁଡ଼ିକୁ ବ୍ରାଉଜ କରିବାରେ ଅସମର୍ଥ କି?  କମ୍ପୁଟରର ନେଟୱର୍କ ସଂଯୋଗକୁ ଯାଞ୍ଚ କରନ୍ତୁ।</li><li>ଆପଣଙ୍କର କମ୍ପୁଟର କିମ୍ବା ନେଟୱର୍କ ଫାୟାରୱାଲ କିମ୍ବା ପ୍ରକ୍ସି ଦ୍ୱାରା ପ୍ରତିରୋଧିତ କି? ଭୁଲ ସଂରଚନା ୱେବ ବ୍ରାଉଜିଙ୍ଗରେ ବାଧା ସୃଷ୍ଟି କରିପାରେ।</li></ul>">
+
+<!ENTITY deniedPortAccess.title "ସୁରକ୍ଷା କାରଣ ହେତୁ ସଂଯୋଗିକୀକୁ ଅଟକାଯାଇଛି">
+<!ENTITY deniedPortAccess.longDesc "<p>ଅନୁରୋଧ କରାଯାଇଥିବା ଠିକଣା ଗୋଟିଏ ପୋର୍ଟକୁ ଉଲ୍ଲେଖ କରିଥାଏ (ଯେପରିକି <q>mozilla.org:80</q> mozilla.org ରେ ପୋର୍ଟ 80 ପାଇଁ) ସାଧାରଣତଃ ୱେବ ବ୍ରାଉଜିଙ୍ଗ ବ୍ୟତୀତ <em>ଅନ୍ୟାନ୍ୟ</em> କାର୍ଯ୍ୟ ପାଇଁ ବ୍ୟବହୃତ ହୋଇଥାଏ। ବ୍ରାଉଜର ଆପଣଙ୍କର ପ୍ରତିରକ୍ଷା ଏବଂ ସୁରକ୍ଷା ପାଇଁ ଅନୁରୋଧକୁ ବାତିଲ କରିଛି।</p>">
+
+<!ENTITY dnsNotFound.title "ଠିକଣା ମିଳୁନାହିଁ">
+<!ENTITY dnsNotFound.longDesc "<p>ବ୍ରାଉଜର ହୋଷ୍ଟ ସର୍ଭରକୁ ପ୍ରଦତ୍ତ ଠିକଣା ପାଇଁ ଖୋଜିପାରିଲା ନାହିଁ।</p><ul><li>ଡମେନ ନାମ ଲେଖିବା ସମୟରେ ଆପଣ କିଛି ଭୁଲ କରିଛନ୍ତି କି? (ଯେପରିକି  <q><strong>www</strong>.mozilla.org</q> ପରିବର୍ତ୍ତେ <q><strong>ww</strong>.mozilla.org</q>)</li><li>ଏହି ନାମରେ କୌଣସି ଡମେନ  ଅଛି ବୋଲି ଆପଣ ନିଶ୍ଚିତ କି ?  ଏହାର ପଞ୍ଜିକରଣ ସମୟ ହୁଏତଃ ସମାପ୍ତ ହୋଇଛି।</li><li>ଆପଣ ଅନ୍ୟ ସାଇଟଗୁଡ଼ିକୁ ବ୍ରାଉଜ କରିବାରେ ଅସମର୍ଥି କି?  ଆପଣଙ୍କର ନେଟୱର୍କ ସଂଯୋଗ ଏବଂ DNS ସର୍ଭର ସଂରଚନାକୁ ଯାଞ୍ଚ କରନ୍ତୁ।</li><li>ଆପଣଙ୍କର କମ୍ପୁଟର କିମ୍ବା ନେଟୱର୍କ ଫାୟାରୱାଲ କିମ୍ବା ପ୍ରକ୍ସି ଦ୍ୱାରା ପ୍ରତିରୋଧିତ କି? ଭୁଲ ସଂରଚନା ୱେବ ବ୍ରାଉଜିଙ୍ଗରେ ବାଧା ସୃଷ୍ଟି କରିପାରେ।</li></ul>">
+
+<!ENTITY fileNotFound.title "ଫାଇଲ ମିଳୁନାହିଁ">
+<!ENTITY fileNotFound.longDesc "<ul><li>ବସ୍ତୁଗୁଡ଼ିକୁ ପୁନଃ ନାମକରଣ, ଅପସାରଣ, କିମ୍ବା ସ୍ଥାନାନ୍ତରଣ କରିହେବ କି?</li><li>ଏହି ଠିକଣାରେ ବନାନ ତ୍ରୁଟି, ପୁଞ୍ଜିକରଣ, କିମ୍ବା ଅନ୍ୟାନ୍ୟ ଛପାଯୋଗ୍ୟ ତ୍ରୁଟି ଅଛି କି?</li><li>ଅନୁରୋଧ କରାଯାଇଥିବା ବସ୍ତୁ ପାଇଁ ଯଥେଷ୍ଟ ଅଭିଗମ୍ୟ ଅନୁମତି ଅଛି କି?</li></ul>">
+
+
+
+<!ENTITY generic.title "ଅନୁରୋଧକୁ ସମ୍ପୂର୍ଣ୍ଣ କରିହେବ ନାହିଁ">
+<!ENTITY generic.longDesc "<p>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅତିରିକ୍ତ ସୂଚନା କିମ୍ବା ତ୍ରୁଟି ବର୍ତ୍ତମାନ ଉପଲବ୍ଧ ନାହିଁ।</p>">
+
+<!ENTITY malformedURI.title "ଅବୈଧ ଠିକଣା">
+<!ENTITY malformedURI.longDesc "<p>ଦିଆଯାଇଥିବା ଠିକଣାଟି ପରିଚିତ ଅବସ୍ଥାରେ ନାହିଁ। ଭୁଲ ପାଇଁ ଦୟାକରି ଅବସ୍ଥିତି ପଟିକୁ ଯାଞ୍ଚ କରନ୍ତୁ ଏବଂ ପୁଣି ଚେଷ୍ଟାକରନ୍ତୁ।</p>">
+
+<!ENTITY netInterrupt.title "ତଥ୍ୟ ସ୍ଥାନାନ୍ତରଣ ବ୍ୟାଘାତ ପ୍ରାପ୍ତ ହୋଇଛି">
+<!ENTITY netInterrupt.longDesc "<p>ବ୍ରାଉଜର ସଫଳତାର ସହିତ  ସଂଯୁକ୍ତ ହୋଇଛି, କିନ୍ତୁ ସୂଚନା ସ୍ଥାନାନ୍ତରଣ କରିବ ସମୟରେ ସଂଯୋଗ ବ୍ୟାଘାତ ପ୍ରାପ୍ତ ହୋଇଛି। ଦୟାକରି ପୁଣିଥରେ ଚେଷ୍ଟାକରନ୍ତୁ।</p><ul><li>ଆପଣ ଅନ୍ୟ ସାଇଟଗୁଡ଼ିକୁ ବ୍ରାଉଜ କରିବାରେ ଅକ୍ଷମ କି? କମ୍ପୁଟରର ନେଟୱର୍କ ସଂଯୋଗକୁ ଯାଞ୍ଚ କରନ୍ତୁ।</li><li>ଏପର୍ଯ୍ୟନ୍ତ ସମସ୍ୟା ଅଛି କି? ସହାୟତା ପାଇଁ ଆପଣଙ୍କର ନେଟୱର୍କ ପ୍ରଶାସକଙ୍କ କିମ୍ବା ଇଣ୍ଟରନେଟ ପ୍ରଦାନକାରୀ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY notCached.title "ଦଲିଲର ସମୟ ସମାପ୍ତ ହୋଇଛି">
+<!ENTITY notCached.longDesc "<p>ଅନୁରୋଧ କରାଯାଇଥିବା ଦଲିଲଟି ବ୍ରାଉଜରର କ୍ୟାଶେରେ ଉପଲବ୍ଧ ନାହିଁ।</p><ul><li>ସୁରକ୍ଷା ଜନିତ ସାବଧାନତା ଭାବରେ, ବ୍ରାଉଜର ସ୍ୱୟଂଚାଳିତ ଭାବରେ ଜରୁରୀ ଦଲିଲଗୁଡ଼ିକୁ ପୁଣି ଅନୁରୋଧ କରିନଥାଏ।</li><li>ସେହି ଦଲିଲକୁ ୱେବସାଇଟରୁ ପୁଣି ଅନୁରୋଧ କରିବା ପାଇଁ ପୁଣିଥରେ ଚେଷ୍ଟାକରନ୍ତୁକୁ କ୍ଲିକ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY netOffline.title "ଅଫଲାଇନ ଅବସ୍ଥା">
+<!ENTITY netOffline.longDesc2 "<p>ବ୍ରାଉଜର ଅଫଲାଇନ ଧାରାରେ ଚାଲୁଅଛି ଏବଂ ଅନୁରୋଧ  କରିଥିବା ବସ୍ତୁ ସହିତ ସଂଯୋଗ କରିପାରିବେ ନାହିଁ।</p><ul><li>କମ୍ପୁଟରଟି ସକ୍ରିୟ ନେଟୱର୍କ ସହିତ ସଂଯୁକ୍ତ ହୋଇଛି କି ନାହିଁ?</li><li>&quot; କୁ ଦବାନ୍ତୁ ଏବଂ ଅନଲାଇନ ଧାରାକୁ ପରିବର୍ତ୍ତନ କରିବା ପାଇଁ ଏବଂ ପୃଷ୍ଠାକୁ ପୁନର୍ଧାରଣ କରିବା ପାଇଁ &quot; କୁ ପୁଣିଥରେ ଚେଷ୍ଟାକରନ୍ତୁ।</li></ul>">
+
+<!ENTITY contentEncodingError.title "ବିଷୟବସ୍ତୁ ସାଙ୍କେତିକରଣ ତ୍ରୁଟି">
+<!ENTITY contentEncodingError.longDesc "<p>ଆପଣ ଦେଖିବାକୁ ଚେଷ୍ଟାକରୁଥିବା ପୃଷ୍ଠାକୁ ଦର୍ଶାଯାଇପାରିବ ନାହିଁ କାରଣ ଏହା ଗୋଟିଏ ଅବୈଧ କିମ୍ବା ଅସମର୍ଥିତ ସଙ୍କୋଚନକୁ ବ୍ୟବହାର କରିଥାଏ।</p><ul><li>ଏହି ସମସ୍ୟା ବିଷୟରେ ସୂଚନା ଦେବା ପାଇଁ  ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY unsafeContentType.title "ଅସୁରକ୍ଷିତ ଫାଇଲ ପ୍ରକାର">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ଏହି ସମସ୍ୟା ବିଷୟରେ ସୂଚନା ଦେବା ପାଇଁ  ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li> </ul>">
+
+<!ENTITY netReset.title "ସଂଯୋଗ ବ୍ୟାଘାତ ପ୍ରାପ୍ତ">
+<!ENTITY netReset.longDesc "<p>ଗୋଟିଏ ସଂଯୋଗ ସହିତ ବୁଝାମଣା କରିବା ସମୟରେ ନେଟୱର୍କ ସଂଯୋଗ ବ୍ୟାଘାତ ପ୍ରାପ୍ତ ହୋଇଛି। ଦୟାକରି ପୁଣିଥରେ ଚେଷ୍ଟାକରନ୍ତୁ।</p>">
+
+<!ENTITY netTimeout.title "ନେଟୱର୍କ ସମୟ ସମାପ୍ତ">
+<!ENTITY netTimeout.longDesc "<p>ଅନୁରୋଧ କରାଯାଇଥିବା ସାଇଟଟି ସଂଯୋଗ ପାଇଁ ଅନୁରୋଧକୁ ଉତ୍ତର ଦେଉ ନାହିଁ ଏବଂ ବ୍ରାଉଜର ଉତ୍ତରକୁ ଆଉ ଅପେକ୍ଷା କରୁ ନାହିଁ।</p><ul><li>ସର୍ଭରଟି ଅଧିକ ଭାରାକ୍ରାନ୍ତ ହୋଇଥାଇପାରେ ଅଥବା ଅସ୍ଥାୟୀ ଭାବରେ ଖରାପ ଥାଇପାରେ?  ପରେ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।</li><li>ଆପଣ ଅନ୍ୟ ସାଇଟଗୁଡ଼ିକୁ ବ୍ରାଉଜ କରିବାରେ ଅକ୍ଷମ କି? କମ୍ପୁଟରର ନେଟୱର୍କ ସଂଯୋଗକୁ ଯାଞ୍ଚ କରନ୍ତୁ।</li><li>ଆପଣଙ୍କର କମ୍ପୁଟର କିମ୍ବା ନେଟୱର୍କ ଫାୟାରୱାଲ କିମ୍ବା ପ୍ରକ୍ସି ଦ୍ୱାରା ପ୍ରତିରୋଧିତ କି? ଭୁଲ ସଂରଚନା ୱେବ ବ୍ରାଉଜିଙ୍ଗରେ ବାଧା ସୃଷ୍ଟି କରିପାରେ।</li><li>ଏପର୍ଯ୍ୟନ୍ତ ସମସ୍ୟା ଅଛି କି? ସହାୟତା ପାଇଁ ଆପଣଙ୍କର ନେଟୱର୍କ ପ୍ରଶାସକଙ୍କ କିମ୍ବା ଇଣ୍ଟରନେଟ ପ୍ରଦାନକାରୀ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "ଅଜଣା ପ୍ରଟୋକଲ">
+<!ENTITY unknownProtocolFound.longDesc "<p>ଏହି ଠିକଣାଟି ଏକ ପ୍ରଟୋକଲକୁ ଉଲ୍ଲେଖ କରିଥାଏ (ଯେପରିକି <q>wxyz://</q>) ବ୍ରାଉଜର ଟିହ୍ନିପାରୁ ନାହିଁ, ତେଣୁ ବ୍ରାଉଜର ସେହି ସାଇଟ ସହିତ ସଠିକ ଭାବରେ ସଂଯୋଗ ସ୍ଥାପନ କରିପାରିବ ନାହିଁ।</p><ul><li>ଆପଣ ମଲଟିମେଡିଆ କିମ୍ବା ଅନ୍ୟାନ୍ୟ ପାଠ୍ୟ-ବିହୀନ ସର୍ଭରଗୁଡ଼ିକ ପାଇଁ ଚେଷ୍ଟା କରୁଛନ୍ତି କି? ଅଧିକ ଆବଶ୍ୟକତା ପାଇଁ ସାଇଟକୁ ଯାଞ୍ଚ କରନ୍ତୁ।</li><li>କିଛି ପ୍ରଟୋକଲଗୁଡ଼ିକ ବ୍ରାଉଜର ସେମାନଙ୍କୁ ଚିହ୍ନିବା ପୂର୍ବରୁ ହୁଏତଃ ତୃତୀୟ ପକ୍ଷ  ସଫ୍ଟୱେର କିମ୍ବା ପ୍ଲଗଇନଗୁଡ଼ିକୁ ଆବଶ୍ୟକ କରିପାରନ୍ତି।</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "ପ୍ରକ୍ସି ସର୍ଭର ସଂଯୋଗ ପାଇଁ ମନା କରିଲା">
+<!ENTITY proxyConnectFailure.longDesc "<p>ବ୍ରାଉଜରଟି ଏକ ପ୍ରକ୍ସି ସର୍ଭର ବ୍ୟବହାର ପାଇଁ ବିନ୍ୟାସିତ ହୋଇଛି, କିନ୍ତୁ ସେହି ପ୍ରକ୍ସି ସଂଯୋଗ ପାଇଁ ବାରଣ କରିଛି।</p><ul><li>ବ୍ରାଉଜରର ପ୍ରକ୍ସି ସଂରଚନା ସଠିକ ଅଛି କି? ସଂରଚନାକୁ ଯାଞ୍ଚ କରନ୍ତୁ ଏବଂ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।</li><li>ପ୍ରକ୍ସି ସର୍ଭିସ ଏହି ନେଟୱର୍କରୁ ସଂଯୋଗକୁ ଅନୁମତି ଦେଇଥାଏ କି?</li><li>ଏପର୍ଯ୍ୟନ୍ତ ସମସ୍ୟା ଅଛି କି? ସହାୟତା ପାଇଁ ଆପଣଙ୍କର ନେଟୱର୍କ ପ୍ରଶାସକଙ୍କ କିମ୍ବା ଇଣ୍ଟରନେଟ ପ୍ରଦାନକାରୀ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "ପ୍ରକ୍ସି ସର୍ଭର ମିଳୁନାହିଁ">
+<!ENTITY proxyResolveFailure.longDesc "<p>ବ୍ରାଉଜରଟି ଏକ ପ୍ରକ୍ସି ସର୍ଭର ବ୍ୟବହାର ପାଇଁ ବିନ୍ୟାସିତ ହୋଇଛି, କିନ୍ତୁ ସେହି ପ୍ରକ୍ସି ମିଳୁ ନାହିଁ।</p><ul><li>ବ୍ରାଉଜରର ପ୍ରକ୍ସି ସଂରଚନା ସଠିକ ଅଛି କି? ସଂରଚନାକୁ ଯାଞ୍ଚ କରନ୍ତୁ ଏବଂ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।</li><li>ଆପଣଙ୍କ କମ୍ପୁଟର କୌଣସି ସକ୍ରିୟ ନେଟୱର୍କ ସହିତ ସଂଯୁକ୍ତ ଅଛି କି?</li><li>ଏପର୍ଯ୍ୟନ୍ତ ସମସ୍ୟା ଅଛି କି? ସହାୟତା ପାଇଁ ଆପଣଙ୍କର ନେଟୱର୍କ ପ୍ରଶାସକଙ୍କ କିମ୍ବା ଇଣ୍ଟରନେଟ ପ୍ରଦାନକାରୀ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY redirectLoop.title "ଲୁପର ଦିଗ ପରିବର୍ତ୍ତନ କରନ୍ତୁ">
+<!ENTITY redirectLoop.longDesc "<p>ବ୍ରାଉଜର ଅନୁରୋଧ କରାଯାଇଥିବା ବସ୍ତୁକୁ କାଢ଼ିବା ବନ୍ଦ କରିଛି। ସାଇଟ ସେହି ଅନୁରୋଧକୁ କଦାପି ସମ୍ପୂର୍ଣ୍ଣ ହେଉନଥିବା ଉପାୟରେ ଦିଗ ପରିବର୍ତ୍ତନ କରୁଅଛି।</p><ul><li>ଆପଣ ଏହି ସାଇଟ ଦ୍ୱାରା ଆବଶ୍ୟକ କୁକିଗୁଡ଼ିକୁ ନିଷ୍କ୍ରିୟ କରିଛନ୍ତି ଅଥବା ଅଟକ ରଖିଛନ୍ତି?</li><li><em>NOTE</em>: ଯଦି ସାଇଟର କୁକିଗୁଡ଼ିକୁ ଗ୍ରହଣ କରିବା ଦ୍ୱାରା ତାହା ସମସ୍ୟାର ସମାଧାନ କରିନଥାଏ, ତେବେ ଏହା ହୁଏତଃ ଆପଣଙ୍କ କମ୍ପୁଟର ପରିବର୍ତ୍ତେ ସର୍ଭର ସଂରଚନା  ସମସ୍ୟା ହୋଇପାରେ।</li></ul>">
+
+<!ENTITY unknownSocketType.title "ଭୁଲ ଉତ୍ତର">
+<!ENTITY unknownSocketType.longDesc "<p>ସାଇଟ ନେଟୱର୍କ ଅନୁରୋଧକୁ ଅପ୍ରତ୍ୟାଶିତ ଭାବରେ ଉତ୍ତର ଦେଇଥାଏ ଏବଂ ବ୍ରାଉଜର ଅଗ୍ରସର ହୋଇନପାରେ।</p>">
+
+<!ENTITY nssFailure2.title "ସୁରକ୍ଷିତ ସଂଯୋଗ ବିଫଳ ହେଲା">
+<!ENTITY nssFailure2.longDesc2 "<p>ଆପଣ ଦେଖିବାକୁ ଚାହୁଁଥିବା ପୃଷ୍ଠାକୁ ଦର୍ଶାଯାଇ ପାରିବ ନାହିଁ କାରଣ ଗ୍ରହଣ କରାଯାଇଥିବା ତଥ୍ୟର ବୈଧିକରଣକୁ ଯାଞ୍ଚ କରାଯାଇନାହିଁ।</p><ul><li>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅଗଚର କରାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ସମ୍ପର୍କ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY nssBadCert.title "ସୁରକ୍ଷିତ ସଂଯୋଗ ବିଫଳ ହେଲା">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>ଏହା ହୁଏତଃ ସର୍ଭର ସଂରଚନା ସମସ୍ୟା ହୋଇପାରେ, କିମ୍ବା ଏହି ସର୍ଭରର କେହି ପରିଚୟ ଚୋରି କରିଥାଇପାରେ।</li> <li>ଯଦି ଆପଣ ଅତିତରେ ଏହି ସର୍ଭର ସହିତ ସଫଳତାର ସହିତ ସଂଯୁକ୍ତ କରିଛନ୍ତି, ତେବେ  ଏହି ତ୍ରୁଟିଟି ଅସ୍ଥାୟୀ ହୋଇପାରେ, ଏବଂ ଆପଣ ପରେ ପୁଣିଥରେ ଚେଷ୍ଟା କରିପାରିବେ।</li> </ul>">
+
+
+
+<!ENTITY cspBlocked.title "ବିଷୟବସ୍ତୁ ସୁରକ୍ଷା ନିତୀ ଦ୍ୱାରା ଅଟକ ରଖାଯାଇଛି">
+<!ENTITY cspBlocked.longDesc "<p>ବ୍ରାଉଜର ଏହି ପୃଷ୍ଠାକୁ ଏହି ଉପାୟରେ ଧାରଣ କରିବାରୁ ବାରଣ ହୋଇଛି କାରଣ ସେହି ପୃଷ୍ଠାରେ ଏମିତି କିଛି ବିଷୟବସ୍ତୁ ଅଛି ଯାହାକି ଧାରଣ କରିବା ପାଇଁ ଅନୁମତି ଦେଇନଥାଏ।</p>">
+
+<!ENTITY corruptedContentErrorv2.title "ତ୍ରୁଟିଯୁକ୍ତ ବିଷୟବସ୍ତୁ ତ୍ରୁଟି">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ଆପଣ ଦେଖିବାକୁ ଚାହୁଁଥିବା ପୃଷ୍ଠାକୁ ଦର୍ଶାଯାଇ ପାରିବ ନାହିଁ କାରଣ ତଥ୍ୟ ପରିବହନରେ ଗୋଟିଏ ତ୍ରୁଟି ଦେଖା ଦେଇଛି।</p><ul><li>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅଗଚର କରାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ସମ୍ପର୍କ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY remoteXUL.title "ସୁଦୂର XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅବଗତ କରାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>It may have been removed, moved, or file permissions may be preventing access.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+">
+

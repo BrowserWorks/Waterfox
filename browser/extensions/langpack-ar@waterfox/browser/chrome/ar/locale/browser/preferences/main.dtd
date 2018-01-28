@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "البدء">
+
+<!ENTITY startupPage2.label        "عند بدء &brandShortName;">
+<!ENTITY startupPage2.accesskey    "ع">
+<!ENTITY startupUserHomePage.label "اعرض صفحتي الرئيسية">
+<!ENTITY startupBlankPage.label    "اعرض صفحة فارغة">
+<!ENTITY startupPrevSession.label  "اعرض نوافذي و ألسنتي من المرّة السابقة">
+
+<!ENTITY homepage2.label           "صفحة البداية">
+<!ENTITY homepage2.accesskey       "د">
+<!ENTITY useCurrentPage.label      "استخدم الصفحة الحالية">
+<!ENTITY useCurrentPage.accesskey  "ح">
+<!ENTITY useMultiple.label         "استخدم الصفحات الحالية">
+<!ENTITY chooseBookmark.label      "استخدم علامة…">
+<!ENTITY chooseBookmark.accesskey  "ع">
+<!ENTITY restoreDefault.label      "استعد المبدئي">
+<!ENTITY restoreDefault.accesskey  "س">
+
+<!ENTITY downloads.label     "التّنزيلات">
+
+<!ENTITY saveTo.label "احفظ الملفّات في">
+<!ENTITY saveTo.accesskey "ظ">
+<!ENTITY chooseFolderWin.label        "تصفّح…">
+<!ENTITY chooseFolderWin.accesskey    "ص">
+<!ENTITY chooseFolderMac.label        "اختر…">
+<!ENTITY chooseFolderMac.accesskey    "ت">
+<!ENTITY alwaysAskWhere.label         "اسألني دائمًا عن مكان حفظ الملفّات">
+<!ENTITY alwaysAskWhere.accesskey     "ن">
+
+<!ENTITY alwaysCheckDefault2.label        "تحقق دائمًا من كون &brandShortName; متصفّحك المبدئي">
+<!ENTITY alwaysCheckDefault2.accesskey    "د">
+<!ENTITY setAsMyDefaultBrowser3.label     "اجعله المبدئي…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "م">
+<!ENTITY isDefault.label                  "‏&brandShortName; هو المتصفح المبدئي حاليا">
+<!ENTITY isNotDefault.label               "‏&brandShortName; ليس المتصفح المبدئي حاليا">
+
+<!ENTITY separateProfileMode.label        "اسمح بتشغيل &brandShortName; و فَيَرفُكس في نفس الوقت">
+<!ENTITY useWaterfoxSync.label             "فائدة: يستخدم هذا ملفات إعدادات مستقلة. استخدم «تزامن» لمشاركة البيانات بينهما.">
+<!ENTITY getStarted.notloggedin.label     "لِج إلى &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "افتح تفضيلات &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "فعل &brandShortName; متعدد السيرورات">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informacija apie „url-classifier“">
+<!ENTITY aboutUrlClassifier.providerTitle               "Tiekėjas">
+<!ENTITY aboutUrlClassifier.provider                    "Tiekėjas">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Paskutinio atnaujinimo laikas">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Kito atnaujinimo laikas">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Atsitraukimo laikas">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Paskutinio atnaujinimo būsena">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Atnaujinti">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Podėlis">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Atnaujinti">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Išvalyti">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Lentelės pavadinimas">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Neigiamų podėlio įrašų skaičius">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Teigiamų podėlio įrašų skaičius">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Rodyti įrašus">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Podėlio įrašai">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiksas">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Neigiamo podėlio galiojimo pabaiga">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Pilna maišos reikšmė">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Teigiamo podėlio galiojimo pabaiga">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Derinti">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Parinkti žurnalo modulius">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Parinkti žurnalo failą">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Parinkti JS žurnalą">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Saugaus naršymo žurnalo moduliai">
+<!ENTITY aboutUrlClassifier.debugModules                "Dabartiniai žurnalo moduliai">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Saugaus naršymo JS žurnalas">
+<!ENTITY aboutUrlClassifier.debugFile                   "Dabartinis žurnalo failas">

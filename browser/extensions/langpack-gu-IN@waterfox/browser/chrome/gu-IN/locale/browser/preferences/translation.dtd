@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "અપવાદ - અનુવાદ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "અનુવાદને નીચેની ભાષાઓ માટે માંગણી કરેલ હશે નહિં:">
+<!ENTITY treehead.languageName.label      "ભાષાઓ">
+<!ENTITY removeLanguage.label             "ભાષા દૂર કરો">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "બધી ભાષાઓ દૂર કરો">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "અનુવાદને નીચેની સાઇટ માટે માંગણી કરેલ હશે નહિં:">
+<!ENTITY treehead.siteName.label          "સાઇટ">
+<!ENTITY removeSite.label                 "સાઇટ દૂર કરો">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "બધી સાઇટ દૂર કરો">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "બંધ કરો">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

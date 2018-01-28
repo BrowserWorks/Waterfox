@@ -1,0 +1,132 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Gặp vấn đề khi tải trang">
+<!ENTITY retry.label "Thử lại">
+<!ENTITY returnToPreviousPage.label "Trở lại">
+<!ENTITY advanced.label "Nâng cao">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Không thể kết nối">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Địa chỉ này đã bị chặn">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Không tìm thấy máy chủ">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Xin kiểm tra các lỗi gõ địa chỉ như là <strong>ww</strong>.example.com thay vì gõ đúng phải là <strong>www</strong>.example.com</li> <li>Nếu bạn không thể mở bất kì trang nào, hãy kiểm tra  kết nối mạng.</li> <li>Nếu máy tính hoặc mạng được bảo vệ bởi tường lửa hoặc proxy, hãy chắc rằng  &brandShortName; được phép truy cập Web.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Không tìm thấy tập tin">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kiểm tra tên xem có lỗi gõ HOA-thường hay lỗi nào khác không.</li> <li>Kiểm tra xem tập tin có bị di chuyển, đổi tên hay bị xóa không.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Nó có thể đã bị xóa, chuyển đi, hay quyền truy cập tập tin đã bị chặn.</li> </ul>">
+
+<!ENTITY generic.title "Lỗi.">
+<!ENTITY generic.longDesc "<p>Vì lý do nào đó, &brandShortName; không thể mở trang này.</p>">
+
+
+
+
+<!ENTITY malformedURI.title "Địa chỉ không hợp lệ">
+<!ENTITY malformedURI.longDesc "<ul> <li>Địa chỉ Web thường được viết như sau <strong>http://www.mozilla.com/</strong></li> <li>Hãy chắc chắn rằng bạn đang dùng đúng dấu xổ chéo (tức là dấu <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Kết nối bị ngắt">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Tài liệu bị hết hạn">
+<!ENTITY notCached.longDesc "<p>Tài liệu được yêu cầu không có sẵn trong bộ đệm của &brandShortName;.</p><ul><li>Vì lí do bảo mật, &brandShortName; không tự động tải lại các tài liệu nhạy cảm.</li><li>Nhấn nút Thử Lại để yêu cầu tải lại tài liệu từ trang web.</li></ul>">
+
+<!ENTITY netOffline.title "Chế độ ngoại tuyến">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Nhấn &quot;Thử lại&quot; để chuyển sang chế độ trực tuyến và tải lại trang.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Lỗi encoding">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Vui lòng liên hệ với chủ trang web để báo với họ về vấn đề này.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Kiểu tập tin không an toàn">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Vui lòng liên hệ với chủ trang web để báo với họ về vấn đề này.</li> </ul>">
+
+<!ENTITY netReset.title "Kết nối bị khởi tạo lại">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Kết nối bị hết thời gian chờ">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Chương trình không hiểu địa chỉ này">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Có lẽ bạn cần phải cài đặt phần mềm khác mới mở được.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Máy chủ proxy từ chối kết nối">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kiểm tra thiết lập proxy để chắc chắn rằng mọi thứ đều đúng.</li> <li>Liên hệ với quản trị mạng của bạn để chắc chắn rằng máy chủ proxy  vẫn đang hoạt động.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Không tìm thấy máy chủ proxy">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kiểm tra thiết lập proxy.</li> <li>Kiểm tra kết nối mạng.</li> <li>Nếu máy tính hoặc mạng được bảo vệ bởi tường lửa hoặc proxy, hãy chắc chắn rằng &brandShortName; được phép truy cập Web.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Trang này không chuyển hướng đúng cách">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Vấn đề này thỉnh thoảng có thể xảy ra do bạn vô hiệu hóa hoặc từ chối cookie.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Nhận được phản hồi lạ từ máy chủ">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kiểm tra để chắc chắn rằng hệ thống của bạn có Trình quản lí Bảo mật Cá nhân đã được cài đặt.</li> <li>Điều này có thể là do cấu hình không chuẩn trên máy chủ.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul><li>Không thể hiển thị trang bạn muốn xem vì không thể kiểm tra tính xác thực của dữ liệu nhận được.</li><li>Vui lòng liên hệ chủ trang web để báo với họ vấn đề này.</li></ul>">
+
+<!ENTITY certerror.longpagetitle1 "Kết nối của bạn không an toàn">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Người chủ của <span class='hostname'/> đã cấu hình trang của họ không đúng.  Để tránh mất cắp thông tin của bạn, &brandShortName; đã không kết nối tới trang này.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Trang web này có thể bị gián đoạn tạm thời hoặc do quá tải. Hãy thử lại trong chốc lát.</li> <li>Nếu bạn không thể mở bất kì trang nào, hãy kiểm tra kết nối mạng.</li> <li>Nếu máy tính hoặc mạng của bạn được bảo vệ bởi tường lửa hoặc proxy, hãy chắc chắn rằng &brandShortName; được phép truy cập Web.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Bị chặn bởi Chính sách bảo mật nội dung">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; không tải trang này vì nó có một chính sách bảo vệ nội dung không cho phép việc tải theo cách này.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Lỗi nội dung không toàn vẹn">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Không thể hiển thị được trang mà bạn muốn xem vì có lỗi trong truyền tải dữ liệu.</p><ul><li>Vui lòng liên hệ chủ trang web để báo họ về vấn đề này.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Thêm ngoại Lệ…">
+
+<!ENTITY errorReporting.automatic2 "Báo cáo những lỗi như thế này để giúp Mozilla nhận diện và chặn những trang độc hại">
+<!ENTITY errorReporting.learnMore "Tìm hiểu thêm…">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Vui lòng liên hệ với chủ trang web để báo với họ vấn đề này.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Không thể kết nối một cách an toàn">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+<!ENTITY certerror.pagetitle1  "Kết nối không bảo mật">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Trang này dùng HTTP Strict Transport Security (HSTS) để chỉ định &brandShortName; chỉ được kết nối với nó một cách bảo mật. Cho nên, không khả thi để thêm ngoại lệ cho chứng chỉ này.">
+<!ENTITY certerror.copyToClipboard.label "Chép văn bản vào bảng ghi tạm">
+
+<!ENTITY inadequateSecurityError.title "Kết nối của bạn không an toàn">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> sử dụng công nghệ bảo mật lỗi thời và dễ bị tấn công. Một kẻ tấn công có thể dễ dàng làm lộ những thông tin mà bạn nghĩ là an toàn. Người quản lý trang web trước tiên sẽ cần phải sửa lỗi máy chủ trước khi bạn có thể vào trang.</p><p>Mã lỗi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Dường như là cài đặt bảo mật mạng của bạn có thể gây ra điều này. Bạn có muốn khôi phục cài đặt mặc định?">
+<!ENTITY prefReset.label "Khôi phục cài đặt mặc định">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY nssFailure2.title "Secure Connection Failed">
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+

@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Byvoegingbestuurder">
+
+<!ENTITY search.placeholder                   "Deursoek alle byvoegings">
+<!ENTITY search.buttonlabel                   "Soek">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Laai tans…">
+<!ENTITY listEmpty.installed.label            "Daar is geen byvoegings van hierdie tipe geïnstalleer nie">
+<!ENTITY listEmpty.availableUpdates.label     "Geen bywerkings gevind nie">
+<!ENTITY listEmpty.recentUpdates.label        "Geen byvoegings is onlangs bygewerk nie">
+<!ENTITY listEmpty.findUpdates.label          "Kontroleer vir bywerkings">
+<!ENTITY listEmpty.search.label               "Kon nie enige bypassende byvoegings vind nie">
+<!ENTITY listEmpty.button.label               "Kom meer te wete oor byvoegings">
+<!ENTITY installAddonFromFile.label           "Installeer byvoeging uit lêer…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Nutsgoed vir alle byvoegings">
+
+<!ENTITY getThemes.description                "Lus om die blaaier te verpersoonlik?">
+<!ENTITY getThemes.learnMore                  "Kies uit duisende temas.">
+
+<!ENTITY cmd.back.tooltip                     "Gaan een bladsy terug">
+<!ENTITY cmd.forward.tooltip                  "Gaan een bladsy vorentoe">
+
+<!ENTITY showUnsignedExtensions.button.label  "Sommige uitbreidings kon nie geverifieer word nie">
+<!ENTITY showAllExtensions.button.label       "Wys alle uitbreidings">
+<!ENTITY debugAddons.label                    "Ontfout byvoegings">
+<!ENTITY debugAddons.accesskey                "b">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Alle byvoegings is deur veilige modus gedeaktiveer.">
+<!ENTITY warning.checkcompatibility.label          "Kontrolering of byvoegings versoenbaar is, is gedeaktiveer. U het moontlik onversoenbare byvoegings.">
+<!ENTITY warning.checkcompatibility.enable.label   "Aktiveer">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Aktiveer byvoeging-versoenbaarheidkontrole">
+<!ENTITY warning.updatesecurity.label              "Kontrolering vir bywerkings vir byvoegings is gedeaktiveer. U kan dalk deur bywerkings gekompromitteer word.">
+<!ENTITY warning.updatesecurity.enable.label       "Aktiveer">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Aktiveer byvoegingsbywerking-beveiliging-kontrole">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Soek">
+<!ENTITY view.discover.label                  "Kry byvoegings">
+<!ENTITY view.recentUpdates.label             "Onlangse bywerkings">
+<!ENTITY view.availableUpdates.label          "Beskikbare bywerkings">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Kontroleer vir bywerkings">
+<!ENTITY updates.checkForUpdates.accesskey    "K">
+<!ENTITY updates.viewUpdates.label            "Bekyk onlangse bywerkings">
+<!ENTITY updates.viewUpdates.accesskey        "B">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Werk byvoegings outomaties by">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "W">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Stel alle byvoegings om outomaties by te werk">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "S">
+<!ENTITY updates.resetUpdatesToManual.label          "Stel alle byvoegings om handmatig by te werk">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "S">
+<!ENTITY updates.updating.label               "Byvoegings word bygewerk">
+<!ENTITY updates.installed.label              "Die byvoegings is bygewerk.">
+<!ENTITY updates.downloaded.label             "Die byvoeging-bywerkings is afgelaai.">
+<!ENTITY updates.restart.label                "Herbegin nou vir volledige installering">
+<!ENTITY updates.noneFound.label              "Geen bywerkings gevind nie">
+<!ENTITY updates.manualUpdatesFound.label     "Bekyk beskikbare bywerkings">
+<!ENTITY updates.updateSelected.label         "Installeer bywerkings">
+<!ENTITY updates.updateSelected.tooltip       "Installeer beskikbare bywerkings in hierdie lys">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Wys meer inligting">
+<!ENTITY cmd.showDetails.accesskey            "W">
+<!ENTITY cmd.findUpdates.label                "Vind bywerkings">
+<!ENTITY cmd.findUpdates.accesskey            "V">
+<!ENTITY cmd.preferencesWin.label             "Opsies">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "Voorkeure">
+<!ENTITY cmd.preferencesUnix.accesskey        "V">
+<!ENTITY cmd.about.label                      "Aangaande">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "Aktiveer">
+<!ENTITY cmd.enableAddon.accesskey            "A">
+<!ENTITY cmd.disableAddon.label               "Deaktiveer">
+<!ENTITY cmd.disableAddon.accesskey           "a">
+<!ENTITY cmd.enableTheme.label                "Trek tema aan">
+<!ENTITY cmd.enableTheme.accesskey            "T">
+<!ENTITY cmd.disableTheme.label               "Trek tema uit">
+<!ENTITY cmd.disableTheme.accesskey           "e">
+<!ENTITY cmd.askToActivate.label              "Vra om te aktiveer">
+<!ENTITY cmd.askToActivate.tooltip            "Vra telkens om dié byvoeging te gebruik">
+<!ENTITY cmd.alwaysActivate.label             "Aktiveer altyd">
+<!ENTITY cmd.alwaysActivate.tooltip           "Gebruik altyd dié byvoeging">
+<!ENTITY cmd.neverActivate.label              "Moet nooit aktiveer nie">
+<!ENTITY cmd.neverActivate.tooltip            "Moet nooit dié byvoeging gebruik nie">
+<!ENTITY cmd.stateMenu.tooltip                "Bepaal wanneer dié byvoeging uitvoer">
+<!ENTITY cmd.installAddon.label               "Installeer">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Verwyder">
+<!ENTITY cmd.uninstallAddon.accesskey         "V">
+<!ENTITY cmd.showPreferencesWin.label         "Opsies">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Verander hierdie byvoeging se opsies">
+<!ENTITY cmd.showPreferencesUnix.label        "Voorkeure">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Verander hierdie byvoeging se voorkeure">
+<!ENTITY cmd.contribute.label                 "Dra by">
+<!ENTITY cmd.contribute.accesskey             "D">
+<!ENTITY cmd.contribute.tooltip               "Dra by tot die ontwikkeling van hierdie byvoeging">
+
+<!ENTITY cmd.showReleaseNotes.label           "Wys vrystellingaantekeninge">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Wys die vrystellingaantekeninge vir hierdie bywerking">
+<!ENTITY cmd.hideReleaseNotes.label           "Versteek vrystellingaantekeninge">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Versteek die vrystellingaantekeninge vir hierdie bywerking">
+<!ENTITY cmd.findReplacement.label            "Soek vir plaasvervanger">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Wat is byvoegings?">
+<!ENTITY discover.description2                "Byvoegings is toepassings waarmee jy &brandShortName; kan pasmaak met ekstra funksionaliteit of styl. Daar is byvoorbeeld 'n kantbalk wat jou tyd spaar, 'n weerberig, of 'n tema wat &brandShortName; meer laat lyk soos jy daarvan hou.">
+<!ENTITY discover.footer                      "Wanneer jy aan die internet gekoppel is, sal hierdie paneel van die beste en gewildste byvoegings bevat wat jy kan probeer.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Weergawe">
+<!ENTITY detail.lastupdated.label             "Laas bygewerk">
+<!ENTITY detail.creator.label                 "Ontwikkelaar">
+<!ENTITY detail.homepage.label                "Tuisblad">
+<!ENTITY detail.numberOfDownloads.label       "Aflaaie">
+
+<!ENTITY detail.contributions.description     "Die ontwikkelaar van hierdie byvoeging vra dat jy die volgehoue ontwikkeling daarvan steun deur 'n klein bydrae te lewer.">
+
+<!ENTITY detail.updateType                    "Outobywerkings">
+<!ENTITY detail.updateDefault.label           "Verstek">
+<!ENTITY detail.updateDefault.tooltip         "Installeer bywerkings outomaties net as dit die verstek is">
+<!ENTITY detail.updateAutomatic.label         "Aan">
+<!ENTITY detail.updateAutomatic.tooltip       "Installeer bywerkings outomaties">
+<!ENTITY detail.updateManual.label            "Af">
+<!ENTITY detail.updateManual.tooltip          "Moenie bywerkings outomaties installeer nie">
+<!ENTITY detail.home                          "Tuisblad">
+<!ENTITY detail.repository                    "Byvoeging-profiel">
+<!ENTITY detail.size                          "Grootte">
+
+<!ENTITY detail.checkForUpdates.label         "Kontroleer vir bywerkings">
+<!ENTITY detail.checkForUpdates.accesskey     "v">
+<!ENTITY detail.checkForUpdates.tooltip       "Kontroleer vir bywerking vir hierdie byvoeging">
+<!ENTITY detail.showPreferencesWin.label      "Opsies">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "Verander hierdie byvoeging se opsies">
+<!ENTITY detail.showPreferencesUnix.label     "Voorkeure">
+<!ENTITY detail.showPreferencesUnix.accesskey "V">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Verander hierdie byvoeging se voorkeure">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Gradering">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Laat wag">
+<!ENTITY progress.cancel.tooltip              "Kanselleer">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Naam">
+<!ENTITY sort.name.tooltip                    "Rangskik volgens naam">
+<!ENTITY sort.dateUpdated.label               "Laas bygewerk">
+<!ENTITY sort.dateUpdated.tooltip             "Rangskik volgens datum bygewerk">
+<!ENTITY sort.relevance.label                 "Relevansie">
+<!ENTITY sort.relevance.tooltip               "Rangskik volgens relevansie">
+<!ENTITY sort.price.label                     "Prys">
+<!ENTITY sort.price.tooltip                   "Rangskik volgens prys">
+
+<!ENTITY search.filter2.label                 "Soektog:">
+<!ENTITY search.filter2.installed.label       "My byvoegings">
+<!ENTITY search.filter2.installed.tooltip     "Wys geïnstalleerde byvoegings">
+<!ENTITY search.filter2.available.label       "Beskikbare byvoegings">
+<!ENTITY search.filter2.available.tooltip     "Wys byvoegings beskikbaar om te installeer">
+
+<!ENTITY addon.homepage                       "Tuisblad">
+<!ENTITY addon.details.label                  "Meer">
+<!ENTITY addon.details.tooltip                "Wys meer details oor hierdie byvoeging">
+<!ENTITY addon.unknownDate                    "Onbekend">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "VEROUDERD">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(gedeaktiveer)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Bywerk">
+<!ENTITY addon.undoAction.label               "Ontdoen">
+<!ENTITY addon.undoAction.tooltip             "Ontdoen hierdie handeling">
+<!ENTITY addon.undoRemove.label               "Ontdoen">
+<!ENTITY addon.undoRemove.tooltip             "Hou hierdie byvoeging geïnstalleer">
+<!ENTITY addon.restartNow.label               "Herbegin nou">
+<!ENTITY addon.install.label                  "Installeer">
+<!ENTITY addon.install.tooltip                "Installeer hierdie byvoeging">
+<!ENTITY addon.updateNow.label                "Opdateer nou">
+<!ENTITY addon.updateNow.tooltip              "Installeer die bywerking vir hierdie byvoeging">
+<!ENTITY addon.includeUpdate.label            "Sluit by bywerking in">
+<!ENTITY addon.updateAvailable.label          "'n Bywerking is beskikbaar">
+<!ENTITY addon.checkingForUpdates.label       "Kontroleer vir bywerkings…">
+<!ENTITY addon.releaseNotes.label             "Vrystellingaantekeninge:">
+<!ENTITY addon.loadingReleaseNotes.label      "Laai tans…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Jammer, kon nie die vrystellingsaantekeninge laai nie.">
+
+<!ENTITY addon.createdBy.label                "Deur ">
+
+<!ENTITY eula.title                           "Eindgebruiker-lisensieooreenkoms">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Aanvaar en installeer…">
+
+<!ENTITY settings.path.button.label           "Blaai…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Wat's dié? Telemetrie kan per geleentheid eksperimente installeer en uitvoer.">
+<!ENTITY experiment.info.learnmore "Meer inligting">
+<!ENTITY experiment.info.learnmore.accesskey "M">
+<!ENTITY experiment.info.changetelemetry "Instellings vir Telemetrie">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Meer inligting…">
+
+<!ENTITY disabledUnsigned.heading "Sommige byvoegings is gedeaktiveer">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Die volgende byvoegings is nie geverifieer vir gebruik in &brandShortName; nie. U kan ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "plaasvervangers soek">
+<!ENTITY disabledUnsigned.description.end " of die ontwikkelaar vra om hulle te laat verifieer.">
+<!ENTITY disabledUnsigned.learnMore "Meer inligting oor ons pogings om elkeen veilig te hou aanlyn.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Ontwikkelaars wat hulle byvoegings wil laat verifieer kan gerus ons ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "handleiding">
+<!ENTITY disabledUnsigned.devInfo.end " lees.">
+
+<!ENTITY pluginDeprecation.description "Kort iets? Sommige inproppe word nie meer ondersteun deur &brandShortName; nie.">
+<!ENTITY pluginDeprecation.learnMore "Meer inligting.">
+
+<!ENTITY legacyWarning.description "Kort iets? Sommige uitbreidings word nie meer ondersteun deur &brandShortName; nie.">
+<!ENTITY legacyWarning.showLegacy "Wys verouderde uitbreidings">
+<!ENTITY legacyExtensions.title "Verouderde uitbreidings">
+<!ENTITY legacyExtensions.description "Dié uitbreidings voldoen nie aan &brandShortName; se huidige standaarde nie, en is dus gedeaktiveer.">
+<!ENTITY legacyExtensions.learnMore "Lees meer oor veranderinge aan byvoegings">

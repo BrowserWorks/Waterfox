@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShorterName; bereinigen">
+<!ENTITY refreshProfile.dialog.description1  "Ein Neuanfang löst &brandShorterName;-Probleme und stellt die Leistung wieder her.">
+<!ENTITY refreshProfile.dialog.description2  "Dies wird:">
+<!ENTITY refreshProfile.dialog.items.label1  "Ihre Add-ons und Anpassungen entfernen">
+<!ENTITY refreshProfile.dialog.items.label2  "Die Browser-Einstellungen auf den Standard zurücksetzen">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShorterName; bereinigen">
+
+<!ENTITY refreshProfile.title                "Machen Sie &brandShorterName; wieder flott.">
+<!ENTITY refreshProfile.button.label         "&brandShorterName; bereinigen…">
+
+<!ENTITY refreshProfile.cleaning.description "Fast fertig…">

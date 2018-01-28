@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Bonvenon al &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Komenci seancon por speguli viajn langetojn, legosignojn kaj aliajn aferojn.">
+<!ENTITY aboutAccountsConfig.startButton.label "Unuaj paŝoj">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferoj de Spegulado">
+<!ENTITY aboutAccounts.noConnection.title "Neniu konekto">
+<!ENTITY aboutAccounts.noConnection.description "Vi devas esti konektita al la reto por komenci seanco.">
+<!ENTITY aboutAccounts.noConnection.retry "Klopodu denove">
+<!ENTITY aboutAccounts.badConfig.title "Malĝustaj agordoj">
+<!ENTITY aboutAccounts.badConfig.description "Ne eblas eltrovi la agordojn de la servilo por via konto de Waterfox. Bonvolu klopodi denove poste.">

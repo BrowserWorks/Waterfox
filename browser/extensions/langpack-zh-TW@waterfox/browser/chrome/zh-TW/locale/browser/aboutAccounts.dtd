@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "歡迎使用 &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "登入以同步您的分頁、書籤、密碼與其他資料。">
+<!ENTITY aboutAccountsConfig.startButton.label "開始設定">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "同步偏好設定">
+<!ENTITY aboutAccounts.noConnection.title "無連線">
+<!ENTITY aboutAccounts.noConnection.description "您必須連線到網際網路才能登入。">
+<!ENTITY aboutAccounts.noConnection.retry "重試">
+<!ENTITY aboutAccounts.badConfig.title "設定無效">
+<!ENTITY aboutAccounts.badConfig.description "無法偵測您的 Waterfox 帳號伺服器設定，請稍後再試。">

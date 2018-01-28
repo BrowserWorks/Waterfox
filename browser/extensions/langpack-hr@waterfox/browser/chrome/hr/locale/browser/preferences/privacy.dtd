@@ -1,0 +1,135 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  trackingProtectionAlways.label       "Uvijek">
+<!ENTITY  trackingProtectionAlways.accesskey   "j">
+<!ENTITY  trackingProtectionPrivate.label      "Samo u privatnim prozorima">
+<!ENTITY  trackingProtectionPrivate.accesskey  "r">
+<!ENTITY  trackingProtectionNever.label        "Nikad">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Saznajte više">
+<!ENTITY  trackingProtectionExceptions.label   "Iznimke…">
+<!ENTITY  trackingProtectionExceptions.accesskey "z">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Koristi zaštitu od praćenja u privatnim prozorima">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+
+<!ENTITY trackingProtectionPBMLearnMore.label "Saznajte više">
+
+
+
+
+
+
+
+<!ENTITY  history.label                 "Povijest">
+
+
+
+
+
+<!ENTITY  locbar.bookmarks.label        "Zabilješke">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Otvori kartice">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Povezana pretraživanja od zadane tražilice">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Prihvati kolačiće trećih strana:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+
+<!ENTITY  acceptThirdParty.never.label    "Nikad">
+<!ENTITY  acceptThirdParty.visited.label  "Od posjećenih">
+
+<!ENTITY  keepUntil.label               "Zadrži do:">
+<!ENTITY  keepUntil.accesskey           "ž">
+
+<!ENTITY  expire.label                  "isteka roka">
+<!ENTITY  close.label                   "zatvaranja &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Iznimke...">
+<!ENTITY  cookieExceptions.accesskey    "m">
+
+<!ENTITY  showCookies.label             "Prikaži kolačiće...">
+<!ENTITY  showCookies.accesskey         "k">
+
+
+<!ENTITY  historyHeader.remember.label     "zapamtiti povijest">
+<!ENTITY  historyHeader.dontremember.label "neće nikada zapamtiti povijest">
+<!ENTITY  historyHeader.custom.label       "koristiti prilagođene postavke za povijest">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; će zapamtiti povijest pretraživanja, preuzimanja, formi i traženja, te će sačuvati kolačiće stranica koje ste posjetili.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Možda ćete željeti ">
+<!ENTITY  rememberActions.clearHistory.label  "očistiti nedavnu povijest">
+<!ENTITY  rememberActions.middle.label        " ili ">
+<!ENTITY  rememberActions.removeCookies.label "ukloniti osobne kolačiće">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; će koristiti iste postavke kao i za privatno pretraživanje, te neće pamtiti povijest pretraživanja.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Možda ćete željeti ">
+<!ENTITY  dontrememberActions.clearHistory.label "očistiti svu trenutnu povijest">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Uvijek koristi privatni način pretraživanja">
+<!ENTITY  privateBrowsingPermanent2.accesskey "v">
+
+<!ENTITY  rememberHistory2.label      "Zapamti povijest pretraživanja i preuzimanja">
+<!ENTITY  rememberHistory2.accesskey  "r">
+
+<!ENTITY  rememberSearchForm.label       "Zapamti povijest traženja i formi">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Očisti povijest pri zatvaranju &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "z">
+
+<!ENTITY  clearOnCloseSettings.label     "Postavke…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "Saznajte više">
+<!ENTITY  browserContainersEnabled.label        "Omogući sadržajne kartice">
+<!ENTITY  browserContainersEnabled.accesskey    "m">
+<!ENTITY  browserContainersSettings.label        "Postavke…">
+<!ENTITY  browserContainersSettings.accesskey    "t">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.always.label   "Always">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; will">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  suggestionSettings2.label     "Change preferences for search engine suggestions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY  trackingProtectionHeader2.label      "Tracking Protection">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

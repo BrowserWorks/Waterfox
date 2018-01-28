@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Reportes de fallos">
+<!ENTITY crashesUnsubmitted.label   "Reportes de fallos no enviados">
+<!ENTITY crashesSubmitted.label     "Reportes de fallos enviados">
+<!ENTITY id.heading                 "ID del informe">
+<!ENTITY dateCrashed.heading        "Fecha del fallo">
+<!ENTITY dateSubmitted.heading      "Fecha de envío">
+<!ENTITY noReports.label            "No se ha enviado ningún informe de fallos.">
+<!ENTITY noConfig.label             "Esta aplicación no ha sido configurada para mostrar informes de fallos. Debe configurarse la preferencia <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Eliminar todos los informes">

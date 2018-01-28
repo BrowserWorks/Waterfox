@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from institems.xul -->
+
+<!ENTITY dialog.title            "Pemasangan Perisian">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Pasang add-ons daripada pembangun yang anda percayai sahaja.">
+<!ENTITY warningSecondary.label  "Perisian hasad boleh merosakkan komputer anda atau mencabul privasi anda.">
+
+<!ENTITY from.label "daripada:">
+

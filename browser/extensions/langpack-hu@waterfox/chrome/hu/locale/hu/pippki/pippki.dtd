@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Mesterjelszó megváltoztatása">
+<!ENTITY setPassword.tokenName.label "Adatvédelmi eszköz">
+<!ENTITY setPassword.oldPassword.label "Jelenlegi jelszó:">
+<!ENTITY setPassword.newPassword.label "Új jelszó:">
+<!ENTITY setPassword.reenterPassword.label "Új jelszó (ismét):">
+<!ENTITY setPassword.meter.label "Jelszó minősége">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Alaphelyzet">
+<!ENTITY resetPassword.title  "Mesterjelszó törlése">
+<!ENTITY resetPassword.text  "Ha törli a mesterjelszót, minden tárolt webes és e-mail jelszó, űrlapadat, valamint a személyes tanúsítványok és a személyes kulcsok elvesznek. Biztosan törli a mesterjelszót?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Tanúsítvány letöltése">
+<!ENTITY downloadCert.message1 "Arra kérik, hogy bízzon meg egy új hitelesítésszolgáltatóban (CA-ban).">
+<!ENTITY downloadCert.trustSSL "Megbízás webhelyek azonosítására">
+<!ENTITY downloadCert.trustEmail "Megbízás a levelezőpartnerek azonosítására">
+<!ENTITY downloadCert.trustObjSign "Megbízás a szoftverfejlesztők azonosítására">
+<!ENTITY downloadCert.message3 "Mielőtt megbízna ebben a CA-ban bármilyen célból, vizsgálja meg a tanúsítványát, valamint az irányelveit (házirendjét) és folyamatait (ha vannak ilyenek).">
+<!ENTITY downloadCert.viewCert.label "Megjelenítés">
+<!ENTITY downloadCert.viewCert.text "A CA tanúsítványának megvizsgálása">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Felhasználóazonosítási kérelem">
+<!ENTITY clientAuthAsk.message1 "A webhely azt kívánja, hogy Ön igazolja magát egy tanúsítvánnyal:">
+<!ENTITY clientAuthAsk.message2 "Válassza ki az azonosításhoz használandó tanúsítványt:">
+<!ENTITY clientAuthAsk.message3 "A kijelölt tanúsítvány részletei:">
+
+<!ENTITY pkcs12.setpassword.title  "Tanúsítványok biztonsági mentésének jelszava">
+<!ENTITY pkcs12.setpassword.message  "A tanúsítványok biztonsági mentésének jelszava arra szolgál, hogy védje a most létrehozandó mentésfájlt.  A folytatáshoz meg kell adni a jelszót.">
+<!ENTITY pkcs12.setpassword.label1 "Jelszó:">
+<!ENTITY pkcs12.setpassword.label2 "Jelszó (ismét):">
+<!ENTITY pkcs12.setpassword.reminder "Fontos: Ha elfelejti a tanúsítványokról készült biztonsági mentéshez használt jelszót, nem fogja tudni visszaállítani a tanúsítványokat a mentésből.  Írja fel biztonságos helyre.">
+
+<!ENTITY chooseToken.title  "Tokenválasztás párbeszédpanel">
+<!ENTITY chooseToken.message1 "Válasszon egy tokent.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Személyes kulcs generálása">
+<!ENTITY createCertInfo.msg1 "Kulcsgenerálás folyamatban… Ez eltarthat egy pár percig…">
+<!ENTITY createCertInfo.msg2 "Kis türelmet…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Hitelesítés védett tokennel">
+<!ENTITY protectedAuth.msg "Hitelesítse magát a tokennél. A hitelesítési módszer a token típusától függ.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

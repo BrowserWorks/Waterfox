@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Tilasu ceecijinay">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "War tilasu ceecijinaa suuba. &brandShortName; ga goy nd'a doo zuwoo, ceeciyan zuwoo, nda šintin moɲoo ra.">
+
+<!ENTITY provideSearchSuggestions.label        "Ceeci honnandiyaney noo">
+<!ENTITY provideSearchSuggestions.accesskey    "C">
+
+<!ENTITY showURLBarSuggestions.label           "Ceeci honnandiyaney cebe zuu gorodoo hunyaney ra">
+<!ENTITY showURLBarSuggestions.accesskey       "g">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Ceeci honnandiyaney ši cebe gorodoo zuu hunyaney ra zama war na &brandShortName; hanse a ma ši honga taariki kul.">
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "Ceeci zuwoo ga naŋ war ma ceecijinay tanayaŋ zaa dogoo ra. Suuba wey kaŋ ma cebe.">
+
+<!ENTITY engineNameColumn.label                "Ceecijinay">
+<!ENTITY engineKeywordColumn.label             "Kufalkalima">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Tilasu ceecijinawey willi">
+<!ENTITY restoreDefaultSearchEngines.accesskey "T">
+
+<!ENTITY removeEngine.label                    "Kaa">
+<!ENTITY removeEngine.accesskey                "K">
+
+<!ENTITY addMoreSearchEngines.label            "Ceecijinay tontoniyaŋ dam…">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+

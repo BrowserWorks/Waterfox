@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "சிதைவு அறிக்கைகள்">
+<!ENTITY crashesUnsubmitted.label   "சமர்பிக்கப்படா செயலிழப்பு அறிக்கைகள்">
+<!ENTITY crashesSubmitted.label     "செயலிழப்பு அறிக்கைகள் சமர்ப்பிக்கப்பட்டன">
+<!ENTITY id.heading                 "அறிக்கை ID">
+<!ENTITY dateCrashed.heading        "சிதைவு தேதி">
+<!ENTITY dateSubmitted.heading      "சமர்ப்பிக்கப்பட்ட தேதி">
+<!ENTITY noReports.label            "எந்த அழித்தல் அறிக்கையும் சமர்ப்பிக்கப்படவில்லை.">
+<!ENTITY noConfig.label             "இந்த பயன்பாடு அழித்தல் அறிக்கைகளை காட்ட கட்டமைக்கப்படவில்லை. முன்னுரிமைகள் <code>breakpad.reportURL</code> அமைக்கப்பட வேண்டும்.">
+<!ENTITY clearAllReports.label      "அனைத்து அறிக்கைகளையும் நீக்கு">

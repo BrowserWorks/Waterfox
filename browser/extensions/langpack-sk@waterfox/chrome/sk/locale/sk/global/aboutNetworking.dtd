@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Stránka O pripojení k sieti">
+<!ENTITY aboutNetworking.warning               "Toto je veľmi experimentálna stránka. Nepokračujte, ak neviete, čo robíte.">
+<!ENTITY aboutNetworking.showNextTime          "Toto upozornenie zobraziť aj nabudúce">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockety">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockety">
+<!ENTITY aboutNetworking.refresh               "Obnoviť">
+<!ENTITY aboutNetworking.autoRefresh           "Automaticky obnoviť každé 3 sekundy">
+<!ENTITY aboutNetworking.hostname              "Názov servera">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktívny">
+<!ENTITY aboutNetworking.idle                  "Nečinný">
+<!ENTITY aboutNetworking.host                  "Server">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Odoslané">
+<!ENTITY aboutNetworking.received              "Prijaté">
+<!ENTITY aboutNetworking.family                "Rodina">
+<!ENTITY aboutNetworking.addresses             "Adresy">
+<!ENTITY aboutNetworking.expires               "Vyprší (v sekundách)">
+<!ENTITY aboutNetworking.messagesSent          "Odoslané správy">
+<!ENTITY aboutNetworking.messagesReceived      "Prijaté správy">
+<!ENTITY aboutNetworking.bytesSent             "Odoslané bajty">
+<!ENTITY aboutNetworking.bytesReceived         "Prijaté bajty">
+<!ENTITY aboutNetworking.logging               "Záznam">
+<!ENTITY aboutNetworking.logTutorial           "Pre informácie o používaní tohoto nástroja prosím navštívte stránku <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a>.">
+<!ENTITY aboutNetworking.currentLogFile        "Aktuálny súbor protokolu:">
+<!ENTITY aboutNetworking.currentLogModules     "Aktuálne moduly protokolu:">
+<!ENTITY aboutNetworking.setLogFile            "Nastaviť súbor protokolu">
+<!ENTITY aboutNetworking.setLogModules         "Nastaviť moduly protokolu">
+<!ENTITY aboutNetworking.startLogging          "Spustiť záznam protokolu">
+<!ENTITY aboutNetworking.stopLogging           "Zastaviť záznam protokolu">
+<!ENTITY aboutNetworking.dnsLookup             "Vyhľadávanie DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Vyriešiť">
+<!ENTITY aboutNetworking.dnsDomain             "Doména">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "Adresy IP">
+<!ENTITY aboutNetworking.rcwn                  "Štatistiky RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Stav RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Počet víťazstiev medzipamäte">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Počet víťazstiev siete">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Celkový počet sieťových požiadavkov">
+<!ENTITY aboutNetworking.rcwnOperation         "Operácia s vyrovnávacou pamäťou">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Otvorenie">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Čítanie">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Zápis">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Otvorenie položky">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Krátkodobý priemer">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Dlhodobý priemer">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Dlhodobá smerodajná odchýlka">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Počet pomalých prístupov do vyrovnávacej pamäte">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Počet rýchlych prístupov do vyrovnávacej pamäte">

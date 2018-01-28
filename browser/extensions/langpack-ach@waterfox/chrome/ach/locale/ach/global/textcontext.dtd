@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Ngol">
+<!ENTITY cutCmd.accesskey "o">
+<!ENTITY copyCmd.label "Lok">
+<!ENTITY copyCmd.accesskey "L">
+<!ENTITY pasteCmd.label "Mwon">
+<!ENTITY pasteCmd.accesskey "M">
+<!ENTITY undoCmd.label "Gony">
+<!ENTITY undoCmd.accesskey "G">
+<!ENTITY selectAllCmd.label "Yer Weng">
+<!ENTITY selectAllCmd.accesskey "W">
+<!ENTITY deleteCmd.label "Kwany">
+<!ENTITY deleteCmd.accesskey "K">
+
+<!ENTITY spellAddToDictionary.label "Med bot buk me nukuta">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "Gony med i buk me nukuta">
+<!ENTITY spellUndoAddToDictionary.accesskey "o">
+<!ENTITY spellCheckToggle.label "Ngi ka icoyo maber">
+<!ENTITY spellCheckToggle.accesskey "c">
+<!ENTITY spellNoSuggestions.label "(Tam amia me Nukta peke)">
+<!ENTITY spellDictionaries.label "Leb">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "Jwa">
+
+<!ENTITY fillLoginMenu.label          "Pong dony iye">
+<!ENTITY fillLoginMenu.accesskey      "P">
+<!ENTITY fillPasswordMenu.label       "Pong mung me donyo">
+<!ENTITY fillPasswordMenu.accesskey   "P">
+<!ENTITY fillUsernameMenu.label       "Pong Nying me tic">
+<!ENTITY fillUsernameMenu.accesskey   "P">
+<!ENTITY noLoginSuggestions.label     "(Tam amia me Nukta peke)">
+<!ENTITY viewSavedLogins.label        "Nen donyo iyie ma kigwoko">

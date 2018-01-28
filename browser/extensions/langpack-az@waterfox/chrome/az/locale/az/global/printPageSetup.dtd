@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Səhifə nizamı">
+
+<!ENTITY basic.tab           "Forma və Seçimlər">
+
+<!ENTITY formatGroup.label   "Forma">
+
+<!ENTITY orientation.label   "Ünvan:">
+<!ENTITY portrait.label      "Şaquli">
+<!ENTITY portrait.accesskey  "Ş">
+<!ENTITY landscape.label     "Üfiqi">
+<!ENTITY landscape.accesskey "Ü">
+
+<!ENTITY scale.label         "Ölçü:">
+<!ENTITY scale.accesskey     "Ö">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Səhifə ölçüsünə sığdır">
+<!ENTITY shrinkToFit.accesskey "d">
+
+<!ENTITY optionsGroup.label  "Nizamlar">
+
+<!ENTITY printBG.label       "Arxa fonu çap et (rənglər və rəsimlər)">
+<!ENTITY printBG.accesskey   "x">
+
+<!ENTITY advanced.tab        "Haşiyələr və Başlıq/Sonluq">
+
+<!ENTITY marginGroup.label   "Kənarlar (#1)">
+<!ENTITY marginUnits.inches  "inç">
+<!ENTITY marginUnits.metric  "milimetre">
+<!ENTITY marginTop.label     "Yuxarıdan:">
+<!ENTITY marginTop.accesskey "u">
+<!ENTITY marginBottom.label  "Şaquli">
+<!ENTITY marginBottom.accesskey "a">
+<!ENTITY marginLeft.label    "Sol:">
+<!ENTITY marginLeft.accesskey "l">
+<!ENTITY marginRight.label   "Sağ">
+<!ENTITY marginRight.accesskey "S">
+
+<!ENTITY headerFooter.label  "Başlıqlar və Sonluqlar">
+
+<!ENTITY hfLeft.label        "Sol:">
+<!ENTITY hfCenter.label      "Merkez:">
+<!ENTITY hfRight.label       "Sağ">
+<!ENTITY headerLeft.tip      "Sol başlık">
+<!ENTITY headerCenter.tip    "Orta başlık">
+<!ENTITY headerRight.tip     "Sağ başlık">
+<!ENTITY footerLeft.tip      "Sol Haşiyə">
+<!ENTITY footerCenter.tip    "Orta Haşiyə ">
+<!ENTITY footerRight.tip     "Sağ Haşiyə">
+
+<!ENTITY hfTitle             "Başlık">
+<!ENTITY hfURL               "Ünvan">
+<!ENTITY hfDateAndTime       "Tarix/Saat">
+<!ENTITY hfPage              "#. səhifə">
+<!ENTITY hfPageAndTotal      "#/#. səhifə">
+<!ENTITY hfBlank             "--boş--">
+<!ENTITY hfCustom            "Şəxsiləşdir:">
+
+<!ENTITY customPrompt.title  "Şəxsiləşdir:">
+<!ENTITY customPrompt.prompt "Şəxsi başlıq/haşiyə mətnini daxil edin">

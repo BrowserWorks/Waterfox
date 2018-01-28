@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-zh-CN@waterfox"
+               em:name="Chinese Simplified (zh-CN) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="Mozest">
+    <em:contributor>Wen Shaohua</em:contributor> <em:contributor>Jin Jian</em:contributor> <em:contributor>Rongjun Mu</em:contributor> <em:contributor>Xie Yanbo</em:contributor> <em:contributor>Cathayan</em:contributor> <em:contributor>YFdyh000</em:contributor> <em:contributor>xcffl</em:contributor> <em:contributor>Shen Hao</em:contributor> <em:contributor>Liu Xing</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

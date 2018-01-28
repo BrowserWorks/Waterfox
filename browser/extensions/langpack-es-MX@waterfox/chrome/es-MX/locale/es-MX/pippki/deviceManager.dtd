@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Administrador de dispositivos">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Módulos de seguridad y dispositivos">
+<!ENTITY devmgr.details.title                   "Detalles">
+<!ENTITY devmgr.details.title2                  "Valor">
+
+<!ENTITY devmgr.button.login.label              "Iniciar sesión">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Terminar sesión">
+<!ENTITY devmgr.button.logout.accesskey         "T">
+<!ENTITY devmgr.button.changepw.label           "Cambiar contraseña">
+<!ENTITY devmgr.button.changepw.accesskey       "C">
+<!ENTITY devmgr.button.load.label               "Cargar">
+<!ENTITY devmgr.button.load.accesskey           "C">
+<!ENTITY devmgr.button.unload.label             "Descargar">
+<!ENTITY devmgr.button.unload.accesskey         "D">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Introduce la información para el módulo que quieres añadir.">
+<!ENTITY loaddevice.modname                     "Nombre del módulo:">
+<!ENTITY loaddevice.modname.accesskey           "m">
+<!ENTITY loaddevice.modname.default             "Nuevo módulo PKCS#11">
+<!ENTITY loaddevice.filename                    "Archivo del módulo:">
+<!ENTITY loaddevice.filename.accesskey          "A">
+<!ENTITY loaddevice.browse                      "Examinar…">
+<!ENTITY loaddevice.browse.accesskey            "x">
+
+<!ENTITY loaddevice.title2                      "Cargar el driver de dispositivo PKCS#11">

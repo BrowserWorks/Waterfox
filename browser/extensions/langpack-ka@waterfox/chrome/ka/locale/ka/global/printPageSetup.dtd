@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "გვერდის პარამეტრები">
+
+<!ENTITY basic.tab           "ფორმატი და პარამეტრები">
+
+<!ENTITY formatGroup.label   "ფორმატი">
+
+<!ENTITY orientation.label   "ორიენტაცია:">
+<!ENTITY portrait.label      "პორტრეტი">
+<!ENTITY portrait.accesskey  "პ">
+<!ENTITY landscape.label     "პეიზაჟი">
+<!ENTITY landscape.accesskey "ზ">
+
+<!ENTITY scale.label         "ზომის ცვლილება:">
+<!ENTITY scale.accesskey     "მ">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "შემჭიდროება ისე, რომ გვერდის სიგანეს დაემთხვეს">
+<!ENTITY shrinkToFit.accesskey "ს">
+
+<!ENTITY optionsGroup.label  "პარამეტრები">
+
+<!ENTITY printBG.label       "ფონის დაბეჭდვა (ფერები და სურათები)">
+<!ENTITY printBG.accesskey   "ფ">
+
+<!ENTITY advanced.tab        "მინდვრები &amp; ზედა/ქვედა კოლონტიტული">
+
+<!ENTITY marginGroup.label   "საზღვრები (#1)">
+<!ENTITY marginUnits.inches  "დუიმებში">
+<!ENTITY marginUnits.metric  "მილიმეტრებში">
+<!ENTITY marginTop.label     "ზედა:">
+<!ENTITY marginTop.accesskey "ზ">
+<!ENTITY marginBottom.label  "ქვედა:">
+<!ENTITY marginBottom.accesskey "ქ">
+<!ENTITY marginLeft.label    "მარცხენა:">
+<!ENTITY marginLeft.accesskey "მ">
+<!ENTITY marginRight.label   "მარჯვენა:">
+<!ENTITY marginRight.accesskey "ჯ">
+
+<!ENTITY headerFooter.label  "ზედა და ქვედა კოლონტიტულები">
+
+<!ENTITY hfLeft.label        "მარცხენა:">
+<!ENTITY hfCenter.label      "შუა:">
+<!ENTITY hfRight.label       "მარჯვენა:">
+<!ENTITY headerLeft.tip      "მარცხენა თავსართი">
+<!ENTITY headerCenter.tip    "შუა თავსართი">
+<!ENTITY headerRight.tip     "მარჯვენა თავსართი">
+<!ENTITY footerLeft.tip      "მარცხენა ბოლოსართი">
+<!ENTITY footerCenter.tip    "შუა ქვესართი">
+<!ENTITY footerRight.tip     "მარჯვხენა ქვესართი">
+
+<!ENTITY hfTitle             "სათაური">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "თარიღი">
+<!ENTITY hfPage              "გვერდი #">
+<!ENTITY hfPageAndTotal      "გვერდი # სულ #">
+<!ENTITY hfBlank             "-ცარიელი-">
+<!ENTITY hfCustom            "საკუთარი…">
+
+<!ENTITY customPrompt.title  "საკუთარი…">
+<!ENTITY customPrompt.prompt "თავსართის/ქვესართის მითითება">

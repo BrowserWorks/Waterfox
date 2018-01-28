@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "پنجره‌های بازشو">
+
+<!ENTITY  blockPopups.label           "مسدود کردن پنجره‌های بازشو">
+<!ENTITY  blockPopups.accesskey       "م">
+
+<!ENTITY  notificationsPolicy.label            "اعلان‌ها">
+<!ENTITY  notificationsPolicyLearnMore.label   "بیشتر بدانید">
+<!ENTITY  notificationsPolicyDesc4.label       "انتخاب کنید چه سایت‌هایی اجازه دارند به شما اعلان ارسال کنند">
+<!ENTITY  notificationsPolicyButton.accesskey  "ا">
+<!ENTITY  notificationsPolicyButton.label      "انتخاب…">
+<!ENTITY  notificationsDoNotDisturb.label      "مزاحم من نشوید">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "ن">
+<!ENTITY  notificationsDoNotDisturbDetails.value "هیچ اعلانی تا زمان راه‌اندازی مجدد &brandShortName; دریافت نخواهید کرد">
+
+<!ENTITY  popupExceptions.label       "استثناها…">
+<!ENTITY  popupExceptions.accesskey   "ا">
+
+<!ENTITY  fontsAndColors.label        "قلم‌ها و رنگ‌ها">
+
+<!ENTITY  defaultFont.label           "قلم پیش‌فرض:">
+<!ENTITY  defaultFont.accesskey       "پ">
+<!ENTITY  defaultSize.label           "اندازه:">
+<!ENTITY  defaultSize.accesskey       "ا">
+
+<!ENTITY  advancedFonts.label         "پیشرفته...">
+<!ENTITY  advancedFonts.accesskey     "پ">
+
+<!ENTITY  colors.label                "رنگها‌...">
+<!ENTITY  colors.accesskey            "ر">
+
+
+<!ENTITY languages.label              "زبان‌ها">
+<!ENTITY chooseLanguage.label         "زبان مورد علاقهٔ خود را برای نمایش صفحات انتخاب کنید">
+<!ENTITY chooseButton.label           "انتخاب…">
+<!ENTITY chooseButton.accesskey       "ا">
+
+<!ENTITY translateWebPages.label      "ترجمه محتویات وب">
+<!ENTITY translateWebPages.accesskey  "ت">
+<!ENTITY translateExceptions.label    "استثناها…">
+<!ENTITY translateExceptions.accesskey "س">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "ترجمه با">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "محتوای DRM">
+
+<!ENTITY  playDRMContent.label         "پخش محتوا DRM">
+<!ENTITY  playDRMContent.accesskey     "پ">
+<!ENTITY  playDRMContent.learnMore.label "بیشتر بدانید">

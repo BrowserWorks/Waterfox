@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "આ પાનું આમાં છે">
+<!ENTITY translation.translateThisPage.label    "શું આ પાનું અનુવાદ કરવુ છે?">
+<!ENTITY translation.translate.button           "અનુવાદ કરો">
+<!ENTITY translation.notNow.button              "અત્યારે નહિં">
+
+<!ENTITY translation.translatingContent.label   "પાનાં સમાવિષ્ટને અનુવાદ કરી રહ્યા છે…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "આ પાનું આમાંથી અનુવાદ કરી દેવામાં આવ્યુ છે">
+<!ENTITY translation.translatedTo.label         "થી">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "મૂળભૂત બતાવો">
+<!ENTITY translation.showTranslation.button     "અનુવાદ બતાવો">
+
+<!ENTITY translation.errorTranslating.label     "આ પાનાંને અનુવાદ કરતી વખતે ભૂલ ઉદ્ભવી.">
+<!ENTITY translation.tryAgain.button            "ફરી પ્રયત્ન કરો">
+
+<!ENTITY translation.serviceUnavailable.label   "અનુવાદ આ સમયે ઉપલબ્ધ નથી. મહેરબાની કરીને ફરી પ્રયત્ન કરો.">
+
+<!ENTITY translation.options.menu               "વિકલ્પો">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "કદી આ સાઇટને અનુવાદ કરો નહિં">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "અનુવાદ પસંદગીઓ">
+<!ENTITY translation.options.preferences.accesskey "T">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "નાં દ્દારા અનુવાદ">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.poweredByYandex,
+                        translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  translation.options.attribution.poweredByYandex is displayed instead of
+  -  the other two strings when yandex translation engine is preferred by the
+  -  user.
+  -->
+<!ENTITY translation.options.attribution.yandexTranslate "Yandex દ્વારા સંચાલિત.Translate">

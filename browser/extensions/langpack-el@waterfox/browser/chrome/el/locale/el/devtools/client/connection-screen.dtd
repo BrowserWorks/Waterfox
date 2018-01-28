@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Σύνδεση">
+<!ENTITY header     "Σύνδεση με την απομακρυσμένη συσκευή">
+<!ENTITY host       "Σύστημα:">
+<!ENTITY port       "Θύρα:">
+<!ENTITY connect    "Σύνδεση">
+<!ENTITY connecting "Γίνεται σύνδεση…">
+<!ENTITY availableAddons "Διαθέσιμα απομακρυσμένα πρόσθετα:">
+<!ENTITY availableTabs "Διαθέσιμες απομακρυσμένες καρτέλες:">
+<!ENTITY availableProcesses "Διαθέσιμες απομακρυσμένες διαδικασίες:">
+<!ENTITY connectionError "Σφάλμα:">
+<!ENTITY errorTimeout "Σφάλμα: λήξη χρονικού ορίου σύνδεσης.">
+<!ENTITY errorRefused "Σφάλμα: η σύνδεση απορρίφθηκε.">
+<!ENTITY errorUnexpected "Μη αναμενόμενο σφάλμα.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Τα Εργαλεία Προγραμματιστή του Waterfox μπορούν να αποσφαλματώσουν απομακρυσμένες συσκευές (για παράδειγμα Waterfox για Android και Waterfox OS). Βεβαιωθείτε ότι έχετε ενεργοποιήσει την επιλογή «Απομακρυσμένη Αποσφαλμάτωση» στην απομακρυσμένη συσκευή. Για περισσότερες πληροφορίες, δείτε την ">
+<!ENTITY remoteDocumentation "τεκμηρίωση">
+<!ENTITY remoteHelpSuffix ".">
+

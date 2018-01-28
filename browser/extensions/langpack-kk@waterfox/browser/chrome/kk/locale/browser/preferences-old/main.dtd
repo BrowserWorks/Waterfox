@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Іске қосылу">
+
+<!ENTITY startupPage.label         "&brandShortName; қосылу кезінде:">
+<!ENTITY startupPage.accesskey     "ы">
+<!ENTITY startupUserHomePage.label "Үй парағыңызды көрсету">
+<!ENTITY startupBlankPage.label    "Таза парақты көрсету">
+<!ENTITY startupPrevSession.label  "Алдында ашылған терезелер мен беттерді көрсету">
+
+<!ENTITY homepage.label            "Үй парағы:">
+<!ENTITY homepage.accesskey        "й">
+<!ENTITY useCurrentPage.label      "Ағымдағы бетті қолдану">
+<!ENTITY useCurrentPage.accesskey  "А">
+<!ENTITY useMultiple.label         "Ағымдағы беттерді қолдану">
+<!ENTITY chooseBookmark.label      "Бетбелгіні қолдану…">
+<!ENTITY chooseBookmark.accesskey  "Б">
+<!ENTITY restoreDefault.label      "Бастапқы күйге келтіру">
+<!ENTITY restoreDefault.accesskey  "с">
+
+<!ENTITY downloads.label     "Жүктемелер">
+
+<!ENTITY saveTo.label "Файлдарды келесі жерге сақтау">
+<!ENTITY saveTo.accesskey "д">
+<!ENTITY chooseFolderWin.label        "Қарап шығу…">
+<!ENTITY chooseFolderWin.accesskey    "ш">
+<!ENTITY chooseFolderMac.label        "Таңдау…">
+<!ENTITY chooseFolderMac.accesskey    "Т">
+<!ENTITY alwaysAskWhere.label         "Файлдар сақталатын жері туралы әрқашан сұрау">
+<!ENTITY alwaysAskWhere.accesskey     "ж">
+
+<!ENTITY alwaysCheckDefault2.label        "Әр қосылған кезде &brandShortName; жүйедегі негізгі браузер екенін тексеру">
+<!ENTITY alwaysCheckDefault2.accesskey    "н">
+<!ENTITY setAsMyDefaultBrowser2.label     "Негізгі браузер қылу">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "Н">
+<!ENTITY isDefault.label                  "&brandShortName; сіздің ағымдағы негізгі браузеріңіз">
+<!ENTITY isNotDefault.label               "&brandShortName; негізгі браузер емес">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; және Waterfox үшін бір уақытта жұмыс жасауды рұқсат ету">
+<!ENTITY useWaterfoxSync.label             "Кеңес: Бұл бөлек профильдерді қолданады. Олар арасында деректермен бөлісу үшін Синхрондауды қолданыңыз.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; ішіне кіру…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; баптауларын ашу">
+
+<!ENTITY e10sEnabled.label                "Мультипроцессті &brandShortName; іске қосу">

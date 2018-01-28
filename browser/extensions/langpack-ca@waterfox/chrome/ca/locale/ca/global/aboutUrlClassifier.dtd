@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informació sobre «url-classifier»">
+<!ENTITY aboutUrlClassifier.providerTitle               "Proveïdor">
+<!ENTITY aboutUrlClassifier.provider                    "Proveïdor">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Darrera actualització">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Propera actualització">
+
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Estat de la darrera actualització">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Actualitza">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Memòria cau">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Actualitza">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Esborra">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Nom de la taula">
+
+
+
+<!ENTITY aboutUrlClassifier.cacheEntries                "Entrades en memòria cau">
+
+
+
+
+<!ENTITY aboutUrlClassifier.debugTitle                  "Depuració">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Defineix els mòduls de registre">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Defineix el fitxer de registre">
+
+
+<!ENTITY aboutUrlClassifier.debugModules                "Mòduls de registre actuals">
+
+<!ENTITY aboutUrlClassifier.debugFile                   "Fitxer de registre actual">
+
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Number of negative cache entries">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Number of positive cache entries">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positive cache expiry">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Show entries">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Set JS Log">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Safe Browsing JS log">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Safe Browsing log modules">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">

@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Perlindungan Penjejakan">
+<!ENTITY  trackingProtection2.description      "Penjejakan ialah pengumpulan data pelyaran anda dalam pelbagai laman web. Penjejakan boleh digunakan untuk membina profil dan memaparkan kandungan berdasarkan maklumat pelayaran dan peribadi anda.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Gunakan Perlindungan Penjejakan untuk menyekat penjejak dikenali">
+<!ENTITY  trackingProtectionAlways.label       "Sentiasa">
+<!ENTITY  trackingProtectionAlways.accesskey   "n">
+<!ENTITY  trackingProtectionPrivate.label      "Hanya dalam tertingkap persendirian">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Tidak sekali">
+<!ENTITY  trackingProtectionNever.accesskey    "k">
+<!ENTITY  trackingProtectionLearnMore.label    "Ketahui selanjutnya">
+<!ENTITY  trackingProtectionExceptions.label   "Pengecualian…">
+<!ENTITY  trackingProtectionExceptions.accesskey "g">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Guna Perlindungan Penjejakan dalam Tetingkap Persendirian">
+<!ENTITY trackingProtectionPBM5.accesskey     "k">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Gunakan Perlindungan Penjejakan dalam Pelayaran Peribadi untuk menyekat penjejak dikenali">
+<!ENTITY trackingProtectionPBM6.accesskey     "b">
+<!ENTITY trackingProtectionPBMLearnMore.label "Ketahui selanjutnya">
+<!ENTITY changeBlockList2.label               "Tukar Senarai Sekatan…">
+<!ENTITY changeBlockList2.accesskey           "T">
+
+<!ENTITY  doNotTrack.description        "Hantar laman web isyarat “Jangan Jejak” bahawa anda tidak mahu dikesan">
+<!ENTITY  doNotTrack.learnMore.label    "Ketahui selanjutnya">
+<!ENTITY  doNotTrack.default.label      "Hanya apabila menggunakan Perlindungan Penjejakan">
+<!ENTITY  doNotTrack.always.label       "Sentiasa">
+
+<!ENTITY  history.label                 "Sejarah">
+<!ENTITY  permissions.label             "Keizinan">
+
+<!ENTITY  addressBar.label              "Bar Alamat">
+<!ENTITY  addressBar.suggest.label      "Apabila menggunakan bar alamat, syorkan">
+<!ENTITY  locbar.history2.label         "Sejarah pelayaran">
+<!ENTITY  locbar.history2.accesskey     "S">
+<!ENTITY  locbar.bookmarks.label        "Tandabuku">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Buka tab">
+<!ENTITY  locbar.openpage.accesskey     "b">
+<!ENTITY  locbar.searches.label         "Carian berkaitan dari enjin carian piawai">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "Tukar keutamaan bagi cadangan enjin carian">
+
+<!ENTITY  acceptCookies2.label          "Terima kuki dari laman web">
+<!ENTITY  acceptCookies2.accesskey      "T">
+
+<!ENTITY  acceptThirdParty.pre.label      "Menerima kuki pihak ketiga:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "M">
+<!ENTITY  acceptThirdParty.always.label   "Sentiasa">
+<!ENTITY  acceptThirdParty.never.label    "Tidak sekali">
+<!ENTITY  acceptThirdParty.visited.label  "Daripada yang dilawati">
+
+<!ENTITY  keepUntil.label               "Kekalkan sehingga:">
+<!ENTITY  keepUntil.accesskey           "h">
+
+<!ENTITY  expire.label                  "ianya luput">
+<!ENTITY  close.label                   "Saya tutup &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Pengecualian…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Papar Kuki…">
+<!ENTITY  showCookies.accesskey         "P">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; akan">
+<!ENTITY  historyHeader2.pre.accesskey     "a">
+<!ENTITY  historyHeader.remember.label     "Ingat sejarah">
+<!ENTITY  historyHeader.dontremember.label "Jangan ingat sejarah">
+<!ENTITY  historyHeader.custom.label       "Guna tetapan penyesuaian untuk sejarah">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; akan mengingati sejarah pelayaran web, muat turun, borang dan carian anda, dan menyimpan kuki daripada laman web yang anda pernah lawati.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Anda mungkin mahu ">
+<!ENTITY  rememberActions.clearHistory.label  "hapuskan sejarah layaran terkini anda">
+<!ENTITY  rememberActions.middle.label        ", atau ">
+<!ENTITY  rememberActions.removeCookies.label "buang kuki individu">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; akan menggunakan tetapan yang sama untuk layaran peribadi dan tidak akan mengingati sejarah layaran semasa anda melayari Web.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Anda mungkin juga mahu ">
+<!ENTITY  dontrememberActions.clearHistory.label "hapuskan semua sejarah layaran semasa">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Sentiasa gunakan mod pelayaran peribadi">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Ingat semua lawan sesawang yang telah dikunjungi dan segala benda yang telah dimuat turun">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Ingat sejarah dan borang sejarah">
+<!ENTITY  rememberSearchForm.accesskey   "h">
+
+<!ENTITY  clearOnClose.label             "Buang sejarah apabila &brandShortName; ditutup">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Tetapan…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "Ketahui selanjutnya">
+<!ENTITY  browserContainersEnabled.label        "Dayakan Tab Kontena">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Tetapan…">
+<!ENTITY  browserContainersSettings.accesskey    "p">

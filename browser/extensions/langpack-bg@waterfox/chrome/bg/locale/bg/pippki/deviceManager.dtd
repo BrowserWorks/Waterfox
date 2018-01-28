@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Управление на устройства">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Модули за защита и сигурни устройства">
+<!ENTITY devmgr.details.title                   "Подробности">
+<!ENTITY devmgr.details.title2                  "Стойност">
+
+<!ENTITY devmgr.button.login.label              "Влизане">
+<!ENTITY devmgr.button.login.accesskey          "В">
+<!ENTITY devmgr.button.logout.label             "Излизане">
+<!ENTITY devmgr.button.logout.accesskey         "И">
+<!ENTITY devmgr.button.changepw.label           "Промяна на парола">
+<!ENTITY devmgr.button.changepw.accesskey       "П">
+<!ENTITY devmgr.button.load.label               "Зареждане">
+<!ENTITY devmgr.button.load.accesskey           "З">
+<!ENTITY devmgr.button.unload.label             "Освобождаване">
+<!ENTITY devmgr.button.unload.accesskey         "О">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Въведете информация за добавяния модул.">
+<!ENTITY loaddevice.modname                     "Име на модула:">
+<!ENTITY loaddevice.modname.accesskey           "м">
+<!ENTITY loaddevice.modname.default             "Нов модул на PKCS#11">
+<!ENTITY loaddevice.filename                    "Файл на модула:">
+<!ENTITY loaddevice.filename.accesskey          "Ф">
+<!ENTITY loaddevice.browse                      "Разглеждане…">
+<!ENTITY loaddevice.browse.accesskey            "Р">
+
+<!ENTITY loaddevice.title2                      "Зареждане на драйвер за PKCS#11 устройство">

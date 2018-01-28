@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+	<ShortName>Ecosia</ShortName>
+	<Description>Search Ecosia</Description>
+	<InputEncoding>UTF-8</InputEncoding>
+	<Image height="16" width="16">resource://search-plugins/images/ecosia.ico</Image>
+	<Url type="text/html" method="get" template="https://www.ecosia.org/search?q={searchTerms}&amp;ref=waterfox"/>
+	<Url type="application/x-suggestions+json" template="https://ac.ecosia.org/autocomplete?q={searchTerms}&amp;type=list&amp;ref=waterfox"/>
+</OpenSearchDescription>

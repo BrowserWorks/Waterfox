@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Qisqacha nom"> 
+<!ENTITY message.label    "Ba`zi namuna matnlari bu yerga keladi.">
+<!ENTITY editfield0.label "Foydalanuvchi nomi:"> 
+<!ENTITY editfield1.label "Parol:"> 
+<!ENTITY checkbox.label   "tekshirish">
+<!ENTITY copyCmd.label    "Nusxa olish">
+<!ENTITY copyCmd.accesskey "N">
+<!ENTITY selectAllCmd.label "Barchasini tanlash">
+<!ENTITY selectAllCmd.accesskey "B">

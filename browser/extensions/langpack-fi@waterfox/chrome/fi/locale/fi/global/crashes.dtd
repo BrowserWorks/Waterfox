@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Kaatumisilmoitukset">
+<!ENTITY crashesUnsubmitted.label   "Lähettämättömät kaatumisilmoitukset">
+<!ENTITY crashesSubmitted.label     "Lähetetyt kaatumisilmoitukset">
+<!ENTITY id.heading                 "Kaatumistunnus">
+<!ENTITY dateCrashed.heading        "Kaatumisaika">
+<!ENTITY dateSubmitted.heading      "Lähettämisaika">
+<!ENTITY noReports.label            "Kaatumisilmoituksia ei ole lähetetty.">
+<!ENTITY noConfig.label             "Tätä ohjelmaa ei ole asetettu näyttämään kaatumisilmoituksia. Asetuksen <code>breakpad.reportURL</code> arvon täytyy olla tosi.">
+<!ENTITY clearAllReports.label      "Poista ilmoitukset">

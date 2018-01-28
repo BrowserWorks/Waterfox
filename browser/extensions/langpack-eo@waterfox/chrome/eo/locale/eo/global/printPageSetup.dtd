@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Agordi paĝon">
+
+<!ENTITY basic.tab           "Formato kaj elektebloj">
+
+<!ENTITY formatGroup.label   "Formato">
+
+<!ENTITY orientation.label   "Orientiĝo:">
+<!ENTITY portrait.label      "Vertikala">
+<!ENTITY portrait.accesskey  "V">
+<!ENTITY landscape.label     "Horizontala">
+<!ENTITY landscape.accesskey "H">
+
+<!ENTITY scale.label         "Skalo:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Adapti grandon al la larĝo de la paĝo">
+<!ENTITY shrinkToFit.accesskey "A">
+
+<!ENTITY optionsGroup.label  "Elektebloj">
+
+<!ENTITY printBG.label       "Presi fonon (kolorojn kaj bildojn)">
+<!ENTITY printBG.accesskey   "F">
+
+<!ENTITY advanced.tab        "Marĝenoj kaj paĝokapo/paĝopiedo">
+
+<!ENTITY marginGroup.label   "Marĝenoj (#1)">
+<!ENTITY marginUnits.inches  "coloj">
+<!ENTITY marginUnits.metric  "milimetroj">
+<!ENTITY marginTop.label     "Supre:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Malsupre:">
+<!ENTITY marginBottom.accesskey "M">
+<!ENTITY marginLeft.label    "Maldekstre:">
+<!ENTITY marginLeft.accesskey "A">
+<!ENTITY marginRight.label   "Dekstre:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Paĝokapoj kaj paĝopiedoj">
+
+<!ENTITY hfLeft.label        "Maldekstre:">
+<!ENTITY hfCenter.label      "Centre:">
+<!ENTITY hfRight.label       "Dekstre:">
+<!ENTITY headerLeft.tip      "Maldekstra paĝokapo">
+<!ENTITY headerCenter.tip    "Centra paĝokapo">
+<!ENTITY headerRight.tip     "Dekstra paĝokapo">
+<!ENTITY footerLeft.tip      "Maldekstra paĝokapo">
+<!ENTITY footerCenter.tip    "Centra paĝopiedo">
+<!ENTITY footerRight.tip     "Dekstra paĝopiedo">
+
+<!ENTITY hfTitle             "Titolo">
+<!ENTITY hfURL               "Retadreso">
+<!ENTITY hfDateAndTime       "Dato/Horo">
+<!ENTITY hfPage              "Paĝo #">
+<!ENTITY hfPageAndTotal      "Paĝo # de #">
+<!ENTITY hfBlank             "--malplena--">
+<!ENTITY hfCustom            "Personecigita…">
+
+<!ENTITY customPrompt.title  "Personecigita…">
+<!ENTITY customPrompt.prompt "Tajpu vian personecigitan tekston por kaptitolo aŭ subtitolo">

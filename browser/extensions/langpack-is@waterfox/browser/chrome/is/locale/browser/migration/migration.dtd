@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Innflutningshjálp">
+
+<!ENTITY importFrom.label               "Flytja inn stillingar, bókamerki, ferla, lykilorð og önnur gögn frá:">
+<!ENTITY importFromUnix.label           "Flytja inn stillingar, bókamerki, ferla, lykilorð og önnur gögn frá:">
+<!ENTITY importFromBookmarks.label      "Flytja inn bókamerki frá:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Flytja ekkert inn">
+<!ENTITY importFromNothing.accesskey    "e">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Öruggur vafri">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Engin forrit fundust sem gætu innihaldið bókamerki, ferill eða lykilorð.">
+
+<!ENTITY importSource.title             "Flytja inn stillingar og gögn">
+<!ENTITY importItems.title              "Hlutir til að flytja inn">
+<!ENTITY importItems.label              "Veldu hvaða hluti þú vilt flytja inn:">
+
+<!ENTITY migrating.title                "Flyt inn…">
+<!ENTITY migrating.label                "Verið er að flytja inn eftirfarandi hluti…">
+
+<!ENTITY selectProfile.title            "Veldu notanda">
+<!ENTITY selectProfile.label            "Hægt er að flytja eftirfarandi notendur inn frá:">
+
+<!ENTITY done.title                     "Innflutningi lokið">
+<!ENTITY done.label                     "Eftirfarandi hluti tókst að flytja inn:">
+
+<!ENTITY closeSourceBrowser.label       "Gakktu úr skugga um að valinn vafri sé lokaður áður en haldið er áfram.">

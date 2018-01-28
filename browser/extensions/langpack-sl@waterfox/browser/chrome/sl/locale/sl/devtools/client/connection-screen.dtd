@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Poveži">
+<!ENTITY header     "Poveži se z oddaljeno napravo">
+<!ENTITY host       "Gostitelj:">
+<!ENTITY port       "Vrata:">
+<!ENTITY connect    "Poveži">
+<!ENTITY connecting "Povezovanje …">
+<!ENTITY availableAddons "Razpoložljivi oddaljeni dodatki:">
+<!ENTITY availableTabs "Razpoložljivi oddaljeni zavihki:">
+<!ENTITY availableProcesses "Razpoložljivi oddaljeni procesi:">
+<!ENTITY connectionError "Napaka:">
+<!ENTITY errorTimeout "Napaka: povezava je potekla.">
+<!ENTITY errorRefused "Napaka: povezava zavrnjena.">
+<!ENTITY errorUnexpected "Nepričakovana napaka.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Razvojna orodja za Waterfox omogočajo razhroščevanje oddaljenih naprav (npr. Waterfoxa za Android in Waterfox OS). Na oddaljeni napravi morate vključiti možnost 'Oddaljeno razhroščevanje'. Za več informacij si oglejte ">
+<!ENTITY remoteDocumentation "dokumentacijo">
+<!ENTITY remoteHelpSuffix ".">
+

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "U is nie tans in 'n private venster nie.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Open 'n privaatvenster">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Private blaaiery">
+<!ENTITY privateBrowsing.title.tracking                  "Private blaaiery met volgbeskerming">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Wanneer mens in 'n private venster blaai, sal Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nie">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        " die volgende stoor nie:">
+<!ENTITY aboutPrivateBrowsing.info.visited               "besoekte bladsye">
+<!ENTITY aboutPrivateBrowsing.info.searches              "soektogte">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "koekies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tydelike lêers">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox sal ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "wel">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " die volgende stoor:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "lêers afgelaai">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "boekmerke">
+<!ENTITY aboutPrivateBrowsing.note.before                "Private blaaiery ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "maak mens nie anoniem">
+<!ENTITY aboutPrivateBrowsing.note.after                 " op die Internet nie. U werkgewer of internetdiensverskaffer kan steeds weet watter bladsye u besoek.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Meer inligting oor ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Private blaaiery">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Volgbeskerming">
+<!ENTITY trackingProtection.description2                 "Party webwerwe gebruik speurkode wat mens se aktiwiteit oor die Internet kan monitor. Met Volgbeskerming sal Waterfox baie speurders blokkeer wat inligting oor u blaaigedrag versamel.">
+<!ENTITY trackingProtection.startTour1                   "Sien hoe dit werk">

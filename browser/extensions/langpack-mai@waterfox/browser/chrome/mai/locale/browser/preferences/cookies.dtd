@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "अहाँक कंप्यूटर पर निम्न कूकीज जमा अछि :">
+<!ENTITY     cookiename.label               "कूकीज नाम">
+<!ENTITY     cookiedomain.label             "साइट">
+
+<!ENTITY     props.name.label               "नाम:">
+<!ENTITY     props.value.label              "सामग्री:">
+<!ENTITY     props.domain.label             "मेजबाननाम:">
+<!ENTITY     props.path.label               "पथ:">
+<!ENTITY     props.secure.label             "एकरा लेल  प्रेषित:">
+<!ENTITY     props.expires.label            "मियाद समाप्ति:">
+
+
+<!ENTITY     window.title                   "कूकीज">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+
+
+<!ENTITY     button.close.label             "बन्न करू">
+<!ENTITY     button.close.accesskey         "C">
+
+<!ENTITY     props.container.label          "Container:">
+
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     searchFilter.label             "Search">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "पूर्वनिर्धारित शोध इंजिन">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "आपले पूर्वनिर्धारित शोध इंजिन निवडा. &brandShortName; ते लोकेशन बार, शोध बार, आणि सुरूवातीच्या पृष्ठावर वापरते.">
+
+<!ENTITY provideSearchSuggestions.label        "शोध सूचना पुरवा">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "लोकेशन बार परिणामांत शोध सूचना दाखवा">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "आपल्या शोध सूचना लोकेशन बारवर दिसणार नाही कारण आपण इतिहास लक्षात न ठेवण्यासाठी &brandShortName; हे संयोजित केले आहे">
+
+<!ENTITY oneClickSearchEngines.label           "एक-क्लिक शोध इंजिन">
+
+<!ENTITY chooseWhichOneToDisplay.label         "शोध बार मुळे आपणास थेट पर्यायी इंजिन्स शोधता येतात. कोणते प्रदर्शित करायचे त्याची निवड करा.">
+
+<!ENTITY engineNameColumn.label                "शोध इंजिन्स">
+<!ENTITY engineKeywordColumn.label             "मुख्यशब्द">
+
+<!ENTITY restoreDefaultSearchEngines.label     "पूर्वनिर्धारित शोध इंजिन पुर्वस्थित करा">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "काढून टाका">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "आणखी शोध इंजिन्स जोडा…">

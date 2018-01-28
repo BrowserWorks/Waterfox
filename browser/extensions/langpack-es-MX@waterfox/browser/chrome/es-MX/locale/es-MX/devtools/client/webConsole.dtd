@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "Consola web">
+<!ENTITY browserConsole.title "Consola del navegador">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Abrir en una pestaña nueva">
+<!ENTITY openURL.accesskey "p">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Red">
+<!ENTITY btnPageNet.tooltip "Registrar acceso a la red">
+<!ENTITY btnPageNet.accesskey "R">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Registrar errores y advertencias en el CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Registrar excepciones JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Seguridad">
+<!ENTITY btnPageSecurity.tooltip "Registrar errores de seguridad y advertencias">
+<!ENTITY btnPageSecurity.accesskey "u">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "Registro">
+<!ENTITY btnPageLogging.tooltip "Registrar mensajes enviados al objeto window.console">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "Errores">
+<!ENTITY btnConsoleInfo         "Información">
+<!ENTITY btnConsoleWarnings     "Advertencias">
+<!ENTITY btnConsoleLog          "Registro">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Reflujos">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "Servidor">
+<!ENTITY btnServerLogging.tooltip     "Registro de mensajes recibidos desde un servidor web">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerErrors              "Errores">
+<!ENTITY btnServerInfo                "Información">
+<!ENTITY btnServerWarnings            "Advertencias">
+<!ENTITY btnServerLog                 "Registro">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Workers compartidos">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Trabajadores al Servicio">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Complemento o Chrome Workers">
+
+<!ENTITY filterOutput.placeholder "Filtrar salida">
+<!ENTITY btnClear.label        "Limpiar">
+<!ENTITY btnClear.tooltip      "Limpiar la salida de la consola web">
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "=">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "-">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "0">
+
+<!ENTITY copyURLCmd.label     "Copiar la ruta del enlace">
+<!ENTITY copyURLCmd.accesskey "r">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Abrir en vista de Variables">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "Almacenar como variable global">
+<!ENTITY storeAsGlobalVar.accesskey "A">

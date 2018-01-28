@@ -1,0 +1,163 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Jikelele">
+
+<!ENTITY useCursorNavigation.label       "Sebenzisa qho amaqhosha ekheza ukufunisela kumakhasi">
+<!ENTITY useCursorNavigation.accesskey   "a">
+<!ENTITY searchOnStartTyping.label       "Khangela iteksti xa uqalisa ukuchwetheza">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY useOnScreenKeyboard.label       "Bonisa ukuphatha nekhibhodi xa kuyimfuneko">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Ukubhrawuza">
+
+<!ENTITY useAutoScroll.label             "Sebenzisa ukusikrola ngokuzenzekelayo">
+<!ENTITY useAutoScroll.accesskey         "u">
+<!ENTITY useSmoothScrolling.label        "Sebenzisa ukuhambahamba kokubhaliweyo okugudileyo">
+<!ENTITY useSmoothScrolling.accesskey    "g">
+<!ENTITY checkUserSpelling.label         "Khangela upelo lwakho njengoko uchwetheza">
+<!ENTITY checkUserSpelling.accesskey     "u">
+
+<!ENTITY dataChoicesTab.label            "Okukhethwayo kwengcombolo">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Ukuxelwa kwedatha kuyekisiwe ngenxa yolu lwakheko">
+
+
+<!ENTITY healthReportLearnMore.label     "Funda okungakumbi">
+
+
+
+
+
+<!ENTITY crashReporterLearnMore.label    "Funda okungakumbi">
+
+<!ENTITY networkTab.label                "Inethiwekhi">
+
+
+<!ENTITY connectionDesc.label            "Lungiselela indlela i-&brandShortName; enxibelela ngayo kwi-Intanethi">
+<!ENTITY connectionSettings.label        "Isetingi…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Umxholo wewebhu okhutshelweyo">
+
+<!ENTITY offlineStorage2.label           "Umxholo wewebhu wangaphandle kwenethiwekhi neengcombolo zomsebenzisi">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "IDatha yeSayithi">
+<!ENTITY clearSiteData.label             "Cima Yonke iDatha">
+<!ENTITY clearSiteData.accesskey         "i">
+<!ENTITY siteDataSettings.label          "Iietingi…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Funda okungakumbi">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Linganisela imemori esisikhupheli">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "I-MB yesithuba">
+<!ENTITY clearCacheNow.label             "Susa ngoku">
+<!ENTITY clearCacheNow.accesskey         "S">
+<!ENTITY clearOfflineAppCacheNow.label   "Gutyula ngoku">
+<!ENTITY clearOfflineAppCacheNow.accesskey "G">
+<!ENTITY overrideSmartCacheSize.label    "Cima ulawulo lwememori esisikhupheli ezenzekelayo">
+<!ENTITY overrideSmartCacheSize.accesskey "C">
+
+<!ENTITY updateTab.label                 "Hlaziya">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "I-&brandShortName; iZihlaziyi">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "Uhlobo ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Vumela i-&brandShortName; ukuba">
+
+
+<!ENTITY updateCheckChoose2.label        "Khangela uhlaziyo, kodwa ikuvumela ukuba ukhethe ukuba ungazifaka na">
+<!ENTITY updateCheckChoose2.accesskey    "K">
+<!ENTITY updateManual2.label             "Ungaze ukhangele uhlaziyo (akunconyelwa)">
+<!ENTITY updateManual2.accesskey         "U">
+
+<!ENTITY updateHistory2.label            "Bonisa iMbali yoHlaziyo…">
+<!ENTITY updateHistory2.accesskey        "l">
+
+<!ENTITY useService.label                "Sebenzisa inkonzo yokungasemva ukufakela uhlaziyo">
+<!ENTITY useService.accesskey            "y">
+
+<!ENTITY enableSearchUpdate2.label       "Ngokuzenzekelayo hlaziya iinjini zokukhangela">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Iyakuxelela xa iwebhusayithi icela ukugcina iingcombolo ezinokusetyenziswa xa ingekho kwinethiwekhi">
+<!ENTITY offlineStorageNotify.accesskey           "I">
+<!ENTITY offlineStorageNotifyExceptions.label     "Izinxaxhi…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "z">
+
+<!ENTITY offlineAppsList2.label          "Ezi webhusayithi zilandelayo zivunyelwe ukugcina iingcombolo ezisetyenziswa ngaphandle kwenethiwekhi:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Susa…">
+<!ENTITY offlineAppsListRemove.accesskey "S">
+<!ENTITY offlineAppRemove.confirm        "Shenxisa ingcombolo yangaphandle kweintanethi">
+
+<!ENTITY certificateTab.label            "Izatifikethi">
+<!ENTITY certPersonal2.description       "Xa iseva icela isatifikethi sakho">
+<!ENTITY selectCerts.auto                "Khetha esinye ngokuzenzekela">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Iyakubuza ngawo onke amaxesha">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Buza iiseva zomphenduli ze-OCSP ukuqinisekisa ukugqibelela kwangoku kwezatifikethi">
+<!ENTITY enableOCSP.accesskey            "B">
+
+
+
+
+
+<!ENTITY performance.label               "Ukusebenza">
+<!ENTITY useRecommendedPerformanceSettings2.label "Sebenzisa iisetingi ezinconyelwayo zokusebenza">
+<!ENTITY useRecommendedPerformanceSettings2.description "Ezi setingi zilungiselelwe ihadwe nenkqubo yokusebenza yekhompyutha yakho.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "S">
+<!ENTITY performanceSettingsLearnMore.label "Funda okungakumbi">
+<!ENTITY limitContentProcessOption.label "Inkqubo yesiqulatho nomlinganiselo">
+<!ENTITY limitContentProcessOption.description "Iinkqubo ezongezelelekileyo zesiqulatho zinokuphucula ukusebenza xa usebenzisa iithebhu ezininzi, kodwa iya kusebenzisa imemori engakumbi.">
+<!ENTITY limitContentProcessOption.accesskey   "l">
+<!ENTITY limitContentProcessOption.disabledDescription "Ukuphucula inani leenkqubo zeziqulatho kunokwenzeka kuphela ngeenkqubo ezininzi ze-&brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Funda indlela yokuhlola ukuba zivuliwe iinkqubo ezininzi">
+<!ENTITY allowHWAccel.label              "Sebenzisa ukhawuleziso lwehadiwe xa lufumaneka">
+<!ENTITY allowHWAccel.accesskey          "d">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

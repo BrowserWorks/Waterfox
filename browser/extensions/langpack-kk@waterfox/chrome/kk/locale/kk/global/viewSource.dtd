@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Бастапқы коды:">
+
+<!ENTITY fileMenu.label "Файл">
+<!ENTITY fileMenu.accesskey "Ф">
+<!ENTITY savePageCmd.label "Бетті қалай сақтау…">
+<!ENTITY savePageCmd.accesskey "а">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Парақ баптаулары…">
+<!ENTITY pageSetupCmd.accesskey "р">
+<!ENTITY printPreviewCmd.label "Алдын-ала қарау">
+<!ENTITY printPreviewCmd.accesskey "д">
+<!ENTITY printCmd.label "Баспаға шығару…">
+<!ENTITY printCmd.accesskey "Б">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Жабу">
+<!ENTITY closeCmd.accesskey "Ж">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Жолға өту…">
+<!ENTITY goToLineCmd.accesskey "о">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Түрі">
+<!ENTITY viewMenu.accesskey       "р">
+<!ENTITY reloadCmd.label "Жаңарту">
+<!ENTITY reloadCmd.accesskey "Ж">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Ұзын жолдарды тасымалдау"> 
+<!ENTITY menu_wrapLongLines.accesskey "т">
+<!ENTITY menu_highlightSyntax.label "Синтаксисті түспен ерекшелеу">
+<!ENTITY menu_highlightSyntax.accesskey "е">
+<!ENTITY menu_textSize.label "Қаріп өлшемі">
+<!ENTITY menu_textSize.accesskey "р">
+<!ENTITY menu_textEnlarge.label "Үлкейту">
+<!ENTITY menu_textEnlarge.accesskey "л">
+<!ENTITY menu_textReduce.label "Кішірейту">
+<!ENTITY menu_textReduce.accesskey "К">
+<!ENTITY menu_textReset.label "Кәдімгі">
+<!ENTITY menu_textReset.accesskey "д">
+
+<!ENTITY findOnCmd.label     "Осы парақтан іздеу…">
+<!ENTITY findOnCmd.accesskey "с">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Қайтадан іздеу">
+<!ENTITY findAgainCmd.accesskey "й">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "е">
+
+<!ENTITY backCmd.label "Артқа">
+<!ENTITY backCmd.accesskey "А">
+<!ENTITY forwardCmd.label "Алға">
+<!ENTITY forwardCmd.accesskey "л">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Сілтемені көшіріп алу">
+<!ENTITY copyLinkCmd.accesskey "С">
+<!ENTITY copyEmailCmd.label "Электронды пошта адресін көшіріп алу">
+<!ENTITY copyEmailCmd.accesskey "Э">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "Mdel izen-agi">
+
+<!ENTITY checkForUpdates "Muqel ma yella we maynut...">
+
+<!ENTITY learnMore "Issin ugar…">
+
+<!ENTITY defaultButton.label "IH!">
+<!ENTITY defaultButton.accesskey "I">

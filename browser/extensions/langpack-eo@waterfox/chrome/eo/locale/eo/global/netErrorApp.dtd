@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This file exists to allow applications to override one or more messages
+     from netError.dtd; Applications which want to do this should override
+     this file with their own version of netErrorApp.dtd -->
+
+<!-- An example (from Waterfox):
+
+<!ENTITY securityOverride.linkText "Aŭ vi povas aldoni escepton…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Lasu min foriri!">
+<!ENTITY securityOverride.exceptionButtonLabel "Aldoni escepton…">
+
+<!ENTITY securityOverride.warningContent "
+<p>Vi ne devus aldoni escepton se vi uzas interretan konekton kiun vi ne fidas tute aŭ se vi ne kutimas vidi averton por tiu ĉi retejo.</p>
+<p>Se vi daŭre volas aldoni escepton por tiu ĉi retejo, vi povas tion fari en la spertulaj agordoj pri ĉifrado.</p>
+">
+
+-->

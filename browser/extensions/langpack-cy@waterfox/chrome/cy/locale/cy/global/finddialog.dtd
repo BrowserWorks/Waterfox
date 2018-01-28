@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Canfod ar y Dudalen">
+<!ENTITY findField.label "Canfod beth:">
+<!ENTITY findField.accesskey "b">
+<!ENTITY caseSensitiveCheckbox.label "Cydweddu maint">
+<!ENTITY caseSensitiveCheckbox.accesskey "C">
+<!ENTITY wrapCheckbox.label "Amlapio">
+<!ENTITY wrapCheckbox.accesskey "A">
+<!ENTITY findButton.label "Canfod nesaf">
+<!ENTITY findButton.accesskey "n">
+<!ENTITY cancelButton.label "Diddymu">
+<!ENTITY closeButton.label "Cau">
+<!ENTITY up.label "I fyny">
+<!ENTITY up.accesskey "f">
+<!ENTITY down.label "I lawr">
+<!ENTITY down.accesskey "l">
+<!ENTITY direction.label "Cyfeiriad">

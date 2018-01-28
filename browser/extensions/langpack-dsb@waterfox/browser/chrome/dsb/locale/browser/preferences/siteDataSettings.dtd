@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nastajenja - sedłowe daty">
+<!ENTITY     hostCol.label                 "Sedło">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Składowak">
+<!ENTITY     searchTextboxPlaceHolder             "Websedła pytaś">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "s">
+<!ENTITY     removeSelected.label          "Wubrane wótwónoźeś">
+<!ENTITY     removeSelected.accesskey      "u">
+<!ENTITY     save.label                    "Změny składowaś">
+<!ENTITY     save.accesskey                "s">
+<!ENTITY     cancel.label                  "Pśetergnuś">
+<!ENTITY     cancel.accesskey              "P">
+<!ENTITY     removingDialog.title          "Daty sedła wótwónoźeś">
+<!ENTITY     removingSelected.description  "Gaž daty sedła wótwónoźujośo, budu se teke pśisłušne cookieje a webwopśimjeśe offline wótwónoźowaś. Pśez to se snaź z websedłow wótzjawijośo. Cośo změny napšawdu pśewjasć?">
+<!ENTITY     siteTree.label                "Slědujuce cookieje websedła se wótwónoźiju:">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "انسخ">
+<!ENTITY  copy.accesskey        "ن">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "اختر الكل">
+<!ENTITY  selectall.accesskey   "ك">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "عام">
+<!ENTITY  generalTab.accesskey  "ع">
+<!ENTITY  generalTitle          "العنوان:">
+<!ENTITY  generalURL            "العنوان:">
+<!ENTITY  generalType           "النوع:">
+<!ENTITY  generalMode           "نمط التصيير:">
+<!ENTITY  generalSize           "الحجم:">
+<!ENTITY  generalReferrer       "العنوان المُحِيل:">
+<!ENTITY  generalSource         "مصدر الذّاكرة المؤقّتة:">
+<!ENTITY  generalModified       "آخر تعديل:">
+<!ENTITY  generalEncoding2      "ترميز النص:">
+<!ENTITY  generalMetaName       "الاسم">
+<!ENTITY  generalMetaContent    "المحتوى">
+
+<!ENTITY  mediaTab              "الوسائط">
+<!ENTITY  mediaTab.accesskey    "و">
+<!ENTITY  mediaLocation         "المكان:">
+<!ENTITY  mediaText             "النص المرتبط:">
+<!ENTITY  mediaAltHeader        "النصّ البديل">
+<!ENTITY  mediaAddress          "العنوان">
+<!ENTITY  mediaType             "النوع">
+<!ENTITY  mediaSize             "الحجم">
+<!ENTITY  mediaCount            "العدد">
+<!ENTITY  mediaDimension        "الأبعاد:">
+<!ENTITY  mediaLongdesc         "الوصف المطوّل:">
+<!ENTITY  mediaBlockImage.accesskey "ص">
+<!ENTITY  mediaSaveAs           "احفظ باسم…">
+<!ENTITY  mediaSaveAs.accesskey "س">
+<!ENTITY  mediaSaveAs2.accesskey "س">
+<!ENTITY  mediaPreview          "معاينة الوسائط:">
+
+<!ENTITY  feedTab               "التلقيمات">
+<!ENTITY  feedTab.accesskey     "ت">
+<!ENTITY  feedSubscribe         "اشترِك">
+<!ENTITY  feedSubscribe.accesskey "ش">
+
+<!ENTITY  permTab               "التّصاريح">
+<!ENTITY  permTab.accesskey     "ص">
+<!ENTITY  permUseDefault        "استخدم المبدئي">
+<!ENTITY  permAskAlways         "اسأل دائمًا">
+<!ENTITY  permAllow             "اسمح">
+<!ENTITY  permAllowSession      "اسمح للجلسة">
+<!ENTITY  permBlock             "احجب">
+<!ENTITY  permissionsFor        "صلاحيات:">
+<!ENTITY  permPlugins           "تفعيل الملحقات">
+
+<!ENTITY  permClearStorage           "امسح المخزون">
+<!ENTITY  permClearStorage.accesskey "ح">
+
+<!ENTITY  securityTab           "السريّة">
+<!ENTITY  securityTab.accesskey "س">
+<!ENTITY  securityView.certView "اعرض الشهادة">
+<!ENTITY  securityView.accesskey "ع">
+<!ENTITY  securityView.unknown   "مجهول">
+
+
+<!ENTITY  securityView.identity.header   "هوية الموقع">
+<!ENTITY  securityView.identity.owner    "المالك:">
+<!ENTITY  securityView.identity.domain   "موقع الوِب:">
+<!ENTITY  securityView.identity.verifier "تحقق منها:">
+<!ENTITY  securityView.identity.validity "تنقضي في:">
+
+<!ENTITY  securityView.privacy.header                   "الخصوصية و التأريخ">
+<!ENTITY  securityView.privacy.history                  "هل زُرتُ هذا الموقع من قبل؟">
+<!ENTITY  securityView.privacy.cookies                  "هل يحفظ هذا الموقع معلومات (كعكات) على حاسوبي؟">
+<!ENTITY  securityView.privacy.viewCookies              "اعرض الكعكات">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "ع">
+<!ENTITY  securityView.privacy.passwords                "هل حفظتُ أي كلمات سر لهذا الموقع؟">
+<!ENTITY  securityView.privacy.viewPasswords            "اعرض كلمات السر المحفوظة">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "ك">
+
+<!ENTITY  securityView.technical.header                 "التفاصيل التقنية">
+
+<!ENTITY  helpButton.label                              "مساعدة">

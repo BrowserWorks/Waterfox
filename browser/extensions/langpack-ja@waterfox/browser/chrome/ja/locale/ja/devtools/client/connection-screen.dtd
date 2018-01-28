@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title			"接続する">
+<!ENTITY header			"リモート機器に接続する">
+<!ENTITY host			"ホスト:">
+<!ENTITY port			"ポート:">
+<!ENTITY connect		"接続">
+<!ENTITY connecting		"接続中">
+<!ENTITY availableAddons	"利用可能なリモートのアドオン:">
+<!ENTITY availableTabs		"利用可能なリモートのタブ:">
+<!ENTITY availableProcesses	"利用可能なリモートのプロセス:">
+<!ENTITY connectionError	"エラー:">
+<!ENTITY errorTimeout		"エラー: 接続がタイムアウトしました。">
+<!ENTITY errorRefused		"エラー: 接続が拒否されました。">
+<!ENTITY errorUnexpected	"予期しないエラー。">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp		"Waterfox 開発ツールではリモート機器 (Waterfox for Android、Waterfox OS など) のデバッグが可能です。リモート機器のオプションの [リモートデバッグ] がオンになっているか確認してください。詳しくは ">
+<!ENTITY remoteDocumentation	"ドキュメント">
+<!ENTITY remoteHelpSuffix	" をご覧ください。">
+

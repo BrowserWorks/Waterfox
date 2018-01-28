@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; taagandiri">
+
+<!ENTITY  offline.title                   "&brandShortName; ga goy bila nda ciyari">
+<!ENTITY  offline.description             "&brandShortName; ga hima ka huru ciyari alhaali ra ka dii wala taagandirey  goo no war tontoney še, k'i tee cerekanbe waneyaŋ  woo dumoo še.">
+<!ENTITY  offline.toggleOffline.label     "Huru ciyari alhaali ra sohõ.">
+<!ENTITY  offline.toggleOffline.accesskey "H">
+
+<!ENTITY  mismatch.win.title              "Ši-cerekanbe tontoniyaŋ">
+<!ENTITY  mismatch.top.label              "Tontoney wey ši cerekanbe nda woo dumoo  &brandShortName; še, adiši i kayandi:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ga hin ka koroši wala cerekanbante dumey  ga bara tontoney wey še.">
+
+<!ENTITY  checking.wizard.title           "Tontoni cerekanbantey koroši">
+<!ENTITY  checking.top.label              "War tontoni cerekanbantey koroši taagandiriyaŋ še…">
+<!ENTITY  checking.status                 "Woo ga hin ka miniti fooyaŋ gay…">
+
+<!ENTITY  found.wizard.title               "Tontoni cerekanbantey duwandi">
+<!ENTITY  found.top.label                 "Tontoney kaŋ war ga boona k'i sinji suuba:">
+<!ENTITY  found.disabledXPinstall.label   "Tontoney ši hin ka sinjandi zama goyjinay sinjiyanoo kayandi sohõ. War ga hin ka kayandiyanoo barmay ganda.">
+<!ENTITY  found.enableXPInstall.label     "Naŋ Interneti nungey ma porogaram sinji">
+<!ENTITY  found.enableXPInstall.accesskey "a">
+
+<!ENTITY  installing.wizard.title         "Goo ma tontoni cerekanbantey sinji">
+<!ENTITY  installing.top.label            "Taagandirey zumandi nd'i sinji war tontoney še…">
+
+<!ENTITY  noupdates.wizard.title          "Tontoni cerekanbanteyaŋ kul mana duwandi">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; mana hin ka duu taagandirey war tontoni cerekanbantey še.">
+<!ENTITY  noupdates.error.desc            "Šenday fooyaŋ bangay taagandirey ceeciroo waate.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; ga koroši waati foo nda a ma war bayrandi waati kaŋ taagandiri cerekanbantey wey duwandi war tontoney še.">
+
+<!ENTITY  finished.wizard.title           "Tontoni cerekanbanteyaŋ sinjandi">
+<!ENTITY  finished.top.label              "&brandShortName; ma taagandirey sinji war tontoney ga.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; ga koroši waati foo nda a ma war bayrandi waati kaŋ taagandirey duwandi tontoney še.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ga koroši waati foo nd'a ga war bayrandi waati kaŋ taagandiriyaŋ duwandi tontoney še.">
+
+<!ENTITY  adminDisabled.wizard.title      "Mana hin ka taagandirey koroši">
+<!ENTITY  adminDisabled.warning.label     "Boro ši hin ka taagandiriyaŋ koroši ši cerekanbe tontoney še zama goyjinay sinjiyan &brandShortName; kayandi. Taare war dabariɲaa juwalkaa hãa faaba še.">
+
+<!ENTITY  versioninfo.wizard.title        "Tontoni cerekanbeyan koroši">
+<!ENTITY  versioninfo.top.label           "War tontoney cerekanbeyanoo koroši nda woo &brandShortName; dumoo.">
+<!ENTITY  versioninfo.waiting             "Woo ga hin ka miniti fooyaŋ gay…">
+
+<!ENTITY  installerrors.wizard.title      "Šenday taagandirey sinjiyanoo waate">
+<!ENTITY  installerrors.intro.label       "&brandShortName; dii šendayyaŋ waati kaŋ a ga war tontoney jerey taagandi.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Ben naagu hala &brandShortName; tunandiroo ma koy jine.">
+<!ENTITY  clickFinish.labelMac            "Benandi naagu hala &brandShortName; tunandiroo ma koy jine.">
+<!ENTITY  enableChecking.label            "Naŋ &brandShortName; ma taagandirey koroši.">

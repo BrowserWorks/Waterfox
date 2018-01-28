@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Ukhuseleko Lokutreka">
+<!ENTITY  trackingProtection2.description      "Ukutreka yingqokelela yedatha yokubhrawza kwiiwebhu ezininzi. Ukutreka kunokusetyenziselwa ukwakha iprofayile nokubonisa isiqulatho ngokusekelwe kwinkcazelo yokubhrawza neyobuqu.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Sebenzisa uKhuseleko lokuTreka ukuze ubhloke abatreki abaziwayo">
+<!ENTITY  trackingProtectionAlways.label       "Qho">
+<!ENTITY  trackingProtectionAlways.accesskey   "o">
+<!ENTITY  trackingProtectionPrivate.label      "Kuphela kwiiwindow zabucala">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Ungaze">
+<!ENTITY  trackingProtectionNever.accesskey    "U">
+<!ENTITY  trackingProtectionLearnMore.label    "Funda ngakumbi">
+<!ENTITY  trackingProtectionExceptions.label   "Ezikhethekileyo…">
+<!ENTITY  trackingProtectionExceptions.accesskey "z">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Sebenzisa Ukhuseleko Lokutreka Kwiifestile Zabucala">
+<!ENTITY trackingProtectionPBM5.accesskey     "c">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Sebenzisa uKhuseleko lokuTreka ukuBhrawza kwaBucala ukuze ubhloke abatreki abaziwayo">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Funda okungakumbi">
+
+
+
+<!ENTITY  doNotTrack.description        "Thumelela iiwebhsayithi umqondiso othi &quot;Musa ukuTreka&quot; obonisa ukuba akufuni kutrekwa">
+<!ENTITY  doNotTrack.learnMore.label    "Funda ngakumbi">
+<!ENTITY  doNotTrack.default.label      "Kuphela xa usebenzisa uKhuseleko lokuTreka">
+<!ENTITY  doNotTrack.always.label       "Qho">
+
+<!ENTITY  history.label                 "Imbali">
+<!ENTITY  permissions.label             "Iimvume">
+
+
+
+
+<!ENTITY  locbar.bookmarks.label        "Iibhukhmakhi">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Vula iithebhu">
+<!ENTITY  locbar.openpage.accesskey     "V">
+<!ENTITY  locbar.searches.label         "Ukukhangela okufana noku ukusuka kwinjini yokukhangela esisiseko">
+<!ENTITY  locbar.searches.accesskey     "a">
+
+<!ENTITY  suggestionSettings2.label     "Tshintsha iipreferensi zamacebiso enjini yokukhangela">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Yamkela iikhukhi zomnye umntu:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "m">
+<!ENTITY  acceptThirdParty.always.label   "Qho">
+<!ENTITY  acceptThirdParty.never.label    "Ungaze">
+<!ENTITY  acceptThirdParty.visited.label  "Isuka kwetyelelweyo">
+
+<!ENTITY  keepUntil.label               "Gcina zide:">
+<!ENTITY  keepUntil.accesskey           "z">
+
+<!ENTITY  expire.label                  "ziphelelwe">
+<!ENTITY  close.label                   "Ndivala i-&brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Izinxaxhi…">
+<!ENTITY  cookieExceptions.accesskey    "z">
+
+<!ENTITY  showCookies.label             "Bonisa iiKhukhi…">
+<!ENTITY  showCookies.accesskey         "B">
+
+<!ENTITY  historyHeader2.pre.label         "I-&brandShortName; iya">
+<!ENTITY  historyHeader2.pre.accesskey     "i">
+<!ENTITY  historyHeader.remember.label     "Khumbula imbali">
+<!ENTITY  historyHeader.dontremember.label "Ungaze ukhumbule imbali">
+<!ENTITY  historyHeader.custom.label       "Sebenzisa iisethingi zesiqhelo kwimbali">
+<!ENTITY  historyHeader.post.label         "​‌">
+
+<!ENTITY  rememberDescription.label      "I-&brandShortName; iya kukhumbula imbali yakho yokubhrawuza, yokukhutshelwayo, yefom neyokukhangela ize igcine iikhukhi kwiwebhusayithi oyityelelayo.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Ungafuna ">
+<!ENTITY  rememberActions.clearHistory.label  "ukususa imbali yakho yakutshanje">
+<!ENTITY  rememberActions.middle.label        ", okanye ">
+<!ENTITY  rememberActions.removeCookies.label "susa iikhukhi ezinganye">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "i-&brandShortName; iya kusebenzisa iisethingi ezifanayo njengokubhrawuza kwangasese kwaye ayiyi kukhumbula nayiphi na imbali njengokuba ubhrawuza iwebhu.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Kwakhona usenokufuna ">
+<!ENTITY  dontrememberActions.clearHistory.label "ukususa yonke imbali yakutshanje">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Soloko usebenzisa imo yokubhrawuza yangasese">
+<!ENTITY  privateBrowsingPermanent2.accesskey "o">
+
+<!ENTITY  rememberHistory2.label      "Khumbula imbali yokubhrawuza nokukhuphela kwam">
+<!ENTITY  rememberHistory2.accesskey  "K">
+
+<!ENTITY  rememberSearchForm.label       "Khumbula imbali yokukhangela neyefom">
+<!ENTITY  rememberSearchForm.accesskey   "a">
+
+<!ENTITY  clearOnClose.label             "Susa imbali xa i-&brandShortName; ivala">
+<!ENTITY  clearOnClose.accesskey         "S">
+
+<!ENTITY  clearOnCloseSettings.label     "Imimiselo…">
+<!ENTITY  clearOnCloseSettings.accesskey "m">
+
+<!ENTITY  browserContainersLearnMore.label      "Funda ngakumbi">
+<!ENTITY  browserContainersEnabled.label        "Vumela iiThebhu zeKhonteyina">
+<!ENTITY  browserContainersEnabled.accesskey    "u">
+<!ENTITY  browserContainersSettings.label        "Iisetingi…">
+<!ENTITY  browserContainersSettings.accesskey    "s">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">

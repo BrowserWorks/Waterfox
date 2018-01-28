@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "സര്‍ട്ടിഫിക്കറ്റ്‌ മാനേജര്‍">
+
+<!ENTITY certmgr.tab.mine                     "നിങ്ങളുടെ സര്‍ട്ടിഫിക്കറ്റുകള്‍">
+<!ENTITY certmgr.tab.others2                  "ആളുകള്‍">
+<!ENTITY certmgr.tab.websites3                "സര്‍വറുകള്‍">
+<!ENTITY certmgr.tab.ca                       "അതോരിറ്റികള്‍">
+<!ENTITY certmgr.tab.orphan2                  "വേറെ">
+
+<!ENTITY certmgr.mine                         "നിങ്ങള്‍ക്കു്‌ ഈ സംഘടനകളില്‍ നിന്നു്‌ നിങ്ങളെ തിരിച്ചറിയുന്നതായ സര്‍ട്ടിഫിക്കറ്റുകള്‍ ഉണ്ട്:">
+<!ENTITY certmgr.others                       "നിങ്ങള്‍ക്ക് ഫയലില്‍ ഈ ആളുകളെ തിരിച്ചറിയുന്നതായ സര്‍ട്ടിഫിക്കറ്റുകളുണ്ട്:">
+<!ENTITY certmgr.websites2                    "നിങ്ങള്‍ക്ക് ഫയലില്‍ സര്‍ട്ടിഫിക്കറ്റുകള്‍ ഉണ്ട്, ഈ സര്‍വറുകള്‍ തിരിച്ചറിയാന്‍ :">
+<!ENTITY certmgr.cas                          "നിങ്ങള്‍ക്ക് ഫയലില്‍ ഈ സര്‍ട്ടിഫിക്കറ്റ് ഒതോറിറ്റികളെ തിരിച്ചറിയുന്നതായ സര്‍ട്ടിഫിക്കറ്റുകളുണ്ട്:">
+<!ENTITY certmgr.orphans                      "നിങ്ങള്‍ക്ക് ഫയലില്‍ സര്‍ട്ടിഫിക്കറ്റുകള്‍ ഉണ്ട്, ഇവ വേറെ ഒരു തരത്തിലും പെടുന്നില്ല :">
+
+<!ENTITY certmgr.detail.general_tab.title     "പൊതുവായവ">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "വിവരങ്ങള്‍ ">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "ഇപ്പോള്‍ സര്‍ട്ടിഫിക്കറ്റ് ഉറപ്പിക്കുന്നു…">
+<!ENTITY certmgr.subjectinfo.label            "ആര്‍ക്കു് നല്‍കിയിരിക്കുന്നു:‌">
+<!ENTITY certmgr.issuerinfo.label             "പ്രസദ്ധീകരിച്ചതു്">
+<!ENTITY certmgr.periodofvalidity.label       "കാലാവധി" >
+<!ENTITY certmgr.fingerprints.label           "വിരലടയാളങ്ങള്‍">
+<!ENTITY certmgr.certdetail.title             "സര്‍ട്ടിഫിക്കറ്റ്‌ വിവരങ്ങള്‍ ">
+<!ENTITY certmgr.certdetail.cn                "പൊതു പേരു്‌  (CN)">
+<!ENTITY certmgr.certdetail.o                 "സ്ഥാപനം">
+<!ENTITY certmgr.certdetail.ou                "Organisational Unit (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "സീരിയല്‍ നമ്പര്‍">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 ഫിംഗര്‍പ്രിന്റ്">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 ഫിംഗര്‍പ്രിന്റ്">
+
+<!ENTITY certmgr.editcacert.title             "CA സര്‍ട്ടിഫിക്കറ്റുകളുടെ വിശ്വസ്ഥത സജ്ജീകരണങ്ങള്‍ ചിട്ടപെടുത്തുക">
+<!ENTITY certmgr.editcert.edittrust           "വിശ്വസ്ഥത സജ്ജീകരണങ്ങള്‍ ചിട്ടപെടുത്തുക:">
+<!ENTITY certmgr.editcert.trustssl            "ഈ സര്‍ട്ടിഫികറ്റിനു വെബ്-സൈറ്റുകള്‍ തിരിച്ചറിയാന്‍ സാധിക്കും.">
+<!ENTITY certmgr.editcert.trustemail          "ഈ സര്‍ട്ടിഫികറ്റിനു മെയില്‍ ഉപയുക്താക്കളെ തിരിച്ചറിയാന്‍ സാധിക്കും.">
+<!ENTITY certmgr.editcert.trustobjsign        "ഈ സര്‍ട്ടിഫികറ്റിനു സോഫ്റ്റ്വെയര്‍ നിര്‍മ്മാതാക്കളെ തിരിച്ചറിയാന്‍ സാധിക്കും.">
+
+<!ENTITY certmgr.deletecert.title             "സര്‍ട്ടിഫിക്കറ്റ്‌ മായിക്കുക">
+
+<!ENTITY certmgr.certname                     "സര്‍ട്ടിഫിക്കറ്റിന്റെ പേര്‌ ">
+<!ENTITY certmgr.certserver                   "സര്‍വര്‍ ">
+<!ENTITY certmgr.override_lifetime            "ജീവിത കാലാവധി">
+<!ENTITY certmgr.tokenname                    "സുരക്ഷ ഉപകരണങ്ങള്‍ ">
+<!ENTITY certmgr.begins                       "ആരംഭിയ്ക്കുന്നതു്">
+<!ENTITY certmgr.expires                      "കാലാവധി കഴിയുന്നത്‌ ">
+<!ENTITY certmgr.email                        "ഇമെയില്‍ വിലാസം ">
+<!ENTITY certmgr.serial                       "സീരിയല്‍ നമ്പര്‍">
+
+<!ENTITY certmgr.close.label                  "അടയ്ക്കുക ">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                  "കാണുക ">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "ട്രസ്റ്റ് ചിട്ടപ്പെടുത്തുക…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "വേറൊരു രൂപത്തില്‍ ഫയല്‍ സംരക്ഷിക്കുക…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "നീക്കം ചെയ്യുക…">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete_builtin.label         "വെട്ടി നീക്കുക അല്ലെങ്കില്‍ അവിശ്വസിയ്ക്കുക…">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "പകര്‍പ്പ് ഉണ്ടാക്കുക…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "എല്ലാ ഫയലുകള്‍ക്കും പകര്‍പ്പുകള്‍ ഉണ്ടാക്കുക…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "വേറൊരു രൂപത്തില്‍ നിന്നും ഫയല്‍ തുറക്കുക……">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "സര്‍ട്ടിഫിക്കേറ്റ് ഫീള്‍ഡുകള്‍">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.label                 "ഫീല്‍ഡ്‌ വാല്യൂ">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "സര്‍ട്ടിഫിക്കറ്റ് ശ്രേണി">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "വിവേചനം  ചേര്‍ക്കുക…">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "സുരക്ഷ വിവേചനം ചേര്‍ക്കുക">
+<!ENTITY exceptionMgr.exceptionButton.label   "സുരക്ഷാ എക്സെപ്ഷന്‍ ഉറപ്പാക്കുക">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "നിയമദത്തമായ ബാങ്കുകളോ കടകളോ പൊതു സൈറ്റുകളോ നിങ്ങളോടു ഇതു ചെയ്യുവാന്‍ ചോദിക്കില്ല.">
+<!ENTITY exceptionMgr.certlocation.caption2   "സര്‍വര്‍">
+<!ENTITY exceptionMgr.certlocation.url        "സ്ഥാനം:">
+<!ENTITY exceptionMgr.certlocation.download   "സര്‍ട്ടിഫിക്കറ്റ് ലഭിക്കുക">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "സര്‍ട്ടിഫിക്കറ്റിന്റെ സ്ഥിതി">
+<!ENTITY exceptionMgr.certstatus.viewCert     "കാണുക...">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "ഈ വിവേചനം എപ്പോഴത്തേക്കുമായി സുരക്ഷിതമാക്കി വെക്കുക">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

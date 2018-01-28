@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Maschina da tschertgar da standard">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Tscherna tia maschina da tschertgar da standard. &brandShortName; l'utilisescha en la trav d'adressas, la trav da tschertgar e la pagina da partenza.">
+
+<!ENTITY provideSearchSuggestions.label        "Porscher propostas da tschertgar">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Mussar propostas da tschertgar en ils resultats da la trav d'adressas">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Propostas da tschertgar na vegnan betg mussadas en la trav d'adressas perquai che ti has configurà &brandShortName; uschia che la cronologia na vegn betg memorisada.">
+
+<!ENTITY oneClickSearchEngines.label           "Maschinas da tschertgar cun-in-clic">
+
+<!ENTITY chooseWhichOneToDisplay.label         "La trav da tschertgar ta pussibilitescha da tschertgar directamain era cun autras maschinas da tschertgar. Tscherna tgeninas che duain vegnir mussadas.">
+
+<!ENTITY engineNameColumn.label                "Maschina da tschertgar">
+<!ENTITY engineKeywordColumn.label             "Chavazzin">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaurar las maschinas da tschertgar da standard">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "Allontanar">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines.label            "Agiuntar dapli maschinas da tschertgar…">

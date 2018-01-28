@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Jauna cilne">
+<!ENTITY newtab.customize.classic "Rādīt biežāk apmeklētās lapas">
+<!ENTITY newtab.customize.cog.enhanced "Iekļaut ieteiktās lapas">
+<!ENTITY newtab.customize.cog.title2 "JAUNAS CILNES RĪKI">
+<!ENTITY newtab.customize.cog.learn "Uzziniet vairāk par jaunajām cilnēm">
+<!ENTITY newtab.customize.title "Pielāgojiet jaunās cilnes lapu">
+<!ENTITY newtab.customize.blank2 "Parādīt tukšu lapu">
+<!ENTITY newtab.undo.removedLabel "Bildītes nav.">
+<!ENTITY newtab.undo.undoButton "Atcelt.">
+<!ENTITY newtab.undo.restoreButton "Atjaunot visus.">
+<!ENTITY newtab.undo.closeTooltip "Paslēpt">

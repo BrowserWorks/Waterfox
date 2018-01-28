@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Сіздің құқықтарыңыз туралы">
+<!ENTITY rights.intro "&brandFullName; тегін әрі ашық бағдарлама болып табылады. Оның дамуына әлем бойынша мыңдаған адамдар үлес қосты. Сіз келесі нәрселер туралы білуіңіз керек:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; сізге ">
+<!ENTITY rights.intro-point1b "Mozilla MPL лицензиясы бойынша ұсынылады">
+<!ENTITY rights.intro-point1c ". Демек, сіздің &brandShortName; қолдану, көшіріп алу және таратуға толық құқығыңыз бар.  Оның үстіне қажетіңізге қарай &brandShortName; бастапқы кодын түзете аласыз. Mozilla MPL өзіңіздің түзетулеріңіз бар жинақтарды таратуға да рұқсат береді.">
+
+<!ENTITY rights.intro-point2-a "Сізде Waterfox сауда белгілеріне не лицензияларына, ешбір шектеусіз Waterfox аты мен логотипін қоса, құқығыңыз жоқ. Сауда белгілері жөнінде қосымша ақпараты ">
+<!ENTITY rights.intro-point2-b "осында">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName; ішіндегі бірнеше мүмкіндіктер, Crash Reporter сияқты, &vendorShortName; үшін кері байланыс хабарламаларын жіберуге мүмкіндік береді. Оны жіберу нәтижесінде сіз &vendorShortName; үшін ол хабарламаны өнімдерді жақсартуға, вебсайтта ол жауапты көрсетуге әрі жауапты таратуға құқық берумен келісесіз.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Жеке ақпаратыңыз бен &vendorShortName; үшін &brandShortName; арқылы жіберілген кері байланыс хабарламаларын біз қалай қолданатынын ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Жекелік саясатында сипатталған">
+<!ENTITY rights.intro-point3c "алуға болады.">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Осы өнімге қолдана алатын кез келген құпиялық саясаты осы жерде тізіліп көрсетілуі тиіс.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Кейбір &brandShortName; мүмкіндіктер интернетке негізделген ақпараттық қызметтерді қолдануға мүмкіндік береді, бірақ біз олардың 100&#037; дәл әрі қатесіз болуына кепілдеме бермейміз. Көбірек қолдану ақпараты және осыны сөндіру жолын сипаттайтын ақпарат, келесі жерде: ">
+<!ENTITY rights.intro-point4b "қызметтерді пайдалану шарттарынан ">
+<!ENTITY rights.intro-point4c "алуға болады">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Егер бұл өнім құрамында сайттар туралы хабарлау қызметі бар болса, сол қызметтерді пайдалану шарттары ">
+<!ENTITY rights.intro-point4b-unbranded "Сайттар туралы хабарлау ">
+<!ENTITY rights.intro-point4c-unbranded "бөлімінде көрсетілуі тиіс.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; интернетке негізделген ақпараттық қызметтері">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Видео құрамасынын кейбір түрлерін ойната алу үшін, &brandShortName; үшінші жақтардан арнайы декодтау модульдерін жүктеп алады.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; интернетке негізделген ақпараттық қызметтерді қолданады (&quot;Қызметтер&quot;), &brandShortName; осы бинарлы нұсқасын қолдану кезінде сізге көбірек мүмкіндіктерді ұсыну үшін, қолдану шарттары төменде көрсетілген. Егер сіз бір не бірнеше қызметті қолданбаймын десеңіз, немесе қолдану шарттарымен келіспесеңіз, ол мүмкіндік не қызметті сөндіре аласыз. Мүкіндік не қызметті сөндіру нұсқауын келесі жерде ">
+<!ENTITY rights2.webservices-b "таба аласыз">
+<!ENTITY rights3.webservices-c ". Басқа мүмкіндіктер және қызметтерді қолданба баптауларында сөндіруге болады.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Қауіпсіз шолу мүмкіндігін өшірмеу ұсынылады, өтйкені онсыз сіз қауіпсіз емес сайттарға кезіге аласыз.  Бұл мүмкіндікті толығымен сөндірем десеңіз, келесі қадамдарды орындаңыз:">
+<!ENTITY rights.safebrowsing-term1 "Қолданба баптауларын ашыңыз">
+<!ENTITY rights.safebrowsing-term2 "Қауіпсіздік бетін ашыңыз">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot; үшін опцияны сөндіріңіз">
+<!ENTITY rights.safebrowsing-term4 "Қауіпсіз шолу енді сөндірілген">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Орналасуға байланысты шолу: ">
+<!ENTITY rights.locationawarebrowsing-b "қосымша ғана.  Рұқсатсыз ешбір орналасу ақпараты жіберілмейді.  Бұл мүмкіндікті толығымен сөндірем десеңіз, келесі қадамдарды орындаңыз:">
+<!ENTITY rights.locationawarebrowsing-term1a "Адрес өрісінде ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config теріңіз">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled теріңіз">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled баптауында қос шертіңіз">
+<!ENTITY rights.locationawarebrowsing-term4 "Орналасуға байланысты шолу енді сөндірілген">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Өнімге қосылған сайттар туралы хабарлау қызметтеріне шолу, оны сөндіру тәртібі осы жерде көрсетілуі тиіс.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Осы өнімге қатысты қызметтерді пайдалану саясаты осы жерде көрсетілуі тиіс.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; және үлесін қосушылары, лицензорлар мен партнерлары дәл әрі заманауи қызметтерді ұсынуға тырысады.  Алайда, біз ол ақпараттың нақты әрі қатесіз болуына кепілдеме бере алмаймыз.  Мысалы, қауіпсіз шолу кейбір қауіпті сайттарды анықтай алмай, ал кейбір дұрыс сайттарды қауіпті деп анықтай алады, және Орналасуға байланысты шолу ақпаратын ұсынушылар да, біз де орналасу ақпаратының дәлдігі үшін кепілдеме бере алмаймыз.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; Қызметтерді ұсынудан бас тартуына не олардың жұмысын өзгертуге құқылы.">
+<!ENTITY rights2.webservices-term3 "Сізге бұл қызметтерді сәйкес &brandShortName; нұсқасымен қолдануға болады, және &vendorShortName; сізге ондай қолдануға керек рұқсат құқықтарын береді.  Ол қызметтерге қатысты барлық басқа құқықтар &vendorShortName; және оның лицензорларда қалады.  Бұл шарттар &brandShortName; және сәйкес &brandShortName;  үшін бастапқы код нұсқаларына қолдануға болатын ашық код лицензиялар аясында берілген құқықтарды шектеуге арналмаған.">
+<!ENTITY rights.webservices-term4 "Қызметтер «қалай бар», солай ұсынылады.  &vendorShortName;, оның қызметкерлері, лицензиарлары, дистрибьюторлары осы арқылы кез келген тура не жанама кепіл беруден, оның ішінде Қызметтердің сатуға жарамдылығына не олардың сіздің көңіліңізден шығатындығына кепіл беруден бас тартады.  Қызметтерді таңдаудан, оны пайдаланудан туындайтын барлық қауіп сіздің мойныңызда.  Кейбір заңнамаға сәйкес жанама кепіл беруден бас тарту не оны шектеуге рұқсат етілмейді. Мұндай жағдайда кепіл беруден бас тарту сізге қатысты болмауы мүмкін.">
+<!ENTITY rights.webservices-term5 "Заң талап ететін жағдайдан басқа кезде, &vendorShortName; және оның қызметкерлері, лицензиарлары, дистрибьюторлары &brandShortName; және Қызметтерді пайдаланудан туындаған не соларға қатысты ешқандай жанама, ерекше, кездейсоқ, салдарлы, айыппұл не жаза түріндегі зардаптарға жауап бермейді. Осыған байланысты ұжымдық жауапкершілік $500 (бес жүз АҚШ доллары) мөлшерінен аспайды. Кейбір заңнамаға сәйкес белгілі-бір зардапты өтеуден бас тарту не оны шектеуге рұқсат етілмейді. Мұндай жағдайда зардапты өтеуден бас тарту не оны шектеу сізге қатысты болмауы мүмкін.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; қажетіне қарай осы шарттарды жаңартып отырады. Бұл шарттар &vendorShortName; жазбаша рұқсатынсыз өзгеруі не тоқтатылуы мүмкін емес.">
+<!ENTITY rights.webservices-term7 "Осы шарттар АҚШ, Калифорния штатының коллизиялық құқық нормалары алынған заңдарымен реттеледі. Егер осы шарттардың кез келген бөлігі заң тұрғысынан жарамсыз не орындалмайтын болып жатса да, қалған бөлімдер өзінің заңдық күшін сақтайды. Осы шарттардың аударылған әрі ағылшын нұсқаларының арасында қарама-қарсылық байқалса, ағылшын нұсқасын басшылыққа алу керек.">

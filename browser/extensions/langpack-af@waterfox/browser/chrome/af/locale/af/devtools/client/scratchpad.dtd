@@ -1,0 +1,190 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "Rofwerk">
+
+<!ENTITY fileMenu.label               "Lêer">
+<!ENTITY fileMenu.accesskey           "L">
+
+<!ENTITY newWindowCmd.label           "Nuwe venster">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Open lêer…">
+<!ENTITY openFileCmd.accesskey        "O">
+<!ENTITY openFileCmd.commandkey       "o">
+
+
+
+<!ENTITY revertCmd.label              "Keer terug…">
+<!ENTITY revertCmd.accesskey          "t">
+
+<!ENTITY saveFileCmd.label            "Stoor">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Stoor as…">
+<!ENTITY saveFileAsCmd.accesskey      "a">
+
+<!ENTITY closeCmd.label               "Sluit">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "S">
+
+
+
+
+
+
+
+
+
+
+
+<!-- + is above this key on many keyboards -->
+
+
+
+
+
+
+
+<!ENTITY editMenu.label               "Redigeer">
+<!ENTITY editMenu.accesskey           "e">
+
+<!ENTITY run.label                    "Voer uit">
+<!ENTITY run.accesskey                "r">
+
+
+<!ENTITY inspect.label                "Inspekteer">
+<!ENTITY inspect.accesskey            "I">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Vertoon">
+<!ENTITY display.accesskey            "V">
+<!ENTITY display.key                  "l">
+
+
+
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "Omgewing">
+<!ENTITY environmentMenu.accesskey    "O">
+
+
+<!ENTITY contentContext.label         "Inhoud">
+<!ENTITY contentContext.accesskey     "I">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "Blaaier">
+<!ENTITY browserContext.accesskey     "B">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+
+
+
+
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+
+
+
+<!ENTITY executeMenu.label            "Uitvoering">
+<!ENTITY executeMenu.accesskey        "v">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+
+
+<!ENTITY documentationLink.accesskey  "D">
+
+
+<!ENTITY documentationLink.label      "Scratchpad Help on MDN">
+<!ENTITY evalFunction.accesskey "v">
+<!ENTITY evalFunction.key "e">
+<!ENTITY evalFunction.label "Evaluate Current Function">
+<!ENTITY helpMenu.accesskey           "H">
+<!ENTITY helpMenu.label               "Help">
+<!ENTITY helpMenuWin.accesskey        "H">
+
+<!ENTITY helpMenuWin.label            "Help">
+<!ENTITY highlightTrailingSpace.accesskey "H">
+
+<!ENTITY highlightTrailingSpace.label     "Highlight Trailing Space">
+<!ENTITY largerFont.accesskey         "a">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> 
+<!ENTITY largerFont.label             "Larger Font">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY lineNumbers.label             "Show Line Numbers">
+<!ENTITY normalSize.accesskey         "N">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY normalSize.label             "Normal Size">
+<!ENTITY openRecentMenu.accesskey     "R">
+
+<!ENTITY openRecentMenu.label         "Open Recent">
+<!ENTITY pprint.accesskey             "P">
+
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.label                 "Pretty Print">
+<!ENTITY reloadAndRun.accesskey       "E">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY reloadAndRun.label           "Reload And Run">
+<!ENTITY resetContext2.accesskey      "T">
+
+<!ENTITY resetContext2.label          "Reset Variables">
+<!ENTITY run.key                      "r">
+
+<!ENTITY smallerFont.accesskey        "M">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY smallerFont.label            "Smaller Font">
+<!ENTITY viewMenu.accesskey           "V">
+
+<!ENTITY viewMenu.label               "View">
+<!ENTITY wordWrap.accesskey            "W">
+
+<!ENTITY wordWrap.label                "Wrap Text">

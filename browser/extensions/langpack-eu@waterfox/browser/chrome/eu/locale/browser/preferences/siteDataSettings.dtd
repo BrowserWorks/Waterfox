@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Ezarpenak - Guneen datuak">
+<!ENTITY     hostCol.label                 "Gunea">
+<!ENTITY     statusCol.label               "Egoera">
+<!ENTITY     usageCol.label                "Biltegiratzea">
+<!ENTITY     searchTextboxPlaceHolder             "Bilatu webguneak">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "B">
+<!ENTITY     removeSelected.label          "Kendu hautatutakoak">
+<!ENTITY     removeSelected.accesskey      "K">
+<!ENTITY     save.label                    "Gorde aldaketak">
+<!ENTITY     save.accesskey                "G">
+<!ENTITY     cancel.label                  "Utzi">
+<!ENTITY     cancel.accesskey              "U">
+<!ENTITY     removingDialog.title          "Gunearen datuak kentzea">
+<!ENTITY     removingSelected.description  "Gunearen datuak kentzean erlazionatutako cookieak eta lineaz kanpoko web edukia ere kenduko dira. Honen eraginez webguneetako zure saioak amai litezke. Ziur zaude aldaketak burutu nahi dituzula?">
+<!ENTITY     siteTree.label                "Webgunearen ondorengo cookieak kendu egingo dira:">

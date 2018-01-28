@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "అప్రమేయ శోధన యంత్రం">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "మీ అప్రమేయ శోధన యంత్రాన్ని ఎంచుకోండి. &brandShortName; దాన్ని చిరునామా పట్టీలోనూ, శోధన పట్టీలోనూ, మొదటి పేజీలోనూ వాడుతుంది.">
+
+<!ENTITY provideSearchSuggestions.label        "వెతుకుడు సలహాలను చూపించు">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "స్థాన పట్టీ ఫలితాలలో వెతుకుడు సలహాలను చూపించు">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "స్థాన పట్టీ ఫలితాలలో వెతుకుడు సలహాలను చూపించలేము ఎందుకంటే &brandShortName; మీ చరిత్రను ఎప్పుడూ గుర్తుంచుకోకుండా అమర్చుకున్నారు.">
+
+<!ENTITY oneClickSearchEngines.label           "ఒక్క-నొక్కు శోధన యంత్రాలు">
+
+<!ENTITY chooseWhichOneToDisplay.label         "శోధన పట్టీ నుండి మీరు నేరుగా ప్రత్యామ్నాయ యంత్రాలలో వెతకవచ్చు. వేటిని చూపించాలో ఎంచుకోండి.">
+
+<!ENTITY engineNameColumn.label                "శోధన యంత్రం">
+<!ENTITY engineKeywordColumn.label             "కీపదం">
+
+<!ENTITY restoreDefaultSearchEngines.label     "అప్రమేయ శోధన యంత్రాలను పునరుద్ధరించు">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "తీసివేయి">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "మరికొన్ని శోధన యంత్రాలను చేర్చుకోండి…">

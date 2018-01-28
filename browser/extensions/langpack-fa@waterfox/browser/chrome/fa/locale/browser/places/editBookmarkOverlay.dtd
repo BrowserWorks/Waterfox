@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "نام:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "ن">
+<!ENTITY editBookmarkOverlay.location.label                  "مکان:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "م">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "مکان خورد:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "خ">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "مکان سایت:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "س">
+<!ENTITY editBookmarkOverlay.folder.label                    "پوشه:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "نمایش تمام پوشه‌های نشانک‌ها">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "مخفی کردن">
+<!ENTITY editBookmarkOverlay.tags.label                      "برچسب‌ها:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "ب">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "برچسب‌ها را با ویرگول جدا کنید">
+<!ENTITY editBookmarkOverlay.description.label               "شرح:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ش">
+<!ENTITY editBookmarkOverlay.keyword.label                   "کلیدواژه:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "ک">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "نمایش تمام برچسب‌ها">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "بارگیری این نشانک در نوار کناری">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ش">
+<!ENTITY editBookmarkOverlay.choose.label                    "انتخاب…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "پوشهٔ جدید">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "پ">

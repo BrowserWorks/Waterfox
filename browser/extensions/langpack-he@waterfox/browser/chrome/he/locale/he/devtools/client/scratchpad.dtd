@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY window.title                 "דף טיוטה">
+
+<!ENTITY fileMenu.label               "קובץ">
+<!ENTITY fileMenu.accesskey           "ק">
+
+<!ENTITY newWindowCmd.label           "חלון חדש">
+<!ENTITY newWindowCmd.accesskey       "ח">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "פתיחת קובץ…">
+<!ENTITY openFileCmd.accesskey        "פ">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "פתיחת אחרונים">
+<!ENTITY openRecentMenu.accesskey     "א">
+
+<!ENTITY revertCmd.label              "החזרה…">
+<!ENTITY revertCmd.accesskey          "ח">
+
+<!ENTITY saveFileCmd.label            "שמירה">
+<!ENTITY saveFileCmd.accesskey        "ש">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "שמירה בשם…">
+<!ENTITY saveFileAsCmd.accesskey      "ש">
+
+<!ENTITY closeCmd.label               "סגירה">
+<!ENTITY closeCmd.key                 "ס">
+<!ENTITY closeCmd.accesskey           "ס">
+
+<!ENTITY viewMenu.label               "תצוגה">
+<!ENTITY viewMenu.accesskey           "ת">
+
+<!ENTITY lineNumbers.label             "הצגת מספרי שורות">
+<!ENTITY lineNumbers.accesskey         "ס">
+
+<!ENTITY wordWrap.label                "גלישת טקסט">
+<!ENTITY wordWrap.accesskey            "ל">
+
+<!ENTITY highlightTrailingSpace.label     "הדגשת רווחים עוקבים">
+<!ENTITY highlightTrailingSpace.accesskey "ד">
+
+<!ENTITY largerFont.label             "גופן גדול יותר">
+<!ENTITY largerFont.accesskey         "ג">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> <!-- + is above this key on many keyboards -->
+
+<!ENTITY smallerFont.label            "גופן קטן יותר">
+<!ENTITY smallerFont.accesskey        "ק">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "גודל רגיל">
+<!ENTITY normalSize.accesskey         "ר">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "עריכה">
+<!ENTITY editMenu.accesskey           "ע">
+
+<!ENTITY run.label                    "הרצה">
+<!ENTITY run.accesskey                "ר">
+<!ENTITY run.key                      "R">
+
+<!ENTITY inspect.label                "חקירה">
+<!ENTITY inspect.accesskey            "ח">
+<!ENTITY inspect.key                  "ח">
+
+<!ENTITY display.label                "תצוגה">
+<!ENTITY display.accesskey            "ת">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "הדפסה יפה">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "ד">
+
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+<!ENTITY environmentMenu.label        "סביבה">
+<!ENTITY environmentMenu.accesskey    "ס">
+
+
+<!ENTITY contentContext.label         "תוכן">
+<!ENTITY contentContext.accesskey     "ת">
+
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+<!ENTITY browserContext.label         "דפדפן">
+<!ENTITY browserContext.accesskey     "ד">
+
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+<!ENTITY helpMenu.label               "עזרה">
+<!ENTITY helpMenu.accesskey           "ע">
+<!ENTITY helpMenuWin.label            "עזרה">
+<!ENTITY helpMenuWin.accesskey        "ע">
+
+<!ENTITY documentationLink.label      "עזרה עבור דף טיוטה ב־MDN">
+<!ENTITY documentationLink.accesskey  "ע">
+
+
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+<!ENTITY resetContext2.label          "איפוס משתנים">
+<!ENTITY resetContext2.accesskey      "א">
+
+<!ENTITY reloadAndRun.label           "טעינה מחדש והפעלה">
+<!ENTITY reloadAndRun.accesskey       "ט">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "ביצוע">
+<!ENTITY executeMenu.accesskey        "ב">
+
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+<!ENTITY errorConsoleCmd.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+<!ENTITY evalFunction.label "הערכת הפונקציה הנוכחית">
+<!ENTITY evalFunction.accesskey "ע">
+<!ENTITY evalFunction.key "e">

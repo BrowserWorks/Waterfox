@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "Blòcca i barcoin de pop-up">
+<!ENTITY  blockPopups.accesskey       "B">
+<!ENTITY  popupExceptions.label       "Eceçioin…">
+<!ENTITY  popupExceptions.accesskey   "E">
+<!ENTITY  fontsAndColors.label        "Coî e testo">
+<!ENTITY  defaultFont.label           "Caratere predefinio:">
+<!ENTITY  defaultFont.accesskey       "d">
+<!ENTITY  defaultSize.label           "Dimenscion:">
+<!ENTITY  defaultSize.accesskey       "s">
+<!ENTITY  advancedFonts.label         "Avansæ…">
+<!ENTITY  advancedFonts.accesskey     "n">
+<!ENTITY  colors.label                "Coi…">
+<!ENTITY  colors.accesskey            "C">
+<!ENTITY languages.label              "Lengoe">
+<!ENTITY chooseLanguage.label         "Çerni a lengoa preferia pe-e pagine">
+<!ENTITY chooseButton.label           "Çerni…">
+<!ENTITY chooseButton.accesskey       "i">
+<!ENTITY popups.label "Barcon de pop-up">
+<!ENTITY translateWebPages.label "Traduxi contegnui web">
+<!ENTITY translateWebPages.accesskey "T">
+<!ENTITY translateExceptions.label "Eceçioin…">
+<!ENTITY translateExceptions.accesskey "z">
+<!ENTITY translation.options.attribution.beforeLogo "Traduçioin a cura de">
+<!ENTITY translation.options.attribution.afterLogo "">
+<!ENTITY drmContent.label "Contegnui con DRM">
+<!ENTITY playDRMContent.label "Riproduci contegnui con DRM">
+<!ENTITY playDRMContent.accesskey "R">
+<!ENTITY playDRMContent.learnMore.label "Atre informaçioin">
+<!ENTITY notificationsDoNotDisturb.label "No ronpime">
+<!ENTITY notificationsDoNotDisturb.accesskey "N">
+<!ENTITY notificationsDoNotDisturbDetails.value "No saiâ mostrâ nisciunn-a notifica fin a quande arvi torna &brandShortName;">
+<!ENTITY notificationsPolicy.label "Notifiche">
+<!ENTITY notificationsPolicyButton.accesskey "e">
+<!ENTITY notificationsPolicyButton.label "Çerni…">
+<!ENTITY notificationsPolicyDesc3.label "Çerni di sciti aotorizæ a mandâ notifiche">
+<!ENTITY notificationsPolicyLearnMore.label "Atre informaçioin">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

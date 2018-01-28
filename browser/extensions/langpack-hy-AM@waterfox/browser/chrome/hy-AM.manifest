@@ -1,0 +1,11 @@
+locale branding hy-AM hy-AM/locale/branding/
+locale browser hy-AM hy-AM/locale/browser/
+locale browser-region hy-AM hy-AM/locale/browser-region/
+locale devtools hy-AM hy-AM/locale/hy-AM/devtools/client/
+locale devtools-shared hy-AM hy-AM/locale/hy-AM/devtools/shared/
+locale formautofill hy-AM hy-AM/locale/hy-AM/
+locale pdf.js hy-AM hy-AM/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

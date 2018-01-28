@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Tijal ajtij ewan tzij">
+<!ENTITY setPassword.tokenName.label "Okisaxel richin jikomal">
+<!ENTITY setPassword.oldPassword.label "Ewan tzij wakami:">
+<!ENTITY setPassword.newPassword.label "K'ak'a' ewan tzij:">
+<!ENTITY setPassword.reenterPassword.label "K'ak'a' ewan tzij (tijikib'äx):">
+<!ENTITY setPassword.meter.label "Retanel rutzil ri ewan tzij">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Titikirisäx chik">
+<!ENTITY resetPassword.title  "Titzolïx ri ajtij ewan tzij">
+<!ENTITY resetPassword.text  "We natzolij ri ajtzij ewan atzij, xkeyujtäj el ri ewan taq tzij richin ajk'amaya'l chuqa' taqoya'l, ri taq kitzij nojwuj, ichinan ruwujil taq b'i'aj chuqa' ichinan ewan taq tzij. ¿La kan nawajo' natzolij ri ajtij ewan atzij?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Tajin niqasäx ri ruwujil rub'i'">
+<!ENTITY downloadCert.message1 "Nik'utüx chawe chi tatz'eta' ütz ri k'ak'a' Taqonel Ya'öl Ruwujil B'i'aj (CA).">
+<!ENTITY downloadCert.trustSSL "Takuqub'a' ak'u'x rik'in re CA richin ye'atz'ët ajk'amaya'l taq ruxaq k'amaya'l.">
+<!ENTITY downloadCert.trustEmail "Tijikib'äx pa re jun CA richin niya' ketal taq ruwinaq taqoya'l.">
+<!ENTITY downloadCert.trustObjSign "Takuqub'a' ak'u'x rik'in ri CA richin ye'atz'ët taq ajb'anöy kema'.">
+<!ENTITY downloadCert.message3 "Chuwäch nakuqub'a' ak'u'x chi rij re CA re' richin xab'achike na rayb'äl, k'o chin tinik'öx ri ruwujil rub'i', runa'ojil chuqa' taq rub'eyal CA (we e wachel).">
+<!ENTITY downloadCert.viewCert.label "Titz'et">
+<!ENTITY downloadCert.viewCert.text "Tinik'öx ruwujil rub'i' CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Ruk'utuxik ri rub'i' ri winäq">
+<!ENTITY clientAuthAsk.message1 "Re jun ruxaq k'amaya'l re' xuk'utuj pe chi taya' ab'i' rik'in jun ruwujil b'i'aj:">
+<!ENTITY clientAuthAsk.message2 "Tacha' jun ruwujil b'i'aj richin nak'utub'ej awi':">
+<!ENTITY clientAuthAsk.message3 "Cha'on kib'anikil ruwujil b'i'aj:">
+
+<!ENTITY pkcs12.setpassword.title  "Ticha' jun to'onel ewan tzij richin ri ruwujil b'i'aj">
+<!ENTITY pkcs12.setpassword.message  "Ri ewan rutzij ri to'öy ruwujil b'i'aj, ri xtatz'ib'aj qa wawe', xtuchajij ri to'öy yakb'äl, ri natz'ük yan qa.  K'o chi natz'ib'aj re ewan tzij re' richin nab'än qa ri to'öy wachib'enïk.">
+<!ENTITY pkcs12.setpassword.label1 "To'onel ewan rutzij ri ruwujil b'i'aj:">
+<!ENTITY pkcs12.setpassword.label2 "To'öy ewan rutzij ri ruwujil b'i'aj (tijikib'äx):">
+<!ENTITY pkcs12.setpassword.reminder "K'atzinel: We namestaj ri ewan rutzij ruto'öy ruwujil ab'i', man xkatikïr ta xtachojmirisaj pa jun chi ti mej.  Taya' pa jun utziläj k'ojlib'äl.">
+
+<!ENTITY chooseToken.title  "Rutzijonem rucha'oj wachinäq">
+<!ENTITY chooseToken.message1 "Tacha' jun wachinäq.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Tajin nitz'uk jun ichinan ewan tzij">
+<!ENTITY createCertInfo.msg1 "Rutz'ukik ewan tzij nitajin… Re re' xtuk'waj ka'i' oxi ch'utiramaj….">
+<!ENTITY createCertInfo.msg2 "Tawoyob'ej…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Chajin ri tz'etonem ruma token">
+<!ENTITY protectedAuth.msg "Taya' atzijol chuwa ri token. Ri rub'eyal naya' atzijol xtroqaj ri ruwäch.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

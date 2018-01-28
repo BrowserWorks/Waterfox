@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY window.title                 "Përjashtime">
+<!ENTITY window.width                 "36em">
+
+<!ENTITY treehead.sitename.label      "Sajt">
+<!ENTITY treehead.status.label        "Gjendje">
+<!ENTITY removepermission.label       "Hiqe Sajtin">
+<!ENTITY removeallpermissions.label   "Hiqi Krejt Sajtet">
+<!ENTITY address.label                "Adresë e sajtit:">
+<!ENTITY address.accesskey            "A">
+<!ENTITY block.label                  "Bllokoje">
+<!ENTITY session.label                "Lejo për Sesion">
+<!ENTITY allow.label                  "Lejoje">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Anuloje">
+<!ENTITY button.cancel.accesskey      "A">
+<!ENTITY button.ok.label              "Ruaji Ndryshimet">
+<!ENTITY button.ok.accesskey          "R">
+
+<!ENTITY removepermission.accesskey   "H">
+<!ENTITY removeallpermissions.accesskey "T">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.accesskey              "L">
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

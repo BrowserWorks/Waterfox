@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Mae Ychwanegion yn gallu achosi problemau">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "Mae &brandShortName; wedi canfod fod yr ychwanegion canlynol yn gallu creu ansefydlogrwydd neu broblemau diogelwch:">
+<!ENTITY blocklist.softblocked       "Er eich diogelwch, argymhellir eich bod yn ailgychwyn gyda'r ychwanegion hyn wedi eu hanalluogi.">
+<!ENTITY blocklist.hardblocked       "Mae'r ychwanegion hyn a thebygrwydd uchel o achosi problemau ac maent wedi eu rhwystro, ond bydd angen ailgychwyn i'w hanalluogi yn llwyr.">
+<!ENTITY blocklist.softandhard       "Mae'r ychwanegion sydd â risg uchel o achosi problemau wedi eu rhwystro. Mae'r lleill o risg is, ond argymhellir yn gryf eich bod yn ailgychwyn gyda nhw wedi eu hanalluogi.">
+<!ENTITY blocklist.moreinfo          "Rhagor o wybodaeth">
+
+<!ENTITY blocklist.accept.label      "Ailgychwyn &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "A">
+
+<!ENTITY blocklist.blocked.label     "Rhwystrwyd">
+<!ENTITY blocklist.checkbox.label    "Anablu">

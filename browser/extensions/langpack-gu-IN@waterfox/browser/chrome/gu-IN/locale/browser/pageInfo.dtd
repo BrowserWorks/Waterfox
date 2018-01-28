@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "નકલ કરો">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "બધું પસંદ કરો">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "સામાન્ય">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "શીર્ષક:">
+<!ENTITY  generalURL            "સરનામું:">
+<!ENTITY  generalType           "પ્રકાર:">
+<!ENTITY  generalMode           "રેન્ડર સ્થિતિ:">
+<!ENTITY  generalSize           "માપ:">
+<!ENTITY  generalReferrer       "સંદર્ભિત URL:">
+<!ENTITY  generalSource         "કેશ સ્રોત:">
+<!ENTITY  generalModified       "સુધારેલ:">
+<!ENTITY  generalEncoding2      "ટેક્સ્ટ એન્કોડિંગ:">
+<!ENTITY  generalMetaName       "નામ">
+<!ENTITY  generalMetaContent    "વિષયસુચી">
+
+<!ENTITY  mediaTab              "મીડિયા">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "સ્થાન:">
+<!ENTITY  mediaText             "સંકલિત લખાણ:">
+<!ENTITY  mediaAltHeader        "વૈકલ્પિક લખાણ">
+<!ENTITY  mediaAddress          "સરનામું">
+<!ENTITY  mediaType             "પ્રકાર">
+<!ENTITY  mediaSize             "માપ">
+<!ENTITY  mediaCount            "ગણો">
+<!ENTITY  mediaDimension        "પરિમાણો:">
+<!ENTITY  mediaLongdesc         "લાંબુ વર્ણન:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "આ રીતે સંગ્રહો...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "મીડિયા પૂર્વદર્શન:">
+
+<!ENTITY  feedTab               "અભિપ્રાયો">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "ઉમેદવારી">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "પરવાનગીઓ">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "મૂળભૂત વાપરો">
+<!ENTITY  permAskAlways         "હંમેશા પૂછો">
+<!ENTITY  permAllow             "પરવાનગી આપો">
+<!ENTITY  permAllowSession      "સત્ર માટે પરવાનગી આપો">
+<!ENTITY  permBlock             "અટકાવો">
+<!ENTITY  permissionsFor        "માટેની પરવાનગીઓ:">
+<!ENTITY  permPlugins           "પ્લગઇનને સક્રિય કરો">
+
+<!ENTITY  permClearStorage           "સંગ્રહ સાફ કરો">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "સુરક્ષા">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "પ્રમાણપત્ર જુઓ">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "અજ્ઞાત">
+
+
+<!ENTITY  securityView.identity.header   "વેબ સાઈટ ઓળખ">
+<!ENTITY  securityView.identity.owner    "માલિક: ">
+<!ENTITY  securityView.identity.domain   "વેબ સાઈટ: ">
+<!ENTITY  securityView.identity.verifier "ચકાસનાર: ">
+<!ENTITY  securityView.identity.validity "ના રોજ સમાપ્ત થયેલ:">
+
+<!ENTITY  securityView.privacy.header                   "ખાનગીપણું &amp; ઇતિહાસ">
+<!ENTITY  securityView.privacy.history                  "શું મેં આ વેબસાઈટની આજે પહેલાં મુલાકાત લીધી છે?">
+<!ENTITY  securityView.privacy.cookies                  "શું આ વેબ સાઈટ મારા કમ્પ્યૂટર પર જાણકારી (કુકીઓ) સંગ્રહી રહી છે?">
+<!ENTITY  securityView.privacy.viewCookies              "કુકીઓ જુઓ">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "શું મેં આ વેબસાઈટ માટે કોઈપણ પાસવર્ડો સંગ્રહ્યા છે?">
+<!ENTITY  securityView.privacy.viewPasswords            "સંગ્રહાયેલ પાસવર્ડો જુઓ">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "ટેક્નિકલ વિગતો">
+
+<!ENTITY  helpButton.label                              "મદદ">

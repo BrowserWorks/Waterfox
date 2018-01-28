@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Suɓo Heftinirde Kuutoro">
+
+<!ENTITY            profilename.label      "Innde Heftinirde:">
+
+<!ENTITY            start.label            "Hurmin &brandShortName;">
+<!ENTITY            exit.label             "Yaltu">
+
+<!ENTITY            availprofiles.label    "Keftinirɗe Goodaaɗe">
+
+<!ENTITY            newButton.label        "Sos Heftinirde…">
+<!ENTITY            newButton.accesskey    "S">
+<!ENTITY            renameButton.label     "Innit Heftinirde…">
+<!ENTITY            renameButton.accesskey "I">
+<!ENTITY            deleteButton.label     "Momtu Heftinirde…">
+<!ENTITY            deleteButton.accesskey "M">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; mooftat humpito baɗte teelte maa, cuɓoraaɗe e teme kuutoro goɗɗe e nder heftinirde kuutoro maa.">
+
+<!ENTITY            offlineState.label    "Gollo e ceŋtol">
+<!ENTITY            offlineState.accesskey "G">
+
+<!ENTITY            useSelected.label       "Huutoro heftinirde labaande ndee tawa naamnetaake e kurmal">
+<!ENTITY            useSelected.accesskey   "u">

@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "आरंभन">
+
+
+
+<!ENTITY startupBlankPage.label    "एकटा खाली पृष्ठ देखाउ">
+
+
+
+<!ENTITY useCurrentPage.label      " मोजुदा पृष्ठक प्रयोग  करू ">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         " मोजुदा पृष्ठक प्रयोग  करू ">
+<!ENTITY chooseBookmark.label      "पुस्तकचिह्नक प्रयोग करू…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "पूर्वनिर्धारित मे फेर जमा  करू ">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "डाउनलोड">
+
+<!ENTITY saveTo.label "एतय फाइल सहेजू">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ब्राउज करू …">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "चुनू…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+
+
+
+
+
+
+<!ENTITY isDefault.label                  "&brandShortName; अखन अहाँक तयशुदा ब्राउजर अछि">
+<!ENTITY isNotDefault.label               "&brandShortName; अखन अहाँक तयशुदा ब्राउजर अछि">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; आओर फ़ायरफ़ॉक्स केँ एक्के समय मे चलबाक लेल स्वीकारू">
+<!ENTITY useWaterfoxSync.label             "संकेत: ई अलग प्रोफाइलक उपयोग करैत अछि. हुनकर बीच आँकड़ा साझा करबाक लेल सिंक क उपयोग करू.">
+
+
+
+<!ENTITY e10sEnabled.label                "मल्टी-प्रोसेस &brandShortName; सक्रिय करू">
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY alwaysCheckDefault2.label        "Always check if &brandShortName; is your default browser">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "ನೀವು ಇದನ್ನು ತೆರೆಯಲು ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ:">
+<!ENTITY  from.label                  "ಇಂದ:">
+<!ENTITY  actionQuestion.label        "&brandShortName;ಈ ಕಡತದಿಂದ ಏನು ಮಾಡಬೇಕು?">
+
+<!ENTITY  openWith.label              "ಇದರೊಂದಿಗೆ ತೆರೆ">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "ಇತರೆ…">
+
+<!ENTITY  saveFile.label              "ಕಡತವನ್ನು ಉಳಿಸು">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "ಇನ್ನು ಮುಂದೆ ಈ ಬಗೆಯ ಕಡತಗಳಿಗೆ ಹೀಗೆಯೆ ಮಾಡು.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "ಇದು ಒಂದು:">
+
+<!ENTITY  chooseHandlerMac.label      "ಆರಿಸು…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "ನೋಡು…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "ನೀವು ಈ ಕಡತವನ್ನು ಉಳಿಸಲು ಬಯಸುತ್ತೀರೆ?">

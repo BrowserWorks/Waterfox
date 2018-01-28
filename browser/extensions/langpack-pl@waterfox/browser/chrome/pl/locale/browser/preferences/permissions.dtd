@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Wyjątki">
+<!ENTITY window.width "39em">
+
+<!ENTITY treehead.sitename2.label "Witryna">
+<!ENTITY treehead.status.label        "Status">
+<!ENTITY removepermission2.label "Usuń witrynę">
+<!ENTITY removepermission2.accesskey "">
+<!ENTITY removeallpermissions2.label "Usuń wszystkie witryny">
+<!ENTITY removeallpermissions2.accesskey "">
+<!ENTITY address.label                "Adres witryny:">
+<!ENTITY address.accesskey "">
+<!ENTITY block.label                  "Blokuj">
+<!ENTITY block.accesskey "">
+<!ENTITY session.label                "Zezwalaj na czas sesji">
+<!ENTITY session.accesskey "">
+<!ENTITY allow.label                  "Zezwalaj">
+<!ENTITY allow.accesskey "">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label "Anuluj">
+<!ENTITY button.cancel.accesskey "">
+<!ENTITY button.ok.label "Zachowaj">
+<!ENTITY button.ok.accesskey "">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ਜੰਤਰ ਮੈਨੇਜਰ">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "ਸੁਰੱਖਿਆ ਮੋਡੀਊਲ ਅਤੇ ਜੰਤਰ">
+<!ENTITY devmgr.details.title                   "ਵੇਰਵੇ">
+<!ENTITY devmgr.details.title2                  "ਮੁੱਲ">
+
+<!ENTITY devmgr.button.login.label              "ਲਾਗਇਨ">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "ਲਾਗ ਆਉਟ">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "ਪਾਸਵਰਡ ਨੂੰ ਬਦਲੋ">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "ਲੋਡ ਕਰੋ">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "ਅਣ-ਲੋਡ ਕਰੋ">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "ਜੋ ਮੋਡੀਊਲ ਤੁਸੀਂ ਸ਼ਾਮਿਲ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ, ਉਸ ਦੇ ਬਾਰੇ ਜਾਣਕਾਰੀ ਦਿਓ">
+<!ENTITY loaddevice.modname                     "ਮੋਡੀਊਲ ਨਾਂ:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "ਨਵਾਂ PKCS#11 ਮੋਡੀਊਲ">
+<!ENTITY loaddevice.filename                    "ਮੋਡੀਊਲ ਦਾ ਫਾਈਲ ਨਾਂ:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "...ਝਲਕ">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

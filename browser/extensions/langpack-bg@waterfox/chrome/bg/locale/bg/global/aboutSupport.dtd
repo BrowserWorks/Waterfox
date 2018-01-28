@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Информация за отстраняване на неизправности">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "Тази страница съдържа техническа информация, която може да ви е от полза, когато се опитвате да решите проблем. Ако търсите отговори на често задавани въпроси за &brandShortName;, проверете в нашата <a id='supportLink'>страница за поддръжка</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Доклади за сривове">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Идентификатор на доклад">
+<!ENTITY aboutSupport.crashes.sendDate "Изпратен">
+<!ENTITY aboutSupport.crashes.allReports "Всички доклади за сривове">
+<!ENTITY aboutSupport.crashes.noConfig "Приложението не е настроено да показва доклади за сривове.">
+
+<!ENTITY aboutSupport.extensionsTitle "Разширения">
+<!ENTITY aboutSupport.extensionName "Име">
+<!ENTITY aboutSupport.extensionEnabled "Включено">
+<!ENTITY aboutSupport.extensionVersion "Версия">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Възможности на &brandShortName;">
+<!ENTITY aboutSupport.featureName "Име">
+<!ENTITY aboutSupport.featureVersion "Версия">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Експериментални възможности">
+<!ENTITY aboutSupport.experimentName "Име">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Описание">
+<!ENTITY aboutSupport.experimentActive "Включен">
+<!ENTITY aboutSupport.experimentEndDate "Крайна дата">
+<!ENTITY aboutSupport.experimentHomepage "Страница">
+<!ENTITY aboutSupport.experimentBranch "Клон">
+
+<!ENTITY aboutSupport.appBasicsTitle "Основни за приложението">
+<!ENTITY aboutSupport.appBasicsName "Име">
+<!ENTITY aboutSupport.appBasicsVersion "Версия">
+<!ENTITY aboutSupport.appBasicsBuildID "Build идентификатор">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Канал за обновяване">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "История на обновяванията">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "История на обновяванията">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Директория на профила">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Папка на профила">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Включени приставки">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Настройки на компилацията">
+<!ENTITY aboutSupport.appBasicsUserAgent "Потребителски агент">
+<!ENTITY aboutSupport.appBasicsOS "ОС">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Използване на паметта">
+<!ENTITY aboutSupport.appBasicsPerformance "Производителност">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Регистрирани Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Профили">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Многопроцесни прозорци">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Процеси за уеб съдържание">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Надежден режим">
+
+<!ENTITY aboutSupport.showDir.label "Отваряне на папката">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Показване във Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Отваряне на папката">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Важни променени настройки">
+<!ENTITY aboutSupport.modifiedPrefsName "Име">
+<!ENTITY aboutSupport.modifiedPrefsValue "Стойност">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Настройки от user.js">
+<!ENTITY aboutSupport.userJSDescription "Папката с вашия профил съдържа файла <a id='prefs-user-js-link'>user.js</a>, в който има потребителски, не създадени от &brandShortName; настройки.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Важни заключени настройки">
+<!ENTITY aboutSupport.lockedPrefsName "Име">
+<!ENTITY aboutSupport.lockedPrefsValue "Стойност">
+
+<!ENTITY aboutSupport.graphicsTitle "Изчертаване">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "База от данни на Places">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Цялост">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Проверка на целостта">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Постепенен GC">
+
+<!ENTITY aboutSupport.a11yTitle "Достъпност">
+<!ENTITY aboutSupport.a11yActivated "Включено">
+<!ENTITY aboutSupport.a11yForceDisabled "Предотвратяване на достъпност">
+<!ENTITY aboutSupport.a11yHandlerUsed "Използвано устройство за достъпност">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Версии на библиотеки">
+
+<!ENTITY aboutSupport.installationHistoryTitle "История на инсталирането">
+<!ENTITY aboutSupport.updateHistoryTitle "История на обновяванията">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Копиране на текста в системния буфер">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Копиране необработени данни в системния буфер">
+
+<!ENTITY aboutSupport.sandboxTitle "Виртуална среда">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Отхвърлени системни извиквания">
+<!ENTITY aboutSupport.sandboxSyscallIndex "№">
+<!ENTITY aboutSupport.sandboxSyscallAge "Време">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Вид процес">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Аргументи">
+
+<!ENTITY aboutSupport.safeModeTitle "Пробвайте надеждния режим">
+<!ENTITY aboutSupport.restartInSafeMode.label "Рестартиране с изключени добавки…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Възможности">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Диагностика">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Журнал на грешките">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Журнал на решенията">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Изключени възможности на защитата от сривове">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Заобикаляния">
+
+<!ENTITY aboutSupport.mediaTitle "Медия">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Изходни устройства">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Входни устройства">
+<!ENTITY aboutSupport.mediaDeviceName "Наименование">
+<!ENTITY aboutSupport.mediaDeviceGroup "Група">
+<!ENTITY aboutSupport.mediaDeviceVendor "Производител">
+<!ENTITY aboutSupport.mediaDeviceState "Състояние">
+<!ENTITY aboutSupport.mediaDevicePreferred "Предпочитано">
+<!ENTITY aboutSupport.mediaDeviceFormat "Формат">
+<!ENTITY aboutSupport.mediaDeviceChannels "Канали">
+<!ENTITY aboutSupport.mediaDeviceRate "Честота">
+<!ENTITY aboutSupport.mediaDeviceLatency "Закъснение">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title		"クラッシュレポート">
+<!ENTITY crashesUnsubmitted.label	"未送信のクラッシュレポート">
+<!ENTITY crashesSubmitted.label		"送信したクラッシュレポート">
+<!ENTITY id.heading			"レポート ID">
+<!ENTITY dateCrashed.heading		"クラッシュ日時">
+<!ENTITY dateSubmitted.heading		"送信日時">
+<!ENTITY noReports.label		"送信したクラッシュレポートはありません。">
+<!ENTITY noConfig.label			"このプログラムはクラッシュレポートを表示できるように設定されていません。<code>breakpad.reportURL</code> が設定されている必要があります。">
+<!ENTITY clearAllReports.label		"すべてのレポートを削除">

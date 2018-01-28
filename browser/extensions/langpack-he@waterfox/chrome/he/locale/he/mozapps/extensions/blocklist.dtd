@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "ייתכן שתוספות אלו יוצרות בעיות">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; זיהה שהתוספות הבאות ידועות ככאלה הגורמות לבעיות יציבות או אבטחה:">
+<!ENTITY blocklist.softblocked       "למען הגנתך, מומלץ שתפעיל מחדש את התוכנה עם תוספות אלו מנוטרלות.">
+<!ENTITY blocklist.hardblocked       "תוספות אלו בסיכון גבוה ליצירת בעיות יציבות או אבטחה ולכן נחסמו, אך נדרשת הפעלה מחדש של התוכנה לניטרול מוחלט שלהם.">
+<!ENTITY blocklist.softandhard       "התוספות שמהוות סיכון גבוה ליצירת בעיות יציבות ואבטחה נחסמוץ התוספות האחרות מהוות סיכון נמוך יותר, אבל מומלץ שתפעיל מחדש את התוכנה כשהן מנוטרלות.">
+<!ENTITY blocklist.moreinfo          "מידע נוסף">
+
+<!ENTITY blocklist.accept.label      "הפעלת &brandShortName; מחדש">
+<!ENTITY blocklist.accept.accesskey  "מ">
+
+<!ENTITY blocklist.blocked.label     "נחסם">
+<!ENTITY blocklist.checkbox.label    "נטרל">

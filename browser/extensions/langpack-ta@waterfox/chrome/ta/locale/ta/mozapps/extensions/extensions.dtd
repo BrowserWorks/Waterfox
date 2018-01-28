@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "கூடுதல் இணைப்பு மேலாளர் ">
+
+<!ENTITY search.placeholder                   "அனைத்து கூடுதல் இணைப்புகளையும் தேடு">
+<!ENTITY search.buttonlabel                   "தேடு">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "ஏற்றுகிறது…">
+<!ENTITY listEmpty.installed.label            "இந்த வகையில் கூடுதல் இணைப்பு உங்களிடம் இல்லையெனில் நிறுவவும்">
+<!ENTITY listEmpty.availableUpdates.label     "புதுப்பித்தல்கள் எதுவும் இல்லை">
+<!ENTITY listEmpty.recentUpdates.label        "நீங்கள் எந்த கூடுதல் இணைப்புகளையும் சமீபத்தில் புதுப்பிக்கவில்லை">
+<!ENTITY listEmpty.findUpdates.label          "புதுப்பித்தல்களுக்கு சரி பார்க்கவும்">
+<!ENTITY listEmpty.search.label               "பொருந்தும் எந்த கூடுதல் இணைப்புகளையும் காண முடியவில்லை">
+<!ENTITY listEmpty.button.label               "துணை நிரல்கள் பற்றி மேலும் அறிய">
+<!ENTITY installAddonFromFile.label           "கோப்பிலிருந்து நீட்சிகள் நிறுவுகிறது…">
+<!ENTITY installAddonFromFile.accesskey       "க">
+<!ENTITY toolsMenu.tooltip                    "அனைத்து கூடுதல் இணைப்புகளுக்குமான கருவிகள்">
+
+<!ENTITY getThemes.description                "உங்கள் உலாவியை விருப்பமைக்க பார்க்கிறீர்களா?">
+<!ENTITY getThemes.learnMore                  "ஆயிரக்கணககான கருப்பொருள்களில் இருந்து தேர்ந்தெடு.">
+
+<!ENTITY cmd.back.tooltip                     "ஒரு பக்கம் பின் செல்">
+<!ENTITY cmd.forward.tooltip                  "ஒரு பக்கம் முன் செல்">
+
+<!ENTITY showUnsignedExtensions.button.label  "சில நீட்சிகளைச் சரிபார்க்க இயலாது">
+<!ENTITY showAllExtensions.button.label       "எல்லா நீட்சிகளையும் காட்டு">
+<!ENTITY debugAddons.label                    "கூடுதல் இணைப்புளை வழுநீக்கு">
+<!ENTITY debugAddons.accesskey                "b">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "பாதுகாப்பு முறைமையால் அனைத்து கூடுதல் இணைப்புகளும் செயல்நீக்கப்பட்டன.">
+<!ENTITY warning.checkcompatibility.label          "கூடுதல் இணைப்பு ஒத்தியல்பு சரிபார்த்தல் செயல்நீக்கப்பட்டுள்ளது. நீங்கள் ஒத்தியல்பில்லாத கூடுதல் இணைப்புகளை கொண்டிருக்கலாம்.">
+<!ENTITY warning.checkcompatibility.enable.label   "செயல்படுத்து">
+<!ENTITY warning.checkcompatibility.enable.tooltip "கூடுதல் இணைப்பு ஒத்தியல்பு சரிபார்த்தலை செயல்படுத்து">
+<!ENTITY warning.updatesecurity.label              "கூடுதல் இணைப்பு புதுப்பித்தல் பாதுகாப்பு சரிபார்த்தல் செயல்நீக்கப்பட்டுள்ளது.நீங்கள் புதுப்பித்தல்களால் திருப்தியடையலாம்.">
+<!ENTITY warning.updatesecurity.enable.label       "செயல்படுத்து">
+<!ENTITY warning.updatesecurity.enable.tooltip     "கூடுதல் இணைப்பு மேம்படுத்தல் பாதுகாப்பு சரிபார்த்தலை செயல்படுத்து">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "தேடுக">
+<!ENTITY view.discover.label                  "துணை நிரல்களைப் பெறு">
+<!ENTITY view.recentUpdates.label             "சமீபத்திய புதுப்பித்தல்கள்">
+<!ENTITY view.availableUpdates.label          "இருக்கும் புதுப்பித்தல்கள்">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "புதியவை உள்ளதா எனப்பார்">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "சமீபத்திய மேம்படுத்தல்களை பார்">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "கூடுதல் இணைப்புகளை தானாக புதுப்பி">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "தானாக புதுப்பிக்க அனைத்து கூடுதல் இணைப்புகளையும் மறுஅமை">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "கைமுறையாக புதுப்பிக்க அனைத்து கூடுதல் இணைப்புகளையும் மறுஅமை">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "கூடுதல் இணைப்புகளை புதுப்பிக்கிறது">
+<!ENTITY updates.installed.label              "உங்களின் துணை நிரல்கள் புதுப்பிக்கப்பட்டன.">
+<!ENTITY updates.downloaded.label             "உங்கள் கூடுதல் இணைப்பு பதிவிறக்கப்பட்டன.">
+<!ENTITY updates.restart.label                "நிறுவலை முடிக்க மறுதுவக்கவும்">
+<!ENTITY updates.noneFound.label              "புதுப்பித்தல்கள் எதுவும் காணப்படவில்லை">
+<!ENTITY updates.manualUpdatesFound.label     "இருக்கும் புதுப்பித்தல்களை பார்">
+<!ENTITY updates.updateSelected.label         "புதுப்பித்தல்களை நிறுவு">
+<!ENTITY updates.updateSelected.tooltip       "இந்த பட்டியலில் இருக்கும் புதுப்பித்தல்களை நிறுவவும்">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "கூடுதல் தகவலைக் காட்டு">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "புதுப்பித்தல்களை தேடு">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "விருப்பங்கள்">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "விருப்பங்கள்">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "பற்றி">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "செயல்படுத்து">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "செயல்நீக்கு">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "தீம்மை அணிந்து கொள்">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "தீம் அணிவதை நிறுத்து">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "செயல்படுத்தக் கேட்கவும்">
+<!ENTITY cmd.askToActivate.tooltip            "ஒவ்வொரு முறையும் இந்த துணை நிரலைப் பயன்படுத்தக் கேட்கவும்">
+<!ENTITY cmd.alwaysActivate.label             "எப்போதும் செயல்படுத்து">
+<!ENTITY cmd.alwaysActivate.tooltip           "எப்போதும் இந்த துணை நிரலைப் பயன்படுத்து">
+<!ENTITY cmd.neverActivate.label              "ஒருபோதும் செயல்படுத்தாதே">
+<!ENTITY cmd.neverActivate.tooltip            "ஒருபோதும் இந்த துணை நிரலைப் பயன்படுத்தாதே">
+<!ENTITY cmd.stateMenu.tooltip                "இந்த துணை நிரல் எப்போது இயங்கும் என்பதை மாற்றவும்">
+<!ENTITY cmd.installAddon.label               "நிறுவு">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "நீக்கு">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "விருப்பங்கள்">
+<!ENTITY cmd.showPreferencesWin.tooltip       "இந்த கூடுதல் இணைப்பு விருப்பங்களை மாற்றவும்">
+<!ENTITY cmd.showPreferencesUnix.label        "விருப்பங்கள்">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "இந்த கூடுதல் இணைப்பு விருப்பங்களை மாற்றவும்">
+<!ENTITY cmd.contribute.label                 "உதவுங்கள்">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "இந்த கூடுதல் இணைப்பை உருவாக்க உதவுங்கள்">
+
+<!ENTITY cmd.showReleaseNotes.label           "வெளியீட்டு அறிக்கையைக் காட்டு">
+<!ENTITY cmd.showReleaseNotes.tooltip         "இந்த புதுப்பித்தலின் வெளியீட்டு அறிக்கையைக் காட்டு">
+<!ENTITY cmd.hideReleaseNotes.label           "வெளியீட்டு அறிக்கையை மறை">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "இந்த புதுப்பித்தலின் வெளியீட்டு அறிக்கையை மறை">
+<!ENTITY cmd.findReplacement.label            "ஒரு மாற்றைக் கண்டுபிடி">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "கூடுதல் இணைப்பு என்றால் என்ன?">
+<!ENTITY discover.description2                "துணை நிரல்கள் என்பது கூடுதல் செயல்பாடு அல்லது பாணியுடன் &brandShortName; விருப்பமைக்க உதவும் பயன்பாடுகள் ஆகும். நேரம் சேமிக்கும் ஒரு பக்கப்பட்டை, ஒரு வானிலை அறிவிப்பி அல்லது உங்களுக்கு சொந்தமாக உள்ள &brandShortName; கருப்பொருளை முயற்சிக்கவும்.">
+<!ENTITY discover.footer                      "நீங்கள் இணையத்தில் இணைக்கப்படும் போது, இந்த பலகம் உங்களுக்கு மிகவும் பிரபலமான கூடுதல் இணைப்புகளை நீங்கள் முயற்சிக்க காட்டும்.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "பதிப்பு">
+<!ENTITY detail.lastupdated.label             "கடைசி புதுப்பிக்கப்பட்டது">
+<!ENTITY detail.creator.label                 "உருவாக்குபவர்">
+<!ENTITY detail.homepage.label                "முதன்மை பக்கம்">
+<!ENTITY detail.numberOfDownloads.label       "பதிவிறக்கங்கள்">
+
+<!ENTITY detail.contributions.description     "இந்த கூடுதல் இணைப்பை உருவாக்கியவர் சிறிய தொகை கொடையாக அளித்து தொடர்ந்து சேவையளிக்க கேட்கிறார்.">
+
+<!ENTITY detail.updateType                    "தானியாக்க புதுப்பித்தல்கள்">
+<!ENTITY detail.updateDefault.label           "முன்னிருப்பு">
+<!ENTITY detail.updateDefault.tooltip         "அது முன்னிருப்பாக இருந்தால் மட்டும் தானாக புதுப்பித்தல்களை தானா நிறுவவும்">
+<!ENTITY detail.updateAutomatic.label         "இயக்கு">
+<!ENTITY detail.updateAutomatic.tooltip       "தானாக புதுப்பித்தல்களை நிறுவவும்">
+<!ENTITY detail.updateManual.label            "நிறுத்து">
+<!ENTITY detail.updateManual.tooltip          "தானாக புதுப்பித்தல்களை நிறுவ வேண்டாம்">
+<!ENTITY detail.home                          "முதன்மை பக்கம்">
+<!ENTITY detail.repository                    "கூடுதல் இணைப்பு விவரக்குறிப்பு">
+<!ENTITY detail.size                          "அளவு">
+
+<!ENTITY detail.checkForUpdates.label         "புதுப்பித்தல்களுக்கு சரிபார்">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "இந்த கூடுதல் இணைப்பிற்கான புதுப்பித்தல்களுக்கு சரி பார்">
+<!ENTITY detail.showPreferencesWin.label      "விருப்பங்கள்">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "இந்த கூடுதல் இணைப்பு விருப்பங்களை மாற்றவும்">
+<!ENTITY detail.showPreferencesUnix.label     "விருப்பங்கள்">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "இந்த கூடுதல் இணைப்பு விருப்பங்களை மாற்றவும்">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "மதிப்பெண்">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "இடைநிறுத்து">
+<!ENTITY progress.cancel.tooltip              "ரத்து">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "பெயர்">
+<!ENTITY sort.name.tooltip                    "பெயரால் வரிசைப்படுத்து">
+<!ENTITY sort.dateUpdated.label               "கடைசியாக புதுப்பிக்கப்பட்டது">
+<!ENTITY sort.dateUpdated.tooltip             "தேதிப்படி வரிசைப்படுத்தல் புதுப்பிக்கப்பட்டது">
+<!ENTITY sort.relevance.label                 "சிறந்த பொருத்தம்">
+<!ENTITY sort.relevance.tooltip               "தொடர்புடையது படி வரிசைப்படுத்து">
+<!ENTITY sort.price.label                     "விலை">
+<!ENTITY sort.price.tooltip                   "விலைப்படி வரிசைப்படுத்து">
+
+<!ENTITY search.filter2.label                 "தேடு:">
+<!ENTITY search.filter2.installed.label       "எனது நிரல்கள்">
+<!ENTITY search.filter2.installed.tooltip     "நிறுவப்பட்ட கூடுதல் இணைப்புகளை காட்டு">
+<!ENTITY search.filter2.available.label       "இருக்கும் துணை நிரல்கள்">
+<!ENTITY search.filter2.available.tooltip     "நிறுவ இருக்கும் கூடுதல் இணைப்புகளை காட்டு">
+
+<!ENTITY addon.homepage                       "முதன்மை பக்கம்">
+<!ENTITY addon.details.label                  "இன்னும்">
+<!ENTITY addon.details.tooltip                "இந்த கூடுதல் இணைப்பு பற்றி இன்னும் விவரங்களை காட்டு">
+<!ENTITY addon.unknownDate                    "தெரியாதது">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "மரபு">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(செயல்நீக்கப்பட்டுள்ளது)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "புதுப்பி">
+<!ENTITY addon.undoAction.label               "மறை">
+<!ENTITY addon.undoAction.tooltip             "இந்த செயலை மறை">
+<!ENTITY addon.undoRemove.label               "மறை">
+<!ENTITY addon.undoRemove.tooltip             "இந்த கூடுதல் இணைப்பை நிறுவவும்">
+<!ENTITY addon.restartNow.label               "இப்போது மறுதுவக்கு">
+<!ENTITY addon.install.label                  "நிறுவு">
+<!ENTITY addon.install.tooltip                "இந்த கூடுதல் இணைப்பை நிறுவு">
+<!ENTITY addon.updateNow.label                "இப்போது புதுப்பி">
+<!ENTITY addon.updateNow.tooltip              "இந்த புதுப்பித்தலை இந்த கூடுதல் இணைப்பிற்கு நிறுவு">
+<!ENTITY addon.includeUpdate.label            "புதுப்பித்தலில் சேர்">
+<!ENTITY addon.updateAvailable.label          "ஒரு புதுப்பித்தல் உள்ளது">
+<!ENTITY addon.checkingForUpdates.label       "புதுப்பித்தல்களுக்கு சரிபார்க்கிறது…">
+<!ENTITY addon.releaseNotes.label             "வெளியீட்டு அறிக்கை:">
+<!ENTITY addon.loadingReleaseNotes.label      "ஏற்றுகிறது…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "மன்னிக்கவும், ஆனால் வெளியீட்டு அறிக்கையை ஏற்றும்போது ஒரு பிழை உள்ளது.">
+
+<!ENTITY addon.createdBy.label                "உருவாக்கியவர் ">
+
+<!ENTITY eula.title                           "பயனர் உரிம ஒப்பந்தம்">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "ஏற்று நிறுவு…">
+
+<!ENTITY settings.path.button.label           "உலாவு...">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "என்ன இது? நேரத்திற்கு நேரம் தொலைப்பதிவவானது சோதனைகளை நிறுவி இயக்க கூடும்.">
+<!ENTITY experiment.info.learnmore "மேலும் அறிய">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "தொலைப்பதிவு அமைவுகள்">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "மேலும் அறிய…">
+
+<!ENTITY disabledUnsigned.heading "சில கூடுதல் இணைப்புகள் முடக்கப்பட்டுள்ளன.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "&brandShortName; என்பதில் பயன்படுத்துவதற்காகப் பின்வரும் கூடுதல் இணைப்புகள் சரிபார்க்கப்படவில்லை. நீங்கள்">
+<!ENTITY disabledUnsigned.description.findAddonsLink "மாற்றுகளைக் கண்டுபிடிக்க முடியும்">
+<!ENTITY disabledUnsigned.description.end " அல்லது உருவாக்குநர்களை அவற்றைச் சரிபார்க்கக் கேளுங்கள்.">
+<!ENTITY disabledUnsigned.learnMore "உங்களை இணையத்தில் பாதுகாப்பாக வைத்திருக்கான எங்களின் முயற்சிகள் பற்றி மேலும் அறிக.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "தங்கள் கூடுதல் இணைப்புகளை உறுதிப்படுத்த விரும்பும் உருவாக்குநர்கள் வாசிப்பதின் மூலம் தொடரலாம்">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "கையேடு">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "ஏதோ ஒன்று இல்லையா? சில நீட்டிப்புகள் &brandShortName; உலாவியால் ஆதரிக்கப்படாது.">
+<!ENTITY pluginDeprecation.learnMore "மேலும் அறிய.">
+
+<!ENTITY legacyWarning.description "ஏதோ ஒன்று இல்லையா? சில நீட்டிப்புகள் &brandShortName; உலாவியால் ஆதரிக்கப்படாது.">
+<!ENTITY legacyWarning.showLegacy "மரபு நீட்சிகளைக் காண்பி">
+<!ENTITY legacyExtensions.title "மரபு நீட்சிகள்">
+<!ENTITY legacyExtensions.description "தற்போதைய &brandShortName; தரத்துடன் இல்லாததால் இந்த நீட்சிகள் முடக்கி வைக்கப்படும்.">
+<!ENTITY legacyExtensions.learnMore "துணை நிரல்களுக்கான மாற்றங்களை அறியுங்கள்">

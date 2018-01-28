@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "设置 - 站点数据">
+<!ENTITY     hostCol.label                 "站点">
+<!ENTITY     statusCol.label               "状态">
+<!ENTITY     usageCol.label                "存储">
+<!ENTITY     searchTextboxPlaceHolder             "搜索网站">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "移除选中">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "保存更改">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "取消">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "移除站点数据">
+<!ENTITY     removingSelected.description  "移除站点数据也会删除相关的 Cookie 和脱机网络内容，这可能使您的网站登录状态丢失。确定进行此更改吗？">
+<!ENTITY     siteTree.label                "下列网站 Cookie 将被移除：">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "אשף יצירת פרופיל">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; מאחסן מידע על ההגדרות וההעדפות שלך בפרופיל האישי שלך.">
+<!ENTITY profileCreationExplanation_2.text  "אם אתה חולק עותק זה של &brandShortName; עם משתמשים אחרים, תוכל להשתמש בפרופילים כדי לשמור את המידע של כל משתמש בנפרד. כדי לעשות זאת, על כל משתמש ומשתמשת ליצור פרופיל משלו (או משלה).">
+<!ENTITY profileCreationExplanation_3.text  "אם אתה האדם היחיד המשתמש בעותק זה של &brandShortName;, חייב להיות להיות לך לפחות פרופיל אחד. אם תרצה, תוכל ליצור לעצמך מספר פרופילים כדי לאחסן קבוצות שונות של הגדרות והעדפות. למשל, ייתכן שתרצה פרופילים נפרדים לשימוש עסקי ואישי.">
+<!ENTITY profileCreationExplanation_4.text  "כדי להתחיל ליצור את הפרופיל שלך, לחץ על &quot;הבא&quot;.">
+<!ENTITY profileCreationExplanation_4Mac.text  "כדי להתחיל ליצור את הפרופיל שלך, לחץ על &quot;המשך&quot;.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "כדי להתחיל ביצירת הפרופיל שלך, לחץ הבא.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "אם תיצור מספר פרופילים תוכל להבדיל ביניהם לפי שמם. תוכל להשתמש בשם המסופק כאן או להשתמש בשם משלך.">
+<!ENTITY profilePrompt.label            "הכנס שם לפרופיל חדש:">
+<!ENTITY profilePrompt.accesskey        "E">
+<!ENTITY profileDirectoryExplanation.text   "הגדרות המשתמש, ההעדפות, ונתונים אחרים הקשורים למשתמש שלך יאוחסנו ב:">
+<!ENTITY profileDefaultName             "משתמש בררת מחדל">
+<!ENTITY button.choosefolder.label      "בחירת תיקיה…">
+<!ENTITY button.choosefolder.accesskey  "ת">
+<!ENTITY button.usedefault.label        "שימוש בתיקיית בררת המחדל">
+<!ENTITY button.usedefault.accesskey    "ה">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Utskriftsformat">
+
+<!ENTITY basic.tab           "Format &amp; Alternativ">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Orientering:">
+<!ENTITY portrait.label      "Stående">
+<!ENTITY portrait.accesskey  "S">
+<!ENTITY landscape.label     "Liggande">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "Skala:">
+<!ENTITY scale.accesskey     "a">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Krymp till sidbredd">
+<!ENTITY shrinkToFit.accesskey "K">
+
+<!ENTITY optionsGroup.label  "Alternativ">
+
+<!ENTITY printBG.label       "Skriv ut bakgrund (färger &amp; bilder)">
+<!ENTITY printBG.accesskey   "b">
+
+<!ENTITY advanced.tab        "Marginaler &amp; Sidhuvud/sidfot">
+
+<!ENTITY marginGroup.label   "Marginaler (#1)">
+<!ENTITY marginUnits.inches  "tum">
+<!ENTITY marginUnits.metric  "millimeter">
+<!ENTITY marginTop.label     "Sidhuvud:">
+<!ENTITY marginTop.accesskey "d">
+<!ENTITY marginBottom.label  "Sidfot:">
+<!ENTITY marginBottom.accesskey "S">
+<!ENTITY marginLeft.label    "Vänster:">
+<!ENTITY marginLeft.accesskey "V">
+<!ENTITY marginRight.label   "Höger:">
+<!ENTITY marginRight.accesskey "H">
+
+<!ENTITY headerFooter.label  "Sidhuvud &amp; sidfot">
+
+<!ENTITY hfLeft.label        "Vänster:">
+<!ENTITY hfCenter.label      "Mitten:">
+<!ENTITY hfRight.label       "Höger:">
+<!ENTITY headerLeft.tip      "Vänster sidhuvud">
+<!ENTITY headerCenter.tip    "Mittensidhuvud">
+<!ENTITY headerRight.tip     "Höger sidhuvud">
+<!ENTITY footerLeft.tip      "Vänster sidfot">
+<!ENTITY footerCenter.tip    "Mittensidfot">
+<!ENTITY footerRight.tip     "Höger sidfot">
+
+<!ENTITY hfTitle             "Titel">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Datum/Tid">
+<!ENTITY hfPage              "Sida #">
+<!ENTITY hfPageAndTotal      "Sida # av #">
+<!ENTITY hfBlank             "--inget--">
+<!ENTITY hfCustom            "Egen…">
+
+<!ENTITY customPrompt.title  "Egen…">
+<!ENTITY customPrompt.prompt "Skriv in din egen sidhuvuds- eller sidfotstext">

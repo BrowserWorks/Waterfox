@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "سٹارٹ اپ">
+
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "اپنا ہوم صفحہ دکھائیں">
+<!ENTITY startupBlankPage.label    "خالی صفحہ دکھائیں">
+<!ENTITY startupPrevSession.label  "اپنا دریچہ اور آخری وقت کے ٹیب دکھائیں">
+
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "حالیہ صفحہ برتیں">
+<!ENTITY useCurrentPage.accesskey  "ح">
+<!ENTITY useMultiple.label         "حالیہ صفحے استعمال کریں">
+<!ENTITY chooseBookmark.label      "نشانی استعمال کریں…">
+<!ENTITY chooseBookmark.accesskey  "ن">
+<!ENTITY restoreDefault.label      "طے شدہ بحال کریں">
+<!ENTITY restoreDefault.accesskey  "ب">
+
+<!ENTITY downloads.label     "ڈاؤن لوڈ">
+
+<!ENTITY saveTo.label "مسل محفوظ کریں بر">
+<!ENTITY saveTo.accesskey "م">
+<!ENTITY chooseFolderWin.label        "براؤز کریں…">
+<!ENTITY chooseFolderWin.accesskey    "ا">
+<!ENTITY chooseFolderMac.label        "انتخاب کریں…">
+<!ENTITY chooseFolderMac.accesskey    "ا">
+<!ENTITY alwaysAskWhere.label         "مجھ سے ہمیشہ پوچھیں کہ مسل کہاں محفوظ کرنی ہے">
+<!ENTITY alwaysAskWhere.accesskey     "ہ">
+
+<!ENTITY alwaysCheckDefault2.label        "ہمیشہ جانچ پڑتال کریں کہ &brandShortName; آپ کا پہلے سے طے شدہ براؤزر ہے">
+<!ENTITY alwaysCheckDefault2.accesskey    "ی">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; اس وقت آپ کا طےشدہ براؤزر ہے">
+<!ENTITY isNotDefault.label               "&brandShortName; اس وقت آپ کا طےشدہ  براؤزر نھیں ہے">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; اور Waterfox کو ہم وقت چلنے کی اجازت دے">
+<!ENTITY useWaterfoxSync.label             "ٹوٹکا: یہ علیحدہ پروفائلز استعمال کرتا ہے. ان کے درمیان ڈیٹا کا اشتراک کرنے کی مطابقت پذیری کا استعمال کریں.">
+
+<!ENTITY e10sEnabled.label                "کثیر عمل کاری &brandShortName; کو اہل بنائیں">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">

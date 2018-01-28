@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Margayyan ga">
+<!ENTITY aboutNetworking.warning               "Siiyan mise ti woo. Ma ši a tee bila nda borobeeri hawgaykaw.">
+<!ENTITY aboutNetworking.showNextTime          "Yaamaroo woo cebe yane hiino">
+<!ENTITY aboutNetworking.ok                    "Ayyo">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Funey">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Taagandi">
+<!ENTITY aboutNetworking.autoRefresh           "Boŋ-taagandi segondu 3 kul">
+<!ENTITY aboutNetworking.hostname              "Zunbudoo maa">
+<!ENTITY aboutNetworking.port                  "Kotay-mee">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Dirante">
+<!ENTITY aboutNetworking.idle                  "Ši dira">
+<!ENTITY aboutNetworking.host                  "Zunbudoo">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Sanbante">
+<!ENTITY aboutNetworking.received              "Duwante ">
+<!ENTITY aboutNetworking.family                "Alaayan">
+<!ENTITY aboutNetworking.addresses             "Aderesey">
+<!ENTITY aboutNetworking.expires               "Waati ga ben (segonduyaŋ)">
+<!ENTITY aboutNetworking.messagesSent          "Bataga sanbantey">
+<!ENTITY aboutNetworking.messagesReceived      "Bataga duwantey">
+<!ENTITY aboutNetworking.bytesSent             "Cebsu-ize sanbantey">
+<!ENTITY aboutNetworking.bytesReceived         "Cebsu-ize duwantey">
+<!ENTITY aboutNetworking.logging               "Huruyan">
+<!ENTITY aboutNetworking.logTutorial           "Dii <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP huruyan</a> ka bay taka kaŋ nda boro ga goy nda jinaa woo.">
+<!ENTITY aboutNetworking.currentLogFile        "Sohõda huruyan tuku:">
+<!ENTITY aboutNetworking.currentLogModules     "Sohõda huruyan dunbey:">
+<!ENTITY aboutNetworking.setLogFile            "Huruyan tuku kayandi">
+<!ENTITY aboutNetworking.setLogModules         "Huruyan dunhey kayandi">
+<!ENTITY aboutNetworking.startLogging          "Huruyan šintin">
+<!ENTITY aboutNetworking.stopLogging           "Huruyan kayandi">
+<!ENTITY aboutNetworking.dnsLookup             "DNS gunari">
+<!ENTITY aboutNetworking.dnsLookupButton       "Anniya">
+<!ENTITY aboutNetworking.dnsDomain             "Laama">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

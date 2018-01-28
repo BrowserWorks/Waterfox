@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Асноўныя">
+
+<!ENTITY useCursorNavigation.label       "Заўсёды ўжываць клавішы-стрэлкі для перамяшчэння ў старонках">
+<!ENTITY useCursorNavigation.accesskey   "с">
+<!ENTITY searchOnStartTyping.label       "Шукаць тэкст, калі вы пачынаеце набор">
+<!ENTITY searchOnStartTyping.accesskey   "ч">
+<!ENTITY useOnScreenKeyboard.label       "Паказваць экранную клавіятуру, калі неабходна">
+<!ENTITY useOnScreenKeyboard.accesskey   "л">
+
+<!ENTITY browsing.label                  "Агляданне">
+
+<!ENTITY useAutoScroll.label             "Выкарыстоўваць аўтаматычную пракрутку">
+<!ENTITY useAutoScroll.accesskey         "с">
+<!ENTITY useSmoothScrolling.label        "Выкарыстоўваць плаўнае пракручванне">
+<!ENTITY useSmoothScrolling.accesskey    "л">
+<!ENTITY checkUserSpelling.label         "Правяраць арфаграфію пад час набору">
+<!ENTITY checkUserSpelling.accesskey     "н">
+
+<!ENTITY dataChoicesTab.label            "Выбар дадзеных">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Адпраўка дадзеных адключана для гэтай канфігурацыі зборкі">
+
+<!ENTITY enableHealthReport1.label       "Дазволіць &brandShortName; аўтаматычна адпраўляць тэхнічныя звесткі і звесткі ўзаемадзеяння ў Mozilla">
+<!ENTITY enableHealthReport1.accesskey   "а">
+<!ENTITY healthReportLearnMore.label     "Даведацца больш">
+
+<!ENTITY dataCollection.label            "Збор і выкарыстанне звестак &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Мы імкнёмся даць вам выбар і збіраць толькі тое, што патрэбна для ўсіх для выпуску і паляпшэння &brandShortName;. Мы заўсёды пытаемся дазволу, перш чым атрымаць асабістую інфармацыю.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Паведамленне аб прыватнасці">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Дазволіць &brandShortName; адпраўляць справаздачы пра падзенні ў Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "п">
+<!ENTITY crashReporterLearnMore.label    "Даведацца больш">
+
+<!ENTITY networkTab.label                "Сетка">
+
+<!ENTITY networkProxy.label              "Проксі-сервер">
+
+<!ENTITY connectionDesc.label            "Наладзіць, як &brandShortName; мусіць злучацца з Інтэрнэтам">
+<!ENTITY connectionSettings.label        "Налады…">
+<!ENTITY connectionSettings.accesskey    "л">
+
+<!ENTITY httpCache.label                 "Кэшаванае сеціўнае змесціва">
+
+<!ENTITY offlineStorage2.label           "Пазасеткавае сеціўнае змесціва і карыстальніцкія дадзеныя">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Звесткі сайта">
+<!ENTITY clearSiteData.label             "Ачысціць усе звесткі">
+<!ENTITY clearSiteData.accesskey         "з">
+<!ENTITY siteDataSettings.label          "Налады…">
+<!ENTITY siteDataSettings.accesskey      "л">
+<!ENTITY siteDataLearnMoreLink.label     "Даведацца больш">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Абмежаваць кэш">
+<!ENTITY limitCacheSizeBefore.accesskey  "м">
+<!ENTITY limitCacheSizeAfter.label       "МБ прасторы">
+<!ENTITY clearCacheNow.label             "Ачысціць зараз">
+<!ENTITY clearCacheNow.accesskey         "ч">
+<!ENTITY clearOfflineAppCacheNow.label   "Ачысціць зараз">
+<!ENTITY clearOfflineAppCacheNow.accesskey "з">
+<!ENTITY overrideSmartCacheSize.label    "Перахапіць кіраванне кэшам">
+<!ENTITY overrideSmartCacheSize.accesskey "П">
+
+<!ENTITY updateTab.label                 "Абнаўленне">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "Абнаўленні &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Трымайце &brandShortName; абноўленым для лепшай прадукцыйнасці, стабільнасці і бяспекі.">
+<!ENTITY updateApplication.version.pre   "Версія ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Дазволіць &brandShortName;">
+<!ENTITY updateAuto3.label               "Аўтаматычна ўсталёўваць абнаўленні (рэкамендуецца)">
+<!ENTITY updateAuto3.accesskey           "А">
+<!ENTITY updateCheckChoose2.label        "Правяраць наяўнасць абнаўленняў, але даваць вам выбар, ці ўсталёўваць іх">
+<!ENTITY updateCheckChoose2.accesskey    "П">
+<!ENTITY updateManual2.label             "Ніколі не правяраць наяўнасць абнаўленняў (не рэкамендуецца)">
+<!ENTITY updateManual2.accesskey         "Н">
+
+<!ENTITY updateHistory2.label            "Паказаць гісторыю абнаўленняў...">
+<!ENTITY updateHistory2.accesskey        "с">
+
+<!ENTITY useService.label                "Выкарыстоўваць фонавую службу для ўсталявання абнаўленняў">
+<!ENTITY useService.accesskey            "ф">
+
+<!ENTITY enableSearchUpdate2.label       "Аўтаматычна абнаўляць пашукавікі">
+<!ENTITY enableSearchUpdate2.accesskey   "а">
+
+<!ENTITY offlineStorageNotify.label               "Паведамляць, калі вэб-сайт пытае дазвол на захоўванне звестак для пазасеткавага выкарыстання">
+<!ENTITY offlineStorageNotify.accesskey           "П">
+<!ENTITY offlineStorageNotifyExceptions.label     "Выключэнні…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ч">
+
+<!ENTITY offlineAppsList2.label          "Наступныя вэб-сайты маюць дазвол на захаванне дадзеных для пазасеткавага выкарыстання:">
+<!ENTITY offlineAppsList.height          "8em">
+<!ENTITY offlineAppsListRemove.label     "Выдаліць…">
+<!ENTITY offlineAppsListRemove.accesskey "В">
+<!ENTITY offlineAppRemove.confirm        "Выдаліць пазасеткавыя дадзеныя">
+
+<!ENTITY certificateTab.label            "Сертыфікаты">
+<!ENTITY certPersonal2.description       "Калі сервер запытвае ваш асабісты сертыфікат">
+<!ENTITY selectCerts.auto                "Выбіраць аўтаматычна">
+<!ENTITY selectCerts.auto.accesskey      "Ы">
+<!ENTITY selectCerts.ask                 "Пытацца кожны раз">
+<!ENTITY selectCerts.ask.accesskey       "П">
+<!ENTITY enableOCSP.label                "Звяртацца да сервера OCSP за пацверджаннем дзейснасці сертыфікатаў">
+<!ENTITY enableOCSP.accesskey            "З">
+<!ENTITY viewCerts2.label                "Паказаць сертыфікаты…">
+<!ENTITY viewCerts2.accesskey            "с">
+<!ENTITY viewSecurityDevices2.label      "Прылады бяспекі…">
+<!ENTITY viewSecurityDevices2.accesskey  "б">
+
+<!ENTITY performance.label               "Прадукцыйнасць">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Выкарыстоўваць рэкамендаваныя налады прадукцыйнасці">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Гэтыя налады падабраны адмыслова для вашага камп'ютара і аперацыйнай сістэмы.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "ы">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Падрабязней">
+<!ENTITY limitContentProcessOption.label "Абмежаванне колькасці працэсаў">
+<!ENTITY limitContentProcessOption.description
+                                         "Дадатковая колькасць працэсаў можа павялічыць прадукцыйнасць пры адкрыцці некалькіх картак, але браўзер будзе спажываць больш памяці.">
+<!ENTITY limitContentProcessOption.accesskey   "а">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Змена колькасці працэсаў магчымая толькі ў шматпрацэснай версіі &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Даведайцеся, як праверыць, ці ўключана шматпрацэснасць">
+<!ENTITY allowHWAccel.label              "Выкарыстоўваць, калі можна, апаратнае паскарэнне">
+<!ENTITY allowHWAccel.accesskey          "н">

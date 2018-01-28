@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Style Editor window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : The correct localization of this file might be to keep
+     it in English, or another language commonly spoken among web developers.
+     You want to make that choice consistent across the developer tools.
+     A good criteria is the language in which you'd find the best documentation
+     on web development on the web. -->
+
+<!ENTITY newButton.label            "新增">
+<!ENTITY newButton.tooltip          "建立並將新的樣式表擴充至文件尾端">
+<!ENTITY newButton.accesskey        "N">
+
+<!ENTITY importButton.label         "匯入…">
+<!ENTITY importButton.tooltip       "匯入並將已經存在的樣式表附加到文件尾端">
+<!ENTITY importButton.accesskey     "I">
+
+<!ENTITY visibilityToggle.tooltip   "切換樣式表可見度">
+
+<!ENTITY saveButton.label           "儲存">
+<!ENTITY saveButton.tooltip         "將此樣式表另存為檔案">
+<!ENTITY saveButton.accesskey       "S">
+
+<!ENTITY optionsButton.tooltip      "樣式編輯器選項">
+
+<!-- LOCALIZATION NOTE  (showOriginalSources.label): This is the label on the context
+     menu item to toggle showing original sources in the editor. -->
+<!ENTITY showOriginalSources.label     "顯示原始碼">
+
+<!-- LOCALIZATION NOTE  (showOriginalSources.accesskey): This is the access key for
+     the menu item to toggle showing original sources in the editor. -->
+<!ENTITY showOriginalSources.accesskey  "o">
+
+<!-- LOCALIZATION NOTE  (showMediaSidebar.label): This is the label on the context
+     menu item to toggle showing @media rule shortcuts in a sidebar. -->
+<!ENTITY showMediaSidebar.label     "顯示 @media 側邊欄">
+
+<!-- LOCALIZATION NOTE  (showMediaSidebar.accesskey): This is the access key for
+     the menu item to toggle showing the @media sidebar. -->
+<!ENTITY showMediaSidebar.accesskey     "m">
+
+<!-- LOCALICATION NOTE  (mediaRules.label): This is shown above the list of @media rules
+     in each stylesheet editor sidebar. -->
+<!ENTITY mediaRules.label           "@media 規則">
+
+<!ENTITY editorTextbox.placeholder  "在此輸入 CSS。">
+
+<!-- LOCALICATION NOTE  (noStyleSheet.label): This is shown when a page has no
+     stylesheet. -->
+<!ENTITY noStyleSheet.label         "這個頁面沒有樣式表。">
+
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-start.label): This is the start of a
+     tip sentence shown when there is no stylesheet. It suggests to create a new
+     stylesheet and provides an action link to do so. -->
+<!ENTITY noStyleSheet-tip-start.label  "也許您想要 ">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-action.label): This is text for the
+     link that triggers creation of a new stylesheet. -->
+<!ENTITY noStyleSheet-tip-action.label "附加全新的樣式表">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-end.label): End of the tip sentence -->
+<!ENTITY noStyleSheet-tip-end.label    "?">
+
+<!-- LOCALIZATION NOTE (openLinkNewTab.label): This is the text for the
+     context menu item that opens a stylesheet in a new tab -->
+<!ENTITY openLinkNewTab.label     "用新分頁開啟鏈結">
+

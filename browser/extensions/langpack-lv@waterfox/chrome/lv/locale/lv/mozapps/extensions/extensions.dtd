@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Papildinājumu pārvaldnieks">
+
+<!ENTITY search.placeholder                   "Meklēt papildinājumus">
+<!ENTITY search.buttonlabel                   "Meklēšana">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Ielādē…">
+<!ENTITY listEmpty.installed.label            "Jums nav uzinstalēts neviens šī tipa atjauninājums">
+<!ENTITY listEmpty.availableUpdates.label     "Atjauninājumi nav atrasti">
+<!ENTITY listEmpty.recentUpdates.label        "Pēdējā laikā neviens papildinājums nav atjaunināts">
+<!ENTITY listEmpty.findUpdates.label          "Meklēt atjauninājumus">
+<!ENTITY listEmpty.search.label               "Nevar atrast nevienu atbilstošu papildinājumu">
+<!ENTITY listEmpty.button.label               "Uzziniet vairāk par papildinājumiem">
+<!ENTITY installAddonFromFile.label           "Instalēt no faila…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Visu papildinājumu rīki">
+
+<!ENTITY getThemes.description                "Gribat personalizēt savu pārlūku?">
+<!ENTITY getThemes.learnMore                  "Izvēlieties kādu no tūkstošiem tēmu.">
+
+<!ENTITY cmd.back.tooltip                     "Pāriet uz iepriekšējo lapu">
+<!ENTITY cmd.forward.tooltip                  "Pāriet uz nākamo lapu">
+
+<!ENTITY showUnsignedExtensions.button.label  "Dažus papildinājumus nevar pārbaudīt">
+<!ENTITY showAllExtensions.button.label       "Rādīt visus papildinājumus">
+<!ENTITY debugAddons.label                    "Atkļūdot papildinājumus">
+<!ENTITY debugAddons.accesskey                "d">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Drošais režīms ir deaktivējis visus papildinājumu.">
+<!ENTITY warning.checkcompatibility.label          "Papildinājumu savietojamības pārbaude ir deaktivēta. Iespējams jums ir nesavietojami papildinājumu.">
+<!ENTITY warning.checkcompatibility.enable.label   "Aktivēt">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Aktivēt papildinājumu savietojamības pārbaudi">
+<!ENTITY warning.updatesecurity.label              "Papildinājumu drošības pārbaude ir deaktivēta. Iespējams jums ir nedroši papildinājumu.">
+<!ENTITY warning.updatesecurity.enable.label       "Aktivēt">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Aktivēt papildinājumu drošības pārbaudi">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Meklēšana">
+<!ENTITY view.discover.label                  "Iegūt papildinājumus">
+<!ENTITY view.recentUpdates.label             "Nesenie atjauninājumi">
+<!ENTITY view.availableUpdates.label          "Pieejamie atjauninājumi">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Meklēt atjauninājumus">
+<!ENTITY updates.checkForUpdates.accesskey    "M">
+<!ENTITY updates.viewUpdates.label            "Aplūkot nesenos atjauninājumus">
+<!ENTITY updates.viewUpdates.accesskey        "n">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Atjaunināt papildinājumus automātiski">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Atjaunināt visus papildinājumus automātiski">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "l">
+<!ENTITY updates.resetUpdatesToManual.label          "Atjaunināt visus papildinājumus manuāli">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "m">
+<!ENTITY updates.updating.label               "Atjaunina papildinājumus">
+<!ENTITY updates.installed.label              "Jūsu papildinājumi ir atjaunināti.">
+<!ENTITY updates.downloaded.label             "Jūsu papildinājumu atjauninājumi ir lejupielādēti.">
+<!ENTITY updates.restart.label                "Pārstartējiet, lai pabeigtu atjaunināšanu">
+<!ENTITY updates.noneFound.label              "Atjauninājumi nav atrasti">
+<!ENTITY updates.manualUpdatesFound.label     "Aplūkot pieejamos atjauninājumus">
+<!ENTITY updates.updateSelected.label         "Instalēt atjauninājumus">
+<!ENTITY updates.updateSelected.tooltip       "Instalēt visus šajā sarakstā pieejamos atjauninājumus">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Rādīt papildus informāciju">
+<!ENTITY cmd.showDetails.accesskey            "p">
+<!ENTITY cmd.findUpdates.label                "Meklēt atjauninājumus">
+<!ENTITY cmd.findUpdates.accesskey            "M">
+<!ENTITY cmd.preferencesWin.label             "Iestatījumi">
+<!ENTITY cmd.preferencesWin.accesskey         "I">
+<!ENTITY cmd.preferencesUnix.label            "Iestatījumi">
+<!ENTITY cmd.preferencesUnix.accesskey        "I">
+<!ENTITY cmd.about.label                      "Par šo papildinājumu">
+<!ENTITY cmd.about.accesskey                  "P">
+
+<!ENTITY cmd.enableAddon.label                "Ieslēgt">
+<!ENTITY cmd.enableAddon.accesskey            "e">
+<!ENTITY cmd.disableAddon.label               "Atslēgt">
+<!ENTITY cmd.disableAddon.accesskey           "t">
+<!ENTITY cmd.enableTheme.label                "Izmantot šo tēmu">
+<!ENTITY cmd.enableTheme.accesskey            "I">
+<!ENTITY cmd.disableTheme.label               "Neizmantot šo tēmu">
+<!ENTITY cmd.disableTheme.accesskey           "N">
+<!ENTITY cmd.askToActivate.label              "Jautāt, lai aktivētu">
+<!ENTITY cmd.askToActivate.tooltip            "Jautāt katru reizi pirms šī papildinājuma izmantošanas">
+<!ENTITY cmd.alwaysActivate.label             "Aktivēt vienmēr">
+<!ENTITY cmd.alwaysActivate.tooltip           "Vienmēr izmantot šo papildinājumu">
+<!ENTITY cmd.neverActivate.label              "Nekad neaktivēt">
+<!ENTITY cmd.neverActivate.tooltip            "Nekad neizmantot šo papildinājumu">
+<!ENTITY cmd.stateMenu.tooltip                "Nosakiet, kad tiks izmantots papildinājums">
+<!ENTITY cmd.installAddon.label               "Instalēt">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Noņemt">
+<!ENTITY cmd.uninstallAddon.accesskey         "N">
+<!ENTITY cmd.showPreferencesWin.label         "Iestatījumi">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Izmainīt šī papildinājuma iestatījumus">
+<!ENTITY cmd.showPreferencesUnix.label        "Iestatījumi">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Izmainīt šī papildinājuma iestatījumus">
+<!ENTITY cmd.contribute.label                 "Atbalstīt">
+<!ENTITY cmd.contribute.accesskey             "A">
+<!ENTITY cmd.contribute.tooltip               "Atbalstīt šī papildinājuma izstrādi">
+
+<!ENTITY cmd.showReleaseNotes.label           "Parādīt laidiena piezīmes">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Parādīt šī atjauninājuma laidiena piezīmes">
+<!ENTITY cmd.hideReleaseNotes.label           "Paslēpt laidiena piezīmes">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Paslēpt šī laidiena piezīmes">
+<!ENTITY cmd.findReplacement.label            "Atrast aizvietotājus">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Kas ir papildinājumi?">
+<!ENTITY discover.description2                "Papildinājumi ir mazas programmiņas, kas ļauj jums papildināt &brandShortName; ar papildus funkcionalitāti vai stilu. Izmēģiniet laiku ietaupošo sānu joslu, laika ziņu programmiņu vai pielāgotu &brandShortName; izskatu, lai padarītu savu &brandShortName; unikālu.">
+<!ENTITY discover.footer                      "Kad esat savienoti ar internetu, šajā logā būs redzami populārākie un labākie papildinājumi, kas pieejami jūsu izmēģināšanai.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Versija">
+<!ENTITY detail.lastupdated.label             "Pēdējo reizi atjaunināts">
+<!ENTITY detail.creator.label                 "Izstrādātājs">
+<!ENTITY detail.homepage.label                "Mājas lapa">
+<!ENTITY detail.numberOfDownloads.label       "Lejupielāžu skaits">
+
+<!ENTITY detail.contributions.description     "Šī papildinājuma autors lūdz jūs atbalstīt izstrādi ar nelielu ziedojumu.">
+
+<!ENTITY detail.updateType                    "Automātiska atjaunināšana">
+<!ENTITY detail.updateDefault.label           "Noklusētā vērtība">
+<!ENTITY detail.updateDefault.tooltip         "Automātiski instalēt atjauninājumus vienīgi, ja tā ir noklusētā vērtība">
+<!ENTITY detail.updateAutomatic.label         "Ieslēgta">
+<!ENTITY detail.updateAutomatic.tooltip       "Instalēt atjauninājumus automātiski">
+<!ENTITY detail.updateManual.label            "Izslēgta">
+<!ENTITY detail.updateManual.tooltip          "Neinstalēt atjauninājumus automātiski">
+<!ENTITY detail.home                          "Mājas lapa">
+<!ENTITY detail.repository                    "Papildinājuma profils">
+<!ENTITY detail.size                          "Izmērs">
+
+<!ENTITY detail.checkForUpdates.label         "Meklēt atjauninājumus">
+<!ENTITY detail.checkForUpdates.accesskey     "M">
+<!ENTITY detail.checkForUpdates.tooltip       "Meklēt atjauninājumus šim papildinājumam">
+<!ENTITY detail.showPreferencesWin.label      "Iestatījumi">
+<!ENTITY detail.showPreferencesWin.accesskey  "I">
+<!ENTITY detail.showPreferencesWin.tooltip    "Izmainīt šī papildinājuma iestatījumus">
+<!ENTITY detail.showPreferencesUnix.label     "Iestatījumi">
+<!ENTITY detail.showPreferencesUnix.accesskey "I">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Izmainīt šī papildinājuma iestatījumus">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Vērtējums">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Apturēt">
+<!ENTITY progress.cancel.tooltip              "Atcelt">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Nosaukums">
+<!ENTITY sort.name.tooltip                    "Kārtot pēc nosaukuma">
+<!ENTITY sort.dateUpdated.label               "Atjaunināts">
+<!ENTITY sort.dateUpdated.tooltip             "Kārtot pēc atjaunināšanas datuma">
+<!ENTITY sort.relevance.label                 "Labākais rezultāts">
+<!ENTITY sort.relevance.tooltip               "Kārtot pēc atbilstības">
+<!ENTITY sort.price.label                     "Cena">
+<!ENTITY sort.price.tooltip                   "Kārtot pēc cenas">
+
+<!ENTITY search.filter2.label                 "Rādīt:">
+<!ENTITY search.filter2.installed.label       "Manus papildinājumus">
+<!ENTITY search.filter2.installed.tooltip     "Rādīt instalētos papildinājumus">
+<!ENTITY search.filter2.available.label       "Pieejamos papildinājumus">
+<!ENTITY search.filter2.available.tooltip     "Rādīt instalēšanai pieejamos papildinājumus">
+
+<!ENTITY addon.homepage                       "Mājas lapa">
+<!ENTITY addon.details.label                  "Vairāk">
+<!ENTITY addon.details.tooltip                "Rādīt vairāk informācijas par šo papildinājumu">
+<!ENTITY addon.unknownDate                    "Nezināms">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "MANTOJUMS">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(atslēgts)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "atjauninājums">
+<!ENTITY addon.undoAction.label               "Atcelt">
+<!ENTITY addon.undoAction.tooltip             "Atcelt šo darbību">
+<!ENTITY addon.undoRemove.label               "Atcelt">
+<!ENTITY addon.undoRemove.tooltip             "Saglabāt šo papildinājumu">
+<!ENTITY addon.restartNow.label               "Pārstartēt">
+<!ENTITY addon.install.label                  "Instalēt">
+<!ENTITY addon.install.tooltip                "Instalēt šo papildinājumu">
+<!ENTITY addon.updateNow.label                "Atjaunināt">
+<!ENTITY addon.updateNow.tooltip              "Instalēt šī papildinājuma atjauninājumu">
+<!ENTITY addon.includeUpdate.label            "Iekļaut atjauninājumā">
+<!ENTITY addon.updateAvailable.label          "Ir pieejams atjauninājums">
+<!ENTITY addon.checkingForUpdates.label       "Meklē atjauninājumus…">
+<!ENTITY addon.releaseNotes.label             "Laidiena piezīmes:">
+<!ENTITY addon.loadingReleaseNotes.label      "Ielādē…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Atvainojiet, bet ielādējot laidiena piezīmes notikusi kļūda.">
+
+<!ENTITY addon.createdBy.label                "Autors: ">
+
+<!ENTITY eula.title                           "Produkta lietošanas nosacījumi">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Pieņemt un instalēt…">
+
+<!ENTITY settings.path.button.label           "Pārlūkot…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Kas ir šis? Telemetrija laiku pa laikam var uzinstalēt un darbināt dažādus eksperimentus.">
+<!ENTITY experiment.info.learnmore "Uzzināt vairāk">
+<!ENTITY experiment.info.learnmore.accesskey "U">
+<!ENTITY experiment.info.changetelemetry "Telemetrijas iestatījumi">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Uzzināt vairāk…">
+
+<!ENTITY disabledUnsigned.heading "Daži papildinājumi ir deaktivēti">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Šos papildinājumus nevar pārbaudīt izmantošanai ar &brandShortName;. Jūs varat ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "atrast aizvietotājus">
+<!ENTITY disabledUnsigned.description.end " vai palūgt to izstrādātājam apstiprināt tos.">
+<!ENTITY disabledUnsigned.learnMore "Uzziniet vairāk par to ko darām, lai jūs būtu drošībā.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Izstrādātāji, kas vēlas apstiprināt savus papildinājumus var turpināt izlasot mūsu ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "pamācību">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Kaut kas pietrūkst? Dažus spraudņus &brandShortName; vairs neatbalsta.">
+<!ENTITY pluginDeprecation.learnMore "Uzzināt vairāk.">
+
+<!ENTITY legacyWarning.description "Kaut kas pietrūkst? Dažus spraudņus &brandShortName; vairs neatbalsta.">
+<!ENTITY legacyWarning.showLegacy "Rādīt visus papildinājumus">
+<!ENTITY legacyExtensions.title "Vēsturiskie papildinājumi">
+<!ENTITY legacyExtensions.description "Šie paplašinājumi neatbilst pašreizējiem &brandShortName; standartiem, tāpēc tie tika deaktivizēti.">
+<!ENTITY legacyExtensions.learnMore "Uzzināt vairāk par papildinājumu izmaiņām">

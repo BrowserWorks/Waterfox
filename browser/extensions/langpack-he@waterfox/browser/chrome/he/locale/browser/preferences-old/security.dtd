@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "כללי">
+
+<!ENTITY  warnOnAddonInstall.label        "הזהרה כאשר אתרים מנסים להתקין תוספות">
+<!ENTITY  warnOnAddonInstall.accesskey    "ת">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "חסימת תוכן מסוכן ומטעה">
+<!ENTITY  enableSafeBrowsing.accesskey    "ת">
+
+<!ENTITY  blockDownloads.label            "חסימת הורדות מסוכנות">
+<!ENTITY  blockDownloads.accesskey        "ה">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "הזהרה על תוכנות לא נפוצות ותכנות לא רצויות">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "ת">
+
+<!ENTITY  addonExceptions.label         "חריגות…">
+<!ENTITY  addonExceptions.accesskey     "ח">
+
+
+<!ENTITY  logins.label                  "כניסות">
+
+<!ENTITY  rememberLogins.label          "שמירת כניסות לאתרים">
+<!ENTITY  rememberLogins.accesskey      "ש">
+<!ENTITY  passwordExceptions.label      "חריגות…">
+<!ENTITY  passwordExceptions.accesskey  "ר">
+
+<!ENTITY  useMasterPassword.label        "שימוש בססמה ראשית">
+<!ENTITY  useMasterPassword.accesskey    "ש">
+<!ENTITY  changeMasterPassword.label     "שינוי ססמה ראשית…">
+<!ENTITY  changeMasterPassword.accesskey "נ">
+
+<!ENTITY  savedLogins.label              "כניסות שמורות…">
+<!ENTITY  savedLogins.accesskey          "כ">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

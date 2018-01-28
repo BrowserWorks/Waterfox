@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Paleistis">
+
+<!ENTITY startupPage.label         "Paleidžiant „&brandShortName;“">
+<!ENTITY startupPage.accesskey     "l">
+<!ENTITY startupUserHomePage.label "Rodyti pradžios tinklalapį">
+<!ENTITY startupBlankPage.label    "rodyti tuščią puslapį">
+<!ENTITY startupPrevSession.label  "Atverti paskiausio seanso langus ir korteles">
+
+<!ENTITY homepage.label            "Pradžios tinklalapis:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "Šiuo metu atvertas tinklalapis">
+<!ENTITY useCurrentPage.accesskey  "Š">
+<!ENTITY useMultiple.label         "Šiuo metu atverti tinklalapiai">
+<!ENTITY chooseBookmark.label      "Tinklalapis iš adresyno…">
+<!ENTITY chooseBookmark.accesskey  "T">
+<!ENTITY restoreDefault.label      "Atstatyti numatytąjį">
+<!ENTITY restoreDefault.accesskey  "A">
+
+<!ENTITY downloads.label     "Atsiuntimai">
+
+<!ENTITY saveTo.label "Atsiunčiamus failus įrašyti į:">
+<!ENTITY saveTo.accesskey "f">
+<!ENTITY chooseFolderWin.label        "Parinkti…">
+<!ENTITY chooseFolderWin.accesskey    "r">
+<!ENTITY chooseFolderMac.label        "Parinkti…">
+<!ENTITY chooseFolderMac.accesskey    "r">
+<!ENTITY alwaysAskWhere.label         "Visada klausti, kur įrašyti failus">
+<!ENTITY alwaysAskWhere.accesskey     "V">
+
+<!ENTITY alwaysCheckDefault2.label        "Visada tikrinti, ar „&brandShortName;“ yra jūsų numatytoji naršyklė">
+<!ENTITY alwaysCheckDefault2.accesskey    "d">
+<!ENTITY setAsMyDefaultBrowser2.label     "Padaryti numatytąja">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "n">
+<!ENTITY isDefault.label                  "„&brandShortName;“ šiuo metu yra numatytoji naršyklė">
+<!ENTITY isNotDefault.label               "„&brandShortName;“ šiuo metu nėra numatytoji naršyklė">
+
+<!ENTITY separateProfileMode.label        "Leisti „&brandShortName;“ veikti tuo pačiu metu kaip ir „Waterfox“">
+<!ENTITY useWaterfoxSync.label             "Patarimas: tai naudoja atskirus profilius. Bendrinti duomenis tarp jų galite naudodami „Sync“.">
+<!ENTITY getStarted.notloggedin.label     "Prisijungti prie „&syncBrand.shortName.label;“…">
+<!ENTITY getStarted.configured.label      "Atverti „&syncBrand.shortName.label;“ nuostatas">
+
+<!ENTITY e10sEnabled.label                "Įjungti daugiaprocesę „&brandShortName;“">

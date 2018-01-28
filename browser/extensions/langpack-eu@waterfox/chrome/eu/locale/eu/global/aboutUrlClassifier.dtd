@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "url-classifier-ari buruzko informazioa">
+<!ENTITY aboutUrlClassifier.providerTitle               "Hornitzailea">
+<!ENTITY aboutUrlClassifier.provider                    "Hornitzailea">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Azken eguneraketa">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Hurrengo eguneraketa">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Etete-denbora">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Azken eguneraketaren egoera">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Eguneratu">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cachea">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Berritu">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Garbitu">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Taularen izena">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Cache-sarrera negatiboen kopurua">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Cache-sarrera positiboen kopurua">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Erakutsi sarrerak">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cache-sarrerak">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Aurrizkia">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Cache negatiboaren iraungitzea">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Hash osoa">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Cache positiboaren iraungitzea">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Araztu">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Ezarri erregistro-moduluak">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Ezarri erregistro-fitxategia">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Ezarri JS erregistroa">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Nabigatze seguruko erregistro-moduluak">
+<!ENTITY aboutUrlClassifier.debugModules                "Uneko erregistro-moduluak">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Nabigatze seguruko JS erregistroa">
+<!ENTITY aboutUrlClassifier.debugFile                   "Uneko erregistro-fitxategia">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "일반">
+
+<!ENTITY useCursorNavigation.label       "커서 키를 항상 페이지 내에서 사용">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "타이핑을 시작하면 검색">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "필요하면 터치 키보드 보여주기">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "보기 기능">
+
+<!ENTITY useAutoScroll.label             "자동 스크롤 기능 사용">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "부드러운 스크롤 기능 사용">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "입력할 때 철자 확인">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "데이터 선택">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "이 빌드 설정에서는 데이타 보고가 비활성화 되어 있음">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName;가 자동으로 기술과 상호작용 데이터를 Mozilla로 전송하도록 허용">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "더 알아보기">
+
+<!ENTITY dataCollection.label            "&brandShortName; 데이터 수집과 사용">
+<!ENTITY dataCollectionDesc.label        "&brandShortName;를 모두를 위해 제공하고 개선하기 위해서 필요한 것만 수집하고 선택권을 제공하기 위해 노력합니다. 개인 정보를 전송하기 전에 항상 허가여부를 묻습니다.">
+<!ENTITY dataCollectionPrivacyNotice.label    "개인정보 안내">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName;가 Mozilla에 충돌 보고를 보내도록 허용">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "더 알아보기">
+
+<!ENTITY networkTab.label                "네트워크">
+
+<!ENTITY networkProxy.label              "네트워크 프록시">
+
+<!ENTITY connectionDesc.label            "&brandShortName;가 인터넷에 연결하는 방법을 선택합니다.">
+<!ENTITY connectionSettings.label        "설정…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "캐쉬된 웹 페이지">
+
+<!ENTITY offlineStorage2.label           "오프라인 웹 페이지 및 사용자 데이터">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "사이트 데이터">
+<!ENTITY clearSiteData.label             "모든 데이터 삭제">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "설정…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "자세히 알아보기">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "제한 용량">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB 공간">
+<!ENTITY clearCacheNow.label             "삭제">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "지금 삭제">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "자동 캐시 크기 관리">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "업데이트">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; 업데이트">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "&brandShortName;가 최상의 성능, 안정성, 보안을 유지할 수 있도록 최신 버전으로 유지힙니다.">
+<!ENTITY updateApplication.version.pre   "버전 ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName; 설치 방법">
+<!ENTITY updateAuto3.label               "자동으로 업데이트 설치(추천)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "새로운 업데이트를 확인하지만 설치는 수동으로 진행">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "업데이트 확인 안함(권장하지 않음)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "업데이트 기록 보기…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "업데이트 설치 시 백그라운드 작업으로 하기">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "검색 엔진 자동 업데이트">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "웹사이트가 오프라인 상태일 때 데이터를 저장하려하면 물어봄">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "예외…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "오프라인용 데이터를 저장하는 웹 사이트 목록:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "삭제…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "오프라인 자료 삭제">
+
+<!ENTITY certificateTab.label            "인증서">
+<!ENTITY certPersonal2.description       "서버가 인증 정보를 요구할 때">
+<!ENTITY selectCerts.auto                "자동으로 하나를 선택">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "항상 물어보기">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "OCSP서버를 통해 인증서 유효성 실시간 확인">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "인증서 보기…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "보안 기기…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "성능">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "권장 설정을 사용">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "이 설정은 컴퓨터 하드웨어 및 운영체제에 맞게 조정됩니다.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "더 알아보기">
+<!ENTITY limitContentProcessOption.label "컨텐트 프로세스 제한">
+<!ENTITY limitContentProcessOption.description
+                                         "추가 컨텐트 프로세스는 다중 탭을 사용 하는 경우 성능을 향상 시킬 수 있지만 더 많은 메모리를 사용 합니다.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "컨텐트 프로세스 갯수 변경은 멀티 프로세스 &brandShortName;에서만 가능합니다.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "멀티 프로세스가 활성화 되었는지 확인하는 방법">
+<!ENTITY allowHWAccel.label              "하드웨어 가속이 가능하면 사용">
+<!ENTITY allowHWAccel.accesskey          "r">

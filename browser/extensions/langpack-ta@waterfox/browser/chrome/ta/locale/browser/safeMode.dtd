@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; பாதுகாப்பு பயன்முறை">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "பாதுகாப்பு முறையில் துவக்கு">
+<!ENTITY refreshProfile.label         "&brandShortName; ஐ புதுப்பி">
+
+<!ENTITY safeModeDescription3.label   "பாதுகாப்பு பயன்முறை என்பது &brandShortName; இன் சிறப்பு பயன்முறை, சிக்கல்களை தீர்க்க இது பயன்படுகிறது.">
+<!ENTITY safeModeDescription4.label   "உங்கள் நீட்சிகளை மற்றும் தனிப்பயன் அமைப்புகள் தற்காலிகமாக முடக்கப்படும்.">
+
+<!ENTITY refreshProfileInstead.label  "நீங்கள் பழுதுப்பார்த்தலைத் தவிர்த்து &brandShortName; உலாவியைப் புதுப்பிக்கலாம்.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; தொடங்கும் போது எதிர்பாராத விதமாக மூடப்பட்டது. இது கூடுதல் இணைப்புகளால் அல்லது பிற பிரச்சினைகளால் ஏற்படும். சிக்கலை தீர்க்க பாதுகாப்பான முறையில் முயற்சி செய்யலாம்.">

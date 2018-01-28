@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "Խմբագրիչ">
+
+<!ENTITY fileMenu.label               "Ֆայլ">
+<!ENTITY fileMenu.accesskey           "Ֆ">
+
+<!ENTITY newWindowCmd.label           "Նոր պատուհան">
+<!ENTITY newWindowCmd.accesskey       "Ն">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Բացել ֆայլ…">
+<!ENTITY openFileCmd.accesskey        "Բ">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Բացել վերջինը">
+<!ENTITY openRecentMenu.accesskey     "վ">
+
+<!ENTITY revertCmd.label              "Վերադարձնել…">
+<!ENTITY revertCmd.accesskey          "ա">
+
+<!ENTITY saveFileCmd.label            "Պահպանել">
+<!ENTITY saveFileCmd.accesskey        "Պ">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Պահպանել որպես…">
+<!ENTITY saveFileAsCmd.accesskey      "ո">
+
+<!ENTITY closeCmd.label               "Փակել">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "Փ">
+
+<!ENTITY viewMenu.label               "Տեսք">
+<!ENTITY viewMenu.accesskey           "Տ">
+
+<!ENTITY lineNumbers.label             "Ցուցադրել տողի համարները">
+<!ENTITY lineNumbers.accesskey         "տ">
+
+<!ENTITY wordWrap.label                "Տողադարձել">
+<!ENTITY wordWrap.accesskey            "Տ">
+
+<!ENTITY highlightTrailingSpace.label     "Գունանշել հետին տարածքը">
+<!ENTITY highlightTrailingSpace.accesskey "Գ">
+
+<!ENTITY largerFont.label             "Մեծ տառատեսակ">
+<!ENTITY largerFont.accesskey         "ե">
+<!ENTITY largerFont.commandkey        "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY largerFont.commandkey2       "="> 
+
+<!ENTITY smallerFont.label            "Փոքր տառատեսակ">
+<!ENTITY smallerFont.accesskey        "ո">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "Նորմալ չափ">
+<!ENTITY normalSize.accesskey         "Ն">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Խմբագրել">
+<!ENTITY editMenu.accesskey           "Խ">
+
+<!ENTITY run.label                    "Վազք">
+<!ENTITY run.accesskey                "Վ">
+<!ENTITY run.key                      "Վ">
+
+<!ENTITY inspect.label                "Հսկել">
+<!ENTITY inspect.accesskey            "Հ">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Ցուցադրել">
+<!ENTITY display.accesskey            "Ց">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Տպել">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "Տ">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "Միջավայր">
+<!ENTITY environmentMenu.accesskey    "Մ">
+
+
+<!ENTITY contentContext.label         "Բովանդակություն">
+<!ENTITY contentContext.accesskey     "Բ">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "Դիտարկիչ">
+<!ENTITY browserContext.accesskey     "Դ">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "Օգնություն">
+<!ENTITY helpMenu.accesskey           "Օ">
+<!ENTITY helpMenuWin.label            "Օգնություն">
+<!ENTITY helpMenuWin.accesskey        "Օ">
+
+<!ENTITY documentationLink.label      "Խմբագրիչի օգնությունը MDN-ում ">
+<!ENTITY documentationLink.accesskey  "D">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "Վերակայել փոփոխականները">
+<!ENTITY resetContext2.accesskey      "ա">
+
+<!ENTITY reloadAndRun.label           "Վերաբացել ">
+<!ENTITY reloadAndRun.accesskey       "ր">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Կատարել">
+<!ENTITY executeMenu.accesskey        "ա">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+<!ENTITY evalFunction.label "Փորձարկել ընթացիկ գործառույթը">
+<!ENTITY evalFunction.accesskey "ո">
+<!ENTITY evalFunction.key "e">

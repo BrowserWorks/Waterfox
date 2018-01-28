@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "আপনার অধিকার সম্পর্কে">
+<!ENTITY rights.intro "&brandFullName; একটি মুক্ত এবং ওপেনসোর্স সফটওয়্যার, যা সারা বিশ্বের হাজার হাজার মানুষের সমবেত প্রচেষ্টায় তৈরি হয়েছে। এ সম্পর্কে কিছু জিনিস আপনার জানা দরকার:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; আপনার জন্য সহজলভ্য করা হচ্ছে ">
+<!ENTITY rights.intro-point1b "মোজিলা পাবলিক লাইসেন্সের">
+<!ENTITY rights.intro-point1c " এর অর্থ আপনি &brandShortName; ব্যবহার, অনুলিপি এবং অন্যদের কাছে বিতরণ করতে পারবেন।  আপনি আপনার প্রয়োজনে &brandShortName; এর সোর্স কোডও পরিবর্তন করতে পারেন। মোজিলা পাবলিক লাইসেন্স আপনাকে আপনার পরিবর্তিত সংস্করণটি বিতরণ করার অধিকারও প্রদান করে।">
+
+<!ENTITY rights.intro-point2-a "Waterfox এর নাম বা প্রতীকের সীমিত ব্যবহার ব্যাতীত Waterfox বা সংশ্লিষ্ট কোন পার্টির ট্রেডমার্ক ব্যবহারের বা লাইসেন্স করার অধিকার নেই। ট্রেডমার্ক সম্পর্কিত আরও তথ্য এখানে পাওয়া যাবে ">
+<!ENTITY rights.intro-point2-b "এখানে">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName; এর কিছু বৈশিষ্ট্যে যেমন, ক্র্যাশ রিপোর্টার &vendorShortName; এ মন্তব্য করার অপশন দেয়। মন্তব্য জমা দেয়া নির্বাচন করে আপনি &vendorShortName; কে মন্তব্য ব্যবহার করে প্রোডাক্ট উন্নয়ন, ওয়েবসাইটে মন্তব্য প্রকাশ এবং মন্তব্য বন্টনের অনুমোদন দেন।">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "আমরা কিভাবে এখানে আপনার &brandShortName; এর মাধ্যমে &vendorShortName; এ জমাকৃত ব্যক্তিগত তথ্য এবং মন্তব্য ব্যবহার করি ">
+<!ENTITY rights2.intro-point3b "&brandShortName; গোপনীয়তার নীতি">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "এই পণ্যের জন্য প্রযোজ্য সব ব্যক্তিগত নীতিমালা এখানেই তালিকাভুক্ত থাকবে।">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "কিছু &brandShortName; বৈশিষ্ট্য ওয়েব ভিত্তিক তথ্য সেবা ব্যবহার করে, যাই হোক, আমরা নিশ্চিত করতে পারি না যে তারা 100&#037; সঠিক অথবা নির্ভুল কিনা। আরো বেশী বিস্তারিত এর জন্য, কিভাবে বৈশিষ্ট্য নিষ্ক্রিয় করা হবে যার মধ্যে এই পরিসেবা ব্যবহার করার তথ্য সংযুক্ত আছে, পাওয়া যেতে পারে ">
+<!ENTITY rights.intro-point4b "সেবার শর্তাবলীতে">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "যদি এই পণ্যটি ওয়েব সার্ভিস যুক্ত করে, তবে তার যেকোনো প্রযোজ্য শর্ত ">
+<!ENTITY rights.intro-point4b-unbranded "ওয়েবসাইট সার্ভিসসমূহের">
+<!ENTITY rights.intro-point4c-unbranded " অনুচ্ছেদ।">
+
+<!ENTITY rights2.webservices-header "&brandFullName; ওয়েব ভিত্তিক তথ্য সেবা">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "নির্দিষ্ট ভিডিও কন্টেন্ট ধরনের, &brandShortName; প্লে ব্যাক করার জন্য; তৃতীয় পক্ষের থেকে জনপ্রিয়তা নির্দিষ্ট কন্টেন্ট ডিক্রিপশন মডিউল।">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "নিম্নে বর্নিত শর্তানুসারে, আপনার ব্যবহারের জন্য &brandShortName; এর বাইনারি সংস্করণের কিছু বৈশিষ্ট্য (&quot;Services&quot;) সরবরাহ করার জন্য &brandFullName; ওয়েবভিত্তিক তথ্য সেবা ব্যবহার করে। আপনি যদি নিম্নোক্ত এক বা একাধিক সেবা ব্যবহার করতে না চান বা শর্তগুলো গ্রহনযোগ্য না হয় তবে, আপনি বৈশিষ্ট্য বা সেবা নিস্ক্রিয় করে দিতে পারেন। একটি নির্দিষ্ট বৈশিষ্ট্য বা সেবা কিভাবে নিস্ক্রিয় করা যায় সে সম্পর্কিত তথ্য পাওয়া যেতে পারে ">
+<!ENTITY rights2.webservices-b "এখানে">
+<!ENTITY rights3.webservices-c "এপ্লিকেশন অগ্রাধিকারসমূহ অন্যান্য বৈশিষ্ট্য এবং পরিসেবাগুলো নিস্ক্রিয় করা যাবে।">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "নিরাপদ ব্রাউজিং: ">
+<!ENTITY rights.safebrowsing-b "নিরাপদ ব্রাউজিং বৈশিষ্ট্য নিষ্ক্রিয় করা সুপারিশকৃত নয় কারণ এর ফলে আপনি অনিরাপদ সাইটে চলে যেতে পারেন।  আপনি যদি এ বৈশিষ্ট্য সম্পূর্ণরূপে নিষ্ক্রিয় করে চান তবে নিম্নোক্ত ধাপ অনুসরনীয়:">
+<!ENTITY rights.safebrowsing-term1 "অ্যাপ্লিকেশন পছন্দ খোলা">
+<!ENTITY rights.safebrowsing-term2 "নিরাপত্তা নির্বাচন নির্বাচন">
+<!ENTITY rights2.safebrowsing-term3 "অপশনে টিক সরান &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "নিরাপদ ব্রাউজিং নিস্ক্রিয়">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "অবস্থান সচেতন ব্রাউজিং: ">
+<!ENTITY rights.locationawarebrowsing-b "সর্বদা opt-এর মধ্যে।  আপনার অনুমতি ছাড়া কোনো অবস্থান তথ্য কখনই পাঠানো হয়নি।  আপনি যদি বৈশিষ্ট্য সম্পূর্নরূপে নিস্ক্রিয় করতে চান, তবে নিম্নোক্ত ধাপ অনুসরনীয়:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL বারে, ধরণ ">
+<!ENTITY rights.locationawarebrowsing-term1b "পরিচিতি:কনফিগ">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled ধরণ">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled পছন্দে ডবল ক্লিক">
+<!ENTITY rights.locationawarebrowsing-term4 "অবস্থান-সচেতন-ব্রাউজিং নিস্ক্রিয়">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "এই পণ্যে ব্যবহৃত ওয়েবসাইট সার্ভিসসমূহের সংক্ষিপ্ত বর্ণনা, এবং কিভাবে সেবাগুলো নিষ্ক্রিয় করা যায় তা এখানে অন্তর্ভুক্ত থাকবে।">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "এই পণ্যের সেবার জন্য প্রযোজ্য সব শর্ত এখানে তালিকাভুক্ত থাকবে।">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; এবং এর অবদানকারী, লাইসেন্স প্রদানকারী এবং অংশীদারগণ সঠিক এবং সময় উপযোগী তথ্য প্রদান করার জন্য কাজ করে।  তা সত্বেও, তারা এই নিশ্চয়তা দেন না যে এই তথ্য সম্পূর্ণ এবং নির্ভুল। উদাহরণস্বরূপ, নিরাপদ ব্রাউজিং সেবার সাহায্যে কিছু ঝুঁকিপূর্ণ সাইট সনাক্ত করা নাও যেতে পারে।  আবার কিছু নিরাপদ সাইটকে ভুলবশত ঝুঁকিপূর্ণ হিসেবে চিহ্নিত করা হতে পারে এবং অবস্থান সচেতন সেবায় অবস্থান কেবল আমাদের সেবা সরবরাহকারীগন হিসাব করেন এবং অবস্থানের নির্ভুলতা নিয়ে আমরা বা সেবা সরবরাহকারী কেউই নিশ্চয়তা দিতে পারে না।">
+<!ENTITY rights.webservices-term2 "&vendorShortName; নিজ বিবেচনায় সেবাসমূহ বন্ধ বা পরিবর্তন করতে পারে।">
+<!ENTITY rights2.webservices-term3 "&brandShortName; এর এই সংস্করণের সাথে সরবরাহকৃত সকল সেবার ব্যবহারে আপনাকে স্বাগতম, এবং  &vendorShortName; আপনাকে এমন করার জন্য সব অধিকার দিয়েছে।  অন্যান্য সকল অধিকার &vendorShortName; এবং এর লাইসেন্স প্রদানকারী দ্বারা সংরক্ষিত। এসকল শর্ত &brandShortName; এবং &brandShortName; এর সংশ্লিষ্ট সোর্স কোড ভার্সনের জন্য প্রযোজ্য, ওপেন সোর্স লাইসেন্সের অধিকার খর্ব করার জন্য দেয়া হয়নি।">
+<!ENTITY rights.webservices-term4 "সেবাগুলো প্রদান করা হয় &quot;যেমন আছে&quot;  &vendorShortName;, এর অবদানকারী, লাইসেন্স প্রদানকারী এবং পরিবেশক, যেকোন প্রকার সুস্পষ্ট বা নিহিত ওয়ারেন্টি, এই পণ্য বানিজ্যিকভাবে বা আপনার প্রয়োজন মেটাতে ব্যবহারযোগ্য, এ সম্পর্কিত সব ওয়ারেন্টি থেকেও।  সেবা নির্বাচন থেকে শুরু করে তার মান সম্পর্কিত সব ঝুঁকিই আপনার। কিছু এলাকার ক্ষেত্রে নিহিত ওয়ারেন্টি বাতিল বা সীমিত করা তাদের এখতিয়ারের বাইরে, তাই, এই ঘোষনাটি আপনার জন্য প্রযোজ্য নাও হতে পারে।">
+<!ENTITY rights.webservices-term5 "আইনের প্রয়োজন ব্যতীত, &vendorShortName;, এর অবদানকারী, লাইসেন্স প্রদানকারী, এবং পরিবেশক যেকোন পরোক্ষ, বিশেষ, প্রাসঙ্গিক, ক্ষতিকারক, শাস্তিমূলক ঘটনার জন্য দায়ী হবে না, যা &brandShortName; বা এর সেবা ব্যবহার করার কারণে প্রত্যক্ষ বা পরোক্ষভাবে সংঘটিত হয়েছে।   এই শর্তাবলীর অধীনে সম্মিলিত দায় $৫০০ (পাঁচ শত ডলার) অতিক্রম করবে না। কিছু এলাকা ক্ষতি সীমাবদ্ধ করা অনুমোদন করে না, তাই, এই ঘোষনাটি আপনার জন্য প্রযোজ্য নাও হতে পারে।">
+<!ENTITY rights.webservices-term6 "&vendorShortName; প্রয়োজন অনুযায়ী এসব শর্ত হালনাগাদ করতে পারে। এসকল শর্তসমূহ &vendorShortName; এর লিখিত অনুমতি ব্যতীত পরির্তন বা বাতিল করা যাবে না।">
+<!ENTITY rights.webservices-term7 "আইনের বিরোধ সংক্রান্ত অংশ ব্যতিরেকে, এই শর্তসমূহ যুক্তরাষ্ট্রের ক্যালিফোর্নিয়া স্টেটের আইন অনুযায়ী নিয়ন্ত্রিত। এই শর্তসমূহের কোনো অংশ অবৈধ বা অগ্রহণযোগ্য হলেও, বাকি অংশ সম্পূর্ণভাবে কার্যকর থাকবে। যদি ইংরেজি সংস্করণ এবং অনুবাদকৃত সংস্করণের মধ্যে কোনো বিরোধ থাকে, তাহলে ইংরেজি সংস্করণটি অগ্রাধিকার পাবে।">

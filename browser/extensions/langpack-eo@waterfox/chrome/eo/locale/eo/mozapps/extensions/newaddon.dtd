@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instali aldonaĵon">
+<!ENTITY intro           "Alia programo en via komputilo ŝatus modifi
+                          &brandShortName; per la jena aldonaĵo:">
+<!ENTITY warning         "Instalu aldonaĵojn nur de aŭtoroj kiujn vi fidas.">
+<!ENTITY allow           "Permesi tiun ĉi instaladon">
+<!ENTITY later           "Vi povas ŝanĝi vian opinion iam ajn per vizito
+                          al Administrado de aldonaĵoj.">
+<!ENTITY continue        "Daŭrigi">
+<!ENTITY restartMessage  "Vi devas restartigi &brandShortName; por fini la instaladon de tiu ĉi aldonaĵo.">
+<!ENTITY restartButton   "Restartigi &brandShortName;">
+<!ENTITY cancelButton    "Nuligi">

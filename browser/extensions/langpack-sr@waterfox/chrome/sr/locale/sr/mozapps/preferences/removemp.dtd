@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Уклањање главне лозинке">
+<!ENTITY removeInfo.label                  "Унесите тренутну лозинку да бисте наставили:">
+<!ENTITY removeWarning1.label              "Главна лозинка служи да заштити осетљиве податке као што су лозинке са сајтова.">
+<!ENTITY removeWarning2.label              "Ако уклоните главну лозинку, подаци неће бити заштићени ако неко упадне у систем.">
+<!ENTITY setPassword.oldPassword.label     "Тренутна лозинка:">
+

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Dizze website brûkt in ynstekker dy't &brandShortName; fertrage kin.">
+<!ENTITY tapToPlayPlugin                                     "Tik hjir om de ynstekker te aktivearjen.">
+<!ENTITY clickToActivatePlugin                               "Ynstekker aktivearje.">
+<!ENTITY checkForUpdates                                     "Kontrolearje op fernijingen…">
+<!ENTITY blockedPlugin.label                                 "Dizze ynstekker is blokkearre foar jo beskerming.">
+<!ENTITY hidePluginBtn.label                                 "Ynstekker ferstoppe">
+<!ENTITY managePlugins                                       "Ynstekkers beheare…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "Laad de ">
+<!ENTITY reloadPlugin.middle                                 "side opnij">
+<!ENTITY reloadPlugin.post                                   " om it nochris te probearjen.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Ungelokrapport ferstjoere">
+<!ENTITY report.submitting                                   "Rapport ferstjoere…">
+<!ENTITY report.submitted                                    "Ungelokrapport ferstjoerd.">
+<!ENTITY report.disabled                                     "Ungelokrapportaazje útskeakele.">
+<!ENTITY report.failed                                       "Ferstjoeren mislearre.">
+<!ENTITY report.unavailable                                  "Gjin rapport beskikber.">
+<!ENTITY report.comment                                      "Foegje in opmerking ta (opmerkingen binne publyklik sichtber)">
+<!ENTITY report.pageURL                                      "De side-URL meistjoere">
+
+<!ENTITY plugin.file                                         "Bestân">
+<!ENTITY plugin.mimeTypes                                    "MIME-typen">
+<!ENTITY plugin.flashProtectedMode.label                     "Befeilige modus fan Adobe Flash ynskeakelje">
+<!ENTITY plugin.enableBlocklists.label                       "Gefaarlike en misliedende Flash-ynhâld blokkearje">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Apie jūsų teises">
+<!ENTITY rights.intro "„&brandFullName;“ yra laisvoji atviroji programa, kuriama bendruomenės, apimančios tūkstančius žmonių iš viso pasaulio. Keletas dalykų, kuriuos turėtumėte žinoti:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "Jums leidžiama naudotis „&brandShortName;“ programa, vadovaujantis ">
+<!ENTITY rights.intro-point1b "„Mozilla“ viešąja licencija (Mozilla Public License)">
+<!ENTITY rights.intro-point1c ". Ši licencija leidžia naudotis „&brandShortName;“ programa, ją dauginti ir platinti.  Be to, galite laisvai modifikuoti „&brandShortName;“ pirminius tekstus. Licencija nedraudžia platinti ir jūsų modifikuotų programos versijų.">
+
+<!ENTITY rights.intro-point2-a "Jums nesuteikiamos jokios prekės ženklo teisės ar licencijos į „Waterfox“ ar kitų šalių prekės ženklus, tame tarpe – į „Waterfox“ vardą ar logotipą. Papildomą informaciją apie prekės ženklus rasite ">
+<!ENTITY rights.intro-point2-b "čia">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Kai kurios „&brandShortName;“ savybės, pavyzdžiui, strigčių pranešiklis, suteikia galimybę siųsti atsiliepimus „&vendorShortName;i“. Siųsdami atsiliepimus, jūs suteikiate „&vendorShortName;i“ teisę jais naudotis savo kuriamų produktų tobulinimo tikslais, skelbti juos savo svetainėse ir platinti juos kitais būdais.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Kaip jūsų asmeniniai duomenys ir per „&brandShortName;“ gauti atsiliepimai yra naudojami „Mozilloje“, nurodyta ">
+<!ENTITY rights2.intro-point3b "„&brandShortName;“ privatumo nuostatuose">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Čia turėtų būti išvardintos šiai programai taikomos privatumo nuostatos.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Kai kurie „&brandShortName;“ komponentai suteikia galimybę naudotis papildomomis saityno tarnybų paslaugomis, tačiau mes negalime užtikrinti, kad šios tarnybos niekada neklysta ir veikia nepriekaištingai. Daugiau informacijos apie šiuos komponentus ir apie tai, kaip juos išjungti, rasite ">
+<!ENTITY rights.intro-point4b "naudojimosi paslaugomis nuostatuose">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Jei šioje programoje naudojamos kokios nors saityno tarnybos, nuorodos į jų naudojimosi taisykles turėtų būti pateiktos skyrelyje ">
+<!ENTITY rights.intro-point4b-unbranded "„Naudojamos saityno tarnybos“">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "„&brandFullName;“ naudojamos informacinės saityno tarnybos">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Kad galėtų atkurti tam tikrus vaizdo turinio formatus, „&brandShortName;“ parsisiunčia tam tikrus turinio iššifravimo modulius iš trečiųjų šalių.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "Programoje „&brandFullName;“ naudojamos informacinių saityno tarnybų paslaugos (toliau – „Paslaugos“), kurios reikalingos kai kurioms šios programos „&brandShortName;“ versijos funkcijoms įgyvendinti. Šių Paslaugų teikimo nuostatai pateikiami žemiau. Jeigu nenorite naudotis kuriomis nors Paslaugomis, arba nesutinkate su jų teikimo nuostatais, galite išjungti atitinkamas programos funkcijas arba atsisakyti Paslaugų. Instrukcijos, kaip išjungti konkrečias funkcijas ar atsisakyti Paslaugų, pateikiamos ">
+<!ENTITY rights2.webservices-b "čia">
+<!ENTITY rights3.webservices-c ". Kitas galimybes ir tarnybų paslaugas galite išjungti programos nuostatose.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Saugusis naršymas („SafeBrowsing“): ">
+<!ENTITY rights.safebrowsing-b "Išjungti šios funkcijos nerekomenduojame, nes ją išjungę, galėsite neįspėti patekti į nesaugias saityno svetaines. Jeigu visgi norite šią funkciją visiškai išjungti, darykite tai taip:">
+<!ENTITY rights.safebrowsing-term1 "Atverti programos nuostatas">
+<!ENTITY rights.safebrowsing-term2 "pasirinkite nuostatų kategoriją „Saugumas“;">
+<!ENTITY rights2.safebrowsing-term3 "Nuimkite pažymėjimą nuo „&enableSafeBrowsing.label;“ nuostatos">
+<!ENTITY rights.safebrowsing-term4 "saugusis naršymas išjungtas.">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Naršymas nustatant geografinę vietą: ">
+<!ENTITY rights.locationawarebrowsing-b "Ši funkcija yra pasirenkama – be atskiro jūsų leidimo jokia informacija apie geografinę vietą nebus siunčiama. Jeigu norite šią funkciją išjungti visiškai, darykite tai taip:">
+<!ENTITY rights.locationawarebrowsing-term1a "adreso lauke įrašykite ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config;">
+<!ENTITY rights.locationawarebrowsing-term2 "filtro lauke įrašykite „geo.enabled“;">
+<!ENTITY rights.locationawarebrowsing-term3 "dukart spustelėkite nuostatą „geo.enabled“;">
+<!ENTITY rights.locationawarebrowsing-term4 "naršymas nustatant geografinę vietą išjungtas.">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Čia turėtų būti pateiktas šioje programoje naudojamų saityno paslaugų aprašas bei instrukcijos, kaip šių paslaugų naudojimo atsisakyti, jei tai įmanoma.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Čia turėtų būti pateiktos šioje programoje naudojamų saityno paslaugų naudojimosi taisyklės.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "„&vendorShortName;“ ir jos talkininkai, licencijų išdavėjai ir partneriai nuolat dirba, stengdamiesi teikti tiksliausias ir šviežiausias Paslaugas. Deja, neįmanoma užtikrinti, jog šie duomenys būtų išsamūs ir be klaidų. Pavyzdžiui, saugaus naršymo paslauga gali neatpažinti kai kurių pavojingų svetainių, o kai kurias saugias gali klaidingai palaikyti pavojingomis, o naršymo nustatant geografinę vietą Paslaugos nustatoma geografinė vieta visada yra tik apytikslė – nei mes, nei mūsų Paslaugų teikėjai negarantuojame, kad nustatoma vieta yra tiksli.">
+<!ENTITY rights.webservices-term2 "„&vendorShortName;“ gali vienašališkai nutraukti ar pakeisti Paslaugų teikimą.">
+<!ENTITY rights2.webservices-term3 "Jūs esate kviečiami naudotis šiomis Paslaugomis su šia „&brandShortName;“ laida, ir „&vendorShortName;“ jums suteikia visas jos turimas tam reikalingas teises.  „&vendorShortName;“ ir jos licencijų išdavėjai pasilieka visas kitas su Paslaugomis susijusias teises.  Šiomis taisyklėmis nesiekiama apriboti teisių, kurias jums suteikia programai „&brandShortName;“ ir jos pirminiams tekstams taikoma atvirųjų programų licencija.">
+<!ENTITY rights.webservices-term4 "Paslaugos teikiamos „tokios, kokios yra“. „&vendorShortName;“, jos bendradarbiai, licencijų išdavėjai ir platintojai atsiriboja nuo bet kokių išreikštų ar numanomų garantijų, kaip antai nuo garantijų, jog Paslaugos yra veiksmingos ir atitiks jūsų poreikius. Jūs prisiimate visą riziką, susijusią su Paslaugų, atitinkančių jūsų poreikius, pasirinkimu, kokybe ir veiksnumu. Kai kuriose jurisdikcijose atsiriboti nuo numanomų garantijų neleidžiama, tad gali būti, kad jums ši taisyklė negalioja.">
+<!ENTITY rights.webservices-term5 "Išskyrus kiek to reikalauja įstatymai, „&vendorShortName;“, jos bendradarbiai, licencijų išdavėjai ir platintojai nebus laikomi atsakingais už bet kokią netiesioginę, tyčinę, netyčinę, pasėkminę, baudžiamąją ar kitokią žalą, kilusią dėl „&brandShortName;“ ir Paslaugų naudojimo ar bet kokiu būdu su tuo susijusią.  Pagal šias taisykles, kolektyvinė atsakomybė negali viršyti 500 (penkių šimtų) JAV dolerių.  Kai kuriose jurisdikcijose atsiriboti nuo kai kurių tipų žalos neleidžiama, tad gali būti, kad jums ši taisyklė negalioja.">
+<!ENTITY rights.webservices-term6 "Kilus poreikiui, „&vendorShortName;“ šias taisykles gali keisti. Be raštiško „Mozillos“ sutikimo šios taisyklės negali būti taisomos ar atšaukiamos.">
+<!ENTITY rights.webservices-term7 "Šiose taisyklėse vadovaujamasi JAV Kalifornijos valstijoje galiojančiais įstatymais. Kilus neatitikimams tarp šių taisyklių ir įstatymų, įstatymai laikomi viršesniais. Jei kuri nors šių taisyklių dalis neatitinka įstatymų ar negali būti įgyvendanama, kitos jų dalys bus laikomos galiojančiomis. Jei tarp išverstos šių taisyklių versijos ir originalių taisyklių anglų kalba yra neatitikimų, turi būti vadovaujamasi angliškąja taisyklių versija.">

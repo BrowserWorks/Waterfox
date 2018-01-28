@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Postava stranice">
+
+<!ENTITY basic.tab           "Format i opcije">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Orijentacija:">
+<!ENTITY portrait.label      "Uspravno">
+<!ENTITY portrait.accesskey  "U">
+<!ENTITY landscape.label     "Položeno">
+<!ENTITY landscape.accesskey "P">
+
+<!ENTITY scale.label         "Omjer:">
+<!ENTITY scale.accesskey     "O">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Smanji da pristaje širini stranice">
+<!ENTITY shrinkToFit.accesskey "š">
+
+<!ENTITY optionsGroup.label  "Mogućnosti">
+
+<!ENTITY printBG.label       "Ispiši pozadinu (boje i slike)">
+<!ENTITY printBG.accesskey   "b">
+
+<!ENTITY advanced.tab        "Margine i zaglavlje/podnožje">
+
+<!ENTITY marginGroup.label   "Margine (#1)">
+<!ENTITY marginUnits.inches  "inča">
+<!ENTITY marginUnits.metric  "milimetara">
+<!ENTITY marginTop.label     "Vrh:">
+<!ENTITY marginTop.accesskey "V">
+<!ENTITY marginBottom.label  "Dno:">
+<!ENTITY marginBottom.accesskey "D">
+<!ENTITY marginLeft.label    "Lijevo:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "Desno:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Zaglavlja i podnožja">
+
+<!ENTITY hfLeft.label        "Lijevo:">
+<!ENTITY hfCenter.label      "Sredina:">
+<!ENTITY hfRight.label       "Desno:">
+<!ENTITY headerLeft.tip      "Zaglavlje lijevo">
+<!ENTITY headerCenter.tip    "Zaglavlje sredina">
+<!ENTITY headerRight.tip     "Zaglavlje desno">
+<!ENTITY footerLeft.tip      "Podnožje lijevo">
+<!ENTITY footerCenter.tip    "Podnožje sredina">
+<!ENTITY footerRight.tip     "Podnožje desno">
+
+<!ENTITY hfTitle             "Naslov">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Datum/Vrijeme">
+<!ENTITY hfPage              "Stranica #">
+<!ENTITY hfPageAndTotal      "Stranica # od #">
+<!ENTITY hfBlank             "--prazno--">
+<!ENTITY hfCustom            "Prilagođeno...">
+
+<!ENTITY customPrompt.title  "Prilagođeno...">
+<!ENTITY customPrompt.prompt "Upišite tekst vašeg zaglavlja/podnožja">

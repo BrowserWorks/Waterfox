@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Doplňky způsobující problémy">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "Aplikace &brandShortName; zjistila, že následující doplňky způsobují bezpečnostní nebo výkonové problémy:">
+<!ENTITY blocklist.softblocked       "Z důvodů vaší ochrany je doporučováno tyto doplňky zakázat a aplikaci restartovat.">
+<!ENTITY blocklist.hardblocked       "Z důvodů vaší ochrany byly tyto nebezpečné doplňky označeny jako zakázané. Pro jejich kompletní zákaz je vyžadován restart aplikace.">
+<!ENTITY blocklist.softandhard       "Z důvodů vaší ochrany byly více nebezpečné doplňky označeny jako zakázané. Zbylé doplňky jsou sice méně nebezpečné, přesto je doporučováno je zakázat a aplikaci restartovat.">
+<!ENTITY blocklist.moreinfo          "Více informací">
+
+<!ENTITY blocklist.accept.label      "Restartovat aplikaci &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Blokováno">
+<!ENTITY blocklist.checkbox.label    "Zakázat">

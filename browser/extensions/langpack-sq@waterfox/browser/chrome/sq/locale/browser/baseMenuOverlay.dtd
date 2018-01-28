@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Minimizoje">
+<!ENTITY bringAllToFront.label    "Bjeri të Tëra Para">
+<!ENTITY zoomWindow.label         "Zoom">
+<!ENTITY windowMenu.label         "Dritare">
+
+<!ENTITY helpMenu.label           "Ndihmë"> 
+<!ENTITY helpMenu.accesskey       "N"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Ndihmë"> 
+<!ENTITY helpMenuWin.accesskey    "N">
+<!ENTITY aboutProduct2.label      "Rreth &brandShorterName;-it">
+<!ENTITY aboutProduct2.accesskey  "R">
+<!ENTITY productHelp2.label       "Ndihmë mbi &brandShorterName;-in">
+<!ENTITY productHelp2.accesskey   "N">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Shkurtore Tastiere">
+<!ENTITY helpKeyboardShortcuts.accesskey "S">
+
+<!ENTITY helpSafeMode.label       "Riniseni me Shtesat të Çaktivizuara…">
+<!ENTITY helpSafeMode.accesskey   "Ç">
+<!ENTITY helpSafeMode.stop.label       "Rinise me Shtesat të Aktivizuara">
+<!ENTITY helpSafeMode.stop.accesskey   "A">
+
+<!ENTITY healthReport2.label      "Raport Mbi Shëndetin e &brandShorterName;-it">
+<!ENTITY healthReport2.accesskey  "R">
+
+<!ENTITY helpTroubleshootingInfo.label      "Të dhëna Diagnostikimi">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "Parashtroni Përshtypjet…">
+<!ENTITY helpFeedbackPage.accesskey  "P">
+
+<!ENTITY helpShowTour2.label            "Tur &brandShorterName;-i">
+<!ENTITY helpShowTour2.accesskey        "T">
+
+<!ENTITY preferencesCmdMac.label        "Parapëlqime…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Shërbime">
+
+<!ENTITY hideThisAppCmdMac2.label       "Fshihe &brandShorterName;-in">
+<!ENTITY hideThisAppCmdMac2.commandkey  "F">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Fshihi të Tjerat">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Shfaqi të Tëra">

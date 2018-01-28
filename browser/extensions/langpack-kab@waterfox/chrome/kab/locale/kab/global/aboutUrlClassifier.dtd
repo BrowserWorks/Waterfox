@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Talγut γef url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Imefki">
+<!ENTITY aboutUrlClassifier.provider                    "Imfeki">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Akud n uleqqem aneggaru">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Akud n uleqqem i d-iteddun">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Asrag n tiririt">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Addad n uleqqem aneggaru">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Alqem">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Tuffirt">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Smiren">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Sfeḍ">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Isem n tfelwit">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Amḍan n inekcam d uzdir n tuffirt">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Amḍan n inekcam d ufrir n tuffirt">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Sken-d inekcam">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Ffer inekcam">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Azdawṣil">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Tuffirt tuzdirt temmut">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Adway iččuren">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Tuffirt tufrirt temmut">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Taseγtit">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Sbadu izegrar iγmisen">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Sbadu afaylu aɣmis">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Rmed aγmis JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Izegrar n uγmis i iminig aγelsan">
+<!ENTITY aboutUrlClassifier.debugModules                "Izegrar iɣmisen imiranen">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Aγmis n tunigin taɣelsant">
+<!ENTITY aboutUrlClassifier.debugFile                   "Afaylu aɣmis amiran">

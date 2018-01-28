@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Munkamenet helyreállítása">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Sajnálatos dolog történt">
+<!ENTITY restorepage.problemDesc    "A &brandShortName; nem tudja maradéktalanul helyreállítani ablakait és lapjait. Ezt általában egy nemrég megnyitott weboldal szokta okozni.">
+<!ENTITY restorepage.tryThis        "Lehetőségek:">
+<!ENTITY restorepage.restoreSome    "Egy vagy több, a problémát valószínűleg okozó lap eltávolítása">
+<!ENTITY restorepage.startNew       "Új munkamenet indítása">
+
+<!ENTITY restorepage.tryagainButton "Visszaállítás">
+<!ENTITY restorepage.restore.access "V">
+<!ENTITY restorepage.closeButton    "Bezárás">
+<!ENTITY restorepage.close.access   "B">
+
+<!ENTITY restorepage.restoreHeader  "Visszaállítás">
+<!ENTITY restorepage.listHeader     "Ablakok és lapok">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "&#037;S. ablak">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Gyerünk!">
+<!ENTITY welcomeback2.restoreButton.access "G">
+
+<!ENTITY welcomeback2.tabtitle      "Sikerült!">
+
+<!ENTITY welcomeback2.pageTitle     "Sikerült!">
+<!ENTITY welcomeback2.pageInfo1     "A &brandShortName; készen áll.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Minden ablak és lap visszaállítása">
+<!ENTITY welcomeback2.restoreSome.label "Csak a kiválasztottak visszaállítása">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Kiegészítői és a testreszabások eltávolításra kerültek, és a böngésző beállításai vissza lettek állítva az alapbeállításokra. Ha ez nem oldotta meg a problémát, akkor ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "tudjon meg többet a további lehetőségekről.">
+

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Hëpërhë s&apos;gjendeni në dritare private.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Hapni Dritare Private">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "H">
+
+<!ENTITY privateBrowsing.title                           "Shfletim Privat">
+<!ENTITY privateBrowsing.title.tracking                  "Shfletim Privat me Mbrojtje Nga Gjurmimet">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Kur shfletoni nga një Dritare Private, Waterfox-i ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nuk ruan">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "faqe të vizituara">
+<!ENTITY aboutPrivateBrowsing.info.searches              "kërkime">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "kartela të përkohshme">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox-i ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "do të ruajë">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "shkarkimet tuaja">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "faqerojtësit tuaj">
+<!ENTITY aboutPrivateBrowsing.note.before                "Shfletimi Privat ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nuk ju bën anonim">
+<!ENTITY aboutPrivateBrowsing.note.after                 " në Internet. Punëdhënësi juaj apo furnizuesi juaj i shërbimit internet mundet prapëseprapë të mësojë se cilat faqe vizitoni.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Mësoni më tepër mbi">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Shfletimin Privat">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Mbrojtje Nga Gjurmimet">
+<!ENTITY trackingProtection.description2                 "Disa sajte përdorin gjurmues që mund të mbikëqyrin veprimtarinë tuaj nëpër Internet. Me Mbrojtjen Nga Gjurmimet, Waterfox-i do të bllokojë mjaft nga gjurmuesit që mund të mbledhin informacione rreth mënyrës se si shfletoni.">
+<!ENTITY trackingProtection.startTour1                   "Shihni se si funksionon">

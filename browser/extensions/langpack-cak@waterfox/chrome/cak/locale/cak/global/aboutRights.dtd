@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Tawetamaj kiwäch ri taq ach'ojib'al">
+<!ENTITY rights.intro "&brandFullName; jun jamäl kema' chuqa' jaqäl chi nimaläj b'i'aj, ri nuk'un kuma molaj taq winäq aj chijun ri ruwach'ulew. Ja re' ri jujun taq na'oj ri k'atzinel nawetamaj:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; wachel rik'in re taq rojqanem ri ">
+<!ENTITY rights.intro-point1b "Ruwinaqilal ya'öl q'ij Mozilla">
+<!ENTITY rights.intro-point1c ". Rere' nrajo' nub'ij chi ütz nawokisaj, nawachib'ej chuqa' nataluj ri &brandShortName; chi ke ch'aqa' chik.  Chuqa' ütz najalwachij ri ruxe' nimatz'ib' ri &brandShortName; achike na rub'eyal rajowaxik chawe. Ri ya'öl ruq'ij winaqilal ri Mozilla chuqa' nuya' pan ach'ojib'al chi ye'ataluj ri taq ruwäch ye'ak'ëx.">
+
+<!ENTITY rights.intro-point2-a "Man niya' ta ri taq ch'ojib'äl kichin ri taq rajawal o taq ya'öl q'ij ri e retal rub'i' eruq'alajisan ri Mozilla Moloj o xa b'a achike jun chik peraj, ri chuqa' k'o chupam ri rub'i' o ruwachib'al rub'i' ri Waterfox. Ch'aqa' chik etamab'äl chi kij ri taq retal b'i'aj tikirel nawïl pa ">
+<!ENTITY rights.intro-point2-b "wawe'">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Jujun taq rub'anikil pa &brandShortName;, achi'el ri rutzijol taq sachoj, xtuya' q'ij chawe chi natäq el etamab'äl pa &vendorShortName;. Toq nacha' natäq ri taq atzijol, naya' q'ij chi re' ri &vendorShortName; richin yerokisaj richin yerub'än rutzil ri taq ruk'ayij, yerutz'ajb'a' ri taq atzijol pa ri ruxaq ruk'amaya'l chuqa' yerutaluj ri taq atzijol.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Achike rub'eyal niqokisaj ri rutzijol awichin chuqa' taq atzijol k'o pa &vendorShortName; rik'in ri &brandShortName; xkecholajïx pa ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Richinan Na'oj">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Xa b'a achike richinan na'oj okel pa re k'ayij re', rajowaxik niq'alajisäx wawe'.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Jujun taq rub'anikil ri &brandShortName; nikokisaj taq samaj pa ruwi' na'oj, ri k'o kixe'el richin k'amaya'l; xa xe chi man yojtikïr ta niqajikib'a' chi kan e 100&#037; ütz chuqa' chi majun rusachoj. Nilitäj ch'aqa' chik taq rutzijol, achi'el taq etamab'äl pa ruwi' rub'eyal ye'achüp ri kib'anikil nikokisaj re taq samaj re', pa ">
+<!ENTITY rights.intro-point4b "rojqanem samaj">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "We re jun k'ayij re' k'o taq rusamaj k'amaya'l chupam, xa b'a achike chi rojqanem samaj okel pa (taq) samaj k'o ta chi kiximon ki' pa ">
+<!ENTITY rights.intro-point4b-unbranded "Taq rusamaj ri ruxaq k'amaya'l">
+<!ENTITY rights.intro-point4c-unbranded " peraj.">
+
+<!ENTITY rights2.webservices-header "taq samaj retamab'äl ri &brandFullName; k'o kixe'el pa k'amaya'l">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Richin ye'atzïj jujun taq ruwäch chi rupam silowachib'äl, &brandShortName; ke'aqasaj jujun peraj taq ch'akul richin chi e'etaman kipam aj rox winäq.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; nrokisaj taq samaj richin etamab&apos;äl ri k&apos;o ruxe&apos;el pa k&apos;amaya&apos;l (&quot;taq samaj&quot;) richin nuq&apos;alajisab&apos;ej jujun taq rub&apos;anikil ya&apos;on retal richin rokisaxik rik&apos;in ri ruwäch rukach&apos;akul ri &brandShortName; rik&apos;in ri taq ojqanem xkecholajïx qa. We man nawajo&apos; ta nawokisaj jun o juley chik taq samaj o man e ütz ta chawäch ri taq ojqanem, ütz nachüp ri rusamaj o (taq) Samaj. Ri taq rucholajil pa ruwi&apos; rub&apos;eyal nachüp jun rub&apos;anikil o samaj, ütz nawïl pa ">
+<!ENTITY rights2.webservices-b "wawe'">
+<!ENTITY rights3.webservices-c ". Ch'aqa' chik taq rub'anikil o taq samaj ütz yechup pa taq rajowaxik ri samajel.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Ütz okem pa k'amaya'l: ">
+<!ENTITY rights.safebrowsing-b "Man ruk'amon ta nachüp ri ütz okem pa kematz'ib', ruma chi rik'in jub'a' katok chupam itzel taq ruxaq k'amaya'l.  We nawajo' jumul nachüp re rusamaj re', tawoqaj re jujun taq rucholajil re:">
+<!ENTITY rights.safebrowsing-term1 "Tajaqa' ri taq rajowaxik samajel">
+<!ENTITY rights.safebrowsing-term2 "Tacha' ri rucha'oj chajinem">
+<!ENTITY rights2.safebrowsing-term3 "Tachupu&apos; ri cha&apos;oj richin &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Wakami ri ütz okem pa k'amaya'l chupül">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Okem pa k'amaya'l k'o ruxe'el pa ruk'ojlemal: ">
+<!ENTITY rights.locationawarebrowsing-b "junelïk cha'el ruma ri winäq.  Majub'ey nitaq etamab'äl chi rij ri ruk'ojlemal we man naya' ta q'ij.  We kan nawajo' nachüp re rub'anikil re', tawoqaj re taq rucholajil re':">
+<!ENTITY rights.locationawarebrowsing-term1a "Pa URL k'amaya'l, tatz'ib'aj ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Ruwäch geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Ka'i' pitz' pa rajowaxik geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Wakami chupül ri okem pa k'amaya'l rik'in k'ojlemal">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Wawe' k'o chi nitz'aqatisäx apo jun ruch'utitzijol rusamaj ri ruxaq k'amaya'l, ri ruk'wan ri k'ayij, chuqa' k'o pe ri taq rucholajil rub'eyal nitz'apïx, we ke ri' rajowaxik.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Konojel ri taq rojqanem samaj e okel chi re, re k'ayij re', k'atzinel chi e cholotäl qa wawe'.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; chuqa' ri taq ruto'onela', ajya'öl q'ij chuqa' achib'ilal samaj, ri yeya'on ri jikïl chuqa' k'exon samaj.  Xa xe chi man yojtikïr ta niqajikib'a' chi re etamab'äl re' tz'aqät chuqa' chi majun sachoj chupam.  Achi'el, ri samaj chi rij ütz okem pa k'amaya'l rik'in jub'a' man titikïr ta nuya' ketal jujun taq itzel ruxaq k'amaya'l chuqa' rik'in jub'a' choj nisach toq nuya' ketal chi e ütz jujun taq ruxaq k'amaya'l chuqa' ri taq retal ochochib'äl tzolin pe kuma ri ya'öl samaj chi rij okema pa k'amaya'l toq ruk'wa'a'n ri k'ojlemal xa xe jun q'ijub'äl chuqa' ni xa ta röj chuqa' ri e ya'öl qasamaj kan niqajikib'a' ri taq k'ojlemal eya'on pe.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; nitikïr nuqupij o nuk'ëx ri Samaj ri nawajo' rat.">
+<!ENTITY rights2.webservices-term3 "Yatqapeyoj chi ye'awokisaj ri taq samaj rik'in ri ruwäch rachib'ilanik ri &brandShortName;, chuqa'  &vendorShortName; nuya' q'ij chawe' richin  nab'än. &vendorShortName; chuqa' ri yeya'on q'ij nikiq'ät ki chuwäch ri ch'aqa' chik taq ch'ojib'äl chi kij ri taq samaj. Ri taq ojqanem ri' man nuq'ät ta majun chi ch'ojib'äl nikiya' ri taq ya'öl q'ij chi rij ri nimaläj b'i'aj aj okel pa &brandShortName; chuqa' ri taq kiwäch taq nimaläj b'i'aj richin tz'ib' e k'o pa &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Ri taq samaj richinan &quot;achi&apos;el.&quot;  &vendorShortName;, ri to&apos;onela&apos;, ajya&apos;öl q&apos;ij chuqa&apos; talunela&apos;, nikixutüj xa b&apos;a achike retal chilab&apos;enïk, achi&apos;el akuchi&apos; tz&apos;ib&apos;atäl wi chuqa&apos; nuna&apos;ojij rij, ri k&apos;o chupam chuqa&apos; man nuq&apos;ät ta ri&apos;, retal chilab&apos;enïk chi ri samaj ajk&apos;ayij chuqa&apos; chi nik&apos;atzin chi re jun winäq.  Rat natz&apos;ila&apos; awi&apos; we nacha&apos; re jun samaj re&apos; richin nawokisaj, achi&apos;el chuqa&apos; ri rutzil chuqa&apos; rub&apos;eyal nisamäj. Jujun taq ulewal man nikiya&apos; ta q&apos;ij richin ye&apos;elesäx o yeq&apos;at ri taq retal chilab&apos;enïk e ch&apos;ob&apos;otel, we ke ri&apos; re jun q&apos;atoj re&apos; man xtitikïr ta xtub&apos;än rusamaj.">
+<!ENTITY rights.webservices-term5 "Xa xe we nich'ojïx ruma ri taqanem tzij, &vendorShortName; ri taq ruto'onela', taq ajya'öl q'ij chuqa' talunela' man xkepa'e' ta ki' chuwäch jun k'ayewal man chuwäch ta, nimaläj, k'ulwachinem, jikïl, k'o ruk'amon pe o tz'etel, ri yek'ulwachitäj pe rik'in rokisaxik ri &brandShortName; chuqa' ri taq samaj.  Ri niman tzij pa molaj ruma ri taq ojqanem ri' man niq'ax ta chuwäch ri US$500 (juq'o' juk'al taq dolar). Jujun taq ulewal man nikiya' ta q'ij chi nik'is o niq'at kiwa jujun taq tz'ilanem, ruma ri' re jun elenem re' o q'atoj rik'in jub'a' man okel ta chawe.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; ütz ye'ak'ëx re taq ojqanem re we rajowaxik chi ramajil chi ramajil. Man ütz ta yejal o yeq'at we man nuya' ta q'ij pa tz'ib'anïk ri &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Re jujun taq ojqanem re' nitz'et kiwa kuma ri taq rutaqanem tzij ri California amaq', U.S.A, ye'el chuqa' chupam ri taq k'ayewal kik'in ch'aqa' chik taqanem taq tzij. We jun peraj chi ke re taq ojqanem re' nitz'et chi man e ütz ta o man tikirel ta yesamajïx, ri ch'aqa' chik k'o chupam jikïl ri kuchuq'a' chuqa' kik'amon pe. We k'o k'ayewal rik'in ri kitzalq'omanik re taq ojqanem re' rik'in ri pa q'anchi', ja ri ruwäch pa q'anchi' xtoqäx.">

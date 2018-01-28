@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Skrifttyper">
+
+<!ENTITY  language.label                          "Skrifttyper for:">
+<!ENTITY  language.accesskey                      "k">
+
+<!ENTITY  size.label                              "Størrelse:">
+<!ENTITY  sizeProportional.accesskey              "r">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "Proporsjonal:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Seriffskrift:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Seriffløs skrift:">
+<!ENTITY  sans-serif.accesskey                    "ø">
+<!ENTITY  monospace.label                         "Fast bredde:">
+<!ENTITY  monospace.accesskey                     "F">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Vestlig">
+<!ENTITY  font.langGroup.japanese                 "Japansk">
+<!ENTITY  font.langGroup.trad-chinese             "Tradisjonell kinesisk (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Forenklet kinesisk">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tradisjonell kinesisk (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreansk">
+<!ENTITY  font.langGroup.cyrillic                 "Kyrillisk">
+<!ENTITY  font.langGroup.el                       "Gresk">
+<!ENTITY  font.langGroup.other                    "Andre skriftsystemer">
+<!ENTITY  font.langGroup.thai                     "Thai">
+<!ENTITY  font.langGroup.hebrew                   "Hebraisk">
+<!ENTITY  font.langGroup.arabic                   "Arabisk">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilsk">
+<!ENTITY  font.langGroup.armenian                 "Armensk">
+<!ENTITY  font.langGroup.bengali                  "Bengalsk">
+<!ENTITY  font.langGroup.canadian                 "Kanadisk">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopisk">
+<!ENTITY  font.langGroup.georgian                 "Georgisk">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matematikk">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kanaresisk">
+<!ENTITY  font.langGroup.sinhala                  "Singalesisk">
+<!ENTITY  font.langGroup.tibetan                  "Tibetansk">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minste skriftstørrelse:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Ingen">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Seriffskrift">
+<!ENTITY  useDefaultFontSansSerif.label           "Seriffløs skrift">
+
+<!ENTITY  allowPagesToUseOwn.label                "Tillat nettsider å velge egne skrifttyper, istedenfor dine valg ovenfor">
+<!ENTITY  allowPagesToUseOwn.accesskey            "T">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Tegnkoding for eldre innhold">
+<!ENTITY languages.customize.Fallback2.label      "Reserve-tegnkoding:">
+<!ENTITY languages.customize.Fallback2.accesskey  "v">
+<!ENTITY languages.customize.Fallback2.desc       "Denne tegnkodingen brukes for eldre innhold som ikke oppgir hvilken tegnkoding som benyttes.">
+
+<!ENTITY languages.customize.Fallback.auto        "Standard for gjeldende språk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabisk">
+<!ENTITY languages.customize.Fallback.baltic      "Baltisk">
+<!ENTITY languages.customize.Fallback.ceiso       "Sentraleuropeisk, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Sentraleuropeisk, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Kinesisk, forenklet">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Kinesisk, tradisjonell">
+<!ENTITY languages.customize.Fallback.cyrillic    "Kyrillisk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Gresk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebraisk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japansk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Koreansk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Thai">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Tyrkisk">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnamesisk">
+<!ENTITY languages.customize.Fallback.other       "Annet (inkl. vesteuropeisk)">

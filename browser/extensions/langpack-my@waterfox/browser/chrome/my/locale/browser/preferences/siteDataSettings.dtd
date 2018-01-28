@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "အပြင်အဆင်များ - ဆိုက်ဒေတာ">
+<!ENTITY     hostCol.label                 "ဆိုက်">
+<!ENTITY     statusCol.label               "အခြေအနေ">
+<!ENTITY     usageCol.label                "သိမ်းဆည်းပါ">
+<!ENTITY     searchTextboxPlaceHolder             "ဝဘ်ဆိုက်များကို ရှာဖွေရန်">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "ရွေးထားသည့်အရာများကို ဖယ်ရှားပါ">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "ပြောင်းလဲမှုများကို သိမ်းပါ">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "မလုပ်ဆောင်တော့ပါ">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "ဝဘ်ဆိုက်ဒေတာကို ဖယ်ရှားနေပါသည်">
+<!ENTITY     removingSelected.description  "ဆိုက်အချက်အလက်များကို ဖျက်ပါက ဆက်စပ်သော ကွတ်ကီးများနှင့် ချိတ်ဆက်မဲ့ ဝဘ်အချက်အလက်များကိုပါ ဖျက်ပါမည်။ ယခုကဲ့သို့ ဖျက်လျှင် ဝဘ်ဆိုက်များတွင် ဝင်ထားပါက ထွက်မည်။ ပြောင်းလဲမှုများကို ပြုလုပ်မည်မှာ သေချာပါသလား။">
+<!ENTITY     siteTree.label                "အောက်ပါဝဘ်ဆိုက်၏ ကွတ်ကီးကို ဖယ်ရှားပါမည်။">

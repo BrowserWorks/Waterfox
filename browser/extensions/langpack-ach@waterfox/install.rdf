@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-ach@waterfox"
+               em:name="Acholi (UG) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="mozilla.org">
+    <em:contributor>San James</em:contributor> <em:contributor>War Child Holland-Uganda</em:contributor> <em:contributor>Acuma George Patrick</em:contributor> <em:contributor>Keneth Ogwal</em:contributor>  <em:contributor>Dan Jasper Okello</em:contributor> <em:contributor>Opio June Brian</em:contributor> <em:contributor>Kaloba Haron</em:contributor> <em:contributor>Komakech S. B. Ford</em:contributor> <em:contributor>Akena David Akeni</em:contributor> <em:contributor>Acire Samuel</em:contributor>  <em:contributor>Ojara David Prince</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

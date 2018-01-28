@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "প্রোফাইল সম্পর্কে">
+<!ENTITY aboutProfiles.subtitle "এই পৃষ্ঠা আপনাকে আপনার প্রোফাইল পরিচালনা করতে সাহায্য করবে। প্রতিটি প্রোফাইলের একটি পৃথক জগৎ রয়েছে সেখানে ইতিহাস, বুকমার্ক, সেটিং, অ্যাড-অন রয়েছে।">
+<!ENTITY aboutProfiles.create "একটি নতুন প্রোফাইল তৈরি করুন">
+<!ENTITY aboutProfiles.restart.title "পুনরারম্ভ">
+<!ENTITY aboutProfiles.restart.inSafeMode "অ্যাড-অন নিষ্ক্রিয় করে পুনরারম্ভ করুন…">
+<!ENTITY aboutProfiles.restart.normal "স্বাভাবিকভাবে পুনরারম্ভ করুন…">

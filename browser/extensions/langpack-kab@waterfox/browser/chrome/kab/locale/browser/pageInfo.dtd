@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Nɣel">
+<!ENTITY  copy.accesskey        "N">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Ffren Akk">
+<!ENTITY  selectall.accesskey   "F">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Amatu">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Azwel:">
+<!ENTITY  generalURL            "Tansa:">
+<!ENTITY  generalType           "Tawsit:">
+<!ENTITY  generalMode           "Askar n tririt:">
+<!ENTITY  generalSize           "Teɣzi:">
+<!ENTITY  generalReferrer       "URL n uɣbalu:">
+<!ENTITY  generalSource         "Aɣbalu n tuffirt:">
+<!ENTITY  generalModified       "Iţusnifel:">
+<!ENTITY  generalEncoding2      "Asettengel n uḍris:">
+<!ENTITY  generalMetaName       "Isem">
+<!ENTITY  generalMetaContent    "Agbur">
+
+<!ENTITY  mediaTab              "Allalen n teywalt">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adeg:">
+<!ENTITY  mediaText             "Aḍris iccuden:">
+<!ENTITY  mediaAltHeader        "Aḍris amlellay">
+<!ENTITY  mediaAddress          "Tansa">
+<!ENTITY  mediaType             "Tawsit">
+<!ENTITY  mediaSize             "Teɣzi">
+<!ENTITY  mediaCount            "Amḍan">
+<!ENTITY  mediaDimension        "tisektiwin">
+<!ENTITY  mediaLongdesc         "Aglam ɣezzifen:">
+<!ENTITY  mediaBlockImage.accesskey "u">
+<!ENTITY  mediaSaveAs           "Sekles s yisem…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "y">
+<!ENTITY  mediaPreview          "Taskant n wallal n teywalt:">
+
+<!ENTITY  feedTab               "Isuddam">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Jerred">
+<!ENTITY  feedSubscribe.accesskey "J">
+
+<!ENTITY  permTab               "Tisirag">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Tisirag n tazwara">
+<!ENTITY  permAskAlways         "Sutur yal tikelt">
+<!ENTITY  permAllow             "Sireg">
+<!ENTITY  permAllowSession      "Sireg i tɣimit">
+<!ENTITY  permBlock             "Sewḥel">
+<!ENTITY  permissionsFor        "Tisirag i:">
+<!ENTITY  permPlugins           "Rmed izegrar ">
+
+<!ENTITY  permClearStorage           "Kkes isefka">
+<!ENTITY  permClearStorage.accesskey "K">
+
+<!ENTITY  securityTab           "Taɣellist">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Sken aselkin">
+<!ENTITY  securityView.accesskey "k">
+<!ENTITY  securityView.unknown   "Arussin">
+
+
+<!ENTITY  securityView.identity.header   "Tamagit n usmel web">
+<!ENTITY  securityView.identity.owner    "Bab:">
+<!ENTITY  securityView.identity.domain   "Asmel web:">
+<!ENTITY  securityView.identity.verifier "Isenqed-it:">
+<!ENTITY  securityView.identity.validity "Ad yemmet di:">
+
+<!ENTITY  securityView.privacy.header                   "Tudert tusligt d umezgar">
+<!ENTITY  securityView.privacy.history                  "Rziɣ yakan ɣer usmel-a web?">
+<!ENTITY  securityView.privacy.cookies                  "Asmel-a web igemmer talɣut (inagan n tuqqna) ɣef uselkim-inu?">
+<!ENTITY  securityView.privacy.viewCookies              "Wali inagan n tuqqna">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "g">
+<!ENTITY  securityView.privacy.passwords                "Skelseɣ awal uffir i usmel-a web?">
+<!ENTITY  securityView.privacy.viewPasswords            "Wali awalen uffiren yettwakelsen">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Talqayt tatiknikt">
+
+<!ENTITY  helpButton.label                              "Tallalt">

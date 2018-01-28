@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Информация за url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Доставчик">
+<!ENTITY aboutUrlClassifier.provider                    "Доставчик">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Последно обновяване">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Следващо обновяване">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Време за премахване на елемент">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Състояние на последното обновяване">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Обновяване">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Кеш">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Опресняване">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Изчистване">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Име на таблица">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Брой на отрицателни записи в кеша">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Брой на положителни записи в кеша">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Показване на записите">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Записи в кеша">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Представка">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Срок на отрицателен кеш">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Пълен хеш">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Срок на положителен кеш">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Дебъгване">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Задаване на модули за журнала">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Задаване на файлове за журнала">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Задаване журнал за JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Модули за журнала при надеждно сърфиране">
+<!ENTITY aboutUrlClassifier.debugModules                "Текущи модули за журнала">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Журнал на JS при надеждно сърфиране">
+<!ENTITY aboutUrlClassifier.debugFile                   "Текуж файл на журнала">

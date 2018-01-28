@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Параметры - Данные сайтов">
+<!ENTITY     hostCol.label                 "Сайт">
+<!ENTITY     statusCol.label               "Статус">
+<!ENTITY     usageCol.label                "Хранилище">
+<!ENTITY     searchTextboxPlaceHolder             "Поиск веб-сайтов">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "и">
+<!ENTITY     removeSelected.label          "Удалить выбранное">
+<!ENTITY     removeSelected.accesskey      "а">
+<!ENTITY     save.label                    "Сохранить изменения">
+<!ENTITY     save.accesskey                "х">
+<!ENTITY     cancel.label                  "Отмена">
+<!ENTITY     cancel.accesskey              "м">
+<!ENTITY     removingDialog.title          "Удаление данных сайтов">
+<!ENTITY     removingSelected.description  "Удаление данных сайтов приведёт к удалению соответствующих кук и автономного веб-содержимого. Это может привести к разрегистрации на веб-сайтах. Вы уверены, что хотите произвести изменения?">
+<!ENTITY     siteTree.label                "Будут удалены следующие куки веб-сайтов:">

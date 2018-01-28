@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "打印">
+
+<!ENTITY printDialog.title "打印">
+
+<!ENTITY fpDialog.title "保存文件">
+
+<!ENTITY fileCheck.label "打印至文件">
+<!ENTITY fileCheck.accesskey "F">
+<!ENTITY propertiesButton.label "属性…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "打印机描述：">
+<!ENTITY printer.label "打印机">
+<!ENTITY printerInput.label "打印机名称：">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "打印范围">
+<!ENTITY allpagesRadio.label "全部页">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "页">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "从">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "到">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "选择">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "份">
+<!ENTITY numCopies.label "份数：">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "打印框架">
+<!ENTITY aslaidoutRadio.label "如屏幕所示布局">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label  "所选框架">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "分开打印每个框架">
+<!ENTITY eachframesepRadio.accesskey  "E">

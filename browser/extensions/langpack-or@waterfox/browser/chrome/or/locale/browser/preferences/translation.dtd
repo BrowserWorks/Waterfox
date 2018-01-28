@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ବ୍ୟତୀକ୍ରମ - ଅନୁବାଦ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ନିମ୍ନଲିଖିତ ଭାଷାଗୁଡ଼ିକ ପାଇଁ ଅନୁବାଦ ଦିଆଯିବ ନାହିଁ:">
+<!ENTITY treehead.languageName.label      "ଭାଷା">
+<!ENTITY removeLanguage.label             "ଭାଷା ବାହାର କରନ୍ତୁ">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "ସମସ୍ତ ଭାଷାଗୁଡ଼ିକୁ ବାହାର କରନ୍ତୁ">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "ନିମ୍ନଲିଖିତ ସାଇଟଗୁଡ଼ିକ ପାଇଁ ଅନୁବାଦ ଦିଆଯିବ ନାହିଁ:">
+
+<!ENTITY removeSite.label                 "ସାଇଟ ହଟାନ୍ତୁ">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "ସମସ୍ତ ସାଇଟଗୁଡ଼ିକୁ ହଟାନ୍ତୁ">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "ବନ୍ଦକରନ୍ତୁ">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "Air a chruthachadh le:">
+<!ENTITY  developers.label            "Luchd-leasachaidh:">
+<!ENTITY  translators.label           "Eadar-theangadairean:">
+<!ENTITY  contributors.label          "Luchd-cuideachaidh:">
+<!ENTITY  homepage.label              "Tadhail air an duilleag-dhachaidh">

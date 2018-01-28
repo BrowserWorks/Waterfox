@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Startowaś">
+
+<!ENTITY startupPage.label         "Gaž &brandShortName; se startujo:">
+<!ENTITY startupPage.accesskey     "G">
+<!ENTITY startupUserHomePage.label "Waš startowy bok pokazaś">
+<!ENTITY startupBlankPage.label    "Prozny bok pokazaś">
+<!ENTITY startupPrevSession.label  "Waše wokna a rejtarki wót slědnego raza pokazaś">
+
+<!ENTITY homepage.label            "Startowy bok:">
+<!ENTITY homepage.accesskey        "S">
+<!ENTITY useCurrentPage.label      "Aktualny bok wužywaś">
+<!ENTITY useCurrentPage.accesskey  "A">
+<!ENTITY useMultiple.label         "Aktualne boki wužywaś">
+<!ENTITY chooseBookmark.label      "Cytańske znamje wužywaś…">
+<!ENTITY chooseBookmark.accesskey  "C">
+<!ENTITY restoreDefault.label      "Standard wótnowiś">
+<!ENTITY restoreDefault.accesskey  "t">
+
+<!ENTITY downloads.label     "Ześěgnjenja">
+
+<!ENTITY saveTo.label "Dataje składowaś do">
+<!ENTITY saveTo.accesskey "D">
+<!ENTITY chooseFolderWin.label        "Pśepytaś…">
+<!ENTITY chooseFolderWin.accesskey    "e">
+<!ENTITY chooseFolderMac.label        "Wubraś…">
+<!ENTITY chooseFolderMac.accesskey    "u">
+<!ENTITY alwaysAskWhere.label         "Pśecej se pšašaś, źož dataje maju se składowaś">
+<!ENTITY alwaysAskWhere.accesskey     "P">
+
+<!ENTITY alwaysCheckDefault2.label        "Pśecej kontrolěrowaś, lěc &brandShortName; jo waš standardny wobglědowak">
+<!ENTITY alwaysCheckDefault2.accesskey    "c">
+<!ENTITY setAsMyDefaultBrowser2.label     "K standardoju cyniś">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "s">
+<!ENTITY isDefault.label                  "&brandShortName; jo tuchylu waš standardny wobglědowak">
+<!ENTITY isNotDefault.label               "&brandShortName; njejo waš standardny wobglědowak">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; a Waterfox dowóliś, rownocasnje běžaś">
+<!ENTITY useWaterfoxSync.label             "Tip: To wužywa separatne profile. Wužywajśo Sync, aby daty mjazy nimi źělił.">
+<!ENTITY getStarted.notloggedin.label     "Se pla &syncBrand.shortName.label; pśizjawiś…">
+<!ENTITY getStarted.configured.label      "Nastajenja &syncBrand.shortName.label; wócyniś">
+
+<!ENTITY e10sEnabled.label                "Wěcejprocesowy &brandShortName; zmóžniś">

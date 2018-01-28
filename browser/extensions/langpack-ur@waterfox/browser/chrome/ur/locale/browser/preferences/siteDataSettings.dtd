@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "سیٹکگیں - سائٹ کے کوائف">
+<!ENTITY     hostCol.label                 "سائٹ">
+<!ENTITY     statusCol.label               "موجودہ حالت ">
+<!ENTITY     usageCol.label                "ذخیرہ">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "منسوخ کریں">
+<!ENTITY     cancel.accesskey              "م">
+<!ENTITY     removingDialog.title          "سائٹ کے کوائف ہٹائیں">
+
+<!ENTITY     removeSelected.label          "Remove Selected">
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">
+<!ENTITY     save.label                    "Save Changes">
+<!ENTITY     searchTextboxPlaceHolder             "Search websites">
+<!ENTITY     siteTree.label                "The following website cookies will be removed:">

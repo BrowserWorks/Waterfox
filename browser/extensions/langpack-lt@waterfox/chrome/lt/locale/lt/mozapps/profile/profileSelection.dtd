@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "„&brandShortName;“ profilio pasirinkimas">
+
+<!ENTITY            profilename.label      "Profilio vardas:">
+
+<!ENTITY            start.label            "Paleisti „&brandShortName;“">
+<!ENTITY            exit.label             "Baigti darbą">
+
+<!ENTITY            availprofiles.label    "Esami profiliai">
+
+<!ENTITY            newButton.label        "Sukurti profilį…">
+<!ENTITY            newButton.accesskey    "k">
+<!ENTITY            renameButton.label     "Pervardyti profilį…">
+<!ENTITY            renameButton.accesskey "v">
+<!ENTITY            deleteButton.label     "Pašalinti profilį…">
+<!ENTITY            deleteButton.accesskey "š">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "„&brandShortName;“ nuostatos, tinklaviečių adresynas, laiškai ir kt. informacija laikoma naudotojo profilyje.">
+
+<!ENTITY            offlineState.label    "Dirbti neprisijungus prie tinklo">
+<!ENTITY            offlineState.accesskey "D">
+
+<!ENTITY            useSelected.label       "Ateityje neklausiant naudoti nurodytą profilį">
+<!ENTITY            useSelected.accesskey   "A">

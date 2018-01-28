@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "新分頁">
+<!ENTITY newtab.customize.classic "顯示您最常造訪的網站">
+<!ENTITY newtab.customize.cog.enhanced "包含推薦網站">
+<!ENTITY newtab.customize.cog.title2 "新分頁選項">
+<!ENTITY newtab.customize.cog.learn "了解新分頁的更多資訊">
+<!ENTITY newtab.customize.title "自訂您的新分頁頁面">
+<!ENTITY newtab.customize.blank2 "顯示空白頁面">
+<!ENTITY newtab.undo.removedLabel "已移除縮圖。">
+<!ENTITY newtab.undo.undoButton "還原。">
+<!ENTITY newtab.undo.restoreButton "全部恢復。">
+<!ENTITY newtab.undo.closeTooltip "隱藏">

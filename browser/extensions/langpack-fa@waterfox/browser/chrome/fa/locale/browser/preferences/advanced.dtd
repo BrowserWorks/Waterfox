@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "عمومی">
+
+<!ENTITY useCursorNavigation.label       "در مرور صفحات همیشه از مکان‌نما استفاده شود">
+<!ENTITY useCursorNavigation.accesskey   "ص">
+<!ENTITY searchOnStartTyping.label       "هنگامی که شروع به وارد کردن حروف می‌کنم، به دنبال متن جست‌وجو شود">
+<!ENTITY searchOnStartTyping.accesskey   "ج">
+<!ENTITY useOnScreenKeyboard.label       "نمایش یک صفحه‌کلید لمسی در صورت لزوم">
+<!ENTITY useOnScreenKeyboard.accesskey   "ص">
+
+<!ENTITY browsing.label                  "مرور">
+
+<!ENTITY useAutoScroll.label             "استفاده از لغزش خودکار">
+<!ENTITY useAutoScroll.accesskey         "ل">
+<!ENTITY useSmoothScrolling.label        "استفاده از لغزش هموار">
+<!ENTITY useSmoothScrolling.accesskey    "غ">
+<!ENTITY checkUserSpelling.label         "بررسی املا همزمان با نوشتن">
+<!ENTITY checkUserSpelling.accesskey     "ن">
+
+<!ENTITY dataChoicesTab.label            "انتخاب داده‌ها">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "گزارش کردن داده‌ها برای این پیکربندی ساخته شده غیرفعال شده است">
+
+<!ENTITY enableHealthReport1.label       "اجازه داده به &brandShortName; برای ارسال خودکار اطلاعات فعالیت‌های فنی به موزیلا">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "بیشتر بدانید">
+
+<!ENTITY dataCollection.label            "ذخیره اطلاعات و استفاده &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "ما تمام تلاش خود را می‌کنیم که به شما حق انتخاب بدهیم و تنها اطلاعاتی را جمع‌آوری کنیم که برای بهبود &brandShortName; برای همه، کمک کند. ما همیشه قبل از دریافت اطلاعات شخصی از شما اجازه خواهیم گرفت.">
+<!ENTITY dataCollectionPrivacyNotice.label    "نکات حفظ حریم خصوصی">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "اجازه دادن به &brandShortName; برای ارسال گزارشات خرابی برای موزیلا">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "بیشتر بدانید">
+
+<!ENTITY networkTab.label                "شبکه">
+
+<!ENTITY networkProxy.label              "شبکه پراکسی">
+
+<!ENTITY connectionDesc.label            "چگونگی اتصال &brandShortName; به اینترنت را پیکربندی کنید">
+<!ENTITY connectionSettings.label        "تنظیمات…">
+<!ENTITY connectionSettings.accesskey    "ت">
+
+<!ENTITY httpCache.label                 "ذخیره محتوا وب در حافظه‌ پنهان">
+
+<!ENTITY offlineStorage2.label           "محتوا وب و اطلاعات کاربر به صورت برون‌خط">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "اطلاعات پایگاه اینترنتی">
+<!ENTITY clearSiteData.label             "پاک کردن همه داده‌ها">
+<!ENTITY clearSiteData.accesskey         "پ">
+<!ENTITY siteDataSettings.label          "تنظیمات…">
+<!ENTITY siteDataSettings.accesskey      "ت">
+<!ENTITY siteDataLearnMoreLink.label     "بیشتر بدانید">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "محدود کردن حافظهٔ نهان به">
+<!ENTITY limitCacheSizeBefore.accesskey  "م">
+<!ENTITY limitCacheSizeAfter.label       "مگابایت از فضا">
+<!ENTITY clearCacheNow.label             "هم‌اکنون پاک شود">
+<!ENTITY clearCacheNow.accesskey         "ه">
+<!ENTITY clearOfflineAppCacheNow.label   "هم‌اکنون پاک شود">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ه">
+<!ENTITY overrideSmartCacheSize.label    "لغو مدیریت دستی حافظهٔ نهان">
+<!ENTITY overrideSmartCacheSize.accesskey "ل">
+
+<!ENTITY updateTab.label                 "بروزرسانی">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "بروزرسانی‌های &brandShortName;:">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "برای تجربه بهترین کارایی، پایداری و امنیت &brandShortName; را به روز نگاه دارید.">
+<!ENTITY updateApplication.version.pre   "نسخه">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "اجازه داده به &brandShortName; برای">
+<!ENTITY updateAuto3.label               "بروزرسانی‌ها به صورت خودکار نصب شود (پیشنهاد می‌شود)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "وجود بروزرسانی‌ها را بررسی کن، اما به شما اجازه انتخاب برای نصب داده شود">
+<!ENTITY updateCheckChoose2.accesskey    "و">
+<!ENTITY updateManual2.label             "هرگز برای بروزرسانی‌ها بررسی نکن (توصیه نمی‌شود)">
+<!ENTITY updateManual2.accesskey         "ه">
+
+<!ENTITY updateHistory2.label            "نمایش تاریخچهٔ بروزرسانی…">
+<!ENTITY updateHistory2.accesskey        "ت">
+
+<!ENTITY useService.label                "از سرویس پس‌زمینه برای نصب بروزرسانی ها استفاده شود">
+<!ENTITY useService.accesskey            "پ">
+
+<!ENTITY enableSearchUpdate2.label       "بطور خودکار موتورهای جست‌وجو بروزرسانی شوند">
+<!ENTITY enableSearchUpdate2.accesskey   "س">
+
+<!ENTITY offlineStorageNotify.label               "هنگامی که یک پایگاه وب تلاش می‌کند اطلاعاتی برای استفاده آفلاین ذخیره کند به من اطلاع بده">
+<!ENTITY offlineStorageNotify.accesskey           "ه">
+<!ENTITY offlineStorageNotifyExceptions.label     "استثناها…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ث">
+
+<!ENTITY offlineAppsList2.label          "پایگاه‌های وب زیر اجازه ذخیره اطلاعات برای استفاده برون‌خط را دارند:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "حذف…">
+<!ENTITY offlineAppsListRemove.accesskey "ح">
+<!ENTITY offlineAppRemove.confirm        "حذف اطلاعات آفلاین">
+
+<!ENTITY certificateTab.label            "گواهینامه‌ها">
+<!ENTITY certPersonal2.description       "هنگامی که کارگزاری گواهی شخصی شما را درخواست می‌کند">
+<!ENTITY selectCerts.auto                "انتخاب‌ یکی به صورت خودکار">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "هر بار پرسیده شود">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "پرس‌وجو از کارگزار پاسخگوی OCSP جهت تصدیق اعتبار فعلی گواهینامه">
+<!ENTITY enableOCSP.accesskey            "پ">
+<!ENTITY viewCerts2.label                "نمایش‌ گواهینامه‌ها…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "دستگاه‌های امنیتی…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "کارایی">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "استفاده از تنظیماتِ کارایی توصیه شده">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "این تنظیمات بر اساس سخت‌افزار و سیستم‌عامل رایانهٔ شما تنظیم شده است.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "س">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "بیشتر بدانید">
+<!ENTITY limitContentProcessOption.label "محدودیت پروسهٔ محتوا">
+<!ENTITY limitContentProcessOption.description
+                                         "پروسه‌هایِ محتوایِ بیشتر می‌تواند کارایی را هنگام استفاده از چندین زبانه افزایش دهد، اما حافظه بیشتری هم مصرف خواهد کرد.">
+<!ENTITY limitContentProcessOption.accesskey   "م">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "تغییر دادن تعداد پردازدش‌های محتوا تنها با چند‌پردازشی &brandShortName; امکان پذیر است.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "بدانید چگونه بررسی کنید چندپرادزشی فعال است">
+<!ENTITY allowHWAccel.label              "استفاده از شتاب‌دهنده‌های سخت‌افزاری در صورت وجود">
+<!ENTITY allowHWAccel.accesskey          "ش">

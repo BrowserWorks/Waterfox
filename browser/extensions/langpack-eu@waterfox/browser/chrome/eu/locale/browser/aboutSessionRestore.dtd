@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Berreskuratu saioa">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Tira, hau pixka bat lotsagarria da.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; arazoak izaten ari da zure leihoak eta fitxak berreskuratzean. Hau berriki irekitako web orri baten ondorio izan ohi da.">
+<!ENTITY restorepage.tryThis        "Ondorengoa egiten saia zaitezke:">
+<!ENTITY restorepage.restoreSome    "Arazoaren sorburua dela uste duzun edozein fitxa ezabatzen">
+<!ENTITY restorepage.startNew       "Nabigatze-saio berria abiatzen">
+
+<!ENTITY restorepage.tryagainButton "Berreskuratu">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Itxi">
+<!ENTITY restorepage.close.access   "I">
+
+<!ENTITY restorepage.restoreHeader  "Berreskuratu">
+<!ENTITY restorepage.listHeader     "Leihoak eta fitxak">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "&#037;S leihoa">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Aurrera!">
+<!ENTITY welcomeback2.restoreButton.access "A">
+
+<!ENTITY welcomeback2.tabtitle      "Ongi!">
+
+<!ENTITY welcomeback2.pageTitle     "Ongi!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; erabiltzeko prest dago.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Berreskuratu leiho eta fitxa guztiak">
+<!ENTITY welcomeback2.restoreSome.label "Berreskuratu nahi dituzunak soilik">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Zure gehigarriak eta pertsonalizazioak kendu egin dira eta nabigatzailearen ezarpenak lehenespenetara leheneratu dira. Honek ez badu zure arazoa konpondu, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "irakurri argibide gehiago egin dezakezunaren inguruan.">
+

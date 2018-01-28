@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "ផ្លាស់ប្ដូរ​ពាក្យ​សម្ងាត់​មេ">
+<!ENTITY setPassword.tokenName.label "ឧបករណ៍​សុវត្ថិភាព">
+<!ENTITY setPassword.oldPassword.label "ពាក្យ​សម្ងាត់​បច្ចុប្បន្ន ៖">
+<!ENTITY setPassword.newPassword.label "ពាក្យ​សម្ងាត់​ថ្មី ៖">
+<!ENTITY setPassword.reenterPassword.label "ពាក្យ​សម្ងាត់​ថ្មី (ម្តង​ទៀត) ៖">
+<!ENTITY setPassword.meter.label "ឧបករណ៍​​វាស់​​​គុណ​ភាព​​​ពាក្យ​​​សម្ងាត់">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "កំណត់​ឡើង​វិញ">
+<!ENTITY resetPassword.title  "កំណត់​ពាក្យ​សម្ងាត់​មេ​ឡើង​​វិញ">
+<!ENTITY resetPassword.text  "ប្រសិន​បើ​អ្នក​កំណត់​ពាក្យ​សម្ងាត់​មេ​របស់​អ្នក​ឡើង​វិញ ពាក្យសម្ងាត់​បណ្ដាញ និង​អ៊ីមែល​ ទិន្នន័យ​ទ្រង់ទ្រាយ វិញ្ញាបនបត្រ​ផ្ទាល់ខ្លួន​ និង​សោ​ឯកជន​ទាំងអស់​របស់​អ្នក នឹង​ត្រូវ​បាន​បំភ្លេច​ចោល​ ។ តើ​អ្នក​ពិត​ជា​ចង់​កំណត់​ពាក្យ​សម្ងាត់​មេ​របស់​អ្នក​ឡើង​វិញ​ឬ ?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "កំពុង​ទាញ​យក​វិញ្ញាបនបត្រ">
+<!ENTITY downloadCert.message1 "អ្នក​ត្រូវ​បាន​ស្នើ​ឲ្យ​ជឿ​ទុកចិត្ត​លើ​​អាជ្ញាធរ​​វិញ្ញាបនបត្រ​ (CA) ថ្មី ។">
+<!ENTITY downloadCert.trustSSL "ទុកចិត្ត​លើ CA នេះ​ដើម្បី​កំណត់​អត្តសញ្ញាណ​តំបន់បណ្ដាញ ។">
+<!ENTITY downloadCert.trustEmail "ទុកចិត្ត​លើ​ CA នេះ​ដើម្បី​កំណត់​អត្តសញ្ញាណ​របស់​​អ្នក​ប្រើ​អ៊ីមែល ។">
+<!ENTITY downloadCert.trustObjSign "ទុកចិត្ត​លើ CA នេះ​ដើម្បី​កំណត់​អត្តសញ្ញាណ​របស់​អ្នក​អភិវឌ្ឍន៍​កម្មវិធី ។">
+<!ENTITY downloadCert.message3 "មុន​ពេល​ជឿ​ទុកចិត្ត​លើ CA នេះ​សម្រាប់​គោលបំណង​ណាមួយ អ្នក​គួរតែ​ត្រួតពិនិត្យមើល​វិញ្ញាបនបត្រ គោលការណ៍ និង​បែបបទ​របស់​វា (ប្រសិនបើ​មាន)។">
+<!ENTITY downloadCert.viewCert.label "មើល">
+<!ENTITY downloadCert.viewCert.text "ត្រួត​ពិនិត្យ​វិញ្ញាបនបត្រ​ CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "ស្នើ​សុំ​អត្ត​សញ្ញាណ​អ្នក​ប្រើ">
+<!ENTITY clientAuthAsk.message1 "តំបន់បណ្ដាញ​នេះ​បាន​ស្នើសុំ​ឲ្យ​អ្នក​បញ្ជាក់​ប្រាប់​អំពី​អត្តសញ្ញាណ​របស់​អ្នក​ជាមួយ​នឹង​វិញ្ញាបនបត្រ ៖">
+<!ENTITY clientAuthAsk.message2 "ជ្រើស​វិញ្ញាបនបត្រ​មួយ​ ដើម្បី​បង្ហាញ​ជា​អត្តសញ្ញាណ ៖">
+<!ENTITY clientAuthAsk.message3 "សេចក្ដី​លម្អិត​នៃ​វិញ្ញាបនបត្រ​ដែល​បាន​ជ្រើស ៖ ">
+
+<!ENTITY pkcs12.setpassword.title  "ជ្រើស​ពាក្យសម្ងាត់​បម្រុងទុក​វិញ្ញាបនបត្រ">
+<!ENTITY pkcs12.setpassword.message  "ពាក្យសម្ងាត់​បម្រុងទុក​ដែល​អ្នក​បាន​កំណត់​នៅ​​ទីនេះ​ ការពារ​ឯកសារ​បម្រុងទុក​ដែល​អ្នក​រៀបនឹង​បង្កើត ។  អ្នក​ត្រូវតែ​កំណត់​ពាក្យសម្ងាត់​នេះ​ដើម្បី​បន្ត​ជា​មួយ​នឹង​ការ​បម្រុងទុក ។">
+<!ENTITY pkcs12.setpassword.label1 "ពាក្យសម្ងាត់​សម្រាប់​បម្រុងទុក​វិញ្ញាបនបត្រ ៖">
+<!ENTITY pkcs12.setpassword.label2 "ពាក្យសម្ងាត់​សម្រាប់​បម្រុងទុក​វិញ្ញាបនបត្រ (ម្ដងទៀត)៖">
+<!ENTITY pkcs12.setpassword.reminder "សំខាន់ ៖ ប្រសិនបើ​អ្នក​ភ្លេច​ពាក្យសម្ងាត់​សម្រាប់​បម្រុងទុក​វិញ្ញាបនបត្រ​របស់​អ្នក អ្នក​នឹង​មិន​អាច​ស្ដារ​ឯកសារ​បម្រុង​ទុក​នេះ​នៅ​ពេល​ក្រោយ​បាន​ទេ ។  សូម​ចម្លង​វា​ទុក​នៅ​ក្នុង​ទីតាំង​សុវត្ថិភាព ។">
+
+<!ENTITY chooseToken.title  "ជ្រើស​ប្រអប់​ថូខឹន">
+<!ENTITY chooseToken.message1 "សូម​ជ្រើស​ថូខឹន ។">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "កំពុង​បង្កើត​សោ​ឯកជន">
+<!ENTITY createCertInfo.msg1 "ការ​បង្កើត​សោ​កំពុងតែ​ដំណើរការ… វា​អាច​ចំណាយ​ពេល​ពីរ​បី​នាទី….">
+<!ENTITY createCertInfo.msg2 "សូម​រង់ចាំ...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "បាន​ការពារ​ការ​ផ្ទៀងផ្ទាត់​ភាព​ត្រឹមត្រូវ​របស់​ថូខឹន">
+<!ENTITY protectedAuth.msg "សូម​ផ្ទៀងផ្ទាត់​ភាព​ត្រឹមត្រូវ​ចំពោះ​ថូខឹន ។ វិធីសាស្ត្រ​ផ្ទៀងផ្ទាត់​ភាព​ត្រឹមត្រូវ​ផ្អែក​លើ​ប្រភេទ​នៃ​ថូខឹន​របស់​អ្នក ។">
+<!ENTITY protectedAuth.tokenName.label "ថូខឹន ៖">

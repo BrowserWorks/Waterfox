@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Дозволи">
+
+<!ENTITY  blockPopups.label           "Блокувати виринаючі вікна">
+<!ENTITY  blockPopups.accesskey       "Б">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Докладніше">
+<!ENTITY  notificationsPolicyDesc4.label       "Оберіть сайти, яким дозволено надсилати вам сповіщення">
+<!ENTITY  notificationsPolicyButton.accesskey  "и">
+<!ENTITY  notificationsPolicyButton.label      "Вибрати…">
+<!ENTITY  notificationsDoNotDisturb.label      "Не турбувати мене">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "Н">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Сповіщення не будуть показуватись доки ви не перезапустите &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Винятки…">
+<!ENTITY  popupExceptions.accesskey   "В">
+
+<!ENTITY  fontsAndColors.label        "Шрифти і кольори">
+
+<!ENTITY  defaultFont2.label          "Типовий шрифт">
+<!ENTITY  defaultFont2.accesskey      "ш">
+<!ENTITY  defaultSize2.label          "Розмір">
+<!ENTITY  defaultSize2.accesskey      "Р">
+
+<!ENTITY  advancedFonts.label         "Додатково…">
+<!ENTITY  advancedFonts.accesskey     "о">
+
+<!ENTITY  colors.label                "Кольори…">
+<!ENTITY  colors.accesskey            "ь">
+
+
+<!ENTITY language2.label              "Мова">
+<!ENTITY chooseLanguage.label         "Оберіть бажану мову для показу веб-сторінок">
+<!ENTITY chooseButton.label           "Вибрати…">
+<!ENTITY chooseButton.accesskey       "а">
+
+<!ENTITY translateWebPages.label      "Перекладати веб вміст">
+<!ENTITY translateWebPages.accesskey  "П">
+<!ENTITY translateExceptions.label    "Винятки…">
+<!ENTITY translateExceptions.accesskey "н">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Переклад виконується">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Вміст з керуванням цифровими правами (DRM)">
+
+<!ENTITY  playDRMContent2.label          "Відтворювати вміст з DRM">
+<!ENTITY  playDRMContent2.accesskey      "В">
+<!ENTITY  playDRMContent.learnMore.label "Докладніше">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Tisirag">
+
+<!ENTITY  blockPopups.label           "Sewḥel isfuyla udhimen">
+<!ENTITY  blockPopups.accesskey       "S">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Issin ugar">
+<!ENTITY  notificationsPolicyDesc4.label       "Fren ismal web i izemren a k-d-aznen ilɣuten">
+<!ENTITY  notificationsPolicyButton.accesskey  "F">
+<!ENTITY  notificationsPolicyButton.label      "Fren…">
+<!ENTITY  notificationsDoNotDisturb.label      "Ur yi-ttcewwil ara">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "r">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Ulac alɣu ad yettwaseknen skud ur tulseḍ ara asenker i &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Tisuraf…">
+<!ENTITY  popupExceptions.accesskey   "s">
+
+<!ENTITY  fontsAndColors.label        "Tisefsiyin d yiniten">
+
+<!ENTITY  defaultFont2.label          "Tasefsit tamezwarut">
+<!ENTITY  defaultFont2.accesskey      "K">
+<!ENTITY  defaultSize2.label          "Teɣzi">
+<!ENTITY  defaultSize2.accesskey      "T">
+
+<!ENTITY  advancedFonts.label         "Talqayt…">
+<!ENTITY  advancedFonts.accesskey     "l">
+
+<!ENTITY  colors.label                "Initen…">
+<!ENTITY  colors.accesskey            "I">
+
+
+<!ENTITY language2.label              "Tutlayt">
+<!ENTITY chooseLanguage.label         "Fren tutlayt tebɣiḍ i uskan n isebtar">
+<!ENTITY chooseButton.label           "Fren…">
+<!ENTITY chooseButton.accesskey       "F">
+
+<!ENTITY translateWebPages.label      "Suqel agbur web">
+<!ENTITY translateWebPages.accesskey  "S">
+<!ENTITY translateExceptions.label    "Tisuraf…">
+<!ENTITY translateExceptions.accesskey "r">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Tasuqilt sɣuṛ">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Izerfan n usefrek n ugbur umḍin (DRM)">
+
+<!ENTITY  playDRMContent2.label          "Γaṛ agbur ittwaḥerzen s DRM-">
+<!ENTITY  playDRMContent2.accesskey      "Γ">
+<!ENTITY  playDRMContent.learnMore.label "Issin ugar">

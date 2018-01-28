@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Kəs">
+<!ENTITY cutCmd.accesskey "K">
+<!ENTITY copyCmd.label "Köçür">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Yapışdır">
+<!ENTITY pasteCmd.accesskey "Y">
+<!ENTITY undoCmd.label "Geri al">
+<!ENTITY undoCmd.accesskey "G">
+<!ENTITY selectAllCmd.label "Hamısını Seç">
+<!ENTITY selectAllCmd.accesskey "H">
+<!ENTITY deleteCmd.label "Sil">
+<!ENTITY deleteCmd.accesskey "S">
+
+<!ENTITY spellAddToDictionary.label "Lüğətə əlavə et">
+<!ENTITY spellAddToDictionary.accesskey "L">
+<!ENTITY spellUndoAddToDictionary.label "Lüğətə əlavə etməni geri qaytar">
+<!ENTITY spellUndoAddToDictionary.accesskey "g">
+<!ENTITY spellCheckToggle.label "Orfoqrafiya Yoxlaması">
+<!ENTITY spellCheckToggle.accesskey "q">
+<!ENTITY spellNoSuggestions.label "(Nümunə söz yoxdur)">
+<!ENTITY spellDictionaries.label "Dillər">
+<!ENTITY spellDictionaries.accesskey "l">
+
+<!ENTITY searchTextBox.clear.label "Təmizlə">
+
+<!ENTITY fillLoginMenu.label          "Məlumatları doldur">
+<!ENTITY fillLoginMenu.accesskey      "d">
+<!ENTITY fillPasswordMenu.label       "Parolu doldur">
+<!ENTITY fillPasswordMenu.accesskey   "d">
+<!ENTITY fillUsernameMenu.label       "İstifadəçi Adını doldur">
+<!ENTITY fillUsernameMenu.accesskey   "d">
+<!ENTITY noLoginSuggestions.label     "(Hesab təklifi yoxdur)">
+<!ENTITY viewSavedLogins.label        "Saxlanılmış Daxil olmaları göstər">

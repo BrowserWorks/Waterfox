@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Dùin an taba seo">
+<!ENTITY tabCrashed.restoreTab "Aisig an taba seo">
+<!ENTITY tabCrashed.restoreAll "Aisig gach taba a thuislich">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ìoc, thuislich an taba agad.">
+<!ENTITY tabCrashed.offerHelp "’S urrainn dhuinn do chuideachadh!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Tagh “&tabCrashed.restoreTab;” airson susbaint na duilleige ath-luchdadh.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Tagh “&tabCrashed.restoreTab;” no “&tabCrashed.restoreAll;” airson susbaint na duilleige ath-luchdadh.">
+<!ENTITY tabCrashed.requestHelp "An cuidich thu sinn?">
+<!ENTITY tabCrashed.requestHelpMessage "Ma gheibh sinn aithisgean tuislich, bidh e nas fhasa dhuinn fiosrachadh dè dh’adhbharaich e agus fàsaidh &brandShortName; nas fhearr ri linn sin.">
+<!ENTITY tabCrashed.requestReport "Cuir aithisg mun taba seo">
+<!ENTITY tabCrashed.sendReport2 "Cuir aithisg tuislich mun taba a tha thu a’ coimhead air">
+<!ENTITY tabCrashed.commentPlaceholder2 "’S urrainn dhut beachd a chur ris (chithear na beachdan gu poblach)">
+<!ENTITY tabCrashed.includeURL2 "Gabh a-staigh URL na duilleige san aithisg tuislidh seo">
+<!ENTITY tabCrashed.emailPlaceholder "Cuir a-steach am post-d agad an-seo">
+<!ENTITY tabCrashed.emailMe "Cuir post-d thugam nuair a bhios fiosrachadh ri fhaighinn">
+<!ENTITY tabCrashed.reportSent "Chaidh an aithisg mun tuisleach a chur mu thràth, mòran taing airson taic a chumail rinn a' leasachadh &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Dèan aithris air tabaichean sa chùlaibh">
+<!ENTITY tabCrashed.autoSubmit2 "Ùraich na roghainnean is cuir aithisgean tuislidh gu fèin-obrachail, a’ gabhail a-staigh aithisgean mu thabaichean a thuislich sa chùlaibh san t-seisean seo agus seiseanan san àm ri teachd">

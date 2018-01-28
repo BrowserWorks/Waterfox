@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "ही साईट एका प्लगइनचा वापर करते जे &brandShortName; ला हळू करू शकते.">
+<!ENTITY tapToPlayPlugin                                     "प्लगइन सुरू करण्यासाठी येथे टॅप करा.">
+<!ENTITY clickToActivatePlugin                               "प्लगइन सुरू करा.">
+<!ENTITY checkForUpdates                                     "सुधारणांसाठी तपासा...">
+<!ENTITY blockedPlugin.label                                 "हे प्लगइन आपल्या सुरक्षेकरीता रोखले आहे.">
+<!ENTITY hidePluginBtn.label                                 "प्लगइन लपवा">
+<!ENTITY managePlugins                                       "प्लगईन्स् व्यवस्थापित करा…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "‌">
+<!ENTITY reloadPlugin.middle                                 "पृष्ठ परत लोड करा">
+<!ENTITY reloadPlugin.post                                   " पुन्हा प्रयत्न करण्यासाठी.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "क्रॅश अहवाल पाठवा">
+<!ENTITY report.submitting                                   "अहवाल पाठवत आहे…">
+<!ENTITY report.submitted                                    "क्रॅश अहवाल पाठवला.">
+<!ENTITY report.disabled                                     "क्रॅश रिपोर्टिंग बंद केले.">
+<!ENTITY report.failed                                       "सादर करण्यात अपयश आले.">
+<!ENTITY report.unavailable                                  "अहवाल उपलब्ध नाही.">
+<!ENTITY report.comment                                      "टिपण्णी समाविष्ट करा (टिपण्णी सार्वजनिकरित्या दृष्यास्पद आहे)">
+<!ENTITY report.pageURL                                      "पृष्ठाचे URL समाविष्ट करा">
+
+<!ENTITY plugin.file                                         "फाइल">
+<!ENTITY plugin.mimeTypes                                    "MIME चे प्रकार">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash चा सुरक्षित मोड कार्यान्वित करा">
+<!ENTITY plugin.enableBlocklists.label                       "धोकादायक आणि घुसखोरी करू शकणारा फ्लॅश मजकूर अडवा">

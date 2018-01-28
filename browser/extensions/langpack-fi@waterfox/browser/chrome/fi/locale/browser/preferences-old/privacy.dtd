@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Käytä seurannan suojausta">
+<!ENTITY  trackingProtectionAlways.label       "Aina">
+<!ENTITY  trackingProtectionAlways.accesskey   "n">
+<!ENTITY  trackingProtectionPrivate.label      "Vain yksityisen selaamisen ikkunoissa">
+<!ENTITY  trackingProtectionPrivate.accesskey  "V">
+<!ENTITY  trackingProtectionNever.label        "Ei koskaan">
+<!ENTITY  trackingProtectionNever.accesskey    "E">
+<!ENTITY  trackingProtectionLearnMore.label    "Lue lisää">
+<!ENTITY  trackingProtectionExceptions.label   "Poikkeukset…">
+<!ENTITY  trackingProtectionExceptions.accesskey "P">
+
+<!ENTITY tracking.label                 "Seurantatiedot">
+<!ENTITY trackingProtectionPBM5.label         "Käytä seurannan suojausta yksityisen selaamisen ikkunoissa">
+<!ENTITY trackingProtectionPBM5.accesskey     "y">
+<!ENTITY trackingProtectionPBMLearnMore.label "Lue lisää">
+<!ENTITY changeBlockList.label          "Muuta estolistaa">
+<!ENTITY changeBlockList.accesskey      "M">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Voit myös ">
+<!ENTITY  doNotTrack.settings.label     "muokata Älä seuraa -asetuksia">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historiatiedot">
+
+<!ENTITY  locationBar.label             "Osoitepalkki">
+
+<!ENTITY  locbar.suggest.label          "Ehdota osoitepalkissa sivuja:">
+<!ENTITY  locbar.history.label          "Sivuhistoriasta">
+<!ENTITY  locbar.history.accesskey      "S">
+<!ENTITY  locbar.bookmarks.label        "Kirjanmerkeistä">
+<!ENTITY  locbar.bookmarks.accesskey    "K">
+<!ENTITY  locbar.openpage.label         "Avoimista välilehdistä">
+<!ENTITY  locbar.openpage.accesskey     "A">
+<!ENTITY  locbar.searches.label         "Vastaavia hakuja oletushakupalvelusta">
+<!ENTITY  locbar.searches.accesskey     "o">
+
+<!ENTITY  suggestionSettings.label      "Muokkaa hakukoneiden ehdotusten asetuksia…">
+<!ENTITY  suggestionSettings.accesskey  "d">
+
+<!ENTITY  acceptCookies2.label          "Sivustot saavat asettaa evästeitä">
+<!ENTITY  acceptCookies2.accesskey      "v">
+
+<!ENTITY  acceptThirdParty.pre.label      "Salli kolmannen osapuolen evästeet:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "m">
+<!ENTITY  acceptThirdParty.always.label   "Aina">
+<!ENTITY  acceptThirdParty.never.label    "Ei milloinkaan">
+<!ENTITY  acceptThirdParty.visited.label  "Vierailluilta sivustoilta">
+
+<!ENTITY  keepUntil.label               "Säilytä evästeet:">
+<!ENTITY  keepUntil.accesskey           "t">
+
+<!ENTITY  expire.label                  "kunnes ne vanhenevat">
+<!ENTITY  close.label                   "kunnes &brandShortName; suljetaan">
+
+<!ENTITY  cookieExceptions.label        "Poikkeukset…">
+<!ENTITY  cookieExceptions.accesskey    "P">
+
+<!ENTITY  showCookies.label             "Näytä evästeet…">
+<!ENTITY  showCookies.accesskey         "N">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; säilyttää:">
+<!ENTITY  historyHeader.pre.accesskey      "F">
+<!ENTITY  historyHeader.remember.label     "Täydelliset historiatiedot">
+<!ENTITY  historyHeader.dontremember.label "Ei mitään historiatietoja">
+<!ENTITY  historyHeader.custom.label       "Valitut historiatiedot">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; kerää ja säilyttää sivu-, lataus-, lomake- ja hakuhistoriatietoja sekä evästeet sivuilta, joilla olet käynyt.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Voit halutessasi ">
+<!ENTITY  rememberActions.clearHistory.label  "poistaa joitain historiatietoja">
+<!ENTITY  rememberActions.middle.label        " tai ">
+<!ENTITY  rememberActions.removeCookies.label "poistaa yksittäisiä evästeitä">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; toimii aina kuten yksityisessä selaustilassa, eikä säilytä mitään historiatietoja.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Voit halutessasi myös ">
+<!ENTITY  dontrememberActions.clearHistory.label "poistaa kaikki kerätyt historiatiedot">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Selaa aina yksityinen selaus -tilassa">
+<!ENTITY  privateBrowsingPermanent2.accesskey "y">
+
+<!ENTITY  rememberHistory2.label      "Säilytä selaushistoria ja tieto latauksista">
+<!ENTITY  rememberHistory2.accesskey  "ä">
+
+<!ENTITY  rememberSearchForm.label       "Säilytä lomakkeiden ja hakupalkin tiedot">
+<!ENTITY  rememberSearchForm.accesskey   "d">
+
+<!ENTITY  clearOnClose.label             "Poista historiatiedot kun &brandShortName; suljetaan">
+<!ENTITY  clearOnClose.accesskey         "o">
+
+<!ENTITY  clearOnCloseSettings.label     "Asetukset…">
+<!ENTITY  clearOnCloseSettings.accesskey "u">
+
+<!ENTITY  browserContainersHeader.label         "Luokitellut välilehdet">
+<!ENTITY  browserContainersLearnMore.label      "Lue lisää">
+<!ENTITY  browserContainersEnabled.label        "Käytä luokiteltuja välilehtiä">
+<!ENTITY  browserContainersEnabled.accesskey    "v">
+<!ENTITY  browserContainersSettings.label        "Asetukset…">
+<!ENTITY  browserContainersSettings.accesskey    "e">

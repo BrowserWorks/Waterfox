@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Rheolwr Ychwanegion">
+
+<!ENTITY search.placeholder                   "Chwilio drwy'r ychwanegion">
+<!ENTITY search.buttonlabel                   "Chwilio">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Llwytho…">
+<!ENTITY listEmpty.installed.label            "Nid oes gennych ychwanegion o'r math yma wedi eu gosod">
+<!ENTITY listEmpty.availableUpdates.label     "Heb ganfod diweddariadau">
+<!ENTITY listEmpty.recentUpdates.label        "Nid ydych wedi diweddaru eich ychwanegion yn ddiweddar">
+<!ENTITY listEmpty.findUpdates.label          "Gwirio am Ddiweddariadau">
+<!ENTITY listEmpty.search.label               "Methu canfod ychwanegion o'r un math">
+<!ENTITY listEmpty.button.label               "Dysgu rhagor am ychwanegion">
+<!ENTITY installAddonFromFile.label           "Gosod Ychwanegyn o Ffeil…">
+<!ENTITY installAddonFromFile.accesskey       "G">
+<!ENTITY toolsMenu.tooltip                    "Offer ar gyfer pob ychwanegyn">
+
+<!ENTITY getThemes.description                "Eisiau personoli eich porwr?">
+<!ENTITY getThemes.learnMore                  "Dewis o filoedd o themâu.">
+
+<!ENTITY cmd.back.tooltip                     "Nôl un tudalen">
+<!ENTITY cmd.forward.tooltip                  "Ymlaen un tudalen">
+
+<!ENTITY showUnsignedExtensions.button.label  "Nid oedd modd dilysu rhai estyniadau">
+<!ENTITY showAllExtensions.button.label       "Dangos pob estyniad">
+<!ENTITY debugAddons.label                    "Dadfygio Ychwanegion">
+<!ENTITY debugAddons.accesskey                "Y">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Mae pob ychwanegyn wedi eu hanalluogi gan y modd diogel.">
+<!ENTITY warning.checkcompatibility.label          "Mae gwirio cydnawsedd ychwanegion wedi ei analluogi. Efallai fod gennych ychwanegion anghydnaws.">
+<!ENTITY warning.checkcompatibility.enable.label   "Galluogi">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Galluogi gwirio cydnawsedd ychwanegion">
+<!ENTITY warning.updatesecurity.label              "Mae gwirio diogelwch diweddariad wedi ei analluogi. Efallai eich bod o dan fygythiad gan ddiweddariad.">
+<!ENTITY warning.updatesecurity.enable.label       "Galluogi">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Galluogi gwirio diogelwch diweddariad ychwanegyn">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Chwilio">
+<!ENTITY view.discover.label                  "Estyn Ychwanegion">
+<!ENTITY view.recentUpdates.label             "Diweddariadau Diweddar">
+<!ENTITY view.availableUpdates.label          "Diweddariadau ar Gael">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Gwirio am Ddiweddariadau">
+<!ENTITY updates.checkForUpdates.accesskey    "G">
+<!ENTITY updates.viewUpdates.label            "Gweld Diweddariadau Diweddar">
+<!ENTITY updates.viewUpdates.accesskey        "D">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Diweddaru Ychwanegion yn Awtomatig">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Ailosod Pob Ychwanegyn i'w Diweddaru'n Awtomatig">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "P">
+<!ENTITY updates.resetUpdatesToManual.label          "Ailosod Pob Ychwanegyn i Ddiweddaru gyda Llaw">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "L">
+<!ENTITY updates.updating.label               "Diweddaru ychwanegion">
+<!ENTITY updates.installed.label              "Mae eich ychwanegion wedi eu diweddaru.">
+<!ENTITY updates.downloaded.label             "Mae diweddariadau eich ychwanegion wedi eu llwytho i law.">
+<!ENTITY updates.restart.label                "Ailgychwyn i gwblhau'r gosod">
+<!ENTITY updates.noneFound.label              "Heb ganfod diweddariadau">
+<!ENTITY updates.manualUpdatesFound.label     "Gweld Diweddariadau ar Gael">
+<!ENTITY updates.updateSelected.label         "Gosod Diweddariadau">
+<!ENTITY updates.updateSelected.tooltip       "Gosod diweddariadau sydd ar gael o'r rhestr">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Dangos Rhagor o Wybodaeth">
+<!ENTITY cmd.showDetails.accesskey            "D">
+<!ENTITY cmd.findUpdates.label                "Canfod Diweddariadau">
+<!ENTITY cmd.findUpdates.accesskey            "C">
+<!ENTITY cmd.preferencesWin.label             "Dewisiadau">
+<!ENTITY cmd.preferencesWin.accesskey         "D">
+<!ENTITY cmd.preferencesUnix.label            "Dewisiadau">
+<!ENTITY cmd.preferencesUnix.accesskey        "e">
+<!ENTITY cmd.about.label                      "Ynghylch">
+<!ENTITY cmd.about.accesskey                  "Y">
+
+<!ENTITY cmd.enableAddon.label                "Galluogi">
+<!ENTITY cmd.enableAddon.accesskey            "G">
+<!ENTITY cmd.disableAddon.label               "Atal">
+<!ENTITY cmd.disableAddon.accesskey           "A">
+<!ENTITY cmd.enableTheme.label                "Gwisgo Thema">
+<!ENTITY cmd.enableTheme.accesskey            "w">
+<!ENTITY cmd.disableTheme.label               "Peidio Gwisgo Thema">
+<!ENTITY cmd.disableTheme.accesskey           "P">
+<!ENTITY cmd.askToActivate.label              "Gofyn i'w Weithredu">
+<!ENTITY cmd.askToActivate.tooltip            "Gofyn i ddefnyddio'r ychwanegyn yma bob tro">
+<!ENTITY cmd.alwaysActivate.label             "Gweithredu Bob Tro">
+<!ENTITY cmd.alwaysActivate.tooltip           "Defnyddio'r ychwanegyn bob tro">
+<!ENTITY cmd.neverActivate.label              "Byth Gweithredu">
+<!ENTITY cmd.neverActivate.tooltip            "Peidio byth â defnyddio'r ychwanegyn">
+<!ENTITY cmd.stateMenu.tooltip                "Newid pryd mae'r ychwanegyn yn rhedeg">
+<!ENTITY cmd.installAddon.label               "Gosod">
+<!ENTITY cmd.installAddon.accesskey           "G">
+<!ENTITY cmd.uninstallAddon.label             "Tynnu">
+<!ENTITY cmd.uninstallAddon.accesskey         "T">
+<!ENTITY cmd.showPreferencesWin.label         "Dewisiadau">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Newid dewisiadau'r ychwanegyn">
+<!ENTITY cmd.showPreferencesUnix.label        "Dewisiadau">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Newid dewisiadau'r ychwanegyn">
+<!ENTITY cmd.contribute.label                 "Cyfrannu">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "Cyfrannu i ddatblygiad yr ychwanegyn">
+
+<!ENTITY cmd.showReleaseNotes.label           "Dangos Nodiadau Rhyddhau">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Dangos nodiadau rhyddhau'r diweddariad yma">
+<!ENTITY cmd.hideReleaseNotes.label           "Cuddio'r Nodiadau Ryddhau">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Cuddio nodiadau ryddhau'r diweddariad yma">
+<!ENTITY cmd.findReplacement.label            "Canfod Amnewidyn">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Beth yw Ychwanegion?">
+<!ENTITY discover.description2                "Mae Ychwanegion yn raglenni sy'n caniatáu i chi bersenoleiddio &brandShortName; gyda swyddogaethau neu steil ychwanegol. Defnyddiwch y bar ochr, hysbysydd tywydd, neu thema i'ch gwneud yn gysurus gyda &brandShortName;.">
+<!ENTITY discover.footer                      "Pan fyddwch wedi cysylltu â'r rhyngrwyd, bydd y paen yn cynnwys rhai o'r ychwanegion gorau a mwyaf poblogaidd i chi eu dewis.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Fersiwn">
+<!ENTITY detail.lastupdated.label             "Diweddarwyd Diwethaf">
+<!ENTITY detail.creator.label                 "Datblygwr">
+<!ENTITY detail.homepage.label                "Tudalen Cartref">
+<!ENTITY detail.numberOfDownloads.label       "Llwythi">
+
+<!ENTITY detail.contributions.description     "Mae datblygwr yr ychwanegyn yn gofyn eich bod yn cynorthwyo i gefnogi datblygiad drwy wneud cyfraniad bychan.">
+
+<!ENTITY detail.updateType                    "Diweddariadau Awtomatig">
+<!ENTITY detail.updateDefault.label           "Rhagosodedig">
+<!ENTITY detail.updateDefault.tooltip         "Gosod diweddariadau'n awtomatig os mai dyna yw'r rhagosodedig">
+<!ENTITY detail.updateAutomatic.label         "Ymlaen">
+<!ENTITY detail.updateAutomatic.tooltip       "Gosod diweddariadau'n awtomatig">
+<!ENTITY detail.updateManual.label            "Diffodd">
+<!ENTITY detail.updateManual.tooltip          "Peidio gosod diweddariadau'n awtomatig">
+<!ENTITY detail.home                          "Tudalen Cartref">
+<!ENTITY detail.repository                    "Proffil Ychwanegyn">
+<!ENTITY detail.size                          "Maint">
+
+<!ENTITY detail.checkForUpdates.label         "Gwirio am Ddiweddariadau">
+<!ENTITY detail.checkForUpdates.accesskey     "G">
+<!ENTITY detail.checkForUpdates.tooltip       "Gwirio am ddiweddariad i'r ychwanegyn">
+<!ENTITY detail.showPreferencesWin.label      "Dewisiadau">
+<!ENTITY detail.showPreferencesWin.accesskey  "D">
+<!ENTITY detail.showPreferencesWin.tooltip    "Newid dewisiadau'r ychwanegyn">
+<!ENTITY detail.showPreferencesUnix.label     "Dewisiadau">
+<!ENTITY detail.showPreferencesUnix.accesskey "e">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Newid dewisiadau'r ychwanegyn">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Graddio">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Oedi">
+<!ENTITY progress.cancel.tooltip              "Diddymu">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Enw">
+<!ENTITY sort.name.tooltip                    "Trefnu yn ôl enw">
+<!ENTITY sort.dateUpdated.label               "Diweddarwyd Diwethaf">
+<!ENTITY sort.dateUpdated.tooltip             "Trefnu yn ôl dyddiad diweddaru">
+<!ENTITY sort.relevance.label                 "Tebygrwydd gorau">
+<!ENTITY sort.relevance.tooltip               "Trefnu yn ôl perthnasedd">
+<!ENTITY sort.price.label                     "Pris">
+<!ENTITY sort.price.tooltip                   "Trefnu yn ôl pris">
+
+<!ENTITY search.filter2.label                 "Chwilio:">
+<!ENTITY search.filter2.installed.label       "Ychwanegion">
+<!ENTITY search.filter2.installed.tooltip     "Dangos yr ychwanegion presennol">
+<!ENTITY search.filter2.available.label       "Ychwanegion ar Gael">
+<!ENTITY search.filter2.available.tooltip     "Dangos ychwanegion sydd ar gael i'w gosod">
+
+<!ENTITY addon.homepage                       "Tudalen Cartref">
+<!ENTITY addon.details.label                  "Rhagor">
+<!ENTITY addon.details.tooltip                "Dangos rhagor o wybodaeth am yr ychwanegyn">
+<!ENTITY addon.unknownDate                    "Anhysbys">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "HEN">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(analluogwyd)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Diweddaru">
+<!ENTITY addon.undoAction.label               "Dadwneud">
+<!ENTITY addon.undoAction.tooltip             "Dadwneud y weithred">
+<!ENTITY addon.undoRemove.label               "Dadwneud">
+<!ENTITY addon.undoRemove.tooltip             "Cadw'r ychwanegyn wedi ei osod">
+<!ENTITY addon.restartNow.label               "Ailgychwyn nawr">
+<!ENTITY addon.install.label                  "Gosod">
+<!ENTITY addon.install.tooltip                "Gosod yr ychwanegyn yma">
+<!ENTITY addon.updateNow.label                "Diweddaru Nawr">
+<!ENTITY addon.updateNow.tooltip              "Gosod diweddariad yr ychwanegyn yma">
+<!ENTITY addon.includeUpdate.label            "Cynnwys yn y Diweddariad">
+<!ENTITY addon.updateAvailable.label          "Mae diweddariad ar gael">
+<!ENTITY addon.checkingForUpdates.label       "Gwirio am ddiweddariadau…">
+<!ENTITY addon.releaseNotes.label             "Nodiadau Ryddhau:">
+<!ENTITY addon.loadingReleaseNotes.label      "Llwytho…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Ymddiheuriadau ond roedd yn wall llwytho'r nodiadau ryddhau.">
+
+<!ENTITY addon.createdBy.label                "Gan ">
+
+<!ENTITY eula.title                           "Cytundeb Trwydded Defnyddiwr">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Derbyn a Gosod…">
+
+<!ENTITY settings.path.button.label           "Pori…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Beth yw hyn? Mae Telemetreg yn gallu gosod a rhedeg arbrofion o bryd i'w gilydd.">
+<!ENTITY experiment.info.learnmore "Dysgu Rhagor">
+<!ENTITY experiment.info.learnmore.accesskey "D">
+<!ENTITY experiment.info.changetelemetry "Gosodiadau Telemetreg">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Dysgu Rhagor…">
+
+<!ENTITY disabledUnsigned.heading "Mae rhai ychwanegion wedi eu hanalluogi">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Mae'r ychwanegion canlynol wedi eu dilysu i'w defnyddio yn &brandShortName;. Gallwch ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "canfod newidiadau">
+<!ENTITY disabledUnsigned.description.end " neu ofyn i'r datblygwr iddynt gael eu dilysu.">
+<!ENTITY disabledUnsigned.learnMore "Dysgu rhagor am ein hymdrechion i'ch cadw'n ddiogel ar-lein.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Gall ddatblygwyr sydd â diddordeb mewn dilysu eu hychwanegion barhau drwy ddarllen ein ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "canllawiau">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Rhywbeth ar goll? Nid yw rhai ategion yn cael eu cynnal bellach gan &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Dysgu Rhagor.">
+
+<!ENTITY legacyWarning.description "Colli rhywbeth? Nid yw rhai ategion yn cael eu cynnal bellach gan &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Dangos hen estyniadau">
+<!ENTITY legacyExtensions.title "Hen Estyniadau">
+<!ENTITY legacyExtensions.description "Nid yw'r estyniadau hyn yn cyrraedd safonau cyfredol &brandShortName; ac mae nhw wedi cael eu diffodd.">
+<!ENTITY legacyExtensions.learnMore "Dysgu am y newidiadau i ychwanegion">

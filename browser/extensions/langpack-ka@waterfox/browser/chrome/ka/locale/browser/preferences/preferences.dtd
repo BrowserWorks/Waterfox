@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "პარამეტრები">
+<!ENTITY  prefWindow.title        "პარამეტრები">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; პარამეტრები">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 64em; min-height: 48em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 70em; min-height: 50em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 64em; min-height: 48.5em;">
+
+<!ENTITY  paneSearchResults.title       "ძიების შედეგები">
+<!ENTITY  paneGeneral.title             "მთავარი ">
+<!ENTITY  paneSearch.title              "ძიება">
+<!ENTITY  paneFilesApplications.title   "ფაილები &amp; პროგრამები">
+<!ENTITY  panePrivacySecurity.title     "პირადულობა &amp; უსაფრთხოება">
+<!ENTITY  paneContainers.title          "სათავსი ჩანართები">
+<!ENTITY  paneUpdates.title             "განახლებები">
+
+<!ENTITY  languageAndAppearance.label   "ენა და იერსახე">
+<!ENTITY  filesAndApplications.label    "ფაილები და პროგრამები">
+<!ENTITY  browserPrivacy.label          "პირადული ბრაუზერი">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Waterfox ანგარიში">
+
+<!ENTITY  helpButton2.label        "&brandShortName; დახმარება">

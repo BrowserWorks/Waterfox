@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "Yub">
+<!ENTITY editMenu.accesskey        "Y">
+<!ENTITY undoCmd.label             "Nwo timo">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "N">
+<!ENTITY redoCmd.label             "Nwo timo">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "N">
+<!ENTITY cutCmd.label              "Ngol">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "l">
+<!ENTITY copyCmd.label             "Lok">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "L">
+<!ENTITY pasteCmd.label            "Dani">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "D">
+<!ENTITY deleteCmd.label           "Kwany woko">
+<!ENTITY deleteCmd.accesskey       "K">
+<!ENTITY selectAllCmd.label        "Yer Weng">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "W">
+<!ENTITY findCmd.label             "Nong">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "N">
+<!ENTITY findAgainCmd.label        "Nong Doki">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "o">
+<!ENTITY findPreviousCmd.label     "Nong Mukatoangec">
+<!ENTITY findPreviousCmd.accesskey "a">

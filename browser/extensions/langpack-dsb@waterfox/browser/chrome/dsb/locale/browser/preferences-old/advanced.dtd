@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Powšykne">
+
+<!ENTITY accessibility.label             "Pśistupnosć">
+
+<!ENTITY useCursorNavigation.label       "Pśecej kursorowe tasty za pógibowanje na bokach wužywaś">
+<!ENTITY useCursorNavigation.accesskey   "k">
+<!ENTITY searchOnStartTyping.label       "Pśi pisanju tekst pytaś">
+<!ENTITY searchOnStartTyping.accesskey   "P">
+<!ENTITY blockAutoReload.label           "Warnowaś, gaž websedła wopytuju bok dalej pósrědniś abo znowego zacytaś">
+<!ENTITY blockAutoReload.accesskey       "W">
+<!ENTITY useOnScreenKeyboard.label       "Dotykańsku tastaturu pokazaś, jolic trěbne">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Pśeglědowanje">
+
+<!ENTITY useAutoScroll.label             "Awtomatiske pśesuwanje wužywaś">
+<!ENTITY useAutoScroll.accesskey         "A">
+<!ENTITY useSmoothScrolling.label        "Pólažke pśesuwanje wužywaś">
+<!ENTITY useSmoothScrolling.accesskey    "l">
+<!ENTITY checkUserSpelling.label         "Pśi pisanju pšawopis kontrolěrowaś">
+<!ENTITY checkUserSpelling.accesskey     "P">
+
+<!ENTITY dataChoicesTab.label            "Datowy wuběrk">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Datowe rozpšawjenje jo znjemóžnjone za toś tu programowu konfiguraciju">
+
+<!ENTITY healthReportDesc.label          "Pomaga wam, wugbaśe wašogo wobglědowaka rozměś a źěli daty z &vendorShortName; wó statusu wašogo wobglědowaka">
+<!ENTITY enableHealthReport.label        "&brandShortName; - statusowu rozpšawu zmóžniś">
+<!ENTITY enableHealthReport.accesskey    "r">
+<!ENTITY healthReportLearnMore.label     "Dalšne informacije">
+
+<!ENTITY telemetryDesc.label             "Źěli wugbaśe, wužyśe, hardware a pśiměrjenja wašogo wobglědowaka z &vendorShortName;, aby nam pomagała, &brandShortName; pólěpšyś">
+<!ENTITY enableTelemetryData.label       "Pśidatne daty źěliś (na pś. telemetriju)">
+<!ENTITY enableTelemetryData.accesskey   "t">
+<!ENTITY telemetryLearnMore.label        "Dalšne informacije">
+
+<!ENTITY crashReporterDesc2.label         "Wowaleńske rozpšawy pomagaju &vendorShortName;, problemy rozwězaś a waš woglědowak stabilnješy a wěsćejišy cyniś">
+<!ENTITY alwaysSubmitCrashReports.label   "&brandShortName; dowóliś, njewobźěłane wowaleńske rozpšawy we wašom mjenju pósłaś">
+<!ENTITY alwaysSubmitCrashReports.accesskey "b">
+<!ENTITY crashReporterLearnMore.label     "Dalšne informacije">
+
+<!ENTITY networkTab.label                "Seś">
+
+<!ENTITY connection.label                "Zwisk">
+
+<!ENTITY connectionDesc.label            "Konfigurěrowaś, kak &brandShortName; ma z internetom zwězaś">
+<!ENTITY connectionSettings.label        "Nastajenja…">
+<!ENTITY connectionSettings.accesskey    "N">
+
+<!ENTITY httpCache.label                 "Pufrowane webwopśimjeśe">
+
+<!ENTITY offlineStorage2.label           "Webwopśimjeśe a wužywarske daty offline">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Sedłowe daty">
+<!ENTITY clearSiteData.label             "Wšykne daty lašowaś">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Nastajenja…">
+<!ENTITY siteDataSettings.accesskey      "N">
+<!ENTITY siteDataLearnMoreLink.label     "Dalšne informacije">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Pufrowak wobgranicowaś na">
+<!ENTITY limitCacheSizeBefore.accesskey  "P">
+<!ENTITY limitCacheSizeAfter.label       "MB ruma">
+<!ENTITY clearCacheNow.label             "Něnto wuprozniś">
+<!ENTITY clearCacheNow.accesskey         "u">
+<!ENTITY clearOfflineAppCacheNow.label   "Něnto wuprozniś">
+<!ENTITY clearOfflineAppCacheNow.accesskey "r">
+<!ENTITY overrideSmartCacheSize.label    "Awtomatiske zastojanje pufrowaka pśepisaś">
+<!ENTITY overrideSmartCacheSize.accesskey "m">
+
+<!ENTITY updateTab.label                 "Aktualizěrowaś">
+
+<!ENTITY updateApplication.label         "Aktualizacije &brandShortName;">
+<!ENTITY updateAuto1.label               "Aktualizacije awtomatiski instalěrowaś (pśiraźijo se: pólěpšona wěstota)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "Za aktualizacijami pytaś, ale do togo se pšašaś, lěc maju se instalěrowaś">
+<!ENTITY updateCheckChoose.accesskey     "Z">
+<!ENTITY updateManual.label              "Nigda za aktualizacijami njepytaś (njedopórucone: wěstotne riziko)">
+<!ENTITY updateManual.accesskey          "e">
+
+<!ENTITY updateHistory.label             "Aktualizacisku historiju pokazaś">
+<!ENTITY updateHistory.accesskey         "h">
+
+<!ENTITY useService.label                "Slězynowu słužbu za instalěrowanje aktualizacijow wužywaś">
+<!ENTITY useService.accesskey            "S">
+
+<!ENTITY autoUpdateOthers.label          "Awtomatiski aktualizěrowaś">
+<!ENTITY enableSearchUpdate.label        "Pytnice">
+<!ENTITY enableSearchUpdate.accesskey    "P">
+
+<!ENTITY offlineStorageNotify.label               "Informěrowaś, gaž websedło co daty za wužywanje offline składowaś">
+<!ENTITY offlineStorageNotify.accesskey           "I">
+<!ENTITY offlineStorageNotifyExceptions.label     "Wuwześa…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "u">
+
+<!ENTITY offlineAppsList2.label          "Slědujuce websedła směju daty za wužywanje offline składowaś:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Wótpóraś…">
+<!ENTITY offlineAppsListRemove.accesskey "W">
+<!ENTITY offlineAppRemove.confirm        "Daty offline wótpóraś">
+
+<!ENTITY certificateTab.label            "Certifikaty">
+<!ENTITY certPersonal.label              "Napšašowanja">
+<!ENTITY certPersonal.description        "Gaž serwer pomina wósobinski certifikat:">
+<!ENTITY selectCerts.auto                "Awtomatiski wubraś">
+<!ENTITY selectCerts.auto.accesskey      "s">
+<!ENTITY selectCerts.ask                 "Kuždy raz se pšašaś">
+<!ENTITY selectCerts.ask.accesskey       "K">
+<!ENTITY enableOCSP.label                "Pla wótegronowych serwerow OCSP se napšašowaś, aby aktualnu płaśiwosć certifikatow wobkšuśiło">
+<!ENTITY enableOCSP.accesskey            "P">
+<!ENTITY viewCerts.label                 "Certifikaty pokazaś">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "Wěstotne rědy">
+<!ENTITY viewSecurityDevices.accesskey   "t">
+
+<!ENTITY performance.label               "Wugbaśe">
+<!ENTITY useRecommendedPerformanceSettings.label "Dopórucone wugbaśowe nastajenja wužywaś">
+<!ENTITY useRecommendedPerformanceSettings.description "Toś te nastajenja su na hardwaru a źěłowy system wašogo licadła pśiměrjone.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "D">
+<!ENTITY performanceSettingsLearnMore.label "Dalšne informacije">
+<!ENTITY limitContentProcessOption.label "Limit wopśimjeśowego procesa">
+<!ENTITY limitContentProcessOption.description "Wěcej wopśimjeśowych procesow móžo wugbaśe pólěpšowaś, gaž se někotare rejtarki wužywaju, buźo pak teke wěcej składa pśetrjebowaś.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription "Licba wopśimjeśowych procesow dajo se jano z wěcejprocesowym &brandShortName; změniś.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Zgóńśo, kak móžośo kontrolěrowaś, lěc wěcejprocesowa funkcija jo zmóžnjona">
+<!ENTITY allowHWAccel.label              "Hardwarowe póspěšenje wužywaś, jolic k dispoziciji">
+<!ENTITY allowHWAccel.accesskey          "H">

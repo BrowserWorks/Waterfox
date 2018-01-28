@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Жалпы">
+
+<!ENTITY useCursorNavigation.label       "Парақтарға навигация жасау үшін әрқашан курсор батырмаларын қолдану">
+<!ENTITY useCursorNavigation.accesskey   "н">
+<!ENTITY searchOnStartTyping.label       "Мәтін терілген кезде оны парақтан іздей бастау">
+<!ENTITY searchOnStartTyping.accesskey   "т">
+<!ENTITY useOnScreenKeyboard.label       "Керек болған кезде шерту пернетақтасын қолдану">
+<!ENTITY useOnScreenKeyboard.accesskey   "п">
+
+<!ENTITY browsing.label                  "Сайттарды қарау">
+
+<!ENTITY useAutoScroll.label             "Автоматты айналдыруды қолдану">
+<!ENTITY useAutoScroll.accesskey         "в">
+<!ENTITY useSmoothScrolling.label        "Тегіс айналдыруды қолдану">
+<!ENTITY useSmoothScrolling.accesskey    "е">
+<!ENTITY checkUserSpelling.label         "Мәтін терілген кезде орфографияны тексеру">
+<!ENTITY checkUserSpelling.accesskey     "о">
+
+<!ENTITY dataChoicesTab.label            "Деректер таңдауы">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Деректер есептемесін беру бұл жинақта сөндірілген">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName; үшін Mozilla адресіне автоматты түрде техникалық және әрекеттесу деректерін жіберуді рұқсат ету">
+<!ENTITY enableHealthReport1.accesskey   "р">
+<!ENTITY healthReportLearnMore.label     "Көбірек білу">
+
+<!ENTITY dataCollection.label            "&brandShortName; деректер жинауы және қолданылуы">
+<!ENTITY dataCollectionDesc.label        "Біз сізге таңдауды қолыңызға беріп, тек әркім үшін &brandShortName; өнімін ұсыну және жақсарту мақсатында керек деректерді жинаймыз. Жеке ақпаратты алу алдында біз әрқашан рұқсатты сұраймыз.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Жекелік ескертуі">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName; үшін Mozilla адресіне құлау хабарламаларын жіберуді рұқсат ету">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "л">
+<!ENTITY crashReporterLearnMore.label    "Көбірек білу">
+
+<!ENTITY networkTab.label                "Желі">
+
+<!ENTITY networkProxy.label              "Желілік прокси">
+
+<!ENTITY connectionDesc.label            "&brandShortName; Интернетке байланысу параметрлерін баптау">
+<!ENTITY connectionSettings.label        "Баптау…">
+<!ENTITY connectionSettings.accesskey    "а">
+
+<!ENTITY httpCache.label                 "Кэштелген веб құрамасы">
+
+<!ENTITY offlineStorage2.label           "Оффлайн веб құрамасы мен пайдаланушы мәліметтері">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Сайт деректері">
+<!ENTITY clearSiteData.label             "Барлық деректерді тазарту">
+<!ENTITY clearSiteData.accesskey         "з">
+<!ENTITY siteDataSettings.label          "Баптаулар…">
+<!ENTITY siteDataSettings.accesskey      "п">
+<!ENTITY siteDataLearnMoreLink.label     "Көбірек білу">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Кэш шегі">
+<!ENTITY limitCacheSizeBefore.accesskey  "К">
+<!ENTITY limitCacheSizeAfter.label       "МБ орын">
+<!ENTITY clearCacheNow.label             "Қазір өшіру">
+<!ENTITY clearCacheNow.accesskey         "з">
+<!ENTITY clearOfflineAppCacheNow.label   "Қазір өшіру">
+<!ENTITY clearOfflineAppCacheNow.accesskey "з">
+<!ENTITY overrideSmartCacheSize.label    "Кэшті автобасқаруды елемеу">
+<!ENTITY overrideSmartCacheSize.accesskey "м">
+
+<!ENTITY updateTab.label                 "Жаңартулар">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; жаңартулары">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "&brandShortName; жақсырақ өнімділік, тұрақтылық және қауіпсіздікпен жаңартылған етіп ұстаңыз.">
+<!ENTITY updateApplication.version.pre   "Нұсқасы ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName; үшін рұқсат ету">
+<!ENTITY updateAuto3.label               "Жаңартуларды автоорнату (ұсынылады)">
+<!ENTITY updateAuto3.accesskey           "а">
+<!ENTITY updateCheckChoose2.label        "Жаңартуларды тексеру, бірақ орнату керектігін өзіңіз тандайсыз">
+<!ENTITY updateCheckChoose2.accesskey    "з">
+<!ENTITY updateManual2.label             "Жаңартуларды тексермеу (ұсынылмайды)">
+<!ENTITY updateManual2.accesskey         "р">
+
+<!ENTITY updateHistory2.label            "Жаңартулар тарихын көрсету…">
+<!ENTITY updateHistory2.accesskey        "р">
+
+<!ENTITY useService.label                "Жаңартуларды орнату үшін фон қызметін қолдану">
+<!ENTITY useService.accesskey            "ф">
+
+<!ENTITY enableSearchUpdate2.label       "Іздеу жүйелерін автожаңарту">
+<!ENTITY enableSearchUpdate2.accesskey   "а">
+
+<!ENTITY offlineStorageNotify.label               "Веб-сайт дербес режимде қолданылатын мәліметтерді сақтауды сұраса, сені ескерту">
+<!ENTITY offlineStorageNotify.accesskey           "р">
+<!ENTITY offlineStorageNotifyExceptions.label     "Осыдан бөлек…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "б">
+
+<!ENTITY offlineAppsList2.label          "Келесі веб сайттарға оффлайн қолдануы үшін мәліметті сақтауға рұқсат етілген:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Өшіру…">
+<!ENTITY offlineAppsListRemove.accesskey "ш">
+<!ENTITY offlineAppRemove.confirm        "Дербес режимдегі веб-сайттардың ақпаратын өшіру">
+
+<!ENTITY certificateTab.label            "Сертификаттар">
+<!ENTITY certPersonal2.description       "Егерде сервер сіздің жеке сертификатыңызды сұраса">
+<!ENTITY selectCerts.auto                "Мені сұрамай-ақ жіберу">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Әрбір ретте cізден сұрау">
+<!ENTITY selectCerts.ask.accesskey       "р">
+<!ENTITY enableOCSP.label                "OCSP жауап беруші серверлерін сертификаттардың ағымдағы дұрыстығы жөнінде сұрау">
+<!ENTITY enableOCSP.accesskey            "с">
+<!ENTITY viewCerts2.label                "Сертификаттарды қарау…">
+<!ENTITY viewCerts2.accesskey            "С">
+<!ENTITY viewSecurityDevices2.label      "Қауіпсіздік құрылғылары…">
+<!ENTITY viewSecurityDevices2.accesskey  "ы">
+
+<!ENTITY performance.label               "Өнімділік">
+<!ENTITY useRecommendedPerformanceSettings2.label "Ұсынылатын өнімділік баптауларын қолдану">
+<!ENTITY useRecommendedPerformanceSettings2.description "Бұл баптаулар сіздің компьютеріңіздің құрылғылары және операциялық жүйесі үшін ыңғайлатылған.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "д">
+<!ENTITY performanceSettingsLearnMore.label "Көбірек білу">
+<!ENTITY limitContentProcessOption.label "Құрама процестерінің шегі">
+<!ENTITY limitContentProcessOption.description "Қосымша құрама процестері бірнеше беттерді қолдану кезінде өнімділікті арттыра алады, бірақ, нәтижесінде көбірек жады қолданылады.">
+<!ENTITY limitContentProcessOption.accesskey   "ш">
+<!ENTITY limitContentProcessOption.disabledDescription "Процесстер санын түзету тек көппроцесстік &brandShortName; үшін мүмкін.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Көппроцесстік іске қосылғанын қалай білуге болады">
+<!ENTITY allowHWAccel.label              "Қолжетерлік болса құрылғылық үдетуді қолдану">
+<!ENTITY allowHWAccel.accesskey          "д">

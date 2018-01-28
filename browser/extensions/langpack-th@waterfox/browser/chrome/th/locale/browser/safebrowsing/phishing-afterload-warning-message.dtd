@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "นำฉันออกไปจากที่นี่!">
+<!ENTITY safeb.palm.decline.label "เพิกเฉยคำเตือนนี้">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "นี่ไม่ใช่ไซต์หลอกลวง…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "ห">
+<!ENTITY safeb.palm.reportPage.label "ทำไมหน้านี้จึงถูกปิดกั้น?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "คำแนะนำโดย <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "หน้ารุกรานตามการรายงาน!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "หน้าเว็บนี้ที่ <span id='malware_sitename'/> ถูกรายงานว่าเป็นหน้ารุกรานและถูกปิดกั้นตามค่ากำหนดความปลอดภัยของคุณ">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>หน้ารุกรานจะพยายามติดตั้งโปรแกรมซึ่งขโมยข้อมูลส่วนตัว ใช้คอมพิวเตอร์ของคุณเพื่อโจมตีผู้อื่น หรือสร้างความเสียหายให้กับระบบของคุณ</p><p>บางหน้ารุกรานจงใจแจกจ่ายซอฟต์แวร์ที่เป็นอันตราย แต่หลายแห่งก็ถูกบุกรุกโดยที่เจ้าของไม่ทราบหรือไม่ได้อนุญาต</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "หน้าที่มีซอฟต์แวร์ไม่พึงประสงค์ตามการรายงาน!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "หน้าเว็บนี้ที่ <span id='unwanted_sitename'/> ถูกรายงานว่ามีซอฟต์แวร์ไม่พึงประสงค์และถูกปิดกั้นตามค่ากำหนดความปลอดภัยของคุณ">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>หน้าที่มีซอฟต์แวร์ไม่พึงประสงค์จะพยายามติดตั้งซอฟต์แวร์ที่สามารถหลอกลวงและส่งผลกระทบกับระบบของคุณในทางที่ไม่คาดคิด</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "ไซต์หลอกลวง!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "หน้าเว็บนี้ที่ <span id='phishing_sitename'/> ถูกรายงานว่าเป็นไซต์หลอกลวงและถูกปิดกั้นตามค่ากำหนดความปลอดภัยของคุณ">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>ไซต์หลอกลวงถูกออกแบบมาเพื่อหลอกล่อให้คุณทำบางอย่างที่อันตราย อย่างการติดตั้งซอฟต์แวร์ หรือเปิดเผยข้อมูลส่วนตัวของคุณอย่างรหัสผ่าน, หมายเลขโทรศัพท์ หรือบัตรเครดิต</p><p>การป้อนข้อมูลใด ๆ ในหน้าเว็บนี้อาจส่งผลให้เกิดการโจรกรรมข้อมูลส่วนตัวหรือการฉ้อฉลอื่น</p>">
+

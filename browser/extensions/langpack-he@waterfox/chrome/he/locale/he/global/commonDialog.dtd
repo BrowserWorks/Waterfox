@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "כותרת מקוצרת"> 
+<!ENTITY message.label    "טקסט דוגמה בא כאן.">
+<!ENTITY editfield0.label "שם משתמש:"> 
+<!ENTITY editfield1.label "ססמה:"> 
+<!ENTITY checkbox.label   "סמן">
+<!ENTITY copyCmd.label    "העתקה">
+<!ENTITY copyCmd.accesskey "ה">
+<!ENTITY selectAllCmd.label "בחירת הכל">
+<!ENTITY selectAllCmd.accesskey "ב">

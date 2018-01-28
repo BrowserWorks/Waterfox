@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "ඔබ දැනට සිටින්නේ පුද්ගලික කවුළුවක නොවේ.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "පුද්ගලික කවුළුව විවෘත කරන්න">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "පෞද්ගලික ගවේෂණය">
+<!ENTITY privateBrowsing.title.tracking                  "ලුහුබැඳීම් ආරක්ෂාව සමඟ පුද්ගලික ගවේශනය">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "ඔබ පුද්ගලික කවුළුවක් තුළ ගවේශනය කරන විට, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "සුරකින්නේ නැත">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "පිවිසුනු පිටු">
+<!ENTITY aboutPrivateBrowsing.info.searches              "සෙවුම්">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "කුකී">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "තාවකාලික ගොනු">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "සුරකිනු ඇත">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ඔබේ:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "බාගත කිරීම්">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "පිටු සලකුණු">
+<!ENTITY aboutPrivateBrowsing.note.before                "පුද්ගලික ගවේශනය ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ඔබව නිර්නාමික නොකරයි">
+<!ENTITY aboutPrivateBrowsing.note.after                 " අන්තර්ජාලයේ. ඔබේ සේවා යෝජකයා හෝ අන්තර්ජාල සම්පාදකයන්ට ඔබ පිවිසි පිටු හඳුනාගත හැක.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "මේ පිළිබඳ වැඩිදුර දැනගන්න ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "පෞද්ගලික ගවේෂණය">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ලුහුබැඳීම් ආරක්ෂාව">
+<!ENTITY trackingProtection.description2                 "ඇතැම් ජාල අඩවි මගින් ඔබේ අන්තර්ජාල ක්‍රියාකාරීත්වය දර්ශනය කිරීම සඳහා ලුහුබැඳීම් භාවිත කරයි. ලුහුබැඳීම් ආරක්ෂාව මගින් Waterfox විසින් ඔබේ ගවේශන හැසිරීම පිළිබඳ තොරතුරු එක්රැස් කරන ලුහුබැඳීම් වලකයි.">
+<!ENTITY trackingProtection.startTour1                   "එය ක්‍රියාකරන්නේ කෙසේදැයි බලන්න">

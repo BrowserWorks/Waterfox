@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "সার্টিফিকেট পরিচালন ব্যবস্থা">
+
+<!ENTITY certmgr.tab.mine                     "আপনার ব্যক্তিগত সার্টিফিকেট">
+<!ENTITY certmgr.tab.others2                  "ব্যক্তি">
+<!ENTITY certmgr.tab.websites3                "সার্ভার">
+<!ENTITY certmgr.tab.ca                       "কর্তৃপক্ষ (অথোরিটি)">
+<!ENTITY certmgr.tab.orphan2                  "অন্যান্য">
+
+<!ENTITY certmgr.mine                         "উল্লিখিত প্রতিষ্ঠানগুলি থেকে আপনাকে সনাক্তকারী সার্টিফিকেট উপস্থিত রয়েছে :">
+<!ENTITY certmgr.others                       "উল্লিখিত ব্যক্তিদের সনাক্ত করতে ব্যবহৃত সার্টিফিকেট আপনার ফাইলে উপস্থিত রয়েছে:">
+<!ENTITY certmgr.websites2                    "নিম্নলিখিত সার্ভারগুলির পরিচয় প্রমাণকারী সার্টিফিকেট ফাইলে উপস্থিত রয়েছে:">
+<!ENTITY certmgr.cas                          "উল্লিখিত সার্টিফিকেট অথোরিটিগুলিকে সনাক্ত করতে ব্যবহৃত সার্টিফিকেট আপনার ফাইলে উপস্থিত রয়েছে:">
+<!ENTITY certmgr.orphans                      "ফাইলের মধ্যে বেশ কয়েকটি সার্টিফিকেট অন্যান্য কোনো বিভাগের ক্ষেত্রে প্রযোজ্য নয়:">
+
+<!ENTITY certmgr.detail.general_tab.title     "সাধারণ">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "বিবরণ">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "বর্তমানে চিহ্নিত সার্টিফিকেট পরীক্ষা করা হচ্ছে…">
+<!ENTITY certmgr.subjectinfo.label            "প্রাপক">
+<!ENTITY certmgr.issuerinfo.label             "প্রকাশক">
+<!ENTITY certmgr.periodofvalidity.label       "বৈধতার সময়কাল" >
+<!ENTITY certmgr.fingerprints.label           "ফিঙ্গারপ্রিন্ট">
+<!ENTITY certmgr.certdetail.title             "সার্টিফিকেটের বিবরণ">
+<!ENTITY certmgr.certdetail.cn                "সাধারণ নাম (CN)">
+<!ENTITY certmgr.certdetail.o                 "প্রতিষ্ঠান (O)">
+<!ENTITY certmgr.certdetail.ou                "প্রাতিষ্ঠানিক একক (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "ক্রমিক সংখ্যা">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 ফিঙ্গারপ্রিন্ট">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 ফিঙ্গারপ্রিন্ট">
+
+<!ENTITY certmgr.editcacert.title             "CA সার্টিফিকেটের বিশ্বস্ততা সংক্রান্ত বৈশিষ্ট্য সম্পাদন করুন">
+<!ENTITY certmgr.editcert.edittrust           "বিশ্বস্ততা সংক্রান্ত বৈশিষ্ট্য সম্পাদন করুন:">
+<!ENTITY certmgr.editcert.trustssl            "এই সার্টিফিকেটের সাহায্যে ওয়েব-সাইট সনাক্ত করা সম্ভব।">
+<!ENTITY certmgr.editcert.trustemail          "এই সার্টিফিকেটের সাহায্যে মেইল ব্যবহারকারীদের সনাক্ত করা সম্ভব।">
+<!ENTITY certmgr.editcert.trustobjsign        "এই সার্টিফিকেটের সাহায্যে সফ্টওয়্যার নির্মাতাদের সনাক্ত করা সম্ভব।">
+
+<!ENTITY certmgr.deletecert.title             "সার্টিফিকেট মুছে ফেলুন">
+
+<!ENTITY certmgr.certname                     "সার্টিফিকেটের নাম">
+<!ENTITY certmgr.certserver                   "সার্ভার">
+<!ENTITY certmgr.override_lifetime            "সীমাহীন মেয়াদ">
+<!ENTITY certmgr.tokenname                    "নিরাপত্তা ডিভাইস">
+<!ENTITY certmgr.begins                       "আরম্ভ হল">
+<!ENTITY certmgr.expires                      "মেয়াদ পূরণের তারিখ">
+<!ENTITY certmgr.email                        "ই-মেইল ঠিকানা">
+<!ENTITY certmgr.serial                       "ক্রমিক সংখ্যা">
+
+<!ENTITY certmgr.close.label                  "বন্ধ">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                  "প্রদর্শন…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "বিশ্বস্ততার মাত্রা পরিবর্তন করুন…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "এক্সপোর্ট করুন…">
+<!ENTITY certmgr.export.accesskey             "এ">
+<!ENTITY certmgr.delete2.label                "মুছে ফেলুন…">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete_builtin.label         "মুছে ফেলুন অথবা অবিশ্বস্ত রূপে চিহ্নিত করুন…">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "ব্যাক-আপ করুন…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "সমগ্র ব্যাক-আপ করুন…">
+<!ENTITY certmgr.backupall2.accesskey         "স">
+<!ENTITY certmgr.restore2.label               "ইম্পোর্ট করুন…">
+<!ENTITY certmgr.restore2.accesskey           "ই">
+<!ENTITY certmgr.details.label                "সার্টিফিকেটের ক্ষেত্র">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.label                 "ক্ষেত্রের মান">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "সার্টিফিকেটের অনুক্রম">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "ব্যতিক্রম যোগ করুন…">
+<!ENTITY certmgr.addException.accesskey       "ব">
+
+<!ENTITY exceptionMgr.title                   "নিরাপত্তা জড়িত ব্যতিক্রম যোগ করুন">
+<!ENTITY exceptionMgr.exceptionButton.label   "নিরাপত্তা জড়িত ব্যতিক্রম নিশ্চিত করুন">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "বৈধ ব্যাঙ্ক, বিপনী ও অন্যান্য সার্বজনীন সাইট দ্বারা এই অনুরোধ করা হবে না।">
+<!ENTITY exceptionMgr.certlocation.caption2   "সার্ভার">
+<!ENTITY exceptionMgr.certlocation.url        "অবস্থান:">
+<!ENTITY exceptionMgr.certlocation.download   "সার্টিফিকেট প্রাপ্ত করুন">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "সার্টিফিকেটের অবস্থা">
+<!ENTITY exceptionMgr.certstatus.viewCert     "প্রদর্শন…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "এই ব্যতিক্রমটি স্থায়ীরূপে সংরক্ষণ করুন">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

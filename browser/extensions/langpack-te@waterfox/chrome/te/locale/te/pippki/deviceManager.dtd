@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "సాధన నిర్వాహకి">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "రక్షణ మాడ్యూళ్ళు మరియు సాధనాలు">
+<!ENTITY devmgr.details.title                   "వివరములు">
+<!ENTITY devmgr.details.title2                  "విలువ">
+
+<!ENTITY devmgr.button.login.label              "లాగ్ ఇన్">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "లాగ్ అవుట్">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "సంకేతపదాన్ని మార్చు">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "లోడ్‌చేయి">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "అన్‌లోడ్ చేయి">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "మీరు కలపాలనుకొంటున్న మాడ్యూల్ సమాచారాన్ని ప్రవేశపెట్టండి.">
+<!ENTITY loaddevice.modname                     "మాడ్యూల్ పేరు:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "కొత్త PKCS#11 మాడ్యూల్">
+<!ENTITY loaddevice.filename                    "మాడ్యూల్ ఫైల్ నామము:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "అన్వేషించు...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

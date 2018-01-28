@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "მონაცემთა გადმოტანა">
+
+<!ENTITY importFrom.label               "გადმოიტანეთ პარამეტრები, სანიშნეები, ისტორია, პაროლები და სხვა მონაცემები ბრაუზერიდან:">
+<!ENTITY importFromUnix.label           "გადმოიტანეთ პარამეტრები, სანიშნეები, ისტორია, პაროლები და სხვა მონაცემები ბრაუზერიდან:">
+<!ENTITY importFromBookmarks.label      "სანიშნეთა გადმოტანა:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "გადმოტანის გარეშე">
+<!ENTITY importFromNothing.accesskey    "გ">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "სანიშნეების, ისტორიის ან პაროლის მონაცემთა შემცველი პროგრამები ვერ მოიძებნა.">
+
+<!ENTITY importSource.title             "პარამეტრებისა და მონაცემთა გადმოტანა">
+<!ENTITY importItems.title              "გადმოსატანი მონაცემები">
+<!ENTITY importItems.label              "მიუთითეთ გადმოსატანი მონაცემები:">
+
+<!ENTITY migrating.title                "გადმოტანა…">
+<!ENTITY migrating.label                "გადმოვა შემდეგი მონაცემები…">
+
+<!ENTITY selectProfile.title            "პროფილის არჩევა">
+<!ENTITY selectProfile.label            "შემდეგი პროფილები ხელმისაწვდომია გადმოსატანად ბრაუზერიდან:">
+
+<!ENTITY done.title                     "გადმოტანა დასრულდა">
+<!ENTITY done.label                     "გადმოტანილია შემდეგი მონაცემები:">
+
+<!ENTITY closeSourceBrowser.label       "გაგრძელებამდე დარწმუნდით, რომ არჩეული ბრაუზერი დახურულია.">

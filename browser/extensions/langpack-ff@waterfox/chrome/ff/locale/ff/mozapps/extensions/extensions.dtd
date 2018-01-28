@@ -1,0 +1,270 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Topitorde Ɓeyditte">
+
+<!ENTITY search.placeholder                   "Yiylo ɓeyditte fof">
+<!ENTITY search.buttonlabel                   "Yiylo">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Nana loowa…">
+<!ENTITY listEmpty.installed.label            "A alaa hay ɓeydital gootal aafaangal e oo fannu">
+<!ENTITY listEmpty.availableUpdates.label     "Alaa kesɗitine njiytaa">
+<!ENTITY listEmpty.recentUpdates.label        "A hesɗitinaani hay beyditere wootere sakket">
+<!ENTITY listEmpty.findUpdates.label          "Yuurno Kesɗitine">
+<!ENTITY listEmpty.search.label               "Horiima yiytude ɓaydittee jaaɓɗuɗe">
+<!ENTITY listEmpty.button.label               "Ɓeydu humpito e ɓeyditte">
+<!ENTITY installAddonFromFile.label           "Aaf Ɓeyditte Iwde e Fiilde…">
+<!ENTITY installAddonFromFile.accesskey       "A">
+<!ENTITY toolsMenu.tooltip                    "Kuutorɗe ɓeyditte fof">
+
+
+
+<!ENTITY cmd.back.tooltip                     "Rutto hello wooto">
+<!ENTITY cmd.forward.tooltip                  "Yah yeeso hello wooto">
+
+<!ENTITY showUnsignedExtensions.button.label  "Won e timmitte koriima ƴeewteede">
+<!ENTITY showAllExtensions.button.label       "Hollu timmitte fof">
+<!ENTITY debugAddons.label                    "Buggito Ɓeyditte">
+<!ENTITY debugAddons.accesskey                "b">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Mbayka kisnal daaƴii ɓeyditte fof.">
+<!ENTITY warning.checkcompatibility.label          "Ƴeewtagol jaaɓdugol ɓeyditte koko daaƴaa. Aɗa waawi jogaade ɓeyditte ɗe njaaɓaani.">
+<!ENTITY warning.checkcompatibility.enable.label   "Daaƴtu">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Daaƴtu ƴeewtagol jaaɓdugol ɓeyditte">
+<!ENTITY warning.updatesecurity.label              "Ƴeewtagol kisnal ɓeyditte koko daaƴaa. Aɗa waawi heɓde caɗe e kesɗitine.">
+<!ENTITY warning.updatesecurity.enable.label       "Daaƴtu">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Daaƴtu ƴeewtagol kisnal ɓeyditte">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Yiylo">
+<!ENTITY view.discover.label                  "Ɗaɓɓu Ɓeyditte">
+<!ENTITY view.recentUpdates.label             "Kesɗitine Cakkitiiɗe">
+<!ENTITY view.availableUpdates.label          "Kesɗitine Goodaaɗe">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Yuurno kesɗitine">
+<!ENTITY updates.checkForUpdates.accesskey    "Y">
+<!ENTITY updates.viewUpdates.label            "Hollir Kesɗitine Cakkitiiɗe">
+<!ENTITY updates.viewUpdates.accesskey        "H">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Hesɗitin Ɓeyditte e Jaajol">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "Ɓ">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Waklit Ɓeyditte Fof yoo Kesɗitino e Jaajol">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "W">
+<!ENTITY updates.resetUpdatesToManual.label          "Waklit Ɓeyditte Fof yoo Kesɗitino e Junngol">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "W">
+<!ENTITY updates.updating.label               "Nana hesɗitina ɓeyditte">
+<!ENTITY updates.installed.label              "Ɓeyditte maa kesɗitinaama.">
+<!ENTITY updates.downloaded.label             "Kesɗitine ɓeyditte maa ngaawtaama.">
+<!ENTITY updates.restart.label                "Hurmitin jooni ngam jokkitde aafgol">
+<!ENTITY updates.noneFound.label              "Alaa kesɗitine njiytaa">
+<!ENTITY updates.manualUpdatesFound.label     "Hollir Kesɗitine Goodaaɗe">
+<!ENTITY updates.updateSelected.label         "Aaf Kesɗitine">
+<!ENTITY updates.updateSelected.tooltip       "Aaf kesɗitine goodaaɗe e ngol doggol">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Hollir Humpito Ɓeydoro">
+<!ENTITY cmd.showDetails.accesskey            "H">
+<!ENTITY cmd.findUpdates.label                "Yiylo Kesɗitine">
+<!ENTITY cmd.findUpdates.accesskey            "Y">
+<!ENTITY cmd.preferencesWin.label             "Cuɓe">
+<!ENTITY cmd.preferencesWin.accesskey         "C">
+<!ENTITY cmd.preferencesUnix.label            "Cuɓoraaɗe">
+<!ENTITY cmd.preferencesUnix.accesskey        "C">
+<!ENTITY cmd.about.label                      "Baɗte">
+<!ENTITY cmd.about.accesskey                  "B">
+
+<!ENTITY cmd.enableAddon.label                "Daaƴtu">
+<!ENTITY cmd.enableAddon.accesskey            "D">
+<!ENTITY cmd.disableAddon.label               "Daaƴ">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "Jammin Siŋkoore">
+<!ENTITY cmd.enableTheme.accesskey            "J">
+<!ENTITY cmd.disableTheme.label               "Dartin Jammingol Siŋkoore">
+<!ENTITY cmd.disableTheme.accesskey           "J">
+<!ENTITY cmd.askToActivate.label              "Naamno ngam Hurminde">
+<!ENTITY cmd.askToActivate.tooltip            "Naamndo ngam huutoraade ndee seŋre saha kala">
+<!ENTITY cmd.alwaysActivate.label             "Hurminat sahaa kala">
+<!ENTITY cmd.alwaysActivate.tooltip           "Huutoto ndee seŋre sahaa kala">
+<!ENTITY cmd.neverActivate.label              "Hoto Hurminat">
+<!ENTITY cmd.neverActivate.tooltip            "Hoto huutoro ndee seŋre hay sahaa">
+<!ENTITY cmd.stateMenu.tooltip                "Waylu so ndee seŋre hurmii">
+<!ENTITY cmd.installAddon.label               "Aaf">
+<!ENTITY cmd.installAddon.accesskey           "A">
+<!ENTITY cmd.uninstallAddon.label             "Ittu">
+<!ENTITY cmd.uninstallAddon.accesskey         "I">
+<!ENTITY cmd.showPreferencesWin.label         "Cuɓe">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Waylu cuɓe ngal ɓeydital">
+<!ENTITY cmd.showPreferencesUnix.label        "Cuɓoraaɗe">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Waylu cuɓoraaɗe ngal ɓeydital">
+<!ENTITY cmd.contribute.label                 "Addu ballal">
+<!ENTITY cmd.contribute.accesskey             "A">
+<!ENTITY cmd.contribute.tooltip               "Wallit e totagol ngal ɓeydital">
+
+<!ENTITY cmd.showReleaseNotes.label           "Hollu Konngol Bayyinol">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Hollu konngol bayyinol ngal ɓeydital">
+<!ENTITY cmd.hideReleaseNotes.label           "Suuɗ Konngol Bayyinol">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Suuɗ konngol bayyinol ngal ɓeydital">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Ko woni ɓeyditte?">
+<!ENTITY discover.description2                "Ɓeyditte ko jaaɓnirɗe ballooje-ma heertinde &brandShortName; ɓeyda heen gaatuleeje goɗɗe walla panni. Ƴeewndo palal kuutorɗe jaawnowal, tintinorde asamaan, walla mbaydi siŋkoore ɓeydowal &brandShortName; nanndude e yiɗde maa.">
+<!ENTITY discover.footer                      "So a seŋiima e enternet, ngal alluwal maa hollu ɓeyditte ɓurɗe ŋarɗude e lollude ngal ƴeewndo-ɗaa.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Yamre">
+<!ENTITY detail.lastupdated.label             "Hesɗitinaa Sakket">
+<!ENTITY detail.creator.label                 "Topaajo">
+<!ENTITY detail.homepage.label                "Hello jaɓɓorgo">
+<!ENTITY detail.numberOfDownloads.label       "Gaawte">
+
+<!ENTITY detail.contributions.description     "Tototooɗo ngal ɓeydital ena naamnii yo a wallit ɗum tambaade topagol ñiiɓngol so addude dokkal hay so seeɗa.">
+
+<!ENTITY detail.updateType                    "Kesɗitine Jaajol">
+<!ENTITY detail.updateDefault.label           "Goowaaɗo">
+<!ENTITY detail.updateDefault.tooltip         "Aaf kesɗitine e jaajol so wonaa tawa ko ɗum goowaɗum">
+<!ENTITY detail.updateAutomatic.label         "Kuɓɓol">
+<!ENTITY detail.updateAutomatic.tooltip       "Aaf kesɗitine e jaajol">
+<!ENTITY detail.updateManual.label            "Ñifol">
+<!ENTITY detail.updateManual.tooltip          "Hoto aaf kesɗitine e jaajol">
+<!ENTITY detail.home                          "Hello jaɓɓorgo">
+<!ENTITY detail.repository                    "Heftinirde Ɓeyditte">
+<!ENTITY detail.size                          "Ɓetol">
+
+<!ENTITY detail.checkForUpdates.label         "Yuurno kesɗitine">
+<!ENTITY detail.checkForUpdates.accesskey     "k">
+<!ENTITY detail.checkForUpdates.tooltip       "Yuurno kesɗitine ngal ɓeydital">
+<!ENTITY detail.showPreferencesWin.label      "Cuɓe">
+<!ENTITY detail.showPreferencesWin.accesskey  "C">
+<!ENTITY detail.showPreferencesWin.tooltip    "Waylu cuɓe ngal ɓeydital">
+<!ENTITY detail.showPreferencesUnix.label     "Cuɓoraaɗe">
+<!ENTITY detail.showPreferencesUnix.accesskey "C">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Waylu cuɓoraaɗe ngal ɓeydital">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Ɓetagol">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Sabbo">
+<!ENTITY progress.cancel.tooltip              "Haaytu">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Innde">
+<!ENTITY sort.name.tooltip                    "Leemtir innde">
+<!ENTITY sort.dateUpdated.label               "Hesɗitinaa Sakket">
+<!ENTITY sort.dateUpdated.tooltip             "Leemtir ñalngu kesɗitinal">
+<!ENTITY sort.relevance.label                 "Jaaɓol dowrowol">
+<!ENTITY sort.relevance.tooltip               "Leemtir toɗɗondiral">
+<!ENTITY sort.price.label                     "Njaru">
+<!ENTITY sort.price.tooltip                   "Leemtir njaru">
+
+<!ENTITY search.filter2.label                 "Yiylo:">
+<!ENTITY search.filter2.installed.label       "Ɓeyditte Am">
+<!ENTITY search.filter2.installed.tooltip     "Hollu ɓeyditte aafaaɗe">
+<!ENTITY search.filter2.available.label       "Ɓeyditte Goodaaɗe">
+<!ENTITY search.filter2.available.tooltip     "Hollu ɓeyditte goodaaɗe ngam aafde">
+
+<!ENTITY addon.homepage                       "Hello jaɓɓorgo">
+<!ENTITY addon.details.label                  "Teelte goɗɗe">
+<!ENTITY addon.details.tooltip                "Hollu teelɗe goɗɗe baɗte ngal ɓeydital">
+<!ENTITY addon.unknownDate                    "Anndaaka">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(ko ko daaƴaa)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Hesɗitin">
+<!ENTITY addon.undoAction.label               "Firtu">
+<!ENTITY addon.undoAction.tooltip             "Firtu ngal baɗal">
+<!ENTITY addon.undoRemove.label               "Firtu">
+<!ENTITY addon.undoRemove.tooltip             "Woppu ngal ɓeydital ɗo aafii ɗoo">
+<!ENTITY addon.restartNow.label               "Hurmitin jooni">
+<!ENTITY addon.install.label                  "Aaf">
+<!ENTITY addon.install.tooltip                "Aaf ngal ɓeydital">
+<!ENTITY addon.updateNow.label                "Hesɗitin Jooni">
+<!ENTITY addon.updateNow.tooltip              "LoAaf ow kesɗitinal ngal ɓeydital">
+<!ENTITY addon.includeUpdate.label            "Waɗor e kesɗitinal">
+<!ENTITY addon.updateAvailable.label          "Kesɗitinal ena woodi">
+<!ENTITY addon.checkingForUpdates.label       "Nana yiyloo kesɗitine…">
+<!ENTITY addon.releaseNotes.label             "Konngol Bayyinol:">
+<!ENTITY addon.loadingReleaseNotes.label      "Nana loowa…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Ɗaccu hakke, kono waɗii juumre e loowgol konngol bayyinol.">
+
+<!ENTITY addon.createdBy.label                "Waɗi ko ">
+
+<!ENTITY eula.title                           "Nanondiral Jamirol Kuutoro">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Jaɓ, Aafaa…">
+
+<!ENTITY settings.path.button.label           "Weɗɗit…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Ko ɗumwoni? Telemeetriri ana waawi aafde e dognude dawtinde saha-sahaa kala.">
+<!ENTITY experiment.info.learnmore "Ɓeydu Humpito">
+<!ENTITY experiment.info.learnmore.accesskey "Ɓ">
+<!ENTITY experiment.info.changetelemetry "Teelte Telemeetiri">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Ɓeydu Humpito…">
+
+<!ENTITY disabledUnsigned.heading "Won e ɓeyditte ko daaƴaaɗe">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Ɗee ɓeyditte ƴeewtaaka ngam kuutoree e &brandShortName;. Aɗa waawi ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "yiytude lomtooje">
+<!ENTITY disabledUnsigned.description.end " walla naamno-ɗaa topaajo oo yoo ƴeewto-ɗe.">
+<!ENTITY disabledUnsigned.learnMore "Ɓeydu humpito baɗte darnde amen e wallude ma hisde e geese.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Topayɓe hatojinɓe e ƴeewtaade ɓeyditte mum'en ena mbaawi jokkude tarde ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "famminorde">
+<!ENTITY disabledUnsigned.devInfo.end "amen.">
+
+<!ENTITY pluginDeprecation.description "Ena ŋakki huunde? Won ceŋe nattuɗe tammiteede e &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Ɓeydu Humpito.">
+
+<!ENTITY legacyWarning.description "Ena ŋakki huunde? Won jokke nattuɗe tammbaade e &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Hollu Jokke donaaɗe">
+
+
+
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY getThemes.description                "Looking to personalize your browser?">
+<!ENTITY getThemes.learnMore                  "Choose from thousands of themes.">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">

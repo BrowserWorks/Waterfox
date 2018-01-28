@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   <!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "ਇਸ ਸਫ਼ੇ ਉੱਤੇ ਲੱਭੋ">
+
+<!ENTITY findField.label "ਇਸ ਦੀ ਲੱਭੋ:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "ਮਿਲਦੇ ਹਾਲਾਤ">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "ਸਮੇਟੋ">
+<!ENTITY wrapCheckbox.accesskey "W">
+
+
+<!ENTITY findButton.label "ਅੱਗੇ ਲੱਭੋ">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "ਰੱਦ ਕਰੋ">
+<!ENTITY closeButton.label "ਬੰਦ ਕਰੋ">
+<!ENTITY up.label "ਉੱਤੇ">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "ਹੇਠਾਂ">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "ਦਿਸ਼ਾ">

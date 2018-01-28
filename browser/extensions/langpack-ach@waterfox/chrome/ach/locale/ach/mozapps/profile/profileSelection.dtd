@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Yer Gin makwako Latic">
+
+<!ENTITY            profilename.label      "Nying pi Gin makwako:">
+
+<!ENTITY            start.label            "Cak &brandShortName;">
+<!ENTITY            exit.label             "Kat woko">
+
+<!ENTITY            availprofiles.label    "Gin makwako Matye">
+
+<!ENTITY            newButton.label        "Yub Gin makwako…">
+<!ENTITY            newButton.accesskey    "Y">
+<!ENTITY            renameButton.label     "Nwo nying Gin makwako…">
+<!ENTITY            renameButton.accesskey "N">
+<!ENTITY            deleteButton.label     "Duny Gin makwako…">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; gwoko ngec makwako tera ni, gin ma imaro, ki jami pa latic kwede iyi gin makwako.">
+
+<!ENTITY            offlineState.label    "Pe itii iwi yamo">
+<!ENTITY            offlineState.accesskey "t">
+
+<!ENTITY            useSelected.label       "Tii ki gin makwako ma kiyero ni labongo penyo iye acaki">
+<!ENTITY            useSelected.accesskey   "i">

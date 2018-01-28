@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "راهنمای گام‌به‌گام وارد کردن اطلاعات">
+
+<!ENTITY importFrom.label               "وارد کردن گزینه‌ها، نشانک‌ها، تاریخچه، گذرواژه‌ها و دیگر داده‌ها از:">
+<!ENTITY importFromUnix.label           "وارد کردن ترجیحات، نشانک‌ها، تاریخچه، گذرواژه‌ها و دیگر داده‌ها از:">
+<!ENTITY importFromBookmarks.label      "وارد کردن نشانک‌ها از:">
+
+<!ENTITY importFromIE.label             "اینترنت اکسپلورر مایکروسافت">
+<!ENTITY importFromIE.accesskey         "م">
+<!ENTITY importFromEdge.label           "مایکروسافت Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "هیچ چیزی وارد نکن">
+<!ENTITY importFromNothing.accesskey    "ه">
+<!ENTITY importFromSafari.label         "سافاری">
+<!ENTITY importFromSafari.accesskey     "س">
+<!ENTITY importFromCanary.label         "کروم قناری">
+<!ENTITY importFromCanary.accesskey     "ق">
+<!ENTITY importFromChrome.label         "کروم">
+<!ENTITY importFromChrome.accesskey     "ک">
+<!ENTITY importFromChromium.label       "کرومیوم">
+<!ENTITY importFromChromium.accesskey   "م">
+<!ENTITY importFromWaterfox.label        "فایرفاکس">
+<!ENTITY importFromWaterfox.accesskey    "ف">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "برنامه‌ای که شامل اطلاعات نشانک‌ها، تاریخچه یا گذرواژه‌ها باشد یافت نشد.">
+
+<!ENTITY importSource.title             "وارد کردن تنظیمات و داده‌ها">
+<!ENTITY importItems.title              "مواردی که وارد شوند">
+<!ENTITY importItems.label              "مواردی را که می‌خواهید وارد شوند انتخاب کنید:">
+
+<!ENTITY migrating.title                "در حال وارد کردن…">
+<!ENTITY migrating.label                "موارد زیر در حال وارد شدن هستند…">
+
+<!ENTITY selectProfile.title            "انتخاب مجموعهٔ تنظیمات">
+<!ENTITY selectProfile.label            "مجموعه تنظیمات زیر برای وارد کردن موجودند:">
+
+<!ENTITY done.title                     "اطلاعات وارد شد">
+<!ENTITY done.label                     "موارد زیر با موفقیت وارد شدند:">
+
+<!ENTITY closeSourceBrowser.label       "لطفا قبل از ادامه دادن مطمئن شوید که مرورگر انتخاب شده بسته باشد.">

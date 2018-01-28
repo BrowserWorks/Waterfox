@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ymportearassistint">
+
+<!ENTITY importFrom.label               "Opsjes, blêdwizers, skiednis, wachtwurden en oare gegevens ymportearje út:">
+<!ENTITY importFromUnix.label           "Foarkarren, blêdwizers, skiednis, wachtwurden en oare gegevens ymportearje út:">
+<!ENTITY importFromBookmarks.label      "Blêdwizers ymportearje út:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Neat ymportearje">
+<!ENTITY importFromNothing.accesskey    "t">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Der binne gjin programma’s fûn dy't blêdwizers, skiednis of wachtwurden befetsje.">
+
+<!ENTITY importSource.title             "Ynstellingen en gegevens ymportearje út:">
+<!ENTITY importItems.title              "Te ymportearjen ûnderdielen">
+<!ENTITY importItems.label              "Selektearje de te ymportearjen ûnderdielen:">
+
+<!ENTITY migrating.title                "Ymportearje…">
+<!ENTITY migrating.label                "De folgjende ûnderdielen wurde op dit stuit ymportearre…">
+
+<!ENTITY selectProfile.title            "Profyl selektearje">
+<!ENTITY selectProfile.label            "De folgjende profilen binne beskikber om út te ymportearjen:">
+
+<!ENTITY done.title                     "Ymportearjen dien">
+<!ENTITY done.label                     "De folgjende ûnderdielen binne suksesfol ymportearre:">
+
+<!ENTITY closeSourceBrowser.label       "Soargje derfoar dat de selektearre browser sluten is eardat jo trochgean.">

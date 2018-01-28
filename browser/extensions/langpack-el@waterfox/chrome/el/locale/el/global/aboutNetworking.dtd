@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Περί δικτύωσης">
+<!ENTITY aboutNetworking.warning               "Πολύ πειραματικό. Να μην χρησιμοποιείται χωρίς επίβλεψη από ενήλικα.">
+<!ENTITY aboutNetworking.showNextTime          "Εμφάνιση της προειδοποίησης την επόμενη φορά">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Υποδοχές">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Ανανέωση">
+<!ENTITY aboutNetworking.autoRefresh           "Αυτόματη ανανέωση κάθε 3 δευτερόλεπτα">
+<!ENTITY aboutNetworking.hostname              "Όνομα κεντρικού υπολογιστή">
+<!ENTITY aboutNetworking.port                  "Θύρα">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Ενεργό">
+<!ENTITY aboutNetworking.idle                  "Αδρανές">
+<!ENTITY aboutNetworking.host                  "Διακομιστής">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Απεσταλμένα">
+<!ENTITY aboutNetworking.received              "Ληφθέντα">
+<!ENTITY aboutNetworking.family                "Οικογένεια">
+<!ENTITY aboutNetworking.addresses             "Διευθύνσεις">
+<!ENTITY aboutNetworking.expires               "Λήγει (δευτερόλεπτα)">
+<!ENTITY aboutNetworking.messagesSent          "Απεσταλμένα μηνύματα">
+<!ENTITY aboutNetworking.messagesReceived      "Ληφθέντα μηνύματα">
+<!ENTITY aboutNetworking.bytesSent             "Απεσταλμένα byte">
+<!ENTITY aboutNetworking.bytesReceived         "Ληφθέντα byte">
+<!ENTITY aboutNetworking.logging               "Καταγραφή">
+<!ENTITY aboutNetworking.logTutorial           "Δείτε την <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Καταγραφή HTTP</a> για οδηγίες σχετικά με τη χρήση αυτού του εργαλείου.">
+<!ENTITY aboutNetworking.currentLogFile        "Τρέχον αρχείο καταγραφής:">
+<!ENTITY aboutNetworking.currentLogModules     "Τρέχοντες μονάδες καταγραφής:">
+<!ENTITY aboutNetworking.setLogFile            "Ορισμός αρχείου καταγραφής">
+<!ENTITY aboutNetworking.setLogModules         "Ορισμός μονάδων καταγραφής">
+<!ENTITY aboutNetworking.startLogging          "Έναρξη καταγραφής">
+<!ENTITY aboutNetworking.stopLogging           "Τερματισμός καταγραφής">
+<!ENTITY aboutNetworking.dnsLookup             "Αναζήτηση DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Επίλυση">
+<!ENTITY aboutNetworking.dnsDomain             "Τομέας">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "Στατιστικά RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Κατάσταση RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Αριθμός νικών cache">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Αριθμός νικών δικτύου">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Αριθμός συνολικών αιτημάτων δικτύου">
+<!ENTITY aboutNetworking.rcwnOperation         "Λειτουργία μνήμης cache">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Άνοιγμα">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Ανάγνωση">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Εγγραφή">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Ανοικτή είσοδος">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Μικρός μέσος όρος">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Μεγάλος μέσος όρος">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Μακρά τυπική απόκλιση">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Αργή μέτρηση cache">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Η cache δεν μετρά αργά">

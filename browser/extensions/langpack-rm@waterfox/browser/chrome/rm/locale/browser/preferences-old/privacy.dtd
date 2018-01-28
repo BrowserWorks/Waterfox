@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Utilisar la protecziun cunter il fastizar">
+<!ENTITY  trackingProtectionAlways.label       "Adina">
+<!ENTITY  trackingProtectionAlways.accesskey   "A">
+<!ENTITY  trackingProtectionPrivate.label      "Mo en fanestras privatas">
+<!ENTITY  trackingProtectionPrivate.accesskey  "p">
+<!ENTITY  trackingProtectionNever.label        "Mai">
+<!ENTITY  trackingProtectionNever.accesskey    "i">
+<!ENTITY  trackingProtectionLearnMore.label    "Dapli infurmaziuns">
+<!ENTITY  trackingProtectionExceptions.label   "Excepziuns...">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Fastizar">
+<!ENTITY trackingProtectionPBM5.label         "Utilisar la protecziun cunter il fastizar en il modus privat">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Ulteriuras infurmaziuns">
+<!ENTITY changeBlockList.label          "Midar la glista da bloccar">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Ti pos era ">
+<!ENTITY  doNotTrack.settings.label     "administrar tes parameters da la protecziun cunter il fastizar">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Cronologia">
+
+<!ENTITY  locationBar.label             "La trav d'adressas">
+
+<!ENTITY  locbar.suggest.label          "Durant l'endataziun en la trav d'adressas proponer il suandant:">
+<!ENTITY  locbar.history.label          "Cronologia">
+<!ENTITY  locbar.history.accesskey      "i">
+<!ENTITY  locbar.bookmarks.label        "Segnapaginas">
+<!ENTITY  locbar.bookmarks.accesskey    "g">
+<!ENTITY  locbar.openpage.label         "Tabs averts">
+<!ENTITY  locbar.openpage.accesskey     "b">
+<!ENTITY  locbar.searches.label         "Sumegliantas tschertgas da la maschina da tschertgar da standard">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Midar ils parameters per propostas da maschinas da tschertgar…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "Acceptar cookies da websites">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Permetter cookies da terzs:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "Adina">
+<!ENTITY  acceptThirdParty.never.label    "Mai">
+<!ENTITY  acceptThirdParty.visited.label  "Da visitads">
+
+<!ENTITY  keepUntil.label               "Memorisar fin che:">
+<!ENTITY  keepUntil.accesskey           "M">
+
+<!ENTITY  expire.label                  "els n'èn betg pli valids">
+<!ENTITY  close.label                   "&brandShortName; vegn serrà">
+
+<!ENTITY  cookieExceptions.label        "Excepziuns…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Mussar ils cookies…">
+<!ENTITY  showCookies.accesskey         "o">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; vegn a far il suandant:">
+<!ENTITY  historyHeader.pre.accesskey      "v">
+<!ENTITY  historyHeader.remember.label     "Memorisar la cronologia">
+<!ENTITY  historyHeader.dontremember.label "Mai memorisar la cronologia">
+<!ENTITY  historyHeader.custom.label       "Utilisar per la cronologia ils parameters definids da l'utilisader">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; vegn a memorisar la cronologia da navigar, las telechargiadas, las endataziuns en formulars ed en champs da tschertgar e plinavant a salvar cookies da websites che ti has visità.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Forsa vuls ti ">
+<!ENTITY  rememberActions.clearHistory.label  "stizzar tia cronologia pli nova">
+<!ENTITY  rememberActions.middle.label        ", u ">
+<!ENTITY  rememberActions.removeCookies.label "stizzar singuls cookies">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; vegn ad utilisar las medemas preferenzas sco en il modus privat e na vegn betg a far ina cronologia da tia navigaziun en l'internet.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Forsa vuls ti era ">
+<!ENTITY  dontrememberActions.clearHistory.label "stizzar l'entira cronologia pli nova">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Adina navigar en il modus privat">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Memorisar la cronologia dal navigar e da las telechargiadas">
+<!ENTITY  rememberHistory2.accesskey  "r">
+
+<!ENTITY  rememberSearchForm.label       "Memorisar las endataziuns en champs da tschertgar ed en formulars">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Stizzar la cronologia sche &brandShortName; vegn serrà">
+<!ENTITY  clearOnClose.accesskey         "S">
+
+<!ENTITY  clearOnCloseSettings.label     "Parameters…">
+<!ENTITY  clearOnCloseSettings.accesskey "z">
+
+<!ENTITY  browserContainersHeader.label         "Tabs da container">
+<!ENTITY  browserContainersLearnMore.label      "Ulteriuras infurmaziuns">
+<!ENTITY  browserContainersEnabled.label        "Activar ils tabs da container">
+<!ENTITY  browserContainersEnabled.accesskey    "r">
+<!ENTITY  browserContainersSettings.label        "Parameters…">
+<!ENTITY  browserContainersSettings.accesskey    "r">

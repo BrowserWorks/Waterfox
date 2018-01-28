@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "歷史記錄清除設定">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "34em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+
+<!ENTITY sanitizeDialog2.title         "清除最近的歷史記錄">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "當我離開 &brandShortName; 時，它應該自動清除:">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "清除時間範圍: ">
+<!ENTITY clearTimeDuration.accesskey      "T">
+<!ENTITY clearTimeDuration.lastHour       "一小時內">
+<!ENTITY clearTimeDuration.last2Hours     "兩小時內">
+<!ENTITY clearTimeDuration.last4Hours     "四小時內">
+<!ENTITY clearTimeDuration.today          "今天">
+<!ENTITY clearTimeDuration.everything     "所有歷史記錄">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "詳細資訊">
+<!ENTITY detailsProgressiveDisclosure.accesskey "e">
+
+<!ENTITY historySection.label         "瀏覽紀錄">
+<!ENTITY dataSection.label            "資料">
+
+<!ENTITY itemHistoryAndDownloads.label     "瀏覽與下載記錄">
+<!ENTITY itemHistoryAndDownloads.accesskey "B">
+<!ENTITY itemFormSearchHistory.label       "已存表單及搜尋記錄">
+<!ENTITY itemFormSearchHistory.accesskey   "F">
+<!ENTITY itemCookies.label                 "Cookie">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "快取">
+<!ENTITY itemCache.accesskey               "a">
+<!ENTITY itemOfflineApps.label             "離線網站資料">
+<!ENTITY itemOfflineApps.accesskey         "O">
+<!ENTITY itemActiveLogins.label            "已登入的連線">
+<!ENTITY itemActiveLogins.accesskey        "L">
+<!ENTITY itemSitePreferences.label         "個別網站設定">
+<!ENTITY itemSitePreferences.accesskey     "S">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "此動作無法復原。">

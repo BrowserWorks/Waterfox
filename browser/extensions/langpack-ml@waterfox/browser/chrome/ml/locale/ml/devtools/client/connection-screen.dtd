@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "കണക്ട് ചെയ്യുക">
+<!ENTITY header     "റിമോട്ട് ഡിവൈസിലേക്കു് കണക്ട് ചെയ്യുക">
+<!ENTITY host       "ഹോസ്റ്റ്‌:">
+<!ENTITY port       "പോര്‍ട്ട്‌:">
+<!ENTITY connect    "കണക്ട് ചെയ്യുക">
+<!ENTITY connecting "കണക്ട് ചെയ്യുന്നു…">
+<!ENTITY availableAddons "ലഭ്യമായ വിദൂര ആഡ്-ഓണുകള്‍:">
+<!ENTITY availableTabs "ലഭ്യമായ വിദൂര റ്റാബുകള്‍:">
+<!ENTITY availableProcesses "ലഭ്യമായ വിദൂര പ്രക്രിയകള്‍:">
+<!ENTITY connectionError "തെറ്റു്">
+<!ENTITY errorTimeout "പിശക്: കണക്ഷന്റെ സമയപരിധി കഴിഞ്ഞു">
+<!ENTITY errorRefused "പിശക്: കണക്ഷന്‍ നിരസിച്ചു.">
+<!ENTITY errorUnexpected "പ്രതീക്ഷിക്കാത്ത തകരാര്‍.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "ഫയര്‍ഫോക്സ് ഡവലപ്പര്‍ പ്രയോഗങ്ങള്‍ക്ക് റിമോട്ട് ഡിവൈസുകള്‍ ഡീബഗ് ചെയ്യുവാന്‍ സാധ്യമാകുന്നു (ഉദാഹരണത്തിന്, Android-നുള്ള Waterfox). റിമോട്ട് ഡിവൈസില്‍ 'റിമോട്ട് ഡീബഗ്ഗിങ്' ഐച്ഛികം ഓണ്‍ ചെയ്തു എന്നുറപ്പാക്കുക. കൂടുതല്‍ വിവരങ്ങള്‍ക്ക്,">
+<!ENTITY remoteDocumentation "വിവരണക്കുറിപ്പു്">
+<!ENTITY remoteHelpSuffix ".">
+

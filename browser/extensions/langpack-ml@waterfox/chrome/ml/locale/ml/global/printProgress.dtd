@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE printProgress.dtd Main UI for Print Progress Dialog -->
+
+<!ENTITY printWindow.title "പ്രിന്റ്‌ ചെയ്തുകൊണ്ടിരിക്കുന്നു"> 
+<!ENTITY title    "തലക്കെട്ട്‌ "> 
+<!ENTITY progress "പുരോഗതി:">
+<!ENTITY preparing "തൈയ്യാറെടുക്കുന്നു ">
+<!ENTITY printComplete "പ്രിന്റ്‌ ചെയ്തു കഴിഞ്ഞിരിക്കുന്നു">
+
+<!ENTITY dialogCancel.label "റദ്ദാക്കുക"> 
+<!ENTITY dialogClose.label "അടയ്ക്കുക ">
+<!-- LOCALIZATION NOTE (percentPrint):
+
+    This string is used to format the text to the right of the progress
+    meter.
+
+    #1 will be replaced by the percentage of the file that has been saved -->
+
+<!ENTITY percentPrint "#1&#037;">

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "ఇష్టాంశాలు">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "తెరిచివున్న ట్యాబులు">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "చరిత్ర">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "లాగిన్ లు">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "అభిరుచులు">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "పొడిగింతలు">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "చిరునామాలు">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "క్రెడిట్ కార్డులు">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "పరికరం పేరు">
+<!ENTITY changeSyncDeviceName2.label "పరికరం పేరు మార్చు…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "రద్దుచేయి">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "భద్రపరచు">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "సేవా నిబంధనలు">
+<!ENTITY fxaPrivacyNotice.link.label "గోప్యతా నోటీసు">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "నిర్థారించబడలేదు.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "మళ్ళీ అనుసంధానించడానికి సైన్ ఇన్ అవ్వండి">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "మీరు ప్రవేశించి లేరు.">
+<!ENTITY signIn.label                "ప్రవేశించండి">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "ప్రొఫైల్ చిత్రం మార్చు">
+<!ENTITY verifiedManage.label        "ఖాతా నిర్వహణ">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect3.label           "అనుసంధానం తెంచు…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY verify.label                "ఈమెయిలు నిర్థారించు">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "ఈ ఈమెయిలును మర్చిపో">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "మీ జాలాన్ని మీతో తీసుకువెళ్ళండి">
+<!ENTITY signedOut.description        "మీ ఇష్టాంశాలను, చరిత్రను, ట్యాబులను, సంకేతపదాలను, పొడగింతలను, అభిరుచులను మీ పరికరాలన్నింటిలోనూ సింక్రనైజ్ చెయ్యండి.">
+<!ENTITY signedOut.accountBox.title   "ఒక &syncBrand.fxAccount.label;‌తో అనుసంధానించండి">
+<!ENTITY signedOut.accountBox.create  "ఖాతా సృష్టించుకోండి">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "ప్రవేశించండి">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "సింక్ అమరికలు">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "మీ మొబైలు పరికరంతో సింక్రనించడానికి Waterfoxని ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " లేదా ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " లో దించుకోండి.">
+
+<!ENTITY signedIn.settings.description "Choose what to synchronize on your devices using &brandShortName;.">
+

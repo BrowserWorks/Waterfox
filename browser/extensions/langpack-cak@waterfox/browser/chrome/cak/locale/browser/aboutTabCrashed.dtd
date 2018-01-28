@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Titz'apïx re ruwi' re'">
+<!ENTITY tabCrashed.restoreTab "Titzolïx ruwäch re ruwi' re'">
+<!ENTITY tabCrashed.restoreAll "Ketzolïx kiwäch konojel ri man etikirinäq ta taq ruwi'">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Uy. Xqa ruchuq'a' ruwi'.">
+<!ENTITY tabCrashed.offerHelp "¡Yojtikïr yatqato'!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Ticha' &tabCrashed.restoreTab; richin nisamajib'ëx chik ri rupam ruxaq.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Ticha' &tabCrashed.restoreTab; o &tabCrashed.restoreAll; richin nisamajib'ëx chik ri rupam ruxaq.">
+<!ENTITY tabCrashed.requestHelp "¿La yojato'?">
+<!ENTITY tabCrashed.requestHelpMessage "Ri taq kitzijol sachoj yojkito' yeqanik'oj ri taq k'ayewal chuqa' ruk'ojlem ri &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Titzijöx re ruwi' re'">
+<!ENTITY tabCrashed.sendReport2 "Titaq jun rutzijol sachoj richin re ruwi' tajin natz'ët">
+<!ENTITY tabCrashed.commentPlaceholder2 "Cha'el taq rutzijol (ri taq rutzijol konojel winaqi' yetz'eton)">
+<!ENTITY tabCrashed.includeURL2 "Titz'aqatisäx ruxaq URL rik'in re rutzijol sachoj re'">
+<!ENTITY tabCrashed.emailPlaceholder "Tatz'ib'aj wawe' ri rochochib'al ataqoya'l">
+<!ENTITY tabCrashed.emailMe "Tataqa' pe jun taqoyal chwe toq k'o ch'aqa' chik rutzijol">
+<!ENTITY tabCrashed.reportSent "Xtaq ri rutzijol sachoj. ¡Matyox chawe ruma yojato' chi niqaq'i' jun &brandShortName; janila ütz!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Titzijöx taq ruwi' chupam">
+<!ENTITY tabCrashed.autoSubmit2 "Ke'ak'exa' ri taq ajowab'äl richin yonil nikitäq taq rutzijol k'ayewal, achi'el chuqa' ri taq rutzijol ruwi' richin rupam xq'ate' pa re moloj re' chuqa' pa ri taq moloj ri'ïl ri chwa'q kab'ij">

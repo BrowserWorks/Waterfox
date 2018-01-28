@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "افزودن حامل جدید">
+<!ENTITY addButton.accesskey  "ا">
+<!ENTITY preferencesButton.label "ترجیحات">
+<!ENTITY removeButton.label   "حذف">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; بازگشت به حریم شخصی">
+
+<!ENTITY window.title         "افزودن حامل جدید">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "نام:">
+<!ENTITY name.accesskey       "ن">
+<!ENTITY name.placeholder     "وارد کردن نام حامل">
+<!ENTITY icon.label           "تصویر:">
+<!ENTITY icon.accesskey       "ت">
+<!ENTITY color.label          "رنگ:">
+<!ENTITY color.accesskey      ":">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "انجام شد">
+<!ENTITY button.ok.accesskey  "ا">
+

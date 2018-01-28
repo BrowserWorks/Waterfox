@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Odtwórz">
+<!ENTITY playButton.pauseLabel "Wstrzymaj">
+<!ENTITY muteButton.muteLabel "Wycisz">
+<!ENTITY muteButton.unmuteLabel "Włącz dźwięk">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Tryb pełnoekranowy">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Opuść tryb pełnoekranowy">
+<!ENTITY castingButton.castingLabel "Wyślij na inne urządzenie">
+<!ENTITY closedCaption.off "Wyłączone">
+
+<!ENTITY stats.media "Media">
+<!ENTITY stats.size "Rozmiar">
+<!ENTITY stats.activity "Bieżący stan">
+<!ENTITY stats.activityPaused "Wstrzymanie">
+<!ENTITY stats.activityPlaying "Odtwarzanie">
+<!ENTITY stats.activityEnded "Zakończono">
+<!ENTITY stats.activitySeeking "(przewijanie)">
+<!ENTITY stats.volume "Głośność">
+<!ENTITY stats.framesParsed "Liczba przetworzonych klatek">
+<!ENTITY stats.framesDecoded "Liczba odkodowanych klatek">
+<!ENTITY stats.framesPresented "Liczba pokazanych klatek">
+<!ENTITY stats.framesPainted "Liczba narysowanych klatek">
+
+<!ENTITY error.aborted "Wczytywanie wideo przerwane.">
+<!ENTITY error.network "Odtwarzanie wideo przerwane z powodu błędu sieci.">
+<!ENTITY error.decode "Nie można odtworzyć wideo, ponieważ plik jest uszkodzony.">
+<!ENTITY error.srcNotSupported "Nieobsługiwany format wideo lub typ MIME.">
+<!ENTITY error.noSource2 "Nie odnaleziono wideo w obsługiwanym formacie i typie MIME.">
+<!ENTITY error.generic "Odtwarzanie wideo przerwane z powodu nieznanego błędu.">
+
+<!ENTITY scrubberScale.nameFormat "Upłynęło #1 z #2">
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

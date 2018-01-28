@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Núdzový režim aplikácie &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Spustiť v núdzovom režime">
+<!ENTITY refreshProfile.label         "Obnoviť &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Núdzový režim je špeciálny režim prehliadača &brandShortName;, ktorý slúži na riešenie problémov s programom.">
+<!ENTITY safeModeDescription4.label   "Vaše doplnky a vlastné nastavenia budú dočasne zakázané.">
+
+<!ENTITY refreshProfileInstead.label  "Núdzový režim môžete preskočiť a skúsiť obnovenie prehliadača &brandShortName; do pôvodných nastavení.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; bol počas spúšťania neočakávane ukončený. Toto môže byť spôsobené doplnkami alebo nastaveniami. Problém sa môžete pokúsiť vyriešiť spustením prehliadača v Núdzovom režime.">

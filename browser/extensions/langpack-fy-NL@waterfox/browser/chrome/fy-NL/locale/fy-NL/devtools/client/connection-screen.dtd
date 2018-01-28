@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Ferbine">
+<!ENTITY header     "Ferbyn mei oar apparaat">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Poarte:">
+<!ENTITY connect    "Ferbine">
+<!ENTITY connecting "Ferbine…">
+<!ENTITY availableAddons "Beskikbere add-ons op oare apparaat:">
+<!ENTITY availableTabs "Beskikbere ljepblêden oare apparaat:">
+<!ENTITY availableProcesses "Beskikbere prosessen oare apparaat:">
+<!ENTITY connectionError "Flater:">
+<!ENTITY errorTimeout "Flater: ferbining oer de wachttiid.">
+<!ENTITY errorRefused "Flater: ferbining wegere.">
+<!ENTITY errorUnexpected "Net ferwachte flater.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Waterfox Developer Tools kin oare apparaten (bygelyks Waterfox foar Android en Waterfox OS) debugge. Wês wis dat jo de opsje 'Oar apparaat debugge' oanstean hawwe op it oare apparaat. Foar mear, sjoch de ">
+<!ENTITY remoteDocumentation " dokumintaasje">
+<!ENTITY remoteHelpSuffix ".">
+

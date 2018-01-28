@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "מנוע חיפוש בררת מחדל">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "&brandShortName; ישתמש במנוע חיפוש בררת המחדל בשורת המיקום, שורת החיפוש ודף ההתחלה. במסך זה ניתן לבחור את מנוע חיפוש בררת המחדל.">
+
+<!ENTITY provideSearchSuggestions.label        "הצגת המלצות חיפוש">
+<!ENTITY provideSearchSuggestions.accesskey    "מ">
+
+<!ENTITY showURLBarSuggestions.label           "הצגת הצעות חיפוש בתוצאות סרגל המיקום">
+<!ENTITY showURLBarSuggestions.accesskey       "ס">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "הצעות חיפוש לא יופיעו בתוצאות סרגל המיקום מכיוון שהגדרת ש־&brandShortName; לעולם לא לזכור היסטוריה.">
+
+<!ENTITY oneClickSearchEngines.label           "מנועי חיפוש בלחיצה אחת">
+
+<!ENTITY chooseWhichOneToDisplay.label         "שורת החיפוש מאפשרת חיפוש במנועי חיפוש חלופיים. נא לבחור אילו מהם יוצגו.">
+
+<!ENTITY engineNameColumn.label                "מנוע חיפוש">
+<!ENTITY engineKeywordColumn.label             "מילת מפתח">
+
+<!ENTITY restoreDefaultSearchEngines.label     "שחזור למנועי חיפוש בררת מחדל">
+<!ENTITY restoreDefaultSearchEngines.accesskey "ש">
+
+<!ENTITY removeEngine.label                    "הסרה">
+<!ENTITY removeEngine.accesskey                "ה">
+
+<!ENTITY addMoreSearchEngines.label            "הוספת מנועי חיפוש נוספים…">

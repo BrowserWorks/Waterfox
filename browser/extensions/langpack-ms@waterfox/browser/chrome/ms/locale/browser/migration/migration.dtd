@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Bestari Import">
+
+<!ENTITY importFrom.label               "Import Pilihan, Tandabuku, Sejarah, Kata laluan dan lain-lain data dari:">
+<!ENTITY importFromUnix.label           "Import Keutamaan, Tandabuku, Sejarah, Kata laluan dan lain-lain data dari:">
+<!ENTITY importFromBookmarks.label      "Import Tandabuku dari:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Jangan import apa-apa">
+<!ENTITY importFromNothing.accesskey    "t">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Pelayar Selamat">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Tiada atur cara yang mengandungi tandabuku, sejarah atau data kata laluan yang dapat ditemui.">
+
+<!ENTITY importSource.title             "Tetapan dan Data Import">
+<!ENTITY importItems.title              "Item untuk Diimport">
+<!ENTITY importItems.label              "Pilih item yang mahu diimport:">
+
+<!ENTITY migrating.title                "Mengimport…">
+<!ENTITY migrating.label                "Item berikut sedang diimport…">
+
+<!ENTITY selectProfile.title            "Pilih Profil">
+<!ENTITY selectProfile.label            "Profil berikut tersedia untuk diimport dari:">
+
+<!ENTITY done.title                     "Import Selesai">
+<!ENTITY done.label                     "Item berikut telah berjaya diimport:">
+
+<!ENTITY closeSourceBrowser.label       "Sila pastikan pelayar yang dipilih telah ditutup sebelum meneruskan.">

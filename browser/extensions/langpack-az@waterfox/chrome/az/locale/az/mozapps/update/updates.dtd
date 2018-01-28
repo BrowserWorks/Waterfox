@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Proqram yeniləmə">
+
+<!ENTITY  checking.title                  "Yeniləmə yoxlaması">
+<!ENTITY  updateCheck.label               "Yeni &brandShortName; versiyaları axtarılır…">
+
+<!ENTITY  noupdatesfound.title            "Yeniləmə tapılmadı">
+<!ENTITY  noupdatesautoenabled.intro      "Heç bir yeniləmə yoxdur. &brandShortName; müəyyən fasilələrlə yeniləmələri yoxlayacaq.">
+<!ENTITY  noupdatesautodisabled.intro     "Heç bir yeniləmə yoxdur. Lütfən daha sonra yenidən yoxlayın ya da &brandShortName; proqramının yeniləmə yoxlamasını aktivləşdirin.">
+
+<!ENTITY  manualUpdate.title              "Yenilənə bilmir">
+<!ENTITY  manualUpdate.desc               "Tövsiyə edilən bir təhlükəsizlik və dayanıqlılıq yeniləməsi var, ancaq quraşdırmaq üçün lazımlı icazəniz yoxdur. Zəhmət olmasa Sistem idarəçinizlə məsləhətləşin və ya bu kompüterdə proqram qurma icazəsinə sahib bir hesab üzərindən yenidən yoxlayın.">
+<!ENTITY  manualUpdate.space.desc         "Qurulması tövsiyə edilən təhlükəsizlik və dayanıqlılıq yeniləməsi var ancaq quraşdırma üçün kifayət qədər sahəniz yoxdur.">
+<!ENTITY  manualUpdateGetMsg.label        "&brandShortName; proqramının ən son versiyasını ən son versiyasını hər zaman burdan yükləyə bilərsiniz:">
+
+<!ENTITY  unsupported.title               "Sistem dəstəklənmir">
+<!ENTITY  unsupported.label               "Sizin &brandShortName; səyyahınız köhnəlib, amma son versiya sizin sistem tərəfindən dəstəklənmir. Sisteminizi yüksəldib bir daha yoxlayın. Bir daha bu xəbərdarlığı görməyəcəksiz, ">
+<!ENTITY  unsupportedLink.label           "daha ətraflı öyrənin.">
+
+<!ENTITY  clickHere.label                 "Bu yeniləmə haqqındaki məlumatları göstər">
+
+<!ENTITY  evangelism.desc                 "&brandShortName; proqramına aid bu yeniləməni qısa zamanda qurmağınız şiddətlə tövsiyyə edilir.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; yüklənir">
+<!ENTITY  downloading.intro               "Aşağıdakı yeniləmələr quruldu:">
+<!ENTITY  connecting.label                "Yeniləmə serverinə bağlanır…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; yüklənən əlavəli yeniləmənin tam olmasını təsdiqləyə bilmədi, buna görə tam yeniləmə paketi yüklənir.">
+
+<!ENTITY  viewDetails.tooltip             "Bu yeniləmənin təfərrüatlarına bax">
+
+<!ENTITY  details.link                    "Ətraflı məlumat">
+
+<!ENTITY  error.title                     "Xətalı yeniləmə">
+
+<!ENTITY  error.label                     "Bu yeniləməni yoxlayarkən, endirərkən və ya quraşdırarkən xəta oldu. &brandShortName; yenilənə bilmir, səbəb:">
+                                           
+<!ENTITY  errorManual.label               "&brandShortName; səyyahını bu linkə keçərək əllə ən son versiyaya yeniləyə bilərsiniz:">
+                                           
+<!ENTITY  errorpatching.intro             "Yeniləmə hissəciyi əlavə edilə bilmir. &brandShortName; yeniləməni bütöv endirərək bir daha yoxlayacaq.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; yeniləmə olub-olmadığını yoxlaya bilmir. Zəhmət olmasa buradan ən son &brandShortName; versiyasını işlətdiyinizə əmin olun:">
+
+<!ENTITY  finishedPage.title              "Yeniləmə qurulmağa hazırdır">
+<!ENTITY  finishedPage.text               "Yeniləmə &brandShortName; bir sonraki dəfə yenidən başladıqda qurulacaq. &brandShortName; səyyahını indi yenidən başlada, və ya işinizə davam edib daha sonra yeniləyə bilərsiz.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; səyyahına aid bir təhlükəsizlik və dayanıqlılıq yeniləməsi endirildi və quraşdırılmaya hazırdır.">
+<!ENTITY  finishedBackground.name         "Yeniləmə:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Yeniləmə &brandShortName; yenidən başladılanda quraşdırılacaq. &brandShortName; səyyahını indi və ya işinizə davam edib, daha sonra da yenidən başlada bilərsiniz.">
+<!ENTITY  finishedBackground.moreElevated "Bu yeniləmə administrator icazələri tələb edir. Yeniləmə &brandShortName; səyyahı bir sonrakı dəfə başlatdığınızda qurulacaq. &brandShortName; səyyahını indi və ya istifadə etməyə davam edib daha sonra yenidən başlada və ya yeniləməni rədd edə bilərsiz.">
+
+<!ENTITY  update.details.label            "Ətraflı məlumat">
+<!ENTITY  update.installedOn.label        "Quraşdırma tarixi:">
+<!ENTITY  update.status.label             "Durum:">

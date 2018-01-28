@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Поставке - подаци сајта">
+<!ENTITY     hostCol.label                 "Веб сајт">
+<!ENTITY     statusCol.label               "Статус">
+<!ENTITY     usageCol.label                "Складиште">
+<!ENTITY     searchTextboxPlaceHolder             "Претражи веб сајтове">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "П">
+<!ENTITY     removeSelected.label          "Уклони изабрани">
+<!ENTITY     removeSelected.accesskey      "У">
+<!ENTITY     save.label                    "Сачувај промене">
+<!ENTITY     save.accesskey                "С">
+<!ENTITY     cancel.label                  "Откажи">
+<!ENTITY     cancel.accesskey              "к">
+<!ENTITY     removingDialog.title          "Избриши податке сајта">
+<!ENTITY     removingSelected.description  "Брисањем података сајта ћете такође обрисати и повезане колачиће и ванмрежни садржај. Ово ће вас можда одјавити са сајтова. Да ли сте сигурни да желите да наставите?">
+<!ENTITY     siteTree.label                "Следећи колачићи веб сајта ће бити обрисани:">

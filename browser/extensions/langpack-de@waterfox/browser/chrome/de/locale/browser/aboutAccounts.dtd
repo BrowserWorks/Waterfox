@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Willkommen bei &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Melden Sie sich an, um Ihre Tabs, Lesezeichen, Passwörter und mehr zu synchronisieren.">
+<!ENTITY aboutAccountsConfig.startButton.label "Anmelden">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync-Einstellungen">
+<!ENTITY aboutAccounts.noConnection.title "Keine Verbindung">
+<!ENTITY aboutAccounts.noConnection.description "Sie müssen zum Anmelden mit dem Internet verbunden sein.">
+<!ENTITY aboutAccounts.noConnection.retry "Erneut versuchen">
+<!ENTITY aboutAccounts.badConfig.title "Fehlerhafte Konfiguration">
+<!ENTITY aboutAccounts.badConfig.description "Ihre Einstellungen betreffend des Servers für Waterfox-Konten konnten nicht ermittelt werden. Bitte versuchen Sie es später erneut.">

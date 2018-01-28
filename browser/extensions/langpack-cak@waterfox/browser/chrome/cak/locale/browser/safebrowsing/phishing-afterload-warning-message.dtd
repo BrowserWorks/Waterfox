@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "¡Kinel el wawe!">
+<!ENTITY safeb.palm.decline.label "Tijerepüx re rutzijol k'ayewal re'">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Re re' man q'olonel ta chi ruxaq k'amaya'l…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "q">
+<!ENTITY safeb.palm.reportPage.label "¿Atux ruma toq xq'eleb'ëx re jun ruxaq k'amaya'l re'?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Ya'on na'oj ruma <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "¡Q'olonel re ruxaq k'amaya'l re'!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Re ruxaq k'amaya'l re' <span id='malware_sitename'/> xya' rutzijol chi niqeleb'en, ruma ri' toq xq'at ruma ach'ojin kan pa chajinïk.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Ri eleq'oma' taq ruxaq k'amaya'l nikitojtob'ej nikiyäk jun kema', ri nitikïr nreleq'aj awetamab'al, nrokisaj re asamajib'al richin nritzelaj ri aq'inoj.</p><p>Jujun taq ruxaq k'amaya'l jutaqil nikitaluj itzel taq kema', xa xe chi e k'ïy ri nikiq'ab'aj tzij ruma man awetaman ta chi chuqa' ya'on q'ij chi ke kuma ri kajaw pan ewäl.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "¡Ruxaq k'amaya'l ya'on rutzijol chi k'o itzel kema' chupam!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Pa ri ruxaq k'amaya'l <span id='unwanted_sitename'/> ya'on rutzijol chi k'o itzel taq kema' chupam ruma ri' toq xq'eleb'ëx rij richin rirajowaxik taq achajinik.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Itzel taq ruxaq kema' nkajo' nikiyäk q'olonel taq kema' chuqa' wakami chanin nritzelaj ri aq'inoj.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "¡Q'olonel Ruxaq K'amaya'l!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Re ruxaq k'amaya'l re' <span id='phishing_sitename'/> ya'on rutzijol chi niq'eleb'en, ruma ri' toq xq'at ruma ach'ojin chi kachajïx pa ri awajowab'al.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Ri q'olonel taq ruxaq k'amaya'l, enuk'un richin yatkiq'öl chuqa' richin nab'än jun k'ayewal, achi'el kiyakik kema', naq'alajisaj ri atzijol, achi'el ewan taq tzij, kajilab'al taq oyonib'äl o ch'utit'im pwäq.</p><p>Natz'ib'aj xab'achike chi na'oj pa re ruxaq k'amaya'l re', rik'in jub'a' nupo' ri' achi'el jun releq'axik k'utwachib'äl o jun chik chi eläq'.</p>">
+

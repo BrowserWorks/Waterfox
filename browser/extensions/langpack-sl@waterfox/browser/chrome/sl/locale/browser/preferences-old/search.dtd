@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Privzet iskalnik">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Izberite privzet iskalnik. &brandShortName; ga uporablja v vrstici z naslovom, v vrstici za iskanje in na začetnih straneh.">
+
+<!ENTITY provideSearchSuggestions.label        "Predlogi iskanja">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Prikaži predloge iskanja med zadetki vrstice z naslovom">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Predlogi iskanja v vrstici z naslovom ne bodo prikazani, ker ste &brandShortName; nastavili tako, da si nikoli ne zapomni zgodovine.">
+
+<!ENTITY oneClickSearchEngines.label           "Iskalniki, dostopni z enim klikom">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Vrstica za iskanje omogoča dostop tudi do nekaterih drugih iskalnikov. Izberite, katere želite prikazati.">
+
+<!ENTITY engineNameColumn.label                "Iskalnik">
+<!ENTITY engineKeywordColumn.label             "Ključna beseda">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Ponastavi privzete iskalnike">
+<!ENTITY restoreDefaultSearchEngines.accesskey "P">
+
+<!ENTITY removeEngine.label                    "Odstrani">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines.label            "Dodaj več iskalnikov …">

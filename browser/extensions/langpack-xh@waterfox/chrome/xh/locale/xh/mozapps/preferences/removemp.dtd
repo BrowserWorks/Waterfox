@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Susa Igama Lokugqithisa Elingumalathindlela">
+<!ENTITY removeInfo.label                  "Kufuneka ungenise igama lokugqithisa lakho langoku ukuze uqhube:">
+<!ENTITY removeWarning1.label              "Igama Lokugqithisa lakho Elingumalathindlela lisetyenziselwa ukukhusela ulwazi olubuthathaka olufana namagama okugqithisa esiza.">
+<!ENTITY removeWarning2.label              "Ukuba ususa Igama Lokugqithisa lakho Elingumalathindlela ulwazi lwakho alusayi kukhuseleka xa ikhompyutha yakho isilele.">
+<!ENTITY setPassword.oldPassword.label     "Igama lokugqithisa langoku:">
+

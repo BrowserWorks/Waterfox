@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Rapports de plantage">
+<!ENTITY crashesUnsubmitted.label   "Rapports de plantage non envoyés">
+<!ENTITY crashesSubmitted.label     "Rapports de plantage envoyés">
+<!ENTITY id.heading                 "Identifiant du rapport">
+<!ENTITY dateCrashed.heading        "Date du plantage">
+<!ENTITY dateSubmitted.heading      "Date d’envoi">
+<!ENTITY noReports.label            "Aucun rapport de plantage n’a été envoyé.">
+<!ENTITY noConfig.label             "Cette application n’est pas configurée pour afficher les rapports de plantage. Vous devez définir la variable <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Supprimer tous les rapports">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copia">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Selecciona-ho tot">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "General">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Títol:">
+<!ENTITY  generalURL            "Adreça:">
+<!ENTITY  generalType           "Tipus:">
+<!ENTITY  generalMode           "Mode de renderització:">
+<!ENTITY  generalSize           "Mida:">
+<!ENTITY  generalReferrer       "URL referent:">
+<!ENTITY  generalSource         "Origen:">
+<!ENTITY  generalModified       "Modificat:">
+<!ENTITY  generalEncoding2      "Codificació del text:">
+<!ENTITY  generalMetaName       "Nom">
+<!ENTITY  generalMetaContent    "Contingut">
+
+<!ENTITY  mediaTab              "Multimèdia">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Ubicació:">
+<!ENTITY  mediaText             "Text associat:">
+<!ENTITY  mediaAltHeader        "Text alternatiu">
+<!ENTITY  mediaAddress          "Adreça">
+<!ENTITY  mediaType             "Tipus">
+<!ENTITY  mediaSize             "Mida">
+<!ENTITY  mediaCount            "Recompte">
+<!ENTITY  mediaDimension        "Dimensions:">
+<!ENTITY  mediaLongdesc         "Descripció llarga:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Anomena i desa…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Previsualització dels fitxers multimèdia:">
+
+<!ENTITY  feedTab               "Canals">
+<!ENTITY  feedTab.accesskey     "C">
+<!ENTITY  feedSubscribe         "Subscriu">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Permisos">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Utilitza el valor per defecte">
+<!ENTITY  permAskAlways         "Demana-m'ho sempre">
+<!ENTITY  permAllow             "Permet">
+<!ENTITY  permAllowSession      "Permet durant la sessió">
+<!ENTITY  permBlock             "Bloca">
+<!ENTITY  permissionsFor        "Permisos per:">
+<!ENTITY  permPlugins           "Activar els connectors">
+
+<!ENTITY  permClearStorage           "Esborrar l'emmagatzematge">
+<!ENTITY  permClearStorage.accesskey "z">
+
+<!ENTITY  securityTab           "Seguretat">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Mostra el certificat">
+<!ENTITY  securityView.accesskey "c">
+<!ENTITY  securityView.unknown   "Desconegut">
+
+
+<!ENTITY  securityView.identity.header   "Identitat del lloc web">
+<!ENTITY  securityView.identity.owner    "Propietari:">
+<!ENTITY  securityView.identity.domain   "Lloc web: ">
+<!ENTITY  securityView.identity.verifier "Verificat per: ">
+<!ENTITY  securityView.identity.validity "Data de venciment:">
+
+<!ENTITY  securityView.privacy.header                   "Privadesa i historial">
+<!ENTITY  securityView.privacy.history                  "He visitat aquest lloc web abans d'avui?">
+<!ENTITY  securityView.privacy.cookies                  "Aquest lloc web emmagatzema informació (galetes) al meu ordinador?">
+<!ENTITY  securityView.privacy.viewCookies              "Mostra les galetes">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "g">
+<!ENTITY  securityView.privacy.passwords                "He desat cap contrasenya d'aquest lloc web?">
+<!ENTITY  securityView.privacy.viewPasswords            "Mostra les contrasenyes desades">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "y">
+
+<!ENTITY  securityView.technical.header                 "Detalls tècnics">
+
+<!ENTITY  helpButton.label                              "Ajuda">

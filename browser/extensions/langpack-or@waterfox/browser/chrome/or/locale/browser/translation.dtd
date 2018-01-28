@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+
+<!ENTITY translation.thisPageIsIn.label         "ଏହି ପୃଷ୍ଠାଟି ଏଠାରେ">
+<!ENTITY translation.translateThisPage.label    "ଏହି ପୃଷ୍ଠାକୁ ଅନୁବାଦ କରିବେ କି?">
+<!ENTITY translation.translate.button           "ଅନୁବାଦ">
+<!ENTITY translation.notNow.button              "ବର୍ତ୍ତମାନ ନୁହଁ">
+
+<!ENTITY translation.translatingContent.label   "ପୃଷ୍ଠା ବିଷୟବସ୍ତୁକୁ ଅନୁବାଦ କରୁଅଛି…">
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+
+<!ENTITY translation.translatedFrom.label       "ଏହି ପୃଷ୍ଠାଟି ଏଥିରୁ ଅନୁବାଦିତ ହୋଇଛି">
+<!ENTITY translation.translatedTo.label         "କୁ">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "ପ୍ରକୃତକୁ ଦର୍ଶାନ୍ତୁ">
+<!ENTITY translation.showTranslation.button     "ଅନୁବାଦ ଦର୍ଶାନ୍ତୁ">
+
+<!ENTITY translation.errorTranslating.label     "ଏହି ପୃଷ୍ଠାକୁ ଅନୁବାଦ କରିବାସମୟରେ ଏକ ତୃଟି ଦେଖାଦେଇଛି।">
+<!ENTITY translation.tryAgain.button            "ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ">
+
+<!ENTITY translation.serviceUnavailable.label   "ବର୍ତ୍ତମାନ ଅନୁବାଦ ଉପଲବ୍ଧ ନାହିଁ। ଦୟାକରି ପରେ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।">
+
+<!ENTITY translation.options.menu               "ବିକଳ୍ପଗୁଡ଼ିକ">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "ଏହି ସାଇଟକୁ କଦାପି ଅନୁବାଦ କରନ୍ତୁ ନାହିଁ">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "ଅନୁବାଦ ପସନ୍ଦଗୁଡ଼ିକ">
+<!ENTITY translation.options.preferences.accesskey "T">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "ଅନୁବାଦକ">
+<!ENTITY translation.options.attribution.afterLogo "">
+<!-- LOCALIZATION NOTE (translation.options.attribution.poweredByYandex,
+                        translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  translation.options.attribution.poweredByYandex is displayed instead of
+  -  the other two strings when yandex translation engine is preferred by the
+  -  user.
+  -->
+
+<!ENTITY translation.options.attribution.yandexTranslate "Powered by Yandex.Translate">

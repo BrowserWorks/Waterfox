@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY organize.label                 "Sistemim">
+<!ENTITY file.close.label               "Mbylle">
+<!ENTITY file.close.accesskey           "M">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Shfaqje">
+<!ENTITY view.columns.label             "Shfaq Shtylla">
+<!ENTITY view.columns.accesskey         "S">
+<!ENTITY view.sort.label                "Renditi">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Të parenditura">
+<!ENTITY view.unsorted.accesskey        "T">
+<!ENTITY view.sortAscending.label       "Rend radhitje A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Rend radhitje Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importoni Faqerojtës prej HTML-je…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksportoni Faqerojtës si HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importoni Të dhëna prej Tjetër Shfletuesi…">
+<!ENTITY importOtherBrowser.accesskey      "T">
+
+<!ENTITY cmd.backup.label               "Kopjeruajeni…">
+<!ENTITY cmd.backup.accesskey           "K">
+<!ENTITY cmd.restore2.label             "Riktheji">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Zgjidhni Kartelë…">
+<!ENTITY cmd.restoreFromFile.accesskey  "K">
+<!ENTITY cmd.open.label                  "Hape">
+<!ENTITY cmd.open.accesskey              "H">
+<!ENTITY cmd.open_window.label           "Hape në Dritare të Re">
+<!ENTITY cmd.open_window.accesskey       "D">
+<!ENTITY cmd.open_private_window.label     "Hape në Dritare të Re Private">
+<!ENTITY cmd.open_private_window.accesskey "P">
+<!ENTITY cmd.open_tab.label              "Hape në Skedë të Re">
+<!ENTITY cmd.open_tab.accesskey          "S">
+<!ENTITY cmd.open_all_in_tabs.label      "Hapi të Tëra në Skeda">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "T">
+<!ENTITY cmd.properties.label      "Veti">
+<!ENTITY cmd.properties.accesskey  "V">
+
+<!ENTITY cmd.sortby_name.label              "Renditi Sipas Emrash">
+<!ENTITY cmd.sortby_name.accesskey          "R">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Faqerojtës i Ri…">
+<!ENTITY cmd.new_bookmark.accesskey        "q">
+<!ENTITY cmd.new_folder.label              "Dosje e Re…">
+<!ENTITY cmd.new_folder.accesskey          "D">
+<!ENTITY cmd.context_new_folder.accesskey  "O">
+<!ENTITY cmd.new_separator.label           "Ndarës i Ri">
+<!ENTITY cmd.new_separator.accesskey       "s">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Ringarko Faqerojtësin e Gjallë">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+<!ENTITY cmd.moveBookmarks.label                  "Lëvizini…">
+<!ENTITY cmd.moveBookmarks.accesskey              "L">
+<!ENTITY col.name.label          "Emër">
+<!ENTITY col.tags.label          "Etiketa">
+<!ENTITY col.url.label           "Vend">
+<!ENTITY col.mostrecentvisit.label "Vizita Më e Freskët">
+<!ENTITY col.visitcount.label    "Numër Vizitash">
+<!ENTITY col.description.label   "Përshkrim">
+<!ENTITY col.dateadded.label     "Shtuar më">
+<!ENTITY col.lastmodified.label  "Ndryshuar Së Fundi">
+
+<!ENTITY search.label                              "Kërko në:">
+<!ENTITY search.accesskey                          "K">
+<!ENTITY cmd.find.key  "f">
+<!ENTITY maintenance.label   "Importim dhe Kopjeruajtje">
+<!ENTITY backButton.tooltip  "Kthehuni mbrapsht">
+<!ENTITY forwardButton.tooltip  "Vazhdoni përpara">
+<!ENTITY detailsPane.more.label "Më tepër">
+<!ENTITY detailsPane.less.label "Më pak">
+<!ENTITY detailsPane.selectAnItemText.description "Përzgjidhni një objekt për ta parë dhe për t&amp;i përpunuar vetitë">
+<!ENTITY detailsPane.less.accesskey "M">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY organize.accesskey    "S">
+<!ENTITY places.library.title  "Librari">
+<!ENTITY views.accesskey                "S">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+
+<!ENTITY cmd.deleteDomainData.label     "Harroje Këtë Sajt">
+<!ENTITY cmd.deleteDomainData.accesskey "H">
+
+<!ENTITY maintenance.tooltip    "Importoni dhe kopjeruani faqerojtësit tuaj">
+<!ENTITY organize.tooltip      "Organizoni faqerojtësit tuaj">
+<!ENTITY views.tooltip                  "Ndërroni shfaqjen">
+
+<!ENTITY find.label               "Kërko:">
+<!ENTITY find.accesskey           "K">
+<!ENTITY view.label               "Shihni">
+<!ENTITY view.accesskey           "i">
+<!ENTITY byDate.label             "Sipas Datash">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "Sipas Sajtesh">
+<!ENTITY bySite.accesskey         "S">
+<!ENTITY byMostVisited.label      "Sipas Më të Vizituarve">
+<!ENTITY byMostVisited.accesskey  "V">
+<!ENTITY byLastVisited.label      "Sipas Vizituar Së Fundi">
+<!ENTITY byLastVisited.accesskey  "F">
+<!ENTITY byDayAndSite.label       "Sipas Datash dhe Sajtesh">
+<!ENTITY byDayAndSite.accesskey   "t">
+
+<!ENTITY search.placeholder  "Search">
+

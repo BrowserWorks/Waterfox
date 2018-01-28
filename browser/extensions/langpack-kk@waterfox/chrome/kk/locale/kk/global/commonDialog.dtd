@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Қысқаша атауы"> 
+<!ENTITY message.label    "Мәтін үлгісі.">
+<!ENTITY editfield0.label "Пайдаланушы аты:"> 
+<!ENTITY editfield1.label "Пароль:"> 
+<!ENTITY checkbox.label   "Тексеру">
+<!ENTITY copyCmd.label    "Көшіріп алу">
+<!ENTITY copyCmd.accesskey "К">
+<!ENTITY selectAllCmd.label "Барлығын ерекшелеу">
+<!ENTITY selectAllCmd.accesskey "Б">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Toś to sedło tykac wužywa, kótaryž mógał &brandShortName; spómałšyś.">
+<!ENTITY tapToPlayPlugin                                     "Pótusniśo how, aby tykac aktiwěrował.">
+<!ENTITY clickToActivatePlugin                               "Tykac aktiwěrowaś.">
+<!ENTITY checkForUpdates                                     "Za aktualizacijami pytaś…">
+<!ENTITY blockedPlugin.label                                 "Toś ten tykac jo se za waš šćit zablokěrował.">
+<!ENTITY hidePluginBtn.label                                 "Tykac schowaś">
+<!ENTITY managePlugins                                       "Tykace zastojaś…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Bok znowego zacytaś">
+<!ENTITY reloadPlugin.post                                   " aby hyšći raz wopytał.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Rozpšawu wó wowalenju pósłaś">
+<!ENTITY report.submitting                                   "Rozpšawa se sćelo…">
+<!ENTITY report.submitted                                    "Rozpšawa wó wowalenju jo se pósłała.">
+<!ENTITY report.disabled                                     "Rozpšawjanje wó wowalenjach jo znjemóžnjone.">
+<!ENTITY report.failed                                       "Wótpósłanje njejo se raźiło.">
+<!ENTITY report.unavailable                                  "Žedna rozpšawa k dispoziciji.">
+<!ENTITY report.comment                                      "Komentar pśidaś (komentary su zjawnje widobne)">
+<!ENTITY report.pageURL                                      "URL boka zapśimjeś">
+
+<!ENTITY plugin.file                                         "Dataja">
+<!ENTITY plugin.mimeTypes                                    "MIME-typy">
+<!ENTITY plugin.flashProtectedMode.label                     "Šćitany modus Adobe Flash zmóžniś">
+<!ENTITY plugin.enableBlocklists.label                       "Tšašne a šarowate wopśimjeśe Flash blokěrowaś">

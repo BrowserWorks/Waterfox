@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "კავშირის პარამეტრები">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "პროქსის გამართვა ინტერნეტზე წვდომისათვის">
+<!ENTITY  noProxyTypeRadio.label        "პროქსის გარეშე">
+<!ENTITY  noProxyTypeRadio.accesskey    "გ">
+<!ENTITY  systemTypeRadio.label         "სისტემის პროქსის პარამეტრებით სარგებლობა">
+<!ENTITY  systemTypeRadio.accesskey     "ს">
+<!ENTITY  WPADTypeRadio.label           "პროქსის პარამეტრების ავტომატური დადგენა ამ ქსელისთვის">
+<!ENTITY  WPADTypeRadio.accesskey       "ქ">
+<!ENTITY  manualTypeRadio.label         "პროქსის ხელით გამართვა:">
+<!ENTITY  manualTypeRadio.accesskey     "პ">
+<!ENTITY  autoTypeRadio.label           "პროქსის ავტომატური გამართვის URL:">
+<!ENTITY  autoTypeRadio.accesskey       "ვ">
+<!ENTITY  reload.label                  "ხელახლა ჩატვირთვა">
+<!ENTITY  reload.accesskey              "ხ">
+<!ENTITY  ftp.label                     "FTP პროქსი:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP პროქსი:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL პროქსი:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS სერვერი:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "პროქსის DNS SOCKS v5-ის გამოყენებისას">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "პორტი:">
+<!ENTITY  HTTPport.accesskey            "პ">
+<!ENTITY  SSLport.accesskey             "ო">
+<!ENTITY  FTPport.accesskey             "რ">
+<!ENTITY  SOCKSport.accesskey           "ტ">
+<!ENTITY  noproxy.label                 "არ გამოიყენება შემდეგ მისამართებზე:">
+<!ENTITY  noproxy.accesskey             "ა">
+<!ENTITY  noproxyExplain.label          "მაგალითი: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ყველა პროტოკოლისთვის ამ პროქსი-სერვერის გამოყენება">
+<!ENTITY  shareproxy.accesskey          "ყ">
+<!ENTITY  autologinproxy.label          "არ მოითხოვოს ავთენტიფიკაცია თუ პაროლი შენახულია">
+<!ENTITY  autologinproxy.accesskey      "თ">
+<!ENTITY  autologinproxy.tooltip        "ეს პარამეტრი ავტომატურად გატარებთ ავთენტიფიკაციას პროქსიში (როდესაც მათთვის მტკიცებულებები შენახული გაქვთ). თუ ავთენტიფიკაცია ჩაიშალა შეგატყობინებთ. ">

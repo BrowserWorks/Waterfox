@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Mayela namalungelo akho">
+<!ENTITY rights.intro "I-&brandFullName; ikhululekile kwaye ivula isoftwe yoxwebhu, eyenziwe luluntu olungamawaka kwihlabathi jikelele. Kukho izinto ezimbalwa ekumele uzazi:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "I-&brandShortName; yenziwe yafumaneka kuwe phantsi kwemiqathango ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Oku kuthetha ukuba ungayisebenzisa, ungayikhuphela kwaye ungayinikezela i-&brandShortName; kwabanye.  Unakho nokuyilungisa ikhowudi yoxwebhu i-&brandShortName; njengoko ufuna ukuhlangabezana neemfuno zakho. I-Mozilla Public License ikwakunika ilungelo lokunikezela ngeenguqulelo zakho ezilungisiweyo.">
+
+<!ENTITY rights.intro-point2-a "Akunikwanga nawaphi na amalungelo ophawu lorhwebo okanye amaphepha-mvume eempawu zorhwebo Waterfox okanye ezalo naliphi na iqela kuqukwa, ngokungenamida, igama lakwa-Waterfox okanye imbasa yabo. Inkcazelo engaphezulu ngeempawu zorhwebo ingafumaneka ">
+<!ENTITY rights.intro-point2-b "apha">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Ezinye iimpawu ze-&brandShortName;, ezinjenge-Crash Reporter zikunika enye indlela yokunika ingxelo i-&vendorShortName;. Ngokukhetha ukuthumela ingxelo, unika i-&vendorShortName; imvume yokusebenzisa ingxelo ukuze iphucule imveliso yayo, yokupapasha ingxelo kwiiwebhusayithi zayo nokunikezela ngengxelo.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Indlela esisebenzisa ngayo iinkcukacha zakho kwanengxelo ethunyelweyo ye-&vendorShortName; nge-&brandShortName; ichazwe ">
+<!ENTITY rights2.intro-point3b "I-&brandShortName; Umgaqo-nkqubo wangasese">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Nayiphi na imigaqo-nkqubo yangasese esebenzayo yale mveliso imele idweliswe apha.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Ezinye iimpawu ze-&brandShortName; zisebenzisa iinkonzo zenkcukacha esekeke kwiwebhu, nangona kunjalo, asinakuziqinisekisa ukuba zichaneke ngo-100&#037; okanye azinazimposiso. Iinkcukacha ezingaphezulu kuqukwa nenkcazelo yokuqhwalelisa iimpawu ezisebenzisa ezi nkonzo, zingafumaneka ">
+<!ENTITY rights.intro-point4b "kwimiqathango yenkonzo">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Ukuba le mveliso ibandakanya iinkonzo zewebhu, nayiphi na imiqathango yenkonzo esebenzayo kwi(i)nkonzo kumele inxityelelaniswe ">
+<!ENTITY rights.intro-point4b-unbranded "Iinkonzo zewebhusayithi">
+<!ENTITY rights.intro-point4c-unbranded " icandelo.">
+
+<!ENTITY rights2.webservices-header "I-&brandFullName; Iinkonzo zenkcazelo ezisekelwe kwiwebhu">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Khon' ukuze uzidlale ezinye iintlobo zesixhobo sevidiyo, i-&brandShortName; ikhuphela iimodyuli ezithile zokuguqula ukusuka kwabanye abantu. ">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "I-&brandFullName; isebenzisa iinkonzo zenkcukacha esekeke kwiwebhu (&quot;Iinkonzo&quot;) ukunikeza ngezinye zeempawu ezinikezelwe ukusebenzisa kwakho ngale nguqulelo yebhayinari ye-&brandShortName; ngaphantsi kwemiqathango echazwe ngaphantsi. Ukuba akufuni ukusebenzisa enye okanye ezinye zeenkonzo okanye ukuba imiqathango engezantsi ayamnkelekanga, ungaluqhwalelisa uphawu okanye i(i)nkonzo. Imiyalelo yokuqhwalelisa uphawu oluthile okanye inkonzo ifumaneka ">
+<!ENTITY rights2.webservices-b "apha">
+<!ENTITY rights3.webservices-c ". Ezinye iinkalo neeNkonzo zinokuvalwa zingasebenzi kwiipriferensi zokusebenza.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Ukubhrawuza okukhuselekileyo: ">
+<!ENTITY rights.safebrowsing-b "Ukuqhwalelisa uphawu lokubhrawuza okukhuselekileyo makungenziwa kuba kunokukhokelela ekubeni ungene kwiisayithi ezingakhuselekanga.  Ukuba ufuna ukuqhwalelisa uphawu ngokupheleleyo, landela la manyathelo:">
+<!ENTITY rights.safebrowsing-term1 "Vula iipriferensi zeaplikheshini">
+<!ENTITY rights.safebrowsing-term2 "Khetha ukhetho loKhuseleko">
+<!ENTITY rights2.safebrowsing-term3 "Cima ukhetho oluthi &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Ukubhrawuza okukhuselekileyo ngoku kuqhwalelisiwe">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Ukubhrawuza okufunisela ngendawo: ">
+<!ENTITY rights.locationawarebrowsing-b "isoloko ilukhetho. Akukho nkcazelo yendawo ethunyelwa ngaphandle kwemvume yakho. Ukuba ufuna ukuqhwalelisa uphawu ngokupheleleyo, landela la manyathelo:">
+<!ENTITY rights.locationawarebrowsing-term1a "Kwibha ye-URL, chwetheza ">
+<!ENTITY rights.locationawarebrowsing-term1b "malunga nolungiselelo">
+<!ENTITY rights.locationawarebrowsing-term2 "Chwetheza geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Cofa kabini kwipriferensi ye-geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Ukubhrawuza okufunisela indawo ngoku kuqhwalelisiwe">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Isishwankathelo sewebhusayithi esilungiselela okubandakanywa yimveliso, ndawonye nemiyalelo yendlela yokusiqhwalelisa, ukuba kuyenzeka, kufuneka zibandakanywe apha.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Nayiphi na imiqathango yenkonzo esebenzayo yale mveliso kufuneka idweliswe apha.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "I-&vendorShortName; nababhaleli bayo, abaniki-maphephamvume nabalingane basebenzela ukunikezela ngeenkonzo ezisulungekileyo nezigqibeleleyo.  Naxa kunjalo, asinakuqinisekisa ukuba le nkcazelo igqibelele kwaye iyinasiphoso.  Umzekelo, iNkonzo yokuBhrawuza ekhuselekileyo isenokungazichongi iisayithi ezinobungozi, zichonge iisayithi ezikhuselekileyo ngempazamo kunye neNkonzo yokufunisela indawo, zonke iindawo ezibuyiswe ngabanikezeli-nkonzo bethu ziintelekelelo kuphela kwaye akukho namnye phakathi kwethu nabanikezeli-nkonzo bethu oqinisekisa ngokuchaneka kweendawo ezinikezelweyo.">
+<!ENTITY rights.webservices-term2 "I-&vendorShortName; isenokuziyeka okanye izitshintshe iinkonzo ngokubona kwayo.">
+<!ENTITY rights2.webservices-term3 "Ungazisebenzisa ezi nkonzo nenguqulelo ekhoyo ye-&brandShortName;, kwaye i-&vendorShortName; ikunika ilungelo lokwenza oko.  I-&vendorShortName; nabaniki-maphephamvume ayo iwabambile onke amanye amalungelo kwiinkonzo.  Le miqathango ayijoliswanga ekunciphiseni nawaphi na amalungelo anikezelwe phantsi kwamaphepha-mvume oxwebhu oluvulekileyo asebenza kwi-&brandShortName; nakwiinguqulelo zekhowudi yoxwebhu oluhambelanayo ne-&brandShortName;.">
+<!ENTITY rights.webservices-term4 "IiNkonzo zinikezwa &quot;zinjengoko zinjalo.&quot; i-&vendorShortName;, abaniki-galelo, abaniki-layisensi, kunye nabasasazi bazo, bayazikhupha kwibango lazo zonke iziqinisekiso, nokuba zivakalisa ngokuphandle okanye ngokusebenzayo, ukuquka ngaphandle kwezithintelo, iziqinisekiso zokuba iiNkonzo ziyarhwebeka kwaye zizilungele iinjongo  zakho ezithile. Uya kubuthathela kuwe bonke ubungozi obunokuvela ekukhetheni kwakho iinkonzo ezifanele iinjongo zakho nangokumayela nomgangatho kwanokusebenza kweenkonzo. Ezinye iindawo zolawulo azikuvumeli ukukhutshelwa ngaphandle okanye ukuncitshiswa kweewaranti ezingathiwanga pahaha, ngoko ke oku kungabi nabutyala abusebenzi kuwe.">
+<!ENTITY rights.webservices-term5 "Ngaphandle kokusemthethweni, i-&vendorShortName;, ababhaleli, abaniki-maphephamvume nabanikezeli bayo abayi kuba nabutyala ngawo nawuphi na umonakalo ongathanga ngqo, okhethekileyo, owengozi, ongumvuka, osisohlwayo okanye ongumzekelo ongumvuka okanye ophathelele ekusetyenzisweni kwe-&brandShortName; neenkonzo.  Ubutyala obudibeneyo phantsi kwale miqathango abuyi kudlula kuma-$500 (amakhulu amahlanu eedola). Ezinye iindawo zolawulo azikuvumeli ukukhutshelwa ngaphandle okanye ukuncitshiswa komonakalo othile, ngoko ke oku kukhutshelwa ngaphandle nokuncitshiswa kusenokungasebenzi kuwe.">
+<!ENTITY rights.webservices-term6 "I-&vendorShortName; ingayihlaziya le miqathango ngokwemfuneko yoko ngamaxesha athile. Le miqathango ayinakulungiswa okanye irhoxiswe ngaphandle kwesivumelwano esibhaliweyo se-&vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Le miqathango ilawulwa yimithetho yelizwe laseCalifornia, eMelika, ngaphandle kwemigaqo engokungqubana nomthetho. Ukuba kukho inxalenye yale miqathango engasebenziyo okanye engenakusetyenziswa, inxalenye eyintsalela iya kusebenza yona. Ukuba kuthe kwakho ukungqubana phakathi kwenguqulelo yale miqathango nolwimi lwesiNgesi, ulwimi lwesiNgesi lulo oluya kusetyenziswa.">

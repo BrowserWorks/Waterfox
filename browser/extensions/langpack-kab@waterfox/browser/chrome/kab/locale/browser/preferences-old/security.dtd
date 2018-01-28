@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Amatu">
+
+<!ENTITY  warnOnAddonInstall2.label       "Lɣu ticki ismal ttaɛraḍen ad sbedden izegrar">
+<!ENTITY  warnOnAddonInstall2.accesskey   "B">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Sewḥel yir agbur neɣ win iweɛṛen">
+<!ENTITY  enableSafeBrowsing.accesskey    "S">
+
+<!ENTITY  blockDownloads.label            "Sewḥel yir asider">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Lɣu-yi-d ɣef iseɣẓanen ur nelhi ara akked wid ur bɣiɣ ara ">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "ẓ">
+
+<!ENTITY  addonExceptions.label         "Tisuraf…">
+<!ENTITY  addonExceptions.accesskey     "s">
+
+
+<!ENTITY  logins.label                  "Inekcumen">
+
+<!ENTITY  rememberLogins2.label         "Cfu ɣef inekcumen ɣer yismal">
+<!ENTITY  rememberLogins2.accesskey     "Z">
+<!ENTITY  passwordExceptions.label      "Tisuraf…">
+<!ENTITY  passwordExceptions.accesskey  "r">
+
+<!ENTITY  useMasterPassword.label        "Seqdec awal uffir agejdan">
+<!ENTITY  useMasterPassword.accesskey    "S">
+<!ENTITY  changeMasterPassword.label     "Snifel awal uffir agejdan…">
+<!ENTITY  changeMasterPassword.accesskey "a">
+
+<!ENTITY  savedLogins.label              "Inekcumen yettwakelsen…">
+<!ENTITY  savedLogins.accesskey          "e">

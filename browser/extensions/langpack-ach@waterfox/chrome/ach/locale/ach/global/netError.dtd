@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Bal me cano pot buk">
+<!ENTITY retry.label "Tem Doki">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Kube pe Olare">
+<!ENTITY connectionFailure.longDesc "<p>Kadi bedi kakube nen calo tye atir, layeny onongo pe romo cako kube.</p><ul><li>Onyo kakube peke pi tutunu? Tem doki lacen.</li><li>Pe iromo yenyo di bar mapat?  Rot kube pa kakube me komputa.</li><li>Komputa mamegi onyo kakube ki tyeko gengo woko ki firewall onyo proxi? Ter ma pe kakare romo balo yenyo kakube.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Kigengo woko Bur pi kop me gwoko Kuc">
+<!ENTITY deniedPortAccess.longDesc "<p>Kabedo ma kikwayo ni nyutu yoo bur (e.g. <q>mozilla.org:80</q> for port 80 on mozilla.org) kitiyo kwede pi tic mapat me <em>other</em> ma loyo yenyo Web. Yeny ojuko woko kwac pi gwoki ki gwoko kuc.</p>">
+
+<!ENTITY dnsNotFound.title "Kebedo Pe Ononge">
+<!ENTITY dnsNotFound.longDesc "<p>Layeny onongo pe romo nongo lapok tic me gang pi address ma kigabo.</p><ul><li>I timo bal mo ikare me cono gang? (e.g. <q><strong>ww</strong>.mozilla.org</q> instead of <q><strong>www</strong>.mozilla.org</q>)</li><li>I moko ada ni kabedo me gang man tye ada?  Cone nen calo  kare ne okato woko.</li><li>Pe iromo yenyo di bar mukene? Rot kakube me intanet ki ter me lapok tic me DNS.</li><li>Kompiuta mamegi onyo kigengo woko kakube me wiyamo ki firewall onyo proxi?  ter ma pe kakare romo balo yenyo Web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Pwail Pe ononge">
+<!ENTITY fileNotFound.longDesc "<ul><li>I tamo ni kiloko nying jami, ki kyanyo, onyo kikobo woko?</li><li>Nukta mo tye, madongo, onyo cal mogo me bal i address?</li><li>Onyo itye ki twero manok me donyo i jami ma kikwayo?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Kikwero woko nongo pwail ne">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Romo bedo ni kikwanyo woko, kikobo, onyo twero me pwail tye ka gengo nongo ne.</li> </ul>">
+
+<!ENTITY generic.title "Pe romo Tyeko Kwac">
+<!ENTITY generic.longDesc "<p>Ngec mukene mapol makwako peko man onyo bal kombedi pe nonge.</p>">
+
+<!ENTITY malformedURI.title "Kabedo Mape tiyo">
+<!ENTITY malformedURI.longDesc "<p>Kabedo ma kimiyo ni pe tye i kit ma ki ngeno kwede. Tim ber i rot bar me kabedo pi bal ki tem doki.</p>">
+
+<!ENTITY netInterrupt.title "Kibalo woko Kobo Tic">
+<!ENTITY netInterrupt.longDesc "<p>Layeny okube muloyo maber atika, ento kibalo woko kube ikare me kobo ngec.  Tim ber item doki.</p><ul><li>Onyo pe iromo yenyo di bar mukene? Rot kakube me wiyamo pa kompiuta.</li><li>Pwod itye ki ayela? Nong tam ki bot lalo kakube mamegi me wiyamo onyo lagab intanet pi kony.</li></ul>">
+
+<!ENTITY notCached.title "Gin acoya ma kare ne otum">
+<!ENTITY notCached.longDesc "<p>Coc acoya ma kikwayo pe nonge i gwok pa layeny.</p><ul><li>Macalo cik me gwoko kuc me bal, Layeny pe romo kwayo coc acoya nitit pire kene.</li><li>Dii tem doki me nwoyo kwayo coc acoya ki kakube me Web.</li></ul>">
+
+<!ENTITY netOffline.title "Peke iwiyamo">
+<!ENTITY netOffline.longDesc2 "<p>Layeny tye katic i kite mape iwiyamo ci dong pe twero kube ki gin ma kikwayo ni.</p><ul><li>Komputa ne okube ki kakube ma tye katic?</li><li>Dii &quot;Tem doki&quot; me loke i kite matye iwiyamo kadong i nwo cano pot buk.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Gin matye iye Tye kajogo Bal">
+<!ENTITY contentEncodingError.longDesc "<p>Pot buk ma itye kaneno ne pe romo nyutu pien tiyo ki mung ma pe tiyo onyo kit dic ma pe kicwako ne.</p><ul><li>Tim ber ikube ki wegi di bar me Web me mino gi ngec pi peko man.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Kit Pwail Mape ber">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Tim ber ikube ki wegi kakube man me mini gi ngec pi peko man.</li> </ul>">
+
+<!ENTITY netReset.title "Kibalo Kube woko">
+<!ENTITY netReset.longDesc "<p>Kakube me lakub iwi yamo kibalo woko kun poro kube. Tim ber item doki.</p>">
+
+<!ENTITY netTimeout.title "Cawa me kube i wiyamo otum woko">
+<!ENTITY netTimeout.longDesc "<p>Kakube ma kipenyo pire ni pe oye kwac pi kube ki layeny ci ogiko kuro pi lagam.</p><ul><li>Itamo ni lapok tic tye ka nongo miti ma lamal onyo peko pi tutunu?  Tem doki lacen.</li><li>Pe i romo yenyo kakube mukene? Ngi kube pa komputa mamegi.</li><li>Komputa mamegi onyo kakube kigengo woko ki firewall onyo proxi?  Ter ma pe kakare romo balo yeny i kakube.</li><li>Pwod tye ki ayela? Kube ki laloc me kakube me wiyamo onyo lapok intanet pi kony.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Cik coc ma pe ngene">
+<!ENTITY unknownProtocolFound.longDesc "<p>Address poko yor cik me coc (e.g. <q>wxyz://</q>) layeny pe ongeno, layeny dong pe romo kube maber ki kakube.</p><ul><li>I tye katemo donyo i cal mamol onyo tic-mogo me coc? Rot kakube pi jami mamite mapol.</li><li>Cik mogo me coc mito purugram me pati me adek onyo rwako iyie mapwod layeny twero ngeno gi.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Lapok tic me Proxi okwero Kube woko">
+<!ENTITY proxyConnectFailure.longDesc "<p>Kicano layeny me tic ki proxi, ento proxi okwero kube woko.</p><ul><li>lapok tic me proxi tika kicane kakare? Rot ter ki item odoco.</li><li>Tic me proxi weko kube ki kakube me wiyamo?</li><li>Pwod itye ki ayela? Kube ki lalo kakube ni me wiyamo onyo lagab intanet pi kony.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Lapok tic me Proxi Pe Ononge">
+<!ENTITY proxyResolveFailure.longDesc "<p>Kiyubu layeny me tic ki lapok tic me proxi, ento proxi pe onongo romo nonge.</p><ul><li>can me proxi pa layeny tye kakare? Rot tera ki item doki.</li><li>Kompiuta tye okube i kakube me wiyamo ma kiti?</li><li>Pwod tye ki ayela? Kube ki lalo kakube me wiyamo ni onyo lagab intanet pi kony.</li></ul>">
+
+<!ENTITY redirectLoop.title "Nyutu odoco nyo">
+<!ENTITY redirectLoop.longDesc "<p>Layeny ogiko teme me gamo jami ma kikwayo pire. Kakube tye ka wiro kwac i yoo ma pe bitum.</p><ul><li>Ijuko woko onyo igengo angija ma mite pi kakube man?</li><li><em>NGEC</em>: Kacce ye angija pi kakube ne pe ocobo peko, romo bedo peko i ter pa lapok tic pe kompiuta mamegi.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Lagam mape kakare">
+<!ENTITY unknownSocketType.longDesc "<p>Di bar ogamo kwac me kakube iyore ma pe kigeno ki layeny pe twero mede anyim.</p>">
+
+<!ENTITY nssFailure2.title "Kube maber pe olare">
+<!ENTITY nssFailure2.longDesc2 "<p>Pot buk ma itye katemo neno pe romo nyute pien twero pa tic ma kigamo pe onongo romo moko.</p><ul><li>Tim ber i kube ki wegi kakube wek i mini gi ngec pi peko man.</li></ul>">
+
+<!ENTITY nssBadCert.title "Gwoko Kubo Pe olare">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Man tyero bedo peko me can pa lapok tic, onyo romo bedo ngat mo tye ka tuku ki lapok tic.</li> <li>Ka ityeko kube ki lapok tic man maber i kare mukato angec, bal man twero bedo pi tutunu, ci i romo temo doki lacen</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Onyo iromo medo ma kiweko woko…">
+<!ENTITY securityOverride.warningContent "<p>Omyero pe imed ma ki weko woko ka itye katic ki kube me intanet mape i geno matwal onyo ka pe ingiyo ki neno ciko pi lapok tic man.</p> <p>Ka ce pwod imito medo ma ki weko woko pi kakube man, iromo timo ne i ter mamegi ma lamal me loko coc i kod.</p>">
+
+<!ENTITY cspBlocked.title "Kigengo ki Cik me Gwoko kuc pa jami matye iye">
+<!ENTITY cspBlocked.longDesc "<p>Layeny ogengo pot buk man ka pango i yoo man pien pot puk tye ki cik me gwoko kuc ma pe yee ne.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Bal me Jami Matye Iye">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Pot buk ma i tye katemo neno ne pe romo nyutu pien bal me cwalo tic onyute.</p><ul><li>Tim ber i kube ki wegi di bar me Web me minigi ngec pi peko man.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL Mape kiwaya">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Tim ber i kube ki wegi kakube ne me mini gi ngec pi peko man.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Kube ni pe tye ki ber bedo">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> tiyo ki diro me ber bedo ma con ki kiromo mwonyo ne cawa mo keken. Ngat ma omwonyo romo nyuto ngec mamegi ma itamo no ni tye maber iyoo mayot. Laloc me kakube ne myero kong oyub lapok tic ma pud pe ilimo kakube ne.</p><p>Kod me bal: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

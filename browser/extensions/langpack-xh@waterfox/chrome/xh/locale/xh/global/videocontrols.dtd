@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Dlala">
+<!ENTITY playButton.pauseLabel "Isiqabu">
+<!ENTITY muteButton.muteLabel "Thulisa isandi">
+<!ENTITY muteButton.unmuteLabel "Vuselela isandi">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Isikrini esiZeleyo">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Phuma kwisikrin esipheleleyo">
+<!ENTITY castingButton.castingLabel "Lahlela kwiskrini">
+<!ENTITY closedCaption.off "Icimile">
+
+<!ENTITY stats.media "Izilondolozi">
+<!ENTITY stats.size "Ubukhulu">
+<!ENTITY stats.activity "Umsebenzi">
+<!ENTITY stats.activityPaused "Inqumamile">
+<!ENTITY stats.activityPlaying "Ukudlala">
+<!ENTITY stats.activityEnded "Yaphela">
+<!ENTITY stats.activitySeeking "(ukufuna)">
+<!ENTITY stats.volume "Umqulu">
+<!ENTITY stats.framesParsed "Iifreyim zihlahlelwe">
+<!ENTITY stats.framesDecoded "Iifreyim zifakwe iikhowudi">
+<!ENTITY stats.framesPresented "Iifreyim zinikezelwe">
+<!ENTITY stats.framesPainted "Iifreyim zipeyintiwe">
+
+<!ENTITY error.aborted "Ukulayisha kwevidiyo kunqunyanyisiwe.">
+<!ENTITY error.network "Ukudlala ubuyela umva kwevidiyo kuyekisiwe ngenxa yemposiso yenethiwekhi.">
+<!ENTITY error.decode "Ividiyo ayinakudlalwa kuba ifayile yonakalisiwe.">
+<!ENTITY error.srcNotSupported "Ifomathi yevidiyo okanye udidi lwe-MIME aluxhaswa.">
+<!ENTITY error.noSource2 "Akukho vidiyo enefomathi exhaswayo nenodidi lwe-MIME efumanekayo.">
+<!ENTITY error.generic "Ukudlala ubuyela umva kwevidiyo kuyekisiwe ngenxa yemposiso engaziwayo.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 ye#2 iphelile">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

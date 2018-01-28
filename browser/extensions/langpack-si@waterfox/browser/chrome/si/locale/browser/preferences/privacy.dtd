@@ -1,0 +1,131 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionAlways.label       "සැමවිටම">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "පුද්ගලික කවුළුවකදී පමණක්">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "කිසිදාක නැත">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "තවත් දැනගන්න">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Tracking">
+<!ENTITY trackingProtectionPBM5.label         "පුද්ගලික කවුළුවලදී ලුහුබැඳීම් ආරක්ෂාව භාවිතා කරන්න">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "වැඩිදුරටත් දැනුවත්වන්න">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "තවද ඔබට ">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "ඉතිහාසය">
+
+<!ENTITY  locationBar.label             "ස්ථාන තීරුව">
+
+<!ENTITY  locbar.history.label          "ඉතිහාසය">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "පිටු සලකුණු">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "ටැබ් විවෘත කරන්න">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+
+<!ENTITY  acceptCookies.label           "අඩවි වෙතින් කුකී පිළිගන්න">
+<!ENTITY  acceptCookies.accesskey       "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "මෙම තෙවන පාර්‍ශවික කුකි අනුමත කරන්න">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "සැමවිටම">
+<!ENTITY  acceptThirdParty.never.label    "Never">
+<!ENTITY  acceptThirdParty.visited.label  "පිවිසි වෙතින්">
+
+<!ENTITY  keepUntil.label               "තබාගත යුත්තේ:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "කල් ඉකුත්වන තුරු">
+<!ENTITY  close.label                   "මම &brandShortName; වසන තුරු">
+
+<!ENTITY  cookieExceptions.label        "හැරදැමීම්...">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "කුකි දර්ශනය කරන්න...">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.remember.label     "අතීතය මතක තබාගන්න">
+<!ENTITY  historyHeader.dontremember.label "කිසිවිටෙක අතීතය මතක තබා නොගන්න">
+<!ENTITY  historyHeader.custom.label       "අතීතය සඳහා රිසිකරණ සැකසුම් භාවිතා කරන්න">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ඔබේ ගවේෂණ, බාගැනීම්, පෝරම සහ සෙවුම් ඉතිහාසය මතක තබාගනු ඇති අතර, ඔබ පිවිසෙන වෙබ් අඩවි මගින් කුකී ගබඩා කර තබාගනු ඇත.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "ඔබට අවශ්‍ය වනු ඇත්තේ ">
+<!ENTITY  rememberActions.clearHistory.label  "ඔබේ ඉතිහාසය මකා දැමීම">
+<!ENTITY  rememberActions.middle.label        ", හෝ ">
+<!ENTITY  rememberActions.removeCookies.label "එක් එක් කුකී මකා දැමීමයි">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; එම සැකසුම්ම පුද්ගලික ගවේෂණය සඳහා යොදාගනු ඇති අතර ඔබ ගවේෂණය කරන අතරතුර කිසිදු ඉතිහාසයක් මතකයේ තබානොගනු ඇත.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "තවද ඔබට වත්මන් ඉතිහාසය මකා දැමීමට ">
+<!ENTITY  dontrememberActions.clearHistory.label "අවශ්‍ය විය හැ">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "සෑම විටම පෞද්ගලික ගවේෂණය භාවිතා කරන්න">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "මගේ ගවේෂණ ඉතිහාසය සහ බාගැනීම් මතක තබාගන්න">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "සෙවීම් සහ පෝරම අතීතයන් මතක තබාගන්න">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; වසන විට අතීතයන් හිස් කරන්න">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "සැකසුම්…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "තවත් දැනගන්න">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "සිටුවම්...">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY  browserContainersEnabled.label        "Enable Container Tabs">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; will">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  locbar.searches.label         "Related searches from the default search engine">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  suggestionSettings2.label     "Change preferences for search engine suggestions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
+<!ENTITY  trackingProtectionHeader2.label      "Tracking Protection">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

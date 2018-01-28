@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Ket med-ikome">
+<!ENTITY intro           "Purugram mukene ma i komputa ni mito yubo &brandShortName; ki med-ikome magi:">
+<!ENTITY warning         "Ket med-ikome keken ki bot lucoc ma i geno.">
+<!ENTITY allow           "Ye ket man">
+<!ENTITY later           "Itwero loko tami cawa mo keken jwijwi kun icito i lalo med-ikome.">
+<!ENTITY continue        "Mede">
+<!ENTITY restartMessage  "Myero i cak nitit &brandShortName; i tyeko keto lamed ikom ma eni ni.">
+<!ENTITY restartButton   "Cak nitit &brandShortName;">
+<!ENTITY cancelButton    "Juki">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Ishga tushirish">
+
+<!ENTITY startupPage.label         "&brandShortName; ishga tushirilganda:">
+<!ENTITY startupPage.accesskey     "i">
+
+<!ENTITY startupBlankPage.label    "Bo‘sh sahifa ko‘rsatilsin">
+
+
+<!ENTITY homepage.label            "Uy sahifasi:">
+<!ENTITY homepage.accesskey        "s">
+<!ENTITY useCurrentPage.label      "Joriy sahifadan foydalanish">
+<!ENTITY useCurrentPage.accesskey  "J">
+<!ENTITY useMultiple.label         "Joriy sahifalardan foydalanish">
+<!ENTITY chooseBookmark.label      "Xatcho‘plardan foydalanish">
+<!ENTITY chooseBookmark.accesskey  "X">
+<!ENTITY restoreDefault.label      "Standart holatiga tiklash">
+<!ENTITY restoreDefault.accesskey  "S">
+
+<!ENTITY downloads.label     "Yuklab olishlar">
+
+<!ENTITY saveTo.label "Fayllarni saqlash manzili:">
+<!ENTITY saveTo.accesskey "s">
+<!ENTITY chooseFolderWin.label        "Ko‘rish…">
+<!ENTITY chooseFolderWin.accesskey    "K">
+<!ENTITY chooseFolderMac.label        "Tanlash">
+<!ENTITY chooseFolderMac.accesskey    "T">
+
+
+
+<!ENTITY alwaysCheckDefault2.label        "Agar &brandShortName; standart brauzeringiz bo‘lsa, doimo tekshirilsin">
+<!ENTITY alwaysCheckDefault2.accesskey    "t">
+<!ENTITY setAsMyDefaultBrowser2.label     "Asosiy sifatida o‘rnatish">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "A">
+<!ENTITY isDefault.label                  "&brandShortName; - hozircha standart brauzeringiz">
+<!ENTITY isNotDefault.label               "&brandShortName; - standart brauzeringiz emas">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; Waterfox’ni bir vaqtda ishga tushirishga ruxsat berish">
+<!ENTITY useWaterfoxSync.label             "Maslahat: U alohida profillardan foydalandi. Ular o‘rtasida ma’lumotlarni almashish uchum sinxronlashdan foydalaning.">
+
+
+
+<!ENTITY e10sEnabled.label                "&brandShortName; brauzerida multi-jarayonni yoqib qo‘yish">
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">

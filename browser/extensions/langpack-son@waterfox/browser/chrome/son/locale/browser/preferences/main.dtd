@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Tunandi">
+
+<!ENTITY startupPage2.label        "Waati kaŋ &brandShortName; ga tun">
+<!ENTITY startupPage2.accesskey    "t">
+<!ENTITY startupUserHomePage.label "War šintin moɲoo cebe">
+<!ENTITY startupBlankPage.label    "Moo koonu cebe">
+<!ENTITY startupPrevSession.label  "War zanfuney nda cee koraa kanjey cebe">
+
+
+<!ENTITY useCurrentPage.label      "Sohõ moɲoo goyandi">
+<!ENTITY useCurrentPage.accesskey  "S">
+<!ENTITY useMultiple.label         "Sohõ moɲey goyandi">
+<!ENTITY chooseBookmark.label      "Doo-šilbay goyandi...">
+<!ENTITY chooseBookmark.accesskey  "D">
+<!ENTITY restoreDefault.label      "Bere tilasu alhaali ga">
+<!ENTITY restoreDefault.accesskey  "B">
+
+<!ENTITY downloads.label     "Zumandiyaney">
+
+<!ENTITY saveTo.label "Tukey gaabu ga">
+<!ENTITY saveTo.accesskey "g">
+<!ENTITY chooseFolderWin.label        "Guna…">
+<!ENTITY chooseFolderWin.accesskey    "G">
+<!ENTITY chooseFolderMac.label        "Suuba…">
+<!ENTITY chooseFolderMac.accesskey    "S">
+<!ENTITY alwaysAskWhere.label         "Ay hãa waati kul nungu kaŋ ra tukey ga jiši">
+<!ENTITY alwaysAskWhere.accesskey     "w">
+
+<!ENTITY alwaysCheckDefault2.label        "Guna waati kul wala &brandShortName; ti war tilasu ceecikaa">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+
+
+<!ENTITY isDefault.label                  "&brandShortName; ti war tilasu ceecikaa sohõda.">
+<!ENTITY isNotDefault.label               "&brandShortName; manti war tilasu ceecikaa sohõda">
+
+<!ENTITY separateProfileMode.label        "Naŋ &brandShortName; nda Waterfox ma dira cere bande">
+<!ENTITY useWaterfoxSync.label             "Dabari: Woo ga goy nda alhaali fayanteyaŋ. Goy nda Sync ka bayhayey žemni gamey ra.">
+<!ENTITY getStarted.notloggedin.label     "Huru &syncBrand.shortName.label; ra…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; ibaayey feeri">
+
+<!ENTITY e10sEnabled.label                "Goy-boobo alhaali tunandi &brandShortName; se">
+
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

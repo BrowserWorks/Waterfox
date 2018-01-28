@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "നിങ്ങളുടെ അവകാശങ്ങളെപ്പറ്റി">
+<!ENTITY rights.intro "അനേകായിരം വ്യക്തികളുള്ളൊരു സമൂഹം തയ്യാറാക്കുന്നൊരു സ്വതന്ത്ര സോഫ്റ്റ്‌വെയറാണു് &brandFullName;. നിങ്ങള്‍ അറിയേണ്ട ചില കാര്യങ്ങള്‍ താഴെ പറഞ്ഞിരിയ്ക്കന്നു.">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName;-ല്‍ നിങ്ങള്‍ക്കു് ഈ രീതിയില്‍ ലഭ്യമാക്കുന്നു:">
+<!ENTITY rights.intro-point1b "മോസിലാ പബ്ലിക് ലൈസന്‍സ്">
+<!ENTITY rights.intro-point1c ". അതായതു്, നിങ്ങള്‍ക്കു്  മറ്റുള്ളവരുമായി &brandShortName; ഉപയോഗിയ്ക്കുവാനും വിതരണം ചെയ്യുവാനും സാധ്യമാകുന്നു. നിങ്ങളുടെ ആവശ്യങ്ങള്‍ക്കായി &brandShortName;-നുള്ള സോഴ്സ് കോഡില്‍ മാറ്റം വരുത്തുവാന്‍ നിങ്ങള്‍ക്കു് സാധ്യമാകുന്നു. നിങ്ങള്‍ മാറ്റം വരുത്തിയ പതിപ്പുകളും വിതരണം ചെയ്യുവാന്‍ മോസില്ലാ പബ്ലിക് ലൈസന്‍സ് നിങ്ങളെ അനുവദിയ്ക്കുന്നു.">
+
+<!ENTITY rights.intro-point2-a "ഫയര്‍ഫോക്സിന്റെ പേരു് അല്ലെങ്കില്‍ ചിഹ്നങ്ങള്‍ ഉള്‍പ്പടെയുള്ള മോസില്ലാ ഫൌണ്ടേഷന്റെ ട്രെയിഡ്‌മാര്‍ക്കുകളിലേക്കു് നിങ്ങള്‍ക്കു് ട്രെയിഡ്‌മാര്‍ക്ക് റൈറ്റുകളും ലൈസന്‍സും ലഭ്യമല്ല. കൂടുതല്‍ വിവരങ്ങള്‍ക്കു് നിങ്ങള്‍ക്കു് ലഭ്യമാകുന്നു.">
+<!ENTITY rights.intro-point2-b "ഇവിടെ">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "ക്രാഷ് റിപ്പോര്‍ട്ടര്‍ പോലുള്ള &brandShortName;-ലുള്ള വിശേഷതകള്‍, നിങ്ങള്‍ക്കു് &vendorShortName;-ലേക്കു് അഭിപ്രായങ്ങള്‍ അറിയിയ്ക്കുവാന്‍ സഹായിയ്ക്കുന്നു. അഭിപ്രായങ്ങള്‍ രേഖപ്പെടുത്തുവാന്‍ തെരഞ്ഞെടുത്താല്‍, &vendorShortName;-നു് നിങ്ങള്‍ അവയുടെ പ്രൊഡക്ടുകള്‍ നന്നാക്കുവാന്‍, വെബ്സൈറ്റുകളില്‍ അഭിപ്രായങ്ങള്‍ നല്‍കുവാന്‍, അവ വിതരണം ചെയ്യുവാന്‍ എന്നിവയ്ക്കുള്ള അനുവാദം നല്‍കുന്നു.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "&brandShortName; മുഖേന നിങ്ങള്‍ &vendorShortName; -ലേക്കു് നല്‍കുന്ന അഭിപ്രായങ്ങളും സ്വകാര്യ വിവരങ്ങളും എങ്ങനെ ഉപയോഗിയ്ക്കുന്നു എന്നു് ഇവിടെ വിവരിയ്ക്കുന്നു: ">
+<!ENTITY rights2.intro-point3b "&brandShortName; സ്വകാര്യ പോളിസി">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "ഈ പ്രൊഡക്ടിനുള്ള എല്ലാ സ്വകാര്യ പോളിസികളും ഇവിടെ കാണാം.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "ചില &brandShortName; വിശേഷതകള്‍ അവയുടെ വെബ് അടിസ്ഥാനത്തിലുള്ള വിവരങ്ങള്‍ ഉപയോഗിയ്ക്കുന്നു, എന്നാല്‍ അവ 100&#037; ശരിയാണെന്നുറപ്പിയ്ക്കുവാനും സാധ്യമല്ല. ഈ സര്‍വീസുകള്‍ ഉപയോഗിയ്ക്കുന്ന വിശേഷതകള്‍ എങ്ങനെ പ്രവര്‍ത്തന രഹിതമാക്കാം എന്നതിനെപ്പറ്റിയുള്ള കൂടുതല്‍ വിവരങ്ങള്‍ക്കായി ഇതു് കാണുക: ">
+<!ENTITY rights.intro-point4b "സര്‍വീസ് നിബന്ധനകള്‍">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "ഈ പ്രൊഡക്ട് വെബ് സര്‍വീസുകള്‍ ഉള്‍പ്പെടുത്തിയാല്‍, എല്ലാ സര്‍വീസ് നിബന്ധനകളും ഇതിലേക്കു് ബന്ധിപ്പിയ്ക്കുന്നു:">
+<!ENTITY rights.intro-point4b-unbranded "  ഭാഗം.">
+<!ENTITY rights.intro-point4c-unbranded "  ഭാഗം.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; വെബ്-അടിസ്ഥാനത്തിലുള്ള വിവരങ്ങള്‍ക്കുള്ള സര്‍വീസുകള്‍">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "ചില ചലചിത്രങ്ങള്‍ കാണാന്‍ &brandShortName; പുറമേയുള്ള ചില ഡിക്രിപ്ഷന്‍ മോഡ്യുള്‍ ഡൌണ്‍ലോഡ് ചെയ്ത് ഉപയോഗിക്കുന്നു.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "താഴെ പറഞ്ഞിരിയ്ക്കുന്ന വ്യവസ്ഥകള്‍ അനുസരിച്ചു് &brandShortName;-ന്റെ ബൈനറി പതിപ്പിനൊപ്പം ഉപയോഗിയ്ക്കുന്നതിനായി ചില വിശേഷതകള്‍ ലഭ്യമാക്കുന്നതിനായി &brandFullName;  വെബ് അടിസ്ഥാനത്തിലുള്ള വിവരങ്ങളുടെ സര്‍വീസുകള്‍ (&quot;Services&quot;) ഉപയോഗിയ്ക്കുന്നു. സര്‍വീസുകളില്‍ ഒന്നോ കൂടുതലോ ഉപയോഗിയ്ക്കണമെങ്കില്‍, വിശേഷത അല്ലെങ്കില്‍ സര്‍വീസ് പ്രവര്‍ത്തന രഹിതമാക്കാം. ഇതു് നടപ്പിലാക്കുന്നതിനുള്ള നിര്‍ദ്ദേശങ്ങള്‍ ലഭ്യമാകുന്നു.">
+<!ENTITY rights2.webservices-b "ഇവിടെ">
+<!ENTITY rights3.webservices-c ". പ്രയോഗത്തിന്റെ മുന്‍ഗണനകളില്‍ മറ്റു് വിശേഷതകളും സര്‍വീസുകളും പ്രവര്‍ത്തന സജ്ജമാക്കാം.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "സുരക്ഷിതമായ ബ്രൌസിങ്: ">
+<!ENTITY rights.safebrowsing-b "സുരക്ഷിതമായ ബ്രൌസിങ് വിശേഷത പ്രവര്‍ത്തന രഹിതമാക്കുന്നതു് ഉചിതമല്ല, കാരണം ഇതു് നിങ്ങളെ അസുരക്ഷിതമായ വെബ് സൈറ്റുകളിലേക്കു് എത്തിയ്ക്കുന്നു. ഈ വിശേഷത പൂര്‍ണ്ണമായി പ്രവര്‍ത്തന രഹിതമാക്കുന്നതിനായി, ഈ നടപടികള്‍ പാലിയ്ക്കുക:">
+<!ENTITY rights.safebrowsing-term1 "പ്രയോഗത്തിനുള്ള മുന്‍ഗണനകള്‍ തുറക്കുക">
+<!ENTITY rights.safebrowsing-term2 "സുരക്ഷ തെരഞ്ഞെടുക്കല്‍ തെരഞ്ഞെടുക്കുക">
+
+<!ENTITY rights.safebrowsing-term4 "സുരക്ഷാ ബ്രൌസിങ് ഇപ്പോള്‍ പ്രവര്‍ത്തന രഹിതമാക്കിയിരിയ്ക്കുന്നു">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "സ്ഥാനം അറിഞ്ഞുള്ള ബ്രൌസിങ്: ">
+<!ENTITY rights.locationawarebrowsing-b "എപ്പോഴും ഉപയോഗിയ്ക്കുക. നിങ്ങളുടെ അനുവാദമില്ലാതെ സ്ഥലവിവരങ്ങള്‍ അയയ്ക്കുന്നതല്ല. നിങ്ങള്‍ക്കിതു് പൂര്‍ണ്ണമായി പ്രവര്‍ത്തന രഹിതമാക്കണമെങ്കില്‍, ഇവ നടപ്പിലാക്കുക:">
+<!ENTITY rights.locationawarebrowsing-term1a "യുആര്‍എല്‍ ബാറില്‍, തരം  ">
+<!ENTITY rights.locationawarebrowsing-term1b "കോണ്‍ഫിഗിനെ കുറിച്ച്‌">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled തരം">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled മുന്‍ഗണനയില്‍ രണ്ടു തവണ ക്ലിക്ക് ചെയ്യുക">
+<!ENTITY rights.locationawarebrowsing-term4 "സ്ഥാനം-അനുസരിച്ചുള്ള ബ്രൌസിങ് പ്രവര്‍ത്തന രഹിതമാണു്">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "An overview of the web site services the product incorporates, along with instructions on how to disable them, if applicable, should be included here.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "ഈ പ്രൊഡക്ടിനുള്ള സര്‍വീസ് വ്യവസ്ഥകള്‍ ഇവിടെ ലഭ്യമാക്കണം.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName;, ഇതിന്റെ വിതരണക്കാര്‍,  ലൈസന്‍സുകാര്‍,  ഇടപാടുകാര്‍ എന്നിവര്‍ ഏറ്റവും പുതിയ സര്‍വീസകുള്‍ ലഭ്യമാക്കുന്നു. എന്നിരുന്നീലും,  ഇതു് നൂറൂ ശതനാമം ശരിയാണെന്നു് ഉറപ്പാക്കുവാന്‍ സാധ്യമല്ല. ഉദാഹരണത്തിനു്, ചിലപ്പോള്‍ സുരക്ഷിതമായ ബ്രൌസിങ് സര്‍വീസ് ചിലപ്പോള്‍ ചില അപകടകരമായ വെബ്സൈറ്റുകള്‍ തിരിച്ചറിയുകയില്ല. കൂടാതെ, സ്ഥലം ലഭ്യമാക്കുന്ന സര്‍വീസ് ലഭ്യമാക്കുന്ന എല്ലാ സ്ഥലങ്ങളും ശരിയാകണമെന്നും ഉറപ്പില്ല.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; ഒരു പക്ഷേ തുടരുന്നതല്ല, അല്ലെങ്കില്‍ സര്‍വീസുകള്‍ മാറ്റുന്നു.">
+<!ENTITY rights2.webservices-term3 "&brandShortName;-നൊപ്പമുള്ള പതിപ്പിനൊപ്പം ഈ സര്‍വീസുകള്‍ നിങ്ങള്‍ക്കു് ഉപയോഗിയ്ക്കാം,  &vendorShortName; നിങ്ങള്‍ക്കു് ഇതിനുള്ള അനുമതികള്‍ ലഭ്യമാക്കുന്നു. &vendorShortName;-ഉം ഇവയുടെ ലൈസന്‍സറുകളും സര്‍വീസുകളിലുള്ള എല്ലാ അവകാശങ്ങളും കരുതിവയ്ക്കുന്നു. &brandShortName;-നു് ലഭ്യമാക്കിയിരിയ്ക്കുന്ന ഓപ്പണ്‍ സോഴ്സ് ലൈസന്‍സുകള്‍ക്കും  &brandShortName;-ന്റെ ഉചിതമായ സോഴ്സ് കോഡ് പതിപ്പുകളിലും മാത്രം ഈ വ്യവസ്ഥകളുടെ അവകാശങ്ങള്‍ ഒതുങ്ങുന്നില്ല.">
+<!ENTITY rights.webservices-term4 "The Services are provided &quot;as-is.&quot;  &vendorShortName;, its contributors, licensors, and distributors, disclaim all warranties, whether express or implied, including without limitation, warranties that the Services are merchantable and fit for your particular purposes.  You bear the entire risk as to selecting the Services for your purposes and as to the quality and performance of the Services. Some jurisdictions do not allow the exclusion or limitation of implied warranties, so this disclaimer may not apply to you.">
+<!ENTITY rights.webservices-term5 "Except as required by law, &vendorShortName;, its contributors, licensors, and distributors will not be liable for any indirect, special, incidental, consequential, punitive, or exemplary damages arising out of or in any way relating to the use of &brandShortName; and the Services.  The collective liability under these terms will not exceed $500 (five hundred dollars). Some jurisdictions do not allow the exclusion or limitation of certain damages, so this exclusion and limitation may not apply to you.">
+<!ENTITY rights.webservices-term6 "സമയമനുസരിച്ചു് &vendorShortName; ഈ വ്യവസ്ഥകള്‍ പരിഷ്കരിയ്ക്കപ്പെടുന്നു.  &vendorShortName;-ന്റെ എഴുതിയ എഗ്രീമെന്റില്ലാതെ നിങ്ങള്‍ക്കു് ഈ വ്യവസ്ഥകളില്‍ മാറ്റം വരുത്തുവാനോ ഇതു് റദ്ദാക്കുവാനോ സാധ്യമല്ല.">
+<!ENTITY rights.webservices-term7 "These terms are governed by the laws of the state of California, U.S.A., excluding its conflict of law provisions. If any portion of these terms is held to be invalid or unenforceable, the remaining portions will remain in full force and effect. In the event of a conflict between a translated version of these terms and the English language version, the English language version shall control.">
+
+<!ENTITY rights2.safebrowsing-term3 "Uncheck the option to &quot;&enableSafeBrowsing.label;&quot;">

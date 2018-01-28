@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Uygulamalar">
+<!ENTITY  applications.description "&brandShortName; tarayıcısının Web’den indirdiğiniz dosyaları veya Web’de gezinirken kullandığınız uygulamaları nasıl ele alacağını seçin.">
+
+<!ENTITY  typeColumn.label        "İçerik türü">
+<!ENTITY  typeColumn.accesskey    "t">
+
+<!ENTITY  actionColumn2.label     "Eylem">
+<!ENTITY  actionColumn2.accesskey "E">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Dosya türlerinde ve uygulamalarda ara">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Kar…">
+<!ENTITY print.accesskey      "K">
+<!ENTITY pageSetup.label      "Moo kayandiyan…">
+<!ENTITY pageSetup.accesskey  "y">
+<!ENTITY page.label           "Moo:">
+<!ENTITY page.accesskey       "M">
+<!ENTITY of.label             "boŋ">
+<!ENTITY scale.label          "Zimamari:">
+<!ENTITY scale.accesskey      "Z">
+<!ENTITY portrait.label       "Gandebii">
+<!ENTITY portrait.accesskey   "G">
+<!ENTITY landscape.label      "Gandakanje">
+<!ENTITY landscape.accesskey  "G">
+<!ENTITY close.label          "Daabu">
+<!ENTITY close.accesskey      "D">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Hanse war boŋ še…">
+<!ENTITY ShrinkToFit.label    "Kaccandi ka sawandi nda moɲoo">
+<!ENTITY customPrompt.title   "Boŋše zimamari…">
+<!ENTITY simplifyPage.label   "Moɲoo faalandi">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "Kanandoo barmay ka cawroo faalandi">
+<!ENTITY simplifyPage.disabled.tooltip "Moɲoo woo ši hin faalandi nga boŋ se">
+
+<!ENTITY homearrow.tooltip    "Moo jinaa">
+<!ENTITY endarrow.tooltip     "Moo koraa">
+<!ENTITY nextarrow.tooltip    "Jine moɲoo">
+<!ENTITY previousarrow.tooltip "Banda moɲoo">

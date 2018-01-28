@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title				"デバイスマネージャー">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2				"width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label			"セキュリティモジュールとデバイス">
+<!ENTITY devmgr.details.title			"詳細">
+<!ENTITY devmgr.details.title2			"値">
+
+<!ENTITY devmgr.button.login.label		"ログイン">
+<!ENTITY devmgr.button.login.accesskey		"n">
+<!ENTITY devmgr.button.logout.label		"ログアウト">
+<!ENTITY devmgr.button.logout.accesskey		"O">
+<!ENTITY devmgr.button.changepw.label		"パスワードを変更...">
+<!ENTITY devmgr.button.changepw.accesskey	"P">
+<!ENTITY devmgr.button.load.label		"追加...">
+<!ENTITY devmgr.button.load.accesskey		"L">
+<!ENTITY devmgr.button.unload.label		"削除">
+<!ENTITY devmgr.button.unload.accesskey		"U">
+<!ENTITY devmgr.button.fips.accesskey		"F">
+
+<!ENTITY loaddevice.info			"追加するモジュール情報を入力してください。">
+<!ENTITY loaddevice.modname			"モジュール名:">
+<!ENTITY loaddevice.modname.accesskey		"M">
+<!ENTITY loaddevice.modname.default		"New PKCS #11 Module"><!-- (^^; 日本語名での登録はできないとのこと -->
+<!ENTITY loaddevice.filename			"ファイルパス:">
+<!ENTITY loaddevice.filename.accesskey		"f">
+<!ENTITY loaddevice.browse			"参照...">
+<!ENTITY loaddevice.browse.accesskey		"B">
+
+<!ENTITY loaddevice.title2			"PKCS #11 デバイスドライバーの読み込み">

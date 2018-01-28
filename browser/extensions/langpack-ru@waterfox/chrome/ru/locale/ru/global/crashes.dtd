@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Сообщения о падениях">
+<!ENTITY crashesUnsubmitted.label   "Неотправленные сообщения о падениях">
+<!ENTITY crashesSubmitted.label     "Отправленные сообщения о падениях">
+<!ENTITY id.heading                 "Идентификатор сообщения">
+<!ENTITY dateCrashed.heading        "Дата падения">
+<!ENTITY dateSubmitted.heading      "Дата отправки">
+<!ENTITY noReports.label            "Ни одного сообщения о падении отправлено не было.">
+<!ENTITY noConfig.label             "Это приложение не было настроено на отображение сообщений о падениях. Необходимо установить параметр <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Удалить все сообщения">

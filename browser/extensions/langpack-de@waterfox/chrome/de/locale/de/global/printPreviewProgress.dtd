@@ -1,0 +1,5 @@
+<!--LOCALIZATION NOTE printPreviewProgress.dtd Main UI for Print Preview Progress Dialog -->
+<!ENTITY printWindow.title "Druckvorschau"> 
+<!ENTITY title   "Titel:"> 
+<!ENTITY preparing "Vorbereiten…">
+<!ENTITY progress "Fortschritt:">

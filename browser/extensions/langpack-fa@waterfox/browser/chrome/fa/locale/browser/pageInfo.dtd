@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "رونوشت برداشتن">
+<!ENTITY  copy.accesskey        "ن">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "انتخاب همه">
+<!ENTITY  selectall.accesskey   "ه">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "عمومی">
+<!ENTITY  generalTab.accesskey  "ع">
+<!ENTITY  generalTitle          "عنوان:">
+<!ENTITY  generalURL            "نشانی:">
+<!ENTITY  generalType           "نوع:">
+<!ENTITY  generalMode           "حالت ترسیم:">
+<!ENTITY  generalSize           "اندازه:">
+<!ENTITY  generalReferrer       "نشانی اینترنتی ارجاع کننده:">
+<!ENTITY  generalSource         "متن در حافظهٔ نهان:">
+<!ENTITY  generalModified       "زمان تغییر:">
+<!ENTITY  generalEncoding2      "کدگذاری متن:">
+<!ENTITY  generalMetaName       "نام">
+<!ENTITY  generalMetaContent    "محتوا">
+
+<!ENTITY  mediaTab              "رسانه">
+<!ENTITY  mediaTab.accesskey    "ر">
+<!ENTITY  mediaLocation         "مکان:">
+<!ENTITY  mediaText             "متن مربوط:">
+<!ENTITY  mediaAltHeader        "متن بدل">
+<!ENTITY  mediaAddress          "نشانی">
+<!ENTITY  mediaType             "نوع">
+<!ENTITY  mediaSize             "اندازه">
+<!ENTITY  mediaCount            "تعداد">
+<!ENTITY  mediaDimension        "ابعاد:">
+<!ENTITY  mediaLongdesc         "شرح طولانی:">
+<!ENTITY  mediaBlockImage.accesskey "ب">
+<!ENTITY  mediaSaveAs           "ذخیره به نام…">
+<!ENTITY  mediaSaveAs.accesskey "ن">
+<!ENTITY  mediaSaveAs2.accesskey "ذ">
+<!ENTITY  mediaPreview          "پیش‌نمایش رسانه:">
+
+<!ENTITY  feedTab               "خوردها">
+<!ENTITY  feedTab.accesskey     "خ">
+<!ENTITY  feedSubscribe         "آبونه شدن">
+<!ENTITY  feedSubscribe.accesskey "آ">
+
+<!ENTITY  permTab               "مجوزها">
+<!ENTITY  permTab.accesskey     "م">
+<!ENTITY  permUseDefault        "استفاده از مقدار پیش‌فرض">
+<!ENTITY  permAskAlways         "هر بار پرسیده شود">
+<!ENTITY  permAllow             "اجازه دادن">
+<!ENTITY  permAllowSession      "اجازه دادن برای نشست">
+<!ENTITY  permBlock             "باز داشتن">
+<!ENTITY  permissionsFor        "مجوزها برای:">
+<!ENTITY  permPlugins           "فعال کردن افزونه‌ها">
+
+<!ENTITY  permClearStorage           "پاک‌سازی حافظه">
+<!ENTITY  permClearStorage.accesskey "پ">
+
+<!ENTITY  securityTab           "امنیت">
+<!ENTITY  securityTab.accesskey "ا">
+<!ENTITY  securityView.certView "نمایش گواهی">
+<!ENTITY  securityView.accesskey "ن">
+<!ENTITY  securityView.unknown   "نامعلوم">
+
+
+<!ENTITY  securityView.identity.header   "هویت پایگاه وبی">
+<!ENTITY  securityView.identity.owner    "صاحب:">
+<!ENTITY  securityView.identity.domain   "پایگاه وبی:">
+<!ENTITY  securityView.identity.verifier "تأیید شده توسط:">
+<!ENTITY  securityView.identity.validity "انقضا در:">
+
+<!ENTITY  securityView.privacy.header                   "تاریخچه و موارد حریم شخصی">
+<!ENTITY  securityView.privacy.history                  "آیا قبل از امروز از این پایگاه وب بازدید کرده‌ام؟">
+<!ENTITY  securityView.privacy.cookies                  "آیا این پایگاه وب اطلاعاتی (کوکی) بر روی رایانهٔ من ذخیره کرده است؟">
+<!ENTITY  securityView.privacy.viewCookies              "مشاهدهٔ کوکی‌ها">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "ک">
+<!ENTITY  securityView.privacy.passwords                "آیا برای این پایگاه وب گذرواژه‌ای ذخیره کرده‌ام؟">
+<!ENTITY  securityView.privacy.viewPasswords            "مشاهدهٔ گذرواژه‌های ذخیره شده">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "گ">
+
+<!ENTITY  securityView.technical.header                 "جزئیات فنی">
+
+<!ENTITY  helpButton.label                              "راهنما">

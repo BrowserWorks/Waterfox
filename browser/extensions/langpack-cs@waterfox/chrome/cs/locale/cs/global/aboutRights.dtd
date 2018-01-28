@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "O vašich právech">
+<!ENTITY rights.intro "&brandFullName; je svobodný software s otevřeným zdrojovým kódem, který je vytvářen tisíci dobrovolníky z celého světa. Je zde ale několik věcí, které byste měli vědět:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "Aplikace &brandShortName; je dostupná za podmínek stanovených ve ">
+<!ENTITY rights.intro-point1b "Veřejné licenci Mozilly">
+<!ENTITY rights.intro-point1c " (MPL). Ta vám umožňuje aplikaci &brandShortName; používat, kopírovat a šířit. Pokud potřebujete, můžete také pozměnit zdrojový kód aplikace &brandShortName; podle vašich potřeb. Veřejná licence Mozilly vám dává také právo šířit vámi pozměněné verze.">
+
+<!ENTITY rights.intro-point2-a "Nejsou vám však podstoupena žádná práva ani licence k ochranným známkám Waterfox, či třetích stran, a to zejména k logu a jménu Waterfox. Podrobnější informace o ochranných známkách jsou dostupné ">
+<!ENTITY rights.intro-point2-b "zde">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Některé funkce aplikace &brandShortName;, jako např. hlášení pádů, vám umožní odeslat zpětnou vazbu organizaci &vendorShortName;. Odesláním zpětné vazby poskytujete organizaci &vendorShortName; povolení k užití zpětné vazbu pro vylepšení svých produktů, zveřejnění na stránkách a distribuci.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Způsoby užití osobních informací a zpětné vazby odeslané organizaci &vendorShortName; pomocí aplikace &brandShortName; jsou popsány v ">
+<!ENTITY rights2.intro-point3b "pravidlech ochrany soukromí aplikace &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Zásady ochrany soukromí nejsou pro neznačkové verze produktů k dispozici.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Některé funkce aplikace &brandShortName; využívají webových informačních služeb. U těchto služeb není možno garantovat jejich 100&#37; správnost a bezchybnost. Více podrobností, včetně informací jak tyto služby zakázat, lze nalézt v ">
+<!ENTITY rights.intro-point4b "podmínkách služeb">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Pokud tato neznačková verze produktu začleňuje některé služby webových serverů, měly by být jejich podmínky k nalezení v ">
+<!ENTITY rights.intro-point4b-unbranded "podmínkách služeb">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "Webové informační služby aplikace &brandFullName;">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Pro přehrání některých typů video obsahu &brandShortName; stáhne odpovídající dešifrovací moduly třetích stran.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; používá webové informační služby („Služby“) z důvodu zajištění některých funkcí dostupných v rámci této binární verze aplikace &brandShortName; za podmínek popsaných níže. Pokud si nepřejete jednu nebo více Služeb používat nebo jsou pro vás níže uvedené podmínky neakceptovatelné, lze tyto služby vypnout. Postup, jak lze vypnout určitou funkcionalitu nebo Službu, lze najít ">
+<!ENTITY rights2.webservices-b "zde">
+<!ENTITY rights3.webservices-c ". Další funkce a Služby lze zakázat v předvolbách aplikace.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Bezpečné prohlížení: ">
+<!ENTITY rights.safebrowsing-b "Zakázání funkce bezpečného prohlížení není doporučováno, protože vám umožní navštěvovat nebezpečné stránky. Pokud ale chcete tuto funkci zakázat, postupujte podle těchto kroků:">
+<!ENTITY rights.safebrowsing-term1 "Otevřete předvolby aplikace">
+<!ENTITY rights.safebrowsing-term2 "Zvolte panel Zabezpečení">
+<!ENTITY rights2.safebrowsing-term3 "Zrušte výběr možnosti &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Bezpečné prohlížení je momentálně vypnuto">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Prohlížení se znalostí polohy: ">
+<!ENTITY rights.locationawarebrowsing-b "Služby se znalostí polohy si vždy musí vyžádat váš souhlas, bez kterého nejsou odeslány žádné informace o poloze. Pokud ale chcete tuto funkci zakázat, postupujte podle těchto kroků:">
+<!ENTITY rights.locationawarebrowsing-term1a "Do pole adresy zadejte ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "a potvrďte varování. Zadejte hledat „geo.enabled“">
+<!ENTITY rights.locationawarebrowsing-term3 "Z místní nabídky přepněte předvolbu na hodnotu false">
+<!ENTITY rights.locationawarebrowsing-term4 "Prohlížení se znalostí polohy je momentálně vypnuto">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Krátký popis začleněných služeb webových serverů spolu s instrukcemi, jak je zakázat.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Zde by měl být seznam podmínek začleněných služeb.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "Organizace &vendorShortName;, její přispěvatelé, držitelé licencí a partneři se snaží poskytovat co nejvíce přesné a aktuální Služby. Přesto není možné garantovat, že poskytované informace jsou ucelené a bezchybné. Např. služba bezpečného prohlížení nemusí rozpoznat některé zákeřné stránky a může chybně označit některé bezpečné stránky. V rámci služeb se znalostí polohy jsou i všechny polohy vrácené našimi poskytovateli služeb pouze odhadem. Ani my ani náš poskytovatel služby negarantujeme přesnost poskytnuté polohy.">
+<!ENTITY rights.webservices-term2 "Organizace &vendorShortName; může libovolně ukončit nebo změnit užívání Služeb.">
+<!ENTITY rights2.webservices-term3 "Jste zváni k užití Služeb spojených s touto verzí aplikace &brandShortName; a organizace &vendorShortName; vám zaručuje právo toto činit. Organizace &vendorShortName; a držitelé licencí si vyhrazují všechna ostatní práva spojená se Službami. Cílem těchto podmínek není omezení žádných práv udělených v rámci licencí svobodného softwaru vztahujících se na aplikaci &brandShortName; a na odpovídající zdrojový kód této verze aplikace &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Služby jsou poskytovány „tak jak jsou“. &vendorShortName;, její přispěvatelé, držitelé licencí a distributoři se zříkají všech záruk, ať už vyjádřených nebo předpokládaných, včetně ale nikoliv výhradně, záruk zpeněžitelnosti Služeb a vhodnosti k vašemu určitému účelu. Jste plně zodpovědní za veškerá rizika spojená s volbou Služeb pro vaše účely, a to jak do kvality, tak do výkonnosti Služeb. Některé právní systémy nepovolují vyloučení nebo omezení předpokládaných záruk, v takovém případě toto zřeknutí pro vás neplatí.">
+<!ENTITY rights.webservices-term5 "Organizace &vendorShortName;, její přispěvatelé, držitelé licencí a distributoři nejsou mimo výjimky dané zákonem zodpovědní za žádné nepřímé, mimořádné, nahodilé škody (a ani za sankční náhradu škody) vyplývající ze způsobu použití nebo ze způsobu souvisejícího s použitím aplikace &brandShortName; a Služeb. Souhrnná odpovědnost za těchto podmínek nepřesáhne $500 (pět set dolarů). Některé právní systémy nepovolují vyloučení odpovědnosti za určité škody, v takovém případě tato vyloučení a omezení pro vás neplatí.">
+<!ENTITY rights.webservices-term6 "Organizace &vendorShortName; může dle nutnosti tyto podmínky libovolně aktualizovat. Tyto podmínky nelze měnit či zrušit bez písemného souhlasu organizace &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Tyto podmínky se řídí zákony státu Kalifornie, U.S.A., vyjma neshod se zákonnými ustanoveními. Pokud se ukáže, že některá část těchto podmínek je neplatná či nevynutitelná, zůstávají zbylé podmínky v plné platnosti. V případě rozporu mezi touto přeloženou verzí podmínek a anglickou verzí podmínek je autoritativní anglická verze.">

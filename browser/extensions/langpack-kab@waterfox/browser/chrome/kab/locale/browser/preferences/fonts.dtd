@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Tisefsiyin">
+
+<!ENTITY  language.label                          "Tisefsiyin i:">
+<!ENTITY  language.accesskey                      "T">
+
+<!ENTITY  size.label                              "Teɣzi:">
+<!ENTITY  sizeProportional.accesskey              "T">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "Aẓunan:">
+<!ENTITY  proportional.accesskey                  "A">
+
+<!ENTITY  serif.label                             "Serif :">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Tehri tusbuṭ:">
+<!ENTITY  monospace.accesskey                     "T">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Tutlayin tilaṭiniyin">
+<!ENTITY  font.langGroup.japanese                 "Tajapunit">
+<!ENTITY  font.langGroup.trad-chinese             "Tacinit tamensayt (Ṭaywan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Tacinit tafessast">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tacinit tamensayt (Hung Kung) ">
+<!ENTITY  font.langGroup.korean                   "Takurit">
+<!ENTITY  font.langGroup.cyrillic                 "Tasirilikt">
+<!ENTITY  font.langGroup.el                       "Tagrigit">
+<!ENTITY  font.langGroup.other                    "Inagrawen n tira nniḍen">
+<!ENTITY  font.langGroup.thai                     "Taṭaylant">
+<!ENTITY  font.langGroup.hebrew                   "Taɛebranit">
+<!ENTITY  font.langGroup.arabic                   "Taɛrabt">
+<!ENTITY  font.langGroup.devanagari               "Tadibanagarit">
+<!ENTITY  font.langGroup.tamil                    "Taṭamilt">
+<!ENTITY  font.langGroup.armenian                 "Taṛminit">
+<!ENTITY  font.langGroup.bengali                  "Tabengalit">
+<!ENTITY  font.langGroup.canadian                 "Unṭiq akanadi yedduklen">
+<!ENTITY  font.langGroup.ethiopic                 "Tamharikt">
+<!ENTITY  font.langGroup.georgian                 "Tajyuṛjit">
+<!ENTITY  font.langGroup.gujarati                 "Taguǧaṛatit">
+<!ENTITY  font.langGroup.gurmukhi                 "Tagurmixit">
+<!ENTITY  font.langGroup.khmer                    "Taxemmaṛit">
+<!ENTITY  font.langGroup.malayalam                "Tamalayalamit">
+<!ENTITY  font.langGroup.math                     "Tusnakt">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Taluggut">
+<!ENTITY  font.langGroup.kannada                  "Takannadit">
+<!ENTITY  font.langGroup.sinhala                  "Tasinhalit">
+<!ENTITY  font.langGroup.tibetan                  "Tatibitant">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Teɣzi taddayt n tsefsit:">
+<!ENTITY minSize.accesskey                        "T">
+<!ENTITY minSize.none                             "Ulac">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Sireg isebtar web ad sqedcen tisefsiyin-nsen deg umḍiq n tidak ifernen daw-a">
+<!ENTITY  allowPagesToUseOwn.accesskey            "S">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Asettengel n uḍris i ugbur aqbuṛ">
+<!ENTITY languages.customize.Fallback2.label      "Asettengel n uḍris n ufran aneggaru:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "Asettengel-a n uḍris ittuseqdec i ugbur aqbuṛ ur d-nettammal ara asettengel-ines.">
+
+<!ENTITY languages.customize.Fallback.auto        "Azal amezwer i tutlayt tadigant">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Taɛrabt">
+<!ENTITY languages.customize.Fallback.baltic      "Tabalṭikt">
+<!ENTITY languages.customize.Fallback.ceiso       "Uṛup alemmas, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Uṛup alemmas, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Tacinit, taḥerfit">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Tacinit, tamensayt">
+<!ENTITY languages.customize.Fallback.cyrillic    "Tasirilikt">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Tagrigit">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Taɛebranit">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Tajapunit">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Takurit">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Taṭaylant">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Taṭurkit">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Tavyiṭnamit">
+<!ENTITY languages.customize.Fallback.other       "Ayen nniḍen (Yedda Uṛup n umalu)">

@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Libraia">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Òrganizza">
+<!ENTITY organize.accesskey    "Ò">
+<!ENTITY organize.tooltip      "Òrganizza i teu segnalibbri">
+
+<!ENTITY file.close.label               "Særa">
+<!ENTITY file.close.accesskey           "S">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Viste">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Cangia a teu vista">
+<!ENTITY view.columns.label             "Fanni vedde e colònne">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Ordina">
+<!ENTITY view.sort.accesskey            "Ó">
+<!ENTITY view.unsorted.label            "No ordinæ">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Ordina A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordina Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Inpòrta Segnalibbri da HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Espòrta Segnalibbri a HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Inportâ dæti da un atro navegatô…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Fanni 'na còpia de seguessa…">
+<!ENTITY cmd.backup.accesskey           "c">
+<!ENTITY cmd.restore2.label             "Repiggia">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Çerni file…">
+<!ENTITY cmd.restoreFromFile.accesskey  "c">
+
+<!ENTITY cmd.deleteDomainData.label     "Ascòrdite de questo scito">
+<!ENTITY cmd.deleteDomainData.accesskey "A">
+
+<!ENTITY cmd.open.label                  "Arvi">
+<!ENTITY cmd.open.accesskey              "v">
+<!ENTITY cmd.open_window.label           "Arvi inte 'n atro barcon">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "Arvi inte 'n neuva barcon privou">
+<!ENTITY cmd.open_private_window.accesskey "m">
+<!ENTITY cmd.open_tab.label              "Arvi inte 'n atro feuggio">
+<!ENTITY cmd.open_tab.accesskey          "v">
+<!ENTITY cmd.open_all_in_tabs.label      "Arvi tutto inti feuggi">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "o">
+
+<!ENTITY cmd.properties.label      "Propietæ">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Ordina pe nomme">
+<!ENTITY cmd.sortby_name.accesskey          "Ó">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Neuvo segnalibbro…">
+<!ENTITY cmd.new_bookmark.accesskey        "b">
+<!ENTITY cmd.new_folder.label              "Neuva cartella…">
+<!ENTITY cmd.new_folder.accesskey          "N">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "Neuvo separatô">
+<!ENTITY cmd.new_separator.accesskey       "s">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Recarega segnalibbro dò-u vivo">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY cmd.moveBookmarks.label                  "Mescia…">
+<!ENTITY cmd.moveBookmarks.accesskey              "M">
+
+<!ENTITY col.name.label          "Nomme">
+<!ENTITY col.tags.label          "Etichette">
+<!ENTITY col.url.label           "Indirisso">
+<!ENTITY col.mostrecentvisit.label "Vixita ciù recente">
+<!ENTITY col.visitcount.label    "Numero de vixite">
+<!ENTITY col.description.label   "Descriçion">
+<!ENTITY col.dateadded.label     "Azonto">
+<!ENTITY col.lastmodified.label  "Cangiou o">
+
+<!ENTITY search.label                              "Riçerca:">
+<!ENTITY search.accesskey                          "R">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Inportâ e fâ de còpie de seguessa">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Inpòrta e fanni a còpia de seguessa di teu segnalibbri">
+
+<!ENTITY backButton.tooltip  "Vanni inderê">
+
+<!ENTITY forwardButton.tooltip  "Vanni avanti">
+
+<!ENTITY detailsPane.more.label "Ciù">
+<!ENTITY detailsPane.more.accesskey "C">
+<!ENTITY detailsPane.less.label "Meno">
+<!ENTITY detailsPane.less.accesskey "M">
+<!ENTITY detailsPane.selectAnItemText.description "Seleçionn-a un ògetto pe vedde e modificâ e propietæ">
+
+<!ENTITY find.label               "Riçerca:">
+<!ENTITY find.accesskey           "R">
+<!ENTITY view.label               "Fanni vedde">
+<!ENTITY view.accesskey           "F">
+<!ENTITY byDate.label             "Pe dæta">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Pe scito">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "Pe ciù vixitæ">
+<!ENTITY byMostVisited.accesskey  "v">
+<!ENTITY byLastVisited.label      "Pe urtime vixite">
+<!ENTITY byLastVisited.accesskey  "P">
+<!ENTITY byDayAndSite.label       "Pe dæta e scito">
+<!ENTITY byDayAndSite.accesskey   "t">
+
+<!ENTITY search.placeholder  "Search">
+

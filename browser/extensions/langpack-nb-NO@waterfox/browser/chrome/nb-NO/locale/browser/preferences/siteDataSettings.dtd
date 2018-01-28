@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Innstillinger - sidedata">
+<!ENTITY     hostCol.label                 "Nettsted">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Lagring">
+<!ENTITY     searchTextboxPlaceHolder             "Søk på nettsider">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Fjern valgte">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Lagre endringer">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Avbryt">
+<!ENTITY     cancel.accesskey              "A">
+<!ENTITY     removingDialog.title          "Fjerner nettsidedata">
+<!ENTITY     removingSelected.description  "Hvis du fjerner nettsteddata, fjerner du også relaterte infokapsler og frakoblet nettinnhold. Dette kan logge deg ut av nettsider. Er du sikker på at du vil gjøre endringene?">
+<!ENTITY     siteTree.label                "Følgende nettstedsinfokapsler fjernes:">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Fargar">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Overstyr fargane spesifiserte av nettsida med mine val ovanfor:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Alltid">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Berre med høgkontrast-tema">
+<!ENTITY  overrideDefaultPageColors.never.label  "Aldri">
+
+<!ENTITY  color                           "Tekst og bakgrunn">
+<!ENTITY  textColor.label                 "Tekst:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Bakgrunn:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "Bruk systemfargar">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Understrek lenker">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "Lenkefargar">
+<!ENTITY  linkColor.label                 "Ikkje-besøkte lenker:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Besøkte lenker:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

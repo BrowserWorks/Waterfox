@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Lapas iestatījumi">
+
+<!ENTITY basic.tab           "Formatēšana un iestatījumi">
+
+<!ENTITY formatGroup.label   "Formāts">
+
+<!ENTITY orientation.label   "Novietojums:">
+<!ENTITY portrait.label      "Portrets">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Ainava">
+<!ENTITY landscape.accesskey "A">
+
+<!ENTITY scale.label         "Mērogs:">
+<!ENTITY scale.accesskey     "M">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Saspiest, lai ietilptu lapā">
+<!ENTITY shrinkToFit.accesskey "l">
+
+<!ENTITY optionsGroup.label  "Iestatījumi">
+
+<!ENTITY printBG.label       "Drukāt fonu (krāsas un attēlus)">
+<!ENTITY printBG.accesskey   "f">
+
+<!ENTITY advanced.tab        "Malas un galvene/kājene">
+
+<!ENTITY marginGroup.label   "Malas (#1)">
+<!ENTITY marginUnits.inches  "collas">
+<!ENTITY marginUnits.metric  "milimetri">
+<!ENTITY marginTop.label     "Augšā:">
+<!ENTITY marginTop.accesskey "A">
+<!ENTITY marginBottom.label  "Apakšā:">
+<!ENTITY marginBottom.accesskey "p">
+<!ENTITY marginLeft.label    "Kreisā:">
+<!ENTITY marginLeft.accesskey "K">
+<!ENTITY marginRight.label   "Labā:">
+<!ENTITY marginRight.accesskey "L">
+
+<!ENTITY headerFooter.label  "Galvenes un kājenes">
+
+<!ENTITY hfLeft.label        "Kreisā:">
+<!ENTITY hfCenter.label      "Centrs:">
+<!ENTITY hfRight.label       "Labā:">
+<!ENTITY headerLeft.tip      "Kreisā galvene">
+<!ENTITY headerCenter.tip    "Centra galvene">
+<!ENTITY headerRight.tip     "Labā galvene">
+<!ENTITY footerLeft.tip      "Kreisā kājene">
+<!ENTITY footerCenter.tip    "Centra kājene">
+<!ENTITY footerRight.tip     "Labā kājene">
+
+<!ENTITY hfTitle             "Virsraksts">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Datums/Laiks">
+<!ENTITY hfPage              "Lapa #">
+<!ENTITY hfPageAndTotal      "Lapa # no #">
+<!ENTITY hfBlank             "--tukšs--">
+<!ENTITY hfCustom            "Pielāgots...">
+
+<!ENTITY customPrompt.title  "Pielāgots...">
+<!ENTITY customPrompt.prompt "Šeit ievadiet savu galvenes vai kājenes tekstu">

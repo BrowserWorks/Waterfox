@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Izjeme - Prevajanje">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Prevajanje ne bo na voljo za naslednje jezike:">
+<!ENTITY treehead.languageName.label      "Jeziki">
+<!ENTITY removeLanguage.label             "Odstrani jezik">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "Odstrani vse jezike">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Prevajanje ne bo na voljo za naslednje strani:">
+<!ENTITY treehead.siteName2.label         "Spletne strani">
+<!ENTITY removeSite.label                 "Odstrani stran">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Odstrani vse strani">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Zapri">
+<!ENTITY button.close.accesskey           "Z">

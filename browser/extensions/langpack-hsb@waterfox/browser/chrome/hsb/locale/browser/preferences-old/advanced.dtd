@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Powšitkowny">
+
+<!ENTITY accessibility.label             "Přistupnosć">
+
+<!ENTITY useCursorNavigation.label       "Přeco kursorowe tasty za pohibowanje na stronach wužiwać">
+<!ENTITY useCursorNavigation.accesskey   "k">
+<!ENTITY searchOnStartTyping.label       "Při pisanju tekst pytać">
+<!ENTITY searchOnStartTyping.accesskey   "P">
+<!ENTITY blockAutoReload.label           "Warnować, hdyž websydła pospytuja stronu dale posrědkować abo znowa začitać">
+<!ENTITY blockAutoReload.accesskey       "W">
+<!ENTITY useOnScreenKeyboard.label       "Dótknjensku tastaturu pokazać, jeli trěbne">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Přehladowanje">
+
+<!ENTITY useAutoScroll.label             "Awtomatiske přesuwanje wužiwać">
+<!ENTITY useAutoScroll.accesskey         "A">
+<!ENTITY useSmoothScrolling.label        "Łahodne přesuwanje wužiwać">
+<!ENTITY useSmoothScrolling.accesskey    "h">
+<!ENTITY checkUserSpelling.label         "Při pisanju prawopis kontrolować">
+<!ENTITY checkUserSpelling.accesskey     "P">
+
+<!ENTITY dataChoicesTab.label            "Datowy wuběr">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Datowe rozprawjenje je znjemóžnjene za tutu programowu konfiguraciju">
+
+<!ENTITY healthReportDesc.label          "Pomha wam, wukon wašeho wobhladowaka rozumić a dźěli daty z &vendorShortName; wo statusu wašeho wobhladowaka">
+<!ENTITY enableHealthReport.label        "&brandShortName; - statusowu rozprawu zmóžnić">
+<!ENTITY enableHealthReport.accesskey    "r">
+<!ENTITY healthReportLearnMore.label     "Dalše informacije">
+
+<!ENTITY telemetryDesc.label             "Dźěli wukon, wužiće, hardware a přiměrjenja wašeho wobhladowaka z &vendorShortName;, zo by nam pomhała, &brandShortName; polěpšić">
+<!ENTITY enableTelemetryData.label       "Přidatne daty dźělić (na př. telemetriju)">
+<!ENTITY enableTelemetryData.accesskey   "t">
+<!ENTITY telemetryLearnMore.label        "Dalše informacije">
+
+<!ENTITY crashReporterDesc2.label         "Spadowe rozprawy pomhaja &vendorShortName;, problemy rozrisać a waš wohladowak stabilniši a wěsćiši činić">
+<!ENTITY alwaysSubmitCrashReports.label   "&brandShortName; dowolić, njewobdźěłane spadowe rozprawy we wašim mjenje pósłać">
+<!ENTITY alwaysSubmitCrashReports.accesskey "b">
+<!ENTITY crashReporterLearnMore.label     "Dalše informacije">
+
+<!ENTITY networkTab.label                "Syć">
+
+<!ENTITY connection.label                "Zwisk">
+
+<!ENTITY connectionDesc.label            "Konfigurować, kak &brandShortName; ma z internetom zwjazać">
+<!ENTITY connectionSettings.label        "Nastajenja…">
+<!ENTITY connectionSettings.accesskey    "N">
+
+<!ENTITY httpCache.label                 "Pufrowany webwobsah">
+
+<!ENTITY offlineStorage2.label           "Webwobsah a wužiwarske daty offline">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Sydłowe daty">
+<!ENTITY clearSiteData.label             "Wšě daty zhašeć">
+<!ENTITY clearSiteData.accesskey         "h">
+<!ENTITY siteDataSettings.label          "Nastajenja…">
+<!ENTITY siteDataSettings.accesskey      "N">
+<!ENTITY siteDataLearnMoreLink.label     "Dalše informacije">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Pufrowak wobmjezować na">
+<!ENTITY limitCacheSizeBefore.accesskey  "P">
+<!ENTITY limitCacheSizeAfter.label       "MB ruma">
+<!ENTITY clearCacheNow.label             "Nětko wuprózdnić">
+<!ENTITY clearCacheNow.accesskey         "u">
+<!ENTITY clearOfflineAppCacheNow.label   "Nětko wuprózdnić">
+<!ENTITY clearOfflineAppCacheNow.accesskey "r">
+<!ENTITY overrideSmartCacheSize.label    "Awtomatiske rjadowanje pufrowaka přepisać">
+<!ENTITY overrideSmartCacheSize.accesskey "m">
+
+<!ENTITY updateTab.label                 "Aktualizować">
+
+<!ENTITY updateApplication.label         "Aktualizacije &brandShortName;">
+<!ENTITY updateAuto1.label               "Aktualizacije awtomatisce instalować (poruča so: polěpšena wěstota)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "Za aktualizacijemi pytać, ale prjedy so prašeć, hač maja so instalować">
+<!ENTITY updateCheckChoose.accesskey     "Z">
+<!ENTITY updateManual.label              "Ženje za aktualizacijemi njepytać (njeporuča so: wěstotne riziko)">
+<!ENTITY updateManual.accesskey          "e">
+
+<!ENTITY updateHistory.label             "Aktualizacisku historiju pokazać">
+<!ENTITY updateHistory.accesskey         "h">
+
+<!ENTITY useService.label                "Pozadkowu słužbu za instalowanje aktualizacijow wužiwać">
+<!ENTITY useService.accesskey            "P">
+
+<!ENTITY autoUpdateOthers.label          "Awtomatisce aktualizować">
+<!ENTITY enableSearchUpdate.label        "Pytawy">
+<!ENTITY enableSearchUpdate.accesskey    "y">
+
+<!ENTITY offlineStorageNotify.label               "Informować, hdyž websydło chce daty za wužiwanje offline składować">
+<!ENTITY offlineStorageNotify.accesskey           "I">
+<!ENTITY offlineStorageNotifyExceptions.label     "Wuwzaća…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "u">
+
+<!ENTITY offlineAppsList2.label          "Slědowace websydła smědźa daty za wužiwanje offline składować:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Wotstronić…">
+<!ENTITY offlineAppsListRemove.accesskey "o">
+<!ENTITY offlineAppRemove.confirm        "Daty offline wotstronić">
+
+<!ENTITY certificateTab.label            "Certifikaty">
+<!ENTITY certPersonal.label              "Naprašowanja">
+<!ENTITY certPersonal.description        "Hdyž sej serwer waš wosobinski certifikat žada:">
+<!ENTITY selectCerts.auto                "Awtomatisce wubrać">
+<!ENTITY selectCerts.auto.accesskey      "s">
+<!ENTITY selectCerts.ask                 "Kóždy raz so prašeć">
+<!ENTITY selectCerts.ask.accesskey       "K">
+<!ENTITY enableOCSP.label                "Pola wotmołwnych serwerow OCSP so naprašować, zo by aktualnu płaćiwosć certifikatow wobkrućiło">
+<!ENTITY enableOCSP.accesskey            "P">
+<!ENTITY viewCerts.label                 "Certifikaty pokazać">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "Wěstotne graty">
+<!ENTITY viewSecurityDevices.accesskey   "t">
+
+<!ENTITY performance.label               "Wukon">
+<!ENTITY useRecommendedPerformanceSettings.label "Doporučene wukonowe nastajenja wužiwać">
+<!ENTITY useRecommendedPerformanceSettings.description "Tute nastajenja su na hardwaru a dźěłowy system wašeho ličaka přiměrjene.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "D">
+<!ENTITY performanceSettingsLearnMore.label "Dalše informacije">
+<!ENTITY limitContentProcessOption.label "Mjeza wobsahoweho procesa">
+<!ENTITY limitContentProcessOption.description "Wjace wobsahowych procesow móže wukon polěpšować, hdyž so wjacore rajtarki wužiwaja, budźe wšak tež wjace składa přetrjebować.">
+<!ENTITY limitContentProcessOption.accesskey   "M">
+<!ENTITY limitContentProcessOption.disabledDescription "Ličba wobsahowych procesow da so jenož z wjaceprocesowym &brandShortName; změnić.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Zhońće, kak móžeće kontrolować, hač wjaceprocesowa funkcija je zmóžnjena">
+<!ENTITY allowHWAccel.label              "Hardwarowe pospěšenje wužiwać, jeli k dispoziciji">
+<!ENTITY allowHWAccel.accesskey          "H">

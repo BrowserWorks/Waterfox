@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Εφαρμογές">
+<!ENTITY  applications.description "Επιλέξτε πώς διαχειρίζεται το &brandShortName; τα ληφθέντα αρχεία από το διαδίκτυο ή τις εφαρμογές που χρησιμοποιείτε κατά την περιήγηση.">
+
+<!ENTITY  typeColumn.label        "Τύπος περιεχομένου">
+<!ENTITY  typeColumn.accesskey    "Τ">
+
+<!ENTITY  actionColumn2.label     "Ενέργεια">
+<!ENTITY  actionColumn2.accesskey "Ε">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Αναζήτηση τύπων αρχείων ή εφαρμογών">

@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY trackingProtectionHeader.label "Usar protección contra rastreo">
+<!ENTITY trackingProtectionAlways.label "Siempre">
+<!ENTITY trackingProtectionAlways.accesskey "i">
+<!ENTITY trackingProtectionPrivate.label "Solo en ventanas privadas">
+<!ENTITY trackingProtectionPrivate.accesskey "v">
+<!ENTITY trackingProtectionNever.label "Nunca">
+<!ENTITY trackingProtectionNever.accesskey "u">
+<!ENTITY trackingProtectionLearnMore.label "Saber más">
+<!ENTITY trackingProtectionExceptions.label "Excepciones…">
+<!ENTITY trackingProtectionExceptions.accesskey "x">
+<!ENTITY tracking.label "Rastreo">
+<!ENTITY trackingProtectionPBM5.label "Usar protección contra rastreo en ventanas privadas">
+<!ENTITY trackingProtectionPBM5.accesskey "d">
+<!ENTITY trackingProtectionPBMLearnMore.label "Saber más">
+<!ENTITY changeBlockList.label "Cambiar lista de bloqueo">
+<!ENTITY changeBlockList.accesskey "l">
+<!ENTITY doNotTrack.pre.label "También puede ">
+<!ENTITY doNotTrack.settings.label "administrar sus ajustes de No rastrear">
+<!ENTITY doNotTrack.post.label ".">
+<!ENTITY history.label "Historial">
+<!ENTITY locationBar.label "Barra de direcciones">
+<!ENTITY locbar.suggest.label "Al usar la barra de direcciones, sugerir:">
+<!ENTITY locbar.history.label "Historial">
+<!ENTITY locbar.history.accesskey "H">
+<!ENTITY locbar.bookmarks.label "Marcadores">
+<!ENTITY locbar.bookmarks.accesskey "M">
+<!ENTITY locbar.openpage.label "Abrir pestañas">
+<!ENTITY locbar.openpage.accesskey "A">
+<!ENTITY locbar.searches.label "Búsquedas relacionadas del buscador por defecto">
+<!ENTITY locbar.searches.accesskey "B">
+<!ENTITY suggestionSettings.label "Cambiar preferencias de sugerencias de buscadores…">
+<!ENTITY suggestionSettings.accesskey "o">
+<!ENTITY acceptCookies2.label "Aceptar cookies de sitios web">
+<!ENTITY acceptCookies2.accesskey "k">
+<!ENTITY acceptThirdParty.pre.label "Aceptar las cookies de terceras partes:">
+<!ENTITY acceptThirdParty.pre.accesskey "c">
+<!ENTITY acceptThirdParty.always.label "Siempre">
+<!ENTITY acceptThirdParty.never.label "Nunca">
+<!ENTITY acceptThirdParty.visited.label "De los visitados">
+<!ENTITY keepUntil.label "Mantener hasta que:">
+<!ENTITY keepUntil.accesskey "M">
+<!ENTITY expire.label "caduquen">
+<!ENTITY close.label "cierre &brandShortName;">
+<!ENTITY cookieExceptions.label "Excepciones…">
+<!ENTITY cookieExceptions.accesskey "E">
+<!ENTITY showCookies.label "Mostrar cookies…">
+<!ENTITY showCookies.accesskey "S">
+<!ENTITY historyHeader.pre.label "&brandShortName; podrá:">
+<!ENTITY historyHeader.pre.accesskey "p">
+<!ENTITY historyHeader.remember.label "Recordar el historial">
+<!ENTITY historyHeader.dontremember.label "No recordar el historial">
+<!ENTITY historyHeader.custom.label "Usar una configuración personalizada para el historial">
+<!ENTITY historyHeader.post.label "">
+<!ENTITY rememberDescription.label "&brandShortName; recordará su historial de navegación, descargas, formularios y búsquedas, y guardará también cookies de los sitios Web que visite.">
+<!ENTITY rememberActions.pre.label "También podría ">
+<!ENTITY rememberActions.clearHistory.label "limpiar su historial reciente">
+<!ENTITY rememberActions.middle.label ", o ">
+<!ENTITY rememberActions.removeCookies.label "eliminar cookies de forma individual">
+<!ENTITY rememberActions.post.label ".">
+<!ENTITY dontrememberDescription.label "&brandShortName; usará la misma configuración que en la navegación privada, y no recordará ningún dato de su historial mientras navega por la Web.">
+<!ENTITY dontrememberActions.pre.label "También le podría interesar ">
+<!ENTITY dontrememberActions.clearHistory.label "limpiar todo el historial">
+<!ENTITY dontrememberActions.post.label ".">
+<!ENTITY privateBrowsingPermanent2.label "Modo permanente de navegación privada">
+<!ENTITY privateBrowsingPermanent2.accesskey "n">
+<!ENTITY rememberHistory2.label "Recordar mi historial de descargas y navegación">
+<!ENTITY rememberHistory2.accesskey "R">
+<!ENTITY rememberSearchForm.label "Recordar el historial de formularios y búsquedas">
+<!ENTITY rememberSearchForm.accesskey "f">
+<!ENTITY clearOnClose.label "Limpiar el historial cuando &brandShortName; se cierre">
+<!ENTITY clearOnClose.accesskey "h">
+<!ENTITY clearOnCloseSettings.label "Configuración…">
+<!ENTITY clearOnCloseSettings.accesskey "g">
+<!ENTITY browserContainersHeader.label "Pestañas contenedoras">
+<!ENTITY browserContainersLearnMore.label "Saber más">
+<!ENTITY browserContainersEnabled.label "Activar pestañas contenedoras">
+<!ENTITY browserContainersEnabled.accesskey "ñ">
+<!ENTITY browserContainersSettings.label "Configuración…">
+<!ENTITY browserContainersSettings.accesskey "C">

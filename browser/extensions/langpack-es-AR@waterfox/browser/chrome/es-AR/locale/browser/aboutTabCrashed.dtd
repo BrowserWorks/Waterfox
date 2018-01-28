@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Cerrar esta pestaña">
+<!ENTITY tabCrashed.restoreTab "Restaurar esta pestaña">
+<!ENTITY tabCrashed.restoreAll "Restaurar todas las pestañas colgadas">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ahhhh. La pestaña falló.">
+<!ENTITY tabCrashed.offerHelp "¡Podemos ayudar!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Elija &tabCrashed.restoreTab; para recargar contenido de la página.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Elija &tabCrashed.restoreTab; o &tabCrashed.restoreAll; para recargar el contenido de la página.">
+<!ENTITY tabCrashed.requestHelp "¿Nos ayudaría?">
+<!ENTITY tabCrashed.requestHelpMessage "Los informes de fallos nos ayudan a diagnosticar problemas y mejorar &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Informar esta pestaña">
+<!ENTITY tabCrashed.sendReport2 "Enviar un informe de fallos para la pestaña en vista">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comentarios opcionales (los comentarios son visibles públicamente)">
+<!ENTITY tabCrashed.includeURL2 "Incluir URL de la página con este informe de fallos">
+<!ENTITY tabCrashed.emailPlaceholder "Ingrese su dirección de correo electrónico aquí">
+<!ENTITY tabCrashed.emailMe "Envíeme un correo electrónico cuando haya más información disponible">
+<!ENTITY tabCrashed.reportSent "Informe de fallo enviado. ¡Gracias por ayudar a mejorar a &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Informar pestañas en segundo plano">
+<!ENTITY tabCrashed.autoSubmit2 "Actualizar preferencias para enviar informes de fallos automáticamente, incluyendo informes para pestañas en segundo plano que hayan fallado en esta sesión y sesiones futuras">

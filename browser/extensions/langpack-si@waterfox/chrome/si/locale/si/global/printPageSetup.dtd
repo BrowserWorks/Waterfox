@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "පිටු සැකසුම">
+
+<!ENTITY basic.tab           "හැඩගැසුම් සහ අභිප්‍රේත">
+
+<!ENTITY formatGroup.label   "සංයුතිය">
+
+<!ENTITY orientation.label   "පිටුවේ ආකාරය:">
+<!ENTITY portrait.label      "සිරස්ව">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "තිරස්ව">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "පරිමාණය:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "පිටු පළලට සරිලන ළෙස අඩු කරන්න">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "විකල්ප">
+
+<!ENTITY printBG.label       "පසුබිම මුද්‍රණය කරන්න (වර්ණයන් සහ රූප)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "සීමා සහ සිරස/පාදම">
+
+<!ENTITY marginGroup.label   "මාර්ජිනයන් (#1)">
+<!ENTITY marginUnits.inches  "අඟල්">
+<!ENTITY marginUnits.metric  "මිලි මීටර්">
+<!ENTITY marginTop.label     "ඉහළ:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "පහළ:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "වම:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "දකුණ:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "ශීර්ෂක සහ පාදම්">
+
+<!ENTITY hfLeft.label        "වම:">
+<!ENTITY hfCenter.label      "මැද:">
+<!ENTITY hfRight.label       "දකුණ:">
+<!ENTITY headerLeft.tip      "වම් ශීර්ෂකය">
+<!ENTITY headerCenter.tip    "මධ්‍ය ශීර්ෂකය">
+<!ENTITY headerRight.tip     "දකුණු ශීර්ෂකය">
+<!ENTITY footerLeft.tip      "වම් පාදකය">
+<!ENTITY footerCenter.tip    "මධ්‍ය පාදකය">
+<!ENTITY footerRight.tip     "දකුණු පාදකය">
+
+<!ENTITY hfTitle             "සිරස්තලය">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "දිනය/වේලාව">
+<!ENTITY hfPage              "පිටුව #">
+<!ENTITY hfPageAndTotal      "පිටු #, # කින්">
+<!ENTITY hfBlank             "--හිස්--">
+<!ENTITY hfCustom            "රිසිකරණය...">
+
+<!ENTITY customPrompt.title  "රිසිකරණය...">
+<!ENTITY customPrompt.prompt "සිරස/පාදම සඳහා ඔබටෙ රිසි පාඨ ඇතලත් කරන්න">

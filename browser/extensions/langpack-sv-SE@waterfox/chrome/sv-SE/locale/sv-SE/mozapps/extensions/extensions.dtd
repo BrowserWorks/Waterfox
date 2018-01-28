@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Hantera tillägg">
+
+<!ENTITY search.placeholder                   "Sök bland alla tillägg">
+<!ENTITY search.buttonlabel                   "Sök">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Hämtar…">
+<!ENTITY listEmpty.installed.label            "Du har inga tillägg av den här typen installerade">
+<!ENTITY listEmpty.availableUpdates.label     "Inga uppdateringar hittades">
+<!ENTITY listEmpty.recentUpdates.label        "Du har inte uppdaterat några tillägg nyligen">
+<!ENTITY listEmpty.findUpdates.label          "Sök efter uppdateringar">
+<!ENTITY listEmpty.search.label               "Kunde inte hitta några matchande tillägg">
+<!ENTITY listEmpty.button.label               "Läs mer om tillägg">
+<!ENTITY installAddonFromFile.label           "Installera tillägg från fil…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Verktyg för alla tillägg">
+
+<!ENTITY getThemes.description                "Funderar du på att anpassa din webbläsare?">
+<!ENTITY getThemes.learnMore                  "Välj bland tusentals teman.">
+
+<!ENTITY cmd.back.tooltip                     "Gå bakåt en sida">
+<!ENTITY cmd.forward.tooltip                  "Gå framåt en sida">
+
+<!ENTITY showUnsignedExtensions.button.label  "Vissa utökningar kunde inte verifieras">
+<!ENTITY showAllExtensions.button.label       "Visa alla utökningar">
+<!ENTITY debugAddons.label                    "Felsök tillägg">
+<!ENTITY debugAddons.accesskey                "s">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Alla tillägg är inaktiverade i felsäkert läge.">
+<!ENTITY warning.checkcompatibility.label          "Kompatibilitetskontroll av tillägg är inaktiverat. Du kan ha inkompatibla tillägg.">
+<!ENTITY warning.checkcompatibility.enable.label   "Aktivera">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Aktiverar kompatibilitetskontroll av tillägg">
+<!ENTITY warning.updatesecurity.label              "Säkerhetskontroll av tilläggsuppdateringar är inaktiverat. Du är sårbar för skadliga uppdateringar.">
+<!ENTITY warning.updatesecurity.enable.label       "Aktivera">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Aktiverar säkerhetskontroll av tilläggsuppdateringar">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Sök">
+<!ENTITY view.discover.label                  "Hämta tillägg">
+<!ENTITY view.recentUpdates.label             "Nyligen uppdaterade">
+<!ENTITY view.availableUpdates.label          "Tillgängliga uppdateringar">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Sök efter uppdateringar">
+<!ENTITY updates.checkForUpdates.accesskey    "u">
+<!ENTITY updates.viewUpdates.label            "Visa nyligen uppdaterade">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Installera uppdateringar automatiskt">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "t">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Ställ om alla tillägg till automatisk uppdatering">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "S">
+<!ENTITY updates.resetUpdatesToManual.label          "Ställ om alla tillägg till manuell uppdatering">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "S">
+<!ENTITY updates.updating.label               "Uppdaterar tillägg">
+<!ENTITY updates.installed.label              "Dina tillägg har uppdaterats.">
+<!ENTITY updates.downloaded.label             "Uppdateringarna till tilläggen har hämtats.">
+<!ENTITY updates.restart.label                "Starta om nu för att slutföra installationen">
+<!ENTITY updates.noneFound.label              "Inga uppdateringar hittades">
+<!ENTITY updates.manualUpdatesFound.label     "Se tillgängliga uppdateringar">
+<!ENTITY updates.updateSelected.label         "Installera uppdateringar">
+<!ENTITY updates.updateSelected.tooltip       "Installerar tillgängliga uppdateringar från listan">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Visa mer information">
+<!ENTITY cmd.showDetails.accesskey            "V">
+<!ENTITY cmd.findUpdates.label                "Sök efter uppdateringar">
+<!ENTITY cmd.findUpdates.accesskey            "S">
+<!ENTITY cmd.preferencesWin.label             "Inställningar">
+<!ENTITY cmd.preferencesWin.accesskey         "n">
+<!ENTITY cmd.preferencesUnix.label            "Inställningar">
+<!ENTITY cmd.preferencesUnix.accesskey        "n">
+<!ENTITY cmd.about.label                      "Om">
+<!ENTITY cmd.about.accesskey                  "O">
+
+<!ENTITY cmd.enableAddon.label                "Aktivera">
+<!ENTITY cmd.enableAddon.accesskey            "A">
+<!ENTITY cmd.disableAddon.label               "Inaktivera">
+<!ENTITY cmd.disableAddon.accesskey           "I">
+<!ENTITY cmd.enableTheme.label                "Använd tema">
+<!ENTITY cmd.enableTheme.accesskey            "ä">
+<!ENTITY cmd.disableTheme.label               "Sluta använd tema">
+<!ENTITY cmd.disableTheme.accesskey           "ä">
+<!ENTITY cmd.askToActivate.label              "Fråga efter aktivering">
+<!ENTITY cmd.askToActivate.tooltip            "Fråga varje gång efter aktivering">
+<!ENTITY cmd.alwaysActivate.label             "Aktivera alltid">
+<!ENTITY cmd.alwaysActivate.tooltip           "Använd alltid det här tillägget">
+<!ENTITY cmd.neverActivate.label              "Aktivera aldrig">
+<!ENTITY cmd.neverActivate.tooltip            "Använd aldrig det här tillägget">
+<!ENTITY cmd.stateMenu.tooltip                "Välj när tillägget ska användas">
+<!ENTITY cmd.installAddon.label               "Installera">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Ta bort">
+<!ENTITY cmd.uninstallAddon.accesskey         "T">
+<!ENTITY cmd.showPreferencesWin.label         "Inställningar">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Ändra tilläggets inställningar">
+<!ENTITY cmd.showPreferencesUnix.label        "Inställningar">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Ändra tilläggets inställningar">
+<!ENTITY cmd.contribute.label                 "Bidra">
+<!ENTITY cmd.contribute.accesskey             "B">
+<!ENTITY cmd.contribute.tooltip               "Ge ett bidrag till utvecklingen av detta tillägg">
+
+<!ENTITY cmd.showReleaseNotes.label           "Visa versionsfakta">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Visar versionsfakta för den här uppdateringen">
+<!ENTITY cmd.hideReleaseNotes.label           "Dölj versionsfakta">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Döljer versionsfakta för den här uppdateringen">
+<!ENTITY cmd.findReplacement.label            "Hitta en ersättare">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Vad är tillägg?">
+<!ENTITY discover.description2                "Tillägg är program som gör att du kan anpassa &brandShortName; med extra funktionalitet eller utseende. Prova ett tidsbesparande sidofält, en väderrapportör eller ett annat utseende till &brandShortName;.">
+<!ENTITY discover.footer                      "När du är ansluten till internet kommer den här panelen att visa några av de bästa och mest populära tilläggen som du kan testa.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Version">
+<!ENTITY detail.lastupdated.label             "Senast uppdaterad">
+<!ENTITY detail.creator.label                 "Utvecklare">
+<!ENTITY detail.homepage.label                "Webbplats">
+<!ENTITY detail.numberOfDownloads.label       "Hämtningar">
+
+<!ENTITY detail.contributions.description     "Skaparen av det här tillägget ber dig om ett litet bidrag för att stödja den fortsatta utvecklingen.">
+
+<!ENTITY detail.updateType                    "Automatiska uppdateringar">
+<!ENTITY detail.updateDefault.label           "Standard">
+<!ENTITY detail.updateDefault.tooltip         "Installera uppdateringar automatiskt endast om det är standard">
+<!ENTITY detail.updateAutomatic.label         "På">
+<!ENTITY detail.updateAutomatic.tooltip       "Installerar uppdateringar automatiskt">
+<!ENTITY detail.updateManual.label            "Av">
+<!ENTITY detail.updateManual.tooltip          "Installera inte uppdateringar automatiskt">
+<!ENTITY detail.home                          "Webbplats">
+<!ENTITY detail.repository                    "Tilläggets profil">
+<!ENTITY detail.size                          "Storlek">
+
+<!ENTITY detail.checkForUpdates.label         "Sök efter uppdateringar">
+<!ENTITY detail.checkForUpdates.accesskey     "ö">
+<!ENTITY detail.checkForUpdates.tooltip       "Söker efter uppdateringar till tillägget">
+<!ENTITY detail.showPreferencesWin.label      "Inställningar">
+<!ENTITY detail.showPreferencesWin.accesskey  "ä">
+<!ENTITY detail.showPreferencesWin.tooltip    "Ändra tilläggets inställningar">
+<!ENTITY detail.showPreferencesUnix.label     "Inställningar">
+<!ENTITY detail.showPreferencesUnix.accesskey "ä">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Ändra tilläggets inställningar">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Betyg">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Paus">
+<!ENTITY progress.cancel.tooltip              "Avbryt">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Namn">
+<!ENTITY sort.name.tooltip                    "Ordna efter namn">
+<!ENTITY sort.dateUpdated.label               "Senast uppdaterad">
+<!ENTITY sort.dateUpdated.tooltip             "Ordna efter senast uppdaterad">
+<!ENTITY sort.relevance.label                 "Bästa träff">
+<!ENTITY sort.relevance.tooltip               "Ordna efter bästa träff">
+<!ENTITY sort.price.label                     "Pris">
+<!ENTITY sort.price.tooltip                   "Ordna efter pris">
+
+<!ENTITY search.filter2.label                 "Sök:">
+<!ENTITY search.filter2.installed.label       "Mina tillägg">
+<!ENTITY search.filter2.installed.tooltip     "Visar installerade tillägg">
+<!ENTITY search.filter2.available.label       "Tillgängliga tillägg">
+<!ENTITY search.filter2.available.tooltip     "Visar tillägg som kan installeras">
+
+<!ENTITY addon.homepage                       "Webbplats">
+<!ENTITY addon.details.label                  "Mer">
+<!ENTITY addon.details.tooltip                "Visar fler detaljer om det här tillägget">
+<!ENTITY addon.unknownDate                    "Okänt">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ÄLDRE">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(inaktiverat)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "(uppdatering)">
+<!ENTITY addon.undoAction.label               "Ångra">
+<!ENTITY addon.undoAction.tooltip             "Ångra denna åtgärd">
+<!ENTITY addon.undoRemove.label               "Ångra">
+<!ENTITY addon.undoRemove.tooltip             "Behåll tillägget installerat">
+<!ENTITY addon.restartNow.label               "Starta om nu">
+<!ENTITY addon.install.label                  "Installera">
+<!ENTITY addon.install.tooltip                "Installerar detta tillägg">
+<!ENTITY addon.updateNow.label                "Uppdatera nu">
+<!ENTITY addon.updateNow.tooltip              "Installerar uppdateringen för det här tillägget">
+<!ENTITY addon.includeUpdate.label            "Inkludera i uppdatering">
+<!ENTITY addon.updateAvailable.label          "En uppdatering är tillgänglig">
+<!ENTITY addon.checkingForUpdates.label       "Söker efter uppdateringar…">
+<!ENTITY addon.releaseNotes.label             "Versionsfakta:">
+<!ENTITY addon.loadingReleaseNotes.label      "Hämtar…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Det uppstod tyvärr ett fel vid hämtningen av versionsfakta.">
+
+<!ENTITY addon.createdBy.label                "Av ">
+
+<!ENTITY eula.title                           "Licensavtal för slutanvändare">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Acceptera och installera…">
+
+<!ENTITY settings.path.button.label           "Bläddra…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Vad är detta? Telemetri kan installera och köra experiment då och då.">
+<!ENTITY experiment.info.learnmore "Läs mer">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetri-inställningar">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Läs mer…">
+
+<!ENTITY disabledUnsigned.heading "Vissa tillägg har inaktiverats">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Följande tillägg har inte verifierats för användning i &brandShortName;. Du kan ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "hitta ersättare">
+<!ENTITY disabledUnsigned.description.end " eller fråga utvecklaren för att få dem verifierade.">
+<!ENTITY disabledUnsigned.learnMore "Läs mer om vår strävan för att hjälpa till att hålla dig säker på nätet.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Utvecklare som är intresserade av att få sina tillägg verifierade kan fortsätta genom att läsa vår ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "handbok">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Saknar du något? Vissa insticksmoduler stöds inte längre av &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Läs mer.">
+
+<!ENTITY legacyWarning.description "Saknar du något? Vissa tillägg stöds inte längre av &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Visa äldre tillägg">
+<!ENTITY legacyExtensions.title "Äldre tillägg">
+<!ENTITY legacyExtensions.description "Dessa tillägg uppfyller inte nuvarande standarder i &brandShortName; så de har inaktiverats.">
+<!ENTITY legacyExtensions.learnMore "Läs mer om ändringar av tillägg">

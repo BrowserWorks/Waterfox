@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informacije wó URL-klasifikatorje">
+<!ENTITY aboutUrlClassifier.providerTitle               "Póbitowaŕ">
+<!ENTITY aboutUrlClassifier.provider                    "Póbitowaŕ">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Cas slědneje aktualizacije">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Cas pśiduceje aktualizacije">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Slědkstajeński cas">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Status slědneje aktualizacije">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Aktualizacija">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Aktualizěrowaś">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Lašowaś">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabelowe mě">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Licba zapiskow negatiwnego cacha">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Licba zapiskow pozitiwnego cacha">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Zapiski pokazaś">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Zapiski cacha">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Spadnjenje negatiwnego cacha">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Połny hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Spadnjenje pozitiwnego cacha">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Zmólki pytaś">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Protokolowe module póstajiś">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Protokolowu dataju póstajiś">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Javaskriptowy protokol póstajiś">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Protokolowe module wěstego pśeglědowanja">
+<!ENTITY aboutUrlClassifier.debugModules                "Aktualne protokolowe module">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Javaskriptowy protokol wěstego pśeglědowanja">
+<!ENTITY aboutUrlClassifier.debugFile                   "Aktualna protokolowa dataja">

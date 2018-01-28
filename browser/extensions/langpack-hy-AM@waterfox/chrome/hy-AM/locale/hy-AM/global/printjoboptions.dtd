@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Տպիչի հատկությունները">
+
+<!ENTITY paperInput.label "Թղթի չափը.">
+<!ENTITY paperInput.accesskey "Թ">
+
+<!ENTITY jobTitleInput.label "Գործի Անունը.">
+<!ENTITY jobTitleInput.accesskey "Գ">
+
+<!ENTITY colorGroup.label "Գունավոր.">
+<!ENTITY grayRadio.label "Անգույն">
+<!ENTITY grayRadio.accesskey "Ա">
+<!ENTITY colorRadio.label "Գունավոր">
+<!ENTITY colorRadio.accesskey "Գ">
+
+<!ENTITY edgeMarginInput.label "Թղթի եզրի եւ տպվածի եզրի միջև արանքը (մատնաչափ)">
+<!ENTITY topInput.label "Վերևից.">
+<!ENTITY topInput.accesskey "Վ">
+<!ENTITY bottomInput.label "Ներքևից.">
+<!ENTITY bottomInput.accesskey "Ն">
+<!ENTITY leftInput.label "Ձախից.">
+<!ENTITY leftInput.accesskey "Ձ">
+<!ENTITY rightInput.label "Աջից.">
+<!ENTITY rightInput.accesskey "Ա">

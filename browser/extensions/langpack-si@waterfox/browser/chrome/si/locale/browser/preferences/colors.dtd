@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "වර්‍ණ">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "සැමවිටම">
+<!ENTITY  overrideDefaultPageColors.never.label  "කිසිදාක නැත">
+
+<!ENTITY  color                           "පෙළ සහ පසුබිම">
+<!ENTITY  textColor.label                 "පෙළ:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "පසුබිම:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "පද්ධති වර්‍ණ භාවිතා කරන්න">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "පුරුක් යටීර">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "පුරුක් වර්‍ණ">
+<!ENTITY  linkColor.label                 "ගමන් නොකළ පුරුක්:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "ගමන් කළ පුරුක්:">
+<!ENTITY  visitedLinkColor.accesskey      "V">
+
+<!ENTITY  overrideDefaultPageColors.auto.label   "Only with High Contrast themes">
+<!ENTITY  overrideDefaultPageColors.label        "Override the colors specified by the page with your selections above:">

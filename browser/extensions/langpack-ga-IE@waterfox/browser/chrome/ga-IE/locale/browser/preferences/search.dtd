@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Inneall Cuardaigh Réamhshocraithe">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Roghnaigh inneall cuardaigh réamhshocraithe le húsáid sa bharra suímh agus sa bharra cuardaigh.">
+
+<!ENTITY provideSearchSuggestions.label        "Tabhair moltaí cuardaigh dom">
+<!ENTITY provideSearchSuggestions.accesskey    "c">
+
+<!ENTITY showURLBarSuggestions2.label           "Taispeáin moltaí cuardaigh i dtorthaí sa mbarra suímh">
+<!ENTITY showURLBarSuggestions2.accesskey       "s">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Ní thaispeánfar moltaí cuardaigh sa mbarra suímh toisc go ndúirt tú le &brandShortName; gan do stair bhrabhsála a mheabhrú.">
+
+<!ENTITY oneClickSearchEngines.label           "Innill Chuardaigh Aonchlic">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Roghnaigh innill chuardaigh mhalartacha le taispeáint faoin bharra suímh agus faoin bharra cuardaigh nuair a thosaíonn tú ag clóscríobh.">
+
+<!ENTITY engineNameColumn.label                "Inneall Cuardaigh">
+<!ENTITY engineKeywordColumn.label             "Lorgfhocal">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Athchóirigh na hInnill Chuardaigh Réamhshocraithe">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "Bain">
+<!ENTITY removeEngine.accesskey                "B">
+
+<!ENTITY findMoreSearchEngines.label           "Tuilleadh inneall cuardaigh">

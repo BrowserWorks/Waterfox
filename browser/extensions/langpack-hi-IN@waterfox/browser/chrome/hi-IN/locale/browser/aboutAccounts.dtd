@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; मे स्वागत है">
+
+<!ENTITY aboutAccountsConfig.description "अपने टैब, बुकमार्क, कूटशब्द और अन्य सिंक करने के लिए साइन इन करें.">
+<!ENTITY aboutAccountsConfig.startButton.label "प्रारंभ करें">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "सिंक प्राथमिकताएँ">
+<!ENTITY aboutAccounts.noConnection.title "कनेक्शन नहीं है">
+<!ENTITY aboutAccounts.noConnection.description "साईन इन के लिए आपका इंटरनेट से जुड़ा होना आवश्यक है.">
+<!ENTITY aboutAccounts.noConnection.retry "पुनः प्रयास करें">
+<!ENTITY aboutAccounts.badConfig.title "खराब विन्यास">
+<!ENTITY aboutAccounts.badConfig.description "आपका Waterfox खाता सर्वर विन्यास को निर्धारित करने में असमर्थ हैं. कृपया बाद में पुनः प्रयास करे.">

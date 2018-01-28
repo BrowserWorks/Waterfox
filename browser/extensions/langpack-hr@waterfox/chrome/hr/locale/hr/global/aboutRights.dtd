@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "O vašim pravima">
+<!ENTITY rights.intro "&brandFullName; je slobodan program otvorenog koda, izgrađen od strane zajednice tisuća programera iz cijelog svijeta. Trebali biste znati neke podatke:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; vam je dostupan pod uvjetima ">
+<!ENTITY rights.intro-point1b "Mozilla Public licence">
+<!ENTITY rights.intro-point1c ". To znači da možete koristiti, kopirati i distribuirati &brandShortName; drugima. Također ste pozvani mijenjati izvorni kod &brandShortName; kako god želite. Mozilla Public licenca vam daje pravo distribucije izmijenjenih inačica.">
+
+<!ENTITY rights.intro-point2-a "Nisu vam odobrena nikakva prava na zaštitni znak ili licenciranje zaštitnih znakova Mozilla fundacije ili bilo kojih drugih strana, uključujući, ali ne i ograničeno na, ime Waterfox ili logo. Dodatne informacije o zaštitnim znacima možete naći ">
+<!ENTITY rights.intro-point2-b "ovdje">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Neke mogućnosti u &brandShortName;, poput izvjestitelja o rušenjima, nude vam izbor slanja povratnih informacija na &vendorShortName;. Odabirom slanja povratnih informacija, automatski dopuštate da &vendorShortName; iskoristi vaše informacije za unaprijeđenje svojih proizoda, objavi informacije na svojim web stranicama i to distribuira vaše povratne informacije.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Način na koji koristimo vaše osobne informacije i povratne informacije poslane na &vendorShortName; kroz &brandShortName; je opisan u ">
+<!ENTITY rights2.intro-point3b "&brandShortName; politici privatnosti">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Bilo koje primjenjivo pravilo privatnosti za ovaj proizvod mora biti navedeno ovdje.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Neke &brandShortName; mogućnosti koriste informacijske usluge na webu, međutim, ne možemo jamčiti da su one 100&#037; točne i bez grešaka. Više detalja, uključujući i informacije kako onemogućiti ovu mogućnosti koje koriste te usluge možete pronaći u ">
+<!ENTITY rights.intro-point4b "uvjetima usluga">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Ukoliko ovaj proizvod uključuje web usluge, svi primjenjivi uvjeti za tu uslugu bi trebali biti povezani na ">
+<!ENTITY rights.intro-point4b-unbranded "Usluge web stranica">
+<!ENTITY rights.intro-point4c-unbranded " odjeljku.">
+
+<!ENTITY rights2.webservices-header "&brandFullName;ove informacijske usluge na webu">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Da bi mogao reproducirati neke vrste video zapisa, &brandShortName; preuzima određene module za dekripciju od trećih strana.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "Za pružanje nekih mogućnosti u ovoj binarnoj inačici, &brandFullName; koristi informacijske usluge na webu pod niže navedenim uvjetima. Ako ne želite koristiti jednu ili više ovih usluga ili su vam niže navedeni uvjeti neprihvatljivi, možete isključiti mogućnost ili uslugu/e. Upute za isključivanje određene mogućnosti ili usluge možete pronaći ">
+<!ENTITY rights2.webservices-b "ovdje">
+<!ENTITY rights3.webservices-c ". Druge mogućnosti i usluge se mogu onemogućiti u postavkama programa.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Onemogućavanjem Safe Browsing mogućnosti nije preporučljivo zbog mogućeg pristupa nesigurnim stranicama.  Ako želite u potpunosti onemogućiti ovu mogućnost, slijedite ove korake:">
+<!ENTITY rights.safebrowsing-term1 "Otvorite postavke aplikacije">
+<!ENTITY rights.safebrowsing-term2 "Odaberite kategoriju Sigurnost">
+<!ENTITY rights2.safebrowsing-term3 "Isključite mogućnost kako biste &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing je sada isključen">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Geolokacijsko pretraživanje: ">
+<!ENTITY rights.locationawarebrowsing-b "je uvijek dobrovoljno.  Informacije o lokaciji se nikada ne šalju bez vašeg dopuštenja.  Ako želite u potpunosti onemogućiti ovu mogućnost, slijedite ove korake:">
+<!ENTITY rights.locationawarebrowsing-term1a "U adresnu traku upišite ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Upišite geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Dvaput kliknite na postavku geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Geolokacijsko pretraživanje je sada isključeno">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Pregled usluga za web stranice, koje ovaj proizvod uključuje, uz upute kako ih onemogućiti, ako je moguće, trebao bi se nalaziti ovdje.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Bilo koji primijenjivi uvjeti usluga za ovaj proizvod bi trebali biti navedeni ovdje.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; i njegovi doprinositelji, izdavatelji licenci i partneri rade na pružanju najpreciznijih i ažurnih usluga.  Međutim, ne možemo jamčiti da su ove informacije sveobuhvatne i bez grešaka.  Na primjer, usluga Safe Browsing možda neće identificirati neke rizične stranice ili će pak neke sigurne stranice prepoznati kao rizične. Lokacije u usluzi geolociranja su procjene naših pružatelja usluge, koji ne jamče preciznost dobivenih lokacija.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; može ukinuti ili promijeniti uslugu prema vlastitom nahođenju.">
+<!ENTITY rights2.webservices-term3 "Uz danu inačicu &brandShortName;a ste slobodni koristiti ove usluge i &vendorShortName; vam daje pravo za to.  &vendorShortName; i njezini pružatelji licence zadržavaju sva ostala prava u uslugama.  Ovi uvjeti nisu namjenjeni ograničavanju vaših prava danih u licencama otvorenog kôda koje se primjenjuju na &brandShortName; i odgovarajući izvorni kôd &brandShortName;a.">
+<!ENTITY rights.webservices-term4 "Usluge su pružete &quot;kakve jesu&quot;. &vendorShortName;, njegovi razvijatelji, vlasnici licenca i distributeri, poriču sva jamstva, izražena ili podrazumijevana, uključujući bez ograničenja, jamstva da su usluge uporabljive kvalitete i da su primjenjive vašim potrebama. Snosite cijeli rizik odabira Usluga za svoje potrebe i kvalitete i performansi Usluga. Neki entiteti ne dozvoljavaju izizueće ili ograničavanje podrazumijevanih jamstava, pa se ovo odricanje možda ne primjenjuje i na vas.">
+<!ENTITY rights.webservices-term5 "Osim kada to zahtijeva zakon, &vendorShortName;, njegovi razvijatelji, vlasnici licenca i distributeri neće biti odgovorni za nikakvu indirektnu, posebnu, slučajnu, posljedičnu, kaznenu ili primjernu štetu nastalu od ili na bilo koji način povezano uz uporabu &brandShortName; i njegovih Usluge. Ukupna odgovornost pod ovim uvjetima neće prelaziti $500 (pet stotina dolara). Neki entiteti ne dozvoljavaju izizueće ili ograničavanje podrazumijevanih jamstava, pa se ovo odricanje možda ne primjenjuje i na vas.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; može izmijeniti ove uvjete s vremena na vrijeme, ukoliko je to potrebno. Ovi se uvjeti ne mogu promijeniti  ili ukinuti bez pisanog sporazuma s &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Ovi uvjeti su pokriveni zakonima države Kalifornija, SAD, izuzimajući je iz konflikata u zakonskim propisima. Ako je bilo koji dio ovih uvjeta nevaljan ili neprimijenjiv, preostali dio ostaje u punoj snazi i djelovanju. U slučaju konflikta između prevedene inačice ovih uvjeta i inačice na engleskom jeziku, inačica na engleskom jeziku je primijenjiva.">

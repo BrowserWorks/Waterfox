@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label		"ブックマーク">
+<!ENTITY engine.bookmarks.accesskey	"m">
+<!ENTITY engine.tabs.label2		"開いたタブ">
+<!ENTITY engine.tabs.accesskey		"T">
+<!ENTITY engine.history.label		"履歴">
+<!ENTITY engine.history.accesskey	"r">
+<!ENTITY engine.logins.label		"ログイン情報">
+<!ENTITY engine.logins.accesskey	"L">
+<!ENTITY engine.prefs.label		"個人設定">
+<!ENTITY engine.prefs.accesskey		"S">
+<!ENTITY engine.addons.label		"アドオン">
+<!ENTITY engine.addons.accesskey	"A">
+<!ENTITY engine.addresses.label		"所在地フォーム"><!-- Bug 1379533 -->
+<!ENTITY engine.addresses.accesskey	"e">
+<!ENTITY engine.creditcards.label	"クレジットカード">
+<!ENTITY engine.creditcards.accesskey	"C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label		"端末名">
+<!ENTITY changeSyncDeviceName2.label		"端末名を変更...">
+<!ENTITY changeSyncDeviceName2.accesskey	"h">
+<!ENTITY cancelChangeSyncDeviceName.label	"キャンセル">
+<!ENTITY cancelChangeSyncDeviceName.accesskey	"n">
+<!ENTITY saveChangeSyncDeviceName.label		"保存">
+<!ENTITY saveChangeSyncDeviceName.accesskey	"v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label		"利用規約">
+
+<!-- Waterfox Accounts stuff -->
+<!ENTITY fxaPrivacyNotice.link.label	"プライバシーに関する注意">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label	"">
+<!ENTITY signedInUnverified.aftername.label	"は認証されていません。">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label	"">
+<!ENTITY signedInLoginFailure.aftername.label	"に再接続するにはログインしてください。">
+
+<!ENTITY notSignedIn.label		"ログインしていません。">
+<!ENTITY signIn.label			"ログイン">
+<!ENTITY signIn.accesskey		"g">
+<!ENTITY profilePicture.tooltip		"プロフィール写真を変更します">
+<!ENTITY verifiedManage.label		"アカウントの管理">
+<!ENTITY verifiedManage.accesskey	"o">
+<!ENTITY disconnect3.label		"切断...">
+<!ENTITY disconnect3.accesskey		"D">
+<!ENTITY verify.label			"メールアドレス認証">
+<!ENTITY verify.accesskey		"V">
+<!ENTITY forget.label			"このメールアドレスを解除">
+<!ENTITY forget.accesskey		"F">
+
+<!ENTITY signedOut.caption		"ウェブを持ち歩こう">
+<!ENTITY signedOut.description		"ブックマークやページの表示履歴、タブ、パスワード、アドオン、設定を、お持ちのすべての端末間で同期できます。">
+<!ENTITY signedOut.accountBox.title	"&syncBrand.fxAccount.label; で接続する">
+<!ENTITY signedOut.accountBox.create	"アカウント作成">
+<!ENTITY signedOut.accountBox.create.accesskey	"C">
+<!ENTITY signedOut.accountBox.signin	"ログイン">
+<!ENTITY signedOut.accountBox.signin.accesskey	"I">
+
+<!ENTITY signedIn.settings.label	"Sync 設定">
+<!ENTITY signedIn.settings.description	"端末上の同期して &brandShortName; で使用するものを選んでください。">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start		"Waterfox for ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink	"Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore		" または ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink		"iOS">
+
+<!ENTITY mobilePromo3.end		" をダウンロードしてモバイル端末と同期しましょう。">

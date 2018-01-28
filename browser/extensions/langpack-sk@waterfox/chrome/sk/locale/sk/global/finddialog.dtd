@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "Hľadanie na tejto stránke">
+<!ENTITY findField.label "Hľadať text:">
+<!ENTITY findField.accesskey "t">
+<!ENTITY caseSensitiveCheckbox.label "Rozlišovať malé a veľké písmená">
+<!ENTITY caseSensitiveCheckbox.accesskey "R">
+<!ENTITY wrapCheckbox.label "V celom dokumente">
+<!ENTITY wrapCheckbox.accesskey "d">
+<!ENTITY findButton.label "Hľadať">
+<!ENTITY findButton.accesskey "H">
+<!ENTITY cancelButton.label "Zrušiť">
+<!ENTITY closeButton.label "Zavrieť">
+<!ENTITY up.label "Nahor">
+<!ENTITY up.accesskey "N">
+<!ENTITY down.label "Nadol">
+<!ENTITY down.accesskey "d">
+<!ENTITY direction.label "Smer hľadania">

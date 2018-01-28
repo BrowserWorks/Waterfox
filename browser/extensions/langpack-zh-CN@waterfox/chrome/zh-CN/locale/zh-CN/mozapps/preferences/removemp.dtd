@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "移除主密码">
+<!ENTITY removeInfo.label                  "您必须输入您的当前密码才能继续操作：">
+<!ENTITY removeWarning1.label              "主密码用于保护您的敏感信息（如网站密码）。">
+<!ENTITY removeWarning2.label              "如果您移除您的主密码，当他人取得您的电脑时将可以窃取您的信息。">
+<!ENTITY setPassword.oldPassword.label     "当前密码：">
+

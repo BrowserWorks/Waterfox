@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Paràmetres de neteja de l'historial">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "34em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+
+<!ENTITY sanitizeDialog2.title         "Neteja l'historial recent">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "Quan surti del &brandShortName;, hauria d'esborrar automàticament:">
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "Abast temporal per netejar: ">
+<!ENTITY clearTimeDuration.accesskey      "r">
+<!ENTITY clearTimeDuration.lastHour       "La darrera hora">
+<!ENTITY clearTimeDuration.last2Hours     "Les darreres dues hores">
+<!ENTITY clearTimeDuration.last4Hours     "Les darreres quatre hores">
+<!ENTITY clearTimeDuration.today          "Avui">
+<!ENTITY clearTimeDuration.everything     "Tot">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "Detalls">
+<!ENTITY detailsProgressiveDisclosure.accesskey "e">
+
+<!ENTITY historySection.label         "Historial">
+<!ENTITY dataSection.label            "Dades">
+
+<!ENTITY itemHistoryAndDownloads.label     "Historial de navegació i baixades">
+<!ENTITY itemHistoryAndDownloads.accesskey "v">
+<!ENTITY itemFormSearchHistory.label       "Formularis i historial de cerca">
+<!ENTITY itemFormSearchHistory.accesskey   "F">
+<!ENTITY itemCookies.label                 "Galetes">
+<!ENTITY itemCookies.accesskey             "G">
+<!ENTITY itemCache.label                   "Memòria cau">
+<!ENTITY itemCache.accesskey               "a">
+<!ENTITY itemOfflineApps.label             "Dades de llocs web fora de línia">
+<!ENTITY itemOfflineApps.accesskey         "o">
+<!ENTITY itemActiveLogins.label            "Sessions actives">
+<!ENTITY itemActiveLogins.accesskey        "S">
+<!ENTITY itemSitePreferences.label         "Preferències del lloc">
+<!ENTITY itemSitePreferences.accesskey     "l">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "Aquesta acció no es pot desfer.">

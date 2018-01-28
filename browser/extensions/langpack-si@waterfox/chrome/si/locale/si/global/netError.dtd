@@ -1,0 +1,100 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "පිටුව පූරණයේ දෝෂයකි">
+<!ENTITY retry.label "නැවත උත්සාහ කරන්න">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "සම්බන්ධවීමට අසමත් විය">
+<!ENTITY connectionFailure.longDesc "<p>අඩවිය නිරවද්‍ය ලෙස පෙනුනත්, ගවේශකයට සම්බන්ධ වීමට නොහැකි විය.</p><ul><li>අඩවිය තාවකාලිකව භාවිතය සඳහා නොමැති වියහැකිද? පසුව යළි උත්සාහ කරන්න.</li><li>ඔබට වෙනත් අඩවි වෙත පිවිසීමට අපහසු ද?  පරිගණකයේ ජාල සබඳතාව පිරික්සන්න.</li><li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වෝලයක් මඟින් ආරක්‍ෂිත ද? සාවද්‍ය සැකසුම් වෙබ් ගවේෂණයට බාධා ඇති කළ හැක.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "ආරක්‍ෂක හේතුන් මත පොර්ට් එක අවහිර කර ඇත.">
+<!ENTITY deniedPortAccess.longDesc "<p>ඉල්ලුම් කර තිබෙන ලිපිනය මගින් නියම කර ඇත්තේ සාමාන්‍යයෙන් වෙබ් ගවේෂණය <em>හැර වෙනත්</em> කටයුතු සඳහා යොදාගැනෙන ප්‍රවේශමාර්ගයකි (උ.දා. mozilla.org මත 80 ප්‍රවේශමාර්ගය සඳහා <q>mozilla.org:80</q>) භාවිතය. ඔබේ රැකවරණය හා ආරක්ෂාව උදෙසා බ්‍රවුසරය එම ඉල්ලීම අහෝසි කර තිබේ.</p>">
+
+<!ENTITY dnsNotFound.title "ලිපිනය හමු නොවුණි">
+<!ENTITY dnsNotFound.longDesc "<p>ලබාදුන් ලිපිනයට අදාල සේවාදායකය ගවේශකයට සොයාගත නොහැක.</p><ul><li>කලාප ලිපිනය යතුරුකරණයේදි ඔබට අතපසු වීමක් සිදු වූවාද ? (උදා: <q><strong>www</strong>.mozilla.org</q> වෙනුවට <q><strong>ww</strong>.mozilla.org</q>)</li><li>මෙම කලාප ලිපිනය පවතින බවට ඔබට විශ්වාස ද?  එහි ලියාපදිංචිය කල්ඉක්ම වී තිබිය හැක.</li><li>ඔබට වෙනත් අඩවි වෙත පිවිසීමට අපහසු ද?  පරිගණකයේ ජාල සබඳත සහ DNS සේවාදායකයේ සැකසුම් පිරික්සන්න.</li><li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වෝලයක් මඟින් ආරක්‍ෂිත ද? සාවද්‍ය සැකසුම් වෙබ් ගවේෂණයට බාධා ඇති කළ හැක.</li></ul>">
+
+<!ENTITY fileNotFound.title "ගොනුව හමු නොවුණි">
+<!ENTITY fileNotFound.longDesc "<ul><li>අයිතමය නාමය වෙනස්කර, ඉවත්කර හෝ වෙනත් තැනක ස්ථාපිතව කර තිබිය හැකි?</li><li>දලිපිනයේ අක්‍ෂර වින්‍යාස හෝ වෙනත් ලිවිමේ ගැටලුවක් ද?</li><li>ඉල්ලා සිටි අයිතමය සඳහා ඔබට නිසි ප්‍රවේශ අවසර තිබේද?</li></ul>">
+
+
+<!ENTITY generic.title "ඉල්ලීම නිම කළ නොහැක">
+<!ENTITY generic.longDesc "<p>මෙම ගැටලුව හෝ දෝෂය පිළිබඳ අමතර තොරතුරු දැනට නොමැත.</p>">
+
+<!ENTITY malformedURI.title "සාවද්‍ය ලිපිය">
+<!ENTITY malformedURI.longDesc "<p>ලබාදුන් ලිපිනය හදුණාගත නොහැකි ආකාරයේ පවති. කරුණාකර අතපසුවීමක් සිදු වි ඇති දැයි පිහිටුම් තීරුවේ පරික්‍ෂා කර, යළි උත්සාහ කරන්න.</p>">
+
+<!ENTITY netInterrupt.title "දත්ත හුවමාරු කිරීමේ බාධා">
+<!ENTITY netInterrupt.longDesc "<p>ගවේෂකය සාර්ථකව සම්බන්ධ වුවත් දත්ත හුවමාරුවේදි සම්බන්ධතාවට බාධා ඇති විය. කරුණාකර යළි උත්සාහ කරන්න.</p><ul><li>ඔබට වෙනත් අඩවි ගවේෂණය කළ නොහැකිද? පරිගණකයේ ජාල සම්බධතාව පරික්‍ෂා කරන්න.</li><li>ගැටලුව තවදුරටත් පවතීද? සහාය සඳහා ඔබගේ ජාල පරිපාලකගේ හෝ අන්තර්ජාල සැපයුම්කරුගේ උපදෙස් පතන්න.</li></ul>">
+
+<!ENTITY notCached.title "ලේඛනය කල් ඉකුත්වී ඇත">
+<!ENTITY notCached.longDesc "<p>ඉල්ලූ ලේඛනය බ්‍රව්සරයෙහි කෑෂ් තුළ නැත.</p><ul><li> ආරක්ෂක ක්‍රමවේදයක් ලෙස, බ්‍රව්සරය ස්වයංක්‍රීයව සංවේදී දත්ත සහිත ලේඛන යළි ලබා ගන්නේ නැත.</li><li>වෙබ් අඩවියෙන් ලේඛන යළි ලබා ගැනීමට නැවත උත්සාහ කරන්න මත ක්ලික් කරන්න.</li></ul>">
+
+<!ENTITY netOffline.title "නොබැඳි ආකාරය">
+<!ENTITY netOffline.longDesc2 "<p>ගවේශකය මාර්ගගත නොවන ප්‍රකාරයක ක්‍රියාකරන බැවින් ඉල්ලාසිටි අයිතිමයට සබඳ විය නොහැකිවිය.</p><ul><li>මෙම පරිගණකය සක්‍රීය ජාලයකට සම්බන්ධද?</li><li>මාර්ගගත ප්‍රකාරයට ගොස් පිටුව යළි පූර්ණය කිරීමට &quot;යළි උත්සහ කරන්න&quot; ඔබන්න.</li></ul>">
+
+<!ENTITY contentEncodingError.title "අන්තර්ගතයේ සංකේතාංකණ දෝෂයක්">
+<!ENTITY contentEncodingError.longDesc "<p>ඔබ බැලීමට උත්සාහ කරන පිටුව පෙන්විය නොහැක, මන්ද එය සාවද්‍ය හෝ සහාය නොදක්වන සංකේතාකන ක්‍රමයක් භාවිත කරයි.</p><ul><li>කරුණාකර අඩවියේ හිමිකරුට මෙම ගැටලුව දන්වා සිටින්න.</li></ul>">
+
+<!ENTITY unsafeContentType.title "අනාරාක්‍ෂිත ගොනු වර්‍ගයක්">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>කරුණාකර මෙම ගැටලුව පිළිබඳ වෙබ් අඩවියේ හිමිකරුට දැනුම් දෙන්න.</li> 
+</ul>">
+
+<!ENTITY netReset.title "සම්බන්ධතාව සඳහා බාධා ඇති විය">
+<!ENTITY netReset.longDesc "<p>සම්බන්ධය සැකසෙමින් සිටියදි ජාලය සබැඳියට බාධා ඇති විය. කරුණාකර යළි උත්සාහ කරන්න.</p>">
+
+<!ENTITY netTimeout.title "ජාල සබඳතාව කල් ඉකුත් විය">
+<!ENTITY netTimeout.longDesc "<p>ඉල්ලා සිටි අඩවිය සම්බන්ධතා ඉල්ලීමට පිළිතුරු නොදුන් අතර ගවේශකය පිළිතුර සඳහා රැදි සිටීම නවතා දමා ඇත.</p><ul><li> ඇතැම් විට සේවාදායකය අතිවිශාල ඉල්ලුමකට හෝ තාවකාලික සේවා අත්හිටුවීමකට ලක්ව ඇති?  යළි උත්සාහ කරන්න.</li><li>ඔබට වෙනත් අඩවි වෙතට පිවිසිය නොහැකි ද? පරිගණකයේ ජාල සම්බන්ධතාව පිරික්සන්න.</li><li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වෝලයක් නැතහොත් ප්‍රොක්සියක් මඟින් ආරක්‍ෂිත ද? සාවද්‍ය සැකසුම් වෙබ් ගවේෂණයට බාධා ඇති කළ හැකියි.</li><li>තවමත් ගැටලු තිබේ ද? සහාය සඳහා ඔබේ ජාල පරිපාලකගේ හෝ අන්තර්ජාල සේවා සැපයුම්කරු අමතන්න.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "නොදන්නා ප්‍රොටොකොලය">
+<!ENTITY unknownProtocolFound.longDesc "<p>ලිපිනයේ දක්වා ඇති ප්‍රොටොකෝලය (උදා: <q>wxyz://</q>) ගවේශකයක් නොහදුනයි. එමනිසා ගවේශකයකයට එම අඩවියට නිසියාකාරව සම්බන්ධ විය නොහැක.</p><ul><li>ඔබ බහුමාධ්‍ය හෝ වෙනත් පෙළ නොවන සේවා සඳහා ප්‍රවේශනයට උත්සාහ කරයිද? අමතර අවශ්‍යතා සඳහා අඩවිය පිරික්සන්න.</li><li>සමහරක් ප්‍රොටොකෝල ගවේශකයක් මගින් හදුනා ගැනීම සඳහා තෙවන පාර්ශවික මෘදුකාංග හෝ ප්ලගීන අවශයවේ.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "ප්‍රෝක්සි සේවාදායකය සම්බන්ධතානය ප්‍රතික්‍ෂේප කෙරිණි">
+<!ENTITY proxyConnectFailure.longDesc "<p>ගවේශකය ප්‍රෝක්සි සේවාදායකයක් භාවිත කිරීමට සකසා ඇති නමුත්, ප්‍රෝක්සි සේවාදායකය සම්බන්ධතානය ප්‍රතික්‍ෂේප කෙරිණි. </p><ul><li>ගවේශකයේ ප්‍රෝක්සි සේවාදායක සැකසුම් නිවැරදි ද? සැකසුම් යළි පිරික්සා යළි උත්සාහ කරන්න.</li><li>ප්‍රෝක්සි සේවාව මෙම ජාලයෙන් සම්බන්ධතා අනුමත කරයි ද?</li><li>තවමත් ගැටලු තිබේ ද? සහාය සඳහා ඔබේ ජාල පරිපාලකගේ හෝ අන්තර්ජාල සේවා සැපයුම්කරු අමතන්න.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "ප්‍රෝක්සි සේවාදායකය හමු නොවිය">
+<!ENTITY proxyResolveFailure.longDesc "<p>ගවේශකය ප්‍රෝක්සි සේවාදායකයක් භාවිත කිරීමට සකසා ඇති නමුත්, ප්‍රෝක්සි සේවාදායකය සොයාගත නොහැක.</p><ul><li>ගවේශකයේ ප්‍රෝක්සි සේවාදායක සැකසුම් නිවැරදි ද? සැකසුම් යළි පිරික්සා යළි උත්සාහ කරන්න.</li><li>පරිගණකය සක්‍රීය ජාලයකට සම්බන්ධව තිබේ ද?</li><li>තවමත් ගැටලු තිබේ ද? සහාය සඳහා ඔබේ ජාල පරිපාලකගේ හෝ අන්තර්ජාල සේවා සැපයුම්කරු අමතන්න.</li></ul>">
+
+<!ENTITY redirectLoop.title "අවසන් නොවන අයුරින් හරවා යැවීමක්!">
+<!ENTITY redirectLoop.longDesc "<p>ගවේශකය ඉල්ලා සිටි අයිතම ලබාගැනීම නවතාලන ලදි. අඩවිය ඉල්ලීම කිසිවිටෙක අවසන් නොවන අයුරින් හරවා යවයි.</p><ul><li>ඔබ මෙම අඩවියට අවශ්‍ය කුකී අක්‍රීය හෝ අවහිර කර ඇත් ද?</li><li><em>සටහන</em>: අඩවියේ කුකී අනුමත කිරීමෙන් ගැටලුව විසදෙන්නේ නැති නම්, බොහෝදුරට ගැටලුව විය හැක්කේ ඔබේ පරිගණකයේ නොව සේවාදායකයේ සැකසුම්වලයි.</li></ul>">
+
+<!ENTITY unknownSocketType.title "වැරදි ප්‍රතිචාරයක්">
+<!ENTITY unknownSocketType.longDesc "<p>අඩවිය ජාලය වෙත බලාපොරොත්තු නොවු ආකාරයේ ප්‍රතිචාරයක් දැක් වූ අතර ගවේශකයකයට ඉදිරියට කටයුතු කළ නොහැක.</p>">
+
+<!ENTITY nssFailure2.title " ආරක්ෂිත සම්බන්ධතාව අසමත් විය">
+<!ENTITY nssFailure2.longDesc2 "<p>ලැබුණු දත්තවල තථ්‍යතාව නිර්ණය කරගත නොහැකි වීම හේතුවෙන් ඔබ පිවිසීමට උත්සාහ කරන පිටුව පෙන්විය නොහැක.</p><ul><li>කරුණාකර අඩවියේ හිමිකරුට මෙම ගැටලුව දන්වා සිටින්න.</li></ul>">
+
+<!ENTITY nssBadCert.title " ආරක්ෂිත සම්බන්ධතාව අසමත් විය">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>මෙය සේවාදායකයේ සැකසුම් පිළිබඳ ගැටලුවක් විය හැකි ය, නැත හොත් වෙනත් අයෙකු සේවාදායකය නොමග යැවීමට තැත් කිරිමක් විය හැකි ය.</li> 
+<li>ඔබ මීට පෙරත් මෙම සේවාදායකයට සාර්තකව සම්බන්ධ වුයේ නම් මෙය තාවකාලික දෝෂයක් විය හැකි අතර ඔබට යළි උත්සාහ කළ හැක.</li> 
+</ul>">
+
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>The browser prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Please contact the website owners to inform them of this problem.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>The page you are trying to view cannot be shown because an error in the data transmission was detected.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+<!ENTITY corruptedContentErrorv2.title "Corrupted Content Error">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>It may have been removed, moved, or file permissions may be preventing access.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+">
+

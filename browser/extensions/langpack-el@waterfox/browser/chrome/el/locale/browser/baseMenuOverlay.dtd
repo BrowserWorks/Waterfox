@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "Ε">
+<!ENTITY minimizeWindow.label     "Ελαχιστοποίηση">
+<!ENTITY bringAllToFront.label    "Μεταφορά όλων μπροστά">
+<!ENTITY zoomWindow.label         "Ζουμ">
+<!ENTITY windowMenu.label         "Παράθυρο">
+
+<!ENTITY helpMenu.label           "Βοηθεια"> 
+<!ENTITY helpMenu.accesskey       "Β"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Βοήθεια"> 
+<!ENTITY helpMenuWin.accesskey    "Β">
+<!ENTITY aboutProduct2.label      "Σχετικά με το &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "ρ">
+<!ENTITY productHelp2.label       "Βοήθεια για το &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "Β">
+<!ENTITY helpMac.commandkey       ";">
+
+<!ENTITY helpKeyboardShortcuts.label     "Συντομεύσεις πληκτρολογίου">
+<!ENTITY helpKeyboardShortcuts.accesskey "υ">
+
+<!ENTITY helpSafeMode.label       "Επανεκκίνηση με ανενεργά πρόσθετα…">
+<!ENTITY helpSafeMode.accesskey   "χ">
+<!ENTITY helpSafeMode.stop.label       "Επανεκκίνηση με ενεργά πρόσθετα">
+<!ENTITY helpSafeMode.stop.accesskey   "π">
+
+<!ENTITY healthReport2.label      "Αναφορά υγείας του &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "γ">
+
+<!ENTITY helpTroubleshootingInfo.label      "Πληροφορίες αντιμετώπισης προβλημάτων">
+<!ENTITY helpTroubleshootingInfo.accesskey  "μ">
+
+<!ENTITY helpFeedbackPage.label      "Υποβολή σχολίων…">
+<!ENTITY helpFeedbackPage.accesskey  "λ">
+
+<!ENTITY helpShowTour2.label            "Ξενάγηση στο &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "Ξ">
+
+<!ENTITY preferencesCmdMac.label        "Προτιμήσεις…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Υπηρεσίες">
+
+<!ENTITY hideThisAppCmdMac2.label       "Απόκρυψη &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "κ">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Απόκρυψη άλλων">
+<!ENTITY hideOtherAppsCmdMac.commandkey "ψ">
+
+<!ENTITY showAllAppsCmdMac.label        "Εμφάνιση όλων">

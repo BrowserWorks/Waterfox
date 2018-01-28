@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Umum">
+
+<!ENTITY useCursorNavigation.label       "Sentiasa gunakan kunci kursor untuk navigasi antara halaman">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Cari teks sebaik sahaja anda mula menaip">
+<!ENTITY searchOnStartTyping.accesskey   "e">
+<!ENTITY useOnScreenKeyboard.label       "Papar papan kekunci sentuh apabila perlu">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Menyemak">
+
+<!ENTITY useAutoScroll.label             "Guna autoskrol">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Guna skrol lancar">
+<!ENTITY useSmoothScrolling.accesskey    "G">
+<!ENTITY checkUserSpelling.label         "Semak ejaan ketika anda menaip">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Pilihan Data">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Laporan data dinyahdayakan bagi konfigurasi binaan ini">
+
+<!ENTITY enableHealthReport1.label       "Izinkan &brandShortName; secara automatik menghantar data teknikal dan interaksi kepada Mozilla">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Ketahui Selanjutnya">
+
+<!ENTITY dataCollection.label            "Pengumpulan dan penggunaan data &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Kami berusaha untuk menyediakan anda dengan pilihan dan hanya mengumpulkan apa yang kami perlukan, dan memajukan &brandShortName; untuk semua orang. Kami sentiasa meminta izin sebelum menerima maklumat peribadi.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Notis Privasi">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Izinkan &brandShortName; menghantar laporan ranap kepada Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "l">
+<!ENTITY crashReporterLearnMore.label    "Ketahui Selanjutnya">
+
+<!ENTITY networkTab.label                "Rangkaian">
+
+<!ENTITY networkProxy.label              "Proksi Rangkaian">
+
+<!ENTITY connectionDesc.label            "Konfigur cara &brandShortName; menyambung ke Internet">
+<!ENTITY connectionSettings.label        "Ubah suai…">
+<!ENTITY connectionSettings.accesskey    "U">
+
+<!ENTITY httpCache.label                 "Cache Kandungan Web">
+
+<!ENTITY offlineStorage2.label           "Data Kandungan Web Luar talian dan Pengguna">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Data Laman">
+<!ENTITY clearSiteData.label             "Buang Semua Data">
+<!ENTITY clearSiteData.accesskey         "s">
+<!ENTITY siteDataSettings.label          "Tetapan…">
+<!ENTITY siteDataSettings.accesskey      "p">
+<!ENTITY siteDataLearnMoreLink.label     "Ketahui selanjutnya">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Had cache kepada">
+<!ENTITY limitCacheSizeBefore.accesskey  "d">
+<!ENTITY limitCacheSizeAfter.label       "MB daripada ruang">
+<!ENTITY clearCacheNow.label             "Buang Sekarang">
+<!ENTITY clearCacheNow.accesskey         "B">
+<!ENTITY clearOfflineAppCacheNow.label   "Buang Sekarang">
+<!ENTITY clearOfflineAppCacheNow.accesskey "S">
+<!ENTITY overrideSmartCacheSize.label    "Sampukan automatik pengurusan cache">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Kemaskini">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; kemaskini">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Pastikan &brandShortName; sentiasa dikemaskini untuk mendapatkan prestasi, kestabilan dan keselamatan yang terbaik.">
+<!ENTITY updateApplication.version.pre   "Versi ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Izinkan &brandShortName; untuk">
+<!ENTITY updateAuto3.label               "Pemasangan kemaskini automatik (disyorkan)">
+<!ENTITY updateAuto3.accesskey           "a">
+<!ENTITY updateCheckChoose2.label        "Semak kemaskini tetapi anda pilih samada mahu memasangnya">
+<!ENTITY updateCheckChoose2.accesskey    "S">
+<!ENTITY updateManual2.label             "Jangan semak kemaskini (tidak disyorkan)">
+<!ENTITY updateManual2.accesskey         "J">
+
+<!ENTITY updateHistory2.label            "Papar Sejarah Kemaskini…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "Gunakan servis latar belakang bagi pemasangan versi terkini">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Kemaskini enjin carian secara automatik">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Maklumkan anda apabila laman web mahu menyimpan data bagi kegunaan luar talian">
+<!ENTITY offlineStorageNotify.accesskey           "B">
+<!ENTITY offlineStorageNotifyExceptions.label     "Pengecualian…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "k">
+
+<!ENTITY offlineAppsList2.label          "Laman web yang berikut telah dibenarkan untuk menyimpan data untuk digunakan ketika luar talian:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Buang…">
+<!ENTITY offlineAppsListRemove.accesskey "B">
+<!ENTITY offlineAppRemove.confirm        "Buang data luar talian">
+
+<!ENTITY certificateTab.label            "Sijil">
+<!ENTITY certPersonal2.description       "Apabila pelayan meminta sijil peribadi anda">
+<!ENTITY selectCerts.auto                "Pilih satu secara automatik">
+<!ENTITY selectCerts.auto.accesskey      "P">
+<!ENTITY selectCerts.ask                 "Tanya setiap kali">
+<!ENTITY selectCerts.ask.accesskey       "T">
+<!ENTITY enableOCSP.label                "Tanya pelayan responder OCSP untuk memastikan kesahihan sijil semasa">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "Papar Sijil…">
+<!ENTITY viewCerts2.accesskey            "S">
+<!ENTITY viewSecurityDevices2.label      "Peranti Keselamatan…">
+<!ENTITY viewSecurityDevices2.accesskey  "P">
+
+<!ENTITY performance.label               "Prestasi">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Gunakan tetapan prestasi yang disyorkan">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Tetapan ini direka untuk perkakasan dan sistem operasi komputer anda.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "G">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Ketahui selanjutnya">
+<!ENTITY limitContentProcessOption.label "Had proses kandungan">
+<!ENTITY limitContentProcessOption.description
+                                         "Proses kandungan tambahan boleh memperbaiki prestasi apabila menggunakan berbilang tab, tetapi juga akan menggunakan lebih banyak memori.">
+<!ENTITY limitContentProcessOption.accesskey   "H">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Mengubah bilangan proses kandungan hanya boleh dilakukan dengan multi proses &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Ketahui cara untuk menyemak samada multi proses didayakan">
+<!ENTITY allowHWAccel.label              "Guna pecutan perkakasan bila tersedia">
+<!ENTITY allowHWAccel.accesskey          "r">

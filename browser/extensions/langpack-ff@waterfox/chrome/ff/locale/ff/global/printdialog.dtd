@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Winndito">
+
+<!ENTITY printDialog.title "Winndito">
+
+<!ENTITY fpDialog.title "Danndu Fiilde">
+
+<!ENTITY fileCheck.label "Winndito e Fiilde">
+<!ENTITY fileCheck.accesskey "F">
+<!ENTITY propertiesButton.label "Keeroeaaɗi…">
+<!ENTITY propertiesButton.accesskey "r">
+<!ENTITY descText.label "Cifagol Winndito:">
+<!ENTITY printer.label "Winnditorde">
+<!ENTITY printerInput.label "Innde Winnditorde:">
+<!ENTITY printerInput.accesskey "I">
+
+<!ENTITY printrangeGroup.label "Taaɓal Winndito">
+<!ENTITY allpagesRadio.label "Kelle Fof">
+<!ENTITY allpagesRadio.accesskey "F">
+<!ENTITY rangeRadio.label  "Kelle">
+<!ENTITY rangeRadio.accesskey  "K">
+<!ENTITY frompageInput.label  "tuggi">
+<!ENTITY frompageInput.accesskey  "g">
+<!ENTITY topageInput.label  "haa">
+<!ENTITY topageInput.accesskey  "h">
+<!ENTITY selectionRadio.label "Labannde">
+<!ENTITY selectionRadio.accesskey "L">
+
+<!ENTITY copies.label "Tummbittte">
+<!ENTITY numCopies.label "No foti tummbitte:">
+<!ENTITY numCopies.accesskey "t">
+
+<!ENTITY printframeGroup.label "Winndito Kaareeje">
+<!ENTITY aslaidoutRadio.label "Hono no lelorii e yaynirde">
+<!ENTITY aslaidoutRadio.accesskey "y">
+<!ENTITY selectedframeRadio.label  "Kaareeje labaaɗe ɗee">
+<!ENTITY selectedframeRadio.accesskey  "l">
+<!ENTITY eachframesepRadio.label  "Kaarewol fof bannge">
+<!ENTITY eachframesepRadio.accesskey  "K">

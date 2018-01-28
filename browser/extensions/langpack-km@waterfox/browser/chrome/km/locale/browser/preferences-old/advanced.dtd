@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "ទូទៅ">
+
+<!ENTITY accessibility.label             "មធ្យោបាយ​ងាយស្រួល">
+
+<!ENTITY useCursorNavigation.label       "ប្រើ​គ្រាប់​ចុច​ទស្សន៍​ទ្រនិច​ជានិច្ច​ដើម្បី​រុករក​ក្នុង​ទំព័រ">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "ស្វែងរក​​អក្សរ នៅ​ពេល​អ្នក​ចាប់ផ្ដើម​វាយ">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY blockAutoReload.label           "ដាស់តឿន​​អ្នក​នៅ​ពេល​ដែល​គេហទំព័រ​ព្យាយាម​​បញ្ជូន​បន្ត ឬ​ផ្ទុក​ទំព័រ​ឡើងវិញ">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "បង្ហាញ​ក្ដារចុច​ប៉ះ​នៅ​ពេល​ចាំបាច់">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "រក​មើល">
+
+<!ENTITY useAutoScroll.label             "ប្រើ​រំកិល​ស្វ័យប្រវត្តិ">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "​ប្រើ​រមូរ​រលូន">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "ពិនិត្យ​មើល​​អក្ខរាវិរុទ្ធ​នៅ​ពេល​អ្នក​វាយ">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "ជម្រើស​ទិន្នន័យ">
+
+<!ENTITY healthReportDesc.label          "ជួយ​អ្នក​ឲ្យ​យល់​អំពី​ដំណើរការ​នៃ​កម្មវិធី​រុករក​បណ្ដាញ​របស់​អ្នក និង​ការ​ចែករំលែក​ទិន្នន័យ​អំពី​សុខភាព​កម្មវិធី​រុករក​របស់​អ្នក​ដោយ​ប្រើ &vendorShortName;">
+<!ENTITY enableHealthReport.label        "បើក &brandShortName; របាយការណ៍​សុខភាព">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "ស្វែងយល់​បន្ថែម">
+
+<!ENTITY telemetryDesc.label             "ចែករំលែក​ដំណើរការ ការ​ប្រើប្រាស់ ផ្នែក​រឹង និង​ការ​ប្ដូរ​ទិន្នន័យ​តាម​បំណង​អំពី​កម្មវិធី​រុករក​បណ្ដាញ​របស់​អ្នក​ដោយ​ប្រើ &vendorShortName; ដើម្បី​ជួយ​ធ្វើឲ្យ &brandShortName; ប្រសើរ​ឡើង">
+<!ENTITY enableTelemetryData.label       "ចែករំលែក​ទិន្នន័យ​បន្ថែម (ឧ. ទូរមាត្រ​វិធី)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "ស្វែងយល់​​បន្ថែម">
+
+<!ENTITY crashReporterDesc2.label         "របាយការណ៍​ភាព​ជាប់គាំង​ជួយ &vendorShortName; ដោះស្រាយ​បញ្ហា និង​ធ្វើ​ឲ្យ​កម្មវិធី​អ៊ីនធឺណិត​របស់​អ្នក​​មាន​ស្ថិរភាព និង​សុវត្ថិភាព​បន្ថែម">
+<!ENTITY alwaysSubmitCrashReports.label   "អនុញ្ញាត​ឲ្យ &brandShortName; ផ្ញើ​របាយការណ៍​ភាព​ជាប់​គាំង​ដែល​បាន​បម្រុង​ជំនួសអ្នក">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "ស្វែងយល់​បន្ថែម">
+
+<!ENTITY networkTab.label                "បណ្តាញ">
+
+<!ENTITY connection.label                "ការ​តភ្ជាប់">
+
+<!ENTITY connectionDesc.label            "កំណត់​រចនាសម្ព័ន្ធ​អំពី​វិធីដែល &brandShortName; តភ្ជាប់​ទៅ​កាន់​អ៊ីនធឺណិត">
+<!ENTITY connectionSettings.label        "ការ​កំណត់…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "មាតិកា​បណ្ដាញ​ដែល​បាន​ដាក់​ក្នុង​ឃ្លាំង​សម្ងាត់">
+
+<!ENTITY offlineStorage2.label           "មាតិកា​បណ្ដាញ និង​ទិន្នន័យ​អ្នកប្រើ​ក្រៅ​បណ្ដាញ">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "ទិន្នន័យ​ទំព័រ">
+<!ENTITY clearSiteData.label             "សម្អាត​ទិន្នន័យ​ទាំងអស់">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "ការ​កំណត់...">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "ស្វែងយល់​បន្ថែម">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "កំណត់​ឃ្លាំង​សម្ងាត់​ត្រឹម">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB នៃ​ទំហំ">
+<!ENTITY clearCacheNow.label             "សម្អាត​ឥឡូវនេះ">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "សម្អាត​ឥឡូវនេះ">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "បដិសេធ​ការ​គ្រប់គ្រង​ឃ្លាំង​សម្ងាត់​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "ធ្វើ​បច្ចុប្បន្នភាព">
+
+<!ENTITY updateApplication.label         "បច្ចុប្បន្នភាព &brandShortName;">
+<!ENTITY updateAuto1.label               "ដំឡើង​បច្ចុប្បន្នភាព​ដោយ​ស្វ័យប្រវត្តិ (បាន​ផ្ដល់​អនុសាសន៍ ៖ សុវត្ថិភាព​កាន់តែប្រសើរ)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "ពិនិត្យរក​​មើល​បច្ចុប្បន្នភាព ប៉ុន្តែ​ទុក​ឲ្យ​អ្នក​សម្រេច​ថា​ត្រូវ​ដំឡើង​អ្វីមួយ">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateManual.label              "កុំ​រកមើល​បច្ចុប្បន្នភាព (មិន​ត្រូវ​បាន​ផ្ដល់​អនុសាសន៍ ៖ ហានិភ័យ​សុវត្ថិភាព)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "បង្ហាញ​ប្រវត្តិ​បច្ចុប្បន្នភាព">
+<!ENTITY updateHistory.accesskey         "p">
+
+<!ENTITY useService.label                "ប្រើ​សេវា​ផ្ទៃ​ខាងក្រោយ ដើម្បី​ដំឡើង​បច្ចុប្បន្នភាព">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY autoUpdateOthers.label          "ធ្វើ​បច្ចុប្បន្នភាព​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY enableSearchUpdate.label        "ម៉ាស៊ីន​ស្វែងរក">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+<!ENTITY offlineStorageNotify.label               "ប្រាប់​អ្នក​នៅ​ពេល​ដែល​​គេហទំព័រ​សួរ​ឲ្យ​ផ្ទុក​ទិន្នន័យ​សម្រាប់​ប្រើប្រាស់​ពេល​គ្មាន​អ៊ីនធឺណិត">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "ការ​លើកលែង...">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "តំបន់​បណ្ដាញ​ដូច​ខាងក្រោម​នេះ ត្រូវ​បាន​អនុញ្ញាត​ឲ្យ​ទុក​ទិន្នន័យ​សម្រាប់​ការ​ប្រើ​ក្រៅ​បណ្ដាញ ៖">
+<!ENTITY offlineAppsList.height          "10em">
+<!ENTITY offlineAppsListRemove.label     "យក​ចេញ...">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "យក​ទិន្នន័យ​ក្រៅ​បណ្ដាញ​ចេញ">
+
+<!ENTITY certificateTab.label            "វិញ្ញាបនបត្រ">
+<!ENTITY certPersonal.label              "ការ​ស្នើ">
+<!ENTITY certPersonal.description        "នៅ​ពេល​ដែល​ម៉ាស៊ីន​មេ​ស្នើ​សុំ​វិញ្ញាបនបត្រ​ផ្ទាល់ខ្លួន​របស់​អ្នក៖">
+<!ENTITY selectCerts.auto                "ជ្រើសរើស​​វិញ្ញាបនបត្រ​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "សួរ​អ្នក​រាល់លើក">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "ម៉ាស៊ីន​មេ​កម្មវិធី​ឆ្លើយតប OCSP ត្រូវ​បញ្ជាក់​ភាព​ត្រឹមត្រូវ​នៃ​វិញ្ញាបនបត្រ​បច្ចុប្បន្ន">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts.label                 "មើល​វិញ្ញាបនបត្រ">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "សុវត្ថិភាព ឧបករណ៍">
+<!ENTITY viewSecurityDevices.accesskey   "D">
+
+<!ENTITY performance.label               "ដំណើរការ">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "ប្រើ​ការ​កំណត់​ដំណើរការ​ដែល​បាន​ណែនាំ">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "ការ​កំណត់​ទាំងនេះ​គឺ​ត្រូវ​ជាមួយ​ផ្នែក​រឹង និង​ប្រព័ន្ធ​ប្រតិបត្តិការ​នៃ​កុំព្យូទ័រ​របស់​អ្នក។​">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "ស្វែងយល់​បន្ថែម">
+<!ENTITY limitContentProcessOption.label "ដែន​កំណត់​ដំណើរការ​មាតិកា">
+<!ENTITY limitContentProcessOption.description
+                                         "ដំណើរការ​មាតិកា​បន្ថែម​អាច​ធ្វើឲ្យ​ដំណើរការ​ប្រសើរ​ឡើង​នៅ​ពេល​ប្រើ​ផ្ទាំង​ច្រើន ប៉ុន្តែ​វា​នឹង​ប្រើ​អង្គ​ចងចាំ​ច្រើន​ដែរ។">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY allowHWAccel.label              "ប្រើ​ការ​បង្កើន​ល្បឿន​ផ្នែក​រឹង នៅពេល​អាច​ប្រើ​បាន">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">

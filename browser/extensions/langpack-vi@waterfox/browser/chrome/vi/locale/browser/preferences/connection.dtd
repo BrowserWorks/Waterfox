@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Thiết lập Kết nối">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Cấu hình các Proxy để truy cập vào Internet">
+<!ENTITY  noProxyTypeRadio.label        "Không dùng proxy">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "Dùng các thiết lập proxy của hệ thống">
+<!ENTITY  systemTypeRadio.accesskey     "D">
+<!ENTITY  WPADTypeRadio.label           "Tự động dò thiết lập của proxy cho mạng này">
+<!ENTITY  WPADTypeRadio.accesskey       "m">
+<!ENTITY  manualTypeRadio.label         "Cấu hình proxy thủ công:">
+<!ENTITY  manualTypeRadio.accesskey     "r">
+<!ENTITY  autoTypeRadio.label           "URL cấu hình proxy tự động:">
+<!ENTITY  autoTypeRadio.accesskey       "U">
+<!ENTITY  reload.label                  "Tải lại">
+<!ENTITY  reload.accesskey              "i">
+<!ENTITY  ftp.label                     "Proxy FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Proxy HTTP:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "Proxy SSL:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "Máy chủ SOCKS:">
+<!ENTITY  socks.accesskey               "O">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "DNS của proxy khi dùng SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Cổng:">
+<!ENTITY  HTTPport.accesskey            "C">
+<!ENTITY  SSLport.accesskey             ":">
+<!ENTITY  FTPport.accesskey             "n">
+<!ENTITY  SOCKSport.accesskey           "g">
+<!ENTITY  noproxy.label                 "Không dùng Proxy cho:">
+<!ENTITY  noproxy.accesskey             "K">
+<!ENTITY  noproxyExplain.label          "Ví dụ: .vi.mozdev.org, .vnn.vn, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Dùng máy chủ proxy này cho mọi giao thức">
+<!ENTITY  shareproxy.accesskey          "x">
+<!ENTITY  autologinproxy.label          "Không yêu cầu xác nhận nếu đã lưu mật khẩu">
+<!ENTITY  autologinproxy.accesskey      "n">
+<!ENTITY  autologinproxy.tooltip        "Tùy chọn này xác thực ngầm bạn với proxy khi bạn đã lưu thông tin ủy nhiệm của chúng. Bạn sẽ được yêu cầu nếu việc xác thực thất bại.">

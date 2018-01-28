@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Go">
+
+<!ENTITY printDialog.title "Go coc">
+
+<!ENTITY fpDialog.title "Gwok pwail">
+
+<!ENTITY fileCheck.label "Go coc bot pwail">
+<!ENTITY fileCheck.accesskey "p">
+<!ENTITY propertiesButton.label "Jami…">
+<!ENTITY propertiesButton.accesskey "m">
+<!ENTITY descText.label "Tito kit ma lago coc obedo kwede:">
+<!ENTITY printer.label "Lago coc">
+<!ENTITY printerInput.label "Nying Lago coc:">
+<!ENTITY printerInput.accesskey "L">
+
+<!ENTITY printrangeGroup.label "Kwayi goyo coc ma patpat">
+<!ENTITY allpagesRadio.label "Pot Buk Weng">
+<!ENTITY allpagesRadio.accesskey "P">
+<!ENTITY rangeRadio.label  "Pot buk">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "ki">
+<!ENTITY frompageInput.accesskey  "i">
+<!ENTITY topageInput.label  "bot">
+<!ENTITY topageInput.accesskey  "b">
+<!ENTITY selectionRadio.label "Yera">
+<!ENTITY selectionRadio.accesskey "Y">
+
+<!ENTITY copies.label "Ma kiporo">
+<!ENTITY numCopies.label "Wel ma ki rudo:">
+<!ENTITY numCopies.accesskey "m">
+
+<!ENTITY printframeGroup.label "Purem me goc">
+<!ENTITY aslaidoutRadio.label "Macalo kiketo woko i wang kompiuta">
+<!ENTITY aslaidoutRadio.accesskey "k">
+<!ENTITY selectedframeRadio.label  "Pureem ma kiyero">
+<!ENTITY selectedframeRadio.accesskey  "e">
+<!ENTITY eachframesepRadio.label  "Purem acelacel kene">
+<!ENTITY eachframesepRadio.accesskey  "P">

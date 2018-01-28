@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Nomme:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Indirisso">
+<!ENTITY editBookmarkOverlay.location.accesskey              "I">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Indirisso do feed:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "f">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Indirisso do scito:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "s">
+<!ENTITY editBookmarkOverlay.folder.label                    "Cartella:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Fanni vedde tutta a cartella di segnalibbri">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Ascondi">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etichette:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "t">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Separa e etichette co-e virgole">
+<!ENTITY editBookmarkOverlay.description.label               "Descriçion">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Paròlle ciave:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "P">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Fanni vedde tutte e etichette">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Carega sto segnalibbro in sciâ bara de scianco">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "C">
+<!ENTITY editBookmarkOverlay.choose.label                    "Çerni…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Neuva cartella">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "N">
+

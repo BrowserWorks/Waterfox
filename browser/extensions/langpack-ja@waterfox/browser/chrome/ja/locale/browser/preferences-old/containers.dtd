@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label	"新しいコンテナーを追加">
+<!ENTITY addButton.accesskey	"A">
+<!ENTITY preferencesButton.label	"設定">
+<!ENTITY removeButton.label	"削除">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label		"&#171; プライバシーに戻る">
+
+<!ENTITY window.title		"新しいコンテナーを追加する">
+<!ENTITY window.width		"45em">
+
+<!ENTITY name.label		"名前:">
+<!ENTITY name.accesskey		"N">
+<!ENTITY name.placeholder	"コンテナー名を入力してください">
+<!ENTITY icon.label		"アイコン:">
+<!ENTITY icon.accesskey		"I">
+<!ENTITY color.label		"色:">
+<!ENTITY color.accesskey	"o">
+<!ENTITY windowClose.key	"w">
+
+<!ENTITY button.ok.label	"完了">
+<!ENTITY button.ok.accesskey	"D">

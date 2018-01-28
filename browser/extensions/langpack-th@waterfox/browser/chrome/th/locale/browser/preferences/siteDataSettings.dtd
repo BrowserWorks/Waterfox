@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "การตั้งค่า - ข้อมูลไซต์">
+<!ENTITY     hostCol.label                 "ไซต์">
+<!ENTITY     statusCol.label               "สถานะ">
+<!ENTITY     usageCol.label                "ที่เก็บข้อมูล">
+<!ENTITY     searchTextboxPlaceHolder             "ค้นหาเว็บไซต์">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "ค">
+<!ENTITY     removeSelected.label          "เอาที่เลือกออก">
+<!ENTITY     removeSelected.accesskey      "อ">
+<!ENTITY     save.label                    "บันทึกการเปลี่ยนแปลง">
+<!ENTITY     save.accesskey                "บ">
+<!ENTITY     cancel.label                  "ยกเลิก">
+<!ENTITY     cancel.accesskey              "ย">
+<!ENTITY     removingDialog.title          "เอาข้อมูลไซต์ออก">
+<!ENTITY     siteTree.label                "คุกกี้ของเว็บไซต์ดังต่อไปนี้จะถูกเอาออก:">
+
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">

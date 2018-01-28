@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "မွမ်းမံချက် မှတ်တမ်း">
+<!ENTITY  history.intro             "အောက်ပါ မွမ်းမံချက်များကို တပ်ဆင်ထားပြီ -">
+<!ENTITY  closebutton.label         "ပိတ်ပါ ">
+                                     
+<!ENTITY  noupdates.label           "မွမ်းမံချက်များကို မတပ်ဆင်ရသေးဘူး">
+
+<!ENTITY  name.header               "မွမ်းမံချက် အမည်">
+<!ENTITY  date.header               "တပ်ဆင်တဲ့ နေ့စွဲ">
+<!ENTITY  type.header               "အမျိုးအစား">
+<!ENTITY  state.header              "အခြေအနေ">
+

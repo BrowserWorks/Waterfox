@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Šī lapa izmanto spraudņus, kas var palēnināt &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Pieskarieties šeit, lai aktivētu spraudni.">
+<!ENTITY clickToActivatePlugin                               "Aktivēt spraudni.">
+<!ENTITY checkForUpdates                                     "Meklēt atjauninājumus…">
+<!ENTITY blockedPlugin.label                                 "Jūsu drošības nodrošināšanai šis spraudnis ir bloķēts.">
+<!ENTITY hidePluginBtn.label                                 "Paslēpt spraudni">
+<!ENTITY managePlugins                                       "Pārvaldīt spraudņus…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Pārlādējiet lapu">
+<!ENTITY reloadPlugin.post                                   ", lai mēģinātu vēlreiz.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Sūtīt avārijas ziņojumu">
+<!ENTITY report.submitting                                   "Sūta ziņojumu…">
+<!ENTITY report.submitted                                    "Avārijas ziņojums nosūtīts.">
+<!ENTITY report.disabled                                     "Avārijas ziņojumi ir deaktivēti.">
+<!ENTITY report.failed                                       "Nosūtīšana neizdevās.">
+<!ENTITY report.unavailable                                  "Ziņojumi nav pieejami.">
+<!ENTITY report.comment                                      "Pievienot komentāru (komentāri ir redzami publiski)">
+<!ENTITY report.pageURL                                      "Iekļaut lapas adresi">
+
+<!ENTITY plugin.file                                         "Fails">
+<!ENTITY plugin.mimeTypes                                    "MIME tips">
+<!ENTITY plugin.flashProtectedMode.label                     "Aktivēt Adobe Flash aizsargāto režīmu">
+<!ENTITY plugin.enableBlocklists.label                       "Bloķēt bīstamu un uzmācīgu Flash saturu">

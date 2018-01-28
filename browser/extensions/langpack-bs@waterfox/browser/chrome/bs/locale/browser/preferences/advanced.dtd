@@ -1,0 +1,186 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Opće">
+
+<!ENTITY useCursorNavigation.label       "Uvijek koristi strelice na tastaturi za kretanje po stranicama">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Traži tekst čim počnem da kucam">
+<!ENTITY searchOnStartTyping.accesskey   "k">
+<!ENTITY useOnScreenKeyboard.label       "Prikaži tastaturu za dodir kada je potrebno">
+<!ENTITY useOnScreenKeyboard.accesskey   "t">
+
+<!ENTITY browsing.label                  "Surfanje">
+
+<!ENTITY useAutoScroll.label             "Koristi autoscrolling">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Koristi glatko pomjeranje">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "Provjeravaj pravopis dok kucam">
+<!ENTITY checkUserSpelling.accesskey     "o">
+
+<!ENTITY dataChoicesTab.label            "Izbori podataka">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+
+
+
+
+
+
+
+
+
+<!ENTITY networkTab.label                "Mreža">
+
+
+<!ENTITY connectionDesc.label            "Konfigurišite kako se &brandShortName; konektuje na internet">
+<!ENTITY connectionSettings.label        "Postavke…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Keširani Web sadržaj">
+
+<!ENTITY offlineStorage2.label           "Offline Web sadržaj i korisnički podaci">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Podaci stranice">
+<!ENTITY clearSiteData.label             "Očisti sve podatke">
+<!ENTITY clearSiteData.accesskey         "a">
+<!ENTITY siteDataSettings.label          "Postavke…">
+<!ENTITY siteDataSettings.accesskey      "e">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Ograniči cache na">
+<!ENTITY limitCacheSizeBefore.accesskey  "O">
+<!ENTITY limitCacheSizeAfter.label       "MB prostora">
+<!ENTITY clearCacheNow.label             "Očisti odmah">
+<!ENTITY clearCacheNow.accesskey         "O">
+<!ENTITY clearOfflineAppCacheNow.label   "Očisti odmah">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "Preskoči automatsko upravljanje cacheom">
+<!ENTITY overrideSmartCacheSize.accesskey "c">
+
+<!ENTITY updateTab.label                 "Update">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; nadogradnje">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Dozvoli &brandShortName;u da">
+
+
+<!ENTITY updateCheckChoose2.label        "Provjeri za nadogradnju, ali me prvo pitaj da li želim instalirati">
+<!ENTITY updateCheckChoose2.accesskey    "P">
+<!ENTITY updateManual2.label             "Nikad ne provjeravaj za nadogradnju (nije preporučeno)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Prikaži historijat nadogradnji…">
+<!ENTITY updateHistory2.accesskey        "P">
+
+<!ENTITY useService.label                "Koristi pozadinski servis za instalaciju update-a">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Automatski nadograđuj pretraživače">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Obavijestiti vas kada web stranica zatraži dozvolu za pohranu podataka za offline upotrebu">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Izuzeci…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "I">
+
+<!ENTITY offlineAppsList2.label          "Sljedećim web stranicama je dozvoljeno da spremaju podatke za offline upotrebu:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Ukloni…">
+<!ENTITY offlineAppsListRemove.accesskey "U">
+<!ENTITY offlineAppRemove.confirm        "Ukloni offline podatke">
+
+<!ENTITY certificateTab.label            "Certifikati">
+<!ENTITY certPersonal2.description       "Kada server zatraži vaš lični certifikat">
+<!ENTITY selectCerts.auto                "Odaberi jedan automatski">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Pitati vas svaki put">
+<!ENTITY selectCerts.ask.accesskey       "a">
+<!ENTITY enableOCSP.label                "Upitajte OCSP servere da biste potvrdili validnost certifikata">
+<!ENTITY enableOCSP.accesskey            "U">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Koristi hardversko ubrzanje kada je dostupno">
+<!ENTITY allowHWAccel.accesskey          "u">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY crashReporterLearnMore.label    "Learn more">
+
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY updateApplication.version.pre   "Version ">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Use recommended performance settings">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

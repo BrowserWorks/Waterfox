@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Manager de dispozitive">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Module și dispozitive de securitate">
+<!ENTITY devmgr.details.title                   "Detalii">
+<!ENTITY devmgr.details.title2                  "Valoare">
+
+<!ENTITY devmgr.button.login.label              "Autentificare">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Deautentificare">
+<!ENTITY devmgr.button.logout.accesskey         "i">
+<!ENTITY devmgr.button.changepw.label           "Schimbă parola">
+<!ENTITY devmgr.button.changepw.accesskey       "p">
+<!ENTITY devmgr.button.load.label               "Încarcă">
+<!ENTITY devmgr.button.load.accesskey           "c">
+<!ENTITY devmgr.button.unload.label             "Descarcă">
+<!ENTITY devmgr.button.unload.accesskey         "D">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Introdu informații despre modulul pe care dorești să îl adaugi.">
+<!ENTITY loaddevice.modname                     "Nume modul:">
+<!ENTITY loaddevice.modname.accesskey           "N">
+<!ENTITY loaddevice.modname.default             "Modul PKCS#11 nou">
+<!ENTITY loaddevice.filename                    "Nume fișier modul:">
+<!ENTITY loaddevice.filename.accesskey          "N">
+<!ENTITY loaddevice.browse                      "Răsfoiește…">
+<!ENTITY loaddevice.browse.accesskey            "R">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Безбеден режим на &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Стартувај во безбеден режим">
+<!ENTITY resetProfile.label           "Ресетирај го &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Безбедниот режим е специјален режим на &brandShortName; што може
+да се користи при разрешување на проблеми.">
+<!ENTITY safeModeDescription4.label   "Вашите додатоци и прилагодување привремено ќе бидат оневозможени.">
+
+<!ENTITY resetProfileInstead.label    "Исто така можете да го ресетирате &brandShortName; ако сакате да почнете од почеток.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription2.label safeModeInstead.label resetProfileFooter.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription2.label "&brandShortName; се затвори неочекувани при стартување. Ова може да е
+предизвикано од додатоци или други проблеми. Можете да го разрешите овој
+проблем со ресетирање на &brandShortName; или со барање на проблемот во безбеден режим.">
+<!ENTITY resetProfileFooter.label       "Прелистувачот ќе биде ресетиран на основните поставки.">
+<!ENTITY safeModeInstead.label          "Ако не го сакате ова може да продолжите во безбеден режим каде
+Вашите додатоци и прилагодувања се привремено оневозможени.">
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; closed unexpectedly while starting. This might be caused by add-ons or other problems. You can try to resolve the problem by troubleshooting in Safe Mode.">
+<!ENTITY refreshProfile.label         "Refresh &brandShortName;">
+
+<!ENTITY refreshProfileInstead.label  "You can also skip troubleshooting and try refreshing &brandShortName;.">
+

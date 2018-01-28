@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cancelButton.label "Anuloje">
+<!ENTITY caseSensitiveCheckbox.label "Siç është shkruar">
+<!ENTITY caseSensitiveCheckbox.accesskey "S">
+<!ENTITY direction.label "Drejtim">
+<!ENTITY down.label "Poshtë">
+<!ENTITY down.accesskey "P">
+<!ENTITY findButton.accesskey "G">
+<!ENTITY findButton.label "Gjej Pasuesen">
+<!ENTITY findDialog.title "Gjej në Këtë Faqe">
+<!ENTITY findField.label "Çfarë të gjendet:">
+<!ENTITY findField.accesskey "Ç">
+<!ENTITY up.label "Sipër">
+<!ENTITY up.accesskey "S">
+<!ENTITY wrapCheckbox.label "Mbështille">
+<!ENTITY wrapCheckbox.accesskey "M">
+<!ENTITY closeButton.label "Mbylle">

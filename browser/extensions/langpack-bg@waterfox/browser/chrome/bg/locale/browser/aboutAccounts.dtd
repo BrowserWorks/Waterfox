@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Добре дошли в &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Впишете се, за да бъдат синхронизирани вашите раздели, отметки, пароли и др.">
+<!ENTITY aboutAccountsConfig.startButton.label "Въведение">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Настройки на Sync">
+<!ENTITY aboutAccounts.noConnection.title "Няма връзка с Интернет">
+<!ENTITY aboutAccounts.noConnection.description "Трябва да сте свързан към Интернет, за да може да се впишете.">
+<!ENTITY aboutAccounts.noConnection.retry "Нов опит">
+<!ENTITY aboutAccounts.badConfig.title "Неправилна настройка">
+<!ENTITY aboutAccounts.badConfig.description "Настройката на сървъра на вашия Waterfox Account не може да бъде намерена. Моля, опитайте по-късно.">

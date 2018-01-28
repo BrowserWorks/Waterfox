@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "חלונות קופצים">
+
+<!ENTITY  blockPopups.label           "חסימת חלונות קופצים">
+<!ENTITY  blockPopups.accesskey       "ח">
+
+<!ENTITY  notificationsPolicy.label            "התרעות">
+<!ENTITY  notificationsPolicyLearnMore.label   "מידע נוסף">
+<!ENTITY  notificationsPolicyDesc3.label       "בחירת אתרים מורשים לשליחת התרעות">
+<!ENTITY  notificationsPolicyButton.accesskey  "ב">
+<!ENTITY  notificationsPolicyButton.label      "בחירה…">
+<!ENTITY  notificationsDoNotDisturb.label      "נא לא להפריע">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "נ">
+<!ENTITY  notificationsDoNotDisturbDetails.value "לא יוצגו התרעות עד אשר &brandShortName; יופעל מחדש">
+
+<!ENTITY  popupExceptions.label       "חריגות...">
+<!ENTITY  popupExceptions.accesskey   "ר">
+
+<!ENTITY  fontsAndColors.label        "גופנים וצבעים">
+
+<!ENTITY  defaultFont.label           "גופן בררת מחדל:">
+<!ENTITY  defaultFont.accesskey       "ד">
+<!ENTITY  defaultSize.label           "גודל:">
+<!ENTITY  defaultSize.accesskey       "ג">
+
+<!ENTITY  advancedFonts.label         "מתקדם...">
+<!ENTITY  advancedFonts.accesskey     "מ">
+
+<!ENTITY  colors.label                "צבעים...">
+<!ENTITY  colors.accesskey            "צ">
+
+
+<!ENTITY languages.label              "שפות">
+<!ENTITY chooseLanguage.label         "בחירת השפה המועדפת עליך להצגת דפים">
+<!ENTITY chooseButton.label           "בחירה…">
+<!ENTITY chooseButton.accesskey       "ב">
+
+<!ENTITY translateWebPages.label      "תרגום תוכן רשת">
+<!ENTITY translateWebPages.accesskey  "ת">
+<!ENTITY translateExceptions.label    "חריגות…">
+<!ENTITY translateExceptions.accesskey "ג">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "תרגום של">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "תוכן ניהול זכויות קניין">
+
+<!ENTITY  playDRMContent.label         "ניגון תוכן ניהול זכויות קניין">
+<!ENTITY  playDRMContent.accesskey     "ז">
+<!ENTITY  playDRMContent.learnMore.label "מידע נוסף">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

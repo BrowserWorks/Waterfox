@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Stillingar fyrir ferilhreinsun">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "34em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+
+<!ENTITY sanitizeDialog2.title         "Hreinsa nýlega ferla">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "Þegar ég loka &brandShortName;, ætti sjálfkrafa að hreinsa:">
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "Tímabil sem á að hreinsa: ">
+<!ENTITY clearTimeDuration.accesskey      "T">
+<!ENTITY clearTimeDuration.lastHour       "Seinasta klukkustund">
+<!ENTITY clearTimeDuration.last2Hours     "Seinustu tvær klukkustundir">
+<!ENTITY clearTimeDuration.last4Hours     "Seinustu fjórar klukkustundir">
+<!ENTITY clearTimeDuration.today          "Í dag">
+<!ENTITY clearTimeDuration.everything     "Allt">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "Nánar">
+<!ENTITY detailsProgressiveDisclosure.accesskey "N">
+
+<!ENTITY historySection.label         "Ferill">
+<!ENTITY dataSection.label            "Gögn">
+
+<!ENTITY itemHistoryAndDownloads.label     "Vafra og niðurhals ferla">
+<!ENTITY itemHistoryAndDownloads.accesskey "V">
+<!ENTITY itemFormSearchHistory.label       "Eyðublaða og leitarferill">
+<!ENTITY itemFormSearchHistory.accesskey   "f">
+<!ENTITY itemCookies.label                 "Smákökur">
+<!ENTITY itemCookies.accesskey             "S">
+<!ENTITY itemCache.label                   "Biðminni">
+<!ENTITY itemCache.accesskey               "B">
+<!ENTITY itemOfflineApps.label             "Ónettengd vefgögn">
+<!ENTITY itemOfflineApps.accesskey         "t">
+<!ENTITY itemActiveLogins.label            "Virkar innskráningar">
+<!ENTITY itemActiveLogins.accesskey        "i">
+<!ENTITY itemSitePreferences.label         "Stillingar vefsvæðis">
+<!ENTITY itemSitePreferences.accesskey     "S">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "Ekki er ekki hægt að bakfæra þessa aðgerð.">

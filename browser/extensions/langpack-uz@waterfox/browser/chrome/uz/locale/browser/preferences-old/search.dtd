@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standart qidiruv tizimi">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Asosiy qidiruv tizimini tanlang. &brandShortName; undan manzil panelida, qidiruv panelida va boshlang‘ich sahifada foydalanadi.">
+
+<!ENTITY provideSearchSuggestions.label        "Qidiruv tavsiyalarini keltirish">
+<!ENTITY provideSearchSuggestions.accesskey    "Q">
+
+<!ENTITY showURLBarSuggestions.label           "Qidiruv tavsiyalarini manzil qatoridagi natijalarda ko‘rsatish">
+<!ENTITY showURLBarSuggestions.accesskey       "m">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Qidiruv tavsiyalari manzil qatorida ko‘rsatilmaydi, chunki &brandShortName; brauzerini tarixni eslab qolmaydigan qilib sozlagansiz.">
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "Qidiruv paneli sizga muqobil qidiruv tizimlarini taklif qiladi. Qaysi birini ko‘rsatish kerakligini tanlang.">
+
+<!ENTITY engineNameColumn.label                "Qidiruv tizimlari">
+<!ENTITY engineKeywordColumn.label             "Kalit so‘z">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Standart qidiruv tizimlarini tiklash">
+<!ENTITY restoreDefaultSearchEngines.accesskey "S">
+
+<!ENTITY removeEngine.label                    "Olib tashlash">
+<!ENTITY removeEngine.accesskey                "O">
+
+<!ENTITY addMoreSearchEngines.label            "Ko‘proq qidiruv tizimlarini qo‘shish">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+

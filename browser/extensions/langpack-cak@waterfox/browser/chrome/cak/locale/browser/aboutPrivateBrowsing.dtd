@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Wakami man at k'o ta chupam jun ichinan tzuwäch.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Tijaq jun ichinan tzuwäch">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "i">
+
+<!ENTITY privateBrowsing.title                           "Ichinan okem pa k'amaya'l">
+<!ENTITY privateBrowsing.title.tracking                  "Ichinan Okik'amaya'l rik'in Chajinïk chuwäch Ojqanïk">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Toq yatok pa jun ichinan tzuwäch, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "man tuyäk">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "taq ruxaq etz'eton">
+<!ENTITY aboutPrivateBrowsing.info.searches              "taq kanob'äl">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "taq kaxlanwey">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "jumej taq yakb'äl">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "xtiyak">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " awichin:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "taq qasanïk">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "taq yaketal">
+<!ENTITY aboutPrivateBrowsing.note.before                "Ichinan okem pa k'amaya'l ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "man nub'än ta chawe chi man etaman ta awäch">
+<!ENTITY aboutPrivateBrowsing.note.after                 " pa k'amaya'l. Ri ya'öl ak'amaya'l o ri asamajinel, k'a nitikïr na nutzu' ri taq ruxaq k'amaya'l ri ye'atzu'.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Tetamäx ch'aqa' chik chi rij ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Ichinan okem pa k'amaya'l">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Chajinïk chuwäch Ojqanïk">
+<!ENTITY trackingProtection.description2                 "Jujun ruxaq k'amaya'l nikokisaj ojqanela', ri yetikïr nikinik'oj ri asamaj pa K'amaya'l. Rik'in Chajinïk chuwäch Ojqanïk ri Waterfox xkeruq'ät k'ïy taq ojqanela', ri yetikïr nikimöl etamab'äl chi rij rub'anikil runa'oj ri okem pa k'amaya'l.">
+<!ENTITY trackingProtection.startTour1                   "Tatz'eta' rub'eyal nisamäj">

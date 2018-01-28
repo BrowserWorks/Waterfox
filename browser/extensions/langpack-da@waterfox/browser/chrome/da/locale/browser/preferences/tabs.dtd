@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tabulator-tasten skifter mellem de senest anvendte faneblade">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Åbn links i faneblade, hvor de ellers ville blive åbnet i vinduer">
+<!ENTITY newWindowsAsTabs.accesskey   "f">
+
+<!ENTITY warnOnCloseMultipleTabs.label  "Advar mig, når jeg lukker flere faneblade">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "l">
+
+<!ENTITY warnOnOpenManyTabs.label       "Advar mig, hvis jeg åbner flere faneblade, som kan gøre &brandShortName; langsommere">
+<!ENTITY warnOnOpenManyTabs.accesskey   "å">
+
+<!ENTITY switchLinksToNewTabs.label        "Skift fokus til det nye faneblad, når jeg åbner et link i det">
+<!ENTITY switchLinksToNewTabs.accesskey    "S">
+
+<!ENTITY showTabsInTaskbar.label          "Vis forhåndsvisning for faneblade på Windows Proceslinje">
+<!ENTITY showTabsInTaskbar.accesskey      "W">
+<!ENTITY tabsGroup.label          "Faneblade">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Yleiset">
+
+<!ENTITY useCursorNavigation.label       "Liiku sivuilla nuolinäppäimillä">
+<!ENTITY useCursorNavigation.accesskey   "s">
+<!ENTITY searchOnStartTyping.label       "Ala etsiä tekstistä heti kirjoitettaessa">
+<!ENTITY searchOnStartTyping.accesskey   "A">
+<!ENTITY useOnScreenKeyboard.label       "Näytä kosketusnäppäimistö tarvittaessa">
+<!ENTITY useOnScreenKeyboard.accesskey   "N">
+
+<!ENTITY browsing.label                  "Selaus">
+
+<!ENTITY useAutoScroll.label             "Vieritä sivua automaattisesti">
+<!ENTITY useAutoScroll.accesskey         "V">
+<!ENTITY useSmoothScrolling.label        "Vieritä sivua portaattomasti">
+<!ENTITY useSmoothScrolling.accesskey    "e">
+<!ENTITY checkUserSpelling.label         "Oikolue käyttäjän kirjoitukset">
+<!ENTITY checkUserSpelling.accesskey     "l">
+
+<!ENTITY dataChoicesTab.label            "Kerätyt tiedot">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Tietojen kerääminen ei ole käytössä tässä koostamiskokoonpanossa">
+
+<!ENTITY enableHealthReport1.label       "Salli, että &brandShortName; lähettää teknisiä ja käyttötilastoja Mozillalle automaattisesti">
+<!ENTITY enableHealthReport1.accesskey   "ö">
+<!ENTITY healthReportLearnMore.label     "Lue lisää">
+
+<!ENTITY dataCollection.label            "&brandShortName;in tietojen keräys ja käyttö">
+<!ENTITY dataCollectionDesc.label        "Pyrimme antamaan sinulle vapauden valita ja keräämään vain tietoja, joita tarvitsemme voidaksemme tarjota &brandShortName;in kaikille ja parantaa sitä. Kysymme aina lupaa ennen kuin vastaanotamme henkilötietoja.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Tietosuojakäytäntö">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Salli, että &brandShortName; lähettää kaatumisilmoitukset Mozillalle">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "e">
+<!ENTITY crashReporterLearnMore.label    "Lue lisää">
+
+<!ENTITY networkTab.label                "Verkko">
+
+<!ENTITY networkProxy.label              "Verkon välityspalvelin">
+
+<!ENTITY connectionDesc.label            "Muokkaa &brandShortName;in verkkoyhteysasetuksia">
+<!ENTITY connectionSettings.label        "Asetukset…">
+<!ENTITY connectionSettings.accesskey    "A">
+
+<!ENTITY httpCache.label                 "Välimuistissa oleva verkkosisältö">
+
+<!ENTITY offlineStorage2.label           "Yhteydetöntä tilaa varten tallennetut tiedot">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Sivustojen tallentamat tiedot">
+<!ENTITY clearSiteData.label             "Tyhjennä kaikki tiedot">
+<!ENTITY clearSiteData.accesskey         "k">
+<!ENTITY siteDataSettings.label          "Asetukset…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Lue lisää">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Rajoita väliaikaistiedostojen viemä tila">
+<!ENTITY limitCacheSizeBefore.accesskey  "R">
+<!ENTITY limitCacheSizeAfter.label       "megatavuun">
+<!ENTITY clearCacheNow.label             "Tyhjennä heti">
+<!ENTITY clearCacheNow.accesskey         "T">
+<!ENTITY clearOfflineAppCacheNow.label   "Tyhjennä heti">
+<!ENTITY clearOfflineAppCacheNow.accesskey "y">
+<!ENTITY overrideSmartCacheSize.label    "Ohita automaattinen väliaikatiedostojen hallinta">
+<!ENTITY overrideSmartCacheSize.accesskey "h">
+
+<!ENTITY updateTab.label                 "Päivitys">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName;in päivitykset">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Pidä &brandShortName; ajan tasalla parhaan suorituskyvyn, vakauden ja turvallisuuden vuoksi.">
+<!ENTITY updateApplication.version.pre   "Versio ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName;in päivitystapa">
+<!ENTITY updateAuto3.label               "Asenna päivitykset automaattisesti (suositellaan)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "Hae päivitykset, mutta anna sinun päättää asennetaanko ne">
+<!ENTITY updateCheckChoose2.accesskey    "e">
+<!ENTITY updateManual2.label             "Älä hae päivityksiä (ei suositella)">
+<!ENTITY updateManual2.accesskey         "Ä">
+
+<!ENTITY updateHistory2.label            "Näytä päivityshistoria…">
+<!ENTITY updateHistory2.accesskey        "N">
+
+<!ENTITY useService.label                "Asenna päivitykset taustalla toimivalla palvelulla">
+<!ENTITY useService.accesskey            "u">
+
+<!ENTITY enableSearchUpdate2.label       "Päivitä hakukoneet automaattisesti">
+<!ENTITY enableSearchUpdate2.accesskey   "k">
+
+<!ENTITY offlineStorageNotify.label               "Näytä ilmoitus, kun sivusto pyytää lupaa tallentaa tietoa yhteydetöntä tilaa varten">
+<!ENTITY offlineStorageNotify.accesskey           "N">
+<!ENTITY offlineStorageNotifyExceptions.label     "Poikkeukset…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "P">
+
+<!ENTITY offlineAppsList2.label          "Seuraavilla sivustoilla on lupa tallentaa tietoja yhteydetöntä tilaa varten:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Poista…">
+<!ENTITY offlineAppsListRemove.accesskey "s">
+<!ENTITY offlineAppRemove.confirm        "Poista yhteydetöntä tilaa varten tallennetut tiedot">
+
+<!ENTITY certificateTab.label            "Varmenteet">
+<!ENTITY certPersonal2.description       "Sivuston pyytäessä varmennettasi">
+<!ENTITY selectCerts.auto                "valitse sellainen automaattisesti">
+<!ENTITY selectCerts.auto.accesskey      "v">
+<!ENTITY selectCerts.ask                 "kysy joka kerta">
+<!ENTITY selectCerts.ask.accesskey       "k">
+<!ENTITY enableOCSP.label                "Vahvista varmenteiden kelpoisuus OCSP-vastaajapalvelimilta">
+<!ENTITY enableOCSP.accesskey            "C">
+<!ENTITY viewCerts2.label                "Näytä varmenteet…">
+<!ENTITY viewCerts2.accesskey            "y">
+<!ENTITY viewSecurityDevices2.label      "Turvallisuuslaitteet…">
+<!ENTITY viewSecurityDevices2.accesskey  "T">
+
+<!ENTITY performance.label               "Suorituskyky">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Käytä suositeltuja suorituskykyasetuksia">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Nämä asetukset sovitetaan tietokoneesi laitteiston ja käyttöjärjestelmän kanssa.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "u">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Lue lisää">
+<!ENTITY limitContentProcessOption.label "Sisältöprosessien yläraja">
+<!ENTITY limitContentProcessOption.description
+                                         "Useammat sisältöprosessit parantavat suorituskykyä käytettäessä useita välilehtiä, mutta kuluttavat myös enemmän muistia.">
+<!ENTITY limitContentProcessOption.accesskey   "i">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Sisältöprosessien määrän muokkaaminen on mahdollista vain useaa prosessia hyödyntävällä &brandShortName;illa.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Lue, miten usean prosessin hyödyntämisen tilanteen voi tarkistaa">
+<!ENTITY allowHWAccel.label              "Käytä laitteistokiihdytystä jos mahdollista">
+<!ENTITY allowHWAccel.accesskey          "K">

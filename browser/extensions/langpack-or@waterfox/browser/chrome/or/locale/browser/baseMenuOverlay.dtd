@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "କ୍ଷୁଦ୍ରତମ କରନ୍ତୁ">
+<!ENTITY bringAllToFront.label    "ସମସ୍ତଙ୍କୁ ଆଗକୁ ଆଣନ୍ତୁ">
+<!ENTITY zoomWindow.label         "ସାନବଡ଼ କରନ୍ତୁ">
+<!ENTITY windowMenu.label         "ୱିଣ୍ଡୋ">
+
+<!ENTITY helpMenu.label           "ସହାୟତା"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "ସହାୟତା"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "&brandShorterName; ବାବଦରେ">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; ସହଯୋଗ">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "କିବୋର୍ଡ ସକ୍ଷିପ୍ତପଥ (K)">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "ଏଡ-ଅନଗୁଡ଼ିକୁ ନିଷ୍କ୍ରିୟ କରି ପୁନଃଚାଳନ କରନ୍ତୁ…">
+<!ENTITY helpSafeMode.accesskey   "R">
+
+
+
+<!ENTITY healthReport2.label      "&brandShorterName; ଅବସ୍ଥା ବିବରଣୀ">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "ତ୍ରୁଟିନିବାରଣ ସୂଚନା">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "ମତାମତ ଦାଖଲ କରନ୍ତୁ…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; ଜାଣିବା">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "ପସନ୍ଦ…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "ସେବା">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; ଲୁଚାନ୍ତୁ">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "ଅନ୍ୟମାନଙ୍କୁ ଲୁଚାନ୍ତୁ">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "ସମସ୍ତଙ୍କୁ ଦର୍ଶାନ୍ତୁ">
+
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY helpSafeMode.stop.label       "Restart with Add-ons Enabled">

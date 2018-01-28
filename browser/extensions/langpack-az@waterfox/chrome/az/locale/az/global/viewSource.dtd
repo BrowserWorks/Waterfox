@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Qaynaq: ">
+
+<!ENTITY fileMenu.label "Fayl">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "Fərqli saxla…">
+<!ENTITY savePageCmd.accesskey "a">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Səhifə Nizamı…">
+<!ENTITY pageSetupCmd.accesskey "ı">
+<!ENTITY printPreviewCmd.label "Çapa ön baxış">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Çap et…">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Qapat">
+<!ENTITY closeCmd.accesskey "Q">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Sətirə keç…">
+<!ENTITY goToLineCmd.accesskey "S">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Görünüş">
+<!ENTITY viewMenu.accesskey       "G">
+<!ENTITY reloadCmd.label "Yenilə">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Uzun sətirləri kəs"> 
+<!ENTITY menu_wrapLongLines.accesskey "U">
+<!ENTITY menu_highlightSyntax.label "Sintaksisi qeyd et">
+<!ENTITY menu_highlightSyntax.accesskey "H">
+<!ENTITY menu_textSize.label "Metn ölçüsü">
+<!ENTITY menu_textSize.accesskey "t">
+<!ENTITY menu_textEnlarge.label "Mətn ölçüsünü böyüt">
+<!ENTITY menu_textEnlarge.accesskey "b">
+<!ENTITY menu_textReduce.label "Mətn ölçüsünü kiçilt">
+<!ENTITY menu_textReduce.accesskey "k">
+<!ENTITY menu_textReset.label "Normal">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Bu səhifədə axtar…">
+<!ENTITY findOnCmd.accesskey "B">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Sonrakını tap">
+<!ENTITY findAgainCmd.accesskey "S">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Geri qayıt">
+<!ENTITY backCmd.accesskey "G">
+<!ENTITY forwardCmd.label "İleri">
+<!ENTITY forwardCmd.accesskey "l">
+<!ENTITY goBackCmd.commandKey "-">
+<!ENTITY goForwardCmd.commandKey "+">
+
+<!ENTITY copyLinkCmd.label "Keçid ünvanını köçür">
+<!ENTITY copyLinkCmd.accesskey "K">
+<!ENTITY copyEmailCmd.label "E-poçt ünvanını köçür">
+<!ENTITY copyEmailCmd.accesskey "E">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "ترک این مکان!">
+<!ENTITY safeb.palm.decline.label "این هشدار نادیده گرفته شود">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "این یک سایت گمراه‌کننده نیست…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "گ">
+<!ENTITY safeb.palm.reportPage.label "چرا این صفحه مسدود شده بود؟">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "مشاوره فراهم شده توسط <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "صفحهٔ تهاجمی شناخته شده!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "صفحهٔ به نشانی <span id='malware_sitename'/> به عنوان یک صفحهٔ تهاجمی گزارش شده است و دسترسی به آن بر اساس ترجیحات امنیتی شما مسدود شده است.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>صفحه‌های تهاجمی تلاش می‌کنند برنامه‌هایی نصب کنند که اطلاعات خصوصی را سرقت می‌کنند، از رایانهٔ شما برای حمله به دیگران استفاده می‌کنند، یا به آن آسیب می‌زنند.</p><p>برخی صفحه‌های تهاجمی عمداً به پخش نرم‌افزارهای زیان‌بار می‌پردازند، ولی بسیاری از آن‌ها بدون اطلاع و مجوز صاحبانشان تصاحب گردیده‌اند.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "صفحه نرم افزاری ناخواسته گزارش شده!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "این صفحه به نشانی <span id='unwanted_sitename'/> به عنوان یک صفحهٔ تهاجمی گزارش شده است و دسترسی به آن بر اساس ترجیحات امنیتی شما مسدود شده است.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>صفحه‌های نرم افزاری ناخواسته تلاش می‌کنند برنامه‌هایی نصب کنند که گمراه کننده هستند و میتوانند به روش های غیر منتظره به سیستم آسیب بزنند.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "سایت گمراه‌کننده!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "این صفحه به نشانی <span id='phishing_sitename'/> به عنوان یک سایت گمراه‌کننده گزارش شده است و دسترسی به آن بر اساس ترجیحات امنیتی شما مسدود شده است.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>سایت‌های گمراه‌کننده طراحی شده‌اند تا شما را برای انجام کارهای خطرناک، مانند نصب نرم‌افزار، یا فاش کردن اطلاعات شخصی مثل گذرواژه‌ها، شماره‌های تلفن و اطلاعات کارت‌های اعتباری فریب دهند.</p><p>وارد کردن هر گونه اطلاعات در این صفحه ممکن است باعث دزدی هویت یا سایر اعمال کلاه‌بردارانه شود.</p>">
+

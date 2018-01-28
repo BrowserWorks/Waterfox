@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- (^^; messenger/preferences/connection.dtd とほぼ同一 -->
+
+<!ENTITY  connectionsDialog.title       "インターネット接続">
+<!ENTITY  window.width2                 "54em"><!-- en-US: 49em -->
+<!ENTITY  window.macWidth2              "46em"><!-- en-US: 44em -->
+
+<!ENTITY  proxyTitle.label              "インターネット接続に使用するプロキシの設定">
+<!ENTITY  noProxyTypeRadio.label        "プロキシを使用しない"><!-- prev: インターネットに直接接続する -->
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "システムのプロキシ設定を利用する">
+<!ENTITY  systemTypeRadio.accesskey     "u">
+<!ENTITY  WPADTypeRadio.label           "このネットワークのプロキシ設定を自動検出する">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "手動でプロキシを設定する:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "自動プロキシ設定スクリプト URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "再読み込み">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP プロキシ:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP プロキシ:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL プロキシ:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS ホスト:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "SOCKS v5 を使用するときは DNS もプロキシを使用する">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "ポート:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "プロキシなしで接続:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "例: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "すべてのプロトコルでこのプロキシを使用する">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "パスワードを保存してある場合は認証を確認しない">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "このオプションは、プロキシへのパスワードが保存してある場合、確認することなく認証を行います。認証に失敗した場合は確認を行います。">

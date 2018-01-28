@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Yaltin am ɗoo!">
+<!ENTITY safeb.palm.decline.label "Faalkiso ngoo reentino">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Ɗum wonaa lowre fuuntoore…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "Hol ko waɗi ngoo hello daaƴeede?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "Jaŋtaama ko Hello Njangu!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Ngoo hello geese to <span id='malware_sitename'/> jaŋtaama ko hello njangu etee daaƴaama tugnaade e cuɓoraaɗe kisal maa.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Kelle njangu eotoo ko loowde topirɗe gujjirɗe humpito maa suraango, kuutoroo ordinateer maa ngam yande e woɗɓe, walla bonna yuɓɓo maa.</p><p>Yoga e kelle njangu ɗee ena cara topirɗe bonɗe e teyre, kono keewɗe ko bonnooje tawa jeyɗo-ɗe oo anndaa walla yamiraani.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Koko jaŋtaa Hello Topirde añaande!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Ngoo hello geese to <span id='unwanted_sitename'/> jaŋtaama ko hello njangu etee daaƴaama tugnaade e cuɓoraaɗe kisal maa.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Kelle topirɗe gañaaɗe etoto aafde topirɗe baawɗe fuuntude kadi njana e yuɓɓo maa e mbaydi ndi tijjaaka.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Lowre Fuuntoore!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Ngoo hello geese to <span id='phishing_sitename'/> jaŋtaama ko lowre fuuntoore etee daaƴaama tugnaade e cuɓoraaɗe kisal maa.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Lowe puuntooje mbaɗiraa ko tuufaade-ma e waɗde ko ena bonnan-maa, hono aafde topateeri, walla saaktude humpito maa heeriingo, walla finndeeji, tonngooɗe noddirɗe walla karte banke.</p><p>Naatnude humpito waawngo wonde fof ena waawu wuftude e nguyka innde maa walla jaŋfe nannduɗe heen.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

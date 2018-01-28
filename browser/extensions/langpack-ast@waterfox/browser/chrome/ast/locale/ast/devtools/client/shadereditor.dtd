@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY shaderEditorUI.vertexShader "Asolombrador de vértices">
+<!ENTITY shaderEditorUI.fragmentShader "Asolombrador de fragmentos">
+<!ENTITY shaderEditorUI.reloadNotice1 "Recargar">
+<!ENTITY shaderEditorUI.reloadNotice2 "la páxina pa poder editar códigu GLSL.">
+<!ENTITY shaderEditorUI.emptyNotice "Esperando a que se cree un contestu WebGL…">

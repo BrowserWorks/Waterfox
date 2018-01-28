@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Applications">
+<!ENTITY  applications.description "Définissez le comportement de &brandShortName; avec les fichiers que vous téléchargez et les applications que vous utilisez lorsque vous naviguez.">
+
+<!ENTITY  typeColumn.label        "Type de contenu">
+<!ENTITY  typeColumn.accesskey    "T">
+
+<!ENTITY  actionColumn2.label     "Action">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Rechercher des types de fichiers ou d’applications">

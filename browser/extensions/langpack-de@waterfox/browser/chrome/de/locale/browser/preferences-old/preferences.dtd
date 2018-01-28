@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Einstellungen">
+<!ENTITY  prefWindow.title        "Einstellungen">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName;-Einstellungen">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2    "width: 45em; min-height: 49em;">
+<!ENTITY  prefWinMinSize.styleMac     "width: 50em; min-height: 45em;">
+<!ENTITY  prefWinMinSize.styleGNOME   "width: 48em; min-height: 38.5em;">
+
+<!ENTITY  paneGeneral.title       "Allgemein">
+<!ENTITY  paneTabs.title          "Tabs">
+<!ENTITY  paneSearch.title        "Suche">
+<!ENTITY  paneContent.title       "Inhalt">
+<!ENTITY  paneApplications.title  "Anwendungen">
+<!ENTITY  panePrivacy.title       "Datenschutz">
+<!ENTITY  paneContainers.title    "Tab-Umgebungen">
+<!ENTITY  paneSecurity.title      "Sicherheit">
+<!ENTITY  paneAdvanced.title      "Erweitert">
+
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync.title          "Sync">
+
+<!ENTITY  helpButton.label        "Hilfe">

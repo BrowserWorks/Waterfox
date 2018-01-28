@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "ప్రోజెక్ట్">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "కొత్త అనువర్తనం...">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "ప్యాకేజ్ చేసిన అనువర్తనం తెరు...">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "హోస్టుచేసిన అనువర్తనం తెరువు...">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "అనువర్తనమును తెరువు">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "సంస్థాపించి నడుపు">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "అనువర్తనం ఆపు">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "అనువర్తనమును డీబగ్ చేయండి">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "ప్రోజెక్ట్ ను తీసివేయి">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "అభిరుచులు">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "అదనపు భాగాలను నిర్వహించండి">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "ట్యాబులను రీఫ్రెష్ చేయి">
+
+<!ENTITY runtimeMenu_label "రన్‌టైమ్">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "అనుసంధానం తెంచు">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "స్క్రీన్‌షాట్">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "రన్‌టైమ్ సమాచారం">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "మానిటర్">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "పరికర అభిరుచులు">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "పరికరపు అమరికలు">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "దర్శించు">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "ఎడిటర్ మార్చు">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "జూమ్ చేయి">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "జూమ్ తగ్గించు">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "జూమ్ రీసెట్ చేయండి">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "అనువర్తనమును తెరువు">
+<!ENTITY runtimeButton_label "రన్‌టైమ్ ఎంపికచేయి">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "నా ప్రోజెక్టులు">
+<!ENTITY projectPanel_runtimeApps "రన్‌టైమ్ అనువర్తనాలు">
+<!ENTITY projectPanel_tabs "ట్యాబులు">
+<!ENTITY runtimePanel_usb "USB పరికరాలు">
+<!ENTITY runtimePanel_wifi "Wi-Fi పరికరాలు">
+<!ENTITY runtimePanel_simulator "సిమ్యులేటర్లు">
+<!ENTITY runtimePanel_other "ఇతర">
+<!ENTITY runtimePanel_installsimulator "సిమ్యులేటర్ ను సంస్థాపించు">
+<!ENTITY runtimePanel_noadbhelper "ADB సహాయకిని సంస్థాపించు">
+<!ENTITY runtimePanel_nousbdevice "మీ పరికరమును చూడలేకపోతున్నారా?">
+<!ENTITY runtimePanel_refreshDevices_label "పరికరాలను పునశ్చరించు">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "చెల్లునటువంటి">
+<!ENTITY details_warning_header "హెచ్చరికలు">
+<!ENTITY details_error_header "దోషములు">
+<!ENTITY details_description "వివరణ">
+<!ENTITY details_location "స్థానము">
+<!ENTITY details_manifestURL "అనువర్తనం ID">
+<!ENTITY details_removeProject_button "ప్రోజెక్ట్ ను తీసివేయి">
+<!ENTITY details_showPrepackageLog_button "ప్రీ-పాకేజ్ లాగ్ ను చూపించండి">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "కొత్త అనువర్తనం">
+<!ENTITY newAppHeader "టెంప్లేట్ ని ఎంపికచేయి">
+<!ENTITY newAppLoadingTemplate "టెంప్లేట్లను లోడ్‌చేయబడుతున్నది...">
+<!ENTITY newAppProjectName "ప్రోజెక్ట్ పేరు:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "మూసివేయి">
+
+<!-- Addons -->
+<!ENTITY addons_title "అదనపు కాంపోనెంట్లు">
+<!ENTITY addons_aboutaddons "పొడిగింతలు నిర్వాహికను తెరువు">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "అభిరుచులు">
+<!ENTITY prefs_editor_title "ఎడిటర్">
+<!ENTITY prefs_general_title "సాధారణం">
+<!ENTITY prefs_restore "అప్రమేయాలను పునరుద్ధరించు">
+<!ENTITY prefs_manage_components "అదనపు భాగాలు నిర్వహించండి">
+<!ENTITY prefs_options_autoconnectruntime "మునుపటి రన్ టైమ్ కు తిరిగి కనెక్ట్ అవ్వండి">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE మొదలగునప్పుడు మునుపటి రన్ టైమ్ కు తిరిగి కనెక్ట్ అవ్వండి">
+<!ENTITY prefs_options_rememberlastproject "ఆఖరి ప్రోజెక్ట్ గుర్తుంచుకో">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE మొదలవునప్పుడు మునుపటి ప్రోజెక్ట్‌ను తిరిగివుంచు">
+<!ENTITY prefs_options_templatesurl "టెంప్లేట్ల URL">
+<!ENTITY prefs_options_templatesurl_tooltip "అందుబాటులోని టెంప్లేట్ల సూచిక">
+<!ENTITY prefs_options_showeditor "ఎడిటర్ చూపు">
+<!ENTITY prefs_options_showeditor_tooltip "అంతర్గత ఎడిటర్ ను చూపించు">
+<!ENTITY prefs_options_tabsize "ట్యాబు పరిమాణం">
+<!ENTITY prefs_options_expandtab "సాఫ్ట్ ట్యాబులు">
+<!ENTITY prefs_options_expandtab_tooltip "ట్యాబ్ కారెక్టర్ బదులుగా ఖాళీలను ఉపయోగించు">
+<!ENTITY prefs_options_detectindentation "ఆటోఇండెంట్">
+<!ENTITY prefs_options_detectindentation_tooltip "సోర్స్ కాంటెంట్‌ పై ఆధారపడిన ఇండెంటేషన్ అంచనావేయి">
+<!ENTITY prefs_options_autocomplete "స్వయంసమాప్తి">
+<!ENTITY prefs_options_autocomplete_tooltip "కోడ్ స్వయంచాలకంగా చేతనించు">
+<!ENTITY prefs_options_autoclosebrackets "బ్రాకెట్లు స్వయంచాలకంగా మూయబడును">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "మూసివేత బ్రాకెట్లు స్వయంచాలకంగా పెట్టబడును">
+<!ENTITY prefs_options_keybindings "కీ బైండింగులు">
+<!ENTITY prefs_options_keybindings_default "అప్రమేయ">
+<!ENTITY prefs_options_autosavefiles "ఫైళ్లు ఆటోసేవ్ చేయండి">
+<!ENTITY prefs_options_autosavefiles_tooltip "ప్రాజెక్టు ప్రారంభించడానికి ముందు సవరించిన ఫైళ్ళు ఆటోమేటిక్గా సేవ్ అవుతాయి">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "రన్‌టైమ్ సమాచారం">
+<!ENTITY runtimedetails_adbIsRoot "ADB root: ">
+<!ENTITY runtimedetails_summonADBRoot "root పరికరం">
+<!ENTITY runtimedetails_ADBRootWarning "(లాక్‌చేయని బూట్‌లోడర్ అవసరం)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "అపరిమితమైన DevTools అధికారాలు: ">
+<!ENTITY runtimedetails_requestPrivileges "ఉన్నత అనుమతులు అభ్యర్ధించు">
+<!ENTITY runtimedetails_privilegesWarning "(పరికరం పునఃప్రారంభించును. root ఏక్సెస్ అవసరం.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "బులియన్">
+<!ENTITY device_typenumber "ఇంటీజర్">
+<!ENTITY device_typestring "స్ట్రింగ్">
+<!ENTITY device_typeobject "ఆబ్జక్టు">
+<!ENTITY device_typenone "ఒక రకాన్ని ఎంచుకోండి">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "పరికరము యొక్క ప్రాధాన్యతలు">
+<!ENTITY devicepreference_search "శోధన ప్రాధాన్యతలు">
+<!ENTITY devicepreference_newname "కొత్త ప్రాధాన్యత పేరు">
+<!ENTITY devicepreference_newtext "ప్రాధాన్యత విలువ">
+<!ENTITY devicepreference_addnew "క్రొత్త ప్రాధాన్యతను జోడించండి">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "పరికరపు అమరికలు">
+<!ENTITY devicesetting_search "శోధన సెట్టింగ్‌లు">
+<!ENTITY devicesetting_newname "కొత్త అమరిక పేరు">
+<!ENTITY devicesetting_newtext "అమరిక విలువ">
+<!ENTITY devicesetting_addnew "కొత్త అమరికను చేర్చు">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "మానిటర్">
+<!ENTITY monitor_help "సహాయం">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "క్లయింట్ ఐడెంటిఫికేషన్">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "మీరు కనెక్ట్ చేసే తుది ఈ కనెక్షన్ ప్రమాణీకరించడానికి మరింత సమాచారం అవసరం.  దయచేసి ఇతర ముగింపు న కనిపించే ప్రాంప్టులో క్రింద టోకెన్ అందించండి.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "QR స్కానర్ ప్రాంప్ట్ లేదా?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR స్కానర్ ప్రాంప్ట్ ఉందా?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "మీ ఇతర పరికరం ఒక QR కోడ్ స్కాన్ కు బదులుగా ఒక టోకెన్ కోసం అడుగుతుంటే, ఇతర పరికరం క్రింద విలువను కాపీ చెయ్యండి:">
+<!ENTITY wifi_auth_qr_size_note "కనెక్షన్ విజయవంతంగా స్థాపించుటకు QR కోడ్ చాలా చిన్నదిగా కనిపిస్తే, జూమ్ లేదా విండో విస్తరించడానికి ప్రయత్నించండి.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "ముందు ప్యాకేజింగ్ కమాండ్ లాగులు">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "సిమ్యులేటర్ ఎంపికలు">
+<!ENTITY simulator_remove "సిమ్యులేటర్ ను తొలగించు">
+<!ENTITY simulator_reset "అప్రమేయాలను పునరుద్ధరించు">
+<!ENTITY simulator_name "పేరు">
+<!ENTITY simulator_software "సాఫ్ట్‌వేర్">
+<!ENTITY simulator_version "వర్షన్">
+<!ENTITY simulator_profile "ప్రొఫైల్">
+<!ENTITY simulator_hardware "హార్డువేర్">
+<!ENTITY simulator_device "పరికరం">
+<!ENTITY simulator_screenSize "తెర">
+<!ENTITY simulator_pixelRatio "పిక్సెల్ నిష్పత్తి">
+<!ENTITY simulator_tv_data "TV సిమ్యులేషన్">
+<!ENTITY simulator_tv_data_open "కాన్ఫిగ్ డేటా">
+<!ENTITY simulator_tv_data_open_button "కాన్ఫిగ్ సంచయం తెరువు…">

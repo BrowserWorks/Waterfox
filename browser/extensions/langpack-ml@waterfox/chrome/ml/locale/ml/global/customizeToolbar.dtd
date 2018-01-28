@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "ഉപകരണ പട്ട ഇഷ്‌ടാനുസൃതമാക്കുക ">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "വലിച്ചു മാറ്റി ഉപകരണ പട്ടയിലേക്ക്‌ വസ്തുക്കള്‍ ചേര്‍ക്കുകയോ പട്ടയില്‍ നിന്നും വസ്തുക്കള്‍ നീക്കം ചെയ്യുകയോ ചെയ്യാം. ">
+<!ENTITY show.label               "കാണിക്കുക ">
+<!ENTITY iconsAndText.label       "ഐക്കണുകളും ടെക്സ്റ്റും">
+<!ENTITY icons.label              "ഐക്കണുകള്‍ ">
+<!ENTITY text.label               "ടെക്സ്റ്റ്‌ ">
+<!ENTITY useSmallIcons.label      "ചെറിയ ഐക്കണുകള്‍ ഉപയോഗിക്കുക">
+<!ENTITY restoreDefaultSet.label  "ഡിഫോള്‍ട്ട്‌ സെറ്റ്‌ പുനസ്ഥാപിക്കുക">
+<!ENTITY addNewToolbar.label      "പുതിയ ഉപകരണപ്പട്ട ചേര്‍ക്കുക ">
+<!ENTITY saveChanges.label        "കഴിഞ്ഞിരിക്കുന്നു ">
+<!ENTITY undoChanges.label        "മാറ്റങ്ങള്‍ പൂര്‍വ്വാവസ്ഥയിലാക്കുക">

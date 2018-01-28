@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-an@waterfox"
+               em:name="Aragonés Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="mozilla.org / Softaragonés">
+    <em:contributor>Softaragonés</em:contributor> <em:contributor>Softcatalà</em:contributor> <em:contributor>Juan Pablo Martínez Cortés</em:contributor> <em:contributor>Chesús Daniel Trigo</em:contributor> <em:contributor>Daniel Martínez Cucalón</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

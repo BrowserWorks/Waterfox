@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Benvegnuo into &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Acedi pe scincronizâ feuggi, segnalibbri, paròlle segrete e atri elementi.">
+<!ENTITY aboutAccountsConfig.startButton.label "Iniçia">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferense Sync">
+<!ENTITY aboutAccounts.noConnection.title "Conescion no disponibile">
+<!ENTITY aboutAccounts.noConnection.description "Serve 'na conescion a Internet pe acede.">
+<!ENTITY aboutAccounts.noConnection.retry "Preuva torna">
+<!ENTITY aboutAccounts.badConfig.title "Configuraçion sbaliâ">
+<!ENTITY aboutAccounts.badConfig.description "No pòsso determinâ a configuraçion do teu account Waterfox. Pe piaxéi preuva dòppo.">

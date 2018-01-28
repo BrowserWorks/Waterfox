@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Skoazeller ar c'hrouiñ aelad">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; a vir stlennoù a-zivout hoc'h arventennoù ha gwellvezioù e-barzh hoc'h aelad personel.">
+<!ENTITY profileCreationExplanation_2.text  "Mar bez rannet an eilad-mañ eus &brandShortName; gant arveriaded all e c'hallit arverañ aeladoù evit ma chomo disrannet stlennoù pep arveriad. A-benn hen ober e vo ret da bep arveriad krouiñ e (pe hec'h) aelad dezhañ/dezhi.">
+<!ENTITY profileCreationExplanation_3.text  "Mard oc'h an den nemetañ oc'h ober gant an eilad-mañ eus &brandShortName;, ez eo ret deoc'h kaout un aelad da vihanañ. Mar fell deoc'h e c'hallot krouiñ meur a aelad evidoc'h-c'hwi a-benn mirout kefluniadurioù disheñvel eus hoc'h arventennoù ha gwellvezioù. Da skouer, c'hoant ho pefe da gaout un aelad evit ar vicher hag unan all evit ar vuhez prevez.">
+<!ENTITY profileCreationExplanation_4.text  "Evit krouiñ hoc'h aelad, klikañ war War-lerc'h.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Evit krouiñ hoc'h aelad, klikit war Kenderc'hel.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Evit krouiñ hoc'h aelad, klikit war War-lerc'h.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Mar bez krouet meur a aelad ganeoc'h e c'hallot o tiforc'hañ dre an anvioù aeladoù. Tu zo deoc'h d'ober gant an anv roet amañ pe arverañ unan e-touez ho re.">
+<!ENTITY profilePrompt.label            "Roit un anv aelad nevez :">
+<!ENTITY profilePrompt.accesskey        "e">
+<!ENTITY profileDirectoryExplanation.text   "Gwaredet e vo hoc'h arventennoù, ho kwellvezioù hag ar roadennoù all o tennañ d'an arveriaded all e :">
+<!ENTITY profileDefaultName             "Arveriad dre ziouer">
+<!ENTITY button.choosefolder.label      "Diuz un teuliad…">
+<!ENTITY button.choosefolder.accesskey  "t">
+<!ENTITY button.usedefault.label        "Arverañ an teuliad dre ziouer">
+<!ENTITY button.usedefault.accesskey    "u">

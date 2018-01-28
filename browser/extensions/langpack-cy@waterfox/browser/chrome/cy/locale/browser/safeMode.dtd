@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Modd Diogel &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Cychwyn yn y Modd Diogel">
+<!ENTITY refreshProfile.label         "Adnewyddu &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Modd arbennig o fewn &brandShortName; yw'r Modd Diogel y mae modd ei ddefnyddio i ddatrys problemau.">
+<!ENTITY safeModeDescription4.label   "Bydd eich ychwanegion a'ch gosodiadau cyfaddas yn cael eu hanalluogi dros dro.">
+
+<!ENTITY refreshProfileInstead.label  "Gallwch hepgor datrys problemau a cheisio adnewyddu &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "Caeodd &brandShortName; yn annisgwyl wrth gychwyn. Efallai fod hyn o ganlyniad i ychwanegyn neu anhawster arall. Mae modd ceisio datrys y broblem o fewn y Modd Diogel.">

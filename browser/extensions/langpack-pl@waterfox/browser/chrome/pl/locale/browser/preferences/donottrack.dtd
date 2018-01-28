@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Preferencje względem śledzenia">
+<!ENTITY window.width "50em">
+<!ENTITY window.height "10em">
+
+<!ENTITY doNotTrackCheckbox2.label "Informowanie witryn, że użytkownik nie chce być śledzony.">
+<!ENTITY doNotTrackCheckbox2.accesskey "">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; niezależnie wysyła nagłówek informujący, że użytkownik nie chce być śledzony (DNT), gdy ochrona przed śledzeniem jest włączona.">
+<!ENTITY doNotTrackLearnMore.label "Więcej informacji">

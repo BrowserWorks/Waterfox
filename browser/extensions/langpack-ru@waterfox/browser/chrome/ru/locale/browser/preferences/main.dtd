@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Запуск">
+
+<!ENTITY startupPage2.label        "При запуске &brandShortName;">
+<!ENTITY startupPage2.accesskey    "и">
+<!ENTITY startupUserHomePage.label "Показать домашнюю страницу">
+<!ENTITY startupBlankPage.label    "Показать пустую страницу">
+<!ENTITY startupPrevSession.label  "Показать окна и вкладки, открытые в прошлый раз">
+
+<!ENTITY homepage2.label           "Домашняя страница">
+<!ENTITY homepage2.accesskey       "м">
+<!ENTITY useCurrentPage.label      "Использовать текущую страницу">
+<!ENTITY useCurrentPage.accesskey  "п">
+<!ENTITY useMultiple.label         "Использовать текущие страницы">
+<!ENTITY chooseBookmark.label      "Использовать закладку…">
+<!ENTITY chooseBookmark.accesskey  "в">
+<!ENTITY restoreDefault.label      "Восстановить по умолчанию">
+<!ENTITY restoreDefault.accesskey  "о">
+
+<!ENTITY downloads.label     "Загрузки">
+
+<!ENTITY saveTo.label "Путь для сохранения файлов">
+<!ENTITY saveTo.accesskey "ь">
+<!ENTITY chooseFolderWin.label        "Обзор…">
+<!ENTITY chooseFolderWin.accesskey    "б">
+<!ENTITY chooseFolderMac.label        "Выбрать…">
+<!ENTITY chooseFolderMac.accesskey    "ы">
+<!ENTITY alwaysAskWhere.label         "Всегда выдавать запрос на сохранение файлов">
+<!ENTITY alwaysAskWhere.accesskey     "е">
+
+<!ENTITY alwaysCheckDefault2.label        "Всегда проверять, является ли &brandShortName; вашим браузером по умолчанию">
+<!ENTITY alwaysCheckDefault2.accesskey    "а">
+<!ENTITY setAsMyDefaultBrowser3.label     "Установить по умолчанию…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "н">
+<!ENTITY isDefault.label                  "В настоящий момент &brandShortName; является вашим браузером по умолчанию">
+<!ENTITY isNotDefault.label               "&brandShortName; не является вашим браузером по умолчанию">
+
+<!ENTITY separateProfileMode.label        "Разрешить одновременный запуск &brandShortName; и Waterfox">
+<!ENTITY useWaterfoxSync.label             "Совет: При этом используются отдельные профили. Используйте Синхронизацию для обмена между ними данными.">
+<!ENTITY getStarted.notloggedin.label     "Войти в Синхронизацию…">
+<!ENTITY getStarted.configured.label      "Открыть настройки Синхронизации">
+
+<!ENTITY e10sEnabled.label                "Включить мультипроцессность в &brandShortName;">

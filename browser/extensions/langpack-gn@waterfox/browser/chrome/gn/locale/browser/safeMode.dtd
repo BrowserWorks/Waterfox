@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; jeikekatu">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Eñepyrũ jeikekatúpe">
+<!ENTITY refreshProfile.label         "&brandShortName; ñemyenyhẽjey">
+
+<!ENTITY safeModeDescription3.label   "Jeikekatu ha'e peteĩ &brandShortName; rekoitevoi ikatúva ojepuru oñemyatyrõ hag̃ua apañuãi.">
+<!ENTITY safeModeDescription4.label   "Umi moĩmbaha ha mboheko ñemomba'epyréva oñemboguéta sapy'aitemi.">
+
+<!ENTITY refreshProfileInstead.label  "Ikatu avei epo pe apañuãi ñemyatyrõ ha embopiro'y &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; oñemboty ehe'arõ'ỹre oñepyrũmi jave. Ko ikatu oiko tembipuru'i térã ambue apañuãi rupi. Nde ikatu eñeha'ã emoĩporã pe apañuãi jeikekatu rupi añoite.">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Vi ne estas nun en privata fenestro.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Malfermi privatan fenestron">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privata retumo">
+<!ENTITY privateBrowsing.title.tracking                  "Privata retumo kun protekto kontraŭ spurado">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Dum vi retumas en privata fenestro, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ne konservas">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "vizititajn paĝojn">
+<!ENTITY aboutPrivateBrowsing.info.searches              "serĉojn">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "kuketojn">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tempajn dosierojn">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ja konservos">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " viajn:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "elŝutojn">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "legosignojn">
+<!ENTITY aboutPrivateBrowsing.note.before                "Retumi private ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ne igas vin anonima">
+<!ENTITY aboutPrivateBrowsing.note.after                 " en la reto. Via dunginto aŭ retprovizanto povas daŭre scii kiujn paĝojn vi vizitas.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Pli da informo pri ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Privata retumo">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protekto kontraŭ spurado">
+<!ENTITY trackingProtection.description2                 "Kelkaj retejoj uzas spurilojn kiuj povas sekvi vin tra la reto. La protekto kontraŭ spurado de Waterfox blokos plurajn spurilojn kiuj povus kolekti informon pri via agado en la reto.">
+<!ENTITY trackingProtection.startTour1                   "Vidi kiel tio ĉi funkcias">

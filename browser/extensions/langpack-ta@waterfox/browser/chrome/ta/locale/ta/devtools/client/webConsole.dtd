@@ -1,0 +1,103 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "வலை பணிமுனை">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "URL ஐ புதிஅய் தாவலில் திற (T)">
+<!ENTITY openURL.accesskey "T">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Net">
+<!ENTITY btnPageNet.tooltip "பிணைய அணுகலைப் பதிவு செய்">
+<!ENTITY btnPageNet.accesskey "N">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "CSS பிழைகளையும் எச்சரிக்கைகளையும் பதிவிடு">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "JavaScript விலக்கங்களைப் பதிவு செய்">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "பாதுகாப்பு">
+<!ENTITY btnPageSecurity.tooltip "பாதுகாப்பு பிழைகளையும் எச்சரிக்கைகளையும் பதிவிடு">
+<!ENTITY btnPageSecurity.accesskey "u">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "பதிவுசெய்தல்">
+<!ENTITY btnPageLogging.tooltip "window.console பொருளுக்கு அனுப்பப்படும் செய்திகளைப் பதிவு செய்">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "பிழைகள்">
+<!ENTITY btnConsoleInfo         "தகவல்">
+<!ENTITY btnConsoleWarnings     "எச்சரிக்கைகள்">
+<!ENTITY btnConsoleLog          "பதிவு">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "மீளோடைகள்">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+
+<!ENTITY btnServerErrors              "பிழைகள்">
+<!ENTITY btnServerInfo                "தகவல்">
+<!ENTITY btnServerWarnings            "எச்சரிக்கைகள்">
+<!ENTITY btnServerLog                 "பதிவு">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+
+<!ENTITY filterOutput.placeholder "வடிகட்டி வெளியீடு">
+<!ENTITY btnClear.label        "அகற்று">
+<!ENTITY btnClear.tooltip      "வலை பணிமுனை வெளியீட்டை அழி">
+<!ENTITY btnClear.accesskey    "அ">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "இணைப்பு இடத்தை நகலெடு">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+
+
+
+
+
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!ENTITY btnConsoleWindowlessWorkers "Add-on or Chrome Workers">
+
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerLogging.label       "Server">
+<!ENTITY btnServerLogging.tooltip     "Log messages received from a web server">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY openInVarViewCmd.label "Open in Variables View">
+<!ENTITY storeAsGlobalVar.accesskey "S">
+<!ENTITY storeAsGlobalVar.label "Store as global variable">

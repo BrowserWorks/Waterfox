@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Извештаи за уривање">
+<!ENTITY crashesUnsubmitted.label   "Неиспратени извештаи за уривање">
+<!ENTITY crashesSubmitted.label     "Испратени извештаи за уривање">
+<!ENTITY id.heading                 "ID на извештајот">
+<!ENTITY dateCrashed.heading        "Датум на уривање">
+<!ENTITY dateSubmitted.heading      "Датум на испраќање">
+<!ENTITY noReports.label            "Нема испратени извештаи за уривање.">
+<!ENTITY noConfig.label             "Оваа програма не е конфигурирана за прикажување на извештаи од уривање. Преференцата <code>breakpad.reportURL</code> мора да биде поставена.">
+<!ENTITY clearAllReports.label      "Отстрани ги сите извештаи">

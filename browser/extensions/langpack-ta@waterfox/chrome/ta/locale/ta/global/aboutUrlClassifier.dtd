@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "url-பிரிப்பான் பற்றியத் தகவல்">
+<!ENTITY aboutUrlClassifier.providerTitle               "வழங்குநர்">
+<!ENTITY aboutUrlClassifier.provider                    "வழங்குநர்">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "கடைசியாகப் புதுப்பித்த நேரம்">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "அடுத்த புதுப்பிப்பு நேரம்">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "திரும்பப்பெறும் நேரம்">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "கடைசி புதுப்பிப்பு நிலை">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "புதுப்பி">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "இடையகம்">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "புதுப்பி">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "துடை">
+<!ENTITY aboutUrlClassifier.cacheTableName              "அட்டவணை பெயர்">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "எதிர் இடையக உள்ளீடுகளின் எண்ணிக்கை">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "நேர்இடையக உள்ளீடுகளின் எண்ணிக்கை">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "உள்ளீடுகளைக் காட்டு">
+<!ENTITY aboutUrlClassifier.cacheEntries                "இடையக உள்ளீடுகள்">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "முன்னொட்டு">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "எதிர் இடையகக் காலாவதி">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "முழு கொத்து">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "நேர் இடையகக் காலாவதி">
+<!ENTITY aboutUrlClassifier.debugTitle                  "வழு நீக்கம்">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "பதிவுச் சிப்பங்களை அமை">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "பதிவுக் கோப்பை அமை">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS பதிவை அமை">
+<!ENTITY aboutUrlClassifier.debugSBModules              "பாதுகாப்பான உலாவல் பதிவுச் சிப்பங்கள்">
+<!ENTITY aboutUrlClassifier.debugModules                "தற்போதைய பதிவுச் சிப்பங்கள்:">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "பாதுகாப்பான உலாவல் JS பதிவு">
+<!ENTITY aboutUrlClassifier.debugFile                   "தற்போதைய பதிவுக் கோப்பு">

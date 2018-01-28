@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Güvenlik">
+<!ENTITY  phishingProtection.label       "Dolandırıcılık koruması">
+
+<!ENTITY  warnOnAddonInstall2.label       "Siteler eklenti kurmayı denediğinde uyar">
+<!ENTITY  warnOnAddonInstall2.accesskey   "U">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Tehlikeli ve aldatıcı içerikleri engelle">
+<!ENTITY  enableSafeBrowsing.accesskey    "T">
+
+<!ENTITY  blockDownloads.label            "Tehlikeli indirmeleri engelle">
+<!ENTITY  blockDownloads.accesskey        "i">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "İstenmeyen ve bilinmeyen yazılımlar hakkında beni uyar">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "b">
+
+<!ENTITY  addonExceptions.label         "İstisnalar…">
+<!ENTITY  addonExceptions.accesskey     "n">
+
+
+<!ENTITY  formsAndPasswords.label       "Formlar ve parolalar">
+
+<!ENTITY  rememberLogins2.label         "Site giriş bilgilerini hatırla">
+<!ENTITY  rememberLogins2.accesskey     "H">
+<!ENTITY  passwordExceptions.label      "İstisnalar…">
+<!ENTITY  passwordExceptions.accesskey  "s">
+
+<!ENTITY  useMasterPassword.label        "Ana parola kullan">
+<!ENTITY  useMasterPassword.accesskey    "n">
+<!ENTITY  changeMasterPassword.label     "Ana parolayı değiştir…">
+<!ENTITY  changeMasterPassword.accesskey "d">
+
+<!ENTITY  savedLogins.label              "Kayıtlı hesaplar…">
+<!ENTITY  savedLogins.accesskey          "K">

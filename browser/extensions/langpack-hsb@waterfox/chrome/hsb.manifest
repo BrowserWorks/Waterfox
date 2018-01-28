@@ -1,0 +1,14 @@
+locale alerts hsb hsb/locale/hsb/alerts/
+locale autoconfig hsb hsb/locale/hsb/autoconfig/
+locale global hsb hsb/locale/hsb/global/
+locale global-platform hsb hsb/locale/hsb/global-platform/mac/ os=Darwin
+locale global-platform hsb hsb/locale/hsb/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform hsb hsb/locale/hsb/global-platform/win/ os=WINNT
+locale mozapps hsb hsb/locale/hsb/mozapps/
+locale necko hsb hsb/locale/hsb/necko/
+locale passwordmgr hsb hsb/locale/hsb/passwordmgr/
+locale pipnss hsb hsb/locale/hsb/pipnss/
+locale pippki hsb hsb/locale/hsb/pippki/
+locale places hsb hsb/locale/hsb/places/
+locale pluginproblem hsb hsb/locale/hsb/pluginproblem/
+locale weave hsb hsb/locale/hsb/services/

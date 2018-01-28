@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Upravitelj digitalnih potrdil">
+
+<!ENTITY certmgr.tab.mine                     "Vaša digitalna potrdila">
+<!ENTITY certmgr.tab.others2                  "Ljudje">
+<!ENTITY certmgr.tab.websites3                "Strežniki">
+<!ENTITY certmgr.tab.ca                       "Overitelji">
+<!ENTITY certmgr.tab.orphan2                  "Drugi">
+
+<!ENTITY certmgr.mine                         "Imate digitalna potrdila naslednjih organizacij, ki predstavljajo vas:">
+<!ENTITY certmgr.others                       "Imate digitalna potrdila, ki predstavljajo naslednje ljudi:">
+<!ENTITY certmgr.websites2                    "Imate digitalna potrdila, ki predstavljajo naslednje strežnike:">
+<!ENTITY certmgr.cas                          "Imate digitalna potrdila, ki predstavljajo naslednje overitelje:">
+<!ENTITY certmgr.orphans                      "Imate digitalna potrdila, ki ne spadajo v nobeno izmed drugih kategorij:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Splošno">
+<!ENTITY certmgr.detail.general_tab.accesskey "S">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Podrobnosti">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Poteka preverjanje digitalnih potrdil …">
+<!ENTITY certmgr.subjectinfo.label            "Izdano za">
+<!ENTITY certmgr.issuerinfo.label             "Izdajatelj">
+<!ENTITY certmgr.periodofvalidity.label       "Obdobje veljavnosti" >
+<!ENTITY certmgr.fingerprints.label           "Prstni odtisi">
+<!ENTITY certmgr.certdetail.title             "Podrobnosti digitalnega potrdila">
+<!ENTITY certmgr.certdetail.cn                "Splošno ime (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organizacija (O)">
+<!ENTITY certmgr.certdetail.ou                "Organizacijska enota (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Serijska številka">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Prstni odtis SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Prstni odtis SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Urejanje nastavitev zaupanja overiteljem">
+<!ENTITY certmgr.editcert.edittrust           "Spremeni nastavitve zaupanja:">
+<!ENTITY certmgr.editcert.trustssl            "To digitalno potrdilo lahko predstavlja spletne strani.">
+<!ENTITY certmgr.editcert.trustemail          "Ta digitalno potrdilo lahko predstavlja uporabnike e-pošte.">
+<!ENTITY certmgr.editcert.trustobjsign        "Ta digitalno potrdilo lahko predstavlja izdelovalce programov.">
+
+<!ENTITY certmgr.deletecert.title             "Izbriši digitalno potrdilo">
+
+<!ENTITY certmgr.certname                     "Ime digitalnega potrdila">
+<!ENTITY certmgr.certserver                   "Strežnik">
+<!ENTITY certmgr.override_lifetime            "Življenjska doba">
+<!ENTITY certmgr.tokenname                    "Varnostna naprava">
+<!ENTITY certmgr.begins                       "Začne veljati">
+<!ENTITY certmgr.expires                      "Poteče">
+<!ENTITY certmgr.email                        "E-poštni naslov">
+<!ENTITY certmgr.serial                       "Serijska številka">
+
+<!ENTITY certmgr.close.label                  "Zapri">
+<!ENTITY certmgr.close.accesskey              "Z">
+<!ENTITY certmgr.view2.label                  "Ogled …">
+<!ENTITY certmgr.view2.accesskey              "O">
+<!ENTITY certmgr.edit3.label                  "Uredi zaupanje …">
+<!ENTITY certmgr.edit3.accesskey              "e">
+<!ENTITY certmgr.export.label                 "Izvozi …">
+<!ENTITY certmgr.export.accesskey             "i">
+<!ENTITY certmgr.delete2.label                "Zbriši …">
+<!ENTITY certmgr.delete2.accesskey            "Z">
+<!ENTITY certmgr.delete_builtin.label         "Zbriši ali umakni zaupanje …">
+<!ENTITY certmgr.delete_builtin.accesskey     "Z">
+<!ENTITY certmgr.backup2.label                "Varnostna kopija …">
+<!ENTITY certmgr.backup2.accesskey            "K">
+<!ENTITY certmgr.backupall2.label             "Varnostna kopija vseh">
+<!ENTITY certmgr.backupall2.accesskey         "v">
+<!ENTITY certmgr.restore2.label               "Uvozi …">
+<!ENTITY certmgr.restore2.accesskey           "u">
+<!ENTITY certmgr.details.label                "Polja digitalnega potrdila">
+<!ENTITY certmgr.details.accesskey            "O">
+<!ENTITY certmgr.fields.label                 "Vrednost polja">
+<!ENTITY certmgr.fields.accesskey             "R">
+<!ENTITY certmgr.hierarchy.label              "Hierarhija digitalnih potrdil">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Dodaj izjemo …">
+<!ENTITY certmgr.addException.accesskey       "i">
+
+<!ENTITY exceptionMgr.title                   "Dodaj varnostno izjemo">
+<!ENTITY exceptionMgr.exceptionButton.label   "Potrdi varnostno izjemo">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "z">
+<!ENTITY exceptionMgr.supplementalWarning     "Uveljavljene banke, trgovine in druge javne strani vas ne bodo prosile za to.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Strežnik">
+<!ENTITY exceptionMgr.certlocation.url        "Lokacija:">
+<!ENTITY exceptionMgr.certlocation.download   "Dobi digitalno potrdilo">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Stanje digitalnega potrdila">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Ogled …">
+<!ENTITY exceptionMgr.certstatus.accesskey    "O">
+<!ENTITY exceptionMgr.permanent.label         "Trajno shrani izjemo">
+<!ENTITY exceptionMgr.permanent.accesskey     "T">

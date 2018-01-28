@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Ñanduti raperã rehegua">
+<!ENTITY aboutNetworking.warning               "Kóva ha'e oñeha'ãva gueteri. Ndojepuruva'erãi peteĩ kakuaapáva rehe'ỹ.">
+<!ENTITY aboutNetworking.showNextTime          "Ehechauka ko kyhyjerã peteĩhápe">
+<!ENTITY aboutNetworking.ok                    "MONEĨ">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Moingeha">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Mbopiro'y">
+<!ENTITY aboutNetworking.autoRefresh           "Embopiro'y ijehegui 3 aravo'ive og̃uahẽvo">
+<!ENTITY aboutNetworking.hostname              "Mohendahavusu réra">
+<!ENTITY aboutNetworking.port                  "Mbojuajuhaite">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Myandypyre">
+<!ENTITY aboutNetworking.idle                  "okéva">
+<!ENTITY aboutNetworking.host                  "Mohendahavusu">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Mondopyre">
+<!ENTITY aboutNetworking.received              "Japyhypyre">
+<!ENTITY aboutNetworking.family                "Pehẽngue">
+<!ENTITY aboutNetworking.addresses             "Kundaharape">
+<!ENTITY aboutNetworking.expires               "Paha (aravo'ive)">
+<!ENTITY aboutNetworking.messagesSent          "Marandu mondopyre">
+<!ENTITY aboutNetworking.messagesReceived      "Marandu japyhypyre">
+<!ENTITY aboutNetworking.bytesSent             "Bytes mondopyre">
+<!ENTITY aboutNetworking.bytesReceived         "Bytes japyhypyre">
+<!ENTITY aboutNetworking.logging               "Hasapy">
+<!ENTITY aboutNetworking.logTutorial           "Eporandu <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> eikuaaséramo mba'éichapa eipurúta ko tembipuru.">
+<!ENTITY aboutNetworking.currentLogFile        "Marandurenda rembiasakue rehegua:">
+<!ENTITY aboutNetworking.currentLogModules     "Jehaipy ra'ãha rehegua:">
+<!ENTITY aboutNetworking.setLogFile            "Emopyenda marandurenda jehaipy">
+<!ENTITY aboutNetworking.setLogModules         "Emopyenda jehaipy ra'ãha">
+<!ENTITY aboutNetworking.startLogging          "Ta'ãha moñepyrũ">
+<!ENTITY aboutNetworking.stopLogging           "Ta'ãha jejoko">
+<!ENTITY aboutNetworking.dnsLookup             "DNS jeheka">
+<!ENTITY aboutNetworking.dnsLookupButton       "Japopa">
+<!ENTITY aboutNetworking.dnsDomain             "Tendatee">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Papapy'atygua">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN rekotee">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Kache nemba'etéva rehegua">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Kache nemba'eteéva">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Ñanduti rehegua mba'ejerure">
+<!ENTITY aboutNetworking.rcwnOperation         "Kache Rembiapo">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Ijurujáva">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Moñe'ẽ">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Hai">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Jeikeha ijurujáva">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Mombytegua mbykýva">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Mombytegua ipukúva">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Ñemboyke ha'etéva ipukúva">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Kache nemba'etéva imbeguéva">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Kache nemba'etéva imbegue'ỹva">

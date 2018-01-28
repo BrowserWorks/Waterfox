@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab обикаля разделите в реда на използване">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "б">
+
+<!ENTITY newWindowsAsTabs.label       "Отваряне на новите прозорци в раздел">
+<!ENTITY newWindowsAsTabs.accesskey   "д">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Предупреждаване при затваряне на няколко раздела">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "п">
+
+<!ENTITY warnOnOpenManyTabs.label       "Предупреждаване, когато отварянето на няколко раздела може да забави &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "а">
+
+<!ENTITY switchLinksToNewTabs.label        "При отваряне на препратка в раздел, той да става активен">
+<!ENTITY switchLinksToNewTabs.accesskey    "н">
+
+<!ENTITY showTabsInTaskbar.label          "Преглед на разделите в лентата със задачите на Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "с">
+<!ENTITY tabsGroup.label          "Раздели">

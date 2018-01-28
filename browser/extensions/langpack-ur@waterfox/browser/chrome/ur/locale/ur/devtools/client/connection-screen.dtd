@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "جڑیں">
+<!ENTITY header     "بعید آلہ سے رابطہ قائم کریں">
+<!ENTITY host       "میزبان:">
+<!ENTITY port       "دہانہ:">
+<!ENTITY connect    "جڑیں">
+<!ENTITY connecting "جوڑ رہا ہے…">
+<!ENTITY availableAddons "دستیاب بعید ایڈ اون">
+<!ENTITY availableTabs "دستیاب شدہ بعید ٹیبیں:">
+<!ENTITY availableProcesses "دستیاب شدہ بعید عمل کاری:">
+<!ENTITY connectionError "خرابی:">
+<!ENTITY errorTimeout "نقص: جڑنے کی مدت ختم ہوچکی ہے۔">
+<!ENTITY errorRefused "نقص: جڑنا نامنظور ہوا۔">
+<!ENTITY errorUnexpected "غیرمتوقع نقص۔">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox Dتخلیق کار ٹول  بعید آلات (جیسے کہ Waterfox for Android اور Waterfox OS) کو ٹھیک کرنے میں مدد دیتا ہے۔ دیکھ لیں کہ آپ نے بعید آلے میں بعید ٹھیک کرنے کا اختیار آن کیا ہوا ہے۔ مزید کے لیے دیکھیں">
+<!ENTITY remoteDocumentation "دستاویزکاری">
+<!ENTITY remoteHelpSuffix ".">
+

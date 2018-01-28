@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Chào mừng đến với &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Đăng nhập để đồng bộ các thẻ, trang đánh dấu, mật khẩu và các phần khác.">
+<!ENTITY aboutAccountsConfig.startButton.label "Bắt đầu">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Tùy chỉnh đồng bộ">
+<!ENTITY aboutAccounts.noConnection.title "Không có kết nối">
+<!ENTITY aboutAccounts.noConnection.description "Bạn phải kết nối với Internet để đăng nhập.">
+<!ENTITY aboutAccounts.noConnection.retry "Thử lại">
+<!ENTITY aboutAccounts.badConfig.title "Cấu hình sai">
+<!ENTITY aboutAccounts.badConfig.description "Không thể xác định cấu hình máy chủ tài khoản Waterfox của bạn. Hãy thử lại sau.">

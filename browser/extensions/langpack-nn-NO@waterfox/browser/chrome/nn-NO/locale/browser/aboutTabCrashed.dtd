@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Lat att denne fana">
+<!ENTITY tabCrashed.restoreTab "Bygg oppatt denne fana">
+<!ENTITY tabCrashed.restoreAll "Bygg oppatt alle krasja faner">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ops. Fana di krasja.">
+<!ENTITY tabCrashed.offerHelp "Vi kan hjelpe deg!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Vel &tabCrashed.restoreTab; for å laste inn sideinnhald på nytt.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Vel &tabCrashed.restoreTab; eller &tabCrashed.restoreAll; for lasta inn sideinnhald på nytt.">
+<!ENTITY tabCrashed.requestHelp "Vil du hjelpe oss?">
+<!ENTITY tabCrashed.requestHelpMessage "Krasjrapportar hjelper oss med å diagnostisere problem og å gjera &brandShortName; betre.">
+<!ENTITY tabCrashed.requestReport "Rapporter denne fana">
+<!ENTITY tabCrashed.sendReport2 "Send ein krasjrapport for fana du ser på">
+<!ENTITY tabCrashed.commentPlaceholder2 "Valfri kommentar (som er synleg for ålmenta)">
+<!ENTITY tabCrashed.includeURL2 "Ta med nettadressa til sida i krasjrapporten.">
+<!ENTITY tabCrashed.emailPlaceholder "Skriv inn e-postadressa di her">
+<!ENTITY tabCrashed.emailMe "Send meg e-post når meir informasjon er tilgjengeleg">
+<!ENTITY tabCrashed.reportSent "Krasjrapport er allereie sendt; takk for at du hjelper til med å gjere &brandShortName; betre!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Rapporter bakgrunnsfaner">
+<!ENTITY tabCrashed.autoSubmit2 "Oppdater innstillingar for å automatisk sende krasjrapportar, inkludert rapportar for krasja bakgrunnsfaner, frå denne økta og framtidige økter">

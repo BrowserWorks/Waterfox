@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Thiết lập Trang">
+
+<!ENTITY basic.tab           "Định dạng &amp; Tùy chọn">
+
+<!ENTITY formatGroup.label   "Định dạng">
+
+<!ENTITY orientation.label   "Chiều:">
+<!ENTITY portrait.label      "Dọc">
+<!ENTITY portrait.accesskey  "D">
+<!ENTITY landscape.label     "Ngang">
+<!ENTITY landscape.accesskey "N">
+
+<!ENTITY scale.label         "Tỉ lệ:">
+<!ENTITY scale.accesskey     "T">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Co lại cho vừa Độ rộng Trang">
+<!ENTITY shrinkToFit.accesskey "C">
+
+<!ENTITY optionsGroup.label  "Tùy chọn">
+
+<!ENTITY printBG.label       "In hình nền (màu sắc &amp; hình ảnh)">
+<!ENTITY printBG.accesskey   "I">
+
+<!ENTITY advanced.tab        "Lề &amp; Đầu trang/Cuối trang">
+
+<!ENTITY marginGroup.label   "Lề (#1)">
+<!ENTITY marginUnits.inches  "inch">
+<!ENTITY marginUnits.metric  "milimét">
+<!ENTITY marginTop.label     "Trên:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "Dưới:">
+<!ENTITY marginBottom.accesskey "D">
+<!ENTITY marginLeft.label    "Trái:">
+<!ENTITY marginLeft.accesskey "r">
+<!ENTITY marginRight.label   "Phải:">
+<!ENTITY marginRight.accesskey "P">
+
+<!ENTITY headerFooter.label  "Đầu trang &amp; Cuối trang">
+
+<!ENTITY hfLeft.label        "Trái:">
+<!ENTITY hfCenter.label      "Giữa:">
+<!ENTITY hfRight.label       "Phải:">
+<!ENTITY headerLeft.tip      "Đầu trang bên Trái">
+<!ENTITY headerCenter.tip    "Đầu trang ở Giữa">
+<!ENTITY headerRight.tip     "Đầu trang bên Phải">
+<!ENTITY footerLeft.tip      "Cuối trang bên Trái">
+<!ENTITY footerCenter.tip    "Cuối trang ở Giữa">
+<!ENTITY footerRight.tip     "Cuối trang bên Phải">
+
+<!ENTITY hfTitle             "Tiêu đề">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Ngày/Giờ">
+<!ENTITY hfPage              "Trang #">
+<!ENTITY hfPageAndTotal      "Trang # trên tổng #">
+<!ENTITY hfBlank             "--trống--">
+<!ENTITY hfCustom            "Tùy biến…">
+
+<!ENTITY customPrompt.title  "Tùy biến…">
+<!ENTITY customPrompt.prompt "Nhập phần văn bản tùy biến của bạn cho phần đầu/cuối trang">

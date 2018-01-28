@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newtab.pageTitle "Nowa karta">
+<!ENTITY newtab.customize.classic "Często odwiedzane strony">
+<!ENTITY newtab.customize.cog.enhanced "Sugerowane strony">
+<!ENTITY newtab.customize.cog.title2 "Ustawienia nowej karty">
+<!ENTITY newtab.customize.cog.learn "Więcej informacji o nowej karcie">
+<!ENTITY newtab.customize.title "Dostosuj stronę nowej karty">
+<!ENTITY newtab.customize.blank2 "Pusta">
+<!ENTITY newtab.undo.removedLabel "Miniaturka usunięta.">
+<!ENTITY newtab.undo.undoButton "Cofnij.">
+<!ENTITY newtab.undo.restoreButton "Przywróć wszystkie.">
+<!ENTITY newtab.undo.closeTooltip "Ukryj">

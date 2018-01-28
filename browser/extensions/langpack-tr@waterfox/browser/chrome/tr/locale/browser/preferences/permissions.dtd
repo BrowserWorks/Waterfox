@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "İstisnalar">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Site">
+<!ENTITY treehead.status.label        "Durum">
+<!ENTITY removepermission2.label      "Siteyi kaldır">
+<!ENTITY removepermission2.accesskey  "K">
+<!ENTITY removeallpermissions2.label  "Tüm siteleri kaldır">
+<!ENTITY removeallpermissions2.accesskey "d">
+<!ENTITY address.label                "Site adresi:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Engelle">
+<!ENTITY block.accesskey              "E">
+<!ENTITY session.label                "Oturum boyunca izin ver">
+<!ENTITY session.accesskey            "r">
+<!ENTITY allow.label                  "İzin ver">
+<!ENTITY allow.accesskey              "z">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Vazgeç">
+<!ENTITY button.cancel.accesskey      "a">
+<!ENTITY button.ok.label              "Değişiklikleri kaydet">
+<!ENTITY button.ok.accesskey          "D">
+

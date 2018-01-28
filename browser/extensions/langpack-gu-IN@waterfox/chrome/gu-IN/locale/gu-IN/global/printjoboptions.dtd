@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "પ્રિન્ટરનાં ગુણધર્મો">
+
+<!ENTITY paperInput.label "કાગળનું માપ:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "ક્રિયા શીર્ષક:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "રંગ:">
+<!ENTITY grayRadio.label "ગ્રેસ્કેલ">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "રંગ">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "કાગળની ધારથી હાંસિયાનું માપ(ઇંચમાં)">
+<!ENTITY topInput.label "ઉપર:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "નીચે:">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "ડાબું:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "જમણું:">
+<!ENTITY rightInput.accesskey "R">

@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "पृष्ठक लोडिंगमे समस्या">
+<!ENTITY retry.label "फेर कोशिश करू ">
+
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "कनेक्ट करबामे असमर्थ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "ई पता प्रतिबंधित अछि ">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "सर्वर नहि भेटल">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>पता केँ टाइपिंग त्रुटि क लेल जाँचे जहिना जे <strong>ww</strong>.example.com बजाए <strong>www</strong>.example.com के</li> <li> जँ  अहाँ ककरो पृष्ठ केँ लोड करब मे असमर्थ अछि , अपने कंप्यूटर सँजाल कनेक्शन क जाँच  करू .</li> <li> जँ  अहाँक कंप्यूटर अथवा सँजाल फायरवाल अथवा प्राक्सी सँ सुरक्षित  अछि , सुनिश्चित करू जे &brandShortName; केँ वेब क अभिगम क लेल अनुमति प्राप्त  अछि .</li> </ul>">
+
+<!ENTITY fileNotFound.title "फाइल नहि भेटल">
+<!ENTITY fileNotFound.longDesc "<ul> <li>कैपिटलाइजेशन अथवा दूसरी टाइपिंग त्रुटि क लेल फाइल नाम जाँचू.</li> <li>जाँचे ई देखब क लेल जे फाइल खिसकलया, फेर नामकरण कएल अथवा मेटायल गेल छल.</li> </ul>">
+
+
+
+<!ENTITY generic.title "ओफ्फ.">
+<!ENTITY generic.longDesc "<p>&brandShortName; किछु कारणक लेल एहि पृष्ठ केँ लोड नहि कए सकैत अछि .</p>">
+
+
+
+
+<!ENTITY malformedURI.title "पता वैध नहि अछि ">
+<!ENTITY malformedURI.longDesc "<ul> <li>वेब पता प्रायः एहि तरह लिखा जाएत अछि <strong>http://www.example.com/</strong></li> <li>सुनिश्चित करू जे अहाँ फारवर्ड स्लैश क प्रयोग कए रहल छी (यानी <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "कनेक्शन बाधित कएल गेल छल">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "दस्तावेजक समय खतम भेल">
+<!ENTITY notCached.longDesc "<p>The requested document is not available in &brandShortName;'s cache.</p><ul><li>As a security precaution, &brandShortName; does not automatically re-request sensitive documents.</li><li>Click Try Again to re-request the document from the website.</li></ul>">
+
+<!ENTITY netOffline.title "Offline mode">
+<!ENTITY netOffline.longDesc2 "<ul> <li>&quot;फेर कोशिश करू&quot; केँ आनलाइन अवस्थामे जएबाक लेल दबाउ आओर पृष्ठ फेर लोड करू.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "अंतर्वस्तु ऐन्कोडिंग त्रुटि">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>कृपया वेबसाइट मालिक सँ हुनका एहि समस्याक संबंधमे बताबैक लेल संपर्क करू.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "असुरक्षित फाइल प्रकार">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>कृपया वेबसाइट मालिक सँ हुनका एहि समस्याक संबंधमे बताबैक लेल संपर्क करू.</li> </ul>">
+
+<!ENTITY netReset.title "कनेक्शन रिसेट कएल गेल छल">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "कनेक्शनक समय समाप्त भए गेल">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "पता समझाएल नहि गेल छल">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>अहाँ आन साफ्टवेयर कए एहि पता कए खोलबाक लेल स्थापित कए सकैत छी.</li> .</ul>">
+
+<!ENTITY proxyConnectFailure.title "प्राक्सी सर्वर कनेक्शन अस्वीकार कए रहल अछि ">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>प्राक्सी सेटिंगक जाँच सुनिश्चित करबाक लेल करू कि ओ सही अछि .</li> <li>अपन सँजाल प्रशासक कए जाँचू सुनिश्चित करबाक लेल प्राक्सी सर्वर काज कए रहल अछि.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "प्राक्सी सर्वर ढ़ूढ़वमे असमर्थ">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>प्राक्सी सेटिंगक जाँच सुनिश्चित करबाक लेल करू जे ओ सही अछि.</li> <li>सुनिश्चित करबाक लेल जाँचू जे अहाँक कंप्यूटरक पास कार्यशील सँजाल कनेक्शन अछि .</li> <li> जों अहाँक कंप्यूटर वा सँजाल फायरवाल वा प्राक्सीसँ सुरक्षित अछि, सुनिश्चित करू कि &brandShortName; क वेबक अभिगमक लेल अनुमति प्राप्त अछि.</li> </ul>">
+
+<!ENTITY redirectLoop.title "पृष्ठ ठीकसँ पुनर्निर्देशित नहि कए रहल अछि ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ई समस्या कहियो-कहियो कुकीक स्वीकार करब वा निष्क्रिय करबाक कारण होइत अछि.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "सर्वर सँ अप्रत्याशित अनुक्रिया">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>सुनिश्चित करबाक लेल जाँचू जे अहाँक सिस्टम मे निज सुरक्षा प्रबंधक स्थापित अछि .</li> <li>इ सर्वर पर केकरो गैर मानक विन्यासक कारण भए सकैत अछि.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>पृष्ठ जेकरा अहाँ देखबाक कोशिश कए रहल छी नहि देखाओल जाए सकैत अछि किएक प्राप्त आंकड़ा क प्रमाणिकता जांचल नहि जाए सकल.</li> <li>कृपया वेब साइट मालिक कए एहि समस्याक संबंध मे सूचित करबाक लेल संपर्क करू.</li> </ul>">
+
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+<!ENTITY sharedLongDesc "<ul> <li>साइट अस्थायी रूपसँ अनुपलब्ध वा अत्यधिक व्यस्त भए सकैत अछि. किछु कालमे फेर कोशिश करू.</li> <li>जों अहाँ केकरो पृष्ठ कए लोड करबामे असमर्थ छी,  अपन कंप्यूटर सँजाल संयोजनक जाँच करू.</li> <li> जों अहाँक कंप्यूटर वा सँजाल केकरो फायरवाल वा प्राक्सीस संरक्षित अछि , सुनिश्चित करू जे &brandShortName; वेबक पहुँचबाक लेल अनुमति प्राप्त अछि.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "अपवाद जोड़ू…">
+
+<!ENTITY errorReporting.learnMore "आओर जानू…">
+
+<!ENTITY remoteXUL.title "दूरस्थ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>कृपया वेबसाइट मालिककेँ ई समस्याक संबंधमे सूचित करबाक लेल संपर्क करू.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "सुरक्षित रूप सँ कनेक्ट करए मे असमर्थ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+
+
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+
+
+<!ENTITY advanced.label "Advanced">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.copyToClipboard.label "Copy text to clipboard">
+
+<!ENTITY certerror.introPara "The owner of <span class='hostname'/> has configured their website improperly.  To protect your information from being stolen, &brandShortName; has not connected to this website.">
+
+<!ENTITY certerror.longpagetitle1 "Your connection is not secure">
+<!ENTITY certerror.pagetitle1  "Insecure Connection">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "This site uses HTTP
+Strict Transport Security (HSTS) to specify that &brandShortName; may only connect
+to it securely. As a result, it is not possible to add an exception for this
+certificate.">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>The page you are trying to view cannot be shown because an error in the data transmission was detected.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+
+<!ENTITY corruptedContentErrorv2.title "Corrupted Content Error">
+<!ENTITY errorReporting.automatic2 "Report errors like this to help Mozilla identify and block malicious sites">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>It may have been removed, moved, or file permissions may be preventing access.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY nssFailure2.title "Secure Connection Failed">
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+
+<!ENTITY prefReset.label "Restore default settings">
+<!ENTITY prefReset.longDesc "It looks like your network security settings might be causing this. Do you want the default settings to be restored?">
+<!ENTITY returnToPreviousPage.label "Go Back">
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+

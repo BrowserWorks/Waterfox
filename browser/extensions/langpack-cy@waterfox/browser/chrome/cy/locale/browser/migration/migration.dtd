@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Dewin Mewnforio">
+
+<!ENTITY importFrom.label               "Mewnforio Dewisiadau, Nodau Tudalen, Hanes, Cyfrineiriau, a data arall o:">
+<!ENTITY importFromUnix.label           "Mewnforio Dewisiadau, Nodau Tudalen, Hanes, Cyfrineiriau a data arall o:">
+<!ENTITY importFromBookmarks.label      "Mewnforio Nodau Tudalen o:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Peidio mewnforio dim">
+<!ENTITY importFromNothing.accesskey    "d">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Porwr Diogel">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Methu canfod unrhyw rhaglenni sy'n cynnwys nodau tudalen, hanes na data cyfrineiriau.">
+
+<!ENTITY importSource.title             "Gosodiadau Mewnforio a Data">
+<!ENTITY importItems.title              "Eitemau i'w Mewnforio">
+<!ENTITY importItems.label              "Dewis eitemau i'w mewnforio:">
+
+<!ENTITY migrating.title                "Mewnforio…">
+<!ENTITY migrating.label                "Mae'r eitemau canlynol yn cael eu mewnforio…">
+
+<!ENTITY selectProfile.title            "Dewis Proffil">
+<!ENTITY selectProfile.label            "Mae'r proffiliau canlynol ar gael i'w mewnforio o:">
+
+<!ENTITY done.title                     "Wedi Cwblhau Mewnforio">
+<!ENTITY done.label                     "Cafodd yr eitemau canlynol eu mewnforio'n llwyddiannus:">
+
+<!ENTITY closeSourceBrowser.label       "Gwnewch yn siŵr fod y porwr wedi ei gau cyn parhau.">

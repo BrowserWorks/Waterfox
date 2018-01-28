@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Malunga nokunethwekha">
+<!ENTITY aboutNetworking.warning               "Apha kusalingwa. Ungayisebenzisi ungajongwanga ngumntu omdala.">
+<!ENTITY aboutNetworking.showNextTime          "Bonisa esi silumkiso kwixesha elizayo">
+<!ENTITY aboutNetworking.ok                    "KULUNGILE">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Iisokethi">
+<!ENTITY aboutNetworking.dns                   "I-DNS">
+<!ENTITY aboutNetworking.websockets            "IiSokethi ZeWebhu">
+<!ENTITY aboutNetworking.refresh               "Yenza ntsha">
+<!ENTITY aboutNetworking.autoRefresh           "Yenza ntsha ngokuzenzekelayo qho kwimizuzwana emi-3">
+<!ENTITY aboutNetworking.hostname              "Igama lomamkeli">
+<!ENTITY aboutNetworking.port                  "Isiqhagamshelisi">
+
+<!ENTITY aboutNetworking.ssl                   "I-SSL">
+<!ENTITY aboutNetworking.active                "Iyasebenza">
+<!ENTITY aboutNetworking.idle                  "Ihleli nje">
+<!ENTITY aboutNetworking.host                  "Umamkeli">
+<!ENTITY aboutNetworking.tcp                   "I-TCP">
+<!ENTITY aboutNetworking.sent                  "Ithunyelwe">
+<!ENTITY aboutNetworking.received              "Ifunyenwe">
+<!ENTITY aboutNetworking.family                "Usapho">
+<!ENTITY aboutNetworking.addresses             "Iidilesi">
+<!ENTITY aboutNetworking.expires               "Iyaphelelwa (Imizuzwana)">
+<!ENTITY aboutNetworking.messagesSent          "Umyalezo Uthunyelwe">
+<!ENTITY aboutNetworking.messagesReceived      "Umyalezo Ufunyenwe">
+<!ENTITY aboutNetworking.bytesSent             "IiByte Zithunyelwe">
+<!ENTITY aboutNetworking.bytesReceived         "IiByte Zifunyenwe">
+<!ENTITY aboutNetworking.logging               "Iyaloga">
+<!ENTITY aboutNetworking.logTutorial           "Jonga i-<a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> ukuze ufumane imiyalelo ngendlela yokusebenzisa esi sixhobo.">
+<!ENTITY aboutNetworking.currentLogFile        "Ifayile yaNgoku yokuLoga:">
+<!ENTITY aboutNetworking.currentLogModules     "Iimodyuli zaNgoku zokuLoga:">
+<!ENTITY aboutNetworking.setLogFile            "Seta iFayile yokuLoga">
+<!ENTITY aboutNetworking.setLogModules         "Seta iiModyuli zokuLoga">
+<!ENTITY aboutNetworking.startLogging          "Qalisa ukuLoga">
+<!ENTITY aboutNetworking.stopLogging           "Yeka ukuLoga">
+<!ENTITY aboutNetworking.dnsLookup             "Ukhangelo LweDNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Combulula">
+<!ENTITY aboutNetworking.dnsDomain             "Idomeyini">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

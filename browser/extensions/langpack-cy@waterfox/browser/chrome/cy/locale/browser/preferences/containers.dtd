@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Ychwanegu Cynhwysydd Newydd">
+<!ENTITY addButton.accesskey  "Y">
+<!ENTITY preferencesButton.label "Dewisiadau">
+<!ENTITY removeButton.label   "Tynnu">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Ewch Nôl">
+
+<!ENTITY window.title         "Ychwanegu Cynhwysydd Newydd">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Enw:">
+<!ENTITY name.accesskey       "E">
+<!ENTITY name.placeholder     "Rhowch enw cynhwysydd">
+<!ENTITY icon.label           "Eicon:">
+<!ENTITY icon.accesskey       "E">
+<!ENTITY color.label          "Lliw:">
+<!ENTITY color.accesskey      "L">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Gorffen">
+<!ENTITY button.ok.accesskey  "G">
+

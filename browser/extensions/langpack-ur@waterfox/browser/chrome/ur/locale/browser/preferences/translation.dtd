@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "مستثنیات - ترجمہ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ترجمہ مندرجہ ذیل زبانوں کے لئے پیش نہیں کیا جائے گا:">
+<!ENTITY treehead.languageName.label      "زبانیں">
+<!ENTITY removeLanguage.label             "زبان ہٹائیں">
+<!ENTITY removeLanguage.accesskey         "ہ">
+<!ENTITY removeAllLanguages.label         "تمام زبانیں ہٹائیں">
+<!ENTITY removeAllLanguages.accesskey     "ٹ">
+
+<!ENTITY noTranslationForSites.label      "ترجمہ مندرجہ ذیل سائٹ کے لئے پیش نہیں کیا جائے گا:">
+
+<!ENTITY removeSite.label                 "سائٹ ہٹائیں">
+<!ENTITY removeSite.accesskey             "ہ">
+<!ENTITY removeAllSites.label             "تمام سائٹیں ہٹائیں">
+<!ENTITY removeAllSites.accesskey         "ہ">
+
+<!ENTITY button.close.label               "بند کریں">
+<!ENTITY button.close.accesskey           "ب">
+
+<!ENTITY treehead.siteName2.label         "Websites">

@@ -1,0 +1,14 @@
+locale alerts hy-AM hy-AM/locale/hy-AM/alerts/
+locale autoconfig hy-AM hy-AM/locale/hy-AM/autoconfig/
+locale global hy-AM hy-AM/locale/hy-AM/global/
+locale global-platform hy-AM hy-AM/locale/hy-AM/global-platform/mac/ os=Darwin
+locale global-platform hy-AM hy-AM/locale/hy-AM/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform hy-AM hy-AM/locale/hy-AM/global-platform/win/ os=WINNT
+locale mozapps hy-AM hy-AM/locale/hy-AM/mozapps/
+locale necko hy-AM hy-AM/locale/hy-AM/necko/
+locale passwordmgr hy-AM hy-AM/locale/hy-AM/passwordmgr/
+locale pipnss hy-AM hy-AM/locale/hy-AM/pipnss/
+locale pippki hy-AM hy-AM/locale/hy-AM/pippki/
+locale places hy-AM hy-AM/locale/hy-AM/places/
+locale pluginproblem hy-AM hy-AM/locale/hy-AM/pluginproblem/
+locale weave hy-AM hy-AM/locale/hy-AM/services/

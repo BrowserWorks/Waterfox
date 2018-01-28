@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "General">
+
+<!ENTITY  warnOnAddonInstall2.label       "Avertir, sche websites emprovan d'installar supplements">
+<!ENTITY  warnOnAddonInstall2.accesskey   "A">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Bloccar cuntegn privlus ed engianaivel">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloccar telechargiadas privlusas">
+<!ENTITY  blockDownloads.accesskey        "p">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "T'avertir da programs nungiavischads e nunusitads">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "A">
+
+<!ENTITY  addonExceptions.label         "Excepziuns…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  logins.label                  "Infurmaziuns d'annunzia">
+
+<!ENTITY  rememberLogins2.label         "Memorisar las infurmaziuns d'annunzia">
+<!ENTITY  rememberLogins2.accesskey     "M">
+<!ENTITY  passwordExceptions.label      "Excepziuns…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "Utilisar in pled-clav universal">
+<!ENTITY  useMasterPassword.accesskey    "u">
+<!ENTITY  changeMasterPassword.label     "Midar il pled-clav universal…">
+<!ENTITY  changeMasterPassword.accesskey "d">
+
+<!ENTITY  savedLogins.label              "Infurmaziuns d'annunzia memorisadas…">
+<!ENTITY  savedLogins.accesskey          "n">

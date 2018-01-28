@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "证书管理器">
+
+<!ENTITY certmgr.tab.mine                     "您的证书">
+<!ENTITY certmgr.tab.others2                  "个人">
+<!ENTITY certmgr.tab.websites3                "服务器">
+<!ENTITY certmgr.tab.ca                       "证书机构">
+<!ENTITY certmgr.tab.orphan2                  "其他">
+
+<!ENTITY certmgr.mine                         "您有这些组织用来识别您的证书：">
+<!ENTITY certmgr.others                       "您用来识别这些人的证书文件：">
+<!ENTITY certmgr.websites2                    "您用来识别这些服务器的证书：">
+<!ENTITY certmgr.cas                          "您有识别这些证书颁发机构的证书文件：">
+<!ENTITY certmgr.orphans                      "您的不符合其他种类的证书：">
+
+<!ENTITY certmgr.detail.general_tab.title     "常规">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "详细信息">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "正在核实证书…">
+<!ENTITY certmgr.subjectinfo.label            "颁发给">
+<!ENTITY certmgr.issuerinfo.label             "颁发者">
+<!ENTITY certmgr.periodofvalidity.label       "有效期" >
+<!ENTITY certmgr.fingerprints.label           "指纹">
+<!ENTITY certmgr.certdetail.title             "证书细节">
+<!ENTITY certmgr.certdetail.cn                "通用名(CN)">
+<!ENTITY certmgr.certdetail.o                 "组织">
+<!ENTITY certmgr.certdetail.ou                "组织单元">
+<!ENTITY certmgr.certdetail.serialnumber      "序列号">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 指纹">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 指纹">
+
+<!ENTITY certmgr.editcacert.title             "编辑证书颁发机构信任关系设置">
+<!ENTITY certmgr.editcert.edittrust           "编辑信任设置：">
+<!ENTITY certmgr.editcert.trustssl            "此证书可以标识网站。">
+<!ENTITY certmgr.editcert.trustemail          "此证书可以标识电子邮件用户。">
+<!ENTITY certmgr.editcert.trustobjsign        "此证书可以标识软件制造者。">
+
+<!ENTITY certmgr.deletecert.title             "删除证书">
+
+<!ENTITY certmgr.certname                     "证书名称">
+<!ENTITY certmgr.certserver                   "服务器">
+<!ENTITY certmgr.override_lifetime            "生命周期">
+<!ENTITY certmgr.tokenname                    "安全设备">
+<!ENTITY certmgr.begins                       "起始时间">
+<!ENTITY certmgr.expires                      "过期时间">
+<!ENTITY certmgr.email                        "电子邮件地址">
+<!ENTITY certmgr.serial                       "序列号">
+
+<!ENTITY certmgr.close.label                  "关闭">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                  "查看…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "编辑信任…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "导出…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "删除…">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete_builtin.label         "删除或不信任…">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "备份…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "全部备份…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "导入…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "证书字段">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.label                 "字段值">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "证书结构">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "添加例外…">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "添加安全例外">
+<!ENTITY exceptionMgr.exceptionButton.label   "确认安全例外">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "合法的银行、电商以及其他公共站点不会要求您如此操作。">
+<!ENTITY exceptionMgr.certlocation.caption2   "服务器">
+<!ENTITY exceptionMgr.certlocation.url        "地址:">
+<!ENTITY exceptionMgr.certlocation.download   "获取证书">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "证书状态">
+<!ENTITY exceptionMgr.certstatus.viewCert     "查看…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "永久保存此例外">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

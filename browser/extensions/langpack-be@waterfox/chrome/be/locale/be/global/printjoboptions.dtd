@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Уласцівасці прынтара">
+
+<!ENTITY paperInput.label "Памер паперы:">
+<!ENTITY paperInput.accesskey "м">
+
+<!ENTITY jobTitleInput.label "Загаловак работы:">
+<!ENTITY jobTitleInput.accesskey "р">
+
+<!ENTITY colorGroup.label "Колер:">
+<!ENTITY grayRadio.label "Адценні шэрага">
+<!ENTITY grayRadio.accesskey "ш">
+<!ENTITY colorRadio.label "Колер">
+<!ENTITY colorRadio.accesskey "К">
+
+<!ENTITY edgeMarginInput.label "Прагал ад краю паперы да прымежку">
+<!ENTITY topInput.label "Угары:">
+<!ENTITY topInput.accesskey "У">
+<!ENTITY bottomInput.label "Знізу:">
+<!ENTITY bottomInput.accesskey "н">
+<!ENTITY leftInput.label "Злева:">
+<!ENTITY leftInput.accesskey "л">
+<!ENTITY rightInput.label "Справа:">
+<!ENTITY rightInput.accesskey "п">

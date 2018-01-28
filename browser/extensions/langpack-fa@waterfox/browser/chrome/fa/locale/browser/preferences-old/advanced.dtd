@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "عمومی">
+
+<!ENTITY accessibility.label             "دسترسی‌پذیری">
+
+<!ENTITY useCursorNavigation.label       "در مرور صفحات همیشه از مکان‌نما استفاده شود">
+<!ENTITY useCursorNavigation.accesskey   "ص">
+<!ENTITY searchOnStartTyping.label       "هنگامی که شروع به وارد کردن حروف می‌کنم، به دنبال متن جست‌وجو شود">
+<!ENTITY searchOnStartTyping.accesskey   "ج">
+<!ENTITY blockAutoReload.label           "هنگامی که پایگاه‌های اینترنتی تلاش می‌کنند صفحه را بازآوری کنند یا تغییر مسیر دهند، هشدار داده شود">
+<!ENTITY blockAutoReload.accesskey       "ا">
+<!ENTITY useOnScreenKeyboard.label       "نمایش یک صفحه‌کلید لمسی در صورت لزوم">
+<!ENTITY useOnScreenKeyboard.accesskey   "ص">
+
+<!ENTITY browsing.label                  "مرور">
+
+<!ENTITY useAutoScroll.label             "استفاده از لغزش خودکار">
+<!ENTITY useAutoScroll.accesskey         "ل">
+<!ENTITY useSmoothScrolling.label        "استفاده از لغزش هموار">
+<!ENTITY useSmoothScrolling.accesskey    "غ">
+<!ENTITY checkUserSpelling.label         "بررسی املا همزمان با نوشتن">
+<!ENTITY checkUserSpelling.accesskey     "ن">
+
+<!ENTITY dataChoicesTab.label            "انتخاب داده‌ها">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "گزارش کردن اطلاعات برای این پیکربندی ساخته شده غیرفعال شده است">
+
+<!ENTITY healthReportDesc.label          "به شما در درک عملکرد مرورگرتان یاری می‌رساند و اطلاعاتی را در مورد سلامتی مرورگر شما با&vendorShortName; به اشتراک می‌گذارد.">
+<!ENTITY enableHealthReport.label        "فعال‌کردن گزارش سلامتی &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "گ">
+<!ENTITY healthReportLearnMore.label     "بیشتر بدانید">
+
+<!ENTITY telemetryDesc.label             "به اشتراک‌گذاری کارایی، کاربرد، سخت‌افزار و اطلاعات سفارشی‌سازی در مورد مرورگر شما با &vendorShortName; به ما کمک می کند تا &brandShortName; بهتری داشته باشیم">
+<!ENTITY enableTelemetryData.label       "به‌ اشتراک‌گذاری اطلاعات اضافی (به عنوان مثال: دورسنجی)">
+<!ENTITY enableTelemetryData.accesskey   "د">
+<!ENTITY telemetryLearnMore.label        "بیشتر بدانید">
+
+<!ENTITY crashReporterDesc2.label         "گزارش‌های فروپاشی به &vendorShortName; کمک می‌کند تا مشکلات را برطرف و مرورگر شما را پایدارتر و امن‌تر کند">
+<!ENTITY alwaysSubmitCrashReports.label   "اجازه به &brandShortName; برای ارسال وقایع ثبت شدهٔ گزارش‌های فروپاشی از طرف شما">
+<!ENTITY alwaysSubmitCrashReports.accesskey "و">
+<!ENTITY crashReporterLearnMore.label     "بیشتر بدانید">
+
+<!ENTITY networkTab.label                "شبکه">
+
+<!ENTITY connection.label                "اتصال">
+
+<!ENTITY connectionDesc.label            "چگونگی اتصال &brandShortName; به اینترنت را پیکربندی کنید">
+<!ENTITY connectionSettings.label        "تنظیمات…">
+<!ENTITY connectionSettings.accesskey    "ت">
+
+<!ENTITY httpCache.label                 "ذخیره محتوا وب در حافظه‌ پنهان">
+
+<!ENTITY offlineStorage2.label           "محتوا وب و اطلاعات کاربر به صورت برون‌خط">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "اطلاعات پایگاه اینترنتی">
+<!ENTITY clearSiteData.label             "پاک کردن همه داده‌ها">
+<!ENTITY clearSiteData.accesskey         "پ">
+<!ENTITY siteDataSettings.label          "تنظیمات…">
+<!ENTITY siteDataSettings.accesskey      "ت">
+<!ENTITY siteDataLearnMoreLink.label     "بیشتر بدانید">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "محدود کردن حافظهٔ نهان به">
+<!ENTITY limitCacheSizeBefore.accesskey  "م">
+<!ENTITY limitCacheSizeAfter.label       "مگابایت از فضا">
+<!ENTITY clearCacheNow.label             "هم‌اکنون پاک شود">
+<!ENTITY clearCacheNow.accesskey         "ه">
+<!ENTITY clearOfflineAppCacheNow.label   "هم‌اکنون پاک شود">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ه">
+<!ENTITY overrideSmartCacheSize.label    "لغو مدیریت دستی حافظهٔ نهان">
+<!ENTITY overrideSmartCacheSize.accesskey "ل">
+
+<!ENTITY updateTab.label                 "بروزرسانی">
+
+<!ENTITY updateApplication.label         "بروزرسانی‌های &brandShortName;:">
+<!ENTITY updateAuto1.label               "نصب خودکار بروزرسانی‌ها (توصیه می‌شود: بهبود امنیت)">
+<!ENTITY updateAuto1.accesskey           "ن">
+<!ENTITY updateCheckChoose.label         "بررسی برای بروزرسانی، اما به من اجازه بده اینکه نصب شوند یا خیر را انتخاب کنم">
+<!ENTITY updateCheckChoose.accesskey     "ب">
+<!ENTITY updateManual.label              "هرگز بروزرسانی‌ها بررسی نشوند (توصیه نمی‌شود: خطر امنیتی)">
+<!ENTITY updateManual.accesskey          "ه">
+
+<!ENTITY updateHistory.label             "نمایش تاریخچه‌ی به‌هنگام‌سازی‌ها">
+<!ENTITY updateHistory.accesskey         "ه">
+
+<!ENTITY useService.label                "از سرویس پس‌زمینه برای نصب بروزرسانی ها استفاده شود">
+<!ENTITY useService.accesskey            "پ">
+
+<!ENTITY autoUpdateOthers.label          "بروزرسانی خودکار">
+<!ENTITY enableSearchUpdate.label        "موتورهای جست‌وجو">
+<!ENTITY enableSearchUpdate.accesskey    "م">
+
+<!ENTITY offlineStorageNotify.label               "هنگامی که یک پایگاه وب تلاش می‌کند اطلاعاتی برای استفاده آفلاین ذخیره کند به من اطلاع بده">
+<!ENTITY offlineStorageNotify.accesskey           "ه">
+<!ENTITY offlineStorageNotifyExceptions.label     "استثناها…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ث">
+
+<!ENTITY offlineAppsList2.label          "پایگاه‌های وب زیر اجازه ذخیره اطلاعات برای استفاده برون‌خط را دارند:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "حذف…">
+<!ENTITY offlineAppsListRemove.accesskey "ح">
+<!ENTITY offlineAppRemove.confirm        "حذف اطلاعات آفلاین">
+
+<!ENTITY certificateTab.label            "گواهینامه‌ها">
+<!ENTITY certPersonal.label              "درخواست‌ها">
+<!ENTITY certPersonal.description        "هنگامی که کارگزاری گواهی شخصی من را درخواست می‌کند:">
+<!ENTITY selectCerts.auto                "انتخاب‌ یکی به صورت خودکار">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "هر بار پرسیده شود">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "پرس‌وجو از کارگزار پاسخگوی OCSP جهت تصدیق اعتبار فعلی گواهینامه">
+<!ENTITY enableOCSP.accesskey            "پ">
+<!ENTITY viewCerts.label                 "نمایش‌ گواهینامه‌ها">
+<!ENTITY viewCerts.accesskey             "گ">
+<!ENTITY viewSecurityDevices.label       "امنیت دستگاه‌ها">
+<!ENTITY viewSecurityDevices.accesskey   "د">
+
+<!ENTITY performance.label               "کارایی">
+<!ENTITY useRecommendedPerformanceSettings.label "استفاده از تنظیماتِ کارایی توصیه شده">
+<!ENTITY useRecommendedPerformanceSettings.description "این تنظیمات بر اساس سخت‌افزار و سیستم‌عامل رایانهٔ شما تنظیم شده است.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "س">
+<!ENTITY performanceSettingsLearnMore.label "بیشتر بدانید">
+<!ENTITY limitContentProcessOption.label "محدودیت پروسهٔ محتوا">
+<!ENTITY limitContentProcessOption.description "پروسه‌هایِ محتوایِ بیشتر می‌تواند کارایی را هنگام استفاده از چندین زبانه افزایش دهد، اما حافظه بیشتری هم مصرف خواهد کرد.">
+<!ENTITY limitContentProcessOption.accesskey   "م">
+<!ENTITY limitContentProcessOption.disabledDescription "تغییر دادن تعداد پردازدش‌های محتوا تنها با چند‌پردازشی &brandShortName; امکان پذیر است.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "بدانید چگونه بررسی کنید چندپرادزشی فعال است یا خیر">
+<!ENTITY allowHWAccel.label              "استفاده از شتاب‌دهنده‌های سخت‌افزاری در صورت وجود">
+<!ENTITY allowHWAccel.accesskey          "ش">

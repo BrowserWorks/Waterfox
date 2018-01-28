@@ -1,0 +1,214 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "بيئة فَيَرفُكس لتطوير الوب">
+
+<!ENTITY projectMenu_label "مشروع">
+
+<!ENTITY projectMenu_newApp_label "تطبيق جديد…">
+
+<!ENTITY projectMenu_importPackagedApp_label "افتح تطبيقًا مُحزّمًا…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "م">
+<!ENTITY projectMenu_importHostedApp_label "افتح تطبيقًا مستضافًا…">
+<!ENTITY projectMenu_importHostedApp_accesskey "س">
+<!ENTITY projectMenu_selectApp_label "افتح تطبيقا…">
+<!ENTITY projectMenu_selectApp_accesskey "ف">
+<!ENTITY projectMenu_play_label "نصّب و شغّل">
+<!ENTITY projectMenu_play_accesskey "ث">
+<!ENTITY projectMenu_stop_label "أوقف التطبيق">
+<!ENTITY projectMenu_stop_accesskey "ق">
+<!ENTITY projectMenu_debug_label "نقّح التطبيق">
+<!ENTITY projectMenu_debug_accesskey "ن">
+<!ENTITY projectMenu_remove_label "أزل المشروع">
+<!ENTITY projectMenu_remove_accesskey "ض">
+<!ENTITY projectMenu_showPrefs_label "التفضيلات">
+<!ENTITY projectMenu_showPrefs_accesskey "ت">
+<!ENTITY projectMenu_manageComponents_label "أدر المكونات الإضافية">
+<!ENTITY projectMenu_manageComponents_accesskey "د">
+<!ENTITY projectMenu_refreshTabs_label "أنعش الألسنة">
+
+<!ENTITY runtimeMenu_label "بيئة التشغيل">
+
+<!ENTITY runtimeMenu_disconnect_label "اقطع الاتصال">
+<!ENTITY runtimeMenu_disconnect_accesskey "ص">
+<!ENTITY runtimeMenu_takeScreenshot_label "لقطة شاشة">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "ل">
+<!ENTITY runtimeMenu_showDetails_label "معلومات بيئة التشغيل">
+<!ENTITY runtimeMenu_showDetails_accesskey "ت">
+
+<!ENTITY runtimeMenu_showMonitor_accesskey "ش">
+<!ENTITY runtimeMenu_showDevicePrefs_label "تفضيلات الجهاز">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "ج">
+<!ENTITY runtimeMenu_showSettings_label "إعدادات الجهاز">
+
+
+<!ENTITY viewMenu_label "اعرض">
+<!ENTITY viewMenu_accesskey "ع">
+<!ENTITY viewMenu_zoomin_label "قرّب">
+
+<!ENTITY viewMenu_zoomout_label "بعّد">
+<!ENTITY viewMenu_zoomout_accesskey "ق">
+
+
+
+<!ENTITY projectButton_label "افتح تطبيقا">
+<!ENTITY runtimeButton_label "اختر بيئة تشغيل">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!-- open menu -->
+<!-- reload app -->
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+
+<!ENTITY key_zoomout "-">
+
+
+<!ENTITY projectPanel_myProjects "مشاريعي">
+<!ENTITY projectPanel_runtimeApps "تطبيقات بيئة التشغيل">
+<!ENTITY projectPanel_tabs "الألسنة">
+<!ENTITY runtimePanel_usb "أجهزة USB">
+<!ENTITY runtimePanel_wifi "أجهزة واي-فاي">
+<!ENTITY runtimePanel_simulator "المحاكيات">
+<!ENTITY runtimePanel_other "أخرى">
+<!ENTITY runtimePanel_installsimulator "نصّب محاكيًا">
+<!ENTITY runtimePanel_noadbhelper "نصّب «مساعد Adb»">
+<!ENTITY runtimePanel_nousbdevice "لم تجد جهازك؟">
+<!ENTITY runtimePanel_refreshDevices_label "أنعش الأجهزة">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "صالحة">
+<!ENTITY details_warning_header "تحذيرات">
+<!ENTITY details_error_header "أعطال">
+<!ENTITY details_description "الوصف">
+<!ENTITY details_location "المكان">
+<!ENTITY details_manifestURL "معرّف التطبيق">
+<!ENTITY details_removeProject_button "أزل المشروع">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "تطبيق جديد">
+<!ENTITY newAppHeader "اختر قالبا">
+<!ENTITY newAppLoadingTemplate "يحمّل القوالب…">
+<!ENTITY newAppProjectName "اسم المشروع:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "أغلق">
+<!-- Addons -->
+
+<!ENTITY addons_title "المكونات الإضافية">
+<!ENTITY addons_aboutaddons "افتح مدير الإضافات">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "التفضيلات">
+<!ENTITY prefs_editor_title "المحرر">
+<!ENTITY prefs_general_title "عام">
+<!ENTITY prefs_restore "استعد الإعدادات المبدئية">
+<!ENTITY prefs_manage_components "أدر المكونات الإضافية">
+<!ENTITY prefs_options_autoconnectruntime "أعد الاتصال مع بيئة التشغيل السابقة">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "أعد الاتصال مع بيئة التشغيل السابقة عندما تبدأ بيئة المطورين">
+<!ENTITY prefs_options_rememberlastproject "تذكر آخر مشروع">
+
+<!ENTITY prefs_options_templatesurl "مسار القوالب">
+<!ENTITY prefs_options_templatesurl_tooltip "فهرس القوالب المتاحة">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "معلومات بيئة التشغيل">
+<!ENTITY runtimedetails_adbIsRoot "ADB‏ جذر: ">
+
+<!ENTITY runtimedetails_ADBRootWarning "(يحتاج محمل إقلاع مُزال قفله)">
+
+<!ENTITY runtimedetails_requestPrivileges "يحتاج امتيازات أعلى">
+
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "عدد منطقي">
+<!ENTITY device_typenumber "عدد صحيح">
+<!ENTITY device_typestring "نصّ">
+<!ENTITY device_typeobject "كائن">
+<!ENTITY device_typenone "اختر نوعًا">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "تفضيلات الجهاز">
+<!ENTITY devicepreference_search "ابحث في التفضيلات">
+<!ENTITY devicepreference_newname "اسم التفضيل الجديد">
+<!ENTITY devicepreference_newtext "قيمة التّفضيل">
+<!ENTITY devicepreference_addnew "أضف تفضيلا جديدا">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "إعدادات الجهاز">
+<!ENTITY devicesetting_search "ابحث في الإعدادات">
+<!ENTITY devicesetting_newname "اسم الإعداد الجديد">
+<!ENTITY devicesetting_newtext "قيمة الإعداد">
+<!ENTITY devicesetting_addnew "أضِف إعدادا جديدا">
+<!-- Monitor -->
+<!ENTITY monitor_help "مساعدة">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "نقطة النهاية التي تحاول الاتصال بها تحتاج المزيد من المعلومات لاستيثاق الاتصال.  من فضلك امسح رمز QR أدناه ضوئيا عبر الطلب الموجود في الجهاز الآخر.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "ألم يظهر طلب مسح QR ضوئيا؟">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "هل ظهر طلب مسح QR ضوئيا؟">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "إن سأل الجهاز الآخر عن رمز بدل مسح رمز QR ضوئيا، فمن فضلك انسخ القيمة أدناه إلى الجهاز الآخر:">
+
+<!-- Logs panel -->
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "خيارات المحاكي">
+<!ENTITY simulator_remove "احذف المحاكي">
+<!ENTITY simulator_reset "استعد الإعدادات المبدئية">
+<!ENTITY simulator_name "الاسم">
+<!ENTITY simulator_software "البرمجيات">
+<!ENTITY simulator_version "النسخة">
+
+<!ENTITY simulator_hardware "العتاد">
+<!ENTITY simulator_device "جهاز">
+<!ENTITY simulator_screenSize "الشاشة">
+<!ENTITY simulator_pixelRatio "معدل البكسلات">
+
+
+
+
+<!ENTITY key_play "R">
+<!ENTITY key_quit "W">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY key_showProjectPanel "O">
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY logs_title "Pre-packaging Command Logs">
+
+<!ENTITY monitor_title "Monitor">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Restore previous project when WebIDE starts">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY runtimedetails_privilegesWarning "(Will reboot device. Requires root access.)">
+
+<!ENTITY runtimedetails_summonADBRoot "root device">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Unrestricted DevTools privileges: ">
+<!ENTITY simulator_profile "Profile">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Open Config Directory…">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY viewMenu_resetzoom_label "Reset Zoom">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY wifi_auth_header "Client Identification">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+

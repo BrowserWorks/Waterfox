@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Të dhëna rreth url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Furnizues">
+<!ENTITY aboutUrlClassifier.provider                    "Furnizues">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Koha e përditësimit të fundit">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Koha e përditësimit pasues">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Gjendje e përditësimit të fundit">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Përditësim">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Fshehtinë">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Diagnostikim">
+<!ENTITY aboutUrlClassifier.debugFile                   "Kartelë regjistri të tanishëm">
+
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Clear">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cache Entries">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Number of negative cache entries">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Number of positive cache entries">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positive cache expiry">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Refresh">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Show entries">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Table name">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Set Log File">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Set JS Log">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Set Log Modules">
+<!ENTITY aboutUrlClassifier.debugModules                "Current log modules">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Safe Browsing JS log">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Safe Browsing log modules">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "K">
+<!ENTITY  copy.label            "Wachib'exïk">
+<!ENTITY  copy.accesskey        "c">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Rucha'ik ronojel">
+<!ENTITY  selectall.accesskey   "r">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Chijun">
+<!ENTITY  generalTab.accesskey  "O">
+<!ENTITY  generalTitle          "B'i'aj:">
+<!ENTITY  generalURL            "Ochochib'äl:">
+<!ENTITY  generalType           "Ruwäch:">
+<!ENTITY  generalMode           "Pa'äl pa chuwäch rub'anikil:">
+<!ENTITY  generalSize           "Nimilem:">
+<!ENTITY  generalReferrer       "Atux JAY:">
+<!ENTITY  generalSource         "Ruxe'el ri jumejyak:">
+<!ENTITY  generalModified       "K'exon:">
+<!ENTITY  generalEncoding2      "Rucholajil rucholajem tzij:">
+<!ENTITY  generalMetaName       "B'i'aj">
+<!ENTITY  generalMetaContent    "rupam">
+
+<!ENTITY  mediaTab              "K'ïy k'oxom">
+<!ENTITY  mediaTab.accesskey    "K">
+<!ENTITY  mediaLocation         "Ochochib'al:">
+<!ENTITY  mediaText             "Ximon chi rucholajem tzij:">
+<!ENTITY  mediaAltHeader        "Cha'el rucholajem tzij">
+<!ENTITY  mediaAddress          "Ochochib'äl">
+<!ENTITY  mediaType             "Ruwäch">
+<!ENTITY  mediaSize             "Nimilem">
+<!ENTITY  mediaCount            "Rub'i' taqoya'l">
+<!ENTITY  mediaDimension        "Runimilem:">
+<!ENTITY  mediaLongdesc         "Nïm cholonem:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Tiyak achi'el…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Nab'ey rutzub'al q'ojom:">
+
+<!ENTITY  feedTab               "Taq b'ey">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Tz'ib'anïk b'i'aj">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Taq ya'oj q'ij">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Tokisäx ri ruk'amon wi pe">
+<!ENTITY  permAskAlways         "Junelïk tik'utüx pe">
+<!ENTITY  permAllow             "Tiya' q'ij">
+<!ENTITY  permAllowSession      "Tiya' q'ij pa re molojri'ïl re'">
+<!ENTITY  permBlock             "Tiq'eleb'ëx">
+<!ENTITY  permissionsFor        "Taq ruya'ik q'ij richin:">
+<!ENTITY  permPlugins           "Titzij ri nak'ab'äl">
+
+<!ENTITY  permClearStorage           "Tijosq'ïx ri yakonem">
+<!ENTITY  permClearStorage.accesskey "K">
+
+<!ENTITY  securityTab           "Chajinïk">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Tatz'eta' ruwujil b'i'aj">
+<!ENTITY  securityView.accesskey "W">
+<!ENTITY  securityView.unknown   "Man etaman ta ruwäch">
+
+
+<!ENTITY  securityView.identity.header   "Ruk'utwachib'al ruxaq k'amaya'l">
+<!ENTITY  securityView.identity.owner    "Rajaw">
+<!ENTITY  securityView.identity.domain   "Ruxaq k'amaya'l:">
+<!ENTITY  securityView.identity.verifier "Jikib'an ruma:">
+<!ENTITY  securityView.identity.validity "Nik'is ruq'ijul ri:">
+
+<!ENTITY  securityView.privacy.header                   "Ichinanem chuqa' natab'äl">
+<!ENTITY  securityView.privacy.history                  "¿La nintz'ët chik re jun ruxaq k'amaya'l re'?">
+<!ENTITY  securityView.privacy.cookies                  "¿Re ruxaq k'amaya'l re' tajin nuyäk taq na'oj (taq kaxlanwey) pa re kematz'ib' re'?">
+<!ENTITY  securityView.privacy.viewCookies              "Ketz'et Taq kaxlanwey">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "¿La xeyak ewan taq rutzij re ruxaq k'amaya'l re'?">
+<!ENTITY  securityView.privacy.viewPasswords            "Ketz'et ri yakäl ewan taq tzij">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Retal ajsamajel">
+
+<!ENTITY  helpButton.label                              "To'ïk">

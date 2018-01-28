@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Litir">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Hunsa litina sem eru skilgreindir af síðunni með mínum litum hér fyrir ofan:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Alltaf">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Aðeins með þema sem eru litsterk">
+<!ENTITY  overrideDefaultPageColors.never.label  "Aldrei">
+
+<!ENTITY  color                           "Texti og Bakgrunnur">
+<!ENTITY  textColor.label                 "Texti:">
+<!ENTITY  textColor.accesskey             "t">
+<!ENTITY  backgroundColor.label           "Bakgrunnur:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "Nota kerfisliti">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Undirstrika tengla">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "Litir tengla">
+<!ENTITY  linkColor.label                 "Ónotaðir tenglar:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Notaðir tenglar:">
+<!ENTITY  visitedLinkColor.accesskey      "N">

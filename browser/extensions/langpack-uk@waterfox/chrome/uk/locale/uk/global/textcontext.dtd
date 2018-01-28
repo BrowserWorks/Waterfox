@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Вирізати">
+<!ENTITY cutCmd.accesskey "и">
+<!ENTITY copyCmd.label "Копіювати">
+<!ENTITY copyCmd.accesskey "о">
+<!ENTITY pasteCmd.label "Вставити">
+<!ENTITY pasteCmd.accesskey "а">
+<!ENTITY undoCmd.label "Повернути">
+<!ENTITY undoCmd.accesskey "у">
+<!ENTITY selectAllCmd.label "Виділити все">
+<!ENTITY selectAllCmd.accesskey "и">
+<!ENTITY deleteCmd.label "Стерти">
+<!ENTITY deleteCmd.accesskey "и">
+
+<!ENTITY spellAddToDictionary.label "Додати в словник">
+<!ENTITY spellAddToDictionary.accesskey "о">
+<!ENTITY spellUndoAddToDictionary.label "Скасувати додавання в словник">
+<!ENTITY spellUndoAddToDictionary.accesskey "с">
+<!ENTITY spellCheckToggle.label "Перевіряти правопис">
+<!ENTITY spellCheckToggle.accesskey "П">
+<!ENTITY spellNoSuggestions.label "(припущень не знайдено)">
+<!ENTITY spellDictionaries.label "Мови">
+<!ENTITY spellDictionaries.accesskey "о">
+
+<!ENTITY searchTextBox.clear.label "Очистити">
+
+<!ENTITY fillLoginMenu.label          "Ввести дані входу">
+<!ENTITY fillLoginMenu.accesskey      "В">
+<!ENTITY fillPasswordMenu.label       "Ввести пароль">
+<!ENTITY fillPasswordMenu.accesskey   "В">
+<!ENTITY fillUsernameMenu.label       "Ввести ім'я користувача">
+<!ENTITY fillUsernameMenu.accesskey   "В">
+<!ENTITY noLoginSuggestions.label     "(Немає пропозицій паролів)">
+<!ENTITY viewSavedLogins.label        "Переглянути збережені паролі">

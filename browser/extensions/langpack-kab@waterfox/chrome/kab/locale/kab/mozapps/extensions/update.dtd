@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Aleqqem n &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; a yemahel ara s srid ">
+<!ENTITY  offline.description             "Issefk &brandShortName; ad yeddu s uskar uqqin akken ad isenqed ileqman n izegrar imernan yellan i wakken ad mṣadan d lqem-agi.">
+<!ENTITY  offline.toggleOffline.label     "Uɣal ɣer uskar s srid tura">
+<!ENTITY  offline.toggleOffline.accesskey "U">
+
+<!ENTITY  mismatch.win.title              "Izegrar imernan ur n-mṣaḍa ara">
+<!ENTITY  mismatch.top.label              "Izegrar-agi ur mṣadan ara d lqem-agi n &brandShortName; ihi itturermeden:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; yezmer ad isenqed ma llan ileqman  imṣadanen n izegrar-agi.">
+
+<!ENTITY  checking.wizard.title           "Asenqed n izegrar imernan yemṣadan">
+<!ENTITY  checking.top.label              "Asenqed n izegrar imernan ur nemṣada ara…">
+<!ENTITY  checking.status                 "Aya yezmer ad yeṭṭef kra n tesdadin…">
+
+<!ENTITY  found.wizard.title               "Izegrar imernan imsaḍan ţwaffen">
+<!ENTITY  found.top.label                 "Fren izegrar imernan tebɣiḍ ad tesbeddeḍ:">
+<!ENTITY  found.disabledXPinstall.label   "Ileqman-agi ur zmiren ara ad ttwasebedden acku asebded n iseɣẓanen yetturermed  akka tura. Tzemred as tesnifleḍ aɣewwaṛ daw-agi:">
+<!ENTITY  found.enableXPInstall.label     "Sireg ismal web ad sebedden iseɣẓanen">
+<!ENTITY  found.enableXPInstall.accesskey "S">
+
+<!ENTITY  installing.wizard.title         "Asebded n izegrar imernan imṣadan">
+<!ENTITY  installing.top.label            "Azdam d usebded n ileqman n izegrar imernan…">
+
+<!ENTITY  noupdates.wizard.title          "Ulac azegrir imṣadan">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; ur yezmir ara ad yaf ileqman i yizegrar-inek ur nemṣada ara.">
+<!ENTITY  noupdates.error.desc            "Kra n wuguren ţumugren-d deg unadi n ileqman.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; ad isenqed sya ɣer da u a k-id inermes ɣef ileqman imṣadan ticki heggan.">
+
+<!ENTITY  finished.wizard.title           "Izegrar imernan imsaḍan bedden">
+<!ENTITY  finished.top.label              "&brandShortName; isebded ileqman n izegrar-inek.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; ad isenqed sya ɣer da u a k-d-yefk tallalt ticki ileqman n izegrar imernan heggan.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ad isenqed sya ɣer da u a k-d-yefk tallalt ticki ileqman n izegrar imernan heggan.">
+
+<!ENTITY  adminDisabled.wizard.title      "D-awezɣi asenqed n tilin n ileqman">
+<!ENTITY  adminDisabled.warning.label     "D awezɣi asenqed n tilin n ileqman i yizegrar-inek ur nemṣada ara acku asebded n iseɣẓanen i &brandShortName; itturermed. Ma ulac aɣilif, nermes anedbal n unagraw-ik ma tebɣiḍ tallalt.aramsaḍan">
+
+<!ENTITY  versioninfo.wizard.title        "Asenqed n umsaḍa n izegrar imernan">
+<!ENTITY  versioninfo.top.label           "Asenqed n umṣada n izegrar-inek imernan d lqem-agi &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Aya yezmer ad yeṭṭef kra n tesdadin…">
+
+<!ENTITY  installerrors.wizard.title      "Ugure deg usebded n ileqman">
+<!ENTITY  installerrors.intro.label       "&brandShortName; yufa-d uguren deg uleqqem n kra n izegrar imernan ">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Sit ɣef Fak akken ad tkemmleḍ asenker n &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Sit ɣef Fak akken ad tkemmleḍ asenker n &brandShortName;.">
+<!ENTITY  enableChecking.label            "Sireg i &brandShortName; asenqed n ileqman.">

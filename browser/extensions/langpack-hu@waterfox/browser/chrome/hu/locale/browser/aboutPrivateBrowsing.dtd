@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Jelenleg nem privát ablakot használ.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Privát ablak megnyitása">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Privát böngészés">
+<!ENTITY privateBrowsing.title.tracking                  "Privát böngészés követés elleni védelemmel">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Amikor privát ablakban böngészik, a Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nem menti">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        " a:">
+<!ENTITY aboutPrivateBrowsing.info.visited               "meglátogatott oldalakat">
+<!ENTITY aboutPrivateBrowsing.info.searches              "kereséseket">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "sütiket">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ideiglenes fájlokat">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "A Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "elmenti">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " a:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "letöltéseket">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "könyvjelzőket">
+<!ENTITY aboutPrivateBrowsing.note.before                "A privát böngészés ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nem teszi névtelenné">
+<!ENTITY aboutPrivateBrowsing.note.after                 " az interneten. A munkáltatója vagy az internetszolgáltatója ettől függetlenül is tudhatja, hogy milyen oldalakat látogat meg.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Tudjon meg többet a ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Privát böngészésről">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Védelem követés ellen">
+<!ENTITY trackingProtection.description2                 "Egyes weboldalak követőket használnak, amelyek az interneten bárhol követhetik az Ön tevékenységét. A követés elleni védelemmel a Waterfox sok követőt blokkol, amelyek böngészési szokásairól gyűjtenek adatokat.">
+<!ENTITY trackingProtection.startTour1                   "Nézze meg a működését">

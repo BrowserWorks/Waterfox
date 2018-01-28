@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "rtl">
+<!ENTITY rights.title "آپ کے حقوق کے متعلق">
+<!ENTITY rights.intro "&brandFullName; آزاد اور کھلا ماخذ سافٹ ویئر ہے، جو کے دنیا بھر سے ہزاروں لوگوں کے گروپ نے بنائی ہے۔ کچھ باتیں ہیں جو آپ کو پتہ ہونی چاہیے:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; آپ کو بر اصطلاحات کے زیر تحت دستیاب کیا گیا ہے ">
+<!ENTITY rights.intro-point1b "Mozilla عوامی لائسنس">
+<!ENTITY rights.intro-point1c "۔ اس کا مطلب ہے کہ آپ &brandShortName; کو استعمال، نقل اور دوسروں کو بانٹ سکتے ہیں۔  آپ اپنی ضرورت پوری کرنے لے لیے &brandShortName; کا سورس کوڈ بھی تبدیل کر سکتے ہیں۔ Mozilla عوامی لائسنس آپ کو اپنی تبدیل کی ہوئی ورژن بانٹنے کی بھی اجازت دیتا ہے۔">
+
+<!ENTITY rights.intro-point2-a "آپ کو Waterfox یا کسی پارٹی، کے ٹریڈ مارک کے لائسنس یا ٹریڈ مارک حقوق نہیں دیے گئے۔ اس میں بغیر کسی حدبندی کے Waterfox نام اور لوگو بھی شامل ہیں۔ ٹریڈمارک پر اضافی معلومات شاید ملیں ">
+<!ENTITY rights.intro-point2-b "ادھر">
+<!ENTITY rights.intro-point2-c "۔">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName; کے کچھ پیچر، جیسا کہ کریش رپورٹر، آپ کو &vendorShortName; تک فیڈ بیک پہنچانے کا اختیار دیتے ہیں۔ فیڈ بیک جمع کرانے کا انتخاب کر کے آپ &vendorShortName; کو اجازت دیتے ہیں کہ وہ یہ فیڈ بیک استعمال کر کے اپنے پراڈکٹ بہتر بنائے، فیڈ بیک اپنی ویب سائٹ پر شائع کرے، اور فیڈ بیک کو بانٹیں۔">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "ہم آپ کی &vendorShortName; کو بھیجی ہوئی ذاتی معلومات اور فیڈ بیک کس طرح &brandShortName; کے ذریعے استعمال کرتے ہیں، یہ بتایا گیا ہے ">
+<!ENTITY rights2.intro-point3b "&brandShortName; نجی نوعیت">
+<!ENTITY rights.intro-point3c "۔">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "اس پراڈکٹ پر اطلاق پزیر نجی نوعیت کی پالسیاں یہاں پر لکھی ہونی چاہیے۔">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "کچھ &brandShortName; فیچر ویب پر مبنی معلوماتی خدمات استعمال کرتے ہیں، لیکن ہم اس بات کی گیرنٹی نہیں دے سکتے کہ یہ 100&#037; ٹھیک یا نقص سے آزاد ہیں۔ ان خدمات کو استعمال کرنے والے فیچر کو نا اہل بنانے کے طریقے اور مزید تفاصیل آپ کو مل سکتی ہیں بر ">
+<!ENTITY rights.intro-point4b "خدمات اصطلاحات">
+<!ENTITY rights.intro-point4c "۔">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "آگ یہ مصنوعہ ویب خدمات شامل کرتا ہے تو خدمات کی کوئی بھی اطلاق پزیر خدمات اصطلاحات مربوط ہونی چاہییں بر ">
+<!ENTITY rights.intro-point4b-unbranded "ویب سائٹ خدمات">
+<!ENTITY rights.intro-point4c-unbranded " صیغہ۔">
+
+<!ENTITY rights2.webservices-header "&brandFullName; ویب پر مبنی معلوماتی خدمات">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "ویڈیو مواد کی بعض اقسام کو واپس چلانے کے لئے،&brandShortName; مخصوص مواد ڈکرپشن ماڈیولز تیسری پارٹیوں کی طرف سے ڈاؤن لوڈ کرتا ہے">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; نیچے دی گَی شرائط کے تحت &brandShortName; کی اس بائنری ورژن کے ساتھ آپ کے استعمال کے لیے کچھ فیچر مہیا کرنے کے لیے ویب پر مبنی معلوماتی خدمات  (&quot;Services&quot;) استعمال کرتا ہے۔ اگر آپ خدمات میں سے ایک یا زیادہ نہیں استعمال کرنا چاہتے یا آپ کو شرائط قبول نہیں تو آپ فیچر یا خدمت نااہل بنا سکتے ہیں۔ کوئی مخصوص فیچر یا خدمت نااہل بنانے کا طریقہ آپ کو ملے گا ">
+<!ENTITY rights2.webservices-b "یہاں">
+<!ENTITY rights3.webservices-c "۔ دیگر فیچر اور سروس ایپلی کیشن ترجیحات میں نااہل کی جا سکتی ہیں۔">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "محفوظ براوزنگ">
+<!ENTITY rights.safebrowsing-b "محفوظ براؤزنگ فیچر نا اہل کرنا تجویز کردہ نہیں ہے کیونکہ اس کے نتیجے میں آپ غیر محفوظ سائٹوں پر پہنچ سکتے ہیں۔  اگر آپ اس فیچر کو پوری طرح سے نااہل کرنا چاہتے ہیں، تو یہ مرحلہ پورے کیجیے:">
+<!ENTITY rights.safebrowsing-term1 "ایپلی کیشن کی ترجیحات کھولیں">
+<!ENTITY rights.safebrowsing-term2 "سلامتی انتخاب منتخب کریں">
+<!ENTITY rights2.safebrowsing-term3 "کرنے کا اختیار غیر منتخب &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "محفوظ براؤزنگ اب نا اہل ہے">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "محل وقوع آگاہ براؤزنگ: ">
+<!ENTITY rights.locationawarebrowsing-b "ہمیشہ خدکار اختیار ہے۔  کوئی بھی محل وقوع معلومات آپ کی اجازت کے بغیر نہیں بھیجی جائے گی۔  اگر آپ اس فیچر کو نااہل کرنا چاہتے ہیں تو یہ مرحلے پورے کریں:">
+<!ENTITY rights.locationawarebrowsing-term1a "یو ار ایل بار میں ٹائپ کریں ">
+<!ENTITY rights.locationawarebrowsing-term1b "بارے میں: تشکیل">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled ٹائپ کریں">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled ترجیح پر کلک کریں">
+<!ENTITY rights.locationawarebrowsing-term4 "محل وقوع آگاہ براؤزنگ اب نا اہل ہے">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "مصنوعہ کی شامل کردہ خدمات اور ان کو نا اہل بنانے کی ہدایات، اگر اطلاق پزیر ہوں تو، یہاں پر شامل ہونی چاہیے ہیں۔">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "اس مصنوعہ پر کوئی بھی اطلاق پزیر خدمت اصطلاحات یہاں پر شامل فہرست ہونی چاہیے ہیں۔">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; اور اس کے معاونین، لائسنس دینے والے اور شریک سب سے درست اور تازہ خدمات دینے کے لیے کام کرتے ہیں۔  لیکن ہم اس چیز کی گیرنٹی نہیں دے سکتے کہ یہ معلومات پوری اور نقص سے آزاد ہے۔  مثال کے طور پر، محفوظ براؤزنگ خدمت شائد کچھ خطرناک سائٹوں کو نہ شناخت کر سکے اور کچھ محفوظ سائٹوں کو غلطی سے شناخت کر دے اور محل وقوع آگاہ خدمات میں خدمت مہیا کنندہ سے آئی ہوئے تمام محل وقوع اندازے ہوتے ہیں اور نا ہم اور نہ ہمارے خدمت مہیا کنندہ مہیا کی گئے محل وقوع کی درستگی کی گیرنٹی دیتے ہیں۔ ">
+<!ENTITY rights.webservices-term2 "&vendorShortName; خدمات کو موقوف یا تبدیل کر سکتا ہے۔">
+<!ENTITY rights2.webservices-term3 "آپ ان Services کو &brandShortName; کی ساتھ کی ورژن کے ساتھ استعمال کر سکتے ہیں اور &vendorShortName; آپ کو یہ کرنے کے حقوق دیتا ہے۔ &vendorShortName; اور اس کے لائسنس کنندے اس کہ علاوہ Services کے تمام حقوق اپنے پاس رکھتا ہے۔  ان اصطلاحات کا یہ مقصد نہیں ہے کہ یہ &brandShortName; پر اور اس کے ساتھ کی &brandShortName; کی اوپن سورس ورژنوں پر لاگو اوپن سورس لائسنسوں کے کسی بھی حق میں رکاوٹ ڈالیں۔">
+<!ENTITY rights.webservices-term4 "خدمات &quot;as-is&quot; طور پر مہیا کی گئی ہیں۔  &vendorShortName;، اس کے معاونین، لائسنس کنندہ، اور ڈسٹربیوٹر، تمام وارنٹیوں کو ڈسکلیم کرتے ہیں، چاہے وہ ایکسپریس یا امپلائڈ ہوں، لمیٹیشن کے بغیر بشمول، وارنٹیوں کے کہ خدمات مرچنٹبل ہیں اور آپ کے خاص مقاصد پر پوری اترتی ہیں۔  آپ اپنے مقاصد کے لیے خدمات چننے کی اور خدمات کی کوالٹی اور سرانجام دہی کی تمام رسک خود اٹھاتے ہیں۔ کچھ جورسڈکشنیں امپلائڈ وارنٹیوں کی اکسکلوژن یا لمٹیشن کی اجازت نہیں دیتیں، تو شائد یہ ڈسکلیمر آپ پر لاگو نہ ہو۔  ">
+<!ENTITY rights.webservices-term5 "سوائے اس کے کہ قانونی طور پر درکار ہو، &vendorShortName;، اس کے معاونین، لائسنس کنندہ، اور ڈسٹربیوٹر کسی بھی انڈائرکٹ، خاص، انسڈنٹل، کونسیکوئنشل، پیونٹیو، یا ایگزمپلیری ضرر کے ذمہ دار نہیں ہوں گے جو کہ &brandShortName; اور خدمات کے ذریعے یا ان کے کسی تعلق سے آئیں۔  ان شرائط کے تحط کلکٹیو لائبلٹی $500 (پانچ سو ڈالر) سے زائد نہیں ہو گے۔ کچھ جورسڈکشنیں امپلائڈ وارنٹیوں کی اکسکلوژن یا لمٹیشن کی اجازت نہیں دیتیں، تو شائد یہ ڈسکلیمر آپ پر لاگو نہ ہو۔">
+<!ENTITY rights.webservices-term6 "&vendorShortName; یہ اصطلاحات وقتافوقتا ضرورت کے طور پر تازہ کر سکتا ہے۔ یہ اصطلاحات &vendorShortName; کے تحریری معاہدے کے بغیر تبدیل یا منسوخ نہیں کی جا سکتیں۔">
+<!ENTITY rights.webservices-term7 "یہ اصطلاحات U.S.A. کے کیلیفورنیا سٹیٹ کے قوانین کے تحط ہیں، سوائے اس کی کانفلکٹ آف لا پرووژن کے۔ اگر ان اصطلاحات میں سے کوِئی بھی حصہ ناجائز یا لاگو کرنے کے قابل نہیں ہوا، تو باقی حصے پورے دباؤ اور اثر کے ساتھ رہیں گے۔ ان اصطلاحات کی ٹرانسلیٹ شدہ ورژن اور انگریزی ورژن میں تعارض کے موقع پر، انگریزی ورژن کا کنٹرول چلے گا۔">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Meklēt šajā lapā">
+<!ENTITY findField.label "Meklēt:">
+<!ENTITY findField.accesskey "k">
+<!ENTITY caseSensitiveCheckbox.label "Reģistrjūtīgs">
+<!ENTITY caseSensitiveCheckbox.accesskey "r">
+<!ENTITY wrapCheckbox.label "Pārnest">
+<!ENTITY wrapCheckbox.accesskey "r">
+<!ENTITY findButton.label "Meklēt nākamo">
+<!ENTITY findButton.accesskey "n">
+<!ENTITY cancelButton.label "Atcelt">
+<!ENTITY closeButton.label "Aizvērt">
+<!ENTITY up.label "Augšup">
+<!ENTITY up.accesskey "u">
+<!ENTITY down.label "Lejup">
+<!ENTITY down.accesskey "L">
+<!ENTITY direction.label "Virziens">

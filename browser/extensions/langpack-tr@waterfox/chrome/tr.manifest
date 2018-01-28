@@ -1,0 +1,14 @@
+locale alerts tr tr/locale/tr/alerts/
+locale autoconfig tr tr/locale/tr/autoconfig/
+locale global tr tr/locale/tr/global/
+locale global-platform tr tr/locale/tr/global-platform/mac/ os=Darwin
+locale global-platform tr tr/locale/tr/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform tr tr/locale/tr/global-platform/win/ os=WINNT
+locale mozapps tr tr/locale/tr/mozapps/
+locale necko tr tr/locale/tr/necko/
+locale passwordmgr tr tr/locale/tr/passwordmgr/
+locale pipnss tr tr/locale/tr/pipnss/
+locale pippki tr tr/locale/tr/pippki/
+locale places tr tr/locale/tr/places/
+locale pluginproblem tr tr/locale/tr/pluginproblem/
+locale weave tr tr/locale/tr/services/

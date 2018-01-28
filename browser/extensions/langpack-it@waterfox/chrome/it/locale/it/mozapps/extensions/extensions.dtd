@@ -1,0 +1,189 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addons.windowTitle "Gestione componenti aggiuntivi">
+<!ENTITY search.placeholder "Cerca tra i componenti aggiuntivi">
+<!ENTITY search.buttonlabel "Cerca">
+<!ENTITY search.commandkey "f">
+<!ENTITY loading.label "Caricamento…">
+<!ENTITY listEmpty.installed.label "Non risulta installato alcun componente aggiuntivo di questo tipo">
+<!ENTITY listEmpty.availableUpdates.label "Nessun aggiornamento disponibile">
+<!ENTITY listEmpty.recentUpdates.label "Nessun componente aggiuntivo è stato aggiornato di recente">
+<!ENTITY listEmpty.findUpdates.label "Controlla aggiornamenti">
+<!ENTITY listEmpty.search.label "Non è stato trovato alcun componente aggiuntivo corrispondente">
+<!ENTITY listEmpty.button.label "Scopri altre informazioni sui componenti aggiuntivi">
+<!ENTITY installAddonFromFile.label "Installa componente aggiuntivo da file…">
+<!ENTITY installAddonFromFile.accesskey "I">
+<!ENTITY toolsMenu.tooltip "Strumenti per tutti i componenti aggiuntivi">
+<!ENTITY getThemes.description "Sei alla ricerca di nuovi modi per personalizzare il browser?">
+<!ENTITY getThemes.learnMore "Scegli tra migliaia di temi.">
+<!ENTITY cmd.back.tooltip "Torna indietro di una pagina">
+<!ENTITY cmd.forward.tooltip "Vai avanti di una pagina">
+<!ENTITY debugAddons.label "Debug componenti aggiuntivi">
+<!ENTITY debugAddons.accesskey "D">
+<!ENTITY showUnsignedExtensions.button.label "Non è stato possibile verificare alcune estensioni">
+<!ENTITY showAllExtensions.button.label "Visualizza tutte le estensioni">
+<!ENTITY warning.safemode.label "Tutti i componenti aggiuntivi sono stati disattivati dalla modalità provvisoria.">
+<!ENTITY warning.checkcompatibility.label "Il controllo di compatibilità dei componenti aggiuntivi è disattivato. Potrebbero essere presenti dei componenti aggiuntivi non compatibili.">
+<!ENTITY warning.checkcompatibility.enable.label "Attiva">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Attiva il controllo di compatibilità dei componenti aggiuntivi">
+<!ENTITY warning.updatesecurity.label "Il controllo sulla sicurezza degli aggiornamenti dei componenti aggiuntivi è disattivato. Il sistema potrebbe essere danneggiato da un aggiornamento.">
+<!ENTITY warning.updatesecurity.enable.label "Attiva">
+<!ENTITY warning.updatesecurity.enable.tooltip "Attiva il controllo sulla sicurezza degli aggiornamenti dei componenti aggiuntivi">
+<!ENTITY view.search.label "Cerca">
+<!ENTITY view.discover.label "Esplora">
+<!ENTITY view.recentUpdates.label "Aggiornamenti recenti">
+<!ENTITY view.availableUpdates.label "Aggiornamenti disponibili">
+<!ENTITY updates.checkForUpdates.label "Controlla aggiornamenti">
+<!ENTITY updates.checkForUpdates.accesskey "C">
+<!ENTITY updates.viewUpdates.label "Visualizza aggiornamenti recenti">
+<!ENTITY updates.viewUpdates.accesskey "V">
+<!ENTITY updates.updateAddonsAutomatically.label "Aggiorna automaticamente i componenti aggiuntivi">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!ENTITY updates.resetUpdatesToAutomatic.label "Ripristina l’aggiornamento automatico per tutti i componenti aggiuntivi">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey "R">
+<!ENTITY updates.resetUpdatesToManual.label "Ripristina l’aggiornamento manuale per tutti i componenti aggiuntivi">
+<!ENTITY updates.resetUpdatesToManual.accesskey "R">
+<!ENTITY updates.updating.label "Aggiornamento dei componenti aggiuntivi in corso">
+<!ENTITY updates.installed.label "I componenti aggiuntivi sono stati aggiornati.">
+<!ENTITY updates.downloaded.label "Gli aggiornamenti sono stati scaricati.">
+<!ENTITY updates.restart.label "Riavvia adesso per completare l’installazione">
+<!ENTITY updates.noneFound.label "Nessun aggiornamento disponibile">
+<!ENTITY updates.manualUpdatesFound.label "Visualizza aggiornamenti disponibili">
+<!ENTITY updates.updateSelected.label "Installa aggiornamenti">
+<!ENTITY updates.updateSelected.tooltip "Installa gli aggiornamenti disponibili in questo elenco">
+<!ENTITY cmd.showDetails.label "Visualizza ulteriori informazioni">
+<!ENTITY cmd.showDetails.accesskey "V">
+<!ENTITY cmd.findUpdates.label "Controlla aggiornamenti">
+<!ENTITY cmd.findUpdates.accesskey "C">
+<!ENTITY cmd.preferencesWin.label "Opzioni">
+<!ENTITY cmd.preferencesWin.accesskey "O">
+<!ENTITY cmd.preferencesUnix.label "Preferenze">
+<!ENTITY cmd.preferencesUnix.accesskey "P">
+<!ENTITY cmd.about.label "Informazioni su">
+<!ENTITY cmd.about.accesskey "I">
+<!ENTITY cmd.enableAddon.label "Attiva">
+<!ENTITY cmd.enableAddon.accesskey "A">
+<!ENTITY cmd.disableAddon.label "Disattiva">
+<!ENTITY cmd.disableAddon.accesskey "D">
+<!ENTITY cmd.enableTheme.label "Utilizza questo tema">
+<!ENTITY cmd.enableTheme.accesskey "t">
+<!ENTITY cmd.disableTheme.label "Abbandona questo tema">
+<!ENTITY cmd.disableTheme.accesskey "t">
+<!ENTITY cmd.askToActivate.label "Chiedi prima di attivare">
+<!ENTITY cmd.askToActivate.tooltip "Chiedi ogni volta prima di attivare questo componente aggiuntivo">
+<!ENTITY cmd.alwaysActivate.label "Attiva sempre">
+<!ENTITY cmd.alwaysActivate.tooltip "Utilizza sempre questo componente aggiuntivo">
+<!ENTITY cmd.neverActivate.label "Non attivare mai">
+<!ENTITY cmd.neverActivate.tooltip "Non utilizzare mai questo componente aggiuntivo">
+<!ENTITY cmd.stateMenu.tooltip "Scegli quando utilizzare questo componente aggiuntivo">
+<!ENTITY cmd.installAddon.label "Installa">
+<!ENTITY cmd.installAddon.accesskey "I">
+<!ENTITY cmd.uninstallAddon.label "Rimuovi">
+<!ENTITY cmd.uninstallAddon.accesskey "R">
+<!ENTITY cmd.showPreferencesWin.label "Opzioni">
+<!ENTITY cmd.showPreferencesWin.tooltip "Modifica le opzioni di questo componente aggiuntivo">
+<!ENTITY cmd.showPreferencesUnix.label "Preferenze">
+<!ENTITY cmd.showPreferencesUnix.tooltip "Modifica le preferenze di questo componente aggiuntivo">
+<!ENTITY cmd.contribute.label "Fai una donazione">
+<!ENTITY cmd.contribute.accesskey "F">
+<!ENTITY cmd.contribute.tooltip "Contribuisci allo sviluppo di questo componente aggiuntivo">
+<!ENTITY cmd.showReleaseNotes.label "Visualizza note di versione">
+<!ENTITY cmd.showReleaseNotes.tooltip "Visualizza le note di versione per questo aggiornamento">
+<!ENTITY cmd.hideReleaseNotes.label "Nascondi note di versione">
+<!ENTITY cmd.hideReleaseNotes.tooltip "Nascondi le note di versione per questo aggiornamento">
+<!ENTITY cmd.findReplacement.label "Trova un’alternativa">
+<!ENTITY discover.title "Che cosa sono i componenti aggiuntivi?">
+<!ENTITY discover.description2 "I componenti aggiuntivi sono applicazioni che permettono di personalizzare &brandShortName; aggiungendo nuove caratteristiche o modificandone l’aspetto. Rendi &brandShortName; unico aggiungendo una nuova barra laterale per risparmiare tempo, visualizza le notifiche del meteo direttamente in &brandShortName; o cambiane l’aspetto con un nuovo tema.">
+<!ENTITY discover.footer "Quando si è connessi a Internet in questo pannello vengono visualizzati alcuni dei componenti aggiuntivi più popolari e più interessanti.">
+<!ENTITY detail.version.label "Versione">
+<!ENTITY detail.lastupdated.label "Ultimo aggiornamento">
+<!ENTITY detail.creator.label "Sviluppatore">
+<!ENTITY detail.homepage.label "Sito web">
+<!ENTITY detail.numberOfDownloads.label "Download">
+<!ENTITY detail.contributions.description "Lo sviluppatore di questo componente aggiuntivo chiede agli utenti una piccola donazione per contribuire al suo sviluppo.">
+<!ENTITY detail.updateType "Aggiornamento automatico">
+<!ENTITY detail.updateDefault.label "Predefinito">
+<!ENTITY detail.updateDefault.tooltip "Installa automaticamente gli aggiornamenti se questa è l’impostazione predefinita">
+<!ENTITY detail.updateAutomatic.label "Attivo">
+<!ENTITY detail.updateAutomatic.tooltip "Installa automaticamente gli aggiornamenti">
+<!ENTITY detail.updateManual.label "Disattivato">
+<!ENTITY detail.updateManual.tooltip "Non installare automaticamente gli aggiornamenti">
+<!ENTITY detail.home "Sito web">
+<!ENTITY detail.repository "Profilo del componente aggiuntivo">
+<!ENTITY detail.size "Dimensione">
+<!ENTITY detail.checkForUpdates.label "Controlla aggiornamenti">
+<!ENTITY detail.checkForUpdates.accesskey "e">
+<!ENTITY detail.checkForUpdates.tooltip "Controlla aggiornamenti per questo componente aggiuntivo">
+<!ENTITY detail.showPreferencesWin.label "Opzioni">
+<!ENTITY detail.showPreferencesWin.accesskey "O">
+<!ENTITY detail.showPreferencesWin.tooltip "Modifica le opzioni di questo componente aggiuntivo">
+<!ENTITY detail.showPreferencesUnix.label "Preferenze">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip "Modifica le preferenze di questo componente aggiuntivo">
+<!ENTITY rating2.label "Voto">
+<!ENTITY progress.pause.tooltip "Pausa">
+<!ENTITY progress.cancel.tooltip "Annulla">
+<!ENTITY sort.name.label "Nome">
+<!ENTITY sort.name.tooltip "Ordina per nome">
+<!ENTITY sort.dateUpdated.label "Ultimo aggiornamento">
+<!ENTITY sort.dateUpdated.tooltip "Ordina per data di aggiornamento">
+<!ENTITY sort.relevance.label "Pertinenza">
+<!ENTITY sort.relevance.tooltip "Ordina per pertinenza">
+<!ENTITY sort.price.label "Prezzo">
+<!ENTITY sort.price.tooltip "Ordina per prezzo">
+<!ENTITY search.filter2.label "Cerca:">
+<!ENTITY search.filter2.installed.label "Componenti aggiuntivi installati">
+<!ENTITY search.filter2.installed.tooltip "Visualizza i componenti aggiuntivi installati">
+<!ENTITY search.filter2.available.label "Componenti aggiuntivi disponibili">
+<!ENTITY search.filter2.available.tooltip "Visualizza i componenti aggiuntivi disponibili per l’installazione">
+<!ENTITY addon.homepage "Sito web">
+<!ENTITY addon.details.label "Altro">
+<!ENTITY addon.details.tooltip "Visualizza ulteriori dettagli su questo componente aggiuntivo">
+<!ENTITY addon.unknownDate "Sconosciuto">
+<!ENTITY addon.legacy.label "OBSOLETA">
+<!ENTITY addon.disabled.postfix "(disattivato)">
+<!ENTITY addon.update.postfix "Aggiorna">
+<!ENTITY addon.undoAction.label "Annulla">
+<!ENTITY addon.undoAction.tooltip "Annulla questa azione">
+<!ENTITY addon.undoRemove.label "Annulla">
+<!ENTITY addon.undoRemove.tooltip "Mantieni installato questo componente aggiuntivo">
+<!ENTITY addon.restartNow.label "Riavvia adesso">
+<!ENTITY addon.install.label "Installa">
+<!ENTITY addon.install.tooltip "Installa questo componente aggiuntivo">
+<!ENTITY addon.updateNow.label "Aggiorna adesso">
+<!ENTITY addon.updateNow.tooltip "Installa l’aggiornamento per questo componente aggiuntivo">
+<!ENTITY addon.includeUpdate.label "Includi negli aggiornamenti">
+<!ENTITY addon.updateAvailable.label "È disponibile un aggiornamento">
+<!ENTITY addon.checkingForUpdates.label "Ricerca aggiornamenti…">
+<!ENTITY addon.releaseNotes.label "Note di versione:">
+<!ENTITY addon.loadingReleaseNotes.label "Caricamento…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Siamo spiacenti, si è verificato un errore durante il caricamento delle note di versione.">
+<!ENTITY addon.createdBy.label "di ">
+<!ENTITY eula.title "Contratto di licenza con l’utente finale">
+<!ENTITY eula.width "560px">
+<!ENTITY eula.height "400px">
+<!ENTITY eula.accept "Accetta e installa…">
+<!ENTITY settings.path.button.label "Sfoglia…">
+<!ENTITY experiment.info.label "Che cos’è questo? Occasionalmente la telemetria potrebbe installare ed eseguire esperimenti.">
+<!ENTITY experiment.info.learnmore "Ulteriori informazioni">
+<!ENTITY experiment.info.learnmore.accesskey "U">
+<!ENTITY experiment.info.changetelemetry "Impostazioni telemetria">
+<!ENTITY experiment.info.changetelemetry.accesskey "t">
+<!ENTITY setting.learnmore "Ulteriori informazioni…">
+<!ENTITY disabledUnsigned.heading "Alcuni componenti aggiuntivi sono stati disattivati">
+<!ENTITY disabledUnsigned.description.start "I seguenti componenti non sono stati verificati per l’utilizzo in &brandShortName;. È possibile ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "cercare delle alternative">
+<!ENTITY disabledUnsigned.description.end " o chiedere allo sviluppatore di farli verificare.">
+<!ENTITY disabledUnsigned.learnMore "Scopri ulteriori informazioni sul nostro impegno per garantire la sicurezza degli utenti online.">
+<!ENTITY disabledUnsigned.devInfo.start "Gli sviluppatori interessati al processo di verifica dei componenti aggiuntivi possono consultare il seguente ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "manuale">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+<!ENTITY pluginDeprecation.description "Manca qualcosa? Alcuni plugin non sono più supportati da &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Ulteriori informazioni.">
+<!ENTITY legacyWarning.description "Manca qualcosa? Alcune estensioni non sono più supportate da &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Mostra le estensioni obsolete">
+<!ENTITY legacyExtensions.title "Estensioni obsolete">
+<!ENTITY legacyExtensions.description "Queste estensioni non soddisfano gli standard attualmente richiesti da &brandShortName; e sono state disattivate.">
+<!ENTITY legacyExtensions.learnMore "Ulteriori informazioni sui cambiamenti riguardanti le estensioni in &brandShortName;">

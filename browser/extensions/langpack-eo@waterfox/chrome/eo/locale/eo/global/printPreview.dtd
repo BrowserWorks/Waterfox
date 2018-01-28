@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Presi…">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "Agordi paĝon…">
+<!ENTITY pageSetup.accesskey  "a">
+<!ENTITY page.label           "Paĝo:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "de">
+<!ENTITY scale.label          "Skalo:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "Vertikala">
+<!ENTITY portrait.accesskey   "V">
+<!ENTITY landscape.label      "Horizontala">
+<!ENTITY landscape.accesskey  "H">
+<!ENTITY close.label          "Fermi">
+<!ENTITY close.accesskey      "F">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Personecigita…">
+<!ENTITY ShrinkToFit.label    "Etigi por adapti">
+<!ENTITY customPrompt.title   "Personecigita skalo…">
+<!ENTITY simplifyPage.label   "Simpligi paĝon">
+<!ENTITY simplifyPage.accesskey "S">
+<!ENTITY simplifyPage.enabled.tooltip  "Ŝanĝi la distribuon por pli facila lego">
+<!ENTITY simplifyPage.disabled.tooltip "Ne eblas aŭtomate simpligi tiun ĉi paĝon">
+
+<!ENTITY homearrow.tooltip    "Unua paĝo">
+<!ENTITY endarrow.tooltip     "Lasta paĝo">
+<!ENTITY nextarrow.tooltip    "Venonta page">
+<!ENTITY previousarrow.tooltip "Antaŭa page">

@@ -1,0 +1,14 @@
+locale alerts or or/locale/or/alerts/
+locale autoconfig or or/locale/or/autoconfig/
+locale global or or/locale/or/global/
+locale global-platform or or/locale/or/global-platform/mac/ os=Darwin
+locale global-platform or or/locale/or/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform or or/locale/or/global-platform/win/ os=WINNT
+locale mozapps or or/locale/or/mozapps/
+locale necko or or/locale/or/necko/
+locale passwordmgr or or/locale/or/passwordmgr/
+locale pipnss or or/locale/or/pipnss/
+locale pippki or or/locale/or/pippki/
+locale places or or/locale/or/places/
+locale pluginproblem or or/locale/or/pluginproblem/
+locale weave or or/locale/or/services/

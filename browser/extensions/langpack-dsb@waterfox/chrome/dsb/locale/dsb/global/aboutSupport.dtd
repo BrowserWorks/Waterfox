@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informacije za rozwězowanje problemow">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "Toś ten bok wopśimujo techniske informacije, kótarež by mógli wužytne byś, gaž wopytujośo problem rozwězaś. Jolic pytaśo za wótegronami za zwucone pšašanja qó &brandShortName;, woglědajśo k našomu <a id='supportLink'>pódpěrańskemu websydłoju</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Rozpšawy wowalenjow">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID rozpšawy">
+<!ENTITY aboutSupport.crashes.sendDate "Wótpósłany">
+<!ENTITY aboutSupport.crashes.allReports "Wšykne rozpšawy wowalenjow">
+<!ENTITY aboutSupport.crashes.noConfig "Nałoženje njejo se konfigurěrowało, aby rozpšawy wowalenjow zwobrazniło.">
+
+<!ENTITY aboutSupport.extensionsTitle "Rozšyrjenja">
+<!ENTITY aboutSupport.extensionName "Mě">
+<!ENTITY aboutSupport.extensionEnabled "Zmóžnjony">
+<!ENTITY aboutSupport.extensionVersion "Wersija">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Funkcije &brandShortName;">
+<!ENTITY aboutSupport.featureName "Mě">
+<!ENTITY aboutSupport.featureVersion "Wersija">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperimentelne funkcije">
+<!ENTITY aboutSupport.experimentName "Mě">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Wopisanje">
+<!ENTITY aboutSupport.experimentActive "Aktiwny">
+<!ENTITY aboutSupport.experimentEndDate "Kóńcny datum">
+<!ENTITY aboutSupport.experimentHomepage "Startowy bok">
+<!ENTITY aboutSupport.experimentBranch "Wótnožka">
+
+<!ENTITY aboutSupport.appBasicsTitle "Zakłady nałoženja">
+<!ENTITY aboutSupport.appBasicsName "Mě">
+<!ENTITY aboutSupport.appBasicsVersion "Wersija">
+<!ENTITY aboutSupport.appBasicsBuildID "Wersijowy ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Aktualizěrowański kanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Aktualizaciska historija">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Aktualizacisku historiju pokazaś">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilowy zarědnik">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilowy zarědnik">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Zmóžnjone tykace">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Konfiguracija programoweje wersije">
+<!ENTITY aboutSupport.appBasicsUserAgent "User Agent">
+<!ENTITY aboutSupport.appBasicsOS "Źěłowy system">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Wužyty składowak">
+<!ENTITY aboutSupport.appBasicsPerformance "Wugbaśe">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Zregistrěrowane &quot;service workers&quot;">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profile">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocesowe wokna">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Webwopśimjeśowe procese">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Kluc Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Kluc słužby póstajenja stojnišća Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Wěsty modus">
+
+<!ENTITY aboutSupport.showDir.label "Zarědnik wócyniś">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "W Finder pokazaś">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Zarědnik wócyniś">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Wažne změnjone nastajenja">
+<!ENTITY aboutSupport.modifiedPrefsName "Mě">
+<!ENTITY aboutSupport.modifiedPrefsValue "Gódnota">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Nastajenja w user.js">
+<!ENTITY aboutSupport.userJSDescription "Waš profilowy zarědnik wopśimujo <a id='prefs-user-js-link'>dataju user.js</a>, kótaraž wopśimujo nastajenja, kótarež njejsu se pśez &brandShortName; napórali.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Wažne zastajone nastajenja">
+<!ENTITY aboutSupport.lockedPrefsName "Mě">
+<!ENTITY aboutSupport.lockedPrefsValue "Gódnota">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Datowa banka historije a cytańskich znamjenjow">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrita">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Integritu pśeglědowaś">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementelny GC">
+
+<!ENTITY aboutSupport.a11yTitle "Pśistupnosć">
+<!ENTITY aboutSupport.a11yActivated "Aktiwěrowany">
+<!ENTITY aboutSupport.a11yForceDisabled "Bźezbarjernosći zajźowaś">
+<!ENTITY aboutSupport.a11yHandlerUsed "Pśistupny handler wužyty">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Bibliotekowe wersije">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Instalaciska historija">
+<!ENTITY aboutSupport.updateHistoryTitle "Aktualizaciska historija">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Tekst do majzywótkłada kopěrowaś">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Gropne daty do mjazywótkłada kopěrowaś">
+
+<!ENTITY aboutSupport.sandboxTitle "Pěskowy kašćik">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Wótpokazane systemowe wołanja">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Pśed sekundami">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Procesowy typ">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumenty">
+
+<!ENTITY aboutSupport.safeModeTitle "Wěsty modus wopytaś">
+<!ENTITY aboutSupport.restartInSafeMode.label "Ze znjemóžnjonymi dodankami znowego startowaś…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funkcije">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostika">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Protokol njewuspěchow">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Protokol rozsuźenja">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Funkcije, kótarež su se wót wowaleńskego stražnika znjemóžnili">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Nuzowe rozwězanja">
+
+<!ENTITY aboutSupport.mediaTitle "Medije">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Wudawańske rědy">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Zapódawańske rědy">
+<!ENTITY aboutSupport.mediaDeviceName "Mě">
+<!ENTITY aboutSupport.mediaDeviceGroup "Kupka">
+<!ENTITY aboutSupport.mediaDeviceVendor "Pśedawaŕ">
+<!ENTITY aboutSupport.mediaDeviceState "Status">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferěrowany">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanale">
+<!ENTITY aboutSupport.mediaDeviceRate "Rata">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latenca">

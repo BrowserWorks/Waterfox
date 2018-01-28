@@ -1,0 +1,105 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry-ի տվյալ">
+
+<!ENTITY aboutTelemetry.pingDataSource "Փինգ տվյալի աղբյուրին.">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Ընթացիկ փինգի տվյալ">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Արխիվացված փինգի տվյալ">
+
+<!ENTITY aboutTelemetry.raw "JSON տող">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Ցուցադրել տվյալի ենթաշրջանը">
+
+<!ENTITY aboutTelemetry.choosePing "Ընտրել փինգը.">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; առանց փինգի">
+
+<!ENTITY aboutTelemetry.showOlderPing "Հի փինգ &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Շաբաթ">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Փինգ">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Գլխավոր տվյալներ">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Միջավայրի տվյալ">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetry-ի մատյանը">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Ցուցադրել SQL-ի առաջարկությունը">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "       Դիտարկիչի կախումներ">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection " Շղթների կախում ">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  Գծապատկերներ">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Ստեղնաշարային հիստոգրամներ">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Պարզ չափումներ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Հավելման մանրամասները">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Հետագա գրումներ">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "      Տեղեկություն աշխատաշրջանի մասին">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  ՀԻՇԵՔ. Միացված է SQL-ի վրիպազերծման դանդաղ եղանակը։ Ստորև կարող են ցուցադրվել SQL ամբողջական տողեր, բայց դրանք չեն հաստատվի Telemetry-ում։">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Ընտրել գործառույթի անունները՝ շեղջերի համար">
+
+
+<!ENTITY aboutTelemetry.filterText "  Զտիչ (տողը կամ /regexp/)">
+
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+

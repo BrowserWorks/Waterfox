@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Dillər">
+<!ENTITY languages.customize.description                "Bəzi səhifələr birdən çox dil dəstəyi verə bilər. Göstəriləcək dil sıralamasını aşağıdakı pəncərədən seçə bilərsiniz.">
+<!ENTITY languages.customize.moveUp.label               "Yuxarıya">
+<!ENTITY languages.customize.moveUp.accesskey           "u">
+<!ENTITY languages.customize.moveDown.label             "Aşağı apar">
+<!ENTITY languages.customize.moveDown.accesskey         "A">
+<!ENTITY languages.customize.deleteButton.label         "Sil">
+<!ENTITY languages.customize.deleteButton.accesskey     "S">
+<!ENTITY languages.customize.selectLanguage.label       "Əlavə ediləcək dili seçin…">
+<!ENTITY languages.customize.addButton.label            "Əlavə et">
+<!ENTITY languages.customize.addButton.accesskey        "a">
+

@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Dados de telemetria">
+
+<!ENTITY aboutTelemetry.pingDataSource "Fonte de dados ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Dados ping atuais">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Dados ping arquivados">
+
+<!ENTITY aboutTelemetry.raw "JSON em bruto">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Mostrar dados de sub-sessão">
+
+<!ENTITY aboutTelemetry.choosePing "Escolha o ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping recente">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping antigo &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Fraco">
+
+<!ENTITY aboutTelemetry.archivePingType "Tipo de ping">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Hoje">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Ontem">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Antigo">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Dados gerais">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Dados do ambiente">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Registo de telemetria">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Instruções SQL lentas">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Bloqueios do navegador">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Bloqueios de threads">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Stacks capturadas">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Escalares">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Escalares codificados">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramas">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histogramas teclados">
+
+<!ENTITY aboutTelemetry.eventsSection "  Eventos">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Medições simples">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Detalhes do extra">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Escritas atrasadas">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Informação da sessão">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTA: A depuração lenta de SQL está ativada. As strings de SQL completas poderão ser mostradas abaixo mas não serão submetidas à telemetria.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Obter nomes de funções para stacks">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Mostrar dados em bruto de stack">
+
+<!ENTITY aboutTelemetry.filterText "  Filtro (strings ou /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Payload">

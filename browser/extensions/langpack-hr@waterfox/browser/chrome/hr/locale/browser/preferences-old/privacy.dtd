@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Koristite zaštitu od praćenja">
+<!ENTITY  trackingProtectionAlways.label       "Uvijek">
+<!ENTITY  trackingProtectionAlways.accesskey   "j">
+<!ENTITY  trackingProtectionPrivate.label      "Samo u privatnim prozorima">
+<!ENTITY  trackingProtectionPrivate.accesskey  "r">
+<!ENTITY  trackingProtectionNever.label        "Nikad">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Saznajte više">
+<!ENTITY  trackingProtectionExceptions.label   "Iznimke…">
+<!ENTITY  trackingProtectionExceptions.accesskey "z">
+
+<!ENTITY tracking.label                 "Praćenje">
+<!ENTITY trackingProtectionPBM5.label         "Koristi zaštitu od praćenja u privatnim prozorima">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Saznajte više">
+<!ENTITY changeBlockList.label          "Promijenite popis blokiranih">
+<!ENTITY changeBlockList.accesskey      "b">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Možete također ">
+<!ENTITY  doNotTrack.settings.label     "upravljanje vašim &quot;ne prati me&quot; postavkama">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Povijest">
+
+<!ENTITY  locationBar.label             "Adresna traka">
+
+<!ENTITY  locbar.suggest.label          "Pri korištenju adresne trake, predloži:">
+<!ENTITY  locbar.history.label          "Povijest">
+<!ENTITY  locbar.history.accesskey      "P">
+<!ENTITY  locbar.bookmarks.label        "Zabilješke">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Otvori kartice">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Povezana pretraživanja od zadane tražilice">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Promijenite postavke prijedloga tražilica…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Prihvati kolačiće trećih strana:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Uvijek">
+<!ENTITY  acceptThirdParty.never.label    "Nikad">
+<!ENTITY  acceptThirdParty.visited.label  "Od posjećenih">
+
+<!ENTITY  keepUntil.label               "Zadrži do:">
+<!ENTITY  keepUntil.accesskey           "ž">
+
+<!ENTITY  expire.label                  "isteka roka">
+<!ENTITY  close.label                   "zatvaranja &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Iznimke...">
+<!ENTITY  cookieExceptions.accesskey    "m">
+
+<!ENTITY  showCookies.label             "Prikaži kolačiće...">
+<!ENTITY  showCookies.accesskey         "k">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; će:">
+<!ENTITY  historyHeader.pre.accesskey      "e">
+<!ENTITY  historyHeader.remember.label     "zapamtiti povijest">
+<!ENTITY  historyHeader.dontremember.label "neće nikada zapamtiti povijest">
+<!ENTITY  historyHeader.custom.label       "koristiti prilagođene postavke za povijest">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; će zapamtiti povijest pretraživanja, preuzimanja, formi i traženja, te će sačuvati kolačiće stranica koje ste posjetili.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Možda ćete željeti ">
+<!ENTITY  rememberActions.clearHistory.label  "očistiti nedavnu povijest">
+<!ENTITY  rememberActions.middle.label        " ili ">
+<!ENTITY  rememberActions.removeCookies.label "ukloniti osobne kolačiće">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; će koristiti iste postavke kao i za privatno pretraživanje, te neće pamtiti povijest pretraživanja.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Možda ćete željeti ">
+<!ENTITY  dontrememberActions.clearHistory.label "očistiti svu trenutnu povijest">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Uvijek koristi privatni način pretraživanja">
+<!ENTITY  privateBrowsingPermanent2.accesskey "v">
+
+<!ENTITY  rememberHistory2.label      "Zapamti povijest pretraživanja i preuzimanja">
+<!ENTITY  rememberHistory2.accesskey  "r">
+
+<!ENTITY  rememberSearchForm.label       "Zapamti povijest traženja i formi">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Očisti povijest pri zatvaranju &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "z">
+
+<!ENTITY  clearOnCloseSettings.label     "Postavke…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Sadržajne kartice">
+<!ENTITY  browserContainersLearnMore.label      "Saznajte više">
+<!ENTITY  browserContainersEnabled.label        "Omogući sadržajne kartice">
+<!ENTITY  browserContainersEnabled.accesskey    "m">
+<!ENTITY  browserContainersSettings.label        "Postavke…">
+<!ENTITY  browserContainersSettings.accesskey    "t">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

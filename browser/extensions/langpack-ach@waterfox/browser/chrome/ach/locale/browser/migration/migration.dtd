@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Kel Wizard ki woko">
+
+<!ENTITY importFrom.label               "Gin ayera me Kelo ki woko, Alama me buk, Gin mukato, Mung me donyo kacel ki tic mogo ki bot:">
+<!ENTITY importFromUnix.label           "Kel ki woko ter, Alama me buk, Gin mukato, Mung me donyo kacel ki tic mogo kibot:">
+<!ENTITY importFromBookmarks.label      "Kel Alama buk kiwoko ki bot:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Pe ikel gin mo ki woko">
+<!ENTITY importFromNothing.accesskey    "P">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 layeny ma tye ki ber bedo">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Pe tye purugram mo matye ki tic me alama buk, gin mukato onyo mung me donyo ma kiromo nongo.">
+
+<!ENTITY importSource.title             "Kel Ter kacel ki Tic ki woko">
+<!ENTITY importItems.title              "Jami me akela ki woko">
+<!ENTITY importItems.label              "Yer jami me akela ki woko:">
+
+<!ENTITY migrating.title                "Kelo ki woko…">
+<!ENTITY migrating.label                "Jami magi kombedi kitye ka kelo ki woko…">
+
+<!ENTITY selectProfile.title            "Yer Profile">
+<!ENTITY selectProfile.label            "Profile magi nonge me kel ki iye:">
+
+<!ENTITY done.title                     "Kel ki woko otum">
+<!ENTITY done.label                     "Jami magi okele maber ki woko:">
+
+<!ENTITY closeSourceBrowser.label       "Tim ber inen ni layeny ma kiyero ni kiloro woko mapud pe imede anyim.">

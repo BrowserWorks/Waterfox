@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Tuchwilu njejsće w priwatnym woknje.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Priwatne wokno wočinić">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Priwatny modus">
+<!ENTITY privateBrowsing.title.tracking                  "Priwatny modus ze slědowanskim škitom">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Jeli w priwatnym woknje přehladujeće, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "njeskładuje">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "wopytane strony">
+<!ENTITY aboutPrivateBrowsing.info.searches              "pytanja">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "placki">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "nachwilne dataje">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "budźe składować">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " waše:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "sćehnjenja">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "zapołožki">
+<!ENTITY aboutPrivateBrowsing.note.before                "Priwatny modus ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "was anonymny nječini">
+<!ENTITY aboutPrivateBrowsing.note.after                 " w interneće. Waš dźěłodawar abo internetny poskićowar móže hišće wědźeć, kotru stronu wopytujeće.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Zhońće wjace wo ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Priwatny modus">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Slědowanski škit">
+<!ENTITY trackingProtection.description2                 "Někotre websydła wužiwaja slědowanske programy, kotrež wašu aktiwitu w interneće dohladuja. Ze slědowanskim škitom Waterfox budźe wjele slědowanskich programow blokować, kotrež móža daty wo wašim přehladowanskim zadźerženju nahromadźić.">
+<!ENTITY trackingProtection.startTour1                   "Wobhladajće sej, kak to funguje">

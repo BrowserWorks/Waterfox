@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Пра сетку">
+<!ENTITY aboutNetworking.warning               "Вельмі спробная асаблівасць. Не карыстайцеся без нагдляду дарослых.">
+<!ENTITY aboutNetworking.showNextTime          "Паказваць гэтае папярэджанне наступным разам">
+<!ENTITY aboutNetworking.ok                    "Добра">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Сокеты">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Сеціўныя сокеты">
+<!ENTITY aboutNetworking.refresh               "Паднавіць">
+<!ENTITY aboutNetworking.autoRefresh           "Паднаўляць кожныя 3 секунды">
+<!ENTITY aboutNetworking.hostname              "Назва трымальніка">
+<!ENTITY aboutNetworking.port                  "Порт">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Дзейны">
+<!ENTITY aboutNetworking.idle                  "Бяздзейны">
+<!ENTITY aboutNetworking.host                  "Трымальнік">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Дасланыя">
+<!ENTITY aboutNetworking.received              "Атрыманыя">
+<!ENTITY aboutNetworking.family                "Сям'я">
+<!ENTITY aboutNetworking.addresses             "Адрасы">
+<!ENTITY aboutNetworking.expires               "Састарэнне (Секунды)">
+<!ENTITY aboutNetworking.messagesSent          "Дасланыя паведамленні">
+<!ENTITY aboutNetworking.messagesReceived      "Атрыманыя паведамленні">
+<!ENTITY aboutNetworking.bytesSent             "Дасланыя байты">
+<!ENTITY aboutNetworking.bytesReceived         "Атрыманыя байты">
+<!ENTITY aboutNetworking.logging               "Метрыка">
+<!ENTITY aboutNetworking.logTutorial           "Для атрымання інструкцый пра тое, як выкарыстоўваць гэты інструмент, прачытайце артыкул <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a>.">
+<!ENTITY aboutNetworking.currentLogFile        "Бягучы файл журнала:">
+<!ENTITY aboutNetworking.currentLogModules     "Бягучыя модулі журнала:">
+<!ENTITY aboutNetworking.setLogFile            "Пазначыць файл журнала">
+<!ENTITY aboutNetworking.setLogModules         "Пазначыць модулі журнала">
+<!ENTITY aboutNetworking.startLogging          "Пачаць вядзенне журнала">
+<!ENTITY aboutNetworking.stopLogging           "Спыніць вядзенне журнала">
+<!ENTITY aboutNetworking.dnsLookup             "Пошук DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Вырашыць">
+<!ENTITY aboutNetworking.dnsDomain             "Дамен">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "Статыстыка RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Стан RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Лік выйгрышаў кэша">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Лік выйгрышаў сеткі">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Агульная колькасць сеткавых запытаў">
+<!ENTITY aboutNetworking.rcwnOperation         "Аперацыі кэшу">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Адкрыць">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Прачытана">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Запісана">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Адкрыта запісаў">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Кароткае сярэдняе">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Доўгае сярэдняе">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Доўгае сярэднеквадратычнае адхіленне">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Лік маруднага кэша">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Лік не-маруднага кэша">

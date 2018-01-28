@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "स्थिती:">
+<!ENTITY tile.label                 "विभागीय">
+<!ENTITY center.label               "मध्यभाग">
+<!ENTITY stretch.label              "विस्तार">
+<!ENTITY fill.label                 "भरा">
+<!ENTITY fit.label                  "बसवा">
+<!ENTITY preview.label              "पूर्वदृश्य">
+<!ENTITY color.label                "रंग:">
+<!ENTITY setDesktopBackground.title "डेस्कटॉपची पार्श्वभूमी विशद करा">
+<!ENTITY openDesktopPrefs.label     "डेस्कटॉपवरील प्राधान्यक्रम उघडा">
+<!ENTITY closeWindow.key            "w">

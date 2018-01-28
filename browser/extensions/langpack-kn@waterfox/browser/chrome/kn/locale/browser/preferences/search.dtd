@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "ಪೂರ್ವನಿಯೋಜಿತ ಹುಡುಕು ಎಂಜಿನ್">
+
+
+<!ENTITY provideSearchSuggestions.label        "search ಸಲಹೆಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+
+<!ENTITY urlBarSuggestionsPermanentPB.label    "ಎಂದಿಗೂ ಸಹ ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬೇಡ ಎಂದು ನೀವು &brandShortName; ಅನ್ನು ಸಂರಚಿಸಿರುವುದರಿಂದ ಹುಡುಕುವಾಗ ಸ್ಥಳದ ಪಟ್ಟಿಯ ಫಲಿತಾಂಶಗಳಲ್ಲಿ ಯಾವುದೆ ಸಲಹೆಗಳನ್ನು ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.">
+
+
+
+<!ENTITY engineNameColumn.label                "ಹುಡುಕು ಎಂಜಿನ್‌">
+<!ENTITY engineKeywordColumn.label             "ಸೂಚಕ ಪದ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Default ಹುಡುಕು ಎಂಜಿನ್‌ಗಳನ್ನು ಮರುಹೊಂದಿಸು">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Remove">
+<!ENTITY removeEngine.accesskey                "R">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY oneClickSearchEngines.label           "One-Click Search Engines">
+
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

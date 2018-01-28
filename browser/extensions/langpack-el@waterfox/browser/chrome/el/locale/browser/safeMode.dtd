@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Ασφαλής λειτουργία του &brandShortName;">
+<!ENTITY window.maxWidth              "430">
+
+<!ENTITY startSafeMode.label          "Εκκίνηση σε Ασφαλή λειτουργία">
+<!ENTITY refreshProfile.label         "Ανανέωση του &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Η Ασφαλής λειτουργία είναι μια ειδική λειτουργία του &brandShortName; που μπορεί να χρησιμοποιηθεί για την αντιμετώπιση πιθανών προβλημάτων.">
+<!ENTITY safeModeDescription4.label   "Τα πρόσθετα και οι προσαρμοσμένες ρυθμίσεις σας θα απενεργοποιηθούν προσωρινά.">
+
+<!ENTITY refreshProfileInstead.label  "Μπορείτε επίσης να παραλείψετε την αντιμετώπιση προβλημάτων και να δοκιμάσετε την ανανέωση του &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "Το &brandShortName; τερματίστηκε απρόσμενα κατά την εκκίνηση. Αυτό μπορεί να προκλήθηκε από κάποιο πρόσθετο ή άλλα προβλήματα. Μπορείτε να προσπαθήσετε να επιλύσετε το πρόβλημα στην Ασφαλή λειτουργία.">

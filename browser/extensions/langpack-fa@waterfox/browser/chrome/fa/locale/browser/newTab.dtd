@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "زبانهٔ جدید">
+<!ENTITY newtab.customize.classic "نمایش سایت‌های پربازدید شما">
+<!ENTITY newtab.customize.cog.enhanced "همراه با سایت‌های پیشنهادی">
+<!ENTITY newtab.customize.cog.title2 "کنترل های زبانه جدید">
+<!ENTITY newtab.customize.cog.learn "اطلاعات بیشتر دربارهٔ زبانهٔ جدید">
+<!ENTITY newtab.customize.title "سفارشی کردن صفحه جدید تب دارتان">
+<!ENTITY newtab.customize.blank2 "نمایش صفحه خالی">
+<!ENTITY newtab.undo.removedLabel "تصویر کوچک حذف شد.">
+<!ENTITY newtab.undo.undoButton "برگردان.">
+<!ENTITY newtab.undo.restoreButton "برگرداندن همه.">
+<!ENTITY newtab.undo.closeTooltip "مخفی کردن">

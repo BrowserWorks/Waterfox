@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Følgende cookies er gemt på din computer:">
+<!ENTITY     cookiename.label               "Cookie-navn">
+<!ENTITY     cookiedomain.label             "Websted">
+<!-- LOCALIZATION NOTE (button.removeSelectedCookies.accesskey):
+  The label associated with this accesskey can be found in 
+  preferences.properties as removeSelectedCookies.
+-->
+
+<!ENTITY     props.name.label               "Navn:">
+<!ENTITY     props.value.label              "Indhold:">
+<!ENTITY     props.domain.label             "Vært:">
+<!ENTITY     props.path.label               "Sti:">
+<!ENTITY     props.secure.label             "Send for:">
+<!ENTITY     props.expires.label            "Udløber:">
+<!ENTITY     props.container.label          "Container:">
+
+<!ENTITY     window.title                   "Cookies">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Søg">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "Luk">
+<!ENTITY     button.close.accesskey         "L">

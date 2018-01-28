@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Leabharmharcanna">
+<!ENTITY engine.bookmarks.accesskey "L">
+<!ENTITY engine.tabs.label2         "Cluaisíní Oscailte">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Stair">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Fhocail Fhaire">
+<!ENTITY engine.logins.accesskey    "F">
+<!ENTITY engine.prefs.label         "Sainroghanna">
+<!ENTITY engine.prefs.accesskey     "S">
+<!ENTITY engine.addons.label        "Breiseáin">
+<!ENTITY engine.addons.accesskey    "B">
+<!ENTITY engine.addresses.label     "Seoltaí">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "Cártaí creidmheasa">
+<!ENTITY engine.creditcards.accesskey "C">
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Ainm an Ghléis">
+<!ENTITY changeSyncDeviceName.label "Athraigh Ainm an Ghléis…">
+<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "Cealaigh">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "g">
+<!ENTITY saveChangeSyncDeviceName.label "Sábháil">
+<!ENTITY saveChangeSyncDeviceName.accesskey "b">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Téarmaí Seirbhíse">
+<!ENTITY fxaPrivacyNotice.link.label "Fógra Príobháideachais">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "Níl">
+<!ENTITY signedInUnverified.aftername.label "deimhnithe.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Logáil isteach chun athcheangal">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Níl tú logáilte isteach.">
+<!ENTITY signIn.label                "Logáil isteach">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "Athraigh an pictiúr próifíle">
+<!ENTITY verifiedManage.label        "Bainistigh mo Chuntas">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect.label            "Dícheangail…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY verify.label                "Dearbhaigh an Seoladh Ríomhphoist">
+<!ENTITY verify.accesskey            "D">
+<!ENTITY forget.label                "Déan Dearmad ar an Seoladh Ríomhphoist seo">
+<!ENTITY forget.accesskey            "e">
+
+<!ENTITY signedOut.caption            "Beir do Ghréasán féin leat">
+<!ENTITY signedOut.description        "Siocrónaigh do chuid leabharmharcanna, stair, cluaisíní, focail fhaire, breiseáin, agus sainroghanna ar do ghléasanna go léir.">
+<!ENTITY signedOut.accountBox.title   "Ceangail le &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Cruthaigh Cuntas">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Logáil Isteach">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.engines.label       "Sioncronaigh trasna gach gléas">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Íoslódáil Waterfox ar ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " nó ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " chun sioncronú le do ghléas soghluaiste.">

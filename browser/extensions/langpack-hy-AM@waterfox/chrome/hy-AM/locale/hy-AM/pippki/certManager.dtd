@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Վկայագրերի Կառավարիչ">
+
+<!ENTITY certmgr.tab.mine                     "Ձեր Արտոնաթղթերը">
+<!ENTITY certmgr.tab.others2                  "Մարդիք">
+<!ENTITY certmgr.tab.websites3                "Սերվերներ">
+<!ENTITY certmgr.tab.ca                       "Հեղինակություններ">
+<!ENTITY certmgr.tab.orphan2                  "Այլոք">
+
+<!ENTITY certmgr.mine                         "Դուք ունեք Ձեր անձը նույնացնող վկայագրեր հետևյալ կազմակերպություններից.">
+<!ENTITY certmgr.others                       "Դուք ունեք պահպանված արտոնաթղթեր, որոնք այս անձանց նույնացնում են:">
+<!ENTITY certmgr.websites2                    "Դուք ֆայլում ունեք վկայագրեր որոնք նույնականացնում են հետևյալ սերվերներին.">
+<!ENTITY certmgr.cas                          "Դուք ունեք պահպանված Վկայագրեր, որոնք այս հեղինակությունները նույնացնում են:">
+<!ENTITY certmgr.orphans                      "Դուք ֆալյում ունեք վկայագրեր որենք չեն համատեղվում ոչ մի այլ բաժիններում.">
+
+<!ENTITY certmgr.detail.general_tab.title     "Գլխավորը">
+<!ENTITY certmgr.detail.general_tab.accesskey "Գ">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Մանրամասներ">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "Մ">
+
+<!ENTITY certmgr.pending.label                "Հիմա ստուգվում է Վկայագիրը...">
+<!ENTITY certmgr.subjectinfo.label            "Տրված է՝.">
+<!ENTITY certmgr.issuerinfo.label             "Թողարկող՝.">
+<!ENTITY certmgr.periodofvalidity.label       "Վաերականության ժամկետը" >
+<!ENTITY certmgr.fingerprints.label           "Մատնահետքերը">
+<!ENTITY certmgr.certdetail.title             "Տեղեկություն վկայագրի մասին">
+<!ENTITY certmgr.certdetail.cn                "Ընդհանուր անունը (CN)">
+<!ENTITY certmgr.certdetail.o                 "Կազմակերպությունը (O)">
+<!ENTITY certmgr.certdetail.ou                "Կազմակերպ. Բաժանմ. (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Հերթ. Համարը">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 Մատնահետք">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 Մատնահետք">
+
+<!ENTITY certmgr.editcacert.title             "Խմբագրել CA Վկայագրի վստահության դրույթները">
+<!ENTITY certmgr.editcert.edittrust           "Խմբագրել վստահության դրույթները">
+<!ENTITY certmgr.editcert.trustssl            "Այս Վկայագիրը կարող է վեբ հանգույցներ նույնացնել:">
+<!ENTITY certmgr.editcert.trustemail          "Այս Վկայագիրը կարող է էլ-փոստ օգտվ. նույնացնել:">
+<!ENTITY certmgr.editcert.trustobjsign        "Այս Վկայագիրը կարող է ծրագր. արտադրող նույնացնել:">
+
+<!ENTITY certmgr.deletecert.title             "Հեռացնել Վկայագիրը ">
+
+<!ENTITY certmgr.certname                     "Վկայագրի Անունը">
+<!ENTITY certmgr.certserver                   "Սպասարկիչ">
+<!ENTITY certmgr.override_lifetime            "Տևողություն">
+<!ENTITY certmgr.tokenname                    "Անվտանգության Սարք">
+<!ENTITY certmgr.begins                       "Սկսում է՝">
+<!ENTITY certmgr.expires                      "Ժամկետը ավարտվում է՝">
+<!ENTITY certmgr.email                        "Էլ-Փոստ հասցեն">
+<!ENTITY certmgr.serial                       "Հերթ. Համարը">
+
+<!ENTITY certmgr.close.label                  "Փակել">
+<!ENTITY certmgr.close.accesskey              "Փ">
+<!ENTITY certmgr.view2.label                  "Դիտել...">
+<!ENTITY certmgr.view2.accesskey              "Դ">
+<!ENTITY certmgr.edit3.label                  "Խմբագրել վստահությունը">
+<!ENTITY certmgr.edit3.accesskey              "Խ">
+<!ENTITY certmgr.export.label                 "Արտահանել...">
+<!ENTITY certmgr.export.accesskey             "Ա">
+<!ENTITY certmgr.delete2.label                "Ջնջում...">
+<!ENTITY certmgr.delete2.accesskey            "Ջ">
+<!ENTITY certmgr.delete_builtin.label         "Ջնջել կամ Չվստահել">
+<!ENTITY certmgr.delete_builtin.accesskey     "Ջ">
+<!ENTITY certmgr.backup2.label                "Պահուստացում...">
+<!ENTITY certmgr.backup2.accesskey            "Պ">
+<!ENTITY certmgr.backupall2.label             "Վերականգնում Ամենը...">
+<!ENTITY certmgr.backupall2.accesskey         "Վ">
+<!ENTITY certmgr.restore2.label               "Ներմուծել…">
+<!ENTITY certmgr.restore2.accesskey           "ե">
+<!ENTITY certmgr.details.label                "Վկայագրի դաշտերը">
+<!ENTITY certmgr.details.accesskey            "դ">
+<!ENTITY certmgr.fields.label                 "Դաշտի արժեքը">
+<!ENTITY certmgr.fields.accesskey             "ա">
+<!ENTITY certmgr.hierarchy.label              "Վկայագրի Ծառը">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Ավելացնել բացառություն...">
+<!ENTITY certmgr.addException.accesskey       "բ">
+
+<!ENTITY exceptionMgr.title                   "Ավելացնել Անվտանգության Բացառություն">
+<!ENTITY exceptionMgr.exceptionButton.label   "Հաստատել Անվտանգության Բացառությունը">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "Հ">
+<!ENTITY exceptionMgr.supplementalWarning     "Օրինական բանկեր, խանութներ և այլ հասարակական կայքեր չեն խնդրի ձեզանից անել սա:">
+<!ENTITY exceptionMgr.certlocation.caption2   "Սպասարկիչ">
+<!ENTITY exceptionMgr.certlocation.url        "Հասցեն.">
+<!ENTITY exceptionMgr.certlocation.download   "Ստանալ Վկայագիրը">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Վկայագրի Վիճակը">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Դիտել...">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Ընդմիշտ պահել այս բացառությունը">
+<!ENTITY exceptionMgr.permanent.accesskey     "Ը">

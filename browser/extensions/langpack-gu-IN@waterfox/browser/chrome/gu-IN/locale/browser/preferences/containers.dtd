@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "નવું કન્ટેઈનર ઉમેરો">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "પસંદગીઓ">
+<!ENTITY removeButton.label   "દૂર કરો">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; પાછા જાવ">
+
+<!ENTITY window.title         "નવું કન્ટેઈનર ઉમેરો">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "નામ:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "કન્ટેઈનરમાં નામ દાખલ કરો">
+<!ENTITY icon.label           "ચિહ્ન:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "રંગ:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "પૂર્ણ થયું">
+<!ENTITY button.ok.accesskey  "D">
+

@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Hayakul">
+
+<!ENTITY accessibility.label             "Duwandiyan">
+
+<!ENTITY useCursorNavigation.label       "Waati kul ma moo dirandikaw kufaley ka naaru moɲey ra">
+<!ENTITY useCursorNavigation.accesskey   "d">
+<!ENTITY searchOnStartTyping.label       "Hantum ceeci waati kaŋ ay šintin ka hantum">
+<!ENTITY searchOnStartTyping.accesskey   "H">
+<!ENTITY blockAutoReload.label           "War yaamar waati kaŋ Interneti nungey ga wiri ka moɲoo bisandi wala k'a zumandi taaga">
+<!ENTITY blockAutoReload.accesskey       "n">
+<!ENTITY useOnScreenKeyboard.label       "Maate walha cebe nd'a ga hima">
+<!ENTITY useOnScreenKeyboard.accesskey   "h">
+
+<!ENTITY browsing.label                  "Ceeciyan">
+
+<!ENTITY useAutoScroll.label             "Boŋ-cendiyan goyandi">
+<!ENTITY useAutoScroll.accesskey         "c">
+<!ENTITY useSmoothScrolling.label        "Cendiyan baana goyandi">
+<!ENTITY useSmoothScrolling.accesskey    "a">
+<!ENTITY checkUserSpelling.label         "War boŋhantumoo koroši waati kaŋ ay ga hantum">
+<!ENTITY checkUserSpelling.accesskey     "h">
+
+<!ENTITY dataChoicesTab.label            "Bayhaya suubarey">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Ga war gaa ka faham ceecikaa goysahãa se nda ka bayhaya žemni war ceecikaa baanoo ga nda &vendorShortName;">
+<!ENTITY enableHealthReport.label        "&brandShortName; baani bayrandikaa tunandi">
+<!ENTITY enableHealthReport.accesskey    "r">
+
+
+<!ENTITY telemetryDesc.label             "Goysahã, goyfondo, jinay šenda nda boŋse hanseyan bayhayey žemni war ceecikaa ga nda &vendorShortName; k'ir gaa ka &brandShortName; boryandi">
+
+
+
+
+<!ENTITY crashReporterDesc2.label         "Kaŋyan bayrandey ga &vendorShortName; faaba ka harasawey hanse nda ka war ceecijinaa tabatandi nda saajaw">
+<!ENTITY alwaysSubmitCrashReports.label   "Naŋ &brandShortName; ma kaŋyan bayrandi margantey sanba war se">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+
+
+<!ENTITY networkTab.label                "Sankay">
+
+<!ENTITY connection.label                "Ciyari">
+
+<!ENTITY connectionDesc.label            "Hanse taka kaŋ nda &brandShortName; ga Interneti ciya">
+<!ENTITY connectionSettings.label        "Kayandiyaney…">
+<!ENTITY connectionSettings.accesskey    "a">
+
+<!ENTITY httpCache.label                 "Interneti gundekuna lanbante">
+
+<!ENTITY offlineStorage2.label           "Bila nda ciya Interneti gundekuna lanbante nda goykaw bayhayey">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Nungu bayhayey">
+<!ENTITY clearSiteData.label             "Bayhayey kul tuusu">
+<!ENTITY clearSiteData.accesskey         "u">
+<!ENTITY siteDataSettings.label          "Kayandiyaney…">
+<!ENTITY siteDataSettings.accesskey      "i">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Tugudoo kayandi">
+<!ENTITY limitCacheSizeBefore.accesskey  "d">
+<!ENTITY limitCacheSizeAfter.label       "MB jišidoo dimma">
+<!ENTITY clearCacheNow.label             "Koonandi sohõ">
+<!ENTITY clearCacheNow.accesskey         "K">
+<!ENTITY clearOfflineAppCacheNow.label   "Koonandi sohõ">
+<!ENTITY clearOfflineAppCacheNow.accesskey "h">
+<!ENTITY overrideSmartCacheSize.label    "Boŋdirandi tugudoo juwalyan daaru">
+<!ENTITY overrideSmartCacheSize.accesskey "d">
+
+<!ENTITY updateTab.label                 "Taagandiri">
+
+<!ENTITY updateAuto1.label               "Taagandirey sinji ngey boŋse (yaamarante: saajaw tontonandi)">
+<!ENTITY updateAuto1.accesskey           "a">
+<!ENTITY updateCheckChoose.label         "Taagandirey guna, amma naŋ ya ngey sinjiyan dogoo suuba">
+<!ENTITY updateCheckChoose.accesskey     "g">
+<!ENTITY updateManual.label              "Ši taagandirey ceeci abada (manti yaamarante: saajaw allamaana)">
+<!ENTITY updateManual.accesskey          "b">
+
+<!ENTITY updateHistory.label             "Taagandiri taariku cebe">
+<!ENTITY updateHistory.accesskey         "a">
+
+<!ENTITY useService.label                "Goy bandafaari zaa ka taagarandirey sinji">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate.label        "Ceeci maršiney">
+<!ENTITY enableSearchUpdate.accesskey    "e">
+
+<!ENTITY offlineStorageNotify.label               "Har war se waati kaŋ interneti nungu ga hãa ka bayhayey jiši bila nda interneti-ciyari">
+<!ENTITY offlineStorageNotify.accesskey           "H">
+<!ENTITY offlineStorageNotifyExceptions.label     "Hasarawey…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "a">
+
+<!ENTITY offlineAppsList2.label          "Interneti nungey wey duu fondo ka bayhayey jiši bila-nda-ciyari goyyan se:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Kaa…">
+<!ENTITY offlineAppsListRemove.accesskey "K">
+<!ENTITY offlineAppRemove.confirm        "Bila-nda-ciyari kaa">
+
+<!ENTITY certificateTab.label            "Tabatiyan-tiirawey">
+<!ENTITY certPersonal.label              "Hãayaney">
+<!ENTITY certPersonal.description        "Waati kaŋ feršikaw n'ay boŋ tabatiyan-tiiraa wiri:">
+<!ENTITY selectCerts.auto                "Affoo suuba boŋse">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Hãa waati foo kul">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Hayyan OCSP zaabi feršikey ka sohõda tabatandi tiira booriyanoo cimandi.">
+<!ENTITY enableOCSP.accesskey            "H">
+<!ENTITY viewCerts.label                 "Tabatiyan-tiirawey guna">
+<!ENTITY viewCerts.accesskey             "a">
+<!ENTITY viewSecurityDevices.label       "Saajaw jinawey">
+<!ENTITY viewSecurityDevices.accesskey   "w">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Goy nda jinay šenda cahãndikaw nd'a ga bara">
+<!ENTITY allowHWAccel.accesskey          "j">
+
+<!ENTITY autoUpdateOthers.label          "Automatically Update">
+<!ENTITY crashReporterLearnMore.label     "Learn more">
+
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY enableTelemetryData.label       "Share Additional Data (i.e., Telemetry)">
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY telemetryLearnMore.label        "Learn more">
+
+<!ENTITY updateApplication.label         "&brandShortName; Updates">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

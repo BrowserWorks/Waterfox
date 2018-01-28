@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "უსაფრთხოება">
+<!ENTITY  phishingProtection.label       "ყალბი გვერდებისგან დაცვა">
+
+<!ENTITY  warnOnAddonInstall2.label       "გაფრთხილება საიტების მიერ დამატების ჩადგმის მცდელობისას">
+<!ENTITY  warnOnAddonInstall2.accesskey   "გ">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "სახიფათო და თაღლითური შიგთავსის შეზღუდვა">
+<!ENTITY  enableSafeBrowsing.accesskey    "ღ">
+
+<!ENTITY  blockDownloads.label            "სახიფათო ჩამოტვირთვების აკრძალვა">
+<!ENTITY  blockDownloads.accesskey        "ძ">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "გაფრთხილება არასასურველი და უჩვეულო პროგრამების შესახებ">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "უ">
+
+<!ENTITY  addonExceptions.label         "გამონაკლისები…">
+<!ENTITY  addonExceptions.accesskey     "გ">
+
+
+<!ENTITY  formsAndPasswords.label       "ველები &amp; პაროლები">
+
+<!ENTITY  rememberLogins2.label         "საიტებზე შესვლის მონაცემების დამახსოვრება">
+<!ENTITY  rememberLogins2.accesskey     "დ">
+<!ENTITY  passwordExceptions.label      "გამონაკლისები…">
+<!ENTITY  passwordExceptions.accesskey  "ნ">
+
+<!ENTITY  useMasterPassword.label        "მთავარი პაროლის გამოყენება">
+<!ENTITY  useMasterPassword.accesskey    "პ">
+<!ENTITY  changeMasterPassword.label     "მთავარი პაროლის შეცვლა…">
+<!ENTITY  changeMasterPassword.accesskey "მ">
+
+<!ENTITY  savedLogins.label              "შენახული შესვლები…">
+<!ENTITY  savedLogins.accesskey          "შ">

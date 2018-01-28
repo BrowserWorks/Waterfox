@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "పేజీ అమరిక">
+
+<!ENTITY basic.tab           "రూపు &amp; ఎంపికలు">
+
+<!ENTITY formatGroup.label   "రూపం">
+
+<!ENTITY orientation.label   "తీరు:">
+<!ENTITY portrait.label      "నిలువుచిత్రం">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "అడ్డచిత్రం">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "స్కేల్:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "పేజీ వెడల్పుకు సరిపోవునట్లు కుచింపు">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "ఎంపికలు">
+
+<!ENTITY printBG.label       "వెనుతలాన్ని ముద్రించు (రంగులు &amp; బొమ్మలు)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "అంచులు &amp; శీర్షిక/Footer">
+
+<!ENTITY marginGroup.label   "మార్జిన్లు (#1)">
+<!ENTITY marginUnits.inches  "అంగుళాలు">
+<!ENTITY marginUnits.metric  "మిల్లీమీటర్లు">
+<!ENTITY marginTop.label     "పై భాగము:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "క్రింద:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "ఎడమ వైపు:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "కుడి వైపు:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "పీఠికలు &amp; ఫుటర్ లు">
+
+<!ENTITY hfLeft.label        "ఎడమ:">
+<!ENTITY hfCenter.label      "మద్ భాగము:">
+<!ENTITY hfRight.label       "కుడి వైపు:">
+<!ENTITY headerLeft.tip      "ఎడమ పీఠిక">
+<!ENTITY headerCenter.tip    "మద్య పీఠిక">
+<!ENTITY headerRight.tip     "కుడి పీఠిక">
+<!ENTITY footerLeft.tip      "ఎడమ ఫుటర్">
+<!ENTITY footerCenter.tip    "మద్య ఫుటర్">
+<!ENTITY footerRight.tip     "కుడి ఫుటర్">
+
+<!ENTITY hfTitle             "శీర్షిక">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "తేది/సమయం">
+<!ENTITY hfPage              "పేజీ #">
+<!ENTITY hfPageAndTotal      "# యొక్క పేజీ #">
+<!ENTITY hfBlank             "--ఖాళీ--">
+<!ENTITY hfCustom            "ఇష్టానుసారం...">
+
+<!ENTITY customPrompt.title  "ఇష్టానుసారం...">
+<!ENTITY customPrompt.prompt "మీ ఇష్టానుసారమైన పాఠ్యమును/footer ప్రవేశపెట్టండి">

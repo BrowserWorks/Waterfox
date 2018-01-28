@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Unntak - oversetting">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Oversetting vil ikke bli tilbydt for følgende språk:">
+<!ENTITY treehead.languageName.label      "Språk">
+<!ENTITY removeLanguage.label             "Fjern språk">
+<!ENTITY removeLanguage.accesskey         "F">
+<!ENTITY removeAllLanguages.label         "Fjern alle språk">
+<!ENTITY removeAllLanguages.accesskey     "a">
+
+<!ENTITY noTranslationForSites.label      "Oversetting vil ikke tilbys for følgende nettsted:">
+<!ENTITY treehead.siteName2.label         "Nettsteder">
+<!ENTITY removeSite.label                 "Fjern nettsted">
+<!ENTITY removeSite.accesskey             "F">
+<!ENTITY removeAllSites.label             "Fjern alle nettsted">
+<!ENTITY removeAllSites.accesskey         "r">
+
+<!ENTITY button.close.label               "Lukk">
+<!ENTITY button.close.accesskey           "L">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Midar il pled-clav universal">
+<!ENTITY setPassword.tokenName.label "Modul da criptografia">
+<!ENTITY setPassword.oldPassword.label "Pled-clav actual:">
+<!ENTITY setPassword.newPassword.label "Pled-clav nov:">
+<!ENTITY setPassword.reenterPassword.label "Pled-clav nov (repeter):">
+<!ENTITY setPassword.meter.label "Valitaziun da la qualitad dal pled-clav">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Redefinir">
+<!ENTITY resetPassword.title  "Redefinir il pled-clav universal">
+<!ENTITY resetPassword.text  "Sche tes pled-clav universal vegn redefinì, perdas ti tut tes pleds-clav memorisads da web e dad e-mail, tias datas da formulars, tes certificats persunals e tias clavs privatas. Vuls ti tuttina redefinir tes pled-clav universal? ">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Telechargiar il certificat">
+<!ENTITY downloadCert.message1 "Ti es vegnì dumandà da fidar ad in nov post da certificaziun (CA).">
+<!ENTITY downloadCert.trustSSL "Fidar a questa CA per identifitgar websites.">
+<!ENTITY downloadCert.trustEmail "Fidar a questa CA per identifitgar utilisaders dad e-mail.">
+<!ENTITY downloadCert.trustObjSign "Fidar a questa CA per identifitgar sviluppaders da software.">
+<!ENTITY downloadCert.message3 "Avant che fidar a questa CA per mintga intent, duessas ti controllar il certificat e sias directivas e proceduras (sche avant maun).">
+<!ENTITY downloadCert.viewCert.label "Mussar">
+<!ENTITY downloadCert.viewCert.text "Controllar il certificat CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Dumonda d'identifitgar l'utilisader">
+<!ENTITY clientAuthAsk.message1 "Questa website pretenda che ti t'identifitgeschias cun in certificat:">
+<!ENTITY clientAuthAsk.message2 "Tscherna in certificat che vegn mussà sco identificaziun:">
+<!ENTITY clientAuthAsk.message3 "Detagls dal certificat tschernì:">
+
+<!ENTITY pkcs12.setpassword.title  "Tscherna in pled-clav per il pled-clav da segirezza dal certificat">
+<!ENTITY pkcs12.setpassword.message  "Il pled-clav da segirezza dal certificat che ti defineschas qua protegia la datoteca da segirezza che ti vuls crear. Ti stos definir quest pled-clav per cuntinuar cun la copia da segirezza.">
+<!ENTITY pkcs12.setpassword.label1 "Pled-clav da segirezza dal certificat:">
+<!ENTITY pkcs12.setpassword.label2 "Pled-clav da segirezza dal certificat (repeter):">
+<!ENTITY pkcs12.setpassword.reminder "Impurtant: sche ti emblidas tes pled-clav da segirezza dal certificat, na pos ti pli tard betg pli restaurar questa copia da segirezza. Al notescha per plaschair en in lieu segir.">
+
+<!ENTITY chooseToken.title  "Dialog per tscherner in token">
+<!ENTITY chooseToken.message1 "Tscherna per plaschair in token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Crear ina clav privata">
+<!ENTITY createCertInfo.msg1 "La clav vegn creada... Quai po durar intginas minutas...">
+<!ENTITY createCertInfo.msg2 "Spetgar per plaschair...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Autentificaziun da token protegida">
+<!ENTITY protectedAuth.msg "T'autentifitgescha per plaschair tar il token. La metoda d'autentificaziun dependa dal tip da tes token. ">
+<!ENTITY protectedAuth.tokenName.label "Token:">

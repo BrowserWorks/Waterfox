@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "ဒီတပ်ဗ်ကို ပိတ်ရန်">
+<!ENTITY tabCrashed.restoreTab "ဒီတပ်ဗ်ကို ပြန်ဖွင့်ရန်">
+<!ENTITY tabCrashed.restoreAll "ပျက်စီးသွားသည့်တပ်ဗ်များအားလုံးကို ပြန်ဖွင့်ရန်">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "တပ်ဗ်ရှိ ဆောင်ရွက်နေမှုများ ရပ်ဆိုင်းသွားသည်။">
+<!ENTITY tabCrashed.offerHelp "ကျွန်ုပ်တို့ သင့်ကို ကူညီနိုင်ပါသည်။">
+<!ENTITY tabCrashed.single.offerHelpMessage "စာမျက်နှာကို ပြန်လည်ဖွင့်ရန် &tabCrashed.restoreTab; ကို ရွေးပါ။">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "စာမျက်နှာကို ပြန်လည်ဖွင့်ရန် &tabCrashed.restoreTab; သို့မဟုတ် &tabCrashed.restoreAll; ကို ရွေးပါ။">
+<!ENTITY tabCrashed.requestHelp "ကျွန်ုပ်တို့ကို ကူညီပါမည်လား။">
+<!ENTITY tabCrashed.requestHelpMessage "ပျက်စီးမှုအစီရင်ခံစာများသည် ပြဿနာများရှာဖွေဖြေရှင်းရာတွင်နှင့် &brandShortName; ကို ပိုမိုကောင်းမွန်လာစေရာတွင် ကူညီပါသည်။">
+<!ENTITY tabCrashed.requestReport "ဒီတပ်ဗ်ကို အသိပေးတင်ပြရန်">
+<!ENTITY tabCrashed.sendReport2 "သင်ကြည့်ရှုနေသော တပ်ဗ်၏ ပျက်စီးမှုအစီရင်ခံစာကို ပေးပို့ပါ">
+<!ENTITY tabCrashed.commentPlaceholder2 "မှတ်ချက်များ (၎င်းတို့ကို လူသိရှင်ကြား တွေ့မြင်နိုင်သည်)">
+<!ENTITY tabCrashed.includeURL2 "ဒီပျက်စီးမှုအစီရင်ခံစာနှင့်အတူ စာမျက်နှာ၏ URL ကို ပူးတွဲပါ">
+<!ENTITY tabCrashed.emailPlaceholder "သင့်အီမေးလ်လိပ်စာကို ဤနေရာတွင် ထည့်ပါ။">
+<!ENTITY tabCrashed.emailMe "အချက်အလက်များ ထပ်မံရရှိလာပါက ကျွန်ုပ်ထံ အီးမေးလ်ပို့ပါ">
+<!ENTITY tabCrashed.reportSent "ပြဿနာ အချက်အား ကြိုတင် တင်ပြခဲ့ပြီး ဖြစ်ပါသည်။ &brandShortName; ပိုကောင်းအောင် ပြုလုပ်နိုင်ရန် သင့်ကူညီမှုအား ကျေးဇူးတင်ပါသည်">
+<!ENTITY tabCrashed.requestAutoSubmit2 "နောက်ကွယ်တွင် ဆောင်ရွက်နေသော တပ်ဗ်များကို အသိပေးတင်ပြပါ">
+<!ENTITY tabCrashed.autoSubmit2 "ယခုအသုံးပြုကာလ နှင့် နောင်အသုံးပြုမည့် ကာလအပိုင်းအခြားအတွက် ရပ်ဆိုင်းသွားသော နောက်ကွယ်ရှိတပ်ဗ်များ၏ အစီရင်ခံစာများအပါအဝင် ပျက်စီးမှုအစီရင်ခံစာများကို အလိုအလျောက်ပေးပို့ရန် နှစ်သက်ရာအပြင်အဆင်များကို ပြင်ဆင်မွမ်းမံပါ။">

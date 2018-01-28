@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "کی طرف سے بنا ہے:">
+<!ENTITY  developers.label            "تکمیل کار:">
+<!ENTITY  translators.label           "مترجمین:">
+<!ENTITY  contributors.label          "معاونین:">
+<!ENTITY  homepage.label              "ابتدائی صفحہ دیکھیں">

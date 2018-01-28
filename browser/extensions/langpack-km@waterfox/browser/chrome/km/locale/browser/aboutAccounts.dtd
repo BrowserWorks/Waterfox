@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "សូម​ស្វាគមន៍​ការ​មកកាន់ &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "ចូល​ដើម្បី​សមកាលកម្ម​ពាក្យសម្ងាត់ ចំណាំ ថេប​របស់​អ្នក &amp; ច្រើន​ទៀត។">
+<!ENTITY aboutAccountsConfig.startButton.label "ចាប់ផ្ដើម">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ចំណូលចិត្ត​ធ្វើ​សមកាលកម្ម">
+<!ENTITY aboutAccounts.noConnection.title "គ្មាន​ការ​តភ្ជាប់">
+<!ENTITY aboutAccounts.noConnection.description "អ្នក​ត្រូវតែ​តភ្ជាប់​ទៅ​កាន់​អ៊ីនធឺណិត​ដើម្បី​អាច​ចូល​បាន។">
+<!ENTITY aboutAccounts.noConnection.retry "ព្យាយាម​ម្ដង​ទៀត">
+<!ENTITY aboutAccounts.badConfig.title "ការ​កំណត់​រចនាសម្ព័ន្ធ​មិន​ល្អ">
+<!ENTITY aboutAccounts.badConfig.description "មិន​អាច​កំណត់​រចនាសម្ព័ន្ធ​ម៉ាស៊ីន​មេ​​គណនី Waterfox របស់​អ្នក​បាន​ទេ។ សូម​ព្យាយាម​ម្ដង​ទៀត​នៅ​ពេល​ក្រោយ។">

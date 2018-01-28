@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Configuración de página">
+
+<!ENTITY basic.tab           "Formato y opciones">
+
+<!ENTITY formatGroup.label   "Formato">
+
+<!ENTITY orientation.label   "Orientación:">
+<!ENTITY portrait.label      "Vertical">
+<!ENTITY portrait.accesskey  "V">
+<!ENTITY landscape.label     "Horizontal">
+<!ENTITY landscape.accesskey "l">
+
+<!ENTITY scale.label         "Escala:">
+<!ENTITY scale.accesskey     "E">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Reducir hasta ajustar al ancho de la página">
+<!ENTITY shrinkToFit.accesskey "R">
+
+<!ENTITY optionsGroup.label  "Opciones">
+
+<!ENTITY printBG.label       "Imprimir fondo (colores e imágenes)">
+<!ENTITY printBG.accesskey   "f">
+
+<!ENTITY advanced.tab        "Márgenes y encabezado/pie de página">
+
+<!ENTITY marginGroup.label   "Márgenes (#1)">
+<!ENTITY marginUnits.inches  "pulgadas">
+<!ENTITY marginUnits.metric  "milímetros">
+<!ENTITY marginTop.label     "Superior:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Inferior:">
+<!ENTITY marginBottom.accesskey "I">
+<!ENTITY marginLeft.label    "Izquierda:">
+<!ENTITY marginLeft.accesskey "I">
+<!ENTITY marginRight.label   "Derecha:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Encabezados y pies de página">
+
+<!ENTITY hfLeft.label        "Izquierda:">
+<!ENTITY hfCenter.label      "Centro:">
+<!ENTITY hfRight.label       "Derecha:">
+<!ENTITY headerLeft.tip      "Encabezado izquierdo">
+<!ENTITY headerCenter.tip    "Encabezado central">
+<!ENTITY headerRight.tip     "Encabezado derecho">
+<!ENTITY footerLeft.tip      "Pie izquierdo">
+<!ENTITY footerCenter.tip    "Pie central">
+<!ENTITY footerRight.tip     "Pie derecho">
+
+<!ENTITY hfTitle             "Título">
+<!ENTITY hfURL               "Dirección">
+<!ENTITY hfDateAndTime       "Fecha/hora">
+<!ENTITY hfPage              "Página #">
+<!ENTITY hfPageAndTotal      "Página # de #">
+<!ENTITY hfBlank             "--nada--">
+<!ENTITY hfCustom            "Personalizado…">
+
+<!ENTITY customPrompt.title  "Personalizado…">
+<!ENTITY customPrompt.prompt "Introduzca el texto personalizado para el encabezado/pie">

@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Ιδιωτική Περιήγηση)">
+
+<!ENTITY appmenu.tooltip                     "Άνοιγμα μενού">
+<!ENTITY navbarOverflow.label                "Περισσότερα εργαλεία…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Ανανέωση καρτέλας">
+<!ENTITY  reloadTab.accesskey                "Α">
+<!ENTITY  reloadAllTabs.label                "Ανανέωση όλων των καρτελών">
+<!ENTITY  reloadAllTabs.accesskey            "λ">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Κλείσιμο καρτελών στα δεξιά">
+<!ENTITY  closeTabsToTheEnd.accesskey        "ξ">
+<!ENTITY  closeOtherTabs.label               "Κλείσιμο των άλλων καρτελών">
+<!ENTITY  closeOtherTabs.accesskey           "ω">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Καρφίτσωμα καρτέλας">
+<!ENTITY  pinTab.accesskey                   "ρ">
+<!ENTITY  unpinTab.label                     "Ξεκαρφίτσωμα καρτέλας">
+<!ENTITY  unpinTab.accesskey                 "κ">
+<!ENTITY  sendTabToDevice.label              "Αποστολή καρτέλας σε συσκευή">
+<!ENTITY  sendTabToDevice.accesskey          "σ">
+<!ENTITY  sendPageToDevice.label             "Αποστολή σελίδας σε συσκευή">
+<!ENTITY  sendPageToDevice.accesskey         "δ">
+<!ENTITY  sendLinkToDevice.label             "Αποστολή συνδέσμου σε συσκευή">
+<!ENTITY  sendLinkToDevice.accesskey         "μ">
+<!ENTITY  moveToNewWindow.label              "Μετακίνηση σε νέο παράθυρο">
+<!ENTITY  moveToNewWindow.accesskey          "π">
+<!ENTITY  bookmarkAllTabs.label              "Προσθήκη όλων των καρτελών στους σελιδοδείκτες…">
+<!ENTITY  bookmarkAllTabs.accesskey          "Κ">
+<!ENTITY  undoCloseTab.label                 "Αναίρεση κλεισίματος καρτέλας">
+<!ENTITY  undoCloseTab.accesskey             "ν">
+<!ENTITY  closeTab.label                     "Κλείσιμο καρτέλας">
+<!ENTITY  closeTab.accesskey                 "Κ">
+
+<!ENTITY  listAllTabs.label      "Προβολή καρτελών σε λίστα">
+
+<!ENTITY tabCmd.label "Νέα καρτέλα">
+<!ENTITY tabCmd.accesskey "τ">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Άνοιγμα τοποθεσίας…">
+<!ENTITY openFileCmd.label "Άνοιγμα αρχείου…">
+<!ENTITY openFileCmd.accesskey "ν">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Διαμόρφωση σελίδας…">
+<!ENTITY printSetupCmd.accesskey "μ">
+<!ENTITY printPreviewCmd.label "Προεπισκόπηση εκτύπωσης">
+<!ENTITY printPreviewCmd.accesskey "ρ">
+<!ENTITY printCmd.label "Εκτύπωση…">
+<!ENTITY printCmd.accesskey "κ">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Εργασία χωρίς σύνδεση">
+<!ENTITY goOfflineCmd.accesskey "χ">
+
+<!ENTITY menubarCmd.label "Γραμμή εργαλείων μενού">
+<!ENTITY menubarCmd.accesskey "θ">
+<!ENTITY navbarCmd.label "Γραμμή εργαλείων πλοήγησης">
+<!ENTITY personalbarCmd.label "Γραμμή σελιδοδεικτών">
+<!ENTITY personalbarCmd.accesskey "γ">
+<!ENTITY bookmarksToolbarItem.label "Στοιχεία γραμμής εργαλείων σελιδοδεικτών">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Ανανέωση όλων των καρτελών">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "ο">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Προσθήκη όλων των καρτελών στους σελιδοδείκτες…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "Κ">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Αναίρεση κλεισίματος καρτέλας">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "ι">
+
+<!ENTITY pageSourceCmd.label "Κώδικας σελίδας">
+<!ENTITY pageSourceCmd.accesskey "δ">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Πληροφορίες σελίδας">
+<!ENTITY pageInfoCmd.accesskey "λ">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Άνοιγμα ίδιας καρτέλας">
+<!ENTITY mirrorTabCmd.accesskey "γ">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Μετάβαση σε πλήρη οθόνη">
+<!ENTITY enterFullScreenCmd.accesskey "π">
+<!ENTITY exitFullScreenCmd.label "Έξοδος από πλήρη οθόνη">
+<!ENTITY exitFullScreenCmd.accesskey "π">
+<!ENTITY fullScreenCmd.label "Πλήρης οθόνη">
+<!ENTITY fullScreenCmd.accesskey "Π">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Προβολή όλων των καρτελών">
+<!ENTITY showAllTabsCmd.accesskey "λ">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Σύνδεση στο &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "Άνοιγμα προτιμήσεων του &syncBrand.shortName.label;">
+<!ENTITY fxaSignInError.label "Επανασύνδεση στο &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Επαλήθευση του λογαριασμού σας">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Ελαχιστοποίηση">
+<!ENTITY fullScreenRestore.tooltip "Επαναφορά">
+<!ENTITY fullScreenClose.tooltip "Κλείσιμο">
+<!ENTITY fullScreenAutohide.label "Απόκρυψη γραμμών εργαλείων">
+<!ENTITY fullScreenAutohide.accesskey "ψ">
+<!ENTITY fullScreenExit.label "Έξοδος από πλήρη οθόνη">
+<!ENTITY fullScreenExit.accesskey "π">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "εκτελείται σε πλήρη οθόνη">
+<!ENTITY fullscreenWarning.generic.label "Αυτό το έγγραφο εμφανίζεται σε πλήρη οθόνη">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Έξοδος από πλήρη οθόνη (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Έξοδος από πλήρη οθόνη (esc)">
+<!ENTITY leaveDOMFullScreen.label "Έξοδος από πλήρη οθόνη">
+<!ENTITY leaveDOMFullScreen.accesskey "δ">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "Ο τομέας">
+<!ENTITY pointerlockWarning.afterDomain.label "ελέγχει τον κέρσορα. Πατήστε Esc για ανάκτηση ελέγχου.">
+<!ENTITY pointerlockWarning.generic.label "Αυτό το έγγραφο ελέγχει τον κέρσορα. Πατήστε Esc για ανάκτηση ελέγχου.">
+
+<!ENTITY closeWindow.label "Κλείσιμο παραθύρου">
+<!ENTITY closeWindow.accesskey "θ">
+
+<!ENTITY bookmarksMenu.label "Σελιδοδείκτες">
+<!ENTITY bookmarksMenu.accesskey "Σ">
+<!ENTITY bookmarkThisPageCmd.label "Προσθήκη στους σελιδοδείκτες">
+<!ENTITY editThisBookmarkCmd.label "Επεξεργασία σελιδοδείκτη">
+<!ENTITY bookmarkThisPageCmd.commandkey "π">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Εύρεση περισσότερων υπηρεσιών κοινής χρήσης…">
+<!ENTITY sharePageCmd.label "Κοινή χρήση σελίδας">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "μ">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Κοινή χρήση συνδέσμου">
+<!ENTITY shareLink.accesskey "δ">
+<!ENTITY shareImage.label "Κοινή χρήση εικόνας">
+<!ENTITY shareImage.accesskey "ε">
+<!ENTITY shareSelect.label "Κοινή χρήσης επιλογής">
+<!ENTITY shareSelect.accesskey "π">
+<!ENTITY shareVideo.label "Κοινή χρήση βίντεο">
+<!ENTITY shareVideo.accesskey "β">
+<!ENTITY feedsMenu2.label "Συνδρομή σε αυτή τη σελίδα">
+<!ENTITY subscribeToPageMenupopup.label "Συνδρομή σε αυτή τη σελίδα">
+<!ENTITY subscribeToPageMenuitem.label "Συνδρομή σε αυτή τη σελίδα…">
+<!ENTITY addCurPagesCmd.label "Προσθήκη όλων των καρτελών στους σελιδοδείκτες…">
+<!ENTITY showAllBookmarks2.label "Προβολή όλων των σελιδοδεικτών">
+<!ENTITY recentBookmarks.label "Πρόσφατοι σελιδοδείκτες">
+<!ENTITY otherBookmarksCmd.label "Άλλοι σελιδοδείκτες">
+<!ENTITY mobileBookmarksCmd.label "Σελιδοδείκτες κινητού">
+<!ENTITY bookmarksToolbarChevron.tooltip "Προβολή περισσότερων σελιδοδεικτών">
+<!ENTITY showRecentlyBookmarked.label     "Προβολή πρόσφατων σελιδοδεικτών">
+<!ENTITY showRecentlyBookmarked.accesskey "φ">
+<!ENTITY hideRecentlyBookmarked.label     "Απόκρυψη πρόσφατων σελιδοδεικτών">
+<!ENTITY hideRecentlyBookmarked.accesskey "Φ">
+
+<!ENTITY backCmd.label                "Πίσω">
+<!ENTITY backButton.tooltip           "Μετάβαση μια σελίδα πίσω">
+<!ENTITY forwardCmd.label             "Μπροστά">
+<!ENTITY forwardButton.tooltip        "Μετάβαση μια σελίδα μπροστά">
+<!ENTITY backForwardButtonMenu.tooltip "Δεξί κλικ ή τράβηγμα προς τα κάτω για προβολή ιστορικού">
+<!ENTITY backForwardButtonMenuMac.tooltip "Τράβηγμα προς στα κάτω για προβολή ιστορικού">
+<!ENTITY reloadCmd.label              "Ανανέωση">
+<!ENTITY stopCmd.label                "Διακοπή">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Μετάβαση στη διεύθυνση της γραμμής διευθύνσεων">
+<!ENTITY printButton.label            "Εκτύπωση">
+<!ENTITY printButton.tooltip          "Εκτύπωση σελίδας">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Πληροφορίες ιστοσελίδας">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Άνοιγμα πλαισίου μηνυμάτων">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Άνοιγμα πλαισίου αίτησης τοποθεσίας">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Άνοιγμα πλαισίου μηνυμάτων εγκατάστασης προσθέτων">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Άνοιγμα πλαισίου μηνυμάτων αποθηκευμένων εκτός σύνδεσης">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Άνοιγμα πλαισίου μηνυμάτων αποθήκευσης συνθηματικού">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Διαχείριση χρήσης πρόσθετων λειτουργιών">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Αλλαγή του αν θα λαμβάνετε ειδοποιήσεις από τον ιστοτόπο">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Αποθήκευση δεδομένων στην Επίμονη Αποθήκευση">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Το πρόγραμμα περιήγησης ελέγχεται απομακρυσμένα">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Διαχείριση του διαμοιρασμού της κάμερας και/ή του μικροφώνου σας για τον ιστοτόπο">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Διαχείριση του διαμοιρασμού του μικροφώνου σας για τον ιστοτόπο">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Διαχείριση του διαμοιρασμού των παραθύρων ή της οθόνης σας με τον ιστοτόπο">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Άνοιγμα πλαισίου μηνυμάτων εγκατάστασης">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Μετάφραση σελίδας">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Διαχείριση μετάφρασης σελίδας">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Διαχείριση χρήσης λογισμικού DRM">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Έχετε αποκλείσει την κάμερά σας για τον ιστοτόπο.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Έχετε αποκλείσει το μικρόφωνό σας για τον ιστοτόπο.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Έχετε αποκλείσει τον ιστοτόπο από το μοίρασμα της οθόνης σας.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Έχετε αποκλείσει τις πληροφορίες τοποθεσίας για τον ιστοτόπο.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Έχετε αποκλείσει την αποθήκευση δεδομένων για τον ιστοτόπο.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Έχετε αποκλείσει τις ειδοποιήσεις για τον ιστοτόπο.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Έχετε αποκλείσει την επίμονη αποθήκευση για αυτή την ιστοσελίδα.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Προβολή ιστορικού">
+
+<!ENTITY searchItem.title             "Αναζήτηση">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Αρχική σελίδα">
+
+<!ENTITY bookmarksButton.label          "Σελιδοδείκτες">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Σελιδοδείκτες">
+<!ENTITY bookmarksMenuButton.other.label "Άλλοι σελιδοδείκτες">
+<!ENTITY bookmarksMenuButton.mobile.label "Σελιδοδείκτες κινητού">
+<!ENTITY viewBookmarksSidebar2.label        "Προβολή πλευρικής στήλης σελιδοδεικτών">
+<!ENTITY viewBookmarksToolbar.label         "Προβολή εργαλειοθήκης σελιδοδεικτών">
+<!ENTITY searchBookmarks.label              "Αναζήτηση σελιδοδεικτών">
+
+<!ENTITY containersMenu.label "Περιβάλλοντα">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Ιστορικό">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Εργαλεία">
+<!ENTITY toolsMenu.accesskey          "γ"> 
+
+<!ENTITY keywordfield.label           "Προσθέστε μια λέξη-κλειδί για αυτή την αναζήτηση…">
+<!ENTITY keywordfield.accesskey       "κ">
+
+<!ENTITY downloads.label              "Λήψεις">
+<!ENTITY downloads.accesskey          "ψ">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Πρόσθετα">
+<!ENTITY addons.accesskey             "θ">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Εργαλεία προγραμματιστή">
+<!ENTITY webDeveloperMenu.accesskey   "Π">
+
+<!ENTITY inspectContextMenu.label     "Έλεγχος αντικειμένου">
+<!ENTITY inspectContextMenu.accesskey "υ">
+
+<!ENTITY fileMenu.label         "Αρχείο"> 
+<!ENTITY fileMenu.accesskey       "Α">
+<!ENTITY newUserContext.label             "Νέα καρτέλα εντός περιβάλλοντος">
+<!ENTITY newUserContext.accesskey         "β">
+<!ENTITY newNavigatorCmd.label        "Νέο παράθυρο">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "Ν">
+<!ENTITY newPrivateWindow.label     "Νέο παράθυρο ιδιωτικής περιήγησης">
+<!ENTITY newPrivateWindow.accesskey "δ">
+<!ENTITY newNonRemoteWindow.label   "Νέο μη-e10s παράθυρο">
+
+<!ENTITY editMenu.label         "Επεξεργασία"> 
+<!ENTITY editMenu.accesskey       "Ε"> 
+<!ENTITY undoCmd.label            "Αναίρεση">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "Α"> 
+<!ENTITY redoCmd.label            "Ακύρωση αναίρεσης">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "κ"> 
+<!ENTITY cutCmd.label           "Αποκοπή">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "π"> 
+<!ENTITY copyCmd.label            "Αντιγραφή">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "Α"> 
+<!ENTITY pasteCmd.label           "Επικόλληση">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "π"> 
+<!ENTITY deleteCmd.label          "Διαγραφή">  
+<!ENTITY deleteCmd.key            "Δ">  
+<!ENTITY deleteCmd.accesskey        "Δ"> 
+<!ENTITY selectAllCmd.label         "Επιλογή όλων">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "λ"> 
+<!ENTITY preferencesCmd2.label       "Επιλογές">
+<!ENTITY preferencesCmd2.accesskey     "Ε">
+<!ENTITY preferencesCmdUnix.label       "Προτιμήσεις">
+<!ENTITY preferencesCmdUnix.accesskey     "μ"> 
+
+<!ENTITY clearRecentHistory.label               "Εκκαθάριση πρόσφατου ιστορικού…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Προβολή"> 
+<!ENTITY viewMenu.accesskey       "ρ"> 
+<!ENTITY viewToolbarsMenu.label       "Εργαλειοθήκες"> 
+<!ENTITY viewToolbarsMenu.accesskey     "ρ"> 
+<!ENTITY viewSidebarMenu.label "Πλευρική στήλη">
+<!ENTITY viewSidebarMenu.accesskey "ε">
+<!ENTITY viewCustomizeToolbar.label       "Προσαρμογή…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "Π">
+<!ENTITY overflowCustomizeToolbar.label       "Προσαρμογή γραμμής εργαλείων…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ο">
+
+<!ENTITY historyMenu.label "Ιστορικό">
+<!ENTITY historyMenu.accesskey "Ι">
+<!ENTITY historyUndoMenu.label "Πρόσφατα κλεισμένες καρτέλες">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Πρόσφατα κλεισμένα παράθυρα">
+<!ENTITY historyRestoreLastSession.label "Επαναφορά προηγούμενης συνεδρίας">
+
+<!ENTITY showAllHistoryCmd2.label "Προβολή όλου του ιστορικού">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Προσαρμογή">
+<!ENTITY appMenuCustomize.tooltip "Προσαρμογή του μενού και των γραμμών εργαλείων">
+<!ENTITY appMenuCustomizeExit.label "Τέλος προσαρμογής">
+<!ENTITY appMenuCustomizeExit.tooltip "Ολοκλήρωση προσαρμογής">
+<!ENTITY appMenuHistory.label "Ιστορικό">
+<!ENTITY appMenuHistory.showAll.label "Προβολή όλου του ιστορικού">
+<!ENTITY appMenuHistory.clearRecent.label "Εκκαθάριση πρόσφατου ιστορικού…">
+<!ENTITY appMenuHistory.restoreSession.label "Επαναφορά προηγούμενης συνεδρίας">
+<!ENTITY appMenuHistory.viewSidebar.label "Προβολή πλευρικής στήλης ιστορικού">
+<!ENTITY appMenuHistory.recentHistory.label "Πρόσφατο ιστορικό">
+<!ENTITY appMenuHelp.label "Βοήθεια">
+<!ENTITY appMenuHelp.tooltip "Άνοιγμα βοήθειας">
+
+<!ENTITY appMenuRemoteTabs.label "Συγχρονισμένες καρτέλες">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Δεν υπάρχουν ανοικτές καρτέλες">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Εμφάνιση περισσότερων">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Εμφάνιση περισσότερων καρτελών από αυτή τη συσκευή">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Εμφάνιση όλων">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Εμφάνιση όλων των καρτελών από αυτή τη συσκευή">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ενεργοποιήστε τον συγχρονισμό καρτελών για να δείτε μια λίστα από καρτέλες από τις άλλες σας συσκευές.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Καμία συγχρονισμένη καρτέλα… ακόμη!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Θέλετε να δείτε τις καρτέλες από τις άλλες σας συσκευές εδώ;">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Προτιμήσεις συγχρονισμού">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Συνδεθείτε για να δείτε μία λίστα με καρτέλες από τις άλλες σας συσκευές.">
+<!ENTITY appMenuRemoteTabs.signin.label "Σύνδεση στο Sync">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Διαχείριση συσκευών…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Δείτε την πλευρική στήλη του Συγχρονισμού">
+
+<!ENTITY customizeMenu.addToToolbar.label "Προσθήκη στην εργαλειοθήκη">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Α">
+<!ENTITY customizeMenu.addToPanel.label "Προσθήκη στο μενού">
+<!ENTITY customizeMenu.addToPanel.accesskey "Μ">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Προσθήκη στο μενού">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "Μ">
+<!ENTITY customizeMenu.moveToToolbar.label "Μετακίνηση στην εργαλειοθήκη">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "ο">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Μετακίνηση στο μενού">
+<!ENTITY customizeMenu.moveToPanel.accesskey "ο">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Καρφίτσωμα στο μενού">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "Κ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Ξεκαρφίτσωμα από το μενού">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "Ξ">
+<!ENTITY customizeMenu.removeFromToolbar.label "Αφαίρεση από τη γραμμή εργαλείων">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.removeFromMenu.label "Αφαίρεση από το μενού">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "Ρ">
+<!ENTITY customizeMenu.addMoreItems.label "Προσθήκη περισσότερων αντικειμένων…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "α">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Περισσότερα">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Αναζήτηση όρου ή εισαγωγή διεύθυνσης">
+<!ENTITY urlbar.accesskey             "δ">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Επέκταση:">
+<!ENTITY urlbar.switchToTab.label     "Μετάβαση σε καρτέλα:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Θα θέλατε να βελτιώσετε την εμπειρία της αναζήτησης με το να σας παρέχουμε προτάσεις;">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Μάθετε περισσότερα…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "ι">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Όχι">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "ο">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ναι">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "ν">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Συμβουλή:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Λάβετε βοήθεια με την εύρεση πραγμάτων! Αναζητήστε το &#x1F50E; δίπλα στις προτάσεις αναζήτησης.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Αλλαγή επιλογών…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "Α">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Αλλαγή προτιμήσεων…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "Α">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Ερώτημα αναζήτησης">
+<!ENTITY contentSearchSubmit.tooltip  "Υποβολή αναζήτησης">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Αναζήτηση">
+<!ENTITY searchIcon.tooltip           "Αναζήτηση">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Αναζήτηση ">
+<!ENTITY searchWith.label             " στο:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Αναζήτηση ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Αναζήτηση στο:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Αλλαγή ρυθμίσεων αναζήτησης">
+<!ENTITY changeSearchSettings.tooltip "Αλλαγή ρυθμίσεων αναζήτησης">
+
+<!ENTITY searchInNewTab.label         "Αναζήτηση σε νέα καρτέλα">
+<!ENTITY searchInNewTab.accesskey     "T">
+<!ENTITY searchSetAsDefault.label     "Ορισμός ως προκαθορισμένη μηχανή αναζήτησης">
+<!ENTITY searchSetAsDefault.accesskey "D">
+
+<!ENTITY openLinkCmdInTab.label       "Άνοιγμα δεσμού σε νέα καρτέλα">
+<!ENTITY openLinkCmdInTab.accesskey   "τ">
+<!ENTITY openLinkCmd.label            "Άνοιγμα συνδέσμου σε νέο παράθυρο">
+<!ENTITY openLinkCmd.accesskey        "δ">
+<!ENTITY openLinkInPrivateWindowCmd.label "Άνοιγμα συνδέσμου σε νέο ιδιωτικό παράθυρο">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "δ">
+<!ENTITY openLinkCmdInCurrent.label     "Άνοιγμα δεσμού">
+<!ENTITY openLinkCmdInCurrent.accesskey "ο">
+<!ENTITY openFrameCmdInTab.label      "Άνοιγμα πλαισίου σε νέα καρτέλα">
+<!ENTITY openFrameCmdInTab.accesskey  "π">
+<!ENTITY openFrameCmd.label           "Άνοιγμα πλαισίου σε νέο παράθυρο">
+<!ENTITY openFrameCmd.accesskey       "ν">
+<!ENTITY openLinkCmdInContainerTab.label "Άνοιγμα δεσμού σε νέα καρτέλα εντός περιβάλλοντος">
+<!ENTITY openLinkCmdInContainerTab.accesskey "κ">
+<!ENTITY showOnlyThisFrameCmd.label     "Προβολή μόνο αυτού του πλαισίου">
+<!ENTITY showOnlyThisFrameCmd.accesskey "ν">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Ανανέωση πλαισίου">
+<!ENTITY reloadFrameCmd.accesskey     "ν">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Προβολή πηγαίου κώδικα επιλογής">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Προβολή πηγαίου κώδικα MathML">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "ε">
+<!ENTITY viewPageSourceCmd.label      "Προβολή πηγαίου κώδικα">
+<!ENTITY viewPageSourceCmd.accesskey  "Π">
+<!ENTITY viewFrameSourceCmd.label     "Προβολή πηγαίου κώδικα πλαισίου">
+<!ENTITY viewFrameSourceCmd.accesskey "β">
+<!ENTITY viewPageInfoCmd.label        "Προβολή πληροφοριών σελίδας">
+<!ENTITY viewPageInfoCmd.accesskey    "λ">
+<!ENTITY viewFrameInfoCmd.label       "Προβολή πληροφοριών πλαισίου">
+<!ENTITY viewFrameInfoCmd.accesskey   "β">
+<!ENTITY reloadImageCmd.label         "Ανανέωση εικόνας">
+<!ENTITY reloadImageCmd.accesskey     "ν">
+<!ENTITY viewImageCmd.label           "Προβολή εικόνας">
+<!ENTITY viewImageCmd.accesskey       "κ">
+<!ENTITY viewImageInfoCmd.label       "Προβολή πληροφοριών εικόνας">
+<!ENTITY viewImageInfoCmd.accesskey   "φ">
+<!ENTITY viewImageDescCmd.label       "Προβολή περιγραφής">
+<!ENTITY viewImageDescCmd.accesskey   "φ">
+<!ENTITY viewVideoCmd.label           "Προβολή βίντεο">
+<!ENTITY viewVideoCmd.accesskey       "β">
+<!ENTITY viewBGImageCmd.label         "Προβολή εικόνας παρασκηνίου">
+<!ENTITY viewBGImageCmd.accesskey     "β">
+<!ENTITY setDesktopBackgroundCmd.label      "Ορισμός ως ταπετσαρία…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "τ">
+<!ENTITY bookmarkPageCmd2.label       "Προσθήκη στους σελιδοδείκτες">
+<!ENTITY bookmarkThisLinkCmd.label      "Προσθήκη στους σελιδοδείκτες">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "δ">
+<!ENTITY bookmarkThisFrameCmd.label      "Προσθήκη στους σελιδοδείκτες">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "λ">
+<!ENTITY copyURLCmd.label             "Αντιγραφή URL">
+<!ENTITY emailPageCmd.label           "Αποστολή συνδέσμου…">
+<!ENTITY emailPageCmd.accesskey       "λ">
+<!ENTITY savePageCmd.label            "Αποθήκευση σελίδας ως…">
+<!ENTITY savePageCmd.accesskey        "π">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "λ">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Αποθήκευση πλαισίου ως…">
+<!ENTITY saveFrameCmd.accesskey       "π">
+<!ENTITY printFrameCmd.label          "Εκτύπωση πλαισίου…">
+<!ENTITY printFrameCmd.accesskey      "λ">
+<!ENTITY saveLinkCmd.label            "Αποθήκευση δεσμού ως…">
+<!ENTITY saveLinkCmd.accesskey        "θ">
+<!ENTITY saveImageCmd.label           "Αποθήκευση εικόνας ως…">
+<!ENTITY saveImageCmd.accesskey       "θ">
+<!ENTITY saveVideoCmd.label           "Αποθήκευση βίντεο ως…">
+<!ENTITY saveVideoCmd.accesskey       "θ">
+<!ENTITY saveAudioCmd.label           "Αποθήκευση ήχου ως…">
+<!ENTITY saveAudioCmd.accesskey       "θ">
+<!ENTITY emailImageCmd.label          "Αποστολή εικόνας…">
+<!ENTITY emailImageCmd.accesskey      "σ">
+<!ENTITY emailVideoCmd.label          "Αποστολή βίντεο…">
+<!ENTITY emailVideoCmd.accesskey      "σ">
+<!ENTITY castVideoCmd.label           "Αποστολή του βίντεο σε συσκευή">
+<!ENTITY castVideoCmd.accesskey       "β">
+<!ENTITY emailAudioCmd.label          "Αποστολή ήχου…">
+<!ENTITY emailAudioCmd.accesskey      "χ">
+<!ENTITY playPluginCmd.label          "Ενεργοποίηση αυτής της πρόσθετης λειτουργίας">
+<!ENTITY playPluginCmd.accesskey      "γ">
+<!ENTITY hidePluginCmd.label          "Απόκρυψη αυτής της πρόσθετης λειτουργίας">
+<!ENTITY hidePluginCmd.accesskey      "π">
+<!ENTITY copyLinkCmd.label            "Αντιγραφή τοποθεσίας δεσμού">
+<!ENTITY copyLinkCmd.accesskey        "γ">
+<!ENTITY copyImageCmd.label           "Αντιγραφή τοποθεσίας εικόνας">
+<!ENTITY copyImageCmd.accesskey       "ν">
+<!ENTITY copyImageContentsCmd.label   "Αντιγραφή εικόνας">
+<!ENTITY copyImageContentsCmd.accesskey  "γ"> 
+<!ENTITY copyVideoURLCmd.label        "Αντιγραφή τοποθεσίας βίντεο">
+<!ENTITY copyVideoURLCmd.accesskey    "γ">
+<!ENTITY copyAudioURLCmd.label        "Αντιγραφή τοποθεσίας ήχου">
+<!ENTITY copyAudioURLCmd.accesskey    "γ">
+<!ENTITY copyEmailCmd.label           "Αντιγραφή διεύθυνσης email">
+<!ENTITY copyEmailCmd.accesskey       "Ε">
+<!ENTITY thisFrameMenu.label              "Αυτό το πλαίσιο">
+<!ENTITY thisFrameMenu.accesskey          "λ">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Αναπαραγωγή">
+<!ENTITY mediaPlay.accesskey         "π">
+<!ENTITY mediaPause.label            "Παύση">
+<!ENTITY mediaPause.accesskey        "η">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Σίγαση">
+<!ENTITY mediaMute.accesskey         "Σ">
+<!ENTITY mediaUnmute.label           "Άρση σίγασης">
+<!ENTITY mediaUnmute.accesskey       "ρ">
+<!ENTITY mediaPlaybackRate2.label     "Ταχύτητα αναπαραγωγής">
+<!ENTITY mediaPlaybackRate2.accesskey "τ">
+<!ENTITY mediaPlaybackRate050x2.label "Αργή (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "α">
+<!ENTITY mediaPlaybackRate100x2.label "Κανονική">
+<!ENTITY mediaPlaybackRate100x2.accesskey "Κ">
+<!ENTITY mediaPlaybackRate125x2.label "Γρήγορη (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "Ρ">
+<!ENTITY mediaPlaybackRate150x2.label "Πιο γρήγορη (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "γ">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Πολύ υψηλή (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "Λ">
+<!ENTITY mediaLoop.label             "Επανάληψη">
+<!ENTITY mediaLoop.accesskey         "Ψ">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Εμφάνιση στοιχείων ελέγχου">
+<!ENTITY mediaShowControls.accesskey "φ">
+<!ENTITY mediaHideControls.label     "Απόκρυψη στοιχείων ελέγχου">
+<!ENTITY mediaHideControls.accesskey "ψ">
+<!ENTITY videoFullScreen.label       "Πλήρης οθόνη">
+<!ENTITY videoFullScreen.accesskey   "Π">
+<!ENTITY videoSaveImage.label        "Αποθήκευση στιγμιότυπου ως…">
+<!ENTITY videoSaveImage.accesskey    "ς">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Εμφάνιση στατιστικών">
+<!ENTITY videoShowStats.accesskey    "φ">
+<!ENTITY videoHideStats.label        "Απόκρυψη στατιστικών">
+<!ENTITY videoHideStats.accesskey    "ψ">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Μεγέθυνση">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "σ">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Σμίκρυνση">
+<!ENTITY fullZoomReduceCmd.accesskey    "υ">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Επαναφορά">
+<!ENTITY fullZoomResetCmd.accesskey     "ρ">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Ζουμ μόνο στο κείμενο">
+<!ENTITY fullZoomToggleCmd.accesskey    "κ">
+<!ENTITY fullZoom.label                 "Ζουμ">
+<!ENTITY fullZoom.accesskey             "γ">
+
+<!ENTITY sidebarCloseButton.tooltip     "Κλείσιμο πλευρικής στήλης">
+<!ENTITY sidebarMenuClose.label         "Κλείσιμο πλευρικής γραμμής">
+
+<!ENTITY quitApplicationCmdWin2.label       "Έξοδος">
+<!ENTITY quitApplicationCmdWin2.accesskey   "ξ">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Έξοδος από το &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Έξοδος"> 
+<!ENTITY quitApplicationCmd.accesskey   "ξ">
+<!ENTITY quitApplicationCmdMac2.label   "Έξοδος από το &brandShorterName;">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Κλείσιμο">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "Κ">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Μορφοποίηση σελίδας">
+<!ENTITY pageStyleMenu.accesskey "ο">
+<!ENTITY pageStyleNoStyle.label "Χωρίς μορφοποίηση">
+<!ENTITY pageStyleNoStyle.accesskey "ρ">
+<!ENTITY pageStylePersistentOnly.label "Βασική μορφοποίηση σελίδας">
+<!ENTITY pageStylePersistentOnly.accesskey "Β">
+
+<!ENTITY pageReportIcon.tooltip            "Αλλαγή ρυθμίσεων φραγής αναδυόμενων παραθύρων για αυτή την ιστοσελίδα">
+
+<!ENTITY allowPopups.accesskey "ν">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Επεξεργασία προτιμήσεων φραγής αναδυόμενων παραθύρων…">
+<!ENTITY editPopupSettings.label "Επεξεργασία επιλογών φραγής αναδυόμενων παραθύρων…">
+<!ENTITY editPopupSettings.accesskey "ξ">
+<!ENTITY dontShowMessage.accesskey "Ν">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Αλλαγή κατεύθυνσης σελίδας">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "τ">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Αλλαγή κατεύθυνσης κειμένου">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "κ">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Εύρεση σε αυτή τη σελίδα…">
+<!ENTITY findOnCmd.accesskey "ρ">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Εύρεση ξανά">
+<!ENTITY findAgainCmd.accesskey "ξ">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Προσθήκη λεξικών…">
+<!ENTITY spellAddDictionaries.accesskey "θ">
+
+<!ENTITY editBookmark.done.label                     "Προσθήκη">
+<!ENTITY editBookmark.removeBookmark.accessKey       "ρ">
+
+<!ENTITY identity.connectionSecure "Ασφαλής σύνδεση">
+<!ENTITY identity.connectionNotSecure "Η σύνδεση δεν είναι ασφαλής">
+<!ENTITY identity.connectionFile "Αυτή η σελίδα είναι αποθηκευμένη στον υπολογιστή σας.">
+<!ENTITY identity.connectionVerified2 "Έχετε συνδεθεί με ασφαλή τρόπο στον ιστότοπο, που είναι ιδιοκτησία του:">
+<!ENTITY identity.connectionInternal "Αυτή είναι μια ασφαλής σελίδα του &brandShortName;.">
+<!ENTITY identity.extensionPage "Αυτή η σελίδα φορτώθηκε από μια επέκταση.">
+<!ENTITY identity.insecureLoginForms2 "Τα στοιχεία σύνδεσης που πληκτρολογήσατε σε αυτή την σελίδα μπορεί να διαρεύσουν.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "Ο &brandShortName; έχει εμποδίσει τμήματα αυτής της σελίδας που δεν είναι ασφαλή.">
+<!ENTITY identity.passiveLoaded "Κάποια τμήματα αυτής της σελίδας δεν είναι ασφαλή (π.χ. κάποιες εικόνες).">
+<!ENTITY identity.activeLoaded "Έχετε απενεργοποιήσει την προστασία σε αυτή τη σελίδα.">
+<!ENTITY identity.weakEncryption "Αυτή η σελίδα χρησιμοποιεί μη ισχυρή κρυπτογράφηση.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Η σύνδεσή σας σε αυτή τη σελίδα δεν είναι ασφαλής. Πληροφορίες που υποβάλετε μπορεί να είναι ορατές σε τρίτους (όπως κωδικοί, μηνύματα, πιστωτικές κάρτες κ.α. ).">
+<!ENTITY identity.description.insecureLoginForms "Τα στοιχεία σύνδεσης που εισάγατε στη σελίδα δεν είναι ασφαλή και μπορεί να τεθούν σε κίνδυνο.">
+<!ENTITY identity.description.weakCipher "Η σύνδεση σας σε αυτή τη σελίδα χρησιμοποιεί μη ισχυρή κρυπτογράφηση και δεν είναι ασφαλής.">
+<!ENTITY identity.description.weakCipher2 "Τρίτοι μπορούν να δουν τις πληροφορίες σας ή να τροποποιήσουν την συμπεριφορά αυτής της ιστοσελίδας.">
+<!ENTITY identity.description.activeBlocked "Ο &brandShortName; έχει εμποδίσει τμήματα αυτής της σελίδας που δεν είναι ασφαλή.">
+<!ENTITY identity.description.passiveLoaded "Η σύνδεσή σας δεν είναι ασφαλής και πληροφορίες που μοιράζεστε με αυτή τη σελίδα μπορεί να είναι ορατές από τρίτους.">
+<!ENTITY identity.description.passiveLoaded2 "Αυτή η σελίδα έχει περιεχόμενο που δεν είναι ασφαλές (π.χ. εικόνες).">
+<!ENTITY identity.description.passiveLoaded3 "Παρόλο που ο &brandShortName; έχει εμποδίσει τμήματα του περιεχομένου, υπάρχουν ακόμα κάποια τμήματα που δεν είναι ασφαλή (π.χ. εικόνες).">
+<!ENTITY identity.description.activeLoaded "Αυτή η ιστοσελίδα έχει περιεχόμενο που δεν είναι ασφαλές (π.χ. scripts) και η σύνδεσή σας δεν είναι ασφαλής.">
+<!ENTITY identity.description.activeLoaded2 "Πληροφορίες που μοιράζεστε με αυτή τη σελίδα μπορεί να είναι ορατές από τρίτους (όπως κωδικοί, μηνύματα, πιστωτικές κάρτες κ.α.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Ενεργοποίηση προστασίας">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "Ε">
+<!ENTITY identity.disableMixedContentBlocking.label "Απενεργοποίηση προστασίας για την ώρα">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "Δ">
+<!ENTITY identity.learnMore "Μάθετε περισσότερα">
+
+<!ENTITY identity.removeCertException.label "Αφαίρεση Εξαίρεσης">
+<!ENTITY identity.removeCertException.accesskey "Ρ">
+
+<!ENTITY identity.moreInfoLinkText2 "Περισσότερες πληροφορίες">
+
+<!ENTITY identity.permissions "Δικαιώματα">
+<!ENTITY identity.permissionsEmpty "Δεν έχετε χορηγήσει ειδικές άδειες στη σελίδα.">
+<!ENTITY identity.permissionsReloadHint "Ίσως χρειαστεί να φορτώσετε εκ νέου τη σελίδα για εφαρμογή των αλλαγών.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Καρτέλες περιηγητή">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Συγχρονισμένες καρτέλλες">
+
+<!ENTITY syncedTabs.sidebar.label              "Συγχρονισμένες καρτέλλες">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Συνδεθείτε στο Waterfox από τις άλλες συσκευές σας για να δείτε τις καρτέλες τους εδώ.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Καμία συγχρονισμένη καρτέλα… ακόμη!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Θέλετε να δείτε τις καρτέλες σας από άλλες συσκευές εδώ;">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Συνδεθείτε για να δείτε μια λίστα καρτελών από τις άλλες συσκευές σας.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Δεν υπάρχουν ανοικτές καρτέλες">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Ανοίξτε τις προτιμήσεις του &syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Ενεργοποιήστε τον συγχρονισμό καρτελών για να δείτε μια λίστα από καρτέλες από τις άλλες σας συσκευές.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Άνοιγμα">
+<!ENTITY syncedTabs.context.open.accesskey                   "Ο">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Άνοιγμα σε νέα καρτέλα">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "κ">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Άνοιγμα σε νέο παράθυρο">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "ν">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Άνοιγμα σε νέο ιδιωτικό παράθυρο">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "Π">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Η καρτέλα ως σελιδοδείκτης…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "Β">
+<!ENTITY syncedTabs.context.copy.label                       "Αντιγραφή">
+<!ENTITY syncedTabs.context.copy.accesskey                   "α">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Άνοιγμα όλων σε καρτέλες">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "Α">
+<!ENTITY syncedTabs.context.managedevices.label              "Διαχείριση συσκευών…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "Σ">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Σύνδεση στο &syncBrand.shortName.label;…">
+<!ENTITY syncSignIn.accesskey         "Υ">
+<!ENTITY syncSyncNowItem.label        "Συγχρονισμός τώρα">
+<!ENTITY syncSyncNowItem.accesskey    "Σ">
+<!ENTITY syncReAuthItem.label         "Επανασύνδεση στο &syncBrand.shortName.label;…">
+<!ENTITY syncReAuthItem.accesskey     "Ρ">
+<!ENTITY syncToolbarButton.label      "Sync">
+
+<!ENTITY social.addons.label "Διαχείριση υπηρεσιών…">
+
+<!ENTITY social.directory.label "Κατάλογος Ενεργοποιήσεων">
+<!ENTITY social.directory.text "Μπορείτε να ενεργοποιήσετε τις υπηρεσίες Κοινοποίησης από τον κατάλογο.">
+<!ENTITY social.directory.button "Φύγαμε!">
+<!ENTITY social.directory.introText "Κάντε κλικ σε μια υπηρεσία για να την προσθέσετε στον &brandShortName;.">
+<!ENTITY social.directory.viewmore.text "Εμφάνιση περισσότερων">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Επιπρόσθετα εργαλεία και λειτουργίες">
+<!ENTITY customizeMode.menuAndToolbars.empty "Θέλετε περισσότερα εργαλεία;">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Επιλέξτε ανάμεσα από χιλιάδες πρόσθετα">
+<!ENTITY customizeMode.restoreDefaults "Επαναφορά προεπιλογών">
+<!ENTITY customizeMode.done "Τέλος">
+<!ENTITY customizeMode.titlebar "Γραμμή τίτλου">
+<!ENTITY customizeMode.toolbars2 "Γραμμές εργαλειών">
+<!ENTITY customizeMode.lwthemes "Θέματα">
+<!ENTITY customizeMode.lwthemes.myThemes "Τα θέματά μου">
+<!ENTITY customizeMode.lwthemes.recommended "Προτεινόμενα">
+<!ENTITY customizeMode.lwthemes.menuManage "Διαχείριση">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "μ">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Λήψη περισσότερων θεμάτων">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "γ">
+<!ENTITY customizeMode.emptyOverflowList.description "Σύρετε και εναποθέστε στοιχεία εδώ για να τα έχετε πάντα κοντά, αλλά όχι στη γραμμή εργαλείων…">
+<!ENTITY customizeMode.uidensity "Πυκνότητα">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Κανονικό">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Κανονικό">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "Κ">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Πολύ πυκνό">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Πολύ πυκνό">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "Π">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Αφή">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Αφή">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "Α">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label 'Χρήση επιλογής "Αφή" για τη λειτουργία tablet'>
+
+<!ENTITY getUserMedia.selectCamera.label "Μοιραστείτε την κάμερα:">
+<!ENTITY getUserMedia.selectCamera.accesskey "Ψ">
+<!ENTITY getUserMedia.selectMicrophone.label "Μοιραστείτε το μικρόφωνο:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "Μ">
+<!ENTITY getUserMedia.audioCapture.label "Θα μοιραστεί ο ήχος από την καρτέλα.">
+<!ENTITY getUserMedia.allWindowsShared.message "Θα μοιραστούν όλα τα ορατά παράθυρα της οθόνη σας.">
+
+<!ENTITY trackingProtection.title "Προστασία από παρακολούθηση">
+<!ENTITY trackingProtection.detectedBlocked3 "Ο &brandShortName; εμποδίζει τμήματα της σελίδας που μπορούν να καταγράψουν τη συμπεριφορά σας.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Αυτή η ιστοσελίδα περιέχει στοιχεία που μπορούν να καταγράψουν τη συμπεριφορά σας. Έχετε απενεργοποιήσει την προστασία.">
+<!ENTITY trackingProtection.notDetected3 "Κανένα στοιχείο καταγραφής σε αυτή τη σελίδα.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Απενεργοποίηση προστασίας για αυτή τη σελίδα">
+<!ENTITY trackingProtection.unblock.accesskey "Δ">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Απενεργοποίηση προστασίας για αυτή τη συνεδρία">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "Δ">
+<!ENTITY trackingProtection.block2.label "Ενεργοποίηση προστασίας">
+<!ENTITY trackingProtection.block2.accesskey "Ε">
+
+<!ENTITY trackingContentBlocked.message "Παρακολούθηση">
+<!ENTITY trackingContentBlocked.moreinfo "Έχουν εμποδιστεί τμήματα αυτής της σελίδας που μπορούν να καταγράψουν τη διαδικτυακή συμπεριφορά σας.">
+<!ENTITY trackingContentBlocked.learnMore "Μάθετε περισσότερα">
+<!ENTITY trackingContentBlocked.options "Επιλογές">
+<!ENTITY trackingContentBlocked.unblock2.label "Απενεργοποίηση προστασίας για αυτή τη σελίδα">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "Δ">
+<!ENTITY trackingContentBlocked.block.label "Ενεργοποίηση προστασίας">
+<!ENTITY trackingContentBlocked.block.accesskey "Ε">
+<!ENTITY trackingContentBlocked.disabled.message "Η προστασία από παρακολούθηση είναι ανενεργή">
+
+<!ENTITY pluginNotification.showAll.label "Προβολή όλων">
+<!ENTITY pluginNotification.showAll.accesskey "β">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "Να επιτρέπεται για τώρα">
+<!ENTITY pluginActivateAlways.label "Να επιτρέπεται πάντα">
+<!ENTITY pluginBlockNow.label "Φραγή πρόσθετης λειτουργίας">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "32em">
+
+<!ENTITY uiTour.infoPanel.close "Κλείσιμο">
+
+<!ENTITY appMenuSidebars.label         "Πλευρικές στήλες">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Διαγραφή των τελευταίων:">
+<!ENTITY panicButton.view.5min                    "Πέντε λεπτών">
+<!ENTITY panicButton.view.2hr                     "Δύο ωρών">
+<!ENTITY panicButton.view.day                     "24 ωρών">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Εάν συνεχίσετε:">
+<!ENTITY panicButton.view.deleteCookies           "Θα διαγραφούν τα πρόσφατα <html:strong>cookies</html:strong>">
+<!ENTITY panicButton.view.deleteHistory           "Θα διαγραφεί το πρόσφατο <html:strong>ιστορικό</html:strong>">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Θα κλείσουν όλες οι <html:strong>καρτέλες</html:strong> και τα <html:strong>παράθυρα</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "ανοίξει ένα νέο παράθυρο">
+
+<!ENTITY panicButton.view.undoWarning             "Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.">
+<!ENTITY panicButton.view.forgetButton            "Ξέχασέ το!">
+
+<!ENTITY panicButton.thankyou.msg1                "Έγινε εκκαθάριση του πρόσφατου ιστορικού σας.">
+<!ENTITY panicButton.thankyou.msg2                "Καλή και ασφαλή περιήγηση!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Ευχαριστώ!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Μάθετε περισσότερα για το DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "μ">
+
+<!ENTITY updateAvailable.message "Ενημερώστε το &brandShorterName; για ακόμα περισσότερη ταχύτητα και απόρρητο.">
+<!ENTITY updateAvailable.whatsnew.label "Δείτε τι νέο υπάρχει.">
+<!ENTITY updateAvailable.header.message "Μια νέα ενημέρωση για το &brandShorterName; είναι διαθέσιμη.">
+<!ENTITY updateAvailable.acceptButton.label "Λήψη ενημέρωσης">
+<!ENTITY updateAvailable.acceptButton.accesskey "Λ">
+<!ENTITY updateAvailable.cancelButton.label "Όχι τώρα">
+<!ENTITY updateAvailable.cancelButton.accesskey "Ο">
+<!ENTITY updateAvailable.panelUI.label "Λήψη ενημέρωσης για το &brandShorterName;">
+
+<!ENTITY updateManual.message "Κάντε λήψη μιας φρέσκιας έκδοσης του &brandShorterName; και θα σάς βοηθήσουμε να την εγκαταστήσετε.">
+<!ENTITY updateManual.whatsnew.label "Δείτε τι νέο υπάρχει.">
+<!ENTITY updateManual.header.message "Το &brandShorterName; δεν μπορεί να ενημερωθεί στην πιο πρόσφατη έκδοση.">
+<!ENTITY updateManual.acceptButton.label "Λήψη του &brandShorterName;">
+<!ENTITY updateManual.acceptButton.accesskey "Λ">
+<!ENTITY updateManual.cancelButton.label "Όχι τώρα">
+<!ENTITY updateManual.cancelButton.accesskey "Ο">
+<!ENTITY updateManual.panelUI.label "Λήψη μιας φρέσκιας έκδοσης του &brandShorterName;">
+
+<!ENTITY updateRestart.message "Μετά από μια σύντομη επανεκκίνηση, το &brandShorterName; θα επαναφέρει όλες τις ανοικτές καρτέλες και τα παράθυρά σας.">
+<!ENTITY updateRestart.header.message2 "Επανεκκίνηση για ενημέρωση του &brandShorterName;.">
+<!ENTITY updateRestart.acceptButton.label "Επανεκκίνηση και επαναφορά">
+<!ENTITY updateRestart.acceptButton.accesskey "Ε">
+<!ENTITY updateRestart.cancelButton.label "Όχι τώρα">
+<!ENTITY updateRestart.cancelButton.accesskey "Ο">
+<!ENTITY updateRestart.panelUI.label2 "Επανεκκίνηση για ενημέρωση του &brandShorterName;">
+
+<!ENTITY pageActionButton.tooltip "Ενέργειες σελίδας">
+<!ENTITY pageAction.addToUrlbar.label "Προσθήκη στη Γραμμή Διευθύνσεων">
+<!ENTITY pageAction.removeFromUrlbar.label "Αφαίρεση από τη Γραμμή Διευθύνσεων">
+
+<!ENTITY sendToDevice.label2 "Αποστολή σε συσκευή">
+<!ENTITY sendToDevice.syncNotReady.label "Συγχρονισμός συσκευών…">

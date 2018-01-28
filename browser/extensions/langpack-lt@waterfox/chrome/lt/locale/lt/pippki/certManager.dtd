@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Liudijimų tvarkytuvė">
+
+<!ENTITY certmgr.tab.mine                     "Jūsų liudijimai">
+<!ENTITY certmgr.tab.others2                  "Asmenų">
+<!ENTITY certmgr.tab.websites3                "Serverių">
+<!ENTITY certmgr.tab.ca                       "Liudijimų įstaigų">
+<!ENTITY certmgr.tab.orphan2                  "Kiti">
+
+<!ENTITY certmgr.mine                         "Turite liudijimus, išduotus šių jus identifikuojančių įstaigų:">
+<!ENTITY certmgr.others                       "Turite liudijimus, identifikuojančius šiuos asmenis:">
+<!ENTITY certmgr.websites2                    "Turite liudijimus, identifikuojančius šiuos serverius:">
+<!ENTITY certmgr.cas                          "Turite liudijimus, identifikuojančius šias liudijimų įstaigas:">
+<!ENTITY certmgr.orphans                      "Turite liudijimus, nepatenkančius į kitas kategorijas:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Bendroji">
+<!ENTITY certmgr.detail.general_tab.accesskey "B">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Išsamesnė">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "I">
+
+<!ENTITY certmgr.pending.label                "Liudijimo galiojimas šiuo metu tikrinamas…">
+<!ENTITY certmgr.subjectinfo.label            "Kam išduotas">
+<!ENTITY certmgr.issuerinfo.label             "Kas išdavė">
+<!ENTITY certmgr.periodofvalidity.label       "Galiojimo periodas" >
+<!ENTITY certmgr.fingerprints.label           "Kontroliniai kodai">
+<!ENTITY certmgr.certdetail.title             "Išsamesnė informacija apie liudijimą">
+<!ENTITY certmgr.certdetail.cn                "Vardas (CN)">
+<!ENTITY certmgr.certdetail.o                 "Įstaiga (O)">
+<!ENTITY certmgr.certdetail.ou                "Įstaigos padalinys (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Numeris">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 kontrolinis kodas">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 kontrolinis kodas">
+
+<!ENTITY certmgr.editcacert.title             "Pasitikėjimo LĮ liudijimu nuostatos">
+<!ENTITY certmgr.editcert.edittrust           "Pasitikėjimo nuostatos:">
+<!ENTITY certmgr.editcert.trustssl            "Šis liudijimas gali patvirtinti svetainių tapatybę">
+<!ENTITY certmgr.editcert.trustemail          "Šis liudijimas gali patvirtinti el. pašto naudotojų tapatybę">
+<!ENTITY certmgr.editcert.trustobjsign        "Šis liudijimas gali patvirtinti programinės įrangos gamintojų tapatybę">
+
+<!ENTITY certmgr.deletecert.title             "Liudijimo šalinimas">
+
+<!ENTITY certmgr.certname                     "Liudijimo vardas">
+<!ENTITY certmgr.certserver                   "Serveris">
+<!ENTITY certmgr.override_lifetime            "Galiojimo laikas">
+<!ENTITY certmgr.tokenname                    "Saugumo priemonė">
+<!ENTITY certmgr.begins                       "Prasideda">
+<!ENTITY certmgr.expires                      "Baigiasi">
+<!ENTITY certmgr.email                        "El. pašto adresas">
+<!ENTITY certmgr.serial                       "Numeris">
+
+<!ENTITY certmgr.close.label                  "Užverti">
+<!ENTITY certmgr.close.accesskey              "U">
+<!ENTITY certmgr.view2.label                  "Peržiūrėti…">
+<!ENTITY certmgr.view2.accesskey              "P">
+<!ENTITY certmgr.edit3.label                  "Taisyti pasitikėjimą…">
+<!ENTITY certmgr.edit3.accesskey              "T">
+<!ENTITY certmgr.export.label                 "Eksportuoti…">
+<!ENTITY certmgr.export.accesskey             "E">
+<!ENTITY certmgr.delete2.label                "Pašalinti…">
+<!ENTITY certmgr.delete2.accesskey            "š">
+<!ENTITY certmgr.delete_builtin.label         "Pašalinti arba nepasitikėti…">
+<!ENTITY certmgr.delete_builtin.accesskey     "š">
+<!ENTITY certmgr.backup2.label                "Archyvuoti…">
+<!ENTITY certmgr.backup2.accesskey            "A">
+<!ENTITY certmgr.backupall2.label             "Archyvuoti viską…">
+<!ENTITY certmgr.backupall2.accesskey         "v">
+<!ENTITY certmgr.restore2.label               "Importuoti…">
+<!ENTITY certmgr.restore2.accesskey           "I">
+<!ENTITY certmgr.details.label                "Liudijimo laukai">
+<!ENTITY certmgr.details.accesskey            "k">
+<!ENTITY certmgr.fields.label                 "Lauko reikšmė">
+<!ENTITY certmgr.fields.accesskey             "r">
+<!ENTITY certmgr.hierarchy.label              "Liudijimų hierarchija">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Pritaikyti išimtį…">
+<!ENTITY certmgr.addException.accesskey       "m">
+
+<!ENTITY exceptionMgr.title                   "Saugumo išimties pritaikymas">
+<!ENTITY exceptionMgr.exceptionButton.label   "Patvirtinti saugumo išimtį">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "P">
+<!ENTITY exceptionMgr.supplementalWarning     "Patikimi bankai, parduotuvės ir kitos viešos svetainės neprašytų šito daryti.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Serveris">
+<!ENTITY exceptionMgr.certlocation.url        "Adresas:">
+<!ENTITY exceptionMgr.certlocation.download   "Atsiųsti liudijimą">
+<!ENTITY exceptionMgr.certlocation.accesskey  "A">
+<!ENTITY exceptionMgr.certstatus.caption      "Liudijimo būsena">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Parodyti…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "r">
+<!ENTITY exceptionMgr.permanent.label         "Įrašyti šią išimtį visam laikui">
+<!ENTITY exceptionMgr.permanent.accesskey     "v">

@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Zastojnik dodankow">
+
+<!ENTITY search.placeholder                   "Wšykne dodanki pytaś">
+<!ENTITY search.buttonlabel                   "Pytaś">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Zacytujo se…">
+<!ENTITY listEmpty.installed.label            "Njejsćo dodanki toś togo typa instalěrował">
+<!ENTITY listEmpty.availableUpdates.label     "Žedne aktualizacije namakane">
+<!ENTITY listEmpty.recentUpdates.label        "Slědny cas njejsćo dodanki aktualizěrował">
+<!ENTITY listEmpty.findUpdates.label          "Za aktualizacijami pytaś">
+<!ENTITY listEmpty.search.label               "Gódne dodanki njejsu se dali namakaś">
+<!ENTITY listEmpty.button.label               "Dalšne informacije wó dodankach">
+<!ENTITY installAddonFromFile.label           "Dodank z dataje instalěrowaś…">
+<!ENTITY installAddonFromFile.accesskey       "D">
+<!ENTITY toolsMenu.tooltip                    "Rědy za wšykne dodanki">
+
+<!ENTITY getThemes.description                "Cośo swój wobglědowak pśiměriś?">
+<!ENTITY getThemes.learnMore                  "Wubjeŕśo z towzyntow drastwow.">
+
+<!ENTITY cmd.back.tooltip                     "Jaden bok slědk">
+<!ENTITY cmd.forward.tooltip                  "Jaden bok doprědka">
+
+<!ENTITY showUnsignedExtensions.button.label  "Někotare rozšyrjenja njejsu dali se wobkšuśiś">
+<!ENTITY showAllExtensions.button.label       "Wšykne rozšyrjenja pokazaś">
+<!ENTITY debugAddons.label                    "Dodanki za zmólkami pśepytowaś">
+<!ENTITY debugAddons.accesskey                "m">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Wšykne dodanki su se pśez wěsty modus znjemóžnili.">
+<!ENTITY warning.checkcompatibility.label          "Pśespytowanje dodankoweje kompatibelnosći jo znjemóžnjone. Jo móžno, až maśo njekompatibelne dodanki.">
+<!ENTITY warning.checkcompatibility.enable.label   "Zmóžniś">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Pśespytowanje dodankeje kompatibelnosći zmóžniś">
+<!ENTITY warning.updatesecurity.label              "Pśespytowanje wěstoty aktualizacije jo znjemóžnjone. Jo móžno, až aktualizacije wam wobgrozuju.">
+<!ENTITY warning.updatesecurity.enable.label       "Zmóžniś">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Pśespytowanje wěstoty aktualizacije zmóžniś">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Pytaś">
+<!ENTITY view.discover.label                  "Dodanki wobstaraś">
+<!ENTITY view.recentUpdates.label             "Nejnowše aktualizacije">
+<!ENTITY view.availableUpdates.label          "K dispoziciji stojece aktualizacije">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Za aktualizacijami pytaś">
+<!ENTITY updates.checkForUpdates.accesskey    "a">
+<!ENTITY updates.viewUpdates.label            "Nejnowše aktualizacije se woglědaś">
+<!ENTITY updates.viewUpdates.accesskey        "N">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Dodanki awtomatiski aktualizěrowaś">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "D">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Wšykne dodanki zasej awtomatiski aktualizěrowaś">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "z">
+<!ENTITY updates.resetUpdatesToManual.label          "Wšykne dodanki manuelnje aktualizěrowaś">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "m">
+<!ENTITY updates.updating.label               "Aktualizěrowanje dodankow">
+<!ENTITY updates.installed.label              "Waše dodanki su se zaktualizěrowali.">
+<!ENTITY updates.downloaded.label             "Waše dodankowe aktualizacije su se ześěgnuli.">
+<!ENTITY updates.restart.label                "Znowego startowaś, aby se instalacija dokóńcyła">
+<!ENTITY updates.noneFound.label              "Žedne aktualizacije namakane">
+<!ENTITY updates.manualUpdatesFound.label     "K dispoziciji stojece aktualizacije se woglědaś">
+<!ENTITY updates.updateSelected.label         "Aktualizacije instalěrowaś">
+<!ENTITY updates.updateSelected.tooltip       "K dispoziciji stojece aktualizacije z lisćiny instalěrowaś">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Dalšne informacije pokazaś">
+<!ENTITY cmd.showDetails.accesskey            "i">
+<!ENTITY cmd.findUpdates.label                "Aktualizacije pytaś">
+<!ENTITY cmd.findUpdates.accesskey            "A">
+<!ENTITY cmd.preferencesWin.label             "Nastajenja">
+<!ENTITY cmd.preferencesWin.accesskey         "N">
+<!ENTITY cmd.preferencesUnix.label            "Nastajenja">
+<!ENTITY cmd.preferencesUnix.accesskey        "N">
+<!ENTITY cmd.about.label                      "Wó">
+<!ENTITY cmd.about.accesskey                  "W">
+
+<!ENTITY cmd.enableAddon.label                "Zmóžniś">
+<!ENTITY cmd.enableAddon.accesskey            "m">
+<!ENTITY cmd.disableAddon.label               "Znjemóžniś">
+<!ENTITY cmd.disableAddon.accesskey           "n">
+<!ENTITY cmd.enableTheme.label                "Drastwu wužywaś">
+<!ENTITY cmd.enableTheme.accesskey            "r">
+<!ENTITY cmd.disableTheme.label               "Drastwu wěcej njewužywaś">
+<!ENTITY cmd.disableTheme.accesskey           "w">
+<!ENTITY cmd.askToActivate.label              "Za aktiwěrowanje se pšašaś">
+<!ENTITY cmd.askToActivate.tooltip            "Pšašaś se, lěc ma se toś ten dodank kuždy cas wužywaś">
+<!ENTITY cmd.alwaysActivate.label             "Pśecej aktiwěrowaś">
+<!ENTITY cmd.alwaysActivate.tooltip           "Toś ten dodank pśecej wužywaś">
+<!ENTITY cmd.neverActivate.label              "Nigda njeaktiwěrowaś">
+<!ENTITY cmd.neverActivate.tooltip            "Toś ten dodank nigda njewužywaś">
+<!ENTITY cmd.stateMenu.tooltip                "Změniś, gaž toś ten dodank běžy">
+<!ENTITY cmd.installAddon.label               "Instalěrowaś">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Wótpóraś">
+<!ENTITY cmd.uninstallAddon.accesskey         "W">
+<!ENTITY cmd.showPreferencesWin.label         "Nastajenja">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Nastajenja toś togo dodanka změniś">
+<!ENTITY cmd.showPreferencesUnix.label        "Nastajenja">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Nastajenja toś togo dodanka změniś">
+<!ENTITY cmd.contribute.label                 "Pśinosowaś">
+<!ENTITY cmd.contribute.accesskey             "P">
+<!ENTITY cmd.contribute.tooltip               "K wuwiśeju toś togo dodanka pśinosowaś">
+
+<!ENTITY cmd.showReleaseNotes.label           "Wersijowe informacije pokazaś">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Wersijowe informacije za toś tu aktualizaciju pokazaś">
+<!ENTITY cmd.hideReleaseNotes.label           "Wersijowe informacije schowaś">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Wersijowe informacije za toś tu aktualizaciju schowaś">
+<!ENTITY cmd.findReplacement.label            "Narownanje pytaś">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Co su dodanki?">
+<!ENTITY discover.description2                "Dodanki su nałoženja, z kótarymiž móžośo &brandShortName; z pśidatneju funkcionalnosću abo pśidatnym stilom swójim žycenjam a pótrjebam pśiměriś. Wopytajśo cas žarjecu bócnicu, pśedpowěsć wjedra abo drastwu, aby swój wósobinski &brandShortName; dostał.">
+<!ENTITY discover.footer                      "Gaž sćo z internetom zwězany, buźo toś to wokno wam někotare z lěpšych a nejpopularnjejšych dodankow za wopytowanje póbitowaś.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Wersija">
+<!ENTITY detail.lastupdated.label             "Slědny raz zaktualizěrowany">
+<!ENTITY detail.creator.label                 "Wuwijaŕ">
+<!ENTITY detail.homepage.label                "Startowy bok">
+<!ENTITY detail.numberOfDownloads.label       "Ześěgnjenja">
+
+<!ENTITY detail.contributions.description     "Wuwijaŕ toś togo dodanka pšosy, aby wy pomagał, jogo stawne wuwiśe pódpěraś, z tym až pósćiwaśo mały pśinosk.">
+
+<!ENTITY detail.updateType                    "Awtomatiske aktualizacije">
+<!ENTITY detail.updateDefault.label           "Standard">
+<!ENTITY detail.updateDefault.tooltip         "Aktualizacije jano awtomatiski instalěrowaś, jolic to jo standard">
+<!ENTITY detail.updateAutomatic.label         "Zašaltowany">
+<!ENTITY detail.updateAutomatic.tooltip       "Aktualizacije awtomatiski instalěrowaś">
+<!ENTITY detail.updateManual.label            "Wušaltowany">
+<!ENTITY detail.updateManual.tooltip          "Aktualizacije awtomatiski njeinstalěrowaś">
+<!ENTITY detail.home                          "Startowy bok">
+<!ENTITY detail.repository                    "Dodankowy profil">
+<!ENTITY detail.size                          "Wjelikosć">
+
+<!ENTITY detail.checkForUpdates.label         "Za aktualizacijami pytaś">
+<!ENTITY detail.checkForUpdates.accesskey     "Z">
+<!ENTITY detail.checkForUpdates.tooltip       "Aktualizacije za toś ten dodank pytaś">
+<!ENTITY detail.showPreferencesWin.label      "Nastajenja">
+<!ENTITY detail.showPreferencesWin.accesskey  "N">
+<!ENTITY detail.showPreferencesWin.tooltip    "Nastajenja toś togo dodanka změniś">
+<!ENTITY detail.showPreferencesUnix.label     "Nastajenja">
+<!ENTITY detail.showPreferencesUnix.accesskey "N">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Nastajenja toś togo dodanka změniś">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Pógódnośenje">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Zastajiś">
+<!ENTITY progress.cancel.tooltip              "Pśetergnuś">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Mě">
+<!ENTITY sort.name.tooltip                    "Pó mjenju sortěrowaś">
+<!ENTITY sort.dateUpdated.label               "Slědny raz zaktualizěrowany">
+<!ENTITY sort.dateUpdated.tooltip             "Pó aktualizaciskem datumje sortěrowaś">
+<!ENTITY sort.relevance.label                 "Nejlěpšy wótpowědnik">
+<!ENTITY sort.relevance.tooltip               "Pó relewancy sortěrowaś">
+<!ENTITY sort.price.label                     "Płaśizna">
+<!ENTITY sort.price.tooltip                   "Pó płaśiznje sortěrowaś">
+
+<!ENTITY search.filter2.label                 "Pytaś:">
+<!ENTITY search.filter2.installed.label       "Móje dodanki">
+<!ENTITY search.filter2.installed.tooltip     "Zainstalěrowane dodanki pokazaś">
+<!ENTITY search.filter2.available.label       "K dispoziciji stojece nastajenja">
+<!ENTITY search.filter2.available.tooltip     "Instalěrujobne dodanki pokazaś">
+
+<!ENTITY addon.homepage                       "Startowy bok">
+<!ENTITY addon.details.label                  "Wěcej">
+<!ENTITY addon.details.tooltip                "Dalšne drobnostki wó toś tom dodanku pokazaś">
+<!ENTITY addon.unknownDate                    "Njeznaty">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ZESTARJONY">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(znjemóžnjony)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Aktualizěrowaś">
+<!ENTITY addon.undoAction.label               "Anulěrowaś">
+<!ENTITY addon.undoAction.tooltip             "Toś tu akciju anulěrowaś">
+<!ENTITY addon.undoRemove.label               "Anulěrowaś">
+<!ENTITY addon.undoRemove.tooltip             "Toś ten dodank zainstalěrowany wóstajiś">
+<!ENTITY addon.restartNow.label               "Něnto znowego startowaś">
+<!ENTITY addon.install.label                  "Instalěrowaś">
+<!ENTITY addon.install.tooltip                "Toś ten dodank instalěrowaś">
+<!ENTITY addon.updateNow.label                "Něnto aktualizěrowaś">
+<!ENTITY addon.updateNow.tooltip              "Aktualizaciju za toś ten dodank instalěrowaś">
+<!ENTITY addon.includeUpdate.label            "Do aktualizacije zapśimjeś">
+<!ENTITY addon.updateAvailable.label          "Aktualizacija stoj k dispoziciji">
+<!ENTITY addon.checkingForUpdates.label       "Aktualizacije se pytaju…">
+<!ENTITY addon.releaseNotes.label             "Wersijowe informacije:">
+<!ENTITY addon.loadingReleaseNotes.label      "Zacytujo se…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Pśi zacytowanju wersijowych informacijow jo bóžko zmólka nastała.">
+
+<!ENTITY addon.createdBy.label                "Wót ">
+
+<!ENTITY eula.title                           "Licencne dojadnanje z kóńcnym wužywarjom">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Akceptěrowaś a instalěrowaś…">
+
+<!ENTITY settings.path.button.label           "Pśepytaś…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Co to jo? Telemetrija móžo wótergi eksperimenty instalěrowaś a běžaś daś.">
+<!ENTITY experiment.info.learnmore "Dalšne informacije">
+<!ENTITY experiment.info.learnmore.accesskey "D">
+<!ENTITY experiment.info.changetelemetry "Telemetrijowe nastajenja">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Dalšne informacije…">
+
+<!ENTITY disabledUnsigned.heading "Někotre dodanki su se znjemóžnili">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Slědujuce dodanki njejsu se wobkšuśili za wužywanje w &brandShortName;. Móžośo ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "wuměnenja namakaś">
+<!ENTITY disabledUnsigned.description.end " abo wuwijarja pšosyś, je wobkšuśiś.">
+<!ENTITY disabledUnsigned.learnMore "Zgóńśo wěcej wó našych procowanjach, wam pomagaś, online wěsty wóstaś.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Wuwijarje, kótarež kśě, až jich dodanki se wobkšuśiju, mógu pókšacowaś, z tym až cytaju našu ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "pśirucku">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Felujo něco? Někotare tykace njepódpěraju se wěcej pśez &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Dalšne informacije.">
+
+<!ENTITY legacyWarning.description "Felujo něco? Někotare rozšyrjenja njepódpěraju se wěcej pśez &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Zestarjone rozšyrjenja pokazaś">
+<!ENTITY legacyExtensions.title "Zestarjone rozšyrjenja">
+<!ENTITY legacyExtensions.description "Toś te rozšyrjenja su se znjemóžnili, dokulaž standardam &brandShortName; njewótpowěduju.">
+<!ENTITY legacyExtensions.learnMore "Dalšne informacije wó změnach toś tych dodankow">

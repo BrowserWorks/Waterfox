@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This file exists to allow applications to override one or more messages
+     from netError.dtd; Applications which want to do this should override
+     this file with their own version of netErrorApp.dtd -->
+
+<!-- An example (from Waterfox):
+
+<!ENTITY securityOverride.linkText             "Võid ka lisada erandi…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Aita mind siit välja!">
+<!ENTITY securityOverride.exceptionButtonLabel "Lisa erand…">
+
+<!ENTITY securityOverride.warningContent "
+<p>Erandit ei tohiks lisada, kui kasutad internetiühendust, mida sa täielikult ei usalda, või kui sa pole harjunud saama hoiatusi sellelt serverilt.</p>
+<p>Kui soovid lisada erandi sellele lehele, võid teha seda turvalisuse täpsemate seadistuste alt.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+-->

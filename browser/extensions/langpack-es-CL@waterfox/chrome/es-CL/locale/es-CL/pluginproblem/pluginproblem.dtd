@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Este sitio usa un complemento que puede volver lento a &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Aprieta aquí para activar el complemento.">
+<!ENTITY clickToActivatePlugin                               "Activar complemento.">
+<!ENTITY checkForUpdates                                     "Buscar actualizaciones…">
+<!ENTITY blockedPlugin.label                                 "Este complemento ha sido bloqueado para su protección.">
+<!ENTITY hidePluginBtn.label                                 "Ocultar complemento">
+<!ENTITY managePlugins                                       "Administrar complementos…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Recarga la página">
+<!ENTITY reloadPlugin.post                                   " para volver a intentarlo.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Enviar reporte de fallos">
+<!ENTITY report.submitting                                   "Enviando reporte…">
+<!ENTITY report.submitted                                    "Reporte de fallos enviado.">
+<!ENTITY report.disabled                                     "Reporte de fallos desactivado.">
+<!ENTITY report.failed                                       "Envío fallido.">
+<!ENTITY report.unavailable                                  "No hay reportes disponibles.">
+<!ENTITY report.comment                                      "Añadir un comentario (los comentarios son públicos)">
+<!ENTITY report.pageURL                                      "Incluir URL de la página">
+
+<!ENTITY plugin.file                                         "Archivo">
+<!ENTITY plugin.mimeTypes                                    "Tipos MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Activar modo protegido de Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Bloquear contenido Flash peligroso e intrusivo">

@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "შრიფტები">
+
+<!ENTITY  language.label                          "შრიფტები დამწერლობისთვის:">
+<!ENTITY  language.accesskey                      "შ">
+
+<!ENTITY  size.label                              "ზომა:">
+<!ENTITY  sizeProportional.accesskey              "ზ">
+<!ENTITY  sizeMonospace.accesskey                 "გ">
+
+<!ENTITY  proportional.label                      "პროპორციული:">
+<!ENTITY  proportional.accesskey                  "პ">
+
+<!ENTITY  serif.label                             "ნაჭდევებიანი:">
+<!ENTITY  serif.accesskey                         "ნ">
+<!ENTITY  sans-serif.label                        "გროტესკი:">
+<!ENTITY  sans-serif.accesskey                    "გ">
+<!ENTITY  monospace.label                         "მონოსიგანის:">
+<!ENTITY  monospace.accesskey                     "მ">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "ლათინური">
+<!ENTITY  font.langGroup.japanese                 "იაპონური">
+<!ENTITY  font.langGroup.trad-chinese             "ჩინური ტრადიციულ (ტაივანი)">
+<!ENTITY  font.langGroup.simpl-chinese            "ჩინური გამარტივებული">
+<!ENTITY  font.langGroup.trad-chinese-hk          "ჩინური ტრადიციულ (ჰომგ-კონგი)">
+<!ENTITY  font.langGroup.korean                   "კორეული">
+<!ENTITY  font.langGroup.cyrillic                 "კირილიცა">
+<!ENTITY  font.langGroup.el                       "ბერძნული">
+<!ENTITY  font.langGroup.other                    "სხვა დამწერლობები">
+<!ENTITY  font.langGroup.thai                     "ტაილანდური">
+<!ENTITY  font.langGroup.hebrew                   "ებრაული">
+<!ENTITY  font.langGroup.arabic                   "არაბული">
+<!ENTITY  font.langGroup.devanagari               "დევანაგირი">
+<!ENTITY  font.langGroup.tamil                    "თამილური">
+<!ENTITY  font.langGroup.armenian                 "სომხური">
+<!ENTITY  font.langGroup.bengali                  "ბენგალური">
+<!ENTITY  font.langGroup.canadian                 "კანადური მარცვლოვანი უნიფიცირებული">
+<!ENTITY  font.langGroup.ethiopic                 "ეთიოპური">
+<!ENTITY  font.langGroup.georgian                 "ქართული">
+<!ENTITY  font.langGroup.gujarati                 "გუჯარათული">
+<!ENTITY  font.langGroup.gurmukhi                 "გურმუხი">
+<!ENTITY  font.langGroup.khmer                    "ქჰმერული">
+<!ENTITY  font.langGroup.malayalam                "მალაური">
+<!ENTITY  font.langGroup.math                     "მათემატიკა">
+<!ENTITY  font.langGroup.odia                     "ორია">
+<!ENTITY  font.langGroup.telugu                   "ტელუგუ">
+<!ENTITY  font.langGroup.kannada                  "კანნადა">
+<!ENTITY  font.langGroup.sinhala                  "სინჰალა">
+<!ENTITY  font.langGroup.tibetan                  "ტიბეტური">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "შრიფტის უმცირესი ზომა:">
+<!ENTITY minSize.accesskey                        "ც">
+<!ENTITY minSize.none                             "შეუზღუდავი">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "ნაჭდევებიანი">
+<!ENTITY  useDefaultFontSansSerif.label           "გროტესკი">
+
+<!ENTITY  allowPagesToUseOwn.label                "ნების დართვა ვებგვერდებისთვის, თავად აირჩიოს ფონტები, ზემოთ მითითებულის მიუხედავად">
+<!ENTITY  allowPagesToUseOwn.accesskey            "ნ">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "ტექსტის კოდირება მოძველებული შიგთავსითვის">
+<!ENTITY languages.customize.Fallback2.label      "ტექსტის სათადარიგო კოდირება:">
+<!ENTITY languages.customize.Fallback2.accesskey  "ტ">
+<!ENTITY languages.customize.Fallback2.desc       "ეს კოდირება გამოიყენება მოძველებული შიგთავსისთვის, რომელიც თავის კოდირების ვერ უთითებს.">
+
+<!ENTITY languages.customize.Fallback.auto        "არჩეული ენისთვის ნაგულისხმევი">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "არაბული">
+<!ENTITY languages.customize.Fallback.baltic      "ბალტიისპირული">
+<!ENTITY languages.customize.Fallback.ceiso       "ცენტრალურ ევროპული, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "ცენტრალურ ევროპული, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "ჩინური, გამარტივებული">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "ჩინური, ტრადიციული">
+<!ENTITY languages.customize.Fallback.cyrillic    "კირილიცა">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "ბერძნული">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "ებრაული">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "იაპონური">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "კორეული">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "ტაილანდური">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "თურქული">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "ვიეტნამური">
+<!ENTITY languages.customize.Fallback.other       "სხვა (მათ შორის დასავლეთ ევროპული)">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Vstup jen na vlastní nebezpečí!">
+<!ENTITY aboutWarningText.label "Změna některých hodnot v tomto rozšířeném nastavení může mít špatný vliv na stabilitu, bezpečnost a výkonnost této aplikace. Je doporučováno pokračovat pouze pokud víte, co děláte.">
+<!ENTITY aboutWarningButton2.label "Beru to na vědomí!">
+<!ENTITY aboutWarningCheckbox.label "Zobrazit příště toto varování">
+
+<!ENTITY searchPrefs.label "Hledat:">
+<!ENTITY searchPrefs.accesskey "H">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "k">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Název předvolby">
+<!ENTITY lockColumn.label "Stav">
+<!ENTITY typeColumn.label "Typ">
+<!ENTITY valueColumn.label "Hodnota">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Klepnutím seřadíte"> 
+<!ENTITY columnChooser.tooltip "Klepnutím vyberte sloupce pro zobrazení"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopírovat">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopírovat název">
+<!ENTITY copyName.accesskey "z">
+<!ENTITY copyValue.label "Kopírovat hodnotu">
+<!ENTITY copyValue.accesskey "K">
+<!ENTITY modify.label "Změnit">
+<!ENTITY modify.accesskey "m">
+<!ENTITY toggle.label "Přepnout">
+<!ENTITY toggle.accesskey "t">
+<!ENTITY reset.label "Obnovit">
+<!ENTITY reset.accesskey "O">
+<!ENTITY new.label "Nová předvolba">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Řetězec">
+<!ENTITY string.accesskey "t">
+<!ENTITY integer.label "Číslo">
+<!ENTITY integer.accesskey "s">
+<!ENTITY boolean.label "Logická hodnota">
+<!ENTITY boolean.accesskey "g">

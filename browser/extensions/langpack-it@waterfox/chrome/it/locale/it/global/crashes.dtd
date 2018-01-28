@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title "Segnalazioni di arresto anomalo">
+<!ENTITY crashesUnsubmitted.label "Segnalazioni non ancora inviate">
+<!ENTITY crashesSubmitted.label "Segnalazioni inviate">
+<!ENTITY id.heading "ID segnalazione">
+<!ENTITY dateCrashed.heading "Data crash">
+<!ENTITY dateSubmitted.heading "Data invio">
+<!ENTITY noReports.label "Non è stata inviata alcuna segnalazione.">
+<!ENTITY noConfig.label "Questa applicazione non è stata configurata per visualizzare le segnalazioni inviate. È necessario impostare il parametro <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label "Rimuovi tutte le segnalazioni">

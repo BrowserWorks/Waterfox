@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Gud kany me cako larwak.">
+<!ENTITY clickToActivatePlugin                               "Cak larwak.">
+<!ENTITY checkForUpdates                                     "Rot pi ngec manyen…">
+<!ENTITY blockedPlugin.label                                 "Kigengo larwak man woko pi gwoko in.">
+<!ENTITY hidePluginBtn.label                                 "Kan larwak">
+<!ENTITY managePlugins                                       "Lo larwak…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Nwo cano potbuk">
+<!ENTITY reloadPlugin.post                                   " me temo doki.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Cwal ripot me poto">
+<!ENTITY report.submitting                                   "Cwalo ripot…">
+<!ENTITY report.submitted                                    "Kicwalo ripot me poto.">
+<!ENTITY report.disabled                                     "Kijuko woko cwalo ripot me poto.">
+<!ENTITY report.failed                                       "Cwalo pe olare.">
+<!ENTITY report.unavailable                                  "Ripot mo pe tye.">
+<!ENTITY report.comment                                      "Med tami (tam nen bot lwak)">
+<!ENTITY report.pageURL                                      "Med URL me pot buk ne">
+
+<!ENTITY plugin.file                                         "Pwail">
+<!ENTITY plugin.mimeTypes                                    "Kit me MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Cak kit me Adobe Flash ma kigwokko">
+
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

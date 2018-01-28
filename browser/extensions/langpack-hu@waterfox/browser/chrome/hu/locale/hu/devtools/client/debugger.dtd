@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Debugger strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (debuggerUI.closeButton.tooltip): This is the tooltip for
+  -  the button that closes the debugger UI. -->
+
+
+
+<!ENTITY debuggerUI.closeButton.tooltip "Bezárás">
+<!-- LOCALIZATION NOTE (debuggerUI.panesButton.tooltip): This is the tooltip for
+  -  the button that toggles the panes visible or hidden in the debugger UI. -->
+
+<!ENTITY debuggerUI.panesButton.tooltip "Panelek be/ki">
+<!-- LOCALIZATION NOTE (debuggerUI.blackBoxMessage.label): This is the message
+  - displayed to users when they select a black boxed source from the sources
+  - list in the debugger. -->
+
+<!ENTITY debuggerUI.blackBoxMessage.label "A forrás fekete dobozzá van téve: töréspontjai ki vannak kapcsolva, és a léptetés átugorja.">
+<!-- LOCALIZATION NOTE (debuggerUI.blackBoxMessage.unBlackBoxButton): This is
+  - the text displayed in the button to stop black boxing the currently selected
+  - source. -->
+
+<!ENTITY debuggerUI.blackBoxMessage.unBlackBoxButton "A forrás ne legyen fekete doboz">
+<!-- LOCALIZATION NOTE (debuggerUI.optsButton.tooltip): This is the tooltip for
+  -  the button that opens up an options context menu for the debugger UI. -->
+
+<!ENTITY debuggerUI.optsButton.tooltip  "Hibakereső beállításai">
+<!-- LOCALIZATION NOTE (debuggerUI.sources.blackBoxTooltip): This is the tooltip
+  -  for the button that black boxes the selected source. -->
+
+<!ENTITY debuggerUI.sources.blackBoxTooltip "Fekete doboz be/ki">
+<!-- LOCALIZATION NOTE (debuggerUI.sources.prettyPrint): This is the tooltip for the
+  -  button that pretty prints the selected source. -->
+
+<!ENTITY debuggerUI.sources.prettyPrint "Forrás csinosítása">
+<!-- LOCALIZATION NOTE (debuggerUI.autoPrettyPrint): This is the label for the
+  -  checkbox that toggles auto pretty print. -->
+
+<!ENTITY debuggerUI.autoPrettyPrint     "Minimalizált források automata csinosítása">
+<!ENTITY debuggerUI.autoPrettyPrint.accesskey "c">
+<!-- LOCALIZATION NOTE (debuggerUI.sources.toggleBreakpoints): This is the tooltip for the
+  -  button that toggles all breakpoints for all sources. -->
+
+<!ENTITY debuggerUI.sources.toggleBreakpoints "Minden töréspont be/ki">
+<!-- LOCALIZATION NOTE (debuggerUI.clearButton): This is the label for
+  -  the button that clears the collected tracing data in the tracing tab. -->
+
+<!ENTITY debuggerUI.clearButton "Tartalom törlése">
+<!-- LOCALIZATION NOTE (debuggerUI.clearButton.tooltip): This is the tooltip for
+  -  the button that clears the collected tracing data in the tracing tab. -->
+
+<!ENTITY debuggerUI.clearButton.tooltip "Összegyűjtött nyomok törlése">
+<!-- LOCALIZATION NOTE (debuggerUI.pauseExceptions): This is the label for the
+  -  checkbox that toggles pausing on exceptions. -->
+
+<!ENTITY debuggerUI.pauseExceptions           "Szünet kivételekkor">
+<!ENTITY debuggerUI.pauseExceptions.accesskey "v">
+<!-- LOCALIZATION NOTE (debuggerUI.ignoreCaughtExceptions): This is the label for the
+  -  checkbox that toggles ignoring caught exceptions. -->
+
+<!ENTITY debuggerUI.ignoreCaughtExceptions           "Elkapott kivételek mellőzése">
+<!ENTITY debuggerUI.ignoreCaughtExceptions.accesskey "m">
+<!-- LOCALIZATION NOTE (debuggerUI.showPanesOnInit): This is the label for the
+  -  checkbox that toggles visibility of panes when opening the debugger. -->
+
+<!ENTITY debuggerUI.showPanesOnInit           "Panelek megjelenítése indításkor">
+<!ENTITY debuggerUI.showPanesOnInit.accesskey "d">
+<!-- LOCALIZATION NOTE (debuggerUI.showVarsFilter): This is the label for the
+  -  checkbox that toggles visibility of a designated variables filter box. -->
+
+<!ENTITY debuggerUI.showVarsFilter           "Változók szűrőmező megjelenítése">
+<!ENTITY debuggerUI.showVarsFilter.accesskey "V">
+<!-- LOCALIZATION NOTE (debuggerUI.showOnlyEnum): This is the label for the
+  -  checkbox that toggles visibility of hidden (non-enumerable) variables and
+  -  properties in stack views. The "enumerable" flag is a state of a property
+  -  defined in JavaScript. When in doubt, leave untranslated. -->
+
+<!ENTITY debuggerUI.showOnlyEnum           "Csak felsorolható tulajdonságok megjelenítése">
+<!ENTITY debuggerUI.showOnlyEnum.accesskey "C">
+<!-- LOCALIZATION NOTE (debuggerUI.showOriginalSource): This is the label for
+  -  the checkbox that toggles the display of original or sourcemap-derived
+  -  sources. -->
+
+<!ENTITY debuggerUI.showOriginalSource           "Eredeti források megjelenítése">
+<!ENTITY debuggerUI.showOriginalSource.accesskey "O">
+<!-- LOCALIZATION NOTE (debuggerUI.autoBlackBox): This is the label for
+  -  the checkbox that toggles whether sources that we suspect are minified are
+  -  automatically black boxed or not. -->
+
+<!ENTITY debuggerUI.autoBlackBox           "Minimalizált források automatikus fekete dobozzá tétele">
+<!ENTITY debuggerUI.autoBlackBox.accesskey "f">
+<!-- LOCALIZATION NOTE (debuggerUI.searchPanelOperators): This is the text that
+  -  appears in the filter panel popup as a header for the operators part. -->
+
+<!ENTITY debuggerUI.searchPanelOperators    "Operátorok:">
+<!-- LOCALIZATION NOTE (debuggerUI.searchFile): This is the text that appears
+  -  in the source editor's context menu for the scripts search operation. -->
+
+<!ENTITY debuggerUI.searchFile           "Parancsfájlok szűrése">
+<!ENTITY debuggerUI.searchFile.key       "P">
+<!ENTITY debuggerUI.searchFile.altkey    "O">
+<!ENTITY debuggerUI.searchFile.accesskey "P">
+<!-- LOCALIZATION NOTE (debuggerUI.searchGlobal): This is the text that appears
+  -  in the source editor's context menu for the global search operation. -->
+
+<!ENTITY debuggerUI.searchGlobal           "Keresés minden fájlban">
+<!ENTITY debuggerUI.searchGlobal.key       "F">
+<!ENTITY debuggerUI.searchGlobal.accesskey "F">
+<!-- LOCALIZATION NOTE (debuggerUI.searchFunction): This is the text that appears
+  -  in the source editor's context menu for the function search operation. -->
+
+<!ENTITY debuggerUI.searchFunction           "Függvénydefiníció keresése">
+<!ENTITY debuggerUI.searchFunction.key       "D">
+<!ENTITY debuggerUI.searchFunction.accesskey "D">
+<!-- LOCALIZATION NOTE (debuggerUI.searchToken): This is the text that appears
+  -  in the source editor's context menu for the token search operation. -->
+
+<!ENTITY debuggerUI.searchToken           "Keresés">
+<!ENTITY debuggerUI.searchToken.key       "K">
+<!ENTITY debuggerUI.searchToken.accesskey "K">
+<!-- LOCALIZATION NOTE (debuggerUI.searchLine): This is the text that appears
+  -  in the source editor's context menu for the line search operation. -->
+
+<!ENTITY debuggerUI.searchGoToLine           "Ugrás sorra…">
+<!ENTITY debuggerUI.searchGoToLine.key       "L">
+<!ENTITY debuggerUI.searchGoToLine.accesskey "U">
+<!-- LOCALIZATION NOTE (debuggerUI.searchVariable): This is the text that appears
+  -  in the source editor's context menu for the variables search operation. -->
+
+<!ENTITY debuggerUI.searchVariable           "Változók szűrése">
+<!ENTITY debuggerUI.searchVariable.key       "V">
+<!ENTITY debuggerUI.searchVariable.accesskey "V">
+<!-- LOCALIZATION NOTE (debuggerUI.focusVariables): This is the text that appears
+  -  in the source editor's context menu for the variables focus operation. -->
+
+<!ENTITY debuggerUI.focusVariables           "Változófa fókuszba">
+<!ENTITY debuggerUI.focusVariables.key       "z">
+<!ENTITY debuggerUI.focusVariables.accesskey "z">
+<!-- LOCALIZATION NOTE (debuggerUI.condBreakPanelTitle): This is the text that
+  -  appears in the conditional breakpoint panel popup as a description. -->
+
+<!ENTITY debuggerUI.condBreakPanelTitle "Ez a töréspont csak akkor állítja le a végrehajtást, ha a következő kifejezés igaz">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuBreak): This is the text that
+  -  appears in the source editor context menu for adding a breakpoint. -->
+
+<!ENTITY debuggerUI.seMenuBreak     "Töréspont hozzáadása">
+<!ENTITY debuggerUI.seMenuBreak.key "B">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuCondBreak): This is the text that
+  -  appears in the source editor context menu for adding a conditional
+  -  breakpoint. -->
+
+<!ENTITY debuggerUI.seMenuCondBreak     "Feltételes töréspont hozzáadása">
+<!ENTITY debuggerUI.seMenuCondBreak.key "B">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuBreak): This is the text that
+  -  appears in the source editor context menu for editing a breakpoint. -->
+
+<!ENTITY debuggerUI.seEditMenuCondBreak     "Feltételes töréspont szerkesztése">
+<!ENTITY debuggerUI.seEditMenuCondBreak.key "B">
+<!-- LOCALIZATION NOTE (debuggerUI.tabs.*): This is the text that
+  -  appears in the debugger's side pane tabs. -->
+
+<!ENTITY debuggerUI.tabs.workers        "Workerek">
+<!ENTITY debuggerUI.tabs.sources        "Források">
+<!ENTITY debuggerUI.tabs.traces         "Nyomkövetések">
+<!ENTITY debuggerUI.tabs.callstack      "Hívási verem">
+<!ENTITY debuggerUI.tabs.variables      "Változók">
+<!ENTITY debuggerUI.tabs.events         "Események">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuAddWatch): This is the text that
+  -  appears in the source editor context menu for adding an expression. -->
+
+<!ENTITY debuggerUI.seMenuAddWatch      "Kijelölés figyelőkifejezéssé">
+<!ENTITY debuggerUI.seMenuAddWatch.key  "E">
+<!-- LOCALIZATION NOTE (debuggerUI.addWatch): This is the text that
+  -  appears in the watch expressions context menu for adding an expression. -->
+
+<!ENTITY debuggerUI.addWatch            "Figyelőkifejezés hozzáadása">
+<!ENTITY debuggerUI.addWatch.accesskey  "F">
+<!-- LOCALIZATION NOTE (debuggerUI.removeWatch): This is the text that
+  -  appears in the watch expressions context menu for removing all expressions. -->
+
+<!ENTITY debuggerUI.removeAllWatch           "Minden figyelőkifejezés eltávolítása">
+<!ENTITY debuggerUI.removeAllWatch.key       "E">
+<!ENTITY debuggerUI.removeAllWatch.accesskey "M">
+<!-- LOCALIZATION NOTE (debuggerUI.stepping): These are the keycodes that
+  -  control the stepping commands in the debugger (continue, step over,
+  -  step in and step out). -->
+
+<!ENTITY debuggerUI.stepping.resume1    "VK_F8">
+<!ENTITY debuggerUI.stepping.stepOver1  "VK_F10">
+<!ENTITY debuggerUI.stepping.stepIn1    "VK_F11">
+<!ENTITY debuggerUI.stepping.stepOut1   "VK_F11">
+<!-- LOCALIZATION NOTE (debuggerUI.context.newTab):  This is the label
+  -  for the Open in New Tab menu item displayed in the context menu of the
+  -  debugger sources side menu. This should be the same as
+  -  netmonitorUI.context.newTab  -->
+
+<!ENTITY debuggerUI.context.newTab           "Megnyitás új lapon">
+<!ENTITY debuggerUI.context.newTab.accesskey "n">
+<!-- LOCALIZATION NOTE (debuggerUI.context.copyUrl): This is the label displayed
+  -  on the context menu that copies the selected request's url. This should be
+  -  the same as netmonitorUI.context.copyUrl -->
+
+<!ENTITY debuggerUI.context.copyUrl           "URL másolása">
+<!ENTITY debuggerUI.context.copyUrl.accesskey "m">
+<!ENTITY debuggerUI.context.copyUrl.key "m">

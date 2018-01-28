@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "เปลี่ยนรหัสผ่านหลัก">
+<!ENTITY setPassword.tokenName.label "อุปกรณ์ความปลอดภัย">
+<!ENTITY setPassword.oldPassword.label "รหัสผ่านปัจจุบัน:">
+<!ENTITY setPassword.newPassword.label "รหัสผ่านใหม่:">
+<!ENTITY setPassword.reenterPassword.label "รหัสผ่านใหม่ (อีกครั้ง):">
+<!ENTITY setPassword.meter.label "มาตรวัดคุณภาพรหัสผ่าน">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "ล้าง">
+<!ENTITY resetPassword.title  "ล้างรหัสผ่านหลัก">
+<!ENTITY resetPassword.text  "หากคุณตั้งรหัสผ่านหลักของคุณใหม่ รหัสผ่านเว็บและอีเมล, ข้อมูลแบบฟอร์ม, ใบรับรองส่วนบุคคล, และกุญแจส่วนตัวทั้งหมดที่คุณจัดเก็บจะถูกลืม คุณแน่ใจหรือไม่ว่าต้องการตั้งรหัสผ่านหลักของคุณใหม่?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "กำลังดาวน์โหลดใบรับรอง">
+<!ENTITY downloadCert.message1 "คุณได้รับคำขอให้เชื่อถือผู้ออกใบรับรอง (CA) ใหม่">
+<!ENTITY downloadCert.trustSSL "เชื่อมั่น CA แห่งนี้สำหรับการระบุเว็บไซต์">
+<!ENTITY downloadCert.trustEmail "เชื่อมั่น CA แห่งนี้สำหรับการระบุผู้ใช้อีเมล">
+<!ENTITY downloadCert.trustObjSign "เชื่อถือ CA นี้เพื่อระบุตัวตนนักพัฒนาซอฟต์แวร์">
+<!ENTITY downloadCert.message3 "ก่อนที่จะเชื่อมั่น CA แห่งนี้ไม่ว่าเพื่อวัตถุประสงค์ใดก็ตาม คุณควรตรวจสอบใบรับรองตลอดจนนโยบายและขั้นตอนการรับรองของ CA แห่งนั้นเสียก่อน (ถ้ามี)">
+<!ENTITY downloadCert.viewCert.label "ดู">
+<!ENTITY downloadCert.viewCert.text "ตรวจสอบใบรับรอง CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "คำร้องขออัตลักษณ์ผู้ใช้">
+<!ENTITY clientAuthAsk.message1 "ไซต์นี้ได้ร้องขอให้คุณระบุตนเองด้วยใบรับรอง:">
+<!ENTITY clientAuthAsk.message2 "เลือกใบรับรองเพื่อระบุตัวตน:">
+<!ENTITY clientAuthAsk.message3 "รายละเอียดของใบรับรองที่เลือก:">
+
+<!ENTITY pkcs12.setpassword.title  "เลือกรหัสผ่านสำรองใบรับรอง :">
+<!ENTITY pkcs12.setpassword.message  "รหัสผ่านสำรองใบรับรองที่กำลังจะตั้งนี้จะช่วยปกป้องแฟ้มสำรองข้อมูลที่คุณกำลังจะสร้างขึ้น คุณจำเป็นต้องตั้งรหัสผ่านนี้เสียก่อนที่จะดำเนินการสำรองข้อมูลต่อ">
+<!ENTITY pkcs12.setpassword.label1 "รหัสผ่านสำรองใบรับรอง :">
+<!ENTITY pkcs12.setpassword.label2 "รหัสผ่านสำรองใบรับรอง (อีกครั้ง) :">
+<!ENTITY pkcs12.setpassword.reminder "สำคัญมาก : หากคุณลืมรหัสผ่านสำรองใบรับรอง คุณจะไม่สามารถเรียกคืนข้อมูลที่สำรองไว้ได้อีกต่อไป ควรบันทึกรหัสผ่านนี้ไว้ในที่ปลอดภัย">
+
+<!ENTITY chooseToken.title  "กล่องเลือกโทเค็น">
+<!ENTITY chooseToken.message1 "โปรดเลือกโทเค็น">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "กำลังสร้างกุญแจส่วนตัว">
+<!ENTITY createCertInfo.msg1 "กำลังสร้างกุญแจ… อาจใช้เวลาสักครู่…">
+<!ENTITY createCertInfo.msg2 "โปรดรอ…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "การพิสูจน์ว่าโทเค็นที่ปกป้องไว้เป็นของจริง">
+<!ENTITY protectedAuth.msg "โปรดพิสูจน์ว่าโทเค็นเป็นของจริง วิธีพิสูจน์จะขึ้นกับชนิดของโทเค็น">
+<!ENTITY protectedAuth.tokenName.label "โทเค็น :">

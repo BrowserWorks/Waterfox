@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Naam:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Ligging:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Voerligging:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "V">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Werfligging:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "W">
+<!ENTITY editBookmarkOverlay.folder.label                    "Vouer:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Wys al die boekmerkvouers">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Verskuil">
+<!ENTITY editBookmarkOverlay.tags.label                      "Merkers:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "M">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Skei merkers met kommas">
+<!ENTITY editBookmarkOverlay.description.label               "Beskrywing:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "B">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Sleutelwoord:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "S">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Wys alle oortjies">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Laai hierdie boekmerk in die kantbalk">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "Kies…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Nuwe vouer">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

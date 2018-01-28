@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; မွမ်းမံချက်">
+
+<!ENTITY  offline.title                   "&brandShortName; ဟာ ချိတ်ဆက်မဲ့မှာလုပ်ဆောင်နေတယ်">
+<!ENTITY  offline.description             "သင့်ရဲ့ ပေါင်းထည့်ချက်များအတွက် ရနိုင်တဲ့ မွမ်းမံချက်များကို ဒီမူအဆင့်နဲ့လိုက်ဖက်မှု ရှိမရှိ သိရဖို့ &brandShortName; အွန်လိုင်း သွားဖို့ လိုအပ်တယ်။">
+<!ENTITY  offline.toggleOffline.label     "အွန်လိုင်းပေါ် သွားပါ။">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "မလိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များ">
+<!ENTITY  mismatch.top.label              "အောက်ပါ ပေါင်းထည့်ချက်များဟာ &brandShortName; မူအဆင့်များနဲ့ မလိုက်ဖက်တဲ့အတွက် ပိတ်ထားရတယ်။">
+<!ENTITY  mismatch.bottom.label           "ဒီပေါင်းထည့်ချက်များအတွက် လိုက်ဖက်တဲ့ မူအဆင့်များ ရနိုင်မှုကို&brandShortName; က စစ်ဆေးနိုင်တယ်။">
+
+<!ENTITY  checking.wizard.title           "လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များကို စစ်ဆေးပါ">
+<!ENTITY  checking.top.label              "သင့်ရဲ့ လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်အတွက် မွမ်းမံချက်များကို စစ်ဆေးနေတယ်...">
+<!ENTITY  checking.status                 "ဒီအရာက အချိန်အနည်းငယ် ယူနိုင်တယ်...">
+
+<!ENTITY  found.wizard.title               "လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များကို တွေ့ရှိတယ်">
+<!ENTITY  found.top.label                 "သင်တပ်ဆင်လိုတဲ့ ပေါင်းထည့်ချက်များကို ရွေးပါ -">
+<!ENTITY  found.disabledXPinstall.label   "လောလောဆယ် ဆော့ဗ်ဝဲ တပ်ဆင်မှုကို ပိတ်ထားတဲ့အတွက် ဒီမွမ်းမံချက်များ ကို တပ်ဆင်လို့ မရနိုင်ဘူး။ ဒီအောက်က အပြင်အဆင်ကိုသင်ပြင်ဆင်နိုင်တယ်။">
+<!ENTITY  found.enableXPInstall.label     "ဝဘ်ဆိုက်တွေကို ဆော့ဖ်ဝဲထည့်သွင်းခွင့်ပြုတယ်">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များကို တပ်ဆင်ပါ">
+<!ENTITY  installing.top.label            "သင့်ရဲ့ ပေါင်းထည့်ချက်များအတွက် မွမ်းမံချက်များကို ဆွဲချပြီး တပ်ဆင်ပါ...">
+
+<!ENTITY  noupdates.wizard.title          "လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များကို ရှာမတွေ့ဘူး">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; ဟာ သင့်ရဲ့ လိုက်ဖက်မှု မရှိတဲ့ ပေါင်းထည့်ချက်များအတွက် မွမ်းမံချက်များကို မရှာနိုင်ဘူး။">
+<!ENTITY  noupdates.error.desc            "မွမ်းမံချက်များကို ရှာဖွေနေစဉ် တချို့ ပြဿနာများကို ​ရင်ဆိုင်ရတယ်။">
+<!ENTITY  noupdates.checkEnabled.desc     "ဒီပေါင်းထည့်ချက်များအတွက် လိုက်ဖက်တဲ့ မွမ်းမံချက်များ တွေ့ရှိတဲ့အချိန်ကို &brandShortName; က အချိန်မှန် စစ်ဆေးပေးပြီး သင့်ကို အသိပေးလိမ့်မယ်။">
+
+<!ENTITY  finished.wizard.title           "လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်ကို တပ်ဆင်ထားတယ်">
+<!ENTITY  finished.top.label              "&brandShortName; က သင့်ပေါင်းထည့်ချက်များအတွက် မွမ်းမံချက်များကို တပ်ဆင်ပေးတယ်။">
+<!ENTITY  finished.checkDisabled.desc     "ပေါင်းထည့်ချက်များအတွက် မွမ်းမံချက်တွေ တွေ့ရှိတဲ့အချိန်ကို &brandShortName; က အချိန်မှန် စစ်ဆေးပေးပြီး သင့်ကို အသိပေးနိုင်တယ်။">
+<!ENTITY  finished.checkEnabled.desc      "ပေါင်းထည့်ချက်များအတွက် မွမ်းမံချက်တွေ တွေ့ရှိတဲ့အချိန်ကို &brandShortName; က အချိန်မှန် စစ်ဆေးပေးပြီး သင့်ကို အသိပေးလိမ့်မယ်။">
+
+<!ENTITY  adminDisabled.wizard.title      "မွမ်းမံချက်များကို မစစ်ဆေးနိုင်ဘူး">
+<!ENTITY  adminDisabled.warning.label     "&brandShortName; အတွက် ဆော့ဗ်ဝဲ တပ်ဆင်မှုကို ပိတ်ထားတဲ့အတွက် လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များအတွက် မွမ်းမံချက်များကို စစ်ဆေးဖို့ မဖြစ်နိုင်ဘူး။ အကူအညီအတွက် သင့်ရဲ့ နည်းစနစ် စီမံခန့်ခွဲသူကို ဆက်သွယ်ပါ။">
+
+<!ENTITY  versioninfo.wizard.title        "လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များကို စစ်ဆေးနေတယ်">
+<!ENTITY  versioninfo.top.label           "သင့်ရဲ့ လိုက်ဖက်တဲ့ ပေါင်းထည့်ချက်များကို ဒီ &brandShortName; မူအဆင့်နဲ့ စစ်ဆေးနေတယ်။">
+<!ENTITY  versioninfo.waiting             "ဒီအရာက အချိန်အနည်းငယ် ယူနိုင်တယ်...">
+
+<!ENTITY  installerrors.wizard.title      "မွမ်းမံချက်များကို တပ်ဆင်တဲ့ ပြဿနာများ">
+<!ENTITY  installerrors.intro.label       "သင့်ရဲ့ အချို့ ပေါင်းထည့်ချက်များကို မွမ်းမံနေစဉ် &brandShortName;  က ပြဿနာ ရင်ဆိုင်ရတယ်။">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; ကို ဆက်လက် စတင်ဖို့ ပြီးဆုံးပြီ ကို နှိုပ်ပါ။">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; ကို ဆက်လက် စတင်ဖို့ လုပ်ပြီးပြီကို နှိုပ်ပါ။">
+<!ENTITY  enableChecking.label            "မွမ်းမံချက်များကို စစ်ဆေးဖို့ &brandShortName; ကို ခွင့်ပြုပါ။">

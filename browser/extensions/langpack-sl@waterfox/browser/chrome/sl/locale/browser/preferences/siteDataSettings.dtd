@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nastavitve - Podatki strani">
+<!ENTITY     hostCol.label                 "Stran">
+<!ENTITY     statusCol.label               "Stanje">
+<!ENTITY     usageCol.label                "Shramba">
+<!ENTITY     searchTextboxPlaceHolder             "Išči strani">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "I">
+<!ENTITY     removeSelected.label          "Odstrani izbrane">
+<!ENTITY     removeSelected.accesskey      "O">
+<!ENTITY     save.label                    "Shrani spremembe">
+<!ENTITY     save.accesskey                "S">
+<!ENTITY     cancel.label                  "Prekliči">
+<!ENTITY     cancel.accesskey              "P">
+<!ENTITY     removingDialog.title          "Odstranjevanje podatkov strani">
+<!ENTITY     removingSelected.description  "Ko odstranite podatke strani, boste odstranili tudi povezane piškotke in vsebino za delo brez povezave. To vas bo morda odjavilo iz spletnih strani. Ste prepričani, da želite uveljaviti spremembe?">
+<!ENTITY     siteTree.label                "Odstranjeni bodo piškotki naslednjih spletnih strani:">

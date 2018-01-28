@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-es-CL@waterfox"
+               em:name="Español (Chile) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="mozilla.org">
+    <em:contributor>Richard von Moltke</em:contributor> <em:contributor>Vedran Tomicic</em:contributor> <em:contributor>Carlos Riveros</em:contributor> <em:contributor>Joaquín Haeussler</em:contributor> <em:contributor>Emilio Sepúlveda</em:contributor> <em:contributor>Pablo Olmos De Aguilera</em:contributor> <em:contributor>Eduardo Escárez</em:contributor> <em:contributor>Ricardo Varas</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Asistent za založenje profilow">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; składuje informacije wo wašich nastajenjach a preferencach we wašim wosobinskim profilu.">
+<!ENTITY profileCreationExplanation_2.text  "Jeli tutu kopiju &brandShortName; zhromadnje z druhimi wužiwarjemi wužiwaće, móžeće rozdźelne profile wužiwać, zo byšće informacije kóždeho wužiwarja rozdźělene zdźeržał. Za to dyrbjał kóždy wužiwar swój profil załožić.">
+<!ENTITY profileCreationExplanation_3.text  "Jeli sće jenička wosoba, kotraž tutu kopiju &brandShortName; wužiwa, dyrbiće znajmjeńša jedyn profil měć. Jeli chceće, móžeće wjacore profile za sebje załožić, zo byšće rozdźělne grupy nastajenjow a preferency składował. Na přikład chceće snano separatne profile za powołanske a priwatne wužiwanje měć.">
+<!ENTITY profileCreationExplanation_4.text  "Zo byšće swój profil załožił, klikńće na Dale.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Zo byšće swój profil załožił, klikńće na Pokročować.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Zo byšće swój profil založił, klikńće na Dale.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Jeli wjacore profile založujeće, móžeće je z profilowymi mjenami rozeznawać. Móžeće tu podate abo swoje mjeno wužiwać.">
+<!ENTITY profilePrompt.label            "Zapodajće nowe profilowe mjeno:">
+<!ENTITY profilePrompt.accesskey        "Z">
+<!ENTITY profileDirectoryExplanation.text   "Waše wužiwarske nastajenja, preferency a druhe daty, kotrež so na wužiwarja poćahuja, budu so składować w:">
+<!ENTITY profileDefaultName             "Standardny wužiwar">
+<!ENTITY button.choosefolder.label      "Rjadowak wubrać…">
+<!ENTITY button.choosefolder.accesskey  "R">
+<!ENTITY button.usedefault.label        "Standardny rjadowak wužiwać">
+<!ENTITY button.usedefault.accesskey    "S">

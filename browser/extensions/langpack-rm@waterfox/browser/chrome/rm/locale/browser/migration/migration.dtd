@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistent per importar">
+
+<!ENTITY importFrom.label               "Importar opziuns, segnapaginas, cronologia, pleds-clav ed autras datas da:">
+<!ENTITY importFromUnix.label           "Importar preferenzas, segnapaginas, cronologia, pleds-clav ed autras datas da:">
+<!ENTITY importFromBookmarks.label      "Importar ils segnapaginas da:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "">
+<!ENTITY importFromNothing.label        "Importar nagut">
+<!ENTITY importFromNothing.accesskey    "I">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Impussibel da chattar in program che cuntegna datas davart ils segnapaginas, la cronologia u ils pleds-clav.">
+
+<!ENTITY importSource.title             "Importar ils parameters e las datas">
+<!ENTITY importItems.title              "Datas che duain vegnir importadas">
+<!ENTITY importItems.label              "Tscherna per plaschair las datas che duain vegnir importadas:">
+
+<!ENTITY migrating.title                "Importar…">
+<!ENTITY migrating.label                "Las suandantas datas vegnan importadas actualmain:">
+
+<!ENTITY selectProfile.title            "Tscherner in profil">
+<!ENTITY selectProfile.label            "Ils suandants profils stattan a disposiziun per l'import:">
+
+<!ENTITY done.title                     "L'import è terminà">
+<!ENTITY done.label                     "Las suandantas datas èn vegnidas importadas cun success:">
+
+<!ENTITY closeSourceBrowser.label       "Controllescha p.pl. ch'il navigatur tschernì è serrà avant che cuntinuar.">

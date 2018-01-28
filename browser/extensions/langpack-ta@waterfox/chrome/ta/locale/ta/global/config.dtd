@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "நீங்கள் உங்கள் உத்தரவாதத்தை மீறலாம்!">
+<!ENTITY aboutWarningText.label "கூடுதல் அமைவுகளை மாற்றுதல் நிலைப்புதன்மை, பாதுகாப்பு மற்றும் இந்த பயன்பாட்டின் செயல்திறனை குறைக்கலாம். இதனை செய்ய வேண்டுமென்றால் தொடரவும்.">
+<!ENTITY aboutWarningButton2.label "நான் ஆபத்தை ஏற்றுக்கொள்கிறேன்!">
+<!ENTITY aboutWarningCheckbox.label "இந்த எச்சரிக்கை அடுத்த முறையும் காட்டவும்">
+
+<!ENTITY searchPrefs.label "தேடு:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "முன்னுரிமை பெயர்">
+<!ENTITY lockColumn.label "நிலை">
+<!ENTITY typeColumn.label "வகை">
+<!ENTITY valueColumn.label "மதிப்பு">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "வரிசைப்படுத்த சொடுக்கவும்"> 
+<!ENTITY columnChooser.tooltip "நிரல்களை காட்ட இவற்றை சொடுக்கி தேர்ந்தெடுக்கவும்"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "நகலெடு">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "நகலின் பெயர்">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "நகலின் மதிப்பு">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "மாற்றுதல்">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "மாற்றி">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "மறுஅமை">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "புதிய">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "சரம்">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "முழுஎண்">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "பூலியன்">
+<!ENTITY boolean.accesskey "B">

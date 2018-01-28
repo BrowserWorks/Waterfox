@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "540">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "コピー">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "すべて選択">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "一般">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "タイトル:">
+<!ENTITY  generalURL            "アドレス:">
+<!ENTITY  generalType           "MIME タイプ:">
+<!ENTITY  generalMode           "描画モード:">
+<!ENTITY  generalSize           "サイズ:">
+<!ENTITY  generalReferrer       "参照元 URL:">
+<!ENTITY  generalSource         "キャッシュソース:">
+<!ENTITY  generalModified       "更新日時:">
+<!ENTITY  generalEncoding2      "テキストエンコーディング:">
+<!ENTITY  generalMetaName       "名前">
+<!ENTITY  generalMetaContent    "値">
+
+<!ENTITY  mediaTab              "メディア">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "アドレス (URL):">
+<!ENTITY  mediaText             "関連テキスト:"><!-- (^^; Associated Text -->
+<!ENTITY  mediaAltHeader        "代替テキスト">
+<!ENTITY  mediaAddress          "URL">
+<!ENTITY  mediaType             "種類">
+<!ENTITY  mediaSize             "サイズ">
+<!ENTITY  mediaCount            "カウント">
+<!ENTITY  mediaDimension        "寸法:">
+<!ENTITY  mediaLongdesc         "詳細説明:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "名前を付けて保存...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "メディアプレビュー:"><!-- (^^; 要再検討 -->
+
+<!ENTITY  feedTab               "フィード">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "購読">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "サイト別設定">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "標準設定を使用">
+<!ENTITY  permAskAlways         "毎回確認">
+<!ENTITY  permAllow             "許可">
+<!ENTITY  permAllowSession      "セッション中のみ許可">
+<!ENTITY  permBlock             "ブロック">
+<!ENTITY  permissionsFor        "対象サイト:">
+<!ENTITY  permPlugins           "プラグインの実行">
+
+<!ENTITY  permClearStorage           "ストレージを消去">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "セキュリティ">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "証明書を表示...">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "不明">
+
+
+<!ENTITY  securityView.identity.header   "ウェブサイトの識別情報">
+<!ENTITY  securityView.identity.owner    "運営者:">
+<!ENTITY  securityView.identity.domain   "ウェブサイト:">
+<!ENTITY  securityView.identity.verifier "認証局:">
+<!ENTITY  securityView.identity.validity "有効期限:">
+
+<!ENTITY  securityView.privacy.header                   "プライバシーと履歴">
+<!ENTITY  securityView.privacy.history                  "昨日までにこのサイトを表示したことがあるか">
+<!ENTITY  securityView.privacy.cookies                  "このサイトはコンピューターに情報 (Cookie) を保存しているか">
+<!ENTITY  securityView.privacy.viewCookies              "Cookie を表示...">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "このサイトのパスワードを保存しているか">
+<!ENTITY  securityView.privacy.viewPasswords            "パスワードを表示..."><!-- (^^; デザイン上このボタンラベルは短く -->
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "技術情報">
+
+<!ENTITY  helpButton.label                              "ヘルプ">

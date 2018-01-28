@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "സോഫ്റ്റ്‌വെയര്‍ ഇന്‍സ്റ്റലേഷന്‍">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "നിങ്ങള്‍ വിശ്വസിയ്ക്കുന്ന രചയിതാക്കളില്‍ നിന്നു് മാത്രം ആഡ്-ഓണുകള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുന്നു.">
+<!ENTITY warningSecondary.label  "തകരാറുള്ള സോഫ്റ്റ്‌വെയര്‍ നിങ്ങളുടെ കമ്പ്യൂട്ടര്‍ തകരാറിലാക്കുന്നു അല്ലെങ്കില്‍ സ്വകാര്യതയ്ക്കെതിരെയാകുന്നു.">
+
+<!ENTITY from.label "ഇവിടെ നിന്നും:">
+

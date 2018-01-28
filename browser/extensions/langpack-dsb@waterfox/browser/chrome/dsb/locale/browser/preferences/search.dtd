@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standardna pytnica">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Wubjeŕśo standardnu pytnicu, kótaraž ma se w adresowem pólu a pytańskem polu wužywaś.">
+
+<!ENTITY provideSearchSuggestions.label        "Pytańske naraźenja pódaś">
+<!ENTITY provideSearchSuggestions.accesskey    "P">
+
+<!ENTITY showURLBarSuggestions2.label           "Pytańske naraźenja we wuslědkach adresowego póla pokazaś">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Pytańske naraźenja njebudu se we wuslědkach adresowego póla pokazaś, dokulaž sćo &brandShortName; tak konfigurěrował, až njespomnjejo se nigda historiju.">
+
+<!ENTITY oneClickSearchEngines.label           "Pytnice z jadnym kliknjenim">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Wubjeŕśo alternatiwne pytnice, kótarež se pód adresowym pólom a pytańskim pólom pokazuju, gaž klucowe słowo zapódawaśo.">
+
+<!ENTITY engineNameColumn.label                "Pytnica">
+<!ENTITY engineKeywordColumn.label             "Klucowe słowo">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Standardne pytnice wótnowiś">
+<!ENTITY restoreDefaultSearchEngines.accesskey "S">
+
+<!ENTITY removeEngine.label                    "Wótpóraś">
+<!ENTITY removeEngine.accesskey                "W">
+
+<!ENTITY findMoreSearchEngines.label           "Dalšne pytnice pytaś">

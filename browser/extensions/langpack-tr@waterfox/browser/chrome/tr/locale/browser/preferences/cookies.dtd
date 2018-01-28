@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Aşağıdaki çerezler bilgisayarınızda depolanmıştır:">
+<!ENTITY     cookiename.label               "Çerez adı">
+<!ENTITY     cookiedomain.label             "Site">
+
+<!ENTITY     props.name.label               "Ad:">
+<!ENTITY     props.value.label              "İçerik:">
+<!ENTITY     props.domain.label             "Ana makine:">
+<!ENTITY     props.path.label               "Yolu:">
+<!ENTITY     props.secure.label             "Gönderme yolu:">
+<!ENTITY     props.expires.label            "Bitiş tarihi:">
+<!ENTITY     props.container.label          "Kapsayıcı:">
+
+<!ENTITY     window.title                   "Çerezler">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Ara">
+<!ENTITY     searchFilter.accesskey         "A">
+
+<!ENTITY     button.close.label             "Kapat">
+<!ENTITY     button.close.accesskey         "K">

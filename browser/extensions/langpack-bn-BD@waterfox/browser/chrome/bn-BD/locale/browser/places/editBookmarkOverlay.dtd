@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "নাম:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "অবস্থান:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "ফিডের অবস্থান:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "সাইটের অবস্থান:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "ফোল্ডার:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "সব বুকমার্ক ফোল্ডার প্রদর্শন">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "আড়াল">
+<!ENTITY editBookmarkOverlay.tags.label                      "ট্যাগ:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "কমা চিহ্ন দিয়ে ট্যাগ আলাদা করা হবে">
+<!ENTITY editBookmarkOverlay.description.label               "বিবরণ:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "কীওয়ার্ড:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "সব ট্যাগ প্রদর্শন">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "বুকমার্কটি সাইডবারে লোড করা হবে">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "নির্বাচন…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "নতুন ফোল্ডার">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

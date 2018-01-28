@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Upplýsingar um url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Þjónustuaðili">
+<!ENTITY aboutUrlClassifier.provider                    "Þjónustuaðili">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Seinast uppfært">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Næsti uppfærslutími">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Biðtími">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Seinasta uppfærslustaða">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Uppfæra">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Skyndiminni">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Endurnýja">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Hreinsa">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Heiti töflu">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Fjöldi neikvæðra færslna í skyndiminni">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Fjöldi jákvæðra færslna í skyndiminni">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Sýna færslur">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Færslur í skyndiminni">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Forskeyti">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Gildistími á neikvæðum færslum í skyndiminni">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Fullt hash gildi">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Gildistími á jákvæðum færslum í skyndiminni">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Kemba">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Setja einingar fyrir skráningu">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Setja skráningarskrá">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Setja JS skráningu">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Skráningareiningar fyrir örugga vöfrun">
+<!ENTITY aboutUrlClassifier.debugModules                "Núverandi skráningareiningar">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS skráning fyrir örugga vöfrun">
+<!ENTITY aboutUrlClassifier.debugFile                   "Núverandi skráningarskrá">

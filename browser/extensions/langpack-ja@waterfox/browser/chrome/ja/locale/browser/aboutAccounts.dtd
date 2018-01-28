@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome			"&syncBrand.shortName.label; へようこそ">
+
+<!ENTITY aboutAccountsConfig.description	"ログインするとタブやブックマークやパスワードなどを同期できます。">
+<!ENTITY aboutAccountsConfig.startButton.label	"始める">
+<!ENTITY aboutAccountsConfig.syncPreferences.label	"Sync 設定">
+<!ENTITY aboutAccounts.noConnection.title	"接続していません">
+<!ENTITY aboutAccounts.noConnection.description	"ログインするには、インターネット接続が必要です。">
+<!ENTITY aboutAccounts.noConnection.retry	"再試行">
+<!ENTITY aboutAccounts.badConfig.title		"設定が正しくありません">
+<!ENTITY aboutAccounts.badConfig.description	"Waterfox アカウントのサーバー設定が正しくありません。後で試してください。">

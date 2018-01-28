@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Проект">
+<!ENTITY projectMenu_accesskey "П">
+<!ENTITY projectMenu_newApp_label "Новий застосунок…">
+<!ENTITY projectMenu_newApp_accesskey "Н">
+<!ENTITY projectMenu_importPackagedApp_label "Відкрити запакований застосунок…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "з">
+<!ENTITY projectMenu_importHostedApp_label "Розміщений застосунок…">
+<!ENTITY projectMenu_importHostedApp_accesskey "Р">
+<!ENTITY projectMenu_selectApp_label "Відкрити застосунок…">
+<!ENTITY projectMenu_selectApp_accesskey "В">
+<!ENTITY projectMenu_play_label "Встановити і запустити">
+<!ENTITY projectMenu_play_accesskey "с">
+<!ENTITY projectMenu_stop_label "Зупинити застосунок">
+<!ENTITY projectMenu_stop_accesskey "т">
+<!ENTITY projectMenu_debug_label "Зневадження застосунку">
+<!ENTITY projectMenu_debug_accesskey "е">
+<!ENTITY projectMenu_remove_label "Вилучити проект">
+<!ENTITY projectMenu_remove_accesskey "л">
+<!ENTITY projectMenu_showPrefs_label "Налаштування">
+<!ENTITY projectMenu_showPrefs_accesskey "Н">
+<!ENTITY projectMenu_manageComponents_label "Керувати додатковими компонентами">
+<!ENTITY projectMenu_manageComponents_accesskey "К">
+<!ENTITY projectMenu_refreshTabs_label "Оновити вкладки">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Роз’єднати">
+<!ENTITY runtimeMenu_disconnect_accesskey "Р">
+<!ENTITY runtimeMenu_takeScreenshot_label "Знімок екрану">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "З">
+<!ENTITY runtimeMenu_showDetails_label "Інформація Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "І">
+<!ENTITY runtimeMenu_showMonitor_label "Монітор">
+<!ENTITY runtimeMenu_showMonitor_accesskey "М">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Налаштування пристрою">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "Н">
+<!ENTITY runtimeMenu_showSettings_label "Параметри пристрою">
+<!ENTITY runtimeMenu_showSettings_accesskey "п">
+
+<!ENTITY viewMenu_label "Перегляд">
+<!ENTITY viewMenu_accesskey "П">
+<!ENTITY viewMenu_toggleEditor_label "Перемкнути редактор">
+<!ENTITY viewMenu_toggleEditor_accesskey "р">
+<!ENTITY viewMenu_zoomin_label "Збільшити">
+<!ENTITY viewMenu_zoomin_accesskey "З">
+<!ENTITY viewMenu_zoomout_label "Зменшити">
+<!ENTITY viewMenu_zoomout_accesskey "м">
+<!ENTITY viewMenu_resetzoom_label "Відновити масштаб">
+<!ENTITY viewMenu_resetzoom_accesskey "В">
+
+<!ENTITY projectButton_label "Відкрити застосунок">
+<!ENTITY runtimeButton_label "Вибрати Runtime">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Мої проекти">
+<!ENTITY projectPanel_runtimeApps "Runtime застосунки">
+<!ENTITY projectPanel_tabs "Вкладки">
+<!ENTITY runtimePanel_usb "Пристрої USB">
+<!ENTITY runtimePanel_wifi "Пристрої Wi-Fi">
+<!ENTITY runtimePanel_simulator "Симулятори">
+<!ENTITY runtimePanel_other "Інше">
+<!ENTITY runtimePanel_installsimulator "Встановити симулятор">
+<!ENTITY runtimePanel_noadbhelper "Встановити помічник ADB">
+<!ENTITY runtimePanel_nousbdevice "Не можете побачити свій пристрій?">
+<!ENTITY runtimePanel_refreshDevices_label "Оновити список пристроїв">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "дійсне">
+<!ENTITY details_warning_header "попередження">
+<!ENTITY details_error_header "помилки">
+<!ENTITY details_description "Опис">
+<!ENTITY details_location "Розташування">
+<!ENTITY details_manifestURL "ID застосунку">
+<!ENTITY details_removeProject_button "Вилучити проект">
+<!ENTITY details_showPrepackageLog_button "Показати журнал попереднього запакування">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Новий застосунок">
+<!ENTITY newAppHeader "Вибрати шаблон">
+<!ENTITY newAppLoadingTemplate "Завантаження шаблонів…">
+<!ENTITY newAppProjectName "Назва проекту:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Закрити">
+
+<!-- Addons -->
+<!ENTITY addons_title "Додаткові компоненти">
+<!ENTITY addons_aboutaddons "Відкрити менеджер додатків">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Налаштування">
+<!ENTITY prefs_editor_title "Редактор">
+<!ENTITY prefs_general_title "Загальні">
+<!ENTITY prefs_restore "Відновити типові">
+<!ENTITY prefs_manage_components "Керувати додатковими компонентами">
+<!ENTITY prefs_options_autoconnectruntime "Повторно підключитися до попереднього runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Повторне підключення до попереднього runtime при запуску WebIDE">
+<!ENTITY prefs_options_rememberlastproject "Пам’ятати останній проект">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Відновити попередній проект при запуску WebIDE">
+<!ENTITY prefs_options_templatesurl "URL шаблонів">
+<!ENTITY prefs_options_templatesurl_tooltip "Індексувати доступні шаблони">
+<!ENTITY prefs_options_showeditor "Показати редактор">
+<!ENTITY prefs_options_showeditor_tooltip "Показати внутрішній редактор">
+<!ENTITY prefs_options_tabsize "Розмір вкладки">
+<!ENTITY prefs_options_expandtab "Легкі вкладки">
+<!ENTITY prefs_options_expandtab_tooltip "Використовувати пробіли замість знаку вкладки">
+<!ENTITY prefs_options_detectindentation "Автовідступи">
+<!ENTITY prefs_options_detectindentation_tooltip "Вгадувати стиль відступів на основі вмісту джерела">
+<!ENTITY prefs_options_autocomplete "Автозавершення">
+<!ENTITY prefs_options_autocomplete_tooltip "Активувати автоматичне завершення коду">
+<!ENTITY prefs_options_autoclosebrackets "Автозакриття дужок">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Автоматично вставляти закриваючі дужки">
+<!ENTITY prefs_options_keybindings "Сполучення клавіш">
+<!ENTITY prefs_options_keybindings_default "Типово">
+<!ENTITY prefs_options_autosavefiles "Автозбереження файлів">
+<!ENTITY prefs_options_autosavefiles_tooltip "Автоматично зберігати змінені файли перед запуском проекту">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Інформація Runtime">
+<!ENTITY runtimedetails_adbIsRoot "ADB є коренем: ">
+<!ENTITY runtimedetails_summonADBRoot "кореневий пристрій">
+<!ENTITY runtimedetails_ADBRootWarning "(потребує розблокованого завантажувача)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Необмежені права DevTools: ">
+<!ENTITY runtimedetails_requestPrivileges "запитувати вищі права">
+<!ENTITY runtimedetails_privilegesWarning "(Перезавантажить пристрій. Потребує доступу root.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Логічне">
+<!ENTITY device_typenumber "Ціле">
+<!ENTITY device_typestring "Рядок">
+<!ENTITY device_typeobject "Об’єкт">
+<!ENTITY device_typenone "Вибрати тип">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Налаштування пристрою">
+<!ENTITY devicepreference_search "Налаштування пошуку">
+<!ENTITY devicepreference_newname "Назва нового налаштування">
+<!ENTITY devicepreference_newtext "Значення налаштування">
+<!ENTITY devicepreference_addnew "Додати нове налаштування">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Параметри пристрою">
+<!ENTITY devicesetting_search "Параметри пошуку">
+<!ENTITY devicesetting_newname "Назва нового параметра">
+<!ENTITY devicesetting_newtext "Значення параметра">
+<!ENTITY devicesetting_addnew "Додати новий параметр">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Монітор">
+<!ENTITY monitor_help "Допомога">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Ідентифікація клієнта">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Точка доступу, до якої ви підключаєтесь, потребує додаткову інформацію для перевірки цього з’єднання. Будь ласка, відскануйте QR-код внизу через запит на вашому іншому пристрої.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Немає запиту від QR-сканера?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Маєте запит від QR-сканера?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Якщо замість сканування QR-коду ваш пристрій вимагає токен, скопіюйте будь ласка значення внизу в інший пристрій:">
+<!ENTITY wifi_auth_qr_size_note "Якщо QR-код виглядає занадто дрібним для успішного встановлення з'єднання, спробуйте збільшити масштаб або розмір вікна.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Журнали команд попереднього запакування">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Параметри симулятора">
+<!ENTITY simulator_remove "Видалити симулятор">
+<!ENTITY simulator_reset "Відновити типові">
+<!ENTITY simulator_name "Назва">
+<!ENTITY simulator_software "Програмне забезпечення">
+<!ENTITY simulator_version "Версія">
+<!ENTITY simulator_profile "Профіль">
+<!ENTITY simulator_hardware "Апаратне забезпечення">
+<!ENTITY simulator_device "Пристрій">
+<!ENTITY simulator_screenSize "Дисплей">
+<!ENTITY simulator_pixelRatio "Співвідношення пікселів">
+<!ENTITY simulator_tv_data "TV Моделювання">
+<!ENTITY simulator_tv_data_open "Налаштування даних">
+<!ENTITY simulator_tv_data_open_button "Відкрити каталог налаштувань…">

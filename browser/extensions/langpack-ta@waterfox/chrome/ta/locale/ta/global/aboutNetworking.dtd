@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "பிணையமாக்கல் பற்றி">
+<!ENTITY aboutNetworking.warning               "இது பரிசோதனைத் தன்மை கொண்டது. பெரியவர்களின் மேற்பார்வையின்றி பயன்படுத்த வேண்டாம்.">
+<!ENTITY aboutNetworking.showNextTime          "இந்த எச்சரிக்கை அடுத்த முறையும் காட்டவும்">
+<!ENTITY aboutNetworking.ok                    "சரி">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "சாக்கெட்டுகள்">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "வலை சாக்கெட்டுகள்">
+<!ENTITY aboutNetworking.refresh               "புதுப்பி">
+<!ENTITY aboutNetworking.autoRefresh           "3 வினாடிகளுக்கு ஒரு முறை தானாக புதுப்பி">
+<!ENTITY aboutNetworking.hostname              "வழங்கி பெயர்">
+<!ENTITY aboutNetworking.port                  "முனையம்">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "செயலில் உள்ளது">
+<!ENTITY aboutNetworking.idle                  "செயலின்றி">
+<!ENTITY aboutNetworking.host                  "வழங்கி">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "அனுப்பப்பட்டது">
+<!ENTITY aboutNetworking.received              "பெறப்பட்டது">
+<!ENTITY aboutNetworking.family                "குடும்பம்">
+<!ENTITY aboutNetworking.addresses             "முகவரிகள்">
+<!ENTITY aboutNetworking.expires               "காலாவதியாவது (வினாடிகள்)">
+<!ENTITY aboutNetworking.messagesSent          "செய்தி அனுப்பப்பட்டது">
+<!ENTITY aboutNetworking.messagesReceived      "பெறப்பட்ட செய்திகள்">
+<!ENTITY aboutNetworking.bytesSent             "பைட் அனுப்பப்பட்டது">
+<!ENTITY aboutNetworking.bytesReceived         "பைட் பெறப்பட்டது">
+<!ENTITY aboutNetworking.logging               "பதிவுறுதல்">
+<!ENTITY aboutNetworking.logTutorial           "HTTP பதிவுகளுக்கு<a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'> தளத்தைப் பார்த்து</a> இந்தக் கருவியை எவ்வாறு பாவிப்பது எனப் பார்.">
+<!ENTITY aboutNetworking.currentLogFile        "தற்போதைய பதிவு கோப்பு:">
+<!ENTITY aboutNetworking.currentLogModules     "தற்போதைய பதிவு சிப்பங்கள்:">
+<!ENTITY aboutNetworking.setLogFile            "பதிவு கோப்பை அமை">
+<!ENTITY aboutNetworking.setLogModules         "பதிவு சிப்பங்களை அமை">
+<!ENTITY aboutNetworking.startLogging          "பதிவைத் தொடங்கு">
+<!ENTITY aboutNetworking.stopLogging           "பதிவை நிறுத்து">
+<!ENTITY aboutNetworking.dnsLookup             "DNS முகவரி பார்த்தல்">
+<!ENTITY aboutNetworking.dnsLookupButton       "தீர்த்தல்">
+<!ENTITY aboutNetworking.dnsDomain             "களம்">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "RCWN நிலவரம்">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN நிலவரம்">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "இடையக சேமிப்பு எண்ணிக்கை">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "புதிய வெற்றி எண்ணிக்கை">
+<!ENTITY aboutNetworking.totalNetworkRequests  "மொத்த பிணைய கோரிக்கை எண்ணிகை">
+<!ENTITY aboutNetworking.rcwnOperation         "செயல்பாட்டின் தற்காலிக சேமிப்பு">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "திற">
+<!ENTITY aboutNetworking.rcwnPerfRead          "வாசி">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "எழுது">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "உள்ளீடைத் திற">
+<!ENTITY aboutNetworking.rcwnAvgShort          "குறுகிய சராசரி">
+<!ENTITY aboutNetworking.rcwnAvgLong           "யீண்ட சராசரி">
+<!ENTITY aboutNetworking.rcwnStddevLong        "நீண்ட கால அட்டவணை">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "இடையக எண்ணிக்கை">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "மெதுவான இடையக எண்">

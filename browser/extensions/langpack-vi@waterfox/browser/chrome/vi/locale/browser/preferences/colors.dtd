@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Màu sắc">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Luôn luôn">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Chỉ trong các diện mạo có độ tương phản cao">
+<!ENTITY  overrideDefaultPageColors.never.label  "Không bao giờ">
+
+<!ENTITY  color                           "Văn bản và Nền">
+<!ENTITY  textColor.label                 "Văn bản:">
+<!ENTITY  textColor.accesskey             "V">
+<!ENTITY  backgroundColor.label           "Nền:">
+<!ENTITY  backgroundColor.accesskey       "N">
+<!ENTITY  useSystemColors.label           "Dùng màu sắc của hệ thống">
+<!ENTITY  useSystemColors.accesskey       "D">
+
+<!ENTITY  underlineLinks.label            "Gạch chân các liên kết">
+<!ENTITY  underlineLinks.accesskey        "G">
+<!ENTITY  links                           "Màu sắc của Liên kết">
+<!ENTITY  linkColor.label                 "Liên kết chưa vào:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "Liên kết đã vào:">
+<!ENTITY  visitedLinkColor.accesskey      "k">
+
+<!ENTITY  overrideDefaultPageColors.label        "Override the colors specified by the page with your selections above:">

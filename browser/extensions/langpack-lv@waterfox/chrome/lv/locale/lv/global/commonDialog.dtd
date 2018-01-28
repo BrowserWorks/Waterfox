@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Īss virsraksts"> 
+<!ENTITY message.label    "Šeit ir vieta paraugtekstam.">
+<!ENTITY editfield0.label "Lietotājvārds:"> 
+<!ENTITY editfield1.label "Parole:"> 
+<!ENTITY checkbox.label   "atzīme">
+<!ENTITY copyCmd.label    "Kopēt">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY selectAllCmd.label "Iezīmēt visu">
+<!ENTITY selectAllCmd.accesskey "v">

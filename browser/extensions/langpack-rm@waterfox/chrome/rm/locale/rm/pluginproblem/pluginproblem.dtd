@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Questa pagina fa diever dad in plug-in che po render pli plaun &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Smatga qua per activar il plug-in.">
+<!ENTITY clickToActivatePlugin                               "Activar il plug-in.">
+<!ENTITY checkForUpdates                                     "Tschertgar actualisaziuns…">
+<!ENTITY blockedPlugin.label                                 "Quest plug-in è bloccà per ta proteger.">
+<!ENTITY hidePluginBtn.label                                 "Zuppentar il plug-in">
+<!ENTITY managePlugins                                       "Administrar ils plug-ins…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Rechargiar la pagina">
+<!ENTITY reloadPlugin.post                                   " per empruvar anc ina giada.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Trametter ina annunzia da collaps">
+<!ENTITY report.submitting                                   "Trametter l'annunzia…">
+<!ENTITY report.submitted                                    "Tramess l'annunzia.">
+<!ENTITY report.disabled                                     "Annunzias da collaps èn deactivadas.">
+<!ENTITY report.failed                                       "Betg reussì da trametter.">
+<!ENTITY report.unavailable                                  "Nagina annunzia disponibla.">
+<!ENTITY report.comment                                      "Agiuntar in commentari (ils commentaris vegnan publitgads)">
+<!ENTITY report.pageURL                                      "Integrar la URL da la pagina">
+
+<!ENTITY plugin.file                                         "Datoteca">
+<!ENTITY plugin.mimeTypes                                    "Tips da MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Activar il modus da protecziun dad Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Bloccar cuntegn da Flash privlus e mulestus">

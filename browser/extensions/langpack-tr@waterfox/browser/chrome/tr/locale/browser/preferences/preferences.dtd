@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Seçenekler">
+<!ENTITY  prefWindow.title        "Tercihler">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; Tercihleri">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 45.8em; min-height: 39em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 50em; min-height: 50em">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 50em; min-height: 50em;">
+
+<!ENTITY  paneSearchResults.title       "Arama sonuçları">
+<!ENTITY  paneGeneral.title             "Genel">
+<!ENTITY  paneSearch.title              "Arama">
+<!ENTITY  paneFilesApplications.title   "Dosyalar ve Uygulamalar">
+<!ENTITY  panePrivacySecurity.title     "Gizlilik ve Güvenlik">
+<!ENTITY  paneContainers.title          "Kapsayıcı sekmeler">
+<!ENTITY  paneUpdates.title             "Güncellemeler">
+
+<!ENTITY  languageAndAppearance.label   "Dil ve görünüm">
+<!ENTITY  filesAndApplications.label    "Dosyalar ve uygulamalar">
+<!ENTITY  browserPrivacy.label          "Tarayıcı gizliliği">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Waterfox Hesabı">
+
+<!ENTITY  helpButton2.label        "&brandShortName; Desteği">

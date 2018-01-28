@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Sambung">
+<!ENTITY header     "Sambung ke peranti jauh">
+<!ENTITY host       "Hos:">
+<!ENTITY port       "liang:">
+<!ENTITY connect    "Sambung">
+<!ENTITY connecting "Sedang menyambung...">
+<!ENTITY availableAddons "Add-on jarak jauh yang tersedia:">
+<!ENTITY availableTabs "Tab jauh yang tersedia:">
+<!ENTITY availableProcesses "Proses jauh yang tersedia:">
+<!ENTITY connectionError "Ralat:">
+<!ENTITY errorTimeout "Ralat: masa sambungan tamat.">
+<!ENTITY errorRefused "Ralat: sambungan ditolak.">
+<!ENTITY errorUnexpected "Ralat tak terduga.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Alatan Pembangun Waterfox boleh menyahpepijat peranti remote (Waterfox untuk Android dan Waterfox OS, sebagai contoh). Pastikan anda telah mengaktifkan pilihan 'Remote debugging' dalam peranti remote. Untuk maklumat lanjut, rujuk ">
+<!ENTITY remoteDocumentation "dokumentasi">
+<!ENTITY remoteHelpSuffix ".">
+

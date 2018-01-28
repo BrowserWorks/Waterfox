@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Actualizare software">
+
+<!ENTITY  checking.title                  "Se caută actualizări">
+<!ENTITY  updateCheck.label               "Se caută versiuni noi de &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Nu s-au găsit actualizări">
+<!ENTITY  noupdatesautoenabled.intro      "Nu sunt actualizări disponibile. &brandShortName; va verifica periodic dacă există actualizări.">
+<!ENTITY  noupdatesautodisabled.intro     "Nu sunt actualizări disponibile. Vă rugăm să încercați din nou mai târziu sau să activați căutarea automată de actualizări &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "Imposibil de actualizat">
+<!ENTITY  manualUpdate.desc               "O actualizare de securitate și stabilitate este disponibilă, dar nu aveți permisiunile necesare pentru a o instala. Vă rugăm să contactați administratorul de sistem sau să încercați din nou dintr-un alt cont care are permisiunea de a instala programe pe acest calculator.">
+<!ENTITY  manualUpdate.space.desc         "Este disponibilă o actualizare de securitate și stabilitate, dar nu ai suficient spațiu liber să o instalezi.">
+<!ENTITY  manualUpdateGetMsg.label        "Puteți obține oricând ultima versiune de &brandShortName; la:">
+
+<!ENTITY  unsupported.title               "Sistem nesuportat">
+<!ENTITY  unsupported.label               "&brandShortName; este învechit, dar ultima versiune nu este suportată de sistemul dumneavoastră. Vă rugăm să vă actualizați sistemul, apoi să încercați din nou. Nu veți mai vedea această notă din nou, dar puteți">
+<!ENTITY  unsupportedLink.label           "află mai multe.">
+
+<!ENTITY  clickHere.label                 "Mai multe informații despre această actualizare">
+
+<!ENTITY  evangelism.desc                 "Se recomandă insistent ca să aplici această actualizare pentru &brandShortName; cât mai curând posibil.">
+
+<!ENTITY  downloadPage.title              "Se descarcă &brandShortName;">
+<!ENTITY  downloading.intro               "Se descarcă actualizarea…">
+<!ENTITY  connecting.label                "Conectare la serverul de actualizare…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; nu a putut verifica integritatea actualizării incrementale pe care a transferat-o, astfel că acum descarcă întregul pachet de actualizare.">
+
+<!ENTITY  viewDetails.tooltip             "Vezi detaliile acestei actualizări">
+
+<!ENTITY  details.link                    "Detalii">
+
+<!ENTITY  error.title                     "Actualizare eșuată">
+
+<!ENTITY  error.label                     "Au existat probleme cu verificarea, descărcarea sau instalarea acestei actualizări. &brandShortName; nu poate fi actualizat pentru că:">
+                                           
+<!ENTITY  errorManual.label               "Puteți actualiza &brandShortName; manual vizitând acest link și descărcând ultima versiune:">
+                                           
+<!ENTITY  errorpatching.intro             "Actualizarea parțială nu a putut fi aplicată. &brandShortName; va încerca din nou, de data aceasta descărcând o actualizare completă.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; nu poate determina dacă există o actualizare disponibilă. Te rugăm să te asiguri că ai ultima versiune de &brandShortName; de pe:">
+
+<!ENTITY  finishedPage.title              "Actualizarea este gata de instalare">
+<!ENTITY  finishedPage.text               "Actualizarea va fi instalată la următoarea pornire a &brandShortName;. Puteți reporni &brandShortName; acum sau vă puteți continua sesiunea și să reporniți mai târziu.">
+
+<!ENTITY  finishedBackgroundPage.text     "S-a descărcat o actualizare de securitate și stabilitate pentru &brandShortName;.">
+<!ENTITY  finishedBackground.name         "Actualizare:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Actualizarea va fi instalată la următoarea pornire a &brandShortName;. Puteți reporni &brandShortName; acum sau vă puteți continua sesiunea și să reporniți mai târziu.">
+<!ENTITY  finishedBackground.moreElevated "Această actualizare necesită privilegii de administrator. Actualizarea va fi instalată data viitoare când va porni &brandShortName;. Poți reporni &brandShortName; acum, poți continua lucrul și să repornești mai târziu, sau poți refuza această actualizare.">
+
+<!ENTITY  update.details.label            "Detalii">
+<!ENTITY  update.installedOn.label        "Instalată:">
+<!ENTITY  update.status.label             "Stare:">

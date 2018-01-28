@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title              "ফোল্ডাৰ বাছক">
+<!ENTITY window.style              "width: 36em; height: 18em;">
+<!ENTITY moveTo.label              "চিহ্নিত স্থানলৈ স্থানান্তৰ কৰক:">
+<!ENTITY newFolderButton.label     "নতুন ফোল্ডাৰ">
+<!ENTITY newFolderButton.accesskey "N">

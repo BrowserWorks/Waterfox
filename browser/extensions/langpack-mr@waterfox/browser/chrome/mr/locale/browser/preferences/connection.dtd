@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "जोडणी सेटिंग्स्">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "इंटरनेट वापरण्यासाठी प्रॉक्सी ची मांडणी करा">
+<!ENTITY  noProxyTypeRadio.label        "प्रॉक्सी नाही">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "प्रणाली प्रॉक्सी सेटिंग्जचा वापर करा">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "या नेटवर्कसाठी प्रतिनिधी(प्रॉक्सी) सेटींग्स आपोआप शोधून काढा">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "मानवीय प्रॉक्सी संरचना:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "स्वयं प्रॉक्सी संरचना URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "पुन्हा लोड करा">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "एफ् टी पी (FTP) प्रतिनिधी:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP प्रॉक्सी:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL प्रॉक्सी:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "सॉक्स(SOCKS) यजमान:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "सॉक्स(SOCKS) v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "सॉक्स(SOCKS) v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "SOCKS v5 वापरताना DNS ची प्रॉक्सी करा">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "तळ, पोर्ट(Port):">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "करीता प्रॉक्सी नाही:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "उदाहरणार्थ: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ह्या प्रॉक्सी सर्व्हरचा सर्व प्रोटोकॉल्सकरिता वापर करा">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "पासवर्ड साठवले असल्यास ओळख पटविण्याकरिता विचारू नका">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "प्रॉक्सीजकरिता श्रेय अगोदर साठवले असल्यास, हे पर्याय आपली ओळख पटवते. ओळख पटवणे अपयशी ठरल्यास आपणास विचारले जाईल.">

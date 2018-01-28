@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY  permissions.label           "Tilladelser">
+
+<!ENTITY  blockPopups.label           "Bloker pop op-vinduer">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Læs mere">
+<!ENTITY  notificationsPolicyDesc4.label       "Vælg websteder, der må sende dig beskeder">
+<!ENTITY  notificationsPolicyButton.accesskey  "g">
+<!ENTITY  notificationsPolicyButton.label      "Vælg…">
+<!ENTITY  notificationsDoNotDisturb.label      "Forstyr ikke">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "o">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Der vil ikke blive vist beskeder før du genstarter &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Undtagelser…">
+<!ENTITY  popupExceptions.accesskey   "U">
+
+<!ENTITY  fontsAndColors.label        "Skrifttyper &amp; farver">
+
+<!ENTITY  defaultFont2.label           "Standardskrifttype:">
+<!ENTITY  defaultFont2.accesskey       "k">
+<!ENTITY  defaultSize2.label           "Størrelse:">
+<!ENTITY  defaultSize2.accesskey       "t">
+
+<!ENTITY  advancedFonts.label         "Avanceret…">
+<!ENTITY  advancedFonts.accesskey     "v">
+
+<!ENTITY  colors.label                "Farver…">
+<!ENTITY  colors.accesskey            "F">
+
+
+<!ENTITY language2.label              "Sprog">
+<!ENTITY chooseLanguage.label         "Vælg dit fortrukne sprog at få vist sider i">
+<!ENTITY chooseButton.label           "Vælg…">
+<!ENTITY chooseButton.accesskey       "æ">
+
+<!ENTITY translateWebPages.label      "Oversæt webindhold">
+<!ENTITY translateWebPages.accesskey  "O">
+<!ENTITY translateExceptions.label    "Undtagelser…">
+<!ENTITY translateExceptions.accesskey "n">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Oversættelser af">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Indhold beskyttet af digital rettigheds-styring (DRM)"> 
+
+<!ENTITY  playDRMContent2.label          "Afspil DRM-kontrolleret indhold">
+<!ENTITY  playDRMContent2.accesskey      "A">
+<!ENTITY  playDRMContent.learnMore.label "Læs mere">

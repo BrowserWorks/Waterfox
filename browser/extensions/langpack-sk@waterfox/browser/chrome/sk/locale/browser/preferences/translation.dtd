@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Výnimky - Preklad">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Preklad nebude ponúkaný pre nasledujúce jazyky:">
+<!ENTITY treehead.languageName.label      "Jazyky">
+<!ENTITY removeLanguage.label             "Odstrániť jazyk">
+<!ENTITY removeLanguage.accesskey         "d">
+<!ENTITY removeAllLanguages.label         "Odstrániť všetky jazyky">
+<!ENTITY removeAllLanguages.accesskey     "n">
+
+<!ENTITY noTranslationForSites.label      "Preklad nebude ponúkaný pre nasledujúce stránky:">
+<!ENTITY treehead.siteName2.label         "Webové stránky">
+<!ENTITY removeSite.label                 "Odstrániť stránku">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Odstrániť všetky stránky">
+<!ENTITY removeAllSites.accesskey         "v">
+
+<!ENTITY button.close.label               "Zavrieť">
+<!ENTITY button.close.accesskey           "Z">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; drošais režīms">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Sākt drošajā režīmā">
+<!ENTITY refreshProfile.label         "Atjaunot &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Drošais režīms ir speciāls &brandShortName; režīms dažādu tehnisko problēmu risināšanai.">
+<!ENTITY safeModeDescription4.label   "Jūsu papildinājumi un nestandarta iestatījumi tiks īslaicīgi deaktivēti.">
+
+<!ENTITY refreshProfileInstead.label  "Ja vēlaties varat izlaist problēmas meklēšanu un atjaunot &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; negaidīti aizvērās ielādes laikā. Šo var izraisīt papildinājumi vai citas problēmas. Lai atrisinātu šo varat atjaunot &brandShortName; uz sākotnējo stāvokli vai arī meklēt problēmas risinājumu Drošajā režīmā.">

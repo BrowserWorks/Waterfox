@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Enw:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "E">
+<!ENTITY editBookmarkOverlay.location.label                  "Lleoliad:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Lleoliad Llif:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "f">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Lleoliad Gwefan:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "L">
+<!ENTITY editBookmarkOverlay.folder.label                    "Ffolder:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Dangos pob ffolder nod tudalen">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Cuddio">
+<!ENTITY editBookmarkOverlay.tags.label                      "Tagiau:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Gwahanu tagiau gydag atalnod">
+<!ENTITY editBookmarkOverlay.description.label               "Disgrifiad:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Allweddair:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "A">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Dangos pob tag">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Llwytho'r nod tudalen i'r bar ochr">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "Dewis…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Ffolder Newydd">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "N">

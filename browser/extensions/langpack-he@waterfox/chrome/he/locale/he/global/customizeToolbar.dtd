@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "התאמה אישית של סרגל כלים">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "ביכולתך להוסיף או להסיר פריטים על ידי גרירה אל או מתוך סרגלי הכלים.">
+<!ENTITY show.label               "הצג:">
+<!ENTITY iconsAndText.label       "צלמיות וטקסט">
+<!ENTITY icons.label              "צלמיות">
+<!ENTITY text.label               "טקסט">
+<!ENTITY useSmallIcons.label      "שימוש בצלמיות קטנות">
+<!ENTITY restoreDefaultSet.label  "שחזור בררת מחדל">
+<!ENTITY addNewToolbar.label      "סרגל כלים חדש">
+<!ENTITY saveChanges.label        "סיום">
+<!ENTITY undoChanges.label        "בטל שינויים">

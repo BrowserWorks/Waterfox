@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Ana parolayı değiştir">
+<!ENTITY setPassword.tokenName.label "Güvenlik aygıtı">
+<!ENTITY setPassword.oldPassword.label "Şu anki parola:">
+<!ENTITY setPassword.newPassword.label "Yeni parola:">
+<!ENTITY setPassword.reenterPassword.label "Yeni parola (tekrar):">
+<!ENTITY setPassword.meter.label "Parola kalite ölçümü">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Sıfırla">
+<!ENTITY resetPassword.title  "Ana Parolayı Sıfırla">
+<!ENTITY resetPassword.text  "Eğer ana parolanızı sıfırlarsanız, web ve e-posta parolanız, form verileriniz, kişisel sertifikalarınız ve özel anahtarlarınız kaybolur. Ana parolanızı sıfırlamak istediğinizden emin misiniz?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Sertifika indiriliyor">
+<!ENTITY downloadCert.message1 "Yeni bir Sertifika Makamına (CA) güvenmeniz istendi.">
+<!ENTITY downloadCert.trustSSL "Web sitelerini tanımlamak için bu CA'ya güven.">
+<!ENTITY downloadCert.trustEmail "E-posta kullanıcılarını tanımlamak için bu CA'ya güven.">
+<!ENTITY downloadCert.trustObjSign "Yazılım geliştiricileri tanımlamak için bu CA'ya güven.">
+<!ENTITY downloadCert.message3 "Herhangi bir amaçla bu CA'ya güvenmeden önce sertifikasını, ilkelerini ve prosedürlerini (varsa) incelemelisiniz.">
+<!ENTITY downloadCert.viewCert.label "Göster">
+<!ENTITY downloadCert.viewCert.text "CA sertifikasını incele">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Kullanıcı Tanımlama İsteği">
+<!ENTITY clientAuthAsk.message1 "Bu site, kendinizi bir sertifikayla tanıtmanızı istiyor:">
+<!ENTITY clientAuthAsk.message2 "Sizi tanıtmak için gösterilecek sertifikayı seçin:">
+<!ENTITY clientAuthAsk.message3 "Seçilen sertifikanın ayrıntıları:">
+
+<!ENTITY pkcs12.setpassword.title  "Sertifika yedeği için bir parola seçin">
+<!ENTITY pkcs12.setpassword.message  "Burada belirttiğiniz sertifika yedeği parolası, oluşturmak üzere olduğunuz yedek dosyasını korur. Yedeklemeye devam etmek için bu parolayı koymak zorundasınız.">
+<!ENTITY pkcs12.setpassword.label1 "Sertifika yedek parolası:">
+<!ENTITY pkcs12.setpassword.label2 "Sertifika yedek parolası (tekrar):">
+<!ENTITY pkcs12.setpassword.reminder "Önemli: Eğer sertifika yedek parolanızı unutursanız bu yedeği daha sonra geri yükleyemezsiniz.  Lütfen bunu güvenli bir yere kaydedin.">
+
+<!ENTITY chooseToken.title  "Jeton Seçim Kutusu">
+<!ENTITY chooseToken.message1 "Lütfen bir jeton seçin.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Özel anahtar oluşturuluyor">
+<!ENTITY createCertInfo.msg1 "Anahtar oluşturuluyor… Bu işlem birkaç dakika sürebilir…">
+<!ENTITY createCertInfo.msg2 "Lütfen bekleyin…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Korunmuş İşaretin Kimlik Doğrulaması">
+<!ENTITY protectedAuth.msg "Lütfen işarete kimliğinizi doğrulayın. Kimlik doğrulama yöntemi işaretinizin türüne göre değişir.">
+<!ENTITY protectedAuth.tokenName.label "Jeton:">

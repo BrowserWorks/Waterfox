@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title "Modalità provvisoria di &brandShortName;">
+<!ENTITY window.maxWidth "400">
+<!ENTITY startSafeMode.label "Avvia in Modalità provvisoria">
+<!ENTITY refreshProfile.label "Ripristina &brandShortName;">
+<!ENTITY safeModeDescription3.label "La Modalità provvisoria è una speciale modalità di &brandShortName; che può essere utilizzata per la risoluzione di problemi.">
+<!ENTITY safeModeDescription4.label "Verranno temporaneamente disattivati i componenti aggiuntivi e le impostazioni personalizzate.">
+<!ENTITY refreshProfileInstead.label "È anche possibile ignorare la risoluzione dei problemi e provare a ripristinare &brandShortName;.">
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; si è chiuso in modo imprevisto durante l’avvio. Questo potrebbe essere dovuto ai componenti aggiuntivi installati o altre cause. È possibile cercare di risolvere l’errore utilizzando la Modalità provvisoria.">

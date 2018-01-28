@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "글꼴">
+
+<!ENTITY  language.label                          "다음 언어/문자를 위한 글꼴:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "크기:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "가변폭 글꼴:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "명조체:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "고딕체:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "고정폭 글꼴:">
+<!ENTITY  monospace.accesskey                     "M">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "로마자">
+<!ENTITY  font.langGroup.japanese                 "일본어">
+<!ENTITY  font.langGroup.trad-chinese             "중국어 번체 (대만)">
+<!ENTITY  font.langGroup.simpl-chinese            "중국어 간체">
+<!ENTITY  font.langGroup.trad-chinese-hk          "중국어 번체 (홍콩)">
+<!ENTITY  font.langGroup.korean                   "한국어">
+<!ENTITY  font.langGroup.cyrillic                 "키릴문자">
+<!ENTITY  font.langGroup.el                       "그리스어">
+<!ENTITY  font.langGroup.other                    "기타 문자">
+<!ENTITY  font.langGroup.thai                     "타이어">
+<!ENTITY  font.langGroup.hebrew                   "히브리어">
+<!ENTITY  font.langGroup.arabic                   "아랍어">
+<!ENTITY  font.langGroup.devanagari               "데바나가리 문자">
+<!ENTITY  font.langGroup.tamil                    "타밀어">
+<!ENTITY  font.langGroup.armenian                 "아르메니아어">
+<!ENTITY  font.langGroup.bengali                  "벵골어">
+<!ENTITY  font.langGroup.canadian                 "캐나다 원주민 음절 문자">
+<!ENTITY  font.langGroup.ethiopic                 "에티오피아어">
+<!ENTITY  font.langGroup.georgian                 "조지아어">
+<!ENTITY  font.langGroup.gujarati                 "구자라트어">
+<!ENTITY  font.langGroup.gurmukhi                 "구르무키 글자">
+<!ENTITY  font.langGroup.khmer                    "크메르어">
+<!ENTITY  font.langGroup.malayalam                "말라얄람어">
+<!ENTITY  font.langGroup.math                     "수학">
+<!ENTITY  font.langGroup.odia                     "오디아">
+<!ENTITY  font.langGroup.telugu                   "텔루구어">
+<!ENTITY  font.langGroup.kannada                  "칸나다어">
+<!ENTITY  font.langGroup.sinhala                  "싱할라어">
+<!ENTITY  font.langGroup.tibetan                  "티베트어">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "최소 글꼴 크기:">
+<!ENTITY minSize.accesskey                        "o">
+<!ENTITY minSize.none                             "없음">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "명조체">
+<!ENTITY  useDefaultFontSansSerif.label           "고딕체">
+
+<!ENTITY  allowPagesToUseOwn.label                "위에 선택된 서체 대신에 페이지 폰트 설정 표시 허용">
+<!ENTITY  allowPagesToUseOwn.accesskey            "A">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "레거시 콘텐츠에 사용할 글자 인코딩">
+<!ENTITY languages.customize.Fallback2.label      "대체할 글자 인코딩:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "인코딩 선언이 되어있지 않은 레거시 콘텐츠에 사용할 글자 인코딩입니다.">
+
+<!ENTITY languages.customize.Fallback.auto        "현재 언어의 기본값">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "아라비아어">
+<!ENTITY languages.customize.Fallback.baltic      "발트어">
+<!ENTITY languages.customize.Fallback.ceiso       "중앙 유럽어, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "중앙 유럽어, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "중국어, 간체">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "중국어, 정체">
+<!ENTITY languages.customize.Fallback.cyrillic    "키릴 문자">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "그리스어">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "히브리어">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "일본어">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "한국어">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "타이어">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "터키어">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "베트남어">
+<!ENTITY languages.customize.Fallback.other       "기타 (중앙유럽어 포함)">

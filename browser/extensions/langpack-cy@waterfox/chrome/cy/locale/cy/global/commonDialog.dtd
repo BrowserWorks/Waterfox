@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Teitl Byr"> 
+<!ENTITY message.label    "Mae peth testun enghreifftiol yn mynd yma.">
+<!ENTITY editfield0.label "Enw Defnyddiwr:"> 
+<!ENTITY editfield1.label "Cyfrinair:"> 
+<!ENTITY checkbox.label   "gwirio">
+<!ENTITY copyCmd.label    "Copïo">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "Dewis Popeth">
+<!ENTITY selectAllCmd.accesskey "P">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "పదం యొక్క తర్వాతి సంభవాన్ని కనుగొను">
+<!ENTITY previous.tooltip "పదంయొక్క ముందలి సంభవాన్ని కనుగొను">
+<!ENTITY findCloseButton.tooltip "కనుగొను పట్టీని మూసివేయి">
+<!ENTITY highlightAll.label "అన్నిటిని ఉద్దీపనం చేయుము">
+<!ENTITY highlightAll.accesskey "A">
+<!ENTITY highlightAll.tooltiptext "పదంయొక్క అన్ని సంభవాలను ఉద్దీపనం చేయుము">
+<!ENTITY caseSensitive.label "బడిని సరిపోల్చు">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "చిన్నపెద్ద అక్షరతేడా గుర్తిస్తూ వెతుకు">
+<!ENTITY entireWord.label "మొత్తం పదాలు">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "మొత్తం పదాలు మాత్రమే వెతుకుము">

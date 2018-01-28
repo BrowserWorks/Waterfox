@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "அமர்வை மீட்டமை">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "நன்று, இது தடுமாறியிருக்கிறது.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; உங்கள் சாளரங்கள் மற்றும் கீற்றுகளை மீட்பதில் சிக்கலை கொண்டுள்ளது. இது சமீபத்தில் திறக்கப்பட்ட இணைய பக்கத்தால் ஏற்படுகிறது.">
+<!ENTITY restorepage.tryThis        "பின்வரும் வழிமுறைகளை முயற்சித்து பாருங்கள்:">
+<!ENTITY restorepage.restoreSome    "சிக்கல் உண்டாக்கலாம் என நீங்கள் நினைக்கும் ஒன்று அல்லது சில கீற்றுகளை நீக்குகிறது.">
+<!ENTITY restorepage.startNew       "ஒரு புதிய அமர்வைத் துவங்கி உலாவுங்கள்">
+
+<!ENTITY restorepage.tryagainButton "மறுசேமி">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "மூடு">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "மீட்டெடு">
+<!ENTITY restorepage.listHeader     "சாளரங்களும் கீற்றுகளும்">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "சாளரம் &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "உடனே பொலாம்!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "வெற்றி!">
+
+<!ENTITY welcomeback2.pageTitle     "வெற்றி!">
+<!ENTITY welcomeback2.pageInfo1     "போவதற்கு &brandShortName; தயார்.">
+
+<!ENTITY welcomeback2.restoreAll.label  "எல்லா சாளரங்கள் &amp; கீற்றுகளை மீட்டமை">
+<!ENTITY welcomeback2.restoreSome.label "உங்களுக்கு வேண்டியதை மட்டும் மீட்டமை">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "உங்களது நீட்சிகளும் தனிப்பயனாக்கங்களும் நீக்கப்பட்டு, உங்கள் உலாவி இயல்பான அமைப்புகளுக்கு மீட்டமைக்கப்பட்டது. இது உங்கள் பிரச்சனையை சரி செய்யாவிடில், ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "நீங்கள் வேற என்ன செய்ய முடியும் என்பது பற்றி மேலும் அறிய.">
+

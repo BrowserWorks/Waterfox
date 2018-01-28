@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "عن الشبكات">
+<!ENTITY aboutNetworking.warning               "هذا تجريبي جدّا. لا يستعمل إلا تحت إشراف الكبار.">
+<!ENTITY aboutNetworking.showNextTime          "أظهر هذا التحذير في المرّة القادمة">
+<!ENTITY aboutNetworking.ok                    "حاضر">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "المقابس">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "أعِد التحميل">
+<!ENTITY aboutNetworking.autoRefresh           "أعِد التحميل تلقائيا كل ٣ ثوان">
+<!ENTITY aboutNetworking.hostname              "اسم المستضيف">
+<!ENTITY aboutNetworking.port                  "المنفذ">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "نشط">
+<!ENTITY aboutNetworking.idle                  "خامل">
+<!ENTITY aboutNetworking.host                  "المستضيف">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "مُرسَل">
+<!ENTITY aboutNetworking.received              "مُستلَم">
+<!ENTITY aboutNetworking.family                "العائلة">
+<!ENTITY aboutNetworking.addresses             "العناوين">
+<!ENTITY aboutNetworking.expires               "مدة انتهاء الصلاحية (بالثواني)">
+<!ENTITY aboutNetworking.messagesSent          "أُرسلت الرسالة">
+<!ENTITY aboutNetworking.messagesReceived      "الرسائل المُستلمة">
+<!ENTITY aboutNetworking.bytesSent             "البايتات المرسلة">
+<!ENTITY aboutNetworking.bytesReceived         "البايتات المستلمة">
+<!ENTITY aboutNetworking.logging               "التسجيل">
+<!ENTITY aboutNetworking.logTutorial           "طالع <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>تسجيل HTTP</a> لتعليمات استخدام هذه الأداة.">
+<!ENTITY aboutNetworking.currentLogFile        "ملف السجل الحالي:">
+<!ENTITY aboutNetworking.currentLogModules     "وحدات السجل الحالية:">
+<!ENTITY aboutNetworking.setLogFile            "حدد ملف السجل">
+<!ENTITY aboutNetworking.setLogModules         "حدد وحدات السجل">
+<!ENTITY aboutNetworking.startLogging          "ابدأ تسجيل الوقائع">
+<!ENTITY aboutNetworking.stopLogging           "أوقف تسجيل الوقائع">
+<!ENTITY aboutNetworking.dnsLookup             "بحث DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "حُلّ">
+<!ENTITY aboutNetworking.dnsDomain             "النطاق">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "العناوين">
+<!ENTITY aboutNetworking.rcwn                  "إحصائيات RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "حالة RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "مرات غلبة الخبيئة">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "مرات غلبة الشبكة">
+<!ENTITY aboutNetworking.totalNetworkRequests  "العدد الكلي لطلبات الشبكة">
+<!ENTITY aboutNetworking.rcwnOperation         "عملية خبيئة">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "فتح">
+<!ENTITY aboutNetworking.rcwnPerfRead          "قراءة">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "كتابة">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "فتح المُدخلة">
+<!ENTITY aboutNetworking.rcwnAvgShort          "متوسط القصير">
+<!ENTITY aboutNetworking.rcwnAvgLong           "متوسط الطويل">
+<!ENTITY aboutNetworking.rcwnStddevLong        "الانحراف المعياري الطويل">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "مرات بطء الخبيئة">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "مرات عدم بطء الخبيئة">

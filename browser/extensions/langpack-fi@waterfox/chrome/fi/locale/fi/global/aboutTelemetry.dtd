@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Kaukomittaustiedot">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping-datan lähde:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Tämänhetkinen ping-data
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Arkistoitu ping-data
+">
+
+<!ENTITY aboutTelemetry.raw "
+Muotoilematon JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Näytä ali-istuntodata
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Valitse ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; uudempi ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Vanhempi ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Viikko
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Pingin tyyppi
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Tänään
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Eilen
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Vanhemmat
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Yleistiedot
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Ympäristön tiedot
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Kaukomittausloki
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Hitaat SQL-lauseet
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Selaimen jäätymiset
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Ohjelmasäikeen jäätymiset
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Kaapatut pinot
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skaalariarvot
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Avaimelliset skalaariarvot
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrammit
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histogrammit merkinnöistä
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Tapahtumat
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Yksinkertaiset mittaukset
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Lisäosien tiedot
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Myöhästyneet kirjoitukset
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Istunnon tiedot
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  Huom.: Hidas SQL-virheenetsintä on päällä. Täydelliset SQL-lausekkeet saattavat näkyä alla, mutta niitä ei lähetetä mittaustietona.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Nouda funktioiden nimet pinoihin
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Näytä muotoilematon pinodata
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Suodata (merkkijono tai /säännöllinen lause/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Tiedot
+">

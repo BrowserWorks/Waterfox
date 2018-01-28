@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "Goyjinay sinjiyan">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Tontoney kaŋ hun war naanay borey hinne sinji.">
+<!ENTITY warningSecondary.label  "Goyjinay laala ga hin ka war ordinateroo hasara wal'i ma war suturaa kaa.">
+
+<!ENTITY from.label "hun doo:">
+

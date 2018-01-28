@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "താഴെപ്പറയുന്ന കുക്കികള്‍ നിങ്ങളുടെ കമ്പ്യൂട്ടറില്‍ സൂക്ഷിച്ചിരിക്കുന്നു ">
+<!ENTITY     cookiename.label               "കൂക്കിയുടെ പേര്‌">
+<!ENTITY     cookiedomain.label             "സൈറ്റ്‌">
+
+<!ENTITY     props.name.label               "പേര്‌ ">
+<!ENTITY     props.value.label              "ഉള്ളടക്കം">
+<!ENTITY     props.domain.label             "ഹോസ്റ്റ്‌:">
+<!ENTITY     props.path.label               "പാത  ">
+<!ENTITY     props.secure.label             "ഇതിനു വേണ്ടി അയക്കുക: ">
+<!ENTITY     props.expires.label            "കാലാവധി കഴിയുന്നത്‌ ">
+
+
+<!ENTITY     window.title                   "കുക്കികള്‍ ">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+
+
+<!ENTITY     button.close.label             "അടയ്ക്കുക ">
+<!ENTITY     button.close.accesskey         "C">
+
+<!ENTITY     props.container.label          "Container:">
+
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     searchFilter.label             "Search">

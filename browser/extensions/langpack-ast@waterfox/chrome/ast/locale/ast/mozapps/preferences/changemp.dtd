@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Camudar contraseña maestra">
+<!ENTITY setPassword.tokenName.label       "Preséu de seguranza">
+<!ENTITY setPassword.oldPassword.label     "Contraseña actual:">
+<!ENTITY setPassword.newPassword.label     "Introducir contraseña nueva:">
+<!ENTITY setPassword.reenterPassword.label "Reintroducir contraseña:">
+<!ENTITY setPassword.meter.label           "Mididor de calidá de contraseñes">
+<!ENTITY setPassword.meter.loading         "Cargando">
+<!ENTITY masterPasswordDescription.label   "Úsase una contraseña maestra pa protexer información sensible como contraseñes de sitios.  Si crees una, pidirásete que la introduzas una vegada per sesión cuando &brandShortName; reciba información guardada y protexida pola contraseña.">
+<!ENTITY masterPasswordWarning.label       "Asegúrate de recordar la contraseña maestra qu'afitesti, por favor.  Si la escaeces, nun sedrás a acceder a información dala protexida por ella.">

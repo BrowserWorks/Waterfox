@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "l">
+<!ENTITY toggleToolboxF12.keycode          "VK_F2">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Sachoj toq nijaq ri kikaxa samajib'äl pa okik'amaya'l:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Q'axinäq chi nuk'ulem">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Nik'onel">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Tik'ut pe ri rub'anikil okik'amaya'l">
+<!ENTITY options.showUserAgentStyles.tooltip "We nitzij rere' xkek'ut pe ri taq b'anikil ruk'amon wi pe, ri xkesamajib'ëx ruma ri okik'amaya'l.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Kijachik taq DOM b'anikil">
+<!ENTITY options.collapseAttrs.tooltip "Kejach yuquyäq taq b'anikil pa ri nik'onel">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Junilal k'o wi rub'onil">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "i">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Achi'el nik'oxïk">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Kiwa winäq">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Rub'i' ri b'onil">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Xa xe re moloj wakami chanin, tasamajib'ej ri ruxaq">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Ketz'ij ri taq kikaxa taq samajib'äl richin kichojmirisaxik ri chrome richin okik'amaya'l chuqa' richin ri tz'aqat">
+<!ENTITY options.enableChrome.tooltip3  "We natzïj re cha'oj re', nuya' q'ij chi ye'awokisaj k'ïy taq kisamajib'al nuk'unela' pa rokem ri okik'amaya'l (rik'in ri Taq Samajib'äl > B'anel web > Kikaxa taq rusamajib'al okik'amaya'l) chuqa' yechojmirisäx taq tz'aqat pa kinuk'samajela' taq tz'aqat">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Titz'ij ri näj chojmirisaxïk">
+<!ENTITY options.enableRemote.tooltip2  "Toq nokisäx re jun cha'oj re', nuya' q'ij chi ke ri taq kisamajib'al b'anöl kema' nikichojmirisaj jun näj peraj achi'el ri Waterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Titz'apïx JavaSript *">
+<!ENTITY options.disableJavaScript.tooltip   "Toq nitzij re jun cha'oj re' xtutz'apij ri JavaScript pa re ruwi' wakami. We re ruwi' o ri kikaxa taq samajib'äl nitz'apitäj, xtichuputäj re jun nuk'uj re'.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Tichup HTTP ewa'n (toq jaqäl ri kikaxa taq samajib'äl)">
+<!ENTITY options.disableHTTPCache.tooltip   "Toq nitzij re cha'oj re' xtichup ri HTTP ewa'n kichin konojel ri taq ruwi', ri ekijaqon kikaxa taq samajib'äl. Ri taq kisamajela' taq samaj man etz'ilon ta ruma re cha'oj re'.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Titzij ri samajela' pa samaj rik'in HTTP (Toq jaqäl ri kikaxa taq samajib'äl)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Toq nitzij re cha'oj re' xtuya' q'ij chi yesamäj ri Samajela' pa samaj rik'in HTTP pa ronojel ri taq ruwi' erujaqon ri kikaxa taq samajib'äl.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Taq kisamajib'al b'anonela' e k'o wi">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Taq kisamajib'al b'anel eyakon kik'in taq tz'aqat">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Taq pitz'bäl yewachin pa ri kikaxa taq samajib'äl">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Man nikoch'otäj ta pa ri kikaxa taq samajib'äl wakami chanin">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Taq wachinel">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Tokisäx ri ruwachinel okik'amaya'l Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Tijalalöx ri ruwachinel pa okik'amaya'l Developer Edition.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Ajk'amaya'l Temeb'äl">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Ketzij taq retal q'ijul">
+<!ENTITY options.timestampMessages.tooltip    "We natzïj re cha'oj re', ri taq choloj chuqa' elem pa ri Ajk'amaya'l temeb'äl xtuk'üt pe jun retal q'ijul">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Chojmirisab'äl">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Titzij kitzub'al xe'el ">
+<!ENTITY options.sourceMaps.tooltip    "We natzïj re cha'oj xe'el re' xtatzu' pa ri chojmirisab'äl chuqa' temeb'äl.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Kinuk'unel taq b'anikil">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Kek'ut pe ri qitzij taq xe'el">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Kek'ut pe ri qitzij taq xe'el (achi'el, ruyakb'al Sass) pa ri Kinuk'unel taq b'anikil chuqa' Nik'onel">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "Titz'aqatisäx ruyon CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Titz'aqatisäx ruyon ri taq ch'akulal, taq etal chuqa' cha'onela' CSS pa ri kinuk'unel taq b'anikil toq tajin yatz'ib'an">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Rub'anikil ri chapoj ruwa">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Chapoj ruwa pa yakwuj">
+<!ENTITY options.screenshot.clipboard.tooltip    "Tayaka' ri chapoj ruwa jumul pa yakwuj">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Titzij ri ruk'oxom ruk'amonel elesäy wachib'äl">
+<!ENTITY options.screenshot.audio.tooltip    "Nutzij ri ruk'oxom ruq'ojom elesäy wachib'äl toq nub'än ri chapoj ruwa">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Relik taq ajowaxïk">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Ketzij yakonïk taq taq tz'ib'axïk">
+<!ENTITY options.enablePersistentLogs.tooltip  "We natzïj re cha'oj re', ri Ajk'amaya'l temeb'äl chuqa' ri rujolom k'amab'ey man xtutikirisaj ta ri elem jutaqil toq xkatok pa k'amaya'l pa jun k'ak'a' ruxaq">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Tik'ut pe ri kinuk'uche'el taq tzij richin Gecko">
+<!ENTITY options.showPlatformData.tooltip  "We natzïj re cha'oj re', ri taq rutzijol tz'etöy q'ijul richin JavaScript xtutz'aqatisaj Taq rutz'ib' runuk'uche'el richin Gecko">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Taq rajowaxik nuk'unel">
+<!ENTITY options.sourceeditor.detectindentation.label   "Xtz'et ruchi' cholaj">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Tawila' ri ruchi' cholaj ri k'o ruq'ij chupam ruxe'el">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Tutz'apij ri' ruyon ri q'inijuch'">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Tich'ap pa ruyonil tz'apin taq q'inijuch'">
+<!ENTITY options.sourceeditor.expandtab.label           "Ruchi' cholaj nrokisab'ej taq kojol ">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Ke'okisäx taq kojol pa ruk'exel ri rutz'ib' alk'utu'">
+<!ENTITY options.sourceeditor.tabsize.label             "Runimilem ruwi'">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "R">
+<!ENTITY options.sourceeditor.keybinding.label          "Kitunik taq pitz'b'äl">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Jikib'an wi">

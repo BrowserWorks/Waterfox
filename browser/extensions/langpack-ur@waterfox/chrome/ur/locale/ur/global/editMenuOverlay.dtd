@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "تدوین">
+<!ENTITY editMenu.accesskey        "ت">
+<!ENTITY undoCmd.label             "کالعدم کریں">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "ک">
+<!ENTITY redoCmd.label             "اعادہ کریں">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "ا">
+<!ENTITY cutCmd.label              "کاٹیں">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "ک">
+<!ENTITY copyCmd.label             "نقل کریں">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "ن">
+<!ENTITY pasteCmd.label            "چسپاں کریں">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "چ">
+<!ENTITY deleteCmd.label           "حذف کریں">
+<!ENTITY deleteCmd.accesskey       "ح">
+<!ENTITY selectAllCmd.label        "تمام منتخب کریں">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "ت">
+<!ENTITY findCmd.label             "ڈھونڈیں">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "ڈ">
+<!ENTITY findAgainCmd.label        "دوبارہ ڈھونڈیں">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "د">
+<!ENTITY findPreviousCmd.label     "پچھلا ڈھونڈیں">
+<!ENTITY findPreviousCmd.accesskey "پ">

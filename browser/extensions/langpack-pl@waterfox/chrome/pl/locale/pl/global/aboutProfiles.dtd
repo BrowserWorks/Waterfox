@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "O profilach">
+<!ENTITY aboutProfiles.subtitle "Ta strona ma za zadanie ułatwiać zarządzanie profilami. Każdy profil ma oddzielną historię, zakładki, ustawienia, dodatki i tym podobne.">
+<!ENTITY aboutProfiles.create "Utwórz nowy profil">
+<!ENTITY aboutProfiles.restart.title "Ponowne uruchamianie">
+<!ENTITY aboutProfiles.restart.inSafeMode "Uruchom ponownie z wyłączonymi dodatkami…">
+<!ENTITY aboutProfiles.restart.normal "Uruchom ponownie…">

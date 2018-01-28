@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Вы зараз не ў прыватным акне.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Адчыніць прыватнае акно">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "а">
+
+<!ENTITY privateBrowsing.title                           "Прыватнае агляданне">
+<!ENTITY privateBrowsing.title.tracking                  "Прыватнае агляданне з аховай ад сачэння">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Калі вы аглядаеце сеціва праз прыватнае акно, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "не захоўвае">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "наведаныя старонкі">
+<!ENTITY aboutPrivateBrowsing.info.searches              "пашуковыя запыты">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "кукі">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "часовыя файлы">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Але Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "захоўвае">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " вашы:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "сцягванні">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "закладкі">
+<!ENTITY aboutPrivateBrowsing.note.before                "Прыватнае агляданне ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "не робіць вас ананімам">
+<!ENTITY aboutPrivateBrowsing.note.after                 " у інтэрнэце. Ваш працадаўца і інтэрнэт-правайдар па-ранейшаму могуць ведаць, якія старонкі вы наведваеце.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Даведайцеся больш пра ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Прыватнае агляданне">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Ахова ад сачэння">
+<!ENTITY trackingProtection.description2                 'Некаторыя сайты выкарыстоўваюць спецыяльныя метады, каб асочваць вашу актыўнасць у інтэрнэце і збіраць пра вас звесткі. Тэхналогія Waterfox пад назвай "Ахова ад сачэння" (Tracking Protection) блакуе многія з гэтых метадаў.'>
+<!ENTITY trackingProtection.startTour1                   "Як гэта працуе?">

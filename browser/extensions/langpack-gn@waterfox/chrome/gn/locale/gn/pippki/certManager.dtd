@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Mboajepyréva ñangarekoha">
+
+<!ENTITY certmgr.tab.mine                     "Nemboajepyre">
+<!ENTITY certmgr.tab.others2                  "Yvypóra">
+<!ENTITY certmgr.tab.websites3                "Mohendahavusu">
+<!ENTITY certmgr.tab.ca                       "Moakãhára">
+<!ENTITY certmgr.tab.orphan2                  "Ambue">
+
+<!ENTITY certmgr.mine                         "Oguereko mboajepyréva ko'ã atyguasúpe omoha'eñóva:">
+<!ENTITY certmgr.others                       "Eguereko mboajepyréva marandurendápe oikuaaporãva ko'ã tapicha:">
+<!ENTITY certmgr.websites2                    "Eguereko mboajepyréva marandurendápe oikuaaporãva ko'ã mohendahavusúpe:">
+<!ENTITY certmgr.cas                          "Oguereko mboajepyréva marandurendápe omoha'eñóva ko'ã moakãhára mboajehára.">
+<!ENTITY certmgr.orphans                      "Oguereko mboajepyréva marandurendápe ndojupytýiva mavavetéva ndive:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Opavavetépe">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Mba'emimi">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Ohechajeyhína ko'ág̃a pe mboajepyréva…">
+<!ENTITY certmgr.subjectinfo.label            "Ojejapo chupe">
+<!ENTITY certmgr.issuerinfo.label             "Ojapóva pe">
+<!ENTITY certmgr.periodofvalidity.label       "Pa'ũ jepurukuaaha" >
+<!ENTITY certmgr.fingerprints.label           "Kuã rapykuere">
+<!ENTITY certmgr.certdetail.title             "Mboajepyréva mba'emimi">
+<!ENTITY certmgr.certdetail.cn                "Téra heta oĩva (CN)">
+<!ENTITY certmgr.certdetail.o                 "Atyguasu (O)">
+<!ENTITY certmgr.certdetail.ou                "Joaju ñembohekokatu (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Papapy syryry">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 kuã rapykuere">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 kuã rapykuere">
+
+<!ENTITY certmgr.editcacert.title             "Embosako'i ñemboheko jeroviaha CA mba'éva">
+<!ENTITY certmgr.editcert.edittrust           "Embosako'i ñemboheko jeroviaha:">
+<!ENTITY certmgr.editcert.trustssl            "Ko mboajepyréva ikatu ohechakuaa ñanduti renda.">
+<!ENTITY certmgr.editcert.trustemail          "Ko mboajepyréva ikatu ohechakuaa puruhára ñandutiveve pegua.">
+<!ENTITY certmgr.editcert.trustobjsign        "Ko mboajepyréva ikatu ohechakuaa software mboguatahápe.">
+
+<!ENTITY certmgr.deletecert.title             "Mboajepyréva mboguete">
+
+<!ENTITY certmgr.certname                     "Mboajepyréva réra">
+<!ENTITY certmgr.certserver                   "Mohendahavusu">
+<!ENTITY certmgr.override_lifetime            "Pururã ára">
+<!ENTITY certmgr.tokenname                    "Mba'e'oka rekorasãrã">
+<!ENTITY certmgr.begins                       "Oñepyrũ amo">
+<!ENTITY certmgr.expires                      "Oikóta ko'a peve">
+<!ENTITY certmgr.email                        "Ñanduti veve kundaharape.">
+<!ENTITY certmgr.serial                       "Papapy syryry">
+
+<!ENTITY certmgr.close.label                  "Mboty">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                  "Hecha…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Jerovia mbosako'i…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "Jeguerahauka…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Mboguete…">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete_builtin.label         "Emboguete térã anive ejerovia hese…">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "Mbokuatia...">
+<!ENTITY certmgr.backup2.accesskey            "M">
+<!ENTITY certmgr.backupall2.label             "Eñongatuguypaite…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "Mba'egueru…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Mboajepyréva reheguaite">
+<!ENTITY certmgr.details.accesskey            "F">
+<!ENTITY certmgr.fields.label                 "Ñu repy">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "Mboajepyréva Sãmbyhyhareko">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Oĩ'ỹva mbojoapy…">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "Oĩ'ỹva rekorasãrã mbojuapy">
+<!ENTITY exceptionMgr.exceptionButton.label   "Emoneĩ tekorosãrã oĩ'ỹva">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "Umi virurenda, ñemuha ha ambue tenda opavave mba'éva ndojeruremo'ãi ndéva ejapo kóicha.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Mohendahavusu">
+<!ENTITY exceptionMgr.certlocation.url        "Kundaharape:">
+<!ENTITY exceptionMgr.certlocation.download   "Mboajepyréva jeguereko">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Mboajepyréva rekotee">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Hecha…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Eñongatu ko oĩ'ỹva tapiaite g̃uarãva">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

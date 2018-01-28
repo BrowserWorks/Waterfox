@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Kuatiarogue ñembohekopyahu">
+
+<!ENTITY basic.tab           "Ysaja ha poravopyrã">
+
+<!ENTITY formatGroup.label   "Ysaja">
+
+<!ENTITY orientation.label   "Jehesape'a:">
+<!ENTITY portrait.label      "Oñembo'ýva">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Oñenóva">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "Jupiha:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Emoĩporã kuatiarogue pykuépe">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "Jeporavorã">
+
+<!ENTITY printBG.label       "Tugua mbokuatia (sa'y ha mba'era'ãnga)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "Tembe'y ha kuatiarogue myakãha/py">
+
+<!ENTITY marginGroup.label   "Tembe'y (#1)">
+<!ENTITY marginUnits.inches  "ha'ãha">
+<!ENTITY marginUnits.metric  "ha'ãha'i">
+<!ENTITY marginTop.label     "Yvatevéva:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "Michĩvéva:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "Asu:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "Akatúa:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "Myakãha ha py">
+
+<!ENTITY hfLeft.label        "Asu:">
+<!ENTITY hfCenter.label      "Mombyte:">
+<!ENTITY hfRight.label       "Akatúa:">
+<!ENTITY headerLeft.tip      "Myakãha asúva">
+<!ENTITY headerCenter.tip    "Myakãha mbyteguáva">
+<!ENTITY headerRight.tip     "Myakãha akatuagua">
+<!ENTITY footerLeft.tip      "Py asugua">
+<!ENTITY footerCenter.tip    "Py mbyteguáva">
+<!ENTITY footerRight.tip     "Py akatuagua">
+
+<!ENTITY hfTitle             "Teratee:">
+<!ENTITY hfURL               "Kundaharape">
+<!ENTITY hfDateAndTime       "Arange/aravo">
+<!ENTITY hfPage              "Kuatiarogue #">
+<!ENTITY hfPageAndTotal      "Kuatiarogue # pe #">
+<!ENTITY hfBlank             "--nandi--">
+<!ENTITY hfCustom            "Ñemomba'epyre…">
+
+<!ENTITY customPrompt.title  "Ñemomba'epyre…">
+<!ENTITY customPrompt.prompt "Emoinge nemoñe'ẽrã mba'etéva myakãha/pýva">

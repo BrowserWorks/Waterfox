@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Дадаць новы кантэйнер">
+<!ENTITY addButton.accesskey  "Д">
+<!ENTITY preferencesButton.label "Налады">
+<!ENTITY removeButton.label   "Выдаліць">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Вярнуцца">
+
+<!ENTITY window.title         "Дадаць новы кантэйнер">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Імя:">
+<!ENTITY name.accesskey       "І">
+<!ENTITY name.placeholder     "Увядзіце назву кантэйнера">
+<!ENTITY icon.label           "Значок:">
+<!ENTITY icon.accesskey       "З">
+<!ENTITY color.label          "Колер:">
+<!ENTITY color.accesskey      "о">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Гатова">
+<!ENTITY button.ok.accesskey  "Г">
+

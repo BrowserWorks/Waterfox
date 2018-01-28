@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Ziurtagiri-kudeatzailea">
+
+<!ENTITY certmgr.tab.mine                     "Zure ziurtagiriak">
+<!ENTITY certmgr.tab.others2                  "Pertsonak">
+<!ENTITY certmgr.tab.websites3                "Zerbitzariak">
+<!ENTITY certmgr.tab.ca                       "Autoritateak">
+<!ENTITY certmgr.tab.orphan2                  "Besteak">
+
+<!ENTITY certmgr.mine                         "Zu identifikatzen zaituzten erakunde hauen ziurtagiriak dituzu artxibatuta:">
+<!ENTITY certmgr.others                       "Pertsona hauek identifikatzen dituzten ziurtagiriak dituzu artxibatuta:">
+<!ENTITY certmgr.websites2                    "Zerbitzari hauek identifikatzen dituzten ziurtagiriak dituzu artxibatuta:">
+<!ENTITY certmgr.cas                          "Autoritate ziurtagiri emaile hauek identifikatzen dituzten ziurtagiriak dituzu artxibatuta:">
+<!ENTITY certmgr.orphans                      "Kategoria honetan sailka ezin daitezkeen ziurtagiriak dituzu artxibatuta:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Orokorra">
+<!ENTITY certmgr.detail.general_tab.accesskey "O">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Xehetasunak">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "X">
+
+<!ENTITY certmgr.pending.label                "Ziurtagiria egiaztatzen…">
+<!ENTITY certmgr.subjectinfo.label            "Honi emana:">
+<!ENTITY certmgr.issuerinfo.label             "Jaulkitzailea:">
+<!ENTITY certmgr.periodofvalidity.label       "Balio-epea" >
+<!ENTITY certmgr.fingerprints.label           "Hatz-markak">
+<!ENTITY certmgr.certdetail.title             "Ziurtagiriaren xehetasunak">
+<!ENTITY certmgr.certdetail.cn                "Izen Arrunta (IA)">
+<!ENTITY certmgr.certdetail.o                 "Erakundea (E)">
+<!ENTITY certmgr.certdetail.ou                "Erakunde saila (ES)">
+<!ENTITY certmgr.certdetail.serialnumber      "Serie-zenbakia:">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 hatzmarka">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 hatzmarka">
+
+<!ENTITY certmgr.editcacert.title             "Editatu AZ ziurtagiriaren fidagarritasun-ezarpenak">
+<!ENTITY certmgr.editcert.edittrust           "Editatu fidagarritasun-ezarpenak:">
+<!ENTITY certmgr.editcert.trustssl            "Ziurtagiri honek webguneak identifika ditzake.">
+<!ENTITY certmgr.editcert.trustemail          "Ziurtagiri honek posta erabiltzaileak identifika ditzake.">
+<!ENTITY certmgr.editcert.trustobjsign        "Ziurtagiri honek software egileak identifika ditzake.">
+
+<!ENTITY certmgr.deletecert.title             "Ezabatu ziurtagiria">
+
+<!ENTITY certmgr.certname                     "Ziurtagiriaren izena">
+<!ENTITY certmgr.certserver                   "Zerbitzaria">
+<!ENTITY certmgr.override_lifetime            "Iraupena">
+<!ENTITY certmgr.tokenname                    "Segurtasun-gailua">
+<!ENTITY certmgr.begins                       "Hasiera-data">
+<!ENTITY certmgr.expires                      "Iraungitze-data">
+<!ENTITY certmgr.email                        "Helbide elektronikoa">
+<!ENTITY certmgr.serial                       "Serie-zenbakia:">
+
+<!ENTITY certmgr.close.label                  "Itxi">
+<!ENTITY certmgr.close.accesskey              "x">
+<!ENTITY certmgr.view2.label                  "Ikusi…">
+<!ENTITY certmgr.view2.accesskey              "k">
+<!ENTITY certmgr.edit3.label                  "Editatu fidagarritasuna…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "Esportatu…">
+<!ENTITY certmgr.export.accesskey             "s">
+<!ENTITY certmgr.delete2.label                "Ezabatu…">
+<!ENTITY certmgr.delete2.accesskey            "E">
+<!ENTITY certmgr.delete_builtin.label         "Ezabatu edo mesfidatu…">
+<!ENTITY certmgr.delete_builtin.accesskey     "E">
+<!ENTITY certmgr.backup2.label                "Babeskopia…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "Egin guztiaren basbeskopia…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "Inportatu…">
+<!ENTITY certmgr.restore2.accesskey           "n">
+<!ENTITY certmgr.details.label                "Ziurtagiri-eremuak">
+<!ENTITY certmgr.details.accesskey            "m">
+<!ENTITY certmgr.fields.label                 "Eremuaren balioa">
+<!ENTITY certmgr.fields.accesskey             "i">
+<!ENTITY certmgr.hierarchy.label              "Ziurtagiri-hierarkia">
+<!ENTITY certmgr.hierarchy.accesskey2         "h">
+<!ENTITY certmgr.addException.label           "Gehitu salbuespena…">
+<!ENTITY certmgr.addException.accesskey       "l">
+
+<!ENTITY exceptionMgr.title                   "Gehitu segurtasun-salbuespena">
+<!ENTITY exceptionMgr.exceptionButton.label   "Berretsi segurtasun-salbuespena">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "B">
+<!ENTITY exceptionMgr.supplementalWarning     "Banku legitimo, denda eta beste gune publikoek ez dizute hau egiteko eskatuko.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Zerbitzaria">
+<!ENTITY exceptionMgr.certlocation.url        "Kokapena:">
+<!ENTITY exceptionMgr.certlocation.download   "Eskuratu ziurtagiria">
+<!ENTITY exceptionMgr.certlocation.accesskey  "E">
+<!ENTITY exceptionMgr.certstatus.caption      "Ziurtagiriaren egoera">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Ikusi…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "I">
+<!ENTITY exceptionMgr.permanent.label         "Gorde betirako salbuespen hau">
+<!ENTITY exceptionMgr.permanent.accesskey     "b">

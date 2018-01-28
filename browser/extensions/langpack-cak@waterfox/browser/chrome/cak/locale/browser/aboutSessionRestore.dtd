@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Tichojmirisäx molojri'ïl">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "K'ayew jub'a' rere'.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; k'ayew nub'än chuwäch nok chik chupam ri taq tzuwäch chuqa' taq ruwi'. Rere' nib'anatäj toq nab'ey xatok chupam jun ruxaq k'amaya'l.">
+<!ENTITY restorepage.tryThis        "Tikirel natojtob'ej:">
+<!ENTITY restorepage.restoreSome    "Kelesäx el ri ketal jun o junjun taq ruwi', ri nikiya' k'ayewal">
+<!ENTITY restorepage.startNew       "Titikirisäx jun chik k'ak'a' chi molojri'ïl">
+
+<!ENTITY restorepage.tryagainButton "Tichojmirisäx">
+<!ENTITY restorepage.restore.access "M">
+<!ENTITY restorepage.closeButton    "Titz'apïx">
+<!ENTITY restorepage.close.access   "P">
+
+<!ENTITY restorepage.restoreHeader  "Titzolïx">
+<!ENTITY restorepage.listHeader     "Taq tzuwäch chuqa' taq ruwi'">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Window &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "¡Jo'!">
+<!ENTITY welcomeback2.restoreButton.access "O">
+
+<!ENTITY welcomeback2.tabtitle      "¡Xojtikïr!">
+
+<!ENTITY welcomeback2.pageTitle     "¡Xojtikïr!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; ütz chik richin tichap chik el.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Ketzolïx chik kiwäch ri taq tzuwäch chuqa' taq ruwi'">
+<!ENTITY welcomeback2.restoreSome.label "Xa xe jujun titzolïx kiwäch">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Ri taq atz'aqat chuqa' ichinanem xeyuj el, ruma ri' ri runuk'ulem okik'amaya'l xtzolïx ruwäch rik'in ri taq retal e k'o wi. We man nuchojmirisaj ta ri k'ayewal re', ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "tasik'ij ch'aqa' chik pa ruwi' ri yatikïr nab'än.">
+

@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Cyffredinol">
+
+<!ENTITY useCursorNavigation.label       "Defnyddio bysellau'r cyrchwr ar gyfer symud o fewn tudalennau">
+<!ENTITY useCursorNavigation.accesskey   "D">
+<!ENTITY searchOnStartTyping.label       "Chwilio am destun wrth i mi gychwyn teipio">
+<!ENTITY searchOnStartTyping.accesskey   "d">
+<!ENTITY useOnScreenKeyboard.label       "Dangos bysellfwrdd cyffwrdd pan fydd angen">
+<!ENTITY useOnScreenKeyboard.accesskey   "b">
+
+<!ENTITY browsing.label                  "Pori">
+
+<!ENTITY useAutoScroll.label             "Defnyddio awto sgrolio">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Defnyddio sgrolio llyfn">
+<!ENTITY useSmoothScrolling.accesskey    "s">
+<!ENTITY checkUserSpelling.label         "Gwirio'r sillafu wrth deipio">
+<!ENTITY checkUserSpelling.accesskey     "G">
+
+<!ENTITY dataChoicesTab.label            "Dewisiadau Data">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Mae adrodd ar ddata wedi ei analluogi ar gyfer ffurfweddiad yr adeiledd hwn">
+
+<!ENTITY enableHealthReport1.label       "Caniatáu i &brandShortName; anfon yn awtomatig ddata technegol a rhyngweithio i Mozilla">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Dysgu rhagor">
+
+<!ENTITY dataCollection.label            "Casglu Data a Defnyddio &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Rydym yn ceisio darparu dewisiadau i chi a chasglu dim ond beth sydd ei angen arnom i ddarparu a gwella &brandShortName; ar gyfer pawb. Rydym yn gofyn caniatâd bob tro cyn derbyn manylion personol.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Rhybudd Preifatrwydd">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Caniatáu i &brandShortName; anfon adroddiadau chwalu i Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "Dysgu rhagor">
+
+<!ENTITY networkTab.label                "Rhwydwaith">
+
+<!ENTITY networkProxy.label              "Dirprwy Rhwydwaith">
+
+<!ENTITY connectionDesc.label            "Pennu sut mae &brandShortName; yn cysylltu â'r We">
+<!ENTITY connectionSettings.label        "Gosodiadau…">
+<!ENTITY connectionSettings.accesskey    "G">
+
+<!ENTITY httpCache.label                 "Cynnwys Gwe wedi ei Storio">
+
+<!ENTITY offlineStorage2.label           "Cynnwys Gwe All-lein a Data Defnyddiwr">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Data Gwefan">
+<!ENTITY clearSiteData.label             "Clirio'r Holl Ddata">
+<!ENTITY clearSiteData.accesskey         "H">
+<!ENTITY siteDataSettings.label          "Gosodiadau…">
+<!ENTITY siteDataSettings.accesskey      "G">
+<!ENTITY siteDataLearnMoreLink.label     "Dysgu rhagor">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Cyfyngu’r storfa i">
+<!ENTITY limitCacheSizeBefore.accesskey  "C">
+<!ENTITY limitCacheSizeAfter.label       "MB o le">
+<!ENTITY clearCacheNow.label             "Clirio Nawr">
+<!ENTITY clearCacheNow.accesskey         "N">
+<!ENTITY clearOfflineAppCacheNow.label   "Clirio Nawr">
+<!ENTITY clearOfflineAppCacheNow.accesskey "C">
+<!ENTITY overrideSmartCacheSize.label    "Anwybyddu rheolaeth storfa awtomatig">
+<!ENTITY overrideSmartCacheSize.accesskey "A">
+
+<!ENTITY updateTab.label                 "Diweddaru">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "Diweddariadau &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "Cadw &brandShortName; yn gyfredol ar gyfer y perfformiad, sefydlogrwydd a diogelwch gorau.">
+<!ENTITY updateApplication.version.pre   "Fersiwn ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Caniatau i &brandShortName;">
+<!ENTITY updateAuto3.label               "Gosod diweddariadau'n awtomatig (argymell)">
+<!ENTITY updateAuto3.accesskey           "G">
+<!ENTITY updateCheckChoose2.label        "Gwirio am ddiweddariadau, ond gadael i mi ddewis i'w gosod a'i peidio">
+<!ENTITY updateCheckChoose2.accesskey    "G">
+<!ENTITY updateManual2.label             "Byth gwirio am ddiweddariadau (ddim yn argymell)">
+<!ENTITY updateManual2.accesskey         "B">
+
+<!ENTITY updateHistory2.label            "Dangos Hanes Diweddaru…">
+<!ENTITY updateHistory2.accesskey        "D">
+
+<!ENTITY useService.label                "Defnyddio gwasanaethau cefndirol i osod diweddariadau">
+<!ENTITY useService.accesskey            "c">
+
+<!ENTITY enableSearchUpdate2.label       "Diweddaru peiriannau chwilio yn awtomatig">
+<!ENTITY enableSearchUpdate2.accesskey   "p">
+
+<!ENTITY offlineStorageNotify.label               "Dweud wrthyf pan fydd gwefan yn gofyn i storio data ar gyfer defnydd all-lein">
+<!ENTITY offlineStorageNotify.accesskey           "D">
+<!ENTITY offlineStorageNotifyExceptions.label     "Eithriadau…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "E">
+
+<!ENTITY offlineAppsList2.label          "Mae'r gwefannau canlynol yn cael caniatâd i storio data ar gyfer defnydd all-lein:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Tynnu…">
+<!ENTITY offlineAppsListRemove.accesskey "T">
+<!ENTITY offlineAppRemove.confirm        "Tynnu data all-lein">
+
+<!ENTITY certificateTab.label            "Tystysgrifau">
+<!ENTITY certPersonal2.description       "Pan fydd gweinydd yn gofyn am fy nhystysgrif bersonol:">
+<!ENTITY selectCerts.auto                "Dewis un yn awtomatig">
+<!ENTITY selectCerts.auto.accesskey      "T">
+<!ENTITY selectCerts.ask                 "Gofyn i mi bob tro">
+<!ENTITY selectCerts.ask.accesskey       "G">
+<!ENTITY enableOCSP.label                "Ymholi â gweinyddion atebwr OCSP i gadarnhau dilysrwydd cyfredol y tystysgrifau">
+<!ENTITY enableOCSP.accesskey            "Y">
+<!ENTITY viewCerts2.label                "Darllen Tystysgrifau…">
+<!ENTITY viewCerts2.accesskey            "D">
+<!ENTITY viewSecurityDevices2.label      "Dyfeisiau Diogelwch…">
+<!ENTITY viewSecurityDevices2.accesskey  "y">
+
+<!ENTITY performance.label               "Perfformiad">
+<!ENTITY useRecommendedPerformanceSettings2.label "Defnyddio gosodiadau perfformiad sy'n cael eu hargymell">
+<!ENTITY useRecommendedPerformanceSettings2.description "Mae'r gosodiadau hyn wedi eu teilwrio i galedwedd a system weithredu eich cyfrifiadur.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "D">
+<!ENTITY performanceSettingsLearnMore.label "Dysgu rhagor">
+<!ENTITY limitContentProcessOption.label "Terfyn proses cynnwys">
+<!ENTITY limitContentProcessOption.description "Mae rhagor o brosesau cynnwys yn gallu gwella perfformiad pan yn defnyddio tabiau lluosog, ond fydd hefyd yn defnyddio mwy o gof.">
+<!ENTITY limitContentProcessOption.accesskey   "T">
+<!ENTITY limitContentProcessOption.disabledDescription "Dim ond yn y fersiwn amlbroses o &brandShortName; y mae newid y nifer o brosesau cynnwys yn bosib.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Dysgwch sut i weld os yw aml-brosesu wedi ei alluogi">
+<!ENTITY allowHWAccel.label              "Defnyddio cyflymu caledwedd pan fydd ar gael">
+<!ENTITY allowHWAccel.accesskey          "e">

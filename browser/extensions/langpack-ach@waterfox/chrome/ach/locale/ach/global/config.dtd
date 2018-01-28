@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ikom:cano">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Man romo gengo pora mamegi!">
+<!ENTITY aboutWarningText.label "Loko ter magi me rwom ma malu twero kelo bal i bedo mot, gwoko kuc, ki tic maber pi purugram man. I twero ka mede teki i moko adaa ngo ma in itye katimo.">
+<!ENTITY aboutWarningButton2.label "Aye acara ne!">
+<!ENTITY aboutWarningCheckbox.label "Nyut cik man i kare mabino">
+
+<!ENTITY searchPrefs.label "Yeny:">
+<!ENTITY searchPrefs.accesskey "y">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Nying ma imito">
+<!ENTITY lockColumn.label "Kite">
+<!ENTITY typeColumn.label "Kit">
+<!ENTITY valueColumn.label "Wel">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Dii me yero"> 
+<!ENTITY columnChooser.tooltip "Dii me yero rek me atera ka maleng"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Lok">
+<!ENTITY copyPref.accesskey "L">
+<!ENTITY copyName.label "Lok Nying">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Lok wel">
+<!ENTITY copyValue.accesskey "w">
+<!ENTITY modify.label "Yub">
+<!ENTITY modify.accesskey "Y">
+<!ENTITY toggle.label "Loko gin atima ki i kompiuta">
+<!ENTITY toggle.accesskey "L">
+<!ENTITY reset.label "Ter nitit">
+<!ENTITY reset.accesskey "T">
+<!ENTITY new.label "Nyen">
+<!ENTITY new.accesskey "e">
+<!ENTITY string.label "Tol">
+<!ENTITY string.accesskey "T">
+<!ENTITY integer.label "Namba ne">
+<!ENTITY integer.accesskey "N">
+<!ENTITY boolean.label "Gin matye kwede acel ki not">
+<!ENTITY boolean.accesskey "G">

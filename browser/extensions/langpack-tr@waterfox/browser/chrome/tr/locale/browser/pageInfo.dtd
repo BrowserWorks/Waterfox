@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopyala">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Tümünü seç">
+<!ENTITY  selectall.accesskey   "s">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Genel">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Başlık:">
+<!ENTITY  generalURL            "Adres:">
+<!ENTITY  generalType           "Tür:">
+<!ENTITY  generalMode           "Yorum kipi:">
+<!ENTITY  generalSize           "Boyut:">
+<!ENTITY  generalReferrer       "Yönlendiren URL:">
+<!ENTITY  generalSource         "Önbellek kaynağı:">
+<!ENTITY  generalModified       "Değişme tarihi:">
+<!ENTITY  generalEncoding2      "Metin kodlaması:">
+<!ENTITY  generalMetaName       "Adı">
+<!ENTITY  generalMetaContent    "İçerik">
+
+<!ENTITY  mediaTab              "Ortam">
+<!ENTITY  mediaTab.accesskey    "O">
+<!ENTITY  mediaLocation         "Konum:">
+<!ENTITY  mediaText             "İlgili metin:">
+<!ENTITY  mediaAltHeader        "Alternatif metin">
+<!ENTITY  mediaAddress          "Adres">
+<!ENTITY  mediaType             "Türü">
+<!ENTITY  mediaSize             "Boyut">
+<!ENTITY  mediaCount            "Sayaç">
+<!ENTITY  mediaDimension        "Ölçüler:">
+<!ENTITY  mediaLongdesc         "Uzun açıklama:">
+<!ENTITY  mediaBlockImage.accesskey "e">
+<!ENTITY  mediaSaveAs           "Farklı kaydet…">
+<!ENTITY  mediaSaveAs.accesskey "F">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Ortam ön izleme:">
+
+<!ENTITY  feedTab               "Beslemeler">
+<!ENTITY  feedTab.accesskey     "B">
+<!ENTITY  feedSubscribe         "Abone ol">
+<!ENTITY  feedSubscribe.accesskey "o">
+
+<!ENTITY  permTab               "İzinler">
+<!ENTITY  permTab.accesskey     "z">
+<!ENTITY  permUseDefault        "Varsayılanı kullan">
+<!ENTITY  permAskAlways         "Her zaman sor">
+<!ENTITY  permAllow             "İzin ver">
+<!ENTITY  permAllowSession      "Oturum boyunca izin ver">
+<!ENTITY  permBlock             "Engelle">
+<!ENTITY  permissionsFor        "İzinler:">
+<!ENTITY  permPlugins           "Yan uygulamaları etkinleştirebilir">
+
+<!ENTITY  permClearStorage           "Depolananları temizle">
+<!ENTITY  permClearStorage.accesskey "t">
+
+<!ENTITY  securityTab           "Güvenlik">
+<!ENTITY  securityTab.accesskey "G">
+<!ENTITY  securityView.certView "Sertifikayı göster">
+<!ENTITY  securityView.accesskey "S">
+<!ENTITY  securityView.unknown   "Bilinmiyor">
+
+
+<!ENTITY  securityView.identity.header   "Web sitesi kimliği">
+<!ENTITY  securityView.identity.owner    "Sahibi:">
+<!ENTITY  securityView.identity.domain   "Web sitesi:">
+<!ENTITY  securityView.identity.verifier "Doğrulayan:">
+<!ENTITY  securityView.identity.validity "Bitiş tarihi:">
+
+<!ENTITY  securityView.privacy.header                   "Gizlilik ve geçmiş">
+<!ENTITY  securityView.privacy.history                  "Bu siteyi daha önce ziyaret ettim mi?">
+<!ENTITY  securityView.privacy.cookies                  "Bu site bilgisayarımda bilgi (çerez) depoluyor mu?">
+<!ENTITY  securityView.privacy.viewCookies              "Çerezleri göster">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "R">
+<!ENTITY  securityView.privacy.passwords                "Bu siteye ait bir parola kaydettim mi?">
+<!ENTITY  securityView.privacy.viewPasswords            "Kayıtlı parolaları göster">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "K">
+
+<!ENTITY  securityView.technical.header                 "Teknik ayrıntılar">
+
+<!ENTITY  helpButton.label                              "Yardım">

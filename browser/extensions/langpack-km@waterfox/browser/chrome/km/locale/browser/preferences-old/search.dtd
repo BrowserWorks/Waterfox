@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "ម៉ាស៊ីន​ស្វែងរក​លំនាំដើម">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "ជ្រើស​ម៉ាស៊ីន​ស្វែងរក​លំនាំដើម។ &brandShortName; ប្រើ​វា​នៅ​ក្នុង​របារ​ទីតាំង របារ​ស្វែងរក និង​ទំព័រ​ចាប់ផ្ដើម។">
+
+<!ENTITY provideSearchSuggestions.label        "បង្ហាញ​ការ​ផ្ដល់​យោបល់​ស្វែងរក">
+<!ENTITY provideSearchSuggestions.accesskey    "រ">
+
+<!ENTITY showURLBarSuggestions.label           "បង្ហាញ​ការ​ផ្ដល់​យោបល់​ស្វែងរក​ក្នុង​លទ្ធផល​របារ​ទីតាំង">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "សំណើ​ស្វែងរក​នឹង​​មិន​បង្ហាញ​នៅ​ក្នុង​លទ្ធផល​របារ​ទីតាំង​​ទេ ព្រោះ​អ្នក​បាន​កំណត់​រចនាសម្ព័ន្ធ &brandShortName; មិន​ដែល​ឲ្យ​ចងចាំ​ប្រវត្តិ។">
+
+<!ENTITY oneClickSearchEngines.label           "ម៉ាស៊ីន​ស្វែងរក​ចុច​តែ​ម្ដង">
+
+<!ENTITY chooseWhichOneToDisplay.label         "របារ​ស្វែងរក​អនុញ្ញាត​ឲ្យ​ស្វែងរក​ម៉ាស៊ីន​ឆ្លាស់គ្នា​ដោយ​ផ្ទាល់។ ជ្រើស​មួយ​ណា​ដែល​ត្រូវ​បង្ហាញ។">
+
+<!ENTITY engineNameColumn.label                "ម៉ាស៊ីន​ស្វែងរក">
+<!ENTITY engineKeywordColumn.label             "ពាក្យ​គន្លឹះ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "ស្ដារ​ម៉ាស៊ីន​ស្វែងរកលំនាំដើម">
+<!ENTITY restoreDefaultSearchEngines.accesskey "ល">
+
+<!ENTITY removeEngine.label                    "យក​ចេញ...">
+<!ENTITY removeEngine.accesskey                "ញ">
+
+<!ENTITY addMoreSearchEngines.label            "បន្ថែម​ម៉ាស៊ីន​ស្វែងរក​ច្រើន​ទៀត…">

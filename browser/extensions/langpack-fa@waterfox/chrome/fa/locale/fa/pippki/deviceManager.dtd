@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "مدیر دستگاه‌ها">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 52em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "واحد‌ها و دستگاه‌های امنیتی">
+<!ENTITY devmgr.details.title                   "جزئیات">
+<!ENTITY devmgr.details.title2                  "مقدار">
+
+<!ENTITY devmgr.button.login.label              "ورود به سیستم">
+<!ENTITY devmgr.button.login.accesskey          "و">
+<!ENTITY devmgr.button.logout.label             "خروج از سیستم">
+<!ENTITY devmgr.button.logout.accesskey         "خ">
+<!ENTITY devmgr.button.changepw.label           "تغییر گذرواژه">
+<!ENTITY devmgr.button.changepw.accesskey       "گ">
+<!ENTITY devmgr.button.load.label               "بار کردن">
+<!ENTITY devmgr.button.load.accesskey           "ب">
+<!ENTITY devmgr.button.unload.label             "خارج کردن">
+<!ENTITY devmgr.button.unload.accesskey         "ج">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "اطلاعات پیمانه‌ای را که می‌خواهید اضافه شود وارد کنید.">
+<!ENTITY loaddevice.modname                     "نام واحد:">
+<!ENTITY loaddevice.modname.accesskey           "ن">
+<!ENTITY loaddevice.modname.default             "واحد PKCS#11 جدید">
+<!ENTITY loaddevice.filename                    "نام پروندهٔ واحد:">
+<!ENTITY loaddevice.filename.accesskey          "پ">
+<!ENTITY loaddevice.browse                      "مرور…">
+<!ENTITY loaddevice.browse.accesskey            "م">
+
+<!ENTITY loaddevice.title2                      "بار کردن راه‌انداز دستگاه PKCS#11">

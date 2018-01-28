@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Звесткі для вырашэння праблемаў">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Гэта старонка змяшчае тэхнічныя звесткі, якія могуць быць карыснымі, калі
+  спрабуеце вырашыць праблему. Калі вы шукаеце адказы на агульныя пытанні
+  пра &brandShortName;, наведайце наш <a id='supportLink'>сайт падтрымкі</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Cправаздачы пра крахі">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Ідэнтыфікатар справаздачы">
+<!ENTITY aboutSupport.crashes.sendDate "Пададзена">
+<!ENTITY aboutSupport.crashes.allReports "Усе справаздачы пра крахі">
+<!ENTITY aboutSupport.crashes.noConfig "Гэта праграма не наладжана паказваць справаздачы пра крахі.">
+
+<!ENTITY aboutSupport.extensionsTitle "Пашырэнні">
+<!ENTITY aboutSupport.extensionName "Назва">
+<!ENTITY aboutSupport.extensionEnabled "Задзейнічана">
+<!ENTITY aboutSupport.extensionVersion "Версія">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Магчымасці &brandShortName;">
+<!ENTITY aboutSupport.featureName "Імя">
+<!ENTITY aboutSupport.featureVersion "Версія">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Эксперыментальныя магчымасці">
+<!ENTITY aboutSupport.experimentName "Назва">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Апісанне">
+<!ENTITY aboutSupport.experimentActive "Дзейны">
+<!ENTITY aboutSupport.experimentEndDate "Канцавая дата">
+<!ENTITY aboutSupport.experimentHomepage "Хатняя старонка">
+<!ENTITY aboutSupport.experimentBranch "Галіна">
+
+<!ENTITY aboutSupport.appBasicsTitle "Асновы праграмы">
+<!ENTITY aboutSupport.appBasicsName "Назва">
+<!ENTITY aboutSupport.appBasicsVersion "Версія">
+<!ENTITY aboutSupport.appBasicsBuildID "ID зборкі">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Канал абнаўлення">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Гісторыя абнаўленняў">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Паказаць гісторыю абнаўленняў">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Дырэкторыя профілю">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Папка профілю">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Уключаныя плагіны">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Канфігурацыя зборкі">
+<!ENTITY aboutSupport.appBasicsUserAgent "Дзеяч карыстальніка">
+<!ENTITY aboutSupport.appBasicsOS "АС">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Ужыванне памяці">
+<!ENTITY aboutSupport.appBasicsPerformance "Прадукцыйнасць">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Зарэгістраваныя сервіс-воркеры">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Профілі">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Шматпрацэсныя вокны">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Працэсы вэб-кантэнту">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Ключ Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Ключ Службы вызначэння месцазнаходжання ад Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Абаронены рэжым">
+
+<!ENTITY aboutSupport.showDir.label "Адкрыць дырэкторыю">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Паказаць у шукальніку">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Адкрыць папку">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Змененыя важныя налады">
+<!ENTITY aboutSupport.modifiedPrefsName "Назва">
+<!ENTITY aboutSupport.modifiedPrefsValue "Значэнне">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Налады user.js">
+<!ENTITY aboutSupport.userJSDescription "Папка вашага профілю змяшчае <a id='prefs-user-js-link'>файл user.js</a>, у якім знаходзяцца налады, не створаныя &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Заблакаваныя важныя налады">
+<!ENTITY aboutSupport.lockedPrefsName "Назва">
+<!ENTITY aboutSupport.lockedPrefsValue "Значэнне">
+
+<!ENTITY aboutSupport.graphicsTitle "Графіка">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "База звестак месцаў">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Цэльнасць">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Праверыць цэльнасць">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "Даступнасць">
+<!ENTITY aboutSupport.a11yActivated "Задзейнічаны">
+<!ENTITY aboutSupport.a11yForceDisabled "Прадухіліць даступнасць">
+<!ENTITY aboutSupport.a11yHandlerUsed "Апрацоўшчык даступнасці. які выкарыстоўваецца">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Версіі бібліятэк">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Гісторыя ўсталявання">
+<!ENTITY aboutSupport.updateHistoryTitle "Гісторыя абнаўленняў">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Скапіяваць тэкст у буфер абмену">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Скапіяваць сырыя дадзеныя ў буфер абмену">
+
+<!ENTITY aboutSupport.sandboxTitle "Пясочніца">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Адхіленыя сістэмныя выклікі">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Секунд таму">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Тып працэсу">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Сістэмны выклік">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Аргументы">
+
+<!ENTITY aboutSupport.safeModeTitle "Паспрабаваць абаронены рэжым">
+<!ENTITY aboutSupport.restartInSafeMode.label "Перазапусціць з адключанымі дадаткамі…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Магчымасці">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Дыягностыка">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Журнал падзенняў">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Журнал рашэнняў">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Адключаныя магчымасці абаронцы ад падзенняў">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Абыходныя шляхі">
+
+<!ENTITY aboutSupport.mediaTitle "Медыя">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Прылады вываду">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Прылады ўводу">
+<!ENTITY aboutSupport.mediaDeviceName "Назва">
+<!ENTITY aboutSupport.mediaDeviceGroup "Група">
+<!ENTITY aboutSupport.mediaDeviceVendor "Вытворца">
+<!ENTITY aboutSupport.mediaDeviceState "Стан">
+<!ENTITY aboutSupport.mediaDevicePreferred "Рэкамендавана">
+<!ENTITY aboutSupport.mediaDeviceFormat "Фармат">
+<!ENTITY aboutSupport.mediaDeviceChannels "Каналы">
+<!ENTITY aboutSupport.mediaDeviceRate "Частата">
+<!ENTITY aboutSupport.mediaDeviceLatency "Затрымка">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importēšanas vednis">
+
+<!ENTITY importFrom.label               "Importēt iestatījumus, grāmatzīmes, vēsturi, paroles un citus datus no:">
+<!ENTITY importFromUnix.label           "Importēt iestatījumus, grāmatzīmes, vēsturi, paroles un citus datus no:">
+<!ENTITY importFromBookmarks.label      "Importēt grāmatzīmes no:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Neimportēt neko">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Drošs pārlūks">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Nav atrasta neviena programma, no kuras importēt grāmatzīmes, vēsturi vai paroļu informāciju.">
+
+<!ENTITY importSource.title             "Importēt iestatījumus un datus">
+<!ENTITY importItems.title              "Importējamie elementi">
+<!ENTITY importItems.label              "Izvēlieties importējamos elementus:">
+
+<!ENTITY migrating.title                "Notiek importēšana...">
+<!ENTITY migrating.label                "Tiek importēti izvēlētie elementi...">
+
+<!ENTITY selectProfile.title            "Izvēlieties profilu">
+<!ENTITY selectProfile.label            "Datus var importēt no šiem profiliem:">
+
+<!ENTITY done.title                     "Importēšana ir pabeigta">
+<!ENTITY done.label                     "Tika sekmīgi importēti:">
+
+<!ENTITY closeSourceBrowser.label       "Lūdzu pārliecinieties ka izvēlētais pārlūks ir aizvērts pirms turpināt.">

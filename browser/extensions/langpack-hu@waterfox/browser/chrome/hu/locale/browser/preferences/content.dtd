@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Engedélyek">
+
+<!ENTITY  blockPopups.label           "Felugró ablakok tiltása">
+<!ENTITY  blockPopups.accesskey       "F">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "További tudnivalók">
+<!ENTITY  notificationsPolicyDesc4.label       "Válassza ki, mely webhelyek küldhetnek Önnek értesítést">
+<!ENTITY  notificationsPolicyButton.accesskey  "T">
+<!ENTITY  notificationsPolicyButton.label      "Tallózás…">
+<!ENTITY  notificationsDoNotDisturb.label      "Ne zavarjanak">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "z">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Nem jelenik meg értesítés a &brandShortName; újraindításáig">
+
+<!ENTITY  popupExceptions.label       "Kivételek…">
+<!ENTITY  popupExceptions.accesskey   "K">
+
+<!ENTITY  fontsAndColors.label        "Betűk és színek">
+
+<!ENTITY  defaultFont2.label          "Alapértelmezett betűkészlet">
+<!ENTITY  defaultFont2.accesskey      "A">
+<!ENTITY  defaultSize2.label          "Méret">
+<!ENTITY  defaultSize2.accesskey      "M">
+
+<!ENTITY  advancedFonts.label         "Speciális…">
+<!ENTITY  advancedFonts.accesskey     "c">
+
+<!ENTITY  colors.label                "Színek…">
+<!ENTITY  colors.accesskey            "z">
+
+
+<!ENTITY language2.label              "Nyelv">
+<!ENTITY chooseLanguage.label         "Az oldalak megjelenítésére előnyben részesített nyelv megadása">
+<!ENTITY chooseButton.label           "Tallózás…">
+<!ENTITY chooseButton.accesskey       "T">
+
+<!ENTITY translateWebPages.label      "Webtartalom fordítása">
+<!ENTITY translateWebPages.accesskey  "f">
+<!ENTITY translateExceptions.label    "Kivételek…">
+<!ENTITY translateExceptions.accesskey "K">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Fordítás:">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Digitális jogkezelést (DRM) használó tartalom">
+
+<!ENTITY  playDRMContent2.label          "DRM-vezérelt tartalom lejátszása">
+<!ENTITY  playDRMContent2.accesskey      "l">
+<!ENTITY  playDRMContent.learnMore.label "További tudnivalók">

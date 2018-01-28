@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Jaaɓnirɗe">
+
+
+<!ENTITY  typeColumn.label        "Fannu Loowdi">
+<!ENTITY  typeColumn.accesskey    "L">
+
+<!ENTITY  actionColumn2.label     "Baɗal">
+<!ENTITY  actionColumn2.accesskey "B">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Yiylo sifaaji piille walla jaaɓnirɗe">
+
+<!ENTITY  applications.description "Choose how &brandShortName; handles the files you download from the web or the applications you use while browsing.">
+

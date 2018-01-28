@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY csscoverage.backButton "Indietro">
+<!ENTITY csscoverage.unused "Regole inutilizzate">
+<!ENTITY csscoverage.noMatches "Nessuna corrispondenza disponibile per le seguenti regole:">
+<!ENTITY csscoverage.optimize.header "Pagine ottimizzabili">
+<!ENTITY csscoverage.optimize.body1 "In alcuni casi è possibile velocizzare il caricamento spostando i tag">
+<!ENTITY csscoverage.optimize.body2 "al termine della pagina e creando un nuovo elemento inline">
+<!ENTITY csscoverage.optimize.body3 "con gli stili necessari prima dell’evento “load” iniziale. Questi sono i blocchi di stile richiesti:">
+<!ENTITY csscoverage.optimize.bodyX "Tutte le regole sono inline.">
+<!ENTITY csscoverage.footer1 "Consultare">
+<!ENTITY csscoverage.footer2a "https://developer.mozilla.org/docs/Tools/CSS_Coverage">
+<!ENTITY csscoverage.footer3 "l’articolo di MDN sullo strumento Copertura CSS">
+<!ENTITY csscoverage.footer4 "per alcune precisazioni sulla generazione di questo rapporto.">

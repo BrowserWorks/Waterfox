@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Teelte- Keɓe Lowre">
+<!ENTITY     hostCol.label                 "Lowre">
+<!ENTITY     statusCol.label               "Ngonka">
+<!ENTITY     usageCol.label                "Hattan moofto">
+<!ENTITY     searchTextboxPlaceHolder             "Yiylo lowe">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "D">
+<!ENTITY     removeSelected.label          "Momtu cuɓaaɗe">
+<!ENTITY     removeSelected.accesskey      "M">
+<!ENTITY     save.label                    "Daɗndu mbaliigaaji">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Haaytu">
+<!ENTITY     cancel.accesskey              "H">
+<!ENTITY     removingDialog.title          "Momtugol keɓe lowre">
+<!ENTITY     removingSelected.description  "Momtude keɓe lowre maa ittor kadi kukiije e loowdi geese ɗe ceŋaaki jokkiiɗe heen. Ɗuum ina waawi seŋtude ma e lowe geese. Aɗa yananaa yiɗde waɗde bayle ɗee?">
+<!ENTITY     siteTree.label                "Kuukiije lowe garooje ɗee maa momte:">

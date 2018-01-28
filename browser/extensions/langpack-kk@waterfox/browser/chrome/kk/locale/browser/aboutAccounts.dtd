@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; ішіне қош келдіңіз">
+
+<!ENTITY aboutAccountsConfig.description "Беттер, бетбелгілер, парольдерді синхрондау және т.б. үшін кіріңіз.">
+<!ENTITY aboutAccountsConfig.startButton.label "Бастау">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Синхрондау баптаулары">
+<!ENTITY aboutAccounts.noConnection.title "Байланыс жоқ">
+<!ENTITY aboutAccounts.noConnection.description "Кіру үшін интернетпен байланыс болу тиіс.">
+<!ENTITY aboutAccounts.noConnection.retry "Қайтадан көру">
+<!ENTITY aboutAccounts.badConfig.title "Жарамсыз баптаулар">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox тіркелгі серверінің баптауларын анықтау мүмкін емес. Кейінірек қайталап көріңіз.">

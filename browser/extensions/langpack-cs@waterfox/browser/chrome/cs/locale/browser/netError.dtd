@@ -1,0 +1,205 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Chyba při načítání stránky">
+<!ENTITY retry.label "Zkusit znovu">
+<!ENTITY returnToPreviousPage.label "Přejít zpět">
+<!ENTITY advanced.label "Rozšířené">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Chyba spojení">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Omezení přístupu k adrese">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server nenalezen">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Zkontrolujte, že je adresa napsána správně a neobsahuje chyby jako
+    <strong>ww</strong>.example.com místo
+    <strong>www</strong>.example.com</li>
+  <li>Pokud se vám nezobrazují ani ostatní stránky, zkontrolujte síťové připojení svého
+    počítače.</li>
+  <li>Pokud je váš počítač chráněný firewallem nebo proxy serverem, zkontrolujte, že má
+    &brandShortName; povolený přístup k internetu.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Soubor nenalezen">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Zkontrolujte, že je jméno souboru napsáno správně, a to včetně velikosti písmen.</li>
+  <li>Zkontrolujte, že soubor nebyl přesunut, přejmenován nebo smazán.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Přístup k souboru byl odepřen">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>Možná byl smazán, přesunut nebo jeho oprávnění zabraňují přístupu.</li>
+</ul>">
+
+<!ENTITY generic.title "Nepodařilo se dokončit požadavek">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; nemůže tuto stránku načíst.</p>
+">
+
+<!ENTITY captivePortal.title "Přihlásit se do sítě">
+<!ENTITY captivePortal.longDesc2 "<p>Pro přístup k internetu se musíte nejdříve přihlásit k této síti.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Otevřít přihlašovací stránku k síti">
+
+<!ENTITY malformedURI.title "Neplatná adresa">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Adresa webové stránky má zpravidla tvar
+    <strong>http://www.example.com/</strong></li>
+  <li>Zkontrolujte, že používáte správná lomítka (tj.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Spojení bylo přerušeno">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Platnost dokumentu vypršela">
+<!ENTITY notCached.longDesc "<p>Požadovaný dokument už není dostupný v mezipaměti aplikace &brandShortName;.</p><ul><li>Z bezpečnostních důvodů &brandShortName; automaticky nestahuje důvěrné dokumenty.</li><li>Pro opětovné stažení dokumentu z webového serveru klepněte na tlačítko „Zkusit znovu“.</li></ul>">
+
+<!ENTITY netOffline.title "Režim offline">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Pro přechod do režimu online a obnovení stránky klepněte na tlačítko „Zkusit znovu“.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Chyba znakové sady obsahu">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Nebezpečný typ souboru">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Spojení přerušeno">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Vypršel čas spojení">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa nebyla rozpoznána">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Pro otevření této adresy budete patrně potřebovat nainstalovat další software.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Proxy server odmítl spojení">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Zkontrolujte nastavení proxy serveru.</li>
+  <li>Kontaktujte správce vaší sítě, jestli je proxy server v provozu.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Proxy server nenalezen">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Zkontrolujte nastavení proxy serveru.</li>
+  <li>Zkontrolujte síťové připojení svého počítače.</li>
+  <li>Pokud je váš počítač chráněn firewallem nebo proxy serverem, zkontrolujte, že má
+    &brandShortName; přístup na internet.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Smyčka při přesměrování">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Tento problém může být způsoben zakázáním nebo odmítnutím
+    cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Neplatná odpověď serveru">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Zkontrolujte, že má váš systém nainstalován
+Personal Security Manager.</li>
+  <li>Tato chyba může být také způsobena nestandardní konfigurací serveru.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Chyba zabezpečeného spojení">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Požadovanou stránku nelze zobrazit, protože nelze ověřit autenticitu přijatých dat.</li>
+  <li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "Vaše připojení není zabezpečené">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Majitel serveru <span class='hostname'/> nakonfiguroval své webové stránky nesprávně. Abychom chránili vaše informace před odcizením, &brandShortName; se k této webové stránce nepřipojil.">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Server je dočasně nedostupný. Zkuste to prosím znovu
+za chvíli.</li>
+  <li>Pokud se vám nezobrazují ani ostatní stránky, zkontrolujte síťové připojení svého
+    počítače.</li>
+  <li>Pokud je váš počítač chráněn firewallem nebo proxy serverem, zkontrolujte, že má
+    &brandShortName; přístup na internet.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Zablokováno dle bezpečnostních pravidel obsahu">
+<!ENTITY cspBlocked.longDesc "<p>Aplikace &brandShortName; zabránila v nahrání této stránky, protože tato stránka má bezpečnostní pravidla, která takovýto způsob nahrání zakazují.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Chyba v obsahu stránky">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Požadovanou stránku nelze zobrazit, protože při přenosu dat došlo k chybě.</p><ul><li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Přidat výjimku…">
+
+<!ENTITY errorReporting.automatic2 "Hlásit chyby jako je tato a pomoci tak organizaci Mozilla identifikovat a blokovat škodlivé stránky">
+<!ENTITY errorReporting.learnMore "Zjistit více…">
+
+<!ENTITY remoteXUL.title "Vzdálené XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Nelze se zabezpečeně připojit">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Podrobné informace: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p>Aplikace &brandShortName; se nemohla připojit k adrese <span id='wrongSystemTime_URL'/>, protože čas na vašem počítači je zřejmě špatně nastavený a tak brání bezpečnému spojení.</p> <p>Čas na vašem počítači je nastaven na <span id='wrongSystemTime_systemDate'/>, ale měl by být <span id='wrongSystemTime_actualDate'/>. Opravte prosím nastavení data a času na vašem počítači.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>Aplikace &brandShortName; se nemohla připojit k adrese <span id='wrongSystemTimeWithoutReference_URL'/>, protože čas na vašem počítači je zřejmě špatně nastavený a tak brání bezpečnému spojení.</p> <p>Čas na vašem počítači je nastaven na <span id='wrongSystemTimeWithoutReference_systemDate'/>. Opravte prosím nastavení data a času na vašem počítači.</p>">
+
+<!ENTITY certerror.pagetitle1  "Nezabezpečené připojení">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Tento server používá HTTP
+Strict Transport Security (HSTS), čímž určuje, že se má &brandShortName; připojovat
+pouze zabezpečeně. Z tohoto důvodu není možné přidat pro tento certifikát výjimku.">
+<!ENTITY certerror.copyToClipboard.label "Zkopírovat text do schránky">
+
+<!ENTITY inadequateSecurityError.title "Vaše připojení není zabezpečené">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> používá technologii která je zastaralá a náchylná k útoku. Útočník může snadno získat informace, které si myslíte, že jsou zabezpečené. Správce serveru musí server opravit předtím, než budete moci stránku navštívit.</p><p>Kód chyby: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Zdá se, že příčinou může být vaše nastavení zabezpečení. Chcete obnovit výchozí nastavení?">
+<!ENTITY prefReset.label "Obnovit výchozí nastavení">

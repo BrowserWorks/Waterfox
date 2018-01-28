@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Închide această filă">
+<!ENTITY tabCrashed.restoreTab "Restaurează această filă">
+<!ENTITY tabCrashed.restoreAll "Restaurează toate filele închise care s-au închis neașteptat">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Of. Fila tocmai s-a închis neașteptat.">
+<!ENTITY tabCrashed.offerHelp "Te putem ajuta!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Alege &tabCrashed.restoreTab; pentru a reîncărca conținutul paginii.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Alege &tabCrashed.restoreTab; sau &tabCrashed.restoreAll; pentru a reîncărca conținutul paginii.">
+<!ENTITY tabCrashed.requestHelp "Poți să ne ajuți?">
+<!ENTITY tabCrashed.requestHelpMessage "Rapoartele de defecțiuni ne ajută să diagnosticăm problemele și să îmbunătățim &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Raportează această filă">
+<!ENTITY tabCrashed.sendReport2 "Trimite un raport de defecțiuni pentru fila pe care o vezi">
+<!ENTITY tabCrashed.commentPlaceholder2 "Adaugă un comentariu (comentariile sunt vizibile publicului)">
+<!ENTITY tabCrashed.includeURL2 "Include URL-ul paginii cu acest raport de defecțiuni">
+<!ENTITY tabCrashed.emailPlaceholder "Introdu adresa ta de e-mail aici">
+<!ENTITY tabCrashed.emailMe "Trimite-mi e-mail când sunt mai multe informații disponibile">
+<!ENTITY tabCrashed.reportSent "Raportul de defecțiuni a fost deja transmis; îți mulțumim pentru că ne ajuți să facem &brandShortName; mai bun!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Raportează file din fundal">
+<!ENTITY tabCrashed.autoSubmit2 "Actualizează preferințele pentru a trimite în mod automat rapoarte de defecte, inclusiv rapoarte pentru file din fundal nerecuperabile din această sesiune și sesiuni viitoare">

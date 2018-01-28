@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "چھوٹا کریں">
+<!ENTITY bringAllToFront.label    "تمام سامنے لائیں">
+<!ENTITY zoomWindow.label         "زوم کریں">
+<!ENTITY windowMenu.label         "دریچہ">
+
+<!ENTITY helpMenu.label           "مدد"> 
+<!ENTITY helpMenu.accesskey       "م"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "ہدایات"> 
+<!ENTITY helpMenuWin.accesskey    "ہ">
+<!ENTITY aboutProduct2.label      "&brandShorterName; کے بارے میں">
+<!ENTITY aboutProduct2.accesskey  "ک">
+<!ENTITY productHelp2.label       "&brandShorterName; مدد">
+<!ENTITY productHelp2.accesskey   "م">
+<!ENTITY helpMac.commandkey       "؟">
+
+<!ENTITY helpKeyboardShortcuts.label     " کلیدی تختہ تیز راہیں">
+<!ENTITY helpKeyboardShortcuts.accesskey "ک">
+
+<!ENTITY helpSafeMode.label       "ایڈ اون نا اہل کر کے دوباره شروع کریں">
+<!ENTITY helpSafeMode.accesskey   "د">
+<!ENTITY helpSafeMode.stop.label       "ایڈ اون اہل کر کے دوباره شروع کریں">
+<!ENTITY helpSafeMode.stop.accesskey   "د">
+
+<!ENTITY healthReport2.label      "&brandShorterName; تندرستی رپورٹ">
+<!ENTITY healthReport2.accesskey  "ت">
+
+<!ENTITY helpTroubleshootingInfo.label      "ازالہ کاری معلومات">
+<!ENTITY helpTroubleshootingInfo.accesskey  "ا">
+
+<!ENTITY helpFeedbackPage.label      "اپنی رائے بھیجیں...">
+<!ENTITY helpFeedbackPage.accesskey  "ب">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; جائزہ">
+<!ENTITY helpShowTour2.accesskey        "ج">
+
+<!ENTITY preferencesCmdMac.label        "ترجیحات ...">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "خدمات">
+
+<!ENTITY hideThisAppCmdMac2.label       "چھپائیں &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "دیگر چھپائیں">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "تمام دکھائیں">

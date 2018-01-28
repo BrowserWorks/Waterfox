@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Поставки за врската">
+
+<!ENTITY  proxyTitle.label              "Конфигурирање на посредник за пристап на Интернет">
+<!ENTITY  noProxyTypeRadio.label        "Без посредник">
+<!ENTITY  noProxyTypeRadio.accesskey    "Б">
+<!ENTITY  systemTypeRadio.label         "Користи ги системските поставки за посредник">
+<!ENTITY  systemTypeRadio.accesskey     "и">
+<!ENTITY  WPADTypeRadio.label           "Авто-откривање на поставки за посредник за оваа мрежа">
+<!ENTITY  WPADTypeRadio.accesskey       "о">
+<!ENTITY  manualTypeRadio.label         "Рачна конфигурација на посредник:">
+<!ENTITY  manualTypeRadio.accesskey     "Р">
+<!ENTITY  autoTypeRadio.label           "URL за автоматска конфигурација на посредник:">
+<!ENTITY  autoTypeRadio.accesskey       "а">
+<!ENTITY  reload.label                  "Превчитај">
+<!ENTITY  reload.accesskey              "е">
+<!ENTITY  ftp.label                     "FTP поср.:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP поср.:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL поср.:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS домаќин:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  port.label                    "Порта:">
+<!ENTITY  HTTPport.accesskey            "П">
+<!ENTITY  SSLport.accesskey             "о">
+<!ENTITY  FTPport.accesskey             "р">
+<!ENTITY  SOCKSport.accesskey           "а">
+<!ENTITY  noproxy.label                 "Без поср. за:">
+<!ENTITY  noproxy.accesskey             "е">
+<!ENTITY  noproxyExplain.label          "Пример: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Овој сервер е за сите протоколи">
+<!ENTITY  shareproxy.accesskey          "с">
+
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.label          "Do not prompt for authentication if password is saved">
+<!ENTITY  autologinproxy.tooltip        "This option silently authenticates you to proxies when you have saved credentials for them. You will be prompted if authentication fails.">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS when using SOCKS v5">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  window.width2                 "49em">

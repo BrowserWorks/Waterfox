@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Sistema contra lo seguimiento">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Aplica siempre la función «No quiero que me sigan»">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "Quan la protección contra lo seguimiento ye activada, lo &brandShortName; ninviará un sinyal comunicando que no quiers que se te siga.">
+<!ENTITY doNotTrackLearnMore.label    "Saber-ne mas">

@@ -1,0 +1,62 @@
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Seite einrichten">
+
+<!ENTITY basic.tab           "Format &amp; Optionen">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Ausrichtung:">
+<!ENTITY portrait.label      "Hochformat">
+<!ENTITY portrait.accesskey  "H">
+<!ENTITY landscape.label     "Querformat">
+<!ENTITY landscape.accesskey "Q">
+
+<!ENTITY scale.label         "Skalierung:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Auf Seitengröße verkleinern">
+<!ENTITY shrinkToFit.accesskey "v">
+
+<!ENTITY optionsGroup.label  "Optionen">
+
+<!ENTITY printBG.label       "Hintergrund drucken (Farben und Bilder)">
+<!ENTITY printBG.accesskey   "g">
+
+<!ENTITY advanced.tab        "Ränder &amp; Kopf-/Fußzeilen">
+
+<!ENTITY marginGroup.label   "Ränder (#1)">
+<!ENTITY marginUnits.inches  "Zoll">
+<!ENTITY marginUnits.metric  "Millimeter">
+<!ENTITY marginTop.label     "Oben:">
+<!ENTITY marginTop.accesskey "O">
+<!ENTITY marginBottom.label  "Unten:">
+<!ENTITY marginBottom.accesskey "U">
+<!ENTITY marginLeft.label    "Links:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "Rechts:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "Kopf- &amp; Fußzeilen">
+
+<!ENTITY hfLeft.label        "Links:">
+<!ENTITY hfCenter.label      "Mitte:">
+<!ENTITY hfRight.label       "Rechts:">
+<!ENTITY headerLeft.tip      "Kopfzeile links">
+<!ENTITY headerCenter.tip    "Kopfzeile mittig">
+<!ENTITY headerRight.tip     "Kopfzeile rechts">
+<!ENTITY footerLeft.tip      "Fußzeile links">
+<!ENTITY footerCenter.tip    "Fußzeile mittig">
+<!ENTITY footerRight.tip     "Fußzeile rechts">
+
+<!ENTITY hfTitle             "Titel">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Datum/Uhrzeit">
+<!ENTITY hfPage              "Seite #">
+<!ENTITY hfPageAndTotal      "Seite # von #">
+<!ENTITY hfBlank             "--leer--">
+<!ENTITY hfCustom            "Benutzerdefiniert…">
+
+<!ENTITY customPrompt.title  "Benutzerdefiniert…">
+<!ENTITY customPrompt.prompt "Geben Sie Ihren benutzerdefinierten Kopf-/Fußzeilentext an">

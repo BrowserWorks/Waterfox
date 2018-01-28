@@ -1,0 +1,141 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Подаци телеметрије">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Извор података пинга:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Подаци тренутног пинга
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Архивирани подаци пинга
+">
+
+<!ENTITY aboutTelemetry.raw "
+Необрађен JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Прикажи податке сесије
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Изабери пинг:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Новији пинг
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Старији пинг &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Седмица
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Врста пинга
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Пинг
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Данас
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Јуче
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Старије
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Општи подаци
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Подаци о окружењу
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Дневник телеметрије
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Прикажи SQL упите
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Прегледач прекида везу
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Нит губи везу
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Ухваћени стекови
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Скалари
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "Кључни скалари">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Хистограми
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Кључни хистограми
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Догађаји
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Једноставна мерења
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Детаљи о додатку
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Касна писања
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Информације о сесији
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  Напона: Споро SQL решавање је укључено. SQL стрингови ће можда бити приказани испод али не могу бити послати телеметрији.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Имена Fetch функција за стекове">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Прикажи стек податке">
+
+<!ENTITY aboutTelemetry.filterText "
+  Филтрирај (стрингови или /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "ခလုတ်တန်းကို စိတ်ကြိုက် ဖန်တီးပါ">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "အချက်အလက်အားဆွဲယူခြင်းဖြင့် သုံးပြုအမြန်ဘားမှဖယ်ရှားပစ်နိင်သည်။">
+<!ENTITY show.label               "ဖေါ်ပြပါ -">
+<!ENTITY iconsAndText.label       "ပုံ​​သကေင်္တများနဲ့ စာသား">
+<!ENTITY icons.label              "ပုံ​​သကေင်္တများ">
+<!ENTITY text.label               "စာသား">
+<!ENTITY useSmallIcons.label      "ပုံ​​သကေင်္တငယ်များကို သုံးစွဲပါ">
+<!ENTITY restoreDefaultSet.label  "စံချမှတ်ချက်အတိုင်း ပြန်ထားပါ">
+<!ENTITY addNewToolbar.label      "ခလုတ်တန်းသစ် ထည့်သွင်းပါ">
+<!ENTITY saveChanges.label        "ပြီးသွားပြီ">
+<!ENTITY undoChanges.label        "ပြင်ဆင်ချက်များ ပြန်ဖြည်ပါ">

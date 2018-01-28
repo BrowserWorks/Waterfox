@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Bạn đang ở cửa sổ không phải riêng tư.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Mở một cửa sổ riêng tư">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "r">
+
+<!ENTITY privateBrowsing.title                           "Duyệt web riêng tư">
+<!ENTITY privateBrowsing.title.tracking                  "Duyệt web riêng tư với chế độ chống theo dõi">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Khi bạn duyệt web trong cửa sổ riêng tư, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "không lưu">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "trang đã vào">
+<!ENTITY aboutPrivateBrowsing.info.searches              "tìm kiếm">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tập tin tạm thời">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "sẽ lưu">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " của bạn:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "tải về">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "trang đánh dấu">
+<!ENTITY aboutPrivateBrowsing.note.before                "Duyệt web riêng tư ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "không giúp bạn ẩn danh">
+<!ENTITY aboutPrivateBrowsing.note.after                 " trên Internet. Chủ công ty hoặc nhà cung cấp Internet của bạn vẫn có thể biết những trang bạn truy cập.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Tìm hiểu thêm về ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Duyệt web riêng tư">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Chống theo dõi">
+<!ENTITY trackingProtection.description2                 "Một số trang dùng hệ thống theo dõi để có thể theo dõi hoạt động của bạn trên Internet. Với chế độ chống theo dõi của Waterfox sẽ giúp chặn hệ thống theo dõi có thể thu thập thông tin về hành vi duyệt web của bạn.">
+<!ENTITY trackingProtection.startTour1                   "Xem nó hoạt động thế nào">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Localizar nesta página">
+<!ENTITY findField.label "Procurar por:">
+<!ENTITY findField.accesskey "p">
+<!ENTITY caseSensitiveCheckbox.label "Sensível a maiúsculas/minúsculas">
+<!ENTITY caseSensitiveCheckbox.accesskey "s">
+<!ENTITY wrapCheckbox.label "Encapsular">
+<!ENTITY wrapCheckbox.accesskey "E">
+<!ENTITY findButton.label "Localizar seguinte">
+<!ENTITY findButton.accesskey "L">
+<!ENTITY cancelButton.label "Cancelar">
+<!ENTITY closeButton.label "Fechar">
+<!ENTITY up.label "Acima">
+<!ENTITY up.accesskey "c">
+<!ENTITY down.label "Abaixo">
+<!ENTITY down.accesskey "b">
+<!ENTITY direction.label "Direção">

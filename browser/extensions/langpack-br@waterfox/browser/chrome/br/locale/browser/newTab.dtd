@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Ivinell nevez">
+<!ENTITY newtab.customize.classic "Diskouez ho lec'hiennoù gwellañ">
+<!ENTITY newtab.customize.cog.enhanced "Enkorfañ al lec'hiennoù aliet">
+<!ENTITY newtab.customize.cog.title2 "REOLIADURIOÙ AN IVINELL NEVEZ">
+<!ENTITY newtab.customize.cog.learn "Deskiñ a-zivout an ivinelloù nevez">
+<!ENTITY newtab.customize.title "Personelaat ho pajenn Ivinell Nevez">
+<!ENTITY newtab.customize.blank2 "Diskouez ur bajenn wenn">
+<!ENTITY newtab.undo.removedLabel "Melvenn dilamet.">
+<!ENTITY newtab.undo.undoButton "Dizober.">
+<!ENTITY newtab.undo.restoreButton "Assav pep tra.">
+<!ENTITY newtab.undo.closeTooltip "Kuzhat">

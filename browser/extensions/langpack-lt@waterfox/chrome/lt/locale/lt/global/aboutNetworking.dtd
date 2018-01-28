@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Tinklo ryšiai">
+<!ENTITY aboutNetworking.warning               "Ši funkcija labai eksperimentinė. Nenaudokite jos be suaugusiųjų priežiūros.">
+<!ENTITY aboutNetworking.showNextTime          "Rodyti šį pranešimą kitą kartą">
+<!ENTITY aboutNetworking.ok                    "Gerai">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sujungimai">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Atnaujinti">
+<!ENTITY aboutNetworking.autoRefresh           "Automatiškai naujinti kas 3 sekundes">
+<!ENTITY aboutNetworking.hostname              "Serverio vardas">
+<!ENTITY aboutNetworking.port                  "Prievadas">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktyvus">
+<!ENTITY aboutNetworking.idle                  "Neveiksnus">
+<!ENTITY aboutNetworking.host                  "Serveris">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Išsiųsta">
+<!ENTITY aboutNetworking.received              "Gauta">
+<!ENTITY aboutNetworking.family                "Tipas">
+<!ENTITY aboutNetworking.addresses             "Addresai">
+<!ENTITY aboutNetworking.expires               "Galiojimo trukmė (sek.)">
+<!ENTITY aboutNetworking.messagesSent          "Išsiųsta pranešimų">
+<!ENTITY aboutNetworking.messagesReceived      "Gauta pranešimų">
+<!ENTITY aboutNetworking.bytesSent             "Išsiųsta baitų">
+<!ENTITY aboutNetworking.bytesReceived         "Gauta baitų">
+<!ENTITY aboutNetworking.logging               "Žurnalizavimas">
+<!ENTITY aboutNetworking.logTutorial           "Paskaitykite apie <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP žurnalizavimą</a> norėdami gauti instrukcijų kaip naudotis šiuo įrankiu.">
+<!ENTITY aboutNetworking.currentLogFile        "Dabartinis žurnalo failas:">
+<!ENTITY aboutNetworking.currentLogModules     "Dabartiniai žurnalo moduliai:">
+<!ENTITY aboutNetworking.setLogFile            "Parinkti žurnalo failą">
+<!ENTITY aboutNetworking.setLogModules         "Parinkti žurnalo modulius">
+<!ENTITY aboutNetworking.startLogging          "Pradėti žurnalizavimą">
+<!ENTITY aboutNetworking.stopLogging           "Baigti žurnalizavimą">
+<!ENTITY aboutNetworking.dnsLookup             "DNS paieška">
+<!ENTITY aboutNetworking.dnsLookupButton       "Nustatyti">
+<!ENTITY aboutNetworking.dnsDomain             "Sritis">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP adresai">
+<!ENTITY aboutNetworking.rcwn                  "RCWN statistika">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN būsena">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Podėlio laimėjimų kiekis">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Tinklo laimėjimų kiekis">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Bendras tinklo užklausų kiekis">
+<!ENTITY aboutNetworking.rcwnOperation         "Podėlio operacija">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Atvėrimas">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Skaitymas">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Rašymas">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Įrašo atvėrimas">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Trumpas vidurkis">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Ilgas vidurkis">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Ilgas standartinis nuokrypis">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Podėlio lėto kiekis">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Podėlio ne lėto kiekis">

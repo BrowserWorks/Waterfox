@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Звіти про збої">
+<!ENTITY crashesUnsubmitted.label   "Не надіслані звіти про збої">
+<!ENTITY crashesSubmitted.label     "Надіслані звіти про збої">
+<!ENTITY id.heading                 "ID звіту">
+<!ENTITY dateCrashed.heading        "Дата збою">
+<!ENTITY dateSubmitted.heading      "Дата надсилання">
+<!ENTITY noReports.label            "Жодних звітів про збої не надсилалось.">
+<!ENTITY noConfig.label             "Ця програма не була налаштована для показу звітів про збої. Повинно бути встановлено налаштування <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Вилучити всі звіти">

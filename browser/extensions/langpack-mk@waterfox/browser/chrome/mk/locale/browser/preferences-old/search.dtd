@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Основен пребарувач">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Изберете го Вашиот основен пребарувач. &brandShortName; го користи во адресната лента, лентата за пребарување и на почетната страница.">
+
+<!ENTITY provideSearchSuggestions.label        "Прикажувај предлог-пребарувања">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Прикажувај предлог-пребарувања во резултатите во адресната лента">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Предлог-пребарувањата нема да се прикажуваат во резултатите во адресната лента бидејќи &brandShortName; е прилагоден никогаш да не ја снима историјата на прелистување.">
+
+<!ENTITY oneClickSearchEngines.label           "Пребарувачи на еден клик">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Лентата за пребарување Ви овозможува директно пребарување со различни пребарувачи. Изберете кои да се прикажуваат.">
+
+<!ENTITY engineNameColumn.label                "Пребарувач">
+<!ENTITY engineKeywordColumn.label             "Клучен збор">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Врати ги основните пербарувачи">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "Избриши">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines.label            "Додајте уште пребарувачи …">

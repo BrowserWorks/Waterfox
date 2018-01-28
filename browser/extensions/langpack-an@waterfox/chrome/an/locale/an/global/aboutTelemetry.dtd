@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Datos de telemetría">
+
+<!ENTITY aboutTelemetry.pingDataSource "Fuent de datos de ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Datos actuals de ping">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Datos de ping archivaus">
+
+<!ENTITY aboutTelemetry.raw "JSON crudo">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Amostrar datos d'a subsession">
+
+<!ENTITY aboutTelemetry.choosePing "Trigar ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nunca fer ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping mas viello &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Semana">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Datos chenerals">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Datos d'o entorno">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Rechistro de telemetría">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Consultas SQL lentas">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Penchadas d'o navegador">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Penchadas de filos">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Pilas capturadas">
+
+<!ENTITY aboutTelemetry.scalarsSection "Escalars">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Escalars con clau">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramas">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Datos chenerals">
+
+<!ENTITY aboutTelemetry.eventsSection "  Eventos">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Midas simples">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Detalles d'o complemento">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Escrituras rezagadas">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Información d'a sesión">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  AVISO: A depuración de consultas SQL lentas ye activada. Talment as cadenas SQL completas se amuestren abaixo, pero no se ninviarán ta Telemetría.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Pillar los nombres d'as funcions d'as pilas">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Amostrar datos crudos d'a pila">
+
+<!ENTITY aboutTelemetry.filterText "  Filtrar (cadenas u /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Payload">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

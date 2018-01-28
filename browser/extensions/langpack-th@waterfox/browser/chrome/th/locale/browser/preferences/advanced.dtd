@@ -1,0 +1,159 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "ทั่วไป">
+
+<!ENTITY useCursorNavigation.label       "ใช้ปุ่มลูกศรเพื่อนำทางภายในหน้าเสมอ">
+<!ENTITY useCursorNavigation.accesskey   "ก">
+<!ENTITY searchOnStartTyping.label       "ค้นหาข้อความเมื่อคุณเริ่มพิมพ์">
+<!ENTITY searchOnStartTyping.accesskey   "ว">
+<!ENTITY useOnScreenKeyboard.label       "แสดงแป้นพิมพ์แบบสัมผัสเมื่อจำเป็น">
+<!ENTITY useOnScreenKeyboard.accesskey   "ผ">
+
+<!ENTITY browsing.label                  "การท่องเว็บ">
+
+<!ENTITY useAutoScroll.label             "ใช้การเลื่อนหน้าอัตโนมัติ">
+<!ENTITY useAutoScroll.accesskey         "ช">
+<!ENTITY useSmoothScrolling.label        "ใช้การเลื่อนหน้าแบบลื่นไหล">
+<!ENTITY useSmoothScrolling.accesskey    "ก">
+<!ENTITY checkUserSpelling.label         "ตรวจสอบการสะกดคำของคุณเมื่อคุณพิมพ์">
+<!ENTITY checkUserSpelling.accesskey     "จ">
+
+<!ENTITY dataChoicesTab.label            "ตัวเลือกข้อมูล">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY enableHealthReport1.label       "อนุญาตให้ &brandShortName; ส่งข้อมูลทางเทคนิคและการโต้ตอบไปยัง Mozilla โดยอัตโนมัติ">
+<!ENTITY healthReportLearnMore.label     "เรียนรู้เพิ่มเติม">
+
+<!ENTITY dataCollection.label            "การเก็บรวบรวมและใช้ข้อมูล &brandShortName;">
+<!ENTITY dataCollectionPrivacyNotice.label    "ประกาศความเป็นส่วนตัว">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "อนุญาตให้ &brandShortName; ส่งรายงานข้อขัดข้องไปยัง Mozilla">
+<!ENTITY crashReporterLearnMore.label    "เรียนรู้เพิ่มเติม">
+
+<!ENTITY networkTab.label                "เครือข่าย">
+
+<!ENTITY networkProxy.label              "พร็อกซีเครือข่าย">
+
+<!ENTITY connectionDesc.label            "กำหนดค่าวิธีที่ &brandShortName; เชื่อมต่อกับอินเทอร์เน็ต">
+<!ENTITY connectionSettings.label        "การตั้งค่า…">
+<!ENTITY connectionSettings.accesskey    "ต">
+
+<!ENTITY httpCache.label                 "เนื้อหาเว็บที่ถูกแคชไว้">
+
+<!ENTITY offlineStorage2.label           "เนื้อหาเว็บออฟไลน์และข้อมูลผู้ใช้">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "ข้อมูลไซต์">
+<!ENTITY clearSiteData.label             "ล้างข้อมูลทั้งหมด">
+<!ENTITY clearSiteData.accesskey         "ง">
+<!ENTITY siteDataSettings.label          "การตั้งค่า…">
+<!ENTITY siteDataSettings.accesskey      "ต">
+<!ENTITY siteDataLearnMoreLink.label     "เรียนรู้เพิ่มเติม">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "จำกัดแคชไว้ที่">
+<!ENTITY limitCacheSizeBefore.accesskey  "ว">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "ล้างตอนนี้">
+<!ENTITY clearCacheNow.accesskey         "ล">
+<!ENTITY clearOfflineAppCacheNow.label   "ล้างตอนนี้">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ล">
+<!ENTITY overrideSmartCacheSize.label    "เขียนทับการจัดการแคชอัตโนมัติ">
+<!ENTITY overrideSmartCacheSize.accesskey "ข">
+
+<!ENTITY updateTab.label                 "อัปเดต">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "อัปเดต &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "รุ่น ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "อนุญาตให้ &brandShortName;">
+<!ENTITY updateAuto3.label               "ติดตั้งการอัปเดตโดยอัตโนมัติ (แนะนำ)">
+<!ENTITY updateAuto3.accesskey           "ด">
+<!ENTITY updateCheckChoose2.label        "ตรวจสอบการอัปเดตแต่ให้คุณเลือกว่าจะติดตั้งหรือไม่">
+<!ENTITY updateCheckChoose2.accesskey    "ว">
+<!ENTITY updateManual2.label             "ไม่ตรวจสอบการอัปเดตเสมอ (ไม่แนะนำ)">
+<!ENTITY updateManual2.accesskey         "ม">
+
+<!ENTITY updateHistory2.label            "แสดงประวัติการอัปเดต…">
+<!ENTITY updateHistory2.accesskey        "ส">
+
+<!ENTITY useService.label                "ใช้บริการเบื้องหลังเพื่อติดตั้งการอัปเดต">
+<!ENTITY useService.accesskey            "ช">
+
+<!ENTITY enableSearchUpdate2.label       "อัปเดตเครื่องมือค้นหาโดยอัตโนมัติ">
+<!ENTITY enableSearchUpdate2.accesskey   "อ">
+
+<!ENTITY offlineStorageNotify.label               "แจ้งคุณเมื่อเว็บไซต์ขอจัดเก็บข้อมูลสำหรับใช้งานออฟไลน์">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "ข้อยกเว้น…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "เว็บไซต์ดังต่อไปนี้ได้รับอนุญาตให้จัดเก็บข้อมูลสำหรับใช้งานออฟไลน์:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "เอาออก…">
+<!ENTITY offlineAppsListRemove.accesskey "อ">
+<!ENTITY offlineAppRemove.confirm        "เอาข้อมูลออฟไลน์ออก">
+
+<!ENTITY certificateTab.label            "ใบรับรอง">
+<!ENTITY certPersonal2.description       "เมื่อเซิร์ฟเวอร์ร้องขอใบรับรองส่วนบุคคลของคุณ">
+<!ENTITY selectCerts.auto                "เลือกมาหนึ่งโดยอัตโนมัติ">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "ถามคุณทุกครั้ง">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "สืบค้นเซิร์ฟเวอร์ตอบกลับ OCSP เพื่อยืนยันความถูกต้องของใบรับรองปัจจุบัน">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "ดูใบรับรอง…">
+<!ENTITY viewSecurityDevices2.label      "อุปกรณ์ความปลอดภัย…">
+
+<!ENTITY performance.label               "ประสิทธิภาพ">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "ใช้การตั้งค่าประสิทธิภาพที่แนะนำ">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "การตั้งค่าเหล่านี้ถูกปรับให้เหมาะเข้ากับฮาร์ดแวร์และระบบปฏิบัติการของคุณ">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "ภ">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "เรียนรู้เพิ่มเติม">
+<!ENTITY limitContentProcessOption.label "ขีดจำกัดโปรเซสเนื้อหา">
+<!ENTITY limitContentProcessOption.description
+                                         "โปรเซสเนื้อหาที่เพิ่มขึ้นสามารถปรับปรุงประสิทธิภาพเมื่อใช้หลายแท็บ แต่จะใช้หน่วยความจำมากขึ้นเช่นกัน">
+<!ENTITY limitContentProcessOption.accesskey   "ข">
+<!ENTITY allowHWAccel.label              "ใช้การเร่งความเร็วด้วยฮาร์ดแวร์เมื่อใช้งานได้">
+<!ENTITY allowHWAccel.accesskey          "ง">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+

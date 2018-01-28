@@ -1,0 +1,5 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY xml.nostylesheet "XML 파일에 형식 정보는 표시되지 않습니다. 문서 구조는 아래와 같습니다.">

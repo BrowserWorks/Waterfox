@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Pridėti naują sudėtinį rodinį">
+<!ENTITY addButton.accesskey  "P">
+<!ENTITY preferencesButton.label "Nuostatos">
+<!ENTITY removeButton.label   "Pašalinti">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Grįžti">
+
+<!ENTITY window.title         "Pridėti naują sudėtinį rodinį">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Pavadinimas:">
+<!ENTITY name.accesskey       "v">
+<!ENTITY name.placeholder     "Įveskite sudėtinio rodinio pavadinimą">
+<!ENTITY icon.label           "Piktograma:">
+<!ENTITY icon.accesskey       "i">
+<!ENTITY color.label          "Spalva:">
+<!ENTITY color.accesskey      "S">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Atlikta">
+<!ENTITY button.ok.accesskey  "A">
+

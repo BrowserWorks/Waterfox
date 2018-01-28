@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Novo separador">
+<!ENTITY newtab.customize.classic "Mostrar os seus sites mais visitados">
+<!ENTITY newtab.customize.cog.enhanced "Incluir sites sugeridos">
+<!ENTITY newtab.customize.cog.title2 "CONTROLOS DE NOVO SEPARADOR">
+<!ENTITY newtab.customize.cog.learn "Saber acerca do novo separador">
+<!ENTITY newtab.customize.title "Personalizar a sua página de novo separador">
+<!ENTITY newtab.customize.blank2 "Mostrar página vazia">
+<!ENTITY newtab.undo.removedLabel "Miniatura removida.">
+<!ENTITY newtab.undo.undoButton "Desfazer.">
+<!ENTITY newtab.undo.restoreButton "Restaurar tudo.">
+<!ENTITY newtab.undo.closeTooltip "Ocultar">

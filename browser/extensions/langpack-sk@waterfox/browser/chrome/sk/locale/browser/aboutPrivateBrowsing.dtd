@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Práve nie ste v režime Súkromné prehliadanie">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Otvoriť Súkromné okno">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "S">
+
+<!ENTITY privateBrowsing.title                           "Súkromné prehliadanie">
+<!ENTITY privateBrowsing.title.tracking                  "Súkromné prehliadanie s Ochranou pred sledovaním">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Pri prehliadaní v Súkromnom okne Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "neukladá">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "navštívené stránky">
+<!ENTITY aboutPrivateBrowsing.info.searches              "vyhľadávania">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "súbory cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "dočasné súbory">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "bude ukladať">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " vaše:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "prevzaté súbory">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "záložky">
+<!ENTITY aboutPrivateBrowsing.note.before                "Režim Súkromné prehliadanie ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "vás neanonymizuje">
+<!ENTITY aboutPrivateBrowsing.note.after                 " na internete. Váš zamestnávateľ alebo poskytovateľ internetového pripojenia môžu stále zistiť, aké stránky ste navštívili.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Ďalšie informácie o ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "režime Súkromné prehliadanie">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Ochrana pred sledovaním">
+<!ENTITY trackingProtection.description2                 "Niektoré webové stránky používajú sledovacie prvky, ktoré monitorujú vašu aktivitu na internete. S Ochranou pred sledovaním Waterfox zablokuje veľké množstvo týchto sledovacích prvkov.">
+<!ENTITY trackingProtection.startTour1                   "Pozrite sa ako to funguje">

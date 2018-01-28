@@ -1,0 +1,277 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "ആഡ്-ഓണ്‍ മാനേജര്‍">
+
+<!ENTITY search.placeholder                   "എല്ലാ ആഡ്-ഓണുകളും തെരയുക">
+<!ENTITY search.buttonlabel                   "തെരയുക">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "ലഭ്യമാക്കുന്നു…">
+<!ENTITY listEmpty.installed.label            "ഈ രീതിയിലുള്ള ആഡ്-ഓണുകള്‍ നിങ്ങള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്തിട്ടില്ല">
+<!ENTITY listEmpty.availableUpdates.label     "പരിഷ്കരണങ്ങള്‍ ലഭ്യമല്ല">
+<!ENTITY listEmpty.recentUpdates.label        "അടുത്തിടയ്ക്കു് ആഡ്-ഓണുകള്‍ പരിഷ്കരിച്ചിട്ടില്ല">
+<!ENTITY listEmpty.findUpdates.label          "പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിയ്ക്കുക">
+<!ENTITY listEmpty.search.label               "ചേരുന്ന ആഡ്-ഓണുകള്‍ ലഭ്യമായില്ല">
+<!ENTITY listEmpty.button.label               "ആഡ്-ഓണുകളെപ്പറ്റി കൂടുതല്‍ അറിയുക">
+<!ENTITY installAddonFromFile.label           "ഫയലില്‍ നിന്നും ആഡ്-ഓണ്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുക…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "എല്ലാ ആഡ്-ഓണുകള്‍ക്കുമുള്ള പ്രയോഗങ്ങള്‍">
+
+
+
+<!ENTITY cmd.back.tooltip                     "ഒരു താള്‍ പുറകോട്ട് പോകുക">
+<!ENTITY cmd.forward.tooltip                  "ഒരു താള്‍ മുമ്പോട്ട് പോകുക">
+
+<!ENTITY showUnsignedExtensions.button.label  "ചില എക്റ്റെന്‍ഷനുകള്‍ പരിശോധിക്കാന്‍ പറ്റുന്നില്ല">
+<!ENTITY showAllExtensions.button.label       "എല്ലാ എക്സ്റ്റെന്‍ഷനും കാണിക്കുക">
+
+
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "എല്ലാ ആഡ്-ഓണുകളും സേഫ് മോഡില്‍ പ്രവര്‍ത്തന രഹിതമാക്കിയിരിയ്ക്കുന്നു.">
+<!ENTITY warning.checkcompatibility.label          "ആഡ്-ഓണ്‍ പൊരുത്തം പരിശോധന പ്രവര്‍ത്തന രഹിതമാക്കിയിരിയ്ക്കുന്നു. പൊരുത്തപ്പെടാത്ത ആഡ്-ഓണുകളുണ്ടാവാം.">
+<!ENTITY warning.checkcompatibility.enable.label   "പ്രവര്‍ത്തന സജ്ജം">
+<!ENTITY warning.checkcompatibility.enable.tooltip "ആഡ്-ഓണ്‍ പൊരുത്തം പരിശോധന പ്രവര്‍ത്തന സജ്ജമാക്കുക">
+<!ENTITY warning.updatesecurity.label              "ആഡ്-ഓണ്‍ പരിഷ്കരണ സുരക്ഷാ പരിശോധന പ്രവര്‍ത്തന രഹിതമാക്കിയിരിയ്ക്കുന്നു. ഉചിതമായ പരിഷ്കരണങ്ങള്‍ ലഭ്യമായില്ല.">
+<!ENTITY warning.updatesecurity.enable.label       "പ്രവര്‍ത്തന സജ്ജം">
+<!ENTITY warning.updatesecurity.enable.tooltip     "ആഡ്-ഓണ്‍ പരിഷ്കരണ സുരക്ഷാ പരിശോധന പ്രവര്‍ത്തന സജ്ജമാക്കുക">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "തെരയുക">
+<!ENTITY view.discover.label                  "ആഡ്-ഓണുകള്‍ ലഭ്യമാകുക">
+<!ENTITY view.recentUpdates.label             "ഏറ്റവും പുതിയ പരിഷ്കരണങ്ങള്‍">
+<!ENTITY view.availableUpdates.label          "ലഭ്യമായ പരിഷ്കരണങ്ങള്‍">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിയ്ക്കുക">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "ഏറ്റവും പുതിയ പരിഷ്കരങ്ങള്‍ കാണുക">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "ഓട്ടോമാറ്റിക്കായി ആഡ്-ഓണുകള്‍ പരിഷ്കരിയ്ക്കുക">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "ഓട്ടോമാറ്റിക്കായി പരിഷ്കരിയ്ക്കുന്നതിനു് എല്ലാ ആഡ്-ഓണുകളും വീണ്ടും സജ്ജമാക്കുക">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "മാനുവലായി പരിഷ്കരിയ്ക്കുന്നതിനായി എല്ലാ ആഡ്-ഓണുകളും വീണ്ടും സജ്ജമാക്കുക">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "ആഡ്-ഓണുകള്‍ പരിഷ്കരിയ്ക്കുന്നു">
+<!ENTITY updates.installed.label              "നിങ്ങളുടെ ആഡ്-ഓണുകള്‍ പരിഷ്കരിച്ചിരിയ്ക്കുന്നു.">
+<!ENTITY updates.downloaded.label             "നിങ്ങളുടെ ആഡ്-ഓണുകള്‍ക്കുള്ള പരിഷ്കരണം ഡൌണ്‍ലോഡ് ചെയ്തിരിയ്ക്കുന്നു.">
+<!ENTITY updates.restart.label                "ഇന്‍സ്റ്റലേഷന്‍ പൂര്‍ത്തിയാക്കുന്നതിനായി വീണ്ടും ആരംഭിയ്ക്കുക">
+<!ENTITY updates.noneFound.label              "പരിഷ്കരണങ്ങള്‍ ലഭ്യമല്ല">
+<!ENTITY updates.manualUpdatesFound.label     "ലഭ്യമായ പരിഷ്കരണങ്ങള്‍ കാണുക">
+<!ENTITY updates.updateSelected.label         "പരിഷ്കരണങ്ങള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY updates.updateSelected.tooltip       "പട്ടികയില്‍ ലഭ്യമായ പരിഷ്കരണങ്ങള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "കൂടുതല്‍ വിവരങ്ങള്‍ കാണിയ്ക്കുക">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "പരിഷ്കരണങ്ങള്‍ കണ്ടെത്തുക">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "ഐച്ഛികങ്ങള്‍">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "മുന്‍ഗണനകള്‍">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "സംബന്ധിച്ചു്">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "പ്രവര്‍ത്തന സജ്ജം">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "പ്രവര്‍ത്തന രഹിതം">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "ഥീം സ്വീകരിയ്ക്കുക">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "ഥീം ഉപയോഗം നിര്‍ത്തുക">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "സജീവമാക്കുവാന്‍ ആവശ്യപ്പെടുക">
+<!ENTITY cmd.askToActivate.tooltip            "ഓരോ തവണയും ഈ ആഡ്-ഓണ്‍ ചേര്‍ക്കുവാന്‍ ആവശ്യപ്പെടുക">
+<!ENTITY cmd.alwaysActivate.label             "എപ്പോഴും സജീവം">
+<!ENTITY cmd.alwaysActivate.tooltip           "എപ്പോഴും ഈ ആഡ്-ഓണ്‍ ഉപയോഗിയ്ക്കുക">
+<!ENTITY cmd.neverActivate.label              "ഒരിയ്ക്കലും സജീവമാക്കരുതു്">
+<!ENTITY cmd.neverActivate.tooltip            "ഒരിയ്ക്കലും ഈ ആഡ്-ഓണ്‍ ഉപയോഗിയ്ക്കരുതു്">
+<!ENTITY cmd.stateMenu.tooltip                "ഈ ആഡ്-ഓണുകള്‍ പ്രവര്‍ത്തിയ്ക്കുമ്പോള്‍ മാറ്റുക">
+<!ENTITY cmd.installAddon.label               "ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "നീക്കം ചെയ്യുക">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "ഐച്ഛികങ്ങള്‍">
+<!ENTITY cmd.showPreferencesWin.tooltip       "ഈ ആഡ്-ഓണിനുള്ള ഐച്ഛികങ്ങള്‍ മാറ്റുക">
+<!ENTITY cmd.showPreferencesUnix.label        "മുന്‍ഗണനകള്‍">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "ഈ ആഡ്-ഓണിനുള്ള മുന്‍ഗണനകള്‍ മാറ്റുക">
+<!ENTITY cmd.contribute.label                 "സംഭാവന ചെയ്യുക">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "ഈ ആഡ്-ഓണിന്റെ പുരോഗതിയ്ക്കായി സംഭാവന ചെയ്യുക">
+
+<!ENTITY cmd.showReleaseNotes.label           "പ്രകാശനക്കുറിപ്പുകള്‍ കാണിയ്ക്കുക">
+<!ENTITY cmd.showReleaseNotes.tooltip         "ഈ പരിഷ്കരണത്തിനുള്ള പ്രകാശനക്കുറിപ്പുകള്‍ കാണിയ്ക്കുക">
+<!ENTITY cmd.hideReleaseNotes.label           "പ്രകാശനക്കുറിപ്പുകള്‍ അദൃശ്യമാക്കുക">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "ഈ പരിഷ്കരണത്തിനുള്ള പ്രകാശനക്കുറിപ്പുകള്‍ അദൃശ്യമാക്കുക">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "എന്താണു് ആഡ്-ഓണുകള്‍?">
+<!ENTITY discover.description2                "നിങ്ങളുടെ ഇഷ്ടാനുസൃതം &brandShortName; -നു് കൂടുതല്‍ പ്രവര്‍ത്തനശേഷിയും ശൈലിയും ലഭ്യമാക്കുന്ന പ്രയോഗങ്ങളാണു് ആഡ്-ഓണുകള്‍. &brandShortName; നിങ്ങളുടെ ഇഷ്ടമുള്ളത് പോലെ ആക്കാന്‍ ഒരു കാലാവസ്ഥാ അറിയിപ്പോ, തീം മാറ്റുകയോ ചെയ്ത് നോക്കു.">
+<!ENTITY discover.footer                      "ഇന്റര്‍നെറ്റ് കണക്ഷനുള്ളപ്പോള്‍, ഈ പെയിനില്‍ ഏറ്റവും  ഉത്തമമായ ആഡ്-ഓണുകള്‍ നിങ്ങള്‍ക്കു് കാണാം.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "പതിപ്പു്">
+<!ENTITY detail.lastupdated.label             "ഏറ്റവും ഒടുവില്‍ പുതുക്കിയതു്">
+<!ENTITY detail.creator.label                 "ഡവലപ്പര്‍">
+<!ENTITY detail.homepage.label                "ആസ്ഥാനതാള്‍">
+<!ENTITY detail.numberOfDownloads.label       "ഡൌണ്‍ലോഡുകള്‍">
+
+<!ENTITY detail.contributions.description     "ചെറിയ സംഭാവനകള്‍ നല്‍കി ഈ ആഡ്-ഓണിനുള്ള പുരോഗമനത്തിനായി സഹായിയ്ക്കുവാന്‍ ഡവലപ്പര്‍ അഭ്യര്‍ത്ഥിയ്ക്കുന്നു.">
+
+<!ENTITY detail.updateType                    "ഓട്ടോമാറ്റിക്ക് പരിഷ്കരണങ്ങള്‍">
+<!ENTITY detail.updateDefault.label           "സ്വതവേ">
+<!ENTITY detail.updateDefault.tooltip         "സ്വതവേയുള്ളതാണെങ്കില്‍ മാത്രം പരിഷ്കരണങ്ങള്‍ ഓട്ടോമാറ്റിക്കായി ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY detail.updateAutomatic.label         "ഓണ്‍">
+<!ENTITY detail.updateAutomatic.tooltip       "പരിഷ്കരണങ്ങള്‍ ഓട്ടോമാറ്റിക്കായി ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY detail.updateManual.label            "ഓഫ്">
+<!ENTITY detail.updateManual.tooltip          "പരിഷ്കരണങ്ങള്‍ ഓട്ടോമാറ്റിക്കായി ഇന്‍സ്റ്റോള്‍ ചെയ്യരുതു്">
+<!ENTITY detail.home                          "ആസ്ഥാനതാള്‍">
+<!ENTITY detail.repository                    "ആഡ്-ഓണ്‍ പ്രൊഫൈല്‍">
+<!ENTITY detail.size                          "വ്യാപ്തി">
+
+<!ENTITY detail.checkForUpdates.label         "പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിയ്ക്കുക">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "ഈ ആഡ്-ഓണിനുള്ള പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിയ്ക്കുക">
+<!ENTITY detail.showPreferencesWin.label      "ഐച്ഛികങ്ങള്‍">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "ഈ ആഡ്-ഓണിനുള്ള ഐച്ഛികങ്ങള്‍ മാറ്റുക">
+<!ENTITY detail.showPreferencesUnix.label     "മുന്‍ഗണനകള്‍">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "ഈ ആഡ്-ഓണിനുള്ള മുന്‍ഗണനകള്‍ മാറ്റുക">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "റേറ്റിങ്">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "തല്‍ക്കാലത്തേക്കു് നിര്‍ത്തുക">
+<!ENTITY progress.cancel.tooltip              "റദ്ദാക്കുക">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "പേരു്">
+<!ENTITY sort.name.tooltip                    "പേരു് അനുസരിച്ചു് ക്രമത്തിലാക്കുക">
+<!ENTITY sort.dateUpdated.label               "ഏറ്റവും ഒടുവില്‍ പരിഷ്കരിച്ചതു്">
+<!ENTITY sort.dateUpdated.tooltip             "പരിഷ്കരിച്ച തീയതി അനുസരിച്ചു് ക്രമത്തിലാക്കുക">
+<!ENTITY sort.relevance.label                 "ഏറ്റവും കൂടുതല്‍ പൊരുത്തം">
+<!ENTITY sort.relevance.tooltip               "പ്രാധാന്യം അനുസരിച്ചു് ക്രമത്തിലാക്കുക">
+<!ENTITY sort.price.label                     "വില">
+<!ENTITY sort.price.tooltip                   "വില അനുസരിച്ചു് ക്രമത്തിലാക്കുക">
+
+<!ENTITY search.filter2.label                 "തെരയുക:">
+<!ENTITY search.filter2.installed.label       "സ്വന്തം ആഡ്-ഓണുകള്‍">
+<!ENTITY search.filter2.installed.tooltip     "ഇന്‍സ്റ്റോള്‍ ചെയ്ത ആഡ്-ഓണുകള്‍ കാണിയ്ക്കുക">
+<!ENTITY search.filter2.available.label       "ലഭ്യമായ ആഡ്-ഓണുകള്‍">
+<!ENTITY search.filter2.available.tooltip     "ഇന്‍സ്റ്റോള്‍ ചെയ്യുവാന്‍ ലഭ്യമായ ആഡ്-ഓണുകള്‍ കാണിയ്ക്കുക">
+
+<!ENTITY addon.homepage                       "ആസ്ഥാന താള്‍">
+<!ENTITY addon.details.label                  "കൂടുതല്‍">
+<!ENTITY addon.details.tooltip                "ഈ ആഡ്-ഓണ്‍ സംബന്ധിച്ചു് കൂടുതല്‍ വിവരങ്ങള്‍ കാണിയ്ക്കുക">
+<!ENTITY addon.unknownDate                    "അപരിചിതം">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(പ്രവര്‍ത്തന രഹിതം)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "പരിഷ്കരിയ്ക്കുക">
+<!ENTITY addon.undoAction.label               "വേണ്ട">
+<!ENTITY addon.undoAction.tooltip             "ഈ പ്രവര്‍ത്തി ആവശ്യമില്ല">
+<!ENTITY addon.undoRemove.label               "വേണ്ട">
+<!ENTITY addon.undoRemove.tooltip             "ഈ ആഡ്-ഓണ്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്തു് സൂക്ഷിയ്ക്കുക">
+<!ENTITY addon.restartNow.label               "ഉടന്‍ വീണ്ടും ആരംഭിയ്ക്കുക">
+<!ENTITY addon.install.label                  "ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY addon.install.tooltip                "ആ ആഡ്-ഓണ്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY addon.updateNow.label                "ഉടന്‍ പരിഷ്കരിയ്ക്കുക">
+<!ENTITY addon.updateNow.tooltip              "ഈ ആഡ്-ഓണിനുള്ള പരിഷ്കരണം ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY addon.includeUpdate.label            "പരിഷ്കരണത്തില്‍ ഉള്‍പ്പെടുത്തുക">
+<!ENTITY addon.updateAvailable.label          "ഒരു പരിഷ്കരണം ലഭ്യമാണു്">
+<!ENTITY addon.checkingForUpdates.label       "പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിയ്ക്കുന്നു…">
+<!ENTITY addon.releaseNotes.label             "പ്രകാശനക്കുറിപ്പുകള്‍:">
+<!ENTITY addon.loadingReleaseNotes.label      "ലഭ്യമാക്കുക…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "ക്ഷമിയ്ക്കുക, പ്രകാശനക്കുറിപ്പുകള്‍ ലഭ്യമാക്കുന്നതില്‍ പിശക്.">
+
+
+<!ENTITY eula.title                           "ഉപയോക്താവിനുള്ള ലൈസന്‍സ് എഗ്രീമെന്റ്">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "സ്വീകരിച്ചു് ഇന്‍സ്റ്റോള്‍ ചെയ്യുക…">
+
+<!ENTITY settings.path.button.label           "പരതുക…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "എന്താണിതു്? ഓരോ സമയത്തു് ടെലിമെട്രി ഇന്‍സ്റ്റോള്‍ ചെയ്തു് പരീക്ഷണങ്ങള്‍ പ്രവര്‍ത്തിയ്ക്കുന്നു.">
+<!ENTITY experiment.info.learnmore "കൂടുതല്‍ അറിയുക">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "ടെലിമെട്രി സജ്ജീകരണങ്ങള്‍">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "കൂടുതല്‍ അറിയുക…">
+
+<!ENTITY disabledUnsigned.heading "ചില ആഡോണുകള്‍ പ്രവര്‍ത്തനരഹിതമാക്കി">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "ഈ ആഡോണുകൾ &brandShortName; ൽ ഉപയോഗിക്കാമെന്ന് ഇതുവരെ ഉറപ്പുവരുത്തിയിട്ടില്ല. നിങ്ങൾക്ക് ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "പകരം വെക്കാനാവുന്നവ കണ്ടെത്താം">
+<!ENTITY disabledUnsigned.description.end " അല്ലെങ്കിൽ ഡെവലപ്പറോട് അവ വെരിഫൈ ചെയ്യാൻ ആവശ്യപ്പെടാം.">
+<!ENTITY disabledUnsigned.learnMore "ഓൺലൈനിൽ താങ്കൾ കൂടുതൽ സുരക്ഷിതനായിരിക്കാൻ സഹായിക്കുന്നതിനായുള്ള ഞങ്ങളുടെ ശ്രമങ്ങളെക്കുറിച്ച് കൂടുതൽ മനസിലാക്കുക.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "തങ്ങളുടെ ആഡോണുകൾ വെരിഫൈ ചെയ്യുന്നതിൽ തല്പരരായ ഡെവലപ്പർമാർക്ക് ഞങ്ങളുടെ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "മാന്വൽ വായിക്കുന്നത് തുടരാവുന്നതാണ്">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+
+
+
+
+
+
+
+<!ENTITY addon.createdBy.label                "By ">
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY debugAddons.accesskey                "B">
+
+<!ENTITY debugAddons.label                    "Debug Add-ons">
+<!ENTITY getThemes.description                "Looking to personalize your browser?">
+<!ENTITY getThemes.learnMore                  "Choose from thousands of themes.">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">
+<!ENTITY pluginDeprecation.description "Missing something? Some plugins are no longer supported by &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Learn More.">
+

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "छपाईयंत्राचे गुणधर्म">
+
+<!ENTITY paperInput.label "पृष्ठाचे आकार:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "कार्य शीर्षक:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "रंग:">
+<!ENTITY grayRadio.label "ग्रेस्केल">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "रंग">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "पेपरच्या टोकापासून समासपर्यंतचे अंतर">
+<!ENTITY topInput.label "शीर्ष:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "तळ:">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "डावा:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "उजवा:">
+<!ENTITY rightInput.accesskey "R">

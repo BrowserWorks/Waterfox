@@ -1,0 +1,14 @@
+locale alerts zh-TW zh-TW/locale/zh-TW/alerts/
+locale autoconfig zh-TW zh-TW/locale/zh-TW/autoconfig/
+locale global zh-TW zh-TW/locale/zh-TW/global/
+locale global-platform zh-TW zh-TW/locale/zh-TW/global-platform/mac/ os=Darwin
+locale global-platform zh-TW zh-TW/locale/zh-TW/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform zh-TW zh-TW/locale/zh-TW/global-platform/win/ os=WINNT
+locale mozapps zh-TW zh-TW/locale/zh-TW/mozapps/
+locale necko zh-TW zh-TW/locale/zh-TW/necko/
+locale passwordmgr zh-TW zh-TW/locale/zh-TW/passwordmgr/
+locale pipnss zh-TW zh-TW/locale/zh-TW/pipnss/
+locale pippki zh-TW zh-TW/locale/zh-TW/pippki/
+locale places zh-TW zh-TW/locale/zh-TW/places/
+locale pluginproblem zh-TW zh-TW/locale/zh-TW/pluginproblem/
+locale weave zh-TW zh-TW/locale/zh-TW/services/

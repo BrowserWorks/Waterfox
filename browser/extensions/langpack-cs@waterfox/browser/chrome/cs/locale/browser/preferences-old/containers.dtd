@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Přidat kontejner">
+<!ENTITY addButton.accesskey  "a">
+<!ENTITY preferencesButton.label "Předvolby">
+<!ENTITY removeButton.label   "Odebrat">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Zpět na nastavení Soukromí">
+
+<!ENTITY window.title         "Přidat kontejner">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Název:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Zadejte název kontejneru">
+<!ENTITY icon.label           "Ikona:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Barva:">
+<!ENTITY color.accesskey      "r">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Hotovo">
+<!ENTITY button.ok.accesskey  "H">
+

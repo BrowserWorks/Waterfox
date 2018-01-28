@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "புதிய கீற்று">
+<!ENTITY newtab.customize.classic "உங்கள் முதன்மை தளங்களைக் காண்பி">
+<!ENTITY newtab.customize.cog.enhanced "பரிந்துரைத்த தளங்களை உள்ளடக்கு">
+<!ENTITY newtab.customize.cog.title2 "புதிய கீற்றுக் கட்டுப்பாடுகள்">
+<!ENTITY newtab.customize.cog.learn "புதிய கீற்றைப் பற்றி அறிக">
+<!ENTITY newtab.customize.title "உங்களின் புதிய கீற்றுப் பக்கத்தை தனிபயனாக்கவும்">
+<!ENTITY newtab.customize.blank2 "வெற்று பக்கத்தைக் காட்டு">
+<!ENTITY newtab.undo.removedLabel "சிறுபடம் நீக்கப்பட்டது.">
+<!ENTITY newtab.undo.undoButton "செயல்தவிர்.">
+<!ENTITY newtab.undo.restoreButton "அனைத்தும் மீட்டமை.">
+<!ENTITY newtab.undo.closeTooltip "மறை">

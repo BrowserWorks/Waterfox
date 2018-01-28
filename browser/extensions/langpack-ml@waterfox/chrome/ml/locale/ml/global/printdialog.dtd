@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "പ്രിന്റ് ചെയ്യുക ">
+
+<!ENTITY printDialog.title "പ്രിന്റ് ചെയ്യുക ">
+
+<!ENTITY fpDialog.title "ഫയല്‍ സൂക്ഷിക്കുക">
+
+<!ENTITY fileCheck.label "ഫയലിലേക്ക്‌ പ്രിന്റ് ചെയ്യുക">
+<!ENTITY fileCheck.accesskey "F">
+<!ENTITY propertiesButton.label "ഗുണവിശേഷതകള്‍...">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "പ്രിന്റര്‍ വിവരണം ">
+<!ENTITY printer.label "പ്രിന്റര്‍">
+<!ENTITY printerInput.label " പ്രിന്ററിന്റെ പേര്:">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "പ്രിന്ററിന്റെ പരിധി">
+<!ENTITY allpagesRadio.label "എല്ലാ താളുകളും ">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "താളുകള്‍ ">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "എവിടെ നിന്നും">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "എവിടേക്ക്">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "തെരഞ്ഞെടുക്കല്‍">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "പകര്‍പ്പുകള്‍">
+<!ENTITY numCopies.label "പകര്‍പ്പുകളൊടെ എണ്ണം ">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "ഫ്രേയിമുകള്‍ പ്രിന്റ്‌ ചെയ്യുക ">
+<!ENTITY aslaidoutRadio.label "സ്ക്രീനില്‍ നിരത്തിയിരിക്കുന്നതു പോലെ">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label  "തെരഞ്ഞെടുത്ത ഫ്രയിം">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "ഒരോ ഫ്രെയിമും വെവ്വേറെ ">
+<!ENTITY eachframesepRadio.accesskey  "E">

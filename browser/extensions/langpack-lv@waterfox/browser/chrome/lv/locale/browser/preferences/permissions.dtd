@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Izņēmumi">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Mājas lapa">
+<!ENTITY treehead.status.label        "Statuss">
+<!ENTITY removepermission2.label      "Aizvākt lapu">
+<!ENTITY removepermission2.accesskey  "L">
+<!ENTITY removeallpermissions2.label  "Aizvākt visas lapas">
+<!ENTITY removeallpermissions2.accesskey "v">
+<!ENTITY address.label                "Tīmekļa vietnes adrese:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Bloķēt">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Atļaut tikai šīs sesijas laikā">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Atļaut">
+<!ENTITY allow.accesskey              "A">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Atcelt">
+<!ENTITY button.cancel.accesskey      "c">
+<!ENTITY button.ok.label              "Saglabāt izmaiņas">
+<!ENTITY button.ok.accesskey          "S">
+

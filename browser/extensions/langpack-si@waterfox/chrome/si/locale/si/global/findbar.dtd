@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "මේ වාක්‍ය ඛණ්ඩය මීළඟට යෙදෙන ස්ථානය සොයන්න">
+<!ENTITY previous.tooltip "මේ වාක්‍ය ඛණ්ඩය මීට පෙර යෙදුණු ස්ථානය සොයන්න">
+<!ENTITY findCloseButton.tooltip "සෙවීම් තීරුව වසන්න">
+<!ENTITY highlightAll.label "සියල්ල උද්දීපනය">
+<!ENTITY highlightAll.accesskey "A">
+<!ENTITY highlightAll.tooltiptext "මේ වාක්‍ය ඛණ්ඩය යෙදෙන සියලු ස්ථාන ඉස්මතු කර පෙන්වන්න">
+<!ENTITY caseSensitive.label "අක්ෂර ගැලපුම">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "අක්ශර සංවේදීව සොයන්න">
+<!ENTITY entireWord.label "මුළු වචනයම">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "සම්පූර්ණ වචනය පමණක් සොයන්න">

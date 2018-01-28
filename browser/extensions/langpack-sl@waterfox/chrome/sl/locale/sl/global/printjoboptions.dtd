@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Lastnosti tiskalnika">
+
+<!ENTITY paperInput.label "Velikost papirja:">
+<!ENTITY paperInput.accesskey "V">
+
+<!ENTITY jobTitleInput.label "Ime naloge:">
+<!ENTITY jobTitleInput.accesskey "n">
+
+<!ENTITY colorGroup.label "Barva:">
+<!ENTITY grayRadio.label "Odtenki sive">
+<!ENTITY grayRadio.accesskey "s">
+<!ENTITY colorRadio.label "Barvno">
+<!ENTITY colorRadio.accesskey "B">
+
+<!ENTITY edgeMarginInput.label "Velikost roba">
+<!ENTITY topInput.label "Zgoraj:">
+<!ENTITY topInput.accesskey "Z">
+<!ENTITY bottomInput.label "Spodaj:">
+<!ENTITY bottomInput.accesskey "o">
+<!ENTITY leftInput.label "Levo:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "Desno:">
+<!ENTITY rightInput.accesskey "D">

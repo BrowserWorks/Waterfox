@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "מציאת המופע הבא של הביטוי">
+<!ENTITY previous.tooltip "מציאת המופע הקודם של הביטוי">
+<!ENTITY findCloseButton.tooltip "סגירת סרגל החיפוש">
+<!ENTITY highlightAll.label "הדגשת הכול">
+<!ENTITY highlightAll.accesskey "ד">
+<!ENTITY highlightAll.tooltiptext "הדגשת כל המופעים של הביטוי">
+<!ENTITY caseSensitive.label "התאמת אותיות גדולות/קטנות">
+<!ENTITY caseSensitive.accesskey "ת">
+<!ENTITY caseSensitive.tooltiptext "חיפוש עם רגישות לאותיות גדולות">
+<!ENTITY entireWord.label "מילים שלמות">
+<!ENTITY entireWord.accesskey "ש">
+<!ENTITY entireWord.tooltiptext "חיפוש מילים שלמות בלבד">

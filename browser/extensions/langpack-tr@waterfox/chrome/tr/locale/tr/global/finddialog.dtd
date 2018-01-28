@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Bu sayfada bul">
+<!ENTITY findField.label "Bulunacak metin:">
+<!ENTITY findField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Büyük-küçük harfe duyarlı">
+<!ENTITY caseSensitiveCheckbox.accesskey "B">
+<!ENTITY wrapCheckbox.label "Kaydır">
+<!ENTITY wrapCheckbox.accesskey "K">
+<!ENTITY findButton.label "Sonrakini bul">
+<!ENTITY findButton.accesskey "S">
+<!ENTITY cancelButton.label "Vazgeç">
+<!ENTITY closeButton.label "Kapat">
+<!ENTITY up.label "Yukarı">
+<!ENTITY up.accesskey "Y">
+<!ENTITY down.label "Aşağı">
+<!ENTITY down.accesskey "A">
+<!ENTITY direction.label "Arama yönü">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Lecture">
+<!ENTITY playButton.pauseLabel "Pause">
+<!ENTITY muteButton.muteLabel "Muet">
+<!ENTITY muteButton.unmuteLabel "Audible">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Plein écran">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Sortie du mode plein écran">
+<!ENTITY castingButton.castingLabel "Diffuser sur l’écran">
+<!ENTITY closedCaption.off "Désactivés">
+
+<!ENTITY stats.media "Média">
+<!ENTITY stats.size "Taille">
+<!ENTITY stats.activity "Activité">
+<!ENTITY stats.activityPaused "En pause">
+<!ENTITY stats.activityPlaying "Lecture en cours">
+<!ENTITY stats.activityEnded "Terminé">
+<!ENTITY stats.activitySeeking "(recherche)">
+<!ENTITY stats.volume "Volume">
+<!ENTITY stats.framesParsed "Images analysées">
+<!ENTITY stats.framesDecoded "Images décodées">
+<!ENTITY stats.framesPresented "Images présentées">
+<!ENTITY stats.framesPainted "Images dessinées">
+
+<!ENTITY error.aborted "Chargement de la vidéo arrêté.">
+<!ENTITY error.network "La lecture de la vidéo a été interrompue à cause d’une erreur de réseau.">
+<!ENTITY error.decode "La vidéo ne peut être visionnée car le fichier est corrompu.">
+<!ENTITY error.srcNotSupported "Le format vidéo ou le type MIME n’est pas géré.">
+<!ENTITY error.noSource2 "Aucune vidéo dont le format ou le type MIME est géré n’a été trouvée.">
+<!ENTITY error.generic "La lecture de la vidéo a été interrompue à cause d’une erreur inconnue.">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "#1 sur #2 écoulées">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

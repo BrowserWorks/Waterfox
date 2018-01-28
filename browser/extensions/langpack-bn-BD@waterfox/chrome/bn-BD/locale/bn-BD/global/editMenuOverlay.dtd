@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "সম্পাদনা (E)">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label             "পূর্বাবস্থায় ফেরানো (U)">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "U">
+<!ENTITY redoCmd.label             "পুনরায় করা (R)">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "R">
+<!ENTITY cutCmd.label              "কাটা (t)">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "t">
+<!ENTITY copyCmd.label             "অনুলিপি (C)">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "C">
+<!ENTITY pasteCmd.label            "প্রতিলেপন">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "P">
+<!ENTITY deleteCmd.label           "মুছে ফেলা (D)">
+<!ENTITY deleteCmd.accesskey       "D">
+<!ENTITY selectAllCmd.label        "সব নির্বাচন (A)">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "A">
+<!ENTITY findCmd.label             "অনুসন্ধান (F)">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "F">
+<!ENTITY findAgainCmd.label        "পুনরায় অনুসন্ধান (g)">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "g">
+<!ENTITY findPreviousCmd.label     "পূর্ববর্তী উপস্থিতি অনুসন্ধান (v)">
+<!ENTITY findPreviousCmd.accesskey "v">

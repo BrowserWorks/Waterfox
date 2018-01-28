@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab skiptir á milli flipa í notkunarröð">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Opna nýja glugga í nýjum flipa">
+<!ENTITY newWindowsAsTabs.accesskey   "f">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Vara við þegar ég loka mörgum flipum">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Vara við ef opnun á mörgum flipum gæti hægt á &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "o">
+
+<!ENTITY switchLinksToNewTabs.label        "Þegar ég opna tengil í nýjum flipa, skipta strax yfir á hann">
+<!ENTITY switchLinksToNewTabs.accesskey    "s">
+
+<!ENTITY showTabsInTaskbar.label          "Sýna flipasýnishorn í Windows verkslánni">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Flipar">

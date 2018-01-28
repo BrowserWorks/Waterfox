@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "ନିମ୍ନଲିଖିତ କୁକିଗୁଡ଼ିକ ଆପଣଙ୍କର କମ୍ପୁଟରରେ ସଞ୍ଚୟ କରାଯାଇଛି:">
+<!ENTITY     cookiename.label               "କୁକି ନାମ">
+<!ENTITY     cookiedomain.label             "ସାଇଟ">
+
+<!ENTITY     props.name.label               "ନାମ:">
+<!ENTITY     props.value.label              "ସୂଚୀ:">
+<!ENTITY     props.domain.label             "ହୋଷ୍ଟ:">
+<!ENTITY     props.path.label               "ପଥ:">
+<!ENTITY     props.secure.label             "ପାଇଁ ପଠାନ୍ତୁ:">
+<!ENTITY     props.expires.label            "ସମାପ୍ତ ହୁଏ:">
+
+
+<!ENTITY     window.title                   "କୁକିଗୁଡ଼ିକ">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+
+
+<!ENTITY     button.close.label             "ବନ୍ଦ କରନ୍ତୁ">
+<!ENTITY     button.close.accesskey         "C">
+
+<!ENTITY     props.container.label          "Container:">
+
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     searchFilter.label             "Search">

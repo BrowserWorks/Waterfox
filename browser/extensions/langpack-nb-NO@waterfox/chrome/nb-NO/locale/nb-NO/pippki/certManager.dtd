@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Sertifikatbehandling">
+
+<!ENTITY certmgr.tab.mine                     "Dine sertifikater">
+<!ENTITY certmgr.tab.others2                  "Personer">
+<!ENTITY certmgr.tab.websites3                "Servere">
+<!ENTITY certmgr.tab.ca                       "Utstedere">
+<!ENTITY certmgr.tab.orphan2                  "Andre">
+
+<!ENTITY certmgr.mine                         "Du har sertifikater fra disse organisasjonene som identifiserer deg:">
+<!ENTITY certmgr.others                       "Du har lagrede sertifikater som identifiserer disse personene:">
+<!ENTITY certmgr.websites2                    "Du har lagrede sertifikater som identifiserer disse serverne:">
+<!ENTITY certmgr.cas                          "Du har lagrede sertifikater som identifiserer disse sertifikatutstederne:">
+<!ENTITY certmgr.orphans                      "Du har lagrede sertifikater som ikke passer i de andre kategoriene:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Generelt">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Detaljer">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Kontrollerer sertifikat …">
+<!ENTITY certmgr.subjectinfo.label            "Utstedt til">
+<!ENTITY certmgr.issuerinfo.label             "Utstedt av">
+<!ENTITY certmgr.periodofvalidity.label       "Gyldighetsperiode" >
+<!ENTITY certmgr.fingerprints.label           "Fingeravtrykk">
+<!ENTITY certmgr.certdetail.title             "Sertifikatdetaljer">
+<!ENTITY certmgr.certdetail.cn                "Vanlig navn (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organisasjon (O)">
+<!ENTITY certmgr.certdetail.ou                "Organisasjonsenhet (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Serienummer">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 fingeravtrykk">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 fingeravtrykk">
+
+<!ENTITY certmgr.editcacert.title             "Rediger tiltro for CA-sertifikat">
+<!ENTITY certmgr.editcert.edittrust           "Rediger tiltro:">
+<!ENTITY certmgr.editcert.trustssl            "Dette sertifikatet kan identifisere nettsider.">
+<!ENTITY certmgr.editcert.trustemail          "Dette sertifikatet kan identifisere e-postbrukere.">
+<!ENTITY certmgr.editcert.trustobjsign        "Dette sertifikatet kan identifisere programutviklere.">
+
+<!ENTITY certmgr.deletecert.title             "Slett sertifikat">
+
+<!ENTITY certmgr.certname                     "Sertifikatnavn">
+<!ENTITY certmgr.certserver                   "Server">
+<!ENTITY certmgr.override_lifetime            "Levetid">
+<!ENTITY certmgr.tokenname                    "Sikkerhetsenhet">
+<!ENTITY certmgr.begins                       "Starter den">
+<!ENTITY certmgr.expires                      "Utløper">
+<!ENTITY certmgr.email                        "E-postadresse">
+<!ENTITY certmgr.serial                       "Serienummer">
+
+<!ENTITY certmgr.close.label                  "Lukk">
+<!ENTITY certmgr.close.accesskey              "L">
+<!ENTITY certmgr.view2.label                  "Vis …">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Rediger tiltro …">
+<!ENTITY certmgr.edit3.accesskey              "R">
+<!ENTITY certmgr.export.label                 "Eksporter …">
+<!ENTITY certmgr.export.accesskey             "k">
+<!ENTITY certmgr.delete2.label                "Slett …">
+<!ENTITY certmgr.delete2.accesskey            "S">
+<!ENTITY certmgr.delete_builtin.label         "Slett/opphev tiltro …">
+<!ENTITY certmgr.delete_builtin.accesskey     "e">
+<!ENTITY certmgr.backup2.label                "Sikkerhetskopier …">
+<!ENTITY certmgr.backup2.accesskey            "k">
+<!ENTITY certmgr.backupall2.label             "Sikkerhetskopier alle …">
+<!ENTITY certmgr.backupall2.accesskey         "e">
+<!ENTITY certmgr.restore2.label               "Importer …">
+<!ENTITY certmgr.restore2.accesskey           "I">
+<!ENTITY certmgr.details.label                "Sertifikatfelt">
+<!ENTITY certmgr.details.accesskey            "r">
+<!ENTITY certmgr.fields.label                 "Feltverdi">
+<!ENTITY certmgr.fields.accesskey             "F">
+<!ENTITY certmgr.hierarchy.label              "Sertifikathierarki">
+<!ENTITY certmgr.hierarchy.accesskey2         "k">
+<!ENTITY certmgr.addException.label           "Legg til unntak …">
+<!ENTITY certmgr.addException.accesskey       "e">
+
+<!ENTITY exceptionMgr.title                   "Legg til sikkerhetsunntak">
+<!ENTITY exceptionMgr.exceptionButton.label   "Bekreft sikkerhetsunntak">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "B">
+<!ENTITY exceptionMgr.supplementalWarning     "Legitime banker, nettbutikker og andre offentlige nettsteder vil aldri be deg om å gjøre dette.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Server">
+<!ENTITY exceptionMgr.certlocation.url        "Adresse:">
+<!ENTITY exceptionMgr.certlocation.download   "Hent sertifikat">
+<!ENTITY exceptionMgr.certlocation.accesskey  "H">
+<!ENTITY exceptionMgr.certstatus.caption      "Sertifikatstatus">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Vis …">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Lagre dette unntaket permanent">
+<!ENTITY exceptionMgr.permanent.accesskey     "L">

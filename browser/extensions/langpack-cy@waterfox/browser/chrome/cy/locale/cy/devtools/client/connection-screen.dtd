@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Cysylltu">
+<!ENTITY header     "Cysylltu i ddyfais bell">
+<!ENTITY host       "Gwesteiwr:">
+<!ENTITY port       "Porth:">
+<!ENTITY connect    "Cysylltu">
+<!ENTITY connecting "Cysylltu…">
+<!ENTITY availableAddons "Ychwanegion pell ar gael:">
+<!ENTITY availableTabs "Tabiau pell ar gael:">
+<!ENTITY availableProcesses "Prosesau pell ar gael:">
+<!ENTITY connectionError "Gwall:">
+<!ENTITY errorTimeout "Gwall: terfyn amser cysylltiad.">
+<!ENTITY errorRefused "Gwall: gwrthodwyd y cysylltiad.">
+<!ENTITY errorUnexpected "Gwall annisgwyl.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Gall offer Datblygwr Waterfox ddadfygio dyfeisiau pell (Waterfox Android a Waterfox OS, er enghraifft). Gwnewch yn siŵr eich bod wedi cychwyn y dewis 'Dadfygio pell' ar y ddyfais pell. I gael rhagor o wybodaeth, gw. ">
+<!ENTITY remoteDocumentation "dogfennaeth">
+<!ENTITY remoteHelpSuffix ".">
+

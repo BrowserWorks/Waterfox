@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Acest site folosește un plugin care poate încetini &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Atinge aici pentru a activa pluginul.">
+<!ENTITY clickToActivatePlugin                               "Activează pluginul.">
+<!ENTITY checkForUpdates                                     "Caută actualizări…">
+<!ENTITY blockedPlugin.label                                 "Acest plugin a fost dezactivat pentru a te proteja.">
+<!ENTITY hidePluginBtn.label                                 "Ascunde pluginul">
+<!ENTITY managePlugins                                       "Gestionează pluginurile…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Reîncarcă pagina">
+<!ENTITY reloadPlugin.post                                   " pentru a încerca din nou.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Trimite raportul de defecțiuni">
+<!ENTITY report.submitting                                   "Se trimite raportul…">
+<!ENTITY report.submitted                                    "S-a trimis raportul de defecțiuni.">
+<!ENTITY report.disabled                                     "Raportarea de defecțiuni e dezactivată.">
+<!ENTITY report.failed                                       "Trimiterea a eșuat.">
+<!ENTITY report.unavailable                                  "Niciun raport disponibil.">
+<!ENTITY report.comment                                      "Adaugă un comentariu (comentariile sunt vizibile public)">
+<!ENTITY report.pageURL                                      "Include adresa (URL-ul) paginii">
+
+<!ENTITY plugin.file                                         "Fișier">
+<!ENTITY plugin.mimeTypes                                    "Tipuri MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Activează modul protejat Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Blochează conținutul periculos și intruziv Flash">

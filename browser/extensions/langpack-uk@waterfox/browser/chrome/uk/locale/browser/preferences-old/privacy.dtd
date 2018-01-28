@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Використовувати захист від стеження">
+<!ENTITY  trackingProtectionAlways.label       "Завжди">
+<!ENTITY  trackingProtectionAlways.accesskey   "З">
+<!ENTITY  trackingProtectionPrivate.label      "Лише у приватних вікнах">
+<!ENTITY  trackingProtectionPrivate.accesskey  "Л">
+<!ENTITY  trackingProtectionNever.label        "Ніколи">
+<!ENTITY  trackingProtectionNever.accesskey    "Н">
+<!ENTITY  trackingProtectionLearnMore.label    "Докладніше">
+<!ENTITY  trackingProtectionExceptions.label   "Винятки…">
+<!ENTITY  trackingProtectionExceptions.accesskey "В">
+
+<!ENTITY tracking.label                 "Стеження">
+<!ENTITY trackingProtectionPBM5.label         "Використовувати захист від стеження в приватних вікнах">
+<!ENTITY trackingProtectionPBM5.accesskey     "ж">
+<!ENTITY trackingProtectionPBMLearnMore.label "Докладніше">
+<!ENTITY changeBlockList.label          "Змінити список блокування">
+<!ENTITY changeBlockList.accesskey      "З">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Ви також можете ">
+<!ENTITY  doNotTrack.settings.label     "керувати своїми налаштуваннями відмови від стеження">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Історія відвідувань">
+
+<!ENTITY  locationBar.label             "Панель адреси">
+
+<!ENTITY  locbar.suggest.label          "При використанні панелі адреси, пропонувати:">
+<!ENTITY  locbar.history.label          "Історію">
+<!ENTITY  locbar.history.accesskey      "т">
+<!ENTITY  locbar.bookmarks.label        "Закладки">
+<!ENTITY  locbar.bookmarks.accesskey    "а">
+<!ENTITY  locbar.openpage.label         "Відкриті вкладки">
+<!ENTITY  locbar.openpage.accesskey     "в">
+<!ENTITY  locbar.searches.label         "Пов'язані пошуки з типового засобу пошуку">
+<!ENTITY  locbar.searches.accesskey     "П">
+
+<!ENTITY  suggestionSettings.label      "Змінити налаштування для пропозицій засобу пошуку…">
+<!ENTITY  suggestionSettings.accesskey  "м">
+
+<!ENTITY  acceptCookies2.label          "Приймати куки від сайтів">
+<!ENTITY  acceptCookies2.accesskey      "й">
+
+<!ENTITY  acceptThirdParty.pre.label      "Приймати куки від сторонніх сайтів:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "с">
+<!ENTITY  acceptThirdParty.always.label   "Завжди">
+<!ENTITY  acceptThirdParty.never.label    "Ніколи">
+<!ENTITY  acceptThirdParty.visited.label  "Від відвіданих">
+
+<!ENTITY  keepUntil.label               "Зберігати доки:">
+<!ENTITY  keepUntil.accesskey           "г">
+
+<!ENTITY  expire.label                  "не закінчиться термін їх дії">
+<!ENTITY  close.label                   "я не закрию &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Винятки…">
+<!ENTITY  cookieExceptions.accesskey    "и">
+
+<!ENTITY  showCookies.label             "Показати куки…">
+<!ENTITY  showCookies.accesskey         "о">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; буде:">
+<!ENTITY  historyHeader.pre.accesskey      "б">
+<!ENTITY  historyHeader.remember.label     "Пам’ятати історію">
+<!ENTITY  historyHeader.dontremember.label "Ніколи не пам’ятати історії">
+<!ENTITY  historyHeader.custom.label       "Використовувати власні налаштування історії">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; буде пам’ятати вашу історію переглядів, завантажень, форм, та пошуків, а також зберігати куки з відвідуваних вами сайтів.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Можливо ви хочете ">
+<!ENTITY  rememberActions.clearHistory.label  "стерти вашу недавню історію">
+<!ENTITY  rememberActions.middle.label        ", або ">
+<!ENTITY  rememberActions.removeCookies.label "прибрати персональні куки">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; буде використовувати ті ж налаштування, що й у приватному режимі, та не буде пам’ятати історію вашого перегляду.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Можливо ви також хочете ">
+<!ENTITY  dontrememberActions.clearHistory.label "стерти всю поточну історію">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Завжди використовувати режим приватного перегляду">
+<!ENTITY  privateBrowsingPermanent2.accesskey "п">
+
+<!ENTITY  rememberHistory2.label      "Пам’ятати історію переглядів та завантажень">
+<!ENTITY  rememberHistory2.accesskey  "і">
+
+<!ENTITY  rememberSearchForm.label       "Пам’ятати історію пошуків та форм">
+<!ENTITY  rememberSearchForm.accesskey   "м">
+
+<!ENTITY  clearOnClose.label             "Стирати історію при закритті &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "С">
+
+<!ENTITY  clearOnCloseSettings.label     "Налаштування…">
+<!ENTITY  clearOnCloseSettings.accesskey "Н">
+
+<!ENTITY  browserContainersHeader.label         "Вкладки контейнера">
+<!ENTITY  browserContainersLearnMore.label      "Докладніше">
+<!ENTITY  browserContainersEnabled.label        "Увімкнути контейнери вкладок">
+<!ENTITY  browserContainersEnabled.accesskey    "к">
+<!ENTITY  browserContainersSettings.label        "Налаштування…">
+<!ENTITY  browserContainersSettings.accesskey    "л">

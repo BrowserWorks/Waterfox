@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; - Aktualizacija">
+
+<!ENTITY  offline.title                   "&brandShortName; offline dźeła">
+<!ENTITY  offline.description             "&brandShortName; dyrbi online hić, zo by hladał, hač aktualizacije za waše přidatki k dispoziciji steja, zo by je z tutej wersiju kompatibelne činił.">
+<!ENTITY  offline.toggleOffline.label     "Nětko online hić.">
+<!ENTITY  offline.toggleOffline.accesskey "N">
+
+<!ENTITY  mismatch.win.title              "Inkompatibelne přidatki">
+<!ENTITY  mismatch.top.label              "Slědowace přidatki njejsu z tutej wersiju &brandShortName; kompatibelne a buchu znjemóžnjene:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; móže hladać, hač kompatibelne wersije tutych přidatkow k dispoziciji steja.">
+
+<!ENTITY  checking.wizard.title           "Za kompatibelnymi přidatkami přepruwować">
+<!ENTITY  checking.top.label              "Waše inkompatibelne přidatki přepruwuja so za aktualizacijemi…">
+<!ENTITY  checking.status                 "To móže někotre mjeńšiny trać…">
+
+<!ENTITY  found.wizard.title               "Kompatibelne přidatki namakane">
+<!ENTITY  found.top.label                 "Wubjerće přidatki, kotrež byšće rady instalował:">
+<!ENTITY  found.disabledXPinstall.label   "Tute aktualizacije njedadźa so instalować, dokelž instalacija softwary je tuchwilu znjemóžnjena. Móžeće tute nastajenje deleka změnić.">
+<!ENTITY  found.enableXPInstall.label     "Websydłam dowolić, zo softwaru instaluja">
+<!ENTITY  found.enableXPInstall.accesskey "W">
+
+<!ENTITY  installing.wizard.title         "Instalacija kompatibelnych přidatkow">
+<!ENTITY  installing.top.label            "Aktualizacije za waše přidatki so sćahuja a instaluja…">
+
+<!ENTITY  noupdates.wizard.title          "Žane kompatibelne přidatki namakane">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; njemóže aktualizacije za waše inkompatibelne přidatki namakać.">
+<!ENTITY  noupdates.error.desc            "Při pytanju za aktualizacijemi su někotre problemy wustupili.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; budźe periodisce pruwować a was informować, hdyž so kompatibelne aktualizacije za tute přidatki namakaja.">
+
+<!ENTITY  finished.wizard.title           "Kompatibelne přidatki instalowane">
+<!ENTITY  finished.top.label              "&brandShortName; je aktualizacije za waše přidatki instalował.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; móže periodisce pruwować a was informować, hdyž so aktualizacije za přidatki namakaja.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; budźe periodisce pruwować a was informować, hdyž so aktualizacije za přidatki namakaja.">
+
+<!ENTITY  adminDisabled.wizard.title      "Njeje móžno za aktualizacijemi pruwować">
+<!ENTITY  adminDisabled.warning.label     "Njeje móžno, za aktualizacijemi za inkompatibelne přidatki pruwować, dokelž instalacija softwary za &brandShortName; bu znjemóžnjena. Prošu stajće so ze swojim systemowym administratorom za podpěru do zwiska.">
+
+<!ENTITY  versioninfo.wizard.title        "Za kompatibelnosću přidatkow pruwować">
+<!ENTITY  versioninfo.top.label           "Kompatibelnosć wašich přidatkow z tutej wersiju &brandShortName; so přepruwuje.">
+<!ENTITY  versioninfo.waiting             "To móže někotre mjeńšiny trać…">
+
+<!ENTITY  installerrors.wizard.title      "Problemy při instalowanju aktualizacijow">
+<!ENTITY  installerrors.intro.label       "&brandShortName; je při aktualizowanju někotrych wašich přidatkow na problemy storčił.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Klikńće na Skónčić, zo by ze startowanjom &brandShortName; pokročowal.">
+<!ENTITY  clickFinish.labelMac            "Klikńće na Dočitany, zo by ze startowanjom &brandShortName; pokročowal.">
+<!ENTITY  enableChecking.label            "&brandShortName; dowolić, zo za aktualizacijemi pruwuje.">

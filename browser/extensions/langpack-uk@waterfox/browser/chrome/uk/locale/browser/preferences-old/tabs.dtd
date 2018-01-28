@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab перемикає між вкладками в порядку недавнього їх використання">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Відкривати замість нових вікон нові вкладки">
+<!ENTITY newWindowsAsTabs.accesskey   "в">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Попереджати при закритті декількох вкладок">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "к">
+
+<!ENTITY warnOnOpenManyTabs.label       "Попереджати, коли відкриття великої кількості вкладок може сповільнити роботу &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "л">
+
+<!ENTITY switchLinksToNewTabs.label        "При відкритті посилання в новій вкладці, одразу ж переключатись на неї">
+<!ENTITY switchLinksToNewTabs.accesskey    "я">
+
+<!ENTITY showTabsInTaskbar.label          "Показувати нариси вкладок у панелі завдань Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "и">
+<!ENTITY tabsGroup.label          "Вкладки">

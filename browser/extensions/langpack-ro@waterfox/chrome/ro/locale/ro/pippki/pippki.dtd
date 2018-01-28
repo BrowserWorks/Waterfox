@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Schimbă parola generală">
+<!ENTITY setPassword.tokenName.label "Dispozitiv de securitate">
+<!ENTITY setPassword.oldPassword.label "Parola actuală:">
+<!ENTITY setPassword.newPassword.label "Parola nouă:">
+<!ENTITY setPassword.reenterPassword.label "Parola nouă (din nou):">
+<!ENTITY setPassword.meter.label "Indicatorul de calitate al parolei">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Resetează">
+<!ENTITY resetPassword.title  "Resetare parolă generală">
+<!ENTITY resetPassword.text  "Dacă resetezi parola generală, toate parolele de la site-urile web și conturile de e-mail pe care le-ai memorat, precum și datele formularelor, certificatele personale și cheile private, vor fi pierdute. Sigur dorești să resetezi parola generală?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Descărcare certificat">
+<!ENTITY downloadCert.message1 "Vi se cere să acreditați o autoritate nouă de certificare (AC).">
+<!ENTITY downloadCert.trustSSL "Acreditează această AC pentru identificarea site-urilor web.">
+<!ENTITY downloadCert.trustEmail "Acreditează această AC pentru identificarea utilizatorilor de e-mail.">
+<!ENTITY downloadCert.trustObjSign "Acreditează această AC pentru identificarea creatorilor de software.">
+<!ENTITY downloadCert.message3 "Înainte de a acredita această AC, ar trebui să îi examinați certificatul, precum și politicile și procedurile (dacă există).">
+<!ENTITY downloadCert.viewCert.label "Vizualizează">
+<!ENTITY downloadCert.viewCert.text "Examinează certificatul AC">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Cerere identificare utilizator">
+<!ENTITY clientAuthAsk.message1 "Acest site vă cere să vă identificați cu un certificat:">
+<!ENTITY clientAuthAsk.message2 "Alegeți un certificat care să fie prezentat drept identificare:">
+<!ENTITY clientAuthAsk.message3 "Detaliile certificatului selectat:">
+
+<!ENTITY pkcs12.setpassword.title  "Alegeți o parolă de siguranță pentru certificate">
+<!ENTITY pkcs12.setpassword.message  "Parola pe care o setați aici protejează fișierul de siguranță pe care sunteți pe cale să-l creați.  Trebuie să setați această parolă pentru a continua salvarea de siguranță.">
+<!ENTITY pkcs12.setpassword.label1 "Parola de siguranță pentru certificate:">
+<!ENTITY pkcs12.setpassword.label2 "Parola de siguranță pentru certificate (din nou):">
+<!ENTITY pkcs12.setpassword.reminder "Important: Dacă uitați parola de siguranță pentru certificate, nu veți putea reface această copie mai târziu.  Vă rugăm să aveți grijă să o păstrați într-un loc sigur.">
+
+<!ENTITY chooseToken.title  "Alege tokenul">
+<!ENTITY chooseToken.message1 "Vă rugăm să alegeți un token.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Generez o cheie privată">
+<!ENTITY createCertInfo.msg1 "Generarea cheii în curs… Aceasta poate dura câteva minute….">
+<!ENTITY createCertInfo.msg2 "Vă rugăm să așteptați…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Autentificare prin identificator protejat">
+<!ENTITY protectedAuth.msg "Vă rugăm să vă autentificați cu tokenul. Metoda de autentificare depinde de tipul tokenului dumneavoastră.">
+<!ENTITY protectedAuth.tokenName.label "Identificator:">

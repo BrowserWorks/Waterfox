@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Unntak">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Nettsted">
+<!ENTITY treehead.status.label        "Status">
+<!ENTITY removepermission2.label      "Fjern nettsted">
+<!ENTITY removepermission2.accesskey  "F">
+<!ENTITY removeallpermissions2.label  "Fjern alle nettsteder">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY address.label                "Adressen til nettstedet:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Blokker">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Tillat for programøkten">
+<!ENTITY session.accesskey            "T">
+<!ENTITY allow.label                  "Tillat">
+<!ENTITY allow.accesskey              "T">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Avbryt">
+<!ENTITY button.cancel.accesskey      "A">
+<!ENTITY button.ok.label              "Lagre endringer">
+<!ENTITY button.ok.accesskey          "L">
+

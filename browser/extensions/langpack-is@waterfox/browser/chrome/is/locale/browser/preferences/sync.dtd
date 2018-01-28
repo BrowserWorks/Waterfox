@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Bókamerki">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "Opna flipa">
+<!ENTITY engine.tabs.accesskey      "f">
+<!ENTITY engine.history.label       "Ferill">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Innskráningar">
+<!ENTITY engine.logins.accesskey    "I">
+<!ENTITY engine.prefs.label         "Valkostir">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "Viðbætur">
+<!ENTITY engine.addons.accesskey    "æ">
+
+
+<!ENTITY engine.creditcards.label   "Greiðslukort">
+<!ENTITY engine.creditcards.accesskey "G">
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Tækjanafn">
+<!ENTITY changeSyncDeviceName2.label "Breyta nafni tækis…">
+<!ENTITY changeSyncDeviceName2.accesskey "B">
+<!ENTITY cancelChangeSyncDeviceName.label "Hætta við">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "H">
+<!ENTITY saveChangeSyncDeviceName.label "Vista">
+<!ENTITY saveChangeSyncDeviceName.accesskey "V">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Skilmálar þjónustu">
+<!ENTITY fxaPrivacyNotice.link.label "Upplýsingar um meðferð persónuupplýsinga">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "er ekki staðfestur.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Skráðu þig inn aftur til að tengjast aftur">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Þú ert ekki skráður inn.">
+<!ENTITY signIn.label                "Innskráning">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "Breyta notandamynd">
+
+
+<!ENTITY disconnect3.label           "Aftengja…">
+<!ENTITY disconnect3.accesskey       "A">
+<!ENTITY verify.label                "Staðfesta tölvupóstfang">
+<!ENTITY verify.accesskey            "v">
+<!ENTITY forget.label                "Gleyma þessu tölvupóstfangi">
+<!ENTITY forget.accesskey            "f">
+
+<!ENTITY signedOut.caption            "Taktu vefinn með þér">
+<!ENTITY signedOut.description        "Samstilltu bókamerki, feril, flipa, lykilorð, viðbætur, og stillingará milli allra þinna tækja.">
+<!ENTITY signedOut.accountBox.title   "Tengjast með &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Búa til reikning">
+<!ENTITY signedOut.accountBox.create.accesskey  "B">
+<!ENTITY signedOut.accountBox.signin  "Innskráning">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Sync stillingar">
+<!ENTITY signedIn.settings.description "Velja hvað á að samstilla á tækjum sem eru að nota &brandShortName;.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Hala niður Waterfox fyrir ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " eða ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " til að samstilla með farsímanum.">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verifiedManage.label        "Manage account">

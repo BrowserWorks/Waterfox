@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ  ପରିବର୍ତ୍ତନ କରନ୍ତୁ">
+<!ENTITY setPassword.tokenName.label       "ସୁରକ୍ଷା ଯନ୍ତ୍ର">
+<!ENTITY setPassword.oldPassword.label     "ପ୍ରଚଳିତ ପ୍ରବେଶ ସଂକେତ:">
+<!ENTITY setPassword.newPassword.label     "ନୂତନ ପ୍ରବେଶ ସଂକେତ ଭରଣ କରନ୍ତୁ:">
+<!ENTITY setPassword.reenterPassword.label "ପ୍ରବେଶ ସଂକେତକୁ ପୁଣିଥରେ ଭରଣ କରନ୍ତୁ:">
+<!ENTITY setPassword.meter.label           "ପ୍ରବେଶ ସଂକେତ ଗୁଣବତ୍ତା ମାପକ">
+<!ENTITY setPassword.meter.loading         "ଧାରଣ କରୁଅଛି">
+<!ENTITY masterPasswordDescription.label   "ସାଇଟ ପ୍ରବେଶ ସଂକେତ ପରି ସମ୍ବେଦନଶୀଳ ସୂଚନାକୁ ସୁରକ୍ଷା ଦେବା ପାଇଁ ଗୋଟିଏ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ବ୍ୟବହାର କରାଯାଇଛି. ଯଦି ଆପଣ ଗୋଟିଏ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତ ତେବେ ଆପଣଙ୍କୁ ପ୍ରତି ଅଧିବାଶନ ପାଇଁ ଥରେ ଭରଣ କରିବାକୁ ପଡ଼ିବ ଯେତେବେଳେ &brandShortName; ପ୍ରବେଶ ସଂକେତ ଦ୍ୱାରା ସୁରକ୍ଷିତ ଥିବା ସଂରକ୍ଷିତ ସୂଚନାକୁ କାଢ଼ିବାକୁ ଯିବ.">
+<!ENTITY masterPasswordWarning.label       "ଦୟାକରି ନିଶ୍ଚିତ ହୁଅନ୍ତୁ ଯେ ଆପଣ ବିନ୍ୟାସ କରିଥିବା ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ଆପଣ ମନେରଖିଛନ୍ତି.  ଯଦି ଆପଣ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ଭୁଲିଯାଆନ୍ତି, ତେବେ ଆପଣ ଏହା ଦ୍ୱାରା ସୁରକ୍ଷିତ ହୋଇ ରହିଥିବା କୌଣସି ସୂଚନା କାଢ଼ି ପାରିବେ ନାହିଁ.">

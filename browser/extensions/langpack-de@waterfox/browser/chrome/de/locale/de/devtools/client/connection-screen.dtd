@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Verbinden">
+<!ENTITY header     "Mit anderem Gerät über Netzwerk verbinden">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Verbinden">
+<!ENTITY connecting "Verbindung wird hergestellt…">
+<!ENTITY availableAddons "Verfügbare externe Add-ons:">
+<!ENTITY availableTabs "Verfügbare externe Tabs:">
+<!ENTITY availableProcesses "Verfügbare externe Prozesse:">
+<!ENTITY connectionError "Fehler:">
+<!ENTITY errorTimeout "Fehler: Verbindungs-Zeitüberschreitung">
+<!ENTITY errorRefused "Fehler: Verbindungsanfrage abgelehnt">
+<!ENTITY errorUnexpected "Unerwarteter Fehler">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Waterfox-Entwicklerwerkzeuge können andere Geräte über das Netzwerk debuggen (zum Beispiel Waterfox für Android und Waterfox OS). Überprüfen Sie, dass Sie die Einstellung 'Externes Debugging' auf dem anderen Gerät aktiviert haben. Weitere Informationen dazu in der ">
+<!ENTITY remoteDocumentation "Dokumentation">
+<!ENTITY remoteHelpSuffix ".">
+

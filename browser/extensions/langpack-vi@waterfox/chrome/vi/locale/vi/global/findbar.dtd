@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Tìm cụm từ ở phần sau">
+<!ENTITY previous.tooltip "Tìm cụm từ ở phần trước">
+<!ENTITY findCloseButton.tooltip "Đóng thanh Tìm kiếm">
+
+
+<!ENTITY highlightAll.tooltiptext "Tô sáng tất cả các cụm từ tìm thấy">
+<!ENTITY caseSensitive.label "Phân biệt HOA-thường">
+<!ENTITY caseSensitive.accesskey "A">
+<!ENTITY caseSensitive.tooltiptext "Tìm kiếm có phân biệt chữ hoa và chữ thường">
+<!ENTITY entireWord.label "Toàn bộ từ">
+<!ENTITY entireWord.accesskey "T">
+<!ENTITY entireWord.tooltiptext "Chỉ tìm toàn bộ từ">
+
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.label "Highlight All">

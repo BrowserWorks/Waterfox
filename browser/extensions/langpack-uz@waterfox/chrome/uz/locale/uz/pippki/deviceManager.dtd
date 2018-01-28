@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Qurilma menejeri">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "Xavfsizlik modullari va qurilmalar">
+<!ENTITY devmgr.details.title                   "Tafsilotlar">
+<!ENTITY devmgr.details.title2                  "Qiymat">
+
+<!ENTITY devmgr.button.login.label              "Kirish">
+<!ENTITY devmgr.button.login.accesskey          "K">
+<!ENTITY devmgr.button.logout.label             "Chiqish">
+<!ENTITY devmgr.button.logout.accesskey         "C">
+<!ENTITY devmgr.button.changepw.label           "Parolni o‘zgartirish">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "Yuklash">
+<!ENTITY devmgr.button.load.accesskey           "Y">
+<!ENTITY devmgr.button.unload.label             "Yuklamaslik">
+<!ENTITY devmgr.button.unload.accesskey         "Y">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Qoʻshmoqchi boʻlgan modulingiz haqida axborot kiriting">
+<!ENTITY loaddevice.modname                     "Modul nomi:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Yangi PKCS#11 moduli">
+<!ENTITY loaddevice.filename                    "Modulning fayl nomi">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Koʻrish">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

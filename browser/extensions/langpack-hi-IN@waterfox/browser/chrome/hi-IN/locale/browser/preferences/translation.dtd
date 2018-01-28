@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "अपवाद - अनुवाद">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "निम्नलिखित भाषाओं के लिए अनुवाद पेश किए जाएँगे:">
+<!ENTITY treehead.languageName.label      "भाषा">
+<!ENTITY removeLanguage.label             "भाषा हटाएँ">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "सभी भाषाएँ हटाएँ">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "निम्नलिखित साइट के लिए अनुवाद पेश किए जाएँगे:">
+<!ENTITY treehead.siteName2.label         "वेबसाइट">
+<!ENTITY removeSite.label                 "साइट हटाएँ">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "सभी साइटें हटाएँ">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "बंद करें">
+<!ENTITY button.close.accesskey           "C">

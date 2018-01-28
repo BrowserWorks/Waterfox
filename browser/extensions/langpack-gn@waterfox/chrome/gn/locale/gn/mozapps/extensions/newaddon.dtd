@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Moĩmbaha ñemohenda">
+<!ENTITY intro           "Ambue tembiaporape nemohendahápe omoambuese &brandShortName; ko moimbaha ndive:">
+<!ENTITY warning         "Emohenda moĩmbaha umi ejeroviaveha añógui.">
+<!ENTITY allow           "Emoneĩ ko ñemohenda">
+<!ENTITY later           "Tapiaite ikatu emoambue neremiandu péicha eipotáramo tembipuru'i ñangarekohára rupi.">
+<!ENTITY continue        "Jejapojeyjey ">
+<!ENTITY restartMessage  "Emoñepyrũjeyva'erã &brandShortName; embopaha hag̃ua ko moimbaha ñemohenda.">
+<!ENTITY restartButton   "&brandShortName; moñepyrũjey">
+<!ENTITY cancelButton    "Heja">

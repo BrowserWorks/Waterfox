@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "ୱେବ କୋନସଲ">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "ନୂତନ ଟ୍ୟାବରେ URL କୁ ଖୋଲନ୍ତୁ">
+<!ENTITY openURL.accesskey "T">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "ନେଟ">
+<!ENTITY btnPageNet.tooltip "ଲଗ ନେଟୱର୍କ ପ୍ରବେଶାନୁମତି">
+<!ENTITY btnPageNet.accesskey "N">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "CSS ତ୍ରୁଟି ଏବଂ ଚେତାବନୀଗୁଡ଼ିକୁ ଦାଖଲ କରନ୍ତୁ">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS (J)">
+<!ENTITY btnPageJS.tooltip  "JavaScript ବ୍ୟତୀକ୍ରମଗୁଡ଼ିକୁ ଲଗ କରନ୍ତୁ">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "ସୁରକ୍ଷା (u)">
+<!ENTITY btnPageSecurity.tooltip "ସୁରକ୍ଷା ତ୍ରୁଟି ଏବଂ ଚେତାବନୀଗୁଡ଼ିକୁ ଲଗ କରନ୍ତୁ">
+<!ENTITY btnPageSecurity.accesskey "u">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "ଲଗ କରୁଅଛି">
+<!ENTITY btnPageLogging.tooltip "window.console ବସ୍ତୁ ପାଖକୁ ପଠାଯାଇଥିବା ଲଗ ସନ୍ଦେଶଗୁଡ଼ିକ">
+<!ENTITY btnPageLogging.accesskey3 "L">
+
+
+
+
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "ପୁନଃପ୍ରବାହ">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+
+
+
+
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+
+<!ENTITY filterOutput.placeholder "ଫଳାଫଳକୁ ଛାଣନ୍ତୁ">
+<!ENTITY btnClear.label        "ସଫାକରନ୍ତୁ">
+<!ENTITY btnClear.tooltip      "ୱେବ କୋନସଲ ଫଳାଫଳକୁ ସଫାକରନ୍ତୁ">
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "ସଂଯୋଗିକୀ ସ୍ଥାନକୁ ନକଲ କରନ୍ତୁ">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+
+
+
+
+
+<!ENTITY btnConsoleErrors       "Errors">
+<!ENTITY btnConsoleInfo         "Info">
+<!ENTITY btnConsoleLog          "Log">
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!ENTITY btnConsoleWarnings     "Warnings">
+<!ENTITY btnConsoleWindowlessWorkers "Add-on or Chrome Workers">
+
+<!ENTITY btnServerErrors              "Errors">
+<!ENTITY btnServerInfo                "Info">
+<!ENTITY btnServerLog                 "Log">
+
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerLogging.label       "Server">
+<!ENTITY btnServerLogging.tooltip     "Log messages received from a web server">
+<!ENTITY btnServerWarnings            "Warnings">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY openInVarViewCmd.label "Open in Variables View">
+<!ENTITY storeAsGlobalVar.accesskey "S">
+<!ENTITY storeAsGlobalVar.label "Store as global variable">

@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Error del navegador apertura caja de herramientas:Kundaha rembipuru ryru jepe'aha jejavy:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Ñemoĩporã opapotáva">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Mbohekoha">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Kundaha rehegua jehechauka">
+<!ENTITY options.showUserAgentStyles.tooltip "Emyandývo kóva ojehechaukáta ypykuéva rehegua kundaha omyanyhẽva.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Tekome'ẽ DOM ñemboyke">
+<!ENTITY options.collapseAttrs.tooltip "Tekome'ẽ ipukúva moambuekuaávape ñemboyke">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Sa'y joja imarãva">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "r">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Apoháraramo">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Mba'evai">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Sa'ykuéra réra">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Tembiapo ag̃agua añónte, emyenyhẽjey kuatiarogue">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Emoapysẽ kundaha chrome ha embojuapy tembipuru ryru mopotĩha">
+<!ENTITY options.enableChrome.tooltip3  "Emyandývo ko poravorã eipurukuaáta hetaiterei tembipuru mboguataháva pe kundaha jereguáva (tembipuru rupi > Web Developer > Browser Toolbox) ha moimbaha mopotĩhápe moimbaha Ñangarekoha guive">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Ñemopotĩ okayguáva myandy">
+<!ENTITY options.enableRemote.tooltip2  "Emyandývo ko poravopyrã omoneĩta mboguatahára tembiporukuérape omopotĩvo mba'e okaygua Waterfox mab'éva, Waterfox OS ichagua">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "JavaScript * monge">
+<!ENTITY options.disableJavaScript.tooltip   "Emyendývo ko poravopyrã omongéta JavaScript tendayke ag̃aguágui. Pe tendayke térã tembiporu ryru oñembotýta upéicharõ ko ñemoĩporã oñemboykéta.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Kache HTTP ñemonge (tembipuru ryru ijuruja jave)">
+<!ENTITY options.disableHTTPCache.tooltip   "Emyandývo ko porãvopyrã oipe'áta kache HTTP opavave tenda'i ombojurujáva tembipuru renda. Mba'apoharakuérape ndohupytýi ko tembiapo hesegua.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Mba'epytyvõrã mba'apohára moheñói HTTP rupi (tembipuru ryru ijurujáramo)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Emyandývo ko poravopyrã omoneĩta mba'apoharakuéra mba'epytyvõrãva HTTP rupi opavave tenda'ípe g̃uarã oguerekóva tembipuru ryru ijurujáva.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Tembipuru mboguatahára ijypyguáva">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Tembiporu Mboguatahára moimbaha omohendapyréra">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Tembipuru Ryru ojepurukuaáva">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Ndojokupytýi mba'epuru ag̃agua tembipuru ryru rehegua">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Mbojeguaha">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Aipuru mboguataha téma Mbosako'i kundahaha rehegua">
+<!ENTITY options.usedeveditiontheme.tooltip "Emoambue téma mboguataha Mbosako'i kundahaha rehegua.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Mba'e'okarupa">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Ára rehegua myandy">
+<!ENTITY options.timestampMessages.tooltip    "Remyandývo ko poravopyrã, je'epohýi ha iñesẽ mba'e'okarupápe ohechaukáta aravo rehegua">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Mopotĩha">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Embojuruja yvyra'ãnga ypýva">
+<!ENTITY options.sourceMaps.tooltip    "Embojurujárõ ko porãvopyrã, teñoiha omboajéta mopotĩha ha mba'e'okarupápe.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Mbosako'iha">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Teñoiha añetéva jehechauka">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Teñoiha añetéva jehechauka (e.g. marandurenda Sass) mbosako'ihápe ha imoambuekuaahápe">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "CSS ijehegui ñemoĩmba">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Ijehegui ñemoĩmba mba'eteéva, hepy ha poravohára CSS Mbosako'ihápe ohaikuévo">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Mba'erechaha japyhypyre reko">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Mba'erechaha japyhypyre kuatiajokohápe">
+<!ENTITY options.screenshot.clipboard.tooltip    "Eñongatu mba'erechaha japyhypyre kuatiajokohaitépe">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Emboheta mba'epu ta'ãnga nohẽháme">
+<!ENTITY options.screenshot.audio.tooltip    "Emyendy mba'epu henduýva ta'ãnga nohẽha pegua mba'erechaha japyhypyrépe">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Jerohoryvéva opavave mba'éva">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Tembiasakue ñongatu myandy">
+<!ENTITY options.enablePersistentLogs.tooltip  "Remboajévo poravopyrã, mba'e'okarupa ha Mba'ejoajupyre rechaharã nomboguemo'ãi ñesẽ reikundahakuévo kuatiarogue pyahúpe">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Mba'ekuaarã jehechauka Gecko rehegua">
+<!ENTITY options.showPlatformData.tooltip  "Remyandývo poravopyrã marandu ñehesa'ỹijoha JavaScript omoingéta ta'ãnga'i Gecko rehegua">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Mbosako'iha oguerohoryvéva">
+<!ENTITY options.sourceeditor.detectindentation.label   "Pa'ũguasu jehechakuaa">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Oikuaa pa'ũguasu ayvu retepy rupi">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Autoclose jokoha">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Emoinge ijehegui ñemboty jokoha">
+<!ENTITY options.sourceeditor.expandtab.label           "Eipuruhína pa'ũ guasu">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Eipuru pa'ũ pe pa'ũjepo rendaguépe">
+<!ENTITY options.sourceeditor.tabsize.label             "Tendayke tuichakue">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "Jehaiha mbojopyru">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Jepokokuaa'ỹha">

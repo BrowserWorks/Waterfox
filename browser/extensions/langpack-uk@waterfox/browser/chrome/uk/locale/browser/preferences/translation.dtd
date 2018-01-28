@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Винятки - Переклад">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Переклад не буде пропонуватись для таких мов:">
+<!ENTITY treehead.languageName.label      "Мови">
+<!ENTITY removeLanguage.label             "Прибрати мову">
+<!ENTITY removeLanguage.accesskey         "м">
+<!ENTITY removeAllLanguages.label         "Прибрати всі мови">
+<!ENTITY removeAllLanguages.accesskey     "в">
+
+<!ENTITY noTranslationForSites.label      "Переклад не буде пропонуватись для таких сайтів:">
+<!ENTITY treehead.siteName2.label         "Веб-сайти">
+<!ENTITY removeSite.label                 "Прибрати сайт">
+<!ENTITY removeSite.accesskey             "с">
+<!ENTITY removeAllSites.label             "Прибрати всі сайти">
+<!ENTITY removeAllSites.accesskey         "і">
+
+<!ENTITY button.close.label               "Закрити">
+<!ENTITY button.close.accesskey           "З">

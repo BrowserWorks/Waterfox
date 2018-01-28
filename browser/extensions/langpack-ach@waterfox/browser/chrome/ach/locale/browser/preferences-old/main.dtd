@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Caki">
+
+<!ENTITY startupPage.label         "Ka &brandShortName; ocake:">
+<!ENTITY startupPage.accesskey     "o">
+<!ENTITY startupUserHomePage.label "Nyut pot buk mamegi me gang">
+<!ENTITY startupBlankPage.label    "Nyut pot buk ma tye nono">
+<!ENTITY startupPrevSession.label  "Nyut dirica ki dirca matino mamegi ma ceng ca">
+
+<!ENTITY homepage.label            "Pot buk me gang:">
+<!ENTITY homepage.accesskey        "u">
+<!ENTITY useCurrentPage.label      "Tii ki pot buk ma kombedi">
+<!ENTITY useCurrentPage.accesskey  "p">
+<!ENTITY useMultiple.label         "Tii ki pot buk ma kombedi">
+<!ENTITY chooseBookmark.label      "Tii ki Alama buk…">
+<!ENTITY chooseBookmark.accesskey  "A">
+<!ENTITY restoreDefault.label      "Dwok i makwongo">
+<!ENTITY restoreDefault.accesskey  "D">
+
+<!ENTITY downloads.label     "Gam">
+
+<!ENTITY saveTo.label "Gwok pwail bot">
+<!ENTITY saveTo.accesskey "w">
+<!ENTITY chooseFolderWin.label        "Yeny…">
+<!ENTITY chooseFolderWin.accesskey    "e">
+<!ENTITY chooseFolderMac.label        "Yer…">
+<!ENTITY chooseFolderMac.accesskey    "r">
+<!ENTITY alwaysAskWhere.label         "Jwi penyi kwene me gwoko pwail">
+<!ENTITY alwaysAskWhere.accesskey     "J">
+
+<!ENTITY alwaysCheckDefault2.label        "Jwijwi rot kace &brandShortName; tye layeny mamegi makwongo">
+<!ENTITY alwaysCheckDefault2.accesskey    "j">
+<!ENTITY setAsMyDefaultBrowser2.label     "Mi obed makwongo">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "m">
+<!ENTITY isDefault.label                  "&brandShortName; kombedi tye layeny mamegi makwongo">
+<!ENTITY isNotDefault.label               "&brandShortName; pe tye layeny mamegi makwongo">
+
+<!ENTITY separateProfileMode.label        "Ye &brandShortName; ki Waterfox me tic lawang acel">
+<!ENTITY useWaterfoxSync.label             "Ngec: Man tiyo ki propwail ma patpat. Tii ki Ribo me nywako data ikin gi.">
+<!ENTITY getStarted.notloggedin.label     "Dony iyie &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Yab ter me &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Cak tic mapol &brandShortName;">

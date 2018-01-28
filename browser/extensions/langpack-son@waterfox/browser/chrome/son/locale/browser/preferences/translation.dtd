@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Laybey - berandiyan">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Berandiyan ši duwandi šenney wey ra:">
+<!ENTITY treehead.languageName.label      "Šenney">
+<!ENTITY removeLanguage.label             "Šenni kaa">
+<!ENTITY removeLanguage.accesskey         "k">
+<!ENTITY removeAllLanguages.label         "Šenney kul kaa">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Berandiyan ši duwandi interneti nungey wey ga:">
+
+<!ENTITY removeSite.label                 "Nungu kaa">
+<!ENTITY removeSite.accesskey             "N">
+<!ENTITY removeAllSites.label             "Nungey kul kaa">
+<!ENTITY removeAllSites.accesskey         "u">
+
+<!ENTITY button.close.label               "Daabu">
+<!ENTITY button.close.accesskey           "D">
+
+<!ENTITY treehead.siteName2.label         "Websites">

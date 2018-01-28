@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+
+<!-- These strings are used in the about:home page -->
+
+<!ENTITY abouthome.pageTitle "&brandFullName; အဖွင့်စာမျက်နှာ">
+
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+<!ENTITY abouthome.defaultSnippet1.v1 "Waterfox ကို ရွေးချယ်သည့်အတွက် ကျေးဇူးတင်ပါသည်။ သင့်ဘရောင်ဇာ၏ စွမ်းရည်များကို ရယူအသုံးချနိုင်ရန် <a>စွမ်းဆောင်ရည်အသစ်များ</a> အကြောင်း ပိုမိုလေ့လာနိုင်ပါသည်။">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "Waterfox ကို သင့်စိတ်ကြိုက် လွယ်ကူစွာ ပြုပြင်သုံးစွဲနိုင်ပါသည်။ <a>ထောင်ပေါင်းများစွာသော ပေါင်းစပ်အတ်အွန်များ ရွေးချယ်ရန်</a>">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; သည် အခမဲ့ဖြစ်ပြီး အကျိုးအမြတ်အတွက်မဟုတ်သော Waterfox မှ ပွင့်လင်းရင်းမြစ် ဆော့ဖ်ဝဲလ် ဖြစ်ပါသည်။ <a>ရပိုင်ခွင့်များကို သိရှိရန်…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "စာမှတ်များ">
+<!ENTITY abouthome.historyButton.label   "မှတ်တမ်း">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "ရွေးစရာများ">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "နှစ်သက်ရာအပြင်အဆင်များ">
+<!ENTITY abouthome.addonsButton.label    "အတ်အွန်များ">
+<!ENTITY abouthome.downloadsButton.label "ဆွဲယူထားသည့်ဖိုင်များ">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+<!ENTITY abouthome.aboutMozilla.label    "Mozilla အကြောင်း">

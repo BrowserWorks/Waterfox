@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "ပိတ်ပင်ထားသည့် စာရင်းများ">
+<!ENTITY window.width                 "55em">
+
+<!ENTITY treehead.list.label          "စာရင်း">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "မလုပ်ဆောင်တော့ပါ">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "ပြောင်းလဲမှုများကို သိမ်းပါ">
+<!ENTITY button.ok.accesskey          "S">

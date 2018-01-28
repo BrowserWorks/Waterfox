@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Nome:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Localización:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Enderezo da fonte:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "f">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Enderezo do sitio:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "s">
+<!ENTITY editBookmarkOverlay.folder.label                    "Cartafol:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Amosar todos os cartafoles de marcadores">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Agochar">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etiquetas:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "E">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Separar as etiquetas con vírgulas">
+<!ENTITY editBookmarkOverlay.description.label               "Descrición:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Palabra clave:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "c">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Amosar todas as etiquetas">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Cargar este marcador na barra lateral">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "a">
+<!ENTITY editBookmarkOverlay.choose.label                    "Escoller…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Novo cartafol">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

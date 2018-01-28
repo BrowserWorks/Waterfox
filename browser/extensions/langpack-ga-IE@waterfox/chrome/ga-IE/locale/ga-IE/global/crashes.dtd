@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Tuairiscí Tuairteála">
+<!ENTITY crashesUnsubmitted.label   "Tuairiscí Tuairteála Gan Seoladh">
+<!ENTITY crashesSubmitted.label     "Tuairiscí Tuairteála a Seoladh">
+<!ENTITY id.heading                 "Aitheantas na Tuairisce">
+<!ENTITY dateCrashed.heading        "Dáta na Tuairte">
+<!ENTITY dateSubmitted.heading      "Dáta ar a Seoladh">
+<!ENTITY noReports.label            "Níor seoladh tuairisc tuairteála ar bith.">
+<!ENTITY noConfig.label             "Níl an feidhmchlár seo cumraithe le tuairiscí tuairteála a thaispeáint. Caithfear an rogha <code>breakpad.reportURL</code> a shocrú.">
+<!ENTITY clearAllReports.label      "Bain Gach Tuairisc">

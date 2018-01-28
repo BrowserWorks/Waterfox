@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Mecanismo de pesquisa padrão">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Escolha o seu mecanismo de pesquisa padrão. O &brandShortName; irá usá-lo na barra de endereço, barra de pesquisa e na página inicial.">
+
+<!ENTITY provideSearchSuggestions.label        "Sugestões de pesquisa">
+<!ENTITY provideSearchSuggestions.accesskey    "S">
+
+<!ENTITY showURLBarSuggestions.label           "Mostrar sugestões de pesquisa na barra de endereço">
+<!ENTITY showURLBarSuggestions.accesskey       "M">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "As sugestões de pesquisa não serão mostradas nos resultados da barra de endereço, porque você configurou o &brandShortName; para nunca lembrar o histórico.">
+
+<!ENTITY oneClickSearchEngines.label           "Mecanismos de pesquisa em um clique">
+
+<!ENTITY chooseWhichOneToDisplay.label         "A barra de pesquisa permite pesquisar em mecanismos alternativos. Escolha um.">
+
+<!ENTITY engineNameColumn.label                "Mecanismo de pesquisa">
+<!ENTITY engineKeywordColumn.label             "Palavra-chave">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaurar mecanismos de pesquisa padrão">
+<!ENTITY restoreDefaultSearchEngines.accesskey "p">
+
+<!ENTITY removeEngine.label                    "Remover">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "Adicionar mecanismos de pesquisa…">

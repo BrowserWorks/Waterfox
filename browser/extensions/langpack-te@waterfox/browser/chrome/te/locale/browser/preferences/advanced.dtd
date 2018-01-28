@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "సాధారణం">
+
+<!ENTITY useCursorNavigation.label       "పేజీల మధ్య సంచరణకు ఎల్లప్పుడు కర్సరు కీలను ఉపయోగించండి">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "మీరు టైపుచేయడం ప్రారంభించినప్పటి నుంచి పాఠ్యము‍ కొరకు శోధించు">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "అవసరమైనప్పుడు స్పర్శా కీ బోర్డు చూపించు">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "బ్రౌజింగ్">
+
+<!ENTITY useAutoScroll.label             "స్వయంచాలక స్క్రోలింగ్ వాడు">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "సాఫీ స్క్రోలింగ్ వాడు">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "మీరు టైపు చేసినప్పుడు స్పెల్లింగ్ ను పరిశీలించు">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "దత్తాంశం ఎంపికలు">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "ఈ బిల్డ్ కాన్ఫిగరేషన్ కోసం డేటా రిపోర్టింగ్ నిలిపివేయబడింది">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "ఇంకా తెలుసుకోండి">
+
+<!ENTITY dataCollection.label            "&brandShortName; డేటా సేకరణ మరియు ఉపయోగం">
+<!ENTITY dataCollectionPrivacyNotice.label    "గోప్యతా విధానం">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName; ను అనుమతించు Mozillaకు క్రాష్ నివేదికలను పంపటానికి">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "ఇంకా తెలుసుకోండి">
+
+<!ENTITY networkTab.label                "నెట్‌వర్క్">
+
+<!ENTITY networkProxy.label              "నెట్‌వర్క్ ప్రోక్సీ">
+
+<!ENTITY connectionDesc.label            "&brandShortName; ఎలా అంతర్జాలముకు అనుసంధానించబడుతోందో ఆకృతీకరించు">
+<!ENTITY connectionSettings.label        "అమరికలు…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "క్యాచీ చేసిన వెబ్ విషయం">
+
+<!ENTITY offlineStorage2.label           "ఆఫ్‌లైన్ వెబ్ విషయం మరియు వాడుకరి దత్తాంశం">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "సైటు డేటా">
+<!ENTITY clearSiteData.label             "మొత్తం డేటాను క్లియర్ చేయి">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "అమరికలు…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "మరింత తెలుసుకోండి">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "క్యాచీను ఇంతకు పరిమితం చేయి">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB జాగాకు">
+<!ENTITY clearCacheNow.label             "ఇప్పుడు శుభ్రపరచు">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "ఇప్పుడు శుభ్రంచేయి">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "స్వయంచాలక క్యాచీ నిర్వహణను వోవర్‌రైడ్ చేయి">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "నవీకరణ">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; తాజాకరణలు">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "సంచిక ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "వీటికి &brandShortName;ని అనుమతించు">
+<!ENTITY updateAuto3.label               "నవీకరణలను స్వయంచాలితంగా స్థాపించు (సిఫార్సు చేయబడినది)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "తాజాకరణల కోసం చూస్తుంది కానీ స్థాపించుకోవాలో వద్దో మిమ్నల్ని ఎంచుకోనిస్తుంది">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "తాజాకరణల కోసం ఎప్పుడూ చూడవద్దు (సిఫారసు చేయము)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "తాజాకరణ చరిత్రను చూపించు…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "నవీకరణలను సంస్థాపించుటకు బ్యాక్‌గ్రౌండ్ సేవను ఉపయోగించు">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "సెర్చింజన్లను స్వయంచాలకంగా తాజాకరించు">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "వెబ్‌ సైటు ఆఫ్‌లైన్ ఉపయోగం కొరకు డాటాను నిల్వచేయుటకు అడిగినప్పుడు మీకు తెలియజేయును">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "మినహాయింపులు…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "కింది వెబ్‌ సైట్ల దత్తాంశము దాచి ఆఫ్‌లైన్ వాడుక కొరకు ఉపయోగించుటకు అనుమతి కలిగి ఉన్నది:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "తీసివేయి…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "ఆఫ్‌లైన్ డాటాను తీసివేయి">
+
+<!ENTITY certificateTab.label            "ధృవీకరణ పత్రాలు">
+<!ENTITY selectCerts.auto                "స్వయంచాలకంగా ఒక దానిని ఎంపికచేయి">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "ప్రతిసారీ మిమ్మల్ని అడుగును">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "ధృవీకరణపత్రాల ప్రస్తుత ప్రమాణతను నిర్థారించుటకు OCSP రెస్పాండర్ సేవికలను ప్రశ్నిస్తుంది">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "ధృవీకరణ పత్రాలను దర్శించు…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "రక్షణ పరికరాలు…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "పనితనం">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "ఇంకా తెలుసుకోండి">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY allowHWAccel.label              "అందుబాటులో ఉన్నప్పుడు హార్డువేర్ యాక్సెలరేషన్ ఉపయోగించు">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY certPersonal2.description       "When a server requests your personal certificate">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Use recommended performance settings">

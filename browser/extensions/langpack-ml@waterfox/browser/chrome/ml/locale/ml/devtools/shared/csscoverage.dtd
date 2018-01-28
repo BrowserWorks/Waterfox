@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the CSS Coverage Report
+   - strings. See the 'csscoverage' command for more information, and
+   - devtools/client/styleeditor/styleeditor.xul for context -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+   - keep it in English, or another language commonly spoken among web developers.
+   - You want to make that choice consistent across the developer tools.
+   - A good criteria is the language in which you'd find the best
+   - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (csscoverage.backButton):
+  -  Text on the button to go back to the main style editor -->
+
+
+
+<!ENTITY csscoverage.backButton "പുറകോട്ട്">
+<!-- LOCALIZATION NOTE (csscoverage.unused, csscoverage.noMatches):
+  -  This is the heading and body text for the CSS usage part of the report -->
+
+<!ENTITY csscoverage.unused "ഉപയോഗിയ്ക്കാത്ത നിയമങ്ങള്‍">
+<!ENTITY csscoverage.noMatches "ഈ നിയമങ്ങളുമായി പൊരുത്തമുള്ളവ ലഭ്യമായില്ല:">
+<!-- LOCALIZATION NOTE (csscoverage.optimize.header):
+  -  This is the heading for the CSS optimization part of the report -->
+
+<!ENTITY csscoverage.optimize.header "ഒപ്ടിമൈസ് ചെയ്യുവാന്‍ സാധ്യമായ താളുകള്‍">
+<!-- LOCALIZATION NOTE (csscoverage.preload1, csscoverage.preload2,
+  -  csscoverage.preload3): These 3 are part of a paragraph with 1 and 2
+  -  separated by a styled <link> tag and 2 and 3 separated by a styled
+  -  <style> tag -->
+
+<!ENTITY csscoverage.optimize.body1 "താങ്കൾക്ക് ലഭ്യമാക്കുന്നതിന്റെ വേഗത ടാഗുകൾ താളിന്റെ താഴേക്കും">
+<!ENTITY csscoverage.optimize.body2 "ലോഡ് ഇവന്റുകൾക്ക് മുൻപ് ആവശ്യമായ സ്റ്റൈലുകളോട് കൂടിയ ഒരു പുതിയ ഇൻലൈൻ എലമെന്റ് മുകളിലേക്കും മാറ്റുന്നതിലൂടെ ചില സമയങ്ങളിൽ വർദ്ധിപ്പിക്കാം">
+<!ENTITY csscoverage.optimize.body3 "താങ്കൾക്ക് ആവശ്യമായ സ്റ്റൈൽ കൂട്ടങ്ങൾ ഇവയാണ്:">
+<!-- LOCALIZATION NOTE (csscoverage.optimize.bodyX):
+  -  This is what we say when we have no optimization suggestions -->
+
+<!ENTITY csscoverage.optimize.bodyX "എല്ലാ നിയമങ്ങളും ഉള്‍പ്പെടുത്തിയിരിയ്ക്കുന്നു.">
+<!-- LOCALIZATION NOTE (csscoverage.footer1, csscoverage.footer2a,
+  -  csscoverage.footer3, csscoverage.footer4): The text displayed at the
+  -  bottom of the page, with 2a being the URL opened when the link text in 3
+  -  is clicked -->
+
+<!ENTITY csscoverage.footer1 "സന്ദര്‍ശിക്കേണ്ടവ">
+<!ENTITY csscoverage.footer2a "https://developer.mozilla.org/docs/Tools/CSS_Coverage">
+<!ENTITY csscoverage.footer3 "സിഎസ്എസ് കവറേജ് പ്രയോഗത്തിലുള്ള എംഡിഎന്‍ ലേഖനം">
+<!ENTITY csscoverage.footer4 "റിപോര്‍ട്ട് ലഭ്യമാക്കുന്നതിനുള്ള മുന്നറിയിപ്പ്.">

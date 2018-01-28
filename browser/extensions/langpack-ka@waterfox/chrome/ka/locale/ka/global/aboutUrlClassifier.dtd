@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "მონაცემები url-classifier -ის შესახებ">
+<!ENTITY aboutUrlClassifier.providerTitle               "მომწოდებელი">
+<!ENTITY aboutUrlClassifier.provider                    "მომწოდებელი">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "ბოლო განახლების დრო">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "მომდევნო განახლების დრო">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "უკან დაბრუნების დროს">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "ბოლო განახლების მდგომარეობა">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "განახლება">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "კეში">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "განახლება">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "გასუფთავება">
+<!ENTITY aboutUrlClassifier.cacheTableName              "ცხრილის სახელი">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "კეშის უარყოფითი ჩანაწერების რაოდენობა">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "კეშის დადებითი ჩანაწერების რაოდენობა">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "ჩანაწერების ჩვენება">
+<!ENTITY aboutUrlClassifier.cacheEntries                "კეშის ჩანაწერები">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "წინსართი">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "კეშის უარყოფითი ჩანაწერების ვადა">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "სრული ჰეში">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "კეშის დადებითი ჩანაწერების ვადა">
+<!ENTITY aboutUrlClassifier.debugTitle                  "გამართვა">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "აღრიცხვის მოდულების მითითება">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "აღრიცხვის ფაილის მითითება">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS აღრიცხვის მითითება">
+<!ENTITY aboutUrlClassifier.debugSBModules              "უსაფრთხო თვალიერების აღრიცხვის მოდულები">
+<!ENTITY aboutUrlClassifier.debugModules                "მიმდინარე აღრიცხვის მოდულები">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "უსაფრთხო თვალიერების JS აღრიცხვა">
+<!ENTITY aboutUrlClassifier.debugFile                   "მიმდინარე აღრიცხვის ფაილი">

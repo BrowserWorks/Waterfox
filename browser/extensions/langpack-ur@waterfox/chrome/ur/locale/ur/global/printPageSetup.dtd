@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "صفحہ سیٹ اپ">
+
+<!ENTITY basic.tab           "وضع اور اختیارات">
+
+<!ENTITY formatGroup.label   "وضع کریں">
+
+<!ENTITY orientation.label   "سمت بندی:">
+<!ENTITY portrait.label      "عمودی انداز">
+<!ENTITY portrait.accesskey  "ع">
+<!ENTITY landscape.label     "افقی انداز">
+<!ENTITY landscape.accesskey "ا">
+
+<!ENTITY scale.label         "پیمانہ:">
+<!ENTITY scale.accesskey     "پ">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "صفحہ چوڑائی موزوں کرنے کےلیے سکیڑیں">
+<!ENTITY shrinkToFit.accesskey "چ">
+
+<!ENTITY optionsGroup.label  "اختیارات">
+
+<!ENTITY printBG.label       "پس منظر چھاپیں (رنگ اور نقوش)">
+<!ENTITY printBG.accesskey   "پ">
+
+<!ENTITY advanced.tab        "حاشیے اور سر تحریر/ذیل تحریر">
+
+<!ENTITY marginGroup.label   "حاشیے (#1)">
+<!ENTITY marginUnits.inches  "انچ">
+<!ENTITY marginUnits.metric  "ملی میٹر">
+<!ENTITY marginTop.label     "بالا:">
+<!ENTITY marginTop.accesskey "ب">
+<!ENTITY marginBottom.label  "پایان:">
+<!ENTITY marginBottom.accesskey "پ">
+<!ENTITY marginLeft.label    "بایاں:">
+<!ENTITY marginLeft.accesskey "ب">
+<!ENTITY marginRight.label   "دایاں:">
+<!ENTITY marginRight.accesskey "د">
+
+<!ENTITY headerFooter.label  "سر تحریر اور ذیل تحریر">
+
+<!ENTITY hfLeft.label        "بایاں:">
+<!ENTITY hfCenter.label      "مرکز:">
+<!ENTITY hfRight.label       "دایاں:">
+<!ENTITY headerLeft.tip      "بایاں سر تحریر">
+<!ENTITY headerCenter.tip    "سر تحریر مرکز">
+<!ENTITY headerRight.tip     "دایاں سر تحریر">
+<!ENTITY footerLeft.tip      "بایاں ذیل تحریر">
+<!ENTITY footerCenter.tip    "ذیل تحریر مرکز">
+<!ENTITY footerRight.tip     "دایاں ذیل تحریر">
+
+<!ENTITY hfTitle             "عنوان">
+<!ENTITY hfURL               "یو ار ایل">
+<!ENTITY hfDateAndTime       "وقت/تاریخ">
+<!ENTITY hfPage              "صفحہ #">
+<!ENTITY hfPageAndTotal      "# صفحوں کا صفح #">
+<!ENTITY hfBlank             "--خالی--">
+<!ENTITY hfCustom            "مخصوص...">
+
+<!ENTITY customPrompt.title  "مخصوص...">
+<!ENTITY customPrompt.prompt "اپنا مخصوص سر تحریر/ذیل تحریر متن داخل کریں">

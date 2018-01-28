@@ -1,0 +1,159 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "ข้อมูลการแก้ไขปัญหา">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  หน้านี้มีข้อมูลทางเทคนิคที่อาจเป็นประโยชน์เมื่อคุณกำลังพยายามแก้ไขปัญหา หากคุณกำลังมองหาคำตอบสำหรับคำถามที่พบบ่อยเกี่ยวกับ &brandShortName; ตรวจสอบ <a id='supportLink'>เว็บไซต์สนับสนุน</a> ของเรา">
+
+<!ENTITY aboutSupport.crashes.title "รายงานข้อขัดข้อง">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID รายงาน">
+<!ENTITY aboutSupport.crashes.sendDate "ส่งข้อมูลแล้ว">
+<!ENTITY aboutSupport.crashes.allReports "รายงานข้อขัดข้องทั้งหมด">
+<!ENTITY aboutSupport.crashes.noConfig "แอปพลิเคชันนี้ไม่ได้ถูกกำหนดค่าให้แสดงผลรายงานข้อข้อง">
+
+<!ENTITY aboutSupport.extensionsTitle "ส่วนขยาย">
+<!ENTITY aboutSupport.extensionName "ชื่อ">
+<!ENTITY aboutSupport.extensionEnabled "ถูกเปิดใช้งาน">
+<!ENTITY aboutSupport.extensionVersion "รุ่น">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "คุณลักษณะของ &brandShortName;">
+
+<!ENTITY aboutSupport.experimentsTitle "คุณลักษณะทดลอง">
+<!ENTITY aboutSupport.experimentName "ชื่อ">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "คำอธิบาย">
+<!ENTITY aboutSupport.experimentActive "ใช้งานอยู่">
+<!ENTITY aboutSupport.experimentEndDate "วันสิ้นสุด">
+<!ENTITY aboutSupport.experimentHomepage "หน้าแรก">
+
+<!ENTITY aboutSupport.appBasicsTitle "พื้นฐานแอปพลิเคชัน">
+<!ENTITY aboutSupport.appBasicsName "ชื่อ">
+<!ENTITY aboutSupport.appBasicsVersion "รุ่น">
+<!ENTITY aboutSupport.appBasicsBuildID "Build ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "ช่องทางการอัปเดต">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "ประวัติการอัปเดต">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "แสดงประวัติการอัปเดต">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "ไดเรกทอรีโปรไฟล์">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "โฟลเดอร์โปรไฟล์">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "ปลั๊กอินที่เปิดใช้งาน">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Build Configuration">
+<!ENTITY aboutSupport.appBasicsUserAgent "User Agent">
+<!ENTITY aboutSupport.appBasicsOS "ระบบปฏิบัติการ">
+<!ENTITY aboutSupport.appBasicsMemoryUse "หน่วยความจำที่ใช้">
+<!ENTITY aboutSupport.appBasicsPerformance "ประสิทธิภาพ">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "ตัวทำงานบริการที่ลงทะเบียน">
+
+<!ENTITY aboutSupport.appBasicsProfiles "โปรไฟล์">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "หน้าต่างแบบหลายโปรเซส">
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "โหมดปลอดภัย">
+
+<!ENTITY aboutSupport.showDir.label "เปิดไดเรกทอรี">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "แสดงใน Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "เปิดโฟลเดอร์">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ค่ากำหนดสำคัญที่ถูกเปลี่ยนแปลง">
+<!ENTITY aboutSupport.modifiedPrefsName "ชื่อ">
+<!ENTITY aboutSupport.modifiedPrefsValue "ค่า">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "ค่ากำหนด user.js">
+<!ENTITY aboutSupport.userJSDescription "โฟลเดอร์โปรไฟล์ของคุณมี <a id='prefs-user-js-link'>ไฟล์ user.js</a> ซึ่งมีค่ากำหนดที่ไม่ได้ถูกสร้างโดย &brandShortName;">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "ค่ากำหนดสำคัญที่ถูกล็อค">
+<!ENTITY aboutSupport.lockedPrefsName "ชื่อ">
+<!ENTITY aboutSupport.lockedPrefsValue "ค่า">
+
+<!ENTITY aboutSupport.graphicsTitle "กราฟิก">
+
+<!ENTITY aboutSupport.placeDatabaseIntegrity "ความสมบูรณ์">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "ตรวจสอบความสมบูรณ์">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+
+<!ENTITY aboutSupport.a11yTitle "การช่วยเข้าถึง">
+<!ENTITY aboutSupport.a11yActivated "ถูกเปิดใช้งาน">
+<!ENTITY aboutSupport.a11yForceDisabled "ป้องกันการช่วยเข้าถึง">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "รุ่น Library">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ประวัติการติดตั้ง">
+<!ENTITY aboutSupport.updateHistoryTitle "ประวัติการอัปเดต">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "คัดลอกข้อความไปยังคลิปบอร์ด">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "คัดลอกข้อมูลดิบไปยังคลิปบอร์ด">
+
+<!ENTITY aboutSupport.sandboxTitle "กระบะทราย">
+
+<!ENTITY aboutSupport.safeModeTitle "ลองใช้โหมดปลอดภัย">
+<!ENTITY aboutSupport.restartInSafeMode.label "เริ่มการทำงานใหม่และปิดใช้งานส่วนเสริม…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "คุณลักษณะ">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "การวินิจฉัย">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Failure Log">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">

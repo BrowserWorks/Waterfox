@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "ಜಾಲಬಂಧದ ಕುರಿತು">
+<!ENTITY aboutNetworking.warning               "ಇದು ಕೇವಲ ಪ್ರಾಯೋಗಿಕವಷ್ಟೆ. ವಯಸ್ಕರ ಮೇಲ್ವಿಚಾರಣೆ ಇಲ್ಲದೆ ಬಳಸಬೇಡಿ.">
+<!ENTITY aboutNetworking.showNextTime          "ಈ ಎಚ್ಚರಿಕಾ ಸಂದೇಶವನ್ನು ಮುಂದಿನ ಬಾರಿ ತೋರಿಸು">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "ಸಾಕೆಟ್‌ಗಳು">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "ವೆಬ್‌ಸಾಕೆಟ್‌ಗಳು">
+<!ENTITY aboutNetworking.refresh               "ತಾಜಾಗೊಳಿಸು">
+<!ENTITY aboutNetworking.autoRefresh           "ಪ್ರತಿ 3 ಸೆಕೆಂಡುಗಳಿಗೆ ಸ್ವತ:ಪುನಶ್ಚೇತನಗೊಳ್ಳು">
+<!ENTITY aboutNetworking.hostname              "ಅತಿಥೇಯ ಗಣಕದ ಹೆಸರು">
+<!ENTITY aboutNetworking.port                  "ಪೋರ್ಟ್">
+
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "ಸಕ್ರಿಯ">
+<!ENTITY aboutNetworking.idle                  "ನಿಷ್ಕ್ರಿಯ">
+<!ENTITY aboutNetworking.host                  "ಅತಿಥೇಯ">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "ಕಳುಹಿಸಲಾಗಿದೆ">
+<!ENTITY aboutNetworking.received              "ಪಡೆಯಲಾಗಿದೆ">
+<!ENTITY aboutNetworking.family                "ಕುಲ">
+<!ENTITY aboutNetworking.addresses             "ವಿಳಾಸಗಳು">
+<!ENTITY aboutNetworking.expires               "ಅಂತ್ಯಗೊಳ್ಳುತ್ತಿದೆ (ಸೆಕೆಂಡುಗಳಲ್ಲಿ)">
+<!ENTITY aboutNetworking.messagesSent          "ಸಂದೇಶಗಳನ್ನು ಕಳಿಸಲಾಗಿದೆ">
+<!ENTITY aboutNetworking.messagesReceived      "ಸಂದೇಶವನ್ನು ಸ್ವೀಕರಿಸಲಾಗಿದೆ">
+<!ENTITY aboutNetworking.bytesSent             "ಬೈಟ್ಸ್‌ಗಳನ್ನು ಕಳಿಸಲಾಗಿದೆ">
+<!ENTITY aboutNetworking.bytesReceived         "ಬೈಟ್ಸ್‌ಗಳನ್ನು ಪಡೆಯಲಾಗಿದೆ">
+<!ENTITY aboutNetworking.logging               "ದಾಖಲಾತಿ‍">
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.dnsLookup             "DNS ಲುಕ್ಅಪ್">
+<!ENTITY aboutNetworking.dnsLookupButton       "ಬಗೆಹರಿಸಿ">
+<!ENTITY aboutNetworking.dnsDomain             "ಡೊಮೈನ್">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPಗಳು">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.currentLogFile        "Current Log File:">
+<!ENTITY aboutNetworking.currentLogModules     "Current Log Modules:">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.logTutorial           "See <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> for instructions on how to use this tool.">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.setLogFile            "Set Log File">
+<!ENTITY aboutNetworking.setLogModules         "Set Log Modules">
+<!ENTITY aboutNetworking.startLogging          "Start Logging">
+<!ENTITY aboutNetworking.stopLogging           "Stop Logging">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

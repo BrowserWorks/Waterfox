@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ಹೊರತುಪಡಿಕೆಗಳು - ಅನುವಾದ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ಈ ಕೆಳಗಿನ ಭಾಷೆಗಳಿಗೆ ಅನುವಾದವನ್ನು ಒದಗಿಸಲಾಗುವುದಿಲ್ಲ:">
+<!ENTITY treehead.languageName.label      "ಭಾಷೆಗಳು">
+<!ENTITY removeLanguage.label             "ಭಾಷೆಯನ್ನು ತೆಗೆದುಹಾಕು">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "ಎಲ್ಲಾ ಭಾಷೆಗಳನ್ನು ತೆಗೆದುಹಾಕು">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "ಈ ಕೆಳಗಿನ ತಾಣಗಳಿಗಾಗಿ ಅನುವಾದವನ್ನು ಒದಗಿಸಲಾಗುವುದಿಲ್ಲ:">
+
+<!ENTITY removeSite.label                 "ತಾಣವನ್ನು ತೆಗೆದು ಹಾಕು">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "ಎಲ್ಲಾ ತಾಣವನ್ನು ತೆಗೆದು ಹಾಕು">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "ಮುಚ್ಚು">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

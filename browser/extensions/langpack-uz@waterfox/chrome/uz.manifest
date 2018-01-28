@@ -1,0 +1,14 @@
+locale alerts uz uz/locale/uz/alerts/
+locale autoconfig uz uz/locale/uz/autoconfig/
+locale global uz uz/locale/uz/global/
+locale global-platform uz uz/locale/uz/global-platform/mac/ os=Darwin
+locale global-platform uz uz/locale/uz/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform uz uz/locale/uz/global-platform/win/ os=WINNT
+locale mozapps uz uz/locale/uz/mozapps/
+locale necko uz uz/locale/uz/necko/
+locale passwordmgr uz uz/locale/uz/passwordmgr/
+locale pipnss uz uz/locale/uz/pipnss/
+locale pippki uz uz/locale/uz/pippki/
+locale places uz uz/locale/uz/places/
+locale pluginproblem uz uz/locale/uz/pluginproblem/
+locale weave uz uz/locale/uz/services/

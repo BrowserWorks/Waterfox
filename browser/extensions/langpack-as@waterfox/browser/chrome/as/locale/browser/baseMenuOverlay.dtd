@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "সৰু কৰক">
+<!ENTITY bringAllToFront.label    "সকলো সন্মুখলৈ আনক">
+<!ENTITY zoomWindow.label         "জুম কৰক">
+<!ENTITY windowMenu.label         "উইন্ডো">
+
+<!ENTITY helpMenu.label           "সহায়"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "সহায়"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+
+
+
+
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "কিবৰ্ড চৰ্টকাটসমূহ">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "এড-অন সমূহ অসামৰ্থবান থকাকে পুনৰাম্ভ কৰক…">
+<!ENTITY helpSafeMode.accesskey   "R">
+
+
+
+
+
+<!ENTITY helpTroubleshootingInfo.label      "সমস্যামুক্তিৰ তথ্য">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "সঁহাৰি জমা দিয়ক…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+
+
+<!ENTITY preferencesCmdMac.label        "পছন্দসমূহ…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "সেৱাসমূহ">
+
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "অন্য লুকাওক">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "সকলো দেখুৱাওক">
+
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY aboutProduct2.label      "About &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY healthReport2.label      "&brandShorterName; Health Report">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY helpSafeMode.stop.label       "Restart with Add-ons Enabled">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; Tour">
+<!ENTITY hideThisAppCmdMac2.label       "Hide &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY productHelp2.label       "&brandShorterName; Help">

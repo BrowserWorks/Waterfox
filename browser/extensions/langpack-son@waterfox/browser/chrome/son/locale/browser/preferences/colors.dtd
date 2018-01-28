@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Noonawey">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Noonawey kaŋ tabatandi nor nda moɲoo nd'ay šilbawey ne beene:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "r">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Waati kul">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Nda furarey kaŋ ga fatta ka boori hinne">
+<!ENTITY  overrideDefaultPageColors.never.label  "Abada">
+
+<!ENTITY  color                           "Kalimaɲaa kuru nda bandafaari">
+<!ENTITY  textColor.label                 "Kalimaɲaa kuru:">
+<!ENTITY  textColor.accesskey             "K">
+<!ENTITY  backgroundColor.label           "Bandafaari:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "Dabariɲaa noonawey goyandi">
+<!ENTITY  useSystemColors.accesskey       "D">
+
+<!ENTITY  underlineLinks.label            "Dobey cire žeeri">
+<!ENTITY  underlineLinks.accesskey        "D">
+<!ENTITY  links                           "Dobu noonawey">
+<!ENTITY  linkColor.label                 "Dobey kaŋ ši diyandi:">
+<!ENTITY  linkColor.accesskey             "D">
+<!ENTITY  visitedLinkColor.label          "Dobu diyantey:">
+<!ENTITY  visitedLinkColor.accesskey      "D">

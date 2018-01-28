@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Göstər">
+<!ENTITY playButton.pauseLabel "Dayandır">
+<!ENTITY muteButton.muteLabel "Səsi bağla">
+<!ENTITY muteButton.unmuteLabel "Sesi aç">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Tam ekran">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Tam ekrandan çıx">
+<!ENTITY castingButton.castingLabel "Ekrana Yayımla">
+<!ENTITY closedCaption.off "Söndürülmüş">
+
+<!ENTITY stats.media "Ortam">
+<!ENTITY stats.size "Həcmi">
+<!ENTITY stats.activity "Fəaliyyət">
+<!ENTITY stats.activityPaused "Saxlanıldı">
+<!ENTITY stats.activityPlaying "Göstərilir">
+<!ENTITY stats.activityEnded "Bitdi">
+<!ENTITY stats.activitySeeking "(fırladılır)">
+<!ENTITY stats.volume "Səs">
+<!ENTITY stats.framesParsed "Emal edilən kadr">
+<!ENTITY stats.framesDecoded "Həll edilən kadr">
+<!ENTITY stats.framesPresented "Təqdim edilən kadr">
+<!ENTITY stats.framesPainted "Çəkilən kadr">
+
+<!ENTITY error.aborted "Video yükləmə dayandırıldı.">
+<!ENTITY error.network "Bir şəbəkə səhvi səbəbi ilə video göstərilməsi ləğv edildi.">
+<!ENTITY error.decode "Fayl korlandığı üçün video göstərilə bilmir.">
+<!ENTITY error.srcNotSupported "Video formatı və ya MIME formatı dəstəklənmir.">
+<!ENTITY error.noSource2 "Dəstəklənən formatlarda və ya MIME formatlarında video tapılmadı.">
+<!ENTITY error.generic "Naməlum bir səhv səbəbi ilə video göstərilməsi ləğv edildi.">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "#1, cəmi #2">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

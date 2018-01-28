@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "ယခင်အသုံးပြုခဲ့သည့်အပိုင်းကို ပြန်ဖွင့်ပါ">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "အားနာပါတယ်၊ စိတ်မကောင်းပါဘူး။">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ဟာ သင့်ရဲ့ ၀င်းဒိုးနဲ့ စာအမှတ်များကို ပြန်ဖေါ်ဖို့ အခက်အခဲ ရှိနေတယ်။ ဒါဟာ လတ်တလော ဖွင့်နေတဲ့ ကွန်ရက် စာမျက်နှာ တခုကြောင့် ဖြစ်တယ်။">
+<!ENTITY restorepage.tryThis        "သင် စမ်းကြည့်နိုင်တယ် - ">
+<!ENTITY restorepage.restoreSome    "သင်ဖယ်ရှားဖို့ လုပ်နေတဲ့ စာအမှတ် တခု (သို့) အများ​ကြောင့် ပြဿနာ ဖြစ်နေနိုင်တယ်။">
+<!ENTITY restorepage.startNew       "ကြည့်ရှုမှုဆက်ရှင်တစ်ခုလုံးကို အသစ် စတင်နေပါသည်">
+
+<!ENTITY restorepage.tryagainButton "ပြန်ဖွင့်ပါ">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "ပိတ်ပါ">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "ပြန်ဖွင့်ပါ">
+<!ENTITY restorepage.listHeader     "၀င်းဒိုးများနှင့် တပ်ဗ်များ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "၀င်းဒိုး &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "စကြစို့။">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "အောင်မြင်ပါသည်။">
+
+<!ENTITY welcomeback2.pageTitle     "အောင်မြင်ပါသည်။">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName;ကို စတင်အသုံးနိုင်ပါပြီ။">
+
+<!ENTITY welcomeback2.label.restoreAll  "ဝင်းဒိုးနှင့် တပ်ဗ်အားလုံးကို ပြန်ဖွင့်ရန်">
+<!ENTITY welcomeback2.label.restoreSome "သင်ကြည့်ချင်သည့်တစ်ခုကို ပြန်ဖွင့်ရန်">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "သင့်ပေါင်းစပ်ပရိုဂရမ်များနှင့် ပြုပြင်ချက်များကို ဖယ်ရှားပြီးပါပြီ။ ထို့ပြင် သင့်ဘရောက်ဇာအပြင်အဆင်များကိုလည်း မူလအတိုင်း ပြန်လည်သတ်မှတ်ပြီးပါပြီ။ အကယ်၍ ဤဆောင်ရွက်ချက်သည် သင့်ပြဿနာကို မပြင်ဆင်နိုင်ပါက၊ ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "သင်အသုံးပြုနိုင်သည်များကို ပိုမိုလေ့လာရန်။">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">
+<!ENTITY welcomeback2.restoreSome.label "Restore only the ones you want">
+
+

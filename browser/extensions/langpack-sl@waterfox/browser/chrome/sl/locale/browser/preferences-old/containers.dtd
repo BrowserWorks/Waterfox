@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Dodaj nov vsebnik">
+<!ENTITY addButton.accesskey  "D">
+<!ENTITY preferencesButton.label "Nastavitve">
+<!ENTITY removeButton.label   "Odstrani">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Nazaj na Zasebnost">
+
+<!ENTITY window.title         "Dodaj nov vsebnik">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Ime:">
+<!ENTITY name.accesskey       "m">
+<!ENTITY name.placeholder     "Vnesite ime vsebnika">
+<!ENTITY icon.label           "Ikona:">
+<!ENTITY icon.accesskey       "k">
+<!ENTITY color.label          "Barva:">
+<!ENTITY color.accesskey      "B">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Končaj">
+<!ENTITY button.ok.accesskey  "K">
+

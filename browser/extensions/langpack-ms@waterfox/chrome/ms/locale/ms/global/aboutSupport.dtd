@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Maklumat Pencarisilapan">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Halaman ini mengandungi maklumat teknikal yang mungkin berguna apabila anda
+  cuba menyelesaikan masalah. Jika anda mencari jawapan soalan lazim
+  berkenaan &brandShortName;, semak di <a id='supportLink'>support website</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Laporan Ranap">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID Laporan">
+<!ENTITY aboutSupport.crashes.sendDate "Dihantar">
+<!ENTITY aboutSupport.crashes.allReports "Semua Laporan Ranap">
+<!ENTITY aboutSupport.crashes.noConfig "Aplikasi ini tidak dikonfigurasikan untuk memaparkan laporan ranap.">
+
+<!ENTITY aboutSupport.extensionsTitle "Ekstensi">
+<!ENTITY aboutSupport.extensionName "Nama">
+<!ENTITY aboutSupport.extensionEnabled "Didayakan">
+<!ENTITY aboutSupport.extensionVersion "Versi">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Ciri &brandShortName;">
+<!ENTITY aboutSupport.featureName "Nama">
+<!ENTITY aboutSupport.featureVersion "Versi">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Ciri-ciri Eksperimen">
+<!ENTITY aboutSupport.experimentName "Nama">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Huraian">
+<!ENTITY aboutSupport.experimentActive "Aktif">
+<!ENTITY aboutSupport.experimentEndDate "Tarikh Akhir">
+<!ENTITY aboutSupport.experimentHomepage "Halaman utama">
+<!ENTITY aboutSupport.experimentBranch "Cabang">
+
+<!ENTITY aboutSupport.appBasicsTitle "Asas Aplikasi">
+<!ENTITY aboutSupport.appBasicsName "Nama">
+<!ENTITY aboutSupport.appBasicsVersion "Versi">
+<!ENTITY aboutSupport.appBasicsBuildID "ID Binaan">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Saluran Kemaskini">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Sejarah Kemaskini">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Papar Sejarah Kemaskini">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Direktori Profil">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Folder Profil">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Dayakan Plugins">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Konfigurasi Binaan">
+<!ENTITY aboutSupport.appBasicsUserAgent "Ejen pengguna">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Kegunaan Memori">
+<!ENTITY aboutSupport.appBasicsPerformance "Prestasi">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Worker Berdaftar">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profil">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Tetingkap Multiproses">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Proses Kandungan Web">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mod Selamat">
+
+<!ENTITY aboutSupport.showDir.label "Buka Direktori">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Papar dalam Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Buka Folder">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Pengubahan rujukan pilihan yang penting">
+<!ENTITY aboutSupport.modifiedPrefsName "Nama">
+<!ENTITY aboutSupport.modifiedPrefsValue "Nilai">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Keutamaan user.js">
+<!ENTITY aboutSupport.userJSDescription "Profil folder anda mengandungi satu <a id='prefs-user-js-link'>fail user.js</a>, dimana termasuk tetapan yang tidak dilakukan oleh &brandShortName; .">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Keutamaan Terkunci Yang Penting">
+<!ENTITY aboutSupport.lockedPrefsName "Nama">
+<!ENTITY aboutSupport.lockedPrefsValue "Nilai">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafik">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Tempat Pangkalan Data">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integriti">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Sahkan Integriti">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Penambahan GC">
+
+<!ENTITY aboutSupport.a11yTitle "Ketercapaian">
+<!ENTITY aboutSupport.a11yActivated "Diaktifkan">
+<!ENTITY aboutSupport.a11yForceDisabled "Halang Ketercapaian">
+<!ENTITY aboutSupport.a11yHandlerUsed "Menggunakan Accessible Handler">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Versi Pustaka">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Sejarah Pemasangan">
+<!ENTITY aboutSupport.updateHistoryTitle "Kemaskini Sejarah">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Salin teks ke klipbod">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Salin data mentah kepada klipbod">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Beberapa Saat Lepas">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Jenis Proses">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.safeModeTitle "Cuba Mod Selamat">
+<!ENTITY aboutSupport.restartInSafeMode.label "Mula semula dengan Add-ons Dinyahdayakan…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Ciri-ciri">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostik">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Log Kegagalan">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Log Keputusan">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Ciri Crash Guard Dinyahdayakan">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Peranti Output">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Peranti Input">
+<!ENTITY aboutSupport.mediaDeviceName "Nama">
+<!ENTITY aboutSupport.mediaDeviceGroup "Kumpulan">
+<!ENTITY aboutSupport.mediaDeviceVendor "Pembekal">
+<!ENTITY aboutSupport.mediaDeviceState "Keadaan">
+<!ENTITY aboutSupport.mediaDevicePreferred "Diutamakan">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Saluran">
+<!ENTITY aboutSupport.mediaDeviceRate "Kadar">
+<!ENTITY aboutSupport.mediaDeviceLatency "Kependaman">

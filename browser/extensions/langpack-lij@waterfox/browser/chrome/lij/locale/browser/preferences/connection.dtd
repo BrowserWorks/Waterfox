@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Preferense de conescion">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Inpòsta i proxy pe intrâ in sciâ ræ">
+<!ENTITY  noProxyTypeRadio.label        "No proxy">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "Adeuvia o proxy de scistema">
+<!ENTITY  systemTypeRadio.accesskey     "Û">
+<!ENTITY  WPADTypeRadio.label           "Treuva e inpostaçion do proxy in aotomatico pe sta ræ">
+<!ENTITY  WPADTypeRadio.accesskey       "T">
+<!ENTITY  manualTypeRadio.label         "Inpòsta a man o proxy:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "URL pe inpostâ in aotomatico o proxy:">
+<!ENTITY  autoTypeRadio.accesskey       "o">
+<!ENTITY  reload.label                  "Recarega">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "Proxy FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Proxy HTTP:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "Proxy SSL:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "Host SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS quande se deuvia SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "D">
+<!ENTITY  port.label                    "Pòrta:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "No Proxy pe:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "Ezenpio: mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Adeuvia sto proxy pe tutti i pròtocòlli">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "No domandâ l’aotenticaçion se a paròlla segreta a l'é sarvâ">
+<!ENTITY  autologinproxy.accesskey      "c">
+<!ENTITY  autologinproxy.tooltip        "Sta òpçion a permette de aotenticase diretamente con in proxy se ti gh'æ de credensiali sarvæ. A domanda ti a vediæ in caxo de'erô.">

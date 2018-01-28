@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Proje">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Yeni uygulama…">
+<!ENTITY projectMenu_newApp_accesskey "Y">
+<!ENTITY projectMenu_importPackagedApp_label "Paket uygulama aç…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Barındırılan uygulama aç…">
+<!ENTITY projectMenu_importHostedApp_accesskey "B">
+<!ENTITY projectMenu_selectApp_label "Uygulama aç…">
+<!ENTITY projectMenu_selectApp_accesskey "U">
+<!ENTITY projectMenu_play_label "Yükle ve çalıştır">
+<!ENTITY projectMenu_play_accesskey "ü">
+<!ENTITY projectMenu_stop_label "Uygulamayı durdur">
+<!ENTITY projectMenu_stop_accesskey "d">
+<!ENTITY projectMenu_debug_label "Uygulamada hata ayıkla">
+<!ENTITY projectMenu_debug_accesskey "h">
+<!ENTITY projectMenu_remove_label "Projeyi kaldır">
+<!ENTITY projectMenu_remove_accesskey "k">
+<!ENTITY projectMenu_showPrefs_label "Tercihler">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Ek bileşenleri yönet">
+<!ENTITY projectMenu_manageComponents_accesskey "n">
+<!ENTITY projectMenu_refreshTabs_label "Sekmeleri Tazele">
+
+<!ENTITY runtimeMenu_label "Çalışma zamanı">
+<!ENTITY runtimeMenu_accesskey "z">
+<!ENTITY runtimeMenu_disconnect_label "Bağlantıyı kes">
+<!ENTITY runtimeMenu_disconnect_accesskey "B">
+<!ENTITY runtimeMenu_takeScreenshot_label "Ekran görüntüsü">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "E">
+<!ENTITY runtimeMenu_showDetails_label "Çalışma zamanı bilgileri">
+<!ENTITY runtimeMenu_showDetails_accesskey "a">
+<!ENTITY runtimeMenu_showMonitor_label "İzleyici">
+<!ENTITY runtimeMenu_showMonitor_accesskey "z">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Cihaz tercihleri">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "C">
+<!ENTITY runtimeMenu_showSettings_label "Cihaz ayarları">
+<!ENTITY runtimeMenu_showSettings_accesskey "z">
+
+<!ENTITY viewMenu_label "Göster">
+<!ENTITY viewMenu_accesskey "G">
+<!ENTITY viewMenu_toggleEditor_label "Editörü aç/kapat">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "Yaklaştır">
+<!ENTITY viewMenu_zoomin_accesskey "Y">
+<!ENTITY viewMenu_zoomout_label "Uzaklaştır">
+<!ENTITY viewMenu_zoomout_accesskey "U">
+<!ENTITY viewMenu_resetzoom_label "Yaklaşmayı sıfırla">
+<!ENTITY viewMenu_resetzoom_accesskey "s">
+
+<!ENTITY projectButton_label "Uygulama aç">
+<!ENTITY runtimeButton_label "Çalışma zamanı seç">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "a">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Projelerim">
+<!ENTITY projectPanel_runtimeApps "Çalışma zamanı uygulamaları">
+<!ENTITY projectPanel_tabs "Sekmeler">
+<!ENTITY runtimePanel_usb "USB aygıtları">
+<!ENTITY runtimePanel_wifi "Wi-Fi aygıtları">
+<!ENTITY runtimePanel_simulator "Simülatörler">
+<!ENTITY runtimePanel_other "Diğer">
+<!ENTITY runtimePanel_installsimulator "Simülatör yükle">
+<!ENTITY runtimePanel_noadbhelper "ADB Helper'ı yükle">
+<!ENTITY runtimePanel_nousbdevice "Cihazınızı göremiyor musunuz?">
+<!ENTITY runtimePanel_refreshDevices_label "Cihazları yenile">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "geçerli">
+<!ENTITY details_warning_header "uyarılar">
+<!ENTITY details_error_header "hatalar">
+<!ENTITY details_description "Açıklama">
+<!ENTITY details_location "Konum">
+<!ENTITY details_manifestURL "Uygulama kimliği">
+<!ENTITY details_removeProject_button "Projeyi kaldır">
+<!ENTITY details_showPrepackageLog_button "Ön paket günlüğünü göster">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Yeni uygulama">
+<!ENTITY newAppHeader "Şablon seçin">
+<!ENTITY newAppLoadingTemplate "Şabolanlar yükleniyor…">
+<!ENTITY newAppProjectName "Proje adı:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Kapat">
+
+<!-- Addons -->
+<!ENTITY addons_title "Ekstra bileşenler">
+<!ENTITY addons_aboutaddons "Eklenti Yöneticisi’ni aç">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Tercihler">
+<!ENTITY prefs_editor_title "Editör">
+<!ENTITY prefs_general_title "Genel">
+<!ENTITY prefs_restore "Varsayılanları geri yükle">
+<!ENTITY prefs_manage_components "Ek bileşenleri yönet">
+<!ENTITY prefs_options_autoconnectruntime "Önceki çalışma zamanına yeniden bağlan">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE başladığında önceki çalışma zamanına yeniden bağlan">
+<!ENTITY prefs_options_rememberlastproject "Son projeyi hatırla">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE başladığında önceki projeyi geri yükle">
+<!ENTITY prefs_options_templatesurl "Şablonların URL’si">
+<!ENTITY prefs_options_templatesurl_tooltip "Kullanılabilir şablonlar dizini">
+<!ENTITY prefs_options_showeditor "Editörü göster">
+<!ENTITY prefs_options_showeditor_tooltip "Dahili editörü göster">
+<!ENTITY prefs_options_tabsize "Sekme boyutu">
+<!ENTITY prefs_options_expandtab "Tab yerine boşluk">
+<!ENTITY prefs_options_expandtab_tooltip "Tab karakteri yerine boşluk kullan">
+<!ENTITY prefs_options_detectindentation "Otomatik girinti">
+<!ENTITY prefs_options_detectindentation_tooltip "Kaynak içeriğe dayanarak girintilemeyi tahmin et">
+<!ENTITY prefs_options_autocomplete "Otomatik tamamla">
+<!ENTITY prefs_options_autocomplete_tooltip "Kodları otomatik tamamlamayı etkinleştir">
+<!ENTITY prefs_options_autoclosebrackets "Parantezleri otomatik kapat">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Kapatma parantezlerini otomatik ekle">
+<!ENTITY prefs_options_keybindings "Kısayol tuşları">
+<!ENTITY prefs_options_keybindings_default "Varsayılan">
+<!ENTITY prefs_options_autosavefiles "Dosyaları otomatik kaydet">
+<!ENTITY prefs_options_autosavefiles_tooltip "Düzenlenen dosyaları projeyi çalıştırmadan önce kendiliğinden kaydeder">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Çalışma zamanı bilgileri">
+<!ENTITY runtimedetails_adbIsRoot "ADB root mu?: ">
+<!ENTITY runtimedetails_summonADBRoot "root cihaz">
+<!ENTITY runtimedetails_ADBRootWarning "(kilitsiz bootloader gerekir)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Kısıtlamasız DevTools izinleri: ">
+<!ENTITY runtimedetails_requestPrivileges "daha fazla izin iste">
+<!ENTITY runtimedetails_privilegesWarning "(Cihaz yeniden başlatılacaktır. Root erişimi gerekir.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenumber "Tam sayı">
+<!ENTITY device_typestring "Dizgi">
+<!ENTITY device_typeobject "Nesne">
+<!ENTITY device_typenone "Tür seçin">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Cihaz tercihleri">
+<!ENTITY devicepreference_search "Arama tercihleri">
+<!ENTITY devicepreference_newname "Yeni tercih adı">
+<!ENTITY devicepreference_newtext "Tercih değeri">
+<!ENTITY devicepreference_addnew "Yeni tercih ekle">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Cihaz ayarları">
+<!ENTITY devicesetting_search "Arama ayarları">
+<!ENTITY devicesetting_newname "Yeni ayar adı">
+<!ENTITY devicesetting_newtext "Ayar değeri">
+<!ENTITY devicesetting_addnew "Yeni ayar ekle">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "İzleyici">
+<!ENTITY monitor_help "Yardım">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "İstemci kimliği">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Bağlandığınız uç nokta, bu bağlantıyı doğrulamak için daha fazla bilgiye ihtiyaç duyuyor. Lütfen diğer uçtaki istemi kullanarak aşağıdaki QR kodunu tarayın.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "QR tarayıcı görünmüyor mu?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR tarayıcı mı görüyorsunuz?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Diğer cihaz QR kodunu taramanız yerine jeton girmenizi isterse lütfen aşağıdaki değeri kopyalayıp diğer cihaza yapıştırın:">
+<!ENTITY wifi_auth_qr_size_note "QR kodu bağlantıyı kuramayacak kadar küçük görünüyorsa yakınlaştırmayı veya pencereyi büyütmeyi deneyin.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Ön paketleme komut günlükleri">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Simülatör seçenekleri">
+<!ENTITY simulator_remove "Simülatörü sil">
+<!ENTITY simulator_reset "Varsayılanları geri yükle">
+<!ENTITY simulator_name "İsim">
+<!ENTITY simulator_software "Yazılım">
+<!ENTITY simulator_version "Sürüm">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Donanım">
+<!ENTITY simulator_device "Aygıt">
+<!ENTITY simulator_screenSize "Ekran">
+<!ENTITY simulator_pixelRatio "Piksel oranı">
+<!ENTITY simulator_tv_data "TV simülasyonü">
+<!ENTITY simulator_tv_data_open "Yapılandırma verileri">
+<!ENTITY simulator_tv_data_open_button "Yapılandırma klasörünü aç…">

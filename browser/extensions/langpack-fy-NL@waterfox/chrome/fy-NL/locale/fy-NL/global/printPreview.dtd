@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Ofdrukke…">
+<!ENTITY print.accesskey      "O">
+<!ENTITY pageSetup.label      "Side-ynstellingen…">
+<!ENTITY pageSetup.accesskey  "y">
+<!ENTITY page.label           "Side:">
+<!ENTITY page.accesskey       "d">
+<!ENTITY of.label             "fan">
+<!ENTITY scale.label          "Skaal:">
+<!ENTITY scale.accesskey      "k">
+<!ENTITY portrait.label       "Steand">
+<!ENTITY portrait.accesskey   "t">
+<!ENTITY landscape.label      "Lizzend">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "Slute">
+<!ENTITY close.accesskey      "S">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Oanpast…">
+<!ENTITY ShrinkToFit.label    "Ferlytsje oant papierformaat">
+<!ENTITY customPrompt.title   "Oanpaste skaal…">
+<!ENTITY simplifyPage.label   "Side ferienfâldigje">
+<!ENTITY simplifyPage.accesskey "n">
+<!ENTITY simplifyPage.enabled.tooltip  "Wizigje layout om makliker te lêzen">
+<!ENTITY simplifyPage.disabled.tooltip "Dizze side kin net automatysk ferienfâldige wurde">
+
+<!ENTITY homearrow.tooltip    "Earste side">
+<!ENTITY endarrow.tooltip     "Lêste side">
+<!ENTITY nextarrow.tooltip    "Folgjende side">
+<!ENTITY previousarrow.tooltip "Foargeande side">

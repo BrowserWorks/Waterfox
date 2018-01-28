@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Bladsylaaifout">
+<!ENTITY retry.label "Probeer weer">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Kon nie koppel nie">
+<!ENTITY connectionFailure.longDesc "<p>Alhoewel die werf geldig blyk te wees, kon die blaaier nie 'n verbinding bewerkstellig nie.</p><ul><li>Sou dit kon wees dat die werf tydelik onbeskikbaar is? Probeer later weer.</li><li>Kan u ook nie ander werwe bekyk nie?  Kontroleer die rekenaar se netwerkverbinding.</li><li>Word u rekenaar of netwerk beskerm deur 'n brandmuur of instaanbediener? Die verkeerde opstelling kan met webblaaiery inmeng.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Poort beperk weens sekuriteitsredes">
+<!ENTITY deniedPortAccess.longDesc "<p>Die aangevraagde adres spesifiseer 'n poort (bv. <q>mozilla.org:80</q> vir poort 80 op mozilla.org) wat gewoonlik vir <em>ander</em> doeleindes as webblaaiery gebruik word. Die blaaier het die versoek gekanselleer vir u beskerming en sekuriteit.</p>">
+
+<!ENTITY dnsNotFound.title "Adres nie gevind nie">
+<!ENTITY dnsNotFound.longDesc "<p>Die blaaier kon nie die gasheerbediener vir die aangegewe adres vind nie.</p><ul><li>Het u dalk 'n fout gemaak toe u die domein ingetik het? (bv. <q><strong>ww</strong>.mozilla.org</q> in plaas van <q><strong>www</strong>.mozilla.org</q>)</li><li>Is u seker hierdie domeinadres bestaan?  Die domein se registrasie het dalk al verval.</li><li>Kan u ook nie ander werwe bekyk nie?  Gaan u netwerkverbinding- en DNS-bedieneropstelling na.</li><li>Word u rekenaar of netwerk beskerm deur 'n brandmuur of instaanbediener?  Die verkeerde opstelling kan met webblaaiery inmeng.</li></ul>">
+
+<!ENTITY fileNotFound.title "Lêer nie gevind nie">
+<!ENTITY fileNotFound.longDesc "<ul><li>Kan dit wees dat die item hernoem, verwyder of verskuif is?</li><li>Is daar 'n spelfout, kasfout of ander skryffout in die adres?</li><li>Het u voldoende toegangsregte vir die aangevraagde item?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Toegang tot die lêer is geweier">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Dit is moontlik verwyder, geskuif, of dalk verbied lêertoegangsregte toegang.</li></ul>">
+
+<!ENTITY generic.title "Kan nie versoek voltooi nie">
+<!ENTITY generic.longDesc "<p>Bykomende inligting oor hierdie probleem of fout is tans onbeskikbaar.</p>">
+
+<!ENTITY malformedURI.title "Ongeldige adres">
+<!ENTITY malformedURI.longDesc "<p>Die aangegewe adres is nie in 'n herkende formaat nie. Kontroleer die adresveld vir foute na en probeer weer.</p>">
+
+<!ENTITY netInterrupt.title "Dataoordrag onderbreek">
+<!ENTITY netInterrupt.longDesc "<p>Die blaaier het suksesvol gekoppel, maar die verbinding is onderbreek terwyl inligting oorgedra is.  Probeer weer.</p><ul><li>Kan u ook nie ander werwe bekyk nie? Kontroleer die rekenaar se netwerkverbinding.</li><li>Sukkel u steeds? Doen navraag by u netwerkadministrateur of internetverskaffer vir bystand.</li></ul>">
+
+<!ENTITY notCached.title "Dokumentgeldigheid het verval">
+<!ENTITY notCached.longDesc "<p>Die aangevraagde dokument is nie beskikbaar in blaaier se kas nie.</p><ul><li>As 'n sekuriteitsmaatreël vra die blaaier nie outomaties weer vir sensitiewe dokumente nie.</li><li>Klik Probeer weer om die dokument weer van die webwerf aan te vra.</li></ul>">
+
+<!ENTITY netOffline.title "Vanlynmodus">
+<!ENTITY netOffline.longDesc2 "<p>Die blaaier is in vanlyn modus en kan nie aan die aangevraagde item koppel nie.</p><ul><li>Is die rekenaar aan &apos;n aktiewe netwerk gekoppel?</li><li>Klik &quot;Probeer weer&quot; om na aanlynmodus oor te skakel en die bladsy te herlaai.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Inhoudenkoderingsfout">
+<!ENTITY contentEncodingError.longDesc "<p>Die bladsy wat u probeer bekyk, kan nie gewys word nie omdat dit 'n ongeldige of nieondersteunde inpakformaat gebruik.</p><ul><li>Kontak die webwerf se eienaar om hulle oor die probleem in te lig.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Onveilige lêersoort">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kontak die webwerf se eienaar om hulle oor die probleem in te lig.</li> </ul>">
+
+<!ENTITY netReset.title "Verbinding onderbreek">
+<!ENTITY netReset.longDesc "<p>Die netwerkverbinding is onderbreek terwyl 'n verbinding onderhandel is. Probeer weer.</p>">
+
+<!ENTITY netTimeout.title "Netwerkuittelling">
+<!ENTITY netTimeout.longDesc "<p>Die aangevraagde werf het nie op 'n verbindingsversoek gereageer nie en die blaaier het ophou wag vir 'n respons.</p><ul><li>Ervaar die bediener dalk hoë vraag of is dit tydelik buite werking?  Probeer later weer.</li><li>Kan u ook nie ander werwe bekyk nie? Kontroleer die rekenaar se netwerkverbinding.</li><li>Word u rekenaar of netwerk beskerm deur 'n brandmuur of instaanbediener?  Die verkeerde opstelling kan met webblaaiery inmeng.</li><li>Sukkel u steeds? Doen navraag by u netwerkadministrateur of internetverskaffer vir bystand.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Onbekende protokol">
+<!ENTITY unknownProtocolFound.longDesc "<p>Die adres spesifiseer 'n protokol (bv. <q>wxyz://</q>) wat die blaaier nie herken nie, en dus kan die blaaier nie behoorlik aan die werf koppel nie.</p><ul><li>Probeer u toegang tot multimedia- of ander nieteks-dienste verkry? Kontroleer die werf vir bykomende vereistes.</li><li>Sekere protokolle vereis derdeparty-sagteware of inproppe voor die blaaier hulle kan herken.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Instaanbediener het verbinding geweier">
+<!ENTITY proxyConnectFailure.longDesc "<p>Die blaaier is opgestel om 'n instaanbediener te gebruik, maar die instaanbediener het 'n verbinding geweier.</p><ul><li>Is die blaaier se instaanbediener-opstelling korrek? Kontroleer die opsteling en probeer weer.</li><li>Laat die instaandiens verbindings van hierdie netwerk toe?</li><li>Sukkel u steeds? Doen navraag by u netwerkadministrateur of internetverskaffer vir bystand.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Instaanbediener nie gevind nie">
+<!ENTITY proxyResolveFailure.longDesc "<p>Die blaaier is opgestel om 'n instaanbediener te gebruik, maar die instaanbediener kon nie gevind word nie.</p><ul><li>Is die blaaier se instaanbediener-opstelling korrek? Kontroleer die opsteling en probeer weer.</li><li>Is die rekenaar aan 'n aktiewe netwerk gekoppel?</li><li>Sukkel u steeds? Doen navraag by u netwerkadministrateur of internetverskaffer vir bystand.</li></ul>">
+
+<!ENTITY redirectLoop.title "Herverwysingslus">
+<!ENTITY redirectLoop.longDesc "<p>Die blaaier het opgehou om die aangevraagde item te probeer herwin. Die werf herverwys die versoek op 'n manier wat nooit sal voltooi nie.</p><ul><li>Het u koekies wat deur hierdie werf vereis word, gedeaktiveer of geblokkeer?</li><li><em>LET WEL</em>: Indien dit nie die probleem oplos om die werf se koekies te aanvaar nie, is dit waarskynlik 'n bedieneropstellingsprobleem en nie u rekenaar se skuld nie.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Verkeerde respons">
+<!ENTITY unknownSocketType.longDesc "<p>Die werf op 'n onverwagse wyse op die netwerkversoek gereageer; die blaaier kan nie voortgaan nie.</p>">
+
+<!ENTITY nssFailure2.title "Kon nie beveilig koppel nie">
+<!ENTITY nssFailure2.longDesc2 "<p>Die bladsy wat u probeer bekyk, kan nie gewys word nie omdat die egtheid van die ontvangde data nie geverifieer kon word nie.</p><ul><li>Kontak die webwerf se eienaars om hulle oor die probleem in te lig.</li></ul>">
+
+<!ENTITY nssBadCert.title "Kon nie beveilig koppel nie">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Daar kan dalk fout met die bediener se opstelling wees, of dalk probeer iemand die bediener na-aap.</li> <li>As u in die verlede suksesvol aan hierdie bediener gekoppel het, kan die fout dalk tydelik wees, en dan kan u later weer probeer.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Of u kan 'n uitsondering byvoeg…">
+<!ENTITY securityOverride.warningContent "<p>U moenie 'n uitsondering byvoeg as u 'n internetverbinding gebruik wat u nie heeltemal vertrou nie of as u nie gewoonlik 'n waarskuwing vir hierdie bediener ontvang nie.</p> <p>As u wel 'n uitsondering vir hierdie werf wil byvoeg, kan u dit doen in u gevorderde enkripsie-instellings.</p>">
+
+<!ENTITY cspBlocked.title "Geblokkeer deur inhoudbeveiligingsbeleid">
+<!ENTITY cspBlocked.longDesc "<p>Die blaaier het voorkom dat hierdie bladsy op hierdie manier laai want die bladsy het 'n inhoudbeveiligingsbeleid wat dit keer.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fout: inhoud korrup">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Die bladsy wat u probeer sien kan nie vertoon word nie omdat 'n fout bespeur is in die dataoordrag.</p><ul><li>Kontak die webwerf se eienaar om hulle oor die probleem in te lig.</li></ul>">
+
+<!ENTITY remoteXUL.title "Afgeleë XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontak die webwerf se eienaar om hulle oor die probleem in te lig.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Die verbinding is nie beveilig nie">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> gebruik verouderde sekuriteittegnologie en is kwesbaar vir aanvalle. 'n Aanvaller kan maklik inligting bekom wat mens sou dink veilig was. Die webwerfadministrateur sal die bediener eers moet regmaak voordat die werf besoek kan word.</p><p>Foutkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

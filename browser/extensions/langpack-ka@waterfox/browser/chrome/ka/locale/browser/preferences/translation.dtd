@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "თარგმნა - გამონაკლისები">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ამ ენების გადათარგმნა არ იქნება შემოთავაზებული:">
+<!ENTITY treehead.languageName.label      "ენები">
+<!ENTITY removeLanguage.label             "ენის ამოღება">
+<!ENTITY removeLanguage.accesskey         "ე">
+<!ENTITY removeAllLanguages.label         "ყველა ენის ამოღება">
+<!ENTITY removeAllLanguages.accesskey     "ყ">
+
+<!ENTITY noTranslationForSites.label      "ამ გვერდების გადათარგმნა არ იქნება შემოთავაზებული:">
+<!ENTITY treehead.siteName2.label         "საიტები">
+<!ENTITY removeSite.label                 "საიტის ამოღება">
+<!ENTITY removeSite.accesskey             "ს">
+<!ENTITY removeAllSites.label             "ყველა საიტის ამოღება">
+<!ENTITY removeAllSites.accesskey         "ყ">
+
+<!ENTITY button.close.label               "დახურვა">
+<!ENTITY button.close.accesskey           "დ">

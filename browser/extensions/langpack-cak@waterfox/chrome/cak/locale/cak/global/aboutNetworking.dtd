@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Chi rij ri rokisaxik ri b'ey">
+<!ENTITY aboutNetworking.warning               "Rere' yalan soltojtob'enel. Man tokisäx we man tajin achib'ilan jun nimawinäq richin nitz'eton apo.">
+<!ENTITY aboutNetworking.showNextTime          "Junelïk tik'ut pe re jun retal k'ayewal re'.">
+<!ENTITY aboutNetworking.ok                    "Ütz">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Chuq'b'äl">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Titzolïx">
+<!ENTITY aboutNetworking.autoRefresh           "Tutzolij rupaläj pa ruyonil pa jujun 3 xil ch'utiramaj">
+<!ENTITY aboutNetworking.hostname              "Rub'i' ruk'u'x samaj">
+<!ENTITY aboutNetworking.port                  "B'ey">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Tzijïl">
+<!ENTITY aboutNetworking.idle                  "Man tzijïl ta">
+<!ENTITY aboutNetworking.host                  "Ruk'u'x Samaj">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Titaq">
+<!ENTITY aboutNetworking.received              "K'ulun">
+<!ENTITY aboutNetworking.family                "Ach'alalri'ïl">
+<!ENTITY aboutNetworking.addresses             "Ochochib'äl">
+<!ENTITY aboutNetworking.expires               "Nik'is (Taq xil ch'utiramaj)">
+<!ENTITY aboutNetworking.messagesSent          "Taq rutzijol etaqon">
+<!ENTITY aboutNetworking.messagesReceived      "Taq rutzijol ek'ulun">
+<!ENTITY aboutNetworking.bytesSent             "Taq wayt etaqon">
+<!ENTITY aboutNetworking.bytesReceived         "Taq wayt ek'ulun">
+<!ENTITY aboutNetworking.logging               "Tajin nitz'ib'äx">
+<!ENTITY aboutNetworking.logTutorial           "Tatz'eta' <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Tajin nitz'ib'äx</a> richin ye'ak'ül taq rutzijol pa ruwi' rokisaxik re samajib'äl re'.">
+<!ENTITY aboutNetworking.currentLogFile        "Wakami titz'ib'äx yakb'äl:">
+<!ENTITY aboutNetworking.currentLogModules     "Wakami ketz'ib'äx taq juperaj:">
+<!ENTITY aboutNetworking.setLogFile            "Tijikib'äx nitz'ib'äx yakb'äl">
+<!ENTITY aboutNetworking.setLogModules         "Tijikib'äx yetz'ib'äx taq juperaj">
+<!ENTITY aboutNetworking.startLogging          "Titikirisäx tajin nitz'ib'äx">
+<!ENTITY aboutNetworking.stopLogging           "Titanab'äx tajin nitz'ib'äx">
+<!ENTITY aboutNetworking.dnsLookup             "Rukanoxik DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Tisol">
+<!ENTITY aboutNetworking.dnsDomain             "Ruk'ojlem b'ey">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Cholajilatzij">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN B'anikil">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Xuch'äk ajilanem ri jumejyak">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Ch'akon chijun ajilanem">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Chijun kajilanem taq kik'utuxik k'amab'ey">
+<!ENTITY aboutNetworking.rcwnOperation         "Rusamaj Jumejyak">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Tijaq">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Tisik'ïx">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Titz'ib'äx">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Jaqäl Okitz'b'">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Ko'öl Junamilal">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Nïm Junamilal">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Nïm Rutzalenik pa Rub'eyal">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Eqal rutaqoya'l jumejyak">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Man Eqal ta rutaqoya'l jumejyak">

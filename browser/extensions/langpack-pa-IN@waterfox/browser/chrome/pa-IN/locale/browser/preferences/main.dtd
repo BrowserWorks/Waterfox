@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "ਸ਼ੁਰੂ">
+
+<!ENTITY startupPage2.label        "ਜਦ &brandShortName; ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "ਆਪਣਾ ਮੁੱਖ ਸਫ਼ਾ ਵੇਖੋ">
+<!ENTITY startupBlankPage.label    "ਖ਼ਾਲੀ ਸਫ਼ਾ ਵੇਖੋ">
+<!ENTITY startupPrevSession.label  "ਪਿਛਲੀ ਵਾਰ ਦੀਆਂ ਆਪਣੀਆਂ ਵਿੰਡੋ ਅਤੇ ਟੈਬਾਂ ਨੂੰ ਵੇਖੋ">
+
+<!ENTITY homepage2.label           "ਮੁੱਖ ਸਫ਼ਾ">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "ਮੇਰੇ ਮੌਜੂਦਾ ਸਫ਼ੇ ਨੂੰ ਵਰਤੋਂ">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "ਮੌਜੂਦਾ ਸਫ਼ੇ ਨੂੰ ਵਰਤੋਂ">
+<!ENTITY chooseBookmark.label      "…ਬੁੱਕਮਾਰਕ ਨੂੰ ਵਰਤੋਂ">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "ਮੂਲ ਨੂੰ ਮੁੜ-ਸਟੋਰ ਕਰੋ">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "ਡਾਊਨਲੋਡ">
+
+<!ENTITY saveTo.label "ਫਾਈਲਾਂ ਨੂੰ ਸੰਭਾਲੋ">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "…ਝਲਕ">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "…ਚੋਣ">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "ਹਮੇਸ਼ਾ ਤੁਹਾਨੂੰ ਪੁੱਛੇ ਕਿ ਫਾਈਲਾਂ ਕਿੱਥੇ ਸੰਭਾਲਣੀਆਂ ਹਨ">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "ਹਮੇਸ਼ਾ ਜਾਂਚ ਕਰੋ ਕਿ ਕੀ &brandShortName; ਤੁਹਾਡਾ ਮੂਲ ਬਰਾਊਜ਼ਰ ਹੈ">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+<!ENTITY setAsMyDefaultBrowser3.label     "…ਡਿਫਾਲਟ ਬਣਾਓ">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; ਇਸ ਸਮੇਂ ਤੁਹਾਡਾ ਮੂਲ ਬਰਾਊਜ਼ਰ ਹੈ">
+<!ENTITY isNotDefault.label               "&brandShortName; ਤੁਹਾਡਾ ਮੂਲ ਬਰਾਊਜ਼ਰ ਨਹੀਂ ਹੈ">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; ਤੇ ਫਾਇਰਫਾਕਸ ਨੂੰ ਇੱਕੋ ਸਮੇਂ ਚੱਲਣ ਦੀ ਇਜ਼ਾਜ਼ਤ ਦਿਉ">
+<!ENTITY useWaterfoxSync.label             "ਇਸ਼ਾਰਾ: ਇਹ ਵੱਖਰੇ ਪਰੋਫਾਈਲ ਵਰਤਦੇ ਹਨ। ਉਹਨਾਂ ਵਿਚਾਲੇ ਡਾਟਾ ਸਾਂਝਾ ਕਰਨ ਲਈ ਸਿੰਕ ਦੀ ਵਰਤੋਂ।">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; ਮੇਰੀ ਪਸੰਦ ਖੋਲ੍ਹੋ">
+
+<!ENTITY e10sEnabled.label                "ਮਲਟੀ-ਪਰੋਸੈਸ &brandShortName; ਸਮਰੱਥ ਕਰੋ">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Zrjadowak grata">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Module a grat wěstoty">
+<!ENTITY devmgr.details.title                   "Detaile">
+<!ENTITY devmgr.details.title2                  "Hódnota">
+
+<!ENTITY devmgr.button.login.label              "Přizjewjenje">
+<!ENTITY devmgr.button.login.accesskey          "i">
+<!ENTITY devmgr.button.logout.label             "Wotzjewjenje">
+<!ENTITY devmgr.button.logout.accesskey         "o">
+<!ENTITY devmgr.button.changepw.label           "Hesło přeměnić">
+<!ENTITY devmgr.button.changepw.accesskey       "H">
+<!ENTITY devmgr.button.load.label               "Začitać">
+<!ENTITY devmgr.button.load.accesskey           "a">
+<!ENTITY devmgr.button.unload.label             "Wotstronić">
+<!ENTITY devmgr.button.unload.accesskey         "s">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Zapisajće informacije wo modulu, kotryž chceće přidać.">
+<!ENTITY loaddevice.modname                     "Mjeno modula:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Nowy modul PKCS#11">
+<!ENTITY loaddevice.filename                    "Datajowe mjeno modula:">
+<!ENTITY loaddevice.filename.accesskey          "D">
+<!ENTITY loaddevice.browse                      "Přepytać…">
+<!ENTITY loaddevice.browse.accesskey            "e">
+
+<!ENTITY loaddevice.title2                      "Gratowy ćěrjak PKCS#11 začitać">

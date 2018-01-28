@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; নিরাপদ মোড">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "নিরাপদ মোডে শুরু করুন">
+<!ENTITY refreshProfile.label         "&brandShortName; পুনঃনির্ধারণ করা হবে">
+
+<!ENTITY safeModeDescription3.label   "&brandShortName; এর নিরাপদ মোড হচ্ছে একটি বিশেষ মোড যা কিনা বিভিন্ন বিষয়ের সমস্যার সমাধানে ব্যবহৃত হয়।">
+<!ENTITY safeModeDescription4.label   "আপনার অ্যাড-অন এবং স্বনির্বাচিত সেটিংস সাময়িকভাবে নিষ্ক্রিয় করা হবে।">
+
+<!ENTITY refreshProfileInstead.label  "এছাড়াও আপনি সমস্যাসমাধান লাফালাফি এবং রিফ্রেশ &brandShortName; চেষ্টা করতে পারেন;">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; অপ্রত্যাশিতভাবে শুরুতে বন্ধ হয়ে যায়। অ্যাড-অন অথবা অন্যকোনো কারণে এই সমস্যা দেখা দিতে পারে। আপনি সেফ মোড এর মাধ্যমে এই সমস্যার সমাধান করার চেষ্টা করতে পারেন।">

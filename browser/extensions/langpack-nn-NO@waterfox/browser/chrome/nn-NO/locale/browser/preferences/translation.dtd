@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Unntak - omsetting">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Omsetting vert ikkje tilbydd for følgjande språk:">
+<!ENTITY treehead.languageName.label      "Språk">
+<!ENTITY removeLanguage.label             "Fjern språk">
+<!ENTITY removeLanguage.accesskey         "F">
+<!ENTITY removeAllLanguages.label         "Fjern alle språk">
+<!ENTITY removeAllLanguages.accesskey     "a">
+
+<!ENTITY noTranslationForSites.label      "Omsetting vert ikkje tilbydd for følgjande nettsider:">
+<!ENTITY treehead.siteName2.label         "Nettsider">
+<!ENTITY removeSite.label                 "Fjern nettstad">
+<!ENTITY removeSite.accesskey             "F">
+<!ENTITY removeAllSites.label             "Fjern alle nettstadar">
+<!ENTITY removeAllSites.accesskey         "r">
+
+<!ENTITY button.close.label               "Lukk">
+<!ENTITY button.close.accesskey           "L">

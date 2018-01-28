@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Mba'ejegueru pytyvõha">
+
+<!ENTITY importFrom.label               "Jeporavorã jegueru, techaukaha, tembiasakue, ñe'ẽñemi ha ambue mba'ekuaarã kóvagui:">
+<!ENTITY importFromUnix.label           "Jerohoryvéva jegueru, techaukaha, tembiasakue, ñe'ẽñemi ha ambue mba'ekuaarã kóvagui:">
+<!ENTITY importFromBookmarks.label      "Techaukaha jegueru kóvagui:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ani regueru mba'eve">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Ndojejuhúi tembiaporape oguerekóva techaukaha, tembiasakue térã mba'ekuaarã ñe'ẽñemi rehegua.">
+
+<!ENTITY importSource.title             "Mba'epytyvõrã ha mba'ekuaarã jegueru">
+<!ENTITY importItems.title              "Mba'epuru ojeguerútava">
+<!ENTITY importItems.label              "Eiporavo mba'epuru reguerútava">
+
+<!ENTITY migrating.title                "Jegueruhína…">
+<!ENTITY migrating.label                "Ojegueruhína ko'ã mba'epuru…">
+
+<!ENTITY selectProfile.title            "Rechaukaha jeporavo">
+<!ENTITY selectProfile.label            "Ikatu regueru mba'ekuaarã ko'ã  rechaukahakuéragui:">
+
+<!ENTITY done.title                     "Jeguerupaite">
+<!ENTITY done.label                     "Ko'ã mba'epuru ojeguerupa porã:">
+
+<!ENTITY closeSourceBrowser.label       "Ikatúpiko, ehechaporãke pe kundaha poravopyre oñembotýpara'e reku'e mboyve jey.">

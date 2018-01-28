@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; ಗೆ ಸ್ವಾಗತ">
+
+<!ENTITY aboutAccountsConfig.description "ನಿಮ್ಮ ಹಾಳೆಗಳು, ಪುಟ ಗುರುತುಗಳು, ಪ್ರವೇಶ ಪದಗಳು ಮತ್ತು ಇತ್ಯಾದಿಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು ಪ್ರವೇಶಿಸಿ.">
+<!ENTITY aboutAccountsConfig.startButton.label "ಪ್ರಾರಂಭಿಸಿ">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ಸಿಂಕ್ ಆದ್ಯತೆಗಳು">
+<!ENTITY aboutAccounts.noConnection.title "ಯಾವುದೆ ಸಂಪರ್ಕವಿಲ್ಲ">
+<!ENTITY aboutAccounts.noConnection.description "ನೀವು ಸೈನ್‌ಇನ್‌ ಮಾಡಲು ಅಂತರಜಾಲಕ್ಕೆ ಸಂಪರ್ಕ ಹೊಂದಿರಬೇಕಾಗುತ್ತದೆ.">
+<!ENTITY aboutAccounts.noConnection.retry "ಇನ್ನೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸು">
+<!ENTITY aboutAccounts.badConfig.title "ತಪ್ಪಾದ ಸಂರಚನೆ">
+<!ENTITY aboutAccounts.badConfig.description "ನಿಮ್ಮ Waterfox ಖಾತೆಯ ಸರ್ವರ್ ಸಂರಚನೆಯನ್ನು ನಿರ್ಧರಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ಇನ್ನೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.">

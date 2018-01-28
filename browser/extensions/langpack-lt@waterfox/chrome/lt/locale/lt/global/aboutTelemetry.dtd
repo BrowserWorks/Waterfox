@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrijos duomenys">
+
+<!ENTITY aboutTelemetry.pingDataSource "Patikrinti duomenų šaltinio ryšį:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Dabartinio ryšio patikrinimo duomenys">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Archyve esantys ryšio tikrinimo duomenys">
+
+<!ENTITY aboutTelemetry.raw "Pirminis JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Rodyti posesijinius duomenis">
+
+<!ENTITY aboutTelemetry.choosePing "Pasirinkite ryšio patikrinimą:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Niekada netikrinti ryšio">
+
+<!ENTITY aboutTelemetry.showOlderPing "Senesnis ryšio patikrinimas &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Savaitė">
+
+<!ENTITY aboutTelemetry.archivePingType "Ryšio tikrinimo tipas">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ryšio patikrinimas">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Šiandien">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Vakar">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Senesni">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Įprasti duomenys">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Aplinkos duomenys">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetrijos žurnalas">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Lėti SQL sakiniai">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Naršyklės strigtys">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Gijų strigtys">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Įrašyti dėklai">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skaliarai">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Raktiniai skaliarai">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramos">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Raktinės histogramos">
+
+<!ENTITY aboutTelemetry.eventsSection "  Įvykiai">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Paprasti matavimai">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Priedų duomenys">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Vėlavę įrašymai">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Seanso informacija">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  PASTABA: Įjungtas lėtų SQL sakinių derinimas. Žemiau gali būti rodomi pilni SQL sakiniai, tačiau jie nebus pateikiami telemetrijai.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Rinkti funkcijų vardus dėklams">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Rodyti neapdorotus dėklų duomenis">
+
+<!ENTITY aboutTelemetry.filterText "  Filtras (tekstas arba /reguliarusis reiškinys/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Turinys">

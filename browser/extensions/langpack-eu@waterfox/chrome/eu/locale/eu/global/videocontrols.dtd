@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Erreproduzitu">
+<!ENTITY playButton.pauseLabel "Pausatu">
+<!ENTITY muteButton.muteLabel "Mututu">
+<!ENTITY muteButton.unmuteLabel "Ez mututu">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Pantaila osoa">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Irten pantaila osoko modutik">
+<!ENTITY castingButton.castingLabel "Transmititu pantailara">
+<!ENTITY closedCaption.off "Desaktibatu">
+
+<!ENTITY stats.media "Media">
+<!ENTITY stats.size "Tamaina">
+<!ENTITY stats.activity "Jarduera">
+<!ENTITY stats.activityPaused "Pausatuta">
+<!ENTITY stats.activityPlaying "Erreproduzitzen">
+<!ENTITY stats.activityEnded "Amaituta">
+<!ENTITY stats.activitySeeking "(bilatzen)">
+<!ENTITY stats.volume "Bolumena">
+<!ENTITY stats.framesParsed "Analizatutako fotogramak">
+<!ENTITY stats.framesDecoded "Deskodetutako fotogramak">
+<!ENTITY stats.framesPresented "Aurkeztutako fotogramak">
+<!ENTITY stats.framesPainted "Marraztutako fotogramak">
+
+<!ENTITY error.aborted "Bideoa kargatzea geldituta.">
+<!ENTITY error.network "Bideoaren erreprodukzioa abortatuta sareko errore batengatik.">
+<!ENTITY error.decode "Ezin da bideoa erreproduzitu fitxategia hondatuta dagoelako.">
+<!ENTITY error.srcNotSupported "Bideo-formatua edo MIME mota ez da onartzen.">
+<!ENTITY error.noSource2 "Ez da bideorik aurkitu onartutako bideo-formatu eta MIME motarekin.">
+<!ENTITY error.generic "Bideoaren erreprodukzioa abortatuta errore ezezagun batengatik.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "igarotako denbora: #1 / #2">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#2<span> / #1</span>">

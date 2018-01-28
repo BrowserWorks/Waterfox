@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label "&brandShortName; - kasutajaprofiili valimine">
+
+<!ENTITY profilename.label "Profiili nimi:">
+
+<!ENTITY start.label "Käivita &brandShortName;">
+<!ENTITY exit.label "Välju">
+
+<!ENTITY availprofiles.label "Saadaolevad profiilid">
+
+<!ENTITY newButton.label "Loo profiil...">
+<!ENTITY newButton.accesskey "L">
+<!ENTITY renameButton.label "Nimeta profiil ümber...">
+<!ENTITY renameButton.accesskey "N">
+<!ENTITY deleteButton.label "Kustuta profiil...">
+<!ENTITY deleteButton.accesskey "K">
+
+<!-- manager entities -->
+<!ENTITY pmDescription.label "&brandShortName; säilitab sinu kasutajasätteid, eelistusi ja muid andmeid sinu kasutajaprofiilina.">
+
+<!ENTITY offlineState.label "Tööta võrguta">
+<!ENTITY offlineState.accesskey "t">
+
+<!ENTITY useSelected.label     "Valitud profiili kasutatakse käivitamisel küsimata">
+<!ENTITY useSelected.accesskey "r">

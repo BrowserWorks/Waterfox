@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Du er ikkje i eit privat vindauge no.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Opne eit privat vindauge">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "O">
+
+<!ENTITY privateBrowsing.title                           "Privat nettlesing">
+<!ENTITY privateBrowsing.title.tracking                  "Privat nettlesing med sporingsvern">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Når du surfar i eit privat vindauge, vil Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ikkje lagre">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "besøkte sider">
+<!ENTITY aboutPrivateBrowsing.info.searches              "søk">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "infokapslar">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "mellombelse filer">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "vil lagre">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "nedlastingar">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "bokmerke">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privat nettlesing ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "gjer deg ikkje anonym">
+<!ENTITY aboutPrivateBrowsing.note.after                 " på nettet. Arbeidsgjevaren eller Internettleverandøren din kan framleis sjå kva for sider du vitjar.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Les meir om ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Privat nettlesing">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Sporingsvern">
+<!ENTITY trackingProtection.description2                 "Nokre nettstadar brukar sporfølgjarar som kan overvake aktiviteten din over heile nettet. Med sporingsvern vil Waterfox blokkere mange sporfølgjarar som kan samle inn informasjon om surfevanane dine.">
+<!ENTITY trackingProtection.startTour1                   "Sjå korleis dette fungerer">

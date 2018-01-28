@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Mirar en ista pachina">
+<!ENTITY findField.label "Mirar texto:">
+<!ENTITY findField.accesskey "M">
+<!ENTITY caseSensitiveCheckbox.label "Coincidencia de mayusclas/minusclas">
+<!ENTITY caseSensitiveCheckbox.accesskey "C">
+<!ENTITY wrapCheckbox.label "Permitir ocupar quantas linias">
+<!ENTITY wrapCheckbox.accesskey "P">
+<!ENTITY findButton.label "Buscar o siguient">
+<!ENTITY findButton.accesskey "B">
+<!ENTITY cancelButton.label "Cancelar">
+<!ENTITY closeButton.label "Zarrar">
+<!ENTITY up.label "Alto">
+<!ENTITY up.accesskey "A">
+<!ENTITY down.label "Abaixo">
+<!ENTITY down.accesskey "A">
+<!ENTITY direction.label "Adreza">

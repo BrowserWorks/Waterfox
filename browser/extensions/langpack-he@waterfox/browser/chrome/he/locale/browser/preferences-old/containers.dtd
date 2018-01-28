@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "הוספת מגירה חדשה">
+<!ENTITY addButton.accesskey  "מ">
+<!ENTITY preferencesButton.label "העדפות">
+<!ENTITY removeButton.label   "הסרה">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; חזרה למסך „פרטיות”">
+
+<!ENTITY window.title         "הוספת מגירה חדשה">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "שם:">
+<!ENTITY name.accesskey       "ש">
+<!ENTITY name.placeholder     "נא להזין שם מגירה">
+<!ENTITY icon.label           "סמל:">
+<!ENTITY icon.accesskey       "ס">
+<!ENTITY color.label          "צבע:">
+<!ENTITY color.accesskey      "ב">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "סיום">
+<!ENTITY button.ok.accesskey  "ס">
+

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "ॲप्लिकेशन">
+<!ENTITY  applications.description "संकेतस्थळावरून किंवा ब्राउझ करत असलेल्या ॲप्लिकेशनने डाउनलोड केलेल्या फाइल्स &brandShortName; ने कश्या हाताळाव्या ते निवडा.">
+
+<!ENTITY  typeColumn.label        "अंतर्भुत माहिती प्रकार">
+<!ENTITY  typeColumn.accesskey    "T">
+
+<!ENTITY  actionColumn2.label     "कृती">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "फाईल प्रकार किंवा ॲप्लिकेशन शोधा">

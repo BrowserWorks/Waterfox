@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Personelaat ar varrenn ostilhoù">
+<!ENTITY dialog.dimensions        "width: 115ch; height: 36em;">
+<!ENTITY instructions.description "Stlejañ an ergorenn war pe diwar ar barrennoù ostilhoù a-us evit ouzhpennañ pe dilemel anezhi.">
+<!ENTITY show.label               "Diskouez :">
+<!ENTITY iconsAndText.label       "Arlunioù ha testenn">
+<!ENTITY icons.label              "Arlunioù">
+<!ENTITY text.label               "Testenn">
+<!ENTITY useSmallIcons.label      "Ober gant arlunioù bihan">
+<!ENTITY restoreDefaultSet.label  "Assav ar spletad dre ziouer">
+<!ENTITY addNewToolbar.label      "Ouzhpennañ ur varrenn ostilhoù">
+<!ENTITY saveChanges.label        "Graet eo">
+<!ENTITY undoChanges.label        "Dizober kemmoù">

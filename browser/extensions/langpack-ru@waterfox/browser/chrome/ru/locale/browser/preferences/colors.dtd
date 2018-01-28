@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Цвета">
+<!ENTITY  window.width                    "52em">
+<!ENTITY  window.macWidth                 "57em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Заменять цвета, указанные страницей, на выбранные выше цвета:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "а">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Всегда">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Только с высококонтрастными темами">
+<!ENTITY  overrideDefaultPageColors.never.label  "Никогда">
+
+<!ENTITY  color                           "Текст и фон">
+<!ENTITY  textColor.label                 "Текст:">
+<!ENTITY  textColor.accesskey             "к">
+<!ENTITY  backgroundColor.label           "Фон:">
+<!ENTITY  backgroundColor.accesskey       "о">
+<!ENTITY  useSystemColors.label           "Использовать системные цвета">
+<!ENTITY  useSystemColors.accesskey       "с">
+
+<!ENTITY  underlineLinks.label            "Подчёркивать ссылки">
+<!ENTITY  underlineLinks.accesskey        "ч">
+<!ENTITY  links                           "Цвет ссылок">
+<!ENTITY  linkColor.label                 "Непросмотренные ссылки:">
+<!ENTITY  linkColor.accesskey             "е">
+<!ENTITY  visitedLinkColor.label          "Просмотренные ссылки:">
+<!ENTITY  visitedLinkColor.accesskey      "м">

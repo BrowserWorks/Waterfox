@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "ප්‍රධාන රහස්පදය ඉවත් කරන්න">
+<!ENTITY removeInfo.label                  "ඉදිරියට ක්‍රියාත්මක වීම සඳහා ඔබ දැනට භාවිත කරන රහස්පදය ඇතුළත් කළ යුතුම වේ:">
+<!ENTITY removeWarning1.label              "ඔබේ ප්‍රධාන රහස්පදය අඩවි රහස්පද වැනි සංවේදි තොරතුරු ආරක්‍ෂා කිරීම සඳහා භාවිත කර ඇත.">
+<!ENTITY removeWarning2.label              "ඔබ ප්‍රධාන රහස්පදය ඉවත කළ හොත් ඔබේ පරිගණකය අවදානම් සහිත වුවහොත් ඔබේ තොරතුරු ආරක්‍ෂා නොවනු ඇත.">
+<!ENTITY setPassword.oldPassword.label     "දැනට ඇති රහස්පදය:">
+

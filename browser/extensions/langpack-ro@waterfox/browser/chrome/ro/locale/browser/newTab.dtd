@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Filă nouă">
+<!ENTITY newtab.customize.classic "Afișează site-urile de top">
+<!ENTITY newtab.customize.cog.enhanced "Include site-urile sugerate">
+<!ENTITY newtab.customize.cog.title2 "CONTROALE PENTRU FILĂ NOUĂ">
+<!ENTITY newtab.customize.cog.learn "Află despre fila nouă">
+<!ENTITY newtab.customize.title "Personalizează pagina pentru filă nouă">
+<!ENTITY newtab.customize.blank2 "Afișează pagină goală">
+<!ENTITY newtab.undo.removedLabel "Miniatură eliminată.">
+<!ENTITY newtab.undo.undoButton "Anulează.">
+<!ENTITY newtab.undo.restoreButton "Restaurează tot.">
+<!ENTITY newtab.undo.closeTooltip "Ascunde">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Arredol d'os suyos dreitos">
+<!ENTITY rights.intro "&brandFullName; ye un software gratuito y de codigo ubierto construiu por una comunidat de milars de colaboradors de totz. I hai quantas cosetas que habría de conoixer:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ye disponible ta vusté baixo os termins d'a ">
+<!ENTITY rights.intro-point1b "Mozilla Public License (Licencia Publica de Mozilla)">
+<!ENTITY rights.intro-point1c ". Isto significa que puede fer servir, copiar y distribuir o &brandShortName; a atras personas.  Tamién puede modificar o codigo fuent d'o &brandShortName; ta adaptar-lo a las suyas necesidatz. A licencia Mozilla Public License (Licencia Publica de Mozilla) le atorga o dreito de distribuir as suyas versions modificadas.">
+
+<!ENTITY rights.intro-point2-a "No se le atorga garra dreito ni licencia sobre las marcas comercials de Waterfox u os suyos filials, incluindo sin limitación o nombre y logo de Waterfox. Puede trobar-ie información adicional sobre as marcas comercials ">
+<!ENTITY rights.intro-point2-b "aquí">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Qualques caracteristicas d'o &brandShortName;, como achent de fallos, le dan a opción de proporcionar información a &vendorShortName;. En esleir ninviar ixa información, atorga o permiso a &vendorShortName; ta usar a mesma ta amillorar os suyos productos, ta publicar ixa información en os suyos puestos web y ta distribuir-la.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "A traza en que usamos a suya información personal y as opinions ninviadas ta &vendorShortName; a traviés de &brandShortName; se describe en a ">
+<!ENTITY rights2.intro-point3b "Politica de privacidat de &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Qualsiquier politica de privacidat aplicable a iste producto s'ha de listar aquí.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Belunas d'as funcionalidatz d'o &brandShortName; fan servir servicios d'información web; manimenos, no podemos guarenciar que sigan 100&#037; precisos u sinde errors. Mas detalles, incluindo-ie información de cómo inhabilitar istos servicios, puet trobar-se en os ">
+<!ENTITY rights.intro-point4b "termins d'o servicio">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Si iste producto incorpora servicios web, totz os termins de servicio aplicables a o(s) servicio(s) habrían d'enlazar-se en a sección ">
+<!ENTITY rights.intro-point4b-unbranded "de servicios web">
+<!ENTITY rights.intro-point4c-unbranded " sección.">
+
+<!ENTITY rights2.webservices-header "Servicios d'información web de &brandFullName;">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Ta reproducir bels tipos de contenius de video, &brandShortName; descarga bels modulos de descifrau de conteniu de terceros.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "O &brandFullName; emplega servicios d&apos;información web (&quot;servicios&quot; d&apos;agora entabant), ta proporcionar belunas d&apos;as funcionalidatz disponibles t&apos;o suyo emplego con ista versión binaria d&apos;o &brandShortName;; como se describe a continuación. Si no en quiere fer servir un (o mas), o bien no considera lurs termins acceptables, puet trigar inhabilitar-los. I ha instruccions de como inhabilitar una funcionalidat u servicio concreto ">
+<!ENTITY rights2.webservices-b "aquí">
+<!ENTITY rights3.webservices-c ". A resta de caracteristicas y servicios se pueden desactivar en as preferencias de l'aplicación.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Navegación segura: ">
+<!ENTITY rights.safebrowsing-b "Desactivar a caracteristica de navegación segura no se recomienda porque puede dar como resultau que visite puestos no seguros.  Si deseya desactivar de tot ista caracteristica, siga os trangos siguients:">
+<!ENTITY rights.safebrowsing-term1 "Ubra as preferencias de l'aplicación">
+<!ENTITY rights.safebrowsing-term2 "Seleccione o panel Seguranza">
+<!ENTITY rights2.safebrowsing-term3 "Desmarcar la opción pa &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "A navegación segura ye agora desactivada">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Navegación basada en a ubicación cheografica: ">
+<!ENTITY rights.locationawarebrowsing-b "siempre son a esleción de l'usuario.  Nunca no se ninviará garra información sobre a suya ubicación sin o suyo permiso.  Si deseya desactivar a caracteristica por completo, siga istos trangos:">
+<!ENTITY rights.locationawarebrowsing-term1a "En a barra d'adrezas, escriba ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Escriba-ie geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Faiga doble clic en a preferencia geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "A navegación basada en ubicación cheografica s'ha desactivau">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Aquí s'ha d'incluir un resumen d'os servicios web que o producto incorpora, de conchunta con instruccions sobre cómo deshabilitar-los si cal.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Qualsiquier termin de servicio ta iste producto ha d'estar listau aquí.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; y os suyos colaboradors, licenciatarios y socios treballan ta furnir os servicios mas precisos y actualizaus.  Manimenos, no podemos guarenciar que ista información sía completa y libre d'errors.  Por eixemplo, o servicio de navegación segura puede no identificar qualques puestos periglosos y puede identificar qualques puestos seguros por error y as adrezas tornadas por os nuestros proveyedors d'o servicio de navegación basada en a ubicación son solament estimacions y ni nusatros ni os nuestros proveyedors guarenciamos a exactitut d'as ubicacions proporcionadas.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; puede deixar d'ufrir u cambiar os servicios en qualsiquier inte.">
+<!ENTITY rights2.webservices-term3 "Puede fer servir istos servicios con a versión correspondient de &brandShortName; y &vendorShortName; le atorga dreitos ta fer-lo.  &vendorShortName; y os suyos licenciatarios se reservan a resta de dreitos d'os servicios. Istos termins no limitan garra dreito atorgau por as licencias de codigo ubierto aplicables a &brandShortName; y as versions d'o codigo fuent correspondient de &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Os servicios se presentan &quot;tal qual son&quot;.  &vendorShortName;, os suyos colaboradors, licenciadors, y distribuidors negan dar qualsiquier guarancia, ya siga expresa u implicita, incluindo-ie, sin garra mena de limitación, guarancias de que os servicios sigan comercials y que respondan a os suyos propositos particulars.  Vusté asume tot o risgo de trigar os servicios t&apos;os suyos propositos, asinas como lur qualidat y rendimiento. Bellas churisdiccions no permiten a exclusión o limitación d&apos;as guarancias implicitas y, doncas, ista norma talment no le afecte.">
+<!ENTITY rights.webservices-term5 "Fueras d'an que sía requeriu por a lei, &vendorShortName;, os suyos colaboradors, licenciatarios y distribuidors no serán responsables de garra danyo indirecto, especial, imprevisto, resultant, punitivo u eixemplar relacionau con l'uso de &brandShortName; y os servicios. a responsabilidat colectiva baixo istes termins no podrán exceder os US$500 (cincientos dolars). Qualques churisdiccions no permiten a exclusión u limitación de bells danyos, asinas que ista exclusión y limitación puede no estar aplicable ta vusté.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; puede actualizar istos termins quan sía necesario, de tiempo en tiempo. Istos termins no pueden estar modificaus u cancelaus sin o consentimiento por escrito de &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Istos termins son rechius por as leis d'o Estau de California, E.U.A., excluindo-ne os conflictos previstos por a lei. Si qualsiquier parte d'istos termins fuesen consideraus no validos u no aplicables, a resta de partes continarían tenendo a suya fuerza y efecto total. Caso d'haber un conflicto entre una versión traducida d'istes termins y a versión en idioma Anglés, a versión en Anglés será a que prevaldrá.">

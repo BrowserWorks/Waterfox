@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "ص">
+<!ENTITY minimizeWindow.label     "صغّر">
+<!ENTITY bringAllToFront.label    "اجلب الكل للمقدمة">
+<!ENTITY zoomWindow.label         "قرّب">
+<!ENTITY windowMenu.label         "نافذة">
+
+<!ENTITY helpMenu.label           "مساعدة"> 
+<!ENTITY helpMenu.accesskey       "س"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "مساعدة"> 
+<!ENTITY helpMenuWin.accesskey    "س">
+<!ENTITY aboutProduct2.label      "عن &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "ع">
+<!ENTITY productHelp2.label       "مساعدة &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "س">
+<!ENTITY helpMac.commandkey       "؟">
+
+<!ENTITY helpKeyboardShortcuts.label     "اختصارات لوحة المفاتيح">
+<!ENTITY helpKeyboardShortcuts.accesskey "خ">
+
+<!ENTITY helpSafeMode.label       "أعِد التشغيل مع تعطيل الإضافات…">
+<!ENTITY helpSafeMode.accesskey   "ش">
+<!ENTITY helpSafeMode.stop.label       "أعِد التشغيل مع تفعيل الإضافات">
+<!ENTITY helpSafeMode.stop.accesskey   "ش">
+
+<!ENTITY healthReport2.label      "تقرير حالة &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "ق">
+
+<!ENTITY helpTroubleshootingInfo.label      "معلومات مواجهة الأعطال">
+<!ENTITY helpTroubleshootingInfo.accesskey  "ط">
+
+<!ENTITY helpFeedbackPage.label      "أرسِل تعليقًا…">
+<!ENTITY helpFeedbackPage.accesskey  "ر">
+
+<!ENTITY helpShowTour2.label            "جولة في &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "ل">
+
+<!ENTITY preferencesCmdMac.label        "التفضيلات…">
+<!ENTITY preferencesCmdMac.commandkey   "،">
+
+<!ENTITY servicesMenuMac.label          "الخدمات">
+
+<!ENTITY hideThisAppCmdMac2.label       "أخفِ &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "أخفِ الآخرين">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "أظهر الكل">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Vigyázat, veszélyes terület!">
+<!ENTITY aboutWarningText.label "Ezeknek a szakértőknek szóló beállításoknak a megváltoztatása káros hatással lehet az alkalmazás stabilitására, biztonságára vagy teljesítményére. Csak akkor folytassa, ha tisztában van azzal, amit csinál.">
+<!ENTITY aboutWarningButton2.label "Elfogadom a kockázatot!">
+<!ENTITY aboutWarningCheckbox.label "A figyelmeztetés megjelenítése legközelebb">
+
+<!ENTITY searchPrefs.label "Keresés:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "k">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Beállítás neve">
+<!ENTITY lockColumn.label "Állapot">
+<!ENTITY typeColumn.label "Típus">
+<!ENTITY valueColumn.label "Érték">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Kattintson ide az e szerint rendezéshez"> 
+<!ENTITY columnChooser.tooltip "Jelölje ki a megjelenítendő oszlopokat"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Másolás">
+<!ENTITY copyPref.accesskey "M">
+<!ENTITY copyName.label "Név másolása">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Érték másolása">
+<!ENTITY copyValue.accesskey "r">
+<!ENTITY modify.label "Módosítás">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Ki/be">
+<!ENTITY toggle.accesskey "K">
+<!ENTITY reset.label "Visszaállítás">
+<!ENTITY reset.accesskey "V">
+<!ENTITY new.label "Új">
+<!ENTITY new.accesskey "j">
+<!ENTITY string.label "Karakterlánc">
+<!ENTITY string.accesskey "K">
+<!ENTITY integer.label "Egész">
+<!ENTITY integer.accesskey "E">
+<!ENTITY boolean.label "Logikai">
+<!ENTITY boolean.accesskey "L">

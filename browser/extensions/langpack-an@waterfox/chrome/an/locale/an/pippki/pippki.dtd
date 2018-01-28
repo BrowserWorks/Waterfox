@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Cambiar a clau mayestra">
+<!ENTITY setPassword.tokenName.label "Dispositivo de seguranza">
+<!ENTITY setPassword.oldPassword.label "Clau actual:">
+<!ENTITY setPassword.newPassword.label "Clau nueva:">
+<!ENTITY setPassword.reenterPassword.label "Clau nueva (unatra vegada):">
+<!ENTITY setPassword.meter.label "Mesurador de calidat d'a clau">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Restablir">
+<!ENTITY resetPassword.title  "Restablir a clau mayestra">
+<!ENTITY resetPassword.text  "Si restableix a suya clau mayestra, todas as claus de web y de correu electronico, os datos d'os formularios, os certificaus personals y as claves privadas almagazenaus serán ixuplidaus. Ye seguro que quiere restablir a suya clau mayestra?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Descargando o certificau">
+<!ENTITY downloadCert.message1 "Se l'ha demandau que confíe en una entidat certificadera (CA) nueva.">
+<!ENTITY downloadCert.trustSSL "Confiar en ista CA ta identificar puestos web.">
+<!ENTITY downloadCert.trustEmail "Confiar en ista CA ta identificar usuarios de correu electronico.">
+<!ENTITY downloadCert.trustObjSign "Confiar en ista CA ta identificar desembolicadors de software.">
+<!ENTITY downloadCert.message3 "Antes de confiar en ista CA ta qualsiquier finalidat, cal que n'examine o certificau y as normas y os procedimientos (si son disponibles).">
+<!ENTITY downloadCert.viewCert.label "Veyer">
+<!ENTITY downloadCert.viewCert.text "Examinar o certificau d'a CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Solicitut d'identificación d'usuario">
+<!ENTITY clientAuthAsk.message1 "Iste puesto ha solicitau que s'identifique con un certificau:">
+<!ENTITY clientAuthAsk.message2 "Trigue un certificau ta presentar-lo como identificación:">
+<!ENTITY clientAuthAsk.message3 "Detalles d'o certificau trigau:">
+
+<!ENTITY pkcs12.setpassword.title  "Trigue una clau ta la copia de seguranza d'o certificau">
+<!ENTITY pkcs12.setpassword.message  "A clau ta la copia de seguranza d'o certificau que defina aquí proteche o fichero de copia de seguranza que contino creyará.  Ha de definir-la ta continar con a copia de seguranza.">
+<!ENTITY pkcs12.setpassword.label1 "Clau d'a copia de seguranza d'o certificau:">
+<!ENTITY pkcs12.setpassword.label2 "Clau d'a copia de seguranza d'o certificau (unatra vegada):">
+<!ENTITY pkcs12.setpassword.reminder "Important: si ixuplida a clau d'a copia de seguranza d'o certificau no podrá restablir-la mas entabant.  Alce-la en un puesto seguro.">
+
+<!ENTITY chooseToken.title  "Dialogo de triga d'o teste">
+<!ENTITY chooseToken.message1 "Trigue un teste.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Se ye chenerando una clau privada">
+<!ENTITY createCertInfo.msg1 "Se ye chenerando a clau… Puede tardar bells minutos….">
+<!ENTITY createCertInfo.msg2 "Aspere…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Autentificación de teste protechida">
+<!ENTITY protectedAuth.msg "Autentifique a o teste. O metodo d'autentificación pende en o tipo d'o suyo teste.">
+<!ENTITY protectedAuth.tokenName.label "Teste:">

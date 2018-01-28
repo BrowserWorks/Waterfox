@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "આયાત વિઝાર્ડ">
+
+<!ENTITY importFrom.label               "વિકલ્પો, બુકમાર્કો, ઇતિહાસ, પાસવર્ડો, અહીંથી આયાત કરો:">
+<!ENTITY importFromUnix.label           "પસંદગીઓ, બુકમાર્કો, ઇતિહાસ, પાસવર્ડો, અહીંથી આયાત કરો:">
+<!ENTITY importFromBookmarks.label      "બુકમાર્કો આયાત કરો:">
+
+<!ENTITY importFromIE.label             "ઈન્ટરનેટ એક્સપ્લોરર">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "કંઇ આયાત ન કરો">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "સફારી">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 સુરક્ષિત બ્રાઉઝર">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "બુકમાર્કો, ઇતિહાસ અથવા પાસવર્ડ માહિતીઓ સમાવતા કોઈ કાર્યક્રમો શોધી શક્યા નહિં.">
+
+<!ENTITY importSource.title             "સેટીંગ અને માહિતી અહીંથી આયાત કરો">
+<!ENTITY importItems.title              "આયાત કરવાની વસ્તુઓ">
+<!ENTITY importItems.label              "કઇ વસ્તુઓ આયાત કરવાની છે તે પસંદ કરો:">
+
+<!ENTITY migrating.title                "આયાત કરે છે...">
+<!ENTITY migrating.label                "નીચેની વસ્તુઓ અત્યારે આયાત થઇ રહી છે...">
+
+<!ENTITY selectProfile.title            "રુપરેખા પસંદ કરો">
+<!ENTITY selectProfile.label            "પોતાના માંથી નિકાસ કરવા માટે નીચેની રુપરેખાઓ પ્રાપ્ત છે:">
+
+<!ENTITY done.title                     "આયાત પૂર્ણ">
+<!ENTITY done.label                     "નીચેની વસ્તુઓ સફળતાપૂર્વક આયાત કરાઇ છે:">
+
+<!ENTITY closeSourceBrowser.label       "ચાલુ રાખતાં પહેલાં કૃપા કરીને ખાતરી કરો કે પસંદ કરેલ બ્રાઉઝર બંધ છે.">

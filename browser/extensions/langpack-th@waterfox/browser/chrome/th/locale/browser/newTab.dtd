@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "แท็บใหม่">
+<!ENTITY newtab.customize.classic "แสดงไซต์เด่นของคุณ">
+<!ENTITY newtab.customize.cog.enhanced "รวมไซต์แนะนำ">
+<!ENTITY newtab.customize.cog.title2 "ปุ่มควบคุมแท็บใหม่">
+<!ENTITY newtab.customize.cog.learn "เรียนรู้เกี่ยวกับแท็บใหม่">
+<!ENTITY newtab.customize.title "ปรับแต่งหน้าแท็บใหม่ของคุณ">
+<!ENTITY newtab.customize.blank2 "แสดงหน้าว่าง">
+<!ENTITY newtab.undo.removedLabel "นำภาพขนาดย่อออกไปแล้ว">
+<!ENTITY newtab.undo.undoButton "เลิกทำ">
+<!ENTITY newtab.undo.restoreButton "เรียกคืนทั้งหมด">
+<!ENTITY newtab.undo.closeTooltip "ซ่อน">

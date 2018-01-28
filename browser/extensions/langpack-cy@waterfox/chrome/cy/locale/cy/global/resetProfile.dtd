@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Adnewyddu &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Cychwyn o'r newydd i ddatrys problemau ac adfer perfformiad.">
+<!ENTITY refreshProfile.dialog.description2  "Bydd hyn yn:">
+<!ENTITY refreshProfile.dialog.items.label1  "Tynnu eich ychwanegion a'ch cyfaddasiadau">
+<!ENTITY refreshProfile.dialog.items.label2  "Adfer eich gosodiadau pori i'w rhagosodiad">
+<!ENTITY refreshProfile.dialog.button.label  "Adnewyddu &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Rhoi bywyd newydd i &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Adnewyddu &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Bron â gorffen…">

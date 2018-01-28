@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "ផ្ទុក​ឡើង​វិញ &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "ចាប់ផ្ដើម​ឡើងវិញ​ដើម្បី​កែ​បញ្ហា រួច​ស្ដារ​ដំណើរការ។">
+<!ENTITY refreshProfile.dialog.description2  "វា​នឹង៖">
+<!ENTITY refreshProfile.dialog.items.label1  "លុប​កម្មវិធី​បន្ថែម និង​ការ​ប្ដូរ​តាម​តម្រូវ​ការ​របស់​អ្នក">
+<!ENTITY refreshProfile.dialog.items.label2  "ស្ដារ​ការ​កំណត់​កម្មវិធី​អ៊ីនធឺណិត​របស់​អ្នក​ទៅ​លំនាំដើម">
+<!ENTITY refreshProfile.dialog.button.label  "ចាប់ផ្ដើម &brandShortName; ឡើងវិញ">
+
+<!ENTITY refreshProfile.title                "ធ្វើឲ្យ &brandShortName; ដំណើរការ​ស្រួល">
+<!ENTITY refreshProfile.button.label         "កំណត់ &brandShortName; ឡើងវិញ...">
+
+<!ENTITY refreshProfile.cleaning.description "ជិត​រួច​ហើយ...">

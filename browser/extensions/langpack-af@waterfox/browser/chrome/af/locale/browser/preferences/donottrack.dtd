@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Moenie volg nie">
+
+
+
+<!ENTITY doNotTrackCheckbox2.label    "Pas “Moenie volg nie” altyd toe">
+<!ENTITY doNotTrackCheckbox2.accesskey "a">
+
+<!ENTITY doNotTrackTPInfo.description "Wanneer Volgbeskerming aan is, sal &brandShortName; 'n sein stuur dat u nie gevolg wil word nie.">
+<!ENTITY doNotTrackLearnMore.label    "Meer inligting">
+
+<!ENTITY window.height                "10em">
+
+<!ENTITY window.width                 "50em">

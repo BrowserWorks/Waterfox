@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Configuración - Datos del sitio">
+<!ENTITY     hostCol.label                 "Sitio">
+<!ENTITY     statusCol.label               "Estado">
+<!ENTITY     usageCol.label                "Almacenamiento">
+<!ENTITY     searchTextboxPlaceHolder             "Buscar sitios Web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Eliminar seleccionados">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Guardar cambios">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Cancelar">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Eliminar datos del sitio">
+<!ENTITY     removingSelected.description  "Si elimina los datos del sitio también se eliminarán las cookies y el contenido Web fuera de línea. Esto cerrará sus sesiones en los sitios. ¿Está seguro de que quiere realizar esos cambios?">
+<!ENTITY     siteTree.label                "Se eliminarán cookies de los siguientes sitios web:">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "ભંગાણ અહેવાલો">
+<!ENTITY crashesUnsubmitted.label   "સબમિટ ન થયેલા ક્રેશ રિપોર્ટ્સ">
+<!ENTITY crashesSubmitted.label     "ભંગાણ અહેવાલો જમા કર્યા">
+<!ENTITY id.heading                 "અહેવાલ ID">
+<!ENTITY dateCrashed.heading        "તારીખ ક્રેશ">
+<!ENTITY dateSubmitted.heading      "જમા થયેલ તારીખ">
+<!ENTITY noReports.label            "કોઈ ભંગાણ અહેવાલો જમા થયેલ નથી.">
+<!ENTITY noConfig.label             "આ કાર્યક્રમ ભંગાણ અહેવાલો દર્શાવવા માટે રૂપરેખાંકિત થયેલ નથી. પસંદગી <code>breakpad.reportURL</code> સુયોજીત થયેલ હોવી જ જોઈએ.">
+<!ENTITY clearAllReports.label      "બધા અહેવાલોને દૂર કરો">

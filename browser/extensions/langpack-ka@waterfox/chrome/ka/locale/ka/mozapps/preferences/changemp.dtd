@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "მთავარი პაროლის შეცვლა">
+<!ENTITY setPassword.tokenName.label       "უსაფრთხოების მოწყობილობა">
+<!ENTITY setPassword.oldPassword.label     "მიმდინარე პაროლი:">
+<!ENTITY setPassword.newPassword.label     "ახალი პაროლის მითითება:">
+<!ENTITY setPassword.reenterPassword.label "ხელმეორედ მითითება:">
+<!ENTITY setPassword.meter.label           "პაროლის ხარისხმზომი">
+<!ENTITY setPassword.meter.loading         "ჩამოტვირთვა">
+<!ENTITY masterPasswordDescription.label   "მთავარი პაროლი იცავს ისეთ მნიშვნელოვან ინფორმაციას, როგორიცაა მაგალითად, საიტების ანგარიშების პაროლები.  მთავარი პაროლის შექმნის შემთხვევაში, მისი მითითება საჭირო იქნება &brandShortName; ყოველი გახსნისას ერთხელ, მაგ პაროლით დაცულ მონაცემებზე წვდომის მისაღებად.">
+<!ENTITY masterPasswordWarning.label       "გთხოვთ დარწმუნდეთ, რომ მთავარი პაროლი კარგად გახსოვთ და არ დაგავიწყდებათ.  მისი დავიწყების შემთხვევაში თქვენ ამ პაროლით დაცულ მონაცემებს ვეღარ გახსნით.">

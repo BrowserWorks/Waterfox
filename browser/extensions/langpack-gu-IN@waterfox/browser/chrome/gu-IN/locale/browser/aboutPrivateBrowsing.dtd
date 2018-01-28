@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "તમે હાલમાં ખાનગી વિન્ડો મા નથી.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "ખાનગી વિન્ડો ખોલો">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "પિ">
+
+<!ENTITY privateBrowsing.title                           "ખાનગી બ્રાઉઝિંગ">
+<!ENTITY privateBrowsing.title.tracking                  "ટ્રેકિંગ પ્રોટેક્શન સાથે ખાનગી બ્રાઉઝિંગ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "જ્યારે તમે એક ફાયરફોક્સ ખાનગી વિન્ડો મા બ્રાઉઝ કરો">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "સાચવી નથી">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "મુલાકાત લીધેલા પૃષ્ઠો">
+<!ENTITY aboutPrivateBrowsing.info.searches              "શોધ">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "કૂકીઝ">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "કામચલાઉ ફાઈલો">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "સેવ કરશે">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "તમારા:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ડાઉનલોડ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "બુકમાર્ક્સ">
+<!ENTITY aboutPrivateBrowsing.note.before                "ખાનગી બ્રાઉઝિંગ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "તમને અનામી બનાવશે નાઈ">
+<!ENTITY aboutPrivateBrowsing.note.after                 "ઇન્ટરનેટ પર તમારા નિયોક્તા અથવા ઇન્ટરનેટ સેવા પ્રદાતા હજુ પણ તમે કાયા પાનાની મુલાકાત લો છો એની ખબર રાખી શકે છે">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "વિશે વધુ જાણો">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "ખાનગી બ્રાઉઝિંગ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ટ્રૅકિંગ સંરક્ષણ">
+<!ENTITY trackingProtection.description2                 "કેટલીક વેબસાઇટ્સ તમારી પ્રવૃત્તિ મોનીટર કરવા માટે ટ્રેકર્સ નો ઉપયોગ કરી શકે છે. ટ્રેકિંગ પ્રોટેક્શન ફાયરફોક્સ ઘણા ટ્રેકર્સ ને અવરોધિત કરશે કે જે તમારી માહિતી એકત્રિત કરી શકે છે.">
+<!ENTITY trackingProtection.startTour1                   "કેવી રીતે કામ કરે છે તે જોઈએ">

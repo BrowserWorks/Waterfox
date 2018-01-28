@@ -1,0 +1,151 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "General">
+
+<!ENTITY useCursorNavigation.label       "Folosește întotdeauna săgețile pentru a naviga în pagini">
+<!ENTITY useCursorNavigation.accesskey   "F">
+<!ENTITY searchOnStartTyping.label       "Caută textul când încep să tastez">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "Arată o tastatură tactilă când este necesar">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Navigare">
+
+<!ENTITY useAutoScroll.label             "Folosește derularea automată">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Folosește derularea lină">
+<!ENTITY useSmoothScrolling.accesskey    "i">
+<!ENTITY checkUserSpelling.label         "Verifică ortografia pe măsură ce tastez">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Împărtășire de date">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY enableHealthReport1.label       "Permite lui &brandShortName; să trimită automat Mozillei date tehnice și date despre interacțiuni">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Află mai multe">
+
+<!ENTITY dataCollection.label            "Colectarea și utilizarea de date din &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Ne străduim să îți oferim posibilitatea de a face alegeri și colectăm doar ceea ce avem nevoie ca să furnizăm și să îmbunătățim &brandShortName; pentru toată lumea. Întotdeauna solicităm permisiunea înainte de a primi informații personale.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Politica de confidențialitate">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Permite-i lui &brandShortName; să trimită Mozillei rapoarte de defecțiuni">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "Află mai multe">
+
+<!ENTITY networkTab.label                "Rețea">
+
+<!ENTITY networkProxy.label              "Proxy pentru rețea">
+
+<!ENTITY connectionDesc.label            "Configurează modul în care &brandShortName; se conectează la internet">
+<!ENTITY connectionSettings.label        "Setări…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Conținut web în cache">
+
+<!ENTITY offlineStorage2.label           "Conținut web offline și datele utilizatorului">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Datele site-urilor">
+<!ENTITY clearSiteData.label             "Șterge toate datele">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Setări…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Află mai multe">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Limitează memoria cache la">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB din spațiu">
+<!ENTITY clearCacheNow.label             "Șterge acum">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "Șterge acum">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "Ignoră gestionarea automată a cache-ului">
+<!ENTITY overrideSmartCacheSize.accesskey "o">
+
+<!ENTITY updateTab.label                 "Actualizare">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "Actualizări &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "Menține &brandShortName; actualizat pentru cea mai bună performanță, stabilitate și securitate.">
+<!ENTITY updateApplication.version.pre   "Versiunea ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Permite ca &brandShortName; să">
+<!ENTITY updateAuto3.label               "Instaleze automat actualizări (recomandat)">
+<!ENTITY updateAuto3.accesskey           "a">
+<!ENTITY updateCheckChoose2.label        "Caute actualizări, dar să te lase să decizi dacă le instalezi">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "Nu caute niciodată actualizări (nerecomandat)">
+<!ENTITY updateManual2.accesskey         "n">
+
+<!ENTITY updateHistory2.label            "Afișează istoricul actualizărilor">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "Folosește serviciul care rulează în fundal pentru a instala actualizări">
+<!ENTITY useService.accesskey            "d">
+
+<!ENTITY enableSearchUpdate2.label       "Actualizează automat motoarele de căutare">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Spune-mi când un site solicită să stocheze date pentru utilizarea offline">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Excepții…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "Următoarele site-uri web au permisiunea de a stoca date pentru utilizare offline:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Elimină…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "Șterge datele offline">
+
+<!ENTITY certificateTab.label            "Certificate">
+<!ENTITY certPersonal2.description       "Când un server îți cere certificatul personal">
+<!ENTITY selectCerts.auto                "Selectează automat unul">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Întreabă de fiecare dată">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Interoghează serverele de răspuns OCSP pentru confirmarea valabilității actuale a certificatelor">
+<!ENTITY enableOCSP.accesskey            "h">
+<!ENTITY viewCerts2.label                "Vezi certificatele…">
+<!ENTITY viewCerts2.accesskey            "c">
+<!ENTITY viewSecurityDevices2.label      "Dispozitive de securitate…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "Performanță">
+<!ENTITY useRecommendedPerformanceSettings2.label "Folosește setările recomandate de performanță">
+<!ENTITY useRecommendedPerformanceSettings2.description "Aceste setări sunt adaptate pentru hardware-ul și sistemul de operare al calculatorului.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "U">
+<!ENTITY performanceSettingsLearnMore.label "Află mai multe">
+<!ENTITY limitContentProcessOption.label "Limita proceselor pentru conținut">
+<!ENTITY limitContentProcessOption.description "Procesele adiționale pentru conținut pot îmbunătăți performanța atunci când se folosesc mai multe file, însă va consuma și mai multă memorie.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription "Modificarea numărului de procese pentru conținut este posibilă doar cu funcția de multiprocese din &brandShortName;.">
+
+<!ENTITY allowHWAccel.label              "Folosește accelerarea hardware atunci când este disponibilă">
+<!ENTITY allowHWAccel.accesskey          "h">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "530">
+<!ENTITY  pageInfoWindow.height "480">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Αντιγραφή">
+<!ENTITY  copy.accesskey        "γ">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Επιλογή όλων">
+<!ENTITY  selectall.accesskey   "λ">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Γενικά">
+<!ENTITY  generalTab.accesskey  "Γ">
+<!ENTITY  generalTitle          "Τίτλος:">
+<!ENTITY  generalURL            "Διεύθυνση:">
+<!ENTITY  generalType           "Τύπος:">
+<!ENTITY  generalMode           "Λειτουργία εμφάνισης:">
+<!ENTITY  generalSize           "Μέγεθος:">
+<!ENTITY  generalReferrer       "URL παραπομπής:">
+<!ENTITY  generalSource         "Πηγή cache:">
+<!ENTITY  generalModified       "Τροποποίηση:">
+<!ENTITY  generalEncoding2      "Κωδικοποίηση:">
+<!ENTITY  generalMetaName       "Όνομα">
+<!ENTITY  generalMetaContent    "Περιεχόμενο">
+
+<!ENTITY  mediaTab              "Πολυμέσα">
+<!ENTITY  mediaTab.accesskey    "μ">
+<!ENTITY  mediaLocation         "Τοποθεσία:">
+<!ENTITY  mediaText             "Σχετικό κείμενο:">
+<!ENTITY  mediaAltHeader        "Εναλλακτικό κείμενο">
+<!ENTITY  mediaAddress          "Διεύθυνση">
+<!ENTITY  mediaType             "Τύπος">
+<!ENTITY  mediaSize             "Μέγεθος">
+<!ENTITY  mediaCount            "Αρίθμηση">
+<!ENTITY  mediaDimension        "Διαστάσεις:">
+<!ENTITY  mediaLongdesc         "Μακρά περιγραφή:">
+<!ENTITY  mediaBlockImage.accesskey "α">
+<!ENTITY  mediaSaveAs           "Αποθήκευση ως...">
+<!ENTITY  mediaSaveAs.accesskey "θ">
+<!ENTITY  mediaSaveAs2.accesskey "η">
+<!ENTITY  mediaPreview          "Προεπισκόπηση πολυμέσων:">
+
+<!ENTITY  feedTab               "Αρχεία ροής">
+<!ENTITY  feedTab.accesskey     "χ">
+<!ENTITY  feedSubscribe         "Συνδρομή">
+<!ENTITY  feedSubscribe.accesskey "υ">
+
+<!ENTITY  permTab               "Δικαιώματα">
+<!ENTITY  permTab.accesskey     "Δ">
+<!ENTITY  permUseDefault        "Χρήση προεπιλογών">
+<!ENTITY  permAskAlways         "Ερώτηση πάντα">
+<!ENTITY  permAllow             "Επιτρέπεται">
+<!ENTITY  permAllowSession      "Να επιτρέπεται για αυτή τη συνεδρία">
+<!ENTITY  permBlock             "Φραγή">
+<!ENTITY  permissionsFor        "Δικαιώματα για:">
+<!ENTITY  permPlugins           "Ενεργοποίηση πρόσθετων λειτουργιών">
+
+<!ENTITY  permClearStorage           "Εκκαθάριση αποθηκευτικού χώρου">
+<!ENTITY  permClearStorage.accesskey "θ">
+
+<!ENTITY  securityTab           "Ασφάλεια">
+<!ENTITY  securityTab.accesskey "σ">
+<!ENTITY  securityView.certView "Προβολή πιστοποιητικού">
+<!ENTITY  securityView.accesskey "β">
+<!ENTITY  securityView.unknown   "Άγνωστη">
+
+
+<!ENTITY  securityView.identity.header   "Ταυτότητα ιστοσελίδας">
+<!ENTITY  securityView.identity.owner    "Ιδιοκτήτης: ">
+<!ENTITY  securityView.identity.domain   "Ιστοσελίδα: ">
+<!ENTITY  securityView.identity.verifier "Επιβεβαιώθηκε από: ">
+<!ENTITY  securityView.identity.validity "Λήγει στις:">
+
+<!ENTITY  securityView.privacy.header                   "Απόρρητο &amp; ιστορικό">
+<!ENTITY  securityView.privacy.history                  "Έχω επισκεφθεί αυτή τη σελίδα ποτέ μέχρι σήμερα;">
+<!ENTITY  securityView.privacy.cookies                  "Αποθηκεύει αυτή η ιστοσελίδα πληροφορίες (cookies) στον υπολογιστή μου;">
+<!ENTITY  securityView.privacy.viewCookies              "Προβολή cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "π">
+<!ENTITY  securityView.privacy.passwords                "Έχω αποθηκεύσει κωδικούς πρόσβασης για αυτή την ιστοσελίδα;">
+<!ENTITY  securityView.privacy.viewPasswords            "Προβολή αποθηκευμένων κωδικών πρόσβασης">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "λ">
+
+<!ENTITY  securityView.technical.header                 "Τεχνικές λεπτομέρειες">
+
+<!ENTITY  helpButton.label                              "Βοήθεια">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Farby">
+<!ENTITY  window.width                    "39em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Použiť mnou definované farby namiesto tých, ktoré sú definované na stránke:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Vždy">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Len pre témy s vysokým kontrastom">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nikdy">
+
+<!ENTITY  color                           "Text a pozadie">
+<!ENTITY  textColor.label                 "Text:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Pozadie:">
+<!ENTITY  backgroundColor.accesskey       "z">
+<!ENTITY  useSystemColors.label           "Použiť systémové farby">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Podčiarkovať odkazy">
+<!ENTITY  underlineLinks.accesskey        "d">
+<!ENTITY  links                           "Farby odkazov">
+<!ENTITY  linkColor.label                 "Nenavštívené odkazy:">
+<!ENTITY  linkColor.accesskey             "e">
+<!ENTITY  visitedLinkColor.label          "Navštívené odkazy:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

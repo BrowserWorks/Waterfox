@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Creu Proffil Dewin">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "Mae &brandShortName; yn storio gwybodaeth am eich gosodiadau a'ch dewisiadau yn eich proffil personol.">
+<!ENTITY profileCreationExplanation_2.text  "Os ydych yn rhannu'r copi o &brandShortName; gyda defnyddwyr eraill, mae modd defnyddio proffiliau i gadw gwybodaeth eich gilydd ar wahân. I wneud hyn, dylai pob defnyddiwr greu ei broffil ei hun.">
+<!ENTITY profileCreationExplanation_3.text  "Os mai chi yw'r unig berson sy'n defnyddio'r copi o &brandShortName;, rhaid i chi gael o leiaf un proffil. Os hoffech chi mae modd creu proffiliau niferus er mwyn cadw gosodiadau a dewisiadau i chi eich hun. Er enghraifft, efallai yr hoffech chi gael proffil gwahanol ar gyfer defnydd busnes neu bersonol.">
+<!ENTITY profileCreationExplanation_4.text  "I gychwyn creu eich proffil, cliciwch Nesaf.">
+<!ENTITY profileCreationExplanation_4Mac.text  "I gychwyn creu eich proffil, cliciwch Parhau.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "I gychwyn creu eich proffil, cliciwch Nesaf.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Os ydych yn creu nifer o broffiliau mae modd eu gwahaniaethu wrth enw'r proffil. Mae modd defnyddio'r enw sy'n cael ei ddarparu yma neu enw eich hun.">
+<!ENTITY profilePrompt.label            "Rhowch enw proffil newydd:">
+<!ENTITY profilePrompt.accesskey        "e">
+<!ENTITY profileDirectoryExplanation.text   "Bydd eich gosodiadau defnyddiwr, dewisiadau a data arall sy'n perthyn i ddefnyddiwr yn cael ei gadw yn:">
+<!ENTITY profileDefaultName             "Defnyddiwr Rhagosodedig">
+<!ENTITY button.choosefolder.label      "Dewis Ffolder…">
+<!ENTITY button.choosefolder.accesskey  "D">
+<!ENTITY button.usedefault.label        "Defnyddio'r Ffolder Rhagosodedig">
+<!ENTITY button.usedefault.accesskey    "R">

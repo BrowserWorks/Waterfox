@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title "Asistente de importación">
+
+<!ENTITY importFrom.label "Importar opciones, marcadores, historial, contraseñas y otros datos de:">
+<!ENTITY importFromUnix.label "Importar preferencias, marcadores, historial, contraseñas y otros datos de:">
+<!ENTITY importFromBookmarks.label "Importar Marcadores desde:">
+
+<!ENTITY importFromIE.label "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label "No importar nada">
+<!ENTITY importFromNothing.accesskey "i">
+<!ENTITY importFromSafari.label "Safari">
+<!ENTITY importFromSafari.accesskey "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label "No se encontraron programas que contengan marcadores, historial o datos de contraseña.">
+
+<!ENTITY importSource.title "Importar opciones y datos de">
+<!ENTITY importItems.title "Items a importar">
+<!ENTITY importItems.label "Seleccionar que ítems importar:">
+
+<!ENTITY migrating.title "Importando…">
+<!ENTITY migrating.label "Los siguientes ítems están siendo importados…">
+
+<!ENTITY selectProfile.title "Seleccione perfil">
+<!ENTITY selectProfile.label "Los siguientes perfiles están disponibles para ser importados:">
+
+<!ENTITY done.title "Importación completa">
+<!ENTITY done.label "Los siguientes ítems fueron importados exitosamente:">
+
+<!ENTITY closeSourceBrowser.label       "Asegúrese que el navegador seleccionado esté cerrado antes de continuar.">

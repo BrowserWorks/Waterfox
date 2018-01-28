@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "सामान्य">
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+
+
+
+
+
+<!ENTITY  addonExceptions.label         "अपवाद…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  logins.label                  "लॉगइन">
+
+
+<!ENTITY  passwordExceptions.label      "अपवाद…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "मुख्य गुड़किल्ली क' प्रयोग  करू ">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "मुख्य गुड़किल्ली बदलू…">
+<!ENTITY  changeMasterPassword.accesskey "M">
+
+<!ENTITY  savedLogins.label              "सहेजल लॉगिन…">
+<!ENTITY  savedLogins.accesskey          "L">
+
+<!ENTITY  blockDownloads.accesskey        "D">
+
+<!ENTITY  blockDownloads.label            "Block dangerous downloads">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "C">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Warn you about unwanted and uncommon software">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  enableSafeBrowsing.label        "Block dangerous and deceptive content">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

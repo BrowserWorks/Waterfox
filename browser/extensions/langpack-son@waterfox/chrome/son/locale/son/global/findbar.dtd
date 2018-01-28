@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Kalimaɲaŋoo hiino bangayroo ceeci">
+<!ENTITY previous.tooltip "Kalimaɲaŋoo bangayri bisantaa ceeci">
+<!ENTITY findCloseButton.tooltip "Ceeci žeeri daabu">
+<!ENTITY highlightAll.label "Kul šilbay">
+<!ENTITY highlightAll.accesskey "b">
+<!ENTITY highlightAll.tooltiptext "Kalimaɲaŋoo bangayrey kul ceeci">
+<!ENTITY caseSensitive.label "Harfu-beeriyan tenjandi">
+<!ENTITY caseSensitive.accesskey "a">
+<!ENTITY caseSensitive.tooltiptext "Ceeci nda harfu-beeri maateyan">
+<!ENTITY entireWord.label "Kalima timmantey">
+<!ENTITY entireWord.accesskey "K">
+<!ENTITY entireWord.tooltiptext "Kalima timmantey hinne ceeci">

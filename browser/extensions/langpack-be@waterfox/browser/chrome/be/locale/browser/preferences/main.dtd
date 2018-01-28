@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Запуск">
+
+<!ENTITY startupPage2.label        "Пасля запуску &brandShortName;">
+<!ENTITY startupPage2.accesskey    "а">
+<!ENTITY startupUserHomePage.label "паказваць вашу хатнюю старонку">
+<!ENTITY startupBlankPage.label    "паказваць пустую старонку">
+<!ENTITY startupPrevSession.label  "паказваць апошнія вокны і карткі">
+
+<!ENTITY homepage2.label           "Хатняя старонка">
+<!ENTITY homepage2.accesskey       "Х">
+<!ENTITY useCurrentPage.label      "Ужыць цяперашнюю старонку">
+<!ENTITY useCurrentPage.accesskey  "с">
+<!ENTITY useMultiple.label         "Ужыць дзейныя старонкі">
+<!ENTITY chooseBookmark.label      "Ужыць закладку…">
+<!ENTITY chooseBookmark.accesskey  "з">
+<!ENTITY restoreDefault.label      "Аднавіць прадвызначаную">
+<!ENTITY restoreDefault.accesskey  "А">
+
+<!ENTITY downloads.label     "Сцягванні">
+
+<!ENTITY saveTo.label "Захоўваць файлы ў">
+<!ENTITY saveTo.accesskey "З">
+<!ENTITY chooseFolderWin.label        "Агляд…">
+<!ENTITY chooseFolderWin.accesskey    "г">
+<!ENTITY chooseFolderMac.label        "Выбраць…">
+<!ENTITY chooseFolderMac.accesskey    "В">
+<!ENTITY alwaysAskWhere.label         "Заўжды пытацца, куды запісваць файлы">
+<!ENTITY alwaysAskWhere.accesskey     "З">
+
+<!ENTITY alwaysCheckDefault2.label        "Заўжды правяраць, ці з'яўляецца &brandShortName; прадвызначаным браўзерам">
+<!ENTITY alwaysCheckDefault2.accesskey    "н">
+<!ENTITY setAsMyDefaultBrowser3.label     "Зрабіць прадвызначаным…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "З">
+<!ENTITY isDefault.label                  "&brandShortName; зараз ваш прадвызначаны браўзер">
+<!ENTITY isNotDefault.label               "&brandShortName; не прадвызначаны браўзер">
+
+<!ENTITY separateProfileMode.label        "Дазволіць &brandShortName; і Waterfox выконвацца адначасова">
+<!ENTITY useWaterfoxSync.label             "Падказка: для гэтага выкарыстоўваюцца асобныя профілі. Карыстайцеся Sync для абмену дадзенымі паміж імі.">
+<!ENTITY getStarted.notloggedin.label     "Увайсці ў &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Адкрыць налады &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Уключыць шматпрацэсны &brandShortName;">

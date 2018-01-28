@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Ongi etorri &syncBrand.shortName.label;(e)ra">
+
+<!ENTITY aboutAccountsConfig.description "Hasi saioa zure fitxak, laster-markak, pasahitzak eta gehiago sinkronizatzeko.">
+<!ENTITY aboutAccountsConfig.startButton.label "Hasi erabiltzen">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync hobespenak">
+<!ENTITY aboutAccounts.noConnection.title "Konexiorik ez">
+<!ENTITY aboutAccounts.noConnection.description "Internetera konektatuta egon behar duzu saioa hasteko.">
+<!ENTITY aboutAccounts.noConnection.retry "Saiatu berriro">
+<!ENTITY aboutAccounts.badConfig.title "Konfigurazio okerra">
+<!ENTITY aboutAccounts.badConfig.description "Ezin da zure Waterfox kontuko zerbitzariaren konfigurazioa zehaztu. Saiatu berriro geroago.">

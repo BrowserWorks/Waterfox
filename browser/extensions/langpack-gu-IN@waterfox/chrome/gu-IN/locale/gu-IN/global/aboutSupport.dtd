@@ -1,0 +1,166 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "મુશ્કેલીનિવારણ જાણકારી">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  આ પાનું ટૅકનિકલ જાણકારીને સમાવે છે કે જે ઉપયોગી થઇ શકે છે જ્યારે તમે સમસ્યાનો ઉકેલ લાવવાનો પ્રયત્ન કરી રહ્યા હોય. જો તમે &brandShortName; વિશે સામાન્ય પ્રશ્ર્નોનાં જવાબો જોઇ રહ્યા હોય, અમારી <a id='supportLink'>આધાર વેબ સાઇટ</a> ને ચકાસો.">
+
+<!ENTITY aboutSupport.crashes.title "ભંગાણ અહેવાલો">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "અહેવાલ ઓળખ">
+<!ENTITY aboutSupport.crashes.sendDate "જમા થયેલ">
+<!ENTITY aboutSupport.crashes.allReports "બધા ભંગાણ અહેવાલો">
+<!ENTITY aboutSupport.crashes.noConfig "આ કાર્યક્રમ ભંગાણ અહેવાલો દર્શાવવા માટે રૂપરેખાંકિત થયેલ નથી.">
+
+<!ENTITY aboutSupport.extensionsTitle "એક્સટેન્શનો">
+<!ENTITY aboutSupport.extensionName "નામ">
+<!ENTITY aboutSupport.extensionEnabled "સક્રિય થયેલ">
+<!ENTITY aboutSupport.extensionVersion "આવૃત્તિ">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+<!ENTITY aboutSupport.experimentsTitle "પરીક્ષણીય લક્ષણો">
+<!ENTITY aboutSupport.experimentName "નામ">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "વર્ણન">
+<!ENTITY aboutSupport.experimentActive "સક્રિય">
+<!ENTITY aboutSupport.experimentEndDate "અંત તારીખ">
+<!ENTITY aboutSupport.experimentHomepage "ઘરપાનુ">
+
+<!ENTITY aboutSupport.appBasicsTitle "કાર્યક્રમ મૂળભૂતો">
+<!ENTITY aboutSupport.appBasicsName "નામ">
+<!ENTITY aboutSupport.appBasicsVersion "આવૃત્તિ">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateHistory "ઇતિહાસ સુધારો">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "સુધારા ઇતિહાસને બતાવો">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "રૂપરેખા ડિરેક્ટરી">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "રૂપરેખા ફોલ્ડર">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "સક્રિય થયેલ પ્લગઇનો">
+<!ENTITY aboutSupport.appBasicsBuildConfig "બિલ્ડ રૂપરેખાંકન">
+<!ENTITY aboutSupport.appBasicsUserAgent "વપરાશકર્તા એજન્ટ">
+<!ENTITY aboutSupport.appBasicsMemoryUse "મેમરી વપરાશ">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "મલ્ટીપ્રોસેસ વિન્ડો">
+
+
+
+<!ENTITY aboutSupport.showDir.label "ડિરેક્ટરી ખોલો">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "શોધકર્તામાં બતાવો">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "અગત્યની સુધારા પસંદગીઓ">
+<!ENTITY aboutSupport.modifiedPrefsName "નામ">
+<!ENTITY aboutSupport.modifiedPrefsValue "કિંમત">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js પસંદગીઓ">
+<!ENTITY aboutSupport.userJSDescription "તમારુ રૂપરેખા ફોલ્ડર &lt;a id='prefs-user-js-link'>user.js ફાઇલ&lt;/a> સમાવે છે, કે જે પસંદગીઓને સમાવે છે કે જેઓ  &brandShortName; દ્દારા બનાવેલ હતી નહિ.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "મહત્વની તાળુ મારેલ પસંદગીઓ">
+<!ENTITY aboutSupport.lockedPrefsName "નામ">
+<!ENTITY aboutSupport.lockedPrefsValue "કિંમત">
+
+<!ENTITY aboutSupport.graphicsTitle "ગ્રાફિક્સ">
+
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "વધતુ જતુ GC">
+
+<!ENTITY aboutSupport.a11yTitle "સુલભતા">
+<!ENTITY aboutSupport.a11yActivated "સક્રિય થયેલ">
+<!ENTITY aboutSupport.a11yForceDisabled "સુલભતા અટકાવો">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "લાઇબ્રેરી આવૃત્તિઓ">
+
+<!ENTITY aboutSupport.installationHistoryTitle "સ્થાપન ઇતિહાસ">
+<!ENTITY aboutSupport.updateHistoryTitle "સુધારા ઇતિહાસ">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "ક્લિપબોર્ડમાં લખાણની નકલ કરો">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ક્લિપબોર્ડમાં કાચી માહિતીની નકલ કરો">
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsBuildID "Build ID">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsPerformance "Performance">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiles">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Safe Mode">
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registered Service Workers">
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Update Channel">
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostics">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Failure Log">
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Features">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verify Integrity">
+
+<!ENTITY aboutSupport.restartInSafeMode.label "Restart with Add-ons Disabled…">
+
+<!ENTITY aboutSupport.safeModeTitle "Try Safe Mode">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

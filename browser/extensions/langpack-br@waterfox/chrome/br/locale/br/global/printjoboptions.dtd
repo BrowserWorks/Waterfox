@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Perzhioù ar voullerez">
+
+<!ENTITY paperInput.label "Ment ar baperenn :">
+<!ENTITY paperInput.accesskey "p">
+
+<!ENTITY jobTitleInput.label "Titl al labour :">
+<!ENTITY jobTitleInput.accesskey "T">
+
+<!ENTITY colorGroup.label "Liv :">
+<!ENTITY grayRadio.label "Liveoù louedoù">
+<!ENTITY grayRadio.accesskey "L">
+<!ENTITY colorRadio.label "Liv">
+<!ENTITY colorRadio.accesskey "L">
+
+<!ENTITY edgeMarginInput.label "Esaouenn eus riblenn ar baperenn betek ar marz">
+<!ENTITY topInput.label "Krec'h :">
+<!ENTITY topInput.accesskey "K">
+<!ENTITY bottomInput.label "Diaz :">
+<!ENTITY bottomInput.accesskey "D">
+<!ENTITY leftInput.label "Kleiz :">
+<!ENTITY leftInput.accesskey "l">
+<!ENTITY rightInput.label "Dehou :">
+<!ENTITY rightInput.accesskey "D">

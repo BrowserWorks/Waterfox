@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title "Vzhled stránky…">
+
+<!ENTITY basic.tab "Formát a možnosti">
+
+<!ENTITY formatGroup.label "Formát">
+
+<!ENTITY orientation.label "Orientace:">
+<!ENTITY portrait.label "Na výšku">
+<!ENTITY portrait.accesskey "v">
+<!ENTITY landscape.label "Na šířku">
+<!ENTITY landscape.accesskey "u">
+
+<!ENTITY scale.label "Měřítko:">
+<!ENTITY scale.accesskey "M">
+<!ENTITY scalePercent "&#037;">
+
+<!ENTITY shrinkToFit.label "Na šířku stránky">
+<!ENTITY shrinkToFit.accesskey "s">
+
+<!ENTITY optionsGroup.label "Možnosti">
+
+<!ENTITY printBG.label "Tisknout pozadí (barvy a obrázky)">
+<!ENTITY printBG.accesskey "T">
+
+<!ENTITY advanced.tab "Okraje, záhlaví a zápatí">
+
+<!ENTITY marginGroup.label "Okraje (#1)">
+<!ENTITY marginUnits.inches "palce">
+<!ENTITY marginUnits.metric "milimetry">
+<!ENTITY marginTop.label "Nahoře:">
+<!ENTITY marginTop.accesskey "N">
+<!ENTITY marginBottom.label "Dole:">
+<!ENTITY marginBottom.accesskey "D">
+<!ENTITY marginLeft.label "Vlevo:">
+<!ENTITY marginLeft.accesskey "l">
+<!ENTITY marginRight.label "Vpravo:">
+<!ENTITY marginRight.accesskey "p">
+
+<!ENTITY headerFooter.label "Záhlaví a zápatí">
+
+<!ENTITY hfLeft.label "Vlevo:">
+<!ENTITY hfCenter.label "Uprostřed:">
+<!ENTITY hfRight.label "Vpravo:">
+<!ENTITY headerLeft.tip "Záhlaví vlevo">
+<!ENTITY headerCenter.tip "Záhlaví uprostřed">
+<!ENTITY headerRight.tip "Záhlaví vpravo">
+<!ENTITY footerLeft.tip "Zápatí vlevo">
+<!ENTITY footerCenter.tip "Zápatí uprostřed">
+<!ENTITY footerRight.tip "Zápatí vpravo">
+
+<!ENTITY hfTitle "Nadpis">
+<!ENTITY hfURL "URL">
+<!ENTITY hfDateAndTime "Datum a čas">
+<!ENTITY hfPage "Strana #">
+<!ENTITY hfPageAndTotal "Strana # z #">
+<!ENTITY hfBlank "—prázdno—">
+<!ENTITY hfCustom "Vlastní…">
+
+<!ENTITY customPrompt.title "Vlastní…">
+<!ENTITY customPrompt.prompt "Zadejte prosím vlastní text pro záhlaví či zápatí">

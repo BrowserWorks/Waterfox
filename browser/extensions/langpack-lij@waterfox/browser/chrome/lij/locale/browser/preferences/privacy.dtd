@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Proteçion anti-traciamento">
+<!ENTITY  trackingProtection.description       "O traciamento l'é quande e aziende piagian informaçioin in sce ti pe fase 'n profî e vedde contegnui bazæ in sciâ teu navegaçion e dæti personâ.">
+<!ENTITY  trackingProtection.radioGroupLabel   "Blòcca e aziende de traciamento de fâ vedde i contegnui">
+<!ENTITY  trackingProtectionAlways.label       "De longo">
+<!ENTITY  trackingProtectionAlways.accesskey   "g">
+<!ENTITY  trackingProtectionPrivate.label      "Solo inti barcoin privæ">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Mai">
+<!ENTITY  trackingProtectionNever.accesskey    "m">
+<!ENTITY  trackingProtectionLearnMore.label    "Atre informaçioin">
+<!ENTITY  trackingProtectionExceptions.label   "Eceçioin…">
+<!ENTITY  trackingProtectionExceptions.accesskey "c">
+
+<!ENTITY tracking.label                 "Traciamento">
+<!ENTITY trackingProtectionPBM5.label         "Ativa a proteçion anti-traciamento inta Navegaçion privâ">
+<!ENTITY trackingProtectionPBM5.accesskey     "e">
+<!ENTITY trackingProtectionPBMLearnMore.label "Atre informaçioin">
+<!ENTITY changeBlockList.label          "Seleçionn-a elenco">
+<!ENTITY changeBlockList.accesskey      "l">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Ti peu anche ">
+<!ENTITY  doNotTrack.settings.label     "gestî e inpostaçioin No traciâ">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Stöia">
+
+<!ENTITY  locationBar.label             "Bara di indirissi">
+
+<!ENTITY  locbar.suggest2.label         "Quande ti deuvi a bara di indirissi, conseggia">
+<!ENTITY  locbar.history.label          "Stöia">
+<!ENTITY  locbar.history.accesskey      "n">
+<!ENTITY  locbar.bookmarks.label        "Segnalibbri">
+<!ENTITY  locbar.bookmarks.accesskey    "b">
+<!ENTITY  locbar.openpage.label         "feuggi averti">
+<!ENTITY  locbar.openpage.accesskey     "g">
+<!ENTITY  locbar.searches.label         "riçerche corelæ do-u motô de riçerca predefinio">
+<!ENTITY  locbar.searches.accesskey     "h">
+
+<!ENTITY  suggestionSettings2.label     "Cangia e inpostaçioin di conseggi di motoî de riçerca">
+
+<!ENTITY  acceptCookies.label           "Acetta i cookie da sti sciti">
+<!ENTITY  acceptCookies.accesskey       "k">
+
+<!ENTITY  acceptThirdParty.pre.label      "Acetta i cookie de terse parte:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "de longo">
+<!ENTITY  acceptThirdParty.never.label    "mai">
+<!ENTITY  acceptThirdParty.visited.label  "da-i sciti vixitæ">
+
+<!ENTITY  keepUntil.label               "Mantegni fin a che:">
+<!ENTITY  keepUntil.accesskey           "M">
+
+<!ENTITY  expire.label                  "scazzan">
+<!ENTITY  close.label                   "Mi særo &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Eceçioin…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Fanni vedde i cookie…">
+<!ENTITY  showCookies.accesskey         "F">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; saia">
+<!ENTITY  historyHeader2.pre.accesskey     "s">
+<!ENTITY  historyHeader.remember.label     "Aregòrda a stöia">
+<!ENTITY  historyHeader.dontremember.label "No aregordâ a stöia">
+<!ENTITY  historyHeader.custom.label       "Adeuvia e preferense personalizæ pe a stöia">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; o s'aregòrda de teu navegaçioin, descaregamenti e stöia de riçerche, e in ciù o sarva i cookie da-i sciti che ti vixiti.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Ti peu voei ">
+<!ENTITY  rememberActions.clearHistory.label  "Scancelâ a stöia ciù neuva">
+<!ENTITY  rememberActions.middle.label        ", ò ">
+<!ENTITY  rememberActions.removeCookies.label "scancelâ cookie scingoli">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; o deuvia e mæxime preferense da-a navegaçion privâ, e o no se aregòrda da stöia de teu navegaçioin.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Ti ti peu voei ascì ">
+<!ENTITY  dontrememberActions.clearHistory.label "Scancella tutta a stöia corente">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Deuvia de longo o mòddo de navegaçion privou">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Aregòrda a stöia de navegaçion e descaregamenti">
+<!ENTITY  rememberHistory2.accesskey  "ç">
+
+<!ENTITY  rememberSearchForm.label       "Aregòrda e riçerche e a stöia di mòdoli">
+<!ENTITY  rememberSearchForm.accesskey   "l">
+
+<!ENTITY  clearOnClose.label             "Scancella a stöia quande særa o &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Inpostaçioin…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Contegnitô de Feuggi">
+<!ENTITY  browserContainersLearnMore.label      "Ciù informaçioin">
+<!ENTITY  browserContainersEnabled.label        "Abilita Contegnitô de Feuggi">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Inpostaçioin…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

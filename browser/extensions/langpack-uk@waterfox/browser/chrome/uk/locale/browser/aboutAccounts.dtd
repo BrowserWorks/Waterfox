@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Вітаємо в Синхронізації">
+
+<!ENTITY aboutAccountsConfig.description "Увійдіть для синхронізації своїх вкладок, закладок, паролів та інших даних.">
+<!ENTITY aboutAccountsConfig.startButton.label "Почати">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Налаштування синхронізації">
+<!ENTITY aboutAccounts.noConnection.title "Немає з'єднання">
+<!ENTITY aboutAccounts.noConnection.description "Щоб виконати вхід, у вас повинно бути підключення до Інтернету.">
+<!ENTITY aboutAccounts.noConnection.retry "Спробувати знову">
+<!ENTITY aboutAccounts.badConfig.title "Неправильна конфігурація">
+<!ENTITY aboutAccounts.badConfig.description "Не вдалося визначити конфігурацію сервера вашого облікового запису Waterfox. Спробуйте знову пізніше.">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Waylu Finnde Baabaare">
+<!ENTITY setPassword.tokenName.label       "Kaɓirgol Kisal">
+<!ENTITY setPassword.oldPassword.label     "Finnde woodnde:">
+<!ENTITY setPassword.newPassword.label     "Naatnu finnde hesere:">
+<!ENTITY setPassword.reenterPassword.label "Naatnu kadi finnde:">
+<!ENTITY setPassword.meter.label           "Ɓetirɗe moƴƴugol finnde">
+<!ENTITY setPassword.meter.loading         "Nana loowa">
+<!ENTITY masterPasswordDescription.label   "Finnde Baabaare ena huutoraa ngam suurde humpito hulanaango.  So a sosii Finnde Baabaare ma a naamne yo a naatnu-nde laawol gootol e naatol so &brandShortName; aaftiima humpito danndaango ngo finnde ndee suuri.">
+<!ENTITY masterPasswordWarning.label       "Tiiɗno ƴeew so maa siiftor Finnde Baabaare cuɓi-ɗaa ndee.  So a yejjitii Finnde Baabaare maa, maa horo heɓde humpito ngo finnde ndee suuri ngoo.">

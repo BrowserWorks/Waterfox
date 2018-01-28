@@ -1,0 +1,14 @@
+locale alerts son son/locale/son/alerts/
+locale autoconfig son son/locale/son/autoconfig/
+locale global son son/locale/son/global/
+locale global-platform son son/locale/son/global-platform/mac/ os=Darwin
+locale global-platform son son/locale/son/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform son son/locale/son/global-platform/win/ os=WINNT
+locale mozapps son son/locale/son/mozapps/
+locale necko son son/locale/son/necko/
+locale passwordmgr son son/locale/son/passwordmgr/
+locale pipnss son son/locale/son/pipnss/
+locale pippki son son/locale/son/pippki/
+locale places son son/locale/son/places/
+locale pluginproblem son son/locale/son/pluginproblem/
+locale weave son son/locale/son/services/

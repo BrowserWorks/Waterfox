@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "სანიშნეები">
+<!ENTITY engine.bookmarks.accesskey "ს">
+<!ENTITY engine.tabs.label2         "გახსნილი ჩანართები">
+<!ENTITY engine.tabs.accesskey      "ჩ">
+<!ENTITY engine.history.label       "ისტორია">
+<!ENTITY engine.history.accesskey   "ი">
+<!ENTITY engine.logins.label        "შესვლები">
+<!ENTITY engine.logins.accesskey    "დ">
+<!ENTITY engine.prefs.label         "პარამეტრები">
+<!ENTITY engine.prefs.accesskey     "პ">
+<!ENTITY engine.addons.label        "დამატებები">
+<!ENTITY engine.addons.accesskey    "დ">
+<!ENTITY engine.addresses.label     "მისამართები">
+<!ENTITY engine.addresses.accesskey "ს">
+<!ENTITY engine.creditcards.label   "საკრედიტო ბარათები">
+<!ENTITY engine.creditcards.accesskey "კ">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "მოწყობილობის სახელი">
+<!ENTITY changeSyncDeviceName2.label "მოწყობილობის სახელის შეცვლა…">
+<!ENTITY changeSyncDeviceName2.accesskey "ს">
+<!ENTITY cancelChangeSyncDeviceName.label "გაუქმება">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "გ">
+<!ENTITY saveChangeSyncDeviceName.label "შენახვა">
+<!ENTITY saveChangeSyncDeviceName.accesskey "ე">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "გამოყენების პირობები">
+<!ENTITY fxaPrivacyNotice.link.label "პირადი მონაცემების დებულება">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "გადამოწმებული არაა.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "ხელახლა დასაკავშირებლად გთხოვთ შედით სისტემაში">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "თქვენ შესული არ ხართ.">
+<!ENTITY signIn.label                "შესვლა">
+<!ENTITY signIn.accesskey            "ვ">
+<!ENTITY profilePicture.tooltip      "პროფილის სურათის შეცვლა">
+<!ENTITY verifiedManage.label        "ანგარიშის მართვა">
+<!ENTITY verifiedManage.accesskey    "მ">
+<!ENTITY disconnect3.label           "კავშირის გაწყვეტა…">
+<!ENTITY disconnect3.accesskey       "წ">
+<!ENTITY verify.label                "ელფოსტის დამოწმება">
+<!ENTITY verify.accesskey            "დ">
+<!ENTITY forget.label                "ამ ელფოსტის დავიწყება">
+<!ENTITY forget.accesskey            "ყ">
+
+<!ENTITY signedOut.caption            "წაიყოლეთ თქვენი მონაცემები თან">
+<!ENTITY signedOut.description        "დაასინქრონეთ თქვენი სანიშნეები, ისტორია, ჩანართები, პაროლები, დამატებები და პარამეტრები ყველა მოწყობილობაზე.">
+<!ENTITY signedOut.accountBox.title   "&syncBrand.fxAccount.label; - დაკავშირება">
+<!ENTITY signedOut.accountBox.create  "ანგარიშის შექმნა">
+<!ENTITY signedOut.accountBox.create.accesskey  "ქ">
+<!ENTITY signedOut.accountBox.signin  "შესვლა">
+<!ENTITY signedOut.accountBox.signin.accesskey  "ლ">
+
+<!ENTITY signedIn.settings.label       "სინქრონიზაციის პარამეტრები">
+<!ENTITY signedIn.settings.description "აირჩიეთ, რისი დასინქრონება გსურთ &brandShortName;-ით თქვენს მოწყობილობაზე.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "ჩამოტვირთეთ Waterfox ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android-ისთვის">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " ან ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS-ისთვის">
+
+<!ENTITY mobilePromo3.end              " თქვენ მობილურ მოწყობილობასთან სინქრონიზაციისთვის.">

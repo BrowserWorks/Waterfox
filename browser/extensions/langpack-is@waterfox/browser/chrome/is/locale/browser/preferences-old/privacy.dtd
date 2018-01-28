@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Nota vörn gegn gagnasöfnun">
+<!ENTITY  trackingProtectionAlways.label       "Alltaf">
+<!ENTITY  trackingProtectionAlways.accesskey   "A">
+<!ENTITY  trackingProtectionPrivate.label      "Aðeins í huliðsgluggum">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Aldrei">
+<!ENTITY  trackingProtectionNever.accesskey    "d">
+<!ENTITY  trackingProtectionLearnMore.label    "Fræðast meira">
+<!ENTITY  trackingProtectionExceptions.label   "Undanþágur…">
+<!ENTITY  trackingProtectionExceptions.accesskey "U">
+
+<!ENTITY tracking.label                 "Gagnasöfnun">
+<!ENTITY trackingProtectionPBM5.label         "Nota vörn gegn gagnasöfnun í huliðsgluggum">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Fræðast meira">
+<!ENTITY changeBlockList.label          "Breyta lokunarlista">
+<!ENTITY changeBlockList.accesskey      "B">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Þú getur einnig ">
+<!ENTITY  doNotTrack.settings.label     "stjórnað stillingum fyrir því að fylgst sé ekki með þér">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Ferill">
+
+<!ENTITY  locationBar.label             "Staðsetningarslá">
+
+<!ENTITY  locbar.suggest.label          "Þegar ég nota staðsetningarslá, stinga upp á:">
+<!ENTITY  locbar.history.label          "Ferill">
+<!ENTITY  locbar.history.accesskey      "F">
+<!ENTITY  locbar.bookmarks.label        "Bókamerki">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Opnir flipar">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Sambærileg leit frá sjálfgefnu leitarvélinni">
+<!ENTITY  locbar.searches.accesskey     "æ">
+
+<!ENTITY  suggestionSettings.label      "Breyta stillingum fyrir ábendingar leitarvéla…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Þiggja smákökur frá þriðja aðila:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "Þ">
+<!ENTITY  acceptThirdParty.always.label   "Alltaf">
+<!ENTITY  acceptThirdParty.never.label    "Aldrei">
+<!ENTITY  acceptThirdParty.visited.label  "Frá heimsóttum síðum">
+
+<!ENTITY  keepUntil.label               "Eiga þangað til:">
+<!ENTITY  keepUntil.accesskey           "E">
+
+<!ENTITY  expire.label                  "þær renna út">
+<!ENTITY  close.label                   "ég loka &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Undanþágur…">
+<!ENTITY  cookieExceptions.accesskey    "U">
+
+<!ENTITY  showCookies.label             "Sýna smákökur…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; mun:">
+<!ENTITY  historyHeader.pre.accesskey      "m">
+<!ENTITY  historyHeader.remember.label     "Geyma feril">
+<!ENTITY  historyHeader.dontremember.label "Aldrei geyma feril">
+<!ENTITY  historyHeader.custom.label       "Nota sérsniðnar stillingar fyrir feril">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; mun geyma vöfrun, niðurhal, eyðublöð og leitarferil, og geyma smákökur frá þeim vefsvæðum sem þú heimsækir.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Ef þú vilt getur þú ">
+<!ENTITY  rememberActions.clearHistory.label  "hreinsað nýlega ferla">
+<!ENTITY  rememberActions.middle.label        ", eða ">
+<!ENTITY  rememberActions.removeCookies.label "eytt ákveðnum smákökum">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; mun nota sömu stillingar og í huliðsstillingu, og geyma ekki vafraferil.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Þú getur líka ">
+<!ENTITY  dontrememberActions.clearHistory.label "hreinsað núverandi feril">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Nota alltaf einkavöfrun">
+<!ENTITY  privateBrowsingPermanent2.accesskey "k">
+
+<!ENTITY  rememberHistory2.label      "Muna vafraferil og niðurhalsferil">
+<!ENTITY  rememberHistory2.accesskey  "g">
+
+<!ENTITY  rememberSearchForm.label       "Muna leit og eyðublaðaferil">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Hreinsa feril þegar &brandShortName; hættir">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Stillingar…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Innihalds flipar">
+<!ENTITY  browserContainersLearnMore.label      "Fræðast meira">
+<!ENTITY  browserContainersEnabled.label        "Virkja innihalds flipa">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Stillingar…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

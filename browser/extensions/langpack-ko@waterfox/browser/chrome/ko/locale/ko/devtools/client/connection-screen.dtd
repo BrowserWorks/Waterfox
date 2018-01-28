@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "연결하기">
+<!ENTITY header     "원격 기기에 연결하기">
+<!ENTITY host       "호스트:">
+<!ENTITY port       "포트:">
+<!ENTITY connect    "연결">
+<!ENTITY connecting "연결 중…">
+<!ENTITY availableAddons "사용 가능한 원격 부가 기능:">
+<!ENTITY availableTabs "사용 가능한 원격 탭:">
+<!ENTITY availableProcesses "사용 가능한 원격 프로세스:">
+<!ENTITY connectionError "오류:">
+<!ENTITY errorTimeout "오류: 연결 시간이 지났습니다.">
+<!ENTITY errorRefused "오류: 연결이 거절되었습니다.">
+<!ENTITY errorUnexpected "알 수 없는 오류입니다.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Waterfox 개발자 도구로 Waterfox 안드로이드 버전이나 Waterfox OS와 같은 다른 기기를 원격으로 디버깅할 수 있습니다. 단, 기기의 '원격 디버깅'이 켜져 있어야 합니다. 더 자세한 사항은">
+<!ENTITY remoteDocumentation "이 문서">
+<!ENTITY remoteHelpSuffix "를 보시기 바랍니다.">
+

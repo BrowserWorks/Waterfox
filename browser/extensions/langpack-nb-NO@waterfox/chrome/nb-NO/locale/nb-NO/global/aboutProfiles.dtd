@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Om profiler">
+<!ENTITY aboutProfiles.subtitle "Denne siden hjelper deg å behandle dine profiler. Hver profil er en egen verden som inneholder egen historikk, bokmerker, innstillinger og utvidelser.">
+<!ENTITY aboutProfiles.create "Lag en ny profil">
+<!ENTITY aboutProfiles.restart.title "Start på nytt">
+<!ENTITY aboutProfiles.restart.inSafeMode "Start på nytt med utvidelser avslått …">
+<!ENTITY aboutProfiles.restart.normal "Start på nytt vanlig …">

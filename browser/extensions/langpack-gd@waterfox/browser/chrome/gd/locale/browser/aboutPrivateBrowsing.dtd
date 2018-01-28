@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Chan eil thu ann an uinneag phrìobhaideach an-dràsta fhèin.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Fosgail uinneag phrìobhaideach">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Brabhsadh prìobhaideach">
+<!ENTITY privateBrowsing.title.tracking                  "Brabhsadh prìobhaideach le dìon o thracadh">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Nuair a nì thu brabhsadh ann an uinneag phrìobhaideach, ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "cha sàbhail Waterfox">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "duilleagan air an tadhail thu">
+<!ENTITY aboutPrivateBrowsing.info.searches              "na lorgas tu">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "briosgaidean">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "faidhlichean sealach">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Ach ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "sàbhailidh Waterfox">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " na leanas:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "na luchdaicheas tu a-nuas">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "comharran-lìn">
+<!ENTITY aboutPrivateBrowsing.note.before                "Cha dèan brabhsadh prìobhaideach ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "do-fhaicsinneach thu">
+<!ENTITY aboutPrivateBrowsing.note.after                 " air an eadar-lìon. Chì an solaraiche-lìn no am fastaiche agad fhathast na duilleagan air an tadhail thu.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Barrachd fiosrachaidh mu ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "bhrabhsadh prìobhaideach">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Dìon o thracadh">
+<!ENTITY trackingProtection.description2                 "Cleachdaidh cuid a làraichean-lìn tracaichean a chumas sùil air na nì thu air an eadar-lìon. Ma chleachdas tu an dìon o thracadh, bacaidh Waterfox mòran thracaichean a chruinneachadh dàta mun ghiùlan bhrabhsaidh agad.">
+<!ENTITY trackingProtection.startTour1                   "Seo mar a dh’obraicheas e">

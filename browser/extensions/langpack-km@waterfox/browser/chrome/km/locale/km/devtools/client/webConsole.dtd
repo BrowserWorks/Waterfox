@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "កុងសូល​បណ្ដាញ">
+<!ENTITY browserConsole.title "កុងសូល​កម្មវិធី​អ៊ីនធឺណិត">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "បើក URL ក្នុង​ ផ្ទាំង​ថ្មី">
+<!ENTITY openURL.accesskey "ផ">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "បណ្ដាញ">
+<!ENTITY btnPageNet.tooltip "ចុះ​កំណត់ហេតុ​ការ​ចូល​ដំណើរការ​បណ្ដាញ">
+<!ENTITY btnPageNet.accesskey "ប">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "ការ​ព្រមាន និង​កំហុស CSS ​កំណត់​ហេតុ">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "ចុះ​កំណត់ហេតុ​ករណី​លើកលែង​របស់ JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "សុវត្ថិភាព">
+<!ENTITY btnPageSecurity.tooltip "ការ​ព្រមាន និង​កំហុស​សុវត្ថិភាព​កំណត់​ហេតុ">
+<!ENTITY btnPageSecurity.accesskey "ភ">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "ការ​ចូល">
+<!ENTITY btnPageLogging.tooltip "សារ​កំណត់​ហេតុ​បាន​ផ្ញើ​ទៅ​វត្ថុ window.console">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "កំហុស">
+<!ENTITY btnConsoleInfo         "ព័ត៌មាន">
+<!ENTITY btnConsoleWarnings     "ការ​ព្រមាន">
+<!ENTITY btnConsoleLog          "កំណត់ហេតុ">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Reflows">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "ម៉ាស៊ីន​មេ">
+<!ENTITY btnServerLogging.tooltip     "សារ​កំណត់​ហេតុ​ដែល​បាន​ទទួល​ពី​​ម៉ាស៊ីន​មេ​បណ្ដាញ">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerErrors              "កំហុស">
+<!ENTITY btnServerInfo                "ព័ត៌មាន">
+<!ENTITY btnServerWarnings            "ការ​ព្រមាន">
+<!ENTITY btnServerLog                 "កំណត់ហេតុ">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "កម្ម​វិធី​បន្ថែម​ ឬ Chrome Workers">
+
+<!ENTITY filterOutput.placeholder "លទ្ធផល​តម្រង">
+<!ENTITY btnClear.label        "សម្អាត">
+<!ENTITY btnClear.tooltip      "សម្អាត​លទ្ធផល​កុងសូល​បណ្ដាញ">
+<!ENTITY btnClear.accesskey    "ត">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "ចម្លង​ទីតាំង​តំណ">
+<!ENTITY copyURLCmd.accesskey "ណ">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "បើក​នៅ​ក្នុង​ទិដ្ឋភាព​អញ្ញត្រ">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "ផ្ទុក​ជា​អញ្ញត្តកម្ម​សកល">
+<!ENTITY storeAsGlobalVar.accesskey "S">

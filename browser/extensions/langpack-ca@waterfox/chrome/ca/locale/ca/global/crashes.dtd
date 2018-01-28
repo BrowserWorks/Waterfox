@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Informes de fallada">
+<!ENTITY crashesUnsubmitted.label   "Informes de fallada pendents d'enviar">
+<!ENTITY crashesSubmitted.label     "Informes de fallada enviats">
+<!ENTITY id.heading                 "Identificador de l'informe">
+<!ENTITY dateCrashed.heading        "Data de fallada">
+<!ENTITY dateSubmitted.heading      "Data d'enviament">
+<!ENTITY noReports.label            "No s'ha enviat cap informe de fallada.">
+<!ENTITY noConfig.label             "No s'ha configurat l'aplicació perquè mostri informes de fallada. Cal definir la preferència <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Suprimeix tots els informes">

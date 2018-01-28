@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "പ്ലെ ചെയ്യുക">
+<!ENTITY playButton.pauseLabel "തല്‍ക്കാലത്തേക്കു് നിര്‍ത്തുക">
+<!ENTITY muteButton.muteLabel "നിശബ്ദമാക്കുക">
+<!ENTITY muteButton.unmuteLabel "ശബ്ദം വയ്ക്കുക">
+<!ENTITY fullscreenButton.enterfullscreenlabel "സ്ക്രീന്‍ പൂര്‍ണ്ണവലിപ്പത്തില്‍">
+<!ENTITY fullscreenButton.exitfullscreenlabel "സ്ക്രീന്‍ പൂര്‍വ്വഃവസ്ഥയിലാക്കുക">
+<!ENTITY castingButton.castingLabel "സ്ക്രീനിലേക്കു് കാസ്റ്റ് ചെയ്യൂ">
+
+
+<!ENTITY stats.media "മീഡിയാ">
+<!ENTITY stats.size "വ്യാപ്തി">
+<!ENTITY stats.activity "പ്രവര്‍ത്തി">
+<!ENTITY stats.activityPaused "തല്‍ക്കാലത്തേക്കു് നിര്‍ത്തിയിരിയ്ക്കുന്നു">
+<!ENTITY stats.activityPlaying "പ്രവര്‍ത്തിയ്ക്കുന്നു">
+<!ENTITY stats.activityEnded "കഴിഞ്ഞിരിയ്ക്കുന്നു">
+<!ENTITY stats.activitySeeking "(തെരയുന്നു)">
+<!ENTITY stats.volume "ശബ്ദം">
+<!ENTITY stats.framesParsed "പാഴ്സ് ചെയ്ത ഫ്രെയിമുകള്‍">
+<!ENTITY stats.framesDecoded "ഡീകോഡ് ചെയ്ത ഫ്രെയിമുകള്‍">
+<!ENTITY stats.framesPresented "ലഭ്യമാക്കിയ ചെയ്ത ഫ്രെയിമുകള്‍">
+<!ENTITY stats.framesPainted "പെയിന്റ് ചെയ്ത ഫ്രെയിമുകള്‍">
+
+<!ENTITY error.aborted "വീഡിയോ ലഭ്യമാക്കുന്നതു് നിര്‍ത്തിയിരിയ്ക്കുന്നു.">
+<!ENTITY error.network "നെറ്റ്‌വര്‍ക്ക് പിശക് കാരണം വീഡിയോ വീണ്ടും പ്രവര്‍ത്തിയ്ക്കുന്നതു് നിര്‍ത്തിയിരിയ്ക്കുന്നു.">
+<!ENTITY error.decode "ഫയലില്‍ തകരാറുള്ളതിനാല്‍ വീഡിയോ പ്രവര്‍ത്തിയ്ക്കുവാന്‍ സാധ്യമല്ല.">
+<!ENTITY error.srcNotSupported "വീഡിയോ ശൈലി അല്ലെങ്കില്‍ MIMe തരം പിന്തുണയ്ക്കുന്നില്ല.">
+<!ENTITY error.noSource2 "പിന്തുണയ്ക്കുന്ന ശൈലിയിലും MIMe തരത്തിലുമുള്ള വീഡിയോ പിന്തുണയ്ക്കുന്നില്ല.">
+<!ENTITY error.generic "അപരിചിതമായ കാരണത്താല്‍ വീഡിയോ പ്രവര്‍ത്തിയ്ക്കുവാന്‍ സാധ്യമല്ല.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1/#2 കഴിഞ്ഞിരിയ്ക്കുന്നു">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY closedCaption.off "Off">
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

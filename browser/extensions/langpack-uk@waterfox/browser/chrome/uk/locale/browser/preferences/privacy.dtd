@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Захист від стеження">
+<!ENTITY  trackingProtection2.description      "Стеження - це збирання ваших даних перегляду на різних веб-сайтах. Стеження може бути використане для створення профілю і показу вмісту, що базується на ваших даних перегляду та особистої інформації.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Блокувати відомі елементи стеження">
+<!ENTITY  trackingProtectionAlways.label       "Завжди">
+<!ENTITY  trackingProtectionAlways.accesskey   "З">
+<!ENTITY  trackingProtectionPrivate.label      "Лише у приватних вікнах">
+<!ENTITY  trackingProtectionPrivate.accesskey  "Л">
+<!ENTITY  trackingProtectionNever.label        "Ніколи">
+<!ENTITY  trackingProtectionNever.accesskey    "Н">
+<!ENTITY  trackingProtectionLearnMore.label    "Докладніше">
+<!ENTITY  trackingProtectionExceptions.label   "Винятки…">
+<!ENTITY  trackingProtectionExceptions.accesskey "В">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Використовувати захист від стеження в приватних вікнах">
+<!ENTITY trackingProtectionPBM5.accesskey     "ж">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Блокувати відомі елементи стеження в приватному перегляді">
+<!ENTITY trackingProtectionPBM6.accesskey     "с">
+<!ENTITY trackingProtectionPBMLearnMore.label "Докладніше">
+<!ENTITY changeBlockList2.label               "Змінити список блокування…">
+<!ENTITY changeBlockList2.accesskey           "м">
+
+<!ENTITY  doNotTrack.description        "Передавати веб-сайтам сигнал “Не стежити”">
+<!ENTITY  doNotTrack.learnMore.label    "Докладніше">
+<!ENTITY  doNotTrack.default.label      "Лише при використанні захисту від стеження">
+<!ENTITY  doNotTrack.always.label       "Завжди">
+
+<!ENTITY  history.label                 "Історія відвідувань">
+<!ENTITY  permissions.label             "Дозволи">
+
+<!ENTITY  addressBar.label              "Панель адреси">
+<!ENTITY  addressBar.suggest.label      "При використанні панелі адреси, пропонувати">
+<!ENTITY  locbar.history2.label         "Історію переглядів">
+<!ENTITY  locbar.history2.accesskey     "т">
+<!ENTITY  locbar.bookmarks.label        "Закладки">
+<!ENTITY  locbar.bookmarks.accesskey    "а">
+<!ENTITY  locbar.openpage.label         "Відкриті вкладки">
+<!ENTITY  locbar.openpage.accesskey     "в">
+<!ENTITY  locbar.searches.label         "Пов'язані пошуки з типового засобу пошуку">
+<!ENTITY  locbar.searches.accesskey     "П">
+
+<!ENTITY  suggestionSettings2.label     "Змінити налаштування пропозицій засобів пошуку">
+
+<!ENTITY  acceptCookies2.label          "Приймати куки з веб-сайтів">
+<!ENTITY  acceptCookies2.accesskey      "м">
+
+<!ENTITY  acceptThirdParty.pre.label      "Приймати куки від сторонніх сайтів:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "с">
+<!ENTITY  acceptThirdParty.always.label   "Завжди">
+<!ENTITY  acceptThirdParty.never.label    "Ніколи">
+<!ENTITY  acceptThirdParty.visited.label  "Від відвіданих">
+
+<!ENTITY  keepUntil.label               "Зберігати доки:">
+<!ENTITY  keepUntil.accesskey           "г">
+
+<!ENTITY  expire.label                  "не закінчиться термін їх дії">
+<!ENTITY  close.label                   "я не закрию &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Винятки…">
+<!ENTITY  cookieExceptions.accesskey    "и">
+
+<!ENTITY  showCookies.label             "Показати куки…">
+<!ENTITY  showCookies.accesskey         "о">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; буде">
+<!ENTITY  historyHeader2.pre.accesskey     "б">
+<!ENTITY  historyHeader.remember.label     "Пам’ятати історію">
+<!ENTITY  historyHeader.dontremember.label "Ніколи не пам’ятати історії">
+<!ENTITY  historyHeader.custom.label       "Використовувати власні налаштування історії">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; буде пам’ятати вашу історію переглядів, завантажень, форм, та пошуків, а також зберігати куки з відвідуваних вами сайтів.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Можливо ви хочете ">
+<!ENTITY  rememberActions.clearHistory.label  "стерти вашу недавню історію">
+<!ENTITY  rememberActions.middle.label        ", або ">
+<!ENTITY  rememberActions.removeCookies.label "прибрати персональні куки">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; буде використовувати ті ж налаштування, що й у приватному режимі, та не буде пам’ятати історію вашого перегляду.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Можливо ви також хочете ">
+<!ENTITY  dontrememberActions.clearHistory.label "стерти всю поточну історію">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Завжди використовувати режим приватного перегляду">
+<!ENTITY  privateBrowsingPermanent2.accesskey "п">
+
+<!ENTITY  rememberHistory2.label      "Пам’ятати історію переглядів та завантажень">
+<!ENTITY  rememberHistory2.accesskey  "і">
+
+<!ENTITY  rememberSearchForm.label       "Пам’ятати історію пошуків та форм">
+<!ENTITY  rememberSearchForm.accesskey   "м">
+
+<!ENTITY  clearOnClose.label             "Стирати історію при закритті &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "С">
+
+<!ENTITY  clearOnCloseSettings.label     "Налаштування…">
+<!ENTITY  clearOnCloseSettings.accesskey "Н">
+
+<!ENTITY  browserContainersLearnMore.label      "Докладніше">
+<!ENTITY  browserContainersEnabled.label        "Увімкнути контейнери вкладок">
+<!ENTITY  browserContainersEnabled.accesskey    "к">
+<!ENTITY  browserContainersSettings.label        "Налаштування…">
+<!ENTITY  browserContainersSettings.accesskey    "л">

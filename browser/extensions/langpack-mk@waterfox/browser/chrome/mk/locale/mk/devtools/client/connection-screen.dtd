@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Поврзување">
+<!ENTITY header     "Поврзување со надворежен уред">
+<!ENTITY host       "Домаќин:">
+<!ENTITY port       "Порта:">
+<!ENTITY connect    "Поврзи се">
+<!ENTITY connecting "Се поврзува…">
+<!ENTITY availableTabs "Достапни надворешни јазичиња:">
+<!ENTITY availableProcesses "Достапни надворешни процеси:">
+<!ENTITY connectionError "Грешка:">
+<!ENTITY errorTimeout "Грешка: времето за врска истече.">
+<!ENTITY errorRefused "Грешка: врската е одбиена.">
+<!ENTITY errorUnexpected "Неочекувана грешка.">
+<!ENTITY help "Развојните алатки на Waterfox можат да дебагираат надворешни уреди (на пример Waterfox за Android и Waterfox OS). Проверете дали сте го вклучиле надворешното дебагирање на другиот уред. За повеќе информации видете ја <a target='_' href='https://developer.mozilla.org/docs/Tools/Debugger#Remote_Debugging'>документацијата</a>.">
+
+<!ENTITY availableAddons "Available remote add-ons:">
+<!ENTITY remoteDocumentation "documentation">
+<!ENTITY remoteHelp "Waterfox Developer Tools can debug remote devices (Waterfox for Android and Waterfox OS, for example). Make sure that you have turned on the ‘Remote debugging’ option in the remote device. For more, see the ">
+<!ENTITY remoteHelpSuffix ".">
+

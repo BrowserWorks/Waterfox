@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "क्रैश रिपोर्ट">
+<!ENTITY crashesUnsubmitted.label   "सबमिट नहीं किए गए क्रैश रिपोर्ट">
+<!ENTITY crashesSubmitted.label     "सौंपा गया क्रैश रिपोर्ट">
+<!ENTITY id.heading                 "रिपोर्ट ID">
+<!ENTITY dateCrashed.heading        "दिनांक क्रैश हो गया">
+<!ENTITY dateSubmitted.heading      "सौंपा गया दिनांक">
+<!ENTITY noReports.label            "कोई क्रैश रिपोर्ट सौंपा नहीं गया है.">
+<!ENTITY noConfig.label             "यह अनुप्रयोग को क्रैश रिपोर्ट को दिखाने के लिए विन्यस्त नहीं किया गया है. वरीयता <code>breakpad.reportURL</code> जरूर सेट की जानी चाहिए.">
+<!ENTITY clearAllReports.label      "सभी रिपोर्ट हटाएँ">

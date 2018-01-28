@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "팝업">
+
+<!ENTITY  blockPopups.label           "팝업 창 차단">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "알림">
+<!ENTITY  notificationsPolicyLearnMore.label   "자세히 보기">
+<!ENTITY  notificationsPolicyDesc4.label       "알림을 보낼 수 있는 웹사이트 선택">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "선택…">
+<!ENTITY  notificationsDoNotDisturb.label      "방해하지 않기">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName;를 재시작 할 때 까지 알림을 보이지 않음">
+
+<!ENTITY  popupExceptions.label       "예외 목록…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "글꼴과 색상">
+
+<!ENTITY  defaultFont.label           "기본 글꼴:">
+<!ENTITY  defaultFont.accesskey       "D">
+<!ENTITY  defaultSize.label           "크기:">
+<!ENTITY  defaultSize.accesskey       "S">
+
+<!ENTITY  advancedFonts.label         "고급…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "색상…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "언어">
+<!ENTITY chooseLanguage.label         "웹 페이지를 표시할 선호 언어 선택">
+<!ENTITY chooseButton.label           "선택…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "웹 콘텐츠 번역하기">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "예외…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "번역: ">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM 콘텐츠">
+
+<!ENTITY  playDRMContent.label         "DRM 콘텐츠 재생">
+<!ENTITY  playDRMContent.accesskey     "P">
+<!ENTITY  playDRMContent.learnMore.label "더 알아보기">

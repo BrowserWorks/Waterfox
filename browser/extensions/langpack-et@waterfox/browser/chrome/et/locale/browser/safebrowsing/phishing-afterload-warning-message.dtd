@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Aita mind siit välja!">
+<!ENTITY safeb.palm.decline.label "Eira hoiatust">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "See ei ole veebivõltsing…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "b">
+<!ENTITY safeb.palm.reportPage.label "Miks see leht blokiti?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Nõuande andja: <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Ründava veebilehe hoiatus!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Aadressil <span id='malware_sitename'/> asuv veebileht on teadete kohaselt ründav leht ja see blokiti vastavalt sinu turvasätetele.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Ründavad lehed üritavad paigaldada privaatandmeid varastavaid rakendusi, kasutavad sinu arvutit teiste ründamiseks või kahjustavad sinu arvutit.</p><p>Mõned ründavad lehed jagavad tahtlikult kahjulikku tarkvara, teised teevad seda aga omaniku teadmata või omanikult luba küsimata.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Soovimatu tarkvara levitamise kahtlus!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Aadressil <span id='unwanted_sitename'/> asuv veebileht levitab teadete kohaselt soovimatut tarkvara ja see blokiti vastavalt sinu turvasätetele.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Soovimatut tarkvara levitavad veebilehed üritavad paigaldada tarkvara, mis võib olla petlik ja mõjutada süsteemi ootamatul viisil.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Veebivõltsingu hoiatus!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Aadressil <span id='phishing_sitename'/> asuv veebileht on teadete kohaselt veebivõltsingut sisaldav leht ja see blokiti vastavalt sinu turvasätetele.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Veebivõltsingud on loodud sinu ülekavaldamiseks, et panna sind tegema midagi ohtlikku, näiteks paigaldama tarkvara või avaldama privaatset teavet (paroolid, telefoninumbrid või krediitkaardi andmed).</p><p>Sellistele lehtedele andmete sisestamine võib kaasa tuua identiteedivarguse või muu pettuse.</p>">
+

@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informaçioin in sciâ soluçion di problemi">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  Sta pagina a contegne informaçioin tecniche che peuan ese utili quande ti preuvi a risòlve un problema. Se ti çerchi rispòste a domande comuni in sce &brandShortName;, contròlla o nòstro <a id='supportLink'>scito de agiutto</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Segnalaçioin de cianto anòmalo">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID segnalaçion">
+<!ENTITY aboutSupport.crashes.sendDate "Mandâ">
+<!ENTITY aboutSupport.crashes.allReports "Tutte e segnalaçioin">
+<!ENTITY aboutSupport.crashes.noConfig "St'aplicaçion a no l'é configurâ pe mostrâ e segnalaçioin de cianto anòmalo.">
+
+<!ENTITY aboutSupport.extensionsTitle "Estenscioin">
+<!ENTITY aboutSupport.extensionName "Nomme">
+<!ENTITY aboutSupport.extensionEnabled "Abilitou">
+<!ENTITY aboutSupport.extensionVersion "Verscion">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Carateristiche sperimentali">
+<!ENTITY aboutSupport.experimentName "Nome">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Descriçion">
+<!ENTITY aboutSupport.experimentActive "Ativa">
+<!ENTITY aboutSupport.experimentEndDate "Dæta fin">
+<!ENTITY aboutSupport.experimentHomepage "Pagina prinçipâ">
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.appBasicsTitle "Aplicaçion de Base">
+<!ENTITY aboutSupport.appBasicsName "Nomme">
+<!ENTITY aboutSupport.appBasicsVersion "Verscion">
+<!ENTITY aboutSupport.appBasicsBuildID "ID da build">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Canâ d'agiornamento">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Stöia di agiornamenti">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Fanni vedde a stöia di agiornamenti">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profî de cartelle">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Cartella do profî">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Plugin abilitæ">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Crea preferensa">
+<!ENTITY aboutSupport.appBasicsUserAgent "Agente do utente">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Uzo da memöia">
+<!ENTITY aboutSupport.appBasicsPerformance "Prestaçioin">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service worker registræ">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profî">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Barcoin moltiprocesso">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Ciave Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Ciave do Serviçio de Localizaçion de Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mòddo seguo">
+
+<!ENTITY aboutSupport.showDir.label "Arvi cartella">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Fanni vedde into Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Arvi cartella">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Preferense inportanti cangiæ">
+<!ENTITY aboutSupport.modifiedPrefsName "Nomme">
+<!ENTITY aboutSupport.modifiedPrefsValue "Valô">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Preferense into user.js">
+<!ENTITY aboutSupport.userJSDescription "Inta cartella do profî gh'é un <a id='prefs-user-js-link'>file user.js</a> con preferense che no en inpostæ da &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Preferense inportanti blocæ">
+<!ENTITY aboutSupport.lockedPrefsName "Nomme">
+<!ENTITY aboutSupport.lockedPrefsValue "Valô">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafica">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Database di leughi">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integritæ">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verifica Integritæ">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC incrementale">
+
+<!ENTITY aboutSupport.a11yTitle "Acesibilitæ">
+<!ENTITY aboutSupport.a11yActivated "Ativou">
+<!ENTITY aboutSupport.a11yForceDisabled "Inpedisci acesibilitæ">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Vescioin da libraia">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Stöia da instalaçion">
+<!ENTITY aboutSupport.updateHistoryTitle "Stöia di agiornamenti">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Còpia testo in scî aponti">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Còpia dæti sgreuzzi in scî aponti">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Scistema de ciamæ refuæ">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Segondi fa">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Tipo de processo">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argomenti">
+
+<!ENTITY aboutSupport.safeModeTitle "Preuva o mòddo seguo">
+<!ENTITY aboutSupport.restartInSafeMode.label "Arvi torna co-i conponenti azonti dizativæ…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Carateristiche">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnòsticâ">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Diaio di Cianti">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Diaio de Decixoin">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Carateristiche pe-a proteçion di cianti dizabilitæ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Mastrussi">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "610">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copiar">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Seleccionar todo">
+<!ENTITY  selectall.accesskey   "S">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "General">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Título:">
+<!ENTITY  generalURL            "Dirección:">
+<!ENTITY  generalType           "Tipo:">
+<!ENTITY  generalMode           "Modo de renderizado:">
+<!ENTITY  generalSize           "Tamaño:">
+<!ENTITY  generalReferrer       "Dirección de referencia:">
+<!ENTITY  generalSource         "Origen:">
+<!ENTITY  generalModified       "Modificado:">
+<!ENTITY  generalEncoding2      "Codificación del texto:">
+<!ENTITY  generalMetaName       "Nombre">
+<!ENTITY  generalMetaContent    "Contenido">
+
+<!ENTITY  mediaTab              "Multimedia">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Dirección:">
+<!ENTITY  mediaText             "Texto asociado:">
+<!ENTITY  mediaAltHeader        "Texto alternativo">
+<!ENTITY  mediaAddress          "Dirección">
+<!ENTITY  mediaType             "Tipo">
+<!ENTITY  mediaSize             "Tamaño">
+<!ENTITY  mediaCount            "Cuenta">
+<!ENTITY  mediaDimension        "Tamaño:">
+<!ENTITY  mediaLongdesc         "Descripción larga:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Guardar como…">
+<!ENTITY  mediaSaveAs.accesskey "G">
+<!ENTITY  mediaSaveAs2.accesskey "u">
+<!ENTITY  mediaPreview          "Vista preliminar:">
+
+<!ENTITY  feedTab               "Canales">
+<!ENTITY  feedTab.accesskey     "C">
+<!ENTITY  feedSubscribe         "Suscribir">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Permisos">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Usar predeterminado">
+<!ENTITY  permAskAlways         "Preguntar siempre">
+<!ENTITY  permAllow             "Permitir">
+<!ENTITY  permAllowSession      "Permitir en esta sesión">
+<!ENTITY  permBlock             "Bloquear">
+<!ENTITY  permissionsFor        "Permisos para:">
+<!ENTITY  permPlugins           "Activar plugins">
+
+<!ENTITY  permClearStorage           "Limpiar almacenamiento">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Seguridad">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Ver certificado">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Desconocido">
+
+
+<!ENTITY  securityView.identity.header   "Identidad del sitio web">
+<!ENTITY  securityView.identity.owner    "Propietario:">
+<!ENTITY  securityView.identity.domain   "Sitio web:">
+<!ENTITY  securityView.identity.verifier "Verificado por:">
+<!ENTITY  securityView.identity.validity "Caduca el:">
+
+<!ENTITY  securityView.privacy.header                   "Privacidad e historial">
+<!ENTITY  securityView.privacy.history                  "¿He visitado este sitio web anteriormente?">
+<!ENTITY  securityView.privacy.cookies                  "¿Este sitio web está almacenando información (cookies) en mi equipo?">
+<!ENTITY  securityView.privacy.viewCookies              "Ver cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "¿He guardado contraseñas de este sitio web?">
+<!ENTITY  securityView.privacy.viewPasswords            "Ver contraseñas guardadas">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Detalles técnicos">
+
+<!ENTITY  helpButton.label                              "Ayuda">

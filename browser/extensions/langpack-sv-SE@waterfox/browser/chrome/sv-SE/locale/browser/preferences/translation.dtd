@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Undantag - Översättning">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Översättning finns inte på följande språk: ">
+<!ENTITY treehead.languageName.label      "Språk">
+<!ENTITY removeLanguage.label             "Ta bort språk">
+<!ENTITY removeLanguage.accesskey         "T">
+<!ENTITY removeAllLanguages.label         "Ta bort alla språk">
+<!ENTITY removeAllLanguages.accesskey     "T">
+
+<!ENTITY noTranslationForSites.label      "Översättning finns inte för följande hemsidor: ">
+<!ENTITY treehead.siteName2.label         "Webbplatser">
+<!ENTITY removeSite.label                 "Ta bort Sajt">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Ta bort alla Sajter">
+<!ENTITY removeAllSites.accesskey         "a">
+
+<!ENTITY button.close.label               "Stäng">
+<!ENTITY button.close.accesskey           "ä">

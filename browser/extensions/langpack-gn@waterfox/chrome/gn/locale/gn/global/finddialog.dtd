@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Ko Kuatiaroguépe jeheka">
+<!ENTITY findField.label "Moñe'ẽrã jeheka:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "Ejesareko taiguasu/taimichĩre">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "Heta tairendápe ñeime moneĩ">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY findButton.label "Upeiguáva heka">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "Heja">
+<!ENTITY closeButton.label "Emboty">
+<!ENTITY up.label "Yvate">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "Yvy gotyo">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "Kundaharape">

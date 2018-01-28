@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Tib'e pa ri jun chik pajtzij xilitäj">
+<!ENTITY previous.tooltip "Tib'an b'enam pa ri jun kan q'aptzij xilitäj">
+<!ENTITY findCloseButton.tooltip "Titz'apïx ri rukajtz'ik kanob'äl">
+<!ENTITY highlightAll.label "Tiya'retal ronojel">
+<!ENTITY highlightAll.accesskey "r">
+<!ENTITY highlightAll.tooltiptext "Tiya' ketal konojel ri taq pajtzij xe'ilitäj">
+<!ENTITY caseSensitive.label "Na'onel chi ke taq nimatz'ib'">
+<!ENTITY caseSensitive.accesskey "n">
+<!ENTITY caseSensitive.tooltiptext "Tikanöx rik'in rukojol nimatz'ib' chuqa' ch'utitz'ib'">
+<!ENTITY entireWord.label "Tz'aqät taq tzij">
+<!ENTITY entireWord.accesskey "T">
+<!ENTITY entireWord.tooltiptext "Kekanöx xa xe tz'aqät taq tzij">

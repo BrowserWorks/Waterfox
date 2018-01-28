@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "再生">
+<!ENTITY playButton.pauseLabel "一時停止">
+<!ENTITY muteButton.muteLabel "ミュート">
+<!ENTITY muteButton.unmuteLabel "ミュート解除">
+<!ENTITY fullscreenButton.enterfullscreenlabel "全画面表示">
+<!ENTITY fullscreenButton.exitfullscreenlabel "全画面表示を解除">
+<!ENTITY castingButton.castingLabel "画面に映す">
+<!ENTITY closedCaption.off "オフ">
+
+<!ENTITY stats.media "メディア">
+<!ENTITY stats.size "サイズ">
+<!ENTITY stats.activity "再生状態">
+<!ENTITY stats.activityPaused "一時停止">
+<!ENTITY stats.activityPlaying "再生中">
+<!ENTITY stats.activityEnded "再生終了">
+<!ENTITY stats.activitySeeking "(シーク中)">
+<!ENTITY stats.volume "音量">
+<!ENTITY stats.framesParsed "解析済みフレーム">
+<!ENTITY stats.framesDecoded "デコード済みフレーム">
+<!ENTITY stats.framesPresented "再生済みフレーム">
+<!ENTITY stats.framesPainted "描画済みフレーム">
+
+<!ENTITY error.aborted "動画の読み込みを中止しました。">
+<!ENTITY error.network "ネットワークエラーが発生したため動画の再生を中止しました。">
+<!ENTITY error.decode "ファイルが壊れているため動画を再生できません。">
+<!ENTITY error.srcNotSupported "この動画のファイル形式または MIME タイプはサポートされていません。">
+<!ENTITY error.noSource2 "サポートされたファイル形式および MIME タイプの動画が見つかりませんでした。">
+<!ENTITY error.generic "不明なエラーが発生したため動画の再生を中止しました。">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+ -->
+<!ENTITY scrubberScale.nameFormat "#1 / #2">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

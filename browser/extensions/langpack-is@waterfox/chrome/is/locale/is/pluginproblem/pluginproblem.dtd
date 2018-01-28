@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Þetta vefsvæði notar tengiforrit sem gæti minnkað afköst &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Smelltu hér til að virkja tengiforrit.">
+<!ENTITY clickToActivatePlugin                               "Virkja tengiforrit.">
+<!ENTITY checkForUpdates                                     "Athuga með uppfærslur…">
+<!ENTITY blockedPlugin.label                                 "Þetta tengiforrit hefur verið stöðvað til að vernda þig.">
+<!ENTITY hidePluginBtn.label                                 "Fela tengiforrit">
+<!ENTITY managePlugins                                       "Sýsla með tengiforrit…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Endurnýja síðuna">
+<!ENTITY reloadPlugin.post                                   " til að prófa aftur.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Senda hrunskýrslu">
+<!ENTITY report.submitting                                   "Sendi skýrslu…">
+<!ENTITY report.submitted                                    "Hrunskýrsla send.">
+<!ENTITY report.disabled                                     "Hrunskýrslugjöf óvirk.">
+<!ENTITY report.failed                                       "Sending mistókst.">
+<!ENTITY report.unavailable                                  "Engin skýrsla tiltæk.">
+<!ENTITY report.comment                                      "Bæta við athugasemd (athugasemdir eru opnar öllum)">
+<!ENTITY report.pageURL                                      "Bæta við URL síðu">
+
+<!ENTITY plugin.file                                         "Skrá">
+<!ENTITY plugin.mimeTypes                                    "MIME tegundir">
+<!ENTITY plugin.flashProtectedMode.label                     "Virkja varnarham fyrir Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Loka á hættulegt og uppáþrengjandi Flash efni">

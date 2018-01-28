@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Xavfsizlik">
+
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Xavfli va yolg‘on saytlarni bloklash">
+<!ENTITY  enableSafeBrowsing.accesskey    "b">
+
+<!ENTITY  blockDownloads.label            "Xavfli yuklab olishlarni bloklash">
+<!ENTITY  blockDownloads.accesskey        "X">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Keraksiz va ishonchsiz dasturiy ta’minotlar o‘rnatilayotganda ogohlantirilsin">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "c">
+
+<!ENTITY  addonExceptions.label         "Istisnolar">
+<!ENTITY  addonExceptions.accesskey     "I">
+
+
+<!ENTITY  formsAndPasswords.label       "Shakllar va parollar">
+
+
+<!ENTITY  passwordExceptions.label      "Istisnolar">
+<!ENTITY  passwordExceptions.accesskey  "I">
+
+<!ENTITY  useMasterPassword.label        "Parol ustasidan foydalanish">
+<!ENTITY  useMasterPassword.accesskey    "f">
+<!ENTITY  changeMasterPassword.label     "Parol ustasini oʻzgartirish">
+<!ENTITY  changeMasterPassword.accesskey "u">
+
+<!ENTITY  savedLogins.label              "Saqlangan login ma’lumotlari…">
+<!ENTITY  savedLogins.accesskey          "l">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

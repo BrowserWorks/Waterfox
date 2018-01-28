@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ব্যতিক্ৰসমূহ - অনুবাদ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "নিম্নলিখিত ভাষাসমূহৰ বাবে অনুবাদ প্ৰদান কৰা নহব:">
+<!ENTITY treehead.languageName.label      "ভাষাসমূহ">
+<!ENTITY removeLanguage.label             "ভাষা আতৰাওক">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "সকলো ভাষা আতৰাওক">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "নিম্নলিখিত ছাইটসমূহৰ বাবে অনুবাদ প্ৰদান কৰা নহব:">
+
+<!ENTITY removeSite.label                 "ছাইট আঁতৰাওক">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "সকলো ছাইট আঁতৰাওক">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "বন্ধ কৰক">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

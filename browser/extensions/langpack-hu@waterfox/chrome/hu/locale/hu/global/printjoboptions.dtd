@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Nyomtató tulajdonságai">
+
+<!ENTITY paperInput.label "Papírméret:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "Feladat neve:">
+<!ENTITY jobTitleInput.accesskey "v">
+
+<!ENTITY colorGroup.label "Szín:">
+<!ENTITY grayRadio.label "Szürkeárnyalatos">
+<!ENTITY grayRadio.accesskey "S">
+<!ENTITY colorRadio.label "Színes">
+<!ENTITY colorRadio.accesskey "z">
+
+<!ENTITY edgeMarginInput.label "Helyköz a papír szélétől a margóig">
+<!ENTITY topInput.label "Fent:">
+<!ENTITY topInput.accesskey "F">
+<!ENTITY bottomInput.label "Lent:">
+<!ENTITY bottomInput.accesskey "L">
+<!ENTITY leftInput.label "Balra:">
+<!ENTITY leftInput.accesskey "B">
+<!ENTITY rightInput.label "Jobbra:">
+<!ENTITY rightInput.accesskey "J">

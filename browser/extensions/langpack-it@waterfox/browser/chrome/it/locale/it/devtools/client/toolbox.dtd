@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeCmd.key "W">
+<!ENTITY toggleToolbox.key "I">
+<!ENTITY toggleToolboxF12.keycode "VK_F12">
+<!ENTITY toggleToolboxF12.keytext "F12">
+<!ENTITY browserToolboxErrorMessage "Errore in apertura Cassetta degli attrezzi browser:">
+<!ENTITY options.context.advancedSettings "Impostazioni avanzate">
+<!ENTITY options.context.inspector "Analisi pagina">
+<!ENTITY options.showUserAgentStyles.label "Visualizza stili del browser">
+<!ENTITY options.showUserAgentStyles.tooltip "Attivando questa opzione verranno visualizzati gli stili predefiniti caricati dal browser.">
+<!ENTITY options.collapseAttrs.label "Tronca attributi DOM">
+<!ENTITY options.collapseAttrs.tooltip "Tronca gli attributi troppo lunghi in Analisi pagina">
+<!ENTITY options.defaultColorUnit.label "Unità predefinita colori:">
+<!ENTITY options.defaultColorUnit.accesskey "U">
+<!ENTITY options.defaultColorUnit.authored "come l’originale">
+<!ENTITY options.defaultColorUnit.hex "esadecimale">
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!ENTITY options.defaultColorUnit.name "nomi dei colori">
+<!ENTITY options.context.triggersPageRefresh "* solo sessione corrente, ricarica la pagina">
+<!ENTITY options.enableChrome.label5 "Attiva debug chrome del browser e componenti aggiuntivi">
+<!ENTITY options.enableChrome.tooltip3 "Attivando questa opzione è possibile utilizzare diversi strumenti di sviluppo direttamente sul browser (da Strumenti > Sviluppo web > Cassetta degli attrezzi browser) ed effettuare il debug dei componenti aggiuntivi">
+<!ENTITY options.enableRemote.label3 "Attiva debug remoto">
+<!ENTITY options.enableRemote.tooltip2 "Attivando questa opzione è possibile utilizzare gli strumenti di sviluppo per effettuare il debug su istanze remote come Waterfox OS">
+<!ENTITY options.disableJavaScript.label "Disattiva JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip "Attivando questa opzione JavaScript verrà disattivato per la scheda corrente. Se la scheda o gli strumenti di sviluppo vengono chiusi l’impostazione verrà rimossa.">
+<!ENTITY options.disableHTTPCache.label "Disattiva cache HTTP (quando gli strumenti sono aperti)">
+<!ENTITY options.disableHTTPCache.tooltip "Attivando questa opzione la cache HTTP verrà disattivata per tutte le schede in cui sono aperti gli strumenti di sviluppo. Questa impostazione non ha effetto sui service worker.">
+<!ENTITY options.enableServiceWorkersHTTP.label "Attiva service worker via HTTP (quando la cassetta degli attrezzi è aperta)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip "Attivando questa opzione verranno attivati i service worker via HTTP in tutte le schede dove la cassetta degli attrezzi è aperta.">
+<!ENTITY options.selectDefaultTools.label2 "Strumenti di sviluppo predefiniti">
+<!ENTITY options.selectAdditionalTools.label "Strumenti di sviluppo installati da componenti aggiuntivi">
+<!ENTITY options.selectEnabledToolboxButtons.label "Pulsanti disponibili">
+<!ENTITY options.toolNotSupported.label "* Non supportato per il target corrente degli strumenti">
+<!ENTITY options.selectDevToolsTheme.label2 "Temi:">
+<!ENTITY options.usedeveditiontheme.label "Utilizza il tema Developer Edition per il browser">
+<!ENTITY options.usedeveditiontheme.tooltip "Attiva/disattiva il tema Developer Edition per il browser.">
+<!ENTITY options.webconsole.label "Console web">
+<!ENTITY options.timestampMessages.label "Attiva timestamp">
+<!ENTITY options.timestampMessages.tooltip "Attivando questa opzione verrà visualizzato nella Console web il timestamp associato a comandi e risultati">
+<!ENTITY options.debugger.label "Debugger">
+<!ENTITY options.sourceMaps.label "Attiva mapping di origine">
+<!ENTITY options.sourceMaps.tooltip "Attivando questa opzione il mapping di origine verrà utilizzato per i riferimenti al codice sorgente in Debugger e Console.">
+<!ENTITY options.styleeditor.label "Editor stili">
+<!ENTITY options.stylesheetSourceMaps.label "Visualizza sorgenti originali">
+<!ENTITY options.stylesheetSourceMaps.tooltip "Visualizza sorgenti originali (ad es. file Sass) in Editor stili e Analisi pagina">
+<!ENTITY options.stylesheetAutocompletion.label "Completamento automatico CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip "Completa automaticamente durante la scrittura nell’Editor stili le proprietà CSS, i valori e i selettori">
+<!ENTITY options.screenshot.label "Opzioni per la cattura schermate">
+<!ENTITY options.screenshot.clipboard.label "Salva negli appunti">
+<!ENTITY options.screenshot.clipboard.tooltip "Salva la schermata direttamente negli appunti">
+<!ENTITY options.screenshot.audio.label "Riproduci il suono dell’otturatore">
+<!ENTITY options.screenshot.audio.tooltip "Riproduci il suono dell’otturatore di una fotocamera quando si cattura una schermata">
+<!ENTITY options.commonPrefs.label "Preferenze comuni">
+<!ENTITY options.enablePersistentLogs.label "Attiva registri permanenti">
+<!ENTITY options.enablePersistentLogs.tooltip "Attivando questa opzione la Console web e il Monitor di rete non verranno azzerati ogni volta che si naviga in una nuova pagina">
+<!ENTITY options.showPlatformData.label "Visualizza dati piattaforma Gecko">
+<!ENTITY options.showPlatformData.tooltip "Attivando questa opzione i rapporti del Profiler JavaScript conterranno i simboli della piattaforma Gecko">
+<!ENTITY options.sourceeditor.label "Preferenze editor">
+<!ENTITY options.sourceeditor.detectindentation.label "Rileva tipo di rientro">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Cerca di identificare il rientro del testo in base al codice sorgente">
+<!ENTITY options.sourceeditor.autoclosebrackets.label "Chiusura automatica delle parentesi">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Inserisci automaticamente le parentesi di chiusura">
+<!ENTITY options.sourceeditor.expandtab.label "Utilizza spazio per rientri">
+<!ENTITY options.sourceeditor.expandtab.tooltip "Utilizza spazi vuoti al posto del carattere di tabulazione">
+<!ENTITY options.sourceeditor.tabsize.label "Dimensione tabulazione">
+<!ENTITY options.sourceeditor.tabsize.accesskey "D">
+<!ENTITY options.sourceeditor.keybinding.label "Scorciatoie da tastiera">
+<!ENTITY options.sourceeditor.keybinding.accesskey "t">
+<!ENTITY options.sourceeditor.keybinding.default.label "Predefinito">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Fáilte go dtí &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Logáil isteach chun do chuid cluaisíní, leabharmharcanna, agus focail fhaire a shioncronú.">
+<!ENTITY aboutAccountsConfig.startButton.label "Tús maith">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sioncronaigh sainroghanna">
+<!ENTITY aboutAccounts.noConnection.title "Gan ceangal">
+<!ENTITY aboutAccounts.noConnection.description "Ní mór duit a bheith ceangailte leis an Idirlíon le logáil isteach.">
+<!ENTITY aboutAccounts.noConnection.retry "Bain triail eile as">
+<!ENTITY aboutAccounts.badConfig.title "Droch-chumraíocht">
+<!ENTITY aboutAccounts.badConfig.description "Ní féidir cumraíocht freastalaí an chuntais Waterfox a fháil. Bain triail eile as ar ball.">

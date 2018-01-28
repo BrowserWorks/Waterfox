@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Ko'ag̃aite nereiméi peteĩ ovetã ñemíme.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Eike Window ovetã Ñemíme">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "Ñ">
+
+<!ENTITY privateBrowsing.title                           "Kundaha ñemi">
+<!ENTITY privateBrowsing.title.tracking                  "Kundahára ñemi jehekaha mo'ãha ndive">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Eipyguarávo ovetã ñemiguáva, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "noñongatúi">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "kuatiarogue hechapyre">
+<!ENTITY aboutPrivateBrowsing.info.searches              "jeheka">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "marandurenda sapy'aguáva">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ohasáta">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " nde:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "Ñemboguejy">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "techaukahakuéra">
+<!ENTITY aboutPrivateBrowsing.note.before                "Kundaha ñemi ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nandeapói jehecha'ỹvaramo">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ñandutípe. Ne ñanduti me'ẽha térã momba'apoha ikatu oikuaa gueteri mba'e kuatiaroguépe eikéra'e.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Eikuaave ko'ãvare">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Kundaha ñemigua">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Tapykuereho ñemo'ã">
+<!ENTITY trackingProtection.description2                 "Oĩ ñandutirenda oiporúva tembipuru ohapykueho hag̃ua rejapóva ñandutivevépe. Ñemo'ã Tapykuehógui rupi Waterfox ojokopaite umi nderapykuehoséva ani hag̃ua omyaty mba'ekuaarã nde rehegua ýrõ rejapóva rehegua.">
+<!ENTITY trackingProtection.startTour1                   "Ehecha mba'éichapa omba'apohína">

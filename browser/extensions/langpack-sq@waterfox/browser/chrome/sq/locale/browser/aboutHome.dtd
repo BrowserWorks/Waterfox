@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+
+<!-- These strings are used in the about:home page -->
+
+<!ENTITY abouthome.pageTitle "Faqja e Fillimit për &brandFullName;-in">
+
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+<!ENTITY abouthome.defaultSnippet1.v1 "Faleminderit për zgjedhjen e Waterfox-it! Për të përfituar maksimumin prej shfletuesit tuaj, njihuni më tej me <a>veçoritë më të reja</a>.">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "Është e lehtë ta përshtatni Waterfox-in tuaj pikërisht si e doni. <a>Zgjidhni prej mijëra shtesash për të</a>.">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName;-i është software i lirë dhe me burim të hapur, ndërtuar nga organizmi jofitimprurës Waterfox. <a>Njihni të drejtat tuaja…</a>">
+
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+
+<!ENTITY abouthome.bookmarksButton.label "Faqerojtës">
+<!ENTITY abouthome.historyButton.label   "Historik">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "Mundësi">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "Parapëlqime">
+<!ENTITY abouthome.addonsButton.label    "Shtesa">
+
+<!ENTITY abouthome.downloadsButton.label "Shkarkime">
+
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+<!ENTITY abouthome.aboutMozilla.label    "Rreth Mozilla-s">

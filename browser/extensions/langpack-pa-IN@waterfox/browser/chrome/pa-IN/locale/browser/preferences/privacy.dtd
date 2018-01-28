@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "ਟਰੈਕਿੰਗ ਤੋਂ ਸੁਰੱਖਿਆ">
+<!ENTITY  trackingProtection2.radioGroupLabel  "ਜਾਣੇ-ਪਛਾਣੇ ਟਰੈਕਰਾਂ 'ਤੇ ਪਾਬੰਦੀ ਲਗਾਉਣ ਲਈ ਟਰੈਕਿੰਗ ਸੁਰੱਖਿਆ ਨੂੰ ਵਰਤੋਂ">
+<!ENTITY  trackingProtectionAlways.label       "ਹਮੇਸ਼ਾ">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "ਸਿਰਫ਼ ਪ੍ਰਾਈਵੇਟ ਵਿੰਡੋਆਂ ਵਿੱਚ">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "ਕਦੇ ਨਹੀਂ">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "ਹੋਰ ਸਿੱਖੋ">
+<!ENTITY  trackingProtectionExceptions.label   "…ਛੋਟਾਂ">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "ਪ੍ਰਾਈਵੇਟ ਵਿੰਡੋਆਂ ਵਿੱਚ ਟਰੈਕ ਹੋਣ ਤੋਂ ਸੁਰੱਖਿਆ ਨੂੰ ਵਰਤੋਂ">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "ਹੋਰ ਜਾਣੋ">
+<!ENTITY changeBlockList2.label               "ਪਾਬੰਦੀ ਸੂਚੀ ਬਦਲੋ…">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY  doNotTrack.learnMore.label    "ਹੋਰ ਸਿੱਖੋ">
+<!ENTITY  doNotTrack.default.label      "ਕੇਵਲ ਤਾਂ ਜਦੋਂ ਟਰੈਕਿੰਗ ਸੁਰੱਖਿਆ ਦੀ ਵਰਤੋਂ ਹੁੰਦੀ ਹੋਵੇ">
+<!ENTITY  doNotTrack.always.label       "ਹਮੇਸ਼ਾ">
+
+<!ENTITY  history.label                 "ਅਤੀਤ">
+<!ENTITY  permissions.label             "ਇਜਾਜ਼ਤਾਂ">
+
+<!ENTITY  addressBar.label              "ਸਿਰਨਾਵਾਂ ਪੱਟੀ">
+<!ENTITY  addressBar.suggest.label      "ਜਦੋਂ ਸਿਰਨਾਵਾਂ ਪੱਟੀ ਵਰਤੀ ਜਾਂਦੀ ਹੋਵੇ ਤਾਂ ਸੁਝਾਓ">
+<!ENTITY  locbar.history2.label         "ਬਰਾਊਜ਼ਿੰਗ ਅਤੀਤ">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.bookmarks.label        "ਬੁੱਕਮਾਰਕ">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "ਟੈਬਾਂ ਖੋਲ੍ਹੋ">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "ਡਿਫਾਲਟ ਖੋਜ ਇੰਜਣ ਤੋਂ ਸੰਬੰਧਿਤ ਖੋਜਾਂ">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "ਖੋਜ ਇੰਜਣ ਸੁਝਆਵਾਂ ਲਈ ਪਸੰਦਾਂ ਨੂੰ ਬਦਲੋ">
+
+<!ENTITY  acceptCookies.label           "ਸਾਈਟਾਂ ਤੋਂ ਕੂਕੀਜ਼ ਮਨਜ਼ੂਰ">
+<!ENTITY  acceptCookies.accesskey       "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "ਸੁਤੰਤਰ-ਧਿਰ ਤੋਂ ਕੂਕੀਜ਼ ਮਨਜ਼ੂਰੀ:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "ਹਮੇਸ਼ਾ">
+<!ENTITY  acceptThirdParty.never.label    "ਕਦੇ ਨਹੀਂ">
+<!ENTITY  acceptThirdParty.visited.label  "ਖੋਲ੍ਹੀਆਂ ਗਈਆਂ ਤੋਂ ਹੀ">
+
+<!ENTITY  keepUntil.label               "ਰੱਖੋ ਜਦੋਂ ਤੱਕ ਕਿ:">
+<!ENTITY  keepUntil.accesskey           "K">
+
+<!ENTITY  expire.label                  "ਉਨ੍ਹਾਂ ਦੀ ਮਿਆਦ ਹੋਵੇ">
+<!ENTITY  close.label                   "ਜਦੋਂ ਮੈਂ &brandShortName; ਬੰਦ ਕਰਾਂ">
+
+<!ENTITY  cookieExceptions.label        "ਛੋਟ…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "ਕੂਕੀਜ਼ ਵੇਖੋ…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; ਕਰੇਗਾ">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "ਅਤੀਤ">
+<!ENTITY  historyHeader.dontremember.label "ਕਦੇ ਵੀ ਅਤੀਤ ਯਾਦ ਨਾ ਰੱਖੋ">
+<!ENTITY  historyHeader.custom.label       "ਅਤੀਤ ਲਈ ਕਸਟਮ ਸੈਟਿੰਗ ਵਰਤੋਂ">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ਤੁਹਾਡੀ ਬਰਾਊਜ਼ਿੰਗ, ਡਾਊਨਲੋਡ, ਫਾਰਮ ਅਤੇ ਖੋਜ ਅਤੀਤ ਨੂੰ ਯਾਦ ਰੱਖੇਗਾ ਅਤੇ ਤੁਹਾਡੇ ਵਲੋਂ ਖੋਲ੍ਹੀਆਂ ਵੈੱਬ ਸਾਈਟਾਂ ਲਈ ਕੂਕੀਜ਼ ਵੀ ਰੱਖੇਗਾ।">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "ਤੁਸੀਂ ਚਾਹੋਗੇ ਕਿ ">
+<!ENTITY  rememberActions.clearHistory.label  "ਤੁਹਾਡਾ ਤਾਜ਼ਾ ਅਤੀਤ ਸਾਫ਼ ਕੀਤਾ ਜਾਵੇ">
+<!ENTITY  rememberActions.middle.label        ", ਜਾਂ ">
+<!ENTITY  rememberActions.removeCookies.label "ਵੱਖ ਵੱਖ ਕੂਕੀਜ਼ ਹਟਾਏ ਜਾਣ">
+<!ENTITY  rememberActions.post.label          "।">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ਪ੍ਰਾਈਵੇਟ ਬਰਾਊਜ਼ਿੰਗ ਵਾਲੀਆਂ ਸੈਟਿੰਗਾਂ ਵਰਤੇਗਾ ਅਤੇ ਤੁਹਾਡੇ ਵਲੋਂ ਵੈੱਬ ਬਰਾਊਜ਼ ਕਰਨ ਦਾ ਕੋਈ ਵੀ ਅਤੀਤ ਯਾਦ ਨਹੀਂ ਰੱਖੇਗਾ।">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "ਤੁਸੀਂ ਇਹ ਵੀ ਚਾਹੋਗੇ ਕਿ ">
+<!ENTITY  dontrememberActions.clearHistory.label "ਸਭ ਮੌਜੂਦਾ ਅਤੀਤ ਸਾਫ਼ ਕਰਨਾ">
+<!ENTITY  dontrememberActions.post.label         "।">
+
+<!ENTITY  privateBrowsingPermanent2.label "ਹਮੇਸ਼ਾ ਪ੍ਰਾਈਵੇਟ ਬਰਾਊਜ਼ਿੰਗ ਮੋਡ ਹੀ ਵਰਤੋਂ">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "ਮੇਰੇ ਬਰਾਊਜ਼ ਕਰਨ ਅਤੇ ਡਾਊਨਲੋਡ ਅਤੀਤ ਨੂੰ ਯਾਦ ਰੱਖੋ">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "ਖੋਜ ਅਤੇ ਫਾਰਮ ਅਤੀਤ ਨੂੰ ਯਾਦ ਰੱਖੋ">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "ਜਦੋਂ &brandShortName; ਬੰਦ ਹੋਵੇ ਤਾਂ ਅਤੀਤ ਨੂੰ ਸਾਫ਼ ਕਰੋ">
+<!ENTITY  clearOnClose.accesskey         "w">
+
+<!ENTITY  clearOnCloseSettings.label     "…ਸੈਟਿੰਗਾਂ">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "ਹੋਰ ਜਾਣੋ">
+<!ENTITY  browserContainersEnabled.label        "ਕਨਟੇਨਰ ਟੈਬਾਂ ਨੂੰ ਸਮਰੱਥ ਕਰੋ">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "ਸੈਟਿੰਗਾਂ…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

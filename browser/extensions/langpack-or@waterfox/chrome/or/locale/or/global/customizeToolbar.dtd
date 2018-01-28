@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "ସାଧନ ପଟିକୁ ଇଚ୍ଛାରୂପଣ କରନ୍ତୁ">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "ଆପଣ ବସ୍ତୁଗୁଡ଼ିକୁ ସାଧନପଟିରୁ ଟାଣିକରି  ଯୋଗ କରିପାରିବେ କିମ୍ବା କାଢ଼ି ପାରିବେ।">
+<!ENTITY show.label               "ଦର୍ଶାନ୍ତୁ:">
+<!ENTITY iconsAndText.label       "ଚିତ୍ର ସଂକେତ ଏବଂ ପାଠ୍ୟ">
+<!ENTITY icons.label              "ଚିତ୍ର ସଂକେତ ଗୁଡ଼ିକ">
+<!ENTITY text.label               "ପାଠ୍ୟ">
+<!ENTITY useSmallIcons.label      "ଛୋଟ ଚିତ୍ର ସଂକେତଗୁଡ଼ିକୁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY restoreDefaultSet.label  "ପୂର୍ବନିର୍ଦ୍ଧାରିତ ସେଟକୁ ପୁନଃ ସ୍ଥାପନ କରନ୍ତୁ">
+<!ENTITY addNewToolbar.label      "ନୂତନ ସାଧନପଟି ଯୋଗ କରନ୍ତୁ">
+<!ENTITY saveChanges.label        "ସମାପ୍ତ">
+<!ENTITY undoChanges.label        "ପରିବର୍ତ୍ତନଗୁଡ଼ିକୁ ଅପରିବର୍ତ୍ତନୀୟ କରନ୍ତୁ">

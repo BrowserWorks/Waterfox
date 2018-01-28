@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "დამატების ჩადგმა">
+<!ENTITY intro           "თქვენი კომპიუტერის სხვა პროგრამას სურს
+                          &brandShortName;-ის შეცვლა ამ დამატებით:">
+<!ENTITY warning         "ჩადგით დამატებები მხოლოდ იმ ავტორებისგან, რომელთაც ენდობით.">
+<!ENTITY allow           "ნების დართვა ჩადგმაზე">
+<!ENTITY later           "თქვენ ყოველთვის შეგიძლიათ გადაწყვეტილების შეცვლა
+                          დამატებების მმართველში გადასვლით.">
+<!ENTITY continue        "გაგრძელება">
+<!ENTITY restartMessage  "დამატების ჩადგმის დასასრულებლად საჭიროა &brandShortName;-ის ხელახლა გაშვება.">
+<!ENTITY restartButton   "&brandShortName;-ის ხელახლა გაშვება">
+<!ENTITY cancelButton    "გაუქმება">

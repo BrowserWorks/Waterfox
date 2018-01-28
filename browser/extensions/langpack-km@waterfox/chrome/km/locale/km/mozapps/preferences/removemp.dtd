@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "យក​ពាក្យ​សម្ងាត់​មេ​ចេញ">
+<!ENTITY removeInfo.label                  "អ្នក​ត្រូវ​តែ​បញ្ចូល​ពាក្យសម្ងាត់​បច្ចុប្បន្ន​របស់​អ្នក ដើម្បី​បន្ត ៖">
+<!ENTITY removeWarning1.label              "ពាក្យ​សម្ងាត់​មេ​របស់​អ្នក ត្រូវ​ប្រើ​សម្រាប់​ការពារ​ព័ត៌មាន ដូចជា​ពាក្យ​សម្ងាត់​បណ្ដាញ ។">
+<!ENTITY removeWarning2.label              "ប្រសិនបើ អ្នក​យក​ពាក្យសម្ងាត់​មេ​ចេញ ព័ត៌មាន​របស់​អ្នក​នឹង​មិន​ត្រូវ​បាន​ការពារ​ទេ ទោះបីជា​កុំព្យូទ័រ​របស់​អ្នក​ព្រមព្រៀង​ក៏ដោយ ។">
+<!ENTITY setPassword.oldPassword.label     "ពាក្យ​សម្ងាត់​បច្ចុប្បន្ន ៖">
+

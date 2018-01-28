@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from institems.xul -->
+
+<!ENTITY dialog.title            "การติดตั้งซอฟต์แวร์">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "ติดตั้งเฉพาะส่วนเสริมจากผู้สร้างที่คุณเชื่อถือเท่านั้น">
+<!ENTITY warningSecondary.label  "ซอฟต์แวร์ประสงค์ร้ายสามารถสร้างความเสียหายให้กับคอมพิวเตอร์ของคุณหรือละเมิดความเป็นส่วนตัวของคุณ">
+
+<!ENTITY from.label "จาก:">
+

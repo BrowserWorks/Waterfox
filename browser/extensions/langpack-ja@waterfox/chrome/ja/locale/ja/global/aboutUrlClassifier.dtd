@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle			"url-classifier についての情報">
+<!ENTITY aboutUrlClassifier.providerTitle		"プロバイダー">
+<!ENTITY aboutUrlClassifier.provider			"プロバイダー">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime	"最終更新日時">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime	"次回更新日時">
+<!ENTITY aboutUrlClassifier.providerBackOffTime		"待ち時間">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus	"更新状態">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn		"更新">
+<!ENTITY aboutUrlClassifier.cacheTitle			"キャッシュ">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn		"リフレッシュ">
+<!ENTITY aboutUrlClassifier.cacheClearBtn		"消去">
+<!ENTITY aboutUrlClassifier.cacheTableName		"テーブル名">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries		"ネガティブキャッシュのエントリー数">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries		"ポジティブキャッシュのエントリー数">
+<!ENTITY aboutUrlClassifier.cacheShowEntries		"エントリーを表示">
+<!ENTITY aboutUrlClassifier.cacheEntries		"キャッシュエントリー">
+<!ENTITY aboutUrlClassifier.cachePrefix			"接頭辞">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry		"ネガティブキャッシュの有効期限	Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cacheFullhash		"完全ハッシュ">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry		"ポジティブキャッシュの有効期限	Positive cache expiry">
+<!ENTITY aboutUrlClassifier.debugTitle			"デバッグ">
+<!ENTITY aboutUrlClassifier.debugModuleBtn		"ログモジュールを設定">
+<!ENTITY aboutUrlClassifier.debugFileBtn		"ログファイルを設定">
+<!ENTITY aboutUrlClassifier.debugJSLogChk		"JS ログを設定">
+<!ENTITY aboutUrlClassifier.debugSBModules		"セーフブラウジングのログモジュール">
+<!ENTITY aboutUrlClassifier.debugModules		"現在のログモジュール">
+<!ENTITY aboutUrlClassifier.debugSBJSModules		"セーフブラウジングの JS ログ">
+<!ENTITY aboutUrlClassifier.debugFile			"現在のログファイル">

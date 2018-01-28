@@ -1,0 +1,14 @@
+locale alerts ga-IE ga-IE/locale/ga-IE/alerts/
+locale autoconfig ga-IE ga-IE/locale/ga-IE/autoconfig/
+locale global ga-IE ga-IE/locale/ga-IE/global/
+locale global-platform ga-IE ga-IE/locale/ga-IE/global-platform/mac/ os=Darwin
+locale global-platform ga-IE ga-IE/locale/ga-IE/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform ga-IE ga-IE/locale/ga-IE/global-platform/win/ os=WINNT
+locale mozapps ga-IE ga-IE/locale/ga-IE/mozapps/
+locale necko ga-IE ga-IE/locale/ga-IE/necko/
+locale passwordmgr ga-IE ga-IE/locale/ga-IE/passwordmgr/
+locale pipnss ga-IE ga-IE/locale/ga-IE/pipnss/
+locale pippki ga-IE ga-IE/locale/ga-IE/pippki/
+locale places ga-IE ga-IE/locale/ga-IE/places/
+locale pluginproblem ga-IE ga-IE/locale/ga-IE/pluginproblem/
+locale weave ga-IE ga-IE/locale/ga-IE/services/

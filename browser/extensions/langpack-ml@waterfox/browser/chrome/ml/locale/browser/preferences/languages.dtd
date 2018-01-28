@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "ഭാഷകള്‍">
+<!ENTITY languages.customize.description                "വെബ്‌ താളുകള്‍ ചിലപ്പോള്‍ ഒന്നിലധികം ഭാഷകളില്‍ ലഭ്യമാണ്‌. ഈ വെബ്‌ താളുകള്‍ ഏതു ഭാഷകളില്‍ കാണേണമെന്നത്‌ മുന്‍ഗണനാ ക്രമത്തില്‍ തെരഞ്ഞെടുക്കുക ">
+<!ENTITY languages.customize.moveUp.label               "മുകളിലേക്ക്‌ മാറ്റുക">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "താഴേക്ക്‌ മാറ്റുക ">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "നീക്കം ചെയ്യുക ">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.selectLanguage.label       "ചേര്‍ക്കേണ്ട ഭാഷ തെരഞ്ഞെടുക്കുക">
+<!ENTITY languages.customize.addButton.label            "ചേര്‍ക്കുക ">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

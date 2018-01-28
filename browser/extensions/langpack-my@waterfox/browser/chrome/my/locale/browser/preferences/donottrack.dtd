@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "လိုက်လံ မှတ်သားခြင်း မပြုပါနှင့်">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "(A) နောက်ယောင်ခံမလိုက်ရ ကို အမြဲသတ်မှတ်ထားပါ">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "ခြေရာခံကာကွယ်မှုကို ဖွင့်ထားသည်ဖြစ်စေ၊ ပိတ်ထားသည်ဖြစ်စေ သင်သည် ခြေရာခံခြင်းမရှိစေလိုဘူးဆိုတာကို &brandShortName; က အချက်ပေးပါမည်။">
+<!ENTITY doNotTrackLearnMore.label    "ပိုမိုလေ့လာရန်">

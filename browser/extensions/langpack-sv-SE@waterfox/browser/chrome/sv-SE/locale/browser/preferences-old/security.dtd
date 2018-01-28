@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Allmänt">
+
+<!ENTITY  warnOnAddonInstall2.label       "Varna när webbplatser försöker installera tillägg">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Blockera farligt och vilseledande innehåll">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Blockera farliga hämtningar">
+<!ENTITY  blockDownloads.accesskey        "f">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Varna mig om oönskad och ovanlig mjukvara">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "m">
+
+<!ENTITY  addonExceptions.label         "Undantag…">
+<!ENTITY  addonExceptions.accesskey     "U">
+
+
+<!ENTITY  logins.label                  "Inloggningar ">
+
+<!ENTITY  rememberLogins2.label         "Kom ihåg inloggningar för webbplatser">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "Undantag…">
+<!ENTITY  passwordExceptions.accesskey  "d">
+
+<!ENTITY  useMasterPassword.label        "Använd ett huvudlösenord">
+<!ENTITY  useMasterPassword.accesskey    "A">
+<!ENTITY  changeMasterPassword.label     "Byt huvudlösenord…">
+<!ENTITY  changeMasterPassword.accesskey "B">
+
+<!ENTITY  savedLogins.label              "Sparade inloggningar…">
+<!ENTITY  savedLogins.accesskey          "l">

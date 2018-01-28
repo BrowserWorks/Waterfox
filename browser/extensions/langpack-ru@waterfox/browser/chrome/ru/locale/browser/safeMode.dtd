@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; — Безопасный режим">
+<!ENTITY window.maxWidth              "500">
+
+<!ENTITY startSafeMode.label          "Запустить в Безопасном Режиме">
+<!ENTITY refreshProfile.label         "Очистить &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Безопасный Режим является специальным режимом работы &brandShortName;, который может быть использован для решения проблем.">
+<!ENTITY safeModeDescription4.label   "Ваши дополнения и сделанные вами настройки будут временно отключены.">
+
+<!ENTITY refreshProfileInstead.label  "Вы также можете пропустить попытку решения проблемы и попробовать очистить &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; при запуске неожиданно закрылся. Это могло быть вызвано дополнениями или другими проблемами. Вы можете попытаться решить проблему, устранив её причину в Безопасном Режиме.">

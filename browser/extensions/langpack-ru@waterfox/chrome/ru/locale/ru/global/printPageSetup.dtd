@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Параметры страницы">
+
+<!ENTITY basic.tab           "Формат и свойства">
+
+<!ENTITY formatGroup.label   "Формат">
+
+<!ENTITY orientation.label   "Ориентация:">
+<!ENTITY portrait.label      "Книжная">
+<!ENTITY portrait.accesskey  "н">
+<!ENTITY landscape.label     "Альбомная">
+<!ENTITY landscape.accesskey "л">
+
+<!ENTITY scale.label         "Масштаб:">
+<!ENTITY scale.accesskey     "ш">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Сжать до ширины страницы">
+<!ENTITY shrinkToFit.accesskey "ж">
+
+<!ENTITY optionsGroup.label  "Свойства">
+
+<!ENTITY printBG.label       "Печать фона (цвета и изображения)">
+<!ENTITY printBG.accesskey   "ч">
+
+<!ENTITY advanced.tab        "Поля и колонтитулы">
+
+<!ENTITY marginGroup.label   "Поля (#1)">
+<!ENTITY marginUnits.inches  "дюймов">
+<!ENTITY marginUnits.metric  "миллиметров">
+<!ENTITY marginTop.label     "Сверху:">
+<!ENTITY marginTop.accesskey "в">
+<!ENTITY marginBottom.label  "Снизу:">
+<!ENTITY marginBottom.accesskey "и">
+<!ENTITY marginLeft.label    "Слева:">
+<!ENTITY marginLeft.accesskey "е">
+<!ENTITY marginRight.label   "Справа:">
+<!ENTITY marginRight.accesskey "п">
+
+<!ENTITY headerFooter.label  "Колонтитулы">
+
+<!ENTITY hfLeft.label        "Слева:">
+<!ENTITY hfCenter.label      "По центру:">
+<!ENTITY hfRight.label       "Справа:">
+<!ENTITY headerLeft.tip      "Верхний колонтитул (слева)">
+<!ENTITY headerCenter.tip    "Верхний колонтитул (по центру)">
+<!ENTITY headerRight.tip     "Верхний колонтитул (справа)">
+<!ENTITY footerLeft.tip      "Нижний колонтитул (слева)">
+<!ENTITY footerCenter.tip    "Нижний колонтитул (по центру)">
+<!ENTITY footerRight.tip     "Нижний колонтитул (справа)">
+
+<!ENTITY hfTitle             "Заголовок страницы">
+<!ENTITY hfURL               "Адрес страницы">
+<!ENTITY hfDateAndTime       "Дата и время">
+<!ENTITY hfPage              "Номер страницы">
+<!ENTITY hfPageAndTotal      "Страница # из #">
+<!ENTITY hfBlank             "--пусто--">
+<!ENTITY hfCustom            "Настроить…">
+
+<!ENTITY customPrompt.title  "Настройка…">
+<!ENTITY customPrompt.prompt "Введите собственный текст колонтитула">

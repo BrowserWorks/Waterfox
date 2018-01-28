@@ -1,0 +1,11 @@
+locale branding bn-IN bn-IN/locale/branding/
+locale browser bn-IN bn-IN/locale/browser/
+locale browser-region bn-IN bn-IN/locale/browser-region/
+locale devtools bn-IN bn-IN/locale/bn-IN/devtools/client/
+locale devtools-shared bn-IN bn-IN/locale/bn-IN/devtools/shared/
+locale formautofill bn-IN bn-IN/locale/bn-IN/
+locale pdf.js bn-IN bn-IN/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

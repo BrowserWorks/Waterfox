@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Sos Ɗoworde Heftinirde">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; mooftat humpito baɗte teelte maa e cuɓoraaɗe maa e nder heftinirde maa heeriinnde.">
+<!ENTITY profileCreationExplanation_2.text  "So tawii ko a denndauo ndee tummbitere &brandShortName;, e woɗɓe, aɗa waawi huutoraade keftinirɗe ngam seerndude humpitooji mom. Ngam waɗde ɗum, kuutoro kala ena foti sosde heftinirde mum heeriinnde.">
+<!ENTITY profileCreationExplanation_3.text  "So tawii ko aan gooto huutortoo ndee tummbitere &brandShortName;, aɗa foti jogaade hay so heftinirde wootere. So aɗa yiɗi, aɗa waawi sosande hoore maa keftinirɗe keewɗe ngam mooftude teelte e cuɓoraaɗe ceertuɗe. Yeu, aɗa waawi yiɗde jogaade keftinirɗe ceertuɗe ngam njulaagu e golle keeriiɗe.">
+<!ENTITY profileCreationExplanation_4.text  "Ngam fuɗɗaade sosde heftinirde maa, dobo Payɗo.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Ngam fuɗɗaade sosde heftinirde maa, dobo Jokku.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Ngam fuɗɗaade sosde heftinirde maa, dobo Payɗo.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "So a sosii keftinirɗe keewɗe aɗa waawi seerndirɗe-ɗe innde. Aɗa waawi huutoraade innde hokkaande ndee walla kuutoro-ɗaa innde nde cuɓi-ɗaa.">
+<!ENTITY profilePrompt.label            "Naatnu innde heftinirde hesere:">
+<!ENTITY profilePrompt.accesskey        "N">
+<!ENTITY profileDirectoryExplanation.text   "Teelte kuutoro maa, cuɓoraaɗe e keɓe kuutoro goɗɗe maa moofte e nder:">
+<!ENTITY profileDefaultName             "Kuutoro Goowaaɗo">
+<!ENTITY button.choosefolder.label      "Suɓo Runngere…">
+<!ENTITY button.choosefolder.accesskey  "S">
+<!ENTITY button.usedefault.label        "Huutoro Runngere Woowaande">
+<!ENTITY button.usedefault.accesskey    "H">

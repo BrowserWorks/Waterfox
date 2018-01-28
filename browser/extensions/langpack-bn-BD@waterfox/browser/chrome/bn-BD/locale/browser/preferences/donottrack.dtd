@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "ট্র্যাক করবেন না">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "ট্র‍্যাক করবে না সব সময় প্রয়োগ করো">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "যখনই ট্রাকিং সুরক্ষা সক্রিয় থাকবে &brandShortName; একটি সিগন্যাল পাঠাবে যে আপনাকে যেনো ট্রাক করা না হয়।">
+<!ENTITY doNotTrackLearnMore.label    "আরও জানুন">

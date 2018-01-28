@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Utsûnderingen - oersettingen">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Oersettingen wurde net oanbean foar de folgjende talen:">
+<!ENTITY treehead.languageName.label      "Talen">
+<!ENTITY removeLanguage.label             "Talen fuortsmite">
+<!ENTITY removeLanguage.accesskey         "T">
+<!ENTITY removeAllLanguages.label         "Alle talen fuortsmite">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Oersettingen wurde net oanbean foar de folgjende websites:">
+<!ENTITY treehead.siteName2.label         "Websites">
+<!ENTITY removeSite.label                 "Websites fuortsmite">
+<!ENTITY removeSite.accesskey             "v">
+<!ENTITY removeAllSites.label             "Alle websites fuortsmite">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Slute">
+<!ENTITY button.close.accesskey           "S">

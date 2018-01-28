@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "تنظیم صفحه">
+
+<!ENTITY basic.tab           "قالب و گزینه‌ها">
+
+<!ENTITY formatGroup.label   "قالب">
+
+<!ENTITY orientation.label   "جهت">
+<!ENTITY portrait.label      "پرتره‌ای">
+<!ENTITY portrait.accesskey  "پ">
+<!ENTITY landscape.label     "منظره‌ای">
+<!ENTITY landscape.accesskey "م">
+
+<!ENTITY scale.label         "مقیاس:">
+<!ENTITY scale.accesskey     "م">
+<!ENTITY scalePercent        "٪">
+
+<!ENTITY shrinkToFit.label   "کوچک کردن به اندازهٔ عرض صفحه">
+<!ENTITY shrinkToFit.accesskey "ک">
+
+<!ENTITY optionsGroup.label  "گزینه‌ها">
+
+<!ENTITY printBG.label       "چاپ پس‌زمینه (رنگ‌ها و تصاویر)">
+<!ENTITY printBG.accesskey   "چ">
+
+<!ENTITY advanced.tab        "حاشیه‌ها و سرصفحه//Footer">
+
+<!ENTITY marginGroup.label   "حاشیه‌ها (#1)">
+<!ENTITY marginUnits.inches  "اینچ">
+<!ENTITY marginUnits.metric  "میلی‌متر">
+<!ENTITY marginTop.label     "بالا:">
+<!ENTITY marginTop.accesskey "ب">
+<!ENTITY marginBottom.label  "پایین:">
+<!ENTITY marginBottom.accesskey "پ">
+<!ENTITY marginLeft.label    "چپ:">
+<!ENTITY marginLeft.accesskey "چ">
+<!ENTITY marginRight.label   "راست:">
+<!ENTITY marginRight.accesskey "ر">
+
+<!ENTITY headerFooter.label  "سرصفحه‌ها و پاصفحه‌ها">
+
+<!ENTITY hfLeft.label        "چپ:">
+<!ENTITY hfCenter.label      "وسط:">
+<!ENTITY hfRight.label       "راست:">
+<!ENTITY headerLeft.tip      "سرصفحهٔ چپ">
+<!ENTITY headerCenter.tip    "سرصفحهٔ وسط">
+<!ENTITY headerRight.tip     "سرصفحهٔ راست">
+<!ENTITY footerLeft.tip      "پاصفحهٔ چپ">
+<!ENTITY footerCenter.tip    "پاصفحهٔ وسط">
+<!ENTITY footerRight.tip     "پاصفحهٔ راست">
+
+<!ENTITY hfTitle             "عنوان">
+<!ENTITY hfURL               "نشانی اینترنتی">
+<!ENTITY hfDateAndTime       "تاریخ/زمان">
+<!ENTITY hfPage              "صفحهٔ #">
+<!ENTITY hfPageAndTotal      "صفحهٔ # از #">
+<!ENTITY hfBlank             "‐‐خالی‐‐">
+<!ENTITY hfCustom            "سفارشی…">
+
+<!ENTITY customPrompt.title  "سفارشی…">
+<!ENTITY customPrompt.prompt "متن سرصفحه/پاصفحهٔ سفارشی‌تان را وارد کنید">

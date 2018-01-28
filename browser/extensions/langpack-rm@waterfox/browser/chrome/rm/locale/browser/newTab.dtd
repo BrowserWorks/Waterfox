@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Nov tab">
+<!ENTITY newtab.customize.classic "Mussar tias paginas preferidas">
+<!ENTITY newtab.customize.cog.enhanced "Includer paginas proponidas">
+<!ENTITY newtab.customize.cog.title2 "CONFIGURAZIUN PER NOVS TABS">
+<!ENTITY newtab.customize.cog.learn "Ulteriuras infurmaziuns davart novs tabs">
+<!ENTITY newtab.customize.title "Persunalisar tia pagina per novs tabs">
+<!ENTITY newtab.customize.blank2 "Mussar ina pagina vida">
+<!ENTITY newtab.undo.removedLabel "Allontanà la miniatura.">
+<!ENTITY newtab.undo.undoButton "Revocar.">
+<!ENTITY newtab.undo.restoreButton "Restaurar tut.">
+<!ENTITY newtab.undo.closeTooltip "Zuppentar">

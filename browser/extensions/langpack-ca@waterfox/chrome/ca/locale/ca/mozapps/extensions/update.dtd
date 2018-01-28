@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Actualització del &brandShortName;">
+
+<!ENTITY  offline.title                   "El &brandShortName; està treballant fora de línia">
+<!ENTITY  offline.description             "Cal que el &brandShortName; es posi en línia per comprovar si hi ha actualitzacions disponibles dels vostres complements per fer-los compatibles amb aquesta versió.">
+<!ENTITY  offline.toggleOffline.label     "Posa en línia ara.">
+<!ENTITY  offline.toggleOffline.accesskey "P">
+
+<!ENTITY  mismatch.win.title              "Complements incompatibles">
+<!ENTITY  mismatch.top.label              "Els següents complements no són compatibles amb la versió nova del &brandShortName; i s'han inhabilitat:">
+<!ENTITY  mismatch.bottom.label           "El &brandShortName; pot comprovar si hi ha versions compatibles disponibles d'aquests complements.">
+
+<!ENTITY  checking.wizard.title           "S'està comprovant si hi ha complements compatibles">
+<!ENTITY  checking.top.label              "S'estan cercant actualitzacions dels complements incompatibles…">
+<!ENTITY  checking.status                 "Això pot trigar uns minuts…">
+
+<!ENTITY  found.wizard.title               "S'han trobat complements compatibles">
+<!ENTITY  found.top.label                 "Seleccioneu els complements que voleu instal·lar:">
+<!ENTITY  found.disabledXPinstall.label   "No poden instal·lar-se aquestes actualitzacions perquè la instal·lació de programari està actualment inhabilitada. Podeu canviar aquest paràmetre a sota.">
+<!ENTITY  found.enableXPInstall.label     "Permet que els llocs web instal·lin programari">
+<!ENTITY  found.enableXPInstall.accesskey "P">
+
+<!ENTITY  installing.wizard.title         "S'estan instal·lant els complements compatibles">
+<!ENTITY  installing.top.label            "S'estan baixant i instal·lant les actualitzacions dels vostres complements…">
+
+<!ENTITY  noupdates.wizard.title          "No s'han trobat complements compatibles">
+<!ENTITY  noupdates.intro.desc            "El &brandShortName; no ha trobat cap actualització dels vostres complements incompatibles.">
+<!ENTITY  noupdates.error.desc            "S'han produït alguns problemes mentre s'intentava de trobar actualitzacions.">
+<!ENTITY  noupdates.checkEnabled.desc     "El &brandShortName; cercarà actualitzacions compatibles d'aquests complements periòdicament i us informarà quan n'hi hagi.">
+
+<!ENTITY  finished.wizard.title           "S'han instal·lat complements compatibles">
+<!ENTITY  finished.top.label              "El &brandShortName; ha instal·lat les actualitzacions dels vostres complements.">
+<!ENTITY  finished.checkDisabled.desc     "El &brandShortName; pot cercar actualitzacions dels complements periòdicament i informar-vos quan n'hi hagi.">
+<!ENTITY  finished.checkEnabled.desc      "El &brandShortName; cercarà actualitzacions dels complements periòdicament i us informarà quan n'hi hagi.">
+
+<!ENTITY  adminDisabled.wizard.title      "No es poden cercar actualitzacions">
+<!ENTITY  adminDisabled.warning.label     "No es poden cercar actualitzacions dels complements incompatibles perquè s'ha inhabilitat la instal·lació de programari del &brandShortName;. Contacteu amb el vostre administrador de sistema perquè us pugui ajudar.">
+
+<!ENTITY  versioninfo.wizard.title        "S'està comprovant la compatibilitat dels complements">
+<!ENTITY  versioninfo.top.label           "S'està comprovant la compatibilitat dels vostres complements amb aquesta versió del &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Això pot trigar uns minuts…">
+
+<!ENTITY  installerrors.wizard.title      "S'han produït problemes en instal·lar les actualitzacions">
+<!ENTITY  installerrors.intro.label       "El &brandShortName; ha trobat problemes quan actualitzava alguns dels vostres complements.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Feu clic a Finalitza per continuar amb l'inici del &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Feu clic a Fet per continuar amb l'inici del &brandShortName;.">
+<!ENTITY  enableChecking.label            "Permet que el &brandShortName; cerqui actualitzacions.">

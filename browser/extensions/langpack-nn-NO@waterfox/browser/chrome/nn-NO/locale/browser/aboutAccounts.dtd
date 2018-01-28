@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Velkomen til &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Logg inn for å synkronisere faner, bokmerke og passord med meir.">
+<!ENTITY aboutAccountsConfig.startButton.label "Kom i gang">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync-innstillingar">
+<!ENTITY aboutAccounts.noConnection.title "Ikkje noko samband">
+<!ENTITY aboutAccounts.noConnection.description "Du må vere kopla til Internett for å logge inn.">
+<!ENTITY aboutAccounts.noConnection.retry "Prøv igjen">
+<!ENTITY aboutAccounts.badConfig.title "Ugyldig oppsett">
+<!ENTITY aboutAccounts.badConfig.description "Klarte ikkje å stadfeste tenaroppsettet for Waterfox-kontoen din. Prøv igjen seinare.">

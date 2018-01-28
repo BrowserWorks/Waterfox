@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Бақылаудан қорғанысты қолдану">
+<!ENTITY  trackingProtection2.description      "Трекерлер сіздің шолу деректеріңізді вебсайттардан жинайды. Нәтижесінде профиль құрастырылып, сіздің шолу және жеке деректеріңіз негізінде сізге веб құрама көрсетіледі.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Белгілі трекерлерді блоктау үшін Бақылаудан қорғанысты қолдану">
+<!ENTITY  trackingProtectionAlways.label       "Әрқашан">
+<!ENTITY  trackingProtectionAlways.accesskey   "ш">
+<!ENTITY  trackingProtectionPrivate.label      "Тек жекелік терезелерінде">
+<!ENTITY  trackingProtectionPrivate.accesskey  "к">
+<!ENTITY  trackingProtectionNever.label        "Ешқашан">
+<!ENTITY  trackingProtectionNever.accesskey    "н">
+<!ENTITY  trackingProtectionLearnMore.label    "Көбірек білу">
+<!ENTITY  trackingProtectionExceptions.label   "Ережелерден бөлек…">
+<!ENTITY  trackingProtectionExceptions.accesskey "Е">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Жекелік шолу терезелерінде бақылаудан қорғанысты қолдану">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Жекелік шолуда белгілі трекерлерді блоктау үшін Бақылаудан қорғанысты қолдану">
+<!ENTITY trackingProtectionPBM6.accesskey     "Ж">
+<!ENTITY trackingProtectionPBMLearnMore.label "Көбірек білу">
+<!ENTITY changeBlockList2.label               "Блоктізімді өзгерту…">
+<!ENTITY changeBlockList2.accesskey           "г">
+
+<!ENTITY  doNotTrack.description        "Сайттарға &quot;Мені бақыламау&quot; сигналын жіберу арқылы сіз өзіңізді бақыламауды қалайтыныңыз туралы хабарлау">
+<!ENTITY  doNotTrack.learnMore.label    "Көбірек білу">
+<!ENTITY  doNotTrack.default.label      "Тек Бақылаудан қорғанысты қолдану кезінде">
+<!ENTITY  doNotTrack.always.label       "Әрқашан">
+
+<!ENTITY  history.label                 "Тарихы">
+<!ENTITY  permissions.label             "Рұқсаттар">
+
+<!ENTITY  addressBar.label              "Адрес жолағы">
+<!ENTITY  addressBar.suggest.label      "Адрес жолағын қолдану кезінде, ұсыну">
+<!ENTITY  locbar.history2.label         "Шолулар тарихы">
+<!ENTITY  locbar.history2.accesskey     "Ш">
+<!ENTITY  locbar.bookmarks.label        "Бетбелгілер">
+<!ENTITY  locbar.bookmarks.accesskey    "л">
+<!ENTITY  locbar.openpage.label         "Ашық беттер">
+<!ENTITY  locbar.openpage.accesskey     "А">
+<!ENTITY  locbar.searches.label         "Негізгі іздеу жүйіесінен байланысқан іздеулер">
+<!ENTITY  locbar.searches.accesskey     "й">
+
+<!ENTITY  suggestionSettings2.label     "Іздеу жүйесінің ұсыныстары үшін қалауларды өз&amp;герту">
+
+<!ENTITY  acceptCookies2.label          "Вебсайттардан cookies қабылдау">
+<!ENTITY  acceptCookies2.accesskey      "д">
+
+<!ENTITY  acceptThirdParty.pre.label      "Үшінші жақты cookies қабылдау:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ш">
+<!ENTITY  acceptThirdParty.always.label   "Әрқашан">
+<!ENTITY  acceptThirdParty.never.label    "Ешқашан">
+<!ENTITY  acceptThirdParty.visited.label  "Мен болған жерден ғана">
+
+<!ENTITY  keepUntil.label               "Дейін сақтау:">
+<!ENTITY  keepUntil.accesskey           "н">
+
+<!ENTITY  expire.label                  "олардың мерзімі аяқталғанша дейін">
+<!ENTITY  close.label                   "Мен &brandShortName; жапқанға дейін">
+
+<!ENTITY  cookieExceptions.label        "Ережелерден бөлек…">
+<!ENTITY  cookieExceptions.accesskey    "Е">
+
+<!ENTITY  showCookies.label             "Cookies көрсету…">
+<!ENTITY  showCookies.accesskey         "р">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName;">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "тарихты сақтайды">
+<!ENTITY  historyHeader.dontremember.label "тарихты ешқашан сақтамайды">
+<!ENTITY  historyHeader.custom.label       "қолдан көрсетілген тарих баптауын қолданады">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; қаралған веб-парақ, жүктеме, форма, іздеу тарихын және cookies файлдарын сақтайтын болады.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Сонымен қатар, ">
+<!ENTITY  rememberActions.clearHistory.label  "жуырдағы тарихты тазарту">
+<!ENTITY  rememberActions.middle.label        ", немесе ">
+<!ENTITY  rememberActions.removeCookies.label "жекеленген cookies файлдарын өшіруді қалайтын шығарсыз">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; жекелік шолу режимінің баптауын пайдаланады, яғни браузер тарихына ешқандай мәлімет сақталмайды.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Сонымен қатар ">
+<!ENTITY  dontrememberActions.clearHistory.label "тарихты да тазарту">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Әрқашан жекелік шолу режимін қолдану">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ж">
+
+<!ENTITY  rememberHistory2.label      "Менің шолу тарихымды және жүктемелер тарихын сақтау">
+<!ENTITY  rememberHistory2.accesskey  "М">
+
+<!ENTITY  rememberSearchForm.label       "Іздеу және формалар тарих сақтау">
+<!ENTITY  rememberSearchForm.accesskey   "з">
+
+<!ENTITY  clearOnClose.label             "Тарихты &brandShortName; жабылғанда тазартып отыру">
+<!ENTITY  clearOnClose.accesskey         "Т">
+
+<!ENTITY  clearOnCloseSettings.label     "Баптау…">
+<!ENTITY  clearOnCloseSettings.accesskey "п">
+
+<!ENTITY  browserContainersLearnMore.label      "Көбірек білу">
+<!ENTITY  browserContainersEnabled.label        "Контейнер беттерін іске қосу">
+<!ENTITY  browserContainersEnabled.accesskey    "е">
+<!ENTITY  browserContainersSettings.label        "Баптаулар…">
+<!ENTITY  browserContainersSettings.accesskey    "п">

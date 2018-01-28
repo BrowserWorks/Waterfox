@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "સામાન્ય">
+
+<!ENTITY useCursorNavigation.label       "પાનાંઓમાં શોધખોળ કરવા માટે હંમેશા કર્સર કીઓ વાપરો">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "જ્યારે તમે ટાઇપ કરવાનું શરૂ કરો ત્યારે ટેક્સ્ટ માટે શોધો">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "જ્યારે જરૂરી હોય ત્યારે ટચ કીબોર્ડ બતાવો">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "બ્રાઉઝીંગ">
+
+<!ENTITY useAutoScroll.label             "આપોઆપ સરકાવવાનું વાપરો">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "લીસી રીતે સરકાવવાનું વાપરો">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "તમે લખો તે મુજબ તમારી જોડણી તપાસો">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "માહિતી પસંદગી">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "આ તૈચાર કરેલ રૂપરેખાંકન માટે ડેટા અહેવાલ અક્ષમ કરેલું છે">
+
+<!ENTITY enableHealthReport1.label       "Mozilla પર આપમેળે ટેકનિકલ અને ક્રિયાપ્રતિક્રિયા ડેટા મોકલવા માટે &brandShortName; નેેે પરવાનગી આપો">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "વધારે શીખો">
+
+<!ENTITY dataCollection.label            "&brandShortName; ડેટા સંગ્રહ અને ઉપયોગ">
+<!ENTITY dataCollectionDesc.label        "અમે તમને પસંદગીઓ સાથે પ્રદાન કરવાનો પ્રયત્ન કરીએ છીએ અને દરેક માટે શું પ્રદાન અને સુધારવાની જરૂર છે તે જ &brandShortName; એકત્રિત કરીએ છીએ. અમે હંમેશા વ્યક્તિગત માહિતી મેળવવા પહેલાં પરવાનગી પૂછીશુ.">
+<!ENTITY dataCollectionPrivacyNotice.label    "ગોપનીયતા સૂચના">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "પરવાનગી આપો &brandShortName; Mozilla ને ક્રેશ રિપોર્ટ્સ મોકલવા માટે">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "વધારે શીખો">
+
+<!ENTITY networkTab.label                "નેટવર્ક">
+
+<!ENTITY networkProxy.label              "નેટવર્ક પ્રોક્સી">
+
+<!ENTITY connectionDesc.label            "કેવી રીતે &brandShortName; ઈન્ટરનેટ સાથે જોડાય છે તે રૂપરેખાંકિત કરો">
+<!ENTITY connectionSettings.label        "સેટીંગ...">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "કેશ થયેલ વેબ સમાવિષ્ટો">
+
+<!ENTITY offlineStorage2.label           "ઑફલાઇન વેબ સમાવિષ્ટો અને વપરાશકર્તા માહિતી">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "સાઇટ ડેટા">
+<!ENTITY clearSiteData.label             "બધા ડેટા સાફ કરો">
+<!ENTITY clearSiteData.accesskey         "I">
+<!ENTITY siteDataSettings.label          "સેટિંગ્સ…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "વધુ શીખો">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "તેની માટે મર્યાદિત કેશ">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB જેટલી જગ્યા">
+<!ENTITY clearCacheNow.label             "હમણાં સાફ કરો">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "હમણાં સાફ કરો">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "આપોઆપ કેશ સંચાલન પર ફરીથી લખો">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "સુધારો">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; સુધારો">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "શ્રેષ્ઠ પ્રદર્શન, સ્થિરતા અને સુરક્ષા માટે &brandShortName; અધતન રાખો.">
+<!ENTITY updateApplication.version.pre   "આવૃત્તિ ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "મંજૂરી આપો &brandShortName; માટે">
+<!ENTITY updateAuto3.label               "આપમેળે સુધારા ઇન્સ્ટોલ કરો (ભલામણ કરેલ)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "સુધારાઓ માટે ચકાસો પરંતુ તમે તેમને સ્થાપિત કરવા માટે પસંદ કરી દો">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "અપડેટ્સ માટે ક્યારેય તપાસ કરશો નહીં (આગ્રહણીય નથી)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "અપડેટ ઇતિહાસ બતાવો…">
+<!ENTITY updateHistory2.accesskey        "P">
+
+<!ENTITY useService.label                "સુધારાઓ સ્થાપિત કરવા માટે પાશ્વભાગ સેવા વાપરો">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "આપમેળે શોધ એન્જિન અપડેટ કરો">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "જ્યારે કોઈ વેબસાઇટ ઑફલાઇન ઉપયોગ માટે ડેટા સ્ટોર કરવા માટે પૂછે ત્યારે તમને જણાવશે">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "અપવાદો…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "નીચેની વેબસાઇટોને ઑફલાઇન વપરાશ માટે માહિતી સંગ્રહવાની પરવાનગી છે:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "દૂર કરો...">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "ઓફલાઈન માહિતી દૂર કરો">
+
+<!ENTITY certificateTab.label            "પ્રમાણપત્રો">
+<!ENTITY certPersonal2.description       "સર્વર તમારી વ્યક્તિગત પ્રમાણપત્રની વિનંતી કરે ત્યારે">
+<!ENTITY selectCerts.auto                "એક આપોઆપ પસંદ કરો">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "દર વખતે તમને પૂછો">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "પ્રમાણપત્રની હાલની યોગ્યતાની ખાતરી કરવા માટે ક્વેરી OCSP જવાબ સર્વરો">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "પ્રમાણપત્રો જુઓ…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "સુરક્ષા ઉપકરણો…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "કામગીરી">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "આગ્રહણીય પ્રદર્શન સેટિંગ્સનો ઉપયોગ કરો">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "આ સેટિંગ્સ તમારા કમ્પ્યુટરનાં હાર્ડવેર અને ઑપરેટિંગ સિસ્ટમ અનુસાર બનાવાય છે.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "વધુ શીખો">
+<!ENTITY limitContentProcessOption.label "સામગ્રી પ્રક્રિયા મર્યાદા">
+<!ENTITY limitContentProcessOption.description
+                                         "બહુવિધ ટૅબ્સનો ઉપયોગ કરતી વખતે વધારાની સામગ્રી પ્રક્રિયાઓ પ્રભાવ સુધારી શકે છે, પરંતુ તે વધુ મેમરીનો પણ ઉપયોગ કરશે.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "મલ્ટિપ્રોસેસ સાથે સામગ્રી પ્રોસેસની સંખ્યામાં ફેરફાર કરવો શક્ય છે &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "મલ્ટિપ્રોસેસ સક્રિય કરે છે કે નહીં તે કેવી રીતે તપાસવું તે જાણો">
+<!ENTITY allowHWAccel.label              "હાર્ડવેર વેગને વાપરો જ્યારે ઉપલબ્ધ હોય">
+<!ENTITY allowHWAccel.accesskey          "r">

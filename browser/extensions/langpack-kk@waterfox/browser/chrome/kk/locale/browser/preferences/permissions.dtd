@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Осыдан бөлек">
+<!ENTITY window.width                 "55em">
+
+<!ENTITY treehead.sitename2.label     "Вебсайт">
+<!ENTITY treehead.status.label        "Статус">
+<!ENTITY removepermission2.label      "Вебсайтты өшіру">
+<!ENTITY removepermission2.accesskey  "ш">
+<!ENTITY removeallpermissions2.label  "Барлық вебсайттарды өшіру">
+<!ENTITY removeallpermissions2.accesskey "р">
+<!ENTITY address.label                "Сайт адресі:">
+<!ENTITY address.accesskey            "д">
+<!ENTITY block.label                  "Блоктау">
+<!ENTITY block.accesskey              "Б">
+<!ENTITY session.label                "Тек осы сессияға рұқсат беру">
+<!ENTITY session.accesskey            "Т">
+<!ENTITY allow.label                  "Рұқсат ету">
+<!ENTITY allow.accesskey              "е">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Бас тарту">
+<!ENTITY button.cancel.accesskey      "т">
+<!ENTITY button.ok.label              "Өзгерістерді сақтау">
+<!ENTITY button.ok.accesskey          "с">
+

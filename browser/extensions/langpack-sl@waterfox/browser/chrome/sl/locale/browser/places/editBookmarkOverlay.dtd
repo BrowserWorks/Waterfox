@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Ime:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "I">
+<!ENTITY editBookmarkOverlay.location.label                  "Naslov:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "N">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Naslov vira:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "V">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Naslov strani:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "Mapa:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Prikaži vse mape zaznamkov">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Skrij">
+<!ENTITY editBookmarkOverlay.tags.label                      "Oznake:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "O">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Loči oznake z vejicami">
+<!ENTITY editBookmarkOverlay.description.label               "Opis:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "O">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Ključna beseda:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Prikaži vse oznake">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Naloži ta zaznamek v stransko vrstico">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "z">
+<!ENTITY editBookmarkOverlay.choose.label                    "Izberi ...">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Nova mapa">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

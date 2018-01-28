@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Taglia">
+<!ENTITY cutCmd.accesskey "T">
+<!ENTITY copyCmd.label "Copia">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "Incolla">
+<!ENTITY pasteCmd.accesskey "I">
+<!ENTITY undoCmd.label "Annulla">
+<!ENTITY undoCmd.accesskey "A">
+<!ENTITY selectAllCmd.label "Seleziona tutto">
+<!ENTITY selectAllCmd.accesskey "S">
+<!ENTITY deleteCmd.label "Elimina">
+<!ENTITY deleteCmd.accesskey "E">
+<!ENTITY spellAddToDictionary.label "Aggiungi al dizionario">
+<!ENTITY spellAddToDictionary.accesskey "u">
+<!ENTITY spellUndoAddToDictionary.label "Annulla “Aggiungi al dizionario”">
+<!ENTITY spellUndoAddToDictionary.accesskey "u">
+<!ENTITY spellCheckToggle.label "Controllo ortografico">
+<!ENTITY spellCheckToggle.accesskey "o">
+<!ENTITY spellNoSuggestions.label "(nessun suggerimento ortografico)">
+<!ENTITY spellDictionaries.label "Lingue">
+<!ENTITY spellDictionaries.accesskey "L">
+<!ENTITY searchTextBox.clear.label "Cancella">
+<!ENTITY fillLoginMenu.label "Compila le credenziali di accesso">
+<!ENTITY fillLoginMenu.accesskey "m">
+<!ENTITY fillPasswordMenu.label "Compila password">
+<!ENTITY fillPasswordMenu.accesskey "m">
+<!ENTITY fillUsernameMenu.label "Compila nome utente">
+<!ENTITY fillUsernameMenu.accesskey "m">
+<!ENTITY noLoginSuggestions.label "(nessun suggerimento disponibile)">
+<!ENTITY viewSavedLogins.label "Visualizza accessi salvati">

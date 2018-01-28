@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importowy zastojnik">
+
+<!ENTITY importFrom.label               "Nastajenja, cytańske znamjenja, historiju, gronidła a hynakše daty importěrowaś z:">
+<!ENTITY importFromUnix.label           "Nastajenja, cytańske znamjenja, historiju, gronidła a hynakše daty importěrowaś z:">
+<!ENTITY importFromBookmarks.label      "Cytańske znamjenja importěrowaś z:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Nic njeimportěrowaś">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Žedne programy namakane, kótarež wopśimuju cytańske znamjenja, historiju abo gronidła.">
+
+<!ENTITY importSource.title             "Daty a nastajenja importěrowaś">
+<!ENTITY importItems.title              "Objekty za importěrowanje">
+<!ENTITY importItems.label              "Wubjeŕśo objekty za importěrowanje:">
+
+<!ENTITY migrating.title                "Importěrujo se…">
+<!ENTITY migrating.label                "Slědujuce objekty se rowno importěruju…">
+
+<!ENTITY selectProfile.title            "Profil wubraś">
+<!ENTITY selectProfile.label            "Slědujuce profile stoje k dispoziciji za importěrowanje z:">
+
+<!ENTITY done.title                     "Importěrowanje dokóńćone">
+<!ENTITY done.label                     "Slědujuce objekty su se z wuspěchom importěrowali:">
+
+<!ENTITY closeSourceBrowser.label       "Pšosym zawěsććo, až wubrany wobglědowak jo zacynjony, nježli až pókšacujośo.">

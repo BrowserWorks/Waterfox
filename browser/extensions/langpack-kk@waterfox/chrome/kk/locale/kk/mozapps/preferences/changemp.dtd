@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Мастер-парольді ауыстыру">
+<!ENTITY setPassword.tokenName.label       "Қорғаныс құрылғысы">
+<!ENTITY setPassword.oldPassword.label     "Ағымдағы пароль:">
+<!ENTITY setPassword.newPassword.label     "Жаңа пароль:">
+<!ENTITY setPassword.reenterPassword.label "Жаңа пароль (қайтадан):">
+<!ENTITY setPassword.meter.label           "Пароль сапасы">
+<!ENTITY setPassword.meter.loading         "Жүктелу">
+<!ENTITY masterPasswordDescription.label   "Мастер-пароль сайттардың парольдері сияқты сезгіш ақпаратты сақтай үшін қолданылады. Егер сіз мастер-пароль жасасаңыз, оның көмегімен қорғалған барлық ақпаратты оқу үшін, &brandShortName; қосылғанда мастер-парольді бір рет енгізесіз.">
+<!ENTITY masterPasswordWarning.label       "Мастер-пароліңізді ұмытым қалмауыңызға назар аударыңыз. Егер оны ұмытып қалсаңыз, оның көмегімен қорғалған барлық ақпараттан айрыласыз.">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Vous ne vous trouvez pas dans une fenêtre de navigation privée.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Ouvrir une fenêtre de navigation privée">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "u">
+
+<!ENTITY privateBrowsing.title                           "Navigation privée">
+<!ENTITY privateBrowsing.title.tracking                  "Navigation privée avec protection contre le pistage">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Lorsque vous naviguez dans une fenêtre privée, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ne conservera pas">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        " :">
+<!ENTITY aboutPrivateBrowsing.info.visited               "Les pages visitées">
+<!ENTITY aboutPrivateBrowsing.info.searches              "Les recherches">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Les cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "Les fichiers temporaires">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "conservera">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " :">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "Les téléchargements">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "Les marque-pages">
+<!ENTITY aboutPrivateBrowsing.note.before                "La navigation privée ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ne vous rend pas anonyme">
+<!ENTITY aboutPrivateBrowsing.note.after                 " sur Internet. Votre fournisseur d’accès à Internet ou votre employeur peuvent toujours connaître les pages que vous visitez.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "En savoir plus sur la ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "navigation privée">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protection contre le pistage">
+<!ENTITY trackingProtection.description2                 "Certains sites web utilisent des mouchards pour pister votre activité sur Internet. Avec la protection contre le pistage, Waterfox bloquera de nombreux mouchards capables de collecter des informations sur votre comportement en ligne.">
+<!ENTITY trackingProtection.startTour1                   "Principes de fonctionnement">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Անվանումը.">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "Ա">
+<!ENTITY editBookmarkOverlay.location.label                  "Հասցեն.">
+<!ENTITY editBookmarkOverlay.location.accesskey              "Հ">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Նորությունների շղթայի հասցեն`">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "Ն">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Կայքի հասցեն`">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "Կ">
+<!ENTITY editBookmarkOverlay.folder.label                    "Թղթապանակը`">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Ցուցադրել էջանիշերի բոլոր թղթապանակները">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Թաքցնել">
+<!ENTITY editBookmarkOverlay.tags.label                      "Նշիչներ`">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "Ն">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Առանձնացնել կցապիտակները ստորակետերով">
+<!ENTITY editBookmarkOverlay.description.label               "Նկարագրությունը.">
+<!ENTITY editBookmarkOverlay.description.accesskey           "Ն">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Կարճ անուն`">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "Կ">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Ցուցադրել բոլոր կցապիտակները">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Ներմուծել Էջանիշը կողային վահանակ">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "Ն">
+<!ENTITY editBookmarkOverlay.choose.label                    "Նկարագրությունը.">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Նոր թղթապանակ">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "թ">

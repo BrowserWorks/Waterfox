@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "ସଫ୍ଟୱେର ଅଦ୍ୟତନ">
+
+<!ENTITY  checking.title                  "ଅଦ୍ୟତନଗୁଡ଼ିକ ପାଇଁ ଯାଞ୍ଚ କରୁଅଛି">
+<!ENTITY  updateCheck.label               "&brandShortName;ର ନୂତନ ସଂସ୍କରଣକୁ ଖୋଜୁଅଛି…">
+
+<!ENTITY  noupdatesfound.title            "କୌଣସି ଅଦ୍ୟତନ ମିଳିଲା ନାହିଁ">
+<!ENTITY  noupdatesautoenabled.intro      "ସେଠାରେ କୌଣସି ଅଦ୍ୟତନ ଉପଲବ୍ଧ ନାହିଁ। &brandShortName; ଅଦ୍ୟତନ ପାଇଁ ନିୟମିତ ଭାବେ ଯାଞ୍ଚ କରିବ।">
+<!ENTITY  noupdatesautodisabled.intro     "ସେଠାରେ କୌଣସି ଅଦ୍ୟତନ ଉପଲବ୍ଧ ନାହିଁ। ଦୟାକରି ପରେ ପୁଣିଥରେ ଯାଞ୍ଚ କରନ୍ତୁ କିମ୍ବା &brandShortName;ର ସ୍ୱୟଂଚାଳିତ ଅଦ୍ୟତନ ଯାଞ୍ଚକୁ ସକ୍ରିୟ କରନ୍ତୁ।">
+
+<!ENTITY  manualUpdate.title              "ଅଦ୍ୟତନ କରିବାରେ ବିଫଳ">
+<!ENTITY  manualUpdate.desc               "ଗୋଟିଏ ପରାମର୍ଶିତ ସୁରକ୍ଷା ଏବଂ ସ୍ଥାୟୀ ଅଦ୍ୟତନ ଉପଲବ୍ଧ, କିନ୍ତୁ ଏହାକୁ ସ୍ଥାପନ କରିବା ପାଇଁ ଆପଣଙ୍କ ପାଖରେ ତନ୍ତ୍ର ଅନୁମତି ନାହିଁ। ଦୟାକରି ଆପଣଙ୍କ ତନ୍ତ୍ର ପରିଚାଳକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ, କିମ୍ବା ସ୍ଥାପନ ପାଇଁ ଅନୁମତି ପ୍ରାପ୍ତ ଅନ୍ୟ ଏକ କମ୍ପୁଟରରୁ ଏହାକୁ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।">
+<!ENTITY  manualUpdate.space.desc         "ଗୋଟିଏ ପରାମର୍ଶିତ ସୁରକ୍ଷା ଏବଂ ସ୍ଥାୟୀତ୍ୱ ଅଦ୍ୟତନ ଉପଲବ୍ଧ ଅଛି, କିନ୍ତୁ ଆପଣଙ୍କ ପାଖରେ ସ୍ଥାପନ କରିବା ପାଇଁ ଯଥେଷ୍ଟ ସ୍ଥାନ ନାହିଁ।">
+<!ENTITY  manualUpdateGetMsg.label        "ଆପଣ ଏଠାରେ ସର୍ବଦା &brandShortName;ର ନୂତନତମ ସଂସ୍କରଣ ପାଇବେ:">
+
+<!ENTITY  unsupported.title               "ତନ୍ତ୍ର ସହାୟତାପ୍ରାପ୍ତ ନୁହଁ">
+<!ENTITY  unsupported.label               "ଆପଣଙ୍କର &brandShortName; ପୁରୁଣା ହୋଇଛି, କିନ୍ତୁ ନୂତନତମ ସଂସ୍କରଣଟି ଆପଣଙ୍କ ତନ୍ତ୍ରରେ ସହାୟତା ପ୍ରାପ୍ତ ନୁହଁ। ଦୟାକରି ଆପଣଙ୍କ ତନ୍ତ୍ରକୁ ଉନ୍ନୟନ କରନ୍ତୁ, ତାପରେ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ। ଆପଣ ଏହି ବିଜ୍ଞପ୍ତିକୁ ପୁଣିଥରେ ଦେଖିବେ ନାହିଁ, କିନ୍ତୁ ଆପଣ ଦେଖି ପାରିବେ">
+<!ENTITY  unsupportedLink.label           "ଅଧିକ ଜ୍ଞାନ ଆହରଣ କରନ୍ତୁ।">
+
+<!ENTITY  clickHere.label                 "ଏହି ଅଦ୍ୟତନ ବିଷୟରେ ଅଧିକ ସୂଚନା ଦେଖନ୍ତୁ">
+
+<!ENTITY  evangelism.desc                 "ଏହା ବିଶେଷ ଭାବେ ପରାମର୍ଶିତ ଯେ ଯଥାଶିଘ୍ର ସମ୍ଭବ ଆପଣ ଏହି ଅଦ୍ୟତନକୁ &brandShortName;ପାଇଁ ପ୍ରୟୋଗ କରନ୍ତୁ।">
+
+<!ENTITY  downloadPage.title              "Downloading &brandShortName;">
+<!ENTITY  downloading.intro               "ଅଦ୍ୟତନ ଆହରଣ କରୁଅଛି…">
+<!ENTITY  connecting.label                "ଅଦ୍ୟତନ ସର୍ଭର ସହିତ ସଂଯୋଗ ସ୍ଥାପନ କରୁଅଛି…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ଆହରଣ କରିଥିବା କ୍ରମବର୍ଦ୍ଧିଷ୍ଣୁ ଅଦ୍ୟତନର ଅଖଣ୍ଡତାକୁ ଯାଞ୍ଚ କରିବାରେ ଅସମର୍ଥ, ତେଣୁ ଏହା ବର୍ତ୍ତମାନ ସମ୍ପୂର୍ଣ୍ଣ ଅଦ୍ୟତନ ପ୍ୟାକେଜକୁ ଆହରଣ କରୁଅଛି।">
+
+<!ENTITY  viewDetails.tooltip             "ଏହି ଅଦ୍ୟତନ ପାଇଁ ବିବରଣୀ ଦେଖନ୍ତୁ">
+
+<!ENTITY  details.link                    "ବିବରଣୀ">
+
+<!ENTITY  error.title                     "ଅଦ୍ୟତନ ବିଫଳ ହୋଇଛି">
+
+<!ENTITY  error.label                     "ଏହି ଅଦ୍ୟତନକୁ ଆହରଣ, କିମ୍ବା ସ୍ଥାପନ କରିବା ପାଇଁ ଅନୁସନ୍ଧାନ କରିବାରେ ସମସ୍ୟା ଦେଖାଦେଇଛି।  &brandShortName; କୁ ଅଦ୍ୟତନ କରାଯାଇପାରିଲା ନାହିଁ, କାରଣ:">
+                                           
+<!ENTITY  errorManual.label               "ଏହି ସଂଯୋଗକୁ ପରିଦର୍ଶନ କରି ଏବଂ ନୂତନତମ ସଂସ୍କରଣକୁ ଆହରଣ କରି ଆପଣ &brandShortName; କୁ ହସ୍ତକୃତ ଭାବରେ ଅଦ୍ୟତନ କରିପାରିବେ:">
+                                           
+<!ENTITY  errorpatching.intro             "ଆଂଶିକ ଅଦ୍ୟତନକୁ ପ୍ରୟୋଗ କରିହେଲାନାହିଁ। &brandShortName; ଗୋଟିଏ ସମ୍ପୂର୍ଣ୍ଣ ଅଦ୍ୟତନକୁ ଆହରଣ କରି ପୁଣିଥରେ ଚେଷ୍ଟାକରିବ।">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ଟି ସେଠାରେ ଅଦ୍ୟତନ ଉପଲବ୍ଧ ଅଛି କି ନାହିଁ ତାହା ନିର୍ଦ୍ଧାରଣ କରିବାରେ ଅସମର୍ଥ। ଦୟାକରି ନିଶ୍ଚିତ କରନ୍ତୁ ଯେ ଆପଣଙ୍କ ପାଖରେ &brandShortName; ର ନୂତନତମ ସଂସ୍କରଣ ଅଛି:">
+
+<!ENTITY  finishedPage.title              "ଅଦ୍ୟତନ ସ୍ଥାପନ ପାଇଁ ପ୍ରସ୍ତୁତ ଅଛି">
+<!ENTITY  finishedPage.text               "ପରବର୍ତ୍ତି ସମୟରେ &brandShortName; ଆରମ୍ଭ ହେଲେ ଅଦ୍ୟତନକୁ ସ୍ଥାପନ କରାଯିବ। ଆପଣ ବର୍ତ୍ତମାନ &brandShortName; କୁ ପୁନଃଚାଳନ କରିପାରିବେ, ଅଥବା କାର୍ଯ୍ୟ ଚାଲୁ ରଖନ୍ତୁ ଏବଂ ପରେ ପୁନଃଚାଳନ କରନ୍ତୁ।">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName;  ପାଇଁ ଗୋଟିଏ ସୁରକ୍ଷା ଏବଂ ସ୍ଥାୟୀତ୍ୱ ଅଦ୍ୟତନକୁ ଆହରଣ କରାଯାଇଛି ଏବଂ ସ୍ଥାପନ ପାଇଁ ପ୍ରସ୍ତୁତ ଅଛି।">
+<!ENTITY  finishedBackground.name         "ଅଦ୍ୟତନ:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "ପରବର୍ତ୍ତି ସମୟରେ &brandShortName; ଆରମ୍ଭ ହେଲେ ଅଦ୍ୟତନକୁ ସ୍ଥାପନ କରାଯିବ। ଆପଣ ବର୍ତ୍ତମାନ &brandShortName; କୁ ପୁନଃଚାଳନ କରିପାରିବେ, ଅଥବା କାର୍ଯ୍ୟ ଚାଲୁ ରଖନ୍ତୁ ଏବଂ ପରେ ପୁନଃଚାଳନ କରନ୍ତୁ।">
+
+
+<!ENTITY  update.details.label            "ବିବରଣୀ">
+<!ENTITY  update.installedOn.label        "ରେ ସ୍ଥାପିତ:">
+<!ENTITY  update.status.label             "ସ୍ଥିତି:">
+
+<!ENTITY  finishedBackground.moreElevated "This update requires administrator privileges. The update will be
+                                           installed the next time &brandShortName; starts. You can restart
+                                           &brandShortName; now, continue working and restart later, or decline this
+                                           update.">
+

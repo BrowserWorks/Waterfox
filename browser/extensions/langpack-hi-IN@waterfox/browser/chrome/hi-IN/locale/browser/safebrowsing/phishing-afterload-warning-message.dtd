@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "यहां से मुझे निकालें!">
+<!ENTITY safeb.palm.decline.label "इस चेतावनी को अनदेखा करें">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "यह एक भ्रमकारी भुजाल नहीं है…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "क्यों यह पृष्ठ रोका गया है?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "Reported Attack Page!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> पर यह वेब पृष्ठ एक अटैक पृष्ठ के रूप में सूचित किया गया है और आपके सुरक्षा वरीयता के अधार पर अवरूद्ध किया गया.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Attack pages try to install programs that steal private information, use your computer to attack others, or damage your system.</p><p>Some attack pages intentionally distribute harmful software, but many are compromised without the knowledge or permission of their owners.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "अवांछित सॉफ्टवेयर पेज रिपोर्ट किया गया!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> पर यह वेब पृष्ठ अवांछित सॉफ्टवेयर रखने हेतु सूचित किया गया और आपकी सुरक्षा वरीयता के आधार पर अवरुद्ध कर दिया गया है.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>अवांछित सॉफ्टवेयर पृष्ठ वह सॉफ्टवेयर स्थापित करने का प्रयास करता हैं जो भ्रामक हो सकता है और अप्रत्याशित तरीके में आपके तंत्र को प्रभावित कर सकता है.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "भ्रमकारी भुजाल!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "यह वेब पेज <span id='phishing_sitename'/> को धोकादायक सूचित किआ गया है और आपके प्राथमिकता के अनुसार बंद कर दिया गया है.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>भ्रमकारी साइट्स आपको भ्रमित कर आपकी निजी जानकारी जैसे फ़ोन नंबर, पासवर्ड, क्रेडिट कार्ड का दुरुपयोग या आपके डिवाइस मैं आपत्तिजनक सॉफ्टवेयर इनस्टॉल करके आपको उलझाने हेतु डिज़ाइन की गई हैं।</p><p>वेब के माध्यम से दर्ज की गई कोई भी व्यक्तिगत जानकारी आपकी पहचान के लिए घातक हो सकती है।</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

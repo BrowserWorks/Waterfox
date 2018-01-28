@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "ලුහුබදින්න එපා">
+<!ENTITY window.width                 "40em">
+<!ENTITY window.height                "8em">
+
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackLearnMore.label    "තවත් දැනගන්න">
+
+<!ENTITY doNotTrackCheckbox2.label    "Always apply Do Not Track">
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; will send a signal that you don’t want to be tracked whenever Tracking Protection is on.">

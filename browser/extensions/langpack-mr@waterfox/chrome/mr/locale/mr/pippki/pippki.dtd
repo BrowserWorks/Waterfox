@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "मुख्य पासवर्ड बदला">
+<!ENTITY setPassword.tokenName.label "सुरक्षा साधन">
+<!ENTITY setPassword.oldPassword.label "सध्याचा पासवर्ड:">
+<!ENTITY setPassword.newPassword.label "नवीन पासवर्ड:">
+<!ENTITY setPassword.reenterPassword.label "नवीन पासवर्ड(पुन्हा):">
+<!ENTITY setPassword.meter.label "पासवर्ड गुणांक मापक">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "पुनःस्थापित करा">
+<!ENTITY resetPassword.title  "मुख्य पासवर्ड शब्द पुनःस्थापित करा">
+<!ENTITY resetPassword.text  "मुख्य पासवर्ड शब्द पुनःस्थापित केल्यास, आपले सर्व संचयीत वेब व ई-मेल पासवर्ड, फॉर्म माहिती, व्यक्तिगत प्रमाणपत्रे, व व्यक्तिगत कळ लक्षात ठेवल्या जाणार नाही. आपणास मुख्य पासवर्ड नक्की पुनःस्थापित करायचे?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "प्रमाणपत्र डाउनलोड करत आहे">
+<!ENTITY downloadCert.message1 "आपणास नवीन प्रमाणपत्र अधिप्रमाणन (CA) वर विश्वास ठेवण्यास कळवण्यात आले आहे.">
+<!ENTITY downloadCert.trustSSL "संकेत स्थळे ओळखण्याकरिता ह्या CA वर विश्वास ठेवा.">
+<!ENTITY downloadCert.trustEmail "ईमेल वापरकर्त्यांना ओळखण्याकरिता ह्या CA वर विश्वास ठेवा.">
+<!ENTITY downloadCert.trustObjSign "सॉफ्टवेअर निर्मात्यांना ओळखण्याकरिता ह्या CA वर विश्वास ठेवा.">
+<!ENTITY downloadCert.message3 "कुठल्याही कारणस्तव ह्या CA वर विश्वास ठेवण्यापूर्वी, आपण त्याकरीता प्रमाणपत्र आणि करार व कार्यपध्दतीचे परिक्षण केले पाहिजे (उपलब्ध असल्यास).">
+<!ENTITY downloadCert.viewCert.label "दृश्य">
+<!ENTITY downloadCert.viewCert.text "CA प्रमाणपत्राचे परिक्षण करा">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "वापरकर्ता ओळख विनंती">
+<!ENTITY clientAuthAsk.message1 "हे स्थळ विनंती करत आहे की आपले ओळख प्रमाणपत्र असले पाहिजे:">
+<!ENTITY clientAuthAsk.message2 "ओळखण्याकरीता प्रमाणपत्र निवडा:">
+<!ENTITY clientAuthAsk.message3 "निवडलेल्या प्रमाणपत्राचे तपशील:">
+
+<!ENTITY pkcs12.setpassword.title  "प्रमाणपत्राचे प्रतिकृत पासवर्ड निवडा">
+<!ENTITY pkcs12.setpassword.message  "आपण येथे निश्चित केलेले पासवर्डआपली प्रतिकृती फाइलचे संरक्षण करते.  प्रतिकृतीकरीता आपण पासवर्ड निश्चित केला पाहिजे.">
+<!ENTITY pkcs12.setpassword.label1 "प्रतिकृती पासवर्ड प्रमाणपत्र:">
+<!ENTITY pkcs12.setpassword.label2 "प्रतिकृती पासवर्ड प्रमाणपत्र (पुन्हा):">
+<!ENTITY pkcs12.setpassword.reminder "महत्वाचे: आपण प्रतिकृती पासवर्ड प्रमाणपत्र विसरलात तर याची प्रतिकृती पुनःस्थापित करता येणार नाही.  कृपया सुरक्षित ठिकाणी त्याची नोंद करा.">
+
+<!ENTITY chooseToken.title  "टोकन संवाद निवडा">
+<!ENTITY chooseToken.message1 "कृपया टोकन निवडा.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "व्यक्तिगत कळ निर्माण करत आहे">
+<!ENTITY createCertInfo.msg1 "व्यक्तिगत कळ निर्माण करत आहे… याला काहीक मिनिटे लागेल…">
+<!ENTITY createCertInfo.msg2 "कृपया थांबा…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "सुरक्षीत टोकन अधिप्रमाणता">
+<!ENTITY protectedAuth.msg "टोकन अधिप्रमाणीत करा. अधिप्रमाणन कार्यपद्धती टोकनच्या प्रकारावर अवलंबून आहे.">
+<!ENTITY protectedAuth.tokenName.label "टोकन:">

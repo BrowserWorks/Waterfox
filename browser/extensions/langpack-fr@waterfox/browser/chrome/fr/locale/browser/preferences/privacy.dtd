@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Protection contre le pistage">
+<!ENTITY  trackingProtection2.description      "Le pistage correspond à la collecte de vos données de navigation sur plusieurs sites web. Le pistage peut servir à établir un profil et afficher du contenu en rapport avec votre navigation et vos données personnelles.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Utiliser la protection contre le pistage pour bloquer les traqueurs connus">
+<!ENTITY  trackingProtectionAlways.label       "Toujours">
+<!ENTITY  trackingProtectionAlways.accesskey   "T">
+<!ENTITY  trackingProtectionPrivate.label      "Uniquement dans les fenêtres privées">
+<!ENTITY  trackingProtectionPrivate.accesskey  "U">
+<!ENTITY  trackingProtectionNever.label        "Jamais">
+<!ENTITY  trackingProtectionNever.accesskey    "J">
+<!ENTITY  trackingProtectionLearnMore.label    "En savoir plus">
+<!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Utiliser la protection contre le pistage dans les fenêtres de navigation privée">
+<!ENTITY trackingProtectionPBM5.accesskey     "i">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Utiliser la protection contre le pistage en navigation privée pour bloquer les traqueurs connus">
+<!ENTITY trackingProtectionPBM6.accesskey     "i">
+<!ENTITY trackingProtectionPBMLearnMore.label "En savoir plus">
+<!ENTITY changeBlockList2.label               "Modifier les listes de blocage…">
+<!ENTITY changeBlockList2.accesskey           "b">
+
+<!ENTITY  doNotTrack.description        "Envoyer aux sites web un signal « Ne pas me pister » indiquant que vous ne souhaitez pas être pisté">
+<!ENTITY  doNotTrack.learnMore.label    "En savoir plus">
+<!ENTITY  doNotTrack.default.label      "Seulement lorsque la protection contre le pistage est utilisée">
+<!ENTITY  doNotTrack.always.label       "Toujours">
+
+<!ENTITY  history.label                 "Historique">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  addressBar.label              "Barre d’adresse">
+<!ENTITY  addressBar.suggest.label      "Lors de l’utilisation de la barre d’adresse, suggérer">
+<!ENTITY  locbar.history2.label         "Historique de navigation">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.bookmarks.label        "Marque-pages">
+<!ENTITY  locbar.bookmarks.accesskey    "M">
+<!ENTITY  locbar.openpage.label         "Onglets ouverts">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Recherches similaires du moteur de recherche par défaut">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "Modifier les préférences pour les suggestions de recherche">
+
+<!ENTITY  acceptCookies2.label          "Accepter les cookies">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Accepter les cookies tiers :">
+<!ENTITY  acceptThirdParty.pre.accesskey  "e">
+<!ENTITY  acceptThirdParty.always.label   "toujours">
+<!ENTITY  acceptThirdParty.never.label    "jamais">
+<!ENTITY  acceptThirdParty.visited.label  "depuis les sites visités">
+
+<!ENTITY  keepUntil.label               "Les conserver jusqu’à :">
+<!ENTITY  keepUntil.accesskey           "L">
+
+<!ENTITY  expire.label                  "leur expiration">
+<!ENTITY  close.label                   "la fermeture de &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Exceptions…">
+<!ENTITY  cookieExceptions.accesskey    "x">
+
+<!ENTITY  showCookies.label             "Afficher les cookies…">
+<!ENTITY  showCookies.accesskey         "k">
+
+<!ENTITY  historyHeader2.pre.label         "Règles de conservation">
+<!ENTITY  historyHeader2.pre.accesskey     "R">
+<!ENTITY  historyHeader.remember.label     "Conserver l’historique">
+<!ENTITY  historyHeader.dontremember.label "Ne jamais conserver l’historique">
+<!ENTITY  historyHeader.custom.label       "Utiliser les paramètres personnalisés pour l’historique">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; conservera les données de navigation, les téléchargements, les formulaires et l’historique de recherche, et les cookies des sites visités.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Vous voulez peut-être ">
+<!ENTITY  rememberActions.clearHistory.label  "effacer votre historique récent">
+<!ENTITY  rememberActions.middle.label        ", ou ">
+<!ENTITY  rememberActions.removeCookies.label "supprimer des cookies spécifiques">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; utilisera les mêmes paramètres que pour la navigation privée et ne conservera aucun historique de votre navigation.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Vous voulez peut-être ">
+<!ENTITY  dontrememberActions.clearHistory.label "effacer la totalité de l’historique actuel">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Toujours utiliser le mode de navigation privée">
+<!ENTITY  privateBrowsingPermanent2.accesskey "i">
+
+<!ENTITY  rememberHistory2.label      "Conserver l’historique de navigation et des téléchargements">
+<!ENTITY  rememberHistory2.accesskey  "C">
+
+<!ENTITY  rememberSearchForm.label       "Conserver l’historique des recherches et des formulaires">
+<!ENTITY  rememberSearchForm.accesskey   "n">
+
+<!ENTITY  clearOnClose.label             "Vider l’historique lors de la fermeture de &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "V">
+
+<!ENTITY  clearOnCloseSettings.label     "Paramètres…">
+<!ENTITY  clearOnCloseSettings.accesskey "P">
+
+<!ENTITY  browserContainersLearnMore.label      "En savoir plus">
+<!ENTITY  browserContainersEnabled.label        "Activer les onglets contextuels">
+<!ENTITY  browserContainersEnabled.accesskey    "g">
+<!ENTITY  browserContainersSettings.label        "Paramètres…">
+<!ENTITY  browserContainersSettings.accesskey    "s">

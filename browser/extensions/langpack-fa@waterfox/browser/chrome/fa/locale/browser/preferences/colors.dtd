@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "رنگ‌ها">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "رونویسی رنگ‌های مشخص شده توسط صفحه با انتخاب‌های بالای من:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "ر">
+
+<!ENTITY  overrideDefaultPageColors.always.label "همیشه">
+<!ENTITY  overrideDefaultPageColors.auto.label   "تنها تم با کنتراست بالا">
+<!ENTITY  overrideDefaultPageColors.never.label  "هرگز">
+
+<!ENTITY  color                           "متن و پس‌زمینه">
+<!ENTITY  textColor.label                 "متن:">
+<!ENTITY  textColor.accesskey             "م">
+<!ENTITY  backgroundColor.label           "پس‌زمینه:">
+<!ENTITY  backgroundColor.accesskey       "پ">
+<!ENTITY  useSystemColors.label           "استفاده از رنگ‌های سیستم">
+<!ENTITY  useSystemColors.accesskey       "س">
+
+<!ENTITY  underlineLinks.label            "زیرخط‌دار کردن پیوندها">
+<!ENTITY  underlineLinks.accesskey        "ز">
+<!ENTITY  links                           "رنگ پیوندها">
+<!ENTITY  linkColor.label                 "پیوندهای بازدید نشده:">
+<!ENTITY  linkColor.accesskey             "پ">
+<!ENTITY  visitedLinkColor.label          "پیوندهای بازدید شده:">
+<!ENTITY  visitedLinkColor.accesskey      "ب">

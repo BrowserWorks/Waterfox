@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "အတ်အွန်အားတပ်ဆင်">
+<!ENTITY intro           "အောက်ပါအတ်အွန်ဖြင့် သင်၏ကွန်ပျူတာအတွင်းမှ ပရိုဂရမ်တစ်ခုသည် &brandShortName; အားပြင်ဆင်ရန်ရှိနေသည် :">
+<!ENTITY warning         "ပေါင်းထည့်ချက်များကို သင်စိတ်ချတဲ့ ရေးသားသူများ ထံမှသာ ​တပ်ဆင်ပါ။">
+<!ENTITY allow           "တပ်ဆင်ခြင်းအားခွင့်ပြုပါ။">
+<!ENTITY later           "အတ်အွန်ထိန်းချုပ်ခြင်းနေရာသို့သွားပြီး သင်စိတ်ပြောင်းတဲ့အခါတိုင်းဖြုတ်နိုင်တပ်နိုင်ပါသည်။">
+<!ENTITY continue        "ဆက်လုပ်ပါ">
+<!ENTITY restartMessage  "ဤအတ်အွန်အားတပ်ဆင်ရန်အတွက် &brandShortName; အားပြန်စရန်လိုအပ်သည်။">
+<!ENTITY restartButton   "&brandShortName; ကို ပြန်ဖွင့်ပါ">
+<!ENTITY cancelButton    "မဆောင်ရွက်တော့ပါ">

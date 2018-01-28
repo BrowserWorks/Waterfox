@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "പ്രിന്റര്‍ ഗുണവിശേഷതകള്‍">
+
+<!ENTITY paperInput.label "പേപ്പര്‍ വലിപ്പം ">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "ജോലിയുടെ പേര്:">
+<!ENTITY jobTitleInput.accesskey "ല">
+
+<!ENTITY colorGroup.label "നിറം ">
+<!ENTITY grayRadio.label "GreyScale">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "നിറം ">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "പേപ്പറിന്റെ അറ്റത്തുനിന്നും മാര്‍ജിനിലേക്കുള്ള വിടവ്‌ ">
+<!ENTITY topInput.label "മുകള്‍ഭാഗം:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "അടിവശം">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "ഇടത്‌">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "വലത്‌">
+<!ENTITY rightInput.accesskey "R">

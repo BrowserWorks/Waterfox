@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Endre hovedpassord">
+<!ENTITY setPassword.tokenName.label "Sikkerhetsenhet">
+<!ENTITY setPassword.oldPassword.label "Nåværende passord:">
+<!ENTITY setPassword.newPassword.label "Nytt passord:">
+<!ENTITY setPassword.reenterPassword.label "Nytt passord (igjen):">
+<!ENTITY setPassword.meter.label "Kvalitetsmåling av passord">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Tilbakestill">
+<!ENTITY resetPassword.title  "Tilbakestill hovedpassord">
+<!ENTITY resetPassword.text  "Dersom du tilbakestiller hovedpassordet vil alle lagrede nettside- og e-postpassord, skjemadata, personlige sertifikater og private nøkler gå tapt. Er du sikker på at du vil tilbakestille hovedpassordet?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Laster ned sertifikat">
+<!ENTITY downloadCert.message1 "Du er forespurt å ha tillit til en ny sertifikatutsteder (CA)">
+<!ENTITY downloadCert.trustSSL "Stol på denne CA-en til å identifisere nettsider.">
+<!ENTITY downloadCert.trustEmail "Stol på denne CA-en til å identifisere e-postbrukere.">
+<!ENTITY downloadCert.trustObjSign "Stol på denne CA-en til å identifisere programutviklere.">
+<!ENTITY downloadCert.message3 "Før du velger å ha tillit til denne sertifikatutstederen (CA), bør du undersøke dens sertifikat og dens fremgangsmåter og prosedyrer.">
+<!ENTITY downloadCert.viewCert.label "Vis">
+<!ENTITY downloadCert.viewCert.text "Undersøk CA-sertifikat">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Forespørsel om brukeridentifikasjon">
+<!ENTITY clientAuthAsk.message1 "Dette nettstedet ønsker at du identifiserer deg selv med et sertifikat:">
+<!ENTITY clientAuthAsk.message2 "Velg sertifikat som du vil bruke som identifikasjon:">
+<!ENTITY clientAuthAsk.message3 "Detaljer om valgt sertifikat:">
+
+<!ENTITY pkcs12.setpassword.title  "Velg passord for sikkerhetskopi av sertifikater">
+<!ENTITY pkcs12.setpassword.message  "Passordet du bestemmer her vil beskytte sikkerhetskopien du nå oppretter. Du må skrive inn dette passordet for å fortsette med sikkerhetskopieringen.">
+<!ENTITY pkcs12.setpassword.label1 "Passord for sikkerhetskopi:">
+<!ENTITY pkcs12.setpassword.label2 "Passord for sikkerhetskopi (igjen):">
+<!ENTITY pkcs12.setpassword.reminder "Viktig: Dersom du glemmer passordet til sikkerhetskopien vil du ikke kunne få tilbake innholdet i sikkerhetskopien senere. Skriv det ned på et sikkert sted.">
+
+<!ENTITY chooseToken.title  "Velg symbol">
+<!ENTITY chooseToken.message1 "Velg symbol.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Genererer en privat nøkkel">
+<!ENTITY createCertInfo.msg1 "Nøkkeloppretting foregår … Dette kan ta en stund …">
+<!ENTITY createCertInfo.msg2 "Vent …">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Autentisering med beskyttet tegn">
+<!ENTITY protectedAuth.msg "Vennligst autentiser tegnet. Autentiseringsmetoden er avhengig av type signeringsenhet.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

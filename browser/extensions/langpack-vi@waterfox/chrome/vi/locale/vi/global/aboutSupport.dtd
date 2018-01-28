@@ -1,0 +1,187 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Thông tin Gỡ rối vấn đề">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Trang này chứa thông tin kĩ thuật có thể có ích khi bạn đang cố giải quyết một vấn đề. Nếu bạn đang tìm câu trả lời cho các câu hỏi thông thường về &brandShortName;, hãy xem <a id='supportLink'>trang web hỗ trợ</a> của chúng tôi.">
+
+<!ENTITY aboutSupport.crashes.title "Trình báo lỗi">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Định danh Báo cáo">
+<!ENTITY aboutSupport.crashes.sendDate "Đã gửi">
+<!ENTITY aboutSupport.crashes.allReports "Tất cả các báo cáo lỗi">
+<!ENTITY aboutSupport.crashes.noConfig "Ứng dụng này chưa được thiết lập để hiển thị các báo cáo lỗi.">
+
+<!ENTITY aboutSupport.extensionsTitle "Phần mở rộng">
+<!ENTITY aboutSupport.extensionName "Tên">
+<!ENTITY aboutSupport.extensionEnabled "Kích hoạt">
+<!ENTITY aboutSupport.extensionVersion "Phiên bản">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "Các tính năng thử nghiệm">
+<!ENTITY aboutSupport.experimentName "Tên">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Mô tả">
+<!ENTITY aboutSupport.experimentActive "Đã bật">
+<!ENTITY aboutSupport.experimentEndDate "Ngày kết thúc">
+<!ENTITY aboutSupport.experimentHomepage "Trang chủ">
+
+
+<!ENTITY aboutSupport.appBasicsTitle "Cơ bản về ứng dụng">
+<!ENTITY aboutSupport.appBasicsName "Tên">
+<!ENTITY aboutSupport.appBasicsVersion "Phiên bản">
+<!ENTITY aboutSupport.appBasicsBuildID "Build ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Kênh cập nhật">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Lịch sử cập nhật">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Hiển thị lịch sử cập nhật">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Thư mục Hồ sơ">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Thư mục Hồ sơ">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Phần bổ trợ Đã kích hoạt">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Cấu hình Bản xây dựng">
+<!ENTITY aboutSupport.appBasicsUserAgent "Chuỗi đại diện Người dùng">
+
+<!ENTITY aboutSupport.appBasicsMemoryUse "Sử dụng Bộ nhớ">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Các service worker đã đăng ký">
+
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Các cửa sổ đa tiến trình">
+
+
+
+
+<!ENTITY aboutSupport.showDir.label "Mở Thư mục">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Hiện trong Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Các tùy chọn quan trọng đã được sửa đổi">
+<!ENTITY aboutSupport.modifiedPrefsName "Tên">
+<!ENTITY aboutSupport.modifiedPrefsValue "Giá trị">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Tinh chỉnh user.js">
+<!ENTITY aboutSupport.userJSDescription "Thư mục hồ sơ của bạn chứa một tập tin <a id='prefs-user-js-link'>user.js</a>, bao gồm các tùy chỉnh không được tạo bởi &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Các tùy chọn quan trọng đã khóa">
+<!ENTITY aboutSupport.lockedPrefsName "Tên">
+<!ENTITY aboutSupport.lockedPrefsValue "Giá trị">
+
+<!ENTITY aboutSupport.graphicsTitle "Đồ họa">
+
+
+
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "Tính năng Truy cập">
+<!ENTITY aboutSupport.a11yActivated "Được kích hoạt">
+<!ENTITY aboutSupport.a11yForceDisabled "Ngăn các tùy chọn về khả năng truy cập">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Phiên bản Thư viện">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Lược sử Cài đặt">
+<!ENTITY aboutSupport.updateHistoryTitle "Lịch sử cập nhật">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Chép văn bản vào bảng tạm">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Chép dữ liệu thô vào bảng tạm">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "Thử dùng Chế độ an toàn">
+<!ENTITY aboutSupport.restartInSafeMode.label "Khởi động lại, tắt hết các tiện ích…">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsPerformance "Performance">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiles">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Safe Mode">
+
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostics">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Failure Log">
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Features">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verify Integrity">
+
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

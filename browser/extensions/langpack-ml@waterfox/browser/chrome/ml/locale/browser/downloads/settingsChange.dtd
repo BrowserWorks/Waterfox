@@ -1,0 +1,7 @@
+<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  settingsChangePreferences.label  "&brandShortName;-ന്റെ മുന്‍ഗണനകളില്‍ പ്രയോഗങ്ങളുടെ റ്റാബ് ഉപയോഗിച്ചു് നിങ്ങള്‍ക്കു് ക്രമികരണങ്ങള്‍ മാറ്റുവാന്‍ സാധിക്കുന്നു.">
+<!ENTITY  settingsChangeOptions.label      "&brandShortName;-നുള്ള ഉപാധിയില്‍  പ്രയോഗങ്ങളുടെ റ്റാബ് ഉപയോഗിച്ചു് നിങ്ങള്‍ക്കു് ക്രമികരണങ്ങള്‍ മാറ്റുവാന്‍ സാധിക്കുന്നു.">

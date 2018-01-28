@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "প্রধান পাসওয়ার্ড পরিবর্তন করুন">
+<!ENTITY setPassword.tokenName.label "নিরাপত্তা ডিভাইস">
+<!ENTITY setPassword.oldPassword.label "বর্তমান পাসওয়ার্ড:">
+<!ENTITY setPassword.newPassword.label "নতুন পাসওয়ার্ড:">
+<!ENTITY setPassword.reenterPassword.label "নতুন পাসওয়ার্ড (পুনরায় লিখুন):">
+<!ENTITY setPassword.meter.label "পাসওয়ার্ডের গুণমানের মাপকাঠি">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "পুনরায় নির্ধারণ">
+<!ENTITY resetPassword.title  "প্রধান পাসওয়ার্ড পুনরায় নির্ধারণ করুন">
+<!ENTITY resetPassword.text  "প্রধান পাসওয়ার্ড পুনরায় নির্ধারণ করা হলে আপনার দ্বারা সংরক্ষিত সমস্ত ওয়েব ও ই-মেইল পাসওয়ার্ড, ফর্মের তথ্য, ব্যক্তিগত সার্টিফিকেট ও কি (key) মুছে যাবে। আপনি কি নিশ্চিতরূপে প্রধান পাসওয়ার্ড পুনরায় নির্ধারণ করতে ইচ্ছুক?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "সার্টিফিকেট ডাউনলোড করা হচ্ছে">
+<!ENTITY downloadCert.message1 "একটি নতুন সার্টিফিকেট অথোরিটিকে (CA) বিশ্বাস করার অনুরোধ জানানো হয়েছে।">
+<!ENTITY downloadCert.trustSSL "ওয়েব-সাইট সনাক্ত করতে এই CA-টি বিশ্বাস করা হবে।">
+<!ENTITY downloadCert.trustEmail "ই-মেইল ব্যবহারকারীদের সনাক্ত করতে এই CA-টি বিশ্বাস করা হবে।">
+<!ENTITY downloadCert.trustObjSign "সফ্টওয়্যার নির্মাতাদের সনাক্ত করতে এই CA-টি বিশ্বাস করা হবে।">
+<!ENTITY downloadCert.message3 "কোনো ধরনের কর্মের জন্য এই CA-টি বিশ্বাস করার পূর্বে এর সার্টিফিকেট, নিয়মনীতি ও কর্ম প্রণালী (উপলব্ধ হলে) পরীক্ষা করা বাঞ্ছনীয়।">
+<!ENTITY downloadCert.viewCert.label "প্রদর্শন">
+<!ENTITY downloadCert.viewCert.text "CA সার্টিফিকেট পরীক্ষা করুন">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "ব্যবহারকারীর পরিচয়প্রমাণের অনুরোধ">
+<!ENTITY clientAuthAsk.message1 "এই সাইটে আপনাকে একটি সার্টিফিকেটের সাহায্যে নিজের পরিচয় প্রমাণ করার অনুরোধ জানানো হয়েছে:">
+<!ENTITY clientAuthAsk.message2 "পরিচয় প্রমাণ হিসাবে পেশ করার জন্য একটি সার্টিফিকেট প্রস্তুত করুন:">
+<!ENTITY clientAuthAsk.message3 "নির্বাচিত সার্টিফিকেটের বিবরণ:">
+
+<!ENTITY pkcs12.setpassword.title  "সার্টিফিকেট ব্যাক-আপ পাসওয়ার্ড নির্বাচন করুন">
+<!ENTITY pkcs12.setpassword.message  "এই স্থানে স্থাপিত সার্টিফিকেট ব্যাক-আপ পাসওয়ার্ডের দ্বারা যে ব্যাক-আপ ফাইলটি নির্মাণ করা হবে তা সুরক্ষিত রাখা হবে।  ব্যাক-আপ কর্মে এগিয়ে যেতে হলে এই পাসওয়ার্ডটি নির্ধারণ করা আবশ্যক।">
+<!ENTITY pkcs12.setpassword.label1 "সার্টিফিকেট ব্যাক-আপ পাসওয়ার্ড:">
+<!ENTITY pkcs12.setpassword.label2 "সার্টিফিকেট ব্যাক-আপ পাসওয়ার্ড (পুনরায়):">
+<!ENTITY pkcs12.setpassword.reminder "গুরুত্বপূর্ণ: সার্টিফিকেট ব্যাক-আপ পাসওয়ার্ড হারিয়ে গেলে আপনি এই ব্যাক-আপ পুনরুদ্ধার করতে সক্ষম হবেন না। অনুগ্রহ করে এই পাসওয়ার্ডটি কোনো সুরক্ষিত স্থানে সংরক্ষণ করুন।">
+
+<!ENTITY chooseToken.title  "টোকেন নির্বাচন সংক্রান্ত ডায়লগ">
+<!ENTITY chooseToken.message1 "অনুগ্রহ করে একটি টোকেন নির্বাচন করুন।">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "ব্যক্তিগত কি (key) উৎপন্ন করার প্রণালী">
+<!ENTITY createCertInfo.msg1 "কি (Key) উৎপন্ন করা হচ্ছে... এই কাজে কিছু সময় ব্যয় হবে....">
+<!ENTITY createCertInfo.msg2 "অনুগ্রহ করে অপেক্ষা করুন...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "সুরক্ষিত টোকেন অনুমোদন">
+<!ENTITY protectedAuth.msg "অনুগ্রহ করে টোকেন সহযোগে অনুমোদন করুন। ব্যবহৃত টোকেনের উপর অনুমোদন পদ্ধতি নির্ভরশীল।">
+<!ENTITY protectedAuth.tokenName.label "টোকেন:">

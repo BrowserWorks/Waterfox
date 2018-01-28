@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Debugger strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (debuggerUI.closeButton.tooltip): This is the tooltip for
+  -  the button that closes the debugger UI. -->
+<!ENTITY debuggerUI.closeButton.tooltip "Κλείσιμο">
+
+<!-- LOCALIZATION NOTE (debuggerUI.panesButton.tooltip): This is the tooltip for
+  -  the button that toggles the panes visible or hidden in the debugger UI. -->
+<!ENTITY debuggerUI.panesButton.tooltip "(Απ)ενεργοποίηση προβολών">
+
+<!-- LOCALIZATION NOTE (debuggerUI.blackBoxMessage.label): This is the message
+  - displayed to users when they select a black boxed source from the sources
+  - list in the debugger. -->
+<!ENTITY debuggerUI.blackBoxMessage.label "Αυτή η πηγή είναι σε μαύρο κουτί: τα σημεία διακοπής της είναι ανενεργή και γίνεται παράκαμψή της.">
+
+<!-- LOCALIZATION NOTE (debuggerUI.blackBoxMessage.unBlackBoxButton): This is
+  - the text displayed in the button to stop black boxing the currently selected
+  - source. -->
+<!ENTITY debuggerUI.blackBoxMessage.unBlackBoxButton "Διακοπή τοποθέτησης πηγής σε μαύρο κουτί">
+
+<!-- LOCALIZATION NOTE (debuggerUI.optsButton.tooltip): This is the tooltip for
+  -  the button that opens up an options context menu for the debugger UI. -->
+<!ENTITY debuggerUI.optsButton.tooltip  "Επιλογές αποσφαλμάτωσης">
+
+<!-- LOCALIZATION NOTE (debuggerUI.sources.blackBoxTooltip): This is the tooltip
+  -  for the button that black boxes the selected source. -->
+<!ENTITY debuggerUI.sources.blackBoxTooltip "(Απ)ενεργοποίηση τοποθέτησης σε μαύρο κουτί">
+
+<!-- LOCALIZATION NOTE (debuggerUI.sources.prettyPrint): This is the tooltip for the
+  -  button that pretty prints the selected source. -->
+<!ENTITY debuggerUI.sources.prettyPrint "Ωραιοποίηση πηγής">
+
+<!-- LOCALIZATION NOTE (debuggerUI.autoPrettyPrint): This is the label for the
+  -  checkbox that toggles auto pretty print. -->
+<!ENTITY debuggerUI.autoPrettyPrint     "Αυτόματη ωραιοποίηση ελαχιστοποιημένων πηγών">
+<!ENTITY debuggerUI.autoPrettyPrint.accesskey "Ω">
+
+<!-- LOCALIZATION NOTE (debuggerUI.sources.toggleBreakpoints): This is the tooltip for the
+  -  button that toggles all breakpoints for all sources. -->
+<!ENTITY debuggerUI.sources.toggleBreakpoints "Ενεργοποίηση/απενεργοποίηση όλων των σημείων διακοπής">
+
+<!-- LOCALIZATION NOTE (debuggerUI.clearButton): This is the label for
+  -  the button that clears the collected tracing data in the tracing tab. -->
+<!ENTITY debuggerUI.clearButton "Εκκαθάριση">
+
+<!-- LOCALIZATION NOTE (debuggerUI.clearButton.tooltip): This is the tooltip for
+  -  the button that clears the collected tracing data in the tracing tab. -->
+<!ENTITY debuggerUI.clearButton.tooltip "Εκκαθάριση συλλεγόμενων στοιχείων">
+
+<!-- LOCALIZATION NOTE (debuggerUI.pauseExceptions): This is the label for the
+  -  checkbox that toggles pausing on exceptions. -->
+<!ENTITY debuggerUI.pauseExceptions           "Παύση στις εξαιρέσεις">
+<!ENTITY debuggerUI.pauseExceptions.accesskey "Ε">
+
+<!-- LOCALIZATION NOTE (debuggerUI.ignoreCaughtExceptions): This is the label for the
+  -  checkbox that toggles ignoring caught exceptions. -->
+<!ENTITY debuggerUI.ignoreCaughtExceptions           'Παράβλεψη "πιασμένων" εκφράσεων'>
+<!ENTITY debuggerUI.ignoreCaughtExceptions.accesskey "Π">
+
+<!-- LOCALIZATION NOTE (debuggerUI.showPanesOnInit): This is the label for the
+  -  checkbox that toggles visibility of panes when opening the debugger. -->
+<!ENTITY debuggerUI.showPanesOnInit           "Εμφάνιση προβολών στην εκκίνηση">
+<!ENTITY debuggerUI.showPanesOnInit.accesskey "Ε">
+
+<!-- LOCALIZATION NOTE (debuggerUI.showVarsFilter): This is the label for the
+  -  checkbox that toggles visibility of a designated variables filter box. -->
+<!ENTITY debuggerUI.showVarsFilter           "Εμφάνιση κουτιού φιλτραρίσματος μεταβλητών">
+<!ENTITY debuggerUI.showVarsFilter.accesskey "Μ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.showOnlyEnum): This is the label for the
+  -  checkbox that toggles visibility of hidden (non-enumerable) variables and
+  -  properties in stack views. The "enumerable" flag is a state of a property
+  -  defined in JavaScript. When in doubt, leave untranslated. -->
+<!ENTITY debuggerUI.showOnlyEnum           "Εμφάνιση μόνο αριθμήσιμων ιδιοτήτων">
+<!ENTITY debuggerUI.showOnlyEnum.accesskey "Ι">
+
+<!-- LOCALIZATION NOTE (debuggerUI.showOriginalSource): This is the label for
+  -  the checkbox that toggles the display of original or sourcemap-derived
+  -  sources. -->
+<!ENTITY debuggerUI.showOriginalSource           "Εμφάνιση αρχικών πηγών">
+<!ENTITY debuggerUI.showOriginalSource.accesskey "Α">
+
+<!-- LOCALIZATION NOTE (debuggerUI.autoBlackBox): This is the label for
+  -  the checkbox that toggles whether sources that we suspect are minified are
+  -  automatically black boxed or not. -->
+<!ENTITY debuggerUI.autoBlackBox           "Αυτόματη προσθήκη ελαχιστοποιημένων πηγών σε μαύρο κουτί">
+<!ENTITY debuggerUI.autoBlackBox.accesskey "Κ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchPanelOperators): This is the text that
+  -  appears in the filter panel popup as a header for the operators part. -->
+<!ENTITY debuggerUI.searchPanelOperators    "Λειτουργοί:">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchFile): This is the text that appears
+  -  in the source editor's context menu for the scripts search operation. -->
+<!ENTITY debuggerUI.searchFile           "Φιλτράρισμα σεναρίων">
+<!ENTITY debuggerUI.searchFile.key       "Ρ">
+<!ENTITY debuggerUI.searchFile.altkey    "Λ">
+<!ENTITY debuggerUI.searchFile.accesskey "Ρ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchGlobal): This is the text that appears
+  -  in the source editor's context menu for the global search operation. -->
+<!ENTITY debuggerUI.searchGlobal           "Αναζήτηση σε όλα τα αρχεία">
+<!ENTITY debuggerUI.searchGlobal.key       "Α">
+<!ENTITY debuggerUI.searchGlobal.accesskey "Α">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchFunction): This is the text that appears
+  -  in the source editor's context menu for the function search operation. -->
+<!ENTITY debuggerUI.searchFunction           "Αναζήτηση ορισμού συνάρτησης">
+<!ENTITY debuggerUI.searchFunction.key       "Ο">
+<!ENTITY debuggerUI.searchFunction.accesskey "Ο">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchToken): This is the text that appears
+  -  in the source editor's context menu for the token search operation. -->
+<!ENTITY debuggerUI.searchToken           "Εύρεση">
+<!ENTITY debuggerUI.searchToken.key       "Ε">
+<!ENTITY debuggerUI.searchToken.accesskey "Ε">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchLine): This is the text that appears
+  -  in the source editor's context menu for the line search operation. -->
+<!ENTITY debuggerUI.searchGoToLine           "Μετάβαση στη σειρά…">
+<!ENTITY debuggerUI.searchGoToLine.key       "Σ">
+<!ENTITY debuggerUI.searchGoToLine.accesskey "Σ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.searchVariable): This is the text that appears
+  -  in the source editor's context menu for the variables search operation. -->
+<!ENTITY debuggerUI.searchVariable           "Φιλτράρισμα μεταβλητών">
+<!ENTITY debuggerUI.searchVariable.key       "Μ">
+<!ENTITY debuggerUI.searchVariable.accesskey "Μ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.focusVariables): This is the text that appears
+  -  in the source editor's context menu for the variables focus operation. -->
+<!ENTITY debuggerUI.focusVariables           "Εστίαση στο δέντρο μεταβλητών">
+<!ENTITY debuggerUI.focusVariables.key       "Μ">
+<!ENTITY debuggerUI.focusVariables.accesskey "Μ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.condBreakPanelTitle): This is the text that
+  -  appears in the conditional breakpoint panel popup as a description. -->
+<!ENTITY debuggerUI.condBreakPanelTitle "Αυτό το σημείο διακοπής θα σταματήσει την εκτέλεση μόνο αν η ακόλουθη έκφραση είναι αληθής">
+
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuBreak): This is the text that
+  -  appears in the source editor context menu for adding a breakpoint. -->
+<!ENTITY debuggerUI.seMenuBreak     "Προσθήκη σημείου διακοπής">
+<!ENTITY debuggerUI.seMenuBreak.key "Δ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuCondBreak): This is the text that
+  -  appears in the source editor context menu for adding a conditional
+  -  breakpoint. -->
+<!ENTITY debuggerUI.seMenuCondBreak     "Προσθήκη σημείου διακοπής υπό όρους">
+<!ENTITY debuggerUI.seMenuCondBreak.key "Δ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuBreak): This is the text that
+  -  appears in the source editor context menu for editing a breakpoint. -->
+<!ENTITY debuggerUI.seEditMenuCondBreak     "Επεξεργασία σημείου διακοπής υπό όρους">
+<!ENTITY debuggerUI.seEditMenuCondBreak.key "Δ">
+
+<!-- LOCALIZATION NOTE (debuggerUI.tabs.*): This is the text that
+  -  appears in the debugger's side pane tabs. -->
+<!ENTITY debuggerUI.tabs.workers        "Workers">
+<!ENTITY debuggerUI.tabs.sources        "Πηγές">
+<!ENTITY debuggerUI.tabs.traces         "Ίχνη">
+<!ENTITY debuggerUI.tabs.callstack      "Στοίβα κλήσεων">
+<!ENTITY debuggerUI.tabs.variables      "Μεταβλητές">
+<!ENTITY debuggerUI.tabs.events         "Γεγονότα">
+
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuAddWatch): This is the text that
+  -  appears in the source editor context menu for adding an expression. -->
+<!ENTITY debuggerUI.seMenuAddWatch      "Επιλογή για έκφραση παρακολούθησης">
+<!ENTITY debuggerUI.seMenuAddWatch.key  "Ε">
+
+<!-- LOCALIZATION NOTE (debuggerUI.addWatch): This is the text that
+  -  appears in the watch expressions context menu for adding an expression. -->
+<!ENTITY debuggerUI.addWatch            "Προσθήκη έκφρασης παρακολούθησης">
+<!ENTITY debuggerUI.addWatch.accesskey  "Ε">
+
+<!-- LOCALIZATION NOTE (debuggerUI.removeWatch): This is the text that
+  -  appears in the watch expressions context menu for removing all expressions. -->
+<!ENTITY debuggerUI.removeAllWatch           "Αφαίρεση όλων των εκφράσεων παρακολούθησης">
+<!ENTITY debuggerUI.removeAllWatch.key       "Ε">
+<!ENTITY debuggerUI.removeAllWatch.accesskey "Ε">
+
+<!-- LOCALIZATION NOTE (debuggerUI.stepping): These are the keycodes that
+  -  control the stepping commands in the debugger (continue, step over,
+  -  step in and step out). -->
+<!ENTITY debuggerUI.stepping.resume1    "VK_F8">
+<!ENTITY debuggerUI.stepping.stepOver1  "VK_F10">
+<!ENTITY debuggerUI.stepping.stepIn1    "VK_F11">
+<!ENTITY debuggerUI.stepping.stepOut1   "VK_F11">
+
+<!-- LOCALIZATION NOTE (debuggerUI.context.newTab):  This is the label
+  -  for the Open in New Tab menu item displayed in the context menu of the
+  -  debugger sources side menu. This should be the same as
+  -  netmonitorUI.context.newTab  -->
+<!ENTITY debuggerUI.context.newTab           "Άνοιγμα σε νέα καρτέλα">
+<!ENTITY debuggerUI.context.newTab.accesskey "Α">
+
+<!-- LOCALIZATION NOTE (debuggerUI.context.copyUrl): This is the label displayed
+  -  on the context menu that copies the selected request's url. This should be
+  -  the same as netmonitorUI.context.copyUrl -->
+<!ENTITY debuggerUI.context.copyUrl           "Αντιγραφή URL">
+<!ENTITY debuggerUI.context.copyUrl.accesskey "Α">
+<!ENTITY debuggerUI.context.copyUrl.key "Α">

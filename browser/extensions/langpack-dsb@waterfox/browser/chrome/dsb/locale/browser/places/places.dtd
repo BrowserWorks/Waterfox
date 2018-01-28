@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Biblioteka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizěrowaś">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Waše cytańske znamjenja organizěrowaś">
+
+<!ENTITY file.close.label               "Zacyniś">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Naglědy">
+<!ENTITY views.accesskey                "N">
+<!ENTITY views.tooltip                  "Waš naglěd wuměniś">
+<!ENTITY view.columns.label             "Słupy pokazaś">
+<!ENTITY view.columns.accesskey         "u">
+<!ENTITY view.sort.label                "Sortěrowaś">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Njesortěrowany">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Sortěrowański pórěd A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sortěrowański pórěd Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Cytańske znamjenja z HTML importěrowaś…">
+<!ENTITY importBookmarksFromHTML.accesskey "C">
+<!ENTITY exportBookmarksToHTML.label       "Cytańske znamjenja do HTML eksportěrowaś…">
+<!ENTITY exportBookmarksToHTML.accesskey   "z">
+<!ENTITY importOtherBrowser.label          "Daty z drugego wobglědowaka importěrowaś…">
+<!ENTITY importOtherBrowser.accesskey      "D">
+
+<!ENTITY cmd.backup.label               "Zawěsćiś…">
+<!ENTITY cmd.backup.accesskey           "Z">
+<!ENTITY cmd.restore2.label             "Wótnowiś">
+<!ENTITY cmd.restore2.accesskey         "n">
+<!ENTITY cmd.restoreFromFile.label      "Dataju wubraś…">
+<!ENTITY cmd.restoreFromFile.accesskey  "D">
+
+<!ENTITY cmd.deleteDomainData.label     "Toś to sedło zabyś">
+<!ENTITY cmd.deleteDomainData.accesskey "s">
+
+<!ENTITY cmd.open.label                  "Wócyniś">
+<!ENTITY cmd.open.accesskey              "c">
+<!ENTITY cmd.open_window.label           "W nowem woknje wócyniś">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "W nowem priwatnem woknje wócyniś">
+<!ENTITY cmd.open_private_window.accesskey "r">
+<!ENTITY cmd.open_tab.label              "W nowem rejtarku wócyniś">
+<!ENTITY cmd.open_tab.accesskey          "r">
+<!ENTITY cmd.open_all_in_tabs.label      "Wšykne w rejtarkach wócyniś">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "W">
+
+<!ENTITY cmd.properties.label      "Kakosći">
+<!ENTITY cmd.properties.accesskey  "K">
+
+<!ENTITY cmd.sortby_name.label              "Pó mjenje sortěrowaś">
+<!ENTITY cmd.sortby_name.accesskey          "m">
+<!ENTITY cmd.context_sortby_name.accesskey  "m">
+
+<!ENTITY cmd.new_bookmark.label            "Nowe cytańske znamje…">
+<!ENTITY cmd.new_bookmark.accesskey        "N">
+<!ENTITY cmd.new_folder.label              "Nowy zarědnik…">
+<!ENTITY cmd.new_folder.accesskey          "r">
+<!ENTITY cmd.context_new_folder.accesskey  "r">
+<!ENTITY cmd.new_separator.label           "Nowa źěleńska linija">
+<!ENTITY cmd.new_separator.accesskey       "l">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Dynamiske cytańske znamje znowego zacytaś">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "z">
+
+<!ENTITY cmd.moveBookmarks.label                  "Pśesunuś…">
+<!ENTITY cmd.moveBookmarks.accesskey              "P">
+
+<!ENTITY col.name.label          "Mě">
+<!ENTITY col.tags.label          "Wobznamjenja">
+<!ENTITY col.url.label           "Městno">
+<!ENTITY col.mostrecentvisit.label "Nejnowšy woglěd">
+<!ENTITY col.visitcount.label    "Licba woglědow">
+<!ENTITY col.description.label   "Wopisanje">
+<!ENTITY col.dateadded.label     "Pśidany">
+<!ENTITY col.lastmodified.label  "Slědna změna">
+
+<!ENTITY search.placeholder  "Pytaś">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importěrowaś a zawěsćiś">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Waše cytańske znamjenja importěrowaś a zawěsćiś">
+
+<!ENTITY backButton.tooltip  "Slědk hyś">
+
+<!ENTITY forwardButton.tooltip  "Doprědka hyś">
+
+<!ENTITY detailsPane.more.label "Wěcej">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Mjenjej">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "Zapisk wubraś, aby se jogo kakosći woglědali a wobźěłali">
+
+<!ENTITY view.label               "Naglěd">
+<!ENTITY view.accesskey           "N">
+<!ENTITY byDate.label             "Pó datumje">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Pó sedle">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "Pó nejcesćej woglědanych">
+<!ENTITY byMostVisited.accesskey  "h">
+<!ENTITY byLastVisited.label      "Pó ako slědny woglědanych">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "Pó datumje a sedle">
+<!ENTITY byDayAndSite.accesskey   "t">

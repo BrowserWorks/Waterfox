@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Pye-malo">
+
+<!ENTITY  blockPopups.label           "Geng dirica ma pye-malo">
+<!ENTITY  blockPopups.accesskey       "G">
+
+<!ENTITY  notificationsPolicy.label            "Jami angeya">
+<!ENTITY  notificationsPolicyLearnMore.label   "Nong ngec mapol">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "e">
+<!ENTITY  notificationsPolicyButton.label      "Yer…">
+<!ENTITY  notificationsDoNotDisturb.label      "Pe i yel an">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "e">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Pe ki binyuto gin angeya mo wang ma i nwoyo cako &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Ma kiweko woko…">
+<!ENTITY  popupExceptions.accesskey   "M">
+
+<!ENTITY  fontsAndColors.label        "Dit me coc &amp; rangi">
+
+<!ENTITY  defaultFont.label           "Dit coc makwongo:">
+<!ENTITY  defaultFont.accesskey       "D">
+<!ENTITY  defaultSize.label           "Dit:">
+<!ENTITY  defaultSize.accesskey       "D">
+
+<!ENTITY  advancedFonts.label         "Ma lamal…">
+<!ENTITY  advancedFonts.accesskey     "M">
+
+<!ENTITY  colors.label                "Rangi…">
+<!ENTITY  colors.accesskey            "R">
+
+
+<!ENTITY languages.label              "Leb">
+<!ENTITY chooseLanguage.label         "Yer leb ma imito pi yaro pot buk">
+<!ENTITY chooseButton.label           "Yer…">
+<!ENTITY chooseButton.accesskey       "e">
+
+<!ENTITY translateWebPages.label      "Kob gin manonge iye kakube">
+<!ENTITY translateWebPages.accesskey  "K">
+<!ENTITY translateExceptions.label    "Ma kiweko woko…">
+<!ENTITY translateExceptions.accesskey "a">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Ngat ma okobo aye">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Jami me DRM">
+
+<!ENTITY  playDRMContent.label         "Tuk jami me DRM">
+<!ENTITY  playDRMContent.accesskey     "T">
+<!ENTITY  playDRMContent.learnMore.label "Nong ngec mapol">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

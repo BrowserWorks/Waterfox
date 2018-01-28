@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Çökmə Hesabatları">
+<!ENTITY crashesUnsubmitted.label   "Göndərilməmiş Çökmə Hesabatları">
+<!ENTITY crashesSubmitted.label     "Göndərilmiş Çökmə Hesabatları">
+<!ENTITY id.heading                 "Hesabat kimliyi">
+<!ENTITY dateCrashed.heading        "Çökmə Tarixi">
+<!ENTITY dateSubmitted.heading      "Göndərilmə Tarixi">
+<!ENTITY noReports.label            "Hələki heç bir xəta hesabatı göndərilməyib.">
+<!ENTITY noConfig.label             "Bu proqram hələki çökmə hesabatı göstərməkçün nizamlanmayıb.<code>breakpad.reporturl</code> seçimi seçilmiş olmalıdır ">
+<!ENTITY clearAllReports.label      "Bütün hesabatları sil">

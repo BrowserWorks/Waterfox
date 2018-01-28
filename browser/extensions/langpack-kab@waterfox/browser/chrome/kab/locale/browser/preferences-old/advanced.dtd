@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Amatu">
+
+<!ENTITY accessibility.label             "Tuffart">
+
+<!ENTITY useCursorNavigation.label       "Seqdec yal tikelt tiqeffalin n tunigin i tikli deg usebter">
+<!ENTITY useCursorNavigation.accesskey   "S">
+<!ENTITY searchOnStartTyping.label       "Nadi aḍris ticki tebda tira">
+<!ENTITY searchOnStartTyping.accesskey   "N">
+<!ENTITY blockAutoReload.label           "Lɣu-yid ticki asmel web ad yeɛreḍ asnifel n ubrid neɣ asniles n usali ">
+<!ENTITY blockAutoReload.accesskey       "L">
+<!ENTITY useOnScreenKeyboard.label       "Sken anasiw amennalan ticki terra tmara">
+<!ENTITY useOnScreenKeyboard.accesskey   "n">
+
+<!ENTITY browsing.label                  "Tunigin">
+
+<!ENTITY useAutoScroll.label             "Seqdec adrurem awurman">
+<!ENTITY useAutoScroll.accesskey         "d">
+<!ENTITY useSmoothScrolling.label        "Seqdec adrurem aleggwaɣ">
+<!ENTITY useSmoothScrolling.accesskey    "e">
+<!ENTITY checkUserSpelling.label         "Senqed taɣdira-inu mi ara ttaruɣ ">
+<!ENTITY checkUserSpelling.accesskey     "q">
+
+<!ENTITY dataChoicesTab.label            "Isefka i d-yettumegren">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Aneqqis n isefka ur irmid ara i uswel-a n usefsu">
+
+<!ENTITY healthReportDesc.label          "Ad k-yall akken ad tegzuḍ timellit n iminig-inek u ad yazen i &vendorShortName; talɣut ɣef addad n tezmert n iminig-inek.">
+<!ENTITY enableHealthReport.label        "Rmed tacrawt n tezmert n &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "Lmed ugar">
+
+<!ENTITY telemetryDesc.label             "Ad yazen tilɣa ɣef timellit, aseqdec, arrum d waggen i &vendorShortName; iwakken ad aɣ-d-yefk afus i usnerni n tɣara n &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Azen isefka isemmadanen (Amedya: isefka tilisɣal)">
+<!ENTITY enableTelemetryData.accesskey   "A">
+<!ENTITY telemetryLearnMore.label        "Issin ugar">
+
+<!ENTITY crashReporterDesc2.label         "Ineqqisen n uɣelluy ad allen &vendorShortName; akken ad yefru uguren udiɣ ad yerr iminig-inek d urkid d aɣelsan">
+<!ENTITY alwaysSubmitCrashReports.label   "Sireg &brandShortName; akken ad yazen ineqqisen n uɣelluy deg ugilal">
+<!ENTITY alwaysSubmitCrashReports.accesskey "e">
+<!ENTITY crashReporterLearnMore.label     "Issin ugar">
+
+<!ENTITY networkTab.label                "Aẓeṭṭa">
+
+<!ENTITY connection.label                "Tuqqna">
+
+<!ENTITY connectionDesc.label            "Swel tarrayt n tuqqna n &brandShortName; ɣer Internet ">
+<!ENTITY connectionSettings.label        "Iɣewwaṛen…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Agbur web uffir">
+
+<!ENTITY offlineStorage2.label           "Agbur web d isefka n useqdac deg uskar war tuqqna">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "isefka n usmel">
+<!ENTITY clearSiteData.label             "kkes akk isefka">
+<!ENTITY clearSiteData.accesskey         "k">
+<!ENTITY siteDataSettings.label          "Iɣewwaṛen…">
+<!ENTITY siteDataSettings.accesskey      "I">
+<!ENTITY siteDataLearnMoreLink.label     "Lmed ugar">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Err talast n tuffirt ɣer">
+<!ENTITY limitCacheSizeBefore.accesskey  "E">
+<!ENTITY limitCacheSizeAfter.label       "MAṬ n wadeg">
+<!ENTITY clearCacheNow.label             "Sfeḍ tura">
+<!ENTITY clearCacheNow.accesskey         "S">
+<!ENTITY clearOfflineAppCacheNow.label   "Sfeḍ tura">
+<!ENTITY clearOfflineAppCacheNow.accesskey "t">
+<!ENTITY overrideSmartCacheSize.label    "Snifel asefrek awurman n tuffirt">
+<!ENTITY overrideSmartCacheSize.accesskey "n">
+
+<!ENTITY updateTab.label                 "Leqqem">
+
+<!ENTITY updateApplication.label         "Ileqman n. &brandShortName;">
+<!ENTITY updateAuto1.label               "Sebded s wudem awurman ileqman (yelha i tɣellist-inek)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "Senqed ma llan ileqman, acu kan eǧǧ-iyi a ten-sbeddeɣ ">
+<!ENTITY updateCheckChoose.accesskey     "n">
+<!ENTITY updateManual.label              "Weṛǧin ad tesneqdeḍ ileqman (ur ilhi ara acku yella wugur n tɣellist)">
+<!ENTITY updateManual.accesskey          "W">
+
+<!ENTITY updateHistory.label             "Sken amazray n ileqman">
+<!ENTITY updateHistory.accesskey         "S">
+
+<!ENTITY useService.label                "Seqdec ameẓlu n ugilal i usebded n ileqman">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY autoUpdateOthers.label          "Leqqem s wudem awurman  ">
+<!ENTITY enableSearchUpdate.label        "Imseddayen n unadi">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+<!ENTITY offlineStorageNotify.label               "Lɣu-yi-d ticki asmel yebɣa ad isekles isefka i useqdec arusrid ">
+<!ENTITY offlineStorageNotify.accesskey           "L">
+<!ENTITY offlineStorageNotifyExceptions.label     "Tisuraf…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "T">
+
+<!ENTITY offlineAppsList2.label          "Ismal-a web zemren ad skelsen isefka i useqdec arusrid:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Kkes…">
+<!ENTITY offlineAppsListRemove.accesskey "K">
+<!ENTITY offlineAppRemove.confirm        "Kkes isefka war tuqqna">
+
+<!ENTITY certificateTab.label            "Iselkinen">
+<!ENTITY certPersonal.label              "Isutren">
+<!ENTITY certPersonal.description        "Ticki aqeddac isuter aselkin-iw udmawan: ">
+<!ENTITY selectCerts.auto                "Fren yiwen s wudem awurman">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Steqsi-yi-d yal tikelt ">
+<!ENTITY selectCerts.ask.accesskey       "A ">
+<!ENTITY enableOCSP.label                "Suter iqeddacen imerrayen OCSP akken ad sentmen taneɣbalt n iselkinen ">
+<!ENTITY enableOCSP.accesskey            "S">
+<!ENTITY viewCerts.label                 "Sken iselkinen">
+<!ENTITY viewCerts.accesskey             "S">
+<!ENTITY viewSecurityDevices.label       "Taɣellist n ibenkan">
+<!ENTITY viewSecurityDevices.accesskey   "T">
+
+<!ENTITY performance.label               "Tamellit">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Seqdec iɣewwaṛen n temellit ihulen">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Iɣewwaṛen-a wulmen i twila n warrum n uselkim-inek d unagraw n wammud.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "S">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Issin ugar">
+<!ENTITY limitContentProcessOption.label "Azal afellay n ukala n ugbur">
+<!ENTITY limitContentProcessOption.description
+                                         "Ikalan n ugbur nniḍen zemren ad qaεḍen ugar tamellit di lawan n useqdec n waṭas acaren, maca akka ad iseqdec aṭas n tkatut.">
+<!ENTITY limitContentProcessOption.accesskey   "Y">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Tzemreḍ kan ad tesnifleḍ amḍan n ugbur n ukala akked ugetakala &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Issin amek ad tsneqdeḍ ma yella agetakala yermed">
+<!ENTITY allowHWAccel.label              "Seqdec tasɣiwelt tudlift n warrum ma tella">
+<!ENTITY allowHWAccel.accesskey          "q">

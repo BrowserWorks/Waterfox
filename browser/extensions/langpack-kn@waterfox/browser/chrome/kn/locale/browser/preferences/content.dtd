@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "ಪುಟಿಕೆ (ಪಾಪ್-ಅಪ್) ಕಿಟಕಿಗಳನ್ನು ತಡೆ ಹಿಡಿ">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "ಆರಿಸಿ…">
+<!ENTITY  notificationsDoNotDisturb.label      "ತೊಂದರೆ ಮಾಡಬೇಡಿ">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "ನೀವು &brandShortName; ಅನ್ನು ಮರು ಆರಂಭಿಸುವ ತನಕ ಸೂಚನೆಗಳನ್ನು ತೋರಿಸಲಾಗುವುದಿಲ್ಲ">
+
+<!ENTITY  popupExceptions.label       "ಹೊರತಾದವುಗಳು...">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "ಅಕ್ಷರಶೈಲಿಗಳು ಮತ್ತು ಬಣ್ಣಗಳು">
+
+
+
+
+
+<!ENTITY  advancedFonts.label         "ಮುಂದುವರೆದ...">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "ಬಣ್ಣಗಳು...">
+<!ENTITY  colors.accesskey            "C">
+
+<!ENTITY chooseLanguage.label         "ಪುಟಗಳನ್ನು ತೋರಿಸಲು ನಿಮ್ಮ ಬಯಕೆಯ ಭಾಷೆಯನ್ನು ಆರಿಸಿ">
+<!ENTITY chooseButton.label           "ಆರಿಸಿ…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "ಜಾಲದಲ್ಲಿನ ಕಂಟೆಂಟ್ ಅನ್ನು ಅನುವಾದಿಸು">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "ಹೊರತಾದವುಗಳು...">
+<!ENTITY translateExceptions.accesskey "x">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "ಅನುವಾದಿಸಿದವರು">
+<!ENTITY translation.options.attribution.afterLogo "‌">
+
+
+
+<!ENTITY  playDRMContent.learnMore.label "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">
+
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultFont2.label          "Default font">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  defaultSize2.label          "Size">
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

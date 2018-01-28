@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Seurannan suojaus">
+<!ENTITY  trackingProtection2.description      "Seuranta on selaustietojen keräämistä useiden sivustojen yli. Seurantaa voidaan käyttää profilointiin ja näyttämään sisältöä selaus- ja henkilötietojesi perusteella.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Käytä seurannan suojausta estämään tunnettuja seurantamenetelmiä">
+<!ENTITY  trackingProtectionAlways.label       "Aina">
+<!ENTITY  trackingProtectionAlways.accesskey   "n">
+<!ENTITY  trackingProtectionPrivate.label      "Vain yksityisen selaamisen ikkunoissa">
+<!ENTITY  trackingProtectionPrivate.accesskey  "V">
+<!ENTITY  trackingProtectionNever.label        "Ei koskaan">
+<!ENTITY  trackingProtectionNever.accesskey    "E">
+<!ENTITY  trackingProtectionLearnMore.label    "Lue lisää">
+<!ENTITY  trackingProtectionExceptions.label   "Poikkeukset…">
+<!ENTITY  trackingProtectionExceptions.accesskey "P">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Käytä seurannan suojausta yksityisen selaamisen ikkunoissa">
+<!ENTITY trackingProtectionPBM5.accesskey     "y">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Käytä seurannan suojausta yksityisessä selauksessa estämään tunnettuja seurantamenetelmiä">
+<!ENTITY trackingProtectionPBM6.accesskey     "m">
+<!ENTITY trackingProtectionPBMLearnMore.label "Lue lisää">
+<!ENTITY changeBlockList2.label               "Muuta estolistaa…">
+<!ENTITY changeBlockList2.accesskey           "M">
+
+<!ENTITY  doNotTrack.description        "Lähetä sivustoille Älä seuraa -signaali, että et halua sinua seurattavan">
+<!ENTITY  doNotTrack.learnMore.label    "Lue lisää">
+<!ENTITY  doNotTrack.default.label      "Vain käytettäessä seurannan suojausta">
+<!ENTITY  doNotTrack.always.label       "Aina">
+
+<!ENTITY  history.label                 "Historiatiedot">
+<!ENTITY  permissions.label             "Oikeudet">
+
+<!ENTITY  addressBar.label              "Osoitepalkki">
+<!ENTITY  addressBar.suggest.label      "Ehdota osoitepalkissa sivuja">
+<!ENTITY  locbar.history2.label         "selaushistoriasta">
+<!ENTITY  locbar.history2.accesskey     "h">
+<!ENTITY  locbar.bookmarks.label        "kirjanmerkeistä">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "avoimista välilehdistä">
+<!ENTITY  locbar.openpage.accesskey     "a">
+<!ENTITY  locbar.searches.label         "Vastaavia hakuja oletushakupalvelusta">
+<!ENTITY  locbar.searches.accesskey     "o">
+
+<!ENTITY  suggestionSettings2.label     "Muuta hakukoneiden ehdotusten asetuksia">
+
+<!ENTITY  acceptCookies2.label          "Sivustot saavat asettaa evästeitä">
+<!ENTITY  acceptCookies2.accesskey      "v">
+
+<!ENTITY  acceptThirdParty.pre.label      "Salli kolmannen osapuolen evästeet:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "m">
+<!ENTITY  acceptThirdParty.always.label   "Aina">
+<!ENTITY  acceptThirdParty.never.label    "Ei milloinkaan">
+<!ENTITY  acceptThirdParty.visited.label  "Vierailluilta sivustoilta">
+
+<!ENTITY  keepUntil.label               "Säilytä evästeet:">
+<!ENTITY  keepUntil.accesskey           "t">
+
+<!ENTITY  expire.label                  "kunnes ne vanhenevat">
+<!ENTITY  close.label                   "kunnes &brandShortName; suljetaan">
+
+<!ENTITY  cookieExceptions.label        "Poikkeukset…">
+<!ENTITY  cookieExceptions.accesskey    "P">
+
+<!ENTITY  showCookies.label             "Näytä evästeet…">
+<!ENTITY  showCookies.accesskey         "N">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; säilyttää">
+<!ENTITY  historyHeader2.pre.accesskey     "F">
+<!ENTITY  historyHeader.remember.label     "Täydelliset historiatiedot">
+<!ENTITY  historyHeader.dontremember.label "Ei mitään historiatietoja">
+<!ENTITY  historyHeader.custom.label       "Valitut historiatiedot">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; kerää ja säilyttää sivu-, lataus-, lomake- ja hakuhistoriatietoja sekä evästeet sivuilta, joilla olet käynyt.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Voit halutessasi ">
+<!ENTITY  rememberActions.clearHistory.label  "poistaa joitain historiatietoja">
+<!ENTITY  rememberActions.middle.label        " tai ">
+<!ENTITY  rememberActions.removeCookies.label "poistaa yksittäisiä evästeitä">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; toimii aina kuten yksityisessä selaustilassa, eikä säilytä mitään historiatietoja.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Voit halutessasi myös ">
+<!ENTITY  dontrememberActions.clearHistory.label "poistaa kaikki kerätyt historiatiedot">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Selaa aina yksityinen selaus -tilassa">
+<!ENTITY  privateBrowsingPermanent2.accesskey "y">
+
+<!ENTITY  rememberHistory2.label      "Säilytä selaushistoria ja tieto latauksista">
+<!ENTITY  rememberHistory2.accesskey  "ä">
+
+<!ENTITY  rememberSearchForm.label       "Säilytä lomakkeiden ja hakupalkin tiedot">
+<!ENTITY  rememberSearchForm.accesskey   "d">
+
+<!ENTITY  clearOnClose.label             "Poista historiatiedot kun &brandShortName; suljetaan">
+<!ENTITY  clearOnClose.accesskey         "o">
+
+<!ENTITY  clearOnCloseSettings.label     "Asetukset…">
+<!ENTITY  clearOnCloseSettings.accesskey "u">
+
+<!ENTITY  browserContainersLearnMore.label      "Lue lisää">
+<!ENTITY  browserContainersEnabled.label        "Käytä luokiteltuja välilehtiä">
+<!ENTITY  browserContainersEnabled.accesskey    "v">
+<!ENTITY  browserContainersSettings.label        "Asetukset…">
+<!ENTITY  browserContainersSettings.accesskey    "e">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Druckereigenschaften">
+
+<!ENTITY paperInput.label "Papiergröße:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "Druckauftrag:">
+<!ENTITY jobTitleInput.accesskey "c">
+
+<!ENTITY colorGroup.label "Farbe:">
+<!ENTITY grayRadio.label "Graustufen">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "Farben">
+<!ENTITY colorRadio.accesskey "F">
+
+<!ENTITY edgeMarginInput.label "Abstand zwischen Papierrand und Druckrand">
+<!ENTITY topInput.label "Oben:">
+<!ENTITY topInput.accesskey "O">
+<!ENTITY bottomInput.label "Unten:">
+<!ENTITY bottomInput.accesskey "U">
+<!ENTITY leftInput.label "Links:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "Rechts:">
+<!ENTITY rightInput.accesskey "R">

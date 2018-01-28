@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "அச்சிடு…">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "பக்க அமைப்பு...">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "பக்கம்:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "உடைய">
+<!ENTITY scale.label          "அளவு மாற்றம்:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "நீளவாக்கில்">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "அகலவாக்கில்">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "மூடு">
+<!ENTITY close.accesskey      "C">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "தனிப்பயன்...">
+<!ENTITY ShrinkToFit.label    "பொருந்தும்படி சுருக்கு">
+<!ENTITY customPrompt.title   "தனிப்பயன் அளவு மாற்றம்...">
+<!ENTITY simplifyPage.label   "பக்கத்தை எளிமையாக்கு">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "எளிதான வாசிப்பிற்கு அமைப்பை மாற்றவும்">
+<!ENTITY simplifyPage.disabled.tooltip "இப்பக்கதை தானாக எளிதாக்க முடியாது">
+
+<!ENTITY homearrow.tooltip    "முதல் பக்கம்">
+<!ENTITY endarrow.tooltip     "கடைசி பக்கம்">
+<!ENTITY nextarrow.tooltip    "அடுத்த பக்கம்">
+<!ENTITY previousarrow.tooltip "முந்தைய பக்கம்">

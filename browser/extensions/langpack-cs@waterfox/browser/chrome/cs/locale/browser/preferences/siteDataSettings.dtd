@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nastavení - Data stránek">
+<!ENTITY     hostCol.label                 "Server">
+<!ENTITY     statusCol.label               "Stav">
+<!ENTITY     usageCol.label                "Úložiště">
+<!ENTITY     searchTextboxPlaceHolder             "Hledat">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "H">
+<!ENTITY     removeSelected.label          "Odebrat vybrané">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Uložit změny">
+<!ENTITY     save.accesskey                "l">
+<!ENTITY     cancel.label                  "Zrušit">
+<!ENTITY     cancel.accesskey              "Z">
+<!ENTITY     removingDialog.title          "Odstraňování dat stránky">
+<!ENTITY     removingSelected.description  "Odstranění dat stránky odstraní také cookies a offline obsah. To může způsobit vaše odhlášení z webové stránky. Opravdu chcete změny provést?">
+<!ENTITY     siteTree.label                "Budou odstraněny následující cookies:">

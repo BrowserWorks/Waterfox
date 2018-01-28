@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Titz'ajb'äx…">
+<!ENTITY print.accesskey      "T">
+<!ENTITY pageSetup.label      "Tinuk'samajïx ruxaq…">
+<!ENTITY pageSetup.accesskey  "s">
+<!ENTITY page.label           "Ruxaq:">
+<!ENTITY page.accesskey       "x">
+<!ENTITY of.label             "richin">
+<!ENTITY scale.label          "Xakb'äl:">
+<!ENTITY scale.accesskey      "X">
+<!ENTITY portrait.label       "Palem">
+<!ENTITY portrait.accesskey   "a">
+<!ENTITY landscape.label      "Kotz'olem">
+<!ENTITY landscape.accesskey  "l">
+<!ENTITY close.label          "Titz'apïx">
+<!ENTITY close.accesskey      "T">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Ichinan…">
+<!ENTITY ShrinkToFit.label    "Tinuk'ub'ëx rik'in ruxaq">
+<!ENTITY customPrompt.title   "Ichinan xakb'äl…">
+<!ENTITY simplifyPage.label   "Tich'utinirisäx ruxaq">
+<!ENTITY simplifyPage.accesskey "c">
+<!ENTITY simplifyPage.enabled.tooltip  "Tijal ri ruwachib'enik richin man k'ayew ta nub'än nisik'ïx">
+<!ENTITY simplifyPage.disabled.tooltip "Re ruxaq k'amaya'l re' man tikirel ta nich'utinirisäx qa pa ruyonil">
+
+<!ENTITY homearrow.tooltip    "Nab'ey ruxaq">
+<!ENTITY endarrow.tooltip     "Ruk'isib'äl ruxaq">
+<!ENTITY nextarrow.tooltip    "Jun chik ruxaq">
+<!ENTITY previousarrow.tooltip "Jun kan ruxaq">

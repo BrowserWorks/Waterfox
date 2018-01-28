@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Pulih Sesi">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Nampaknya, ini agak memalukan.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; sedang mengalami masalah memulihkan tetingkap dan tab anda. Kebiasaannya ini berpunca dari halaman web terkini yang dibuka.">
+<!ENTITY restorepage.tryThis        "Anda boleh cuba:">
+<!ENTITY restorepage.restoreSome    "Menghapuskan satu atau lebih tab yang anda fikir menjadi punca kepada masalah ini">
+<!ENTITY restorepage.startNew       "Memulakan keseluruhan sesi pelayaran baru">
+
+<!ENTITY restorepage.tryagainButton "Pulih">
+<!ENTITY restorepage.restore.access "P">
+<!ENTITY restorepage.closeButton    "Tutup">
+<!ENTITY restorepage.close.access   "T">
+
+<!ENTITY restorepage.restoreHeader  "Kembalikan semula">
+<!ENTITY restorepage.listHeader     "Tetingkap dan Tab">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Tetingkap &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Mari mulakan!">
+<!ENTITY welcomeback2.restoreButton.access "M">
+
+<!ENTITY welcomeback2.tabtitle      "Berjaya!">
+
+<!ENTITY welcomeback2.pageTitle     "Berjaya!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; sedia untuk dimulakan.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Pulih semua tetingkap &amp; tab">
+<!ENTITY welcomeback2.restoreSome.label "Pulih hanya yang anda mahu">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Add-ons dan penyesuaian anda telah dialih keluar dan tetapan pelayar anda telah dipulihkan kepada piawai. Jika tindakan ini tidak menyelesaikan masalah anda, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "ketahui selanjutnya apa yang anda boleh lakukan.">
+

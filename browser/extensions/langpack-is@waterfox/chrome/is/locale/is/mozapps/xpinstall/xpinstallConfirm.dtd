@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "Hugbúnaðar uppsetning">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Settu bara inn viðbætur frá þeim höfundum sem þú treystir.">
+<!ENTITY warningSecondary.label  "Varasamur hugbúnaður gæti skemmt tölvuna eða misnotað friðhelgi þína.">
+
+<!ENTITY from.label "frá:">
+

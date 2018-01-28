@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "টেলিমেট্রি ডাটা">
+
+<!ENTITY aboutTelemetry.pingDataSource "পিং তথ্যের উৎস:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "বর্তমান পিং তথ্য">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "আর্কাইভ পিং তথ্য">
+
+<!ENTITY aboutTelemetry.raw "পরিশোধিত JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "সাবসেশনের তথ্য দেখান">
+
+<!ENTITY aboutTelemetry.choosePing "পিং নির্বাচন করুন:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; নতুন পিং">
+
+<!ENTITY aboutTelemetry.showOlderPing "পুরাতন পিং &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "সপ্তাহ">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "পিং">
+
+<!ENTITY aboutTelemetry.optionGroupToday "আজ">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "গতকাল">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "পুরানো">
+
+<!ENTITY aboutTelemetry.generalDataSection "   সাধারণ তথ্য">
+
+<!ENTITY aboutTelemetry.environmentDataSection "   পরিবেশ ডেটা">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "   টেলিমেট্রি লগ">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  ধীর গতির এসকিউএল বিবৃতি">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  ব্রাউজার হ্যাং করেছে">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "   থ্রেড হ্যাং">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  স্ক্যালারস">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  কীড স্কেলারস">
+
+<!ENTITY aboutTelemetry.histogramsSection "  বারলেখ">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  উদ্দীপিত হিস্টোগ্রামসমূহ">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  সহজ পরিমাপ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  অ্যাড-অনের বিস্তারিত">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  বিলম্বিত লেখনী">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  সিস্টেম সংক্রান্ত তথ্য">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  নোট: ধীর গতির SQL ডিবাগিং সক্রিয় করা হয়েছে।সম্পূর্ণ SQL স্ট্রিং নীচে প্রদর্শিত হতে পারে কিন্তু তাদের টেলিমেট্রিতে উপস্থাপন করা হবে না।">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  স্ট্যাকের জন্য ফাংশনের নামসমূহ আনো">
+
+
+<!ENTITY aboutTelemetry.filterText "  ফিল্টার (স্ট্রিং অথবা /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  পেলোড">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+

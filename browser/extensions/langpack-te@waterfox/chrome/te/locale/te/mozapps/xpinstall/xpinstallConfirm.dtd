@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from institems.xul -->
+
+<!ENTITY dialog.title            "సాఫ్టువేర్ సంస్థాపన">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "మీరు నమ్మే మూలకర్తల నుండి మాత్రమే పొడిగింతలను సంస్థాపించండి.">
+<!ENTITY warningSecondary.label  "చెడ్డ సాఫ్టువేర్ మీ కంప్యూటర్‌ను పాడు చేయవచ్చు లేదా మీ గోప్యతకు భంగం కలిగించవచ్చు.">
+
+<!ENTITY from.label "నుండి:">
+

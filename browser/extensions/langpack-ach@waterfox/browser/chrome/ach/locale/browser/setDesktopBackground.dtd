@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Kabedo:">
+<!ENTITY tile.label                 "Matangula">
+<!ENTITY center.label               "Dyere">
+<!ENTITY stretch.label              "Ciki">
+<!ENTITY fill.label                 "Pik">
+<!ENTITY fit.label                  "Porre">
+<!ENTITY preview.label              "Kit ma nen kwede">
+<!ENTITY color.label                "Rangi:">
+<!ENTITY setDesktopBackground.title "Ter cal me nge wang kompiuta">
+<!ENTITY openDesktopPrefs.label     "Yab ter me wang kompiuta">
+<!ENTITY closeWindow.key            "w">

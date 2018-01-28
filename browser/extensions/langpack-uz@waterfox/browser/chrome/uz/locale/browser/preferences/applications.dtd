@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Ilova dasturlar">
+
+
+<!ENTITY  typeColumn.label        "Kontentda yozish">
+<!ENTITY  typeColumn.accesskey    "y">
+
+<!ENTITY  actionColumn2.label     "Amal">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Fayl turlari yoki ilova dasturlarni tanlang">
+
+<!ENTITY  applications.description "Choose how &brandShortName; handles the files you download from the web or the applications you use while browsing.">
+

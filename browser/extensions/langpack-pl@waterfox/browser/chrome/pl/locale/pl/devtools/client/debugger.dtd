@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY debuggerUI.closeButton.tooltip "Zamknij">
+<!ENTITY debuggerUI.panesButton.tooltip "Pokaż lub ukryj panele">
+
+<!ENTITY debuggerUI.blackBoxMessage.label "Źródło ukryte w czarnej skrzynce - punkty wstrzymań są wyłączone, a polecenia przechodzenia pomijają je.">
+<!ENTITY debuggerUI.blackBoxMessage.unBlackBoxButton "Zaprzestań ukrywania tego źródła w czarnej skrzynce">
+
+<!ENTITY debuggerUI.optsButton.tooltip "Opcje debugera">
+<!ENTITY debuggerUI.sources.blackBoxTooltip "Przełącz czarną skrzynkę">
+<!ENTITY debuggerUI.sources.prettyPrint "Popraw czytelność">
+<!ENTITY debuggerUI.autoPrettyPrint "Automatyczne poprawianie czytelności">
+<!ENTITY debuggerUI.autoPrettyPrint.accesskey "A">
+<!ENTITY debuggerUI.sources.toggleBreakpoints "Włącza/wyłącza wszystkie punkty wstrzymania">
+<!ENTITY debuggerUI.clearButton "Wyczyść">
+<!ENTITY debuggerUI.clearButton.tooltip "Wyczyści zebrane ślady">
+<!ENTITY debuggerUI.pauseExceptions "Zatrzymuj na wyjątkach">
+<!ENTITY debuggerUI.pauseExceptions.accesskey "Z">
+<!ENTITY debuggerUI.ignoreCaughtExceptions "Ignoruj wyłapane wyjątki">
+<!ENTITY debuggerUI.ignoreCaughtExceptions.accesskey "I">
+<!ENTITY debuggerUI.showPanesOnInit "Wyświetlaj panele po uruchomieniu">
+<!ENTITY debuggerUI.showPanesOnInit.accesskey "W">
+<!ENTITY debuggerUI.showVarsFilter "Wyświetlaj pole filtrowania zmiennych">
+<!ENTITY debuggerUI.showVarsFilter.accesskey "f">
+<!ENTITY debuggerUI.showOnlyEnum "Wyświetlaj tylko wyliczalne własności">
+<!ENTITY debuggerUI.showOnlyEnum.accesskey "t">
+<!ENTITY debuggerUI.showOriginalSource "Wyświetlaj oryginalne źródła">
+<!ENTITY debuggerUI.showOriginalSource.accesskey "o">
+<!ENTITY debuggerUI.autoBlackBox "Automatycznie ukrywanie upakowanych (min.js) źródeł">
+<!ENTITY debuggerUI.autoBlackBox.accesskey "u">
+
+<!ENTITY debuggerUI.searchPanelOperators "Operatory">
+<!ENTITY debuggerUI.searchFile "Filtrowanie skryptów">
+<!ENTITY debuggerUI.searchFile.accesskey "F">
+<!ENTITY debuggerUI.searchFile.altkey "O">
+<!ENTITY debuggerUI.searchFile.key "P">
+<!ENTITY debuggerUI.searchGlobal "Wyszukiwanie we wszystkich plikach">
+<!ENTITY debuggerUI.searchGlobal.accesskey "h">
+<!ENTITY debuggerUI.searchGlobal.key "F">
+<!ENTITY debuggerUI.searchFunction "Szukaj definicji funkcji">
+<!ENTITY debuggerUI.searchFunction.accesskey "d">
+<!ENTITY debuggerUI.searchFunction.key "D">
+<!ENTITY debuggerUI.searchToken "Wyszukaj">
+<!ENTITY debuggerUI.searchToken.accesskey "a">
+<!ENTITY debuggerUI.searchToken.key "F">
+<!ENTITY debuggerUI.searchGoToLine "Przejdź do wiersza…">
+<!ENTITY debuggerUI.searchGoToLine.accesskey "P">
+<!ENTITY debuggerUI.searchGoToLine.key "L">
+<!ENTITY debuggerUI.searchVariable "Filtrowanie zmiennych">
+<!ENTITY debuggerUI.searchVariable.accesskey "z">
+<!ENTITY debuggerUI.searchVariable.key "V">
+
+<!ENTITY debuggerUI.focusVariables "Ustaw zaznaczenie na drzewo zmiennych">
+<!ENTITY debuggerUI.focusVariables.accesskey "w">
+<!ENTITY debuggerUI.focusVariables.key "V">
+
+<!ENTITY debuggerUI.condBreakPanelTitle "Ten punkt wstrzymania zatrzyma wykonywanie tylko, jeśli następujące wyrażenie będzie miało wartość true">
+
+<!ENTITY debuggerUI.seMenuBreak "Dodaj punkt wstrzymania">
+<!ENTITY debuggerUI.seMenuBreak.key "B">
+<!ENTITY debuggerUI.seMenuCondBreak "Dodaj warunkowy punkt wstrzymania">
+<!ENTITY debuggerUI.seMenuCondBreak.key "B">
+<!ENTITY debuggerUI.seEditMenuCondBreak "Edytuj warunkowy punkt wstrzymania">
+<!ENTITY debuggerUI.seEditMenuCondBreak.key "w">
+<!ENTITY debuggerUI.seMenuAddWatch "Utwórz obserwowane wyrażenie z zaznaczenia">
+<!ENTITY debuggerUI.seMenuAddWatch.key "E">
+
+<!ENTITY debuggerUI.tabs.workers "Wątki">
+<!ENTITY debuggerUI.tabs.sources "Źródła">
+<!ENTITY debuggerUI.tabs.callstack "Stos wywołań">
+<!ENTITY debuggerUI.tabs.traces "Ślady stosu">
+<!ENTITY debuggerUI.tabs.variables "Zmienne">
+<!ENTITY debuggerUI.tabs.events "Zdarzenia">
+
+<!ENTITY debuggerUI.addWatch "Dodaj wyrażenie do obserwowania">
+<!ENTITY debuggerUI.addWatch.accesskey "D">
+<!ENTITY debuggerUI.removeAllWatch "Usuń wszystkie obserwowane wyrażenia">
+<!ENTITY debuggerUI.removeAllWatch.accesskey "U">
+<!ENTITY debuggerUI.removeAllWatch.key "E">
+
+<!ENTITY debuggerUI.stepping.resume1 "VK_F8">
+<!ENTITY debuggerUI.stepping.stepOver1 "VK_F10">
+<!ENTITY debuggerUI.stepping.stepIn1 "VK_F11">
+<!ENTITY debuggerUI.stepping.stepOut1 "VK_F11">
+
+<!ENTITY debuggerUI.context.newTab "Otwórz w nowej karcie">
+<!ENTITY debuggerUI.context.newTab.accesskey "O">
+<!ENTITY debuggerUI.context.copyUrl "Kopiuj URL">
+<!ENTITY debuggerUI.context.copyUrl.accesskey "K">
+<!ENTITY debuggerUI.context.copyUrl.key "C">

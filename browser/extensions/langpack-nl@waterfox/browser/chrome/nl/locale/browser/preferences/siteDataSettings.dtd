@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Instellingen - Websitegegevens">
+<!ENTITY     hostCol.label                 "Website">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Opslag">
+<!ENTITY     searchTextboxPlaceHolder             "Websites doorzoeken">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "z">
+<!ENTITY     removeSelected.label          "Geselecteerde verwijderen">
+<!ENTITY     removeSelected.accesskey      "v">
+<!ENTITY     save.label                    "Wijzigingen opslaan">
+<!ENTITY     save.accesskey                "s">
+<!ENTITY     cancel.label                  "Annuleren">
+<!ENTITY     cancel.accesskey              "n">
+<!ENTITY     removingDialog.title          "Websitegegevens verwijderen">
+<!ENTITY     removingSelected.description  "Het verwijderen van websitegegevens verwijdert ook gerelateerde cookies en offline-webinhoud. Dit kan u bij websites afmelden. Weet u zeker dat u de wijzigingen wilt aanbrengen?">
+<!ENTITY     siteTree.label                "De volgende websitecookies zullen worden verwijderd:">

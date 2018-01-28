@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Негізгі іздеу жүйесі">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Негізгі іздеу жүйесін таңдау. &brandShortName; оны адрестер, іздеу жолағы және басты бет үшін қолданады.">
+
+<!ENTITY provideSearchSuggestions.label        "Іздеу ұсыныстарын көрсету">
+<!ENTITY provideSearchSuggestions.accesskey    "с">
+
+<!ENTITY showURLBarSuggestions.label           "Орналасулар жолағы нәтижелерінде іздеу ұсыныстарын көрсету">
+<!ENTITY showURLBarSuggestions.accesskey       "л">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Орналасу жолағынан іздеу нәтижелерінде іздеу ұсыныстары көрсетілмейді, өйткені сіз &brandShortName; өнімін тарихты есте сақтамайтындай етіп баптадыңыз.">
+
+<!ENTITY oneClickSearchEngines.label           "Бірлік шертумен іздеу қызметтері">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Іздеу жолағында қосымша іздеу қызметтері арқылы іздеуге болады. Көрсетілетіндерді таңдаңыз.">
+
+<!ENTITY engineNameColumn.label                "Іздеу жүйесі">
+<!ENTITY engineKeywordColumn.label             "Кілтсөз">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Бастапқы іздеу жүйелерін қалпына келтіру">
+<!ENTITY restoreDefaultSearchEngines.accesskey "д">
+
+<!ENTITY removeEngine.label                    "Өшіру">
+<!ENTITY removeEngine.accesskey                "ш">
+
+<!ENTITY addMoreSearchEngines.label            "Көбірек іздеу қызметтерін қосу…">

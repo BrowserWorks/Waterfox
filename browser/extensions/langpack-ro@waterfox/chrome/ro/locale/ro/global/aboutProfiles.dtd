@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Despre profiluri">
+<!ENTITY aboutProfiles.subtitle "Această pagină te ajută să gestionezi profilurile. Fiecare profil este o lume separată care conține istoric, marcaje, setările și suplimente separate.">
+<!ENTITY aboutProfiles.create "Creează un profil nou">
+<!ENTITY aboutProfiles.restart.title "Repornire">
+<!ENTITY aboutProfiles.restart.inSafeMode "Repornește cu suplimentele dezactivate…">
+<!ENTITY aboutProfiles.restart.normal "Repornește normal…">

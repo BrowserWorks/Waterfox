@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Questo o peu anulâ a teu garançia!">
+<!ENTITY aboutWarningText.label "Cangiâ ste inpostaçioin avansæ peu ese peigoso pe-a stabilitæ, seguessa e prestaçioin de sta aplicaçion. Ti doviesci continoâ solo se ti sæ ben quello che ti fæ.">
+<!ENTITY aboutWarningButton2.label "Acetto o reizego!">
+<!ENTITY aboutWarningCheckbox.label "Fanni vedde sto alarme a pròscima vòtta">
+
+<!ENTITY searchPrefs.label "Riçerca:">
+<!ENTITY searchPrefs.accesskey "R">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Nomme da preferensa">
+<!ENTITY lockColumn.label "Stato">
+<!ENTITY typeColumn.label "Tipo">
+<!ENTITY valueColumn.label "Valô">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Sciacca pe ordinâ"> 
+<!ENTITY columnChooser.tooltip "Sciacca pe seleçionâ e colònne da vedde"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Còpia">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "Còpia Nomme">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Còpia Valô">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "Cangia">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Cangia">
+<!ENTITY toggle.accesskey "C">
+<!ENTITY reset.label "Reinpòsta">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "Neuvo">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Stringa">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Integer">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

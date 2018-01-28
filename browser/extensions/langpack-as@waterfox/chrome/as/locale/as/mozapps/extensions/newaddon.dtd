@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "এড-অন ইনস্টল কৰক">
+<!ENTITY intro           "আপোনাৰ কমপিউটাৰৰ অন্য এটা প্ৰগ্ৰামে নিম্নলিখিত এড-অনৰ সৈতে &brandShortName; সলনি কৰিব বিচাৰে:">
+<!ENTITY warning         "কেৱল আপুনি ভৰষা কৰিব পৰা লেখকসমূহৰ পৰা এড-অনসমূহে ইনস্টল কৰিব।">
+<!ENTITY allow           "এই ইনস্টলৰ অনুমতি দিয়ক">
+<!ENTITY later           "আপুনি সদায় আপোনাৰ চিন্তা যিকোনো সময়তে এড-অনসমূহ ব্যৱস্থাপকলে গৈ সলনি কৰিব পাৰিব।">
+<!ENTITY continue        "আগবাঢ়ক">
+<!ENTITY restartMessage  "এই এড-অনৰ ইনস্টল সম্পূৰ্ণ কৰিবলে আপুনি &brandShortName; পুনৰাম্ভ কৰিব লাগিব।">
+<!ENTITY restartButton   "&brandShortName; পুনৰাম্ভ কৰক">
+<!ENTITY cancelButton    "বাতিল কৰক">

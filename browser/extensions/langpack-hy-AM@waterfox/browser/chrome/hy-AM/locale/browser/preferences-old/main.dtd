@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Մեկնարկը                ">
+
+<!ENTITY startupPage.label         "&brandShortName;-ի մեկնարկի ժամանակ`">
+<!ENTITY startupPage.accesskey     "ն">
+<!ENTITY startupUserHomePage.label "Ցուցադրել ձեր սկզբնական էջը">
+<!ENTITY startupBlankPage.label    "Ցուցադրել դատարկ էջ">
+<!ENTITY startupPrevSession.label  "Ցուցադրել ձեր նախորդ պատուհանները և ներդիրները">
+
+<!ENTITY homepage.label            "Սկզբնական էջ`">
+<!ENTITY homepage.accesskey        "Ս">
+<!ENTITY useCurrentPage.label      "Օգտագործել ընթացիկ էջը">
+<!ENTITY useCurrentPage.accesskey  "ը">
+<!ENTITY useMultiple.label         "Օգտագործել ընթացիկ էջերը">
+<!ENTITY chooseBookmark.label      "Օգտագործել էջանիշ...                ">
+<!ENTITY chooseBookmark.accesskey  "է">
+<!ENTITY restoreDefault.label      "Վերականգնել լռելայնը">
+<!ENTITY restoreDefault.accesskey  "Վ">
+
+<!ENTITY downloads.label     "Ներբեռնումներ">
+
+<!ENTITY saveTo.label "Ֆայլերը պահելու տեղը՝">
+<!ENTITY saveTo.accesskey "ե">
+<!ENTITY chooseFolderWin.label        "Ընտրել…">
+<!ENTITY chooseFolderWin.accesskey    "տ">
+<!ENTITY chooseFolderMac.label        "Ընտրել…">
+<!ENTITY chooseFolderMac.accesskey    "լ">
+<!ENTITY alwaysAskWhere.label         "Միշտ հարցնել ֆայլերը պահպանելու տեղը">
+<!ENTITY alwaysAskWhere.accesskey     "Մ">
+
+<!ENTITY alwaysCheckDefault2.label        "Միշտ ստուգել, թե արդյոք &brandShortName;-ը ձեր հիմնական դիտարկիչն է">
+<!ENTITY alwaysCheckDefault2.accesskey    "շ">
+<!ENTITY setAsMyDefaultBrowser2.label     "Դարձնել հիմնականը">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "հ">
+<!ENTITY isDefault.label                  "&brandShortName;-ը այժմ ձեր հիմնական դիտարկիչն է">
+<!ENTITY isNotDefault.label               "&brandShortName;-ը այժմ ձեր հիմնական դիտարկիչը չէ">
+
+<!ENTITY separateProfileMode.label        "Թույլատրել, որ &brandShortName;-ը և Waterfox-ը մեկնարկեն միաժամանակ">
+<!ENTITY useWaterfoxSync.label             "Հուշում. Օգտագործում են առանձին պրոֆիլներ: Սինքի միջոցով կարող եք համօգտագործել տվյալները:">
+<!ENTITY getStarted.notloggedin.label     "Մուտք գործել &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Բացել &syncBrand.shortName.label;-ի կարգավորումները">
+
+<!ENTITY e10sEnabled.label                "Միացնել բազմընթաց &brandShortName;">

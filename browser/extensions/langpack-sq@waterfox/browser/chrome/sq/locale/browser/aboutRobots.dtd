@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:robots page, which ties in with the
+     robots theme used in the Waterfox 3 Beta 2/3 first run pages...
+         https://www.mozilla.com/en-US/firefox/3.0b2/firstrun/
+         https://www.mozilla.com/en-US/firefox/3.0b3/firstrun/
+     They're just meant to be fun and whimsical, with references to some geeky
+     but well-known robots in movies and books. Be creative with translations! -->
+
+<!-- Nonsense line from the movie "The Day The Earth Stood Still". No translation needed. -->
+<!ENTITY robots.pagetitle  "Gort! Klaatu barada nikto!">
+<!-- Movie: Logan's Run... Box (cybog): "Welcome Humans! I am ready for you." -->
+<!ENTITY robots.errorTitleText "Mirë se vini, Qenie Njerëzore!">
+<!-- Movie: The Day The Earth Stood Still. Spoken by Klaatu. -->
+<!ENTITY robots.errorShortDescText "Kemi ardhur t&apos;u vizitojmë në paqe dhe me dëshirën e mirë!">
+<!-- Various books by Isaac Asimov. http://en.wikipedia.org/wiki/Three_Laws_of_Robotics -->
+<!ENTITY robots.errorLongDesc1 "Robotët nuk duhet t&apos;i bëjnë dëm një qenieje njerëzore apo, nëpërmjet mosveprimit, të lejojnë që një qenie njerëzore t&apos;i bëjë dëm vetes.">
+<!-- Movie: Blade Runner. Batty: "I've seen things you people wouldn't believe..." -->
+<!ENTITY robots.errorLongDesc2 "Robotët kanë parë gjëra që ju njerëz nuk do t&apos;u zinit besë.">
+<!-- Book: Hitchiker's Guide To The Galaxy. What the Sirius Cybernetics Corporation calls robots. -->
+<!ENTITY robots.errorLongDesc3 "Roboti është Shoku Juaj Plastik Me të Cilin Ka Lezet të Rrish">
+<!-- TV: Futurama. Bender's first line is "Bite my shiny metal ass." -->
+<!ENTITY robots.errorLongDesc4 "Robotët i kanë prapanicat prej metali, ndaj nuk duhen kafshuar aty.">
+<!-- TV: Battlestar Galactica (2004 series). From the opening text. -->
+<!ENTITY robots.errorTrailerDescText "Dhe e kanë një plan.">
+<!-- TV: Battlestar Galactica (2004 series). Common expletive referring to Cylons. -->
+<!ENTITY robots.imgtitle "Frakkin' Toasters">
+<!-- Book: Hitchiker's Guide To The Galaxy. Arthur presses a button and it warns him. -->
+<!ENTITY robots.dontpress "Ju lutemi, mos e shtypni prapë këtë buton.">

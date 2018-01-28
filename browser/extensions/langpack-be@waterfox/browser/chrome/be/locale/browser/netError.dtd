@@ -1,0 +1,181 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Праблема загрузкі старонкі">
+<!ENTITY retry.label "Паспрабуйце зноў">
+<!ENTITY returnToPreviousPage.label "Вярнуцца">
+<!ENTITY advanced.label "Дадаткова">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Нельга злучыцца">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Гэты адрас абмежаваны">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Сервер не знойдзены">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Праверце адрас. Магчыма, вы зрабілі памылку падчас набору, накшталт 
+    <strong>ww</strong>.example.com замест
+    <strong>www</strong>.example.com</li>
+  <li>Праверце злучэнне вашага камп'ютара з сеткаю, калі вы не здольны загрузіць ніводную
+    старонку.</li>
+  <li>Упэўніцеся, калі ваш камп'ютар або сетка абараняюцца фаерволам ці проксі,
+    што &brandShortName; дазволена мець доступ да сеціва.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Файл не знойдзены">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Упэўніцеся, што няма ніякай памылкі ў назве файла, такой, як прапушчаная/лішняя літара або вялікая літара замест малой, або інакшай.</li> <li>Упэўніцеся, што файл не быў перайменаваны, выдалены або перамешчаны.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Доступ да файла забаронены">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Магчыма, што ён быў выдалены або перамешчаны, або дазволы на файл не даюць атрымаць да яго доступ.</li>
+</ul>">
+
+<!ENTITY generic.title "Ух?!">
+<!ENTITY generic.longDesc "<p>&brandShortName; не можа загрузіць гэтую старонку з невядомай прычыны.</p>">
+
+<!ENTITY captivePortal.title "Злучыцца з сеткай">
+<!ENTITY captivePortal.longDesc2 "
+<p>Вы павінны ўвайсці ў гэту сетку перад тым, як зможаце атрымаць доступ у Інтэрнэт.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Адкрыць старонку ўваходу ў сетку">
+
+<!ENTITY malformedURI.title "Несапраўдны адрас">
+<!ENTITY malformedURI.longDesc "<ul> <li>Адрас Сеціва звычайна пішацца, як <strong>http://www.example.com/</strong></li> <li>Упэўніцеся, што вы ўжываеце простыя косыя рыскі (г.зн. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Злучэнне перарвана">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Дакумент састарэў">
+<!ENTITY notCached.longDesc "<p>Запатрабаваны дакумент не даступны ў кэшы &brandShortName;.</p><ul><li>Дзеля бяспекі &brandShortName; не перазапытвае значныя дакументы самастойна.</li><li>Пстрыкніце &quot;Паспрабаваць зноў&quot;, каб запытаць дакумент з вэб-сайта ізноў.</li></ul>">
+
+<!ENTITY netOffline.title "Пазасеткавы рэжым">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Націсніце &quot;Паспрабаваць зноў&quot;, каб перключыцца ў сеткавы рэжым і абнавіць старонку.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Памылка кадавання змесціва">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Паведамце, калі ласка, уладальнікам вэб-сайта пра гэтую праблему.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Небяспечны тып файла">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Паведамце, калі ласка, уладальнікам вэб-сайта пра гэтую праблему.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Злучэнне скінута">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Час чакання злучэння выйшаў">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Немагчыма распазнаць адрас">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Магчыма, вы павінны ўсталяваць іншую праграму, каб адчыніць гэты адрас.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Проксі-сервер адмовіўся злучацца">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Упэўніцеся, што налады проксі правільныя.</li>
+  <li>Звяжыцеся з адміністратарам сеткі, каб ўпэўніцца, што проксі-сервер
+     працуе.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Немагчыма знайсці проксі-сервер">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Упэўніцеся, што налады проксі правільныя.</li>
+  <li>Упэўніцеся, што злучэнне вашага камп'ютара з сеткаю працуе.</li>
+  <li>Упэўніцеся, калі ваш камп'ютар або сетка абараняюцца фаерволам ці проксі,
+    што &brandShortName; дазволена мець доступ да сеціва.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Старонка няправільна перанакіроўваецца">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Гэтая праблема часам вынікае з забароны або адмаўлення ад набывання бірак.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Нечаканы адказ сервера">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Упэўніцеся, што Менеджар асабістай бяспекі
+    ўсталяваны ў вашай сістэме.</li>
+  <li>Гэта звязана, магчыма, з незвычайнымі наладамі сервера.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Няўдача бяспечнага злучэння">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Старонка, якую вы спрабуеце адкрыць, не можа быць паказана, бо сапраўднасць атрыманых звестак нельга пацвердзіць.</li>
+  <li>Калі ласка, паведаміце ўладальніку сайта пра гэтую праблему.</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "Вашае злучэнне не бяспечнае">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Уладальнік <span class='hostname'/> наладзіў свой вэб-сайт няправільна.  Каб абараніць вашы звесткі ад крадзяжу, &brandShortName; не злучаўся з сайтам.">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Магчыма, сайт часова недаступны ці перагружаны. Паспрабуйце зноў крыху
+    пазней.</li>
+  <li>Калі ніводная старонка не адкрываецца, праверце злучэнне камп'ютара з
+    сеткай.</li>
+  <li>Калі ваш камп'ютар ці сетка ахоўваюцца фаерволам ці проксі, пераканайцеся,
+    што &brandShortName; дазволена мець доступ да сеціва.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Заблакавана палітыкай бяспекі змесціва">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; адмовіў старонцы ў чытанні такім спосабам, бо палітыка бяспекі змесціва гэтай старонкі забараняе гэта.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Памылка пашкоджанага змесціва">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Старонка, якую вы спрабуеце адкрыць, не можа быць паказана, бо выяўлена памылка перадачы даных.</p><ul><li>Калі ласка, паведаміце ўладальніку сайта пра гэтую праблему.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Дадаць выключэнне…">
+
+<!ENTITY errorReporting.automatic2 "Паведамляць пра памылкі такога кшталту, каб дапамагчы Mozilla выяўляць і блакаваць зламысныя сайты">
+<!ENTITY errorReporting.learnMore "Даведацца больш…">
+
+<!ENTITY remoteXUL.title "Аддалены XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Паведаміце, калі ласка, уладальнікам сайта пра гэтую праблему.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Немагчыма злучыцца бяспечна">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Дадатковыя звесткі: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; не злучыўся з <span id='wrongSystemTime_URL'/>, бо гадзіннік вашага камп'ютара паказвае няправільны час, і гэта прадухіляе бяспечныя злучэнні.</p> <p>Ваш камп'ютар настаўлены на <span id='wrongSystemTime_systemDate'/>, калі мусіць быць <span id='wrongSystemTime_actualDate'/>. Каб выправіць праблему, змяніце свае налады даты і часу, каб адпавядаць карэктнаму часу.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; не злучыўся з <span id='wrongSystemTimeWithoutReference_URL'/>, бо гадзіннік вашага камп'ютара паказвае няправільны час, і гэта прадухіляе бяспечныя злучэнні.</p> <p>Ваш камп'ютар настаўлены на <span id='wrongSystemTimeWithoutReference_systemDate'/>. Каб выправіць гэту праблему, змяніце свае налады даты і часу, каб адпавядаць карэктнаму часу.</p>">
+
+<!ENTITY certerror.pagetitle1  "Небяспечнае злучэнне">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Гэты сайт выкарыстоўвае HTTP
+Строгая бяспека транспарту (HSTS) прадугледжвае, што &brandShortName; можа злучацца з ім толькі бяспечна. Як следства, немагчыма дадаць выключэнне для гэтага сертыфіката.">
+<!ENTITY certerror.copyToClipboard.label "Капіяваць тэкст у буфер абмену">
+
+<!ENTITY inadequateSecurityError.title "Ваша злучэнне не бяспечнае">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> выкарыстоўвае тэхналогію бяспекі, якая састарэла і ўразлівая да атак. Зламыснік можа з лёгкасцю выкрыць звесткі, пра якія вы думаеце, што яны ў бяспецы. Адміністратар вэб-сайта мусіць выправіць гэты сервер, перш чым вы зможаце наведаць яго бяспечна.</p><p>Код памылкі: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Выглядае, што выклікаць гэта маглі вашы налады сеткавай бяспекі. Хочаце скінуць налады да прадвызначаных?">
+<!ENTITY prefReset.label "Скінуць да прадвызначаных">

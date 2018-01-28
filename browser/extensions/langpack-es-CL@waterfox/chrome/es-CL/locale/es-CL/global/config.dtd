@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "¡Ojo al charqui!">
+<!ENTITY aboutWarningText.label "Cambiar estas configuraciones avanzadas puede afectar la estabilidad, seguridad y rendimiento de esta aplicación. Solo debería continuar si está seguro de lo que va a hacer.">
+<!ENTITY aboutWarningButton2.label "¡Acepto el riesgo!">
+<!ENTITY aboutWarningCheckbox.label "Mostrar esta advertencia la próxima vez">
+
+<!ENTITY searchPrefs.label "Buscar:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Nombre de preferencia">
+<!ENTITY lockColumn.label "Estado">
+<!ENTITY typeColumn.label "Tipo">
+<!ENTITY valueColumn.label "Valor">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Presione para ordenar"> 
+<!ENTITY columnChooser.tooltip "Presione para seleccionar las columnas a mostrar"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Copiar">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "Copiar nombre">
+<!ENTITY copyName.accesskey "n">
+<!ENTITY copyValue.label "Copiar valor">
+<!ENTITY copyValue.accesskey "v">
+<!ENTITY modify.label "Modificar">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Modificar">
+<!ENTITY toggle.accesskey "M">
+<!ENTITY reset.label "Restablecer">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "Nuevo">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Cadena">
+<!ENTITY string.accesskey "C">
+<!ENTITY integer.label "Entero">
+<!ENTITY integer.accesskey "E">
+<!ENTITY boolean.label "Lógico">
+<!ENTITY boolean.accesskey "L">

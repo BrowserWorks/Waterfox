@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Davart ils profils">
+<!ENTITY aboutProfiles.subtitle "Questa pagina gida dad administrar tes profils. Mintga profil è in mund separà che cuntegna datas separadas per la cronologia, ils segnapaginas, ils parameters ed ils supplements.">
+<!ENTITY aboutProfiles.create "Crear in nov profil">
+<!ENTITY aboutProfiles.restart.title "Reaviar">
+<!ENTITY aboutProfiles.restart.inSafeMode "Reaviar e deactivar ils supplements…">
+<!ENTITY aboutProfiles.restart.normal "Reaviar a moda normala…">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Мастер-парольді өшіру">
+<!ENTITY removeInfo.label                  "Жалғастыру үшін ағымдағы пароліңізді енгізіңіз:">
+<!ENTITY removeWarning1.label              "Мастер-пароль маңызды ақпаратты, мысалы, веб-сайттарға қатынау парольдерді, қорғау үшін қолданылады.">
+<!ENTITY removeWarning2.label              "Мастер-парольді өшірсеңіз, браузерде сақталып тұрған ақпарат бөтен адамдардың сіздің компьютеріңізге қолдары жеткен жағдайда қорғалмайды.">
+<!ENTITY setPassword.oldPassword.label     "Ағымдағы пароль:">
+

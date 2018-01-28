@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Змяненне галоўнага пароля">
+<!ENTITY setPassword.tokenName.label "Прылада бяспекі">
+<!ENTITY setPassword.oldPassword.label "Цяперашні пароль:">
+<!ENTITY setPassword.newPassword.label "Новы пароль:">
+<!ENTITY setPassword.reenterPassword.label "Новы пароль (ізноў):">
+<!ENTITY setPassword.meter.label "Вымяральнік якасці пароля">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Скінуць">
+<!ENTITY resetPassword.title  "Скіданне галоўнага пароля">
+<!ENTITY resetPassword.text  "Калі вы пазбавіцеся вашага галоўнага пароля, усе вашы захаваныя паролі сеціва і э-пошты, даныя формаў, асабістыя пасведчанні і прыватныя ключы згубяцца. Вы сапраўды хочаце скінуць ваш галоўны пароль? ">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Сцягванне сертыфіката">
+<!ENTITY downloadCert.message1 "Вас запыталі аб даверу да новага Цэнтра Сертыфікацыі (ЦС).">
+<!ENTITY downloadCert.trustSSL "Давяраць гэтаму ЦС ідэнтыфікаваць вэб-сайты.">
+<!ENTITY downloadCert.trustEmail "Давяраць гэтаму ЦС апазнаваць э-паштовых карыстальнікаў.">
+<!ENTITY downloadCert.trustObjSign "Давяраць гэтаму ЦС ідэнтыфікаваць вытворцаў праграмнага забеспячэння.">
+<!ENTITY downloadCert.message3 "Перад тым, як даверыцца гэтаму ЦС з нейкай мэтай, вы мусіце даследаваць яго сертыфікат, яго палітыку і працэдуры (калі даступны).">
+<!ENTITY downloadCert.viewCert.label "Прагляд">
+<!ENTITY downloadCert.viewCert.text "Даследаваць сертыфікат ЦС">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Запыт вызначэння карыстальніка">
+<!ENTITY clientAuthAsk.message1 "Гэты сайт патрабуе, каб вы ідэнтыфікавалі сябе сертыфікатам:">
+<!ENTITY clientAuthAsk.message2 "Вылучыце сертыфікат, каб падаць як вызначэнне:">
+<!ENTITY clientAuthAsk.message3 "Падрабязнасці вылучанага сертыфіката:">
+
+<!ENTITY pkcs12.setpassword.title  "Выбраць пароль для рэзерв.копіі сертыфікатаў">
+<!ENTITY pkcs12.setpassword.message  "Пароль рэзерв.копіі сертыфікатаў, які вы прызначылі, засцерагае файл, які вы ствараеце.  Вы павінны прызначыць гэты пароль, каб пачаць рэзервовае капіяванне.">
+<!ENTITY pkcs12.setpassword.label1 "Пароль рэзервовай копіі:">
+<!ENTITY pkcs12.setpassword.label2 "Пароль рэзервовай копіі (зноў):">
+<!ENTITY pkcs12.setpassword.reminder "Увага: Калі вы забудзеце ваш пароль рэзервовай копіі сертыфікатаў, вы не зможаце ўзнавіць файлы з гэтай копіі пазней.  Занатуйце яго, калі ласка, у надзейным месцы.">
+
+<!ENTITY chooseToken.title  "Дыялог выбару лексемы">
+<!ENTITY chooseToken.message1 "Выберыце, калі ласка, лексему.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Стварэнне прыватнага ключа">
+<!ENTITY createCertInfo.msg1 "Стварэнне ключа… Патрэбен пэўны час….">
+<!ENTITY createCertInfo.msg2 "Пачакайце, калі ласка, …">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Аўтарызацыя з абароненай лексемай">
+<!ENTITY protectedAuth.msg "Аўтарызуйцеся, калі ласка, да лексемы. Метад аўтарызацыі залежыць ад тыпу вашай сістэмы.">
+<!ENTITY protectedAuth.tokenName.label "Лексема:">

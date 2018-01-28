@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Ter me Kube">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Yik proxy me nongo intanet">
+<!ENTITY  noProxyTypeRadio.label        "Proxy peke">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "Tii ki ter pa proxy me nyonyo">
+<!ENTITY  systemTypeRadio.accesskey     "T">
+<!ENTITY  WPADTypeRadio.label           "Nong pire kene ter me proxy pi kube man">
+<!ENTITY  WPADTypeRadio.accesskey       "b">
+<!ENTITY  manualTypeRadio.label         "Yik me proxy ma ikito kikomi:">
+<!ENTITY  manualTypeRadio.accesskey     "x">
+<!ENTITY  autoTypeRadio.label           "URL me proxy ma ki yiko pire kene:">
+<!ENTITY  autoTypeRadio.accesskey       "i">
+<!ENTITY  reload.label                  "Nwo cano">
+<!ENTITY  reload.accesskey              "o">
+<!ENTITY  ftp.label                     "Proxy me FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Proxy me HTTP:">
+<!ENTITY  http.accesskey                "y">
+<!ENTITY  ssl.label                     "Proxy me SSL:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "Lami kube me SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "DNS me proxy ka itye katic ki SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Bur:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Petye Proxy pi:">
+<!ENTITY  noproxy.accesskey             "P">
+<!ENTITY  noproxyExplain.label          "Labolle: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Tii ki proxy me lapok tic man pi cik me kube weng">
+<!ENTITY  shareproxy.accesskey          "i">
+<!ENTITY  autologinproxy.label          "Pe i peny pi roto ada kace kigwoko mung me donyo">
+<!ENTITY  autologinproxy.accesskey      "d">
+<!ENTITY  autologinproxy.tooltip        "Gin ayera man roto ada ni bot proxy laling kace i gwoko lok komi pi gi. Ki bi penyi kace roto ada opoto woko.">

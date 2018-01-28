@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Tervetuloa käyttämään &syncBrand.shortName.label;-palvelu">
+
+<!ENTITY aboutAccountsConfig.description "Kirjaudu sisään synkronoidaksesi välilehtesi, kirjanmerkkisi, salasanasi ja muita tietoja.">
+<!ENTITY aboutAccountsConfig.startButton.label "Aloitetaan">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Synkronointiasetukset">
+<!ENTITY aboutAccounts.noConnection.title "Ei verkkoyhteyttä">
+<!ENTITY aboutAccounts.noConnection.description "Tarvitaan verkkoyhteys, jotta voidaan kirjautua palveluun.">
+<!ENTITY aboutAccounts.noConnection.retry "Yritä uudestaan">
+<!ENTITY aboutAccounts.badConfig.title "Virheelliset asetukset">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox-tilisi palvelimen asetuksia ei voitu määrittää. Yritä myöhemmin uudelleen.">

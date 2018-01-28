@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Ιδιότητες εκτυπωτή">
+
+<!ENTITY paperInput.label "Μέγεθος χαρτιού:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "Τίτλος εργασίας:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "Έγχρωμη:">
+<!ENTITY grayRadio.label "Κλίμακα του γκρι">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "Έγχρωμη">
+<!ENTITY colorRadio.accesskey "χ">
+
+<!ENTITY edgeMarginInput.label "Κενό από την άκρη του χαρτιού ως το περιθώριο">
+<!ENTITY topInput.label "Πάνω:">
+<!ENTITY topInput.accesskey "Π">
+<!ENTITY bottomInput.label "Κάτω:">
+<!ENTITY bottomInput.accesskey "Κ">
+<!ENTITY leftInput.label "Αριστερά:">
+<!ENTITY leftInput.accesskey "ρ">
+<!ENTITY rightInput.label "Δεξιά:">
+<!ENTITY rightInput.accesskey "Δ">

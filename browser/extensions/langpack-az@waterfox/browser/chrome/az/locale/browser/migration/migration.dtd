@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "İdxal sehirbazı">
+
+<!ENTITY importFrom.label               "Seçimləri, Əlfəcinləri, Tarixçəni, Parolları və digər məlumatları buradan idxal et:">
+<!ENTITY importFromUnix.label           "Nizamlamaları, Əlfəcinləri, Tarixçəni, Parolları və digər məlumatları buradan idxal et:">
+<!ENTITY importFromBookmarks.label      "Əlfəcinləri buradan idxal et:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Heç nə idxal etmə">
+<!ENTITY importFromNothing.accesskey    "m">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Əlfəcinlərin, tarixçənin və ya parol məlumatlarının qeyd edildiyi heç bir proqram tapılmadı.">
+
+<!ENTITY importSource.title             "Nizamlamaları və məlumatları idxal etmə">
+<!ENTITY importItems.title              "İdxal ediləcək obyektlər">
+<!ENTITY importItems.label              "İdxal ediləcək obyektləri seçin:">
+
+<!ENTITY migrating.title                "İdxal edilir…">
+<!ENTITY migrating.label                "Aşağıdakı obyektlər uğurla idxal edildi…">
+
+<!ENTITY selectProfile.title            "Profil Seçin">
+<!ENTITY selectProfile.label            "Aşağıdakı profilləri buradan idxal edilə bilər:">
+
+<!ENTITY done.title                     "İdxal tamamlandı">
+<!ENTITY done.label                     "Aşağıdakı obyektlər uğurla idxal edildi:">
+
+<!ENTITY closeSourceBrowser.label       "Davam etməzdən əvvəl seçilən səyyahın qapalı olduğundan əmin olun.">

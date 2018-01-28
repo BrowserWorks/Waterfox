@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "ချုံ့ပါ">
+<!ENTITY bringAllToFront.label    "အားလုံးကို ရှေ့သို့ ယူလာပါ">
+<!ENTITY zoomWindow.label         "ချုံ့/ချဲ့ပါ">
+<!ENTITY windowMenu.label         "ဝင်းဒိုး">
+
+<!ENTITY helpMenu.label           "အကူအညီ"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "အကူအညီ"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "&brandShorterName; အကြောင်း">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; အကူအညီ">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "ကီးဘုတ်အမြန်သုံးခလုတ်များ">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "အတ်အွန်များကို ပိတ်ပြီး ပြန်စပါ…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "အတ်အွန်များဖွင့်ပြီး ပြန်စတင်ပါ">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "&brandShorterName; ကျန်းမာရေးအစီရင်ခံစာ">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "အခက်အခဲဆိုင်ရာ ဖြေရှင်းခြင်းနည်းလမ်းများ">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "အကြုံပြုချက်ကို ပေးပို့ရန်…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; အလည်အပတ်">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "နှစ်သက်ရာအပြင်အဆင်များ…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "၀န်ဆောင်မှုများ">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; ကို ဖျောက်ထားပါ">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "အခြားအရာများကို ဖျောက်ထားပါ">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "အားလုံးကို ပြပါ">

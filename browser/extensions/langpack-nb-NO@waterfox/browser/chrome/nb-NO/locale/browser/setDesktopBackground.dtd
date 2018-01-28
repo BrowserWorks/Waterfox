@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Posisjon:">
+<!ENTITY tile.label                 "Side ved side">
+<!ENTITY center.label               "Midtstilt">
+<!ENTITY stretch.label              "Strukket">
+<!ENTITY fill.label                 "Fyll">
+<!ENTITY fit.label                  "Pass">
+<!ENTITY preview.label              "Forhåndsvisning">
+<!ENTITY color.label                "Farge:">
+<!ENTITY setDesktopBackground.title "Sett skrivebordsbakgrunn">
+<!ENTITY openDesktopPrefs.label     "Åpne skrivebordsinnstillinger">
+<!ENTITY closeWindow.key            "w">

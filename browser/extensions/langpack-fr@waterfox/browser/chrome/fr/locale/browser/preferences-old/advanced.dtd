@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Général">
+
+<!ENTITY accessibility.label             "Accessibilité">
+
+<!ENTITY useCursorNavigation.label       "Toujours utiliser les touches de navigation pour se déplacer à l’intérieur d’une page">
+<!ENTITY useCursorNavigation.accesskey   "T">
+<!ENTITY searchOnStartTyping.label       "Lancer la recherche lors de la saisie de texte">
+<!ENTITY searchOnStartTyping.accesskey   "c">
+<!ENTITY blockAutoReload.label           "Prévenir lorsque des sites web tentent de rediriger ou de recharger la page">
+<!ENTITY blockAutoReload.accesskey       "P">
+<!ENTITY useOnScreenKeyboard.label       "Afficher un clavier virtuel lorsque nécessaire">
+<!ENTITY useOnScreenKeyboard.accesskey   "A">
+
+<!ENTITY browsing.label                  "Navigation">
+
+<!ENTITY useAutoScroll.label             "Utiliser le défilement automatique">
+<!ENTITY useAutoScroll.accesskey         "U">
+<!ENTITY useSmoothScrolling.label        "Utiliser le défilement doux">
+<!ENTITY useSmoothScrolling.accesskey    "s">
+<!ENTITY checkUserSpelling.label         "Vérifier l’orthographe pendant la saisie">
+<!ENTITY checkUserSpelling.accesskey     "V">
+
+<!ENTITY dataChoicesTab.label            "Données collectées">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "L’envoi de données est désactivé pour cette configuration de compilation">
+
+<!ENTITY healthReportDesc.label          "Vous aide à comprendre les performances de votre navigateur et envoie à &vendorShortName; des informations concernant la santé de votre navigateur">
+<!ENTITY enableHealthReport.label        "Activer le bilan de santé de &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "c">
+<!ENTITY healthReportLearnMore.label     "En savoir plus">
+
+<!ENTITY telemetryDesc.label             "Envoie des informations sur les performances, le matériel, l’utilisation et les personnalisations à &vendorShortName; pour aider à améliorer &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Envoyer des données supplémentaires (c.-à-d. des données télémétriques)">
+<!ENTITY enableTelemetryData.accesskey   "E">
+<!ENTITY telemetryLearnMore.label        "En savoir plus">
+
+<!ENTITY crashReporterDesc2.label         "Les rapports de plantages aident &vendorShortName; à corriger les problèmes et à rendre votre navigateur plus stable et sécurisé">
+<!ENTITY alwaysSubmitCrashReports.label   "Autoriser &brandShortName; à envoyer pour vous les rapports de plantages en attente">
+<!ENTITY alwaysSubmitCrashReports.accesskey "u">
+<!ENTITY crashReporterLearnMore.label     "En savoir plus">
+
+<!ENTITY networkTab.label                "Réseau">
+
+<!ENTITY connection.label                "Connexion">
+
+<!ENTITY connectionDesc.label            "Configurer la façon dont &brandShortName; se connecte à Internet">
+<!ENTITY connectionSettings.label        "Paramètres…">
+<!ENTITY connectionSettings.accesskey    "P">
+
+<!ENTITY httpCache.label                 "Contenu web en cache">
+
+<!ENTITY offlineStorage2.label           "Contenu web et données utilisateur hors connexion">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Données des sites">
+<!ENTITY clearSiteData.label             "Effacer toutes les données">
+<!ENTITY clearSiteData.accesskey         "f">
+<!ENTITY siteDataSettings.label          "Paramètres…">
+<!ENTITY siteDataSettings.accesskey      "a">
+<!ENTITY siteDataLearnMoreLink.label     "En savoir plus">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Limiter le cache à">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "Mo d’espace disque">
+<!ENTITY clearCacheNow.label             "Vider maintenant">
+<!ENTITY clearCacheNow.accesskey         "V">
+<!ENTITY clearOfflineAppCacheNow.label   "Vider maintenant">
+<!ENTITY clearOfflineAppCacheNow.accesskey "d">
+<!ENTITY overrideSmartCacheSize.label    "Modifier la gestion automatique du cache">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Mises à jour">
+
+<!ENTITY updateApplication.label         "Mises à jour de &brandShortName;">
+<!ENTITY updateAuto1.label               "Installer automatiquement les mises à jour (recommandé pour votre sécurité)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "Vérifier l’existence de mises à jour, mais vous laisser décider de leur installation">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateManual.label              "Ne jamais vérifier les mises à jour (déconseillé, cela représente un risque de sécurité)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Afficher l’historique des mises à jour">
+<!ENTITY updateHistory.accesskey         "h">
+
+<!ENTITY useService.label                "Utiliser un service en arrière-plan pour installer les mises à jour">
+<!ENTITY useService.accesskey            "s">
+
+<!ENTITY autoUpdateOthers.label          "Mettre à jour automatiquement">
+<!ENTITY enableSearchUpdate.label        "les moteurs de recherche">
+<!ENTITY enableSearchUpdate.accesskey    "r">
+
+<!ENTITY offlineStorageNotify.label               "Avertir lorsqu’un site souhaite conserver des données pour une utilisation hors connexion">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "Exceptions…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "Les sites suivants sont autorisés à stocker des données pour une utilisation hors connexion :">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Supprimer…">
+<!ENTITY offlineAppsListRemove.accesskey "S">
+<!ENTITY offlineAppRemove.confirm        "Supprimer les données hors connexion">
+
+<!ENTITY certificateTab.label            "Certificats">
+<!ENTITY certPersonal.label              "Requêtes">
+<!ENTITY certPersonal.description        "Lorsqu’un serveur demande votre certificat personnel :">
+<!ENTITY selectCerts.auto                "en sélectionner un automatiquement">
+<!ENTITY selectCerts.auto.accesskey      "e">
+<!ENTITY selectCerts.ask                 "vous demander à chaque fois">
+<!ENTITY selectCerts.ask.accesskey       "v">
+<!ENTITY enableOCSP.label                "Interroger le répondeur OCSP pour confirmer la validité de vos certificats">
+<!ENTITY enableOCSP.accesskey            "I">
+<!ENTITY viewCerts.label                 "Afficher les certificats">
+<!ENTITY viewCerts.accesskey             "A">
+<!ENTITY viewSecurityDevices.label       "Périphériques de sécurité">
+<!ENTITY viewSecurityDevices.accesskey   "P">
+
+<!ENTITY performance.label               "Performances">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Utiliser les paramètres de performance recommandés">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Ces paramètres sont adaptés à la configuration matérielle de votre ordinateur et à votre système d’exploitation.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "En savoir plus">
+<!ENTITY limitContentProcessOption.label "Nombre maximum de processus de contenu">
+<!ENTITY limitContentProcessOption.description
+                                         "Davantage de processus de contenu peut améliorer les performances lors de l’utilisation de plusieurs onglets, cependant la consommation de mémoire sera plus importante.">
+<!ENTITY limitContentProcessOption.accesskey   "N">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifier le nombre de processus de contenu est possible uniquement avec la version multi-processus de &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Apprendre à vérifier si le mode multi-processus est activé">
+<!ENTITY allowHWAccel.label              "Utiliser l’accélération graphique matérielle si disponible">
+<!ENTITY allowHWAccel.accesskey          "n">

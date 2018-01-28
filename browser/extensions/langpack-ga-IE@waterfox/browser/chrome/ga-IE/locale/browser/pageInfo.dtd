@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Cóipeáil">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Roghnaigh Uile">
+<!ENTITY  selectall.accesskey   "U">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Ginearálta">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Teideal:">
+<!ENTITY  generalURL            "Seoladh:">
+<!ENTITY  generalType           "Cineál:">
+<!ENTITY  generalMode           "Mód Rindreála:">
+<!ENTITY  generalSize           "Méid:">
+<!ENTITY  generalReferrer       "URL tagartha:">
+<!ENTITY  generalSource         "Suíomh na Taisce:">
+<!ENTITY  generalModified       "Athraithe:">
+<!ENTITY  generalEncoding2      "Ionchódú Téacs:">
+<!ENTITY  generalMetaName       "Ainm">
+<!ENTITY  generalMetaContent    "Ábhar">
+
+<!ENTITY  mediaTab              "Meáin">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Suíomh:">
+<!ENTITY  mediaText             "Téacs Gaolmhar:">
+<!ENTITY  mediaAltHeader        "Téacs mar Mhalairt">
+<!ENTITY  mediaAddress          "Seoladh">
+<!ENTITY  mediaType             "Cineál">
+<!ENTITY  mediaSize             "Méid">
+<!ENTITY  mediaCount            "Líon">
+<!ENTITY  mediaDimension        "Toisí:">
+<!ENTITY  mediaLongdesc         "Cur Síos Fada:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Sábháil Mar…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "l">
+<!ENTITY  mediaPreview          "Réamhamharc na Meán:">
+
+<!ENTITY  feedTab               "Fothaí">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Liostáil">
+<!ENTITY  feedSubscribe.accesskey "L">
+
+<!ENTITY  permTab               "Ceadanna">
+<!ENTITY  permTab.accesskey     "C">
+<!ENTITY  permUseDefault        "Úsáid Réamhshocrú">
+<!ENTITY  permAskAlways         "Fiafraigh díom i gcónaí">
+<!ENTITY  permAllow             "Ceadaigh">
+<!ENTITY  permAllowSession      "Ceadaigh don Seisiún">
+<!ENTITY  permBlock             "Coisc">
+<!ENTITY  permissionsFor        "Ceadanna le haghaidh:">
+<!ENTITY  permPlugins           "Cuir Forlíontáin i nGníomh">
+
+<!ENTITY  permClearStorage           "Glan an Stóras">
+<!ENTITY  permClearStorage.accesskey "G">
+
+<!ENTITY  securityTab           "Slándáil">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Taispeáin an Teastas">
+<!ENTITY  securityView.accesskey "T">
+<!ENTITY  securityView.unknown   "Anaithnid">
+
+
+<!ENTITY  securityView.identity.header   "Aitheantas an tSuímh Ghréasáin">
+<!ENTITY  securityView.identity.owner    "Úinéir:">
+<!ENTITY  securityView.identity.domain   "Suíomh Gréasáin:">
+<!ENTITY  securityView.identity.verifier "Fíoraithe ag:">
+<!ENTITY  securityView.identity.validity "In éag ar:">
+
+<!ENTITY  securityView.privacy.header                   "Príobháideachas agus Stair">
+<!ENTITY  securityView.privacy.history                  "Ar thug mé cuairt ar an suíomh seo roimh inniu?">
+<!ENTITY  securityView.privacy.cookies                  "An bhfuil an suíomh Gréasáin seo ag stóráil faisnéise (fianáin) ar mo ríomhaire?">
+<!ENTITY  securityView.privacy.viewCookies              "Féach ar Fhianáin">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "F">
+<!ENTITY  securityView.privacy.passwords                "An bhfuil focail fhaire sábháilte agam le haghaidh an tsuímh seo?">
+<!ENTITY  securityView.privacy.viewPasswords            "Taispeáin Focail Fhaire a Sábháladh">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "S">
+
+<!ENTITY  securityView.technical.header                 "Mionsonraí Teicniúla">
+
+<!ENTITY  helpButton.label                              "Cabhair">

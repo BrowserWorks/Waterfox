@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "ชื่อ:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "ช">
+<!ENTITY editBookmarkOverlay.location.label                  "ตำแหน่งที่ตั้ง:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "ต">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "ตำแหน่งที่ตั้งฟีด:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "ฟ">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "ตำแหน่งที่ตั้งไซต์:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "ห">
+<!ENTITY editBookmarkOverlay.folder.label                    "โฟลเดอร์:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "แสดงโฟลเดอร์ที่คั่นหน้าทั้งหมด">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "ซ่อน">
+<!ENTITY editBookmarkOverlay.tags.label                      "ป้ายกำกับ:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "ป">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "แบ่งป้ายกำกับด้วยจุลภาค">
+<!ENTITY editBookmarkOverlay.description.label               "คำอธิบาย:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ค">
+<!ENTITY editBookmarkOverlay.keyword.label                   "คำสำคัญ:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "ส">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "แสดงป้ายกำกับทั้งหมด">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "โหลดที่คั่นหน้านี้ในแถบข้าง">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ห">
+<!ENTITY editBookmarkOverlay.choose.label                    "เลือก…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "โฟลเดอร์ใหม่">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "ฟ">

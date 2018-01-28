@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "İzlənmə Qoruması istifadə et">
+<!ENTITY  trackingProtectionAlways.label       "Həmişə">
+<!ENTITY  trackingProtectionAlways.accesskey   "H">
+<!ENTITY  trackingProtectionPrivate.label      "Ancaq Məxfi Pəncərələrdə">
+<!ENTITY  trackingProtectionPrivate.accesskey  "n">
+<!ENTITY  trackingProtectionNever.label        "Heç vaxt">
+<!ENTITY  trackingProtectionNever.accesskey    "v">
+<!ENTITY  trackingProtectionLearnMore.label    "Ətraflı öyrən">
+<!ENTITY  trackingProtectionExceptions.label   "İstisnalar…">
+<!ENTITY  trackingProtectionExceptions.accesskey "a">
+
+<!ENTITY tracking.label                 "İzleme">
+<!ENTITY trackingProtectionPBM5.label         "Məxfi Pəncərələrdə İzlənmə Qoruması istifadə et">
+<!ENTITY trackingProtectionPBM5.accesskey     "P">
+<!ENTITY trackingProtectionPBMLearnMore.label "Ətraflı öyrən">
+<!ENTITY changeBlockList.label          "Qara Siyahını Dəyiş">
+<!ENTITY changeBlockList.accesskey      "D">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Həmçinin ">
+<!ENTITY  doNotTrack.settings.label     "Məni İzləmə tənzimləmələrinizi idarə edə bilərsiz">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Tarixçə">
+
+<!ENTITY  locationBar.label             "Ünvan sətiri">
+
+<!ENTITY  locbar.suggest.label          "Ünvan sətirindən istifadə edərkən təklif et:">
+<!ENTITY  locbar.history.label          "Tarixçə">
+<!ENTITY  locbar.history.accesskey      "T">
+<!ENTITY  locbar.bookmarks.label        "Əlfəcinlər">
+<!ENTITY  locbar.bookmarks.accesskey    "l">
+<!ENTITY  locbar.openpage.label         "Açıq vərəqlər">
+<!ENTITY  locbar.openpage.accesskey     "A">
+<!ENTITY  locbar.searches.label         "Əsas axtarış mühərrikindən uyğun axtarışlar">
+<!ENTITY  locbar.searches.accesskey     "y">
+
+<!ENTITY  suggestionSettings.label      "Axtarış mühərriyi təklifləri üçün nizamlamaları dəyiş…">
+<!ENTITY  suggestionSettings.accesskey  "m">
+
+<!ENTITY  acceptCookies.label           "Saytlardan çərəzləri qəbul et">
+<!ENTITY  acceptCookies.accesskey       "e">
+
+<!ENTITY  acceptThirdParty.pre.label      "Üçüncü tərəf çərəzlərini qəbul et:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "l">
+<!ENTITY  acceptThirdParty.always.label   "Həmişə">
+<!ENTITY  acceptThirdParty.never.label    "Heç vaxt">
+<!ENTITY  acceptThirdParty.visited.label  "Baxılanlardan">
+
+<!ENTITY  keepUntil.label               "Saxlama limiti:">
+<!ENTITY  keepUntil.accesskey           "t">
+
+<!ENTITY  expire.label                  "vaxtı bitənədək">
+<!ENTITY  close.label                   "&brandShortName; qapatanadək">
+
+<!ENTITY  cookieExceptions.label        "İstisnalar…">
+<!ENTITY  cookieExceptions.accesskey    "a">
+
+<!ENTITY  showCookies.label             "Çərəzləri Göstər…">
+<!ENTITY  showCookies.accesskey         "G">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; səyyahı:">
+<!ENTITY  historyHeader.pre.accesskey      "h">
+<!ENTITY  historyHeader.remember.label     "Tarixçəni xatırla">
+<!ENTITY  historyHeader.dontremember.label "Tarixçəni heç vaxt xatırlama">
+<!ENTITY  historyHeader.custom.label       "Tarixçə üçün fərdi tənzimləmələri işlət">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; sizin səyahət, endirmə, forma və axtarış tarixçənizi xatırlayacaq, və daxil olduğunuz veb saytlardan çərəzləri saxlayacaq.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "İstəsəniz ">
+<!ENTITY  rememberActions.clearHistory.label  "yaxın tarixçənizi">
+<!ENTITY  rememberActions.middle.label        " və ya ">
+<!ENTITY  rememberActions.removeCookies.label "fərdi çərəzləri silə">
+<!ENTITY  rememberActions.post.label          " bilərsiz.">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; gizli baxışdakı nizamlamalardan istifadə edəcək və siz Web-də gəzərkən keçmişlə bağlı heçnə xatırlamayacaq.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Əlavə olaraq">
+<!ENTITY  dontrememberActions.clearHistory.label "bütün keçmişinizi də silə bilirsiniz">
+<!ENTITY  dontrememberActions.post.label         "açıqlanmışdır.">
+
+<!ENTITY  privateBrowsingPermanent2.label "Həmişə gizli baxış rejimindən istifadə et">
+<!ENTITY  privateBrowsingPermanent2.accesskey "g">
+
+<!ENTITY  rememberHistory2.label      "Endirmə və Tarixçəmi yadda saxla">
+<!ENTITY  rememberHistory2.accesskey  "l">
+
+<!ENTITY  rememberSearchForm.label       "Axtarış və form keçmişini xatırla">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; bağlananda tarixçəni sil">
+<!ENTITY  clearOnClose.accesskey         "s">
+
+<!ENTITY  clearOnCloseSettings.label     "Nizamlar…">
+<!ENTITY  clearOnCloseSettings.accesskey "a">
+
+<!ENTITY  browserContainersHeader.label         "Konteyner Vərəqləri">
+<!ENTITY  browserContainersLearnMore.label      "Ətraflı öyrən">
+<!ENTITY  browserContainersEnabled.label        "Konteyner Vərəqlərini Aktivləşdir">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Tənzimləmələr…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

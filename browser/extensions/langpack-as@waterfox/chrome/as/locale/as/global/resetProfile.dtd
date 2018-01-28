@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; সতেজ কৰক">
+<!ENTITY refreshProfile.dialog.description1  "সমস্যাসমূহ সমাধান কৰিবলৈ আৰু পৰিৱেশন উদ্ধাৰ কৰিবলৈ নতুনকৈ আৰম্ভ কৰক।">
+<!ENTITY refreshProfile.dialog.description2  "ই:">
+<!ENTITY refreshProfile.dialog.items.label1  "আপোনাৰ এড-অনসমূহ আৰু স্বনিৰ্বাচনসমূহ আতৰাওক">
+<!ENTITY refreshProfile.dialog.items.label2  "আপোনাৰ ব্ৰাউছাৰ সংহতিসমূহ অবিকল্পিতলৈ পুনৰ সংহতি কৰক">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; সতেজ কৰক">
+
+<!ENTITY refreshProfile.title                "&brandShortName; ক টিউন আপ কৰক">
+<!ENTITY refreshProfile.button.label         "&brandShortName; সতেজ কৰক…">
+
+<!ENTITY refreshProfile.cleaning.description "প্ৰায় সম্পূৰ্ণ…">

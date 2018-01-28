@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Ñembohekopyahu rembiasakue">
+<!ENTITY  history.intro             "Oñemohendapáma ko'ã ñembohekopyahu:">
+<!ENTITY  closebutton.label         "Mboty">
+                                     
+<!ENTITY  noupdates.label           "Ndaipóri gueteri ñembohekopyahu oñemohendapyréva">
+
+<!ENTITY  name.header               "Ñembohekopyahu réra">
+<!ENTITY  date.header               "Ñembohekopyahu arange">
+<!ENTITY  type.header               "Mba'eichagua">
+<!ENTITY  state.header              "Tekotee">
+

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "भाषा">
+<!ENTITY languages.customize.description                "वेब पृष्ठे काही वेळा एकापेक्षा अधिक भाषांमध्ये पुरवली जातात. आपल्या प्राधान्यक्रमानुसार, वेब पृष्ठे दर्शवण्यासाठी भाषांची निवड करा.">
+<!ENTITY languages.customize.moveUp.label               "वर हलवा">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "खाली हलवा">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "काढुन टाका">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.selectLanguage.label       "जमा करण्यासाठी भाषा निवडा…">
+<!ENTITY languages.customize.addButton.label            "समाविष्ट करा">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

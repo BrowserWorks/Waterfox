@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "ჩაკეცვა">
+<!ENTITY bringAllToFront.label    "ყველას წინ გადმოტანა">
+<!ENTITY zoomWindow.label         "ზომის ცვლილება">
+<!ENTITY windowMenu.label         "ფანჯარა">
+
+<!ENTITY helpMenu.label           "დახმარება"> 
+<!ENTITY helpMenu.accesskey       "დ"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "დახმარება"> 
+<!ENTITY helpMenuWin.accesskey    "დ">
+<!ENTITY aboutProduct2.label      "&brandShorterName;-ის შესახებ">
+<!ENTITY aboutProduct2.accesskey  "ე">
+<!ENTITY productHelp2.label       "&brandShorterName; დახმარება">
+<!ENTITY productHelp2.accesskey   "დ">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "კლავიატურის მალსახმობები">
+<!ENTITY helpKeyboardShortcuts.accesskey "კ">
+
+<!ENTITY helpSafeMode.label       "გამორთული დამატებებით გაშვება...">
+<!ENTITY helpSafeMode.accesskey   "ხ">
+<!ENTITY helpSafeMode.stop.label       "ჩართული დამატებებით გაშვება">
+<!ENTITY helpSafeMode.stop.accesskey   "ჩ">
+
+<!ENTITY healthReport2.label      "&brandShorterName; გამართულობის შესახებ მოხსენება">
+<!ENTITY healthReport2.accesskey  "ჯ">
+
+<!ENTITY helpTroubleshootingInfo.label      "გაუმართაობის აღმოფხვრა">
+<!ENTITY helpTroubleshootingInfo.accesskey  "პ">
+
+<!ENTITY helpFeedbackPage.label      "უკუკავშირი...">
+<!ENTITY helpFeedbackPage.accesskey  "გ">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; ტური">
+<!ENTITY helpShowTour2.accesskey        "უ">
+
+<!ENTITY preferencesCmdMac.label        "პარამეტრები…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "მომსახურებები">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName;-ის დამალვა">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "სხვების დამალვა">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "ყველას ჩვენება">

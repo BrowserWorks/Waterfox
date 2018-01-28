@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab ju kalon nëpër skedat sipas radhës së përdorimit së fundi">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Dritaret e reja hapi më mirë si skedë të re">
+<!ENTITY newWindowsAsTabs.accesskey   "D">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Sinjalizo kur mbyllen disa skeda njëherësh">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "b">
+
+<!ENTITY warnOnOpenManyTabs.label       "Sinjalizo kur hapja e shumë skedave njëherësh do të mund të ngadalësonte &brandShortName;-in">
+<!ENTITY warnOnOpenManyTabs.accesskey   "h">
+
+<!ENTITY switchLinksToNewTabs.label        "Kur një lidhje hapet si një skedë të re, kalo në të menjëherë">
+<!ENTITY switchLinksToNewTabs.accesskey    "K">
+
+<!ENTITY showTabsInTaskbar.label          "Shfaq paraparje skedash te &quot;Windows taskbar&quot;">
+<!ENTITY showTabsInTaskbar.accesskey      "a">
+<!ENTITY tabsGroup.label          "Skeda">

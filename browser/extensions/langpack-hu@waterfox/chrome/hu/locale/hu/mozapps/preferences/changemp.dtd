@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Mesterjelszó megváltoztatása">
+<!ENTITY setPassword.tokenName.label       "Adatvédelmi eszköz">
+<!ENTITY setPassword.oldPassword.label     "Jelenlegi jelszó:">
+<!ENTITY setPassword.newPassword.label     "Új jelszó:">
+<!ENTITY setPassword.reenterPassword.label "Jelszó megerősítése:">
+<!ENTITY setPassword.meter.label           "Jelszó minősége">
+<!ENTITY setPassword.meter.loading         "Betöltés">
+<!ENTITY masterPasswordDescription.label   "A mesterjelszó érzékeny adatok, például webhelyek belépési jelszavai védelmére használható. Ha létrehozza a mesterjelszót, akkor minden munkamenetben egyszer be kell írnia, amikor a &brandShortName; betölti a jelszóval védett mentett adatokat.">
+<!ENTITY masterPasswordWarning.label       "A mesterjelszót jól jegyezze meg. Ha elfelejti, nem fog tudni hozzáférni az általa védett adatokhoz.">

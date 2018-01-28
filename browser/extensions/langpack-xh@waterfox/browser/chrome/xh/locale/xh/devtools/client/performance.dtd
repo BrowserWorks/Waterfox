@@ -1,0 +1,137 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "Iisampuli zeevenkile ze-profiler kwi-buffer ye-circular, kwaye wakuba ifikelele ukulinganisela ukurekhoda, iisampuli ezintsha ukuqalisa ukucima iisampuli ekuqaleni kokurekhoda.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!ENTITY performanceUI.disabledRealTime.nonE10SBuild "Idatha yokurekhoda yexesha lokwenene iyekisiwe kwiWaterfox eneeprosesi ezininzi.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Vumela inkqubo exananazileyo yeWaterfox kwiiprefrensi ukuba irekhode idatha ngexesha lokwenene.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "I-buffer igcwele. Iisampuli ezindala ngoku ziyaqalisa ukucima.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+
+<!ENTITY performanceUI.unavailableNoticePB "Ukurekhoda iprofayili akukho okwangoku. Sicela uvale zonke iiwindow zokubrawuza zabucala uze uzame kwakhona">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "Kuyalayishwa…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "I-Waterfall">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Bonisa imisebenzi eyahlukeneyo eyenziwa yibhrawza ebudeni bokurekhoda, eyandlalwe ngolungelelwano njengengxangxasi.">
+<!ENTITY performanceUI.toolbar.js-calltree "Tsalela Umthi">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Ibalaselisa imisebenzi yeJavaScript apho ibhrawza ichitha ixesha elininzi ebudeni bokurekhoda">
+<!ENTITY performanceUI.toolbar.memory-calltree "Izinto ezabelweyo">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Ibonisa apho imemori ibikhona ebudeni bokurekhoda.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Itshati ye-JS Flame">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Ibonisa istekhi seminxeba seJavaScript ebudeni bokurekhoda.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Izinto ezabelweyo zetshati ye-flame">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "Lilonke ixesha">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Umthamo wexesha elichithwe kulo msebenzi nemisebenzi eliyitsalelayo. ">
+<!ENTITY performanceUI.table.selfDuration             "Ukuzijongela ixesha">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Umthamo wexesha elichithwe kuphela kulo msebenzi.">
+<!ENTITY performanceUI.table.totalPercentage          "Zizonke indleko">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Ipesenti yexesha elichithwe kulo msebenzi nemisebenzi eliyitsalelayo">
+<!ENTITY performanceUI.table.selfPercentage           "Indleko zakho">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Ipesenti yexesha elichithwe kulo msebenzi.">
+<!ENTITY performanceUI.table.samples                  "Iisampuli">
+<!ENTITY performanceUI.table.samples.tooltip          "Inani lamaxesha lo msebenzi obukwi-stack xa iprofiler ithatha isampuli.">
+<!ENTITY performanceUI.table.function                 "Umsebenzi">
+<!ENTITY performanceUI.table.function.tooltip         "Igama nomthombo wendawo womsebenzi owenziwe isampuli.">
+<!ENTITY performanceUI.table.totalAlloc               "Zizonke izinto ezabelweyo ezenziwe iisampuli ">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Inani elipheleleyo lobeko lwe-Objekthi iye yasemplishwa kule ndawo nakubafowunelwa.">
+<!ENTITY performanceUI.table.selfAlloc                "Izinto Ezabelweyo Ezenziwe Iisampuli ">
+<!ENTITY performanceUI.table.selfAlloc.tooltip        "Inani leeObjekti ezibekiweyo eziyisampulu yale ndawo">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Khetha idatha omawuyibonise kumzila wexesha">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "Configa ukhetho lokusebenza.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "Buyisa Umthi Womnxeba">
+<!ENTITY performanceUI.invertTree.tooltiptext "Ibuyisa imiboniso yomnxeba womthi ipathi zeprofayile yomnxeba ukususela kweyona freyimu incinci ukunyuka ukuya kweyona freyimu inkulu.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "Buyisela iTshathi yeFleyimu">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Ibuyisela imiboniso yetshati yefreyimu ipathi zeprofayile yomnxeba ukususela kweyona freyimu incinci ukunyuka ukuya kweyona freyimu indala.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "Bonisa iPlatfomu yeDatha yeGecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Ibonisa idatha yeplatfomu ivumela iingxelo zeJavaScript Profiler ukuba ziquke iisimboli zeplatfomu yeGecko.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!ENTITY performanceUI.showJITOptimizations             "Bonisa ukuOptimayiza kweJIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Bonisa idatha yoku-ooptimayiza yeJIT eyisampulu kwifreyimu yeJavaScript nganye.">
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "Yenza Sicaba Ukubuyiselwa Komthi">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Yekisa ukubuyela xa kusebenza uhlolo.">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "Rekhoda iMemori">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Rekhoda ukusetyenziswa kwememori ngoxa uprofayila">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "Rekhoda Ezibekiweyo">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Rekhoda ukubekwa kweNto ngoxa uprofayila.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "Rekhoda iReyithi yeFreyimu">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Rekhoda ireyithi yefreyimu ngoxa uprofayile">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Ngoku iyarekhoda isebenzisa">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "Yekisa ukurekhoda ngokufaka">
+<!ENTITY performanceUI.console.stopCommandEnd   "kwikhonsoli.">

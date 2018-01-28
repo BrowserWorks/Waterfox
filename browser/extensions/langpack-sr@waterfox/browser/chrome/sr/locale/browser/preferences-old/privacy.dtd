@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Користити заштиту од праћења">
+<!ENTITY  trackingProtectionAlways.label       "Увек">
+<!ENTITY  trackingProtectionAlways.accesskey   "У">
+<!ENTITY  trackingProtectionPrivate.label      "Само у приватним прозорима">
+<!ENTITY  trackingProtectionPrivate.accesskey  "С">
+<!ENTITY  trackingProtectionNever.label        "Никада">
+<!ENTITY  trackingProtectionNever.accesskey    "Н">
+<!ENTITY  trackingProtectionLearnMore.label    "Сазнајте више">
+<!ENTITY  trackingProtectionExceptions.label   "Изузеци…">
+<!ENTITY  trackingProtectionExceptions.accesskey "И">
+
+<!ENTITY tracking.label                 "Праћење">
+<!ENTITY trackingProtectionPBM5.label         "Користи заштиту од праћења у приватним прозорима">
+<!ENTITY trackingProtectionPBM5.accesskey     "ш">
+<!ENTITY trackingProtectionPBMLearnMore.label "Сазнајте више">
+<!ENTITY changeBlockList.label          "Промени листу блокираних елемената">
+<!ENTITY changeBlockList.accesskey      "л">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Такође можете ">
+<!ENTITY  doNotTrack.settings.label     "управљати са вашим Не желим да ме прате поставкама">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Историјат">
+
+<!ENTITY  locationBar.label             "Адресна трака">
+
+<!ENTITY  locbar.suggest.label          "При употреби адресне траке, предложи:">
+<!ENTITY  locbar.history.label          "Историјат">
+<!ENTITY  locbar.history.accesskey      "И">
+<!ENTITY  locbar.bookmarks.label        "Забелешке">
+<!ENTITY  locbar.bookmarks.accesskey    "З">
+<!ENTITY  locbar.openpage.label         "Отвори језичке">
+<!ENTITY  locbar.openpage.accesskey     "ј">
+<!ENTITY  locbar.searches.label         "Повезане претраге са подразумеваног претраживача">
+<!ENTITY  locbar.searches.accesskey     "п">
+
+<!ENTITY  suggestionSettings.label      "Промени поставке за предлоге претраживача…">
+<!ENTITY  suggestionSettings.accesskey  "т">
+
+<!ENTITY  acceptCookies.label           "Прихватај колачиће са сајтова">
+<!ENTITY  acceptCookies.accesskey       "к">
+
+<!ENTITY  acceptThirdParty.pre.label      "Прихватај колачиће од трећих лица:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "т">
+<!ENTITY  acceptThirdParty.always.label   "Увек">
+<!ENTITY  acceptThirdParty.never.label    "Никад">
+<!ENTITY  acceptThirdParty.visited.label  "Од посећених">
+
+<!ENTITY  keepUntil.label               "Чувај док:">
+<!ENTITY  keepUntil.accesskey           "Ч">
+
+<!ENTITY  expire.label                  "не истекну">
+<!ENTITY  close.label                   "не затворим &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Изузеци">
+<!ENTITY  cookieExceptions.accesskey    "И">
+
+<!ENTITY  showCookies.label             "Прикажи колачиће…">
+<!ENTITY  showCookies.accesskey         "л">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "F">
+<!ENTITY  historyHeader.remember.label     "бележи историјат">
+<!ENTITY  historyHeader.dontremember.label "никада не бележи историјат">
+<!ENTITY  historyHeader.custom.label       "користи посебна подешавања за историјат">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ће запамтити историјат прегледања, преузимања, формулара и претраге и чуваће колачиће са веб сајтова које посећујете.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Можда желите да ">
+<!ENTITY  rememberActions.clearHistory.label  "обришете историјат">
+<!ENTITY  rememberActions.middle.label        ", или ">
+<!ENTITY  rememberActions.removeCookies.label "уклоните поједине колачиће">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ће користити иста подешавања као за приватно прегледања, и неће памтити историјат прегледања веб страница.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Можда такође желите да ">
+<!ENTITY  dontrememberActions.clearHistory.label "обришете тренутни историјат">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Увек користи режим приватног прегледања">
+<!ENTITY  privateBrowsingPermanent2.accesskey "в">
+
+<!ENTITY  rememberHistory2.label      "Запамти мој историјат прегледања и преузимања">
+<!ENTITY  rememberHistory2.accesskey  "З">
+
+<!ENTITY  rememberSearchForm.label       "Запамти историјат образаца и претраге">
+<!ENTITY  rememberSearchForm.accesskey   "р">
+
+<!ENTITY  clearOnClose.label             "Обриши историјат када се &brandShortName; затвори">
+<!ENTITY  clearOnClose.accesskey         "О">
+
+<!ENTITY  clearOnCloseSettings.label     "Поставке…">
+<!ENTITY  clearOnCloseSettings.accesskey "П">
+
+<!ENTITY  browserContainersHeader.label         "Контејнер језичци">
+<!ENTITY  browserContainersLearnMore.label      "Сазнајте више">
+<!ENTITY  browserContainersEnabled.label        "Омогући контејнер језичке">
+<!ENTITY  browserContainersEnabled.accesskey    "к">
+<!ENTITY  browserContainersSettings.label        "Поставке…">
+<!ENTITY  browserContainersSettings.accesskey    "в">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

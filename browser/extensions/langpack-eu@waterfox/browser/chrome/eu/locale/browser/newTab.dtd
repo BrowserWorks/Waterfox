@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Fitxa berria">
+<!ENTITY newtab.customize.classic "Erakutsi zure gune erabilienak">
+<!ENTITY newtab.customize.cog.enhanced "Sartu iradokitako guneak">
+<!ENTITY newtab.customize.cog.title2 "FITXA BERRIAREN KONTROLAK">
+<!ENTITY newtab.customize.cog.learn "Fitxa berriei buruzko argibide gehiago">
+<!ENTITY newtab.customize.title "Pertsonalizatu fitxa berriaren orria">
+<!ENTITY newtab.customize.blank2 "Erakutsi orri hutsa">
+<!ENTITY newtab.undo.removedLabel "Koadro txikia kenduta.">
+<!ENTITY newtab.undo.undoButton "Desegin.">
+<!ENTITY newtab.undo.restoreButton "Berrezarri dena.">
+<!ENTITY newtab.undo.closeTooltip "Ezkutatu">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Pornire">
+
+<!ENTITY startupPage2.label        "Când &brandShortName; pornește:">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Arată pagina de start">
+<!ENTITY startupBlankPage.label    "Arată o pagină goală">
+<!ENTITY startupPrevSession.label  "Arată ferestrele și filele de data trecută">
+
+<!ENTITY homepage2.label           "Pagină de start">
+<!ENTITY useCurrentPage.label      "Folosește pagina actuală">
+<!ENTITY useCurrentPage.accesskey  "c">
+<!ENTITY useMultiple.label         "Folosește paginile actuale">
+<!ENTITY chooseBookmark.label      "Folosește un marcaj…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "Folosește opțiunea implicită">
+<!ENTITY restoreDefault.accesskey  "F">
+
+<!ENTITY downloads.label     "Descărcări">
+
+<!ENTITY saveTo.label "Salvează fișierele în">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Răsfoiește…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "Alege…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Întreabă întotdeauna unde să salvez fișierele">
+<!ENTITY alwaysAskWhere.accesskey     "n">
+
+<!ENTITY alwaysCheckDefault2.label        "Verifică întotdeauna dacă &brandShortName; este browserul implicit">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser3.label     "Desemnează ca implicit">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; este în prezent browserul implicit">
+<!ENTITY isNotDefault.label               "&brandShortName; nu este browserul implicit">
+
+<!ENTITY separateProfileMode.label        "Permite ca &brandShortName; și Waterfox să ruleze în același timp">
+<!ENTITY useWaterfoxSync.label             "Pont: Acesta folosește profiluri separate. Folosește Sincronizare pentru a împărtăși datele între ele.">
+<!ENTITY getStarted.notloggedin.label     "Autentifică-te la &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Deschide preferințele &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Activează funcționalitatea de multiprocese a &brandShortName;">
+
+<!ENTITY homepage2.accesskey       "P">

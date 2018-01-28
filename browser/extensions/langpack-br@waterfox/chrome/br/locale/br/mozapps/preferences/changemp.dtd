@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Kemmañ ar ger-tremen mestr">
+<!ENTITY setPassword.tokenName.label       "Trevnad diogelroez">
+<!ENTITY setPassword.oldPassword.label     "Ger-tremen bremanel :">
+<!ENTITY setPassword.newPassword.label     "Roit ur ger-tremen nevez :">
+<!ENTITY setPassword.reenterPassword.label "Enankit ar ger-tremen en-dro :">
+<!ENTITY setPassword.meter.label           "Perzhded ar ger-tremen">
+<!ENTITY setPassword.meter.loading         "O kargañ">
+<!ENTITY masterPasswordDescription.label   "Arveret e vez ar ger-tremen mestr evit gwareziñ stlennoù kizidik evel gerioù-tremen ul lec'hienn. Mar bez krouet ur ger-tremen mestr ganeoc'h e vo goulennet diganeoc'h ur wech gant bep a estezioù pa vo atoret stlennoù gwarezet gant ur ger-tremen gant &brandShortName;.">
+<!ENTITY masterPasswordWarning.label       "Bezit sur e vo dalc'het soñj eus ar ger-tremen mestr hoc'h eus enanket. Mar bez ankouaet ho ker-tremen ne viot ket evit haeziñ ar stlennoù gwarezet gantañ.">

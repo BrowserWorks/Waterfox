@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "安装附加组件">
+<!ENTITY intro           "您计算机上的某个程序想要修改 &brandShortName; 的下列附加组件：">
+<!ENTITY warning         "请仅安装来自您所信任的作者的附加组件。">
+<!ENTITY allow           "允许安装">
+<!ENTITY later           "您随时都可以去附加组件管理器改变您的决定。">
+<!ENTITY continue        "继续">
+<!ENTITY restartMessage  "您必须重新启动 &brandShortName; 以完成此附加组件的安装。">
+<!ENTITY restartButton   "重新启动 &brandShortName;">
+<!ENTITY cancelButton    "取消">

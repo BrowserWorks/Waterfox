@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "ხელსაწყოთა ზოლის მორგება">
+<!ENTITY dialog.dimensions        "width: 94ch; height: 36em;">
+<!ENTITY instructions.description "ელემენტების დამატება და ამოღება შეგიძლიათ პულტში ან პულტიდან მათი გადაჩოჩებით.">
+<!ENTITY show.label               "ჩვენება:">
+<!ENTITY iconsAndText.label       "ხატულები და ტექსტი">
+<!ENTITY icons.label              "ხატულები">
+<!ENTITY text.label               "ტექსტი">
+<!ENTITY useSmallIcons.label      "პატარა ხატულები">
+<!ENTITY restoreDefaultSet.label  "აღდგენა">
+<!ENTITY addNewToolbar.label      "ახლის დამატება">
+<!ENTITY saveChanges.label        "მზადაა">
+<!ENTITY undoChanges.label        "ცვლილებების გაუქმება">

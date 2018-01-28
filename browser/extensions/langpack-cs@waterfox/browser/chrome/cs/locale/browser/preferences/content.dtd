@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Oprávnění">
+
+<!ENTITY  blockPopups.label           "Blokovat vyskakovací okna">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Zjistit více">
+<!ENTITY  notificationsPolicyDesc4.label       "Vyberte, které servery vám mohou posílat oznámení">
+<!ENTITY  notificationsPolicyButton.accesskey  "y">
+<!ENTITY  notificationsPolicyButton.label      "Vybrat…">
+<!ENTITY  notificationsDoNotDisturb.label      "Nerušit mě">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "N">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Dokud aplikaci &brandShortName; nerestartujete, žádná oznámení se nezobrazí">
+
+<!ENTITY  popupExceptions.label       "Výjimky…">
+<!ENTITY  popupExceptions.accesskey   "k">
+
+<!ENTITY  fontsAndColors.label        "Písma a barvy">
+
+<!ENTITY  defaultFont2.label          "Výchozí písmo">
+<!ENTITY  defaultFont2.accesskey      "p">
+<!ENTITY  defaultSize2.label          "Velikost">
+<!ENTITY  defaultSize2.accesskey      "V">
+
+<!ENTITY  advancedFonts.label         "Rozšířené…">
+<!ENTITY  advancedFonts.accesskey     "o">
+
+<!ENTITY  colors.label                "Barvy…">
+<!ENTITY  colors.accesskey            "y">
+
+
+<!ENTITY language2.label              "Jazyk">
+<!ENTITY chooseLanguage.label         "Vyberte jazyky pro zobrazování webových stránek">
+<!ENTITY chooseButton.label           "Vybrat jazyky…">
+<!ENTITY chooseButton.accesskey       "j">
+
+<!ENTITY translateWebPages.label      "Překládat webové stránky">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Výjimky…">
+<!ENTITY translateExceptions.accesskey "V">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Překlady od">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Obsah chráněný pomocí Digital Rights Management (DRM)">
+
+<!ENTITY  playDRMContent2.label          "Přehrávat obsah chráněný pomocí DRM">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent.learnMore.label "Zjistit více">

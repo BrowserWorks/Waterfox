@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Taggia">
+<!ENTITY cutCmd.accesskey "T">
+<!ENTITY copyCmd.label "Còpia">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "Incòlla">
+<!ENTITY pasteCmd.accesskey "I">
+<!ENTITY undoCmd.label "Anulla">
+<!ENTITY undoCmd.accesskey "A">
+<!ENTITY selectAllCmd.label "Seleçionn-a tutto">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Scancella">
+<!ENTITY deleteCmd.accesskey "S">
+<!ENTITY searchTextBox.clear.label "Scancella">
+<!ENTITY spellAddToDictionary.label "Azonzi a-o Diçionaio">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "Anulla l'azonta a-o diçionaio">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+
+<!ENTITY spellCheckToggle.label "Contròllo òrtografico">
+<!ENTITY spellCheckToggle.accesskey "o">
+
+<!ENTITY spellNoSuggestions.label "(No sugerimenti in sciô testo)">
+<!ENTITY spellDictionaries.label "Lengoe">
+<!ENTITY spellDictionaries.accesskey "L">
+<!ENTITY fillLoginMenu.label "Conpila dæti d'acesso">
+<!ENTITY fillLoginMenu.accesskey "n">
+<!ENTITY fillPasswordMenu.label "Conpila paròlle segrete">
+<!ENTITY fillPasswordMenu.accesskey "n">
+<!ENTITY fillUsernameMenu.label "Conpila nomme utente">
+<!ENTITY fillUsernameMenu.accesskey "m">
+<!ENTITY noLoginSuggestions.label "(nesciun conseggio)">
+<!ENTITY viewSavedLogins.label "Amia acessi sarvæ">

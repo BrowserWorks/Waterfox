@@ -1,0 +1,188 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "పేజీని లోడుచేయడంలో సమస్య">
+<!ENTITY retry.label "మళ్ళీ ప్రయత్నించు">
+<!ENTITY returnToPreviousPage.label "వెనక్కి వెళ్ళు">
+<!ENTITY advanced.label "ఉన్నతం">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "సంధానం సాధ్యం కావడంలేదు">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "ఈ చిరునామా నిషిద్దం">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "సేవిక కనబడలేదు">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>చిరునామాలో <strong>www</strong>.example.com బదులుగా <strong>ww</strong>.example.com టైపుచేయడం లాంటి తప్పులు ఉన్నాయేమో పరిశీలించండి</li>
+   <li>మీరు వేరే పేజీలను కూడా తెరవలేకపోతూంటే, మీ కంప్యూటర్ నెట్‌వర్క్ అనుసంధానాన్ని సరిచూసుకోండి.</li> 
+  <li>మీ కంప్యూటర్ లేక నెట్‌వర్క్ గానీ  ఫైర్‌వాల్ చేత రక్షించబడుతూంటే, &brandShortName;కి జాలానికి అనుసంధానమయ్యే అనుమతి ఉండేట్లు చూసుకోండి.</li>
+</ul>">
+
+<!ENTITY fileNotFound.title "ఫైలు కనబడ లేదు">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>కేపిటలైజేషన్ లేదా ఇతర టైపింగు పొరపాట్లు ఫైలు పేరులో ఉన్నాయేమో చూడండి.</li>
+  <li>ఫైలు తరలించబడిందో, పేరు మార్చబడిందో, లేదా తొలగించబడిందో కూడా సరిచూసుకోండి.</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.title "ఫైలుకి ఆక్సెస్ తిరస్కరించబడింది">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>దీన్ని తొలగించి లేదా తరలించి ఉండవచ్చు లేదా ఫైలు అనుమతులు ప్రాప్యతను నిరోధిస్తూండవచ్చు.</li>
+</ul>
+">
+
+<!ENTITY generic.title "అయ్యో.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ఏదో ఒక కారణం వలన ఈ పేజీని లోడు చేయలేకపోతోంది.</p>">
+
+<!ENTITY captivePortal.title "నెట్వర్కులోనికి ప్రవేశించండి">
+
+<!ENTITY openPortalLoginPage.label2 "నెట్వర్క్ లాగిన్ పేజీని తెరవండి">
+
+<!ENTITY malformedURI.title "ఈ చిరునామా సరైనది కాదు">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>సాధారణంగా జాల చిరునామాలను ఇలా వ్రాస్తారు <strong>http://www.example.com/</strong></li>
+  <li>మీరు ఫార్వార్డు స్లాషులనే (అంటే <strong>/</strong>) వాడుతున్నారో లేదో చూసుకోండి .</li>
+</ul>">
+
+<!ENTITY netInterrupt.title "అనుసంధానానికి అంతరాయం కలిగింది">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "పత్రం కాలం చెల్లింది">
+<!ENTITY notCached.longDesc "<p>అభ్యర్ధించిన పత్రం &brandShortName; క్యాషేలో లేదు.</p><ul><li> భద్రతాపరమైన ముందు జాగ్రత్తగా, &brandShortName; సున్నితమైన పత్రాలను స్వయంచాలకంగా తిరిగి-అభ్యర్ధించదు.</li><li>వెబ్‌సైటు నుండి పత్రాన్ని తిరిగి-అభ్యర్ధించడానికి మళ్ళీ ప్రయత్నించు నొక్కండి.</li></ul>">
+
+<!ENTITY netOffline.title "ఆఫ్‌లైన్ రీతి">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>ఆన్‌లైన్ రీతికి మారి పేజీని తిరిగి లోడు చేయడానికి &quot;మళ్ళీ ప్రయత్నించు&quot; నొక్కండి.</li>
+</ul>">
+
+<!ENTITY contentEncodingError.title "కాంటెంట్ ఎన్‌కోడింగ్ తప్పిదం">
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి వారికి ఈ సమస్య గురించి తెలియజేయండి.</li>
+</ul>">
+
+<!ENTITY unsafeContentType.title "సురక్షితం కాని ఫైలు రకం">
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li>దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించి వారికి ఈ సమస్య గురించి తెలియజేయండి.</li>
+</ul>">
+
+<!ENTITY netReset.title "అనుసంధానం పునరుద్ధరించబడింది">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "అనుసంధాన సమయం అయిపోయింది">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "ఆ చిరునామా అర్థం కాలేదు">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>ఈ చిరునామాను తెరవడానికి మీరు వేరే సాఫ్టువేరును స్థాపించుకోవాల్సిరావచ్చు.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "ఆ ప్రాక్సీ సేవిక అనుసంధానాలను తిరస్కరిస్తోంది">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>ప్రాక్సీ అమరికలు సరిగానే ఉన్నాయేమో పరిశీలించండి.</li>
+  <li>ప్రాక్సీ సేవిక పనిచేస్తోందని నిర్ధారించుకోడానికి మీ నెట్‌వర్క్ నిర్వహణాధికారిని సంప్రదించండి.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "ప్రాక్సీ సేవికను కనుగొనలేకపోయాం">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>ప్రాక్సీ అమరికలు సరిగానే ఉన్నాయేమో పరిశీలించండి.</li>
+  <li>మీ కంప్యూటరుకి పనిచేస్తూన్న నెట్‌వర్క్ అనుసంధానం ఉందని నిర్ధారించుకోండి.</li>
+  <li>మీ కంప్యూటరు లేదా నెట్‌వర్కు ఫైర్‌వాల్ లేక ప్రాక్సీ ద్వారా సంరక్షించబడితే, &brandShortName;కి జాలాన్ని వాడుకునే అనుమతి ఉండేలా చూడండి.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "పేజీ సరిగా దారిమళ్ళించడం లేదు">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>కూకీలను అచేనతనం చేయడం వల్లగానీ లేదా వాటిని అంగీకరించకపోవడం వల్ల గానీ కొన్నిసార్లు ఈ సమస్య రావచ్చు.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "సేవిక నుండి అనుకోని స్పందన">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>మీ కంప్యూటర్లో పర్సనల్ సెక్యూరిటీ మేనేజర్ స్థాపితమై ఉండేట్లు చూడండి.</li>
+  <li>ఇది ప్రామాణికం గాని సేవిక స్వరూపణం వల్ల కావచ్చు.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "సురక్షిత అనుసంధానం విఫలమైంది">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>మీరు చూడటానికి ప్రయత్నిస్తున్న పేజీని చూపించలేము ఎందుకంటే అందుకున్న డేటా యథార్థతను తనిఖీ చేయలేకపోయాం.</li>
+  <li>ఈ సమస్యను నివేదించడానికి దయచేసి వెబ్‌సైటు యజమానులను సంప్రదించండి.</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "మీ అనుసంధానం సురక్షితమైనది కాదు">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/> యజమాని వారి వెబ్‌సైటును సరిగా స్వరూపించలేదు.  మీ సమాచారం దొంగిలించబడకుండా రక్షించడానికి, &brandShortName; ఈ వెబ్‌సైటుకి అనుసంధానించలేదు.">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>ఈ సైటు తాత్కాలికంగా అందుబాటులో లేదు లేదా చాలా ఒత్తిడిలో ఉంది. కాసేపాగి మళ్ళీ ప్రయత్నించండి.</li>
+  <li>మీరు వేరే పేజీలేమీ తెరవలేకపోతూంటే, మీ కంప్యూటర్ నెట్‌వర్క్ అనుసంధానాన్ని సరిచూసుకోండి.</li>
+  <li>మీ కంప్యూటరు లేదా నెట్‌వర్కు ఫైర్‌వాల్ లేక ప్రాక్సీ సంరక్షణలో ఉంటే, &brandShortName;కి జాలాన్ని వాడుకునే అనుమతి ఉండేలా చూడండి.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "కాంటెంట్ రక్షణ విధానం చేత నిరోధించబడింది">
+<!ENTITY cspBlocked.longDesc "<p>ఈ పేజీ ఈ విధంగా లోడవడాన్ని &brandShortName; నియంత్రించింది ఎందుకంటే ఈ పేజీ కాంటెంట్ రక్షణ విధానం దీన్ని అనుమతించదు.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "పాడైన విషయ దోషం">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>మీరు చూడడానికి ప్రయత్నిస్తూన్న పేజీ చూపించబడదు ఎందుకంటే డేటా బదలాయింపులో తప్పిదం గుర్తించబడింది.</p><ul><li>దయచేసి వెబ్‌సైటు యజమాలనుల సంప్రదించి ఈ సమస్యను వారికి తెలియజేయండి.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "మినహాయింపును చేర్చు…">
+
+<!ENTITY errorReporting.automatic2 "హానికరమైన సైట్లను గుర్తించి నిరోధించడంలో సహాయపడేందుకు ఇలాంటి తప్పిదాలను Mozillaకు నివేదించండి">
+<!ENTITY errorReporting.learnMore "ఇంకా తెలుసుకోండి…">
+
+<!ENTITY remoteXUL.title "రిమోట్ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>దయజేసి వెబ్‌సైటు యజమాలను సంప్రదించి ఈ సమస్యను వారికి తెలియజేయండి.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "సురక్షితంగా అనుసంధానం కాలేకున్నాము">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "ఉన్నత సమాచారం: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; అనేది <span id='wrongSystemTime_URL'/> కి కనెక్ట్ కాలేదు ఎందుకంటే మీ కంప్యూటర్ యొక్క గడియారం తప్పు సమయాన్ని సూచిస్తున్నది మరియు ఇది ఒక సురక్షిత కనెక్షన్ ను నివారిస్తున్నది.</p> <p>మీ కంప్యూటరు <span id='wrongSystemTime_systemDate'/> కి అమర్చి ఉన్నది, ఇది <span id='wrongSystemTime_actualDate'/> గా, ఉండాలి. ఈ సమస్యను పరిష్కరించడానికి, సరైన సమయంతో సరిపోలే విధంగా మీ తేదీ మరియు సమయమును మార్చండి.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; అనేది <span id='wrongSystemTimeWithoutReference_URL'/> కి కనెక్ట్ కాలేదు ఎందుకంటే మీ కంప్యూటర్ యొక్క గడియారం తప్పు సమయాన్ని సూచిస్తున్నది మరియు ఇది ఒక సురక్షిత కనెక్షన్ ను నివారిస్తున్నది.</p> <p>మీ కంప్యూటరు <span id='wrongSystemTimeWithoutReference_systemDate'/> కి అమర్చి ఉన్నది. ఈ సమస్యను పరిష్కరించడానికి, సరైన సమయంతో సరిపోలే విధంగా మీ తేదీ మరియు సమయమును మార్చండి.</p>">
+
+<!ENTITY certerror.pagetitle1  "అరక్షిత అనుసంధానం">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "&brandShortName; సురక్షితంగా మాత్రమే అనుసంధానం కావాలని చెప్పడానికి HTTP కఠినమైన రవాణా సెక్యూరిటీ (HSTS)ని ఈ సైటు వాడుతూంది. ఫలితంగా, ఈ సర్టిఫికెటుకి మినహాయింపును చేర్చడం సాధ్యం కాదు.">
+<!ENTITY certerror.copyToClipboard.label "పాఠ్యాన్ని క్లిప్‌బోర్డుకి కాపీచేయి">
+
+<!ENTITY inadequateSecurityError.title "మీ అనుసంధానం సురక్షితమైనది కాదు">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> కాలం చెల్లిన దాడికి దుర్భలంగా ఉన్న భద్రతా సాంకేతికత వాడుతోంది. మీరు భద్రం అనుకున్న సమాచారాన్ని దాడి చేసినవారు సులభంగా బయల్పరచవచ్చు. మీరు సైటును చూడగలిగే ముందు సైటు నిర్వాహకులు సైటు సేవికను బాగుచేయాలి.</p><p>దోష సంకేతం: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "ఇది మీ నెట్‌వర్కు భద్రతా అమరికల వల్ల అయివుండవచ్చనిపిస్తోంది. అప్రమేత అమరికలను పునరుద్ధరించమంటారా?">
+<!ENTITY prefReset.label "అప్రమేయ అమరికలను పునరుద్ధరించు">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+

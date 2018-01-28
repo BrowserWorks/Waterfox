@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "இணை">
+<!ENTITY header     "தொலை நிலை சாதனத்துடன் இணை">
+<!ENTITY host       "புரவலன்:">
+<!ENTITY port       "துறை:">
+<!ENTITY connect    "இணை">
+<!ENTITY connecting "இணைக்கிறது...">
+<!ENTITY availableAddons "தொலைநிலையில் இருக்கும் துணை நிரல்கள்:">
+<!ENTITY availableTabs "உள்ள தொலைநிலை கீற்றுகள்:">
+<!ENTITY availableProcesses "உள்ள தொலைநிலை செயலாக்கங்கள்:">
+<!ENTITY connectionError "பிழை:">
+<!ENTITY errorTimeout "பிழை: இணைப்பு காலம் கடந்துவிட்டது.">
+<!ENTITY errorRefused "பிழை: இணைப்பு மறுக்கப்பட்டது.">
+<!ENTITY errorUnexpected "எதிர்பாராத பிழை.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "பயர்பாக்ஸ் உருவாக்குநர் கருவிகள் தொலைவிலுள்ள கருவிகளில் வலுநீக்கம் செய்ய முடியும் (எ.கா, ஆண்ட்ராய்டு பயர்பாக்ஸ் மற்றும் பயர்பாக்ஸ் இயங்குத்தளம்). நீங்க தொலைவிலுள்ள கருவிகளில் 'தொலைதூர வலுநீக்கம்' ஐ செயற்பாட்டில் வைத்துள்ளீர்களா என சரிபார்க்கவும். மேலும் தகவலுக்கு பார், ">
+<!ENTITY remoteDocumentation "ஆவணமாக்கம்">
+<!ENTITY remoteHelpSuffix ".">
+

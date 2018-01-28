@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab به ترتیب زبانه‌های اخیرا استفاده شده بین آنها حرکت می‌کند">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "پنجره‌های جدید در عوض در یک زبانه جدید باز شوند">
+<!ENTITY newWindowsAsTabs.accesskey   "ج">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "در هنگام بستن بیش از یک زبانه هشدار داده شود">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "ب">
+
+<!ENTITY warnOnOpenManyTabs.label       "در صورتی که باز کردن چند زبانه بتواند باعث کند کردن &brandShortName; بشود، به من هشدار بده">
+<!ENTITY warnOnOpenManyTabs.accesskey   "ک">
+
+<!ENTITY switchLinksToNewTabs.label        "هنگامی که یک پیوند را در زبانه جدید باز میکنم، بلافاصله آن زبانه نمایش داده شود">
+<!ENTITY switchLinksToNewTabs.accesskey    "ه">
+
+<!ENTITY showTabsInTaskbar.label          "پیش‌نمایش زبانه‌ها در نوار وضعیت ویندوز">
+<!ENTITY showTabsInTaskbar.accesskey      "ز">
+<!ENTITY tabsGroup.label          "زبانه‌ها">

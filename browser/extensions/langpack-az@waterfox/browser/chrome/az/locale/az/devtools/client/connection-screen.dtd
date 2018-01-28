@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Qoşul">
+<!ENTITY header     "Uzaq cihaza qoşul">
+<!ENTITY host       "Server:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Qoşul">
+<!ENTITY connecting "Bağlanır…">
+<!ENTITY availableAddons "Available remote add-ons:">
+<!ENTITY availableTabs "Available remote tabs:">
+<!ENTITY availableProcesses "Available remote processes:">
+<!ENTITY connectionError "Səhv:">
+
+
+<!ENTITY errorUnexpected "Gözlənilməz səhv.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox Tərtibatçı Alətləri uzaq cihazları sazlaya bilər (məsələn Android üçün Waterfox, Waterfox  OS). Uzaq cihazda ‘Uzaqdan sazlama’ seçimini açdığınıza əmin olun. Ətraflı məlumat üçün ">
+<!ENTITY remoteDocumentation "sənədə">
+<!ENTITY remoteHelpSuffix " baxın.">
+
+
+<!ENTITY errorRefused "Error: connection refused.">
+<!ENTITY errorTimeout "Error: connection timeout.">

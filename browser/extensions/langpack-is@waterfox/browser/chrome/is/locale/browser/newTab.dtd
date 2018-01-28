@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Nýr flipi">
+<!ENTITY newtab.customize.classic "Sýna mest notuðu vefsvæðin">
+<!ENTITY newtab.customize.cog.enhanced "Bæta við vefsvæðum sem mælt er með">
+<!ENTITY newtab.customize.cog.title2 "NÝJAR FLIPA STÝRINGAR">
+<!ENTITY newtab.customize.cog.learn "Lesa um nýja flipann">
+<!ENTITY newtab.customize.title "Sérsníða nýju flipasíðuna">
+<!ENTITY newtab.customize.blank2 "Sýna tóma síðu">
+<!ENTITY newtab.undo.removedLabel "Smámynd fjarlægð.">
+<!ENTITY newtab.undo.undoButton "Hætta við.">
+<!ENTITY newtab.undo.restoreButton "Endurheimta allt.">
+<!ENTITY newtab.undo.closeTooltip "Fela">

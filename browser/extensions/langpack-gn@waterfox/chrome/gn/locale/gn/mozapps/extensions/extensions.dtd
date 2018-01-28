@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Moĩmbaha ñangarekohára">
+
+<!ENTITY search.placeholder                   "Moimbaha jeheka">
+<!ENTITY search.buttonlabel                   "Heka">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Oñemyenyhẽhína…">
+<!ENTITY listEmpty.installed.label            "Ndereguerekói ãichagua moĩmbaha">
+<!ENTITY listEmpty.availableUpdates.label     "Ndojejuhúi ñembohekopyahu">
+<!ENTITY listEmpty.recentUpdates.label        "Nerembopyahúi mba'evéichagua moĩmbaha">
+<!ENTITY listEmpty.findUpdates.label          "Ñembohekopyahu jeheka">
+<!ENTITY listEmpty.search.label               "Ndojejuhúi mba'evéichagua ñemboguejypyre ojogueraháva">
+<!ENTITY listEmpty.button.label               "Eikuaave moimbahakuéra rehegua">
+<!ENTITY installAddonFromFile.label           "Emohenda moĩmbaha marandurenda guive…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Tembipuru opaite moimbahápe g̃uarã">
+
+<!ENTITY getThemes.description                "¿Eñemomba'ese nekundahára rehe?">
+<!ENTITY getThemes.learnMore                  "Eiporavo hetaite mbojeguaha apytépe.">
+
+<!ENTITY cmd.back.tooltip                     "Eguevi jey">
+<!ENTITY cmd.forward.tooltip                  "Ambue toguépe jehasa ">
+
+<!ENTITY showUnsignedExtensions.button.label  "Heta pukukue ndaikatúi kuri ojehechajey">
+<!ENTITY showAllExtensions.button.label       "Opaite mba'ejoapyrã jehecha">
+<!ENTITY debugAddons.label                    "Emopotĩ Moĩmbahakuéra">
+<!ENTITY debugAddons.accesskey                "p">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Opaite moĩmbaha oñemongepáma teko jerovia rupi.">
+<!ENTITY warning.checkcompatibility.label          "Ojueheguáva jehechajey moĩmbaha reheguáva oñemongéma. Ikatu oguereko heta juehegua'ỹva.">
+<!ENTITY warning.checkcompatibility.enable.label   "Myandy">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Ojueheguáva jehechajey moimbaha reheguáva myandy.">
+<!ENTITY warning.updatesecurity.label              "Tekorosãrã jehechajey moĩmbaha rehegua oñemongéma. Ikatu ehecha nde rekorosãrã oñembyaikuaáva embohekopyahu aja.">
+<!ENTITY warning.updatesecurity.enable.label       "Myandy">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Emyandy jehechajey moimbaha rekorosãrã reheguáva">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Jeheka">
+<!ENTITY view.discover.label                  "Moĩmbaha rupity">
+<!ENTITY view.recentUpdates.label             "Ñembohekopyahu ramovéva">
+<!ENTITY view.availableUpdates.label          "Ñembohekopyahu eipurukuaáva">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Ñembohekopyahu jeheka">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "Ñembohekopyahu ramovéva jehecha">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Moĩmbaha ijeheguietéva mbohekopyahu">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Emboheko opaite umi moimbaha oñembohekopyahu hag̃ua ijeheguiete">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "Emboheko opaite moĩmbaha oñembohekopyahu hag̃uáicha pópe">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "Moimbaha hekopyahuhína">
+<!ENTITY updates.installed.label              "Oñembohekopyahúma nemoimbaha.">
+<!ENTITY updates.downloaded.label             "Ne moĩmbaha rehegua ñembohekopyahu oñemboguejypáma.">
+<!ENTITY updates.restart.label                "Emoñepyrujey ko'ág̃a emohenda hag̃ua">
+<!ENTITY updates.noneFound.label              "Ndojejuhúi ñembohekopyahu">
+<!ENTITY updates.manualUpdatesFound.label     "Ehecha ñembohekopyahu eipurukuaáva">
+<!ENTITY updates.updateSelected.label         "Ñembohekopyahu mohenda">
+<!ENTITY updates.updateSelected.tooltip       "Ñembohekopyahu eipurukuaáva ko tysýi pegua mohenda">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Maranduve jehechauka">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "Ñembohekopyahu jeheka">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "Jeporavorã">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "Jerohoryvéva">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "Rehegua">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "Myandy">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "Monge">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "Mbojeguaha Puru">
+<!ENTITY cmd.enableTheme.accesskey            "M">
+<!ENTITY cmd.disableTheme.label               "Anive eipuru ko Mbojeguaha">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "Eporandu emyandy hag̃ua">
+<!ENTITY cmd.askToActivate.tooltip            "Eporandu eipurúta jave ko moĩmbaha">
+<!ENTITY cmd.alwaysActivate.label             "Emyendy tapia">
+<!ENTITY cmd.alwaysActivate.tooltip           "Eipuru tapiaite ko moĩmbaha">
+<!ENTITY cmd.neverActivate.label              "Ani emyandy araka'eve">
+<!ENTITY cmd.neverActivate.tooltip            "Aníke eipuru araka'eve ko moimbaha">
+<!ENTITY cmd.stateMenu.tooltip                "Emoambue ojeipuru vove ko moimbaha">
+<!ENTITY cmd.installAddon.label               "Mohenda">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Mboguete">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "Jeporavorã">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Emoambue poravopyrã ko moĩmbaha rehegua">
+<!ENTITY cmd.showPreferencesUnix.label        "Jerohoryvéva">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Emoambue jerohoryvéva ko moĩmbaha rehegua">
+<!ENTITY cmd.contribute.label                 "Pytyvõ">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "Eipytyvõ moimbaha ñemboguatápe">
+
+<!ENTITY cmd.showReleaseNotes.label           "Jehaipy rehegua jehechauka">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Ko ñembohekopyahu jehaipyre rehegua jehechauka.">
+<!ENTITY cmd.hideReleaseNotes.label           "Jehapy rehegua ñomi">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Emokañy jehaipy ko ñembohekopyahu rehegua.">
+<!ENTITY cmd.findReplacement.label            "Ejuhu hekoviarã">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Mba'épa umi moĩmbaha.">
+<!ENTITY discover.description2                "Umi moĩmbaha ha'e tembipuru'i ombohapéva emomba'ete hag̃ua &brandShortName; tembiaporã oguerekóva térã moimbyréva. Eipuru ta'ãngarupa yke oikuave'ẽva aravo, ohechaukáva ára rehegua térã peteĩ téma ñemoha'ãngáva ejapo hag̃ua &brandShortName;-gui nemba'ete.">
+<!ENTITY discover.footer                      "Eikete vove ñandutípe, ko ta'ãngarupa ome'ẽta heta mba'e iporã ha ojehecharamovéva moĩmbaha eipuruséramo g̃uarã.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Peteïchagua">
+<!ENTITY detail.lastupdated.label             "Ñembohekopyahu ramovéva">
+<!ENTITY detail.creator.label                 "Mboguatahára">
+<!ENTITY detail.homepage.label                "Kuatiarogue ñepyrũ">
+<!ENTITY detail.numberOfDownloads.label       "Ñemboguejy">
+
+<!ENTITY detail.contributions.description     "Ko moimbaha mboguatahára ojerure eipytyvõ okueve hag̃ua mboguatahápe ejapóvo peteĩ michĩmíva mba'eme'ẽ.">
+
+<!ENTITY detail.updateType                    "Ñembohekopyahu ijeheguíva">
+<!ENTITY detail.updateDefault.label           "Jepokokuaa'ỹha">
+<!ENTITY detail.updateDefault.tooltip         "Emohendarei tekopyahu oĩ jave kóva ypykuéramo">
+<!ENTITY detail.updateAutomatic.label         "Hẽe">
+<!ENTITY detail.updateAutomatic.tooltip       "Emohenda ñembohekopyahu ijeheguíva">
+<!ENTITY detail.updateManual.label            "Mongepyre">
+<!ENTITY detail.updateManual.tooltip          "Aníke emohenda ñembohekopyahu ijeheguíva">
+<!ENTITY detail.home                          "Kuatiarogue ñepyrũha">
+<!ENTITY detail.repository                    "Perfil del complemento">
+<!ENTITY detail.size                          "Tuichakue">
+
+<!ENTITY detail.checkForUpdates.label         "Ñembohekopyahu jeheka ">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "Eheka ñembohekopyahu ko moimbaha rehegua">
+<!ENTITY detail.showPreferencesWin.label      "Jeporavorã">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "Emoambue poravopyrã ko moĩmbaha rehegua">
+<!ENTITY detail.showPreferencesUnix.label     "Ojererohoryvéva">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Emoambue jerohoryvéva ko moĩmbaha rehegua">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Ñehepyme'ẽ">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Mombegue">
+<!ENTITY progress.cancel.tooltip              "Heja">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Téra">
+<!ENTITY sort.name.tooltip                    "Téra rupi ñemohenda">
+<!ENTITY sort.dateUpdated.label               "Ñembohekopyahu ramovéva">
+<!ENTITY sort.dateUpdated.tooltip             "Emohenda mba'e araguápa ñembohekopyahu">
+<!ENTITY sort.relevance.label                 "Ojojoguavéva">
+<!ENTITY sort.relevance.tooltip               "Emohenda imba'eguasu rupi">
+<!ENTITY sort.price.label                     "Tepy">
+<!ENTITY sort.price.tooltip                   "Emohenda hepykue rupi">
+
+<!ENTITY search.filter2.label                 "Heka:">
+<!ENTITY search.filter2.installed.label       "Che moĩmbahakuéra">
+<!ENTITY search.filter2.installed.tooltip     "Moĩmbaha mohendapyréva jehechauka">
+<!ENTITY search.filter2.available.label       "Moimbaha ojepurukuaáva">
+<!ENTITY search.filter2.available.tooltip     "Ehechauka moimbaha ojueheguáva emohenda hag̃ua">
+
+<!ENTITY addon.homepage                       "Kuatiarogue ñepyrũha">
+<!ENTITY addon.details.label                  "Hetave">
+<!ENTITY addon.details.tooltip                "Ehechauka mba'emimive ko moimbaha rehegua">
+<!ENTITY addon.unknownDate                    "Ojekuaa'ỹva">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "HEJAPYRE">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(ñemongepyréva)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Mbopyahu">
+<!ENTITY addon.undoAction.label               "Mboguevi">
+<!ENTITY addon.undoAction.tooltip             "Emboguevi ko tembiapo">
+<!ENTITY addon.undoRemove.label               "Mboguevi">
+<!ENTITY addon.undoRemove.tooltip             "Erekotapia ko moĩmbaha mohendapyréva">
+<!ENTITY addon.restartNow.label               "Emoñepyrũjey ko'ág̃a">
+<!ENTITY addon.install.label                  "Emoañete">
+<!ENTITY addon.install.tooltip                "Emohenda ko moimbaha">
+<!ENTITY addon.updateNow.label                "Embohekopyahu ko'ág̃a">
+<!ENTITY addon.updateNow.tooltip              "Emohenda ñembohekopyahu ko moimbaha rehegua">
+<!ENTITY addon.includeUpdate.label            "Emoinge ñembohekopyahúpe">
+<!ENTITY addon.updateAvailable.label          "Oĩ peteĩ ñembohekopyahu eipurukuaáva">
+<!ENTITY addon.checkingForUpdates.label       "Ñemañajey  mab'e ipyahúvare">
+<!ENTITY addon.releaseNotes.label             "Jehaipy rehegua:">
+<!ENTITY addon.loadingReleaseNotes.label      "Oñemyanyhína…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Rombyasy, oiko jejavy henyhẽnguévo jehaipyre rehegua.">
+
+<!ENTITY addon.createdBy.label                "Rehe ">
+
+<!ENTITY eula.title                           "Jokupyty ñe'ẽme'ẽguigua puruhára paha mba'éva">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Moneĩ ha mohenda…">
+
+<!ENTITY settings.path.button.label           "Poravo…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "¿Mba'épiko kóva? Telemetry ikatu omohenda ha omboguata mba'epyahu sapy'a py'a.">
+<!ENTITY experiment.info.learnmore "Jeikuaave">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetría ñemoĩporã">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Kuaave…">
+
+<!ENTITY disabledUnsigned.heading "Heta moimbaha ojepe'aitéma">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Ko'ã moĩmbaha ndojehechajeýi ojepuru hag̃uáicha &brandShortName;-pe. Ikatu">
+<!ENTITY disabledUnsigned.description.findAddonsLink "Myengoviarã juhu">
+<!ENTITY disabledUnsigned.description.end " térã ejerure mboguatahárape ojehechajey hag̃ua.">
+<!ENTITY disabledUnsigned.learnMore "Eikuaave oreñeha'ã rehegua ikatu hag̃uáicha roipytyvõ peime hag̃ua jeikekatúpe.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Umi mboguatahára oipotáva moimbaha jehechapyréva ikatu omoñe'ẽve ohóvo ko ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "popeguáva">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Oĩpa nderejuhúiva? Sapy'ánte oĩ mba'ejoajurã ndaikatuvéima ojepuru &brandShortName; ndive.">
+<!ENTITY pluginDeprecation.learnMore "Jeikuaave.">
+
+<!ENTITY legacyWarning.description "Oĩpa nderejuhúiva? Sapy'ánte oĩ mba'ejoajurã ndaikatuvéimava ojepuru &brandShortName; ndive.">
+<!ENTITY legacyWarning.showLegacy "Opaite mba'ejoapyrã jehecha">
+<!ENTITY legacyExtensions.title "Opaite mba'ejoapyrã">
+<!ENTITY legacyExtensions.description "Ko'ã jepysokue ndoguerekói &brandShortName; tekoguatarã oñembogue hag̃ua.">
+<!ENTITY legacyExtensions.learnMore "Maranduve moĩmbaha moambue rehegua">

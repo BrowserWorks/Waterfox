@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "config ನ ಬಗ್ಗೆ">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "ಇದು ನಿಮ್ಮ ವಾರಂಟಿಯನ್ನು  ಅನೂರ್ಜಿತಗೊಳಿಸಬಹುದು!">
+<!ENTITY aboutWarningText.label "ಈ ಸುಧಾರಿತ ಸಿದ್ಧತೆಗಳನ್ನು ಬದಲಾಯಿಸುವುದರಿಂದ ಈ ಅನ್ವಯದ ದೃಢತೆ, ಸುರಕ್ಷತೆ ಹಾಗು ಕಾರ್ಯಕ್ಷಮತೆಯ ಮೇಲೆ ಕೆಟ್ಟ ಪರಿಣಾಮಗಳು ಬೀರಬಹುದು. ನೀವು ಏನು ಮಾಡಲು ಹೊರಟಿದ್ದೀರೆಂದು ನಿಮಗೆ ಖಚಿತವಿದ್ದಲ್ಲಿ ಮಾತ್ರ ನೀವು ಮುಂದುವರೆಯ ಬೇಕು.">
+<!ENTITY aboutWarningButton2.label "ನಾನು ಅಪಾಯವನ್ನು ಒಪ್ಪಿಕೊಳ್ಳುತ್ತೇನೆ!">
+<!ENTITY aboutWarningCheckbox.label "ಈ ಎಚ್ಚರಿಕಾ ಸಂದೇಶವನ್ನು ಮುಂದಿನ ಬಾರಿ ತೋರಿಸು">
+
+<!ENTITY searchPrefs.label "ಹುಡುಕ:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "ಆದ್ಯತೆಯ ಹೆಸರು">
+<!ENTITY lockColumn.label "ಸ್ಥಿತಿ">
+<!ENTITY typeColumn.label "ಪ್ರಕಾರ">
+<!ENTITY valueColumn.label "ಮೌಲ್ಯ">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "ವಿಂಗಡಿಸಲು ಕ್ಲಿಕ್ಕಿಸಿ"> 
+<!ENTITY columnChooser.tooltip "ತೋರಿಸಲು ಕಾಲಂಗಳನ್ನು ಕ್ಲಿಕ್ಕಿಸುವ ಮೂಲಕ ಆರಿಸಿ"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "ಪ್ರತಿಮಾಡು">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "ಹೆಸರನ್ನು ಪ್ರತಿ ಮಾಡು">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "ಮೌಲ್ಯವನ್ನು ಪ್ರತಿ ಮಾಡು">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "ಮಾರ್ಪಡಿಸು">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "ಹೊರಳಿಸು">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "ಮತ್ತೊಮ್ಮೆ ಹೊಂದಿಸು">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "ಹೊಸ">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "ಪದಸಮುಚ್ಚಯ">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "ಪೂರ್ಣಾಂಕ">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "ಬೂಲಿಯನ್">
+<!ENTITY boolean.accesskey "B">

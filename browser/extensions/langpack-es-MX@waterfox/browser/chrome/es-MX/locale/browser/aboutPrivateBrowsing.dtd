@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "En este momento no estás en una ventana privada.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Abrir una ventana privada">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Navegación privada">
+<!ENTITY privateBrowsing.title.tracking                  "Navegación Privada con Protección de Rastreo">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Cuando navegas en una Ventana Privada, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "no guarda">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "las páginas visitadas">
+<!ENTITY aboutPrivateBrowsing.info.searches              "las búsquedas">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "las cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "los archivos temporales">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "guardará">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " tus:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "descargas">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "marcadores">
+<!ENTITY aboutPrivateBrowsing.note.before                "Navegación Privada ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "no te vuelve anónimo">
+<!ENTITY aboutPrivateBrowsing.note.after                 " en Internet. Tu jefe o tu proveedor de Internet aún pueden saber las páginas que visitas.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Aprender más acerca de ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Navegación privada">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protección contra rastreo">
+<!ENTITY trackingProtection.description2                 "Algunos sitios web usan rastreadores que pueden monitorear tu actividad a través de Internet. Con la Navegación Privada, Waterfox bloqueará muchos rastreadores recolectan información acerca de tu actividad de navegación.">
+<!ENTITY trackingProtection.startTour1                   "Ver cómo funciona">

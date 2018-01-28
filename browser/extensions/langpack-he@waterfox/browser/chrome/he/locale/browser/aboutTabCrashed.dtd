@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "סגירת לשונית זו">
+<!ENTITY tabCrashed.restoreTab "שחזור לשונית">
+<!ENTITY tabCrashed.restoreAll "שחזור כל הלשוניות שקרסו">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "אבוי. הלשונית שלך התרסקה.">
+<!ENTITY tabCrashed.offerHelp "אנחנו יכולים לעזור לך!">
+<!ENTITY tabCrashed.single.offerHelpMessage "נא ללחוץ על &tabCrashed.restoreTab; כדי לטעון מחדש את תוכן הדף.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "נא ללחוץ על &tabCrashed.restoreTab; או &tabCrashed.restoreAll; כדי לטעון מחדש את תוכן הדף.">
+<!ENTITY tabCrashed.requestHelp "נוכל לקבל את עזרתך?">
+<!ENTITY tabCrashed.requestHelpMessage "דיווחי קריסה מסייעים לנו לאתר בעיות ולהפוך את &brandShortName; לטוב יותר.">
+<!ENTITY tabCrashed.requestReport "דיווח על לשונית זו">
+<!ENTITY tabCrashed.sendReport2 "שליחת דיווח קריסה עבור הלשונית הנוכחית">
+<!ENTITY tabCrashed.commentPlaceholder2 "הוספת הערה (לא חובה; הערות חשופות לקהל)">
+<!ENTITY tabCrashed.includeURL2 "צירוף כתובת האתר ביחד עם דיווח קריסה זה">
+<!ENTITY tabCrashed.emailPlaceholder "נא להכניס את כתובת הדוא״ל שלך כאן">
+<!ENTITY tabCrashed.emailMe "נא לשלוח אלי דוא״ל כאשר מידע נוסף זמין">
+<!ENTITY tabCrashed.reportSent "דיווח הקריסה כבר נשלח; תודה על עזרתך בשיפור &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "דיווח על הלשוניות שברקע">
+<!ENTITY tabCrashed.autoSubmit2 "עדכון העדפות כדי לשלוח דיווחי קריסה באופן אוטומטי, לרבות דיווחים על קריסה של לשוניות רקע מהפעלה זו ומהפעלות עתידיות">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Ligar">
+<!ENTITY header     "Ligar a dispositivo remoto">
+<!ENTITY host       "Servidor:">
+<!ENTITY port       "Porta:">
+<!ENTITY connect    "Ligar">
+<!ENTITY connecting "A estabelecer ligação…">
+<!ENTITY availableAddons "Extras remotos disponíveis:">
+<!ENTITY availableTabs "Separadores remotos disponíveis:">
+<!ENTITY availableProcesses "Processos remotos disponíveis:">
+<!ENTITY connectionError "Erro:">
+<!ENTITY errorTimeout "Erro: a ligação excedeu o tempo limite.">
+<!ENTITY errorRefused "Erro: ligação recusada.">
+<!ENTITY errorUnexpected "Erro desconhecido.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "As ferramentas de programador do Waterfox podem depurar dispositivos remotos (Waterfox para Android e Waterfox OS, por exemplo). Certifique-se que ativou a opção ‘Depuração remota‘ no dispositivo remoto. Para mais informações consulte a ">
+<!ENTITY remoteDocumentation "documentação">
+<!ENTITY remoteHelpSuffix ".">
+

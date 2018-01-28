@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle "Información sobre url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle "Proveedor">
+<!ENTITY aboutUrlClassifier.provider "Proveedor">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime "Fecha y hora de última actualización">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime "Fecha y hora de próxima actualización">
+<!ENTITY aboutUrlClassifier.providerBackOffTime "Tiempo atrás">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus "Estado de última actualización">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn "Actualizar">
+<!ENTITY aboutUrlClassifier.cacheTitle "Caché">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn "Refrescar">
+<!ENTITY aboutUrlClassifier.cacheClearBtn "Limpiar">
+<!ENTITY aboutUrlClassifier.cacheTableName "Nombre de tabla">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries "Número de entradas de caché fallidas">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries "Número de entradas de caché acertadas">
+<!ENTITY aboutUrlClassifier.cacheShowEntries "Mostrar entradas">
+<!ENTITY aboutUrlClassifier.cacheEntries "Entradas de caché">
+<!ENTITY aboutUrlClassifier.cachePrefix "Prefijo">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry "Caducidad de caché fallido">
+<!ENTITY aboutUrlClassifier.cacheFullhash "Valor resumen completo">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry "Caducidad de caché positivo">
+<!ENTITY aboutUrlClassifier.debugTitle "Depurar">
+<!ENTITY aboutUrlClassifier.debugModuleBtn "Establecer módulos de registro">
+<!ENTITY aboutUrlClassifier.debugFileBtn "Establecer archivo de registro">
+<!ENTITY aboutUrlClassifier.debugJSLogChk "Establecer registro JS">
+<!ENTITY aboutUrlClassifier.debugSBModules "Módulos de registro de navegación segura">
+<!ENTITY aboutUrlClassifier.debugModules "Módulos actuales de registro">
+<!ENTITY aboutUrlClassifier.debugSBJSModules "Registro JS de navegación segura">
+<!ENTITY aboutUrlClassifier.debugFile "Archivo actual de registro">

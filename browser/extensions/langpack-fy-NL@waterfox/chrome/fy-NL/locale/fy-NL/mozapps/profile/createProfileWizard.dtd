@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Wizard profyl oanmeitsje">
+<!ENTITY window.size                  "width: 50em; height: 37em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; bewarret ynformaasje oer jo ynstellingen en foarkarren yn jo persoanlike profyl.">
+<!ENTITY profileCreationExplanation_2.text  "As jo dizze kopy fan &brandShortName; diele mei oare brûkers, kinne jo profilen brûke om de ynformaasje fan alle brûkers skieden te hâlden. Om dit te beriken moat elke brûker syn of har eigen profyl oanmeitsje.">
+<!ENTITY profileCreationExplanation_3.text  "As jo de iennichste binne dy't dizze kopy fan &brandShortName; brûke, moatte jo op syn minst ien profyl hawwe. Jo kinne, as jo wolle, mear as ien profyl oanmeitsje foar josels om ferskate sets fan ynstellingen en foarkarren te bewarjen. Bygelyks, jo wolle miskien aparte profilen ha foar saaklik en persoanlik gebrûk.">
+<!ENTITY profileCreationExplanation_4.text  "Om te begjinnen mei it oanmeitsjen fan jo profyl, klik op Folgjende.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Klik op Trochgean om te begjinnen mei it oanmeitsjen fan jo profyl.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Klik op Folgjende om te begjinnen mei it oanmeitsjen fan jo profyl.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "As jo mear as ien profyl oanmeitsje, kin jo se út inoar hâlde troch de profylnammen. Jo kinne de namme hjirûnder brûke of in eigen namme kieze.">
+<!ENTITY profilePrompt.label            "Fier in nije profylnamme yn:">
+<!ENTITY profilePrompt.accesskey        "F">
+<!ENTITY profileDirectoryExplanation.text   "Jo ynstellingen, foarkarren en oare brûkersgegevens sille bewarre wurde yn:">
+<!ENTITY profileDefaultName             "Standertbrûker">
+<!ENTITY button.choosefolder.label      "Map kieze...">
+<!ENTITY button.choosefolder.accesskey  "K">
+<!ENTITY button.usedefault.label        "Standertmap brûke">
+<!ENTITY button.usedefault.accesskey    "b">

@@ -1,0 +1,126 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem med lasting av sida">
+<!ENTITY retry.label "Prøv på nytt">
+<!ENTITY returnToPreviousPage.label "Gå tilbake">
+<!ENTITY advanced.label "Avansert">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Klarte ikkje å kople til">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Tilgang til denne adressa er avgrensa">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Fann ikkje tenaren">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Sjå om det er skrivefeil i adressa, til dømes <strong>ww</strong>.example.com i staden for <strong>www</strong>.example.com</li> <li>Dersom du ikkje greier å laste inn nettsider, kontroller at nettverkssambandet til datamaskina er i orden.</li> <li>Dersom datamaskina di eller nettverket er verna av ein brannmur eller mellomtenar, kontroller at &brandShortName; har løyve til å bruke Internett.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fann ikkje fila">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kontroller filnamnet etter skilnader i store/små bokstavar eller andre skrivefeil.</li> <li>Kontroller om fila er flytta, har endra namn eller er sletta.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Tilgang til fila vart nekta">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Den kan ha vorte fjerna, flytta, eller så kan filrettar hindra tilgang.</li></ul>">
+
+<!ENTITY generic.title "Ops.">
+<!ENTITY generic.longDesc "<p>&brandShortName; klarte ikkje å laste denne sida av ukjent årsak.</p>">
+
+<!ENTITY captivePortal.title "Logg inn på nettverket">
+<!ENTITY captivePortal.longDesc2 "
+<p>Du må logge inn på nettverket før du kan kople til Internett.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Opne innloggingsside for nettverk">
+
+<!ENTITY malformedURI.title "Adressa er ugyldig">
+<!ENTITY malformedURI.longDesc "<ul> <li>Nettsideadresser skal vanlegvis skrivast som <strong>http://www.example.com/</strong></li> <li>Kontroller at du brukar framover-skråstrek (til dømes <strong>/</strong>).</li> </ul> ">
+
+<!ENTITY netInterrupt.title "Tilkoplinga vart broten">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumentet er utgått på dato">
+<!ENTITY notCached.longDesc "<p>Det førespurde dokumentet er ikkje tilgjengeleg i &brandShortName; sitt snøgglager.</p><ul><li>Av tryggingsomsyn tillét ikkje &brandShortName; å automatisk hente sensitive dokument på nytt.</li><li>Trykk Prøv igjen for å hente dokumentet på nytt frå nettstaden.</li></ul>">
+
+<!ENTITY netOffline.title "Fråkopla modus">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Trykk «Prøv igjen» for å byte til tilkopla modus og laste sida på nytt.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Feil med teiknkoding">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Kontakt eigarane av nettstaden og informer dei om problemet.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Utrygg filtype">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kontakt eigaren av nettsida og informer dei om dette problemet.</li> </ul>">
+
+<!ENTITY netReset.title "Tilkoplinga vart broten">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Tilkoplinga fekk tidsavbrot">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Klarte ikkje å forstå adressa">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Det kan vere at du må installere anna programvare for å opne denne adressa.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Mellomtenar godtek ikkje tilkoplingar">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kontroller at mellomtenarinnstillingane er korrekte.</li> <li>Kontakt nettverksansvarleg for å forsikre deg om at mellomtenaren fungerer.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Klarte ikkje å finne mellomtenaren">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kontroller at innstillingane for mellomtenar er rette.</li> <li>Kontroller at datamaskina har ei fungerande nettverkstilkopling.</li> <li>Dersom datamaskina di eller nettverket er verna av ein brannmur eller mellomtenar, kontroller at &brandShortName; har løyve til å kople til Internett.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Nettsida vidaresender ikkje skikkeleg">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Dette problemet kan av og til kome av at infokapslar har vorte slått av eller ved å ikkje godta infokapslar.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Uventa svar frå tenar">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontroller at systemet ditt har Personal Security Manager installert.</li> <li>Dette problemet kan kome av eit uvanleg oppsett på tenaren.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Trygt samband feila">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Sida du prøver å opne kan ikkje visast fordi det ikkje kan stadfestast at overførte data er autentiske.</li> <li>Kontakt nettstadeigarane og informer om problemet.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Tilkoplinga di er ikkje trygg">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Eigaren av <span class='hostname'/> har konfigurert nettstaden sin feil.  For å verne informasjonen din frå å bli stolen, har &brandShortName; ikkje kopla seg til denne nettstaden.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Nettstaden kan vere mellombels utilgjengeleg eller oppteken. Prøv om att om ei lita stund.</li> <li>Dersom ingen sider vert lasta, kontroller at nettverkstilkoplinga til datamaskina er i orden.</li> <li>Dersom datamaskina er verna av ein brannmur eller mellomtenar, kontroller at &brandShortName; har løyve til å bruke nettet.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blokkert av tryggingspraksis for innhald">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; hindra nettsida frå å laste inn på denne måten fordi nettsida har ein tryggingspraksis som forbyr det.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Øydelagt innhald">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Sida du prøver å vise kan ikkje opnast fordi ein feil i dataoverføringa vart oppdaga.</p><ul><li>Kontakt eigarane av nettstaden og informer dei om dette problemet.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Legg til eit unntak…">
+
+<!ENTITY errorReporting.automatic2 "Rapporter feil som dette for å hjelpe Mozilla med å identifisere og blokkere skadelege nettstadar">
+<!ENTITY errorReporting.learnMore "Les meir…">
+
+<!ENTITY remoteXUL.title "Ekstern-XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakt nettstadseigarane og informer dei om dette problemet.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Klarte ikkje å kople til trygt">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Avansert info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; kopla seg ikkje til <span id='wrongSystemTime_URL'/> fordi datamaskinklokka ser ut til å visa feil tid og dette hindrar ei trygg tilkopling.</p> <p>Datamaskina di er innstilt på <span id='wrongSystemTime_systemDate'/>, når ho burde vere <span id='wrongSystemTime_actualDate'/>. For å rette opp dette problemet, endre dato- og tidsinnstillingar slik at rett tid vert vist.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; kopla ikkje til <span id='wrongSystemTimeWithoutReference_URL'/> fordi datamaskinklokka di ser ut til å vise feil tid, og dette hindrar ei trygg tilkopling</p> <p>Datamaskina di er innstillt på <span id='wrongSystemTimeWithoutReference_systemDate'/>. For å rette opp feilen, endrar du dato- og tidsinnstillingar slik at rett tid vert vist.</p>">
+
+<!ENTITY certerror.pagetitle1  "Usikker tilkopling">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Denne nettstaden brukar HTTP Strict Transport Security (HSTS) for å spesifisere at &brandShortName; berre skal kople til trygt. Derfor kan ein ikkje leggje til eit unntak for dette sertifikatet.">
+<!ENTITY certerror.copyToClipboard.label "Kopier tekst til utklippstavla">
+
+<!ENTITY inadequateSecurityError.title "Tilkoplinga di er ikkje trygg">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> brukar tryggingsteknologi som er forelda og sårbar for åtak. Ein angripar kan lett avsløre informasjon som du trudde skulle vera sikker. Administrator på nettstaden må fikse tenaren før du kan besøke nettsida.</p><p>Feilkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Det ser ut til at sikkerheitsinnstillingane i nettverket kan vere årsak til dette. Vil du stille tilbake til standard innstillingar?">
+<!ENTITY prefReset.label "Still tilbake til standard innstillingar">

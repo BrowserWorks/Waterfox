@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Új app…">
+<!ENTITY projectMenu_newApp_accesskey "a">
+<!ENTITY projectMenu_importPackagedApp_label "Csomagolt app megnyitása…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "C">
+<!ENTITY projectMenu_importHostedApp_label "Kiszolgálóoldali app megnyitása…">
+<!ENTITY projectMenu_importHostedApp_accesskey "K">
+<!ENTITY projectMenu_selectApp_label "App megnyitása…">
+<!ENTITY projectMenu_selectApp_accesskey "n">
+<!ENTITY projectMenu_play_label "Telepítés és futtatás">
+<!ENTITY projectMenu_play_accesskey "T">
+<!ENTITY projectMenu_stop_label "App leállítása">
+<!ENTITY projectMenu_stop_accesskey "l">
+<!ENTITY projectMenu_debug_label "App hibakeresése">
+<!ENTITY projectMenu_debug_accesskey "h">
+<!ENTITY projectMenu_remove_label "Projekt eltávolítása">
+<!ENTITY projectMenu_remove_accesskey "P">
+<!ENTITY projectMenu_showPrefs_label "Beállítások">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Extra összetevők kezelése">
+<!ENTITY projectMenu_manageComponents_accesskey "E">
+<!ENTITY projectMenu_refreshTabs_label "Lapok frissítése">
+
+<!ENTITY runtimeMenu_label "Futtatókörnyezet">
+<!ENTITY runtimeMenu_accesskey "F">
+<!ENTITY runtimeMenu_disconnect_label "Leválás">
+<!ENTITY runtimeMenu_disconnect_accesskey "L">
+<!ENTITY runtimeMenu_takeScreenshot_label "Képernyőkép">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "K">
+<!ENTITY runtimeMenu_showDetails_label "Futtatókörnyezet infó">
+<!ENTITY runtimeMenu_showDetails_accesskey "u">
+<!ENTITY runtimeMenu_showMonitor_label "Figyelés">
+<!ENTITY runtimeMenu_showMonitor_accesskey "F">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Eszközbeállítások">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "z">
+<!ENTITY runtimeMenu_showSettings_label "Eszközbeállítások">
+<!ENTITY runtimeMenu_showSettings_accesskey "z">
+
+<!ENTITY viewMenu_label "Nézet">
+<!ENTITY viewMenu_accesskey "z">
+<!ENTITY viewMenu_zoomin_label "Nagyítás">
+<!ENTITY viewMenu_zoomin_accesskey "N">
+<!ENTITY viewMenu_zoomout_label "Kicsinyítés">
+<!ENTITY viewMenu_zoomout_accesskey "K">
+<!ENTITY viewMenu_resetzoom_label "Nagyítás visszaállítása">
+<!ENTITY viewMenu_resetzoom_accesskey "v">
+
+<!ENTITY projectButton_label "App megnyitása">
+<!ENTITY runtimeButton_label "Futtatókörnyezet kiválasztása">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Projektjeim">
+<!ENTITY projectPanel_runtimeApps "Futtatókörnyezet appok">
+<!ENTITY projectPanel_tabs "Lapok">
+<!ENTITY runtimePanel_usb "USB eszközök">
+<!ENTITY runtimePanel_wifi "Wi-Fi eszközök">
+<!ENTITY runtimePanel_simulator "Szimulátorok">
+<!ENTITY runtimePanel_other "Egyéb">
+<!ENTITY runtimePanel_installsimulator "Szimulátor telepítése">
+<!ENTITY runtimePanel_noadbhelper "ADB segéd telepítése">
+<!ENTITY runtimePanel_nousbdevice "Nem látja az eszközt?">
+<!ENTITY runtimePanel_refreshDevices_label "Eszközök frissítése">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "érvényes">
+<!ENTITY details_warning_header "figyelmeztetések">
+<!ENTITY details_error_header "hibák">
+<!ENTITY details_description "Leírás">
+<!ENTITY details_location "Hely">
+<!ENTITY details_manifestURL "App azonosító">
+<!ENTITY details_removeProject_button "Projekt eltávolítása">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Új app">
+<!ENTITY newAppHeader "Válasszon sablont">
+<!ENTITY newAppLoadingTemplate "Sablonok betöltése…">
+<!ENTITY newAppProjectName "Projektnév:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Bezárás">
+
+<!-- Addons -->
+<!ENTITY addons_title "Extra összetevők">
+<!ENTITY addons_aboutaddons "Kiegészítőkezelő megnyitása">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Beállítások">
+<!ENTITY prefs_editor_title "Szerkesztő">
+<!ENTITY prefs_general_title "Általános">
+<!ENTITY prefs_restore "Alapértelmezések visszaállítása">
+<!ENTITY prefs_manage_components "Extra összetevők kezelése">
+<!ENTITY prefs_options_autoconnectruntime "Újracsatlakozás a korábbi futtatókörnyezethez">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Újracsatlakozás a korábbi futtatókörnyezethez a WebIDE indulásakor">
+<!ENTITY prefs_options_rememberlastproject "Utolsó projekt megjegyzése">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Előző projekt helyreállítása a WebIDE indulásakor">
+<!ENTITY prefs_options_templatesurl "Sablonok URL-je">
+<!ENTITY prefs_options_templatesurl_tooltip "Elérhető sablonok listája">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Futtatókörnyezet infó">
+<!ENTITY runtimedetails_adbIsRoot "Az ADB rootként fut:">
+<!ENTITY runtimedetails_summonADBRoot "root eszköz">
+<!ENTITY runtimedetails_ADBRootWarning "(feloldott rendszerbetöltőt igényel)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Korlátlan fejlesztői jogosultságok:">
+<!ENTITY runtimedetails_requestPrivileges "magasabb jogosultságok kérése">
+<!ENTITY runtimedetails_privilegesWarning "(Újraindítja az eszközt. Root hozzáférést igényel.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Logikai">
+<!ENTITY device_typenumber "Egész">
+<!ENTITY device_typestring "Karakterlánc">
+<!ENTITY device_typeobject "Objektum">
+<!ENTITY device_typenone "Válasszon típust">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Eszközbeállítások">
+<!ENTITY devicepreference_search "Beállítások keresése">
+<!ENTITY devicepreference_newname "Új beállításnév">
+<!ENTITY devicepreference_newtext "Beállítás értéke">
+<!ENTITY devicepreference_addnew "Új beállítás hozzáadása">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Eszközbeállítások">
+<!ENTITY devicesetting_search "Keresési beállítások">
+<!ENTITY devicesetting_newname "Új beállítás neve">
+<!ENTITY devicesetting_newtext "Beállítás értéke">
+<!ENTITY devicesetting_addnew "Új beállítás hozzáadása">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Figyelés">
+<!ENTITY monitor_help "Súgó">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Kliens azonosítása">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "A végpont, amelyhez kapcsolódik, további információkat igényel a kapcsolat hitelesítéséhez. Olvassa be a lenti QR-kódot a másik eszközön megjelenő kérdésre.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Nincs QR-beolvasási kérdés?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Van QR-beolvasási kérdés?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Ha a másik eszköz a QR-kód beolvasása helyett jelsort kér, akkor másolja át a lenti értéket a másik eszközre:">
+<!ENTITY wifi_auth_qr_size_note "Ha a QR kód túl kicsi a kapcsolat sikeres létrehozásához, akkor próbáljon nagyítani, vagy átméretezni az ablakot.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Előzetes csomagolási parancsnaplók">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Szimulátor beállításai">
+<!ENTITY simulator_remove "Szimulátor törlése">
+<!ENTITY simulator_reset "Alapértelmezések visszaállítása">
+<!ENTITY simulator_name "Név">
+<!ENTITY simulator_software "Szoftver">
+<!ENTITY simulator_version "Verzió">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Hardver">
+<!ENTITY simulator_device "Eszköz">
+<!ENTITY simulator_screenSize "Képernyő">
+<!ENTITY simulator_pixelRatio "Képpontarány:">
+<!ENTITY simulator_tv_data "TV szimuláció">
+<!ENTITY simulator_tv_data_open "Beállítási adatok">
+<!ENTITY simulator_tv_data_open_button "Beállításkönyvtár megnyitása…">

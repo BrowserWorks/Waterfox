@@ -1,0 +1,87 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetri Verileri">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping verisi kaynağı:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Şu anki ping verisi">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arşivlenmiş ping verisi">
+
+<!ENTITY aboutTelemetry.raw "Ham JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Alt oturum verilerini göster">
+
+<!ENTITY aboutTelemetry.choosePing "Ping'i seçin:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Daha yeni ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Daha eski ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Hafta">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping türü
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Bugün
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Dün
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Daha eski
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Genel Veriler">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Ortam Verileri">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Temeletri günlüğü">
+
+<!ENTITY aboutTelemetry.slowSqlSection "   Yavaş SQL Deyimleri ">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "   Tarayıcı Takılmaları ">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  İş Parçacığı Takılmaları">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Yakalanan Yığınlar">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Değişkenler">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Anahtarlı Skalerler">
+
+<!ENTITY aboutTelemetry.histogramsSection "   Histogramlar ">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Anahtarlı Histogramlar">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Olaylar">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "   Basit Ölçümler ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "Eklenti Ayrıntıları">
+
+<!ENTITY aboutTelemetry.lateWritesSection "   Geç Yazmalar ">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "   Oturum Bilgisi">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "   NOT: Yavaş SQL hata ayıklaması etkin durumda. Tam SQL dizgileri aşağıdaki gösterilebilir ama Telemetri'ye gönderilmezler. ">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Yığınların fonksiyon adlarını topla">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Ham yığın verilerini göster">
+
+<!ENTITY aboutTelemetry.filterText "  Filtrele (dizgiler veya /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Yük">

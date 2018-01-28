@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "דיווחי קריסה">
+<!ENTITY crashesUnsubmitted.label   "דיווחי קריסה שלא נשלחו">
+<!ENTITY crashesSubmitted.label     "דיווחי קריסה שנשלחו">
+<!ENTITY id.heading                 "קוד דיווח">
+<!ENTITY dateCrashed.heading        "תאריך הקריסה">
+<!ENTITY dateSubmitted.heading      "תאריך השליחה">
+<!ENTITY noReports.label            "לא נשלחו דיווחי קריסה.">
+<!ENTITY noConfig.label             "ישום זה לא מוגדר להציג דיווחי קריסות. המאפיין <code>breakpad.reportURL</code> חייב להיות מוגדר.">
+<!ENTITY clearAllReports.label      "הסרת כל הדיווחים">

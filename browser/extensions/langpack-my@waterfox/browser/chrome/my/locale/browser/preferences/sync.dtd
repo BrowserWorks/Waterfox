@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "စာမှတ်များ">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "တပ်ဗ်များကို ဖွင့်ပါ">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "မှတ်တမ်း">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.prefs.label         "အပြင်အဆင်များ">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "ပေါင်းထည့်ဆော့ဝဲများ">
+<!ENTITY engine.addons.accesskey    "ပ">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "ကိရိယာအမည်">
+<!ENTITY changeSyncDeviceName2.label "ကိရိယာအမည်ကို ပြောင်းလဲရန်…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "မဆောင်ရွက်တော့ပါ">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "သိမ်းဆည်းပါ">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "အသုံးပြုချိန်တွင်လိုက်နာရမည့်အချက်များ">
+<!ENTITY fxaPrivacyNotice.link.label "ကိုယ်ရေးကာကွယ်မှု သတိပေးချက်">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "​ကို အတည်မပြုရသေးပါ။">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "ပြန်လည်ချိတ်ဆက်ရန် အကောင့်ဖြင့် ဝင်ရောက်ပါ">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "အကောင့်ဖြင့် မဝင်ထားပါ">
+<!ENTITY signIn.label                "ဝင်ပါ">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "ပရိုဖိုင်းရုပ်ပုံကို ပြောင်းလဲရန်">
+<!ENTITY verifiedManage.label        "အကောင့်ကို စီမံရန်">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect3.label           "ချိတ်ဆက်ဖြုတ်ရန်…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY verify.label                "အီးမေးလ်ကို အတည်ပြုရန်">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "ယခုအီးမေးလ်ကို မမှတ်ထားပါနှင့်">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "ဝဘ်ကို သင့်နဲ့အတူ ခေါ်ဆောင်သွားပါ">
+<!ENTITY signedOut.description        "သင့်ကိရိယာအားလုံးရှိ စာမှတ်များ၊ မှတ်တမ်း၊ စာမျက်နှာများ၊ စကားဝှက်များ၊ အတ်အွန်များနှင့် အပြင်အဆင်များကို တစ်ပြေးညီဖြစ်စေပါ။">
+<!ENTITY signedOut.accountBox.title   "&syncBrand.fxAccount.label; ကို အသုံးပြုပြီး ချိတ်ဆက်ရန်">
+<!ENTITY signedOut.accountBox.create  "အကောင့်အသစ် ဖန်တီးပါ">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "လက်မှတ်ထိုး ဝင်ပါ">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Sync အပြင်အဆင်များ">
+<!ENTITY signedIn.settings.description "&brandShortName; ကို အသုံးပြုပြီး သင်၏ ကိရိယာများတွင် ပြိုင်တူလုပ်မည့်အရာများကို ရွေးပါ။">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "ထိုစနစ်အတွက် မီးမြေခွေးကို ဆွဲယူကူးပါ၊ ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " သို့မဟုတ် ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " သင့်မိုဘိုင်းလ်ကိရိယာများကို တစ်ပြေးညီဖြစ်စေရန်">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">

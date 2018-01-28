@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY popups.label "Ventanas emergentes">
+<!ENTITY blockPopups.label "Bloquear ventanas emergentes">
+<!ENTITY blockPopups.accesskey "B">
+<!ENTITY notificationsPolicy.label "Notificaciones">
+<!ENTITY notificationsPolicyLearnMore.label "Saber más">
+<!ENTITY notificationsPolicyDesc4.label "Elija qué sitios web tiene permitido enviarle notificaciones">
+<!ENTITY notificationsPolicyButton.accesskey "E">
+<!ENTITY notificationsPolicyButton.label "Elegir…">
+<!ENTITY notificationsDoNotDisturb.label "No molestarme">
+<!ENTITY notificationsDoNotDisturb.accesskey "N">
+<!ENTITY notificationsDoNotDisturbDetails.value "No se mostrarán más notificaciones hasta que reinicie &brandShortName;">
+<!ENTITY popupExceptions.label "Excepciones…">
+<!ENTITY popupExceptions.accesskey "E">
+<!ENTITY fontsAndColors.label "Tipografías y colores">
+<!ENTITY defaultFont.label "Tipografía predet.:">
+<!ENTITY defaultFont.accesskey "T">
+<!ENTITY defaultSize.label "Tamaño:">
+<!ENTITY defaultSize.accesskey "m">
+<!ENTITY advancedFonts.label "Avanzadas…">
+<!ENTITY advancedFonts.accesskey "A">
+<!ENTITY colors.label "Colores…">
+<!ENTITY colors.accesskey "C">
+<!ENTITY languages.label "Idiomas">
+<!ENTITY chooseLanguage.label "Elegir el idioma preferido para mostrar las páginas web">
+<!ENTITY chooseButton.label "Seleccionar…">
+<!ENTITY chooseButton.accesskey "o">
+<!ENTITY translateWebPages.label "Traducir contenido web">
+<!ENTITY translateWebPages.accesskey "d">
+<!ENTITY translateExceptions.label "Excepciones…">
+<!ENTITY translateExceptions.accesskey "x">
+<!ENTITY translation.options.attribution.beforeLogo "Traducciones de">
+<!ENTITY translation.options.attribution.afterLogo "">
+<!ENTITY drmContent.label "Contenido DRM">
+<!ENTITY playDRMContent.label "Reproducir contenido DRM">
+<!ENTITY playDRMContent.accesskey "P">
+<!ENTITY playDRMContent.learnMore.label "Saber más">

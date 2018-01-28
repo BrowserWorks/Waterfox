@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Asistanto de importado">
+
+<!ENTITY importFrom.label               "Importi elekteblojn, legosignojn, historion, pasvortojn kaj aliajn datumojn el:">
+<!ENTITY importFromUnix.label           "Importi preferojn, legosignojn, historion, pasvortojn kaj aliajn datumojn el:">
+<!ENTITY importFromBookmarks.label      "Importi legosignojn el:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Importi nenion">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Neniu programo, enhavanta legosignojn, historion aŭ pasvortajn datumojn, estis trovita.">
+
+<!ENTITY importSource.title             "Importi agordojn kaj datumojn">
+<!ENTITY importItems.title              "Elementoj importotaj">
+<!ENTITY importItems.label              "Elekti elementojn importotajn:">
+
+<!ENTITY migrating.title                "Importanta…">
+<!ENTITY migrating.label                "La jenaj elementoj estas nuntempe importataj…">
+
+<!ENTITY selectProfile.title            "Elekti profilon">
+<!ENTITY selectProfile.label            "Eblas importi el la jenaj profiloj:">
+
+<!ENTITY done.title                     "Importado finita">
+<!ENTITY done.label                     "La jenaj elementoj estis sukcese importitaj:">
+
+<!ENTITY closeSourceBrowser.label       "Bonvolu certi ke la elektita retumilo estu fermita antaŭ ol daŭrigi.">

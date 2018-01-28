@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox 웹IDE">
+
+<!ENTITY projectMenu_label "프로젝트">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "새 앱…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "패키지형 앱 열기…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "호스트형 앱 열기…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "앱 열기…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "설치하고 실행">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "앱 멈추기">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "앱 디버깅">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "프로젝트 지우기">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "환경 설정">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "추가할 수 있는 항목 관리">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "탭 새로고침">
+
+<!ENTITY runtimeMenu_label "런타임">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "끊기">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "스크린샷">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "런타임 정보">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "모니터">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "기기 환경 설정">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "기기 설정">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "보기">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "편집기 열고 닫기">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "크게 보기">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "작게 보기">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "처음 크기로">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "앱 열기">
+<!ENTITY runtimeButton_label "런타임 선택">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "내 프로젝트">
+<!ENTITY projectPanel_runtimeApps "런타임 앱">
+<!ENTITY projectPanel_tabs "탭">
+<!ENTITY runtimePanel_usb "USB 기기">
+<!ENTITY runtimePanel_wifi "Wi-Fi 기기">
+<!ENTITY runtimePanel_simulator "시뮬레이터">
+<!ENTITY runtimePanel_other "기타">
+<!ENTITY runtimePanel_installsimulator "시뮬레이터 설치">
+<!ENTITY runtimePanel_noadbhelper "ADB 도우미 설치">
+<!ENTITY runtimePanel_nousbdevice "기기가 안뜹니까?">
+<!ENTITY runtimePanel_refreshDevices_label "기기 새로고침">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "유효">
+<!ENTITY details_warning_header "경고">
+<!ENTITY details_error_header "오류">
+<!ENTITY details_description "설명">
+<!ENTITY details_location "주소">
+<!ENTITY details_manifestURL "앱 ID">
+<!ENTITY details_removeProject_button "프로젝트 삭제">
+<!ENTITY details_showPrepackageLog_button "패키징 전 로그 보기">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "새 앱">
+<!ENTITY newAppHeader "템플릿 선택">
+<!ENTITY newAppLoadingTemplate "템플릿을 읽어들이는 중…">
+<!ENTITY newAppProjectName "프로젝트 이름:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "닫기">
+
+<!-- Addons -->
+<!ENTITY addons_title "추가할 수 있는 항목">
+<!ENTITY addons_aboutaddons "부가 기능 관리자 열기">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "환경 설정">
+<!ENTITY prefs_editor_title "편집기">
+<!ENTITY prefs_general_title "일반">
+<!ENTITY prefs_restore "기본값으로 복원">
+<!ENTITY prefs_manage_components "추가할 수 있는 항목 관리">
+<!ENTITY prefs_options_autoconnectruntime "이전 런타임에 다시 연결">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "웹IDE를 열 때 이전 런타임에 다시 연결">
+<!ENTITY prefs_options_rememberlastproject "마지막 프로젝트 기억하기">
+<!ENTITY prefs_options_rememberlastproject_tooltip "웹IDE를 열면 이전 프로젝트 되살리기">
+<!ENTITY prefs_options_templatesurl "템플릿 URL">
+<!ENTITY prefs_options_templatesurl_tooltip "사용 가능한 템플릿 색인">
+<!ENTITY prefs_options_showeditor "편집기 보기">
+<!ENTITY prefs_options_showeditor_tooltip "내부 편집기 보기">
+<!ENTITY prefs_options_tabsize "탭 크기">
+<!ENTITY prefs_options_expandtab "소프트 탭">
+<!ENTITY prefs_options_expandtab_tooltip "탭 문자 대신 빈칸 쓰기">
+<!ENTITY prefs_options_detectindentation "알아서 들여쓰기">
+<!ENTITY prefs_options_detectindentation_tooltip "소스 내용을 가지고 들여쓰기 알아내기">
+<!ENTITY prefs_options_autocomplete "자동완성">
+<!ENTITY prefs_options_autocomplete_tooltip "코드 자동완성 켜기">
+<!ENTITY prefs_options_autoclosebrackets "괄호 알아서 닫기">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "알아서 닫는 괄호 넣기">
+<!ENTITY prefs_options_keybindings "키 바인딩">
+<!ENTITY prefs_options_keybindings_default "기본">
+<!ENTITY prefs_options_autosavefiles "파일 자동 저장">
+<!ENTITY prefs_options_autosavefiles_tooltip "프로젝트 실행하기 전에 수정된 파일을 자동으로 저장">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "런타임 정보">
+<!ENTITY runtimedetails_adbIsRoot "루트 권한 ADB: ">
+<!ENTITY runtimedetails_summonADBRoot "루팅된 기기">
+<!ENTITY runtimedetails_ADBRootWarning "(언락된 부트로더 필요)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "개발자 도구 권한 제한 풀림: ">
+<!ENTITY runtimedetails_requestPrivileges "더 높은 권한 요구">
+<!ENTITY runtimedetails_privilegesWarning "(기기를 다시 시작합니다. 루트 접근이 필요합니다.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "불린">
+<!ENTITY device_typenumber "정수">
+<!ENTITY device_typestring "문자열">
+<!ENTITY device_typeobject "객체">
+<!ENTITY device_typenone "형식 선택">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "기기 환경 설정">
+<!ENTITY devicepreference_search "환경 설정 찾기">
+<!ENTITY devicepreference_newname "새 환경 설정 이름">
+<!ENTITY devicepreference_newtext "환경 설정 값">
+<!ENTITY devicepreference_addnew "새 환경 설정 추가">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "기기 설정">
+<!ENTITY devicesetting_search "설정 찾기">
+<!ENTITY devicesetting_newname "새 설정 이름">
+<!ENTITY devicesetting_newtext "설정 값">
+<!ENTITY devicesetting_addnew "새 설정 추가">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "모니터">
+<!ENTITY monitor_help "도움말">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "클라이언트 인증">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "붙으려는 쪽에서는 연결을 인증하기 위한 더 많은 정보가 필요합니다. 기기에서 스캐너가 뜨면 아래 QR코드를 비춰주십시오.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "QR코드 스캐너가 뜨지 않습니까?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR코드 스캐너가 뜨나요?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "해당 기기에서 QR코드 스캐너가 뜨지 않고 토큰을 묻는다면 아래 값을 넣어주십시오:">
+<!ENTITY wifi_auth_qr_size_note "QR 코드가 너무 작아서 성공적으로 연결되지 않는다면 확대를 하거나 창을 키워보세요.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "패키징 전 명령어 로그">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "시뮬레이터 설정">
+<!ENTITY simulator_remove "시뮬레이터 없애기">
+<!ENTITY simulator_reset "기본값으로 복원">
+<!ENTITY simulator_name "이름">
+<!ENTITY simulator_software "소프트웨어">
+<!ENTITY simulator_version "버전">
+<!ENTITY simulator_profile "프로필">
+<!ENTITY simulator_hardware "하드웨어">
+<!ENTITY simulator_device "기기">
+<!ENTITY simulator_screenSize "스크린">
+<!ENTITY simulator_pixelRatio "픽셀 비율">
+<!ENTITY simulator_tv_data "TV 시뮬레이션">
+<!ENTITY simulator_tv_data_open "설정 데이타">
+<!ENTITY simulator_tv_data_open_button "설정 디렉토리 열기…">

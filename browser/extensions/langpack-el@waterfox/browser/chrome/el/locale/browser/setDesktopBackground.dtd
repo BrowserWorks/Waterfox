@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Θέση:">
+<!ENTITY tile.label                 "Πλακίδιο">
+<!ENTITY center.label               "Κέντρο">
+<!ENTITY stretch.label              "Τέντωμα">
+<!ENTITY fill.label                 "Γέμισμα">
+<!ENTITY fit.label                  "Προσαρμογή">
+<!ENTITY preview.label              "Προεπισκόπηση">
+<!ENTITY color.label                "Χρώμα:">
+<!ENTITY setDesktopBackground.title "Ορισμός ταπετσαρίας επιφάνειας εργασίας">
+<!ENTITY openDesktopPrefs.label     "Άνοιγμα προτιμήσεων επιφάνειας εργασίας">
+<!ENTITY closeWindow.key            "w">

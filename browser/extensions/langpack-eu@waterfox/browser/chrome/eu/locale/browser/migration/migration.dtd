@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Inportazio-morroia">
+
+<!ENTITY importFrom.label               "Laster-markak, historia, pasahitzak eta beste zenbait datu hemendik inportatu:">
+<!ENTITY importFromUnix.label           "Hobespenak, laster-markak, historia, pasahitzak eta beste zenbait datu hemendik inportatu:">
+<!ENTITY importFromBookmarks.label      "Laster-markak nondik inportatu:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ezer ez inportatu">
+<!ENTITY importFromNothing.accesskey    "E">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Ezin izan da laster-markak, historia edo pasahitz daturik duen programarik aurkitu.">
+
+<!ENTITY importSource.title             "Inportatu ezarpenak eta datuak">
+<!ENTITY importItems.title              "Inportatu beharrekoak">
+<!ENTITY importItems.label              "Aukeratu inportatu beharrekoak:">
+
+<!ENTITY migrating.title                "Inportatzen…">
+<!ENTITY migrating.label                "Ondorengo osagaiak inportatzen…">
+
+<!ENTITY selectProfile.title            "Hautatu profila">
+<!ENTITY selectProfile.label            "Inportatzeko honako profil hauek daude eskuragarri:">
+
+<!ENTITY done.title                     "Inportazioa burutu da">
+<!ENTITY done.label                     "Hurrengo osagaiak ondo inportatu dira:">
+
+<!ENTITY closeSourceBrowser.label       "Ziurtatu hautatutako nagitzailea itxita dagoela jarraitu aurretik.">

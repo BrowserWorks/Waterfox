@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Граць">
+<!ENTITY playButton.pauseLabel "Прыпыніць">
+<!ENTITY muteButton.muteLabel "Заглушыць">
+<!ENTITY muteButton.unmuteLabel "Уключыць гук">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Увесь экран">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Закрыць поўны экран">
+<!ENTITY castingButton.castingLabel "Перакінуць на экран">
+<!ENTITY closedCaption.off "Адключана">
+
+<!ENTITY stats.media "Медыя">
+<!ENTITY stats.size "Памер">
+<!ENTITY stats.activity "Дзейнасць">
+<!ENTITY stats.activityPaused "Прыпынена">
+<!ENTITY stats.activityPlaying "Граецца">
+<!ENTITY stats.activityEnded "Скончана">
+<!ENTITY stats.activitySeeking "(шукаецца)">
+<!ENTITY stats.volume "Гучнасць">
+<!ENTITY stats.framesParsed "Рамкі разабраныя">
+<!ENTITY stats.framesDecoded "Рамкі дэкадаваныя">
+<!ENTITY stats.framesPresented "Рамкі прадстаўленыя">
+<!ENTITY stats.framesPainted "Рамкі намаляваныя">
+
+<!ENTITY error.aborted "Загрузка відэа прыпынена.">
+<!ENTITY error.network "Прайграванне відэа абарвана праз сеткавую памылку.">
+<!ENTITY error.decode "Відэа не можа быць прайграна, бо файл пашкоджаны.">
+<!ENTITY error.srcNotSupported "Фармат відэая або тып MIME не падтрымліваюцца.">
+<!ENTITY error.noSource2 "Не знойдзены відэа, фармат якіх або тым MIME якіх падтрымліваюцца.">
+<!ENTITY error.generic "Прайграванне відэа абарвана праз невядомую памылку.">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "Мінула #1 з #2">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

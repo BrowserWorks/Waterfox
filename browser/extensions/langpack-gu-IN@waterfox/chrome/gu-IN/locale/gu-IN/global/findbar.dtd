@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "મહાવરાનો આગળનો વારો શોધો">
+<!ENTITY previous.tooltip "મહાવરાનો પાછળનો વારો શોધો">
+<!ENTITY findCloseButton.tooltip "શોધ પટ્ટી બંધ કરો">
+
+
+<!ENTITY highlightAll.tooltiptext "મહાવરાના બધા વારાઓ પ્રકાશિત કરો">
+<!ENTITY caseSensitive.label "કેસ સરખાવો">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "કેસ સંવેદનશીલતાથી શોધો">
+
+
+
+
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.label "Whole Words">
+<!ENTITY entireWord.tooltiptext "Search whole words only">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.label "Highlight All">

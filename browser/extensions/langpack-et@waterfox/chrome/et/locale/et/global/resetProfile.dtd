@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName;i värskendamine">
+<!ENTITY refreshProfile.dialog.description1  "Probleemide lahendamiseks ja kiiruse taastamiseks alusta värskelt lehelt.">
+<!ENTITY refreshProfile.dialog.description2  "Jätkates:">
+<!ENTITY refreshProfile.dialog.items.label1  "eemaldatakse lisad ja kohandamised">
+<!ENTITY refreshProfile.dialog.items.label2  "lähtestatakse brauseri sätted vaikeväärtustele">
+<!ENTITY refreshProfile.dialog.button.label  "Värskenda &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Alusta &brandShortName;iga puhtalt lehelt">
+<!ENTITY refreshProfile.button.label         "Värskenda &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Peaaegu valmis…">

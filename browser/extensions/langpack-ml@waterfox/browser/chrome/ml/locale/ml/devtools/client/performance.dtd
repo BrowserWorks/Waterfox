@@ -1,0 +1,139 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "പ്രൊഫൈലര്‍ സാമ്പിളുകളെ ഒരു വൃത്താകൃതിയിലുള്ള ബഫറില്‍ സൂക്ഷിക്കുകയും, സൂക്ഷിക്കുന്നതിനുള്ള പരിധിയില്‍ ബഫര്‍ എത്തുമ്പോള്‍ പുതിയ സാമ്പിളുകള്‍ സൂക്ഷിച്ചു വെച്ചിരിക്കുന്നതിന്റെ തുടക്കത്തിലുള്ള സാമ്പിളുകളെ മാറ്റിയെഴുതുകയും ചെയ്യുന്നു.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!ENTITY performanceUI.disabledRealTime.nonE10SBuild "നോണ്‍-മള്‍ട്ടിപ്രോസെസ് ഫയര്‍ഫോക്സില്‍ റിയല്‍ടൈം ഡാറ്റ റെക്കോര്‍ഡ്‌ ചെയ്യുന്നത് ഡിസബിള്‍ഡ് ആണ്.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "റെക്കോര്‍ഡിംഗ് ഡാറ്റ റിയല്‍ടൈമില്‍ റെന്‍ഡര്‍ ചെയ്യുവാന്‍ മുന്‍ഗണനകളില്‍ മള്‍ട്ടിപ്രോസെസ് ഫയര്‍ഫോക്സ് ഇനേബിള്‍ ചെയ്യുക.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "ബഫര്‍ ഫുള്‍ ആണ്.പഴയ സാമ്പിളുകള്‍ ഇപ്പൊ ഓവര്‍റൈറ്റ് ചെയ്യുകയാണ്.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+
+<!ENTITY performanceUI.unavailableNoticePB "ഒരു പ്രൊഫൈല്‍ റെക്കോര്‍ഡ്‌ ചെയ്യുന്നത് ഇപ്പോള്‍  ലഭ്യമല്ല. ദയവായി എല്ലാ സ്വകാര്യ ബ്രൌസിംഗ് വിന്‍ഡോകളും അടച്ചു വീണ്ടും ശ്രമിക്കുക.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "ലഭ്യമാക്കുന്നു…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "വാട്ടര്‍ഫാള്‍">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "സൂക്ഷിക്കുന്ന സമയത്ത് ബ്രൗസര്‍ നടത്തുന്ന വിവിധ പ്രയോഗങ്ങളെ ഒരു വെള്ളച്ചാട്ടം പോലെ അനുക്രമമായി പ്രദര്‍ശിപ്പിക്കുന്നു.">
+<!ENTITY performanceUI.toolbar.js-calltree "കോള്‍ ട്രീ">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "റെക്കോര്‍ഡിംഗ് ചെയ്യുമ്പോള്‍ ബ്രൌസര്‍ കൂടുതല്‍ സമയം ചിലവഴിക്കുന്ന ജാവസ്ക്രിപ്റ്റ് ഫങ്ഷനുകള്‍ ഹൈലൈറ്റ് ചെയ്യുന്നു.">
+<!ENTITY performanceUI.toolbar.memory-calltree "അലോക്കേഷനുകൾ">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "റെക്കോര്‍ഡിംഗ് ചെയ്യുമ്പോള്‍ മെമ്മറി എവിടെയാണ് അലോക്കേറ്റ് ചെയ്തത് എന്ന്‍ കാണിക്കുന്നു.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "ജെഎസ് ഫ്ലെയിം ചാര്‍ട്ട്">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "സൂക്ഷിക്കുന്നതിന്റെ സമയത്തുള്ള ജാവാസ്ക്രിപ്റ്റ് കോള്‍ സ്റ്റാക് പ്രദര്‍ശിപ്പിക്കുക.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "അല്ലോക്കേഷന്‍ ഫ്ലെയിം ചാര്‍ട്ട് ">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "മൊത്തം സമയം">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "ഈ ഫങ്ങ്ഷനിലും ഈ ഫങ്ങ്ഷന്‍ വിളിക്കുന്ന ഫങ്ങ്ഷനുകളിലും ചിലവഴിച്ച ആകെ സമയം.">
+<!ENTITY performanceUI.table.selfDuration             "സെല്‍ഫ് ടൈം">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "ഈ ഫങ്ങ്ഷനില്‍ മാത്രമായി ചിലവഴിച്ച ആകെ സമയം.">
+<!ENTITY performanceUI.table.totalPercentage          "മൊത്തം വില">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "ഈ ഫങ്ങ്ഷനിലും ഈ ഫങ്ങ്ഷന്‍ വിളിക്കുന്ന ഫങ്ങ്ഷനുകളിലും ചിലവഴിച്ച ആകെ സമയത്തിന്റെ ശതമാനം.">
+<!ENTITY performanceUI.table.selfPercentage           "സെല്‍ഫ് കോസ്റ്റ്">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "ഈ ഫങ്ങ്ഷനില്‍ മാത്രമായി ചിലവഴിച്ച ആകെ സമയത്തിന്റെ ശതമാനം.">
+<!ENTITY performanceUI.table.samples                  "മാതൃകകള്‍">
+<!ENTITY performanceUI.table.samples.tooltip          "പ്രൊഫൈലര്‍ ഒരു സാമ്പിള്‍ എടുത്തപ്പോള്‍ സ്റ്റാക്കില്‍ ഉണ്ടായിരുന്ന ഈ ഫങ്ങ്ഷന്‍റെ എണ്ണം.">
+<!ENTITY performanceUI.table.function                 "ഫംങ്ഷന്‍">
+<!ENTITY performanceUI.table.function.tooltip         "സാമ്പിള്‍ ഫംങ്ഷന്‍റെ പേരും ഉറവിടവും.">
+<!ENTITY performanceUI.table.totalAlloc               "ആകെ സാമ്പിള്‍ഡ് അലോക്കേഷന്‍">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "ഈ സ്ഥാനത്ത് കോളീ രീതിയില്‍ സാമ്പിള്‍ ചെയ്യപ്പെട്ട ഒബ്ജക്റ്റ് അലോക്കേഷനുകളുടെ എണ്ണം.">
+<!ENTITY performanceUI.table.selfAlloc                "സെല്‍ഫ് സാമ്പിള്‍ഡ് അലോക്കേഷന്‍സ്">
+<!ENTITY performanceUI.table.selfAlloc.tooltip        "ഈ സ്ഥാനത്ത് സാമ്പിള്‍ ചെയ്യപ്പെട്ട ഒബ്ജക്റ്റ് അലോക്കേഷനുകളുടെ എണ്ണം.">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "ടൈംലൈനില്‍ പ്രദര്‍ശിപ്പിയ്ക്കേണ്ട ഡേറ്റാ തെരഞ്ഞെടുക്കുക">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "പ്രവര്‍ത്തന മുന്‍ഗണനകള്‍ ക്രമീകരിയ്ക്കുക.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "കോള്‍ ട്രീ തിരിയ്ക്കുക">
+<!ENTITY performanceUI.invertTree.tooltiptext "കോള്‍ ട്രീ തിരിയ്ക്കുന്നതു്, ഏറ്റവും പുതിയ ഫ്രെയിമുകള്‍ മുതല്‍ പഴയ ഫ്രെയിമുകള്‍ വരെയുള്ള പ്രൊഫൈല്‍ ചെയ്ത കോള്‍ വഴികള്‍ ലഭ്യമാക്കുന്നു.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "ഫ്ലെയിം ചാര്‍ട്ട് തിരിയ്ക്കുക">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "ഫ്ലെയിം ചാര്‍ട്ട് തിരിയ്ക്കുന്നതു്, ഏറ്റവും ചെറിയ ഫ്രെയിമുകള്‍ മുതല്‍ പഴയ ഫ്രെയിമുകള്‍ വരെയുള്ള പ്രൊഫൈല്‍ ചെയ്ത കോള്‍ പാഥുകള്‍ ലഭ്യമാക്കുന്നു.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "ജക്കോ പ്ലാറ്റ്ഫോം ഡേറ്റാ കാണിയ്ക്കുക">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "പ്ലാറ്റ്ഫോം ഡാറ്റ കാണിക്കുന്നത് ജാവസ്ക്രിപ്റ്റ് പ്രൊഫൈലര്‍ അറിയിപ്പുകളില്‍ ഗെക്കോ പ്ലാറ്റ്ഫോം ചിഹ്നങ്ങള്‍ ഉള്‍പ്പെടുത്തുന്നു.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "ട്രീ റിക്കേര്‍ഷന്‍ ഇല്ലാതാക്കുക">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "ഫംഗ്ഷനുകള്‍ നിരീക്ഷിയ്ക്കുമ്പോള്‍ റിക്കേര്‍ഷന്‍ ഇല്ലാതാക്കുക.">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "മെമ്മറി റിക്കോര്‍ഡ് ചെയ്യുക">
+<!ENTITY performanceUI.enableMemory.tooltiptext "പ്രൊഫൈല്‍ ചെയ്യുമ്പോള്‍ മെമ്മറി ഉപയോഗം റിക്കോര്‍ഡ് ചെയ്യുക.">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "അലോക്കേഷനുകൾ റെക്കോര്‍ഡ്‌ ചെയ്യുക">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "പ്രൊഫൈല്‍ ചെയ്യുമ്പോള്‍ ഒബ്ജെക്റ്റ് അലോക്കേഷന്‍ റിക്കോര്‍ഡ് ചെയ്യുക.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "ഫ്രെയിം റേറ്റ് റിക്കോര്‍ഡ് ചെയ്യുക">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "പ്രൊഫൈല്‍ ചെയ്യുമ്പോള്‍ ഫ്രെയിം റേറ്റ് റിക്കോര്‍ഡ് ചെയ്യുക.">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "നിലവില്‍ റെക്കോര്‍ഡ്‌ ചെയ്തുകൊണ്ടിരിക്കുന്നത്">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "‌">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "ഇത് നല്‍കുന്നതിലൂടെ സൂക്ഷിക്കല്‍ നിര്‍ത്തുക - ">
+<!ENTITY performanceUI.console.stopCommandEnd   "കണ്‍സോളിനുള്ളിലേക്ക്.">
+
+<!ENTITY performanceUI.showJITOptimizations             "Show JIT Optimizations">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Show JIT optimization data sampled in each JavaScript frame.">
+

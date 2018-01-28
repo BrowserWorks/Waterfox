@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "اتّصل">
+<!ENTITY header     "اتصل بجهاز بعيد">
+<!ENTITY host       "المستضيف:">
+<!ENTITY port       "المنفذ:">
+<!ENTITY connect    "اتّصل">
+<!ENTITY connecting "يتّصل…">
+<!ENTITY availableAddons "الإضافات البعيدة المتاحة:">
+<!ENTITY availableTabs "الألسنة البعيدة المتاحة:">
+<!ENTITY availableProcesses "السيرورات البعيدة المتاحة:">
+<!ENTITY connectionError "عطل:">
+<!ENTITY errorTimeout "عطل: انتهت مهلة الاتصال.">
+<!ENTITY errorRefused "عطل: رُفِض الاتصال.">
+<!ENTITY errorUnexpected "عُطل غير متوقّع.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "يمكن لأدوات فيرفكس للمطورين تنقيح الأجهزة البعيدة (فيرفكس لأندرويد ونظام فيرفكس مثلًا). تأكد من تفعيل خيار ’التنقيح البعيد‘ في الجهاز البعيد. للمزيد، طالع ">
+<!ENTITY remoteDocumentation "التوثيق">
+<!ENTITY remoteHelpSuffix ".">
+

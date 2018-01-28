@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "মাস্টার পাসওয়ার্ড পরিবর্তন">
+<!ENTITY setPassword.tokenName.label       "নিরাপত্তা ডিভাইস">
+<!ENTITY setPassword.oldPassword.label     "বর্তমান পাসওয়ার্ড:">
+<!ENTITY setPassword.newPassword.label     "নতুন পাসওয়ার্ড দিন:">
+<!ENTITY setPassword.reenterPassword.label "পাসওয়ার্ডটি পুনরায় দিন:">
+<!ENTITY setPassword.meter.label           "পাসওয়ার্ডের গুণমানসূচক">
+<!ENTITY setPassword.meter.loading         "লোড করা হচ্ছে">
+<!ENTITY masterPasswordDescription.label   "সংবেদনশীল তথ্য যেমন সাইট পাসওয়ার্ড সুরক্ষিত রাখতে মাস্টার পাসওয়ার্ড ব্যবহার করা হয়।  আপনি যদি মাস্টার পাসওয়ার্ড তৈরি করে থাকেন, তবে &brandShortName; ঐ পাসওয়ার্ড দিয়ে সুরক্ষিত কোনো তথ্য আনার জন্য প্রতি সেশনে আপনাকে অন্তত একবার এটি দিতে হবে।">
+<!ENTITY masterPasswordWarning.label       "অনুগ্রহ করে আপনার নির্ধারিত মাস্টার পাসওয়ার্ডটি মনে রাখবেন।  মাস্টার পাসওয়ার্ড ভুলে গেলে আপনি এর দ্বারা সুরক্ষিত কোনো তথ্য উদ্ধার করতে পারবেন না।">

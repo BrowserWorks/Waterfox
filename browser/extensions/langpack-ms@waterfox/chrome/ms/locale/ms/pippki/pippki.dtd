@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Tukar Kata laluan Induk">
+<!ENTITY setPassword.tokenName.label "Peranti Sekuriti">
+<!ENTITY setPassword.oldPassword.label "Kata laluan semasa:">
+<!ENTITY setPassword.newPassword.label "Katalalan baru:">
+<!ENTITY setPassword.reenterPassword.label "Kata laluan baru (lagi):">
+<!ENTITY setPassword.meter.label "Meter kualiti kata laluan">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Ulang tetap">
+<!ENTITY resetPassword.title  "Set semula Kata laluan Induk">
+<!ENTITY resetPassword.text  "Jika anda set semula kata laluan induk, semua kata laluan web dan emel yang tersimpan, data borang, sijil peribadi, dan kunci peribadi akan dilupakan. Adakah anda pasti mahu set semula kata laluan induk anda?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Memuaturun Sijil">
+<!ENTITY downloadCert.message1 "Anda telah ditanya untuk percayakan Autoriti Siil (CA) baru.">
+<!ENTITY downloadCert.trustSSL "Percayai CA ini untuk mengenal pasti laman web.">
+<!ENTITY downloadCert.trustEmail "Percayakan CA ini untuk mengenal pasti pengguna e-mel.">
+<!ENTITY downloadCert.trustObjSign "Percayakan CA ini untuk mengenali pembangun perisian.">
+<!ENTITY downloadCert.message3 "Sebelum mempercayai CA ini untuk sebarang kegunaan, anda perlu memeriksa sijilnya dan polisi dan prosedurnya (jika ada).">
+<!ENTITY downloadCert.viewCert.label "Papar">
+<!ENTITY downloadCert.viewCert.text "Periksa sijil CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Permohonan Pengenalan Pengguna">
+<!ENTITY clientAuthAsk.message1 "Laman ini telah meminta anda untuk memperkenalkan diri dengan sijil:">
+<!ENTITY clientAuthAsk.message2 "Pilih sijil untuk dijadikan sebagai pengenalan:">
+<!ENTITY clientAuthAsk.message3 "Perincian sijil terpilih:">
+
+<!ENTITY pkcs12.setpassword.title  "Pilih Kata laluan Sandaran Sijil">
+<!ENTITY pkcs12.setpassword.message  "Kata laluan sandaran sijil yang anda tetapkan di sini melindungi fail sandaran yang anda akan cipta.  Anda mesti menetapkan kata laluan untuk meneruskan sandaran.">
+<!ENTITY pkcs12.setpassword.label1 "Kata laluan sandaran sijil:">
+<!ENTITY pkcs12.setpassword.label2 "Kata laluan sandaran sijil (lagi):">
+<!ENTITY pkcs12.setpassword.reminder "Penting: Jika anda lupa kata laluan sandaran sijil anda, anda tidak akan dapat pulihkan sandaran ini lagi.  Sila catat di lokasi yang selamat.">
+
+<!ENTITY chooseToken.title  "Dialog Pilih Token">
+<!ENTITY chooseToken.message1 "Sila pilih token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Menjana Kucni Peribadi">
+<!ENTITY createCertInfo.msg1 "Penjanaan Kunci sedang dilakukan... Ini akan mengambil sedikit masa...">
+<!ENTITY createCertInfo.msg2 "Sila tunggu...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Token pengesahan dilindungi">
+<!ENTITY protectedAuth.msg "Sila buat pengesahan kepada token. Kaedah pengesahan adalah bergantung kepada jenis token anda.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

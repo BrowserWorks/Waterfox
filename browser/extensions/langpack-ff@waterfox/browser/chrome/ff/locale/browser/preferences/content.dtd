@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "Falo kenorɗe cuppitte">
+<!ENTITY  blockPopups.accesskey       "o">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Ɓeydu humpito">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "o">
+<!ENTITY  notificationsPolicyButton.label      "Suɓo…">
+<!ENTITY  notificationsDoNotDisturb.label      "Hoto haljin am">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Hay tintinol hollirtaake so wonaa e hurmitin &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Paltooje…">
+<!ENTITY  popupExceptions.accesskey   "P">
+
+<!ENTITY  fontsAndColors.label        "Ponte &amp; Nooneeji">
+
+<!ENTITY  defaultFont2.label          "Fontere woowaande:">
+<!ENTITY  defaultFont2.accesskey      "F">
+<!ENTITY  defaultSize2.label          "Ɓetol:">
+<!ENTITY  defaultSize2.accesskey      "Ɓ">
+
+<!ENTITY  advancedFonts.label         "Ceeɓtore…">
+<!ENTITY  advancedFonts.accesskey     "C">
+
+<!ENTITY  colors.label                "Nooneeji…">
+<!ENTITY  colors.accesskey            "N">
+
+<!ENTITY chooseLanguage.label         "Suɓo ɗemngal njiɗ-ɗaa ngam jaytinde kelle">
+<!ENTITY chooseButton.label           "Suɓo…">
+<!ENTITY chooseButton.accesskey       "u">
+
+<!ENTITY translateWebPages.label      "Fir loowdi geese">
+<!ENTITY translateWebPages.accesskey  "F">
+<!ENTITY translateExceptions.label    "Paltooje…">
+<!ENTITY translateExceptions.accesskey "a">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Fulii ko">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+
+
+<!ENTITY  playDRMContent.learnMore.label "Ɓeydu humpito">
+
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

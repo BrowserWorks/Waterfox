@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Oku kungasiphuthisa isiqinisekiso!">
+<!ENTITY aboutWarningText.label "Ukutshintha ezi setingi eziqhubele phambili zingaba yingozi ekuzinzeni, kukhuseleko nokusebenza kwale aplikheshini. Kufuneka uqhubeke kuphela ukuba uqinisekile ngento oyenzayo.">
+
+<!ENTITY aboutWarningCheckbox.label "Bonisa esi silumkiso kwixesha elizayo">
+
+<!ENTITY searchPrefs.label "Khangela:">
+<!ENTITY searchPrefs.accesskey "n">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Igama Lesikhethwa">
+<!ENTITY lockColumn.label "Isimo">
+<!ENTITY typeColumn.label "Isimbo">
+<!ENTITY valueColumn.label "Ixabiso">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Nqomfa ukuze uhlelahlele"> 
+<!ENTITY columnChooser.tooltip "Nqomfa uze ukhethe imiqolo eyehlayo ukuze ubonise"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopa">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopa Negama">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Kopa Ixabiso">
+<!ENTITY copyValue.accesskey "I">
+<!ENTITY modify.label "Hlengahlengisa">
+<!ENTITY modify.accesskey "H">
+<!ENTITY toggle.label "Isixhobo esitshintshwa ngokufanayo">
+<!ENTITY toggle.accesskey "I">
+<!ENTITY reset.label "Phinda umisele">
+<!ENTITY reset.accesskey "P">
+<!ENTITY new.label "Okutsha">
+<!ENTITY new.accesskey "t">
+<!ENTITY string.label "Umtya">
+<!ENTITY string.accesskey "U">
+<!ENTITY integer.label "Inani elipheleleyo">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">

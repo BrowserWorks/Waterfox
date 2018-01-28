@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nije app…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Ferpakte app iepenje…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "a">
+<!ENTITY projectMenu_importHostedApp_label "Hoste app iepenje…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "App iepenje…">
+<!ENTITY projectMenu_selectApp_accesskey "i">
+<!ENTITY projectMenu_play_label "Ynstallearje en útfiere">
+<!ENTITY projectMenu_play_accesskey "Y">
+<!ENTITY projectMenu_stop_label "App stoppe">
+<!ENTITY projectMenu_stop_accesskey "s">
+<!ENTITY projectMenu_debug_label "App-debugging">
+<!ENTITY projectMenu_debug_accesskey "d">
+<!ENTITY projectMenu_remove_label "Projekt fuortsmite">
+<!ENTITY projectMenu_remove_accesskey "f">
+<!ENTITY projectMenu_showPrefs_label "Foarkarren">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Ekstra ûnderdielen beheare">
+<!ENTITY projectMenu_manageComponents_accesskey "b">
+<!ENTITY projectMenu_refreshTabs_label "Ljepblêden fernije">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Ferbrekke">
+<!ENTITY runtimeMenu_disconnect_accesskey "F">
+<!ENTITY runtimeMenu_takeScreenshot_label "Skermôfbylding">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Runtime-ynfo">
+<!ENTITY runtimeMenu_showDetails_accesskey "e">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Apparaatfoarkarren">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "A">
+<!ENTITY runtimeMenu_showSettings_label "Apparaatynstellingen">
+<!ENTITY runtimeMenu_showSettings_accesskey "n">
+
+<!ENTITY viewMenu_label "Byld">
+<!ENTITY viewMenu_accesskey "l">
+<!ENTITY viewMenu_toggleEditor_label "Editor yn-/útskeakelje">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "Ynzoome">
+<!ENTITY viewMenu_zoomin_accesskey "Y">
+<!ENTITY viewMenu_zoomout_label "Utzoome">
+<!ENTITY viewMenu_zoomout_accesskey "U">
+<!ENTITY viewMenu_resetzoom_label "Zoom werinisjalisearje">
+<!ENTITY viewMenu_resetzoom_accesskey "Z">
+
+<!ENTITY projectButton_label "App iepenje">
+<!ENTITY runtimeButton_label "Runtime selektearje">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Myn projekten">
+<!ENTITY projectPanel_runtimeApps "Runtime-apps">
+<!ENTITY projectPanel_tabs "Ljepblêden">
+<!ENTITY runtimePanel_usb "USB-apparaten">
+<!ENTITY runtimePanel_wifi "Wifi-apparaten">
+<!ENTITY runtimePanel_simulator "Simulatoren">
+<!ENTITY runtimePanel_other "Oars">
+<!ENTITY runtimePanel_installsimulator "Simulator ynstallearje">
+<!ENTITY runtimePanel_noadbhelper "ADB Helper ynstallearje">
+<!ENTITY runtimePanel_nousbdevice "Sjogge jo jo apparaat net?">
+<!ENTITY runtimePanel_refreshDevices_label "Apparaten fernije">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "jildich">
+<!ENTITY details_warning_header "warskôgingen">
+<!ENTITY details_error_header "flaters">
+<!ENTITY details_description "Beskriuwing">
+<!ENTITY details_location "Lokaasje">
+<!ENTITY details_manifestURL "App-id">
+<!ENTITY details_removeProject_button "Projekt fuortsmite">
+<!ENTITY details_showPrepackageLog_button "Lochboek foar ferpakken toane">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Nije app">
+<!ENTITY newAppHeader "Sjabloan selektearje">
+<!ENTITY newAppLoadingTemplate "Sjabloanen lade…">
+<!ENTITY newAppProjectName "Projektnamme:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Slute">
+
+<!-- Addons -->
+<!ENTITY addons_title "Ekstra ûnderdielen">
+<!ENTITY addons_aboutaddons "Add-onbehearder iepenje">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Foarkarren">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Algemien">
+<!ENTITY prefs_restore "Standertwearden">
+<!ENTITY prefs_manage_components "Ekstra ûnderdielen beheare">
+<!ENTITY prefs_options_autoconnectruntime "Opnij mei foarige runtime ferbine">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Opnij mei foarige runtime ferbine as WebIDE start">
+<!ENTITY prefs_options_rememberlastproject "Lêste projekt ûnthâlde">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Foarige projekt werom bringe as WebIDE start">
+<!ENTITY prefs_options_templatesurl "Sjabloan-URL">
+<!ENTITY prefs_options_templatesurl_tooltip "Yndeks fan beskikbere sjabloanen">
+<!ENTITY prefs_options_showeditor "Editor toane">
+<!ENTITY prefs_options_showeditor_tooltip "Ynterne editor toane">
+<!ENTITY prefs_options_tabsize "Ljepblêdgrutte">
+<!ENTITY prefs_options_expandtab "Soft-ljepblêden">
+<!ENTITY prefs_options_expandtab_tooltip "Spaasjes brûke yn stee fan it tabteken">
+<!ENTITY prefs_options_detectindentation "Auto-ynspringe">
+<!ENTITY prefs_options_detectindentation_tooltip "Ynspringing riede op basis fan boarneynhâld">
+<!ENTITY prefs_options_autocomplete "Autofoltôgje">
+<!ENTITY prefs_options_autocomplete_tooltip "Automatysk koadeoanfolling ynskeakelje">
+<!ENTITY prefs_options_autoclosebrackets "Automatysk heaken slute">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Automatysk slútheaken ynfoegje">
+<!ENTITY prefs_options_keybindings "Fluchtoetsen">
+<!ENTITY prefs_options_keybindings_default "Standert">
+<!ENTITY prefs_options_autosavefiles "Bestannen automatysk bewarje">
+<!ENTITY prefs_options_autosavefiles_tooltip "Bewurke bestannen automatysk bewarje foar útfieren fan projekt">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Runtime-ynfo">
+<!ENTITY runtimedetails_adbIsRoot "ADB is root: ">
+<!ENTITY runtimedetails_summonADBRoot "rootapparaat">
+<!ENTITY runtimedetails_ADBRootWarning "(fereasket net-beskoattele bootloader)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Unbeheinde DevTools-foech: ">
+<!ENTITY runtimedetails_requestPrivileges "hegere foech freegje">
+<!ENTITY runtimedetails_privilegesWarning "(Sil apparaat werstarte. Fereasket root-tagong.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typestring "String">
+<!ENTITY device_typeobject "Object">
+<!ENTITY device_typenone "Selektearje in type">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Apparaatfoarkarren">
+<!ENTITY devicepreference_search "Sykfoarkarren">
+<!ENTITY devicepreference_newname "Namme fan nije foarkar">
+<!ENTITY devicepreference_newtext "Foarkarwearde">
+<!ENTITY devicepreference_addnew "Nije foarkar tafoegje">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Apparaatynstellingen">
+<!ENTITY devicesetting_search "Sykynstellingen">
+<!ENTITY devicesetting_newname "Namme fan nije ynstelling">
+<!ENTITY devicesetting_newtext "Ynstellingwearde">
+<!ENTITY devicesetting_addnew "Nije ynstelling tafoegje">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Help">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Client-identifikaasje">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "It einpunt wêrmei't jo ferbining meitsje, hat mear ynformaasje nedich om dizze ferbining te autentisearjen. Scan de ûndersteande QR-code fia de prompt op jo oare apparaat.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Gjin QR-scannerprompt?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Wol in QR-scannerprompt?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "As jo oare apparaat om in token freget yn stee fan in QR-koade te scannen, kopiear dan de ûndersteande wearde nei it oare apparaat:">
+<!ENTITY wifi_auth_qr_size_note "As de QR-koade te lyts liket om de ferbining mei sukses ta stân te bringen, probearje dan yn te zoomen of it finster te fergrutsjen.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Lochboek fan opdrachten foar ferpakken">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Simulatoropsjes">
+<!ENTITY simulator_remove "Simulator fuortsmite">
+<!ENTITY simulator_reset "Standertwearden">
+<!ENTITY simulator_name "Namme">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_version "Ferzje">
+<!ENTITY simulator_profile "Profyl">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_device "Apparaat">
+<!ENTITY simulator_screenSize "Skerm">
+<!ENTITY simulator_pixelRatio "Pikselferhâlding">
+<!ENTITY simulator_tv_data "Tf-simulaasje">
+<!ENTITY simulator_tv_data_open "Konfiguraasjegegevens">
+<!ENTITY simulator_tv_data_open_button "Konfiguraasjemap iepenje…">

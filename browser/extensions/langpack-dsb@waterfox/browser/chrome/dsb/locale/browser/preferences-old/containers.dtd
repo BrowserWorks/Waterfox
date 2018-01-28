@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Nowy kontejner pśidaś">
+<!ENTITY addButton.accesskey  "k">
+<!ENTITY preferencesButton.label "Nastajenja">
+<!ENTITY removeButton.label   "Wótwónoźeś">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Slědk k priwatnosći">
+
+<!ENTITY window.title         "Nowy kontejner pśidaś">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Mě:">
+<!ENTITY name.accesskey       "M">
+<!ENTITY name.placeholder     "Zapódajśo kontejnerowe mě">
+<!ENTITY icon.label           "Symbol:">
+<!ENTITY icon.accesskey       "S">
+<!ENTITY color.label          "Barwa:">
+<!ENTITY color.accesskey      "B">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Gótowo">
+<!ENTITY button.ok.accesskey  "G">
+

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "പ്റധാന പാസ്‌വേറ്‍ഡ് ‌ മാറ്റുക ">
+<!ENTITY setPassword.tokenName.label       "സുരക്ഷാ ഉപകരണങ്ങള്‍ ">
+<!ENTITY setPassword.oldPassword.label     "ഇപ്പോഴത്തെ പാസ്‌വേറ്‍ഡ് :">
+<!ENTITY setPassword.newPassword.label     "പുതിയ പാസ്‌വേറ്‍ഡ് എന്റര്‍ ചെയ്യുക ">
+<!ENTITY setPassword.reenterPassword.label "പാസ്‌വേറ്‍ഡ് വീണ്ടും നല്‍കുക:">
+<!ENTITY setPassword.meter.label           "പാസ്‌വേഡിന്റെ നിലവാരം കാണിക്കുന്ന മീറ്റര്‍">
+<!ENTITY setPassword.meter.loading         "ലഭ്യമാക്കുന്നു">
+<!ENTITY masterPasswordDescription.label   "സൈറ്റ് പാസ്‌വേറ്‍ഡുകള്‍ പോലുള്ള പ്റധാനപ്പെട്ട വിവരങ്ങള്‍ സൂക്ഷിക്കുന്നതിനാണ് മാസ്റ്റര്‍ പാസ്‌വേറ്‍ഡ് .  നിങ്ങള്‍ ഈ പാസ്‌വേര്‍ഡ് ഉണ്ടാക്കിയാല്‍, ഇതുപയോഗിച്ച് സൂക്ഷിക്കുന്ന വിവരങ്ങള്‍  &brandShortName; ലഭ്യമാക്കുമ്പോള്‍, നിങ്ങളോട് എല്ലാ സെഷനുകളിലും ഒരിക്കല്‍ ഈ പാസ്‌വേര്‍ഡ് ചോദിക്കുന്നതാണ് ">
+<!ENTITY masterPasswordWarning.label       "നിങ്ങളുടെ പാസ്‌വേറ്‍ഡ് ദയവായി ഓറ്‍ത്തിരിക്കുക. ഇത് മറന്നാല്‍, നിങ്ങള്‍ക്ക് പാസ്‌വേറ്‍ഡ് ഉപയോഗിച്ച് സൂക്ഷിക്കുന്ന വിവരങ്ങള്‍ ലഭ്യമാക്കുവാന്‍ സാധ്യമാകുന്നതല്ല.">

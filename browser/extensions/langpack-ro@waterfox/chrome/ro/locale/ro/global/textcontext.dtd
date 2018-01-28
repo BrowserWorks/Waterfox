@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Taie">
+<!ENTITY cutCmd.accesskey "T">
+<!ENTITY copyCmd.label "Copiază">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "Lipește">
+<!ENTITY pasteCmd.accesskey "p">
+<!ENTITY undoCmd.label "Anulează">
+<!ENTITY undoCmd.accesskey "u">
+<!ENTITY selectAllCmd.label "Selectează tot">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Șterge">
+<!ENTITY deleteCmd.accesskey "g">
+
+<!ENTITY spellAddToDictionary.label "Adaugă în dicționar">
+<!ENTITY spellAddToDictionary.accesskey "u">
+<!ENTITY spellUndoAddToDictionary.label "Anulează adăugarea la dicționar">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Verifică ortografia">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(nicio sugestie de ortografie)">
+<!ENTITY spellDictionaries.label "Limbi">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "Curăță">
+
+<!ENTITY fillLoginMenu.label          "Precompletare date autentificare">
+<!ENTITY fillLoginMenu.accesskey      "f">
+<!ENTITY fillPasswordMenu.label       "Precompletare parolă">
+<!ENTITY fillPasswordMenu.accesskey   "r">
+<!ENTITY fillUsernameMenu.label       "Precompletare utilizator">
+<!ENTITY fillUsernameMenu.accesskey   "r">
+<!ENTITY noLoginSuggestions.label     "(nicio sugestie de autentificare)">
+<!ENTITY viewSavedLogins.label        "Vezi autentificările salvate">

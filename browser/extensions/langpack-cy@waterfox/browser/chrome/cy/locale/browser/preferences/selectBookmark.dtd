@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY selectBookmark.title "Gosod Tudalen Cartref">
+<!ENTITY selectBookmark.label "Dewiswch Nod Tudalen i fod yn Dudalen Cartref. Os fyddwch yn dewis ffolder, bydd y Nodau Tudalen yn y ffolder yn cael eu hagor mewn Tabiau.">
+

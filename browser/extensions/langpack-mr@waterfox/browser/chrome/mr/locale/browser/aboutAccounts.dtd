@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; वर आपले स्वागत आहे">
+
+<!ENTITY aboutAccountsConfig.description "आपले टॅब, वाचनखूणा, पासवर्ड आणि इतर काही सिंक करण्यासाठी साईन-इन करा.">
+<!ENTITY aboutAccountsConfig.startButton.label "सुरुवात करा">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ताळमेळ प्राधान्यक्रम">
+<!ENTITY aboutAccounts.noConnection.title "जोडणी नाही">
+<!ENTITY aboutAccounts.noConnection.description "साईन-इन करण्यासाठी आपले इंटरनेट चालू असणे आवश्यक आहे.">
+<!ENTITY aboutAccounts.noConnection.retry "पुन्हा प्रयत्न करा">
+<!ENTITY aboutAccounts.badConfig.title "खराब संरचना">
+<!ENTITY aboutAccounts.badConfig.description "आपल्या Waterfox खात्याच्या सर्व्हरची संरचना ठरवण्यात अक्षम. कृपया नंतर प्रयत्न करा.">

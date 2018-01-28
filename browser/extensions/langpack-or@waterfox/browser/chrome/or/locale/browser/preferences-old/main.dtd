@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "ଆରମ୍ଭ">
+
+<!ENTITY startupPage.label         "ଯେତେବେଳେ &brandShortName; ଆରମ୍ଭହୁଏ:">
+<!ENTITY startupPage.accesskey     "s">
+
+<!ENTITY startupBlankPage.label    "ଗୋଟିଏ ଖାଲି ପୃଷ୍ଠା ଦର୍ଶାନ୍ତୁ">
+
+
+<!ENTITY homepage.label            "ମୂଳ ପୃଷ୍ଠା:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "ପ୍ରଚଳିତ ପୃଷ୍ଠା ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "ପ୍ରଚଳିତ ପୃଷ୍ଠାଗୁଡ଼ିକୁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY chooseBookmark.label      "ଚିହ୍ନିତ ସ୍ଥାନ ବ୍ୟବହାର କରନ୍ତୁ…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "ପୂର୍ବନିର୍ଦ୍ଧାରିତରେ ପୁନଃ ସ୍ଥାପନ କରନ୍ତୁ">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "ଆହରଣ">
+
+<!ENTITY saveTo.label "ରେ ଫାଇଲଗୁଡ଼ିକୁ ସଂରକ୍ଷଣ କରନ୍ତୁ">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ବ୍ରାଉଜ କରନ୍ତୁ…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "ବାଛନ୍ତୁ…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+
+
+
+
+<!ENTITY setAsMyDefaultBrowser2.label     "ଏହାକୁ ପୂର୍ବନିର୍ଦ୍ଧାରିତ କରନ୍ତୁ">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; ବର୍ତ୍ତମାନ ଆପଣଙ୍କର ପୂର୍ବନିର୍ଦ୍ଧାରିତ ବ୍ରାଉଜର ଅଟେ">
+<!ENTITY isNotDefault.label               "&brandShortName; ବର୍ତ୍ତମାନ ଆପଣଙ୍କର ପୂର୍ବନିର୍ଦ୍ଧାରିତ ବ୍ରାଉଜର ଅଟେ">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; ଏବଂ Waterfox କୁ ଏକା ସହିତ ଚାଲିବା ପାଇଁ ଅନୁମତି ଦିଅନ୍ତୁ">
+<!ENTITY useWaterfoxSync.label             "ସୂଚନା: ଏହା ପୃଥକ ରୂପରେଖାକୁ ବ୍ୟବହାର କରିଥାଏ। ତଥ୍ଯକୁ ସେଗୁଡ଼ିକ ମଧ୍ଯରେ ସହଭାଗ କରିବା ପାଇଁ ସନ୍ତୁଳନକୁ ବ୍ୟବହାର କରନ୍ତୁ।">
+
+
+
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY alwaysCheckDefault2.label        "Always check if &brandShortName; is your default browser">
+<!ENTITY e10sEnabled.label                "Enable multi-process &brandShortName;">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">

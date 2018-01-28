@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY robots.pagetitle "¡Bienvenidos, humanos!">
+<!ENTITY robots.errorTitleText "¡Bienvenidos, humanos!">
+<!ENTITY robots.errorShortDescText "¡Venimos a visitaros en son de paz y con buena voluntad!">
+<!ENTITY robots.errorLongDesc1 "Un robot no debe dañar a un ser humano o, por su inacción, dejar que un ser humano sufra daño.">
+<!ENTITY robots.errorLongDesc2 "Los robots han visto cosas que vosotros no creeríais.">
+<!ENTITY robots.errorLongDesc3 "Los robots son vuestros amigos de plástico con quien os gustará estar.">
+<!ENTITY robots.errorLongDesc4 "Los robots tienen brillantes culos metálicos que no deben ser chupados.">
+<!ENTITY robots.errorTrailerDescText "Y tienen un plan.">
+<!ENTITY robots.imgtitle "Jodidas tostadoras">
+<!ENTITY robots.dontpress "Por favor, no pulses este botón otra vez.">

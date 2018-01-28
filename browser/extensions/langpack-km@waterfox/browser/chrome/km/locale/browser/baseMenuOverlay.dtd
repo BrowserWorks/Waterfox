@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "">
+<!ENTITY minimizeWindow.label     "បង្រួម​អប្បបរមា">
+<!ENTITY bringAllToFront.label    "នាំទៅ​មុខ​ទាំងអស់">
+<!ENTITY zoomWindow.label         "ពង្រីក">
+<!ENTITY windowMenu.label         "បង្អួច">
+
+<!ENTITY helpMenu.label           "ជំនួយ"> 
+<!ENTITY helpMenu.accesskey       ""> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "ជំនួយ"> 
+<!ENTITY helpMenuWin.accesskey    "">
+<!ENTITY aboutProduct2.label      "អំពី &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "">
+<!ENTITY productHelp2.label       "&brandShorterName; ជំនួយ">
+<!ENTITY productHelp2.accesskey   "">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "គ្រាប់ចុច​ផ្លូវកាត់">
+<!ENTITY helpKeyboardShortcuts.accesskey "">
+
+<!ENTITY helpSafeMode.label       "ចាប់ផ្ដើម​ឡើងវិញ​ដោយ​បិទ​កម្មវិធី​បន្ថែម...">
+<!ENTITY helpSafeMode.accesskey   "">
+<!ENTITY helpSafeMode.stop.label       "ចាប់ផ្ដើម​ឡើងវិញ​ដោយ​បើក​​កម្មវិធី​បន្ថែម">
+<!ENTITY helpSafeMode.stop.accesskey   "">
+
+<!ENTITY healthReport2.label      "&brandShorterName; របាយការណ៍​សុខភាព">
+<!ENTITY healthReport2.accesskey  "">
+
+<!ENTITY helpTroubleshootingInfo.label      "ព័ត៌មាន​អំពី​ការ​ដោះស្រាយ​បញ្ហា">
+<!ENTITY helpTroubleshootingInfo.accesskey  "">
+
+<!ENTITY helpFeedbackPage.label      "ដាក់​ស្នើ​មតិ​ត្រឡប់...">
+<!ENTITY helpFeedbackPage.accesskey  "">
+
+<!ENTITY helpShowTour2.label            "ទស្សនា &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "">
+
+<!ENTITY preferencesCmdMac.label        "ចំណូលចិត្ត...">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "សេវាកម្ម">
+
+<!ENTITY hideThisAppCmdMac2.label       "លាក់ &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "">
+
+<!ENTITY hideOtherAppsCmdMac.label      "លាក់​ផ្សេងទៀត">
+<!ENTITY hideOtherAppsCmdMac.commandkey "">
+
+<!ENTITY showAllAppsCmdMac.label        "បង្ហាញ​ទាំងអស់">

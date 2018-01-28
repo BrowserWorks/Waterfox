@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY trackingProtectionHeader2.label "Ochrona przed śledzeniem">
+<!ENTITY trackingProtection2.description "Śledzenie to zbieranie informacji o Twoim przeglądaniu na wielu różnych stronach. Śledzenie jest używane do profilowania użytkowników i wyświetlania treści na podstawie Twojego przeglądania i osobistych danych.">
+<!ENTITY trackingProtection2.radioGroupLabel "Chroń przed śledzeniem przez znane elementy śledzące:">
+<!ENTITY trackingProtectionAlways.label "Zawsze">
+<!ENTITY trackingProtectionAlways.accesskey "">
+<!ENTITY trackingProtectionPrivate.label "W oknach prywatnych">
+<!ENTITY trackingProtectionPrivate.accesskey "">
+<!ENTITY trackingProtectionNever.label "Nigdy">
+<!ENTITY trackingProtectionNever.accesskey "">
+<!ENTITY trackingProtectionLearnMore.label "Więcej informacji">
+<!ENTITY trackingProtectionExceptions.label "Wyjątki…">
+<!ENTITY trackingProtectionExceptions.accesskey "">
+
+<!ENTITY trackingProtectionPBM5.label "Ochrona przed śledzeniem w oknach prywatnych.">
+<!ENTITY trackingProtectionPBM5.accesskey "">
+<!ENTITY trackingProtectionPBM6.label "Ochrona przed śledzeniem przez znane elementy śledzące w oknach prywatnych.">
+<!ENTITY trackingProtectionPBM6.accesskey "">
+<!ENTITY trackingProtectionPBMLearnMore.label "Więcej informacji">
+<!ENTITY changeBlockList2.label "Zmień listę blokowanych…">
+<!ENTITY changeBlockList2.accesskey "">
+
+<!ENTITY doNotTrack.description "Informuj witryny o preferencjach względem śledzenia (wysyłanie nagłówka „Do Not Track”):">
+<!ENTITY doNotTrack.learnMore.label "Więcej informacji">
+<!ENTITY doNotTrack.default.label "Tylko podczas używania ochrony przed śledzeniem">
+<!ENTITY doNotTrack.always.label "Zawsze">
+
+<!ENTITY addressBar.label "Pasek adresu">
+<!ENTITY addressBar.suggest.label "Podpowiedzi w pasku adresu opieraj na:">
+<!ENTITY locbar.history2.label "historii przeglądania">
+<!ENTITY locbar.history2.accesskey "">
+<!ENTITY locbar.bookmarks.label "zakładkach">
+<!ENTITY locbar.bookmarks.accesskey "">
+<!ENTITY locbar.openpage.label "otwartych kartach">
+<!ENTITY locbar.openpage.accesskey "">
+<!ENTITY locbar.searches.label "podpowiedziach wyszukiwania">
+<!ENTITY locbar.searches.accesskey "">
+
+<!ENTITY suggestionSettings2.label "Zmień ustawienia podpowiedzi dostarczanych przez wyszukiwarki">
+
+<!ENTITY history.label "Historia">
+<!ENTITY historyHeader2.pre.label "Program &brandShortName;:">
+<!ENTITY historyHeader2.pre.accesskey "">
+<!ENTITY historyHeader.remember.label "będzie zachowywał historię">
+<!ENTITY historyHeader.dontremember.label "nie będzie zachowywał historii">
+<!ENTITY historyHeader.custom.label "będzie używał ustawień użytkownika">
+<!ENTITY historyHeader.post.label "">
+
+<!ENTITY permissions.label "Uprawnienia">
+
+<!ENTITY acceptCookies2.label "Akceptowanie ciasteczek">
+<!ENTITY acceptCookies2.accesskey "">
+<!ENTITY acceptThirdParty.pre.label "Akceptowanie ciasteczek witryn zewnętrznych podmiotów:">
+<!ENTITY acceptThirdParty.pre.accesskey "">
+<!ENTITY acceptThirdParty.always.label "zawsze">
+<!ENTITY acceptThirdParty.never.label "nigdy">
+<!ENTITY acceptThirdParty.visited.label "z odwiedzonych">
+<!ENTITY keepUntil.label "Przechowywanie ciasteczek:">
+<!ENTITY keepUntil.accesskey "">
+<!ENTITY expire.label "do ich wygaśnięcia">
+<!ENTITY close.label "do zamknięcia programu &brandShortName;">
+<!ENTITY cookieExceptions.label "Wyjątki…">
+<!ENTITY cookieExceptions.accesskey "">
+<!ENTITY showCookies.label "Wyświetl ciasteczka…">
+<!ENTITY showCookies.accesskey "">
+
+<!ENTITY rememberDescription.label "&brandShortName; zachowa historię przeglądania, wyszukiwania, pobieranych plików i danych formularzy, zachowa także ciasteczka z odwiedzanych witryn.">
+<!ENTITY rememberActions.pre.label "">
+<!ENTITY rememberActions.clearHistory.label "Wyczyść ostatnią historię">
+<!ENTITY rememberActions.middle.label " lub ">
+<!ENTITY rememberActions.removeCookies.label "usuń pojedyncze ciasteczka">
+<!ENTITY rememberActions.post.label ".">
+<!ENTITY dontrememberDescription.label "Program &brandShortName; będzie używał tych samych ustawień co w trybie prywatnym i nie będzie zachowywał historii podczas przeglądania witryn WWW.">
+<!ENTITY dontrememberActions.pre.label          "Można także ">
+<!ENTITY dontrememberActions.clearHistory.label "wyczyścić całą bieżącą historię">
+<!ENTITY dontrememberActions.post.label         ".">
+
+<!ENTITY privateBrowsingPermanent2.label "Zawsze aktywny tryb przeglądania prywatnego">
+<!ENTITY privateBrowsingPermanent2.accesskey "">
+<!ENTITY rememberHistory2.label "Historia przeglądania i pobierania plików">
+<!ENTITY rememberHistory2.accesskey "">
+<!ENTITY rememberSearchForm.label "Historia wyszukiwania i formularzy">
+<!ENTITY rememberSearchForm.accesskey "">
+<!ENTITY clearOnClose.label "Czyszczenie historii podczas zamykania programu &brandShortName;">
+<!ENTITY clearOnClose.accesskey "">
+<!ENTITY clearOnCloseSettings.label "Ustawienia…">
+<!ENTITY clearOnCloseSettings.accesskey "">
+
+<!ENTITY browserContainersLearnMore.label "Więcej informacji">
+<!ENTITY browserContainersEnabled.label "Karty z kontekstem">
+<!ENTITY browserContainersEnabled.accesskey "">
+<!ENTITY browserContainersSettings.label "Dostosuj…">
+<!ENTITY browserContainersSettings.accesskey "">

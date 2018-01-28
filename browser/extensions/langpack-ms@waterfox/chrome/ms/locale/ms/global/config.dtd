@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Ini mungkin membatalkan jaminan anda!">
+<!ENTITY aboutWarningText.label "Mengubah tetapan lanjutan ini boleh membahayakan kestabilan, keselamatan dan  prestasi aplikasi. Hanya teruskan jika anda pasti apa yang anda sedang lakukan.">
+<!ENTITY aboutWarningButton2.label "Saya terima risikonya!">
+<!ENTITY aboutWarningCheckbox.label "Papar amaran ini pada waktu lain">
+
+<!ENTITY searchPrefs.label "Cari:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Nama Keutamaan">
+<!ENTITY lockColumn.label "Status">
+<!ENTITY typeColumn.label "Jenis">
+<!ENTITY valueColumn.label "Nilai">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Klik untuk susun"> 
+<!ENTITY columnChooser.tooltip "Klik untuk pilih kolum dipapar"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Salin">
+<!ENTITY copyPref.accesskey "n">
+<!ENTITY copyName.label "Salin Nama">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Salin Nilai">
+<!ENTITY copyValue.accesskey "S">
+<!ENTITY modify.label "Ubahsuai">
+<!ENTITY modify.accesskey "b">
+<!ENTITY toggle.label "Tuil">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "Set semula">
+<!ENTITY reset.accesskey "a">
+<!ENTITY new.label "Baru">
+<!ENTITY new.accesskey "B">
+<!ENTITY string.label "Rentetan">
+<!ENTITY string.accesskey "e">
+<!ENTITY integer.label "Integer">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

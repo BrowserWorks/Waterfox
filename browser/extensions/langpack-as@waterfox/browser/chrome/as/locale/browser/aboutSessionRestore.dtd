@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "অধিবেশন পুনৰুদ্ধাৰ কৰক">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "বাৰু, এইটো লজ্জাজনক।">
+<!ENTITY restorepage.problemDesc    "আপোনাৰ উইন্ডো আৰু টেবসমূহক পুনৰুদ্ধাৰ কৰিবলৈ &brandShortName; ৰ সমস্যা হৈছে। এইটো সাধাৰণতে এটা নতুনকৈ খোলা ৱেব পৃষ্ঠাৰ বাবে হয়।">
+<!ENTITY restorepage.tryThis        "আপুনি চেষ্টা কৰিব পাৰে:">
+<!ENTITY restorepage.restoreSome    "সমস্যা কাৰণ হ'ব পৰা একাধিক টেব আঁতৰাই">
+<!ENTITY restorepage.startNew       "এটা সম্পূৰ্ণ নতুন ব্ৰাউছৰ অধিবেশন আৰম্ভ কৰি">
+
+<!ENTITY restorepage.tryagainButton "পুনৰুদ্ধাৰ কৰক">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "বন্ধ কৰক">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "পুনৰুদ্ধাৰ কৰক">
+<!ENTITY restorepage.listHeader     "উইন্ডো আৰু টেববোৰ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "উইন্ডো &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "যাওঁ বোলক!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "সফল!">
+
+<!ENTITY welcomeback2.pageTitle     "সফল!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; আৰম্ভ হবলৈ প্ৰস্তুত।">
+
+<!ENTITY welcomeback2.restoreSome.label "কেৱল আপুনি বিচৰাবোৰ পুনৰুদ্ধাৰ কৰক">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "আপোনাৰ এড-অনসমূহ আৰু স্বনিৰ্বাচনসমূহক আতৰোৱা হৈছে আৰু আপোনাৰ ব্ৰাউছাৰৰ সংহতিসমূহক তাৰ অবিকল্পিতলৈ পুনৰুদ্ধাৰ কৰা হৈছে। যদি ই আপোনাৰ সমস্যাৰ সমাধান কৰা নাই, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "আপুনি কি কৰিব পাৰিব তাৰ বিষয়ে অধিক জানক।">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">

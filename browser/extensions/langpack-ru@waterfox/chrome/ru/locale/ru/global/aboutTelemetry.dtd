@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Данные телеметрии">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Источник данных пинга:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Данные текущего пинга
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Данные архивированного пинга
+">
+
+<!ENTITY aboutTelemetry.raw "
+Необработанный JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Отображать данные подсессии
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Выберите пинг:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Более новый пинг
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Более старый пинг &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Неделя
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Тип пинга
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Пинг
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Сегодня
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Вчера
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Ранее
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Общие данные
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Данные окружения
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Лог телеметрии
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Медленные SQL-инструкции
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Зависания браузера
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Зависания потоков
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Захваченные Стеки
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Скаляры
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Скаляры ключей
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Гистограммы
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Гистограммы ключей
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  События
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Простые измерения
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Сведения о дополнении
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Поздние записи
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Информация о сессии
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  ПРИМЕЧАНИЕ: Включён медленный режим отладки SQL. Внизу могут быть показаны полные строки SQL, но в телеметрию они отправлены не будут.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Загрузить имена функций для стеков
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Показать сырые данные стека
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Фильтр (строковый или /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Нагрузка
+">

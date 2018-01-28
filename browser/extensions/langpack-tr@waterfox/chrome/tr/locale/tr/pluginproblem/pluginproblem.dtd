@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Bu site, &brandShortName; tarayıcınızı yavaşlatabilecek bir eklenti kullanıyor.">
+<!ENTITY tapToPlayPlugin                                     "Yan uygulamayı etkinleştirmek için buraya dokunun.">
+<!ENTITY clickToActivatePlugin                               "Yan uygulamayı etkinleştir.">
+<!ENTITY checkForUpdates                                     "Güncellemeleri denetle…">
+<!ENTITY blockedPlugin.label                                 "Bu yan uygulama korunmanız için engellendi.">
+<!ENTITY hidePluginBtn.label                                 "Yan uygulamayı gizle">
+<!ENTITY managePlugins                                       "Yan uygulamaları yönet…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Yeniden denemek için ">
+<!ENTITY reloadPlugin.post                                   " sayfayı tazeleyin.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Çökme raporu gönder">
+<!ENTITY report.submitting                                   "Rapor gönderiliyor…">
+<!ENTITY report.submitted                                    "Çökme raporu gönderildi.">
+<!ENTITY report.disabled                                     "Çökme raporu gönderimi devre dışı.">
+<!ENTITY report.failed                                       "Gönderim başarısız oldu.">
+<!ENTITY report.unavailable                                  "Rapor yok.">
+<!ENTITY report.comment                                      "Yorumunuzu ekleyin (Yorumlar herkes tarafından görülebilir.)">
+<!ENTITY report.pageURL                                      "Sayfanın adresini dahil et">
+
+<!ENTITY plugin.file                                         "Dosya">
+<!ENTITY plugin.mimeTypes                                    "MIME Türleri">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash korumalı kipini etkinleştir">
+<!ENTITY plugin.enableBlocklists.label                       "Tehlikeli veya rahatsız edici Flash içeriklerini engelle">

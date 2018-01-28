@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Acest lucru ți-ar putea invalida garanția!">
+<!ENTITY aboutWarningText.label "Schimbarea valorilor acestor setări avansate poate dăuna stabilității, securității și performanței acestei aplicații. Ar trebui să continui doar dacă știi ce faci.">
+<!ENTITY aboutWarningButton2.label "Accept riscul!">
+<!ENTITY aboutWarningCheckbox.label "Arată această avertizare data viitoare">
+
+<!ENTITY searchPrefs.label "Căutare:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Numele preferinței">
+<!ENTITY lockColumn.label "Stare">
+<!ENTITY typeColumn.label "Tip">
+<!ENTITY valueColumn.label "Valoare">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Clic pentru sortare"> 
+<!ENTITY columnChooser.tooltip "Clic pentru a selecta coloanele de afișat"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Copiază">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "Copiază numele">
+<!ENTITY copyName.accesskey "n">
+<!ENTITY copyValue.label "Copiază valoarea">
+<!ENTITY copyValue.accesskey "v">
+<!ENTITY modify.label "Modifică">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Comută">
+<!ENTITY toggle.accesskey "t">
+<!ENTITY reset.label "Resetează">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "Nou">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "Text">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Număr">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

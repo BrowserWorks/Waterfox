@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Hrunskýrslur">
+<!ENTITY crashesUnsubmitted.label   "Ótilkynntar hrun skýrslur">
+<!ENTITY crashesSubmitted.label     "Tilkynntar hrun skýrslur">
+<!ENTITY id.heading                 "Skýrslu auðkenni">
+<!ENTITY dateCrashed.heading        "Hrun dagsetning">
+<!ENTITY dateSubmitted.heading      "Sendingardagur">
+<!ENTITY noReports.label            "Engar hrun skýrslur hafa verið sendar.">
+<!ENTITY noConfig.label             "Þetta forrit hefur ekki verið stillt til að sýna hrun skýrslur. Stillingin <code>breakpad.reportURL</code> verður að vera stillt.">
+<!ENTITY clearAllReports.label      "Fjarlægja allar skýrslur">

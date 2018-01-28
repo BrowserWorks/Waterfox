@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Относно Мрежарството">
+<!ENTITY aboutNetworking.warning               "Много е експериментално. Ползвайте само под надзора на възрастен.">
+<!ENTITY aboutNetworking.showNextTime          "Показване на предупреждението и следващия път">
+<!ENTITY aboutNetworking.ok                    "Добре">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Сокети">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Опресняване">
+<!ENTITY aboutNetworking.autoRefresh           "Oпресняване на всеки 3 секунди">
+<!ENTITY aboutNetworking.hostname              "Име на хост">
+<!ENTITY aboutNetworking.port                  "Порт">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Включен">
+<!ENTITY aboutNetworking.idle                  "Бездействащ">
+<!ENTITY aboutNetworking.host                  "Хост">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Изпратени">
+<!ENTITY aboutNetworking.received              "Получени">
+<!ENTITY aboutNetworking.family                "Поколение">
+<!ENTITY aboutNetworking.addresses             "Адреси">
+<!ENTITY aboutNetworking.expires               "Изтича (секунди)">
+<!ENTITY aboutNetworking.messagesSent          "Съобщения изпратени">
+<!ENTITY aboutNetworking.messagesReceived      "Съобщения получени">
+<!ENTITY aboutNetworking.bytesSent             "Байта изпратени">
+<!ENTITY aboutNetworking.bytesReceived         "Байта получени">
+<!ENTITY aboutNetworking.logging               "Журнал">
+<!ENTITY aboutNetworking.logTutorial           "Вижте <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Журнали на HTTP</a> за инструкции как да използвате този инструмент.">
+<!ENTITY aboutNetworking.currentLogFile        "Текущ журнал:">
+<!ENTITY aboutNetworking.currentLogModules     "Текущи модули:">
+<!ENTITY aboutNetworking.setLogFile            "Задаване на файлове за журнала">
+<!ENTITY aboutNetworking.setLogModules         "Задаване на модули за журнала">
+<!ENTITY aboutNetworking.startLogging          "Започване">
+<!ENTITY aboutNetworking.stopLogging           "Спиране">
+<!ENTITY aboutNetworking.dnsLookup             "Търсене в DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Определяне">
+<!ENTITY aboutNetworking.dnsDomain             "Домейн">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-та">
+<!ENTITY aboutNetworking.rcwn                  "Статистика на RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Състояние на RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Спечелени от кеша">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Спечелени от мрежата">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Общ брой мрежови заявки">
+<!ENTITY aboutNetworking.rcwnOperation         "Действия с кеша">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Отваряне">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Четене">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Писане">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Отваряне на елемент">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Късо усреднение">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Дълго усреднение">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Дълго стандартно отклонение">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Брой бавен кеш">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Брой не бавен кеш">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Thatha Ngaphandle Umncedi">
+
+<!ENTITY importFrom.label               "Thumela ekunokukhethwa kuko, iibhukhmakhi, imbali, ipasiwedi nezinye iingcombolo kwi-:">
+<!ENTITY importFromUnix.label           "Thumela iipriferensi, iibhukhmakhi, imbali, ipasiwedi nezinye iingcombolo kwi-:">
+<!ENTITY importFromBookmarks.label      "Thatha Ngaphandle Izalathisi Eziphawulayo ezivela:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Musa ukuthatha nantoni ngaphandle">
+<!ENTITY importFromNothing.accesskey    "M">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "I-360 ibhrawuza ekhuselekileyo">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Akukho ziprogram ziqulethe iibhukhmakhi, imbali okanye iingcombolo zepasiwedi zifumanekayo.">
+
+<!ENTITY importSource.title             "Ngenisa iiSethingi neNgcombolo">
+<!ENTITY importItems.title              "Amanqaku afanele Ukuthathwa Ngaphandle">
+<!ENTITY importItems.label              "Khetha ukuba ngawaphi amanqaku anokuthathwa ngaphandle:">
+
+<!ENTITY migrating.title                "Kuthathwa ngaphandle…">
+<!ENTITY migrating.label                "Amanqaku alandelayo athathwa ngaphandle okwangoku…">
+
+<!ENTITY selectProfile.title            "Khetha Inkangeleko Yesimo">
+<!ENTITY selectProfile.label            "Ezi profayile zilandelayo ziyafumaneka ukuba zingathunyelwa kwi-:">
+
+<!ENTITY done.title                     "Ukuthatha Ngaphandle Kugqityiwe">
+<!ENTITY done.label                     "Amanqaku alandelayo athathwe ngaphandle ngempumelelo:">
+
+<!ENTITY closeSourceBrowser.label       "Sicela uqiniseke ukuba ukhethe ibhrawza ivaliwe ngaphambi kokuqhubeka.">

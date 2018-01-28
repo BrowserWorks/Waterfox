@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Shtype">
+
+<!ENTITY printDialog.title "Shtyp">
+
+<!ENTITY fpDialog.title "Ruajtje Kartelë">
+
+<!ENTITY fileCheck.label "Shtype në Kartelë">
+<!ENTITY fileCheck.accesskey "K">
+<!ENTITY propertiesButton.label "Veti…">
+<!ENTITY propertiesButton.accesskey "V">
+<!ENTITY descText.label "Përshkrim Shtypësi:">
+<!ENTITY printer.label "Shtypës">
+<!ENTITY printerInput.label "Shtypës:">
+<!ENTITY printerInput.accesskey "S">
+
+<!ENTITY printrangeGroup.label "Interval Shtypjeje">
+<!ENTITY allpagesRadio.label "Tërë Faqet">
+<!ENTITY allpagesRadio.accesskey "T">
+<!ENTITY rangeRadio.label  "Faqe">
+<!ENTITY rangeRadio.accesskey  "F">
+<!ENTITY frompageInput.label  "prej">
+<!ENTITY frompageInput.accesskey  "p">
+<!ENTITY topageInput.label  "te">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "Përzgjedhje">
+<!ENTITY selectionRadio.accesskey "P">
+
+<!ENTITY copies.label "Kopje">
+<!ENTITY numCopies.label "Numër kopjesh:">
+<!ENTITY numCopies.accesskey "n">
+
+<!ENTITY printframeGroup.label "Shtypni Korniza">
+<!ENTITY aslaidoutRadio.label "Siç shihet në ekran">
+<!ENTITY aslaidoutRadio.accesskey "S">
+<!ENTITY selectedframeRadio.label  "Kornizën e përzgjedhur">
+<!ENTITY selectedframeRadio.accesskey  "K">
+<!ENTITY eachframesepRadio.label  "Çdo kornizë veçmas">
+<!ENTITY eachframesepRadio.accesskey  "Ç">

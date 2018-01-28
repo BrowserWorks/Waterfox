@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importowy zrjadowak">
+
+<!ENTITY importFrom.label               "Nastajenja, zapołožki, historiju, hesła a hinaše daty importować z:">
+<!ENTITY importFromUnix.label           "Nastajenja, zapołožki, historiju, hesła a hinaše daty importować z:">
+<!ENTITY importFromBookmarks.label      "Zapołožki importować z:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ničo njeimportować">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Žane programy namakane, kotrež zapołožki, historiju abo hesła wobsahuja.">
+
+<!ENTITY importSource.title             "Daty a nastajenja importować">
+<!ENTITY importItems.title              "Objekty za importowanje">
+<!ENTITY importItems.label              "Wubjerće objekty za importowanje:">
+
+<!ENTITY migrating.title                "Importuje so…">
+<!ENTITY migrating.label                "Slědowace objekty so runje importuja…">
+
+<!ENTITY selectProfile.title            "Profil wubrać">
+<!ENTITY selectProfile.label            "Slědowace profile steja k dispoziciji za importowanje z:">
+
+<!ENTITY done.title                     "Importowanje dokónčene">
+<!ENTITY done.label                     "Slědowace objekty su so z wuspěchom importowali:">
+
+<!ENTITY closeSourceBrowser.label       "Prošu zawěsćće, zo wubrany wobhladowak je začinjeny, prjedy hač pokročujeće.">

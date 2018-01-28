@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "ახალი ჩანართი">
+<!ENTITY newtab.customize.classic "რჩული საიტების ჩვენება">
+<!ENTITY newtab.customize.cog.enhanced "შემოთავაზებული საიტები">
+<!ENTITY newtab.customize.cog.title2 "ახალი ჩანართის გამართვა">
+<!ENTITY newtab.customize.cog.learn "ახალი ჩანართის შესახებ">
+<!ENTITY newtab.customize.title "მოირგეთ ახალი ჩანართის გვერდი">
+<!ENTITY newtab.customize.blank2 "სუფთა გვერდის ჩვენება">
+<!ENTITY newtab.undo.removedLabel "ესკიზი წაიშალა.">
+<!ENTITY newtab.undo.undoButton "მოქმედების დაბრუნება.">
+<!ENTITY newtab.undo.restoreButton "ყველას აღდგენა.">
+<!ENTITY newtab.undo.closeTooltip "დამალვა">

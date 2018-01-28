@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Aranjare în pagină">
+
+<!ENTITY basic.tab           "Format și opțiuni">
+
+<!ENTITY formatGroup.label   "Formatare">
+
+<!ENTITY orientation.label   "Orientare:">
+<!ENTITY portrait.label      "Portret">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Peisaj">
+<!ENTITY landscape.accesskey "P">
+
+<!ENTITY scale.label         "Scală:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Micșorează pentru a încăpea în pagină">
+<!ENTITY shrinkToFit.accesskey "M">
+
+<!ENTITY optionsGroup.label  "Opțiuni">
+
+<!ENTITY printBG.label       "Tipărește fundalul (culori și imagini)">
+<!ENTITY printBG.accesskey   "T">
+
+<!ENTITY advanced.tab        "Margini și antet/subsol">
+
+<!ENTITY marginGroup.label   "Margini (#1)">
+<!ENTITY marginUnits.inches  "țoli">
+<!ENTITY marginUnits.metric  "milimetri">
+<!ENTITY marginTop.label     "Sus:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Jos:">
+<!ENTITY marginBottom.accesskey "J">
+<!ENTITY marginLeft.label    "Stânga:">
+<!ENTITY marginLeft.accesskey "S">
+<!ENTITY marginRight.label   "Dreapta:">
+<!ENTITY marginRight.accesskey "r">
+
+<!ENTITY headerFooter.label  "Antete și subsoluri">
+
+<!ENTITY hfLeft.label        "Stânga:">
+<!ENTITY hfCenter.label      "Centru:">
+<!ENTITY hfRight.label       "Dreapta:">
+<!ENTITY headerLeft.tip      "Antet stânga">
+<!ENTITY headerCenter.tip    "Antet mijloc">
+<!ENTITY headerRight.tip     "Antet dreapta">
+<!ENTITY footerLeft.tip      "Subsol stânga">
+<!ENTITY footerCenter.tip    "Subsol mijloc">
+<!ENTITY footerRight.tip     "Subsol dreapta">
+
+<!ENTITY hfTitle             "Titlu">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Data/ora">
+<!ENTITY hfPage              "Pagina #">
+<!ENTITY hfPageAndTotal      "Pagina # din #">
+<!ENTITY hfBlank             "--nimic--">
+<!ENTITY hfCustom            "Personalizat…">
+
+<!ENTITY customPrompt.title  "Personalizare…">
+<!ENTITY customPrompt.prompt "Introduceți textul personalizat pentru antet/subsol">

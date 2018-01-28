@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab selaa välilehtiä käyttöjärjestyksessä alkaen viimeisimmästä">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "s">
+
+<!ENTITY newWindowsAsTabs.label       "Avaa uudet ikkunat uusiin välilehtiin">
+<!ENTITY newWindowsAsTabs.accesskey   "A">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Varoita, kun olen sulkemassa useita välilehtiä">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "V">
+
+<!ENTITY warnOnOpenManyTabs.label       "Varoita, kun useiden välilehtien avaaminen voi hidastaa &brandShortName;ia">
+<!ENTITY warnOnOpenManyTabs.accesskey   "r">
+
+<!ENTITY switchLinksToNewTabs.label        "Siirry linkistä avattuun välilehteen heti">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "Näytä esikatselut välilehdistä Windowsin tehtäväpalkissa">
+<!ENTITY showTabsInTaskbar.accesskey      "y">
+<!ENTITY tabsGroup.label          "Välilehdet">

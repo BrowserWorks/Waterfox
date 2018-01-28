@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Tá na fianáin seo a leanas sábháilte ar do ríomhaire:">
+<!ENTITY     cookiename.label               "Ainm ar an fhianán">
+<!ENTITY     cookiedomain.label             "Suíomh">
+
+<!ENTITY     props.name.label               "Ainm:">
+<!ENTITY     props.value.label              "Ábhar:">
+<!ENTITY     props.domain.label             "Óstach:">
+<!ENTITY     props.path.label               "Conair:">
+<!ENTITY     props.secure.label             "Le haghaidh:">
+<!ENTITY     props.expires.label            "As Feidhm:">
+<!ENTITY     props.container.label          "Coimeádán:">
+
+<!ENTITY     window.title                   "Fianáin">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Cuardaigh">
+<!ENTITY     searchFilter.accesskey         "u">
+
+<!ENTITY     button.close.label             "Dún">
+<!ENTITY     button.close.accesskey         "D">

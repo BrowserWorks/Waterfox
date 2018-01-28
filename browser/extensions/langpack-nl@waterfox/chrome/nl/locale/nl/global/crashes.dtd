@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Crashrapporten">
+<!ENTITY crashesUnsubmitted.label   "Niet-verzonden crashrapporten">
+<!ENTITY crashesSubmitted.label     "Verzonden crashrapporten">
+<!ENTITY id.heading                 "Rapport-ID">
+<!ENTITY dateCrashed.heading        "Crashdatum">
+<!ENTITY dateSubmitted.heading      "Verzenddatum">
+<!ENTITY noReports.label            "Er zijn geen crashrapporten verzonden.">
+<!ENTITY noConfig.label             "Deze toepassing is niet geconfigureerd om crashrapporten weer te geven. De voorkeursinstelling <code>breakpad.reportURL</code> moet worden ingesteld.">
+<!ENTITY clearAllReports.label      "Alle rapporten verwijderen">

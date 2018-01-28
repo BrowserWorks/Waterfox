@@ -1,0 +1,213 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+
+
+
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!-- reload app -->
+<!-- show toolbox -->
+<!-- toggle sidebar -->
+<!-- zoom -->
+
+
+<!-- Lense -->
+
+<!-- New App -->
+
+
+<!-- Decks -->
+
+
+<!-- Addons -->
+
+<!-- Prefs -->
+
+<!-- Runtime Details -->
+
+<!-- Device Preferences and Settings -->
+
+<!-- Device Preferences -->
+
+<!-- Device Settings -->
+
+<!-- Monitor -->
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+
+<!-- Logs panel -->
+
+<!-- Simulator Options -->
+
+<!ENTITY addons_aboutaddons "Open Add-ons Manager">
+
+<!ENTITY addons_title "Extra Components">
+<!ENTITY deck_close "Close">
+
+<!ENTITY details_description "Description">
+<!ENTITY details_error_header "errors">
+<!ENTITY details_location "Location">
+<!ENTITY details_manifestURL "App ID">
+<!ENTITY details_removeProject_button "Remove Project">
+
+<!ENTITY details_valid_header "valid">
+<!ENTITY details_warning_header "warnings">
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenone "Select a type">
+
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typeobject "Object">
+<!ENTITY device_typestring "String">
+<!ENTITY devicepreference_addnew "Add new preference">
+
+<!ENTITY devicepreference_newname "New preference name">
+<!ENTITY devicepreference_newtext "Preference value">
+<!ENTITY devicepreference_search "Search preferences">
+<!ENTITY devicepreference_title "Device Preferences">
+<!ENTITY devicesetting_addnew "Add new setting">
+
+<!ENTITY devicesetting_newname "New setting name">
+<!ENTITY devicesetting_newtext "Setting value">
+<!ENTITY devicesetting_search "Search settings">
+<!ENTITY devicesetting_title "Device Settings">
+<!ENTITY key_play "R">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY key_showProjectPanel "O">
+<!ENTITY key_toggleToolbox "VK_F12">
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY logs_title "Pre-packaging Command Logs">
+
+<!ENTITY monitor_help "Help">
+
+<!ENTITY monitor_title "Monitor">
+<!ENTITY newAppHeader "Select template">
+<!ENTITY newAppLoadingTemplate "Loading templates…">
+<!ENTITY newAppProjectName "Project Name:">
+
+
+<!ENTITY newAppWindowTitle "New App">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "General">
+<!ENTITY prefs_manage_components "Manage Extra Components">
+<!ENTITY prefs_options_autoconnectruntime "Reconnect to previous runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Reconnect to previous runtime when WebIDE starts">
+<!ENTITY prefs_options_rememberlastproject "Remember last project">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Restore previous project when WebIDE starts">
+<!ENTITY prefs_options_templatesurl "Templates URL">
+<!ENTITY prefs_options_templatesurl_tooltip "Index of available templates">
+
+<!ENTITY prefs_restore "Restore Defaults">
+<!ENTITY prefs_title "Preferences">
+<!ENTITY projectButton_label "Open App">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_debug_label "Debug App">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_importHostedApp_label "Open Hosted App…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importPackagedApp_label "Open Packaged App…">
+<!ENTITY projectMenu_label "Project">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_manageComponents_label "Manage Extra Components">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_newApp_label "New App…">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_play_label "Install and Run">
+<!ENTITY projectMenu_refreshTabs_label "Refresh Tabs">
+
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_remove_label "Remove Project">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_selectApp_label "Open App…">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_showPrefs_label "Preferences">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_stop_label "Stop App">
+<!ENTITY projectPanel_myProjects "My Projects">
+<!ENTITY projectPanel_runtimeApps "Runtime Apps">
+<!ENTITY projectPanel_tabs "Tabs">
+<!ENTITY runtimeButton_label "Select Runtime">
+
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_disconnect_label "Disconnect">
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showDetails_label "Runtime Info">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Device Preferences">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY runtimeMenu_showSettings_label "Device Settings">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_takeScreenshot_label "Screenshot">
+<!ENTITY runtimePanel_installsimulator "Install Simulator">
+<!ENTITY runtimePanel_noadbhelper "Install ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Can’t see your device?">
+<!ENTITY runtimePanel_other "Other">
+<!ENTITY runtimePanel_refreshDevices_label "Refresh Devices">
+
+<!ENTITY runtimePanel_simulator "Simulators">
+<!ENTITY runtimePanel_usb "USB Devices">
+<!ENTITY runtimePanel_wifi "Wi-Fi Devices">
+<!ENTITY runtimedetails_ADBRootWarning "(requires unlocked bootloader)">
+<!ENTITY runtimedetails_adbIsRoot "ADB is root: ">
+<!ENTITY runtimedetails_privilegesWarning "(Will reboot device. Requires root access.)">
+
+<!ENTITY runtimedetails_requestPrivileges "request higher privileges">
+<!ENTITY runtimedetails_summonADBRoot "root device">
+<!ENTITY runtimedetails_title "Runtime Info">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Unrestricted DevTools privileges: ">
+<!ENTITY simulator_device "Device">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_name "Name">
+<!ENTITY simulator_pixelRatio "Pixel Ratio">
+<!ENTITY simulator_profile "Profile">
+<!ENTITY simulator_remove "Delete Simulator">
+<!ENTITY simulator_reset "Restore Defaults">
+<!ENTITY simulator_screenSize "Screen">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_title "Simulator Options">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Open Config Directory…">
+<!ENTITY simulator_version "Version">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_label "View">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY viewMenu_resetzoom_label "Reset Zoom">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomin_label "Zoom In">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_zoomout_label "Zoom Out">
+<!ENTITY wifi_auth_header "Client Identification">
+<!ENTITY wifi_auth_no_scanner "No QR scanner prompt?">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+
+<!ENTITY wifi_auth_scan_request "The endpoint you are connecting to needs more information to authenticate this connection.  Please scan the QR code below via the prompt on your other device.">
+<!ENTITY wifi_auth_token_request "If your other device asks for a token instead of scanning a QR code, please copy the value below to the other device:">
+<!ENTITY wifi_auth_yes_scanner "Have a QR scanner prompt?">

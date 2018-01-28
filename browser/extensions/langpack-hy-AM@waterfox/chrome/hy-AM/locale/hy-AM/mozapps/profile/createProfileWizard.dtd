@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Ստեղծել պրոֆիլի Օգնական">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName;­-ը Ձեր նախընտրանքների և կազմաձևման վերաբերյալ տվյալները պահպանում է Ձեր անձնական հաշվում:">
+<!ENTITY profileCreationExplanation_2.text  "Եթե Դուք &brandShortName;­-ը այլ օգտվողների հետ համատեղ եք օգտագործում, ապա կարող եք օգտագործել հաշիվներ՝ օգտվողների տեղեկություններն իրարից առանձին պահելու համար: Դրա համար ամեն օգտվող պիտի ստեղծի իր անձնական հաշիվը:">
+<!ENTITY profileCreationExplanation_3.text  "Եթե Դուք &brandShortName;­-ի միակ օգտվողն եք, ապա պիտի ունենաք առնվազն մեկ հաշիվ: Այնուամենայնիվ, կարող եք ստեղծել ձեր համար բազմաթիվ հաշիվներ նախընտրանքների և կազմաձեվման տարբեր խմբեր ունենալու համար: Օրինակ՝. կարող եք ունենալ մեկ աշխատանքային հաշիվ եվ մեկ անձնական օգտագորման հաշիվ:">
+<!ENTITY profileCreationExplanation_4.text  "Հաշվի ստեղծման գործնթացը սկսելու համար սեղմեք Հաջորդ կոճակը:">
+<!ENTITY profileCreationExplanation_4Mac.text  "Ձեր պրոֆիլի ստեղծման համար սեղմեք Շարունակել:">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Հաշվի ստեղծման գործընթացը սկսելու համար սեղմեք Հաջորդ կոճակը:">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Հաշիվները կարելի է տարբերակել ըստ անունների: Կարող եք օգտագործել նախանշված անունը կամ նշեք մեկ այլ անուն՝ Ձեր ցանկությամբ:">
+<!ENTITY profilePrompt.label            "Մուտքագրեք նոր հաշվի անունը.">
+<!ENTITY profilePrompt.accesskey        "Մ">
+<!ENTITY profileDirectoryExplanation.text   "Ձոր կարգավորումները և օգտվողի այլ ֆայլեր կպահվեն՝">
+<!ENTITY profileDefaultName             "Ըստ Լռելայն Օգտվող">
+<!ENTITY button.choosefolder.label      "Ընտրեք թղթապանակը…">
+<!ENTITY button.choosefolder.accesskey  "Ը">
+<!ENTITY button.usedefault.label        "Օգտագործել նախանշված թղթապանակը">
+<!ENTITY button.usedefault.accesskey    "Օ">

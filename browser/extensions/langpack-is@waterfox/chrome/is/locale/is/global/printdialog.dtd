@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Prenta">
+
+<!ENTITY printDialog.title "Prenta">
+
+<!ENTITY fpDialog.title "Vista skrá">
+
+<!ENTITY fileCheck.label "Prenta í skrá">
+<!ENTITY fileCheck.accesskey "s">
+<!ENTITY propertiesButton.label "Eiginleikar…">
+<!ENTITY propertiesButton.accesskey "E">
+<!ENTITY descText.label "Lýsing á prentara:">
+<!ENTITY printer.label "Prentari">
+<!ENTITY printerInput.label "Heiti prentara:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Prentbil">
+<!ENTITY allpagesRadio.label "Allar síður">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "Síður">
+<!ENTITY rangeRadio.accesskey  "S">
+<!ENTITY frompageInput.label  "frá">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "til">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "Val">
+<!ENTITY selectionRadio.accesskey "V">
+
+<!ENTITY copies.label "Afrit">
+<!ENTITY numCopies.label "Fjöldi afrita:">
+<!ENTITY numCopies.accesskey "F">
+
+<!ENTITY printframeGroup.label "Prenta ramma">
+<!ENTITY aslaidoutRadio.label "Eins og sést á skjánum">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label  "Valinn rammi">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "Hvern ramma sérstaklega">
+<!ENTITY eachframesepRadio.accesskey  "e">

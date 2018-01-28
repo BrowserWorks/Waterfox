@@ -1,0 +1,11 @@
+locale branding uk uk/locale/branding/
+locale browser uk uk/locale/browser/
+locale browser-region uk uk/locale/browser-region/
+locale devtools uk uk/locale/uk/devtools/client/
+locale devtools-shared uk uk/locale/uk/devtools/shared/
+locale formautofill uk uk/locale/uk/
+locale pdf.js uk uk/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

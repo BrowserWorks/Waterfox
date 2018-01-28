@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; Yenilənmə">
+
+<!ENTITY  offline.title                   "&brandShortName; indi offline işləyir">
+<!ENTITY  offline.description             "&brandShortName; proqramının yeniləmələri yoxlaması və uyğun əlavələri yükləmək üçün online olması lazımdır.">
+<!ENTITY  offline.toggleOffline.label     "İndi onlayn ol.">
+<!ENTITY  offline.toggleOffline.accesskey "o">
+
+<!ENTITY  mismatch.win.title              "Uyğun olmayan əlavələr">
+<!ENTITY  mismatch.top.label              "Aşağıdaki əlavələr &brandShortName; brauzerinin bu versiyası ilə uyğun deyil və buna görə söndürüldü:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; bu əlavələrin uyğun versiyasının olub olmamasını yoxlaya bilər.">
+
+<!ENTITY  checking.wizard.title           "Uyğun əlavələrə baxılır">
+<!ENTITY  checking.top.label              "Uyğun olmayan əlavələrinizin olub olmadığı yoxlanılır…">
+<!ENTITY  checking.status                 "Bu əməliyyat bir neçə dəqiqə çəkə bilər…">
+
+<!ENTITY  found.wizard.title               "Uyğun əlavə tapıldı">
+<!ENTITY  found.top.label                 "Quraşdırmaq istədiyiniz əlavəni seçin:">
+<!ENTITY  found.disabledXPinstall.label   "Bu yeniləmələr qurula bilməz, çünki proqram quraşdırılması indi söndürülüb. Bu seçimi aşağıdan dəyişə bilərsiniz.">
+<!ENTITY  found.enableXPInstall.label     "Saytların proqram yükləməsinə icazə ver">
+<!ENTITY  found.enableXPInstall.accesskey "y">
+
+<!ENTITY  installing.wizard.title         "Uyğun əlavələr quraşdırılır">
+<!ENTITY  installing.top.label            "Əlavə yenilənmələri yüklənib quraşdırılır…">
+
+<!ENTITY  noupdates.wizard.title          "Uyğun əlavə tapılmadı">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; uyğun olmayan əlavələrinizlə bağlı yeniləmə tapılmadı.">
+<!ENTITY  noupdates.error.desc            "Yeniləmələr axtarılırkən bəzi xətalar baş verdi.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; müəyyən aralıqlarla bu əlavələrin yeniləmələrinin olub olmadığını yoxlayaraq sizə xəbər verəcək.">
+
+<!ENTITY  finished.wizard.title           "Uyğun əlavələr quraşdırıldı">
+<!ENTITY  finished.top.label              "&brandShortName; əlavələrinizin yeniləmələrini quraşdırdı.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; müəyyən aralıqlarla bu əlavələrin yeniləmələrinin olub olmadığını yoxlayaraq sizə xəbər verə bilər.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; müəyyən aralıqlarla bu əlavələrin yeniləmələrinin olub olmadığını yoxlayaraq sizə xəbər verəcək.">
+
+<!ENTITY  adminDisabled.wizard.title      "Yeniləmələrə baxıla bilmədi">
+<!ENTITY  adminDisabled.warning.label     "Uyğun olmayan əlavələrinizin yeniləmələri yoxlanıla bilmir, çünki &brandShortName; ilə bağlı proqram quraşdırılması söndürülmüşdür. Kömək almaq üçün sistem idarəçisi ilə əlaqə saxlayın.">
+
+<!ENTITY  versioninfo.wizard.title        "Əlavələrin uyğunluğu yoxlanılır">
+<!ENTITY  versioninfo.top.label           "Əlavələrinizin &brandShortName; səyyahının bu versiyası ilə uyğun olub olmadığı yoxlanılır.">
+<!ENTITY  versioninfo.waiting             "Bu əməliyyat bir neçə dəqiqə çəkə bilər…">
+
+<!ENTITY  installerrors.wizard.title      "Yeniləmələrin quraşdırılmasında problem">
+<!ENTITY  installerrors.intro.label       "&brandShortName; bəzi əlavələrinizi yeniləyərkən problemlərlə qarşılaşdı.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; brauzerini açmağa davam etmək üçün Tamamlandı düyməsinə basın.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; proqramını başladmaq üçün Tamamlandı düyməsinə basın.">
+<!ENTITY  enableChecking.label            "&brandShortName; brauzerinin yeniləmələrə baxmasına icazə ver.">

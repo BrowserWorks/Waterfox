@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Исклучоци">
+<!ENTITY window.width                 "36em">
+
+<!ENTITY treehead.sitename.label      "Место">
+<!ENTITY treehead.status.label        "Статус">
+<!ENTITY removepermission.label       "Отстрани го местото">
+<!ENTITY removepermission.accesskey   "р">
+<!ENTITY removeallpermissions.label   "Отстрани ги сите места">
+<!ENTITY removeallpermissions.accesskey "е">
+<!ENTITY address.label                "Адреса на мрежното место:">
+<!ENTITY address.accesskey            "д">
+<!ENTITY block.label                  "Блокирај">
+<!ENTITY block.accesskey              "Б">
+<!ENTITY session.label                "Дозволи привремено">
+<!ENTITY session.accesskey            "п">
+<!ENTITY allow.label                  "Дозволи">
+<!ENTITY allow.accesskey              "о">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.close.label           "Затвори">
+<!ENTITY button.close.accesskey       "З">
+
+
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.cancel.label          "Cancel">
+<!ENTITY button.ok.accesskey          "S">
+
+<!ENTITY button.ok.label              "Save Changes">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

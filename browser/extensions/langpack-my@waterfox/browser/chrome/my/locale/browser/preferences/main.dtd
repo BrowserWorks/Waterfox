@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "စတင်ခြင်း">
+
+<!ENTITY startupPage2.label        "&brandShortName; စတင်သောအခါ">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "မူလစာမျက်နှာကို ပြပါ">
+<!ENTITY startupBlankPage.label    "စာမျက်နှာ အလွတ်ကို ပြပေးပါ">
+<!ENTITY startupPrevSession.label  "နောက်ဆုံးအသုံးပြုခဲ့သော ဝင်းဒိုးများ နှင့် တပ်ဗ်များကို ပြန်ဖွင့်ပါ">
+
+<!ENTITY homepage2.label           "အဖွင့်စာမျက်နှာ">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "လက်ရှိစာမျက်နှာကို အသုံးပြုပါ">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "လက်ရှိဖွင့်ထားသည့် စာမျက်နှာများကို အသုံးပြုပါ">
+<!ENTITY chooseBookmark.label      "စာမှတ်ကို အသုံးပြုပါ…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "မူလသတ်မှတ်ချက်အတိုင်း ပြန်ထားပါ">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "ဆွဲယူထားသည့် ဖိုင်များ">
+
+<!ENTITY saveTo.label "ဖိုင်များကို ထိုနေရာတွင် သိမ်းရန်">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ရှာဖွေရန်…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "ရွေးပါ…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "မည်သည့်နေရာတွင် ဖိုင်သိမ်းရမည်ကိုမေးပါ">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "&brandShortName; သည် ပုံသေဘရောင်ဇာ ဟုတ်/မဟုတ် အမြဲစစ်ဆေးပါ">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "မူသေ သတ်မှတ်ရန်">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; သည် လက်ရှိတွင် ပုံသေဘရောက်ဇာ ဖြစ်ပါသည်">
+<!ENTITY isNotDefault.label               "&brandShortName; သည် ပုံသေဘရောက်ဇာ ဖြစ်မနေပါ">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; နှင့် မီးမြေခွေးတို့ကို တချိန်တည်းမှာ လုပ်ငန်းဆောင်ရွက်ခွင့် ပြုပါ">
+<!ENTITY useWaterfoxSync.label             "အရိပ်အမြွက်၊ မတူညီသည့် ပရိုဖိုင်းများကို အသုံးပြုပါသည်။ ထိုပရိုဖိုင်းများကြား အချက်အလက်မျှဝေရန် Sync ကို အသုံးပြုပါ။">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; သို့ ဝင်ပါ…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; ၏ အပြင်အဆင်များကို ဖွင့်ပါ">
+
+<!ENTITY e10sEnabled.label                "&brandShortName; မာလ်တီ-ပရောဆက်ကို ဖွင့်ပါ">
+
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

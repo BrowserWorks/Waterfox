@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; এ স্বাগতম">
+
+<!ENTITY aboutAccountsConfig.description "আপনার ট্যাব, বুকমার্ক, পাসওয়ার্ড ও অন্যন্য সিঙ্ক করতে সাইন ইন করুন।">
+<!ENTITY aboutAccountsConfig.startButton.label "শুরু করুন">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "পছন্দসমূহ সুসংগত করুন">
+<!ENTITY aboutAccounts.noConnection.title "সংযোগ নেই">
+<!ENTITY aboutAccounts.noConnection.description "সাইন ইন করতে ইন্টারনেট সংযোগ জরুরি">
+<!ENTITY aboutAccounts.noConnection.retry "পুনরায় চেষ্টা করুন">
+<!ENTITY aboutAccounts.badConfig.title "বাজে কনফিগারেশন">
+<!ENTITY aboutAccounts.badConfig.description "আপনার Waterfox অ্যাকাউন্ট সার্ভার কনফিগারেশন নিশ্চিত করতে ব্যর্থ। অনুগ্রহ করে পরে আবার চেষ্টা করুন।">

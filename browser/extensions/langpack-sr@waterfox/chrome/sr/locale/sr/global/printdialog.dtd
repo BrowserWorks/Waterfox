@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Штампање">
+
+<!ENTITY printDialog.title "Штампање">
+
+<!ENTITY fpDialog.title "Сними датотеку">
+
+<!ENTITY fileCheck.label "Штампај у датотеку">
+<!ENTITY fileCheck.accesskey "Ш">
+<!ENTITY propertiesButton.label "Особине…">
+<!ENTITY propertiesButton.accesskey "О">
+<!ENTITY descText.label "Опис штампача:">
+<!ENTITY printer.label "Штампач">
+<!ENTITY printerInput.label "Име штампача:">
+<!ENTITY printerInput.accesskey "И">
+
+<!ENTITY printrangeGroup.label "Опсег штампе">
+<!ENTITY allpagesRadio.label "Све странице">
+<!ENTITY allpagesRadio.accesskey "С">
+<!ENTITY rangeRadio.label  "Странице">
+<!ENTITY rangeRadio.accesskey  "н">
+<!ENTITY frompageInput.label  "од">
+<!ENTITY frompageInput.accesskey  "о">
+<!ENTITY topageInput.label  "до">
+<!ENTITY topageInput.accesskey  "д">
+<!ENTITY selectionRadio.label "Избор">
+<!ENTITY selectionRadio.accesskey "И">
+
+<!ENTITY copies.label "Копије">
+<!ENTITY numCopies.label "Број копија:">
+<!ENTITY numCopies.accesskey "Б">
+
+<!ENTITY printframeGroup.label "Штампање оквира">
+<!ENTITY aslaidoutRadio.label "Као на екрану">
+<!ENTITY aslaidoutRadio.accesskey "К">
+<!ENTITY selectedframeRadio.label  "Само изабран оквир">
+<!ENTITY selectedframeRadio.accesskey  "С">
+<!ENTITY eachframesepRadio.label  "Сваки оквир засебно">
+<!ENTITY eachframesepRadio.accesskey  "з">

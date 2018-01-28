@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "మీరు తెరుచుటకు ఎంపికచేసికొనినారు:">
+<!ENTITY  from.label                  "నుండి:">
+<!ENTITY  actionQuestion.label        "&brandShortName; ఈ ఫైల్ తో ఏమి చేయాలి?">
+
+<!ENTITY  openWith.label              "దీనితో తెరువు">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "ఇతర...">
+
+<!ENTITY  saveFile.label              "ఫైల్ ను భద్రపరచు">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "ఇక నుండి ఇలాంటి ఫైళ్ళకు దీనిని స్వయంచాలకంగా చేయుము.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "ఏదైతే:">
+
+<!ENTITY  chooseHandlerMac.label      "ఎంచుకో...">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "అన్వేషించు...">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "మీరు ఈ ఫైల్ ను భద్రపరచాలని అనుకుంటున్నారా?">

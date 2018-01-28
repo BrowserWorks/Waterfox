@@ -1,0 +1,14 @@
+locale alerts mai mai/locale/mai/alerts/
+locale autoconfig mai mai/locale/mai/autoconfig/
+locale global mai mai/locale/mai/global/
+locale global-platform mai mai/locale/mai/global-platform/mac/ os=Darwin
+locale global-platform mai mai/locale/mai/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform mai mai/locale/mai/global-platform/win/ os=WINNT
+locale mozapps mai mai/locale/mai/mozapps/
+locale necko mai mai/locale/mai/necko/
+locale passwordmgr mai mai/locale/mai/passwordmgr/
+locale pipnss mai mai/locale/mai/pipnss/
+locale pippki mai mai/locale/mai/pippki/
+locale places mai mai/locale/mai/places/
+locale pluginproblem mai mai/locale/mai/pluginproblem/
+locale weave mai mai/locale/mai/services/

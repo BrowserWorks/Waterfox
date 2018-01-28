@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Προσοχή! Μπορεί να ακυρώσετε την εγγύηση του προϊόντος! ;-)">
+<!ENTITY aboutWarningText.label "Η αλλαγή των προεπιλεγμένων τιμών πιθανόν να προκαλέσει  ανεπιθύμητες παρενέργειες στην σταθερότητα, ασφάλεια και συμπεριφορά αυτής της εφαρμογής. Θα πρέπει να συνεχίσετε με τις αλλαγές μόνο αν γνωρίζετε καλά τι κάνετε.">
+<!ENTITY aboutWarningButton2.label "Δέχομαι το ρίσκο!">
+<!ENTITY aboutWarningCheckbox.label "Εμφάνιση της προειδοποίησης και την επόμενη φορά">
+
+<!ENTITY searchPrefs.label "Αναζήτηση:">
+<!ENTITY searchPrefs.accesskey "ζ">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Προτιμήσεις">
+<!ENTITY lockColumn.label "Κατάσταση">
+<!ENTITY typeColumn.label "Είδος">
+<!ENTITY valueColumn.label "Τιμή">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Πατήστε για ταξινόμηση"> 
+<!ENTITY columnChooser.tooltip "Πατήστε να επιλέξετε τις προς εμφάνιση στήλες"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "Ψ">
+<!ENTITY copyPref.label "Αντιγραφή">
+<!ENTITY copyPref.accesskey "γ">
+<!ENTITY copyName.label "Αντιγραφή ονόματος">
+<!ENTITY copyName.accesskey "ν">
+<!ENTITY copyValue.label "Αντιγραφή τιμής">
+<!ENTITY copyValue.accesskey "τ">
+<!ENTITY modify.label "Τροποποίηση">
+<!ENTITY modify.accesskey "ρ">
+<!ENTITY toggle.label "(Απ)ενεργοποίηση">
+<!ENTITY toggle.accesskey "Ε">
+<!ENTITY reset.label "Επαναφορά">
+<!ENTITY reset.accesskey "π">
+<!ENTITY new.label "Νέο">
+<!ENTITY new.accesskey "Ν">
+<!ENTITY string.label "Αλφαριθμητικό">
+<!ENTITY string.accesskey "λ">
+<!ENTITY integer.label "Ακέραιος">
+<!ENTITY integer.accesskey "">
+<!ENTITY boolean.label "Δυαδικός">
+<!ENTITY boolean.accesskey "">

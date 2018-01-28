@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "โปรดระวัง แก้แล้วพังเราจะไม่รับผิดชอบนะ!">
+<!ENTITY aboutWarningText.label "การเปลี่ยนการตั้งค่าขั้นสูงเหล่านี้อาจเป็นอันตรายต่อความเสถียร ความปลอดภัย และประสิทธิภาพของแอปพลิเคชันนี้ คุณควรดำเนินการต่อเฉพาะเมื่อคุณแน่ใจว่าคุณกำลังทำอะไรอยู่เท่านั้น">
+<!ENTITY aboutWarningButton2.label "ฉันยอมรับความเสี่ยง!">
+<!ENTITY aboutWarningCheckbox.label "แสดงคำเตือนนี้ในครั้งถัดไป">
+
+<!ENTITY searchPrefs.label "ค้นหา:">
+<!ENTITY searchPrefs.accesskey "ห">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "ชื่อค่ากำหนด">
+<!ENTITY lockColumn.label "สถานะ">
+<!ENTITY typeColumn.label "ประเภท">
+<!ENTITY valueColumn.label "ค่า">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "คลิกเพื่อเรียงลำดับ"> 
+<!ENTITY columnChooser.tooltip "คลิกเพื่อเลือกคอลัมน์ที่จะแสดงผล"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "คัดลอก">
+<!ENTITY copyPref.accesskey "ค">
+<!ENTITY copyName.label "คัดลอกชื่อ">
+<!ENTITY copyName.accesskey "ด">
+<!ENTITY copyValue.label "คัดลอกค่า">
+<!ENTITY copyValue.accesskey "ล">
+<!ENTITY modify.label "เปลี่ยนแปลง">
+<!ENTITY modify.accesskey "เ">
+<!ENTITY toggle.label "สลับค่า">
+<!ENTITY toggle.accesskey "ส">
+<!ENTITY reset.label "กลับค่าเดิม">
+<!ENTITY reset.accesskey "ก">
+<!ENTITY new.label "ใหม่">
+<!ENTITY new.accesskey "ม">
+<!ENTITY string.label "สตริง">
+<!ENTITY string.accesskey "ส">
+<!ENTITY integer.label "จำนวนเต็ม">
+<!ENTITY integer.accesskey "จ">
+<!ENTITY boolean.label "ค่าตรรกะ">
+<!ENTITY boolean.accesskey "ค">

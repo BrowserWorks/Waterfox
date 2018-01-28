@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "K'o wi chi kanonel">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Tacha' ri ruk'u'x kanob'äl kan k'o wi richin nawokisaj pa ri kikajtz'ik taq ochochib'äl chuqa' pa ri rukajtz'ik kanoxïk.">
+
+<!ENTITY provideSearchSuggestions.label        "Tiya' pe taq chilab'en  richin nikanöx">
+<!ENTITY provideSearchSuggestions.accesskey    "n">
+
+<!ENTITY showURLBarSuggestions2.label           "Kek'ut pe taq ruchilab'enik kanoxïk chi kikojol ri kiq'iq'oj kikajtz'ik taq ochochib'äl">
+<!ENTITY showURLBarSuggestions2.accesskey       "q">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Man xkeq'alajin ta pe ri taq chilab'exïk richin nikanöx pa rukajtz'ik ochochib'äl ruma chi anuk'un ri &brandShortName; richin majub'ey tunataj ri anatab'al.">
+
+<!ENTITY oneClickSearchEngines.label           "Samajel taq kanob'äl rik'in jupitz'oj">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Ke'acha' chi kikojol ri kik'u'x taq kanob'äl yeq'alajin pe chuxe' ri kikajtz'ik taq ochochib'äl chuqa' ri rukajtz'ik kanoxïk toq natz'ib'aj qa jun ruxe'el tzij.">
+
+<!ENTITY engineNameColumn.label                "Rusamajel kanob'äl">
+<!ENTITY engineKeywordColumn.label             "Ruk'u'x tzij">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Ketzolïx ri kisamajel kanob'äl ruk'amon wi pe">
+<!ENTITY restoreDefaultSearchEngines.accesskey "r">
+
+<!ENTITY removeEngine.label                    "Telesäx">
+<!ENTITY removeEngine.accesskey                "s">
+
+<!ENTITY findMoreSearchEngines.label           "Kekanöx ch'aqa' chik kik'u'x taq kanob'äl">

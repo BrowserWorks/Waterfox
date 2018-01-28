@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Gehitu edukiontzi berria">
+<!ENTITY addButton.accesskey  "G">
+<!ENTITY preferencesButton.label "Hobespenak">
+<!ENTITY removeButton.label   "Kendu">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Itzuli pribatutasunera">
+
+<!ENTITY window.title         "Gehitu edukiontzi berria">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Izena:">
+<!ENTITY name.accesskey       "I">
+<!ENTITY name.placeholder     "Idatzi edukiontziaren izena">
+<!ENTITY icon.label           "Ikonoa:">
+<!ENTITY icon.accesskey       "k">
+<!ENTITY color.label          "Kolorea:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Eginda">
+<!ENTITY button.ok.accesskey  "E">
+

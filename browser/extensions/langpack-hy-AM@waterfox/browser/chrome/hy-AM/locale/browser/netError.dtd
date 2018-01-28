@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Էջը բեռնելու խնդիր">
+<!ENTITY retry.label "Կրկին փորձել">
+<!ENTITY returnToPreviousPage.label "Հետ գնալ">
+<!ENTITY advanced.label "Լրացուցիչ">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Չհաջողվեց կապ հաստատել">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Այս հասցեն արգելափակված է">
+<!ENTITY deniedPortAccess.longDesc "Այս հասցեն արգելափակված է">
+
+<!ENTITY dnsNotFound.title "Սպասարկիչը չի գտնվել">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Ստուգեք հասցեն մուտքագրման սխալի համար, օրինակ՝ <strong>ww</strong>.example.com <strong>www</strong>.example.com-ի փոխարեն</li> <li>Եթե չի ստացվում բեռնել որևէ էջ՝ ստուգեք համակարգչի ցանցային կապակցումը:</li> <li>Եթե ձեր համակարգիչը կամ ցանցը ապահովագրված է firewall-ով կամ պրոքսիով՝ համոզվեք, որ &brandShortName;-ին թույլատրված է միանալ ցանցին:</li> </ul>">
+
+<!ENTITY fileNotFound.title "Ֆայլը չի գտնվել">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Ստուգեք ֆայլի անունը մեծատառերի կամ այլ տպագրական սխալների համար:</li> <li>Ստուգեք, թե արդյոք ֆայլը չի տեղափոխվել, անվանափոխվել կամ ջնջվել:</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Մատչումը ֆայլին մերժված է">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Հնարավոր է՝ այն հեռացվել է, տեղափոխվել կամ ֆայլի թույլտվությունները կանխել են մատչումը:</li></ul>">
+
+<!ENTITY generic.title "Վայ։">
+<!ENTITY generic.longDesc "<p>&brandShortName;-ը ինչ-որ պատճառով չի կարող բեռնել այս էջը:</p>">
+
+<!ENTITY captivePortal.title "Մուտք գործել ցանց">
+<!ENTITY captivePortal.longDesc2 "<p>Դուք պետք է մուտք գործեք այս ցանց, որ կարողանաք մուտք գործել համացանց:</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Բացել ցանց մուտք գործելու էջը">
+
+<!ENTITY malformedURI.title "Հասցեի սխալ ձևաչափ">
+<!ENTITY malformedURI.longDesc "<ul> <li>Վեբ հասցեները սովորաբար գրվում են հետևյալ կերպ` <strong>http://www.example.com/</strong></li> <li>Համոզվեք, որ օգտագործում եք հակադարձ սլեշներ (այսինքն` <strong>/</strong>):</li> </ul>">
+
+<!ENTITY netInterrupt.title "Կապը խզվեց">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Ավարտվել է">
+<!ENTITY notCached.longDesc "<p>Պահանջվող փաստաթուղթը հասանելի չէ &brandShortName;-ի պահոցում։</p><ul><li>Անվտանգության նկատառումներով &brandShortName;-ը ինքնաշխատ չի վերապահանջում նմանատիպ փաստաթղթերը։ </li><li>Սեղմեք Կրկին փորձել՝ վերապահանջելու փաստաթուղթը վեբ կայքից։</li></ul>">
+
+<!ENTITY netOffline.title "Անցանց եղանակ">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Սեղմեք&quot;Կրկին փորձել&quot;` անցնելու համար առցանց եղանակի և էջը վերաբացելու համար:</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Բովանդակության Կոդավորման Սխալ">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Խնդրեմ կապնվեք այս կայքի սեփականատերերին այս խնդրի մասին տեղյակ պահելու համար:</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Ոչ անվտանգ ֆայլի տեսակ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Խնդրեմ կապնվեք այս կայքի սեփականատերերին այս խնդրի մասին տեղյակ պահելու համար:</li> </ul>">
+
+<!ENTITY netReset.title "Կապը խզվեց">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Կապի հաստատման ժամանակը սպառվեց">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Հասցեն անհասկանալի էր">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Այս հասցեն բացելու համար ձեզ հավանաբար անհրաժեշտ է ձեռք բերել այլ ձրագիր:</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Պրոքսի սպասարկիչը մերժում է ընդունել կապը">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ստուգեք պրոքսի կարգավորումները՝ նրանց ստույգության մեջ համոզվելու համար:</li> <li>Կապվեք ձեր ցանցի կառավարիչի հետ՝ համոզվելու համար, որ պրոքսի սպասարկիչը  աշխատում է:</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Չի ստացվում գտնել պրոքսի սպասարկիչը">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Ստուգեք պրոքսի կարգավորումները՝ համոզվելու համար դրանք ճիշտ են:</li> <li>Ստուգեք և համոզվեք, որ համակարգիչը ունի աշխատող ցանցային կապակցում:</li> <li>Եթե ձեր համակարգիչը կամ ցանցը պաշտպանված է firewall-ով կամ պրոքսիով,  համոզվեք, որ &brandShortName;-ը ունի ցացին միանալու իրավունք:</li> </ul>">
+
+<!ENTITY redirectLoop.title "Էջի սխալ վերահասցեավորում">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Այս խնդիրը երբեմն կարող է ծագել cookie-ների  անջատումից կամ մերժումից:</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Սպասարկիչի պատասխանը անհասկանալի է:">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Ստուգեք և համոզվեք, որ ձեր համակարգը ունի տեղակայված Անվտանգության  Անձնական Կառավարիչ:</li> <li>Դա կարող է լինել սպասարկիչի ոչ ստանդարտ կարգավորման արդյունք:</li> </ul>">
+
+<!ENTITY nssFailure2.title "Չհաջողվեց կատարել Պաշտպանված կապակցում">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Այն էջը, որը փորձում եք դիտել, կարող է չերևալ, որովհետև ստացված տվյալների իսկությունը  չի կարող ստուգվել:</li> <li>Խնդրում ենք կապնվել կայքի սեփականատերերի հետ՝ նրանց տեղյակ պահելու այս խնդրի մասին:</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Կապակցումն անվտանգ չէ">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/>-ի սեփականատերը իր կայքը սխալ է կազմաձևել:  Որպեսզի ձեր տվյալները չգողանան՝ &brandShortName;-ը չի կապակցվել այս կայքին:">
+
+<!ENTITY sharedLongDesc "<ul> <li>Հնարավոր է՝ կայքը անհասանելի է կամ գերբեռնված է: Կրկին փորձեք մի քանի րոպե  անց:</li> <li>Եթե չի ստացվում բացել որևէ էջ, ստուգեք ձեր համակարգչի  ցանցային միացումը:</li> <li>Եթե ձեր համակարգիչը կամ ցանցը ապահովագրված է firewall-ով, համոզվեք, որ  &brandShortName;-ը ունի ցանցին միանալու արտոնություն:</li> </ul>">
+
+<!ENTITY cspBlocked.title "Արգելափակվել է Կոնտենտի Անվտանգության Քաղաքականության կողմից">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;­­-ը խոչնդոտեց այս էջի բեռնավորումը, քանի որ էջի պարունակության անվտանգության կանոնակարգն արգելում է նման բեռնավորումը</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Բովանդակությունը վնասված է">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ընթացիկ էջը չի կարող ցուցադրվել, քանզի տեղի է ունեցնել փոխանցման սխալ։</p><ul><li>Կապնվեք վեբ կայիք հեղինակների հետ՝ նրանց այս մասին հաղորդելու համար։</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Ավելացնել Բացառություն...">
+
+<!ENTITY errorReporting.automatic2 "Հաղորդեք նման սխալների մասին՝ օգնելու համար Mozilla-ին գտնելու և արգելափակելու վնասակար կայքերը">
+<!ENTITY errorReporting.learnMore "Իմանալ ավելին…">
+
+<!ENTITY remoteXUL.title "Հեռադիր XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Խնդրում ենք, կապնվեք վեբ կայքի սեփականատերերի հետ` այս խնդրի մասին տեղեկացնելու համար:</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Չհաջողվեց անվտանգ կապակցումը">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Լրացուցիչ՝ SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName;-ը չի կապակցվել <span id='wrongSystemTime_URL'/>-ին, քանի որ կարծես թե ձեր համակարգչի ժամացույցը սխալ ժամանակ է ցույց տալիս և դա խանգարում է անվտանգ կապակցմանը:</p> <p>Ձեր համակարգչի ժամանակն է՝ <span id='wrongSystemTime_systemDate'/>, այնինչ պետք է լինի՝ <span id='wrongSystemTime_actualDate'/>: Խնդիրը ուղղելու համար փոխեք ամսաթիվը և ժամանակը համակարգչում:</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> &brandShortName;-ը չի կապակցվել <span id='wrongSystemTimeWithoutReference_URL'/> -ին, քանի որ կարծես թե ձեր համակարգչի ժամացույցը սխալ ժամանակ է ցույց տալիս և դա խանգարում է անվտանգ կապակցմանը:</p> <p>Ձեր համակարգչի ժամանակն է՝ <span id='wrongSystemTimeWithoutReference_systemDate'/>: Խնդիրը ուղղելու համար փոխեք ամսաթիվը և ժամանակը համակարգչում:</p>">
+
+<!ENTITY certerror.pagetitle1  "Ոչ անվտանգ կապակցում">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Այս կայքը օգտագործում է HTTP Strict Transport Security (HSTS)՝ հատկորոշելու այն, որ &brandShortName;-ը կապակցվում է միայն անվտանգ: Որպես արդյունք՝ հնարավոր չէ ավելացնել բացառություն այս վկայագրի համար:">
+<!ENTITY certerror.copyToClipboard.label "Պատճենել մեկուսաշրջույթում">
+
+<!ENTITY inadequateSecurityError.title "Կապակցումն անվտանգ չէ">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> օգտագործում է անվտանգ տեխնոլոգիա, որը հնացած է և խոցելի հարձակումների համար: Հարձակվողը կարող է հեշտությամբ հայտնաբերել տեղեկություններ, որոնք ձեր կարծիքով ապահով են: Կայքի վարիչը պետք է նախ ուղղի սպասարկիչը, որպեսզի կարողանաք այցելել կայքը:</p><p>Սխալի կոդը՝ NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Կարծես՝ ձեր ցանցի անվտանգության կարգավորումները առաջացնել սա: Վերականգնե՞լ հիմնական կարգավորումները:">
+<!ENTITY prefReset.label "Վերականգնել հիմնական կարգավորումները">

@@ -1,0 +1,162 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "பொது">
+
+<!ENTITY useCursorNavigation.label       "எப்போதும் நிலைக்காட்டி விசைகளை பயன்படுத்தி பக்கங்களிடையே செல்">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "நீங்கள் தட்டச்சு செய்யத்தொடங்கும்போது உரையைத் தேடவும்">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "தேவைப்படும் பொருட்டு தொடு விசைப்பலகையைக் காட்டு">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "உலாவல்">
+
+<!ENTITY useAutoScroll.label             "தானியக்க உருளலை பயன்படுத்து">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "மென்மை உருளலை பயன்படுத்து">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "நான் தட்டச்சு செய்யும் போதே எழுத்துப்பிழையைச் சரிபார்">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "தரவு தெரிவுகள்">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "இந்தக் கட்டமைப்பிற்கு தரவு அறிக்கை முடக்கப்பட்டுள்ளது">
+
+<!ENTITY enableHealthReport1.label       "தொழில்நுட்ப மற்றும் தொடர்புத் தரவுகளை மொசில்லாவிற்கு தானாக அனுப்ப &brandShortName; உலாவியை அனுமதி">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "மேலும் அறிய">
+
+<!ENTITY dataCollection.label            "&brandShortName; தரவுத் திரட்டும் பயனளவும்">
+
+
+
+
+<!ENTITY crashReporterLearnMore.label    "மேலும் அறிய">
+
+<!ENTITY networkTab.label                "பிணையம்">
+
+
+<!ENTITY connectionDesc.label            "எவ்வாறு &brandShortName; இணையத்துடன் இணைக்கப்பட்டுள்ளது என கட்டமைக்கவும்">
+<!ENTITY connectionSettings.label        "அமைவுகள்…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "தேக்கப்பட்ட வலை உள்ளடக்கம்">
+
+<!ENTITY offlineStorage2.label           "ஆஃப்லைன் வலை உள்ளடக்கம் மற்றும் பயனர் தரவு">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "தளத்தின் தரவு">
+<!ENTITY clearSiteData.label             "அனைத்து தரவுகளையும் துடை">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "அமைவுகள்…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "மேலும் அறிய">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "இடையக வரம்பு">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB இடம்">
+<!ENTITY clearCacheNow.label             "இப்போது துடைக்கவும்">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "இப்போது துடைக்கவும்">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "தானியக்க இடையக மேலாண்மையை மேலெழுது">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "மேம்படுத்தல்">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; மேம்படுத்தல்கள்">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "பதிப்பு ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "பின்வரும் தேர்வுக்கு &brandShortName; உலாவியை அனுமதி">
+
+
+<!ENTITY updateCheckChoose2.label        "புதுப்பிப்புகள் உள்ளதா எனச் சோதிக்கவும், நிறுவ வேண்டுமா என்பதை நானே தேர்வு செய்கிறேன்">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "புதுப்பித்தல்களைப் பார்க்க வேண்டாம் (பரிந்துரைக்கவில்லை)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "புதுப்பித்தல் வரலாறு…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "புதுப்பிப்புகளை நிறுவ ஒரு பின்புல சேவையைப் பயன்படுத்தவும்">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "தேடுபொறிகளைத் தானாகப் புதுப்பிக்கும்">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "ஒரு வலைத்தளம் இணைப்பில்லாமல் தரவைச் சேமித்து பயன்படுத்தக் கேட்டால் என்னிடம் சொல்">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "விதிவிலக்குகள்…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "பின்வரும் இணைய தளங்கள் இணைப்பில்லாத பயனுக்கு தரவை சேமிக்க அனுமதிக்கப்படுபவை:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "நீக்குக…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "இணைப்பில்லாத தரவை நீக்கு">
+
+<!ENTITY certificateTab.label            "சான்றிதழ்கள்">
+<!ENTITY certPersonal2.description       "ஒரு சேவையகம் உங்கள் தனிப்பட்ட சான்றிதழைக் கேட்டால்">
+<!ENTITY selectCerts.auto                "தானாக ஒன்றைத் தேர்ந்தெடு">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "ஒவ்வொரு முறையும் உங்களைக் கேட்கவும்">
+<!ENTITY selectCerts.ask.accesskey       "அ">
+<!ENTITY enableOCSP.label                "சான்றிதழ்களின் செல்லுபடி நிலையை உறுதிப்படுத்துவதற்காக OCSP பதிலளிப்பு சேவையகங்களிடம் வினவு">
+<!ENTITY enableOCSP.accesskey            "Q">
+
+
+
+
+
+<!ENTITY performance.label               "செயல்திறன்">
+<!ENTITY useRecommendedPerformanceSettings2.label "பரிந்துரைத்த செயல்திறன் அமைவுகளைப் பாவிக்கவும்">
+<!ENTITY useRecommendedPerformanceSettings2.description "இந்த அமைவுகள் உங்கள் கணினியின் வன்பொருளுக்கும் இயங்குதளத்திற்கும் ஏற்ப அமைந்துள்ளது.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "U">
+<!ENTITY performanceSettingsLearnMore.label "மேலும் அறிய">
+<!ENTITY limitContentProcessOption.label "உள்ளடக்க செயல்முறை வரம்பு">
+<!ENTITY limitContentProcessOption.description "பல கீற்றுகளைப் பயன்படுத்தும் போது கூடுதல் உள்ளடக்க செயலாக்கங்கள் செயல்திறனை மேம்படுத்தும், ஆனால் அது அதிக நினைவகத்தைப் பயன்படுத்தும்.">
+<!ENTITY limitContentProcessOption.accesskey   "l">
+<!ENTITY limitContentProcessOption.disabledDescription "உள்ளடக்க செயல்முறைகளின் எண்ணிக்கையை மாற்றியமைத்தல் பல செயல்முறை கொண்ட &brandShortName; உலாவியுடன் மட்டுமே சாத்தியமாகும் .">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "பன்செயல்முறை உள்ளதா என்பதைச் சோதிக்க கற்றுக்கொள்ளுங்கள்">
+<!ENTITY allowHWAccel.label              "கிடைக்கும்போது வன்பொருள் முடுக்கத்தை பயன்படுத்தவும்">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

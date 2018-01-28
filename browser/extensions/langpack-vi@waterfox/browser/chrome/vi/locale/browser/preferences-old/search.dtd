@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Dịch vụ tìm kiếm mặc định">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Xin hãy lựa chọn dịch vụ tìm kiếm mặc định. &brandShortName; sẽ sử dụng nó trong thanh địa chỉ, thanh tìm kiếm và trang khởi động.">
+
+<!ENTITY provideSearchSuggestions.label        "Tự động đề nghị từ khóa tìm kiếm">
+<!ENTITY provideSearchSuggestions.accesskey    "n">
+
+<!ENTITY showURLBarSuggestions.label           "Hiển thị đề xuất tìm kiếm trong kết quả thanh địa chỉ">
+<!ENTITY showURLBarSuggestions.accesskey       "c">
+
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "Thanh tìm kiếm cho phép bạn tìm kiếm nhanh bằng các dịch vụ không phải mặc định. Xin hãy lựa chọn những dịch vụ nào được hiển thị.">
+
+<!ENTITY engineNameColumn.label                "Dịch vụ tìm kiếm">
+<!ENTITY engineKeywordColumn.label             "Từ khóa">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Đặt lại dịch vụ tìm kiếm mặc định">
+<!ENTITY restoreDefaultSearchEngines.accesskey "l">
+
+<!ENTITY removeEngine.label                    "Xóa">
+<!ENTITY removeEngine.accesskey                "X">
+
+<!ENTITY addMoreSearchEngines.label            "Cài thêm dịch vụ tìm &amp;kiếm…">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Search suggestions will not be shown in location bar results because you have configured &brandShortName; to never remember history.">
+

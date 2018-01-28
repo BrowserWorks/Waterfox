@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Nooneeji">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "54em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Lomtinir noorɗe ɗe hello ngoo sifii cuɓanɗe maa les ɗee:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Sahaa kala">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Yoo wonat ciŋkooje laaɓtuɗe tan">
+<!ENTITY  overrideDefaultPageColors.never.label  "Hay sahaa">
+
+<!ENTITY  color                           "Binndol e Cakkital">
+<!ENTITY  textColor.label                 "Binndol:">
+<!ENTITY  textColor.accesskey             "B">
+<!ENTITY  backgroundColor.label           "Cakkital:">
+<!ENTITY  backgroundColor.accesskey       "C">
+<!ENTITY  useSystemColors.label           "Huutoro nooneeji yuɓɓo">
+<!ENTITY  useSystemColors.accesskey       "u">
+
+<!ENTITY  underlineLinks.label            "Waɗ diidlesol e jokkorɗe">
+<!ENTITY  underlineLinks.accesskey        "W">
+<!ENTITY  links                           "Nooneeji Jokkol">
+<!ENTITY  linkColor.label                 "Jokkorɗe ɗe Njillaaka:">
+<!ENTITY  linkColor.accesskey             "N">
+<!ENTITY  visitedLinkColor.label          "Jokkorɗe ɗe Jillaaɗe:">
+<!ENTITY  visitedLinkColor.accesskey      "J">

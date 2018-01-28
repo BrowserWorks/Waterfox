@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Treoraí na bPróifílí">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "Sábhálann &brandShortName; eolas faoi do shocruithe agus sainroghanna i do phróifíl phearsanta.">
+<!ENTITY profileCreationExplanation_2.text  "Má tá an chóip seo de &brandShortName; á roinnt le húsáideoirí eile, is féidir leat úsáid a bhaint as próifílí chun eolas pearsanta a choinneáil ar leithligh ó chéile. Seo le déanamh, ní foláir do gach úsáideoir próifíl phearsanta a chruthú.">
+<!ENTITY profileCreationExplanation_3.text  "Más tusa an t-aon duine amháin ag baint úsáide as an gcóip seo de &brandShortName;, is gá próifíl amháin ar a laghad a bheith agat. Más mian leat, is féidir leat próifílí éagsúla a chruthú duit féin chun socruithe agus roghanna éagsúla a choinneáil. Mar shampla, d'fhéadfaí próifílí ar leith a bheith agat le haghaidh gnó agus le haghaidh d'úsáide féin.">
+<!ENTITY profileCreationExplanation_4.text  "Chun próifíl a chruthú, cliceáil Ar Aghaidh.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Chun próifíl a chruthú, cliceáil Ar Aghaidh.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Chun próifíl a chruthú, cliceáil Ar Aghaidh.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Má chruthaíonn tú próifílí éagsúla, is féidir iad a aithint óna chéile le hainmneacha na bpróifílí. Is féidir an t-ainm a thugtar anseo a úsáid, nó do cheann féin.">
+<!ENTITY profilePrompt.label            "Cuir isteach ainm próifíle nua:">
+<!ENTITY profilePrompt.accesskey        "e">
+<!ENTITY profileDirectoryExplanation.text   "Stórálfar do chuid socruithe úsáideora, roghanna agus sonraí úsáideora eile i:">
+<!ENTITY profileDefaultName             "Úsáideoir Réamhshocraithe">
+<!ENTITY button.choosefolder.label      "Roghnaigh Fillteán…">
+<!ENTITY button.choosefolder.accesskey  "R">
+<!ENTITY button.usedefault.label        "Úsáid Fillteán Réamhshocraithe">
+<!ENTITY button.usedefault.accesskey    "s">

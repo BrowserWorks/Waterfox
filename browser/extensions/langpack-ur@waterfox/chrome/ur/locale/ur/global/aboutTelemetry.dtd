@@ -1,0 +1,94 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ٹیلیمٹری کوائف">
+
+<!ENTITY aboutTelemetry.pingDataSource "کوائف ماخذ کو پنگ کریں">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "موجودہ پنگ کے کوائف">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "محفوظہ پنگ کوائف">
+
+<!ENTITY aboutTelemetry.raw "خام JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "ذیلی سیشن کوائف دکھائیں">
+
+<!ENTITY aboutTelemetry.choosePing "پنگ کا انتخاب کریں">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; جدید تر پنگ">
+
+<!ENTITY aboutTelemetry.showOlderPing "پرانی پنگ  &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "ہفتہ">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "پینگ">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  جنرل کوائف">
+
+<!ENTITY aboutTelemetry.environmentDataSection "ماحولیاتی کوائف">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  ٹیلیمیٹری لاگ">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  سست SQL سٹیٹمنٹ">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  براؤزر جاتا ہے">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  ڈوری پھنس جاتی ہے">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  گرفت شدہ اسٹیک">
+
+<!ENTITY aboutTelemetry.scalarsSection "سکیلر ">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Keyed Scalars">
+
+<!ENTITY aboutTelemetry.histogramsSection "  ہسٹو گرام">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "کلید شدہ ہسٹوگرامز">
+
+<!ENTITY aboutTelemetry.eventsSection "  واقعات">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  سادہ پیمائشیں">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  اضافہ تفاصیل">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  دیرانہ لکھائی">
+
+<!ENTITY aboutTelemetry.sessionInfoSection " سیشن کی معلومات">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  نوٹ: سست SQL ڈیبگنگ اہل ہے۔ نیچے پوری SQL سٹرنگز دکھائی جا سکتی ہیں لیکن یہ ٹیلیمٹری کو جمع نہیں کرائ جائیں گی۔">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  فلٹر (سٹرنگز یا /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "پیلوڈ">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

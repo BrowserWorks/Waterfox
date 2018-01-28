@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standard-søgetjeneste">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Vælg den søgetjeneste, du vil bruge i adresselinjen og søgelinjen.">
+
+<!ENTITY provideSearchSuggestions.label        "Vis søgeforslag">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.label           "Vis søgeforslag i adresselinjen">
+<!ENTITY showURLBarSuggestions2.accesskey       "a">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Søgeforslag vil ikke blive vist i adressefeltet, fordi du har sat &brandShortName; op til aldrig at gemme historik.">
+
+<!ENTITY oneClickSearchEngines.label           "Lyn-søgetjenester">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Vælg de alternative søgetjenester, der vises under adresselinjen og søgelinjen, når du begynder at indtaste en søgeterm.">
+
+<!ENTITY engineNameColumn.label                "Søgetjeneste">
+<!ENTITY engineKeywordColumn.label             "Stikord">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Gendan standard-søgetjenester">
+<!ENTITY restoreDefaultSearchEngines.accesskey "g">
+
+<!ENTITY removeEngine.label                    "Fjern">
+<!ENTITY removeEngine.accesskey                "f">
+
+<!ENTITY findMoreSearchEngines.label           "Find flere søgetjenester">

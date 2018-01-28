@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "રંગો">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "ઉપરોક્ત તમારી પસંદગીઓ સાથે પૃષ્ઠ દ્વારા ઉલ્લેખિત રંગોને ઓવરરાઇડ કરો:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "હંમેશા">
+<!ENTITY  overrideDefaultPageColors.auto.label   "ફક્ત ઉચ્ચ વિરોધાભાસ વિષય સાથે">
+<!ENTITY  overrideDefaultPageColors.never.label  "ક્યારેય નહિં">
+
+<!ENTITY  color                           "લખાણ અને પાશ્વ ભાગ">
+<!ENTITY  textColor.label                 "લખાણ:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "પાશ્વ ભાગ:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "સિસ્ટમ રંગો વાપરો">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "કડીઓ નીચે લીટી કરો">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "કડી રંગો">
+<!ENTITY  linkColor.label                 "નહિં મુલાકાત લીધેલ કડીઓ:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "મુલાકાત લીધેલ કડીઓ:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Koloreak">
+<!ENTITY  window.width                    "44em">
+<!ENTITY  window.macWidth                 "44em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Gainidatzi orriak zehaztutako koloreak goiko hautapenekin:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "G">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Beti">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Kontraste handiko itxurekin soilik">
+<!ENTITY  overrideDefaultPageColors.never.label  "Inoiz ez">
+
+<!ENTITY  color                           "Testua eta atzeko planoa">
+<!ENTITY  textColor.label                 "Testua:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Atzeko planoa:">
+<!ENTITY  backgroundColor.accesskey       "A">
+<!ENTITY  useSystemColors.label           "Erabili sistemaren koloreak">
+<!ENTITY  useSystemColors.accesskey       "E">
+
+<!ENTITY  underlineLinks.label            "Azpimarratu loturak">
+<!ENTITY  underlineLinks.accesskey        "z">
+<!ENTITY  links                           "Loturen koloreak">
+<!ENTITY  linkColor.label                 "Bisitatu gabeko loturak:">
+<!ENTITY  linkColor.accesskey             "s">
+<!ENTITY  visitedLinkColor.label          "Bisitatutako loturak:">
+<!ENTITY  visitedLinkColor.accesskey      "B">

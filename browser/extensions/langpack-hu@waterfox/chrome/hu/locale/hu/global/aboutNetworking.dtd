@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Hálózatkezelés névjegye">
+<!ENTITY aboutNetworking.warning               "Ez nagyon kísérleti. Ne használja szülői felügyelet nélkül!">
+<!ENTITY aboutNetworking.showNextTime          "A figyelmeztetés megjelenítése legközelebb">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Socketek">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSocketek">
+<!ENTITY aboutNetworking.refresh               "Frissítés">
+<!ENTITY aboutNetworking.autoRefresh           "Autofrissítés 3 másodpercenként">
+<!ENTITY aboutNetworking.hostname              "Gépnév">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktív">
+<!ENTITY aboutNetworking.idle                  "Tétlen">
+<!ENTITY aboutNetworking.host                  "Gép">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Elküldött elemek">
+<!ENTITY aboutNetworking.received              "Beérkezés">
+<!ENTITY aboutNetworking.family                "Család">
+<!ENTITY aboutNetworking.addresses             "Címek">
+<!ENTITY aboutNetworking.expires               "Lejár (másodperc)">
+<!ENTITY aboutNetworking.messagesSent          "Küldött üzenetek">
+<!ENTITY aboutNetworking.messagesReceived      "Kapott üzenetek">
+<!ENTITY aboutNetworking.bytesSent             "Küldött bájtok">
+<!ENTITY aboutNetworking.bytesReceived         "Kapott bájtok">
+<!ENTITY aboutNetworking.logging               "Naplózás">
+<!ENTITY aboutNetworking.logTutorial           "Lásd a <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP naplózás</a> lapot az eszköz használati utasításaiért.">
+<!ENTITY aboutNetworking.currentLogFile        "Jelenlegi naplófájl:">
+<!ENTITY aboutNetworking.currentLogModules     "Jelenlegi naplómodulok:">
+<!ENTITY aboutNetworking.setLogFile            "Naplófájl beállítása">
+<!ENTITY aboutNetworking.setLogModules         "Naplómodulok beállítása">
+<!ENTITY aboutNetworking.startLogging          "Naplózás elkezdése">
+<!ENTITY aboutNetworking.stopLogging           "Naplózás leállítása">
+<!ENTITY aboutNetworking.dnsLookup             "DNS kikeresés">
+<!ENTITY aboutNetworking.dnsLookupButton       "Feloldás">
+<!ENTITY aboutNetworking.dnsDomain             "Tartomány">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-k">
+<!ENTITY aboutNetworking.rcwn                  "RCWN statisztikák">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN állapot">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "A gyorsítótár nyerésének száma">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "A hálózat nyerésének száma">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Összes hálózati kérés száma">
+<!ENTITY aboutNetworking.rcwnOperation         "Gyorsítótár művelet">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Megnyitás">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Olvasás">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Írás">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Bejegyzés megnyitva">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Rövid átlag">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Hosszú átlag">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Hosszú szórás">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "A gyorsítótár hányszor volt lassú">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "A gyorsítótár hányszor nem volt lassú">

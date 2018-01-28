@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY updateWizard.title              "&brandShortName;i uuendamine">
+
+<!ENTITY offline.title                   "&brandShortName; töötab võrguta režiimis">
+<!ENTITY offline.description             "&brandShortName; peab lülituma võrgurežiimi, et kontrollida, kas sinu lisadele on saadaval selle versiooniga ühilduvaid uuendusi.">
+<!ENTITY offline.toggleOffline.label     "Lülitu võrgurežiimi">
+<!ENTITY offline.toggleOffline.accesskey "L">
+
+<!ENTITY mismatch.win.title              "Mitteühilduvad lisad">
+<!ENTITY mismatch.top.label              "Järgnevad lisad ei ole selle &brandShortName;i versiooniga ühilduvad ning keelati:">
+<!ENTITY mismatch.bottom.label           "&brandShortName; saab kontrollida, kas neile lisadele leidub ühilduvaid versioone.">
+
+<!ENTITY checking.wizard.title           "Ühilduvate lisade kontrollimine">
+<!ENTITY checking.top.label              "Mitteühilduvate lisade uuenduste kontrollimine...">
+<!ENTITY checking.status                 "See võib võtta natuke aega...">
+
+<!ENTITY found.wizard.title              "Leiti ühilduvad lisad">
+<!ENTITY found.top.label                 "Vali lisad, mida soovid paigaldada:">
+<!ENTITY found.disabledXPinstall.label   "Neid uuendusi pole võimalik paigaldada, kuna tarkvara paigaldamine on praegu keelatud. Sa võid seda sätet allpool muuta.">
+<!ENTITY found.enableXPInstall.label     "Luba veebilehtedel tarkvara paigaldada">
+<!ENTITY found.enableXPInstall.accesskey "L">
+
+<!ENTITY installing.wizard.title         "Ühilduvate lisade paigaldamine">
+<!ENTITY installing.top.label            "Uuenduste allalaadimine ning paigaldamine...">
+
+<!ENTITY noupdates.wizard.title          "Ühtki ühilduvat lisa ei leitud">
+<!ENTITY noupdates.intro.desc            "&brandShortName; ei leidnud sinu ühildumatutele lisadele uuendusi.">
+<!ENTITY noupdates.error.desc            "Uuenduste leidmisel esines mõningaid probleeme.">
+<!ENTITY noupdates.checkEnabled.desc     "&brandShortName; kontrollib perioodiliselt ühilduvaid uuendusi nendele lisadele ning annab teada, kui midagi leitakse.">
+
+<!ENTITY finished.wizard.title           "Ühilduvad lisad on paigaldatud">
+<!ENTITY finished.top.label              "&brandShortName; paigaldas uuendused sinu lisadele.">
+<!ENTITY finished.checkDisabled.desc     "&brandShortName; võib perioodiliselt kontrollida uuendusi nendele lisadele ning anda teada, kui midagi leitakse.">
+<!ENTITY finished.checkEnabled.desc      "&brandShortName; kontrollib korrapäraselt, kas neile lisadele on uuendusi, ja annab teada, kui midagi leitakse.">
+
+<!ENTITY adminDisabled.wizard.title      "Uuenduste kontrollimine pole võimalik">
+<!ENTITY adminDisabled.warning.label     "Uuenduste olemasolu ühildumatutele lisadele pole võimalik kontrollida, kuna &brandShortName;il pole lubatud tarkvara paigaldada. Abi saamiseks võta ühendust oma süsteemiadministraatoriga.">
+
+<!ENTITY versioninfo.wizard.title        "Lisade ühilduvuse kontrollimine">
+<!ENTITY versioninfo.top.label           "Lisade ühilduvuse kontrollimine selle &brandShortName;i versiooniga.">
+<!ENTITY versioninfo.waiting             "See võib võtta natuke aega...">
+
+<!ENTITY installerrors.wizard.title      "Probleem uuenduste paigaldamisel">
+<!ENTITY installerrors.intro.label       "&brandShortName;il oli probleeme mõne lisa uuendamisel.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY clickFinish.label               "&brandShortName;i käivitamise jätkamiseks klõpsa Lõpeta.">
+<!ENTITY clickFinish.labelMac            "&brandShortName;i käivitamise jätkamiseks klõpsa Lõpeta.">
+<!ENTITY enableChecking.label            "&brandShortName;il lubatakse kontrollida uuendusi.">

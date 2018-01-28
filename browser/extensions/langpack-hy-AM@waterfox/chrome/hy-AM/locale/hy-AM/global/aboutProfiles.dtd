@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Պրոֆիլների մասին">
+<!ENTITY aboutProfiles.subtitle "Այս էջը օգնում է ձեզ կառավարել ձեր պրոֆիլները: Յուրաքանչյուր պրոֆիլ առանձին աշխարհ է, որը պարունակում է առանձին պատմություն, էջանիշեր, կարգավորումներ և հավելումներ:">
+<!ENTITY aboutProfiles.create "Ստեղծել նոր պրեֆիլ">
+<!ENTITY aboutProfiles.restart.title "Վերամեկնարկել">
+<!ENTITY aboutProfiles.restart.inSafeMode "Վերամեկնարկել՝ հավելումներն անջատված...">
+<!ENTITY aboutProfiles.restart.normal "Նորմալ վերամեկնարկում...">

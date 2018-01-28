@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "Web Console">
+<!ENTITY browserConsole.title "ဘယောက်ဆာ Console">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "URL ကို တပ်ဗ်အသစ်တွင် ဖွင့်ပါ">
+<!ENTITY openURL.accesskey "T">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Copy Link Location">
+<!ENTITY copyURLCmd.accesskey "a">
+
+
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY btnClear.label        "Clear">
+<!ENTITY btnClear.tooltip      "Clear the Web Console output">
+<!ENTITY btnConsoleErrors       "Errors">
+<!ENTITY btnConsoleInfo         "Info">
+<!ENTITY btnConsoleLog          "Log">
+<!ENTITY btnConsoleReflows      "Reflows">
+
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!ENTITY btnConsoleWarnings     "Warnings">
+<!ENTITY btnConsoleWindowlessWorkers "Add-on or Chrome Workers">
+
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Log CSS errors and warnings">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Log JavaScript exceptions">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnPageLogging.label   "Logging">
+<!ENTITY btnPageLogging.tooltip "Log messages sent to the window.console object">
+<!ENTITY btnPageNet.accesskey "N">
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageNet.label   "Net">
+<!ENTITY btnPageNet.tooltip "Log network access">
+<!ENTITY btnPageSecurity.accesskey "u">
+
+<!ENTITY btnPageSecurity.label "Security">
+<!ENTITY btnPageSecurity.tooltip "Log security errors and warnings">
+<!ENTITY btnServerErrors              "Errors">
+<!ENTITY btnServerInfo                "Info">
+<!ENTITY btnServerLog                 "Log">
+
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerLogging.label       "Server">
+<!ENTITY btnServerLogging.tooltip     "Log messages received from a web server">
+<!ENTITY btnServerWarnings            "Warnings">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY closeCmd.key         "W">
+<!ENTITY filterOutput.placeholder "Filter output">
+<!ENTITY findCmd.key          "F">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY openInVarViewCmd.label "Open in Variables View">
+<!ENTITY storeAsGlobalVar.accesskey "S">
+<!ENTITY storeAsGlobalVar.label "Store as global variable">

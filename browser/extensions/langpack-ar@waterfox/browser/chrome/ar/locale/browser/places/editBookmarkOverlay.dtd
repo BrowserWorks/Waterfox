@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "الاسم:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "س">
+<!ENTITY editBookmarkOverlay.location.label                  "المكان:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "م">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "مكان التلقيمة:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "ت">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "مكان الموقع:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "ق">
+<!ENTITY editBookmarkOverlay.folder.label                    "المجلد:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "أظهر كلّ مجلدات العلامات">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "أخفِ">
+<!ENTITY editBookmarkOverlay.tags.label                      "الوسوم:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "و">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "افصل الوسوم بفاصلة">
+<!ENTITY editBookmarkOverlay.description.label               "الوصف:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ص">
+<!ENTITY editBookmarkOverlay.keyword.label                   "الكلمة المفتاحيّة:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "ك">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "أظهر كل الوسوم">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "حمّل هذه العلامة في الشريط الجانبي">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ه">
+<!ENTITY editBookmarkOverlay.choose.label                    "اختر…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "مجلد جديد">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "ج">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "ପୁରୁଣା ତଥ୍ୟକୁ ଅଦ୍ୟତନ କରନ୍ତୁ">
+<!ENTITY  history.intro             "ନିମ୍ନଲିଖିତ ଅଦ୍ୟତନଗୁଡ଼ିକୁ ସ୍ଥାପନ କରାଯାଇଛି:">
+<!ENTITY  closebutton.label         "ବନ୍ଦ କରନ୍ତୁ">
+                                     
+<!ENTITY  noupdates.label           "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଅଦ୍ୟତନ ସ୍ଥାପିତ ହୋଇନାହିଁ">
+
+<!ENTITY  name.header               "ନାମ ଅଦ୍ୟତନ କରନ୍ତୁ">
+<!ENTITY  date.header               "ସ୍ଥାପନ ତାରିଖ">
+<!ENTITY  type.header               "ପ୍ରକାର">
+<!ENTITY  state.header              "ସ୍ଥିତି">
+

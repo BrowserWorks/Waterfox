@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "మీ హక్కుల గురించి">
+<!ENTITY rights.intro "ప్రపంచంలో అన్ని ప్రాంతాలనుండి వేల మంది సముదాయముచే తయారు చేయబడిన &brandFullName; ఒక స్వేచ్ఛామూలాలు ఉచితంగా కల సాఫ్ట్‌వేర్. మీరు తెలుసుకోవాలిసిన కొన్ని సంగతులు:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". మీరు &brandShortName; ను వాడుకొనుట, కాపీ చేయుట, ఇతరులకు ఇచ్చుట చేయవచ్చు.  &brandShortName; మూలపు కోడ్ ని మీ అవసరాలకొరకు మార్చవచ్చు. Mozilla పబ్లిక్ లైసెన్సు ఇలా మార్చిన వాటిని ఇతరులకు ఇచ్చే హక్కుని మీకు ఇస్తుంది.">
+
+<!ENTITY rights.intro-point2-a "Mozilla సంస్థ లేదా యే ఇతర పార్టీ యొక్క లైసెన్సులను లేదా వ్యాపార గుర్తులపై, Waterfox పేరు లేదా చిహ్నముపై మీకు యెటువంటి వ్యాపారగుర్తు హక్కులను యిచ్చుటలేదు. వ్యాపారచిహ్నాలగురించి మరింత సమాచారం ">
+<!ENTITY rights.intro-point2-b "యిక్కడ చూడవచ్చు">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "&brandShortName; నందు కొన్ని విశేషణములు, క్రాష్ నివేదిక వంటిది, యిది మీరు &vendorShortName;కు స్పందనను అందించు ఎంపికను యిచ్చును. స్పందనను అప్పజెప్పు యెంచుకొనుట ద్వారా, మీరు &vendorShortName; కు దాని వుత్పత్తులను మెరుగుపరచుకొనుటకు స్పందనను ఉపయోగించు అనుమతిని యిచ్చెదరు, మీరు స్పందనను దాని వెబ్‌సైట్లపై ప్రచురించుటకు, మరియు పంపిణీ చేయుటకు కూడా అనుమతినిచ్చెదరు.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "మీరు &vendorShortName; కు &brandShortName; ద్వారా అప్పజెప్పిన మీ వ్యక్తిగత సమాచారము మరియు స్పందనను మేము యెలా ఉపయోగిస్తామో యిక్కడ తెలుపబడెను ">
+<!ENTITY rights2.intro-point3b "&brandShortName; గోప్యతా విధానం">
+<!ENTITY rights.intro-point3c "దొరుకుతుంది.">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "ఈ ఉత్పత్తికి సరిపడే ఇతర గోపనీయత విధానాలను ఇక్కడ ఇవ్వ వలెను.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "కొన్ని &brandShortName; సౌలభ్యములు వెబ్-అధారిత సమాచార సేవలను ఉపయోగించును, ఏమైనప్పటికి, అవి 100&#037;  ఖ్చచితమైనవని లేదా దోష-రహితమైనవని మేము హామీ యీయలేము. అదిక వివరముల కొరకు, ఈ సేవలను ఉపయోగించు సౌలభ్యములను యెలా అచేతనము చేయవలెను అను సమాచారముతో కలుపుకొని, ఇక్కడ చూడండి ">
+<!ENTITY rights.intro-point4b "సేవా షరతులు">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "ఈ ఉత్పత్తి  వెబ్ సేవలు కలిగివుంటే, అలాంటివాటికి ఎదైనా ఇతర సేవ షరతులు ">
+<!ENTITY rights.intro-point4b-unbranded "వెబ్ సైటు సేవలు">
+<!ENTITY rights.intro-point4c-unbranded " భాగానికి అనుబంధం చేయాలి.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; వెబ్-ఆధారిత సమాచారం సేవలు">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "కొన్ని రకాల వీడియో కాంటెంట్‌ను నడుపుటకు, &brandShortName; కొన్ని కాంటెంట్ డిక్రిప్షన్ మాడ్యూళ్ళను ఇతరులనుండి దిగుమతి చేయును.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "క్రింది ఇవ్వబడిన షరతులు లోబడి &brandShortName; యొక్క బైనరీ  విడుదలతో  ఉపయోగించుట కొరకు సౌలభ్యములను అందించుటకు &brandFullName; వెబ్-ఆధారిత సమాచార సేవలను (&quot;సేవలు&quot;) ఉపయోగించును. మీరు యిసేవలలో ఒకటి లేదా అంతకన్నా ఎక్కువ వాటిని వాడుటకు యిష్టపడకపోయినా లేక కింది షరతులు అమోదయోగ్యం కాకున్నా, మీరు సౌలభ్యమును లేక సేవ(ల)ను అచేతనము చేయవచ్చును. ఫలానా సౌలభ్యము లేదా సేవ యెలా అచేతనము చేయవలెను అనునది యిక్కడ కనుగొనవచ్చు ">
+<!ENTITY rights2.webservices-b "యిక్కడ">
+<!ENTITY rights3.webservices-c ". అనువర్తన అభీష్టాల నందు ఇతర విశేషణాలు మరియు సేవలు ప్రదర్శించవచ్చు.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "రక్షితబ్రౌజింగ్: ">
+<!ENTITY rights.safebrowsing-b "రక్షిత బ్రౌజింగ్ సౌలభ్యమును అచేతనము చేయుట సిఫార్సు చేయుటలేదు యెంచేతంటే అది మీరు సురక్షితంకాని సైటులకు వెళ్ళుటకు కారణం కావచ్చును. మీరు యిసౌలభ్యమును పూర్తిగా అచేతనము చేయవలెనంటే, ఈ కింది అంచెలను అనుసరించు:">
+<!ENTITY rights.safebrowsing-term1 "అనువర్తనము అభీష్టాలను తెరువు">
+<!ENTITY rights.safebrowsing-term2 "రక్షమ యెంపికను యెంపికచేయుము">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot; కి ఎంపిక గుర్తుచేయవద్దు">
+<!ENTITY rights.safebrowsing-term4 "రక్షణ బ్రౌజింగ్ యిప్పుడు అచేతనము చేయబడింది">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "స్థానము తెలిసిన బ్రౌజింగ్: ">
+<!ENTITY rights.locationawarebrowsing-b "మీ అనుమతి లేకుండా ఎప్పుడూ కూడా స్థానము సమాచారము పంపబడదు. ఈ సౌలభ్యమును మీరు పూర్తిగా అచేతనము చేయవలెనంటే, ఈ కింది అంచెలను అనుసరించు:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL పట్టీనందు, యిది టైపు చేయుము ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled టైపు చేయుము">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled అభీష్టములపై రెండు సార్లు నొక్కుము">
+<!ENTITY rights.locationawarebrowsing-term4 "స్థానము-తెలిసిన బ్రౌజింగ్ యిప్పుడు అచేతనమగును">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "ఉత్పత్తి లో వున్న వెబ్ సైటు సేవల గురించిన సంగ్రహ సమాచారము, అటువంటి వాటిని అవసరమైతే ఎలా అచేతనం చేయాలో ఇక్కడ ఇవ్వాలి.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "ఈ ఉత్పత్తికి ఎదైనా సరిపడే సేవా షరతులు ఇక్కడ ఇవ్వాలి.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; మరియు దాని సహాయకులు, లైసెన్సర్స్ మరియు భాగస్వామ్యులు అత్యంత ఖచ్చితమైన మరియు నవీకృత సేవలను అందించుటకు పనిచేస్తున్నారు. ఏమైనప్పటికి, యిసమాచారమును దోష-రహితమని మేము హామీ ఇవ్వలేము. ఉదాహరణకు, రక్షిత బ్రౌజింగ్ సేవ కొన్ని సమస్యాత్మక సైట్లను గుర్తించ లేక పోవచ్చును మరియు కొన్ని సురక్షిత సైట్లను దోష పూరితంగా గుర్తించవచ్చును లొకేషన్ యెవేర్ సర్వీస్ ద్వారా అందించబడిన అన్ని స్థానములు అంచనాలు మాత్రమే మేము కాని మా సేవా వుత్పాదకులుగాని స్థానముల ఖచ్చితత్వముపై హామీ ఇచ్చుట లేదు.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; ఇచ్ఛాపూర్వకంగా ఈ సేవలను నిలిపి వేయవచ్చు లేక మార్పు చేయవచ్చు.">
+<!ENTITY rights2.webservices-term3 "మీరు ఈ సేవలను &brandShortName; యొక్క వర్షన్‌తో ఉపయోగించవచ్చును, మరియు &vendorShortName; అలా చేయుటకు మీకు హక్కులను యిచ్చును. &vendorShortName; మరియు దాని లైసెన్సర్స్ అన్ని యితర హక్కులను సేవలనందు కలిగివుందురు. ఈ షరతులు &brandShortName;కు మరియు సంభందిత &brandShortName; సోర్స్ కోడ్ వర్షన్‌లకు వర్తించు వోపెన్ సోర్స్ లైసెన్సెస్ కిందని యే హక్కులను పరిమితం చేయుటకు వద్దేశించినవి కావు.">
+<!ENTITY rights.webservices-term4 "ఈ  సేవలను   &quot;యధాస్థితిగా&quot; అందచేయబడుతున్నవి.     &vendorShortName;, దాని  సహాయకులు, లైసెన్సు దారులు, పంపిణీ దారులు   , ఇవి వ్యాపారానికి  సరి అయినవని , మీ అవసరాలకు సరిపోతాయని , వీటి నాణ్యత గురించి  వివరించబడిన, లేక అనుకొనబడిన హామీలకు  ఏ హద్దు లేకుండా భాద్యత వహించరు.  సేవలను ఎంచుకోవటంవలన , వాటి నాణ్యతవలన కలిగే లాభనష్టాలకి మొత్తము బాధ్యత   మీదే . కొన్ని ప్రాంతాలలో  అనుకోబడిన హామీలను  తీసివేయటానికి, లేక భాద్యత గ్గించటానికి  అనుమతి లేకపోతే, ఈ  షరతు మీకు వర్తించదు.">
+<!ENTITY rights.webservices-term5 "చట్ట పరిధికి  అవసరమైనవి మినహాయించి, &vendorShortName;, దాని  సహాయకులు, లైసెన్సు దారులు మరియు  పంపిణీ దారులు,  &brandShortName; యొక్క సేవలను  వాడుటం వలన  కలిగిన    అన్ని  రకాల  నష్టాలకు  భాద్యత  వహించరు. సమీష్ఠి భాద్యత   $500 (ఐదు వందల డాలర్లు) లోబడి వుంటుంది. కొన్ని ప్రాంతాలలో   సష్టాల భాద్యతను  తీసివేయటానికి, లేక భాద్యత గ్గించటానికి  అనుమతి లేకపోతే, ఈ షరతు  మీకు వర్తించదు.">
+<!ENTITY rights.webservices-term6 "ఈషరతులను కాలానుగుణంగా, అవసరానికి తగినంతగా &vendorShortName; మార్చువచ్చు. &vendorShortName; వారితో వ్రాతపూర్వకమైన ఒప్పందం లేకుండా వీటిలో మార్పు కాని, వీటిని రద్దు చేయడం కాని జరగదు.">
+<!ENTITY rights.webservices-term7 "అమెరికా సంయుక్త రాష్ట్రాలలోని, కాలిఫోర్నియా రాష్ట్ర చట్టాల ప్రకారం (చట్టాల భేదాల విధానాలు మినహాయించి) ఈ షరతులు అమలుజరుపబడతాయి. వీటిలో ఎవైనా అమలుజరపవీలులేదని, చట్టపరముకావని తెలిసినప్పుడు, మిగిలిన భాగాలు పూర్తి ప్రభావం మరియు వత్తిడి కలిగివుంటాయి. ఇంగ్లీషు మరి ఇతర భాష అనువాదాలలో ఈ షరతులను అన్వయించడంలో తేడాలున్నపుడు, ఇంగ్లీషు భాషలో గల షరతులనే ప్రామాణికంగా తీసుకోబడతాయి.">

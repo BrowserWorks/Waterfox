@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle			"トラブルシューティング情報">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle	"このページには問題発生時に役立てられる技術情報が表示されます。&brandShortName; に関する一般的な質問については <a id='supportLink'>サポートサイト</a> をご覧ください。">
+
+<!ENTITY aboutSupport.crashes.title		"クラッシュレポート">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id		"レポート ID">
+<!ENTITY aboutSupport.crashes.sendDate		"送信日時">
+<!ENTITY aboutSupport.crashes.allReports	"すべてのクラッシュレポート">
+<!ENTITY aboutSupport.crashes.noConfig		"このプログラムはクラッシュレポートを表示できるように設定されていません。">
+
+<!ENTITY aboutSupport.extensionsTitle		"拡張機能">
+<!ENTITY aboutSupport.extensionName		"名前">
+<!ENTITY aboutSupport.extensionEnabled		"有効">
+<!ENTITY aboutSupport.extensionVersion		"バージョン">
+<!ENTITY aboutSupport.extensionId		"ID">
+
+<!ENTITY aboutSupport.featuresTitle		"&brandShortName; の機能">
+<!ENTITY aboutSupport.featureName		"名前">
+<!ENTITY aboutSupport.featureVersion		"バージョン">
+<!ENTITY aboutSupport.featureId			"ID">
+
+<!ENTITY aboutSupport.experimentsTitle		"実験的な機能">
+<!ENTITY aboutSupport.experimentName		"名前">
+<!ENTITY aboutSupport.experimentId		"ID">
+<!ENTITY aboutSupport.experimentDescription	"説明">
+<!ENTITY aboutSupport.experimentActive		"アクティブ">
+<!ENTITY aboutSupport.experimentEndDate		"終了日">
+<!ENTITY aboutSupport.experimentHomepage	"ホームページ">
+
+<!ENTITY aboutSupport.experimentBranch		"ブランチ">
+
+<!ENTITY aboutSupport.appBasicsTitle		"アプリケーション基本情報">
+<!ENTITY aboutSupport.appBasicsName		"名前">
+<!ENTITY aboutSupport.appBasicsVersion		"バージョン">
+<!ENTITY aboutSupport.appBasicsBuildID		"ビルド ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel		"更新チャンネル">
+<!ENTITY aboutSupport.appBasicsUpdateHistory		"更新履歴">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory	"更新履歴を表示">
+
+<!ENTITY aboutSupport.appBasicsProfileDir	"プロファイルフォルダー">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac	"プロファイルフォルダー">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins	"有効なプラグイン">
+<!ENTITY aboutSupport.appBasicsBuildConfig	"ビルド設定">
+<!ENTITY aboutSupport.appBasicsUserAgent	"ユーザーエージェント">
+<!ENTITY aboutSupport.appBasicsOS		"OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse	"メモリー使用量">
+<!ENTITY aboutSupport.appBasicsPerformance	"パフォーマンス">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers	"登録された Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles		"プロファイル">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport	"マルチプロセスウィンドウ">
+
+<!ENTITY aboutSupport.appBasicsProcessCount	"ウェブコンテンツプロセス">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle	"Google キー">
+<!ENTITY aboutSupport.appBasicsKeyMozilla	"Mozilla Location Service キー">
+
+<!ENTITY aboutSupport.appBasicsSafeMode		"セーフモード">
+
+<!ENTITY aboutSupport.showDir.label		"ディレクトリーを開く"><!-- Win/Mac 以外 -->
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label		"Finder に表示">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label		"フォルダーを開く">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle	"変更された重要な設定">
+<!ENTITY aboutSupport.modifiedPrefsName		"名前">
+<!ENTITY aboutSupport.modifiedPrefsValue	"値">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle		"user.js 設定ファイル">
+<!ENTITY aboutSupport.userJSDescription		"このプロファイルには、&brandShortName; では作成されない設定値が含まれた <a id='prefs-user-js-link'>user.js 設定ファイル</a> があります。">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle	"ロックされた重要な設定">
+<!ENTITY aboutSupport.lockedPrefsName		"名前">
+<!ENTITY aboutSupport.lockedPrefsValue		"値">
+
+<!ENTITY aboutSupport.graphicsTitle		"グラフィック">
+
+<!ENTITY aboutSupport.placeDatabaseTitle		"Places データベース">
+<!ENTITY aboutSupport.placeDatabaseIntegrity		"完全性">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity	"完全性を検証">
+
+<!ENTITY aboutSupport.jsTitle			"JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC		"インクリメンタル GC">
+
+<!ENTITY aboutSupport.a11yTitle			"アクセシビリティ">
+<!ENTITY aboutSupport.a11yActivated		"有効">
+<!ENTITY aboutSupport.a11yForceDisabled		"アクセシビリティの無効化">
+<!ENTITY aboutSupport.a11yHandlerUsed		"アクセシブルハンドラーの使用">
+
+<!ENTITY aboutSupport.libraryVersionsTitle	"ライブラリのバージョン">
+
+<!ENTITY aboutSupport.installationHistoryTitle	"インストール履歴">
+<!ENTITY aboutSupport.updateHistoryTitle	"更新履歴">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label		"テキストをクリップボードにコピー">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label	"生データをクリップボードにコピー">
+
+<!ENTITY aboutSupport.sandboxTitle		"サンドボックス">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle	"却下されたシステムコール">
+<!ENTITY aboutSupport.sandboxSyscallIndex	"#">
+<!ENTITY aboutSupport.sandboxSyscallAge		"秒前">
+<!ENTITY aboutSupport.sandboxSyscallPID		"PID">
+<!ENTITY aboutSupport.sandboxSyscallTID		"TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType	"プロセスの種類">
+<!ENTITY aboutSupport.sandboxSyscallNumber	"Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs	"引数">
+
+<!ENTITY aboutSupport.safeModeTitle		"セーフモードを試す">
+<!ENTITY aboutSupport.restartInSafeMode.label	"アドオンを無効化して再起動...">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle	"機能">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle	"診断">
+<!ENTITY aboutSupport.graphicsFailureLogTitle	"失敗ログ">
+<!ENTITY aboutSupport.graphicsGPU1Title		"GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title		"GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle	"決定ログ">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle	"クラッシュガードが無効化した機能">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle	"回避策">
+
+<!ENTITY aboutSupport.mediaTitle		"メディア">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle	"出力デバイス">
+<!ENTITY aboutSupport.mediaInputDevicesTitle	"入力デバイス">
+<!ENTITY aboutSupport.mediaDeviceName		"デバイス名">
+<!ENTITY aboutSupport.mediaDeviceGroup		"グループ">
+<!ENTITY aboutSupport.mediaDeviceVendor		"ベンダー">
+<!ENTITY aboutSupport.mediaDeviceState		"状態">
+<!ENTITY aboutSupport.mediaDevicePreferred	"優先">
+<!ENTITY aboutSupport.mediaDeviceFormat		"形式">
+<!ENTITY aboutSupport.mediaDeviceChannels	"チャンネル">
+<!ENTITY aboutSupport.mediaDeviceRate		"レート">
+<!ENTITY aboutSupport.mediaDeviceLatency	"遅延">

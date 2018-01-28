@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Стартување">
+
+<!ENTITY startupBlankPage.label    "Прикажи празна страница">
+
+<!ENTITY useCurrentPage.label      "Вчитана страница">
+<!ENTITY useCurrentPage.accesskey  "и">
+<!ENTITY useMultiple.label         "Сите вчитани">
+<!ENTITY chooseBookmark.label      "Користи обележувач...">
+<!ENTITY chooseBookmark.accesskey  "б">
+<!ENTITY restoreDefault.label      "Основна страница">
+<!ENTITY restoreDefault.accesskey  "р">
+
+<!ENTITY downloads.label     "Преземања">
+
+<!ENTITY saveTo.label "Снимај ги датотеките во">
+<!ENTITY saveTo.accesskey "м">
+<!ENTITY chooseFolderWin.label        "Разгледај…">
+<!ENTITY chooseFolderWin.accesskey    "з">
+<!ENTITY chooseFolderMac.label        "Изберете…">
+<!ENTITY chooseFolderMac.accesskey    "е">
+
+
+
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY alwaysCheckDefault2.label        "Always check if &brandShortName; is your default browser">
+<!ENTITY e10sEnabled.label                "Enable multi-process &brandShortName;">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY isDefault.label                  "&brandShortName; is currently your default browser">
+<!ENTITY isNotDefault.label               "&brandShortName; is not your default browser">
+
+<!ENTITY separateProfileMode.label        "Allow &brandShortName; and Waterfox to run at the same time">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">
+<!ENTITY useWaterfoxSync.label             "Tip: This uses separate profiles. Use Sync to share data between them.">

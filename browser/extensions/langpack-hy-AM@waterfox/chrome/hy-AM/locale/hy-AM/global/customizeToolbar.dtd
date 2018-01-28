@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Հարմարեցնել Գործիքագոտին">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Կարող եք բաղադրիչներ ավելացնել կամ հեռացնել գործիքագոտիներում՝ դրանք վերցնելով և գցելով այնտեղ, որտեղ ցանկանում եք:">
+<!ENTITY show.label               "Ցուցադրել.">
+<!ENTITY iconsAndText.label       "Պատկերներ և Տեքստ">
+<!ENTITY icons.label              "Պատկերներ">
+<!ENTITY text.label               "Տեքստ">
+<!ENTITY useSmallIcons.label      "Օգտ. փոքր պատկերներ">
+<!ENTITY restoreDefaultSet.label  "Վերականգնել Նախնականը">
+<!ENTITY addNewToolbar.label      "Ավելացնել Նոր Վահանակ">
+<!ENTITY saveChanges.label        "Պատրաստ է">
+<!ENTITY undoChanges.label        "Փոփոխությունները Հետադարձել">

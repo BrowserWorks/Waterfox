@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Betg suandar mes fastizs">
+<!ENTITY window.width                 "40em">
+<!ENTITY window.height                "8em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Adina applitgar «Betg fastizar»">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; trametta in signal che di che ti na veglias betg vegnir persequità sche la protecziun cunter il fastizar è activada.">
+<!ENTITY doNotTrackLearnMore.label    "Ulteriuras infurmaziuns">

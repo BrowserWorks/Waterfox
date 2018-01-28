@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Bloklyste">
+
+
+<!ENTITY treehead.list.label          "Lys">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Kanselleer">
+<!ENTITY button.cancel.accesskey      "K">
+<!ENTITY button.ok.label              "Stoor veranderinge">
+<!ENTITY button.ok.accesskey          "S">
+
+<!ENTITY window.width                 "55em">
+

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "பெயர்:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "ப">
+<!ENTITY editBookmarkOverlay.location.label                  "இடம்:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "இறங்கும் இடம்:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "இணையதள இடம்:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "அடைவு:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "புத்தகக்குறிகள் அடைவுகள் அனைத்தையும் காட்டு">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "மறை">
+<!ENTITY editBookmarkOverlay.tags.label                      "ஒட்டுகள்:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "ஒட்டுகளை அரைப்புள்ளிகளால் பிரிக்கவும்">
+<!ENTITY editBookmarkOverlay.description.label               "விவரம்:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "முக்கியச்சொல்:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "அனைத்து ஒட்டுகளையும் காட்டு">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "இந்த புத்தகக்குறியை பக்கப்பட்டையில் ஏற்று">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "தேர்ந்தெடு…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "புதிய அடைவு">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

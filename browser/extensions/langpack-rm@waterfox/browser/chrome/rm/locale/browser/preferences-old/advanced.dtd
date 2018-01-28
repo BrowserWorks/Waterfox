@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "General">
+
+<!ENTITY accessibility.label             "Agids d'endataziun">
+
+<!ENTITY useCursorNavigation.label       "Permetter da marcar text cun la tastatura">
+<!ENTITY useCursorNavigation.accesskey   "m">
+<!ENTITY searchOnStartTyping.label       "Retschertgar il text cura che ti cumenzas a tippar">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY blockAutoReload.label           "Avertir sche websites emprovan da renviar u rechargiar la pagina">
+<!ENTITY blockAutoReload.accesskey       "v">
+<!ENTITY useOnScreenKeyboard.label       "Mussar ina tastatura tactila sche necessari">
+<!ENTITY useOnScreenKeyboard.accesskey   "t">
+
+<!ENTITY browsing.label                  "Navigaziun">
+
+<!ENTITY useAutoScroll.label             "Activar la defilada automatica">
+<!ENTITY useAutoScroll.accesskey         "o">
+<!ENTITY useSmoothScrolling.label        "Activar la defilada cuntinuanta">
+<!ENTITY useSmoothScrolling.accesskey    "n">
+<!ENTITY checkUserSpelling.label         "Controllar l'ortografia durant l'endataziun">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Decisiuns da datas">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Rapports da datas èn deactivads per questa configuraziun da compilaziun">
+
+<!ENTITY healthReportDesc.label          "Gida dad analisar la prestaziun da tes navigatur e cundivida cun &vendorShortName; las datas davart la sanadad da tes navigatur">
+<!ENTITY enableHealthReport.label        "Activar l'analisa da sanadad da &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "n">
+<!ENTITY healthReportLearnMore.label     "Ulteriuras infurmaziuns ">
+
+<!ENTITY telemetryDesc.label             "Cundivida datas davart prestaziun, utilisaziun, hardware e persunalisaziun da tes navigatur cun &vendorShortName; per meglierar &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Cundivider datas supplementaras (p.ex. telemetria)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Ulteriuras infurmaziuns ">
+
+<!ENTITY crashReporterDesc2.label         "Annunzias da collaps gidan a &vendorShortName; da schliar problems e render tes navigatur pli stabel e segir">
+<!ENTITY alwaysSubmitCrashReports.label   "Permetter a &brandShortName; da trametter rapports da collaps anc betg tramess">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "Ulteriuras infurmaziuns ">
+
+<!ENTITY networkTab.label                "Rait">
+
+<!ENTITY connection.label                "Connexiun">
+
+<!ENTITY connectionDesc.label            "Definir la moda da connexiun da &brandShortName; cun l'internet">
+<!ENTITY connectionSettings.label        "Parameters…">
+<!ENTITY connectionSettings.accesskey    "P">
+
+<!ENTITY httpCache.label                 "Cuntegn da web en il cache">
+
+<!ENTITY offlineStorage2.label           "Cuntegn da web per l'utilisaziun offline e datas d'utilisader">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Datas da la pagina">
+<!ENTITY clearSiteData.label             "Stizzar tut las datas">
+<!ENTITY clearSiteData.accesskey         "t">
+<!ENTITY siteDataSettings.label          "Parameters…">
+<!ENTITY siteDataSettings.accesskey      "r">
+<!ENTITY siteDataLearnMoreLink.label     "Ulteriuras infurmaziuns">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Limitar il cache a">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB da la memoria">
+<!ENTITY clearCacheNow.label             "Svidar ussa">
+<!ENTITY clearCacheNow.accesskey         "S">
+<!ENTITY clearOfflineAppCacheNow.label   "Svidar ussa">
+<!ENTITY clearOfflineAppCacheNow.accesskey "u">
+<!ENTITY overrideSmartCacheSize.label    "Surscriver l'administraziun automatica dal cache">
+<!ENTITY overrideSmartCacheSize.accesskey "c">
+
+<!ENTITY updateTab.label                 "Actualisaziun">
+
+<!ENTITY updateApplication.label         "Actualisaziuns da &brandShortName;">
+<!ENTITY updateAuto1.label               "Installar automaticamain actualisaziuns (recumandà, pli segir)">
+<!ENTITY updateAuto1.accesskey           "I">
+<!ENTITY updateCheckChoose.label         "Tschertgar actualisaziuns, ma dumandar avant che installar">
+<!ENTITY updateCheckChoose.accesskey     "T">
+<!ENTITY updateManual.label              "Mai tschertgar actualisaziuns (betg recumandà, privel da segirezza)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Mussar la cronologia da las actualisaziuns">
+<!ENTITY updateHistory.accesskey         "c">
+
+<!ENTITY useService.label                "Utilisar in servetsch per installar actualisaziuns senza interrupziun">
+<!ENTITY useService.accesskey            "r">
+
+<!ENTITY autoUpdateOthers.label          "Actualisar automaticamain">
+<!ENTITY enableSearchUpdate.label        "Maschinas da tschertgar">
+<!ENTITY enableSearchUpdate.accesskey    "s">
+
+<!ENTITY offlineStorageNotify.label               "Dumandar en cas che websites vulan memorisar datas per l'utilisaziun offline">
+<!ENTITY offlineStorageNotify.accesskey           "D">
+<!ENTITY offlineStorageNotifyExceptions.label     "Excepziuns…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "Suandantas paginas d'internet dastgan memorisar datas per l'utilisaziun offline:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Allontanar…">
+<!ENTITY offlineAppsListRemove.accesskey "A">
+<!ENTITY offlineAppRemove.confirm        "Allontanar las datas offline">
+
+<!ENTITY certificateTab.label            "Certificats">
+<!ENTITY certPersonal.label              "Dumondas">
+<!ENTITY certPersonal.description        "Sch'ina website dumonda il certificat da segirezza persunal:">
+<!ENTITY selectCerts.auto                "Tscherner automaticamain in">
+<!ENTITY selectCerts.auto.accesskey      "T">
+<!ENTITY selectCerts.ask                 "Dumandar mintga giada">
+<!ENTITY selectCerts.ask.accesskey       "D">
+<!ENTITY enableOCSP.label                "Laschar confermar la validitad da certificats entras dumandar servers da OCSP">
+<!ENTITY enableOCSP.accesskey            "c">
+<!ENTITY viewCerts.label                 "Mussar ils certificats">
+<!ENTITY viewCerts.accesskey             "c">
+<!ENTITY viewSecurityDevices.label       "Moduls da criptadi">
+<!ENTITY viewSecurityDevices.accesskey   "M">
+
+<!ENTITY performance.label               "Prestaziun">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Utilisar ils parameters da prestaziun recumandads">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Quests parameters èn adattads per la hardware da tes computer e tes sistem operativ.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "p">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Ulteriuras infurmaziuns">
+<!ENTITY limitContentProcessOption.label "Limita da process da cuntegn">
+<!ENTITY limitContentProcessOption.description
+                                         "Process da cuntegn supplementars pon augmentar la prestaziun sche ti utiliseschas plirs tabs, ma els dovran era dapli memoria.">
+<!ENTITY limitContentProcessOption.accesskey   "l">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Igl è mo pussaivel da midar il dumber da process da cuntegn cun versiuns da &brandShortName; che sustegnan plirs process.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Ve a savair co che ti pos controllar sche la funcziun da plirs process è activada">
+<!ENTITY allowHWAccel.label              "Utilisar sche pussaivel l'acceleraziun cun hardware da grafica">
+<!ENTITY allowHWAccel.accesskey          "h">

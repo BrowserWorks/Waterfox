@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label;కి స్వాగతం">
+
+<!ENTITY aboutAccountsConfig.description "మీ ట్యాబులను, ఇష్టాంశాలను, సంకేతపదాలను, ఇంకా మరెన్నింటినో సింక్రనించుకోడానికి ప్రవేశించండి.">
+<!ENTITY aboutAccountsConfig.startButton.label "మొదలుపెట్టండి">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync అభిరుచులు">
+<!ENTITY aboutAccounts.noConnection.title "అనుసంధానం లేదు">
+<!ENTITY aboutAccounts.noConnection.description "లోనికి ప్రవేశించడానికి మీరు అంతర్జాలానికి అనుసంధానమై ఉండాలి.">
+<!ENTITY aboutAccounts.noConnection.retry "మళ్ళీ ప్రయత్నించు">
+<!ENTITY aboutAccounts.badConfig.title "చెడ్డ ఆకృతీకరణ">
+<!ENTITY aboutAccounts.badConfig.description "మీ Waterfox ఖాతా సర్వర్ ఆకృతీకరణ గుర్తించలేకపోయింది. దయచేసి తర్వాత మళ్లీ ప్రయత్నించండి.">

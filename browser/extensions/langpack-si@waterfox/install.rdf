@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-si@waterfox"
+               em:name="Sinhala (si-LK) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="mozilla.org">
+    <em:contributor>Danishka Navin</em:contributor><em:contributor>Kalpa Pathum</em:contributor> <em:contributor>Gayan Kalhara</em:contributor><em:contributor>RohanaDasanayaka</em:contributor>  <em:contributor>SrishanuLokupathirage</em:contributor> <em:contributor>HarshanaWeerasinghe</em:contributor> <em:contributor> Lahiru Himesh</em:contributor><em:contributor>Nuwan Indika</em:contributor> <em:contributor>Lohan Gunaweera</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

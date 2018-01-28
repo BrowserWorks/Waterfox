@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Maa:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "M">
+<!ENTITY editBookmarkOverlay.location.label                  "Gorodoo:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "G">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Alhabar damdoo:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "A">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Nungu doo:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "N">
+<!ENTITY editBookmarkOverlay.folder.label                    "Foolo:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Doo-šilba foolawey kul cebe">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Tugu">
+<!ENTITY editBookmarkOverlay.tags.label                      "Kanjey:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "K">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Kanji fayantey nda surkumey">
+<!ENTITY editBookmarkOverlay.description.label               "Šilbayyan:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "Š">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Kufalkalima:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Kanjey kul cebe">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Doo-šilbaa woo zumandi ceraw-maaboŋ ra">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "w">
+<!ENTITY editBookmarkOverlay.choose.label                    "Suuba…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Foolo taaga">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "F">

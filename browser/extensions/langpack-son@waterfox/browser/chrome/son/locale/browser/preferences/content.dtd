@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "Biiboŋ bata zanfuney daabu">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Bay ka tonton">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "u">
+<!ENTITY  notificationsPolicyButton.label      "Suuba…">
+<!ENTITY  notificationsDoNotDisturb.label      "Ya mma dejje">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "m">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Bangandiyan kul ši cebandi hala &brandShortName; ma tun taaga">
+
+<!ENTITY  popupExceptions.label       "Hasarawey…">
+<!ENTITY  popupExceptions.accesskey   "H">
+
+<!ENTITY  fontsAndColors.label        "Šigirawey nda noonawey">
+
+<!ENTITY  defaultFont2.label          "Tilasu šigira">
+<!ENTITY  defaultFont2.accesskey      "T">
+<!ENTITY  defaultSize2.label          "Adadu">
+<!ENTITY  defaultSize2.accesskey      "A">
+
+<!ENTITY  advancedFonts.label         "Jinehere…">
+<!ENTITY  advancedFonts.accesskey     "J">
+
+<!ENTITY  colors.label                "Noonawey…">
+<!ENTITY  colors.accesskey            "N">
+
+<!ENTITY chooseLanguage.label         "War šenni ibaayantaa suuba ka moɲey cebe">
+<!ENTITY chooseButton.label           "Suuba…">
+<!ENTITY chooseButton.accesskey       "u">
+
+<!ENTITY translateWebPages.label      "Interneti gundekuna berandi">
+<!ENTITY translateWebPages.accesskey  "b">
+<!ENTITY translateExceptions.label    "Hasarawey…">
+<!ENTITY translateExceptions.accesskey "H">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Berandikey">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+
+
+<!ENTITY  playDRMContent.learnMore.label "Bay ka tonton">
+
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

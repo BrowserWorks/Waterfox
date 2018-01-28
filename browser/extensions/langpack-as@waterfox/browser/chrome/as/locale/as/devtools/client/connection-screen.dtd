@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "সংযোগ কৰক">
+<!ENTITY header     "দূৰৱৰ্তী ডিভাইচলে সংযোগ কৰক">
+<!ENTITY host       "হস্ট:">
+<!ENTITY port       "প'ৰ্ট:">
+<!ENTITY connect    "সংযোগ কৰক">
+<!ENTITY connecting "সংযোগ কৰা হৈ আছে…">
+<!ENTITY availableAddons "উপলব্ধ দূৰৱৰ্তী এড-সমূহ:">
+<!ENTITY availableTabs "উপলব্ধ দূৰৱৰ্তী টেবসমূহ:">
+<!ENTITY availableProcesses "উপলব্ধ দূৰৱৰ্তী প্ৰক্ৰিয়াসমূহ:">
+<!ENTITY connectionError "ভুল:">
+<!ENTITY errorTimeout "ত্ৰুটি: সংযোগৰ সময়অন্ত।">
+<!ENTITY errorRefused "ত্ৰুটি: সংযোগ নাকচ কৰা হল।">
+<!ENTITY errorUnexpected "অপ্ৰত্যাশিত ত্ৰুটি।">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox উন্নয়নকাৰী সঁজুলিসমূহে দূৰৱৰ্তী ডিভাইচসমূহ ডিবাগ কৰিব পাৰে (উদাহৰণস্বৰূপ, Android ৰ বাবে Waterfox আৰু Waterfox OS)। দূৰৱৰ্তী ডিভাইচত 'দূৰৱৰ্তী ডিবাগিং' বিকল্প অন থকাটো সুনিশ্চিত কৰক। অধিক জানিবলৈ, চাওক ">
+<!ENTITY remoteDocumentation "তথ্যচিত্ৰ">
+<!ENTITY remoteHelpSuffix ".">
+

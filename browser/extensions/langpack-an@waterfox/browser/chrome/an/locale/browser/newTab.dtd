@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Nueva pestanya">
+
+<!ENTITY newtab.customize.cog.enhanced "Inlcuyer os puestos socherius">
+<!ENTITY newtab.customize.cog.title2 "CONTROLS DE NUEVA PESTANYA">
+<!ENTITY newtab.customize.cog.learn "Saber mas sobre Nuevas pestanya">
+<!ENTITY newtab.customize.title "Personalizar a pachina de Nueva Pestanya">
+<!ENTITY newtab.customize.blank2 "Amostrar una pachina en blanco">
+<!ENTITY newtab.undo.removedLabel "Miniatura eliminada.">
+<!ENTITY newtab.undo.undoButton "Desfer.">
+<!ENTITY newtab.undo.restoreButton "Restaurar-las todas.">
+<!ENTITY newtab.undo.closeTooltip "Amagar">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title "Zgłoszenia awarii">
+<!ENTITY crashesUnsubmitted.label "Nieprzesłane zgłoszenia awarii">
+<!ENTITY crashesSubmitted.label "Przesłane zgłoszenia awarii">
+<!ENTITY id.heading                 "ID zgłoszenia">
+<!ENTITY dateCrashed.heading "Data awarii">
+<!ENTITY dateSubmitted.heading "Data zgłoszenia">
+<!ENTITY noReports.label            "Nie przesłano żadnych zgłoszeń awarii.">
+<!ENTITY noConfig.label             "Ten program nie został właściwie skonfigurowany do wyświetlania zgłoszeń awarii. Konieczne jest prawidłowe ustawienie opcji <code>breakpad.reportURL</code>">
+<!ENTITY clearAllReports.label      "Usuń wszystkie zgłoszenia">

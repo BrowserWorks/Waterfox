@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addons.windowTitle                   "Dodatki">
+
+<!ENTITY search.placeholder                   "Szukaj we wszystkich dodatkach">
+<!ENTITY search.buttonlabel "Szukaj">
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Wczytywanie…">
+<!ENTITY listEmpty.installed.label            "Brak zainstalowanych dodatków tego typu">
+<!ENTITY listEmpty.availableUpdates.label     "Nie znaleziono aktualizacji">
+<!ENTITY listEmpty.recentUpdates.label        "Dodatki nie były ostatnio aktualizowane">
+<!ENTITY listEmpty.findUpdates.label          "Sprawdź dostępność aktualizacji">
+
+<!ENTITY listEmpty.search.label               "Nie znaleziono pasujących dodatków">
+<!ENTITY listEmpty.button.label               "Więcej informacji o dodatkach">
+
+<!ENTITY installAddonFromFile.label           "Zainstaluj dodatek z pliku…">
+<!ENTITY installAddonFromFile.accesskey       "Z">
+
+<!ENTITY toolsMenu.tooltip                    "Narzędzia dla wszystkich dodatków">
+
+<!ENTITY getThemes.description "Szukasz sposobu na personalizację przeglądarki?">
+<!ENTITY getThemes.learnMore "Wybieraj spośród tysięcy motywów.">
+
+<!ENTITY cmd.back.tooltip                     "Przejdź jedną stronę do przodu">
+<!ENTITY cmd.forward.tooltip                  "Przejdź jedną stronę wstecz">
+
+<!ENTITY showUnsignedExtensions.button.label "Niektóre rozszerzenia nie mogły zostać zweryfikowane">
+<!ENTITY showAllExtensions.button.label "Pokaż wszystkie rozszerzenia">
+<!ENTITY debugAddons.label "Debuguj dodatki">
+<!ENTITY debugAddons.accesskey "i">
+
+<!ENTITY warning.safemode.label                    "Wszystkie dodatki zostały wyłączone przez tryb awaryjny">
+<!ENTITY warning.checkcompatibility.label          "Sprawdzanie zgodności dodatków jest wyłączone. Dodatki mogą być niezgodne.">
+<!ENTITY warning.checkcompatibility.enable.label   "Włącz">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Włącz sprawdzanie zgodności dodatków">
+<!ENTITY warning.updatesecurity.label              "Sprawdzanie bezpieczeństwa aktualizacji jest wyłączone. Aktualizacje mogą powodować zagrożenie.">
+<!ENTITY warning.updatesecurity.enable.label       "Włącz">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Włącz sprawdzanie bezpieczeństwa aktualizacji dodatków">
+
+<!ENTITY view.search.label                    "Szukaj">
+<!ENTITY view.discover.label                  "Pobierz dodatki">
+<!ENTITY view.recentUpdates.label             "Ostatnie aktualizacje">
+<!ENTITY view.availableUpdates.label          "Dostępne aktualizacje">
+
+<!ENTITY updates.checkForUpdates.label        "Znajdź aktualizacje">
+<!ENTITY updates.checkForUpdates.accesskey    "n">
+<!ENTITY updates.viewUpdates.label            "Wyświetl ostatnie aktualizacje">
+<!ENTITY updates.viewUpdates.accesskey        "W">
+<!ENTITY updates.updateAddonsAutomatically.label     "Aktualizuj dodatki automatycznie">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Przestaw wszystkie dodatki na automatyczną aktualizację">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "P">
+<!ENTITY updates.resetUpdatesToManual.label          "Przestaw wszystkie dodatki na ręczną aktualizację">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "P">
+<!ENTITY updates.updating.label "Aktualizowanie dodatków…">
+<!ENTITY updates.installed.label "Dodatki zostały uaktualnione.">
+<!ENTITY updates.downloaded.label             "Pobrano aktualizacje dodatków.">
+<!ENTITY updates.restart.label                "Uruchom ponownie, by dokończyć instalację">
+<!ENTITY updates.noneFound.label              "Nie znaleziono aktualizacji">
+<!ENTITY updates.manualUpdatesFound.label     "Wyświetl dostępne aktualizacje">
+<!ENTITY updates.updateSelected.label         "Zainstaluj aktualizacje">
+<!ENTITY updates.updateSelected.tooltip       "Zainstaluj aktualizacje z tej listy">
+
+<!ENTITY cmd.showDetails.label                "Wyświetl więcej informacji">
+<!ENTITY cmd.showDetails.accesskey            "W">
+<!ENTITY cmd.findUpdates.label                "Znajdź aktualizacje">
+<!ENTITY cmd.findUpdates.accesskey            "n">
+<!ENTITY cmd.preferencesWin.label             "Opcje">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "Preferencje">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "O tym dodatku">
+<!ENTITY cmd.about.accesskey                  "d">
+
+<!ENTITY cmd.enableAddon.label                "Włącz">
+<!ENTITY cmd.enableAddon.accesskey            "W">
+<!ENTITY cmd.disableAddon.label               "Wyłącz">
+<!ENTITY cmd.disableAddon.accesskey           "W">
+<!ENTITY cmd.enableTheme.label                "Używaj motywu">
+<!ENTITY cmd.enableTheme.accesskey            "a">
+<!ENTITY cmd.disableTheme.label               "Przestań używać motywu">
+<!ENTITY cmd.disableTheme.accesskey           "a">
+<!ENTITY cmd.askToActivate.label              "Pytaj o aktywację">
+<!ENTITY cmd.askToActivate.tooltip            "Pytaj za każdym razem o użycie tego dodatku">
+<!ENTITY cmd.alwaysActivate.label             "Zawsze aktywuj">
+<!ENTITY cmd.alwaysActivate.tooltip           "Zawsze używaj tego dodatku">
+<!ENTITY cmd.neverActivate.label              "Nigdy nie aktywuj">
+<!ENTITY cmd.neverActivate.tooltip            "Nigdy nie używaj tego dodatku">
+<!ENTITY cmd.stateMenu.tooltip                "Zmień, kiedy ten dodatek ma działać">
+<!ENTITY cmd.installAddon.label               "Zainstaluj">
+<!ENTITY cmd.installAddon.accesskey           "Z">
+<!ENTITY cmd.uninstallAddon.label             "Usuń">
+<!ENTITY cmd.uninstallAddon.accesskey         "U">
+<!ENTITY cmd.showPreferencesWin.label         "Opcje">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Zmień opcje tego dodatku">
+<!ENTITY cmd.showPreferencesUnix.label        "Preferencje">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Zmień preferencje związane z tym dodatkiem">
+<!ENTITY cmd.contribute.label                 "Wspomóż">
+<!ENTITY cmd.contribute.accesskey             "s">
+<!ENTITY cmd.contribute.tooltip               "Wspomóż rozwój tego dodatku">
+
+<!ENTITY cmd.showReleaseNotes.label           "Wyświetl informacje o wydaniu">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Wyświetl informacje o wydaniu tej aktualizacji">
+<!ENTITY cmd.hideReleaseNotes.label           "Ukryj informacje o wydaniu">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Ukryj informacje o wydaniu tej aktualizacji">
+<!ENTITY cmd.findReplacement.label "Znajdź zamiennik">
+
+<!ENTITY discover.title                       "Czym są dodatki?">
+<!ENTITY discover.description2                "Dodatki to programy, które pozwalają dostosować program &brandShortName; do upodobań użytkownika dzięki nowej funkcjonalności lub innemu wyglądowi. Wypróbuj panel boczny oszczędzający czas, powiadomienia o pogodzie albo nowy motyw graficzny.">
+<!ENTITY discover.footer                      "Kiedy dostępne jest połączenie z Internetem, ten panel będzie wyświetlał najnowsze i najpopularniejsze dodatki, które warto wypróbować.">
+
+<!ENTITY detail.version.label                 "Wersja">
+<!ENTITY detail.lastupdated.label             "Ostatnia aktualizacja">
+<!ENTITY detail.creator.label                 "Twórca">
+<!ENTITY detail.homepage.label                "Witryna">
+<!ENTITY detail.numberOfDownloads.label       "Liczba pobrań">
+
+<!ENTITY detail.contributions.description     "Autor tego dodatku prosi o wsparcie niewielką kwotą jego dalszego rozwoju.">
+
+<!ENTITY detail.updateType                    "Aktualizacje automatyczne">
+<!ENTITY detail.updateDefault.label           "Ustawienia domyślne">
+<!ENTITY detail.updateDefault.tooltip         "Instaluj aktualizacje automatycznie tylko, jeśli takie jest domyślne ustawienie">
+<!ENTITY detail.updateAutomatic.label         "Włącz">
+<!ENTITY detail.updateAutomatic.tooltip       "Instaluj aktualizacje automatycznie">
+<!ENTITY detail.updateManual.label            "Wyłącz">
+<!ENTITY detail.updateManual.tooltip          "Nie instaluj aktualizacji automatycznie">
+<!ENTITY detail.home                          "Strona domowa">
+<!ENTITY detail.repository                    "Profil dodatku">
+<!ENTITY detail.size                          "Rozmiar">
+
+<!ENTITY detail.checkForUpdates.label         "Sprawdź dostępność aktualizacji">
+<!ENTITY detail.checkForUpdates.accesskey     "S">
+<!ENTITY detail.checkForUpdates.tooltip       "Sprawdź, czy dostępne są aktualizacje dla tego dodatku">
+<!ENTITY detail.showPreferencesWin.label      "Opcje">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "Zmień opcje tego dodatku">
+<!ENTITY detail.showPreferencesUnix.label     "Preferencje">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Zmień preferencje związane z tym dodatkiem">
+
+<!ENTITY rating2.label                         "Ocena">
+
+<!ENTITY progress.pause.tooltip               "Wstrzymaj">
+<!ENTITY progress.cancel.tooltip              "Anuluj">
+
+<!ENTITY sort.name.label                      "Nazwa">
+<!ENTITY sort.name.tooltip                    "Sortuj według nazwy">
+<!ENTITY sort.dateUpdated.label               "Ostatnia aktualizacja">
+<!ENTITY sort.dateUpdated.tooltip             "Sortuj według daty aktualizacji">
+<!ENTITY sort.relevance.label                 "Najbardziej pasujące">
+<!ENTITY sort.relevance.tooltip               "Sortuj według istotności">
+<!ENTITY sort.price.label                     "Cena">
+<!ENTITY sort.price.tooltip                   "Sortuj według ceny">
+
+<!ENTITY search.filter2.label                 "Przeszukaj:">
+<!ENTITY search.filter2.installed.label       "moje dodatki">
+<!ENTITY search.filter2.installed.tooltip     "Wyświetl zainstalowane dodatki">
+<!ENTITY search.filter2.available.label       "dostępne dodatki">
+<!ENTITY search.filter2.available.tooltip     "Wyświetl dodatki dostępne do instalacji">
+
+<!ENTITY addon.homepage                       "Witryna">
+<!ENTITY addon.details.label                  "Więcej">
+<!ENTITY addon.details.tooltip                "Wyświetl więcej informacji o tym dodatku">
+<!ENTITY addon.unknownDate                    "nieznana">
+<!ENTITY addon.legacy.label "Przestarzałe">
+<!ENTITY addon.disabled.postfix               "(wyłączony)">
+<!ENTITY addon.update.postfix                 "(aktualizacja)">
+<!ENTITY addon.undoAction.label               "Cofnij">
+<!ENTITY addon.undoAction.tooltip "Cofnij tę czynność">
+<!ENTITY addon.undoRemove.label               "Cofnij">
+<!ENTITY addon.undoRemove.tooltip             "Pozostaw ten dodatek">
+<!ENTITY addon.restartNow.label               "Uruchom ponownie">
+<!ENTITY addon.install.label                  "Zainstaluj">
+<!ENTITY addon.install.tooltip                "Zainstaluj ten dodatek">
+<!ENTITY addon.updateNow.label                "Aktualizuj teraz">
+<!ENTITY addon.updateNow.tooltip              "Zainstaluj aktualizację tego dodatku">
+<!ENTITY addon.includeUpdate.label "Uaktualnij ten dodatek">
+<!ENTITY addon.updateAvailable.label          "Dostępna jest aktualizacja">
+<!ENTITY addon.checkingForUpdates.label       "Poszukiwanie aktualizacji…">
+<!ENTITY addon.releaseNotes.label             "Informacje o wydaniu:">
+<!ENTITY addon.loadingReleaseNotes.label      "Wczytywanie…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Przepraszamy, podczas pobierania informacji o wydaniu wystąpił błąd.">
+
+<!ENTITY addon.createdBy.label                "Autor: ">
+
+<!ENTITY eula.title                           "Umowa licencyjna użytkownika">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Zaakceptuj i zainstaluj…">
+
+<!ENTITY settings.path.button.label           "Przeglądaj…">
+
+<!ENTITY experiment.info.label "Telemetria może od czasu do czasu instalować i uruchamiać eksperymenty.">
+<!ENTITY experiment.info.learnmore "Więcej informacji">
+<!ENTITY experiment.info.learnmore.accesskey "W">
+<!ENTITY experiment.info.changetelemetry "Ustawienia telemetrii">
+<!ENTITY experiment.info.changetelemetry.accesskey "U">
+
+<!ENTITY setting.learnmore "Więcej informacji…">
+
+<!ENTITY disabledUnsigned.heading "Niektóre dodatki zostały wyłączone">
+<!ENTITY disabledUnsigned.description.start "Następujące dodatki nie zostały zweryfikowane do użytku w programie &brandShortName;. Możesz ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "poszukać zamienników">
+<!ENTITY disabledUnsigned.description.end " lub poprosić ich dostawcę o weryfikację.">
+<!ENTITY disabledUnsigned.learnMore "Więcej informacji o naszych wysiłkach na rzecz Twojego bezpieczeństwa w sieci.">
+<!ENTITY disabledUnsigned.devInfo.start "Programiści zainteresowani weryfikacją swoich dodatków mogą skorzystać z ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "dokumentacji">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Czegoś tutaj brakuje? Niektóre wtyczki nie są już obsługiwane w programie &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Więcej informacji">
+
+<!ENTITY legacyWarning.description "Czegoś tutaj brakuje? Niektóre wtyczki nie są już obsługiwane przez program &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Wyświetl przestarzałe rozszerzenia">
+<!ENTITY legacyExtensions.title "Przestarzałe rozszerzenia">
+<!ENTITY legacyExtensions.description "Te rozszerzenia nie spełniają obecnych standardów programu &brandShortName; i z tego powodu zostały wyłączone.">
+<!ENTITY legacyExtensions.learnMore "Więcej informacji o zmianach w dodatkach">

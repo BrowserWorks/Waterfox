@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Ağ hakkında">
+<!ENTITY aboutNetworking.warning               "Bu çok deneysel bir şey. Ne yaptığınızdan emin değilseniz kullanmayın.">
+<!ENTITY aboutNetworking.showNextTime          "Bu uyarıyı bir sonraki kez yine göster">
+<!ENTITY aboutNetworking.ok                    "Tamam">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Yenile">
+<!ENTITY aboutNetworking.autoRefresh           "3 saniyede bir otomatik yenile">
+<!ENTITY aboutNetworking.hostname              "Makine adı">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Etkin">
+<!ENTITY aboutNetworking.idle                  "Beklemede">
+<!ENTITY aboutNetworking.host                  "Makine">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Gönderilen">
+<!ENTITY aboutNetworking.received              "Alınan">
+<!ENTITY aboutNetworking.family                "Aile">
+<!ENTITY aboutNetworking.addresses             "Adresler">
+<!ENTITY aboutNetworking.expires               "Zaman aşımı (saniye)">
+<!ENTITY aboutNetworking.messagesSent          "Gönderilen mesajlar">
+<!ENTITY aboutNetworking.messagesReceived      "Alınan mesajlar">
+<!ENTITY aboutNetworking.bytesSent             "Gönderilen bayt">
+<!ENTITY aboutNetworking.bytesReceived         "Alınan bayt">
+<!ENTITY aboutNetworking.logging               "Log Kaydı">
+<!ENTITY aboutNetworking.logTutorial           "Bu aracı nasıl kullanabileceğinizi öğrenmek için <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> sayfasına bakın.">
+<!ENTITY aboutNetworking.currentLogFile        "Geçerli log dosyası:">
+<!ENTITY aboutNetworking.currentLogModules     "Geçerli log modülleri:">
+<!ENTITY aboutNetworking.setLogFile            "Log doyasını ayarlar">
+<!ENTITY aboutNetworking.setLogModules         "Log modüllerini ayarla">
+<!ENTITY aboutNetworking.startLogging          "Log tutmayı başlat">
+<!ENTITY aboutNetworking.stopLogging           "Log tutmayı durdur">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Çözümleme">
+<!ENTITY aboutNetworking.dnsLookupButton       "Çözümle">
+<!ENTITY aboutNetworking.dnsDomain             "Alan adı">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP'ler">
+<!ENTITY aboutNetworking.rcwn                  "RCWN İstatistikleri">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN durumu">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Toplam ağ isteği sayısı">
+<!ENTITY aboutNetworking.rcwnOperation         "Önbellek operasyonu">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Açma">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Okuma">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Yazma">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Kayıt açma">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Kısa ortalama">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Uzun ortalama">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Uzun standart sapma">
+
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">

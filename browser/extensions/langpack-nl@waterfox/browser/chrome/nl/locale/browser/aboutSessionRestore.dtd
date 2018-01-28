@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Sessie herstellen">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Onze excuses voor het ongemak.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ondervindt problemen bij het herstellen van uw vensters en tabbladen. Dit wordt meestal veroorzaakt door een onlangs geopende pagina.">
+<!ENTITY restorepage.tryThis        "U kunt proberen:">
+<!ENTITY restorepage.restoreSome    "Een of meerdere tabbladen die volgens u het probleem veroorzaken te verwijderen">
+<!ENTITY restorepage.startNew       "Een geheel nieuwe sessie te starten">
+
+<!ENTITY restorepage.tryagainButton "Herstellen">
+<!ENTITY restorepage.restore.access "H">
+<!ENTITY restorepage.closeButton    "Sluiten">
+<!ENTITY restorepage.close.access   "S">
+
+<!ENTITY restorepage.restoreHeader  "Herstellen">
+<!ENTITY restorepage.listHeader     "Vensters en tabbladen">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Venster &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Beginnen!">
+<!ENTITY welcomeback2.restoreButton.access "B">
+
+<!ENTITY welcomeback2.tabtitle      "Gelukt!">
+
+<!ENTITY welcomeback2.pageTitle     "Gelukt!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; is gereed voor gebruik.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Alle vensters en tabbladen herstellen">
+<!ENTITY welcomeback2.restoreSome.label "Alleen bepaalde vensters en tabbladen">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Uw add-ons en aanpassingen zijn verwijderd en uw browserinstellingen zijn naar hun standaardwaarden teruggezet. Als dit uw probleem niet heeft opgelost, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "lees dan hier wat u kunt doen.">

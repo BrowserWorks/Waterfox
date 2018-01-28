@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Odpravljanje težav">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Ta stran vsebuje tehnične podatke, ki jih boste morda potrebovali pri odpravljanju
+  težav. Če iščete odgovore na splošna vprašanja o programu
+  &brandShortName;, obiščite <a id='supportLink'>strani za podporo uporabnikom</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Poročila o sesutjih">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID poročila">
+<!ENTITY aboutSupport.crashes.sendDate "Datum pošiljanja">
+<!ENTITY aboutSupport.crashes.allReports "Vsa poročila o sesutjih">
+<!ENTITY aboutSupport.crashes.noConfig "Ta program ni bil nastavljen za prikaz poročil o sesutjih.">
+
+<!ENTITY aboutSupport.extensionsTitle "Razširitve">
+<!ENTITY aboutSupport.extensionName "Ime">
+<!ENTITY aboutSupport.extensionEnabled "Vključeno">
+<!ENTITY aboutSupport.extensionVersion "Različica">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Zmogljivosti &brandShortName;a">
+<!ENTITY aboutSupport.featureName "Ime">
+<!ENTITY aboutSupport.featureVersion "Različica">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Poskusne zmogljivosti">
+<!ENTITY aboutSupport.experimentName "Ime">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Opis">
+<!ENTITY aboutSupport.experimentActive "Aktivno">
+<!ENTITY aboutSupport.experimentEndDate "Datum konca">
+<!ENTITY aboutSupport.experimentHomepage "Domača stran">
+<!ENTITY aboutSupport.experimentBranch "Veja">
+
+<!ENTITY aboutSupport.appBasicsTitle "Osnovni podatki">
+<!ENTITY aboutSupport.appBasicsName "Ime">
+<!ENTITY aboutSupport.appBasicsVersion "Različica">
+<!ENTITY aboutSupport.appBasicsBuildID "ID gradnje">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Posodobitveni kanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Zgodovina posodobitev">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Prikaži zgodovino posodobitev">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Mapa s profilom">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Mapa s profilom">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Omogočeni vtičniki">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Nastavitev graditve">
+<!ENTITY aboutSupport.appBasicsUserAgent "Uporabniški agent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Poraba pomnilnika">
+<!ENTITY aboutSupport.appBasicsPerformance "Učinkovitost">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registrirani Service Workerji">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profili">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Večprocesna okna">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Procesi spletne vsebine">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Ključ Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Ključ lokacijskih storitev Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Varni način">
+
+<!ENTITY aboutSupport.showDir.label "Odpri mapo">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Prikaži v Finderju">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Odpri mapo">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Pomembne spremenjene nastavitve">
+<!ENTITY aboutSupport.modifiedPrefsName "Ime">
+<!ENTITY aboutSupport.modifiedPrefsValue "Vrednost">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Nastavitve user.js">
+<!ENTITY aboutSupport.userJSDescription "V vaši mapi s profilom se nahaja <a id='prefs-user-js-link'>datoteka user.js</a>, ki vsebuje nastavitve, ki jih ni ustvaril &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Pomembne zaklenjene nastavitve">
+<!ENTITY aboutSupport.lockedPrefsName "Ime">
+<!ENTITY aboutSupport.lockedPrefsValue "Vrednost">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Podatkovna zbirka mest">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Celovitost">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Preveri celovitost">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementalen GC">
+
+<!ENTITY aboutSupport.a11yTitle "Dostopnost">
+<!ENTITY aboutSupport.a11yActivated "Vključeno">
+<!ENTITY aboutSupport.a11yForceDisabled "Prepreči dostopnost">
+<!ENTITY aboutSupport.a11yHandlerUsed "Uporabljen upravljalec dostopnosti">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Različice knjižnic">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Zgodovina namestitev">
+<!ENTITY aboutSupport.updateHistoryTitle "Zgodovina posodobitev">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopiraj besedilo v odložišče">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopiraj neobdelane podatke v odložišče">
+
+<!ENTITY aboutSupport.sandboxTitle "Peskovnik">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Zavrnjeni sistemski klici">
+<!ENTITY aboutSupport.sandboxSyscallIndex "Št. ">
+<!ENTITY aboutSupport.sandboxSyscallAge "Pred nekaj sekundami">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Vrsta procesa">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Sistemski klic">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumenti">
+
+<!ENTITY aboutSupport.safeModeTitle "Poskusite varni način">
+<!ENTITY aboutSupport.restartInSafeMode.label "Ponovno zaženi z onemogočenimi dodatki …">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Možnosti">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostika">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Dnevnik napak">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPE št. 1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPE št. 2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Dnevnik odločitev">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Onemogočene možnosti zaščite pred sesutjem">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Zaobidenja">
+
+<!ENTITY aboutSupport.mediaTitle "Predstavnost">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Izhodne naprave">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Vhodne naprave">
+<!ENTITY aboutSupport.mediaDeviceName "Ime">
+<!ENTITY aboutSupport.mediaDeviceGroup "Skupina">
+<!ENTITY aboutSupport.mediaDeviceVendor "Ponudnik">
+<!ENTITY aboutSupport.mediaDeviceState "Stanje">
+<!ENTITY aboutSupport.mediaDevicePreferred "Prednostno">
+<!ENTITY aboutSupport.mediaDeviceFormat "Oblika">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanali">
+<!ENTITY aboutSupport.mediaDeviceRate "Hitrost">
+<!ENTITY aboutSupport.mediaDeviceLatency "Zakasnitev">

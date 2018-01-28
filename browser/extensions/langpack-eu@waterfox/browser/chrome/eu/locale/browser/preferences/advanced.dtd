@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Orokorra">
+
+<!ENTITY useCursorNavigation.label       "Erabili beti kurtsore-teklak orriak nabigatzeko">
+<!ENTITY useCursorNavigation.accesskey   "k">
+<!ENTITY searchOnStartTyping.label       "Bilatu testua idazten hasi bezain laster">
+<!ENTITY searchOnStartTyping.accesskey   "B">
+<!ENTITY useOnScreenKeyboard.label       "Beharrezkoa denean, erakutsi ukipen-teklatua">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Nabigatzea">
+
+<!ENTITY useAutoScroll.label             "Erabili korritze automatikoa">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Erabili korritze leuna">
+<!ENTITY useSmoothScrolling.accesskey    "u">
+<!ENTITY checkUserSpelling.label         "Egiaztatu ortografia idatzi ahala">
+<!ENTITY checkUserSpelling.accesskey     "z">
+
+<!ENTITY dataChoicesTab.label            "Datu-aukerak">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Datuen berri ematea desgaituta dago eraikitze-konfigurazio honetarako">
+
+<!ENTITY enableHealthReport1.label       "Baimendu &brandShortName;(r)i datu tekniko eta interakziozkoak automatikoki Mozillara bidaltzea">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Argibide gehiago">
+
+<!ENTITY dataCollection.label            "&brandShortName; datuen bilketa eta erabilera">
+<!ENTITY dataCollectionDesc.label        "Aukerak ematen ahalegintzen gara &brandShortName; denontzat hobetzeko behar ditugun datuak soilik biltzeko. Informazio pertsonala jaso aurretik zure baimena eskatzen dugu beti.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Pribatutasun-oharra">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Baimendu &brandShortName;(r)i hutsegite-txostenak Mozillara bidaltzea">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "h">
+<!ENTITY crashReporterLearnMore.label    "Argibide gehiago">
+
+<!ENTITY networkTab.label                "Sarea">
+
+<!ENTITY networkProxy.label              "Sareko proxya">
+
+<!ENTITY connectionDesc.label            "Konfiguratu &brandShortName; nola konektatzen den Internetera">
+<!ENTITY connectionSettings.label        "Ezarpenak…">
+<!ENTITY connectionSettings.accesskey    "E">
+
+<!ENTITY httpCache.label                 "Cachean gordetako web edukia">
+
+<!ENTITY offlineStorage2.label           "Lineaz kanpoko web edukia eta erabiltzaileen datuak">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Gunearen datuak">
+<!ENTITY clearSiteData.label             "Garbitu datu guztiak">
+<!ENTITY clearSiteData.accesskey         "G">
+<!ENTITY siteDataSettings.label          "Ezarpenak…">
+<!ENTITY siteDataSettings.accesskey      "E">
+<!ENTITY siteDataLearnMoreLink.label     "Argibide gehiago">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Mugatu cachea">
+<!ENTITY limitCacheSizeBefore.accesskey  "M">
+<!ENTITY limitCacheSizeAfter.label       "MBtara">
+<!ENTITY clearCacheNow.label             "Garbitu orain">
+<!ENTITY clearCacheNow.accesskey         "G">
+<!ENTITY clearOfflineAppCacheNow.label   "Garbitu orain">
+<!ENTITY clearOfflineAppCacheNow.accesskey "r">
+<!ENTITY overrideSmartCacheSize.label    "Gainidatzi automatikoki cachearen kudeaketa">
+<!ENTITY overrideSmartCacheSize.accesskey "d">
+
+<!ENTITY updateTab.label                 "Eguneraketak">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; eguneraketak">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "Mantendu &brandShortName; eguneratuta errendimendu, egonkortasun eta segurtasun onena bermatzeko.">
+<!ENTITY updateApplication.version.pre   "​">
+<!ENTITY updateApplication.version.post  " bertsioa">
+<!ENTITY updateApplication.description   "Baimendu &brandShortName;(r)i">
+<!ENTITY updateAuto3.label               "Instalatu eguneraketak automatikoki (gomendatua)">
+<!ENTITY updateAuto3.accesskey           "a">
+<!ENTITY updateCheckChoose2.label        "Eguneraketak bilatzen baina utzi aukeratzen instalatuko diren edo ez">
+<!ENTITY updateCheckChoose2.accesskey    "b">
+<!ENTITY updateManual2.label             "Ez egiaztatu inoiz eguneraketarik dagoen (ez gomendatua)">
+<!ENTITY updateManual2.accesskey         "n">
+
+<!ENTITY updateHistory2.label            "Erakutsi eguneraketen historia…">
+<!ENTITY updateHistory2.accesskey        "E">
+
+<!ENTITY useService.label                "Erabili atzeko planoko zerbitzua eguneraketak instalatzeko">
+<!ENTITY useService.accesskey            "z">
+
+<!ENTITY enableSearchUpdate2.label       "Eguneratu automatikoki bilaketa-motorrak">
+<!ENTITY enableSearchUpdate2.accesskey   "E">
+
+<!ENTITY offlineStorageNotify.label               "Abisatu webgune batek datuak biltegiratu nahi baditu lineaz kanpo erabiltzeko">
+<!ENTITY offlineStorageNotify.accesskey           "A">
+<!ENTITY offlineStorageNotifyExceptions.label     "Salbuespenak…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "S">
+
+<!ENTITY offlineAppsList2.label          "Ondorengo webguneek datuak gordetzeko baimena dute lineaz kanpo erabiltzeko:">
+<!ENTITY offlineAppsList.height          "8em">
+<!ENTITY offlineAppsListRemove.label     "Ezabatu…">
+<!ENTITY offlineAppsListRemove.accesskey "z">
+<!ENTITY offlineAppRemove.confirm        "Ezabatu lineaz kanpo erabiltzeko datuak">
+
+<!ENTITY certificateTab.label            "Ziurtagiriak">
+<!ENTITY certPersonal2.description       "Webgune batek nire ziurtagiri pertsonala eskatzen duenean:">
+<!ENTITY selectCerts.auto                "Hautatu bat automatikoki">
+<!ENTITY selectCerts.auto.accesskey      "t">
+<!ENTITY selectCerts.ask                 "Galdetu beti">
+<!ENTITY selectCerts.ask.accesskey       "G">
+<!ENTITY enableOCSP.label                "Galdetu OCSP erantzule-zerbitzariei ziurtagiriak baliozkoak diren egiaztatzeko">
+<!ENTITY enableOCSP.accesskey            "G">
+<!ENTITY viewCerts2.label                "Ikusi ziurtagiriak…">
+<!ENTITY viewCerts2.accesskey            "k">
+<!ENTITY viewSecurityDevices2.label      "Segurtasun-gailuak…">
+<!ENTITY viewSecurityDevices2.accesskey  "S">
+
+<!ENTITY performance.label               "Errendimendua">
+<!ENTITY useRecommendedPerformanceSettings2.label "Erabili gomendatutako errendimendu-ezarpenak">
+<!ENTITY useRecommendedPerformanceSettings2.description "Ezarpen hauek zure ordenagailuaren hardwareari eta sistema eragileari egokituta daude.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "E">
+<!ENTITY performanceSettingsLearnMore.label "Argibide gehiago">
+<!ENTITY limitContentProcessOption.label "Eduki-prozesuen muga">
+<!ENTITY limitContentProcessOption.description "Eduki-prozesu gehigarriek errendimendua hobe dezakete hainbat fitxa erabiltzean baina memoria gehiago ere erabiliko du.">
+<!ENTITY limitContentProcessOption.accesskey   "m">
+<!ENTITY limitContentProcessOption.disabledDescription "Edukien prozesu kopurua multiprozesu moduko &brandShortName;(r)ekin alda daiteke soilik.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Argibide gehiago multiprozesu modua gaituta dagoen egiaztatzeko">
+<!ENTITY allowHWAccel.label              "Erabili hardware-azelerazioa erabilgarri dagoenean">
+<!ENTITY allowHWAccel.accesskey          "h">

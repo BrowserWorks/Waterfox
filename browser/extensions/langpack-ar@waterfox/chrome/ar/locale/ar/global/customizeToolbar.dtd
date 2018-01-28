@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "خصّص شريط الأدوات">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "يمكنك إضافة العناصر وإزالتها بسحبها من أشرطة الأدوات وإليها.">
+<!ENTITY show.label               "اعرض:">
+<!ENTITY iconsAndText.label       "أيقونات ونصّ">
+<!ENTITY icons.label              "أيقونات">
+<!ENTITY text.label               "نص">
+<!ENTITY useSmallIcons.label      "استخدم أيقونات صغيرة">
+<!ENTITY restoreDefaultSet.label  "استعد المجموعة المبدئيّة">
+<!ENTITY addNewToolbar.label      "أضِف شريط أدوات جديد">
+<!ENTITY saveChanges.label        "تمّ">
+<!ENTITY undoChanges.label        "تراجع عن التّغييرات">

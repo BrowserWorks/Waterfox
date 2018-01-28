@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Mou seguru de &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Aniciar en Mou seguru">
+<!ENTITY refreshProfile.label         "Reaniciar &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "El mou seguru ye un mou especial de &brandShortName; que pue usase pa la igua de problemes.">
+<!ENTITY safeModeDescription4.label   "Los tos complementos y configuraciones personalizaes van desactivase de mou temporal.">
+
+<!ENTITY refreshProfileInstead.label  "Tamién pues saltar la igua de problemes y tentar de reaniciar &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; zarróse inesperadamente entrín s'aniciaba. Esto quiciabes tea causao por complementos u otros problemes. Pues tentar d'iguar el problema nel Mou seguru.">

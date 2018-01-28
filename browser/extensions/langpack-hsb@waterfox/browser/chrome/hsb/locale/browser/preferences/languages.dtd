@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Rěče">
+<!ENTITY languages.customize.description                "Webstrony so druhdy we wjace hač jednej rěči k dispoziciji steja. Wubjerće rěče za předstajenje tutych webstronow we swojim preferowanym porjedźe:">
+<!ENTITY languages.customize.moveUp.label               "Horje">
+<!ENTITY languages.customize.moveUp.accesskey           "H">
+<!ENTITY languages.customize.moveDown.label             "Dele">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "Wotstronić">
+<!ENTITY languages.customize.deleteButton.accesskey     "W">
+<!ENTITY languages.customize.selectLanguage.label       "Rěč wubrać…">
+<!ENTITY languages.customize.addButton.label            "Přidać">
+<!ENTITY languages.customize.addButton.accesskey        "P">
+

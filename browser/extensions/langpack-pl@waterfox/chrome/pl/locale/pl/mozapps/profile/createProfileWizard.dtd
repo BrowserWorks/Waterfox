@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Kreator nowego profilu">
+<!ENTITY window.size "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; przechowuje informacje o ustawieniach i preferencjach użytkownika w prywatnym profilu.">
+<!ENTITY profileCreationExplanation_2.text "Jeżeli dzielisz tę kopię programu &brandShortName; z innymi użytkownikami, możesz używać profili, aby rozdzielić dane użytkowników. Aby tego dokonać, każdy użytkownik powinien mieć własny profil.">
+<!ENTITY profileCreationExplanation_3.text "Jeżeli jesteś jedyną osobą korzystającą z tej kopii programu &brandShortName;, musisz mieć przynajmniej jeden profil. Jeśli chcesz, możesz utworzyć kilka profili na własny użytek, z różnymi ustawieniami i preferencjami. Na przykład, możesz mieć osobne profile: służbowy i prywatny.">
+<!ENTITY profileCreationExplanation_4.text  "Aby rozpocząć tworzenie profilu, naciśnij przycisk Dalej.">
+<!ENTITY profileCreationExplanation_4Mac.text    "Aby rozpocząć tworzenie profilu, naciśnij przycisk Kontynuuj.">
+<!ENTITY profileCreationExplanation_4Gnome.text "Aby rozpocząć tworzenie profilu, naciśnij przycisk Dalej.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Tworzony profil musi mieć nazwę różną od już istniejących profili. Użyj nazwy podanej poniżej lub wprowadź własną.">
+<!ENTITY profilePrompt.label            "Wprowadź nazwę nowego profilu:">
+<!ENTITY profilePrompt.accesskey        "N">
+<!ENTITY profileDirectoryExplanation.text     "Ustawienia, preferencje oraz pozostałe dane osobiste użytkownika będą przechowywane w:">
+<!ENTITY profileDefaultName             "Domyślny użytkownik">
+<!ENTITY button.choosefolder.label      "Wybierz folder…">
+<!ENTITY button.choosefolder.accesskey  "W">
+<!ENTITY button.usedefault.label        "Użyj domyślnego folderu">
+<!ENTITY button.usedefault.accesskey    "U">

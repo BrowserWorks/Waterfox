@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Phần này có thể làm vô hiệu chế độ bảo hành!">
+<!ENTITY aboutWarningText.label "Thay đổi những thiết lập nâng cao này có thể gây hại cho sự ổn định, bảo mật và tính năng của ứng dụng này. Bạn chỉ nên tiếp tục nếu bạn hoàn toàn chắc chắn về những gì mình đang làm.">
+
+<!ENTITY aboutWarningCheckbox.label "Hiện cảnh báo này vào lần sau">
+
+<!ENTITY searchPrefs.label "Tìm kiếm:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Tên Tùy Chọn">
+<!ENTITY lockColumn.label "Trạng thái">
+<!ENTITY typeColumn.label "Kiểu">
+<!ENTITY valueColumn.label "Giá trị">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Nhấn để sắp xếp"> 
+<!ENTITY columnChooser.tooltip "Nhấn để chọn cột hiển thị"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Chép">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "Chép Tên">
+<!ENTITY copyName.accesskey "T">
+<!ENTITY copyValue.label "Chép Giá Trị">
+<!ENTITY copyValue.accesskey "G">
+<!ENTITY modify.label "Sửa đổi">
+<!ENTITY modify.accesskey "S">
+<!ENTITY toggle.label "Bật-Tắt">
+<!ENTITY toggle.accesskey "B">
+<!ENTITY reset.label "Mặc định">
+<!ENTITY reset.accesskey "M">
+<!ENTITY new.label "Mới">
+<!ENTITY new.accesskey "i">
+<!ENTITY string.label "Chuỗi">
+<!ENTITY string.accesskey "C">
+<!ENTITY integer.label "Số nguyên">
+<!ENTITY integer.accesskey "S">
+<!ENTITY boolean.label "Luận lí">
+<!ENTITY boolean.accesskey "L">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">
+<!ENTITY focusSearch2.key "f">
+

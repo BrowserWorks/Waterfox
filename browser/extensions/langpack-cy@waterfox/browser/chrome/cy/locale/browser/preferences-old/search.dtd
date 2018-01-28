@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Peiriant Chwilio Rhagosodedig">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Dewiswch eich peiriant chwilio rhagosodedig. Bydd &brandShortName; yn ei ddefnyddio yn y bar lleoliad, y bar chwilio a'r dudalen cychwyn.">
+
+<!ENTITY provideSearchSuggestions.label        "Darparu awgrymiadau chwilio">
+<!ENTITY provideSearchSuggestions.accesskey    "c">
+
+<!ENTITY showURLBarSuggestions.label           "Dangos awgrymiadau chwilio yng nghanlyniadau'r bar lleoliad">
+<!ENTITY showURLBarSuggestions.accesskey       "D">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Ni fydd awgrymiadau chwilio'n cael eu dangos yn y bar lleoliad gan eich bod wedi ffurfweddu &brandShortName; i byth cofio hanes.">
+
+<!ENTITY oneClickSearchEngines.label           "Peiriannau Chwilio Un Clic">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Mae'r bar chwilio'n caniatáu i chi ddefnyddio peiriannau eraill. Dewiswch pa rai i'w dangos.">
+
+<!ENTITY engineNameColumn.label                "Peiriannau Chwilio">
+<!ENTITY engineKeywordColumn.label             "Allweddair">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Adfer Peiriannau Chwilio Rhagosodedig">
+<!ENTITY restoreDefaultSearchEngines.accesskey "A">
+
+<!ENTITY removeEngine.label                    "Tynnu">
+<!ENTITY removeEngine.accesskey                "T">
+
+<!ENTITY addMoreSearchEngines.label            "Ychwanegu peiriannau chwilio eraill…">

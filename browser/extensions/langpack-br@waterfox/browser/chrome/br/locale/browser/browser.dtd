@@ -1,0 +1,996 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Merdeiñ prevez)">
+
+<!ENTITY appmenu.tooltip                     "Digeriñ al lañser">
+<!ENTITY navbarOverflow.label                "Muioc'h a ostilhoù…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Adkargañ an ivinell">
+<!ENTITY  reloadTab.accesskey                "A">
+<!ENTITY  reloadAllTabs.label                "Adkargañ an holl ivinelloù">
+<!ENTITY  reloadAllTabs.accesskey            "d">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Serriñ an ivinelloù war an tu dehou">
+<!ENTITY  closeTabsToTheEnd.accesskey        "i">
+<!ENTITY  closeOtherTabs.label               "Serriñ an ivinelloù all">
+<!ENTITY  closeOtherTabs.accesskey           "S">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Spilhennañ an ivinell">
+<!ENTITY  pinTab.accesskey                   "p">
+<!ENTITY  unpinTab.label                     "Dispilhennañ an ivinell">
+<!ENTITY  unpinTab.accesskey                 "s">
+<!ENTITY  sendTabToDevice.label              "Kas an ivinell d'an trevnad">
+<!ENTITY  sendTabToDevice.accesskey          "t">
+<!ENTITY  sendPageToDevice.label             "Kas ar bajenn d'an trevnad">
+<!ENTITY  sendPageToDevice.accesskey         "t">
+<!ENTITY  sendLinkToDevice.label             "Kas an ere d'an trevnad">
+<!ENTITY  sendLinkToDevice.accesskey         "t">
+<!ENTITY  moveToNewWindow.label              "Dilec'hiañ en ur prenestr nevez">
+<!ENTITY  moveToNewWindow.accesskey          "D">
+<!ENTITY  bookmarkAllTabs.label              "Lakaat ur sined war an holl ivinelloù…">
+<!ENTITY  bookmarkAllTabs.accesskey          "k">
+<!ENTITY  undoCloseTab.label                 "Dizober Serriñ an ivinell">
+<!ENTITY  undoCloseTab.accesskey             "z">
+<!ENTITY  closeTab.label                     "Serriñ an ivinell">
+<!ENTITY  closeTab.accesskey                 "e">
+
+<!ENTITY  listAllTabs.label      "Roll an holl ivinelloù">
+
+<!ENTITY tabCmd.label "Ivinell nevez">
+<!ENTITY tabCmd.accesskey "I">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Digeriñ ul lec'hiadur…">
+<!ENTITY openFileCmd.label "Digeriñ ur restr…">
+<!ENTITY openFileCmd.accesskey "D">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Arventennoù ar bajenn…">
+<!ENTITY printSetupCmd.accesskey "A">
+<!ENTITY printPreviewCmd.label "Alberz ar moullañ">
+<!ENTITY printPreviewCmd.accesskey "l">
+<!ENTITY printCmd.label "Moullañ…">
+<!ENTITY printCmd.accesskey "M">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Labourat ezlinenn">
+<!ENTITY goOfflineCmd.accesskey "z">
+
+<!ENTITY menubarCmd.label "Barrenn lañserioù">
+<!ENTITY menubarCmd.accesskey "B">
+<!ENTITY navbarCmd.label "Barrenn ostilhoù merdeiñ">
+<!ENTITY personalbarCmd.label "Barrenn ostilhoù ar sinedoù">
+<!ENTITY personalbarCmd.accesskey "s">
+<!ENTITY bookmarksToolbarItem.label "Ergorennoù barrenn ostilhoù ar sinedoù">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Adkargañ an holl ivinelloù">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "d">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Lakaat ur sined war an holl ivinelloù…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "k">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Dizober Serriñ an ivinell">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "z">
+
+<!ENTITY pageSourceCmd.label "Tarzh ar bajennad">
+<!ENTITY pageSourceCmd.accesskey "b">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Stlennoù ar bajennad">
+<!ENTITY pageInfoCmd.accesskey "t">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Ivinell Melezour">
+<!ENTITY mirrorTabCmd.accesskey "M">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Kregiñ ar mod skramm a-bezh">
+<!ENTITY enterFullScreenCmd.accesskey "s">
+<!ENTITY exitFullScreenCmd.label "Kuitaat ar mod skramm a-bezh">
+<!ENTITY exitFullScreenCmd.accesskey "s">
+<!ENTITY fullScreenCmd.label "Skramm a-bezh">
+<!ENTITY fullScreenCmd.accesskey "S">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Diskouez an holl ivinelloù">
+<!ENTITY showAllTabsCmd.accesskey "a">
+<!ENTITY toggleReaderMode.key "A">
+
+<!ENTITY fxaSignIn.label "En em gennaskañ ouzh &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "Digeriñ gwellvezioù &syncBrand.shortName.label;">
+<!ENTITY fxaSignInError.label "En em adkennaskañ ouzh &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Gwiriit ho kont">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Bihanaat">
+<!ENTITY fullScreenRestore.tooltip "Assav">
+<!ENTITY fullScreenClose.tooltip "Serriñ">
+<!ENTITY fullScreenAutohide.label "Kuzhat ar varrenn ostilhoù">
+<!ENTITY fullScreenAutohide.accesskey "h">
+<!ENTITY fullScreenExit.label "Kuitaat ar mod skramm a-bezh">
+<!ENTITY fullScreenExit.accesskey "K">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "a zo e skramm a-bezh">
+<!ENTITY fullscreenWarning.generic.label "War ar skramm a-bezh emañ an teul-mañ bremañ">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Kuitaat ar mod skramm a-bezh (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Kuitaat ar mod skramm a-bezh (Esc)">
+<!ENTITY leaveDOMFullScreen.label "Kuitaat ar mod skramm a-bezh">
+<!ENTITY leaveDOMFullScreen.accesskey "u">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "a c'hall reoliñ ho logodenn. Pouezit war Achap evit bezañ mestr outi en-dro.">
+<!ENTITY pointerlockWarning.generic.label "Meret eo ho logodenn gant an teul-mañ. Pouezit war Achap evit bezañ mestr outi en-dro.">
+
+<!ENTITY closeWindow.label "Serriñ ar prenestr">
+<!ENTITY closeWindow.accesskey "r">
+
+<!ENTITY bookmarksMenu.label "Sinedoù">
+<!ENTITY bookmarksMenu.accesskey "n">
+<!ENTITY bookmarkThisPageCmd.label "Lakaat ur sined war ar bajenn-mañ">
+<!ENTITY editThisBookmarkCmd.label "Embann ar sined-mañ">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Kavout muioc'h a wazerezhioù rannañ…">
+<!ENTITY sharePageCmd.label "Rannañ ar bajenn-mañ">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "R">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Rannañ an ere-mañ">
+<!ENTITY shareLink.accesskey "a">
+<!ENTITY shareImage.label "Rannañ ar skeudenn-mañ">
+<!ENTITY shareImage.accesskey "R">
+<!ENTITY shareSelect.label "Rannañ an diuzad">
+<!ENTITY shareSelect.accesskey "R">
+<!ENTITY shareVideo.label "Rannañ ar video-mañ">
+<!ENTITY shareVideo.accesskey "R">
+<!ENTITY feedsMenu2.label "Koumanantiñ d'ar bajenn-mañ">
+<!ENTITY subscribeToPageMenupopup.label "Koumanantiñ d'ar bajenn-mañ">
+<!ENTITY subscribeToPageMenuitem.label "Koumanantiñ d'ar bajenn-mañ…">
+<!ENTITY addCurPagesCmd.label "Ouzhpennañ an holl ivinelloù d'ar sinedoù">
+<!ENTITY showAllBookmarks2.label "Diskouez an holl sinedoù">
+<!ENTITY recentBookmarks.label "Lakaet war ur sined nevez zo">
+<!ENTITY otherBookmarksCmd.label "Sinedoù all">
+<!ENTITY mobileBookmarksCmd.label "Sinedoù hezoug">
+<!ENTITY bookmarksToolbarChevron.tooltip "Diskouez meur a sined">
+<!ENTITY showRecentlyBookmarked.label     "Diskouez ar sinedoù nevez">
+<!ENTITY showRecentlyBookmarked.accesskey "D">
+<!ENTITY hideRecentlyBookmarked.label     "Kuzhat ar sinedoù nevez">
+<!ENTITY hideRecentlyBookmarked.accesskey "K">
+
+<!ENTITY backCmd.label                "Kent">
+<!ENTITY backButton.tooltip           "Mont d'ar bajennad kent">
+<!ENTITY forwardCmd.label             "War-lerc'h">
+<!ENTITY forwardButton.tooltip        "Mont d'ar bajennad war-lerc'h">
+<!ENTITY backForwardButtonMenu.tooltip "Grit ur c'hlik dehou pe sachit etrezek an traoñ evit diskouez ar roll istor">
+<!ENTITY backForwardButtonMenuMac.tooltip "Sachit etrezek an traoñ evit diskouez ar roll istor">
+<!ENTITY reloadCmd.label              "Adkargañ">
+<!ENTITY stopCmd.label                "Paouez">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Mont d'ar chomlec'h er varrenn lec'hiañ">
+<!ENTITY printButton.label            "Moullañ">
+<!ENTITY printButton.tooltip          "Moullañ ar bajennad-mañ">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Gwelout titouroù al lec'hienn">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Digeriñ penel ar c'hemennadennoù">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Digeriñ penel ar goulenn lec'hiadur">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Digeriñ penel kemennadenn staliadur an askouezh">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Digeriñ penel kemennadenn ar c'hadaviñ ezlinenn">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Digeriñ penel kemennadenn enrollañ ar ger-tremen">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Ardeiñ arver an enlugellad">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Ardeiñ penaos e c'hallit degemer rebuzadurioù digant al lec'hienn">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Kadavin roadennoù er c'hadaviñ diastal">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Reoliet a-bell eo ar merdeer">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Ardeiñ rannadur ho kamera ha/pe ho mikrofon gant al lec'hienn">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Ardeiñ rannadur ho mikrofon gant al lec'hienn">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Ardeiñ rannadur ho prenestr pe ho skramm gant al lec'hienn">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Digeriñ penel ar gemennadenn staliadur">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Treiñ ar bajenn-mañ">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Ardeiñ troidigezh ar bajenn">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Ardeiñ an arver meziantoù DRM">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Stanket ho peus ho kamera evit al lec'hienn-mañ.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Stanket ho peus ho mikrofon evit al lec'hienn-mañ.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Difennet ho peus al lec'hienn-mañ da rannañ ho skramm.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Stanket ho peus an titouroù lec'hiadur evit al lec'hienn-mañ.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Stanket ho peus an titouroù kadaviñ evit al lec'hienn-mañ.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Stanket ho peus ar rebuzadurioù evit al lec'hienn-mañ.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Stanket ho peus ar c'hadaviñ diastal evit al lec'hienn-mañ.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Diskouez ar roll istor">
+
+<!ENTITY searchItem.title             "Klask">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "D'ar gêr">
+
+<!ENTITY bookmarksButton.label          "Sinedoù">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Sinedoù">
+<!ENTITY bookmarksMenuButton.other.label "Sinedoù all">
+<!ENTITY bookmarksMenuButton.mobile.label "Sinedoù hezoug">
+<!ENTITY viewBookmarksSidebar2.label        "Gwelout barrenn gostez ar sinedoù">
+<!ENTITY viewBookmarksToolbar.label         "Gwelout barrenn ostilhoù ar sinedoù">
+<!ENTITY searchBookmarks.label              "Klask er sinedoù">
+
+<!ENTITY containersMenu.label "Endalc'herien">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Roll istor">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Ostilhoù">
+<!ENTITY toolsMenu.accesskey          "O"> 
+
+<!ENTITY keywordfield.label           "Ouzhpennañ ur ger-alc'hwez evit ar c'hlask-mañ …">
+<!ENTITY keywordfield.accesskey       "k">
+
+<!ENTITY downloads.label              "Pellgargadurioù">
+<!ENTITY downloads.accesskey          "d">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Askouezhioù">
+<!ENTITY addons.accesskey             "A">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Diorroer web">
+<!ENTITY webDeveloperMenu.accesskey   "w">
+
+<!ENTITY inspectContextMenu.label     "Ensellout an elfenn">
+<!ENTITY inspectContextMenu.accesskey "E">
+
+<!ENTITY fileMenu.label         "Restr"> 
+<!ENTITY fileMenu.accesskey       "R">
+<!ENTITY newUserContext.label             "Ivinell endalc'her nevez">
+<!ENTITY newUserContext.accesskey         "e">
+<!ENTITY newNavigatorCmd.label        "Prenestr nevez">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "n">
+<!ENTITY newPrivateWindow.label     "Prenestr merdeiñ prevez nevez">
+<!ENTITY newPrivateWindow.accesskey "v">
+<!ENTITY newNonRemoteWindow.label   "Prenestr nann-e10s nevez">
+
+<!ENTITY editMenu.label         "Embann"> 
+<!ENTITY editMenu.accesskey       "E"> 
+<!ENTITY undoCmd.label            "Dizober ">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "D"> 
+<!ENTITY redoCmd.label            "Adober">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "r"> 
+<!ENTITY cutCmd.label           "Troc'hañ">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "T"> 
+<!ENTITY copyCmd.label            "Eilañ">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "i"> 
+<!ENTITY pasteCmd.label           "Pegañ">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "P"> 
+<!ENTITY deleteCmd.label          "Dilemel">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "D"> 
+<!ENTITY selectAllCmd.label         "Diuz pep tra">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "a"> 
+<!ENTITY preferencesCmd2.label       "Dibarzhioù">
+<!ENTITY preferencesCmd2.accesskey     "b">
+<!ENTITY preferencesCmdUnix.label       "Gwellvezioù">
+<!ENTITY preferencesCmdUnix.accesskey     "l"> 
+
+<!ENTITY clearRecentHistory.label               "Skarzhañ ar roll istor nevesañ…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Gwelout"> 
+<!ENTITY viewMenu.accesskey       "w"> 
+<!ENTITY viewToolbarsMenu.label       "Barrennoù ostilhoù"> 
+<!ENTITY viewToolbarsMenu.accesskey     "B"> 
+<!ENTITY viewSidebarMenu.label "Barrenn gostez">
+<!ENTITY viewSidebarMenu.accesskey "g">
+<!ENTITY viewCustomizeToolbar.label       "Personelaat…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "P">
+<!ENTITY overflowCustomizeToolbar.label       "Personelaat ar varrenn ostilhoù…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Roll istor">
+<!ENTITY historyMenu.accesskey "l">
+<!ENTITY historyUndoMenu.label "Ivinelloù serret nevez zo">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Prenestroù serret nevez zo">
+<!ENTITY historyRestoreLastSession.label "Assav an estez kent">
+
+<!ENTITY showAllHistoryCmd2.label "Diskouez ar roll istor a-bezh">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Personelaat">
+<!ENTITY appMenuCustomize.tooltip "Personelaat al lañser hag ar barrennoù ostilhoù">
+<!ENTITY appMenuCustomizeExit.label "Kuitaat ar personelaat">
+<!ENTITY appMenuCustomizeExit.tooltip "Echuiñ ar personelaat">
+<!ENTITY appMenuHistory.label "Roll istor">
+<!ENTITY appMenuHistory.showAll.label "Diskouez ar roll istor a-bezh">
+<!ENTITY appMenuHistory.clearRecent.label "Skarzhañ ar roll istor nevesañ…">
+<!ENTITY appMenuHistory.restoreSession.label "Assav an estez kent">
+<!ENTITY appMenuHistory.viewSidebar.label "Gwelout barrenn gostez ar roll istor">
+<!ENTITY appMenuHistory.recentHistory.label "Roll istor nevesañ">
+<!ENTITY appMenuHelp.label "Skoazell">
+<!ENTITY appMenuHelp.tooltip "Digeriñ al lañser skoazell">
+
+<!ENTITY appMenuRemoteTabs.label "Ivinelloù goubredet">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Ivinell digor ebet">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Diskouez muioc'h...">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Diskouez muioc'h a ivinelloù eus an trevnad-mañ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Diskouez pep tra">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Diskouez holl ivinelloù an trevnad-mañ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Gweredekait goubredañ an ivinelloù evit gwelout ur roll ivinelloù eus ho trevnadoù all.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Sinedoù goubredet ebet... Evit ar mare!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Fellout a ra deoc'h gwelout ivinelloù ho trevnadoù all amañ?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Gwellvezvioù goubredañ">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Kennaskit da welet ur roll ivinelloù eus ho trevnadoù all">
+<!ENTITY appMenuRemoteTabs.signin.label "Kennaskañ da Synx">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Ardeiñ an trevnadoù…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Gwelout barrenn-gostez an ivinelloù goubredet ">
+
+<!ENTITY customizeMenu.addToToolbar.label "Ouzhpennañ d'ar varrenn ostilhoù">
+<!ENTITY customizeMenu.addToToolbar.accesskey "O">
+<!ENTITY customizeMenu.addToPanel.label "Ouzhpennañ d'al lañser">
+<!ENTITY customizeMenu.addToPanel.accesskey "l">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Ouzhpennañ d'al lañser dic'hlann">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "d">
+<!ENTITY customizeMenu.moveToToolbar.label "Dilec'hiañ er varrenn ostilhoù">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "v">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Dilec'hiañ el lañser">
+<!ENTITY customizeMenu.moveToPanel.accesskey "e">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Spilhennañ d'al lañser dic'hlann">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "S">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Dispilhennañ eus al lañser dic'hlann">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "i">
+<!ENTITY customizeMenu.removeFromToolbar.label "Lemel diouzh ar varrenn ostilhoù">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "o">
+<!ENTITY customizeMenu.removeFromMenu.label "Lemel diouzh al lañser">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "a">
+<!ENTITY customizeMenu.addMoreItems.label "Ouzhpennañ muioc'h a elfennoù…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "m">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Muioc'h">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Bizskrivit un termen da glask pe ur chomlec'h">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Askouezh:">
+<!ENTITY urlbar.switchToTab.label     "Mont d'an ivinell :">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Fellout a ra deoc'h gwellat hoc'h arver klask gant kinnigoù ?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Gouzout hiroc'h…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "G">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Ket">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "K">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ya">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "y">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tun:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Klaskit traoù en ur vezañ skoazellet! Klaskit an arlun &#x1F50E; e-kichen an alioù enklask.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Kemmañ an dibarzhioù...">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "K">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Kemmañ ar Gwellvezioù...">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "G">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Klask an azgoulenn">
+<!ENTITY contentSearchSubmit.tooltip  "Kinnig ar c'hlask">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Klask">
+<!ENTITY searchIcon.tooltip           "Klask">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Klask ">
+<!ENTITY searchWith.label             " gant :">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Klask ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Klask gant :">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Kemmañ an arventennoù klask">
+<!ENTITY changeSearchSettings.tooltip "Kemmañ an arventennoù klask">
+
+<!ENTITY searchInNewTab.label         "Klask en ivinell nevez">
+<!ENTITY searchInNewTab.accesskey     "n">
+<!ENTITY searchSetAsDefault.label     "Lakaat evel keflusker enklask dre ziouer">
+<!ENTITY searchSetAsDefault.accesskey "k">
+
+<!ENTITY openLinkCmdInTab.label       "Digeriñ an ere e-barzh un ivinell nevez">
+<!ENTITY openLinkCmdInTab.accesskey   "i">
+<!ENTITY openLinkCmd.label            "Digeriñ an ere e-barzh ur prenestr nevez">
+<!ENTITY openLinkCmd.accesskey        "b">
+<!ENTITY openLinkInPrivateWindowCmd.label "Digeriñ an ere e-barzh ur prenestr merdeiñ prevez nevez">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "m">
+<!ENTITY openLinkCmdInCurrent.label     "Digeriñ an ere">
+<!ENTITY openLinkCmdInCurrent.accesskey "g">
+<!ENTITY openFrameCmdInTab.label      "Digeriñ ar frammad e-barzh un ivinell nevez">
+<!ENTITY openFrameCmdInTab.accesskey  "i">
+<!ENTITY openFrameCmd.label           "Digeriñ ar frammad e-barzh ur prenestr nevez">
+<!ENTITY openFrameCmd.accesskey       "p">
+<!ENTITY openLinkCmdInContainerTab.label "Digeriñ an ere en un ivinell endalc'her nevez">
+<!ENTITY openLinkCmdInContainerTab.accesskey "c">
+<!ENTITY showOnlyThisFrameCmd.label     "Gwelout ar frammad-mañ hepken">
+<!ENTITY showOnlyThisFrameCmd.accesskey "f">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Adkargañ ar frammad">
+<!ENTITY reloadFrameCmd.accesskey     "k">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Gwelout tarzh an diuzad">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Gwelout tarzh MathML">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Gwelout tarzh ar bajennad">
+<!ENTITY viewPageSourceCmd.accesskey  "t">
+<!ENTITY viewFrameSourceCmd.label     "Gwelout tarzh ar frammad">
+<!ENTITY viewFrameSourceCmd.accesskey "t">
+<!ENTITY viewPageInfoCmd.label        "Gwelout stlennoù ar bajennad">
+<!ENTITY viewPageInfoCmd.accesskey    "t">
+<!ENTITY viewFrameInfoCmd.label       "Gwelout stlennoù ar frammad">
+<!ENTITY viewFrameInfoCmd.accesskey   "t">
+<!ENTITY reloadImageCmd.label         "Adkargañ ar skeudenn">
+<!ENTITY reloadImageCmd.accesskey     "r">
+<!ENTITY viewImageCmd.label           "Gwelout ar skeudenn">
+<!ENTITY viewImageCmd.accesskey       "s">
+<!ENTITY viewImageInfoCmd.label       "Gwelout stlennoù ar skeudenn">
+<!ENTITY viewImageInfoCmd.accesskey   "w">
+<!ENTITY viewImageDescCmd.label       "Gwelout an deskrivadur">
+<!ENTITY viewImageDescCmd.accesskey   "d">
+<!ENTITY viewVideoCmd.label           "Gwelout ar video">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Gwelout ar skeudenn drekleur">
+<!ENTITY viewBGImageCmd.accesskey     "d">
+<!ENTITY setDesktopBackgroundCmd.label      "Arventennañ evel Drekleur ar burev…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "l">
+<!ENTITY bookmarkPageCmd2.label       "Lakaat ur sined war ar bajenn-mañ">
+<!ENTITY bookmarkThisLinkCmd.label      "Lakaat ur sined war an ere">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "L">
+<!ENTITY bookmarkThisFrameCmd.label      "Merkañ ar frammad war ur sined">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "M">
+<!ENTITY copyURLCmd.label             "Eilañ an URL">
+<!ENTITY emailPageCmd.label           "Kas an ere dre bostel…">
+<!ENTITY emailPageCmd.accesskey       "K">
+<!ENTITY savePageCmd.label            "Enrollañ ar bajenn evel…">
+<!ENTITY savePageCmd.accesskey        "a">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "b">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Enrollañ ar frammad evel…">
+<!ENTITY saveFrameCmd.accesskey       "f">
+<!ENTITY printFrameCmd.label          "Moullañ ar frammad…">
+<!ENTITY printFrameCmd.accesskey      "l">
+<!ENTITY saveLinkCmd.label            "Enrollañ an ere evel…">
+<!ENTITY saveLinkCmd.accesskey        "n">
+<!ENTITY saveImageCmd.label           "Enrollañ ar skeudenn evel…">
+<!ENTITY saveImageCmd.accesskey       "v">
+<!ENTITY saveVideoCmd.label           "Enrollañ ar video evel…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Enrollañ ar restr klevet evel…">
+<!ENTITY saveAudioCmd.accesskey       "v">
+<!ENTITY emailImageCmd.label          "Kas ar skeudenn dre bostel…">
+<!ENTITY emailImageCmd.accesskey      "K">
+<!ENTITY emailVideoCmd.label          "Kas ar video dre bostel…">
+<!ENTITY emailVideoCmd.accesskey      "K">
+<!ENTITY castVideoCmd.label           "Kas ar video d'an trevnad">
+<!ENTITY castVideoCmd.accesskey       "a">
+<!ENTITY emailAudioCmd.label          "Kas ar restr klevet dre bostel…">
+<!ENTITY emailAudioCmd.accesskey      "K">
+<!ENTITY playPluginCmd.label          "Gweredekaat an enlugellad-mañ">
+<!ENTITY playPluginCmd.accesskey      "w">
+<!ENTITY hidePluginCmd.label          "Kuzhat an enlugellad-mañ">
+<!ENTITY hidePluginCmd.accesskey      "u">
+<!ENTITY copyLinkCmd.label            "Eilañ lec'hiadur an ere">
+<!ENTITY copyLinkCmd.accesskey        "l">
+<!ENTITY copyImageCmd.label           "Eilañ lec'hiadur ar skeudenn">
+<!ENTITY copyImageCmd.accesskey       "k">
+<!ENTITY copyImageContentsCmd.label   "Eilañ ar skeudenn">
+<!ENTITY copyImageContentsCmd.accesskey  "r"> 
+<!ENTITY copyVideoURLCmd.label        "Eilañ lec'hiadur ar video">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Eilañ lec'hiadur ar restr klevet">
+<!ENTITY copyAudioURLCmd.accesskey    "E">
+<!ENTITY copyEmailCmd.label           "Eilañ ar chomlec'h postel">
+<!ENTITY copyEmailCmd.accesskey       "p">
+<!ENTITY thisFrameMenu.label              "Ar frammad-se">
+<!ENTITY thisFrameMenu.accesskey          "f">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Lenn">
+<!ENTITY mediaPlay.accesskey         "L">
+<!ENTITY mediaPause.label            "Ehan">
+<!ENTITY mediaPause.accesskey        "E">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Mud">
+<!ENTITY mediaMute.accesskey         "M">
+<!ENTITY mediaUnmute.label           "Heglev">
+<!ENTITY mediaUnmute.accesskey       "H">
+<!ENTITY mediaPlaybackRate2.label     "Tizh lenn">
+<!ENTITY mediaPlaybackRate2.accesskey "l">
+<!ENTITY mediaPlaybackRate050x2.label "Gorrek (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "G">
+<!ENTITY mediaPlaybackRate100x2.label "Reizh">
+<!ENTITY mediaPlaybackRate100x2.accesskey "R">
+<!ENTITY mediaPlaybackRate125x2.label "Herrek (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "H">
+<!ENTITY mediaPlaybackRate150x2.label "Herrekoc'h (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "e">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Tizh divuzul (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "d">
+<!ENTITY mediaLoop.label             "Dol">
+<!ENTITY mediaLoop.accesskey         "D">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Diskouez ar reolerezhioù">
+<!ENTITY mediaShowControls.accesskey "D">
+<!ENTITY mediaHideControls.label     "Kuzhat ar reolerezhioù">
+<!ENTITY mediaHideControls.accesskey "u">
+<!ENTITY videoFullScreen.label       "Skramm a-bezh">
+<!ENTITY videoFullScreen.accesskey   "S">
+<!ENTITY videoSaveImage.label        "Enrollañ an dapadenn-skramm evel…">
+<!ENTITY videoSaveImage.accesskey    "n">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Diskouez ar stadegoù">
+<!ENTITY videoShowStats.accesskey    "i">
+<!ENTITY videoHideStats.label        "Kuzhat ar stadegoù">
+<!ENTITY videoHideStats.accesskey    "u">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Zoum brasaat">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "b">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Zoum bihanaat">
+<!ENTITY fullZoomReduceCmd.accesskey    "o">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Adderaouekaat">
+<!ENTITY fullZoomResetCmd.accesskey     "r">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Zoumañ war an destenn hepken">
+<!ENTITY fullZoomToggleCmd.accesskey    "t">
+<!ENTITY fullZoom.label                 "Zoum">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "Serriñ ar varrenn gostez">
+<!ENTITY sidebarMenuClose.label         "Serriñ ar varrenn gostez">
+
+<!ENTITY quitApplicationCmdWin2.label       "Kuitaat">
+<!ENTITY quitApplicationCmdWin2.accesskey   "K">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Kuitaat &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Kuitaat"> 
+<!ENTITY quitApplicationCmd.accesskey   "K">
+<!ENTITY quitApplicationCmdMac2.label   "Kuitaat &brandShorterName;">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Serriñ">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "S">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Stil ar bajennad">
+<!ENTITY pageStyleMenu.accesskey "S">
+<!ENTITY pageStyleNoStyle.label "Stil ebet">
+<!ENTITY pageStyleNoStyle.accesskey "b">
+<!ENTITY pageStylePersistentOnly.label "Stil pajennad eeun">
+<!ENTITY pageStylePersistentOnly.accesskey "e">
+
+<!ENTITY pageReportIcon.tooltip            "Kemmañ arventennoù da herzel an diflugelloù evit al lec'hienn-mañ">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Embann dibarzhioù an harz diflugelloù…">
+<!ENTITY editPopupSettings.label "Embann an dibarzhioù evit herzel an diflugelloù…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Kemmañ tu ar bajenn">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "b">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Kemmañ tuadur an destenn">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "d">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Klask war ar bajennad-mañ…">
+<!ENTITY findOnCmd.accesskey "K">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Klask c'hoazh">
+<!ENTITY findAgainCmd.accesskey "h">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Ouzhpennañ geriadurioù…">
+<!ENTITY spellAddDictionaries.accesskey "a">
+
+<!ENTITY editBookmark.done.label                     "Graet">
+<!ENTITY editBookmark.removeBookmark.accessKey       "D">
+
+<!ENTITY identity.connectionSecure "Secure Connection">
+<!ENTITY identity.connectionNotSecure "N'eo ket diarvar ar c'hennask">
+<!ENTITY identity.connectionFile "War hoc'h urzhiataer eo kadavet ar bajenn-mañ.">
+<!ENTITY identity.connectionVerified2 "Kennasket oc'h en un doare diogel ouzh al lec'hienn, perc'hennet gant :">
+<!ENTITY identity.connectionInternal "Ur bajenn &brandShortName; diarvar eo.">
+<!ENTITY identity.extensionPage "Diwar un askouezh eo karget ar bajenn-mañ.">
+<!ENTITY identity.insecureLoginForms2 "Treuzvarc'het e c'hall bezañ an titouroù kennaskañ enanket er bajenn-mañ.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "Stanket eo bet gant &brandShortName; lodennoù arvarus er bajennad.">
+<!ENTITY identity.passiveLoaded "Arvarus eo lodennoù eus ar bajennad (skeudennoù, da skouer).">
+<!ENTITY identity.activeLoaded "Diweredekaet ho peus ar gwarez war ar bajenn-mañ.">
+<!ENTITY identity.weakEncryption "Enrinegañ gwan a vez arveret gant ar bajenn-mañ.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "N'eo ket prevez ho kennask war al lec'hienn-mañ. Gallout a ra an titouroù kinniget ganeoc'h bezañ gwelet gant tud all (gerioù-tremen, kemennadennoù, kartennoù gred en o zouez).">
+<!ENTITY identity.description.insecureLoginForms "N'eo ket diogel an titouroù kennaskañ enanket ganeoc'h er bajennad-mañ ha gallout a reont bezañ en arvar. ">
+<!ENTITY identity.description.weakCipher "Enrinegañ gwan a vez arveret gant ho kennask d'al lec'hienn-mañ ha n'eo ket prevez.">
+<!ENTITY identity.description.weakCipher2 "Gallout a ra tud all sellet ouzh ho titouroù pe kemmañ emzalc'h al lec'hienn.">
+<!ENTITY identity.description.activeBlocked "Stanket eo bet gant &brandShortName; lodennoù arvarus er bajennad.">
+<!ENTITY identity.description.passiveLoaded "N'eo ket prevez ho kennask ha galloud a ra an titouroù rannet gant al lec'hienn bezañ gwelet gant tud all.">
+<!ENTITY identity.description.passiveLoaded2 "Endalc'hadoù el lec'hienn-mañ a zo arvarus (skeudennoù, da skouer).">
+<!ENTITY identity.description.passiveLoaded3 "Daoust m'eo bet stanked endalc'hadoù gant &brandShortName; e chom endalc'hadoù arvarus er bajennad (skeudennoù, da skouer).">
+<!ENTITY identity.description.activeLoaded "Endalc'hadoù arvarus a zo el lec'hienn (skriptoù, da skouer) ha n'eo ket prevez ho kennask.">
+<!ENTITY identity.description.activeLoaded2 "Gallout a ra an titouroù rannet gant al lec'hienn bezañ gwelet gant tud all (evel gerioù-tremen, kemennadennoù, kartennoù gred, hag all.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Gweredekaat ar gwarez">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "G">
+<!ENTITY identity.disableMixedContentBlocking.label "Diweredekaat ar gwarez evit poent">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Gouzout hiroc'h">
+
+<!ENTITY identity.removeCertException.label "Lemel an nemedenn kuit">
+<!ENTITY identity.removeCertException.accesskey "L">
+
+<!ENTITY identity.moreInfoLinkText2 "Muioc'h a stlennoù">
+
+<!ENTITY identity.permissions "Aotreoù">
+<!ENTITY identity.permissionsEmpty "N'ho peus roet aotre arbennik ebet d'al lec'hienn-mañ.">
+<!ENTITY identity.permissionsReloadHint "Ret eo deoc'h adkargañ ar bajenn evit arloañ ar c'hemmoù.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Ivinelloù merdeer">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Ivinelloù goubredet">
+
+<!ENTITY syncedTabs.sidebar.label              "Ivinelloù goubredet">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Kennaskit da Waterfox gant trevnadoù all evit gwelout o ivinelloù aze.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Sinedoù goubredet ebet... Evit ar mare!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Fellout a ra deoc'h gwelout ivinelloù ho trevnadoù all amañ?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Kennaskit da welet ur roll ivinelloù eus ho trevnadoù all">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Ivinell digor ebet">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Digeriñ gwellvezioù &syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Gweredekait goubredañ an ivinelloù evit gwelout ur roll ivinelloù eus ho trevnadoù all.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Digeriñ">
+<!ENTITY syncedTabs.context.open.accesskey                   "D">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Digeriñ e-barzh un ivinell nevez">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "g">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Digeriñ e-barzh ur prenestr nevez">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "b">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Digeriñ e-barzh ur prenestr merdeiñ prevez nevez">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "m">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Lakaat ur sined war an ivinell-mañ…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "L">
+<!ENTITY syncedTabs.context.copy.label                       "Eilañ">
+<!ENTITY syncedTabs.context.copy.accesskey                   "i">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Digeriñ an holl anezho e ivinelloù">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "o">
+<!ENTITY syncedTabs.context.managedevices.label              "Ardeiñ an trevnadoù…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "t">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "En em gennaskañ ouzh &syncBrand.shortName.label;">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Goubredañ bremañ">
+<!ENTITY syncSyncNowItem.accesskey    "G">
+<!ENTITY syncReAuthItem.label         "En em adkennaskañ ouzh &syncBrand.shortName.label;…">
+<!ENTITY syncReAuthItem.accesskey     "a">
+<!ENTITY syncToolbarButton.label      "Goubredañ">
+
+<!ENTITY social.addons.label "Ardeiñ ar gwazerezhioù…">
+
+<!ENTITY social.directory.label "Kavlec'hiad ar gweredekadurioù">
+<!ENTITY social.directory.text "Gweredekaet e vez ar gwazerezhioù rannañ diouzh ar c'havlec'hiad-mañ.">
+<!ENTITY social.directory.button "Kasit ac'hanon di !">
+<!ENTITY social.directory.introText "Klikañ war ur gwazerezh d'e ouzhpennañ da &brandShortName;.">
+<!ENTITY social.directory.viewmore.text "Gwelout muioc'h a draoù">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Ostilhoù ha keweriusterioù ouzhpenn">
+<!ENTITY customizeMode.menuAndToolbars.empty "Ezhomm hoc'h eus muioc'h a ostilhoù ?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Dibabit e-touez miliadoù a askouezhioù">
+<!ENTITY customizeMode.restoreDefaults "Assav ar re dre ziouer">
+<!ENTITY customizeMode.done "Graet">
+<!ENTITY customizeMode.titlebar "Barrenn ditl">
+<!ENTITY customizeMode.toolbars2 "Barrennoù ostilhoù">
+<!ENTITY customizeMode.lwthemes "Neuzioù">
+<!ENTITY customizeMode.lwthemes.myThemes "Ma neuzioù">
+<!ENTITY customizeMode.lwthemes.recommended "Erbedet">
+<!ENTITY customizeMode.lwthemes.menuManage "Ardeiñ">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "A">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Kaout muioc'h a neuzioù">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "L">
+<!ENTITY customizeMode.uidensity "Douester">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Reizh">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Reizh">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "R">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Koazhet">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Koazhet">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "K">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Stok">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Stok">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "S">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Arverañ Stok evit ar mod taolennig">
+
+<!ENTITY getUserMedia.selectCamera.label "Webkam da rannañ :">
+<!ENTITY getUserMedia.selectCamera.accesskey "W">
+<!ENTITY getUserMedia.selectMicrophone.label "Mikrofon da rannañ :">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Rannet e vo aodio an ivinell.">
+<!ENTITY getUserMedia.allWindowsShared.message "Rannet e vo an holl brenestroù gwelus war ho skramm.">
+
+<!ENTITY trackingProtection.title "Gwarez heuliañ">
+<!ENTITY trackingProtection.detectedBlocked3 "Stanket eo lodennoù eus ar bajenn a c'hellfe heuliañ ac'hanoc'h gant &brandShortName;.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Endalc'het eo elfennoù a c'hell heuliañ ho merdeiñ el lec'hienn. Diweredekaet ho peus ar gwarez.">
+<!ENTITY trackingProtection.notDetected3 "N'eo bet dinoet elfenn heuliañ ebet er bajenn.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Diweredekaat ar gwarez evit al lec'hienn-mañ">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Diweredekaat ar gwarez evit an estez-mañ">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "Gweredekaat ar gwarez">
+<!ENTITY trackingProtection.block2.accesskey "G">
+
+<!ENTITY trackingContentBlocked.message "Heuliañ ho roudoù">
+<!ENTITY trackingContentBlocked.moreinfo "Harzet eo bet al lodoù eus ar bajenn a heuilh hoc'h oberiantiz enlinenn.">
+<!ENTITY trackingContentBlocked.learnMore "Gouzout hiroc'h">
+<!ENTITY trackingContentBlocked.options "Dibarzhioù">
+<!ENTITY trackingContentBlocked.unblock2.label "Diweredekaat ar gwarez evit al lec'hienn-mañ">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "D">
+<!ENTITY trackingContentBlocked.block.label "Gweredekaat ar gwarez">
+<!ENTITY trackingContentBlocked.block.accesskey "G">
+<!ENTITY trackingContentBlocked.disabled.message "Diweredekaet eo ar gwarez ouzh an heuliañ.">
+
+<!ENTITY pluginNotification.showAll.label "Diskouez pep tra">
+<!ENTITY pluginNotification.showAll.accesskey "s">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "Aotren diouzhtu">
+<!ENTITY pluginActivateAlways.label "Aotren ha derc'hel soñj">
+<!ENTITY pluginBlockNow.label "Herzel an enlugellad">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Serriñ">
+
+<!ENTITY appMenuSidebars.label         "Barrennoù kostez">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Ankouaat an hini diwezhañ :">
+<!ENTITY panicButton.view.5min                    "Pemp munutenn">
+<!ENTITY panicButton.view.2hr                     "Div eurvezh">
+<!ENTITY panicButton.view.day                     "24 eurvezh">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Mar kendalc'hit e vo :">
+<!ENTITY panicButton.view.deleteCookies           "Dilamet an <html:strong>toupinoù</html:strong> nevesañ">
+<!ENTITY panicButton.view.deleteHistory           "Dilamet ar <html:strong>roll istor</html:strong> nevesañ">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Serret an holl <html:strong>ivinelloù</html:strong> hag an holl <html:strong>brenestroù</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "Digeriñ ur prenestr nevez">
+
+<!ENTITY panicButton.view.undoWarning             "Ne c'haller ket dizober ar gwezh-mañ..">
+<!ENTITY panicButton.view.forgetButton            "Ankouaat !">
+
+<!ENTITY panicButton.thankyou.msg1                "Skarzhet eo ho roll istor nevesañ.">
+<!ENTITY panicButton.thankyou.msg2                "Merdeiñ diogel !">
+<!ENTITY panicButton.thankyou.buttonlabel         "Trugarez !">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Gouzout hiroc'h diwar-benn an DRM...">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Hizivait &brandShorterName; evit gwellaat e dizh hag e brevezded.">
+<!ENTITY updateAvailable.whatsnew.label "Lennit petra zo nevez.">
+<!ENTITY updateAvailable.header.message "Un hizivadenn nevez a zo evit &brandShorterName;.">
+<!ENTITY updateAvailable.acceptButton.label "Pellgargañ an hizivadenn">
+<!ENTITY updateAvailable.acceptButton.accesskey "P">
+<!ENTITY updateAvailable.cancelButton.label "Diwezhatoc'h">
+<!ENTITY updateAvailable.cancelButton.accesskey "D">
+<!ENTITY updateAvailable.panelUI.label "Pellgargañ hizivadenn &brandShorterName;">
+
+<!ENTITY updateManual.message "Pellgargit un eilad nevez eus &brandShorterName; ha skoazellañ a raimp d'e staliañ.">
+<!ENTITY updateManual.whatsnew.label "Gwelout pezh a zo nevez.">
+<!ENTITY updateManual.header.message "N'haller ket hizivaat &brandShorterName; d'an handelv nevez.">
+<!ENTITY updateManual.acceptButton.label "Pellgargañ &brandShorterName;">
+<!ENTITY updateManual.acceptButton.accesskey "P">
+<!ENTITY updateManual.cancelButton.label "Ket bremañ">
+<!ENTITY updateManual.cancelButton.accesskey "K">
+<!ENTITY updateManual.panelUI.label "Pellgargañ un eilad nevez eus &brandShorterName;">
+
+<!ENTITY updateRestart.message "Goude un adloc'hañ prim e vo atoret hoc'h ivinelloù ha prenestroù digor gant &brandShorterName;">
+<!ENTITY updateRestart.header.message2 "Adloc'hit evit hizivaat &brandShorterName;">
+<!ENTITY updateRestart.acceptButton.label "Adloc'hañ hag atoriñ">
+<!ENTITY updateRestart.acceptButton.accesskey "A">
+<!ENTITY updateRestart.cancelButton.label "Diwezhatoc'h">
+<!ENTITY updateRestart.cancelButton.accesskey "D">
+<!ENTITY updateRestart.panelUI.label2 "Adloc'hit evit hizivaat &brandShorterName;">
+
+<!ENTITY pageActionButton.tooltip "Gweredoù ar bajenn">
+<!ENTITY pageAction.addToUrlbar.label "Ouzhpennañ d'ar varenn chomlec'h">
+<!ENTITY pageAction.removeFromUrlbar.label "Lemel kuit diouzh ar varrenn chomlec'h">
+
+<!ENTITY sendToDevice.label2 "Kas d'an trevnad">
+<!ENTITY sendToDevice.syncNotReady.label "Trevnadoù o c'houbredañ...">
+
+<!ENTITY customizeMode.emptyOverflowList.description "Drag and drop items here to keep them within reach but out of your toolbar…">

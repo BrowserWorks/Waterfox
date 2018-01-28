@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "גזירה">
+<!ENTITY cutCmd.accesskey "ג">
+<!ENTITY copyCmd.label "העתקה">
+<!ENTITY copyCmd.accesskey "ת">
+<!ENTITY pasteCmd.label "הדבקה">
+<!ENTITY pasteCmd.accesskey "ה">
+<!ENTITY undoCmd.label "ביטול">
+<!ENTITY undoCmd.accesskey "ט">
+<!ENTITY selectAllCmd.label "בחירת הכול">
+<!ENTITY selectAllCmd.accesskey "ב">
+<!ENTITY deleteCmd.label "מחיקה">
+<!ENTITY deleteCmd.accesskey "ח">
+
+<!ENTITY spellAddToDictionary.label "הוספה למילון">
+<!ENTITY spellAddToDictionary.accesskey "מ">
+<!ENTITY spellUndoAddToDictionary.label "ביטול הוספה למילון">
+<!ENTITY spellUndoAddToDictionary.accesskey "ב">
+<!ENTITY spellCheckToggle.label "בדיקת איות">
+<!ENTITY spellCheckToggle.accesskey "ב">
+<!ENTITY spellNoSuggestions.label "(אין הצעות איות)">
+<!ENTITY spellDictionaries.label "שפות">
+<!ENTITY spellDictionaries.accesskey "ש">
+
+<!ENTITY searchTextBox.clear.label "ניקוי">
+
+<!ENTITY fillLoginMenu.label          "מילוי פרטי כניסה">
+<!ENTITY fillLoginMenu.accesskey      "מ">
+<!ENTITY fillPasswordMenu.label       "מילוי ססמה">
+<!ENTITY fillPasswordMenu.accesskey   "מ">
+<!ENTITY fillUsernameMenu.label       "מילוי שם משתמש">
+<!ENTITY fillUsernameMenu.accesskey   "מ">
+<!ENTITY noLoginSuggestions.label     "(אין המלצות התחברות)">
+<!ENTITY viewSavedLogins.label        "צפייה בכניסות שמורות">

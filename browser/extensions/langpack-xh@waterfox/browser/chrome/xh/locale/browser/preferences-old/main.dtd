@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Qalisa">
+
+<!ENTITY startupPage.label         "Xa i-&brandShortName; iqalisa:">
+<!ENTITY startupPage.accesskey     "i">
+<!ENTITY startupUserHomePage.label "Bonisa iphepha lakho lokuqala">
+<!ENTITY startupBlankPage.label    "Bonisa ikhasi elingenanto">
+<!ENTITY startupPrevSession.label  "Bonisa iifestile neethebhu zakho ukususela ukugqibela kwam">
+
+<!ENTITY homepage.label            "Phepha lokuQala:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "Sebenzisa iPhepha laNgoku">
+<!ENTITY useCurrentPage.accesskey  "S">
+<!ENTITY useMultiple.label         "Sebenzisa amaPhepha aNgoku">
+<!ENTITY chooseBookmark.label      "Sebenzisa iBhukhmakhi…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "Buyisela kwiZiseko">
+<!ENTITY restoreDefault.accesskey  "B">
+
+<!ENTITY downloads.label     "Okukhutshelwayo">
+
+<!ENTITY saveTo.label "Gcina iifayile kwi">
+<!ENTITY saveTo.accesskey "c">
+<!ENTITY chooseFolderWin.label        "Bhrwuza…">
+<!ENTITY chooseFolderWin.accesskey    "w">
+<!ENTITY chooseFolderMac.label        "Khetha…">
+<!ENTITY chooseFolderMac.accesskey    "a">
+<!ENTITY alwaysAskWhere.label         "Ndikubuze qho ngendawo emazigcinwe kuyo iifayile">
+<!ENTITY alwaysAskWhere.accesskey     "N">
+
+<!ENTITY alwaysCheckDefault2.label        "Khangela qho ukuba i-&brandShortName; iyibhrawuza yakho esisiseko">
+<!ENTITY alwaysCheckDefault2.accesskey    "o">
+<!ENTITY setAsMyDefaultBrowser2.label     "Yenza Ibe yemiselweyo">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "I">
+<!ENTITY isDefault.label                  "I-&brandShortName; kungokunje iyibhrawuza yakho esisiseko">
+<!ENTITY isNotDefault.label               "I-&brandShortName; ayiyobhrawuza yakho esisiseko">
+
+<!ENTITY separateProfileMode.label        "Vumela i-&brandShortName; kunye ne-Waterfox ukuba zisebenze ngaxeshanye">
+<!ENTITY useWaterfoxSync.label             "Ingcebiso: Le isebenzisa iiprofayile eyahlukeneyo. Sebenzisa ungqamaniso ukwabelana ngenkcukacha phakathi kwazo.">
+
+
+
+<!ENTITY e10sEnabled.label                "Vumela inkqubo eninzi i-&brandShortName;">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">

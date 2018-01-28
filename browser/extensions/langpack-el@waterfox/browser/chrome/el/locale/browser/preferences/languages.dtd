@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "32em">
+
+<!ENTITY languages.customize.Header                     "Γλώσσες">
+<!ENTITY languages.customize.description                "Ορισμένες φορές, οι ιστοσελίδες προσφέρονται σε παραπάνω από μια γλώσσες. Επιλέξτε τις γλώσσες εμφάνισης αυτών των ιστοσελίδων, σε σειρά προτίμησης:">
+<!ENTITY languages.customize.moveUp.label               "Μετακίνηση πάνω">
+<!ENTITY languages.customize.moveUp.accesskey           "π">
+<!ENTITY languages.customize.moveDown.label             "Μετακίνηση κάτω">
+<!ENTITY languages.customize.moveDown.accesskey         "κ">
+<!ENTITY languages.customize.deleteButton.label         "Αφαίρεση">
+<!ENTITY languages.customize.deleteButton.accesskey     "Α">
+<!ENTITY languages.customize.selectLanguage.label       "Επιλέξτε μια γλώσσα για προσθήκη…">
+<!ENTITY languages.customize.addButton.label            "Προσθήκη">
+<!ENTITY languages.customize.addButton.accesskey        "θ">
+

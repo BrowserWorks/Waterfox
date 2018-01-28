@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "નીચેની કુકીઓ તમારા કમ્પ્યૂટર પર સંગ્રહિત છે:">
+<!ENTITY     cookiename.label               "કુકી નામ">
+<!ENTITY     cookiedomain.label             "સાઈટ">
+
+<!ENTITY     props.name.label               "નામ:">
+<!ENTITY     props.value.label              "સમાવિષ્ટો:">
+<!ENTITY     props.domain.label             "યજમાન:">
+<!ENTITY     props.path.label               "પથ:">
+<!ENTITY     props.secure.label             "માટે મોકલો:">
+<!ENTITY     props.expires.label            "મર્યાદા સમાપ્ત:">
+<!ENTITY     props.container.label          "કંટેનર:">
+
+<!ENTITY     window.title                   "કુકીઓ">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "શોધો">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "બંધ કરો">
+<!ENTITY     button.close.accesskey         "C">

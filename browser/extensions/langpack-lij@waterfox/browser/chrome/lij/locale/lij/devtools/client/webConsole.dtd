@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "Console web">
+<!ENTITY browserConsole.title "Console do navegatô">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Arvi URL into neuvo feuggio">
+<!ENTITY openURL.accesskey "t">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Ræ">
+<!ENTITY btnPageNet.tooltip "Registra i accessi a-a ræ">
+<!ENTITY btnPageNet.accesskey "R">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Registra eroî e avizi inte l'analixi CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Registra e eceçioin JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Seguessa">
+<!ENTITY btnPageSecurity.tooltip "Registra eroî e avizi de seguessa">
+<!ENTITY btnPageSecurity.accesskey "S">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "Registraçion">
+<!ENTITY btnPageLogging.tooltip "Registra i mesaggi inviæ a l'ògetto window.console">
+<!ENTITY btnPageLogging.accesskey3 "R">
+<!ENTITY btnConsoleErrors       "Eroî">
+<!ENTITY btnConsoleInfo         "Info">
+<!ENTITY btnConsoleWarnings     "Avizi">
+<!ENTITY btnConsoleLog          "Registro">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Reflow">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "Server">
+<!ENTITY btnServerLogging.tooltip     "Registra i mesaggi reçevui da 'n server web">
+<!ENTITY btnServerLogging.accesskey   "R">
+<!ENTITY btnServerErrors              "Eroî">
+<!ENTITY btnServerInfo                "Info">
+<!ENTITY btnServerWarnings            "Avizi">
+<!ENTITY btnServerLog                 "Diario">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Worker condivizi">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Service worker">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Conp. azonti ò Chrome worker">
+
+<!ENTITY filterOutput.placeholder "Filtra output">
+<!ENTITY btnClear.label        "Scancella">
+<!ENTITY btnClear.tooltip      "Scancella o contegnuo da Console web">
+<!ENTITY btnClear.accesskey    "n">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Còpia indirisso colegamento">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Arvi in Vixoalizaçion variabili">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "Sarva comme variabile globale">
+<!ENTITY storeAsGlobalVar.accesskey "S">

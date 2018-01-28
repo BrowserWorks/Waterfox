@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "চমু শীৰ্ষক"> 
+<!ENTITY message.label    "কিছুমান নমুনা লিখনি ইয়াত আহিব।">
+<!ENTITY editfield0.label "ব্যৱহাৰকাৰী নাম:"> 
+<!ENTITY editfield1.label "পাছৱাৰ্ড:"> 
+<!ENTITY checkbox.label   "নিৰীক্ষণ">
+<!ENTITY copyCmd.label    "কপি কৰক">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "সকলো বাছক">
+<!ENTITY selectAllCmd.accesskey "A">

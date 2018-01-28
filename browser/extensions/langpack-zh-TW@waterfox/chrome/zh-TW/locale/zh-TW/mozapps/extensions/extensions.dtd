@@ -1,0 +1,264 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "附加元件管理員">
+
+<!ENTITY search.placeholder                   "搜尋所有附加元件">
+<!ENTITY search.buttonlabel                   "搜尋">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "載入中…">
+<!ENTITY listEmpty.installed.label            "您並未安裝任何此類型的附加元件">
+<!ENTITY listEmpty.availableUpdates.label     "找不到更新">
+<!ENTITY listEmpty.recentUpdates.label        "您最近沒有更新任何附加元件">
+<!ENTITY listEmpty.findUpdates.label          "檢查更新">
+<!ENTITY listEmpty.search.label               "找不到任何符合您搜尋條件的附加元件">
+<!ENTITY listEmpty.button.label               "取得更多有關附加元件的消息">
+<!ENTITY installAddonFromFile.label           "從檔案安裝附加元件…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "所有附加元件的工具">
+
+<!ENTITY getThemes.description                "想要個人化您的瀏覽器嗎？">
+<!ENTITY getThemes.learnMore                  "從數以千計的佈景主題挑選一套。">
+
+<!ENTITY cmd.back.tooltip                     "回到上一頁">
+<!ENTITY cmd.forward.tooltip                  "前進下一頁">
+
+<!ENTITY showUnsignedExtensions.button.label  "無法驗證某些擴充套件">
+<!ENTITY showAllExtensions.button.label       "顯示所有擴充套件">
+<!ENTITY debugAddons.label                    "附加元件除錯">
+<!ENTITY debugAddons.accesskey                "B">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "所有附加元件於安全模式中都已停用。">
+<!ENTITY warning.checkcompatibility.label          "已停止檢查附加元件相容性，您可能有不相容的附加元件。">
+<!ENTITY warning.checkcompatibility.enable.label   "啟用">
+<!ENTITY warning.checkcompatibility.enable.tooltip "啟用附加元件相容性檢查">
+<!ENTITY warning.updatesecurity.label              "已停止檢查附加元件安全性，更新程式可能不安全。">
+<!ENTITY warning.updatesecurity.enable.label       "啟用">
+<!ENTITY warning.updatesecurity.enable.tooltip     "啟用附加元件更新安全檢查">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "搜尋">
+<!ENTITY view.discover.label                  "取得元件">
+<!ENTITY view.recentUpdates.label             "最近的更新">
+<!ENTITY view.availableUpdates.label          "可用的更新">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "檢查更新">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "檢視最近的更新">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "自動更新附加元件">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "a">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "重設所有附加元件的自動更新設定">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "將所有附加元件設定成手動更新">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "正在更新附加元件">
+<!ENTITY updates.installed.label              "您的附加元件已被更新。">
+<!ENTITY updates.downloaded.label             "已下載您的附加元件更新。">
+<!ENTITY updates.restart.label                "立刻重新啟動以完成安裝">
+<!ENTITY updates.noneFound.label              "找不到更新">
+<!ENTITY updates.manualUpdatesFound.label     "檢視可用的更新">
+<!ENTITY updates.updateSelected.label         "安裝更新">
+<!ENTITY updates.updateSelected.tooltip       "安裝此清單中可用的更新">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "顯示更多資訊">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "尋找更新">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "選項">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "偏好設定">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "關於">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "啟用">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "停用">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "套用佈景主題">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "停用佈景主題">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "啟用時詢問">
+<!ENTITY cmd.askToActivate.tooltip            "每次使用此附加元件時詢問">
+<!ENTITY cmd.alwaysActivate.label             "總是啟用">
+<!ENTITY cmd.alwaysActivate.tooltip           "總是使用此附加元件">
+<!ENTITY cmd.neverActivate.label              "永不啟用">
+<!ENTITY cmd.neverActivate.tooltip            "永不使用此附加元件">
+<!ENTITY cmd.stateMenu.tooltip                "在此附加元件執行時變更">
+<!ENTITY cmd.installAddon.label               "安裝">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "移除">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "選項">
+<!ENTITY cmd.showPreferencesWin.tooltip       "修改此附加元件的選項">
+<!ENTITY cmd.showPreferencesUnix.label        "偏好設定">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "修改此附加元件的偏好設定">
+<!ENTITY cmd.contribute.label                 "捐助">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "贊助這個元件的開發">
+
+<!ENTITY cmd.showReleaseNotes.label           "顯示新鮮事">
+<!ENTITY cmd.showReleaseNotes.tooltip         "顯示此次更新的新鮮事">
+<!ENTITY cmd.hideReleaseNotes.label           "隱藏新鮮事">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "隱藏此次更新的新鮮事">
+<!ENTITY cmd.findReplacement.label            "尋找替代套件">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "什麼是附加元件？">
+<!ENTITY discover.description2                "附加元件就是可以讓您透過一些新增的功能或樣式來個人化您的 &brandShortName; 的應用程式。
+  試試看可以讓您節省時間的側邊欄、天氣預報、或是裝個特別的佈景主題讓 &brandShortName; 變成您想要的樣子。">
+<!ENTITY discover.footer                      "當您連上網路之後，這個窗格將會顯示
+  一些最棒和最多人使用的附加元件讓您試試。">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "版本">
+<!ENTITY detail.lastupdated.label             "最近更新時間">
+<!ENTITY detail.creator.label                 "開發者">
+<!ENTITY detail.homepage.label                "網站首頁">
+<!ENTITY detail.numberOfDownloads.label       "下載次數">
+
+<!ENTITY detail.contributions.description     "這個元件的開發者希望您透過小小的捐獻協助其後續開發。">
+
+<!ENTITY detail.updateType                    "自動更新">
+<!ENTITY detail.updateDefault.label           "預設">
+<!ENTITY detail.updateDefault.tooltip         "只自動安裝預設值為自動更新的更新版本">
+<!ENTITY detail.updateAutomatic.label         "開啟">
+<!ENTITY detail.updateAutomatic.tooltip       "自動安裝更新">
+<!ENTITY detail.updateManual.label            "關閉">
+<!ENTITY detail.updateManual.tooltip          "不要自動安裝更新">
+<!ENTITY detail.home                          "網站首頁">
+<!ENTITY detail.repository                    "附加元件設定檔">
+<!ENTITY detail.size                          "大小">
+
+<!ENTITY detail.checkForUpdates.label         "檢查更新">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "檢查此附加元件是否有更新版本">
+<!ENTITY detail.showPreferencesWin.label      "選項">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "修改此附加元件的選項">
+<!ENTITY detail.showPreferencesUnix.label     "偏好設定">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "修改此附加元件的偏好設定">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "評分">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "暫停">
+<!ENTITY progress.cancel.tooltip              "取消">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "名稱">
+<!ENTITY sort.name.tooltip                    "以名稱排序">
+<!ENTITY sort.dateUpdated.label               "最近更新時間">
+<!ENTITY sort.dateUpdated.tooltip             "以更新日期排序">
+<!ENTITY sort.relevance.label                 "最佳結果">
+<!ENTITY sort.relevance.tooltip               "依照相關程度排序">
+<!ENTITY sort.price.label                     "價格">
+<!ENTITY sort.price.tooltip                   "以價格排序">
+
+<!ENTITY search.filter2.label                 "搜尋:">
+<!ENTITY search.filter2.installed.label       "我的附加元件">
+<!ENTITY search.filter2.installed.tooltip     "顯示已安裝的附加元件">
+<!ENTITY search.filter2.available.label       "可用的附加元件">
+<!ENTITY search.filter2.available.tooltip     "顯示可安裝的附加元件">
+
+<!ENTITY addon.homepage                       "網站首頁">
+<!ENTITY addon.details.label                  "更多資訊">
+<!ENTITY addon.details.tooltip                "顯示更多關於此附加元件的詳情">
+<!ENTITY addon.unknownDate                    "未知">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "傳統">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "（已停用）">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "更新">
+<!ENTITY addon.undoAction.label               "復原">
+<!ENTITY addon.undoAction.tooltip             "還原這個動作">
+<!ENTITY addon.undoRemove.label               "復原">
+<!ENTITY addon.undoRemove.tooltip             "保持安裝此附加元件">
+<!ENTITY addon.restartNow.label               "立刻重新啟動">
+<!ENTITY addon.install.label                  "安裝">
+<!ENTITY addon.install.tooltip                "安裝此附加元件">
+<!ENTITY addon.updateNow.label                "立即更新">
+<!ENTITY addon.updateNow.tooltip              "安裝此附加元件的更新">
+<!ENTITY addon.includeUpdate.label            "包含於更新當中">
+<!ENTITY addon.updateAvailable.label          "有可用的更新">
+<!ENTITY addon.checkingForUpdates.label       "正在檢查更新…">
+<!ENTITY addon.releaseNotes.label             "新鮮事:">
+<!ENTITY addon.loadingReleaseNotes.label      "載入中…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "抱歉，載入新鮮事時發生錯誤。">
+
+<!ENTITY addon.createdBy.label                "作者：">
+
+<!ENTITY eula.title                           "終端使用者授權合約">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "接受並安裝…">
+
+<!ENTITY settings.path.button.label           "瀏覽…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "這是什麼？Telemetry 會不定時安裝執行實驗內容。">
+<!ENTITY experiment.info.learnmore "更多資訊">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetry 選項">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "更多資訊…">
+
+<!ENTITY disabledUnsigned.heading "某些附加元件已被停用">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "以下原件尚未經過驗證，無法在 &brandShortName; 使用。您可以">
+<!ENTITY disabledUnsigned.description.findAddonsLink "看看有沒有其他的替代方案">
+<!ENTITY disabledUnsigned.description.end "或是請開發者申請驗證。">
+<!ENTITY disabledUnsigned.learnMore "了解我們為了保護您的線上安全作了哪些努力。">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "有興趣想要驗證附加元件的開發者可繼續閱讀我們的">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "驗證指南">
+<!ENTITY disabledUnsigned.devInfo.end "。">
+
+<!ENTITY pluginDeprecation.description "少了點東西嗎？&brandShortName; 已不再支援某些外掛程式。">
+<!ENTITY pluginDeprecation.learnMore "了解更多。">
+
+<!ENTITY legacyWarning.description "少了點東西嗎？&brandShortName; 已不再支援某些擴充套件。">
+<!ENTITY legacyWarning.showLegacy "顯示傳統擴充套件">
+<!ENTITY legacyExtensions.title "傳統擴充套件">
+<!ENTITY legacyExtensions.description "這些擴充套件不符合 &brandShortName; 目前的標準，已被停用。">
+<!ENTITY legacyExtensions.learnMore "了解附加元件有什麼變動">

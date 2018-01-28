@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Algemeen">
+
+<!ENTITY accessibility.label             "Toeganklikheid">
+
+<!ENTITY useCursorNavigation.label       "Gebruik altyd die por-sleutels om binne bladsye te navigeer">
+<!ENTITY useCursorNavigation.accesskey   "p">
+<!ENTITY searchOnStartTyping.label       "Soek vir teks wanneer ek begin tik">
+<!ENTITY searchOnStartTyping.accesskey   "s">
+<!ENTITY blockAutoReload.label           "Waarsku wanneer webwerwe probeer om die bladsy te herlaai of herlei">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Wys 'n skermsleutelbord indien nodig">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Blaai">
+
+<!ENTITY useAutoScroll.label             "Gebruik outorol">
+<!ENTITY useAutoScroll.accesskey         "o">
+<!ENTITY useSmoothScrolling.label        "Gebruik gladde rol">
+<!ENTITY useSmoothScrolling.accesskey    "G">
+<!ENTITY checkUserSpelling.label         "Kontroleer spelling terwyl ek tik">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Datakeuses">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Help om die blaaier se werkverrigting te verstaan en deel data met &vendorShortName; oor die blaaier se gesondheid">
+<!ENTITY enableHealthReport.label        "Aktiveer &brandShortName;-gesondheidsverslag">
+<!ENTITY enableHealthReport.accesskey    "r">
+
+
+<!ENTITY telemetryDesc.label             "Deel data oor werkverrigting, gebruik, hardeware en aanpassings van die blaaier met &vendorShortName; om te help om &brandShortName; te verbeter">
+<!ENTITY enableTelemetryData.label       "Deel verdere data (m.a.w. Telemetrie)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+
+
+<!ENTITY crashReporterDesc2.label         "Omvalverslae help &vendorShortName; om probleme op te los en die blaaier meer stabiel en veilig te maak">
+<!ENTITY alwaysSubmitCrashReports.label   "Laat &brandShortName; toe om opgehoopte omvalverslae namens u te stuur">
+<!ENTITY alwaysSubmitCrashReports.accesskey "h">
+
+
+<!ENTITY networkTab.label                "Netwerk">
+
+<!ENTITY connection.label                "Verbinding">
+
+<!ENTITY connectionDesc.label            "Stel op hoe &brandShortName; aan die internet koppel">
+<!ENTITY connectionSettings.label        "Opstelling…">
+<!ENTITY connectionSettings.accesskey    "p">
+
+<!ENTITY httpCache.label                 "Webinhoud in die kas">
+
+<!ENTITY offlineStorage2.label           "Vanlyn webinhoud en gebruikerdata">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Werfdata">
+
+
+<!ENTITY siteDataSettings.label          "Instellings…">
+<!ENTITY siteDataSettings.accesskey      "I">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Beperk kas tot">
+<!ENTITY limitCacheSizeBefore.accesskey  "B">
+<!ENTITY limitCacheSizeAfter.label       "MG spasie">
+<!ENTITY clearCacheNow.label             "Maak nou skoon">
+<!ENTITY clearCacheNow.accesskey         "M">
+<!ENTITY clearOfflineAppCacheNow.label   "Maak nou skoon">
+<!ENTITY clearOfflineAppCacheNow.accesskey "n">
+<!ENTITY overrideSmartCacheSize.label    "Oorheers outomatiese kasbestuur">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Bywerk">
+
+<!ENTITY updateApplication.label         "&brandShortName;-bywerkings">
+<!ENTITY updateAuto1.label               "Installeer bywerkings outomaties (beter vir sekuriteit)">
+<!ENTITY updateAuto1.accesskey           "I">
+<!ENTITY updateCheckChoose.label         "Kontroleer vir bywerkings, maar laat my kies of ek dit wil installeer">
+<!ENTITY updateCheckChoose.accesskey     "K">
+<!ENTITY updateManual.label              "Moet nooit kontroleer vir bywerkings nie (sekuriteitsrisiko)">
+<!ENTITY updateManual.accesskey          "n">
+
+<!ENTITY updateHistory.label             "Wys bywerkinggeskiedenis">
+<!ENTITY updateHistory.accesskey         "y">
+
+<!ENTITY useService.label                "Gebruik 'n agtergronddiens om bywerkings te installeer">
+<!ENTITY useService.accesskey            "a">
+
+<!ENTITY autoUpdateOthers.label          "Outomatiese bywerking">
+<!ENTITY enableSearchUpdate.label        "Soekenjins">
+<!ENTITY enableSearchUpdate.accesskey    "e">
+
+<!ENTITY offlineStorageNotify.label               "Sê wanneer 'n webwerf vra om data vir vanlyn gebruik te stoor">
+<!ENTITY offlineStorageNotify.accesskey           "S">
+<!ENTITY offlineStorageNotifyExceptions.label     "Uitsonderings…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "t">
+
+<!ENTITY offlineAppsList2.label          "Die volgende webwerwe het toestemming om data vir vanlyn gebruik te stoor:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Verwyder…">
+<!ENTITY offlineAppsListRemove.accesskey "V">
+<!ENTITY offlineAppRemove.confirm        "Verwyder vanlyn data">
+
+<!ENTITY certificateTab.label            "Sertifikate">
+<!ENTITY certPersonal.label              "Versoeke">
+<!ENTITY certPersonal.description        "Wanneer 'n bediener my persoonlike sertifikaat aanvra:">
+<!ENTITY selectCerts.auto                "Kies outomaties een">
+<!ENTITY selectCerts.auto.accesskey      "K">
+<!ENTITY selectCerts.ask                 "Vra elke keer">
+<!ENTITY selectCerts.ask.accesskey       "V">
+<!ENTITY enableOCSP.label                "Bevestig huidige geldigheid van sertifikate deur OCSP-bedieners te vra">
+<!ENTITY enableOCSP.accesskey            "B">
+<!ENTITY viewCerts.label                 "Bekyk sertifikate">
+<!ENTITY viewCerts.accesskey             "s">
+<!ENTITY viewSecurityDevices.label       "Sekuriteitstoestelle">
+<!ENTITY viewSecurityDevices.accesskey   "t">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Gebruik hardewareversnelling indien beskikbaar">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY clearSiteData.label             "Clear All Data">
+<!ENTITY crashReporterLearnMore.label     "Learn more">
+
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY telemetryLearnMore.label        "Learn more">
+
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

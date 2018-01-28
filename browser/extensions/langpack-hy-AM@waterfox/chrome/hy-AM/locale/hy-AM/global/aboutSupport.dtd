@@ -1,0 +1,171 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Անսարքության տեղեկատվությունը">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Այս էջը պարունակում է տեխնիկական ինֆորմացիա, որը կարող է օգտակար լինել, երբ դուք փորձում եք լուծել խնդիրը:Եթե դուք փնտրում եք &brandShortName;-ին վերաբերող ընդհանուր հարցերին պատասխաններ,փորձեք մեր <a id='supportLink'> աջակցող կայքը </a>:">
+
+<!ENTITY aboutSupport.crashes.title "Վթարի զեկույցներ">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Հաղորդագրության Համարը">
+<!ENTITY aboutSupport.crashes.sendDate "Ուղարկված">
+<!ENTITY aboutSupport.crashes.allReports "Վթարի բոլոր զեկույցները">
+<!ENTITY aboutSupport.crashes.noConfig "Ծրագիրը կարգավորված չէ ցուցադրելու վթարի զեկույցները:">
+
+<!ENTITY aboutSupport.extensionsTitle "Հավելումներ">
+<!ENTITY aboutSupport.extensionName "Անուն">
+<!ENTITY aboutSupport.extensionEnabled "Միացված է">
+<!ENTITY aboutSupport.extensionVersion "Տարբերակ">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;-ի յուրահատկություններ">
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "Փորձարարական հատկություններ">
+<!ENTITY aboutSupport.experimentName "Անուն">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Նկարագրություն">
+<!ENTITY aboutSupport.experimentActive "Ակտիվ">
+<!ENTITY aboutSupport.experimentEndDate "Ավարտի ամսաթիվ">
+<!ENTITY aboutSupport.experimentHomepage "Կայքէջը">
+<!ENTITY aboutSupport.experimentBranch "Ճյուղ">
+
+<!ENTITY aboutSupport.appBasicsTitle "Տեղեկություն հավելվածի մասին">
+<!ENTITY aboutSupport.appBasicsName "Անուն">
+<!ENTITY aboutSupport.appBasicsVersion "Տարբերակ">
+<!ENTITY aboutSupport.appBasicsBuildID "Կառուցման ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Թարմացումների աղբյուր">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Թարմացումների մատյան">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Ցուցադրել Թարմացումների Պատմությունը">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Պրոֆիլի պահոց">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Պրոֆիլի թղթապանակը">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Միացված բաղադրիչներ ">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Հավաքման ձևաչափ">
+<!ENTITY aboutSupport.appBasicsUserAgent "Օգտետերի Դիտարկիչը">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Հիշողության ծավալ">
+<!ENTITY aboutSupport.appBasicsPerformance "Արտադրողականություն">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Գրանցված Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Պրոֆիլներ">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Բազմաընթացքային պատուհաններ">
+
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla-ի տեղադրության ծառայության բանալի">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Ապահով կերպ">
+
+<!ENTITY aboutSupport.showDir.label "Բացել թղթապանակը">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Ցույց տալ Finder -ում">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Բացել թղթապանակը">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Փոփոխված կարևոր կարգավորումներ">
+<!ENTITY aboutSupport.modifiedPrefsName "Անուն">
+<!ENTITY aboutSupport.modifiedPrefsValue "Արժեքը">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js-ի կարգավորումներ">
+<!ENTITY aboutSupport.userJSDescription "Ձեր պրոֆիլի թղթապանակը պարունակում է<a id='prefs-user-js-link'>user.js ֆայլ</a>, որը ներառում է կարգավորումներ, որոնք չեն ստեղծվել &brandShortName;-ի կողմից։">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Կողպված կարևոր կարգավորումներ">
+<!ENTITY aboutSupport.lockedPrefsName "Անուն">
+<!ENTITY aboutSupport.lockedPrefsValue "Արժեքը">
+
+<!ENTITY aboutSupport.graphicsTitle "Գրաֆիկա">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Տվյալների շտեմարան">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Շտեմարաններ">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Ստուգել ամբողջությունը">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Գործադիր GC">
+
+<!ENTITY aboutSupport.a11yTitle "Մատչելիություն">
+<!ENTITY aboutSupport.a11yActivated "Ակտիվացված է">
+<!ENTITY aboutSupport.a11yForceDisabled "Կանխել հասանելիությունը">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Շտեմարանների տարբերակը">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Տեղակայման մատյան">
+<!ENTITY aboutSupport.updateHistoryTitle "Թարմացումների մատյան">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Պատճենել մեկուսաշրջույթում">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Պատճենել չմշակված տվյալները մեկուսաշրջույթ">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Մերժված համակարգային զանգեր">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Վայրկյան առաջ">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Ընթացքի տեսակը">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Համզանգ">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Փաստարկներ">
+
+<!ENTITY aboutSupport.safeModeTitle "Օգտ. Ապահով կերպը">
+<!ENTITY aboutSupport.restartInSafeMode.label "Վերամեկնարկել՝ անջատելով հավելումները...">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Յուրահատկություններ">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Ախտորոշում">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Ձախողման մատյան">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Որոշման մատյան">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Վթարի պաշտպանի անջատած յուրահատկություններ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Շրջանցիկներ">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "恢复浏览状态">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "哎呀，出了点意外。">
+<!ENTITY restorepage.problemDesc    "&brandShortName; 无法恢复您的窗口和标签页。这通常为最近打开的某个网页所致。">
+<!ENTITY restorepage.tryThis        "您可以试试：">
+<!ENTITY restorepage.restoreSome    "取消勾选您认为可能引发此问题的标签页">
+<!ENTITY restorepage.startNew       "不作恢复，开始一次全新的浏览">
+
+<!ENTITY restorepage.tryagainButton "恢复">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "关闭">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "恢复">
+<!ENTITY restorepage.listHeader     "窗口和标签页">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "窗口 &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "出发！">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "成功！">
+
+<!ENTITY welcomeback2.pageTitle     "成功！">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; 蓄势待发。">
+
+<!ENTITY welcomeback2.restoreAll.label  "恢复全部窗口与标签页">
+<!ENTITY welcomeback2.restoreSome.label "仅恢复您选择的">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "您的附加组件和个性化调整已被移除，浏览器设置也已恢复到默认值。如果这样还无法解决您的问题，">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "您可进一步了解还能做什么。">
+

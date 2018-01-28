@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "Tschertgar en il text">
+<!ENTITY findField.label "Tschertgar">
+<!ENTITY findField.accesskey "s">
+<!ENTITY caseSensitiveCheckbox.label "Resguardar maiusclas/minusclas">
+<!ENTITY caseSensitiveCheckbox.accesskey "g">
+<!ENTITY wrapCheckbox.label "Cumenzar danovamain, cura che la fin dal document è cuntanschida">
+<!ENTITY wrapCheckbox.accesskey "C">
+<!ENTITY findButton.label "Tschertgar vinavant">
+<!ENTITY findButton.accesskey "t">
+<!ENTITY cancelButton.label "Interrumper">
+<!ENTITY closeButton.label "Serrar">
+<!ENTITY up.label "Ensi">
+<!ENTITY up.accesskey "s">
+<!ENTITY down.label "Engiu">
+<!ENTITY down.accesskey "g">
+<!ENTITY direction.label "Direcziun da tschertgar">

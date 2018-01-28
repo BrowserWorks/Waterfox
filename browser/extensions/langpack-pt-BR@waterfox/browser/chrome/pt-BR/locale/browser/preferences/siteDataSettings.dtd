@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Configurações - Dados do site">
+<!ENTITY     hostCol.label                 "Site">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Armazenamento">
+<!ENTITY     searchTextboxPlaceHolder             "Pesquisar sites">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "P">
+<!ENTITY     removeSelected.label          "Remover selecionados">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Salvar alterações">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Cancelar">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Removendo dados do site">
+<!ENTITY     removingSelected.description  "Removendo os dados do site também irá remover cookies e conteúdo off-line. Isto pode te desconectar do sites. Tem certeza que quer fazer as alterações?">
+<!ENTITY     siteTree.label                "Os seguintes cookies serão removidos:">

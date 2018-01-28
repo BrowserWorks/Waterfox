@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "မူသေ ရှာဖွေရေး အင်ဂျင်">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "သင့် မူသေ ရှာဖွေရေး အင်ဂျင်ကို ရွေးပါ။. &brandShortName; သည် ၄င်းကို ရှာဖွေကြည့်ရှုခြင်း ဘား၊ ရှာဖွေရေး ဘားနှင့် စတင်မှု စာမျက်နှာတွင် အသုံးပြုပါသည်။">
+
+<!ENTITY provideSearchSuggestions.label        "sရှာဖွေရေး အကြံပြုချက်များကို ပေးပါ">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "lရှာဖွေကြည့်ရှုရေး ဘား၏ ရလဒ်စာရင်းတွင် ရှာဖွေရေး အကြံပြုချက်များကို ပြပါ">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "ရှာဖွေကြည့်ရှုရေးဘားတွင် ရှာဖွေမှုအကြံပြုချက်များ မပြသခြင်းမှာ ရလဒ်မှတ်တမ်းများ မှတ်သားမထားရန် &brandShortName;  သင်ကိုယ်တိုင် ပြုလုပ်ထားခဲ့သောကြောင့်ဖြစ်သည်။">
+
+<!ENTITY oneClickSearchEngines.label           "ကလစ် တစ်ချက်နှိပ် ရှာဖွေရေး အင်ဂျင်များ">
+
+<!ENTITY chooseWhichOneToDisplay.label         "ရှာဖွေရေးဘားသည် သင့်ကို ရှာဖွေရေးအင်ဂျင်မှတဆင့် တိုက်ရိုက် ရှာဖွေမှု ပြုစေသည်။ ဘယ်တစ်ခုကို ပြမယ်ဆိုတာကို ရွေးပါ။">
+
+<!ENTITY engineNameColumn.label                "ရှာဖွေရေးအင်ဂျင်">
+<!ENTITY engineKeywordColumn.label             "သော့ချက် စာလုံး">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Dမူသေ ရှာဖွေရေး အင်ဂျင်များကို မူလအတိုင်း ပြန်သတ်မှတ်ပါ">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Rဖယ်ရှားပါ">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "ရှာဖွေရေး အင်ဂျင်များကို ထပ်ထည့်ပါ…">

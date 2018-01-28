@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Posisie:">
+<!ENTITY tile.label                 "Teël">
+<!ENTITY center.label               "Sentreer">
+<!ENTITY stretch.label              "Rek">
+<!ENTITY fill.label                 "Opvul">
+<!ENTITY fit.label                  "Pas">
+<!ENTITY preview.label              "Voorskou">
+<!ENTITY color.label                "Kleur:">
+<!ENTITY setDesktopBackground.title "As werkskermagtergrond">
+<!ENTITY openDesktopPrefs.label     "Open werkskermvoorkeure">
+<!ENTITY closeWindow.key            "w">

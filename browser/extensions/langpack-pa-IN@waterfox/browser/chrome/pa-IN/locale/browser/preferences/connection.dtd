@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "ਕੁਨੈਕਸ਼ਨ ਸੈਟਿੰਗ">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "ਇੰਟਰਨੈਟ ਵਰਤਣ ਲਈ ਪਰਾਕਸੀ ਸੰਰਚਨਾ">
+<!ENTITY  noProxyTypeRadio.label        "ਪਰਾਕਸੀ ਨਹੀਂ">
+<!ENTITY  noProxyTypeRadio.accesskey    "x">
+<!ENTITY  systemTypeRadio.label         "ਸਿਸਟਮ ਪਰਾਕਸੀ ਸੈਟਿੰਗ ਵਰਤੋਂ">
+<!ENTITY  systemTypeRadio.accesskey     "y">
+<!ENTITY  WPADTypeRadio.label           "ਇਸ ਨੈੱਟਵਰਕ ਲਈ ਪਰਾਕਸੀ ਦੀ ਖੋਜ ਖੁਦ ਕਰੋ">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "ਦਸਤੀ ਪਰਾਕਸੀ ਸੈਟਿੰਗ:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "ਆਟੋਮੈਟਿਕ ਪਰਾਕਸੀ ਸੰਰਚਨਾ URL:">
+<!ENTITY  autoTypeRadio.accesskey       "a">
+<!ENTITY  reload.label                  "ਮੁੜ ਲੋਡ">
+<!ENTITY  reload.accesskey              "l">
+<!ENTITY  ftp.label                     "FTP ਪਰਾਕਸੀ:">
+<!ENTITY  ftp.accesskey                 "f">
+<!ENTITY  http.label                    "HTTP ਪਰਾਕਸੀ:">
+<!ENTITY  http.accesskey                "h">
+<!ENTITY  ssl.label                     "SSL ਪਰਾਕਸੀ:">
+<!ENTITY  ssl.accesskey                 "s">
+<!ENTITY  socks.label                   "SOCKS ਹੋਸਟ:">
+<!ENTITY  socks.accesskey               "c">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "k">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "ਪਰਾਕਸੀ DNS, ਜਦੋਂ SOCKS v5 ਦੀ ਵਰਤੋਂ ਹੋਵੇ">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "ਪੋਰਟ:">
+<!ENTITY  HTTPport.accesskey            "p">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "ਇਸ ਲਈ ਕੋਈ ਪਰਾਕਸੀ ਨਹੀਂ:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "ਜਿਵੇਂ: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ਸਭ ਪਰੋਟੋਕਾਲਾਂ ਲਈ ਇਹ ਸਰਵਰ ਵਰਤੋਂ">
+<!ENTITY  shareproxy.accesskey          "x">
+<!ENTITY  autologinproxy.label          "ਜੇ ਪਾਸਵਰਡ ਨੂੰ ਸੰਭਾਲਿਆ ਹੈ ਤਾਂ ਪਰਮਾਣਿਤ ਕਰਨ ਲਈ ਨਾ ਪੁੱਛੋ">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "ਇਹ ਚੋਣ ਚੁੱਪਚਾਪ ਢੰਗ ਨਾਲ ਤੁਹਾਨੂੰ ਪਰਾਕਸੀਆਂ ਲਈ ਪਰਮਾਣਿਤ ਕਰਦੀ ਹੈ, ਜਦੋਂ ਤੁਸੀਂ ਉਹਨਾਂ ਲਈ ਪਰਮਾਣਕਿਤਾ ਸੰਭਾਲਦੇ ਹੋ। ਤੁਹਾਨੂੰ ਪੁੱਛਿਆ ਜਾਵੇਗਾ, ਜੇ ਪ੍ਰਮਾਣਕਿਤਾ ਫੇਲ੍ਹ ਹੋਈ।">

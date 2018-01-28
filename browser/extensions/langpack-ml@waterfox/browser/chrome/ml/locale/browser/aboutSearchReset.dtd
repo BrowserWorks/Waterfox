@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle       "തിരയല്‍ ക്രമീകരണം വീണ്ടെടുക്കുക">
+
+<!ENTITY searchreset.pageTitle      "തിരയല്‍ ക്രമീകരണം വീണ്ടെടുക്കണോ?">
+
+<!ENTITY searchreset.pageInfo1      "നിങ്ങളുടെ തെരയല്‍ സജ്ജീകരണങ്ങള്‍ കാലോചിതമാവില്ല. &brandShortName; സ്വതേയുള്ള തെരയല്‍ സജ്ജീകരണങ്ങള്‍ വീണ്ടെടുക്കാന്‍ സഹായിക്കും.">
+<!-- LOCALIZATION NOTE (searchreset.selector.label): this string is
+followed by a dropdown of all the built-in search engines. -->
+<!-- LOCALIZATION NOTE (searchreset.beforelink.pageInfo,
+searchreset.afterlink.pageInfo): these two string are used respectively
+before and after the "Settings page" link (searchreset.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language. -->
+<!ENTITY searchreset.afterlink.pageInfo2  ".">
+
+<!ENTITY searchreset.link.pageInfo2       "ക്രമീകരണ താള്‍">
+
+<!ENTITY searchreset.noChangeButton        "മാറ്റേണ്ടതില്ല">
+
+
+<!ENTITY searchreset.changeEngineButton        "തെരയല്‍ യന്ത്രം മാറ്റൂ">
+
+
+<!ENTITY searchreset.beforelink.pageInfo2 "You can change these settings at any time from the ">
+<!ENTITY searchreset.changeEngineButton.access "C">
+<!ENTITY searchreset.noChangeButton.access "D">
+
+<!ENTITY searchreset.selector.label "This will set your default search engine to">
+

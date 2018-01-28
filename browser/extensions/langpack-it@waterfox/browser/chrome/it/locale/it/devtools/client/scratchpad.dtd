@@ -1,0 +1,80 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Blocco per gli appunti">
+<!ENTITY fileMenu.label "File">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newWindowCmd.label "Nuova finestra">
+<!ENTITY newWindowCmd.accesskey "N">
+<!ENTITY newWindowCmd.commandkey "n">
+<!ENTITY openFileCmd.label "Apri file…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY openRecentMenu.label "Apri recenti">
+<!ENTITY openRecentMenu.accesskey "r">
+<!ENTITY revertCmd.label "Ripristina…">
+<!ENTITY revertCmd.accesskey "t">
+<!ENTITY saveFileCmd.label "Salva">
+<!ENTITY saveFileCmd.accesskey "S">
+<!ENTITY saveFileCmd.commandkey "s">
+<!ENTITY saveFileAsCmd.label "Salva con nome…">
+<!ENTITY saveFileAsCmd.accesskey "v">
+<!ENTITY closeCmd.label "Chiudi">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY viewMenu.label "Visualizza">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY lineNumbers.label "Visualizza numero riga">
+<!ENTITY lineNumbers.accesskey "n">
+<!ENTITY wordWrap.label "Testo a capo">
+<!ENTITY wordWrap.accesskey "T">
+<!ENTITY highlightTrailingSpace.label "Evidenzia spazi finali">
+<!ENTITY highlightTrailingSpace.accesskey "E">
+<!ENTITY largerFont.label "Carattere più grande">
+<!ENTITY largerFont.accesskey "a">
+<!ENTITY largerFont.commandkey "+">
+<!ENTITY largerFont.commandkey2 "=">
+<!ENTITY smallerFont.label "Carattere più piccolo">
+<!ENTITY smallerFont.accesskey "a">
+<!ENTITY smallerFont.commandkey "-">
+<!ENTITY normalSize.label "Carattere predefinito">
+<!ENTITY normalSize.accesskey "r">
+<!ENTITY normalSize.commandkey "0">
+<!ENTITY editMenu.label "Modifica">
+<!ENTITY editMenu.accesskey "M">
+<!ENTITY run.label "Esegui">
+<!ENTITY run.accesskey "s">
+<!ENTITY run.key "r">
+<!ENTITY inspect.label "Analizza">
+<!ENTITY inspect.accesskey "z">
+<!ENTITY inspect.key "i">
+<!ENTITY display.label "Visualizza">
+<!ENTITY display.accesskey "V">
+<!ENTITY display.key "l">
+<!ENTITY pprint.label "Formatta codice">
+<!ENTITY pprint.key "p">
+<!ENTITY pprint.accesskey "F">
+<!ENTITY environmentMenu.label "Ambiente">
+<!ENTITY environmentMenu.accesskey "b">
+<!ENTITY contentContext.label "Contenuto">
+<!ENTITY contentContext.accesskey "C">
+<!ENTITY browserContext.label "Browser">
+<!ENTITY browserContext.accesskey "B">
+<!ENTITY helpMenu.label "Aiuto">
+<!ENTITY helpMenu.accesskey "A">
+<!ENTITY helpMenuWin.label "Aiuto">
+<!ENTITY helpMenuWin.accesskey "A">
+<!ENTITY documentationLink.label "Documentazione su MDN">
+<!ENTITY documentationLink.accesskey "D">
+<!ENTITY resetContext2.label "Reimposta variabili">
+<!ENTITY resetContext2.accesskey "m">
+<!ENTITY reloadAndRun.label "Ricarica ed esegui">
+<!ENTITY reloadAndRun.accesskey "R">
+<!ENTITY reloadAndRun.key "r">
+<!ENTITY executeMenu.label "Esecuzione">
+<!ENTITY executeMenu.accesskey "E">
+<!ENTITY errorConsoleCmd.commandkey "j">
+<!ENTITY evalFunction.label "Valuta la funzione corrente">
+<!ENTITY evalFunction.accesskey "V">
+<!ENTITY evalFunction.key "e">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Installer utviding">
+<!ENTITY intro           "Eit anna program på datamaskina ønskjer å endra &brandShortName; med følgande utviding:">
+<!ENTITY warning         "Installer utvidingar berre frå utgjevarar du stolar på.">
+<!ENTITY allow           "Tillat denne installeringa">
+<!ENTITY later           "Du kan alltids endra meining seinare ved å opna Utvidingshandsamaren.">
+<!ENTITY continue        "Hald fram">
+<!ENTITY restartMessage  "Du må starta &brandShortName; på nytt for å fullføra installasjonen av denne utvidinga.">
+<!ENTITY restartButton   "Start &brandShortName; på nytt">
+<!ENTITY cancelButton    "Avbryt">

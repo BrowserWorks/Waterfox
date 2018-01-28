@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Moteur de recherche par défaut">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Sélectionnez le moteur de recherche à utiliser par défaut dans la barre d’adresse et la barre de recherche.">
+
+<!ENTITY provideSearchSuggestions.label        "Afficher les suggestions de recherche">
+<!ENTITY provideSearchSuggestions.accesskey    "A">
+
+<!ENTITY showURLBarSuggestions2.label           "Afficher les suggestions de recherche parmi les résultats de la barre d’adresse">
+<!ENTITY showURLBarSuggestions2.accesskey       "c">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Les suggestions de recherche ne seront pas affichées parmi les résultats de la barre d’adresse car vous avez configuré &brandShortName; de façon à ce qu’il ne conserve jamais l’historique.">
+
+<!ENTITY oneClickSearchEngines.label           "Moteurs de recherche accessibles en un clic">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Sélectionnez les moteurs de recherche alternatifs qui apparaissent sous la barre d’adresse et la barre de recherche lorsque vous commencez à saisir un mot-clé.">
+
+<!ENTITY engineNameColumn.label                "Moteur de recherche">
+<!ENTITY engineKeywordColumn.label             "Mot-clé">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaurer les moteurs de recherche par défaut">
+<!ENTITY restoreDefaultSearchEngines.accesskey "R">
+
+<!ENTITY removeEngine.label                    "Supprimer">
+<!ENTITY removeEngine.accesskey                "S">
+
+<!ENTITY findMoreSearchEngines.label           "Découvrir d’autres moteurs de recherche">

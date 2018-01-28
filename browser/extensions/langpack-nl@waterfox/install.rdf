@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-nl@waterfox"
+               em:name="Nederlands (NL) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="Mozilla-NL">
+    <em:contributor>Gert-Paul van der Beek</em:contributor><em:contributor>Tim Maks van den Broek</em:contributor><em:contributor>Laurens Holst</em:contributor><em:contributor>Ton Kensen</em:contributor><em:contributor>Anne van Kesteren</em:contributor><em:contributor>Hendrik Maryns</em:contributor><em:contributor>Martijn Ras</em:contributor><em:contributor>leden MozBrowser-forum</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

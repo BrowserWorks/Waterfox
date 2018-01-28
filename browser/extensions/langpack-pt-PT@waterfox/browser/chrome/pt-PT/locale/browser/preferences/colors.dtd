@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Cores">
+<!ENTITY  window.width                    "45em">
+<!ENTITY  window.macWidth                 "44em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Sobrepor as cores especificadas pela página com as suas seleções acima:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Sempre">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Apenas com temas de alto contraste">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nunca">
+
+<!ENTITY  color                           "Texto e fundo">
+<!ENTITY  textColor.label                 "Texto:">
+<!ENTITY  textColor.accesskey             "t">
+<!ENTITY  backgroundColor.label           "Fundo:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Utilizar as cores do sistema">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Sublinhar ligações">
+<!ENTITY  underlineLinks.accesskey        "u">
+<!ENTITY  links                           "Cores das ligações">
+<!ENTITY  linkColor.label                 "Ligações não visitadas:">
+<!ENTITY  linkColor.accesskey             "n">
+<!ENTITY  visitedLinkColor.label          "Ligações visitadas:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

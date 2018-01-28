@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Poikkeukset - Käännökset">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Käännöstä ei ehdoteta seuraaville kielille:">
+<!ENTITY treehead.languageName.label      "Kielet">
+<!ENTITY removeLanguage.label             "Poista kieli">
+<!ENTITY removeLanguage.accesskey         "P">
+<!ENTITY removeAllLanguages.label         "Poista kaikki kielet">
+<!ENTITY removeAllLanguages.accesskey     "k">
+
+<!ENTITY noTranslationForSites.label      "Käännöstä ei ehdoteta seuraaville sivustoille:">
+<!ENTITY treehead.siteName2.label         "Sivustot">
+<!ENTITY removeSite.label                 "Poista sivusto">
+<!ENTITY removeSite.accesskey             "o">
+<!ENTITY removeAllSites.label             "Poista kaikki sivustot">
+<!ENTITY removeAllSites.accesskey         "a">
+
+<!ENTITY button.close.label               "Sulje">
+<!ENTITY button.close.accesskey           "S">

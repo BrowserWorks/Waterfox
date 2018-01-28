@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Raportoj pri paneo">
+<!ENTITY crashesUnsubmitted.label   "Nesenditaj raportoj pri paneo">
+<!ENTITY crashesSubmitted.label     "Senditaj raportoj pri paneo">
+<!ENTITY id.heading                 "ID de raporto">
+<!ENTITY dateCrashed.heading        "Dato de paneo">
+<!ENTITY dateSubmitted.heading      "Dato de sendo">
+<!ENTITY noReports.label            "Neniu raporto estis sendita.">
+<!ENTITY noConfig.label             "Tiu ĉi programo ne estis agordita por montri raportojn de paneo. La prefero <code>breakpad.reportURL</code> devas esti aktiva.">
+<!ENTITY clearAllReports.label      "Forigi ĉiujn raportojn">

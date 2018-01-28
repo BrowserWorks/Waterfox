@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "شغّل">
+<!ENTITY playButton.pauseLabel "ألبِث">
+<!ENTITY muteButton.muteLabel "اكتم الصوت">
+<!ENTITY muteButton.unmuteLabel "أطلِق الصوت">
+<!ENTITY fullscreenButton.enterfullscreenlabel "ملء الشاشة">
+<!ENTITY fullscreenButton.exitfullscreenlabel "غادر ملء الشاشة">
+<!ENTITY castingButton.castingLabel "اعرض على الشاشة">
+<!ENTITY closedCaption.off "لا">
+
+<!ENTITY stats.media "الوسيطة">
+<!ENTITY stats.size "الحجم">
+<!ENTITY stats.activity "النشاط">
+<!ENTITY stats.activityPaused "مُلبثة">
+<!ENTITY stats.activityPlaying "مُشغَّلة">
+<!ENTITY stats.activityEnded "منتهية">
+<!ENTITY stats.activitySeeking "(تبحث)">
+<!ENTITY stats.volume "الصوت">
+<!ENTITY stats.framesParsed "اللقطات المحللة">
+<!ENTITY stats.framesDecoded "اللقطات التي فُكّ ترميزها">
+<!ENTITY stats.framesPresented "اللقطات المعروضة">
+<!ENTITY stats.framesPainted "اللقطات المرسومة">
+
+<!ENTITY error.aborted "توقف تحميل الفديو.">
+<!ENTITY error.network "توقف تشغيل الفديو بسبب عُطل شبكي.">
+<!ENTITY error.decode "تعذّر تشغيل الفديو لعطب في الملف.">
+<!ENTITY error.srcNotSupported "نسق أو نوع MIME الفديو غير مدعوم.">
+<!ENTITY error.noSource2 "لم يُعثر على فديو بنسق أو نوع MIME مدعوم.">
+<!ENTITY error.generic "توقف تشغيل الفديو بسبب عُطل غير معروف.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "انقضت #1 من أصل #2">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1‏<span> \‏ #2</span>">

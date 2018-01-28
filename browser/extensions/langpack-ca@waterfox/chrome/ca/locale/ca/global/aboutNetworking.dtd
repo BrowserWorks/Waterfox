@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Quant al trànsit de xarxa">
+<!ENTITY aboutNetworking.warning               "Aquesta funció és molt experimental. No la utilitzeu sense la supervisió d'un adult.">
+<!ENTITY aboutNetworking.showNextTime          "Mostra'm aquest avís la propera vegada">
+<!ENTITY aboutNetworking.ok                    "D'acord">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sòcols">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Actualitza">
+<!ENTITY aboutNetworking.autoRefresh           "Actualitza automàticament cada 3 segons">
+<!ENTITY aboutNetworking.hostname              "Nom de l'ordinador central">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Actiu">
+<!ENTITY aboutNetworking.idle                  "Inactiu">
+<!ENTITY aboutNetworking.host                  "Ordinador central">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Enviats">
+<!ENTITY aboutNetworking.received              "Rebuts">
+<!ENTITY aboutNetworking.family                "Família">
+<!ENTITY aboutNetworking.addresses             "Adreces">
+<!ENTITY aboutNetworking.expires               "Venciment (segons)">
+<!ENTITY aboutNetworking.messagesSent          "Missatges enviats">
+<!ENTITY aboutNetworking.messagesReceived      "Missatges rebuts">
+<!ENTITY aboutNetworking.bytesSent             "Bytes enviats">
+<!ENTITY aboutNetworking.bytesReceived         "Bytes rebuts">
+<!ENTITY aboutNetworking.logging               "Registre">
+<!ENTITY aboutNetworking.logTutorial           "Vegeu <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> per obtenir instruccions sobre com utilitzar aquesta eina.">
+<!ENTITY aboutNetworking.currentLogFile        "Fitxer de registre actual:">
+<!ENTITY aboutNetworking.currentLogModules     "Mòduls de registre actuals:">
+<!ENTITY aboutNetworking.setLogFile            "Defineix el fitxer de registre">
+<!ENTITY aboutNetworking.setLogModules         "Defineix els mòduls de registre">
+<!ENTITY aboutNetworking.startLogging          "Inicia el registre">
+<!ENTITY aboutNetworking.stopLogging           "Atura el registre">
+<!ENTITY aboutNetworking.dnsLookup             "Consulta DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Resol">
+<!ENTITY aboutNetworking.dnsDomain             "Domini">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

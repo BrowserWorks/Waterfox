@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "പുതിയ റ്റാബ്">
+
+<!ENTITY newtab.customize.cog.enhanced "നിര്‍ദ്ദേശിക്കപ്പെട്ട സൈറ്റുകള്‍ ഉള്‍പ്പെടുത്തുക">
+<!ENTITY newtab.customize.cog.title2 "പുതിയ റ്റാബ് നിയന്ത്രണങ്ങള്‍">
+<!ENTITY newtab.customize.cog.learn "പുതിയ ടാബിനെ പറ്റി അറിയുക">
+<!ENTITY newtab.customize.title "നിങ്ങളുടെ പുതിയ ടാബ് താള്‍ ഇഷ്ടമാക്കുക">
+<!ENTITY newtab.customize.blank2 "ഒരു ശൂന്യമായ താള്‍ കാണിക്കുക">
+<!ENTITY newtab.undo.removedLabel "പ്രതിരൂപം നീക്കം ചെയ്തിരിയ്ക്കുന്നു.">
+<!ENTITY newtab.undo.undoButton "വേണ്ട.">
+<!ENTITY newtab.undo.restoreButton "എല്ലാം വീണ്ടെടുക്കുക.">
+<!ENTITY newtab.undo.closeTooltip "അദൃശ്യമാക്കുക">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

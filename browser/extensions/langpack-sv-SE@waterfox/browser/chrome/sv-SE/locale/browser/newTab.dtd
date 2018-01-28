@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Ny flik">
+<!ENTITY newtab.customize.classic "Visa dina mest besökta webbplatser">
+<!ENTITY newtab.customize.cog.enhanced "Inkludera förslag på webbplatser">
+<!ENTITY newtab.customize.cog.title2 "NY FLIK KONTROLLER">
+<!ENTITY newtab.customize.cog.learn "Lär dig mer om Nya flikar">
+<!ENTITY newtab.customize.title "Anpassa din Ny flik-sida">
+<!ENTITY newtab.customize.blank2 "Visa en tom sida">
+<!ENTITY newtab.undo.removedLabel "Miniatyr borttagen.">
+<!ENTITY newtab.undo.undoButton "Ångra.">
+<!ENTITY newtab.undo.restoreButton "Återställ alla.">
+<!ENTITY newtab.undo.closeTooltip "Dölj">

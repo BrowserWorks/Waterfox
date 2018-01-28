@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Грешка во вчитувањето на страницата">
+<!ENTITY retry.label "Обиди се повторно">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Поврзувањето не успеа">
+<!ENTITY connectionFailure.longDesc "<p>Иако се чини дека местото е важечко, прелистувачот не успеа да воспостави врска.</p><ul><li>Дали е можно местото привремено да е недостапно? Обидете се повторно подоцна. </li><li> Можете ли да сурфате на други мрежни места? Проверете ја мрежната врска на компјутерот.</li><li>Дали Вашата компјутерска мрежа е заштитена со огнен ѕид или посредник? Погрешните поставки можат Ви пречат при сурфањето на мрежата.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Портата е забранета од безбедносни причини">
+<!ENTITY deniedPortAccess.longDesc "<p>Бараната адреса наведе порта (пр. <q>mozilla.org:80</q> за порта 80 на mozilla.org) која нормално се користи за цели <em>различни</em> од сурфање. Прелистувачот го откажа барањето заради Ваша заштита и безбедност.</p>">
+
+<!ENTITY dnsNotFound.title "Адресата не е пронајдена">
+<!ENTITY dnsNotFound.longDesc "<p>Прелистувачот не можеше да го пронајде серверот домаќин на наведената адреса.</p><ul><li>Дали направивте грешка при пишувањето на доменот? (пр. <q><strong>ww</strong>.mozilla.org</q> наместо <q><strong>www</strong>.mozilla.org</q>)</li><li>Дали сте сигурни дека оваа адреса на домен постои?  Можеби неговата регистрација е истечена.</li><li>Дали можете да сурфате на други места?  Проверете ја Вашата мрежна врска и поставките за DNS серверот.</li><li>Дали Вашиот компјутер или мрежа се заштитени со огнен ѕид или посредник?  Погрешните поставки можат Ви пречат при сурфањето на мрежата.</li></ul>">
+
+<!ENTITY fileNotFound.title "Датотеката не е пронајдена">
+<!ENTITY fileNotFound.longDesc "<ul><li>Можеби предметот бил преименуван, отстранет или преместен?</li><li>Дали има правописна или друга грешка при впишување на адресата?</li><li>Дали имате соодветна дозвола за пристап до бараниот елемент?</li></ul>">
+
+<!ENTITY generic.title "Барањето не може да се изврши">
+<!ENTITY generic.longDesc "<p>Моментално нема дополнителни информации за овој проблем или грешка.</p>">
+
+<!ENTITY malformedURI.title "Погрешна адреса">
+<!ENTITY malformedURI.longDesc "<p>Наведената адреса е во непрепознатлив формат. За грешки проверете во локациската лента и обидете се повторно.</p>">
+
+<!ENTITY netInterrupt.title "Трансферот на податоци е прекинат">
+<!ENTITY netInterrupt.longDesc "<p>Прелистувачот се поврза успешно, но врската беше прекината при трансферот на информации.  Обидете се повторно.</p><ul><li>Дали можете да сурфате на други места? Проверете ја мрежната врска на компјутерот.</li><li>Сè уште имате проблеми? Побарајте помош од Вашиот администратор или Интернет провајдер.</li></ul>">
+
+<!ENTITY notCached.title "Документот е застарен">
+<!ENTITY notCached.longDesc "<p>Бараниот документ не е достапен во кешот на прелистувачот. 
+</p><ul><li>Заради безбедност прелистувачот автоматски не 
+побарува осетливи документи.</li><li>Кликнете на „Обиди се повторно“ за повторно да го побарате документот од мрежното место.</li></ul>">
+
+<!ENTITY netOffline.title "Локален режим">
+<!ENTITY netOffline.longDesc2 "<p>Прелистувачот работи локално и не може да се поврзе со бараната 
+ставка.</p><ul><li>Дали компјутерот е поврзан на активна мрежа? 
+</li><li>Стиснете на „Обиди се повторно“ за да се приклучите на мрежа и да 
+ја превчитате страницата.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Грешка во кодирањето на содржината">
+<!ENTITY contentEncodingError.longDesc "<p>Страницата која сакате да ја видите не може да биде прикажана бидејќи користи неправилна или неподдржана форма на компресија.</p><ul><li>Контактирајте со сопствениците на страницата за да ги информирате за овој проблем.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Небезбеден тип на датотека">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>Контактирајте со сопствениците на страницата за да ги информирате за овој проблем.</li> 
+</ul>">
+
+<!ENTITY netReset.title "Врската е прекината">
+<!ENTITY netReset.longDesc "<p>Мрежната врска беше прекината во обидот да се воспостави. Обидете се повторно.</p>">
+
+<!ENTITY netTimeout.title "Предолго чекање на мрежата">
+<!ENTITY netTimeout.longDesc "<p>Бараното место не одговори на барањето за врска и прелистувачот престана да чека одговор.</p><ul><li>Можеби серверот е оптоварен со многу сообраќај или нема струја. Обидете се повторно подоцна.</li><li>Дали можете да сурфате на други места?  Проверете ја мрежната врска на компјутерот.</li><li>Дали Вашата компјутерска мрежа е заштитена со огнен ѕид или посредник? Погрешните поставки можат да му пречат на сурфањето на Интернет.</li><li>Сè уште имате проблеми? Побарајте помош од Вашиот мрежен администратор или Интернет провајдер.</li></ul>">
+
+<!ENTITY protocolNotFound.title "Непознат протокол">
+<!ENTITY protocolNotFound.longDesc "<p>Во адресата е наведен протокол (пр. <q>wxyz://</q>) кој прелистувачот не може да го препознае, па така не може правилно да се поврзе со местото.</p><ul><li>Дали се обидувате да пристапите до мултимедијални или други не-текстуални сервиси? Проверете го местото за дополнителни потреби.</li><li>Некои протоколи може да бараат софтвер од трети лица или приклучоци пред прелистувачот да може да ги препознае.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Серверот посредник ја одби врската">
+<!ENTITY proxyConnectFailure.longDesc "<p>Прелистувачот е конфигуриран да користи посредник, но тој ги одбива врските.</p><ul><li>Дали конфигурацијата за посредникот е точна? Проверете ги поставките и обидете се повторно.</li><li>Дали сервисот на посредникот дозволува врски од оваа мрежа?</li><li>Сè уште имате проблеми? Побарајте помош од Вашиот администратор или Интернет провајдер.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Серверот посредник не е пронајден">
+<!ENTITY proxyResolveFailure.longDesc "<p>Прелистувачот е конфигуриран да користи сервер посредник кој не може да се пронајде.</p><ul><li>Дали конфигурацијата за посредникот е точна? Проверете ги поставките и обидете се повторно.</li><li>Дали компјутерот е поврзан на активна мрежа?</li><li>Сè уште имате проблеми? Побарајте помош од Вашиот администратор или Интернет провајдер.</li></ul>">
+
+<!ENTITY redirectLoop.title "Циклус на пренасочувања">
+<!ENTITY redirectLoop.longDesc "<p>Прелистувачот престана да се обидува да го земе бараниот предмет. Местото го пренасочува барањето на начин на кој тоа не може да заврши.</p><ul><li>Дали сте ги оневозможиле или блокирале колачињата потребни за оваа страница?</li><li><em>ЗАБЕЛЕШКА</em>: Ако прифаќањето на колачињата не го реши овој проблем, тогаш проблемот е најверојатно до конфигурацијата на серверот, а не до Вашиот компјутер.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Неточен одговор">
+<!ENTITY unknownSocketType.longDesc "<p>На мрежното барање, местото одговори на неочекуван начин. Прелистувачот не може да продолжи.</p>">
+
+<!ENTITY nssFailure2.title "Безбедната врска е прекината">
+<!ENTITY nssFailure2.longDesc "<p>Страницата која сакате да ја видите не може да биде прикажана бидејќи вистинитоста на примените податоци не може да се потврди.</p><ul><li>Контактирајте со сопствениците на страницата за да ги информирате за овој проблем.</li></ul>">
+
+<!ENTITY nssBadCert.title "Безбедната врска не успеа">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>Ова може да е проблем со конфигурацијата на серверот или пак некој се претставува како серверот.</li> 
+<li>Ако во минатото успешно сте се поврзувале со овој сервер, грешката можеби е привремена, и подоцна може да се обидете повторно.</li> 
+</ul>">
+
+<!ENTITY malwareBlocked.title "Се сомневаме во напад од страницата!">
+<!ENTITY malwareBlocked.longDesc "<p>Напаѓачките места се обидуваат да инсталираат програми кои крадат приватни информации, го користат Вашиот компјутер за да нападнат други или да му наштетат на Вашиот систем.</p> 
+<p>Сопствениците на мрежните места кои веруваат дека нивните страници се пријавени по грешка може да <a href='http://www.stopbadware.org/home/reviewinfo'>побараат повторно разгледување</a>.</p>">
+
+<!ENTITY phishingBlocked.title "Се сомневаме во измама на Интернет!">
+<!ENTITY phishingBlocked.longDesc "<p>Внесувањето на било какви лични информации на оваа страница може да резултира со кражба на идентитетот или друга измама.</p> 
+<p>Ваквите измами се користат во акции познати како „риболовни напади“, во кои лажна страница и е-пошта се користи за имитирање на извори на кои им верувате.</p>">
+
+<!ENTITY cspFrameAncestorBlocked.title "Блокирано од политика за безбедност на содржина">
+<!ENTITY cspFrameAncestorBlocked.longDesc "<p>Прелистувачот ја спречи страницата да се вчита на ваков начин бидејќи таа има безбедносна политика за содржина што го забранува тоа.</p>">
+
+<!ENTITY corruptedContentError.title "Грешка со корумпирана содржина">
+<!ENTITY corruptedContentError.longDesc "<p>Страницата што сакате да ја видите не може да се прикаже 
+поради грешка во пренеост на податоците.</p><ul><li>Контактирајтесо сопствениците на страницата за да ги известите за овој проблем.</li></ul>">
+
+<!ENTITY remoteXUL.title "Мрежен XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Контактирајте со сопствениците на страницата за да 
+ги информирате за овој проблем.</li></ul></p>">
+<!-- Include app-specific error messages - do not change this in localization!
+     Some applications might override netErrorApp.dtd with their specific version,
+     this inclusion needs to be intact for that approach to work correctly.
+     Please, try to keep this at the end of the file. -->
+
+<!ENTITY % netErrorAppDTD SYSTEM "chrome://global/locale/netErrorApp.dtd">
+%netErrorAppDTD;
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>The page you are trying to view cannot be shown because an error in the data transmission was detected.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+<!ENTITY corruptedContentErrorv2.title "Corrupted Content Error">
+<!ENTITY cspBlocked.longDesc "<p>The browser prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>It may have been removed, moved, or file permissions may be preventing access.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY nssFailure2.longDesc2 "<p>The page you are trying to view cannot be shown because the authenticity of the received data could not be verified.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+">
+
+<!ENTITY unknownProtocolFound.longDesc "<p>The address specifies a protocol (e.g. <q>wxyz://</q>) the browser does not recognize, so the browser cannot properly connect to the site.</p><ul><li>Are you trying to access multimedia or other non-text services? Check the site for extra requirements.</li><li>Some protocols may require third-party software or plugins before the browser can recognize them.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Unknown Protocol">

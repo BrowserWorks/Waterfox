@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Strg+Tab přeběži rajtarki po tuchwilu postajenym porjedźe">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Město toho nowe wokna w nowym rajtarku wočinić">
+<!ENTITY newWindowsAsTabs.accesskey   "n">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Warnować, hdyž so wjacore rajtarki začinjeja">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "W">
+
+<!ENTITY warnOnOpenManyTabs.label       "Warnować, hdyž móhło wočinjenje wjacorych rajtarkow &brandShortName; spomalić">
+<!ENTITY warnOnOpenManyTabs.accesskey   "o">
+
+<!ENTITY switchLinksToNewTabs.label        "Hnydom na wotkaz přepinać, kotryž so w nowym rajtarku wočinja">
+<!ENTITY switchLinksToNewTabs.accesskey    "H">
+
+<!ENTITY showTabsInTaskbar.label          "Rajtarkowe přehlady we Windowsowej nadawkowej lajsće pokazać">
+<!ENTITY showTabsInTaskbar.accesskey      "R">
+<!ENTITY tabsGroup.label          "Rajtarki">

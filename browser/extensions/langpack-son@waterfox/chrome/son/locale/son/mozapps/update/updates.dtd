@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Goyjinay taagandiri">
+
+<!ENTITY  checking.title                  "Taagandirey guna">
+<!ENTITY  updateCheck.label               "Goo ma dumi taagayaŋ guna &brandShortName; še…">
+
+<!ENTITY  noupdatesfound.title            "Taagandiri kul mana duwandi">
+<!ENTITY  noupdatesautoenabled.intro      "Taagandiriyaŋ kul ši bara. &brandShortName; ga guna waati foo-foo wala taagandiryaŋ ga bangay">
+<!ENTITY  noupdatesautodisabled.intro     "Taagandiriyaŋ kul ši bara. Taare wa guna koyne waati foo, wala war ma &brandShortName; boŋ-taagandi korošiyan tunandi.">
+
+<!ENTITY  manualUpdate.title              "Taagandiri ši hin ka tee">
+<!ENTITY  manualUpdate.desc               "Saajaw fellante nda gorandiyan taagandiri goo no. amma war ši nda dabariɲaa fondawey kaŋ ka waažibi ngi sinjiyanoo še. Taare war ma war dabariɲaa juwalkaa hãa, wala war ma ceeci koyne nda kontu foo kaŋ goo nda duɲe ka goyjinay sinji ordinateroo woo ra.">
+<!ENTITY  manualUpdate.space.desc         "Saajaw nda tabatiyan tagandiri foo goo kaŋ yaamarandi, amma war ši nda  doo kaŋ ga wasa k'a sinji.">
+<!ENTITY  manualUpdateGetMsg.label        "War ga hin ka duu &brandShortName; dumi kokorantaa waati kul ne:">
+
+<!ENTITY  unsupported.title               "Dabariɲaa ši kanbandi">
+<!ENTITY  unsupported.label               "War &brandShortName; n' ka žen, amma dumi kokorantaa ši nda  gaakašinay dabariɲaŋoo ga. War dabariɲaŋoo taagandi, de wa ceeci koyne.  War ši ye ka dii bayrandoo woo koyene, amma war ga hin ka">
+<!ENTITY  unsupportedLink.label           "bay ka tonton.">
+
+<!ENTITY  clickHere.label                 "Alhabar bešere guna taagandiroo še">
+
+<!ENTITY  evangelism.desc                 "I ga hansa war yaamar kaŋ war ma taagandiroo woo kanandi &brandShortName; nda cahãri.">
+
+<!ENTITY  downloadPage.title              "Goo ma &brandShortName; zumandi">
+<!ENTITY  downloading.intro               "Taagandiroo goo ma zumandi…">
+<!ENTITY  connecting.label                "Goo ma ciya taagandiri feršikaa še…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; mana hin ka timmetaraa tabatandi, kaŋ jere-taagandiri faalandi, woo se a goo ma taagandiri sanbaroo kul zumandi.">
+
+<!ENTITY  viewDetails.tooltip             "Šilbayhayey guna taagandiroo še">
+
+<!ENTITY  details.link                    "Šilbayhayey">
+
+<!ENTITY  error.title                     "Taagandiroo kay">
+
+<!ENTITY  error.label                     "Šenday fooyaŋ bangay taagandiroo woo ceeciroo, zumandiroo wala sinjiroo ra. &brandShortName; ši hin ka taagandi zama:">
+                                           
+<!ENTITY  errorManual.label               "War ga hin ka &brandShortName; taagandi nda kanbe nda war hanga doboo woo ka dumi kokorantaa zumandi:">
+                                           
+<!ENTITY  errorpatching.intro             "Jere-taagandiroo mana hin ka kanandi. &brandShortName; ga wiri ka taagandiri timmante zumandi.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ši bara ka tabatandi wala taagandiri ga bara. Taare guna wala nda cimi war goo nda &brandShortName; dumi kokorantaa ne:">
+
+<!ENTITY  finishedPage.title              "Taagandiroo soolu k'a sinji">
+<!ENTITY  finishedPage.text               "Taagandiroo ga sinjandi hiino kaŋ &brandShortName; ga tun. War ga hin ka &brandShortName; tunandi taaga sohõda, wala ka gaabu goyoo ga, k'a tunandi taaga nd'a too kayna.">
+
+<!ENTITY  finishedBackgroundPage.text     "Saajaw wala tabatiyan taagandiri foo zumandi &brandShortName; se nd'a soolu sinjiyanoo se.">
+<!ENTITY  finishedBackground.name         "Taagandiri:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Taagandiroo ga sinja hiino kaŋ &brandShortName; ga tun. War ga hin ka &brandShortName; tunandi taaga sohõda, wala war ma gaabu goyoo ga, k'a tunandi taaga nd'a too kayna.">
+<!ENTITY  finishedBackground.moreElevated "Taagandiroo woo ga baa juwalkaw fondo-nooyan. Taagandiroo ga sinjandi hiino kaŋ &brandShortName; ga tun. War ga hin ka &brandShortName; tunandi taaga sohõ, goy nda tunandi taaga hiino, wala taagandiroo woo hode.">
+
+<!ENTITY  update.details.label            "Šilbayhayey">
+<!ENTITY  update.installedOn.label        "Sinjiyan han:">
+<!ENTITY  update.status.label             "Assariya:">

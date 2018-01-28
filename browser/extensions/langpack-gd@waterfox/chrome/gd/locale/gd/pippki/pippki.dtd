@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Atharraich am prìomh fhacal-faire">
+<!ENTITY setPassword.tokenName.label "Uidheam tèarainteachd">
+<!ENTITY setPassword.oldPassword.label "Am facal-faire làithreach:">
+<!ENTITY setPassword.newPassword.label "Am facal-faire ùr:">
+<!ENTITY setPassword.reenterPassword.label "Am faca-faire ùr (a-rithist):">
+<!ENTITY setPassword.meter.label "Tomhas càileachd an fhacail-fhaire">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Ath-shuidhich">
+<!ENTITY resetPassword.title  "Falamhaich am prìomh fhacal-faire">
+<!ENTITY resetPassword.text  "Ma dh'fhalmhaicheas tu am prìomh fhacal-faire, thèid gach facal-faire airson làraichean-lìn is puist-dhealain, dàta fhoirmichean, teisteanasan pearsanta is iuchraichean prìobhaideach air chall. A bheil thu cinnteach gu bheil thu airson am prìomh fhacal-faire agad aiseag?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "A' luchdadh a-nuas teisteanas">
+<!ENTITY downloadCert.message1 "Chaidh iarraidh ort earbsa a chur ann an ùghdarras teisteanachaidh (ÙT) ùr.">
+<!ENTITY downloadCert.trustSSL "Cuir earbsa san ùghdarras teisteanachaidh seo gus làraichean-lìn aithneachadh.">
+<!ENTITY downloadCert.trustEmail "Cuir earbsa san ùghdarras teisteanachaidh seo gus cleachdaichean puist-dhealain aithneachadh.">
+<!ENTITY downloadCert.trustObjSign "Cuir earbsa san ùghdarras teisteanachaidh seo gus luchd-leasachaidh bathar-bog aithneachadh.">
+<!ENTITY downloadCert.message3 "Mus cuir thu earbsa san ùghdarras teisteanachaidh seo, bu chòir dhut sùil a chur air a theisteanas fhèin agus na poileasaidhean is modhan-obrach aca (ma tha gin ann).">
+<!ENTITY downloadCert.viewCert.label "Seall">
+<!ENTITY downloadCert.viewCert.text "Sgrùdaich teisteanas an ùghdarrais theisteanachaidh">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Iarrtas aithneachadh cleachdaiche">
+<!ENTITY clientAuthAsk.message1 "Dh'iarr an làrach ort aithne a thoirt ort fhèin le teisteanas:">
+<!ENTITY clientAuthAsk.message2 "Tagh teisteanas a nochdas tu mar dhearbh-aithne:">
+<!ENTITY clientAuthAsk.message3 "Mion-fhiosrachadh an teisteanais a thagh thu:">
+
+<!ENTITY pkcs12.setpassword.title  "Tagh facal-faire lethbhreac-ghlèidhidh an teisteanais">
+<!ENTITY pkcs12.setpassword.message  "Bidh facal-faire lethbhreac-glèidhidh an teisteanais a shuidheas tu an-seo a' glèidheadh am faidhle a tha thu gu bhith cruthachadh.  Feumaidh tu am facal-faire seo a shuidheachadh mus lean thu ort leis a' lethbhreac-ghlèidhidh.">
+<!ENTITY pkcs12.setpassword.label1 "Facal-faire lethbhreac-glèidhidh an teisteanais:">
+<!ENTITY pkcs12.setpassword.label2 "Facal-faire lethbhreac-glèidhidh an teisteanais (a-rithist):">
+<!ENTITY pkcs12.setpassword.reminder "Cudromach: ma dhìochuimhnicheas tu facal-faire lethbhreac-glèidhidh an teisteanais agad, chan urrainn dhut an lethbhreac-glèidhidh seo a chleachdadh as dèidh sin.  Cum cunntas dheth ann an àite sàbhailte.">
+
+<!ENTITY chooseToken.title  "Tagh còmhradh tòcain">
+<!ENTITY chooseToken.message1 "Tagh tòcan.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "A' gintinn iuchair phrìobhaideach">
+<!ENTITY createCertInfo.msg1 "Iuchair 'ga chruthachadh… Feumaidh seo mionaid no dhà….">
+<!ENTITY createCertInfo.msg2 "Fuirich ort…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Dearbhadh le tòcan dìonta">
+<!ENTITY protectedAuth.msg "Dearbhaich an tòcan. Tha an dòigh dearbhachaidh a' crochadh air seòrsan an tòcain agad.">
+<!ENTITY protectedAuth.tokenName.label "Tòcan:">

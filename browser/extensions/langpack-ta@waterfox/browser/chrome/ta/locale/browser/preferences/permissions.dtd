@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "விதிவிலக்குகள்">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.status.label        "நிலை">
+
+
+
+
+<!ENTITY address.label                "இணைய தளத்தின் முகவரி:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "தடு">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "அமர்வுக்கு அனுமதி">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "அனுமதி">
+<!ENTITY allow.accesskey              "A">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "இரத்து">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "மாற்றங்களைச் சேமிக்கவும்">
+<!ENTITY button.ok.accesskey          "S">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

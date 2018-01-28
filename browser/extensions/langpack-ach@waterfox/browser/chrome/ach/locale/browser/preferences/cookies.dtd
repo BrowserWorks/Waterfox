@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Angija magi kikano i komputa ni:">
+<!ENTITY     cookiename.label               "Nying cookie">
+<!ENTITY     cookiedomain.label             "Kakube">
+
+<!ENTITY     props.name.label               "Nying:">
+<!ENTITY     props.value.label              "Gin manonge iye:">
+<!ENTITY     props.domain.label             "Lami kube:">
+<!ENTITY     props.path.label               "Yo:">
+<!ENTITY     props.secure.label             "Cwal Pi:">
+<!ENTITY     props.expires.label            "Kare ne okato woko:">
+<!ENTITY     props.container.label          "Lamak Jami:">
+
+<!ENTITY     window.title                   "Angija">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Yeny">
+<!ENTITY     searchFilter.accesskey         "Y">
+
+<!ENTITY     button.close.label             "Lor">
+<!ENTITY     button.close.accesskey         "L">

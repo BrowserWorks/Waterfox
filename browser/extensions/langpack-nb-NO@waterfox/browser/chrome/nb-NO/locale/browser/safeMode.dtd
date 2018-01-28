@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; sikker modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Start i Sikker Modus">
+<!ENTITY refreshProfile.label         "Tilbakestill &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Sikker Modus er en spesiell modus i &brandShortName; som kan brukes for å feilsøke problemer.">
+<!ENTITY safeModeDescription4.label   "Utvidelser og tilpassede innstillinger vil midlertidig slås av.">
+
+<!ENTITY refreshProfileInstead.label  "Du kan også hoppe over feilsøking, og prøve oppfriske &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; lukktet uventet mens den startet. Dette kan være forårsaket av en utvidelse eller annet problem. Du kan forsøke å rette problemet ved å feilsøke i Sikker Modus.">

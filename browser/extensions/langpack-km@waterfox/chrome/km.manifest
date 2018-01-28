@@ -1,0 +1,14 @@
+locale alerts km km/locale/km/alerts/
+locale autoconfig km km/locale/km/autoconfig/
+locale global km km/locale/km/global/
+locale global-platform km km/locale/km/global-platform/mac/ os=Darwin
+locale global-platform km km/locale/km/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform km km/locale/km/global-platform/win/ os=WINNT
+locale mozapps km km/locale/km/mozapps/
+locale necko km km/locale/km/necko/
+locale passwordmgr km km/locale/km/passwordmgr/
+locale pipnss km km/locale/km/pipnss/
+locale pippki km km/locale/km/pippki/
+locale places km km/locale/km/places/
+locale pluginproblem km km/locale/km/pluginproblem/
+locale weave km km/locale/km/services/

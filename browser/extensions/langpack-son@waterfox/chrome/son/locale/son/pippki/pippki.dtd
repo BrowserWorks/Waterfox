@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Takaddaɲaa šennikufal barmay">
+<!ENTITY setPassword.tokenName.label "Saajaw jinay">
+<!ENTITY setPassword.oldPassword.label "Sohõda šennikufal">
+<!ENTITY setPassword.newPassword.label "Šennikufal taaga:">
+<!ENTITY setPassword.reenterPassword.label "Šennikufal taaga (koyme):">
+<!ENTITY setPassword.meter.label "Šennikufal hennari meetar">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Yeeti">
+<!ENTITY resetPassword.title  "Takaddaɲaa šennikufal yeeri">
+<!ENTITY resetPassword.text  "Nda war na war takaddaɲaa šennikufaloo yeeri, war tataaru nungu nda bataga šennikufaley kul, war takari bayhayey, boŋše tabatiyan-tiirawey nda sutura kufaley kul ga dere. Alhakiika war ga baa ka war takaddaɲaa šennikufaloo yeeri?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Goo ma tabatiyan-tiira zumandi">
+<!ENTITY downloadCert.message1 "Ir ga hãa kaŋ war ma naanay tabatiyan-tiira hini taagaa.">
+<!ENTITY downloadCert.trustSSL "Naanay tabatiyan-tiira hinoo woo ka Interneti nungey tammaasa.">
+<!ENTITY downloadCert.trustEmail "Naanay tabatiyan-tiira hinoo woo ka bataga goykey tammaasa.">
+<!ENTITY downloadCert.trustObjSign "Naanay tabatiyan-tiira hinoo woo ka goyjinay cinakey tammaasa.">
+<!ENTITY downloadCert.message3 "Ka naanay tabatiyan-tiira hinoo woo dalil kul se, war ga hima ka tabatiyan-tiiraa woo nda nga batu laadaa koroši (nd'i ga bara).">
+<!ENTITY downloadCert.viewCert.label "Gunari">
+<!ENTITY downloadCert.viewCert.text "Tabatiyan-tiira hini koroši">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Goykaw boŋtammaasa wiri">
+<!ENTITY clientAuthAsk.message1 "Nungoo woo wiri kaŋ war ma war boŋ tammaasa nda tabatiyan-tiiraa:">
+<!ENTITY clientAuthAsk.message2 "Tabatiyan-tiira suuba k'a cebe sanda boŋ-tammaasa:">
+<!ENTITY clientAuthAsk.message3 "Tabatiyan-tiira suubantaa šilbayhayey:">
+
+<!ENTITY pkcs12.setpassword.title  "Tabatiyan-tiira banda-gaabu šennikufal suuba">
+<!ENTITY pkcs12.setpassword.message  "Tabatiyan-tiira banda-gaabu šennikufaloo kaŋ war n'a kayandi ne ka banda-gaabu tukoo kaŋ war ga baa k'a tee jejebe.  War ga hima ka šennikufaloo yeeri ka koy jine nda banda-gaabuyanoo.">
+<!ENTITY pkcs12.setpassword.label1 "Tabatiyan-tiira banda-gaabu šennikufal:">
+<!ENTITY pkcs12.setpassword.label2 "Tabatiyan-tiira banda-gaabu šennikufal (koyne):">
+<!ENTITY pkcs12.setpassword.reminder "Hawgay: Nda war dirŋa war tabatiyan-tiira banda-gaabu šennikufaloo, war ši hin ka willi kate koyne hiino.  Taare w'a jiši doo saajantaa ra.">
+
+<!ENTITY chooseToken.title  "Tammaasa faakaray suuba">
+<!ENTITY chooseToken.message1 "Taare tammaasa suuba">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Goo ma sutura kufal kaataray">
+<!ENTITY createCertInfo.msg1 "Kufal kaatarayyanoo goo fondaa ra… Woo ga hin ga too minitiyaŋ….">
+<!ENTITY createCertInfo.msg2 "Taare batu…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Tammaasa lasal-tabatandiyan jejebante">
+<!ENTITY protectedAuth.msg "Taare tammaasa lasal-tabatandi. Lasal-tabatandiyan dabaroo ma tenji nda war boŋ tammaasa dumoo.">
+<!ENTITY protectedAuth.tokenName.label "Tammaasa:">

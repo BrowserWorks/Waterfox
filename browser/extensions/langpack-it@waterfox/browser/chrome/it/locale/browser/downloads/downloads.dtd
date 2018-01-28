@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY downloads.title "Download">
+<!ENTITY downloadDetails.width "56ch">
+<!ENTITY downloadsSummary.minWidth2 "26ch">
+<!ENTITY cmd.pause.label "Pausa">
+<!ENTITY cmd.pause.accesskey "P">
+<!ENTITY cmd.resume.label "Riprendi">
+<!ENTITY cmd.resume.accesskey "R">
+<!ENTITY cmd.cancel.label "Annulla">
+<!ENTITY cmd.show.label "Apri cartella">
+<!ENTITY cmd.show.accesskey "A">
+<!ENTITY cmd.showMac.label "Mostra nel Finder">
+<!ENTITY cmd.showMac.accesskey "F">
+<!ENTITY cmd.retry.label "Riprova">
+<!ENTITY cmd.goToDownloadPage.label "Vai alla pagina di download">
+<!ENTITY cmd.goToDownloadPage.accesskey "w">
+<!ENTITY cmd.copyDownloadLink.label "Copia indirizzo di origine">
+<!ENTITY cmd.copyDownloadLink.accesskey "C">
+<!ENTITY cmd.removeFromHistory.label "Elimina dalla cronologia">
+<!ENTITY cmd.removeFromHistory.accesskey "m">
+<!ENTITY cmd.clearList2.label "Svuota pannello anteprima">
+<!ENTITY cmd.clearList2.accesskey "o">
+<!ENTITY cmd.clearDownloads.label "Cancella elenco download">
+<!ENTITY cmd.clearDownloads.accesskey "n">
+<!ENTITY cmd.unblock2.label "Consenti download">
+<!ENTITY cmd.unblock2.accesskey "s">
+<!ENTITY cmd.removeFile.label "Elimina file">
+<!ENTITY cmd.chooseUnblock.label "Elimina file o consenti download">
+<!ENTITY cmd.chooseOpen.label "Apri o elimina file">
+<!ENTITY showMoreInformation.label "Visualizza ulteriori informazioni">
+<!ENTITY openFile.label "Apri file">
+<!ENTITY retryDownload.label "Riprova download">
+<!ENTITY cancelDownload.label "Annulla download">
+<!ENTITY blocked.label "BLOCCATO">
+<!ENTITY learnMore.label "Ulteriori informazioni">
+<!ENTITY downloadsHistory.label "Visualizza tutti i download">
+<!ENTITY downloadsHistory.accesskey "V">
+<!ENTITY openDownloadsFolder.label "Apri la cartella dei download">
+<!ENTITY clearDownloadsButton.label "Cancella elenco download">
+<!ENTITY clearDownloadsButton.tooltip "Rimuovi dall’elenco i download completati, annullati o non riusciti">
+<!ENTITY downloadsListEmpty.label "Non sono presenti download.">
+<!ENTITY downloadsPanelEmpty.label "Nessun download per questa sessione.">
+<!ENTITY downloadsListNoMatch.label "Non è stato trovato alcun download corrispondente.">

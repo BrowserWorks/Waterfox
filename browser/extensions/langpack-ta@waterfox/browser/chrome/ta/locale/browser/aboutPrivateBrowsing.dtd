@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "நீங்கள் தற்போது அந்தரங்க சாளரத்தில் இல்லை.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "அந்தரங்க சாளரத்தைத் திற">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "அந்தரங்க உலாவல்">
+<!ENTITY privateBrowsing.title.tracking                  "தடமறி பாதுகாப்புடன் கூடிய அந்தரங்க உலாவல்">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "நீங்கள் அந்தரங்க சாளரத்தில் உலாவும் போது, பயர்பாக்ஸ்">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "சேமிக்காது">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "பார்த்த பக்கங்கள்">
+<!ENTITY aboutPrivateBrowsing.info.searches              "தேடல்கள்">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "நினைவிகள்">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "தற்காலிக கோப்புகள்">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "பயர்பாக்ஸ் ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "சேமிக்கும்">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " உங்களுடைய:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "பதிவிறக்கங்கள்">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "புத்தகக்குறிகள்">
+<!ENTITY aboutPrivateBrowsing.note.before                "அந்தரங்க உலாவல் ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "உங்களைப் பெயரற்றவராக ஆக்காது">
+<!ENTITY aboutPrivateBrowsing.note.after                 " இணையத்தில் உங்கள் முதலாளியோ இணைய சேவை வழங்குநரோ நீங்கள் பயன்படுத்திய பக்கங்களைக் கண்டறியலாம்.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "அதுபற்றி மேலும் அறிக ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "அந்தரங்க உலாவல்">
+
+
+<!ENTITY trackingProtection.title                        "தடமறியல் பாதுகாப்பு">
+<!ENTITY trackingProtection.description2                 "சில தளங்கள் உங்கள் இணைய செயல்பாட்டை கண்காணிக்கும் தடமறிகளைப் பயன்படுத்துகிறது. தடமறி பாதுகாப்புடன் உங்கள் உலாவல் நடத்தையை சேகரிக்கும் தடமறிகளை பயர்பாக்ஸ் முடக்கும்.">
+<!ENTITY trackingProtection.startTour1                   "இது எப்படி செயல்படுகிறது என்று பார்க்கலாம்">
+
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+

@@ -1,0 +1,76 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Данни за Телеметрията">
+
+<!ENTITY aboutTelemetry.pingDataSource "Източник на данните в пакета:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Текущи данни">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Архивни данни">
+
+<!ENTITY aboutTelemetry.raw "Необработен JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Показване на подробни данни">
+
+<!ENTITY aboutTelemetry.choosePing "Избиране на пакет:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; По-нов пакет">
+
+<!ENTITY aboutTelemetry.showOlderPing "По-стар пакет &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Седмица">
+
+<!ENTITY aboutTelemetry.archivePingType "Вид на пакета">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Пакет">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Днес">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Вчера">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "По-стари">
+
+<!ENTITY aboutTelemetry.generalDataSection "Основни данни">
+
+<!ENTITY aboutTelemetry.environmentDataSection "Данни за обкръжението">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "Журнал на Телеметрията">
+
+<!ENTITY aboutTelemetry.slowSqlSection "Бавни SQL-заявки">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "Зависвания на браузъра">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "Зависнала нишка">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "Прихванати стекове">
+
+<!ENTITY aboutTelemetry.scalarsSection "Скалари">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "Keyed скалари
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "Хистограми">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "Небалансирани хистограми">
+
+<!ENTITY aboutTelemetry.eventsSection "Събития">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "Прости измервания">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "Подробности за добавки">
+
+<!ENTITY aboutTelemetry.lateWritesSection "Късни записи">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Системна информация">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "ВАЖНО: Записването на бавните SQL заявки е разрешено. Пълните заявки може и да се показват, но те НЕ СЕ изпращат по телеметрията.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "Вземане имената на функциите от стековете">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "Сурови данни на стека">
+
+<!ENTITY aboutTelemetry.filterText "Филтър (низ или /регулярен израз/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Полезен товар">

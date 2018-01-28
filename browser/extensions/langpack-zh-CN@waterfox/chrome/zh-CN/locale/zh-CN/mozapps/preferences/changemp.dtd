@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "修改主密码">
+<!ENTITY setPassword.tokenName.label       "安全设备">
+<!ENTITY setPassword.oldPassword.label     "当前密码：">
+<!ENTITY setPassword.newPassword.label     "请输入新的密码：">
+<!ENTITY setPassword.reenterPassword.label "重新输入密码：">
+<!ENTITY setPassword.meter.label           "密码强度">
+<!ENTITY setPassword.meter.loading         "正在载入">
+<!ENTITY masterPasswordDescription.label   "主密码用于保护敏感的数据（如网站密码）。如果您创建了主密码，那么每次运行 &brandShortName; 后，若要读取已保存的敏感信息，必须再次输入主密码。">
+<!ENTITY masterPasswordWarning.label       "请您一定记住刚才设置的主密码。如果您忘记了主密码，您将再也不能存取所有被主密码保护的信息。">

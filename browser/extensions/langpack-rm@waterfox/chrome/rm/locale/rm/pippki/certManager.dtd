@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Administratur da certificats">
+
+<!ENTITY certmgr.tab.mine                     "Tes certificats">
+<!ENTITY certmgr.tab.others2                  "Persunas">
+<!ENTITY certmgr.tab.websites3                "Server">
+<!ENTITY certmgr.tab.ca                       "Posts da certificaziun">
+<!ENTITY certmgr.tab.orphan2                  "Auters">
+
+<!ENTITY certmgr.mine                         "Ti has certificats da questas organisaziuns che identifitgeschan tai:">
+<!ENTITY certmgr.others                       "Ti has certificats memorisads che identifitgeschan questas persunas:">
+<!ENTITY certmgr.websites2                    "Ti has certificats memorisads che identifitgeschan quests servers:">
+<!ENTITY certmgr.cas                          "Ti has certificats memorisads che identifitgeschan quests posts da certificaziun:">
+<!ENTITY certmgr.orphans                      "Ti has memorisà certificats che n'appartegnan a naginas da las categorias restantas: ">
+
+<!ENTITY certmgr.detail.general_tab.title     "General">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Detagls">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Il certificat vegn actualmain verifitgà…">
+<!ENTITY certmgr.subjectinfo.label            "Emess per">
+<!ENTITY certmgr.issuerinfo.label             "Emess da">
+<!ENTITY certmgr.periodofvalidity.label       "Perioda da validitad" >
+<!ENTITY certmgr.fingerprints.label           "Improntas dal det">
+<!ENTITY certmgr.certdetail.title             "Detagl dal certificat">
+<!ENTITY certmgr.certdetail.cn                "Num general (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organisaziun (O)">
+<!ENTITY certmgr.certdetail.ou                "Unitad d'organisaziun (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Numer da seria">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Impronta dal det SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Impronta dal det SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Modifitgar ils parameters da fidanza en certificats CA">
+<!ENTITY certmgr.editcert.edittrust           "Modifitgar ils parameters da fidanza:">
+<!ENTITY certmgr.editcert.trustssl            "Quest certificat po identifitgar websites.">
+<!ENTITY certmgr.editcert.trustemail          "Quest certificat po identifitgar utilisaders dad e-mail.">
+<!ENTITY certmgr.editcert.trustobjsign        "Quest certificat po identifitgar producents da software.">
+
+<!ENTITY certmgr.deletecert.title             "Stizzar il certificat">
+
+<!ENTITY certmgr.certname                     "Num dal certificat">
+<!ENTITY certmgr.certserver                   "Server">
+<!ENTITY certmgr.override_lifetime            "Durada da vita">
+<!ENTITY certmgr.tokenname                    "Modul da criptografia">
+<!ENTITY certmgr.begins                       "Cumenza ils">
+<!ENTITY certmgr.expires                      "Scroda ils">
+<!ENTITY certmgr.email                        "Adressa dad e-mail">
+<!ENTITY certmgr.serial                       "Numer da seria">
+
+<!ENTITY certmgr.close.label                  "Serrar">
+<!ENTITY certmgr.close.accesskey              "S">
+<!ENTITY certmgr.view2.label                  "Vesair…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Modifitgar la fidanza…">
+<!ENTITY certmgr.edit3.accesskey              "M">
+<!ENTITY certmgr.export.label                 "Exportar…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Stizzar…">
+<!ENTITY certmgr.delete2.accesskey            "t">
+<!ENTITY certmgr.delete_builtin.label         "Stizzar u betg pli fidar…">
+<!ENTITY certmgr.delete_builtin.accesskey     "b">
+<!ENTITY certmgr.backup2.label                "Memorisar…">
+<!ENTITY certmgr.backup2.accesskey            "M">
+<!ENTITY certmgr.backupall2.label             "Memorisar tuts…">
+<!ENTITY certmgr.backupall2.accesskey         "t">
+<!ENTITY certmgr.restore2.label               "Importar…">
+<!ENTITY certmgr.restore2.accesskey           "I">
+<!ENTITY certmgr.details.label                "Layout dal certificat">
+<!ENTITY certmgr.details.accesskey            "L">
+<!ENTITY certmgr.fields.label                 "Valur dal champ">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "Ierarchia da certificats">
+<!ENTITY certmgr.hierarchy.accesskey2         "e">
+<!ENTITY certmgr.addException.label           "Agiuntar in'excepziun…">
+<!ENTITY certmgr.addException.accesskey       "e">
+
+<!ENTITY exceptionMgr.title                   "Agiuntar ina regla d'excepziun da segirezza">
+<!ENTITY exceptionMgr.exceptionButton.label   "Confermar la regla d'excepziun da segirezza">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "S">
+<!ENTITY exceptionMgr.supplementalWarning     "Bancas seriusas, fatschentas ed autras paginas uffizialas na vegnan betg a dumandar tai da far talas chaussas. ">
+<!ENTITY exceptionMgr.certlocation.caption2   "Server">
+<!ENTITY exceptionMgr.certlocation.url        "Adressa:">
+<!ENTITY exceptionMgr.certlocation.download   "Telechargiar il certificat">
+<!ENTITY exceptionMgr.certlocation.accesskey  "T">
+<!ENTITY exceptionMgr.certstatus.caption      "Status dal certificat">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Vesair…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "A">
+<!ENTITY exceptionMgr.permanent.label         "Memorisar questa excepziun per adina">
+<!ENTITY exceptionMgr.permanent.accesskey     "n">

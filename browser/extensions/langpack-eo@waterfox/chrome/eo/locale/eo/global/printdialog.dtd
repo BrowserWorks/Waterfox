@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Presi">
+
+<!ENTITY printDialog.title "Presi">
+
+<!ENTITY fpDialog.title "Konservi dosieron">
+
+<!ENTITY fileCheck.label "Presi sur dosiero">
+<!ENTITY fileCheck.accesskey "D">
+<!ENTITY propertiesButton.label "Atributoj…">
+<!ENTITY propertiesButton.accesskey "a">
+<!ENTITY descText.label "Priskribo de presilo:">
+<!ENTITY printer.label "Presilo">
+<!ENTITY printerInput.label "Nomo de presilo:">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "Presa amplekso">
+<!ENTITY allpagesRadio.label "Ĉiuj paĝoj">
+<!ENTITY allpagesRadio.accesskey "I">
+<!ENTITY rangeRadio.label  "Paĝoj">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "ekde">
+<!ENTITY frompageInput.accesskey  "e">
+<!ENTITY topageInput.label  "ĝis">
+<!ENTITY topageInput.accesskey  "s">
+<!ENTITY selectionRadio.label "Elektaĵo">
+<!ENTITY selectionRadio.accesskey "E">
+
+<!ENTITY copies.label "Kopioj">
+<!ENTITY numCopies.label "Kvanto da kopioj:">
+<!ENTITY numCopies.accesskey "k">
+
+<!ENTITY printframeGroup.label "Presi kadrojn">
+<!ENTITY aslaidoutRadio.label "Kiel videblas sur la ekrano">
+<!ENTITY aslaidoutRadio.accesskey "v">
+<!ENTITY selectedframeRadio.label  "La elektita kadro">
+<!ENTITY selectedframeRadio.accesskey  "l">
+<!ENTITY eachframesepRadio.label  "Ĉiu kadro aparte">
+<!ENTITY eachframesepRadio.accesskey  "A">

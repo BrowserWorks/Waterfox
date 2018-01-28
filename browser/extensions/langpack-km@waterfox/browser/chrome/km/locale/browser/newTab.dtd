@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "ផ្ទាំង​ថ្មី">
+<!ENTITY newtab.customize.classic "បង្ហាញ​តំបន់បណ្ដាញ​ពេញនិយម​របស់​​អ្នក​">
+<!ENTITY newtab.customize.cog.enhanced "បញ្ចូល​តំបន់បណ្ដាញ​ដែល​ស្នើ">
+<!ENTITY newtab.customize.cog.title2 "ការត្រួតពិនិត្យ​មើល​ផ្ទាំងថ្មី">
+<!ENTITY newtab.customize.cog.learn "សិក្សា​អំពី​ផ្ទាំង​ថ្មី">
+<!ENTITY newtab.customize.title "ប្ដូរ​ទំព័រ​ផ្ទាំង​ថ្មី​របស់​អ្នក​តាម​តម្រូវ​ការ">
+<!ENTITY newtab.customize.blank2 "បង្ហាញ​ទំព័រ​ទទេ">
+<!ENTITY newtab.undo.removedLabel "បាន​យក​រូបភាព​តូច​ចេញ។">
+<!ENTITY newtab.undo.undoButton "មិនធ្វើវិញ។">
+<!ENTITY newtab.undo.restoreButton "ស្ដារ​ទាំងអស់។">
+<!ENTITY newtab.undo.closeTooltip "លាក់">

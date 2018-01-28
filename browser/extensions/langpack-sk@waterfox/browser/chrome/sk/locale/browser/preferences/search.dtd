@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Predvolený vyhľadávací modul">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Vyberte si predvolený vyhľadávací modul pre vyhľadávanie z panela s adresou a vyhľadávacieho panela.">
+
+<!ENTITY provideSearchSuggestions.label        "Zobrazovať návrhy vyhľadávania">
+<!ENTITY provideSearchSuggestions.accesskey    "Z">
+
+<!ENTITY showURLBarSuggestions2.label           "Zobrazovať návrhy vyhľadávania vo výsledkoch panela s adresou">
+<!ENTITY showURLBarSuggestions2.accesskey       "a">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Návrhy vyhľadávania nebudú zobrazené vo výsledkoch panela s adresou, pretože ste &brandShortName; nastavili tak, aby si nepamätal históriu.">
+
+<!ENTITY oneClickSearchEngines.label           "Vyhľadávacie moduly na jedno kliknutie">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Vyberte ďalšie vyhľadávacie moduly, ktoré sa zobrazia v ponuke panela s adresou a vyhľadávacieho panela.">
+
+<!ENTITY engineNameColumn.label                "Vyhľadávací modul">
+<!ENTITY engineKeywordColumn.label             "Kľúčové slovo">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Obnoviť predvolené vyhľadávacie moduly">
+<!ENTITY restoreDefaultSearchEngines.accesskey "O">
+
+<!ENTITY removeEngine.label                    "Odstrániť">
+<!ENTITY removeEngine.accesskey                "d">
+
+<!ENTITY findMoreSearchEngines.label           "Nájsť ďalšie vyhľadávacie moduly">

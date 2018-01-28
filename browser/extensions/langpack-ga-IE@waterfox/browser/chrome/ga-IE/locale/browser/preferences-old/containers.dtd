@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Coimeádán Nua">
+<!ENTITY addButton.accesskey  "C">
+<!ENTITY preferencesButton.label "Sainroghanna">
+<!ENTITY removeButton.label   "Bain">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Fill ar na roghanna príobháideachais">
+
+<!ENTITY window.title         "Coimeádán Nua">
+<!ENTITY window.width         "50em">
+
+<!ENTITY name.label           "Ainm:">
+<!ENTITY name.accesskey       "n">
+<!ENTITY name.placeholder     "Cuir ainm an choimeádáin isteach">
+<!ENTITY icon.label           "Deilbhín:">
+<!ENTITY icon.accesskey       "i">
+<!ENTITY color.label          "Dath:">
+<!ENTITY color.accesskey      "t">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Críochnaithe">
+<!ENTITY button.ok.accesskey  "C">
+

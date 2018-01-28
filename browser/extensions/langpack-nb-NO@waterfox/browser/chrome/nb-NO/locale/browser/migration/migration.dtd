@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importveiviser">
+
+<!ENTITY importFrom.label               "Importer innstillinger, bokmerker, historikk, passord og annen informasjon fra:">
+<!ENTITY importFromUnix.label           "Importer innstillinger, bokmerker, historikk, passord og annen informasjon fra:">
+<!ENTITY importFromBookmarks.label      "Importer bokmerker fra:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ikke importer noe">
+<!ENTITY importFromNothing.accesskey    "I">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 sikker nettleser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Klarte ikke finne noen programmer som inneholder bokmerker, historikk og passordinformasjon.">
+
+<!ENTITY importSource.title             "Importer innstillinger og data">
+<!ENTITY importItems.title              "Elementer som skal importeres">
+<!ENTITY importItems.label              "Velg hvilke elementer som skal importeres:">
+
+<!ENTITY migrating.title                "Importerer …">
+<!ENTITY migrating.label                "Følgende elementer blir nå importert …">
+
+<!ENTITY selectProfile.title            "Velg profil">
+<!ENTITY selectProfile.label            "Du kan importere fra følgende profiler:">
+
+<!ENTITY done.title                     "Import er fullført">
+<!ENTITY done.label                     "Følgende elementer er importert:">
+
+<!ENTITY closeSourceBrowser.label       "Kontroller at den valgte nettleseren er lukket før du fortsetter.">

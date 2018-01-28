@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "rtl">
+<!ENTITY rights.title "הזכויות שלך">
+<!ENTITY rights.intro "&brandFullName; היא תוכנה חופשית בקוד פתוח, שנבנתה בידי קהילה של אלפים מכל רחבי העולם. ישנם מספר דברים שעליך לדעת:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; ניתן לך תחת התנאים של ">
+<!ENTITY rights.intro-point1b "הרישיון הציבורי של Mozilla">
+<!ENTITY rights.intro-point1c ". משמעות הדבר היא שניתן להשתמש ב־&brandShortName;, להעתיקו ולהפיצו לאחרים, כמו גם לשנות את קוד המקור של &brandShortName; בדרך המתאימה ביותר לצרכיך. הרישיון הציבורי של Mozilla גם נותן לך את הזכות להפיץ את הגרסאות עם השינויים שלך.">
+
+<!ENTITY rights.intro-point2-a "לא הוענקה לך אף זכות בסמל המסחרי או רישיונות לסמל המסחרי של קרן Mozilla או חלקן, לא כולל הגבלה על השם או הלוגו של Waterfox. מידע נוסף על הסמלים המסחריים נמצא ">
+<!ENTITY rights.intro-point2-b "כאן">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "תכונות מסוימות ב־&brandShortName;, כמו למשל מדווח הקריסות, נותנות לך את האפשרות לספק משוב ל־&vendorShortName;. באמצעות בחירה בשליחת משוב, אתה נותן ל־&vendorShortName; הרשאה להשתמש במשוב כדי לשפר את המוצרים, לפרסם את המשוב באתר שלהם, ולהפיץ את המשוב.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "מידע על אופן השימוש במידע האישי שלך ובמשוב שלך הנשלחים ל־&vendorShortName; דרך &brandShortName; מתואר ב">
+<!ENTITY rights2.intro-point3b "מדיניות הפרטיות של &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "כל מדיניות פרטיות ישימה למוצר זה צריכה להופיע כאן.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "חלק מהתכונות של &brandShortName; משתמשות בשירותי מידע מבוססי רשת, למרות זאת, אין באפשרותנו להבטיח שהם מדויקים ב־100&#037; או נטולי שגיאות. מידע נוסף, לרבות הוראות לניטרול התכונות המשתמשות בשירותים אלו, זמין ב־">
+<!ENTITY rights.intro-point4b "תנאי השירות">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "אם מוצר זה כולל שירותי רשת, יש לקשר כל תנאי שירות ישים עבור השירות(ים) אל הסעיף ">
+<!ENTITY rights.intro-point4b-unbranded "שירותי אתרים">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "שירותי מידע מבוססי רשת של &brandFullName;">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "כדי לנגן סוגים מסוימים של תוכן וידאו, על &brandShortName; להוריד רכיבי פענוח תוכן מסוימים מגורמי צד שלישי.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; משתמש בשירותי מידע מבוססי רשת (להלן &quot;Services&quot;) כדי לספק חלק מהתכונות שלו המסופקות לשימושך עם הגרסה הבינארית הזו של &brandShortName; תחת התנאים שמתוארים מטה. אם אינך רוצה להשתמש באחד או יותר משירותים אלו או שהתנאים המצוינים למטה אינם מתאימים לך, אתה יכול לנטרל את התכונות או השירותים. הוראות לניטרול תכונות או שירותים מסוימים יכולות להימצא ">
+<!ENTITY rights2.webservices-b "כאן">
+<!ENTITY rights3.webservices-c ". תכונות ושירותים אחרים ניתנים לנטרול בהעדפות היישום.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "גלישה בטוחה: ">
+<!ENTITY rights.safebrowsing-b "ניטרול התכונה גלישה בטוחה לא מומלץ מכיוון שביטול התכונה יאפשר לך לגשת לאתרים לא בטוחים. אם אתה רוצה לנטרל את התכונה לחלוטין, עקוב אחר צעדים אלו:">
+<!ENTITY rights.safebrowsing-term1 "פתח את העדפות היישום">
+<!ENTITY rights.safebrowsing-term2 "בחר בלשונית אבטחה">
+<!ENTITY rights2.safebrowsing-term3 "ניתן לבטל את הסימון כדי &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "גלישה בטוחה מנוטרלת כעת">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "דפדפוף מבוסס מיקום: ">
+<!ENTITY rights.locationawarebrowsing-b "תמיד ממתין לאישור המשתמש. אף מידע מיקום לא נשלח בלי לקבל את רשותך. אם אתה מעוניין לנטרל את התכונה הזו לחלוטין, עקוב אחר צעדים אלו:">
+<!ENTITY rights.locationawarebrowsing-term1a "בשורת הכתובות, הקש ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "הקלד geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "לחץ לחיצה כפולה על ההעדפה geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "דפדפוף מבוסס מיקום מנוטרל כעת">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "סקירה של שירותי האתרים שהמוצר מכיל, יחד עם הוראות כיצד לבטל אותם, אם הדבר ישים, צריכה להיכלל כאן.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "יש לרשום כאן כל תנאי שירות ישימים עבור מוצר זה.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; על תורמיו, בעלי זכויות יוצריו ושותפיו עובדים יחדיו כדי לספק את השירותים העדכניים והמדויקים ביותר.  עם זאת, איננו יכולים להבטיח כי מידע זה מקיף ונטול שגיאות.  לדוגמה, שירות הגלישה הבטוחה עלול שלא לזהות מספר אתרים מסוכנים ועלול לזהות כמה אתרים בטוחים בטעות ובשירות מבוסס המיקום כל המיקומים שמוחזרים על ידי ספקי השירות שלנו משוערכים בלבד וגם אנחנו וגם ספקי השירות שלנו לא יכולים להתחייב לדיוקם של המיקומים המסופקים.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; עשוי להפסיק או לשנות את השירותים לפי ראותו.">
+<!ENTITY rights2.webservices-term3 "אתה מוזמן להשתמש בשירותים אלו עם הגרסה הנלוות של &brandShortName;, ו־&vendorShortName; נותנת לך את הרשות לעשות זאת. &vendorShortName; והזכיינים שלה מחזיקים בכל שאר הזכויות בשירותים אלה. תנאים אלו לא נועדו להגביל את הזכויות הניתנות במסגרת רישיונות הקוד הפתוח החלים על &brandShortName; ולגרסאות קוד המקור התואמות של &brandShortName;.">
+<!ENTITY rights.webservices-term4 "השירותים מסופקים &quot;כפי שהם&quot;. &vendorShortName;, התורמים שלו, מעניקי הרישיונות שלו והמפיצים שלו מתנערים מכל אחריות, מפורשת או משתמעת, כולל וללא הגבלה, הבטחות שהשירותים סחירים או מתאימים למטרותיך המסוימות. אתה נושא בכל הסיכון בבחירה בשירותים למטרותיך ובאשר לאיכות ולביצועים של השירותים. שטחי שיפוט מסוימים אינם מתירים החרגה או הגבלה של הבטחות משתמעות, כך שייתכן שמיאון אחריות זה אינו חל עליך.">
+<!ENTITY rights.webservices-term5 "למעט מה שנדרש על פי חוק, &vendorShortName;, התורמים שלו, מעניקי הרישיונות שלו והמפיצים שלו לא ישאו בנזקים עקיפים, מיוחדים, מקריים, תוצאתיים, עונשיים, או יוצאים מגדר הרגיל כתוצאה מן השימוש ב־&brandShortName; או שקשורים באיזה שהוא אופן לשימוש בו ובשירותים. האחריות הנזיקית הכוללת תחת תנאים אלה לא תעלה על 500$ (חמש מאות דולר ארצות הברית). שטחי שיפוט מסוימים אינם מתירים החרגה או הגבלה של נזקים מסוימים, כך שייתכן שהחרגות והגבלות אלה אינן חלות עליך.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; עשוי לעדכן תנאים אלו מעת לעת לפי הצורך. אין לשנות או לבטל תנאים אלו ללא הסכמה בכתב מאת &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "תנאים אלו ניתנים תחת חוקי מדינת קליפורניה בארצות הברית, למעט היכן שהם סותרים את הוראות החוק. אם חלק כלשהו מתנאים אלה נמצא לא תקף או לא ניתן לאכיפה, שאר החלקים ישארו בתוקף מלא. במקרה של סתירה בין גרסה מתורגמת של תנאים אלו והגרסה בשפה האנגלית, הגרסה בשפה האנגלית תגבר.">

@@ -1,0 +1,193 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nová aplikácia…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Otvoriť zbalenú aplikáciu…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "z">
+<!ENTITY projectMenu_importHostedApp_label "Otvoriť hostovanú aplikáciu…">
+<!ENTITY projectMenu_importHostedApp_accesskey "h">
+<!ENTITY projectMenu_selectApp_label "Otvoriť aplikáciu…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Nainštalovať a spustiť">
+<!ENTITY projectMenu_play_accesskey "N">
+<!ENTITY projectMenu_stop_label "Zastaviť aplikáciu">
+<!ENTITY projectMenu_stop_accesskey "Z">
+<!ENTITY projectMenu_debug_label "Ladiť aplikáciu">
+<!ENTITY projectMenu_debug_accesskey "L">
+<!ENTITY projectMenu_remove_label "Odstrániť projekt">
+<!ENTITY projectMenu_remove_accesskey "d">
+<!ENTITY projectMenu_showPrefs_label "Možnosti">
+<!ENTITY projectMenu_showPrefs_accesskey "M">
+<!ENTITY projectMenu_manageComponents_label "Spravovať extra komponenty">
+<!ENTITY projectMenu_manageComponents_accesskey "x">
+<!ENTITY projectMenu_refreshTabs_label "Obnoviť karty">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Odpojiť">
+<!ENTITY runtimeMenu_disconnect_accesskey "d">
+<!ENTITY runtimeMenu_takeScreenshot_label "Snímka obrazovky">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Informácie režimu Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "I">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Nastavenia zariadenia">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "z">
+<!ENTITY runtimeMenu_showSettings_label "Nastavenia zariadenia">
+<!ENTITY runtimeMenu_showSettings_accesskey "z">
+
+<!ENTITY viewMenu_label "Zobraziť">
+<!ENTITY viewMenu_accesskey "Z">
+<!ENTITY viewMenu_zoomin_label "Priblížiť">
+<!ENTITY viewMenu_zoomin_accesskey "P">
+<!ENTITY viewMenu_zoomout_label "Vzdialiť">
+<!ENTITY viewMenu_zoomout_accesskey "V">
+<!ENTITY viewMenu_resetzoom_label "Obnoviť">
+<!ENTITY viewMenu_resetzoom_accesskey "O">
+
+<!ENTITY projectButton_label "Otvoriť aplikáciu">
+<!ENTITY runtimeButton_label "Zvoliť Runtime">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Moje projekty">
+<!ENTITY projectPanel_runtimeApps "Aplikácie v režime Runtime">
+<!ENTITY projectPanel_tabs "Karty">
+<!ENTITY runtimePanel_usb "Zariadenia USB">
+<!ENTITY runtimePanel_wifi "Zariadenia Wi-Fi">
+<!ENTITY runtimePanel_simulator "Simulátory">
+<!ENTITY runtimePanel_other "Iné">
+<!ENTITY runtimePanel_installsimulator "Nainštalovať simulátor">
+<!ENTITY runtimePanel_noadbhelper "Nainštalovať doplnok ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Nevidíte svoje zariadenie?">
+<!ENTITY runtimePanel_refreshDevices_label "Obnoviť zariadenia">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "platné">
+<!ENTITY details_warning_header "upozornenia">
+<!ENTITY details_error_header "chyby">
+<!ENTITY details_description "Popis">
+<!ENTITY details_location "Umiestnenie">
+<!ENTITY details_manifestURL "Identifikátor aplikácie">
+<!ENTITY details_removeProject_button "Odstrániť projekt">
+<!ENTITY details_showPrepackageLog_button "Zobraziť záznamy pre Pre-package">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Nová aplikácia">
+<!ENTITY newAppHeader "Zvoľte šablónu">
+<!ENTITY newAppLoadingTemplate "Načítavajú sa šablóny…">
+<!ENTITY newAppProjectName "Názov projektu:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Zavrieť">
+
+<!-- Addons -->
+<!ENTITY addons_title "Extra komponenty">
+<!ENTITY addons_aboutaddons "Otvoriť Správcu doplnkov">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Nastavenia">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Všeobecné">
+<!ENTITY prefs_restore "Obnoviť predvolené">
+<!ENTITY prefs_manage_components "Spravovať extra komponenty">
+<!ENTITY prefs_options_autoconnectruntime "Znova pripojiť k predchádzajúcemu runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Znova sa pripojiť k predchádzajúcemu runtime pri štarte WebIDE">
+<!ENTITY prefs_options_rememberlastproject "Zapmätať si posledný projekt">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Obnoviť naposledy použitý projekt pri štarte WebIDE">
+<!ENTITY prefs_options_templatesurl "Adresa pre šablóny">
+<!ENTITY prefs_options_templatesurl_tooltip "Zoznam dostupných šablón">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Informácie režimu Runtime">
+<!ENTITY runtimedetails_adbIsRoot "ADB je root: ">
+<!ENTITY runtimedetails_summonADBRoot "rootnuť zariadenie">
+<!ENTITY runtimedetails_ADBRootWarning "(vyžaduje odomknutý bootloader)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Neobmedzené oprávnenia DevTools: ">
+<!ENTITY runtimedetails_requestPrivileges "vyžiadať vyššie oprávnenia">
+<!ENTITY runtimedetails_privilegesWarning "(reštartuje zariadenie. Vyžaduje root práva.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Logická">
+<!ENTITY device_typenumber "Celé číslo">
+<!ENTITY device_typestring "Reťazec">
+<!ENTITY device_typeobject "Objekt">
+<!ENTITY device_typenone "Zvoľte typ">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Nastavenia zariadenia">
+<!ENTITY devicepreference_search "Hľadať v nastaveniach">
+<!ENTITY devicepreference_newname "Názov novej predvoľby">
+<!ENTITY devicepreference_newtext "Hodnota predvoľby">
+<!ENTITY devicepreference_addnew "Pridať novú predvoľbu">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Nastavenia zariadenia">
+<!ENTITY devicesetting_search "Hľadať v nastaveniach">
+<!ENTITY devicesetting_newname "Názov novej predvoľby">
+<!ENTITY devicesetting_newtext "Hodnota predvoľby">
+<!ENTITY devicesetting_addnew "Pridať novú predvoľbu">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Pomocník">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Identifikácia klienta">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Koncový bod, ku ktorému sa pripájate, vyžaduje ďalšie informácie, aby mohol overiť toto pripojenie.  Prosím, načítajte uvedený kód QR svojím ďalším zariadením.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Nemáte čítačku kódov QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Máte čítačku kódov QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Ak vaše druhé zariadenie žiada namiesto načítania kódu QR zadanie tokenu, skopírujte nasledovnú hodnotu do svojho zariadenia:">
+<!ENTITY wifi_auth_qr_size_note "Ak je kód QR veľmi malý pre úspešné nadviazanie spojenia, skúste použiť nástroj lupy alebo zväčšite okno.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Záznamy príkazu Pre-packaging">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Nastavenia simulátora">
+<!ENTITY simulator_remove "Odstrániť simulátor">
+<!ENTITY simulator_reset "Obnoviť predvolené">
+<!ENTITY simulator_name "Názov">
+<!ENTITY simulator_software "Softvér">
+<!ENTITY simulator_version "Verzia">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Hardvér">
+<!ENTITY simulator_device "Zariadenie">
+<!ENTITY simulator_screenSize "Obrazovka">
+<!ENTITY simulator_pixelRatio "Pomer bodov">
+<!ENTITY simulator_tv_data "Simulácia TV">
+<!ENTITY simulator_tv_data_open "Údaje configu">
+<!ENTITY simulator_tv_data_open_button "Otvorí priečinok configu">

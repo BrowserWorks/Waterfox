@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "ផ្លាស់ប្ដូរ​ពាក្យ​សម្ងាត់​មេ">
+<!ENTITY setPassword.tokenName.label       "ឧបករណ៍​សុវត្ថិភាព">
+<!ENTITY setPassword.oldPassword.label     "ពាក្យ​សម្ងាត់​បច្ចុប្បន្ន ៖">
+<!ENTITY setPassword.newPassword.label     "បញ្ចូល​ពាក្យសម្ងាត់​ថ្មី ៖">
+<!ENTITY setPassword.reenterPassword.label "បញ្ចូល​ពាក្យ​សម្ងាត់​ម្ដង​ទៀត ៖">
+<!ENTITY setPassword.meter.label           "ឧបករណ៍​​វាស់​​​គុណ​ភាព​​​ពាក្យ​​​សម្ងាត់">
+<!ENTITY setPassword.meter.loading         "កំពុង​ផ្ទុក">
+<!ENTITY masterPasswordDescription.label   "ពាក្យសម្ងាត់​មេ​ត្រូវ​បាន​ប្រើ​សម្រាប់​ការពារ​ព័ត៌មាន ដូចជា​ពាក្យសម្ងាត់​វេបសាយ។ បើ​អ្នក​បង្កើត​ពាក្យសម្ងាត់​មេ អ្នក​នឹង​ត្រូវ​សួរ​ឲ្យ​បញ្ចូល​នៅ​រាល់​សម័យ ពេល​ដែល &brandShortName; ទៅ​យក​ព័ត៌មាន​រក្សាទុក ដែល​ការពារ​ដោយ​ពាក្យសម្ងាត់។">
+<!ENTITY masterPasswordWarning.label       "ត្រូវ​ច្បាស់​ថា​អ្នក​ចងចាំ ពាក្យ​សម្ងាត់​មេ ដែល​អ្នក​កំណត់ ។ បើ​អ្នក​ភ្លេច​ពាក្យសម្ងាត់​មេ អ្នក​នឹង​មិន​អាច​ចូលទៅ​កាន់​ព័ត៌មាន​ណា​មួយ ដែល​វា​ការពារ​ទេ ។">

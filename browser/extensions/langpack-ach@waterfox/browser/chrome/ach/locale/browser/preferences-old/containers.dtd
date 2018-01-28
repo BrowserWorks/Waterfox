@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Med lamak jami manyen">
+<!ENTITY addButton.accesskey  "e">
+<!ENTITY preferencesButton.label "Ter">
+<!ENTITY removeButton.label   "Kwany">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Dok cen i mung">
+
+<!ENTITY window.title         "Med lamak jami manyen">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nying:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Ket nying lamak jami">
+<!ENTITY icon.label           "Cal:">
+<!ENTITY icon.accesskey       "C">
+<!ENTITY color.label          "Rangi:">
+<!ENTITY color.accesskey      "a">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Otum">
+<!ENTITY button.ok.accesskey  "O">
+

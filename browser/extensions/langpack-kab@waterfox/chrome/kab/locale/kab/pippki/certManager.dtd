@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Amsefrak n iselkan">
+
+<!ENTITY certmgr.tab.mine                     "Iselkan-ik">
+<!ENTITY certmgr.tab.others2                  "Imdanen">
+<!ENTITY certmgr.tab.websites3                "Iqeddacen">
+<!ENTITY certmgr.tab.ca                       "Iduba">
+<!ENTITY certmgr.tab.orphan2                  "Wiyaḍ">
+
+<!ENTITY certmgr.mine                         "Ɣuṛ-ek iselkan n tuddsiwin i k-isuluyen:">
+<!ENTITY certmgr.others                       "Ɣuṛ-ek iselkan ittwakelsen d-isuluyen imdanen-agi:">
+<!ENTITY certmgr.websites2                    "Ɣuṛ-ek iselkan ɣef ufaylu ig suluyen iqeddacen-agi: ">
+<!ENTITY certmgr.cas                          "Ɣuṛ-ek iselkan ikelsen isuluyen iduba yagi n uselken: ">
+<!ENTITY certmgr.orphans                      "Ɣuṛ-ek iselkan ikelsen ur n-cudd-ara ɣrṣum ɣer yiwet n tiggayin nniḍen: ">
+
+<!ENTITY certmgr.detail.general_tab.title     "Amatu">
+<!ENTITY certmgr.detail.general_tab.accesskey "A">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Aglam leqqayen">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "l">
+
+<!ENTITY certmgr.pending.label                "Asenqed n iselkan imiranen…">
+<!ENTITY certmgr.subjectinfo.label            "Ittusgel i:">
+<!ENTITY certmgr.issuerinfo.label             "Iţwazen i:">
+<!ENTITY certmgr.periodofvalidity.label       "Tawala n tneɣbalt" >
+<!ENTITY certmgr.fingerprints.label           "Idsilen umḍinen">
+<!ENTITY certmgr.certdetail.title             "Talɣut leqqayen n uselkin">
+<!ENTITY certmgr.certdetail.cn                "Isem unnim (CN)">
+<!ENTITY certmgr.certdetail.o                 "Tuddsa (O)">
+<!ENTITY certmgr.certdetail.ou                "Aferdis asuddsan (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Uṭṭun n umazrar">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Adsil umḍin SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Adsil umḍin SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Ẓreg iɣewwaṛen n teflest n udabu n uselken">
+<!ENTITY certmgr.editcert.edittrust           "Ẓreg iɣewwaṛen n teflest:">
+<!ENTITY certmgr.editcert.trustssl            "Aselkin-agi yezmer ad isulu ismal web.">
+<!ENTITY certmgr.editcert.trustemail          "Aselkin-agi yezmer ad isulu imaylen n iseqdacen.">
+<!ENTITY certmgr.editcert.trustobjsign        "Aselkin-agi yezmer ad isulu imfarasen n iseẓɣan.">
+
+<!ENTITY certmgr.deletecert.title             "Kkes aselkin">
+
+<!ENTITY certmgr.certname                     "Isem n uselkin">
+<!ENTITY certmgr.certserver                   "Aqeddac">
+<!ENTITY certmgr.override_lifetime            "Tangazt n tudert">
+<!ENTITY certmgr.tokenname                    "Ibenk n tɣellist">
+<!ENTITY certmgr.begins                       "Ad ikker di">
+<!ENTITY certmgr.expires                      "Ad ifak di">
+<!ENTITY certmgr.email                        "Tansa imayl">
+<!ENTITY certmgr.serial                       "Uṭṭun n umazrar">
+
+<!ENTITY certmgr.close.label                  "Mdel">
+<!ENTITY certmgr.close.accesskey              "M">
+<!ENTITY certmgr.view2.label                  "Timeẓri…">
+<!ENTITY certmgr.view2.accesskey              "T">
+<!ENTITY certmgr.edit3.label                  "Snifel taflest">
+<!ENTITY certmgr.edit3.accesskey              "S">
+<!ENTITY certmgr.export.label                 "Sifeḍ…">
+<!ENTITY certmgr.export.accesskey             "S">
+<!ENTITY certmgr.delete2.label                "Kkes…">
+<!ENTITY certmgr.delete2.accesskey            "K">
+<!ENTITY certmgr.delete_builtin.label         "Kkes neɣ ur ţmuddu ara taflest…">
+<!ENTITY certmgr.delete_builtin.accesskey     "K">
+<!ENTITY certmgr.backup2.label                "Kles…">
+<!ENTITY certmgr.backup2.accesskey            "l">
+<!ENTITY certmgr.backupall2.label             "Kles akk…">
+<!ENTITY certmgr.backupall2.accesskey         "s">
+<!ENTITY certmgr.restore2.label               "Kter…">
+<!ENTITY certmgr.restore2.accesskey           "r">
+<!ENTITY certmgr.details.label                "Urtan n uselkin">
+<!ENTITY certmgr.details.accesskey            "U">
+<!ENTITY certmgr.fields.label                 "Azal n wurti">
+<!ENTITY certmgr.fields.accesskey             "z">
+<!ENTITY certmgr.hierarchy.label              "Amyellel n iselkan">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Rnu tasureft…">
+<!ENTITY certmgr.addException.accesskey       "a">
+
+<!ENTITY exceptionMgr.title                   "Rnu tasureft n tɣellist">
+<!ENTITY exceptionMgr.exceptionButton.label   "Sentem tasureft n tɣellist">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "S">
+<!ENTITY exceptionMgr.supplementalWarning     "Lbankat, timidal d ismal web izayzen izerfanen ur ssuturen ara ad teggeḍ aya.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Aqeddac">
+<!ENTITY exceptionMgr.certlocation.url        "Tansa:">
+<!ENTITY exceptionMgr.certlocation.download   "Sis-d aselkin">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Addad n uselkin">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Timeẓri…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Sekles ilebda tasureft-agi">
+<!ENTITY exceptionMgr.permanent.accesskey     "k">

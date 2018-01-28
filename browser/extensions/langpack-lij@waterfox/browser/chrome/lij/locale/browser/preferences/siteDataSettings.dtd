@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Inpostaçioin - Dæti di sciti">
+<!ENTITY     hostCol.label                 "Scito">
+<!ENTITY     statusCol.label               "Stato">
+<!ENTITY     usageCol.label                "Memöia">
+<!ENTITY     searchTextboxPlaceHolder             "Çerca sciti">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "s">
+<!ENTITY     removeSelected.label          "Scancella seleçionæ">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Sarva cangiamenti">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Anulla">
+<!ENTITY     cancel.accesskey              "A">
+<!ENTITY     removingDialog.title          "Scancella dæti do scito">
+<!ENTITY     removingSelected.description  "Scancelâ i dæti do scito te faiâ anche scancelâ i cookie ralativi e-i contegnui feua linia. Questo te poriâ fâ sciortî da-i sciti. T'ê seguo che t'eu fâ cangiamenti?">
+<!ENTITY     siteTree.label                "I segoenti cookie saian scancelæ:">

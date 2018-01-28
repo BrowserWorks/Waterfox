@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Klaida atveriant naršyklės įrankinę:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Sudėtingesnės nuostatos">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Tyriklis">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Rodyti naršyklės stilius">
+<!ENTITY options.showUserAgentStyles.tooltip "Rodyti naršyklės naudojamus vidinius numatytuosius stilius.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Trumpinti DOM atributus">
+<!ENTITY options.collapseAttrs.tooltip "Trumpinti ilgus atributus tyriklyje">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Numatytasis spalvų žymėjimas">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "s">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "kaip nurodyta">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Šešioliktainiai kodai">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "AGŠ(A) (HSL(A))">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RŽM(A) (RGB(A))">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Spalvų vardai">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Galioja tik šią sesiją, įkelia tinklalapį iš naujo">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Įjungti naršyklės sąsajos bei priedų derinimo įrankines">
+<!ENTITY options.enableChrome.tooltip3  "Įjungę šia parinktį galėsite naudotis įvairiomis saityno kūrėjų priemonėmis naršyklėje (per „Priemonės“ > „Saityno kūrėjams“ > „Naršyklės įrankinė“) bei derinti priedus per priedų tvarkytuvę.">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Įgalinti nuotolinį derinimą">
+<!ENTITY options.enableRemote.tooltip2  "Įjungę šią nuostatą, galėsite užsiimti nutolusios „Waterfox“ versijos (pavyzdžiui, „Waterfox OS“) derinimu">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Išjungti „JavaScript“ *">
+<!ENTITY options.disableJavaScript.tooltip   "Pažymėję šią parinktį, išjungsite „JavaScript“ vykdymą šioje kortelėje. Užvėrus kortelę arba įrankinę, ši nuostata bus užmiršta.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Išjungti HTTP podėlį (kol atverta įrankinė)">
+<!ENTITY options.disableHTTPCache.tooltip   "Įjungę šią nuostatą, išjungsite HTTP podėlį visoms kortelėms, kurios kuri atvirą įrankinę. Aptarnavimo scenarijams ši nuostata įtakos neturi.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Įgalinti aptarnavimo scenarijus per HTTP (kai atverta įrankinė)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Įjungę šią parinktį įgalinsite aptarnavimo scenarijus per HTTP visoms kortelėms, kuriose yra atverta įrankinė.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Numatytosios saityno kūrėjų priemonės">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Priedų įdiegtos saityno kūrėjų priemonės">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Rodomi įrankinės mygtukai">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Nepalaikoma su esama įrankinės paskirtimi">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Grafiniai apvalkalai">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Naudoti „Developer Edition“ grafinį apvalkalą">
+<!ENTITY options.usedeveditiontheme.tooltip "Įjungia / išjungia „Developer Edition“ naršyklės apvalkalą.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Saityno pultas">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Įgalinti laiko žymas">
+<!ENTITY options.timestampMessages.tooltip    "Pažymėjus šią parinktį, Saityno pulto išvestis bus rodoma su laiko žymomis">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Derintuvė">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Įgalinti ištekliaus žemėlapius">
+<!ENTITY options.sourceMaps.tooltip    "Įjungus šią parinktį, ištekliai bus atvaizduoti derintuvėje bei pulte.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Stilių rengyklė">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Rodyti pirminius šaltinius">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Rodyti pirminius šaltinius (pvz., SASS failus) stilių rengyklėje ir tyriklyje">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "Automatiškai užbaigti CSS leksemas">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Automatiškai užbaigti renkamus CSS savybių vardus, reikšmes ir selektorius stilių rengyklėje">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Ekrano nuotraukų nuostatos">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Įrašyti į iškarpinę">
+<!ENTITY options.screenshot.clipboard.tooltip    "Įrašo ekrano nuotrauką tiesiai į kompiuterio iškarpinę">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Sugroti fotoaparato užrakto garsą">
+<!ENTITY options.screenshot.audio.tooltip    "Įjungia fotoaparato garsą darant ekrano nuotrauką">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Bendros nuostatos">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Įgalinti išliekančius žurnalus">
+<!ENTITY options.enablePersistentLogs.tooltip  "Pažymėjus šią parinktį, Saityno pulto ir Tinklo stebyklės išvestys nebus išvalomos pereinant į kitą tinklalapį">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Rodyti „Gecko“ platformos duomenis">
+<!ENTITY options.showPlatformData.tooltip  "Jeigu įgalinsite šią parinktį, į „JavaScript“ profiliuoklės ataskaitas bus įtraukti „Gecko“ platformos simboliai">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Teksto redaktoriaus nuostatos">
+<!ENTITY options.sourceeditor.detectindentation.label   "Aptikti įtrauką">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Nuspėti reikiamą įtrauką pagal pirminio teksto struktūrą">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Automatiškai poruoti skliaustus">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Automatiškai pridėti užveriantįjį skliaustą, įvedus atveriantįjį">
+<!ENTITY options.sourceeditor.expandtab.label           "Įtraukai naudoti tarpus">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Naudoti ne tabuliavimo, o tarpo simbolius">
+<!ENTITY options.sourceeditor.tabsize.label             "Tabuliavimo žingsnis">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "Klavišų susiejimai">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Numatytieji">

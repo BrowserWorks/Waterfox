@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Tietoja ongelmatilanteiden ratkaisuun">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Tällä sivulla on teknisiä tietoja, jotka voivat olla avuksi kun yritetään ratkaista 
+  jotain ongelmaa ohjelman kanssa. Jos olet etsimässä vastauksia kysymyksiin
+  &brandShortName;ista, käy katsomassa löytyykö hakemaasi vastausta <a id='supportLink'>tukisivustoltamme</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Kaatumisilmoitukset">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Ilmoituksen tunnus">
+<!ENTITY aboutSupport.crashes.sendDate "Lähetetty">
+<!ENTITY aboutSupport.crashes.allReports "Kaikki kaatumisilmoitukset">
+<!ENTITY aboutSupport.crashes.noConfig "Tätä ohjelmaa ei ole säädetty näyttämään kaatumisilmoituksia.">
+
+<!ENTITY aboutSupport.extensionsTitle "Laajennukset">
+<!ENTITY aboutSupport.extensionName "Nimi">
+<!ENTITY aboutSupport.extensionEnabled "Käytössä">
+<!ENTITY aboutSupport.extensionVersion "Versio">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;-ominaisuudet">
+<!ENTITY aboutSupport.featureName "Nimi">
+<!ENTITY aboutSupport.featureVersion "Versio">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Kokeelliset ominaisuudet">
+<!ENTITY aboutSupport.experimentName "Nimi">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Kuvaus">
+<!ENTITY aboutSupport.experimentActive "Käynnissä">
+<!ENTITY aboutSupport.experimentEndDate "Loppumispäivämäärä">
+<!ENTITY aboutSupport.experimentHomepage "Kotisivu">
+<!ENTITY aboutSupport.experimentBranch "Kanava">
+
+<!ENTITY aboutSupport.appBasicsTitle "Ohjelman perustiedot">
+<!ENTITY aboutSupport.appBasicsName "Nimi">
+<!ENTITY aboutSupport.appBasicsVersion "Versio">
+<!ENTITY aboutSupport.appBasicsBuildID "Koosteen tunniste">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Päivityskanava">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Päivityshistoria">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Näytä päivityshistoria">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profiilikansio">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profiilikansio">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Käytössä olevat liitännäiset">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Koostamisasetukset">
+<!ENTITY aboutSupport.appBasicsUserAgent "Selaintunniste">
+<!ENTITY aboutSupport.appBasicsOS "Käyttöjärjestelmä">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Muistin käyttö">
+<!ENTITY aboutSupport.appBasicsPerformance "Suorituskyky">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Rekisteröidyt Service Workers -apukomentosarjat">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiilit">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Usean prosessin ikkunoita">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Verkkosisällön prosesseja">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google-avain">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service -avain">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Vikasietotila">
+
+<!ENTITY aboutSupport.showDir.label "Avaa kansio">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Avaa Finderissa">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Avaa kansio">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Tärkeät muutetut asetukset">
+<!ENTITY aboutSupport.modifiedPrefsName "Nimi">
+<!ENTITY aboutSupport.modifiedPrefsValue "Arvo">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js-asetukset">
+<!ENTITY aboutSupport.userJSDescription "Profiilisi sisältää <a id='prefs-user-js-link'>user.js-tiedoston</a>, joka sisältää muiden kuin &brandShortName;in määrittelemät asetukset.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Tärkeät lukitut asetukset">
+<!ENTITY aboutSupport.lockedPrefsName "Nimi">
+<!ENTITY aboutSupport.lockedPrefsValue "Arvo">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafiikka">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Places-tietokanta">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Virheettömyys">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Tarkista virheettömyys">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Jatkuva roskienkeräys">
+
+<!ENTITY aboutSupport.a11yTitle "Esteettömyystoiminnot">
+<!ENTITY aboutSupport.a11yActivated "Käytössä">
+<!ENTITY aboutSupport.a11yForceDisabled "Estä esteettömyystoiminnot">
+<!ENTITY aboutSupport.a11yHandlerUsed "Esteettömyyskäsittelijää käytetty">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Kirjastojen versiot">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Asennushistoria">
+<!ENTITY aboutSupport.updateHistoryTitle "Päivityshistoria">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopioi teksti leikepöydälle">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopioi muokkaamaton data leikepöydälle">
+
+<!ENTITY aboutSupport.sandboxTitle "Hiekkalaatikko">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Hylätyt järjestelmäkutsut">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekuntia sitten">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Prosessin tyyppi">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Järjestelmäkutsu">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumentit">
+
+<!ENTITY aboutSupport.safeModeTitle "Kokeile vikasietotilaa">
+<!ENTITY aboutSupport.restartInSafeMode.label "Käynnistä uudelleen ilman lisäosia…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Ominaisuudet">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostiikka">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Virheloki">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Päätösloki">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Kaatumisvahdin käytöstä poistamat ominaisuudet">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Hätäratkaisut">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Toistolaitteet">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Syöttölaitteet">
+<!ENTITY aboutSupport.mediaDeviceName "Nimi">
+<!ENTITY aboutSupport.mediaDeviceGroup "Ryhmä">
+<!ENTITY aboutSupport.mediaDeviceVendor "Valmistaja">
+<!ENTITY aboutSupport.mediaDeviceState "Tila">
+<!ENTITY aboutSupport.mediaDevicePreferred "Ensisijaisuus">
+<!ENTITY aboutSupport.mediaDeviceFormat "Muoto">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanavia">
+<!ENTITY aboutSupport.mediaDeviceRate "Näytteenottotaajuus">
+<!ENTITY aboutSupport.mediaDeviceLatency "Viive">

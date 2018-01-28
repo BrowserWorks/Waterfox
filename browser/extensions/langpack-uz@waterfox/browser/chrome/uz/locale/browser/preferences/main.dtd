@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Ishga tushirish">
+
+<!ENTITY startupPage2.label        "&brandShortName; ishga tushirilganda:">
+<!ENTITY startupPage2.accesskey    "i">
+<!ENTITY startupUserHomePage.label "Bosh sahifa ko‘rsatilsin">
+<!ENTITY startupBlankPage.label    "Bo‘sh sahifa ko‘rsatilsin">
+<!ENTITY startupPrevSession.label  "So‘nggi marta ochilgan barcha oynalar ko‘rsatilsin">
+
+
+<!ENTITY useCurrentPage.label      "Joriy sahifadan foydalanish">
+<!ENTITY useCurrentPage.accesskey  "J">
+<!ENTITY useMultiple.label         "Joriy sahifalardan foydalanish">
+<!ENTITY chooseBookmark.label      "Xatcho‘plardan foydalanish">
+<!ENTITY chooseBookmark.accesskey  "X">
+<!ENTITY restoreDefault.label      "Standart holatiga tiklash">
+<!ENTITY restoreDefault.accesskey  "S">
+
+<!ENTITY downloads.label     "Yuklab olishlar">
+
+<!ENTITY saveTo.label "Fayllarni saqlash manzili:">
+<!ENTITY saveTo.accesskey "s">
+<!ENTITY chooseFolderWin.label        "Ko‘rish…">
+<!ENTITY chooseFolderWin.accesskey    "K">
+<!ENTITY chooseFolderMac.label        "Tanlash">
+<!ENTITY chooseFolderMac.accesskey    "T">
+<!ENTITY alwaysAskWhere.label         "Fayllarni qayerga saqlash doimo mendan so‘ralsin">
+<!ENTITY alwaysAskWhere.accesskey     "d">
+
+<!ENTITY alwaysCheckDefault2.label        "Agar &brandShortName; standart brauzeringiz bo‘lsa, doimo tekshirilsin">
+<!ENTITY alwaysCheckDefault2.accesskey    "t">
+
+
+<!ENTITY isDefault.label                  "&brandShortName; - hozircha standart brauzeringiz">
+<!ENTITY isNotDefault.label               "&brandShortName; - standart brauzeringiz emas">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; Waterfox’ni bir vaqtda ishga tushirishga ruxsat berish">
+<!ENTITY useWaterfoxSync.label             "Maslahat: U alohida profillardan foydalandi. Ular o‘rtasida ma’lumotlarni almashish uchum sinxronlashdan foydalaning.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; hisobiga kirish…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; parametrlarini ochish">
+
+<!ENTITY e10sEnabled.label                "&brandShortName; brauzerida multi-jarayonni yoqib qo‘yish">
+
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

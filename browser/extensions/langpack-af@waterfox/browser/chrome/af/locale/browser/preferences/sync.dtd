@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Boekmerke">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "Oop oortjies">
+<!ENTITY engine.tabs.accesskey      "O">
+<!ENTITY engine.history.label       "Geskiedenis">
+<!ENTITY engine.history.accesskey   "G">
+
+
+<!ENTITY engine.prefs.label         "Voorkeure">
+<!ENTITY engine.prefs.accesskey     "V">
+<!ENTITY engine.addons.label        "Byvoegings">
+<!ENTITY engine.addons.accesskey    "B">
+
+
+
+
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Toestelnaam">
+<!ENTITY changeSyncDeviceName2.label "Verander toestelnaam…">
+<!ENTITY changeSyncDeviceName2.accesskey "V">
+<!ENTITY cancelChangeSyncDeviceName.label "Kanselleer">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "Stoor">
+<!ENTITY saveChangeSyncDeviceName.accesskey "t">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Diensbepalings">
+<!ENTITY fxaPrivacyNotice.link.label "Privaatheidkennisgewing">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "is nie geverifieer nie.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Meld aan om">
+<!ENTITY signedInLoginFailure.aftername.label "te herkoppel.">
+
+<!ENTITY notSignedIn.label           "U is nie aangemeld nie.">
+<!ENTITY signIn.label                "Meld aan">
+<!ENTITY signIn.accesskey            "M">
+<!ENTITY profilePicture.tooltip      "Verander profielprent">
+
+
+<!ENTITY disconnect3.label           "Ontkoppel…">
+<!ENTITY disconnect3.accesskey       "O">
+<!ENTITY verify.label                "Verifieer e-posadres">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "Vergeet dié e-posadres">
+<!ENTITY forget.accesskey            "V">
+
+<!ENTITY signedOut.caption            "Neem die Web saam">
+<!ENTITY signedOut.description        "Sinkroniseer boekmerke, geskiedenis, oortjies, wagwoorde, byvoegings en voorkeure oor alle toestelle.">
+<!ENTITY signedOut.accountBox.title   "Koppel met 'n &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Skep 'n rekening">
+<!ENTITY signedOut.accountBox.create.accesskey  "r">
+<!ENTITY signedOut.accountBox.signin  "Meld aan">
+<!ENTITY signedOut.accountBox.signin.accesskey  "M">
+
+<!ENTITY signedIn.settings.label       "Sync-instellings">
+<!ENTITY signedIn.settings.description "Kies wat om tussen toestelle te sinkroniseer met &brandShortName;.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Laai Waterfox af vir ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " of ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " om met 'n selfoon te sinkroniseer.">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verifiedManage.label        "Manage account">

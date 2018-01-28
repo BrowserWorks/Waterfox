@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Treuva a pròscima ripetiçion do testo da çercâ">
+<!ENTITY previous.tooltip "Treuva a precedente ripetiçion do testo da çercâ">
+<!ENTITY findCloseButton.tooltip "Særa a bara de riçerca">
+<!ENTITY highlightAll.label "Evidençia">
+<!ENTITY highlightAll.accesskey "n">
+<!ENTITY highlightAll.tooltiptext "Evidençia tutte e ripetiçioin do testo da çercâ">
+<!ENTITY caseSensitive.label "maioscole/minoscole">
+<!ENTITY caseSensitive.accesskey "M">
+<!ENTITY caseSensitive.tooltiptext "Distinoi fra maioscole e minoscole inta riçerca">
+<!ENTITY entireWord.label "Paròlla intrega">
+<!ENTITY entireWord.accesskey "i">
+<!ENTITY entireWord.tooltiptext "Çerca solo e paròlle intreghe">

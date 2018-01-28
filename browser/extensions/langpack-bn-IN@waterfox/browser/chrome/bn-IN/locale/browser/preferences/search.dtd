@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "ডিফল্ট সার্চ ইঞ্জিন">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "আপনার ডিফল্ট সার্চ ইঞ্জিন বাছুন। &brandShortName; এটাকে লোকেশন বার, সার্চ বার, এবং শুরুর পেজে ব্যবহার করুন।">
+
+<!ENTITY provideSearchSuggestions.label        "সার্চ সাজেশন প্রদান করুন">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "অনুসন্ধানের প্রস্তাবিত ফলাফল প্রদর্শন করা হবে">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "অনুসন্ধানের পরামর্শগুলি লোকেশান বারে দেখানো হবেনা কারণ আপনি &brandShortName; কনফিগার করেছেন হিস্ট্রিতে মনে না রাখার জন্য।">
+
+<!ENTITY oneClickSearchEngines.label           "একক-ক্লিক সার্চ ইঞ্জিন">
+
+<!ENTITY chooseWhichOneToDisplay.label         "এই সার্চ বার আপনাকে বিকল্প ইঞ্জিন খুঁজতে সাহায্য করে সরাসরিভাবে। বাছুন যেটা দর্শনীয় করতে চান।">
+
+<!ENTITY engineNameColumn.label                "সার্চ ইঞ্জিন">
+<!ENTITY engineKeywordColumn.label             "নির্দেশক শব্দ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "ডিফল্ট সার্চ ইঞ্জিন রিস্টোর করুন">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "মুছে ফেলুন">
+<!ENTITY removeEngine.accesskey                "R">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

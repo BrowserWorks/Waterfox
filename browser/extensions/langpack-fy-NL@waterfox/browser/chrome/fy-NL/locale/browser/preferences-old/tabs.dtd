@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab rint troch ljepblêden yn koartlyn brûkte folchoarder">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Nije finsters iepenje yn in nij ljepblêd">
+<!ENTITY newWindowsAsTabs.accesskey   "l">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "My warskôgje by it sluten fan mear ljepblêden">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "M">
+
+<!ENTITY warnOnOpenManyTabs.label       "My warskôgje as it iepenjen fan mear ljepblêden &brandShortName; fertrage kin">
+<!ENTITY warnOnOpenManyTabs.accesskey   "w">
+
+<!ENTITY switchLinksToNewTabs.label        "As ik in keppeling iepenje yn in nij ljepblêd, der daliks nei ta gean">
+<!ENTITY switchLinksToNewTabs.accesskey    "d">
+
+<!ENTITY showTabsInTaskbar.label          "Ljepblêdfoarbylden yn de Windows-taakbalke toane">
+<!ENTITY showTabsInTaskbar.accesskey      "W">
+<!ENTITY tabsGroup.label          "Ljepblêden">

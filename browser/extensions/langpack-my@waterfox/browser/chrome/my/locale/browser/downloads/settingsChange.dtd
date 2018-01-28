@@ -1,0 +1,7 @@
+<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  settingsChangePreferences.label  "အပြင်အဆင်များအား &brandShortName; ၏နောက်ကွယ်အက်ပလီကေးရှင်းတပ်ဗ်မှပြင်နိုင်သည်">
+<!ENTITY  settingsChangeOptions.label      "အပြင်အဆင်များအား &brandShortName; ၏နောက်ကွယ်အက်ပလီကေးရှင်းတပ်ဗ်မှပြင်နိုင်သည်">

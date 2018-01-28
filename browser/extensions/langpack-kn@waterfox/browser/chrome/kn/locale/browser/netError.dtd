@@ -1,0 +1,133 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "ಪುಟವನ್ನು ಲೋಡ್‍ ಮಾಡುವಲ್ಲಿ ತೊಂದರೆ ಎದುರಾಗಿದೆ">
+<!ENTITY retry.label "ಮರಳಿ ಪ್ರಯತ್ನಿಸು">
+<!ENTITY returnToPreviousPage.label "ಹಿಂದೆ ಹೋಗು">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "ಸಂಪರ್ಕ ಹೊಂದಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "ಈ ವಿಳಾಸವು ಪ್ರತಿಬಂಧಿಸಲ್ಪಟ್ಟಿದೆ">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "ಪರಿಚಾರಕವು ಕಂಡುಬಂದಿಲ್ಲ">
+<!ENTITY dnsNotFound.longDesc "<ul> <li><strong>www</strong>.example.com ನ ಬದಲಿಗೆ  <strong>ww</strong>.example.com ಎಂದಾಗಿರುವ ಬೆರಳಚ್ಚು ದೋಷಗಳಿಗೆಗಾಗಿ ಪರೀಕ್ಷಿಸಿ</li><li>ನಿಮ್ಮಿಂದ ಯಾವುದೆ ಪುಟವನ್ನು ಲೋಡ್ ಮಾಡಲು ಆಗದೆ ಹೋದಲ್ಲಿ,ನಿಮ್ಮ ಗಣಕದ ಜಾಲ ಸಂಪರ್ಕವನ್ನು ಪರೀಕ್ಷಿಸಿ.</li> <li>ನಿಮ್ಮ ಗಣಕವು ಅಥವ ಜಾಲಬಂಧ ಒಂದು ಫೈರ್ವಾಲ್‍ನಿಂದ ಅಥವ ಪ್ರಾಕ್ಸಿಯಿಂದ ಸಂರಕ್ಷಿತಗೊಂಡಿದ್ದಲ್ಲಿ, &brandShortName; ಜಾಲವನ್ನು ನಿಲುಕಿಸಿಕೊಳ್ಳಲು ಅನುಮತಿಸಲು ಮರೆಯದಿರಿ.</li> </ul>">
+
+<!ENTITY fileNotFound.title "ಕಡತವು  ಕಂಡುಬಂದಿಲ್ಲ">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ಕ್ಯಾಪಿಟಲೈಸೇಶನ್‍ಗಾಗಿ ಅಥವ ಇತರೆ ಬೆರಳಚ್ಚು ದೋಷಗಳಿಗಾಗಿ ಕಡತದ ಹೆಸರನ್ನು ಪರೀಕ್ಷಿಸಿ.</li> <li>ಕಡತವು ಸ್ಥಳಾಂತರಿಸಲ್ಪಟ್ಟಿದೆಯೆ, ಹೆಸರು ಬದಲಾಯಿಸಲ್ಪಟ್ಟಿದೆಯೆ ಅಥವ ಅಳಿಸಲ್ಪಟಿದೆಯೆ ಎಂದು ಪರೀಕ್ಷಿಸಿ.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "ಕಡತ ಪ್ರವೇಶವನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>ಅದನ್ನು ತೆಗೆದುಹಾಕಿರಬಹುದು, ಜರುಗಿಸಿರಬಹುದು, ಅಥವಾ ಕಡತದ ಅನುಮತಿಗಳು ಪ್ರವೇಶವನ್ನು ತಡೆಹಿಡಿಯುತ್ತಿರಬಹುದು.</li></ul>">
+
+<!ENTITY generic.title "ಓಹ್.">
+<!ENTITY generic.longDesc "<p>&brandShortName; ಕ್ಕೆ ಈ ಪುಟವನ್ನು ಕೆಲವೊಂದು ಕಾರಣದಿಂದಾಗಿ ಲೋಡ್‍ ಮಾಡಲಾಗುವುದಿಲ್ಲ.</p>">
+
+
+
+
+<!ENTITY malformedURI.title "ವಿಳಾಸವು ಸಮಂಜಸವಾಗಿಲ್ಲ">
+<!ENTITY malformedURI.longDesc "<ul> <li>ಜಾಲ ವಿಳಾಸವು ಸಾಮಾನ್ಯವಾಗಿ     <strong>http://www.example.com/</strong> ರೀತಿಯಲ್ಲಿ  ಬರೆಯಲ್ಪಡುತ್ತದೆ</li> <li>ಮುಮ್ಮುಖವಾಗಿರುವ ಅಡ್ಡಗೆರಗಳನ್ನು ನೀವು ಬಳಸಿದ್ದೀರ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ (ಉದಾ. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "ಸಂಪರ್ಕಕ್ಕೆ ಅಡಚಣೆಯಾಗಿದೆ">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "ದಸ್ತಾವೇಜಿನ ವಾಯಿದೆ ತೀರಿದೆ">
+<!ENTITY notCached.longDesc "<p>ಮನವಿ ಸಲ್ಲಿಸಲಾದ ದಸ್ತಾವೇಜು &brandShortName; ನ ಕ್ಯಾಶೆಯಲ್ಲಿ ಲಭ್ಯವಿಲ್ಲ.</p><ul><li>As a security precautionಸುರಕ್ಷತಾ ಮುನ್ನೆಚ್ಚರಿಕೆಯಾಗಿ, &brandShortName; ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸೂಕ್ಷ್ಮ ಸಂವೇದಿ ದಸ್ತಾವೇಜುಗಳನ್ನು ಮರಳಿ-ಮನವಿ ಮಾಡುವುದಿಲ್ಲ.</li><li>ಜಾಲತಾಣದಿಂದ ದಸ್ತಾವೇಜನ್ನು ಮರಳಿ-ಮನವಿ ಮಾಡಲು ಇನ್ನೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸು ಅನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ.</li></ul>">
+
+<!ENTITY netOffline.title "ಆಫ್‍ಲೈನ್‍ ಕ್ರಮ">
+<!ENTITY netOffline.longDesc2 "<ul> <li>ಆನ್‌ಲೈನ್ ಕ್ರಮಕ್ಕೆ ಬದಲಾಯಿಸಿ ನಂತರ ಪುಟವನ್ನು ಮರಳಿ ಲೋಡ್ ಮಾಡಲು &quot;ಇನ್ನೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸು&quot; ಅನ್ನು ಒತ್ತಿ.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "ವಿಷಯದ ಎನ್ಕೋಡಿಂಗ್‌ ದೋಷ">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>ದಯವಿಟ್ಟು ಈ ತೊಂದರೆಯನ್ನು ತಿಳಿಸಲು ಜಾಲತಾಣದ ಮಾಲಿಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "ಅಸುರಕ್ಷಿತ ಕಡತದ ಬಗೆ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ದಯವಿಟ್ಟು ಈ ತೊಂದರೆಯನ್ನು ತಿಳಿಸಲು ಜಾಲತಾಣದ ಮಾಲಿಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.</li> </ul>">
+
+<!ENTITY netReset.title "ಸಂಪರ್ಕವು ಮರಳಿ ಹೊಂದಿಸಲ್ಪಟ್ಟಿತು">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "ಸಂಪರ್ಕದ ಕಾಲಾವಧಿ ಮುಗಿದಿದೆ">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "ವಿಳಾಸವನ್ನು ಅರ್ಥ ಮಾಡಿಕೊಳ್ಳಲಾಗಿಲ್ಲ">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>ಈ ವಿಳಾಸವನ್ನು ತೆರೆಯಲು ಬೇರೊಂದು ತಂತ್ರಾಂಶವನ್ನು ನೀವು ಅನುಸ್ಥಾಪಿಸುವುದು ಅಗತ್ಯವಾಗಿರುತ್ತದೆ.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ಪ್ರಾಕ್ಸಿ ಪರಿಚಾರಕವು ಸಂಪರ್ಕವನ್ನು ನಿರ್ಬಂಧಿಸುತ್ತಿದೆ">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ಪ್ರಾಕ್ಸಿ  ಸಿದ್ಧತೆಗಳು ಸರಿ ಇವೆಯೆ ಎಂದು ಪರೀಕ್ಷಿಸಿ.</li> <li>ಪ್ರಾಕ್ಸಿ ಪರಿಚಾರಕವು ಕಾರ್ಯ ನಿರ್ವಹಿಸುತ್ತಿದೆಯೆ ಎಂಬುದನ್ನು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಲು ಜಾಲ ವ್ಯವಸ್ಥಾಪಕರನ್ನು  ಸಂಪರ್ಕಿಸಿ.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "ಪ್ರಾಕ್ಸಿ ಪರಿಚಾರಕವನ್ನು ಪತ್ತೆಮಾಡಲಾಗಿಲ್ಲ">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>ಪ್ರಾಕ್ಸಿ  ಸಿದ್ಧತೆಗಳು ಸರಿ ಇವೆಯೆ ಎಂದು ಪರೀಕ್ಷಿಸಿ.</li> <li>ನಿಮ್ಮ ಗಣಕದಲ್ಲಿ ಕಾರ್ಯ ನಿರತವಾಗಿರುವ ಒಂದು ಜಾಲ ಸಂಪರ್ಕ ಇದೆ ಎಂದು ಪರೀಕ್ಷಿಸಿ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.</li> <li>ನಿಮ್ಮ ಗಣಕ ಅಥವ ಜಾಲಬಂಧವು ಒಂದು ಫೈರ್ವಾಲ್ ಅಥವ ಪ್ರಾಕ್ಸಿ ಇಂದ ಸಂರಕ್ಷಿತಗೊಂಡಿದ್ದೆ,  &brandShortName; ವು ಜಾಲವನ್ನು ನಿಲುಕಿಸಿಕೊಳ್ಳಲು ಅನುಮತಿ ಇದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.</li> </ul>">
+
+<!ENTITY redirectLoop.title "ಪುಟವು ಸರಿಯಾಗಿ ಮರಳಿ ನಿರ್ದೇಶನಗೊಳ್ಳುತ್ತಿಲ್ಲ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ಕುಕಿಗಳನ್ನು ಅಶಕ್ತಗೊಳಿಸುವುದು ಅಥವ ಪಡೆದುಕೊಳ್ಳುವುದನ್ನು ನಿರ್ಬಂಧಿಸಿವುದು ಕೆಲವೊಮ್ಮೆ ಈ ತೊಂದರೆಗೆ  ಕಾರಣವಾಗಿರುತ್ತದೆ.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "ಪರಿಚಾರಕದಿಂದ ಅನಿರೀಕ್ಷಿತ ಪ್ರತಿಕ್ರಿಯೆ">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>ನಿಮ್ಮ ಗಣಕದಲ್ಲಿ ವೈಯಕ್ತಿಕ ಸುರಕ್ಷತಾ ವ್ಯವಸ್ಥಾಪಕವು ಅನುಸ್ಥಾಪಿತಗೊಂಡಿದೆ ಎಂಬುದನ್ನು ಪರೀಕ್ಷಿಸಿ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.</li> <li>ಪರಿಚಾರಕದ ಸ್ಟಾಂಡರ್ಡ ಅಲ್ಲದ ಸಂರಚನೆ ಇದಕ್ಕೆ ಕಾರಣವಾಗಿರಬಹುದು.</li> </ul>">
+
+<!ENTITY nssFailure2.title "ಸುರಕ್ಷಿತ ಸಂಪರ್ಕವು ವಿಫಲಗೊಂಡಿದೆ">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>ನೀವು ನೋಡಲು ಪ್ರಯತ್ನಿಸುತ್ತಿರುವ ಪುಟವನ್ನು ತೋರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ ಏಕೆಂದರೆ ಪಡೆಯಲಾದ ಮಾಹಿತಿಯ ವಿಶ್ವಾಸಾರ್ಹತೆಯನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿಲ್ಲ .</li> <li>ದಯವಿಟ್ಟು ಈ ತೊಂದರೆಯ ಬಗ್ಗೆ ಜಾಲತಾಣದ ಮಾಲಿಕರಿಗೆ ತಿಳಿಸಿ.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "ನಿಮ್ಮ ಸಂಪರ್ಕವು ಸುರಕ್ಷಿತವಾಗಿಲ್ಲ‍">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "ಈ ಜಾಲತಾಣದ ಮಾಲಿಕ <span class='hostname'/>  ಅದನ್ನು ‍ಸರಿಯಾಗಿ ಸಂರಚಿಸಿಲ್ಲ. ನಿಮ್ಮ ಮಾಹಿತಿಯನ್ನು ಕಳ್ಳತನದಿಂದ ಸುರಕ್ಷಿತವಾಗಿರಿಸಲು, &brandShortName; ಈ ಜಾಲತಾಣದೊಂದಿಗೆ ಸಂಪರ್ಕವನ್ನು ಹೊಂದಿಲ್ಲ.">
+
+<!ENTITY sharedLongDesc "<ul> <li>ತಾಣವು ತಾತ್ಕಾಲಿಕವಾಗಿ ಅಲಭ್ಯವಾಗಿದೆ ಅಥವ ಬಹುವಾಗಿ ಬಳಸಲ್ಪಡುತ್ತಿದೆ. ಕೆಲವು ಕ್ಷಣಗಳನಂತರ ಮರಳಿ ಪ್ರಯತ್ನಿಸಿ.</li> <li>ನಿಮಗೆ ಯಾವುದೆ ಪುಟವನ್ನು ಲೋಡ್‍ ಮಾಡಲುಆಗದೇ ಹೋದರೆ, ನಿಮ್ಮ ಗಣಕದ ಜಾಲ ಸಂಪರ್ಕವನ್ನು ಪರೀಕ್ಷಿಸಿ.</li> <li>ನಿಮ್ಮ ಗಣಕ ಅಥವ ಜಾಲಬಂಧವು ಒಂದು ಫೈರ್ವಾಲ್ ಅಥವ ಪ್ರಾಕ್ಸಿ ಇಂದ ಸಂರಕ್ಷಿತಗೊಂಡಿದ್ದೆ, &brandShortName; ವುಜಾಲವನ್ನು ನಿಲುಕಿಸಿಕೊಳ್ಳಲು ಅನುಮತಿ ಇದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.</li> </ul>">
+
+<!ENTITY cspBlocked.title "ವಿಷಯ ಸುರಕ್ಷತಾ ನಿಯಮದಿಂದ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ">
+<!ENTITY cspBlocked.longDesc "<p> ಈ ಪುಟವನ್ನು ಈ ರೀತಿಯಲ್ಲಿ ಲೋಡ್ ಮಾಡುದಂತೆ  &brandShortName; ತಡೆದಿದೆ ಏಕೆಂದರೆ ಈ ಪುಟದಲ್ಲಿನ ವಿಷಯ ಸುರಕ್ಷತಾ ನಿಯಮವು ಇದಕ್ಕೆ ಅನುಮತಿ ನೀಡುವುದಿಲ್ಲ.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "ವಿಷಯ ಹಾಳಾದ ದೋಷ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ನೀವು ನೋಡಲು ಬಯಸುವ ಪುಟವನ್ನು ತೋರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ ಏಕೆಂದರೆ ಮಾಹಿತಿ ವರ್ಗಾವಣೆಯಲ್ಲಿ ಒಂದು ದೋಷವು ಕಂಡು ಬಂದಿದೆ.</p><ul><li>ಈ ತೊಂದರೆಯನ್ನು ವರದಿ ಮಾಡಲು ಜಾಲತಾಣದ ಮಾಲಿಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "ವಿನಾಯಿತಿಯನ್ನು ಸೇರಿಸು…">
+
+<!ENTITY errorReporting.automatic2 "ಈ ತರಹದ ದೋಷಗಳನ್ನು ವರದಿ ಮಾಡಿ Mozillaಗೆ ಅಪಾಯಕಾರಿ ತಾಣಗಳನ್ನು ಗುರುತು ಹಿಡಿಯಲು ಮತ್ತು ತಡೆಹಿಡಿಯಲು ಸಹಾಯ ಮಾಡಿ">
+<!ENTITY errorReporting.learnMore "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ...">
+
+<!ENTITY remoteXUL.title "ದೂರಸ್ಥ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>ಈ ತೊಂದರೆಯ ಬಗ್ಗೆ ಜಾಲತಾಣದ ಮಾಲಿಕರಿಗೆ ತಿಳಿಸಲು ದಯವಿಟ್ಟು ಅವರನ್ನು ಸಂಪರ್ಕಿಸಿ.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "ಸುರಕ್ಷಿತವಾಗಿ ಸಂಪರ್ಕ ಸಾಧಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "ಸುಧಾರಿತ ಮಾಹಿತಿ: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+<!ENTITY certerror.pagetitle1  "ಅಸುರಕ್ಷಿತ ಸಂಪರ್ಕ">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "ಈ ತಾಣವು &brandShortName; ನೊಂದಿಗೆ ಸುರಕ್ಷಿತವಾಗಿ ಸಂಪರ್ಕಹೊಂದು ಎಂದು ಸೂಚಿಸಲು HTTP ಸ್ಟ್ರಿಕ್ಟ್‌ ಟ್ರಾನ್ಸ್‌ಪೋರ್ಟ್ ಸೆಕ್ಯುರಿಟಿ (HSTS) ಅನ್ನು ಮಾತ್ರ ಬಳಸುತ್ತದೆ. ಈ ಕಾರಣದಿಂದಾಗಿ, ಈ ತಾಣದ ಪ್ರಮಾಣಪತ್ರಕ್ಕೆ ವಿನಾಯಿತಿಯನ್ನು ಸೇರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.">
+<!ENTITY certerror.copyToClipboard.label "ಪಠ್ಯವನ್ನು ನಕಲುಫಲಕಕ್ಕೆ ಪ್ರತಿಮಾಡು">
+
+<!ENTITY inadequateSecurityError.title "ನಿಮ್ಮ ಸಂಪರ್ಕವು ಸುರಕ್ಷಿತವಾಗಿಲ್ಲ‍">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>ಹಳತಾದ ಮತ್ತು ಆಕ್ರಮಣಕ್ಕೆ ಸಿಲುಕಬಹುದಾದ ಸುರಕ್ಷತಾ ತಂತ್ರಜ್ಞಾನವನ್ನು ಬಳಸುತ್ತಿದೆ. ಆಕ್ರಮಣಕಾರ ನಿಮಗೆ ಸುರಕ್ಷಿತ ಎನಿಸಬಹುದಾದ ಮಾಹಿತಿಯನ್ನು ಸುಲಭವಾಗಿ ಬಹಿರಂಗಪಡಿಸಬಲ್ಲ. ಜಾಲತಾಣದ ನಿರ್ವಾಹಕ ಈ ಸರ್ವರ್ ಅನ್ನು ನೀವು ಭೇಟಿ ನೀಡುವುದಕ್ಕಿಂತ ಮುಂಚೆ ಸರಿಪಡಿಸಬೇಕಿದೆ.</p><p>ದೋಷದ ಸಂಕೇತ: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "ನಿಮ್ಮ ನೆಟ್‍‍ವರ್ಕ್ ಸುರಕ್ಷತೆ ಸಿದ್ಧತೆಗಳಿಂದಾಗಿ ಇದು ಸಂಭವಿಸುತ್ತಿರಬೇಕು. ನೀವು ಪೂರ್ವನಿಯೋಜಿತ ಸಿದ್ಧತೆಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಬಯಸುವಿರಾ?">
+<!ENTITY prefReset.label "ಪೂರ್ವನಿಯೋಜಿತ ಸಿದ್ಧತೆಗಳನ್ನು ಮರಳಿ ಸ್ಥಾಪಿಸು">
+
+<!ENTITY advanced.label "Advanced">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+

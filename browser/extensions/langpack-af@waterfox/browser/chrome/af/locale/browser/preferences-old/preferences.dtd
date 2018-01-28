@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Opsies">
+<!ENTITY  prefWindow.title        "Voorkeure">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName;-voorkeure">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 49em; min-height: 42.5em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneGeneral.title       "Algemeen">
+<!ENTITY  paneTabs.title          "Oortjies">
+<!ENTITY  paneSearch.title        "Soek">
+<!ENTITY  paneContent.title       "Inhoud">
+<!ENTITY  paneApplications.title  "Toepassings">
+<!ENTITY  panePrivacy.title       "Privaatheid">
+<!ENTITY  paneContainers.title    "Konteksoortjies">
+<!ENTITY  paneSecurity.title      "Sekuriteit">
+<!ENTITY  paneAdvanced.title      "Gevorderd">
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+
+<!ENTITY  paneSync.title          "Sync">
+
+<!ENTITY  helpButton.label        "Hulp">

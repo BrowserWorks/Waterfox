@@ -1,0 +1,208 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "โครงการ">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "แอปใหม่…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "เปิดแอปแบบแพ็คเกจ…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "เปิดแอปที่โฮสต์…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "เปิดแอป…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "ติดตั้งและทำงาน">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "หยุดแอป">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "ดีบั๊กแอป">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "เอาโครงการออก">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "ค่ากำหนด">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "จัดการส่วนประกอบพิเศษ">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "เรียกแท็บใหม่">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "ตัดการเชื่อมต่อ">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "จับภาพหน้าจอ">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "ข้อมูล Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "ค่ากำหนดอุปกรณ์">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "ตั้งค่าอุปกรณ์">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "ดู">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "เปิด/ปิดตัวแก้ไข">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "ซูมเข้า">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "ซูมออก">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "กลับค่าเดิมของการซูม">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "เปิดแอป">
+<!ENTITY runtimeButton_label "เลือก Runtime">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "โครงการของฉัน">
+<!ENTITY projectPanel_runtimeApps "แอป Runtime">
+<!ENTITY projectPanel_tabs "แท็บ">
+<!ENTITY runtimePanel_usb "อุปกรณ์ USB">
+<!ENTITY runtimePanel_wifi "อุปกรณ์ Wi-Fi">
+<!ENTITY runtimePanel_simulator "ตัวจำลอง">
+<!ENTITY runtimePanel_other "อื่น ๆ">
+<!ENTITY runtimePanel_installsimulator "ติดตั้งตัวจำลอง">
+<!ENTITY runtimePanel_noadbhelper "ติดตั้ง ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "ไม่เห็นอุปกรณ์ของคุณ?">
+<!ENTITY runtimePanel_refreshDevices_label "เรียกอุปกรณ์ใหม่">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "ถูกต้อง">
+<!ENTITY details_warning_header "คำเตือน">
+<!ENTITY details_error_header "ข้อผิดพลาด">
+<!ENTITY details_description "คำอธิบาย">
+<!ENTITY details_location "ตำแหน่งที่ตั้ง">
+<!ENTITY details_manifestURL "ID แอป">
+<!ENTITY details_removeProject_button "เอาโครงการออก">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "แอปใหม่">
+<!ENTITY newAppHeader "เลือกแม่แบบ">
+<!ENTITY newAppLoadingTemplate "กำลังโหลดแม่แบบ…">
+<!ENTITY newAppProjectName "ชื่อโครงการ:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "ปิด">
+
+<!-- Addons -->
+<!ENTITY addons_title "ส่วนประกอบพิเศษ">
+<!ENTITY addons_aboutaddons "เปิดตัวจัดการส่วนเสริม">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "ค่ากำหนด">
+<!ENTITY prefs_editor_title "ตัวแก้ไข">
+<!ENTITY prefs_general_title "ทั่วไป">
+<!ENTITY prefs_restore "เรียกคืนค่าเริ่มต้น">
+<!ENTITY prefs_manage_components "จัดการส่วนประกอบพิเศษ">
+<!ENTITY prefs_options_rememberlastproject "จดจำโครงการล่าสุด">
+<!ENTITY prefs_options_showeditor "แสดงตัวแก้ไข">
+<!ENTITY prefs_options_showeditor_tooltip "แสดงตัวแก้ไขภายใน">
+<!ENTITY prefs_options_tabsize "ขนาดแท็บ">
+<!ENTITY prefs_options_detectindentation_tooltip "กะประมาณการเยื้องขึ้นอยู่กับเนื้อหาต้นฉบับ">
+<!ENTITY prefs_options_autoclosebrackets "ปิดวงเล็บอัตโนมัติ">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "ใส่วงเล็บปิดอัตโนมัติ">
+<!ENTITY prefs_options_keybindings_default "ค่าเริ่มต้น">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "ข้อมูล Runtime">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "ค่าตรรกะ">
+<!ENTITY device_typeobject "วัตถุ">
+<!ENTITY device_typenone "เลือกชนิด">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "ค่ากำหนดอุปกรณ์">
+<!ENTITY devicepreference_search "ค้นหาค่ากำหนด">
+<!ENTITY devicepreference_newname "ชื่อค่ากำหนดใหม่">
+<!ENTITY devicepreference_newtext "ค่าของค่ากำหนด">
+<!ENTITY devicepreference_addnew "เพิ่มค่ากำหนดใหม่">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "ตั้งค่าอุปกรณ์">
+<!ENTITY devicesetting_search "ตั้งค่าการค้นหา">
+<!ENTITY devicesetting_newname "ชื่อการตั้งค่าใหม่">
+<!ENTITY devicesetting_newtext "ค่าการตั้งค่า">
+<!ENTITY devicesetting_addnew "เพิ่มการตั้งค่าใหม่">
+
+<!-- Monitor -->
+<!ENTITY monitor_help "ช่วยเหลือ">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+
+<!-- Logs panel -->
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "ตัวเลือกตัวจำลอง">
+<!ENTITY simulator_remove "ลบตัวจำลอง">
+<!ENTITY simulator_reset "เรียกคืนค่าเริ่มต้น">
+<!ENTITY simulator_name "ชื่อ">
+<!ENTITY simulator_software "ซอฟต์แวร์">
+<!ENTITY simulator_version "รุ่น">
+<!ENTITY simulator_profile "โปรไฟล์">
+<!ENTITY simulator_hardware "ฮาร์ดแวร์">
+<!ENTITY simulator_device "อุปกรณ์">
+<!ENTITY simulator_screenSize "หน้าจอ">
+<!ENTITY simulator_pixelRatio "อัตราส่วนพิกเซล">
+<!ENTITY simulator_tv_data "การจำลองโทรทัศน์">
+<!ENTITY simulator_tv_data_open_button "เปิดไดเรกทอรีกำหนดค่า…">
+
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typestring "String">
+<!ENTITY logs_title "Pre-packaging Command Logs">
+
+<!ENTITY monitor_title "Monitor">
+<!ENTITY prefs_options_autoconnectruntime "Reconnect to previous runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Reconnect to previous runtime when WebIDE starts">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Restore previous project when WebIDE starts">
+<!ENTITY prefs_options_templatesurl "Templates URL">
+<!ENTITY prefs_options_templatesurl_tooltip "Index of available templates">
+
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimedetails_ADBRootWarning "(requires unlocked bootloader)">
+<!ENTITY runtimedetails_adbIsRoot "ADB is root: ">
+<!ENTITY runtimedetails_privilegesWarning "(Will reboot device. Requires root access.)">
+
+<!ENTITY runtimedetails_requestPrivileges "request higher privileges">
+<!ENTITY runtimedetails_summonADBRoot "root device">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Unrestricted DevTools privileges: ">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY wifi_auth_header "Client Identification">
+<!ENTITY wifi_auth_no_scanner "No QR scanner prompt?">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+
+<!ENTITY wifi_auth_scan_request "The endpoint you are connecting to needs more information to authenticate this connection.  Please scan the QR code below via the prompt on your other device.">
+<!ENTITY wifi_auth_token_request "If your other device asks for a token instead of scanning a QR code, please copy the value below to the other device:">
+<!ENTITY wifi_auth_yes_scanner "Have a QR scanner prompt?">

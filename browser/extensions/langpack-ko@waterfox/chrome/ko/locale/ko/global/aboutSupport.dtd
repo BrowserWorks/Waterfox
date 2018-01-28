@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "문제 해결 정보">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  현재 페이지는 여러분이 &brandShortName; 사용 상 문제점을 해결 할 수 있는 
+  다양한 기술적 정보를 담고 있습니다. 여러분이 문제의 해결을 얻기 위해서는 
+  이 정보를 토대로 <a id='supportLink'>고객 지원 사이트</a>에 문의하시기 바랍니다.
+">
+
+<!ENTITY aboutSupport.crashes.title "충돌 보고서">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "보고 ID">
+<!ENTITY aboutSupport.crashes.sendDate "전송됨">
+<!ENTITY aboutSupport.crashes.allReports "모든 충돌 보고서">
+<!ENTITY aboutSupport.crashes.noConfig "이 어플리케이션은 충돌 보고서를 표시하도록 설정되어 있지 않습니다.">
+
+<!ENTITY aboutSupport.extensionsTitle "확장 기능">
+<!ENTITY aboutSupport.extensionName "이름">
+<!ENTITY aboutSupport.extensionEnabled "사용함">
+<!ENTITY aboutSupport.extensionVersion "버전">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; 주요 기능">
+<!ENTITY aboutSupport.featureName "이름">
+<!ENTITY aboutSupport.featureVersion "버전">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "실험적인 기능">
+<!ENTITY aboutSupport.experimentName "이름">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "설명">
+<!ENTITY aboutSupport.experimentActive "활성화">
+<!ENTITY aboutSupport.experimentEndDate "종료일">
+<!ENTITY aboutSupport.experimentHomepage "홈페이지">
+<!ENTITY aboutSupport.experimentBranch "브랜치">
+
+<!ENTITY aboutSupport.appBasicsTitle "응용 프로그램 기본 정보">
+<!ENTITY aboutSupport.appBasicsName "이름">
+<!ENTITY aboutSupport.appBasicsVersion "버전">
+<!ENTITY aboutSupport.appBasicsBuildID "빌드 ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "업데이트 채널">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "업데이트 기록">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "업데이트 기록 표시">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "프로필 저장 폴더">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "프로필 폴더">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "사용 중인 플러그인">
+<!ENTITY aboutSupport.appBasicsBuildConfig "빌드 설정">
+<!ENTITY aboutSupport.appBasicsUserAgent "사용자 에이전트">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "메모리 사용">
+<!ENTITY aboutSupport.appBasicsPerformance "성능">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "등록된 Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "프로필">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "다중프로세스 윈도우">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "웹 콘텐츠 프로세스">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google 키">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla 위치 서비스 키">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "안전 모드">
+
+<!ENTITY aboutSupport.showDir.label "디렉토리 열기">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Finder에 표시">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "폴더 열기">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "변경 설정 목록">
+<!ENTITY aboutSupport.modifiedPrefsName "이름">
+<!ENTITY aboutSupport.modifiedPrefsValue "값">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js 환경 설정">
+<!ENTITY aboutSupport.userJSDescription "현재 프로필 폴더에는 <a id='prefs-user-js-link'>user.js 파일</a>이 있습니다. 이는 &brandShortName;에 의해 초기 설정이 아닌 사용자 설정을 담고 있습니다.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "중요한 잠긴 환경 설정">
+<!ENTITY aboutSupport.lockedPrefsName "이름">
+<!ENTITY aboutSupport.lockedPrefsValue "값">
+
+<!ENTITY aboutSupport.graphicsTitle "그래픽">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "위치 데이터베이스">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "무결성">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "무결성 확인">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "인크리멘탈 GC">
+
+<!ENTITY aboutSupport.a11yTitle "접근성">
+<!ENTITY aboutSupport.a11yActivated "활성화">
+<!ENTITY aboutSupport.a11yForceDisabled "접근성 끄기">
+<!ENTITY aboutSupport.a11yHandlerUsed "접근 가능한 핸들러 사용됨">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "라이브러리 버전">
+
+<!ENTITY aboutSupport.installationHistoryTitle "설치 기록">
+<!ENTITY aboutSupport.updateHistoryTitle "업데이트 기록">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "클립보드로 텍스트 복사하기">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "클립보드로 원본 복사하기">
+
+<!ENTITY aboutSupport.sandboxTitle "샌드박스">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "거절된 시스템 콜">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "초 전">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "프로세스 타입">
+<!ENTITY aboutSupport.sandboxSyscallNumber "시스템 콜">
+<!ENTITY aboutSupport.sandboxSyscallArgs "인자">
+
+<!ENTITY aboutSupport.safeModeTitle "안전 모드">
+<!ENTITY aboutSupport.restartInSafeMode.label "부가 기능 없이 재시작…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "기능">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "진단">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "실패 로그">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "의사결정 로그">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "크래시 보호 비활성화 기능">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "회피방법">
+
+<!ENTITY aboutSupport.mediaTitle "미디어">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "출력 기기">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "입력 기기">
+<!ENTITY aboutSupport.mediaDeviceName "이름">
+<!ENTITY aboutSupport.mediaDeviceGroup "그룹">
+<!ENTITY aboutSupport.mediaDeviceVendor "벤더">
+<!ENTITY aboutSupport.mediaDeviceState "주">
+<!ENTITY aboutSupport.mediaDevicePreferred "선호">
+<!ENTITY aboutSupport.mediaDeviceFormat "형식">
+<!ENTITY aboutSupport.mediaDeviceChannels "채널">
+<!ENTITY aboutSupport.mediaDeviceRate "비율">
+<!ENTITY aboutSupport.mediaDeviceLatency "지연">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Փոխել Հիմնական Գաղտնաբառը">
+<!ENTITY setPassword.tokenName.label       "Ծածկագրման սարք">
+<!ENTITY setPassword.oldPassword.label     "Առկա գաղտնաբառը.">
+<!ENTITY setPassword.newPassword.label     "Մուտքագրեք նոր գաղտնաբառը.">
+<!ENTITY setPassword.reenterPassword.label "Վերամուտքագրեք գաղտնաբառը.">
+<!ENTITY setPassword.meter.label           "Գաղտնաբառի ապահովությունը">
+<!ENTITY setPassword.meter.loading         "Բեռնավորվում է">
+<!ENTITY masterPasswordDescription.label   "Հիմնական Գաղտնաբառն օգտագործվում է անձնական տեղեկությունները, ինչպես օրինակ կայքերում գաղտնաբառերը պաշտպանելու համար: Հիմնական Գաղտնաբառը նշելուց հետո աշխատաշրջանի ընթացքում  այն պետք է մուտքագրեք մեկ անգամ, երբ &brandShortName;­-ը պաշտպանված տեղեկություններին հարցում կանի:  ">
+<!ENTITY masterPasswordWarning.label       "Խնդրում ենք չմոռանալ Հիմնական Գաղտնաբառը, այլապես ի վիճակի չեք լինի օգտագործել դրանով պաշտպանված տեղեկությունները:">

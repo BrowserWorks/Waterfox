@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+
+<!-- These strings are used in the about:home page -->
+
+<!ENTITY abouthome.pageTitle "&brandFullName; Startside">
+
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+<!ENTITY abouthome.defaultSnippet1.v1 "Tank dat jo keazen hawwe foar Waterfox! Om it measte út jo browser te heljen, lês mear oer de <a>lêste funksjes</a>.">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "It is maklik om jo Waterfox oan te passen sa as jo dat graach wolle. <a>Kies út tûzenen add-ons</a>.">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; is frije en iepenboarnesoftware fan de Waterfox. <a>Ken jo rjochten…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "Blêdwizers">
+<!ENTITY abouthome.historyButton.label   "Skiednis">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "Opsjes">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "Foarkarren">
+<!ENTITY abouthome.addonsButton.label    "Add-ons">
+<!ENTITY abouthome.downloadsButton.label "Downloads">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+<!ENTITY abouthome.aboutMozilla.label    "Oer Mozilla">

@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Yazı tipleri">
+
+<!ENTITY  language.label                          "Yazı tipleri:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  size.label                              "Boyut:">
+<!ENTITY  sizeProportional.accesskey              "B">
+<!ENTITY  sizeMonospace.accesskey                 "u">
+
+<!ENTITY  proportional.label                      "Orantılı:">
+<!ENTITY  proportional.accesskey                  "O">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Monospace:">
+<!ENTITY  monospace.accesskey                     "M">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latince">
+<!ENTITY  font.langGroup.japanese                 "Japonca">
+<!ENTITY  font.langGroup.trad-chinese             "Geleneksel Çince (Tayvan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Basitleştirilmiş Çince">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Geleneksel Çince (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Korece">
+<!ENTITY  font.langGroup.cyrillic                 "Kiril">
+<!ENTITY  font.langGroup.el                       "Yunanca">
+<!ENTITY  font.langGroup.other                    "Diğer yazı sistemleri">
+<!ENTITY  font.langGroup.thai                     "Tayca">
+<!ENTITY  font.langGroup.hebrew                   "İbranice">
+<!ENTITY  font.langGroup.arabic                   "Arapça">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilce">
+<!ENTITY  font.langGroup.armenian                 "Ermenice">
+<!ENTITY  font.langGroup.bengali                  "Bengalce">
+<!ENTITY  font.langGroup.canadian                 "Birleşik Kanada hece yazısı">
+<!ENTITY  font.langGroup.ethiopic                 "Etiyopik">
+<!ENTITY  font.langGroup.georgian                 "Gürcüce">
+<!ENTITY  font.langGroup.gujarati                 "Gucaratça">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmuki">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matematik">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Seylanca">
+<!ENTITY  font.langGroup.tibetan                  "Tibet Dili">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "En küçük yazı tipi boyutu:">
+<!ENTITY minSize.accesskey                        "z">
+<!ENTITY minSize.none                             "Yok">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Yukarıdaki seçimlerim yerine sayfaların kendi yazı tiplerini seçmelerine izin ver">
+<!ENTITY  allowPagesToUseOwn.accesskey            "u">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Eski içerikler için metin kodlaması">
+<!ENTITY languages.customize.Fallback2.label      "Yedek metin kodlaması:">
+<!ENTITY languages.customize.Fallback2.accesskey  "k">
+<!ENTITY languages.customize.Fallback2.desc       "Bu metin kodlaması, kendi kodlamasını tanımlayamayan eski içerikler için kullanılır.">
+
+<!ENTITY languages.customize.Fallback.auto        "Geçerli dil için varsayılan">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arapça">
+<!ENTITY languages.customize.Fallback.baltic      "Baltık">
+<!ENTITY languages.customize.Fallback.ceiso       "Orta Avrupa, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Orta Avrupa, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Çince, Basitleştirilmiş">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Çince, Geleneksel">
+<!ENTITY languages.customize.Fallback.cyrillic    "Kiril">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Yunanca">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "İbranice">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japonca">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Korece">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Tayca">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Türkçe">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnamca">
+<!ENTITY languages.customize.Fallback.other       "Diğer (Batı Avrupa dahil)">

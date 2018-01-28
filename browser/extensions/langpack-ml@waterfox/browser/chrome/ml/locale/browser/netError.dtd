@@ -1,0 +1,146 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "താള്‍ ലോഡ്‌ ചെയ്യുന്നതില്‍ തകരാര്‍ ">
+<!ENTITY retry.label "വീണ്ടും ശ്രമിക്കുക">
+<!ENTITY returnToPreviousPage.label "തിരികെ പോകൂ">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "കണക്ട്‌ ചെയ്യുവാന്‍ സാധിച്ചില്ല">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "ഈ വിലാസം നിരോധിക്കപ്പെട്ടതാണ്‌ ">
+<!ENTITY deniedPortAccess.longDesc "‌">
+
+<!ENTITY dnsNotFound.title "സെര്‍വര്‍ കണ്ടെത്താനായില്ല">
+<!ENTITY dnsNotFound.longDesc "<ul> <li> <strong>www</strong>.example.com-ന് പകരം <strong>ww</strong>.example.com എന്നത് പോലുള്ള അക്ഷര പിശകുകള്‍ക്കായി വിലാസം പരിശോധിക്കുക. </li><li>നിങ്ങള്‍ക്ക് ഏതെങ്കിലും പേജ് ലഭ്യമല്ലെങ്കില്‍, കംപ്യൂട്ടറിന്റെ നെറ്റ്‌വര്‍ക്ക് കണക്ഷന്‍ പരിശോധിക്കുക.</li> <li>നിങ്ങളുടെ കംപ്യൂട്ടര്‍ അല്ലെങ്കില്‍ നെറ്റ്‌വര്‍ക്ക് ഒരു ഫയര്‍വോള്‍ അല്ലെങ്കില്‍ പ്രോക്സി ഉപയോഗിച്ച് സുരക്ഷിതമാക്കിയിരിക്കുന്നു എങ്കില്‍, &brandShortName; -ന് വെബിലേക്ക് പ്രവേശിക്കുവാനുള്ള അനുവാദം ഉണ്ടെന്നുറപ്പാക്കുക..</li> </ul>">
+
+<!ENTITY fileNotFound.title "ഫയല്‍ കാണ്‍മാനില്ല">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ടൈപ്പ് ചെയ്യുന്നതിലുള്ള പിശകുകള്‍ക്കായി ഫയലിന്റെ പേര് പരിശോധിക്കുക.</li> <li>ഫയല്‍ നീക്കം ചെയ്യുകയോ,പേര് മാറ്റുകയോ അല്ലെങ്കില്‍  വെട്ടി നീക്കുകയോ മറ്റോ ചെയ്തോ എന്ന് പരിശോധിക്കുക.</li> </ul>">
+
+
+
+<!ENTITY generic.title "അയ്യോ!!">
+<!ENTITY generic.longDesc "<p>ചില കാരണങ്ങളാല്‍ &brandShortName;-ന്‌ ഈ താള്‍ ലോഡ്‌ ചെയ്യുവാന്‍ സാധ്യമല്ല</p>">
+
+
+
+
+<!ENTITY malformedURI.title "വിലാസം വാലിഡ്‌ അല്ല">
+<!ENTITY malformedURI.longDesc "<ul> <li>വെബിന്റെ വിലാസങ്ങള്‍ സാധാരണ ഇപ്രകാരമാണ് എഴുതുന്നത്: <strong>http://www.example.com/</strong></li> <li>മുന്നോട്ടുള്ള സ്ളാഷ് ആണുപയോഗിക്കുന്നത് എന്നുറപ്പാക്കുക (അതായത്, <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "ഈ കണക്ഷന്‍ തടസ്സപ്പെട്ടിരിക്കുന്നു">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "രേഖയുടെ കാലാവധി കഴിഞ്ഞിരിയ്ക്കുന്നു">
+<!ENTITY notCached.longDesc "<p>&brandShortName; -ന്റെ ക്യാഷില്‍ ആവശ്യപ്പെട്ട രേഖ ലഭ്യമല്ല.</p><ul><li>സുരക്ഷ എന്ന നിലയില്‍, സെന്‍സിറ്റീവ് രേഖകള്‍ക്കായി &brandShortName; ഓട്ടോമാറ്റിക്കായി വീണ്ടും ആവശ്യപ്പെടുന്നില്ല.</li><li>വെബ്സൈറ്റില്‍ നിന്നും രേഖ വീണ്ടും ആവശ്യപ്പെടുന്നതിനായി വീണ്ടും ശ്രമിയ്ക്കുക ക്ലിക്ക് ചെയ്യുക.</li></ul>">
+
+<!ENTITY netOffline.title "ഓഫ്‌ലൈന്‍ മോഡ്‌">
+<!ENTITY netOffline.longDesc2 "<ul> <li>ഓണ്‍ലൈന്‍ മോഡില്‍ തിരികെ ചെന്നു് താള്‍ വീണ്ടും ലഭ്യമാക്കുന്നതിനായി  &quot;വീണ്ടും ശ്രമിയ്ക്കുക&quot; അമര്‍ത്തുക.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "എന്‍കോഡിങ് പിശക്">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>ദയവായി വെബ്സൈറ്റ് ഉടമസ്ഥരെ ഈ പ്രശ്നം അറിയിക്കുക.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "സുരക്ഷിതമല്ലാത്ത തരത്തിലുള്ള ഫയല്‍">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ദയവായി വെബ്സൈറ്റ് ഉടമസ്ഥരെ ഈ പ്രശ്നം അറിയിക്കുക.</li> </ul>">
+
+<!ENTITY netReset.title "കണക്ഷന്‍ റീസെറ്റ്‌ ചെയ്യപ്പെട്ടിരിക്കുന്നു ">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "കണക്ഷന്റെ സമയം കഴിഞ്ഞിരിക്കുന്നു">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "വിലാസം മനസ്സിലാക്കുവാന്‍ സാധിച്ചില്ല">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>ഈ വിലാസം തുറക്കുവാനായി മറ്റ്‌ സോഫ്റ്റ്‌വെയറുകള്‍ ഇന്‍‌സ്റ്റോള്‍ ചെയ്യേണ്ടതായി വന്നേക്കാം </li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "പ്രോക്സി സെര്‍വര്‍ കണക്ഷനുകള്‍ നിഷേധിക്കുന്നു">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>പ്രോക്സി സെറ്റിങ്ങുകള്‍ ശരിയാണ്‌ എന്ന് ഉറപ്പുവരുത്തുക.</li> <li> പ്രോക്സി സെര്‍വര്‍ പ്രവര്‍ത്തിക്കുന്നുവെന്ന് ഉറപ്പ്‌ വരുത്തുവാനായി നെറ്റ്‌വര്‍ക്‌ ഉപ്ദേഷ്ടാവുമായി ബന്ധപ്പെടുക</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "പ്രോക്സി സെര്‍വര്‍ കണ്ടെത്താനായില്ല ">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>പ്രോക്സി ക്രമികരണങ്ങള്‍ ശരിയാണോ എന്ന് നോക്കുക.</li> <li>നിങ്ങളുടെ കംപ്യൂട്ടര്‍ പ്രവര്‍ത്തനത്തിലുള്ള ഒരു നെറ്റ്‌വര്‍ക്ക് കണക്ഷനിലെന്ന് ഉറപ്പ് വരുത്തുക.</li> <li>നിങ്ങളുടെ കംപ്യൂട്ടര്‍ അല്ലെങ്കില്‍ നെറ്റ്‌വര്‍ക്ക് ഒരു ഫയര്‍വോള്‍ അല്ലെങ്കില്‍ പ്രോക്സി ഉപയോഗിച്ച് സുരക്ഷിതമാക്കിയിരിക്കുന്നു എങ്കില്‍, &brandShortName; -ന് വെബിലേക്ക് പ്രവേശിക്കുവാനുള്ള അനുവാദം ഉണ്ടെന്നുറപ്പാക്കുക.</li> </ul>">
+
+<!ENTITY redirectLoop.title "ഈ താള്‍ ശരിയായി റീഡയറക്ട്‌ ചെയുന്നില്ല ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ഈ പ്രശ്നം ചിലപ്പോള്‍ കുക്കികള്‍ നിഷേധിക്കുന്നതു കൊണ്ടോ, കുക്കികള്‍ നിര്‍വീര്യമാക്കുന്നതു കൊണ്ടോ സംഭവിക്കുന്നതാവാം</li></ul>">
+
+<!ENTITY unknownSocketType.title "സെര്‍വറില്‍ നിന്നും പ്രതീക്ഷിക്കാത്ത പ്രതികരണം">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>പേഴ്സണല്‍ സെക്യൂരിറ്റി മാനേജര്‍ നിങ്ങളുടെ സിസ്റ്റത്തില്‍ ഇന്‍‌സ്റ്റോള്‍ ചെയ്തിട്ടുണ്ട്‌ എന്നു് ഉറപ്പു് വരുത്തുക.</li> <li> എത്‌ ചിലപ്പോള്‍ സെര്‍വറിന്റെ നിലവാരമില്ലാത്ത ക്രമീകരണം മൂലമാകാം.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>നിങ്ങള്‍ ഇപ്പോള്‍ കാണുവാന്‍ ശ്രമിക്കുന്ന താള്‍ ലഭ്യമല്ല. കാരണം ലഭ്യമായ ഡേറ്റയുടെ ആധികാരികത ഉറപ്പാക്കുവാന്‍ സാധ്യമായില്ല.</li> <li>ഇതു് സംബന്ധിച്ചുള്ള വിവരങ്ങള്‍ ദയവായി വെബ്സൈറ്റ് ഉടമസ്ഥരെ അറിയിക്കുക.</li> </ul>">
+
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+<!ENTITY sharedLongDesc "<ul> <li>ഈ സൈറ്റ് തല്‍ക്കാലം ലഭ്യമല്ല അല്ലെങ്കില്‍ തിരക്കിലാവാം. കുറച്ച് സമയത്തിന് ശേഷം വീണ്ടും ശ്രമിക്കുക.</li> <li>നിങ്ങള്‍ക്ക് ഒരു പേജും കിട്ടുന്നില്ലെങ്കില്‍, നിങ്ങളുടെ കംപ്യൂട്ടറിന്റെ നെറ്റ്‌വര്‍ക്ക് കണക്ഷന്‍ പരിശോധിക്കുക.</li> <li>നിങ്ങളുടെ കംപ്യൂട്ടര്‍ അല്ലെങ്കില്‍ നെറ്റ്‌വര്‍ക്ക്, ഫയര്‍വോള്‍ അല്ലെങ്കില്‍ പ്രോക്സി ഉപയോഗിച്ച് സുരക്ഷിതമാക്കിയിരിക്കുന്നു എങ്കില്‍, &brandShortName; -ന് വെബിലേക്ക് പ്രവേശിക്കുവാനുള്ള അനുവാദം ഉണ്ടെന്നുറപ്പാക്കുക.</li> </ul>">
+
+<!ENTITY cspBlocked.title "ഉള്ളടക്കത്തിലുള്ള സുരക്ഷാ പോളിസി കാരണം തടഞ്ഞിരിയ്ക്കുന്നു">
+<!ENTITY cspBlocked.longDesc "<p>ഈ താളിന്റെ ഉള്ളടക്ക സുരക്ഷാ പോളിസി ഈ തരത്തില്‍ താള്‍ ലഭ്യമാക്കുന്നതു് അനുവദിയ്ക്കുന്നതല്ല, അതിനാല്‍ &brandShortName; ഇതു് തടയുന്നു.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "തകരാറുള്ള ഉള്ളടക്കത്തില്‍ പിശക്">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ഡേറ്റാ അയയ്ക്കുന്നതിലുള്ള പിശകു് കാരണം നിങ്ങള്‍ കാണുവാന്‍ ശ്രമിയ്ക്കുന്ന താള്‍ നിങ്ങള്‍ക്കു് കാണുവാന്‍ സാധ്യമല്ല.</p><ul><li>ഈ പ്രശ്നത്തെപ്പറ്റി ദയവായി വെബ്സൈറ്റിന്റെ ഉടമസ്ഥരെ അറിയിയ്ക്കുക.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "എക്സെപ്ഷന്‍ ചേര്‍ക്കുക…">
+
+<!ENTITY errorReporting.learnMore "കൂടുതല്‍ അറിയുക...">
+
+<!ENTITY remoteXUL.title "റിമോട്ട് XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>ദയവായി വെബ് സൈറ്റ് ഉടമസ്ഥാക്കളെ ഈ പ്രശ്നത്തെപ്പറ്റി അറിയിയ്ക്കുക.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "സുരക്ഷിതമായി കണക്ട് ചെയ്യുവാന്‍ സാധ്യമല്ല">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+<!ENTITY certerror.pagetitle1  "സുരക്ഷിതമല്ലാത്ത കണക്ഷന്‍">
+
+<!ENTITY certerror.copyToClipboard.label "ക്ലിപ്പ്ബോര്‍ഡിലേക്കു് വാചകം പകര്‍ത്തുക">
+
+<!ENTITY inadequateSecurityError.title "താങ്കളുടെ കണക്ഷന്‍ സുരക്ഷിതമല്ല">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY prefReset.label "സ്വതേയുള്ള സജ്ജീകരണങ്ങള്‍ വീണ്ടെടുക്കുക">
+
+<!ENTITY advanced.label "Advanced">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.introPara "The owner of <span class='hostname'/> has configured their website improperly.  To protect your information from being stolen, &brandShortName; has not connected to this website.">
+
+<!ENTITY certerror.longpagetitle1 "Your connection is not secure">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "This site uses HTTP
+Strict Transport Security (HSTS) to specify that &brandShortName; may only connect
+to it securely. As a result, it is not possible to add an exception for this
+certificate.">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY errorReporting.automatic2 "Report errors like this to help Mozilla identify and block malicious sites">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>It may have been removed, moved, or file permissions may be preventing access.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY nssFailure2.title "Secure Connection Failed">
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+
+<!ENTITY prefReset.longDesc "It looks like your network security settings might be causing this. Do you want the default settings to be restored?">
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+

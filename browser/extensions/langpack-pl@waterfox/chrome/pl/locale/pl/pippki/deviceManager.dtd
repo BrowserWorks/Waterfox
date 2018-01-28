@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title 							"Menedżer urządzeń">
+<!ENTITY devmgr.style2 "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label 					"Urządzenia i moduły zabezpieczające">
+<!ENTITY devmgr.details.title					"Szczegóły">
+<!ENTITY devmgr.details.title2					"Wartość">
+
+<!ENTITY devmgr.button.login.label 				"Zaloguj">
+<!ENTITY devmgr.button.login.accesskey          "Z">
+<!ENTITY devmgr.button.logout.label 			"Wyloguj">
+<!ENTITY devmgr.button.logout.accesskey         "W">
+<!ENTITY devmgr.button.changepw.label 			"Zmień hasło">
+<!ENTITY devmgr.button.changepw.accesskey       "h">
+<!ENTITY devmgr.button.load.label               "Wczytaj">
+<!ENTITY devmgr.button.load.accesskey           "c">
+<!ENTITY devmgr.button.unload.label 			"Usuń z pamięci">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info 						"Wprowadź informacje dla modułu, który ma zostać dodany." >
+<!ENTITY loaddevice.modname 					"Nazwa modułu:" >
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default 			"Nowy moduł PKCS#11" >
+<!ENTITY loaddevice.filename 					"Nazwa pliku modułu:" >
+<!ENTITY loaddevice.filename.accesskey          "N">
+<!ENTITY loaddevice.browse 						"Przeglądaj…" >
+<!ENTITY loaddevice.browse.accesskey          	"P">
+
+<!ENTITY loaddevice.title2 "Wczytaj sterownik urządzenia PKCS#11">

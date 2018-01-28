@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Genel">
+
+<!ENTITY useCursorNavigation.label       "Sayfaların içinde hareket ederken her zaman işaretçi tuşlarını kullan">
+<!ENTITY useCursorNavigation.accesskey   "S">
+<!ENTITY searchOnStartTyping.label       "Yazmaya başlar başlamaz arama yap">
+<!ENTITY searchOnStartTyping.accesskey   "z">
+<!ENTITY useOnScreenKeyboard.label       "Gerektiğinde dokunmatik klavyeyi göster">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Tarama">
+
+<!ENTITY useAutoScroll.label             "Otomatik kaydırmayı kullan">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Akıcı kaydırmayı kullan">
+<!ENTITY useSmoothScrolling.accesskey    "c">
+<!ENTITY checkUserSpelling.label         "Yazarken yazım denetimi yap">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Veri Tercihleri">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Bu yapılandırma için veri raporlama devre dışı bırakılmış">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName;, teknik ve etkileşim verilerimi otomatik olarak Mozilla’ya gönderebilir">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Daha fazla bilgi al">
+
+<!ENTITY dataCollection.label            "&brandShortName; veri toplama ve kullanma izinleri">
+<!ENTITY dataCollectionDesc.label        "Yalnızca &brandShortName; tarayıcımızı geliştirmemize yarayacak verileri topluyoruz ve istemezseniz onları da toplamıyoruz. Kişisel verilerinizi sunucularımıza göndermeden önce mutlaka izninizi istiyoruz.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Gizlilik bildirimi">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName;, çökme raporlarımı Mozilla’ya gönderebilir">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "ö">
+<!ENTITY crashReporterLearnMore.label    "Daha fazla bilgi al">
+
+<!ENTITY networkTab.label                "Ağ">
+
+<!ENTITY networkProxy.label              "Ağ vekil sunucusu">
+
+<!ENTITY connectionDesc.label            "&brandShortName; tarayıcısının internete nasıl bağlanacağını ayarlayın">
+<!ENTITY connectionSettings.label        "Ayarlar…">
+<!ENTITY connectionSettings.accesskey    "A">
+
+<!ENTITY httpCache.label                 "Önbelleğe alınmış web içeriği">
+
+<!ENTITY offlineStorage2.label           "Çevrimdışı web içeriği ve kullanıcı verileri">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Site verileri">
+<!ENTITY clearSiteData.label             "Tüm verileri temizle">
+<!ENTITY clearSiteData.accesskey         "ü">
+<!ENTITY siteDataSettings.label          "Ayarlar…">
+<!ENTITY siteDataSettings.accesskey      "r">
+<!ENTITY siteDataLearnMoreLink.label     "Daha fazla bilgi al">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Önbelleği">
+<!ENTITY limitCacheSizeBefore.accesskey  "Ö">
+<!ENTITY limitCacheSizeAfter.label       "MB ile sınırla">
+<!ENTITY clearCacheNow.label             "Şimdi temizle">
+<!ENTITY clearCacheNow.accesskey         "z">
+<!ENTITY clearOfflineAppCacheNow.label   "Şimdi temizle">
+<!ENTITY clearOfflineAppCacheNow.accesskey "t">
+<!ENTITY overrideSmartCacheSize.label    "Otomatik önbellek yönetimini devre dışı bırak">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Güncelleme">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; güncellemeleri">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "En yüksek performans, güvenilirlik ve güvenlik için &brandShortName; tarayıcınızı güncel tutmalısınız.">
+<!ENTITY updateApplication.version.pre   "Sürüm ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName; tarayıcım">
+<!ENTITY updateAuto3.label               "Güncellemeleri otomatik olarak yüklesin (Önerilir)">
+<!ENTITY updateAuto3.accesskey           "o">
+<!ENTITY updateCheckChoose2.label        "Güncellemeleri denetlesin ama yükleme kararını bana bıraksın">
+<!ENTITY updateCheckChoose2.accesskey    "d">
+<!ENTITY updateManual2.label             "Güncellemeleri hiçbir zaman denetlemesin (Önerilmez)">
+<!ENTITY updateManual2.accesskey         "n">
+
+<!ENTITY updateHistory2.label            "Güncelleme geçmişini göster…">
+<!ENTITY updateHistory2.accesskey        "c">
+
+<!ENTITY useService.label                "Güncellemeleri yüklemek için arka plan hizmetini kullan">
+<!ENTITY useService.accesskey            "h">
+
+<!ENTITY enableSearchUpdate2.label       "Arama motorlarını otomatik olarak güncelle">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Bir site çevrimdışı kullanım için veri depolamak istediğinde bana bildir">
+<!ENTITY offlineStorageNotify.accesskey           "v">
+<!ENTITY offlineStorageNotifyExceptions.label     "İstisnalar…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "s">
+
+<!ENTITY offlineAppsList2.label          "Aşağıdaki web sitelerinin çevrimdışı kullanım için veri depolamasına izin verilmiştir:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Sil…">
+<!ENTITY offlineAppsListRemove.accesskey "S">
+<!ENTITY offlineAppRemove.confirm        "Çevrimdışı verileri sil">
+
+<!ENTITY certificateTab.label            "Sertifikalar">
+<!ENTITY certPersonal2.description       "Bir sunucu kişisel sertifikamı istediğinde">
+<!ENTITY selectCerts.auto                "Birini kendiliğinden seç">
+<!ENTITY selectCerts.auto.accesskey      "B">
+<!ENTITY selectCerts.ask                 "Her seferinde bana sor">
+<!ENTITY selectCerts.ask.accesskey       "H">
+<!ENTITY enableOCSP.label                "Sertifikaların geçerliliğini doğrulamak için OCSP otomatik yanıt sunucularını sorgula">
+<!ENTITY enableOCSP.accesskey            "d">
+<!ENTITY viewCerts2.label                "Sertifikaları göster…">
+<!ENTITY viewCerts2.accesskey            "S">
+<!ENTITY viewSecurityDevices2.label      "Güvenlik aygıtları…">
+<!ENTITY viewSecurityDevices2.accesskey  "A">
+
+<!ENTITY performance.label               "Performans">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Önerilen performans ayarlarını kullan">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Bu ayarlar bilgisayarınızın donanımına ve işletim sistemine göre seçilmiştir.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "Ö">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Daha fazla bilgi al">
+<!ENTITY limitContentProcessOption.label "İçerik işlemi sınırı">
+<!ENTITY limitContentProcessOption.description
+                                         "Daha fazla içerik işlemine izin verdiğinizde, çok sayıda sekme açıkken performans artar ama daha fazla bellek kullanılır.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "İçerik işlemi sayısını değiştirmek yalnızca çok işlemli &brandShortName; ile mümkündür.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Çok işlemin etkin olmadığını kontrol etmeyi öğrenin">
+<!ENTITY allowHWAccel.label              "Mümkün olduğunda donanım ivmelenmesini kullan">
+<!ENTITY allowHWAccel.accesskey          "d">

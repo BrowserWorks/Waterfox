@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Tosú">
+
+<!ENTITY startupPage2.label        "Agus &brandShortName; á thosú">
+<!ENTITY startupPage2.accesskey    "u">
+<!ENTITY startupUserHomePage.label "Taispeáin mo leathanach baile">
+<!ENTITY startupBlankPage.label    "Taispeáin leathanach folamh">
+<!ENTITY startupPrevSession.label  "Taispeáin mo chuid fuinneog agus cluaisíní ón seisiún roimhe seo">
+
+<!ENTITY homepage2.label           "Leathanach baile">
+<!ENTITY homepage2.accesskey       "b">
+<!ENTITY useCurrentPage.label      "Úsáid an Leathanach Reatha">
+<!ENTITY useCurrentPage.accesskey  "R">
+<!ENTITY useMultiple.label         "Úsáid na Leathanaigh Reatha">
+<!ENTITY chooseBookmark.label      "Úsáid Leabharmharc…">
+<!ENTITY chooseBookmark.accesskey  "L">
+<!ENTITY restoreDefault.label      "Cuir na réamhshocruithe ar ais">
+<!ENTITY restoreDefault.accesskey  "a">
+
+<!ENTITY downloads.label     "Íoslódálacha">
+
+<!ENTITY saveTo.label "Sábháil comhaid i">
+<!ENTITY saveTo.accesskey "S">
+<!ENTITY chooseFolderWin.label        "Brabhsáil…">
+<!ENTITY chooseFolderWin.accesskey    "i">
+<!ENTITY chooseFolderMac.label        "Roghnaigh…">
+<!ENTITY chooseFolderMac.accesskey    "i">
+<!ENTITY alwaysAskWhere.label         "Fiafraigh díom cá sábhálfar an comhad i gcónaí">
+<!ENTITY alwaysAskWhere.accesskey     "g">
+
+<!ENTITY alwaysCheckDefault2.label        "Seiceáil i gcónaí an é &brandShortName; an brabhsálaí réamhshocraithe">
+<!ENTITY alwaysCheckDefault2.accesskey    "g">
+<!ENTITY setAsMyDefaultBrowser3.label     "Úsáid mar Réamhshocrú…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "d">
+<!ENTITY isDefault.label                  "Is é &brandShortName; do bhrabhsálaí réamhshocraithe faoi láthair">
+<!ENTITY isNotDefault.label               "Ní hé &brandShortName; do bhrabhsálaí réamhshocraithe faoi láthair">
+
+<!ENTITY separateProfileMode.label        "Lig do &brandShortName; agus Waterfox a bheith ar siúl san am céanna">
+<!ENTITY useWaterfoxSync.label             "Leid: Úsáideann sé seo dhá phróifíl ar leith. Úsáid Sync le sonraí a chomhroinnt eatarthu.">
+<!ENTITY getStarted.notloggedin.label     "Logáil isteach i &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Oscail sainroghanna &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Cumasaigh &brandShortName; ilphróisis">

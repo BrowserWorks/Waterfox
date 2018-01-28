@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Ynstallearje add-on">
+<!ENTITY intro           "In oar programma op jo kompjûter wol
+                          &brandShortName; oanpasse mei de folgjende add-on:">
+<!ENTITY warning         "Ynstallearje allinnich add-ons fan auteurs dy't jo fertrouwe.">
+<!ENTITY allow           "Dizze ynstallaasje tastean">
+<!ENTITY later           "Jo kinne altyd fan gedachten feroarje troch nei
+                          de add-onsbehearder te gean.">
+<!ENTITY continue        "Trochgean">
+<!ENTITY restartMessage  "Jo moatte &brandShortName; opnij opstarte om de ynstallaasje fan dizze add-on dien te meitsjen.">
+<!ENTITY restartButton   "Werstart &brandShortName;">
+<!ENTITY cancelButton    "Annulearje">

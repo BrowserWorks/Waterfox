@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Propietats d'impressió">
+
+<!ENTITY paperInput.label "Mida del paper:">
+<!ENTITY paperInput.accesskey "p">
+
+<!ENTITY jobTitleInput.label "Títol del treball:">
+<!ENTITY jobTitleInput.accesskey "b">
+
+<!ENTITY colorGroup.label "Color:">
+<!ENTITY grayRadio.label "Escala de grisos">
+<!ENTITY grayRadio.accesskey "g">
+<!ENTITY colorRadio.label "Color">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "Espai des de la vora del paper fins al marge">
+<!ENTITY topInput.label "Part superior:">
+<!ENTITY topInput.accesskey "s">
+<!ENTITY bottomInput.label "Part inferior:">
+<!ENTITY bottomInput.accesskey "i">
+<!ENTITY leftInput.label "Esquerra:">
+<!ENTITY leftInput.accesskey "E">
+<!ENTITY rightInput.label "Dreta:">
+<!ENTITY rightInput.accesskey "D">

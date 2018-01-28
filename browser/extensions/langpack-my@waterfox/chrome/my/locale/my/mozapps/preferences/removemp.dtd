@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "ပင်ရင်း စကားဝှက်ကို ဖယ်ရှားပါ">
+<!ENTITY removeInfo.label                  "ဆက်သွားဖို့ သင့်ရဲ့ လက်ရှိ စကားဝှက်ကို သင်ရေးထည့်ရမယ် -">
+<!ENTITY removeWarning1.label              "သင့်ရဲ့ ပင်ရင်း စကားဝှက်ဟာ ကွန်ရက်စကားဝှက်ကဲ့သို့ အရေးကြီးတဲ့ အချက်အလက်ကို ကာကွယ်ဖို့ သုံးစွဲတယ်။">
+<!ENTITY removeWarning2.label              "သင့်ရဲ့ ပင်ရင်း စကားဝှက်ကို သင်ဖယ်ရှားရင် သင့်ကွန်ပျုတာမှာ အ​န္တရယ်ရှိလာရင် သင့်အချက်အလက်ကို ကာကွယ်ပေးမှာ မဟုတ်ဘူး။">
+<!ENTITY setPassword.oldPassword.label     "လက်ရှိ စကားဝှက် -">
+

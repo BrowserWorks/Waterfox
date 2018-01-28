@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Igama:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "I">
+<!ENTITY editBookmarkOverlay.location.label                  "Indawo:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "I">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "INdawo yeFidi:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Indawo yesayithi:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "y">
+<!ENTITY editBookmarkOverlay.folder.label                    "Ifolda:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Bonisa zonke iifolda zeebhukhmakhi">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Fihla">
+<!ENTITY editBookmarkOverlay.tags.label                      "Iithegi:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "I">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Yahlula iithegi ngeekhoma">
+<!ENTITY editBookmarkOverlay.description.label               "Inkcazo:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "I">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Igama eliphambili:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "I">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Bonisa zonke iithegi">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Layisha esi salathisi siphawulweyo kwibha esecaleni">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "s">
+<!ENTITY editBookmarkOverlay.choose.label                    "Khetha…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Isiqulathi Seefayili Esitsha">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "i">

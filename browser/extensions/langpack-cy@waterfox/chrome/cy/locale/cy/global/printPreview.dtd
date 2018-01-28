@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Argraffu…">
+<!ENTITY print.accesskey      "A">
+<!ENTITY pageSetup.label      "Gosodiad Tudalen…">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "Tudalen:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "o">
+<!ENTITY scale.label          "Graddfa:">
+<!ENTITY scale.accesskey      "G">
+<!ENTITY portrait.label       "Portread">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "Tirlun">
+<!ENTITY landscape.accesskey  "l">
+<!ENTITY close.label          "Cau">
+<!ENTITY close.accesskey      "C">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Cyfaddasu…">
+<!ENTITY ShrinkToFit.label    "Lleihau i'r Maint">
+<!ENTITY customPrompt.title   "Graddfa Cyfaddasu…">
+<!ENTITY simplifyPage.label   "Symleiddio Tudalen">
+<!ENTITY simplifyPage.accesskey "S">
+<!ENTITY simplifyPage.enabled.tooltip  "Newid cynllun ar gyfer darllen haws">
+<!ENTITY simplifyPage.disabled.tooltip "Nid oes modd symleiddio'r dudalen yn awtomatig">
+
+<!ENTITY homearrow.tooltip    "Tudalen gyntaf">
+<!ENTITY endarrow.tooltip     "Tudalen olaf">
+<!ENTITY nextarrow.tooltip    "Tudalen nesaf">
+<!ENTITY previousarrow.tooltip "Tudalen blaenorol">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "A jaɓɓaama e &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Seŋo ngam syncude tabbe, maantore, finndeeji ekn.">
+<!ENTITY aboutAccountsConfig.startButton.label "Fuɗɗo ɗoo">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Cuɓoraaɗe sync">
+<!ENTITY aboutAccounts.noConnection.title "Alaa ceŋol">
+<!ENTITY aboutAccounts.noConnection.description "Alaa e sago ceŋo-ɗaa e Enternet ngam seŋaade e lowre.">
+<!ENTITY aboutAccounts.noConnection.retry "Eto goɗngol">
+<!ENTITY aboutAccounts.badConfig.title "Teeltannde feewaani">
+<!ENTITY aboutAccounts.badConfig.description "Horiima anndude teeltannde sarworde Konte maa Waterfox. Tiiɗno eto kadi.">

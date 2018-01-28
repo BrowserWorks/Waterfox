@@ -1,0 +1,94 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "憑證管理員">
+
+<!ENTITY certmgr.tab.mine                     "您的憑證">
+<!ENTITY certmgr.tab.others2                  "人員">
+<!ENTITY certmgr.tab.websites3                "伺服器">
+<!ENTITY certmgr.tab.ca                       "憑證機構">
+<!ENTITY certmgr.tab.orphan2                  "其他">
+
+<!ENTITY certmgr.mine                         "您有來自下列組織的憑證可以識別您自己:">
+<!ENTITY certmgr.others                       "您有可識別下列人員的憑證:">
+<!ENTITY certmgr.websites2                    "您有可識別下列伺服器的憑證:">
+<!ENTITY certmgr.cas                          "您有可識別下列憑證機構的憑證:">
+<!ENTITY certmgr.orphans                      "您有下列不屬於任何分類的憑證:">
+
+<!ENTITY certmgr.detail.general_tab.title     "一般">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "詳細資訊">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "正在驗證憑證…">
+<!ENTITY certmgr.subjectinfo.label            "簽發給">
+<!ENTITY certmgr.issuerinfo.label             "簽發者">
+<!ENTITY certmgr.periodofvalidity.label       "有效期間" >
+<!ENTITY certmgr.fingerprints.label           "指紋">
+<!ENTITY certmgr.certdetail.title             "憑證細節">
+<!ENTITY certmgr.certdetail.cn                "一般名稱 (CN)">
+<!ENTITY certmgr.certdetail.o                 "組織 (O)">
+<!ENTITY certmgr.certdetail.ou                "組織單位 (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "序號">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 指紋">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 指紋">
+
+<!ENTITY certmgr.editcacert.title             "編輯憑證機構信任關係設定">
+<!ENTITY certmgr.editcert.edittrust           "編輯信任關係設定:">
+<!ENTITY certmgr.editcert.trustssl            "此憑證可用來識別網站。">
+<!ENTITY certmgr.editcert.trustemail          "此憑證可用來識別 Email 使用者。">
+<!ENTITY certmgr.editcert.trustobjsign        "此憑證可用來識別軟體製造商。">
+
+<!ENTITY certmgr.deletecert.title             "刪除憑證">
+
+<!ENTITY certmgr.certname                     "憑證名稱">
+<!ENTITY certmgr.certserver                   "伺服器">
+<!ENTITY certmgr.override_lifetime            "有效時間">
+<!ENTITY certmgr.tokenname                    "安全裝置">
+<!ENTITY certmgr.begins                       "開始於">
+<!ENTITY certmgr.expires                      "過期於">
+<!ENTITY certmgr.email                        "E-Mail 地址">
+<!ENTITY certmgr.serial                       "序號">
+
+<!ENTITY certmgr.close.label                  "關閉">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.view2.label                  "檢視…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "編輯信任…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "匯出…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "刪除…">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete_builtin.label         "刪除或取消信任…">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "備份…">
+<!ENTITY certmgr.backup2.accesskey            "B">
+<!ENTITY certmgr.backupall2.label             "全部備份…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "匯入…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "憑證欄位">
+<!ENTITY certmgr.details.accesskey            "f">
+<!ENTITY certmgr.fields.label                 "欄位值">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "憑證層級">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "新增例外網站…">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "新增安全例外">
+<!ENTITY exceptionMgr.exceptionButton.label   "確認安全例外">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "請注意，合法的銀行、商店或其他公開網站不會要求您這麼做！">
+<!ENTITY exceptionMgr.certlocation.caption2   "伺服器">
+<!ENTITY exceptionMgr.certlocation.url        "位置:">
+<!ENTITY exceptionMgr.certlocation.download   "取得憑證">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "憑證狀態">
+<!ENTITY exceptionMgr.certstatus.viewCert     "檢視…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "永久儲存此例外">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">
+

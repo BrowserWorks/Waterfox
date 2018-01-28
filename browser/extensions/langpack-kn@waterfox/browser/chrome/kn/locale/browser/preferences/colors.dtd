@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "ಬಣ್ಣಗಳು">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "ಪುಟದಿಂದ ಸೂಚಿಸಲಾದ ಬಣ್ಣಗಳನ್ನು ಮೇಲಿನ ನಿಮ್ಮಆಯ್ಕೆಗಳಿಂದ ಬದಲಾಯಿಸಿ:‍">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "ಯಾವಾಗಲೂ">
+<!ENTITY  overrideDefaultPageColors.auto.label   "ಹೆಚ್ಚು ಕಾಂಟ್ರಾಸ್ಟ್‌ ಥೀಮ್‌ಗಳಿಂದ ಮಾತ್ರ">
+<!ENTITY  overrideDefaultPageColors.never.label  "ಎಂದಿಗೂ ಬೇಡ">
+
+<!ENTITY  color                           "ಪಠ್ಯ ಹಾಗು ಹಿನ್ನಲೆ">
+<!ENTITY  textColor.label                 "ಪಠ್ಯ:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "ಹಿನ್ನಲೆ:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "ಗಣಕ ಉಪಕರಣವನ್ನು ಬಳಸು">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "ಕೊಂಡಿಗಳ ಕೆಳಗೆ ಗೆರೆ ಹಾಕು">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "ಕೊಂಡಿ ಬಣ್ಣ">
+<!ENTITY  linkColor.label                 "ಭೇಟಿ ನೀಡದೆ ಇರುವ ಕೊಂಡಿಗಳು:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "ಭೇಟಿ ನೀಡಿದ ಕೊಂಡಿಗಳು:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

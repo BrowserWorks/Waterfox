@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Սարքերի Կառավարիչ">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Անվտանգության Բաղադիրներ և Սարքեր">
+<!ENTITY devmgr.details.title                   "Մանրամասներ">
+<!ENTITY devmgr.details.title2                  "Արժեքը">
+
+<!ENTITY devmgr.button.login.label              "Մուտք գործել">
+<!ENTITY devmgr.button.login.accesskey          "ր">
+<!ENTITY devmgr.button.logout.label             "Դուրս գրանցվել ">
+<!ENTITY devmgr.button.logout.accesskey         "գ">
+<!ENTITY devmgr.button.changepw.label           "Փոխել գաղտնաբառը">
+<!ENTITY devmgr.button.changepw.accesskey       "գ">
+<!ENTITY devmgr.button.load.label               "Բեռնավորել">
+<!ENTITY devmgr.button.load.accesskey           "Բ">
+<!ENTITY devmgr.button.unload.label             "Ապաբեռնավորել">
+<!ENTITY devmgr.button.unload.accesskey         "Ա">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Մուտքագրեք ավելացվող բաղադրի վերաբերվող տվյալները">
+<!ENTITY loaddevice.modname                     "Բաղադրի Անունը.">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Նոր PKCS#11 Բաղադիր">
+<!ENTITY loaddevice.filename                    "Բաղադրի Ֆայլի Անունը">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Ընտրել…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Բեռնել PKCS#11 սարքի սարքավարը">

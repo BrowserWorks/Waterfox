@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Dir p'atrás">
+<!ENTITY  button-back-mac.accesskey    "D">
+<!ENTITY  button-next-mac.label        "Siguir">
+<!ENTITY  button-next-mac.accesskey    "S">
+<!ENTITY  button-finish-mac.label      "Fecho">
+<!ENTITY  button-cancel-mac.label      "Encaboxar">
+
+<!ENTITY  button-back-unix.label       "Atrás">
+<!ENTITY  button-back-unix.accesskey   "A">
+<!ENTITY  button-next-unix.label       "Siguiente">
+<!ENTITY  button-next-unix.accesskey   "S">
+<!ENTITY  button-finish-unix.label     "Finar">
+<!ENTITY  button-cancel-unix.label     "Encaboxar">
+
+<!ENTITY  button-back-win.label        "&lt; Atrás">
+<!ENTITY  button-back-win.accesskey    "A">
+<!ENTITY  button-next-win.label        "Siguiente &gt;">
+<!ENTITY  button-next-win.accesskey    "S">
+<!ENTITY  button-finish-win.label      "Finar">
+<!ENTITY  button-cancel-win.label      "Encaboxar">

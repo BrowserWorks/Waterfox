@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName;-update">
+
+<!ENTITY  offline.title                   "&brandShortName; werkt offline">
+<!ENTITY  offline.description             "&brandShortName; moet online gaan om te kunnen zien of er updates
+                                           beschikbaar zijn voor uw add-ons en deze compatibel te maken met deze
+                                           versie.">
+<!ENTITY  offline.toggleOffline.label     "Nu online gaan">
+<!ENTITY  offline.toggleOffline.accesskey "N">
+
+<!ENTITY  mismatch.win.title              "Incompatibele add-ons">
+<!ENTITY  mismatch.top.label              "De volgende add-ons zijn niet compatibel met deze versie
+                                           van &brandShortName; en zijn uitgeschakeld:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; kan controleren op compatibele 
+                                           versies van deze add-ons.">
+
+<!ENTITY  checking.wizard.title           "Controleren op compatibele add-ons">
+<!ENTITY  checking.top.label              "Controleren op updates voor uw incompatibele add-ons…">
+<!ENTITY  checking.status                 "Dit kan enkele minuten duren…">
+
+<!ENTITY  found.wizard.title              "Compatibele add-ons gevonden">
+<!ENTITY  found.top.label                 "Selecteer de add-ons die u wilt installeren:">
+<!ENTITY  found.disabledXPinstall.label   "Deze updates kunnen niet worden geïnstalleerd, omdat software-installatie
+                                           momenteel is uitgeschakeld. U kunt deze instelling hieronder wijzigen.">
+<!ENTITY  found.enableXPInstall.label     "Websites toestaan om software te installeren">
+<!ENTITY  found.enableXPInstall.accesskey "W">
+
+<!ENTITY  installing.wizard.title         "Compatibele add-ons installeren">
+<!ENTITY  installing.top.label            "Updates voor uw add-ons downloaden en installeren…">
+
+<!ENTITY  noupdates.wizard.title          "Geen compatibele add-ons gevonden">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; kan geen updates vinden voor uw
+                                           incompatibele add-ons.">
+<!ENTITY  noupdates.error.desc            "Er zijn problemen opgetreden bij het vinden van updates.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; zal regelmatig controleren en u informeren
+                                           wanneer compatibele updates voor deze add-ons worden gevonden.">
+
+<!ENTITY  finished.wizard.title           "Compatibele add-ons geïnstalleerd">
+<!ENTITY  finished.top.label              "&brandShortName; heeft de updates voor uw add-ons geïnstalleerd.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; kan regelmatig controleren en u informeren
+                                           wanneer updates voor add-ons worden gevonden.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; zal regelmatig controleren en u informeren
+                                           wanneer updates voor add-ons worden gevonden.">
+
+<!ENTITY  adminDisabled.wizard.title      "Controleren op updates niet mogelijk">
+<!ENTITY  adminDisabled.warning.label     "Het is niet mogelijk om te controleren op updates voor incompatibele add-ons,
+                                           omdat software-installatie voor &brandShortName; is uitgeschakeld.
+                                           Neem contact op met uw systeembeheerder voor assistentie.">
+
+<!ENTITY  versioninfo.wizard.title        "Compatibiliteitscontrole van add-ons">
+<!ENTITY  versioninfo.top.label           "Uw add-ons worden gecontroleerd op compatibiliteit met deze
+                                           versie van &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Dit kan enkele minuten duren…">
+
+<!ENTITY  installerrors.wizard.title      "Problemen bij het installeren van updates">
+<!ENTITY  installerrors.intro.label       "&brandShortName; had problemen bij het bijwerken van
+                                           een of meer add-ons.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Klik op Voltooien om door te gaan met het starten van &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Klik op Gereed om door te gaan met het starten van &brandShortName;.">
+<!ENTITY  enableChecking.label            "&brandShortName; toestaan om te controleren op updates">

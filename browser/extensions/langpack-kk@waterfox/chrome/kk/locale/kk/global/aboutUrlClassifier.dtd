@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "url-classifier туралы ақпарат">
+<!ENTITY aboutUrlClassifier.providerTitle               "Провайдер">
+<!ENTITY aboutUrlClassifier.provider                    "Провайдер">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Соңғы жаңарту уақыты">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Келесі жаңарту уақыты">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Ұстау уақыты">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Соңғы жаңарту қалып-күйі">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Жаңарту">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Кэш">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Жаңарту">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Тазарту">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Кесте аты">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Теріс кэш элементтерінің саны">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Оң кэш элементтерінің саны">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Элементтерді көрсету">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Кэш элементтері">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Префиксі">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Теріс кэш мерзімі аяқталу уақыты">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Толық хэш">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Оң кэш мерзімі аяқталу уақыты">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Жөндеу">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Журналдау модульдерін орнату">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Журналдау файлын орнату">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS журналдауын орнату">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Қауіпсіз шолу журналдау модульдері">
+<!ENTITY aboutUrlClassifier.debugModules                "Ағымдағы журналдау модульдері">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Қауіпсіз шолу JS журналдауы">
+<!ENTITY aboutUrlClassifier.debugFile                   "Ағымдағы журналдау файлы">

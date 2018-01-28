@@ -1,0 +1,175 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Okazis problemo dum ŝargado de la paĝo">
+<!ENTITY retry.label "Klopodi denove">
+<!ENTITY returnToPreviousPage.label "Malantaŭen">
+<!ENTITY advanced.label "Spertula">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Ne eblas konektiĝi">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Aliro al tiu ĉi adreso estas limigata">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Servilo ne trovita">
+<!ENTITY dnsNotFound.longDesc "<ul> 
+<li>Kontrolu ĉu estas eraroj en la adreso, kiel 
+<strong>ww</strong>.example.com anstataŭ <strong>www</strong>.example.com</li>
+<li>Se vi ne sukcesas vidi iun ajn paĝon,
+kontrolu la retan konekton de via komputilo.</li>
+<li>Se via komputilo aŭ reto estas protektata de retbarilo aŭ retperanto,
+certiĝu ke &brandShortName; rajtas aliri la TTT-n.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Dosiero ne trovita">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>Kontrolu ĉu la dosiernomo estas ĝuste literumita (majuskloj kaj minuskloj) kaj ĉu estas tajperaroj.</li> 
+<li>Kontrolu ĉu la dosiero estis movita, renomita aŭ forigita.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "Rifuzita aliro al dosiero">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Eble ĝi estis forigita, aŭ movita, aŭ la permesoj dosieraj evitas aliron al ĝi.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Fuŝ’.">
+<!ENTITY generic.longDesc "<p>Pro iu kialo &brandShortName; ne povas ŝargi tiun ĉi paĝon.</p>">
+
+<!ENTITY captivePortal.title "Komenci seancon en tiu ĉi reto">
+<!ENTITY captivePortal.longDesc2 "
+<p>Vi devas komenci seancon en tiu ĉi reto antaŭ ol vi povos aliri la Interreton.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Malfermi paĝon por komenci seancon en la reto">
+
+<!ENTITY malformedURI.title "Tiu ĉi adreso ne estas valida">
+<!ENTITY malformedURI.longDesc "<ul> 
+<li>TTTajn adresojn oni kutime skribas ĉi tiel <strong>http://www.example.com/</strong></li> 
+<li>Kontrolu ĉu vi tajpis la ĝustajn signojn (ekzemple <strong>/</strong>).</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "La konekto estis ĉesigita">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumento malaktuala">
+<!ENTITY notCached.longDesc "<p>La petita dokumento ne ekzistas en la staplo de &brandShortName;.</p><ul><li>Pro sekureca singardo, &brandShortName; aŭtomate ne repetas delikatajn dokumentojn.</li><li>Alklaku 'Klopodi denove' por peti denove la dokumenton al la retejo.</li></ul>">
+
+<!ENTITY netOffline.title "Malkonektita reĝimo">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Premu &quot;Klopodi denove&quot; por baskuli al la konektita reĝimo kaj reŝargi la paĝon.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Eraro de enkodigo de enhavo">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>Bonvolu kontakti la retejajn posedantojn por raporti al ili tiun ĉi problemon.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "Nesekura tipo de dosiero">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>Bonvolu kontakti la retejajn posedantojn por raporti al ili tiun ĉi problemon.</li> 
+</ul>">
+
+<!ENTITY netReset.title "La konekto estis haltigita">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Limtempo por konekto atingita">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "La adreso ne estis komprenita">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Vi eble bezonos instali alian programon por malfermi ĉi tiun adreson.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "La retperanto rifuzas konektojn">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>Kontrolu la agordojn de la retperanto por certiĝi ke ili estas ĝustaj.</li> 
+<li>Kontaktu vian retan administranton por certiĝi ke la retperanto nuntempe funkcias.</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "Ne eblas trovi la retperanton">
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>Kontrolu la agordojn de la retperanto por certiĝi ke ili estas ĝustaj.</li> 
+<li>Kontrolu ĉu via komputilo havas funkciantan retan konekton.</li> 
+<li>Se via komputilo aŭ reto estas protektataj de retbarilo aŭ retperanto, certiĝu ke  &brandShortName; rajtas aliri la TTT-n.</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "La paĝo ne redirektiĝas bone">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>Tiu ĉi problemo povas okazi pro malaktivigo aŭ rifuzo de kuketoj.</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.title "Neatendita respondo el servilo">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>Kontrolu kaj certiĝu ke via sistemo havas la Administranton de persona sekureco instalita.</li> 
+<li>Tiu povus okazi pro nenorma agordado de la servilo.</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "Malsukcesa sekura konekto">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>La paĝo, kiun vi klopodas vidi, ne povas esti montrita ĉar la aŭtentikeco de la ricevitaj datumoj ne povis esti kontrolita.</li>
+  <li>Bonvolu kontakti la posedantojn de la retejo por raporti al ili tiun ĉi problemon.</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "Via konekto ne estas sekura">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "La posedanto de <span class='hostname'/> malĝuste agordis sian retejon. Por protekti viajn datumojn kontraŭ ŝtelo, &brandShortName; ne konektiĝis al tiu ĉi retejo.">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>La retejo povas esti tempe ne atingebla aŭ troe okupata. Klopodu denove post kelkaj momentoj.</li> <li>Se vi ne sukcesas ŝargi iun ajn paĝon, kontrolu la komputilan retan konekton.</li> 
+<li>Se via komputilo aŭ reto estas protektataj de retbarilo aŭ retperanto, certiĝu ke &brandShortName; rajtas aliri la TTT-n.</li> 
+</ul>">
+
+<!ENTITY cspBlocked.title "Blokita de la sekureca politiko pri enhavo">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ne permesis ŝargi la paĝon ĉi tiel, ĉar la paĝo havas sekurecan politikon pri enhavo kiu malpermesas tion.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Eraro pro difektita enhavo">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La paĝo, kiun vi klopodas vidi, ne povas esti montrita ĉar okazis eraro dum la transmeto de datumoj.</p><ul><li>Bonvolu kontakti la posedantojn de la retejo por raporti al ili tiun ĉi problemon.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Aldoni escepton…">
+
+<!ENTITY errorReporting.automatic2 "Raporti erarojn kiel tiu ĉi por helpi Mozillan identigi kaj bloki malicajn retejojn">
+<!ENTITY errorReporting.learnMore "Pli da informo…">
+
+<!ENTITY remoteXUL.title "Fora XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Bonvolu kontakti la posedantojn de la retejo por informi ilin pri tiu ĉi problemo.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Ne eblas sekure konektiĝi">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Spertula informo: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; ne konektiĝis al <span id='wrongSystemTime_URL'/>, ĉar la horloĝo en via komputilo ŝajne montras malĝustan horon, kaj tio malebligas sekuran konekton.</p><p>La dato en via komputilo estas nun <span id='wrongSystemTime_systemDate'/>, sed ĝi devus esti <span id='wrongSystemTime_actualDate'/>. Por solvi ĉi tiun problemon, ŝanĝu la daton kaj horon, tiel ke ili estos ĝustaj.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; ne konektiĝis al <span id='wrongSystemTimeWithoutReference_URL'/>, ĉar la horloĝo en via komputilo ŝajne montras malĝustan horon, kaj tio malebligas sekuran konekton.</p><p>La dato en via komputilo estas nun <span id='wrongSystemTimeWithoutReference_systemDate'/>. Por solvi ĉi tiun problemon, ŝanĝu la daton kaj horon, tiel ke ili estos ĝustaj.</p>">
+
+<!ENTITY certerror.pagetitle1  "Nesekura konekto">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Tiu ĉi retejo uzas HTTP
+Strict Transport Security (HSTS) por specifi ke &brandShortName; nur povas konekti ĝin sekure. Pro tio, ne eblas aldoni escepton por tiu ĉi atestilo.">
+<!ENTITY certerror.copyToClipboard.label "Kopii tekston al tondujo">
+
+<!ENTITY inadequateSecurityError.title "Via konekto ne estas sekura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uzas sekurecan teĥnologion kiu estas kaduka kaj sendefenda. Atakanto povus facile elmeti informojn, kiujn vi opiniis sekuraj. La administranto de la retejo devos ripari la servilon, antaŭ ol vi povos viziti ĝin.</p><p>Erarkodo: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Ŝajne viaj retaj sekurecaj agordoj povus esti la kaŭzo. Ĉu vi volas restarigi la normajn agordojn?">
+<!ENTITY prefReset.label "Restarigi normajn agordojn">

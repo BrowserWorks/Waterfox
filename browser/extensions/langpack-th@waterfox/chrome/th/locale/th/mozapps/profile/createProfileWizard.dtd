@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "ตัวช่วยสร้างโปรไฟล์">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; จัดเก็บข้อมูลเกี่ยวกับการตั้งค่าและค่ากำหนดของคุณในโปรไฟล์ส่วนบุคคลของคุณ">
+<!ENTITY profileCreationExplanation_2.text  "หากคุณกำลังใช้สำเนานี้ของ &brandShortName; ร่วมกับผู้ใช้อื่น ๆ คุณสามารถใช้โปรไฟล์เพื่อเก็บข้อมูลของผู้ใช้แต่ละคนแยกกัน เพื่อทำสิ่งนี้ ผู้ใช้แต่ละคนควรสร้างโปรไฟล์ของตนเอง">
+<!ENTITY profileCreationExplanation_3.text  "หากคุณเป็นเพียงคนเดียวที่ใช้สำเนานี้ของ &brandShortName; คุณต้องมีอย่างน้อยหนึ่งโปรไฟล์ หากคุณต้องการ คุณสามารถสร้างโปรไฟล์หลายชุดสำหรับคุณเองเพื่อจัดเก็บชุดของการตั้งค่าและค่ากำหนดที่ต่างกัน ตัวอย่างเช่น คุณอาจต้องการมีโปรไฟล์แยกสำหรับการใช้งานทางธุรกิจและส่วนบุคคล">
+<!ENTITY profileCreationExplanation_4.text  "เพื่อเริ่มสร้างโปรไฟล์ของคุณ คลิก ถัดไป">
+<!ENTITY profileCreationExplanation_4Mac.text  "เพื่อเริ่มสร้างโปรไฟล์ของคุณ คลิก ดำเนินการต่อ">
+<!ENTITY profileCreationExplanation_4Gnome.text  "เพื่อเริ่มสร้างโปรไฟล์ของคุณ คลิก ถัดไป">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "หากคุณมีหลายโปรไฟล์ คุณสามารถแยกแยะได้โดยใช้ชื่อโปรไฟล์ คุณอาจใช้ชื่อที่ตั้งให้นี้หรือตั้งชื่อเองก็ได้">
+<!ENTITY profilePrompt.label            "ป้อนชื่อโปรไฟล์ใหม่:">
+<!ENTITY profilePrompt.accesskey        "ป">
+<!ENTITY profileDirectoryExplanation.text   "การตั้งค่า, ค่ากำหนด และข้อมูลผู้ใช้ที่เกี่ยวข้องอื่น ๆ จะถูกจัดเก็บใน:">
+<!ENTITY profileDefaultName             "ผู้ใช้เริ่มต้น">
+<!ENTITY button.choosefolder.label      "เลือกโฟลเดอร์…">
+<!ENTITY button.choosefolder.accesskey  "ล">
+<!ENTITY button.usedefault.label        "ใช้โฟลเดอร์เริ่มต้น">
+<!ENTITY button.usedefault.accesskey    "ช">

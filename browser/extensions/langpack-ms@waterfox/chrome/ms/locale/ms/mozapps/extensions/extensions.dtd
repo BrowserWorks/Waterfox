@@ -1,0 +1,264 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Pengurus Add-ons">
+
+<!ENTITY search.placeholder                   "Cari semua add-ons">
+<!ENTITY search.buttonlabel                   "Cari">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Memuatkan...">
+<!ENTITY listEmpty.installed.label            "Anda tidak mempunyai add-ons jenis ini yang dipasang">
+<!ENTITY listEmpty.availableUpdates.label     "Tiada kemaskini ditemui">
+<!ENTITY listEmpty.recentUpdates.label        "Anda tidak ada mengemaskini sebarang add-on baru-baru ini">
+<!ENTITY listEmpty.findUpdates.label          "Semak Kemaskini">
+<!ENTITY listEmpty.search.label               "Tidak dapat mencari add-ons yang sepadan">
+<!ENTITY listEmpty.button.label               "Ketahui selanjutnya mengenai add-ons">
+<!ENTITY installAddonFromFile.label           "Pasang Add-ons Dari Fail…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Alatan untuk semua add-on">
+
+<!ENTITY getThemes.description                "Mahu menyesuaikan pelayar anda?">
+<!ENTITY getThemes.learnMore                  "Pilih satu daripada ribuan tema yang disediakan.">
+
+<!ENTITY cmd.back.tooltip                     "Undur satu halaman">
+<!ENTITY cmd.forward.tooltip                  "Pergi ke halaman seterusnya">
+
+<!ENTITY showUnsignedExtensions.button.label  "Beberapa ekstensi tidak dapat disahkan">
+<!ENTITY showAllExtensions.button.label       "Papar semua ekstensi">
+<!ENTITY debugAddons.label                    "Add-ons Nyahpepijat">
+<!ENTITY debugAddons.accesskey                "s">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Semua add-ons telah dinyahdayakan oleh mod selamat.">
+<!ENTITY warning.checkcompatibility.label          "Pemeriksaan kesesuaian add-on telah dinyahdayakan. Anda mungkin mempunyai add-on yang tidak sesuai.">
+<!ENTITY warning.checkcompatibility.enable.label   "Dayakan">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Dayakan semakan kesesuaian add-on">
+<!ENTITY warning.updatesecurity.label              "Semakan keselamatan kemaskini add-on telah dinyahdayakan. Anda mungkin terdedah kepada bahaya ketika mengemaskini.">
+<!ENTITY warning.updatesecurity.enable.label       "Dayakan">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Dayakan semakan keselamatan kemaskini add-on">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Cari">
+<!ENTITY view.discover.label                  "Dapatkan Add-ons">
+<!ENTITY view.recentUpdates.label             "Kemaskini Terkini">
+<!ENTITY view.availableUpdates.label          "Kemaskini Tersedia">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Semak Kemaskini">
+<!ENTITY updates.checkForUpdates.accesskey    "e">
+<!ENTITY updates.viewUpdates.label            "Papar Kemaskini Terbaru">
+<!ENTITY updates.viewUpdates.accesskey        "P">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Kemaskini Add-ons secara Automatik">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Set semula Semua Add-ons untuk Kemaskini Automatik">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "u">
+<!ENTITY updates.resetUpdatesToManual.label          "Set semula Semua Add-ons Untuk Kemaskini Manual">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "n">
+<!ENTITY updates.updating.label               "Mengemaskini add-on">
+<!ENTITY updates.installed.label              "Add-ons anda telah dikemaskini.">
+<!ENTITY updates.downloaded.label             "Kemaskini add-on anda telah dimuat turun.">
+<!ENTITY updates.restart.label                "Mulakan semula sekarang untuk melengkapkan pemasangan">
+<!ENTITY updates.noneFound.label              "Tiada kemaskini ditemui">
+<!ENTITY updates.manualUpdatesFound.label     "Papar Kemaskini Tersedia">
+<!ENTITY updates.updateSelected.label         "Pasang Kemaskini">
+<!ENTITY updates.updateSelected.tooltip       "Pasang kemaskini yang tersedia di dalam senarai ini">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Papar Maklumat Tambahan">
+<!ENTITY cmd.showDetails.accesskey            "p">
+<!ENTITY cmd.findUpdates.label                "Cari Kemaskini">
+<!ENTITY cmd.findUpdates.accesskey            "k">
+<!ENTITY cmd.preferencesWin.label             "Pilihan">
+<!ENTITY cmd.preferencesWin.accesskey         "p">
+<!ENTITY cmd.preferencesUnix.label            "Keutamaan">
+<!ENTITY cmd.preferencesUnix.accesskey        "m">
+<!ENTITY cmd.about.label                      "Perihal">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "Dayakan">
+<!ENTITY cmd.enableAddon.accesskey            "a">
+<!ENTITY cmd.disableAddon.label               "Nyahdayakan">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "Tema Digunakan">
+<!ENTITY cmd.enableTheme.accesskey            "i">
+<!ENTITY cmd.disableTheme.label               "Berhenti Menggunakan Tema">
+<!ENTITY cmd.disableTheme.accesskey           "r">
+<!ENTITY cmd.askToActivate.label              "Tanya untuk diaktifkan">
+<!ENTITY cmd.askToActivate.tooltip            "Tanya untuk guna add-on setiap masa">
+<!ENTITY cmd.alwaysActivate.label             "Sentiasa Aktif">
+<!ENTITY cmd.alwaysActivate.tooltip           "Sentiasa guna add-on ini">
+<!ENTITY cmd.neverActivate.label              "Jangan Aktif">
+<!ENTITY cmd.neverActivate.tooltip            "Jangan guna add-on ini">
+<!ENTITY cmd.stateMenu.tooltip                "Tukar semasa add-on ini digunakan">
+<!ENTITY cmd.installAddon.label               "Pasang">
+<!ENTITY cmd.installAddon.accesskey           "g">
+<!ENTITY cmd.uninstallAddon.label             "Buang">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "Pilihan">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Tukar pilihan add-on ini">
+<!ENTITY cmd.showPreferencesUnix.label        "Keutamaan">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Tukar keutamaan add-on ini">
+<!ENTITY cmd.contribute.label                 "Menyumbang">
+<!ENTITY cmd.contribute.accesskey             "a">
+<!ENTITY cmd.contribute.tooltip               "Sumbang untuk pembangunan add-on ini">
+
+<!ENTITY cmd.showReleaseNotes.label           "Papar Release Notes">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Papar nota pelepasan untuk kemaskini ini">
+<!ENTITY cmd.hideReleaseNotes.label           "Sorok Nota Pelepasan">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Sorok nota pelepasan untuk kemaskini ini">
+<!ENTITY cmd.findReplacement.label            "Cari Pengganti">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Apakah Add-ons?">
+<!ENTITY discover.description2                "Add-ons ialah aplikasi yang membolehkan anda menyesuaikan &brandShortName; dengan
+  fungsi atau gaya tambahan. Cuba bar sisi jimat-masa, pemaklum cuaca, atau tema yang menjadikan &brandShortName;
+  milik anda.">
+<!ENTITY discover.footer                      "Apabila anda telah disambungkan ke internet, anak tetingkap ini akan  memaparkan beberapa aplikasi tambahan yang menarik dan popular untuk anda cuba.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Versi">
+<!ENTITY detail.lastupdated.label             "Kemaskini Terakhir">
+<!ENTITY detail.creator.label                 "Pembangun">
+<!ENTITY detail.homepage.label                "Halaman utama">
+<!ENTITY detail.numberOfDownloads.label       "Muat Turun">
+
+<!ENTITY detail.contributions.description     "Pembangun aplikasi tambahan ini meminta anda bantuan untuk menyokong pembangunan yang berterusan dengan memberikan sedikit sumbangan.">
+
+<!ENTITY detail.updateType                    "Kemaskini automatik">
+<!ENTITY detail.updateDefault.label           "Piawai">
+<!ENTITY detail.updateDefault.tooltip         "Pasang kemaskini secara automatik hanya jika itulah piawai">
+<!ENTITY detail.updateAutomatic.label         "Aktif">
+<!ENTITY detail.updateAutomatic.tooltip       "Pasang kemaskini secara automatik">
+<!ENTITY detail.updateManual.label            "Nyahaktif">
+<!ENTITY detail.updateManual.tooltip          "Jangan pasang kemaskini secara automatik">
+<!ENTITY detail.home                          "Halaman utama">
+<!ENTITY detail.repository                    "Profil add-on">
+<!ENTITY detail.size                          "Saiz">
+
+<!ENTITY detail.checkForUpdates.label         "Semak Kemaskini">
+<!ENTITY detail.checkForUpdates.accesskey     "n">
+<!ENTITY detail.checkForUpdates.tooltip       "Semak kemaskini add-on ini">
+<!ENTITY detail.showPreferencesWin.label      "Pilihan">
+<!ENTITY detail.showPreferencesWin.accesskey  "h">
+<!ENTITY detail.showPreferencesWin.tooltip    "Tukar pilihan add-on ini">
+<!ENTITY detail.showPreferencesUnix.label     "Keutamaan">
+<!ENTITY detail.showPreferencesUnix.accesskey "a">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Tukar keutamaan add-on ini">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Kadaran">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Jeda">
+<!ENTITY progress.cancel.tooltip              "Batal">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Nama">
+<!ENTITY sort.name.tooltip                    "Susun mengikut nama">
+<!ENTITY sort.dateUpdated.label               "Kemaskini Terakhir">
+<!ENTITY sort.dateUpdated.tooltip             "Susun mengikut tarikh kemaskini">
+<!ENTITY sort.relevance.label                 "Padanan terbaik">
+<!ENTITY sort.relevance.tooltip               "Susun mengikut kaitan">
+<!ENTITY sort.price.label                     "Harga">
+<!ENTITY sort.price.tooltip                   "Susun mengikut harga">
+
+<!ENTITY search.filter2.label                 "Cari:">
+<!ENTITY search.filter2.installed.label       "Add-ons saya">
+<!ENTITY search.filter2.installed.tooltip     "Papar add-ons yang dipasang">
+<!ENTITY search.filter2.available.label       "Add-ons Tersedia">
+<!ENTITY search.filter2.available.tooltip     "Papar add-ons yang sedia untuk dipasang">
+
+<!ENTITY addon.homepage                       "Halaman utama">
+<!ENTITY addon.details.label                  "Selanjutnya">
+<!ENTITY addon.details.tooltip                "Papar butiran lanjut add-on ini">
+<!ENTITY addon.unknownDate                    "Tidak diketahui">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(dinyahdayakan)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Kemaskini">
+<!ENTITY addon.undoAction.label               "Batal">
+<!ENTITY addon.undoAction.tooltip             "Batal tindakan ini">
+<!ENTITY addon.undoRemove.label               "Batal">
+<!ENTITY addon.undoRemove.tooltip             "Kekalkan pemasangan add-on ini">
+<!ENTITY addon.restartNow.label               "Mula semula sekarang">
+<!ENTITY addon.install.label                  "Pasang">
+<!ENTITY addon.install.tooltip                "Pasang add-on ini">
+<!ENTITY addon.updateNow.label                "Kemaskini Sekarang">
+<!ENTITY addon.updateNow.tooltip              "Pasang kemaskini bagi add-on ini">
+<!ENTITY addon.includeUpdate.label            "Termasuk dalam Kemaskini">
+<!ENTITY addon.updateAvailable.label          "Kemaskini tersedia">
+<!ENTITY addon.checkingForUpdates.label       "Menyemak kemaskini…">
+<!ENTITY addon.releaseNotes.label             "Nota Pelepasan:">
+<!ENTITY addon.loadingReleaseNotes.label      "Loading">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Maaf, ada ralat memuatkan nota pelepasan.">
+
+<!ENTITY addon.createdBy.label                "Oleh ">
+
+<!ENTITY eula.title                           "Perjanjian Lesen Pengguna Akhir">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Terima dan Pasang ...">
+
+<!ENTITY settings.path.button.label           "Cari…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Apakah ini? Telemetri mungkin dipasang dan melaksanakan eksperimen dari semasa ke semasa.">
+<!ENTITY experiment.info.learnmore "Ketahui Selanjutnya">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Tetapan Telemetri">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Ketahui Selanjutnya…">
+
+<!ENTITY disabledUnsigned.heading "Beberapa add-ons telah dinyahdayakan">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Add-ons berikut belum disahkan untuk digunakan dalam &brandShortName;. Anda boleh ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "cari pengganti">
+<!ENTITY disabledUnsigned.description.end " atau tanya pembangun untuk mengesahkannya.">
+<!ENTITY disabledUnsigned.learnMore "Ketahui selanjutnya mengenai usaha kami untuk memastikan anda selamat dalam talian.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Pembangun yang berminat untuk mengesahkan add-on mereka boleh meneruskan dengan membaca ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "manual">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Ada sesuatu yang tidak kena? Ada plugin yang tidak lagi disokong oleh &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Ketahui Selanjutnya.">
+
+<!ENTITY legacyWarning.description "Ada sesuatu yang tidak kena? Ada ekstensi tidak lagi disokong oleh &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Pamerkan ekstensi legasi">
+<!ENTITY legacyExtensions.title "Ekstensi Legasi">
+<!ENTITY legacyExtensions.description "Ekstensi berikut tidak memenuhi piawai &brandShortName; oleh itu dinyahaktifkan.">
+<!ENTITY legacyExtensions.learnMore "Ketahui lanjut perubahan add-ons">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Níl tú i bhfuinneog phríobháideach faoi láthair.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Oscail Fuinneog Phríobháideach">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Brabhsáil Phríobháideach">
+<!ENTITY privateBrowsing.title.tracking                  "Brabhsáil Phríobháideach le Cosaint ar Lorgaireacht">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Nuair a dhéanann tú brabhsáil i bhFuinneog Phríobháideach, ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ní shábhálann Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "stair bhrabhsála">
+<!ENTITY aboutPrivateBrowsing.info.searches              "cuardaigh">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "fianáin">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "comhaid shealadacha">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Ach ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "sábhálann Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " do chuid:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "íoslódálacha">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "leabharmharcanna">
+<!ENTITY aboutPrivateBrowsing.note.before                "Fiú le Brabhsáil Phríobháideach, ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ní bheidh tú anaithnid">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ar an Idirlíon. Is féidir le d'fhostaí nó le do sholáthraí seirbhíse na leathanaigh a dtugann tú cuairt orthu a fheiceáil mar sin féin.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Tuilleadh eolais faoi ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Brabhsáil Phríobháideach">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Cosaint ar Lorgaireacht">
+<!ENTITY trackingProtection.description2                 "Úsáideann suímh áirithe lorgairí a choinníonn súil ar a ndéanann tú ar an nGréasán. Le Cosaint ar Lorgaireacht, cuireann Waterfox bac ar go leor lorgairí a bhailíonn faisnéis faoi d'iompar brabhsála.">
+<!ENTITY trackingProtection.startTour1                   "Conas a oibríonn sé">

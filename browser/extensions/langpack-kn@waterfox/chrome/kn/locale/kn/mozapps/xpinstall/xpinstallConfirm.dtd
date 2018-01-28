@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "ತಂತ್ರಾಂಶ ಅನುಸ್ಥಾಪನೆ">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "ನೀವು ನಂಬುವಂತಹ ಕತೃಗಳ ಆಡ್‌ಆನ್‌ಗಳನ್ನು ಮಾತ್ರ ಅನುಸ್ಥಾಪಿಸಿ.">
+<!ENTITY warningSecondary.label  "ಅಪಾಯಕಾರಿ ತಂತ್ರಾಂಶವು ನಿಮ್ಮ ಗಣಕವನ್ನು ಹಾಳುಗೆಡವ ಬಲ್ಲದು ಅಥವ ನಿಮ್ಮ ಖಾಸಗಿತನವನ್ನು ಉಲ್ಲಂಘಿಸಬಲ್ಲದು.">
+
+<!ENTITY from.label "ಯಿಂದ:">
+

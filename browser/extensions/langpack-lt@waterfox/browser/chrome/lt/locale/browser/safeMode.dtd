@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "„&brandShortName;“ ribotoji veiksena">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Start in Safe Mode">
+<!ENTITY refreshProfile.label         "Atšviežinti „&brandShortName;“">
+
+<!ENTITY safeModeDescription3.label   "Ribotoji veiksena – tai speciali programos „&brandShortName;“ veiksena, skirta problemoms spręsti.">
+<!ENTITY safeModeDescription4.label   "Jūsų naudojami priedai ir tinkintos nuostatos bus laikinai išjungti.">
+
+<!ENTITY refreshProfileInstead.label  "Jūs taip pat galite praleisti problemų sprendimą ir pabandyti atšviežinti „&brandShortName;“.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "Paleidimo metu „&brandShortName;“ netikėtai išsijungė. Taip galėjo nutikti dėl naudojamų priedų ar kitų problemų. Galite bandyti išspręsti šią problemą ribotoje veiksenoje.">

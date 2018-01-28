@@ -1,0 +1,222 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage          "Помилка відкриття інструментів браузера:">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings "Додаткові параметри">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector "Ревізор">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label "Показати стилі браузера">
+<!ENTITY options.showUserAgentStyles.tooltip "Увімкнення цього параметра покаже типові стилі, завантажені браузером.">
+
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+<!ENTITY options.collapseAttrs.label "Скорочувати атрибути DOM">
+<!ENTITY options.collapseAttrs.tooltip "Скорочувати довгі атрибути в інспекторі">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label "Типова одиниця кольору">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey "к">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.authored "As Authored">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex "Hex">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name "Назви кольорів">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh  "* тільки поточний сеанс, перезавантажити сторінку">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5    "Увімкнути інструменти зневадження browser chrome та додатків">
+<!ENTITY options.enableChrome.tooltip3  "Увімкнення цього параметра дозволить вам використовувати різні інструменти розробника в контексті браузера (Меню > Розробник > Інструменти браузера) та зневаджувати додатки в менеджері додатків">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3    "Увімкнути віддалене зневадження">
+<!ENTITY options.enableRemote.tooltip2  "Увімкнення цієї опції дозволить інструментам розробника зневаджувати віддалений екземпляр, наприклад, Waterfox OS">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "Увімкнути зневадження обробника (в розробці)">
+<!ENTITY options.enableWorkers.tooltip  "Увімкнення цієї опції дозволить інструментам розробника зневаджувати обробників">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label     "Вимкнути JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Увімкнення цього параметра вимкне JavaScript для поточної вкладки. Якщо вкладка або інструменти закрито, то ці налаштування буде забуто.">
+
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+<!ENTITY options.disableHTTPCache.label     "Вимкнути HTTP-кеш (коли відкрита панель інструментів)">
+<!ENTITY options.disableHTTPCache.tooltip   "Вмикаючи цю опцію ви забороняєте HTTP-кеш для всіх вкладок з відкритою панеллю інструментів. Ця опція не впливає на Service Workers.">
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label     "Увімкнути Service Workers поверх HTTP (коли відкрита панель інструментів)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Увімкнення цього параметра активує Service Workers поверх HTTP для всіх вкладок, які мають відкриту панель інструментів.">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!ENTITY options.selectDefaultTools.label2    "Типові інструменти розробника">
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label  "Інструменти розробника встановлено через додатки">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label     "Доступні кнопки панелі">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label  "* Не підтримується для поточної цілі інструмента">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2   "Теми">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label   "Використовувати тему браузера Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Активує тему браузера Developer Edition.">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label            "Веб-консоль">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label      "Увімкнути відбитки часу">
+<!ENTITY options.timestampMessages.tooltip    "Якщо ввімкнено цей параметр, команди і вивід показуватиме час у веб-консолі">
+
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!ENTITY options.debugger.label            "Зневаджувач">
+
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+<!ENTITY options.sourceMaps.label      "Увімкнути карти джерел">
+<!ENTITY options.sourceMaps.tooltip    "Якщо увімкнути цю опцію, то джерела будуть заноситись в карти в зневаджувачі та консолі.">
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label            "Редактор стилів">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "Показати початкові джерела">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Показати початкові джерела (наприклад, файли «Sass») в редакторі стилів і ревізорі">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label      "Автоматичне доповнення CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Автоматичне доповнення властивостей, значень і вибірок CSS у редакторі стилів під час набирання">
+
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!ENTITY options.screenshot.label            "Поведінка при знімку екрана">
+
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+<!ENTITY options.screenshot.clipboard.label      "Знімок в буфер обміну">
+<!ENTITY options.screenshot.clipboard.tooltip    "Збереження знімку безпосередньо в буфер обміну">
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+<!ENTITY options.screenshot.audio.label      "Звук зйомки камери">
+<!ENTITY options.screenshot.audio.tooltip    "Звук камери під час захоплення знімку екрана">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "Загальні налаштування">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "Увімкнути постійні логи">
+<!ENTITY options.enablePersistentLogs.tooltip  "Якщо ви увімкнете цей параметр, веб-консоль та монітор мережі не будуть очищати результати щоразу при переході до нової сторінки">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label    "Показати дані платформи Gecko">
+<!ENTITY options.showPlatformData.tooltip  "Якщо увімкнено цей параметр, звіти профілятора JavaScript враховуватимуть символи
+платформи Gecko">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label                     "Налаштування редактора">
+<!ENTITY options.sourceeditor.detectindentation.label   "Виявляти стиль відступів">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Вгадувати стиль відступів на основі вмісту джерела">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Автоматичне закриття дужок">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Автоматично вставляти закриваючі дужки">
+<!ENTITY options.sourceeditor.expandtab.label           "Відступ за допомогою пробілів">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Використовувати пробіли замість символа табуляції">
+<!ENTITY options.sourceeditor.tabsize.label             "Розмір табуляції">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "Р">
+<!ENTITY options.sourceeditor.keybinding.label          "Сполучення клавіш">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "С">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Типово">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Fechar esta aba">
+<!ENTITY tabCrashed.restoreTab "Restaurar esta aba">
+<!ENTITY tabCrashed.restoreAll "Restaurar todas as abas travadas">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Aff! Sua aba travou.">
+<!ENTITY tabCrashed.offerHelp "Podemos ajudá-lo!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Escolha &tabCrashed.restoreTab; para recarregar o conteúdo da página.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Escolha &tabCrashed.restoreTab; ou &tabCrashed.restoreAll; para recarregar a página.">
+<!ENTITY tabCrashed.requestHelp "Você nos ajudará?">
+<!ENTITY tabCrashed.requestHelpMessage "Os relatórios de travamento nos ajudam a diagnosticar problemas e a fazer o &brandShortName; melhor.">
+<!ENTITY tabCrashed.requestReport "Relatar esta aba">
+<!ENTITY tabCrashed.sendReport2 "Enviar um relatório do travamento da aba que está vendo">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comentários opcionais (comentários serão visíveis publicamente)">
+<!ENTITY tabCrashed.includeURL2 "Incluir o endereço da página neste relatório de travamento">
+<!ENTITY tabCrashed.emailPlaceholder "Entrar com seu endereço de e-mail aqui">
+<!ENTITY tabCrashed.emailMe "Enviar um e-mail quando mais informações estiverem disponíveis">
+<!ENTITY tabCrashed.reportSent "Relatório do travamento enviado; obrigado por ajudar a fazer o &brandShortName; melhor!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Informar abas em segundo plano">
+<!ENTITY tabCrashed.autoSubmit2 "Atualizar as preferências para enviar automaticamente relatórios de falhas, incluindo relatórios para falhas de abas em segundo plano desta sessão e futuras sessões">

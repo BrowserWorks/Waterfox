@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Chijun">
+
+<!ENTITY  warnOnAddonInstall2.label       "Taya' rutzijol jampe' toq ri ruxaq ajk'amaya'l nrajo' yeruyäk taq tz'aqat">
+<!ENTITY  warnOnAddonInstall2.accesskey   "T">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Keq'at k'ayew chuqa' q'olonel rupam">
+<!ENTITY  enableSafeBrowsing.accesskey    "K">
+
+<!ENTITY  blockDownloads.label            "Keq'at k'ayew taq qasanïk">
+<!ENTITY  blockDownloads.accesskey        "k">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Taya' pe rutzijol pa ruwi' ri itzel chuqa' man relik ta taq kema'">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "n">
+
+<!ENTITY  addonExceptions.label         "Taq man relik ta…">
+<!ENTITY  addonExceptions.accesskey     "r">
+
+
+<!ENTITY  logins.label                  "Kitikirisaxik taq molojri'ïl">
+
+<!ENTITY  rememberLogins2.label         "Tinatäx rutikirisaxik molojri'ïl kichin ri taq ruxaq ajk'amaya'l">
+<!ENTITY  rememberLogins2.accesskey     "T">
+<!ENTITY  passwordExceptions.label      "Taq man relik ta…">
+<!ENTITY  passwordExceptions.accesskey  "e">
+
+<!ENTITY  useMasterPassword.label        "Tokisäx ri nimaläj ewan tzij">
+<!ENTITY  useMasterPassword.accesskey    "T">
+<!ENTITY  changeMasterPassword.label     "Tik'ex nimaläj ewan tzij…">
+<!ENTITY  changeMasterPassword.accesskey "n">
+
+<!ENTITY  savedLogins.label              "Yakon kitikirib'al molojri'ïl…">
+<!ENTITY  savedLogins.accesskey          "k">

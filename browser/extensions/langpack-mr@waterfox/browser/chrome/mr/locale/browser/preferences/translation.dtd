@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "अपवाद - भाषांतरन">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "भाषांतरन खालील भाषांकरिता पुरवले जाणार नाही:">
+<!ENTITY treehead.languageName.label      "भाषा">
+<!ENTITY removeLanguage.label             "भाषा काढून टाका">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "सर्व भाषा काढून टाका">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "खालील स्थळांकरिता भाषांतरन पुवले जाणार नाही:">
+<!ENTITY treehead.siteName2.label         "संकेतस्थळे">
+<!ENTITY removeSite.label                 "साईट काढून टाका">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "सर्व साईट्स काढून टाका">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "बंद करा">
+<!ENTITY button.close.accesskey           "C">

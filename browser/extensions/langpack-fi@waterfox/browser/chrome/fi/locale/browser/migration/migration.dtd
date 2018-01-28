@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title           "Ohjattu profiilin tuonti">
+
+<!ENTITY importFrom.label                "Tuo asetukset, kirjanmerkit, sivuhistoria, salasanat ja muut tiedot ohjelmasta:">
+<!ENTITY importFromUnix.label            "Tuo asetukset, kirjanmerkit, sivuhistoria, salasanat ja muut tiedot ohjelmasta:">
+<!ENTITY importFromBookmarks.label       "Tuo kirjanmerkit ohjelmasta:">
+
+<!ENTITY importFromIE.label              "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey          "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label         "Älä tuo mitään">
+<!ENTITY importFromNothing.accesskey     "Ä">
+<!ENTITY importFromSafari.label          "Safari">
+<!ENTITY importFromSafari.accesskey      "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Ei löydetty ohjelmia, joista voitaisiin hakea kirjanmerkkejä, sivuhistoriaa tai salasanoja.">
+
+<!ENTITY importSource.title              "Tuo asetukset ja tiedot ohjelmasta">
+<!ENTITY importItems.title               "Tuotavat tiedot">
+<!ENTITY importItems.label               "Valitse tuotavat tiedot:">
+
+<!ENTITY migrating.title                 "Tuodaan…">
+<!ENTITY migrating.label                 "Seuraavia tietoja tuodaan…">
+
+<!ENTITY selectProfile.title             "Valitse profiili">
+<!ENTITY selectProfile.label             "Seuraavat profiilit voidaan tuoda ohjelmista:">
+
+<!ENTITY done.title                      "Tuonti valmis">
+<!ENTITY done.label                      "Seuraavat tiedot tuotiin:">
+
+<!ENTITY closeSourceBrowser.label       "Varmista, että valittu selain on suljettu ennen kuin jatkat.">

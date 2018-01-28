@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "محرك البحث المبدئي">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "اختر محرك البحث المبدئي في شريطي العنواوين و البحث.">
+
+<!ENTITY provideSearchSuggestions.label        "اعرض اقتراحات البحث">
+<!ENTITY provideSearchSuggestions.accesskey    "ع">
+
+<!ENTITY showURLBarSuggestions2.label           "أظهر اقتراحات البحث في نتائج شريط العناوين">
+<!ENTITY showURLBarSuggestions2.accesskey       "ت">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "لن تظهر اقتراحات البحث في نتائج شريط الموقع لأنّك أعددت &brandShortName; على ألّا يتذكر التأريخ.">
+
+<!ENTITY oneClickSearchEngines.label           "محركات البحث بنقرة واحدة">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "اختر محركات البحث البديلة التي تظهر تحت شريطي العناوين و البحث عندما تكتب كبمة بحث.">
+
+<!ENTITY engineNameColumn.label                "محرك البحث">
+<!ENTITY engineKeywordColumn.label             "كلمة مفتاحية">
+
+<!ENTITY restoreDefaultSearchEngines.label     "استعد محركات البحث المبدئية">
+<!ENTITY restoreDefaultSearchEngines.accesskey "د">
+
+<!ENTITY removeEngine.label                    "احذف">
+<!ENTITY removeEngine.accesskey                "ح">
+
+<!ENTITY findMoreSearchEngines.label           "اعثر على المزيد من محركات البحث">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY canvasDebuggerUI.reloadNotice1 "Recargar">
+<!ENTITY canvasDebuggerUI.reloadNotice2 "la páxina pa poder depurar contestos &lt;canvas&gt;.">
+<!ENTITY canvasDebuggerUI.emptyNotice1 "Calca nel botón">
+<!ENTITY canvasDebuggerUI.emptyNotice2 "pa guardar la pila de llamaes d'un cuadru d'una animación.">
+<!ENTITY canvasDebuggerUI.recordSnapshot.tooltip "Grabar el siguiente cuadru del bucle d'animación.">
+<!ENTITY canvasDebuggerUI.importSnapshot "Importar…">
+<!ENTITY canvasDebuggerUI.clearSnapshots "Llimpiar">
+<!ENTITY canvasDebuggerUI.searchboxPlaceholder "Filtriar llamaes">
+<!ENTITY canvasDebuggerUI.waitingNotice "Grabando un ciclu d'animación…">

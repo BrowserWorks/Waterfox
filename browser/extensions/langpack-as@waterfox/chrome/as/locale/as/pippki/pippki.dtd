@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "প্ৰমূখ পাছৱাৰ্ড সলনি কৰক">
+<!ENTITY setPassword.tokenName.label "সুৰক্ষাৰ ডিভাইচ">
+<!ENTITY setPassword.oldPassword.label "বৰ্ত্তমান পাছৱাৰ্ড:">
+<!ENTITY setPassword.newPassword.label "নতুন পাছৱাৰ্ড:">
+<!ENTITY setPassword.reenterPassword.label "নতুন পাছৱাৰ্ড (আকৌ):">
+<!ENTITY setPassword.meter.label "পাছৱাৰ্ড গুণৰ একক">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "পুনঃ স্থাপন">
+<!ENTITY resetPassword.title  "প্ৰমূখ পাছৱাৰ্ড পুনঃ স্থাপন কৰক">
+<!ENTITY resetPassword.text  "আপুনি প্ৰমূখ পাছৱাৰ্ড পুনঃ স্থাপন কৰিলে, সকলো ৱেব আৰু ই-মেইল পাছৱাৰ্ড, ফৰ্মৰ তথ্য, ব্যক্তিগত প্ৰমাণপত্ৰ, আৰু ব্যক্তিগগত কি' পাহৰা হ'ব। আপুনি প্ৰমূখ পাছৱাৰ্ড পুনঃ স্থাপন কৰিবলৈ নিশ্চিত নে ?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "প্ৰমাণপত্ৰ ডাউনল'ড কৰা হৈছে">
+<!ENTITY downloadCert.message1 "আপোনাক এটা নতুন প্ৰমাণপত্ৰৰ কৰ্ত্তৃপক্ষক (CA) বিশ্বাস কৰিবলৈ অনুৰোধ কৰা হৈছে।">
+<!ENTITY downloadCert.trustSSL "ৱেব ছাইটৰ পৰিচয়ৰ কাৰণে এই CA ক বিশ্বাস কৰক।">
+<!ENTITY downloadCert.trustEmail "ই-মেইল ব্যৱহাৰকাৰীৰ পৰিচয়ৰ কাৰণে এই CA ক বিশ্বাস কৰক।">
+<!ENTITY downloadCert.trustObjSign "চফ্টৱেৰৰ উন্নয়নকাৰীসকলৰ পৰিচয়ৰ কাৰণে এই CA ক বিশ্বাস কৰক।">
+<!ENTITY downloadCert.message3 "কোনো কামৰ কাৰণে এই CA বিশ্বাস কৰাৰ আগতে, আপুনি তাৰ প্ৰমাণপত্ৰ আৰু নীতি আৰু পদ্ধতি পৰীক্ষা কৰিব লাগিব (যদি আছে)।">
+<!ENTITY downloadCert.viewCert.label "দৰ্শন কৰক">
+<!ENTITY downloadCert.viewCert.text "CA প্ৰমাণপত্ৰ পৰীক্ষা কৰক">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "ব্যৱহাৰকাৰীৰ পৰিচয়ৰ অনুৰোধ">
+<!ENTITY clientAuthAsk.message1 "আপুনি নিজকে এটা প্ৰমাণপত্ৰৰে পৰিচয় দিবলৈ এই ছাইটে অনুৰোধ কৰিছে:">
+<!ENTITY clientAuthAsk.message2 "চিনাকি দিবলৈ এটা প্ৰমাণপত্ৰ বাছক:">
+
+
+<!ENTITY pkcs12.setpassword.title  "প্ৰমাণপত্ৰ বেকআপ পাছৱাৰ্ড বাছক">
+<!ENTITY pkcs12.setpassword.message  "আপুনি নিৰ্ধাৰণ কৰা প্ৰমাণপত্ৰ সংৰক্ষণৰ পাছৱাৰ্ডই আপুনি সৃষ্টি কৰিব লোৱা বেক-আপ ফাইলক ৰক্ষা কৰে।  এই কাৰ্য্যত আগবাঢ়িবলৈ আপুনি পাছৱাৰ্ড নিৰ্ধাৰণ কৰিব লাগিব।">
+<!ENTITY pkcs12.setpassword.label1 "প্ৰমাণপত্ৰ সংৰক্ষণৰ পাছৱাৰ্ড:">
+<!ENTITY pkcs12.setpassword.label2 "প্ৰমাণপত্ৰ সংৰক্ষণৰ পাছৱাৰ্ড (আকৌ):">
+<!ENTITY pkcs12.setpassword.reminder "গুৰুত্বপূৰ্ণ: প্ৰমাণপত্ৰ সংৰক্ষণৰ পাছৱাৰ্ড পাহৰিলে, পিছত আপুনি এই বেক-আপ পুনঃ স্থাপন কৰিব নোৱাৰে।  অনুগ্ৰহ কৰি ইয়াক এটা সুৰক্ষিত স্থানত ৰাখক।">
+
+<!ENTITY chooseToken.title  "টোকপন সম্বাদ নিৰ্ব্বাচন কৰক">
+<!ENTITY chooseToken.message1 "এটা টোকেন বাছক।">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "এটা ব্যক্তিগত কি' সৃষ্টি কৰা হৈছে">
+<!ENTITY createCertInfo.msg1 "কি' সৃষ্টি কৰা হৈছে... কিছু সময় লাগিব....">
+<!ENTITY createCertInfo.msg2 "অনুগ্ৰহ কৰি অপেক্ষা কৰক...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "সুৰক্ষিত টোকেনৰ প্ৰমাণীকৰণ">
+<!ENTITY protectedAuth.msg "অনুগ্ৰহ কৰি টোকেনত প্ৰমাণ কৰক। প্ৰমাণীকৰণৰ পদ্ধতি আপোনাৰ টোকেনৰ ধৰণৰ ওপৰত নিৰ্ভৰ কৰে।">
+<!ENTITY protectedAuth.tokenName.label "টোকেন:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

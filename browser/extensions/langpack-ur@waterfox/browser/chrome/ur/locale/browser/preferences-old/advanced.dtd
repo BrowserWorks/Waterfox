@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "عمومی">
+
+<!ENTITY accessibility.label             "رسائی پزیری">
+
+<!ENTITY useCursorNavigation.label       "صفحات میں آگے پیچھے جانے کے لیے ہمیشہ کرسر کلیدیں استعمال کریں">
+<!ENTITY useCursorNavigation.accesskey   "ک">
+<!ENTITY searchOnStartTyping.label       "میرے ٹائپ کرنے پر متن کے لیے تلاش شروع کریں">
+<!ENTITY searchOnStartTyping.accesskey   "م">
+<!ENTITY blockAutoReload.label           "جب ویب سائٹیں صفحہ کو دوسری سمت بھیجنے کی یا پھر لوڈ کرنے کی کوشش کریں تو مجھے متنبہ کریں">
+<!ENTITY blockAutoReload.accesskey       "س">
+<!ENTITY useOnScreenKeyboard.label       "ضرورت کے وقت ٹچ کی بورڈ دکھایں">
+<!ENTITY useOnScreenKeyboard.accesskey   "ک">
+
+<!ENTITY browsing.label                  "براؤزنگ">
+
+<!ENTITY useAutoScroll.label             "خودکار طومار استعمال کریں">
+<!ENTITY useAutoScroll.accesskey         "خ">
+<!ENTITY useSmoothScrolling.label        "ہموار طومار استعمال کریں">
+<!ENTITY useSmoothScrolling.accesskey    "ہ">
+<!ENTITY checkUserSpelling.label         "ٹائپ کرتے وقت اپنی املا کی پڑتال کریں">
+<!ENTITY checkUserSpelling.accesskey     "ٹ">
+
+<!ENTITY dataChoicesTab.label            "کوائف پسند">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "آپ کو آپ کے براؤزر کی سرانجام دہی سمجھنے میں مدد کرتا ہے اور &vendorShortName; کے ساتھ آپ کے براؤزر کی تندرستی کے کوائف شیئر کرتا ہے">
+<!ENTITY enableHealthReport.label        "&brandShortName; تندرستی رپورٹ اہل بنائیں">
+<!ENTITY enableHealthReport.accesskey    "ر">
+<!ENTITY healthReportLearnMore.label     "مزید سیکھیں">
+
+<!ENTITY telemetryDesc.label             "&brandShortName; کو بہتر بنانے میں مدد دینے کے لیے آپ کے براؤزر کے سرانجام دہی، استعمال، ہارڈ ویئر اور تخصیص کاری کوائف &vendorShortName; کو بھیجتا ہے">
+<!ENTITY enableTelemetryData.label       "اضافی کوائف شیئر کریں (یعنی Telemetry)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "مزید سیکھیں">
+
+<!ENTITY crashReporterDesc2.label         "تباہ کاری کی رپورٹ &vendorShortName; میں مدد کرتی ھے۔ اور آپ کے براؤزر کو زیادہ مستحکم اور محفوظ بناتی ھے">
+<!ENTITY alwaysSubmitCrashReports.label   "آپ کی طرف سے &brandShortName; کو روکے ہوئے ناکامی کی اطلاع بھیجنے کی اجازت دے۔">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "مزید سیکھیں">
+
+<!ENTITY networkTab.label                "نیٹ ورک">
+
+<!ENTITY connection.label                "کنکشن">
+
+<!ENTITY connectionDesc.label            "&brandShortName;  کا انٹرنیٹ سے جڑنے کا طریقہ تشکیل کریں">
+<!ENTITY connectionSettings.label        "سیٹنگیں…">
+<!ENTITY connectionSettings.accesskey    "س">
+
+<!ENTITY httpCache.label                 "کیسہ بند ویب مواد">
+
+<!ENTITY offlineStorage2.label           "آف لائن ویب مواد اور ویب کوائف">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "سائٹ کے کوائف">
+<!ENTITY clearSiteData.label             "تمام کوائف صاف کریں">
+<!ENTITY clearSiteData.accesskey         "ف">
+<!ENTITY siteDataSettings.label          "سیٹنگیں…">
+<!ENTITY siteDataSettings.accesskey      "ن">
+<!ENTITY siteDataLearnMoreLink.label     "مزید سیکھیں">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "کیسہ حد بند کریں">
+<!ENTITY limitCacheSizeBefore.accesskey  "ح">
+<!ENTITY limitCacheSizeAfter.label       "MB جگہ">
+<!ENTITY clearCacheNow.label             "ابھی صاف کریں">
+<!ENTITY clearCacheNow.accesskey         "ص">
+<!ENTITY clearOfflineAppCacheNow.label   "ابھی صاف کریں">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ا">
+<!ENTITY overrideSmartCacheSize.label    "خودکار کیسہ بندوبست زیر کریں">
+<!ENTITY overrideSmartCacheSize.accesskey "ز">
+
+<!ENTITY updateTab.label                 "تازہ کاری">
+
+<!ENTITY updateApplication.label         "&brandShortName; تازہ کاریاں:">
+<!ENTITY updateAuto1.label               "تازہ کاریاں خود بخود تنصیب کریں (تجویز کردہ: بہتر سلامتی )">
+<!ENTITY updateAuto1.accesskey           "خ">
+<!ENTITY updateCheckChoose.label         "تازہ کاریوں کے لیے پڑتال کریں، لیکن مجھے انہیں تنصیب کرنے کا انتخاب کرنے دیں">
+<!ENTITY updateCheckChoose.accesskey     "پ">
+<!ENTITY updateManual.label              "تازہ کاریوں کے لیے کبھی بھی یہ چیک کریں (تجویز کردہ نہیں: سلامتی خطرہ)">
+<!ENTITY updateManual.accesskey          "ک">
+
+<!ENTITY updateHistory.label             "تازہ کاری تاریخ دکھائیں">
+<!ENTITY updateHistory.accesskey         "ت">
+
+<!ENTITY useService.label                "تازہ کاریاں تنصیب کرنے کے لیے پس منظر سروس استعمال کریں">
+<!ENTITY useService.accesskey            "پ">
+
+<!ENTITY autoUpdateOthers.label          "خودکار تازہ کاری">
+<!ENTITY enableSearchUpdate.label        "تلاش انجن">
+<!ENTITY enableSearchUpdate.accesskey    "ا">
+
+<!ENTITY offlineStorageNotify.label               "مجھے بتائیں جب کوئی ویب سائٹ آف لائن استعمال کے لیے کوائف ذخیرہ کرنے کے لیے پوچھے">
+<!ENTITY offlineStorageNotify.accesskey           "ب">
+<!ENTITY offlineStorageNotifyExceptions.label     "استثنیات…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ا">
+
+<!ENTITY offlineAppsList2.label          "مندرجہ ذیل ویب سائٹوں کو آف لائن استعمال کے لیے کوائف ذخیرہ کرنے کی اجازت ہے:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "ہٹائیں…">
+<!ENTITY offlineAppsListRemove.accesskey "ہ">
+<!ENTITY offlineAppRemove.confirm        "آف لائن کوائف ہٹائیں">
+
+<!ENTITY certificateTab.label            "تصدیق نامے">
+<!ENTITY certPersonal.label              "درخواست">
+<!ENTITY certPersonal.description        "جب پیش کار آپ کے ذاتی تصدیق نامہ کی درخواست کرے:">
+<!ENTITY selectCerts.auto                "خودبخود ایک منتخب کریں">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "مجھے ہر بار پوچھیں">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "سوال OCSP ریسپانڈر سرور کی موجودہ سرٹیفکیٹ کی تصدیق کرتی ہے">
+<!ENTITY enableOCSP.accesskey            "س">
+<!ENTITY viewCerts.label                 "تصدیق نامہ دیکھیں">
+<!ENTITY viewCerts.accesskey             "ت">
+<!ENTITY viewSecurityDevices.label       "سلامتی آلات">
+<!ENTITY viewSecurityDevices.accesskey   "آ">
+
+<!ENTITY performance.label               "کارکردگی">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "مزید سیکھیں">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY allowHWAccel.label              "جب دستیاب ہو تو ہارڈ ویئر سرعت کاری استعمال کریں">
+<!ENTITY allowHWAccel.accesskey          "ہ">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

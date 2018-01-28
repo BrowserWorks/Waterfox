@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Veebisait kasutab pluginat, mis võib aeglustada &brandShortName;i tööd.">
+<!ENTITY tapToPlayPlugin                                     "Plugina aktiveerimiseks puuduta.">
+<!ENTITY clickToActivatePlugin                               "Aktiveeri plugin.">
+<!ENTITY checkForUpdates                                     "Kontrolli uuenduste olemasolu…">
+<!ENTITY blockedPlugin.label                                 "See plugin on sinu kaitsmiseks blokitud.">
+<!ENTITY hidePluginBtn.label                                 "Peida plugin">
+<!ENTITY managePlugins                                       "Halda pluginaid…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "Uuesti proovimiseks ">
+<!ENTITY reloadPlugin.middle                                 "laadi lehe sisu uuesti">
+<!ENTITY reloadPlugin.post                                   ".">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Saada vearaport">
+<!ENTITY report.submitting                                   "Raporti saatmine…">
+<!ENTITY report.submitted                                    "Raport on saadetud.">
+<!ENTITY report.disabled                                     "Raportite saatmine on keelatud.">
+<!ENTITY report.failed                                       "Saatmine ebaõnnestus.">
+<!ENTITY report.unavailable                                  "Raport pole saadaval.">
+<!ENTITY report.comment                                      "Lisa kommentaar (kommentaarid on kõigile nähtavad)">
+<!ENTITY report.pageURL                                      "Kaasatakse ka lehe URL">
+
+<!ENTITY plugin.file                                         "Fail">
+<!ENTITY plugin.mimeTypes                                    "MIME-tüübid">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flashi turvarežiim lubatakse">
+<!ENTITY plugin.enableBlocklists.label                       "Ohtlik ja pealetükkiv Flashi sisu blokitakse">

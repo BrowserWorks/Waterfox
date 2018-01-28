@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Eraman nazazu hemendik at!">
+<!ENTITY safeb.palm.decline.label "Ezikusi abisu hau">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Hau ez da gune iruzurtia…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "i">
+<!ENTITY safeb.palm.reportPage.label "Zergatik blokeatu da orri hau?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Aholkularitza <a id='advisory_provider'/> zerbitzuak eskainia">
+
+<!ENTITY safeb.blocked.malwarePage.title "Ustezko orri erasotzailea!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Web orri hau (<span id='malware_sitename'/>) orri erasotzaile bezala salatua dago eta blokeatu egin da zure segurtasun-ezarpenetan oinarrituta.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Zure informazio pertsonala ostu, zure ordenagailua besteei erasotzeko erabili edo zure sistema kaltetzeko programak instalatzen saiatzen dira orri erasotzaileak.</p><p>Zenbait orri erasotzailek nahita banatzen dute software kaltegarria baina, beste askok, jabeak jakinaren gainean egon gabe banatzen dute.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Salatutako nahi ez den softwarearen gunea!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> orria nahi ez den softwarearen zerbitzari bezala salatua dago eta blokeatu egin da zure segurtasun-ezarpenetan oinarrituta.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Nahi ez den softwarearen orriak iruzurtiak izan daitezkeen eta zure sistema espero gabeko moduetan eragin dezaketen softwarea instalatzen saiatzen dira.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Gune iruzurtia!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Web orri hau (<span id='phishing_sitename'/>) iruzurti gisa dago salatuta eta blokeatu egin da zure segurtasun-ezarpenetan oinarrituta.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Zerbait arriskutsua egin dezazun daude diseinatuta gune iruzurtiak, adibidez softwarea instalatzea edo zure informazio pertsonala ezagutzera ematea, hala nola telefono-zenbakiak edo kreditu-txartelak.</p><p>Web orri honetan edozein informazio sartzean identitate-lapurreta edo bestelako iruzurren bat gerta liteke.</p>">
+

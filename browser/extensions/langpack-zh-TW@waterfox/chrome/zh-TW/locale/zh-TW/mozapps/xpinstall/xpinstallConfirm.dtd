@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from institems.xul -->
+
+<!ENTITY dialog.title            "軟體安裝">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "請只從您信任的作者安裝附加元件。">
+<!ENTITY warningSecondary.label  "惡意的程式如病毒可能會損壞您的電腦資料或侵犯您的隱私權。">
+
+<!ENTITY from.label "從:">
+
+

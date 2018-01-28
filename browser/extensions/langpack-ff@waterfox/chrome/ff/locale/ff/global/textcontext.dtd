@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Dottu">
+<!ENTITY cutCmd.accesskey "t">
+<!ENTITY copyCmd.label "Natto">
+<!ENTITY copyCmd.accesskey "N">
+<!ENTITY pasteCmd.label "Ɗakku">
+<!ENTITY pasteCmd.accesskey "Ɗ">
+<!ENTITY undoCmd.label "Firtu">
+<!ENTITY undoCmd.accesskey "F">
+<!ENTITY selectAllCmd.label "Labo Fof">
+<!ENTITY selectAllCmd.accesskey "F">
+<!ENTITY deleteCmd.label "Momtu">
+<!ENTITY deleteCmd.accesskey "M">
+
+<!ENTITY spellAddToDictionary.label "Ɓeydu to e Saggitorde">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "Firtu Ɓeydudol e Saggitorde">
+<!ENTITY spellUndoAddToDictionary.accesskey "t">
+<!ENTITY spellCheckToggle.label "Ƴeewto Mbinndiin">
+<!ENTITY spellCheckToggle.accesskey "d">
+<!ENTITY spellNoSuggestions.label "(Alaa Miijtanɗe Mbinndiin)">
+<!ENTITY spellDictionaries.label "Ɗemɗe">
+<!ENTITY spellDictionaries.accesskey "Ɗ">
+
+<!ENTITY searchTextBox.clear.label "Momtu">
+
+<!ENTITY fillLoginMenu.label          "Naatnu Ceŋorɗe">
+<!ENTITY fillLoginMenu.accesskey      "N">
+<!ENTITY fillPasswordMenu.label       "Naatnu Finnde">
+<!ENTITY fillPasswordMenu.accesskey   "N">
+<!ENTITY fillUsernameMenu.label       "Naatnu Innde Kuutoro">
+<!ENTITY fillUsernameMenu.accesskey   "N">
+<!ENTITY noLoginSuggestions.label     "(Alaa basiye seŋorde)">
+<!ENTITY viewSavedLogins.label        "Yiy ceŋorɗe danndaaɗe">

@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "పాప్-అప్స్">
+
+<!ENTITY  blockPopups.label           "పాప్-అప్ విండోలను నిరోధించు">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "గమనింపులు">
+<!ENTITY  notificationsPolicyLearnMore.label   "ఇంకా తెలుసుకోండి">
+<!ENTITY  notificationsPolicyDesc3.label       "ఏయే సైట్లు మీకు గమనింపులను పంపవచ్చో ఎంచుకోండి">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "ఎంచుకోండి…">
+<!ENTITY  notificationsDoNotDisturb.label      "నన్ను విసిగించవద్దు">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "మీరు &brandShortName; పునఃప్రారంభించేదాక ఏ గమనింపులూ చూపబడవు">
+
+<!ENTITY  popupExceptions.label       "మినహాయింపులు…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "ఫాంట్స్ &amp; రంగులు">
+
+<!ENTITY  defaultFont.label           "అప్రమేయ ఫాంటు:">
+<!ENTITY  defaultFont.accesskey       "D">
+<!ENTITY  defaultSize.label           "పరిమాణం:">
+<!ENTITY  defaultSize.accesskey       "S">
+
+<!ENTITY  advancedFonts.label         "ఉన్నతం…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "రంగులు…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "భాషలు">
+<!ENTITY chooseLanguage.label         "పేజీలను చూపించడానికి మీ ప్రాధాన్య భాషను ఎంచుకోండి">
+<!ENTITY chooseButton.label           "ఎంచుకోండి…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "వెబ్ కాంటెంట్ అనువదించు">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "మినహాయింపులు…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "అనువాదాల సౌజన్యం">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM కాంటెంట్">
+
+<!ENTITY  playDRMContent.label         "DRM కాంటెంట్ నడుపు">
+<!ENTITY  playDRMContent.accesskey     "P">
+<!ENTITY  playDRMContent.learnMore.label "ఇంకా తెలుసుకోండి">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

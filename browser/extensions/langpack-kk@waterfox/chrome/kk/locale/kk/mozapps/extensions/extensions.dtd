@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Қосымшалар басқарушысы">
+
+<!ENTITY search.placeholder                   "Қосымшаларды іздеу">
+<!ENTITY search.buttonlabel                   "Іздеу">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Жүктелуде…">
+<!ENTITY listEmpty.installed.label            "Сізде осы түрдегі қосымшалар орнатылмаған">
+<!ENTITY listEmpty.availableUpdates.label     "Жаңартулар табылмады">
+<!ENTITY listEmpty.recentUpdates.label        "Соңғы кезде ешбір кеңейту жаңартылмады">
+<!ENTITY listEmpty.findUpdates.label          "Жаңартуларды тексеру">
+<!ENTITY listEmpty.search.label               "Сәйкес келетін қосымшалар табылмады">
+<!ENTITY listEmpty.button.label               "Қосымшалар жөнінде көбірек біліңіз">
+<!ENTITY installAddonFromFile.label           "Файлдан қосымшаны орнату…">
+<!ENTITY installAddonFromFile.accesskey       "Ф">
+<!ENTITY toolsMenu.tooltip                    "Барлық файлдар үшін саймандар">
+
+<!ENTITY getThemes.description                "Браузерді өзіңіз үшін ыңғайлатуды қалайсыз ба?">
+<!ENTITY getThemes.learnMore                  "Мыңдаған темалар ішінен таңдаңыз.">
+
+<!ENTITY cmd.back.tooltip                     "Бір параққа қайту">
+<!ENTITY cmd.forward.tooltip                  "Бір параққа алға бару">
+
+<!ENTITY showUnsignedExtensions.button.label  "Кейбір кеңейтулерді растау мүмкін емес">
+<!ENTITY showAllExtensions.button.label       "Барлық кеңейтулерді көрсету">
+<!ENTITY debugAddons.label                    "Қосымшаларды жөндеу">
+<!ENTITY debugAddons.accesskey                "д">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Барлық кеңейтулер қауіпсіз режимімен сөндірілген.">
+<!ENTITY warning.checkcompatibility.label          "Кеңейтулер үйлесімдігін тексеруді сөндіру. Сізде үйлесімсіз кеңейтулер бар болуы мүмкін.">
+<!ENTITY warning.checkcompatibility.enable.label   "Іске қосу">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Кеңейтулер үйлесімдігін тексеруді іске қосу">
+<!ENTITY warning.updatesecurity.label              "Кеңейтулер жаңартуларын қауісіздікке тексеру сөндірулі. Жаңартулармен қор болуыңыз мүмкін.">
+<!ENTITY warning.updatesecurity.enable.label       "Іске қосу">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Кеңейтулер жаңартуларын қауісіздікке тексеруді іске қосу">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Іздеу">
+<!ENTITY view.discover.label                  "Қосымшаларды алу">
+<!ENTITY view.recentUpdates.label             "Соңғы жаңартулар">
+<!ENTITY view.availableUpdates.label          "Қолжетерлік жаңартулар">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Жаңартуларды тексеру">
+<!ENTITY updates.checkForUpdates.accesskey    "к">
+<!ENTITY updates.viewUpdates.label            "Соңғы жаңартуларды қарау">
+<!ENTITY updates.viewUpdates.accesskey        "о">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Кеңейтулерді автожаңарту">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "е">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Барлық кеңейтулерді автожаңартылатындай етіп қылу">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "а">
+<!ENTITY updates.resetUpdatesToManual.label          "Барлық кеңейтулерді тек қолмен жаңартылатындай етіп қылу">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "о">
+<!ENTITY updates.updating.label               "Қосымшалар жаңартылуда">
+<!ENTITY updates.installed.label              "Қосымшаларыңыз жаңартылды.">
+<!ENTITY updates.downloaded.label             "Қосымшаларыңыз жаңартулары жүктеліп алынды.">
+<!ENTITY updates.restart.label                "Орнатуды аяқтау үшін қазір қайта қосу">
+<!ENTITY updates.noneFound.label              "Жаңартулар табылмады">
+<!ENTITY updates.manualUpdatesFound.label     "Қолжетерлік жаңартуларды көрсету">
+<!ENTITY updates.updateSelected.label         "Жаңартуларды орнату">
+<!ENTITY updates.updateSelected.tooltip       "Бұл тізімдегі қолжетерлік жаңартуларды орнату">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Көбірек ақпаратты көрсету">
+<!ENTITY cmd.showDetails.accesskey            "е">
+<!ENTITY cmd.findUpdates.label                "Жаңартуларды іздеу">
+<!ENTITY cmd.findUpdates.accesskey            "а">
+<!ENTITY cmd.preferencesWin.label             "Баптаулар">
+<!ENTITY cmd.preferencesWin.accesskey         "Б">
+<!ENTITY cmd.preferencesUnix.label            "Баптаулар">
+<!ENTITY cmd.preferencesUnix.accesskey        "р">
+<!ENTITY cmd.about.label                      "Осы туралы">
+<!ENTITY cmd.about.accesskey                  "т">
+
+<!ENTITY cmd.enableAddon.label                "Іске қосу">
+<!ENTITY cmd.enableAddon.accesskey            "с">
+<!ENTITY cmd.disableAddon.label               "Сөндіру">
+<!ENTITY cmd.disableAddon.accesskey           "д">
+<!ENTITY cmd.enableTheme.label                "Теманы киіп көру">
+<!ENTITY cmd.enableTheme.accesskey            "м">
+<!ENTITY cmd.disableTheme.label               "Теманы алып тастау">
+<!ENTITY cmd.disableTheme.accesskey           "с">
+<!ENTITY cmd.askToActivate.label              "Белсендіруді сұрау">
+<!ENTITY cmd.askToActivate.tooltip            "Әр ретте бұл қосымшаны қолдануды сұрау">
+<!ENTITY cmd.alwaysActivate.label             "Әрқашан белсендіру">
+<!ENTITY cmd.alwaysActivate.tooltip           "Бұл қосымшаны әрқашан қолдану">
+<!ENTITY cmd.neverActivate.label              "Ешқашан белсендірмеу">
+<!ENTITY cmd.neverActivate.tooltip            "Бұл қосымшаны ешқашан қолданбау">
+<!ENTITY cmd.stateMenu.tooltip                "Бұл қосымша орындалған кезде өзгерту">
+<!ENTITY cmd.installAddon.label               "Орнату">
+<!ENTITY cmd.installAddon.accesskey           "н">
+<!ENTITY cmd.uninstallAddon.label             "Өшіру">
+<!ENTITY cmd.uninstallAddon.accesskey         "ш">
+<!ENTITY cmd.showPreferencesWin.label         "Баптаулар">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Бұл кеңейтудің баптауларын өзгерту">
+<!ENTITY cmd.showPreferencesUnix.label        "Баптаулар">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Бұл кеңейтудің баптауларын өзгерту">
+<!ENTITY cmd.contribute.label                 "Үлес қосу">
+<!ENTITY cmd.contribute.accesskey             "с">
+<!ENTITY cmd.contribute.tooltip               "Бұл қосымшаны дамытуға үлес қосу">
+
+<!ENTITY cmd.showReleaseNotes.label           "Шығарылым ескертпесін көрсету">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Бұл жаңартудың шығарылым ескертпесін көрсету">
+<!ENTITY cmd.hideReleaseNotes.label           "Шығарылым ескертпесін жасыру">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Бұл жаңартудың шығарылым ескертпесін жасыру">
+<!ENTITY cmd.findReplacement.label            "Алмастыруды табу">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Кеңейтулер деген не?">
+<!ENTITY discover.description2                "Кеңейтулер - бұл &brandShortName; өзіңіз үшін баптауға көмектесетін қолданбалар, олар стиль не мүмкіндікті қосады. &brandShortName; өзіңізге лайық ету үшін уақыт сақтайтын бүйір панелі, ауа райы хабарлағышы, немесе сыртқы түрі темаларын көріңіз.">
+<!ENTITY discover.footer                      "Интернетке қосулы кезде, бұл панель сізге пайдалы бола алатын кеңейтулерді ұсынып отырады.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Нұсқасы">
+<!ENTITY detail.lastupdated.label             "Соңғы жаңартылған">
+<!ENTITY detail.creator.label                 "Жасаған">
+<!ENTITY detail.homepage.label                "Үй парағы">
+<!ENTITY detail.numberOfDownloads.label       "Жүктемелер">
+
+<!ENTITY detail.contributions.description     "Бұл кеңейтудің өңдеушісі сізден шағын ғана демеушілік етіп, оның жұмысын қолдау көрсетуді сұраған.">
+
+<!ENTITY detail.updateType                    "Автожаңартулар">
+<!ENTITY detail.updateDefault.label           "Негізгі">
+<!ENTITY detail.updateDefault.tooltip         "Жаңартуларды тек ол негізгі баптау болса ғана автоорнату">
+<!ENTITY detail.updateAutomatic.label         "Іске қосулы">
+<!ENTITY detail.updateAutomatic.tooltip       "Жаңартуларды автоорнату">
+<!ENTITY detail.updateManual.label            "Сөндірулі">
+<!ENTITY detail.updateManual.tooltip          "Жаңартуларды автоорнатпау">
+<!ENTITY detail.home                          "Үй парағы">
+<!ENTITY detail.repository                    "Кеңейту профайлы">
+<!ENTITY detail.size                          "Өлшемі">
+
+<!ENTITY detail.checkForUpdates.label         "Жаңартуларды тексеру">
+<!ENTITY detail.checkForUpdates.accesskey     "т">
+<!ENTITY detail.checkForUpdates.tooltip       "Бұл қосымша үшін жаңартуларды іздеу">
+<!ENTITY detail.showPreferencesWin.label      "Баптаулар">
+<!ENTITY detail.showPreferencesWin.accesskey  "Б">
+<!ENTITY detail.showPreferencesWin.tooltip    "Бұл кеңейтудің баптауларын өзгерту">
+<!ENTITY detail.showPreferencesUnix.label     "Баптаулар">
+<!ENTITY detail.showPreferencesUnix.accesskey "п">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Бұл кеңейтудің баптауларын өзгерту">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Рейтингі">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Аялдату">
+<!ENTITY progress.cancel.tooltip              "Бас тарту">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Аты">
+<!ENTITY sort.name.tooltip                    "Аты бойынша сұрыптау">
+<!ENTITY sort.dateUpdated.label               "Соңғы жаңартылған">
+<!ENTITY sort.dateUpdated.tooltip             "Жаңартылған күні бойынша сұрыптау">
+<!ENTITY sort.relevance.label                 "Ең жақсы сәйкестік">
+<!ENTITY sort.relevance.tooltip               "Релеванттігі бойынша сұрыптау">
+<!ENTITY sort.price.label                     "Бағасы">
+<!ENTITY sort.price.tooltip                   "Бағасы бойынша сұрыптау">
+
+<!ENTITY search.filter2.label                 "Іздеу:">
+<!ENTITY search.filter2.installed.label       "Менің кеңейтулерім">
+<!ENTITY search.filter2.installed.tooltip     "Орнатылған кеңейтулерді көрсету">
+<!ENTITY search.filter2.available.label       "Қолжетерлік кеңейтулер">
+<!ENTITY search.filter2.available.tooltip     "Орнатуға қолжетерлік кеңейтулерді көрсету">
+
+<!ENTITY addon.homepage                       "Үй парағы">
+<!ENTITY addon.details.label                  "Көбірек">
+<!ENTITY addon.details.tooltip                "Бұл кеңейту жөнінде көбірек ақпаратты көрсету">
+<!ENTITY addon.unknownDate                    "Белгісіз">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ЕСКІРГЕН">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(сөндірілген)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Жаңарту">
+<!ENTITY addon.undoAction.label               "Болдырмау">
+<!ENTITY addon.undoAction.tooltip             "Бұл әрекетті болдырмау">
+<!ENTITY addon.undoRemove.label               "Болдырмау">
+<!ENTITY addon.undoRemove.tooltip             "Бұл кеңейтуді орнатылған етіп қалдыру">
+<!ENTITY addon.restartNow.label               "Қазір қайта қосу">
+<!ENTITY addon.install.label                  "Орнату">
+<!ENTITY addon.install.tooltip                "Бұл қосымшаны орнату">
+<!ENTITY addon.updateNow.label                "Қазір жаңарту">
+<!ENTITY addon.updateNow.tooltip              "Бұл кеңейту үшін жаңартуды орнату">
+<!ENTITY addon.includeUpdate.label            "Жаңарту ішінде">
+<!ENTITY addon.updateAvailable.label          "Жаңарту қолжетерлік">
+<!ENTITY addon.checkingForUpdates.label       "Жаңартуларды іздеу…">
+<!ENTITY addon.releaseNotes.label             "Шығарылым ескертпесі:">
+<!ENTITY addon.loadingReleaseNotes.label      "Жүктелу…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Кешіріңіз, шығарылым ескертпесін жүктеп алу кезінде қате кетті.">
+
+<!ENTITY addon.createdBy.label                "Шығарған ">
+
+<!ENTITY eula.title                           "Түпкі пайдаланушымен лицензиялық келісім">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Қабылдау мен орнату…">
+
+<!ENTITY settings.path.button.label           "Шолу…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Бұл не? Телеметрия кейде эксперименттерді орнатып, орындай алады.">
+<!ENTITY experiment.info.learnmore "Көбірек білу">
+<!ENTITY experiment.info.learnmore.accesskey "л">
+<!ENTITY experiment.info.changetelemetry "Телеметрия баптаулары">
+<!ENTITY experiment.info.changetelemetry.accesskey "т">
+
+<!ENTITY setting.learnmore "Көбірек білу…">
+
+<!ENTITY disabledUnsigned.heading "Кейбір қосымшалар сөндірілген">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Келесі қосымшалар &brandShortName; ішінде қолданылуға расталмаған. Сіз ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "баламаларын таба аласыз">
+<!ENTITY disabledUnsigned.description.end " немесе өндірушіден оларды растаудан өткізуді сұрай аласыз.">
+<!ENTITY disabledUnsigned.learnMore "Сіздің онлайн қауіпсіздігін сақтауға арналған біздің әрекеттер жөнінде біліңіз.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Өз қосымшаларын растау үрдісінен өткізгісі келетін өндірушілер біздің келесі құжатты оқи алады: ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "нұсқама">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Бірнәрсе жетіспей ма? Кейбір плагиндерді &brandShortName; енді қолдамайды.">
+<!ENTITY pluginDeprecation.learnMore "Көбірек білу.">
+
+<!ENTITY legacyWarning.description "Бірнәрсе жетіспей ма? &brandShortName; кейбір кеңейтулерді енді қолдамайды.">
+<!ENTITY legacyWarning.showLegacy "Ескірген кеңейтулерді көрсету">
+<!ENTITY legacyExtensions.title "Ескірген кеңейтулер">
+<!ENTITY legacyExtensions.description "Бұл кеңейтулер &brandShortName; өнімінің ағымдағы стандартқа сай емес, сондықтан сөндірілді.">
+<!ENTITY legacyExtensions.learnMore "Қосымшалар өзгерістері туралы көбірек білу">

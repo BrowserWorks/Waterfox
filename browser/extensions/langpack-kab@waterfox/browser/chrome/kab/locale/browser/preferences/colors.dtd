@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Initen">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Snifel initen i d-ittunefken sɣur asebter s wid yettwafernen nig-a: ">
+<!ENTITY  overrideDefaultPageColors.accesskey    "S">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Yal tikelt">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Anagar i yisentalen yellan s ugnil awriran">
+<!ENTITY  overrideDefaultPageColors.never.label  "Weṛǧin">
+
+<!ENTITY  color                           "Aḍris d ugilal">
+<!ENTITY  textColor.label                 "Aḍris:">
+<!ENTITY  textColor.accesskey             "A">
+<!ENTITY  backgroundColor.label           "Agilal">
+<!ENTITY  backgroundColor.accesskey       "A">
+<!ENTITY  useSystemColors.label           "Seqdec initen n unagraw">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Derrer iseɣwan">
+<!ENTITY  underlineLinks.accesskey        "D">
+<!ENTITY  links                           "Initen n iseɣwan">
+<!ENTITY  linkColor.label                 "Iseɣwan ur yettwarzan ara:">
+<!ENTITY  linkColor.accesskey             "I">
+<!ENTITY  visitedLinkColor.label          "Iseɣwan yettwarzan:">
+<!ENTITY  visitedLinkColor.accesskey      "s">

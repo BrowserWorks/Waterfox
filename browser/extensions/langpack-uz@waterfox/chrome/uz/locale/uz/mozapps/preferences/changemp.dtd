@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Parol ustasini oʻzgartirish">
+<!ENTITY setPassword.tokenName.label       "Xavfsiz qurilma">
+<!ENTITY setPassword.oldPassword.label     "Joriy parol:">
+<!ENTITY setPassword.newPassword.label     "Yangi parolni kiriting:">
+<!ENTITY setPassword.reenterPassword.label "Parolni qayta kiriting:">
+<!ENTITY setPassword.meter.label           "Parolning mustahkamlik darajasi">
+<!ENTITY setPassword.meter.loading         "Yuklanmoqda">
+<!ENTITY masterPasswordDescription.label   "Parol ustasi parollarga oʻxshash nozik ma`lumotlarni himoya qilishda foydalaniladi.  Agar &quot;Parol ustasi&quot;ni yaratsangiz, har bir &brandShortName; seansda  parol bilan himoyalangan ma`lumotni saqlashga uringanda, parol kiritishni soʻrayveradi.">
+<!ENTITY masterPasswordWarning.label       "Parol ustasi oʻrnatilganligiga ishonch hosil qiling. Agar &quot;Parol ustasi&quot;ni unutsangiz, u tomonidan himoyalangan ma`lumotlraga kira olmaysiz.">

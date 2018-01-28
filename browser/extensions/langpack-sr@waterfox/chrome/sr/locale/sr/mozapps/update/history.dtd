@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Историјат ажурирања">
+<!ENTITY  history.intro             "Следеће надоградње су инсталиране:">
+<!ENTITY  closebutton.label         "Затвори">
+                                     
+<!ENTITY  noupdates.label           "Још није инсталирана ниједна надоградња">
+
+<!ENTITY  name.header               "Име надоградње">
+<!ENTITY  date.header               "Датум инсталирања">
+<!ENTITY  type.header               "Тип">
+<!ENTITY  state.header              "Држава">
+

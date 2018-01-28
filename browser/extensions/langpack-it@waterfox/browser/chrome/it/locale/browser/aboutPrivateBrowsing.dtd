@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate "Questa non è una finestra anonima.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label "Apri una finestra anonima">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "A">
+<!ENTITY privateBrowsing.title "Navigazione anonima">
+<!ENTITY privateBrowsing.title.tracking "Navigazione anonima con protezione antitracciamento">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before "Quando si naviga in una finestra anonima ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize "non vengono salvati">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after ":">
+<!ENTITY aboutPrivateBrowsing.info.visited "pagine salvate">
+<!ENTITY aboutPrivateBrowsing.info.searches "ricerche">
+<!ENTITY aboutPrivateBrowsing.info.cookies "cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles "file temporanei">
+<!ENTITY aboutPrivateBrowsing.info.saved.before "Mentre ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize "vengono salvati">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2 ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads "download">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks "segnalibri">
+<!ENTITY aboutPrivateBrowsing.note.before "La navigazione anonima ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize "non nasconde ogni traccia della navigazione">
+<!ENTITY aboutPrivateBrowsing.note.after " su Internet. Il datore di lavoro o il fornitore di servizi internet saranno comunque in grado di mantenere un registro delle pagine visitate.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before "Ulteriori informazioni sulla ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title "navigazione anonima">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after ".">
+<!ENTITY trackingProtection.title "Protezione antitracciamento">
+<!ENTITY trackingProtection.description2 "Alcuni siti web utilizzano elementi traccianti in grado di seguire l’attività degli utenti su Internet. Grazie alla protezione antitracciamento è possibile bloccare molti di questi strumenti, impedendo la raccolta di informazioni sulle abitudini di navigazione dei visitatori.">
+<!ENTITY trackingProtection.startTour1 "Scopri come funziona">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Tækjastjóri">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Öryggiseiningar og tæki">
+<!ENTITY devmgr.details.title                   "Nánar">
+<!ENTITY devmgr.details.title2                  "Gildi">
+
+<!ENTITY devmgr.button.login.label              "Skrá inn">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Stimpla út">
+<!ENTITY devmgr.button.logout.accesskey         "S">
+<!ENTITY devmgr.button.changepw.label           "Breyta lykilorði">
+<!ENTITY devmgr.button.changepw.accesskey       "B">
+<!ENTITY devmgr.button.load.label               "Hlaða inn">
+<!ENTITY devmgr.button.load.accesskey           "l">
+<!ENTITY devmgr.button.unload.label             "Taka út">
+<!ENTITY devmgr.button.unload.accesskey         "a">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Sláðu inn upplýsingar um eininguna sem þú vilt bæta við.">
+<!ENTITY loaddevice.modname                     "Eininganafn:">
+<!ENTITY loaddevice.modname.accesskey           "E">
+<!ENTITY loaddevice.modname.default             "Ný PKCS#11 eining">
+<!ENTITY loaddevice.filename                    "Skráarnafn einingar:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Velja…">
+<!ENTITY loaddevice.browse.accesskey            "V">
+
+<!ENTITY loaddevice.title2                      "Hlaða inn PKCS#11 rekil">

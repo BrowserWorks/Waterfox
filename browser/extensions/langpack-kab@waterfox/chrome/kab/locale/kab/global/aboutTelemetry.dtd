@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Isefka n tilisɣelt">
+
+<!ENTITY aboutTelemetry.pingDataSource "Aɣbalu n isefka n Ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Isefkan Ping amiran">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Isefka n Ping ittwaɣebṛen">
+
+<!ENTITY aboutTelemetry.raw "Izirig JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Sken isefka n adtiɣimit">
+
+<!ENTITY aboutTelemetry.choosePing "Fren ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping amaynut">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping aqbuṛ &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Dduṛt">
+
+<!ENTITY aboutTelemetry.archivePingType "Tawsit n untu">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Ass-a">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Iḍelli">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Iqbuṛen">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Isefka imatuten">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Isefka n twennaṭ">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Aɣmis n tilisɣelt">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Tuţriwin SQL tiẓayanin">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Asewḥel n iminig">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Asewḥel n tinelli n uselken">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "   Tinebdanin ittwaṭfen">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Afesnan">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "Afesnan tasarutt">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Imazrudlifen">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Imazrudlifen s wawalen n tsura">
+
+<!ENTITY aboutTelemetry.eventsSection "  Tidyanin">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Iktazalen iḥerfiyen">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Aglam leqqayen n izegrar">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  tira tineggura">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Talɣut n tɣimit">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  Tazmilt: Aseɣti n tuttriwin SQL ẓẓayen yermed. Tuttriwin SQL yemden zemrent ad d-waseknent daw-a, acukan ur zmirent ara ad ttwaznent s tilisɣelt.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Awi-d ismawen n twuriwin i tnebdanin">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Sken-d isefka n ukufi ">
+
+<!ENTITY aboutTelemetry.filterText "  Zizdeg (izriren n isekkilen neɣ tinfaliyin tiluganin)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "   Payload">

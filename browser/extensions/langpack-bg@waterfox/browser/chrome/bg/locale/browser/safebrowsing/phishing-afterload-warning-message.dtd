@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Махнете ме от тук!">
+<!ENTITY safeb.palm.decline.label "Пренебрегване на предупреждението">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Това не е заблуждаващ сайт…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "н">
+<!ENTITY safeb.palm.reportPage.label "Защо е блокирана тази страница?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Източник <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Страница докладвана като враждебна!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Сайтът <span id='malware_sitename'/> е докладван като враждебен и е блокиран спрямо вашите настройки за безопасност.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Атакуващите страници се опитват да инсталират програми, които крадат лична информация, повреждат компютъра ви или го използват за атака на други компютри.</p><p>Някои от тези страници го правят съзнателно, но много са просто жертва и собствениците им не знаят нищо за това.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Докладвана страница с нежелан софтуер!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Сайтът <span id='unwanted_sitename'/> е докладван за сервиране на нежелан софтуер и е блокиран спрямо вашите настройки за безопасност.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Страниците с нежелан софтуер се опитват да инсталират софтуер, който подвежда и влияе по неочакван начин на вашия компютър.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Измамнически сайт!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Сайтът <span id='phishing_sitename'/> е докладван като измамнически и е блокиран спрямо вашите настройки за безопасност.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Заблуждаващите сайтове са направени да ви подмамят да направите нещо опасно, например инсталиране на софтуер или да разкриете лична информация като пароли, телефонни номера или кредитни карти.</p><p>Въвеждането на каквато и да е информация в тази уебстраница може да доведе на кражба на идентичността или друга измама.</p>">
+

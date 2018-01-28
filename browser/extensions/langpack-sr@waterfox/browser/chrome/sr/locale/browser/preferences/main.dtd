@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Покретање">
+
+<!ENTITY startupPage2.label        "Када се &brandShortName; покрене">
+<!ENTITY startupPage2.accesskey    "п">
+<!ENTITY startupUserHomePage.label "Прикажи почетну страницу">
+<!ENTITY startupBlankPage.label    "Прикажи празну страницу">
+<!ENTITY startupPrevSession.label  "Прикажи прозоре и језичке од прошлог пута">
+
+<!ENTITY homepage2.label           "Почетна страница">
+<!ENTITY homepage2.accesskey       "с">
+<!ENTITY useCurrentPage.label      "Користи тренутну страницу">
+<!ENTITY useCurrentPage.accesskey  "т">
+<!ENTITY useMultiple.label         "Користи тренутне странице">
+<!ENTITY chooseBookmark.label      "Користи забелешку…">
+<!ENTITY chooseBookmark.accesskey  "з">
+<!ENTITY restoreDefault.label      "Врати на подразумевану">
+<!ENTITY restoreDefault.accesskey  "В">
+
+<!ENTITY downloads.label     "Преузимања">
+
+<!ENTITY saveTo.label "Сачувај датотеке у">
+<!ENTITY saveTo.accesskey "С">
+<!ENTITY chooseFolderWin.label        "Избор…">
+<!ENTITY chooseFolderWin.accesskey    "И">
+<!ENTITY chooseFolderMac.label        "Избор…">
+<!ENTITY chooseFolderMac.accesskey    "И">
+<!ENTITY alwaysAskWhere.label         "Увек питај где да се сачувају датотеке">
+<!ENTITY alwaysAskWhere.accesskey     "У">
+
+<!ENTITY alwaysCheckDefault2.label        "Увек провери да ли је &brandShortName; мој подразумевани прегледач">
+<!ENTITY alwaysCheckDefault2.accesskey    "у">
+<!ENTITY setAsMyDefaultBrowser3.label     "Учини подразумеваним…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "д">
+<!ENTITY isDefault.label                  "&brandShortName; је тренутно подразумевани прегледач">
+<!ENTITY isNotDefault.label               "&brandShortName; није подразумевани прегледач">
+
+<!ENTITY separateProfileMode.label        "Дозволи да &brandShortName; и Waterfox раде у исто време">
+<!ENTITY useWaterfoxSync.label             "Савет: Ово користи одвојене профиле. Користите Sync да делите податке између њих.">
+<!ENTITY getStarted.notloggedin.label     "Пријавите се на &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Отворите &syncBrand.shortName.label; поставке">
+
+<!ENTITY e10sEnabled.label                "Омогући вишепроцесни &brandShortName;">

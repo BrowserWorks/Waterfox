@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "ई पृष्ठ मे ताकू">
+<!ENTITY findField.label "की ढूँढ़नाइ अछि :">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "केस मिलान करू ">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "लपेटू">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY findButton.label "अगिला ताकू">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "रद्द करू ">
+<!ENTITY closeButton.label "बन्न करू ">
+<!ENTITY up.label "उप्पर">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "नीच्चाँ">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "दिशा">

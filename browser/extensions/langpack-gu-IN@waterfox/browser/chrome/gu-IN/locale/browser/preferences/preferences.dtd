@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "વિકલ્પો">
+<!ENTITY  prefWindow.title        "પસંદગીઓ">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; પસંદગીઓ">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "શોધ પરિણામ">
+<!ENTITY  paneGeneral.title             "સામાન્ય">
+<!ENTITY  paneSearch.title              "શોધો">
+<!ENTITY  paneFilesApplications.title   "ફાઇલો &amp; એપ્લિકેશન્સ">
+<!ENTITY  panePrivacySecurity.title     "ગોપનીયતા &amp; સુરક્ષા">
+<!ENTITY  paneContainers.title          "કન્ટેઈનર ટેબ્સ">
+<!ENTITY  paneUpdates.title             "સુધારો">
+
+<!ENTITY  languageAndAppearance.label   "ભાષા અને દેખાવ">
+<!ENTITY  filesAndApplications.label    "ફાઇલો અને એપ્લિકેશન્સ">
+<!ENTITY  browserPrivacy.label          "બ્રાઉઝર ગોપનીયતા">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Waterfox ખાતુ">
+
+<!ENTITY  helpButton2.label        "&brandShortName; આધાર">

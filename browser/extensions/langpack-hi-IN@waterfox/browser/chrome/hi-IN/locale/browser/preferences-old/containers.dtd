@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "नया पात्र जोड़े">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "प्राथमिकताएँ">
+<!ENTITY removeButton.label   "हटायें">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "#171; फिर से गोपनीयता पर जाएँ">
+
+<!ENTITY window.title         "नया पात्र जोड़े">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "नाम:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "एक पात्र का नाम प्रविष्ट करें">
+<!ENTITY icon.label           "प्रतीकः">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "रंगः">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "कर दिया है">
+<!ENTITY button.ok.accesskey  "D">
+

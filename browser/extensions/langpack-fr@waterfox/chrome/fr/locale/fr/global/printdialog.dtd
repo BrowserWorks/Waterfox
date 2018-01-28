@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Imprimer">
+
+<!ENTITY printDialog.title "Impression">
+
+<!ENTITY fpDialog.title "Enregistrer le fichier">
+
+<!ENTITY fileCheck.label "Imprimer dans un fichier">
+<!ENTITY fileCheck.accesskey "I">
+<!ENTITY propertiesButton.label "Propriétés…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Description de l’imprimante :">
+<!ENTITY printer.label "Imprimante">
+<!ENTITY printerInput.label "Nom de l’imprimante :">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "Pages">
+<!ENTITY allpagesRadio.label "Toutes">
+<!ENTITY allpagesRadio.accesskey "T">
+<!ENTITY rangeRadio.label  "Pages">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "de">
+<!ENTITY frompageInput.accesskey  "d">
+<!ENTITY topageInput.label  "à">
+<!ENTITY topageInput.accesskey  "à">
+<!ENTITY selectionRadio.label "Sélection">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "Copies">
+<!ENTITY numCopies.label "Nombre de copies :">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "Imprimer les cadres">
+<!ENTITY aslaidoutRadio.label "Tels qu’affichés à l’écran">
+<!ENTITY aslaidoutRadio.accesskey "e">
+<!ENTITY selectedframeRadio.label  "Le cadre sélectionné">
+<!ENTITY selectedframeRadio.accesskey  "L">
+<!ENTITY eachframesepRadio.label  "Chaque cadre séparément">
+<!ENTITY eachframesepRadio.accesskey  "h">

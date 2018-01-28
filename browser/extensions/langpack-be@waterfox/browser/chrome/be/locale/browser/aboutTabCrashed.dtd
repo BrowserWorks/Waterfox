@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Закрыць картку">
+<!ENTITY tabCrashed.restoreTab "Аднавіць картку">
+<!ENTITY tabCrashed.restoreAll "Аднавіць усе зламаныя карткі">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ай. Картка зламалася.">
+<!ENTITY tabCrashed.offerHelp "Мы дапаможам!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Націсні &tabCrashed.restoreTab; , каб перачытаць змест старонкі.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Націсні &tabCrashed.restoreTab; ці &tabCrashed.restoreAll; , каб перачытаць змест старонкі.">
+<!ENTITY tabCrashed.requestHelp "Дапаможаце нам?">
+<!ENTITY tabCrashed.requestHelpMessage "Паведамленні пра крахі дапамагаюць дыягнаставаць праблемы і рабіць &brandShortName; лепей.">
+<!ENTITY tabCrashed.requestReport "Даслаць справаздачу пра гэтую картку">
+<!ENTITY tabCrashed.sendReport2 "Даслаць справаздачу пра крах для дзейнай карткі">
+<!ENTITY tabCrashed.commentPlaceholder2 "Неабавязковы каментар (каментары агульнадаступныя)">
+<!ENTITY tabCrashed.includeURL2 "Таксама дадаць URL старонкі">
+<!ENTITY tabCrashed.emailPlaceholder "Увядзіце тут ваш адрас эл.пошты">
+<!ENTITY tabCrashed.emailMe "Даслаць мне ліст, калі будзе больш інфармацыі">
+<!ENTITY tabCrashed.reportSent "Справаздача пра крах ўжо даслана; дзякуй, што дапамагаеце зрабіць &brandShortName; лепей!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Даслаць справаздачу пра фонавыя карткі">
+<!ENTITY tabCrashed.autoSubmit2 "Абнавіць налады, каб аўтаматычна дасылаць справаздачы пра крах, у тым ліку справаздачы пра крахі фонавых картак, пачынаючы з гэтага сеанса">

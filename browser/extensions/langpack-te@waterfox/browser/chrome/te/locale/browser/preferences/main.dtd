@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "ప్రారంభ ప్రక్రియ">
+
+<!ENTITY startupPage2.label        "&brandShortName; మొదలైనప్పుడు">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "నా ముంగిలి పేజీని చూపించు">
+<!ENTITY startupBlankPage.label    "ఖాళీ పేజీని చూపించు">
+<!ENTITY startupPrevSession.label  "చివరిగా మీరు చూసిన విండోలను ట్యాబులను చూపించు">
+
+<!ENTITY homepage2.label           "ముంగిలి పేజీ">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "ప్రస్తుత పేజీని వాడు">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "ప్రస్తుత పేజీలను వాడు">
+<!ENTITY chooseBookmark.label      "ఇష్టాంశాన్ని వాడు…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "అప్రమేయాలను పునరుద్ధరించు">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "దింపుకోళ్ళు">
+
+<!ENTITY saveTo.label "ఇచట ఫైల్సు భద్రపరచు">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "విహరించు…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "ఎంచుకోండి…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "ఫైల్సు ఎక్కడ భద్రపరచాలో ఎప్పుడూ మిమ్మల్ని ఆడుగు">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "&brandShortName; మీ అప్రమేయ విహారిణియేనా అని ఎల్లప్పుడూ పరిశీలించు">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+<!ENTITY setAsMyDefaultBrowser3.label     "అప్రమేయం చేయి…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; ప్రస్తుతం మీ అప్రమేయ విహారిణి">
+<!ENTITY isNotDefault.label               "&brandShortName; ప్రస్తుతం మీ అప్రమేయ విహారిణి కాదు">
+
+<!ENTITY separateProfileMode.label        "&brandShortName;ని మరియు Waterfox ని ఒకేసారి నడుపుటకు అనుమతించు">
+<!ENTITY useWaterfoxSync.label             "చిట్కా: ఇది వేర్వేరు ప్రొఫైళ్ళను వాడుతుంది. వాటి మధ్యలో డేటాను పంచుకోడానికి Syncను వాడండి.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; లోనికి ప్రవేశించండి…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; అభిరుచులను తెరువు">
+
+<!ENTITY e10sEnabled.label                "మల్టీ-ప్రోసెస్ &brandShortName; చేతనించు">

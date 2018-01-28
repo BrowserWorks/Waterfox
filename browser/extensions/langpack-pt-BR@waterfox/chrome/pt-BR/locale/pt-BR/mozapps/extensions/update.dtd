@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Atualização do &brandShortName;">
+
+<!ENTITY  offline.title                   "O &brandShortName; está no modo offline">
+<!ENTITY  offline.description             "O &brandShortName; precisa sair do modo offline para verificar 
+se estão disponíveis as atualizações que tornam as extensões e 
+temas compatíveis com esta versão.">
+<!ENTITY  offline.toggleOffline.label     "Sair do modo offline agora">
+<!ENTITY  offline.toggleOffline.accesskey "S">
+
+<!ENTITY  mismatch.win.title              "Extensões incompatíveis">
+<!ENTITY  mismatch.top.label              "As seguintes extensões não são compatíveis com esta versão do
+                                           &brandShortName; e foram desativadas:">
+<!ENTITY  mismatch.bottom.label           "O &brandShortName; pode verificar se há versões compatíveis 
+destes complementos.">
+
+<!ENTITY  checking.wizard.title           "Verificando se há extensões compatíveis">
+<!ENTITY  checking.top.label              "Verificando atualizações de extensões e temas incompatíveis…">
+<!ENTITY  checking.status                 "Isto pode levar alguns minutos…">
+
+<!ENTITY  found.wizard.title               "Extensões compatíveis encontradas">
+<!ENTITY  found.top.label                 "Selecionar as extensões e temas que gostaria de instalar:">
+<!ENTITY  found.disabledXPinstall.label   "Estas atualizações não podem ser instaladas agora porque a instalação
+de aplicativos está desativada. Você pode mudar esta definição abaixo.">
+<!ENTITY  found.enableXPInstall.label     "Permitir que sites instalem software">
+<!ENTITY  found.enableXPInstall.accesskey "P">
+
+<!ENTITY  installing.wizard.title         "Instalando extensões compatíveis">
+<!ENTITY  installing.top.label            "Recebendo e instalando atualizações das extensões e temas…">
+
+<!ENTITY  noupdates.wizard.title          "Nenhuma extensão compatível encontrada">
+<!ENTITY  noupdates.intro.desc            "O &brandShortName; não localizou atualizações para
+                                           as suas extensões incompatíveis.">
+<!ENTITY  noupdates.error.desc            "Alguns problemas foram encontrados ao tentar localizar atualizações.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; irá verificar periodicamente e informá-lo 
+                                           quando encontrar atualizações compatíveis para estas extensões.">
+
+<!ENTITY  finished.wizard.title           "Instaladas extensões e temas compatíveis">
+<!ENTITY  finished.top.label              "O &brandShortName; instalou as atualizações das extensões e temas.">
+<!ENTITY  finished.checkDisabled.desc     "O &brandShortName; pode verificar periodicamente e notificar 
+quando encontrar atualizações das extensões e temas.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; irá verificar periodicamente e informá-lo 
+                                           quando encontrar atualizações para estas extensões.">
+
+<!ENTITY  adminDisabled.wizard.title      "Não foi possível verificar se há atualizações">
+<!ENTITY  adminDisabled.warning.label     "Não foi possível verificar se há atualizações para as extensões incompatíveis
+                                           porque a instalação delas no &brandShortName; foi desabilitada.
+                                           Por favor, contate o administrador do sistema para auxílio.">
+
+<!ENTITY  versioninfo.wizard.title        "Verificando compatibilidade das extensões">
+<!ENTITY  versioninfo.top.label           "Verificando a compatibilidade das suas extensões com esta
+                                           versão do &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Isto pode levar alguns minutos…">
+
+<!ENTITY  installerrors.wizard.title      "Problemas ao instalar atualizações">
+<!ENTITY  installerrors.intro.label       "O &brandShortName; encontrou problemas ao atualizar
+                                           alguns das suas extensões.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Clique em “Concluir” para continuar abrindo o &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Clique em Concluído para continuar iniciando o &brandShortName;.">
+<!ENTITY  enableChecking.label            "Permitir que o &brandShortName; verifique atualizações">

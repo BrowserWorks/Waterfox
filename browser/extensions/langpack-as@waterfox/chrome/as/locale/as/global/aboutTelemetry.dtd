@@ -1,0 +1,147 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "টেলিমেট্ৰি তথ্য">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection " সাধাৰণ তথ্য">
+
+
+
+<!ENTITY aboutTelemetry.slowSqlSection "  লেহেম SQL স্টেইটমেন্টবোৰ">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  ব্ৰাউছাৰ হেঙ হয়">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection " থ্ৰেড হেঙ হয়">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  হিস্টোগ্ৰামসমূহ">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection " কি'ড হিস্ট'গ্ৰামচ্">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  সাধাৰণ জোখমাখ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  এড-অন বিৱৰণসমূহ">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  শেষৰ লিখনিসমূহ">
+
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  টোকা: লেহেম SQL ডিবাগিং সামৰ্থবান কৰা আছে। সম্পূৰ্ণ SQL স্ট্ৰিংসমূহ তলত দেখুৱা হব পাৰে কিন্তু সিহতক টেলিমেট্ৰিত জমা দিয়া নহব।">
+
+
+
+<!ENTITY aboutTelemetry.filterText " ফিল্টাৰ (স্ট্ৰিং অথবা /regexp/)">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Week
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Choose ping:
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Environment Data
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping data source:
+">
+
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Archived ping data
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Current ping data
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Newer ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Older ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Show subsession data
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry Log
+">
+

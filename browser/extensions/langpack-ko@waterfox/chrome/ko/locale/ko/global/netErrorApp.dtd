@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Error messages that are likely to be overridden by applications go in this
+     file, all messages that likely don't need to tie into app-specific UI
+     should go into netError.dtd 
+
+<!ENTITY securityOverride.linkText "예외 사항 추가…">
+<!ENTITY securityOverride.warningContent "<p>만약 현재 인터넷 연결을 신뢰하지 않거나 이전에 본 웹 서버로 부터 경고창이 보지 않았던 경우 예외 사항에 추가하지 마십시오.</p><p>만일 예외 사항에 추가하고자 한다면 고급 암호 설정에서 변경할 수 있습니다.</p>">
+
+-->

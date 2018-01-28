@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Titzij">
+<!ENTITY playButton.pauseLabel "Titanab'äx">
+<!ENTITY muteButton.muteLabel "Timemür">
+<!ENTITY muteButton.unmuteLabel "Tak'axäx">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Chijun ruwa kematz'ib'">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Tel pa chijun ruwa kematz'ib'">
+<!ENTITY castingButton.castingLabel "Titaq el pa ruwäch">
+<!ENTITY closedCaption.off "Chupül">
+
+<!ENTITY stats.media "K'ïy k'oxom">
+<!ENTITY stats.size "Nimilem">
+<!ENTITY stats.activity "Samaj">
+<!ENTITY stats.activityPaused "Q'aton">
+<!ENTITY stats.activityPlaying "Tajin nitzij">
+<!ENTITY stats.activityEnded "Xk'is">
+<!ENTITY stats.activitySeeking "(tajin nikanöx)">
+<!ENTITY stats.volume "Ruch'ab'äl">
+<!ENTITY stats.framesParsed "Samajin taq kajtz'ik">
+<!ENTITY stats.framesDecoded "Taq kajtz'ik man echolajin ta">
+<!ENTITY stats.framesPresented "Taq kajtz'ik ek'utun pe">
+<!ENTITY stats.framesPainted "K'utun taq kajtz'ik">
+
+<!ENTITY error.aborted "Xpa'e' ri rutzijik silowachib'äl.">
+<!ENTITY error.network "Xq'at rutzijik silowachib'äl ruma jun sachoj pa ruk'u'x samaj.">
+<!ENTITY error.decode "Man tikirel ta nitz'et ri silowachib'äl ruma chi itzel ri yakb'äl.">
+<!ENTITY error.srcNotSupported "Ri rub'anikil o ruwäch">
+<!ENTITY error.noSource2 "Majun silowachib'äl xelitäj, ri nikixïm ki' pa MIME rub'anikil chuqa' ruwäch.">
+<!ENTITY error.generic "Xpa'e' ri rutzijik silowachib'äl ruma jun sachoj ri man etaman ta.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 richin #2 k'ulwachitajinäq">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

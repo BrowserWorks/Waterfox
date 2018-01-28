@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Сессияны қалпына келтіру">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Өкінішті-ақ">
+<!ENTITY restorepage.problemDesc    "&brandShortName; сіздің терезеңіз бен беттеріңізді қалпына келтіруде қиындық көруде. Әдетте, бұл соңғы ашылған веб параққа байланысты.">
+<!ENTITY restorepage.tryThis        "Не істеуге болады:">
+<!ENTITY restorepage.restoreSome    "Қиындық туғызуы мүмкін бір не бірнеше беттерді алып тастаңыз">
+<!ENTITY restorepage.startNew       "Толығымен жаңа сессияны бастау">
+
+<!ENTITY restorepage.tryagainButton "Қалпына келтіру">
+<!ENTITY restorepage.restore.access "р">
+<!ENTITY restorepage.closeButton    "Жабу">
+<!ENTITY restorepage.close.access   "ж">
+
+<!ENTITY restorepage.restoreHeader  "Қалпына келтіру">
+<!ENTITY restorepage.listHeader     "Терезелер мен беттер">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Терезе &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Ал, кеттік!">
+<!ENTITY welcomeback2.restoreButton.access "е">
+
+<!ENTITY welcomeback2.tabtitle      "Сәтті!">
+
+<!ENTITY welcomeback2.pageTitle     "Сәтті!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; жұмысқа дайын.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Барлық терезелер және беттерді қалпына келтіру">
+<!ENTITY welcomeback2.restoreSome.label "Тек өзіңізге керектерді қалпына келтіру">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Сіздің кеңейтулер және баптаулар өшірілді және браузер баптаулары бастапқы мәндерге тасталды. Бұл мәселеңізді шешпесе, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "өзіңіз не жасай алатыныңыз туралы көбірек біліңіз.">
+

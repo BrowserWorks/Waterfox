@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standertsykmasine">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Kies de standert sykmasine foar gebrûk yn de adresbalke en sykbalke.">
+
+<!ENTITY provideSearchSuggestions.label        "Sykfoarstellen jaan">
+<!ENTITY provideSearchSuggestions.accesskey    "S">
+
+<!ENTITY showURLBarSuggestions2.label           "Sykfoarstellen yn adresbalkeresultaten toane">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Sykfoarstellen wurde net yn lokaasjebalkresultaten toand, omdat jo &brandShortName; konfigurearre hawwe om nea skiednis te ûnthâlden.">
+
+<!ENTITY oneClickSearchEngines.label           "Ien-klik-sykmasinen">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Kies de alternative sykmasinen dy't ûnder de adresbalke en sykbalke ferskine as jo in kaaiwurd begjinne yn te fieren.">
+
+<!ENTITY engineNameColumn.label                "Sykmasine">
+<!ENTITY engineKeywordColumn.label             "Kaaiwurd">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Standertsykmasinen weromsette">
+<!ENTITY restoreDefaultSearchEngines.accesskey "S">
+
+<!ENTITY removeEngine.label                    "Fuortsmite">
+<!ENTITY removeEngine.accesskey                "F">
+
+<!ENTITY findMoreSearchEngines.label           "Mear sykmasinen fine">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "ახალი სათავსის დამატება">
+<!ENTITY addButton.accesskey  "ა">
+<!ENTITY preferencesButton.label "პარამეტრები">
+<!ENTITY removeButton.label   "ამოღება">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; უკან">
+
+<!ENTITY window.title         "ახალი სათავსის დამატება">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "სახელი:">
+<!ENTITY name.accesskey       "ს">
+<!ENTITY name.placeholder     "შეიყვანეთ სათავსის სახელი">
+<!ENTITY icon.label           "ხატულა:">
+<!ENTITY icon.accesskey       "ხ">
+<!ENTITY color.label          "ფერი:">
+<!ENTITY color.accesskey      "ფ">
+<!ENTITY windowClose.key      "დ">
+
+<!ENTITY button.ok.label      "მზადაა">
+<!ENTITY button.ok.accesskey  "მ">
+

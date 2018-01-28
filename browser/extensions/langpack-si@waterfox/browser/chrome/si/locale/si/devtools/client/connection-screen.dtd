@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "සම්බන්ධවන්න">
+<!ENTITY header     "දුරස්ථ උපකරණයට සම්බන්ධ වන්න">
+<!ENTITY host       "ධාරකය:">
+<!ENTITY port       "පොර්ට්:">
+<!ENTITY connect    "සබඳවන්න">
+<!ENTITY connecting "සම්බන්ධ වෙයි…">
+<!ENTITY availableAddons "පවතින දුරස්ථ ඇඩෝන:">
+<!ENTITY availableTabs "පවතින දුරස්ථ ටැබ:">
+<!ENTITY availableProcesses "පවතින දුරස්ථ ක්‍රියාකාරකම්:">
+<!ENTITY connectionError "දෝෂය:">
+<!ENTITY errorTimeout "දෝශය: සබඳතාව කල් ඉකුත්විය.">
+<!ENTITY errorRefused "දෝශය: සබඳතාව පිළිකෙව් විය.">
+<!ENTITY errorUnexpected "බලාපොරොත්තු නොවු දෝශයකි">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox සංවර්ධක මෙවලම් හට දුරස්ථ උපාංගයන් දෝශ හරණය කළ හැක (උදාහරණයක් ලෙස Android සඳහා Waterfox හා Waterfox OS) දුරස්ථ උපාංගයේ 'දුරස්ථ දෝශ හරණය' සක්‍රීය කර ඇතිදැයි තහවුරු කරගන්න. තවත් විස්තර සඳහා බලන්න  ">
+<!ENTITY remoteDocumentation "ලේඛණ">
+<!ENTITY remoteHelpSuffix ".">
+

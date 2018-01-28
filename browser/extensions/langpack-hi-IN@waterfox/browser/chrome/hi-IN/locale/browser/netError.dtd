@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label " पृष्ठ की लोडिंग में समस्या">
+<!ENTITY retry.label " फिर कोशिश करें">
+<!ENTITY returnToPreviousPage.label "पीछे जाएँ">
+<!ENTITY advanced.label "उन्नत">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title " कनेक्ट करने में असमर्थ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title " यह पता प्रतिबंधित है">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title " सर्वर नहीं मिला">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>टाइपिंग त्रुटियों के लिए पते की जाँच करें <strong>ww</strong>.example.com की जगह <strong>www</strong>.example.com</li> <li>यदि आप किसी भी पेज लोड करने में असमर्थ हैं, तो कंप्यूटर नेटवर्क  कनेक्शन की जाँच करें.</li> <li>यदि आपका कंप्यूटर या नेटवर्क फायरवाल या प्रॉक्सी से सुरक्षित है, सुनिश्चित करें कि &brandShortName; को वेब के पहुँच के लिए अनुमति प्राप्त है.</li> </ul>">
+
+<!ENTITY fileNotFound.title " फाइल नहीं मिला">
+<!ENTITY fileNotFound.longDesc " <ul> <li>कैपिटलाइजेशन या दूसरी टाइपिंग त्रुटि के लिए फाइल नाम जांचें.</li> <li>जाँचे यह देखने के लिए कि फाइल खिसकाया, फिर नामकरण किया अथवा मिटाया गया था.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "फ़ाइल तक पहुँच रद्द की गयी">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>यह हटाया, खिसकाया गया हो सकता है या फ़ाइल अनुमति पहुँच प्रतिबाधित कर सकती हैं.</li> </ul>">
+
+<!ENTITY generic.title " ओफ्फ.">
+<!ENTITY generic.longDesc " <p>&brandShortName; कुछ कारणों के लिए इस पृष्ठ को लोड नहीं कर सकता है.</p>">
+
+<!ENTITY captivePortal.title "नेटवर्क के लिए लॉग इन करें">
+
+
+<!ENTITY malformedURI.title " पता वैध नहीं है">
+<!ENTITY malformedURI.longDesc "<ul> <li>वेब पता प्रायः इस तरह लिखा जाता है <strong>http://www.example.com/</strong></li> <li>सुनिश्चित करें कि आप फॉरवर्ड स्लैश का प्रयोग कर रहे हैं (यानी <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title " कनेक्शन बाधित किया गया था">
+<!ENTITY netInterrupt.longDesc " &sharedLongDesc;">
+
+<!ENTITY notCached.title " दस्तावेज़ का समय समाप्त">
+<!ENTITY notCached.longDesc "<p>The requested document is not available in &brandShortName;'s cache.</p><ul><li>As a security precaution, &brandShortName; does not automatically re-request sensitive documents.</li><li>Click Try Again to re-request the document from the website.</li></ul>">
+
+<!ENTITY netOffline.title "Offline mode">
+<!ENTITY netOffline.longDesc2 " <ul> <li>&quot;फिर कोशिश करें&quot; को ऑनलाइन अवस्था में जाने के लिए दबाएँ और पृष्ठ फिर लोड करें.</li> </ul>">
+
+<!ENTITY contentEncodingError.title " अंतर्वस्तु ऐन्कोडिंग त्रुटि">
+<!ENTITY contentEncodingError.longDesc " <ul> <li>कृपया वेबसाइट मालिक से उन्हें इस समस्या के बारे में बताने के लिए संपर्क करें.</li> </ul>">
+
+<!ENTITY unsafeContentType.title " असुरक्षित फाइल प्रकार">
+<!ENTITY unsafeContentType.longDesc " <ul> <li>कृपया वेबसाइट मालिक से उन्हें इस समस्या के बारे में बताने के लिए संपर्क करें.</li> </ul>">
+
+<!ENTITY netReset.title " कनेक्शन रिसेट किया गया था">
+<!ENTITY netReset.longDesc " &sharedLongDesc;">
+
+<!ENTITY netTimeout.title " कनेक्शन का समय समाप्त हो गया">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title " पता समझा नहीं गया था">
+<!ENTITY unknownProtocolFound.longDesc " <ul> <li>आप अन्य साफ्टवेयर को इस पता को खोलने के लिए संस्थापित कर सकते हैं.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title " प्रॉक्सी सर्वर कनेक्शन अस्वीकार कर रहा है">
+<!ENTITY proxyConnectFailure.longDesc " <ul> <li>प्रॉक्सी सेटिंग की जाँच सुनिश्चित करने के लिए करें कि वे सही हैं.</li> <li>अपने संजाल प्रशासक को जांचे सुनिश्चित करने के लिए प्रॉक्सी सर्वर काम कर रहा है.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title " प्राक्सी सर्वर ढ़ूढ़ने में असमर्थ">
+<!ENTITY proxyResolveFailure.longDesc " <ul> <li>प्रॉक्सी सेटिंग की जाँच सुनिश्चित करने के लिए करें कि वे सही हैं.</li> <li>सुनिश्चित करने के लिए जाँचें कि आपके कंप्यूटर के पास कार्यशील संजाल कनेक्शन है.</li> <li>यदि आपका कंप्यूटर या संजाल फायरवाल या प्रॉक्सी से सुरक्षित है, सुनिश्चित करें कि &brandShortName; को वेब के अभिगम के लिए अनुमति प्राप्त है.</li> </ul>">
+
+<!ENTITY redirectLoop.title " पृष्ठ ठीक से पुनर्निर्देशित नहीं कर रहा है">
+<!ENTITY redirectLoop.longDesc " <ul> <li>यह समस्या कभी कभी कुकी को स्वीकार करने या निष्क्रिय करने के कारण होता है.</li> </ul>">
+
+<!ENTITY unknownSocketType.title " सर्वर से अप्रत्याशित अनुक्रिया">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>सुनिश्चित करने के लिए जाँचें कि आपके सिस्टम में निजी सुरक्षा प्रबंधक स्थापित है.</li> <li>यह सर्वर पर किसी गैर मानक विन्यास के कारण हो सकता है.</li> </ul>">
+
+<!ENTITY nssFailure2.title "सुरक्षित कनेक्शन विफल">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>पृष्ठ जिसे आप देखने की कोशिश कर रहे हैं नहीं दिखाया जा सकता है क्योंकि प्राप्त आंकड़ा की प्रमाणिकता जांची नहीं जा सकी.</li> <li>कृपया वेब साइट मालिक को इस समस्या के बारे में सूचित करने के लिए संपर्क करें.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "आपका संपर्क सुरक्षित नही है">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/> के मालिक ने अपने वेबसाइट को अनुचित तरीके से कॉन्फ़िगर किया है.  आपकी जानकारी को चोरी होने से बचाने के लिए, &brandShortName; इस वेबसाइट से जुड़ा हुआ नहीं है.">
+
+<!ENTITY sharedLongDesc "<ul> <li>यह साइट अस्थायी रूप से अनुपलब्ध या अत्यधिक व्यस्त हो सकती है! कुछ क्षणों में फिर कोशिश करें.</li> <li>यदि आप किसी पृष्ठ को लोड करने में असमर्थ हैं, अपने कंप्यूटर प्रसार संयोजन की जांच करें.</li> <li>यदि आपका कंप्यूटर या प्रसार किसी फायरवाल या प्रॉक्सी से संरक्षित है, सुनिश्चित करें कि &brandShortName; वेब अभिगमन के लिए अनुमति प्राप्त है.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+<!ENTITY corruptedContentErrorv2.title " खराब अंतर्वस्तु त्रुटि">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>पृष्ठ जिसे आप देखने की कोशिश कर रहे हैं नहीं दिखाया जा सकता है क्योंकि आंकड़ा संचारण में त्रुटि पाया गया.</p><ul><li>कृपया वेबसाइट मालिक को इस समस्या के बारे में सूचित करने के लिए संपर्क करें.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel " अपवाद जोड़ें…">
+
+<!ENTITY errorReporting.automatic2 "इस तरह की त्रुटियों की सूचना देकर Mozilla का सहयोग करें ताकि Mozilla दुर्भावनापूर्ण साइटों की पहचान कर बंद कर सके">
+<!ENTITY errorReporting.learnMore "अधिक जानें…">
+
+<!ENTITY remoteXUL.title " दूरस्थ XUL">
+<!ENTITY remoteXUL.longDesc " <p><ul><li>कृपया वेबसाइट स्वामी को इस समस्या के बारे में सूचित करने के संपर्क करें.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "सुरक्षित रूप से कनेक्ट करने में असमर्थ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "उन्नत जानकारी: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.pagetitle1  "असुरक्षित कनेक्शन">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "यह साइट HTTP कठोर परिवहन सुरक्षा (HSTS) का उपयोग उल्लेखित करने के लिए करती है कि &brandShortName; का इससे केवल सुरक्षित रूप से संपर्क हो सकता है.">
+<!ENTITY certerror.copyToClipboard.label "क्लिपबोर्ड पर पाठ की नक़ल करें ">
+
+<!ENTITY inadequateSecurityError.title "आपका कनेक्शन सुरक्षित नही हैं">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> सुरक्षा तकनीक का उपयोग करता है जो पुराना और आक्रमण हेतु भेद्य है. एक भेदी आसानी से वो सूचना प्रत्यक्ष कर सकता है जिसे आप सुरक्षित समझते हैं. वेबसाइट प्रशासक को आपके साईट देखने से पहले सर्वर ठीक करना होगा.</p><p>त्रुटि कोड: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "लगता है आपकी नेटवर्क सिक्योरिटी के कारण यह हो रहा है. क्या आप चाहते हैं कि आपकी सेटिंग पुरानी स्थिति में आ जाए?">
+<!ENTITY prefReset.label "तयशुदा सेटिंग्स पुरानी स्थिति में लाएं">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+

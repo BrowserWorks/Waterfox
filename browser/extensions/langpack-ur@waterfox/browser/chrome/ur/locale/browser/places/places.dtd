@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "لائبریری">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "تنظیم کریں">
+<!ENTITY organize.accesskey    "ت">
+<!ENTITY organize.tooltip      "اپنی نشانیاں تنظیم کریں">
+
+<!ENTITY file.close.label               "بند کریں">
+<!ENTITY file.close.accesskey           "ب">
+<!ENTITY cmd.close.key                  "ب">
+<!ENTITY views.label                    "نظارے">
+<!ENTITY views.accesskey                "ن">
+<!ENTITY views.tooltip                  "اپنا نظارہ تبدیل کریں">
+<!ENTITY view.columns.label             "کالم دکھائیں">
+<!ENTITY view.columns.accesskey         "ک">
+<!ENTITY view.sort.label                "چھانٹیں">
+<!ENTITY view.sort.accesskey            "چ">
+<!ENTITY view.unsorted.label            "ناچھانٹا ہوا">
+<!ENTITY view.unsorted.accesskey        "ن">
+<!ENTITY view.sortAscending.label       "ا > ے چھانٹی ترتیب">
+<!ENTITY view.sortAscending.accesskey   "ا">
+<!ENTITY view.sortDescending.label      "ے > ا چھانٹی ترتیب">
+<!ENTITY view.sortDescending.accesskey  "ے">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML سے نشانیاں درآمد کریں ...">
+<!ENTITY importBookmarksFromHTML.accesskey "د">
+<!ENTITY exportBookmarksToHTML.label       "نشانیاں HTML میں برآمد کریں ...">
+<!ENTITY exportBookmarksToHTML.accesskey   "ب">
+<!ENTITY importOtherBrowser.label          "کسی دوسرے براؤزر سے کوائف درآمد کریں ...">
+<!ENTITY importOtherBrowser.accesskey      "د">
+
+<!ENTITY cmd.backup.label               "پشتارہ…">
+<!ENTITY cmd.backup.accesskey           "پ">
+<!ENTITY cmd.restore2.label             "بحال کریں">
+<!ENTITY cmd.restore2.accesskey         "ب">
+<!ENTITY cmd.restoreFromFile.label      "مسل منتخاب کریں…">
+<!ENTITY cmd.restoreFromFile.accesskey  "م">
+
+<!ENTITY cmd.deleteDomainData.label     "اس سائٹ کے بارے میں بھول جائیں">
+<!ENTITY cmd.deleteDomainData.accesskey "ب">
+
+<!ENTITY cmd.open.label                  "کھولیں">
+<!ENTITY cmd.open.accesskey              "ک">
+<!ENTITY cmd.open_window.label           "نئے دریچے میں کھولیں">
+<!ENTITY cmd.open_window.accesskey       "ن">
+<!ENTITY cmd.open_private_window.label     "ربط نئے نجی دریچے میں کھولیں">
+<!ENTITY cmd.open_private_window.accesskey "ن">
+<!ENTITY cmd.open_tab.label              "نئی ٹیب میں کھولیں">
+<!ENTITY cmd.open_tab.accesskey          "ن">
+<!ENTITY cmd.open_all_in_tabs.label      "تمام ٹیبوں میں کھولیں">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "ت">
+
+<!ENTITY cmd.properties.label      "خواص">
+<!ENTITY cmd.properties.accesskey  "خ">
+
+<!ENTITY cmd.sortby_name.label              "چھانٹیں بمطابق نام">
+<!ENTITY cmd.sortby_name.accesskey          "چ">
+<!ENTITY cmd.context_sortby_name.accesskey  "ن">
+
+<!ENTITY cmd.new_bookmark.label            "نئی نشانی…">
+<!ENTITY cmd.new_bookmark.accesskey        "ن">
+<!ENTITY cmd.new_folder.label              "نیا پوشہ…">
+<!ENTITY cmd.new_folder.accesskey          "پ">
+<!ENTITY cmd.context_new_folder.accesskey  "پ">
+<!ENTITY cmd.new_separator.label           "نیا جداکار">
+<!ENTITY cmd.new_separator.accesskey       "ج">
+
+<!ENTITY cmd.reloadLivebookmark.label      "لایو نشانی پھر لوڈ کریں">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "پ">
+
+<!ENTITY cmd.moveBookmarks.label                  "بڑھائیں…">
+<!ENTITY cmd.moveBookmarks.accesskey              "ب">
+
+<!ENTITY col.name.label          "نام">
+<!ENTITY col.tags.label          "ٹیگ">
+<!ENTITY col.url.label           "محل وقوع">
+<!ENTITY col.mostrecentvisit.label "سب سے حالیہ مصاحبہ">
+<!ENTITY col.visitcount.label    "ملاحظہ شماری">
+<!ENTITY col.description.label   "تصریح">
+<!ENTITY col.dateadded.label     "اضافہ شدہ">
+<!ENTITY col.lastmodified.label  "آخری بار ترمیم کردہ">
+
+
+<!ENTITY cmd.find.key  "ڈ">
+
+<!ENTITY maintenance.label      "درآمد و پشتارہ">
+<!ENTITY maintenance.accesskey  "د">
+<!ENTITY maintenance.tooltip    "اپنی نشانیاں درآمد اور پشتارہ کریں">
+
+<!ENTITY backButton.tooltip  "واپس جائیں">
+
+<!ENTITY forwardButton.tooltip  "آگے بڑھیں">
+
+<!ENTITY detailsPane.more.label "مزید">
+<!ENTITY detailsPane.more.accesskey "م">
+<!ENTITY detailsPane.less.label "کم">
+<!ENTITY detailsPane.less.accesskey "ک">
+<!ENTITY detailsPane.selectAnItemText.description "شے کے خواص نظارہ اور تدوین کرنے کے لیے اسے منتخب کریں">
+
+<!ENTITY view.label               "نظارہ">
+<!ENTITY view.accesskey           "ن">
+<!ENTITY byDate.label             "حسبِ تاریخ">
+<!ENTITY byDate.accesskey         "ت">
+<!ENTITY bySite.label             "حسبِ سائٹ">
+<!ENTITY bySite.accesskey         "س">
+<!ENTITY byMostVisited.label      "برائے زیادہ ملاحظہ کیے گۓ">
+<!ENTITY byMostVisited.accesskey  "م">
+<!ENTITY byLastVisited.label      "حسب آخری بار ملاحظہ کردہ">
+<!ENTITY byLastVisited.accesskey  "ب">
+<!ENTITY byDayAndSite.label       "حسب تاریخ اور سائٹ">
+<!ENTITY byDayAndSite.accesskey   "ت">
+
+<!ENTITY search.placeholder  "Search">
+

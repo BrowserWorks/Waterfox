@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Gwybodaeth am Ddatrys Problemau">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Mae'r dudalen hon yn cynnwys gwybodaeth dechnegol a allai fod yn ddefnyddiolpan fyddwch yn ceisio datrys problem. Os ydych yn chwilio am atebion i gwestiynaucyffredin am &brandShortName;, edrychwch ar ein wefan cefnogi <a id='supportLink'></a>.">
+
+<!ENTITY aboutSupport.crashes.title "Ardroddiad Chwalu">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Enw'r Adroddiad">
+<!ENTITY aboutSupport.crashes.sendDate "Cyflwynwyd">
+<!ENTITY aboutSupport.crashes.allReports "Pob Adroddiad Chwalu">
+<!ENTITY aboutSupport.crashes.noConfig "Mae'r rhaglen wedi ei ffurfweddu i ddangos adroddiadau chwalu.">
+
+<!ENTITY aboutSupport.extensionsTitle "Estyniadau">
+<!ENTITY aboutSupport.extensionName "Enw">
+<!ENTITY aboutSupport.extensionEnabled "Galluogwyd">
+<!ENTITY aboutSupport.extensionVersion "Fersiwn">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Nodweddion &brandShortName;">
+<!ENTITY aboutSupport.featureName "Enw">
+<!ENTITY aboutSupport.featureVersion "Fersiwn">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Nodweddion Arbrofol">
+<!ENTITY aboutSupport.experimentName "Enw">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Disgrifiad">
+<!ENTITY aboutSupport.experimentActive "Gweithredol">
+<!ENTITY aboutSupport.experimentEndDate "Dyddiad Gorffen">
+<!ENTITY aboutSupport.experimentHomepage "Tudalen Cartref">
+<!ENTITY aboutSupport.experimentBranch "Cangen">
+
+<!ENTITY aboutSupport.appBasicsTitle "Sylfaeni Rhaglen">
+<!ENTITY aboutSupport.appBasicsName "Enw">
+<!ENTITY aboutSupport.appBasicsVersion "Fersiwn">
+<!ENTITY aboutSupport.appBasicsBuildID "Cyfeirnod Adeiladu">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Sianel Diweddaru">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Hanes Diweddaru">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Dangos Hanes Diweddaru">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Cyfeiriadur Proffil">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Ffolder Proffil">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Ategion Galluogwyd">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Ffurfweddiad Adeiladu">
+<!ENTITY aboutSupport.appBasicsUserAgent "Asiant Defnyddiwr">
+<!ENTITY aboutSupport.appBasicsOS "SW">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Defnydd o'r cof">
+<!ENTITY aboutSupport.appBasicsPerformance "Perfformiad">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers Cofrestredig">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Proffiliau">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Ffenestri Amlbroses">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Prosesau Cynnwys Gwe">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Allwedd Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Modd Diogel">
+
+<!ENTITY aboutSupport.showDir.label "Agor Cyfeiriadur">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Dangos yn Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Agor Ffolder">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Dewisiadau Pwysig wedi eu Newid">
+<!ENTITY aboutSupport.modifiedPrefsName "Enw">
+<!ENTITY aboutSupport.modifiedPrefsValue "Gwerth">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Dewisiadau user.js">
+<!ENTITY aboutSupport.userJSDescription "Mae eich ffolder profil yn cynnwys <a id='prefs-user-js-link'>ffeil user.js</a>, sy'n cynnwys dewisiadau sydd heb eu creu gan &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Dewisiadau Wedi eu Cloi Pwysig">
+<!ENTITY aboutSupport.lockedPrefsName "Enw">
+<!ENTITY aboutSupport.lockedPrefsValue "Gwerth">
+
+<!ENTITY aboutSupport.graphicsTitle "Graffigau">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Cronfa Ddata Mannau">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Cyfanrwydd">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Gwirio Cyfanrwydd">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC Cynnyddol">
+
+<!ENTITY aboutSupport.a11yTitle "Hygyrchedd">
+<!ENTITY aboutSupport.a11yActivated "Gweithredu">
+<!ENTITY aboutSupport.a11yForceDisabled "Atal Hygyrchedd">
+<!ENTITY aboutSupport.a11yHandlerUsed "Defnyddiwyd Trinydd Mynediadwy">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Fersiynau Llyfrgell">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Hanes Gosod">
+<!ENTITY aboutSupport.updateHistoryTitle "Hanes Diweddaru">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Copïo testun i'r clipfwrdd">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Copïo data bras i'r clipfwrdd">
+
+<!ENTITY aboutSupport.sandboxTitle "Blwch tywod">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Galwadau System wedi eu Gwrthod">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Eiliad yn Ôl">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Math o Brosesu">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Ymresymiadau">
+
+<!ENTITY aboutSupport.safeModeTitle "Defnyddiwch y Modd Diogel">
+<!ENTITY aboutSupport.restartInSafeMode.label "Ailgychwyn gydag Ychwanegion wedi eu Hanalluogi…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Nodweddion">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnosteg">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Cofnod Methiant">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Cofnod Penderfynnu">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Nodweddion Crash Guard wedi ei Analluogi">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Dulliau Datrys">
+
+<!ENTITY aboutSupport.mediaTitle "Cyfrwng">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Dyfeisiau Allbwn">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Dyfeisiau Mewnbwn">
+<!ENTITY aboutSupport.mediaDeviceName "Enw">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grŵp">
+<!ENTITY aboutSupport.mediaDeviceVendor "Gwerthwr">
+<!ENTITY aboutSupport.mediaDeviceState "Cyflwr">
+<!ENTITY aboutSupport.mediaDevicePreferred "Amgen">
+<!ENTITY aboutSupport.mediaDeviceFormat "Fformat">
+<!ENTITY aboutSupport.mediaDeviceChannels "Sianeli">
+<!ENTITY aboutSupport.mediaDeviceRate "Cyfradd">
+<!ENTITY aboutSupport.mediaDeviceLatency "Cuddni">

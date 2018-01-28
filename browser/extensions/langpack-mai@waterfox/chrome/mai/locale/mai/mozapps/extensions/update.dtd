@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; अद्यतन">
+
+<!ENTITY  offline.title                   "&brandShortName; आफलाइन काज कए रहल अछि ">
+<!ENTITY  offline.description             "&brandShortName; केँ आनलाइन हएबाक जरूरत अछि ई देखबाक लेल अद्यतनउपलब्ध अछि जे नहि अहाँक सहयुक्तिक लेल एहि संस्करणक सँग एकरा सुसंगत करैत छी.">
+<!ENTITY  offline.toggleOffline.label     "आनलाइन होउ.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "गैर सुसंगत सहयुक्ति">
+<!ENTITY  mismatch.top.label              "निम्नलिखित सहयुक्ति सुसंगतत नहि  अछि  &brandShortName; क एहि संस्करण क सँग आओर निष्क्रिय कएल जाए रहल अछि :">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; जाँचि सकैत अछि जे जँ  ई सहयुक्तिक सुसंगत संस्कऱणउपलब्ध अछि अथवा नहि.">
+
+<!ENTITY  checking.wizard.title           "सुसंगत सहयुक्ति कलेल जाँच रहल अछि">
+<!ENTITY  checking.top.label              "अहाँक गैर सुसंगत सहयुक्ति केँ अद्यतन क लेल जाँचि रहल अछि ...">
+<!ENTITY  checking.status                 "ई किछु मिनट लए सकैत अछि ...">
+
+<!ENTITY  found.wizard.title               "सुसंगत सहयुक्ति पएलक">
+<!ENTITY  found.top.label                 "ओ सहयुक्ति केँ चुनू जकरा अहाँ संस्थापित कएनाइ चाहैत छी:">
+<!ENTITY  found.disabledXPinstall.label   "ई अद्यतनकेँ संस्थापित कएल जाए सकैत अछि किएक एकटा साफ्टवेयर संस्थापन अखन निष्क्रिय अछि. अहाँ सेटिंग केँ नीच्चाँ बदैल सकैत छी.">
+<!ENTITY  found.enableXPInstall.label     "वेबसाइट केँ साफ्टवेयर संस्थापनक अनुमति दिअ' ">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "सुसंगत सहयुक्ति संस्थापित कए रहल अछि ">
+<!ENTITY  installing.top.label            "अहाँक सहयुक्ति मे अद्यतन संस्थापित कए रहल अछि ...">
+
+<!ENTITY  noupdates.wizard.title          "कोनो सुसंगत सहयुक्ति नहि भेटल">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; अहाँक सहयुक्तिमे सुसंगत अद्यतन  पाबै मे असमर्थ छल.">
+<!ENTITY  noupdates.error.desc            "अद्यतन क लेल कोशिश क दौरान किछु समस्या छल.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; आवधिक रूप सँ जांचताह आओर अहाँक सूचित करताह  जखन सुसंगत सहयुक्ति क लेल सुसंगत अध्यतन भेटैछ.">
+
+<!ENTITY  finished.wizard.title           "सुसंगत सहयुक्ति संस्थापित">
+<!ENTITY  finished.top.label              "&brandShortName; अहाँक सहयुक्तिक लेल अद्यतन संस्थापित कएल.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; आवधिक रूप सँ जाँच आ सूचित कए सकैत अछि जखन सहयुक्ति क लेल अद्यतन भेटैछ.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; आवधिक रूपसँ जाँच आ सूचित कए सकैत अछि जखन सहयुक्ति क लेल अद्यतन भेटैछ.">
+
+<!ENTITY  adminDisabled.wizard.title      "अद्यतनक लेल जाँचबमे असमर्थ">
+<!ENTITY  adminDisabled.warning.label     "अद्यतनक लेल जाँचनाइ संभव नहि अछि गैर सुसंगत सहयुक्तिअद्यतनक लेल किएक एकरा &brandShortName; लेल साफ्टवेयर संस्थापन निष्क्रिय कएल गेल अछि. कृपया अपन सिस्टम प्रशासकसँ मदतिक गुहार करू.">
+
+<!ENTITY  versioninfo.wizard.title        "सहयुक्ति क सुसंगता जाँचू">
+<!ENTITY  versioninfo.top.label           "सुसंगता क लेल अहाँक सहयुक्ति केँ जाँच रहल अछि  &brandShortName; क एहि संस्करणक सँग.">
+<!ENTITY  versioninfo.waiting             "ई किछु समय लए सकैत अछि...">
+
+<!ENTITY  installerrors.wizard.title      "अद्यतन क लेल संस्थापनमे समस्या">
+<!ENTITY  installerrors.intro.label       "&brandShortName; समस्या पएलक जखन अहाँक किछु सहयुक्ति केँ अद्यतन कए रहल अछि .">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "समाप्त करू क्लिक करू &brandShortName; केँ आरंभ करबाक लेल.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; केँ आरंभ  कएनाइ  जारी रखबाक लेल संपन्न क्लिक  करू .">
+<!ENTITY  enableChecking.label            "&brandShortName; केँ अद्यतनक लेल जाँचबाक स्वीकार करू .">

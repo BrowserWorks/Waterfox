@@ -1,0 +1,11 @@
+<!ENTITY position.label             "Position:">
+<!ENTITY tile.label                 "Nebeneinander">
+<!ENTITY center.label               "Zentriert">
+<!ENTITY stretch.label              "Gestreckt">
+<!ENTITY fill.label                 "Gefüllt">
+<!ENTITY fit.label                  "Angepasst">
+<!ENTITY preview.label              "Vorschau">
+<!ENTITY color.label                "Farbe:">
+<!ENTITY setDesktopBackground.title "Hintergrundbild einrichten">
+<!ENTITY openDesktopPrefs.label     "Desktop-Einstellungen öffnen">
+<!ENTITY closeWindow.key            "w">

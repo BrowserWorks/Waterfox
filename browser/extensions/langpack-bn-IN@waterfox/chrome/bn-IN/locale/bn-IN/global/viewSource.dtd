@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "উল্লিখিত বিষয়বস্তুর উৎস: ">
+
+<!ENTITY fileMenu.label "ফাইল">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "পৃষ্ঠা সংরক্ষণ করুন ...">
+<!ENTITY savePageCmd.accesskey "A">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "পৃষ্ঠার বৈশিষ্ট্য (_u)">
+<!ENTITY pageSetupCmd.accesskey "প">
+<!ENTITY printPreviewCmd.label "প্রাকমুদ্রণ প্রদর্শন">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "প্রিন্ট করুন...">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "বন্ধ করুন">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "উল্লিখিত পংক্তি প্রদর্শন...">
+<!ENTITY goToLineCmd.accesskey "G">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "প্রদর্শন">
+<!ENTITY viewMenu.accesskey       "V">
+<!ENTITY reloadCmd.label "পুনরায় লোড করুন">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "অতিরিক্ত লম্বা পংক্তি বিভাজন করে প্রদর্শিত হবে"> 
+<!ENTITY menu_wrapLongLines.accesskey "W">
+<!ENTITY menu_highlightSyntax.label "সিনট্যাক্স হাইলাইট করা">
+<!ENTITY menu_highlightSyntax.accesskey "H">
+<!ENTITY menu_textSize.label "হরফের মাপ">
+<!ENTITY menu_textSize.accesskey "হ">
+<!ENTITY menu_textEnlarge.label "হরফের মাপ বৃদ্ধি করুন">
+<!ENTITY menu_textEnlarge.accesskey "I">
+<!ENTITY menu_textReduce.label "হরফের মাপ হ্রাস করুন">
+<!ENTITY menu_textReduce.accesskey "D">
+<!ENTITY menu_textReset.label "স্বাভাবিক">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "বর্তমান পৃষ্ঠায় অনুসন্ধান…">
+<!ENTITY findOnCmd.accesskey "F">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "পুনরায় অনুসন্ধান করুন">
+<!ENTITY findAgainCmd.accesskey "প">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "পূর্ববর্তী">
+<!ENTITY backCmd.accesskey "B">
+<!ENTITY forwardCmd.label "পরবর্তী">
+<!ENTITY forwardCmd.accesskey "F">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "লিংকের অবস্থান কপি করুন">
+<!ENTITY copyLinkCmd.accesskey "L">
+<!ENTITY copyEmailCmd.label "ই-মেইল ঠিকানা কপি করুন">
+<!ENTITY copyEmailCmd.accesskey "E">

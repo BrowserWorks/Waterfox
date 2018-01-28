@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "أخرجني من هنا!">
+<!ENTITY safeb.palm.decline.label "تجاهل هذا التحذير">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "هذا ليس موقعًا مخادعًا…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "خ">
+<!ENTITY safeb.palm.reportPage.label "لماذا حُجبت هذه الصفحة؟">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "تقرير من <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "موقع هجمات مُبلغ عنه!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "أُبلِغ عن أن الموقع <span id='malware_sitename'/> موقع هجمات و حُجِبَ بناء على تفضيلات الأمن.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>تحاول مواقع الهجمات تنصيب برامج تسرق المعلومات الشخصية، أو استخدام حاسوبك للهجوم على الآخرين، أو إيذاء حاسوبك.</p><p>توزّع بعض مواقع الهجمات البرامج المشبوهة بشكل مقصود، ولكن الكثير منها مخترق دون علم أو إذن أصحابها.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "صفحة برمجيات غير مرغوب فيها مبلغ عنها!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "أُبلِغ عن أن الموقع <span id='unwanted_sitename'/> يحتوي برمجيات غير مرغوب فيها و حُجِبَ بناء على تفضيلات الأمن.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>صفحات البرمجيات غير المرغوب فيها تحاول تنصيب برمجيات خدّاعة قد تؤثر على نظامك بصور غير متوقعة.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "موقع مخادع!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "أُبلِغ عن أن الموقع <span id='phishing_sitename'/> موقع مخادع و حُجِبَ بناء على تفضيلات الأمن.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>تصمم المواقع المخادعة لتضليلك حتى تفعل شيئًا خطيرًا، مثل تنصيب برمجيات، أو الإفصاح عن معلوماتك الشخصية مثل كلمة السر أو رقم الهاتف أو بطاقات الائتمان.</p><p>إدخال أي معلومات في هذه الصفحة قد يكون سببًا في سرقة هويتك أو أي صورة أخرى من صور الاحتيال.</p>">
+

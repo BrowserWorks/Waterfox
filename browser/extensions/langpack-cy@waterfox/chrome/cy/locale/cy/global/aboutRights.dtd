@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Ynghylch eich hawliau">
+<!ENTITY rights.intro "Mae &brandFullName; yn feddalwedd cod agored rhydd a rhad, wedi ei adeiladu gan gymuned o filoedd o bobl ar draws y byd i gyd. Mae yna rhai pethau i chi gael gwybod:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "Mae &brandShortName; ar gael i chi o dan amodau'r ">
+<!ENTITY rights.intro-point1b "Trwydded Gyhoeddus Mozilla">
+<!ENTITY rights.intro-point1c ". Mae hyn yn golygu y cewch ddefnyddio, gopïo a dosbarthu &brandShortName; i eraill.  Mae croeso i chi newid cod ffynhonnell &brandShortName; yn ôl eich angen. Mae Trwydded Gyhoeddus Mozilla yn rhoi'r hawl i chi ddosbarthu'r fersiwn rydych wedi ei newid.">
+
+<!ENTITY rights.intro-point2-a "Nid ydych yn derbyn unrhyw hawliau nod masnachu na thrwyddedau i nod masnach y Waterfox neu unrhyw barti, gan gynnwys y Mozzilla Foundation heb gyfyngiadau i enw na logo Waterfox. Mae gwybodaeth bellach am nodau masnach i’w cael ">
+<!ENTITY rights.intro-point2-b "yma">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Mae rhai nodweddion yn &brandShortName;, megis yr Adroddwr Chwalu, yn rhoi'r dewis i chi gyfrannu adborth i &vendorShortName;. Drwy ddewis cyflwyno adborth rydych yn rhoi i &vendorShortName; ganiatâd i ddefnyddio'r adborth i wella ei gynnyrch, i gyhoeddi'r adborth ar ei wefannau, ac i ddosbarthu'r adborth.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Mae sut rydym yn defnyddio y data personol ac adborth rydych wedi ei gyflwyno i &vendorShortName; drwy &brandShortName; yn cael ei ddisgrifio yn ">
+<!ENTITY rights2.intro-point3b "Polisi Preifatrwydd &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Rhaid rhestri unrhyw bolisïau preifatrwydd perthnasol yma.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Mae rhai nodweddion &brandShortName; yn gwneud defnydd p wasanaethau gwybodaeth gwe, er hynny nid ydym yn gallu gwarantu eu bod yn 100&#037; yn gywir nac yn rhydd o wallau. Mae rhagor o fanylion, gan gynnwys gwybodaeth ar sut i'w hanalluogi i'w cael yn yr ">
+<!ENTITY rights.intro-point4b "amodau gwasanaeth">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Os yw'r cynnyrch yn cynnwys gwasanaethau gwe, rhaid cysylltu unrhyw amodau gwasanaeth perthnasol ar gyfer y gwasanaeth(au) i'r adran ">
+<!ENTITY rights.intro-point4b-unbranded "Gwasanaethau Gwefan Gwe">
+<!ENTITY rights.intro-point4c-unbranded " berthnasol.">
+
+<!ENTITY rights2.webservices-header "Gwasanaethau Gwybodaeth Gwe &brandFullName;">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Er mwyn chwarae rhai mathau o gynnwys fideo, mae &brandShortName; yn llwytho i lawr rhywfaint o gynnwys modiwlau dadgryptio gan drydydd partïon.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "Mae &brandFullName; yn defnyddio gwasanaethau gwybodaeth gwe (&quot;Gwasanaethau&quot;) i ddarparu rhai o&apos;r nodweddion sy&apos;n cael eu darparu ar eich cyfer yn y fersiwn yma o &brandShortName; o fewn yr amodau disgrifir isod. Os nad ydych am ddefnyddio un neu fwy o&apos;r Gwasanaethau neu mae&apos;r amodau yn annerbyniol, mae modd i chi analluogi&apos;r nodwedd neu&apos;r Gwasanaeth(au). Mae gwybodaeth ar sut i analluogi nodwedd neu Wasanaeth penodol i&apos;w cael ">
+<!ENTITY rights2.webservices-b "yma">
+<!ENTITY rights3.webservices-c ". Mae modd analluogi nodweddion a Gwasanaethau eraill yn newisiadau'r rhaglen.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Pori Diogel: ">
+<!ENTITY rights.safebrowsing-b "Nid yw anablu Pori Diogel yn cael ei gymeradwyo gan y gall arwain i chi fynd i wefannau anniogel.  Os ydych eisiau analluogi'r nodwedd yn llwyr, dilynwch y camau hyn:">
+<!ENTITY rights.safebrowsing-term1 "Agor dewisiadau'r rhaglen">
+<!ENTITY rights.safebrowsing-term2 "Dewis Diogelwch">
+<!ENTITY rights2.safebrowsing-term3 "Dad dicio&apos;r dewis i &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Mae Pori Diogel wedi ei analluogi">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Pori Ymwybodol o Leoliad: ">
+<!ENTITY rights.locationawarebrowsing-b "yn ddewis i chi bob tro.  Ni fydd gwybodaeth yn cael ei anfon heb eich caniatâd.  Os hoffech chi analluogi'r nodwedd yn llwyr, dilynwch y camau hyn:">
+<!ENTITY rights.locationawarebrowsing-term1a "Yn y bar URL, teipiwch ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Teipio geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Clic dwbl i'r dewis geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Mae Pori Ymwybodol o Leoliad wedi ei analluogi">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Rhaid cynnwys yn fan hyn, drosolwg o'r gwasanaeth gwefan gwe mae'r cynnyrch yn ei gynnwys, ynghyd â chyfarwyddiadau ar sut i'w hatal os yn berthnasol.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Rhaid rhestru amodau gwasanaethau gwe yma.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "Mae &vendorShortName; a'i gyfranwyr, trwyddedwyr, a phartneriaid yn gweithio i ddarparu'r Gwasanaethau mwyaf cywir a chyfredol.  Er hynny, nid oes modd i ni warantu fod y wybodaeth yn gynhwysfawr a diwall.  Er enghraifft, efallai na fydd y Gwasanaeth Pori Diogel yn adnabod rhai gwefannau anniogel ac efallai adnabod rhai gwefannau diogel ar gam. Mae pob lleoliad sy'n cael ei ddychwelyd gan ein darparwyr gwasanaeth ar gyfer y Gwasanaeth Ymwybodol o Leoliad yn amcanion yn unig. Nid ydym ni na'r darparwyr gwasanaeth yn gallu gwarantu cywirdeb y lleoliadau hyn.">
+<!ENTITY rights.webservices-term2 "Gall &vendorShortName; atal neu newid y Gwasanaethau yn ôl eu mympwy.">
+<!ENTITY rights2.webservices-term3 "Mae croeso i chi ddefnyddio'r Gwasanaethau hyn gyda'r fersiwn yma o &brandShortName;, ac mae &vendorShortName; rhoi ei hawl i chi wneud hynny.  Mae &vendorShortName; a'i drwyddedwyr yn diogelu pob hawl arall yn y Gwasanaethau.  Nid yw'r amodau wedi eu hanelu at gyfyngu unrhyw hawliau o dan drwyddedau cod agored sy'n perthyn i &brandShortName; ac i'r fersiynau perthnasol o ffynonellau cod &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Mae&apos;r gwasanaeth yn cael ei ddarparu &quot;fel ag y mae&quot;.  Mae &vendorShortName;, ei gyfranwyr, trwyddedwyr, a dosbarthwyr, yn gwadu unrhyw warant, p&apos;un ai yn cael ei fynegi neu ei awgrymu, gan gynnwys heb gyfyngiad, gwarant fod y Gwasanaethau yn farchnadadwy nac yn addas i&apos;ch pwrpas penodol.  Rydych yn derbyn yr holl risg o ddewis y Gwasanaethau ar gyfer eich pwrpas ac i natur ansawdd a pherfformiad y Gwasanaeth. Nid yw rhai awdurdodau&apos;n caniatáu eithrio neu gyfyngu gwarant sy&apos;n cael ei awgrymu felly efallai nad yw&apos;r gwadiad hwn yn berthnasol i chi.">
+<!ENTITY rights.webservices-term5 "Yn wahanol i'r hyn sy'n angenrheidiol yn ôl y gyfraith, ni fydd &vendorShortName;, ei gyfranwyr, trwyddedwyr a dosbarthwyr yn agored i unrhyw iawndal anuniongyrchol, arbenigol, achlysurol, neu enghreifftiol yn codi o neu mewn unrhyw ffordd yn berthnasol i'r defnydd o &brandShortName; a'r Gwasanaethau.   Ni fydd yr atebolrwydd cyfunol o dan yr amodau hyn yn fwy na $500 (pum can dollar). Nid yw rhai awdurdodau yn caniatáu cyfyngu ar rhai materion difrod, felly efallai na fydd hyn yn berthnasol i chi.">
+<!ENTITY rights.webservices-term6 "Gall &vendorShortName; ddiweddaru'r amodau yn ôl y galw o bryd i'w gilydd. Nid oes modd newid na dileu'r amodau heb ganiatâd ysgrifenedig &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Mae'r amodau yn cael eu rheoli gan gyfreithiau talaith California, UDA, gan hepgor ei ddarpariaethau gwrthdaro cyfreithiol. Os yw unrhyw ran o'r amodau i'w cael heb rym cyfreithiol byd y gweddill yn sefyll mewn grym llawn ac effaith. Os digwydd gwrthdaro rhwng fersiwn sydd wedi ei gyfieithu a'r amodau hyn a'r fersiwn Saesneg, y fersiwn Saesneg fydd yn rheoli.">

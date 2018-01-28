@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "ముఖ్య సంకేతపదాన్ని మార్చండి">
+<!ENTITY setPassword.tokenName.label       "రక్షణ సాధనం">
+<!ENTITY setPassword.oldPassword.label     "ప్రస్తుత సంకేతపదం:">
+<!ENTITY setPassword.newPassword.label     "కొత్త సంకేతపదాన్ని ప్రవేశపెట్టండి:">
+<!ENTITY setPassword.reenterPassword.label "సంకేతపదాన్ని మరలా-ప్రవేశపెట్టండి:">
+<!ENTITY setPassword.meter.label           "సంకేతపద నాణ్యతా మీటర్">
+<!ENTITY setPassword.meter.loading         "లోడవుతున్నది">
+<!ENTITY masterPasswordDescription.label   "ఒక ముఖ్య సంకేతపదం సైటు సంకేతపదాలవంటి సున్నితమైన సమాచారాన్ని రక్షించుటకు ఉపయోగించబడింది.  మీరు ముఖ్య సంకేతపదాన్ని సృష్టించినట్లైతే &brandShortName; సంకేతపదంచేత రక్షించబడుతున్న సమాచారాన్ని తెచ్చుటకు ప్రయత్నించునప్పుడు  మీ సెషన్ మొత్తమునకు ఒక సారి సంకేతపదం ప్రవేశపెట్టమని అడగబడును.">
+<!ENTITY masterPasswordWarning.label       "దయచేసి ఖచ్చితంగా మీ ముఖ్యసంకేతపదాన్ని గుర్తుంచుకోండి.  ఒకవేళ మీరు మరచిపోతే, దాని ద్వారా రక్షించబడుతున్న  సమాచారాన్ని అంతటినీ పొందలేరు.">

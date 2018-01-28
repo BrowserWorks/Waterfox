@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "தடமறியல் பாதுகாப்பு">
+<!ENTITY  trackingProtection2.description      "தடமறிதல் என்பது பல்வேறு வலைதளங்களில் உங்கள் உலாவல் தரவின் தொகுப்பாகும். ஒரு சுயவிவரத்தைக் கட்டமைக்கவும் மற்றும் உங்கள் உலாவல் மற்றும் தனிப்பட்ட தகவல்களின் அடிப்படையில் உள்ளடக்கங்களைக் காட்டவும் தடமறிதலைப் பயன்படுத்த முடியும்.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "அறியப்பட்ட தடமறிவான்களை முடக்க தடமறியல் பாதுகாப்பைப் பயன்படுத்தவும்">
+<!ENTITY  trackingProtectionAlways.label       "எப்போதும்">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "அந்தரங்க சாளரங்களில் மட்டும்">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "ஒருபோதுமில்லை">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "மேலும் அறி">
+<!ENTITY  trackingProtectionExceptions.label   "விதிவிலக்குகள்…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "அந்தரங்க சாளரத்தில் தடமறியல் பாதுகாப்பைப் பாவி">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "அறியப்பட்ட தடமறிவான்களை முடக்க தனிப்பட்ட உலாவலில் தடமறியல் பாதுகாப்பைப் பயன்படுத்தவும்">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "மேலும் அறிய">
+
+
+
+<!ENTITY  doNotTrack.description        "நீங்கள் தடமறியப்பட விரும்பவில்லையென்று வலைத்தளங்களுக்கு “தடமறியாதே” சைகையை அனுப்பு">
+<!ENTITY  doNotTrack.learnMore.label    "மேலும் அறிய">
+<!ENTITY  doNotTrack.default.label      "தடமறியல் பாதுகாப்பைப் பயன்படுத்தும்போது மட்டுமே">
+<!ENTITY  doNotTrack.always.label       "எப்போதும்">
+
+<!ENTITY  history.label                 "வரலாறு">
+<!ENTITY  permissions.label             "அனுமதிகள்">
+
+<!ENTITY  addressBar.label              "முகவரி பட்டை">
+<!ENTITY  addressBar.suggest.label      "இடப்பட்டையைப் பயன்படுத்தும் போது, பரிந்துரைக்கவும்">
+
+
+<!ENTITY  locbar.bookmarks.label        "புத்தகக்குறிகள்">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "கீற்றுகளைத் திற">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "முன்னிருப்பு தேடுபொறியிலிருந்து தொடர்புடைய தேடல்கள்">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "தேடுபொறி பரிந்துரைத்துலுக்கான முன்னுரிமைகளை மாற்று">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "மூன்றாம் தரப்பு நினைவிகளை அனுமதிக்கவும்:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "எப்போதும்">
+<!ENTITY  acceptThirdParty.never.label    "ஒரு போதும் இல்லை">
+<!ENTITY  acceptThirdParty.visited.label  "பார்வையிட்டதிலிருந்து">
+
+<!ENTITY  keepUntil.label               "அதுவரை வைத்திரு:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "அவை காலாவதியாகிவிட்டது">
+<!ENTITY  close.label                   "நான் &brandShortName;ஐ மூடுகிறேன்">
+
+<!ENTITY  cookieExceptions.label        "விதிவிலக்குகள்...">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "நினைவிகளைக் காட்டு…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName;">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "வரலாறை நினைவில் வைக்கும்">
+<!ENTITY  historyHeader.dontremember.label "வரலாற்றை நினைவில் வைக்காது">
+<!ENTITY  historyHeader.custom.label       "வரலாறுக்கான விருப்பமை அமைவுகளைப் பாவிக்கும்">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; உங்கள் உலாவும், பதிவிறக்கும், படிவ மற்றும் தேடும் வரலாற்றை நினைவில் வைத்து நீங்கள் பார்வையிடும் இணைய தளங்களின் நினைவிகளையும் வைத்திருக்கும்.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "நீங்கள் இதற்கு விரும்பலாம்">
+<!ENTITY  rememberActions.clearHistory.label  "உங்கள் சமீபத்திய வரலாற்றை துடை">
+<!ENTITY  rememberActions.middle.label        ", அல்லது">
+<!ENTITY  rememberActions.removeCookies.label "தனி நினைவிகளை நீக்கு">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; தனி உலாவல் அமைப்புகளையே பயன்படுத்தும் , மற்றும் நீங்கள் இணையத்தை உலாவும் போது எந்த வரலாற்றையும் நினைவில் கொள்ளாது.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "நீங்களும் இதற்கு விரும்பலாம்">
+<!ENTITY  dontrememberActions.clearHistory.label "நடப்பு வரலாற்று அனைத்தையும் துடை">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "தனிப்பட்ட உலாவலை எப்போதும் பயன்படுத்து">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "என் உலாவல் மற்றும் பதிவிறக்க வரலாற்றை நினைவில் கொள்">
+<!ENTITY  rememberHistory2.accesskey  "வ">
+
+<!ENTITY  rememberSearchForm.label       "தேடும் மற்றும் படிவ வரலாற்றை நினைவில் கொள்">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; மூடுகையில் வரலாற்றைத் துடை">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "அமைவுகள்…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "மேலும் அறிய">
+<!ENTITY  browserContainersEnabled.label        "கலன் கீற்றுகளை செயற்படுத்து">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "அமைவுகள்…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">

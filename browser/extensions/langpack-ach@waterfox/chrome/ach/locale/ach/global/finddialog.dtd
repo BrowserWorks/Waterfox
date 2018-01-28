@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Nong Pot Buk Man">
+<!ENTITY findField.label "Nong ngo:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "Kit marwate">
+<!ENTITY caseSensitiveCheckbox.accesskey "t">
+<!ENTITY wrapCheckbox.label "Um">
+<!ENTITY wrapCheckbox.accesskey "U">
+<!ENTITY findButton.label "Nong Malubo kore">
+<!ENTITY findButton.accesskey "N">
+<!ENTITY cancelButton.label "Juki">
+<!ENTITY closeButton.label "Lor">
+<!ENTITY up.label "Malu">
+<!ENTITY up.accesskey "M">
+<!ENTITY down.label "Piny">
+<!ENTITY down.accesskey "P">
+<!ENTITY direction.label "Tung">

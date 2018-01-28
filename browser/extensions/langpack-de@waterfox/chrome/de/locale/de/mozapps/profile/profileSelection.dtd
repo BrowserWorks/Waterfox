@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Benutzerprofil wählen">
+
+<!ENTITY            profilename.label      "Profil-Name:">
+
+<!ENTITY            start.label            "&brandShortName; starten">
+<!ENTITY            exit.label             "Beenden">
+
+<!ENTITY            availprofiles.label    "Verfügbare Profile">
+
+<!ENTITY            newButton.label        "Profil erstellen…">
+<!ENTITY            newButton.accesskey    "e">
+<!ENTITY            renameButton.label     "Profil umbenennen…">
+<!ENTITY            renameButton.accesskey "u">
+<!ENTITY            deleteButton.label     "Profil löschen…">
+<!ENTITY            deleteButton.accesskey "l">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; speichert Ihre persönlichen Einstellungen und Daten in Ihrem persönlichen Profil.">
+
+<!ENTITY            offlineState.label    "Jetzt offline arbeiten">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "Gewähltes Profil beim Start ohne Nachfrage verwenden">
+<!ENTITY            useSelected.accesskey   "S">

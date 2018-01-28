@@ -1,0 +1,14 @@
+locale alerts my my/locale/my/alerts/
+locale autoconfig my my/locale/my/autoconfig/
+locale global my my/locale/my/global/
+locale global-platform my my/locale/my/global-platform/mac/ os=Darwin
+locale global-platform my my/locale/my/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform my my/locale/my/global-platform/win/ os=WINNT
+locale mozapps my my/locale/my/mozapps/
+locale necko my my/locale/my/necko/
+locale passwordmgr my my/locale/my/passwordmgr/
+locale pipnss my my/locale/my/pipnss/
+locale pippki my my/locale/my/pippki/
+locale places my my/locale/my/places/
+locale pluginproblem my my/locale/my/pluginproblem/
+locale weave my my/locale/my/services/

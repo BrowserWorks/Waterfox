@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Opstart">
+
+<!ENTITY startupPage2.label         "Når &brandShortName; starter:">
+<!ENTITY startupPage2.accesskey     "t">
+<!ENTITY startupUserHomePage.label     "Vis min startside">
+<!ENTITY startupBlankPage.label    "Vis en tom side">
+<!ENTITY startupPrevSession.label  "Vis mine vinduer og faneblade fra sidste gang">
+
+<!ENTITY homepage2.label            "Startside:">
+<!ENTITY homepage2.accesskey        "S">
+<!ENTITY useCurrentPage.label      "Anvend nuværende side">
+<!ENTITY useCurrentPage.accesskey  "n">
+<!ENTITY useMultiple.label         "Anvend nuværende sider">
+<!ENTITY chooseBookmark.label      "Anvend bogmærke…">
+<!ENTITY chooseBookmark.accesskey  "b">
+<!ENTITY restoreDefault.label      "Gendan standard">
+<!ENTITY restoreDefault.accesskey  "G">
+
+<!ENTITY downloads.label     "Filhentning">
+
+<!ENTITY saveTo.label "Gem filer i:">
+<!ENTITY saveTo.accesskey "m">
+<!ENTITY chooseFolderWin.label        "Gennemse…">
+<!ENTITY chooseFolderWin.accesskey    "e">
+<!ENTITY chooseFolderMac.label        "Vælg…">
+<!ENTITY chooseFolderMac.accesskey    "æ">
+<!ENTITY alwaysAskWhere.label "Spørg mig altid, hvor filer skal gemmes">
+<!ENTITY alwaysAskWhere.accesskey "a">
+
+<!ENTITY alwaysCheckDefault2.label        "Undersøg altid om &brandShortName; er din standardbrowser">
+<!ENTITY alwaysCheckDefault2.accesskey    "U">
+<!ENTITY setAsMyDefaultBrowser3.label     "Sæt som standard">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; er sat som din standardbrowser">
+<!ENTITY isNotDefault.label               "&brandShortName; er ikke din standardbrowser">
+
+<!ENTITY separateProfileMode.label        "Tillad &brandShortName; og Waterfox at køre samtidig">
+<!ENTITY useWaterfoxSync.label             "Tip: Dette gør brug at separate profiler. Brug Sync til at dele data mellem dem.">
+<!ENTITY getStarted.notloggedin.label     "Log ind på &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Åbn indstillinger for &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Aktiver multiproces i &brandShortName;">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Canvia la contrasenya mestra">
+<!ENTITY setPassword.tokenName.label "Dispositiu de seguretat">
+<!ENTITY setPassword.oldPassword.label "Contrasenya actual:">
+<!ENTITY setPassword.newPassword.label "Contrasenya nova:">
+<!ENTITY setPassword.reenterPassword.label "Contrasenya nova (un altre cop):">
+<!ENTITY setPassword.meter.label "Avaluador de qualitat de la contrasenya">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Reinicia">
+<!ENTITY resetPassword.title  "Reinicia la contrasenya mestra">
+<!ENTITY resetPassword.text  "Si reinicieu la vostra contrasenya mestra, totes les vostres contrasenyes de web i de correu electrònic, les dades dels formularis, els certificats personals i les claus privades emmagatzemades es perdran. Esteu segur que voleu reiniciar la vostra contrasenya mestra?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Baixada de certificats">
+<!ENTITY downloadCert.message1 "Se us ha demanat que confieu en una entitat certificadora (CA) nova.">
+<!ENTITY downloadCert.trustSSL "Confia en aquesta CA per identificar llocs web.">
+<!ENTITY downloadCert.trustEmail "Confia en aquesta CA per identificar usuaris de correu electrònic.">
+<!ENTITY downloadCert.trustObjSign "Confia en aquesta CA per identificar desenvolupadors de programari.">
+<!ENTITY downloadCert.message3 "Abans de confiar en aquesta CA amb qualsevol finalitat, cal que n'examineu el certificat i les polítiques i procediments (si estan disponibles).">
+<!ENTITY downloadCert.viewCert.label "Visualitza">
+<!ENTITY downloadCert.viewCert.text "Examina el certificat de la CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Sol·licitud d'identificació de l'usuari">
+<!ENTITY clientAuthAsk.message1 "Aquest lloc ha sol·licitat que us identifiqueu amb un certificat:">
+<!ENTITY clientAuthAsk.message2 "Trieu un certificat per presentar-lo com a identificació:">
+<!ENTITY clientAuthAsk.message3 "Detalls del certificat seleccionat:">
+
+<!ENTITY pkcs12.setpassword.title  "Trieu una contrasenya per a la còpia de seguretat del certificat">
+<!ENTITY pkcs12.setpassword.message  "La contrasenya per a la còpia de seguretat del certificat que definiu aquí protegeix el fitxer de còpia de seguretat que ara creareu. Heu de definir-la per seguir amb la còpia de seguretat.">
+<!ENTITY pkcs12.setpassword.label1 "Contrasenya de la còpia de seguretat del certificat:">
+<!ENTITY pkcs12.setpassword.label2 "Contrasenya de la còpia de seguretat del certificat (un altre cop):">
+<!ENTITY pkcs12.setpassword.reminder "Important: si oblideu la contrasenya de la còpia de seguretat del certificat no podreu recuperar-la més endavant. Deseu-la en un lloc segur.">
+
+<!ENTITY chooseToken.title  "Diàleg de tria del testimoni">
+<!ENTITY chooseToken.message1 "Trieu un testimoni.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "S'està generant una clau privada">
+<!ENTITY createCertInfo.msg1 "S'està generant la clau… Pot trigar uns minuts…">
+<!ENTITY createCertInfo.msg2 "Espereu…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Autenticació de testimoni protegit">
+<!ENTITY protectedAuth.msg "Autentiqueu al testimoni. El mètode d'autenticació depèn del tipus del vostre testimoni.">
+<!ENTITY protectedAuth.tokenName.label "Testimoni:">

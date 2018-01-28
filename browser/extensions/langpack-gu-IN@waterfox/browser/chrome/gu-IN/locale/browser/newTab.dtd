@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "નવી ટૅબ">
+<!ENTITY newtab.customize.classic "તમારી ટોચની સાઇટ્સ બતાવો">
+<!ENTITY newtab.customize.cog.enhanced "સૂચિત સાઇટ્સ શામેલ કરો">
+<!ENTITY newtab.customize.cog.title2 "નવું ટૅબ નિયંત્રણો">
+<!ENTITY newtab.customize.cog.learn "નવી ટૅબ વિશે જાણો">
+<!ENTITY newtab.customize.title "તમારા નવા ટેબ પૃષ્ઠને કસ્ટમાઇઝ કરો">
+<!ENTITY newtab.customize.blank2 "કોરુ પાનું બતાવો">
+<!ENTITY newtab.undo.removedLabel "થમ્ભનેઇલ દૂર કરેલ છે.">
+<!ENTITY newtab.undo.undoButton "રદ કરો.">
+<!ENTITY newtab.undo.restoreButton "બધુ પુન:સંગ્રહો.">
+<!ENTITY newtab.undo.closeTooltip "છુપાડો">

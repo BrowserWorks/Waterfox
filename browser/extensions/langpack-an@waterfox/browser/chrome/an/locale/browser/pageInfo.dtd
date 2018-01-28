@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "610">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copiar">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Seleccionar-lo tot">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Cheneral">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Titol:">
+<!ENTITY  generalURL            "Adreza:">
+<!ENTITY  generalType           "Tipo:">
+<!ENTITY  generalMode           "Modo de representación:">
+<!ENTITY  generalSize           "Mida:">
+<!ENTITY  generalReferrer       "URL de procedencia:">
+<!ENTITY  generalSource         "Orichen d'o caché:">
+<!ENTITY  generalModified       "Modificau:">
+<!ENTITY  generalEncoding2      "Codificacion d'o texto:">
+<!ENTITY  generalMetaName       "Nombre">
+<!ENTITY  generalMetaContent    "Conteniu">
+
+<!ENTITY  mediaTab              "Meyos">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adreza:">
+<!ENTITY  mediaText             "Texto asociau:">
+<!ENTITY  mediaAltHeader        "Texto alternativo">
+<!ENTITY  mediaAddress          "Adreza">
+<!ENTITY  mediaType             "Tipo">
+<!ENTITY  mediaSize             "Mida">
+<!ENTITY  mediaCount            "Cuenta">
+<!ENTITY  mediaDimension        "Dimensions:">
+<!ENTITY  mediaLongdesc         "Descripción larga:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Alzar como…">
+<!ENTITY  mediaSaveAs.accesskey "c">
+<!ENTITY  mediaSaveAs2.accesskey "u">
+<!ENTITY  mediaPreview          "Vista preliminar d'o fichero multimedia:">
+
+<!ENTITY  feedTab               "Canals">
+<!ENTITY  feedTab.accesskey     "C">
+<!ENTITY  feedSubscribe         "Conducir-se">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Permisos">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Usar as valuras por defecto">
+<!ENTITY  permAskAlways         "Preguntar siempre">
+<!ENTITY  permAllow             "Permitir">
+<!ENTITY  permAllowSession      "Permitir en ista sesión">
+<!ENTITY  permBlock             "Blocar">
+<!ENTITY  permissionsFor        "Permisos ta:">
+<!ENTITY  permPlugins           "Activar os plugins">
+
+<!ENTITY  permClearStorage           "Limpiar l'almagazenamiento">
+<!ENTITY  permClearStorage.accesskey "c">
+
+<!ENTITY  securityTab           "Seguranza">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Veyer o certificau">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Desconoixiu">
+
+
+<!ENTITY  securityView.identity.header   "Identidat d'o puesto web">
+<!ENTITY  securityView.identity.owner    "Propietario:">
+<!ENTITY  securityView.identity.domain   "Puesto web:">
+<!ENTITY  securityView.identity.verifier "Verificau por:">
+
+
+<!ENTITY  securityView.privacy.header                   "Privacidat y historia">
+<!ENTITY  securityView.privacy.history                  "He visitau iste puesto web antes de hue?">
+<!ENTITY  securityView.privacy.cookies                  "Iste puesto web almagazena información (cookies) en o mío ordinador?">
+<!ENTITY  securityView.privacy.viewCookies              "Veyer as cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ha alzau garra clau d'iste puesto web?">
+<!ENTITY  securityView.privacy.viewPasswords            "Veyer as claus alzadas">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "v">
+
+<!ENTITY  securityView.technical.header                 "Detalles tecnicos">
+
+<!ENTITY  helpButton.label                              "Aduya">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

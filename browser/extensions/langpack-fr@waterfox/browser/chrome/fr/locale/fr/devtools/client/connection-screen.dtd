@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Se connecter">
+<!ENTITY header     "Se connecter à un appareil distant">
+<!ENTITY host       "Hôte :">
+<!ENTITY port       "Port :">
+<!ENTITY connect    "Se connecter">
+<!ENTITY connecting "Connexion…">
+<!ENTITY availableAddons "Modules distants disponibles :">
+<!ENTITY availableTabs "Onglets distants disponibles :">
+<!ENTITY availableProcesses "Processus distants disponibles :">
+<!ENTITY connectionError "Erreur :">
+<!ENTITY errorTimeout "Erreur : délai d’attente de la connexion dépassé.">
+<!ENTITY errorRefused "Erreur : connexion refusée.">
+<!ENTITY errorUnexpected "Erreur inattendue.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Les outils de développement de Waterfox permettent de déboguer des appareils distants (Waterfox pour Android et Waterfox OS, par exemple). Assurez-vous d’avoir activé l’option « Débogage distant » sur l’appareil distant. Pour plus d’informations, consultez la ">
+<!ENTITY remoteDocumentation "documentation">
+<!ENTITY remoteHelpSuffix ".">
+

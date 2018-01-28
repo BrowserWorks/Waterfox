@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "സ്വതവേയുള്ള തിരച്ചില്‍ യന്ത്രം">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "സ്വതവേയുള്ള തെരച്ചില്‍ എഞ്ചിന്‍ തെരഞ്ഞെടുക്കുക. &brandShortName; ഇതു് സ്ഥാനപട്ട, തെരച്ചില്‍ പട്ട, ആരംഭ താള്‍ എന്നിവടങ്ങളില്‍ ഉപയോഗിയ്ക്കുന്നു.">
+
+<!ENTITY provideSearchSuggestions.label        "തിരച്ചിലിനുള്ള നിര്‍ദ്ദേശങ്ങള്‍ നല്‍കുക">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "തിരയല്‍ നിര്‍ദ്ദേശങ്ങള്‍ സ്ഥാനപ്പട്ടയില്‍ കാണിക്കുക">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "സ്ഥാനപട്ടയില്‍ തെരച്ചില്‍ നിര്‍ദ്ദേശങ്ങള്‍ കാണിക്കുന്നതല്ല. കാരണം, താങ്കള്‍ &brandShortName; ക്രമീകരിച്ചിരിയ്ക്കുന്നതു് നാള്‍വഴി ഒരിക്കലും ഓര്‍ക്കാതിരിയ്ക്കാനാണു്.">
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "തെരച്ചില്‍ ബാറിലൂടെ നിങ്ങള്‍ക്കു് മറ്റു് തെരച്ചില്‍ എഞ്ചിനുകള്‍ നേരിട്ടു് തെരയാം, ആവശ്യമുള്ളവ തെരഞ്ഞെടുക്കുക.">
+
+<!ENTITY engineNameColumn.label                "തെരച്ചില്‍ എഞ്ചിന്‍">
+<!ENTITY engineKeywordColumn.label             "കീവേര്‍ഡ്">
+
+<!ENTITY restoreDefaultSearchEngines.label     "സ്വതവേയുള്ള തെരച്ചില്‍ എഞ്ചിനുകള്‍ വീണ്ടെടുക്കുക">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "നീക്കം ചെയ്യുക">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "തെരച്ചിലിനുള്ള കൂടുതല്‍ യന്ത്രങ്ങള്‍ ലഭ്യമാക്കുക…">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+

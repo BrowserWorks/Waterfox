@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "درباره شبکه">
+<!ENTITY aboutNetworking.warning               "این بسیار آزمایشی است. بدون نظارت یک فرد بالغ استفاده نکنید.">
+<!ENTITY aboutNetworking.showNextTime          "دفعهٔ بعدی هم این هشدار نمایش داده شود">
+<!ENTITY aboutNetworking.ok                    "تأیید">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "سوکت‌ها">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "نوسازی">
+<!ENTITY aboutNetworking.autoRefresh           "نوسازی خودکار در هر ۳ ثانیه">
+<!ENTITY aboutNetworking.hostname              "نام میزبان">
+<!ENTITY aboutNetworking.port                  "درگاه">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "فعال">
+<!ENTITY aboutNetworking.idle                  "بی‌کار">
+<!ENTITY aboutNetworking.host                  "میزبان">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "ارسال شده">
+<!ENTITY aboutNetworking.received              "دریافت شده">
+<!ENTITY aboutNetworking.family                "خانواده">
+<!ENTITY aboutNetworking.addresses             "نشانی‌ها">
+<!ENTITY aboutNetworking.expires               "انقضا (ثانیه)">
+<!ENTITY aboutNetworking.messagesSent          "پیام‌های ارسال شده">
+<!ENTITY aboutNetworking.messagesReceived      "پیام‌های دریافت شده">
+<!ENTITY aboutNetworking.bytesSent             "بایت‌های ارسال شده">
+<!ENTITY aboutNetworking.bytesReceived         "بایت‌های دریافت شده">
+<!ENTITY aboutNetworking.logging               "وقایع">
+<!ENTITY aboutNetworking.logTutorial           "برای اطلاع از نحوه استفاده از این ابزار به <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>وقایع HTTP</a> سر بزنید.">
+<!ENTITY aboutNetworking.currentLogFile        "پرونده وقایع فعلی:">
+<!ENTITY aboutNetworking.currentLogModules     "ماژول‌های وقایع فعلی:">
+<!ENTITY aboutNetworking.setLogFile            "تنظیم پرونده وقایع">
+<!ENTITY aboutNetworking.setLogModules         "تنظیم ماژول‌های وقایع">
+<!ENTITY aboutNetworking.startLogging          "شروع ثبت وقایع">
+<!ENTITY aboutNetworking.stopLogging           "توقف ثبت وقایع">
+<!ENTITY aboutNetworking.dnsLookup             "جست‌و‌جو DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "برطرف کردن">
+<!ENTITY aboutNetworking.dnsDomain             "دامنه">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "آمار RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "وضعیت RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "تعداد برتری حافظه‌نهان">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "تعداد برتری شبکه">
+<!ENTITY aboutNetworking.totalNetworkRequests  "مجموع تعداد درخواست‌های شبکه">
+<!ENTITY aboutNetworking.rcwnOperation         "مدیریت حافظه موقت">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "بازکردن">
+<!ENTITY aboutNetworking.rcwnPerfRead          "مطالعه کردن">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "نوشتن">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "ورودی بازکردن">
+<!ENTITY aboutNetworking.rcwnAvgShort          "میانگین کم">
+<!ENTITY aboutNetworking.rcwnAvgLong           "میانگین بلند">
+<!ENTITY aboutNetworking.rcwnStddevLong        "انحراف استاندارد بلند">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "شمارش اهسته حافظه موقت">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "شمارش سریع حافظه موقت">

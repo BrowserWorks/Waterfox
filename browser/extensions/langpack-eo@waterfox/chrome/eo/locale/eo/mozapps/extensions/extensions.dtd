@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Administranto de aldonaĵoj">
+
+<!ENTITY search.placeholder                   "Serĉi ĉiujn aldonaĵojn">
+<!ENTITY search.buttonlabel                   "Serĉi">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Ŝargado…">
+<!ENTITY listEmpty.installed.label            "Vi havas neniun aldonaĵon de tiu tipo instalita">
+<!ENTITY listEmpty.availableUpdates.label     "Neniu ĝisdatigo trovita">
+<!ENTITY listEmpty.recentUpdates.label        "Vi ne ĝisdatigis viajn aldonaĵojn lastatempe">
+<!ENTITY listEmpty.findUpdates.label          "Kontroli ĉu estas ĝisdatigoj">
+<!ENTITY listEmpty.search.label               "Kongruaj aldonaĵoj ne trovitaj">
+<!ENTITY listEmpty.button.label               "Pli da informo pri aldonaĵoj">
+<!ENTITY installAddonFromFile.label           "Instali aldonaĵon el dosiero…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Iloj por ĉiuj aldonaĵoj">
+
+<!ENTITY getThemes.description                "Ĉu vi pretas personecigi vian retumilon?">
+<!ENTITY getThemes.learnMore                  "Elektu inter miloj da etosoj.">
+
+<!ENTITY cmd.back.tooltip                     "Unu paĝo malantaŭen">
+<!ENTITY cmd.forward.tooltip                  "Unu paĝo antaŭen">
+
+<!ENTITY showUnsignedExtensions.button.label  "Montri etendaĵojn kiuj ne povis esti kontrolitaj">
+<!ENTITY showAllExtensions.button.label       "Montri ĉiujn etendaĵojn">
+<!ENTITY debugAddons.label                    "Sencimigi aldonaĵojn">
+<!ENTITY debugAddons.accesskey                "S">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Ĉiuj aldonaĵoj estis malaktivigitaj de la sekura reĝimo.">
+<!ENTITY warning.checkcompatibility.label          "La kontrolado de kongrueco de aldonaĵoj estas malaktiva.  Vi povus havi nekongruajn aldonaĵojn.">
+<!ENTITY warning.checkcompatibility.enable.label   "Aktivigi">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Aktivigi la kontroladon de kongrueco de aldonaĵoj">
+<!ENTITY warning.updatesecurity.label              "La kontrolado de sekurecaj ĝisdatigoj de aldonaĵoj ne estas aktiva.  Vi povus esti kompromitita de ĝisdatigoj.">
+<!ENTITY warning.updatesecurity.enable.label       "Aktivigi">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Aktivigi la kontroladon de sekurecaj ĝisdatigoj de aldonaĵoj">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Serĉi">
+<!ENTITY view.discover.label                  "Elŝuti aldonaĵojn">
+<!ENTITY view.recentUpdates.label             "Ĵusaj ĝisdatigoj">
+<!ENTITY view.availableUpdates.label          "Haveblaj ĝisdatigoj">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Kontroli ĉu estas ĝisdatigoj">
+<!ENTITY updates.checkForUpdates.accesskey    "K">
+<!ENTITY updates.viewUpdates.label            "Vidi ĵusajn ĝisdatigojn">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Aŭtomate ĝisdatigi aldonaĵojn">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Igi ĉiujn aldonaĵojn ĝisdatiĝi aŭtomate">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "I">
+<!ENTITY updates.resetUpdatesToManual.label          "Igi ĉiujn aldonaĵojn ĝisdatiĝi malaŭtomate">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "I">
+<!ENTITY updates.updating.label               "Ĝisdatigado de aldonaĵoj">
+<!ENTITY updates.installed.label              "Viaj aldonaĵoj estis ĝisdatigitaj.">
+<!ENTITY updates.downloaded.label             "Viaj aldonaĵoj estis elŝutitaj.">
+<!ENTITY updates.restart.label                "Restartigi por kompletigi la instaladon">
+<!ENTITY updates.noneFound.label              "Neniu ĝisdatigo trovita">
+<!ENTITY updates.manualUpdatesFound.label     "Vidi haveblajn ĝisdatigojn">
+<!ENTITY updates.updateSelected.label         "Instali ĝisdatigojn">
+<!ENTITY updates.updateSelected.tooltip       "Instali haveblajn ĝisdatigojn en tiu ĉi listo">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Montri pli da informo">
+<!ENTITY cmd.showDetails.accesskey            "M">
+<!ENTITY cmd.findUpdates.label                "Serĉi ĝisdatigojn">
+<!ENTITY cmd.findUpdates.accesskey            "S">
+<!ENTITY cmd.preferencesWin.label             "Elektebloj">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "Preferoj">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "Pri">
+<!ENTITY cmd.about.accesskey                  "r">
+
+<!ENTITY cmd.enableAddon.label                "Aktivigi">
+<!ENTITY cmd.enableAddon.accesskey            "A">
+<!ENTITY cmd.disableAddon.label               "Malaktivigi">
+<!ENTITY cmd.disableAddon.accesskey           "M">
+<!ENTITY cmd.enableTheme.label                "Surmeti etoson">
+<!ENTITY cmd.enableTheme.accesskey            "E">
+<!ENTITY cmd.disableTheme.label               "Demeti etoson">
+<!ENTITY cmd.disableTheme.accesskey           "E">
+<!ENTITY cmd.askToActivate.label              "Demandi antaŭ ol aktivigi">
+<!ENTITY cmd.askToActivate.tooltip            "Ĉiufoje demandi antaŭ ol uzi tiun ĉi aldonaĵon">
+<!ENTITY cmd.alwaysActivate.label             "Ĉiam aktivigi">
+<!ENTITY cmd.alwaysActivate.tooltip           "Ĉiam uzi tiun ĉi aldonaĵon">
+<!ENTITY cmd.neverActivate.label              "Neniam aktivigi">
+<!ENTITY cmd.neverActivate.tooltip            "Neniam uzi tiun ĉi aldonaĵon">
+<!ENTITY cmd.stateMenu.tooltip                "Ŝanĝi la momenton kiam tiu ĉi aldonaĵo funkcias">
+<!ENTITY cmd.installAddon.label               "Instali">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Malinstali">
+<!ENTITY cmd.uninstallAddon.accesskey         "l">
+<!ENTITY cmd.showPreferencesWin.label         "Elektebloj">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Ŝanĝi la elekteblojn de tiu ĉi aldonaĵo">
+<!ENTITY cmd.showPreferencesUnix.label        "Preferoj">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Ŝanĝi la preferojn de tiu ĉi aldonaĵo">
+<!ENTITY cmd.contribute.label                 "Kontribui">
+<!ENTITY cmd.contribute.accesskey             "K">
+<!ENTITY cmd.contribute.tooltip               "Kontribui al la disvolvo de tiu ĉi aldonaĵo">
+
+<!ENTITY cmd.showReleaseNotes.label           "Montri liverajn notojn">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Montri la liverajn notojn de tiu ĉi ĝisdatigo">
+<!ENTITY cmd.hideReleaseNotes.label           "Kaŝi liverajn notojn">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Kaŝi la liverajn notojn por tiu ĉi ĝisdatigo">
+<!ENTITY cmd.findReplacement.label            "Serĉi anstataŭigon">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Kio estas aldonaĵo?">
+<!ENTITY discover.description2                "Aldonaĵo estas programo kiu permesas al vi tajli &brandShortName; per funkcioj aŭ stilaj trajtoj.  Provu tempoŝparan flankan strion, veterinformilon aŭ etosan aspekton por ekposedi &brandShortName;.">
+<!ENTITY discover.footer                      "Se vi havas retaliron vi vidos en tiu ĉi kadro kelkajn el la plej bonaj kaj popularaj aldonaĵoj kiujn vi povus provi.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Versio">
+<!ENTITY detail.lastupdated.label             "Laste modifita">
+<!ENTITY detail.creator.label                 "Programisto">
+<!ENTITY detail.homepage.label                "Ĉefpaĝo">
+<!ENTITY detail.numberOfDownloads.label       "Elŝutoj">
+
+<!ENTITY detail.contributions.description     "La programisto de tiu ĉi aldonaĵo petas al vi subteni la daŭran disvolvon per eta kontribuo.">
+
+<!ENTITY detail.updateType                    "Aŭtomataj ĝisdatigoj">
+<!ENTITY detail.updateDefault.label           "Ĉefa">
+<!ENTITY detail.updateDefault.tooltip         "Aŭtomate instali ĝisdatigojn nur se tiu estas la normo">
+<!ENTITY detail.updateAutomatic.label         "Ŝaltita">
+<!ENTITY detail.updateAutomatic.tooltip       "Aŭtomate instali ĝisdatigojn">
+<!ENTITY detail.updateManual.label            "Malŝaltita">
+<!ENTITY detail.updateManual.tooltip          "Ne instali ĝisdatigojn aŭtomate">
+<!ENTITY detail.home                          "Ĉefpaĝo">
+<!ENTITY detail.repository                    "Profilo de aldonaĵo">
+<!ENTITY detail.size                          "Grando">
+
+<!ENTITY detail.checkForUpdates.label         "Kontroli ĉu estas ĝisdatigoj">
+<!ENTITY detail.checkForUpdates.accesskey     "K">
+<!ENTITY detail.checkForUpdates.tooltip       "Kontroli ĉu estas ĝisdatigoj por tiu ĉi aldonaĵo">
+<!ENTITY detail.showPreferencesWin.label      "Elektebloj">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "Ŝanĝi la elekteblojn de tiu ĉi aldonaĵo">
+<!ENTITY detail.showPreferencesUnix.label     "Preferoj">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Ŝanĝi la preferojn de tiu ĉi aldonaĵo">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Taksado">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Paŭzigi">
+<!ENTITY progress.cancel.tooltip              "Nuligi">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Nomo">
+<!ENTITY sort.name.tooltip                    "Ordigi laŭ nomo">
+<!ENTITY sort.dateUpdated.label               "Laste ĝisdatigita">
+<!ENTITY sort.dateUpdated.tooltip             "Ordigi laŭ dato de ĝisdatigo">
+<!ENTITY sort.relevance.label                 "Plej bona trovo">
+<!ENTITY sort.relevance.tooltip               "Ordigi laŭ taŭgeco">
+<!ENTITY sort.price.label                     "Prezo">
+<!ENTITY sort.price.tooltip                   "Ordigi laŭ prezo">
+
+<!ENTITY search.filter2.label                 "Serĉi">
+<!ENTITY search.filter2.installed.label       "Miaj aldonaĵoj">
+<!ENTITY search.filter2.installed.tooltip     "Montri instalitajn aldonaĵojn">
+<!ENTITY search.filter2.available.label       "Haveblaj aldonaĵoj">
+<!ENTITY search.filter2.available.tooltip     "Montri aldonaĵojn, kiuj povas esti instalitaj">
+
+<!ENTITY addon.homepage                       "Ĉefpaĝo">
+<!ENTITY addon.details.label                  "Pli">
+<!ENTITY addon.details.tooltip                "Montri pli da detaloj pri tiu ĉi aldonaĵo">
+<!ENTITY addon.unknownDate                    "Nekonata">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "KADUKA">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(ne aktiva)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Ĝisdatigi">
+<!ENTITY addon.undoAction.label               "Malfari">
+<!ENTITY addon.undoAction.tooltip             "Malfari tiun ĉi agon">
+<!ENTITY addon.undoRemove.label               "Malfari">
+<!ENTITY addon.undoRemove.tooltip             "Konservi tiun ĉi aldonaĵon instalita">
+<!ENTITY addon.restartNow.label               "Restartigi nun">
+<!ENTITY addon.install.label                  "Instali">
+<!ENTITY addon.install.tooltip                "Instali ĉi tiun aldonaĵon">
+<!ENTITY addon.updateNow.label                "Ĝisdatigi nun">
+<!ENTITY addon.updateNow.tooltip              "Instali la ĝisdatigon por tiu ĉi aldonaĵo">
+<!ENTITY addon.includeUpdate.label            "Inkluzivi en ĝisdatigo">
+<!ENTITY addon.updateAvailable.label          "Estas ĝisdatigo havebla">
+<!ENTITY addon.checkingForUpdates.label       "Kontrolado de ĝisdatigoj…">
+<!ENTITY addon.releaseNotes.label             "Liveraj notoj:">
+<!ENTITY addon.loadingReleaseNotes.label      "Ŝargado…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Pardonon, okazis eraro dum la ŝargado de la liveraj notoj.">
+
+<!ENTITY addon.createdBy.label                "De ">
+
+<!ENTITY eula.title                           "Permesila interkonsento por fina uzanto">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Akcepti kaj instali…">
+
+<!ENTITY settings.path.button.label           "Esplori…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Kio estas tio ĉi? Telemezuro povas instali kaj ruli eksperimentojn fojfoje.">
+<!ENTITY experiment.info.learnmore "Pli da informo">
+<!ENTITY experiment.info.learnmore.accesskey "i">
+<!ENTITY experiment.info.changetelemetry "Agordoj de telemezuro">
+<!ENTITY experiment.info.changetelemetry.accesskey "t">
+
+<!ENTITY setting.learnmore "Pli da informo…">
+
+<!ENTITY disabledUnsigned.heading "Kelkaj aldonaĵoj estis malaktivigitaj">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "La jenaj aldonaĵoj ne estis kontrolitaj por uzo en &brandShortName;. Vi povas ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "trovi anstataŭojn">
+<!ENTITY disabledUnsigned.description.end " aŭ peti al la programisto kontroli ilin.">
+<!ENTITY disabledUnsigned.learnMore "Pli da informo pri niaj penoj helpi vin plu esti sekura en la reto.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Programistoj, kiuj volas ke iliaj aldonaĵoj estu kontrolitaj povas komenci per legado de nia ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "manlibro">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Ĉu io mankas? Kelkaj kromprogramoj ne plu estas subtenataj de &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Pli da informo.">
+
+<!ENTITY legacyWarning.description "Ĉu io mankas? Kelkaj etendaĵoj ne plu estas subtenataj de &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Montri kadukajn etendaĵojn">
+<!ENTITY legacyExtensions.title "Kadukaj etendaĵoj">
+<!ENTITY legacyExtensions.description "Tiuj ĉi etendaĵoj ne kongruas kun la nunaj normoj de &brandShortName;, tial ili estis malaktivigitaj.">
+<!ENTITY legacyExtensions.learnMore "Pli da informo pri la ŝanĝoj en aldonaĵoj">

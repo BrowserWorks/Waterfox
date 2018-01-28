@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Trình thuật sĩ Nhập">
+
+<!ENTITY importFrom.label               "Nhập các Tùy chọn, Trang đánh dấu, Lược sử, Mật khẩu và các dữ liệu khác từ:">
+<!ENTITY importFromUnix.label           "Nhập các Tùy chỉnh, Trang đánh dấu, Lược sử, Mật khẩu và các dữ liệu khác từ:">
+<!ENTITY importFromBookmarks.label      "Nhập các Trang đánh dấu từ:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "I">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Không nhập gì cả">
+<!ENTITY importFromNothing.accesskey    "h">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Không tìm thấy chương trình nào chứa trang đánh dấu, lược sử, hoặc dữ liệu mật khẩu.">
+
+<!ENTITY importSource.title             "Nhập các Thiết lập và Dữ liệu từ">
+<!ENTITY importItems.title              "Các mục cần Nhập">
+<!ENTITY importItems.label              "Chọn các mục để nhập:">
+
+<!ENTITY migrating.title                "Đang nhập…">
+<!ENTITY migrating.label                "Các mục sau đang được nhập…">
+
+<!ENTITY selectProfile.title            "Chọn Hồ Sơ">
+<!ENTITY selectProfile.label            "Các hồ sơ có thể nhập được từ:">
+
+<!ENTITY done.title                     "Nhập Xong">
+<!ENTITY done.label                     "Các mục sau đã được nhập thành công:">
+
+<!ENTITY closeSourceBrowser.label       "Vui lòng chắc chắn trình duyệt được chọn đã đóng truớc khi tiếp tục.">

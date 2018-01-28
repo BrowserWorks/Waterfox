@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Gosodiadau - Data Gwefan">
+<!ENTITY     hostCol.label                 "Gwefan">
+<!ENTITY     statusCol.label               "Statws">
+<!ENTITY     usageCol.label                "Storfa">
+<!ENTITY     searchTextboxPlaceHolder             "Chwilio gwefannau">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "C">
+<!ENTITY     removeSelected.label          "Tynnu'r Dewis">
+<!ENTITY     removeSelected.accesskey      "T">
+<!ENTITY     save.label                    "Cadw Newidiadau">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Diddymu">
+<!ENTITY     cancel.accesskey              "D">
+<!ENTITY     removingDialog.title          "Tynnu Data Gwefan">
+<!ENTITY     removingSelected.description  "Bydd tynnu data'r wefan hefyd yn tynnu cwcis a chynnwys gwe cysylltiedig. Gall hyn eich allgofnodi o wefannau. Ydych chi'n siŵr eich bod am wneud y newidiadau hyn?">
+<!ENTITY     siteTree.label                "Bydd cwcis y wefan ganlynol yn cael eu tynnu:">

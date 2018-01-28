@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ကိရိယာ စီမံခန့်ခွဲသူ">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "လုံခြုံရေး အစိတ်အပိုင်းများနဲ့ ကိရိယာများ">
+<!ENTITY devmgr.details.title                   "အသေးစိတ်များ">
+<!ENTITY devmgr.details.title2                  "တန်ဖိုး">
+
+<!ENTITY devmgr.button.login.label              "အဝင်n">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "အထွက်O">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "Pစကားဝှက်ပြောင်း">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "Lပြန်ဖွင့်">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Uပြန်မလုပ်">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "သင် ထည့်သွင်းလိုတဲ့ အစိတ်အပိုင်းရဲ့ အချက်အလက်ကို ရေးထည့်ပါ။">
+<!ENTITY loaddevice.modname                     "အစိတ်အပိုင်း အမည် -">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "PKCS#11 အစိတ်အပိုင်းသစ်">
+<!ENTITY loaddevice.filename                    "အစိတ်အပိုင်း ဖိုင်အမည် -">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "လှော်​လှန်ပါ...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 ဒရိုင်ဘာကို ဖွင့်ပါ">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Ayarlar - Site Verileri">
+<!ENTITY     hostCol.label                 "Site">
+<!ENTITY     statusCol.label               "Durum">
+<!ENTITY     usageCol.label                "Depolama">
+<!ENTITY     searchTextboxPlaceHolder             "Web sitelerinde ara">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "W">
+<!ENTITY     removeSelected.label          "Seçilenleri sil">
+<!ENTITY     removeSelected.accesskey      "S">
+<!ENTITY     save.label                    "Değişiklikleri kaydet">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Vazgeç">
+<!ENTITY     cancel.accesskey              "z">
+<!ENTITY     removingDialog.title          "Site verileri siliniyor">
+<!ENTITY     removingSelected.description  "Site verilerini silerseniz ilgili çerezler ve vrimdışı web içerikleri de silinecektir. Bu durumda sitelerdeki açık oturumlarınız kapanabilir. Değişiklikleri uygulamak istiyor musunuz?">
+<!ENTITY     siteTree.label                "Aşağıdaki web sitelerinin çerezleri silinecektir:">

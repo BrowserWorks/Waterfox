@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Proyeutu">
+<!ENTITY projectMenu_accesskey "p">
+<!ENTITY projectMenu_newApp_label "Aplicación nueva…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Abrir aplicación empaquetada…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "b">
+<!ENTITY projectMenu_importHostedApp_label "Abrir aplicación agospiada…">
+<!ENTITY projectMenu_importHostedApp_accesskey "L">
+<!ENTITY projectMenu_selectApp_label "Abrir aplicación…">
+<!ENTITY projectMenu_selectApp_accesskey "b">
+<!ENTITY projectMenu_play_label "Instalar y executar">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Detener aplicación">
+<!ENTITY projectMenu_stop_accesskey "D">
+<!ENTITY projectMenu_debug_label "Depurar aplicación">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Desaniciar proyeutu">
+<!ENTITY projectMenu_remove_accesskey "E">
+<!ENTITY projectMenu_showPrefs_label "Preferencies">
+<!ENTITY projectMenu_showPrefs_accesskey "r">
+<!ENTITY projectMenu_manageComponents_label "Alministrar componentes estra">
+<!ENTITY projectMenu_manageComponents_accesskey "l">
+<!ENTITY projectMenu_refreshTabs_label "Refrescar llingüetes">
+
+<!ENTITY runtimeMenu_label "Entornu d'execución">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Desconeutar">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "Captura de pantalla">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "C">
+<!ENTITY runtimeMenu_showDetails_label "Información del entornu d'execución">
+<!ENTITY runtimeMenu_showDetails_accesskey "I">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Preferencies de preséu">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "P">
+<!ENTITY runtimeMenu_showSettings_label "Axustes de preséu">
+<!ENTITY runtimeMenu_showSettings_accesskey "x">
+
+<!ENTITY viewMenu_label "Ver">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "Alternar editor">
+<!ENTITY viewMenu_toggleEditor_accesskey "E">
+<!ENTITY viewMenu_zoomin_label "Aumentar">
+<!ENTITY viewMenu_zoomin_accesskey "m">
+<!ENTITY viewMenu_zoomout_label "Amenorgar">
+<!ENTITY viewMenu_zoomout_accesskey "A">
+<!ENTITY viewMenu_resetzoom_label "Restablecer tamañu">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "Abrir aplicación">
+<!ENTITY runtimeButton_label "Esbillar entornu d'execución">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Los mios proyeutos">
+<!ENTITY projectPanel_runtimeApps "Aplicaciones en tiempu d'execución">
+<!ENTITY projectPanel_tabs "Llingüetes">
+<!ENTITY runtimePanel_usb "Preseos USB">
+<!ENTITY runtimePanel_wifi "Preséu Wi-Fi">
+<!ENTITY runtimePanel_simulator "Simuladores">
+<!ENTITY runtimePanel_other "Otros">
+<!ENTITY runtimePanel_installsimulator "Instalar Simulador">
+<!ENTITY runtimePanel_noadbhelper "Instalar encontu ADB">
+<!ENTITY runtimePanel_nousbdevice "¿Nun pues ver el preséu?">
+<!ENTITY runtimePanel_refreshDevices_label "Refrescar preseos">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "válidu">
+<!ENTITY details_warning_header "avisos">
+<!ENTITY details_error_header "fallos">
+<!ENTITY details_description "Descripción">
+<!ENTITY details_location "Direición">
+<!ENTITY details_manifestURL "ID de l'aplicación">
+<!ENTITY details_removeProject_button "Desaniciar proyeutu">
+<!ENTITY details_showPrepackageLog_button "Amosar rexistru previu al empaquetáu">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Aplicación nueva">
+<!ENTITY newAppHeader "Esbillar plantía">
+<!ENTITY newAppLoadingTemplate "Cargando plantíes…">
+<!ENTITY newAppProjectName "Nome de proyeutu:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Zarrar">
+
+<!-- Addons -->
+<!ENTITY addons_title "Componentes estra">
+<!ENTITY addons_aboutaddons "Abrir l'alministrador de complementos">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Preferencies">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Xeneral">
+<!ENTITY prefs_restore "Restaurar predeterminaos">
+<!ENTITY prefs_manage_components "Alministrar componentes estra">
+<!ENTITY prefs_options_autoconnectruntime "Reconeutar al entornu d'execución anterior">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Reconeutar al entornu d'execución anterior al aniciase WebIDE">
+<!ENTITY prefs_options_rememberlastproject "Recordar el postrer proyeutu">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Restaurar el proyeutu anterior al aniciase WebIDE">
+<!ENTITY prefs_options_templatesurl "URL de plantíes">
+<!ENTITY prefs_options_templatesurl_tooltip "Índiz de plantíes disponibles">
+<!ENTITY prefs_options_showeditor "Amosar editor">
+<!ENTITY prefs_options_showeditor_tooltip "Amosar editor internu">
+<!ENTITY prefs_options_tabsize "Tamañu de la llingüeta">
+<!ENTITY prefs_options_expandtab "Llingüetes flexibles">
+<!ENTITY prefs_options_expandtab_tooltip "Usar espacios en cuenta del caráuter de tabulación">
+<!ENTITY prefs_options_detectindentation "Autosangrar">
+<!ENTITY prefs_options_detectindentation_tooltip "Deducir sangráu basándose nel conteníu del códigu fonte">
+<!ENTITY prefs_options_autocomplete "Autocompletar">
+<!ENTITY prefs_options_autocomplete_tooltip "Activar autocompletáu de códigu">
+<!ENTITY prefs_options_autoclosebrackets "Zarrar llaves automáticamente">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Inxertar llaves de zarru automáticamente">
+<!ENTITY prefs_options_keybindings "Combinaciones de tecles">
+<!ENTITY prefs_options_keybindings_default "Predetermináu">
+<!ENTITY prefs_options_autosavefiles "Auto-guardar ficheros">
+<!ENTITY prefs_options_autosavefiles_tooltip "Guarda automáticamente los ficheros editaos enantes d'executar el proyeutu">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Información del entornu d'execución">
+<!ENTITY runtimedetails_adbIsRoot "ADB ye root: ">
+<!ENTITY runtimedetails_summonADBRoot "preséu raigañu">
+<!ENTITY runtimedetails_ADBRootWarning "(requier un cargador desbloquiáu)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Privilexos non restrinxíos de DevTools:">
+<!ENTITY runtimedetails_requestPrivileges "solicita más privilexos">
+<!ENTITY runtimedetails_privilegesWarning "(va reaniciase'l preséu. Requier accesu root).">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "sí/non">
+<!ENTITY device_typenumber "Enteru">
+<!ENTITY device_typestring "Cadena">
+<!ENTITY device_typeobject "Oxetu">
+<!ENTITY device_typenone "Seleiciona un tipu">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Preferencies de preséu">
+<!ENTITY devicepreference_search "Guetar preferencies">
+<!ENTITY devicepreference_newname "Nome de la preferencia nueva">
+<!ENTITY devicepreference_newtext "Valor de la preferencia">
+<!ENTITY devicepreference_addnew "Amestar preferencia nueva">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Axustes de preséu">
+<!ENTITY devicesetting_search "Axustes de gueta">
+<!ENTITY devicesetting_newname "Nome de configuración nueva">
+<!ENTITY devicesetting_newtext "Valor de configuración">
+<!ENTITY devicesetting_addnew "Amestar configuración nueva">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Ayuda">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Identificación del veceru">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "L'estremu al que tas coneutándote necesita más información pa identificar esta conexón. Analiza'l códigu QR de debaxu per aciu de la solicitú que tienes nel otru preséu.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "¿Nun tienes un analizador QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "¿Tienes un analizador QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Si l'otru preséu solicita un token en cuenta d'analizar un códigu QR, copia'l valor de debaxo nel otru preséu:">
+<!ENTITY wifi_auth_qr_size_note "Si'l códigu QR apaez perpequeñu pa que s'afite con ésitu la conexón, tenta d'averar o agrandar la ventana.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Rexistros d'órdenes previos al empaquetáu">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Opciones del simulador">
+<!ENTITY simulator_remove "Desaniciar simulador">
+<!ENTITY simulator_reset "Reafitar valores">
+<!ENTITY simulator_name "Nome">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_version "Versión">
+<!ENTITY simulator_profile "Perfil">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_device "Preséu">
+<!ENTITY simulator_screenSize "Pantalla">
+<!ENTITY simulator_pixelRatio "Rellación aspeutu">
+<!ENTITY simulator_tv_data "Simulación de TV">
+<!ENTITY simulator_tv_data_open "Datos de configuración">
+<!ENTITY simulator_tv_data_open_button "Abrir direutoriu de configuración…">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Διαχείριση συσκευών">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Μονάδες ασφάλειας και συσκευές">
+<!ENTITY devmgr.details.title                   "Λεπτομέρειες">
+<!ENTITY devmgr.details.title2                  "Τιμή">
+
+<!ENTITY devmgr.button.login.label              "Σύνδεση">
+<!ENTITY devmgr.button.login.accesskey          "Σ">
+<!ENTITY devmgr.button.logout.label             "Αποσύνδεση">
+<!ENTITY devmgr.button.logout.accesskey         "π">
+<!ENTITY devmgr.button.changepw.label           "Αλλαγή κωδικού">
+<!ENTITY devmgr.button.changepw.accesskey       "Α">
+<!ENTITY devmgr.button.load.label               "Φόρτωση">
+<!ENTITY devmgr.button.load.accesskey           "Φ">
+<!ENTITY devmgr.button.unload.label             "Εκφόρτωση">
+<!ENTITY devmgr.button.unload.accesskey         "κ">
+<!ENTITY devmgr.button.fips.accesskey           "ι">
+
+<!ENTITY loaddevice.info                        "Εισάγετε τις πληροφορίες για τη μονάδα που θέλετε να προσθέσετε.">
+<!ENTITY loaddevice.modname                     "Όνομα μονάδος:">
+<!ENTITY loaddevice.modname.accesskey           "μ">
+<!ENTITY loaddevice.modname.default             "Νέα μονάδα  PKCS#11">
+<!ENTITY loaddevice.filename                    "Όνομα αρχείου μονάδας:">
+<!ENTITY loaddevice.filename.accesskey          "χ">
+<!ENTITY loaddevice.browse                      "Αναζήτηση...">
+<!ENTITY loaddevice.browse.accesskey            "ζ">
+
+<!ENTITY loaddevice.title2                      "Φόρτωση προγράμματος οδήγησης συσκευής PKCS#11">

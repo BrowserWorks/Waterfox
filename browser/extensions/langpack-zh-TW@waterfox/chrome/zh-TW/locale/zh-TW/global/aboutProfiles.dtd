@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "關於設定檔">
+<!ENTITY aboutProfiles.subtitle "此頁面可幫助您管理設定檔。不同的設定檔會有自己的小世界，能夠分隔開不同的瀏覽紀錄、書籤、設定與附加元件。">
+<!ENTITY aboutProfiles.create "建立新設定檔">
+<!ENTITY aboutProfiles.restart.title "重新啟動">
+<!ENTITY aboutProfiles.restart.inSafeMode "重新啟動但停用附加元件…">
+<!ENTITY aboutProfiles.restart.normal "正常重新啟動…">
+

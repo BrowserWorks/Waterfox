@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "გაშვება">
+
+<!ENTITY startupPage2.label        "როცა &brandShortName; გაეშვება">
+<!ENTITY startupPage2.accesskey    "ე">
+<!ENTITY startupUserHomePage.label "მთავარი გვერდის ჩვენება">
+<!ENTITY startupBlankPage.label    "ცარიელი გვერდის ჩვენება">
+<!ENTITY startupPrevSession.label  "ბოლოს დახურული ფანჯრებისა და ჩანართების ჩვენება">
+
+<!ENTITY homepage2.label           "მთავარი გვერდი">
+<!ENTITY homepage2.accesskey       "გ">
+<!ENTITY useCurrentPage.label      "მიმდინარე გვერდის გამოყენება">
+<!ENTITY useCurrentPage.accesskey  "მ">
+<!ENTITY useMultiple.label         "მიმდინარე გვერდების გამოყენება">
+<!ENTITY chooseBookmark.label      "სანიშნის გამოყენება…">
+<!ENTITY chooseBookmark.accesskey  "ს">
+<!ENTITY restoreDefault.label      "ნაგულისხმევის აღდგენა">
+<!ENTITY restoreDefault.accesskey  "ა">
+
+<!ENTITY downloads.label     "ჩამოტვირთვები">
+
+<!ENTITY saveTo.label "ფაილების შესანახი მდებარეობა">
+<!ENTITY saveTo.accesskey "შ">
+<!ENTITY chooseFolderWin.label        "ამორჩევა…">
+<!ENTITY chooseFolderWin.accesskey    "რ">
+<!ENTITY chooseFolderMac.label        "შერჩევა…">
+<!ENTITY chooseFolderMac.accesskey    "ე">
+<!ENTITY alwaysAskWhere.label         "ფაილების შენახვისას, ადგილმდებარეობის ყოველ ჯერზე მითითება">
+<!ENTITY alwaysAskWhere.accesskey     "ყ">
+
+<!ENTITY alwaysCheckDefault2.label        "ყოველთვის შემოწმდეს, არის თუ არა &brandShortName; ნაგულისხმევი ბრაუზერი">
+<!ENTITY alwaysCheckDefault2.accesskey    "ვ">
+<!ENTITY setAsMyDefaultBrowser3.label     "ნაგულისხმევად მითითება…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "ნ">
+<!ENTITY isDefault.label                  "ამჟამად &brandShortName; ნაგულისხმევი ბრაუზერია">
+<!ENTITY isNotDefault.label               "&brandShortName; ნაგულისხმევი ბრაუზერი არაა">
+
+<!ENTITY separateProfileMode.label        "&brandShortName;-ის და Waterfox-ის ერთად გაშვების ნების დართვა">
+<!ENTITY useWaterfoxSync.label             "რჩევა: ეს სხვადასხვა პროფილებს იყენებს. მათ შორის მონაცემების გასაზიარებლად Sync გამოიყენეთ.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label;-ში შესვლა…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label;-ის პარამეტრების გახსნა">
+
+<!ENTITY e10sEnabled.label                "მრავალპროცესიანი &brandShortName;">

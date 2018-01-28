@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "ပုံနှိုပ်စက် ဂုဏ်အင်္ဂါရပ်များ">
+
+<!ENTITY paperInput.label "စာရွတ် အရွယ်အစား -">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "အလုပ် ခေါင်းစဉ် -">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "အရောင်-">
+<!ENTITY grayRadio.label "မီးခိုးရောင်">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "အရောင်">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "စာရွတ်အစွန်မှ ဘေးမျဉ်းကြား ကွာဟချက်">
+<!ENTITY topInput.label "ထိပ် -">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "အောက်ခြေ -">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "ဘယ်ဘက် -">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "ညာဘက် -">
+<!ENTITY rightInput.accesskey "R">

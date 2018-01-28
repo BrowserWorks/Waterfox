@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "اطلاعات رفع اشکال">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  این صفحه حاوی اطلاعات فنی است که امکان دارد هنگامی که به دنبال حل مشکلی هستید به شما کمک کند.  اگر به دنبال پاسخی برای پرسش‌های معمول دربارهٔ &brandShortName; هستید، از <a id='supportLink'>وب‌گاه پشتیبانی ما</a> بازدید نمایید.">
+
+<!ENTITY aboutSupport.crashes.title "گزارش‌های فروپاشی">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "شناسهٔ گزارش">
+<!ENTITY aboutSupport.crashes.sendDate "ثبت شد">
+<!ENTITY aboutSupport.crashes.allReports "تمام گزارش‌های فروپاشی">
+<!ENTITY aboutSupport.crashes.noConfig "این برنامه برای نمایش گزارش‌های فروپاشی پیکربندی نشده است.">
+
+<!ENTITY aboutSupport.extensionsTitle "ضمیمه‌ها">
+<!ENTITY aboutSupport.extensionName "نام">
+<!ENTITY aboutSupport.extensionEnabled "فعال">
+<!ENTITY aboutSupport.extensionVersion "نسخه">
+<!ENTITY aboutSupport.extensionId "شناسه">
+
+<!ENTITY aboutSupport.featuresTitle "امکانات &brandShortName;">
+<!ENTITY aboutSupport.featureName "نام">
+<!ENTITY aboutSupport.featureVersion "نسخه">
+<!ENTITY aboutSupport.featureId "شناسه">
+
+<!ENTITY aboutSupport.experimentsTitle "ویژگیهای آزمایشی">
+<!ENTITY aboutSupport.experimentName "نام">
+<!ENTITY aboutSupport.experimentId "شناسه">
+<!ENTITY aboutSupport.experimentDescription "شرح">
+<!ENTITY aboutSupport.experimentActive "فعال‌سازی">
+<!ENTITY aboutSupport.experimentEndDate "تاریخ پایان">
+<!ENTITY aboutSupport.experimentHomepage "صفحه خانگی">
+<!ENTITY aboutSupport.experimentBranch "شاخه">
+
+<!ENTITY aboutSupport.appBasicsTitle "اطلاعات اولیهٔ برنامه">
+<!ENTITY aboutSupport.appBasicsName "نام">
+<!ENTITY aboutSupport.appBasicsVersion "نسخه">
+<!ENTITY aboutSupport.appBasicsBuildID "شناسه ساخت">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "کانال بروزرسانی">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "تاریخچه بروزرسانی">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "نمایش تاریخچه بروزرسانی">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "مسیر مجموعه تنظیمات">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "پوشهٔ نمایه">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "متصل‌شونده‌های فعال">
+<!ENTITY aboutSupport.appBasicsBuildConfig "تنظیمات هنگام ساخت">
+<!ENTITY aboutSupport.appBasicsUserAgent "نام نمایندهٔ کاربر">
+<!ENTITY aboutSupport.appBasicsOS "سیستم عامل">
+<!ENTITY aboutSupport.appBasicsMemoryUse "استفاده حافظه">
+<!ENTITY aboutSupport.appBasicsPerformance "کارایی">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workerهای ثبت شده">
+
+<!ENTITY aboutSupport.appBasicsProfiles "نمایه">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "پنجره‌های چندپردازشی">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "پردازش های محتوا اینترنت">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "کلید گوگل">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "کلید سرویس مکان‌یابی موزیلا">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "حالت امن">
+
+<!ENTITY aboutSupport.showDir.label "باز کردن پوشه">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "نمایش در Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "باز کردن پوشه">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ترجیحاتِ تغییر یافتهٔ مهم">
+<!ENTITY aboutSupport.modifiedPrefsName "نام">
+<!ENTITY aboutSupport.modifiedPrefsValue "مقدار">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "ترجیحات user.js">
+<!ENTITY aboutSupport.userJSDescription "پوشه نمایه‌ی شما شامل یک <a id='prefs-user-js-link'>پرونده user.js</a> است، که شامل ترجیحاتی است که توسط &brandShortName; ساخته نشده است.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "ترجیحات مهم قفل شده">
+<!ENTITY aboutSupport.lockedPrefsName "نام">
+<!ENTITY aboutSupport.lockedPrefsValue "مقدار">
+
+<!ENTITY aboutSupport.graphicsTitle "اطلاعات گرافیکی">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "پایگاه مکان‌ها">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "یکپارچگی">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "بررسی یکپارچگی">
+
+<!ENTITY aboutSupport.jsTitle "جاوا اسکریپت">
+<!ENTITY aboutSupport.jsIncrementalGC "GC افزایشی">
+
+<!ENTITY aboutSupport.a11yTitle "دسترسی‌پذیری">
+<!ENTITY aboutSupport.a11yActivated "فعال‌ شده">
+<!ENTITY aboutSupport.a11yForceDisabled "دسترسی را متوقف کن">
+<!ENTITY aboutSupport.a11yHandlerUsed "مدیریت دسترسی پذیری مورد استفاده قرار گرفته است">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "نسخه‌های کتاب‌خانه">
+
+<!ENTITY aboutSupport.installationHistoryTitle "تاریخچهٔ نصب">
+<!ENTITY aboutSupport.updateHistoryTitle "تاریخچه بروزرسانی">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "رونوشت متن به تخته‌گیره">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "رونوشت برداشتن از داده‌های خام در تخته‌گیره">
+
+<!ENTITY aboutSupport.sandboxTitle "فضا آزمایش">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "تماس‌های سیستمی رد شده">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "ثانیه قبل">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "نوع فرآیند">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "آرگومان‌ها">
+
+<!ENTITY aboutSupport.safeModeTitle "آزمایش حالت امن">
+<!ENTITY aboutSupport.restartInSafeMode.label "راه‌اندازی مجدد، همراه با غیرفعال‌سازی افزونه‌ها…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "ویژگی‌ها">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "تشخیص عیب">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "گزارش خطاهای ثبت شده">
+<!ENTITY aboutSupport.graphicsGPU1Title "پردازنده گرافیکی #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "پردازنده گرافیکی #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "گزارش تصمیم‌ها">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "امکانات غیرفعال شده محافظ فروپاشی">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "راه‌حل">
+
+<!ENTITY aboutSupport.mediaTitle "رسانه">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "خروجی دستگاه‌ها">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "ورودی دستگاها">
+<!ENTITY aboutSupport.mediaDeviceName "نام">
+<!ENTITY aboutSupport.mediaDeviceGroup "گروه">
+<!ENTITY aboutSupport.mediaDeviceVendor "فروشنده">
+<!ENTITY aboutSupport.mediaDeviceState "وضعیت">
+<!ENTITY aboutSupport.mediaDevicePreferred "ترجیح داده شده">
+<!ENTITY aboutSupport.mediaDeviceFormat "قالب">
+<!ENTITY aboutSupport.mediaDeviceChannels "کانال‌ها">
+<!ENTITY aboutSupport.mediaDeviceRate "نرخ">
+<!ENTITY aboutSupport.mediaDeviceLatency "تاخیر">

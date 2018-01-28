@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Attention, danger !">
+<!ENTITY aboutWarningText.label "La modification de ces préférences avancées peut être dommageable pour la stabilité, la sécurité et les performances de cette application. Ne continuez que si vous savez ce que vous faites.">
+<!ENTITY aboutWarningButton2.label "Je prends le risque">
+<!ENTITY aboutWarningCheckbox.label "Afficher cet avertissement la prochaine fois">
+
+<!ENTITY searchPrefs.label "Rechercher :">
+<!ENTITY searchPrefs.accesskey "R">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Nom de l’option">
+<!ENTITY lockColumn.label "Statut">
+<!ENTITY typeColumn.label "Type">
+<!ENTITY valueColumn.label "Valeur">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Trier"> 
+<!ENTITY columnChooser.tooltip "Sélectionner les colonnes à afficher"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Copier">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "Copier le nom">
+<!ENTITY copyName.accesskey "o">
+<!ENTITY copyValue.label "Copier la valeur">
+<!ENTITY copyValue.accesskey "v">
+<!ENTITY modify.label "Modifier">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Inverser">
+<!ENTITY toggle.accesskey "I">
+<!ENTITY reset.label "Réinitialiser">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "Nouvelle">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Chaîne de caractères">
+<!ENTITY string.accesskey "C">
+<!ENTITY integer.label "Nombre entier">
+<!ENTITY integer.accesskey "n">
+<!ENTITY boolean.label "Valeur booléenne">
+<!ENTITY boolean.accesskey "b">

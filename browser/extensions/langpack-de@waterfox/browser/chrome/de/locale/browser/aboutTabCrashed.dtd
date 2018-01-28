@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Diesen Tab schließen">
+<!ENTITY tabCrashed.restoreTab "Diesen Tab wiederherstellen">
+<!ENTITY tabCrashed.restoreAll "Alle abgestürzte Tabs wiederherstellen">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Der Tab ist gerade abgestürzt.">
+<!ENTITY tabCrashed.offerHelp "So geht's weiter:">
+<!ENTITY tabCrashed.single.offerHelpMessage "&quot;&tabCrashed.restoreTab;&quot; lädt den Seiteninhalt neu.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "&quot;&tabCrashed.restoreTab;&quot; oder &quot;&tabCrashed.restoreAll;&quot; laden den Seiteninhalt neu.">
+<!ENTITY tabCrashed.requestHelp "Unterstützen Sie uns!">
+<!ENTITY tabCrashed.requestHelpMessage "Absturzberichte helfen uns beim Analysieren von Problemen und dabei, &brandShortName; besser zu machen.">
+<!ENTITY tabCrashed.requestReport "Diesen Tab melden">
+<!ENTITY tabCrashed.sendReport2 "Absturzbericht für derzeitigen Tab senden">
+<!ENTITY tabCrashed.commentPlaceholder2 "Einen Kommentar hinzufügen (Kommentare sind freiwillig und öffentlich sichtbar)">
+<!ENTITY tabCrashed.includeURL2 "Seitenadresse für diesen Absturzbericht mitsenden">
+<!ENTITY tabCrashed.emailPlaceholder "Ihre E-Mail-Adresse">
+<!ENTITY tabCrashed.emailMe "Beim Vorliegen weiterer Informationen per E-Mail benachrichtigen">
+<!ENTITY tabCrashed.reportSent "Absturzbericht bereits gesendet. Vielen Dank, dass Sie beim Verbessern von &brandShortName; helfen!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Berichte zu Hintergrund-Tabs senden">
+<!ENTITY tabCrashed.autoSubmit2 "In den Einstellungen die automatische Übermittlung von Absturzberichten aktivieren, einschließlich der Berichte über die in dieser und zukünftigen Sitzungen abgestürzten Tabs im Hintergrund">

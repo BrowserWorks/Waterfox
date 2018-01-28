@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "&quot;Parol ustasi&quot;ni oʻchirish">
+<!ENTITY removeInfo.label                  "Amaldagi joriy parolingizni kiritishingiz kerak:">
+<!ENTITY removeWarning1.label              "&quot;Parol ustasi&quot; sayt parollariga oʻxshash nozik ma`lumotlarni himoya qilishda foydalaniladi.">
+<!ENTITY removeWarning2.label              "Agar &quot;Parol ustasi&quot;ni oʻchirsangiz, kompyuteringiz xavf ostida boʻlganda ma`lumotlaringiz himoyalanmaydi.">
+<!ENTITY setPassword.oldPassword.label     "Joriy parol:">
+

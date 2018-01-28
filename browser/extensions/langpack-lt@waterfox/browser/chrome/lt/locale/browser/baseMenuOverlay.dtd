@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Suskleisti">
+<!ENTITY bringAllToFront.label    "Viską į priekinį planą">
+<!ENTITY zoomWindow.label         "Keisti dydį">
+<!ENTITY windowMenu.label         "Langas">
+
+<!ENTITY helpMenu.label           "Žinynas"> 
+<!ENTITY helpMenu.accesskey       "Ž"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Žinynas"> 
+<!ENTITY helpMenuWin.accesskey    "Ž">
+<!ENTITY aboutProduct2.label      "Apie „&brandShorterName;“">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "„&brandShorterName;“ žinynas">
+<!ENTITY productHelp2.accesskey   "ž">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Spartieji klavišai">
+<!ENTITY helpKeyboardShortcuts.accesskey "k">
+
+<!ENTITY helpSafeMode.label       "Perleisti programą, išjungus priedus…">
+<!ENTITY helpSafeMode.accesskey   "r">
+<!ENTITY helpSafeMode.stop.label       "Perleisti programą su išjungtais priedais">
+<!ENTITY helpSafeMode.stop.accesskey   "r">
+
+<!ENTITY healthReport2.label      "„&brandShorterName;“ techninės būklės ataskaita">
+<!ENTITY healthReport2.accesskey  "b">
+
+<!ENTITY helpTroubleshootingInfo.label      "Informacija problemų sprendimui">
+<!ENTITY helpTroubleshootingInfo.accesskey  "r">
+
+<!ENTITY helpFeedbackPage.label      "Siųsti atsiliepimą…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "Įvadas į „&brandShorterName;“">
+<!ENTITY helpShowTour2.accesskey        "v">
+
+<!ENTITY preferencesCmdMac.label        "Nuostatos…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Paslaugos">
+
+<!ENTITY hideThisAppCmdMac2.label       "Nerodyti „&brandShorterName;“">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Nerodyti kitų">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Rodyti viską">

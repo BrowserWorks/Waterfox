@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "ბეჭდვა">
+
+<!ENTITY printDialog.title "ბეჭდვა">
+
+<!ENTITY fpDialog.title "ფაილის ჩაწერა">
+
+<!ENTITY fileCheck.label "ბეჭდვა ფაილში">
+<!ENTITY fileCheck.accesskey "ფ">
+<!ENTITY propertiesButton.label "პარამეტრები…">
+<!ENTITY propertiesButton.accesskey "პ">
+<!ENTITY descText.label "საბეჭდის აღწერა:">
+<!ENTITY printer.label "საბეჭდი">
+<!ENTITY printerInput.label "საბეჭდის დასახელება:">
+<!ENTITY printerInput.accesskey "ხ">
+
+<!ENTITY printrangeGroup.label "ბეჭდვის რანგი">
+<!ENTITY allpagesRadio.label "ყველა გვერდი">
+<!ENTITY allpagesRadio.accesskey "ყ">
+<!ENTITY rangeRadio.label  "გვერდები">
+<!ENTITY rangeRadio.accesskey  "გ">
+<!ENTITY frompageInput.label  "გვერდიდან">
+<!ENTITY frompageInput.accesskey  "ი">
+<!ENTITY topageInput.label  "გვერდამდე">
+<!ENTITY topageInput.accesskey  "ა">
+<!ENTITY selectionRadio.label "მონიშნულის">
+<!ENTITY selectionRadio.accesskey "მ">
+
+<!ENTITY copies.label "ასლები">
+<!ENTITY numCopies.label "ასლების რაოდენობა:">
+<!ENTITY numCopies.accesskey "რ">
+
+<!ENTITY printframeGroup.label "ბლოკების ბეჭდვა">
+<!ENTITY aslaidoutRadio.label "ისე, როგორც ეკრანზეა">
+<!ENTITY aslaidoutRadio.accesskey "კ">
+<!ENTITY selectedframeRadio.label  "მონიშნული ბლოკის">
+<!ENTITY selectedframeRadio.accesskey  "ლ">
+<!ENTITY eachframesepRadio.label  "თითოეული ბლოკის ცალკე">
+<!ENTITY eachframesepRadio.accesskey  "ც">

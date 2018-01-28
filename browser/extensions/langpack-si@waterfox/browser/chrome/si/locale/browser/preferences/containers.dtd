@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "අභිප්‍රේත">
+<!ENTITY removeButton.label   "ඉවත් කරන්න">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "නම:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY icon.label           "අයිකනය:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "වර්ණය:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "නිම කරන ලදි">
+<!ENTITY button.ok.accesskey  "D">
+
+
+<!ENTITY addButton.label      "Add New Container">
+<!ENTITY backLink2.label      "&#171; Go Back">
+
+<!ENTITY name.placeholder     "Enter a container name">
+<!ENTITY window.title         "Add New Container">

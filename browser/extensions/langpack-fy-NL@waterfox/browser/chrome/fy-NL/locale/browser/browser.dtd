@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Priveesneupe)">
+
+<!ENTITY appmenu.tooltip                     "Menu iepenje">
+<!ENTITY navbarOverflow.label                "Mear helpmiddelen…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Ljepblêd fernije">
+<!ENTITY  reloadTab.accesskey                "n">
+<!ENTITY  reloadAllTabs.label                "Alle ljepblêden fernije">
+<!ENTITY  reloadAllTabs.accesskey            "A">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Ljepblêden oan de rjochterkant slute">
+<!ENTITY  closeTabsToTheEnd.accesskey        "j">
+<!ENTITY  closeOtherTabs.label               "Oare ljepblêden slute">
+<!ENTITY  closeOtherTabs.accesskey           "S">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Ljepblêd fêstsette">
+<!ENTITY  pinTab.accesskey                   "L">
+<!ENTITY  unpinTab.label                     "Ljepblêd losmeitsje">
+<!ENTITY  unpinTab.accesskey                 "b">
+<!ENTITY  sendTabToDevice.label              "Ljepblêd nei apparaat ferstjoere">
+<!ENTITY  sendTabToDevice.accesskey          "p">
+<!ENTITY  sendPageToDevice.label             "Side nei apparaat ferstjoere">
+<!ENTITY  sendPageToDevice.accesskey         "p">
+<!ENTITY  sendLinkToDevice.label             "Keppeling nei apparaat ferstjoere">
+<!ENTITY  sendLinkToDevice.accesskey         "p">
+<!ENTITY  moveToNewWindow.label              "Ferpleatse nei nij finster">
+<!ENTITY  moveToNewWindow.accesskey          "f">
+<!ENTITY  bookmarkAllTabs.label              "Blêdwizer foar alle ljepblêden meitsje…">
+<!ENTITY  bookmarkAllTabs.accesskey          "B">
+<!ENTITY  undoCloseTab.label                 "Ljepblêd slute ûngedien meitsje">
+<!ENTITY  undoCloseTab.accesskey             "m">
+<!ENTITY  closeTab.label                     "Ljepblêd slute">
+<!ENTITY  closeTab.accesskey                 "s">
+
+<!ENTITY  listAllTabs.label      "Alle ljepblêdtitels werjaan">
+
+<!ENTITY tabCmd.label "Nij ljepblêd">
+<!ENTITY tabCmd.accesskey "L">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Lokaasje iepenje…">
+<!ENTITY openFileCmd.label "Bestân iepenje…">
+<!ENTITY openFileCmd.accesskey "i">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Side-ynstellingen…">
+<!ENTITY printSetupCmd.accesskey "y">
+<!ENTITY printPreviewCmd.label "Ofdrukfoarbyld">
+<!ENTITY printPreviewCmd.accesskey "f">
+<!ENTITY printCmd.label "Ofdrukke…">
+<!ENTITY printCmd.accesskey "d">
+<!ENTITY printCmd.commandkey "P">
+
+<!ENTITY goOfflineCmd.label "Offline wurkje">
+<!ENTITY goOfflineCmd.accesskey "w">
+
+<!ENTITY menubarCmd.label "Menubalke">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "Navigaasje-arkbalke">
+<!ENTITY personalbarCmd.label "Blêdwizerarkbalke">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "Blêdwizerarkbalke-ûnderdiel">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Alle ljepblêden opnij lade">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "A">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Blêdwizer foar alle ljepblêden meitsje…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "l">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Ljepblêd slute ûngedien meitsje">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "m">
+
+<!ENTITY pageSourceCmd.label "Sideboarne">
+<!ENTITY pageSourceCmd.accesskey "r">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Side-ynfo">
+<!ENTITY pageInfoCmd.accesskey "f">
+<!ENTITY pageInfoCmd.commandkey "y">
+<!ENTITY mirrorTabCmd.label "Ljepblêd spegelje">
+<!ENTITY mirrorTabCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Folslein skerm werjefte">
+<!ENTITY enterFullScreenCmd.accesskey "S">
+<!ENTITY exitFullScreenCmd.label "Folslein skerm werjefte ferlitte">
+<!ENTITY exitFullScreenCmd.accesskey "S">
+<!ENTITY fullScreenCmd.label "Folslein skerm">
+<!ENTITY fullScreenCmd.accesskey "F">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Alle ljepblêden toane">
+<!ENTITY showAllTabsCmd.accesskey "A">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Oanmelde by &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "&syncBrand.shortName.label;-foarkarren iepenje">
+<!ENTITY fxaSignInError.label "Opnij ferbine mei &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Jo account ferifiearje">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Minimalisearje ">
+<!ENTITY fullScreenRestore.tooltip "Werom bringe">
+<!ENTITY fullScreenClose.tooltip "Slute">
+<!ENTITY fullScreenAutohide.label "Arkbalken ferstopje ">
+<!ENTITY fullScreenAutohide.accesskey "A">
+<!ENTITY fullScreenExit.label "Folsleinskermmodus ôfslute">
+<!ENTITY fullScreenExit.accesskey "F">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "brûkt no it folsleine skerm">
+<!ENTITY fullscreenWarning.generic.label "Dit dokumint brûkt no it folsleine skerm">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Folslein skerm ferlitte (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Folslein skerm ferlitte (esc)">
+<!ENTITY leaveDOMFullScreen.label "Folsleinskerm ferlitte">
+<!ENTITY leaveDOMFullScreen.accesskey "f">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "hat de kontrôle oer jo oanwizer. Druk op Esc om de kontrôle wer oer te nimmen.">
+<!ENTITY pointerlockWarning.generic.label "Dit dokumint hat de kontrôle oer jo oanwizer. Druk op Esc om de kontrôle wer oer te nimmen.">
+
+<!ENTITY closeWindow.label "Finster slute">
+<!ENTITY closeWindow.accesskey "s">
+
+<!ENTITY bookmarksMenu.label "Blêdwizers">
+<!ENTITY bookmarksMenu.accesskey "D">
+<!ENTITY bookmarkThisPageCmd.label "Blêdwizer foar dizze side meitsje">
+<!ENTITY editThisBookmarkCmd.label "Dizze blêdwizer bewurkje">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Fyn mear dieltsjinsten…">
+<!ENTITY sharePageCmd.label "Dizze side diele">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "d">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Dizze keppeling diele">
+<!ENTITY shareLink.accesskey "d">
+<!ENTITY shareImage.label "Dizze ôfbylding diele">
+<!ENTITY shareImage.accesskey "d">
+<!ENTITY shareSelect.label "Seleksje diele">
+<!ENTITY shareSelect.accesskey "d">
+<!ENTITY shareVideo.label "Dizze fideo diele">
+<!ENTITY shareVideo.accesskey "d">
+<!ENTITY feedsMenu2.label "Abonnearje op dizze side">
+<!ENTITY subscribeToPageMenupopup.label "Abonnearje op dizze side">
+<!ENTITY subscribeToPageMenuitem.label "Abonnearje op dizze side…">
+<!ENTITY addCurPagesCmd.label "Blêdwizer foar alle ljepblêden meitsje…">
+<!ENTITY showAllBookmarks2.label "Alle blêdwizers toane">
+<!ENTITY recentBookmarks.label "Resint oanmakke blêdwizers">
+<!ENTITY otherBookmarksCmd.label "Oare blêdwizers">
+<!ENTITY mobileBookmarksCmd.label "Mobyl-blêdwizers">
+<!ENTITY bookmarksToolbarChevron.tooltip "Mear blêdwizers toane">
+<!ENTITY showRecentlyBookmarked.label     "Resint oanmakke blêdwizers toane">
+<!ENTITY showRecentlyBookmarked.accesskey "t">
+<!ENTITY hideRecentlyBookmarked.label     "Resint oanmakke blêdwizers ferstopje">
+<!ENTITY hideRecentlyBookmarked.accesskey "f">
+
+<!ENTITY backCmd.label                "Tebek">
+<!ENTITY backButton.tooltip           "Ien side tebek gean">
+<!ENTITY forwardCmd.label             "Foarút">
+<!ENTITY forwardButton.tooltip        "Ien side foarút gean">
+<!ENTITY backForwardButtonMenu.tooltip "Klik mei rjochts of hâld yndrukt om skiednis te toanen">
+<!ENTITY backForwardButtonMenuMac.tooltip "Hâld yndrukt om skiednis te toanen">
+<!ENTITY reloadCmd.label              "Opnij lade">
+<!ENTITY stopCmd.label                "Beëinigje">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "It adres yn de lokaasjebalke iepenje">
+<!ENTITY printButton.label            "Ofdrukke">
+<!ENTITY printButton.tooltip          "Dizze side ôfdrukke">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Website-ynformaasje werjaan">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Berjochtpaniel iepenje">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Lokaasjefersyk-paniel iepenje">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Add-on-ynstallaasjebejocht-paniel iepenje">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Offline ûnthâldberjochtpaniel iepenje">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Bewarre oanmeldingenberjochtpaniel iepenje">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Gebrûk ynstekker beheare">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Wizigje oft jo notifikaasjes fan de website ûntfange kinne">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Gegevens yn permaninte opslach bewarje">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Browser wurdt op ôfstân bestjoerd">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Dielen fan jo kamera en/of mikrofoan mei de website beheare">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Dielen fan jo mikrofoan mei de website beheare">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Dielen fan jo finsters of skerm mei de website beheare">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Ynstallaasjeberjochtpaniel iepenje">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Dizze side oersette">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Sideoersetting beheare">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Gebrûk fan DRM-software beheare">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Jo hawwe jo kamera foar dizze website blokkearre.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Jo hawwe jo mikrofoan foar dizze website blokkearre.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Jo hawwe jo it dielen fan jo skerm foar dizze website blokkearre.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Jo hawwe jo lokaasjeynformaasje foar dizze website blokkearre.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Jo hawwe gegevensûnthâld foar dizze website blokkearre.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Jo hawwe notifikaasjes foar dizze website blokkearre.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Jo hawwe permaninte opslach foar dizze website blokkearre.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Skiednis toane">
+
+<!ENTITY searchItem.title             "Sykje">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Begjinside">
+
+<!ENTITY bookmarksButton.label          "Blêdwizers">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Blêdwizers">
+<!ENTITY bookmarksMenuButton.other.label "Oare blêdwizers">
+<!ENTITY bookmarksMenuButton.mobile.label "Mobyl-blêdwizers">
+<!ENTITY viewBookmarksSidebar2.label        "Blêdwizersydbalke werjaan">
+<!ENTITY viewBookmarksToolbar.label         "Blêdwizerarkbalke werjaan">
+<!ENTITY searchBookmarks.label              "Blêdwizers trochsykje">
+
+<!ENTITY containersMenu.label "Konteners">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Skiednis">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Ekstra">
+<!ENTITY toolsMenu.accesskey          "E"> 
+
+<!ENTITY keywordfield.label           "Kaaiwurd foar dizze sykopdracht tafoegje…">
+<!ENTITY keywordfield.accesskey       "K">
+
+<!ENTITY downloads.label              "Downloads">
+<!ENTITY downloads.accesskey          "D">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "Y">
+<!ENTITY addons.label                 "Add-ons">
+<!ENTITY addons.accesskey             "A">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Webûntwikkeler">
+<!ENTITY webDeveloperMenu.accesskey   "W">
+
+<!ENTITY inspectContextMenu.label     "Elemint ynspektearje">
+<!ENTITY inspectContextMenu.accesskey "E">
+
+<!ENTITY fileMenu.label         "Bestân"> 
+<!ENTITY fileMenu.accesskey       "B">
+<!ENTITY newUserContext.label             "Nij kontenerljepblêd">
+<!ENTITY newUserContext.accesskey         "k">
+<!ENTITY newNavigatorCmd.label        "Nij finster">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "N">
+<!ENTITY newPrivateWindow.label     "Nij priveefinster">
+<!ENTITY newPrivateWindow.accesskey "p">
+<!ENTITY newNonRemoteWindow.label   "Nij net-e10s-finster">
+
+<!ENTITY editMenu.label         "Bewurkje"> 
+<!ENTITY editMenu.accesskey       "W"> 
+<!ENTITY undoCmd.label            "Ungedien meitsje">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "U"> 
+<!ENTITY redoCmd.label            "Opnij útfiere">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "O"> 
+<!ENTITY cutCmd.label           "Knippe">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "N"> 
+<!ENTITY copyCmd.label            "Kopiearje">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "K"> 
+<!ENTITY pasteCmd.label           "Plakke">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "P"> 
+<!ENTITY deleteCmd.label          "Fuortsmite">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "F"> 
+<!ENTITY selectAllCmd.label         "Alles selektearje">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "A"> 
+<!ENTITY preferencesCmd2.label       "Opsjes">
+<!ENTITY preferencesCmd2.accesskey     "O">
+<!ENTITY preferencesCmdUnix.label       "Foarkarren…">
+<!ENTITY preferencesCmdUnix.accesskey     "F"> 
+
+<!ENTITY clearRecentHistory.label               "Resinte skiednis wiskje…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Byld"> 
+<!ENTITY viewMenu.accesskey       "y"> 
+<!ENTITY viewToolbarsMenu.label       "Arkbalken"> 
+<!ENTITY viewToolbarsMenu.accesskey     "A"> 
+<!ENTITY viewSidebarMenu.label "Sidebalke">
+<!ENTITY viewSidebarMenu.accesskey "S">
+<!ENTITY viewCustomizeToolbar.label       "Oanpasse…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "O">
+<!ENTITY overflowCustomizeToolbar.label       "Arkbalke wizigje…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "A">
+
+<!ENTITY historyMenu.label "Skiednis">
+<!ENTITY historyMenu.accesskey "S">
+<!ENTITY historyUndoMenu.label "Koartlyn sluten ljepblêden">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Koartlyn sluten skermen">
+<!ENTITY historyRestoreLastSession.label "Foargeande sesje werom bringe">
+
+<!ENTITY showAllHistoryCmd2.label "Alle skiednis toane">
+<!ENTITY showAllHistoryCmd.commandkey "s">
+
+<!ENTITY appMenuCustomize.label "Oanpasse">
+<!ENTITY appMenuCustomize.tooltip "It menu en de arkbalken oanpasse">
+<!ENTITY appMenuCustomizeExit.label "Oanpassen ôfslute">
+<!ENTITY appMenuCustomizeExit.tooltip "Oanpassen foltôgje">
+<!ENTITY appMenuHistory.label "Skiednis">
+<!ENTITY appMenuHistory.showAll.label "Alle skiednis toane">
+<!ENTITY appMenuHistory.clearRecent.label "Resinte skiednis wiskje…">
+<!ENTITY appMenuHistory.restoreSession.label "Foarige sesje werom bringe">
+<!ENTITY appMenuHistory.viewSidebar.label "Skiednissydbalke werjaaan">
+<!ENTITY appMenuHistory.recentHistory.label "Resinte skiednis">
+<!ENTITY appMenuHelp.label "Help">
+<!ENTITY appMenuHelp.tooltip "Menu Help iepenje">
+
+<!ENTITY appMenuRemoteTabs.label "Syngronisearre ljepblêden">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Gjin iepen ljepblêden">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Mear toane">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Mear ljepblêden fan dit apparaat toane">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Alle toane">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Alle ljepblêden fan dit apparaat toane">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Set ljepblêdsyngronisaasje oan om in list fan ljepblêden fan jo oare apparaten wer te jaan.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Noch gjin syngronisearre ljepblêden…">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Wolle jo hjir jo ljepblêden fan oare apparaten sjen?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Syngronisaasjefoarkarren">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Meld jo oan om in list fan ljepblêden fan jo oare apparaten wer te jaan.">
+<!ENTITY appMenuRemoteTabs.signin.label "Oanmelde by Sync">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Apparaten beheare…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Syngroane-ljepblêdensidebalke werjaan">
+
+<!ENTITY customizeMenu.addToToolbar.label "Tafoegje oan arkbalke">
+<!ENTITY customizeMenu.addToToolbar.accesskey "a">
+<!ENTITY customizeMenu.addToPanel.label "Tafoegje oan menu">
+<!ENTITY customizeMenu.addToPanel.accesskey "m">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Tafoegje oan oerrinmenu">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.moveToToolbar.label "Ferpleatse nei arkbalke">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "F">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Ferpleatse nei menu">
+<!ENTITY customizeMenu.moveToPanel.accesskey "e">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Fêstmeitsje oan oerrinmenu">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "a">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Losmeitsje fan oerrinmenu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "L">
+<!ENTITY customizeMenu.removeFromToolbar.label "Fuortsmite fan arkbalke">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "r">
+<!ENTITY customizeMenu.removeFromMenu.label "Fuortsmite út menu">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Mear items tafoegje…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "M">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Mear">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Fier in sykterm of adres yn">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Utwreiding:">
+<!ENTITY urlbar.switchToTab.label     "Wikselje nei ljepblêd:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Wolle jo jo sykûnderfining ferbetterje mei suggestjes?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Mear ynfo…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "M">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Nee">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "N">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ja">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "J">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tip:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Help nedich om dingen te finen? Sykje nei de &#x1F50E; neist syksuggestjes.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Opsjes wizigje…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "O">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Foarkarren wizigje…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "F">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Sykterm">
+<!ENTITY contentSearchSubmit.tooltip  "Sykopdracht ferstjoere">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Sykje">
+<!ENTITY searchIcon.tooltip           "Sykje">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Sykje nei ">
+<!ENTITY searchWith.label             " mei:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Sykje by ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Sykje mei:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Sykynstellingen wizigje">
+<!ENTITY changeSearchSettings.tooltip "Sykynstellingen wizigje">
+
+<!ENTITY searchInNewTab.label         "Sykje yn Nij ljepblêd">
+<!ENTITY searchInNewTab.accesskey     "t">
+<!ENTITY searchSetAsDefault.label     "Ynstelle as standertsykmasine">
+<!ENTITY searchSetAsDefault.accesskey "s">
+
+<!ENTITY openLinkCmdInTab.label       "Keppeling yn nij ljepblêd iepenje">
+<!ENTITY openLinkCmdInTab.accesskey   "l">
+<!ENTITY openLinkCmd.label            "Keppeling yn nij finster iepenje">
+<!ENTITY openLinkCmd.accesskey        "f">
+<!ENTITY openLinkInPrivateWindowCmd.label "Keppeling iepenje yn nij priveefinster">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "P">
+<!ENTITY openLinkCmdInCurrent.label     "Keppeling iepenje ">
+<!ENTITY openLinkCmdInCurrent.accesskey "K">
+<!ENTITY openFrameCmdInTab.label      "Dielfinster yn nij ljepblêd iepenje">
+<!ENTITY openFrameCmdInTab.accesskey  "l">
+<!ENTITY openFrameCmd.label           "Dielfinster yn nij finster iepenje">
+<!ENTITY openFrameCmd.accesskey       "f">
+<!ENTITY openLinkCmdInContainerTab.label "Keppeling yn nij kontenerljepblêd iepenje">
+<!ENTITY openLinkCmdInContainerTab.accesskey "k">
+<!ENTITY showOnlyThisFrameCmd.label     "Allinnich dit dielfinster toane">
+<!ENTITY showOnlyThisFrameCmd.accesskey "d">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Dielfinster opnij lade">
+<!ENTITY reloadFrameCmd.accesskey     "n">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Boarne fan seleksje besjen">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML-boarne besjen">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "B">
+<!ENTITY viewPageSourceCmd.label      "Sideboarne besjen">
+<!ENTITY viewPageSourceCmd.accesskey  "b">
+<!ENTITY viewFrameSourceCmd.label     "Dielfinsterboarne besjen">
+<!ENTITY viewFrameSourceCmd.accesskey "b">
+<!ENTITY viewPageInfoCmd.label        "Side-ynfo besjen">
+<!ENTITY viewPageInfoCmd.accesskey    "y">
+<!ENTITY viewFrameInfoCmd.label       "Dielfinsterynfo besjen">
+<!ENTITY viewFrameInfoCmd.accesskey   "y">
+<!ENTITY reloadImageCmd.label         "Ofbylding opnij lade">
+<!ENTITY reloadImageCmd.accesskey     "l">
+<!ENTITY viewImageCmd.label           "Ofbylding besjen">
+<!ENTITY viewImageCmd.accesskey       "f">
+<!ENTITY viewImageInfoCmd.label       "Ofbyldingsynfo besjen">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewImageDescCmd.label       "Ofbyldingsomskriuwing besjen">
+<!ENTITY viewImageDescCmd.accesskey   "o">
+<!ENTITY viewVideoCmd.label           "Fideo besjen">
+<!ENTITY viewVideoCmd.accesskey       "I">
+<!ENTITY viewBGImageCmd.label         "Eftergrûnôfbylding besjen">
+<!ENTITY viewBGImageCmd.accesskey     "g">
+<!ENTITY setDesktopBackgroundCmd.label      "As eftergrûn ynstelle">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "e">
+<!ENTITY bookmarkPageCmd2.label       "Blêdwizer foar dizze side meitsje">
+<!ENTITY bookmarkThisLinkCmd.label      "Blêdwizer foar dizze keppeling meitsje">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "m">
+<!ENTITY bookmarkThisFrameCmd.label      "Blêdwizer foar dit dielfinster meitsje">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "m">
+<!ENTITY copyURLCmd.label             "URL kopiearje">
+<!ENTITY emailPageCmd.label           "Keppeling e-maile…">
+<!ENTITY emailPageCmd.accesskey       "e">
+<!ENTITY savePageCmd.label            "Side bewarje as…">
+<!ENTITY savePageCmd.accesskey        "a">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "b">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Dielfinster bewarje as…">
+<!ENTITY saveFrameCmd.accesskey       "l">
+<!ENTITY printFrameCmd.label          "Dielfinster ôfdrukke…">
+<!ENTITY printFrameCmd.accesskey      "d">
+<!ENTITY saveLinkCmd.label            "Keppeling bewarje as…">
+<!ENTITY saveLinkCmd.accesskey        "l">
+<!ENTITY saveImageCmd.label           "Ofbylding bewarje as…">
+<!ENTITY saveImageCmd.accesskey       "n">
+<!ENTITY saveVideoCmd.label           "Bewarje fideo as…">
+<!ENTITY saveVideoCmd.accesskey       "f">
+<!ENTITY saveAudioCmd.label           "Bewarje audio as…">
+<!ENTITY saveAudioCmd.accesskey       "a">
+<!ENTITY emailImageCmd.label          "Ofbylding e-maile…">
+<!ENTITY emailImageCmd.accesskey      "a">
+<!ENTITY emailVideoCmd.label          "Fideo e-maile…">
+<!ENTITY emailVideoCmd.accesskey      "a">
+<!ENTITY castVideoCmd.label           "Fideo nei apparaat stjoere">
+<!ENTITY castVideoCmd.accesskey       "e">
+<!ENTITY emailAudioCmd.label          "Audio e-maile…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "Dizze ynstekker aktivearje">
+<!ENTITY playPluginCmd.accesskey      "k">
+<!ENTITY hidePluginCmd.label          "Dizze ynstekker ferstoppe">
+<!ENTITY hidePluginCmd.accesskey      "f">
+<!ENTITY copyLinkCmd.label            "Keppelingslokaasje kopiearje">
+<!ENTITY copyLinkCmd.accesskey        "p">
+<!ENTITY copyImageCmd.label           "Ofbyldingslokaasje kopiearje">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyImageContentsCmd.label   "Ofbylding kopiearje">
+<!ENTITY copyImageContentsCmd.accesskey  "k"> 
+<!ENTITY copyVideoURLCmd.label        "Fideolokaasje kopiearje">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Audiolokaasje kopiearje">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "E-mailadres kopiearje">
+<!ENTITY copyEmailCmd.accesskey       "m">
+<!ENTITY thisFrameMenu.label              "Dit dielfinster">
+<!ENTITY thisFrameMenu.accesskey          "D">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Ofspylje">
+<!ENTITY mediaPlay.accesskey         "O">
+<!ENTITY mediaPause.label            "Pauzearje">
+<!ENTITY mediaPause.accesskey        "P">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Lûd út">
+<!ENTITY mediaMute.accesskey         "L">
+<!ENTITY mediaUnmute.label           "Lûd oan">
+<!ENTITY mediaUnmute.accesskey       "L">
+<!ENTITY mediaPlaybackRate2.label     "Ofspylfaasje">
+<!ENTITY mediaPlaybackRate2.accesskey "O">
+<!ENTITY mediaPlaybackRate050x2.label "Stadich (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "S">
+<!ENTITY mediaPlaybackRate100x2.label "Normaal">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate125x2.label "Fluch (1,25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "F">
+<!ENTITY mediaPlaybackRate150x2.label "Flugger (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "r">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Healwize faasje (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "H">
+<!ENTITY mediaLoop.label             "Werhelje">
+<!ENTITY mediaLoop.accesskey         "W">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Knoppen toane">
+<!ENTITY mediaShowControls.accesskey "T">
+<!ENTITY mediaHideControls.label     "Knoppen ferstopje">
+<!ENTITY mediaHideControls.accesskey "F">
+<!ENTITY videoFullScreen.label       "Folslein skerm">
+<!ENTITY videoFullScreen.accesskey   "s">
+<!ENTITY videoSaveImage.label        "Momintopname bewarje as…">
+<!ENTITY videoSaveImage.accesskey    "M">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Statistiken toane">
+<!ENTITY videoShowStats.accesskey    "t">
+<!ENTITY videoHideStats.label        "Statistiken ferstopje">
+<!ENTITY videoHideStats.accesskey    "t">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Ynzoome">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "Y">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Utzoome">
+<!ENTITY fullZoomReduceCmd.accesskey    "U">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Tebeksette">
+<!ENTITY fullZoomResetCmd.accesskey     "b">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Allinnich tekst zoome">
+<!ENTITY fullZoomToggleCmd.accesskey    "A">
+<!ENTITY fullZoom.label                 "Zoome">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "Sidebalke slute">
+<!ENTITY sidebarMenuClose.label         "Sidebalke slute">
+
+<!ENTITY quitApplicationCmdWin2.label       "Ofslute">
+<!ENTITY quitApplicationCmdWin2.accesskey   "O">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; ôfslute">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Ofslute"> 
+<!ENTITY quitApplicationCmd.accesskey   "O">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; ôfslute">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Slute">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "S">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Sidestyl">
+<!ENTITY pageStyleMenu.accesskey "d">
+<!ENTITY pageStyleNoStyle.label "Gjin styl">
+<!ENTITY pageStyleNoStyle.accesskey "G">
+<!ENTITY pageStylePersistentOnly.label "Basisstyl">
+<!ENTITY pageStylePersistentOnly.accesskey "B">
+
+<!ENTITY pageReportIcon.tooltip            "Pop-upynstellingen foar dizze website wizigje">
+
+<!ENTITY allowPopups.accesskey "P">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Foarkarren foar pop-upblokkearring bewurkje…">
+<!ENTITY editPopupSettings.label "Opsjes foar pop-upblokkearring bewurkje…">
+<!ENTITY editPopupSettings.accesskey "O">
+<!ENTITY dontShowMessage.accesskey "b">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Siderjochting draaie">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Tekstrjochting draaie">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "t">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Sykje op dizze side…">
+<!ENTITY findOnCmd.accesskey "S">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Opnij sykje">
+<!ENTITY findAgainCmd.accesskey "s">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Wurdboeken tafoegje…">
+<!ENTITY spellAddDictionaries.accesskey "W">
+
+<!ENTITY editBookmark.done.label                     "Klear">
+<!ENTITY editBookmark.removeBookmark.accessKey       "F">
+
+<!ENTITY identity.connectionSecure "Befeilige ferbining">
+<!ENTITY identity.connectionNotSecure "Ferbining is net befeilige">
+<!ENTITY identity.connectionFile "Dizze side is op jo kompjûter bewarre.">
+<!ENTITY identity.connectionVerified2 "Jo hawwe in befeilige ferbining mei dizze website, hokker beheard wurdt troch:">
+<!ENTITY identity.connectionInternal "Dit is in befeilige &brandShortName;-side.">
+<!ENTITY identity.extensionPage "Dizze side is laden fan in útwreiding út.">
+<!ENTITY identity.insecureLoginForms2 "Ynfierde oanmeldingen op dizze side soene oernommen wurde kinne.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; hat ûnderdielen fan dizze side dy't net befeilige binne blokkearre.">
+<!ENTITY identity.passiveLoaded "Underdielen fan dizze side binne net befeilige (lykas ôfbyldingen).">
+<!ENTITY identity.activeLoaded "Jo hawwe befeiliging op dizze side útskeakele.">
+<!ENTITY identity.weakEncryption "Dizze side brûkt swakke befeiliging.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Jo ferbining mei dizze website is net privee. Gegevens dy't jo ferstjoere, soene troch oaren besjoen wurde kinne (lykas wachtwurden, berjochten, creditcardgegevens, ensfh.).">
+<!ENTITY identity.description.insecureLoginForms "De oanmeldingsgegevens dy't jo op dizze side ynfiere binne net feilich en kinne oernommen wurde.">
+<!ENTITY identity.description.weakCipher "Jo ferbining mei dizze website brûkt swakke fersifering en is net privee.">
+<!ENTITY identity.description.weakCipher2 "Oare persoanen kinne jo gegevens besjen of it gedrach fan de website oanpasse.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; hat ûnderdielen fan dizze side dy't net befeilige binne blokkearre.">
+<!ENTITY identity.description.passiveLoaded "Jo ferbining is net privee en gegevens dy't jo mei de website diele soene troch oaren besjoen wurde kinne.">
+<!ENTITY identity.description.passiveLoaded2 "Dizze website befettet ynhâld dy't net befeilige is (lykas ôfbyldingen).">
+<!ENTITY identity.description.passiveLoaded3 "Hoewol &brandShortName; bepaalde ynhâld blokkearre hat, is der noch hieltyd ynhâld op de side dy't net befeilige is (lykas ôfbyldingen).">
+<!ENTITY identity.description.activeLoaded "Dizze website befettet ynhâld dy't net befeilige is (lykas scripts) en jo ferbining dêrmei is net privee.">
+<!ENTITY identity.description.activeLoaded2 "Gegevens dy't jo mei dizze website diele, soene troch oaren besjoen wurde kinne (lykas wachtwurden, berjochten, creditcardgegevens, ensfh.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Beskerming ynskeakelje">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "s">
+<!ENTITY identity.disableMixedContentBlocking.label "Beskerming foar no útskeakelje">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "t">
+<!ENTITY identity.learnMore "Mear ynfo">
+
+<!ENTITY identity.removeCertException.label "Utsûndering fuortsmite">
+<!ENTITY identity.removeCertException.accesskey "f">
+
+<!ENTITY identity.moreInfoLinkText2 "Mear ynformaasje">
+
+<!ENTITY identity.permissions "Tastimmingen">
+<!ENTITY identity.permissionsEmpty "Jo hawwe dizze website gjin spesjale tastimmingen jûn.">
+<!ENTITY identity.permissionsReloadHint "It is mooglik dat jo de side opnij lade moatte om de wizigingen aktyf te meitsjen.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Browserljepblêden">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Syngronisearre ljepblêden">
+
+<!ENTITY syncedTabs.sidebar.label              "Syngronisearre ljepblêden">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Meld jo oan by Waterfox fan jo oare apparaten ôf om harren ljepblêden hjir wer te jaan.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Noch gjin syngronisearre ljepblêden…">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Wolle jo hjir jo ljepblêden fan oare apparaten sjen?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Meld jo oan om in list fan ljepblêden fan jo oare apparaten wer te jaan.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Gjin iepen ljepblêden">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "&syncBrand.shortName.label;-foarkarren iepenje">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Set ljepblêdsyngroanisaasje oan om in list fan ljepblêden fan jo oare apparaten wer te jaan.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Iepenje">
+<!ENTITY syncedTabs.context.open.accesskey                   "I">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Iepenje yn in nij ljepblêd">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "l">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Iepenje yn in nij finster">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "f">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Iepenje yn in nij priveefinster">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "p">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Blêdwizer foar dit ljepblêd meitsje…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "B">
+<!ENTITY syncedTabs.context.copy.label                       "Kopiearje">
+<!ENTITY syncedTabs.context.copy.accesskey                   "K">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Alle iepenje yn ljepblêden">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "A">
+<!ENTITY syncedTabs.context.managedevices.label              "Apparaten beheare…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "d">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Oanmelde by &syncBrand.shortName.label;…">
+<!ENTITY syncSignIn.accesskey         "y">
+<!ENTITY syncSyncNowItem.label        "No syngronisearje">
+<!ENTITY syncSyncNowItem.accesskey    "N">
+<!ENTITY syncReAuthItem.label         "Opnij ferbine mei &syncBrand.shortName.label;…">
+<!ENTITY syncReAuthItem.accesskey     "O">
+<!ENTITY syncToolbarButton.label      "Syngronisearje">
+
+<!ENTITY social.addons.label "Tsjinsten behearje…">
+
+<!ENTITY social.directory.label "Aktivaasjemap">
+<!ENTITY social.directory.text "Jo kinne dieltsjinsten aktivearje út de map.">
+<!ENTITY social.directory.button "Bring my dêrhinne!">
+<!ENTITY social.directory.introText "Klik op in tsjinst om ta te foegjen oan &brandShortName;.">
+<!ENTITY social.directory.viewmore.text "Mear toane">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Ekstra helpmiddelen en funksjes">
+<!ENTITY customizeMode.menuAndToolbars.empty "Wolle jo mear helpmiddelen?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Kies út tûzenen add-ons">
+<!ENTITY customizeMode.restoreDefaults "Standertynstellingen werom bringe">
+<!ENTITY customizeMode.done "Dien">
+<!ENTITY customizeMode.titlebar "Titelbalke">
+<!ENTITY customizeMode.toolbars2 "Arkbalken">
+<!ENTITY customizeMode.lwthemes "Tema's">
+<!ENTITY customizeMode.lwthemes.myThemes "Myn tema's">
+<!ENTITY customizeMode.lwthemes.recommended "Oanrekommandearre">
+<!ENTITY customizeMode.lwthemes.menuManage "Beheare">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "B">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Krij mear tema's">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "K">
+<!ENTITY customizeMode.emptyOverflowList.description "Sleep items hjirnei ta om se deunby mar bûten jo arkbalke te hâlden…">
+<!ENTITY customizeMode.uidensity "Tichtens">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normaal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normaal">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Kompakt">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Kompakt">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "K">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Oanraking">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Oanraking">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "O">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Brûk oanraking foar tabletmodus">
+
+<!ENTITY getUserMedia.selectCamera.label "Kamera om te dielen:">
+<!ENTITY getUserMedia.selectCamera.accesskey "K">
+<!ENTITY getUserMedia.selectMicrophone.label "Mikrofoan om te dielen:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Audio fan it ljepblêd wurdt dield.">
+<!ENTITY getUserMedia.allWindowsShared.message "Alle sichtbere finsters op jo skerm sille dield wurde.">
+
+<!ENTITY trackingProtection.title "Beskerming tsjin folgjen">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; blokkearret ûnderdielen fan de side dy't jo sneupgedrach folgje kinne soe.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Dizze website befettet eleminten dy't jo sneupgedrach folgje kinne soe. Jo hawwe beskerming útskeakele.">
+<!ENTITY trackingProtection.notDetected3 "Gjin folcheleminten op dizze side detektearre.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Beskerming foar dizze website útskeakelje">
+<!ENTITY trackingProtection.unblock.accesskey "t">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Beskerming foar dizze sesje útskeakelje">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "u">
+<!ENTITY trackingProtection.block2.label "Beskerming ynskeakelje">
+<!ENTITY trackingProtection.block2.accesskey "s">
+
+<!ENTITY trackingContentBlocked.message "Folgjen">
+<!ENTITY trackingContentBlocked.moreinfo "Parten fan de side dy't jo online aktiviteiten folgje binne blokkearre.">
+<!ENTITY trackingContentBlocked.learnMore "Mear ynfo">
+<!ENTITY trackingContentBlocked.options "Opsjes">
+<!ENTITY trackingContentBlocked.unblock2.label "Beskerming foar dizze website útskeakelje">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "s">
+<!ENTITY trackingContentBlocked.block.label "Beskerming ynskeakelje">
+<!ENTITY trackingContentBlocked.block.accesskey "B">
+<!ENTITY trackingContentBlocked.disabled.message "Beskerming tsjin folgje is útskeakele">
+
+<!ENTITY pluginNotification.showAll.label "Alles toane">
+<!ENTITY pluginNotification.showAll.accesskey "A">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "No tastean">
+<!ENTITY pluginActivateAlways.label "Tastean en ûnthâlde">
+<!ENTITY pluginBlockNow.label "Ynstekker blokkearje">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Slute">
+
+<!ENTITY appMenuSidebars.label         "Sidebalken">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Ferjit:">
+<!ENTITY panicButton.view.5min                    "Lêste fiif minuten">
+<!ENTITY panicButton.view.2hr                     "Lêste twa oeren">
+<!ENTITY panicButton.view.day                     "Lêste 24 oeren">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Trochgean sil:">
+<!ENTITY panicButton.view.deleteCookies           "Resinte <html:strong>cookies</html:strong> fuortsmite">
+<!ENTITY panicButton.view.deleteHistory           "Resinte <html:strong>skiednis</html:strong> fuortsmite">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Alle <html:strong>ljepblêden</html:strong> en <html:strong>finsters</html:strong> slute">
+<!ENTITY panicButton.view.openNewWindow           "In nij finster iepenje">
+
+<!ENTITY panicButton.view.undoWarning             "Dizze aksje kin net ûngedien makke wurde.">
+<!ENTITY panicButton.view.forgetButton            "Ferjit!">
+
+<!ENTITY panicButton.thankyou.msg1                "Jo resinte skiednis is wiskje.">
+<!ENTITY panicButton.thankyou.msg2                "Feilich sneupje!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Tankewol!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Mear ynfo oer DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Wurkje jo &brandShorterName; by foar it nijste yn faasje en privacy.">
+<!ENTITY updateAvailable.whatsnew.label "Wat is nij.">
+<!ENTITY updateAvailable.header.message "Der is in nije &brandShorterName;-fernijing beskikber.">
+<!ENTITY updateAvailable.acceptButton.label "Fernijing downloade">
+<!ENTITY updateAvailable.acceptButton.accesskey "F">
+<!ENTITY updateAvailable.cancelButton.label "No net">
+<!ENTITY updateAvailable.cancelButton.accesskey "N">
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName;-fernijing downloade">
+
+<!ENTITY updateManual.message "Download in farske kopy fan &brandShorterName; en wy helpe jo it te ynstallearjen.">
+<!ENTITY updateManual.whatsnew.label "Wat is nij.">
+<!ENTITY updateManual.header.message "&brandShorterName; kin net fernije nei de lêste ferzje.">
+<!ENTITY updateManual.acceptButton.label "&brandShorterName; downloade">
+<!ENTITY updateManual.acceptButton.accesskey "d">
+<!ENTITY updateManual.cancelButton.label "No net">
+<!ENTITY updateManual.cancelButton.accesskey "N">
+<!ENTITY updateManual.panelUI.label "Download in farske kopy fan &brandShorterName;">
+
+<!ENTITY updateRestart.message "Nei in flugge werstart sil &brandShorterName; al jo iepen ljepblêden en finsters werstelle.">
+<!ENTITY updateRestart.header.message2 "Start opnij om &brandShorterName; by te wurkjen.">
+<!ENTITY updateRestart.acceptButton.label "Opnij starte en werstelle">
+<!ENTITY updateRestart.acceptButton.accesskey "O">
+<!ENTITY updateRestart.cancelButton.label "No net">
+<!ENTITY updateRestart.cancelButton.accesskey "N">
+<!ENTITY updateRestart.panelUI.label2 "Start &brandShorterName; opnij om te fernijen">
+
+<!ENTITY pageActionButton.tooltip "Side-aksjes">
+<!ENTITY pageAction.addToUrlbar.label "Tafoegje oan adresbalke">
+<!ENTITY pageAction.removeFromUrlbar.label "Fuortsmite fan adresbalke">
+
+<!ENTITY sendToDevice.label2 "Ferstjoere nei apparaat">
+<!ENTITY sendToDevice.syncNotReady.label "Apparaten syngronisearje…">

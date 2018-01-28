@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "ကွန်တိန်နာအသစ်ထပ်ထည့်ပါ">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "အပြင်အဆင်များ">
+<!ENTITY removeButton.label   "ဖယ်ရှားပါ">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; လုံခြုံမှု သို့ပြန်သွားပါ">
+
+<!ENTITY window.title         "ကွန်တိန်နာအသစ်ထပ်ထည့်ပါ">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "အမည်">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "ကွန်တိန်နာအမည်ရေးပါ">
+<!ENTITY icon.label           "ပုံသင်္ကေတ">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "အရောင်">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "ပြီးပြီ">
+<!ENTITY button.ok.accesskey  "D">
+
+
+<!ENTITY backLink2.label      "&#171; Go Back">
+

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Ungelokrapporten">
+<!ENTITY crashesUnsubmitted.label   "Net ynstjoerde ûngelokrapporten">
+<!ENTITY crashesSubmitted.label     "Ynstjoerde ûngelokrapporten">
+<!ENTITY id.heading                 "Rapport ID">
+<!ENTITY dateCrashed.heading        "Ungelokdatum">
+<!ENTITY dateSubmitted.heading      "Ynstjoerdatum">
+<!ENTITY noReports.label            "Der binne gjin ûngelokrapporten ynstjoerd.">
+<!ENTITY noConfig.label             "Dizze applikaasje is net ynsteld om ûngelokrapporten te toanen. De foarkar <code>breakpad.reportURL</code> moat ynsteld wêze.">
+<!ENTITY clearAllReports.label      "Alle rapporten fuortsmite">

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "네트워크 정보">
+<!ENTITY aboutNetworking.warning               "이 기능은 실험 단계입니다. 네트워크 기술에 잘 아는 사람 이외는 사용하지 마십시오.">
+<!ENTITY aboutNetworking.showNextTime          "다음에 경고 표시하기">
+<!ENTITY aboutNetworking.ok                    "확인">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "업데이트">
+<!ENTITY aboutNetworking.autoRefresh           "3초마다 자동 업데이트 ">
+<!ENTITY aboutNetworking.hostname              "호스트명">
+<!ENTITY aboutNetworking.port                  "포토 번호">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "액티브">
+<!ENTITY aboutNetworking.idle                  "대기">
+<!ENTITY aboutNetworking.host                  "호스트">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "송신 데이터 양">
+<!ENTITY aboutNetworking.received              "수신 데이터 양">
+<!ENTITY aboutNetworking.family                "계통">
+<!ENTITY aboutNetworking.addresses             "주소">
+<!ENTITY aboutNetworking.expires               "만료(초)">
+<!ENTITY aboutNetworking.messagesSent          "송신 메시지">
+<!ENTITY aboutNetworking.messagesReceived      "수신 메시지">
+<!ENTITY aboutNetworking.bytesSent             "송신 아르바이트 수">
+<!ENTITY aboutNetworking.bytesReceived         "수신 아르바이트 수">
+<!ENTITY aboutNetworking.logging               "로깅">
+<!ENTITY aboutNetworking.logTutorial           "이 도구 사용 법에 대한 설명은 <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP 로깅</a>을 참조하세요.">
+<!ENTITY aboutNetworking.currentLogFile        "현재 로그 파일:">
+<!ENTITY aboutNetworking.currentLogModules     "현재 로그 모듈:">
+<!ENTITY aboutNetworking.setLogFile            "로그 파일 설정">
+<!ENTITY aboutNetworking.setLogModules         "로그 모듈 설정">
+<!ENTITY aboutNetworking.startLogging          "로깅 시작">
+<!ENTITY aboutNetworking.stopLogging           "로깅 정지">
+<!ENTITY aboutNetworking.dnsLookup             "DNS 조회">
+<!ENTITY aboutNetworking.dnsLookupButton       "조회">
+<!ENTITY aboutNetworking.dnsDomain             "도메인">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+<!ENTITY aboutNetworking.rcwn                  "RCWN 상태">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN 상태">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "캐시 성공 수">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "네트워크 성공 수">
+<!ENTITY aboutNetworking.totalNetworkRequests  "총 네트워크 요청 수">
+<!ENTITY aboutNetworking.rcwnOperation         "캐시 작업">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "열기">
+<!ENTITY aboutNetworking.rcwnPerfRead          "읽기">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "쓰기">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "엔트리 열기">
+<!ENTITY aboutNetworking.rcwnAvgShort          "짧은 평균">
+<!ENTITY aboutNetworking.rcwnAvgLong           "긴 평균">
+<!ENTITY aboutNetworking.rcwnStddevLong        "긴 표준 편차">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "느린 캐시 횟수">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "느리지 않은 캐시 횟수">

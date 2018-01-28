@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Друкаваць">
+
+<!ENTITY printDialog.title "Друкаваць">
+
+<!ENTITY fpDialog.title "Захаваць файл">
+
+<!ENTITY fileCheck.label "Друкаваць у файл">
+<!ENTITY fileCheck.accesskey "ф">
+<!ENTITY propertiesButton.label "Уласцівасці…">
+<!ENTITY propertiesButton.accesskey "а">
+<!ENTITY descText.label "Апісанне прынтара:">
+<!ENTITY printer.label "Прынтар">
+<!ENTITY printerInput.label "Назва прынтара:">
+<!ENTITY printerInput.accesskey "Н">
+
+<!ENTITY printrangeGroup.label "Дыяпазон друку">
+<!ENTITY allpagesRadio.label "Усе старонкі">
+<!ENTITY allpagesRadio.accesskey "У">
+<!ENTITY rangeRadio.label  "Старонкі">
+<!ENTITY rangeRadio.accesskey  "С">
+<!ENTITY frompageInput.label  "з">
+<!ENTITY frompageInput.accesskey  "з">
+<!ENTITY topageInput.label  "да">
+<!ENTITY topageInput.accesskey  "д">
+<!ENTITY selectionRadio.label "Вылучэнне">
+<!ENTITY selectionRadio.accesskey "В">
+
+<!ENTITY copies.label "Копіі">
+<!ENTITY numCopies.label "Колькасць копіяў:">
+<!ENTITY numCopies.accesskey "к">
+
+<!ENTITY printframeGroup.label "Друкаваць рамкі">
+<!ENTITY aslaidoutRadio.label "Так, як размешчаны на экране">
+<!ENTITY aslaidoutRadio.accesskey "э">
+<!ENTITY selectedframeRadio.label  "Вылучаная рамка">
+<!ENTITY selectedframeRadio.accesskey  "р">
+<!ENTITY eachframesepRadio.label  "Кожная рамка асобна">
+<!ENTITY eachframesepRadio.accesskey  "ж">

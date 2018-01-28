@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Zatvori ovu karticu">
+<!ENTITY tabCrashed.restoreTab "Vrati ovu karticu">
+<!ENTITY tabCrashed.restoreAll "Vrati sve srušene kartice">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ups. Vaša kartica se upravo srušila.">
+<!ENTITY tabCrashed.offerHelp "Možemo vam pomoći!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Odaberite &tabCrashed.restoreTab; kako biste ponovno učitali sadržaj stranice.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Odaberite &tabCrashed.restoreTab; ili &tabCrashed.restoreAll; kako biste ponovno učitali sadržaj stranice.">
+<!ENTITY tabCrashed.requestHelp "Želite li nam pomoći?">
+<!ENTITY tabCrashed.requestHelpMessage "Izvještaji rušenja nam pomažu da pronađemo probleme i napravimo &brandShortName; boljim.">
+<!ENTITY tabCrashed.requestReport "Prijavi ovu karticu">
+<!ENTITY tabCrashed.sendReport2 "Pošalji izvještaj rušenja za karticu koju gledate">
+<!ENTITY tabCrashed.commentPlaceholder2 "Neobavezni komentari (komentari su javno vidljivi)">
+<!ENTITY tabCrashed.includeURL2 "Uključi URL stranice s ovim izvještajem rušenja">
+<!ENTITY tabCrashed.emailPlaceholder "Ovdje upišite vašu adresu e-pošte">
+<!ENTITY tabCrashed.emailMe "Pošalji mi e-poštu kada je dostupno više informacija">
+<!ENTITY tabCrashed.reportSent "Izvještaj rušenja je već poslan. Hvala vam što ste pomogli unaprijediti &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Prijavi pozadinske kartice">
+
+
+<!ENTITY tabCrashed.autoSubmit2 "Update preferences to automatically send crash reports, including reports for crashed background tabs from this session and future sessions">

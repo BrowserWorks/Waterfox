@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "页面设置">
+
+<!ENTITY basic.tab           "格式和选项">
+
+<!ENTITY formatGroup.label   "格式">
+
+<!ENTITY orientation.label   "方向：">
+<!ENTITY portrait.label      "纵向">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "横向">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "比例：">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "缩放以适应页面宽度">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "选项">
+
+<!ENTITY printBG.label       "打印背景（颜色和图片）">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "页边距和页眉/页脚">
+
+<!ENTITY marginGroup.label   "页边距 (#1)">
+<!ENTITY marginUnits.inches  "英寸">
+<!ENTITY marginUnits.metric  "毫米">
+<!ENTITY marginTop.label     "顶：">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "底：">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "左：">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "右：">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "页眉和页脚">
+
+<!ENTITY hfLeft.label        "左：">
+<!ENTITY hfCenter.label      "中：">
+<!ENTITY hfRight.label       "右：">
+<!ENTITY headerLeft.tip      "左页眉">
+<!ENTITY headerCenter.tip    "中心页眉">
+<!ENTITY headerRight.tip     "右页眉">
+<!ENTITY footerLeft.tip      "左页脚">
+<!ENTITY footerCenter.tip    "中心页脚">
+<!ENTITY footerRight.tip     "右页脚">
+
+<!ENTITY hfTitle             "标题">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "日期/时间">
+<!ENTITY hfPage              "第 # 页">
+<!ENTITY hfPageAndTotal      "第 # 页，共 # 页">
+<!ENTITY hfBlank             "--空白--">
+<!ENTITY hfCustom            "自定义…">
+
+<!ENTITY customPrompt.title  "自定义…">
+<!ENTITY customPrompt.prompt "请输入自定义的页眉/页脚文字">

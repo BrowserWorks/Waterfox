@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY colorsDialog.title              "Farver">
+<!ENTITY window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Erstat sidens farver med mine valg ovenfor:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "v">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Altid">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Kun når temaer med høj kontrast er valgt">
+<!ENTITY  overrideDefaultPageColors.never.label  "Aldrig">
+
+<!ENTITY color                           "Tekst og baggrund">
+<!ENTITY textColor.label                 "Tekst:">
+<!ENTITY textColor.accesskey             "T">
+<!ENTITY backgroundColor.label           "Baggrund:">
+<!ENTITY backgroundColor.accesskey       "B">
+<!ENTITY useSystemColors.label           "Anvend systemfarver">
+<!ENTITY useSystemColors.accesskey       "s">
+
+<!ENTITY underlineLinks.label            "Understreg links">
+<!ENTITY underlineLinks.accesskey        "n">
+<!ENTITY links                           "Linkfarver">
+<!ENTITY linkColor.label                 "Ubesøgte links:">
+<!ENTITY linkColor.accesskey             "U">
+<!ENTITY visitedLinkColor.label          "Besøgte links:">
+<!ENTITY visitedLinkColor.accesskey      "e">

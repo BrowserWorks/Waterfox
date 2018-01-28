@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Про ваші права">
+<!ENTITY rights.intro "&brandFullName; є вільним програмним забезпеченням з відкритим кодом, створеним багатотисячною спільнотою з усіх куточків світу. Ось кілька речей, які варто знати:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; надається вам на умовах ">
+<!ENTITY rights.intro-point1b "Публічної ліцензії Mozilla">
+<!ENTITY rights.intro-point1c ".Тобто, ви можете використовувати, копіювати та розповсюджувати &brandShortName;. Ви також можете змінювати джерельний код &brandShortName; як хочете та як вважаєте за потрібне. Публічна ліцензія Mozilla дає вам також право розповсюджувати змінені вами версії програми.">
+
+<!ENTITY rights.intro-point2-a "Вам не передаються жодні права на торгову марку чи ліцензії на торгові марки Waterfox або будь-якої сторони, включно та без обмежень на назву і логотип Waterfox. Додаткову інформацію щодо торгових марок можна знайти ">
+<!ENTITY rights.intro-point2-b "тут">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Деякі можливості &brandShortName;, такі як звіти про збої, дають вам змогу надсилати відгук в &vendorShortName;. Прийнявши рішення надіслати відгук, ви даєте &vendorShortName; дозвіл використовувати його для покращення своїх продуктів, публікувати та поширювати його на своїх сайтах.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Те, як ми використовуємо ваші особисті дані та повідомлення, надіслані до &vendorShortName; з допомогою &brandShortName;, описано в ">
+<!ENTITY rights2.intro-point3b "Політиці приватності &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Будь-які придатні для цього продукту угоди конфіденційності мають бути тут.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Деякі з можливостей &brandShortName; використовують послуги інформаційних веб-служб, однак, ми не можемо гарантувати, що вони на 100&#37; точні чи достовірні. Додаткові подробиці, включно з інформацією як вимкнути ці служби, ви можете прочитати в ">
+<!ENTITY rights.intro-point4b "угоді надання послуг">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Якщо цей продукт включає послуги сайтів, то будь-які придатні угоди надання послуг для них мають бути додані посиланнями у розділі ">
+<!ENTITY rights.intro-point4b-unbranded "Послуги сайтів">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "Інформаційні послуги веб-служб в &brandFullName;">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Для можливості відтворення окремих типів відеовмісту, &brandShortName; завантажує певні сторонні модулі дешифрування.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; використовує інформаційні послуги веб-служб («Послуги») для забезпечення роботи деяких можливостей, що надаються з цією бінарною версією &brandShortName; на нижче наведених умовах. Якщо ви не хочете використовувати одну чи більше з Послуг чи нижче наведені умови для вас неприйнятні, то ви можете вимкнути можливість чи Послугу(и). Інструкції щодо того як вимкнути окрему можливість чи послугу ви можете знайти ">
+<!ENTITY rights2.webservices-b "тут">
+<!ENTITY rights3.webservices-c ". Інші можливості та служби можуть бути вимкнені у налаштуваннях програми.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Вимкнення функції Safe Browsing не рекомендується, тому що це може призвести до того, що ви будете потрапляти на небезпечні сайти.  Якщо ви бажаєте повністю вимкнути цю функцію, виконайте наступні кроки:">
+<!ENTITY rights.safebrowsing-term1 "Відкрийте налаштування програми">
+<!ENTITY rights.safebrowsing-term2 "Оберіть розділ Безпека">
+<!ENTITY rights2.safebrowsing-term3 "Приберіть прапорець з &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing тепер вимкнено">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Визначення розташування під час веб-перегляду: ">
+<!ENTITY rights.locationawarebrowsing-b "завжди потребує вашого підтвердження.  Інформація про розташування ніколи не надсилається без вашого дозволу.  Якщо ви бажаєте повністю вимкнути цю функцію, виконайте наступні кроки:">
+<!ENTITY rights.locationawarebrowsing-term1a "В панелі адреси введіть ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Введіть geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Зробіть подвійне натискання по параметру geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Визначення розташування під час веб-перегляду тепер вимкнено">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Тут має бути опис послуг сайтів, що включені в продукт, а також інструкції, як їх вимкнути.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Тут мають бути всі придатні умови надання послуг стосовно цього продукту.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; та її помічники, ліцензіари та партнери працюють над тим, щоб надавати якомога точніші та актуальні послуги. Однак, ми не можемо гарантувати повноти та достовірності цієї інформації.  Наприклад, послуга безпечного перегляду може не розпізнавати деякі небезпечні сайти, або може помилково попереджати про деякі безпечні сайти. Також дані послуги розташування, які надаються нашими провайдерами, є лише приблизними, і ні ми, ані наші провайдери не гарантують точність визначення місця.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; може перервати чи змінити Послуги на свій розсуд.">
+<!ENTITY rights2.webservices-term3 "Ви можете використовувати ці Служби разом з відповідною версією &brandShortName;, а також &vendorShortName; надає вам необхідні для цього права.  &vendorShortName; та її ліцензіари зберігають всі інші права на ці Служби.  Ці умови не призначені для обмеження будь-яких прав, що надані на умовах ліцензій відкритого коду, які застосовуються до  &brandShortName; та відповідних версій &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Послуги надаються «як є»;  &vendorShortName;, учасники, ліцензіари та дистриб’ютори відмовляються від усіх гарантійних зобов’язань, явних та неявних, а також не дають гарантій того, що Послуги залишаються ходовими та відповідають вашим цілям. Ви берете на себе весь ризик як щодо вибору Послуг для себе, так і щодо якості та ефективності Послуг. Деякі юрисдикції не дозволяють винятки чи обмеження гарантійних зобов’язань, тож ця відмова може вас не стосуватися.">
+<!ENTITY rights.webservices-term5 "Окрім випадків, зазначених у законі, &vendorShortName; його учасники, ліцензіари та дистриб’ютори не відповідають за непрямі, особливі, випадкові, крані, послідовні чи зразкові збитки, що випливають з чи якимось чином пов’язані з використанням &brandShortName; та Послуг. Колективна відповідальність за цих умов не буде перевищувати $500 (п’ятсот доларів США). Деякі юрисдикції не дозволяють виключення чи обмеження деяких збитків, тож ці обмеження чи винятки можуть вас не стосуватися.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; може при необхідності оновлювати ці умови час від часу. Ці умови не можуть бути змінені чи скасовані без письмової згоди &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Ці умови регулюються законами штату Каліфорнія, США, за винятком конфлікту законів. Якщо якась частина цих умов нечинна чи така, що не має ніякого впливу, дійсна частина залишається в силі. При невідповідності перекладу цих умов та їх англійської версії, слід посилатися на англійську версію.">

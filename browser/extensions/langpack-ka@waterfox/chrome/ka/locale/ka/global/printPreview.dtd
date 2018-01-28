@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "ბეჭდვა…">
+<!ENTITY print.accesskey      "ბ">
+<!ENTITY pageSetup.label      "გვერდის პარამეტრები…">
+<!ENTITY pageSetup.accesskey  "პ">
+<!ENTITY page.label           "გვერდი:">
+<!ENTITY page.accesskey       "გ">
+<!ENTITY of.label             "-">
+<!ENTITY scale.label          "ზომის ცვლილება:">
+<!ENTITY scale.accesskey      "მ">
+<!ENTITY portrait.label       "შვეულად">
+<!ENTITY portrait.accesskey   "შ">
+<!ENTITY landscape.label      "თარაზულად">
+<!ENTITY landscape.accesskey  "თ">
+<!ENTITY close.label          "დახურვა">
+<!ENTITY close.accesskey      "დ">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "მითითებული…">
+<!ENTITY ShrinkToFit.label    "გვერდზე მორგება">
+<!ENTITY customPrompt.title   "მითითებული ზომები…">
+<!ENTITY simplifyPage.label   "გვერდის გამარტივება">
+<!ENTITY simplifyPage.accesskey "ტ">
+<!ENTITY simplifyPage.enabled.tooltip  "შეცვალეთ განლაგება გამარტივებული კითხვისთვის">
+<!ENTITY simplifyPage.disabled.tooltip "ეს გვერდი ავტომატურად ვერ გამარტივდება">
+
+<!ENTITY homearrow.tooltip    "პირველი გვერდი">
+<!ENTITY endarrow.tooltip     "ბოლო გვერდი">
+<!ENTITY nextarrow.tooltip    "შემდეგი გვერდი">
+<!ENTITY previousarrow.tooltip "წინა გვერდი">

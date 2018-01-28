@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Mbohasarã">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Eiporavopa">
+<!ENTITY  selectall.accesskey   "E">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Tuichakue">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Teratee:">
+<!ENTITY  generalURL            "Tape:">
+<!ENTITY  generalType           "Peteĩchagua:">
+<!ENTITY  generalMode           "Moha'ãnga reko:">
+<!ENTITY  generalSize           "Tuichakue:">
+<!ENTITY  generalReferrer       "URL mamoguápa:">
+<!ENTITY  generalSource         "Kache ñepyrũha:">
+<!ENTITY  generalModified       "Moambuepyréva:">
+<!ENTITY  generalEncoding2      "Moñe'ẽrã mbopapapy:">
+<!ENTITY  generalMetaName       "Téra">
+<!ENTITY  generalMetaContent    "Tetepy">
+
+<!ENTITY  mediaTab              "Hupytyha">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Kundaharape:">
+<!ENTITY  mediaText             "Moñe'ẽrã hesegua:">
+<!ENTITY  mediaAltHeader        "Moñe'ẽrã mokõiguáva">
+<!ENTITY  mediaAddress          "Tape">
+<!ENTITY  mediaType             "Mba'eichagua">
+<!ENTITY  mediaSize             "Tuichakue">
+<!ENTITY  mediaCount            "Mba'ete">
+<!ENTITY  mediaDimension        "Jepysokue:">
+<!ENTITY  mediaLongdesc         "Myesakãha ipukúva:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Ñongatu pyahu…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Apopy mboyvegua rupytyha recha:">
+
+<!ENTITY  feedTab               "Mbohapeha">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Mboheraguapy">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Moneĩ">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Ijypykue jepuru">
+<!ENTITY  permAskAlways         "Porandu tapia">
+<!ENTITY  permAllow             "Moneĩ">
+<!ENTITY  permAllowSession      "Ko tendápe ñemoneĩ">
+<!ENTITY  permBlock             "Joko">
+<!ENTITY  permissionsFor        "Emoneĩ hag̃ua:">
+<!ENTITY  permPlugins           "Mba'ejoajurã myendy">
+
+<!ENTITY  permClearStorage           "Mbyatypyre ñemopotĩ">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Tekorosã">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Mboajepyre jehecha">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Ojekuaa'ỹva">
+
+
+<!ENTITY  securityView.identity.header   "Ñanduti renda reratee">
+<!ENTITY  securityView.identity.owner    "Mba'ejára:">
+<!ENTITY  securityView.identity.domain   "Ñanduti renda:">
+<!ENTITY  securityView.identity.verifier "Ojehechapyréva:">
+<!ENTITY  securityView.identity.validity "Ndoikovéitama ag̃a:">
+
+<!ENTITY  securityView.privacy.header                   "Ñemigua ha tembiasakue">
+<!ENTITY  securityView.privacy.history                  "Ojehechámapa ko ñanduti renda ymavegua">
+<!ENTITY  securityView.privacy.cookies                  "Ko tendápa oñongatuhína (kookie) ko mohendahápe">
+<!ENTITY  securityView.privacy.viewCookies              "Kookie jehecha">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Oñeñongatúpa ñe'ẽñemi ko ñanduti rendápe">
+<!ENTITY  securityView.privacy.viewPasswords            "Terañemi ñongatuguáva jehecha">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Mba'emimi aporekoguáva">
+
+<!ENTITY  helpButton.label                              "Ñepytyvõ">

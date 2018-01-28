@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Cluich">
+<!ENTITY playButton.pauseLabel "Cuir 'na stad">
+<!ENTITY muteButton.muteLabel "Tostaich">
+<!ENTITY muteButton.unmuteLabel "Till an fhuaim">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Làn-sgrìn">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Fàg an làn-sgrìn">
+<!ENTITY castingButton.castingLabel "Tilg air an sgrìn">
+<!ENTITY closedCaption.off "Dheth">
+
+<!ENTITY stats.media "Meadhanan">
+<!ENTITY stats.size "Meud">
+<!ENTITY stats.activity "Gnìomhachd">
+<!ENTITY stats.activityPaused "'Na stad">
+<!ENTITY stats.activityPlaying "'Ga chluich">
+<!ENTITY stats.activityEnded "Crìochnaichte">
+<!ENTITY stats.activitySeeking "('ga shireadh)">
+<!ENTITY stats.volume "Àirde na fuaime">
+<!ENTITY stats.framesParsed "Frèamaichean air am parsadh">
+<!ENTITY stats.framesDecoded "Frèamaichean air an dì-chòdachadh">
+<!ENTITY stats.framesPresented "Frèamaichean air an sealltainn">
+<!ENTITY stats.framesPainted "Frèamaichean air am peantadh">
+
+<!ENTITY error.aborted "Sguireadh de luchdadh a' video.">
+<!ENTITY error.network "Sguireadh cluich a' video air sgàth mearachd lìonraidh.">
+<!ENTITY error.decode "Cha ghabh a' video a chluich a chionn 's gu bheil am faidhle coirbte.">
+<!ENTITY error.srcNotSupported "Chan eil taic ann ri fòrmat a' video no an seòrsa MIME.">
+<!ENTITY error.noSource2 "Cha deach video a lorg aig a bheil fòrmat no seòrsa MIME a tha taic ris.">
+<!ENTITY error.generic "Sguireadh de chluich a' video air sgàth mearachd neo-aithnichte.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 seachad de #2">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Vearaportid">
+<!ENTITY crashesUnsubmitted.label   "Saatmata vearaportid">
+<!ENTITY crashesSubmitted.label     "Saadetud vearaportid">
+<!ENTITY id.heading                 "Raporti ID">
+<!ENTITY dateCrashed.heading        "Vea esinemise kuupäev">
+<!ENTITY dateSubmitted.heading      "Vearaporti saatmise kuupäev">
+<!ENTITY noReports.label            "Ühtegi vearaportit pole saadetud.">
+<!ENTITY noConfig.label             "See rakendus pole seadistatud kuvama vearaporteid. Eelistus <code>breakpad.reportURL</code> peab olema määratud.">
+<!ENTITY clearAllReports.label      "Eemalda kõik raportid">

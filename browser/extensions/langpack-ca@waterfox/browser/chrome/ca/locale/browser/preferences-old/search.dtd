@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Motor de cerca per defecte">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Trieu el motor de cerca per defecte. El &brandShortName; l'utilitzarà en la barra d'ubicació, la barra de cerca i la pàgina d'inici.">
+
+<!ENTITY provideSearchSuggestions.label        "Mostra suggeriments de cerca">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Mostra suggeriments de cerca als resultats de la barra d'ubicació">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "No es mostraran suggeriments de cerca als resultats de la barra d'ubicació perquè heu configurat el &brandShortName; per tal que no recordi mai l'historial.">
+
+<!ENTITY oneClickSearchEngines.label           "Motors de cerca amb un sol clic">
+
+<!ENTITY chooseWhichOneToDisplay.label         "La barra de cerca us permet cercar directament amb motors alternatius. Trieu quins voleu que es mostrin.">
+
+<!ENTITY engineNameColumn.label                "Motor de cerca">
+<!ENTITY engineKeywordColumn.label             "Paraula clau">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaura els motors de cerca per defecte">
+<!ENTITY restoreDefaultSearchEngines.accesskey "R">
+
+<!ENTITY removeEngine.label                    "Elimina">
+<!ENTITY removeEngine.accesskey                "E">
+
+<!ENTITY addMoreSearchEngines.label            "Afegeix més motors de cerca…">

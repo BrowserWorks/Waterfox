@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Add-on mungkin menyebabkan masalah">
+<!ENTITY blocklist.style             "width: 45em; height: 32em">
+<!ENTITY blocklist.summary           "&brandShortName; telah dipastikan yang ekoran tambah-nilai telah diketahui menyebabkan masalah kestabilan dan keselamatan:">
+<!ENTITY blocklist.softblocked       "Untuk perlindungan, anda disaran mula semula dengan menyahdayakan add-ons ini.">
+<!ENTITY blocklist.hardblocked       "Add-ons ini mempunyai risiko tinggi yang menyebabkan ketidakstabilan atau masalah keselamatan dan telah disekat, serta perlu mula semula untuk menyahdayakan sepenuhnya.">
+<!ENTITY blocklist.softandhard       "Add-ons berisiko tinggi yang menyebabkan ketidakstabilan atau masalah keselamatan telah disekat. Add-ons yang lain berisiko rendah, tetapi anda disarankan supaya mula semula untuk menyahdayakannya.">
+<!ENTITY blocklist.moreinfo          "Maklumat lanjut">
+
+<!ENTITY blocklist.accept.label      "Mula semula &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Disekat">
+<!ENTITY blocklist.checkbox.label    "Lumpuhkan">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Yiylorde Woowaande">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Suɓo yiylorde maa woowaande. &brandShortName; huutorto nde e palal nokkuure ndee, palal njiilaw walla hello jaɓɓorgo.">
+
+<!ENTITY provideSearchSuggestions.label        "Hokku wasiyaaji njiilaw">
+<!ENTITY provideSearchSuggestions.accesskey    "w">
+
+<!ENTITY showURLBarSuggestions.label           "Hollu basiye njiilaw e njaltudi palal nokkuure">
+<!ENTITY showURLBarSuggestions.accesskey       "n">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Basiye njiilaw kolliroytaake e njaltudi palal nokkuure sabu ko a teeltiiɗo &brandShortName; yoo waas siiftorde aslol.">
+
+<!ENTITY oneClickSearchEngines.label           "Yiylorde nde dobannde wootere">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Palal njiilaw ngal wallete yiylaade dunnge goɗɗe e saasi. Suɓo nde njiɗ-ɗaa hollirde.">
+
+<!ENTITY engineNameColumn.label                "Yiylorde">
+<!ENTITY engineKeywordColumn.label             "Helmere yiylorde">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Artir Jiylorɗe Goowaaɗe">
+<!ENTITY restoreDefaultSearchEngines.accesskey "t">
+
+<!ENTITY removeEngine.label                    "Ittu">
+<!ENTITY removeEngine.accesskey                "I">
+
+<!ENTITY addMoreSearchEngines.label            "Ɓeydu jiylorɗe goɗɗe…">

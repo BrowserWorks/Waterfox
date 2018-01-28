@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Бібліятэка">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Уладкаваць">
+<!ENTITY organize.accesskey    "У">
+<!ENTITY organize.tooltip      "Упарадкаваць вашы закладкі">
+
+<!ENTITY file.close.label               "Закрыць">
+<!ENTITY file.close.accesskey           "З">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Выгляд">
+<!ENTITY views.accesskey                "В">
+<!ENTITY views.tooltip                  "Змяніць выгляд">
+<!ENTITY view.columns.label             "Паказваць слупкі">
+<!ENTITY view.columns.accesskey         "с">
+<!ENTITY view.sort.label                "Упарадкаваць">
+<!ENTITY view.sort.accesskey            "п">
+<!ENTITY view.unsorted.label            "Без упарадкавання">
+<!ENTITY view.unsorted.accesskey        "Б">
+<!ENTITY view.sortAscending.label       "Парадкаваць ад А да Я">
+<!ENTITY view.sortAscending.accesskey   "А">
+<!ENTITY view.sortDescending.label      "Парадкаваць ад Я да А">
+<!ENTITY view.sortDescending.accesskey  "Я">
+
+<!ENTITY importBookmarksFromHTML.label     "Імпарт закладак з HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "І">
+<!ENTITY exportBookmarksToHTML.label       "Экспарт закладак у HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "Э">
+<!ENTITY importOtherBrowser.label          "Імпарт дадзеных з іншага браўзера…">
+<!ENTITY importOtherBrowser.accesskey      "і">
+
+<!ENTITY cmd.backup.label               "Стварыць рэзервовую копію…">
+<!ENTITY cmd.backup.accesskey           "С">
+<!ENTITY cmd.restore2.label             "Аднавіць">
+<!ENTITY cmd.restore2.accesskey         "н">
+<!ENTITY cmd.restoreFromFile.label      "Выбраць файл…">
+<!ENTITY cmd.restoreFromFile.accesskey  "В">
+
+<!ENTITY cmd.deleteDomainData.label     "Забыць гэты сайт">
+<!ENTITY cmd.deleteDomainData.accesskey "З">
+
+<!ENTITY cmd.open.label                  "Адкрыць">
+<!ENTITY cmd.open.accesskey              "А">
+<!ENTITY cmd.open_window.label           "Адкрыць у новым акне">
+<!ENTITY cmd.open_window.accesskey       "н">
+<!ENTITY cmd.open_private_window.label     "Адкрыць у новым прыватным акне">
+<!ENTITY cmd.open_private_window.accesskey "п">
+<!ENTITY cmd.open_tab.label              "Адкрыць у новай картцы">
+<!ENTITY cmd.open_tab.accesskey          "в">
+<!ENTITY cmd.open_all_in_tabs.label      "Адкрыць усё ў картках">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "у">
+
+<!ENTITY cmd.properties.label      "Уласцівасці">
+<!ENTITY cmd.properties.accesskey  "У">
+
+<!ENTITY cmd.sortby_name.label              "Сартаваць па назве">
+<!ENTITY cmd.sortby_name.accesskey          "С">
+<!ENTITY cmd.context_sortby_name.accesskey  "н">
+
+<!ENTITY cmd.new_bookmark.label            "Новая закладка…">
+<!ENTITY cmd.new_bookmark.accesskey        "Н">
+<!ENTITY cmd.new_folder.label              "Новая папка…">
+<!ENTITY cmd.new_folder.accesskey          "Н">
+<!ENTITY cmd.context_new_folder.accesskey  "п">
+<!ENTITY cmd.new_separator.label           "Новы межнік">
+<!ENTITY cmd.new_separator.accesskey       "м">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Абнавіць жывую закладку">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "А">
+
+<!ENTITY cmd.moveBookmarks.label                  "Перанесці…">
+<!ENTITY cmd.moveBookmarks.accesskey              "р">
+
+<!ENTITY col.name.label          "Назва">
+<!ENTITY col.tags.label          "Тэгі">
+<!ENTITY col.url.label           "Адрас">
+<!ENTITY col.mostrecentvisit.label "Найбольш наведвальныя">
+<!ENTITY col.visitcount.label    "Колькасць наведванняў">
+<!ENTITY col.description.label   "Апісанне">
+<!ENTITY col.dateadded.label     "Дададзена">
+<!ENTITY col.lastmodified.label  "Апошняе змяненне">
+
+<!ENTITY search.placeholder  "Пошук">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Імпарт і рэзерваванне">
+<!ENTITY maintenance.accesskey  "І">
+<!ENTITY maintenance.tooltip    "Імпарт і рэзерваванне вашых закладак">
+
+<!ENTITY backButton.tooltip  "Вярнуцца назад">
+
+<!ENTITY forwardButton.tooltip  "Пайсці наперад">
+
+<!ENTITY detailsPane.more.label "Больш">
+<!ENTITY detailsPane.more.accesskey "Б">
+<!ENTITY detailsPane.less.label "Менш">
+<!ENTITY detailsPane.less.accesskey "М">
+<!ENTITY detailsPane.selectAnItemText.description "Выбар элемента для прагляду і праўкі яго ўласцівасцяў">
+
+<!ENTITY view.label               "Прагляд">
+<!ENTITY view.accesskey           "г">
+<!ENTITY byDate.label             "Па даце">
+<!ENTITY byDate.accesskey         "д">
+<!ENTITY bySite.label             "Па сайце">
+<!ENTITY bySite.accesskey         "п">
+<!ENTITY byMostVisited.label      "Па колькасці наведванняў">
+<!ENTITY byMostVisited.accesskey  "л">
+<!ENTITY byLastVisited.label      "Па апошнім наведванні">
+<!ENTITY byLastVisited.accesskey  "а">
+<!ENTITY byDayAndSite.label       "Па даце і сайце">
+<!ENTITY byDayAndSite.accesskey   "і">

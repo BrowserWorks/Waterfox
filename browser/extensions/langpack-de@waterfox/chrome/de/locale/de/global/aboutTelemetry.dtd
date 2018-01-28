@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrie-Daten">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Datensatz auswählen:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Datensatz in Aufzeichnung
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Archivierte Datensätze
+">
+
+<!ENTITY aboutTelemetry.raw "
+Reines JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Untersitzungsdaten anzeigen
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Datensatz auswählen:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Neuerer Datensatz
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Älterer Datensatz &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Woche
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Datensatz-Typ
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Datensatz
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Heute
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Gestern
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Älter
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Allgemeine Daten
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Umgebungsdaten
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetrie-Protokoll
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Langsame SQL-Befehle
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Browser-Hänger
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Thread-Hänger
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Aufgezeichnete Aufruflisten
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalare
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Schlüsselgebundene Skalare
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogramme
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Schlüsselgebundene Histogramme
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Ereignisse
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Einfache Messdaten
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Add-on-Details
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Späte Schreibvorgänge
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Sitzungsinformationen
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  HINWEIS: Das Debuggen langsamer SQL-Befehle ist aktiv. Es können vollständige SQL-Befehle weiter unten angezeigt werden, diese werden aber nicht durch die Telemetrie übertragen.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Funktionsname für Aufruflisten aufrufen
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Unformatierte Aufruflisten anzeigen
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filter (Zeichenketten oder /Reguläre Ausdrücke/):
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Datenpaket
+">

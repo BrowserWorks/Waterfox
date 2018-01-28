@@ -1,0 +1,105 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Zabilješke">
+<!ENTITY engine.bookmarks.accesskey "Z">
+<!ENTITY engine.tabs.label2         "Otvoreni tabovi">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Historiju">
+<!ENTITY engine.history.accesskey   "r">
+
+
+<!ENTITY engine.prefs.label         "Postavke">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "Add-oni">
+<!ENTITY engine.addons.accesskey    "A">
+
+
+
+
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Naziv uređaja">
+
+
+<!ENTITY cancelChangeSyncDeviceName.label "Otkaži">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "t">
+<!ENTITY saveChangeSyncDeviceName.label "Spasi">
+<!ENTITY saveChangeSyncDeviceName.accesskey "s">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Uslovi korištenja">
+<!ENTITY fxaPrivacyNotice.link.label "Polica privatnosti">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "nije potvrđen.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Prijavite se za ponovno povezivanje">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Niste prijavljeni.">
+<!ENTITY signIn.label                "Prijava">
+<!ENTITY signIn.accesskey            "a">
+<!ENTITY profilePicture.tooltip      "Promijenite profilnu sliku">
+
+
+
+
+<!ENTITY verify.label                "Potvrdi email">
+<!ENTITY verify.accesskey            "e">
+<!ENTITY forget.label                "Zaboravi ovu email adresu">
+<!ENTITY forget.accesskey            "o">
+
+<!ENTITY signedOut.caption            "Ponesite vaš Web sa vama">
+<!ENTITY signedOut.description        "Sinhronizujte vaše zabilješke, historiju, tabove, lozinke, add-one, i druge postavke na svim vašim uređajima.">
+<!ENTITY signedOut.accountBox.title   "Poveži se sa &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Kreiraj račun">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Prijava">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Sync postavke">
+<!ENTITY signedIn.settings.description "Izaberite šta sinhronizovati na vašim uređajima pomoću &brandShortName;a.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Preuzmi Waterfox za ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " ili ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " za sinhronizaciju sa vašim mobilnim uređajem.">
+
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY changeSyncDeviceName2.label "Change Device Name…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY disconnect3.label           "Disconnect…">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verifiedManage.label        "Manage account">

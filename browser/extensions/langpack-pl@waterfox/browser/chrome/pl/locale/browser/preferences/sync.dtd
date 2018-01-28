@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY engine.bookmarks.label "Zakładki">
+<!ENTITY engine.bookmarks.accesskey "">
+<!ENTITY engine.tabs.label2 "Karty">
+<!ENTITY engine.tabs.accesskey "">
+<!ENTITY engine.history.label "Historia">
+<!ENTITY engine.history.accesskey "">
+<!ENTITY engine.logins.label "Dane logowania">
+<!ENTITY engine.logins.accesskey "">
+<!ENTITY engine.prefs.label "Ustawienia">
+<!ENTITY engine.prefs.accesskey "">
+<!ENTITY engine.addons.label "Dodatki">
+<!ENTITY engine.addons.accesskey "">
+<!ENTITY engine.addresses.label "Adresy">
+<!ENTITY engine.addresses.accesskey "">
+<!ENTITY engine.creditcards.label "Dane kart kredytowych">
+<!ENTITY engine.creditcards.accesskey "">
+
+<!ENTITY fxaSyncDeviceName.label "Nazwa urządzenia">
+<!ENTITY changeSyncDeviceName2.label "Zmień nazwę urządzenia…">
+<!ENTITY changeSyncDeviceName2.accesskey "">
+<!ENTITY cancelChangeSyncDeviceName.label "Anuluj">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "">
+<!ENTITY saveChangeSyncDeviceName.label "Zachowaj">
+<!ENTITY saveChangeSyncDeviceName.accesskey "">
+
+<!ENTITY prefs.tosLink.label        "Warunki korzystania z usługi">
+
+<!ENTITY fxaPrivacyNotice.link.label "Uwagi dotyczące prywatności">
+
+<!ENTITY signedInUnverified.beforename.label "Konto">
+<!ENTITY signedInUnverified.aftername.label "nie zostało zweryfikowane.">
+<!ENTITY signedInLoginFailure.beforename.label "Zaloguj się, aby ponownie połączyć konto">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label "Nie zalogowano">
+<!ENTITY signIn.label "Zaloguj">
+<!ENTITY signIn.accesskey "">
+<!ENTITY profilePicture.tooltip "Zmień obraz przypisany do konta">
+<!ENTITY verifiedManage.label "Zarządzaj kontem">
+<!ENTITY verifiedManage.accesskey "">
+<!ENTITY disconnect3.label "Rozłącz…">
+<!ENTITY disconnect3.accesskey "">
+<!ENTITY verify.label "Zweryfikuj adres e-mail">
+<!ENTITY verify.accesskey "">
+<!ENTITY forget.label "Usuń adres e-mail">
+<!ENTITY forget.accesskey "">
+
+<!ENTITY signedOut.caption "Zabierz swoją sieć ze sobą">
+<!ENTITY signedOut.description "Synchronizuj zakładki, historię, karty, hasła, dodatki i ustawienia między wszystkimi swoimi urządzeniami.">
+<!ENTITY signedOut.accountBox.title "&syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create "Utwórz">
+<!ENTITY signedOut.accountBox.create.accesskey "">
+<!ENTITY signedOut.accountBox.signin "Zaloguj się">
+<!ENTITY signedOut.accountBox.signin.accesskey "">
+
+<!ENTITY signedIn.settings.label "Ustawienia synchronizacji">
+<!ENTITY signedIn.settings.description "Wybierz, co synchronizować pomiędzy urządzeniami używając programu &brandShortName;.">
+
+<!ENTITY mobilePromo3.start "Pobierz Firefoksa na">
+<!ENTITY mobilePromo3.androidLink "Androida">
+<!ENTITY mobilePromo3.iOSBefore " lub ">
+<!ENTITY mobilePromo3.iOSLink "iOSa">
+<!ENTITY mobilePromo3.end ", aby synchronizować ze swoim urządzeniem przenośnym.">

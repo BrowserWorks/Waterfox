@@ -1,0 +1,99 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Xatchoʻplar">
+<!ENTITY engine.bookmarks.accesskey "X">
+<!ENTITY engine.tabs.label2         "Ichki oynalarni ochish">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Tarix">
+<!ENTITY engine.history.accesskey   "T">
+<!ENTITY engine.logins.label        "Foydalanuvchilar">
+<!ENTITY engine.logins.accesskey    "F">
+<!ENTITY engine.prefs.label         "Moslashlar">
+<!ENTITY engine.prefs.accesskey     "M">
+<!ENTITY engine.addons.label        "Qoʻshimcha dasturlar">
+<!ENTITY engine.addons.accesskey    "Q">
+
+
+
+
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Qurilma nomi">
+<!ENTITY changeSyncDeviceName2.label "Qurilma nomini o‘zgartirish…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "Bekor qilish">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "B">
+<!ENTITY saveChangeSyncDeviceName.label "Saqlash">
+<!ENTITY saveChangeSyncDeviceName.accesskey "S">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Xizmat shartlari">
+<!ENTITY fxaPrivacyNotice.link.label "Maxfiylik ogohlantirishlari">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "tasdiqlanmagan.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Qayta ulanish uchun kiring">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Siz kirmagansiz.">
+<!ENTITY signIn.label                "Kirish">
+<!ENTITY signIn.accesskey            "K">
+<!ENTITY profilePicture.tooltip      "Profil rasmini o‘zgartirish">
+
+
+<!ENTITY disconnect3.label           "Uzilmoqda…">
+<!ENTITY disconnect3.accesskey       "U">
+<!ENTITY verify.label                "E-pochtani tasdiqlash">
+<!ENTITY verify.accesskey            "t">
+<!ENTITY forget.label                "Ushbu e-pochtani unutish">
+<!ENTITY forget.accesskey            "u">
+
+<!ENTITY signedOut.caption            "Internet doim siz bilan birga">
+<!ENTITY signedOut.description        "Xatcho‘plar, tarix, tablar, parollar, qo‘shimcha dasturlar va boshqa parametrlarni barcha qurilmalar aro sinxronlang.">
+<!ENTITY signedOut.accountBox.title   "&syncBrand.fxAccount.label; bilan ulanish">
+<!ENTITY signedOut.accountBox.create  "Hisob yaratish">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Kirish">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "Sinxronizatsiya moslamalari">
+<!ENTITY signedIn.settings.description "Qurilmangizda &brandShortName;dan foydalanib nimalarni sinxronlashni tanlang.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Waterfox brauzerini mobil qurilmangiz bilan sinxronlash uchun ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " yoki ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " uchun versiyalarini yuklab oling.">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY verifiedManage.label        "Manage account">

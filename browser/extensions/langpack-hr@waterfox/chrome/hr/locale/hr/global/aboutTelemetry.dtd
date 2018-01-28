@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrija">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping izvora podataka:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Trenutni ping podaci">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arhivirani ping podaci">
+
+<!ENTITY aboutTelemetry.raw "Neobrađeni JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Prikaži podatke podsesije">
+
+<!ENTITY aboutTelemetry.choosePing "Odaberi ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; noviji ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Stariji ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Tjedan">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Opći podaci">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Podaci okruženja">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Zapisnik telemetrije">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Spori SQL upiti">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Smrzavanje web preglednika">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Viseći threadovi">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogrami">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histogrami s ključem">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Jednostavna mjerenja">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Detalji dodatka">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Zakašnjela zapisivanja">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Informacije o sesiji">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NAPOMENA: Detaljno praćenje sporih SQL upita je uključeno. Potpuni SQL upiti mogu biti prikazani ispod, međutim oni neće biti poslali Telemetriji.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Filtriraj (tekst ili /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Sadržaj">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+

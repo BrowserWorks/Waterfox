@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "ಹೊಸ ಹಾಳೆ">
+
+<!ENTITY newtab.customize.cog.enhanced "ಸೂಚಿಸಿರುವ ತಾಣಗಳನ್ನು ಸೇರಿಸಿ">
+<!ENTITY newtab.customize.cog.title2 "ಹೊಸ ಹಾಳೆ ನಿಯಂತ್ರಣಗಳು">
+<!ENTITY newtab.customize.cog.learn "ಹೊಸ ಹಾಳೆಯ ಬಗ್ಗೆ ಕಲಿಯಿರಿ">
+<!ENTITY newtab.customize.title "ಹೊಸ ಹಾಳೆಯ ಪುಟವನ್ನು ಅಗತ್ಯಾನುಗುಣಗೊಳಿಸಿ">
+<!ENTITY newtab.customize.blank2 "ಖಾಲಿ ಪುಟವನ್ನು ತೋರಿಸು">
+<!ENTITY newtab.undo.removedLabel "ಅಡಕಚಿತ್ರವನ್ನು (ತಂಬ್‌ನೇಲ್) ಅನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ.">
+<!ENTITY newtab.undo.undoButton "ರದ್ದುಮಾಡು.">
+<!ENTITY newtab.undo.restoreButton "ಎಲ್ಲಾ ಮರಳಿ ಸ್ಥಾಪಿಸು.">
+<!ENTITY newtab.undo.closeTooltip "ಅಡಗಿಸು">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

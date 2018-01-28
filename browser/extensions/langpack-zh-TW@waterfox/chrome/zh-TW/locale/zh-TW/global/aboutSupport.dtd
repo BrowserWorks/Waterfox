@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "疑難排解資訊">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  此頁面包含技術資訊，可能可以幫您解決一些問題。
+  如果您正在尋找關於 &brandShortName; 的一些常見問題，
+  請看看我們的 <a id='supportLink'>支援網站</a>。">
+
+<!ENTITY aboutSupport.crashes.title "錯誤資訊報表">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "報表編號">
+<!ENTITY aboutSupport.crashes.sendDate "送出日期">
+<!ENTITY aboutSupport.crashes.allReports "所有錯誤報表">
+<!ENTITY aboutSupport.crashes.noConfig "此應用程式並未設定為要顯示錯誤資訊報表。">
+
+<!ENTITY aboutSupport.extensionsTitle "擴充套件">
+<!ENTITY aboutSupport.extensionName "名稱">
+<!ENTITY aboutSupport.extensionEnabled "已啟用">
+<!ENTITY aboutSupport.extensionVersion "版本">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; 功能">
+<!ENTITY aboutSupport.featureName "名稱">
+<!ENTITY aboutSupport.featureVersion "版本">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "實驗功能">
+<!ENTITY aboutSupport.experimentName "名稱">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "描述">
+<!ENTITY aboutSupport.experimentActive "啟用">
+<!ENTITY aboutSupport.experimentEndDate "結束日期">
+<!ENTITY aboutSupport.experimentHomepage "首頁">
+<!ENTITY aboutSupport.experimentBranch "分支">
+
+<!ENTITY aboutSupport.appBasicsTitle "應用程式一般資訊">
+<!ENTITY aboutSupport.appBasicsName "名稱">
+<!ENTITY aboutSupport.appBasicsVersion "版本">
+<!ENTITY aboutSupport.appBasicsBuildID "Build ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "更新頻道">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "更新記錄">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "顯示更新記錄">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "設定檔目錄">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "設定檔目錄">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "已啟用的外掛程式">
+<!ENTITY aboutSupport.appBasicsBuildConfig "編譯組態">
+<!ENTITY aboutSupport.appBasicsUserAgent "使用者代理字串（User Agent）">
+<!ENTITY aboutSupport.appBasicsOS "作業系統">
+<!ENTITY aboutSupport.appBasicsMemoryUse "記憶體使用量">
+<!ENTITY aboutSupport.appBasicsPerformance "效能">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "已註冊的 Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "設定檔">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "多程序視窗">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "網頁內容處理程序">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google 金鑰">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service 金鑰">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "安全模式">
+
+<!ENTITY aboutSupport.showDir.label "開啟資料夾">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "顯示於 Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "開啟資料夾">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "已修改的重要偏好設定">
+<!ENTITY aboutSupport.modifiedPrefsName "名稱">
+<!ENTITY aboutSupport.modifiedPrefsValue "值">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js 偏好設定">
+<!ENTITY aboutSupport.userJSDescription "您的設定檔資料夾中有一個 <a id='prefs-user-js-link'>user.js 檔案</a>，當中包含不是由 &brandShortName; 所建立的偏好設定。">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "被鎖定的重要偏好設定">
+<!ENTITY aboutSupport.lockedPrefsName "名稱">
+<!ENTITY aboutSupport.lockedPrefsValue "值">
+
+<!ENTITY aboutSupport.graphicsTitle "圖形">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Places 資料庫">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "資料完整">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "確認資料完整">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "輔助功能">
+<!ENTITY aboutSupport.a11yActivated "已啟用">
+<!ENTITY aboutSupport.a11yForceDisabled "已強迫停用輔助功能">
+<!ENTITY aboutSupport.a11yHandlerUsed "已使用 Accessible Handler">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "程式庫版本">
+
+<!ENTITY aboutSupport.installationHistoryTitle "安裝紀錄">
+<!ENTITY aboutSupport.updateHistoryTitle "更新記錄">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "將文字複製到剪貼簿">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "將原始資料複製到剪貼簿">
+
+<!ENTITY aboutSupport.sandboxTitle "沙盒">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "被拒絕的系統呼叫">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "秒鐘前">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "程序類型">
+<!ENTITY aboutSupport.sandboxSyscallNumber "系統呼叫">
+<!ENTITY aboutSupport.sandboxSyscallArgs "引數">
+
+<!ENTITY aboutSupport.safeModeTitle "試試安全模式">
+<!ENTITY aboutSupport.restartInSafeMode.label "重新啟動但停用附加元件…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "功能">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "診斷">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "錯誤紀錄">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "決策紀錄">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "因 Crash Guard 停用的功能">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaTitle "媒體">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "輸出裝置">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "輸入裝置">
+<!ENTITY aboutSupport.mediaDeviceName "名稱">
+<!ENTITY aboutSupport.mediaDeviceGroup "群組">
+<!ENTITY aboutSupport.mediaDeviceVendor "廠商">
+<!ENTITY aboutSupport.mediaDeviceState "狀態">
+<!ENTITY aboutSupport.mediaDevicePreferred "偏好使用">
+<!ENTITY aboutSupport.mediaDeviceFormat "格式">
+<!ENTITY aboutSupport.mediaDeviceChannels "頻道">
+<!ENTITY aboutSupport.mediaDeviceRate "取樣率">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">

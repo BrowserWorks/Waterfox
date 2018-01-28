@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Vegvisar for ny profil">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; lagrar informasjon om innstillingane og vala dine i den personlege profilen din.">
+<!ENTITY profileCreationExplanation_2.text  "Dersom du deler denne kopien av &brandShortName; med andre brukarar kan du bruka profilane for å halda kvar brukar sin informasjon for seg sjølv. For å gjera dette må kvar brukar laga sin eigen profil.">
+<!ENTITY profileCreationExplanation_3.text  "Dersom du er den einaste personen som brukar denne kopien av &brandShortName; må du ha minst ein profil. Dersom du vil kan du laga fleire profilar for deg sjølv for å skilja mellom ulike sett av innstillingar og val. T.d. kan du ha separate profilar for arbeid og personleg bruk.">
+<!ENTITY profileCreationExplanation_4.text  "Trykk «Neste» for å laga ein ny profil.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Trykk «Hald fram» for å byrja oå laga profilen din.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Trykk «Neste» for å byrja å laga profilen din.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Dersom du lagar fleire profilar kan du skilja dei frå kvarandre med profilnamn. Du kan bruka namnet spesifisert her, eller du kan bruka eit anna.">
+<!ENTITY profilePrompt.label            "Skriv inn nytt profilnamn:">
+<!ENTITY profilePrompt.accesskey        "S">
+<!ENTITY profileDirectoryExplanation.text   "Innstillingane dine og andre brukardata vart lagra i:">
+<!ENTITY profileDefaultName             "Standardbrukar">
+<!ENTITY button.choosefolder.label      "Vel mappe…">
+<!ENTITY button.choosefolder.accesskey  "V">
+<!ENTITY button.usedefault.label        "Bruk standardmappe">
+<!ENTITY button.usedefault.accesskey    "B">

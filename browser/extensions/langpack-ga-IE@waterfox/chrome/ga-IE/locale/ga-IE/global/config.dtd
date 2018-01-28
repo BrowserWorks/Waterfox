@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Fainic!  Seans go gcuirfidh tú do bharánta ar neamhní!">
+<!ENTITY aboutWarningText.label "D'fhéadfadh athrú sna hardroghanna seo dochar a dhéanamh do chobhsaíocht, shlándáil agus fheidhmíocht an fheidhmchláir seo. Ná lean ar aghaidh muna bhfuil tú lánchinnte faoi cad tá á dhéanamh agat.">
+<!ENTITY aboutWarningButton2.label "Tuigim an chontúirt!">
+<!ENTITY aboutWarningCheckbox.label "Taispeáin an rabhadh seo an chéad uair eile">
+
+<!ENTITY searchPrefs.label "Cuardaigh:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Ainm na Sainrogha">
+<!ENTITY lockColumn.label "Stádas">
+<!ENTITY typeColumn.label "Cineál">
+<!ENTITY valueColumn.label "Luach">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Cliceáil lena sórtáil"> 
+<!ENTITY columnChooser.tooltip "Cliceáil chun colúin a roghnú le cur ar taispeáint"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Cóipeáil">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "Cóipeáil Ainm">
+<!ENTITY copyName.accesskey "n">
+<!ENTITY copyValue.label "Cóipeáil an Luach">
+<!ENTITY copyValue.accesskey "L">
+<!ENTITY modify.label "Athraigh">
+<!ENTITY modify.accesskey "A">
+<!ENTITY toggle.label "Scoránaigh">
+<!ENTITY toggle.accesskey "S">
+<!ENTITY reset.label "Athshocraigh">
+<!ENTITY reset.accesskey "r">
+<!ENTITY new.label "Nua">
+<!ENTITY new.accesskey "a">
+<!ENTITY string.label "Teaghrán">
+<!ENTITY string.accesskey "T">
+<!ENTITY integer.label "Slánuimhir">
+<!ENTITY integer.accesskey "i">
+<!ENTITY boolean.label "Boole">
+<!ENTITY boolean.accesskey "B">

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "సాధారణం">
+
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "ప్రమాదకరమైన, మోసపూరిత కంటెంటును నిరోధించు">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "ప్రమాదకరమైన దింపుకోళ్ళను నిరోధించు">
+<!ENTITY  blockDownloads.accesskey        "D">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "అవాంఛిత, అసాధారణ సాఫ్ట్‌వేర్ల గురించి నిన్ను హెచ్చరించు">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "C">
+
+<!ENTITY  addonExceptions.label         "మినహాయింపులు…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  logins.label                  "ప్రవేశాలు">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "మినహాయింపులు…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "ప్రధాన సంకేతపదాన్ని వాడు">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "ప్రధాన సంకేతపదాన్ని మార్చు…">
+<!ENTITY  changeMasterPassword.accesskey "M">
+
+<!ENTITY  savedLogins.label              "భద్రపరచిన ప్రవేశాలు…">
+<!ENTITY  savedLogins.accesskey          "L">
+
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

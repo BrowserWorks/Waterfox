@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "అనుసంధానం">
+<!ENTITY header     "రిమోట్ పరికరముకు అనుసంధానం చేయి">
+<!ENTITY host       "హోస్ట్:">
+<!ENTITY port       "పోర్టు:">
+<!ENTITY connect    "అనుసంధానం">
+<!ENTITY connecting "అనుసంధానిస్తోంది…">
+<!ENTITY availableAddons "అందుబాటులోని రిమోట్ పొడిగింతలు:">
+<!ENTITY availableTabs "అందుబాటులో రిమోట్ ట్యాబ్లు:">
+<!ENTITY availableProcesses "అందుబాటులోని రిమోట్ ప్రోసెస్‌లు:">
+<!ENTITY connectionError "దోషం:">
+<!ENTITY errorTimeout "దోషం: అనుసంధాన సమయం ముగిసెను.">
+<!ENTITY errorRefused "దోషం: అనుసంధానం తిరస్కరించబడెను.">
+<!ENTITY errorUnexpected "అనుకోని దోషం.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Waterfox Developer Tools రిమోట్ పరికరాలను (అంటే, Android కోసం Waterfox మరియు Waterfox OS లను) డీబగ్ చేయగలవు. రిమోట్ పరికరంలో మీరు 'రిమోట్ డీబగ్గింగ్' ఎంపిక ఆన్‌ చేసి ఉండేలా చూసుకోండి. మరింత వివరాలకు, చూడండి ">
+<!ENTITY remoteDocumentation "పత్రీకరణ">
+<!ENTITY remoteHelpSuffix ".">
+

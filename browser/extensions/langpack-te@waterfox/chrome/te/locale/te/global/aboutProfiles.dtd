@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "ప్రొఫైల్లు గురించి">
+<!ENTITY aboutProfiles.subtitle "ఈ పేజీ మీరు మీ ప్రొఫైల్స్ నిర్వహించడానికి సహాయపడుతుంది. ప్రతి పేజీ ప్రత్యేక చరిత్ర, బుక్మార్క్లు, సెట్టింగ్లు మరియు ఆడ్-ఆన్ లు కలిగిన ఒక ప్రత్యేక పదం.">
+<!ENTITY aboutProfiles.create "కొత్త ప్రొఫైల్ ను సృష్టించు">
+<!ENTITY aboutProfiles.restart.title "పునఃప్రారంభించు">
+<!ENTITY aboutProfiles.restart.inSafeMode "పొడిగింతలు ఆపివేసి పునఃప్రారంభించు…">
+<!ENTITY aboutProfiles.restart.normal "సాధారణంగా పునఃప్రారంభించు...">

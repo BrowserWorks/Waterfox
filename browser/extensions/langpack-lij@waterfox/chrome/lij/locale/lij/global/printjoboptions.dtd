@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Propietæ da machina de stanpe:">
+
+<!ENTITY paperInput.label "Dimenscion do pape:">
+<!ENTITY paperInput.accesskey "p">
+
+<!ENTITY jobTitleInput.label "Titolo do lou:">
+<!ENTITY jobTitleInput.accesskey "T">
+
+<!ENTITY colorGroup.label "Co:">
+<!ENTITY grayRadio.label "Scaa de grixi">
+<!ENTITY grayRadio.accesskey "g">
+<!ENTITY colorRadio.label "Cô">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "Destacco da l'angolo do papê a-o Margine">
+<!ENTITY topInput.label "In çimma:">
+<!ENTITY topInput.accesskey "I">
+<!ENTITY bottomInput.label "In fondo:">
+<!ENTITY bottomInput.accesskey "I">
+<!ENTITY leftInput.label "Mancinn-a:">
+<!ENTITY leftInput.accesskey "S">
+<!ENTITY rightInput.label "Drita:">
+<!ENTITY rightInput.accesskey "r">
+

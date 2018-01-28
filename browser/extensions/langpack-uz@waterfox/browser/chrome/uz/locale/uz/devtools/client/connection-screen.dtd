@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Ulanish">
+<!ENTITY header     "Masofadagi qurilmaga ulanish.">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Ulanish">
+<!ENTITY connecting "Ulanmoqda...">
+<!ENTITY availableAddons "Mavjud masofadagi ichki oynalar:">
+<!ENTITY availableTabs "Mavjud masofadagi ichki oynalar:">
+<!ENTITY availableProcesses "Mavjud masofadagi jarayonlar:">
+<!ENTITY connectionError "Xato:">
+<!ENTITY errorTimeout "Xato: ulanish vaqti o‘tib ketdi">
+<!ENTITY errorRefused "Xato: ulanish rad etildi.">
+<!ENTITY errorUnexpected "Kutilmagan xato.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox dasturlash asboblari masofadagi qurilmalarni (masalan, Android va Waterfox OS uchun Waterfox) tuzata oladi. Masofadagi qurilmada &quot;Masofadan tuzatish&quot;ni yoqib qo‘yilganligiga ishonch hosil qiling. Ko‘proq ma’lumot olish uchun   ">
+<!ENTITY remoteDocumentation "qo‘llanmani ko‘ring">
+<!ENTITY remoteHelpSuffix ".">
+

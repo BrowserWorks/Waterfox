@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "Ruyakik kema'">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Ke'ayaka' taq tz'aqat xa xe kichin b'anonela' ri awetan kiwäch.">
+<!ENTITY warningSecondary.label  "Itzel chi kema rik'in jub'a' nritzelaj akematz'ib' o nritzelaj ri awichinem.">
+
+<!ENTITY from.label "aj:">
+

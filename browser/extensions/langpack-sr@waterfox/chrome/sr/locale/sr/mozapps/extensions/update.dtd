@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; надоградња">
+
+<!ENTITY  offline.title                   "&brandShortName; ради ван мреже">
+<!ENTITY  offline.description             "&brandShortName; мора да се повеже са мрежом како би проверио да ли
+                                           постоје надоградње за додатке, како би биле у складу са овим
+                                           издањем програма.">
+<!ENTITY  offline.toggleOffline.label     "Повежи се.">
+<!ENTITY  offline.toggleOffline.accesskey "П">
+
+<!ENTITY  mismatch.win.title              "Некомпатибилни додаци">
+<!ENTITY  mismatch.top.label              "Наведени додаци нису у складу са овим издањем програма &brandShortName;
+                                           и зато су искључени:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; може да провери да ли су доступна компатибилна
+                                           издања ових додатака.">
+
+<!ENTITY  checking.wizard.title           "Провера компатибилних додатака">
+<!ENTITY  checking.top.label              "Тражење надоградњи за некомпатибилне додатке…">
+<!ENTITY  checking.status                 "Ово може да потраје…">
+
+<!ENTITY  found.wizard.title               "Пронађени су компатибилни додаци">
+<!ENTITY  found.top.label                 "Изаберите додатке које желите да поставите:">
+<!ENTITY  found.disabledXPinstall.label   "Ове надоградње не могу бити постављене јер је постављање софтвера тренутно
+                                           искључено. То можете да промените помоћу подешавања испод.">
+<!ENTITY  found.enableXPInstall.label     "Дозволи веб сајтовима да инсталирају софтвер">
+<!ENTITY  found.enableXPInstall.accesskey "Д">
+
+<!ENTITY  installing.wizard.title         "Постављање компатибилних додатака">
+<!ENTITY  installing.top.label            "Преузимања и инсталација надоградњи за додатке…">
+
+<!ENTITY  noupdates.wizard.title          "Компатибилни додаци нису пронађени">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; није могао да пронађе надоградње за
+                                           некомпатибилне додатке.">
+<!ENTITY  noupdates.error.desc            "Дошло је до грешака при тражењу надоградњи.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; ће периодично да проверава и обавештава
+                                           када пронађе компатибилне надоградње.">
+
+<!ENTITY  finished.wizard.title           "Компатибилни додаци су инсталирани">
+<!ENTITY  finished.top.label              "&brandShortName; је поставио надоградње за ваше додатке.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; може периодично да проверава и обавештава
+                                           када пронађе надоградње за додатке.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ће периодично да проверава и обавештава
+                                           када пронађе надоградње за додатке.">
+
+<!ENTITY  adminDisabled.wizard.title      "Није могуће проверити надоградње">
+<!ENTITY  adminDisabled.warning.label     "Није могуће проверити надоградње за некомпатибилне додатке
+                                           јер је инсталација софтвера &brandShortName; онемогућена.
+                                           Обратите се вашем системском администратору за савет.">
+
+<!ENTITY  versioninfo.wizard.title        "Провера компатибилности додатака">
+<!ENTITY  versioninfo.top.label           "Провера додатака на компатибилност са
+                                           овим &brandShortName; издањем.">
+<!ENTITY  versioninfo.waiting             "Ово може да потраје…">
+
+<!ENTITY  installerrors.wizard.title      "Проблеми при постављању надоградњи">
+<!ENTITY  installerrors.intro.label       "&brandShortName; је наишао на проблеме при надоградњи
+                                           неких од додатака.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Кликните на „Доврши“ како бисте наставили покретање програма &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Притисните „Готово‟ да бисте наставили са покретањем програма &brandShortName;.">
+<!ENTITY  enableChecking.label            "Дозволи програму &brandShortName; да проверава надоградње.">

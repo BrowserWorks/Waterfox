@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "700">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Капіяваць">
+<!ENTITY  copy.accesskey        "К">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Вылучыць усё">
+<!ENTITY  selectall.accesskey   "у">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Агульныя">
+<!ENTITY  generalTab.accesskey  "А">
+<!ENTITY  generalTitle          "Загаловак:">
+<!ENTITY  generalURL            "Адрас:">
+<!ENTITY  generalType           "Тып:">
+<!ENTITY  generalMode           "Рэжым адлюстравання:">
+<!ENTITY  generalSize           "Памер:">
+<!ENTITY  generalReferrer       "Спасылальны URL:">
+<!ENTITY  generalSource         "Крыніца кэшавання:">
+<!ENTITY  generalModified       "Зменена:">
+<!ENTITY  generalEncoding2      "Кадаванне тэксту:">
+<!ENTITY  generalMetaName       "Назва">
+<!ENTITY  generalMetaContent    "Змест">
+
+<!ENTITY  mediaTab              "Медыя">
+<!ENTITY  mediaTab.accesskey    "М">
+<!ENTITY  mediaLocation         "Адрас:">
+<!ENTITY  mediaText             "Спалучаны тэкст:">
+<!ENTITY  mediaAltHeader        "Дадатковы тэкст">
+<!ENTITY  mediaAddress          "Адрас">
+<!ENTITY  mediaType             "Тып">
+<!ENTITY  mediaSize             "Памер">
+<!ENTITY  mediaCount            "Колькасць">
+<!ENTITY  mediaDimension        "Памеры:">
+<!ENTITY  mediaLongdesc         "Пашыранае апісанне:">
+<!ENTITY  mediaBlockImage.accesskey "З">
+<!ENTITY  mediaSaveAs           "Захаваць як…">
+<!ENTITY  mediaSaveAs.accesskey "З">
+<!ENTITY  mediaSaveAs2.accesskey "х">
+<!ENTITY  mediaPreview          "Перадпрагляд медыя:">
+
+<!ENTITY  feedTab               "Каналы">
+<!ENTITY  feedTab.accesskey     "К">
+<!ENTITY  feedSubscribe         "Падпісацца">
+<!ENTITY  feedSubscribe.accesskey "П">
+
+<!ENTITY  permTab               "Дазволы">
+<!ENTITY  permTab.accesskey     "Д">
+<!ENTITY  permUseDefault        "Ужываць прадвызначаныя">
+<!ENTITY  permAskAlways         "Заўсёды пытаць">
+<!ENTITY  permAllow             "Дазволіць">
+<!ENTITY  permAllowSession      "Дазволіць на час сеансу">
+<!ENTITY  permBlock             "Блакаваць">
+<!ENTITY  permissionsFor        "Дазволы для:">
+<!ENTITY  permPlugins           "Задзейнічаць плагіны">
+
+<!ENTITY  permClearStorage           "Ачысціць сховішча">
+<!ENTITY  permClearStorage.accesskey "ч">
+
+<!ENTITY  securityTab           "Бяспека">
+<!ENTITY  securityTab.accesskey "Б">
+<!ENTITY  securityView.certView "Паказаць сертыфікат">
+<!ENTITY  securityView.accesskey "П">
+<!ENTITY  securityView.unknown   "Невядомы">
+
+
+<!ENTITY  securityView.identity.header   "Сапраўднасць вэб-сайта">
+<!ENTITY  securityView.identity.owner    "Уладальнік:">
+<!ENTITY  securityView.identity.domain   "Веб-сайт:">
+<!ENTITY  securityView.identity.verifier "Пацверджана:">
+<!ENTITY  securityView.identity.validity "Канчаецца:">
+
+<!ENTITY  securityView.privacy.header                   "Прыватнасць і бяспека">
+<!ENTITY  securityView.privacy.history                  "Я наведваў гэты вэб-сайт напярэдадні?">
+<!ENTITY  securityView.privacy.cookies                  "Захоўвае гэты вэб-сайт звесткі (кукі) на маім камп'ютары?">
+<!ENTITY  securityView.privacy.viewCookies              "Прагледзець кукі">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "к">
+<!ENTITY  securityView.privacy.passwords                "Захаваў я які-небудзь пароль для гэтага вэб-сайта?">
+<!ENTITY  securityView.privacy.viewPasswords            "Прагледзець захаваныя паролі">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "п">
+
+<!ENTITY  securityView.technical.header                 "Тэхнічныя падрабязнасці">
+
+<!ENTITY  helpButton.label                              "Даведка">

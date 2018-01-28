@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Num:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Adressa:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Adressa dal feed:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "f">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Adressa da la website:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "w">
+<!ENTITY editBookmarkOverlay.folder.label                    "Ordinatur:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Mussar tut ils ordinaturs da segnapaginas">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Zuppentar">
+<!ENTITY editBookmarkOverlay.tags.label                      "Chavazzins">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "s">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Separar ils chavazzins cun commas">
+<!ENTITY editBookmarkOverlay.description.label               "Descripziun:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Pled magic:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "P">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Mussar tut ils chavazzins">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Chargiar quest segnapagina en la trav laterala">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "C">
+<!ENTITY editBookmarkOverlay.choose.label                    "Tscherner…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Nov ordinatur">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

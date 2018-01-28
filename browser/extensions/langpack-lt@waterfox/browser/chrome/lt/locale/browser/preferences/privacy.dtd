@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Apsauga nuo stebėjimo">
+<!ENTITY  trackingProtection2.description      "Stebėjimas yra jūsų naršymo duomenų rinkimas daugelyje svetainių. Stebėjimas gali būti panaudotas sudaryti profilį ir rodyti turinį atsižvelgiant į jūsų naršymo bei asmeninę informaciją.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Naudokite apsaugą nuo stebėjimo norėdami užblokuoti žinomus stebėjimo elementus">
+<!ENTITY  trackingProtectionAlways.label       "Visada">
+<!ENTITY  trackingProtectionAlways.accesskey   "V">
+<!ENTITY  trackingProtectionPrivate.label      "Tik privačiojo naršymo languose">
+<!ENTITY  trackingProtectionPrivate.accesskey  "T">
+<!ENTITY  trackingProtectionNever.label        "Niekada">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Sužinoti daugiau">
+<!ENTITY  trackingProtectionExceptions.label   "Išimtys…">
+<!ENTITY  trackingProtectionExceptions.accesskey "I">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Naudoti apsaugą nuo stebėjimo privačiuosiuose languose">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Naudokite apsaugą nuo stebėjimo privačiojo naršymo veiksenoje, norėdami užblokuoti žinomus stebėjimo elementus">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Sužinoti daugiau">
+<!ENTITY changeBlockList2.label               "Keisti blokavimo sąrašą…">
+<!ENTITY changeBlockList2.accesskey           "K">
+
+<!ENTITY  doNotTrack.description        "Siųsti svetainėms „Do Not Track“ signalą, nurodant pageidavimą nebūti sekamiems">
+<!ENTITY  doNotTrack.learnMore.label    "Sužinoti daugiau">
+<!ENTITY  doNotTrack.default.label      "Tik naudojant apsaugą nuo sekimo">
+<!ENTITY  doNotTrack.always.label       "Visada">
+
+<!ENTITY  history.label                 "Žurnalas">
+<!ENTITY  permissions.label             "Leidimai">
+
+<!ENTITY  addressBar.label              "Adreso juosta">
+<!ENTITY  addressBar.suggest.label      "Rašant adreso juostoje, siūlyti">
+<!ENTITY  locbar.history2.label         "Naršymo žurnalas">
+<!ENTITY  locbar.history2.accesskey     "r">
+<!ENTITY  locbar.bookmarks.label        "Adresynas">
+<!ENTITY  locbar.bookmarks.accesskey    "y">
+<!ENTITY  locbar.openpage.label         "Atverti korteles">
+<!ENTITY  locbar.openpage.accesskey     "v">
+<!ENTITY  locbar.searches.label         "Susiję paieškos iš numatytosios ieškyklės">
+<!ENTITY  locbar.searches.accesskey     "j">
+
+<!ENTITY  suggestionSettings2.label     "Keisti ieškyklių siūlymų nuostatas">
+
+<!ENTITY  acceptCookies2.label          "Priimti slapukus iš svetainių">
+<!ENTITY  acceptCookies2.accesskey      "P">
+
+<!ENTITY  acceptThirdParty.pre.label      "Leisti trečiųjų šalių slapukus:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Visada">
+<!ENTITY  acceptThirdParty.never.label    "niekada">
+<!ENTITY  acceptThirdParty.visited.label  "tik lankytoms svetainėms">
+
+<!ENTITY  keepUntil.label               "Laikyti iki:">
+<!ENTITY  keepUntil.accesskey           "k">
+
+<!ENTITY  expire.label                  "jų galiojimo laiko pabaigos">
+<!ENTITY  close.label                   "„&brandShortName;“ seanso pabaigos">
+
+<!ENTITY  cookieExceptions.label        "Išimtys…">
+<!ENTITY  cookieExceptions.accesskey    "I">
+
+<!ENTITY  showCookies.label             "Rodyti slapukus…">
+<!ENTITY  showCookies.accesskey         "R">
+
+<!ENTITY  historyHeader2.pre.label         "„&brandShortName;“ privalo">
+<!ENTITY  historyHeader2.pre.accesskey     "p">
+<!ENTITY  historyHeader.remember.label     "vesti žurnalą">
+<!ENTITY  historyHeader.dontremember.label "niekada nevesti žurnalo">
+<!ENTITY  historyHeader.custom.label       "laikytis tinkintų žurnalo vedimo nuostatų">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "„&brandShortName;“ įsimins jūsų naršytus tinklalapius, parsiųstus failus, įvestas formų ir paieškos laukų reikšmes bei laikys lankomų svetainių slapukus.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Taip pat galbūt norite ">
+<!ENTITY  rememberActions.clearHistory.label  "išvalyti žurnalą">
+<!ENTITY  rememberActions.middle.label        " arba ">
+<!ENTITY  rememberActions.removeCookies.label "pašalinti kai kuriuos slapukus">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "„&brandShortName;“ visą laiką laikysis privačiojo naršymo seanso nuostatų ir nepildys naršymo žurnalo.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Taip pat galbūt norite ">
+<!ENTITY  dontrememberActions.clearHistory.label "visiškai išvalyti žurnalą">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Visada naršyti privačiojo naršymo veiksenoje">
+<!ENTITY  privateBrowsingPermanent2.accesskey "V">
+
+<!ENTITY  rememberHistory2.label      "Įsiminti lankytus tinklalapius ir parsiųstus failus">
+<!ENTITY  rememberHistory2.accesskey  "m">
+
+<!ENTITY  rememberSearchForm.label       "Įsiminti įvestas formų ir paieškos laukų reiškmes">
+<!ENTITY  rememberSearchForm.accesskey   "o">
+
+<!ENTITY  clearOnClose.label             "Išvalyti žurnalą baigiant „&brandShortName;“ darbą">
+<!ENTITY  clearOnClose.accesskey         "b">
+
+<!ENTITY  clearOnCloseSettings.label     "Nuostatos…">
+<!ENTITY  clearOnCloseSettings.accesskey "u">
+
+<!ENTITY  browserContainersLearnMore.label      "Sužinoti daugiau">
+<!ENTITY  browserContainersEnabled.label        "Įjungti sudėtinio rodinio korteles">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Nuostatos…">
+<!ENTITY  browserContainersSettings.accesskey    "u">

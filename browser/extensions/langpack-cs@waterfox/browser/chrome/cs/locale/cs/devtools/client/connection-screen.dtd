@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Připojení">
+<!ENTITY header     "Připojit k vzdálenému zařízení">
+<!ENTITY host       "Hostitel:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Připojit">
+<!ENTITY connecting "Připojování…">
+<!ENTITY availableAddons "Dostupné vzdálené doplňky:">
+<!ENTITY availableTabs "Dostupné vzdálené panely:">
+<!ENTITY availableProcesses "Dostupné vzdálené procesy:">
+<!ENTITY connectionError "Chyba:">
+<!ENTITY errorTimeout "Chyba: Vypršel časový limit připojení.">
+<!ENTITY errorRefused "Chyba: Připojení odmítnuto.">
+<!ENTITY errorUnexpected "Neznámá chyba.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Nástroje vývojáře ve Waterfoxu umožňují ladit vzdálená zařízení (např. Waterfox pro Android a Waterfox OS). Nezapomeňte na vzdáleném zařízení zapnout předvolbu pro „remote debugger“. Více informací najdete v">
+<!ENTITY remoteDocumentation "dokumentaci">
+<!ENTITY remoteHelpSuffix ".">
+

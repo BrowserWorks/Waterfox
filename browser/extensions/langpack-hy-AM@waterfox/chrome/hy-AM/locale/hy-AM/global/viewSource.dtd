@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Ակնագիրն՝ ">
+
+<!ENTITY fileMenu.label "Ֆայլ">
+<!ENTITY fileMenu.accesskey "Ֆ">
+<!ENTITY savePageCmd.label "Էջը պահպանել որպես…">
+<!ENTITY savePageCmd.accesskey "ո">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Տպելու կարգավորում…">
+<!ENTITY pageSetupCmd.accesskey "վ">
+<!ENTITY printPreviewCmd.label "Տպելու նախադիտում">
+<!ENTITY printPreviewCmd.accesskey "ա">
+<!ENTITY printCmd.label "Տպել…">
+<!ENTITY printCmd.accesskey "Տ">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Փակել">
+<!ENTITY closeCmd.accesskey "Փ">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "0">
+
+<!ENTITY goToLineCmd.label "Անցնել տողի...">
+<!ENTITY goToLineCmd.accesskey "Ա">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Տեսք">
+<!ENTITY viewMenu.accesskey       "Տ">
+<!ENTITY reloadCmd.label "Կրկին բեռնել">
+<!ENTITY reloadCmd.accesskey "Կ">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Տողադարձել երկար տողերը"> 
+<!ENTITY menu_wrapLongLines.accesskey "Տ">
+<!ENTITY menu_highlightSyntax.label "Գունանշել Շարահյուսությունը">
+<!ENTITY menu_highlightSyntax.accesskey "Շ">
+<!ENTITY menu_textSize.label "Տեքստի չափը">
+<!ENTITY menu_textSize.accesskey "չ">
+<!ENTITY menu_textEnlarge.label "Մեծացնել">
+<!ENTITY menu_textEnlarge.accesskey "Մ">
+<!ENTITY menu_textReduce.label "Նվազեցնել">
+<!ENTITY menu_textReduce.accesskey "Ն">
+<!ENTITY menu_textReset.label "Սովորական">
+<!ENTITY menu_textReset.accesskey "Ս">
+
+<!ENTITY findOnCmd.label     "Գտնել այս էջում…">
+<!ENTITY findOnCmd.accesskey "Գ">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Նորից Գտնել">
+<!ENTITY findAgainCmd.accesskey "տ">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Հետ">
+<!ENTITY backCmd.accesskey "Հ">
+<!ENTITY forwardCmd.label "Առաջ">
+<!ENTITY forwardCmd.accesskey "Ա">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Պատճենել Հղման Հասցեն">
+<!ENTITY copyLinkCmd.accesskey "Պ">
+<!ENTITY copyEmailCmd.label "Պատճենել Էլ. փոստի հասցեն">
+<!ENTITY copyEmailCmd.accesskey "Պ">

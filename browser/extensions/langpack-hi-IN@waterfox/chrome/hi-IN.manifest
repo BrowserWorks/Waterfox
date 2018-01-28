@@ -1,0 +1,14 @@
+locale alerts hi-IN hi-IN/locale/hi-IN/alerts/
+locale autoconfig hi-IN hi-IN/locale/hi-IN/autoconfig/
+locale global hi-IN hi-IN/locale/hi-IN/global/
+locale global-platform hi-IN hi-IN/locale/hi-IN/global-platform/mac/ os=Darwin
+locale global-platform hi-IN hi-IN/locale/hi-IN/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform hi-IN hi-IN/locale/hi-IN/global-platform/win/ os=WINNT
+locale mozapps hi-IN hi-IN/locale/hi-IN/mozapps/
+locale necko hi-IN hi-IN/locale/hi-IN/necko/
+locale passwordmgr hi-IN hi-IN/locale/hi-IN/passwordmgr/
+locale pipnss hi-IN hi-IN/locale/hi-IN/pipnss/
+locale pippki hi-IN hi-IN/locale/hi-IN/pippki/
+locale places hi-IN hi-IN/locale/hi-IN/places/
+locale pluginproblem hi-IN hi-IN/locale/hi-IN/pluginproblem/
+locale weave hi-IN hi-IN/locale/hi-IN/services/

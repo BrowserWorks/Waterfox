@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Runuk'ulem okem pa k'amaya'l">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Tinuk'samajïx ri taq proxi richin yatok pa k'amaya'l">
+<!ENTITY  noProxyTypeRadio.label        "Majun proxi">
+<!ENTITY  noProxyTypeRadio.accesskey    "p">
+<!ENTITY  systemTypeRadio.label         "Tawokisaj ri runuk'ulem ruproxi q'inoj">
+<!ENTITY  systemTypeRadio.accesskey     "T">
+<!ENTITY  WPADTypeRadio.label           "Pa ruyonil trïl runuk'ulem ri proxi richin re k'amab'ey re'">
+<!ENTITY  WPADTypeRadio.accesskey       "b">
+<!ENTITY  manualTypeRadio.label         "Tanuk'samajij retamawuj proxi:">
+<!ENTITY  manualTypeRadio.accesskey     "r">
+<!ENTITY  autoTypeRadio.label           "JAY richin runuk'ulem pa ruyonil ri proxi:">
+<!ENTITY  autoTypeRadio.accesskey       "y">
+<!ENTITY  reload.label                  "Tisamajib'ëx chik">
+<!ENTITY  reload.accesskey              "s">
+<!ENTITY  ftp.label                     "FTP Proxy:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP proxi:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL Proxy:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS Ruk'u'x Samaj:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "K'exel DNS toq nawokisaj SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "B'ey:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Mani nokisäx proxi richin:">
+<!ENTITY  noproxy.accesskey             "M">
+<!ENTITY  noproxyExplain.label          "Tz'eteb'äl: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Tokisäx ri junam proxi chi ke konojel">
+<!ENTITY  shareproxy.accesskey          "o">
+<!ENTITY  autologinproxy.label          "Mani tik'utüx rutz'etik we yakon ri ewan tzij">
+<!ENTITY  autologinproxy.accesskey      "r">
+<!ENTITY  autologinproxy.tooltip        "Re jun cha'oj re' nuya' awetal eqal chi kiwäch ri taq proxi toq e'ayakon kan taq awujil kichin rije'. Xakasik'ïx we ri ruya'ik awetal nisach.">

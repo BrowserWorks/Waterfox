@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Kirjasinlajit">
+
+<!ENTITY  language.label                          "Merkistö:">
+<!ENTITY  language.accesskey                      "M">
+
+<!ENTITY  size.label                              "Koko:">
+<!ENTITY  sizeProportional.accesskey              "K">
+<!ENTITY  sizeMonospace.accesskey                 "a">
+
+<!ENTITY  proportional.label                      "Suhteellinen:">
+<!ENTITY  proportional.accesskey                  "S">
+
+<!ENTITY  serif.label                             "Pääteviivallinen:">
+<!ENTITY  serif.accesskey                         "P">
+<!ENTITY  sans-serif.label                        "Pääteviivaton:">
+<!ENTITY  sans-serif.accesskey                    "ä">
+<!ENTITY  monospace.label                         "Tasavälinen:">
+<!ENTITY  monospace.accesskey                     "T">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latinalainen">
+<!ENTITY  font.langGroup.japanese                 "Japanilainen">
+<!ENTITY  font.langGroup.trad-chinese             "Perinteinen kiinalainen (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Yksinkertaistettu kiinalainen">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Perinteinen kiinalainen (Hongkong)">
+<!ENTITY  font.langGroup.korean                   "Korealainen">
+<!ENTITY  font.langGroup.cyrillic                 "Kyrillinen">
+<!ENTITY  font.langGroup.el                       "Kreikkalainen">
+<!ENTITY  font.langGroup.other                    "Muut kirjoitusjärjestelmät">
+<!ENTITY  font.langGroup.thai                     "Thaimaalainen">
+<!ENTITY  font.langGroup.hebrew                   "Heprealainen">
+<!ENTITY  font.langGroup.arabic                   "Arabialainen">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilialainen">
+<!ENTITY  font.langGroup.armenian                 "Armenialainen">
+<!ENTITY  font.langGroup.bengali                  "Bengalilainen">
+<!ENTITY  font.langGroup.canadian                 "Kanadalainen tavumerkistö">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopialainen">
+<!ENTITY  font.langGroup.georgian                 "Georgialainen">
+<!ENTITY  font.langGroup.gujarati                 "Gujaratilainen">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhilainen">
+<!ENTITY  font.langGroup.khmer                    "Khmerlainen">
+<!ENTITY  font.langGroup.malayalam                "Malaijalamilainen">
+<!ENTITY  font.langGroup.math                     "Matematiikka">
+<!ENTITY  font.langGroup.odia                     "Orija">
+<!ENTITY  font.langGroup.telugu                   "Telugulainen">
+<!ENTITY  font.langGroup.kannada                  "Kannadalainen">
+<!ENTITY  font.langGroup.sinhala                  "Singalilainen">
+<!ENTITY  font.langGroup.tibetan                  "Tiibettiläinen">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Pienin kirjasinkoko:">
+<!ENTITY minSize.accesskey                        "e">
+<!ENTITY minSize.none                             "Ei ole">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Pääteviivallinen">
+<!ENTITY  useDefaultFontSansSerif.label           "Pääteviivaton">
+
+<!ENTITY  allowPagesToUseOwn.label                "Sivut saavat käyttää omia kirjasinlajejaan oletusten sijaan">
+<!ENTITY  allowPagesToUseOwn.accesskey            "u">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Merkistökoodaus perinteiselle sisällölle">
+<!ENTITY languages.customize.Fallback2.label      "Merkistökoodaus virhetilanteessa:">
+<!ENTITY languages.customize.Fallback2.accesskey  "v">
+<!ENTITY languages.customize.Fallback2.desc       "Tätä merkistökoodausta käytetään perinteiselle sisällölle, jolle ei virheellisesti ole määritelty käytettävää merkistökoodausta.">
+
+<!ENTITY languages.customize.Fallback.auto        "Oletus nykyiselle alueasetukselle">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabialainen">
+<!ENTITY languages.customize.Fallback.baltic      "Balttilainen">
+<!ENTITY languages.customize.Fallback.ceiso       "Keskieurooppalainen, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Keskieurooppalainen, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Yksinkertaistettu kiinalainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Perinteinen kiinalainen">
+<!ENTITY languages.customize.Fallback.cyrillic    "Kyrillinen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Kreikkalainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Heprealainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japanilainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Korealainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Thaimaalainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turkkilainen">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnamilainen">
+<!ENTITY languages.customize.Fallback.other       "Muu (ml. länsieurooppalainen)">

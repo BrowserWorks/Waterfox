@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Jiggo Ɗoworde">
+
+<!ENTITY importFrom.label               "Jiggo Cuɓe, Maantore, Aslol, Finndeeji e keɓe goɗɗe iwdi e:">
+<!ENTITY importFromUnix.label           "Jiggo Cuɓoraaɗe, Maantore, Aslol, Finndeeji e keɓe goɗɗe iwdi e:">
+<!ENTITY importFromBookmarks.label      "Jiggo Maantore iwɗe e:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Hoto jiggo hay baɗte">
+<!ENTITY importFromNothing.accesskey    "H">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Alaa jaaɓnirɗe jogiiɗe maantore, aslol walla finndeeji njiytaa.">
+
+<!ENTITY importSource.title             "Jiggo Teelte e Keɓe">
+<!ENTITY importItems.title              "Teme Jiggeteeɗe">
+<!ENTITY importItems.label              "Suɓo hol teme njiggetee:">
+
+<!ENTITY migrating.title                "Nana jiggoo…">
+<!ENTITY migrating.label                "Ɗee-ɗoo teme ngoni ko e jiggeede…">
+
+<!ENTITY selectProfile.title            "Labo Heftinirde">
+<!ENTITY selectProfile.label            "Ɗee-ɗoo keftinirɗe ena ngoodi ngam jiggaade e mum'en:">
+
+<!ENTITY done.title                     "Jiggagol Gasii">
+<!ENTITY done.label                     "Ɗee-ɗoo teme njiggoraama no moƴƴirta:">
+
+<!ENTITY closeSourceBrowser.label       "Tiiɗno teeŋtin wonde wanngorde suɓaande ndee ko uddiinde hade maa jokkude.">

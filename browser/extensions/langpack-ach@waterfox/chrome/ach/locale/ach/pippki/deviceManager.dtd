@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Lalo Nyonyo">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Dul me Gwoko kuc ki Nyonyo">
+<!ENTITY devmgr.details.title                   "Lok kore kikore">
+<!ENTITY devmgr.details.title2                  "Wel">
+
+<!ENTITY devmgr.button.login.label              "Donyo Iye">
+<!ENTITY devmgr.button.login.accesskey          "y">
+<!ENTITY devmgr.button.logout.label             "Bin Woko">
+<!ENTITY devmgr.button.logout.accesskey         "W">
+<!ENTITY devmgr.button.changepw.label           "Lok Mung me donyo">
+<!ENTITY devmgr.button.changepw.accesskey       "M">
+<!ENTITY devmgr.button.load.label               "Pang">
+<!ENTITY devmgr.button.load.accesskey           "P">
+<!ENTITY devmgr.button.unload.label             "Pe ipang">
+<!ENTITY devmgr.button.unload.accesskey         "P">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Ket ngec pi dul ma imito medo.">
+<!ENTITY loaddevice.modname                     "Nying Dul:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Dul PKCS#11 Manyen">
+<!ENTITY loaddevice.filename                    "Nying pwail me dul:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Yeny…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

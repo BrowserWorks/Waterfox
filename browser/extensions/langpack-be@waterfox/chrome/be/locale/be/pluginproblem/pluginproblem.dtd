@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Гэты сайт выкарыстоўвае плагін, які можа запавольваць працу &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Націсніце тут, каб уключыць плагін.">
+<!ENTITY clickToActivatePlugin                               "Задзейнічаць плагін.">
+<!ENTITY checkForUpdates                                     "Праверыць абнаўленні…">
+<!ENTITY blockedPlugin.label                                 "Гэты плагін заблакаваны ў мэтах вашай бяспекі.">
+<!ENTITY hidePluginBtn.label                                 "Схаваць плагін">
+<!ENTITY managePlugins                                       "Кіраваць плагінамі…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Абнавіць старонку">
+<!ENTITY reloadPlugin.post                                   " каб паўтарыць спробу.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Даслаць справаздачу пра крах">
+<!ENTITY report.submitting                                   "Адпраўка справаздачы…">
+<!ENTITY report.submitted                                    "Справаздача пра крах адпраўлена.">
+<!ENTITY report.disabled                                     "Справаздача пра крах забаронена.">
+<!ENTITY report.failed                                       "Адпраўка не ўдалася.">
+<!ENTITY report.unavailable                                  "Няма даступнай справаздачы.">
+<!ENTITY report.comment                                      "Дадаць каментар (каментары агульнадаступныя)">
+<!ENTITY report.pageURL                                      "Дадаць URL старонкі">
+
+<!ENTITY plugin.file                                         "Файл">
+<!ENTITY plugin.mimeTypes                                    "MIME-тып">
+<!ENTITY plugin.flashProtectedMode.label                     "Уключыць абаронены рэжым Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Блакаваць небяспечнае і назойлівае Flash-змесціва">

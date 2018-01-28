@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY done.label "Objektet vijuese u importuan me sukses:">
+<!ENTITY done.title "Importim i Plotësuar">
+<!ENTITY importFrom.label "Importo Mundësi, Faqerojtës, Historik, Fjalëkalime dhe të dhëna të tjera prej:">
+<!ENTITY importFromBookmarks.label "Importo Faqerojtës prej:">
+<!ENTITY importFromIE.accesskey "M">
+
+<!ENTITY importFromIE.label "Microsoft Internet Explorer">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label "Mos importo gjë">
+<!ENTITY importFromNothing.accesskey "J">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "F">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY importFromUnix.label "Importo Parapëlqime, Faqerojtës, Historik, Fjalëkalime dhe të dhëna të tjera prej:">
+<!ENTITY importItems.label "Përzgjidhni cilët objekte të importohen:">
+<!ENTITY importItems.title "Objekte për Importim">
+<!ENTITY noMigrationSources.label       "Nuk u gjetën dot programe që përmbajnë faqerojtës, historik apo fjalëkalime.">
+<!ENTITY importSource.title "Importo Rregullime dhe Të dhëna">
+<!ENTITY migrating.label "Po importohen objektet vijuese…">
+<!ENTITY migrating.title "Po importohet…">
+<!ENTITY migrationWizard.title "Importues">
+<!ENTITY selectProfile.label "Është e mundur të importohen profilet vijues prej: ">
+<!ENTITY selectProfile.title "Përzgjidhni Profil">
+
+<!ENTITY closeSourceBrowser.label       "Ju lutemi, para se të vazhdohet, sigurohuni që shfletuesi i përzgjedhur të jetë i mbyllur.">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; Chế độ An toàn">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Khởi động vào chế độ an toàn">
+<!ENTITY refreshProfile.label         "Cài đặt lại &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Chế độ an toàn là một chế độ đặc biệt của &brandShortName; dùng để chẩn đoán và giải quyết rắc rối.">
+<!ENTITY safeModeDescription4.label   "Các tiện ích và tùy chỉnh cá nhân sẽ tạm thời bị tắt.">
+
+<!ENTITY refreshProfileInstead.label  "Bạn có thể bỏ qua bước nhận dạng lỗi và thử cài đặt lại &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; bị đóng bất thường trong lúc khởi động. Việc này có thể do tiện ích hoặc các vấn đề khác. Bạn có thể thử giải quyết vấn đề này bằng cách sửa chữa trong chế độ an toàn.">

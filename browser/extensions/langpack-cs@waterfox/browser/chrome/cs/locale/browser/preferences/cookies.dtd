@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Tyto cookies jsou uloženy ve vašem počítači:">
+<!ENTITY     cookiename.label               "Název cookie">
+<!ENTITY     cookiedomain.label             "Server">
+
+<!ENTITY     props.name.label               "Název:">
+<!ENTITY     props.value.label              "Obsah:">
+<!ENTITY     props.domain.label             "Server:">
+<!ENTITY     props.path.label               "Cesta:">
+<!ENTITY     props.secure.label             "Omezení na:">
+<!ENTITY     props.expires.label            "Platnost do:">
+<!ENTITY     props.container.label          "Kontejner:">
+
+<!ENTITY     window.title                   "Správce cookies">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Hledat">
+<!ENTITY     searchFilter.accesskey         "H">
+
+<!ENTITY     button.close.label             "Zavřít">
+<!ENTITY     button.close.accesskey         "Z">

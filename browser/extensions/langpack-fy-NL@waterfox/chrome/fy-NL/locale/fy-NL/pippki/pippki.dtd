@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Haadwachtwurd wizigje">
+<!ENTITY setPassword.tokenName.label "Befeiligingsapparaat">
+<!ENTITY setPassword.oldPassword.label "Aktuele wachtwurd:">
+<!ENTITY setPassword.newPassword.label "Nij wachtwurd:">
+<!ENTITY setPassword.reenterPassword.label "Nij wachtwurd (opnij):">
+<!ENTITY setPassword.meter.label "Wachtwurdkwaliteitsmeter">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Opnij inisjalisearje">
+<!ENTITY resetPassword.title  "Haadwachtwurd opnij inisjalisearje">
+<!ENTITY resetPassword.text  "As jo jo haadwachtwurd opnij ynstelle sille, al jo bewarre web- en e-mailwachtwurden, formuliergegevens, persoanlijke sertifikaten en privee-kaaien fergetten wurde. Binne jo wis dat jo jo haadwachtwurd opnij inisjalisearje wolle?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Sertifikaat downloade">
+<!ENTITY downloadCert.message1 "Jo wurdt frege in nije sertifikaatautoriteit (CA) te fertrouwen.">
+<!ENTITY downloadCert.trustSSL "Fertrou dizze CA foar it identifisearjen fan websites.">
+<!ENTITY downloadCert.trustEmail "Fertrouw dizze CA foar it identifisearjen fan e-mailbrûkers.">
+<!ENTITY downloadCert.trustObjSign "Fertrouw dizze CA foar it identifisearjen fan ûntwikkelers fan programmatuer.">
+<!ENTITY downloadCert.message3 "Foardat jo dizze CA fertrouwe foar watfoar gebrûk dan ek, moatte jo har sertifikaat bestudearje, lyk as har belied en prosedueres (as se beskikber binne).">
+<!ENTITY downloadCert.viewCert.label "Werjaan">
+<!ENTITY downloadCert.viewCert.text "CA-sertifikaat bestudearje">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Brûkersidentifikaasjefersyk">
+<!ENTITY clientAuthAsk.message1 "Dizze website fersiket jo om josels te identifisearjen mei in befeiligingssertifikaat:">
+<!ENTITY clientAuthAsk.message2 "Kies in sertifikaat om as identifikaasje te presintearjen:">
+<!ENTITY clientAuthAsk.message3 "Details fan it selektearre sertifikaat:">
+
+<!ENTITY pkcs12.setpassword.title  "Kies in wachtwurd foar de reservekopy fan it sertifikaat">
+<!ENTITY pkcs12.setpassword.message  "It wachtwurd foar de reservekopy fan it sertifikaat dat jo hjir ynstelle beskermt it reserverkopybestân dat jo op it punt stean te meitsjen.  Jo moatte dit wachtwurd ynstelle foardat jo fierder gean mei de reservekopy.">
+<!ENTITY pkcs12.setpassword.label1 "Wachtwurd foar de reservekopy fan it sertifikaat:">
+<!ENTITY pkcs12.setpassword.label2 "Wachtwurd foar de reservekopy fan it sertifikaat (opnij):">
+<!ENTITY pkcs12.setpassword.reminder "Wichtich: as jo jo wachtwurd foar de reservekopy fan it sertifikaat fejitte, kinne jo dizze reservekopy letter net ferhelpe.  Bewarje it op in feilich plak.">
+
+<!ENTITY chooseToken.title  "Tokenkardialoochfinster">
+<!ENTITY chooseToken.message1 "Kies in token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Dwaande in priveekaai te meitsjen">
+<!ENTITY createCertInfo.msg1 "Dwaande kaai te meitsjen… Dit kin in pear minuten dourje…">
+<!ENTITY createCertInfo.msg2 "In momint geduld…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Beskerme tokenautentikaasje">
+<!ENTITY protectedAuth.msg "Autentisearje by de token. Autentikaasje metoade hinget ôf fan it type fan jo token.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

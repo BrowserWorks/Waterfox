@@ -1,0 +1,222 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Brauzer asboblar panelini ochishda xatolik:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Qoʻshimcha sozlamalar">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Nazoratchi">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Brauzer uslublarini ko‘rsatish">
+<!ENTITY options.showUserAgentStyles.tooltip "Buni yoqish brauzer tomonidan yuklangan joriy uslublarni ko‘rsatadi.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Standart rang">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "S">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "16-lik son">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Rang nomlari">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Faqat joriy seans, sahifani qayta yuklaydi">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Brauzer xromi va  asboblar panelini tuzatish qo‘shimcha dasturlarini yoqing">
+<!ENTITY options.enableChrome.tooltip3  "Ushbu moslamani yoqish brauzer kontektstida turli xil dasturlar vositalaridan foydalanish (Asboblar > Veb dasturchi > Brazuer asboblar paneli orqali) va &quot;Qo‘shimcha dasturlarni boshqarish&quot;dan qo‘shimcha dasturlarni tuzatishga ruxsat beradi">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Masofadan nosozliklarni jo‘natishni yoqish">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "JavaScript *’ni o‘chirib qo‘yish">
+<!ENTITY options.disableJavaScript.tooltip   "Agar buni tanlasangiz, joriy ichki oyna uchun JavaScript o‘chiriladi. Agar ichki oyna yoki asboblar paneli yopilsa, ushbu moslashlar oʻz kuchini yoʻqotadi.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+<!ENTITY options.disableHTTPCache.tooltip   "Buni yoqib qo‘ysangiz, u asboblar paneli ochiq bo‘lgan barcha ichki oynalar uchun HTTP keshni o‘chirib qo‘yadi. Service Workers ta’minotiga ta’sir qilmaydi.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Service Workers ta’minotini sinash xususiyatlarini yoqib qo‘yadi (asboblar paneli ochiq bo‘lganda)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Asboblar paneli bo‘lgan barcha ichki oynalar uchun HTTP ustida service workers ta’minotni yoqib qo‘yadi.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Qoʻshimcha dasturlar oʻrnatgan dasturlash asboblari">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Mavjud asboblar qutisi tugmalari">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Joriy asboblar qutisi nishonini qoʻllab-quvvatlamaydi">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Mavzular">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Dasturchi nashri brauzer mavzusidan foydalaning">
+<!ENTITY options.usedeveditiontheme.tooltip "Dasturchi nashri brauzer mavzusini o‘chirib-yoqadi.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Veb terminal">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Vaqt belgilarini yoqish">
+<!ENTITY options.timestampMessages.tooltip    "Agar buni tanlasangiz, &quot;Veb terminal&quot;dagu buyruqlar va natijalar vaqtni belgilashda ham koʻrinadi ">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Uslubni tahrirlagich">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Asl manbalarni ko‘rsatish">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "&quot;Uslub tahrirchisi&quot; va &quot;Nazoratchi&quot;dagi asl manbalarni (masalan, Sass fayllarini) ko‘rsatish">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "Avtotugatish CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "&quot;Uslub tahrirchisi&quot; CSS xossalari, qiymatlari va tanlagichlarini yozuvingiz sifatida avtotugatish">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Umumumiy moslamalar">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Doimiy ma’lumotlarni saqlashni yoqish">
+<!ENTITY options.enablePersistentLogs.tooltip  "Agar siz ushbu moslamani yoqsangiz, &quot;Veb terminal&quot; har safar yangi sahifani kuzatmoqchi boʻlganingizda chiquvchilarni tozalamaydi">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Gecko platformasi ma’lumotlarini koʻrsatish">
+<!ENTITY options.showPlatformData.tooltip  "Agar siz ushbu moslamani yoqsangiz, JavaScript Profiler natijalari  Gekko platformasi simvollarini qoʻshadi ">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Tahrirlagich parametrlari">
+<!ENTITY options.sourceeditor.detectindentation.label   "Xat boshini aniqlash">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Manba tarkibi asosida xat boshidan boshlashni topish">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Qavslarni avtomatik yopish">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Yopiluvchi qavslarni avtomatik kiritish">
+<!ENTITY options.sourceeditor.expandtab.label           "Bo‘sh joylardan foydalanib xat boshidan boshlash">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Ichki oyna belgisi o‘rniga bo‘sh joylardan foydalanish">
+<!ENTITY options.sourceeditor.tabsize.label             "Ichki oyna hajmi">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "I">
+<!ENTITY options.sourceeditor.keybinding.label          "Tugmalar birikmasi">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "T">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Standart">
+
+<!ENTITY options.collapseAttrs.label "Truncate DOM attributes">
+<!ENTITY options.collapseAttrs.tooltip "Truncate long attributes in the inspector">
+
+<!ENTITY options.debugger.label            "Debugger">
+
+<!ENTITY options.defaultColorUnit.authored "As Authored">
+
+<!ENTITY options.disableHTTPCache.label     "Disable HTTP Cache (when toolbox is open)">
+<!ENTITY options.enableRemote.tooltip2  "Turning this option on will allow the developer tools to debug a remote instance like Waterfox OS">
+
+<!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
+<!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!ENTITY options.screenshot.clipboard.label      "Screenshot to clipboard">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saves to the screenshot directly to the clipboard">
+
+<!ENTITY options.screenshot.label            "Screenshot Behavior">
+
+<!ENTITY options.selectDefaultTools.label2    "Default Developer Tools">
+
+<!ENTITY options.sourceMaps.label      "Enable Source Maps">
+<!ENTITY options.sourceMaps.tooltip    "If you enable this option sources will be mapped in the Debugger and Console.">
+
+<!ENTITY toggleToolbox.key  "I">

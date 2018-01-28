@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "N'emaoc'h ket e-barzh ur prenestr merdeiñ prevez.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Digeriñ ur prenestr merdeiñ prevez">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Merdeiñ prevez">
+<!ENTITY privateBrowsing.title.tracking                  "Merdeiñ prevez gant ar gwarez heuliañ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "‌">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "N'eo ket enrollet">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        " gant Waterfox pa verdeit en ur prenestr merdeiñ prevez:">
+<!ENTITY aboutPrivateBrowsing.info.visited               "pajennoù gweladennet">
+<!ENTITY aboutPrivateBrowsing.info.searches              "klaskoù">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "toupinoù">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "restroù padennek">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "‌">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "Enrollet e vo">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " gant Waterfox:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "pellgargadurioù">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "sinedoù">
+<!ENTITY aboutPrivateBrowsing.note.before                "‌">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "N'hoc'h ket dizanv">
+<!ENTITY aboutPrivateBrowsing.note.after                 " war ar genrouedad gant ar merdeiñ prevez. Gallout a ra hoc'h implijer pe ho pourchaser kenrouedad heuliañ ar pajennoù gweladennet ganeoc'h c'hoazh.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Gouzout hiroc'h diwar-benn">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Merdeiñ prevez">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Gwarez heuliañ">
+<!ENTITY trackingProtection.description2                 "Gant lec'hiennoù 'zo e vez arveret heulierien evit evezhiañ hoc'h obererezh war ar Genrouedad. Gwarez Heuliañ Waterfox a stanko meur a heulier a c'hall dastum titouroù a-zivout hoc'h emzalc'h merdeiñ.">
+<!ENTITY trackingProtection.startTour1                   "Sellit penaos ez a en-dro">

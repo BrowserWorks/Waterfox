@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "விதிவிலக்குகள் - மொழிபெயர்ப்பு">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "பின்வரும் மொழிகளுக்கு மொழிபெயர்ப்பு வழங்கப்பட மாட்டாது:">
+<!ENTITY treehead.languageName.label      "மொழிகள்">
+<!ENTITY removeLanguage.label             "மொழியை நீக்கு">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "எல்லா மொழிகளையும் நீக்கு">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "பின்வரும் தளங்களுக்கு மொழி பெயர்ப்பு வழங்கப்பட மாட்டாது:">
+
+<!ENTITY removeSite.label                 "தளத்தை நீக்கு">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "அனைத்து தளங்களையும் நீக்கு">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "மூடுக">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

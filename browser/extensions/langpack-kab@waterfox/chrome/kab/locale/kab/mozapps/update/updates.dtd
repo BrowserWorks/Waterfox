@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Aleqqem n useɣẓan">
+
+<!ENTITY  checking.title                  "Anadi n ileqman">
+<!ENTITY  updateCheck.label               "Anadi n ileqman imaynuten n &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Ulac ileqman">
+<!ENTITY  noupdatesautoenabled.intro      "Ulac ileqman iheggan. &brandShortName; ad isenqedsi sya ɣer da ma llan ileqman.">
+<!ENTITY  noupdatesautodisabled.intro     "Ulac lqem iheggan akka tura. Ma ulac aɣilif ɛreḍ tikelt nniḍen ticki, neɣ rmed asenqed n uleqqem awurman n &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "Aleqqem d-awezɣi">
+<!ENTITY  manualUpdate.desc               "Lqem n urkad d tɣellist thegga, acu kan ur ɣur-k ara tisirag n unagraw i wesebded. Ma ulac aɣilif, nermes anedbal n unagraw-ik neɣ ɛreḍ tikelt nniḍen s umiḍan igebren tisirag i usebded n useɣẓan ɣef uselkim-inek.">
+<!ENTITY  manualUpdate.space.desc         "Lqem n tɣellist d arkad iwatan yella yakan, acu kan ur ɣuṛ-k ara deqs n wadeg akken ad yebded.">
+<!ENTITY  manualUpdateGetMsg.label        "Tzemreḍ yal tikelt ad awiḍ lqem aneggaru n &brandShortName; ɣef:">
+
+<!ENTITY  unsupported.title               "Anagraw ur iţusefrak ara">
+<!ENTITY  unsupported.label               "&brandShortName; -inek ur yelqim ara, acukan lqem aneggaru ur ittusefrak ara deg unagraw-inek. Ma ulac aɣilif leqqem anagraw-inek, sakin ɛṛeḍ tikelt nniḍen. Izen-a werǧin ad ittusken, acukan tzemreḍ">
+<!ENTITY  unsupportedLink.label           "Issin ugar">
+
+<!ENTITY  clickHere.label                 "Ugar n telɣut ɣef lqem-agi">
+
+<!ENTITY  evangelism.desc                 "Issefk ad tesneseḍ lqem-agi n &brandShortName; s zreb.">
+
+<!ENTITY  downloadPage.title              "Azdam n &brandShortName;">
+<!ENTITY  downloading.intro               "Azdam n lqem…">
+<!ENTITY  connecting.label                "Tuqqna ɣer uqeddac n uleqqem…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ur yezmir ara ad isenqedtimmad s yeḥhricen i d-iţwazedmen, lqem uɣrid ad iţwazdam akka tura.">
+
+<!ENTITY  viewDetails.tooltip             "Sken aglam leqqayen n lqem-agi">
+
+<!ENTITY  details.link                    "Aglam leqqayen">
+
+<!ENTITY  error.title                     "Aleqqem ur yeddi ara">
+
+<!ENTITY  error.label                     "Llan wuuren deg usenqed, deg uzdam neɣ deg usebded n lqem-agi. &brandShortName; ur yezmir ara ad ittwaleqqem imi:">
+                                           
+<!ENTITY  errorManual.label               "Tzemreḍ aţleqmeḍ &brandShortName; s ufus ma tefreḍ aseɣwen-agi u ma tzedmeḍ lqem anegaru:">
+                                           
+<!ENTITY  errorpatching.intro             "Lqem s yeḥricen ur yedda ara. &brandShortName; ad iɛreḍ tikelt nniḍen azdam n lqem uɣrid.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ur izmir ara ad yaf ma yella lqem.Ma ulac aɣilif,Wali ma ɣur-k lqem aneggaru n &brandShortName; di:">
+
+<!ENTITY  finishedPage.title              "Lqem ihegga i wesebded.">
+<!ENTITY  finishedPage.text               "Lqem ad ibded deg usenker d-itteddun n &brandShortName;. Tzemreḍ ad talseḍ asenker n &brandShortName; tura neɣ smed amahil-inek u ales asenker ticki.">
+
+<!ENTITY  finishedBackgroundPage.text     "Lqem n urkad d tɣellist &brandShortName; teţwazdem-ed u thegga i wesebded.">
+<!ENTITY  finishedBackground.name         "Lqem:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Lqem ad ibded deg usenker d-itteddun n &brandShortName;. Tzemreḍ ad talseḍ asenker n &brandShortName; tura neɣ smed amahil-inek talseḍ asenker ticki.">
+<!ENTITY  finishedBackground.moreElevated "Aleqqem-agi yesra taseglut n unedbal. Aleqqem ad yettwasebded deg usenker i d-itteddun n &brandShortName;. Tzemreḍ ad talseḍ asenker n &brandShortName; tura, neɣ smed amahil talseḍ asenker ticki neɣ agwi aleqqem-agi. ">
+
+<!ENTITY  update.details.label            "Aglam leqqayen">
+<!ENTITY  update.installedOn.label        "Ibded di:">
+<!ENTITY  update.status.label             "Addad:">

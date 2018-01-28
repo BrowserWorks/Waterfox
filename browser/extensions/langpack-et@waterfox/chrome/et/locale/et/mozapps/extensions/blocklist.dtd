@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Lisad võivad tekitada probleeme">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; tuvastas, et järgnevad lisad võivad põhjustada stabiilsuse või turvalisuse probleeme:">
+<!ENTITY blocklist.softblocked       "Sinu turvalisuse tagamiseks on tungivalt soovitatav need lisad keelata ja rakendus taaskäivitada.">
+<!ENTITY blocklist.hardblocked       "Need lisad on tuntud kui turvalisuse või stabiilsuse probleemide tekitajad ja blokiti, aga nende täielikuks keelamiseks tuleb rakendus siiski uuesti käivitada.">
+<!ENTITY blocklist.softandhard       "Lisad, mis on tuntud kui turvalisuse või stabiilsuse probleemide tekitajad, blokiti. Muud lisad pole nii ohtlikud, kuid on siiski tungivalt soovitatav, et sa need keelad ja taaskäivitad rakenduse.">
+<!ENTITY blocklist.moreinfo          "Rohkem infot">
+
+<!ENTITY blocklist.accept.label      "Taaskäivita &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "T">
+
+<!ENTITY blocklist.blocked.label     "Blokitud">
+<!ENTITY blocklist.checkbox.label    "Keelatud">

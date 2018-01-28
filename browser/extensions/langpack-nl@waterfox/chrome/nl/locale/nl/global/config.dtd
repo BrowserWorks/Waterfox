@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Dit kan in overtreding zijn met uw garantievoorwaarden!">
+<!ENTITY aboutWarningText.label "Aanpassen van deze uitgebreide voorkeuren kan schadelijk zijn voor de stabiliteit, veiligheid en prestaties van deze toepassing. Ga alleen door als u weet wat u doet.">
+<!ENTITY aboutWarningButton2.label "Ik aanvaard het risico!">
+<!ENTITY aboutWarningCheckbox.label "Deze waarschuwing de volgende keer tonen">
+
+<!ENTITY searchPrefs.label "Zoeken:">
+<!ENTITY searchPrefs.accesskey "Z">
+<!ENTITY focusSearch.key "z">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Voorkeurnaam">
+<!ENTITY lockColumn.label "Status">
+<!ENTITY typeColumn.label "Type">
+<!ENTITY valueColumn.label "Waarde">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Klik om te sorteren">
+<!ENTITY columnChooser.tooltip "Klik om weer te geven kolommen te selecteren">
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "K">
+<!ENTITY copyPref.label "Kopiëren">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Naam kopiëren">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "Waarde kopiëren">
+<!ENTITY copyValue.accesskey "W">
+<!ENTITY modify.label "Aanpassen">
+<!ENTITY modify.accesskey "A">
+<!ENTITY toggle.label "Omschakelen">
+<!ENTITY toggle.accesskey "O">
+<!ENTITY reset.label "Herinitialiseren">
+<!ENTITY reset.accesskey "H">
+<!ENTITY new.label "Nieuw">
+<!ENTITY new.accesskey "e">
+<!ENTITY string.label "String">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Integer">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

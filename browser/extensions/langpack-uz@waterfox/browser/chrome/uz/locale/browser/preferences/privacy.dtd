@@ -1,0 +1,138 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Kuzatuvdan himoyalanish">
+
+
+<!ENTITY  trackingProtectionAlways.label       "Doimo">
+<!ENTITY  trackingProtectionAlways.accesskey   "D">
+<!ENTITY  trackingProtectionPrivate.label      "Faqat maxfiy oynalar uchun">
+<!ENTITY  trackingProtectionPrivate.accesskey  "F">
+<!ENTITY  trackingProtectionNever.label        "Hech qachon">
+<!ENTITY  trackingProtectionNever.accesskey    "H">
+<!ENTITY  trackingProtectionLearnMore.label    "Batafsil ma’lumot">
+<!ENTITY  trackingProtectionExceptions.label   "Istisnolar…">
+<!ENTITY  trackingProtectionExceptions.accesskey "I">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Maxfiy oynalarda kuzatuvdan himoya ishlatish">
+<!ENTITY trackingProtectionPBM5.accesskey     "M">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+
+<!ENTITY trackingProtectionPBMLearnMore.label "Batafsil ma’lumot">
+
+
+
+
+
+
+
+<!ENTITY  history.label                 "Tarix">
+
+
+
+
+
+<!ENTITY  locbar.bookmarks.label        "Xatcho‘plar">
+<!ENTITY  locbar.bookmarks.accesskey    "X">
+<!ENTITY  locbar.openpage.label         "Ichki oynalarni ochish">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Asosiy qidiruv tizimidan aloqador natijalar">
+<!ENTITY  locbar.searches.accesskey     "A">
+
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Begona taraf kukilariga ruxsat berish:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "r">
+
+<!ENTITY  acceptThirdParty.never.label    "Hech qachon">
+<!ENTITY  acceptThirdParty.visited.label  "Kirilganlardan">
+
+<!ENTITY  keepUntil.label               "Saqlansin:">
+<!ENTITY  keepUntil.accesskey           "S">
+
+<!ENTITY  expire.label                  "ular eskirguncha">
+<!ENTITY  close.label                   "Men &brandShortName;ni yopaman">
+
+<!ENTITY  cookieExceptions.label        "Istisnolar…">
+<!ENTITY  cookieExceptions.accesskey    "I">
+
+<!ENTITY  showCookies.label             "Kukilarni ko‘rsatish">
+<!ENTITY  showCookies.accesskey         "k">
+
+
+<!ENTITY  historyHeader.remember.label     "Tarix eslab qolinsin">
+<!ENTITY  historyHeader.dontremember.label "Tarix hech qachon eslab qolinmasin">
+<!ENTITY  historyHeader.custom.label       "Tarix uchun boshqa sozlamalardan foydalanish">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; kirgan saytlaringizni, yuklab olishlarni, turli shakllar va izlash tarixini hamda kirgan saytlaringiz uchun saqlagan kukilarni eslab qoladi.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Siz ">
+<!ENTITY  rememberActions.clearHistory.label  "so‘nggi tarixingizni tozalashni xohlayotgandirsiz">
+<!ENTITY  rememberActions.middle.label        ", yoki ">
+<!ENTITY  rememberActions.removeCookies.label " individual kukilarni o‘chirishni xohlayotgandirsiz">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; xuddi shu moslamalardan shaxsiy ko‘rish sifatida foydalanadi va tarixni saqlab qolmaydi.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Siz, balki,">
+<!ENTITY  dontrememberActions.clearHistory.label " barcha joriy tarixni tozalashni xohlayotgandirsiz">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Doimo maxfiy ko‘rish usulidan foydalanish">
+<!ENTITY  privateBrowsingPermanent2.accesskey "m">
+
+<!ENTITY  rememberHistory2.label      "Kirgan saytlarim va yuklab olish tarixini eslab qolinsin">
+<!ENTITY  rememberHistory2.accesskey  "e">
+
+<!ENTITY  rememberSearchForm.label       "Izlash va tarix shakli eslab qolinsin">
+<!ENTITY  rememberSearchForm.accesskey   "s">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; yopilganda tarix tozalansin">
+<!ENTITY  clearOnClose.accesskey         "t">
+
+<!ENTITY  clearOnCloseSettings.label     "Sozlamalar…">
+<!ENTITY  clearOnCloseSettings.accesskey "l">
+
+<!ENTITY  browserContainersLearnMore.label      "Batafsil ma’lumot">
+<!ENTITY  browserContainersEnabled.label        "Konteyner ichki oynalarni yoqib qo‘yish">
+<!ENTITY  browserContainersEnabled.accesskey    "y">
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.always.label   "Always">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; will">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  suggestionSettings2.label     "Change preferences for search engine suggestions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

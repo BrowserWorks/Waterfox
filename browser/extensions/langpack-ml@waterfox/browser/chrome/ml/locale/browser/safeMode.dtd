@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; സേഫ്‌ മോഡ്‌ ">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "സേഫ് മോഡില്‍ ആരംഭിയ്ക്കുക">
+<!ENTITY refreshProfile.label         "&brandShortName; വീണ്ടും സജ്ജമാക്കുക">
+
+<!ENTITY safeModeDescription3.label   "പ്രശ്നങ്ങള്‍ എന്താണെന്നു് കണ്ടുപിടിച്ചു് അവ പരിഹരിയ്ക്കുന്നതിനുള്ള &brandShortName; ന്റെ പ്രത്യേക മോഡാകുന്നു സേഫ് മോഡ്.">
+<!ENTITY safeModeDescription4.label   "നിങ്ങളുടെ ആഡ്-ഓണുകളും തയ്യാറാക്കിയ സജ്ജീകരണങ്ങളും തല്‍ക്കാലികമായി പ്രവര്‍ത്തന രഹിതമാക്കിയിരിയ്ക്കുന്നു.">
+
+<!ENTITY refreshProfileInstead.label  "ട്രബിള്‍ഷൂട്ടിങ് ഉപേക്ഷിച്ചും &brandShortName; പുതുക്കാം.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "ആരംഭിയ്ക്കുമ്പോള്‍ &brandShortName; അപ്രതീക്ഷിതമായി അടച്ചിരിയ്ക്കുന്നു. ഇതിനു് കാരണങ്ങള്‍  ആഡ്-ഓണുകള്‍ അല്ലെങ്കില്‍ മറ്റെന്തെങ്കിലുമാവാം. ഇതു് പരിഹരിയ്ക്കുന്നതിനായി, നിങ്ങള്‍ക്കു് അതിന്റെ സ്വതവേയുള്ള അവസ്ഥയിലേക്കു് വീണ്ടും സജ്ജമാക്കാം അല്ലെങ്കില്‍ സേഫ് മോഡില്‍ പരിഹാരങ്ങള്‍ കണ്ടുപിടിയ്ക്കാം.">

@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "Kacoc me kakube">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Yab URL i Dirica matidi manyen">
+<!ENTITY openURL.accesskey "D">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Malubo">
+<!ENTITY btnPageNet.tooltip "Gwok wel me nongo kube">
+<!ENTITY btnPageNet.accesskey "M">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Gwok wel me bal kacel ki ciko pa CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Gwok wel Javascript ma kiweko woko">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Ber bedo">
+<!ENTITY btnPageSecurity.tooltip "Gwok wel me bal kacel ki ciko pa ber bedo">
+<!ENTITY btnPageSecurity.accesskey "e">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "Gwoko">
+<!ENTITY btnPageLogging.tooltip "Gwok wel me kwena ma kicwalo bot window.console object">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "Bal">
+<!ENTITY btnConsoleInfo         "Ngec">
+<!ENTITY btnConsoleWarnings     "Cik">
+<!ENTITY btnConsoleLog          "Gwok">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Nwo yiko">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "Lapok tic">
+<!ENTITY btnServerLogging.tooltip     "Kwena me gwok ma kinongo ki bot lapok tic me kakube">
+<!ENTITY btnServerLogging.accesskey   "L">
+<!ENTITY btnServerErrors              "Bal">
+<!ENTITY btnServerInfo                "Ngec">
+<!ENTITY btnServerWarnings            "Cik">
+<!ENTITY btnServerLog                 "Gwok">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Med-ikome onyo Chrome Workers">
+
+<!ENTITY filterOutput.placeholder "Li adwogi">
+<!ENTITY btnClear.label        "Jwa">
+<!ENTITY btnClear.tooltip      "Jwa adogi me Kacoc me kakube">
+<!ENTITY btnClear.accesskey    "a">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Lok Kabedo me Kakube">
+<!ENTITY copyURLCmd.accesskey "e">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Yab i neno pa Gin ma romo lokke">
+<!ENTITY openInVarViewCmd.accesskey "G">
+<!ENTITY storeAsGlobalVar.label "Gwok calo gin ma pol kare romo lokke">
+<!ENTITY storeAsGlobalVar.accesskey "G">

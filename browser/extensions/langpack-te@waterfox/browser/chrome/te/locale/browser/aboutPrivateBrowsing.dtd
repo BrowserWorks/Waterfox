@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "మీరు ప్రస్తుతం అంతరంగిక విండోలో లేరు.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "ఆంతరంగిక విండో తెరువు">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "అంతరంగిక విహరణ">
+<!ENTITY privateBrowsing.title.tracking                  "ట్రాకింగ్ సంరక్షణతో అంతరంగిక విహరణ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "మీరు అంతరంగిక విండోలో విహరించేప్పుడు, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "వీటిని భద్రపరచదు">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "సందర్శించిన పేజీలు">
+<!ENTITY aboutPrivateBrowsing.info.searches              "శోధనలు">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "కుకీలు">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "తాత్కాలిక ఫైళ్ళు">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "వీటిని భద్రపరుస్తుంది">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " మీ:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "దింపుకోళ్ళు">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ఇష్టాంశాలు">
+<!ENTITY aboutPrivateBrowsing.note.before                "అంతరంగిక విహరణ మిమ్మల్ని అంతర్జాలంలో ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "అజ్ఞాతంగా ఉంచదు">
+<!ENTITY aboutPrivateBrowsing.note.after                 ". మీరు పనిచేసే సంస్థ లేదా మీకు అంతర్జాల సేవను అందించేవారు మీరు ఏయే పేజీలు చూస్తున్నారో తెలుసుకోగలరు.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          " దీని గురించి మరింత తెలుసుకోండి">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "అంతరంగిక విహరణ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ట్రాకింగ్ సంరక్షణ">
+<!ENTITY trackingProtection.description2                 "కొన్ని వెబ్‌సైట్లు అంతర్జాలంలో మీ కార్యకలాపాలను గమనించే ట్రాకర్లను వాడతాయి. మీ విహారణ అలవాట్ల గురించి సమాచారాన్ని సేకరించే అనేక ట్రాకర్లను Waterfox ట్రాకింగ్ సంరక్షణతో నిరోధిస్తుంది.">
+<!ENTITY trackingProtection.startTour1                   "ఇది ఎలా పనిచేస్తుందో చూడండి">

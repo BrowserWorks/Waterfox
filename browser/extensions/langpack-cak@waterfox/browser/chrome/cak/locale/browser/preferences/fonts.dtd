@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Ruwäch tz'ib'">
+
+<!ENTITY  language.label                          "Ruwäch tz'ib' richin:">
+<!ENTITY  language.accesskey                      "R">
+
+<!ENTITY  size.label                              "Nimilem:">
+<!ENTITY  sizeProportional.accesskey              "T">
+<!ENTITY  sizeMonospace.accesskey                 "a">
+
+<!ENTITY  proportional.label                      "Junamil:">
+<!ENTITY  proportional.accesskey                  "J">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Rujukojol cholaj:">
+<!ENTITY  monospace.accesskey                     "R">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Latin">
+<!ENTITY  font.langGroup.japanese                 "Japones">
+<!ENTITY  font.langGroup.trad-chinese             "Ojer chino (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Ch'uti Chino">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Relik Chino (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "aj Corea">
+<!ENTITY  font.langGroup.cyrillic                 "Siriliko">
+<!ENTITY  font.langGroup.el                       "RYEWO">
+<!ENTITY  font.langGroup.other                    "Ch'aqa' chik taq rub'eyal ri tz'ib'axik">
+<!ENTITY  font.langGroup.thai                     "Aj Tailanda">
+<!ENTITY  font.langGroup.hebrew                   "Aj Heb'reya">
+<!ENTITY  font.langGroup.arabic                   "aj Arabia">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Armenyan">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Rujachik tunun ruk'u'x tzij aj Canada ">
+<!ENTITY  font.langGroup.ethiopic                 "Eti'ope">
+<!ENTITY  font.langGroup.georgian                 "Aj Georgia">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Aj CamboyaKhmer">
+<!ENTITY  font.langGroup.malayalam                "Malayo">
+<!ENTITY  font.langGroup.math                     "Ajilanem">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Aj Tibet">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Ko'öl runimilem tz'ib':">
+<!ENTITY minSize.accesskey                        "t">
+<!ENTITY minSize.none                             "Majun">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Seriw">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans-serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Tiya' q'ij chi ke ri taq ruxaq tikicha' ri ruwäch kitz'ib', pa ruk'exel ri jun rucha'oj kan">
+<!ENTITY  allowPagesToUseOwn.accesskey            "T">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Rucholajil ruwäch tzij richin rupam sipan kan">
+<!ENTITY languages.customize.Fallback2.label      "Rucholajil rucholajem tzij, ri kan k'o wi:">
+<!ENTITY languages.customize.Fallback2.accesskey  "r">
+<!ENTITY languages.customize.Fallback2.desc       "Re rucholajil rucholajem tz'ib' nokisäx richin ojer rupam, ri man nuya' ta rutzijol ri rucholajil.">
+
+<!ENTITY languages.customize.Fallback.auto        "Ri jikib'an kan richin ri ch'ab'äl re re'">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arawe">
+<!ENTITY languages.customize.Fallback.baltic      "Báltic">
+<!ENTITY languages.customize.Fallback.ceiso       "Centroeuropeo, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Central European, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Ch'uti Chino">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Kan Chino wi">
+<!ENTITY languages.customize.Fallback.cyrillic    "Siriliko">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "aj Grecia">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Aj Heb'reya">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japones">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "KORYANO">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Aj Tailanda">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Aj Turquia">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "aj BYETNAM">
+<!ENTITY languages.customize.Fallback.other       "Ch'aqa' chik (incl. aj Europa occidental)">

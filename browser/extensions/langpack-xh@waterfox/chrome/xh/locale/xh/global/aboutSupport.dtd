@@ -1,0 +1,182 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Inkcazelo yesisombululi-ngxaki">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Eli phepha liqulethe inkcazelo yobuchwepheshe enokuba luncedo xa uzama ukusombulula ingxaki. Ukuba ufuna iimpendulo kwimibuzo eqhelekileyo ye-&brandShortName;, khangela kwisayithi yethu <a id='supportLink'>support website</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Iingxelo zomonakalo">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Isazisi sengxelo">
+<!ENTITY aboutSupport.crashes.sendDate "Ithunyelwe">
+<!ENTITY aboutSupport.crashes.allReports "Zonke iingxelo zokonakala">
+<!ENTITY aboutSupport.crashes.noConfig "Le aplikeyishini ayilungiselelwanga ukubonisa iingxelo zokonakala.">
+
+<!ENTITY aboutSupport.extensionsTitle "Izandiso">
+<!ENTITY aboutSupport.extensionName "Igama">
+<!ENTITY aboutSupport.extensionEnabled "Ezivunyelweyo">
+<!ENTITY aboutSupport.extensionVersion "Uguqulelo">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "Iimpawu zokubonisa">
+<!ENTITY aboutSupport.experimentName "Igama">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Ingcaciso">
+<!ENTITY aboutSupport.experimentActive "Iyasebenza">
+<!ENTITY aboutSupport.experimentEndDate "Umhla wokugqibela">
+<!ENTITY aboutSupport.experimentHomepage "Ikhasi lasekhaya">
+<!ENTITY aboutSupport.experimentBranch "Isebe">
+
+<!ENTITY aboutSupport.appBasicsTitle "Iziseko zeaplikheshini">
+<!ENTITY aboutSupport.appBasicsName "Igama">
+<!ENTITY aboutSupport.appBasicsVersion "Uguqulelo">
+<!ENTITY aboutSupport.appBasicsBuildID "Yakha i-ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Hlaziya iTshaneli">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Imbali yohlaziyo">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Bonisa Imbali Ehlaziyiweyo">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Isalathiso seprofayile">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Ifolda yeprofayile">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Isoftwe encedisayo evunyelweyo">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Yakha uLungiselelo">
+<!ENTITY aboutSupport.appBasicsUserAgent "IArhente yomsebenzisi">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Ukusetyenziswa kwememori">
+<!ENTITY aboutSupport.appBasicsPerformance "Ukusebenza">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Abasebenzisi beNkonzo Ababhalisiweyo ">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Iiprofayile">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "IWindows yeenkqubo ezininzi">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "IMowudi Ekhuselekileyo">
+
+<!ENTITY aboutSupport.showDir.label "Isalathiso esivulekileyo">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Bonisa kwisifumanisi">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Vula iFolda">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Iipriferensi ezilungisiweyo ezibalulekileyo">
+<!ENTITY aboutSupport.modifiedPrefsName "Igama">
+<!ENTITY aboutSupport.modifiedPrefsValue "Ixabiso">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Iipriferensi ze-user.js">
+<!ENTITY aboutSupport.userJSDescription "Ifolda yakho yeprofayile iqulethe ifayile <a id='prefs-user-js-link'>user.js </a>, equlethe iipriferensi ezingenziwanga yi-&brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Iipriferensi ezitshixiweyo ezibalulekileyo">
+<!ENTITY aboutSupport.lockedPrefsName "Igama">
+<!ENTITY aboutSupport.lockedPrefsValue "Ixabiso">
+
+<!ENTITY aboutSupport.graphicsTitle "Iigrafikhi">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Ibeka Oovimba">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Intembeko">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Qinisekisa Intembeko">
+
+<!ENTITY aboutSupport.jsTitle "I-JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "I-GC eyandayo">
+
+<!ENTITY aboutSupport.a11yTitle "Ufikeleleko">
+<!ENTITY aboutSupport.a11yActivated "Ihlaziyiwe">
+<!ENTITY aboutSupport.a11yForceDisabled "Thintela ufikelelo">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Iinguqulelo zelayibhrari">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Imbali yofakelo">
+<!ENTITY aboutSupport.updateHistoryTitle "Imbali yohlaziyo">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Khuphela umbhalo kwiklipbhodi">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Khuphela iingcombolo ezingahlelwanga kwiklipbhodi">
+
+<!ENTITY aboutSupport.sandboxTitle "Ibhokisi yesanti">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "Zama iMo yokuSebenza eKhuselekileyo">
+<!ENTITY aboutSupport.restartInSafeMode.label "Qalisa kwakhona izongezelelo zenziwe azasebenza…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Iifitsha">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Iidayagnostiki">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Isilele ukuLoga">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Ilogi Yesigqibo">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Isilondolozi Sokukresha Siyekise Iifitsha">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Ukusebenza">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">

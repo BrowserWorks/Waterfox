@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Выбар Профілю Карыстальніка">
+
+<!ENTITY            profilename.label      "Назва профілю:">
+
+<!ENTITY            start.label            "Запуск &brandShortName;">
+<!ENTITY            exit.label             "Выйсці">
+
+<!ENTITY            availprofiles.label    "Даступныя профілі">
+
+<!ENTITY            newButton.label        "Стварыць профіль…">
+<!ENTITY            newButton.accesskey    "С">
+<!ENTITY            renameButton.label     "Перайменаваць профіль…">
+<!ENTITY            renameButton.accesskey "й">
+<!ENTITY            deleteButton.label     "Выдаліць профіль…">
+<!ENTITY            deleteButton.accesskey "д">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; захоўвае звесткі пра вашы налады, перавагі і іншыя адзінкі ў вашым профілі карыстальніка.">
+
+<!ENTITY            offlineState.label    "Працаваць па-за сеткай">
+<!ENTITY            offlineState.accesskey "п">
+
+<!ENTITY            useSelected.label       "Ужываць вылучаны профіль без запыту падчас запуску">
+<!ENTITY            useSelected.accesskey   "ж">

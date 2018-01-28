@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Jaŋtol Kooke">
+<!ENTITY crashesUnsubmitted.label   "Jaŋte Hookre ɗe Neldaaka">
+<!ENTITY crashesSubmitted.label     "Jaŋte Hookre Neldaaɗe">
+<!ENTITY id.heading                 "ID Jaŋtol">
+<!ENTITY dateCrashed.heading        "Ñalngu Hookaa">
+<!ENTITY dateSubmitted.heading      "Ñalnde Neldaa">
+<!ENTITY noReports.label            "Alaa jaŋte hookre neldaa.">
+<!ENTITY noConfig.label             "Ngal jaaɓnirgal teeltoraaka waawde jaytinde jaŋte hookre. Alaa e sago suɓre <code>breakpad.reportURL</code> suɓee.">
+<!ENTITY clearAllReports.label      "Momtu Jaŋte Fof">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Inställningar - webbplatsdata">
+<!ENTITY     hostCol.label                 "Webbplats">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Lagring">
+<!ENTITY     searchTextboxPlaceHolder             "Sök webbplatser">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Ta bort markerad">
+<!ENTITY     removeSelected.accesskey      "T">
+<!ENTITY     save.label                    "Spara ändringar">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Avbryt">
+<!ENTITY     cancel.accesskey              "A">
+<!ENTITY     removingDialog.title          "Ta bort platsdata">
+<!ENTITY     removingSelected.description  "Ta bort platsdata kommer också att ta bort relaterade kakor och webbinnehåll offline. Detta kan logga ut dig från webbplatser. Är du säker på att du vill göra ändringarna?">
+<!ENTITY     siteTree.label                "Följande webbplatskakor tas bort:">

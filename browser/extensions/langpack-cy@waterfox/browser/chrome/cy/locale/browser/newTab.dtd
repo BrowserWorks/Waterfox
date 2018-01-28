@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Tab Newydd">
+<!ENTITY newtab.customize.classic "Dangos eich hoff wefannau">
+<!ENTITY newtab.customize.cog.enhanced "Yn cynnwys argymhellion gwefannau">
+<!ENTITY newtab.customize.cog.title2 "RHEOLYDDION TAB NEWYDD">
+<!ENTITY newtab.customize.cog.learn "Dysgu am y Tabiau Newydd">
+<!ENTITY newtab.customize.title "Cyfaddasu eich tudalen Tab Newydd">
+<!ENTITY newtab.customize.blank2 "Dangos tudalen wag">
+<!ENTITY newtab.undo.removedLabel "Tynnwyd y llun bach.">
+<!ENTITY newtab.undo.undoButton "Dadwneud.">
+<!ENTITY newtab.undo.restoreButton "Adfer Popeth.">
+<!ENTITY newtab.undo.closeTooltip "Cuddio">

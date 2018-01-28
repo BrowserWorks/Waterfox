@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "භාෂා">
+<!ENTITY languages.customize.description                "වෙබ් පිටු සමහරවිට භාෂා කිහිපයකින් යුක්ත වේ. අභිමතය පරිදි මෙම පිටු දර්ශනය සඳහා භාෂාවන් තෝරන්න:">
+<!ENTITY languages.customize.moveUp.label               "ඉහළට ගෙනයන්න">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "පහලට ගෙනයන්න">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "ඉවත් කරන්න">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.selectLanguage.label       "භාෂාවක් එක්කිරීමට තෝරන්න...">
+<!ENTITY languages.customize.addButton.label            "එක් කරන්න">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

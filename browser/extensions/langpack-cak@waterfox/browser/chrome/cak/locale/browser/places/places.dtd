@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "molwachinäq">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Ticholajïx">
+<!ENTITY organize.accesskey    "T">
+<!ENTITY organize.tooltip      "Ke'acholajij ri taq yaketal">
+
+<!ENTITY file.close.label               "Titz'apïx">
+<!ENTITY file.close.accesskey           "T">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Taq tzub'al">
+<!ENTITY views.accesskey                "T">
+<!ENTITY views.tooltip                  "Tajala' rutzub'al">
+<!ENTITY view.columns.label             "Kek'ut pe ri taq tem">
+<!ENTITY view.columns.accesskey         "t">
+<!ENTITY view.sort.label                "Ticholajïx">
+<!ENTITY view.sort.accesskey            "c">
+<!ENTITY view.unsorted.label            "Man ticholajïx">
+<!ENTITY view.unsorted.accesskey        "M">
+<!ENTITY view.sortAscending.label       "Ticholajïx A > '">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ticholajïx Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Kek'am pe taq yaketal pa HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "K">
+<!ENTITY exportBookmarksToHTML.label       "Kek'wäx el taq yaketal pa HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "K">
+<!ENTITY importOtherBrowser.label          "Kejik' pe taq tzij richin junchik okik'amaya'l…">
+<!ENTITY importOtherBrowser.accesskey      "j">
+
+<!ENTITY cmd.backup.label               "Tiwachib'ëx…">
+<!ENTITY cmd.backup.accesskey           "T">
+<!ENTITY cmd.restore2.label             "Titzolïx ruk'ojlem">
+<!ENTITY cmd.restore2.accesskey         "T">
+<!ENTITY cmd.restoreFromFile.label      "Ticha' yamb'äl…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY cmd.deleteDomainData.label     "Timestäx re ruxaq k'amaya'l re'">
+<!ENTITY cmd.deleteDomainData.accesskey "m">
+
+<!ENTITY cmd.open.label                  "Tijaq">
+<!ENTITY cmd.open.accesskey              "T">
+<!ENTITY cmd.open_window.label           "Tijaq pa jun k'ak'a' tzuwach">
+<!ENTITY cmd.open_window.accesskey       "k">
+<!ENTITY cmd.open_private_window.label     "Tijaq pa jun k'ak'a' ichinan tzuwäch">
+<!ENTITY cmd.open_private_window.accesskey "i">
+<!ENTITY cmd.open_tab.label              "Tijaq jun k'ak'a' ruwi'">
+<!ENTITY cmd.open_tab.accesskey          "k">
+<!ENTITY cmd.open_all_in_tabs.label      "Tiqaj ronojel rik'in ruwi'">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "T">
+
+<!ENTITY cmd.properties.label      "Taq ch'akulal">
+<!ENTITY cmd.properties.accesskey  "a">
+
+<!ENTITY cmd.sortby_name.label              "Tinuk' chi b'i'aj">
+<!ENTITY cmd.sortby_name.accesskey          "T">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "K'ak'a' yaketal…">
+<!ENTITY cmd.new_bookmark.accesskey        "y">
+<!ENTITY cmd.new_folder.label              "K'ak'a' yakwuj…">
+<!ENTITY cmd.new_folder.accesskey          "w">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "K'ak'a'  jachöy">
+<!ENTITY cmd.new_separator.accesskey       "j">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Kesamajib'ëx silonel taq yaketal">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "K">
+
+<!ENTITY cmd.moveBookmarks.label                  "Tijech'ëx…">
+<!ENTITY cmd.moveBookmarks.accesskey              "T">
+
+<!ENTITY col.name.label          "B'i'aj">
+<!ENTITY col.tags.label          "Taq etal">
+<!ENTITY col.url.label           "Rochochib'al">
+<!ENTITY col.mostrecentvisit.label "Ruk'isib'äl Tz'etoj">
+<!ENTITY col.visitcount.label    "Jarupe' taq tz'etoj">
+<!ENTITY col.description.label   "Cholonem">
+<!ENTITY col.dateadded.label     "Tz'aqatisan">
+<!ENTITY col.lastmodified.label  "Ruk'isib'äl k'exoj">
+
+<!ENTITY search.placeholder  "Tikanöx">
+
+<!ENTITY cmd.find.key  "j">
+
+<!ENTITY maintenance.label      "Tijik' pe chuqa' tito' rij">
+<!ENTITY maintenance.accesskey  "T">
+<!ENTITY maintenance.tooltip    "Tijik' pe chuqa' tik'wäx el ri taq ayaketal">
+
+<!ENTITY backButton.tooltip  "Titzolin">
+
+<!ENTITY forwardButton.tooltip  "Tib'e chuwäch">
+
+<!ENTITY detailsPane.more.label "Ch'aqa' chik">
+<!ENTITY detailsPane.more.accesskey "q">
+<!ENTITY detailsPane.less.label "Jub'a'">
+<!ENTITY detailsPane.less.accesskey "b">
+<!ENTITY detailsPane.selectAnItemText.description "Tacha' jun ch'akulal richin natz'ët chuqa' nanük' ri taq ruch'akulal">
+
+<!ENTITY view.label               "Titz'et">
+<!ENTITY view.accesskey           "t">
+<!ENTITY byDate.label             "chi rajilab'al q'ij">
+<!ENTITY byDate.accesskey         "c">
+<!ENTITY bySite.label             "Chi ruxaq k'amaya'l">
+<!ENTITY bySite.accesskey         "r">
+<!ENTITY byMostVisited.label      "Chi k'ïy tz'eton">
+<!ENTITY byMostVisited.accesskey  "t">
+<!ENTITY byLastVisited.label      "Chi ruk'isib'äl tz'etoj">
+<!ENTITY byLastVisited.accesskey  "k">
+<!ENTITY byDayAndSite.label       "Chi rajilab'al q'ij chuqa' ruxaq k'amaya'l ">
+<!ENTITY byDayAndSite.accesskey   "x">

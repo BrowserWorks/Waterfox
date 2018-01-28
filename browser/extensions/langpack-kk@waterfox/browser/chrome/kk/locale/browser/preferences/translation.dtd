@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Ережеден тыс - Аударма">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "з">
+
+<!ENTITY noTranslationForLanguages.label  "Аударма келесі тілдер үшін ұсынылмайды:">
+<!ENTITY treehead.languageName.label      "Тілдер">
+<!ENTITY removeLanguage.label             "Тілді өшіру">
+<!ENTITY removeLanguage.accesskey         "ш">
+<!ENTITY removeAllLanguages.label         "Барлық тілдерді өшіру">
+<!ENTITY removeAllLanguages.accesskey     "р">
+
+<!ENTITY noTranslationForSites.label      "Аударма келесі сайттар үшін ұсынылмайды:">
+<!ENTITY treehead.siteName2.label         "Вебсайттар">
+<!ENTITY removeSite.label                 "Сайтты өшіру">
+<!ENTITY removeSite.accesskey             "С">
+<!ENTITY removeAllSites.label             "Барлық сайттарды өшіру">
+<!ENTITY removeAllSites.accesskey         "й">
+
+<!ENTITY button.close.label               "Жабу">
+<!ENTITY button.close.accesskey           "Ж">

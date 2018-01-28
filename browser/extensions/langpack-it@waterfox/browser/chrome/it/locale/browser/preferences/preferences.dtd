@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefWindow.titleWin "Opzioni">
+<!ENTITY prefWindow.title "Preferenze">
+<!ENTITY prefWindow.titleGNOME "Preferenze di &brandShortName;">
+<!ENTITY prefWinMinSize.styleWin2 "width: 45em; min-height: 47em;">
+<!ENTITY prefWinMinSize.styleMac "width: 53em; min-height: 40em;">
+<!ENTITY prefWinMinSize.styleGNOME "width: 50em; min-height: 43.5em;">
+<!ENTITY paneSearchResults.title "Risultati della ricerca">
+<!ENTITY paneGeneral.title "Generale">
+<!ENTITY paneSearch.title "Ricerca">
+<!ENTITY paneFilesApplications.title "File e applicazioni">
+<!ENTITY panePrivacySecurity.title "Privacy e sicurezza">
+<!ENTITY paneContainers.title "Schede contenitore">
+<!ENTITY paneUpdates.title "Aggiornamenti">
+<!ENTITY languageAndAppearance.label "Lingua e aspetto">
+<!ENTITY filesAndApplications.label "File e applicazioni">
+<!ENTITY browserPrivacy.label "Privacy del browser">
+<!ENTITY paneSync1.title "Account Waterfox">
+<!ENTITY helpButton2.label "Supporto a &brandShortName;">

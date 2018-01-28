@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ব্যতিক্রম অনুবাদ।">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "নিম্নলিখিত সাইটগুলোর অনুবাদ করা যাবে না:">
+<!ENTITY treehead.languageName.label      "ভাষা">
+<!ENTITY removeLanguage.label             "ভাষা মুছে ফেলুন">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "সব ভাষা মুছে ফেলুন">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "নিচের সাইটগুলোর জন্য অনুবাদ প্রস্তাব করা হবেনা।">
+
+<!ENTITY removeSite.label                 "সাইট অপসারণ S">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "সব সাইট অপসারণ কর i">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "বন্ধ">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

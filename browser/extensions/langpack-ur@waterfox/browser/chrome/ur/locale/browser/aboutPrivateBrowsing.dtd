@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "آپ فی الحال نجی دریچے میں نہیں۔">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "آیک نجی دریچہ کھولیں">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "ن">
+
+<!ENTITY privateBrowsing.title                           "نجی براوزنگ">
+<!ENTITY privateBrowsing.title.tracking                  "ٹریکنگ پروٹیکشن کے ساتھ نجی براؤزنگ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "جب آپ نجی دریچوں میں براؤز کریں، Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "محفوظ نہیں کرسکتا">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "دورہ کردہ صفحہات">
+<!ENTITY aboutPrivateBrowsing.info.searches              "تلاش شدہ">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "کوکی">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "عارضی مسلیں">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "محفوظ کریں گا">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " تمھارا:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ڈاؤن لوڈ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "نشانیاں">
+<!ENTITY aboutPrivateBrowsing.note.before                "نجی براوزنگ ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "آپ کو گمنام نہیں بناتا">
+<!ENTITY aboutPrivateBrowsing.note.after                 " انٹرنیٹ پر۔ آپ کی کمپنی یا انٹرنیٹ سروس مہیا کنندہ آپ کے دیکھے گئے صفحات کی پھر بھی سراغ راہ لگا سکتے ہیں۔">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "کہ بارے میں مزید سیکھیں">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "نجی براوزنگ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "سراغ کاری حفاظت">
+<!ENTITY trackingProtection.description2                 "کچھ ویب سائٹس انٹرنیٹ بھر میں اپنی سرگرمیوں کی نگرانی کے لئے  Trackers کا استعمال کر سکتی ہیں۔ ٹریکنگ پروٹیکشن کے ساتھ Waterfox بہت سے Trackers کو بلاک کرتا ہے جو کی آپ کی براؤزنگ کے رویے کے بارے میں معلومات جمع کر سکتے ہیں۔">
+<!ENTITY trackingProtection.startTour1                   "دیکھیں کہ یہ کیسے کام کرتا ہے">

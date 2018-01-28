@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "એડ-ઓન કદાચ સમસ્યાઓ સર્જી રહ્યા હોઈ શકે">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; એ નક્કી કર્યું છે કે નીચેના એડ-ઓન સુગમતા અને સુરક્ષા સમસ્યાઓ સર્જવા માટે જાણીતા છે:">
+<!ENTITY blocklist.softblocked       "તમારી સુરક્ષા માટે, એ ખૂબ આગ્રહણીય છે કે તમે આ એડ-ઓન નિષ્ક્રિય કરેલ હોય તે સાથે જ પુનઃશરૂ કરો.">
+<!ENTITY blocklist.hardblocked       "આ એડ-ઓનને સુગમતા અને સુરક્ષા સમસ્યાઓ સર્જતું ઊંચુ જોખમ છે અને તેઓ અટકાવવામાં આવેલ છે, પરંતુ તેમને સંપૂર્ણપણે નિષ્ક્રિય કરવા માટે પુનઃશરૂ કરવાનું જરૂરી છે.">
+<!ENTITY blocklist.softandhard       "એડ-ઓન કે જેઓએ સુગમતા અને સુરક્ષા સમસ્યાઓ સર્જતું ઊંચુ જોખમ હોવાથી તે અટકાવવામાં આવેલ છે. અન્ય ઓછા જોખમવાળા છે, પરંતુ એ ખૂબ આગ્રહણીય છે કે તમે તેમને નિષ્ક્રિય કરેલ હોય ત્યારે જ પુનઃશરૂ કરો.">
+<!ENTITY blocklist.moreinfo          "વધુ જાણકારી">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; પુનઃશરૂ કરો">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "બ્લોક થયેલ છે">
+<!ENTITY blocklist.checkbox.label    "નિષ્ક્રિય">

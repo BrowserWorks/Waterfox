@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                  "Nimi:">
+<!ENTITY editBookmarkOverlay.name.accesskey              "N">
+<!ENTITY editBookmarkOverlay.location.label              "Asukoht:">
+<!ENTITY editBookmarkOverlay.location.accesskey          "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label          "Uudistevoo asukoht:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey      "U">
+<!ENTITY editBookmarkOverlay.siteLocation.label          "Veebilehe asukoht:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey      "V">
+<!ENTITY editBookmarkOverlay.folder.label                "Kaust:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip "Näita kõiki järjehoidjate kaustu">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip          "Peida">
+<!ENTITY editBookmarkOverlay.tags.label                  "Sildid:">
+<!ENTITY editBookmarkOverlay.tags.accesskey              "S">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label         "Eralda sildid komadega">
+<!ENTITY editBookmarkOverlay.description.label           "Kirjeldus:">
+<!ENTITY editBookmarkOverlay.description.accesskey       "K">
+<!ENTITY editBookmarkOverlay.keyword.label               "Võtmesõna:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey           "t">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip    "Näita kõiki silte">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label         "Laaditakse külgribal">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey     "d">
+<!ENTITY editBookmarkOverlay.choose.label                "Vali…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label       "Uus kaust">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey   "U">

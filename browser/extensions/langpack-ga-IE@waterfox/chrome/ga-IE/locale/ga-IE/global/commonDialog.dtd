@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Teideal Gearr"> 
+<!ENTITY message.label    "Téacs samplach anseo.">
+<!ENTITY editfield0.label "Ainm an Úsáideora:"> 
+<!ENTITY editfield1.label "Focal Faire:"> 
+<!ENTITY checkbox.label   "marcáil">
+<!ENTITY copyCmd.label    "Cóipeáil">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "Roghnaigh Uile">
+<!ENTITY selectAllCmd.accesskey "U">

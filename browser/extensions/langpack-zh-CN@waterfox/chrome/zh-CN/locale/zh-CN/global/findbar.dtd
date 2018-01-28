@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "查找语句在页面中的下一个位置">
+<!ENTITY previous.tooltip "查找语句在页面中的上一个位置">
+<!ENTITY findCloseButton.tooltip "关闭查找栏">
+<!ENTITY highlightAll.label "高亮全部">
+<!ENTITY highlightAll.accesskey "A">
+<!ENTITY highlightAll.tooltiptext "高亮显示语句在页面中的所有位置">
+<!ENTITY caseSensitive.label "区分大小写">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "以大小写敏感方式搜索">
+<!ENTITY entireWord.label "词句匹配">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "仅匹配由符号分隔开的整个词或句">

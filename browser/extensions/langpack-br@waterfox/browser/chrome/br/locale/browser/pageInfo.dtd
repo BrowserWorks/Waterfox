@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "425">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Eilañ">
+<!ENTITY  copy.accesskey        "i">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Diuz pep tra">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Hollek">
+<!ENTITY  generalTab.accesskey  "o">
+<!ENTITY  generalTitle          "Titl:">
+<!ENTITY  generalURL            "Chomlec'h :">
+<!ENTITY  generalType           "Rizh :">
+<!ENTITY  generalMode           "Mod Neuz :">
+<!ENTITY  generalSize           "Ment :">
+<!ENTITY  generalReferrer       "URL bukenn :">
+<!ENTITY  generalSource         "Tarzh ar grubuilh :">
+<!ENTITY  generalModified       "Daskemmet :">
+<!ENTITY  generalEncoding2      "Bonegadur an destenn :">
+<!ENTITY  generalMetaName       "Anv ">
+<!ENTITY  generalMetaContent    "Endalc'had">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Lec'hiadur :">
+<!ENTITY  mediaText             "Testenn kevreet :">
+<!ENTITY  mediaAltHeader        "Testenn bebeilet">
+<!ENTITY  mediaAddress          "Chomlec'h">
+<!ENTITY  mediaType             "Rizh">
+<!ENTITY  mediaSize             "Ment">
+<!ENTITY  mediaCount            "Kont">
+<!ENTITY  mediaDimension        "Mentoù :">
+<!ENTITY  mediaLongdesc         "Deskrivadenn gemplezh :">
+<!ENTITY  mediaBlockImage.accesskey "H">
+<!ENTITY  mediaSaveAs           "Enrollañ evel…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Alberz ar media :">
+
+<!ENTITY  feedTab               "Lanvioù">
+<!ENTITY  feedTab.accesskey     "n">
+<!ENTITY  feedSubscribe         "Koumanantiñ">
+<!ENTITY  feedSubscribe.accesskey "e">
+
+<!ENTITY  permTab               "Aotreoù">
+<!ENTITY  permTab.accesskey     "t">
+<!ENTITY  permUseDefault        "Arverañ an arventennoù dre ziouer">
+<!ENTITY  permAskAlways         "Goulenn bewech">
+<!ENTITY  permAllow             "Aotren">
+<!ENTITY  permAllowSession      "Aotren evit an estez">
+<!ENTITY  permBlock             "Herzel">
+<!ENTITY  permissionsFor        "Aotreoù evit :">
+<!ENTITY  permPlugins           "Gweredekaat an enlugelladoù">
+
+<!ENTITY  permClearStorage           "Skarzhañ ar c'hadaviñ">
+<!ENTITY  permClearStorage.accesskey "c">
+
+<!ENTITY  securityTab           "Diogelroez">
+<!ENTITY  securityTab.accesskey "g">
+<!ENTITY  securityView.certView "Gwelout an testeni">
+<!ENTITY  securityView.accesskey "t">
+<!ENTITY  securityView.unknown   "Dianav">
+
+
+<!ENTITY  securityView.identity.header   "Pivelezh al lec'hienn internet">
+<!ENTITY  securityView.identity.owner    "Perc'henn : ">
+<!ENTITY  securityView.identity.domain   "Lec'hienn internet :">
+<!ENTITY  securityView.identity.verifier "Gwiriet gant :">
+
+
+<!ENTITY  securityView.privacy.header                   "Buhez prevez ha Roll istor">
+<!ENTITY  securityView.privacy.history                  "Ha gweladennet em befe al lec'hienn-mañ a-raok hiziv ?">
+<!ENTITY  securityView.privacy.cookies                  "Hag al lec'hienn-mañ a vefe o kadaviñ roadennoù (toupinoù) war ma urzhiataer ?">
+<!ENTITY  securityView.privacy.viewCookies              "Gwelout an toupinoù">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "o">
+<!ENTITY  securityView.privacy.passwords                "Ur ger-tremen am eus enrollet evit al lec'hienn-mañ ?">
+<!ENTITY  securityView.privacy.viewPasswords            "Gwelout ar gerioù-tremen bet enrollet">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "g">
+
+<!ENTITY  securityView.technical.header                 "Munudoù kalvezel">
+
+<!ENTITY  helpButton.label                              "Help">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

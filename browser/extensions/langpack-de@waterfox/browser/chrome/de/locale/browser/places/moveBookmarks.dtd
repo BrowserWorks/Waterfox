@@ -1,0 +1,5 @@
+<!ENTITY window.title              "Ordner wählen">
+<!ENTITY window.style              "width: 36em; height: 18em;">
+<!ENTITY moveTo.label              "Verschieben nach:">
+<!ENTITY newFolderButton.label     "Neuer Ordner">
+<!ENTITY newFolderButton.accesskey "N">

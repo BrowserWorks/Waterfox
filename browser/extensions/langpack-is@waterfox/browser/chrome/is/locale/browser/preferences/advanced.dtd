@@ -1,0 +1,163 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Almennt">
+
+<!ENTITY useCursorNavigation.label       "Alltaf nota örvalykla til að ferðast á síðum">
+<!ENTITY useCursorNavigation.accesskey   "ö">
+<!ENTITY searchOnStartTyping.label       "Leita í texta þegar byrjað er að slá inn orð">
+<!ENTITY searchOnStartTyping.accesskey   "L">
+<!ENTITY useOnScreenKeyboard.label       "Sýna snertilyklaborð þegar það er nauðsynlegt">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Leit">
+
+<!ENTITY useAutoScroll.label             "Nota sjálfvirka skrunun">
+<!ENTITY useAutoScroll.accesskey         "o">
+<!ENTITY useSmoothScrolling.label        "Nota fíngerða skrunun">
+<!ENTITY useSmoothScrolling.accesskey    "f">
+<!ENTITY checkUserSpelling.label         "Athuga stafsetningu um leið og texti er sleginn inn">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Meðhöndlun gagna">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Gagna skýrsla er óvirk í þessari útgáfu">
+
+
+<!ENTITY healthReportLearnMore.label     "Fræðast meira">
+
+
+
+
+
+<!ENTITY crashReporterLearnMore.label    "Fræðast meira">
+
+<!ENTITY networkTab.label                "Netkerfi">
+
+
+<!ENTITY connectionDesc.label            "Stilla hvernig &brandShortName; tengist við Internetið">
+<!ENTITY connectionSettings.label        "Stillingar…">
+<!ENTITY connectionSettings.accesskey    "S">
+
+<!ENTITY httpCache.label                 "Vefgögn í flýtiminni">
+
+<!ENTITY offlineStorage2.label           "Ótengd vefgögn og notandagögn">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Gögn vefsvæðis">
+<!ENTITY clearSiteData.label             "Hreinsa öll gögn">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Stillingar…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Fræðast meira">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Takmarka skyndiminni við">
+<!ENTITY limitCacheSizeBefore.accesskey  "T">
+<!ENTITY limitCacheSizeAfter.label       "MB af plássi">
+<!ENTITY clearCacheNow.label             "Hreinsa núna">
+<!ENTITY clearCacheNow.accesskey         "r">
+<!ENTITY clearOfflineAppCacheNow.label   "Hreinsa núna">
+<!ENTITY clearOfflineAppCacheNow.accesskey "n">
+<!ENTITY overrideSmartCacheSize.label    "Hunsa sjálfvirka umsýslu skyndiminnis">
+<!ENTITY overrideSmartCacheSize.accesskey "u">
+
+<!ENTITY updateTab.label                 "Uppfærslur">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; uppfærslur">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "Útgáfa ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Leyfa &brandShortName; að">
+
+
+<!ENTITY updateCheckChoose2.label        "Athuga með uppfærslur, en leyfa mér að velja hvenær á að setja þær upp">
+<!ENTITY updateCheckChoose2.accesskey    "t">
+<!ENTITY updateManual2.label             "Aldrei athuga með uppfærslur (ekki mælt með)">
+<!ENTITY updateManual2.accesskey         "l">
+
+<!ENTITY updateHistory2.label            "Sýna uppfærslusögu…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "Nota bakgrunnsþjónustu til að setja inn uppfærslur">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Uppfæra leitarvélar sjálfvirkt">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Láta vita þegar vefsvæði biður um að geyma gögn fyrir ónettengda notkun">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Undanþágur…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "d">
+
+<!ENTITY offlineAppsList2.label          "Eftirfarandi vefsvæði hafa leyfi til að geyma gögn fyrir notkun án nettengingar:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Fjarlægja…">
+<!ENTITY offlineAppsListRemove.accesskey "r">
+<!ENTITY offlineAppRemove.confirm        "Fjarlægja utankerfis gögn">
+
+<!ENTITY certificateTab.label            "Skilríki">
+<!ENTITY certPersonal2.description       "Þegar netþjónn biður um mitt skilríki">
+<!ENTITY selectCerts.auto                "Velja eitt sjálfvirkt">
+<!ENTITY selectCerts.auto.accesskey      "s">
+<!ENTITY selectCerts.ask                 "Spyrja í hvert skipti">
+<!ENTITY selectCerts.ask.accesskey       "S">
+<!ENTITY enableOCSP.label                "Senda fyrirspurn á OCSP þjóna til að staðfesta hvort núverandi skírteini séu gild">
+<!ENTITY enableOCSP.accesskey            "S">
+
+
+
+
+
+<!ENTITY performance.label               "Afköst">
+<!ENTITY useRecommendedPerformanceSettings2.label "Nota afkastastillingar sem er mælt með">
+<!ENTITY useRecommendedPerformanceSettings2.description "Þessar stillingar eru sérsniðnar fyrir þinn vélbúnað og stýrikerfi.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "N">
+<!ENTITY performanceSettingsLearnMore.label "Fræðast meira">
+<!ENTITY limitContentProcessOption.label "Takmarka þræði fyrir efni">
+<!ENTITY limitContentProcessOption.description "Fleiri þræðir fyrir efni getur aukið afköst þegar verið er að nota marga flipa, en tekur upp meira minni.">
+<!ENTITY limitContentProcessOption.accesskey   "þ">
+<!ENTITY limitContentProcessOption.disabledDescription "Aðeins er hægt að breyta fjölda efnisþráða með &brandShortName; sem inniheldur fjölgjörvavinnslu.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Sjáðu hvernig þú athugar hvort fjölgjörvavinnsla er virk">
+<!ENTITY allowHWAccel.label              "Nota vélbúnaðarhröðun ef mögulegt">
+<!ENTITY allowHWAccel.accesskey          "b">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

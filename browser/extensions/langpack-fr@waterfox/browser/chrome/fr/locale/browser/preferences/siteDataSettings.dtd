@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Paramètres - Données des sites">
+<!ENTITY     hostCol.label                 "Site">
+<!ENTITY     statusCol.label               "État">
+<!ENTITY     usageCol.label                "Stockage">
+<!ENTITY     searchTextboxPlaceHolder             "Rechercher des sites web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "R">
+<!ENTITY     removeSelected.label          "Supprimer les sites sélectionnés">
+<!ENTITY     removeSelected.accesskey      "S">
+<!ENTITY     save.label                    "Enregistrer les changements">
+<!ENTITY     save.accesskey                "E">
+<!ENTITY     cancel.label                  "Annuler">
+<!ENTITY     cancel.accesskey              "A">
+<!ENTITY     removingDialog.title          "Supprimer les données du site">
+<!ENTITY     removingSelected.description  "Supprimer les données du site supprimera également les cookies et le contenu web hors connexion. Cette action pourrait vous déconnecter des sites web. Voulez-vous vraiment effectuer ces changements ?">
+<!ENTITY     siteTree.label                "Les cookies des sites web suivants seront supprimés :">

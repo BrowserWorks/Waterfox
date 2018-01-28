@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Foinse: ">
+
+<!ENTITY fileMenu.label "Comhad">
+<!ENTITY fileMenu.accesskey "C">
+<!ENTITY savePageCmd.label "Sábháil an Leathanach Mar…">
+<!ENTITY savePageCmd.accesskey "M">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Socrú Leathanaigh…">
+<!ENTITY pageSetupCmd.accesskey "L">
+<!ENTITY printPreviewCmd.label "Réamhamharc Priontála">
+<!ENTITY printPreviewCmd.accesskey "R">
+<!ENTITY printCmd.label "Priontáil…">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Dún">
+<!ENTITY closeCmd.accesskey "D">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Téigh chuig Líne…">
+<!ENTITY goToLineCmd.accesskey "T">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Amharc">
+<!ENTITY viewMenu.accesskey       "A">
+<!ENTITY reloadCmd.label "Athlódáil">
+<!ENTITY reloadCmd.accesskey "A">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Timfhill Línte Fada"> 
+<!ENTITY menu_wrapLongLines.accesskey "T">
+<!ENTITY menu_highlightSyntax.label "Aibhsiú Comhréire">
+<!ENTITY menu_highlightSyntax.accesskey "h">
+<!ENTITY menu_textSize.label "Méid Téacs">
+<!ENTITY menu_textSize.accesskey "s">
+<!ENTITY menu_textEnlarge.label "Clómhéid Níos Mó">
+<!ENTITY menu_textEnlarge.accesskey "M">
+<!ENTITY menu_textReduce.label "Clómhéid Níos Lú">
+<!ENTITY menu_textReduce.accesskey "L">
+<!ENTITY menu_textReset.label "Gnáthmhéid">
+<!ENTITY menu_textReset.accesskey "n">
+
+<!ENTITY findOnCmd.label     "Aimsigh sa Leathanach Seo…">
+<!ENTITY findOnCmd.accesskey "A">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Aimsigh Arís">
+<!ENTITY findAgainCmd.accesskey "m">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "l">
+
+<!ENTITY backCmd.label "Siar">
+<!ENTITY backCmd.accesskey "S">
+<!ENTITY forwardCmd.label "Ar Aghaidh">
+<!ENTITY forwardCmd.accesskey "A">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Cóipeáil Suíomh an Naisc">
+<!ENTITY copyLinkCmd.accesskey "S">
+<!ENTITY copyEmailCmd.label "Cóipeáil an Seoladh Ríomhphoist">
+<!ENTITY copyEmailCmd.accesskey "e">

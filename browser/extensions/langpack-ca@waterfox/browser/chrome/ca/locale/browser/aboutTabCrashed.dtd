@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Tanca aquesta pestanya">
+<!ENTITY tabCrashed.restoreTab "Restaura aquesta pestanya">
+<!ENTITY tabCrashed.restoreAll "Restaura totes les pestanyes que han fallat">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Vaja, la pestanya ha fallat.">
+<!ENTITY tabCrashed.offerHelp "Us podem ajudar!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Seleccioneu &tabCrashed.restoreTab; per tornar a carregar el contingut de la pàgina.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Seleccioneu &tabCrashed.restoreTab; o &tabCrashed.restoreAll; per tornar a carregar el contingut de la pàgina.">
+<!ENTITY tabCrashed.requestHelp "Voleu ajudar-nos?">
+<!ENTITY tabCrashed.requestHelpMessage "Els informes de fallada ens ajuden a diagnosticar problemes i a millorar el &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Informa d'aquesta pestanya">
+<!ENTITY tabCrashed.sendReport2 "Envia un informe de fallada de la pestanya que s'està visualitzant">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comentaris opcionals (els comentaris són visibles públicament)">
+<!ENTITY tabCrashed.includeURL2 "Inclou l'URL de la pàgina en aquest informe de fallada">
+<!ENTITY tabCrashed.emailPlaceholder "Introduïu la vostra adreça electrònica aquí">
+<!ENTITY tabCrashed.emailMe "Envia'm un missatge de correu quan hi hagi més informació disponible">
+<!ENTITY tabCrashed.reportSent "Ja s'ha enviat l'informe de fallada. Gràcies per ajudar a millorar el &brandShortName;.">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Informa de les pestanyes en segon pla">
+<!ENTITY tabCrashed.autoSubmit2 "Actualitza les preferències per enviar automàticament informes de fallada, que inclouen les pestanyes en segon pla que han fallat en aquesta sessió i en sessions futures">

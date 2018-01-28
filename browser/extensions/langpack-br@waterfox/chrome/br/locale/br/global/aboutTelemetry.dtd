@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Roadennoù Telemetry">
+
+<!ENTITY aboutTelemetry.pingDataSource "Mammenn roadennoù ping :">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Roadennoù ping bremanel">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Roadennoù ping diellet">
+
+<!ENTITY aboutTelemetry.raw "JSON diaoz">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Diskouez ar roadennoù iz-estez">
+
+<!ENTITY aboutTelemetry.choosePing "Dibabit ar ping :">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping nevezoc'h">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping kozhoc'h &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Sizhun">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Roadennoù hollek">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Roadennoù endro">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Kerzhlevr Telemetry">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Azgoulennoù SQL gorrek">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Sac'hadennoù ar merdeer">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Sac'hadennoù neudennoù">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Bernioù euvret">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skeuliadoù">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Skeuliadelloù alc'hwez">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Tellunioù">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Tellunioù gant alc'hwezioù">
+
+<!ENTITY aboutTelemetry.eventsSection "  Darvoudoù">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Muzulioù eeun">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Munudoù an askouezh">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Skrivadurioù diwezhat">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Titouroù an estez">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTENN : Gweredekaet eo diveugañ an azgoulennoù SQL gorrek. Azgoulennoù SQL klok a c'hell bezañ diskouezet amañ dindan met ne vint ket kaset da Delemetry.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Atoriñ an anvioù arc'hwel evit an tornioù">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Diskouez ar roadennoù tornioù diaoz">
+
+<!ENTITY aboutTelemetry.filterText "  Sil (hedadoù pe /riñvenn reoliek/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Payload">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry-gegevens">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping-gegevensbron:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Huidige ping-gegevens
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Gearchiveerde ping-gegevens
+">
+
+<!ENTITY aboutTelemetry.raw "
+Onbewerkte JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Subsessiegegevens tonen
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Ping kiezen:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Nieuwere ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Oudere ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Week
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Pingtype
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Vandaag
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Gisteren
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Ouder
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Algemene gegevens
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Omgevingsgegevens
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry-logboek
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Trage SQL-instructies
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Browservastlopers
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Threadvastlopers
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Vastgelegde stacks
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrammen
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Sleutelhistogrammen
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Gebeurtenissen
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Eenvoudige metingen
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Add-on-details
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Late schrijfacties
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Sessie-informatie
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOOT: debugging van trage SQL is ingeschakeld. Volledige SQL-strings kunnen hieronder worden weergegeven, maar ze zullen niet bij Telemetry worden ingediend.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Functienamen voor stacks ophalen
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Onbewerkte stackgegevens tonen
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filter (strings of /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Nettolading
+">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Апликације">
+<!ENTITY  applications.description "Изаберите како да &brandShortName; рукује подацима које преузмете са веба или апликацијама које користите.">
+
+<!ENTITY  typeColumn.label        "Врста садржаја">
+<!ENTITY  typeColumn.accesskey    "В">
+
+<!ENTITY  actionColumn2.label     "Дејство">
+<!ENTITY  actionColumn2.accesskey "Д">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Претражи типове података или аплиакција">

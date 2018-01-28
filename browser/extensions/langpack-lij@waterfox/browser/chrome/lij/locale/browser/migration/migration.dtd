@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Proçedua goidâ de inportaçion">
+
+<!ENTITY importFrom.label               "Inportaçion de preferense, segnalibbri, stöia, paròlle segrete e atri dæti da:">
+<!ENTITY importFromUnix.label           "Inpòrta preferense, segnalibbri, stöia, paròlle segrete e atri dæti da:">
+<!ENTITY importFromBookmarks.label      "Inpòrta segnalibbri da:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromNothing.label        "No inportâ ninte">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+
+
+<!ENTITY noMigrationSources.label       "Nisciunn-a aplicaçion che a contegne di segnalibbri, stöia ò paròlle segrete peu ese trova.">
+
+<!ENTITY importSource.title             "Inportaçion de preferense e dæti">
+<!ENTITY importItems.title              "Ògetti da inportâ">
+<!ENTITY importItems.label              "Seleçionn-a i ògetti da inporta:">
+
+<!ENTITY migrating.title                "Inpòrto…">
+<!ENTITY migrating.label                "Sti ògetti son li pe ese inportæ…">
+
+<!ENTITY selectProfile.title            "Seleçionn-a profî">
+<!ENTITY selectProfile.label            "Sti profî se peuan inportâ da:">
+
+<!ENTITY done.title                     "Inportaçion terminâ">
+<!ENTITY done.label                     "Sti ògetti son stæti inportæ:">
+
+<!ENTITY closeSourceBrowser.label "Aseguase che o navegatô seleçionou o segge serou primma de anâ avanti.">
+<!ENTITY importFrom360se.label "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey "3">
+<!ENTITY importFromCanary.label "Chrome Canary">
+<!ENTITY importFromCanary.accesskey "h">
+<!ENTITY importFromChromium.label "Chromium">
+<!ENTITY importFromChromium.accesskey "u">
+<!ENTITY importFromEdge.label "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey "E">
+
+
+
+

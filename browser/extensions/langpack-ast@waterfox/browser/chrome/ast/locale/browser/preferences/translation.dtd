@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Esceiciones - Traducción">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Nun s'ufrirá la traducción pa les llingües de darréu:">
+<!ENTITY treehead.languageName.label      "Llingües">
+<!ENTITY removeLanguage.label             "Desaniciar llingua">
+<!ENTITY removeLanguage.accesskey         "D">
+<!ENTITY removeAllLanguages.label         "Desaniciar toles llingües">
+<!ENTITY removeAllLanguages.accesskey     "t">
+
+<!ENTITY noTranslationForSites.label      "Nun s'ufrirá la traducción pa los sitios de darréu:">
+<!ENTITY treehead.siteName.label          "Sitios">
+<!ENTITY removeSite.label                 "Desaniciar sitiu">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Desaniciar tolos sitios">
+<!ENTITY removeAllSites.accesskey         "e">
+
+<!ENTITY button.close.label               "Zarrar">
+<!ENTITY button.close.accesskey           "Z">
+
+<!ENTITY treehead.siteName2.label         "Websites">

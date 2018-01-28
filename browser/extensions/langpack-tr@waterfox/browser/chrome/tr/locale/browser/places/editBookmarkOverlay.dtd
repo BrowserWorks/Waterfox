@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Ad:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "A">
+<!ENTITY editBookmarkOverlay.location.label                  "Konum:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "K">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Besleme konumu:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "B">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Site konumu:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "Klasör:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Tüm yer imi klasörlerini göster">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Gizler">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etiketler:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "E">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Etiketleri virgülle ayırın">
+<!ENTITY editBookmarkOverlay.description.label               "Tanım:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "n">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Anahtar kelime:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "h">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Tüm etiketleri göster">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Bu yer imini kenar çubuğunda yükle">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "u">
+<!ENTITY editBookmarkOverlay.choose.label                    "Seç…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Yeni klasör">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "n">

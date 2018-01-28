@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "နောက်ထပ်တွေ့ရှိသော စကားစုကို ရှာဖွေပါ">
+<!ENTITY previous.tooltip "ရှေ့တွင် တွေ့ခဲ့သော စကားစုကို ရှာဖွေပါ">
+<!ENTITY findCloseButton.tooltip "ရှာဖွေမှုဘားတန်းကို ပိတ်ပါ">
+<!ENTITY highlightAll.label "အားလုံးကို အရောင်ဖြင့် ချယ်ပြပါ">
+<!ENTITY highlightAll.accesskey "a">
+<!ENTITY highlightAll.tooltiptext "ရှာဖွေသော စကားစု၏ တွေ့ရှိမှုများကို အရောင်ဖြင့် ပြပါ">
+<!ENTITY caseSensitive.label "စာလုံး အကြီး/အသေးအားဖြင့် တိုက်ဆိုင်ပါ">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "စာလုံးအကြီးအသေးဖြင့် ရှာဖွေပါ">
+<!ENTITY entireWord.label "စာလုံးတစ်ခုလုံး">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "စာလုံးတစ်ခုလုံးအားဖြင့် ရှာပါ">

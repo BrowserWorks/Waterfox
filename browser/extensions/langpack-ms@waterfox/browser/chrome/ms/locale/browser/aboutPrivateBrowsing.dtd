@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Anda masih belum dalam tetingkap peribadi.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Buka Tetingkap Peribadi">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Pelayaran Peribadi">
+<!ENTITY privateBrowsing.title.tracking                  "Pelayaran Peribadi dengan Perlindungan Penjejakan">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Apabila anda melayar dalam Tetingkap Peribadi, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "tidak menyimpan">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "halaman yang dilawati">
+<!ENTITY aboutPrivateBrowsing.info.searches              "carian">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "kuki">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "fail sementara">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "akan menyimpan">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " untuk anda:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "muat turun">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "tandabuku">
+<!ENTITY aboutPrivateBrowsing.note.before                "Pelayaran Peribadi ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "tidak membuatkan anda anonimus">
+<!ENTITY aboutPrivateBrowsing.note.after                 " dalam internet. Majikan atau penyedia perkhidmatan Internet anda masih boleh tahu halaman yang anda lawati.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Ketahui selanjutnya perihal ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Pelayaran Peribadi">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Perlindungan Penjejakan">
+<!ENTITY trackingProtection.description2                 "Ada laman web menggunakan pengesan yang boleh memantau aktiviti anda di Internet. Dengan Perlindungan Penjejakan, Waterfox akan menyekat pelbagai jenis pengesan yang boleh mengumpul maklumat tingkah laku pelayaran anda.">
+<!ENTITY trackingProtection.startTour1                   "Ketahui fungsinya">

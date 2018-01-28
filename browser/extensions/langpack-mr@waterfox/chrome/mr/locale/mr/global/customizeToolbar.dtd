@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "साधनपट्टी बदलवा">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "आपण साधनपट्टीतील घटके जोडू किंवा काढू शकता.">
+<!ENTITY show.label               "दर्शवा:">
+<!ENTITY iconsAndText.label       "चिन्ह व मजकूर">
+<!ENTITY icons.label              "चिन्हे">
+<!ENTITY text.label               "मजकूर">
+<!ENTITY useSmallIcons.label      "छोटी चिन्हे वापरा">
+<!ENTITY restoreDefaultSet.label  "मुळ संच पुनःस्थापित करा">
+<!ENTITY addNewToolbar.label      "नवीन साधनपट्टी जोडा">
+<!ENTITY saveChanges.label        "संपले">
+<!ENTITY undoChanges.label        "बदल काढुन टाका">

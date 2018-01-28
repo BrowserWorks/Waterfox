@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Ülemparooli muutmine">
+<!ENTITY setPassword.tokenName.label "Turvaseade">
+<!ENTITY setPassword.oldPassword.label "Praegune parool:">
+<!ENTITY setPassword.newPassword.label "Uus parool:">
+<!ENTITY setPassword.reenterPassword.label "Uue parooli kinnitus:">
+<!ENTITY setPassword.meter.label "Parooli kvaliteedihinnang">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Lähtesta">
+<!ENTITY resetPassword.title  "Peaparooli nullimine">
+<!ENTITY resetPassword.text  "Ülemparooli lähtestamisel unustatakse kõik sinu salvestatud veebi ja e-posti paroolid, vormide andmed, isiklikud sertifikaadid ja privaatvõtmed. Kas oled kindel, et soovid ülemparooli lähtestada?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Sertifikaadi allalaadimine">
+<!ENTITY downloadCert.message1 "Uus sertifitseerimiskeskus (SK) palub end tunnustada.">
+<!ENTITY downloadCert.trustSSL "Usalda seda SK-d veebilehtede tuvastamisel.">
+<!ENTITY downloadCert.trustEmail "Usalda seda SK-d e-posti kasutajate tuvastamisel.">
+<!ENTITY downloadCert.trustObjSign "Usalda seda SK-d tarkvara arendajate tuvastamisel.">
+<!ENTITY downloadCert.message3 "Enne SK tunnustamist ükskõik mis otstarbel oleks mõistlik uurida tema sertifikaati ning reegleid ja protseduure (kui need on saadaval).">
+<!ENTITY downloadCert.viewCert.label "Vaata">
+<!ENTITY downloadCert.viewCert.text "SK sertifikaadi uurimine">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Kasutaja tuvastamispäring">
+<!ENTITY clientAuthAsk.message1 "See veebileht palub sul end sertifikaadiga tuvastada:">
+<!ENTITY clientAuthAsk.message2 "Vali sertifikaat tuvastamiseks:">
+<!ENTITY clientAuthAsk.message3 "Valitud sertifikaadi üksikasjad:">
+
+<!ENTITY pkcs12.setpassword.title  "Parooli valimine sertifikaadi varundamiseks">
+<!ENTITY pkcs12.setpassword.message  "Sertifikaadi varukoopia parool kaitseb sinu sertifikaadi hetkel loomisel olevat varukoopiat.  Ilma parooli sisestamata pole varundamise jätkamine võimalik.">
+<!ENTITY pkcs12.setpassword.label1 "Sertifikaadi varukoopia parool:">
+<!ENTITY pkcs12.setpassword.label2 "Sertifikaadi varukoopia parool (uuesti):">
+<!ENTITY pkcs12.setpassword.reminder "Tähtis: kui sa unustad varukoopia parooli, ei ole võimalik sertifikaati taastada.  Hoia parooli kindlas kohas.">
+
+<!ENTITY chooseToken.title  "Tunnuse valimise dialoog">
+<!ENTITY chooseToken.message1 "Palun vali tunnus.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Privaatvõtme tekitamine">
+<!ENTITY createCertInfo.msg1 "Võtme genereerimine... Selleks võib kuluda mõni minut...">
+<!ENTITY createCertInfo.msg2 "Palun oota...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Turvatõendi kasutusõiguse kinnitamine">
+<!ENTITY protectedAuth.msg "Palun kinnita turvatõendi kasutusõigust. ID-kaardi puhul sisesta PIN kaardilugeja sõrmistikult.">
+<!ENTITY protectedAuth.tokenName.label "Turvatõend:">

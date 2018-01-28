@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.description2  "Điều này sẽ:">
+<!ENTITY refreshProfile.dialog.items.label1  "Xóa các tiện ích và mục tùy chỉnh">
+<!ENTITY refreshProfile.dialog.items.label2  "Khôi phục các thiết lập trình duyệt về mặc định">
+
+
+
+
+<!ENTITY refreshProfile.cleaning.description "Sắp xong rồi…">
+
+<!ENTITY refreshProfile.button.label         "Refresh &brandShortName;…">
+
+<!ENTITY refreshProfile.dialog.button.label  "Refresh &brandShortName;">
+
+<!ENTITY refreshProfile.dialog.description1  "Start fresh to fix problems and restore performance.">
+<!ENTITY refreshProfile.dialog.title         "Refresh &brandShortName;">
+<!ENTITY refreshProfile.title                "Give &brandShortName; a tune up">

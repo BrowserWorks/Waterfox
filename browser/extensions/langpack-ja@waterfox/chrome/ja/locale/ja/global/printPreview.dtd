@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label		"印刷...">
+<!ENTITY print.accesskey	"P">
+<!ENTITY pageSetup.label	"ページ設定...">
+<!ENTITY pageSetup.accesskey	"u">
+<!ENTITY page.label		"ページ:">
+<!ENTITY page.accesskey		"a">
+<!ENTITY of.label		"/">
+<!ENTITY scale.label		"拡大/縮小:">
+<!ENTITY scale.accesskey	"S">
+<!ENTITY portrait.label		"縦">
+<!ENTITY portrait.accesskey	"o">
+<!ENTITY landscape.label	"横">
+<!ENTITY landscape.accesskey	"L">
+<!ENTITY close.label		"閉じる">
+<!ENTITY close.accesskey	"C">
+<!ENTITY p30.label		"30&#037;">
+<!ENTITY p40.label		"40&#037;">
+<!ENTITY p50.label		"50&#037;">
+<!ENTITY p60.label		"60&#037;">
+<!ENTITY p70.label		"70&#037;">
+<!ENTITY p80.label		"80&#037;">
+<!ENTITY p90.label		"90&#037;">
+<!ENTITY p100.label		"100&#037;">
+<!ENTITY p125.label		"125&#037;">
+<!ENTITY p150.label		"150&#037;">
+<!ENTITY p175.label		"175&#037;">
+<!ENTITY p200.label		"200&#037;">
+<!ENTITY Custom.label		"ユーザー設定...">
+<!ENTITY ShrinkToFit.label	"用紙に合わせて縮小"><!-- (^^; 長い表現禁止 -->
+<!ENTITY customPrompt.title	"拡大/縮小を設定...">
+<!ENTITY simplifyPage.label		"ページを単純化">
+<!ENTITY simplifyPage.accesskey		"i">
+<!ENTITY simplifyPage.enabled.tooltip	"読みやすいレイアウトに変更します">
+<!ENTITY simplifyPage.disabled.tooltip	"このページは自動的に単純化できません">
+
+<!ENTITY homearrow.tooltip	"最初のページを表示します">
+<!ENTITY endarrow.tooltip	"最後のページを表示します">
+<!ENTITY nextarrow.tooltip	"次のページを表示します">
+<!ENTITY previousarrow.tooltip	"前のページを表示します">

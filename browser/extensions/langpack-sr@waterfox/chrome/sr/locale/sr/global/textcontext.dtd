@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Исеци">
+<!ENTITY cutCmd.accesskey "И">
+<!ENTITY copyCmd.label "Копирај">
+<!ENTITY copyCmd.accesskey "К">
+<!ENTITY pasteCmd.label "Налепи">
+<!ENTITY pasteCmd.accesskey "Н">
+<!ENTITY undoCmd.label "Опозови">
+<!ENTITY undoCmd.accesskey "О">
+<!ENTITY selectAllCmd.label "Изабери све">
+<!ENTITY selectAllCmd.accesskey "с">
+<!ENTITY deleteCmd.label "Уклони ставку">
+<!ENTITY deleteCmd.accesskey "У">
+
+<!ENTITY spellAddToDictionary.label "Додај у речник">
+<!ENTITY spellAddToDictionary.accesskey "Д">
+<!ENTITY spellUndoAddToDictionary.label "Опозови додавање у речник">
+<!ENTITY spellUndoAddToDictionary.accesskey "з">
+<!ENTITY spellCheckToggle.label "Провери правопис">
+<!ENTITY spellCheckToggle.accesskey "р">
+<!ENTITY spellNoSuggestions.label "(нема предлога)">
+<!ENTITY spellDictionaries.label "Језици">
+<!ENTITY spellDictionaries.accesskey "Ј">
+
+<!ENTITY searchTextBox.clear.label "Обриши">
+
+<!ENTITY fillLoginMenu.label          "Попуни пријаву">
+<!ENTITY fillLoginMenu.accesskey      "П">
+<!ENTITY fillPasswordMenu.label       "Попуни лозинку">
+<!ENTITY fillPasswordMenu.accesskey   "П">
+<!ENTITY fillUsernameMenu.label       "Попуни корисничко име">
+<!ENTITY fillUsernameMenu.accesskey   "П">
+<!ENTITY noLoginSuggestions.label     "(нема предлога пријаве)">
+<!ENTITY viewSavedLogins.label        "Погледај снимљене пријаве">

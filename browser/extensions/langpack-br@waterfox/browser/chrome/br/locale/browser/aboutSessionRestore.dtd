@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Assav an estez">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Hum, nec'hus eo.">
+<!ENTITY restorepage.problemDesc    "Diaesterioù en deus &brandShortName; oc'h assav ho prenestroù hag hoc'h ivinelloù. Peurliesañ e c'hoarvez an dra-se abalamour d'ur bajenn digoret nevez zo.">
+<!ENTITY restorepage.tryThis        "Gallout a rit klask :">
+<!ENTITY restorepage.restoreSome    "Dilemel unan pe veur a ivinell a soñjit bezañ pennkaoz d'ar gudenn">
+<!ENTITY restorepage.startNew       "Kregiñ gant un estez nevez a-grenn">
+
+<!ENTITY restorepage.tryagainButton "Assav">
+<!ENTITY restorepage.restore.access "A">
+<!ENTITY restorepage.closeButton    "Serriñ">
+<!ENTITY restorepage.close.access   "S">
+
+<!ENTITY restorepage.restoreHeader  "Assav">
+<!ENTITY restorepage.listHeader     "Prenestroù hag ivinelloù">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Prenestr &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Bec'h dezhi !">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Taol berzh !">
+
+<!ENTITY welcomeback2.pageTitle     "Pennvad !">
+<!ENTITY welcomeback2.pageInfo1     "Prest eo &brandShortName;">
+
+<!ENTITY welcomeback2.restoreAll.label  "Assav an holl brenestroù hag ivinelloù">
+<!ENTITY welcomeback2.restoreSome.label "Dibab ar re a fell din assav">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Dilamet eo bet hoc'h askouezhioù hag arventennoù personelaet ha lakaet eo bet ho merdeer gant an arventennoù dre ziouer. Ma ne vefe ket ratreet ho kudenn ez eus tu deoc'h ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "gouzout hiroc'h diwar-benn pezh a c'hallfec'h ober.">
+

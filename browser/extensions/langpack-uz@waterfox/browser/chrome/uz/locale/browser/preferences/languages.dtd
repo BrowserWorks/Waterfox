@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Tillar">
+<!ENTITY languages.customize.description                "Vebsahifalar ba’zida bir necha tilni taklif qiladi. Parametlaringiz tartibiga ko‘ra ushbu sahifalar uchun ko‘rinadigan tillarni tanlang:">
+<!ENTITY languages.customize.moveUp.label               "Yuqoriga koʻchirish">
+<!ENTITY languages.customize.moveUp.accesskey           "Y">
+<!ENTITY languages.customize.moveDown.label             "Pastga koʻchirish">
+<!ENTITY languages.customize.moveDown.accesskey         "P">
+<!ENTITY languages.customize.deleteButton.label         "Oʻchirish">
+<!ENTITY languages.customize.deleteButton.accesskey     "O">
+<!ENTITY languages.customize.selectLanguage.label       "Qoʻshish uchun tilni tanlang">
+<!ENTITY languages.customize.addButton.label            "Qoʻshish">
+<!ENTITY languages.customize.addButton.accesskey        "Q">
+

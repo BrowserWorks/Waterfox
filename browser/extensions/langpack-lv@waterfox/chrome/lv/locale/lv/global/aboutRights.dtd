@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Par jūsu tiesībām">
+<!ENTITY rights.intro "&brandFullName; ir brīva bezmaksas atvērtā koda programma, ko veido tūkstošiem brīvprātīgo no visas pasaules. Ir dažas lietas, ko jums būtu vērts zināt:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ir pieejams ar ">
+<!ENTITY rights.intro-point1b "Mozilla publiskās licences">
+<!ENTITY rights.intro-point1c "nosacījumiem. Tas nozīmē, ka jūs varat brīvi izmantot, pavairot uz izplatīt &brandShortName; citiem.  Tāpat jūs droši varat mainīt un papildināt &brandShortName; pirmkodu pēc saviem ieskatiem. Mozilla publiskā licence dod jums tiesības brīvi izplatīt savas modificētās versijas.">
+
+<!ENTITY rights.intro-point2-a "Mozilla nedod jums tiesības izmantot Mozilla un Waterfox preču zīmes un logo. Papildus informācija par preču zīmēm ir atrodama ">
+<!ENTITY rights.intro-point2-b "šeit">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Dažas no &brandShortName; iespējām, piemēram, avāriju gadījumu ziņošanas rīks, piedāvā jums iespēju nosūtīt savu viedokli par &vendorShortName;. Izvēloties nosūtīt savu viedokli, jūs dodat atļauju &vendorShortName; izmantot šo jūsu sniegto informāciju, lai uzlabotu savus produktus, publicēt to savās mājas lapās vai kā citādi izplatīt šo saņemto informāciju.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Tas kā mēs izmantojam jūsu personisko informāciju un &vendorShortName; nosūtīto viedokli izmantojot &brandShortName; ir aprakstīts ">
+<!ENTITY rights2.intro-point3b "&brandShortName; privātuma politikā">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Visām aktuālajām privātuma politikām būtu jābūt uzskaitītām šeit.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Dažas &brandShortName; iespējas izmanto tīmeklī bāzētus pakalpojumus, taču, mēs nevaram garantēt, ka tie ir 100&#037; pareizi un kļūdu brīvi. Papildus informācija par šiem pakalpojumiem un to kā tos deaktivēt, ir pieejama ">
+<!ENTITY rights.intro-point4b "pakalpojumu nosacījumu aprakstā">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Ja šajā produktā ir iekļauti tīmekļa pakalpojumi, visiem aktuālajiem pakalpojuma nosacījumiem jābūt pieejamiem ">
+<!ENTITY rights.intro-point4b-unbranded "mājas lapu pakalpojumu">
+<!ENTITY rights.intro-point4c-unbranded " sadaļā.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; tīmeklī bāzētie informācijas pakalpojumi">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Lai varētu atskaņot dažu tipu video, &brandShortName; lejupielādē zināmus satura atkodēšanas moduļus no trešajām pusēm.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; izmanto tīmeklī bāzētus informācijas pakalpojumus (&quot;Pakalpojumi&quot;), lai nodrošinātu dažas no funkcijām, kas pieejamas binārajā &brandShortName; versijā ar zemāk aprakstītajiem nosacījumiem. Ja nevēlaties izmantot kādu no aprakstītajiem pakalpojumiem vai arī to izmantošanas nosacījumi jums nav pieņemami, jūs varat deaktivet šos pakalpojumus. Instrukcijas, kā deaktivēt konkrētu pakalpojumi ir pieejamas ">
+<!ENTITY rights2.webservices-b "te">
+<!ENTITY rights3.webservices-c ". Citas iespējas un pakalpojumus var deaktivēt programmas iestatījumos.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Drošā pārlūkošana: ">
+<!ENTITY rights.safebrowsing-b "Drošās pārlūkošanas deaktivēšana nav ieteicama, jo šādā veidā jūs varat nonākt nedrošās interneta lapās. Ja tomēr vēlaties to deaktivēt, rīkojieties sekojoši:">
+<!ENTITY rights.safebrowsing-term1 "Atveriet programmas iestatījumus">
+<!ENTITY rights.safebrowsing-term2 "Izvēlieties sadaļu Drošība">
+<!ENTITY rights2.safebrowsing-term3 "Izņemiet iezīmi pie &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Drošā pārlūkošana tagad ir deaktivēta">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Atrašanās vietu zinoša pārlūkošana: ">
+<!ENTITY rights.locationawarebrowsing-b "informācija par jūsu atrašanās vietu nekad netiek sūtīta bez jūsu piekrišanas.  Ja vēlaties pilnībā deaktivēt šo iespēju, rīkojieties sekojoši:">
+<!ENTITY rights.locationawarebrowsing-term1a "Adreses joslā ierakstiet ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Ierakstiet geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Ar dubultklikšķi uzklikšķiniet uz geo.enabled iestatījuma">
+<!ENTITY rights.locationawarebrowsing-term4 "Vietu zinošā pārlūkošana tagad ir deaktivēta">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Pieejamo mājas lapu pakalpojumu apraksti un instrukcijas kā vajadzības gadījumā deaktivēt tos ir pieejami šeit.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Aktuālajiem pakalpojumu izmantošanas noteikumiem būtu jābūt aprakstītiem šeit.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; kopā ar brīvprātīgajiem, licenču partneriem un partneriem strādā pie tā, lai nodrošinātu visprecīzākos un aktuālākos pakalpojumus. Taču mēs nevaram garantēt, ka šī informācija ir visaptveroša un bez kļūdām. Piemēram, drošās pārlūkošanas pakalpojums var nezināt, ka kāda lapa ir bīstama vai arī kļūdaini uzskatīt kādu drošu lapu par bīstamu. Mūsu partneru piedāvātā atrašanās vietas noteikšana ir tikai aptuvena un nedz mēs, nedz mūsu partneri negarantē piedāvātās atrašanās vietas informācijas pareizību.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; var pārtraukt Pakalpojumus pēc saviem ieskatiem.">
+<!ENTITY rights2.webservices-term3 "Mēs laipni lūdzam jūs izmantot šos &brandShortName; piedāvātos pakalpojumus, un &vendorShortName; sniedz jums tiesības to darīt.  &vendorShortName; un tās licenču partneri patur visas citas tiesības šajos pakalpojumos.  Šie nosacījumi nav domāti, lai ierobežotu jūsu tiesības, ko jums sniedz ar &brandShortName; saistītās atvērtā koda licences vai &brandShortName; pirmkoda licences.">
+<!ENTITY rights.webservices-term4 "Pakalpojumi tiek piedāvāti &quot;kādi tie ir.&quot;  &vendorShortName;, tās palīg, licencētāji un izplatītāji atsakās no jebkādām garantijām, neatkarīgi no tā vai tās ir paustas rakstiski vai tiek pieņemtas kā esošas, ieskaitot jebkādas garantijas par to, ka Pakalpojumi ir funkcionāli un atbilstoši jūsu vajadzībām.  Visa atbildība par Pakalpojumu izmantošanu gulstas uz jūsu pleciem attiecībā uz to kvalitāti un atbilstību veicamajām funkcijām.  Zināmos juridiskos apstākļos nav iespējams atteikties no iedomātajām garantijām, līdz ar to šī atruna var uz jums neattiekties.">
+<!ENTITY rights.webservices-term5 "Izņemot gadījumus, kur to pieprasa likumdošana, &vendorShortName;, tās palīgi, licencētāji un izplatītāji nebūs atbildīgi par jebkādiem tīšiem, netiešiem, nejaušiem vai jebkādiem cita veida bojājumiem, kas jebkādā veidā saistāmi ar &brandShortName; un tā Pakalpojumu izmantošanu.  Kopējā atbildība pēc šo nosacījumu principiem nepārsniegs $500 (piecus simtus ASV dolāru). Zināmos juridiskos apstākļos nav iespējams atteikties no iedomātajām garantijām, līdz ar to šī atruna var uz jums neattiekties.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; drīkst brīvi mainīt vai papildināt šos nosacījumus pēc saviem ieskatiem. Šie nosacījumi nevar tikt modificēti vai atcelti bez iepriekšēja rakstiska apliecinājuma no &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Šos noteikumus pārvalda Kalifornijas štata likumdošana, A.S.V. Ja kāda šo nosacījumu daļa tiek uzskatīta par nederīgu vai to nav iespējams piemērot, atlikušās daļas paliek spēkā. Domstarpību gadījumos starp šo nosacījumu tulkotajām un angļu valodas versiju, Angļu valodas versija tiek uzskatīta par galveno.">
+
+<!ENTITY rights.title "About Your Rights">

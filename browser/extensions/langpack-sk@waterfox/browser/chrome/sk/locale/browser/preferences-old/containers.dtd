@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Pridať nový kontajner">
+<!ENTITY addButton.accesskey  "P">
+<!ENTITY preferencesButton.label "Nastavenia">
+<!ENTITY removeButton.label   "Odstrániť">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Prejsť späť na Súkromie">
+
+<!ENTITY window.title         "Pridať nový kontajner">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Názov:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Zadajte názov kontajnera">
+<!ENTITY icon.label           "Ikona:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Farba:">
+<!ENTITY color.accesskey      "a">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Hotovo">
+<!ENTITY button.ok.accesskey  "H">
+

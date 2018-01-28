@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Welkom by &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Meld aan om oortjies, boekmerke, wagwoorde en nog wat te sinchroniseer.">
+<!ENTITY aboutAccountsConfig.startButton.label "Begin">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync-voorkeure">
+<!ENTITY aboutAccounts.noConnection.title "Geen verbinding nie">
+<!ENTITY aboutAccounts.noConnection.description "'n Internetverbinding is nodig om aan te meld.">
+<!ENTITY aboutAccounts.noConnection.retry "Probeer weer">
+<!ENTITY aboutAccounts.badConfig.title "Slegte opstelling">
+<!ENTITY aboutAccounts.badConfig.description "Kan nie die Waterfox-rekenening se bedieneropstelling bepaal nie. Probeer weer later.">

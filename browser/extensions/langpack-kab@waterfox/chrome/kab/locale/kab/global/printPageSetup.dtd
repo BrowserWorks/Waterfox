@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Tarusi n usebter">
+
+<!ENTITY basic.tab           "Amasal d iɣewwaṛen">
+
+<!ENTITY formatGroup.label   "Amasal">
+
+<!ENTITY orientation.label   "Taɣda">
+<!ENTITY portrait.label      "S teɣzi">
+<!ENTITY portrait.accesskey  "e">
+<!ENTITY landscape.label     "S tehri">
+<!ENTITY landscape.accesskey "h">
+
+<!ENTITY scale.label         "Sellum:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Serwes ɣer teɣzi n usebter">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "Iγewwaṛen">
+
+<!ENTITY printBG.label       "Siggez agilal n usebter (initen d tugniwin)">
+<!ENTITY printBG.accesskey   "g">
+
+<!ENTITY advanced.tab        "Timiwa, iqeṛṛa d iḍarren n usebter">
+
+<!ENTITY marginGroup.label   "Timiwa (#1)">
+<!ENTITY marginUnits.inches  "idebbuzen">
+<!ENTITY marginUnits.metric  "imilimitren">
+<!ENTITY marginTop.label     "Afella:">
+<!ENTITY marginTop.accesskey "A">
+<!ENTITY marginBottom.label  "Adda:">
+<!ENTITY marginBottom.accesskey "d">
+<!ENTITY marginLeft.label    "Azelmaḍ:">
+<!ENTITY marginLeft.accesskey "z">
+<!ENTITY marginRight.label   "Ayeffus:">
+<!ENTITY marginRight.accesskey "y">
+
+<!ENTITY headerFooter.label  "Iqeṛṛa d iḍarren">
+
+<!ENTITY hfLeft.label        "Azalmaḍ:">
+<!ENTITY hfCenter.label      "Alemmas:">
+<!ENTITY hfRight.label       "Ayeffus:">
+<!ENTITY headerLeft.tip      "Aqaṛṛu aẓelmaḍ">
+<!ENTITY headerCenter.tip    "Aqeṛṛu ulmis">
+<!ENTITY headerRight.tip     "Aqeṛṛu ayeffus">
+<!ENTITY footerLeft.tip      "Aḍaṛ azelmaḍ">
+<!ENTITY footerCenter.tip    "Aḍaṛ ulmis">
+<!ENTITY footerRight.tip     "Aḍaṛ ayeffus">
+
+<!ENTITY hfTitle             "Azwel">
+<!ENTITY hfURL               "Tansa URL">
+<!ENTITY hfDateAndTime       "Azemz/Akud">
+<!ENTITY hfPage              "Asebter #">
+<!ENTITY hfPageAndTotal      "Asebter # si  #">
+<!ENTITY hfBlank             "--ilem--">
+<!ENTITY hfCustom            "Sagen…">
+
+<!ENTITY customPrompt.title  "Sagen…">
+<!ENTITY customPrompt.prompt "Ma ulac aɣilif sekcem aḍris-inek aqeṛṛu/aḍaṛ">

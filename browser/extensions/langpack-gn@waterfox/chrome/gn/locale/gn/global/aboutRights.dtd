@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Iderechokuéra rehegua">
+<!ENTITY rights.intro "&brandFullName; ha'e peteĩ software ñeme'ẽreíva ha heko jurujáva peteĩ tekove aty oĩhápe hetaiterei pytyvõhára arapy tuichakue jave. Oĩ hetaiterei mba'e eikuaaséramo g̃uarã:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; eipurukuaa ko'ã jeguataha ehapykuehóramo  ">
+<!ENTITY rights.intro-point1b "Mozilla mba'eteéva">
+<!ENTITY rights.intro-point1c ". Kóva he'ise ikatuha eipuru, emboheta ha emyasãi &brandShortName; ambuépe. Ikatu avei emoambue pe ayvu reñoiha embojuehe &brandShortName; hag̃ua neremikotevẽ rehe.  Pe Mozilla Public License ,Mozilla Ñemoneĩ Opavaveguáva, ome'ẽ derécho emyasãivo pe hembiapokue ñemoambuepyréva.">
+
+<!ENTITY rights.intro-point2-a "Waterfox ha heseguáva noñeme'ẽi mba'evéichagua derécho térã ñe'ẽme'ẽ ñemurã rehegua, oike avei ápe Waterfox réra ha ha'ãnga'i. Ikatu ojejuhu marandu pe ñemurã reheguáva ">
+<!ENTITY rights.intro-point2-b "ápe">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Mbovy mba'e &brandShortName;-pe, jejavy mombe'uháraicha, omomarandukuaa &vendorShortName;-pe. Oñemondóta jave pe marandu, ome'ẽ &vendorShortName;-pe juruja ojepuru porã hag̃ua pe marandu omoporãverekávo imba'erepy, oñemoherakuã hag̃ua pe marandu iñanduti rendápe ha oñemyasãi hag̃ua.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Mba'eichaitépa ojepuru nemaranduete ha umi temiandu ojeguerahaukáva &vendorShortName;-pe &brandShortName; rupive oñemoha'ãnga amo ">
+<!ENTITY rights2.intro-point3b "&brandShortName; temiñemi purureko">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Oimeraẽva temiñemi purureko ko japopyrépe g̃uarãva oñembohysyiva'erã ko'ápe.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Heta mba'e &brandShortName; rehegua oipuru marandu ñanduti pegua, péicharamo jepe, ndaikatúi romoañetévo oĩporãmbaiteha. Ikatu ejuhu mba'emimi, oikekuaahápe marandu he'íva mba'éichapa ikatu eipe'aite umi mba'e oipurúva ko'ã mba'epururã, amo ">
+<!ENTITY rights.intro-point4b "mba'epytyvõrã ñemboguata">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Ko japopyre oikéramo ñanduti mba'epytyvõrãme, oimeraẽva mba'epytyvõrã ojogueraháva umi mba'epytyvõrã ndive oikeva'erã ojokuápe amo ">
+<!ENTITY rights.intro-point4b-unbranded "Ñanduti renda mba'epytyvõrã">
+<!ENTITY rights.intro-point4c-unbranded " pehẽ'i.">
+
+<!ENTITY rights2.webservices-header "Mba'epytyvõrã &brandFullName; marandu ñanduti pegua">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Embohetaseve rupi hetaichagua ta'ãngamýi tretepy, &brandShortName; omboguejy heta mbopapapy ra'ãha tetepy mbohapyguáva rehegua.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; oipuru marandu mba&apos;epytyvõrã ipyendáva ñandutípe (&quot;mba&apos;epytyvõrã&quot;) ome&apos;ẽ hag̃ua heseguamimi ojepurukuaáva ko apopy ikõirekóva &brandShortName;-pe ojehaiháicha ko&apos;a guive. Ndereipuruséirõ peteĩ térã hetave mba&apos;epytyvõrã térã jehairysýi oĩva ko&apos;a guive noñemoneĩkuaái, ikatu embogue pe hesegua térã mba&apos;epytyvõrã. Reikuaasérõ mba&apos;éichapa remboguekuaa pe mba&apos;e hesegua térã mba&apos;epytyvõrã rejuhukuaa ko&apos;ápe ">
+<!ENTITY rights2.webservices-b "ko'ápe">
+<!ENTITY rights3.webservices-c ". Ambue mba'e ha mba'epytyvõrã ikatu oñembogue tembipuru'i eguerohoryvéva rupi.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Kundaha jeroviáva: ">
+<!ENTITY rights.safebrowsing-b "Kundaha ñemi rehegua jeikekatu noñemoneĩmbái ikatu rehe nde gueraha tenda jerovia'ỹhápe. Emboguesetéramo ko mba'e rehegua, ehechakuaa ko tape: ">
+<!ENTITY rights.safebrowsing-term1 "Eike tembipuru'i erohoryvévape">
+<!ENTITY rights.safebrowsing-term2 "Eiporavo Tekorosãrã ta'ãngarupa">
+<!ENTITY rights2.safebrowsing-term3 "Embogue poravopyrã &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Kundaha jerovia ko'ág̃a oñemongéma">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Kundaha ipyendaitéva: ">
+<!ENTITY rights.locationawarebrowsing-b "Opaite jey ha'e puruhára jeporavo. Araka'eve noñemondói marandu nerendaite rehegua neñemoneĩ'ỹre. Emboguesetéramo kóva rehegua, ehapykueho ko tape:">
+<!ENTITY rights.locationawarebrowsing-term1a "Pe kundaharape rendápe, ehai ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Ehai geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Eikutu jo'a jerohoryváva geo.enabled-pe">
+<!ENTITY rights.locationawarebrowsing-term4 "Pe kundaha tendaite rehegua oñemongéma ko'ág̃a">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Ko'ápe emoinge peteĩ ñanduti renda mba'epytyvõrã pe japopyre ogueroikéva, je'epyre ndive mba'éichapa ojepe'aiteva'erã, ojejapótaramo.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Oimeraẽva mba'epytyvõrã rape ko japopyrépe g̃uarãva oñembohysýi ko'ápe.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; ha ipytyvõhára, virume'ẽha ha iñirũnguéra omba'apo ome'ẽ hag̃ua mba'epytyvõrã ha'ete ha ipyahuvéva. Upéicharamo jepe, ndaikatúi romoañetete ko marandu ha'eha ijerovia añetéva ha ndoguerekokuaaiha jejavy. Techapyrã, ñanduti mba'epytyvõrã jeroviáva ikatu ndohechakuaái heta tenda imarãva ha ikatu ohechakuaa avei heta tenda ijerovia rekóva jejavy rupi ha umi kundaharape oñemboujeýva ore kundaha mba'epytyvõrã me'ẽhára pe tendaite rehe oma'ẽvo añónte ha ore péicha avei umi ore me'ẽhára romboaje pe tendaite rome'ẽva oĩporã.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; ikatu ndoku'ememéi térã omoambue mba'epytyvõrã ha'e oikpotaháicha">
+<!ENTITY rights2.webservices-term3 "Ikatu eipuru ko'ã mba'epytyvõrã &brandShortName; rehegua ndive, ha &vendorShortName; ome'ẽ derécho ejapóvo péicha. &vendorShortName; ha umi ipytyvõhára oñongatu mba'epytyvõrã derécho hembýva. Ko'ã je'epyre nomomichĩri mba'evéichagua derécho ome'ẽva umi ayvu ijurujáva ñe'ẽme'ẽgua ojogueraháva &brandShortName; ndive, ha ayvu reñoiha peteĩchagua &brandShortName; mba'éva rehegua.">
+<!ENTITY rights.webservices-term4 "Umi mba&apos;epytyvõrã oñeme&apos;ẽ &quot;peichaite&quot;.  &vendorShortName;, ipyptvõhára, hepyme&apos;ẽha ha myasãiharakuéra, ombotove opaichagua jerovia, péicha he&apos;ihápe térã he&apos;ietehápe, oikehápe ha tuichaháicha, jerovia pe mba&apos;epytyvõrã ikatuha eikuave&apos;ẽ ha oguerekopaha pe nde eikotevẽtéva. Nde egueraha nendive pe kyhyjerã poravopyréva ko mba&apos;epytyvõrã rehegua nerembiaporãme péicha avei opaichagua mba&apos;eporã ha ha&apos;evetaha pe mba&apos;epytyvõrã. Ndahetái tendavore nomoneĩri ñemboyke térã ñemomichĩ jeroviaha he&apos;ietéva hesegua, péicha ko nemoneĩ ikatuhína ndoikopái kóvape g̃uarã. ">
+<!ENTITY rights.webservices-term5 "Ojejerure'ỹhápe léi rupi, &vendorShortName; ipytyvõha, moneĩha ha myasãiharakuéra ndaikatúi oñembojávo hesekuéra mba'evéichagua mba'evai ijyke peguáva, ojehúva, oikónteva, oikopyréva, ka'irãiva térã techapyrã añóva &brandShortName; jepurúpe ha avei opaichagua mba'epuru. Atyguáva reheguaite ko'ã je'epy poguy peguáva ndaikatúi ohasávo US$500 (posa dólares). Ndahetái tendaguaite umi ñomoneĩriva ñemboykete térã ñemomichĩ mba'evai rehegua, péicha avei pe ñemboykete ha ñemomichĩ ikatukuaa ndoikói ndéve g̃uarã.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; ikatu ombohekopyahu ko'ã ñemboguata oikotevẽramo ára ohave rire. Ko'ã ñemboguata ndaikatúi oñemoambue térã ohejarei &vendorShortName; ñemoneĩ'ỹre jehaipy rupi.">
+<!ENTITY rights.webservices-term7 "Ko'ã je'epyre oĩhína tetãpehẽ California, EE.UU. leikuéra poguýpe, oñemboykehápe cheikovai he'iháicha léi ambuévape. Oimeraẽva ko'ã je'epyre ryepy pegua ndoikói térã nderejerurekuaái, umi ambue hembýva ko'ãvagui oñemboajetéta pe oĩ hagueichaite. Peichahágui oikóramo cheikovai peteĩchagua ñe'ẽasapyréva ko'ã je'epyre rehegua ha pe ñe'ẽ Inglés, ñe'ẽ Inglés pegua oñemotenondéta.">

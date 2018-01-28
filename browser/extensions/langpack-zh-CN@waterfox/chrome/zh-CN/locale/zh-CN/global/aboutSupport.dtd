@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "故障排除信息">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  本页面包含的技术信息在您寻求解决方法时或许能帮上忙。
+  如果您正在寻找 &brandShortName; 常见问题的答案，
+  可以查阅我们的<a id='supportLink'>帮助网站</a>。">
+
+<!ENTITY aboutSupport.crashes.title "崩溃报告">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "报告 ID">
+<!ENTITY aboutSupport.crashes.sendDate "提交日期">
+<!ENTITY aboutSupport.crashes.allReports "全部崩溃报告">
+<!ENTITY aboutSupport.crashes.noConfig "此应用程序未被配置为显示崩溃报告。">
+
+<!ENTITY aboutSupport.extensionsTitle "扩展">
+<!ENTITY aboutSupport.extensionName "名称">
+<!ENTITY aboutSupport.extensionEnabled "启用">
+<!ENTITY aboutSupport.extensionVersion "版本">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; 功能">
+<!ENTITY aboutSupport.featureName "名称">
+<!ENTITY aboutSupport.featureVersion "版本">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "实验性功能">
+<!ENTITY aboutSupport.experimentName "名称">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "描述">
+<!ENTITY aboutSupport.experimentActive "激活">
+<!ENTITY aboutSupport.experimentEndDate "结束时间">
+<!ENTITY aboutSupport.experimentHomepage "主页">
+<!ENTITY aboutSupport.experimentBranch "分支">
+
+<!ENTITY aboutSupport.appBasicsTitle "应用程序概要">
+<!ENTITY aboutSupport.appBasicsName "名称">
+<!ENTITY aboutSupport.appBasicsVersion "版本">
+<!ENTITY aboutSupport.appBasicsBuildID "版本 ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "更新通道">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "更新历史">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "显示更新历史">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "配置文件夹">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "配置文件夹">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "已启用的插件">
+<!ENTITY aboutSupport.appBasicsBuildConfig "构建配置">
+<!ENTITY aboutSupport.appBasicsUserAgent "用户代理">
+<!ENTITY aboutSupport.appBasicsOS "操作系统">
+<!ENTITY aboutSupport.appBasicsMemoryUse "内存使用">
+<!ENTITY aboutSupport.appBasicsPerformance "性能">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "已注册的 Service Worker">
+
+<!ENTITY aboutSupport.appBasicsProfiles "配置文件">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "多进程窗口">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "网页内容处理进程">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google 密钥">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla 位置服务密钥">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "安全模式">
+
+<!ENTITY aboutSupport.showDir.label "打开目录">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "在 Finder 中显示">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "打开文件夹">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "修改过的重要首选项">
+<!ENTITY aboutSupport.modifiedPrefsName "名称">
+<!ENTITY aboutSupport.modifiedPrefsValue "值">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js 设置">
+<!ENTITY aboutSupport.userJSDescription "您的配置文件夹中有一个 <a id='prefs-user-js-link'>user.js 文件</a>，其中包含了一些并非由 &brandShortName; 所创建的首选项（偏好设置）。">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "重要的已锁定的首选项">
+<!ENTITY aboutSupport.lockedPrefsName "名称">
+<!ENTITY aboutSupport.lockedPrefsValue "值">
+
+<!ENTITY aboutSupport.graphicsTitle "图像">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Places 数据库">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "完整性">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "验证完整性">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "渐进式垃圾收集">
+
+<!ENTITY aboutSupport.a11yTitle "无障碍环境">
+<!ENTITY aboutSupport.a11yActivated "已激活">
+<!ENTITY aboutSupport.a11yForceDisabled "强制停用无障碍环境">
+<!ENTITY aboutSupport.a11yHandlerUsed "采用无障碍处理程序">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "库版本">
+
+<!ENTITY aboutSupport.installationHistoryTitle "安装历史记录">
+<!ENTITY aboutSupport.updateHistoryTitle "更新历史">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "复制文本到剪贴板">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "复制原始数据到剪贴板">
+
+<!ENTITY aboutSupport.sandboxTitle "沙盒">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "被拒绝的系统调用">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "秒前">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "进程类型">
+<!ENTITY aboutSupport.sandboxSyscallNumber "系统调用">
+<!ENTITY aboutSupport.sandboxSyscallArgs "参数">
+
+<!ENTITY aboutSupport.safeModeTitle "尝试安全模式">
+<!ENTITY aboutSupport.restartInSafeMode.label "以安全模式重新启动…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "特性">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "诊断">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "失败日志">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "决策日志">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "被崩溃守卫禁用的功能">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "变通方法">
+
+<!ENTITY aboutSupport.mediaTitle "媒体">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "输出设备">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "输入设备">
+<!ENTITY aboutSupport.mediaDeviceName "名称">
+<!ENTITY aboutSupport.mediaDeviceGroup "组别">
+<!ENTITY aboutSupport.mediaDeviceVendor "厂商">
+<!ENTITY aboutSupport.mediaDeviceState "状态">
+<!ENTITY aboutSupport.mediaDevicePreferred "首选">
+<!ENTITY aboutSupport.mediaDeviceFormat "格式">
+<!ENTITY aboutSupport.mediaDeviceChannels "声道">
+<!ENTITY aboutSupport.mediaDeviceRate "采样率">
+<!ENTITY aboutSupport.mediaDeviceLatency "延迟">

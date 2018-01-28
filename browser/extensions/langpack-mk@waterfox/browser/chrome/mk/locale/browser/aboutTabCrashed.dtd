@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Затвори го ова јазиче">
+<!ENTITY tabCrashed.restoreTab "Врати го ова јазиче">
+<!ENTITY tabCrashed.restoreAll "Врати ги сите урнати јазичиња">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Хах. Јазичето штотуку се сруши.">
+<!ENTITY tabCrashed.offerHelp "Ние можеме да Ви помогнеме!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Изберете &tabCrashed.restoreTab; за да ја освежите содржината на страницата.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Изберете &tabCrashed.restoreTab; или &tabCrashed.restoreAll; за да ја освежите содржината на страницата.">
+<!ENTITY tabCrashed.requestHelp "Ќе ни помогнете?">
+<!ENTITY tabCrashed.requestHelpMessage "Извештаите за уривање ни помагаат да ги дијагностицираме проблемите и да го направиме &brandShortName; подобар.">
+<!ENTITY tabCrashed.requestReport "Пријавете го ова јазиче">
+<!ENTITY tabCrashed.sendReport2 "Испратете извештај за уривање за јазичето што го гледате">
+<!ENTITY tabCrashed.commentPlaceholder2 "Дополнителни коментари (коментарите се јавно-видливи)">
+<!ENTITY tabCrashed.includeURL2 "Вклучи и URL во овој извештај за уривање">
+<!ENTITY tabCrashed.emailPlaceholder "Внесете ја Вашата адреса за е-пошта овде">
+<!ENTITY tabCrashed.emailMe "Испрати ми е-пошта кога ќе има повеќе информации за ова">
+<!ENTITY tabCrashed.reportSent "Извештајот за уривање е веќе испратен; Ви благодариме што помагате &brandShortName; да биде подобар!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Пријавете ги позадинските јазичиња">
+<!ENTITY tabCrashed.autoSubmit2 "Ажурирај ги преференците за автоматско испраќање на извештаи за уривање, вклучително и извештаи за урнати позадински јазичиња од оваа и идните сесии на прелистување">

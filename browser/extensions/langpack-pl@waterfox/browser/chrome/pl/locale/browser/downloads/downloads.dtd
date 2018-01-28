@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloads.title "Pobierane pliki">
+<!ENTITY downloadDetails.width "50ch">
+<!ENTITY downloadsSummary.minWidth2 "30ch">
+
+<!ENTITY cmd.pause.label                  "Wstrzymaj">
+<!ENTITY cmd.pause.accesskey              "W">
+<!ENTITY cmd.resume.label                 "Wznów">
+<!ENTITY cmd.resume.accesskey             "z">
+<!ENTITY cmd.cancel.label                 "Anuluj">
+<!ENTITY cmd.show.label "Otwórz folder nadrzędny">
+<!ENTITY cmd.show.accesskey "f">
+<!ENTITY cmd.showMac.label "Pokaż w Finderze">
+<!ENTITY cmd.showMac.accesskey "F">
+<!ENTITY cmd.retry.label                  "Spróbuj ponownie">
+<!ENTITY cmd.goToDownloadPage.label       "Przejdź do strony pobierania">
+<!ENTITY cmd.goToDownloadPage.accesskey   "P">
+<!ENTITY cmd.copyDownloadLink.label       "Kopiuj adres pobierania">
+<!ENTITY cmd.copyDownloadLink.accesskey   "K">
+<!ENTITY cmd.removeFromHistory.label "Usuń z historii">
+<!ENTITY cmd.removeFromHistory.accesskey "U">
+<!ENTITY cmd.clearList2.label "Wyczyść listę">
+<!ENTITY cmd.clearList2.accesskey "c">
+<!ENTITY cmd.clearDownloads.label "Wyczyść listę">
+<!ENTITY cmd.clearDownloads.accesskey "c">
+<!ENTITY cmd.unblock2.label "Pozwól pobrać">
+<!ENTITY cmd.unblock2.accesskey "P">
+<!ENTITY cmd.removeFile.label "Usuń plik">
+<!ENTITY cmd.chooseUnblock.label "Usuń plik lub pozwól go pobrać">
+<!ENTITY cmd.chooseOpen.label "Otwórz lub usuń plik">
+
+<!ENTITY showMoreInformation.label "Wyświetl więcej informacji">
+<!ENTITY openFile.label "Otwórz plik">
+<!ENTITY retryDownload.label "Pobierz ponownie">
+<!ENTITY cancelDownload.label "Anuluj pobieranie">
+
+<!ENTITY blocked.label "Zablokowano">
+<!ENTITY learnMore.label "więcej informacji">
+
+<!ENTITY downloadsHistory.label "Wyświetl wszystkie">
+<!ENTITY downloadsHistory.accesskey "W">
+
+<!ENTITY openDownloadsFolder.label "Otwórz folder z pobranymi plikami">
+
+<!ENTITY clearDownloadsButton.label "Wyczyść listę">
+<!ENTITY clearDownloadsButton.tooltip "Zakończone, anulowane i nieudane pobierania zostaną usunięte">
+
+<!ENTITY downloadsListEmpty.label "Brak pobranych plików">
+<!ENTITY downloadsPanelEmpty.label "Brak pobranych podczas tej sesji.">
+<!ENTITY downloadsListNoMatch.label "Nie znaleziono żadnych pasujących">

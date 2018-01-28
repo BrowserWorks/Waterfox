@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Emoambue tembipuru renda">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Ikatu embojoapy térã emboguete mba'epuru embosyryrývo tembipuru rendápe térã kóva guive.">
+<!ENTITY show.label               "Hechauka:">
+<!ENTITY iconsAndText.label       "Ta'ãngachu'i ha moñe'ẽrã">
+<!ENTITY icons.label              "Ta'ãngachu'i">
+<!ENTITY text.label               "Moñe'ẽrã">
+<!ENTITY useSmallIcons.label      "Ta'ãngachu'i michĩva jepuru">
+<!ENTITY restoreDefaultSet.label  "Tepy ijypykue rupi">
+<!ENTITY addNewToolbar.label      "Tenda mbojoapy">
+<!ENTITY saveChanges.label        "Apopyre">
+<!ENTITY undoChanges.label        "Moambuepy mboguevi">

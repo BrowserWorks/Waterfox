@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Знайти наступне входження фрази">
+<!ENTITY previous.tooltip "Знайти попереднє входження фрази">
+<!ENTITY findCloseButton.tooltip "Закрити панель пошуку">
+<!ENTITY highlightAll.label "Підсвітити все">
+<!ENTITY highlightAll.accesskey "в">
+<!ENTITY highlightAll.tooltiptext "Підсвітити всі входження фрази">
+<!ENTITY caseSensitive.label "З урахуванням регістру">
+<!ENTITY caseSensitive.accesskey "р">
+<!ENTITY caseSensitive.tooltiptext "Шукати з урахуванням регістру">
+<!ENTITY entireWord.label "Цілі слова">
+<!ENTITY entireWord.accesskey "Ц">
+<!ENTITY entireWord.tooltiptext "Шукати лише цілі слова">

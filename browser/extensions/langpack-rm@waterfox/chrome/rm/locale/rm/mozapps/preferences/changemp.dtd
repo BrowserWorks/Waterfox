@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Midar il pled-clav universal">
+<!ENTITY setPassword.tokenName.label       "Modul da criptografia">
+<!ENTITY setPassword.oldPassword.label     "Pled-clav actual:">
+<!ENTITY setPassword.newPassword.label     "Pled-clav nov:">
+<!ENTITY setPassword.reenterPassword.label "Pled-clav nov (repeter):">
+<!ENTITY setPassword.meter.label           "Valitaziun da la qualitad dal pled-clav">
+<!ENTITY setPassword.meter.loading         "Chargiar">
+<!ENTITY masterPasswordDescription.label   "Il pled-clav universal vegn utilisà per proteger tias datas sensiblas (p.ex. pleds-clav). Sche ti defineschas in pled-clav universal, vegns ti dumandà ina giada per sesida d'endatar il pled-clav universal uschespert che &brandShortName; sto avair access a las datotecas protegidas.">
+<!ENTITY masterPasswordWarning.label       "Ti na dastgas betg emblidar il pled-clav universal che ti has definì. Sche ti emblidas il pled-clav universal, na datti nagina pussaivladad d'acceder a las datas ch'èn protegidas dad el.">

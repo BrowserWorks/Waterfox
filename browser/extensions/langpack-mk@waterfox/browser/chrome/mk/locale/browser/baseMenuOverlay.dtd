@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Минимизирај">
+<!ENTITY bringAllToFront.label    "Донеси ги сите напред">
+<!ENTITY zoomWindow.label         "Зумирај">
+<!ENTITY windowMenu.label         "Прозорец">
+
+<!ENTITY helpMenu.label           "Помош"> 
+<!ENTITY helpMenu.accesskey       "ш"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Помош"> 
+<!ENTITY helpMenuWin.accesskey    "ш">
+<!ENTITY aboutProduct2.label      "За &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "Помош за &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Кратенки за тастатура">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "Рестартирај со исклучени додатоци…">
+<!ENTITY helpSafeMode.accesskey   "Р">
+<!ENTITY helpSafeMode.stop.label       "Рестрартирај со овозможени додатоци">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "Здравствен извештај на &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Информации за проблеми">
+<!ENTITY helpTroubleshootingInfo.accesskey  "И">
+
+<!ENTITY helpFeedbackPage.label      "Испрати коментар…">
+<!ENTITY helpFeedbackPage.accesskey  "с">
+
+<!ENTITY helpShowTour2.label            "Тура на &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Преференции…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Сервиси">
+
+<!ENTITY hideThisAppCmdMac2.label       "Скриј &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Скриј ги другите">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Прикажи сè">

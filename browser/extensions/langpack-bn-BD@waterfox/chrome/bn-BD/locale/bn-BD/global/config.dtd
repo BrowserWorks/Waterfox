@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "পরিচিতি:কনফিগ">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "এটি আপনার ওয়ারেন্টি বাতিল করে দিতে পারে!">
+<!ENTITY aboutWarningText.label "উচ্চ পর্যায়ের এই সেটিংসমূহ পরিবর্তনের ফলে অ্যাপ্লিকেশনের স্থায়ীত্ব, নিরাপত্তা ও কার্যকারিতা প্রভাবিত হতে পারে। আপনি সম্পূর্ণভাবে নিশ্চিত হলে তবেই এগিয়ে যান।">
+<!ENTITY aboutWarningButton2.label "আমি ঝুঁকি গ্রহণ করছি!">
+<!ENTITY aboutWarningCheckbox.label "পরবর্তী সময়ে এই সতর্কীকরণ প্রদর্শন করা হবে">
+
+<!ENTITY searchPrefs.label "Search:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "পছন্দের নাম">
+<!ENTITY lockColumn.label "অবস্থা">
+<!ENTITY typeColumn.label "ধরন">
+<!ENTITY valueColumn.label "মান">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "ক্রমানুসারে সাজাতে ক্লিক করুন"> 
+<!ENTITY columnChooser.tooltip "যে কলাম প্রদর্শিত হবে তা নির্বাচন করতে ক্লিক করুন"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "অনুলিপি (C)">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "নাম অনুলিপি (N)">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "মান অনুলিপি ( V)">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "পরিবর্তন (M)">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "টগল (T)">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "পুনঃনির্ধারণ (R)">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "নতুন (w)">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "স্ট্রিং (S)">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "পূর্ণসংখ্যা (I)">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "বুলিয়ান (B)">
+<!ENTITY boolean.accesskey "B">

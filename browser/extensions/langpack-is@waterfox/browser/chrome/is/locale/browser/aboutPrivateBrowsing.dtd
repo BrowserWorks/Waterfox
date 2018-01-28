@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Þú ert ekki í huliðsglugga.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Opna huliðsglugga">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Huliðsstilling">
+<!ENTITY privateBrowsing.title.tracking                  "Huliðsgluggi er með vörn gegn gagnasöfnun">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Þegar þú vafrar með huliðsglugga, mun Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ekki vista">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "heimsóttar síður">
+<!ENTITY aboutPrivateBrowsing.info.searches              "leit">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "smákökur">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tímabundnar skrár">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "mun hins vegar vista">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "niðurhal">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "bókamerki">
+<!ENTITY aboutPrivateBrowsing.note.before                "Huliðsstilling ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "gerir þig ekki alveg nafnlausan">
+<!ENTITY aboutPrivateBrowsing.note.after                 " á Internetinu. Vinnuveitandinn þinn eða netþjónustuaðili getur ennþá séð hvaða síður þú ferð á.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Læra meira um ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Huliðsstilling">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Vörn gegn gagnasöfnun">
+<!ENTITY trackingProtection.description2                 "Sum vefsvæði nota rekjara sem geta fylgst með notkun þinni á ferð um netið. Með vörn gegn gagnasöfnun getur Waterfox lokað á flesta rekjara sem safna upplýsingum um vafranotkun þína.">
+<!ENTITY trackingProtection.startTour1                   "Sjá hvernig þetta virkar">

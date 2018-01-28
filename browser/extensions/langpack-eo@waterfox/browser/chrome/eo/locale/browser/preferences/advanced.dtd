@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Ĝenerala">
+
+<!ENTITY useCursorNavigation.label       "Ĉiam uzi la moviĝoklavojn por moviĝi ene de paĝoj">
+<!ENTITY useCursorNavigation.accesskey   "m">
+<!ENTITY searchOnStartTyping.label       "Serĉi tekston kiam vi ektajpas">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY useOnScreenKeyboard.label       "Montri tuŝklavaron se necesas">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Retumado">
+
+<!ENTITY useAutoScroll.label             "Uzi aŭtomatan ŝovadon">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Uzi glatan ŝovadon">
+<!ENTITY useSmoothScrolling.accesskey    "g">
+<!ENTITY checkUserSpelling.label         "Kontroli literumadon dum tajpado">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Elektado de datumoj">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "La raporto de datumoj estas malŝaltita pro la agordoj de konstruo">
+
+<!ENTITY enableHealthReport1.label       "Permesi al &brandShortName; aŭtomate sendi teĥnikajn kaj interagajn datumojn al Mozilla">
+<!ENTITY enableHealthReport1.accesskey   "A">
+<!ENTITY healthReportLearnMore.label     "Pli da informo">
+
+<!ENTITY dataCollection.label            "Kolekto kaj uzo de datumojn de &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Ni penas doni al vi plurajn eblojn, kaj kolekti nur tion, kion ni bezonas por fari kaj plibonigi &brandShortName; por ĉiuj. Ni ĉiam petos permeson antaŭ ol ricevi personajn informojn.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Rimarko pri privateco">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Permesi al &brandShortName; sendi al Mozilla raportojn pri paneo">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "p">
+<!ENTITY crashReporterLearnMore.label    "Pli da informo">
+
+<!ENTITY networkTab.label                "Reto">
+
+<!ENTITY networkProxy.label              "Retperanto">
+
+<!ENTITY connectionDesc.label            "Agordi la manieron kiel &brandShortName; konektiĝas al la reto">
+<!ENTITY connectionSettings.label        "Agordoj…">
+<!ENTITY connectionSettings.accesskey    "g">
+
+<!ENTITY httpCache.label                 "Teksaĵa enhavo en staplo">
+
+<!ENTITY offlineStorage2.label           "Deponejo por malkonektitaĵoj, de teksaĵa enhavo kaj de datumoj de uzanto">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Retejaj datumoj">
+<!ENTITY clearSiteData.label             "Viŝi ĉiujn datumojn">
+<!ENTITY clearSiteData.accesskey         "V">
+<!ENTITY siteDataSettings.label          "Agordoj…">
+<!ENTITY siteDataSettings.accesskey      "A">
+<!ENTITY siteDataLearnMoreLink.label     "Pli da informo">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Limigi staplon al">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MO de spaco">
+<!ENTITY clearCacheNow.label             "Viŝi nun">
+<!ENTITY clearCacheNow.accesskey         "V">
+<!ENTITY clearOfflineAppCacheNow.label   "Viŝi nun">
+<!ENTITY clearOfflineAppCacheNow.accesskey "V">
+<!ENTITY overrideSmartCacheSize.label    "Superregi la aŭtomatan administradon de staplo">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Ĝisdatigi">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "Ĝisdatigoj de &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Tenu &brandShortName; ĝisdatigita por havi la plej bonan efikecon, stabilecon kaj sekurecon.">
+<!ENTITY updateApplication.version.pre   "Versio ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Permesi al &brandShortName;">
+<!ENTITY updateAuto3.label               "Aŭtomate instali ĝisdatigojn (rekomendita)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "Kontroli ĉu estas ĝisdatigoj, sed ebligi al uzanto elekti ĉu ilin instali">
+<!ENTITY updateCheckChoose2.accesskey    "K">
+<!ENTITY updateManual2.label             "Neniam kontroli ĉu estas ĝisdatigoj (malkonsilinda)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Montri historion de ĝisdatigoj…">
+<!ENTITY updateHistory2.accesskey        "M">
+
+<!ENTITY useService.label                "Uzi fonan servon por instali ĝisdatigojn">
+<!ENTITY useService.accesskey            "f">
+
+<!ENTITY enableSearchUpdate2.label       "Aŭtomate ĝisdatigi serĉilojn">
+<!ENTITY enableSearchUpdate2.accesskey   "t">
+
+<!ENTITY offlineStorageNotify.label               "Diri al mi kiam retejoj petas konservi datumojn por uzi malkonektite">
+<!ENTITY offlineStorageNotify.accesskey           "r">
+<!ENTITY offlineStorageNotifyExceptions.label     "Esceptoj…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "E">
+
+<!ENTITY offlineAppsList2.label          "La jenaj retejoj rajtas konservi datumojn por uzi malkonektite:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Forigi…">
+<!ENTITY offlineAppsListRemove.accesskey "F">
+<!ENTITY offlineAppRemove.confirm        "Forigi malkonektitaĵojn">
+
+<!ENTITY certificateTab.label            "Atestiloj">
+<!ENTITY certPersonal2.description       "Kiam servilo petas vian personan atestilon">
+<!ENTITY selectCerts.auto                "Aŭtomate elekti unu">
+<!ENTITY selectCerts.auto.accesskey      "A">
+<!ENTITY selectCerts.ask                 "Demandi ĉiufoje">
+<!ENTITY selectCerts.ask.accesskey       "D">
+<!ENTITY enableOCSP.label                "Peti al OCSP respondaj serviloj konfirmon pri la nuna valideco de atestiloj">
+<!ENTITY enableOCSP.accesskey            "P">
+<!ENTITY viewCerts2.label                "Vidi atestilojn…">
+<!ENTITY viewCerts2.accesskey            "a">
+<!ENTITY viewSecurityDevices2.label      "Sekurecaj aparatoj…">
+<!ENTITY viewSecurityDevices2.accesskey  "S">
+
+<!ENTITY performance.label               "Efikeco">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Uzi konsilindajn efikecajn agordojn">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Tiuj ĉi agordoj estas alĝustigitaj al la mastruma sistemo kaj aparataro de via komputilo.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "k">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Pli da informo">
+<!ENTITY limitContentProcessOption.label "Maksimuma nombro de enhavaj taskoj">
+<!ENTITY limitContentProcessOption.description
+                                         "Pli da enhavaj taskoj povas plibonigi efikecon dum uzo de pluraj langetoj, sed ili ankaŭ uzos pli da memoro.">
+<!ENTITY limitContentProcessOption.accesskey   "M">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Nur eblas modifi la nombron de enhavaj taskoj en plurproceza &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Pli da informo, pri kiel eltrovi ĉu plurprocezo estas aktiva">
+<!ENTITY allowHWAccel.label              "Uzi aparatan akceladon se tio disponeblas">
+<!ENTITY allowHWAccel.accesskey          "d">

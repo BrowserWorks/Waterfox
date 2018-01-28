@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Aldatu pasahitz nagusia">
+<!ENTITY setPassword.tokenName.label       "Segurtasun-gailua">
+<!ENTITY setPassword.oldPassword.label     "Uneko pasahitza:">
+<!ENTITY setPassword.newPassword.label     "Idatzi pasahitz berria:">
+<!ENTITY setPassword.reenterPassword.label "Idatzi berriz pasahitza:">
+<!ENTITY setPassword.meter.label           "Pasahitzaren kalitate neurgailua">
+<!ENTITY setPassword.meter.loading         "Kargatzen">
+<!ENTITY masterPasswordDescription.label   "Pasahitz nagusia isilpeko informazioa babesteko erabiltzen da.  Pasahitz nagusia sortzen baduzu, &brandShortName;(e)k saio bakoitzeko eskatuko dizu pasahitz bitartez gordetako edozein informazio behar duenean.">
+<!ENTITY masterPasswordWarning.label       "Ziurta ezazu ezarritako pasahitz nagusia gogoratzen duzula.  Pasahitza ahaztuz gero, ezinezkoa izango da honek babestutako edozein isilpeko informazio berreskuratzea.">

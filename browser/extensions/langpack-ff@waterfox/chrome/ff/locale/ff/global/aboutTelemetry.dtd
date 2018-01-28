@@ -1,0 +1,100 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Keɓe Telemeetiri">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ƴoɓo sewnde keɓe:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Joɓol keɓe gonangol">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Ƴoɓol keɓe resanaama">
+
+<!ENTITY aboutTelemetry.raw "JSON Kecco">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Hollu keɓe lesnaatal">
+
+<!ENTITY aboutTelemetry.choosePing "Suɓol ƴoɓol:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Hoto ƴoɓoto">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ƴoɓol kiiɗngol &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Yontere">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ƴoɓol">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Keɓe Kuuɓal">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Keɓe Taariindi">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Logagol Telemeetiri">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Gowlaali SQL Leelɗi">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Kooke Wanngorde">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "       Kooke gallol">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  Ɓetiwe">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Ɓetiwe Koke">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Asdiiwe">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Keyed Histograms">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Ɓete Beeɓtinaaɗe">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Ɓeydude e cariika">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Binndi Sakket">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Humpito Naatal">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTE: Buggitagol SQL Leelɗo koko hurminaa. Ɓoggi SQL timmuɗi ena mbaawi jaytineede les ɗoo kono ɗo naatnoytaake to Telemeetiri.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Ciimtinirgal (strings or /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Ndimdam">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

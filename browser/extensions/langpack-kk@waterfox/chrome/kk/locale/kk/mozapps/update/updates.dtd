@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Бағдарламалық қамтаманы жаңарту">
+
+<!ENTITY  checking.title                  "Жаңартулардың бар-жоғы тексерілуде">
+<!ENTITY  updateCheck.label               "&brandShortName; жаңа нұсқалары ізделуде…">
+
+<!ENTITY  noupdatesfound.title            "Жаңартулар жоқ">
+<!ENTITY  noupdatesautoenabled.intro      "Ешбір жаңарту жоқ. &brandShortName; жаңартуларды белгілі уақыт өткен сайын тексеріп тұрады.">
+<!ENTITY  noupdatesautodisabled.intro     "Ешбір жаңартулар жоқ. Кейінірек тексеріп көріңіз не &brandShortName; автоматты жаңартуларды тексеру мүмкіндігін қосыңыз.">
+
+<!ENTITY  manualUpdate.title              "Жаңарту мүмкін емес">
+<!ENTITY  manualUpdate.desc               "Ұсынылатын қауіпсіздік пен тұрақтылық жаңартуы бар, бірақ сізде жүйеде бағдарламаларды орнату құқығы жоқ. Жүйелік администраторыңызбен хабарласыңыз, немесе бұл компьютерде бағдарламаларды орнату құқығы бар пайдаланушы атынан қайталап көріңіз.">
+<!ENTITY  manualUpdate.space.desc         "Ұсынылатын қауіпсіздік пен тұрақтылық жаңартуы қолжетерлік, бірақ оны орнату үшін сізде орын жеткіліксіз.">
+<!ENTITY  manualUpdateGetMsg.label        "Сіз әрқашан да &brandShortName; соңғы нұсқасын осы жерден ала аласыз:">
+
+<!ENTITY  unsupported.title               "Жүйеге қолдау жоқ">
+<!ENTITY  unsupported.label               "Сіздің &brandShortName; өніміңіз ескірген, бірақта, оның ең соңғы нұсқасы сіздің жүйеңізді қолдамайды. Жүйеңізді жаңартып, қайтадан көріңіз. Осы ескертуді келесіде көрмейсіз, бірақта">
+<!ENTITY  unsupportedLink.label           "көбірек білуіңізге болады.">
+
+<!ENTITY  clickHere.label                 "Бұл жаңарту жөнінде көбірек білу">
+
+<!ENTITY  evangelism.desc                 "&brandShortName; үшін осы жаңартуды сізге неғұрлым тезірек орнату міндетті түрде ұсынылады.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; жүктелуде">
+<!ENTITY  downloading.intro               "Жаңарту жүктелуде…">
+<!ENTITY  connecting.label                "Жаңарту серверімен байланысты орнату…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; жүктелген жартылай жаңартудың бүтіндігін тексере алмады, сондықтан ол қазір толық жанартуды жүктеп алады.">
+
+<!ENTITY  viewDetails.tooltip             "Осы жаңарту туралы көбірек білу">
+
+<!ENTITY  details.link                    "Көбірек білу">
+
+<!ENTITY  error.title                     "Жаңарту сәтсіз">
+
+<!ENTITY  error.label                     "Осы жаңартуды тексеру, жүктеп алу немесе орнату мүмкін емес. &brandShortName; жаңартылмайды, өйткені:">
+                                           
+<!ENTITY  errorManual.label               "Сіз &brandShortName; келесі сілтемеден өтіп, соңғы нұсқасын жүктеу арқылы қолмен жаңарта аласыз:">
+                                           
+<!ENTITY  errorpatching.intro             "Жартылай жаңартуды іске асыру мүмкін емес. &brandShortName; қазір толық жаңартуды жүктеп алады.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; қолжетерлік жаңартудың бар-жоғын тексере алмады. Сіз &brandShortName; соңғы нұсқасын қолданатынын осында тексеріңіз:">
+
+<!ENTITY  finishedPage.title              "Жаңарту орнатуға дайын">
+<!ENTITY  finishedPage.text               "Осы жаңарту &brandShortName; келесі рет қосылғанда орнатылады. Сіз &brandShortName;  қазір, немесе жұмысыңызды жалғастырып, кейін қайта қоса аласыз.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; үшін қауіпсіздік пен тұрақтылық жаңартуы жүктелді, және ол орнатылуға дайын.">
+<!ENTITY  finishedBackground.name         "Жаңарту:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Осы жаңарту &brandShortName; келесі рет қосылғанда орнатылады. Сіз &brandShortName; қазір, немесе жұмысыңызды жалғастырып, кейін қайта қоса аласыз.">
+<!ENTITY  finishedBackground.moreElevated "Бұл жаңарту әкімшілік құқықтарды талап етеді. Бұл жаңарту &brandShortName; келесі рет іске қосылған кезде орнатылатын болады. Сіз &brandShortName; қазір қайта қосуды, қайта қосуды кейінге қалдырып, жұмысты жалғастыруды немесе бұл жаңартудан бас тартуды қалай аласыз.">
+
+<!ENTITY  update.details.label            "Көбірек білу">
+<!ENTITY  update.installedOn.label        "Орнатылған:">
+<!ENTITY  update.status.label             "Күйі:">

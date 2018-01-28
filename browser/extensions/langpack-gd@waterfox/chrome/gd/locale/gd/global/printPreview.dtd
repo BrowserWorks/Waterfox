@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Clò-bhuail…">
+<!ENTITY print.accesskey      "C">
+<!ENTITY pageSetup.label      "Roghainnean na duilleige…">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "Duilleag:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "a-mach à">
+<!ENTITY scale.label          "Sgèile:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "Portraid">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "Dreach-tìre">
+<!ENTITY landscape.accesskey  "D">
+<!ENTITY close.label          "Dùin">
+<!ENTITY close.accesskey      "D">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Gnàthaichte…">
+<!ENTITY ShrinkToFit.label    "Crùb gu freagarrachd">
+<!ENTITY customPrompt.title   "Sgèile ghnàthaichte…">
+<!ENTITY simplifyPage.label   "Dèan an duilleag na simplidhe">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "Cuir air gleus a’ cho-dhealbhachd ach am bi e nas fhasa ri leughadh">
+<!ENTITY simplifyPage.disabled.tooltip "Cha ghabh an duilleag seo a dhèanamh nas simplidhe gu fèin-obrachail">
+
+<!ENTITY homearrow.tooltip    "A' chiad duilleag">
+<!ENTITY endarrow.tooltip     "An duilleag mu dheireadh">
+<!ENTITY nextarrow.tooltip    "An ath-dhuilleag">
+<!ENTITY previousarrow.tooltip "An duilleag roimhe">

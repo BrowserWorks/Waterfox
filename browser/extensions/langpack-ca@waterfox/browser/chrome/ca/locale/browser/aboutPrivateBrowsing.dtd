@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Actualment no esteu en una finestra privada.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Obre una finestra privada">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Navegació privada">
+<!ENTITY privateBrowsing.title.tracking                  "Navegació privada amb protecció contra el seguiment">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Quan navegueu en una finestra privada, el Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "no desarà">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "pàgines visitades">
+<!ENTITY aboutPrivateBrowsing.info.searches              "cerques">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "galetes">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "fitxers temporals">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "El Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "desarà">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "baixades">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "adreces d'interès">
+<!ENTITY aboutPrivateBrowsing.note.before                "La navegació privada ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "no vol dir que navegareu anònimament">
+<!ENTITY aboutPrivateBrowsing.note.after                 " per Internet. El vostre proveïdor d'Internet o l'empresa per a la qual treballeu podrien conèixer igualment les pàgines que visiteu.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Més informació sobre la ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Navegació privada">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protecció contra el seguiment">
+<!ENTITY trackingProtection.description2                 "Alguns llocs web utilitzen elements que poden fer un seguiment de la vostra activitat a Internet. Amb la protecció contra el seguiment, el Waterfox blocarà els elements de seguiment que poden recollir informació sobre la vostra navegació.">
+<!ENTITY trackingProtection.startTour1                   "Com funciona?">

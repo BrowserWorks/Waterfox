@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "ประวัติการอัปเดต">
+<!ENTITY  history.intro             "การอัปเดตดังต่อไปนี้ได้รับการติดตั้งแล้ว:">
+<!ENTITY  closebutton.label         "ปิด">
+                                     
+<!ENTITY  noupdates.label           "ยังไม่มีการอัปเดตถูกติดตั้ง">
+
+<!ENTITY  name.header               "ชื่อการอัปเดต">
+<!ENTITY  date.header               "วันที่ติดตั้ง">
+<!ENTITY  type.header               "ชนิด">
+<!ENTITY  state.header              "สถานะ">
+

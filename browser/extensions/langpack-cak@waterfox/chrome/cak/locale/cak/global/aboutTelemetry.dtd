@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Taq rutzij Telemetry">
+
+<!ENTITY aboutTelemetry.pingDataSource "Kixe'el ri taq rutzij ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Taq rutzij wakami ri ping">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Yakon taq rutzij ri ping">
+
+<!ENTITY aboutTelemetry.raw "Man samajin ta JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Kek'ut pe taq rutzij rachmolojri'ïl">
+
+<!ENTITY aboutTelemetry.choosePing "Ticha' ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; K'ak'a' chi ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ojer chi ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Wuqq'ij">
+
+<!ENTITY aboutTelemetry.archivePingType "Ruwäch chi Ping">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Wakami">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Iwir">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Nimalaxel">
+
+<!ENTITY aboutTelemetry.generalDataSection "Chijun taq Tzij">
+
+<!ENTITY aboutTelemetry.environmentDataSection " Ruk'ojlib'al tzij">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Etataqonel tokisäx">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Taq b'ab' SQL ajeqal">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Ri okem pa k'amaya'l nutzeqeb'a' ri'">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Kitzeqeb'axik b'ätz'">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Chapon tzub'aj">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Jotob'enïk">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Xakb'äl rik'in ewan tzij">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Tem K'ulwäch">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Taq ruk'u'x Tem K'ulwäch">
+
+<!ENTITY aboutTelemetry.eventsSection "  Taq molojri'ïl">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Relik taq etab'äl">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Kib'anikil tz'aqat">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Yaloj taq tz'ib'anïk">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "Etamab'äl pa ruwi' molojri'ïl">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTA: Ri eqal chojmirisanem SQL chupül. Tikirel yek'ut pe tz'aqät taq SQL rucholajil xa xe chi man xketaq ta pa Telemetry">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Ke'ilitäj taq ajsamaj b'i'aj pa ri taq kutam kichin taq tzub'aj">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Kek'ut pe ri taq rutzij kuta'm man esamajin ta">
+
+<!ENTITY aboutTelemetry.filterText "  Tichayüx (taq cholajil o /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Rupam">

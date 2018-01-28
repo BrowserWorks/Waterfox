@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "ตัด">
+<!ENTITY cutCmd.accesskey "ต">
+<!ENTITY copyCmd.label "คัดลอก">
+<!ENTITY copyCmd.accesskey "ค">
+<!ENTITY pasteCmd.label "วาง">
+<!ENTITY pasteCmd.accesskey "ว">
+<!ENTITY undoCmd.label "เลิกทำ">
+<!ENTITY undoCmd.accesskey "เ">
+<!ENTITY selectAllCmd.label "เลือกทั้งหมด">
+<!ENTITY selectAllCmd.accesskey "ท">
+<!ENTITY deleteCmd.label "ลบ">
+<!ENTITY deleteCmd.accesskey "ล">
+
+<!ENTITY spellAddToDictionary.label "เพิ่มไปยังพจนานุกรม">
+<!ENTITY spellAddToDictionary.accesskey "ป">
+<!ENTITY spellUndoAddToDictionary.label "ยกเลิกการเพิ่มไปยังพจนานุกรม">
+<!ENTITY spellUndoAddToDictionary.accesskey "ย">
+<!ENTITY spellCheckToggle.label "ตรวจสอบการสะกดคำ">
+<!ENTITY spellCheckToggle.accesskey "ส">
+<!ENTITY spellNoSuggestions.label "(ไม่มีข้อเสนอแนะการสะกดคำ)">
+<!ENTITY spellDictionaries.label "ภาษา">
+<!ENTITY spellDictionaries.accesskey "ภ">
+
+<!ENTITY searchTextBox.clear.label "ล้าง">
+
+<!ENTITY fillLoginMenu.label          "กรอกการเข้าสู่ระบบ">
+<!ENTITY fillLoginMenu.accesskey      "เ">
+<!ENTITY fillPasswordMenu.label       "กรอกรหัสผ่าน">
+<!ENTITY fillPasswordMenu.accesskey   "ก">
+<!ENTITY fillUsernameMenu.label       "กรอกชื่อผู้ใช้">
+<!ENTITY fillUsernameMenu.accesskey   "ก">
+<!ENTITY noLoginSuggestions.label     "(ไม่มีข้อเสนอแนะการเข้าสู่ระบบ)">
+<!ENTITY viewSavedLogins.label        "ดูการเข้าสู่ระบบที่บันทึกไว้">

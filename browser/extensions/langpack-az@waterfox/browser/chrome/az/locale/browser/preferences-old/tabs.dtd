@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab son istifadə etmə sırasına görə vərəqlər arasında dönsün">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Yeni pəncərələri yeni vərəq olaraq aç">
+<!ENTITY newWindowsAsTabs.accesskey   "i">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Birdən çox vərəq bağlarkən xəbərdar olun">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Çoxlu vərəq açmağın &brandShortName; səyyahını yavaşlada biləcəyindən xəbərdar olun">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Keçidi yeni vərəqdə açdığımda, dərhal o vərəqə keç">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "Vərəqlərə ön baxışı Windows tapşırıq panelində göstər">
+<!ENTITY showTabsInTaskbar.accesskey      "e">
+<!ENTITY tabsGroup.label          "Vərəqlər">

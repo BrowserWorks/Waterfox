@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Данні телеметрії">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Джерело даних пінга:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Дані поточного пінга
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Дані архівованого пінга
+">
+
+<!ENTITY aboutTelemetry.raw "Необроблений JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Показувати дані підсеансу
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Вибрати пінг:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Новіший пінг
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Старіший пінг &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Тиждень
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Тип пінгу
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Пінг
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Сьогодні
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Вчора
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Раніше
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Загальні дані
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Дані оточення
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Журнал телеметрії
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Повільні SQL запити
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Зависання браузера
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Зависання потоків
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Захоплених стеків
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Величини
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Ключові величини
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Гістограми
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Гістограми з ключами
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Події
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Прості вимірювання
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Відомості про додатки
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Пізні записи
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Інформація про сеанс
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+ Примітка: Увімкнено повільний режим зневадження SQL. Внизу можуть бути показані повні рядки SQL, але в телеметрію вони відправлені не будуть.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Отримати імена функцій для стеків
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Показати необроблені дані стеку
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Фільтр (рядок чи /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Корисне навантаження
+">

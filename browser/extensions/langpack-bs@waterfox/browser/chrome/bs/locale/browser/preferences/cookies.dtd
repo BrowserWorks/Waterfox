@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Sljedeći kolačići su smješteni na vašem računaru:">
+<!ENTITY     cookiename.label               "Naziv kolačića">
+<!ENTITY     cookiedomain.label             "Stranica">
+
+<!ENTITY     props.name.label               "Naziv:">
+<!ENTITY     props.value.label              "Sadržaj:">
+<!ENTITY     props.domain.label             "Host računar:">
+<!ENTITY     props.path.label               "Putanja:">
+<!ENTITY     props.secure.label             "Pošalji za:">
+<!ENTITY     props.expires.label            "Ističe:">
+<!ENTITY     props.container.label          "Kontejner:">
+
+<!ENTITY     window.title                   "Kolačići">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Traži:">
+<!ENTITY     searchFilter.accesskey         "T">
+
+<!ENTITY     button.close.label             "Zatvori">
+<!ENTITY     button.close.accesskey         "Z">

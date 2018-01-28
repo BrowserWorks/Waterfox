@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Přez to móžeće swoju garantiju zhubić!">
+<!ENTITY aboutWarningText.label "Hdyž tute rozšěrjene nastajenja změniće, móže so to škódnje na stabilitu, wěstotu a wukon tutoho nałoženja wuskutkować. Wy měł jenož z tym pokročować, jeli sće sej wěsty, štož činiće.">
+<!ENTITY aboutWarningButton2.label "Akceptuju riziko!">
+<!ENTITY aboutWarningCheckbox.label "Tute warnowanje přichodny raz pokazać">
+
+<!ENTITY searchPrefs.label "Pytać:">
+<!ENTITY searchPrefs.accesskey "t">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Mjeno nastajenja">
+<!ENTITY lockColumn.label "Status">
+<!ENTITY typeColumn.label "Typ">
+<!ENTITY valueColumn.label "Hódnota">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Klikńće, zo byšće sortěrował"> 
+<!ENTITY columnChooser.tooltip "Klikńće, zo byšće wubrane špalty zwobraznił"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopěrować">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Mjeno kopěrować">
+<!ENTITY copyName.accesskey "M">
+<!ENTITY copyValue.label "Hódnotu kopěrować">
+<!ENTITY copyValue.accesskey "H">
+<!ENTITY modify.label "Změnić">
+<!ENTITY modify.accesskey "Z">
+<!ENTITY toggle.label "Přešaltować">
+<!ENTITY toggle.accesskey "P">
+<!ENTITY reset.label "Wróćo stajić">
+<!ENTITY reset.accesskey "r">
+<!ENTITY new.label "Nowy">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "String">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Integer">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

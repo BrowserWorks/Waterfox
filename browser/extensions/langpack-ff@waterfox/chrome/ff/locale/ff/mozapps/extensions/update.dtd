@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Kesɗitinal &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; woni ko e ceŋtol">
+<!ENTITY  offline.description             "&brandShortName; ena sokli wonde e ceŋol ngam yiyde so kesɗitine ena ngoodani ɓeyditta maa ngam jaaɓnude-ɗe e ndee yamre.">
+<!ENTITY  offline.toggleOffline.label     "Yah e ceŋol jooni.">
+<!ENTITY  offline.toggleOffline.accesskey "Y">
+
+<!ENTITY  mismatch.win.title              "Ɓeydital jaaɓdaani">
+<!ENTITY  mismatch.top.label              "Ɗee-ɗoo ɓeyditte njaaɓdaani e ndee yamre &brandShortName; etee ɗe ndaaƴaama:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ena waawi ƴeewtaade so jame jaaɓduɗe e ɗee ɓeyditte ena ngoodi.">
+
+<!ENTITY  checking.wizard.title           "Nana ƴeewtoo Ɓeyditte Jaaɓduɗe">
+<!ENTITY  checking.top.label              "Nana ƴeewtoo ɓeyditte maa ɗe jaaɓdaani ngam kesɗitine…">
+<!ENTITY  checking.status                 "Ɗum ena waawi ɓamde hojomaaji seeɗa…">
+
+<!ENTITY  found.wizard.title               "Ɓeyditte Jaaɓduɗe Njiytaama">
+<!ENTITY  found.top.label                 "Labo ɓeydital njiɗ-ɗaa aafde:">
+<!ENTITY  found.disabledXPinstall.label   "Ɗee ɓeyditte mbaawaa aafeede sabu loowgol topirɗe koko daaƴaa oo sahaa. Aɗa waawi waylude ngal teeltal les ɗoo.">
+<!ENTITY  found.enableXPInstall.label     "Yamir lowe geese yoo aaf topirɗe">
+<!ENTITY  found.enableXPInstall.accesskey "Y">
+
+<!ENTITY  installing.wizard.title         "Nana aafa ɓeyditte jaaɓduɗe">
+<!ENTITY  installing.top.label            "Nana aawtoo kadi aafa kesɗitine ɓeyditte maa…">
+
+<!ENTITY  noupdates.wizard.title          "Alaa Ɓeyditte Jaaɓduɗe Njiytaa">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; horiima yiytude kesɗitine ɓeyditte maa ɗe jaaɓdaani.">
+<!ENTITY  noupdates.error.desc            "Won caɗeele kawraa tuma nde etaa yiytude kesɗitine.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; maa ƴeewto sahaa kala etee tintin-maa so kesɗitine jaaɓduɗe e ɗee ɓeyditte njiytaa.">
+
+<!ENTITY  finished.wizard.title           "Ɓeydital Jaaɓdungal Aafaama">
+<!ENTITY  finished.top.label              "&brandShortName; aafi kesɗitine ɓeyditte maa ɗee.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; ena waawi ƴeewtaade sahaa kala etee tintin-maa so kesɗitine ɓeyditte njiytaa.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; maa ƴeewto sahaa kala etee tintin-maa so kesɗitine ɓeyditte njiytaa.">
+
+<!ENTITY  adminDisabled.wizard.title      "Horiima Ƴeewtaade Kesɗitine">
+<!ENTITY  adminDisabled.warning.label     "Ƴeewtagol kesɗitine ɓeyditte ɗe njaaɓdaani aamnotaako sabu aafgol topirɗe &brandShortName; koko daaƴaa. Tiiɗno jokkondir e Jiiloowo yuɓɓo maa ngam ballal.">
+
+<!ENTITY  versioninfo.wizard.title        "Nana ƴeewtoo Jaaɓdugol Ɓeyditte">
+<!ENTITY  versioninfo.top.label           "Nana ƴeewtoo ɓeyditte maa so ena jaaɓdi e ndee yamre &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Ɗum ena waawi ɓamde hojomaaji seeɗa…">
+
+<!ENTITY  installerrors.wizard.title      "Caɗeele Tuma Aafgol Kesɗitine">
+<!ENTITY  installerrors.intro.label       "&brandShortName; hawrii e caɗeele tuma nde hesɗitinta yoga e ɓeyditte maa.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Dobo Gaynu ngam jokkude kurminal &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Dobo Gasii ngam jokkude kurminal &brandShortName;.">
+<!ENTITY  enableChecking.label            "Yamir &brandShortName; yoo ƴeewto kesɗitine.">

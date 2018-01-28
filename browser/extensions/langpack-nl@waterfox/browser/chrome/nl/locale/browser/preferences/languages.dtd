@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "34em">
+
+<!ENTITY languages.customize.Header                     "Talen">
+<!ENTITY languages.customize.description                "Webpagina’s zijn soms in meerdere talen beschikbaar. Kies de talen voor het weergeven van webpagina’s, op volgorde van voorkeur:">
+<!ENTITY languages.customize.moveUp.label               "Omhoog verplaatsen">
+<!ENTITY languages.customize.moveUp.accesskey           "m">
+<!ENTITY languages.customize.moveDown.label             "Omlaag verplaatsen">
+<!ENTITY languages.customize.moveDown.accesskey         "l">
+<!ENTITY languages.customize.deleteButton.label         "Verwijderen">
+<!ENTITY languages.customize.deleteButton.accesskey     "V">
+<!ENTITY languages.customize.selectLanguage.label       "Selecteer een taal om toe te voegen…">
+<!ENTITY languages.customize.addButton.label            "Toevoegen">
+<!ENTITY languages.customize.addButton.accesskey        "T">

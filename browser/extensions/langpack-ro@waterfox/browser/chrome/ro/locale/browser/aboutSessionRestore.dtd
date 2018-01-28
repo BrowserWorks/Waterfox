@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restaurează sesiunea">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Ei, asta e jenant.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; are probleme la restaurarea ferestrelor și filelor tale. Acest lucru este de obicei cauzat de o pagină web deschisă recent.">
+<!ENTITY restorepage.tryThis        "Poți încerca:">
+<!ENTITY restorepage.restoreSome    "Eliminarea uneia sau mai multor file care crezi că pot fi cauza problemei">
+<!ENTITY restorepage.startNew       "Începerea unei sesiuni cu totul nouă de navigare">
+
+<!ENTITY restorepage.tryagainButton "Restaurează">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Închide">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Restaurează">
+<!ENTITY restorepage.listHeader     "Ferestre și file">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Fereastra &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Să începem!">
+<!ENTITY welcomeback2.restoreButton.access "S">
+
+<!ENTITY welcomeback2.tabtitle      "Succes!">
+
+<!ENTITY welcomeback2.pageTitle     "Succes!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; este gata de funcționare.">
+
+<!ENTITY welcomeback2.restoreSome.label "Restaurează numai pe cele care le dorești">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Suplimentele și personalizările au fost eliminate, iar setările browserului au fost restaurate la setările implicite. Dacă acest lucru nu ți-a rezolvat problema, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "află mai multe despre ce poți face.">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">

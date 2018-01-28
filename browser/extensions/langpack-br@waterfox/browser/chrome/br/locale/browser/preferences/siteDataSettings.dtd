@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Arventennoù - Roadennoù lec'hienn">
+<!ENTITY     hostCol.label                 "Lec'hienn">
+<!ENTITY     statusCol.label               "Stad">
+<!ENTITY     usageCol.label                "Kadaviñ">
+
+
+<!ENTITY     removeSelected.label          "Dilemel ar re ziuzet">
+<!ENTITY     removeSelected.accesskey      "D">
+<!ENTITY     save.label                    "Enrollañ ar c'hemmoù">
+<!ENTITY     save.accesskey                "E">
+<!ENTITY     cancel.label                  "Nullañ">
+<!ENTITY     cancel.accesskey              "N">
+<!ENTITY     removingDialog.title          "O tilemel roadennoù al lec'hienn">
+
+<!ENTITY     siteTree.label                "Dilamet e vo an toupinoù lec'hienn da-heul:">
+
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">
+<!ENTITY     searchTextboxPlaceHolder             "Search websites">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "О профилима">
+<!ENTITY aboutProfiles.subtitle "Ова страница вам помаже да управљате профилима. Сваки профил је засебан свет који садржи засебну историју, језичке, поставке и додатке.">
+<!ENTITY aboutProfiles.create "Направи нови профил">
+<!ENTITY aboutProfiles.restart.title "Поново покрени">
+<!ENTITY aboutProfiles.restart.inSafeMode "Поново покрени са онемогућеним додацима…">
+<!ENTITY aboutProfiles.restart.normal "Поново покрени као иначе…">

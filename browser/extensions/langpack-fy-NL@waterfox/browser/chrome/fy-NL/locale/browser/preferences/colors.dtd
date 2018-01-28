@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Kleuren">
+<!ENTITY  window.width                    "43em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "De kleuren opjûn troch de side oerskriuwe mei myn seleksjes hjirboppe:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "D">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Altyd">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Allinnich by tema’s mei heech kontrast">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nea">
+
+<!ENTITY  color                           "Tekst en eftergrûn">
+<!ENTITY  textColor.label                 "Tekst:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Eftergrûn:">
+<!ENTITY  backgroundColor.accesskey       "E">
+<!ENTITY  useSystemColors.label           "Systeemkleuren brûke">
+<!ENTITY  useSystemColors.accesskey       "S">
+
+<!ENTITY  underlineLinks.label            "Keppelingen ûnderstreekje">
+<!ENTITY  underlineLinks.accesskey        "K">
+<!ENTITY  links                           "Keppelingskleuren">
+<!ENTITY  linkColor.label                 "Net-besochte keppelingen:">
+<!ENTITY  linkColor.accesskey             "N">
+<!ENTITY  visitedLinkColor.label          "Besochte keppelingen:">
+<!ENTITY  visitedLinkColor.accesskey      "B">

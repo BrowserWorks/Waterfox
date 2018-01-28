@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Seinn">
+<!ENTITY playButton.pauseLabel "Cuir ar Sos">
+<!ENTITY muteButton.muteLabel "Gan fuaim">
+<!ENTITY muteButton.unmuteLabel "Le fuaim">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Lánscáileán">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Fág Mód Lánscáileáin">
+<!ENTITY castingButton.castingLabel "Craol ar an Scáileán">
+<!ENTITY closedCaption.off "Múchta">
+
+<!ENTITY stats.media "Meáin">
+<!ENTITY stats.size "Méid">
+<!ENTITY stats.activity "Gníomhaíocht">
+<!ENTITY stats.activityPaused "Curtha ar Sos">
+<!ENTITY stats.activityPlaying "Ag Seinm">
+<!ENTITY stats.activityEnded "Críochnaithe">
+<!ENTITY stats.activitySeeking "(cuardach)">
+<!ENTITY stats.volume "Airde">
+<!ENTITY stats.framesParsed "Frámaí parsáilte">
+<!ENTITY stats.framesDecoded "Frámaí díchódaithe">
+<!ENTITY stats.framesPresented "Frámaí curtha ar taispeáint">
+<!ENTITY stats.framesPainted "Frámaí péinteáilte">
+
+<!ENTITY error.aborted "Stopadh lódáil an fhíseáin.">
+<!ENTITY error.network "Stopadh athsheinm an fhíseáin mar gheall ar earráid líonra.">
+<!ENTITY error.decode "Ní féidir an físeán a sheinm toisc go bhfuil an comhad truaillithe.">
+<!ENTITY error.srcNotSupported "Ní thacaítear leis an bhformáid fhíse nó leis an gcineál MIME.">
+<!ENTITY error.noSource2 "Níor aimsíodh aon fhíseán a dtacaítear lena fhormáid agus lena chineál MIME.">
+<!ENTITY error.generic "Stopadh athsheinm an fhíseáin mar gheall ar earráid anaithnid.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 as #2 imithe">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

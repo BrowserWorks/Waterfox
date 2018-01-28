@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Менеджер пристроїв">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Модулі і пристрої захисту">
+<!ENTITY devmgr.details.title                   "Подробиці">
+<!ENTITY devmgr.details.title2                  "Значення">
+
+<!ENTITY devmgr.button.login.label              "Почати сеанс">
+<!ENTITY devmgr.button.login.accesskey          "о">
+<!ENTITY devmgr.button.logout.label             "Завершити сеанс">
+<!ENTITY devmgr.button.logout.accesskey         "а">
+<!ENTITY devmgr.button.changepw.label           "Змінити пароль">
+<!ENTITY devmgr.button.changepw.accesskey       "і">
+<!ENTITY devmgr.button.load.label               "Завантажити">
+<!ENTITY devmgr.button.load.accesskey           "З">
+<!ENTITY devmgr.button.unload.label             "Вивантажити">
+<!ENTITY devmgr.button.unload.accesskey         "и">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Введіть інформацію про модуль, який хочете додати.">
+<!ENTITY loaddevice.modname                     "Ім’я модуля:">
+<!ENTITY loaddevice.modname.accesskey           "о">
+<!ENTITY loaddevice.modname.default             "Новий модуль PKCS#11">
+<!ENTITY loaddevice.filename                    "Ім’я файлу:">
+<!ENTITY loaddevice.filename.accesskey          "у">
+<!ENTITY loaddevice.browse                      "Перегляд…">
+<!ENTITY loaddevice.browse.accesskey            "я">
+
+<!ENTITY loaddevice.title2                      "Завантажити драйвер пристрою PKCS#11">

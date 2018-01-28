@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "WebIDE de Waterfox">
+
+<!ENTITY projectMenu_label "Projekto">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nova programo…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Malfermi pakitan programon…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Malfermi gastigatan programon…">
+<!ENTITY projectMenu_importHostedApp_accesskey "g">
+<!ENTITY projectMenu_selectApp_label "Malfermi programon…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Instali kaj ruli">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Haltigi programon">
+<!ENTITY projectMenu_stop_accesskey "H">
+<!ENTITY projectMenu_debug_label "Sencimigi programon">
+<!ENTITY projectMenu_debug_accesskey "S">
+<!ENTITY projectMenu_remove_label "Forigi projekton">
+<!ENTITY projectMenu_remove_accesskey "F">
+<!ENTITY projectMenu_showPrefs_label "Preferoj">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Administri ekstrajn komponantojn">
+<!ENTITY projectMenu_manageComponents_accesskey "k">
+<!ENTITY projectMenu_refreshTabs_label "Refreŝigi langetojn">
+
+<!ENTITY runtimeMenu_label "Rulĉirkaŭaĵo">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Malkonekti">
+<!ENTITY runtimeMenu_disconnect_accesskey "M">
+<!ENTITY runtimeMenu_takeScreenshot_label "Ekrankopio">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "E">
+<!ENTITY runtimeMenu_showDetails_label "Rulĉirkaŭaĵa informo">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Kontrolilo">
+<!ENTITY runtimeMenu_showMonitor_accesskey "K">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Preferoj de aparato">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "P">
+<!ENTITY runtimeMenu_showSettings_label "Agordoj de aparato">
+<!ENTITY runtimeMenu_showSettings_accesskey "a">
+
+<!ENTITY viewMenu_label "Vidi">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "Ŝalti/malŝalti redaktilon">
+<!ENTITY viewMenu_toggleEditor_accesskey "r">
+<!ENTITY viewMenu_zoomin_label "Grandigi">
+<!ENTITY viewMenu_zoomin_accesskey "G">
+<!ENTITY viewMenu_zoomout_label "Malpligrandigi">
+<!ENTITY viewMenu_zoomout_accesskey "M">
+<!ENTITY viewMenu_resetzoom_label "Normala grando">
+<!ENTITY viewMenu_resetzoom_accesskey "N">
+
+<!ENTITY projectButton_label "Malfermi programon">
+<!ENTITY runtimeButton_label "Elekti rulĉirkaŭaĵon">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Miaj projektoj">
+<!ENTITY projectPanel_runtimeApps "Programoj de rulĉirkaŭaĵo">
+<!ENTITY projectPanel_tabs "Langetoj">
+<!ENTITY runtimePanel_usb "Aparatoj USB">
+<!ENTITY runtimePanel_wifi "Aparatoj sendrataj">
+<!ENTITY runtimePanel_simulator "Imitiloj">
+<!ENTITY runtimePanel_other "Aliaj">
+<!ENTITY runtimePanel_installsimulator "Instali imitilon">
+<!ENTITY runtimePanel_noadbhelper "Instali helpanton de ADB">
+<!ENTITY runtimePanel_nousbdevice "Ĉu vi ne povas vidi vian aparaton?">
+<!ENTITY runtimePanel_refreshDevices_label "Aktualigi aparatojn">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "valida">
+<!ENTITY details_warning_header "avertoj">
+<!ENTITY details_error_header "eraroj">
+<!ENTITY details_description "Priskribo">
+<!ENTITY details_location "Adreso">
+<!ENTITY details_manifestURL "Programa ID">
+<!ENTITY details_removeProject_button "Forigi projekton">
+<!ENTITY details_showPrepackageLog_button "Montri la antaŭpakan registron">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Nova programo">
+<!ENTITY newAppHeader "Elekti ŝablonon">
+<!ENTITY newAppLoadingTemplate "Ŝablonoj ŝargataj…">
+<!ENTITY newAppProjectName "Nomo de projekto:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Fermi">
+
+<!-- Addons -->
+<!ENTITY addons_title "Ekstraj komponantoj">
+<!ENTITY addons_aboutaddons "Malfermi administranton de aldonaĵoj">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Preferoj">
+<!ENTITY prefs_editor_title "Redaktilo">
+<!ENTITY prefs_general_title "Ĝenerala">
+<!ENTITY prefs_restore "Remeti normojn">
+<!ENTITY prefs_manage_components "Administri ekstrajn komponantojn">
+<!ENTITY prefs_options_autoconnectruntime "Rekonekti antaŭan rulĉirkaŭaĵon">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Kiam WebIDE komenciĝas, rekonekti antaŭan rulĉirkaŭaĵon">
+<!ENTITY prefs_options_rememberlastproject "Memori lastan projekton">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Uzi antaŭan projekton kiam WebIDE komenciĝas">
+<!ENTITY prefs_options_templatesurl "URL de ŝablonoj">
+<!ENTITY prefs_options_templatesurl_tooltip "Indekso de haveblaj ŝablonoj">
+<!ENTITY prefs_options_showeditor "Montri redaktilon">
+<!ENTITY prefs_options_showeditor_tooltip "Montri internan redaktilon">
+<!ENTITY prefs_options_tabsize "Tabogrando">
+<!ENTITY prefs_options_expandtab "Kvazaŭtaboj">
+<!ENTITY prefs_options_expandtab_tooltip "Uzi spacojn anstataŭ la tabosignon">
+<!ENTITY prefs_options_detectindentation "Aŭtomate krei krommarĝenojn">
+<!ENTITY prefs_options_detectindentation_tooltip "Diveni krommarĝenojn surbaze de la enhavo de la fonto">
+<!ENTITY prefs_options_autocomplete "Aŭtomate kompletigi">
+<!ENTITY prefs_options_autocomplete_tooltip "Aktivigi la aŭtomatan kompletigon de kodo">
+<!ENTITY prefs_options_autoclosebrackets "Aŭtomate fermi krampojn">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Aŭtomate enmeti fermajn krampojn">
+<!ENTITY prefs_options_keybindings "Klavkombinoj">
+<!ENTITY prefs_options_keybindings_default "Normaj">
+<!ENTITY prefs_options_autosavefiles "Aŭtomate konservi dosierojn">
+<!ENTITY prefs_options_autosavefiles_tooltip "Aŭtomate konservi modifitajn dosierojn antaŭ ol ruli la projekton">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Informo de rulĉirkaŭaĵo">
+<!ENTITY runtimedetails_adbIsRoot "ADB estas radiko: ">
+<!ENTITY runtimedetails_summonADBRoot "radika aparato">
+<!ENTITY runtimedetails_ADBRootWarning "(tio postulas neblokitan ŝargilon de startigilo)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Senlimaj privilegioj de DevTools: ">
+<!ENTITY runtimedetails_requestPrivileges "peti pli altajn privilegiojn">
+<!ENTITY runtimedetails_privilegesWarning "(Tio restartigos la aparaton. Aliro kiel root estas postulata.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Logika">
+<!ENTITY device_typenumber "Numero">
+<!ENTITY device_typestring "Teksto">
+<!ENTITY device_typeobject "Objekto">
+<!ENTITY device_typenone "Elekti tipon">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Preferoj de aparato">
+<!ENTITY devicepreference_search "Preferoj de serĉo">
+<!ENTITY devicepreference_newname "Nomo de nova prefero">
+<!ENTITY devicepreference_newtext "Valoro de prefero">
+<!ENTITY devicepreference_addnew "Aldoni novan preferon">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Agordoj de aparato">
+<!ENTITY devicesetting_search "Agordoj de serĉo">
+<!ENTITY devicesetting_newname "Nova nomo de agordo">
+<!ENTITY devicesetting_newtext "Valoro de agordo">
+<!ENTITY devicesetting_addnew "Aldoni novan agordon">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Kontrolilo">
+<!ENTITY monitor_help "Helpo">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Identigo de kliento">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "La alia flanko de la konekto bezonas pli da informo por aŭtentigi tiun ĉi konekton. Bonvolu skani la kodon QR kiu troviĝas malsupre ĉe la informpeto en via alia aparato.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Ĉu ne estas peto skani QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Ĉu estas peto skani QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Se via alia aparato petas ĵetonon anstataŭ ol skani kodon QR, bonvolu kopii la valoron, kiu troviĝas malsupre, al la alia aparato:">
+<!ENTITY wifi_auth_qr_size_note "Se la kodo QR estas tro eta por ke la konekto estu sukcesa, klopodu alproksimiĝi aŭ grandigi la fenestron.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Registrado de antaŭpakaj ordonoj">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Elektebloj de imitilo">
+<!ENTITY simulator_remove "Forigi imitilon">
+<!ENTITY simulator_reset "Remeti normajn valorojn">
+<!ENTITY simulator_name "Nomo">
+<!ENTITY simulator_software "Programaro">
+<!ENTITY simulator_version "Versio">
+<!ENTITY simulator_profile "Profilo">
+<!ENTITY simulator_hardware "Aparataro">
+<!ENTITY simulator_device "Aparato">
+<!ENTITY simulator_screenSize "Ekrano">
+<!ENTITY simulator_pixelRatio "Bildera proporcio">
+<!ENTITY simulator_tv_data "Imito de TV">
+<!ENTITY simulator_tv_data_open "Agordaj datumoj">
+<!ENTITY simulator_tv_data_open_button "Malfermi agordan dosierujon…">

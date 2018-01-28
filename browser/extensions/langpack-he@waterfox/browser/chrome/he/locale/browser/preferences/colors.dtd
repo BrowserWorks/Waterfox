@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "צבעים">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "שימוש בצבעים הנבחרים מעלה במקום הצבעים שצוינו בדף:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "ש">
+
+<!ENTITY  overrideDefaultPageColors.always.label "תמיד">
+<!ENTITY  overrideDefaultPageColors.auto.label   "רק עם ערכות נושא בעלות ניגודיות גבוהה">
+<!ENTITY  overrideDefaultPageColors.never.label  "לעולם לא">
+
+<!ENTITY  color                           "טקסט ורקע">
+<!ENTITY  textColor.label                 "טקסט:">
+<!ENTITY  textColor.accesskey             "ט">
+<!ENTITY  backgroundColor.label           "רקע:">
+<!ENTITY  backgroundColor.accesskey       "ר">
+<!ENTITY  useSystemColors.label           "שימוש בצבעי המערכת">
+<!ENTITY  useSystemColors.accesskey       "ה">
+
+<!ENTITY  underlineLinks.label            "סמן קישורים בקו תחתי">
+<!ENTITY  underlineLinks.accesskey        "ס">
+<!ENTITY  links                           "צבעי קישור">
+<!ENTITY  linkColor.label                 "קישורים שלא ביקרתי:">
+<!ENTITY  linkColor.accesskey             "ש">
+<!ENTITY  visitedLinkColor.label          "קישורים שביקרתי:">
+<!ENTITY  visitedLinkColor.accesskey      "ב">

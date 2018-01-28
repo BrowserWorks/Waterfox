@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Ieškoti tolesnio frazės egzemplioriaus">
+<!ENTITY previous.tooltip "Ieškoti ankstesnio frazės egzemplioriaus">
+<!ENTITY findCloseButton.tooltip "Užverti paieškos juostą">
+<!ENTITY highlightAll.label "Viską paryškinti">
+<!ENTITY highlightAll.accesskey "V">
+<!ENTITY highlightAll.tooltiptext "Paryškinti visus radinius">
+<!ENTITY caseSensitive.label "Skirti raidžių registrą">
+<!ENTITY caseSensitive.accesskey "k">
+<!ENTITY caseSensitive.tooltiptext "Ieškoti, skiriant didžiąsias ir mažąsias raides">
+<!ENTITY entireWord.label "Ištisi žodžiai">
+<!ENTITY entireWord.accesskey "I">
+<!ENTITY entireWord.tooltiptext "Ieškoti tik ištisų žodžių">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "추적 방지">
+<!ENTITY window.width                 "40em">
+<!ENTITY window.height                "8em">
+
+<!ENTITY doNotTrackCheckbox2.label    "항상 추적 방지 적용">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "추적 방지가 켜져있을 때에는 &brandShortName;가 추적을 원하지 않는다는 신호를 보낼 것입니다.">
+<!ENTITY doNotTrackLearnMore.label    "더 알아보기">

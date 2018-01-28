@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "I conponenti azonti peuan causâ problemi">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "O &brandShortName; l'à scoverto che sti conponenti azonti caozan problemi de stabilitæ ò problemi de seguessa:">
+<!ENTITY blocklist.softblocked       "Pe-a teu proteçion l'é megio che ti arvi torna con sti conponenti azonti dizabilitæ.">
+<!ENTITY blocklist.hardblocked       "Sti conponenti azonti gh'an un'erto reizeigo de caozâ problemi de stabilitæ ò de seguessa e son stæti blocæ ma ti devi arvi torna pe dizabilitali conpletamente.">
+<!ENTITY blocklist.softandhard       "I conponenti azonti che gh'an un'erto reizeigo de caozâ problemi de stabilitæ ò de seguessa e son stæti blocæ. I atri gha'an basso reizeigo ma l'é megio che ti arvi torna con sti chi dizabilitæ.">
+<!ENTITY blocklist.moreinfo          "Ciù informaçioin">
+
+<!ENTITY blocklist.accept.label      "Arvi torna &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Blocou ">
+<!ENTITY blocklist.checkbox.label    "Dizabilita">
+

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "ភាសា">
+<!ENTITY languages.customize.description                "ពេល​ខ្លះ ទំព័រ​បណ្ដាញ​អាច​ផ្ដល់​នូវ​ភាសា​ច្រើន​ជាង​មួយ ។ ជ្រើស​ភាសា​សម្រាប់​បង្ហាញ​ទំព័រ​បណ្ដាញ​ទាំង​នេះ តាម​ចំណង់ចំណូលចិត្ត។">
+<!ENTITY languages.customize.moveUp.label               "​ផ្លាស់ទី​ឡើង​លើ">
+<!ENTITY languages.customize.moveUp.accesskey           "ង">
+<!ENTITY languages.customize.moveDown.label             "ផ្លាស់ទី​ចុះក្រោម">
+<!ENTITY languages.customize.moveDown.accesskey         "ម">
+<!ENTITY languages.customize.deleteButton.label         "យកចេញ">
+<!ENTITY languages.customize.deleteButton.accesskey     "ញ">
+<!ENTITY languages.customize.selectLanguage.label       "ជ្រើស​ភាសា​ដើម្បី​បន្ថែម...">
+<!ENTITY languages.customize.addButton.label            "បន្ថែម">
+<!ENTITY languages.customize.addButton.accesskey        "ម">
+

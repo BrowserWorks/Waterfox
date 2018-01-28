@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Refrescar &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Comece de cero para solucionar problemas e restaurar o rendemento.">
+<!ENTITY refreshProfile.dialog.description2  "Isto:">
+<!ENTITY refreshProfile.dialog.items.label1  "Retirara os seus complementos e personalizacións">
+<!ENTITY refreshProfile.dialog.items.label2  "Restaurará a configuración do seu navegador aos valores predeterminados">
+<!ENTITY refreshProfile.dialog.button.label  "Refrescar &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Facer un cambio de imaxe a &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Refrescar &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Case feito…">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Profila sortzeko morroia">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName;(e)k zure ezarpen eta hobespenak gordetzen ditu profil pertsonalean.">
+<!ENTITY profileCreationExplanation_2.text  "&brandShortName;(r)en kopia hau beste erabiltzaile batzuekin partekatzen ari bazara, profilak erabil ditzakezu erabiltzaile bakoitzaren datuak bereizita gordetzeko. Hau egiteko erabiltzaile bakoitzak bere profila sortu behar du.">
+<!ENTITY profileCreationExplanation_3.text  "&brandShortName; kopia hau erabiltzen duen pertsona bakarra bazara, behintzat profil bat eduki behar duzu. Nahi izanez gero profil bat baino gehiago erabil ditzakezu ezarpen eta hobespen desberdinak erabiltzeko. Adibidez, profil bat erabilera pertsonalerako eta beste bat lanerako.">
+<!ENTITY profileCreationExplanation_4.text  "Zure profila sortzen hasteko, egin klik 'Hurrengoa' botoian.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Zure profila sortzen hasteko, egin klik 'Jarraitu' botoian.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Zure profila sortzen hasteko, egin klik 'Hurrengoa' botoian.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Profil ugari sortuz gero, profil-izen desberdinez dei ditzakezu. Hemen eskaintzen zaizun izena edo aukerako beste edozein erabil dezakezu.">
+<!ENTITY profilePrompt.label            "Idatzi profil berriaren izena">
+<!ENTITY profilePrompt.accesskey        "e">
+<!ENTITY profileDirectoryExplanation.text   "Zure ezarpenak, hobespenak eta beste zenbait datu hemen gordeko dira:">
+<!ENTITY profileDefaultName             "Erabiltzaile lehenetsia">
+<!ENTITY button.choosefolder.label      "Aukeratu karpeta…">
+<!ENTITY button.choosefolder.accesskey  "A">
+<!ENTITY button.usedefault.label        "Erabili karpeta lehenetsia">
+<!ENTITY button.usedefault.accesskey    "l">

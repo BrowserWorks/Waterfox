@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Sikkerhet">
+<!ENTITY  phishingProtection.label       "Vern mot nettfiske (phishing)">
+
+<!ENTITY  warnOnAddonInstall2.label       "Advar meg når nettsteder forsøker å installere utvidelser">
+<!ENTITY  warnOnAddonInstall2.accesskey   "A">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Blokker farlig og villendende innhold">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Blokker farlige nedlastinger">
+<!ENTITY  blockDownloads.accesskey        "f">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Advar deg om uønskede eller uvanlige programmer">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "d">
+
+<!ENTITY  addonExceptions.label         "Unntak …">
+<!ENTITY  addonExceptions.accesskey     "U">
+
+
+<!ENTITY  formsAndPasswords.label       "Skjema og passord">
+
+<!ENTITY  rememberLogins2.label         "Husk brukernavn og passord for nettsteder">
+<!ENTITY  rememberLogins2.accesskey     "H">
+<!ENTITY  passwordExceptions.label      "Unntak …">
+<!ENTITY  passwordExceptions.accesskey  "n">
+
+<!ENTITY  useMasterPassword.label        "Bruk et hovedpassord">
+<!ENTITY  useMasterPassword.accesskey    "r">
+<!ENTITY  changeMasterPassword.label     "Endre hovedpassord …">
+<!ENTITY  changeMasterPassword.accesskey "d">
+
+<!ENTITY  savedLogins.label              "Lagrede innlogginger …">
+<!ENTITY  savedLogins.accesskey          "L">

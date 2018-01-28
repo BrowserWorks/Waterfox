@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "პარამეტრები">
+<!ENTITY  prefWindow.title        "პარამეტრები">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; პარამეტრები">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 64em; min-height: 48em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 70em; min-height: 50em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 64em; min-height: 48.5em;">
+
+<!ENTITY  paneGeneral.title       "მთავარი ">
+<!ENTITY  paneTabs.title          "ჩანართები">
+<!ENTITY  paneSearch.title        "ძიება">
+<!ENTITY  paneContent.title       "შიგთავსი">
+<!ENTITY  paneApplications.title  "პროგრამები">
+<!ENTITY  panePrivacy.title       "პირადულობა">
+<!ENTITY  paneContainers.title    "სათავსი ჩანართები">
+<!ENTITY  paneSecurity.title      "უსაფრთხოება">
+<!ENTITY  paneAdvanced.title      "დამატებითი">
+
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync.title          "სინქრონიზაცია">
+
+<!ENTITY  helpButton.label        "დახმარება">

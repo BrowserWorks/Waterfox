@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Atzera joan">
+<!ENTITY  button-back-mac.accesskey    "A">
+<!ENTITY  button-next-mac.label        "Jarraitu">
+<!ENTITY  button-next-mac.accesskey    "J">
+<!ENTITY  button-finish-mac.label      "Eginda">
+<!ENTITY  button-cancel-mac.label      "Utzi">
+
+<!ENTITY  button-back-unix.label       "Atzera">
+<!ENTITY  button-back-unix.accesskey   "A">
+<!ENTITY  button-next-unix.label       "Hurrengoa">
+<!ENTITY  button-next-unix.accesskey   "H">
+<!ENTITY  button-finish-unix.label     "Amaitu">
+<!ENTITY  button-cancel-unix.label     "Utzi">
+
+<!ENTITY  button-back-win.label        "&lt; Atzera">
+<!ENTITY  button-back-win.accesskey    "A">
+<!ENTITY  button-next-win.label        "Hurrengoa &gt;">
+<!ENTITY  button-next-win.accesskey    "H">
+<!ENTITY  button-finish-win.label      "Amaitu">
+<!ENTITY  button-cancel-win.label      "Utzi">

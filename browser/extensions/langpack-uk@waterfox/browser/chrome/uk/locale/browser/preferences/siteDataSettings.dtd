@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Налаштування - Дані сайтів">
+<!ENTITY     hostCol.label                 "Сайт">
+<!ENTITY     statusCol.label               "Стан">
+<!ENTITY     usageCol.label                "Сховище">
+<!ENTITY     searchTextboxPlaceHolder             "Пошук веб-сайтів">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "П">
+<!ENTITY     removeSelected.label          "Видалити вибрані">
+<!ENTITY     removeSelected.accesskey      "В">
+<!ENTITY     save.label                    "Зберегти зміни">
+<!ENTITY     save.accesskey                "З">
+<!ENTITY     cancel.label                  "Скасувати">
+<!ENTITY     cancel.accesskey              "С">
+<!ENTITY     removingDialog.title          "Видалення даних сайтів">
+<!ENTITY     removingSelected.description  "Видалення даних сайтів також видалить пов'язані куки і автономний веб-вміст. Це може призвести до вашого виходу з веб-сайтів. Ви справді хочете зробити зміни?">
+<!ENTITY     siteTree.label                "Будуть видалені наступні куки веб-сайтів:">

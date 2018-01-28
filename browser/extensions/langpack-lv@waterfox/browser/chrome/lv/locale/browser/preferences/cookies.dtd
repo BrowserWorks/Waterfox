@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "40em">
+
+<!ENTITY     cookiesonsystem.label          "Šādas sīkdatnes ir saglabātas jūsu datorā:">
+<!ENTITY     cookiename.label               "Sīkdatnes nosaukums">
+<!ENTITY     cookiedomain.label             "Vietne">
+
+<!ENTITY     props.name.label               "Nosaukums:">
+<!ENTITY     props.value.label              "Saturs:">
+<!ENTITY     props.domain.label             "Resursdators:">
+<!ENTITY     props.path.label               "Ceļš:">
+<!ENTITY     props.secure.label             "Sūtīts:">
+<!ENTITY     props.expires.label            "Derīguma termiņš:">
+<!ENTITY     props.container.label          "Konteineris:">
+
+<!ENTITY     window.title                   "Sīkdatnes">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Meklēt">
+<!ENTITY     searchFilter.accesskey         "M">
+
+<!ENTITY     button.close.label             "Aizvērt">
+<!ENTITY     button.close.accesskey         "z">

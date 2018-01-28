@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "არ მითვალთვალო">
+<!ENTITY window.width                 "40em">
+<!ENTITY window.height                "8em">
+
+<!ENTITY doNotTrackCheckbox2.label    '"არ მითვალთვალოთ" მორგება ყოველთვის'>
+<!ENTITY doNotTrackCheckbox2.accesskey "ყ">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; გაგზავნის სიგნალს, რომ თქვენ არ გსურთ გითვალთვალონ, როდესაც თვალთვალისგან დაცვა ჩართულია.">
+<!ENTITY doNotTrackLearnMore.label    "შეიტყვეთ მეტი">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Navn:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Adresse:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Adresse på feed:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "f">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Adresse på side:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "s">
+<!ENTITY editBookmarkOverlay.folder.label                    "Mappe:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Vis alle bogmærkemapper">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Skjul">
+<!ENTITY editBookmarkOverlay.tags.label                      "Mærkater:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "M">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Adskil mærkater med kommaer">
+<!ENTITY editBookmarkOverlay.description.label               "Beskrivelse:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "B">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Stikord:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "t">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Vis alle mærkater">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Indlæs dette bogmærke i sidepanelet">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "I">
+<!ENTITY editBookmarkOverlay.choose.label                    "Vælg…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Ny mappe">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "m">

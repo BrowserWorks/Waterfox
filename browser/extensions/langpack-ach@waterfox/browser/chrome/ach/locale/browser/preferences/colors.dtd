@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Rangi">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Lok rangi ma pot buk ocimo ni ki ma in iyero malo ni:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "L">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Jwijwi">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Keken ki cal ma rangi ne tye malo">
+<!ENTITY  overrideDefaultPageColors.never.label  "Pe matwal">
+
+<!ENTITY  color                           "Coc ki Ngeye">
+<!ENTITY  textColor.label                 "Coc:">
+<!ENTITY  textColor.accesskey             "C">
+<!ENTITY  backgroundColor.label           "Ngeye:">
+<!ENTITY  backgroundColor.accesskey       "N">
+<!ENTITY  useSystemColors.label           "Tii ki rangi pa nyonyo">
+<!ENTITY  useSystemColors.accesskey       "i">
+
+<!ENTITY  underlineLinks.label            "Ngol te kakube">
+<!ENTITY  underlineLinks.accesskey        "l">
+<!ENTITY  links                           "Rangi me kakube">
+<!ENTITY  linkColor.label                 "Kakube ma pe kilimo:">
+<!ENTITY  linkColor.accesskey             "a">
+<!ENTITY  visitedLinkColor.label          "Kakube ma kilimo:">
+<!ENTITY  visitedLinkColor.accesskey      "K">

@@ -1,0 +1,11 @@
+locale branding fy-NL fy-NL/locale/branding/
+locale browser fy-NL fy-NL/locale/browser/
+locale browser-region fy-NL fy-NL/locale/browser-region/
+locale devtools fy-NL fy-NL/locale/fy-NL/devtools/client/
+locale devtools-shared fy-NL fy-NL/locale/fy-NL/devtools/shared/
+locale formautofill fy-NL fy-NL/locale/fy-NL/
+locale pdf.js fy-NL fy-NL/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

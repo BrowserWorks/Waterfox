@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Marque-pages">
+<!ENTITY engine.bookmarks.accesskey "M">
+<!ENTITY engine.tabs.label2         "Onglets ouverts">
+<!ENTITY engine.tabs.accesskey      "O">
+<!ENTITY engine.history.label       "Historique">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Identifiants">
+<!ENTITY engine.logins.accesskey    "I">
+<!ENTITY engine.prefs.label         "Préférences">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "Modules complémentaires">
+<!ENTITY engine.addons.accesskey    "u">
+<!ENTITY engine.addresses.label     "Adresses">
+<!ENTITY engine.addresses.accesskey "A">
+<!ENTITY engine.creditcards.label   "Cartes de paiement">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Nom de l’appareil">
+<!ENTITY changeSyncDeviceName.label "Changer le nom de l’appareil…">
+<!ENTITY changeSyncDeviceName.accesskey "c">
+<!ENTITY cancelChangeSyncDeviceName.label "Annuler">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "A">
+<!ENTITY saveChangeSyncDeviceName.label "Enregistrer">
+<!ENTITY saveChangeSyncDeviceName.accesskey "E">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Conditions d’utilisation">
+<!ENTITY fxaPrivacyNotice.link.label "Politique de confidentialité">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "n’est pas vérifié.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Veuillez vous identifier pour vous reconnecter">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Votre compte n’est pas connecté.">
+<!ENTITY signIn.label                "Connexion">
+<!ENTITY signIn.accesskey            "x">
+<!ENTITY profilePicture.tooltip      "Changer la photo de profil">
+<!ENTITY verifiedManage.label        "Gérer le compte">
+<!ENTITY verifiedManage.accesskey    "G">
+<!ENTITY disconnect.label            "Se déconnecter…">
+<!ENTITY disconnect.accesskey        "d">
+<!ENTITY verify.label                "Vérifier l’adresse électronique">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "Oublier cette adresse électronique">
+<!ENTITY forget.accesskey            "b">
+
+<!ENTITY signedOut.caption            "Emportez votre Web partout avec vous">
+<!ENTITY signedOut.description        "Synchronisez marque-pages, historique, onglets, mots de passe, modules complémentaires et préférences entre tous vos appareils.">
+<!ENTITY signedOut.accountBox.title   "Se connecter avec un &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Créer un compte">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Se connecter">
+<!ENTITY signedOut.accountBox.signin.accesskey  "e">
+
+<!ENTITY signedIn.engines.label       "Données à synchroniser entre tous vos appareils">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Téléchargez Waterfox pour ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " ou ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " afin de synchroniser vos données avec votre appareil mobile.">

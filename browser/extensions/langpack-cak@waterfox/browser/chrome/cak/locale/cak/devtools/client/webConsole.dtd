@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "Ajk'amaya'l Temeb'äl">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Tijaq URL pa jun k'ak'a' ruwi'">
+<!ENTITY openURL.accesskey "r">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "K'amab'ey">
+<!ENTITY btnPageNet.tooltip "Tiq'alajisäx okem pa k'amab'ey">
+<!ENTITY btnPageNet.accesskey "K">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Keq'alajisäx taq sachoj chuqa' kitzijol k'ayewal pa CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Keq'alajisäx JavaScrip taq man relik ta">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Chajixïk">
+<!ENTITY btnPageSecurity.tooltip "Keq'alajisäx taq rusachoj chajixïk chuqa' kitzijol k'ayewal">
+<!ENTITY btnPageSecurity.accesskey "i">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "Tajin nitz'ib'äx">
+<!ENTITY btnPageLogging.tooltip "Keq'alajisäx rutzijol taq taqoj etaqon pa ri window.console wachinäq">
+<!ENTITY btnPageLogging.accesskey3 "K">
+<!ENTITY btnConsoleErrors       "Taq sachoj">
+<!ENTITY btnConsoleInfo         "Etamab'äl">
+<!ENTITY btnConsoleWarnings     "Kitzijol k'ayewal">
+<!ENTITY btnConsoleLog          "Titikirisäx molojri'ïl">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Taq qajnäq">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "Ruk'u'x samaj">
+<!ENTITY btnServerLogging.tooltip     "Kitz'ib'axik taq rutzijol taqoj ek'ulun pa jun okik'amaya'l ruk'u'x samaj">
+<!ENTITY btnServerLogging.accesskey   "R">
+<!ENTITY btnServerErrors              "Taq sachoj">
+<!ENTITY btnServerInfo                "Etamab'äl">
+<!ENTITY btnServerWarnings            "Kitzijol k'ayewal">
+<!ENTITY btnServerLog                 "Titikirisäx molojri'ïl">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "Komonin samajela'">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Samajela' pa samaj">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Add-on o Chrome Samajela'">
+
+<!ENTITY filterOutput.placeholder "Tichayüx elem">
+<!ENTITY btnClear.label        "Tijosq'ïx">
+<!ENTITY btnClear.tooltip      "Tijosq'ïx relem ri Ajk'amaya'l temeb'äl">
+<!ENTITY btnClear.accesskey    "j">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Ruwachib'exik rub'ey ximon tzij">
+<!ENTITY copyURLCmd.accesskey "i">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Tijaq pa taq jalwachil tzub'al">
+<!ENTITY openInVarViewCmd.accesskey "j">
+<!ENTITY storeAsGlobalVar.label "K'ayb'äl achi'el chijun jalwachil">
+<!ENTITY storeAsGlobalVar.accesskey "K">

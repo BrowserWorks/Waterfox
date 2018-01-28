@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "關於網路連線">
+<!ENTITY aboutNetworking.warning               "這是實驗中的功能，請在專家陪同下使用。">
+<!ENTITY aboutNetworking.showNextTime          "下次也顯示此警告訊息">
+<!ENTITY aboutNetworking.ok                    "確定">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "更新">
+<!ENTITY aboutNetworking.autoRefresh           "每三秒自動重新整理">
+<!ENTITY aboutNetworking.hostname              "主機名稱">
+<!ENTITY aboutNetworking.port                  "埠號">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "使用中">
+<!ENTITY aboutNetworking.idle                  "閒置">
+<!ENTITY aboutNetworking.host                  "Host">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "已送出">
+<!ENTITY aboutNetworking.received              "已接收">
+<!ENTITY aboutNetworking.family                "Family">
+<!ENTITY aboutNetworking.addresses             "地址">
+<!ENTITY aboutNetworking.expires               "期限（秒）">
+<!ENTITY aboutNetworking.messagesSent          "送出的訊息數">
+<!ENTITY aboutNetworking.messagesReceived      "接收的訊息數">
+<!ENTITY aboutNetworking.bytesSent             "送出的位元組數">
+<!ENTITY aboutNetworking.bytesReceived         "接收的位元組數">
+<!ENTITY aboutNetworking.logging               "紀錄">
+<!ENTITY aboutNetworking.logTutorial           "請參考 <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> 一文當中的使用教學來使用此工具。">
+<!ENTITY aboutNetworking.currentLogFile        "目前的紀錄檔:">
+<!ENTITY aboutNetworking.currentLogModules     "目前的紀錄模組:">
+<!ENTITY aboutNetworking.setLogFile            "設定記錄檔">
+<!ENTITY aboutNetworking.setLogModules         "設定記錄模組">
+<!ENTITY aboutNetworking.startLogging          "開始記錄">
+<!ENTITY aboutNetworking.stopLogging           "停止紀錄">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Lookup">
+<!ENTITY aboutNetworking.dnsLookupButton       "解析">
+<!ENTITY aboutNetworking.dnsDomain             "網域">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+<!ENTITY aboutNetworking.rcwn                  "RCWN 統計">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN 狀態">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "快取優先計數">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "網路優先計數">
+<!ENTITY aboutNetworking.totalNetworkRequests  "總網路請求數量">
+<!ENTITY aboutNetworking.rcwnOperation         "快取操作">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "開啟">
+<!ENTITY aboutNetworking.rcwnPerfRead          "讀取">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "寫入">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "項目開啟">
+<!ENTITY aboutNetworking.rcwnAvgShort          "短平均">
+<!ENTITY aboutNetworking.rcwnAvgLong           "長平均">
+<!ENTITY aboutNetworking.rcwnStddevLong        "長標準差">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "快取較慢數量">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "快取較快數量">

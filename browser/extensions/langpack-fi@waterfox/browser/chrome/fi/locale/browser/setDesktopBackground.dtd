@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label              "Asettelu:">
+<!ENTITY tile.label                  "Vierekkäin">
+<!ENTITY center.label                "Keskitetty">
+<!ENTITY stretch.label               "Venytetty">
+<!ENTITY fill.label                 "Täytetty">
+<!ENTITY fit.label                  "Sovitettu">
+<!ENTITY preview.label               "Esikatselu">
+<!ENTITY color.label                 "Väri:">
+<!ENTITY setDesktopBackground.title  "Aseta työpöydän taustakuva">
+<!ENTITY openDesktopPrefs.label      "Avaa työpöydän asetukset">
+<!ENTITY closeWindow.key             "w">

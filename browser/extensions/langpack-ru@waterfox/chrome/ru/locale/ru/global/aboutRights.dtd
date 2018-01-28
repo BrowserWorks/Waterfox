@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "О ваших правах">
+<!ENTITY rights.intro "&brandFullName; является бесплатной программой с открытым исходным кодом, созданной многотысячным сообществом людей со всего мира. Вот несколько вещей, о которых вам следует знать:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; предоставляется вам на условиях ">
+<!ENTITY rights.intro-point1b "Публичной лицензии Mozilla">
+<!ENTITY rights.intro-point1c ". Это значит, что вы можете использовать, копировать и распространять &brandShortName;.  Вы также можете модифицировать исходный код &brandShortName; в соответствии со своими нуждами. Публичная лицензия Mozilla также даёт вам право распространять изменённые вами сборки.">
+
+<!ENTITY rights.intro-point2-a "Вам не предоставляются никакие права или лицензии на товарные знаки Waterfox или любой другой стороны, в том числе на название или логотип Waterfox. Дополнительная информация о товарных знаках приведена по ">
+<!ENTITY rights.intro-point2-b "следующему адресу">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Некоторые функции &brandShortName;, такие как Crash Reporter, позволяют вам отправлять отзывы в &vendorShortName;. Отправляя отзыв, вы разрешаете &vendorShortName; использовать отзыв для улучшения её продуктов, размещать отзыв на её веб-сайтах и распространять отзывы любыми другими способами.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "То, как мы используем вашу персональную информацию и отзывы, отправленные в &vendorShortName; через &brandShortName;, описано в ">
+<!ENTITY rights2.intro-point3b "Политике приватности &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Любые применимые политики приватности для этого продукта должны быть перечислены здесь.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Некоторые функции &brandShortName; используют информационные веб-службы, однако мы не можем гарантировать на 100&#037; их безошибочную или корректную работу. Более подробная информация, а также инструкции по отключению этих служб, приведена в ">
+<!ENTITY rights.intro-point4b "условиях использования служб">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Если этот продукт включает в себя службы информирования о сайтах, ссылки на все применимые условия использования этих служб должны быть приведены в разделе ">
+<!ENTITY rights.intro-point4b-unbranded "Службы информирования о веб-сайтах">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "Информационные веб-службы &brandFullName;">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Для воспроизведения определенных типов видеоконтента &brandShortName; загружает определенные плагины расшифровки контента от сторонних производителей.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; использует информационные веб-службы (далее «Службы»), для обеспечения некоторых функций, предоставляемых для вашего использования в этой бинарной версии &brandShortName; на условиях описанных ниже. Если вы не хотите использовать одну или несколько из этих Служб или приведённые ниже условия неприемлемы, вы можете отключить эту функцию или Службу(ы). Инструкции по тому, как отключить конкретную функцию или службу можно найти ">
+<!ENTITY rights2.webservices-b "здесь">
+<!ENTITY rights3.webservices-c ". Другие функции и Службы могут быть отключены в настройках приложения.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Отключение функции Safe Browsing не рекомендуется, так как это может привести к тому, что вы будете попадать на небезопасные сайты.  Если вы хотите полностью отключить эту функцию, выполните следующие действия:">
+<!ENTITY rights.safebrowsing-term1 "Откройте настройки приложения">
+<!ENTITY rights.safebrowsing-term2 "Выберите раздел Защита">
+<!ENTITY rights2.safebrowsing-term3 "Снимите флажок &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing теперь отключён">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Определение местоположения при веб-серфинге: ">
+<!ENTITY rights.locationawarebrowsing-b "всегда требует вашего разрешения. Никакая информация о местоположении никогда не отправляется без вашего разрешения. Если вы хотите полностью отключить эту функцию, выполните следующие действия:">
+<!ENTITY rights.locationawarebrowsing-term1a "В строке адреса наберите ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Наберите geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Произведите двойной щелчок по параметру geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Определение местоположения при веб-серфинге теперь отключено">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Обзор служб информирования о веб-сайтах, включённых в продукт, вместе с инструкциями по их отключению, если таковые требуются, должен быть приведён здесь.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Любые применимые политики использования служб для этого продукта должны быть перечислены здесь.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; и её сотрудники, лицензиары и партнёры прилагают все усилия для предоставления самых точной и актуальной информации через Службы. Однако мы не можем гарантировать, что эта информация является полной и свободной от ошибок. Например служба Safe Browsing может не идентифицировать некоторые опасные сайты и может идентифицировать некоторые безопасные сайты по ошибке как опасные, а все местоположения, возвращаемые нашей Службой Определения Местоположения, являются лишь приблизительными и ни мы, ни наши сервис-провайдеры не можем гарантировать аккуратность предоставленных местоположений.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; может прекратить предоставление Служб или изменить работу Служб по своему усмотрению.">
+<!ENTITY rights2.webservices-term3 "Вы можете использовать эти Службы вместе с сопутствующей версией &brandShortName;, и &vendorShortName; предоставляет вам на это права. &vendorShortName; и её лицензиары сохраняют на данные Службы все остальные права.  Данные условия не предназначены для ограничения любых прав, предоставленных на условиях лицензий для открытого исходного кода, применимых к &brandShortName; и к соответствующему исходному коду версий &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Данные службы предоставляются «как есть».  &vendorShortName;, её сотрудники, лицензиары и дистрибьюторы настоящим отказываются от предоставления любых гарантий, явно выраженных или подразумеваемых, в том числе гарантий того, что Службы пригодны для продажи и подходят для ваших определённых целей.  Весь риск за выбор Служб для ваших целей и в отношении качества и работы Служб несете вы.  Некоторые юрисдикции не допускают исключения или ограничения подразумеваемых гарантий, поэтому настоящий отказ от гарантий может быть к вам неприменим.">
+<!ENTITY rights.webservices-term5 "За исключением случаев, когда этого требует закон, &vendorShortName; и её сотрудники, лицензиары и дистрибьюторы не будут нести ответственности ни за какой косвенный, особый, случайный, последующий, присуждаемый в качестве штрафа или наказания ущерб, вытекающий из использования &brandShortName; и Служб, или каким-либо образом имеющий к ним отношение. В соответствии с этими условиями коллективная ответственность не будет превышать $500 (пятисот долларов США). Некоторые юрисдикции не допускают исключения или ограничения определённых ущербов, поэтому настоящее исключение и ограничение может быть к вам неприменимо.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; при необходимости время от времени может обновлять эти условия. Данные условия не могут быть изменены или отменены без письменного соглашения &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Эти условия регламентируются законами штата Калифорния, США, исключая его нормы коллизионного права. Если какая-либо часть этих условий станет юридически недействительной или неисполнимой, остальные части полностью сохранят свою юридическую силу. В случае возникновения противоречий между переведённой версией этих условий и версией на английском языке, следует руководствоваться версией на английском языке.">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Prehrať">
+<!ENTITY playButton.pauseLabel "Pozastaviť">
+<!ENTITY muteButton.muteLabel "Stlmiť">
+<!ENTITY muteButton.unmuteLabel "Zrušiť stlmenie">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Na celú obrazovku">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Ukončiť režim Na celú obrazovku">
+<!ENTITY castingButton.castingLabel "Prehrať na obrazovke">
+<!ENTITY closedCaption.off "Vypnuté">
+
+<!ENTITY stats.media "Médium">
+<!ENTITY stats.size "Rozmery">
+<!ENTITY stats.activity "Aktivita">
+<!ENTITY stats.activityPaused "Pozastavené">
+<!ENTITY stats.activityPlaying "Prehráva sa">
+<!ENTITY stats.activityEnded "Ukončené">
+<!ENTITY stats.activitySeeking "(presúva sa)">
+<!ENTITY stats.volume "Hlasitosť">
+<!ENTITY stats.framesParsed "Spracovaných snímok">
+<!ENTITY stats.framesDecoded "Dekódovaných snímok">
+<!ENTITY stats.framesPresented "Prezentovaných snímok">
+<!ENTITY stats.framesPainted "Vykreslených snímok">
+
+<!ENTITY error.aborted "Načítavanie videa zastavené.">
+<!ENTITY error.network "Prehrávanie videa bolo prerušené kvôli chybe siete.">
+<!ENTITY error.decode "Video nemôže byť prehraté, pretože súbor je poškodený.">
+<!ENTITY error.srcNotSupported "Formát videa alebo typ MIME nie je podporovaný.">
+<!ENTITY error.noSource2 "Nebolo nájdené video s podporovaným formátom a typom MIME.">
+<!ENTITY error.generic "Prehrávanie videa bolo prerušené kvôli neznámej chybe.">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "Uplynulo: #1 z #2">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "রং">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "উপরে নির্বাচিত মানের পরিবর্তে, পাতাগুলো নিজস্ব রং নির্বাচন করতে পারবে:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "সর্বদা">
+<!ENTITY  overrideDefaultPageColors.auto.label   "শুধু হাই কনট্রাস্ট থিমের সাথে">
+<!ENTITY  overrideDefaultPageColors.never.label  "কখনো নয়">
+
+<!ENTITY  color                           "লেখা ও পটভূমি">
+<!ENTITY  textColor.label                 "লেখা:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "পটভূমি:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "সিস্টেমের রং ব্যবহার করা হবে">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "লিংক নিম্নরেখাঙ্কিত করা হবে">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "লিঙ্কের রং">
+<!ENTITY  linkColor.label                 "অপরিদর্শিত লিংক:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "পরিদর্শিত লিংক">
+<!ENTITY  visitedLinkColor.accesskey      "V">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "ఈ కింది కుకీలు మీ కంప్యూటర్లో నిల్వ చేయబడ్డాయి:">
+<!ENTITY     cookiename.label               "కుకీ పేరు">
+<!ENTITY     cookiedomain.label             "సైటు">
+
+<!ENTITY     props.name.label               "పేరు:">
+<!ENTITY     props.value.label              "విషయ సంగ్రహం:">
+<!ENTITY     props.domain.label             "హోస్టు:">
+<!ENTITY     props.path.label               "పాత్:">
+<!ENTITY     props.secure.label             "వీటికి వెళ్తుంది:">
+<!ENTITY     props.expires.label            "కాలంచెల్లు తేదీ:">
+<!ENTITY     props.container.label          "కంటైనర్:">
+
+<!ENTITY     window.title                   "కుకీలు">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "వెతుకు">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "మూసివేయి">
+<!ENTITY     button.close.accesskey         "C">

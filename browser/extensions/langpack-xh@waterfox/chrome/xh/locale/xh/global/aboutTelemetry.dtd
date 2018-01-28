@@ -1,0 +1,100 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Iingcombolo zethelemetri">
+
+<!ENTITY aboutTelemetry.pingDataSource "Uvimba ingcombolo ye-Ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Inkcukacha ye-ping yakutsha nje">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Inkcukacha ye-ping elondoloziweyo">
+
+<!ENTITY aboutTelemetry.raw "IRaw JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Bonisa iseshini yenkcukacha">
+
+<!ENTITY aboutTelemetry.choosePing "Khetha i-ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; I-ping entshana">
+
+<!ENTITY aboutTelemetry.showOlderPing "I-ping endala &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Iveki">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "I-ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "Ingcombolo jikelele">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Inkcukacha zendawo esingqongileyo">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  I-Telemetry Log">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Iingxelo ze-SQL ezicothayo">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Ukubhrawuza kuyajinga">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Ithredi iyajinga">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "Iscalars">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Ii-Scalars eziNekhi">
+
+<!ENTITY aboutTelemetry.histogramsSection "  IiHistogrem">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "ii Histograms eziqhotyoshelweyo">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Imilinganiselo elula">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Iinkcukacha zesongezelelo">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Mva ibhala">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Inkcazelo yeseshoni">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  QAPHELA: I-SQL ecothayo ephelisa ubuzaza yenziwe yasebenza. Uluhlu lweekharakhtha ze-SQL oluzeleyo lunokuboniswa ngezantsi kodwa aluyi kuthunyelwa kwiThelemetri.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Hluza (izitringi okanye /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "Payload">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

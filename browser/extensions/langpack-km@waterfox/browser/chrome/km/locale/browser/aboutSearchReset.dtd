@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle       "ស្ដារ​ការ​កំណត់​ស្វែងរក​ឡើងវិញ">
+
+<!ENTITY searchreset.pageTitle      "តើ​ស្ដារ​ការ​កំណត់​ស្វែងរក​របស់​អ្នក​មែន​ទេ?">
+
+<!ENTITY searchreset.pageInfo1      "ការ​កំណត់​ស្វែងរក​របស់​អ្នក​អាច​ហួស​សម័យ។ &brandShortName; អាច​ជួយ​អ្នក​ស្ដារ​ការ​កំណត់​ស្វែងរក​លំនាំដើម។">
+
+
+<!-- LOCALIZATION NOTE (searchreset.selector.label): this string is
+followed by a dropdown of all the built-in search engines. -->
+<!ENTITY searchreset.selector.label "វា​នឹង​កំណត់​ម៉ាស៊ីន​ស្វែងរក​លំនាំដើម​របស់​អ្នក​ជា">
+
+<!-- LOCALIZATION NOTE (searchreset.beforelink.pageInfo,
+searchreset.afterlink.pageInfo): these two string are used respectively
+before and after the "Settings page" link (searchreset.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language. -->
+<!ENTITY searchreset.beforelink.pageInfo2 "អ្នក​អាច​ផ្លាស់ប្ដូរ​ការ​​កំណត់​ទាំងនេះ​នៅ​ពេល​ណា​ក៏​បាន​ពី ">
+<!ENTITY searchreset.afterlink.pageInfo2  ".">
+
+<!ENTITY searchreset.link.pageInfo2       "ទំព័រ​ការកំណត់">
+
+<!ENTITY searchreset.noChangeButton        "កុំ​ផ្លាស់ប្ដូរ">
+<!ENTITY searchreset.noChangeButton.access "">
+
+<!ENTITY searchreset.changeEngineButton        "ប្ដូរ​ម៉ាស៊ីន​ស្វែងរក">
+<!ENTITY searchreset.changeEngineButton.access "">

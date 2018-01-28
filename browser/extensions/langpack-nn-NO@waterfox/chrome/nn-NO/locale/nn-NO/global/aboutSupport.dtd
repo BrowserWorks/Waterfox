@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Feilsøking">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  Denne sida inneheld teknisk informasjon som kan vere nyttig når du prøver å løyse eit problem. Besøk også <a id='supportLink'>brukarstøttenettstaden</a> for å få svar på ofte stilte spørsmål om &brandShortName;.">
+
+<!ENTITY aboutSupport.crashes.title "Krasjrapportar">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Rapport-ID">
+<!ENTITY aboutSupport.crashes.sendDate "Sendt">
+<!ENTITY aboutSupport.crashes.allReports "Alle krasjrapportar">
+<!ENTITY aboutSupport.crashes.noConfig "Dette programmet er ikkje konfigurert til å visa krasjrapportar.">
+
+<!ENTITY aboutSupport.extensionsTitle "Utvidingar">
+<!ENTITY aboutSupport.extensionName "Namn">
+<!ENTITY aboutSupport.extensionEnabled "Påslått">
+<!ENTITY aboutSupport.extensionVersion "Versjon">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;-funksjonar">
+<!ENTITY aboutSupport.featureName "Namn">
+<!ENTITY aboutSupport.featureVersion "Versjon">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperimentelle funksjonar">
+<!ENTITY aboutSupport.experimentName "Namn">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Skildring">
+<!ENTITY aboutSupport.experimentActive "Aktiv">
+<!ENTITY aboutSupport.experimentEndDate "Sluttdato">
+<!ENTITY aboutSupport.experimentHomepage "Heimeside">
+<!ENTITY aboutSupport.experimentBranch "Grein">
+
+<!ENTITY aboutSupport.appBasicsTitle "Programinfo">
+<!ENTITY aboutSupport.appBasicsName "Namn">
+<!ENTITY aboutSupport.appBasicsVersion "Versjon">
+<!ENTITY aboutSupport.appBasicsBuildID "Bygg-ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Oppdateringskanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Oppdateringshistorikk">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Vis oppdateringshistorikk">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilmappe">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilmappe">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Påslåtte programtillegg">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Bygginnstillingar">
+<!ENTITY aboutSupport.appBasicsUserAgent "Brukaragent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Minnebruk">
+<!ENTITY aboutSupport.appBasicsPerformance "Yting">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registrerte tenestearbeidarar">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profilar">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprosess-vindauge">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Nettinnhaldsprosessar">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google-nykel">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service-nykel">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Trygg modus">
+
+<!ENTITY aboutSupport.showDir.label "Opna mappe">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Vis i Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Opna mappe">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Viktige endra innstillingar">
+<!ENTITY aboutSupport.modifiedPrefsName "Namn">
+<!ENTITY aboutSupport.modifiedPrefsValue "Verdi">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js innstillingar">
+<!ENTITY aboutSupport.userJSDescription "Profilmappa di inneheld ei <a id='prefs-user-js-link'>user.js-fil</a> som inneheld innstillingar som ikkje vart oppretta av &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Viktige låste innstillingar">
+<!ENTITY aboutSupport.lockedPrefsName "Namn">
+<!ENTITY aboutSupport.lockedPrefsValue "Verdi">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafikk">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Plasser database">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integritet">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Stadfest integritet">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementell GC">
+
+<!ENTITY aboutSupport.a11yTitle "Tilgjenge">
+<!ENTITY aboutSupport.a11yActivated "Aktivert">
+<!ENTITY aboutSupport.a11yForceDisabled "Hindra tilgjenge">
+<!ENTITY aboutSupport.a11yHandlerUsed "Tilgjengeleg handsamar brukt">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Bibliotekversjonar">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Installasjonshistorikk">
+<!ENTITY aboutSupport.updateHistoryTitle "Oppdateringshistorikk">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopier tekst til utklippstavla">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopier råtekst til utklippstavla">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandkasse">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Avvis systemkall">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekund sidan">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Prosesstype">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argument">
+
+<!ENTITY aboutSupport.safeModeTitle "Prøv trygg modus">
+<!ENTITY aboutSupport.restartInSafeMode.label "Start på nytt utan utvidingar…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funksjonar">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostikk">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Feillogg">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Avgjerdslogg">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Krasjvern slo av funksjonar">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Løysingar">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Ut-einingar">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Inn-einingar">
+<!ENTITY aboutSupport.mediaDeviceName "Namn">
+<!ENTITY aboutSupport.mediaDeviceGroup "Gruppe">
+<!ENTITY aboutSupport.mediaDeviceVendor "Leverandør">
+<!ENTITY aboutSupport.mediaDeviceState "Status">
+<!ENTITY aboutSupport.mediaDevicePreferred "Føretrekt">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanalar">
+<!ENTITY aboutSupport.mediaDeviceRate "Fart">
+<!ENTITY aboutSupport.mediaDeviceLatency "Forseinking">

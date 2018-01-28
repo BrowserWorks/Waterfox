@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Yhteysasetukset">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Määritä välityspalvelinasetukset">
+<!ENTITY  noProxyTypeRadio.label        "Ei välityspalvelinta">
+<!ENTITY  noProxyTypeRadio.accesskey    "E">
+<!ENTITY  systemTypeRadio.label         "Käytä järjestelmän välityspalvelinasetuksia">
+<!ENTITY  systemTypeRadio.accesskey     "K">
+<!ENTITY  WPADTypeRadio.label           "Automaattiset välityspalvelinasetukset">
+<!ENTITY  WPADTypeRadio.accesskey       "A">
+<!ENTITY  manualTypeRadio.label         "Aseta välityspalvelinasetukset käsin">
+<!ENTITY  manualTypeRadio.accesskey     "s">
+<!ENTITY  autoTypeRadio.label           "Nouda välityspalvelinasetukset osoitteesta:">
+<!ENTITY  autoTypeRadio.accesskey       "N">
+<!ENTITY  reload.label                  "Päivitä">
+<!ENTITY  reload.accesskey              "ä">
+<!ENTITY  ftp.label                     "FTP-välityspalvelin:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP-välityspalvelin:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL-välityspalvelin:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS-palvelin:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "Käytä välityspalvelinta DNS:lle käytettäessä SOCKS v5:tä">
+<!ENTITY  socksRemoteDNS.accesskey      "E">
+<!ENTITY  port.label                    "Portti:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "r">
+<!ENTITY  FTPport.accesskey             "t">
+<!ENTITY  SOCKSport.accesskey           "i">
+<!ENTITY  noproxy.label                 "Ei välitystä osoitteille:">
+<!ENTITY  noproxy.accesskey             "v">
+<!ENTITY  noproxyExplain.label          "Esimerkiksi: 192.168.1.0/24, .mozilla.org, .fi">
+<!ENTITY  shareproxy.label              "Sama välityspalvelin kaikille yhteyskäytännöille">
+<!ENTITY  shareproxy.accesskey          "m">
+<!ENTITY  autologinproxy.label          "Älä kysy kirjautumistietoja jos salasana on tallennettu">
+<!ENTITY  autologinproxy.accesskey      "Ä">
+<!ENTITY  autologinproxy.tooltip        "Kirjautuminen välityspalvelimelle tapahtuu automaattisesti jos salasana palvelimelle on tallennettu. Kirjautumistietoja kysytään jos automaattinen kirjautuminen epäonnistuu.">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Numatytoji ieškyklė">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Pasirinkite numatytąją ieškyklę. „&brandShortName;“ naudos ją adreso lauke, paieškos lauke bei pradžios puslapyje.">
+
+<!ENTITY provideSearchSuggestions.label        "Pateikti paieškos pasiūlymus">
+<!ENTITY provideSearchSuggestions.accesskey    "i">
+
+<!ENTITY showURLBarSuggestions.label           "Rodyti paieškos žodžių siūlymus adreso lauko rezultatuose">
+<!ENTITY showURLBarSuggestions.accesskey       "a">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Paieškos žodžių siūlymai adreso lauke nebus rodomi, kadangi esate nustatę, jog „&brandShortName;“ niekada nevestų žurnalo.">
+
+<!ENTITY oneClickSearchEngines.label           "Vieno paspaudimo ieškyklės">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Paieškos laukas leidžia ieškoti tiesiogiai per kitas ieškykles. Pasirinkite, kurias norėtumėte matyti.">
+
+<!ENTITY engineNameColumn.label                "Ieškyklė">
+<!ENTITY engineKeywordColumn.label             "Reikšminis žodis">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Atkurti numatytąsias ieškykles">
+<!ENTITY restoreDefaultSearchEngines.accesskey "n">
+
+<!ENTITY removeEngine.label                    "Pašalinti">
+<!ENTITY removeEngine.accesskey                "š">
+
+<!ENTITY addMoreSearchEngines.label            "Pridėti daugiau ieškyklių...">

@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Sorun giderme bilgileri">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  Bu sayfa, bir sorunu gidermeye çalışırken işinize yarabilecek teknik bilgiler içerir. &brandShortName; hakkında genel sorularla ilgili yanıt arıyorsanız <a id='supportLink'>destek sitemizi</a> ziyaret edin.">
+
+<!ENTITY aboutSupport.crashes.title "Çökme Raporları">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Rapor numarası">
+<!ENTITY aboutSupport.crashes.sendDate "Gönderilme tarihi">
+<!ENTITY aboutSupport.crashes.allReports "Tüm çökme raporları">
+<!ENTITY aboutSupport.crashes.noConfig "Bu uygulama, çökme raporlarını görüntülemek için yapılandırılmamış.">
+
+<!ENTITY aboutSupport.extensionsTitle "Uzantılar">
+<!ENTITY aboutSupport.extensionName "Adı">
+<!ENTITY aboutSupport.extensionEnabled "Etkin mi?">
+<!ENTITY aboutSupport.extensionVersion "Sürüm">
+<!ENTITY aboutSupport.extensionId "Kimlik">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; özellikleri">
+<!ENTITY aboutSupport.featureName "Adı">
+<!ENTITY aboutSupport.featureVersion "Sürüm">
+<!ENTITY aboutSupport.featureId "Kimlik">
+
+<!ENTITY aboutSupport.experimentsTitle "Deneysel özellikler">
+<!ENTITY aboutSupport.experimentName "Adı">
+<!ENTITY aboutSupport.experimentId "Kimlik">
+<!ENTITY aboutSupport.experimentDescription "Açıklama">
+<!ENTITY aboutSupport.experimentActive "Etkin">
+<!ENTITY aboutSupport.experimentEndDate "Bitiş tarihi">
+<!ENTITY aboutSupport.experimentHomepage "Ana sayfa">
+<!ENTITY aboutSupport.experimentBranch "Dal">
+
+<!ENTITY aboutSupport.appBasicsTitle "Uygulama temelleri">
+<!ENTITY aboutSupport.appBasicsName "Adı">
+<!ENTITY aboutSupport.appBasicsVersion "Sürüm">
+<!ENTITY aboutSupport.appBasicsBuildID "Yapı numarası">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Güncelleme kanalı">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Güncelleme geçmişi">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Güncelleme geçmişini göster">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profil dizini">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profil klasörü">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Devredeki yan uygulamalar">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Yapılandırma">
+<!ENTITY aboutSupport.appBasicsUserAgent "Kullanıcı istemcisi">
+<!ENTITY aboutSupport.appBasicsOS "İşletim sistemi">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Bellek kullanımı">
+<!ENTITY aboutSupport.appBasicsPerformance "Performans">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Kayıtlı Service Worker'lar">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiller">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Çok işlemli pencereler">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web içeriği işlemi">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google anahtarı">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Konum Hizmeti anahtarı">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Güvenli kip">
+
+<!ENTITY aboutSupport.showDir.label "Dizini aç">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Finder'da göster">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Klasörü aç">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Değiştirilmiş önemli tercihler">
+<!ENTITY aboutSupport.modifiedPrefsName "Adı">
+<!ENTITY aboutSupport.modifiedPrefsValue "Değer">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js tercihleri">
+<!ENTITY aboutSupport.userJSDescription "Profil klasörünüz &brandShortName; tarafından oluşturulmamış tercihler içeren bir <a id='prefs-user-js-link'>user.js dosyası</a> içeriyor.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Önemli kilitlenmiş tercihler">
+<!ENTITY aboutSupport.lockedPrefsName "Adı">
+<!ENTITY aboutSupport.lockedPrefsValue "Değer">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafikler">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Places veritabanı">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Bütünlük">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Bütünlüğü doğrula">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Artırımlı GC">
+
+<!ENTITY aboutSupport.a11yTitle "Erişilebilirlik">
+<!ENTITY aboutSupport.a11yActivated "Etkinleştirildi">
+<!ENTITY aboutSupport.a11yForceDisabled "Erişilebilirliği engelle">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Kitaplık sürümleri">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Yükleme geçmişi">
+<!ENTITY aboutSupport.updateHistoryTitle "Güncelleme geçmişi">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Metni panoya kopyala">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Ham metni panoya kopyala">
+
+<!ENTITY aboutSupport.sandboxTitle "Kum havuzu">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Reddedilen sistem çağrıları">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "saniye önce">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "İşlem türü">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Sistem çağrısı">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Parametreler">
+
+<!ENTITY aboutSupport.safeModeTitle "Güvenli kipi deneyin">
+<!ENTITY aboutSupport.restartInSafeMode.label "Eklentileri devre dışı bırakıp yeniden başlat…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Özellikler">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Tanılama">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Hata günlüğü">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Karar günlüğü">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Çökme koruyucusu tarafından kapatılan özellikler">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Çözümler">
+
+<!ENTITY aboutSupport.mediaTitle "Ortam">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Çıktı cihazları">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Girdi cihazları">
+<!ENTITY aboutSupport.mediaDeviceName "Adı">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grup">
+<!ENTITY aboutSupport.mediaDeviceVendor "Sağlayıcı">
+<!ENTITY aboutSupport.mediaDeviceState "Durumu">
+<!ENTITY aboutSupport.mediaDevicePreferred "Tercih edilen">
+<!ENTITY aboutSupport.mediaDeviceFormat "Biçim">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanallar">
+<!ENTITY aboutSupport.mediaDeviceRate "Oran">
+<!ENTITY aboutSupport.mediaDeviceLatency "Gecikme">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+

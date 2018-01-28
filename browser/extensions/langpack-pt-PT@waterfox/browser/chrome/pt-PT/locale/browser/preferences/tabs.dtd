@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab atravessa em ciclo os separadores na ordem de recentemente utilizados">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Abrir novas janelas em novo separador">
+<!ENTITY newWindowsAsTabs.accesskey   "j">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avisar-lhe ao fechar múltiplos separadores">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Avisar-lhe se a abertura de múltiplos separadores puder tornar o &brandShortName; lento">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Ao abrir uma ligação em novo separador, mudar para o mesmo imediatamente">
+<!ENTITY switchLinksToNewTabs.accesskey    "o">
+
+<!ENTITY showTabsInTaskbar.label          "Pré-visualizar separadores na barra de tarefas do Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "s">
+<!ENTITY tabsGroup.label          "Separadores">

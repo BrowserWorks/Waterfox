@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Refreŝigi &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Rekomeni freŝe por solvi problemojn kaj rehavi antaŭan efikecon.">
+<!ENTITY refreshProfile.dialog.description2  "Tio ĉi faros la jenon:">
+<!ENTITY refreshProfile.dialog.items.label1  "forigos viajn aldonaĵojn kaj personecigojn">
+<!ENTITY refreshProfile.dialog.items.label2  "restarigos la normajn agordojn de via retumilo">
+<!ENTITY refreshProfile.dialog.button.label  "Refreŝigi &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Alĝustigi &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Refreŝigi &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Preskaŭ farita…">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "মাস্টার পাসওয়ার্ড অপসারণ">
+<!ENTITY removeInfo.label                  "এগিয়ে যেতে চাইলে আপনার বর্তমান পাসওয়ার্ড দিন:">
+<!ENTITY removeWarning1.label              "সংবেদনশীল তথ্য যেমন অন্যান্য সাইটের পাসওয়ার্ড সুরক্ষিত রাখতে আপনার মাস্টার পাসওয়ার্ড ব্যবহার করা হয়।">
+<!ENTITY removeWarning2.label              "মাস্টার পাসওয়ার্ড অপসারণ করলে, আপনার কম্পিউটারে কোনো ধরনের আক্রমণ হলে সংরক্ষিত তথ্য ঝুঁকির সম্মুখীন হবে।">
+<!ENTITY setPassword.oldPassword.label     "বর্তমান পাসওয়ার্ড:">
+

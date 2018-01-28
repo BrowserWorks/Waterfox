@@ -1,0 +1,100 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "पृष्ठक लोडिंगमे समस्या">
+<!ENTITY retry.label "पुनः प्रयत्न करू ">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "कनैक्शन मे असफलता त्रुटि">
+<!ENTITY connectionFailure.longDesc "<p>साइट ठीक लगैत अछि, जखनकि, ब्राउज़र एकटा संबंध स्थापित करबा मे असमर्थ छल </p><ul><li>साइट अस्थायी रूप स अनुपलब्ध भए सकैत अछि? फेर स कोशि‍श करू.</li><li>कि अहाँ दोसरो साइट ब्राउज करबा मे असम‍र्थ छी ? कम्प्यूटर क संजाल क जांचि लिअ.</li><li>कि अहाँक कम्प्यूटर आ नेटवर्क फायरवाल स सुरक्षि‍त अछि? गलत सेटिंग्स वेब ब्राउजिंग संगे हस्तक्षेप कए सकैत अछि.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "सुरक्षा कारणसँ प्रतिबंधित पोर्ट">
+<!ENTITY deniedPortAccess.longDesc "<p>निवेदित पता एकटा पोर्ट निर्दिष्ट कएलक (उदाहरण  कलेल . <q>mozilla.org:80</q> 80 पर mozilla.org कलेल  पोर्ट) सामान्यतः वेब ब्राउजिंग सँ <em> आन </em> उद्देश्य  कलेल . ब्राउजर अहाँक सुरक्षा आ रक्षा कलेल आग्रह रद्द कए देलक.</p>">
+
+<!ENTITY dnsNotFound.title "पता मोजुद नहि त्रुटि">
+
+
+<!ENTITY fileNotFound.title "फाइल नहि भेटल त्रुटि">
+<!ENTITY fileNotFound.longDesc "<ul><li>की आइटम केर नाम कें बदलल गेल अछि, हटाओल गेल अछि, अथवा स्थान बदलल गेल?</li><li>की पता मे कोनो स्पेलिंग, पैघ अक्षर, अथवा आन टाइपो केर त्रुटि अछि</li><li>की अनुरोध केर संबंध मे अहाँक पहुँच केर पूरा अनुमति प्राप्त अछि </li></ul>">
+
+
+
+<!ENTITY generic.title "आग्रह पूर्ण नहि कए सकैत अछि">
+<!ENTITY generic.longDesc "<p>ई समस्या अथवा त्रुटिक  संबंध मे बाइली जानकारी अखन अनुपलब्ध अछि.</p>">
+
+<!ENTITY malformedURI.title "अवैध पताक त्रुटि">
+<!ENTITY malformedURI.longDesc "<p> देल गेल पता चिन्हल गेल फॉर्मेट मे नहि अछि. कृपया गलती लेल लकेशन बार मे देखू आओर फेर कोसिस करू.</p>">
+
+<!ENTITY netInterrupt.title "आंकडा हस्तांतरण बाधित">
+<!ENTITY netInterrupt.longDesc "<p>ब्राउजर सफलतापूर्वक कनेक्टेड भेल, मुदा सूचना हस्तांतरणक दौरान बाधित भेल. फेर कोशिश  करू .</p><ul><li>की अहाँ आन साइटकेँ ब्राउज करबमे असमर्थ छी? कंप्यूटरक सँजाल कनेक्शन जाँचू.</li><li>अखनो समस्या अछि ? अपन सँजाल प्रशासक अथवा इंटरनेट प्रदातासँ मदति कलेल संपर्क करू.</li></ul>">
+
+<!ENTITY notCached.title "दस्तावेजक समय समाप्त">
+<!ENTITY notCached.longDesc "<p>The requested document is not available in the browser's cache.</p><ul><li>As a security precaution, the browser does not automatically re-request sensitive documents.</li><li>Click Try Again to re-request the document from the website.</li></ul>">
+
+<!ENTITY netOffline.title "आफलाइन त्रुटि">
+<!ENTITY netOffline.longDesc2 "<p>ब्राउजर अखन आफलाइन विधिमे अछि अथवा निवेदित मदसँ संपर्क नहि भए सकैत अछि.</p><ul><li>की कंप्यूटर कोनो सक्रिय संजालसँ जुड़ल अछि?</li><li>&quot;फेनु कोशिश करू&quot; दबाउ आनलाइन विधिमे आबैक लेल आओर फेनु पृष्ठक लोड करबाक लेल.</li></ul>">
+
+<!ENTITY contentEncodingError.title "अंतर्वस्तु एन्कोडिंग त्रुटि">
+<!ENTITY contentEncodingError.longDesc "<p>पृष्ठ जकरा अहाँ देखबाक कोशिश कए रहल छी नहि देखाओल जाए सकैत अछि किएक ई संकुचनक अवैध अथवा असमर्थित प्रारूपक प्रयोग करैत अछि .</p><ul><li>कृपया वेब साइट मालिककेँ एहि समस्याक संबंध मे सूचित करब क लेल संपर्क  करू .</li></ul>">
+
+<!ENTITY unsafeContentType.title "असुरक्षित फाइल प्रकार">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>कृपया वेबसाइट मालिक सँ एहि समस्याक संबंधमे सूचित करबाक लेल संपर्क करू.</li> </ul>">
+
+<!ENTITY netReset.title "पूर्णतः पुनः सैट करबमे त्रुटि">
+<!ENTITY netReset.longDesc "<p> एकटा कनेक्शन करबाक कोसिस मे नेटवर्क लिंक बाधित भेल. कृपया फेर कोसिस करू.</p>">
+
+<!ENTITY netTimeout.title "पूर्ण समय समाप्त त्रुटि">
+<!ENTITY netTimeout.longDesc "<p>जे साइट अहाँ खोलए चाहैत छी ओ कनेक्शनक प्रतिक्रिया नहि दए रहल अछि आओर ब्रॉउजर कोनो तरह केर प्रतिक्रिया जाहिर नहि क रहल अछि!</p><ul><li>अधिक माँग केर या लोड केर चलते सर्वर अस्थीय रूप सँ ठप्प भ गेल अछि? बाद मे फेर कोसिस करू.</li><li>की अहाँ दोसर साइट केर पहुँच पाबै मे असमर्थ छी? कंप्यूटर कनेक्शन केँ जाँचू.</li><li>की अहाँक कंप्यूटर अथवा नेटवर्क कोनो फॉयरवाल अथवा प्रॉक्सी द्वारा सुरक्षित अछि.</li><li>अखनो दिक्कत भ रहल अछि?अपन नेटवर्क प्रशासक अथवा इंटरनेट प्रदाता सँ सहायता खातिर संपर्क करू.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "प्रोटोकाल ज्ञात नहि त्रुटि">
+<!ENTITY unknownProtocolFound.longDesc "<p>पता जे कुनू प्रोटोकॉल (जेना <q>wxyz://</q>) कए निर्दिष्ट करैत अछि ओकरा ब्राउज़र नहि चिन्हैत अछि, एहिलेल ब्राउज़र ठीक साइट स कनेक्ट नहि‍ भ पबैत अछि .</p><ul><li>अहॉं मल्टीमीडिया वा आन गैर पाठ सेवाक उपयोग करबा क कोशिश कए रहल छी? अतिरिक्त आवश्यकताक लेल साइट कए जाँचू.</li><li>ब्राउज़र कए ओकरा चिन्हय स पहि‍ने कि‍छु प्रोटोकॉल कए तेसर पक्ष क सॉफ्टवेयर वा प्लगिन क आवश्यकता भए सकैत अछि.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "प्राक्सी सर्वर ने संबंधन अस्वीकृत कएल">
+<!ENTITY proxyConnectFailure.longDesc "<p>ब्राउजर प्राक्सी सर्वरक प्रयोग कलेल विन्यस्त अछि,  मुदा कनेक्शन अस्वीकृत कएलक.</p><ul><li>की ब्राउजरक प्राक्सी विन्यास सही अछि? जमावट जाँचू आओर फेर कोशिश करू .</li><li>की प्राक्सी सेवा एहि सँजाल सँ कनेक्शनक अनुमति देत  अछि ?</li><li>अखनो कठिनाइ अछि? अपन सँजाल प्रशासक अथवा इंटरनेट प्रदाता सँ  मदतिक लेल संपर्क करू .</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "प्राक्सी सर्वर नहि भेटल">
+<!ENTITY proxyResolveFailure.longDesc "<p>ब्राउजर एकटा प्राक्सी सर्वर कलेल विन्यस्त  अछि, मुदा प्राक्सी सर्वर नहि भेटि सकल.</p><ul><li>की ब्राउजरक प्राक्सी विन्यास सही अछि ? जमावट जाँचू आओर फेर कोशिश  करू .</li><li>की कंप्यूटर सक्रिय सँजाल सँ जुड़ल अछि ?</li><li>अखनो कठिनाइ अछि? अपन सँजाल प्रशासक अथवा इंटरनेट प्रदाता सँ मदति कलेल संपर्क करू.</li></ul>">
+
+<!ENTITY redirectLoop.title "पुनः दिशा लूप त्रुटि">
+<!ENTITY redirectLoop.longDesc "<p>ब्राउज़र अनुरोध आइटम कए फेर स प्राप्त करबाक कोशिश करब बंद कए देने अछि. साइटक अनुरोध कए एना फेर स निर्देशित करि‍ रहल अछि कि ओ कहियो पूरा नहि होएत.</p><ul><li>कि अहॉं एहि साइट द्वारा जरूरी कुकीज़ कए अक्षम वा अवरुद्ध कए देने छी?</li><li><em>निर्देश:</em>: साइटक कुकीज़ कए स्वीकार करबा स समस्या हल नहि‍ होएत अछि, त इ संभावना अछि कि इ एकटा सर्वर विन्यास मुद्दा अछि और नहि कि अहॉंक कंप्यूटर क.</li></ul>">
+
+<!ENTITY unknownSocketType.title "अज्ञात साकेट त्रुटि">
+<!ENTITY unknownSocketType.longDesc "<p>साइट अप्रत्याशित तरीका सँ संजाल अनुरोध करबाक लेल प्रतिक्रिया आओर ब्राउज़र जारी नहि राखि सकैत छी.</p>">
+
+<!ENTITY nssFailure2.title "सुरक्षित कनेक्शन विफल">
+<!ENTITY nssFailure2.longDesc2 "<p>पृष्ठ जकरा अहाँ देखबाक कोशिश कए रहल छी नहि देखाओल जाए सकैत अछि किएक प्राप्त आंकड़ा क प्रमाणिकता जांचल नहि जाए सकल.</p><ul><li>कृपया वेब साइट मालिक केँ एहि समस्याक संबंध मे सूचित करबाक लेल संपर्क  करू .</li></ul>">
+
+<!ENTITY nssBadCert.title "सुरक्षित कनेक्शन विफल">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>ई सर्वर विन्यास क सँग समस्या भए सकैत अछि, अथवा कोनो दोसर सर्वरक रूपेँ छद्म रूप सँ आनबाक कोशिश कए सकैत अछि.</li> <li> जँ अहाँ सर्वर सँ पाछाँ सफलतापूर्वक कनेक्ट भए चुकल अछि, त्रुटि अस्थायी भए सकैत अछि, आओर अहाँ एकटा बादमे फेर कोशिश कए सकैत  छी.</li> </ul>">
+
+
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>The browser prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "खराब सामग्री त्रुटि">
+
+
+<!ENTITY remoteXUL.title "दूरस्थ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>कृपया वेबसाइट मालिककेँ ई समस्याक संबंधमे सूचित करबाक लेल संपर्क करू.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>The page you are trying to view cannot be shown because an error in the data transmission was detected.</p><ul><li>Please contact the website owners to inform them of this problem.</li></ul>">
+
+<!ENTITY dnsNotFound.longDesc "<p>The browser could not find the host server for the provided address.</p><ul><li>Did you make a mistake when typing the domain? (e.g. <q><strong>ww</strong>.mozilla.org</q> instead of <q><strong>www</strong>.mozilla.org</q>)</li><li>Are you certain this domain address exists?  Its registration may have expired.</li><li>Are you unable to browse other sites?  Check your network connection and DNS server settings.</li><li>Is your computer or network protected by a firewall or proxy?  Incorrect settings can interfere with Web browsing.</li></ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>It may have been removed, moved, or file permissions may be preventing access.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+">
+

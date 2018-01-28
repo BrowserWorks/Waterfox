@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label "Inicio">
+<!ENTITY startupPage2.label "Cuando se inicie &brandShortName;">
+<!ENTITY startupPage2.accesskey "N">
+<!ENTITY startupUserHomePage.label "Mostrar su página de inicio">
+<!ENTITY startupBlankPage.label "Mostrar una página en blanco">
+<!ENTITY startupPrevSession.label "Mostrar sus ventanas y pestañas de la última sesión">
+<!ENTITY homepage2.label "Página de inicio">
+<!ENTITY homepage2.accesskey "P">
+<!ENTITY useCurrentPage.label "Usar página actual">
+<!ENTITY useCurrentPage.accesskey "C">
+<!ENTITY useMultiple.label "Usar páginas actuales">
+<!ENTITY chooseBookmark.label "Usar marcador…">
+<!ENTITY chooseBookmark.accesskey "m">
+<!ENTITY restoreDefault.label "Restaurar al valor por omisión">
+<!ENTITY restoreDefault.accesskey "v">
+<!ENTITY downloads.label "Descargas">
+<!ENTITY saveTo.label "Guardar archivos en">
+<!ENTITY saveTo.accesskey "G">
+<!ENTITY chooseFolderWin.label "Examinar…">
+<!ENTITY chooseFolderWin.accesskey "x">
+<!ENTITY chooseFolderMac.label "Elegir…">
+<!ENTITY chooseFolderMac.accesskey "e">
+<!ENTITY alwaysAskWhere.label "Preguntar siempre dónde guardar los archivos">
+<!ENTITY alwaysAskWhere.accesskey "s">
+<!ENTITY alwaysCheckDefault2.label "Comprobar siempre si &brandShortName; es su navegador predeterminado">
+<!ENTITY alwaysCheckDefault2.accesskey "o">
+<!ENTITY setAsMyDefaultBrowser3.label "Convertir en predeterminado…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "C">
+<!ENTITY isDefault.label "&brandShortName; es su navegador por defecto">
+<!ENTITY isNotDefault.label "&brandShortName; no es su navegador por defecto">
+<!ENTITY separateProfileMode.label "Permitir a &brandShortName; y Waterfox ejecutarse al mismo tiempo">
+<!ENTITY useWaterfoxSync.label "Consejo: esto usa perfiles separados. Use Sync para compartir datos entre ellos.">
+<!ENTITY getStarted.notloggedin.label "Conectarse a &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label "Abrir preferencias de &syncBrand.shortName.label;">
+<!ENTITY e10sEnabled.label "Activar &brandShortName; multiproceso">

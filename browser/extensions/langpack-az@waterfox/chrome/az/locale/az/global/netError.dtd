@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Səhifə yüklənmə xətası">
+<!ENTITY retry.label "Təkrar Yoxla">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Əlaqə cəhdi uğursuz oldu">
+<!ENTITY connectionFailure.longDesc "<p>Baxmayaraq ki, saytın doğru olduğu görsənir, səyyah saytla əlaqə saxlaya bilmədi.</p><ul><li>Sayt müvəqqəti olaraq qapalı ola bilər? Daha sonra yenidən yoxlayın.</li><li>Digər saytları da aça bilmirsiz?  Əgər elədirsə kompüterinizin intetnet bağlantısını yoxlayın.</li><li>Kompüteriniz və ya internet bağlantınız təhlükəsizlik divarı və ya proksi ilə qorunur? Düzgün nizamlanmamış seçimlər Veb Səyahətinizə mane ola bilər.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Təhlükəsizlik üçün bağlantı nöqtəsi bağlıdır">
+<!ENTITY deniedPortAccess.longDesc "<p>Açmaq istədiyiniz ünvanda, adətən, İnternet səyahətindən <em>fərqli</em> məqsədlər üçün olan port (məs. mozilla.org-da 80-ci port üçün <q>mozilla.org:80</q>) göstərilib. Səyyah sizin təhlükəsizliyiniz və qorumanız üçün sorğunu ləğv etdi.</p>">
+
+<!ENTITY dnsNotFound.title "Ünvan tapılmadı">
+<!ENTITY dnsNotFound.longDesc "<p>Brauzer, daxil etdiyiniz ünvanın serverlərini tapa bilmədi.</p><ul><li>Ünvanı səhv daxil etmiş ola bilərsiniz. (Məsələn <q><strong>www</strong>.mozilla.org</q> əvəzinə <q><strong>ww</strong>.mozilla.org</q> yazılmış ola bilər.)</li><li>Bu sayt adı istifadə olunmaya bilər. istifadə tarixi sona çatdığından qeydiyyatdan silinə bilər.</li><li>Digər saytları da aça bilmirsinizsə. Bağlantınızı və DNS server seçimlərini yoxlayın.</li><li>Kompüteriniz ya da bağlantınız təhlükəsizlik divarı ilə qorunmuş ola bilər. DÜzgün nizamlanmamış seçimlər internətə bağlanmanıza problem yarada bilər.</li></ul>">
+
+<!ENTITY fileNotFound.title "Fayl tapılmadı">
+<!ENTITY fileNotFound.longDesc "<ul><li>Fayl köçürülmüş, silinmiş ya da adı dəyişmiş ola bilər.</li><li>Ünvan səhv yazılmış ola bilər.</li><li>İstədiyiniz obyektə müraciət üçün icazəniz olmaya bilər.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Faylın işlədilməsinə icazə verilmədi">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Fayl silinmiş, yeri dəyişdirilmiş və ya icazə yetərsizliyi ola bilər.</li></ul>">
+
+<!ENTITY generic.title "İstək yerinə yetirilə bilmir">
+<!ENTITY generic.longDesc "<p>Bu xəta və problem haqqında ətraflı məlumat mövcud deyil</p>">
+
+<!ENTITY malformedURI.title "Etibarsız ünvan">
+<!ENTITY malformedURI.longDesc "<p>Daxil etdiyiniz ünvan düzgün deyil. Ünvan sətrinə baxıb mümkün səhvləri düzəltdikdən sonra yenidən yoxlayın.</p>">
+
+<!ENTITY netInterrupt.title "Məlumat ötürmə xətası">
+<!ENTITY netInterrupt.longDesc "<p>Brauzer uğurla əlaqə qurdu, ancaq məlumat ötürmə zamanı əlaqə kəsildi.Lütfən təkrar yoxlayın.</p><ul><li>Digər saytları da aça bilmirsinizsə. Bağlantınızı yoxlayın.</li><li>Problem hələ də qalırsa server idarəçinizə müraciət edin.</li></ul>">
+
+<!ENTITY notCached.title "Sənədin vaxtı çıxıb">
+<!ENTITY notCached.longDesc "<p>İstədiyiniz sənəd səyyahın yaddaşında mövcud deyil.</p><ul><li>Təhlükəsizlik tədbiri olaraq, səyyahınız həssas sənədləri avtomatik olaraq yenidən istəmir.</li><li>Sənədi web saytdan yenidən istəmək üçün, Təkrar yoxla düyməsinə klikləyin.</li></ul>">
+
+<!ENTITY netOffline.title "Oflayn rejim">
+<!ENTITY netOffline.longDesc2 "<p>Səyyah hazırda oflayn rejimdədir və tələb olunan obyektə bağlana bilmir.</p><ul><li>Kompüteriniz aktiv şəbəkəyə bağlıdır?</li><li>&quot;Təkrar Yoxla&quot; düyməsinə basaraq onlayn rejimə keçə və səhifəni yeniləyə bilərsiniz.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Məzmun kodlama səhvi">
+<!ENTITY contentEncodingError.longDesc "<p>Baxmaq istədiyiniz səhifə göstərilə bilmir, çünki etibarsız ya da dəstəklənməyən sıxışdırmadan istifadə edir.</p><ul><li>Sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Etibarsız fayl növü">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li> </ul>">
+
+<!ENTITY netReset.title "Bağlantı kəsildi">
+<!ENTITY netReset.longDesc "<p>Bağlantı zamanı əlaqə kəsildi. Lütfən təkrar yoxlayın.</p>">
+
+<!ENTITY netTimeout.title "Şəbəkə gözləmə müddəti">
+<!ENTITY netTimeout.longDesc "<p>Açmaq istədiyiniz sayt cavab vermədiyi üçün gözləmə ləğv edildi.</p><ul><li>Server çox yüklənib və ya müvəqqəti olaraq bir problemlə qarşılaşmış ola bilər. Daha sonra təkrar yoxlayın.</li><li>Digər səhifələrdə açılmaya bilər. Əgər elədirsə bağlantınızı yoxlayın.</li><li>Kompüteriniz ya da bağlantınız təhlükəsizlik divarı ilə qorunmuş ola bilər. DÜzgün nizamlanmamış seçimlər internətə bağlanmanıza problem yarada bilər.</li><li>Bütün yolları yoxlamağınıza baxmayaraq hələ də bağlantı qura bilmirsinizsə, internet provayderinizlə və ya bağlantı idarəçinizlə əlaqə saxlayın.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Naməlum əlaqə protokolu">
+<!ENTITY unknownProtocolFound.longDesc "<p>Daxil edilən ünvan brauzer tərəfindən tanınmayan bir bağlantı protokolu ilə (məs. <q>abcd://</q>) göstərildiyi üçün brauzer sayta bağlana bilmir.</p><ul><li>Siz multimedia və ya digər mətn olmayan bir xidmətə bağlanmaq istəyirsiniz? Əlavə tələblər üçün rəsmi sayta baxın.</li><li>Bəzi bağlantı protokollarının brauzer tərəfindən tanınması üçün üçüncü şəxslər tərəfindən yaradılan proqramlar və ya əlavələr tələb oluna bilər.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy server bağlantını rədd etdi">
+<!ENTITY proxyConnectFailure.longDesc "<p>Brauzer proxy-server istifadə edəcək şəkildə nizamlanmışdır, ancaq proxy-server bağlantı istəyini rədd etdi.</p><ul><li>Proxy-server seçimləri düzgün qurulmamış ola bilər. Seçimləri yoxlayıb yenidən cəhd edin.</li><li>Göstərilən proxy-server şəbəkəniz üzərindən qurulan bağlantılara icazə verməyə bilər.</li><li>Problem hələ də qalırsa,  internet provayderinizlə və ya bağlantı idarəçinizlə əlaqə saxlayın.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxy-server tapılmadı">
+<!ENTITY proxyResolveFailure.longDesc "<p>Brauzer proxy-server istifadə edcək şəkildə nizamlanıb, ancaq proxy-server tapılmadı.</p><ul><li>Proxy-server seçimləri düzgün nizamlanmamış ola bilər. Seçimləri yoxlayıb təkrar yoxlayın.</li><li>Komputerinizdə aktiv bir şəbəkə olmaya bilər.</li><li>Hələ də bağlantı qura bilmirsinizsə, internet provayderinizlə və ya bağlantı idarəçinizlə əlaqə saxlayın.</li></ul>>">
+
+<!ENTITY redirectLoop.title "Yönlendirmə dövrəsi">
+<!ENTITY redirectLoop.longDesc "<p>Səyyah istədiyiniz obyekti almağa cəhd etməyi dayandırdı. Sayt istəyi elə yönləndirir ki, heç vaxt tamamlanmayacaq.</p><ul><li>Saytın tələb etdiyi çərəzləri ləğv və ya blok etmisinizmi?</li><li><em>QEYD</em>: Əgər çərəzlərin qəbul edilməsi xətanı həll etmirsə, böyük ehtimalla problem sizin kompüterinizdə yox, serverin tənzimləmələrindədir.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Şəbəkədən gələn cavab yanlışdır">
+<!ENTITY unknownSocketType.longDesc "<p>Sayt bağlantı istəyinə gözlənilməyən formada cavab verdi və brauzer davam etməyəcək.</p>">
+
+<!ENTITY nssFailure2.title "Təhlükəsiz bağlantı qurulmadı">
+<!ENTITY nssFailure2.longDesc2 "<p>Açmaq istədiyiniz sayt açılmır, çünki alınan məlumatların doğruluğu təsdiqlənmədi.</p><ul><li>Bu problemi məlumat verməkçün lütfən sayt sahibləri ilə əlaqə saxlayın.</li></ul>">
+
+<!ENTITY nssBadCert.title "Təhlükəsiz bağlantı qurulmadı">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Bu, serverin nizamlanması ilə bağlı bir problemdən ya da başqa birinin özünü server kimi göstərməsindən qaynaqlana bilər.</li> <li>Əvvəllər bu serverə uğurla bağlandınızsa problem müvəqqəti ola bilər və daha sonra yenidən açmağı yoxlaya bilərsiniz.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Və ya istisnalıq verə bilərsiz…">
+<!ENTITY securityOverride.warningContent "<p>Etibar etmədiyiniz bir bağlantı istifadə edirsinizsə ya da bu serverlə bağlı xəbərdarlıqları almağa öyrəşməmisinizsə istisnalıq verməməlisiniz.</p><p>Yenə də istisnalıq vermək istəyirsinizsə bunu təkmilləşmiş şifrləmə tənzimləmələriniz ilə edə biləsiniz.</p>">
+
+<!ENTITY cspBlocked.title "Məzmun təhlükəsizlik qaydaları xəbərdar etdiyi üçün bloklandı">
+<!ENTITY cspBlocked.longDesc "<p>Səyyah bu səhifənin bu üsulla yüklənməsinin qarşısını aldı, çünki, səhifədə olan fayllardan birinin təhlükəsizlik siyasəti bunu qadağan edir.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Zədəli Məzmun Xətası">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Baxmaq istədiyiniz səhifə açıla bilmir, çünki fayl ötürülməsi zamanı bir xəta baş verdi.</p><ul><li>Lütfən sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li></ul>">
+
+<!ENTITY remoteXUL.title "Uzaq XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Lütfən sayt sahibləri ilə əlaqə yaradıb bu problemi onlara bildirin.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Bağlantınız güvənilir deyil">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> vaxtı keçmiş texnologiya işlədir və hücumlara açıqdır. Hücumçu güvənilir olduğunu düşündüyünüz məlumatı əldə edə bilər. Saytın administratoru problemi həll etdikdən sonra təkrar daxil ola bilərsiz.</p><p>Xəta kodu: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "استثنیات">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.status.label        "حالت">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY address.label                "ویب سائٹ کا پتہ:">
+<!ENTITY address.accesskey            "پ">
+<!ENTITY block.label                  "بلاک کریں">
+<!ENTITY block.accesskey              "ب">
+<!ENTITY session.label                "سیشن کے لیے اجازت دیں">
+<!ENTITY session.accesskey            "س">
+<!ENTITY allow.label                  "ہونے دیں">
+<!ENTITY allow.accesskey              "ہ">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "منسوخ کریں">
+<!ENTITY button.cancel.accesskey      "م">
+<!ENTITY button.ok.label              "تبدیلیاں محفوظ کریں">
+<!ENTITY button.ok.accesskey          "م">
+
+
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

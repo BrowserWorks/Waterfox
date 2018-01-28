@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "De volgende overeenkomst van de tekst zoeken">
+<!ENTITY previous.tooltip "De vorige overeenkomst van de tekst zoeken">
+<!ENTITY findCloseButton.tooltip "Zoekbalk sluiten">
+<!ENTITY highlightAll.label "Alles markeren">
+<!ENTITY highlightAll.accesskey "A">
+<!ENTITY highlightAll.tooltiptext "Alle overeenkomsten van de tekst markeren">
+<!ENTITY caseSensitive.label "Hoofdlettergevoelig">
+<!ENTITY caseSensitive.accesskey "o">
+<!ENTITY caseSensitive.tooltiptext "Hoofdlettergevoelig zoeken">
+<!ENTITY entireWord.label "Hele woorden">
+<!ENTITY entireWord.accesskey "e">
+<!ENTITY entireWord.tooltiptext "Alleen hele woorden zoeken">

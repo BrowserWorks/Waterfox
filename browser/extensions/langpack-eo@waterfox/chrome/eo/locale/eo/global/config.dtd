@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Tio povas nuligi vian garantion!">
+<!ENTITY aboutWarningText.label "Ŝanĝo de tiuj spertulaj agordoj povas efiki malbone sur la stabileco, sekureco kaj efikeco de tiu ĉi programo. Vi devus daŭrigi nur se vi estas certa ke vi scias kion vi faras.">
+<!ENTITY aboutWarningButton2.label "Mi akceptas la riskon!">
+<!ENTITY aboutWarningCheckbox.label "Montri tiun ĉi atentigon venontan fojon">
+
+<!ENTITY searchPrefs.label "Serĉi:">
+<!ENTITY searchPrefs.accesskey "s">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Nomo de prefero">
+<!ENTITY lockColumn.label "Stato">
+<!ENTITY typeColumn.label "Tipo">
+<!ENTITY valueColumn.label "Valoro">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Alklaku por ordigi"> 
+<!ENTITY columnChooser.tooltip "Alklaku por elekti la montrotajn kolumnojn"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "K">
+<!ENTITY copyPref.label "Kopii">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopii nomon">
+<!ENTITY copyName.accesskey "K">
+<!ENTITY copyValue.label "Kopii valoron">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "Modifi">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Baskuli">
+<!ENTITY toggle.accesskey "B">
+<!ENTITY reset.label "Rekomenci">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "Nova">
+<!ENTITY new.accesskey "n">
+<!ENTITY string.label "Teksto">
+<!ENTITY string.accesskey "T">
+<!ENTITY integer.label "Numero">
+<!ENTITY integer.accesskey "N">
+<!ENTITY boolean.label "Logika">
+<!ENTITY boolean.accesskey "L">

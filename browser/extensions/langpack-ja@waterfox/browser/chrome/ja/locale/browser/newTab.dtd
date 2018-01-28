@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle		"新しいタブ">
+<!ENTITY newtab.customize.classic	"よく見るサイトを表示">
+<!ENTITY newtab.customize.cog.enhanced	"おすすめサイトも表示">
+<!ENTITY newtab.customize.cog.title2	"新しいタブの設定">
+<!ENTITY newtab.customize.cog.learn	"新しいタブの詳細">
+<!ENTITY newtab.customize.title		"新しいタブページをカスタマイズ">
+<!ENTITY newtab.customize.blank2	"空白ページを表示">
+<!ENTITY newtab.undo.removedLabel	"サムネイルを削除しました。">
+<!ENTITY newtab.undo.undoButton		"元に戻す。">
+<!ENTITY newtab.undo.restoreButton	"すべて復元する。">
+<!ENTITY newtab.undo.closeTooltip	"閉じる">

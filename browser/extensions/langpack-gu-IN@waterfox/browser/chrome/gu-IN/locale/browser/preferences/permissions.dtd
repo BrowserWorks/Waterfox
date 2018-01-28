@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "અપવાદો">
+<!ENTITY window.width                 "36em">
+
+<!ENTITY treehead.sitename.label      "સાઈટ">
+<!ENTITY treehead.status.label        "પરિસ્થિતિ">
+<!ENTITY removepermission.label       "સાઈટ દૂર કરો">
+<!ENTITY removepermission.accesskey   "R">
+<!ENTITY removeallpermissions.label   "બધી સાઈટો દૂર કરો">
+<!ENTITY removeallpermissions.accesskey "e">
+<!ENTITY address.label                "વેબ સાઈટનું સરનામું:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "બ્લોક">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "સત્ર માટે પરવાનગી આપો">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "પરવાનગી આપો">
+<!ENTITY allow.accesskey              "A">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "રદ કરો">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "પરિવર્તનો સાચવો">
+<!ENTITY button.ok.accesskey          "S">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

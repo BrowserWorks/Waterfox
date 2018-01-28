@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   <!ENTITY editMenu.label            "ਸੋਧੋ">
+<!ENTITY editMenu.accesskey        "e">
+<!ENTITY undoCmd.label             "ਵਾਪਸ">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "u">
+<!ENTITY redoCmd.label             "ਮੁੜ-ਪਹਿਲਾਂ">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "r">
+<!ENTITY cutCmd.label              "ਕੱਟੋ">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "t">
+<!ENTITY copyCmd.label             "ਕਾਪੀ ਕਰੋ">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "c">
+<!ENTITY pasteCmd.label            "ਚੇਪੋ">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "p">
+<!ENTITY deleteCmd.label           "ਹਟਾਓ">
+<!ENTITY deleteCmd.accesskey       "d">
+<!ENTITY selectAllCmd.label        "ਸਭ ਚੁਣੋ">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "a">
+<!ENTITY findCmd.label             "ਖੋਜ">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "F">
+<!ENTITY findAgainCmd.label        "ਅੱਗੇ ਖੋਜ">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "g">
+<!ENTITY findPreviousCmd.label     "ਪਿੱਛੇ ਖੋਜ">
+<!ENTITY findPreviousCmd.accesskey "v">

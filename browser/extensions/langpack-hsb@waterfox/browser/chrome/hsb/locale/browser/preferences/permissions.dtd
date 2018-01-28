@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Wuwzaća">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Websydło">
+<!ENTITY treehead.status.label        "Status">
+<!ENTITY removepermission2.label      "Websydło wotstronić">
+<!ENTITY removepermission2.accesskey  "t">
+<!ENTITY removeallpermissions2.label  "Wšě sydła wotstronić">
+<!ENTITY removeallpermissions2.accesskey "y">
+<!ENTITY address.label                "Adresa websydła:">
+<!ENTITY address.accesskey            "A">
+<!ENTITY block.label                  "Blokować">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Za posedźenje dowolić">
+<!ENTITY session.accesskey            "p">
+<!ENTITY allow.label                  "Dowolić">
+<!ENTITY allow.accesskey              "D">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Přetorhnyć">
+<!ENTITY button.cancel.accesskey      "P">
+<!ENTITY button.ok.label              "Změny składować">
+<!ENTITY button.ok.accesskey          "s">
+

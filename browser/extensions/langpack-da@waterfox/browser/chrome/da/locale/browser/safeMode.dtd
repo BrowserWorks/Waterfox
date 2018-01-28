@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; køres i fejlsikret tilstand">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Start i fejlsikret tilstand">
+<!ENTITY refreshProfile.label         "Nulstil &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Fejlsikret tilstand er en speciel tilstand af &brandShortName;, som kan bruges til fejlfinding.">
+<!ENTITY safeModeDescription4.label   "Dine udvidelser og indstillinger vil midlertidigt blive deaktiveret.">
+
+<!ENTITY refreshProfileInstead.label  "Du kan også springe fejlfinding over og forsøge at nulstille &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; lukkede uventet under opstart. Dette kan skyldes en udvidelse eller andre problemer. Du kan prøve at finde årsagen til problemet ved hjælp af fejlsikret tilstand.">

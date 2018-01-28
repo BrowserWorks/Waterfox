@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Ezabatu pasahitz nagusia">
+<!ENTITY removeInfo.label                  "Uneko pasahitza eman behar duzu jarraitzeko:">
+<!ENTITY removeWarning1.label              "Pasahitz nagusia guneen pasahitzak bezalako informazio sentibera babesteko erabiltzen da.">
+<!ENTITY removeWarning2.label              "Pasahitz nagusia ezabatuz gero zure informazioa ez da babestuta egongo ordenagailua arriskuan jartzen bada.">
+<!ENTITY setPassword.oldPassword.label     "Uneko pasahitza:">
+

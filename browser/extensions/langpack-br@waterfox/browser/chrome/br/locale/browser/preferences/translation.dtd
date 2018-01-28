@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Nemedennoù - Troidigezh">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "An droidigezh ne vo ket kinniget evit ar yezhoù da-heul :">
+<!ENTITY treehead.languageName.label      "Yezhoù">
+<!ENTITY removeLanguage.label             "Lemel ar yezh">
+<!ENTITY removeLanguage.accesskey         "y">
+<!ENTITY removeAllLanguages.label         "Lemel an holl yezhoù">
+<!ENTITY removeAllLanguages.accesskey     "h">
+
+<!ENTITY noTranslationForSites.label      "An droidigezh ne vo ket kinniget evit al lec'hiennoù da-heul :">
+
+<!ENTITY removeSite.label                 "Lemel al lec'hienn">
+<!ENTITY removeSite.accesskey             "a">
+<!ENTITY removeAllSites.label             "Lemel an holl lec'hiennoù">
+<!ENTITY removeAllSites.accesskey         "l">
+
+<!ENTITY button.close.label               "Serriñ">
+<!ENTITY button.close.accesskey           "S">
+
+<!ENTITY treehead.siteName2.label         "Websites">

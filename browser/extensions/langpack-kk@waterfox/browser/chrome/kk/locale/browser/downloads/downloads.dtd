@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<!-- LOCALIZATION NOTE (downloads.title):
+     Used by screen readers to describe the Downloads Panel.
+     -->
+
+<!ENTITY downloads.title                  "Жүктемелер">
+<!-- LOCALIZATION NOTE (downloadDetails.width):
+     Width of details for a Downloads Panel item (which directly influences the
+     width of the Downloads Panel) expressed using a CSS unit. The longest
+     labels that should fit in the item width are usually those of in-progress
+     downloads and those of blocked downloads.
+
+     A good rule of thumb is to try to determine the longest string possible
+     that an in-progress download could display, and use that value in ch
+     units.
+
+     For example, in English, a long string would be:
+
+     59m 59s left - 1022 of 1023 KB (120.5 KB/sec)
+
+     Since Downloads Panel is redesigned to show the detail string including
+     the hovering case for an item or an action button.
+     Bug 1328519 is for discussing the detail rule of `downloadDetails.width`.
+     -->
+
+<!ENTITY downloadDetails.width            "50ch">
+<!-- LOCALIZATION NOTE (downloadsSummary.minWidth2):
+     Minimum width for the main description of the downloads summary,
+     which is displayed at the bottom of the Downloads Panel if the
+     number of downloads exceeds the limit that the panel can display.
+
+     A good rule of thumb here is to look at the otherDownloads3 string
+     in downloads.properties, and make a reasonable estimate of its
+     maximum length. For English, this seems like a reasonable limit:
+
+     999 files downloading
+
+     that's 21 characters, so we set the minimum width to 21ch.
+     -->
+
+<!ENTITY downloadsSummary.minWidth2       "28ch">
+
+<!ENTITY cmd.pause.label                  "Аялдату">
+<!ENTITY cmd.pause.accesskey              "А">
+<!ENTITY cmd.resume.label                 "Жалғастыру">
+<!ENTITY cmd.resume.accesskey             "Ж">
+<!ENTITY cmd.cancel.label                 "Бас тарту">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                   "Файл орналасқан буманы ашу">
+<!ENTITY cmd.show.accesskey               "а">
+<!ENTITY cmd.showMac.label                "Finder ішінен көрсету">
+<!ENTITY cmd.showMac.accesskey            "ш">
+<!ENTITY cmd.retry.label                  "Қайталау">
+<!ENTITY cmd.goToDownloadPage.label       "Жүктемелер парағына өту">
+<!ENTITY cmd.goToDownloadPage.accesskey   "Ж">
+<!ENTITY cmd.copyDownloadLink.label       "Жүктеу сілтемесін көшіріп алу">
+<!ENTITY cmd.copyDownloadLink.accesskey   "к">
+<!ENTITY cmd.removeFromHistory.label      "Тарихтен өшіру">
+<!ENTITY cmd.removeFromHistory.accesskey  "Т">
+<!ENTITY cmd.clearList2.label             "Алдын-ала қарау панелін тазарту">
+<!ENTITY cmd.clearList2.accesskey         "з">
+<!ENTITY cmd.clearDownloads.label         "Жүктемелерді тазарту">
+<!ENTITY cmd.clearDownloads.accesskey     "д">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Жүктемені рұқсат ету">
+<!ENTITY cmd.unblock2.accesskey           "а">
+<!-- LOCALIZATION NOTE (cmd.removeFile.label):
+     This is the tooltip of the action button shown when malware is blocked.
+     -->
+<!ENTITY cmd.removeFile.label             "Файлды өшіру">
+<!-- LOCALIZATION NOTE (cmd.chooseUnblock.tooltip):
+     This is the tooltip of the action button shown when potentially unwanted
+     downloads are blocked. This opens a dialog where the user can choose
+     whether to unblock or remove the download. Removing is the default option.
+     -->
+<!ENTITY cmd.chooseUnblock.label          "Файлды өшіру немесе жүктемені рұқсат ету">
+<!-- LOCALIZATION NOTE (cmd.chooseOpen.tooltip):
+     This is the tooltip of the action button shown when uncommon downloads are
+     blocked.This opens a dialog where the user can choose whether to open the
+     file or remove the download. Opening is the default option.
+     -->
+<!ENTITY cmd.chooseOpen.label             "Файлды ашу немесе өшіру">
+<!-- LOCALIZATION NOTE (showMoreInformation.label):
+     Displayed when hovering a blocked download, indicates that it's possible to
+     show more information for user to take the next action.
+     -->
+
+<!ENTITY showMoreInformation.label        "Көбірек ақпаратты көрсету">
+<!-- LOCALIZATION NOTE (openFile.label):
+     Displayed when hovering a complete download, indicates that it's possible to
+     open the file using an app available in the system.
+     -->
+
+<!ENTITY openFile.label                   "Файлды ашу">
+<!-- LOCALIZATION NOTE (retryDownload.label):
+     Displayed when hovering a download which is able to be retried by users,
+     indicates that it's possible to download this file again.
+     -->
+
+<!ENTITY retryDownload.label              "Жүктеп алуды қайталау">
+<!-- LOCALIZATION NOTE (cancelDownload.label):
+     Displayed when hovering a download which is able to be cancelled by users,
+     indicates that it's possible to cancel and stop the download.
+     -->
+
+<!ENTITY cancelDownload.label             "Жүктемеден бас тарту">
+<!-- LOCALIZATION NOTE (blocked.label):
+     Shown as a tag before the file name for some types of blocked downloads.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+
+<!ENTITY blocked.label                    "БЛОКТАЛҒАН">
+<!-- LOCALIZATION NOTE (learnMore.label):
+     Shown as a text link for some types of blocked downloads, for example
+     malware, when there is an associated explanation page on the Mozilla site.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+
+<!ENTITY learnMore.label                  "Көбірек білу">
+<!-- LOCALIZATION NOTE (downloadsHistory.label, downloadsHistory.accesskey):
+     This string is shown at the bottom of the Downloads Panel when all the
+     downloads fit in the available space, or when there are no downloads in
+     the panel at all.
+     -->
+
+<!ENTITY downloadsHistory.label           "Барлық жүктемелерді көрсету">
+<!ENTITY downloadsHistory.accesskey       "к">
+<!-- LOCALIZATION NOTE (openDownloadsFolder.label):
+     This command is not currently available in the user interface, but the
+     string was preserved by bug 1362207 to be used in a future version.
+     -->
+
+<!ENTITY openDownloadsFolder.label        "Жүктемелер бумасын ашу">
+
+<!ENTITY clearDownloadsButton.label       "Жүктемелерді тазарту">
+<!ENTITY clearDownloadsButton.tooltip     "Аяқталған, бас тартылған және сәтсіз жүктемелерді тазартады">
+<!-- LOCALIZATION NOTE (downloadsListEmpty.label):
+     This string is shown when there are no items in the Downloads view, when it
+     is displayed inside a browser tab.
+     -->
+
+<!ENTITY downloadsListEmpty.label         "Жүктемелер жоқ.">
+<!-- LOCALIZATION NOTE (downloadsPanelEmpty.label):
+     This string is shown when there are no items in the Downloads Panel.
+     -->
+
+<!ENTITY downloadsPanelEmpty.label        "Бұл сессия үшін жүктемелер жоқ.">
+<!-- LOCALIZATION NOTE (downloadsListNoMatch.label):
+     This string is shown when some search terms are specified, but there are no
+     results in the Downloads view.
+     -->
+
+<!ENTITY downloadsListNoMatch.label       "Сәйкес келетін жүктемелер табылмады.">

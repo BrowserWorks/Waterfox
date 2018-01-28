@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Tutup Tab Ini">
+<!ENTITY tabCrashed.restoreTab "Pulih Tab Ini">
+<!ENTITY tabCrashed.restoreAll "Pulih Semua Tab Ranap">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Alamak. Tab anda sudah ranap.">
+<!ENTITY tabCrashed.offerHelp "Kami boleh membantu anda!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Pilih &tabCrashed.restoreTab; untuk memuat semula kandungan halaman.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Pilih &tabCrashed.restoreTab; atau &tabCrashed.restoreAll; untuk memuat semula kandungan halaman.">
+<!ENTITY tabCrashed.requestHelp "Anda mahu bantu kami?">
+<!ENTITY tabCrashed.requestHelpMessage "Laporan ranap membantu kami mendiagnos masalah dan membuatkan &brandShortName; lebih baik.">
+<!ENTITY tabCrashed.requestReport "Laporkan tab ini">
+<!ENTITY tabCrashed.sendReport2 "Hantar laporan ranap tab yang sedang anda tinjau">
+<!ENTITY tabCrashed.commentPlaceholder2 "Komen pilihan (komen disiarkan kepada umum)">
+<!ENTITY tabCrashed.includeURL2 "Sertakan URL halaman dengan laporan ranap ini">
+<!ENTITY tabCrashed.emailPlaceholder "Masukkan alamat e-mel anda di sini">
+<!ENTITY tabCrashed.emailMe "Hantarkan e-mel kepada saya apabila ada maklumat lanjut">
+<!ENTITY tabCrashed.reportSent "Laporan ranap telah dihantar; terima kasih kerana membantu menjadikan &brandShortName; lebih baik!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Laporkan tab latarbelakang">
+<!ENTITY tabCrashed.autoSubmit2 "Kemaskini keutamaan supaya secara automatik menghantar laporan ranap, termasuk laporan tab latarbelakang yang ranap untuk sesi ini dan sesi akan datang">

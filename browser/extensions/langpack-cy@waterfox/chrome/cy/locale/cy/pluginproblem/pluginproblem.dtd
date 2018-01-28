@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Mae'r wefan hon yn defnyddio ategyn gall arafu &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Cliciwch yma i gychwyn yr ategyn.">
+<!ENTITY clickToActivatePlugin                               "Gweithredu'r ategyn.">
+<!ENTITY checkForUpdates                                     "Gwirio am ddiweddariadau…">
+<!ENTITY blockedPlugin.label                                 "Mae'r ategyn wedi ei rwystro er eich diogelwch.">
+<!ENTITY hidePluginBtn.label                                 "Cuddio ategyn">
+<!ENTITY managePlugins                                       "Rheoli ategion…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Ail lwytho'r dudalen">
+<!ENTITY reloadPlugin.post                                   " i geisio eto.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Anfon adroddiad chwalu">
+<!ENTITY report.submitting                                   "Anfon yr adroddiad…">
+<!ENTITY report.submitted                                    "Wedi anfon adroddiad chwalu.">
+<!ENTITY report.disabled                                     "Adrodd ar chwalu wedi ei analluogi.">
+<!ENTITY report.failed                                       "Cyflwyno wedi methu.">
+<!ENTITY report.unavailable                                  "Dim adroddiad ar gael.">
+<!ENTITY report.comment                                      "Ychwanegu sylw (sylwadau yn weladwy'n gyhoeddus)">
+<!ENTITY report.pageURL                                      "Cynnwys URL y dudalen">
+
+<!ENTITY plugin.file                                         "Ffeil">
+<!ENTITY plugin.mimeTypes                                    "Math MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Galluogi modd diogel Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Rhwystro cynnwys Flash peryglus ac ymwthiol">

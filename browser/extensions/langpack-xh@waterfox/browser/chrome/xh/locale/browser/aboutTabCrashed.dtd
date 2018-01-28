@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Vala le Tab">
+<!ENTITY tabCrashed.restoreTab "Buyisela Le Tab">
+<!ENTITY tabCrashed.restoreAll "Buyisela Zonke iiTab ezoNakeleyo">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Gah. IThebhu yakho isandul' ukukhresha.">
+<!ENTITY tabCrashed.offerHelp "Singakunceda!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Khetha i-&tabCrashed.restoreTab; ukuze uphinde ulowude isiqulatho sephepha.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Khetha i-&tabCrashed.restoreTab; okanye i-&tabCrashed.restoreAll; ukuze uphinde ulowude isiqulatho sephepha.">
+<!ENTITY tabCrashed.requestHelp "Ngaba ungasinceda?">
+<!ENTITY tabCrashed.requestHelpMessage "Ingxelo yokukhresha isinceda sifumanise iingxaki size senze i-&brandShortName; ibe bhetele.">
+<!ENTITY tabCrashed.requestReport "Xela le thebhu">
+<!ENTITY tabCrashed.sendReport2 "Thumela ingxelo yokukhresha yethebhu oyijongileyo">
+<!ENTITY tabCrashed.commentPlaceholder2 "Amagqabaza asecaleni (amagqabaza abonakala ngokuphandle)">
+<!ENTITY tabCrashed.includeURL2 "Quka i-URL yephepha nale ngxelo yokukhresha">
+<!ENTITY tabCrashed.emailPlaceholder "Faka idilesi ye-imeyili yakho apha">
+<!ENTITY tabCrashed.emailMe "Ndithumelele i-imeyili xa ifumaneka inkcazelo engakumbi">
+<!ENTITY tabCrashed.reportSent "Ingxelo yokonakala sele ifakiwe, enkosi ngokunceda ekwenzeni i-&brandShortName; bhetele!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Xela iithebhu zemvelaphi">
+<!ENTITY tabCrashed.autoSubmit2 "Hlaziya iiprefrensi ukuze ngokuzenzekelayo zithumele ingxelo yokukhrsha, iingxelo zeethebhu zemvelaphi ezikhreshileyo zale seshoni neeseshoni zexesha elizayo">

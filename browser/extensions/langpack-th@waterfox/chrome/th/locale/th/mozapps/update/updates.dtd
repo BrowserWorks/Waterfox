@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "อัปเดตซอฟต์แวร์">
+
+<!ENTITY  checking.title                  "กำลังตรวจสอบการอัปเดต">
+<!ENTITY  updateCheck.label               "กำลังมองหา &brandShortName; รุ่นใหม่กว่า…">
+
+<!ENTITY  noupdatesfound.title            "ไม่พบการอัปเดต">
+<!ENTITY  noupdatesautoenabled.intro      "ไม่มีการอัปเดตที่ใช้งานได้ &brandShortName; จะตรวจสอบการอัปเดตเป็นระยะ">
+<!ENTITY  noupdatesautodisabled.intro     "ไม่มีการอัปเดตที่ใช้งานได้ โปรดตรวจสอบอีกครั้งในภายหลังหรือเปิดใช้งานการตรวจสอบการอัปเดตอัตโนมัติของ &brandShortName;">
+
+<!ENTITY  manualUpdate.title              "ไม่สามารถอัปเดต">
+<!ENTITY  manualUpdate.desc               "มีการอัปเดตความปลอดภัยและความเสถียรที่แนะนำ แต่คุณไม่มีสิทธิในระบบที่ต้องการสำหรับติดตั้ง โปรดติดต่อผู้ดูแลระบบของคุณ หรือลองอีกครั้งจากบัญชีที่มีสิทธิติดตั้งซอฟต์แวร์บนคอมพิวเตอร์นี้">
+<!ENTITY  manualUpdate.space.desc         "มีการอัปเดตความปลอดภัยและความเสถียรที่ใช้งานได้ แต่คุณไม่มีพื้นที่เพียงพอสำหรับติดตั้ง">
+<!ENTITY  manualUpdateGetMsg.label        "คุณสามารถรับ &brandShortName; รุ่นล่าสุดได้เสมอที่:">
+
+<!ENTITY  unsupported.title               "ระบบไม่รองรับ">
+<!ENTITY  unsupported.label               "&brandShortName; ของคุณล้าสมัยแล้ว แต่รุ่นล่าสุดไม่รองรับระบบของคุณ โปรดอัปเกรดระบบของคุณ จากนั้นลองอีกครั้ง คุณจะไม่เห็นข้อความนี้อีก แต่คุณสามารถ">
+<!ENTITY  unsupportedLink.label           "เรียนรู้เพิ่มเติม">
+
+<!ENTITY  clickHere.label                 "ดูข้อมูลเพิ่มเติมเกี่ยวกับการอัปเดตนี้">
+
+<!ENTITY  evangelism.desc                 "แนะนำเป็นอย่างยิ่งให้คุณเรียกใช้การอัปเดต &brandShortName; นี้โดยเร็วที่สุดเท่าที่เป็นไปได้">
+
+<!ENTITY  downloadPage.title              "กำลังดาวน์โหลด &brandShortName;">
+<!ENTITY  downloading.intro               "กำลังดาวน์โหลดการอัปเดต…">
+<!ENTITY  connecting.label                "กำลังเชื่อมต่อกับเซิร์ฟเวอร์อัปเดต…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ไม่สามารถตรวจสอบความสมบูรณ์ของการอัปเดตแบบทบเพิ่มที่ดาวน์โหลดได้ ดังนั้นตอนนี้จึงกำลังดาวน์โหลดชุดอัปเดตแบบสมบูรณ์แทน">
+
+<!ENTITY  viewDetails.tooltip             "ดูรายละเอียดการอัปเดตนี้">
+
+<!ENTITY  details.link                    "รายละเอียด">
+
+<!ENTITY  error.title                     "การอัปเดตล้มเหลว">
+
+<!ENTITY  error.label                     "เกิดปัญหาในการตรวจสอบ ดาวน์โหลด หรือติดตั้งการอัปเดต ไม่สามารถอัปเดต &brandShortName; ได้เนื่องจาก:">
+                                           
+<!ENTITY  errorManual.label               "คุณสามารถอัปเดต &brandShortName; ด้วยตนเองโดยไปที่ลิงก์นี้และดาวน์โหลดรุ่นล่าสุด:">
+                                           
+<!ENTITY  errorpatching.intro             "ไม่สามารถเรียกใช้การอัปเดตแบบบางส่วน &brandShortName; จะลองอีกครั้งโดยดาวน์โหลดการอัปเดตแบบสมบูรณ์">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ไม่สามารถตรวจสอบว่ามีการอัปเดตที่ใช้งานได้หรือไม่ โปรดตรวจสอบให้แน่ใจว่าคุณมี &brandShortName; รุ่นล่าสุดจาก:">
+
+<!ENTITY  finishedPage.title              "การอัปเดตพร้อมติดตั้ง">
+<!ENTITY  finishedPage.text               "การอัปเดตจะถูกติดตั้งในครั้งถัดไปที่ &brandShortName; เริ่ม คุณสามารถเริ่มการทำงาน &brandShortName; ใหม่ตอนนี้ หรือทำงานต่อไปและเริ่มการทำงานใหม่ในภายหลัง">
+
+<!ENTITY  finishedBackgroundPage.text     "การอัปเดตความปลอดภัยและความเสถียรสำหรับ &brandShortName; ถูกดาวน์โหลดแล้วและพร้อมติดตั้ง">
+<!ENTITY  finishedBackground.name         "อัปเดต:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "การอัปเดตจะถูกติดตั้งในครั้งถัดไปที่ &brandShortName; เริ่ม คุณสามารถเริ่มการทำงาน &brandShortName; ใหม่ตอนนี้ หรือทำงานต่อไปและเริ่มการทำงานใหม่ในภายหลัง">
+<!ENTITY  finishedBackground.moreElevated "การอัปเดตนี้ต้องการสิทธิของผู้ดูแลระบบ การอัปเดตจะถูกติดตั้งในครั้งถัดไปที่ &brandShortName; เริ่ม คุณสามารถเริ่มการทำงาน &brandShortName; ใหม่ตอนนี้ ทำงานต่อไปและเริ่มการทำงานใหม่ในภายหลัง หรือปฏิเสธการอัปเดตนี้">
+
+<!ENTITY  update.details.label            "รายละเอียด">
+<!ENTITY  update.installedOn.label        "ติดตั้งเมื่อ:">
+<!ENTITY  update.status.label             "สถานะ:">

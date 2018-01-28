@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab để chuyển qua các thẻ theo thứ tự sử dụng gần đây nhất">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Mở cửa sổ mới trong một thẻ mới thay thế">
+<!ENTITY newWindowsAsTabs.accesskey   "w">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Cảnh báo khi bạn đóng nhiều thẻ một lúc">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Cảnh báo khi bạn mở nhiều thẻ một lúc có thể làm chậm &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Khi bạn mở một liên kết trong thẻ mới, chuyển sang thẻ đó ngay">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "Hiển thị hình ảnh xem trước thẻ trong thanh tác vụ Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "e">
+<!ENTITY tabsGroup.label          "Thẻ">

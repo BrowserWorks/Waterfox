@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Endra hovudpassord">
+<!ENTITY setPassword.tokenName.label       "Tryggingseining">
+<!ENTITY setPassword.oldPassword.label     "Gjeldande passord:">
+<!ENTITY setPassword.newPassword.label     "Nytt passord:">
+<!ENTITY setPassword.reenterPassword.label "Gjenta nytt passord:">
+<!ENTITY setPassword.meter.label           "Måling av passordkvalitet">
+<!ENTITY setPassword.meter.loading         "Lastar">
+<!ENTITY masterPasswordDescription.label   "Eit hovudpassord vert brukt til å verna sensitiv informasjon, som t.d. passord på ulike nettsider. Om du opprettar eit hovudpassord vil du bli spurt etter passordet for kvar programøkt, når &brandShortName; hentar ut lagra informasjon som er verna av passordet.">
+<!ENTITY masterPasswordWarning.label       "Ver sikker på at du hugsar hovudpassordet. Om du gløymer hovudpassordet, vil du ikkje få tilgang til informasjonen som er verna av det.">

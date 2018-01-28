@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Excepziuns - Translaziun">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Per suandantas linguas na vegnan offeridas naginas translaziuns:">
+<!ENTITY treehead.languageName.label      "Linguas">
+<!ENTITY removeLanguage.label             "Allontanar la lingua">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "Allontanar tut las linguas">
+<!ENTITY removeAllLanguages.accesskey     "u">
+
+<!ENTITY noTranslationForSites.label      "Per suandantas paginas na vegnan offeridas naginas translaziuns:">
+<!ENTITY treehead.siteName2.label         "Websites">
+<!ENTITY removeSite.label                 "Allontanar pagina">
+<!ENTITY removeSite.accesskey             "l">
+<!ENTITY removeAllSites.label             "Allontanar tut las paginas">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Serrar">
+<!ENTITY button.close.accesskey           "r">

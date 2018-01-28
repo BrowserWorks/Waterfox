@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Keresés ezen az oldalon">
+<!ENTITY findField.label "Szöveg keresése:">
+<!ENTITY findField.accesskey "S">
+<!ENTITY caseSensitiveCheckbox.label "Kis- és nagybetűk megkülönböztetése">
+<!ENTITY caseSensitiveCheckbox.accesskey "i">
+<!ENTITY wrapCheckbox.label "Keresés az egész oldalon">
+<!ENTITY wrapCheckbox.accesskey "e">
+<!ENTITY findButton.label "Következő keresése">
+<!ENTITY findButton.accesskey "K">
+<!ENTITY cancelButton.label "Mégse">
+<!ENTITY closeButton.label "Bezárás">
+<!ENTITY up.label "Felfelé">
+<!ENTITY up.accesskey "F">
+<!ENTITY down.label "Lefelé">
+<!ENTITY down.accesskey "L">
+<!ENTITY direction.label "Keresés iránya">

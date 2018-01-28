@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Xanelas emerxentes">
+
+<!ENTITY  blockPopups.label           "Bloquear xanelas emerxentes">
+<!ENTITY  blockPopups.accesskey       "B">
+<!ENTITY  popupExceptions.label       "Excepcións…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "Tipos de letra e cores">
+
+<!ENTITY  defaultFont.label           "Tipo de letra predeterminado:">
+<!ENTITY  defaultFont.accesskey       "d">
+<!ENTITY  defaultSize.label           "Tamaño:">
+<!ENTITY  defaultSize.accesskey       "T">
+
+<!ENTITY  advancedFonts.label         "Avanzadas…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "Cores…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "Idiomas">
+<!ENTITY chooseLanguage.label         "Escolla o seu idioma preferido para amosar as páxinas">
+<!ENTITY chooseButton.label           "Escoller…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "Traducir contido web">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Excepcións…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Traducións de">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Contido con DRM">
+
+<!ENTITY  playDRMContent.label         "Reproducir contido con DRM">
+<!ENTITY  playDRMContent.accesskey     "p">
+<!ENTITY  playDRMContent.learnMore.label "Máis información">
+
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturb.label      "Do not disturb me">
+<!ENTITY  notificationsDoNotDisturbDetails.value "No notification will be shown until you restart &brandShortName;">
+
+<!ENTITY  notificationsPolicy.label            "Notifications">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "Choose…">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  notificationsPolicyLearnMore.label   "Learn more">

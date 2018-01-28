@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informationen über url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Anbieter">
+<!ENTITY aboutUrlClassifier.provider                    "Anbieter">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Letztes Update (Zeit)">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Nächstes Update (Zeit)">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Abklingzeit">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Status letztes Update">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Aktualisieren">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Aktualisieren">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Leeren">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabellenname">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Anzahl negativer Cache-Einträge">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Anzahl positiver Cache-Einträge">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Einträge anzeigen">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cache-Einträge">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Präfix">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Ablauf negativer Cache-Einträge">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Vollständige Prüfsumme">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Ablauf positiver Cache-Einträge">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debugging">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Zu protokollierende Module festlegen">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Protokolldatei festlegen">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS-Protokoll aktivieren">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Im abgesicherten Modus zu protokollierende Module">
+<!ENTITY aboutUrlClassifier.debugModules                "Derzeit protokollierte Module">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS-Protokoll im Abgesicherten Modus">
+<!ENTITY aboutUrlClassifier.debugFile                   "Derzeitige Protokolldatei">

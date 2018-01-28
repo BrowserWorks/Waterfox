@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title			"設定 - サイトデータ">
+<!ENTITY hostCol.label			"サイト">
+<!ENTITY statusCol.label		"状態">
+<!ENTITY usageCol.label			"ストレージ">
+<!ENTITY searchTextboxPlaceHolder	"ウェブサイトを検索">
+<!ENTITY searchTextboxPlaceHolder.accesskey	"S">
+<!ENTITY removeSelected.label		"選択されたサイトデータを削除">
+<!ENTITY removeSelected.accesskey	"r">
+<!ENTITY save.label			"変更を保存">
+<!ENTITY save.accesskey			"a">
+<!ENTITY cancel.label			"キャンセル">
+<!ENTITY cancel.accesskey		"C">
+<!ENTITY removingDialog.title		"サイトデータの削除">
+<!ENTITY removingSelected.description	"サイトデータを削除すると関連する Cookie やオフラインウェブコンテンツも削除されるため、ウェブサイトからログアウトされます。本当に削除してもよろしいですか？">
+<!ENTITY siteTree.label			"次のウェブサイトの Cookie が削除されます:">

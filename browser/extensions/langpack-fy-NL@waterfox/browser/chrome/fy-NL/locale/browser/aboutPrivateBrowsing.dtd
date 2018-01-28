@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Jo binne op dit stuit net yn in priveefinster.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "In priveefinster iepenje">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Priveenavigaasje">
+<!ENTITY privateBrowsing.title.tracking                  "Priveenavigaasje mei Beskerming tsjin folgjen">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "As jo yn in priveefinster sneupe, sil Waterfox it folgjende ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "net bewarje">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "besochte siden">
+<!ENTITY aboutPrivateBrowsing.info.searches              "sykopdrachten">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tydlike bestannen">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox sil it folgjende ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "wol bewarje">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "downloads">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "blêdwizers">
+<!ENTITY aboutPrivateBrowsing.note.before                "Priveenavigaasje ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "makket jo net anonym">
+<!ENTITY aboutPrivateBrowsing.note.after                 " op it ynternet. Jo wurkjouwer of ynternetserviceprovider kin noch hieltyd sjen hokker siden jo besykje.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Mear ynfo oer ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Priveenavigaasje">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Beskerming tsjin folgjen">
+<!ENTITY trackingProtection.description2                 "Guon websites meitsje gebrûk fan folgers (‘trackers’) dy't jo aktiviteit op it ynternet byhâlde kinne. Mei Beskerming tsjin folgjen sil Waterfox in protte folgers blokkearje dy't ynformaasje oer jo sneupgedrach sammelje kinne.">
+<!ENTITY trackingProtection.startTour1                   "Sjen hoe't dit wurket">

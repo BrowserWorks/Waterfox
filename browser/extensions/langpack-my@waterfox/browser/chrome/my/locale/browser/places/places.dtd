@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "စာကြည့်တိုက်">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "ဖွဲ့စည်းပါ">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "သင်၏ဝတ်စာမျက်နှာအမှတ်များကိုစုစည်းပါ။">
+
+<!ENTITY file.close.label               "ပိတ်ပါ ">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w ">
+<!ENTITY views.label                    "ရှုမြင်ချက်များ">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "သင်၏မြင်ကွင်းအားပြောင်းပါ">
+<!ENTITY view.columns.label             "ကော်လံများကို ပြသပါ">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "မျိုးတူစုပါ">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "မျိုးတူ စုမထားသော">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "က > အ အစဉ်လိုက် မျိုးတူစု ">
+<!ENTITY view.sortAscending.accesskey   "က">
+<!ENTITY view.sortDescending.label      "အ > က အစဉ်လိုက် မျိုးတူစု ">
+<!ENTITY view.sortDescending.accesskey  "အ">
+
+<!ENTITY importBookmarksFromHTML.label     "Import Bookmarks from HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Export Bookmarks to HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "အခြားဘယောက်ဆာတစ်ခုမှအချက်အလက်များကိုသွင်းယူမည်။">
+<!ENTITY importOtherBrowser.accesskey      "အ">
+
+<!ENTITY cmd.backup.label               "သိမ်းဆည်းပါ...">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "ပြန်​ပေးအပ်ပါ">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ဖိုင် ရွေးပါ...">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY cmd.deleteDomainData.label     "ဒီကွန်ရက် အကြောင်းကို မေ့ပစ်ပါ">
+<!ENTITY cmd.deleteDomainData.accesskey "F">
+
+<!ENTITY cmd.open.label                  "ဖွင့်ပါ">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.open_window.label           "၀င်းဒိုးအသစ် တခုမှာ ဖွင့်ပါ">
+<!ENTITY cmd.open_window.accesskey       "N">
+<!ENTITY cmd.open_private_window.label     "သီးသန့် ဝင်းဒိုးအသစ်ထဲတွင် ဖွင့်ပါ။ P">
+<!ENTITY cmd.open_private_window.accesskey "P">
+<!ENTITY cmd.open_tab.label              "စာအမှတ် အသစ်တခုမှာ ဖွင့်ပါ">
+<!ENTITY cmd.open_tab.accesskey          "w">
+<!ENTITY cmd.open_all_in_tabs.label      "အားလုံးကို စာအမှတ်များနဲ့ ဖွင့်ပါ">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "O">
+
+<!ENTITY cmd.properties.label      "ဂုဏ်အင်္ဂါရပ်များ">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "အမည်အလိုက် မျိုးတူစုပါ">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "မှတ်သားချက် အသစ်">
+<!ENTITY cmd.new_bookmark.accesskey        "B">
+<!ENTITY cmd.new_folder.label              "ဖိုင်တွဲ အသစ်">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "ပုဒ်ခွဲ အသစ်">
+<!ENTITY cmd.new_separator.accesskey       "S">
+
+<!ENTITY cmd.reloadLivebookmark.label      "သက်၀င် မှတ်သားချက်ကို ပြန်ဖွင့်ပါ">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY cmd.moveBookmarks.label                  "ရွှေ့ပါ...">
+<!ENTITY cmd.moveBookmarks.accesskey              "M">
+
+<!ENTITY col.name.label          "အမည်">
+<!ENTITY col.tags.label          "စာအမှတ်များ">
+<!ENTITY col.url.label           "တည်နေရာ">
+<!ENTITY col.mostrecentvisit.label "နောက်ဆုံးအသုံးပြုခဲ့သော ဝတ်ဆိုဒ်များ">
+<!ENTITY col.visitcount.label    "လည်ပတ်မူ အရေအတွက်">
+<!ENTITY col.description.label   "ဖေါ်ပြချက်">
+<!ENTITY col.dateadded.label     "ထည့်သွင်းထားပြီ">
+<!ENTITY col.lastmodified.label  "နောက်ဆုံး မွမ်းမံချိန်">
+
+<!ENTITY search.label                              "ရှာဖွေပါ -">
+<!ENTITY search.accesskey                          "S">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "တင်သွင်းပြီး အရန်သင့် သိမ်းဆည်းပါ">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "သင်၏မှတ်သားဝတ်စာမျက်နှာများအားတင်သွင်းပြီးသိမ်ဆည်းထားမည်။">
+
+<!ENTITY backButton.tooltip  "ပြန်ဆုတ်ပါ">
+
+<!ENTITY forwardButton.tooltip  "ဆက်သွားပါ">
+
+<!ENTITY detailsPane.more.label "ပိုမို၍">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "လျှော့၍">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "အချက်တခုကို ရှုမြင်ဖို့နဲ့ ၄င်းရဲ့ ဂုဏ်အင်္ဂါရပ်များကို တည်းဖြတ်ဖို့ ရွေးချယ်ပါ">
+
+<!ENTITY find.label               "ရှာဖွေပါ -">
+<!ENTITY find.accesskey           "S">
+<!ENTITY view.label               "ရှုမြင်ချက်">
+<!ENTITY view.accesskey           "w">
+<!ENTITY byDate.label             "ရက်ဆွဲအားဖြင့်">
+<!ENTITY byDate.accesskey         "ရ">
+<!ENTITY bySite.label             "ဝတ်စာမျက်နှာအားဖြင့်">
+<!ENTITY bySite.accesskey         "ဝ">
+<!ENTITY byMostVisited.label      "အရောက်များခဲ့ဆုံးဝတ်စာမျက်နှာများအားဖြင့်">
+<!ENTITY byMostVisited.accesskey  "အ">
+<!ENTITY byLastVisited.label      "နောက်ဆုံးလည်ခဲ့သောစာမျက်နှာများအားဖြင့်">
+<!ENTITY byLastVisited.accesskey  "န">
+<!ENTITY byDayAndSite.label       "ရက်ဆွဲနှင်ဝတ်ဆိုက်လိပ်စာအားဖြင့်">
+<!ENTITY byDayAndSite.accesskey   "ရ">
+
+<!ENTITY search.placeholder  "Search">
+

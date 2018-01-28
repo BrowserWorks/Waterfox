@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Ümumi">
+
+<!ENTITY  warnOnAddonInstall.label        "Saytlar əlavə quraşdırmaq istədikdə xəbərdar olun">
+<!ENTITY  warnOnAddonInstall.accesskey    "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Təhlükəli və aldadıcı məzmunu blokla">
+<!ENTITY  enableSafeBrowsing.accesskey    "b">
+
+<!ENTITY  blockDownloads.label            "Təhlükəli endirmələri blokla">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "İstənməyən və ümumi olmayan proqramlar haqqında xəbərdar olun">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "C">
+
+<!ENTITY  addonExceptions.label         "İstisnalar…">
+<!ENTITY  addonExceptions.accesskey     "s">
+
+
+<!ENTITY  logins.label                  "Daxil olmalar">
+
+<!ENTITY  rememberLogins.label          "Saytlar üçün daxil olmaları yadda saxla">
+<!ENTITY  rememberLogins.accesskey      "s">
+<!ENTITY  passwordExceptions.label      "İstisnalar…">
+<!ENTITY  passwordExceptions.accesskey  "n">
+
+<!ENTITY  useMasterPassword.label        "Ana parol işlət">
+<!ENTITY  useMasterPassword.accesskey    "i">
+<!ENTITY  changeMasterPassword.label     "Ana parolu dəyişdir…">
+<!ENTITY  changeMasterPassword.accesskey "d">
+
+<!ENTITY  savedLogins.label              "Saxlanmış Daxil olmalar…">
+<!ENTITY  savedLogins.accesskey          "D">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

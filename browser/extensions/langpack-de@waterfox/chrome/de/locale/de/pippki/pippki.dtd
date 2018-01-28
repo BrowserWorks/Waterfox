@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Master-Passwort ändern">
+<!ENTITY setPassword.tokenName.label "Kryptographie-Modul">
+<!ENTITY setPassword.oldPassword.label "Aktuelles Passwort:">
+<!ENTITY setPassword.newPassword.label "Neues Passwort:">
+<!ENTITY setPassword.reenterPassword.label "Neues Passwort (nochmals):">
+<!ENTITY setPassword.meter.label "Passwort-Qualitätsmessung">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Zurücksetzen">
+<!ENTITY resetPassword.title  "Master-Passwort zurücksetzen">
+<!ENTITY resetPassword.text  "Wenn Sie Ihr Master-Passwort zurücksetzen, gehen all Ihre gespeicherten Web- und E-Mail-Passwörter, Formulardaten, persönlichen Zertifikate und privaten Schlüssel verloren. Soll Ihr Master-Passwort trotzdem zurückgesetzt werden?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Herunterladen des Zertifikats">
+<!ENTITY downloadCert.message1 "Sie wurden gebeten, einer neuen Zertifizierungsstelle (CA) zu vertrauen.">
+<!ENTITY downloadCert.trustSSL "Dieser CA vertrauen, um Websites zu identifizieren.">
+<!ENTITY downloadCert.trustEmail "Dieser CA vertrauen, um E-Mail-Nutzer zu identifizieren.">
+<!ENTITY downloadCert.trustObjSign "Dieser CA vertrauen, um Software-Entwickler zu identifizieren.">
+<!ENTITY downloadCert.message3 "Bevor Sie dieser CA für jeglichen Zweck vertrauen, sollten Sie das Zertifikat sowie seine Richtlinien und Prozeduren (wenn vorhanden) überprüfen.">
+<!ENTITY downloadCert.viewCert.label "Ansicht">
+<!ENTITY downloadCert.viewCert.text "CA-Zertifikat überprüfen">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Benutzer-Identifikationsanfrage">
+<!ENTITY clientAuthAsk.message1 "Diese Website verlangt, dass Sie sich mit einem Zertifikat identifizieren:">
+<!ENTITY clientAuthAsk.message2 "Wählen Sie ein Zertifikat, das als Identifikation vorgezeigt wird:">
+<!ENTITY clientAuthAsk.message3 "Details des gewählten Zertifikats:">
+
+<!ENTITY pkcs12.setpassword.title  "Wählen Sie ein Zertifikats-Backup-Passwort">
+<!ENTITY pkcs12.setpassword.message  "Das Zertifikats-Backup-Passwort, das Sie hier festlegen, schützt die Backup-Datei, die Sie im Moment erstellen. Sie müssen dieses Passwort festlegen, um mit dem Backup fortzufahren.">
+<!ENTITY pkcs12.setpassword.label1 "Zertifikats-Backup-Passwort:">
+<!ENTITY pkcs12.setpassword.label2 "Zertifikats-Backup-Passwort (nochmals):">
+<!ENTITY pkcs12.setpassword.reminder "Wichtig: Wenn Sie Ihr Zertifikats-Backup-Passwort vergessen, können Sie dieses Backup später nicht wiederherstellen. Bitte schreiben Sie es an einem sicheren Platz nieder.">
+
+<!ENTITY chooseToken.title  "Token-Wahl-Dialog">
+<!ENTITY chooseToken.message1 "Bitte wählen Sie ein Token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Erstellen eines privaten Schlüssels">
+<!ENTITY createCertInfo.msg1 "Schlüssel wird generiert… Dies kann einige Minuten dauern…">
+<!ENTITY createCertInfo.msg2 "Bitte warten…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Geschützte Token-Authentifikation">
+<!ENTITY protectedAuth.msg "Bitte authentifizieren Sie sich beim Token. Die Authentifikationsmethode hängt vom Typ Ihres Tokens ab.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Strg+Tab pśejźo rejtarki pó tuchylu póstajonem pórěźe">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Nowe wokna w nowem rejtarku wócyniś">
+<!ENTITY newWindowsAsTabs.accesskey   "N">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Warnowaś, gaž někotare rejtarki se zacynjaju">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "W">
+
+<!ENTITY warnOnOpenManyTabs.label       "Warnowaś, gaby wócynjanje někotarych rejtarkow mógło &brandShortName; spomałšyś">
+<!ENTITY warnOnOpenManyTabs.accesskey   "k">
+
+<!ENTITY switchLinksToNewTabs.label        "Ned na wótkaz pśešaltowaś, kótaryž jo se w nowem rejtarku wócynił">
+<!ENTITY switchLinksToNewTabs.accesskey    "t">
+
+<!ENTITY showTabsInTaskbar.label          "Rejtarkowe pśeglědy we Windowsowej nadawkowej rědce pokazaś">
+<!ENTITY showTabsInTaskbar.accesskey      "R">
+<!ENTITY tabsGroup.label          "Rejtarki">

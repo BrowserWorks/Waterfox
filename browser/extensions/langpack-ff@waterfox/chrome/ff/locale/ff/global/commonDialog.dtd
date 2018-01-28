@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Tiitoonde Raɓɓere"> 
+<!ENTITY message.label    "Jubbannde binndol waɗee ɗoo.">
+<!ENTITY editfield0.label "Innde kuutoro:"> 
+<!ENTITY editfield1.label "Finnde:"> 
+<!ENTITY checkbox.label   "Ƴeewto">
+<!ENTITY copyCmd.label    "Natto">
+<!ENTITY copyCmd.accesskey "N">
+<!ENTITY selectAllCmd.label "Labo Fof">
+<!ENTITY selectAllCmd.accesskey "F">

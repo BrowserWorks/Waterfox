@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Tere tulemast &syncBrand.shortName.label;i">
+
+<!ENTITY aboutAccountsConfig.description "Oma kaartide, järjehoidjate, paroolide ja muu sünkroniseerimiseks logi sisse.">
+<!ENTITY aboutAccountsConfig.startButton.label "Tee algust">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Synci sätted">
+<!ENTITY aboutAccounts.noConnection.title "Ühendus puudub">
+<!ENTITY aboutAccounts.noConnection.description "Sisselogimiseks pead olema ühendatud internetiga.">
+<!ENTITY aboutAccounts.noConnection.retry "Proovi uuesti">
+<!ENTITY aboutAccounts.badConfig.title "Halb konfiguratsioon">
+<!ENTITY aboutAccounts.badConfig.description "Sinu Waterfoxi konto serveri konfiguratsiooni polnud võimalik määratleda. Palun proovi hiljem uuesti.">

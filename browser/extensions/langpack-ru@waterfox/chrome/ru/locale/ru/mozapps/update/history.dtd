@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Журнал обновлений">
+<!ENTITY  history.intro             "Были установлены следующие обновления:">
+<!ENTITY  closebutton.label         "Закрыть">
+                                     
+<!ENTITY  noupdates.label           "Ни одного обновления ещё не было установлено">
+
+<!ENTITY  name.header               "Имя обновления">
+<!ENTITY  date.header               "Дата установки">
+<!ENTITY  type.header               "Тип">
+<!ENTITY  state.header              "Состояние">
+

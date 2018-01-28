@@ -1,0 +1,33 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Lựa chọn Hồ sơ Người dùng">
+
+<!ENTITY            profilename.label      "Tên Hồ Sơ:">
+
+<!ENTITY            start.label            "Khởi động &brandShortName;">
+<!ENTITY            exit.label             "Thoát">
+
+<!ENTITY            availprofiles.label    "Các Hồ sơ Hiện tại">
+
+<!ENTITY            newButton.label        "Tạo Hồ Sơ…">
+<!ENTITY            newButton.accesskey    "T">
+<!ENTITY            renameButton.label     "Đổi tên Hồ sơ…">
+<!ENTITY            renameButton.accesskey "n">
+<!ENTITY            deleteButton.label     "Xóa Hồ Sơ…">
+<!ENTITY            deleteButton.accesskey "X">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; lưu thông tin về các thiết lập, tùy chọn, và các danh mục khác trong hồ sơ người dùng của bạn.">
+
+<!ENTITY            offlineState.label    "Làm việc ngoại tuyến">
+<!ENTITY            offlineState.accesskey "v">
+
+
+
+<!ENTITY            useSelected.accesskey   "s">
+<!ENTITY            useSelected.label       "Use the selected profile without asking at startup">

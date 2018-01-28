@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Безбедност">
+<!ENTITY  phishingProtection.label       'Заштита од "пецања"'>
+
+<!ENTITY  warnOnAddonInstall.label        "Упозори ме ако сајтови пробају да инсталирају додатке">
+<!ENTITY  warnOnAddonInstall.accesskey    "У">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Блокирај опасан и обманљив садржај">
+<!ENTITY  enableSafeBrowsing.accesskey    "с">
+
+<!ENTITY  blockDownloads.label            "Блокирај опасна преузимања">
+<!ENTITY  blockDownloads.accesskey        "п">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Упозори ме о нежељеном и ретко коришћеном софтверу">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "р">
+
+<!ENTITY  addonExceptions.label         "Изузеци">
+<!ENTITY  addonExceptions.accesskey     "И">
+
+
+<!ENTITY  formsAndPasswords.label       "Форме и лозинке">
+
+<!ENTITY  rememberLogins1.label          "Запамти пријаве и лозинке за веб сајтове">
+<!ENTITY  rememberLogins1.accesskey      "З">
+<!ENTITY  passwordExceptions.label      "Изузеци">
+<!ENTITY  passwordExceptions.accesskey  "е">
+
+<!ENTITY  useMasterPassword.label        "Користи главну лозинку">
+<!ENTITY  useMasterPassword.accesskey    "К">
+<!ENTITY  changeMasterPassword.label     "Промени главну лозинку…">
+<!ENTITY  changeMasterPassword.accesskey "П">
+
+<!ENTITY  savedLogins.label              "Сачуване пријаве">
+<!ENTITY  savedLogins.accesskey          "С">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

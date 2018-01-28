@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Minimizar">
+<!ENTITY bringAllToFront.label    "Trazer tudo para a frente">
+<!ENTITY zoomWindow.label         "Zoom">
+<!ENTITY windowMenu.label         "Janela">
+
+<!ENTITY helpMenu.label           "Ajuda"> 
+<!ENTITY helpMenu.accesskey       "u"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Ajuda"> 
+<!ENTITY helpMenuWin.accesskey    "u">
+<!ENTITY aboutProduct2.label      "Acerca do &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "Ajuda do &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "u">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Atalhos de teclado">
+<!ENTITY helpKeyboardShortcuts.accesskey "h">
+
+<!ENTITY helpSafeMode.label       "Reiniciar com os extras desativados…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "Reiniciar com os extras ativados">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "Relatório de estado do &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Informação para resolução de problemas">
+<!ENTITY helpTroubleshootingInfo.accesskey  "r">
+
+<!ENTITY helpFeedbackPage.label      "Submeter feedback…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "Visita ao &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Preferências…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Serviços">
+
+<!ENTITY hideThisAppCmdMac2.label       "Ocultar o &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ocultar outras aplicações">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Mostrar tudo">

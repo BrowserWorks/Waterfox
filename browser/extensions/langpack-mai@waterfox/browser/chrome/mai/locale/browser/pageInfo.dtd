@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "नक़ल लिअ">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "सभटा चुनू">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "सामान्य">
+<!ENTITY  generalTab.accesskey  "G">
+
+<!ENTITY  generalURL            "पता:">
+<!ENTITY  generalType           "प्रकार:">
+<!ENTITY  generalMode           "रेंडर विधि:">
+<!ENTITY  generalSize           "आकार:">
+<!ENTITY  generalReferrer       "संदर्भ URL:">
+<!ENTITY  generalSource         "कैश स्रोत:">
+<!ENTITY  generalModified       "रूपांतरित:">
+<!ENTITY  generalEncoding2      "पाठ एनकोडिंग:">
+<!ENTITY  generalMetaName       "नाम">
+<!ENTITY  generalMetaContent    "अंतर्वस्तु">
+
+<!ENTITY  mediaTab              "मीडिया">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "स्थान:">
+<!ENTITY  mediaText             "संबंधित पाठ:">
+<!ENTITY  mediaAltHeader        "वैकल्पिक पाठ">
+<!ENTITY  mediaAddress          "पता">
+<!ENTITY  mediaType             "प्रकार">
+<!ENTITY  mediaSize             "आकार">
+<!ENTITY  mediaCount            "गिनती">
+<!ENTITY  mediaDimension        "आयाम:">
+<!ENTITY  mediaLongdesc         "लंबा विवरण:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "एहिना सहेजू…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "मीडिया पूर्वावलोकन:">
+
+<!ENTITY  feedTab               "फीड">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "सदस्यता लिअ">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "अनुमति">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "पूर्वनिर्धारित क प्रयोग  करू ">
+<!ENTITY  permAskAlways         " हरदम  पूछू">
+<!ENTITY  permAllow             "स्वीकारू">
+<!ENTITY  permAllowSession      "सत्र क लेल स्वीकारू">
+<!ENTITY  permBlock             "रोकू">
+<!ENTITY  permissionsFor        "एकटार लेल अनुमति:">
+<!ENTITY  permPlugins           "प्लगिन सक्रिय करू">
+
+<!ENTITY  permClearStorage           "भंडारण साफ़ करू ">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "सुरक्षा">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "प्रमाणपत्र देखू">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "अज्ञात">
+
+
+<!ENTITY  securityView.identity.header   "वेब साइट सुरक्षा">
+<!ENTITY  securityView.identity.owner    "स्वामी: ">
+<!ENTITY  securityView.identity.domain   "वेब साइट: ">
+<!ENTITY  securityView.identity.verifier "एकटार द्वारा सत्यापित: ">
+
+
+<!ENTITY  securityView.privacy.header                   "गोपनीयता आ इतिहास">
+<!ENTITY  securityView.privacy.history                  "की हम ई वेब साइट आइसँ पहिने देखने छी?">
+<!ENTITY  securityView.privacy.cookies                  "की ई वेब साइट हमर कंप्यूटर पर सूचना (कुकी) जमा कए रहल अछि?">
+<!ENTITY  securityView.privacy.viewCookies              "कुकी देखू">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "की हम कोनो गुड़किल्ली एहि वेबसाइट क लेल सहेजने छी?">
+<!ENTITY  securityView.privacy.viewPasswords            "सहेजल गेल गुड़किल्ली देखू">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "तकनीकी विवरण">
+
+<!ENTITY  helpButton.label                              "मदति ">
+
+<!ENTITY  generalTitle          "Title:">
+<!ENTITY  securityView.identity.validity "Expires on:">
+

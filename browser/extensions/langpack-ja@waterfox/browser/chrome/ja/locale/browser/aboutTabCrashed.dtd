@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab	"このタブを閉じる">
+<!ENTITY tabCrashed.restoreTab	"このタブを復元する">
+<!ENTITY tabCrashed.restoreAll	"クラッシュしたタブをすべて復元する">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2			"申し訳ありません。タブがクラッシュしました。">
+<!ENTITY tabCrashed.offerHelp			"We can help you!">
+<!ENTITY tabCrashed.single.offerHelpMessage	"ページを再読み込みするには、[&tabCrashed.restoreTab;] を選択してください。">
+<!ENTITY tabCrashed.multiple.offerHelpMessage	"ページを再読み込みするには、[&tabCrashed.restoreTab;] または [&tabCrashed.restoreAll;] を選択してください。">
+<!ENTITY tabCrashed.requestHelp			"ご協力をお願いします">
+<!ENTITY tabCrashed.requestHelpMessage		"クラッシュレポートを送信すると、問題の解決と &brandShortName; の改善に役立ちます。">
+<!ENTITY tabCrashed.requestReport		"このタブを報告">
+<!ENTITY tabCrashed.sendReport2			"表示中のタブのクラッシュレポートを送信する">
+<!ENTITY tabCrashed.commentPlaceholder2		"コメントを追記 (公開されます)">
+<!ENTITY tabCrashed.includeURL2			"クラッシュレポートにページの URL を含める">
+<!ENTITY tabCrashed.emailPlaceholder		"メールアドレスを記入">
+<!ENTITY tabCrashed.emailMe			"新着情報があったらメールを送信する">
+<!ENTITY tabCrashed.reportSent			"クラッシュレポートを送信しました。&brandShortName; の改善に役立てます。">
+<!ENTITY tabCrashed.requestAutoSubmit2		"他のタブも報告">
+<!ENTITY tabCrashed.autoSubmit2			"設定を変更すると、このセッション以降にクラッシュした背面のタブについてのレポートを含むクラッシュレポートを自動的に送信します。">

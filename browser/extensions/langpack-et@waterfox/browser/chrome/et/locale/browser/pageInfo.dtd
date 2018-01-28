@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "970">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopeeri">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Vali kõik">
+<!ENTITY  selectall.accesskey   "V">
+<!ENTITY  closeWindow.key       "W">
+
+<!ENTITY  generalTab            "Üldine">
+<!ENTITY  generalTab.accesskey  "l">
+<!ENTITY  generalTitle          "Pealkiri:">
+<!ENTITY  generalURL            "Aadress:">
+<!ENTITY  generalType           "Tüüp:">
+<!ENTITY  generalMode           "Esitusviis:">
+<!ENTITY  generalSize           "Suurus:">
+<!ENTITY  generalReferrer       "Viitav URL:">
+<!ENTITY  generalSource         "Vahemälu allikas:">
+<!ENTITY  generalModified       "Muudetud:">
+<!ENTITY  generalEncoding2      "Teksti kodeering:">
+<!ENTITY  generalMetaName       "Nimi">
+<!ENTITY  generalMetaContent    "Sisu">
+
+<!ENTITY  mediaTab              "Meedia">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Asukoht:">
+<!ENTITY  mediaText             "Seonduv tekst:">
+<!ENTITY  mediaAltHeader        "Alternatiivne tekst">
+<!ENTITY  mediaAddress          "Aadress">
+<!ENTITY  mediaType             "Tüüp">
+<!ENTITY  mediaSize             "Suurus">
+<!ENTITY  mediaCount            "Arv">
+<!ENTITY  mediaDimension        "Mõõtmed:">
+<!ENTITY  mediaLongdesc         "Pikk kirjeldus:">
+<!ENTITY  mediaBlockImage.accesskey "P">
+<!ENTITY  mediaSaveAs           "Salvesta kui...">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Meediafaili eelvaatlus:">
+
+<!ENTITY  feedTab               "Uudistevood">
+<!ENTITY  feedTab.accesskey     "U">
+<!ENTITY  feedSubscribe         "Telli">
+<!ENTITY  feedSubscribe.accesskey "T">
+
+<!ENTITY  permTab               "Õigused">
+<!ENTITY  permTab.accesskey     "i">
+<!ENTITY  permUseDefault        "Kasutatakse vaikimisi õigusi">
+<!ENTITY  permAskAlways         "Alati küsitakse">
+<!ENTITY  permAllow             "Lubatud">
+<!ENTITY  permAllowSession      "Lubatud selleks seansiks">
+<!ENTITY  permBlock             "Keelatud">
+<!ENTITY  permissionsFor        "Õigused veebilehele:">
+<!ENTITY  permPlugins           "Pluginate aktiveerimine">
+
+<!ENTITY  permClearStorage           "Kustuta andmed">
+<!ENTITY  permClearStorage.accesskey "K">
+
+<!ENTITY  securityTab           "Turvalisus">
+<!ENTITY  securityTab.accesskey "r">
+<!ENTITY  securityView.certView "Vaata sertifikaati">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Tundmatu">
+
+
+<!ENTITY  securityView.identity.header   "Veebilehe identiteet">
+<!ENTITY  securityView.identity.owner    "Omanik: ">
+<!ENTITY  securityView.identity.domain   "Veebileht: ">
+<!ENTITY  securityView.identity.verifier "Verifitseerija: ">
+<!ENTITY  securityView.identity.validity "Aegub:">
+
+<!ENTITY  securityView.privacy.header                   "Privaatsus ja ajalugu">
+<!ENTITY  securityView.privacy.history                  "Kas ma olen enne tänast seda lehte juba külastanud?">
+<!ENTITY  securityView.privacy.cookies                  "Kas see veebileht salvestab infot (küpsiseid) minu arvutisse?">
+<!ENTITY  securityView.privacy.viewCookies              "Vaata küpsiseid">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Kas ma olen salvestanud selle veebilehe paroole?">
+<!ENTITY  securityView.privacy.viewPasswords            "Vaata salvestatud paroole">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "s">
+
+<!ENTITY  securityView.technical.header                 "Tehnilised üksikasjad">
+
+<!ENTITY  helpButton.label                              "Abi">

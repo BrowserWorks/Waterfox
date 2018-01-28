@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Tiqupïx">
+<!ENTITY cutCmd.accesskey "q">
+<!ENTITY copyCmd.label "Wachib'exïk">
+<!ENTITY copyCmd.accesskey "c">
+<!ENTITY pasteCmd.label "Titz'ajb'äx">
+<!ENTITY pasteCmd.accesskey "T">
+<!ENTITY undoCmd.label "Titzolïx">
+<!ENTITY undoCmd.accesskey "T">
+<!ENTITY selectAllCmd.label "Ticha' ronojel">
+<!ENTITY selectAllCmd.accesskey "r">
+<!ENTITY deleteCmd.label "Tiyuj">
+<!ENTITY deleteCmd.accesskey "T">
+
+<!ENTITY spellAddToDictionary.label "Titz'aqatisäx pa soltzij">
+<!ENTITY spellAddToDictionary.accesskey "a">
+<!ENTITY spellUndoAddToDictionary.label "Titzolïx chi rij Titz'aqatisäx pa soltzij">
+<!ENTITY spellUndoAddToDictionary.accesskey "t">
+<!ENTITY spellCheckToggle.label "Tinik'öx rutz'ib'axik">
+<!ENTITY spellCheckToggle.accesskey "t">
+<!ENTITY spellNoSuggestions.label "(Majun taq kichilab'exik tz'ib'anïk)">
+<!ENTITY spellDictionaries.label "Taq ch'ab'äl">
+<!ENTITY spellDictionaries.accesskey "T">
+
+<!ENTITY searchTextBox.clear.label "Tijosq'ïx">
+
+<!ENTITY fillLoginMenu.label          "Tinojisäx rutikirisab'al molojri'ïl">
+<!ENTITY fillLoginMenu.accesskey      "T">
+<!ENTITY fillPasswordMenu.label       "Tinojisäx ewan tzij">
+<!ENTITY fillPasswordMenu.accesskey   "T">
+<!ENTITY fillUsernameMenu.label       "Tinojisäx rub'i' winäq">
+<!ENTITY fillUsernameMenu.accesskey   "T">
+<!ENTITY noLoginSuggestions.label     "(Majun taq kichilab'exik rutikirib'al molojri'ïl)">
+<!ENTITY viewSavedLogins.label        "Ketz'et ri yakon kitikirisanik molojri'ïl">

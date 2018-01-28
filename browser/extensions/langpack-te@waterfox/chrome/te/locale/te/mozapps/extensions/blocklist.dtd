@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "బహుశా పొడిగింతలు సమస్యలకు కారణం కావచ్చు">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; కింది పొడిగింతలు స్థిరత్వమునకు లేదా రక్షణకు సంభందించిన సమస్యలను కలిగించునని నిర్థారించెను:">
+<!ENTITY blocklist.softblocked       "మీ రక్షణ కొరకు, ఈ పొడిగింతలు అచేతనపరచి మీరు మరలా పునఃప్రారంభించమని గట్టిగా సిఫార్సు చేయడమైంది.">
+<!ENTITY blocklist.hardblocked       "ఈ పొడిగింతలు స్థిరత్వం లేదా రక్షణ సమస్యలను కలిగించు అధిక ఇబ్బందిని కలిగివున్నాయి మరియు నిషేధించబడినవి, వాటిని పూర్తిగా అచేతనము చేయుటకు పునఃప్రారంభము అవసరము.">
+<!ENTITY blocklist.softandhard       "స్థిరత్వం లేదా రక్షణ సమస్యలను కలిగించు అధిక యిబ్బంది కలిగివున్న పొడిగింతలు నిషేధించబడినవి. మిగతావి తక్కువ యిబ్బంది కలవి, అయితే మీరు వాటిని అచేతనపరచి పునఃప్రారంభుట మంచిదని గట్టిగా సిఫార్సు చేయడమైంది.">
+<!ENTITY blocklist.moreinfo          "మరింత సమాచారం">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; పునఃప్రారంభించు">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "నిషేధించబడినది">
+<!ENTITY blocklist.checkbox.label    "అచేతనపరచు">

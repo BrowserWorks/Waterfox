@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Стандартна търсеща машина">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Изберете търсеща машина, която да използвате от адресната лента и лентата за търсене.">
+
+<!ENTITY provideSearchSuggestions.label        "Показване на подсказки при въвеждане на думи за търсене">
+<!ENTITY provideSearchSuggestions.accesskey    "П">
+
+<!ENTITY showURLBarSuggestions2.label           "Показване на подсказки в резултатите на лентата за търсене">
+<!ENTITY showURLBarSuggestions2.accesskey       "р">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Подсказките при търсене няма да бъдат показвани в резултатите от лентата за адрес, защото &brandShortName; е настроен никога да не запомня историята на браузване.">
+
+<!ENTITY oneClickSearchEngines.label           "Търсене с едно щракване">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Изберете допълнителни търсещи машини, които да се показват под адресната лента и лентата за търсене при въвеждане на текст.">
+
+<!ENTITY engineNameColumn.label                "Търсеща машина">
+<!ENTITY engineKeywordColumn.label             "Ключова дума">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Връщане на стандартните търсещи машини">
+<!ENTITY restoreDefaultSearchEngines.accesskey "В">
+
+<!ENTITY removeEngine.label                    "Премахване">
+<!ENTITY removeEngine.accesskey                "П">
+
+<!ENTITY findMoreSearchEngines.label           "Други търсещи машини">

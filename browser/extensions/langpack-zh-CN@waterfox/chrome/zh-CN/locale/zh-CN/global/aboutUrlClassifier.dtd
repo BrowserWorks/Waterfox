@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "有关 url-classifier（URL 分类器）的信息">
+<!ENTITY aboutUrlClassifier.providerTitle               "供应商">
+<!ENTITY aboutUrlClassifier.provider                    "供应商">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "上次更新时间">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "下次更新时间">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "退避时间">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "上次更新状态">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "更新">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "缓存">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "刷新">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "清除">
+<!ENTITY aboutUrlClassifier.cacheTableName              "表名">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "阴性缓存总数量">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "阳性缓存总数量">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "显示项目">
+<!ENTITY aboutUrlClassifier.cacheEntries                "缓存项目">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "前缀">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "阴性缓存过期">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "完整散列">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "阳性缓存过期">
+<!ENTITY aboutUrlClassifier.debugTitle                  "调试">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "设置日志模块">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "设置日志文件">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "设置 JS 日志">
+<!ENTITY aboutUrlClassifier.debugSBModules              "安全浏览日志模块">
+<!ENTITY aboutUrlClassifier.debugModules                "当前日志模块">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "安全浏览 JS 日志">
+<!ENTITY aboutUrlClassifier.debugFile                   "当前日志文件">

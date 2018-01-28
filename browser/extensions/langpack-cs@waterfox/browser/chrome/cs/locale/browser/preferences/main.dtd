@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Spuštění">
+
+<!ENTITY startupPage2.label        "Při startu aplikace &brandShortName;">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "zobrazit vaši domovskou stránku">
+<!ENTITY startupBlankPage.label    "zobrazit prázdnou stránku">
+<!ENTITY startupPrevSession.label  "zobrazit okna a panely z minula">
+
+<!ENTITY homepage2.label           "Domovská stránka">
+<!ENTITY homepage2.accesskey       "m">
+<!ENTITY useCurrentPage.label      "Použít aktuální stránku">
+<!ENTITY useCurrentPage.accesskey  "k">
+<!ENTITY useMultiple.label         "Použít aktuální stránky">
+<!ENTITY chooseBookmark.label      "Použít záložku…">
+<!ENTITY chooseBookmark.accesskey  "z">
+<!ENTITY restoreDefault.label      "Obnovit výchozí">
+<!ENTITY restoreDefault.accesskey  "b">
+
+<!ENTITY downloads.label     "Stahování">
+
+<!ENTITY saveTo.label "Ukládat všechny soubory do složky">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Procházet…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "Vybrat…">
+<!ENTITY chooseFolderMac.accesskey    "y">
+<!ENTITY alwaysAskWhere.label         "U každého souboru se zeptat, kam ho uložit">
+<!ENTITY alwaysAskWhere.accesskey     "a">
+
+<!ENTITY alwaysCheckDefault2.label        "Kontrolovat, jestli je &brandShortName; výchozím webovým prohlížečem">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+<!ENTITY setAsMyDefaultBrowser3.label     "Nastavit jako výchozí…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "i">
+<!ENTITY isDefault.label                  "&brandShortName; je aktuálně výchozím prohlížečem">
+<!ENTITY isNotDefault.label               "&brandShortName; aktuálně není výchozím prohlížečem">
+
+<!ENTITY separateProfileMode.label        "Povolit současné spuštění aplikací &brandShortName; a Waterfox">
+<!ENTITY useWaterfoxSync.label             "Tip: Budou použity oddělené uživatelské profily. Pro sdílení dat mezi nimi můžete použít službu Sync.">
+<!ENTITY getStarted.notloggedin.label     "Přihlášení k &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Otevřít předvolby služby &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Povolit aplikaci &brandShortName; používat více procesů">

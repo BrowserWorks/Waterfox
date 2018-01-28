@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Woo ga hin ka war gaarantoo mun!">
+<!ENTITY aboutWarningText.label "Jinehere hanseyaney wey barmayroo ka hin ka hasaraw dam war porogaramoo tabatiyanoo, saajaa wala goyyanoo ra. War ga hima koy jine hinne nda war g'alhakiika nda haya kaŋ war g'a tee.">
+<!ENTITY aboutWarningButton2.label "Ay yadda allamaanaa ga!">
+<!ENTITY aboutWarningCheckbox.label "Yaamaroo woo cebe yane hiino">
+
+<!ENTITY searchPrefs.label "Ceeci:">
+<!ENTITY searchPrefs.accesskey "C">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Ibaayi maa">
+<!ENTITY lockColumn.label "Assariya">
+<!ENTITY typeColumn.label "Dumi">
+<!ENTITY valueColumn.label "Hinna">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Naagu ka fay"> 
+<!ENTITY columnChooser.tooltip "Naagu ka sorrawey cebe"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Berandi">
+<!ENTITY copyPref.accesskey "B">
+<!ENTITY copyName.label "Maa berandi">
+<!ENTITY copyName.accesskey "M">
+<!ENTITY copyValue.label "Hinna berandi">
+<!ENTITY copyValue.accesskey "H">
+<!ENTITY modify.label "Barmay">
+<!ENTITY modify.accesskey "B">
+<!ENTITY toggle.label "Kanjari">
+<!ENTITY toggle.accesskey "K">
+<!ENTITY reset.label "Yeeti">
+<!ENTITY reset.accesskey "Y">
+<!ENTITY new.label "Taaga">
+<!ENTITY new.accesskey "a">
+<!ENTITY string.label "Tenjiri">
+<!ENTITY string.accesskey "T">
+<!ENTITY integer.label "Hinna timmante">
+<!ENTITY integer.accesskey "H">
+<!ENTITY boolean.label "Cimi wala taari hãayan">
+<!ENTITY boolean.accesskey "C">

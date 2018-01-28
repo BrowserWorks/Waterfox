@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "کنکشن سیٹکگیں">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "رسائی بطرف انٹرنیٹ پراکسی تشکیل کریں">
+<!ENTITY  noProxyTypeRadio.label        "کوئی پراکسی نہیں">
+<!ENTITY  noProxyTypeRadio.accesskey    "پ">
+<!ENTITY  systemTypeRadio.label         "نظام کی پراکسی سیٹنگیں استعمال کریں">
+<!ENTITY  systemTypeRadio.accesskey     "ا">
+<!ENTITY  WPADTypeRadio.label           "اس نیٹورک کے لیے پراکسی سیٹنگیں خود کھوج کریں">
+<!ENTITY  WPADTypeRadio.accesskey       "ن">
+<!ENTITY  manualTypeRadio.label         "دستی پراکسی تشکیل:">
+<!ENTITY  manualTypeRadio.accesskey     "د">
+<!ENTITY  autoTypeRadio.label           "خودکار پراکسی تشکیل URL:">
+<!ENTITY  autoTypeRadio.accesskey       "خ">
+<!ENTITY  reload.label                  "پھر لوڈ کریں">
+<!ENTITY  reload.accesskey              "پ">
+<!ENTITY  ftp.label                     "FTP پراکسی:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP پراکسی:">
+<!ENTITY  http.accesskey                "پ">
+<!ENTITY  ssl.label                     "SSL پراکسی:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS میزبان:">
+<!ENTITY  socks.accesskey               "S">
+<!ENTITY  socks4.label                  "SOCKS ورژن 4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS ورژن 5">
+<!ENTITY  socks5.accesskey              "و">
+<!ENTITY  socksRemoteDNS.label2         "پراکسی DNS جب استعمال کر رہے ہوں SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "پورٹ:">
+<!ENTITY  HTTPport.accesskey            "پ">
+<!ENTITY  SSLport.accesskey             "س">
+<!ENTITY  FTPport.accesskey             "ف">
+<!ENTITY  SOCKSport.accesskey           "ٹ">
+<!ENTITY  noproxy.label                 "پراکسی نہیں برائے:">
+<!ENTITY  noproxy.accesskey             "ن">
+<!ENTITY  noproxyExplain.label          "مثال: .mozilla.org ،.net.nz ،192.168.1.0/24">
+<!ENTITY  shareproxy.label              "تمام پروٹوکول کے لیے یہ پراکسی سرور استعمال کریں">
+<!ENTITY  shareproxy.accesskey          "ا">
+<!ENTITY  autologinproxy.label          " تصدیق کے لئے فوری طور پر ترغیب نہیں دیں اگر پاس ورڈ پہلے سے محفوظ شدہ ہے">
+<!ENTITY  autologinproxy.accesskey      "غ">
+<!ENTITY  autologinproxy.tooltip        "یہ اختیار خاموشی سے پراکسی پر توثیق کر دیتی ہے جب آپ نے ان کے لیے اسناد محفوظ کیے ہوں۔  توثیق ناکام ہونے کی صورت میں آپ کو بتا دیا جائے گا۔">

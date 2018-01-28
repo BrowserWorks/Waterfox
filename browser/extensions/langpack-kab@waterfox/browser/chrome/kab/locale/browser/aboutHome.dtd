@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+
+<!-- These strings are used in the about:home page -->
+
+<!ENTITY abouthome.pageTitle "Asebter agejdan &brandFullName; ">
+
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+<!ENTITY abouthome.defaultSnippet1.v1 "Tanemmirt imi tferneḍ Waterfox! Akken ad tfaṛseḍ seg iminig-inek/iminig-inem, ẓer <a>timahilin-ines tineggura </a>.">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "Aggan n Waterfox  akken tebɣiḍ d-ayen fessusen aṭas. <a>Fren seg agimen n izegrar</a>. ">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; d aseɣẓan ilelli, d aɣbalu yeldin n Mozilla. <a>Izerfan-ik…</a> ">
+
+<!ENTITY abouthome.bookmarksButton.label "Ticraḍ n isebtar">
+<!ENTITY abouthome.historyButton.label   "Amazray ">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "Iγewwaṛen">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "Ismenyifen ">
+<!ENTITY abouthome.addonsButton.label    "Izegrar ">
+<!ENTITY abouthome.downloadsButton.label "Isidar ">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label; ">
+
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+<!ENTITY abouthome.aboutMozilla.label    "Γef Mozilla">

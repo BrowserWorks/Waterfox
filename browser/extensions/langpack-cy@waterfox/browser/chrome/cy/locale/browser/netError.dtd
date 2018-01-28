@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Anhawster llwytho tudalen">
+<!ENTITY retry.label "Ceisiwch eto">
+<!ENTITY returnToPreviousPage.label "Ewch Nôl">
+<!ENTITY advanced.label "Uwch">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Methu cysylltu">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Mae'r cyfeiriad wedi ei gyfyngu">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Heb ganfod gweinydd">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Gwiriwch y cyfeiriad am wallau teipio megis <strong>ww</strong>.example.com yn lle <strong>www</strong>.example.com</li> <li>Os ydych yn methu llwytho unrhyw dudalen, gwiriwch gysylltiad rhwydwaith eich cyfrifiadur.</li> <li>Os yw eich cyfrifiadur neu rwydwaith wedi ei ddiogelu gan fur cadarn neu ddirprwy gwnewch yn siŵr fod gan &brandShortName; ganiatâd i fynd ar y We.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Heb ganfod ffeil">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Gwiriwch yr enw ffeil am brif lythrennu neu wallau teipio eraill.</li> <li>Gwiriwch i weld os yw'r ffeil wedi symud, ailenwi neu ei dileu.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Mae mynediad i'r ffeil wedi ei wrthod">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Gall ei fod wedi ei dynnu, symud neu fod caniatâd ffeiliau yn rhwystro mynediad.</li> </ul>">
+
+<!ENTITY generic.title "Wps.">
+<!ENTITY generic.longDesc "<p>Nid yw &brandShortName; yn gallu llwytho'r dudalen am ryw reswm.</p>">
+
+<!ENTITY captivePortal.title "Mewngofnodi i'r rhwydwaith">
+<!ENTITY captivePortal.longDesc2 "<p>Rhaid i chi fewngofnodi i'r rhwydwaith hwn cyn i chi gael mynediad i'r Rhyngrwyd.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Agor Tudalen Mewngofnodi i'r Rhwydwaith">
+
+<!ENTITY malformedURI.title "Nid yw'r cyfeiriad yn ddilys">
+<!ENTITY malformedURI.longDesc "<ul> <li>Fel rheol mae cyfeiriadau Gwe'n cael eu hysgrifennu fel <strong>http://www.example.com/</strong></li> <li>Gwnewch yn siŵr eich bod yn defnyddio blaen slaes (h.y. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Cafodd y cysylltiad ei darfu">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Daeth y Ddogfen i Ben">
+<!ENTITY notCached.longDesc "<p>Nid yw'r ddogfen gofynnwyd amdani ar gael yn storfa &brandShortName;.</p><ul><li>Fel mesur diogelwch, nid yw, &brandShortName; yn gofyn eto yn awtomatig am ddogfennau sensitif.</li><li>Cliciwch Ceisiwch Eto i ofyn eto am y ddogfen o'r wefan.</li></ul>">
+
+<!ENTITY netOffline.title "Modd all-lein">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Clicio &quot;Ceisio newid eto&quot; i newid i&apos;r modd ar-lein ac ail lwytho&apos;r dudalen.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Gwall Amgodio Cynnwys">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Cysylltwch â pherchnogion y wefan am y broblem hon.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Math Anniogel o ffeil">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Cysylltwch â pherchnogion y wefan am y broblem hon.</li> </ul>">
+
+<!ENTITY netReset.title "Cafodd y cysylltiad ei ailosod">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Mae cyfnod y cyswllt wedi dod i ben">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Heb ddeall y cyfeiriad">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Efallai bydd angen i chi osod meddalwedd arall i agor y cyfeiriad yma.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Mae'r gweinydd dirprwy yn gwrthod cysylltiadau">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Gwiriwch osodiadau'r dirprwy i wneud yn siŵr eu bod yn gywir.</li> <li>Cysylltwch eich gweinyddwr system i wneud yn siŵr fod y gweinydddirprwyol yn gweithio.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Methu canfod y gweinydd dirprwyol">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Gwiriwch y gosodiadau dirprwyol i wneud yn siŵr eu bod yn gywir.</li> <li>Gwiriwch fod gan eich cyfrifiadur cyswllt a'r we sy'n gweithio.</li> <li>Os yw eich cyfrifiadur wedi ei ddiogelu gan fur cadarn neu ddirprwy, gwnewch yn siŵr fod gan &brandShortName; fynediad i'r we.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Nid yw'r dudalen yn ailgyfeirio'n iawn">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Gall y broblem yma fod wedi ei achosi drwy anablu neu wrthod cookie.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Ymateb annisgwyl gan y gweinydd">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Gwiriwch fod gan eich system Reolwr Diogelwch Personol wedi ei osod.</li> <li>Gall hyn fod oherwydd ffurfweddiad ansafonol ar y gweinydd.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Methodd y Cysylltiad Diogel">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Nid oes modd dangos y dudalen rydych yn ceisio ei darllen gan nad oes modd gwirio dilysrwydd y data derbyniwyd.</li> <li>Cysylltwch â pherchennog y wefan i'w hysbysu o'r anhawster.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Nid yw eich cysylltiad yn ddiogel">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Mae perchennog <span class='hostname'/> wedi ffurfweddu ei wefan yn anghywir.  I rwystro eich manylion rhag cael eu dwyn, nid yw &brandShortName; wedi cysylltu â'r wefan.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Efallai bod y wefan yn brysur neu nad yw ar gael dros dro. Ceisiwch eto ymhen ychydig.</li> <li>Os nad ydych yn gallu llwytho unrhyw dudalennau, gwiriwch gysylltiad rhwydwaith eich cyfrifiadur.</li> <li>Os yw eich cyfrifiadur neu rwydwaith wedi ei ddiogelu gan fur cadarn neu ddirprwy, gwnewch yn siŵr fod gan &brandShortName; hawl i fynediad i'r we.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Rhwystrwyd gan Bolisi Diogelwch Cynnwys">
+<!ENTITY cspBlocked.longDesc "<p>Mae &brandShortName; wedi rhwystro'r dudalen rhag llwytho yn y ffordd yma gan fod gan y dudalen bolisi diogelwch cynnwys sy'n atal hynny.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Gwall Cynnwys Llygredig">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Nid oes modd dangos y dudalen rydych y ceisio ei gweld oherwydd bu canfuwyd gwall wrth drosglwyddo data.</p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Ychwanegu Eithriad…">
+
+<!ENTITY errorReporting.automatic2 "Mae adroddiadau gwall fel hyn y cynorthwyo Mozilla i adnabod a rhwystro gwefannau maleisus">
+<!ENTITY errorReporting.learnMore "Dysgu rhagor…">
+
+<!ENTITY remoteXUL.title "XUL pell">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu am y broblem..</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Methu Cysylltu'n Ddiogel">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Gwybodaeth uwch: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> Nid yw &brandShortName; wedi cysylltu â <span id='wrongSystemTime_URL'/> gan fod eich cloc i weld yn dangos yr amser anghywir ac mae hyn yn rhwystro cysylltiad diogel.</p> <p>Mae eich cyfrifiadur wedi ei osod i <span id='wrongSystemTime_systemDate'/>, pan ddylai ddangos <span id='wrongSystemTime_actualDate'/>. Er mwyn cywiro'r anhawster, newidiwch eich gosodiadau dyddiad ac amser i gyd-fynd a'r amser cywir.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> Nid yw &brandShortName; wedi cysylltu â <span id='wrongSystemTimeWithoutReference_URL'/> gan fod eich cloc i weld yn dangos yr amser anghywir ac mae hyn yn rhwystro cysylltiad diogel.</p> <p>Mae eich cyfrifiadur wedi ei osod i <span id='wrongSystemTimeWithoutReference_systemDate'/>. Er mwyn cywiro'r anhawster, newidiwch eich gosodiadau dyddiad ac amser i gyd-fynd a'r amser cywir.</p>">
+
+<!ENTITY certerror.pagetitle1  "Cysylltiad Anniogel">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Mae'r wefan hon yn defnyddio HTTP Strict Transport Security (HSTS) i bennu fod &brandShortName; yn unig yn cysylltu iddo'n ddiogel. O ganlyniad, nid yw'n bosib ychwanegu eithriad ar gyfer y dystysgrif hon.">
+<!ENTITY certerror.copyToClipboard.label "Copïo testun i'r clipfwrdd">
+
+<!ENTITY inadequateSecurityError.title "Nid yw eich cysylltiad yn ddiogel">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Mae <p><span class='hostname'></span> yn defnyddio technoleg diogelwch sy'n hen ac yn agored i ymosodiad. Gall yr ymosodwr weld manylion am hyn roeddech yn meddwl ei fod yn ddiogel. Mae angen i weinyddwr y wefan drwsio'r gweinydd yn gyntaf cyn bod modd i chi ymweld â' r wefan.</p><p>Cod gwall: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Mae'n edrych fel mai eich gosodiadau diogelwch rhwydwaith sy'n achosi hyn. Hoffech chi adfer y gosodiadau rhagosodedig?">
+<!ENTITY prefReset.label "Adfer y gosodiadau rhagosodedig">

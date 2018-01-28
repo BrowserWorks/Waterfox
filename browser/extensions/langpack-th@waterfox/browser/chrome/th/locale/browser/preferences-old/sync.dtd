@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "ที่คั่นหน้า">
+<!ENTITY engine.bookmarks.accesskey "ค">
+<!ENTITY engine.tabs.label2         "แท็บที่เปิด">
+<!ENTITY engine.tabs.accesskey      "แ">
+<!ENTITY engine.history.label       "ประวัติ">
+<!ENTITY engine.history.accesskey   "ป">
+<!ENTITY engine.logins.label        "การเข้าสู่ระบบ">
+<!ENTITY engine.logins.accesskey    "ก">
+<!ENTITY engine.prefs.label         "ค่ากำหนด">
+<!ENTITY engine.prefs.accesskey     "ค">
+<!ENTITY engine.addons.label        "ส่วนเสริม">
+<!ENTITY engine.addons.accesskey    "ส">
+<!ENTITY engine.addresses.label     "ที่อยู่">
+<!ENTITY engine.creditcards.label   "บัตรเครดิต">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "ชื่ออุปกรณ์">
+<!ENTITY changeSyncDeviceName.label "เปลี่ยนชื่ออุปกรณ์…">
+<!ENTITY changeSyncDeviceName.accesskey "ป">
+<!ENTITY cancelChangeSyncDeviceName.label "ยกเลิก">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "ย">
+<!ENTITY saveChangeSyncDeviceName.label "บันทึก">
+<!ENTITY saveChangeSyncDeviceName.accesskey "บ">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "เงื่อนไขการให้บริการ">
+<!ENTITY fxaPrivacyNotice.link.label "ประกาศความเป็นส่วนตัว">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "ยังไม่ยืนยัน">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "โปรดลงชื่อเข้าเพื่อเชื่อมต่อใหม่">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "คุณไม่ได้ลงชื่อเข้า">
+<!ENTITY signIn.label                "ลงชื่อเข้า">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "เปลี่ยนรูปโปรไฟล์">
+<!ENTITY verifiedManage.label        "จัดการบัญชี">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect.label            "ตัดการเชื่อมต่อ…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY verify.label                "ตรวจสอบอีเมล">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "ลืมอีเมลนี้">
+<!ENTITY forget.accesskey            "ล">
+
+<!ENTITY signedOut.caption            "นำเว็บไปกับคุณ">
+<!ENTITY signedOut.description        "ประสานที่คั่นหน้า, ประวัติ, แท็บ, รหัสผ่าน, ส่วนเสริม และค่ากำหนดระหว่างอุปกรณ์ทั้งหมดของคุณ">
+<!ENTITY signedOut.accountBox.title   "เชื่อมต่อกับ &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "สร้างบัญชี">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "ลงชื่อเข้า">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.engines.label       "ซิงค์ระหว่างอุปกรณ์ทั้งหมด">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "ดาวน์โหลด Waterfox สำหรับ ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " หรือ ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " เพื่อซิงค์กับอุปกรณ์มือถือของคุณ">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.accesskey "C">
+

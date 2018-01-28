@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Víta Vás &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Prihláste sa a môžete synchronizovať svoje karty, záložky a ďalšie.">
+<!ENTITY aboutAccountsConfig.startButton.label "Poďme na to">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Nastavenia synchronizácie">
+<!ENTITY aboutAccounts.noConnection.title "Žiadne pripojenie k sieti">
+<!ENTITY aboutAccounts.noConnection.description "Ak sa chcete prihlásiť, musíte byť pripojený k sieti Internet.">
+<!ENTITY aboutAccounts.noConnection.retry "Skúsiť znova">
+<!ENTITY aboutAccounts.badConfig.title "Chybná konfigurácia">
+<!ENTITY aboutAccounts.badConfig.description "Nepodarilo sa zistiť konfiguráciu serveru pre váš účet Waterfox. Skúste to prosím neskôr.">

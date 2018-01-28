@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "تاریخچهٔ بروزرسانی">
+<!ENTITY  history.intro             "بروزرسانی‌های زیر نصب شده‌اند:">
+<!ENTITY  closebutton.label         "بستن">
+                                     
+<!ENTITY  noupdates.label           "هیچ بروزرسانی‌ای هنوز نصب نشده است">
+
+<!ENTITY  name.header               "نام بروزرسانی">
+<!ENTITY  date.header               "تاریخ نصب">
+<!ENTITY  type.header               "نوع">
+<!ENTITY  state.header              "وضعیت">
+

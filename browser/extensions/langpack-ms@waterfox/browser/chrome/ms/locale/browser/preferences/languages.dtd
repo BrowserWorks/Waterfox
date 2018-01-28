@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Bahasa">
+<!ENTITY languages.customize.description                "Halaman laman web kadangkala boleh diperoleh dalam lebih daripada satu bahasa. Pilih bahasa untuk memaparkan halaman laman web ini, mengikut keutamaan:">
+<!ENTITY languages.customize.moveUp.label               "Pindah Atas">
+<!ENTITY languages.customize.moveUp.accesskey           "a">
+<!ENTITY languages.customize.moveDown.label             "Pindah Bawah">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "Buang">
+<!ENTITY languages.customize.deleteButton.accesskey     "B">
+<!ENTITY languages.customize.selectLanguage.label       "Pilih bahasa untuk ditambah…">
+<!ENTITY languages.customize.addButton.label            "Tambah">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

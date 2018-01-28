@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "ព័ត៌មាន​អំពី​ដំណោះស្រាយ​បញ្ហា">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  ទំព័រ​នេះ មាន​ព័ត៌មាន​បច្ចេកទេស​ដែល​អាច​មាន​ប្រយោជន៍ នៅ​ពេល​ដែល​អ្នក ព្យាយាម​ដោះស្រាយ​បញ្ហា ។ ប្រសិនបើ​អ្នក​កំពុង​រក​ចម្លើយ​សម្រាប់​សំណួរ​ទូទៅ អំពី &brandShortName; ពិនិត្យមើល <a id='supportLink'>តំបន់​បណ្ដាញ​គាំទ្រ</a> របស់​យើង ។">
+
+<!ENTITY aboutSupport.crashes.title "របាយការណ៍​ការ​គាំង">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "លេខ​សម្គាល់​របាយការណ៍">
+<!ENTITY aboutSupport.crashes.sendDate "បាន​ដាក់​ស្នើ">
+<!ENTITY aboutSupport.crashes.allReports "របាយការណ៍​ការ​គាំង​ទាំងអស់">
+<!ENTITY aboutSupport.crashes.noConfig "កម្មវិធី​នេះ​មិន​ទាន់​បាន​កំណត់​រចនាសម្ព័ន្ធ​ដើម្បី​បង្ហាញ​របាយការណ៍​ការ​គាំ​ទេ។">
+
+<!ENTITY aboutSupport.extensionsTitle "ផ្នែក​បន្ថែម">
+<!ENTITY aboutSupport.extensionName "ឈ្មោះ">
+<!ENTITY aboutSupport.extensionEnabled "បាន​អនុញ្ញាត">
+<!ENTITY aboutSupport.extensionVersion "កំណែ">
+<!ENTITY aboutSupport.extensionId "លេខ​សម្គាល់">
+
+<!ENTITY aboutSupport.experimentsTitle "​លក្ខណៈ​ពិសោធន៍">
+<!ENTITY aboutSupport.experimentName "ឈ្មោះ">
+<!ENTITY aboutSupport.experimentId "លេខ​សម្គាល់">
+<!ENTITY aboutSupport.experimentDescription "សេចក្ដី​ពិពណ៌នា">
+<!ENTITY aboutSupport.experimentActive "សកម្ម">
+<!ENTITY aboutSupport.experimentEndDate "កាលបរិច្ឆេទ​បញ្ចប់">
+<!ENTITY aboutSupport.experimentHomepage "គេហទំព័រ">
+<!ENTITY aboutSupport.experimentBranch "សាខា​">
+
+<!ENTITY aboutSupport.appBasicsTitle "មូលដ្ឋាន​គ្រឹះ​របស់​កម្មវិធី">
+<!ENTITY aboutSupport.appBasicsName "ឈ្មោះ">
+<!ENTITY aboutSupport.appBasicsVersion "កំណែ">
+<!ENTITY aboutSupport.appBasicsBuildID "លេខ​សម្គាល់​ការ​បង្កើត">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "ធ្វើ​បច្ចុប្បន្នភាព​ឆានែល">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "ប្រវត្តិ​ធ្វើ​បច្ចុប្បន្នភាព">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "បង្ហាញ​ប្រវត្តិ​បច្ចុប្បន្នភាព">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "ថត​​​ទម្រង់">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "ថត​ទម្រង់">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "កម្មវិធី​ជំនួយ​ដែល​បាន​បើក">
+<!ENTITY aboutSupport.appBasicsBuildConfig "ស្ថាបនា​ការ​កំណត់​រចនាសម្ព័ន្ធ">
+<!ENTITY aboutSupport.appBasicsUserAgent "ភ្នាក់ងារ​អ្នកប្រើ">
+<!ENTITY aboutSupport.appBasicsMemoryUse "អង្គ​ចងចាំ​ដែល​ប្រើ">
+<!ENTITY aboutSupport.appBasicsPerformance "ដំណើរការ">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers ដែល​បាន​ចុះ​ឈ្មោះ">
+
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "វីនដូ​ដំណើរការ​ច្រើន">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "របៀប​សុវត្តិភាព">
+
+<!ENTITY aboutSupport.showDir.label "បើក​ថត">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "បង្ហាញ​ក្នុង​កម្មវិធី​ស្វែងរក">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ចំណូលចិត្ត​ដែល​កែប្រែ​សំខាន់">
+<!ENTITY aboutSupport.modifiedPrefsName "ឈ្មោះ">
+<!ENTITY aboutSupport.modifiedPrefsValue "តម្លៃ">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "ចំណូល​ចិត្ត user.js">
+<!ENTITY aboutSupport.userJSDescription "ថត​ទម្រង់​របស់​អ្នក​មាន <a id='prefs-user-js-link'>user.js file</a> រួម​នឹង​ចំណូលចិត្ត​ដែល​មិន​ត្រូវ​បាន​បង្កើត​ដោយ &brandShortName; ។">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "ចំណូលចិត្ត​ដែល​បាន​ចាក់សោ​សំខាន់">
+<!ENTITY aboutSupport.lockedPrefsName "ឈ្មោះ">
+<!ENTITY aboutSupport.lockedPrefsValue "តម្លៃ">
+
+<!ENTITY aboutSupport.graphicsTitle "ក្រាហ្វិក">
+
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC បន្ថែម">
+
+<!ENTITY aboutSupport.a11yTitle "មធ្យោបាយ​ងាយស្រួល">
+<!ENTITY aboutSupport.a11yActivated "បាន​ធ្វើ​ឲ្យ​សកម្ម">
+<!ENTITY aboutSupport.a11yForceDisabled "ការពារ​ពី​ការ​ចូល​ដំណើរការ">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "កំណែ​បណ្ណាល័យ">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ប្រវត្តិ​នៃ​ការ​ដំឡើង">
+<!ENTITY aboutSupport.updateHistoryTitle "ប្រវត្តិ​ធ្វើ​បច្ចុប្បន្នភាព">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "ចម្លង​អត្ថបទ​ទៅ​ក្ដារ​តម្បៀត​ខ្ទាស់">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ចម្លង​ទិន្នន័យ​ដើម​ទៅ​ក្ដារ​តម្បៀត​ខ្ទាស់">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+
+<!ENTITY aboutSupport.safeModeTitle "សាកល្បង​របៀប​សុវត្ថិភាព">
+<!ENTITY aboutSupport.restartInSafeMode.label "ចាប់ផ្ដើម​ឡើងវិញ​ដោយ​បិទ​កម្មវិធី​បន្ថែម...">
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiles">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostics">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Failure Log">
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Features">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verify Integrity">
+
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

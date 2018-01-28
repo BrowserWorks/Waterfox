@@ -1,0 +1,14 @@
+locale alerts cak cak/locale/cak/alerts/
+locale autoconfig cak cak/locale/cak/autoconfig/
+locale global cak cak/locale/cak/global/
+locale global-platform cak cak/locale/cak/global-platform/mac/ os=Darwin
+locale global-platform cak cak/locale/cak/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform cak cak/locale/cak/global-platform/win/ os=WINNT
+locale mozapps cak cak/locale/cak/mozapps/
+locale necko cak cak/locale/cak/necko/
+locale passwordmgr cak cak/locale/cak/passwordmgr/
+locale pipnss cak cak/locale/cak/pipnss/
+locale pippki cak cak/locale/cak/pippki/
+locale places cak cak/locale/cak/places/
+locale pluginproblem cak cak/locale/cak/pluginproblem/
+locale weave cak cak/locale/cak/services/

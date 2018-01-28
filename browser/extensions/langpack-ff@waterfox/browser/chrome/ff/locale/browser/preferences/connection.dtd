@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Teelte Seŋorde">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Teelto Proxiije ngam Naatde e Internet">
+<!ENTITY  noProxyTypeRadio.label        "Alaa proxy">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "Huutoro proxy yuɓɓo">
+<!ENTITY  systemTypeRadio.accesskey     "x">
+<!ENTITY  WPADTypeRadio.label           "Ejto teelte proxy ngol laylaytol e jaajol">
+<!ENTITY  WPADTypeRadio.accesskey       "p">
+<!ENTITY  manualTypeRadio.label         "Teeltannde proxy e junngol:">
+<!ENTITY  manualTypeRadio.accesskey     "T">
+<!ENTITY  autoTypeRadio.label           "URL teeltannde proxy jaajol:">
+<!ENTITY  autoTypeRadio.accesskey       "j">
+<!ENTITY  reload.label                  "Hesɗitin">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "Proksi FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Proksi HTTP:">
+<!ENTITY  http.accesskey                "s">
+<!ENTITY  ssl.label                     "Proxy SSL:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "Koɗol SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS so SOCKS v5 huutoraama">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Poor:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Alaa proxy toɗɗii:">
+<!ENTITY  noproxy.accesskey             "A">
+<!ENTITY  noproxyExplain.label          "Yeru: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Huutoro ndee sarworde proxy e jaɓɓitore fof">
+<!ENTITY  shareproxy.accesskey          "u">
+<!ENTITY  autologinproxy.label          "Hoto naamno goongɗitinol so finnde ena danndaa">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Ndee suɓre maa goongɗitin-ma e muumre to proksiiji so a danndii innitorɗe maa e majje. Maa naamne so goongɗitinol woorii.">

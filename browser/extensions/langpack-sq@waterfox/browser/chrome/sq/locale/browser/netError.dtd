@@ -1,0 +1,204 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem në ngarkimin e faqes">
+<!ENTITY retry.label "Riprovoni">
+<!ENTITY returnToPreviousPage.label "Kthehuni Mbrapsht">
+<!ENTITY advanced.label "Të mëtejshme">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "S&apos;arrin të lidhet">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Kjo adresë është e ndaluar">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Nuk u gjet shërbyes">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Kontrolloni adresën për gabime shkrimi si p.sh.
+    <strong>ww</strong>.example.com në vend të
+    <strong>www</strong>.example.com</li>
+  <li>Nëse nuk arrini të ngarkoni qoftë edhe një faqe, kontrolloni lidhjen në rrjet të kompjuterit tuaj.</li>
+  <li>Nëse kompjuteri ose rrjeti juaj mbrohet nga një &quot;firewall&quot; ose ndërmjetës, sigurohuni
+    që &brandShortName;-it i lejohet hyrja në Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Nuk u gjet kartelë">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolloni emrin e kartelës për gabime shkrimi me të mëdha ose të vogla, apo të tjera gabime në shkrim.</li>
+  <li>Shihni mos është lëvizur, riemërtuar a fshirë kartela.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Hyrja te kartela u mohua">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Kartela mund të jetë hequr, lëvizur, ose hyrjen e pengojnë lejet mbi kartelën.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Hëm.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName;-i, për ndonjë arsye, nuk mund ta ngarkojë këtë faqe.</p>
+">
+
+<!ENTITY captivePortal.title "Hyni në rrjet">
+<!ENTITY captivePortal.longDesc2 "
+<p>YouDuhet të bëni hyrjen në këtë rrjet, përpara se të hyni në Internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Hap Faqe Hyrjeje në Rrjet">
+
+<!ENTITY malformedURI.title "Adresa nuk është e vlefshme">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Adresat Web zakonisht shkruhen si
+    <strong>http://www.example.com/</strong></li>
+  <li>Sigurohuni që po përdorni pjerrake djathtas (d.m.th.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Lidhja u ndërpre">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumenti Ka Skaduar">
+<!ENTITY notCached.longDesc "<p>Dokumenti i kërkuar nuk gjendet më te fshehtina e &brandShortName;-it.</p><ul><li>Si një masë parandaluese sigurie, &brandShortName;-i nuk rikërkon vetvetiu dokumente rezervat.</li><li>Që ta rikërkoni dokumentin prej sajtit, klikoni mbi Riprovoni.</li></ul>">
+
+<!ENTITY netOffline.title "Mënyrë Jo Në Linjë">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Shtypni &quot;Riprovoni&quot; që të kalohet nën mënyrën në linjë dhe të ringarkohet faqja.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Gabim Kodimi Lënde">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Lloj Jo i Parrezik Kartelash">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Lidhja u rivendos">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Lidhjes i përfundoi koha">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa nuk u kuptua">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Mund t&apos;ju duhet të instaloni tjetër program për të hapur këtë adresë.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Shërbyesi ndërmjetës po hedh poshtë lidhjet">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolloni rregullimet për ndërmjetësin, për t&apos;u siguruar që janë të sakta.</li>
+  <li>Lidhuni me përgjegjësin e rrjetit tuaj, për t&apos;u siguruar që shërbyesi ndërmjetës po punon.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Nuk arrihet të gjendet shërbyesi ndërmjetës">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Kontrolloni rregullimet për ndërmjetësin, për t&apos;u siguruar që janë të sakta.</li>
+  <li>Kontrolloni kompjuterin tuaj, për t&apos;u siguruar që ka një lidhje rrjeti që punon.</li>
+  <li>Nëse kompjuteri apo rrjeti juaj mbrohet nga &quot;firewall&quot; apo ndërmjetës, sigurohuni që &brandShortName;-it i lejohet hyrja në Web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Faqja nuk ridrejton si duhet">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Ndonjëherë ky problem mund të shkaktohet nga çaktivizim apo mospranim cookie-sh.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Përgjigje e papritur prej shërbyesit">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kontrolloni për t&apos;u siguruar që sistemi juaj ka të instaluar Përgjegjësin e Sigurisë Vetjake.</li>
+  <li>Kjo mund të vijë nga një formësim jostandard te shërbyesi.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Dështoi Lidhja e Sigurt">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Faqja që po provoni të shihni nuk shfaqet dot, ngaqë mirëfilltësia e të dhënave të marra nuk u vërtetua dot.</li>
+  <li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;ua bërë të ditur këtë problem.</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "Lidhja juaj s&apos;është e sigurt">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "I zoti i <span class='hostname'/> e ka formësuar sajtin e vet jo siç duhet.  Që të mbrohen të dhënat tuaja nga vjedhja, &brandShortName;-i nuk u lidh me këtë sajt.">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Sajti mund të jetë përkohësisht jashtë pune ose tepër i zënë. Riprovoni pas pak çastesh.</li>
+  <li>Nëse nuk arrini të ngarkoni qoftë edhe një faqe, kontrolloni lidhjen në rrjet për kompjuterin tuaj.</li>
+  <li>Nëse kompjuteri apo rrjeti juaj mbrohet nga një &quot;firewall&quot; ose ndërmjetës, sigurohuni
+    që &brandShortName;-it i është lejuar hyrja në Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bllokuar nga Rregulla Sigurie Lënde">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;-i e pengoi ngarkimin e kësaj faqeje në këtë mënyrë, ngaqë faqja përmban një rregull sigurie lënde që nuk e lejon këtë.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Gabim nga Lëndë e Dëmtuar">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Faqja që po rrekeni të shihni nuk mund të shfaqet, ngaqë u pikas një gabim në transmetimin e të dhënave.</p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit që t&apos;u njoftoni këtë problem.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Shtoni Përjashtim…">
+
+<!ENTITY errorReporting.automatic2 "Raportoni gabime si ky, që të ndihmoni Mozilla-n të identifikojë dhe bllokojë sajte dashakeqë">
+<!ENTITY errorReporting.learnMore "Mësoni më tepër…">
+
+<!ENTITY remoteXUL.title "XUL i Largët">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ju lutemi, lidhuni me të zotët e sajtit për t&apos;u njoftuar këtë problem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "S&apos;arrin të Lidhet Në Mënyrë të Sigurt">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Të dhëna të mëtejshme: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName;-i s’u lidh te <span id='wrongSystemTime_URL'/> ngaqë ora e kompjuterit dukes se tregon kohë të gabuar dhe kjo pengon një lidhje të sigurt.</p> <p>Kompjuteri juaj është rregulluar për <span id='wrongSystemTime_systemDate'/>, ndërkohë që duhet të ishte <span id='wrongSystemTime_actualDate'/>. Që të ndreqet ky problem, ndryshoni rregullimet tuaja për datën dhe kohën, për t’i përputhur me kohën e saktë.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; -i s’u lidh te <span id='wrongSystemTimeWithoutReference_URL'/> ngaqë ora e kompjuterit dukes se tregon kohë të gabuar dhe kjo pengon një lidhje të sigurt.</p> <p>Kompjuteri juaj është rregulluar për <span id='wrongSystemTimeWithoutReference_systemDate'/>. Që të ndreqet ky problem, ndryshoni rregullimet tuaja për datën dhe kohën, për t’i përputhur me kohën e saktë.</p>">
+
+<!ENTITY certerror.pagetitle1  "Lidhje e Pasigurt">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Ky sajt përdor HTTP
+Strict Transport Security (HSTS) që të tregojë se &brandShortName;-i mund të lidhet
+me të vetëm në mënyrë të sigurt. Si pasojë, s&apos;është e mundur të shtohet një përjashtim për këtë
+dëshmi.">
+<!ENTITY certerror.copyToClipboard.label "Kopjoje tekstin te e papastra">
+
+<!ENTITY inadequateSecurityError.title "Lidhja juaj është jo e sigurt">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> përdor teknologji sigurie që është e vjetruar dhe e cenueshme përballë sulmesh. Dikush që sulmon do të mund të zbulonte lehtë të dhëna të cilat i mendonit të parrezikuara. Para se të mund të vizitoni këtë sajt, lypset që përgjegjësi i sajtit të ndreqë shërbyesin.</p><p>Kod gabimi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Duket se kjo shkaktohet nga rregullimet tuaja për sigurinë e rrjetit. Doni të rikthehen rregullimet parazgjedhje?">
+<!ENTITY prefReset.label "Rikthe rregullimet parazgjedhje">

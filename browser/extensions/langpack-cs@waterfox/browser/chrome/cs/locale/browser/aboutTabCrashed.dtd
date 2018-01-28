@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Zavřít tento panel">
+<!ENTITY tabCrashed.restoreTab "Obnovit tento panel">
+<!ENTITY tabCrashed.restoreAll "Obnovit všechny spadlé panely">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Jejda. Váš panel právě spadl.">
+<!ENTITY tabCrashed.offerHelp "Můžeme vám pomoci!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Zvolte &tabCrashed.restoreTab; pro načtení obsahu stránky.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Zvolte &tabCrashed.restoreTab; nebo &tabCrashed.restoreAll; pro načteni obsahu stránky.">
+<!ENTITY tabCrashed.requestHelp "Pomůžete nám?">
+<!ENTITY tabCrashed.requestHelpMessage "Hlášení o pádech nám pomáhají rozpoznat problémy a aplikaci &brandShortName; dále zlepšovat.">
+<!ENTITY tabCrashed.requestReport "Nahlásit tento panel">
+<!ENTITY tabCrashed.sendReport2 "Odeslat hlášení o pádu zobrazeného panelu">
+<!ENTITY tabCrashed.commentPlaceholder2 "Přidat komentář (komentáře jsou veřejně dostupné)">
+<!ENTITY tabCrashed.includeURL2 "Zahrnout do tohoto hlášení o pádu také URL adresu stránky">
+<!ENTITY tabCrashed.emailPlaceholder "Zde vložte svoji e-mailovou adresu">
+<!ENTITY tabCrashed.emailMe "Informovat mě e-mailem, až bude k dispozici více informací">
+<!ENTITY tabCrashed.reportSent "Hlášení o pádu bylo odesláno; děkujeme, že nám pomáháte &brandShortName; vylepšovat!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Nahlásit panely na pozadí">
+<!ENTITY tabCrashed.autoSubmit2 "Nastavit předvolby tak, aby byla hlášení o pádu odesílána automaticky na pozadí, včetně informací o spadlých panelech z této relace a budoucích relací">

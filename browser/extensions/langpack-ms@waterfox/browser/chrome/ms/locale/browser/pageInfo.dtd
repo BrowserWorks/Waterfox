@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Salin">
+<!ENTITY  copy.accesskey        "a">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Pilih Semua">
+<!ENTITY  selectall.accesskey   "S">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Umum">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Tajuk:">
+<!ENTITY  generalURL            "Alamat:">
+<!ENTITY  generalType           "Jenis:">
+<!ENTITY  generalMode           "Mod Jadikan:">
+<!ENTITY  generalSize           "Saiz:">
+<!ENTITY  generalReferrer       "Merujuk URL:">
+<!ENTITY  generalSource         "sumber disorok:">
+<!ENTITY  generalModified       "Diubahsuai:">
+<!ENTITY  generalEncoding2      "Pengekodan Teks:">
+<!ENTITY  generalMetaName       "Nama">
+<!ENTITY  generalMetaContent    "Kandungan">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Lokasi:">
+<!ENTITY  mediaText             "Teks Berkaitan:">
+<!ENTITY  mediaAltHeader        "Teks Ganti">
+<!ENTITY  mediaAddress          "Alamat">
+<!ENTITY  mediaType             "Jenis">
+<!ENTITY  mediaSize             "Saiz">
+<!ENTITY  mediaCount            "Kira">
+<!ENTITY  mediaDimension        "Dimensi-dimensi:">
+<!ENTITY  mediaLongdesc         "Perihal secara panjang lebar:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Simpan Sebagai...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Previu Media:">
+
+<!ENTITY  feedTab               "Suapan">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Langgan">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Keizinan">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Guna Piawai">
+<!ENTITY  permAskAlways         "sentiasa menanya">
+<!ENTITY  permAllow             "Izinkan">
+<!ENTITY  permAllowSession      "Izinkan Sesi ini">
+<!ENTITY  permBlock             "Sekat">
+<!ENTITY  permissionsFor        "Keizinan untuk:">
+<!ENTITY  permPlugins           "Plugin Aktif">
+
+<!ENTITY  permClearStorage           "Buang Storan">
+<!ENTITY  permClearStorage.accesskey "S">
+
+<!ENTITY  securityTab           "Keselamatan">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Papar Sijil">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Tidak diketahui">
+
+
+<!ENTITY  securityView.identity.header   "Identiti Laman Web">
+<!ENTITY  securityView.identity.owner    "Pemilik:">
+<!ENTITY  securityView.identity.domain   "Laman Web:">
+<!ENTITY  securityView.identity.verifier "Disahkan oleh:">
+<!ENTITY  securityView.identity.validity "Luput pada:">
+
+<!ENTITY  securityView.privacy.header                   "Peribadi &amp; Sejarah">
+<!ENTITY  securityView.privacy.history                  "Adakah saya pernah lawati laman web ini sebelum ini?">
+<!ENTITY  securityView.privacy.cookies                  "Adakah laman web ini menyimpan maklumat (kuki) pada komputer saya?">
+<!ENTITY  securityView.privacy.viewCookies              "Papar Cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Adakah saya pernah simpan kata laluan bagi laman web ini?">
+<!ENTITY  securityView.privacy.viewPasswords            "Papar kata laluan yang telah disimpan">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Butiran Teknikal">
+
+<!ENTITY  helpButton.label                              "Bantuan">

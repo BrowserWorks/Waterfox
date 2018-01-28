@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Re taq kaxlanwey re' eyakon pan akematz'ib':">
+<!ENTITY     cookiename.label               "Rub'i' ri kuki">
+<!ENTITY     cookiedomain.label             "Ruxaq k'amaya'l">
+
+<!ENTITY     props.name.label               "B'i'aj:">
+<!ENTITY     props.value.label              "Rupam:">
+<!ENTITY     props.domain.label             "Ruk'u'x Samaj:">
+<!ENTITY     props.path.label               "B'ey:">
+<!ENTITY     props.secure.label             "Titaq chi re:">
+<!ENTITY     props.expires.label            "Xtik'o ruq'ijul:">
+<!ENTITY     props.container.label          "K'ojlib'äl:">
+
+<!ENTITY     window.title                   "Taq kaxlanwey">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "p">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Tikanöx:">
+<!ENTITY     searchFilter.accesskey         "k">
+
+<!ENTITY     button.close.label             "Titz'apïx">
+<!ENTITY     button.close.accesskey         "T">

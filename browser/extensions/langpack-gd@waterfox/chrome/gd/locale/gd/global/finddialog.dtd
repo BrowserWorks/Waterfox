@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Lorg air an duilleag seo">
+<!ENTITY findField.label "Lorg an rud seo:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "Aire do litrichean mòra is beaga">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "Paisg">
+<!ENTITY wrapCheckbox.accesskey "P">
+<!ENTITY findButton.label "An ath-fhear">
+<!ENTITY findButton.accesskey "f">
+<!ENTITY cancelButton.label "Sguir dheth">
+<!ENTITY closeButton.label "Dùin">
+<!ENTITY up.label "Suas">
+<!ENTITY up.accesskey "u">
+<!ENTITY down.label "Sìos">
+<!ENTITY down.accesskey "S">
+<!ENTITY direction.label "Comhair">

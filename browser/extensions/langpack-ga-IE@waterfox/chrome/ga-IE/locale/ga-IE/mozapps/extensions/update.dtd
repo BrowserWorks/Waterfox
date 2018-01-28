@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Nuashonrú &brandShortName;">
+
+<!ENTITY  offline.title                   "Tá &brandShortName; ag obair as líne">
+<!ENTITY  offline.description             "Caithfidh &brandShortName; dul ar líne chun dul sa chuardach ar nuashonruithe do na breiseáin agatsa, lena ndéanamh comhoiriúnach don leagan seo.">
+<!ENTITY  offline.toggleOffline.label     "Téigh ar líne anois.">
+<!ENTITY  offline.toggleOffline.accesskey "T">
+
+<!ENTITY  mismatch.win.title              "Breiseáin Neamh-chomhoiriúnacha">
+<!ENTITY  mismatch.top.label              "Níl na breiseáin seo a leanas comhoiriúnach leis an leagan seo &brandShortName; agus díchumasaíodh iad:">
+<!ENTITY  mismatch.bottom.label           "Is féidir le &brandShortName; leaganacha comhoiriúnacha de na breiseáin seo a lorg.">
+
+<!ENTITY  checking.wizard.title           "Ag lorg Breiseáin Chomhoiriúnacha">
+<!ENTITY  checking.top.label              "Ag seiceáil le haghaidh nuashonruithe ar do bhreiseáin neamh-chomhoiriúnacha…">
+<!ENTITY  checking.status                 "Seans go dtógfaidh sé seo cúpla bomaite…">
+
+<!ENTITY  found.wizard.title               "Aimsíodh Breiseáin Chomhoiriúnacha">
+<!ENTITY  found.top.label                 "Roghnaigh na breiseáin is mian leat a shuiteáil:">
+<!ENTITY  found.disabledXPinstall.label   "Ní féidir na breiseáin seo a shuiteáil toisc go bhfuil suiteáil bhogearraí díchumasaithe faoi láthair. Tig leat an rogha seo a athrú thíos.">
+<!ENTITY  found.enableXPInstall.label     "Tabhair cead do shuímh Ghréasáin bogearraí a shuiteáil">
+<!ENTITY  found.enableXPInstall.accesskey "a">
+
+<!ENTITY  installing.wizard.title         "Breiseáin Chomhoiriúnacha á Suiteáil">
+<!ENTITY  installing.top.label            "Nuashonruithe á n-íoslódáil agus á suiteáil…">
+
+<!ENTITY  noupdates.wizard.title          "Níor Aimsíodh Breiseáin Chomhoiriúnacha">
+<!ENTITY  noupdates.intro.desc            "Níorbh fhéidir le &brandShortName; nuashonruithe a aimsiú ar do bhreiseáin neamh-chomhoiriúnacha.">
+<!ENTITY  noupdates.error.desc            "Bhí fadhbanna ann agus nuashonruithe á chuardach.">
+<!ENTITY  noupdates.checkEnabled.desc     "Seiceálfaidh &brandShortName; go rialta agus cuirfear in iúl duit nuair atá leaganacha comhoiriúnacha ar fáil.">
+
+<!ENTITY  finished.wizard.title           "Suiteáladh Breiseáin Chomhoiriúnacha">
+<!ENTITY  finished.top.label              "Shuiteáil &brandShortName; nuashonruithe ar do bhreiseáin.">
+<!ENTITY  finished.checkDisabled.desc     "Is féidir le &brandShortName; seiceáil go rialta agus cur in iúl duit nuair atá leaganacha comhoiriúnacha ar fáil.">
+<!ENTITY  finished.checkEnabled.desc      "Seiceálfaidh &brandShortName; go rialta agus cuirfear in iúl duit nuair atá nuashonruithe ar fáil.">
+
+<!ENTITY  adminDisabled.wizard.title      "Ní féidir nuashonruithe a lorg">
+<!ENTITY  adminDisabled.warning.label     "Ní féidir na breiseáin neamh-chomhoiriúnacha a nuashonrú toisc go bhfuil suiteáil bhogearraí do &brandShortName; díchumasaithe. Déan teagmháil le riarthóir do chórais le haghaidh cabhrach.">
+
+<!ENTITY  versioninfo.wizard.title        "Comhoiriúnacht na mbreiseán á seiceáil">
+<!ENTITY  versioninfo.top.label           "Tá do chuid breiseán á scrúdú, maidir lena gcomhoiriúnacht don leagan seo de &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Seans go dtógfaidh sé seo cúpla bomaite…">
+
+<!ENTITY  installerrors.wizard.title      "Bhí fadhbanna le linn shuiteáil na nuashonruithe">
+<!ENTITY  installerrors.intro.label       "Bhí fadhbanna ag &brandShortName; le nuashonrú do bhreiseán.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Cliceáil Críochnaigh chun leanúint ar aghaidh le &brandShortName; a thosú.">
+<!ENTITY  clickFinish.labelMac            "Cliceáil &quot;Déanta&quot; chun leanúint ar aghaidh le &brandShortName; a thosú.">
+<!ENTITY  enableChecking.label            "Lig do &brandShortName; nuashonruithe a lorg.">

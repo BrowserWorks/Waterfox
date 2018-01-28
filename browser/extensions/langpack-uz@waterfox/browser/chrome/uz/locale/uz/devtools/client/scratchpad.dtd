@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "Yon daftarcha">
+
+<!ENTITY fileMenu.label               "Fayl">
+<!ENTITY fileMenu.accesskey           "F">
+
+<!ENTITY newWindowCmd.label           "Yangi oyna">
+<!ENTITY newWindowCmd.accesskey       "n">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Faylni ochish">
+<!ENTITY openFileCmd.accesskey        "o">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Yaqinda foydalanilganni ochish">
+<!ENTITY openRecentMenu.accesskey     "Y">
+
+<!ENTITY revertCmd.label              "Qaytarish…">
+<!ENTITY revertCmd.accesskey          "t">
+
+<!ENTITY saveFileCmd.label            "Saqlash">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Boshqa formatda saqlash...">
+<!ENTITY saveFileAsCmd.accesskey      "a">
+
+<!ENTITY closeCmd.label               "Yopish">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "Y">
+
+<!ENTITY viewMenu.label               "Koʻrish">
+<!ENTITY viewMenu.accesskey           "K">
+
+<!ENTITY lineNumbers.label             "Satr tartib raqamlarini ko‘rsatish">
+<!ENTITY lineNumbers.accesskey         "t">
+
+<!ENTITY wordWrap.label                "Matnni joylashtirish">
+<!ENTITY wordWrap.accesskey            "j">
+
+<!ENTITY highlightTrailingSpace.label     "Tugayotgan maydonni ajratib ko‘rsatish">
+<!ENTITY highlightTrailingSpace.accesskey "T">
+
+<!ENTITY largerFont.label             "Kattaroq shrift">
+<!ENTITY largerFont.accesskey         "t">
+<!ENTITY largerFont.commandkey        "+">
+<!-- + is above this key on many keyboards -->
+
+<!ENTITY smallerFont.label            "Kichikroq shrift">
+<!ENTITY smallerFont.accesskey        "k">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "O‘rtacha tezlik">
+<!ENTITY normalSize.accesskey         "O">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Oʻzgartirish">
+<!ENTITY editMenu.accesskey           "O">
+
+<!ENTITY run.label                    "Ishga tushirish">
+<!ENTITY run.accesskey                "I">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "Nazorat qilish">
+<!ENTITY inspect.accesskey            "N">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Ko‘rsatish">
+<!ENTITY display.accesskey            "K">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Ajoyib chop qilish">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "p">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "Muhit">
+<!ENTITY environmentMenu.accesskey    "M">
+
+
+<!ENTITY contentContext.label         "Tarkibi">
+<!ENTITY contentContext.accesskey     "T">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "Brauzer">
+<!ENTITY browserContext.accesskey     "B">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "Yordam">
+<!ENTITY helpMenu.accesskey           "Y">
+<!ENTITY helpMenuWin.label            "Yordam">
+<!ENTITY helpMenuWin.accesskey        "Y">
+
+<!ENTITY documentationLink.label      "MDN tahrirchisi uchun ma’lumot">
+<!ENTITY documentationLink.accesskey  "D">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "O‘zgaruvchilarni tiklash">
+<!ENTITY resetContext2.accesskey      "z">
+
+<!ENTITY reloadAndRun.label           "Qayta yuklash va bajarish">
+<!ENTITY reloadAndRun.accesskey       "y">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Bajarish">
+<!ENTITY executeMenu.accesskey        "j">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+<!ENTITY evalFunction.label "Joriy funksiyani amalga oshirish">
+<!ENTITY evalFunction.accesskey "o">
+<!ENTITY evalFunction.key "e">
+
+<!ENTITY largerFont.commandkey2       "="> 

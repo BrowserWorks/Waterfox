@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "Κονσόλα ιστού">
+<!ENTITY browserConsole.title "Κονσόλα περιηγητή">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Άνοιγμα URL σε νέα καρτέλα">
+<!ENTITY openURL.accesskey "Κ">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Δίκτυο">
+<!ENTITY btnPageNet.tooltip "Καταγραφή πρόσβασης δικτύου">
+<!ENTITY btnPageNet.accesskey "Δ">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "τ">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Καταγραφή σφαλμάτων και προειδοποιήσεων CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Καταγραφή εξαιρέσεων JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Ασφάλεια">
+<!ENTITY btnPageSecurity.tooltip "Καταγραφή σφαλμάτων και προειδοποιήσεων ασφαλείας">
+<!ENTITY btnPageSecurity.accesskey "α">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "Καταγραφή">
+<!ENTITY btnPageLogging.tooltip "Τα μηνύματα καταγραφής εστάλησαν στο αντικείμενο window.console">
+<!ENTITY btnPageLogging.accesskey3 "κ">
+<!ENTITY btnConsoleErrors       "Σφάλματα">
+<!ENTITY btnConsoleInfo         "Πληροφορίες">
+<!ENTITY btnConsoleWarnings     "Προειδοποιήσεις">
+<!ENTITY btnConsoleLog          "Αρχείο καταγραφής">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Reflows">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "Διακομιστής">
+<!ENTITY btnServerLogging.tooltip     "Ελήφθησαν μηνύματα καταγραφής από ένα διακομιστή ιστού">
+<!ENTITY btnServerLogging.accesskey   "Δ">
+<!ENTITY btnServerErrors              "Σφάλματα">
+<!ENTITY btnServerInfo                "Πληροφορίες">
+<!ENTITY btnServerWarnings            "Προειδοποιήσεις">
+<!ENTITY btnServerLog                 "Αρχείο καταγραφής">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Workers προσθέτων ή Chrome">
+
+<!ENTITY filterOutput.placeholder "Έξοδος φίλτρου">
+<!ENTITY btnClear.label        "Εκκαθάριση">
+<!ENTITY btnClear.tooltip      "Εκκαθάριση εξόδου κονσόλας ιστού">
+<!ENTITY btnClear.accesskey    "ρ">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Αντιγραφή τοποθεσίας συνδέσμου">
+<!ENTITY copyURLCmd.accesskey "δ">
+
+<!ENTITY closeCmd.key         "Λ">
+<!ENTITY findCmd.key          "Ε">
+<!ENTITY clearOutputCtrl.key  "Θ">
+<!ENTITY openInVarViewCmd.label "Άνοιγμα σε προβολή μεταβλητών">
+<!ENTITY openInVarViewCmd.accesskey "Μ">
+<!ENTITY storeAsGlobalVar.label "Αποθήκευση ως καθολική μεταβλητή">
+<!ENTITY storeAsGlobalVar.accesskey "Α">

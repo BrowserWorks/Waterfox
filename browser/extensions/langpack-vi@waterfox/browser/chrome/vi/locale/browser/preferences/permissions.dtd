@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Ngoại trừ">
+
+
+<!ENTITY treehead.sitename.label      "Trang">
+<!ENTITY treehead.status.label        "Trạng thái">
+<!ENTITY removepermission.label       "Xóa Trang">
+<!ENTITY removepermission.accesskey   "X">
+<!ENTITY removeallpermissions.label   "Xóa Toàn Bộ Các Trang">
+<!ENTITY removeallpermissions.accesskey "B">
+<!ENTITY address.label                "Địa chỉ của trang web:">
+<!ENTITY address.accesskey            "a">
+<!ENTITY block.label                  "Chặn">
+<!ENTITY block.accesskey              "C">
+<!ENTITY session.label                "Cho phép theo Phiên">
+<!ENTITY session.accesskey            "P">
+<!ENTITY allow.label                  "Cho phép">
+<!ENTITY allow.accesskey              "h">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Hủy bỏ">
+<!ENTITY button.cancel.accesskey      "H">
+<!ENTITY button.ok.label              "Lưu thay đổi">
+<!ENTITY button.ok.accesskey          "L">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">
+<!ENTITY window.width                 "45em">
+

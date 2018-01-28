@@ -1,0 +1,183 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Tổng quát">
+
+<!ENTITY accessibility.label             "Tính năng truy cập">
+
+<!ENTITY useCursorNavigation.label       "Cho phép dùng con trỏ để di chuyển bên trong trang">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Tìm kiếm văn bản khi bạn bắt đầu nhập">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY blockAutoReload.label           "Cảnh báo bạn khi trang web cố gắng chuyển hướng hoặc tải lại trang">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Hiện bàn phím cảm ứng khi cần thiết">
+<!ENTITY useOnScreenKeyboard.accesskey   "b">
+
+<!ENTITY browsing.label                  "Duyệt">
+
+<!ENTITY useAutoScroll.label             "Tự động cuộn">
+<!ENTITY useAutoScroll.accesskey         "u">
+<!ENTITY useSmoothScrolling.label        "Cuộn uyển chuyển">
+<!ENTITY useSmoothScrolling.accesskey    "y">
+<!ENTITY checkUserSpelling.label         "Kiểm tra chính tả khi bạn gõ">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Lựa chọn dữ liệu">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Giúp bạn nắm được hiệu suất trình duyệt của bạn và chia sẻ dữ liệu với &vendorShortName; về trạng thái của trình duyệt">
+<!ENTITY enableHealthReport.label        "Bật trình báo cáo tình trạng &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "r">
+<!ENTITY healthReportLearnMore.label     "Tìm hiểu thêm">
+
+<!ENTITY telemetryDesc.label             "Chia sẻ hiệu năng, cách sử dụng, phần cứng và dữ liệu tùy biến liên quan đến trình duyệt của bạn với &vendorShortName; để giúp chúng tôi tạo ra &brandShortName; tốt hơn">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Tìm hiểu thêm">
+
+<!ENTITY crashReporterDesc2.label         "Báo cáo lỗi giúp &vendorShortName; sửa lỗi và giúp trình duyệt của bạn an toàn và ổn định hơn">
+<!ENTITY alwaysSubmitCrashReports.label   "Cho phép &brandShortName; thay mặt bạn gửi báo cáo còn tồn đọng">
+<!ENTITY alwaysSubmitCrashReports.accesskey "n">
+<!ENTITY crashReporterLearnMore.label     "Tìm hiểu thêm">
+
+<!ENTITY networkTab.label                "Mạng">
+
+<!ENTITY connection.label                "Kết nối">
+
+<!ENTITY connectionDesc.label            "Cách thức &brandShortName; kết nối vào Internet">
+<!ENTITY connectionSettings.label        "Thiết lập…">
+<!ENTITY connectionSettings.accesskey    "p">
+
+<!ENTITY httpCache.label                 "Nội dung web đã được cached">
+
+<!ENTITY offlineStorage2.label           "Nội dung Web và Dữ liệu người dùng ngoại tuyến">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Dữ liệu trang web">
+<!ENTITY clearSiteData.label             "Xóa tất cả dữ liệu">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Thiết lập…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Tìm hiểu thêm">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Giới hạn bộ đệm còn">
+<!ENTITY limitCacheSizeBefore.accesskey  "G">
+<!ENTITY limitCacheSizeAfter.label       "MB dung lượng">
+<!ENTITY clearCacheNow.label             "Xóa Ngay">
+<!ENTITY clearCacheNow.accesskey         "a">
+<!ENTITY clearOfflineAppCacheNow.label   "Xóa Ngay">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "Khống chế việc quản lí bộ đệm tự động">
+<!ENTITY overrideSmartCacheSize.accesskey "K">
+
+<!ENTITY updateTab.label                 "Cập nhật">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "Cập nhật &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "Phiên bản ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Cho phép &brandShortName;">
+<!ENTITY updateAuto2.label               "Tự động cài các bản cập nhật (được khuyến nghị để tăng tính bảo mật)">
+<!ENTITY updateAuto2.accesskey           "A">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "Không bao giờ kiểm tra các bản cập nhật (không khuyến nghị)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Hiển thị lịch sử cập nhật…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "Sử dụng dịch vụ chạy nền để cài đặt các cập nhật">
+<!ENTITY useService.accesskey            "n">
+
+<!ENTITY enableSearchUpdate2.label       "Tự động cập nhật công cụ tìm kiếm">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY reports.label                   "Báo cáo">
+
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "Ngoại trừ…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "N">
+
+<!ENTITY offlineAppsList2.label          "Trang dưới đây cho phép lưu dữ liệu để sử dụng ngoại tuyến:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Xóa…">
+<!ENTITY offlineAppsListRemove.accesskey "X">
+<!ENTITY offlineAppRemove.confirm        "Xóa dữ liệu ngoại tuyến">
+
+<!ENTITY certificateTab.label            "Chứng thư">
+<!ENTITY selectCerts.auto                "Tự động chọn một cái">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Luôn hỏi bạn">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Truy vấn máy chủ đáp ứng giao thức OCSP để xác minh hiệu lực của các chứng thư">
+<!ENTITY enableOCSP.accesskey            "T">
+<!ENTITY viewCerts.label                 "Xem chứng chỉ">
+<!ENTITY viewCerts.accesskey             "c">
+<!ENTITY viewSecurityDevices.label       "Thiết bị bảo mật">
+<!ENTITY viewSecurityDevices.accesskey   "T">
+
+<!ENTITY performance.label               "Hiệu suất">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Sử dụng các cài đặt về hiệu suất được khuyến nghị">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Tìm hiểu thêm">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY allowHWAccel.label              "Dùng gia tốc hệ thống hệ thống khi có thể">
+<!ENTITY allowHWAccel.accesskey          "h">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY certPersonal2.description       "When a server requests your personal certificate">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY offlineStorageNotify.label               "Tell you when a website asks to store data for offline use">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY updateCheckChoose2.label        "Check for updates but let you choose to install them">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "ဒီစာမျက်နှာမှာ ရှာဖွေပါ">
+<!ENTITY findField.label "ရှာရမဲ့အရာ -">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "စာလုံး တိုက်ဆိုင်ပါ">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "ထုပ်ထားပါ">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY findButton.label "နောက်တခု ရှာဖွေပါ">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "ပယ်​ဖျက်ပါ">
+<!ENTITY closeButton.label "ပိတ်ပါ ">
+<!ENTITY up.label "အထက်သို့">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "အောက်သို့">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "ဦးတည်ချက်">

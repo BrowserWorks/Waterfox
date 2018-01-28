@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label;ga xush kelibsiz!">
+
+<!ENTITY aboutAccountsConfig.description "Ichki oynalar, xatcho‘plar va parollarni sinxronlash uchun hisobingizga kiring.">
+<!ENTITY aboutAccountsConfig.startButton.label "Boshlash">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sinxronlashni sozlash">
+<!ENTITY aboutAccounts.noConnection.title "Ulanmagan">
+<!ENTITY aboutAccounts.noConnection.description "Hisobingizga kirish uchun internetga ulanish kerak.">
+<!ENTITY aboutAccounts.noConnection.retry "Yana urinib ko‘rish">
+<!ENTITY aboutAccounts.badConfig.title "Moslama noto‘g‘ri">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox hisobingiz serveri sozlamasini aniqlab bo‘lmadi. Keyinroq qayta urinib ko‘ring.">

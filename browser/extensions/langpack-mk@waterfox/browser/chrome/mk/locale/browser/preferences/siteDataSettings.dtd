@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     hostCol.label                 "Мрежно место">
+<!ENTITY     statusCol.label               "Статус">
+<!ENTITY     usageCol.label                "Складиште">
+<!ENTITY     searchTextboxPlaceHolder             "Пребарувај мрежни места">
+<!ENTITY     removeSelected.label          "Отстрани избрани">
+<!ENTITY     save.label                    "Зачувај промени">
+<!ENTITY     cancel.label                  "Откажи">
+<!ENTITY     removingDialog.title          "Отстранување на податоци за мрежно место">
+<!ENTITY     siteTree.label                "Следниве колачиња ќе бидат отстранети:">
+
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     window.title                  "Settings - Site Data">

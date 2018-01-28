@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Laporan Ranap">
+<!ENTITY crashesUnsubmitted.label   "Laporan Ranap Tidak Dihantar">
+<!ENTITY crashesSubmitted.label     "Laporan Ranap Dihantar">
+<!ENTITY id.heading                 "ID Laporan">
+<!ENTITY dateCrashed.heading        "Tarikh Ranap">
+<!ENTITY dateSubmitted.heading      "Tarikh Dihantar">
+<!ENTITY noReports.label            "Tiada laporan ranap yang telah dihantar.">
+<!ENTITY noConfig.label             "Aplikasi ini belum ditetapkan untuk memaparkan laporan ranap. Keutamaan <code>breakpad.reportURL</code> mesti ditetapkan.">
+<!ENTITY clearAllReports.label      "Buang Semua Laporan">

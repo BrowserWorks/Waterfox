@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Ciyari kayandiyaney">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Tokorawey hanse ka huru Interneti ra">
+<!ENTITY  noProxyTypeRadio.label        "Tokore ši">
+<!ENTITY  noProxyTypeRadio.accesskey    "k">
+<!ENTITY  systemTypeRadio.label         "Dabariɲaa tokore kayandiyaney goyandi">
+<!ENTITY  systemTypeRadio.accesskey     "g">
+<!ENTITY  WPADTypeRadio.label           "Tokore kayandiyaney boŋ honnay sankaa woo se">
+<!ENTITY  WPADTypeRadio.accesskey       "k">
+<!ENTITY  manualTypeRadio.label         "Kanbe tokore hanseyan:">
+<!ENTITY  manualTypeRadio.accesskey     "K">
+<!ENTITY  autoTypeRadio.label           "Tokore boŋ hanseyan aderesu:">
+<!ENTITY  autoTypeRadio.accesskey       "b">
+<!ENTITY  reload.label                  "Zumandi taaga">
+<!ENTITY  reload.accesskey              "t">
+<!ENTITY  ftp.label                     "FTP tokore:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP tokore:">
+<!ENTITY  http.accesskey                "t">
+<!ENTITY  ssl.label                     "SSL tokore:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS zunbudoo:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "DNS tokore SOCKS v5 goyyan waate">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Kotay-mee:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Tokore kul ši woo se:">
+<!ENTITY  noproxy.accesskey             "i">
+<!ENTITY  noproxyExplain.label          "Sanda: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Feršikaw tokoraa woo goyandi berehawey kul se">
+<!ENTITY  shareproxy.accesskey          "g">
+<!ENTITY  autologinproxy.label          "Ma ši hãa y'ay boŋ bayrandi nda šennikufaloo gaabundi">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Suubaroo ka monno ka war šilbay feršikaw tokorey kaŋyaŋ se war na tammaasayaŋ gaabu se. War ga duu alhabar nd'a mana tabatandi.">

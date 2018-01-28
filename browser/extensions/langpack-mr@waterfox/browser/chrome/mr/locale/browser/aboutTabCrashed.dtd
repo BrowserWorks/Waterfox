@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "ही टॅब बंद करा">
+<!ENTITY tabCrashed.restoreTab "हा टॅब पूर्वस्थितीत आणा">
+<!ENTITY tabCrashed.restoreAll "सगळे क्रॅश झालेले टॅब्स पुन्हा पूर्वस्थितीत आणा">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "आत्ताच आपली टॅब क्रॅश झाली.">
+<!ENTITY tabCrashed.offerHelp "आम्ही आपली मदत करू शकतो!">
+<!ENTITY tabCrashed.single.offerHelpMessage "पृष्ठ पुन्हा लोड करण्यासाठी &tabCrashed.restoreTab; निवडा.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "पृष्ठावरील माहिती पुन्हा लोड करण्यासाठी &tabCrashed.restoreTab; किंवा &tabCrashed.restoreAll; निवडा.">
+<!ENTITY tabCrashed.requestHelp "आपण आम्हाला मदत कराल?">
+<!ENTITY tabCrashed.requestHelpMessage "क्रॅश अहवाल आम्हाला समस्यांचे निदान करण्यात आणि &brandShortName; ला सुधारण्यात मदत करतात.">
+<!ENTITY tabCrashed.requestReport "ही टॅब नोंदवा">
+<!ENTITY tabCrashed.sendReport2 "तुम्ही पाहत असलेल्या टॅबचा क्रॅश अहवाल पाठवा">
+<!ENTITY tabCrashed.commentPlaceholder2 "पर्यायी टिपण्णी (टिपण्णी सार्वजनिकरित्या दृष्यास्पद आहे)">
+<!ENTITY tabCrashed.includeURL2 "ह्या क्रॅश अहवालासोबत पृष्ठाची URL समाविष्ट करा">
+<!ENTITY tabCrashed.emailPlaceholder "आपला ईमेल पत्ता येथे प्रविष्ट करा">
+<!ENTITY tabCrashed.emailMe "अधिक माहिती उपलब्ध झाल्यास मला ईमेल करा">
+<!ENTITY tabCrashed.reportSent "क्रॅश अहवाल आधीच सादर केला आहे; &brandShortName; अधिक चांगले बनविण्यास मदत केल्याबद्दल आपले धन्यवाद !">
+<!ENTITY tabCrashed.requestAutoSubmit2 "पार्श्वभूमी टॅबचा अहवाल द्या">
+<!ENTITY tabCrashed.autoSubmit2 "स्वयंरित्या क्रॅश अहवाल पाठवण्यासाठी प्राधान्यक्रम बदला, ज्यात सध्याच्या आणि भविष्यातील सत्रांमधील पार्श्वभुमीवरील टॅबचे क्रॅश अहवाल समाविष्ट असतील">

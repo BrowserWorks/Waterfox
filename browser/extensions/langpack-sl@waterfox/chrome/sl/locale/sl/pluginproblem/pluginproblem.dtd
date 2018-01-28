@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Ta stran uporablja vtičnik, ki lahko upočasni &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Tapnite za vklop vtičnika.">
+<!ENTITY clickToActivatePlugin                               "Vklopi vtičnik.">
+<!ENTITY checkForUpdates                                     "Preveri posodobitve …">
+<!ENTITY blockedPlugin.label                                 "Ta vtičnik je bil zavrnjen iz varnostnih razlogov.">
+<!ENTITY hidePluginBtn.label                                 "Skrij vtičnik">
+<!ENTITY managePlugins                                       "Upravljanje vtičnikov …">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Ponovno naloži stran">
+<!ENTITY reloadPlugin.post                                   " za nov poskus.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Pošlji poročilo o sesutju">
+<!ENTITY report.submitting                                   "Pošiljanje poročila …">
+<!ENTITY report.submitted                                    "Poročilo o sesutju poslano.">
+<!ENTITY report.disabled                                     "Pošiljanje poročil o sesutjih onemogočeno.">
+<!ENTITY report.failed                                       "Dostava ni uspela.">
+<!ENTITY report.unavailable                                  "Poročilo ni na voljo.">
+<!ENTITY report.comment                                      "Dodaj komentar (komentarji so javno vidni)">
+<!ENTITY report.pageURL                                      "Vključi URL strani">
+
+<!ENTITY plugin.file                                         "Datoteka">
+<!ENTITY plugin.mimeTypes                                    "Vrste MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Omogoči zaščiten način Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Zavrni nevarno in vsiljivo vsebino Flash">

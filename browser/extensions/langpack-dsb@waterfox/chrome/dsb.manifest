@@ -1,0 +1,14 @@
+locale alerts dsb dsb/locale/dsb/alerts/
+locale autoconfig dsb dsb/locale/dsb/autoconfig/
+locale global dsb dsb/locale/dsb/global/
+locale global-platform dsb dsb/locale/dsb/global-platform/mac/ os=Darwin
+locale global-platform dsb dsb/locale/dsb/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform dsb dsb/locale/dsb/global-platform/win/ os=WINNT
+locale mozapps dsb dsb/locale/dsb/mozapps/
+locale necko dsb dsb/locale/dsb/necko/
+locale passwordmgr dsb dsb/locale/dsb/passwordmgr/
+locale pipnss dsb dsb/locale/dsb/pipnss/
+locale pippki dsb dsb/locale/dsb/pippki/
+locale places dsb dsb/locale/dsb/places/
+locale pluginproblem dsb dsb/locale/dsb/pluginproblem/
+locale weave dsb dsb/locale/dsb/services/

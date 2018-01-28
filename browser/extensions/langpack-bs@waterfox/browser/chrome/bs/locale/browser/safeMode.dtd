@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; sigurni režim">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Pokreni u sigurnom režimu">
+<!ENTITY refreshProfile.label         "Osvježi &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Sigurni režim je poseban režim &brandShortName;a kojeg možete koristiti za rješavanje problema.">
+<!ENTITY safeModeDescription4.label   "Vaši add-oni i korisničke postavke bit će privremeno onemogućeni.">
+
+<!ENTITY refreshProfileInstead.label  "Možete preskočiti rješavanje problema i probati osvježiti &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; se prilikom pokretanja neočekivano zatvorio. Uzrok može biti jedan od add-ona ili neki drugi problem. Problem možete pokušati otkloniti pomoću sigurnog režima rada.">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Изузеци">
+<!ENTITY window.width                 "46em">
+
+<!ENTITY treehead.sitename.label      "Веб сајт">
+<!ENTITY treehead.status.label        "Стање">
+<!ENTITY removepermission.label       "Уклони сајт">
+<!ENTITY removepermission.accesskey   "У">
+<!ENTITY removeallpermissions.label   "Уклони све сајтове">
+<!ENTITY removeallpermissions.accesskey "в">
+<!ENTITY address.label                "Адреса веб сајта:">
+<!ENTITY address.accesskey            "А">
+<!ENTITY block.label                  "Блокирај">
+<!ENTITY block.accesskey              "Б">
+<!ENTITY session.label                "Дозволи за ову сесију">
+<!ENTITY session.accesskey            "с">
+<!ENTITY allow.label                  "Дозволи">
+<!ENTITY allow.accesskey              "Д">
+<!ENTITY windowClose.key              "с">
+
+<!ENTITY button.cancel.label          "Откажи">
+<!ENTITY button.cancel.accesskey      "О">
+<!ENTITY button.ok.label              "Сачувај промене">
+<!ENTITY button.ok.accesskey          "С">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "אינך כעת בחלון גלישה פרטית.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "פתיחת חלון פרטי">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "פ">
+
+<!ENTITY privateBrowsing.title                           "גלישה פרטית">
+<!ENTITY privateBrowsing.title.tracking                  "גלישה פרטית עם הגנת מעקב">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "בגלישה בחלון פרטי, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "אינו שומר">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "היסטוריה">
+<!ENTITY aboutPrivateBrowsing.info.searches              "חיפושים">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "עוגיות">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "קבצים זמניים">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ישמור">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "הורדות">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "סימניות">
+<!ENTITY aboutPrivateBrowsing.note.before                "גלישה פרטית ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "אינה הופכת אותך לאנונימי">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ברשת. המעסיק שלך או ספק האינטרנט שלך עדיין יכולים לדעת באילו דפים אתה מבקר.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "מידע נוסף על ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "גלישה פרטית">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "הגנה מפני מעקב">
+<!ENTITY trackingProtection.description2                 "אתרים מסוימים עושים שימוש ברכיבי מעקב כדי לעקוב אחר הפעילות שלך ברשת. עם הגנת המעקב Waterfox יחסום רבים מרכיבי מעקב אלו שיכולים לאסוף מידע על אופן הגלישה שלך.">
+<!ENTITY trackingProtection.startTour1                   "איך זה עובד?">

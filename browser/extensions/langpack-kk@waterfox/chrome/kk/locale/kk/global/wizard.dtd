@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Артқа">
+<!ENTITY  button-back-mac.accesskey    "А">
+<!ENTITY  button-next-mac.label        "Жалғастыру">
+<!ENTITY  button-next-mac.accesskey    "Ж">
+<!ENTITY  button-finish-mac.label      "Дайын">
+<!ENTITY  button-cancel-mac.label      "Бас тарту">
+
+<!ENTITY  button-back-unix.label       "Артқа">
+<!ENTITY  button-back-unix.accesskey   "А">
+<!ENTITY  button-next-unix.label       "Келесі">
+<!ENTITY  button-next-unix.accesskey   "К">
+<!ENTITY  button-finish-unix.label     "Дайын">
+<!ENTITY  button-cancel-unix.label     "Бас тарту">
+
+<!ENTITY  button-back-win.label        "&lt; Артқа">
+<!ENTITY  button-back-win.accesskey    "А">
+<!ENTITY  button-next-win.label        "Әрі қарай &gt;">
+<!ENTITY  button-next-win.accesskey    "р">
+<!ENTITY  button-finish-win.label      "Дайын">
+<!ENTITY  button-cancel-win.label      "Бас тарту">

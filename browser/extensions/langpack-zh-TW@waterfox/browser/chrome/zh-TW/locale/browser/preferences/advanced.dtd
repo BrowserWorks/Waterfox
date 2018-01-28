@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "一般">
+
+<!ENTITY useCursorNavigation.label       "總是使用鍵盤方向鍵瀏覽網頁（鍵盤瀏覽）">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "打字時直接搜尋頁面文字（隨打即找）">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "需要時顯示觸控鍵盤">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "瀏覽">
+
+<!ENTITY useAutoScroll.label             "使用自動捲動">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "使用平滑捲動">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "打字時即時檢查拼字">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "回報資料">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "進行編譯設定時，已停用了資料回報功能">
+
+<!ENTITY enableHealthReport1.label       "允許 &brandShortName; 自動傳送技術與互動資料給 Mozilla">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "更多資訊">
+
+<!ENTITY dataCollection.label            "&brandShortName; 資料收集與使用">
+<!ENTITY dataCollectionDesc.label        "我們致力於提供您選擇，也只會收集我們在提供與改善 &brandShortName; 時所必需的資料。我們也一定會經過您的同意才收集您的個人資訊。">
+<!ENTITY dataCollectionPrivacyNotice.label    "隱私權公告">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "允許 &brandShortName; 傳送錯誤回報給 Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "更多資訊">
+
+<!ENTITY networkTab.label                "網路">
+
+<!ENTITY networkProxy.label              "網路代理伺服器">
+
+<!ENTITY connectionDesc.label            "設定 &brandShortName; 要如何連到網路">
+<!ENTITY connectionSettings.label        "設定…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "已快取的網頁內容">
+
+<!ENTITY offlineStorage2.label           "離線網頁內容與使用者資料">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "網站資料">
+<!ENTITY clearSiteData.label             "清除所有資料">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "選項…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "了解更多">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "限制快取大小為">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB 的空間">
+<!ENTITY clearCacheNow.label             "立刻清除">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "立刻清除">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "停用自動快取管理">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "更新">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; 更新">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "保持更新 &brandShortName;，獲得最佳效能、穩定度以及安全性。">
+<!ENTITY updateApplication.version.pre   "">
+<!ENTITY updateApplication.version.post  " 版">
+<!ENTITY updateApplication.description   "讓 &brandShortName;:">
+<!ENTITY updateAuto3.label               "自動安裝更新（推薦）">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "自動檢查更新，但讓您選擇要不要安裝">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "不要檢查更新（不建議，可能會有安全性風險）">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "顯示更新紀錄…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "在背景服務當中安裝更新">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "自動更新搜尋引擎">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "若網站要求儲存資料以供離線使用時告訴您">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "例外網站…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "允許下列網站儲存資料供離線使用:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "移除…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "移除離線資料">
+
+<!ENTITY certificateTab.label            "憑證">
+<!ENTITY certPersonal2.description       "當伺服器要求您的個人憑證時">
+<!ENTITY selectCerts.auto                "自動選擇一組憑證">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "每次詢問您">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "向 OCSP 回應伺服器查詢，以確認憑證有效性">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "檢視憑證…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "安全性裝置…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "效能">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "使用推薦的效能設定">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "這些設定是根據您電腦的硬體與作業系統所量身訂做。">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "了解更多">
+<!ENTITY limitContentProcessOption.label "內容處理程序數量限制">
+<!ENTITY limitContentProcessOption.description
+                                         "調高內容處理程序的數量，可改善開啟多個分頁時的效能，但也會使用更多記憶體。">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "僅能在多程序的 &brandShortName; 當中修改內容處理程序數量。">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "了解如何確認多程序模式是否已開啟">
+<!ENTITY allowHWAccel.label              "可用時開啟硬體加速">
+<!ENTITY allowHWAccel.accesskey          "r">

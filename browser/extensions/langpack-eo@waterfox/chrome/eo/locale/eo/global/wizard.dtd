@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Iri malantaŭen">
+<!ENTITY  button-back-mac.accesskey    "M">
+<!ENTITY  button-next-mac.label        "Daŭrigi">
+<!ENTITY  button-next-mac.accesskey    "D">
+<!ENTITY  button-finish-mac.label      "Preta">
+<!ENTITY  button-cancel-mac.label      "Nuligi">
+
+<!ENTITY  button-back-unix.label       "Malantaŭen">
+<!ENTITY  button-back-unix.accesskey   "M">
+<!ENTITY  button-next-unix.label       "Antaŭen">
+<!ENTITY  button-next-unix.accesskey   "A">
+<!ENTITY  button-finish-unix.label     "Fini">
+<!ENTITY  button-cancel-unix.label     "Nuligi">
+
+<!ENTITY  button-back-win.label        "&lt; Malantaŭen">
+<!ENTITY  button-back-win.accesskey    "M">
+<!ENTITY  button-next-win.label        "Antaŭen  &gt;">
+<!ENTITY  button-next-win.accesskey    "A">
+<!ENTITY  button-finish-win.label      "Fini">
+<!ENTITY  button-cancel-win.label      "Nuligi">

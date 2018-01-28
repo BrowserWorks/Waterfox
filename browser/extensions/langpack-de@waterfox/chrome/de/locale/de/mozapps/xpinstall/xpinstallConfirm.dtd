@@ -1,0 +1,9 @@
+<!-- extracted from institems.xul -->
+
+<!ENTITY dialog.title            "Software-Installation">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Sie sollten Add-ons nur von Quellen installieren, denen Sie vertrauen.">
+<!ENTITY warningSecondary.label  "Böswillige Software kann Dateien auf Ihrem Computer beschädigen oder Ihre Privatsphäre verletzen.">
+
+<!ENTITY from.label "von:">
+

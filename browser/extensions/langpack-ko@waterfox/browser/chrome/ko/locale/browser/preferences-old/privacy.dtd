@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "추적 방지 사용">
+<!ENTITY  trackingProtectionAlways.label       "항상 사용하기">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "사생활 보호 창에서만 사용">
+<!ENTITY  trackingProtectionPrivate.accesskey  "y">
+<!ENTITY  trackingProtectionNever.label        "항상 사용하지 않기">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "더 알아보기">
+<!ENTITY  trackingProtectionExceptions.label   "예외…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "추적 기능">
+<!ENTITY trackingProtectionPBM5.label         "사생활 보호 창에서 추적 방지 사용">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "더 알아보기">
+<!ENTITY changeBlockList.label          "차단 목록 변경">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "당신은 또한 ">
+<!ENTITY  doNotTrack.settings.label     "추적 차단 기능">
+<!ENTITY  doNotTrack.post.label         "을 관리할 수 있습니다.">
+
+<!ENTITY  history.label                 "방문 기록">
+
+<!ENTITY  locationBar.label             "주소창">
+
+<!ENTITY  locbar.suggest.label          "주소창에 표시할 추천 항목:">
+<!ENTITY  locbar.history.label          "방문 기록만">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "북마크만">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "탭 열기">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "기본 검색 엔진에서 가져온 관련 검색어">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "검색 엔진 추천 설정 변경…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "웹사이트의 쿠기 허용">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "제3자 쿠키 허용:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "항상 허용">
+<!ENTITY  acceptThirdParty.never.label    "허용 안함">
+<!ENTITY  acceptThirdParty.visited.label  "방문한 곳만">
+
+<!ENTITY  keepUntil.label               "유지 시간:">
+<!ENTITY  keepUntil.accesskey           "K">
+
+<!ENTITY  expire.label                  "만료 될 때까지">
+<!ENTITY  close.label                   "&brandShortName;를 닫을 때">
+
+<!ENTITY  cookieExceptions.label        "예외 목록…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "쿠키 보기…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; 작업 사항:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "방문 기록 저장">
+<!ENTITY  historyHeader.dontremember.label "방문 기록 저장 안 함">
+<!ENTITY  historyHeader.custom.label       "사용자 정의 설정">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName;는 웹 사이트 방문, 다운로드, 입력 및 검색 기록, 방문한 웹사이트가 제공한 쿠키 등을 저장합니다.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "선택 사항: ">
+<!ENTITY  rememberActions.clearHistory.label  "최근 방문 기록 삭제">
+<!ENTITY  rememberActions.middle.label        " 또는 ">
+<!ENTITY  rememberActions.removeCookies.label "쿠키 삭제">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName;는 사생활 보호 모드와 같은 설정을 가지며 웹 사이트 방문 중 어떤 기록도 저장하지 않습니다.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "선택 사항: ">
+<!ENTITY  dontrememberActions.clearHistory.label "모든 방문 기록 삭제">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "사생활 보호 모드로만 이용">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "표시한 페이지 및 파일 다운로드 기록 저장">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "검색 및 입력 기록 저장">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; 닫을 때 방문 기록 삭제">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "설정…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "포함 탭">
+<!ENTITY  browserContainersLearnMore.label      "자세히 보기">
+<!ENTITY  browserContainersEnabled.label        "포함 탭 활성화">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "설정…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

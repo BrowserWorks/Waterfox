@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "இயக்கு">
+<!ENTITY playButton.pauseLabel "இடைநிறுத்து">
+<!ENTITY muteButton.muteLabel "ஒலி நீக்கு">
+<!ENTITY muteButton.unmuteLabel "ஒலிக்க செய்">
+<!ENTITY fullscreenButton.enterfullscreenlabel "முழுத்திரை">
+<!ENTITY fullscreenButton.exitfullscreenlabel "முழுத்திரையிலிருந்து வெளியேறு">
+<!ENTITY castingButton.castingLabel "திரையில் வார்">
+<!ENTITY closedCaption.off "அணை">
+
+<!ENTITY stats.media "ஊடகம்">
+<!ENTITY stats.size "அளவு">
+<!ENTITY stats.activity "செயல்பாடு">
+<!ENTITY stats.activityPaused "இடைநிறுத்தப்பட்டது">
+<!ENTITY stats.activityPlaying "இயக்குகிறது">
+<!ENTITY stats.activityEnded "முடிவடைந்தது">
+<!ENTITY stats.activitySeeking "(தேடியடைகிறது)">
+<!ENTITY stats.volume "ஒலியளவு">
+<!ENTITY stats.framesParsed "சட்டங்களை பாகுபடுத்த">
+<!ENTITY stats.framesDecoded "குறியீடு நீக்கம் செய்யப்பட்ட பிரேம்கள்">
+<!ENTITY stats.framesPresented "வழங்கப்பட்ட பிரேம்கள்">
+<!ENTITY stats.framesPainted "பெயின்ட் செய்யப்பட்ட பிரேம்கள்">
+
+<!ENTITY error.aborted "வீடியோ ஏற்றுதல் நிறுத்தப்பட்டது.">
+<!ENTITY error.network "பிணைய பிழையின் காரணமாக வீடியோ இயக்கம் கைவிடப்பட்டது.">
+<!ENTITY error.decode "கோப்பு சிதைந்துள்ளதால், வீடியோவை இயக்க முடியாது.">
+<!ENTITY error.srcNotSupported "வீடியோ வடிவமைப்பு அல்லது MIME வகை ஆதரிக்கப்படாதது.">
+<!ENTITY error.noSource2 "ஆதரிக்கப்படும் வடிவமைப்புள்ள அல்லது MIME வகை கொண்ட வீடியோ எதுவும் காணப்படவில்லை.">
+<!ENTITY error.generic "தெரியாத பிழையின் காரணமாக வீடியோ இயக்கம் கைவிடப்பட்டது.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 / #2 கடந்தது">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

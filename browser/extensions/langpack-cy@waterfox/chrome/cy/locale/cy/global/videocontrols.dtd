@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Chwarae">
+<!ENTITY playButton.pauseLabel "Oedi">
+<!ENTITY muteButton.muteLabel "Tewi">
+<!ENTITY muteButton.unmuteLabel "Dad dewi">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Sgrin Lawn">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Gadael y Sgrin Lawn">
+<!ENTITY castingButton.castingLabel "Darlledu i'r Sgrin">
+<!ENTITY closedCaption.off "Diffodd">
+
+<!ENTITY stats.media "Cyfrwng">
+<!ENTITY stats.size "Maint">
+<!ENTITY stats.activity "Gweithgaredd">
+<!ENTITY stats.activityPaused "Oedwyd">
+<!ENTITY stats.activityPlaying "Chwarae">
+<!ENTITY stats.activityEnded "Gorffennwyd">
+<!ENTITY stats.activitySeeking "(chwilio)">
+<!ENTITY stats.volume "Sŵn">
+<!ENTITY stats.framesParsed "Fframiau wedi eu didoli">
+<!ENTITY stats.framesDecoded "Fframiadu wedi eu dadcodio">
+<!ENTITY stats.framesPresented "Fframiau wedi eu cyflwyno">
+<!ENTITY stats.framesPainted "Fframiau wedi eu paentio">
+
+<!ENTITY error.aborted "Mae llwytho'r fideo wedi dod i ben.">
+<!ENTITY error.network "Mae chwarae'r fideo wedi dod i ben oherwydd gwall rhwydwaith.">
+<!ENTITY error.decode "Nid oedd modd chwarae'r fideo gan fod y ffeil yn llwgr.">
+<!ENTITY error.srcNotSupported "Nid yw'r fformat fideo na'r math MIME yn cael eu cynnal.">
+<!ENTITY error.noSource2 "Heb ganfod fideo gyda fformat sy'n cael ei gynnal na math MIME.">
+<!ENTITY error.generic "Ataliwyd chwarae'r fideo oherwydd gwall anhysbys.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 o #2 aeth heibio">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

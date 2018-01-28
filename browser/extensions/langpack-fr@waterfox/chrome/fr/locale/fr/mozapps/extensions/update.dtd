@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Mise à jour de &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; est en mode déconnecté">
+<!ENTITY  offline.description             "&brandShortName; doit être en mode connecté afin de vérifier si des mises à jour de vos modules sont disponibles pour les rendre compatibles avec cette version.">
+<!ENTITY  offline.toggleOffline.label     "Revenir en mode connecté maintenant.">
+<!ENTITY  offline.toggleOffline.accesskey "R">
+
+<!ENTITY  mismatch.win.title              "Modules incompatibles">
+<!ENTITY  mismatch.top.label              "Les modules suivants ne sont pas compatibles avec cette version de &brandShortName; et ont été désactivés :">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; peut vérifier s’il y a des versions compatibles de ces modules disponibles.">
+
+<!ENTITY  checking.wizard.title           "Vérification des modules compatibles">
+<!ENTITY  checking.top.label              "Vérification de la disponibilité de mises à jour pour les modules incompatibles…">
+<!ENTITY  checking.status                 "Cela peut prendre plusieurs minutes…">
+
+<!ENTITY  found.wizard.title               "Modules compatibles trouvés">
+<!ENTITY  found.top.label                 "Sélectionnez les modules que vous désirez installer :">
+<!ENTITY  found.disabledXPinstall.label   "Ces mises à jour ne peuvent pas être installées car l’installation de logiciels est actuellement désactivée. Vous pouvez changer ce paramètre ci-dessous.">
+<!ENTITY  found.enableXPInstall.label     "Autoriser les sites web à installer des logiciels">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "Installation des modules compatibles">
+<!ENTITY  installing.top.label            "Téléchargement et installation des mises à jour des modules…">
+
+<!ENTITY  noupdates.wizard.title          "Aucun module compatible n’a été trouvé">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; n’a pas pu trouver de mises à jour disponibles pour les modules incompatibles.">
+<!ENTITY  noupdates.error.desc            "Des problèmes sont survenus lors de la recherche de mises à jour.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; vérifiera régulièrement et vous informera lorsque des mises à jour compatibles seront disponibles.">
+
+<!ENTITY  finished.wizard.title           "Les modules compatibles ont été installés">
+<!ENTITY  finished.top.label              "&brandShortName; a installé les mises à jour des modules.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; peut vérifier régulièrement et vous informer quand des mises à jour pour les modules sont disponibles.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; vérifiera régulièrement et vous informera lorsque des mises à jour pour les modules seront disponibles.">
+
+<!ENTITY  adminDisabled.wizard.title      "Impossible de vérifier la disponibilité de mises à jour">
+<!ENTITY  adminDisabled.warning.label     "Il n’est pas possible de vérifier la disponibilité de mises à jour pour vos modules incompatibles car l’installation de logiciels pour &brandShortName; a été désactivée. Veuillez contacter votre administrateur système pour obtenir de l’assistance.">
+
+<!ENTITY  versioninfo.wizard.title        "Vérification de la compatibilité des modules">
+<!ENTITY  versioninfo.top.label           "Vérification de la compatibilité des modules avec cette version de &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Cela peut prendre quelques minutes…">
+
+<!ENTITY  installerrors.wizard.title      "Problèmes lors de l’installation des mises à jour">
+<!ENTITY  installerrors.intro.label       "&brandShortName; a rencontré des problèmes lors de la mise à jour de certains des modules.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Cliquez sur Terminer pour continuer le démarrage de &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Cliquez sur Terminer pour continuer le démarrage de &brandShortName;.">
+<!ENTITY  enableChecking.label            "Permettre à &brandShortName; de vérifier la disponibilité de mises à jour.">

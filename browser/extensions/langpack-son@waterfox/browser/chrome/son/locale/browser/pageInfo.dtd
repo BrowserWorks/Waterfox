@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Berandi">
+<!ENTITY  copy.accesskey        "B">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Kul suuba">
+<!ENTITY  selectall.accesskey   "K">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Kulhaya">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Maa:">
+<!ENTITY  generalURL            "URL aderesu:">
+<!ENTITY  generalType           "Dumi:">
+<!ENTITY  generalMode           "Williyan alhaali:">
+<!ENTITY  generalSize           "Adadu:">
+<!ENTITY  generalReferrer       "Fellandi URL:">
+<!ENTITY  generalSource         "Tugudoo aššil:">
+<!ENTITY  generalModified       "Barmayante:">
+<!ENTITY  generalEncoding2      "Hantum harfu-hawyan:">
+<!ENTITY  generalMetaName       "Maa">
+<!ENTITY  generalMetaContent    "Gundekuna">
+
+<!ENTITY  mediaTab              "Alhabar goyjinay">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Gorodoo:">
+<!ENTITY  mediaText             "Kalimaɲaa kuru kondante:">
+<!ENTITY  mediaAltHeader        "Kalimaɲaa kuru bere-berante:">
+<!ENTITY  mediaAddress          "Aderesu">
+<!ENTITY  mediaType             "Dumi">
+<!ENTITY  mediaSize             "Adadu">
+<!ENTITY  mediaCount            "Hinna">
+<!ENTITY  mediaDimension        "Alkadarey:">
+<!ENTITY  mediaLongdesc         "Šilbayyan kuku:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Gaabu sanda…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Alhabar goyjinay moo-fur:">
+
+<!ENTITY  feedTab               "Alhabar damyaney">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Boŋ-maa hantum">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Duɲeyaney">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Tilasu goyandi">
+<!ENTITY  permAskAlways         "Hãa waati kul">
+<!ENTITY  permAllow             "Noo fondo">
+<!ENTITY  permAllowSession      "Noo fondo goywaati se">
+<!ENTITY  permBlock             "Gagay">
+<!ENTITY  permissionsFor        "Duɲeyan woo se:">
+<!ENTITY  permPlugins           "Sukarey dirandi">
+
+<!ENTITY  permClearStorage           "Jišidoo koonandi">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Saajaw">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Tabatiyan-tiira guna">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Šibayante">
+
+
+<!ENTITY  securityView.identity.header   "Interneti nungu boŋtammaasa">
+<!ENTITY  securityView.identity.owner    "Koy:">
+<!ENTITY  securityView.identity.domain   "Interneti nungu:">
+<!ENTITY  securityView.identity.verifier "Kaŋ woo n'a koroši:">
+
+
+<!ENTITY  securityView.privacy.header                   "Sutura nda taariki">
+<!ENTITY  securityView.privacy.history                  "Wala yan ka bay ka Interneti nungoo woo naaru ka bisa?">
+<!ENTITY  securityView.privacy.cookies                  "Interneti nungoo woo mma alhabar (aleewayaŋ) jiši ay ordinateroo ga?">
+<!ENTITY  securityView.privacy.viewCookies              "Aleewawey guna">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Ya n' ka šennikufal kulyaŋ gaabu Interneti nungoo woo se?">
+<!ENTITY  securityView.privacy.viewPasswords            "Šennikufal gaabuntey guna">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Goywaanay šilbayhayey">
+
+<!ENTITY  helpButton.label                              "Faaba">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

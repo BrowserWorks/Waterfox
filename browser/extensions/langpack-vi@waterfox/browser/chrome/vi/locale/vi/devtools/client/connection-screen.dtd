@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Kết nối">
+<!ENTITY header     "Kết nối tới thiết bị từ xa">
+<!ENTITY host       "Máy chủ:">
+<!ENTITY port       "Cổng:">
+<!ENTITY connect    "Kết nối">
+<!ENTITY connecting "Đang kết nối…">
+
+<!ENTITY availableTabs "Các thẻ từ xa có hiệu lực:">
+<!ENTITY availableProcesses "Các xử lý từ xa còn hoạt động:">
+<!ENTITY connectionError "Lỗi:">
+<!ENTITY errorTimeout "Lỗi: Hết thời gian chờ kết nối">
+<!ENTITY errorRefused "Lỗi: kết nối bị từ chối.">
+<!ENTITY errorUnexpected "Lỗi không mong muốn.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+
+
+
+<!ENTITY availableAddons "Available remote add-ons:">
+<!ENTITY remoteDocumentation "documentation">
+<!ENTITY remoteHelp "Waterfox Developer Tools can debug remote devices (Waterfox for Android and Waterfox OS, for example). Make sure that you have turned on the ‘Remote debugging’ option in the remote device. For more, see the ">
+<!ENTITY remoteHelpSuffix ".">
+

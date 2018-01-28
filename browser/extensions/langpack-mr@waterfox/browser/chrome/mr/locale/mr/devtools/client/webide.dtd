@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "प्रकल्प">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "नवीन ॲप…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "पॅकेज केलेले अॅप उघडा...">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "होस्ट केलेले अॅप उघडा…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "अॅप उघडा…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "स्थापित करा आणि चालवा">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "ॲप थांबवा">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "ॲप डिबग करा">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "प्रकल्प काढून टाका">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "प्राधान्यक्रम">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "अतिरिक्त घटक व्यवस्थापित करा">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "टॅब्स पुन्हा दाखल करा">
+
+<!ENTITY runtimeMenu_label "चालू कालावधी">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "खंडीत करा">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "स्क्रीनशॉट">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "चालू कालावधीबद्दल माहिती">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "मॉनिटर">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "साधन प्राधान्यक्रम">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "साधन सेटिंग्स">
+<!ENTITY runtimeMenu_showSettings_accesskey "S">
+
+<!ENTITY viewMenu_label "दृश्य">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "मोठे करा">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "छोटे करा">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "रिसेट झूम">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "अॅप उघडा">
+<!ENTITY runtimeButton_label "स्थानिक चालुकालावधी">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "माझे प्रकल्प">
+<!ENTITY projectPanel_runtimeApps "चालू कालावधी ॲप्स">
+<!ENTITY projectPanel_tabs "टॅब्स">
+<!ENTITY runtimePanel_usb "USB समर्थित साधने">
+<!ENTITY runtimePanel_wifi "वाय-फाय समर्थीत साधने">
+<!ENTITY runtimePanel_simulator "सिम्युलेटर्स">
+<!ENTITY runtimePanel_other "इतर">
+<!ENTITY runtimePanel_installsimulator "सिम्युलेटर इंस्टॉल करा">
+<!ENTITY runtimePanel_noadbhelper "ADB हेल्पर इंस्टॉल करा">
+<!ENTITY runtimePanel_nousbdevice "आपले उपकरण दिसत नाही का?">
+<!ENTITY runtimePanel_refreshDevices_label "पुन्हा दाखल करा">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "वैध">
+<!ENTITY details_warning_header "सावधानता">
+<!ENTITY details_error_header "त्रुटी">
+<!ENTITY details_description "वर्णन">
+<!ENTITY details_location "स्थान">
+<!ENTITY details_manifestURL "ॲप ID">
+<!ENTITY details_removeProject_button "प्रकल्प काढून टाका">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "नवीन ॲप">
+<!ENTITY newAppHeader "टेम्प्लेट निवडा">
+<!ENTITY newAppLoadingTemplate "टेम्पलेट्स लोड करत आहे…">
+<!ENTITY newAppProjectName "प्रकल्प नाव:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "बंद करा">
+<!-- Addons -->
+
+<!ENTITY addons_title "अतिरिक्त घटक">
+<!ENTITY addons_aboutaddons "ॲड-ऑन्स् व्यवस्थापक उघडा">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "प्राधान्यक्रम">
+<!ENTITY prefs_editor_title "एडिटर">
+<!ENTITY prefs_general_title "सर्वसाधारण">
+<!ENTITY prefs_restore "पूर्वनिर्धारित पुनःस्थापीत करा">
+<!ENTITY prefs_manage_components "अतिरिक्त घटक व्यवस्थापित करा">
+<!ENTITY prefs_options_autoconnectruntime "मागील चालू कालावधीला पुन्हा जोडा">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE सुरु झाल्यानंतर मागील चालू कालावधीला पुन्हा जोडा">
+<!ENTITY prefs_options_rememberlastproject "मागील प्रकल्प लक्षात ठेवा">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE सुरु झाल्यानंतर मागील प्रकल्प पूर्ववत करा">
+<!ENTITY prefs_options_templatesurl "टेम्पलेट्स URL">
+<!ENTITY prefs_options_templatesurl_tooltip "उपलब्ध टेम्पलेट्सची अनुक्रमणिका">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "चालू कालावधीबद्दल माहिती">
+<!ENTITY runtimedetails_adbIsRoot "ADB मूळ आहे: ">
+<!ENTITY runtimedetails_summonADBRoot "साधनाला root करा">
+<!ENTITY runtimedetails_ADBRootWarning "(अनलॉक केलेला बूटलोडर आवश्यक)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "अमर्यादित DevTools अधिकार:">
+<!ENTITY runtimedetails_requestPrivileges "अधिक अधिकारासाठी विनंती करा">
+<!ENTITY runtimedetails_privilegesWarning "(साधन रीबूट केले जाईल. root ॲक्सेस आवश्यक)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "बुलियन">
+<!ENTITY device_typenumber "पूर्णांक">
+<!ENTITY device_typestring "स्ट्रिंग">
+<!ENTITY device_typeobject "घटक">
+<!ENTITY device_typenone "प्रकार नीवडा">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "साधन प्राधान्यक्रम">
+<!ENTITY devicepreference_search "शोध प्राधान्यक्रम">
+<!ENTITY devicepreference_newname "नवीन प्राधान्य नाव">
+<!ENTITY devicepreference_newtext "प्राधान्यता नाव">
+<!ENTITY devicepreference_addnew "नवीन प्राधान्य जोडा">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "साधन सेटिंग्स">
+<!ENTITY devicesetting_search "शोध सेटिंग्स">
+<!ENTITY devicesetting_newname "नवीन सेटिंग नाव">
+<!ENTITY devicesetting_newtext "सेटिंगचे मुल्य">
+<!ENTITY devicesetting_addnew "नवीन सेटिंग्ज जोडा">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "मॉनिटर">
+<!ENTITY monitor_help "मदत">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "क्लायंट ओळख">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "ही जोडणी अधिकृत करताना आपण ज्या अन्तीमबिंदू ला जोडणार आहात त्यासाठी अधिक माहितीची गरज आहे. आपल्या अन्य साधनावर प्रोम्ट च्या माध्यमातून कृपया क्यूआर कोड स्कॅन करा.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "क्यूआर स्कॅनर प्रोम्प्ट नाही?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "क्यूआर स्कॅनर प्रोम्प्ट आहे?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "आपले अन्य साधन जर क्यूआर कोड स्कॅन करण्याऐवजी ओळखीची खुण मागत असेल, तर अन्य साधनावर खालील मूल्य कॉपी करा:">
+<!ENTITY wifi_auth_qr_size_note "यशस्वी जोडणी करीता QR कोड छोटा पडत असेल तर, त्याला मोठे करा किंवा विंडोचा आकार वाढवा">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "पॅकेजिंग-पूर्व कमांड लॉग्स">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "सिम्युलेटर पर्याय">
+<!ENTITY simulator_remove "सिम्युलेटर नष्ट करा">
+<!ENTITY simulator_reset "पूर्वनिर्धारित मूळस्थितित आणा">
+<!ENTITY simulator_name "नाव">
+<!ENTITY simulator_software "सॉफ्टवेअर">
+<!ENTITY simulator_version "आवृत्ती">
+<!ENTITY simulator_profile "प्रोफाइलर">
+<!ENTITY simulator_hardware "हार्डवेअर">
+<!ENTITY simulator_device "साधन">
+<!ENTITY simulator_screenSize "पडदा">
+<!ENTITY simulator_pixelRatio "पिक्सेल प्रमाण">
+<!ENTITY simulator_tv_data "टिव्ही अनुकार">
+<!ENTITY simulator_tv_data_open "संरचना संबंधी माहिती">
+<!ENTITY simulator_tv_data_open_button "संरचना डिरेक्ट्री उघडा…">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printWindow.title "Drukowanie" >
+<!ENTITY title "Tytuł:" >
+<!ENTITY progress "Postęp:" >
+<!ENTITY preparing "Przygotowywanie…" >
+<!ENTITY printComplete "Zakończono drukowanie." >
+<!ENTITY dialogCancel.label "Anuluj" >
+<!ENTITY dialogClose.label "Zamknij" >
+<!ENTITY percentPrint "#1&#037;" >

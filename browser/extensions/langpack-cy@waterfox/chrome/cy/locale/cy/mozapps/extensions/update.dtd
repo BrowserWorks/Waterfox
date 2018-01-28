@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Diweddaru &brandShortName;">
+
+<!ENTITY  offline.title                   "Mae &brandShortName; yn gweithio all-lein">
+<!ENTITY  offline.description             "Mae &brandShortName; angen mynd ar-lein i weld os oes diweddariad ar gael i'ch ychwanegion i fod yn cydweddu â'r fersiwn hwn.">
+<!ENTITY  offline.toggleOffline.label     "Ewch ar-lein.">
+<!ENTITY  offline.toggleOffline.accesskey "E">
+
+<!ENTITY  mismatch.win.title              "Ychwanegion Anghydweddus">
+<!ENTITY  mismatch.top.label              "Nid yw'r ychwanegion canlynol yn cydweddu gyda'r fersiwn yma o &brandShortName; ac maent wedi eu hanalluogi:">
+<!ENTITY  mismatch.bottom.label           "Mae &brandShortName; yn gallu gwirio am fersiynau cydweddus o'r ychwanegion hyn ar gael.">
+
+<!ENTITY  checking.wizard.title           "Gwirio am Ychwanegion Cydweddus">
+<!ENTITY  checking.top.label              "Gwirio eich ychwanegion anghymarus am ddiweddariad…">
+<!ENTITY  checking.status                 "Gall hyn gymryd ychydig o amser…">
+
+<!ENTITY  found.wizard.title               "Wedi Canfod Ychwanegion Cydweddus">
+<!ENTITY  found.top.label                 "Dewiswch yr ychwanegion yr hoffech ei osod:">
+<!ENTITY  found.disabledXPinstall.label   "Nid oes modd gosod y diweddariadau hyn gan fod gosod meddalwedd wedi ei hanalluogi ar hyn o bryd. Gallwch newid y gosodiad isod.">
+<!ENTITY  found.enableXPInstall.label     "Caniatáu i wefannau osod meddalwedd">
+<!ENTITY  found.enableXPInstall.accesskey "C">
+
+<!ENTITY  installing.wizard.title         "Rhestru Ychwanegion Cydweddus">
+<!ENTITY  installing.top.label            "Llwytho a gosod diweddariadau i'ch ychwanegion…">
+
+<!ENTITY  noupdates.wizard.title          "Heb Ganfod Ychwanegion Cydweddus">
+<!ENTITY  noupdates.intro.desc            "Nid oedd &brandShortName; yn gallu canfod diweddariad i'ch ychwanegion anghymarus.">
+<!ENTITY  noupdates.error.desc            "Profwyd anawsterau wrth geisio canfod diweddariadau.">
+<!ENTITY  noupdates.checkEnabled.desc     "Bydd &brandShortName; yn gwirio o bryd i'w gilydd a'ch hysbysu pan fydd y diweddariad cydweddus hyn ar gael.">
+
+<!ENTITY  finished.wizard.title           "Ychwanegion Cydweddus wedi eu Gosod">
+<!ENTITY  finished.top.label              "Mae &brandShortName; wedi gosod diweddariadau i'ch ychwanegion.">
+<!ENTITY  finished.checkDisabled.desc     "Gall &brandShortName; wirio o bryd i'w gilydd a'ch hysbysu pan fydd diweddariadau ar gael.">
+<!ENTITY  finished.checkEnabled.desc      "Bydd &brandShortName; yn gwirio o bryd i'w gilydd a'ch hysbysu pan fydd diweddariadau ar gael.">
+
+<!ENTITY  adminDisabled.wizard.title      "Methu Gwirio am Ddiweddariadau">
+<!ENTITY  adminDisabled.warning.label     "Nid yw'n bosibl gwirio am ddiweddariad i ychwanegion anghymarus oherwydd mae gosod meddalwedd ar gyfer &brandShortName; wedi ei analluogi. Cysylltwch â'ch Gweinyddwr System am gymorth.">
+
+<!ENTITY  versioninfo.wizard.title        "Gwirio fod Ychwanegion yn Cydweddu">
+<!ENTITY  versioninfo.top.label           "Gwirio pa ychwanegion sy'n gymharus gyda'r fersiwn yma o &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Gall hyn gymryd ychydig o amser…">
+
+<!ENTITY  installerrors.wizard.title      "Problemau wrth Osod Diweddariadau">
+<!ENTITY  installerrors.intro.label       "Mae &brandShortName; wedi profi anhawster wrth ddiweddaru rhai o'ch ychwanegion.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Clicio Gorffen i gychwyn &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Cliciwch Gorffen i barhau i gychwyn &brandShortName;.">
+<!ENTITY  enableChecking.label            "Caniatáu i &brandShortName; wirio am ddiweddariadau.">

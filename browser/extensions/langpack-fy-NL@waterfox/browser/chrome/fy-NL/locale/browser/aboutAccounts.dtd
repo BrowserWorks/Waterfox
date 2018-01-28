@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Wolkom by &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Meld jo oan om jo ljepblêden, blêdwizers, wachtwurden &amp; mear te syngronisearjen.">
+<!ENTITY aboutAccountsConfig.startButton.label "Start no">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync-foarkarren">
+<!ENTITY aboutAccounts.noConnection.title "Gjin ferbining">
+<!ENTITY aboutAccounts.noConnection.description "Jo moatte mei it ynternet ferbûn wêze om jo oan te melden.">
+<!ENTITY aboutAccounts.noConnection.retry "Opnij probearje">
+<!ENTITY aboutAccounts.badConfig.title "Minne konfiguraasje">
+<!ENTITY aboutAccounts.badConfig.description "Net yn steat de konfiguraasje fan jo Waterfox-account te ûntdekken. Probearje letter opnij.">

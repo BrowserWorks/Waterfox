@@ -1,0 +1,172 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Karkahattayan alhabar">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Moɲoo woo goo nda goyandi alhabar kaŋ ga hin ka bara nda nafaw waati kaŋ war ga ceeci ka fatta šenday ra. Nda war ga zaabiyaŋ ceeci war zaarikul hãayaney se &brandShortName; ga, ir <a id='supportLink'>faaba Interneti nungoo</a> guna.">
+
+<!ENTITY aboutSupport.crashes.title "Kaŋyan bayrandey">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Bayrandi boŋtammaasa">
+<!ENTITY aboutSupport.crashes.sendDate "Sanba han">
+<!ENTITY aboutSupport.crashes.allReports "Kaŋyan bayrandikey kul">
+<!ENTITY aboutSupport.crashes.noConfig "Porogaramoo mana hansandi to kaŋyan bayrandey cebe.">
+
+<!ENTITY aboutSupport.extensionsTitle "Dobuyaney">
+<!ENTITY aboutSupport.extensionName "Maa">
+<!ENTITY aboutSupport.extensionEnabled "Tunante">
+<!ENTITY aboutSupport.extensionVersion "Dumi">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; alhaaley">
+<!ENTITY aboutSupport.featureName "Maa">
+<!ENTITY aboutSupport.featureVersion "Dumi">
+<!ENTITY aboutSupport.featureId "Boŋ-tammaasa">
+
+<!ENTITY aboutSupport.experimentsTitle "Šiiyan se alhaaley">
+<!ENTITY aboutSupport.experimentName "Maa">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Šilbayyan">
+<!ENTITY aboutSupport.experimentActive "Dirante">
+<!ENTITY aboutSupport.experimentEndDate "Ben han">
+<!ENTITY aboutSupport.experimentHomepage "Šintinmoo">
+<!ENTITY aboutSupport.experimentBranch "Kanbe">
+
+<!ENTITY aboutSupport.appBasicsTitle "Porogaram šintin hayey">
+<!ENTITY aboutSupport.appBasicsName "Maa">
+<!ENTITY aboutSupport.appBasicsVersion "Dumi">
+<!ENTITY aboutSupport.appBasicsBuildID "Cinari tammaasa">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Taagandiri kanaara">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Taariki taagandi">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Taariki taagandi cebe">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Fooloɲaa alhal">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Alhaali foolo">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Sukari tunantey">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Cinari hanseyan">
+<!ENTITY aboutSupport.appBasicsUserAgent "Goyteeri">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Lakkal goy-alkadar">
+<!ENTITY aboutSupport.appBasicsPerformance "Teeyan sahã">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers hantumantey">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Alhaaley">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Goyboobo zanfuney">
+
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Kufal">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla gorodoo goy kufal">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Saajaw alhaali">
+
+<!ENTITY aboutSupport.showDir.label "Fooloɲaa feeri">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Cebe ceecikoy ra">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Foolo feeri">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Ibaayi barmayante šifanteyaŋ">
+<!ENTITY aboutSupport.modifiedPrefsName "Maa">
+<!ENTITY aboutSupport.modifiedPrefsValue "Hinna">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js ibaayey">
+<!ENTITY aboutSupport.userJSDescription "War foolo alhaalo goo nda <a id='prefs-user-js-link'>user.js file</a> kaŋ ra ibaayiyaŋ kaŋ &brandShortName; man'i tee.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Ibaayi šifante kufalantey">
+<!ENTITY aboutSupport.lockedPrefsName "Maa">
+<!ENTITY aboutSupport.lockedPrefsValue "Hinna">
+
+<!ENTITY aboutSupport.graphicsTitle "Bii takarey">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Nungey bayrayhay hugu">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Timmeyan">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Timmeyan koroši">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Tonton cindi-kurmakaw">
+
+<!ENTITY aboutSupport.a11yTitle "Duwandiyan">
+<!ENTITY aboutSupport.a11yActivated "Dirante">
+<!ENTITY aboutSupport.a11yForceDisabled "Duuyan ganji">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Tiirahugu dumey">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Taariki sinjiyan">
+<!ENTITY aboutSupport.updateHistoryTitle "Taariki taagandi">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kalimaɲaa kuruI berandi deeji-walhaa ga">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Bayhaya ganey berandi deeji-walhaa ga">
+
+<!ENTITY aboutSupport.sandboxTitle "Lalaba">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "A ga too kayna">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "Saajaw alhaali šii">
+<!ENTITY aboutSupport.restartInSafeMode.label "Tunandi taaga nda tontoni kayantey…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Alhaaley">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Malal korosiyan">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Kaŋyan zaaritiira">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Dabariyan zaaritiira">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Kaŋyan hawgay alhaaley ši dira ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Šendaykuubiyan">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">

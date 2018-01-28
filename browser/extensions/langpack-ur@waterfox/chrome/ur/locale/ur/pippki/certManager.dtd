@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "تصدیق نامہ مینیجر">
+
+<!ENTITY certmgr.tab.mine                     "آپ کے تصدیق نامے">
+<!ENTITY certmgr.tab.others2                  "لوگ">
+<!ENTITY certmgr.tab.websites3                "پیش کار">
+<!ENTITY certmgr.tab.ca                       "مقتدرات">
+<!ENTITY certmgr.tab.orphan2                  "دیگر">
+
+<!ENTITY certmgr.mine                         "آپ کے پاس ان تنظیموں سے تصدیق نامے ہیں جو آپ کی شناخت کرتے ہیں:">
+<!ENTITY certmgr.others                       "آپ کے پاس مسل پر تصدیق نامے ہیں جو ان لوگوں کی شناخت کرتے ہیں:">
+<!ENTITY certmgr.websites2                    "آپ کے پاس مسل پر تصدیق نامے ہیں جو ان پیش کار کی شناخت کرتے ہیں:">
+<!ENTITY certmgr.cas                          "آپ کے پاس مسل پر تصدیق نامے ہیں جو ان تصدیق نامہ مقتدرات کی شناخت کرتے ہیں:">
+<!ENTITY certmgr.orphans                      "آپ کے پاس مسل پر تصدیق نامے ہیں جو کسی بھی دیگر زمرہ جات کے مناسب نہیں۔">
+
+<!ENTITY certmgr.detail.general_tab.title     "عمومی">
+<!ENTITY certmgr.detail.general_tab.accesskey "ع">
+<!ENTITY certmgr.detail.prettyprint_tab.title "تفصیلات">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "ت">
+
+<!ENTITY certmgr.pending.label                "فی الحال تصدیق نامے کی توثیق کر رہا ہے…">
+<!ENTITY certmgr.subjectinfo.label            "جاری شدہ بنام">
+<!ENTITY certmgr.issuerinfo.label             "جاری شدہ بمطابق">
+<!ENTITY certmgr.periodofvalidity.label       "جواز کا عرصہ" >
+<!ENTITY certmgr.fingerprints.label           "انگلیوں کے نشان">
+<!ENTITY certmgr.certdetail.title             "تصدیق نامہ تفصیل">
+<!ENTITY certmgr.certdetail.cn                "کامن نیم (CN)">
+<!ENTITY certmgr.certdetail.o                 "تنظیم (O)">
+<!ENTITY certmgr.certdetail.ou                "تنظیمی یونٹ (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "تسلسلی نمبر">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 انگلی کے نشان">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 انگلیوں کے نشان">
+
+<!ENTITY certmgr.editcacert.title             "CA تصدیق نامہ بھروسا سیٹنگیں تدوین کریں">
+<!ENTITY certmgr.editcert.edittrust           "بھروسا سیٹنگیں تدوین کریں:">
+<!ENTITY certmgr.editcert.trustssl            "یہ تصدیق نامہ ویب سائٹیں شناخت کر سکتا ہے۔">
+<!ENTITY certmgr.editcert.trustemail          "یہ تصدیق نامہ ڈاک صارفین  شناخت کر سکتا ہے۔">
+<!ENTITY certmgr.editcert.trustobjsign        "یہ تصدیق نامہ سافٹ ویئر ساز شناخت کر سکتا ہے۔">
+
+<!ENTITY certmgr.deletecert.title             "تصدیق نامہ حذف کریں">
+
+<!ENTITY certmgr.certname                     "نام تصدیق نامہ">
+<!ENTITY certmgr.certserver                   "پیش کار">
+<!ENTITY certmgr.override_lifetime            "تاحیات">
+<!ENTITY certmgr.tokenname                    "سلامتی آلہ">
+<!ENTITY certmgr.begins                       "شروع ہوتا ہے">
+<!ENTITY certmgr.expires                      "مدت ختم ہوتی ہے بر">
+<!ENTITY certmgr.email                        "ای میل پتہ">
+<!ENTITY certmgr.serial                       "سیریل نمبر">
+
+<!ENTITY certmgr.close.label                  "بند کریں">
+<!ENTITY certmgr.close.accesskey              "ب">
+<!ENTITY certmgr.view2.label                  "نظارہ…">
+<!ENTITY certmgr.view2.accesskey              "ن">
+<!ENTITY certmgr.edit3.label                  "ٹرسٹ تدوین کریں…">
+<!ENTITY certmgr.edit3.accesskey              "ٹ">
+<!ENTITY certmgr.export.label                 "درآمد کریں…">
+<!ENTITY certmgr.export.accesskey             "د">
+<!ENTITY certmgr.delete2.label                "حذف کریں...">
+<!ENTITY certmgr.delete2.accesskey            "ح">
+<!ENTITY certmgr.delete_builtin.label         "حذف کریں یا بد اعتمادی ...">
+<!ENTITY certmgr.delete_builtin.accesskey     "D">
+<!ENTITY certmgr.backup2.label                "پشتارہ...">
+<!ENTITY certmgr.backup2.accesskey            "پ">
+<!ENTITY certmgr.backupall2.label             "تمام پشتارہ کریں...">
+<!ENTITY certmgr.backupall2.accesskey         "پ">
+<!ENTITY certmgr.restore2.label               "درآمد کریں...">
+<!ENTITY certmgr.restore2.accesskey           "د">
+<!ENTITY certmgr.details.label                "قطعات تصدیق نامہ">
+<!ENTITY certmgr.details.accesskey            "ق">
+<!ENTITY certmgr.fields.label                 "قطعہ قدر">
+<!ENTITY certmgr.fields.accesskey             "ق">
+<!ENTITY certmgr.hierarchy.label              "تصدیق نامہ درجہ بندی">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "اکسیپشن اضافہ کریں…">
+<!ENTITY certmgr.addException.accesskey       "ا">
+
+<!ENTITY exceptionMgr.title                   "سلامتی استثنا شامل کریں">
+<!ENTITY exceptionMgr.exceptionButton.label   "تصدیق شدہ حفاظتی استثنا">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "ت">
+<!ENTITY exceptionMgr.supplementalWarning     "جائز بینکوں، دکانوں، اور دیگر عوامی سائٹس ایسا کرنے کو کہہ نہیں کریں گے.">
+<!ENTITY exceptionMgr.certlocation.caption2   "پیش کار">
+<!ENTITY exceptionMgr.certlocation.url        "محل وقوع:">
+<!ENTITY exceptionMgr.certlocation.download   "تصدیق نامہ لائیں">
+<!ENTITY exceptionMgr.certlocation.accesskey  "گ">
+<!ENTITY exceptionMgr.certstatus.caption      "تصدیق نامہ صورت حال">
+<!ENTITY exceptionMgr.certstatus.viewCert     "نظارہ…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "مستقل طور پر محفوظ یہ استثنا">
+<!ENTITY exceptionMgr.permanent.accesskey     "م">

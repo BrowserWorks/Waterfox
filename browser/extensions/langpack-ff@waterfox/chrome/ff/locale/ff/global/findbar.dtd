@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Yiylo cilol garowol konngol ngol">
+<!ENTITY previous.tooltip "Yiylo cilol ɓennugol konngol ngol">
+<!ENTITY findCloseButton.tooltip "Uddu palal njiilaw">
+<!ENTITY highlightAll.label "Jalbin Fof">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.tooltiptext "Jalbin cili konngol ngol kala">
+<!ENTITY caseSensitive.label "Jaaɓnu darnde">
+<!ENTITY caseSensitive.accesskey "d">
+<!ENTITY caseSensitive.tooltiptext "Yiylo wonndude e jaaɓgol darnde">
+<!ENTITY entireWord.label "Kelme Kuuɓɗe">
+<!ENTITY entireWord.accesskey "K">
+<!ENTITY entireWord.tooltiptext "Yiylo kelme kuuɓɗe tan">

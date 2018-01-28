@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Qqen">
+<!ENTITY header     "Qqen ɣer ibenk anmeggag">
+<!ENTITY host       "asenneftaɣ:">
+<!ENTITY port       "tabburt:">
+<!ENTITY connect    "Qqen">
+<!ENTITY connecting "Tuqqna…">
+<!ENTITY availableAddons "Izegrar inmeggagen yellan:">
+<!ENTITY availableTabs "Iccaren inmeggagen yellan:">
+<!ENTITY availableProcesses "Ikalan inmeggagen yellan:">
+<!ENTITY connectionError "Tuccḍa:">
+<!ENTITY errorTimeout "Tuccḍa: tanzagt n uraju n tuqqna tezri.">
+<!ENTITY errorRefused "Tuccḍa: tuqqna tegdel.">
+<!ENTITY errorUnexpected "Tuccḍa tarussint.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Ifecka n tneflit n Waterfox zemrzn ad seɣtin ibenkan inmeggagen (Waterfox  i Android neɣ Waterfox OS). Senqed ma yella iţwarmed uɣewwaṛ 'Taseɣtit tanmeggagt' ɣef yibenk anmeggag. Ugar n telɣut, wali ">
+<!ENTITY remoteDocumentation "tisemlit">
+<!ENTITY remoteHelpSuffix ".">
+

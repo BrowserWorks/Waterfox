@@ -1,0 +1,11 @@
+locale branding hi-IN hi-IN/locale/branding/
+locale browser hi-IN hi-IN/locale/browser/
+locale browser-region hi-IN hi-IN/locale/browser-region/
+locale devtools hi-IN hi-IN/locale/hi-IN/devtools/client/
+locale devtools-shared hi-IN hi-IN/locale/hi-IN/devtools/shared/
+locale formautofill hi-IN hi-IN/locale/hi-IN/
+locale pdf.js hi-IN hi-IN/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

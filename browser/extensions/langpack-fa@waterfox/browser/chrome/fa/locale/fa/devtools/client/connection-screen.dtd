@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "وصل شدن">
+<!ENTITY header     "اتصال به دستگاه دوردست">
+<!ENTITY host       "میزبان:">
+<!ENTITY port       "درگاه:">
+<!ENTITY connect    "وصل شدن">
+<!ENTITY connecting "در حال اتصال…">
+<!ENTITY availableAddons "افزودنی‌های دوردستِ در دسترس:">
+<!ENTITY availableTabs "زبانه‌های دوردستِ در دسترس:">
+<!ENTITY availableProcesses "پردازش‌های دوردستِ در دسترس:">
+<!ENTITY connectionError "خطا:">
+<!ENTITY errorTimeout "خطا: انقضای زمان اتصال.">
+<!ENTITY errorRefused "خطا:ارتباط‌قطع شد.">
+<!ENTITY errorUnexpected "خطای غیرمنتظره.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "«ابزارهای توسعه فایرفاکس» می‌تواند از دستگاه‌های دوردست اشکال‌زدایی کند (برای مثال، فایرفاکس برای اندروید و Waterfox OS). مطمئن شوید که گزینه «اشکال‌زدایی دوردست» را در دستگاه دیگر فعال کرده‌اید. برای مثال،  ">
+<!ENTITY remoteDocumentation "مستندات">
+<!ENTITY remoteHelpSuffix ".">
+

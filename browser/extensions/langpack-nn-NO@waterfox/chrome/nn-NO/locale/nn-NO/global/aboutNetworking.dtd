@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Om nettverk">
+<!ENTITY aboutNetworking.warning               "Dette er veldig eksperimentelt. Ikkje bruk utan tilsyn av ein vaksen.">
+<!ENTITY aboutNetworking.showNextTime          "Vis denne åtvaringa neste gong">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Oppdater">
+<!ENTITY aboutNetworking.autoRefresh           "Auto-oppdater kvart 3. sekund">
+<!ENTITY aboutNetworking.hostname              "Vertsnamn">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktiv">
+<!ENTITY aboutNetworking.idle                  "Uverksam">
+<!ENTITY aboutNetworking.host                  "Vert">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Sendt">
+<!ENTITY aboutNetworking.received              "Mottatt">
+<!ENTITY aboutNetworking.family                "Family">
+<!ENTITY aboutNetworking.addresses             "Adresser">
+<!ENTITY aboutNetworking.expires               "Går ut (Sekund)">
+<!ENTITY aboutNetworking.messagesSent          "Meldingar sendt">
+<!ENTITY aboutNetworking.messagesReceived      "Meldingar mottatt">
+<!ENTITY aboutNetworking.bytesSent             "Byte sendt">
+<!ENTITY aboutNetworking.bytesReceived         "Byte motteke">
+<!ENTITY aboutNetworking.logging               "Loggar">
+<!ENTITY aboutNetworking.logTutorial           "See <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> for instructions on how to use this tool.">
+<!ENTITY aboutNetworking.currentLogFile        "Gjeldande loggfil">
+<!ENTITY aboutNetworking.currentLogModules     "Gjeldande loggmodular:">
+<!ENTITY aboutNetworking.setLogFile            "Vel loggfil">
+<!ENTITY aboutNetworking.setLogModules         "Vel loggmodular">
+<!ENTITY aboutNetworking.startLogging          "Start loggføring">
+<!ENTITY aboutNetworking.stopLogging           "Stopp loggføring">
+<!ENTITY aboutNetworking.dnsLookup             "DNS-oppslag">
+<!ENTITY aboutNetworking.dnsLookupButton       "Slå opp">
+<!ENTITY aboutNetworking.dnsDomain             "Domene">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-ar">
+<!ENTITY aboutNetworking.rcwn                  "RCWN-statistikk">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN-status">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Tal på cache won">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Tal på net won">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Totalt tal på nettverkførespurnadar">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache-operasjon">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Les">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Skriv">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Open oppføring">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Kort gjennomsnitt">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Langt gjennomsnitt">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Langt standardavvik">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Tal på langsam cache">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Tal på ikkje-langsam cache">

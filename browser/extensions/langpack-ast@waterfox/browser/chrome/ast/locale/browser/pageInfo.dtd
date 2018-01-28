@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copiar">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Esbillar too">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Xeneral">
+<!ENTITY  generalTab.accesskey  "X">
+<!ENTITY  generalTitle          "Títulu:">
+<!ENTITY  generalURL            "Direición:">
+<!ENTITY  generalType           "Triba:">
+<!ENTITY  generalMode           "Mou de renderizáu:">
+<!ENTITY  generalSize           "Tamañu:">
+<!ENTITY  generalReferrer       "URL de referencia:">
+<!ENTITY  generalSource         "Fonte de caché:">
+<!ENTITY  generalModified       "Modificáu:">
+<!ENTITY  generalEncoding2      "Codificación de testu:">
+<!ENTITY  generalMetaName       "Nome">
+<!ENTITY  generalMetaContent    "Conteníu">
+
+<!ENTITY  mediaTab              "Medios">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Direición:">
+<!ENTITY  mediaText             "Testu asociáu:">
+<!ENTITY  mediaAltHeader        "Testu alternativu">
+<!ENTITY  mediaAddress          "Direición">
+<!ENTITY  mediaType             "Triba">
+<!ENTITY  mediaSize             "Tamañu">
+<!ENTITY  mediaCount            "Cuenta">
+<!ENTITY  mediaDimension        "Dimensiones:">
+<!ENTITY  mediaLongdesc         "Descripción llarga:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Guardar como…">
+<!ENTITY  mediaSaveAs.accesskey "c">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Previsualización de medios:">
+
+<!ENTITY  feedTab               "Feeds">
+<!ENTITY  feedTab.accesskey     "C">
+<!ENTITY  feedSubscribe         "Soscribise">
+<!ENTITY  feedSubscribe.accesskey "o">
+
+<!ENTITY  permTab               "Permisos">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Usar predetermináu">
+<!ENTITY  permAskAlways         "Entrugar siempres">
+<!ENTITY  permAllow             "Permitir">
+<!ENTITY  permAllowSession      "Permitir nesta sesión">
+<!ENTITY  permBlock             "Bloquiar">
+<!ENTITY  permissionsFor        "Permisos pa:">
+<!ENTITY  permPlugins           "Activar plugins">
+
+<!ENTITY  permClearStorage           "Llimpiar almacenamientu">
+<!ENTITY  permClearStorage.accesskey "c">
+
+<!ENTITY  securityTab           "Seguranza">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Ver certificáu">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Desconocíu">
+
+
+<!ENTITY  securityView.identity.header   "Identidá del sitiu web">
+<!ENTITY  securityView.identity.owner    "Propietariu:">
+<!ENTITY  securityView.identity.domain   "Sitiu web:">
+<!ENTITY  securityView.identity.verifier "Verificáu por:">
+
+<!ENTITY  securityView.privacy.header                   "Privacidá ya historial">
+<!ENTITY  securityView.privacy.history                  "¿Visité esti sitiu web enantes?">
+<!ENTITY  securityView.privacy.cookies                  "¿Ta esti sitiu web atroxando información (cookies) nel mio ordenador?">
+<!ENTITY  securityView.privacy.viewCookies              "Ver cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "¿Guardé cualesquier contraseña pa esti sitiu web?">
+<!ENTITY  securityView.privacy.viewPasswords            "Ver contraseñes guardaes">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "V">
+
+<!ENTITY  securityView.technical.header                 "Detalles téunicos">
+
+<!ENTITY  helpButton.label                              "Ayuda">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

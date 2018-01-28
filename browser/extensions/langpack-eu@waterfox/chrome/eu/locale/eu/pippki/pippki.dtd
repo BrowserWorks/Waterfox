@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Aldatu pasahitz nagusia">
+<!ENTITY setPassword.tokenName.label "Segurtasun-gailua">
+<!ENTITY setPassword.oldPassword.label "Uneko pasahitza:">
+<!ENTITY setPassword.newPassword.label "Pasahitz berria:">
+<!ENTITY setPassword.reenterPassword.label "Pasahitz berria (berriro):">
+<!ENTITY setPassword.meter.label "Pasahitz kalitatearen neurgailua">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Berezarri">
+<!ENTITY resetPassword.title  "Berrezarri pasahitz nagusia">
+<!ENTITY resetPassword.text  "Pasahitz nagusia berrezartzen baduzu, gordeta dituzun webetako eta epostetako pasahitzak, inprimaki datuak, ziurtagiri pertsonalak eta gako pribatuak ahaztu egingo dira. Ziur zaude pasahitz nagusia berrezarri nahi duzula?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Ziurtagiria deskargatzen">
+<!ENTITY downloadCert.message1 "Autoritate ziurtagiri (AZ) berri batez fidatzeko eskatu zaizu.">
+<!ENTITY downloadCert.trustSSL "Fidatu AZ honetaz webguneak identifikatzeko.">
+<!ENTITY downloadCert.trustEmail "Fidatu AZ honetaz e-posta erabiltzaileak identifikatzeko.">
+<!ENTITY downloadCert.trustObjSign "Fidatu AZ honetaz software garatzaileak identifikatzeko.">
+<!ENTITY downloadCert.message3 "Edozein xedetarako AZ honetaz fidatu aurretik, bere ziurtagiria eta bere gidalerroak eta prozedurak (eskuragarri badaude) aztertu behar dituzu.">
+<!ENTITY downloadCert.viewCert.label "Ikusi">
+<!ENTITY downloadCert.viewCert.text "Aztertu AZren ziurtagiriak">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Erabiltzaile identifikazioaren eskaera">
+<!ENTITY clientAuthAsk.message1 "Gune honek zeure burua ziurtagiri batez identifikatzeko eskatu dizu:">
+<!ENTITY clientAuthAsk.message2 "Aukeratu ziurtagiri bat identifikazio gisa aurkezteko:">
+<!ENTITY clientAuthAsk.message3 "Hautatutako ziurtagiriaren xehetasunak:">
+
+<!ENTITY pkcs12.setpassword.title  "Aukeratu ziurtagiri babeskopiaren pasahitza">
+<!ENTITY pkcs12.setpassword.message  "Hemen ezarritako ziurtagiriaren babeskopiak sortu behar duzun babeskopia babestuko du.  Pasahitz hori ezarri behar duzu babeskopiarekin jarraitzeko.">
+<!ENTITY pkcs12.setpassword.label1 "Ziurtagiri babeskopiaren pasahitza:">
+<!ENTITY pkcs12.setpassword.label2 "Ziurtagiri babeskopiaren pasahitza (berriro):">
+<!ENTITY pkcs12.setpassword.reminder "Garrantzizkoa: Ziurtagiri-babeskopiaren pasahitza ahazten bazaizu, ezin izango duzu geroago babeskopia hori berreskuratu.  Gorde ezazu leku seguru batean.">
+
+<!ENTITY chooseToken.title  "Aukeratu token-aren elkarrizketa">
+<!ENTITY chooseToken.message1 "Aukeratu token bat.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Gako pribatua sortzen">
+<!ENTITY createCertInfo.msg1 "Gakoa sortzen… Minutu batzuk har ditzake…">
+<!ENTITY createCertInfo.msg2 "Itxaron…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Babesturiko token autentifikazioa">
+<!ENTITY protectedAuth.msg "Mesedez token-ean autentifikatu. Autentifikazio metodoa token moetaren arabera aldatzen da.">
+<!ENTITY protectedAuth.tokenName.label "Token-a:">

@@ -1,0 +1,5 @@
+<!ENTITY  windowClose.key                         "w">
+<!ENTITY  preferencesDefaultTitleMac.title        "Einstellungen">
+<!ENTITY  preferencesDefaultTitleWin.title        "Einstellungen">
+<!ENTITY  preferencesCloseButton.label            "Schließen">
+<!ENTITY  preferencesCloseButton.accesskey        "c">

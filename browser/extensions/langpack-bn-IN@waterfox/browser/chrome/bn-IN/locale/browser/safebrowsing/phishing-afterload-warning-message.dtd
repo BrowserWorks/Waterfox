@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "আমি এই স্থান পরিত্যাগ করতে চাই!">
+<!ENTITY safeb.palm.decline.label "এই সতর্কবাণী উপেক্ষা করুন">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "এটা একটি প্রতারক সাইট নয়…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "এই পৃষ্ঠাটি কেন প্রতিরোধ করা হয়েছে?">
+
+<!ENTITY safeb.blocked.malwarePage.title "সুনিশ্চিত বিপজ্জনক পেজ!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/>-এ উপস্থিত পেজটি একটি বিপজ্জনক পেজ রূপে চিহ্নিত হয়েছে এবং আপনার নির্ধারিত সুরক্ষামূলক বৈশিষ্ট্য অনুযায়ী এটির প্রদর্শন প্রতিরোধ করা হয়েছে।">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>আক্রমণকারী পেজ দ্বারা কিছু প্রোগ্রাম ইনস্টল করা হয়। এই প্রোগ্রামগুলির মাধ্যমে ব্যক্তিগত তথ্য চুরি, ব্যবহারকারীর কম্পিউটার থেকে অন্যদের আক্রমণ  অথবা সিস্টেমের ক্ষতি করা হয়।</p><p>কিছু আক্রমণকারী পেজ দ্বারা ইচ্ছাকৃত ভাবে বিপজ্জনক সফ্টওয়্যার বিতরণ করা হয়, কিন্তু অধিকাংশ সাইট দ্বারা তাদের মালিকদের অজ্ঞাতে এই ধরনের কর্ম সঞ্চালিত হয়।</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "সন্দেহভাজন অবাঞ্ছিত সফ্টওয়্যার পেজ!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/>এ উপস্থিত পেজটি একটি বিপজ্জনক পেজ রূপে চিহ্নিত হয়েছে এবং আপনার নির্ধারিত সুরক্ষামূলক বৈশিষ্ট্য অনুযায়ী এটির প্রদর্শন প্রতিরোধ করা হয়েছে।">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>অবাঞ্ছিত সফ্টওয়্যার পেজ যা সফটওয়্যার ইন্সটল করবার চেষ্টা করছে যা আপনার সিস্টেমকে খারাপ করে দিতে পারে অনিচ্ছাকৃত ভাবেই।</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "প্রতারক সাইট!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "<span id='phishing_sitename'/>-এ উপস্থিত পেজটি একটি ওয়েব প্রতারণা রূপে চিহ্নিত হয়েছে এবং আপনার নির্ধারিত সুরক্ষামূলক বৈশিষ্ট্য অনুযায়ী এটির প্রদর্শন প্রতিরোধ করা হয়েছে।">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>প্রতারণামূলক সাইটগুলো আপনাকে ট্রিক করে ভয়ঙ্কর কিছু করায়, যেমন সফটওয়্যার ইন্সটল, বা আপনার তথ্য বের করে নেওয়া, যেমন পাসওয়ার্ড, ফোন নম্বর বা ক্রেডিট কার্ড।</p> <p>ওয়েবসাইটের ওয়েব পেজে কিছু তথ্য দেওয়া পরিচয় প্রতারণা বা অন্য জালিয়াতি হতে পারে।</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

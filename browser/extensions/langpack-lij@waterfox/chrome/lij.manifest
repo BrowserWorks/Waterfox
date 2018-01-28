@@ -1,0 +1,14 @@
+locale alerts lij lij/locale/lij/alerts/
+locale autoconfig lij lij/locale/lij/autoconfig/
+locale global lij lij/locale/lij/global/
+locale global-platform lij lij/locale/lij/global-platform/mac/ os=Darwin
+locale global-platform lij lij/locale/lij/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform lij lij/locale/lij/global-platform/win/ os=WINNT
+locale mozapps lij lij/locale/lij/mozapps/
+locale necko lij lij/locale/lij/necko/
+locale passwordmgr lij lij/locale/lij/passwordmgr/
+locale pipnss lij lij/locale/lij/pipnss/
+locale pippki lij lij/locale/lij/pippki/
+locale places lij lij/locale/lij/places/
+locale pluginproblem lij lij/locale/lij/pluginproblem/
+locale weave lij lij/locale/lij/services/

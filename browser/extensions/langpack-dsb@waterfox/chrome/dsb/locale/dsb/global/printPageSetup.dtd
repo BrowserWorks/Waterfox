@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Bok zarědowaś">
+
+<!ENTITY basic.tab           "Format a nastajenja">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Wusměrjenje:">
+<!ENTITY portrait.label      "Wusoki format">
+<!ENTITY portrait.accesskey  "u">
+<!ENTITY landscape.label     "Prěcny format">
+<!ENTITY landscape.accesskey "P">
+
+<!ENTITY scale.label         "Skalěrowanje:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Šyrokosći boka pśiměriś">
+<!ENTITY shrinkToFit.accesskey "b">
+
+<!ENTITY optionsGroup.label  "Nastajenja">
+
+<!ENTITY printBG.label       "Slězynu śišćaś (barwy a wobraze)">
+<!ENTITY printBG.accesskey   "z">
+
+<!ENTITY advanced.tab        "Kšomy a głowowa/nogowa smužka">
+
+<!ENTITY marginGroup.label   "Kšomy (#1)">
+<!ENTITY marginUnits.inches  "colow">
+<!ENTITY marginUnits.metric  "milimetrow">
+<!ENTITY marginTop.label     "Górjejce:">
+<!ENTITY marginTop.accesskey "G">
+<!ENTITY marginBottom.label  "Dołojce:">
+<!ENTITY marginBottom.accesskey "D">
+<!ENTITY marginLeft.label    "Nalěwo:">
+<!ENTITY marginLeft.accesskey "l">
+<!ENTITY marginRight.label   "Napšawo:">
+<!ENTITY marginRight.accesskey "a">
+
+<!ENTITY headerFooter.label  "Głowowe a nogowe smužki">
+
+<!ENTITY hfLeft.label        "Nalěwo:">
+<!ENTITY hfCenter.label      "Centrěrowany:">
+<!ENTITY hfRight.label       "Napšawo:">
+<!ENTITY headerLeft.tip      "Lěwa głowowa smužka">
+<!ENTITY headerCenter.tip    "Srjeźna głowowa smužka">
+<!ENTITY headerRight.tip     "Pšawa głowowa smužka">
+<!ENTITY footerLeft.tip      "Lěwa nogowa smužka">
+<!ENTITY footerCenter.tip    "Srjeźna nogowa smužka">
+<!ENTITY footerRight.tip     "Pšawa nogowa smužka">
+
+<!ENTITY hfTitle             "Titel">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Datum/Cas">
+<!ENTITY hfPage              "Numer boka">
+<!ENTITY hfPageAndTotal      "Bok # z #">
+<!ENTITY hfBlank             "--prozny--">
+<!ENTITY hfCustom            "Swójski…">
+
+<!ENTITY customPrompt.title  "Swójski…">
+<!ENTITY customPrompt.prompt "Zapišćo swój tekst za głowowu/nogowu smužku">

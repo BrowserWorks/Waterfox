@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "కాపీ చేయి">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "అన్నిటిని ఎన్నుకొనుము">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "సాధారణం">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "శీర్షిక:">
+<!ENTITY  generalURL            "చిరునామా:">
+<!ENTITY  generalType           "రకం:">
+<!ENTITY  generalMode           "రెండర్ రీతి:">
+<!ENTITY  generalSize           "పరిమాణం:">
+<!ENTITY  generalReferrer       "సంప్రదించుచున్న URL:">
+<!ENTITY  generalSource         "క్యాచీ మూలం:">
+<!ENTITY  generalModified       "సవరించిన:">
+<!ENTITY  generalEncoding2      "పాఠ్యపు ఎన్‌కోడింగు:">
+<!ENTITY  generalMetaName       "పేరు">
+<!ENTITY  generalMetaContent    "విషయసంగ్రహం">
+
+<!ENTITY  mediaTab              "మాధ్యమం">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "స్థానము:">
+<!ENTITY  mediaText             "అనుభందిత పాఠ్యము:">
+<!ENTITY  mediaAltHeader        "పరిసంభంద పాఠ్యము">
+<!ENTITY  mediaAddress          "చిరునామా">
+<!ENTITY  mediaType             "రకం">
+<!ENTITY  mediaSize             "పరిమాణం">
+<!ENTITY  mediaCount            "లెక్క">
+<!ENTITY  mediaDimension        "కొలతలు:">
+<!ENTITY  mediaLongdesc         "పొడవైన వివరణ:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "భద్రపరుచు రీతి…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "మాధ్యమం ఉపదర్శనం:">
+
+<!ENTITY  feedTab               "ఫీడ్స్ ‌">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "సభ్యత్వం పొందండి">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "అనుమతులు">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "అప్రమేయాన్ని వాడు">
+<!ENTITY  permAskAlways         "ఎల్లప్పుడు అడుగు">
+<!ENTITY  permAllow             "అనుమతించు">
+<!ENTITY  permAllowSession      "ఈ సెషన్‌కు అనుమతించు">
+<!ENTITY  permBlock             "నిరోధించు">
+<!ENTITY  permissionsFor        "దీనికొరకు అనుమతులు:">
+<!ENTITY  permPlugins           "ప్లగిన్ లను క్రియాశీలపరచు">
+
+<!ENTITY  permClearStorage           "నిల్వను శుభ్రపరచు">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "రక్షణ">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "ధృవీకరణపత్రాన్ని చూపించు">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "తెలియని">
+
+
+<!ENTITY  securityView.identity.header   "వెబ్‌ సైటు గుర్తింపు">
+<!ENTITY  securityView.identity.owner    "యజమాని:">
+<!ENTITY  securityView.identity.domain   "వెబ్ సైటు:">
+<!ENTITY  securityView.identity.verifier "దీనిద్వారా నిర్ధారించబడింది:">
+<!ENTITY  securityView.identity.validity "ఇంతలో గడువుతీరును:">
+
+<!ENTITY  securityView.privacy.header                   "గోప్యత మరియు చరిత్ర">
+<!ENTITY  securityView.privacy.history                  "ఈ రోజుకు ముందు నేను ఈ వెబ్ సైటును దర్శించానా?">
+<!ENTITY  securityView.privacy.cookies                  "ఈ వెబ్‌సైటు సమాచారాన్ని (కుకీలను) నా కంప్యూటర్‌ లో నిల్వవుంచుతోందా?">
+<!ENTITY  securityView.privacy.viewCookies              "కుకీలను చూడు">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "ఈ సైటు కోసం నేను ఏమైనా సంకేతపదాలను భద్రపరిచానా?">
+<!ENTITY  securityView.privacy.viewPasswords            "భద్రపరచిన సంకేతపదాలను చూడు">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "సాంకేతిక వివరములు">
+
+<!ENTITY  helpButton.label                              "సహాయం">

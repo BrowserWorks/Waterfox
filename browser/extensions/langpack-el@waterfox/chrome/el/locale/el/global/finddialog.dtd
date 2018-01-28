@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "Εύρεση στη σελίδα">
+<!ENTITY findField.label "Εύρεση κειμένου:">
+<!ENTITY findField.accesskey "ε">
+<!ENTITY caseSensitiveCheckbox.label "Ταίριασμα πεζών/κεφαλαίων">
+<!ENTITY caseSensitiveCheckbox.accesskey "σ">
+<!ENTITY wrapCheckbox.label "Αναδίπλωση">
+<!ENTITY wrapCheckbox.accesskey "δ">
+<!ENTITY findButton.label "Εύρεση επομένου">
+<!ENTITY findButton.accesskey "ρ">
+<!ENTITY cancelButton.label "Ακύρωση">
+<!ENTITY closeButton.label "Κλείσιμο">
+<!ENTITY up.label "Πάνω">
+<!ENTITY up.accesskey "ω">
+<!ENTITY down.label "Κάτω">
+<!ENTITY down.accesskey "τ">
+<!ENTITY direction.label "Κατεύθυνση">

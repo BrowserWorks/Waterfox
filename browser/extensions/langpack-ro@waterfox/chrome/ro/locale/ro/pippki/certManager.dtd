@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Manager de certificate">
+
+<!ENTITY certmgr.tab.mine                     "Certificatele tale">
+<!ENTITY certmgr.tab.others2                  "Ale altora">
+<!ENTITY certmgr.tab.websites3                "Servere">
+<!ENTITY certmgr.tab.ca                       "Autorități">
+<!ENTITY certmgr.tab.orphan2                  "Extra">
+
+<!ENTITY certmgr.mine                         "Ai certificate de la aceste organizații care te identifică:">
+<!ENTITY certmgr.others                       "Ai stocate certificate care identifică aceste persoane:">
+<!ENTITY certmgr.websites2                    "Ai stocate certificate care identifică aceste servere:">
+<!ENTITY certmgr.cas                          "Ai stocate certificate care identifică aceste autorități de certificare:">
+<!ENTITY certmgr.orphans                      "Ai stocate certificate care nu se încadrează în niciuna dintre celelalte categorii:">
+
+<!ENTITY certmgr.detail.general_tab.title     "General">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Detalii">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Se verifică în prezent certificatul...">
+<!ENTITY certmgr.subjectinfo.label            "Emis pentru">
+<!ENTITY certmgr.issuerinfo.label             "Emis de">
+<!ENTITY certmgr.periodofvalidity.label       "Perioada de valabilitate" >
+<!ENTITY certmgr.fingerprints.label           "Amprente">
+<!ENTITY certmgr.certdetail.title             "Detalii certificat">
+<!ENTITY certmgr.certdetail.cn                "Nume comun (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organizație (O)">
+<!ENTITY certmgr.certdetail.ou                "Unitate organizațională (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Număr de serie">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Amprentă SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Amprentă SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Editează setările certificatului de încredere AC">
+<!ENTITY certmgr.editcert.edittrust           "Editează setările de acreditare:">
+<!ENTITY certmgr.editcert.trustssl            "Acest certificat poate identifica site-uri web.">
+<!ENTITY certmgr.editcert.trustemail          "Acest certificat poate identifica utilizatori de e-mail.">
+<!ENTITY certmgr.editcert.trustobjsign        "Acest certificat poate identifica creatori de software.">
+
+<!ENTITY certmgr.deletecert.title             "Șterge certificatul">
+
+<!ENTITY certmgr.certname                     "Numele certificatului">
+<!ENTITY certmgr.certserver                   "Server">
+<!ENTITY certmgr.override_lifetime            "Durată de viață">
+<!ENTITY certmgr.tokenname                    "Dispozitiv de securitate">
+<!ENTITY certmgr.begins                       "Începe">
+<!ENTITY certmgr.expires                      "Expiră">
+<!ENTITY certmgr.email                        "Adresă de e-mail">
+<!ENTITY certmgr.serial                       "Număr de serie">
+
+<!ENTITY certmgr.close.label                  "Închide">
+<!ENTITY certmgr.close.accesskey              "c">
+<!ENTITY certmgr.view2.label                  "Vezi">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Editează încrederea…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "Exportă…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Șterge…">
+<!ENTITY certmgr.delete2.accesskey            "g">
+<!ENTITY certmgr.delete_builtin.label         "Șterge sau anulează încrederea…">
+<!ENTITY certmgr.delete_builtin.accesskey     "d">
+<!ENTITY certmgr.backup2.label                "Salvează">
+<!ENTITY certmgr.backup2.accesskey            "S">
+<!ENTITY certmgr.backupall2.label             "Salvează tot">
+<!ENTITY certmgr.backupall2.accesskey         "l">
+<!ENTITY certmgr.restore2.label               "Importă…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Câmpurile certificatului">
+<!ENTITY certmgr.details.accesskey            "f">
+<!ENTITY certmgr.fields.label                 "Valoarea câmpului">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "Ierarhia certificatelor">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Adaugă excepție…">
+<!ENTITY certmgr.addException.accesskey       "x">
+
+<!ENTITY exceptionMgr.title                   "Adaugă excepție de la securitate">
+<!ENTITY exceptionMgr.exceptionButton.label   "Confirmă excepția de la securitate">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "Băncile autorizate, magazinele și alte site-uri publice nu vă vor cere să faceți asta.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Server">
+<!ENTITY exceptionMgr.certlocation.url        "Adresă:">
+<!ENTITY exceptionMgr.certlocation.download   "Ia certificatul">
+<!ENTITY exceptionMgr.certlocation.accesskey  "I">
+<!ENTITY exceptionMgr.certstatus.caption      "Stare certificat">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Vedere…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Stochează această excepție permanent">
+<!ENTITY exceptionMgr.permanent.accesskey     "p">

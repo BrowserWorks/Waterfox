@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nová aplikace…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Otevřít zabalenou aplikaci…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Otevřít hostovanou aplikaci…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Otevřít aplikaci…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Instalovat a spustit">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Ukončit aplikaci">
+<!ENTITY projectMenu_stop_accesskey "U">
+<!ENTITY projectMenu_debug_label "Ladit aplikaci">
+<!ENTITY projectMenu_debug_accesskey "L">
+<!ENTITY projectMenu_remove_label "Odebrat projekt">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Předvolby">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Správa extra komponent">
+<!ENTITY projectMenu_manageComponents_accesskey "S">
+<!ENTITY projectMenu_refreshTabs_label "Obnovit panely">
+
+<!ENTITY runtimeMenu_label "Běhové prostředí">
+<!ENTITY runtimeMenu_accesskey "B">
+<!ENTITY runtimeMenu_disconnect_label "Odpojit">
+<!ENTITY runtimeMenu_disconnect_accesskey "d">
+<!ENTITY runtimeMenu_takeScreenshot_label "Snímek obrazovky">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Informace o běhovém prostředí">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Monitorování">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Předvolby zařízení">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "P">
+<!ENTITY runtimeMenu_showSettings_label "Nastavení zařízení">
+<!ENTITY runtimeMenu_showSettings_accesskey "N">
+
+<!ENTITY viewMenu_label "Zobrazení">
+<!ENTITY viewMenu_accesskey "Z">
+<!ENTITY viewMenu_toggleEditor_label "Přepnout editor">
+<!ENTITY viewMenu_toggleEditor_accesskey "P">
+<!ENTITY viewMenu_zoomin_label "Zvětšit">
+<!ENTITY viewMenu_zoomin_accesskey "v">
+<!ENTITY viewMenu_zoomout_label "Zmenšit">
+<!ENTITY viewMenu_zoomout_accesskey "m">
+<!ENTITY viewMenu_resetzoom_label "Normální">
+<!ENTITY viewMenu_resetzoom_accesskey "N">
+
+<!ENTITY projectButton_label "Otevřít aplikaci">
+<!ENTITY runtimeButton_label "Volba běhového prostředí">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Mé projekty">
+<!ENTITY projectPanel_runtimeApps "Běhové aplikace">
+<!ENTITY projectPanel_tabs "Panely">
+<!ENTITY runtimePanel_usb "USB zařízení">
+<!ENTITY runtimePanel_wifi "Wi-Fi zařízení">
+<!ENTITY runtimePanel_simulator "Simulátory">
+<!ENTITY runtimePanel_other "Ostatní">
+<!ENTITY runtimePanel_installsimulator "Instalovat simulátor">
+<!ENTITY runtimePanel_noadbhelper "Instalovat ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Nevidíte své zařízení?">
+<!ENTITY runtimePanel_refreshDevices_label "Obnovit zařízení">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "validní">
+<!ENTITY details_warning_header "varování">
+<!ENTITY details_error_header "chyby">
+<!ENTITY details_description "Popis">
+<!ENTITY details_location "Umístění">
+<!ENTITY details_manifestURL "ID aplikace">
+<!ENTITY details_removeProject_button "Odebrat projekt">
+<!ENTITY details_showPrepackageLog_button "Zobrazit protokol před zabalením">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Nová aplikace">
+<!ENTITY newAppHeader "Volba šablony">
+<!ENTITY newAppLoadingTemplate "Probíhá načítání šablon…">
+<!ENTITY newAppProjectName "Název projektu:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Zavřít">
+
+<!-- Addons -->
+<!ENTITY addons_title "Extra komponenty">
+<!ENTITY addons_aboutaddons "Otevřít Správce doplňků">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Předvolby">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Obecné">
+<!ENTITY prefs_restore "Obnovit výchozí">
+<!ENTITY prefs_manage_components "Správa extra komponent">
+<!ENTITY prefs_options_autoconnectruntime "Znovu připojit k předchozímu běhovému prostředí">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Po spouštění WebIDE znovu připojí k předchozímu běhovému prostředí">
+<!ENTITY prefs_options_rememberlastproject "Zapamatovat poslední projekt">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Obnoví při startu WebIDE předchozí projekt">
+<!ENTITY prefs_options_templatesurl "URL šablony">
+<!ENTITY prefs_options_templatesurl_tooltip "Seznam dostupných šablon">
+<!ENTITY prefs_options_showeditor "Zobrazit editor">
+<!ENTITY prefs_options_showeditor_tooltip "Zobrazí interní editor">
+<!ENTITY prefs_options_tabsize "Velikost tabulátoru">
+<!ENTITY prefs_options_expandtab "Měkké tabulátory">
+<!ENTITY prefs_options_expandtab_tooltip "Použije mezery namísto tabulátorů">
+<!ENTITY prefs_options_detectindentation "Automatické odsazování">
+<!ENTITY prefs_options_detectindentation_tooltip "Rozpozná odsazení na základě obsahu zdrojového kódu">
+<!ENTITY prefs_options_autocomplete "Automatické doplňování">
+<!ENTITY prefs_options_autocomplete_tooltip "Povolí automatické doplňování kódu">
+<!ENTITY prefs_options_autoclosebrackets "Automaticky uzavírat závorky">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Zajistí automatické vkládání ukončovacích závorek">
+<!ENTITY prefs_options_keybindings "Klávesové zkratky">
+<!ENTITY prefs_options_keybindings_default "Výchozí">
+<!ENTITY prefs_options_autosavefiles "Automatické ukládání souborů">
+<!ENTITY prefs_options_autosavefiles_tooltip "Automaticky ukládá upravené soubory před spuštěním projektu">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Informace o běhovém prostředí">
+<!ENTITY runtimedetails_adbIsRoot "ADB je root: ">
+<!ENTITY runtimedetails_summonADBRoot "root zařízení">
+<!ENTITY runtimedetails_ADBRootWarning "(vyžaduje odemčený bootloader)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Neomezená oprávnění nástrojů pro vývojáře: ">
+<!ENTITY runtimedetails_requestPrivileges "vyžaduje vyšší oprávnění">
+<!ENTITY runtimedetails_privilegesWarning "(Provede restart zařízení. Vyžadována práva roota.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Logická hodnota">
+<!ENTITY device_typenumber "Číslo">
+<!ENTITY device_typestring "Řetězec">
+<!ENTITY device_typeobject "Objekt">
+<!ENTITY device_typenone "Zvolte typ">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Předvolby zařízení">
+<!ENTITY devicepreference_search "Předvolby vyhledávání">
+<!ENTITY devicepreference_newname "Název nové předvolby">
+<!ENTITY devicepreference_newtext "Hodnota předvolby">
+<!ENTITY devicepreference_addnew "Přidat novou předvolbu">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Nastavení zařízení">
+<!ENTITY devicesetting_search "Nastavení vyhledávání">
+<!ENTITY devicesetting_newname "Název nového nastavení">
+<!ENTITY devicesetting_newtext "Hodnota nastavení">
+<!ENTITY devicesetting_addnew "Přidat nové nastavení">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Nápověda">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Identifikace klienta">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Koncový bod, ke kterému se připojujete, vyžaduje více informací pro ověření tohoto připojení.  Naskenujte prosím QR kód níže pomocí výzvy na vašem dalším zařízení.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Žádná výzva QR skeneru?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Vidíte výzvu QR skeneru?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Pokud se vaše další zařízení zeptá na token místo skenování QR kódu, zkopírujte do něj prosím hodnotu uvedenou níže:">
+<!ENTITY wifi_auth_qr_size_note "Pokud je QR kód příliš malý pro úspěšné navázání spojení, zkuste použít nástroj lupy nebo zvětšit okno.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Protokol příkazů před zabalením">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Možnosti Simulátoru">
+<!ENTITY simulator_remove "Odstranit Simulátor">
+<!ENTITY simulator_reset "Obnovit výchozí">
+<!ENTITY simulator_name "Jméno">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_version "Verze">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_device "Zařízení">
+<!ENTITY simulator_screenSize "Obrazovka">
+<!ENTITY simulator_pixelRatio "Poměr pixelů">
+<!ENTITY simulator_tv_data "Simulace TV">
+<!ENTITY simulator_tv_data_open "Konfigurační data">
+<!ENTITY simulator_tv_data_open_button "Otevřít adresář s konfigurací…">

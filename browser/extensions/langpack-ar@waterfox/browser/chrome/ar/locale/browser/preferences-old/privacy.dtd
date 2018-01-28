@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "استخدم الحماية من التعقّب">
+<!ENTITY  trackingProtectionAlways.label       "دائمًا">
+<!ENTITY  trackingProtectionAlways.accesskey   "د">
+<!ENTITY  trackingProtectionPrivate.label      "في النوافذ الخاصة فقط">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ق">
+<!ENTITY  trackingProtectionNever.label        "أبدًا">
+<!ENTITY  trackingProtectionNever.accesskey    "ب">
+<!ENTITY  trackingProtectionLearnMore.label    "اطّلع على المزيد">
+<!ENTITY  trackingProtectionExceptions.label   "الاستثناءات…">
+<!ENTITY  trackingProtectionExceptions.accesskey "س">
+
+<!ENTITY tracking.label                 "التعقب">
+<!ENTITY trackingProtectionPBM5.label         "استخدم الحماية من التعقّب في النوافذ الخاصة">
+<!ENTITY trackingProtectionPBM5.accesskey     "ص">
+<!ENTITY trackingProtectionPBMLearnMore.label "اطّلع على المزيد">
+<!ENTITY changeBlockList.label          "غيّر قائمة الحجب">
+<!ENTITY changeBlockList.accesskey      "غ">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "يمكنك أيضًا ">
+<!ENTITY  doNotTrack.settings.label     "إدارة تفضيلات خاصية عدم التعقب">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "التأريخ">
+
+<!ENTITY  locationBar.label             "شريط العناوين">
+
+<!ENTITY  locbar.suggest.label          "عند استخدام شريط العناوين، اقترح:">
+<!ENTITY  locbar.history.label          "التأريخ">
+<!ENTITY  locbar.history.accesskey      "ت">
+<!ENTITY  locbar.bookmarks.label        "العلامات">
+<!ENTITY  locbar.bookmarks.accesskey    "ع">
+<!ENTITY  locbar.openpage.label         "الألسنة المفتوحة">
+<!ENTITY  locbar.openpage.accesskey     "ف">
+<!ENTITY  locbar.searches.label         "عمليات البحث المشابهة من محرك البحث المبدئي">
+<!ENTITY  locbar.searches.accesskey     "م">
+
+<!ENTITY  suggestionSettings.label      "غيّر تفضيلات اقتراحات محرّك البحث…">
+<!ENTITY  suggestionSettings.accesskey  "غ">
+
+<!ENTITY  acceptCookies2.label          "اقبل الكعكات من مواقع الوِب">
+<!ENTITY  acceptCookies2.accesskey      "ق">
+
+<!ENTITY  acceptThirdParty.pre.label      "اقبل الكعكات من أطراف أخرى:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ب">
+<!ENTITY  acceptThirdParty.always.label   "دائمًا">
+<!ENTITY  acceptThirdParty.never.label    "أبدًا">
+<!ENTITY  acceptThirdParty.visited.label  "من المواقع المُزارة">
+
+<!ENTITY  keepUntil.label               "احتفظ بها حتى:">
+<!ENTITY  keepUntil.accesskey           "ظ">
+
+<!ENTITY  expire.label                  "تنتهي صلاحيتها">
+<!ENTITY  close.label                   "أغلق &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "الاستثناءات…">
+<!ENTITY  cookieExceptions.accesskey    "س">
+
+<!ENTITY  showCookies.label             "اعرض الكعكات…">
+<!ENTITY  showCookies.accesskey         "ع">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; سوف:">
+<!ENTITY  historyHeader.pre.accesskey      "س">
+<!ENTITY  historyHeader.remember.label     "يتذكر التأريخ">
+<!ENTITY  historyHeader.dontremember.label "لن يتذكر التأريخ أبدًا">
+<!ENTITY  historyHeader.custom.label       "يستخدم إعدادات مخصصة للتأريخ">
+<!ENTITY  historyHeader.post.label         "​">
+
+<!ENTITY  rememberDescription.label      "سيتذكر &brandShortName; تصفحك و تنزيلاتك و النماذج التي ملأتها و تأريخ البحث، كما سيحتفظ بكعكات مواقع الوب التي زرتها.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "قد ترغب بأن ">
+<!ENTITY  rememberActions.clearHistory.label  "تمسح تأريخك الحالي">
+<!ENTITY  rememberActions.middle.label        "، أو ">
+<!ENTITY  rememberActions.removeCookies.label "تزيل الكعكات الشخصية">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "سيستخدم &brandShortName; نفس إعدادات التصفح الخاص، بحيث لن يحتفظ بأيّ تأريخ لتصفحك للوب.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "قد ترغب أيضًا بأن ">
+<!ENTITY  dontrememberActions.clearHistory.label "تمسح تأريخك الحالي كله">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "استخدم نمط التصفح الخاص دائمًا">
+<!ENTITY  privateBrowsingPermanent2.accesskey "د">
+
+<!ENTITY  rememberHistory2.label      "تذكر تأريخ تصفحي و تنزيلاتي">
+<!ENTITY  rememberHistory2.accesskey  "ص">
+
+<!ENTITY  rememberSearchForm.label       "تذكّر تأريخ النماذج والبحث">
+<!ENTITY  rememberSearchForm.accesskey   "ث">
+
+<!ENTITY  clearOnClose.label             "امسح التأريخ عند إغلاق &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "غ">
+
+<!ENTITY  clearOnCloseSettings.label     "إعدادات…">
+<!ENTITY  clearOnCloseSettings.accesskey "د">
+
+<!ENTITY  browserContainersHeader.label         "الألسنة الحاوية">
+<!ENTITY  browserContainersLearnMore.label      "اطّلع على المزيد">
+<!ENTITY  browserContainersEnabled.label        "فعل الألسنة الحاوية">
+<!ENTITY  browserContainersEnabled.accesskey    "ف">
+<!ENTITY  browserContainersSettings.label        "الإعدادات…">
+<!ENTITY  browserContainersSettings.accesskey    "د">

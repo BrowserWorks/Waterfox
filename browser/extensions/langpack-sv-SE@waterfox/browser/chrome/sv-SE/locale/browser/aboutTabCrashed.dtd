@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Stäng denna flik">
+<!ENTITY tabCrashed.restoreTab "Återställ denna flik">
+<!ENTITY tabCrashed.restoreAll "Återställ alla kraschade flikar">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Arghh. Din flik kraschade precis.">
+<!ENTITY tabCrashed.offerHelp "Vi kan hjälpa dig!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Välj &tabCrashed.restoreTab; för att ladda om innehållet på sidan.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Välj &tabCrashed.restoreTab; eller &tabCrashed.restoreAll; för att ladda om innehållet på sidan.">
+<!ENTITY tabCrashed.requestHelp "Vill du hjälpa oss?">
+<!ENTITY tabCrashed.requestHelpMessage "Kraschrapporter hjälper oss att diagnostisera problem och göra &brandShortName; bättre.">
+<!ENTITY tabCrashed.requestReport "Rapportera denna flik">
+<!ENTITY tabCrashed.sendReport2 "Skicka in en kraschrapport för fliken du tittar på">
+<!ENTITY tabCrashed.commentPlaceholder2 "Valfria kommentarer (kommentarer visas offentligt)">
+<!ENTITY tabCrashed.includeURL2 "Inkludera webbadress med denna kraschrapport">
+<!ENTITY tabCrashed.emailPlaceholder "Fyll i din e-postadress här">
+<!ENTITY tabCrashed.emailMe "Skicka e-post när mer information finns tillgänglig">
+<!ENTITY tabCrashed.reportSent "Kraschrapporten har redan skickats. Tack för att du hjälper till att förbättra &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Rapportera bakgrundsflikar">
+<!ENTITY tabCrashed.autoSubmit2 "Uppdatera inställningar för att automatiskt skicka kraschrapporter, inklusive rapporter för kraschade bakgrundsflikar från denna session och framtida sessioner">

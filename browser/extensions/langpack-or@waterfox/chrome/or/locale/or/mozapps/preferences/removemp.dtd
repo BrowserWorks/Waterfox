@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ କାଢ଼ିନିଅନ୍ତୁ">
+<!ENTITY removeInfo.label                  "ଆଗକୁ ବଢ଼ିବା ପାଇଁ ଆପଣଙ୍କର ପ୍ରଚଳିତ ପ୍ରବେଶସଂକେତକୁ ଭରଣକରନ୍ତୁ:">
+<!ENTITY removeWarning1.label              "ସାଇଟ ପ୍ରବେଶ ସଂକେତ ପରି ସମ୍ବେଦନଶୀଳ ସୂଚନାକୁ ରକ୍ଷା କରିବା ପାଇଁ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ବ୍ୟବହାର କରାଯାଇଥାଏ.">
+<!ENTITY removeWarning2.label              "ଯଦି ଆପଣ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ କାଢ଼ିଦିଅନ୍ତି ତେବେ ଆପଣଙ୍କର ସୂଚନାଗୁଡ଼ିକୁ ରକ୍ଷାକରିହେବ ନାହିଁ ଯଦି ଆପଣଙ୍କର କମ୍ପୁଟରଟି ସନ୍ଧିକରିସାରିଛି.">
+<!ENTITY setPassword.oldPassword.label     "ପ୍ରଚଳିତ ପ୍ରବେଶସଂକେତ:">
+

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Име:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "И">
+<!ENTITY editBookmarkOverlay.location.label                  "Адрес:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "А">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Емисия:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "Е">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Сайт:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "С">
+<!ENTITY editBookmarkOverlay.folder.label                    "Папка:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Показване на всички папки с отметки">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Скриване">
+<!ENTITY editBookmarkOverlay.tags.label                      "Етикети:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "Е">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Разделете етикетите със запетаи">
+<!ENTITY editBookmarkOverlay.description.label               "Описание:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "О">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Ключова дума:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "К">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Показване на всички етикети">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Зареждане на отметката в страничната лента">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "с">
+<!ENTITY editBookmarkOverlay.choose.label                    "Избиране…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Нова папка">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "Н">

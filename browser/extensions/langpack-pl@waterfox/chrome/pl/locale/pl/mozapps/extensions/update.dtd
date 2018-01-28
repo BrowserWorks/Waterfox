@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; - Aktualizacja ">
+
+<!ENTITY  offline.title                   "&brandShortName; pracuje w trybie offline">
+<!ENTITY  offline.description		  "&brandShortName; musi przejść do trybu online, by sprawdzić dostępność aktualizacji dla zainstalowanych rozszerzeń, dzięki którym staną się one zgodne z tą wersją programu.">
+<!ENTITY  offline.toggleOffline.label     "Przejdź teraz do trybu online.">
+<!ENTITY  offline.toggleOffline.accesskey "t">
+
+<!ENTITY mismatch.win.title "Niezgodne dodatki">
+<!ENTITY  mismatch.top.label              "Następujące dodatki są niezgodne z tą wersją programu
+                                           &brandShortName; i zostały wyłączone:">
+<!ENTITY mismatch.bottom.label "&brandShortName; może sprawdzić, czy są dostępne zgodne wersje tych dodatków.">
+
+<!ENTITY checking.wizard.title "Poszukiwanie zgodnych dodatków">
+<!ENTITY checking.top.label "Poszukiwanie aktualizacji dla niezgodnych dodatków…">
+<!ENTITY  checking.status                 "Może to potrwać kilka minut…">
+
+<!ENTITY found.wizard.title "Znaleziono zgodne dodatki">
+<!ENTITY  found.top.label                 "Wybierz dodatki, które chcesz zainstalować:">
+<!ENTITY  found.disabledXPinstall.label   "Aktualizacje te nie mogą zostać zainstalowane, ponieważ instalacja oprogramowania jest obecnie wyłączona. Można to zmienić poniżej.">
+<!ENTITY  found.enableXPInstall.label     "Zezwól witrynom na instalację oprogramowania">
+<!ENTITY  found.enableXPInstall.accesskey "Z">
+
+<!ENTITY installing.wizard.title "Instalacja zgodnych dodatków">
+<!ENTITY  installing.top.label            "Pobieranie i instalacja aktualizacji dodatków…">
+
+<!ENTITY noupdates.wizard.title "Nie znaleziono zgodnych dodatków">
+<!ENTITY noupdates.intro.desc "Program &brandShortName; nie znalazł żadnych aktualizacji dla niezgodnych dodatków.">
+<!ENTITY  noupdates.error.desc            "Napotkano pewne problemy podczas poszukiwania aktualizacji.">
+<!ENTITY noupdates.checkEnabled.desc "Program &brandShortName; będzie okresowo sprawdzał i informował o dostępności zgodnych aktualizacji dla dodatków.">
+
+<!ENTITY finished.wizard.title "Zainstalowano zgodne dodatki">
+<!ENTITY  finished.top.label              "Program &brandShortName; zainstalował aktualizacje dla dodatków.">
+<!ENTITY  finished.checkDisabled.desc     "Program &brandShortName; może okresowo sprawdzać i informować o
+                                           dostępności aktualizacji dla dodatków.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; będzie okresowo sprawdzał i informował o
+                                           dostępności aktualizacji dla dodatków.">
+
+<!ENTITY  adminDisabled.wizard.title      "Nie można sprawdzić dostępności aktualizacji">
+<!ENTITY adminDisabled.warning.label "Odnalezienie aktualizacji dla niezgodnych dodatków jest niemożliwe, ponieważ instalacja oprogramowania w programie &brandShortName; została wyłączona. Należy skontaktować się z administratorem systemu.">
+
+<!ENTITY versioninfo.wizard.title "Sprawdzanie zgodności dodatków">
+<!ENTITY versioninfo.top.label "Sprawdzanie, czy zainstalowane dodatki są zgodne z tą wersją programu &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Może to potrwać kilka minut…">
+
+<!ENTITY  installerrors.wizard.title      "Problemy podczas instalowania aktualizacji">
+<!ENTITY  installerrors.intro.label       "Program &brandShortName; napotkał problemy podczas aktualizacji
+                                           niektórych dodatków.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Naciśnij Zakończ, by kontynuować uruchamianie programu &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Naciśnij Gotowe, by kontynuować uruchamianie programu &brandShortName;.">
+<!ENTITY  enableChecking.label            "Zezwól programowi &brandShortName; na poszukiwanie aktualizacji.">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Ütz apetik pa &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Tatikirisaj molojri'ïl pa kiximojri'ïl taq ruwi', taq yaketal, ewan tzij chuqa' juley chik.">
+<!ENTITY aboutAccountsConfig.startButton.label "Titikirisäx">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Taq rajowaxik ximojri'ïl">
+<!ENTITY aboutAccounts.noConnection.title "Majun okib'äl">
+<!ENTITY aboutAccounts.noConnection.description "Rajowaxik chi atokinäq pa k'amaya'l richin natikirisaj molojri'ïl.">
+<!ENTITY aboutAccounts.noConnection.retry "Titojtob'ëx chik">
+<!ENTITY aboutAccounts.badConfig.title "Itzel nuk'ulem">
+<!ENTITY aboutAccounts.badConfig.description "Man tikirel ta xilitäj ri runuk'ulem ruk'u'x rusamaj rub'i' rutaqoya'l Waterfox. Tab'ana' utzil tatojtob'ej pa jun chik ti mej.">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; වෙත සාදරයෙන් පිළිගනිමු">
+
+<!ENTITY aboutAccountsConfig.description "ඔබේ ටැබ්, මුරපද හා තවත් දෑ සම්මුහුර්ත කිරීමට පිවිසෙන්න.">
+<!ENTITY aboutAccountsConfig.startButton.label "අරඹන්න">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "සම්මුහුර්ත සැකසුම්">
+<!ENTITY aboutAccounts.noConnection.title "සබධතාවයක් නැත">
+<!ENTITY aboutAccounts.noConnection.description "පිවිසීම සඳහා ඔබ අන්තර්ජාලයට සම්බන්ධ විය යුතුම වේ.">
+<!ENTITY aboutAccounts.noConnection.retry "යළි උත්සාහ කරන්න">
+
+<!ENTITY aboutAccounts.badConfig.description "Unable to determine your Waterfox Account server configuration. Please try again later.">
+<!ENTITY aboutAccounts.badConfig.title "Bad configuration">

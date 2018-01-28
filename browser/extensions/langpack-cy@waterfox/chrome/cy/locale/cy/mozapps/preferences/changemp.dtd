@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Newid Prif Gyfrinair">
+<!ENTITY setPassword.tokenName.label       "Dyfais Diogelwch">
+<!ENTITY setPassword.oldPassword.label     "Cyfrinair cyfredol:">
+<!ENTITY setPassword.newPassword.label     "Rhoi'r cyfrinair newydd:">
+<!ENTITY setPassword.reenterPassword.label "Rhoi'r cyfrinair eto:">
+<!ENTITY setPassword.meter.label           "Mesurydd ansawdd y cyfrinair">
+<!ENTITY setPassword.meter.loading         "Llwytho">
+<!ENTITY masterPasswordDescription.label   "Mae Prif Gyfrinair yn cael ei ddefnyddio i amddiffyn gwybodaeth sensitif fel cyfrineiriau gwefannau.  Os fyddwch yn creu Prif Gyfrinair bydd gofyn i chi ei rhoi unwaith y sesiwn pan fydd &brandShortName; yn estyn gwybodaeth wedi ei gadw'n ddiogel gan y cyfrinair.">
+<!ENTITY masterPasswordWarning.label       "Gwnewch yn siŵr eich bod yn cofio'r Prif Gyfrinair.  Os byddwch yn anghofio eich Prif Gyfieithiad, ni fydd modd i chi gael mynediad at unrhyw wybodaeth mae'n ei amddiffyn.">

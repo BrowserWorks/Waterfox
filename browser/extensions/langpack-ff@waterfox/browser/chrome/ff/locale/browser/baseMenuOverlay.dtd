@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Taggu">
+<!ENTITY bringAllToFront.label    "Addu Fof Yeeso">
+<!ENTITY zoomWindow.label         "Lonngo">
+<!ENTITY windowMenu.label         "Henorde">
+
+<!ENTITY helpMenu.label           "Ballal"> 
+<!ENTITY helpMenu.accesskey       "B"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Ballal"> 
+<!ENTITY helpMenuWin.accesskey    "B">
+<!ENTITY aboutProduct2.label      "Baɗte &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "B">
+<!ENTITY productHelp2.label       "Ballal &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "B">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Codorɗe Tappirde">
+<!ENTITY helpKeyboardShortcuts.accesskey "C">
+
+<!ENTITY helpSafeMode.label       "Hurmitin tawa Ɓeyditte ena Ndaaƴaa…">
+<!ENTITY helpSafeMode.accesskey   "H">
+<!ENTITY helpSafeMode.stop.label       "Hurmitin tawa Ɓeyditte ena Ndaaƴtaa…">
+<!ENTITY helpSafeMode.stop.accesskey   "H">
+
+<!ENTITY healthReport2.label      "&brandShorterName; Health Report">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Humpito Ñawndugol Caɗeele">
+<!ENTITY helpTroubleshootingInfo.accesskey  "H">
+
+<!ENTITY helpFeedbackPage.label      "Neldu Duttinal…">
+<!ENTITY helpFeedbackPage.accesskey  "N">
+
+<!ENTITY helpShowTour2.label            "Njillu &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "N">
+
+<!ENTITY preferencesCmdMac.label        "Cuɓoraaɗe…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Carworɗe">
+
+<!ENTITY hideThisAppCmdMac2.label       "Suuɗ &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Suuɗ Goɗɗi">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Hollu Fof">

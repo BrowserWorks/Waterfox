@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry-data">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping datakilde:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Nuværende ping-data
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Arkiverede ping-data
+">
+
+<!ENTITY aboutTelemetry.raw "
+Rå JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Vis data fra undersession
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Vælg ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Nyere ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ældre ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Uge
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping-type
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+I dag
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+I går
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Ældre
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Generelle data
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Miljø-data
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry-log
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Langsomme SQL-statements
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Browser-frysninger
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Tråd-frysninger
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Stakke
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalarer
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Indtastede skalarer
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrammer
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Indtastede histogrammer
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Begivenheder
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Simple målinger
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Detaljer for tilføjelser
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Sene skrivninger
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Sessionsoplysninger
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  Bemærk: Langsom SQL-debugging er aktiveret. Hele SQL-strenge vil måske være vist nedenfor, men de bliver ikke sendt til Telemetry.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Hent navne for funktioner for stakke
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Vis rå data fra stakke
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtrer (strenge eller /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">

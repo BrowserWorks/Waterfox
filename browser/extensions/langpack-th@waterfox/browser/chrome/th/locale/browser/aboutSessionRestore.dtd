@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "เรียกคืนวาระ">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "เราเสียใจอย่างสุดซึ้ง">
+<!ENTITY restorepage.problemDesc    "&brandShortName; มีปัญหาในการเรียกคืนหน้าต่างและแท็บของคุณ สาเหตุอาจจะเกิดจากเว็บที่เพิ่งเปิดไปก่อนหน้านี้">
+<!ENTITY restorepage.tryThis        "คุณสามารถลอง:">
+<!ENTITY restorepage.restoreSome    "เอาแท็บที่คุณคิดว่าก่อให้เกิดปัญหาออกไป">
+<!ENTITY restorepage.startNew       "เริ่มการท่องเว็บด้วยวาระใหม่ทั้งหมด">
+
+<!ENTITY restorepage.tryagainButton "เรียกคืน">
+<!ENTITY restorepage.restore.access "ร">
+<!ENTITY restorepage.closeButton    "ปิด">
+<!ENTITY restorepage.close.access   "ป">
+
+<!ENTITY restorepage.restoreHeader  "เรียกคืน">
+<!ENTITY restorepage.listHeader     "หน้าต่างและแท็บ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "หน้าต่าง &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "ไปกันเลย!">
+<!ENTITY welcomeback2.restoreButton.access "ป">
+
+<!ENTITY welcomeback2.tabtitle      "สำเร็จ!">
+
+<!ENTITY welcomeback2.pageTitle     "สำเร็จ!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; พร้อมที่จะเริ่ม">
+
+<!ENTITY welcomeback2.restoreAll.label  "เรียกคืนหน้าต่างและแท็บทั้งหมด">
+<!ENTITY welcomeback2.restoreSome.label "เรียกคืนเฉพาะที่คุณต้องการ">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "ส่วนเสริมและการปรับแต่งของคุณถูกเอาออกและการตั้งค่าเบราว์เซอร์ของคุณถูกเรียกคืนเป็นค่าเริ่มต้น หากนี่ไม่แก้ปัญหาของคุณ ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "เรียนรู้เพิ่มเกี่ยวกับสิ่งที่คุณสามารถทำได้">
+

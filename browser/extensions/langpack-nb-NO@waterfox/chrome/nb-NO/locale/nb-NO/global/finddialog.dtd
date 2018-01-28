@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Søk i denne siden">
+<!ENTITY findField.label "Søk etter:">
+<!ENTITY findField.accesskey "t">
+<!ENTITY caseSensitiveCheckbox.label "Skill mellom store og små bokstaver">
+<!ENTITY caseSensitiveCheckbox.accesskey "k">
+<!ENTITY wrapCheckbox.label "Bryt teksten">
+<!ENTITY wrapCheckbox.accesskey "B">
+<!ENTITY findButton.label "Søk">
+<!ENTITY findButton.accesskey "S">
+<!ENTITY cancelButton.label "Avbryt">
+<!ENTITY closeButton.label "Lukk">
+<!ENTITY up.label "Oppover">
+<!ENTITY up.accesskey "O">
+<!ENTITY down.label "Nedover">
+<!ENTITY down.accesskey "N">
+<!ENTITY direction.label "Retning">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Fechar este separador">
+<!ENTITY tabCrashed.restoreTab "Restaurar este separador">
+<!ENTITY tabCrashed.restoreAll "Restaurar todos os separadores que falharam">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Bolas. O seu separador acabou de falhar.">
+<!ENTITY tabCrashed.offerHelp "Nós podemos ajudar-lhe!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Escolha &tabCrashed.restoreTab; para recarregar o conteúdo da página.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Escolha &tabCrashed.restoreTab; ou &tabCrashed.restoreAll; para recarregar o conteúdo da página.">
+<!ENTITY tabCrashed.requestHelp "Poderia ajudar-nos?">
+<!ENTITY tabCrashed.requestHelpMessage "Os relatórios de falha ajudam-nos a diagnosticar problemas e fazer o &brandShortName; melhor.">
+<!ENTITY tabCrashed.requestReport "Relatar este separador">
+<!ENTITY tabCrashed.sendReport2 "Enviar um relatório de falha para o separador que está a ver">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comentários opcionais (os comentários são visíveis publicamente)">
+<!ENTITY tabCrashed.includeURL2 "Incluir o URL da página com este relatório de falha">
+<!ENTITY tabCrashed.emailPlaceholder "Digite o seu endereço de email aqui">
+<!ENTITY tabCrashed.emailMe "Enviar-me um email quando estiverem disponíveis mais informações">
+<!ENTITY tabCrashed.reportSent "Relatório de falha já submetido; obrigado por ajudar a tornar o &brandShortName; melhor!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Relatar separadores em segundo plano">
+<!ENTITY tabCrashed.autoSubmit2 "Atualizar preferências para enviar relatórios de falha automaticamente, incluindo relatórios para separadores em segundo plano que falharam a partir desta sessão e futuras sessões">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "সংযুক্ত করুন">
+<!ENTITY header     "দূরবর্তী ডিভাইসের সাথে সংযুক্ত করুন">
+<!ENTITY host       "হোস্ট:">
+<!ENTITY port       "পোর্ট (P):">
+<!ENTITY connect    "সংযুক্ত করুন">
+<!ENTITY connecting "সংযুক্ত করা হচ্ছে …">
+<!ENTITY availableAddons "উপলব্ধ রিমোট অ্যাড-অনসমূহ:">
+<!ENTITY availableTabs "সম্ভাব্য রিমোট ট্যাবসমূহ:">
+<!ENTITY availableProcesses "বিদ্যমান রিমোট প্রসেস:">
+<!ENTITY connectionError "ত্রুটি:">
+<!ENTITY errorTimeout "ত্রুটি: সংযোগের সময় শেষ।">
+<!ENTITY errorRefused "ত্রুটি: সংযোগ বাতিল করা হয়েছে।">
+<!ENTITY errorUnexpected "অপ্রত্যাশিত ত্রুটি।">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "ফায়ারফক্স ডেভেলপার টুল রিমোট ডিভাইস (যেমন, Android জন্য Waterfox এবং Waterfox OS) ডিবাগ করতে পারে। নিশ্চিত করুন যে, আপনি রিমোট ডিভাইসের 'রিমোট ডিবাগিং' অপশনটি চালু রেখেছেন। আরো জানার জন্য, দেখুন ">
+<!ENTITY remoteDocumentation "ডকুমেন্টেশন">
+<!ENTITY remoteHelpSuffix ".">
+

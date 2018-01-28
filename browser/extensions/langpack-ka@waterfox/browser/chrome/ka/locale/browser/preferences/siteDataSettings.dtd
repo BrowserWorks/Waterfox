@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "პარამეტრები - საიტის მონაცემები">
+<!ENTITY     hostCol.label                 "საიტი">
+<!ENTITY     statusCol.label               "მდგომარეობა">
+<!ENTITY     usageCol.label                "მეხსიერების საცავი">
+<!ENTITY     searchTextboxPlaceHolder             "საიტების ძიება">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "ს">
+<!ENTITY     removeSelected.label          "მონიშნულის წაშლა">
+<!ENTITY     removeSelected.accesskey      "წ">
+<!ENTITY     save.label                    "ცვლილებების შენახვა">
+<!ENTITY     save.accesskey                "ც">
+<!ENTITY     cancel.label                  "გაუქმება">
+<!ENTITY     cancel.accesskey              "გ">
+<!ENTITY     removingDialog.title          "საიტის მონაცემების წაშლა">
+<!ENTITY     removingSelected.description  "საიტის მონაცემების წაშლისას, ასევე წაიშლება მასთან დაკავშირებული ფუნთუშები და შიგთავსი, რის გამოც, შესული ანგარიშებიდან ავტომატურად გამოხვალთ. ნამდვილად გსურთ ცვლილებები?">
+<!ENTITY     siteTree.label                "შემდეგი ვებსაიტების ფუნთუშები წაიშლება:">

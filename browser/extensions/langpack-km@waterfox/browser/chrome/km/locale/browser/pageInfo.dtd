@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "ចម្លង">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "ជ្រើស​ទាំងអស់">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "ទូទៅ">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "ចំណងជើង៖">
+<!ENTITY  generalURL            "អាសយដ្ឋាន៖">
+<!ENTITY  generalType           "ប្រភេទ៖">
+<!ENTITY  generalMode           "របៀប​បង្ហាញ៖">
+<!ENTITY  generalSize           "ទំហំ៖">
+<!ENTITY  generalReferrer       "URL យោង៖">
+<!ENTITY  generalSource         "ប្រភព​ឃ្លាំង​សម្ងាត់៖">
+<!ENTITY  generalModified       "បាន​កែប្រែ៖">
+<!ENTITY  generalEncoding2      "ការ​បម្លែង​អត្ថបទ៖">
+<!ENTITY  generalMetaName       "ឈ្មោះ">
+<!ENTITY  generalMetaContent    "មាតិកា">
+
+<!ENTITY  mediaTab              "មេឌៀ">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "ទីតាំង ៖">
+<!ENTITY  mediaText             "អត្ថបទ​ដែល​ជាប់ទាក់ទង ៖">
+<!ENTITY  mediaAltHeader        "អត្ថបទ​ជំនួស">
+<!ENTITY  mediaAddress          "អាសយដ្ឋាន">
+<!ENTITY  mediaType             "ប្រភេទ">
+<!ENTITY  mediaSize             "ទំហំ">
+<!ENTITY  mediaCount            "ចំនួន">
+<!ENTITY  mediaDimension        "វិមាត្រ ៖">
+<!ENTITY  mediaLongdesc         "ការ​ពិពណ៌នា​ពិស្ដារ​ ៖">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "រក្សាទុក​ជា...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "មើល​មេឌៀ​ជាមុន ៖">
+
+<!ENTITY  feedTab               "មតិ​ព័ត៌មាន">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "ជាវ">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "សិទ្ធិ">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "ប្រើ​លំនាំ​ដើម">
+<!ENTITY  permAskAlways         "សួរ​ជានិច្ច">
+<!ENTITY  permAllow             "អនុញ្ញាត">
+<!ENTITY  permAllowSession      "អនុញ្ញាត​សម្រាប់​សម័យ ">
+<!ENTITY  permBlock             "ទប់ស្កាត់">
+<!ENTITY  permissionsFor        "សិទ្ធិ​សម្រាប់៖">
+<!ENTITY  permPlugins           "ធ្វើឲ្យ​កម្មវិធី​ជំនួយ​សកម្ម">
+
+<!ENTITY  permClearStorage           "សម្អាត​ឧបករណ៍​ផ្ទុក">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "សុវត្ថិភាព">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "មើល​វិញ្ញាបនបត្រ">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "មិន​ស្គាល់">
+
+
+<!ENTITY  securityView.identity.header   "អត្តសញ្ញាណ​​តំបន់បណ្ដាញ">
+<!ENTITY  securityView.identity.owner    "ម្ចាស់៖">
+<!ENTITY  securityView.identity.domain   "តំបន់បណ្ដាញ៖">
+<!ENTITY  securityView.identity.verifier "ផ្ទៀងផ្ទាត់​ដោយ៖">
+
+<!ENTITY  securityView.privacy.header                   "ភាព​ឯកជន &amp; ប្រវត្តិ">
+<!ENTITY  securityView.privacy.history                  "តើ​ខ្ញុំ​បាន​ចូល​ទស្សនា​តំបន់បណ្ដាញ​នេះ​មុន​ថ្ងៃនេះ​ឬ ?">
+<!ENTITY  securityView.privacy.cookies                  "តើ​តំបន់បណ្ដាញ​នេះ​រក្សាទុក​ព័ត៌មាន (ខូគី) នៅ​ក្នុង​កុំព្យូទ័រ​របស់​ខ្ញុំ​ឬ ?">
+<!ENTITY  securityView.privacy.viewCookies              "មើល​ខូគី">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "តើ​ខ្ញុំ​បាន​រក្សាទុក​ពាក្យសម្ងាត់​សម្រាប់​តំបន់បណ្ដាញ​នេះ​ឬ ?">
+<!ENTITY  securityView.privacy.viewPasswords            "មើល​ពាក្យ​សម្ងាត់​ដែល​បាន​រក្សា​ទុក">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "សេចក្តី​​លម្អិត​អំពី​​បច្ចេកទេស">
+
+<!ENTITY  helpButton.label                              "ជំនួយ">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

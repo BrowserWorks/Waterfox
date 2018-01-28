@@ -1,0 +1,166 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "المفكرة البرمجية">
+
+<!ENTITY fileMenu.label               "ملف">
+<!ENTITY fileMenu.accesskey           "ف">
+
+<!ENTITY newWindowCmd.label           "نافذة جديدة">
+<!ENTITY newWindowCmd.accesskey       "ن">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "افتح ملفًا…">
+<!ENTITY openFileCmd.accesskey        "ت">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "افتح الحديث">
+<!ENTITY openRecentMenu.accesskey     "د">
+
+<!ENTITY revertCmd.label              "استرجع…">
+<!ENTITY revertCmd.accesskey          "س">
+
+<!ENTITY saveFileCmd.label            "احفظ">
+<!ENTITY saveFileCmd.accesskey        "ظ">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "احفظ باسم…">
+<!ENTITY saveFileAsCmd.accesskey      "س">
+
+<!ENTITY closeCmd.label               "أغلِق">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "ق">
+
+<!ENTITY viewMenu.label               "عرض">
+<!ENTITY viewMenu.accesskey           "ع">
+
+<!ENTITY lineNumbers.label             "أظهر أرقام الأسطر">
+<!ENTITY lineNumbers.accesskey         "ر">
+
+<!ENTITY wordWrap.label                "اطو النص">
+<!ENTITY wordWrap.accesskey            "ط">
+
+
+
+<!ENTITY largerFont.label             "خط أكبر">
+<!ENTITY largerFont.accesskey         "ك">
+
+<!-- + is above this key on many keyboards -->
+
+<!ENTITY smallerFont.label            "خط أصغر">
+<!ENTITY smallerFont.accesskey        "ص">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "الحجم العادي">
+<!ENTITY normalSize.accesskey         "ح">
+
+
+<!ENTITY editMenu.label               "تحرير">
+<!ENTITY editMenu.accesskey           "ح">
+
+<!ENTITY run.label                    "شغّل">
+<!ENTITY run.accesskey                "ش">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "فتش">
+<!ENTITY inspect.accesskey            "ف">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "اعرض">
+<!ENTITY display.accesskey            "ض">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "جمّل">
+
+<!ENTITY pprint.accesskey             "ج">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "البيئة">
+<!ENTITY environmentMenu.accesskey    "ة">
+
+
+<!ENTITY contentContext.label         "المحتوى">
+<!ENTITY contentContext.accesskey     "ى">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "المتصفح">
+<!ENTITY browserContext.accesskey     "ص">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "مساعدة">
+<!ENTITY helpMenu.accesskey           "س">
+<!ENTITY helpMenuWin.label            "مساعدة">
+<!ENTITY helpMenuWin.accesskey        "س">
+
+<!ENTITY documentationLink.label      "مساعدة المفكرة البرمجية في MDN">
+<!ENTITY documentationLink.accesskey  "ع">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "صفّر المتغيرات">
+<!ENTITY resetContext2.accesskey      "ص">
+
+<!ENTITY reloadAndRun.label           "أعد التحميل و نفذ">
+<!ENTITY reloadAndRun.accesskey       "ح">
+
+
+<!ENTITY executeMenu.label            "تنفيذ">
+<!ENTITY executeMenu.accesskey        "ذ">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+
+
+<!ENTITY evalFunction.accesskey "v">
+<!ENTITY evalFunction.key "e">
+<!ENTITY evalFunction.label "Evaluate Current Function">
+<!ENTITY highlightTrailingSpace.accesskey "H">
+
+<!ENTITY highlightTrailingSpace.label     "Highlight Trailing Space">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> 
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY pprint.key                   "p">
+<!ENTITY reloadAndRun.key             "r">
+

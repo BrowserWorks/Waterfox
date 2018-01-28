@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ପରିବର୍ତ୍ତନ କରନ୍ତୁ">
+<!ENTITY setPassword.tokenName.label "ସୁରକ୍ଷା ଯନ୍ତ୍ର">
+<!ENTITY setPassword.oldPassword.label "ପ୍ରଚଳିତ ପ୍ରବେଶ ସଂକେତ:">
+<!ENTITY setPassword.newPassword.label "ନୂତନ ପ୍ରବେଶ ସଂକେତ:">
+<!ENTITY setPassword.reenterPassword.label "ପ୍ରବେଶ ସଂକେତ (ପୁଣିଥରେ):">
+<!ENTITY setPassword.meter.label "ପ୍ରବେଶ ସଂକେତ ଗୁଣବତ୍ତା ମାପକ">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "ପୁନଃସ୍ଥାପନ କରନ୍ତୁ">
+<!ENTITY resetPassword.title  "ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ପୁନଃସ୍ଥାପନ କରନ୍ତୁ">
+<!ENTITY resetPassword.text  "ଯଦି ଆପଣ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ପୁନଃସ୍ଥାପନ କରନ୍ତି, ଆପଣଙ୍କର ସମସ୍ତ ସଞ୍ଚିତ ୱେବ ଏବଂ ଇମେଲ ପ୍ରବେଶ ସଂକେତ, ଫର୍ମ ତଥ୍ୟ, ବ୍ୟକ୍ତିଗତ ପ୍ରମାଣ ପତ୍ର, ଏବଂ ନିଜସ୍ୱ କିଗୁଡ଼ିକୁ ଭୁଲିଯିବ. ଆପଣ ନିଶ୍ଚିତ କି ଆପଣ ମୂଖ୍ୟ ପ୍ରବେଶ ସଂକେତକୁ ପୁନଃସ୍ଥାପନ କରିବାକୁ ଚାହୁଁଛନ୍ତି?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "ପ୍ରମାଣପତ୍ର ଆହରଣ କରୁଅଛି">
+<!ENTITY downloadCert.message1 "ଆପଣ ଗୋଟିଏ ନୂତନ ପ୍ରମାଣପତ୍ର ଅଧିକାରୀ (CA)କୁ ବିଶ୍ୱାସ କରିବା ପାଇଁ କହିଥିଲେ.">
+<!ENTITY downloadCert.trustSSL "ୱେବ ସାଇଟ ଚିହ୍ନିବା ପାଇଁ ଏହି CA କୁ ବିଶ୍ୱାସ କରନ୍ତୁ.">
+<!ENTITY downloadCert.trustEmail "ଇମେଲ ଚାଳକମାନଙ୍କୁ ଚିହ୍ନିବା ପାଇଁ ଏହି CA କୁ ବିଶ୍ୱାସ କରନ୍ତୁ.">
+<!ENTITY downloadCert.trustObjSign "ସଫ୍ଟୱେର ବିକାଶକାରୀମାନଙ୍କୁ ଚିହ୍ନିବା ପାଇଁ ଏହି CA କୁ ବିଶ୍ୱାସ କରନ୍ତୁ.">
+<!ENTITY downloadCert.message3 "କୌଣସି ଉଦ୍ଦେଶ୍ୟ ପାଇଁ ଏହି CAକୁ ବିଶ୍ୱାସ କରିବା ପୂର୍ବରୁ, ଆପଣ ଏହାର ପ୍ରମାଣପତ୍ର ଏବଂ ନୀତି ପ୍ରଣାଳୀକୁ ଯାଞ୍ଚକରପାରିବେ (ଯଦି ଉପଲବ୍ଧ ଅଛି).">
+<!ENTITY downloadCert.viewCert.label "ଦୃଶ୍ୟ">
+<!ENTITY downloadCert.viewCert.text "CA ପ୍ରମାଣପତ୍ରକୁ ଯାଞ୍ଚକରନ୍ତୁ">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "ଚାଳକ ଚିହ୍ନଟ ଅନୁରୋଧ">
+<!ENTITY clientAuthAsk.message1 "ଏହି ସାଇଟ ଅନୁରୋଧ କରିଥିଲାଯେ ଆପଣ ଗୋଟିଏ ପ୍ରମାଣପତ୍ର ସାହାଯ୍ୟରେ ନିଜେ ନିଜକୁ ଚିହ୍ନଟ କରାନ୍ତୁ:">
+<!ENTITY clientAuthAsk.message2 "ପରିଚୟ ଆକାରରେ ଉପସ୍ଥିତ କରିବା ପାଇଁ ଗୋଟିଏ ପ୍ରମାଣପତ୍ର ଚୟନ କରନ୍ତୁ:">
+
+
+<!ENTITY pkcs12.setpassword.title  "ଗୋଟିଏ ପ୍ରମାଣପତ୍ର ନକଲସଂରକ୍ଷଣ ପ୍ରବେଶ ସଂକେତ ଚୟନ କରନ୍ତୁ">
+<!ENTITY pkcs12.setpassword.message  "ଆପଣ ଏଠାରେ ବିନ୍ୟାସ କରିଥିବା ପ୍ରମାଣପତ୍ର ନକଲସଂରକ୍ଷଣ ପ୍ରବେଶ ସଂକେତ ଆପଣ ନିର୍ମାଣ କରିବାକୁ ଯାଉଥିବା ନକଲ ସଂରକ୍ଷଣ ଫାଇଲକୁ ରକ୍ଷାକରେ. ନକଲ ସଂରକ୍ଷଣ ସହିତ ଆଗକୁ ବଢ଼ିବା ପାଇଁ ଆପଣଙ୍କୁ ଏହି ପ୍ରବେଶ ସଂକେତକୁ ବିନ୍ୟାସ କରିବାକୁ ପଡ଼ିବ.">
+<!ENTITY pkcs12.setpassword.label1 "ପ୍ରମାଣପତ୍ର ନକଲସଂରକ୍ଷଣ ପ୍ରବେଶ ସଂକେତ:">
+<!ENTITY pkcs12.setpassword.label2 "ପ୍ରମାଣପତ୍ର ନକଲସଂରକ୍ଷଣ ପ୍ରବେଶ ସଂକେତ (ପୁଣିଥରେ):">
+<!ENTITY pkcs12.setpassword.reminder "ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ: ଯଦି ଆପଣ ଆପଣଙ୍କର ପ୍ରମାଣପତ୍ର ନକଲ ସଂରକ୍ଷଣ ପ୍ରବେଶ ସଂକେତକୁ ଭୁଲିଯାଆନ୍ତି, ତେବେ ଆପଣ ପରେ ଏହି ନକଲ ସଂରକ୍ଷଣକୁ ପୁନଃସ୍ଥାପନ କରିବାରେ ସମର୍ଥ ହେବେ ନାହିଁ.  ଦୟାକରି ଏହାକୁ କୌଣସି ସୁରକ୍ଷିତ ସ୍ଥାନରେ ଲିପିବଦ୍ଧ କରନ୍ତୁ.">
+
+<!ENTITY chooseToken.title  "ଟୋକେନ ସଂଳାପ ବାଛନ୍ତୁ">
+<!ENTITY chooseToken.message1 "ଦୟାକରି ଗୋଟିଏ ଟୋକେନ ବାଛନ୍ତୁ.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "ଗୋଟିଏ ନିଜସ୍ୱ କି ନିର୍ମାଣ କରୁଅଛି">
+<!ENTITY createCertInfo.msg1 "କି ନିର୍ମାଣ ପ୍ରଣାଳୀ… ଏହା କିଛି ମିନଟ ସମୟ ନେଇପାରେ….">
+<!ENTITY createCertInfo.msg2 "ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "ସୁରକ୍ଷିତ ଟୋକେନ ବୈଧିକରଣ">
+<!ENTITY protectedAuth.msg "ଦୟାକରି ଟୋକେନକୁ ବୈଧିକରଣ କରନ୍ତୁ. ବୈଧିକରଣ ପ୍ରଣାଳୀ ଆପଣଙ୍କର ଟୋକେନ ପ୍ରକାର ଉପରେ ନିରଭର କରେ.">
+<!ENTITY protectedAuth.tokenName.label "'ଟୋକେନ:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

@@ -1,0 +1,265 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle			"アドオンマネージャー">
+
+<!ENTITY search.placeholder			"アドオンを検索します">
+<!ENTITY search.buttonlabel			"検索">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey			"f">
+
+<!ENTITY loading.label				"読み込み中...">
+<!ENTITY listEmpty.installed.label		"この種類のアドオンはインストールされていません">
+<!ENTITY listEmpty.availableUpdates.label	"更新は見つかりませんでした">
+<!ENTITY listEmpty.recentUpdates.label		"最近更新されたアドオンはありません">
+<!ENTITY listEmpty.findUpdates.label		"更新を確認">
+<!ENTITY listEmpty.search.label			"該当するアドオンは見つかりませんでした">
+<!ENTITY listEmpty.button.label			"アドオンについて知る">
+<!ENTITY installAddonFromFile.label		"ファイルからアドオンをインストール...">
+<!ENTITY installAddonFromFile.accesskey		"I">
+<!ENTITY toolsMenu.tooltip			"アドオンツール">
+
+<!ENTITY getThemes.description			"ブラウザーの外観をお好みに変更しませんか？">
+<!ENTITY getThemes.learnMore			"数多くのテーマの中からお選びいただけます。">
+
+<!ENTITY cmd.back.tooltip			"前のページへ戻ります">
+<!ENTITY cmd.forward.tooltip			"次のページへ進みます">
+
+<!ENTITY showUnsignedExtensions.button.label	"一部の拡張機能を検証できませんでした">
+<!ENTITY showAllExtensions.button.label		"すべての拡張機能を表示">
+<!ENTITY debugAddons.label			"アドオンをデバッグ">
+<!ENTITY debugAddons.accesskey			"B">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label				"セーフモードによりすべてのアドオンが無効化されています。">
+<!ENTITY warning.checkcompatibility.label		"アドオンの互換性確認は無効化されています。互換性のないアドオンがインストールされています。">
+<!ENTITY warning.checkcompatibility.enable.label	"有効化">
+<!ENTITY warning.checkcompatibility.enable.tooltip	"アドオンの互換性の確認を有効化します">
+<!ENTITY warning.updatesecurity.label			"更新のセキュリティ確認が無効化されています。更新により危険にさらされる可能性があります。">
+<!ENTITY warning.updatesecurity.enable.label		"有効化">
+<!ENTITY warning.updatesecurity.enable.tooltip		"アドオンの更新のセキュリティ確認を有効化します">
+
+<!-- categories / views -->
+<!ENTITY view.search.label			"検索">
+<!ENTITY view.discover.label			"アドオン入手">
+<!ENTITY view.recentUpdates.label		"最近の更新">
+<!ENTITY view.availableUpdates.label		"更新可能">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label		"今すぐ更新を確認">
+<!ENTITY updates.checkForUpdates.accesskey	"C">
+<!ENTITY updates.viewUpdates.label		"最近更新したアドオンを表示">
+<!ENTITY updates.viewUpdates.accesskey		"V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label	"アドオンを自動的に更新">
+<!ENTITY updates.updateAddonsAutomatically.accesskey	"A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label		"すべてのアドオンを自動的に更新">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey	"R">
+<!ENTITY updates.resetUpdatesToManual.label		"すべてのアドオンを手動で更新">
+<!ENTITY updates.resetUpdatesToManual.accesskey		"R">
+<!ENTITY updates.updating.label				"更新を確認しています">
+<!ENTITY updates.installed.label			"アドオンが更新されました。">
+<!ENTITY updates.downloaded.label			"アドオンの更新がダウンロードされました。">
+<!ENTITY updates.restart.label				"再起動して更新を完了してください">
+<!ENTITY updates.noneFound.label			"更新は見つかりませんでした">
+<!ENTITY updates.manualUpdatesFound.label		"更新可能なアドオンを表示">
+<!ENTITY updates.updateSelected.label			"更新をインストール">
+<!ENTITY updates.updateSelected.tooltip			"このリストの更新可能なアドオンをインストールします">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label			"詳細情報を表示">
+<!ENTITY cmd.showDetails.accesskey		"S">
+<!ENTITY cmd.findUpdates.label			"更新を確認">
+<!ENTITY cmd.findUpdates.accesskey		"F">
+<!ENTITY cmd.preferencesWin.label		"設定">
+<!ENTITY cmd.preferencesWin.accesskey		"O">
+<!ENTITY cmd.preferencesUnix.label		"設定">
+<!ENTITY cmd.preferencesUnix.accesskey		"P">
+<!ENTITY cmd.about.label			"このアドオンについて">
+<!ENTITY cmd.about.accesskey			"A">
+
+<!ENTITY cmd.enableAddon.label			"有効化">
+<!ENTITY cmd.enableAddon.accesskey		"E">
+<!ENTITY cmd.disableAddon.label			"無効化">
+<!ENTITY cmd.disableAddon.accesskey		"D">
+<!ENTITY cmd.enableTheme.label			"テーマを適用">
+<!ENTITY cmd.enableTheme.accesskey		"W">
+<!ENTITY cmd.disableTheme.label			"テーマを外す">
+<!ENTITY cmd.disableTheme.accesskey		"W">
+<!ENTITY cmd.askToActivate.label		"実行時に確認する">
+<!ENTITY cmd.askToActivate.tooltip		"このアドオンの使用を毎回確認します">
+<!ENTITY cmd.alwaysActivate.label		"常に有効化する">
+<!ENTITY cmd.alwaysActivate.tooltip		"このアドオンは常に使用します">
+<!ENTITY cmd.neverActivate.label		"無効化する">
+<!ENTITY cmd.neverActivate.tooltip		"このアドオンは使用しません">
+<!ENTITY cmd.stateMenu.tooltip			"アドオン実行時の状態を変更します">
+<!ENTITY cmd.installAddon.label			"インストール">
+<!ENTITY cmd.installAddon.accesskey		"I">
+<!ENTITY cmd.uninstallAddon.label		"削除">
+<!ENTITY cmd.uninstallAddon.accesskey		"R">
+<!ENTITY cmd.showPreferencesWin.label		"設定">
+<!ENTITY cmd.showPreferencesWin.tooltip		"このアドオンの設定を変更します">
+<!ENTITY cmd.showPreferencesUnix.label		"設定">
+<!ENTITY cmd.showPreferencesUnix.tooltip	"このアドオンの設定を変更します">
+<!ENTITY cmd.contribute.label			"寄付">
+<!ENTITY cmd.contribute.accesskey		"C">
+<!ENTITY cmd.contribute.tooltip			"このアドオンの開発者に寄付します">
+
+<!ENTITY cmd.showReleaseNotes.label		"リリースノートを表示">
+<!ENTITY cmd.showReleaseNotes.tooltip		"この更新のリリースノートを表示します">
+<!ENTITY cmd.hideReleaseNotes.label		"リリースノートを隠す">
+<!ENTITY cmd.hideReleaseNotes.tooltip		"この更新のリリースノートを隠します">
+<!ENTITY cmd.findReplacement.label		"代わりのアドオンを探す">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title				"アドオンとは何ですか？">
+<!ENTITY discover.description2			"アドオンは、あなたに合わせて &brandShortName; に機能を追加したり &brandShortName; のスタイルを変えたりするものです。各種のサイドバーや天気予報、テーマなどをインストールして、あなただけの &brandShortName; に作り変えてみてください。">
+
+
+<!ENTITY discover.footer			"インターネットに接続されていれば、この画面で人気のアドオンを紹介します。ぜひ、お試しください。">
+
+
+<!-- detail view -->
+<!ENTITY detail.version.label			"バージョン">
+<!ENTITY detail.lastupdated.label		"更新日">
+<!ENTITY detail.creator.label			"開発者">
+<!ENTITY detail.homepage.label			"ホームページ">
+<!ENTITY detail.numberOfDownloads.label		"ダウンロード数">
+
+<!ENTITY detail.contributions.description	"このアドオンの開発者が開発を継続するための少額の寄付によるサポートを求めています。">
+
+<!ENTITY detail.updateType			"自動更新">
+<!ENTITY detail.updateDefault.label		"既定">
+<!ENTITY detail.updateDefault.tooltip		"既定の場合のみ更新を自動的にインストールします">
+<!ENTITY detail.updateAutomatic.label		"オン">
+<!ENTITY detail.updateAutomatic.tooltip		"更新を自動的にインストールします">
+<!ENTITY detail.updateManual.label		"オフ">
+<!ENTITY detail.updateManual.tooltip		"更新を手動でインストールします">
+<!ENTITY detail.home				"ホームページ">
+<!ENTITY detail.repository			"アドオンのプロファイル">
+<!ENTITY detail.size				"サイズ">
+
+<!ENTITY detail.checkForUpdates.label		"更新を確認">
+<!ENTITY detail.checkForUpdates.accesskey	"F">
+<!ENTITY detail.checkForUpdates.tooltip		"このアドオンの更新を確認します">
+<!ENTITY detail.showPreferencesWin.label	"設定">
+<!ENTITY detail.showPreferencesWin.accesskey	"O">
+<!ENTITY detail.showPreferencesWin.tooltip	"このアドオンの設定を変更します">
+<!ENTITY detail.showPreferencesUnix.label	"設定">
+<!ENTITY detail.showPreferencesUnix.accesskey	"P">
+<!ENTITY detail.showPreferencesUnix.tooltip	"このアドオンの設定を変更します">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label				"評価">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip			"一時停止">
+<!ENTITY progress.cancel.tooltip		"キャンセル">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label			"名前順">
+<!ENTITY sort.name.tooltip			"リストを名前順に並べ替えます">
+<!ENTITY sort.dateUpdated.label			"更新日順">
+<!ENTITY sort.dateUpdated.tooltip		"リストを更新日順に並べ替えます">
+<!ENTITY sort.relevance.label			"関連順">
+<!ENTITY sort.relevance.tooltip			"リストを関連順に並べ替えます">
+<!ENTITY sort.price.label			"価格順">
+<!ENTITY sort.price.tooltip			"リストを価格順に並べ替えます">
+
+<!ENTITY search.filter2.label			"表示:">
+<!ENTITY search.filter2.installed.label		"インストールされたアドオン">
+<!ENTITY search.filter2.installed.tooltip	"インストールされたアドオンを表示します">
+<!ENTITY search.filter2.available.label		"利用可能なアドオン">
+<!ENTITY search.filter2.available.tooltip	"インストール可能なアドオンを表示します">
+
+<!ENTITY addon.homepage				"ホームページ">
+<!ENTITY addon.details.label			"詳細">
+<!ENTITY addon.details.tooltip			"このアドオンの詳細を表示します">
+<!ENTITY addon.unknownDate			"不明">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label			"旧式"><!-- en-US: "LEGACY" -->
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix			"(無効)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix			"更新">
+<!ENTITY addon.undoAction.label			"元に戻す">
+<!ENTITY addon.undoAction.tooltip		"この操作を元に戻します">
+<!ENTITY addon.undoRemove.label			"元に戻す">
+<!ENTITY addon.undoRemove.tooltip		"このアドオンをインストールされたままにします">
+<!ENTITY addon.restartNow.label			"今すぐ再起動する">
+<!ENTITY addon.install.label			"インストール">
+<!ENTITY addon.install.tooltip			"このアドオンをインストールします">
+<!ENTITY addon.updateNow.label			"今すぐ更新">
+<!ENTITY addon.updateNow.tooltip		"このアドオンの更新をインストールします">
+<!ENTITY addon.includeUpdate.label		"更新するアドオンに含める">
+<!ENTITY addon.updateAvailable.label		"更新可能です">
+<!ENTITY addon.checkingForUpdates.label		"更新を確認しています...">
+<!ENTITY addon.releaseNotes.label		"リリースノート:">
+<!ENTITY addon.loadingReleaseNotes.label	"読み込み中...">
+<!ENTITY addon.errorLoadingReleaseNotes.label	"エラーが発生したためリリースノートを読み込めませんでした。">
+
+<!ENTITY addon.createdBy.label			"作成者: ">
+
+<!ENTITY eula.title				"エンドユーザーライセンス契約">
+<!ENTITY eula.width				"560px">
+<!ENTITY eula.height				"400px">
+<!ENTITY eula.accept				"同意してインストールする...">
+
+<!ENTITY settings.path.button.label		"参照...">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label				"What's this? Telemetry may install and run experiments from time to time.">
+<!ENTITY experiment.info.learnmore			"詳細">
+<!ENTITY experiment.info.learnmore.accesskey		"L">
+<!ENTITY experiment.info.changetelemetry		"Telemetry 設定">
+<!ENTITY experiment.info.changetelemetry.accesskey	"T">
+
+<!ENTITY setting.learnmore				"詳細...">
+
+<!ENTITY disabledUnsigned.heading			"一部のアドオンが無効化されています">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start		"次のアドオンは &brandShortName; での使用が検証されていません。">
+<!ENTITY disabledUnsigned.description.findAddonsLink	"代わりのアドオンを見つける">
+<!ENTITY disabledUnsigned.description.end		"か、検証されたアドオンを入手できるように開発者に依頼してください。">
+<!ENTITY disabledUnsigned.learnMore			"ユーザーのオンライン上の安全を保つ私たちの活動について学んでください。">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start			"アドオンの検証に興味のある開発者の方は">
+<!ENTITY disabledUnsigned.devInfo.linkToManual		"マニュアル">
+<!ENTITY disabledUnsigned.devInfo.end			"をお読みください。">
+
+<!ENTITY pluginDeprecation.description			"&brandShortName; によるサポートが終了したプラグインは表示されません。">
+<!ENTITY pluginDeprecation.learnMore			"詳細">
+
+<!ENTITY legacyWarning.description		"&brandShortName; によるサポートが終了した拡張機能があります。">
+<!ENTITY legacyWarning.showLegacy		"旧式の拡張機能を表示">
+<!ENTITY legacyExtensions.title 		"旧式の拡張機能">
+<!ENTITY legacyExtensions.description		"これらの拡張機能は、現在の &brandShortName; 標準に適さないため無効化されています。">
+<!ENTITY legacyExtensions.learnMore		"アドオンシステムの変更についての詳細">

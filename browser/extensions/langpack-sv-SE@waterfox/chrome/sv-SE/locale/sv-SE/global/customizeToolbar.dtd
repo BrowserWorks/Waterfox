@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Anpassa verktygsfält">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Du kan lägga till eller ta bort poster genom att dra dem till eller från verktygsfälten.">
+<!ENTITY show.label               "Visa:">
+<!ENTITY iconsAndText.label       "Ikoner och text">
+<!ENTITY icons.label              "Ikoner">
+<!ENTITY text.label               "Text">
+<!ENTITY useSmallIcons.label      "Små ikoner">
+<!ENTITY restoreDefaultSet.label  "Standardutseende">
+<!ENTITY addNewToolbar.label      "Nytt verktygsfält ">
+<!ENTITY saveChanges.label        "Klar">
+<!ENTITY undoChanges.label        "Ångra">

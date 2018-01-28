@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "സ്വതവേയുള്ള തിരച്ചില്‍ യന്ത്രം">
+
+
+<!ENTITY provideSearchSuggestions.label        "തിരച്ചിലിനുള്ള നിര്‍ദ്ദേശങ്ങള്‍ നല്‍കുക">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+
+<!ENTITY urlBarSuggestionsPermanentPB.label    "സ്ഥാനപട്ടയില്‍ തെരച്ചില്‍ നിര്‍ദ്ദേശങ്ങള്‍ കാണിക്കുന്നതല്ല. കാരണം, താങ്കള്‍ &brandShortName; ക്രമീകരിച്ചിരിയ്ക്കുന്നതു് നാള്‍വഴി ഒരിക്കലും ഓര്‍ക്കാതിരിയ്ക്കാനാണു്.">
+
+
+
+<!ENTITY engineNameColumn.label                "തെരച്ചില്‍ എഞ്ചിന്‍">
+<!ENTITY engineKeywordColumn.label             "കീവേര്‍ഡ്">
+
+<!ENTITY restoreDefaultSearchEngines.label     "സ്വതവേയുള്ള തെരച്ചില്‍ എഞ്ചിനുകള്‍ വീണ്ടെടുക്കുക">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "നീക്കം ചെയ്യുക">
+<!ENTITY removeEngine.accesskey                "R">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY oneClickSearchEngines.label           "One-Click Search Engines">
+
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

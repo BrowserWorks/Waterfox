@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Vald+Tab eina per korteles paskiausiai naudotų eiliškumu">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Vietoje naujų langų atverti naujas korteles">
+<!ENTITY newWindowsAsTabs.accesskey   "k">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Įspėti prieš užveriant daugiau kaip vieną kortelę">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "d">
+
+<!ENTITY warnOnOpenManyTabs.label       "Įspėti prieš atveriant daug kortelių, kurios gali sulėtinti „&brandShortName;“ darbą">
+<!ENTITY warnOnOpenManyTabs.accesskey   "s">
+
+<!ENTITY switchLinksToNewTabs.label        "Atveriant saitą naujoje kortelėje, įkelti ją į pirmąjį planą">
+<!ENTITY switchLinksToNewTabs.accesskey    "v">
+
+<!ENTITY showTabsInTaskbar.label          "Rodyti kortelių miniatiūras „Windows“ užduočių juostoje">
+<!ENTITY showTabsInTaskbar.accesskey      "m">
+<!ENTITY tabsGroup.label          "Kortelės">

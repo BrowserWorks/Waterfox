@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Općenito">
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Blokiraj opasni i zavaravajući sadržaj">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Blokiraj opasna preuzimanja">
+<!ENTITY  blockDownloads.accesskey        "o">
+
+
+
+<!ENTITY  addonExceptions.label         "Iznimke...">
+<!ENTITY  addonExceptions.accesskey     "e">
+
+
+<!ENTITY  logins.label                  "Prijave">
+
+
+<!ENTITY  passwordExceptions.label      "Iznimke...">
+<!ENTITY  passwordExceptions.accesskey  "m">
+
+<!ENTITY  useMasterPassword.label        "Koristi glavnu lozinku">
+<!ENTITY  useMasterPassword.accesskey    "u">
+<!ENTITY  changeMasterPassword.label     "Promijeni glavnu lozinku...">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Spremljene prijave…">
+<!ENTITY  savedLogins.accesskey          "l">
+
+<!ENTITY  blockUncommonAndUnwanted.accesskey "C">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Warn you about unwanted and uncommon software">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

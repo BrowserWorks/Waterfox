@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Eiporavo jeike:">
+<!ENTITY  from.label                  "pegua:">
+<!ENTITY  actionQuestion.label        "Mba'épa ikatu ojapo &brandShortName; ko marandurenda ndive.">
+
+<!ENTITY  openWith.label              "Eike ndive">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Ambue…">
+
+<!ENTITY  saveFile.label              "Marandurenda ñongatu">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "Ejapo ijeheguietéva ko'ã marandurendápe g̃uarã ko'ag̃aite guive.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "mba'e péva:">
+
+<!ENTITY  chooseHandlerMac.label      "Poravo…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "Poravo…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "Añetetépa eñongatuse ko marandurenda.">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Iɣewwaṛen n tuqqna">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Tawila n uqeddac apṛuksi i unekcum ɣeṛ Internet">
+<!ENTITY  noProxyTypeRadio.label        "Ulac apṛuksi">
+<!ENTITY  noProxyTypeRadio.accesskey    "l">
+<!ENTITY  systemTypeRadio.label         "Seqdec iɣewwaṛen n upṛuksi n unagraw">
+<!ENTITY  systemTypeRadio.accesskey     "S">
+<!ENTITY  WPADTypeRadio.label           "Tifin tawurmant n iɣewwaṛen n upṛuksi n uẓeṭṭa-a">
+<!ENTITY  WPADTypeRadio.accesskey       "T">
+<!ENTITY  manualTypeRadio.label         "Tawila s ufus n upṛuksi:">
+<!ENTITY  manualTypeRadio.accesskey     "w">
+<!ENTITY  autoTypeRadio.label           "Tansa n twila tawurmant n upṛuksi">
+<!ENTITY  autoTypeRadio.accesskey       "n">
+<!ENTITY  reload.label                  "Smiren">
+<!ENTITY  reload.accesskey              "S">
+<!ENTITY  ftp.label                     "Apṛuksi FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Apṛuksi HTTP:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "Apṛuksi SSL:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "Asenneftaɣ SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS L4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS L5">
+<!ENTITY  socks5.accesskey              "L">
+<!ENTITY  socksRemoteDNS.label2         "Apṛuksi DNS ticki SOCKS v5 yettwaseqdec">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Tabburt:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Ulac apṛuksi i:">
+<!ENTITY  noproxy.accesskey             "U">
+<!ENTITY  noproxyExplain.label          "Amedya: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Seqdec aqeddac-a, apṛuksi, i yal aneggaf">
+<!ENTITY  shareproxy.accesskey          "c">
+<!ENTITY  autologinproxy.label          "Ur sutur ara asesteb ma yella awal uffir yettwakles">
+<!ENTITY  autologinproxy.accesskey      "k">
+<!ENTITY  autologinproxy.tooltip        "Aɣewwaṛ-a a k-isesteb s wudem awurman deg iqeddacen n apruksi, anda awal uffir yekles. Ticki asesteb ur yeddi ara, a k-d-nessuter awal uffir.">

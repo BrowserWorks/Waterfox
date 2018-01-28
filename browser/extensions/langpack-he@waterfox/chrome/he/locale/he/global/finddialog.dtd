@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "מצא בדף זה">
+<!ENTITY findField.label "מצא את:">
+<!ENTITY findField.accesskey "צ">
+<!ENTITY caseSensitiveCheckbox.label "התאם אותיות גדולות/קטנות">
+<!ENTITY caseSensitiveCheckbox.accesskey "ה">
+<!ENTITY wrapCheckbox.label "המשך חיפוש מתחילת הדף">
+<!ENTITY wrapCheckbox.accesskey "ח">
+<!ENTITY findButton.label "מצא את הבא">
+<!ENTITY findButton.accesskey "מ">
+<!ENTITY cancelButton.label "ביטול">
+<!ENTITY closeButton.label "סגירה">
+<!ENTITY up.label "למעלה">
+<!ENTITY up.accesskey "ע">
+<!ENTITY down.label "למטה">
+<!ENTITY down.accesskey "ט">
+<!ENTITY direction.label "כיוון">

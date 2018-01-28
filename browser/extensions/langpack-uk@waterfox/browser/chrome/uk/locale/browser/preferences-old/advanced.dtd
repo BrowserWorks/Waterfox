@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Загальні">
+
+<!ENTITY accessibility.label             "Розширені можливості">
+
+<!ENTITY useCursorNavigation.label       "Завжди використовувати клавіші курсора для переміщення всередині сторінок">
+<!ENTITY useCursorNavigation.accesskey   "в">
+<!ENTITY searchOnStartTyping.label       "Шукати текст під час його введення">
+<!ENTITY searchOnStartTyping.accesskey   "к">
+<!ENTITY blockAutoReload.label           "Попереджати при спробі сайтів перенаправити чи перезавантажити сторінку">
+<!ENTITY blockAutoReload.accesskey       "п">
+<!ENTITY useOnScreenKeyboard.label       "Показувати сенсорну клавіатуру при необхідності">
+<!ENTITY useOnScreenKeyboard.accesskey   "о">
+
+<!ENTITY browsing.label                  "Перегляд сайтів">
+
+<!ENTITY useAutoScroll.label             "Використовувати автоматичне прокручування">
+<!ENTITY useAutoScroll.accesskey         "а">
+<!ENTITY useSmoothScrolling.label        "Використовувати плавне прокручування">
+<!ENTITY useSmoothScrolling.accesskey    "п">
+<!ENTITY checkUserSpelling.label         "Перевіряти орфографію при введенні">
+<!ENTITY checkUserSpelling.accesskey     "в">
+
+<!ENTITY dataChoicesTab.label            "Вибір даних">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Відправлення даних вимкнено для цієї конфігурації збірки">
+
+<!ENTITY healthReportDesc.label          "Допомагає зрозуміти як працює ваш браузер та надсилає дані про справність у &vendorShortName;">
+<!ENTITY enableHealthReport.label        "Увімкнути звіт про справність &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "з">
+<!ENTITY healthReportLearnMore.label     "Докладніше">
+
+<!ENTITY telemetryDesc.label             "Надсилає у &vendorShortName; дані про використання, апаратне забезпечення та налаштування вашого браузера, щоб допомогти нам зробити &brandShortName; кращим">
+<!ENTITY enableTelemetryData.label       "Ділитися додатковими даними (Телеметрія)">
+<!ENTITY enableTelemetryData.accesskey   "Т">
+<!ENTITY telemetryLearnMore.label        "Докладніше">
+
+<!ENTITY crashReporterDesc2.label         "Звіти про збої допомагають &vendorShortName; виправляти проблеми і роблять браузер стабільнішим та безпечнішим">
+<!ENTITY alwaysSubmitCrashReports.label   "Дозволити &brandShortName; надсилати зібрані звіти про збої">
+<!ENTITY alwaysSubmitCrashReports.accesskey "з">
+<!ENTITY crashReporterLearnMore.label     "Докладніше">
+
+<!ENTITY networkTab.label                "Мережа">
+
+<!ENTITY connection.label                "З’єднання">
+
+<!ENTITY connectionDesc.label            "Налаштуйте параметри з’єднання &brandShortName; з інтернетом">
+<!ENTITY connectionSettings.label        "Налаштувати…">
+<!ENTITY connectionSettings.accesskey    "а">
+
+<!ENTITY httpCache.label                 "Кешований веб-вміст">
+
+<!ENTITY offlineStorage2.label           "Автономний веб-вміст і дані користувача">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Дані сайтів">
+<!ENTITY clearSiteData.label             "Стерти всі дані">
+<!ENTITY clearSiteData.accesskey         "т">
+<!ENTITY siteDataSettings.label          "Налаштування…">
+<!ENTITY siteDataSettings.accesskey      "ш">
+<!ENTITY siteDataLearnMoreLink.label     "Докладніше">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Обмежити до">
+<!ENTITY limitCacheSizeBefore.accesskey  "О">
+<!ENTITY limitCacheSizeAfter.label       "МБ на диску">
+<!ENTITY clearCacheNow.label             "Очистити">
+<!ENTITY clearCacheNow.accesskey         "ч">
+<!ENTITY clearOfflineAppCacheNow.label   "Очистити">
+<!ENTITY clearOfflineAppCacheNow.accesskey "и">
+<!ENTITY overrideSmartCacheSize.label    "Ігнорувати автоматичне керування кешем">
+<!ENTITY overrideSmartCacheSize.accesskey "о">
+
+<!ENTITY updateTab.label                 "Оновлення">
+
+<!ENTITY updateApplication.label         "Оновлення &brandShortName;">
+<!ENTITY updateAuto1.label               "Автоматично встановлювати оновлення (рекомендовано)">
+<!ENTITY updateAuto1.accesskey           "А">
+<!ENTITY updateCheckChoose.label         "Перевіряти оновлення, але дозволяти вам вирішувати чи встановлювати їх">
+<!ENTITY updateCheckChoose.accesskey     "П">
+<!ENTITY updateManual.label              "Не перевіряти оновлення (не рекомендовано)">
+<!ENTITY updateManual.accesskey          "Н">
+
+<!ENTITY updateHistory.label             "Показати журнал оновлень">
+<!ENTITY updateHistory.accesskey         "ж">
+
+<!ENTITY useService.label                "Використовувати фонову службу для встановлення оновлень">
+<!ENTITY useService.accesskey            "с">
+
+<!ENTITY autoUpdateOthers.label          "Оновлювати автоматично">
+<!ENTITY enableSearchUpdate.label        "Засоби пошуку">
+<!ENTITY enableSearchUpdate.accesskey    "о">
+
+<!ENTITY offlineStorageNotify.label               "Повідомляти, коли веб-сайт просить зберегти дані для автономного використання">
+<!ENTITY offlineStorageNotify.accesskey           "П">
+<!ENTITY offlineStorageNotifyExceptions.label     "Винятки…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "я">
+
+<!ENTITY offlineAppsList2.label          "Наступним веб-сайтам дозволено зберігати дані для автономного використання:">
+<!ENTITY offlineAppsList.height          "10em">
+<!ENTITY offlineAppsListRemove.label     "Вилучити…">
+<!ENTITY offlineAppsListRemove.accesskey "В">
+<!ENTITY offlineAppRemove.confirm        "Вилучити автономні дані">
+
+<!ENTITY certificateTab.label            "Сертифікати">
+<!ENTITY certPersonal.label              "Запити">
+<!ENTITY certPersonal.description        "Коли сервер вимагає мій особистий сертифікат:">
+<!ENTITY selectCerts.auto                "Обирати один автоматично">
+<!ENTITY selectCerts.auto.accesskey      "б">
+<!ENTITY selectCerts.ask                 "Питати щоразу">
+<!ENTITY selectCerts.ask.accesskey       "т">
+<!ENTITY enableOCSP.label                "Запитувати у серверів OCSP підтвердження поточного стану сертифікатів">
+<!ENTITY enableOCSP.accesskey            "п">
+<!ENTITY viewCerts.label                 "Перегляд сертифікатів">
+<!ENTITY viewCerts.accesskey             "с">
+<!ENTITY viewSecurityDevices.label       "Пристрої захисту">
+<!ENTITY viewSecurityDevices.accesskey   "з">
+
+<!ENTITY performance.label               "Швидкодія">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Використовувати рекомендовані налаштування швидкодії">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Ці налаштування підібрані для вашого комп'ютера й операційної системи.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "В">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Докладніше">
+<!ENTITY limitContentProcessOption.label "Обмеження процесів вмісту">
+<!ENTITY limitContentProcessOption.description
+                                         "Додаткова кількість процесів вмісту може пришвидшити роботу при використанні багатьох вкладок, але при цьому споживатиметься більше пам'яті.">
+<!ENTITY limitContentProcessOption.accesskey   "О">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Зміна числа процесів вмісту можлива лише в багатопроцесній версії &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Дізнайтеся, як перевірити, чи увімкнено багатопроцесність">
+<!ENTITY allowHWAccel.label              "Використовувати апаратне прискорення, якщо можливо">
+<!ENTITY allowHWAccel.accesskey          "к">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; 安全模式">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "以安全模式啟動">
+<!ENTITY refreshProfile.label         "重新整理 &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "您可以透過安全模式來排除 &brandShortName; 的問題。">
+<!ENTITY safeModeDescription4.label   "您的附加元件與自訂設定值將會暫時被停用。">
+
+<!ENTITY refreshProfileInstead.label  "您也可以略過安全模式的程序，試試看重新整理 &brandShortName;。">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; 在啟動時未預期地關閉了。這可能是由附加元件或其他問題所造成的，您可以試著以安全模式啟動來排除這個問題。">
+

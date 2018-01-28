@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title		"更新履歴">
+<!ENTITY  history.intro		"以下の更新をインストールしました">
+<!ENTITY  closebutton.label	"閉じる">
+
+<!ENTITY  noupdates.label	"インストールした更新はありません">
+
+<!ENTITY  name.header		"更新名">
+<!ENTITY  date.header		"インストール日付">
+<!ENTITY  type.header		"種類">
+<!ENTITY  state.header		"状態">
+

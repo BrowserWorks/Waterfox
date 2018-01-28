@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "예외 - 번역">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Translation will not be offered for the following languages:">
+<!ENTITY treehead.languageName.label      "언어">
+<!ENTITY removeLanguage.label             "언어 제거">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "모든 언어 제거">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Translation will not be offered for the following sites:">
+<!ENTITY treehead.siteName2.label         "웹사이트">
+<!ENTITY removeSite.label                 "사이트 제거">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "모든 사이트 제거">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "닫기">
+<!ENTITY button.close.accesskey           "C">

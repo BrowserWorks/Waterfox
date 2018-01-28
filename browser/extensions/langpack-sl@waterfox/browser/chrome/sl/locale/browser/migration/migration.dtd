@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Čarovnik za uvoz">
+
+<!ENTITY importFrom.label               "Uvozi možnosti, zaznamke, zgodovino, gesla in ostale podatke iz:">
+<!ENTITY importFromUnix.label           "Uvozi nastavitve, zaznamke, zgodovino, gesla in ostale podatke iz:">
+<!ENTITY importFromBookmarks.label      "Uvozi zaznamke iz:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorerja">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edga">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ne uvozi ničesar">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safarija">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canaryja">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chroma">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromiuma">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfoxa">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Ni bilo mogoče najti nobenega programa z zaznamki, zgodovino ali gesli za uvoz.">
+
+<!ENTITY importSource.title             "Uvoz nastavitev in podatkov">
+<!ENTITY importItems.title              "Možnosti uvoza">
+<!ENTITY importItems.label              "Izberite, kaj želite uvoziti:">
+
+<!ENTITY migrating.title                "Uvoz ...">
+<!ENTITY migrating.label                "Trenutno se uvaža ...">
+
+<!ENTITY selectProfile.title            "Izbira profila">
+<!ENTITY selectProfile.label            "Uvoz je možen iz naslednjih profilov:">
+
+<!ENTITY done.title                     "Konec uvoza">
+<!ENTITY done.label                     "Uspešno je bilo uvoženo naslednje:">
+
+<!ENTITY closeSourceBrowser.label       "Pred nadaljevanjem se prepričajte, da je izbrani brskalnik zaprt.">

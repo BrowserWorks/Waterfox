@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Zwězaś">
+<!ENTITY header     "Do dalokego rěda zwězaś">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Zwězaś">
+<!ENTITY connecting "Zwězujo se…">
+<!ENTITY availableAddons "K dispoziciji stojece daloke dodanki:">
+<!ENTITY availableTabs "K dispoziciji stojece daloke rejtarki:">
+<!ENTITY availableProcesses "K dispoziciji stojece daloke procese:">
+<!ENTITY connectionError "Zmólka:">
+<!ENTITY errorTimeout "Zmólka: zwisk jo cas pśekšocył.">
+<!ENTITY errorRefused "Zmólka: zwisk jo se wótpokazał.">
+<!ENTITY errorUnexpected "Njewócakana zmólka.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Wuwijarske rědy Waterfox mógu zmólki na dalokich rědach pytaś (na pśikład Waterfox za Android a Waterfox OS). Zawěsććo, až sćo nastajenje 'Daloke pytanje za zmólkami' na dalokem rěźe zašaltował. Za dalšne informacije glejśo ">
+<!ENTITY remoteDocumentation "dokumentaciju">
+<!ENTITY remoteHelpSuffix ".">
+

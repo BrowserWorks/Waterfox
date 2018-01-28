@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "این پایگاه اینترنتی از افزونه ای استفاده می‌کند که ممکن است باعث کندی &brandShortName; شود.">
+<!ENTITY tapToPlayPlugin                                     "برای فعال‌سازی افزونه، فشار دهید.">
+<!ENTITY clickToActivatePlugin                               "افزونه‌های فعال">
+<!ENTITY checkForUpdates                                     "بررسی بروزرسانی …">
+<!ENTITY blockedPlugin.label                                 "این افزونه به منظور محافظت از شما مسدود شده است.">
+<!ENTITY hidePluginBtn.label                                 "مخفی کردن افزونه">
+<!ENTITY managePlugins                                       "مدیریت افزونه‌ها...">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "بارگزاری مجدد صفحه">
+<!ENTITY reloadPlugin.post                                   " برای تلاش مجدد.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "ارسال گزارش دچار خرابی شده است">
+<!ENTITY report.submitting                                   "در حال ارسال گزارش…">
+<!ENTITY report.submitted                                    "خرابی در ارسال گزارش.">
+<!ENTITY report.disabled                                     "ارسال گزارش غیرفعال است.">
+<!ENTITY report.failed                                       "ارسال به مشکل برخورد.">
+<!ENTITY report.unavailable                                  "گزارشی وجود ندارد.">
+<!ENTITY report.comment                                      "افزودن یک توضیح (توضیحات در دسترس عموم قرار خواهند گرفت)">
+<!ENTITY report.pageURL                                      "اضافه‌کردن آدرس صفحه‌ها">
+
+<!ENTITY plugin.file                                         "پرونده">
+<!ENTITY plugin.mimeTypes                                    "انواع MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "فعال‌سازی حالت محافظ در Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "مسدود کردن محتوای Flash خطرناک">

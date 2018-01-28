@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "പിന്തുടരല്‍ സുരക്ഷ ഉപയോഗിക്കുക">
+<!ENTITY  trackingProtectionAlways.label       "എപ്പോഴും">
+<!ENTITY  trackingProtectionAlways.accesskey   "ഴ">
+<!ENTITY  trackingProtectionPrivate.label      "സ്വകാര്യ ജാലകങ്ങളില്‍ മാത്രം">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ത">
+<!ENTITY  trackingProtectionNever.label        "ഒരിക്കലുമില്ല">
+<!ENTITY  trackingProtectionNever.accesskey    "ഒ">
+<!ENTITY  trackingProtectionLearnMore.label    "കൂടുതല്‍ അറിയുക">
+<!ENTITY  trackingProtectionExceptions.label   "വിട്ടുവീഴ്ചകള്‍…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ക">
+
+<!ENTITY tracking.label                 "നിരീക്ഷണം">
+<!ENTITY trackingProtectionPBM5.label         "നിരീക്ഷിക്കല്‍ സംരക്ഷണം സ്വകാര്യ ജാലകത്തില്‍ ഉപയോഗിക്കുക">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "കൂടുതല്‍ അറിയുക">
+<!ENTITY changeBlockList.label          "തടയല്‍ പട്ടിക തിരുത്തുക">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+
+
+<!ENTITY  history.label                 "നാള്‍വഴി">
+
+<!ENTITY  locationBar.label             "സ്ഥാന തട്ട്">
+
+<!ENTITY  locbar.suggest.label          "ഒരു ലൊക്കേഷന്‍ ബാര്‍ ഉപയോഗിക്കുമ്പോള്‍ ഇവ നിർദ്ദേശിക്കുക:">
+<!ENTITY  locbar.history.label          "നാള്‍വഴി">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "അടയാളക്കുറിപ്പുകള്‍">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "തുറന്ന ടാബുകള്‍">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "സ്വതേയുള്ള തിരച്ചില്‍ യന്ത്രത്തില്‍ നിന്നുമുള്ള അനുബന്ധ തെരയലുകള്‍">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "തിരച്ചിൽ യന്ത്രത്തിന്‍റെ നിര്‍ദ്ദേശങ്ങള്‍ ക്രമീകരിക്കുക…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+
+<!ENTITY  acceptThirdParty.always.label   "എപ്പോഴും">
+<!ENTITY  acceptThirdParty.never.label    "ഒരിക്കലും ഇല്ല">
+<!ENTITY  acceptThirdParty.visited.label  "സന്ദര്‍ശനം മുതല്‍">
+
+<!ENTITY  keepUntil.label               "എപ്പോള്‍ വരെ വെയ്ക്കേണം:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "അവയുടെ കാലാവധി കഴിയും വരെ">
+<!ENTITY  close.label                   "&brandShortName; അടയ്ക്കുന്നു ">
+
+<!ENTITY  cookieExceptions.label        "വിട്ടുവീഴ്ചകള്‍">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "കുക്കികള്‍ കാണിക്കുക ">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; will:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "ഹിസ്റ്ററി ഓര്‍ക്കുക">
+<!ENTITY  historyHeader.dontremember.label "ഹിസ്റ്ററി ഇനിയും മുതല്‍ ഓര്‍ക്കരുത്">
+<!ENTITY  historyHeader.custom.label       "ഹിസ്റ്ററിക്കായ് ഇച്ഛാനുസൃതം  സജ്ജീകരണങ്ങള്‍ ഉപയോഗിക്കുക">
+<!ENTITY  historyHeader.post.label         "‌">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; നിങ്ങളുടെ തിരയല്‍, ബ്രൗസിങ്, ഡൗണ്‍ലോഡ്, ഫോര്‍ംസ് എന്നിവയുടെ ഹിസ്റ്ററി ഓര്‍ക്കും, നിങ്ങള്‍ സന്ദര്‍ശിക്കുന്ന സൈറ്റുകളില്‍ നിന്നും കുക്കീസ് വെക്കും..">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "നിങ്ങള്‍ക്കെ ചെയ്യാവുന്നത് : ">
+<!ENTITY  rememberActions.clearHistory.label  "നിങ്ങളുടെ അടുത്തകാലത്തെ ഹിസ്റ്ററി മായ്ക്കുക">
+<!ENTITY  rememberActions.middle.label        ", അലെങ്കില്‍  ">
+<!ENTITY  rememberActions.removeCookies.label "ഓരോന്നായി കുക്കികള്‍ നീക്കം ചെയ്യുക">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; സ്വകാര്യ തിരയലിന്റെ സജ്ജീകരണങ്ങള്‍ ഉപയോഗിക്കും, അതിനാല്‍ നിങ്ങള്‍ വെബ് തിരയുംബോള്‍ ഹിസ്റ്ററി ഓര്‍ക്കുകയില്ല.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "നിങ്ങള്‍ക്കെ ചെയ്യാവുന്നത് : ">
+<!ENTITY  dontrememberActions.clearHistory.label "എല്ലാ ഹിസ്റ്ററിയും മായ്ക്കുക">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "എപ്പോഴും സ്വകാര്യ ബ്രൌസിങ് മോഡ് ഉപയോഗിയ്ക്കുക">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "ബ്രൌസ് ചെയ്തതും ഡൌണ്‍ലോഡ് ചെയ്തതുമായ നാള്‍വഴി സൂക്ഷിയ്ക്കുക">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "തിരയലുകളുടേയും (സര്‍ച്ചുകളുടെ) ഫോര്‍മുകളുടെയും ഹിസ്റ്ററി ഓര്‍ക്കുക">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; നിര്‍ത്തുംബോള്‍ ഹിസ്റ്ററി മായ്ക്കുക">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "സജ്ജീകരണങ്ങള്‍ …">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+
+
+
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersEnabled.label        "Enable Container Tabs">
+<!ENTITY  browserContainersHeader.label         "Container Tabs">
+<!ENTITY  browserContainersLearnMore.label      "Learn more">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  doNotTrack.pre.label          "You can also ">
+<!ENTITY  doNotTrack.settings.label     "manage your Do Not Track settings">

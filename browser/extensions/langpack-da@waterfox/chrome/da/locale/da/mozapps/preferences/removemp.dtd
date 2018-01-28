@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Fjern hovedadgangskode">
+<!ENTITY removeInfo.label                  "Du skal indtaste din nuværende adgangskode for at fortsætte.">
+<!ENTITY removeWarning1.label              "Din hovedadgangskode bruges til at beskytte følsom information, fx adgangskoder til websteder.">
+<!ENTITY removeWarning2.label              "Hvis du fjerner hovedadgangskoden, vil dine informationer ikke være beskyttet hvis din computers sikkerhed bliver kompromitteret.">
+<!ENTITY setPassword.oldPassword.label     "Nuværende adgangskode:">
+

@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "Веб-консоль">
+<!ENTITY browserConsole.title "Консоль браузера">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Открыть URL в новой вкладке">
+<!ENTITY openURL.accesskey "к">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Сеть">
+<!ENTITY btnPageNet.tooltip "Вести лог доступа к сети">
+<!ENTITY btnPageNet.accesskey "е">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "е">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Вести лог ошибок и предупреждений CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Вести лог исключений JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Защита">
+<!ENTITY btnPageSecurity.tooltip "Вести лог ошибок и предупреждений защиты">
+<!ENTITY btnPageSecurity.accesskey "а">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "Журнал">
+<!ENTITY btnPageLogging.tooltip "Сообщения лога отправленные в объект window.console">
+<!ENTITY btnPageLogging.accesskey3 "н">
+<!ENTITY btnConsoleErrors       "Ошибки">
+<!ENTITY btnConsoleInfo         "Инфо">
+<!ENTITY btnConsoleWarnings     "Предупреждения">
+<!ENTITY btnConsoleLog          "Лог">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Reflows">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "Сервер">
+<!ENTITY btnServerLogging.tooltip     "Вести лог сообщений, полученных от веб-сервера">
+<!ENTITY btnServerLogging.accesskey   "в">
+<!ENTITY btnServerErrors              "Ошибки">
+<!ENTITY btnServerInfo                "Инфо">
+<!ENTITY btnServerWarnings            "Предупреждения">
+<!ENTITY btnServerLog                 "Лог">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Shared Workers">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Service Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Дополнение или Chrome Workers">
+
+<!ENTITY filterOutput.placeholder "Фильтр вывода">
+<!ENTITY btnClear.label        "Очистить">
+<!ENTITY btnClear.tooltip      "Очистить вывод веб-консоли">
+<!ENTITY btnClear.accesskey    "и">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Копировать адрес ссылки">
+<!ENTITY copyURLCmd.accesskey "о">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Открыть в Виде Переменных">
+<!ENTITY openInVarViewCmd.accesskey "ы">
+<!ENTITY storeAsGlobalVar.label "Хранить как глобальную переменную">
+<!ENTITY storeAsGlobalVar.accesskey "а">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Αναφορές κατάρρευσης">
+<!ENTITY crashesUnsubmitted.label   "Μη υποβληθείσες αναφορές κατάρρευσης">
+<!ENTITY crashesSubmitted.label     "Υποβληθείσες αναφορές κατάρρευσης">
+<!ENTITY id.heading                 "ID Αναφοράς">
+<!ENTITY dateCrashed.heading        "Ημερομηνία κατάρρευσης">
+<!ENTITY dateSubmitted.heading      "Ημερομηνία υποβολής">
+<!ENTITY noReports.label            "Δεν έχουν υποβληθεί αναφορές προβλημάτων.">
+<!ENTITY noConfig.label             "Αυτή η εφαρμογή δεν έχει ρυθμιστεί για να εμφανίζει αναφορές προβλημάτων. Θα πρέπει να ρυθμιστούν οι προτιμήσεις στο <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Αφαίρεση όλων των αναφορών">

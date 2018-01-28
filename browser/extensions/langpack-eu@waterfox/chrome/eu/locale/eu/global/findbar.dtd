@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Bilatu esaldiaren hurrengo parekatzea">
+<!ENTITY previous.tooltip "Bilatu esaldiaren aurreko parekatzea">
+<!ENTITY findCloseButton.tooltip "Itxi bilaketa barra">
+<!ENTITY highlightAll.label "Nabarmendu guztia">
+<!ENTITY highlightAll.accesskey "z">
+<!ENTITY highlightAll.tooltiptext "Nabarmendu esaldiaren agerpen guztiak">
+<!ENTITY caseSensitive.label "Bereizi maiuskulak/minuskulak">
+<!ENTITY caseSensitive.accesskey "B">
+<!ENTITY caseSensitive.tooltiptext "Bilatu maiuskulak/minuskulak bereiziz">
+<!ENTITY entireWord.label "Hitz osoak">
+<!ENTITY entireWord.accesskey "o">
+<!ENTITY entireWord.tooltiptext "Bilatu hitz osoak soilik">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Поставке повезивања">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Поставке проксија за приступ интернету">
+<!ENTITY  noProxyTypeRadio.label        "Без проксија">
+<!ENTITY  noProxyTypeRadio.accesskey    "Б">
+<!ENTITY  systemTypeRadio.label         "Користи системска подешавања проксија">
+<!ENTITY  systemTypeRadio.accesskey     "К">
+<!ENTITY  WPADTypeRadio.label           "Самостално откривање поставки проксија за ову мрежу">
+<!ENTITY  WPADTypeRadio.accesskey       "С">
+<!ENTITY  manualTypeRadio.label         "Ручно постави прокси:">
+<!ENTITY  manualTypeRadio.accesskey     "Р">
+<!ENTITY  autoTypeRadio.label           "URL самостално постављање проксија:">
+<!ENTITY  autoTypeRadio.accesskey       "U">
+<!ENTITY  reload.label                  "Обнови">
+<!ENTITY  reload.accesskey              "О">
+<!ENTITY  ftp.label                     "FTP прокси:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP прокси:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL прокси:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS хост:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS када се користи SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "D">
+<!ENTITY  port.label                    "Порт:">
+<!ENTITY  HTTPport.accesskey            "П">
+<!ENTITY  SSLport.accesskey             "П">
+<!ENTITY  FTPport.accesskey             "П">
+<!ENTITY  SOCKSport.accesskey           "П">
+<!ENTITY  noproxy.label                 "Не користи прокси за:">
+<!ENTITY  noproxy.accesskey             "е">
+<!ENTITY  noproxyExplain.label          "Пример: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Користи овај прокси за све протоколе">
+<!ENTITY  shareproxy.accesskey          "К">
+<!ENTITY  autologinproxy.label          "Не питај за аутентификацију ако је лозинка сачувана">
+<!ENTITY  autologinproxy.accesskey      "Н">
+<!ENTITY  autologinproxy.tooltip        "Ова опција потврђује веродостојност проксија када имате сачуване акредитиве за њих. Приказаће се порука ако је аутентификација неуспешна.">

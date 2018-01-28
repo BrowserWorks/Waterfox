@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instaliraj add-on">
+<!ENTITY intro           "Drugi program na vašem računaru želi da modifikuje &brandShortName; sa sljedećim add-onom:">
+<!ENTITY warning         "Instalirajte add-one samo onih autora kojim vjerujete.">
+<!ENTITY allow           "Dozvoli ovu instalaciju">
+<!ENTITY later           "Možete se predomisliti bilo kada odlaskom u Upravnik add-onima.">
+<!ENTITY continue        "Nastavi">
+<!ENTITY restartMessage  "Morate restartovati &brandShortName; da bi se završila instalacija addona.">
+<!ENTITY restartButton   "Restartuj &brandShortName;">
+<!ENTITY cancelButton    "Otkaži">

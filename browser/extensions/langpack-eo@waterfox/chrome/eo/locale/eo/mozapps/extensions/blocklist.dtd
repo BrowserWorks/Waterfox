@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Aldonaĵoj povas esti okazigantaj problemojn">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; eltrovis, ke la jenaj aldonaĵoj okazigas stabilecajn aŭ sekurecajn problemojn:">
+<!ENTITY blocklist.softblocked       "Por via protektado estas treege rekomendata ke vi restartigu la programon kun tiuj aldonaĵoj malaktivaj.">
+<!ENTITY blocklist.hardblocked       "Tiuj ĉi aldonaĵoj tre riskas okazigi stabilecajn aŭ sekurecajn problemojn kaj ili estis blokitaj, sed restartigo estas postulata por tuta malaktivigo.">
+<!ENTITY blocklist.softandhard       "La aldonaĵoj kiuj tre riskas okazigi stabilecajn aŭ sekurecajn problemojn estis blokitaj. La aliaj estas malpli riskaj sed estas treege rekomendata malaktivigi ilin kaj restartigi.">
+<!ENTITY blocklist.moreinfo          "Plia informo">
+
+<!ENTITY blocklist.accept.label      "Restartigi &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Blokita">
+<!ENTITY blocklist.checkbox.label    "Malaktivigi">

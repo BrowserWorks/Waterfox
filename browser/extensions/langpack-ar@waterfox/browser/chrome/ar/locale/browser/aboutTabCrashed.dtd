@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "أغلق هذا اللسان">
+<!ENTITY tabCrashed.restoreTab "استعِد هذا اللسان">
+<!ENTITY tabCrashed.restoreAll "استعِد كل الألسنة التي تحطمت">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "انهار اللسان!">
+<!ENTITY tabCrashed.offerHelp "يمكننا مساعدتك.">
+<!ENTITY tabCrashed.single.offerHelpMessage "اختر &tabCrashed.restoreTab; لإعادة تحميل محتوى الصفحة.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "اختر &tabCrashed.restoreTab; أو &tabCrashed.restoreAll; لإعادة تحميل محتوى الصفحة.">
+<!ENTITY tabCrashed.requestHelp "هل ستساعدنا؟">
+<!ENTITY tabCrashed.requestHelpMessage "تساعدنا بلاغات الانهيار في تشخيص المشاكل و تحسين &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "أبلغ عن هذا اللسان">
+<!ENTITY tabCrashed.sendReport2 "أرسل بلاغًا بانهيار اللسان الذي كنت تطالعه">
+<!ENTITY tabCrashed.commentPlaceholder2 "تعليقات اختيارية (التعليقات علنية)">
+<!ENTITY tabCrashed.includeURL2 "أضف عنوان الصفحة إلى بلاغ الانهيار">
+<!ENTITY tabCrashed.emailPlaceholder "أدخل عنوان بريدك الإلكتروني هنا">
+<!ENTITY tabCrashed.emailMe "أرسل لي بريدًا عندما تتوفر مزيد من المعلومات">
+<!ENTITY tabCrashed.reportSent "أُرسلَ تقرير التحطم بالفعل؛ شكرا لمساعدتك في جعل &brandShortName; أفضل.">
+<!ENTITY tabCrashed.requestAutoSubmit2 "أبلغ عن الألسنة التي تعمل في الخلفية">
+<!ENTITY tabCrashed.autoSubmit2 "حدّث التفضيلات لإرسال بلاغات الانهيار تلقائيًا، بما فيها الألسنة المنهارة في الخلفية في هذه الجلسة و الجلسات المستقبلية">

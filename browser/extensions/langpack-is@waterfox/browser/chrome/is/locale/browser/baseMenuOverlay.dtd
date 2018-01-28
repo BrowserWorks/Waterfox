@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Minnka">
+<!ENTITY bringAllToFront.label    "Endurheimta">
+<!ENTITY zoomWindow.label         "Aðdráttur">
+<!ENTITY windowMenu.label         "Gluggi">
+
+<!ENTITY helpMenu.label           "Hjálp"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Hjálp"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "Um &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "U">
+<!ENTITY productHelp2.label       "&brandShorterName; Hjálp">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Flýtilyklar">
+<!ENTITY helpKeyboardShortcuts.accesskey "k">
+
+<!ENTITY helpSafeMode.label       "Endurræsa með viðbætur óvirkar…">
+<!ENTITY helpSafeMode.accesskey   "r">
+<!ENTITY helpSafeMode.stop.label       "Endurræsa með viðbætur virkar">
+<!ENTITY helpSafeMode.stop.accesskey   "r">
+
+<!ENTITY healthReport2.label      "&brandShorterName; ástandsskoðun">
+<!ENTITY healthReport2.accesskey  "ð">
+
+<!ENTITY helpTroubleshootingInfo.label      "Upplýsingar fyrir úrræðaleit">
+<!ENTITY helpTroubleshootingInfo.accesskey  "t">
+
+<!ENTITY helpFeedbackPage.label      "Senda álit…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; Skoðunarferð">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "Valkostir…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Þjónustur">
+
+<!ENTITY hideThisAppCmdMac2.label       "Fela &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Fela aðra">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Sýna allt">

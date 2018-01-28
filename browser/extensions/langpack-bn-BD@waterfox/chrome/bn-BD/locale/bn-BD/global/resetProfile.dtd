@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; রিফ্রেশ করুন">
+<!ENTITY refreshProfile.dialog.description1  "সমস্যার সমাধানের জন্য এবং কর্মক্ষমতা পুনঃস্থাপন নতুন করে শুরু।">
+<!ENTITY refreshProfile.dialog.description2  "এটা হবে:">
+<!ENTITY refreshProfile.dialog.items.label1  "আপনার অ্যাড-অন এবং কাস্টমাইজেশন অপসারণ করুন">
+<!ENTITY refreshProfile.dialog.items.label2  "আপনার ব্রাউজার সেটিংস ডিফল্টে রিস্টোর করুন">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; রিফ্রেশ করুন">
+
+<!ENTITY refreshProfile.title                "&brandShortName; টিউন করুন">
+<!ENTITY refreshProfile.button.label         "&brandShortName; রিফ্রেশ করুন…">
+
+<!ENTITY refreshProfile.cleaning.description "প্রায় সম্পন্ন…">

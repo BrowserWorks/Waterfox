@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "세션 복원">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "문제 알림">
+<!ENTITY restorepage.problemDesc    "&brandShortName;는 이전 창과 탭을 복구하는 데 문제가 있습니다.  최근 열어본 웹 페이지에 의해 발생합니다.">
+<!ENTITY restorepage.tryThis        "작업 사항:">
+<!ENTITY restorepage.restoreSome    "문제를 일으킨 하나 이상의 탭 없애기">
+<!ENTITY restorepage.startNew       "새로 시작하기">
+
+<!ENTITY restorepage.tryagainButton "복원">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "닫기">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "복원">
+<!ENTITY restorepage.listHeader     "창 및 탭">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "창 &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "써 봅시다!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "해냈습니다!">
+
+<!ENTITY welcomeback2.pageTitle     "해냈습니다!">
+<!ENTITY welcomeback2.pageInfo1     "이제 &brandShortName;를 쓰실 수 있습니다.">
+
+<!ENTITY welcomeback2.restoreAll.label  "모든 창과 탭 복원">
+<!ENTITY welcomeback2.restoreSome.label "사용자가 원하는 하나만 복원">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "부가 기능과 사용자 맞춤이 모두 날아가고 브라우저 설정이 처음으로 돌아왔습니다. 그래도 고쳐지지 않았다면 ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "무엇을 더 해볼 수 있는지 알아보십시오.">
+

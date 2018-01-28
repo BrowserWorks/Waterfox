@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Параметри странице">
+
+<!ENTITY basic.tab           "Формат и својства">
+
+<!ENTITY formatGroup.label   "Формат">
+
+<!ENTITY orientation.label   "Усмерење:">
+<!ENTITY portrait.label      "Усправно">
+<!ENTITY portrait.accesskey  "У">
+<!ENTITY landscape.label     "Водоравно">
+<!ENTITY landscape.accesskey "В">
+
+<!ENTITY scale.label         "Размера:">
+<!ENTITY scale.accesskey     "Р">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Уклопи на страницу">
+<!ENTITY shrinkToFit.accesskey "с">
+
+<!ENTITY optionsGroup.label  "Опције">
+
+<!ENTITY printBG.label       "Штампа позадине (боје и слика)">
+<!ENTITY printBG.accesskey   "Ш">
+
+<!ENTITY advanced.tab        "Маргине и заглавље/подножје">
+
+<!ENTITY marginGroup.label   "Маргине (#1)">
+<!ENTITY marginUnits.inches  "инча">
+<!ENTITY marginUnits.metric  "у милиметрима">
+<!ENTITY marginTop.label     "Горњe:">
+<!ENTITY marginTop.accesskey "Г">
+<!ENTITY marginBottom.label  "Доњe:">
+<!ENTITY marginBottom.accesskey "Д">
+<!ENTITY marginLeft.label    "Левe:">
+<!ENTITY marginLeft.accesskey "Л">
+<!ENTITY marginRight.label   "Деснe:">
+<!ENTITY marginRight.accesskey "е">
+
+<!ENTITY headerFooter.label  "Заглавља и подножја">
+
+<!ENTITY hfLeft.label        "Леви:">
+<!ENTITY hfCenter.label      "Средина:">
+<!ENTITY hfRight.label       "Десни:">
+<!ENTITY headerLeft.tip      "Лево заглавље">
+<!ENTITY headerCenter.tip    "Централно заглавље">
+<!ENTITY headerRight.tip     "Десно заглавље">
+<!ENTITY footerLeft.tip      "Лево подножје">
+<!ENTITY footerCenter.tip    "Централно подножје">
+<!ENTITY footerRight.tip     "Десно подножје">
+
+<!ENTITY hfTitle             "Назив">
+<!ENTITY hfURL               "Адреса">
+<!ENTITY hfDateAndTime       "Датум/време">
+<!ENTITY hfPage              "Страница #">
+<!ENTITY hfPageAndTotal      "Страница бр. # од #">
+<!ENTITY hfBlank             "– празно –">
+<!ENTITY hfCustom            "Прилагоди…">
+
+<!ENTITY customPrompt.title  "Прилагоди…">
+<!ENTITY customPrompt.prompt "Унесите сопствени текст за заглавље или подножје">

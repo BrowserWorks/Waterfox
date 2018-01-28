@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "సెషనుని పునరుద్ధరించు">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "దయచేసి క్షమించండి.">
+<!ENTITY restorepage.problemDesc    "మీ విండోలను ట్యాబులను పునరుద్ధరించడానికి &brandShortName; కష్టపడుతోంది. ఇటీవలే తెరిచిన వెబ్ పేజీ వల్ల మామూలుగా ఇలా జరుగుతుంది.">
+<!ENTITY restorepage.tryThis        "మీరు ఇవి ప్రయత్నించవచ్చు:">
+<!ENTITY restorepage.restoreSome    "సమస్యకు మూలం అని మీరనుకుంటున్న ట్యాబులను తొలగించండి">
+<!ENTITY restorepage.startNew       "మళ్ళీ కొత్తగా విహరణను మొదలుపెట్టండి">
+
+<!ENTITY restorepage.tryagainButton "పునరుద్ధరించు">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "మూసివేయి">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "పునరుద్ధరించు">
+<!ENTITY restorepage.listHeader     "విండోలూ ట్యాబులూ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "విండో &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "వెళ్దాం పద!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "విజయవంతం!">
+
+<!ENTITY welcomeback2.pageTitle     "విజయవంతం!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; సిద్ధంగా ఉంది.">
+
+<!ENTITY welcomeback2.restoreAll.label  "అన్ని విండోలను మరియు ట్యాబులను పునరుద్ధరించు">
+<!ENTITY welcomeback2.restoreSome.label "మీకు కావలసిన వాటిని మాత్రమే పునరుద్ధరించండి">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "మీ పొడిగింతలు, అభిమత కూర్పులు తీసివేయబడినవి, విహారిణి అమర్పులు వాటి అప్రమేయాలకు పునరుద్ధరించబడ్డాయి. ఇది మీ సమస్యను పరిష్కరించకపోతే, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "మీరు ఇంకా ఏమి చేయవచ్చో తెలుసుకోండి.">
+

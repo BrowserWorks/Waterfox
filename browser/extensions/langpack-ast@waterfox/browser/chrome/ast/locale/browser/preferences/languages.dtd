@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Llingües">
+<!ENTITY languages.customize.description                "A vegaes les páxines web úfrense en más d'una llingua. Escueyi les llingües p'amosar eses páxines web, n'orde de preferencia:">
+<!ENTITY languages.customize.moveUp.label               "Xubir">
+<!ENTITY languages.customize.moveUp.accesskey           "u">
+<!ENTITY languages.customize.moveDown.label             "Baxar">
+<!ENTITY languages.customize.moveDown.accesskey         "B">
+<!ENTITY languages.customize.deleteButton.label         "Desaniciar">
+<!ENTITY languages.customize.deleteButton.accesskey     "r">
+<!ENTITY languages.customize.selectLanguage.label       "Escueyi una llingua p'amestar…">
+<!ENTITY languages.customize.addButton.label            "Amestar">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

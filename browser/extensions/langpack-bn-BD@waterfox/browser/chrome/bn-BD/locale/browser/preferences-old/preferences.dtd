@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "অপশন">
+<!ENTITY  prefWindow.title        "পছন্দসমূহ">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; পছন্দসমূহ">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 50em; min-height: 45em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 50em; min-height: 45em;">
+
+<!ENTITY  paneGeneral.title       "সাধারণ">
+<!ENTITY  paneTabs.title          "ট্যাব">
+<!ENTITY  paneSearch.title        "অনুসন্ধান">
+<!ENTITY  paneContent.title       "বিষয়বস্তু">
+<!ENTITY  paneApplications.title  "অ্যাপ্লিকেশন">
+<!ENTITY  panePrivacy.title       "গোপনীয়তা">
+<!ENTITY  paneContainers.title    "কন্টেইনার ট্যাব">
+<!ENTITY  paneSecurity.title      "নিরাপত্তা">
+<!ENTITY  paneAdvanced.title      "উচ্চপর্যায়">
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+
+<!ENTITY  paneSync.title          "সিঙ্ক">
+
+<!ENTITY  helpButton.label        "সাহায্য">

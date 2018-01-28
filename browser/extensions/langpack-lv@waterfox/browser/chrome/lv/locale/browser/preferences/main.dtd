@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Palaišana">
+
+<!ENTITY startupPage2.label        "Kad &brandShortName; palaižas">
+<!ENTITY startupPage2.accesskey    "p">
+<!ENTITY startupUserHomePage.label "Rādīt mājas lapu">
+<!ENTITY startupBlankPage.label    "Parādīt tukšu lapu">
+<!ENTITY startupPrevSession.label  "Parādīt manus logus un cilnes no iepriekšējās reizes">
+
+<!ENTITY homepage2.label           "Mājas lapa">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "Lietot pašreizējo lapu">
+<!ENTITY useCurrentPage.accesskey  "L">
+<!ENTITY useMultiple.label         "Lietot pašreizējās lapas">
+<!ENTITY chooseBookmark.label      "Lietot grāmatzīmi…">
+<!ENTITY chooseBookmark.accesskey  "g">
+<!ENTITY restoreDefault.label      "Atjaunot uz noklusēto">
+<!ENTITY restoreDefault.accesskey  "A">
+
+<!ENTITY downloads.label     "Lejupielādes">
+
+<!ENTITY saveTo.label "Vieta, kur saglabāt failus:">
+<!ENTITY saveTo.accesskey "k">
+<!ENTITY chooseFolderWin.label        "Pārlūkot...">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "Izvēlieties...">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Vienmēr jautāt man, kur saglabāt failus">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "Vienmēr pārbaudīt vai &brandShortName; ir noklusētais pārlūks">
+<!ENTITY alwaysCheckDefault2.accesskey    "t">
+<!ENTITY setAsMyDefaultBrowser3.label     "Padarīt par noklusēto…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; šobrīd ir jūsu noklusētais pārlūks">
+<!ENTITY isNotDefault.label               "&brandShortName; šobrīd nav jūsu noklusētais pārlūks">
+
+<!ENTITY separateProfileMode.label        "Ļaut &brandShortName; un Waterfox darboties vienlaicīgi">
+<!ENTITY useWaterfoxSync.label             "Padoms: Šis izmanto atsevišķu profilu. Izmantojiet sinhronizāciju, lai apmainītos ar datiem, starp šiem profiliem.">
+<!ENTITY getStarted.notloggedin.label     "Pierakstīties &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Atvērt &syncBrand.shortName.label; iestatījumus">
+
+<!ENTITY e10sEnabled.label                "Aktivizēt vairāku procesu &brandShortName;">

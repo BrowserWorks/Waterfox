@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Redefinir &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Cumenza da nov per schliar problems e meglierar la prestaziun.">
+<!ENTITY refreshProfile.dialog.description2  "Quai vegn a:">
+<!ENTITY refreshProfile.dialog.items.label1  "Allontanar tes supplements e tia persunalisaziun">
+<!ENTITY refreshProfile.dialog.items.label2  "Redefinir ils parameters da standard dal navigatur">
+<!ENTITY refreshProfile.dialog.button.label  "Redefinir &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Dà nov schlantsch a &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Redefinir &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Prest a fin…">

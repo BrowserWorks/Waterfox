@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Mode sans échec de &brandShortName;">
+<!ENTITY window.maxWidth              "450">
+
+<!ENTITY startSafeMode.label          "Démarrer en mode sans échec">
+<!ENTITY refreshProfile.label         "Réparer &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Le mode sans échec est un mode particulier de &brandShortName; pouvant être utilisé pour résoudre des problèmes.">
+<!ENTITY safeModeDescription4.label   "Vos modules et paramètres personnalisés seront temporairement désactivés.">
+
+<!ENTITY refreshProfileInstead.label  "Vous pouvez également quitter le mode sans échec et lancer la réparation automatique de &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; s’est fermé inopinément lors de son démarrage. Cela peut être causé par des modules ou par d’autres problèmes. Vous pouvez essayer de résoudre le problème via le mode sans échec.">

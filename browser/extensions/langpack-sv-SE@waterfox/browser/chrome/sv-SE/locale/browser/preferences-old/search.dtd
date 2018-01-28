@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standard sökmotor">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Välj din standardsökmotor. &brandShortName; använder den i adressfältet, i sökfältet och på startsidan.">
+
+<!ENTITY provideSearchSuggestions.label        "Ge sökförslag">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Visa sökförslag i och adressfältet">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Sökförslag kommer inte att visas i adressfältet eftersom du har konfigurerat &brandShortName; att aldrig spara historik.">
+
+<!ENTITY oneClickSearchEngines.label           "Sökfältets sökmotorer">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Sökfältet låter dig söka med alternativa sökmotorer direkt. Välj vilka som ska visas.">
+
+<!ENTITY engineNameColumn.label                "Sökmotor">
+<!ENTITY engineKeywordColumn.label             "Nyckelord">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Återställ standard sökmotorer">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Ta bort">
+<!ENTITY removeEngine.accesskey                "T">
+
+<!ENTITY addMoreSearchEngines.label            "Hämta fler sökmotorer…">

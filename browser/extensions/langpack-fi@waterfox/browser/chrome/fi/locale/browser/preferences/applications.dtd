@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Ohjelmat">
+<!ENTITY  applications.description "Valitse, miten &brandShortName; käsittelee verkosta lataamasi tiedostot tai verkkoa selatessa käyttämäsi ohjelmat.">
+
+<!ENTITY  typeColumn.label        "Sisältötyyppi">
+<!ENTITY  typeColumn.accesskey    "S">
+
+<!ENTITY  actionColumn2.label     "Toiminto">
+<!ENTITY  actionColumn2.accesskey "o">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Etsi tiedostotyyppejä tai ohjelmia">

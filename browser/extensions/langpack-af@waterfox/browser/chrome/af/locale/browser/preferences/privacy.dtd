@@ -1,0 +1,125 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Volgbeskerming">
+<!ENTITY  trackingProtection2.description      "Agtervolging is wanneer u blaaidata oor veelvuldige webwerwe versamel word. Agtervolging kan gebruik word om 'n profiel te bou en inhoud te wys gebaseer op blaaigedrag en persoonlike inligting.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Gebruik volgbeskerming om bekende agtervolgers te blok">
+<!ENTITY  trackingProtectionAlways.label       "Altyd">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "Slegs in private vensters">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Nooit">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Meer inligting">
+<!ENTITY  trackingProtectionExceptions.label   "Uitsonderings…">
+<!ENTITY  trackingProtectionExceptions.accesskey "U">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Gebruik volgbeskerming in private vensters">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+
+<!ENTITY trackingProtectionPBMLearnMore.label "Meer inligting">
+
+
+
+<!ENTITY  doNotTrack.learnMore.label    "Meer inligting">
+<!ENTITY  doNotTrack.default.label      "Slegs wanneer volgbeskerming gebruik word">
+<!ENTITY  doNotTrack.always.label       "Altyd">
+
+<!ENTITY  history.label                 "Geskiedenis">
+<!ENTITY  permissions.label             "Toestemmings">
+
+
+
+
+<!ENTITY  locbar.bookmarks.label        "Boekmerke">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Oop oortjies">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Verwante soektogte vanaf die verstek soekenjin">
+<!ENTITY  locbar.searches.accesskey     "V">
+
+<!ENTITY  suggestionSettings2.label     "&amp;Verander voorkeure vir voorstelle vanaf soekenjins">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Aanvaar derdeparty-koekies:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "Altyd">
+<!ENTITY  acceptThirdParty.never.label    "Nooit">
+<!ENTITY  acceptThirdParty.visited.label  "Sedert besoek">
+
+<!ENTITY  keepUntil.label               "Hou tot:">
+<!ENTITY  keepUntil.accesskey           "H">
+
+<!ENTITY  expire.label                  "hulle verval">
+<!ENTITY  close.label                   "ek &brandShortName; afsluit">
+
+<!ENTITY  cookieExceptions.label        "Uitsonderings…">
+<!ENTITY  cookieExceptions.accesskey    "U">
+
+<!ENTITY  showCookies.label             "Wys koekies…">
+<!ENTITY  showCookies.accesskey         "W">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; sal">
+<!ENTITY  historyHeader2.pre.accesskey     "s">
+<!ENTITY  historyHeader.remember.label     "geskiedenis onthou">
+<!ENTITY  historyHeader.dontremember.label "nooit geskiedenis onthou nie">
+<!ENTITY  historyHeader.custom.label       "eie instellings vir geskiedenis gebruik">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; sal u blaai-, aflaai-, vorm- en soekgeskiedenis onthou en koekies hou van webwerwe wat u besoek.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Dalk wil u die ">
+<!ENTITY  rememberActions.clearHistory.label  "onlangse geskiedenis wis">
+<!ENTITY  rememberActions.middle.label        " of ">
+<!ENTITY  rememberActions.removeCookies.label "individuele koekies verwyder">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; gebruik dieselfde instellings as private blaaiery en sal nie enige geskiedenis onthou wanneer u die web besoek nie.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Dalk wil u ook ">
+<!ENTITY  dontrememberActions.clearHistory.label "alle huidige geskiedenis skrap">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Gebruik altyd privaatblaai-modus">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Onthou my blaai- en aflaaigeskiedenis">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Onthou soek- en vormgeskiedenis">
+<!ENTITY  rememberSearchForm.accesskey   "v">
+
+<!ENTITY  clearOnClose.label             "Wis geskiedenis wanneer &brandShortName; toemaak">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Opstelling…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "Meer inligting">
+<!ENTITY  browserContainersEnabled.label        "Aktiveer konteksoortjies">
+<!ENTITY  browserContainersEnabled.accesskey    "v">
+<!ENTITY  browserContainersSettings.label        "Opstelling…">
+<!ENTITY  browserContainersSettings.accesskey    "t">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

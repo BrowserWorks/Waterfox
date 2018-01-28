@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Нова вкладка">
+<!ENTITY newtab.customize.classic "Показувати популярні сайти">
+<!ENTITY newtab.customize.cog.enhanced "Пропоновані сайти">
+<!ENTITY newtab.customize.cog.title2 "КЕРУВАННЯ НОВОЮ ВКЛАДКОЮ">
+<!ENTITY newtab.customize.cog.learn "Докладніше про нову вкладку">
+<!ENTITY newtab.customize.title "Налаштуйте свою сторінку нової вкладки">
+<!ENTITY newtab.customize.blank2 "Показувати чисту сторінку">
+<!ENTITY newtab.undo.removedLabel "Ескіз вилучено.">
+<!ENTITY newtab.undo.undoButton "Скасувати.">
+<!ENTITY newtab.undo.restoreButton "Відновити всі.">
+<!ENTITY newtab.undo.closeTooltip "Приховати">

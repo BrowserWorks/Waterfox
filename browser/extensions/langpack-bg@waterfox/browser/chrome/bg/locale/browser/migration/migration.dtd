@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Помощник при внасяне">
+
+<!ENTITY importFrom.label               "Внасяне на настройки, отметки, история, пароли и други данни от:">
+<!ENTITY importFromUnix.label           "Внасяне на настройки, отметки, история, пароли и други данни от:">
+<!ENTITY importFromBookmarks.label      "Внасяне на отметки от:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Без внасяне на каквото и да е">
+<!ENTITY importFromNothing.accesskey    "Б">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Не са намерени програми, съдържащи отметки, история или пароли.">
+
+<!ENTITY importSource.title             "Внасяне на настройки и данни">
+<!ENTITY importItems.title              "Елементи за внасяне">
+<!ENTITY importItems.label              "Изберете елементите за внасяне:">
+
+<!ENTITY migrating.title                "Внасяне…">
+<!ENTITY migrating.label                "В момента се внасят следните елементи…">
+
+<!ENTITY selectProfile.title            "Избиране на профил">
+<!ENTITY selectProfile.label            "Следните профили могат да бъдат внесени:">
+
+<!ENTITY done.title                     "Внасянето е завършено">
+<!ENTITY done.label                     "Следните елементи бяха успешно внесени:">
+
+<!ENTITY closeSourceBrowser.label       "Моля, преди да продължите се уверете, че избраният браузър е затворен.">

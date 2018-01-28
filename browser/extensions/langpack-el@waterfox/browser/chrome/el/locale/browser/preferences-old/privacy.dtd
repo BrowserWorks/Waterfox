@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Χρήση προστασίας από παρακολούθηση">
+<!ENTITY  trackingProtectionAlways.label       "Πάντα">
+<!ENTITY  trackingProtectionAlways.accesskey   "α">
+<!ENTITY  trackingProtectionPrivate.label      "Μόνο σε ιδιωτικά παράθυρα">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ο">
+<!ENTITY  trackingProtectionNever.label        "Ποτέ">
+<!ENTITY  trackingProtectionNever.accesskey    "π">
+<!ENTITY  trackingProtectionLearnMore.label    "Μάθετε περισσότερα">
+<!ENTITY  trackingProtectionExceptions.label   "Εξαιρέσεις…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ξ">
+
+<!ENTITY tracking.label                 "Καταγραφή">
+<!ENTITY trackingProtectionPBM5.label         "Χρήση Προστασίας από καταγραφή στα ιδιωτικά παράθυρα">
+<!ENTITY trackingProtectionPBM5.accesskey     "ρ">
+<!ENTITY trackingProtectionPBMLearnMore.label "Μάθετε περισσότερα">
+<!ENTITY changeBlockList.label          "Αλλαγή λίστας αποκλεισμού">
+<!ENTITY changeBlockList.accesskey      "Α">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Μπορείτε επίσης να ">
+<!ENTITY  doNotTrack.settings.label     "διαχειριστείτε τις ρυθμίσεις Αποτροπής Καταγραφής σας">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Ιστορικό">
+
+<!ENTITY  locationBar.label             "Γραμμή διευθύνσεων">
+
+<!ENTITY  locbar.suggest.label          "Κατά τη χρήση της γραμμής διευθύνσεων, να γίνεται πρόταση:">
+<!ENTITY  locbar.history.label          "Ιστορικού">
+<!ENTITY  locbar.history.accesskey      "Ι">
+<!ENTITY  locbar.bookmarks.label        "Σελιδοδεικτών">
+<!ENTITY  locbar.bookmarks.accesskey    "δ">
+<!ENTITY  locbar.openpage.label         "Ανοικτών καρτελών">
+<!ENTITY  locbar.openpage.accesskey     "Ο">
+<!ENTITY  locbar.searches.label         "Σχετικές αναζητήσεις από την προεπιλεγμένη μηχανή αναζήτησης">
+<!ENTITY  locbar.searches.accesskey     "ς">
+
+<!ENTITY  suggestionSettings.label      "Αλλαγή προτιμήσεων για τις προτάσεις μηχανών αναζήτησης…">
+<!ENTITY  suggestionSettings.accesskey  "γ">
+
+<!ENTITY  acceptCookies2.label          "Αποδοχή cookies από ιστοσελίδες">
+<!ENTITY  acceptCookies2.accesskey      "Α">
+
+<!ENTITY  acceptThirdParty.pre.label      "Αποδοχή cookies τρίτων:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "η">
+<!ENTITY  acceptThirdParty.always.label   "Πάντα">
+<!ENTITY  acceptThirdParty.never.label    "Ποτέ">
+<!ENTITY  acceptThirdParty.visited.label  "Από επισκέψεις">
+
+<!ENTITY  keepUntil.label               "Διατήρηση μέχρι:">
+<!ENTITY  keepUntil.accesskey           "μ">
+
+<!ENTITY  expire.label                  "τη λήξη τους">
+<!ENTITY  close.label                   "το κλείσιμο του &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Εξαιρέσεις…">
+<!ENTITY  cookieExceptions.accesskey    "Ε">
+
+<!ENTITY  showCookies.label             "Προβολή Cookies…">
+<!ENTITY  showCookies.accesskey         "Π">
+
+<!ENTITY  historyHeader.pre.label          "Το &brandShortName; θα:">
+<!ENTITY  historyHeader.pre.accesskey      "θ">
+<!ENTITY  historyHeader.remember.label     "Διατηρεί το ιστορικό">
+<!ENTITY  historyHeader.dontremember.label "Δεν θα διατηρεί ποτέ το ιστορικό">
+<!ENTITY  historyHeader.custom.label       "Κάνει χρήση προσαρμοσμένων ρυθμίσεων ιστορικού">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "Το &brandShortName; θα διατηρεί το ιστορικό περιήγησης, λήψεων, φορμών και αναζήτησης, καθώς και τα cookies από τις ιστοσελίδες που επισκέπτεστε.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Αν θέλετε, μπορείτε να ">
+<!ENTITY  rememberActions.clearHistory.label  "εκκαθαρίσετε όλο το πρόσφατο ιστορικό σας">
+<!ENTITY  rememberActions.middle.label        ", ή ">
+<!ENTITY  rememberActions.removeCookies.label "να διαγράψετε συγκεκριμένα cookies">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "Το &brandShortName; θα χρησιμοποιεί τις ίδιες ρυθμίσεις με την ιδιωτική περιήγηση και δεν θα διατηρεί το ιστορικό περιήγησης σας.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Αν θέλετε, μπορείτε να ">
+<!ENTITY  dontrememberActions.clearHistory.label "εκκαθαρίσετε όλο το τρέχον ιστορικό σας">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Μόνιμη λειτουργία ιδιωτικής περιήγησης">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ι">
+
+<!ENTITY  rememberHistory2.label      "Διατήρηση του ιστορικού περιήγησης και λήψεων">
+<!ENTITY  rememberHistory2.accesskey  "τ">
+
+<!ENTITY  rememberSearchForm.label       "Διατήρηση ιστορικού αναζήτησης και φορμών">
+<!ENTITY  rememberSearchForm.accesskey   "φ">
+
+<!ENTITY  clearOnClose.label             "Εκκαθάριση ιστορικού όταν κλείνει το &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "κ">
+
+<!ENTITY  clearOnCloseSettings.label     "Ρυθμίσεις…">
+<!ENTITY  clearOnCloseSettings.accesskey "θ">
+
+<!ENTITY  browserContainersHeader.label         "Θεματικές καρτέλες">
+<!ENTITY  browserContainersLearnMore.label      "Μάθετε περισσότερα">
+<!ENTITY  browserContainersEnabled.label        "Ενεργοποίηση θεματικών καρτελών">
+<!ENTITY  browserContainersEnabled.accesskey    "ν">
+<!ENTITY  browserContainersSettings.label        "Ρυθμίσεις…">
+<!ENTITY  browserContainersSettings.accesskey    "ι">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY performanceUI.bufferStatusTooltip "Profiler przechowuje próbki w buforze cyklicznym i gdy zostanie osiągnięty limit pojemności zapisu, nowe próbki zaczynają nadpisywać próbki z początku rejestrowania.">
+<!ENTITY performanceUI.disabledRealTime.nonE10SBuild "Rejestrowanie danych w czasie rzeczywistym jest wyłączone dla Firefoksa nie korzystającego z wielu procesów.">
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Włącz obsługę wielu procesów w ustawieniach Firefoksa, aby dane były przedstawiane w czasie rzeczywistym.">
+<!ENTITY performanceUI.bufferStatusFull "Bufor jest pełny. Starsze próbki będą od teraz nadpisywane.">
+<!ENTITY performanceUI.unavailableNoticePB "Rejestrowanie wydajności niedostępne. Proszę zamknąć wszystkie prywatne okna i spróbować ponownie.">
+<!ENTITY performanceUI.loadingNotice "Wczytywanie…">
+
+<!ENTITY performanceUI.toolbar.waterfall "Oś czasu">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Wyświetla różne operacje wykonywane przez przeglądarkę podczas rejestrowania, ułożone chronologicznie na osi czasu">
+<!ENTITY performanceUI.toolbar.js-calltree "JavaScript">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Wyróżnia funkcje JavaScript w których przeglądarka spędziła najwięcej czasu podczas rejestrowania">
+<!ENTITY performanceUI.toolbar.memory-calltree "Alokacje">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Wyświetla zarejestrowane alokacje pamięci">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Diagram JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Wyświetla zarejestrowany stos wywołań JavaScript">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Diagram alokacji">
+
+<!ENTITY performanceUI.table.totalDuration "Całkowity czas">
+<!ENTITY performanceUI.table.totalDuration.tooltip "Czas spędzony podczas wykonywania tej funkcji i funkcji przez nią wywołanych">
+<!ENTITY performanceUI.table.selfDuration "Własny czas">
+<!ENTITY performanceUI.table.selfDuration.tooltip "Czas spędzony tylko podczas wykonywania tej funkcji">
+<!ENTITY performanceUI.table.totalPercentage "Całkowity koszt">
+<!ENTITY performanceUI.table.totalPercentage.tooltip "Procent czasu spędzonego podczas wykonywania tej funkcji i funkcji przez nią wywołanych">
+<!ENTITY performanceUI.table.selfPercentage "Własny koszt">
+<!ENTITY performanceUI.table.selfPercentage.tooltip "Procent czasu spędzonego podczas wykonywania tylko tej funkcji">
+<!ENTITY performanceUI.table.samples "Próbki">
+<!ENTITY performanceUI.table.samples.tooltip "Wystąpienia funkcji na stosie podczas próbkowania przez profiler">
+<!ENTITY performanceUI.table.function "Funkcja">
+<!ENTITY performanceUI.table.function.tooltip "Nazwa i położenie kodu próbkowanej funkcji">
+<!ENTITY performanceUI.table.totalAlloc "Wszystkie próbki alokacji">
+<!ENTITY performanceUI.table.totalAlloc.tooltip "Całkowita liczba alokowanych obiektów próbkowanych dla tego położenia oraz w wywołaniach">
+<!ENTITY performanceUI.table.selfAlloc "Własne próbki alokacji">
+<!ENTITY performanceUI.table.selfAlloc.tooltip "Liczba alokowanych obiektów próbkowanych dla tego położenia">
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Wybierz, jakie dane wyświetlać na osi czasu">
+<!ENTITY performanceUI.options.gear.tooltiptext "Skonfiguruj ustawienia panelu wydajności">
+
+<!ENTITY performanceUI.invertTree "Odwrócone drzewo wywołań">
+<!ENTITY performanceUI.invertTree.tooltiptext "Odwrócone drzewo wywołań wyświetla zarejestrowane ścieżki wywołań rozwijające się od najmłodszych ramek ku najstarszym">
+<!ENTITY performanceUI.invertFlameGraph "Odwrócone diagramy">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Odwrócone diagramy wyświetlają zarejestrowane ścieżki wywołań rozwijające się od najmłodszych ramek ku najstarszym">
+<!ENTITY performanceUI.showPlatformData "Informacje platformy Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Informacje platformy Gecko umożliwiają włączenie symboli platformy Gecko do raportów profilera JavaScript">
+<!ENTITY performanceUI.showJITOptimizations "Wyświetlanie optymalizacji JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Wyświetlanie danych optymalizacji JIT próbkowanych dla każdej ramki JavaScript">
+<!ENTITY performanceUI.flattenTreeRecursion "Spłaszczona rekurencja drzewa">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Spłaszczanie rekurencji podczas badania funkcji">
+<!ENTITY performanceUI.enableMemory "Rejestrowanie pamięci">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Rejestrowanie zużycia pamięci podczas profilowania">
+<!ENTITY performanceUI.enableAllocations "Rejestrowanie alokacji">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Rejestrowanie alokacji obiektów podczas profilowania">
+<!ENTITY performanceUI.enableFramerate "Rejestrowanie liczby ramek">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Rejestrowanie liczby ramek podczas profilowania">
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Rejestrowanie poprzez">
+<!ENTITY performanceUI.console.recordingNoticeEnd "">
+
+<!ENTITY performanceUI.console.stopCommandStart "Zatrzymaj rejestrowanie, wprowadzając „">
+<!ENTITY performanceUI.console.stopCommandEnd "” w konsoli.">

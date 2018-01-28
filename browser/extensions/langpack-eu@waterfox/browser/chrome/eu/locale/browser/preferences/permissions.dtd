@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Salbuespenak">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Webgunea">
+<!ENTITY treehead.status.label        "Egoera">
+<!ENTITY removepermission2.label      "Kendu webgunea">
+<!ENTITY removepermission2.accesskey  "K">
+<!ENTITY removeallpermissions2.label  "Kendu webgune guztiak">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY address.label                "Webgunearen helbidea:">
+<!ENTITY address.accesskey            "h">
+<!ENTITY block.label                  "Blokeatu">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Baimendu saiorako">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Baimendu">
+<!ENTITY allow.accesskey              "B">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Utzi">
+<!ENTITY button.cancel.accesskey      "U">
+<!ENTITY button.ok.label              "Gorde aldaketak">
+<!ENTITY button.ok.accesskey          "G">
+

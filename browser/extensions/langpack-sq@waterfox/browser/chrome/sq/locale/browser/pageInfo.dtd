@@ -1,0 +1,91 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopjoje">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Përzgjidhe Krejt">
+<!ENTITY  selectall.accesskey   "T">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Të përgjithshme">
+<!ENTITY  generalTab.accesskey  "P">
+<!ENTITY  generalTitle          "Titull:">
+<!ENTITY  generalURL            "Adresë:">
+<!ENTITY  generalType           "Lloj:">
+<!ENTITY  generalMode           "Mënyrë Hartimi:">
+<!ENTITY  generalSize           "Madhësi:">
+<!ENTITY  generalReferrer       "URL referuese:">
+<!ENTITY  generalSource         "Burim Fshehtine:">
+<!ENTITY  generalModified       "Ndryshuar më:">
+<!ENTITY  generalEncoding2       "Kodim Teksti:">
+<!ENTITY  generalMetaName       "Emër">
+<!ENTITY  generalMetaContent    "Lëndë">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaAltHeader        "Tekst Alternativ">
+<!ENTITY  mediaAddress          "Adresë">
+<!ENTITY  mediaType             "Lloj">
+<!ENTITY  mediaSize             "Madhësi">
+<!ENTITY  mediaCount            "Numërim">
+<!ENTITY  mediaLongdesc         "Përshkrim i Gjatë:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Ruajeni Si…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Paraparje e Medias:">
+
+<!ENTITY  feedTab               "Prurje">
+<!ENTITY  feedTab.accesskey     "P">
+<!ENTITY  feedSubscribe         "Pajtohuni">
+<!ENTITY  feedSubscribe.accesskey "j">
+
+<!ENTITY  permTab               "Leje">
+<!ENTITY  permTab.accesskey     "L">
+<!ENTITY  permUseDefault        "Përdor Parazgjedhjen">
+<!ENTITY  permAskAlways         "Pyetmë përherë">
+<!ENTITY  permAllow             "Lejoje">
+<!ENTITY  permAllowSession      "Lejoje për Sesionin">
+<!ENTITY  permBlock             "Bllokoje">
+<!ENTITY  permissionsFor        "Leje për:">
+<!ENTITY  permPlugins           "Aktivizo Shtojcat">
+
+<!ENTITY  securityTab           "Siguri">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Shihini Dëshminë">
+<!ENTITY  securityView.accesskey "S">
+<!ENTITY  securityView.unknown   "E panjohur">
+
+<!ENTITY  securityView.identity.header   "Identitet Sajti">
+<!ENTITY  securityView.identity.owner    "Pronar: ">
+<!ENTITY  securityView.identity.domain   "Sajt: ">
+<!ENTITY  securityView.identity.verifier "Vërtetuar nga: ">
+
+<!ENTITY  securityView.privacy.header                   "Privatësi &amp; Historik">
+<!ENTITY  securityView.privacy.history                  "E kam vizituar këtë sajt më herët se sot?">
+<!ENTITY  securityView.privacy.cookies                  "A po depoziton ky sajt të dhëna (cookies) në kompjuterin tim?">
+<!ENTITY  securityView.privacy.viewCookies              "Shihni Cookie-t">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "C">
+<!ENTITY  securityView.privacy.passwords                "A kam ruajtur ndonjë fjalëkalim për këtë sajt?">
+<!ENTITY  securityView.privacy.viewPasswords            "Shihni Fjalëkalime të Ruajtur">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "F">
+<!ENTITY  securityView.technical.header                 "Hollësi Teknike">
+<!ENTITY  mediaDimension        "Përmasa:">
+<!ENTITY  mediaLocation         "Vend:">
+<!ENTITY  mediaText             "Tekst Shoqërues:">
+
+<!ENTITY  permClearStorage           "Pastroje Depozitën">
+<!ENTITY  permClearStorage.accesskey "P">
+
+<!ENTITY  helpButton.label                              "Ndihmë">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

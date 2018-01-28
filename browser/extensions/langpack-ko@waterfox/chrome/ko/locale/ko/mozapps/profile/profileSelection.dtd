@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - 사용자 프로필 선택">
+
+<!ENTITY            profilename.label      "프로필 이름:">
+
+<!ENTITY            start.label            "&brandShortName; 시작하기">
+<!ENTITY            exit.label             "종료">
+
+<!ENTITY            availprofiles.label    "사용 가능한 프로필">
+
+<!ENTITY            newButton.label        "프로필 만들기">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "프로필 이름 변경…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "프로필 삭제…">
+<!ENTITY            deleteButton.accesskey "D">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName;에 사용자 설정 및 기타 항목들을 저장할 수 있습니다.">
+
+<!ENTITY            offlineState.label    "오프라인으로 작업">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "시작할 때 묻지 않고 선택된 프로파일을 사용">
+<!ENTITY            useSelected.accesskey   "s">

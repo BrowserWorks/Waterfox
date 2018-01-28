@@ -1,0 +1,11 @@
+locale branding az az/locale/branding/
+locale browser az az/locale/browser/
+locale browser-region az az/locale/browser-region/
+locale devtools az az/locale/az/devtools/client/
+locale devtools-shared az az/locale/az/devtools/shared/
+locale formautofill az az/locale/az/
+locale pdf.js az az/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

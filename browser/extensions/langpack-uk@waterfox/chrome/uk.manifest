@@ -1,0 +1,14 @@
+locale alerts uk uk/locale/uk/alerts/
+locale autoconfig uk uk/locale/uk/autoconfig/
+locale global uk uk/locale/uk/global/
+locale global-platform uk uk/locale/uk/global-platform/mac/ os=Darwin
+locale global-platform uk uk/locale/uk/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform uk uk/locale/uk/global-platform/win/ os=WINNT
+locale mozapps uk uk/locale/uk/mozapps/
+locale necko uk uk/locale/uk/necko/
+locale passwordmgr uk uk/locale/uk/passwordmgr/
+locale pipnss uk uk/locale/uk/pipnss/
+locale pippki uk uk/locale/uk/pippki/
+locale places uk uk/locale/uk/places/
+locale pluginproblem uk uk/locale/uk/pluginproblem/
+locale weave uk uk/locale/uk/services/

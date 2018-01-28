@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Ова може да ја поништи Вашата гаранција">
+<!ENTITY aboutWarningText.label "Менувањето на основните вредности на овие напредни поставки можат да бидат штетни за стабилноста, безбедноста и перформансите на оваа програма. Продолжете само ако знаете што правите.">
+<!ENTITY aboutWarningCheckbox.label "Прикажи го ова предупредување и следниот пат">
+
+<!ENTITY searchPrefs.label "Барај:">
+<!ENTITY searchPrefs.accesskey "р">
+<!ENTITY focusSearch.key "r">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Име на преференција">
+<!ENTITY lockColumn.label "Статус">
+<!ENTITY typeColumn.label "Тип">
+<!ENTITY valueColumn.label "Вредност">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Кликнете за да подредите"> 
+<!ENTITY columnChooser.tooltip "Кликнете за да изберете колони за приказ"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Копирај">
+<!ENTITY copyPref.accesskey "К">
+<!ENTITY copyName.label "Копирај го името">
+<!ENTITY copyName.accesskey "о">
+<!ENTITY copyValue.label "Копирај ја вредноста">
+<!ENTITY copyValue.accesskey "в">
+<!ENTITY modify.label "Промени">
+<!ENTITY modify.accesskey "м">
+<!ENTITY toggle.label "Да/Не">
+<!ENTITY toggle.accesskey "Д">
+<!ENTITY reset.label "Ресетирај">
+<!ENTITY reset.accesskey "Р">
+<!ENTITY new.label "Нов">
+<!ENTITY new.accesskey "Н">
+<!ENTITY string.label "Текст">
+<!ENTITY string.accesskey "с">
+<!ENTITY integer.label "Цел број">
+<!ENTITY integer.accesskey "р">
+<!ENTITY boolean.label "да/не">
+<!ENTITY boolean.accesskey "в">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">
+<!ENTITY focusSearch2.key "f">
+

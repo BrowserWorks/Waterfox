@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Сіз ашуға таңдаған:">
+<!ENTITY  from.label                  "қайдан:">
+<!ENTITY  actionQuestion.label        "&brandShortName; бұл файлды қалай өңдеу керек?">
+
+<!ENTITY  openWith.label              "Көмегімен ашу">
+<!ENTITY  openWith.accesskey          "ш">
+<!ENTITY  other.label                 "Таңдау…">
+
+<!ENTITY  saveFile.label              "Файлды сақтау">
+<!ENTITY  saveFile.accesskey          "с">
+
+<!ENTITY  rememberChoice.label        "Файлдардың осы түрі үшін автоматты түрде осыны орындау.">
+<!ENTITY  rememberChoice.accesskey    "а">
+
+<!ENTITY  whichIs.label              "қайсысы:">
+
+<!ENTITY  chooseHandlerMac.label      "Таңдау…">
+<!ENTITY  chooseHandlerMac.accesskey  "Т">
+<!ENTITY  chooseHandler.label         "Қарап шығу…">
+<!ENTITY  chooseHandler.accesskey     "ш">
+
+<!ENTITY  unknownPromptText.label     "Осы файлды сақтауды қалайсыз ба?">

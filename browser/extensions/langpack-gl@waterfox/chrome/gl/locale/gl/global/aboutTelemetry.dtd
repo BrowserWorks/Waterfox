@@ -1,0 +1,190 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Datos telemétricos">
+
+<!ENTITY aboutTelemetry.changeDataChoices "
+  Cambiar
+">
+
+<!ENTITY aboutTelemetry.uploadEnabled "
+  O envío de datos FHR está <span>activado</span>.
+">
+
+<!ENTITY aboutTelemetry.uploadDisabled "
+  O envío de datos FHR está <span>desactivado</span>.
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "
+  O rexistro estendido de telemetría está <span>activado</span>.
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "
+  O rexistro estendido de telemetría está <span>desactivado</span>.
+">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Orixe dos datos de ping:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Datos actuais de ping
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Datos arquivados de ping
+">
+
+
+
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Amosar datos de subsesión
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Escolla ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Ping máis recente
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ping máis antigo &gt;&gt;
+">
+
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Semana
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Datos xerais
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Datos do entorno
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Rexistro de telemetría
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Sentenzas SQL lentas
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Bloqueos do navegador
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Bloqueos dos fillos
+">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogramas
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histogramas con lendas
+">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Medidas simples
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Detalles do complemento
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Escritura atrasada
+">
+
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "
+  Histogramas recollidos polos complementos
+">
+
+<!ENTITY aboutTelemetry.toggle "
+  Prema para cambiar de sección
+">
+
+<!ENTITY aboutTelemetry.emptySection "
+  (Non se recolleron datos)
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOTA: A depuración SQL lenta está activada. Poden amosarse cadeas completas de SQL pero non se enviarán a telemetría.
+">
+
+
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtrar (cadeas ou expresións regulares)
+">
+
+
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+

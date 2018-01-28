@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "435">
+<!ENTITY  pageInfoWindow.height "480">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Копіювати">
+<!ENTITY  copy.accesskey        "о">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Виділити все">
+<!ENTITY  selectall.accesskey   "и">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Основна">
+<!ENTITY  generalTab.accesskey  "с">
+<!ENTITY  generalTitle          "Назва:">
+<!ENTITY  generalURL            "Адреса:">
+<!ENTITY  generalType           "Тип:">
+<!ENTITY  generalMode           "Режим відображення:">
+<!ENTITY  generalSize           "Розмір:">
+<!ENTITY  generalReferrer       "URL, що посилається:">
+<!ENTITY  generalSource         "Джерело кешування:">
+<!ENTITY  generalModified       "Остання зміна:">
+<!ENTITY  generalEncoding2      "Кодування:">
+<!ENTITY  generalMetaName       "Назва">
+<!ENTITY  generalMetaContent    "Зміст">
+
+<!ENTITY  mediaTab              "Мультимедіа">
+<!ENTITY  mediaTab.accesskey    "М">
+<!ENTITY  mediaLocation         "Розташування:">
+<!ENTITY  mediaText             "Пов’язаний текст:">
+<!ENTITY  mediaAltHeader        "Замінний текст">
+<!ENTITY  mediaAddress          "Адреса">
+<!ENTITY  mediaType             "Тип">
+<!ENTITY  mediaSize             "Розмір">
+<!ENTITY  mediaCount            "Кількість">
+<!ENTITY  mediaDimension        "Виміри:">
+<!ENTITY  mediaLongdesc         "Розширений опис:">
+<!ENTITY  mediaBlockImage.accesskey "Р">
+<!ENTITY  mediaSaveAs           "Зберегти як…">
+<!ENTITY  mediaSaveAs.accesskey "З">
+<!ENTITY  mediaSaveAs2.accesskey "з">
+<!ENTITY  mediaPreview          "Попередній перегляд мультимедіа:">
+
+<!ENTITY  feedTab               "Стрічки">
+<!ENTITY  feedTab.accesskey     "С">
+<!ENTITY  feedSubscribe         "Підписатись">
+<!ENTITY  feedSubscribe.accesskey "П">
+
+<!ENTITY  permTab               "Дозволи">
+<!ENTITY  permTab.accesskey     "Д">
+<!ENTITY  permUseDefault        "Типово">
+<!ENTITY  permAskAlways         "Завжди питати">
+<!ENTITY  permAllow             "Дозволити">
+<!ENTITY  permAllowSession      "Дозволити на сеанс">
+<!ENTITY  permBlock             "Заблокувати">
+<!ENTITY  permissionsFor        "Дозволи для:">
+<!ENTITY  permPlugins           "Активувати плагіни">
+
+<!ENTITY  permClearStorage           "Очистити сховище">
+<!ENTITY  permClearStorage.accesskey "ч">
+
+<!ENTITY  securityTab           "Безпека">
+<!ENTITY  securityTab.accesskey "з">
+<!ENTITY  securityView.certView "Переглянути сертифікат">
+<!ENTITY  securityView.accesskey "ф">
+<!ENTITY  securityView.unknown   "Невідомий">
+
+
+<!ENTITY  securityView.identity.header   "Справжність сайту">
+<!ENTITY  securityView.identity.owner    "Власник: ">
+<!ENTITY  securityView.identity.domain   "Сайт: ">
+<!ENTITY  securityView.identity.verifier "Засвідчено: ">
+<!ENTITY  securityView.identity.validity "Завершується:">
+
+<!ENTITY  securityView.privacy.header                   "Конфіденційність та історія">
+<!ENTITY  securityView.privacy.history                  "Чи відвідувався цей сайт раніше?">
+<!ENTITY  securityView.privacy.cookies                  "Чи зберігає цей сайт інформацію (куки) на моєму комп’ютері?">
+<!ENTITY  securityView.privacy.viewCookies              "Переглянути куки">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "к">
+<!ENTITY  securityView.privacy.passwords                "Чи зберігаю я паролі для цього сайту?">
+<!ENTITY  securityView.privacy.viewPasswords            "Переглянути збережені паролі">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "п">
+
+<!ENTITY  securityView.technical.header                 "Технічні подробиці">
+
+<!ENTITY  helpButton.label                              "Допомога">

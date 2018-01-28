@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Kisɗitainal Topirde">
+
+<!ENTITY  checking.title                  "Nana yiyloo kesɗitine">
+<!ENTITY  updateCheck.label               "Nana yiyloo jame &brandShortName; ɓurɗe hesɗude…">
+
+<!ENTITY  noupdatesfound.title            "Alaa Kesɗitine Njiytaa">
+<!ENTITY  noupdatesautoenabled.intro      "Alaa kesɗitine ngoodi. &brandShortName; maa ƴeewto saha sahaa kala.">
+<!ENTITY  noupdatesautodisabled.intro     "Alaa kesɗitine ngoodi. Tiiɗno ƴeewto goɗngol so ɓooyii walla daaƴtu ƴeewtagol jaajol &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "Horiima Hesɗitinde">
+<!ENTITY  manualUpdate.desc               "Kesɗitinal potngal aafeede kisal e jamɗugol kesal ena woodi, kono a alaa jamirooje yuɓɓo naamnaaɗe ɗee ngam loowde ngal. Tiiɗno jokkondir e jiiloowo yuɓɓo maa, walla eto kadi e konte jogiiɗe ɗeen jamirooje ngam aafde topirɗe e ndee ordinateer.">
+<!ENTITY  manualUpdate.space.desc         "Kesɗitinal potngal aafeede kisal e jamɗugol kesal ena woodi, kono a alaa boowal jonngal e mbeɗu maa ngam loowde ngal.">
+<!ENTITY  manualUpdateGetMsg.label        "Aɗa waawi heɓde yamre sakkitiinde &brandShortName; sahaa kala to:">
+
+<!ENTITY  unsupported.title               "Yuɓɓo Tammbaaka">
+<!ENTITY  unsupported.label               "&brandShortName; hiiɗɗitii, kono yamre sakkitiinde ndee jaaɓdaani e yuɓɓo maa. Tiiɗno hesɗitin yuɓɓo maa, kisa eto-ɗaa kadi. A yiyataa ngol tintinol goɗngol, kono aɗa waawi">
+<!ENTITY  unsupportedLink.label           "ɓeydude humpito.">
+
+<!ENTITY  clickHere.label                 "Ɓeydu humpito baɗte ngal kesɗitinal">
+
+<!ENTITY  evangelism.desc                 "Ena wasiyaa noo feewi nde njammintaa ngal kesɗitinal &brandShortName; ko yaajtii.">
+
+<!ENTITY  downloadPage.title              "Nana aawtoo &brandShortName;">
+<!ENTITY  downloading.intro               "Nana aawtoo kesɗitinal ngal…">
+<!ENTITY  connecting.label                "Nana seŋoo e sarworde kesɗitine…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; horiima ƴeewtaade timmugol kesɗitinal ŋayligol ngal o aawtii ngal, wadde o woni ko e aawtaade pakkannde kesɗitinal ndee e kuuɓal.">
+
+<!ENTITY  viewDetails.tooltip             "Hollu cariiɗe ngal kesɗitinal">
+
+<!ENTITY  details.link                    "Cariiɗe">
+
+<!ENTITY  error.title                     "Kesɗitinal Woorii">
+
+<!ENTITY  error.label                     "Waɗii caɗeele tuma ƴeewtagol, aawtagol, walla aafgol ngal kesɗitinal. &brandShortName; horiima hesɗitineede sabu:">
+                                           
+<!ENTITY  errorManual.label               "Aɗa waawi hesɗitinde &brandShortName; e junngol so yillaade ngol jokkol kisa ngaawto-ɗaa yamre sakkitiinde ndee:">
+                                           
+<!ENTITY  errorpatching.intro             "Kesɗitinal peccoral ngal horiima jammineede. &brandShortName; maa eto kadi aawtaade kesɗitinal kuuɓngal.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; horiima hiisaade so kesɗitinal ena woodi. Tiiɗno ƴeewto so njogii-ɗaa ko yamre sakkitiinde &brandShortName; iwde:">
+
+<!ENTITY  finishedPage.title              "Kesɗitinal Hebiima Aafeede">
+<!ENTITY  finishedPage.text               "Kesɗitinal ngal maa aafe tuma nde &brandShortName; hurmiti. Aɗa waawi hurmitinde &brandShortName; jooni, walla jokku gollaade, kurmitinaa goɗngol.">
+
+<!ENTITY  finishedBackgroundPage.text     "Kesɗitinal kisal e jamɗugol &brandShortName; gasii aawteede etee hebiima aafeede.">
+<!ENTITY  finishedBackground.name         "Hesɗitin:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Kesɗitinal ngal maa aafe tuma mo &brandShortName; hurmiti. Aɗa waawi hurmitinde &brandShortName; jooni, walla jokku gollaade, kurmitinaa goɗngol.">
+<!ENTITY  finishedBackground.moreElevated "Ngal kesɗitinal ena naamnii jamirooje Jiiloowo. Kesɗitinal ngal maa aafe tuma nde &brandShortName; hurmiti. Aɗa waawi hurmitinde &brandShortName; jooni, njokkaa gollaade tee kurmintiaa goɗngol, walla paalkiso-ɗaa ngol basiyol.">
+
+<!ENTITY  update.details.label            "Cariiɗe">
+<!ENTITY  update.installedOn.label        "Aafaa ko ñalnde:">
+<!ENTITY  update.status.label             "Ngonka:">

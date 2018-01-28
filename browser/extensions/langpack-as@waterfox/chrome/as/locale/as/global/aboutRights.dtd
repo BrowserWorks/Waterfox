@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "আপোনাৰ অধিকাৰসমূহৰ বিষয়ে">
+<!ENTITY rights.intro "&brandFullName; এটা বিনামূলীয়া আৰু মুক্ত উৎস চফ্টৱেৰ, যাক বিশ্বৰ সকলো প্ৰান্তৰ পৰা হাজাৰ হাজাৰ মানুহৰ এটা সম্প্ৰদায় নিৰ্মাণ কৰিছে। কিছুমান কথা আছে যি আপুনি জানিব লাগে:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; আপেনাৰ বাবে উপলব্ধ কৰা হৈছে ">
+<!ENTITY rights.intro-point1b "Mozilla Public License ৰ অন্তৰ্গত">
+<!ENTITY rights.intro-point1c "। ইয়াৰ অৰ্থ আপুনি &brandShortName; ক ব্যৱহাৰ, কপি আৰু অন্যক বিতৰণ কৰিব পাৰিব।  লগতে আপুনি আপোনাৰ প্ৰয়োজন অনুসৰি &brandShortName; ৰ উৎস ক'ড সলনি কৰিব পাৰিব। Mozilla Public License এ আপোনাক আপোনাৰ পৰিবৰ্তিত সংস্কৰণসমূহ বিতৰণ কৰাৰ অধিকাৰো প্ৰদান কৰে।">
+
+<!ENTITY rights.intro-point2-a "আপোনাক Waterfox অথবা অন্য কোনো দলৰ পণ্যচিহ্নসমূহ, Waterfox নাম অথবা লগোৰ পণ্যচিহ্ন অধিকাৰ অথবা অণুজ্ঞাসমূহ প্ৰদান কৰা নহয়। পণ্যচিহ্নসমূহৰ বিষয়ে অতিৰিক্ত তথ্য পোৱা যাব ">
+<!ENTITY rights.intro-point2-b "ইয়াত">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName; ৰ কিছুমান বৈশিষ্ট্য, যেনে স্খলন সংবাদক, এ আপোনাক &vendorShortName; লে সঁহাৰি জমা দিয়াৰ বিকল্প প্ৰদান কৰে। সঁহাৰি জমা দিয়াটো নিৰ্বাচন কৰি, আপুনি &vendorShortName; ক তাৰ উৎপাদনসমূহ উন্নত কৰিবলে সঁহাৰি ব্যৱহাৰ কৰাৰ, ইয়াৰ ৱেবছাইটসমূহত সঁহাৰি প্ৰকাশ কৰাৰ, আৰু সঁহাৰি বিতৰণ কৰাৰ অনুমতি দিয়ে।">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "আমি কিদৰে আপোনাৰ ব্যক্তিগত তথ্য আৰু &brandShortName; ৰে &vendorShortName; লে জমা দিয়া সঁহাৰি ব্যৱহাৰ কৰো তাৰ বিৱৰণ ">
+<!ENTITY rights2.intro-point3b "&brandShortName; গোপনীয়তা নীতি">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "এই উৎপাদনৰ বিষয়ে যিকোনো প্ৰযোজ্য নীতি ইয়াত তালিকাভুক্ত কৰিব লাগিব।">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "কিছুমান &brandShortName; বৈশিষ্ট্যসমূহে ৱেব-ভিত্তিয় তথ্য সেৱাসমূহৰ ব্যৱহাৰ কৰে, যি কি নহওক, আমি ঠাওৰ দি কব নোৱাৰো সিহত ১০০&#037; সঠিক অথবা ত্ৰুটি-মুক্ত। অধিক বিৱৰণ, লগতে এই সেৱাসমূহ ব্যৱহাৰ কৰা বৈশিষ্ট্যসমূহ কেনেকৈ অসামৰ্থবান কৰা হব তাৰ বিষয়ে তথ্য পোৱা যাব ">
+<!ENTITY rights.intro-point4b "সেৱা চুক্তিসমূহ">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "যদি এই উৎপাদনে ৱেব সেৱাসমূহ অন্তৰ্ভুক্ত কৰে, সেৱা(সমূহ) ৰ বাবে যিকোনো প্ৰযোজ্য সেৱা চুক্তি সংযোগ কৰিব লাগিব ">
+<!ENTITY rights.intro-point4b-unbranded "ৱেবছাইট সেৱাসমূহ">
+<!ENTITY rights.intro-point4c-unbranded " অংশ।">
+
+<!ENTITY rights2.webservices-header "&brandFullName; ৱেব-ভিত্তিয় তথ্য সেৱাসমূহ">
+<!-- point 5 -->
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; এ তলত বিৱৰিত চুক্তিসমূহৰ অন্তৰ্গত &brandShortName; ৰ এই বাইনাৰি সংস্কৰণৰ সৈতে আপোনাৰ ব্যৱহাৰৰ বাবে প্ৰদান কৰা বৈশিষ্ট্যসমূহৰ কিছুমান বৈশিষ্ট্য প্ৰদান কৰিবলে ৱেব-ভিত্তিয় তথ্য সেৱাসমূহ (&quot;সেৱাসমূহ&quot;) ব্যৱহাৰ কৰে। যদি আপুনি সেৱাসমূহৰ এটা বা অধিক ব্যৱহাৰ কৰিব নিবিচাৰে অথবা তলত দিয়া চুক্তিসমূহ গ্ৰহণযোগ্য নহয়, আপুনি বৈশিষ্ট্য অথবা সেৱা(সমূহ) অসামৰ্থবান কৰিব পাৰে। এটা বিশেষ বৈশিষ্ট্য অথবা সেৱা কেনেকৈ অসামৰ্থবান কৰিব তাৰ বিষয়ে নিৰ্দেশ পোৱা যাব ">
+<!ENTITY rights2.webservices-b "ইয়াত">
+<!ENTITY rights3.webservices-c "। অন্য বৈশিষ্ট্য আৰু সেৱা এপ্লিকেচন পছন্দসমূহত অসামৰ্থবান কৰিব পাৰি।">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Safe Browsing বৈশিষ্ট্য অসামৰ্থবান কৰাটো উপদেশিত নহয় কাৰণ ইয়াৰ ফলত আপুনি অসুৰক্ষিত ছাইটসমূহত যাব পাৰে।  যদি আপুনি এই বৈশিষ্ট্য সম্পূৰ্ণভাৱে অসামৰ্থবান কৰিব বিচাৰে, এই স্তৰসমূহ অনুকৰণ কৰক:">
+<!ENTITY rights.safebrowsing-term1 "এপ্লিকেচন পছন্দসমূহ খোলক">
+<!ENTITY rights.safebrowsing-term2 "সুৰক্ষা নিৰ্বাচন বাছক">
+
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing এতিয়া অসামৰ্থবান">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "অৱস্থান সতৰ্ক ব্ৰাউছিং: ">
+<!ENTITY rights.locationawarebrowsing-b "হল সদায় opt-in।  কোনো অৱস্থান তথ্য আপোনাৰ অনুমতি নহোৱাকৈ পঠোৱা নহয়।  যদি আপুনি বৈশিষ্ট্যটো সম্পূৰ্ণভাৱে অসামৰ্থবান কৰিব বিচাৰে, এই স্তৰবোৰ অনুকৰণ কৰক:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL বাৰত, টাইপ কৰক ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled টাইপ কৰক">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled পছন্দত দুবাৰ ক্লিক কৰক">
+<!ENTITY rights.locationawarebrowsing-term4 "অৱস্থান-সতৰ্ক ব্ৰাউছিং এতিয়া অসামৰ্থবান">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "উৎপাদন দ্বাৰা অন্তৰ্ভুক্ত কৰা ৱেবছাইট সেৱাসমূহৰ এটা অভাৰভিউ, সিহতক অসামৰ্থবান কৰাৰ নিৰ্দেশৰ সৈতে, যদি প্ৰযোজ্য, ইয়াত অন্তৰ্ভুক্ত কৰিব লাগিব।">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "এই উৎপাদনৰ বাবে যিকোনো প্ৰযোজ্য সেৱা চুক্তি ইয়াত তালিকাভুক্ত কৰিব লাগিব।">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; আৰু ইয়াৰ অৱদানকাৰীসকল, অনুজ্ঞাদাতাসকল আৰু অংশীদাৰসকলে সঠিক আৰু বৰ্তমান-তাৰিখলৈ-উন্নত সেৱাসমূহ প্ৰদান কৰিবলে কৰ্মৰত।  যি কি নহওক, আমি ঠাওৰ দি কব নোৱাৰো এই তথ্য বিশদ আৰু ত্ৰুটি-মুক্ত।  উদাহৰণস্বৰূপ, Safe Browsing সেৱায় কিছুমান বিপদজনক ছাইট চিনাক্ত নকৰিবও পাৰে আৰু কিছুমান সুৰক্ষিত ছাইটকো ত্ৰুটিপূৰ্ণ বুলি চিনাক্ত কৰিব পাৰে আৰু অৱস্থান সতৰ্ক সেৱাৰ বাবে আমাৰ সেৱা প্ৰদানকাৰী দ্বাৰা প্ৰদান কৰা সকলো অৱস্থান কেৱল অনুমান হয় আৰু আমি অথবা আমাৰ সেৱা প্ৰদানকাৰীসকলে প্ৰদান কৰা অৱস্থানৰ সঠিকতাৰ প্ৰত্যাভূতি দিব নোৱাৰো।">
+<!ENTITY rights.webservices-term2 "&vendorShortName; এ নিজ ইচ্ছাত সেৱাসমূহ বাতিল অথবা সলনি কৰিব পাৰে।">
+<!ENTITY rights2.webservices-term3 "আপুনি &brandShortName; ৰ সংযুক্ত সংস্কৰণৰ সৈতে এই সেৱাসমূহ ব্যৱহাৰ কৰিবলে স্বাগত, আৰু &vendorShortName; এ আপোনাক এনেকুৱা কৰিবলে অনুমতি প্ৰদান কৰে।  &vendorShortName; আৰু ইয়াৰ অনুজ্ঞাদাতাসকলে সেৱাসমূহত অন্য সকলো অধিকাৰ সুৰক্ষিত কৰে।  এই চুক্তিসমূহ &brandShortName; আৰু &brandShortName; ৰ প্ৰাসংগিক উৎস ক'ড সংস্কৰণসমূহলে প্ৰযোজ্য মুক্ত উৎস অনুজ্ঞাসমূহৰ অন্তৰ্গত প্ৰদান কৰা কোনো অধিকাৰক সীমিত কৰিবলে নহয়।">
+<!ENTITY rights.webservices-term4 "সেৱাসমূহ &quot;যেনেকুৱা আছে-তেনেকুৱা&quot; ধৰণে প্ৰদান কৰা হয়।  &vendorShortName;, ইয়াক অৱদানকাৰীসকল, অনুজ্ঞাদাতাসকল, আৰু বিতৰণকাৰীসকল, সকলো ৱাৰেন্টি অস্বীকাৰ কৰে, আভাস দিয়া অথবা প্ৰণয়ন কৰা, কোনো সীমা নহোৱাকৈ অন্তৰ্ভুক্ত কৰা, ৱাৰেন্টি যাৰ বাবে সেৱাসমূহ বাণিজ্যিক আৰু আপোনাৰ নিৰ্দিষ্ট উদ্দেশ্যৰ বাবে উপযুক্ত।  আপুনি সেৱাসমূহ আপোনাৰ উদ্দেশ্যৰ বাবে নিৰ্বাচন কৰিলে সেৱাসমূহৰ বৈশিষ্ট্য আৰু পৰিৱেশনৰ সম্পূৰ্ণ বিপদৰ দায়িত্ব লব। কিছুমান ক্ষেত্ৰাধিকাৰে প্ৰণয়ন কৰা ৱাৰেন্টিসমূহ বহিষ্কাৰ অথবা সীমিত কৰাৰ অনুমতি নিদিয়ে, সেয়েহে এই অস্বীকাৰ পত্ৰ আপোনাৰ বাবে প্ৰযোজ্য নহবও পাৰে।">
+<!ENTITY rights.webservices-term5 "কেৱল আইন দ্বাৰা প্ৰয়োজন হলে, &vendorShortName;, ইয়াৰ অৱদানকাৰীসকল, অনুজ্ঞাদাতাসকল, আৰু বিতৰণকাৰীসকল কোনোধৰণে &brandShortName; আৰু সেৱাসমূহৰ পৰা উৎপন্ন অথবা কোনোভাৱে ইয়াৰ ব্যৱহাৰৰ সৈতে জড়িত কোনো অপ্ৰত্যক্ষ, বিশেষ, আকস্মিক, ফলস্বৰূপ, শাস্তিমূলক, অথবা আদৰ্শস্বৰূপ ক্ষতিৰ বাবে দায়ি নহব।  এই চুক্তিসমূহৰ অন্তৰ্গত সন্মিলিত পৰিশোধ $500 (পাচশ ডলাৰ) ৰ অধিক নহয়। কিছুমান ক্ষেত্ৰাধিকাৰে কিছুমান ক্ষতিৰ বহিষ্কাৰ অথবা সীমাৰ অনুমতি নিদিয়ে, সেয়েহে এই বহিষ্কাৰ আৰু সীমা আপোনাৰ বাবে প্ৰযোজ্য নহবও পাৰে।">
+<!ENTITY rights.webservices-term6 "&vendorShortName; এ এই চুক্তিসমূহ সময় সময়ে উন্নত কৰিব পাৰে। এই চুক্তিসমূহ &vendorShortName; ৰ লিখিত নিবন্ধনৰ অবিহনে পৰিবৰ্তন অথবা বাতিল কৰিব নোৱাৰি।">
+<!ENTITY rights.webservices-term7 "এই চুক্তিসমূহ কেলিফৰ্নিয়া ৰাজ্য, U.S.A. ৰ আইন দ্বাৰা শাসন কৰা হয়, আইন যোগানৰ ইয়াৰ দন্দক বাদ দি। যদি এই চুক্তিসমূহৰ কোনো অংশক অবৈধ অথবা বলৱৎৰ অযোগ্য ধৰা হয়, অৱশিষ্ট অংশসমূহ সম্পূৰ্ণভাৱে কাৰ্য্যকৰী আৰু প্ৰভাৱশালী থাকিব। যদি এই চুক্তিসমূহৰ এটা অনুবাদ কৰা সংস্কৰণ আৰু ইংৰাজী সংস্কৰণৰ মাজত কেতিয়াবা দন্দ হয়, ইংৰাজী সংস্কৰণে নিয়ন্ত্ৰণ কৰিব।">
+
+<!ENTITY rights.intro-point5 "In order to play back certain types of video content, &brandShortName; downloads certain content decryption modules from third parties.">
+
+<!ENTITY rights2.safebrowsing-term3 "Uncheck the option to &quot;&enableSafeBrowsing.label;&quot;">

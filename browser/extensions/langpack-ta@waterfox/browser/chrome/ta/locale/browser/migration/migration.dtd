@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "விசார்டை இறக்குமதி செய்">
+
+<!ENTITY importFrom.label               "தேர்வுகள், புத்தகக்குறிகள், வரலாறு, கடவுச்சொற்கள் மற்றும் வேறு தரவு போன்றவற்றை இதிலிருந்து இறக்கு:">
+<!ENTITY importFromUnix.label           "முன்னுரிமைகள், புத்தகக்குறிகள், வரலாறு, கடவுச்சொற்கள் மற்றும் வேறு தரவு போன்றவற்றை இதிலிருந்து இறக்கு:">
+<!ENTITY importFromBookmarks.label      "இதிலிருந்து புத்தகக்குறிகளை இறக்கு:">
+
+<!ENTITY importFromIE.label             "மைக்ரோசாப்ட் இன்டர்நெட் எக்ஸ்ப்லோரர்">
+<!ENTITY importFromIE.accesskey         "ம">
+<!ENTITY importFromEdge.label           "மைக்ரொசொப்ட் எட்ஜ்">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "எதையும் இறக்க வேண்டாம்">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "சபாரி">
+<!ENTITY importFromSafari.accesskey     "ச">
+<!ENTITY importFromCanary.label         "குரோம் கெனரி">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "கொறோம்">
+<!ENTITY importFromChrome.accesskey     "க">
+<!ENTITY importFromChromium.label       "குரோமியம்">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "பயர்பாக்ஸ்(x)">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 சுழற்சியில் பாதுகாப்பான உலாவி">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "புத்தகக்குறிகள், வரலாறு அல்லது கடவுச்சொல் தரவு போன்றவற்றைக் கொண்ட நிரல்களை காண முடியவில்லை.">
+
+<!ENTITY importSource.title             "இறக்குதல் அமைவுகள் மற்றும் தரவு">
+<!ENTITY importItems.title              "இறக்க வேண்டிய உருப்படிகள்">
+<!ENTITY importItems.label              "எந்த உருப்படிகளை இறக்க வேண்டும் என தேர்ந்தெடுக்கவும்:">
+
+<!ENTITY migrating.title                "இறக்குகிறது…">
+<!ENTITY migrating.label                "பின்வரும் உருப்படிகள் தற்போது இறக்கப்பட வேண்டும்…">
+
+<!ENTITY selectProfile.title            "விவரக்குறிப்பை தேர்ந்தெடு">
+<!ENTITY selectProfile.label            "பின்வரும் விவரக்குறிப்புகள் இறக்க தயாராக உள்ளன:">
+
+<!ENTITY done.title                     "இறக்குதல் முடிவு">
+<!ENTITY done.label                     "பின்வரும் உருப்படிகள் வெற்றிகரமாக இறக்கப்பட்டது:">
+
+<!ENTITY closeSourceBrowser.label       "தொடரும் முன் தேர்ந்தெடுக்கப்பட்ட உலாவி மூடப்பட்டுள்ளதா என உறுதிப்படுத்து.">

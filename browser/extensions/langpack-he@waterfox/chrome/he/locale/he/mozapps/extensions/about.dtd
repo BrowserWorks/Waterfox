@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "נוצר על־ידי:">
+<!ENTITY  developers.label            "מפתחים:">
+<!ENTITY  translators.label           "מתרגמים:">
+<!ENTITY  contributors.label          "תורמים:">
+<!ENTITY  homepage.label              "בקר בדף הבית">

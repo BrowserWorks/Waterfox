@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Diogelwch">
+<!ENTITY  phishingProtection.label       "Diogelwch rhag Twyll">
+
+<!ENTITY  warnOnAddonInstall2.label       "Rhybuddio pan fydd gwefan yn ceisio gosod ychwanegion">
+<!ENTITY  warnOnAddonInstall2.accesskey   "y">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Rhwystro cynnwys peryglus a thwyllodrus">
+<!ENTITY  enableSafeBrowsing.accesskey    "R">
+
+<!ENTITY  blockDownloads.label            "Rhwystro llwytho i lawr peryglus">
+<!ENTITY  blockDownloads.accesskey        "p">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Rhybuddio fi am feddalwedd diofyn ac anghyffredin">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "a">
+
+<!ENTITY  addonExceptions.label         "Eithriadau…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "Ffurflenni a Chyfrineiriau">
+
+<!ENTITY  rememberLogins2.label         "Cofio mewngofnodion a chyfrineiriau gwefannau">
+<!ENTITY  rememberLogins2.accesskey     "C">
+<!ENTITY  passwordExceptions.label      "Eithriadau…">
+<!ENTITY  passwordExceptions.accesskey  "i">
+
+<!ENTITY  useMasterPassword.label        "Defnyddio prif gyfrinair">
+<!ENTITY  useMasterPassword.accesskey    "D">
+<!ENTITY  changeMasterPassword.label     "Newid y Prif Gyfrinair…">
+<!ENTITY  changeMasterPassword.accesskey "N">
+
+<!ENTITY  savedLogins.label              "Mewngofnodion wedi eu Cadw…">
+<!ENTITY  savedLogins.accesskey          "M">

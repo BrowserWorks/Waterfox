@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Hald fram med varsemd. Du kan bryte garantien!">
+<!ENTITY aboutWarningText.label "Dersom du endrar disse avanserte innstillingane kan det verka negativt på tryggleik, stabilitet og yting i dette programmet. Hald fram berre dersom du veit kva du gjer.">
+<!ENTITY aboutWarningButton2.label "Eg tek risikoen!">
+<!ENTITY aboutWarningCheckbox.label "Vis denne åtvaringa neste gong òg">
+
+<!ENTITY searchPrefs.label "Søk:">
+<!ENTITY searchPrefs.accesskey "S">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Innstiling">
+<!ENTITY lockColumn.label "Status">
+<!ENTITY typeColumn.label "Type">
+<!ENTITY valueColumn.label "Verdi">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Trykk her for å sortere"> 
+<!ENTITY columnChooser.tooltip "Trykk her for å velja kolonner som skal visast"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopier">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopier namn">
+<!ENTITY copyName.accesskey "o">
+<!ENTITY copyValue.label "Kopier verdi">
+<!ENTITY copyValue.accesskey "v">
+<!ENTITY modify.label "Endra">
+<!ENTITY modify.accesskey "E">
+<!ENTITY toggle.label "Slå av/på">
+<!ENTITY toggle.accesskey "a">
+<!ENTITY reset.label "Standard">
+<!ENTITY reset.accesskey "S">
+<!ENTITY new.label "Ny">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Streng">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Heiltal">
+<!ENTITY integer.accesskey "H">
+<!ENTITY boolean.label "Boolsk">
+<!ENTITY boolean.accesskey "B">

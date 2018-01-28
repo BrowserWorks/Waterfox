@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "播放">
+<!ENTITY playButton.pauseLabel "暫停">
+<!ENTITY muteButton.muteLabel "靜音">
+<!ENTITY muteButton.unmuteLabel "取消靜音">
+<!ENTITY fullscreenButton.enterfullscreenlabel "全螢幕">
+<!ENTITY fullscreenButton.exitfullscreenlabel "離開全螢幕模式">
+<!ENTITY castingButton.castingLabel "投放至裝置">
+<!ENTITY closedCaption.off "關閉">
+
+<!ENTITY stats.media "媒體">
+<!ENTITY stats.size "大小">
+<!ENTITY stats.activity "狀態">
+<!ENTITY stats.activityPaused "已暫停">
+<!ENTITY stats.activityPlaying "播放中">
+<!ENTITY stats.activityEnded "已結束">
+<!ENTITY stats.activitySeeking "（搜尋中）">
+<!ENTITY stats.volume "音量">
+<!ENTITY stats.framesParsed "已剖析的畫框數">
+<!ENTITY stats.framesDecoded "已解碼的畫框數">
+<!ENTITY stats.framesPresented "已展現的畫框數">
+<!ENTITY stats.framesPainted "已繪製的畫框數">
+
+<!ENTITY error.aborted "已停止載入視訊。">
+<!ENTITY error.network "因為網路錯誤，已中止視訊播放。">
+<!ENTITY error.decode "因為檔案毀損，無法播放視訊。">
+<!ENTITY error.srcNotSupported "不支援的視訊格式或 MIME 類型。">
+<!ENTITY error.noSource2 "沒有找到支援格式與 MIME 類型的影片。">
+<!ENTITY error.generic "因為未知錯誤，已中止視訊播放。">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "#1 / #2">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

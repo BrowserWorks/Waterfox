@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Հավելումները կարող են հարուցել խնդիրներ">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName;-ը հայտնաբերեց, որ հետևյալ հավելումները հայտնի են որպես անկայունության և անվտանգության խնդիրներ հարուցող`">
+<!ENTITY blocklist.softblocked       "Ձեր պաշտպանության համար խստիվ խորհուրդ է տրվում վերսկսել ծրագիրը՝ պասիվացնելով հետևյալ հավելումները:">
+<!ENTITY blocklist.hardblocked       "Այս հավելումները ունեն անկայունության և անվտանգության խնդիրներ ստեղծելու մեծ ռիսկ և նրանք պասիվացվել են, սակայն նրանց բացարձակ պասիվացումը պահանջում է ծրագրի վերսկսում:">
+<!ENTITY blocklist.softandhard       "Հավելումը, որը պարունակում էր կայունության և անվտանգության մեծ ռիսկեր, արգելափվեց: Մնացյալը պարունակում են ցածր ռիսկեր, սակայն խորհուրդ է տրվում վերսկսել աշխատանքը, նախապես անջատելով դրանց:">
+<!ENTITY blocklist.moreinfo          "Մանրամասն տեղեկություններ">
+
+<!ENTITY blocklist.accept.label      "Վերսկսել &brandShortName;-ը">
+<!ENTITY blocklist.accept.accesskey  "Վ">
+
+<!ENTITY blocklist.blocked.label     "Արգելված է">
+<!ENTITY blocklist.checkbox.label    "Անջատել">

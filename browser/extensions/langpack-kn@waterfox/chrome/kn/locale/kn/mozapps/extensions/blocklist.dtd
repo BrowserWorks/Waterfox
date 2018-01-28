@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "ಆಡ್-ಆನ್‌ಗಳು ತೊಂದರೆಯನ್ನು ನೀಡುತ್ತಿರಬಹುದು">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "ಈ ಕೆಳಗಿನ ಆಡ್-ಆನ್‌ಗಳು ಸ್ಥಿರತೆ ಹಾಗು ಸುರಕ್ಷತಾ ತೊಂದರೆಗಳಿಗೆ ಕಾರಣವಾಗುತ್ತದೆ ಎನ್ನುವುದು  ತಿಳಿದುಬಂದಿದೆ ಎಂದು &brandShortName; ಪತ್ತೆ ಮಾಡಿದೆ:">
+<!ENTITY blocklist.softblocked       "ನಿಮ್ಮ ಸುರಕ್ಷತೆಗಾಗಿ, ನೀವು ಈ ಆಡ್-ಆನ್‌ಗಳನ್ನು ಮರಳಿ ಆರಂಭಿಸಿ ಎಂದು ನಾವು ಬಲವಾಗಿ ಸಲಹೆ ಮಾಡುತ್ತೇವೆ.">
+<!ENTITY blocklist.hardblocked       "ಈ ಆಡ್-ಆನ್‌ಗಳು ಸ್ಥಿರತೆ ಹಾಗು ಸುರಕ್ಷತಾ ತೊಂದರೆಗಳಿಗೆ ಕಾರಣವಾಗುವ ಅಪಾಯವನ್ನು ಹೊಂದಿದೆ ಹಾಗು ಇದನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ, ಆದರೆ ಅವನ್ನು ಸಂಪೂರ್ಣವಾಗಿ ಅಶಕ್ತಗೊಳಿಸಲು ಅವನ್ನು ಮರಳಿ ಆರಂಭಿಸುವ ಅಗತ್ಯವಿರುತ್ತದೆ.">
+<!ENTITY blocklist.softandhard       "ಆಡ್-ಆನ್‌ಗಳು ಸ್ಥಿರತೆ ಅಥವ ಸುರಕ್ಷತಾ ತೊಂದರೆಗಳಿಗೆ ಕಾರಣವಾಗುವ ಅಪಾಯವನ್ನು ಹೊಂದಿರುವುದರಿಂದ ಅವನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ. ಇತರೆಯವು ಕಡಿಮೆ ಅಪಾಯವನ್ನು ಹೊಂದಿವೆ, ಆದರೆ ಅವನ್ನು ಅಶಕ್ತಗೊಳಿಸಿ ನಂತರ ಮರಳಿ ಆರಂಭಿಸಿ ಎಂದು ನಾವು ಬಲವಾಗಿ ಸಲಹೆ ಮಾಡುತ್ತೇವೆ.">
+<!ENTITY blocklist.moreinfo          "ಹೆಚ್ಚಿನ ಮಾಹಿತಿ">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; ಅನ್ನು ಮರಳಿ ಆರಂಭಿಸಿ">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ">
+<!ENTITY blocklist.checkbox.label    "ಅಶಕ್ತಗೊಳಿಸಲಾಗಿದೆ">

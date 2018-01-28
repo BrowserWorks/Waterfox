@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "Знайти на цій сторінці">
+<!ENTITY findField.label "Знайти текст:">
+<!ENTITY findField.accesskey "т">
+<!ENTITY caseSensitiveCheckbox.label "З урахуванням регістра">
+<!ENTITY caseSensitiveCheckbox.accesskey "р">
+<!ENTITY wrapCheckbox.label "З початку сторінки">
+<!ENTITY wrapCheckbox.accesskey "ч">
+<!ENTITY findButton.label "Знайти">
+<!ENTITY findButton.accesskey "З">
+<!ENTITY cancelButton.label "Скасувати">
+<!ENTITY closeButton.label "Закрити">
+<!ENTITY up.label "Вгору">
+<!ENTITY up.accesskey "о">
+<!ENTITY down.label "Вниз">
+<!ENTITY down.accesskey "и">
+<!ENTITY direction.label "Напрям">

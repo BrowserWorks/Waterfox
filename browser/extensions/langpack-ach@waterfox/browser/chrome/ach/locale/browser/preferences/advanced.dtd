@@ -1,0 +1,174 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Lumuku">
+
+<!ENTITY useCursorNavigation.label       "Jwijwi tii ki lagony me cursor me wot iye pot buk">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Yeny coc ka acako coyo coc">
+<!ENTITY searchOnStartTyping.accesskey   "c">
+<!ENTITY useOnScreenKeyboard.label       "Nyut kadiyo coc ma ki gudo aguda ka mite">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Yenyo">
+
+<!ENTITY useAutoScroll.label             "Tii ki makobo pire kene">
+<!ENTITY useAutoScroll.accesskey         "m">
+<!ENTITY useSmoothScrolling.label        "Tii ki kob mapwot">
+<!ENTITY useSmoothScrolling.accesskey    "a">
+<!ENTITY checkUserSpelling.label         "Rot nukta ni kun nongo itye kacoc">
+<!ENTITY checkUserSpelling.accesskey     "a">
+
+<!ENTITY dataChoicesTab.label            "Yer me tic">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+
+<!ENTITY healthReportLearnMore.label     "Nong ngec mapol">
+
+
+
+
+
+<!ENTITY crashReporterLearnMore.label    "Nong ngec mapol">
+
+<!ENTITY networkTab.label                "Kube">
+
+
+<!ENTITY connectionDesc.label            "Yik kit ma &brandShortName; kube kwede ki intanet">
+<!ENTITY connectionSettings.label        "Tero…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Gin manonge iye me kakube ma kikano">
+
+<!ENTITY offlineStorage2.label           "Gin manonge iye me kakube ma pe iwiyamo kacel ki tic pa ngat matiyo kwede">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Data me kakube">
+<!ENTITY clearSiteData.label             "Jwa data weng">
+<!ENTITY clearSiteData.accesskey         "a">
+<!ENTITY siteDataSettings.label          "Ter…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Nong ngec mapol">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Wek kakano obed">
+<!ENTITY limitCacheSizeBefore.accesskey  "W">
+<!ENTITY limitCacheSizeAfter.label       "MB me kabedo">
+<!ENTITY clearCacheNow.label             "Jwa Kombedi">
+<!ENTITY clearCacheNow.accesskey         "J">
+<!ENTITY clearOfflineAppCacheNow.label   "Jwa Kombedi">
+<!ENTITY clearOfflineAppCacheNow.accesskey "K">
+<!ENTITY overrideSmartCacheSize.label    "Kwe lalo kakano ma pire kene">
+<!ENTITY overrideSmartCacheSize.accesskey "K">
+
+<!ENTITY updateTab.label                 "Ngec manyen">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "Ngec manyen me &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Yee ki &brandShortName; me">
+
+
+<!ENTITY updateCheckChoose2.label        "Rot pi ngec manyen, ento weko iyero kace imito keto gi">
+<!ENTITY updateCheckChoose2.accesskey    "R">
+<!ENTITY updateManual2.label             "Pe i rot pi ngec manyen matwal (pe kicwako ber bedo pe gene)">
+<!ENTITY updateManual2.accesskey         "P">
+
+<!ENTITY updateHistory2.label            "Nyut Ngec manyen mukato…">
+<!ENTITY updateHistory2.accesskey        "g">
+
+<!ENTITY useService.label                "Tii ki tic ma angec me keto ngec manyennen pi keto ngec">
+<!ENTITY useService.accesskey            "t">
+
+<!ENTITY enableSearchUpdate2.label       "Ket pire kene ngec manyen i injin yeny">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "Miyi ngec kace kakube penyo me kano tic pi tic kwede ma nongo pe okube iwi yamo">
+<!ENTITY offlineStorageNotify.accesskey           "M">
+<!ENTITY offlineStorageNotifyExceptions.label     "Ma kiweko woko…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "i">
+
+<!ENTITY offlineAppsList2.label          "Kakube magi ki ye ki gin me kano tic p tic kwedgi ma nongo pe okube iwi yamo:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Kwany…">
+<!ENTITY offlineAppsListRemove.accesskey "K">
+<!ENTITY offlineAppRemove.confirm        "Kwany tic ma nongo pe okube iwi yamo">
+
+<!ENTITY certificateTab.label            "Waraga">
+<!ENTITY certPersonal2.description       "Kace lapok tic okwayo pi catibiket mamegi">
+<!ENTITY selectCerts.auto                "Yer acel pire kene">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Penyi cawa weng">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Yeny lapok tic ma miyo lagam pa OCSP me moko kare me tic ma kombedi pa waraga">
+<!ENTITY enableOCSP.accesskey            "Y">
+
+
+
+
+
+<!ENTITY performance.label               "Tic">
+<!ENTITY useRecommendedPerformanceSettings2.label "Tii ki ter me tic ma kicimo.">
+
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "T">
+<!ENTITY performanceSettingsLearnMore.label "Nong ngec mapol">
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Tii ki lamed dwiro pa nyonyo ka tye">
+<!ENTITY allowHWAccel.accesskey          "o">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplication.version.pre   "Version ">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

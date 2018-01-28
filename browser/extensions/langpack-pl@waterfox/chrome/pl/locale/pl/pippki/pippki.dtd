@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title "Zmień hasło główne" >
+<!ENTITY setPassword.tokenName.label "Urządzenie zabezpieczające" >
+<!ENTITY setPassword.oldPassword.label "Bieżące hasło:" >
+<!ENTITY setPassword.newPassword.label "Nowe hasło:" >
+<!ENTITY setPassword.reenterPassword.label "Nowe hasło (ponownie):" >
+<!ENTITY setPassword.meter.label "Miernik jakości hasła" >
+<!ENTITY resetPasswordButtonLabel "Zresetuj">
+<!ENTITY resetPassword.title "Zresetuj hasło główne" >
+<!ENTITY resetPassword.text "Po zresetowaniu hasła głównego wszystkie przechowywane dane formularzy, hasła internetowe oraz hasła serwerów pocztowych, certyfikaty osobiste oraz prywatne klucze zostaną usunięte. Czy na pewno zresetować hasło główne?" >
+<!ENTITY downloadCert.title "Pobieranie certyfikatu" >
+<!ENTITY downloadCert.message1 "Otrzymano prośbę o dołączenie nowego organu certyfikacji do listy zaufanych organów." >
+<!ENTITY downloadCert.trustSSL "Zaufaj temu CA przy identyfikacji witryn internetowych." >
+<!ENTITY downloadCert.trustEmail "Zaufaj temu CA przy identyfikacji użytkowników poczty." >
+<!ENTITY downloadCert.trustObjSign "Zaufaj temu CA przy identyfikacji twórców oprogramowania." >
+<!ENTITY downloadCert.message3 "Jeżeli jest to możliwe, przed udzieleniem zgody należy zapoznać się z certyfikatem tego organu oraz jego polityką i stosowanymi procedurami." >
+<!ENTITY downloadCert.viewCert.label "Wyświetl" >
+<!ENTITY downloadCert.viewCert.text "Sprawdź certyfikat CA" >
+<!ENTITY clientAuthAsk.title "Zażądano identyfikacji użytkownika" >
+<!ENTITY clientAuthAsk.message1 "Pobierana strona wysłała żądanie przedstawienia certyfikatu w celu dokonania identyfikacji:" >
+<!ENTITY clientAuthAsk.message2 "Wybierz certyfikat, który zostanie przedstawiony jako identyfikator użytkownika:" >
+<!ENTITY clientAuthAsk.message3 "Szczegóły wybranego certyfikatu:" >
+<!ENTITY pkcs12.setpassword.title "Wybierz hasło kopii bezpieczeństwa certyfikatu" >
+<!ENTITY pkcs12.setpassword.message "Wprowadzane hasło zabezpiecza tworzoną kopię certyfikatu. Utworzenie kopii certyfikatu bez podania hasła zabezpieczającego jest niemożliwe." >
+<!ENTITY pkcs12.setpassword.label1 "Hasło kopii bezpieczeństwa certyfikatu:" >
+<!ENTITY pkcs12.setpassword.label2 "Hasło kopii bezpieczeństwa certyfikatu (ponownie):" >
+<!ENTITY pkcs12.setpassword.reminder "Ważne: Jeżeli hasło zabezpieczające kopię certyfikatu zostanie utracone, późniejsze odtworzenie certyfikatu będzie niemożliwe. Zaleca się zachowanie hasła w bezpiecznym miejscu." >
+<!ENTITY chooseToken.title "Wybór tokenu" >
+<!ENTITY chooseToken.message1 "Należy wybrać token." >
+<!ENTITY createCertInfo.title "Generowanie prywatnego klucza" >
+<!ENTITY createCertInfo.msg1 "Trwa generowanie klucza… Może to potrwać kilka minut…" >
+<!ENTITY createCertInfo.msg2 "Proszę czekać…" >
+
+<!ENTITY protectedAuth.title "Uwierzytelnienie do chronionego tokenu">
+<!ENTITY protectedAuth.msg "Należy uwierzytelnić się do tokenu. Metoda uwierzytelnienia zależy od rodzaju tokenu.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Teknisk information">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Denne side indeholder teknisk information som måske kan være brugbar når du forsøger
+  at løse et problem. Hvis du leder efter svar på ofte spurgte spørgsmål vedrørende
+  &brandShortName;, kan du besøge vores <a id='supportLink'>supportwebsted</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Fejlrapporter">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Rapport-ID">
+<!ENTITY aboutSupport.crashes.sendDate "Sendt">
+<!ENTITY aboutSupport.crashes.allReports "Alle fejlrapporter">
+<!ENTITY aboutSupport.crashes.noConfig "Dette program er ikke konfigureret til at vise fejlrapporter.">
+
+<!ENTITY aboutSupport.extensionsTitle "Udvidelser">
+<!ENTITY aboutSupport.extensionName "Navn">
+<!ENTITY aboutSupport.extensionEnabled "Aktiveret">
+<!ENTITY aboutSupport.extensionVersion "Version">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;-funktioner">
+<!ENTITY aboutSupport.featureName "Navn">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperimentelle funktioner">
+<!ENTITY aboutSupport.experimentName "Navn">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Beskrivelse">
+<!ENTITY aboutSupport.experimentActive "Aktiv">
+<!ENTITY aboutSupport.experimentEndDate "Slutdato">
+<!ENTITY aboutSupport.experimentHomepage "Websted">
+<!ENTITY aboutSupport.experimentBranch "Gren">
+
+<!ENTITY aboutSupport.appBasicsTitle "Programinfo">
+<!ENTITY aboutSupport.appBasicsName "Navn">
+<!ENTITY aboutSupport.appBasicsVersion "Version">
+<!ENTITY aboutSupport.appBasicsBuildID "Build-ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Opdateringskanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Opdateringshistorik">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Vis opdateringshistorik">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilmappe">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilmappe">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Aktive plugins">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Byggekonfiguration">
+<!ENTITY aboutSupport.appBasicsUserAgent "User Agent">
+<!ENTITY aboutSupport.appBasicsOS "Styresystem">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Hukommelsesforbrug">
+<!ENTITY aboutSupport.appBasicsPerformance "Ydelse">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registrerede Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiler">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiproces-vinduer">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Webindholds-processer">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google-nøgle">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service-nøgle">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Fejlsikret tilstand">
+
+<!ENTITY aboutSupport.showDir.label "Åbn mappe">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.show.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Vis i Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Åbn mappe">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Vigtige ændrede indstillinger">
+<!ENTITY aboutSupport.modifiedPrefsName "Navn">
+<!ENTITY aboutSupport.modifiedPrefsValue "Værdi">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Indstillinger i user.js">
+<!ENTITY aboutSupport.userJSDescription "Din profilmappe indeholder filen <a id='prefs-user-js-link'>user.js</a>, som indeholder indstillinger, der ikke er oprettet af &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Vigtige låste indstillinger">
+<!ENTITY aboutSupport.lockedPrefsName "Navn">
+<!ENTITY aboutSupport.lockedPrefsValue "Værdi">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafik">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Databasen Places">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integritet">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Bekræft integritet">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "Tilgængelighed">
+<!ENTITY aboutSupport.a11yActivated "Aktiveret">
+<!ENTITY aboutSupport.a11yForceDisabled "Slå tilgængelighed fra">
+<!ENTITY aboutSupport.a11yHandlerUsed "Tilgængelig håndtering anvendt">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Biblioteksversioner">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Installationshistorik">
+<!ENTITY aboutSupport.updateHistoryTitle "Opdateringshistorik">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopier tekst til udklipsholderen">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopier rå data til udklipsholderen">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Afviste systemkald">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekunder siden">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Procestype">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumenter">
+
+<!ENTITY aboutSupport.safeModeTitle "Prøv fejlsikret tilstand">
+<!ENTITY aboutSupport.restartInSafeMode.label "Genstart med tilføjelser deaktiveret…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funktioner">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostik">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Fejl-log">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Beslutnings-log">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Funktioner deaktiveret af Crash guard">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Løsninger">
+
+<!ENTITY aboutSupport.mediaTitle "Medieindhold">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output-enheder">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input-enheder">
+<!ENTITY aboutSupport.mediaDeviceName "Navn">
+<!ENTITY aboutSupport.mediaDeviceGroup "Gruppe">
+<!ENTITY aboutSupport.mediaDeviceVendor "Producent">
+<!ENTITY aboutSupport.mediaDeviceState "Tilstand">
+<!ENTITY aboutSupport.mediaDevicePreferred "Foretrukken">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanaler">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latenstid">

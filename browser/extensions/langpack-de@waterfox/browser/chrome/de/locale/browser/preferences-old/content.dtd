@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Pop-ups">
+
+<!ENTITY  blockPopups.label           "Pop-up-Fenster blockieren">
+<!ENTITY  blockPopups.accesskey       "P">
+
+<!ENTITY  notificationsPolicy.label            "Benachrichtigungen">
+<!ENTITY  notificationsPolicyLearnMore.label   "Weitere Informationen">
+<!ENTITY  notificationsPolicyDesc4.label       "Websites festlegen, welche Benachrichtigungen senden dürfen">
+<!ENTITY  notificationsPolicyButton.accesskey  "u">
+<!ENTITY  notificationsPolicyButton.label      "Auswählen…">
+<!ENTITY  notificationsDoNotDisturb.label      "Mich nicht stören">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Bis zum Neustart von &brandShortName; werden keine Benachrichtigungen angezeigt.">
+
+<!ENTITY  popupExceptions.label       "Ausnahmen…">
+<!ENTITY  popupExceptions.accesskey   "A">
+
+<!ENTITY  fontsAndColors.label        "Schriftarten &amp; Farben">
+
+<!ENTITY  defaultFont.label           "Standard-Schriftart:">
+<!ENTITY  defaultFont.accesskey       "S">
+<!ENTITY  defaultSize.label           "Größe:">
+<!ENTITY  defaultSize.accesskey       "G">
+
+<!ENTITY  advancedFonts.label         "Erweitert…">
+<!ENTITY  advancedFonts.accesskey     "E">
+
+<!ENTITY  colors.label                "Farben…">
+<!ENTITY  colors.accesskey            "F">
+
+
+<!ENTITY languages.label                 "Sprachen">
+<!ENTITY chooseLanguage.label            "Bevorzugte Sprachen für die Darstellung von Websites wählen">
+<!ENTITY chooseButton.label              "Wählen…">
+<!ENTITY chooseButton.accesskey          "W">
+
+<!ENTITY translateWebPages.label      "Web-Inhalte übersetzen">
+<!ENTITY translateWebPages.accesskey  "z">
+<!ENTITY translateExceptions.label    "Ausnahmen…">
+<!ENTITY translateExceptions.accesskey "u">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Übersetzung mittels">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Inhalte mit DRM-Kopierschutz">
+
+<!ENTITY  playDRMContent.label         "Inhalte mit DRM-Kopierschutz wiedergeben">
+<!ENTITY  playDRMContent.accesskey     "D">
+<!ENTITY  playDRMContent.learnMore.label "Weitere Informationen">

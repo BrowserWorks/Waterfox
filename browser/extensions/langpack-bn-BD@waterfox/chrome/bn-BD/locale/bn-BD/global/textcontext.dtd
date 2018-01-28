@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "কাটা (t)">
+<!ENTITY cutCmd.accesskey "t">
+<!ENTITY copyCmd.label "অনুলিপি (C)">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "প্রতিলেপন">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "পূর্বাবস্থায় ফেরানো (U)">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY selectAllCmd.label "সব নির্বাচন (A)">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY deleteCmd.label "মুছে ফেলা (D)">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "অভিধানে যোগ (o)">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "অ্যাড টু ডিকসনারী এর পূর্বাবস্থায় ফিরুন">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "বানান পরীক্ষা করুন g">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(কোন বানান পরামর্শ নেই)">
+<!ENTITY spellDictionaries.label "ভাষা">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "পরিষ্কার">
+
+<!ENTITY fillLoginMenu.label          "লগিন পূরণ F">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "পাসওয়ার্ড পূরণ F">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "ইউজারনেম পূরণ F">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(কোন সাজেশন প্রস্তাবিত নয়)">
+<!ENTITY viewSavedLogins.label        "সংরক্ষিত লগিন দেখাও">

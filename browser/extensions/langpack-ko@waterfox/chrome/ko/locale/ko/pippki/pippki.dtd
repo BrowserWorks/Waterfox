@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "기본 암호 변경">
+<!ENTITY setPassword.tokenName.label "보안 장치">
+<!ENTITY setPassword.oldPassword.label "현재 암호:">
+<!ENTITY setPassword.newPassword.label "새 암호:">
+<!ENTITY setPassword.reenterPassword.label "새 암호 (재입력):">
+<!ENTITY setPassword.meter.label "암호 수준 측정">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "재설정">
+<!ENTITY resetPassword.title  "기본 암호 재설정">
+<!ENTITY resetPassword.text  "기본 암호를 재설정하면 저장된 웹과 전자 메일 암호, 폼 데이터, 개인 인증서, 그리고 비밀키에 접근하지 못하게됩니다. 정말로 기본 암호를 재설정하시겠습니까?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "인증서 다운로드 중">
+<!ENTITY downloadCert.message1 "새 인증 기관(CA)을 신뢰할 지 항상 물어봅니다.">
+<!ENTITY downloadCert.trustSSL "신뢰된 인증 기관 (웹 사이트)">
+<!ENTITY downloadCert.trustEmail "신뢰된 인증 기관 (메일)">
+<!ENTITY downloadCert.trustObjSign "신뢰된 인증 기관 (응용 프로그램)">
+<!ENTITY downloadCert.message3 "인증 기관을 신뢰하기 전에 인증 기관의 정책과 발급 절차를 확인하십시오.">
+<!ENTITY downloadCert.viewCert.label "보기">
+<!ENTITY downloadCert.viewCert.text "인증 기관 인증서 조사">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "개인 인증서 요청">
+<!ENTITY clientAuthAsk.message1 "웹 사이트에서 신원을 보증할 인증서를 요청합니다.:">
+<!ENTITY clientAuthAsk.message2 "제공할 인증서 선택:">
+<!ENTITY clientAuthAsk.message3 "선택한 인증서 상세 정보">
+
+<!ENTITY pkcs12.setpassword.title  "인증서 백업 암호 입력">
+<!ENTITY pkcs12.setpassword.message  "입력하신 인증서 백업 암호는 곧 생성할 인증서 백업 파일을 보호합니다. 인증서를 백업하는 계속하시려면 반드시 암호를 설정해야 합니다.">
+<!ENTITY pkcs12.setpassword.label1 "인증서 백업 암호:">
+<!ENTITY pkcs12.setpassword.label2 "인증서 백업 암호 (재입력):">
+<!ENTITY pkcs12.setpassword.reminder "중요: 만약 인증서 백업 암호를 분실하면 백업한 인증서를 다시 가져올 수 없습니다.">
+
+<!ENTITY chooseToken.title  "토큰 선택하기">
+<!ENTITY chooseToken.message1 "토큰을 선택하십시오.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "개인키 생성 중">
+<!ENTITY createCertInfo.msg1 "키를 생성하는 중… 잠시만 기다려 주십시오….">
+<!ENTITY createCertInfo.msg2 "잠시만 기다려 주십시오…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "잠금 방식 토큰 인증">
+<!ENTITY protectedAuth.msg "토큰을 인증해주십시오. 인증 방식은 토큰의 유형에 따라 다릅니다.">
+<!ENTITY protectedAuth.tokenName.label "토큰:">

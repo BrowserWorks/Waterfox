@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "درآمد مددگار ">
+
+<!ENTITY importFrom.label               "اختیارات، نشانیاں، سابقات، پاس ورڈ اور دیگر کوائف یہاں سے درآمد کریں: ">
+<!ENTITY importFromUnix.label           "ترجیحات، نشانیاں، سابقات، پاس ورڈ اور دیگر کوائف یہاں سے درآمد کریں: ">
+<!ENTITY importFromBookmarks.label      "نشانیاں یہاں سے درآمد کریں: ">
+
+<!ENTITY importFromIE.label             "Microsoft انٹرنیٹ ایکسپلورر ">
+<!ENTITY importFromIE.accesskey         "ا">
+<!ENTITY importFromEdge.label           "مائیکروسافٹ عیدج">
+<!ENTITY importFromEdge.accesskey       "ع">
+<!ENTITY importFromNothing.label        "کچھ درآمد نہ کریں ">
+<!ENTITY importFromNothing.accesskey    "ن">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "کروم کینری">
+<!ENTITY importFromCanary.accesskey     "ی">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "کرومیم">
+<!ENTITY importFromChromium.accesskey   "م">
+<!ENTITY importFromWaterfox.label        "فائر فاکس ">
+<!ENTITY importFromWaterfox.accesskey    "ف">
+<!ENTITY importFrom360se.label          "360 قابل بھروسا براؤزر">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "کوئی بھی نشانیوں، سابقات یا پاس ورڈ کوائف کا حامل پروگرام نہیں ملا۔ ">
+
+<!ENTITY importSource.title             "سیٹنگیں اور کوائف درآمد کریں ">
+<!ENTITY importItems.title              "درآمد کرنے کی اشیا">
+<!ENTITY importItems.label              "درآمد کرنے کے لیے اشیا منتخب کریں: ">
+
+<!ENTITY migrating.title                "درآمد کر رہے ہے...">
+<!ENTITY migrating.label                "مندرجہ ذیل اشیا اس وقت درآمد ہو رہے ہیں۔۔۔ ">
+
+<!ENTITY selectProfile.title            "پروفائل منتخب کیجیے ">
+<!ENTITY selectProfile.label            "مندرجہ ذیل پروفائل درآمد کے لیے دستیاب ہیں: ">
+
+<!ENTITY done.title                     "درآمد مکمل ">
+<!ENTITY done.label                     "مندرجہ ذیل اشیا کامیابی سے درآمد ہو گئیں: ">
+
+<!ENTITY closeSourceBrowser.label       "جاری رکھنے سے پہلے براہ کرم یقینی بنائیں کے منتخب براؤزر بند کر دیا ہے۔">

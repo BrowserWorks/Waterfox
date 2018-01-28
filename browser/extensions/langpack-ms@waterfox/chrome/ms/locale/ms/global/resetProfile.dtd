@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Muat semula &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Mula segar untuk selesaikan masalah dan memulihkan prestasi.">
+<!ENTITY refreshProfile.dialog.description2  "Ini akan:">
+<!ENTITY refreshProfile.dialog.items.label1  "Buang add-ons dan penyesuaian anda">
+<!ENTITY refreshProfile.dialog.items.label2  "Pulih tetapan pelayar anda kepada piawai">
+<!ENTITY refreshProfile.dialog.button.label  "Muat mula &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Beri &brandShortName; talaan">
+<!ENTITY refreshProfile.button.label         "Muat semula &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Hampir selesai…">

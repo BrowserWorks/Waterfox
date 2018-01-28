@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Opstarte">
+
+<!ENTITY startupPage2.label        "As &brandShortName; start">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Jo startside toane">
+<!ENTITY startupBlankPage.label    "In lege side toane">
+<!ENTITY startupPrevSession.label  "Myn finsters en ljepblêden fan de foarige kear toane">
+
+<!ENTITY homepage2.label           "Begjinside">
+<!ENTITY homepage2.accesskey       "B">
+<!ENTITY useCurrentPage.label      "Aktuele side brûke">
+<!ENTITY useCurrentPage.accesskey  "k">
+<!ENTITY useMultiple.label         "Aktuele siden brûke">
+<!ENTITY chooseBookmark.label      "Blêdwizer brûke…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "Standert werom bringe">
+<!ENTITY restoreDefault.accesskey  "w">
+
+<!ENTITY downloads.label     "Downloads">
+
+<!ENTITY saveTo.label "Bestannen bewarje yn">
+<!ENTITY saveTo.accesskey "e">
+<!ENTITY chooseFolderWin.label        "Blêdzje…">
+<!ENTITY chooseFolderWin.accesskey    "d">
+<!ENTITY chooseFolderMac.label        "Kieze…">
+<!ENTITY chooseFolderMac.accesskey    "z">
+<!ENTITY alwaysAskWhere.label         "My altyd freegje wêr't bestannen bewarre wurde moatte">
+<!ENTITY alwaysAskWhere.accesskey     "b">
+
+<!ENTITY alwaysCheckDefault2.label        "Altyd kontrolearje oft &brandShortName; de standertbrowser is">
+<!ENTITY alwaysCheckDefault2.accesskey    "k">
+<!ENTITY setAsMyDefaultBrowser3.label     "Standert meitsje…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "S">
+<!ENTITY isDefault.label                  "&brandShortName; is op dit stuit jo standertbrowser">
+<!ENTITY isNotDefault.label               "&brandShortName; is net jo standertbrowser">
+
+<!ENTITY separateProfileMode.label        "Tagelyk útfieren fan &brandShortName; en Waterfox tastean">
+<!ENTITY useWaterfoxSync.label             "Tip: Dit brûkt ferskillende profilen. Brûk Sync om gegevens dêrtusken te dielen.">
+<!ENTITY getStarted.notloggedin.label     "Oanmelde by &syncBrand.shortName.label; …">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label;-foarkarren iepenje">
+
+<!ENTITY e10sEnabled.label                "Multiprocess yn &brandShortName; ynskeakelje">

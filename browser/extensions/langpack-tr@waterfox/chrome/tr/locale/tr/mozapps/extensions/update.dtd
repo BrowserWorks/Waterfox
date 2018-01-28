@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; Güncellemesi">
+
+<!ENTITY  offline.title                   "&brandShortName; şu anda çevrimdışı çalışıyor">
+<!ENTITY  offline.description             "&brandShortName; tarayıcısının eklentilerinizi bu sürümle uyumlu hâle getirecek güncellemeler olup olmadığını görmek için çevrimiçi olması gereklidir.">
+<!ENTITY  offline.toggleOffline.label     "Çevrim içi ol.">
+<!ENTITY  offline.toggleOffline.accesskey "v">
+
+<!ENTITY  mismatch.win.title              "Uyumsuz eklentiler">
+<!ENTITY  mismatch.top.label              "Aşağıdaki eklentiler &brandShortName; tarayıcısının bu sürümüyle uyumlu değil ve bu nedenle devre dışı bırakıldılar:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; bu eklentilerin uyumlu sürümlerinin olup olmadığını kontrol edebilir.">
+
+<!ENTITY  checking.wizard.title           "Uyumlu eklentilere bakılıyor">
+<!ENTITY  checking.top.label              "Uyumsuz eklentilerinizin güncellemeleri denetleniyor…">
+<!ENTITY  checking.status                 "Bu işlem birkaç dakika sürebilir…">
+
+<!ENTITY  found.wizard.title               "Uyumlu eklentiler bulundu">
+<!ENTITY  found.top.label                 "Yüklemek istediğiniz eklentileri seçin:">
+<!ENTITY  found.disabledXPinstall.label   "Bu güncellemeler kurulamaz çünkü yazılım kurulumu şu an devre dışı. Bu ayarı aşağıdan değiştirebilirsiniz.">
+<!ENTITY  found.enableXPInstall.label     "Sitelerin yazılım yüklemesine izin ver">
+<!ENTITY  found.enableXPInstall.accesskey "m">
+
+<!ENTITY  installing.wizard.title         "Uyumlu eklentiler kuruluyor">
+<!ENTITY  installing.top.label            "Eklenti güncellemeleri indirilip kuruluyor…">
+
+<!ENTITY  noupdates.wizard.title          "Uyumlu eklenti bulunmadı">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; uyumsuz olan eklentilerinizle ilgili güncelleme bulamadı.">
+<!ENTITY  noupdates.error.desc            "Güncellemeler bulunmaya çalışılırken bazı sorunlar yaşandı.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; belirli aralıklarla bu eklentilerin güncellemelerinin olup olmadığına bakarak size haber verecek.">
+
+<!ENTITY  finished.wizard.title           "Uyumlu eklentiler yüklendi">
+<!ENTITY  finished.top.label              "&brandShortName; eklentilerinizin güncellemelerini kurdu.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; belirli aralıklarla eklentilerin güncellemelerinin olup olmadığına bakarak size haber verebilir.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; belirli aralıklarla eklentilerin güncellemelerinin olup olmadığına bakarak size haber verecek.">
+
+<!ENTITY  adminDisabled.wizard.title      "Güncellemeler denetlenemedi">
+<!ENTITY  adminDisabled.warning.label     "Uyumsuz eklentilerinizin güncellemelerinin olup olmadığınına bakılamıyor çünkü &brandShortName; için yazılım kurulumu devre dışı bırakılmış. Yardım almak için lütfen sistem yöneticisi ile iletişim kurun.">
+
+<!ENTITY  versioninfo.wizard.title        "Eklentilerin uyumluluğuna bakılıyor">
+<!ENTITY  versioninfo.top.label           "Eklentilerinizin &brandShortName; tarayıcısının bu sürümüyle uyumlu olup olmadığına bakılıyor.">
+<!ENTITY  versioninfo.waiting             "Bu işlem birkaç dakika sürebilir…">
+
+<!ENTITY  installerrors.wizard.title      "Güncellemelerin kurulmasında sorun">
+<!ENTITY  installerrors.intro.label       "&brandShortName; bazı eklentilerinizi güncellerken sorunlarla karşılaştı.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "&brandShortName; tarayıcısını açmaya devam etmek için Tamamlandı düğmesine basın.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; tarayıcısını başlatmak için Tamamlandı düğmesine basın.">
+<!ENTITY  enableChecking.label            "&brandShortName; tarayıcısının güncellemelere bakmasına izin ver.">

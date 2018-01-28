@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Nid ydych mewn ffenestr breifat ar hyn o bryd.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Agor Ffenestr Breifat">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "F">
+
+<!ENTITY privateBrowsing.title                           "Pori Preifat">
+<!ENTITY privateBrowsing.title.tracking                  "Pori Preifat gyda Diogelwch Rhag Tracio">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Pan fyddwch yn pori mewn Ffenestr Breifat, ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nid yw'n cadw">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "tudalennau rydych wedi ymweld â nhw">
+<!ENTITY aboutPrivateBrowsing.info.searches              "eich chwilio">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cwcis">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ffeiliau dros dro">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Bydd Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "yn cadw">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " eich:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "llwythi">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "nodau tudalen">
+<!ENTITY aboutPrivateBrowsing.note.before                "Nid yw Pori Preifat ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "yn eich gwneud yn anhysbys">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ar y Rhyngrwyd. Cofiwch y bydd eich cyflogwr a'ch darparwr gwasanaeth rhyngrwyd yn gallu olrhain y tudalennau i chi ymweld â nhw.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Dysgu rhagor am ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Pori Preifat">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Diogelwch Rhag Tracio">
+<!ENTITY trackingProtection.description2                 "Mae rhai gwefannau defnyddio tracwyr sy'n gallu dilyn eich gweithgaredd ar draws y Rhyngrwyd. Gyda diogelu rhag tracio bydd Waterfox yn rhwystro nifer o'r tracwyr sy'n gallu casglu gwybodaeth am eich ymddygiad pori.">
+<!ENTITY trackingProtection.startTour1                   "Gweld sut mae hyn yn gweithio">

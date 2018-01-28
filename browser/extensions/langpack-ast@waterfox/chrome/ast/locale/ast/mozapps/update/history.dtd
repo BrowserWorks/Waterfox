@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Historial d'anovamientos">
+<!ENTITY  history.intro             "Instaláronse los anovamientos de darréu:">
+<!ENTITY  closebutton.label         "Zarrar">
+                                     
+<!ENTITY  noupdates.label           "Entá nun hai anovamientos instalaos">
+
+<!ENTITY  name.header               "Nome d'anovamientu">
+<!ENTITY  date.header               "Data d'nstalación">
+<!ENTITY  type.header               "Triba">
+<!ENTITY  state.header              "Estáu">
+

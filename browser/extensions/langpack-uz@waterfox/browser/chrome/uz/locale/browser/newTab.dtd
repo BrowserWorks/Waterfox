@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Yangi ichki oyna">
+
+<!ENTITY newtab.customize.cog.enhanced "Tavsiya qilingan saytlar bilan birga">
+<!ENTITY newtab.customize.cog.title2 "YANGI ICHKI OYNA TUGMALARI">
+<!ENTITY newtab.customize.cog.learn "Yangi ichki oyna haqida ma’lumot">
+<!ENTITY newtab.customize.title "Yangi ichki oyna sahifasini qulaylashtirish">
+<!ENTITY newtab.customize.blank2 "Bo‘sh sahifa ko‘rsatilsin">
+<!ENTITY newtab.undo.removedLabel "Nishoncha olib tashlandi.">
+<!ENTITY newtab.undo.undoButton "Bekor qilish.">
+<!ENTITY newtab.undo.restoreButton "Barchasi tiklandi.">
+<!ENTITY newtab.undo.closeTooltip "Yashirish">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

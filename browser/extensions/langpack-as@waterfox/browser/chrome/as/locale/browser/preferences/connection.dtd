@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "সংযোগ সংহতিসমূহ">
+
+
+
+<!ENTITY  proxyTitle.label              "ইন্টাৰনেট অভিগম কৰিবলৈ প্ৰক্সিৰ সংৰূপণ কৰক">
+<!ENTITY  noProxyTypeRadio.label        "কোনো প্ৰক্সি নাই">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "চিস্টেমৰ প্ৰক্সিৰ সংহতিসমূহ ব্যৱহাৰ কৰক">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "এই নেটৱাৰ্কৰ বাবে প্ৰক্সি স্বচালিতভাৱে সন্ধান কৰক">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "হস্তচালিত প্ৰক্সি সংৰূপণ:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "স্বচালিত প্ৰক্সি সংৰূপণৰ URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "পুনঃ ল'ড কৰক">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP প্ৰক্সি:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP প্ৰক্সি:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL প্ৰক্সি:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS হস্ট:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+
+
+<!ENTITY  port.label                    "প'ৰ্ট:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "চিহ্নিত ছাইটৰ বাবে কোনো প্ৰক্সি নাই:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "যেনে: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "সকলো প্ৰটোকলৰ বাবে এই প্ৰক্সি চাৰ্ভাৰ ব্যৱহাৰ কৰক">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "পাছৱৰ্ড সংৰক্ষিত থাকিলে প্ৰমাণীকৰণ নিবিচাৰিব">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "এই বিকল্পয় আপোনাক প্ৰক্সিসমূহৰ বাবে প্ৰমাণীত কৰে যদি আপোনাৰ সিহতৰ বাবে তথ্য সংৰক্ষিত আছে। আপোনাক কোৱা হব যদি প্ৰমাণীকৰণ ব্যৰ্থ হয়।">
+
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS when using SOCKS v5">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  window.width2                 "49em">

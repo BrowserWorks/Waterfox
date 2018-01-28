@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instalar extensão">
+<!ENTITY intro           "Um outro aplicativo no seu computador deseja modificar
+                          o &brandShortName; com a seguinte extensão:">
+<!ENTITY warning         "Só instalar extensões de autores em quem confia.">
+<!ENTITY allow           "Permitir esta instalação">
+<!ENTITY later           "Você pode mudar de ideia a qualquer momento, entrando
+                          no gerenciador de extensões.">
+<!ENTITY continue        "Continuar">
+<!ENTITY restartMessage  "O &brandShortName; precisa ser reiniciado para concluir a instalação desta extensão.">
+<!ENTITY restartButton   "Reiniciar o &brandShortName;">
+<!ENTITY cancelButton    "Cancelar">

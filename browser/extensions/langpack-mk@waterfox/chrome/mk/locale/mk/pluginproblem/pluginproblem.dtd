@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Допрете овде за активирање на приклучокот.">
+<!ENTITY clickToActivatePlugin                               "Активирај приклучок.">
+<!ENTITY checkForUpdates                                     "Провери за надградби…">
+<!ENTITY blockedPlugin.label                                 "Овој приклучок е блокиран заради Вашата безбедност.">
+<!ENTITY hidePluginBtn.label                                 "Скриј приклучок">
+<!ENTITY managePlugins                                       "Управување со приклучоци…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Превчитај ја страната">
+<!ENTITY reloadPlugin.post                                   " за да се обидете повторно.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Испрати извештај за уривање">
+<!ENTITY report.submitting                                   "Испраќам извештај…">
+<!ENTITY report.submitted                                    "Извештајот е испратен.">
+<!ENTITY report.disabled                                     "Известувањето за уривања е исклучено.">
+<!ENTITY report.failed                                       "Испраќањето не успеа.">
+<!ENTITY report.unavailable                                  "Нема достапен извештај.">
+<!ENTITY report.comment                                      "Додајте коментар (коментарите се видливи за сите)">
+<!ENTITY report.pageURL                                      "Вклучи URL на страницата">
+
+<!ENTITY plugin.file                                         "Датотека">
+<!ENTITY plugin.mimeTypes                                    "Типови на MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Овозможи заштитен мод на работа на Adobe Flash">
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

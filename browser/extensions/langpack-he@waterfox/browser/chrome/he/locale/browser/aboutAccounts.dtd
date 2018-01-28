@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "ברוכים הבאים אל &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "התחבר כדי לסנכרן את הלשוניות, הססמאות ושאר ההגדרות שלך.">
+<!ENTITY aboutAccountsConfig.startButton.label "בואו ונתחיל">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "העדפות Sync">
+<!ENTITY aboutAccounts.noConnection.title "אין חיבור">
+<!ENTITY aboutAccounts.noConnection.description "יש להיות מחוברים לרשת האינטרנט כדי להיכנס לחשבון.">
+<!ENTITY aboutAccounts.noConnection.retry "לנסות שוב">
+<!ENTITY aboutAccounts.badConfig.title "תצורה שגויה">
+<!ENTITY aboutAccounts.badConfig.description "לא ניתן לקבוע את תצורת החשבון שלך. נא לנסות שוב במועד מאוחר יותר.">

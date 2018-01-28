@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "您的電腦中已儲存下列的 Cookie:">
+<!ENTITY     cookiename.label               "Cookie 名稱">
+<!ENTITY     cookiedomain.label             "網站">
+
+<!ENTITY     props.name.label               "名稱:">
+<!ENTITY     props.value.label              "內容:">
+<!ENTITY     props.domain.label             "主機:">
+<!ENTITY     props.path.label               "路徑:">
+<!ENTITY     props.secure.label             "送出:">
+<!ENTITY     props.expires.label            "有效期限:">
+<!ENTITY     props.container.label          "容器:">
+
+<!ENTITY     window.title                   "Cookie">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "搜尋">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "關閉">
+<!ENTITY     button.close.accesskey         "C">

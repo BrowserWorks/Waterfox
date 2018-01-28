@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "दूरमापी आंकड़ा">
+
+<!ENTITY aboutTelemetry.pingDataSource "पिंग आँकड़ा स्रोत:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "वर्तमान पिंग डेटा">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "आर्काइव पिंग डेटा">
+
+
+<!ENTITY aboutTelemetry.showSubsessionData "उपसत्र डेटा देखाबू">
+
+<!ENTITY aboutTelemetry.choosePing "पिंग चुनू:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; नवीन पिंग">
+
+<!ENTITY aboutTelemetry.showOlderPing "पुरान पिंग &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "सप्ताह">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "पिंग">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "        सामान्य आंकड़ा">
+
+<!ENTITY aboutTelemetry.environmentDataSection "वातावरण डाटा">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "टेलीमेट्री लॉग">
+
+<!ENTITY aboutTelemetry.slowSqlSection "धीमा sql निवेदन">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "ब्राउजर  लटकनाइ">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  लड़ी हैंग करैछ">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "आयत छवि">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "बंद हिस्टोग्राम">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "साधारण माप ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  सहयुक्तिक विवरण">
+
+<!ENTITY aboutTelemetry.lateWritesSection "किछु देर सँ लिखू">
+
+
+<!ENTITY aboutTelemetry.fullSqlWarning "टिप्पणी: धीमा sql दोषसुधार सक्षम अछि. पूर्ण रूप सँ sql  वाक्यांश नीच्चाँ देखाइ दिए सकैत अछि मुदा ओ दूरमापी केँ जमा कएल जाए सकैत अछि ">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  फिल्टर (स्ट्रिंग अथवा /regexp/)">
+
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+

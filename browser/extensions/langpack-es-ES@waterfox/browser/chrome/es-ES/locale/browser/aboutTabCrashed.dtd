@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Cerrar esta pestaña">
+<!ENTITY tabCrashed.restoreTab "Restaurar esta pestaña">
+<!ENTITY tabCrashed.restoreAll "Restaurar todas las pestañas fallidas">
+<!ENTITY tabCrashed.header2 "¡Vaya! Su pestaña acaba de fallar.">
+<!ENTITY tabCrashed.offerHelp "¡Podemos ayudarle!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Elija &tabCrashed.restoreTab; para recargar el contenido de la página.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Elija &tabCrashed.restoreTab; o &tabCrashed.restoreAll; para recargar el contenido de la página.">
+<!ENTITY tabCrashed.requestHelp "¿Nos puede ayudar?">
+<!ENTITY tabCrashed.requestHelpMessage "Los informes de fallos nos ayudan a diagnosticar problemas y mejorar &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Informar de esta pestaña">
+<!ENTITY tabCrashed.sendReport2 "Enviar un informe de fallo de la pestaña que está viendo">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comentarios opcionales (los comentarios son visibles públicamente)">
+<!ENTITY tabCrashed.includeURL2 "Incluir la URL de la página en este informe de fallo">
+<!ENTITY tabCrashed.emailPlaceholder "Escriba su dirección de correo aquí">
+<!ENTITY tabCrashed.emailMe "Enviar un correo cuando haya información disponible">
+<!ENTITY tabCrashed.reportSent "Informe de fallo ya enviado; ¡gracias por ayudar a mejorar &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Informar de las pestañas en segundo plano">
+<!ENTITY tabCrashed.autoSubmit2 "Actualizar preferencias para enviar automáticamente informes de fallo, incluyendo informes de pestañas en fondo que han fallado en esta sesión y en sesiones futuras">

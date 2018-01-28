@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "თვალთვალისგან დაცვის გამოყენება">
+<!ENTITY  trackingProtectionAlways.label       "ყოველთვის">
+<!ENTITY  trackingProtectionAlways.accesskey   "ყ">
+<!ENTITY  trackingProtectionPrivate.label      "მხოლოდ პირად ფანჯრებში">
+<!ENTITY  trackingProtectionPrivate.accesskey  "პ">
+<!ENTITY  trackingProtectionNever.label        "არასდროს">
+<!ENTITY  trackingProtectionNever.accesskey    "ა">
+<!ENTITY  trackingProtectionLearnMore.label    "შეიტყვეთ მეტი">
+<!ENTITY  trackingProtectionExceptions.label   "გამონაკლისები…">
+<!ENTITY  trackingProtectionExceptions.accesskey "კ">
+
+<!ENTITY tracking.label                 "თვალთვალი">
+<!ENTITY trackingProtectionPBM5.label         "თვალთვალისგან დაცვა პირადი ფანჯრით სარგებლობისას">
+<!ENTITY trackingProtectionPBM5.accesskey     "რ">
+<!ENTITY trackingProtectionPBMLearnMore.label "შეიტყვეთ მეტი">
+<!ENTITY changeBlockList.label          "შეზღუდულთა სიის ჩასწორება">
+<!ENTITY changeBlockList.accesskey      "შ">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "თქვენ ასევე შეგიძლიათ ">
+<!ENTITY  doNotTrack.settings.label     '"არ მითვალთვალო" პარამეტრის მითითება'>
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "ისტორია">
+
+<!ENTITY  locationBar.label             "მისამართების ზოლი">
+
+<!ENTITY  locbar.suggest.label          "მისამართების ზოლის გამოყენებისას, შემოთავაზებებში გამოჩნდება:">
+<!ENTITY  locbar.history.label          "ისტორია">
+<!ENTITY  locbar.history.accesskey      "ი">
+<!ENTITY  locbar.bookmarks.label        "სანიშნეები">
+<!ENTITY  locbar.bookmarks.accesskey    "ს">
+<!ENTITY  locbar.openpage.label         "გახსნილი ჩანართები">
+<!ENTITY  locbar.openpage.accesskey     "გ">
+<!ENTITY  locbar.searches.label         "მსგავსი ძიებები ნაგულისხმევი საძიებო სისტემიდან">
+<!ENTITY  locbar.searches.accesskey     "ს">
+
+<!ENTITY  suggestionSettings.label      "საძიებო სისტემის შემოთავაზებების პარამეტრები…">
+<!ENTITY  suggestionSettings.accesskey  "თ">
+
+<!ENTITY  acceptCookies2.label          "ფუნთუშების მიღება საიტებიდან">
+<!ENTITY  acceptCookies2.accesskey      "ფ">
+
+<!ENTITY  acceptThirdParty.pre.label      "მესამე მხარის ფუნთუშების მიღება:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ღ">
+<!ENTITY  acceptThirdParty.always.label   "ყოველთვის">
+<!ENTITY  acceptThirdParty.never.label    "არასდროს">
+<!ENTITY  acceptThirdParty.visited.label  "მხოლოდ მონახულებულიდან">
+
+<!ENTITY  keepUntil.label               "შენახვა სანამ:">
+<!ENTITY  keepUntil.accesskey           "ს">
+
+<!ENTITY  expire.label                  "ვადა გაუვა">
+<!ENTITY  close.label                   "&brandShortName; დაიხურება">
+
+<!ENTITY  cookieExceptions.label        "გამონაკლისები…">
+<!ENTITY  cookieExceptions.accesskey    "გ">
+
+<!ENTITY  showCookies.label             "ფუნთუშების ნახვა…">
+<!ENTITY  showCookies.accesskey         "ფ">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; ბრაუზერი:">
+<!ENTITY  historyHeader.pre.accesskey      "ზ">
+<!ENTITY  historyHeader.remember.label     "დაიმახსოვრებს ისტორიას">
+<!ENTITY  historyHeader.dontremember.label "არასოდეს დაიმახსოვრებს ისტორიას">
+<!ENTITY  historyHeader.custom.label       "ისარგებლებს თქვენი მითითებებით">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; დაიმახსოვრებს დათვალიერებული გვერდების, ჩამოტვირთვების, ველების და ძიების ისტორიას, ასევე შეინახავს ფუნთუშებს, მონახულებული საიტებიდან.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "შესაძლოა მოისურვოთ ">
+<!ENTITY  rememberActions.clearHistory.label  "თქვენი უახლესი ისტორიის გასუფთავება">
+<!ENTITY  rememberActions.middle.label        ", ან ">
+<!ENTITY  rememberActions.removeCookies.label "ცალკეული ფუნთუშების წაშლა">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ბრაუზერი ისარგებლებს პირადი ფანჯრის პარამეტრებით და არ შეინახვს თქვენ მიერ მონახულებული საიტების ისტორიას.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "შესაძლოა ასევე მოისურვოთ ">
+<!ENTITY  dontrememberActions.clearHistory.label "მიმდინარე ისტორიის გასუფთავება">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "ყოველთვის პირადი სეანსის გამოყენება">
+<!ENTITY  privateBrowsingPermanent2.accesskey "პ">
+
+<!ENTITY  rememberHistory2.label      "დათვალიერებული გვერდების და ჩამოტვირთვების ისტორიის დამახსოვრება">
+<!ENTITY  rememberHistory2.accesskey  "დ">
+
+<!ENTITY  rememberSearchForm.label       "ძიებისა და ფორმების ისტორიის დამახსოვრება">
+<!ENTITY  rememberSearchForm.accesskey   "ფ">
+
+<!ENTITY  clearOnClose.label             "ისტორიის გასუფთავება &brandShortName;-ის დახურვისას">
+<!ENTITY  clearOnClose.accesskey         "ფ">
+
+<!ENTITY  clearOnCloseSettings.label     "პარამეტრები…">
+<!ENTITY  clearOnCloseSettings.accesskey "ტ">
+
+<!ENTITY  browserContainersHeader.label         "სათავსი ჩანართები">
+<!ENTITY  browserContainersLearnMore.label      "შეიტყვეთ მეტი">
+<!ENTITY  browserContainersEnabled.label        "სათავსი ჩანართების ჩართვა">
+<!ENTITY  browserContainersEnabled.accesskey    "ჩ">
+<!ENTITY  browserContainersSettings.label        "პარამეტრები…">
+<!ENTITY  browserContainersSettings.accesskey    "პ">

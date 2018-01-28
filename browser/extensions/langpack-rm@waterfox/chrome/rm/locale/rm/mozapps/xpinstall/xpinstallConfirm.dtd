@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from institems.xul -->
+
+<!ENTITY dialog.title            "Installaziun da software">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Ti duessas mo installar supplements da funtaunas, da las qualas ti ta pos fidar.">
+<!ENTITY warningSecondary.label  "Software malvulenta po donnegiar datotecas da tes computer u violar tia sfera privata.">
+
+<!ENTITY from.label "da:">
+

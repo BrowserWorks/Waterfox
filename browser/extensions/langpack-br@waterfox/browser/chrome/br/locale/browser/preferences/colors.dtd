@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Livioù">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Eillec'hiañ al livioù erspizet war ar bajenn gant va diuzadoù a-us:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "E">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Atav">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Gant neuzioù a Dargemm Uhel hepken">
+<!ENTITY  overrideDefaultPageColors.never.label  "Morse">
+
+<!ENTITY  color                           "Testenn ha Drekleur">
+<!ENTITY  textColor.label                 "Testenn :">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Drekleur :">
+<!ENTITY  backgroundColor.accesskey       "D">
+<!ENTITY  useSystemColors.label           "Arverañ livioù ar reizhiad">
+<!ENTITY  useSystemColors.accesskey       "r">
+
+<!ENTITY  underlineLinks.label            "Islinennañ an Ereoù ">
+<!ENTITY  underlineLinks.accesskey        "I">
+<!ENTITY  links                           "Livioù an ereoù">
+<!ENTITY  linkColor.label                 "Ereoù diweladennet :">
+<!ENTITY  linkColor.accesskey             "E">
+<!ENTITY  visitedLinkColor.label          "Ereoù gweladennet :">
+<!ENTITY  visitedLinkColor.accesskey      "o">

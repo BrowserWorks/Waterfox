@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Під'єднатись">
+<!ENTITY header     "Під'єднатись до віддаленого пристрою">
+<!ENTITY host       "Вузол:">
+<!ENTITY port       "Порт:">
+<!ENTITY connect    "Під'єднатись">
+<!ENTITY connecting "З'єднання…">
+<!ENTITY availableAddons "Доступні віддалені додатки:">
+<!ENTITY availableTabs "Доступні віддалені вкладки:">
+<!ENTITY availableProcesses "Доступні віддалені процеси:">
+<!ENTITY connectionError "Помилка:">
+<!ENTITY errorTimeout "Помилка: вичерпано час з'єднання.">
+<!ENTITY errorRefused "Помилка: відмовлено в з'єднанні.">
+<!ENTITY errorUnexpected "Несподівана помилка.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Інструменти розробника Waterfox можуть зневаджувати віддалені пристрої (Waterfox для Android і Waterfox OS, наприклад). Переконайтесь, що ви ввімкнули параметр «Віддалене зневадження» на віддаленому пристрої. Детальніше описано в">
+<!ENTITY remoteDocumentation "документації">
+<!ENTITY remoteHelpSuffix ".">
+

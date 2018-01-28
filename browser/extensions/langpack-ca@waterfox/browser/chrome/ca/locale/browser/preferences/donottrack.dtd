@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "No vull ser seguit">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Aplica sempre la funció «No vull ser seguit»">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "Quan la protecció contra el seguiment està activada, el &brandShortName; enviarà un senyal comunicant que no voleu que se us segueixi.">
+<!ENTITY doNotTrackLearnMore.label    "Més informació">

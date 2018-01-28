@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; ಸುರಕ್ಷತಾ ಸ್ಥಿತಿ">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "ಸುರಕ್ಷಿತಾ ಸ್ಥಿತಿಯಲ್ಲಿ ಆರಂಭಿಸು">
+<!ENTITY refreshProfile.label         "&brandShortName; ಪುನ:ಶ್ಚೇತನಗೊಳಿಸು">
+
+<!ENTITY safeModeDescription3.label   "ಸುರಕ್ಷತಾ ಸ್ಥಿತಿ ಎನ್ನುವುದು &brandShortName; ನ ಒಂದು ವಿಶೇಷ ಸ್ಥಿತಿಯಾಗಿದ್ದು, ಇದನ್ನು ದೋಷಪರಿಹರಿಸಲು ಬಳಸಬಹುದಾಗಿರುತ್ತದೆ.">
+<!ENTITY safeModeDescription4.label   "ನಿಮ್ಮ ಆಡ್-ಆನ್‌ಗಳು ಮತ್ತು ಅಗತ್ಯಾನುಗುಣವಾಗಿ ಬದಲಾಯಿಸಲಾದ ಸಿದ್ಧತೆಗಳನ್ನು ತಾತ್ಕಾಲಿಕವಾಗಿ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿರುತ್ತದೆ.">
+
+<!ENTITY refreshProfileInstead.label  "ನೀವು ದೋಷಪತ್ತೆ ಮಾಡುವಿಕೆಯನ್ನು ಬಿಟ್ಟು &brandShortName; ಅನ್ನು ರಿಫ್ರೆಶ್‌ ಮಾಡಲು ಪ್ರಯತ್ನಿಸಬಹುದು.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; ಆರಂಭಗೊಳ್ಳುವಾಗ ಅನಿರೀಕ್ಷಿತ ರೀತಿಯಲ್ಲಿ ಮುಚ್ಚಲ್ಪಟ್ಟಿದೆ. ಇದು ಆಡ್-ಆನ್‌ಗಳು ಅಥವ ಬೇರೆ ಯಾವುದೊ ತೊಂದರೆಯಿಂದ ಉಂಟಾಗಿರಬಹುದು. ಸುರಕ್ಷಿತ ಸ್ಥಿತಿಯಲ್ಲಿರಿಸಿಕೊಂಡು ದೋಷನಿವಾರಣೆ ಮಾಡುವ ಮೂಲಕ ತೊಂದರೆಯನ್ನು ಪರಿಹರಿಸಲು ಪ್ರಯತ್ನಿಸಬಹುದು.">

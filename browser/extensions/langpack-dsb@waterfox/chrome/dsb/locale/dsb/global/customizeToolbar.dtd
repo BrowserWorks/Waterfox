@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Symbolowu rědku pśiměriś">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Móžośo zapiski pśidaś abo wótpóraś, z tym až śěgnjośo je do abo ze symbolowych rědkow.">
+<!ENTITY show.label               "Pokazaś:">
+<!ENTITY iconsAndText.label       "Symbole a tekst">
+<!ENTITY icons.label              "Symbole">
+<!ENTITY text.label               "Tekst">
+<!ENTITY useSmallIcons.label      "Małe symbole wužywaś">
+<!ENTITY restoreDefaultSet.label  "Standard wótnowiś">
+<!ENTITY addNewToolbar.label      "Nowu symbolowu rědku pśidaś">
+<!ENTITY saveChanges.label        "Dokóńcony">
+<!ENTITY undoChanges.label        "Změny anulěrowaś">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Štampaj…">
+<!ENTITY print.accesskey      "p">
+<!ENTITY pageSetup.label      "Podešavanje strane…">
+<!ENTITY pageSetup.accesskey  "P">
+<!ENTITY page.label           "Strana:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "od">
+<!ENTITY scale.label          "Razmjera:">
+<!ENTITY scale.accesskey      "R">
+<!ENTITY portrait.label       "Uspravno">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "Položeno">
+<!ENTITY landscape.accesskey  "l">
+<!ENTITY close.label          "Zatvori">
+<!ENTITY close.accesskey      "Z">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Korisnički…">
+<!ENTITY ShrinkToFit.label    "Smanji da stane">
+<!ENTITY customPrompt.title   "Korisnička razmjera…">
+<!ENTITY simplifyPage.label   "Pojednostavi stranicu">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "Izmijeni raspored radi lakšeg čitanja">
+<!ENTITY simplifyPage.disabled.tooltip "Ova stranica se ne može automatski pojednostaviti">
+
+<!ENTITY homearrow.tooltip    "Prva strana">
+<!ENTITY endarrow.tooltip     "Zadnja strana">
+<!ENTITY nextarrow.tooltip    "Sljedeća strana">
+<!ENTITY previousarrow.tooltip "Prethodna strana">

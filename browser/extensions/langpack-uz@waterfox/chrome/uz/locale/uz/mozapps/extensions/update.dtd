@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName;ni yangilash">
+
+<!ENTITY  offline.title                   "&brandShortName; oflayn usulda ishlamoqda">
+<!ENTITY  offline.description             "Qoʻshimcha dasturlaringiz uchun yangilanishlarni koʻrish uchun va ularni ushbu versiya bilan mos qilish uchun  &brandShortName; onlayn usuliga oʻtishi kerak ">
+<!ENTITY  offline.toggleOffline.label     "Hozir onlaynga oʻtish">
+<!ENTITY  offline.toggleOffline.accesskey "o">
+
+<!ENTITY  mismatch.win.title              "Mos kelmaydigan qoʻshimcha dastur">
+<!ENTITY  mismatch.top.label              "Quyidagi qoʻshimcha dasturlar &brandShortName; versiyasi bilan mos emas, shuning uchun u oʻchirib qoʻyildi:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ushbu qoʻshimcha dasturlar versiyalari bilanmos boʻlsa, tekshira oladi.">
+
+<!ENTITY  checking.wizard.title           "Mos keladigan qoʻshimcha dasturlaringiz tekshirlmoqda">
+<!ENTITY  checking.top.label              "Yangilanishlar uchun mos kelmaydigan qoʻshimcha dasturlaringiz tekshirilmoqda...">
+<!ENTITY  checking.status                 "Bu bir oz vaqtingizni olishi mumkin...">
+
+<!ENTITY  found.wizard.title               "Mos qoʻshimcha dasturlar topildi">
+<!ENTITY  found.top.label                 "Oʻrnatmoqchi boʻlgan qoʻshimcha dasturingizni tanlang:">
+<!ENTITY  found.disabledXPinstall.label   "Ushbu yangilanishlarni oʻrnatib boʻlmaydi, chunki dastur oʻrnatish hozirda oʻchirib qoʻyilgan. Quyidagi moslamalardan uni oʻzgartirishingiz mumkin.">
+<!ENTITY  found.enableXPInstall.label     "Veb saytlarga dastur oʻrnatishga ruxsat berish">
+<!ENTITY  found.enableXPInstall.accesskey "r">
+
+<!ENTITY  installing.wizard.title         "Mos qoʻshimcha dasturlar oʻrnatilmoqda">
+<!ENTITY  installing.top.label            "Qoʻshimcha dasturlaringizga yangilanishlar yuklanmoqda va oʻrnatilmoqda...">
+
+<!ENTITY  noupdates.wizard.title          "Mos keladigan qoʻshimcha dasturlar topilmadi">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; mos kelmaydigan qoʻshimcha dasturlaringizga yangilanishlar topmaydi.">
+<!ENTITY  noupdates.error.desc            "Yangilanishlar topishga urinilayotganda ba`zi muammolar paydo boʻldi.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; vaqti-vaqti bilan yangilanishlarni tekshirib turadi va mos yangilanishlar topilsa, sizga xabar beradi.">
+
+<!ENTITY  finished.wizard.title           "Mos qoʻshimcha dasturlar oʻrnatildi">
+<!ENTITY  finished.top.label              "&brandShortName; qoʻshimcha dasturlaringizga yangilanishlarni oʻrnatdi.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; yangilanishlarni vaqt-vaqti bilan tekshirib turadi va yangilanishlar topilsa, sizni ogohlantiradi.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; vaqti-vaqti bilan yangilanishlarni tekshirib turadi va ular mavjud boʻlganda, sizni ogohlantiradi.">
+
+<!ENTITY  adminDisabled.wizard.title      "Yangilanishlar uchun tekshirishni amalga oshirib boʻlmadi">
+<!ENTITY  adminDisabled.warning.label     "Qoʻshimcha dasturlarning mosligini tekshirib boʻlmaydi chunki &brandShortName; uchun dastur oʻrnatish oʻchirib qoʻyilgan. Maslahat uchun tizim administratori bilan bogʻlaning.">
+
+<!ENTITY  versioninfo.wizard.title        "Qoʻshimcha dasturlar mosligini tekshirish">
+<!ENTITY  versioninfo.top.label           "Qoʻshimcha dasturlaringizni &brandShortName; versiyasi bilan mosligini tekshirish">
+<!ENTITY  versioninfo.waiting             "Bu bir oz vaqtingizni oladi...">
+
+<!ENTITY  installerrors.wizard.title      "Yangilanishlarni oʻrnatishda muammolar paydo boʻldi">
+<!ENTITY  installerrors.intro.label       "Ba`zi dasturlarni yangilashda &brandShortName; b‎ilan muammolar yuzaga keldi">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName;ni ishga tushirish uchun &quot;Tugatish&quot; tugmasini bosing.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName;ni ishga tushirish uchun &quot;Tayyor&quot; tugmasini bosing.">
+<!ENTITY  enableChecking.label            "&brandShortName;ga tekshirish uchun ruxsat berish.">

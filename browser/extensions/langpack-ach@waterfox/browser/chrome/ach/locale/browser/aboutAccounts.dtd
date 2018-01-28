@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Ki joli i &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Dony iyie wek i rib dirica matino, alama buk, mung me donyo ki mukene mamegi.">
+<!ENTITY aboutAccountsConfig.startButton.label "Caki">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Ter me rib">
+<!ENTITY aboutAccounts.noConnection.title "Kube pe">
+<!ENTITY aboutAccounts.noConnection.description "Myero i bed ma i kube i intanet me donyo iye.">
+<!ENTITY aboutAccounts.noConnection.retry "Tem doki">
+<!ENTITY aboutAccounts.badConfig.title "Ter marac">
+<!ENTITY aboutAccounts.badConfig.description "Pe twero niang ikom ter pa lapok tic pi Akaunt mamegi me Waterfox. Tim ber item doki lacen.">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "ការ​កំណត់​ការ​តភ្ជាប់">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "កំណត់​រចនាសម្ព័ន្ធ​ប្រូកស៊ី ដើម្បី​ចូល​ដំណើរ​ការ​អ៊ីនធឺណិត">
+<!ENTITY  noProxyTypeRadio.label        "គ្មាន​ប្រូកស៊ី​ទេ ">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "ប្រើ​ការ​កំណត់​ប្រូកស៊ី​របស់​ប្រព័ន្ធ ">
+<!ENTITY  systemTypeRadio.accesskey     "u">
+<!ENTITY  WPADTypeRadio.label           "រក​មើល​ការ​កំណត់​ប្រូកស៊ី​ដោយ​ស្វ័យប្រវត្តិ សម្រាប់​បណ្ដាញ​នេះ">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "កំណត់​រចនា​សម្ព័ន្ធ​ប្រូកស៊ី​ដោយ​ដៃ ៖">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "​URL កំណត់​រចនា​សម្ព័ន្ធ​​ប្រូកស៊ី​​ស្វ័យ​ប្រវត្តិ ៖">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "ផ្ទុក​ឡើងវិញ">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "ប្រូកស៊ី FTP ៖">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "ប្រូកស៊ី HTTP ៖">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "ប្រូកស៊ី SSL ៖">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "​ម៉ាស៊ីន SOCKS ៖">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "DNS ប្រូស៊ី​នៅ​ពេល​ប្រើប្រាស់ SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "ច្រក ៖">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "​គ្មាន​ប្រូកស៊ី​ សម្រាប់ ៖">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "ឧទាហរណ៍ ៖ .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ប្រើ​ម៉ាស៊ីន​បម្រើ​ប្រូកស៊ី​នេះ​សម្រាប់​ពិធីការ​ទាំងអស់">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "កុំ​ធ្វើ​ការ​ផ្ទៀងផ្ទាត់​​ប្រសិនបើ​ពាក្យ​សម្ងាត់​ត្រូវ​បាន​រក្សាទុក">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "ជម្រើស​នេះ​ធ្វើ​ការ​ផ្ទៀងផ្ទាត់​ប្រូកស៊ី នៅ​ពេល​ដែល​អ្នក​បាន​រក្សាទុក​ព័ត៌មាន​សម្ងាត់​។ អ្នក​នឹង​បញ្ចូល ប្រសិនបើ​ការ​ផ្ទៀងផ្ទាត់​បរាជ័យ។">

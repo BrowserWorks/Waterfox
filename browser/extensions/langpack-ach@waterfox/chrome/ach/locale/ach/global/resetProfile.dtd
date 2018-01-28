@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Nwo &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Cak odoco me yubo bal ki dwoko tic.">
+<!ENTITY refreshProfile.dialog.description2  "Man bi:">
+<!ENTITY refreshProfile.dialog.items.label1  "Kwanyo med-ikome ki yik mamegi">
+<!ENTITY refreshProfile.dialog.items.label2  "Dwoko ter me layeny mamegi i makwongo">
+<!ENTITY refreshProfile.dialog.button.label  "Cak &brandShortName; odoco">
+
+<!ENTITY refreshProfile.title                "Ter &brandShortName; wek tii maber">
+<!ENTITY refreshProfile.button.label         "Cak &brandShortName; odoco…">
+
+<!ENTITY refreshProfile.cleaning.description "Cok tum…">

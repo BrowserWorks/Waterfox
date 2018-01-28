@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Друк">
+
+<!ENTITY printDialog.title "Друк">
+
+<!ENTITY fpDialog.title "Зберегти файл">
+
+<!ENTITY fileCheck.label "Друк у файл">
+<!ENTITY fileCheck.accesskey "й">
+<!ENTITY propertiesButton.label "Властивості…">
+<!ENTITY propertiesButton.accesskey "В">
+<!ENTITY descText.label "Опис принтера:">
+<!ENTITY printer.label "Принтер">
+<!ENTITY printerInput.label "Принтер:">
+<!ENTITY printerInput.accesskey "П">
+
+<!ENTITY printrangeGroup.label "Діапазон друку">
+<!ENTITY allpagesRadio.label "Всі сторінки">
+<!ENTITY allpagesRadio.accesskey "В">
+<!ENTITY rangeRadio.label  "Сторінки">
+<!ENTITY rangeRadio.accesskey  "С">
+<!ENTITY frompageInput.label  "з">
+<!ENTITY frompageInput.accesskey  "з">
+<!ENTITY topageInput.label  "по">
+<!ENTITY topageInput.accesskey  "о">
+<!ENTITY selectionRadio.label "Виділений фрагмент">
+<!ENTITY selectionRadio.accesskey "ф">
+
+<!ENTITY copies.label "Копії">
+<!ENTITY numCopies.label "Число копій:">
+<!ENTITY numCopies.accesskey "Ч">
+
+<!ENTITY printframeGroup.label "Друк фреймів">
+<!ENTITY aslaidoutRadio.label "Що показані на екрані">
+<!ENTITY aslaidoutRadio.accesskey "Щ">
+<!ENTITY selectedframeRadio.label  "Виділеного фрейма">
+<!ENTITY selectedframeRadio.accesskey  "д">
+<!ENTITY eachframesepRadio.label  "Всіх фреймів окремо">
+<!ENTITY eachframesepRadio.accesskey  "х">

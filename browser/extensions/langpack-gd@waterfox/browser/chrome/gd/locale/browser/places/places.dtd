@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Leabhar-lann">
+<!ENTITY places.library.width  "800">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Cuir air dòigh">
+<!ENTITY organize.accesskey    "C">
+<!ENTITY organize.tooltip      "Cuir air dòigh na comharran-lìn agad">
+
+<!ENTITY file.close.label               "Dùin">
+<!ENTITY file.close.accesskey           "D">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Seallaidhean">
+<!ENTITY views.accesskey                "S">
+<!ENTITY views.tooltip                  "Atharraich an sealladh">
+<!ENTITY view.columns.label             "Seall colbhan">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Seòrsaich">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Gun seòrsachadh">
+<!ENTITY view.unsorted.accesskey        "u">
+<!ENTITY view.sortAscending.label       "Òrdugh seòrsachaidh A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Òrdugh seòrsachaidh Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Ion-phortaich comharran-lìn o HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Às-phortaich comharran-lìn ann an HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "o">
+<!ENTITY importOtherBrowser.label          "Ion-phortaich dàta o bhraibhsair eile…">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+<!ENTITY cmd.backup.label               "Dèan lethbhreac glèidhidh…">
+<!ENTITY cmd.backup.accesskey           "b">
+<!ENTITY cmd.restore2.label             "Aisig">
+<!ENTITY cmd.restore2.accesskey         "A">
+<!ENTITY cmd.restoreFromFile.label      "Tagh faidhle…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY cmd.deleteDomainData.label     "Dìochuimhnich an làrach seo">
+<!ENTITY cmd.deleteDomainData.accesskey "D">
+
+<!ENTITY cmd.open.label                  "Fosgail">
+<!ENTITY cmd.open.accesskey              "o">
+<!ENTITY cmd.open_window.label           "Fosgail ann an uinneag ùr">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "Fosgail ann an uinneag phrìobhaideach ùr">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Fosgail ann an taba ùr">
+<!ENTITY cmd.open_tab.accesskey          "F">
+<!ENTITY cmd.open_all_in_tabs.label      "Fosgail gach duilleag ann an taba">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "o">
+
+<!ENTITY cmd.properties.label      "Roghainnean">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Seòrsaich a-rèir ainm">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Comharra-lìn ùr…">
+<!ENTITY cmd.new_bookmark.accesskey        "C">
+<!ENTITY cmd.new_folder.label              "Pasgan ùr…">
+<!ENTITY cmd.new_folder.accesskey          "P">
+<!ENTITY cmd.context_new_folder.accesskey  "P">
+<!ENTITY cmd.new_separator.label           "Sgaradair ùr">
+<!ENTITY cmd.new_separator.accesskey       "r">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Ath-luchdaich comharra-lìn beò">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "r">
+
+<!ENTITY cmd.moveBookmarks.label                  "Gluais…">
+<!ENTITY cmd.moveBookmarks.accesskey              "G">
+
+<!ENTITY col.name.label          "Ainm">
+<!ENTITY col.tags.label          "Tagaichean">
+<!ENTITY col.url.label           "Àite">
+<!ENTITY col.mostrecentvisit.label "An tadhail as ùire">
+<!ENTITY col.visitcount.label    "Uiread nan tadhal">
+<!ENTITY col.description.label   "Tuairisgeul">
+<!ENTITY col.dateadded.label     "Air a chruthachadh">
+<!ENTITY col.lastmodified.label  "Atharrachadh mu dheireadh">
+
+<!ENTITY search.placeholder  "Lorg">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Ion-phortaich is dèan lethbhreac glèidhidh">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Ion-phortaich is dèan leth-bhreac glèidhidh dhe na comharran-lìn agad">
+
+<!ENTITY backButton.tooltip  "Air ais">
+
+<!ENTITY forwardButton.tooltip  "Air adhart">
+
+<!ENTITY detailsPane.more.label "Barrachd">
+<!ENTITY detailsPane.more.accesskey "B">
+<!ENTITY detailsPane.less.label "Nas lugha">
+<!ENTITY detailsPane.less.accesskey "N">
+<!ENTITY detailsPane.selectAnItemText.description "Tagh rud gus fheartan fhaicinn agus an deasachadh">
+
+<!ENTITY view.label               "Seall">
+<!ENTITY view.accesskey           "S">
+<!ENTITY byDate.label             "A-rèir cinn-là">
+<!ENTITY byDate.accesskey         "A">
+<!ENTITY bySite.label             "A-rèir làraich">
+<!ENTITY bySite.accesskey         "A">
+<!ENTITY byMostVisited.label      "A-rèir uiread nan tadhal">
+<!ENTITY byMostVisited.accesskey  "A">
+<!ENTITY byLastVisited.label      "A-rèir an tadhail mu dheireadh">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "A-rèir cinn-là is làraich">
+<!ENTITY byDayAndSite.accesskey   "A">

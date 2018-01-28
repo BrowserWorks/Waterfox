@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Відмова від стеження">
+<!ENTITY window.width                 "40em">
+<!ENTITY window.height                "8em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Завжди застосовувати відмову від стеження">
+<!ENTITY doNotTrackCheckbox2.accesskey "З">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; буде надсилати сигнал про те, що ви не хочете, щоб за вами стежили, коли увімкнено захист від стеження.">
+<!ENTITY doNotTrackLearnMore.label    "Докладніше">

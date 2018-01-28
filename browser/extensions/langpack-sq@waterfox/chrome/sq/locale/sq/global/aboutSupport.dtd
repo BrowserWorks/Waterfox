@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Të dhëna Diagnostikimi">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Kjo faqe përmban të dhëna teknike që mund të jenë të dobishme kur përpiqeni
+  të zgjidhni një problem. Nëse po shihni për përgjigje për pyetje të rëndomta
+  rreth &brandShortName;-it, shihni te <a id='supportLink'>sajti ynë i asistencës</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Njoftime Vithisjesh">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID Njoftimi">
+<!ENTITY aboutSupport.crashes.sendDate "Parashtruar më">
+<!ENTITY aboutSupport.crashes.allReports "Krejt Njoftimet e Vithisjeve">
+<!ENTITY aboutSupport.crashes.noConfig "Ky aplikacion nuk është formësuar për shfaqje njoftimesh vithisjeje.">
+
+<!ENTITY aboutSupport.extensionsTitle "Zgjerime">
+<!ENTITY aboutSupport.extensionName "Emër">
+<!ENTITY aboutSupport.extensionEnabled "I aktivizuar">
+<!ENTITY aboutSupport.extensionVersion "Version">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Veçori &brandShortName;-i">
+<!ENTITY aboutSupport.featureName "Emër">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Veçori Eksperimentale">
+<!ENTITY aboutSupport.experimentName "Emër">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Përshkrim">
+<!ENTITY aboutSupport.experimentActive "Aktive">
+<!ENTITY aboutSupport.experimentEndDate "Datë Mbarimi">
+<!ENTITY aboutSupport.experimentHomepage "Faqe hyrëse">
+<!ENTITY aboutSupport.experimentBranch "Degë">
+
+<!ENTITY aboutSupport.appBasicsTitle "Të dhëna bazë mbi Aplikacionin">
+<!ENTITY aboutSupport.appBasicsName "Emër">
+<!ENTITY aboutSupport.appBasicsVersion "Version">
+<!ENTITY aboutSupport.appBasicsBuildID "ID Montimi">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Kanal Përditësimi">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Historik Përditësimesh">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Shfaq Historik Përditësimesh">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Drejtoria e Profilit">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Dosje Profili">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Shtojca të Aktivizuara">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Formësim Montimi">
+<!ENTITY aboutSupport.appBasicsUserAgent "Agjent Përdoruesi">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Përdorim Kujtese">
+<!ENTITY aboutSupport.appBasicsPerformance "Performancë">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers të Regjistruar">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profile">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Dritare Multiproces">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Kyç Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Kyç Mozilla Location Service">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mënyrë e Sigurt">
+
+<!ENTITY aboutSupport.showDir.label "Hap Drejtorinë">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Shfaqe te Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Hape Dosjen">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Parapëlqime të Rëndësishme të Ndryshuara">
+<!ENTITY aboutSupport.modifiedPrefsName "Emër">
+<!ENTITY aboutSupport.modifiedPrefsValue "Vlerë">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Parapëlqime për user.js">
+<!ENTITY aboutSupport.userJSDescription "Dosja juaj e profilit përmban një <a id='prefs-user-js-link'>kartelë user.js</a>, e cila përfshin parapëlqime që nuk janë krijuar nga &brandShortName;-i.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Parapëlqime të Rëndësishme të Kyçura">
+<!ENTITY aboutSupport.lockedPrefsName "Emër">
+<!ENTITY aboutSupport.lockedPrefsValue "Vlerë">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafikë">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Bazë të Dhënash Vendesh">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integritet">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verifikoni Integritetin">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GH Shtues">
+
+<!ENTITY aboutSupport.a11yTitle "Përdorshmëri">
+<!ENTITY aboutSupport.a11yActivated "E aktivizuar">
+<!ENTITY aboutSupport.a11yForceDisabled "Parandaloje Përdorshmërinë">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Versione Librarie">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Historik Instalimesh">
+<!ENTITY aboutSupport.updateHistoryTitle "Historik Përditësimesh">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopjoje tekstin te e papastra">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopjo të dhëna të papërpunuara te e papastra">
+
+<!ENTITY aboutSupport.sandboxTitle "Bankëprovë">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Thirrje Sistemi të Hedhura Poshtë">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekonda Më Parë">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Lloj Procesi">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumente">
+
+<!ENTITY aboutSupport.safeModeTitle "Provoni Mënyrën e Parrezik">
+<!ENTITY aboutSupport.restartInSafeMode.label "Riniseni me Shtesa të Çaktivizuara…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Veçori">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostikime">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Regjistër Dështimesh">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Regjistër Vendimesh">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Veçori të Çaktivizuara nga Roja i Vithisjeve">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Zgjidhje të përkohshme">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

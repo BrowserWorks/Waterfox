@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "កាត់">
+<!ENTITY cutCmd.accesskey "ក">
+<!ENTITY copyCmd.label "ចម្លង">
+<!ENTITY copyCmd.accesskey "ច">
+<!ENTITY pasteCmd.label "បិទភ្ជាប់">
+<!ENTITY pasteCmd.accesskey "ប">
+<!ENTITY undoCmd.label "មិនធ្វើវិញ">
+<!ENTITY undoCmd.accesskey "ន">
+<!ENTITY selectAllCmd.label "ជ្រើស​ទាំងអស់">
+<!ENTITY selectAllCmd.accesskey "អ">
+<!ENTITY deleteCmd.label "លុប">
+<!ENTITY deleteCmd.accesskey "ល">
+
+<!ENTITY spellAddToDictionary.label "បន្ថែម​ទៅ​វចនានុក្រម">
+<!ENTITY spellAddToDictionary.accesskey "ម">
+<!ENTITY spellUndoAddToDictionary.label "មិន​អាច​បន្ថែម​ទៅ​វចនា​នុក្រម">
+<!ENTITY spellUndoAddToDictionary.accesskey "ម">
+<!ENTITY spellCheckToggle.label "ពិនិត្យ​អក្ខរាវិរុទ្ធ">
+<!ENTITY spellCheckToggle.accesskey "អ">
+<!ENTITY spellNoSuggestions.label "(គ្មាន​ការ​ផ្ដល់​យោបល់​អក្ខរាវិរុទ្ធ)">
+<!ENTITY spellDictionaries.label "ភាសា">
+<!ENTITY spellDictionaries.accesskey "ស">
+
+<!ENTITY searchTextBox.clear.label "សម្អាត">
+
+<!ENTITY fillLoginMenu.label          "បំពេញ​ការចូល​">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "បំពេញពាក្យ​សម្ងាត់​">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "បំពេញ​ឈ្មោះ​អ្នក​ប្រើ">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(ពុំ​មាន​ការ​ស្នើ​ឲ្យ​ចុះឈ្មោះ)">
+<!ENTITY viewSavedLogins.label        "មើល​ការ​ចូល​ដែល​បាន​រក្សា​ទុក">

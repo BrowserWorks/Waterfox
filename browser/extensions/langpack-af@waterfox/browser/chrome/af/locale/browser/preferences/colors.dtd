@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Kleure">
+<!ENTITY  window.width                    "44em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Gebruik die keuse bo vir kleure eerder as dié wat die bladsy spesifiseer:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "G">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Altyd">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Slegs met hoëkontrastemas">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nooit">
+
+<!ENTITY  color                           "Teks en agtergrond">
+<!ENTITY  textColor.label                 "Teks:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Agtergrond:">
+<!ENTITY  backgroundColor.accesskey       "A">
+<!ENTITY  useSystemColors.label           "Gebruik stelselkleure">
+<!ENTITY  useSystemColors.accesskey       "u">
+
+<!ENTITY  underlineLinks.label            "Onderstreep skakels">
+<!ENTITY  underlineLinks.accesskey        "O">
+<!ENTITY  links                           "Skakelkleure">
+<!ENTITY  linkColor.label                 "Onbesoekte skakels:">
+<!ENTITY  linkColor.accesskey             "s">
+<!ENTITY  visitedLinkColor.label          "Besoekte skakels:">
+<!ENTITY  visitedLinkColor.accesskey      "B">

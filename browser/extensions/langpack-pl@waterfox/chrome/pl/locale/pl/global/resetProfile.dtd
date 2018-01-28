@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY refreshProfile.dialog.title "Odświeżanie programu &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1 "Zacznij od nowa, aby rozwiązać problemy i przywrócić wydajność.">
+<!ENTITY refreshProfile.dialog.description2 "Odświeżenie spowoduje:">
+<!ENTITY refreshProfile.dialog.items.label1 "Usunięcie dodatków i modyfikacji">
+<!ENTITY refreshProfile.dialog.items.label2 "Przywrócenie ustawień domyślnych przeglądarki">
+<!ENTITY refreshProfile.dialog.button.label "Odśwież program &brandShortName;">
+
+<!ENTITY refreshProfile.title "Dostrój Firefoksa">
+<!ENTITY refreshProfile.button.label "Odśwież program &brandShortName;…">
+<!ENTITY refreshProfile.cleaning.description "Prawie gotowe…">

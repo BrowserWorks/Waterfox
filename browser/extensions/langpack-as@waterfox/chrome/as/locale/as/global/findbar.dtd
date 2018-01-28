@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "বাক্যাংশৰ পৰৱৰ্তী উপস্থিতি সন্ধান কৰক">
+<!ENTITY previous.tooltip "বাক্যাংশৰ পূৰ্বৱৰ্তী উপস্থিতি সন্ধান কৰক">
+<!ENTITY findCloseButton.tooltip "সন্ধান বাৰ বন্ধ কৰক">
+
+
+<!ENTITY highlightAll.tooltiptext "বাক্যাংশৰ সকলো উপস্থিতি উজ্জ্বল কৰক">
+<!ENTITY caseSensitive.label "ফলা মিলাওক">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "ফলা সংবেদনশীলতাৰ সৈতে সন্ধান কৰক">
+
+
+
+
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.label "Whole Words">
+<!ENTITY entireWord.tooltiptext "Search whole words only">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.label "Highlight All">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY updateWizard.title              "Opdatering af &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; arbejder offline">
+<!ENTITY  offline.description             "&brandShortName; er nødt til at gå online for at se om opdateringer er tilgængelige til dine tilføjelser, for at gøre dem kompatible med denne version.">
+<!ENTITY  offline.toggleOffline.label     "Gå online nu.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY mismatch.win.title               "Inkompatible tilføjelser">
+<!ENTITY  mismatch.top.label              "Følgende tilføjelser er ikke kompatible med denne version af &brandShortName; og er blevet deaktiveret:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; kan undersøge om der findes kompatible versioner af disse tilføjelser.">
+
+<!ENTITY  checking.wizard.title           "Leder efter kompatible tilføjelser">
+<!ENTITY  checking.top.label              "Søger efter opdateringer til dine inkompatible tilføjelser…">
+<!ENTITY  checking.status                 "Dette kan tage nogle minutter…">
+
+<!ENTITY  found.wizard.title              "Fandt kompatible tilføjelser">
+<!ENTITY  found.top.label                 "Vælg de tilføjelser du ønsker at opdatere:">	
+<!ENTITY  found.disabledXPinstall.label   "Disse opdateringer kan ikke installeres da programinstallation i øjeblikket er deaktiveret. Du kan ændre denne indstilling herunder.">
+<!ENTITY  found.enableXPInstall.label     "Tillad websteder at installere software">
+<!ENTITY  found.enableXPInstall.accesskey "T">
+
+<!ENTITY  installing.wizard.title         "Installerer kompatible tilføjelser">
+<!ENTITY  installing.top.label            "Henter og installerer opdateringer til dine tilføjelser…">
+
+<!ENTITY  noupdates.wizard.title          "Ingen kompatible tilføjelser blev fundet">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; var ikke i stand til at finde opdateringer til dine inkompatible tilføjelser.">
+<!ENTITY  noupdates.error.desc            "Der opstod nogle problemer under forsøget på at finde opdateringer.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; vil periodisk søge og informere dig når kompatible opdateringer til disse tilføjelser er fundet.">
+
+<!ENTITY  finished.wizard.title           "Kompatible tilføjelser blev installeret">
+<!ENTITY  finished.top.label              "&brandShortName; installerede opdateringerne til dine tilføjelser.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; kan periodisk søge efter opdateringer til disse tilføjelser og informere dig, når sådanne opdateringer findes.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; vil periodisk søge efter opdateringer til disse tilføjelser og informere dig, når sådanne opdateringer findes.">
+
+<!ENTITY  adminDisabled.wizard.title      "Ude af stand til at søge efter opdateringer">
+<!ENTITY  adminDisabled.warning.label     "Det er ikke muligt at lede efter opdateringer til inkompatible tilføjelser, fordi programinstallation er blevet deaktiveret. Kontakt venligst din systemadministrator for assistance.">
+
+<!ENTITY  versioninfo.wizard.title        "Undersøger kompatibilitet for tilføjelser">
+<!ENTITY  versioninfo.top.label           "Undersøger dine tilføjelser for kompatibilitet med denne version af &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Dette kan tage nogle minutter…">
+
+<!ENTITY  installerrors.wizard.title      "Problemer under installation af opdateringer">
+<!ENTITY  installerrors.intro.label       "&brandShortName; stødte på problemer under opdatering af nogle af dine tilføjelser.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Klik på Afslut for at fortsætte opstarten af &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Klik på Færdig for at fortsætte opstarten af &brandShortName;.">
+<!ENTITY  enableChecking.label            "Tillad &brandShortName; at søge efter opdateringer.">

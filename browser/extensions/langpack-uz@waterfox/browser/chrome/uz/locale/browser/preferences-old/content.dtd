@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Paydo bo‘luvchi oynalar">
+
+<!ENTITY  blockPopups.label           "Paydo bo‘luvchi oynalarni bloklash">
+<!ENTITY  blockPopups.accesskey       "P">
+
+<!ENTITY  notificationsPolicy.label            "Eslatmalar">
+<!ENTITY  notificationsPolicyLearnMore.label   "Batafsil ma’lumot">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "T">
+<!ENTITY  notificationsPolicyButton.label      "Tanlang…">
+<!ENTITY  notificationsDoNotDisturb.label      "Meni bezovta qilmang">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "M">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName; dasturini qayta ishga tushirmaguningizcha hech qanday eslatma ko‘rsatilmaydi">
+
+<!ENTITY  popupExceptions.label       "Istisnolar…">
+<!ENTITY  popupExceptions.accesskey   "I">
+
+<!ENTITY  fontsAndColors.label        "Shriftlar va ranglar">
+
+<!ENTITY  defaultFont.label           "Standart shrift:">
+<!ENTITY  defaultFont.accesskey       "S">
+<!ENTITY  defaultSize.label           "Hajmi:">
+<!ENTITY  defaultSize.accesskey       "H">
+
+<!ENTITY  advancedFonts.label         "Qo‘shimcha…">
+<!ENTITY  advancedFonts.accesskey     "Q">
+
+<!ENTITY  colors.label                "Ranglar…">
+<!ENTITY  colors.accesskey            "R">
+
+
+<!ENTITY languages.label              "Tillar">
+<!ENTITY chooseLanguage.label         "Sahifalar ko‘rinishi kerak bo‘lgan til">
+<!ENTITY chooseButton.label           "Tanlash…">
+<!ENTITY chooseButton.accesskey       "T">
+
+<!ENTITY translateWebPages.label      "Veb saytni tarjima qilish">
+<!ENTITY translateWebPages.accesskey  "t">
+<!ENTITY translateExceptions.label    "Istisnolar...">
+<!ENTITY translateExceptions.accesskey "s">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Tarjimon:">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+
+<!ENTITY  playDRMContent.label         "DRM tarkibni ko‘rsatish">
+<!ENTITY  playDRMContent.accesskey     "k">
+<!ENTITY  playDRMContent.learnMore.label "Batafsil ma’lumot">
+
+<!ENTITY  drmContent.label             "DRM Content">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

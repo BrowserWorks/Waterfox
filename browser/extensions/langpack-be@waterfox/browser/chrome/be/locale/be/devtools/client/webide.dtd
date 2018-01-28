@@ -1,0 +1,193 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Праект">
+<!ENTITY projectMenu_accesskey "П">
+<!ENTITY projectMenu_newApp_label "Стварыць…">
+<!ENTITY projectMenu_newApp_accesskey "т">
+<!ENTITY projectMenu_importPackagedApp_label "Адкрыць упакаваны…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "п">
+<!ENTITY projectMenu_importHostedApp_label "Адкрыць змешчаны…">
+<!ENTITY projectMenu_importHostedApp_accesskey "з">
+<!ENTITY projectMenu_selectApp_label "Адкрыць…">
+<!ENTITY projectMenu_selectApp_accesskey "А">
+<!ENTITY projectMenu_play_label "Усталяваць і запусціць">
+<!ENTITY projectMenu_play_accesskey "з">
+<!ENTITY projectMenu_stop_label "Спыніць">
+<!ENTITY projectMenu_stop_accesskey "ы">
+<!ENTITY projectMenu_debug_label "Адладзіць">
+<!ENTITY projectMenu_debug_accesskey "д">
+<!ENTITY projectMenu_remove_label "Сцерці праект">
+<!ENTITY projectMenu_remove_accesskey "к">
+<!ENTITY projectMenu_showPrefs_label "Налады">
+<!ENTITY projectMenu_showPrefs_accesskey "а">
+<!ENTITY projectMenu_manageComponents_label "Кіраваць дадатковымі кампанентамі">
+<!ENTITY projectMenu_manageComponents_accesskey "ь">
+<!ENTITY projectMenu_refreshTabs_label "Абнавіць карткі">
+
+<!ENTITY runtimeMenu_label "Асяроддзе">
+<!ENTITY runtimeMenu_accesskey "А">
+<!ENTITY runtimeMenu_disconnect_label "Адлучыць">
+<!ENTITY runtimeMenu_disconnect_accesskey "д">
+<!ENTITY runtimeMenu_takeScreenshot_label "Здымак экрана">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "ы">
+<!ENTITY runtimeMenu_showDetails_label "Звесткі пра асяроддзе">
+<!ENTITY runtimeMenu_showDetails_accesskey "і">
+<!ENTITY runtimeMenu_showMonitor_label "Манітор">
+<!ENTITY runtimeMenu_showMonitor_accesskey "М">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Перавагі прылады">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "п">
+<!ENTITY runtimeMenu_showSettings_label "Налады прылады">
+<!ENTITY runtimeMenu_showSettings_accesskey "ы">
+
+<!ENTITY viewMenu_label "Прагляд">
+<!ENTITY viewMenu_accesskey "П">
+<!ENTITY viewMenu_zoomin_label "Павялічыць">
+<!ENTITY viewMenu_zoomin_accesskey "в">
+<!ENTITY viewMenu_zoomout_label "Паменшыць">
+<!ENTITY viewMenu_zoomout_accesskey "м">
+<!ENTITY viewMenu_resetzoom_label "Скінуць павелічэнне">
+<!ENTITY viewMenu_resetzoom_accesskey "С">
+
+<!ENTITY projectButton_label "Адкрыць прыкладанне">
+<!ENTITY runtimeButton_label "Выбраць асяроддзе">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Мае праекты">
+<!ENTITY projectPanel_runtimeApps "Выконваюцца">
+<!ENTITY projectPanel_tabs "Карткі">
+<!ENTITY runtimePanel_usb "Прылады USB">
+<!ENTITY runtimePanel_wifi "Прылады Wi-Fi">
+<!ENTITY runtimePanel_simulator "Сімулятары">
+<!ENTITY runtimePanel_other "Іншае">
+<!ENTITY runtimePanel_installsimulator "Усталяваць сімулятар">
+<!ENTITY runtimePanel_noadbhelper "Усталяваць дапаможнік ADB">
+<!ENTITY runtimePanel_nousbdevice "Не бачыце сваю прыладу?">
+<!ENTITY runtimePanel_refreshDevices_label "Абнавіць прылады">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "дапушчальны">
+<!ENTITY details_warning_header "папярэджанні">
+<!ENTITY details_error_header "памылкі">
+<!ENTITY details_description "Апісанне">
+<!ENTITY details_location "Месцазнаходжанне">
+<!ENTITY details_manifestURL "Ідэнтыфікатар">
+<!ENTITY details_removeProject_button "Сцерці праект">
+<!ENTITY details_showPrepackageLog_button "Паказаць журнал перадпакавання">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Новы">
+<!ENTITY newAppHeader "Выберыце шаблон">
+<!ENTITY newAppLoadingTemplate "Чытаюцца шаблоны…">
+<!ENTITY newAppProjectName "Назва праекта:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Закрыць">
+
+<!-- Addons -->
+<!ENTITY addons_title "Дадатковыя кампаненты">
+<!ENTITY addons_aboutaddons "Адкрыць менеджар дадаткаў">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Налады">
+<!ENTITY prefs_editor_title "Рэдактар">
+<!ENTITY prefs_general_title "Агульныя">
+<!ENTITY prefs_restore "Узнавіць прадвызначэнні">
+<!ENTITY prefs_manage_components "Кіраваць дадатковымі кампанентамі">
+<!ENTITY prefs_options_autoconnectruntime "Перазлучыцца з папярэднім асяроддзем">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Перазлучацца з папярэднім асяроддзем калі WebIDE стартуе">
+<!ENTITY prefs_options_rememberlastproject "Запомніць апошні праект">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Узнаўляць папярэдні праект калі WebIDE стартуе">
+<!ENTITY prefs_options_templatesurl "URL шаблонаў">
+<!ENTITY prefs_options_templatesurl_tooltip "Індэкс даступных шаблонаў">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Звесткі часу выканання">
+<!ENTITY runtimedetails_adbIsRoot "ADB - корань: ">
+<!ENTITY runtimedetails_summonADBRoot "каранёвая прылада">
+<!ENTITY runtimedetails_ADBRootWarning "(патрабуе разблакаваны загрузчык)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Неабмежаваныя прывілеі DevTools: ">
+<!ENTITY runtimedetails_requestPrivileges "запытаць вышэйшыя прывілеі">
+<!ENTITY runtimedetails_privilegesWarning "(Перастартуе прыладу. Патрабуе доступ root)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Булеўскі">
+<!ENTITY device_typenumber "Цэлалікавы">
+<!ENTITY device_typestring "Радок">
+<!ENTITY device_typeobject "Аб'ект">
+<!ENTITY device_typenone "Выберыце тып">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Налады прылады">
+<!ENTITY devicepreference_search "Налады пошуку">
+<!ENTITY devicepreference_newname "Новая назва перавагі">
+<!ENTITY devicepreference_newtext "Значэнне перавагі">
+<!ENTITY devicepreference_addnew "Дадаць новую перавагу">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Параметры прылады">
+<!ENTITY devicesetting_search "Параметры пошуку">
+<!ENTITY devicesetting_newname "Назва новага параметра">
+<!ENTITY devicesetting_newtext "Значэнне параметра">
+<!ENTITY devicesetting_addnew "Дадаць новы параметр">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Манітор">
+<!ENTITY monitor_help "Даведка">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Ідэнтыфікацыя кліента">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Канечны пункт, да якога вы далучаецеся, патрабуе больш звестак для ідэнтыфікацыі злучэння.  Калі ласка, адскануйце QR-код ніжэй праз запыт на вашай прыладзе.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Няма запыту QR сканера?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Ёсць запыт QR сканера?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Калі ваша іншая прылада запытвае токен замест сканавання QR коду, калі ласка, скапіюйце значэнне ніжэй у іншую прыладу:">
+<!ENTITY wifi_auth_qr_size_note "Калі QR-код занадта малы, каб паспяхова ўсталяваць злучэнне, паспрабуйце павялічыць маштаб ці акно.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Журнал каманд перад-пакавання">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Налады сімулятара">
+<!ENTITY simulator_remove "Выдаліць сімулятар">
+<!ENTITY simulator_reset "Узнавіць сімулятар">
+<!ENTITY simulator_name "Назва">
+<!ENTITY simulator_software "Праграма">
+<!ENTITY simulator_version "Версія">
+<!ENTITY simulator_profile "Профіль">
+<!ENTITY simulator_hardware "Апаратура">
+<!ENTITY simulator_device "Прылада">
+<!ENTITY simulator_screenSize "Экран">
+<!ENTITY simulator_pixelRatio "Суадносіны пікселяў">
+<!ENTITY simulator_tv_data "Сімуляцыя ТБ">
+<!ENTITY simulator_tv_data_open "Звесткі канфігурацыі">
+<!ENTITY simulator_tv_data_open_button "Адкрыць каталог канфігурацыі…">

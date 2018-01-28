@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "설정">
+<!ENTITY  prefWindow.title        "환경 설정">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; 환경 설정">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 45em; min-height: 39em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 48em; min-height: 43em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45em; min-height: 42.5em;">
+
+<!ENTITY  paneSearchResults.title       "검색 결과">
+<!ENTITY  paneGeneral.title             "일반">
+<!ENTITY  paneSearch.title              "검색">
+<!ENTITY  paneFilesApplications.title   "파일 및 애플리케이션">
+<!ENTITY  panePrivacySecurity.title     "개인 정보 및 보안">
+<!ENTITY  paneContainers.title          "포함 탭">
+<!ENTITY  paneUpdates.title             "업데이트">
+
+<!ENTITY  languageAndAppearance.label   "언어와 표현">
+<!ENTITY  filesAndApplications.label    "파일과 어플리케이션">
+<!ENTITY  browserPrivacy.label          "브라우저 개인정보">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Waterfox Account">
+
+<!ENTITY  helpButton2.label        "&brandShortName; 도움말">

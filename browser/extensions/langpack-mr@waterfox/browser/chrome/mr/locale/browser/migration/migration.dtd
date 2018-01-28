@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "विझार्ड आयात करा">
+
+<!ENTITY importFrom.label               "पर्याय, वाचनखूणा, इतिहास, पासवर्ड व इतर माहिती येथून आयात करा:">
+<!ENTITY importFromUnix.label           "याअाधी वापरात असलेली आवडीनिवडी, वाचनखूणा, इतिहास, पासवर्ड व इतर) माहिती येथून आयात करा:">
+<!ENTITY importFromBookmarks.label      "वाचनखूणा येथून आयात करा:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "काहिही आयात करू नका">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 सुरक्षित ब्राउझर">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "वाचनखूणा, इतिहास किंवा पासवर्ड विषयी माहिती देणारे कुठलेही कार्यक्रम आढळले नाही.">
+
+<!ENTITY importSource.title             "आवडीनिवडी आणि माहिती येथून आयात करा">
+<!ENTITY importItems.title              "आयात करण्यासाठीचे घटक">
+<!ENTITY importItems.label              "कोणते घटक आयात करायचे ते निवडा:">
+
+<!ENTITY migrating.title                "आयात करत आहे…">
+<!ENTITY migrating.label                "खालील घटक सध्या आयात केले जात आहेत…">
+
+<!ENTITY selectProfile.title            "निवडसंच निवडा">
+<!ENTITY selectProfile.label            "आयात करण्यासाठी पुढील निवडसंच उपलब्ध आहेत:">
+
+<!ENTITY done.title                     "आयात करणे पुर्ण झाले">
+<!ENTITY done.label                     "खालील घटक यशस्वीरित्या आयात केले गेले:">
+
+<!ENTITY closeSourceBrowser.label       "कृपया पुढे जायच्या पहिले निवडलेला ब्राउझर बंद आहे याची खात्री करा.">

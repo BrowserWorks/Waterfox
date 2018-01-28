@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "সংযোগ সংক্রান্ত বৈশিষ্ট্যাবলী">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "ইন্টারনেট ব্যবহারের জন্য প্রক্সির বৈশিষ্ট্য নির্ধারণ করুন">
+<!ENTITY  noProxyTypeRadio.label        "প্রক্সি অনুপস্থিত">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "সিস্টেম প্রক্সির বৈশিষ্ট্য ব্যবহার করুন">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "চিহ্নিত নেটওয়ার্কের প্রক্সির বৈশিষ্ট্য স্বয়ংক্রিয়ভাবে সনাক্ত করা হবে">
+<!ENTITY  WPADTypeRadio.accesskey       "চ">
+<!ENTITY  manualTypeRadio.label         "ব্যবহারকারী দ্বারা প্রক্সি কনফিগারেশন">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "স্বয়ংক্রিয়ভাবে প্রক্সি কনফিগার করার URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "পুনরায় লোড">
+<!ENTITY  reload.accesskey              "প">
+<!ENTITY  ftp.label                     "FTP প্রক্সি:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP প্রক্সি:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL প্রক্সি:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "সক্স হোস্ট:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "সক্স v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "প্রক্সি DNS SOCKS v5 ব্যবহার করার সময়">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "পোর্ট:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "কোনো প্রক্সি উপস্থিত নেই:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "উদাহরণ: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "সর্বধরনের প্রোটোকলের জন্য একই প্রক্সি ব্যবহার করা হবে">
+<!ENTITY  shareproxy.accesskey          "স">
+<!ENTITY  autologinproxy.label          "পাসওয়ার্ড সংরক্ষিত থাকলে authentication এর জন্য অনুরোধ জানানো হবে না">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "এই অপশানটি আপনাকে প্রক্সির অনুমতি দেয় যখন আপনি সেগুলোর জন্যে পরিচয়পত্র জমা রাখেন। অনুমতি বাতিল হলে আপনাকে জানানো হবে।">

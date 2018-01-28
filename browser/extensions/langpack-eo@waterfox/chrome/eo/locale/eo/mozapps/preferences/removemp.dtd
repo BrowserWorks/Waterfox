@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Forigi ĉefan pasvorton">
+<!ENTITY removeInfo.label                  "Vi devas tajpi vian nunan pasvorton por daŭrigi:">
+<!ENTITY removeWarning1.label              "Per via ĉefa pasvorto delikataj informoj, kiel retejaj pasvortoj, estas protektataj.">
+<!ENTITY removeWarning2.label              "Se vi forigas vian ĉefan pasvorton via informo ne plu estos protektata se via komputilo estas riskita.">
+<!ENTITY setPassword.oldPassword.label     "Nuna pasvorto:">
+

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Maidir le Líonrú">
+<!ENTITY aboutNetworking.warning               "Gné turgnamhach. Ná úsáid gan treoir ó dhuine fásta.">
+<!ENTITY aboutNetworking.showNextTime          "Taispeáin an rabhadh seo an chéad uair eile">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Soicéid">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Athnuaigh">
+<!ENTITY aboutNetworking.autoRefresh           "Athnuaigh gach 3 shoicind">
+<!ENTITY aboutNetworking.hostname              "Óstainm">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Gníomhach">
+<!ENTITY aboutNetworking.idle                  "Díomhaoin">
+<!ENTITY aboutNetworking.host                  "Óstach">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Seolta">
+<!ENTITY aboutNetworking.received              "Faighte">
+<!ENTITY aboutNetworking.family                "Clann">
+<!ENTITY aboutNetworking.addresses             "Seoltaí">
+<!ENTITY aboutNetworking.expires               "As Feidhm (Soicindí)">
+<!ENTITY aboutNetworking.messagesSent          "Teachtaireachtaí Seolta">
+<!ENTITY aboutNetworking.messagesReceived      "Teachtaireachtaí Faighte">
+<!ENTITY aboutNetworking.bytesSent             "Bearta Seolta">
+<!ENTITY aboutNetworking.bytesReceived         "Bearta Faighte">
+<!ENTITY aboutNetworking.logging               "Logáil">
+<!ENTITY aboutNetworking.logTutorial           "Féach ar <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Logáil HTTP</a> le haghaidh treoracha faoi úsáid na huirlise seo.">
+<!ENTITY aboutNetworking.currentLogFile        "An Logchomhad Reatha:">
+<!ENTITY aboutNetworking.currentLogModules     "Logmhodúil Reatha:">
+<!ENTITY aboutNetworking.setLogFile            "Socraigh Logchomhad">
+<!ENTITY aboutNetworking.setLogModules         "Socraigh Logmhodúil">
+<!ENTITY aboutNetworking.startLogging          "Tosaigh Logáil">
+<!ENTITY aboutNetworking.stopLogging           "Stop Logáil">
+<!ENTITY aboutNetworking.dnsLookup             "Cuardach DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Réitigh">
+<!ENTITY aboutNetworking.dnsDomain             "Fearann">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPanna">
+<!ENTITY aboutNetworking.rcwn                  "Staitisticí RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Stádas RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Líon amas ón taisce">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Líon amas ón líonra">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Líon iomlán iarratas líonra">
+<!ENTITY aboutNetworking.rcwnOperation         "Oibríocht na Taisce">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Oscail">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Leámh">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Scríobh">
+
+
+
+
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Líon amas mall ón taisce">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Líon amas nach mall ón taisce">
+
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">

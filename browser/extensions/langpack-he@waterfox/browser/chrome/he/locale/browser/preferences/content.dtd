@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "הרשאות">
+
+<!ENTITY  blockPopups.label           "חסימת חלונות קופצים">
+<!ENTITY  blockPopups.accesskey       "ח">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "מידע נוסף">
+<!ENTITY  notificationsPolicyButton.accesskey  "ב">
+<!ENTITY  notificationsPolicyButton.label      "בחירה…">
+<!ENTITY  notificationsDoNotDisturb.label      "נא לא להפריע">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "נ">
+<!ENTITY  notificationsDoNotDisturbDetails.value "לא יוצגו התרעות עד אשר &brandShortName; יופעל מחדש">
+
+<!ENTITY  popupExceptions.label       "חריגות...">
+<!ENTITY  popupExceptions.accesskey   "ר">
+
+<!ENTITY  fontsAndColors.label        "גופנים וצבעים">
+
+<!ENTITY  defaultFont2.label          "גופן בררת מחדל">
+<!ENTITY  defaultFont2.accesskey      "ב">
+<!ENTITY  defaultSize2.label          "גודל">
+<!ENTITY  defaultSize2.accesskey      "ג">
+
+<!ENTITY  advancedFonts.label         "מתקדם...">
+<!ENTITY  advancedFonts.accesskey     "מ">
+
+<!ENTITY  colors.label                "צבעים...">
+<!ENTITY  colors.accesskey            "צ">
+
+
+<!ENTITY language2.label              "שפה">
+<!ENTITY chooseLanguage.label         "בחירת השפה המועדפת עליך להצגת דפים">
+<!ENTITY chooseButton.label           "בחירה…">
+<!ENTITY chooseButton.accesskey       "ב">
+
+<!ENTITY translateWebPages.label      "תרגום תוכן רשת">
+<!ENTITY translateWebPages.accesskey  "ת">
+<!ENTITY translateExceptions.label    "חריגות…">
+<!ENTITY translateExceptions.accesskey "ג">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "תרגום של">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "תוכן ניהול זכויות דיגיטלי (DRM)">
+
+<!ENTITY  playDRMContent2.label          "לנגן תוכן מוגן DRM">
+<!ENTITY  playDRMContent2.accesskey      "נ">
+<!ENTITY  playDRMContent.learnMore.label "מידע נוסף">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

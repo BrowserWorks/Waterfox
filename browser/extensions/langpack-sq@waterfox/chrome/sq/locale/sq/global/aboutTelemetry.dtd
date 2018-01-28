@@ -1,0 +1,197 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Të dhëna Telemetry-e">
+
+<!ENTITY aboutTelemetry.changeDataChoices "
+  Ndryshojini
+">
+
+<!ENTITY aboutTelemetry.uploadEnabled "
+  Ngarkimi FHR i të dhënave është <span>i aktivizuar</span>.
+">
+
+<!ENTITY aboutTelemetry.uploadDisabled "
+  Ngarkimi FHR i të dhënave është <span>i çaktivizuar</span>.
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "
+  Regjistrimi i zgjeruar nga Telemetry-a është <span>i aktivizuar</span>.
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "
+  Regjistrimi i zgjeruar nga Telemetry-a është <span>i çaktivizuar</span>.
+">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Burim të dhënash ping-u:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Të dhëna ping-u të tanishme
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Të dhëna ping-u të arkivuara
+">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "
+Shfaqje të dhënash ping-u:
+">
+
+<!ENTITY aboutTelemetry.structured "
+Të strukturuara
+">
+
+<!ENTITY aboutTelemetry.raw "
+JSON të papërpunuar
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Shfaqni të dhëna nënsesioni
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Zgjidhni ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Ping më të ri
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ping më të vjetër &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.rawPingData "
+Të dhëna të papërpunuara pingjesh ...
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Javë
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Të dhëna të Përgjithshme
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Të dhëna Mjedisi
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Regjistër Telemetry-e
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Deklarime SQL të Ngadalta
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Ngecje Shfletuesi
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Ngecje Rrjedhe
+">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skalarë
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Skalarë Me Fjalëkyçe
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histograme
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histograme Me Kyç
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Akte
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Matje të Thjeshta
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Hollësi Shtese
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Shkrime të Vonshme
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Të dhëna Sesioni
+">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "
+  Histograme të Grumbulluara nga Shtesat
+">
+
+<!ENTITY aboutTelemetry.toggle "
+  Klikojeni që të zgjerohet/tkurret ndarja
+">
+
+<!ENTITY aboutTelemetry.emptySection "
+  (Nuk ka të dhëna të grumbulluara)
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  SHËNIM: Diagnostikimi i Ngadalësisë në SQL është i aktivizuar. Vargjet e plota SQL mund të shfaqen më poshtë, por ato nuk do t&apos;i parashtrohen Telemetry-së.
+">
+
+
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtroni (vargje ose /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Ngarkesë
+">
+
+<!ENTITY aboutTelemetry.rawPayload "
+  Ngarkesë e Papërpunuar
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

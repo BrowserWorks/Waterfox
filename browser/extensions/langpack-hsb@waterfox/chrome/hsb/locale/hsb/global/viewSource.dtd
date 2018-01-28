@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Žórło wot: ">
+
+<!ENTITY fileMenu.label "Dataja">
+<!ENTITY fileMenu.accesskey "D">
+<!ENTITY savePageCmd.label "Stronu składować jako…">
+<!ENTITY savePageCmd.accesskey "S">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Stronu připrawić…">
+<!ENTITY pageSetupCmd.accesskey "o">
+<!ENTITY printPreviewCmd.label "Ćišćerski přehlad">
+<!ENTITY printPreviewCmd.accesskey "h">
+<!ENTITY printCmd.label "Ćišćeć…">
+<!ENTITY printCmd.accesskey "i">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Začinić">
+<!ENTITY closeCmd.accesskey "Z">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Dźi k lince…">
+<!ENTITY goToLineCmd.accesskey "l">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Napohlad">
+<!ENTITY viewMenu.accesskey       "N">
+<!ENTITY reloadCmd.label "Znowa začitać">
+<!ENTITY reloadCmd.accesskey "t">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Dołhe linki łamać"> 
+<!ENTITY menu_wrapLongLines.accesskey "h">
+<!ENTITY menu_highlightSyntax.label "Syntaksowe wuzběhnjenje">
+<!ENTITY menu_highlightSyntax.accesskey "S">
+<!ENTITY menu_textSize.label "Tekstowa wulkosć">
+<!ENTITY menu_textSize.accesskey "T">
+<!ENTITY menu_textEnlarge.label "Powjetšić">
+<!ENTITY menu_textEnlarge.accesskey "w">
+<!ENTITY menu_textReduce.label "Pomjeńšić">
+<!ENTITY menu_textReduce.accesskey "m">
+<!ENTITY menu_textReset.label "Normalny">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Na tutej stronje pytać…">
+<!ENTITY findOnCmd.accesskey "u">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Dale pytać">
+<!ENTITY findAgainCmd.accesskey "l">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Wróćo">
+<!ENTITY backCmd.accesskey "r">
+<!ENTITY forwardCmd.label "Doprědka">
+<!ENTITY forwardCmd.accesskey "o">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Wotkazowu adresu kopěrować">
+<!ENTITY copyLinkCmd.accesskey "W">
+<!ENTITY copyEmailCmd.label "E-mejlowu adresu kopěrować">
+<!ENTITY copyEmailCmd.accesskey "E">

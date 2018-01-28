@@ -1,0 +1,198 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "ട്രബിള്‍ഷൂട്ടിങിനുള്ള വിവരം">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  This page contains technical information that might be useful when you're trying to solve a problem. If you are looking for answers to common questions about &brandShortName;, check out our <a id='supportLink'>support web site</a>.">
+
+<!ENTITY aboutSupport.crashes.title "തകരാര്‍ രേഖപ്പെടുത്തുന്ന റിപോര്‍ട്ടുകള്‍">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ഐഡി രേഖപ്പെടുത്തുക">
+<!ENTITY aboutSupport.crashes.sendDate "സമര്‍പ്പിച്ചവ">
+<!ENTITY aboutSupport.crashes.allReports "എല്ലാ തകരാര്‍ റിപ്പോര്‍ട്ടുകളും">
+<!ENTITY aboutSupport.crashes.noConfig "തകരാറിന്റെ റിപോര്‍ട്ട് കാണിയ്ക്കുന്നതിനു് ഈ പ്രയോഗം ക്രമീകരിച്ചിട്ടില്ല.">
+
+<!ENTITY aboutSupport.extensionsTitle "എക്സ്റ്റെന്‍ഷനുകള്‍">
+<!ENTITY aboutSupport.extensionName "പേരു്">
+<!ENTITY aboutSupport.extensionEnabled "പ്രവര്‍ത്തന സജ്ജം">
+<!ENTITY aboutSupport.extensionVersion "പതിപ്പു്">
+<!ENTITY aboutSupport.extensionId "ഐഡി">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "പരീക്ഷണാര്‍ത്ഥമായ വിശേഷതകള്‍">
+<!ENTITY aboutSupport.experimentName "പേരു്">
+<!ENTITY aboutSupport.experimentId "ഐഡി">
+<!ENTITY aboutSupport.experimentDescription "വിവരണം">
+<!ENTITY aboutSupport.experimentActive "സജീവമാക്കുക">
+<!ENTITY aboutSupport.experimentEndDate "അവസാനിക്കുന്ന തീയതി">
+<!ENTITY aboutSupport.experimentHomepage "ആസ്ഥാനതാള്‍">
+<!ENTITY aboutSupport.experimentBranch "ശാഖ">
+
+<!ENTITY aboutSupport.appBasicsTitle "പ്രയോഗത്തിന്റെ അടിസ്ഥാന വിശേഷതകള്‍">
+<!ENTITY aboutSupport.appBasicsName "പേരു്">
+<!ENTITY aboutSupport.appBasicsVersion "പതിപ്പു്">
+<!ENTITY aboutSupport.appBasicsBuildID "ബില്‍ഡ് ഐഡി">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "ചാനല്‍ പുതുക്കുക">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "നാള്‍വഴി പുതുക്കുക">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "പരിഷ്കരണ നാള്‍വഴി കാണിക്കുക ">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "പ്രൊഫൈല്‍ ഡയറക്ടറി">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "പ്രൊഫൈല്‍ ഫോള്‍ഡര്‍">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "പ്രവര്‍ത്തന സജ്ജമായ പ്ലഗിനുകള്‍">
+<!ENTITY aboutSupport.appBasicsBuildConfig "ബിള്‍ഡ് ക്രമീകരണം">
+<!ENTITY aboutSupport.appBasicsUserAgent "യൂസര്‍ ഏജന്റ്">
+
+<!ENTITY aboutSupport.appBasicsMemoryUse "മെമ്മറിയുടെ ഉപയോഗം">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "രജിസ്റ്റര്‍ ചെയ്‌ത Service Workers">
+
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "അനവധി പ്രക്രിയയ്ക്കുള്ള ജാലകങ്ങള്‍">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "സുരക്ഷ മോഡ്">
+
+<!ENTITY aboutSupport.showDir.label "ഡയറക്ടറി തുറക്കുക">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "ഫൈന്‍ഡറില്‍ കാണിയ്ക്കുക">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "മാറ്റം വരുത്തിയ പ്രധാനപ്പെട്ട മുന്‍ഗണനകള്‍">
+<!ENTITY aboutSupport.modifiedPrefsName "പേരു്">
+<!ENTITY aboutSupport.modifiedPrefsValue "മൂല്ല്യം">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js മുന്‍ഗണനകള്‍">
+<!ENTITY aboutSupport.userJSDescription "നിങ്ങളുടെ പ്രൊഫൈല്‍ ഫോള്‍ഡറില്‍ ഒരു <a id='prefs-user-js-link'>user.js file</a> അടങ്ങുന്നു. ഇതില്‍ &brandShortName; തയ്യാറാക്കാത്ത മുന്‍ഗണനങ്ങള്‍ ഉള്‍പ്പെടുന്നു.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "പൂട്ടിയ പ്രധാനപ്പെട്ട മുന്‍ഗണനകള്‍">
+<!ENTITY aboutSupport.lockedPrefsName "പേരു്">
+<!ENTITY aboutSupport.lockedPrefsValue "മൂല്ല്യം">
+
+<!ENTITY aboutSupport.graphicsTitle "ഗ്രാഫിക്ക്സ്">
+
+
+
+
+<!ENTITY aboutSupport.jsTitle "ജാവാസ്ക്രിപ്റ്റ്">
+<!ENTITY aboutSupport.jsIncrementalGC "വര്‍ദ്ധിച്ച ജിസി">
+
+<!ENTITY aboutSupport.a11yTitle "ആക്സസിബിളിറ്റി">
+<!ENTITY aboutSupport.a11yActivated "സജീവമാക്കിയിരിയ്ക്കുന്നു">
+<!ENTITY aboutSupport.a11yForceDisabled "ആക്സസിബിളിറ്റി തടയുക">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "ലൈബ്രറി പതിപ്പുകള്‍">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ഇന്‍സ്റ്റലേഷന്‍ നാള്‍വഴി">
+<!ENTITY aboutSupport.updateHistoryTitle "നാള്‍വഴി പുതുക്കുക">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "ക്ലിപ്പ്ബോര്‍ഡിലേക്കു് വാചകം പകര്‍ത്തുക">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ക്ലിപ്പ്ബോര്‍ഡിലേക്കു് ഡേറ്റാ പകര്‍ത്തുക">
+
+<!ENTITY aboutSupport.sandboxTitle "സാന്റ്ബോക്സ്">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "സേഫ് മോഡ് ശ്രമിച്ചുനോക്കുക">
+<!ENTITY aboutSupport.restartInSafeMode.label "ആഡ്-ഓണുകള്‍ പ്രവര്‍ത്തന രഹിതമാക്കി വീണ്ടും ആരംഭിയ്ക്കുക…">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsPerformance "Performance">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiles">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostics">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Failure Log">
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Features">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verify Integrity">
+
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

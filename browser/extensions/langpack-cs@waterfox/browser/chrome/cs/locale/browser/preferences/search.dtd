@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Výchozí vyhledávací modul">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Vyberte výchozí vyhledávač pro hledání z adresního řádku nebo pole hledání.">
+
+<!ENTITY provideSearchSuggestions.label        "Našeptávat návrhy hledání">
+<!ENTITY provideSearchSuggestions.accesskey    "n">
+
+<!ENTITY showURLBarSuggestions2.label           "Našeptávat návrhy hledání také v adresním řádku">
+<!ENTITY showURLBarSuggestions2.accesskey       "e">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Návrhy hledání nebudou v našeptávání adresního řádku uvedeny, protože jste nastavili aplikaci &brandShortName;, aby si nikdy nepamatovala historii.">
+
+<!ENTITY oneClickSearchEngines.label           "Vyhledávání jedním klepnutím">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Vyberte další vyhledávače, které se zobrazí v nabídce adresního řádku a pole hledání.">
+
+<!ENTITY engineNameColumn.label                "Vyhledávací modul">
+<!ENTITY engineKeywordColumn.label             "Klíčové slovo">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Obnovit výchozí vyhledávací moduly">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "Odebrat">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY findMoreSearchEngines.label           "Přidat další vyhledávací moduly">

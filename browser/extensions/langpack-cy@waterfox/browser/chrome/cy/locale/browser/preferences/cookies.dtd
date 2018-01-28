@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Mae'r cwcis canlynol wedi eu storio ar eich cyfrifiadur:">
+<!ENTITY     cookiename.label               "Enw'r Cwci">
+<!ENTITY     cookiedomain.label             "Gwefan">
+
+<!ENTITY     props.name.label               "Enw:">
+<!ENTITY     props.value.label              "Cynnwys:">
+<!ENTITY     props.domain.label             "Gwesteiwr:">
+<!ENTITY     props.path.label               "Llwybr:">
+<!ENTITY     props.secure.label             "Anfon am:">
+<!ENTITY     props.expires.label            "Daw i ben:">
+<!ENTITY     props.container.label          "Cynhwysydd:">
+
+<!ENTITY     window.title                   "Cwcis">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Chwilio">
+<!ENTITY     searchFilter.accesskey         "C">
+
+<!ENTITY     button.close.label             "Cau">
+<!ENTITY     button.close.accesskey         "C">

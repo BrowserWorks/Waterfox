@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Historial de actualizacións">
+<!ENTITY  history.intro             "Instaláronse as seguintes actualizacións:">
+<!ENTITY  closebutton.label         "Pechar">
+                                     
+<!ENTITY  noupdates.label           "Aínda non se instalou ningunha actualización">
+
+<!ENTITY  name.header               "Nome da actualización">
+<!ENTITY  date.header               "Data de instalación">
+<!ENTITY  type.header               "Tipo">
+<!ENTITY  state.header              "Estado">
+

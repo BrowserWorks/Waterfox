@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "બુકમાર્કો">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "ટૅબ ખોલો">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "ઇતિહાસ">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "લોગીન">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "પસંદગીઓ">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "ઍડ-ઓન">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "સરનામાઓ">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "ક્રડિટ કાર્ડ્ઝ">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "ઉપકરણનું નામ">
+<!ENTITY changeSyncDeviceName.label "ઉપકરણ નામ બદલો…">
+<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "રદ કરો">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "સાચવો">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "સેવાની મર્યાદાઓ">
+<!ENTITY fxaPrivacyNotice.link.label "ખાનગી સૂચના">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "ચકાસેલ નથી.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "મહેરબાની કરીને ફરી જોડાણ માટે પ્રવેશો">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "તમે પ્રવેશેલ નથી.">
+<!ENTITY signIn.label                "સાઇન ઇન કરો">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "પ્રોફાઇલ ચિત્ર બદલો">
+<!ENTITY verifiedManage.label        "ખાતાને સંચાલિત કરો">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect.label            "જોડાણ તોડી નાખો…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY verify.label                "ઈમેલ ચકાસો">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "આ ઇમેઇલ ભૂલી જાઓ">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "તમે તમારા વેબ ને લો">
+<!ENTITY signedOut.accountBox.create  "ખાતાને બનાવો">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "સાઇન ઇન કરો">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "ડાઉનલોડ કરો Waterfox માટે ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " અથવા ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+
+<!ENTITY mobilePromo3.end              " to sync with your mobile device.">
+<!ENTITY signedIn.engines.label       "Sync Across All Devices">
+
+<!ENTITY signedOut.accountBox.title   "Connect with a &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.description        "Synchronize your bookmarks, history, tabs, passwords, add-ons, and preferences across all your devices.">

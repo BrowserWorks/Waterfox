@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Folgende Cookies sind auf Ihrem Computer gespeichert:">
+<!ENTITY     cookiename.label               "Cookie-Name">
+<!ENTITY     cookiedomain.label             "Website"> 
+
+<!ENTITY     props.name.label               "Name:">
+<!ENTITY     props.value.label              "Inhalt:">
+<!ENTITY     props.domain.label             "Host:">
+<!ENTITY     props.path.label               "Pfad:">
+<!ENTITY     props.secure.label             "Senden für:">
+<!ENTITY     props.expires.label            "Gültig bis:">
+<!ENTITY     props.container.label          "Umgebung:">
+
+<!ENTITY     window.title                   "Cookies">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Suchen">
+<!ENTITY     searchFilter.accesskey         "u">
+
+<!ENTITY     button.close.label             "Schließen">
+<!ENTITY     button.close.accesskey         "c">

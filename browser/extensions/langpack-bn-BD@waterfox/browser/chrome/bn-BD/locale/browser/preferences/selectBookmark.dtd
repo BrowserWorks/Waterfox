@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY selectBookmark.title "প্রধান পাতা নির্ধারণ">
+<!ENTITY selectBookmark.label "প্রধান পাতা হিসেবে নির্ধারণের জন্য একটি বুকমার্ক বাছাই করুন। কোনো ফোল্ডার নির্বাচন করা হলে, ফোল্ডারের সব বুকমার্ক আলাদা ট্যাবে প্রদর্শিত হবে।">
+

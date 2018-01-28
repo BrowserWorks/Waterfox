@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Bağlan">
+<!ENTITY header     "Uzak aygıta bağlan">
+<!ENTITY host       "Sunucu:">
+<!ENTITY port       "İletișim noktası:">
+<!ENTITY connect    "Bağlan">
+<!ENTITY connecting "Bağlanıyor…">
+<!ENTITY availableAddons "Erişilebilir uzak eklentiler:">
+<!ENTITY availableTabs "Erişilebilir uzak sekmeler:">
+<!ENTITY availableProcesses "Erişilebilir uzak işlemler:">
+<!ENTITY connectionError "Hata:">
+<!ENTITY errorTimeout "Hata: Bağlantı zaman aşımına uğradı.">
+<!ENTITY errorRefused "Hata: Bağlantı reddedildi.">
+<!ENTITY errorUnexpected "Beklenmeyen hata.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox Geliştirici Araçları uzaktaki aygıtlarda (örneğin Android için Waterfox ve Waterfox OS) hata ayıklayabilir. Uzaktaki aygıtta ‘Uzaktan hata ayıklama’ seçeneğini açtığınızdan emin olun. Daha fazla bilgi için ">
+<!ENTITY remoteDocumentation "belgelere">
+<!ENTITY remoteHelpSuffix " bakın.">
+

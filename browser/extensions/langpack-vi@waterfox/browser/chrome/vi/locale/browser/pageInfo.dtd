@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Chép">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Chọn Toàn Bộ">
+<!ENTITY  selectall.accesskey   "B">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Tổng quát">
+<!ENTITY  generalTab.accesskey  "T">
+<!ENTITY  generalTitle          "Tiêu đề:">
+<!ENTITY  generalURL            "Địa chỉ:">
+<!ENTITY  generalType           "Kiểu:">
+<!ENTITY  generalMode           "Chế độ Xử lí:">
+<!ENTITY  generalSize           "Kích thước:">
+<!ENTITY  generalReferrer       "URL liên quan:">
+<!ENTITY  generalSource         "Nguồn Đệm:">
+<!ENTITY  generalModified       "Được chỉnh sửa:">
+<!ENTITY  generalEncoding2      "Mã hóa văn bản:">
+<!ENTITY  generalMetaName       "Tên">
+<!ENTITY  generalMetaContent    "Nội dung">
+
+<!ENTITY  mediaTab              "Đa phương tiện">
+<!ENTITY  mediaTab.accesskey    "a">
+<!ENTITY  mediaLocation         "Địa chỉ:">
+<!ENTITY  mediaText             "Văn bản đi kèm:">
+<!ENTITY  mediaAltHeader        "Văn bản Thay thế">
+<!ENTITY  mediaAddress          "Địa chỉ">
+<!ENTITY  mediaType             "Kiểu">
+<!ENTITY  mediaSize             "Kích thước">
+<!ENTITY  mediaCount            "Tổng số">
+<!ENTITY  mediaDimension        "Kích cỡ:">
+<!ENTITY  mediaLongdesc         "Mô tả Đầy đủ:">
+<!ENTITY  mediaBlockImage.accesskey "C">
+<!ENTITY  mediaSaveAs           "Lưu Thành…">
+<!ENTITY  mediaSaveAs.accesskey "L">
+<!ENTITY  mediaSaveAs2.accesskey "h">
+<!ENTITY  mediaPreview          "Xem trước:">
+
+<!ENTITY  feedTab               "Feed">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Đăng kí">
+<!ENTITY  feedSubscribe.accesskey "g">
+
+<!ENTITY  permTab               "Quyền hạn">
+<!ENTITY  permTab.accesskey     "Q">
+<!ENTITY  permUseDefault        "Dùng Mặc Định">
+<!ENTITY  permAskAlways         "Luôn hỏi">
+<!ENTITY  permAllow             "Cho phép">
+<!ENTITY  permAllowSession      "Cho phép theo Phiên">
+<!ENTITY  permBlock             "Chặn">
+<!ENTITY  permissionsFor        "Quyền hạn cho:">
+<!ENTITY  permPlugins           "Kích hoạt Plugins">
+
+<!ENTITY  permClearStorage           "Xóa trắng lưu trữ">
+<!ENTITY  permClearStorage.accesskey "u">
+
+<!ENTITY  securityTab           "Bảo mật">
+<!ENTITY  securityTab.accesskey "B">
+<!ENTITY  securityView.certView "Xem Chứng Thư">
+<!ENTITY  securityView.accesskey "C">
+<!ENTITY  securityView.unknown   "Không rõ">
+
+
+<!ENTITY  securityView.identity.header   "Định danh Trang Web">
+<!ENTITY  securityView.identity.owner    "Chủ:">
+<!ENTITY  securityView.identity.domain   "Trang web:">
+<!ENTITY  securityView.identity.verifier "Xác minh bởi:">
+
+<!ENTITY  securityView.privacy.header                   "Riêng tư &amp; Lược sử">
+<!ENTITY  securityView.privacy.history                  "Tôi đã từng xem trang web này trước ngày hôm nay chưa?">
+<!ENTITY  securityView.privacy.cookies                  "Trang web này có đang lưu thông tin (cookie) trên máy tôi không?">
+<!ENTITY  securityView.privacy.viewCookies              "Xem Cookie">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "e">
+<!ENTITY  securityView.privacy.passwords                "Tôi có lưu mật khẩu nào trên trang web này không?">
+<!ENTITY  securityView.privacy.viewPasswords            "Xem các Mật khẩu Đã lưu">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "M">
+
+<!ENTITY  securityView.technical.header                 "Chi tiết Kĩ thuật">
+
+<!ENTITY  helpButton.label                              "Trợ giúp">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

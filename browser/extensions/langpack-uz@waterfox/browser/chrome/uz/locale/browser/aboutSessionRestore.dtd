@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Seansni tiklash">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Kechirasiz.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; oyna va ichki oynalaringizni tiklayotganda muammo yuz berdi. Bunga, odatda, so‘nggi ochilgan sahifalar sabab bo‘ladi.">
+<!ENTITY restorepage.tryThis        "Sinab ko‘rishingiz mumkin:">
+<!ENTITY restorepage.restoreSome    "Bir yoki bir nechta ichki oynani o‘chirish muammoga sabab bo‘lishi mumkin">
+<!ENTITY restorepage.startNew       "Butunlay yangi seansni boshlash">
+
+<!ENTITY restorepage.tryagainButton "Tiklash">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Yopish">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Tiklash">
+<!ENTITY restorepage.listHeader     "Oynalar va ichki oynalar">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "&#037;S oyna">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Qani, ketdik!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Muvaffaqiyatli!">
+
+<!ENTITY welcomeback2.pageTitle     "Muvaffaqiyatli!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; ketishga tayyor.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Barcha oynalarni tiklash">
+<!ENTITY welcomeback2.restoreSome.label "Faqat siz xohlaganlarni tiklash">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Qo‘shimcha dasturlaringiz va moslashlaringiz olib tashlandi va brauzeringiz sozlamalari standart holiga tiklandi. Agar bu muammoni hal qilmasa, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "nima qila olishingiz to‘g‘risida ko‘proq o‘rganing.">
+

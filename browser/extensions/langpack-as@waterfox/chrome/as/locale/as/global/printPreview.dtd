@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "প্ৰিন্ট কৰক…">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "পৃষ্ঠাৰ সংস্থাপন…">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "পৃষ্ঠা:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "ৰ">
+<!ENTITY scale.label          "স্কেইল:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "পট্ৰেইট">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "লেণ্ডস্কেইপ">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "বন্ধ কৰক">
+<!ENTITY close.accesskey      "C">
+<!ENTITY p30.label            "৩০&#037;">
+<!ENTITY p40.label            "৪০&#037;">
+<!ENTITY p50.label            "৫০&#037;">
+<!ENTITY p60.label            "৬০&#037;">
+<!ENTITY p70.label            "৭০&#037;">
+<!ENTITY p80.label            "৮০&#037;">
+<!ENTITY p90.label            "৯০&#037;">
+<!ENTITY p100.label           "১০০&#037;">
+<!ENTITY p125.label           "১২৫&#037;">
+<!ENTITY p150.label           "১৫০&#037;">
+<!ENTITY p175.label           "১৭৫&#037;">
+<!ENTITY p200.label           "২০০&#037;">
+<!ENTITY Custom.label         "স্বনিৰ্বাচিত...">
+<!ENTITY ShrinkToFit.label    "খাপ খুৱাবলৈ সৰু কৰক">
+<!ENTITY customPrompt.title   "স্বনিৰ্বাচিত স্কেইল...">
+
+
+
+
+
+<!ENTITY homearrow.tooltip    "প্ৰথম পৃষ্ঠা">
+<!ENTITY endarrow.tooltip     "শেষৰ পৃষ্ঠা">
+<!ENTITY nextarrow.tooltip    "পিছৰ পৃষ্ঠা">
+<!ENTITY previousarrow.tooltip "আগৰ পৃষ্ঠা">
+
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.disabled.tooltip "This page cannot be automatically simplified">
+
+<!ENTITY simplifyPage.enabled.tooltip  "Change layout for easier reading">
+<!ENTITY simplifyPage.label   "Simplify Page">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Newid Prif Gyfrinair">
+<!ENTITY setPassword.tokenName.label "Dyfais Diogelwch">
+<!ENTITY setPassword.oldPassword.label "Cyfrinair cyfredol:">
+<!ENTITY setPassword.newPassword.label "Cyfrinair newydd:">
+<!ENTITY setPassword.reenterPassword.label "Y cyfrinair newydd (eto):">
+<!ENTITY setPassword.meter.label "Mesurydd ansawdd y cyfrinair">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Ailosod">
+<!ENTITY resetPassword.title  "Ailosod Prif Gyfrinair">
+<!ENTITY resetPassword.text  "Os byddwch yn ailosod eich prif gyfrinair, bydd eich cyfrineiriau gwe ac e-bost, data ffurflen, tystysgrifau personol ac allweddi preifat sydd wedi eu cadw'n cael eu colli. Ydych chi'n siŵr eich bod eisiau ailosod eich prif gyfrinair?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Llwytho Tystysgrifau i Lawr">
+<!ENTITY downloadCert.message1 "Rydych wedi cael cais i ymddiried mewn Awdurdod Tystysgrifo (CA) newydd.">
+<!ENTITY downloadCert.trustSSL "Ymddiried yn yr Awdurdod Tystysgrifo i adnabod gwefannau.">
+<!ENTITY downloadCert.trustEmail "Ymddiried yn yr Awdurdod Tystysgrifo i adnabod defnyddwyr e-bost.">
+<!ENTITY downloadCert.trustObjSign "Ymddiried yn yr Awdurdod Tystysgrifo i adnabod datblygwyr meddalwedd.">
+<!ENTITY downloadCert.message3 "Cyn ymddiried mewn Awdurdod Tystysgrifo at unrhyw bwrpas, dylech archwilio ei dystysgrif a'i bolisi a chanllawiau (os yw ar gael).">
+<!ENTITY downloadCert.viewCert.label "Golwg">
+<!ENTITY downloadCert.viewCert.text "Archwilio tystysgrif Awdurdod Tystysgrifo">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Cais am Adnabod Defnyddiwr">
+<!ENTITY clientAuthAsk.message1 "Mae'r wefan yn gofyn i chi ddweud pwy ydych gyda thystysgrif diogelwch:">
+<!ENTITY clientAuthAsk.message2 "Dewiswch dystysgrif i'w chyflwyno fel adnabyddiaeth:">
+<!ENTITY clientAuthAsk.message3 "Manylion y dystysgrif hon:">
+
+<!ENTITY pkcs12.setpassword.title  "Dewiswch Gyfrinair Tystysgrif wrth Gefn">
+<!ENTITY pkcs12.setpassword.message  "Bydd y cyfrinair tystysgrif wrth gefn yma'n amddiffyn y ffeil wrth gefn rydych ar fin ei greu.  Rhaid gosod y cyfrinair i barhau gyda'r ffeil wrth gefn.">
+<!ENTITY pkcs12.setpassword.label1 "Cyfrinair y dystysgrif wrth gefn:">
+<!ENTITY pkcs12.setpassword.label2 "Cyfrinair y dystysgrif wrth gefn (eto):">
+<!ENTITY pkcs12.setpassword.reminder "Pwysig: Os byddwch yn anghofio eich cyfrinair diogelwch cludadwy, ni fydd modd i chi adfer y ffeil wrth gefn yma eto.  Cofnodwch hwn mewn man diogel.">
+
+<!ENTITY chooseToken.title  "Dewiswch Dialog Enghreifftiol">
+<!ENTITY chooseToken.message1 "Dewiswch arwydd.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Cynhyrchu Allwedd Breifat">
+<!ENTITY createCertInfo.msg1 "Wrthi'n Cynhyrchu Allwedd… Gall hyn gymryd ychydig o amser….">
+<!ENTITY createCertInfo.msg2 "Arhoswch…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Dilysu Tocyn Diogel">
+<!ENTITY protectedAuth.msg "Dilyswch i'r tocyn. Mae dulliau dilysu'n dibynnu ar y math o docyn.">
+<!ENTITY protectedAuth.tokenName.label "Tocyn:">

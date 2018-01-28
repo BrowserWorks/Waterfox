@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "หาตำแหน่งถัดไปของวลี">
+<!ENTITY previous.tooltip "หาตำแหน่งก่อนหน้าของวลี">
+<!ENTITY findCloseButton.tooltip "ปิดแถบค้นหา">
+<!ENTITY highlightAll.label "เน้นสีทั้งหมด">
+<!ENTITY highlightAll.accesskey "น">
+<!ENTITY highlightAll.tooltiptext "เน้นสีวลีที่พบทั้งหมด">
+<!ENTITY caseSensitive.label "ตัวพิมพ์ใหญ่เล็กตรงกัน">
+<!ENTITY caseSensitive.accesskey "ว">
+<!ENTITY caseSensitive.tooltiptext "ค้นหาโดยคำนึงถึงตัวพิมพ์ใหญ่เล็ก">
+<!ENTITY entireWord.label "ตรงกันทุกคำ">
+<!ENTITY entireWord.accesskey "ท">
+<!ENTITY entireWord.tooltiptext "ค้นหาแบบตรงกันทุกคำเท่านั้น">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "મુખ્ય પાસવર્ડ બદલો">
+<!ENTITY setPassword.tokenName.label "સુરક્ષા ઉપકરણ">
+<!ENTITY setPassword.oldPassword.label "વર્તમાન પાસવર્ડ:">
+<!ENTITY setPassword.newPassword.label "નવો પાસવર્ડ:">
+<!ENTITY setPassword.reenterPassword.label "નવો પાસવર્ડ (ફરીથી):">
+<!ENTITY setPassword.meter.label "પાસવર્ડ ગુણવત્તા માપક">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "પુનઃસુયોજિત કરો">
+<!ENTITY resetPassword.title  "મુખ્ય પાસવર્ડ ફરી ગોઠવો">
+<!ENTITY resetPassword.text  "જો તમે મુખ્ય પાસવર્ડ બદલશો તો, તમારા બધા વેબ અને ઇ-મેલ પાસવર્ડ, ફોર્મ માહિતી, અંગત પ્રમાણપત્રો અને કી ભુલાઇ જશે. શું તમે ચોક્કસપણે તમારો મુખ્ય પાસવર્ડ બદલવા માંગો છો?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "પ્રમાણપત્રો ડાઉનલોડ થાય છે">
+<!ENTITY downloadCert.message1 "તમને નવાં પ્રમાણપત્રોના સત્તાધિકારી (CA) પર વિશ્વાસ કરવાનુ કહેવામાં આવ્યું છે.">
+<!ENTITY downloadCert.trustSSL "વેબ સાઇટ ઓળખવા માંટે આ CA પર વિશ્વાસ કરો.">
+<!ENTITY downloadCert.trustEmail "મેલ વપરાશકર્તાઓને ઓળખવા માંટે આ CA પર વિશ્વાસ કરો.">
+<!ENTITY downloadCert.trustObjSign "સોફ્ટવેર વિકાસકર્તાઓનો ઓળખવા માંટે આ CA પર વિશ્વાસ કરો">
+<!ENTITY downloadCert.message3 "આ CA નો કોઈ હેતુ માટે વિશ્વાસ કર્યા પહેલાં, એના પ્રમાણપત્ર, નીતિઓ અને પ્રક્રિયાઓ (જો ઉપલબ્ધ હોય) તો 
+ચકાસો.">
+<!ENTITY downloadCert.viewCert.label "જુઓ">
+<!ENTITY downloadCert.viewCert.text "CA પ્રમાણપત્ર ચકાસો">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "વપરાશકર્તા ઓળખ વિનંતી">
+<!ENTITY clientAuthAsk.message1 "આ સાઇટે તમને પ્રમાણપત્ર સાથે તમારી ઓળખાણ આપવા માટે વિનંતી કરી છે:">
+<!ENTITY clientAuthAsk.message2 "ઓળખ તરીકે આપવા પ્રમાણપત્ર પસંદ કરો:">
+
+
+<!ENTITY pkcs12.setpassword.title  "પ્રમાણપત્ર બેકઅપ પાસવર્ડ પસંદ કરો">
+<!ENTITY pkcs12.setpassword.message  "પ્રમાણપત્ર બેકઅપ પાસવર્ડ તમારી બેકઅપ ફાઇલો માટે વપરાશે.">
+<!ENTITY pkcs12.setpassword.label1 "પ્રમાણપત્ર બેકઅપ પાસવર્ડ:">
+<!ENTITY pkcs12.setpassword.label2 "પ્રમાણપત્ર બેકઅપ પાસવર્ડ (ફરીથી):">
+<!ENTITY pkcs12.setpassword.reminder "મહત્વનુઃ  જો તમે પ્રમાણપત્ર બેકઅપ પાસવર્ડ ભૂલી જશો તો ફરી બેકઅપ ફાઇલોને ખોલી શકશો નહિ. 
+તેમને સુરક્ષિત જગ્યાએ નોંધી રાખો.">
+
+<!ENTITY chooseToken.title  "ટોકન સંવાદ પસંદ કરો">
+<!ENTITY chooseToken.message1 "મહેરબાની કરીને ટોકન પસંદ કરો.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "અંગત કી બનાવે છે">
+<!ENTITY createCertInfo.msg1 "કી બનવાનુ પ્રગતિ પર છે... આ થોડી મિનિટો લેશે....">
+<!ENTITY createCertInfo.msg2 "મહેરબાની કરીને રાહ જુઓ...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "સુરક્ષિત ટોકન સત્તાધિકરણ">
+<!ENTITY protectedAuth.msg "મહેરબાની કરીને ટોકનને સત્તાધિકારીત કરો. સત્તાધિકરણ પદ્ધતિ તમારા ટોકનના પ્રકાર પર આધાર રાખે છે.">
+<!ENTITY protectedAuth.tokenName.label "ટોકન:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Správce bezpečnostních zařízení">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Bezpečnostní moduly a zařízení">
+<!ENTITY devmgr.details.title                   "Podrobnosti">
+<!ENTITY devmgr.details.title2                  "Hodnota">
+
+<!ENTITY devmgr.button.login.label              "Přihlásit">
+<!ENTITY devmgr.button.login.accesskey          "P">
+<!ENTITY devmgr.button.logout.label             "Odhlásit">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "Změnit heslo">
+<!ENTITY devmgr.button.changepw.accesskey       "h">
+<!ENTITY devmgr.button.load.label               "Načíst">
+<!ENTITY devmgr.button.load.accesskey           "N">
+<!ENTITY devmgr.button.unload.label             "Uvolnit">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Zadejte informace o modulu, který chcete přidat.">
+<!ENTITY loaddevice.modname                     "Jméno modulu:">
+<!ENTITY loaddevice.modname.accesskey           "m">
+<!ENTITY loaddevice.modname.default             "Nový modul PKCS#11">
+<!ENTITY loaddevice.filename                    "Název souboru modulu:">
+<!ENTITY loaddevice.filename.accesskey          "N">
+<!ENTITY loaddevice.browse                      "Procházet…">
+<!ENTITY loaddevice.browse.accesskey            "P">
+
+<!ENTITY loaddevice.title2                      "Načíst ovladač PKCS#11 zařízení">

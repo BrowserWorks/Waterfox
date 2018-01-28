@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newButton.label            "Nowy">
+<!ENTITY newButton.tooltip          "Utwórz nowy arkusz stylów i dołącz go do dokumentu">
+<!ENTITY newButton.accesskey        "N">
+
+<!ENTITY importButton.label         "Importuj…">
+<!ENTITY importButton.tooltip       "Importuj istniejący arkusz stylów i dołącz go do dokumentu">
+<!ENTITY importButton.accesskey     "I">
+
+<!ENTITY visibilityToggle.tooltip   "Przełącz widoczność arkusza stylów">
+
+<!ENTITY saveButton.label           "Zapisz">
+<!ENTITY saveButton.tooltip         "Zapisz ten arkusz stylów do pliku">
+<!ENTITY saveButton.accesskey       "Z">
+
+<!ENTITY optionsButton.tooltip "Ustawienia edytora stylów">
+<!ENTITY showOriginalSources.label "Oryginalne źródła">
+<!ENTITY showOriginalSources.accesskey "O">
+<!ENTITY showMediaSidebar.label "Panel @media">
+<!ENTITY showMediaSidebar.accesskey "P">
+
+<!ENTITY mediaRules.label "Reguły @media">
+
+<!ENTITY editorTextbox.placeholder  "Wprowadź tutaj CSS.">
+
+<!-- LOCALICATION NOTE  (noStyleSheet.label): This is shown when a page has no
+     stylesheet. -->
+<!ENTITY noStyleSheet.label         "Ta strona nie ma arkusza stylów.">
+
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-start.label): This is the start of a
+     tip sentence shown when there is no stylesheet. It suggests to create a new
+     stylesheet and provides an action link to do so. -->
+<!ENTITY noStyleSheet-tip-start.label  "Być może chcesz ">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-action.label): This is text for the
+     link that triggers creation of a new stylesheet. -->
+<!ENTITY noStyleSheet-tip-action.label "dołączyć nowy arkusz stylów">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-end.label): End of the tip sentence -->
+<!ENTITY noStyleSheet-tip-end.label    "?">
+
+<!ENTITY openLinkNewTab.label "Otwórz odnośnik w nowej karcie">

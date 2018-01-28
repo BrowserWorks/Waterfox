@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Trobar a siguient aparición d'a frase">
+<!ENTITY previous.tooltip "Trobar l'anterior aparición d'a frase">
+<!ENTITY findCloseButton.tooltip "Zarrar a barra de busca">
+<!ENTITY highlightAll.label "Resaltar-lo tot">
+<!ENTITY highlightAll.accesskey "R">
+<!ENTITY highlightAll.tooltiptext "Resaltar todas as aparicions d'a frase">
+<!ENTITY caseSensitive.label "Coincidir mayusclas">
+<!ENTITY caseSensitive.accesskey "C">
+<!ENTITY caseSensitive.tooltiptext "Mirar distinguindo entre mayusclas y minusclas">
+<!ENTITY entireWord.label "Parolas completas">
+<!ENTITY entireWord.accesskey "P">
+<!ENTITY entireWord.tooltiptext "Mirar nomás parolas completas">

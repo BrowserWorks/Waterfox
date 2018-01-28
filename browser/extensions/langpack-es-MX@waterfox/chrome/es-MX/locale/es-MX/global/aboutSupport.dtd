@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Información para solucionar problemas">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  Esta página presenta información técnica que puede ser de ayuda si necesitas resolver un problema. Para obtener respuestas a preguntas comunes sobre &brandShortName; visita nuestro <a id='supportLink'>sitio web de soporte</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Reporte de fallos">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID del reporte">
+<!ENTITY aboutSupport.crashes.sendDate "Enviado">
+<!ENTITY aboutSupport.crashes.allReports "Todos los informes de fallos">
+<!ENTITY aboutSupport.crashes.noConfig "Esta aplicación no ha sido configurada para mostrar reportes de fallos.">
+
+<!ENTITY aboutSupport.extensionsTitle "Extensiones">
+<!ENTITY aboutSupport.extensionName "Nombre">
+<!ENTITY aboutSupport.extensionEnabled "Activada">
+<!ENTITY aboutSupport.extensionVersion "Versión">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Características de &brandShortName;">
+<!ENTITY aboutSupport.featureName "Nombre">
+<!ENTITY aboutSupport.featureVersion "Versión">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Características experimentales">
+<!ENTITY aboutSupport.experimentName "Nombre">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Descripción">
+<!ENTITY aboutSupport.experimentActive "Activo">
+<!ENTITY aboutSupport.experimentEndDate "Fecha de finalización">
+<!ENTITY aboutSupport.experimentHomepage "Página de inicio">
+<!ENTITY aboutSupport.experimentBranch "Rama de desarrollo">
+
+<!ENTITY aboutSupport.appBasicsTitle "Configuración básica de la aplicación">
+<!ENTITY aboutSupport.appBasicsName "Nombre">
+<!ENTITY aboutSupport.appBasicsVersion "Versión">
+<!ENTITY aboutSupport.appBasicsBuildID "Id. de compilación">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Canal de actualizaciones">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Historial de actualizaciones">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Mostrar historial de actualizaciones">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Directorio del perfil">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Carpeta del perfil">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Plugins activados">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Configuración de compilación">
+<!ENTITY aboutSupport.appBasicsUserAgent "Agente de usuario">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Uso de memoria">
+<!ENTITY aboutSupport.appBasicsPerformance "Rendimiento">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers registrados">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Perfiles">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Ventanas multiproceso">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Procesos de contenido web">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Clave de Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Clave del servicio de localización de Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Modo Seguro">
+
+<!ENTITY aboutSupport.showDir.label "Abrir directorio">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Mostrar en Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Abrir carpeta">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Preferencias importantes modificadas">
+<!ENTITY aboutSupport.modifiedPrefsName "Nombre">
+<!ENTITY aboutSupport.modifiedPrefsValue "Valor">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Preferencias en user.js">
+<!ENTITY aboutSupport.userJSDescription "Su carpeta del perfil contiene un <a id='prefs-user-js-link'>archivo user.js</a>, que incluye preferencias que no han sido creadas por &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Preferencias importantes bloqueadas">
+<!ENTITY aboutSupport.lockedPrefsName "Nombre">
+<!ENTITY aboutSupport.lockedPrefsValue "Valor">
+
+<!ENTITY aboutSupport.graphicsTitle "Gráficas">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Base de datos de lugares">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integridad">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verificar integridad">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Recogida de basura incremental">
+
+<!ENTITY aboutSupport.a11yTitle "Accesibilidad">
+<!ENTITY aboutSupport.a11yActivated "Activado">
+<!ENTITY aboutSupport.a11yForceDisabled "Prevenir accesibilidad">
+<!ENTITY aboutSupport.a11yHandlerUsed "Se usó un controlador accesible">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Versiones de bibliotecas">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Historial de instalación">
+<!ENTITY aboutSupport.updateHistoryTitle "Historial de actualizaciones">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Copiar el texto al portapapeles">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Copiar datos en crudo al portapapeles">
+
+<!ENTITY aboutSupport.sandboxTitle "Arenero">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Llamadas del sistema rechazadas">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Hace segundos">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Tipo de proceso">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumentos">
+
+<!ENTITY aboutSupport.safeModeTitle "Probar modo seguro">
+<!ENTITY aboutSupport.restartInSafeMode.label "Reiniciar con Complementos Deshabilitados…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Características">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnósticos">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Registro de fallos">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Registro de decisiones">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Características de protección contra fallos deshabilitadas">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Soluciones">
+
+<!ENTITY aboutSupport.mediaTitle "Multimedia">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Dispositivos de salida">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Dispositivos de entrada">
+<!ENTITY aboutSupport.mediaDeviceName "Nombre">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grupo">
+<!ENTITY aboutSupport.mediaDeviceVendor "Fabricante">
+<!ENTITY aboutSupport.mediaDeviceState "Estado">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferido">
+<!ENTITY aboutSupport.mediaDeviceFormat "Formato">
+<!ENTITY aboutSupport.mediaDeviceChannels "Canales">
+<!ENTITY aboutSupport.mediaDeviceRate "Frecuencia">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latencia">

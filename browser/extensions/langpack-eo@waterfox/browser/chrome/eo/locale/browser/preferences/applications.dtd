@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "Programoj">
+<!ENTITY  applications.description "Elekti kiel &brandShortName; traktas la dosierojn elŝutitajn el la Teksaĵo aŭ la programojn uzatajn por ilin malfermi.">
+
+<!ENTITY  typeColumn.label        "Tipo de enhavo">
+<!ENTITY  typeColumn.accesskey    "E">
+
+<!ENTITY  actionColumn2.label     "Ago">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "Serĉi tipojn de dosiero aŭ programojn">

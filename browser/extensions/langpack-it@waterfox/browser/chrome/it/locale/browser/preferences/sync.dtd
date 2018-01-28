@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY engine.bookmarks.label "Segnalibri">
+<!ENTITY engine.bookmarks.accesskey "e">
+<!ENTITY engine.tabs.label2 "Schede aperte">
+<!ENTITY engine.tabs.accesskey "h">
+<!ENTITY engine.history.label "Cronologia">
+<!ENTITY engine.history.accesskey "C">
+<!ENTITY engine.logins.label "Accessi">
+<!ENTITY engine.logins.accesskey "i">
+<!ENTITY engine.prefs.label "Preferenze">
+<!ENTITY engine.prefs.accesskey "z">
+<!ENTITY engine.addons.label "Componenti aggiuntivi">
+<!ENTITY engine.addons.accesskey "o">
+<!ENTITY engine.addresses.label "Indirizzi">
+<!ENTITY engine.addresses.accesskey "I">
+<!ENTITY engine.creditcards.label "Carte di credito">
+<!ENTITY engine.creditcards.accesskey "r">
+<!ENTITY fxaSyncDeviceName.label "Nome dispositivo">
+<!ENTITY changeSyncDeviceName2.label "Cambia nome dispositivo…">
+<!ENTITY changeSyncDeviceName2.accesskey "d">
+<!ENTITY cancelChangeSyncDeviceName.label "Annulla">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "Salva">
+<!ENTITY saveChangeSyncDeviceName.accesskey "S">
+<!ENTITY prefs.tosLink.label "Condizioni di utilizzo del servizio">
+<!ENTITY fxaPrivacyNotice.link.label "Informativa sulla privacy">
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "non è verificato.">
+<!ENTITY signedInLoginFailure.beforename.label "Accedi per riattivare la connessione">
+<!ENTITY signedInLoginFailure.aftername.label "">
+<!ENTITY notSignedIn.label "Accesso non effettuato.">
+<!ENTITY signIn.label "Accedi">
+<!ENTITY signIn.accesskey "A">
+<!ENTITY profilePicture.tooltip "Cambia l’immagine del profilo">
+<!ENTITY verifiedManage.label "Gestisci account">
+<!ENTITY verifiedManage.accesskey "G">
+<!ENTITY disconnect3.label "Disconnetti…">
+<!ENTITY disconnect3.accesskey "t">
+<!ENTITY verify.label "Verifica email">
+<!ENTITY verify.accesskey "V">
+<!ENTITY forget.label "Dimentica questa email">
+<!ENTITY forget.accesskey "m">
+<!ENTITY signedOut.caption "Il tuo Web, sempre con te">
+<!ENTITY signedOut.description "Sincronizza segnalibri, cronologia, schede, password, componenti aggiuntivi e impostazioni attraverso tutti i tuoi dispositivi.">
+<!ENTITY signedOut.accountBox.title "Connetti &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create "Crea un account">
+<!ENTITY signedOut.accountBox.create.accesskey "u">
+<!ENTITY signedOut.accountBox.signin "Accedi">
+<!ENTITY signedOut.accountBox.signin.accesskey "i">
+<!ENTITY signedIn.settings.label "Impostazioni di sincronizzazione">
+<!ENTITY signedIn.settings.description "Scegli gli elementi da sincronizzare sui dispositivi con &brandShortName;.">
+<!ENTITY mobilePromo3.start "Scarica Waterfox per ">
+<!ENTITY mobilePromo3.androidLink "Android">
+<!ENTITY mobilePromo3.iOSBefore " o ">
+<!ENTITY mobilePromo3.iOSLink "iOS">
+<!ENTITY mobilePromo3.end " per sincronizzare con cellulari e tablet.">

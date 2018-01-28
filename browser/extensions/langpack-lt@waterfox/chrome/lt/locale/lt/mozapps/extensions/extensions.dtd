@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Priedų tvarkytuvė">
+
+<!ENTITY search.placeholder                   "Ieškoti priedų">
+<!ENTITY search.buttonlabel                   "Paieška">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Įkeliama…">
+<!ENTITY listEmpty.installed.label            "Nėra įdiegtų šio tipo priedų">
+<!ENTITY listEmpty.availableUpdates.label     "Naujinimų nerasta">
+<!ENTITY listEmpty.recentUpdates.label        "Pastaruoju metu nesate atnaujinę jokių priedų">
+<!ENTITY listEmpty.findUpdates.label          "Tikrinti, ar yra naujinimų">
+<!ENTITY listEmpty.search.label               "Paiešką atitinkančių priedų nerasta">
+<!ENTITY listEmpty.button.label               "Sužinokite apie priedus daugiau">
+<!ENTITY installAddonFromFile.label           "Įdiegti priedą iš failo…">
+<!ENTITY installAddonFromFile.accesskey       "d">
+<!ENTITY toolsMenu.tooltip                    "Visiems priedams taikomos priemonės">
+
+<!ENTITY getThemes.description                "Norite suasmeninti savo naršyklę?">
+<!ENTITY getThemes.learnMore                  "Rinkitės iš tūkstančių grafinių apvalkalų.">
+
+<!ENTITY cmd.back.tooltip                     "Vienu tinklalapiu atgal">
+<!ENTITY cmd.forward.tooltip                  "Vienu tinklalapiu pirmyn">
+
+<!ENTITY showUnsignedExtensions.button.label  "Kai kurių plėtinių patikrinti nepavyko">
+<!ENTITY showAllExtensions.button.label       "Rodyti visus plėtinius">
+<!ENTITY debugAddons.label                    "Derinti priedus">
+<!ENTITY debugAddons.accesskey                "r">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Ribotojoje veiksenoje visi priedai išjungti.">
+<!ENTITY warning.checkcompatibility.label          "Priedų suderinamumas netikrinamas. Gali būti, kad turite nesuderinamų priedų.">
+<!ENTITY warning.checkcompatibility.enable.label   "Tikrinti">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Įjungti priedų suderinamumo tikrinimą">
+<!ENTITY warning.updatesecurity.label              "Priedų naujinimų saugumas netikrinamas. Priedų naujinimai gali pakenkti jūsų saugumui.">
+<!ENTITY warning.updatesecurity.enable.label       "Tikrinti">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Įjungti priedų naujinimų saugumo tikrinimą">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Paieška">
+<!ENTITY view.discover.label                  "Parsisiųsti priedų">
+<!ENTITY view.recentUpdates.label             "Paskiausiai atnaujinti">
+<!ENTITY view.availableUpdates.label          "Galimi naujinimai">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Tikrinti, ar yra naujinimų">
+<!ENTITY updates.checkForUpdates.accesskey    "T">
+<!ENTITY updates.viewUpdates.label            "Rodyti paskiausiai atnaujintus priedus">
+<!ENTITY updates.viewUpdates.accesskey        "p">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Naujinti priedus automatiškai">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "N">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Visus priedus naujinti automatiškai">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "V">
+<!ENTITY updates.resetUpdatesToManual.label          "Visus priedus naujinti rankiniu būdu">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "V">
+<!ENTITY updates.updating.label               "Priedai naujinami">
+<!ENTITY updates.installed.label              "Turimi priedai atnaujinti.">
+<!ENTITY updates.downloaded.label             "Parsiųsti turimų priedų naujinimai.">
+<!ENTITY updates.restart.label                "Paleiskite programą iš naujo, kad diegimas būtų užbaigtas">
+<!ENTITY updates.noneFound.label              "Naujinimų nerasta">
+<!ENTITY updates.manualUpdatesFound.label     "Rodyti galimus atnaujinti priedus">
+<!ENTITY updates.updateSelected.label         "Įdiegti naujinimus">
+<!ENTITY updates.updateSelected.tooltip       "Įdiegti šiame sąraše esančių priedų naujinimus">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Išsamiau">
+<!ENTITY cmd.showDetails.accesskey            "I">
+<!ENTITY cmd.findUpdates.label                "Rasti naujinimų">
+<!ENTITY cmd.findUpdates.accesskey            "R">
+<!ENTITY cmd.preferencesWin.label             "Nuostatos">
+<!ENTITY cmd.preferencesWin.accesskey         "N">
+<!ENTITY cmd.preferencesUnix.label            "Nuostatos">
+<!ENTITY cmd.preferencesUnix.accesskey        "N">
+<!ENTITY cmd.about.label                      "Apie">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "Įjungti">
+<!ENTITY cmd.enableAddon.accesskey            "u">
+<!ENTITY cmd.disableAddon.label               "Išjungti">
+<!ENTITY cmd.disableAddon.accesskey           "u">
+<!ENTITY cmd.enableTheme.label                "Naudoti apvalkalą">
+<!ENTITY cmd.enableTheme.accesskey            "N">
+<!ENTITY cmd.disableTheme.label               "Nebenaudoti apvalkalo">
+<!ENTITY cmd.disableTheme.accesskey           "N">
+<!ENTITY cmd.askToActivate.label              "Klausti prieš aktyvinant">
+<!ENTITY cmd.askToActivate.tooltip            "Kaskart klausti, ar aktyvinti šį priedą">
+<!ENTITY cmd.alwaysActivate.label             "Visada aktyvinti">
+<!ENTITY cmd.alwaysActivate.tooltip           "Visada aktyvinti šį priedą">
+<!ENTITY cmd.neverActivate.label              "Niekada neaktyvinti">
+<!ENTITY cmd.neverActivate.tooltip            "Niekada neaktyvinti šio priedo">
+<!ENTITY cmd.stateMenu.tooltip                "Keisti, kada šis priedas turi būti aktyvinamas">
+<!ENTITY cmd.installAddon.label               "Įdiegti">
+<!ENTITY cmd.installAddon.accesskey           "d">
+<!ENTITY cmd.uninstallAddon.label             "Pašalinti">
+<!ENTITY cmd.uninstallAddon.accesskey         "š">
+<!ENTITY cmd.showPreferencesWin.label         "Nuostatos">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Keisti šio priedo parinktis">
+<!ENTITY cmd.showPreferencesUnix.label        "Nuostatos">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Keisti šio priedo nuostatas">
+<!ENTITY cmd.contribute.label                 "Paremti">
+<!ENTITY cmd.contribute.accesskey             "P">
+<!ENTITY cmd.contribute.tooltip               "Paremti šio priedo kūrimą">
+
+<!ENTITY cmd.showReleaseNotes.label           "Atverti laidos apžvalgą">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Parodyti šio naujinimo laidos apžvalgą">
+<!ENTITY cmd.hideReleaseNotes.label           "Nerodyti laidos apžvalgos">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Nerodyti šio naujinimo laidos apžvalgos">
+<!ENTITY cmd.findReplacement.label            "Rasti pakaitalą">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Kas yra priedai?">
+<!ENTITY discover.description2                "Priedai – nedidelės programos, kurios leidžia pritaikyti „&brandShortName;“ savo poreikiams, suteikiant papildomų funkcijų ar pakeičiant išvaizdą. Individualizuokite „&brandShortName;“, išbandydami laiką taupantį parankinės modulį, orų pranešiklį ar jums patinkantį grafinį apvalkalą.">
+<!ENTITY discover.footer                      "Kai prisijungsite prie interneto, šioje srityje pamatysite keletą geriausių ir populiariausių priedų.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Laida">
+<!ENTITY detail.lastupdated.label             "Paskiausiai atnaujintas">
+<!ENTITY detail.creator.label                 "Autorius">
+<!ENTITY detail.homepage.label                "Svetainė">
+<!ENTITY detail.numberOfDownloads.label       "Parsisiuntimų">
+
+<!ENTITY detail.contributions.description     "Šio priedo autorius prašo paremti tolesnį jo kūrimą nedideliu finansiniu įnašu.">
+
+<!ENTITY detail.updateType                    "Naujinti automatiškai">
+<!ENTITY detail.updateDefault.label           "Kaip numatyta">
+<!ENTITY detail.updateDefault.tooltip         "Automatiškai naujinti šį priedą, jeigu taip numatyta">
+<!ENTITY detail.updateAutomatic.label         "Taip">
+<!ENTITY detail.updateAutomatic.tooltip       "Automatiškai naujinti šį priedą, kai jam randama naujinimų">
+<!ENTITY detail.updateManual.label            "Ne">
+<!ENTITY detail.updateManual.tooltip          "Nediegti priedo naujinimų automatiškai">
+<!ENTITY detail.home                          "Svetainė">
+<!ENTITY detail.repository                    "Priedo profilis">
+<!ENTITY detail.size                          "Dydis">
+
+<!ENTITY detail.checkForUpdates.label         "Ieškoti naujinimų">
+<!ENTITY detail.checkForUpdates.accesskey     "I">
+<!ENTITY detail.checkForUpdates.tooltip       "Ieškoti šio priedo naujinimų">
+<!ENTITY detail.showPreferencesWin.label      "Nuostatos">
+<!ENTITY detail.showPreferencesWin.accesskey  "N">
+<!ENTITY detail.showPreferencesWin.tooltip    "Keisti šio priedo parinktis">
+<!ENTITY detail.showPreferencesUnix.label     "Nuostatos">
+<!ENTITY detail.showPreferencesUnix.accesskey "N">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Keisti šio priedo nuostatas">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Įvertinimas">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Pristabdyti">
+<!ENTITY progress.cancel.tooltip              "Atsisakyti">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Pavadinimas">
+<!ENTITY sort.name.tooltip                    "Rikiuoti pagal pavadinimą">
+<!ENTITY sort.dateUpdated.label               "Atnaujinimo data">
+<!ENTITY sort.dateUpdated.tooltip             "Rikiuoti pagal paskiausio atnaujinimo datą">
+<!ENTITY sort.relevance.label                 "Atitikimas">
+<!ENTITY sort.relevance.tooltip               "Rikiuoti pagal atitikimą paieškos kriterijams">
+<!ENTITY sort.price.label                     "Kaina">
+<!ENTITY sort.price.tooltip                   "Rikiuoti pagal kainą">
+
+<!ENTITY search.filter2.label                 "Ieškoti:">
+<!ENTITY search.filter2.installed.label       "įdiegtų priedų">
+<!ENTITY search.filter2.installed.tooltip     "Rodyti jau įdiegtus priedus">
+<!ENTITY search.filter2.available.label       "prieinamų priedų">
+<!ENTITY search.filter2.available.tooltip     "Rodyti galimus įdiegti priedus">
+
+<!ENTITY addon.homepage                       "Svetainė">
+<!ENTITY addon.details.label                  "Išsamiau">
+<!ENTITY addon.details.tooltip                "Parodyti išsamesnę informaciją apie šį priedą">
+<!ENTITY addon.unknownDate                    "Nežinoma">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "PASENĘS">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(išjungtas)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "naujinimas">
+<!ENTITY addon.undoAction.label               "Atšaukti">
+<!ENTITY addon.undoAction.tooltip             "Atšaukti šį veiksmą">
+<!ENTITY addon.undoRemove.label               "Atšaukti">
+<!ENTITY addon.undoRemove.tooltip             "Palikti šį priedą įdiegtą">
+<!ENTITY addon.restartNow.label               "Perleisti dabar">
+<!ENTITY addon.install.label                  "Įdiegti">
+<!ENTITY addon.install.tooltip                "Įdiegti šį priedą">
+<!ENTITY addon.updateNow.label                "Atnaujinti">
+<!ENTITY addon.updateNow.tooltip              "Įdiegti šio priedo naujinimą">
+<!ENTITY addon.includeUpdate.label            "Įtraukti į naujinimą">
+<!ENTITY addon.updateAvailable.label          "Yra prieinamų naujinimų">
+<!ENTITY addon.checkingForUpdates.label       "Ieškoma naujinimų…">
+<!ENTITY addon.releaseNotes.label             "Laidos apžvalga:">
+<!ENTITY addon.loadingReleaseNotes.label      "Įkeliama…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Atsiprašome, bet įkeliant laidos apžvalgą įvyko klaida.">
+
+<!ENTITY addon.createdBy.label                "priedą sukūrė ">
+
+<!ENTITY eula.title                           "Licencijos sutartis">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Sutikti su licencija ir įdiegti priedą…">
+
+<!ENTITY settings.path.button.label           "Parinkti…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Kas tai? Eksperimentai retkarčiais gali būti įdiegiami ir sužadinami telemetrijos būdu.">
+<!ENTITY experiment.info.learnmore "Sužinoti daugiau">
+<!ENTITY experiment.info.learnmore.accesskey "d">
+<!ENTITY experiment.info.changetelemetry "Telemetrijos nuostatos">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Sužinoti daugiau…">
+
+<!ENTITY disabledUnsigned.heading "Kai kurie priedai buvo išjungti">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Šių priedų nepavyko patikrinti kaip tinkamų „&brandShortName;“. Jūs galite ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "ieškokite atitikmenų">
+<!ENTITY disabledUnsigned.description.end " arba paprašykite kūrėjo atlikti jų patikrinimą.">
+<!ENTITY disabledUnsigned.learnMore "Sužinokite daugiau apie mūsų pastangas siekiant apsaugoti jus naršant.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Programuotojai, norintys atlikti savo priedų patikrinimą, gali tęsti perskaitydami mūsų ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "vadovą">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Kažko trūksta? Kai kurie papildiniai daugiau nepalaikomi „&brandShortName;“.">
+<!ENTITY pluginDeprecation.learnMore "Sužinoti daugiau.">
+
+<!ENTITY legacyWarning.description "Kažko trūksta? Kai kurių plėtinių „&brandShortName;“ nebepalaiko.">
+<!ENTITY legacyWarning.showLegacy "Rodyti pasenusius plėtinius">
+<!ENTITY legacyExtensions.title "Pasenę plėtiniai">
+<!ENTITY legacyExtensions.description "Šie plėtiniai neatitinka esamų „&brandShortName;“ standartų, tad buvo išjungti.">
+<!ENTITY legacyExtensions.learnMore "Sužinokite apie priedų pokyčius">

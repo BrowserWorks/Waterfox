@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "පිටපත් කරන්න">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "සියල්ල තෝරන්න">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "සාමාන්‍ය">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "මාතෘකාව:">
+<!ENTITY  generalURL            "ලිපිනය:">
+<!ENTITY  generalType           "වර්‍ගය:">
+<!ENTITY  generalMode           "ජනන ප්‍රකාරය:">
+<!ENTITY  generalSize           "විශාලත්වය:">
+<!ENTITY  generalReferrer       "යොමු URL:">
+<!ENTITY  generalSource         "කෑශ් මූලය:">
+<!ENTITY  generalModified       "වෙනස්කළ:">
+<!ENTITY  generalEncoding2      "පෙළ සංකේතනය:">
+<!ENTITY  generalMetaName       "නම">
+<!ENTITY  generalMetaContent    "අන්තර්ගතය">
+
+<!ENTITY  mediaTab              "මාධ්‍ය">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "පිහිටීම:">
+<!ENTITY  mediaText             "අදාල පෙළ:">
+<!ENTITY  mediaAltHeader        "අමතර පෙළ">
+<!ENTITY  mediaAddress          "ලිපිනය">
+<!ENTITY  mediaType             "වර්‍ගය">
+<!ENTITY  mediaSize             "විශාලත්වය">
+<!ENTITY  mediaCount            "ගණන">
+<!ENTITY  mediaDimension        "මාන:">
+<!ENTITY  mediaLongdesc         "දිගු විස්තරය:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "සුරකින අයුර…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "මාධ්‍යය පෙරදැක්ම:">
+
+<!ENTITY  feedTab               "පෝශක">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "දායකත්වය">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "බලතල">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "පෙරනිමිය භාවිත කරන්න">
+<!ENTITY  permAskAlways         "නිතර අසන්න">
+<!ENTITY  permAllow             "අනුමතයි.">
+<!ENTITY  permAllowSession      "වාරය සඳහා ඉඩදේ">
+<!ENTITY  permBlock             "අවහිර කරන්න">
+<!ENTITY  permissionsFor        "අවසර ලැබෙන්නේ:">
+<!ENTITY  permPlugins           "ප්ලගින සක්‍රීය කරන්න">
+
+<!ENTITY  permClearStorage           "ගබඩාව පිරිසිදු">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "ආරක්ෂාව">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "සහතිකය දක්වන්න">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "නොදන්නා">
+
+
+<!ENTITY  securityView.identity.header   "ජාල අඩවියේ අනන්‍යතාව">
+<!ENTITY  securityView.identity.owner    "හිමිකරු:">
+<!ENTITY  securityView.identity.domain   "ජාල අඩවිය:">
+<!ENTITY  securityView.identity.verifier "ස්ථිර කළේ:">
+
+<!ENTITY  securityView.privacy.header                   "පුද්ගලිකත්වය හා ඉතිහාසය">
+<!ENTITY  securityView.privacy.history                  "අද දිනට පෙර මා මෙම අඩවියට පිවිස ඇතිද?">
+<!ENTITY  securityView.privacy.cookies                  "මෙම අඩවිය මගේ පරිගණකය මත තොරතුරු (කුකී) ගබඩා කරයිද?">
+<!ENTITY  securityView.privacy.viewCookies              "කුකීස් බලන්න">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "මෙම අඩවිය සඳහා මවිසින් කිසිඳු මුරපදයක් සුරැක ඇතිද?">
+<!ENTITY  securityView.privacy.viewPasswords            "සුරැකූ රහස්පද බලන්න">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "තාක්ෂණික දත්ත">
+
+<!ENTITY  helpButton.label                              "උදව්">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

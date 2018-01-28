@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Marandu apañuãi oñemyatyrõ haguã">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Ko kuatiarogue oguereko marandu aporekoguáva ikatúva eipuru emyatyrõse jave peteĩ apañuãi. Ehekáramo mbohovái umi porandu oikovéva  &brandShortName; rehegua, eike <a id='supportLink'>tenda eikekuaaha</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Marandu jejavyguáva">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID momarandu">
+<!ENTITY aboutSupport.crashes.sendDate "Mondopyre">
+<!ENTITY aboutSupport.crashes.allReports "Opaite marandu'i jejavy rehegua">
+<!ENTITY aboutSupport.crashes.noConfig "Ko tembipuru'i oñembohekopyahu ohechauka hag̃ua marandu jejavy rehegua.">
+
+<!ENTITY aboutSupport.extensionsTitle "Mba'ejoapyrã">
+<!ENTITY aboutSupport.extensionName "Téra">
+<!ENTITY aboutSupport.extensionEnabled "Myandypyre">
+<!ENTITY aboutSupport.extensionVersion "Peteĩchagua">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Reheguaite">
+<!ENTITY aboutSupport.featureName "Téra">
+<!ENTITY aboutSupport.featureVersion "Peteĩchagua">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Japokuaa reheguaite">
+<!ENTITY aboutSupport.experimentName "Téra">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Moha'ãnga">
+<!ENTITY aboutSupport.experimentActive "Myandy">
+<!ENTITY aboutSupport.experimentEndDate "Arange opaha">
+<!ENTITY aboutSupport.experimentHomepage "Kuatiarogue ñepyrũha">
+<!ENTITY aboutSupport.experimentBranch "Takã">
+
+<!ENTITY aboutSupport.appBasicsTitle "Tembipuru'i ñemboheko ypy">
+<!ENTITY aboutSupport.appBasicsName "Téra">
+<!ENTITY aboutSupport.appBasicsVersion "Peteĩchagua">
+<!ENTITY aboutSupport.appBasicsBuildID "ID jejapo">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Ñembohekopyahu mbohapeha">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Ñembohekopyahu rembiasakue">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Ñembohekopyahu rembiasakue jehechauka">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Marandurenda mba'ete">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Ñongatuha rechaukaha">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Mba'ejoajurã myendypyre">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Mbyatypy ñemboheko">
+<!ENTITY aboutSupport.appBasicsUserAgent "Puruhára pytyvõha">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Mandu'arenda jepuru">
+<!ENTITY aboutSupport.appBasicsPerformance "Mba'eaporã">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Mba'apohára mba'epytyvõrã mboguapyréva">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Mba'etekuéra">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Windows rembiapoita">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Ñanduti Retepy Rembiapo">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google ñe'ẽñemi">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla mba'epytyvõrã rendaite rehegua">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Teko jerovia">
+
+<!ENTITY aboutSupport.showDir.label "Marandurenda'atýpe jeike">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Finder-pe jehechauka">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Ñongatuha ijurujáva">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Jerohoryvéva tuichamba'éva moambuepyre">
+<!ENTITY aboutSupport.modifiedPrefsName "Téra">
+<!ENTITY aboutSupport.modifiedPrefsValue "Hepykue">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Jerohoryvéva user.js-pe">
+<!ENTITY aboutSupport.userJSDescription "Nemba'ete ñongatuha oguereko peteĩ <a id='prefs-user-js-link'>marandurenda user.js</a>, ogueroikóva jerohoryvéva ndaha'éiva &brandShortName; omoheñoimbyre.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Jerohoryvéva tuichamba'éva mbotypyre">
+<!ENTITY aboutSupport.lockedPrefsName "Téra">
+<!ENTITY aboutSupport.lockedPrefsValue "Hepykue">
+
+<!ENTITY aboutSupport.graphicsTitle "Ta'ãnga">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Mba'ekuaarã renda">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Tekoite">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Tekoporã Jehechajey">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Mba'eky'a mbotuicháva mbyatypyre">
+
+<!ENTITY aboutSupport.a11yTitle "Jeikekuaa">
+<!ENTITY aboutSupport.a11yActivated "Myandypyre">
+<!ENTITY aboutSupport.a11yForceDisabled "Jeikekuaa jejoko">
+<!ENTITY aboutSupport.a11yHandlerUsed "Handler ipurupyréva">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Arandukaty peteĩchagua">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Ñemohenda rembiasakue">
+<!ENTITY aboutSupport.updateHistoryTitle "Ñembohekopyahu rembiasakue">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Moñe'ẽrã mbohasa kuatiajokohápe">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "mba'ekuaarã hi'akýva mbohasa kuatiajokohápe">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Ñehenói apopyvusu guive oike'ỹva">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Angete oiko">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Mba'eapo peteĩchagua">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Ñehenói pumbyrýpe">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Je'ekuaaite">
+
+<!ENTITY aboutSupport.safeModeTitle "Eipuru teko jerovia">
+<!ENTITY aboutSupport.restartInSafeMode.label "Moĩmbaha oguepyréva moñepyrũjey…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Reheguáva">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Jehechakuaaite">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Ndaipóri jehaipy">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Jehaipy ñemboaje">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Hesegua ojokóva Apopyvusu je'a Ñangarekoha ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Ñemyatyrõ sapy'agua">
+
+<!ENTITY aboutSupport.mediaTitle "Marandu myasãiha">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Mba'e'oka osẽha">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Mba'e'oka oikeha">
+<!ENTITY aboutSupport.mediaDeviceName "Téra">
+<!ENTITY aboutSupport.mediaDeviceGroup "Aty">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendaha">
+<!ENTITY aboutSupport.mediaDeviceState "Tekotee">
+<!ENTITY aboutSupport.mediaDevicePreferred "Ojehecharamovéva">
+<!ENTITY aboutSupport.mediaDeviceFormat "Ysaja">
+<!ENTITY aboutSupport.mediaDeviceChannels "Mbohapeha">
+<!ENTITY aboutSupport.mediaDeviceRate "Mba'erepy">
+<!ENTITY aboutSupport.mediaDeviceLatency "Tekoteete">

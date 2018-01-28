@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Dịch vụ tìm kiếm mặc định">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Xin hãy lựa chọn dịch vụ tìm kiếm mặc định. &brandShortName; sẽ sử dụng nó trong thanh địa chỉ, thanh tìm kiếm và trang khởi động.">
+
+<!ENTITY provideSearchSuggestions.label        "Tự động đề nghị từ khóa tìm kiếm">
+<!ENTITY provideSearchSuggestions.accesskey    "n">
+
+<!ENTITY showURLBarSuggestions.label           "Hiển thị đề xuất tìm kiếm trong kết quả thanh địa chỉ">
+<!ENTITY showURLBarSuggestions.accesskey       "c">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Gợi ý tìm kiếm sẽ không được hiện ở thanh địa chỉ vì bạn đã thiết lập &brandShortName; không bao giờ ghi nhớ lịch sử.">
+
+
+<!ENTITY chooseWhichOneToDisplay.label         "Thanh tìm kiếm cho phép bạn tìm kiếm nhanh bằng các dịch vụ không phải mặc định. Xin hãy lựa chọn những dịch vụ nào được hiển thị.">
+
+<!ENTITY engineNameColumn.label                "Dịch vụ tìm kiếm">
+<!ENTITY engineKeywordColumn.label             "Từ khóa">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Đặt lại dịch vụ tìm kiếm mặc định">
+<!ENTITY restoreDefaultSearchEngines.accesskey "l">
+
+<!ENTITY removeEngine.label                    "Xóa">
+<!ENTITY removeEngine.accesskey                "X">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY oneClickSearchEngines.label           "One-Click Search Engines">
+
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

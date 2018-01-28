@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "ਰੰਗ">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Override the colors specified by the page with your selections above:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "ਹਮੇਸ਼ਾ">
+<!ENTITY  overrideDefaultPageColors.auto.label   "ਕੇਵਲ ਵੱਧ ਕਨਟਾਰਸਟ ਥੀਮਾਂ ਨਾਲ ਹੀ ਵਰਤੋਂ">
+<!ENTITY  overrideDefaultPageColors.never.label  "ਕਦੇ ਨਹੀਂ">
+
+<!ENTITY  color                           "ਟੈਕਸਟ ਅਤੇ ਬੈਕਗਰਾਊਂਡ">
+<!ENTITY  textColor.label                 "ਟੈਕਸਟ:">
+<!ENTITY  textColor.accesskey             "t">
+<!ENTITY  backgroundColor.label           "ਬੈਕਗਰਾਊਂਡ:">
+<!ENTITY  backgroundColor.accesskey       "b">
+<!ENTITY  useSystemColors.label           "ਸਿਸਟਮ ਰੰਗ ਨੂੰ ਵਰਤੋਂ">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "ਲਿੰਕ ਹੇਠ ਲਾਈਨ">
+<!ENTITY  underlineLinks.accesskey        "u">
+<!ENTITY  links                           "ਲਿੰਕ ਰੰਗ">
+<!ENTITY  linkColor.label                 "ਨਾ-ਖੋਲ੍ਹੇ ਲਿੰਕ:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "ਖੋਲ੍ਹੇ ਲਿੰਕ:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

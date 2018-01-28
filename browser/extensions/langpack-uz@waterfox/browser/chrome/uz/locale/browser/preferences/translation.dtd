@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Istisnolar - Tarjima">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Quyidagi tillar uchun tarjima taklif qilinmaydi:">
+<!ENTITY treehead.languageName.label      "Tillar">
+<!ENTITY removeLanguage.label             "Tilni olib tashlash">
+<!ENTITY removeLanguage.accesskey         "o">
+<!ENTITY removeAllLanguages.label         "Barcha tillarni olib tashlash">
+<!ENTITY removeAllLanguages.accesskey     "r">
+
+<!ENTITY noTranslationForSites.label      "Quyidagi saytlar uchun tarjima taklif qilinmaydi:">
+
+<!ENTITY removeSite.label                 "Saytni olib tashlash">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Barcha saytlarni olib tashlash">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Yopish">
+<!ENTITY button.close.accesskey           "Y">
+
+<!ENTITY treehead.siteName2.label         "Websites">

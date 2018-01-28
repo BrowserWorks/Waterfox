@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Breyta aðallykilorði">
+<!ENTITY setPassword.tokenName.label "Öryggistæki">
+<!ENTITY setPassword.oldPassword.label "Núverandi lykilorð:">
+<!ENTITY setPassword.newPassword.label "Nýtt lykilorð:">
+<!ENTITY setPassword.reenterPassword.label "Nýtt lykilorð (aftur):">
+<!ENTITY setPassword.meter.label "Gæðamæling lykilorðs">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Endursetja">
+<!ENTITY resetPassword.title  "Endurstilla aðallykilorð">
+<!ENTITY resetPassword.text  "Ef þú endurstillir aðallykilorðið, þá muntu missa öll geymd vef- og póstlykilorð, öll form gögn, öll skilríki, og alla einkalykla. Ertu viss um að þú viljir endurstilla aðallykilorðið?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Hleð niður skilríki">
+<!ENTITY downloadCert.message1 "Þú ert beðinn um að treysta nýrri vottunarstöð (CA).">
+<!ENTITY downloadCert.trustSSL "Treysta CA til að auðkenna vefsvæði.">
+<!ENTITY downloadCert.trustEmail "Treysta CA til að auðkenna póst notendur.">
+<!ENTITY downloadCert.trustObjSign "Treysta CA til að auðkenna hugbúnaðarframleiðendur.">
+<!ENTITY downloadCert.message3 "Áður en þú treystir þessum CA fyrir einhverju, ættirðu að athuga skilríki þess, stefnur þess og aðferðir (ef til eru).">
+<!ENTITY downloadCert.viewCert.label "Skoða">
+<!ENTITY downloadCert.viewCert.text "Skoða CA skilríki">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Beiðni um auðkenni notanda">
+<!ENTITY clientAuthAsk.message1 "Þetta vefsvæði bað um að þú auðkennir þig með skilríki:">
+<!ENTITY clientAuthAsk.message2 "Veldu skilríki til að sýna sem auðkenni:">
+<!ENTITY clientAuthAsk.message3 "Upplýsingar um valið skilríki:">
+
+<!ENTITY pkcs12.setpassword.title  "Veldu lykilorð öryggisafrits fyrir skilríki">
+<!ENTITY pkcs12.setpassword.message  "Lykilorðið sem þú slærð hér inn verndar öryggisafritskrána sem verið er að fara að búa til.  Þú verður að slá inn lykilorð til að halda áfram með öryggisafritið.">
+<!ENTITY pkcs12.setpassword.label1 "Lykilorð öryggisafrits:">
+<!ENTITY pkcs12.setpassword.label2 "Lykilorð öryggisafrits (aftur):">
+<!ENTITY pkcs12.setpassword.reminder "Mikilvægt: Ef þú gleymir lykilorði öryggisafrits geturðu ekki endurheimt öryggisafritið seinna.  Vinsamlega geymið það öruggum stað.">
+
+<!ENTITY chooseToken.title  "Veldu tákn">
+<!ENTITY chooseToken.message1 "Veldu tákn.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Bý til einkalykil">
+<!ENTITY createCertInfo.msg1 "Bý til lykil… Þetta gæti tekið nokkrar mínútur….">
+<!ENTITY createCertInfo.msg2 "Bíðið aðeins…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Varin tóka sannvottun">
+<!ENTITY protectedAuth.msg "Vinsamlega auðkenndu þig með tóka. Hvernig auðkennt er fer eftir tegund tóka.">
+<!ENTITY protectedAuth.tokenName.label "Lykill:">

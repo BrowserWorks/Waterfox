@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Tilbakestill &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Start på ny frisk for å rette problemer og få tilbake normal ytelse.">
+<!ENTITY refreshProfile.dialog.description2  "Dette vil:">
+<!ENTITY refreshProfile.dialog.items.label1  "Fjerne utvidelser og tilpasninger">
+<!ENTITY refreshProfile.dialog.items.label2  "Gjenopprette nettleserinnstillinger til standardverdier">
+<!ENTITY refreshProfile.dialog.button.label  "Tilbakestill &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Gi &brandShortName; en overhaling">
+<!ENTITY refreshProfile.button.label         "Tilbakestill &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Nesten ferdig …">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Нов изолатор">
+<!ENTITY addButton.accesskey  "и">
+<!ENTITY preferencesButton.label "Настройки">
+<!ENTITY removeButton.label   "Премахване">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Назад към Поверителност">
+
+<!ENTITY window.title         "Нов изолатор">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Име:">
+<!ENTITY name.accesskey       "И">
+<!ENTITY name.placeholder     "Въведете име на изолатор">
+<!ENTITY icon.label           "Пиктограма:">
+<!ENTITY icon.accesskey       "П">
+<!ENTITY color.label          "Цвят:">
+<!ENTITY color.accesskey      "Ц">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Готово">
+<!ENTITY button.ok.accesskey  "Г">
+

@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Избор на кориснички профил">
+
+<!ENTITY            profilename.label      "Име на профилот:">
+
+<!ENTITY            start.label            "Стартувај го &brandShortName;">
+<!ENTITY            exit.label             "Излез">
+
+<!ENTITY            availprofiles.label    "Достапни профили">
+
+<!ENTITY            newButton.label        "Креирај нов профил…">
+<!ENTITY            newButton.accesskey    "К">
+<!ENTITY            renameButton.label     "Преименувај го профилот…">
+<!ENTITY            renameButton.accesskey "р">
+<!ENTITY            deleteButton.label     "Избриши го профилот…">
+<!ENTITY            deleteButton.accesskey "з">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; ги чува информациите за Вашите поставки и преференции во Вашиот кориснички профил.">
+
+<!ENTITY            offlineState.label    "Работи локално">
+<!ENTITY            offlineState.accesskey "о">
+
+<!ENTITY            useSelected.label       "Користи го избраниот профил при стартувањето без прашување">
+<!ENTITY            useSelected.accesskey   "с">

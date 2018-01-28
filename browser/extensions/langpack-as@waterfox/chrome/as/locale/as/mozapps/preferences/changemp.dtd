@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "প্ৰমূখ পাছৱাৰ্ড সলনি কৰক">
+<!ENTITY setPassword.tokenName.label       "সুৰক্ষাৰ ডিভাইচ">
+<!ENTITY setPassword.oldPassword.label     "বৰ্ত্তমানৰ পাছৱাৰ্ড:">
+<!ENTITY setPassword.newPassword.label     "নতুন পাছৱাৰ্ড দিয়ক:">
+<!ENTITY setPassword.reenterPassword.label "পাছৱাৰ্ড আকৌ দিয়ক:">
+<!ENTITY setPassword.meter.label           "পাছৱাৰ্ডৰ গুণৰ একক">
+<!ENTITY setPassword.meter.loading         "ল'ড কৰা হৈছে">
+<!ENTITY masterPasswordDescription.label   "প্ৰমূখ পাছৱাৰ্ড ব্যৱহাৰ কৰা হয় ছাইটৰ পাছৱাৰ্ডৰ দৰে সংবেদনশীল তথ্য সংৰক্ষণ কৰিবলৈ ব্যৱহাৰ কৰা হয়।  আপুনি এটা প্ৰমূখ পাছৱাৰ্ড সৃষ্টি কৰিলে প্ৰতি অধিবেশনত এবাৰ তাক লিখিবলৈ কোৱা হ'ব যেতিয়া &brandShortName; এ পাছৱাৰ্ডৰে সংৰক্ষিত তথ্য উদ্ধাৰ কৰে।">
+<!ENTITY masterPasswordWarning.label       "আপুনি নিৰ্ধাৰণ কৰা পাছৱাৰ্ড অনুগ্ৰহ কৰি মনত ৰাখিব।  প্ৰমূখ পাছৱাৰ্ড পাহৰিলে, সি সংৰক্ষণ কৰা কোনো তথ্য অভিগম কৰিব নোৱাৰিব।">

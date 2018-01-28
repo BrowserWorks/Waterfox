@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "ჩასწორება">
+<!ENTITY editMenu.accesskey        "რ">
+<!ENTITY undoCmd.label             "დაბრუნება">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "უ">
+<!ENTITY redoCmd.label             "გამეორება">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "მ">
+<!ENTITY cutCmd.label              "ამოჭრა">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "ა">
+<!ENTITY copyCmd.label             "დაკოპირება">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "კ">
+<!ENTITY pasteCmd.label            "ჩასმა">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "ჩ">
+<!ENTITY deleteCmd.label           "წაშლა">
+<!ENTITY deleteCmd.accesskey       "წ">
+<!ENTITY selectAllCmd.label        "ყველას არჩევა">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "ყ">
+<!ENTITY findCmd.label             "ძებნა">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "ძ">
+<!ENTITY findAgainCmd.label        "კვლავძიება">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "კ">
+<!ENTITY findPreviousCmd.label     "წინას პოვნა">
+<!ENTITY findPreviousCmd.accesskey "წ">

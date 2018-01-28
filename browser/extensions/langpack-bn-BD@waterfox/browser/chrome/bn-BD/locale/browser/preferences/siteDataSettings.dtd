@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "সেটিংস - সাইট ডেটা">
+<!ENTITY     hostCol.label                 "সাইট">
+<!ENTITY     statusCol.label               "অবস্থা">
+<!ENTITY     usageCol.label                "স্টোরেজ">
+<!ENTITY     searchTextboxPlaceHolder             "ওয়েবসাইট অনুসন্ধান">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "নির্বাচিতদের অপসারণ">
+<!ENTITY     removeSelected.accesskey      "R">
+<!ENTITY     save.label                    "পরিবর্তনগুলো সংরক্ষণ">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "বাতিল">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "সাইটা ডাটা অপসারণ">
+
+<!ENTITY     siteTree.label                "যেসব ওয়েবসাইটের কুকি অপসারিত হবে:">
+
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">

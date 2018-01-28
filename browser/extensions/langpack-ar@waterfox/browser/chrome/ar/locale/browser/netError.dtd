@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "مشكلة في تحميل الصفحة">
+<!ENTITY retry.label "حاول مرة أخرى">
+<!ENTITY returnToPreviousPage.label "عُد للخلف">
+<!ENTITY advanced.label "متقدم">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "تعذر الاتصال">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "العنوان ممنوع">
+<!ENTITY deniedPortAccess.longDesc "​">
+
+<!ENTITY dnsNotFound.title "الخادوم غير موجود">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>افحص العنوان بحثا عن أخطاء كتابية مثل <strong>ww</strong>.example.com بدلًا من <strong>www</strong>.example.com</li> <li>إذا كنت غير قادر على تحميل أي صفحة، افحص اتصال الحاسوب بالشبكة.</li> <li>إذا كان الحاسوب أو الشبكة محميّين بجدار ناري أو وسيط، تأكّد أنّ &brandShortName; مسموح له الاتصال بالوِب.</li> </ul>">
+
+<!ENTITY fileNotFound.title "الملف غير موجود">
+<!ENTITY fileNotFound.longDesc "<ul> <li>افحص اسم الملف بحثًا عن أخطاء في الكتابة.</li> <li>تأكد أن الملف لم يُنقل، أو يتغير اسمه، أو يُحذف.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "مُنِع الوصول للملف">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>قد يكون حُذِف أو نُقِل أو أن صلاحيّات الملف تمنع الوصول إليه.</li> </ul>">
+
+<!ENTITY generic.title "عذرا.">
+<!ENTITY generic.longDesc "<p>لا يستطيع &brandShortName; تحميل هذه الصفحة لسبب ما.</p>">
+
+<!ENTITY captivePortal.title "لِج إلى الشبكة">
+<!ENTITY captivePortal.longDesc2 "<p>تحتاج الولوج إلى هذه الشبكة أولا لتستطيع الوصول إلى الإنترنت.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "افتح صفحة الولوج إلى الشبكة">
+
+<!ENTITY malformedURI.title "العنوان غير صالح">
+<!ENTITY malformedURI.longDesc "<ul> <li>تكتب عادة عناوين وِب بالشكل <strong>http://www.example.com/</strong></li> <li>تأكد أنك لا تستخدم سلاش أمامية (<strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "قُوطِع الاتصال">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "انتهت صلاحية المستند">
+<!ENTITY notCached.longDesc "<p>المستند المطلوب لم يعد متوفرًا في ذاكرة &brandShortName; الخبيئة.</p><ul><li>كإجراء وقائي، &brandShortName; لا يعيد طلب المستندات الحساسة بشكل آلي.</li><li>اضغط على ”حاول مرة أخرى“ لإعادة طلب المستند من الموقع.</li></ul>">
+
+<!ENTITY netOffline.title "وضع اللا اتصال">
+<!ENTITY netOffline.longDesc2 "<ul> <li>اضغط على ”حاول مجددًا“ للتبديل إلى وضع الاتصال و إعادة تحميل الصفحة.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "خطأ في ترميز المحتوى">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "نوع ملف غير آمن">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!ENTITY netReset.title "صُفِّر الاتصال">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "انتهت مهلة الاتصال">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "لم يُفهم العنوان">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>قد تحتاج تنصيب برمجيات أخرى لفتح هذا العنوان.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "يرفض الخادوم الوسيط الاتصال">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>افحص إعدادات الوسيط لتتأكد أنها صحيحة.</li> <li>اتصل بمدير الشبكة لتتأكد أن الخادوم الوسيط يعمل.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "تعذر العثور على الخادوم الوسيط">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>افحص إعدادات الوسيط لتتأكد أنها صحيحة.</li> <li>تأكد من أن اتصالك الشبكي يعمل.</li> <li>إذا كان حاسوبك محميًا بجدار ناري أو وسيط، تأكد من السماح ل‍&brandShortName; بالنفاذ إلى الوِب.</li> </ul>">
+
+<!ENTITY redirectLoop.title "لا تعيد الصفحة التوجيه بشكل سليم">
+<!ENTITY redirectLoop.longDesc "<ul> <li>سبب هذه المشكلة هو تعطيل الكعكات أو عدم قبولها.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "استجابة غير متوقعة من الخادوم">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>تأكّد أنّ مدير الأمن الشخصي منصّب في نظامك.</li> <li>قد يكون سبب هذا هو إعداد مخالف للمعايير في الخادوم.</li> </ul>">
+
+<!ENTITY nssFailure2.title "فشل الاتصال الآمن">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>لا يمكن عرض الصفحة التي تحاول زيارتها لعدم إمكانية الاستيثاق من البيانات المستقبلة.</li> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "اتّصالك غير آمن">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "لم يضبط مالك <span class='hostname'/> موقعه عل نحو سليم.  لحماية معلوماتك من السرقة، لم يتصل &brandShortName; بهذا الموقع.">
+
+<!ENTITY sharedLongDesc "<ul> <li>قد يكون الموقع متوقفًا مؤقتًا أو مشغولا جدًا. حاول ثانية بعد عدّة دقائق.</li> <li>إذا كنت غير قادر على تحميل أي صفحة، افحص اتصال الحاسوب بالشبكة.</li> <li>إذا كان حاسوبك محميًا بجدار ناري أو وسيط، تأكد من السماح ل‍&brandShortName; بالنفاذ إلى الوِب.</li> </ul>">
+
+<!ENTITY cspBlocked.title "حجبتها سياسة أمن المحتوى">
+<!ENTITY cspBlocked.longDesc "<p>منع &brandShortName; هذه الصفحة من التحميل بهذه الطريقة لأن للصفحة سياسة أمن محتوى تمنع ذلك.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "خطأ محتوى فاسد">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>تعذر عرض الصفحة التي تريد مشاهدتها بسبب خطأ أثناء نقل البيانات.</p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "أضِف استثناءً…">
+
+<!ENTITY errorReporting.automatic2 "أبلغ عن مثل هذه الأعطال لمساعدة موزيلا في التعرف على المواقع الخبيثة و حجبها">
+<!ENTITY errorReporting.learnMore "اطّلع على المزيد…">
+
+<!ENTITY remoteXUL.title "XUL بعيد">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "تعذّر الاتصال بأمان">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "معلومات متقدمة: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p>تعذّر على &brandShortName; الاتصال مع <span id='wrongSystemTime_URL'/> لأن ساعة حاسوبك تعطي وقتًا غير صحيح و هذا يمنع الاتصال الآمن.</p> <p>حاسوبك مضبوط على <span id='wrongSystemTime_systemDate'/> في حين أن الوقت الآن <span id='wrongSystemTime_actualDate'/>. لإصلاح هذه المشكلة سيكون عليك تغيير إعدادات الوقت و التاريخ لتطابق الوقت الحالي.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>تعذّر على &brandShortName; الاتصال مع <span id='wrongSystemTimeWithoutReference_URL'/> لأن ساعة حاسوبك تعطي وقتًا غير صحيح و هذا يمنع الاتصال الآمن.</p><p>حاسوبك مضبوط على <span id='wrongSystemTimeWithoutReference_systemDate'/>. لإصلاح هذه المشكلة سيكون عليك تغيير إعدادات الوقت و التاريخ لتطابق الوقت الحالي.</p>">
+
+<!ENTITY certerror.pagetitle1  "اتصال غير آمن">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "يستخدم هذا الموقع سياسة النقل الصارمة (HSTS) تفرض على &brandShortName; ألا يتصل به إلا بأمان. بناء على هذا فقد تعذّر إضافة استثناء لهذه الشهادة.">
+<!ENTITY certerror.copyToClipboard.label "انسخ النص إلى الحافظة">
+
+<!ENTITY inadequateSecurityError.title "اتّصالك غير آمن">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>يستخدم <span class='hostname'></span> تقنية أمنية عتيقة و عرضة للهجوم. يمكن لمهاجم بسهولة الاطلاع على معلومات تظنها بمأمن. على مدير الموقع إصلاح الخادوم قبل أن يمكنك زيارة الموقع.</p><p>رمز العطل: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "يبدو أن إعدادات أمان الشبكة قد تكون السبب وراء هذا. أتريد استعادة الإعدادات المبدئية؟">
+<!ENTITY prefReset.label "استرجع الإعدادات الأصلية">

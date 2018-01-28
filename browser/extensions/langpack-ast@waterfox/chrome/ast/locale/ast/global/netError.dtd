@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Fallu de carga de páxina">
+<!ENTITY retry.label "Retentar">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Fallu al coneutar">
+<!ENTITY connectionFailure.longDesc "<p>Magar que'l sitiu paez válidu, el restolador nun foi a afitar una conexón.</p><ul><li>¿Pudo'l sitiu nun tar temporalmente disponible? Volvi tentalo más sero.</li><li>¿Nun yes a restolar otros sitios?  Comprueba la conexón de rede del ordenador.</li><li>¿Ta l'ordenador protexíu por un tornafuéu o proxy? Unos axustes incorreutos puen interferir nel restolar web.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Puertu restrinxíu por razones de seguridá">
+<!ENTITY deniedPortAccess.longDesc "<p>La direición solicitada especificaba un puertu (p.ex. <q>mozilla.org:80</q> pal puertu 80 de mozilla.org) usáu davezu pa propósitos <em>distintos</em> a restolar pela Web. El restolador encaboxó la solicitú por proteición y seguridá.</p>">
+
+<!ENTITY dnsNotFound.title "Nun s'alcontró la direición">
+<!ENTITY dnsNotFound.longDesc "<p>El restolador nun pudo alcontrar el sirvidor agospiador pa la direción apurrida.</p><ul><li>¿Tuviesti un fallu al teclexar el dominiu? (exem: <q><strong>ww</strong>.mozilla.org</q> en cuentes de <q><strong>www</strong>.mozilla.org</q>)</li><li>¿Tas seguru qu'esiste esti dominiu?  Quiciabes caducare'l so rexistru.</li><li>¿Nun yes a restolar per otros sitios?  Comprueba la to conexón de rede y axustes DNS.</li><li>¿Ta la to rede protexida por un tornafuéu o proxy?  Los axustes incorreutos puen interferir nel restolar web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Nun s'alcontró'l ficheru">
+<!ENTITY fileNotFound.longDesc "<ul><li>¿Ye dable que l'elementu se renomase, desaniciase o camudase'l so camín?</li><li>¿Hai dalgún fallu d'ortografía, mayúscules o cualesquier otru fallu al escribir la direición?</li><li>¿Tienes privilexos d'accesu pal elementu solicitáu?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Ñegóse l'accesu al ficheru">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Quiciabes tea desaniciáu, movíu o que los permisos del ficheru tean evitando l'accesu.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Nun pudo completase la solicitú">
+<!ENTITY generic.longDesc "<p>Anguaño nun hai información adicional disponible pa esti problema o fallu.</p>">
+
+<!ENTITY malformedURI.title "La direición nun ye válida">
+<!ENTITY malformedURI.longDesc "<p>La direición indicada nun ta nún formatu reconocíu. Por favor, comprueba fallos na barra de direiciones y vuelvi a intentalo.</p>">
+
+<!ENTITY netInterrupt.title "Tresferencia de datos encaboxada">
+<!ENTITY netInterrupt.longDesc "<p>El restolador coneutóse con ésitu pero interrumpióse la conexón entrín se tresfería información.  Volvi tentalo, por favor.</p><ul><li>¿Nun yes a restolar per otros sitios? Comprueba la conexón de rede del ordenador.</li><li>¿Entá tienes problemes? Consulta col to alministrador o fornidor de rede pa más asistencia.</li></ul>">
+
+<!ENTITY notCached.title "Documentu caducáu">
+<!ENTITY notCached.longDesc "<p>El documentu solicitáu nun ta na caché del restolador.</p><ul><li>Como midida de seguranza, el restolador nun va volver a solicitar documentos sensibles.</li><li>Primi de nueves pa volver a solicitar el documentu dende'l sitiu web.</li></ul>">
+
+<!ENTITY netOffline.title "Mou ensin conexón">
+<!ENTITY netOffline.longDesc2 "<p>El restolador web ta en mou ensin conexón y nun puede coneutase al elementu solicitáu.</p><ul><li>¿Ta l'equipu coneutáu a una rede activa?</li><li>Calca &quot;Intentar otra vegada&quot; pa pasar a mou en llinia y recargar la páxina.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Fallu de codificación de conteníu">
+<!ENTITY contentEncodingError.longDesc "<p>La páxina que tas intentando ver nun pue amosase porque usa una forma non válida o non almitía de compresión.</p><ul><li>Por favor, contauta colos propietarios del sitiu web pa informa-yos d'esti problema.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tipu de ficheru non seguru">
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li>Por favor, contauta colos propietarios del sitiu web pa informa-yos d'esti problema.</li>
+</ul>">
+
+<!ENTITY netReset.title "Conexón interrumpida">
+<!ENTITY netReset.longDesc "<p>L'enllaz cola rede interrumpióse entrín se negociaba una conexón. Volvi tentalo, por favor.</p>">
+
+<!ENTITY netTimeout.title "Escosó'l tiempu d'espera">
+<!ENTITY netTimeout.longDesc "<p>El sitiu solicitáu nun respondió a una petición de conexón y el restolador dexó d'esperar una rempuesta.</p><ul><li>¿Podría tar esperimentando'l sirvidor alta demanda o un corte temporal? Vuelvi a intentalo más sero.</li><li>¿Nun puedes restolar per otros sitios? Comprueba la conexón de rede del equipu.</li><li>¿Ta l'equipu protexíu por un proxy o un firewall? Una configuración incorreuta pue interferir col restolar.</li><li>¿Entá con problemes? Consulta col to alministrador de rede o fornidor d'Internet p'asistencia téunica.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protocolu desconocíu">
+<!ENTITY unknownProtocolFound.longDesc "<p>La direición especifica un protocolu (p.ex. <q>wxyz://</q>) que'l restolador nun reconoz, de mou que'l restolador nun pue coneutase correutamente col sitiu.</p><ul><li>¿Tas intentando acceder a multimedia o otros servicios que nun son de testu? Comprueba'l sitiu pa requisitos estra.</li><li>Dalgunos protocolos puen necesitar plugins o software de terceros enantes de que'l restolador pueda reconocelos.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "El sirvidor proxy refugó la conexón">
+<!ENTITY proxyConnectFailure.longDesc "<p>El restolador ta configuráu pa usar un sirvidor proxy, pero'l proxy refugó la conexón.</p><ul><li>¿Ye correuta la configuración del proxy del restolador? Comprueba la configuración y vuelvi a intentalo.</li><li>¿Permite'l serviciu proxy conexones dende esta rede?</li><li>¿Entá con problemas? Consulta col alministrador de rede o fornidor d'Internet p'asistencia téunica.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Nun s'alcontró'l sirvidor proxy">
+<!ENTITY proxyResolveFailure.longDesc "<p>El restolador ta configuráu pa usar un sirvidor proxy, pero nun pudo alcontrase'l sirvidor proxy.</p><ul><li>¿Ye correuta la configuración del proxy del restolador? Comprueba la configuración y vuelvi a intentalo.</li><li>¿L'equipu ta coneutáu a una rede?</li><li>¿Entá con problemes? Consulta col alministrador de rede o fornidor d'Internet p'asistencia téunica.</li></ul>">
+
+<!ENTITY redirectLoop.title "Bucle de redireición">
+<!ENTITY redirectLoop.longDesc "<p>El restolador detúvose intentando recuperar l'elementu solicitaú. El sitiu ta redirixendo la solicitú d'un mou que nun va completase enxamás.</p><ul><li>¿Tienes desactivaes o bloquiaes les cookies requeríes por esti sitiu?</li><li><em>NOTA</em>: Si aceutar les cookies del sitiu nun corrixe'l fallu, dablemente ye un problema de configuración del sirvidor y non del to equipu.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Rempuesta incorreuta">
+<!ENTITY unknownSocketType.longDesc "<p>El sitiu respondió a la solicitú de rede d'un mou inesperáu y el restolador nun puede siguir.</p>">
+
+<!ENTITY nssFailure2.title "Falló la conexón segura">
+<!ENTITY nssFailure2.longDesc2 "<p>La páxina que tas intentando ver nun pue amosase porque nun pue verificase l'autenticidá de los datos recibíos.</p><ul><li>Contauta colos propietarios del sitiu web pa informa-yos esti problema.</li></ul>">
+
+<!ENTITY nssBadCert.title "Falló la conexón segura">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+<li>Esto podría debese a un problema cola configuración del sirvidor, o podría ser daquién intentando facese pasar pol sirvidor.</li>
+<li>Si coneutasti a esti sirvidor con éxitu nel pasáu, el fallu podría ser temporal, y podríes volver facelo más sero.</li>
+</ul>
+">
+
+<!ENTITY securityOverride.linkText "O pues amestar una esceición…">
+<!ENTITY securityOverride.warningContent "
+<p>Nun deberíes amestar una esceición si tas usando una conexón a internet na que nun confíes dafechu o si nun tas avezáu a ver una alvertencia pa esti sirvidor.</p>
+<p>Si entá deseyes amestar una esceición pa esti sitiu, pues facelo nos tos axustes de cifráu avanzáu.</p>
+">
+
+<!ENTITY cspBlocked.title "Bloquiáu por polítiques de seguridá de conteníu">
+<!ENTITY cspBlocked.longDesc "<p>El restolador torgó qu'esta páxina se cargue d'esti mou porque la páxina tien una política de seguridá de conteníu que lo impide.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fallu de conteníu toyíu">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La páxina que tas intentando ver nun pue amosase porque deteutóse un fallu na tresmisión de los datos.</p><ul><li>Contauta colos dueños del sitiu web pa informa-yos d'esti fallu.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL Remotu">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Por favor, contauta col alministrador del sitiu web pa informalu d'esti problema.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "La to conexón nun ye segura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa una teunoloxía de seguranza que nun ta anovada y ye vulnerable a ataques. Un atacante podría revelar cenciellamente información que cuidabes que taba segura. L'alministrador del sitiu web precisará iguar primero'l sirvidor enantes que pueas visitalu.</p><p>Códigu de fallu: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

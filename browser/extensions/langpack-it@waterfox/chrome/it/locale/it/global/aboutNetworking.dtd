@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title "Informazioni sulla rete">
+<!ENTITY aboutNetworking.warning "Si tratta di una funzione sperimentale. Non utilizzare senza la supervisione di un adulto.">
+<!ENTITY aboutNetworking.showNextTime "Visualizza nuovamente questo avviso in futuro">
+<!ENTITY aboutNetworking.ok "OK">
+<!ENTITY aboutNetworking.HTTP "HTTP">
+<!ENTITY aboutNetworking.sockets "Socket">
+<!ENTITY aboutNetworking.dns "DNS">
+<!ENTITY aboutNetworking.websockets "WebSocket">
+<!ENTITY aboutNetworking.refresh "Aggiorna">
+<!ENTITY aboutNetworking.autoRefresh "Aggiorna automaticamente ogni 3 secondi">
+<!ENTITY aboutNetworking.hostname "Nome server">
+<!ENTITY aboutNetworking.port "Porta">
+<!ENTITY aboutNetworking.http2 "HTTP/2">
+<!ENTITY aboutNetworking.ssl "SSL">
+<!ENTITY aboutNetworking.active "Attivo">
+<!ENTITY aboutNetworking.idle "Inattivo">
+<!ENTITY aboutNetworking.host "Server">
+<!ENTITY aboutNetworking.tcp "TCP">
+<!ENTITY aboutNetworking.sent "Inviati">
+<!ENTITY aboutNetworking.received "Ricevuti">
+<!ENTITY aboutNetworking.family "Famiglia">
+<!ENTITY aboutNetworking.addresses "Indirizzi">
+<!ENTITY aboutNetworking.expires "Scadenza (secondi)">
+<!ENTITY aboutNetworking.messagesSent "Messaggi inviati">
+<!ENTITY aboutNetworking.messagesReceived "Messaggi ricevuti">
+<!ENTITY aboutNetworking.bytesSent "Byte inviati">
+<!ENTITY aboutNetworking.bytesReceived "Byte ricevuti">
+<!ENTITY aboutNetworking.logging "Registrazione log">
+<!ENTITY aboutNetworking.logTutorial "Consultare la pagina <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> per istruzioni sull’utilizzo di questo strumento.">
+<!ENTITY aboutNetworking.currentLogFile "File di log corrente:">
+<!ENTITY aboutNetworking.currentLogModules "Moduli di log correnti:">
+<!ENTITY aboutNetworking.setLogFile "Imposta file di log">
+<!ENTITY aboutNetworking.setLogModules "Imposta moduli di log">
+<!ENTITY aboutNetworking.startLogging "Avvia registrazione">
+<!ENTITY aboutNetworking.stopLogging "Interrompi registrazione">
+<!ENTITY aboutNetworking.dnsLookup "DNS lookup">
+<!ENTITY aboutNetworking.dnsLookupButton "Risolvi">
+<!ENTITY aboutNetworking.dnsDomain "Dominio">
+<!ENTITY aboutNetworking.dnsLookupTableColumn "IP">
+<!ENTITY aboutNetworking.rcwn "Statistiche RCWN">
+<!ENTITY aboutNetworking.rcwnStatus "Stato RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount "Numero vittorie cache">
+<!ENTITY aboutNetworking.rcwnNetWonCount "Numero vittorie rete">
+<!ENTITY aboutNetworking.totalNetworkRequests "Numero complessivo richieste di rete">
+<!ENTITY aboutNetworking.rcwnOperation "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfOpen "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite "Write">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen "Entry Open">
+<!ENTITY aboutNetworking.rcwnAvgShort "Short Average">
+<!ENTITY aboutNetworking.rcwnAvgLong "Long Average">
+<!ENTITY aboutNetworking.rcwnStddevLong "Long Standard Deviation">
+<!ENTITY aboutNetworking.rcwnCacheSlow "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow "Cache not slow count">

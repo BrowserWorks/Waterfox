@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Splošno">
+
+<!ENTITY  warnOnAddonInstall2.label       "Opozori, ko bodo spletne strani poskušale namestiti dodatke">
+<!ENTITY  warnOnAddonInstall2.accesskey   "p">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Zavrni nevarno in zavajajočo vsebino">
+<!ENTITY  enableSafeBrowsing.accesskey    "v">
+
+<!ENTITY  blockDownloads.label            "Zavrni nevarne prenose">
+<!ENTITY  blockDownloads.accesskey        "r">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Opozori o neželeni in neobičajni programski opremi">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "O">
+
+<!ENTITY  addonExceptions.label         "Izjeme …">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  logins.label                  "Prijave">
+
+<!ENTITY  rememberLogins2.label         "Zapomni si prijave spletnih strani">
+<!ENTITY  rememberLogins2.accesskey     "Z">
+<!ENTITY  passwordExceptions.label      "Izjeme …">
+<!ENTITY  passwordExceptions.accesskey  "i">
+
+<!ENTITY  useMasterPassword.label        "Uporabi glavno geslo">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "Nastavi glavno geslo …">
+<!ENTITY  changeMasterPassword.accesskey "G">
+
+<!ENTITY  savedLogins.label              "Shranjene prijave …">
+<!ENTITY  savedLogins.accesskey          "H">

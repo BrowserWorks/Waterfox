@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Suppression du mot de passe principal">
+<!ENTITY removeInfo.label                  "Vous devez saisir votre mot de passe principal actuel pour continuer :">
+<!ENTITY removeWarning1.label              "Votre mot de passe principal est utilisé pour protéger des informations sensibles comme les mots de passe utilisés sur les sites.">
+<!ENTITY removeWarning2.label              "Si vous supprimez votre mot de passe principal, vos informations ne seront pas protégées si votre ordinateur est compromis.">
+<!ENTITY setPassword.oldPassword.label     "Mot de passe actuel :">
+

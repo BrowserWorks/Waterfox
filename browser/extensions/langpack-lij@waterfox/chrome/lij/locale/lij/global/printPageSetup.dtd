@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Inpostaçioin da pagina">
+
+<!ENTITY basic.tab           "Formou &amp; Inpostaçion">
+
+<!ENTITY formatGroup.label   "Formou">
+
+<!ENTITY orientation.label   "Poxiçion:">
+<!ENTITY portrait.label      "Drito">
+<!ENTITY portrait.accesskey  "D">
+<!ENTITY landscape.label     "Desteizo">
+<!ENTITY landscape.accesskey "D">
+
+<!ENTITY scale.label         "Scaa:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Adatta a-a larghessa da pagina">
+<!ENTITY shrinkToFit.accesskey "A">
+
+<!ENTITY optionsGroup.label  "Inpostaçioin">
+
+<!ENTITY printBG.label       "Stanpa sfondo (coî &amp; inmagini)">
+<!ENTITY printBG.accesskey   "S">
+
+<!ENTITY advanced.tab        "Margini &amp; Çimma/Fondo">
+
+<!ENTITY marginGroup.label   "Margini (#1)">
+<!ENTITY marginUnits.inches  "Dia gròsse">
+<!ENTITY marginUnits.metric  "Milimetri">
+<!ENTITY marginTop.label     "In çimma:">
+<!ENTITY marginTop.accesskey "I">
+<!ENTITY marginBottom.label  "In fondo:">
+<!ENTITY marginBottom.accesskey "I">
+<!ENTITY marginLeft.label    "Mancinn-a:">
+<!ENTITY marginLeft.accesskey "S">
+<!ENTITY marginRight.label   "Drita:">
+<!ENTITY marginRight.accesskey "r">
+
+<!ENTITY headerFooter.label  "Çimma &amp; Fondo">
+
+<!ENTITY hfLeft.label        "Mancinn-a:">
+<!ENTITY hfCenter.label      "Centro:">
+<!ENTITY hfRight.label       "Drita:">
+<!ENTITY headerLeft.tip      "Çimma a-a mancinn-a">
+<!ENTITY headerCenter.tip    "Çimma a-o centro">
+<!ENTITY headerRight.tip     "Çimma a-a drita">
+<!ENTITY footerLeft.tip      "Çimma a-a mancinn-a">
+<!ENTITY footerCenter.tip    "Fondo a-o centro ">
+<!ENTITY footerRight.tip     "Fondo a drita">
+
+<!ENTITY hfTitle             "Titolo">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Dæta/Oa">
+<!ENTITY hfPage              "pagina #">
+<!ENTITY hfPageAndTotal      "pagina # de #">
+<!ENTITY hfBlank             "--ninte--">
+<!ENTITY hfCustom            "Personalizza…">
+
+<!ENTITY customPrompt.title  "Personalizza…">
+<!ENTITY customPrompt.prompt "Inserisci o testo pe-o fondo ò pe-a çimma">
+

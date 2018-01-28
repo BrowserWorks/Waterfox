@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Coî">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Cangia i coî specificæ da pagina con quelli che ti seleçionn-i chi:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "C">
+
+<!ENTITY  overrideDefaultPageColors.always.label "De longo">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Solo co-i temi a Erto Contrasto">
+<!ENTITY  overrideDefaultPageColors.never.label  "Mai">
+
+<!ENTITY  color                           "Testo e sfondo">
+<!ENTITY  textColor.label                 "Testo:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Sfondo:">
+<!ENTITY  backgroundColor.accesskey       "S">
+<!ENTITY  useSystemColors.label           "Adeuvia i coî de scistema">
+<!ENTITY  useSystemColors.accesskey       "c">
+
+<!ENTITY  underlineLinks.label            "Sotolinia colegamenti">
+<!ENTITY  underlineLinks.accesskey        "g">
+<!ENTITY  links                           "Coî di colegamenti">
+<!ENTITY  linkColor.label                 "Colegamenti no vixitæ:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Colegamenti vixitæ:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

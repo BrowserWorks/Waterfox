@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Kuki berikut disimpan dalam komputer anda:">
+<!ENTITY     cookiename.label               "Nama Cookie">
+<!ENTITY     cookiedomain.label             "Laman">
+
+<!ENTITY     props.name.label               "Nama:">
+<!ENTITY     props.value.label              "Kandungan:">
+<!ENTITY     props.domain.label             "Perumah:">
+<!ENTITY     props.path.label               "Haluan:">
+<!ENTITY     props.secure.label             "Hantar Untuk:">
+<!ENTITY     props.expires.label            "Luput:">
+<!ENTITY     props.container.label          "Bekas:">
+
+<!ENTITY     window.title                   "Cookie">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Cari">
+<!ENTITY     searchFilter.accesskey         "C">
+
+<!ENTITY     button.close.label             "Tutup">
+<!ENTITY     button.close.accesskey         "u">

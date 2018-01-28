@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informo pri la klasifiko de retadresoj">
+<!ENTITY aboutUrlClassifier.providerTitle               "Provizanto">
+<!ENTITY aboutUrlClassifier.provider                    "Provizanto">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Dato de lasta ĝisdatigo">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Dato de venonta ĝisdatigo">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Retiriĝa tempo">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Lasta stato de ĝisdatigo">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Ĝisdatigi">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Staplo">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Refreŝigi">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Viŝi">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Nomo de tablo">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Nombro de negativaj registroj en staplo">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Nombro de pozitivaj registroj en staplo">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Montri registrojn">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Registroj de staplo">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefikso">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Senvalidiĝo de negativa staplo">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Tuta hakvaloro">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Senvalidiĝo de pozitiva staplo">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Sencimigo">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Elekti registrajn modulojn">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Elekti registran dosieron">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Elekti registron de JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Registraj moduloj de sekura retumo">
+<!ENTITY aboutUrlClassifier.debugModules                "Nunaj registraj moduloj">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Registro de JS en sekura retumo">
+<!ENTITY aboutUrlClassifier.debugFile                   "Nuna registra dosiero">

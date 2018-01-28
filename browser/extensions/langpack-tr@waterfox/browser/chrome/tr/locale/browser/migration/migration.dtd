@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "İçe aktarma sihirbazı">
+
+<!ENTITY importFrom.label               "Seçenekleri, yer imlerini, geçmiş bilgisini, parolaları ve diğer verileri buradan içe aktar:">
+<!ENTITY importFromUnix.label           "Tercihleri, yer imlerini, geçmiş bilgisini, parolaları ve diğer verileri buradan içe aktar:">
+<!ENTITY importFromBookmarks.label      "Yer imlerini buradan içe aktar:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "İçe bir şey aktarma">
+<!ENTITY importFromNothing.accesskey    "b">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Yer imlerinin, geçmişin veya parola verisinin kayıtlı olduğu hiçbir program bulunamadı.">
+
+<!ENTITY importSource.title             "Ayarları ve verileri içe aktarma">
+<!ENTITY importItems.title              "İçe aktarılacak öğeler">
+<!ENTITY importItems.label              "İçe aktarılacak öğeleri seçin:">
+
+<!ENTITY migrating.title                "İçe aktarılıyor…">
+<!ENTITY migrating.label                "Aşağıdaki öğeler başarılı bir şekilde içe aktarıldı…">
+
+<!ENTITY selectProfile.title            "Profil seçin">
+<!ENTITY selectProfile.label            "Aşağıdaki profiller buradan içe aktarılabilir:">
+
+<!ENTITY done.title                     "İçe aktarma tamamlandı">
+<!ENTITY done.label                     "Aşağıdaki öğeler başarılı şekilde içe aktarıldı:">
+
+<!ENTITY closeSourceBrowser.label       "Devam etmeden önce lütfen seçilen tarayıcının kapalı olduğundan emin olun.">

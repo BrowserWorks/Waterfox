@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "პირველწყარო: ">
+
+<!ENTITY fileMenu.label "ფაილი">
+<!ENTITY fileMenu.accesskey "ფ">
+<!ENTITY savePageCmd.label "გვერდის შენახვა როგორც…">
+<!ENTITY savePageCmd.accesskey "შ">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "გვერდის პარამეტრები…">
+<!ENTITY pageSetupCmd.accesskey "პ">
+<!ENTITY printPreviewCmd.label "ნახვა ამობეჭდვამდე">
+<!ENTITY printPreviewCmd.accesskey "ნ">
+<!ENTITY printCmd.label "ბეჭდვა…">
+<!ENTITY printCmd.accesskey "ბ">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "დახურვა">
+<!ENTITY closeCmd.accesskey "დ">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "გადასვლა სტრიქონზე…">
+<!ENTITY goToLineCmd.accesskey "გ">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "ჩვენება">
+<!ENTITY viewMenu.accesskey       "ჩ">
+<!ENTITY reloadCmd.label "ხელახლა გახსნა">
+<!ENTITY reloadCmd.accesskey "ხ">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "გრძელი სტრიქონების გადატანა"> 
+<!ENTITY menu_wrapLongLines.accesskey "ს">
+<!ENTITY menu_highlightSyntax.label "სინტაქსის შემოწმება">
+<!ENTITY menu_highlightSyntax.accesskey "ქ">
+<!ENTITY menu_textSize.label "ტექსტის ზომა">
+<!ENTITY menu_textSize.accesskey "ტ">
+<!ENTITY menu_textEnlarge.label "შრიფტის გაზრდა">
+<!ENTITY menu_textEnlarge.accesskey "ზ">
+<!ENTITY menu_textReduce.label "შრიფტის შემცირება">
+<!ENTITY menu_textReduce.accesskey "ც">
+<!ENTITY menu_textReset.label "ნორმალური">
+<!ENTITY menu_textReset.accesskey "ნ">
+
+<!ENTITY findOnCmd.label     "პოვნა ამ გვერდზე…">
+<!ENTITY findOnCmd.accesskey "პ">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "კვლავძებნა">
+<!ENTITY findAgainCmd.accesskey "კ">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "უკან">
+<!ENTITY backCmd.accesskey "უ">
+<!ENTITY forwardCmd.label "წინ">
+<!ENTITY forwardCmd.accesskey "წ">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "ბმულის დაკოპირება">
+<!ENTITY copyLinkCmd.accesskey "მ">
+<!ENTITY copyEmailCmd.label "ელფოსტის მისამართის დაკოპირება">
+<!ENTITY copyEmailCmd.accesskey "ე">

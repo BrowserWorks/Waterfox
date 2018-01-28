@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "ਇਸ ਸਮੇਂ ਤੁਸੀਂ ਪ੍ਰਾਈਵੇਟ ਵਿੰਡੋ ਨੂੰ ਨਹੀਂ ਵਰਤ ਰਹੇ ਹੋ।">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "ਪ੍ਰਾਈਵੇਟ ਵਿੰਡੋ ਨੂੰ ਖੋਲ੍ਹੋ">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "ਪ੍ਰਾਈਵੇਟ ਬਰਾਊਜ਼ਿੰਗ">
+<!ENTITY privateBrowsing.title.tracking                  "ਟਰੈਕ ਹੋਣ ਤੋਂ ਸੁਰੱਖਿਆ ਦੇ ਨਾਲ ਪ੍ਰਾਈਵੇਟ ਬਰਾਊਜ਼ਿੰਗ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "ਜਦੋਂ ਤੁਸੀਂ ਪ੍ਰਾਈਵੇਟ ਵਿੰਡੋ ਵਿੱਚ ਬਰਾਊਜ਼ ਕਰਦੇ ਹੋ ਤਾਂ ਫਾਇਰਫਾਕਸ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ਇਹਨਾਂ ਨੂੰ ਨਹੀਂ ਸੰਭਾਲਦਾ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "ਖੋਲ੍ਹੇ ਗਏ ਸਫ਼ੇ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "ਖੋਜਾਂ">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "ਕੂਕੀਜ਼">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ਆਰਜ਼ੀ ਫਾਈਲਾਂ">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "ਫਾਇਰਫਾਕਸ ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ਸੰਭਾਲੇਗਾ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ਤੁਹਾਡੇ:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ਡਾਊਨਲੋਡ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ਬੁੱਕਮਾਰਕ">
+<!ENTITY aboutPrivateBrowsing.note.before                "ਪ੍ਰਾਈਵੇਟ ਬਰਾਊਜ਼ਰਿੰਗ ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ਤੁਹਾਨੂੰ ਇੰਟਰਨੈੱਟ ਉੱਤੇ ਅਣਪਛਾਤਾ ਨਹੀਂ ">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ਬਣਾਉਂਦੀ ਹੈ। ਤੁਹਾਡੀ ਕੰਪਨੀ ਜਾਂ ਇੰਟਰਨੈੱਟ ਸੇਵਾ ਦੇਣ ਵਾਲੇ ਫਿਰ ਵੀ ਤੁਹਾਡੇ ਵਲੋਂ ਖੋਲ੍ਹੇ ਗਏ ਸਫ਼ਿਆਂ ਬਾਰੇ ਜਾਣ ਸਕਦੇ ਹਨ।">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          " ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "ਪ੍ਰਾਈਵੇਟ ਬਰਾਊਜ਼ਿੰਗ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           " ਬਾਰੇ ਹੋਰ ਜਾਣੋ।">
+
+<!ENTITY trackingProtection.title                        "ਟਰੈਕ ਹੋਣ ਤੋਂ ਸੁਰੱਖਿਆ">
+<!ENTITY trackingProtection.description2                 "ਕੁਝ ਵੈੱਬਸਾਈਟਾਂ ਟਰੈਕਰਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦੀਆਂ ਹਨ, ਜੋ ਕਿ ਇੰਟਰਨੈੱਟ ਉੱਤੇ ਤੁਹਾਡੀ ਸਰਗਰਮੀ ਉੱਤੇ ਨਿਗ੍ਹਾ ਰੱਖ ਸਕਦੇ ਹਨ। ਟਰੈਕਿੰਗ ਤੋਂ ਸੁਰੱਖਿਆ ਨਾਲ ਫਾਇਰਫਾਕਸ ਕਈ ਟਰੈਕਰਾਂ ਉੱਤੇ ਪਾਬੰਦੀ ਲਗਾਉਂਦਾ ਹੈ, ਜੋ ਕਿ ਤੁਹਾਡੇ ਬਰਾਊਜ਼ ਕਰਨ ਦੇ ਰਵੱਈਏ ਬਾਰੇ ਜਾਣਕਾਰੀ ਇਕੱਤਰ ਕਰ ਸਕਦੇ ਹਨ।">
+<!ENTITY trackingProtection.startTour1                   "ਵੇਖੋ ਕਿ ਇਹ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ">

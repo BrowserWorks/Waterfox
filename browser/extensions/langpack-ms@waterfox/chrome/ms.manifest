@@ -1,0 +1,14 @@
+locale alerts ms ms/locale/ms/alerts/
+locale autoconfig ms ms/locale/ms/autoconfig/
+locale global ms ms/locale/ms/global/
+locale global-platform ms ms/locale/ms/global-platform/mac/ os=Darwin
+locale global-platform ms ms/locale/ms/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform ms ms/locale/ms/global-platform/win/ os=WINNT
+locale mozapps ms ms/locale/ms/mozapps/
+locale necko ms ms/locale/ms/necko/
+locale passwordmgr ms ms/locale/ms/passwordmgr/
+locale pipnss ms ms/locale/ms/pipnss/
+locale pippki ms ms/locale/ms/pippki/
+locale places ms ms/locale/ms/places/
+locale pluginproblem ms ms/locale/ms/pluginproblem/
+locale weave ms ms/locale/ms/services/

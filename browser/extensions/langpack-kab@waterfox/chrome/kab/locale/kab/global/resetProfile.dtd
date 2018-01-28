@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Smiren &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Senker tirirt tawurmant i weseɣti n wuguren d tmellit n yiminig.">
+<!ENTITY refreshProfile.dialog.description2  "Ma teddiḍ :">
+<!ENTITY refreshProfile.dialog.items.label1  "Kkes aggan d izegrar-inek">
+<!ENTITY refreshProfile.dialog.items.label2  "Err-d iɣewwaren n iminig-inek ɣer wazalen nsen n uwennez n tazwara">
+<!ENTITY refreshProfile.dialog.button.label  "Smiren &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Mudd cbaḥa i &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Smiren &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Tarda t-tteddu…">

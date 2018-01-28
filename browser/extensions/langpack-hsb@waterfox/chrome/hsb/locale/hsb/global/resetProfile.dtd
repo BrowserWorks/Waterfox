@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; wobnowić">
+<!ENTITY refreshProfile.dialog.description1  "Zaktualizujće, zo byšće problemy wotstronił a wukon wobnowił.">
+<!ENTITY refreshProfile.dialog.description2  "To budźe:">
+<!ENTITY refreshProfile.dialog.items.label1  "Waše přidatki a přiměrjenja wotstronić">
+<!ENTITY refreshProfile.dialog.items.label2  "Nastajenja wašeho wobhladowaka na standardne hódnoty wróćo stajeć">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; wobnowić">
+
+<!ENTITY refreshProfile.title                "Powyšće wukonliwosć &brandShortName;">
+<!ENTITY refreshProfile.button.label         "&brandShortName; wobnowić…">
+
+<!ENTITY refreshProfile.cleaning.description "Nimale dokónčene…">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Sće wočinił:">
+<!ENTITY  from.label                  "z:">
+<!ENTITY  actionQuestion.label        "Što ma &brandShortName; z tutej dataju činić?">
+
+<!ENTITY  openWith.label              "Wočinić z">
+<!ENTITY  openWith.accesskey          "o">
+<!ENTITY  other.label                 "Druha…">
+
+<!ENTITY  saveFile.label              "Dataju składować">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "To awtomatisce za dataje kaž tutu wot nětka činić.">
+<!ENTITY  rememberChoice.accesskey    "T">
+
+<!ENTITY  whichIs.label              "kotryž je:">
+
+<!ENTITY  chooseHandlerMac.label      "Wubrać…">
+<!ENTITY  chooseHandlerMac.accesskey  "u">
+<!ENTITY  chooseHandler.label         "Přepytać…">
+<!ENTITY  chooseHandler.accesskey     "P">
+
+<!ENTITY  unknownPromptText.label     "Chceće tutu dataju składować?">

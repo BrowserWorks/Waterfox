@@ -1,0 +1,269 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Հավելումների կառավարում">
+
+<!ENTITY search.placeholder                   "Որոնում բոլոր հավելումներում">
+<!ENTITY search.buttonlabel                   "Որոնում">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Բեռնում...">
+<!ENTITY listEmpty.installed.label            "Դուք չունեք տեղակայված այս տեսակի հավելումներ">
+<!ENTITY listEmpty.availableUpdates.label     "Թարմացում չի գտնվել">
+<!ENTITY listEmpty.recentUpdates.label        "Վերջին ժամանակներում դուք չեք թարմացրել որևէ հավելում">
+<!ENTITY listEmpty.findUpdates.label          "Ստուգվում է թարմացումները">
+<!ENTITY listEmpty.search.label               "Հնարավոր չեղավ գտնել համընկնող որևէ հավելում">
+<!ENTITY listEmpty.button.label               "Կարդալ հավելումների մասին">
+<!ENTITY installAddonFromFile.label           "Տեղակայեք հավելումը Ֆայլից...">
+<!ENTITY installAddonFromFile.accesskey       "Տ">
+<!ENTITY toolsMenu.tooltip                    "Գործիքներ բոլոր հավելումների համար">
+
+<!ENTITY getThemes.description                "Ցանկանո՞ւմ եք անհատականացնել ձեր դիտարկիչը:">
+<!ENTITY getThemes.learnMore                  "Ընտրեք հազարավոր ձևավորումներից">
+
+<!ENTITY cmd.back.tooltip                     "Նախորդ էջ">
+<!ENTITY cmd.forward.tooltip                  "Հաջորդ էջ">
+
+<!ENTITY showUnsignedExtensions.button.label  "Որոշ հավելումներ չեն կարող ստուգվել:">
+<!ENTITY showAllExtensions.button.label       "Ցուցադրել բոլորը">
+<!ENTITY debugAddons.label                    "Վրիպազերծել հավելումները">
+<!ENTITY debugAddons.accesskey                "պ">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Ապահով կերպը պասիվացրել է բոլոր հավելումները:">
+<!ENTITY warning.checkcompatibility.label          "Հավելումների համատեղելիության ստուգումը պասիվ է: Դուք կարող էք ունենալ անհամատեղելի հավելումներ:">
+<!ENTITY warning.checkcompatibility.enable.label   "Միացնել">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Միացնել հավելման համատեղելիության ստուգումը">
+<!ENTITY warning.updatesecurity.label              "Հավելումների թարմացման անվտանգության ստուգումը պասիվացված է: Թարմացումները կարող են վտանգավոր լինել ձեր համար:">
+<!ENTITY warning.updatesecurity.enable.label       "Միացնել">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Միացնել հավելման թարմացման անվտանգության ստուգումը">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Որոնում">
+<!ENTITY view.discover.label                  "Ձեռք բերել հավելումներ">
+<!ENTITY view.recentUpdates.label             "Վերջին Թարմացումները">
+<!ENTITY view.availableUpdates.label          "Առկա Թարմացումներ">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Ստուգել թարմացումները">
+<!ENTITY updates.checkForUpdates.accesskey    "Ս">
+<!ENTITY updates.viewUpdates.label            "Տեսնել Վերջին Թարմացումները">
+<!ENTITY updates.viewUpdates.accesskey        "Տ">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Թարմացնել հավելումները ինքնաբերաբար">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "Թ">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Վերակայել բոլոր հավելումները՝ ինքնաշխատ թարմացնելու համար">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "Վ">
+<!ENTITY updates.resetUpdatesToManual.label          "Վերակայել հավելումները՝ դրանք ձեռքով թարմացնելու համար">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "վ">
+<!ENTITY updates.updating.label               "Հավելումները թարմացվում են">
+<!ENTITY updates.installed.label              "Ձեր հավելումը թարմացվեց:">
+<!ENTITY updates.downloaded.label             "Ձեր հավելումների թարմացումները բեռնվել են:">
+<!ENTITY updates.restart.label                "Վերամեկնարկեք` տեղադրումը ավարտելու համար">
+<!ENTITY updates.noneFound.label              "Թարմացում չի գտնվել">
+<!ENTITY updates.manualUpdatesFound.label     "Տեսնել Առկա Թարմացումները">
+<!ENTITY updates.updateSelected.label         "Տեղադրել Թարմացումները">
+<!ENTITY updates.updateSelected.tooltip       "Տեղադրում է այս ցանկում առկա թարմացումները:">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Ցուցադրել մանրամասն տեղեկություն">
+<!ENTITY cmd.showDetails.accesskey            "Ց">
+<!ENTITY cmd.findUpdates.label                "Գտնել թարմացումներ">
+<!ENTITY cmd.findUpdates.accesskey            "Գ">
+<!ENTITY cmd.preferencesWin.label             "Կարգավորումներ">
+<!ENTITY cmd.preferencesWin.accesskey         "Կ">
+<!ENTITY cmd.preferencesUnix.label            "Նախըտրանքներ">
+<!ENTITY cmd.preferencesUnix.accesskey        "Ն">
+<!ENTITY cmd.about.label                      "Մասին">
+<!ENTITY cmd.about.accesskey                  "Մ">
+
+<!ENTITY cmd.enableAddon.label                "Միացնել">
+<!ENTITY cmd.enableAddon.accesskey            "Մ">
+<!ENTITY cmd.disableAddon.label               "Անջատել">
+<!ENTITY cmd.disableAddon.accesskey           "Ա">
+<!ENTITY cmd.enableTheme.label                "Հագնել թեմա">
+<!ENTITY cmd.enableTheme.accesskey            "Հ">
+<!ENTITY cmd.disableTheme.label               "Դադարեցնել թեմայի օգտագործումը">
+<!ENTITY cmd.disableTheme.accesskey           "թ">
+<!ENTITY cmd.askToActivate.label              "Ակտիվացման հարցում">
+<!ENTITY cmd.askToActivate.tooltip            "Հավելումը օգտագործելիս ամեն անգամ հարցնել                ">
+<!ENTITY cmd.alwaysActivate.label             "Միշտ Ակտիվացնել">
+<!ENTITY cmd.alwaysActivate.tooltip           "Մշտապես օգտ. այս հավելումը">
+<!ENTITY cmd.neverActivate.label              "Երբեք չակտիվացնել                ">
+<!ENTITY cmd.neverActivate.tooltip            "Երբեք չօգտագործել այս հավելումը                ">
+<!ENTITY cmd.stateMenu.tooltip                "Փոխել, երբ այս հավելումը աշխատում է">
+<!ENTITY cmd.installAddon.label               "Տեղադրել">
+<!ENTITY cmd.installAddon.accesskey           "Տ">
+<!ENTITY cmd.uninstallAddon.label             "Հեռացնել">
+<!ENTITY cmd.uninstallAddon.accesskey         "Հ">
+<!ENTITY cmd.showPreferencesWin.label         "Կարգավորումներ">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Կարգավորել այս հավելումը">
+<!ENTITY cmd.showPreferencesUnix.label        "Նախընտրանքներ">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Փոփոխել այս հավելման նախընտրանքները">
+<!ENTITY cmd.contribute.label                 "Ներդրում">
+<!ENTITY cmd.contribute.accesskey             "Ն">
+<!ENTITY cmd.contribute.tooltip               "Օգնել այս հավելման զարգացմանը">
+
+<!ENTITY cmd.showReleaseNotes.label           "Ցուցադրել Թողարկման Նշումները">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Ցուցադրել այս թարմացման նշումները">
+<!ENTITY cmd.hideReleaseNotes.label           "Թաքցնել Թողարկման Նշումները">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Թաքցնել այս թարմացման թողարկման նշումները">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Ի՞նչ են իրենցից ներկայացնում հավելումները:">
+<!ENTITY discover.description2                "Հավելումները կիրառություններ են, որոնք ձեզ թույլ են տալիս անհատականացնել &brandShortName;-ը  առավել ֆունցիոնալությամբ կամ ոճով: Փորձեք ժամանակ տնտեսող վահանակը, եղանակի տեղեկատուն կամ այլ թեմատիկ տեսք` &brandShortName;-ը ձեր սեփականը դարձնելու համար:   ">
+<!ENTITY discover.footer                      "Երբ դուք մուտք գործեք համացանց, այս վահանակը կցուցադրի լավագույն և ամենատարածված հավելումները, որպեսզի դուք դրանք փորձարկեք:">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Տարբերակ">
+<!ENTITY detail.lastupdated.label             "Վերջին Թարմացումը">
+<!ENTITY detail.creator.label                 "Ծրագրավորում">
+<!ENTITY detail.homepage.label                "Կայքէջը">
+<!ENTITY detail.numberOfDownloads.label       "Ներբեռնումներ">
+
+<!ENTITY detail.contributions.description     "Այս հավելման ստեղծողը խնդրում է, որ դուք աջակցեք հավելման զարգացմանը` կատարելով փոքր ներդրում:">
+
+<!ENTITY detail.updateType                    "Ինքնաշխատ Թարմացումներ">
+<!ENTITY detail.updateDefault.label           "Լռելյայն">
+<!ENTITY detail.updateDefault.tooltip         "Ինքնաբար տեղադրել թարմացումները, եթե միայն սա լռելյայն է">
+<!ENTITY detail.updateAutomatic.label         "Միացնել">
+<!ENTITY detail.updateAutomatic.tooltip       "Տեղադրել թարմացումները ինքնաբար:">
+<!ENTITY detail.updateManual.label            "Անջատել">
+<!ENTITY detail.updateManual.tooltip          "Չտեղադրել թարմացումները ինքնաբար">
+<!ENTITY detail.home                          "Կայքէջը">
+<!ENTITY detail.repository                    "Հավելումների պռոֆիլ">
+<!ENTITY detail.size                          "Չափը">
+
+<!ENTITY detail.checkForUpdates.label         "Ստուգել թարմացումները">
+<!ENTITY detail.checkForUpdates.accesskey     "Ս">
+<!ENTITY detail.checkForUpdates.tooltip       "Ստուգել այս հավելման թարմացումների առկայությունը">
+<!ENTITY detail.showPreferencesWin.label      "Կարգավորումներ">
+<!ENTITY detail.showPreferencesWin.accesskey  "Կ">
+<!ENTITY detail.showPreferencesWin.tooltip    "Կարգավորել այս հավելումը">
+<!ENTITY detail.showPreferencesUnix.label     "Նախընտրանքներ">
+<!ENTITY detail.showPreferencesUnix.accesskey "Ն">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Փոփոխել այս հավելման նախընտրանքները">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Վարկանիշ">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Ընդմիջել">
+<!ENTITY progress.cancel.tooltip              "Զրոյացնել">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Անուն">
+<!ENTITY sort.name.tooltip                    "Դասավորել ըստ անվան">
+<!ENTITY sort.dateUpdated.label               "Վերջին Թարմացումը">
+<!ENTITY sort.dateUpdated.tooltip             "Դասավորել ըստ թարմացման ամսաթվերի">
+<!ENTITY sort.relevance.label                 "Առավել համընկնող">
+<!ENTITY sort.relevance.tooltip               "Դասավորել ըստ կարևորության">
+<!ENTITY sort.price.label                     "Գին">
+<!ENTITY sort.price.tooltip                   "Դասավորել ըստ գնի">
+
+<!ENTITY search.filter2.label                 "Որոնում.">
+<!ENTITY search.filter2.installed.label       "Իմ հավելումները">
+<!ENTITY search.filter2.installed.tooltip     "Ցուցադրել տեղադրված հավելումները">
+<!ENTITY search.filter2.available.label       "Առկա հավելումներ">
+<!ENTITY search.filter2.available.tooltip     "Ցուցադրել տեղադրման համար առկա հավելումները">
+
+<!ENTITY addon.homepage                       "Կայքէջը">
+<!ENTITY addon.details.label                  "Ավելին">
+<!ENTITY addon.details.tooltip                "Ցուցադրել ավելի շատ տեղեկություն այս հավելման մասին">
+<!ENTITY addon.unknownDate                    "Անհայտ">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ԺԱՌԱՆԳՈՒԹՅՈՒՆ">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(անջատված)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Թարմացնել">
+<!ENTITY addon.undoAction.label               "Հրաժարվել">
+<!ENTITY addon.undoAction.tooltip             "Չեղարկել այս գործողությունը">
+<!ENTITY addon.undoRemove.label               "Հրաժարվել">
+<!ENTITY addon.undoRemove.tooltip             "Պահել այս հավելումը տեղադրված">
+<!ENTITY addon.restartNow.label               "Վերամեկնարկել հիմա">
+<!ENTITY addon.install.label                  "Տեղադրել">
+<!ENTITY addon.install.tooltip                "Տեղադրել այս հավելումը">
+<!ENTITY addon.updateNow.label                "Թարմացնել Հիմա">
+<!ENTITY addon.updateNow.tooltip              "Տեղադրել այս հավելման թարմացումը">
+<!ENTITY addon.includeUpdate.label            "Միացնել թարմացումը">
+<!ENTITY addon.updateAvailable.label          "Հասանելի է թարմացում">
+<!ENTITY addon.checkingForUpdates.label       "Ստուգվում է թարմացումները">
+<!ENTITY addon.releaseNotes.label             "Թողարկման նշումներ՝">
+<!ENTITY addon.loadingReleaseNotes.label      "Բեռնում...">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Հնարավոր չեղավ բացել թողարկման նշումները։">
+
+<!ENTITY addon.createdBy.label                "Հեղինակը՝">
+
+<!ENTITY eula.title                           "Վերջին օգտագործողի լիցենզիոն համաձայնագիր">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Ընդունել և Տեղադրել...">
+
+<!ENTITY settings.path.button.label           "Ընտրել…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Ի՞նչ է սա: Telemetry-ին կարող է տեղակայել և ժամանակ առ ժամանակ կատարել փորձեր:">
+<!ENTITY experiment.info.learnmore "Իմանալ ավելին">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetry-ի կարգավորումները">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Իմանալ ավելին...">
+
+<!ENTITY disabledUnsigned.heading "Որոշ հավելումներ անջատվել են">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Հետևյալ հավելումները չեն ստուգվել &brandShortName;-ում: Դուք կարող եք ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "գտնել փոխարինում">
+<!ENTITY disabledUnsigned.description.end " կամ խնդրեք ստեղծողին ստուգել դրանք:">
+<!ENTITY disabledUnsigned.learnMore "Իմանալ ավելին, թե ինչպես ենք մենք ապահովում Ձեր անվտանգությունը առցանց:">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Ովքեր շահագրգռված են, որ իրենց հավելումները ստուգվեն, կարող են կարդալ մեր ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "ձեռնարկ">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Ինչ-որ բան բացակայու՞մ է: Որոշ բաղադրիչներ այլևս չեն աջակցվում &brandShortName;-ի կողմից:">
+<!ENTITY pluginDeprecation.learnMore "Իմանալ ավելին:">
+
+
+
+
+
+
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">

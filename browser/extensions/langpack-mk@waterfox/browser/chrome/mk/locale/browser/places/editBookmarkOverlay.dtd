@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Име:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "м">
+<!ENTITY editBookmarkOverlay.location.label                  "Локација:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "Л">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Локација на каналот:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "к">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Локација на местото:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "с">
+<!ENTITY editBookmarkOverlay.folder.label                    "Папка:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Ги прикажува сите папки со обележувачи">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Крие">
+<!ENTITY editBookmarkOverlay.tags.label                      "Етикети">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "т">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Одделете ги етикетите со запирки">
+<!ENTITY editBookmarkOverlay.description.label               "Опис:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "О">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Клучен збор">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "К">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Ги прикажува сите етикети">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Вчитај го овој обележувач во страничната лента">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "о">
+<!ENTITY editBookmarkOverlay.choose.label                    "Изберете…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Нова папка">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "п">

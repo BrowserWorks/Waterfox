@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Cambiar contraseña maestra">
+<!ENTITY setPassword.tokenName.label       "Dispositivo de seguridad">
+<!ENTITY setPassword.oldPassword.label     "Contraseña actual:">
+<!ENTITY setPassword.newPassword.label     "Introducir nueva contraseña:">
+<!ENTITY setPassword.reenterPassword.label "Confirmar contraseña:">
+<!ENTITY setPassword.meter.label           "Calidad de la contraseña">
+<!ENTITY setPassword.meter.loading         "Cargando">
+<!ENTITY masterPasswordDescription.label   "Una contraseña maestra se usa para proteger información sensible como contraseñas de sitios. Si creas una contraseña maestra, deberá introducirla una vez por sesión cuando &brandShortName; recupere la información protegida por ésta contraseña.">
+<!ENTITY masterPasswordWarning.label       "Procure memorizar bien o escribir en un lugar seguro esta contraseña ya que, si la olvida, no podrá acceder a ninguna información protegida por esta.">

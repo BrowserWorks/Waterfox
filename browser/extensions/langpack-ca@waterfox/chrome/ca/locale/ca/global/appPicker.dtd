@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY NoAppFound.label      "No s'ha trobat cap aplicació per a aquest tipus de fitxer.">
+<!ENTITY BrowseButton.label    "Navega…">
+<!ENTITY SendMsg.label         "Envia aquest element a:">

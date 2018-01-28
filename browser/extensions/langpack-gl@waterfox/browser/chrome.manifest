@@ -1,0 +1,2 @@
+manifest chrome/gl.manifest
+manifest features/chrome.manifest

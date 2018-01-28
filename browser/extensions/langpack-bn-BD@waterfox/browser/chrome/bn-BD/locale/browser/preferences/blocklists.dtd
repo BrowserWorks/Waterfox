@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "ব্লক তালিকা">
+<!ENTITY window.width                 "55em">
+
+<!ENTITY treehead.list.label          "তালিকা">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "বাতিল C">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "পরিবর্তন সংরক্ষণ করুন S">
+<!ENTITY button.ok.accesskey          "S">

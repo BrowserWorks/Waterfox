@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Надградба на софтвер">
+
+<!ENTITY  checking.title                  "Барање на надградби">
+<!ENTITY  updateCheck.label               "Барам нови верзии на &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Не се пронајдени надградби">
+<!ENTITY  noupdatesautoenabled.intro      "Нема достапни надградби. &brandShortName; периодично ќе проверува за надградби.">
+<!ENTITY  noupdatesautodisabled.intro     "Нема достапни надградби. Проверете повторно друг пат или вклучете ја автоматската проверка за &brandShortName; надградби.">
+
+<!ENTITY  manualUpdate.title              "Не може да се надгради">
+<!ENTITY  manualUpdate.desc               "Достапна е препорачана надградба за безбедност и стабилност, но Вие ги немате системските привилегии потребни за да ја инсталирате. Ве молиме контактирајте го вашиот системски администратор, или пробајте повторно од сметка која има привилегии да инсталира софтвер на овој компјутер.">
+<!ENTITY  manualUpdate.space.desc         "Достапна е препорачлива безбедносна и стабилносна надградба, но немате доволно место на дискот за да ја инсталирате.">
+<!ENTITY  manualUpdateGetMsg.label        "Секогаш можете да ја добиете последната верзија од &brandShortName; на:">
+
+<!ENTITY  unsupported.title               "Системот не е поддржан">
+<!ENTITY  unsupported.label               "Вашиот &brandShortName; не е ажуриран, но најновата верзија
+                                           не е поддржана од Вашиот систем. Ве молам надградете го Вашиот систем
+                                           и обидете се повторно. Нема да го видите ова предупредување повторно, но можете">
+<!ENTITY  unsupportedLink.label           "дознајте повеќе.">
+
+<!ENTITY  clickHere.label                 "Видете повеќе информации за оваа надградба">
+
+<!ENTITY  evangelism.desc                 "Се препорачува да ја примените оваа надградба на &brandShortName; во најкус рок.">
+
+<!ENTITY  downloadPage.title              "Продолжува со вчитување на &brandShortName;">
+<!ENTITY  downloading.intro               "Надградбата се презема…">
+<!ENTITY  connecting.label                "Се поврзувам со серверот за надградби…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; не можеше да го утврди интегритетот на инкременталната надградба која ја презема, па затоа сега го презема целиот пакет со надградби.">
+
+<!ENTITY  viewDetails.tooltip             "Прикажи ги деталите за оваа надградба">
+
+<!ENTITY  details.link                    "Детали">
+
+<!ENTITY  error.title                     "Надградбата не успеа">
+
+<!ENTITY  error.label                     "Имаше проблеми со проверувањето, преземањето или инсталирањето на оваа надградба. &brandShortName; не може да се надгради бидејќи:">
+                                           
+<!ENTITY  errorManual.label               "Можете рачно да го надградите &brandShortName; со посета на следнава врска и преземање на последната верзија:">
+                                           
+<!ENTITY  errorpatching.intro             "Парцијалната надградба не може да се примени. &brandShortName; ќе се обиде повторно со преземање на комплетната надградба.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; не може да утврди дали има достапна надградба.Проверете 
+дали ја имате најновата верзија на &brandShortName; од:">
+
+<!ENTITY  finishedPage.title              "Надградбата е спремна за инсталирање">
+<!ENTITY  finishedPage.text               "Надградбата ќе се инсталира при следното стартување на &brandShortName;. Можете да го рестартирате &brandShortName; сега, или да продолжите со работа и да го рестартирате подоцна.">
+
+<!ENTITY  finishedBackgroundPage.text     "Преземена е надградба за безбедност и стабилност на &brandShortName;. Надградбата може да се инсталира.">
+<!ENTITY  finishedBackground.name         "Надградба:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Надградбата ќе се инсталира при следното стартување на &brandShortName;. Можете да го рестартирате &brandShortName; сега, или да продолжите со работа и да го рестартирате подоцна.">
+<!ENTITY  finishedBackground.moreElevated "За оваа надградба се потребни администраторски овластувања. Оваа надградба ќе се
+                                           инсталира следниот пат кога &brandShortName; ќе се стартува. Можете да го рестартирате
+                                           &brandShortName; сега, да продолжите да работите и да го рестартирате подоцна или
+                                           да ја одбиете оваа надградба.">
+
+<!ENTITY  update.details.label            "Детали">
+<!ENTITY  update.installedOn.label        "Инсталирана на:">
+<!ENTITY  update.status.label             "Статус:">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; - Modul sigur">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Pornește în modul sigur">
+<!ENTITY refreshProfile.label         "Reîmprospătează &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Modul sigur este un mod special al &brandShortName; care poate fi folosit pentru a depana problemele.">
+<!ENTITY safeModeDescription4.label   "Suplimentele și setările suplimentare vor fi temporar dezactivate.">
+
+<!ENTITY refreshProfileInstead.label  "De asemenea, poți sări peste depanare și să încerci să reîmprospătezi &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; s-a închis în mod neașteptat la pornire. Acest lucru ar putea fi cauzat de suplimente sau alte probleme. Poți încerca să rezolvi problema prin depanarea acesteia pornind în modul sigur.">

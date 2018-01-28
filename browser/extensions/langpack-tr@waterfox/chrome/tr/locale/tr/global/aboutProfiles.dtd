@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Profiller hakkında">
+<!ENTITY aboutProfiles.subtitle "Bu sayfa profillerinizi yönetmenize yardımcı olur. Her profil; ayrı bir geçmiş, yer imleri, ayarlar ve eklentiler içeren ayrı birer dünyadır.">
+<!ENTITY aboutProfiles.create "Yeni profil oluştur">
+<!ENTITY aboutProfiles.restart.title "Yeniden başlat">
+<!ENTITY aboutProfiles.restart.inSafeMode "Eklentileri devre dışı bırakıp yeniden başlat…">
+<!ENTITY aboutProfiles.restart.normal "Normal başlat…">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "ขณะนี้คุณไม่ได้อยู่ในหน้าต่างส่วนตัว">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "เปิดหน้าต่างส่วนตัว">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "ส">
+
+<!ENTITY privateBrowsing.title                           "การท่องเว็บแบบส่วนตัว">
+<!ENTITY privateBrowsing.title.tracking                  "การท่องเว็บแบบส่วนตัวพร้อมการป้องกันการตามรอย">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "เมื่อคุณเรียกดูในหน้าต่างส่วนตัว Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ไม่บันทึก">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "หน้าที่เยี่ยมชมแล้ว">
+<!ENTITY aboutPrivateBrowsing.info.searches              "การค้นหา">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "คุกกี้">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ไฟล์ชั่วคราว">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "จะบันทึก">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ดาวน์โหลด">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ที่คั่นหน้า">
+<!ENTITY aboutPrivateBrowsing.note.before                "การท่องเว็บแบบส่วนตัว">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ไม่ได้ทำให้คุณนิรนาม">
+<!ENTITY aboutPrivateBrowsing.note.after                 "บนอินเทอร์เน็ต นายจ้างหรือผู้ให้บริการอินเทอร์เน็ตยังคงสามารถทราบว่าคุณเยี่ยมชมหน้าใดบ้าง">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "เรียนรู้เพิ่มเติมเกี่ยวกับ ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "การท่องเว็บแบบส่วนตัว">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           "">
+
+<!ENTITY trackingProtection.title                        "การป้องกันการตามรอย">
+<!ENTITY trackingProtection.description2                 "เว็บไซต์บางแห่งใช้ตัวติดตามที่สามารถสอดส่องกิจกรรมของคุณบนอินเทอร์เน็ต ด้วยการป้องกันการตามรอย Waterfox จะปิดกั้นตัวติดตามจำนวนมากที่สามารถเก็บรวบรวมข้อมูลเกี่ยวกับพฤติกรรมการท่องเว็บของคุณ">
+<!ENTITY trackingProtection.startTour1                   "ดูวิธีการทำงาน">

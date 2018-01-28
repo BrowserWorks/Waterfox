@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "Fermi tiun ĉi mesaĝon">
+
+<!ENTITY checkForUpdates "Kontroli ĉu estas ĝisdatigoj…">
+
+<!ENTITY learnMore "Pli da informo…">
+
+<!ENTITY defaultButton.label "Akcepti">
+<!ENTITY defaultButton.accesskey "A">

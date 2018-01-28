@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "मुख्य गुड़किल्ली बदलू">
+<!ENTITY setPassword.tokenName.label "सुरक्षा युक्ति">
+<!ENTITY setPassword.oldPassword.label " मोजुदा  गुड़किल्ली:">
+<!ENTITY setPassword.newPassword.label "नव गुड़किल्ली:">
+<!ENTITY setPassword.reenterPassword.label "नव गुड़किल्ली (फेर):">
+<!ENTITY setPassword.meter.label "गुड़किल्ली गुणवत्ता मीटर">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "फेर सेट  करू ">
+<!ENTITY resetPassword.title  "मुख्य गुड़किल्ली फेर सेट  करू ">
+<!ENTITY resetPassword.text  "जँ अहाँ मुख्य गुड़किल्ली फेर सेट कएने छी, अहाँक सभटा जमा वेब आओर इमेल गुड़किल्ली, आँकड़ा, निज प्रमाणपत्र, औऱ निज कुँजी विस्मृत हो जएताह. की अहाँ अपन मुख्य गुड़किल्ली सेट फेर कएनाइ केँ सुनिश्चित अछि?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "प्रमाणपत्र डाउनलोड कए रहल  अछि ">
+<!ENTITY downloadCert.message1 "आपको एकटाटा नव सर्टिफिकेट आथोरिटी (CA) पर विश्वास  कलेल  पूछा जएताह.">
+<!ENTITY downloadCert.trustSSL "ई CA केँ भरोसा करू वेबसाइट केँ पहचानने  कलेल .">
+<!ENTITY downloadCert.trustEmail "ई CA केँ भरोसा करू इमेल प्रयोक्ता केँ पहचानने  कलेल .">
+<!ENTITY downloadCert.trustObjSign "ई CA केँ भरोसा करू साफ्टवेयर डेवलपर केँ पहचानने  कलेल .">
+<!ENTITY downloadCert.message3 "ई CA पर ककरो उद्देश्य  कलेल  भरोसा करब सँ पहले, अहाँकेँ एकटारल प्रमाणपत्र आओर एकटारल नीति आओर प्रक्रिया परीक्षा करनी चाही (जँ उपलब्ध  अछि ).">
+<!ENTITY downloadCert.viewCert.label "देखू">
+<!ENTITY downloadCert.viewCert.text "CA प्रमाणपत्र जाँचू">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "प्रयोक्ता पहचान आग्रह">
+<!ENTITY clientAuthAsk.message1 "ई साइट ने आपसे एकटाटा प्रमाणपत्र सँ अपने केँ पहचानने क आग्रह कएल  अछि :">
+<!ENTITY clientAuthAsk.message2 "एकटाटा पहचान क रूपेँ एकटाटा प्रमाणपत्र  कलेल  चुनू:">
+
+
+<!ENTITY pkcs12.setpassword.title  "प्रमाणपत्र बैकअप गुड़किल्ली चुनू">
+<!ENTITY pkcs12.setpassword.message  "प्रमाणपत्र बैकअप गुड़किल्ली जकरा अहाँ एतए सेट कएने छी बैकअफ फाइलक रक्षा करैत अछि  जकरा अहाँ बनाबैक करीब अछि .  अहाँकेँ जरूर एहि गुड़किल्ली केँ सेट कएनाइ चाही एहि बैकअपक सँग.">
+<!ENTITY pkcs12.setpassword.label1 "प्रमाणपत्र बैकअप गुड़किल्ली:">
+<!ENTITY pkcs12.setpassword.label2 "प्रमाणपत्र बैकअप गुड़किल्ली (फेर):">
+<!ENTITY pkcs12.setpassword.reminder "Important: जँ अहाँ अपन प्रमाणपत्र बैकअप गुड़किल्ली भूलि गेलहुँ, अहाँ एहि बैकअप केँ बाद मे फेर नहि लाबि सकब. कृप्या एकरा सुरक्षित स्थान मे रिकार्ड करू.">
+
+<!ENTITY chooseToken.title  "टोकेन समाद चुनू">
+<!ENTITY chooseToken.message1 "एकटा टोकेन चुनू.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "एकटा निज कुँजी उत्पन्न कए रहल अछि ">
+<!ENTITY createCertInfo.msg1 "कुंजी जनन प्रगति मे अछि, ई किछु समय लेत....">
+<!ENTITY createCertInfo.msg2 "कृपया प्रतीक्षा करू ...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "संरक्षित टोकन सत्यापन">
+<!ENTITY protectedAuth.msg "कृपया टोकन मे सत्यापित करू. सत्यापन विधि अहाँक टोकन क प्रकार पर निर्भर करैत अछि .">
+<!ENTITY protectedAuth.tokenName.label "टोकन:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

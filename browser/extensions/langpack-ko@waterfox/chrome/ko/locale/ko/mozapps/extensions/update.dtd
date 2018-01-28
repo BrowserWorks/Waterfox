@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; 업데이트">
+
+<!ENTITY  offline.title                   "&brandShortName;는 오프라인 상태입니다. ">
+<!ENTITY  offline.description             "현재 버전과 호환되는 부가 기능의 업데이트가 있는지 확인하려면 &brandShortName;가 온라인 상태이어야 합니다.">
+<!ENTITY  offline.toggleOffline.label     "온라인 상태로 전환합니다.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "호환되지 않는 부가 기능">
+<!ENTITY  mismatch.top.label              "다음 부가 기능은 &brandShortName; 현재 버전과 호환되지 않으므로 사용 불가 상태로 전환 됩니다:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; 는 이 부가 기능의 사용 가능한 버전을 체크할 수 있습니다.">
+
+<!ENTITY  checking.wizard.title           "호한 가능한 부가기능 검사">
+<!ENTITY  checking.top.label              "호환 되지 않는 부가 기능의 업데이트 검사 중…">
+<!ENTITY  checking.status                 "이 작업은 몇 분 정도 소요될 수 있습니다…">
+
+<!ENTITY  found.wizard.title               "호환 가능한 부가 기능을 찾음">
+<!ENTITY  found.top.label                 "설치할 부가 기능을 선택하십시오:">
+<!ENTITY  found.disabledXPinstall.label   "소프트웨어 설치가 허가되지 않아 업데이트를 설치할 수 없습니다. 아래 설정을 변경하시기 바랍니다.">
+<!ENTITY  found.enableXPInstall.label     "소프트웨어 설치 허가">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "호환 가능한 부가 기능 설치">
+<!ENTITY  installing.top.label            "부가 기능의 업데이트를 설치하고 있습니다…">
+
+<!ENTITY  noupdates.wizard.title          "호환 가능한 부가 기능 없음">
+<!ENTITY  noupdates.intro.desc            "&brandShortName;가 호환 되지 않은 부가 기능에 대한 업데이트를 찾지 못했습니다.">
+<!ENTITY  noupdates.error.desc            "업데이트 중 어떤 문제가 발생할 수도 있습니다.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName;는 주기적으로  업데이트를 검사하여 호환되는 버전을 찾아 알려줄 수 있습니다.">
+
+<!ENTITY  finished.wizard.title           "설치된 호환 가능한 부가 기능">
+<!ENTITY  finished.top.label              "&brandShortName;가 부가 기능 업데이트를 설치했습니다.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName;는 주기적으로 검사하여 호환되는 버전을 찾아 알려줄 수 있습니다.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName;는 주기적으로 검사하여 호환되는 버전을 찾아 알려줄 수 있습니다.">
+
+<!ENTITY  adminDisabled.wizard.title      "업데이트 검사 불가능">
+<!ENTITY  adminDisabled.warning.label     "&brandShortName; 소프트웨어 설치가 가능하지 않기 때문에 호환 가능한 부가 기능 업데이트 검사를 할 수 없습니다. 이 컴퓨터의 시스템 관리자에게 문의하시기 바랍니다.">
+
+<!ENTITY  versioninfo.wizard.title        "호환 가능한 부가 기능 검사">
+<!ENTITY  versioninfo.top.label           "&brandShortName;의 현재 버전과 호환 되는 부가 기능을 검사하고 있습니다.">
+<!ENTITY  versioninfo.waiting             "이 작업은 몇 분 정도 소요 될 수 있습니다…">
+
+<!ENTITY  installerrors.wizard.title      "Problems Installing Updates">
+<!ENTITY  installerrors.intro.label       "부가 기능 업데이트 중 &brandShortName;에 문제가 발생했습니다.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "&brandShortName;를 시작하기 위해 완료를 클릭하십시오.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; 시작을 완료하려면 완료를 누르세요.">
+<!ENTITY  enableChecking.label            "&brandShortName;의 업데이트 검사를 허가하십시오.">

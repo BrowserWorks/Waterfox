@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Probleemoplossingsinformatie">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Deze pagina bevat technische informatie die handig kan zijn als u een probleem 
+  probeert op te lossen. Als u antwoorden op veelgestelde vragen over &brandShortName;
+  zoekt, kijk dan op onze <a id='supportLink'>ondersteuningswebsite</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Crashrapporten">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Rapport-ID">
+<!ENTITY aboutSupport.crashes.sendDate "Verzonden">
+<!ENTITY aboutSupport.crashes.allReports "Alle crashrapporten">
+<!ENTITY aboutSupport.crashes.noConfig "Deze toepassing is niet geconfigureerd om crashrapporten weer te geven.">
+
+<!ENTITY aboutSupport.extensionsTitle "Extensies">
+<!ENTITY aboutSupport.extensionName "Naam">
+<!ENTITY aboutSupport.extensionEnabled "Ingeschakeld">
+<!ENTITY aboutSupport.extensionVersion "Versie">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;-functies">
+<!ENTITY aboutSupport.featureName "Naam">
+<!ENTITY aboutSupport.featureVersion "Versie">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Experimentele functies">
+<!ENTITY aboutSupport.experimentName "Naam">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Beschrijving">
+<!ENTITY aboutSupport.experimentActive "Actief">
+<!ENTITY aboutSupport.experimentEndDate "Einddatum">
+<!ENTITY aboutSupport.experimentHomepage "Homepage">
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.appBasicsTitle "Toepassingsbasics">
+<!ENTITY aboutSupport.appBasicsName "Naam">
+<!ENTITY aboutSupport.appBasicsVersion "Versie">
+<!ENTITY aboutSupport.appBasicsBuildID "Build-ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Updatekanaal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Updategeschiedenis">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Updategeschiedenis tonen">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profielmap">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profielmap">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Ingeschakelde plug-ins">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Buildconfiguratie">
+<!ENTITY aboutSupport.appBasicsUserAgent "Useragent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Geheugengebruik">
+<!ENTITY aboutSupport.appBasicsPerformance "Prestaties">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Geregistreerde Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profielen">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocess-vensters">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Webinhoudsprocessen">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google-sleutel">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla-locatieservicesleutel">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Veilige modus">
+
+<!ENTITY aboutSupport.showDir.label "Map openen">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Tonen in Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Map openen">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Belangrijke aangepaste voorkeuren">
+<!ENTITY aboutSupport.modifiedPrefsName "Naam">
+<!ENTITY aboutSupport.modifiedPrefsValue "Waarde">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js-voorkeuren">
+<!ENTITY aboutSupport.userJSDescription "Uw profielmap bevat een <a id='prefs-user-js-link'>user.js-bestand</a>, dat voorkeuren bevat die niet door &brandShortName; zijn gemaakt.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Belangrijke vergrendelde voorkeuren">
+<!ENTITY aboutSupport.lockedPrefsName "Naam">
+<!ENTITY aboutSupport.lockedPrefsValue "Waarde">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafisch">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Places-database">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integriteit">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Integriteit verifiëren">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incrementele GC">
+
+<!ENTITY aboutSupport.a11yTitle "Toegankelijkheid">
+<!ENTITY aboutSupport.a11yActivated "Geactiveerd">
+<!ENTITY aboutSupport.a11yForceDisabled "Toegankelijkheid voorkomen">
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible-handler gebruikt">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Bibliotheekversies">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Installatiegeschiedenis">
+<!ENTITY aboutSupport.updateHistoryTitle "Updategeschiedenis">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Tekst naar klembord kopiëren">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Onbewerkte gegevens naar klembord kopiëren">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Geweigerde systeemaanroepen">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconden geleden">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Procestype">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumenten">
+
+<!ENTITY aboutSupport.safeModeTitle "Veilige modus proberen">
+<!ENTITY aboutSupport.restartInSafeMode.label "Herstarten met uitgeschakelde add-ons…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Functies">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostische gegevens">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Foutenlogboek">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Beslissingenlogboek">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Door crashbeveiliging uitgeschakelde functies">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Uitvoerapparaten">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Invoerapparaten">
+<!ENTITY aboutSupport.mediaDeviceName "Naam">
+<!ENTITY aboutSupport.mediaDeviceGroup "Groep">
+<!ENTITY aboutSupport.mediaDeviceVendor "Leverancier">
+<!ENTITY aboutSupport.mediaDeviceState "Status">
+<!ENTITY aboutSupport.mediaDevicePreferred "Voorkeur">
+<!ENTITY aboutSupport.mediaDeviceFormat "Indeling">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanalen">
+<!ENTITY aboutSupport.mediaDeviceRate "Frequentie">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latentie">

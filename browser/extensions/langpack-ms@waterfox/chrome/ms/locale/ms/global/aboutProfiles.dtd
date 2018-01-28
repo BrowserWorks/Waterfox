@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Maklumat Profil">
+<!ENTITY aboutProfiles.subtitle "Halaman ini membantu anda untuk menguruskan profil. Setiap profil adalah entiti berbeza yang mengandungi perkataan, sejarah, penanda buku, tetapan dan add-ons yang berasingan.">
+<!ENTITY aboutProfiles.create "Cipta Profil Baru">
+<!ENTITY aboutProfiles.restart.title "Mulakan semula">
+<!ENTITY aboutProfiles.restart.inSafeMode "Mula semula dengan Add-ons Dinyahdaya…">
+<!ENTITY aboutProfiles.restart.normal "Mula semula secara normal…">

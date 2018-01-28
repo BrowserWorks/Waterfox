@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "安全性">
+<!ENTITY  phishingProtection.label       "釣魚防護">
+
+<!ENTITY  warnOnAddonInstall2.label       "當網站嘗試安裝附加元件時警告您">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "封鎖危險及詐騙內容">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "封鎖危險的下載項目">
+<!ENTITY  blockDownloads.accesskey        "D">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "下載不安全或不常見的軟體時警告您">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "C">
+
+<!ENTITY  addonExceptions.label         "例外網站…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "表單與密碼">
+
+<!ENTITY  rememberLogins2.label         "記住網站的登入帳號與密碼">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "例外網站…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "使用主控密碼">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "變更主控密碼…">
+<!ENTITY  changeMasterPassword.accesskey "M">
+
+<!ENTITY  savedLogins.label              "已存登入資訊…">
+<!ENTITY  savedLogins.accesskey          "L">

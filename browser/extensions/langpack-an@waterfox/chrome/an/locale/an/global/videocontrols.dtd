@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Reproducir">
+<!ENTITY playButton.pauseLabel "Pausar">
+<!ENTITY muteButton.muteLabel "Silenciar">
+<!ENTITY muteButton.unmuteLabel "Restaurar son">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Pantalla completa">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Salir d'a pantalla completa">
+<!ENTITY castingButton.castingLabel "Transmitir a la pantalla">
+<!ENTITY closedCaption.off "Desactivau">
+
+<!ENTITY stats.media "Fichers multimedia">
+<!ENTITY stats.size "Mida">
+<!ENTITY stats.activity "Actividat">
+<!ENTITY stats.activityPaused "En pausa">
+<!ENTITY stats.activityPlaying "En reproducción">
+<!ENTITY stats.activityEnded "Rematau">
+<!ENTITY stats.activitySeeking "(se ye posicionando)">
+<!ENTITY stats.volume "Volumen">
+<!ENTITY stats.framesParsed "Fotogramas analisaus">
+<!ENTITY stats.framesDecoded "Fotogramas descodificaus">
+<!ENTITY stats.framesPresented "Fotogramas presentaus">
+<!ENTITY stats.framesPainted "Fotogramas pintaus">
+
+<!ENTITY error.aborted "S'ha aturau a descarga d'o video.">
+<!ENTITY error.network "S'ha abortau a reproducción d'o video por un problema con o ret.">
+<!ENTITY error.decode "O video no se puede reproducir porque o fichero ye corrompiu.">
+<!ENTITY error.srcNotSupported "O formato d'o video u o tipo MIME no son compatibles.">
+<!ENTITY error.noSource2 "No s'ha trobau garra video con un formato u un tipo MIME compatibles.">
+<!ENTITY error.generic "S'ha abortau a reproducción d'o video por un problema desconoixiu.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "S'ha reproduciu #1 de #2">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

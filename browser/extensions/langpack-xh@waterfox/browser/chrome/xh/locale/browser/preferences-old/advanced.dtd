@@ -1,0 +1,168 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Jikelele">
+
+<!ENTITY accessibility.label             "Ufikelelo">
+
+<!ENTITY useCursorNavigation.label       "Sebenzisa qho amaqhosha ekheza ukufunisela kumakhasi">
+<!ENTITY useCursorNavigation.accesskey   "a">
+<!ENTITY searchOnStartTyping.label       "Khangela iteksti xa uqalisa ukuchwetheza">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY blockAutoReload.label           "Ndikulumkise xa iiwebhusayithi zizama ukwalathisa okanye ukulayisha iphepha">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Bonisa ukuphatha nekhibhodi xa kuyimfuneko">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Ukubhrawuza">
+
+<!ENTITY useAutoScroll.label             "Sebenzisa ukusikrola ngokuzenzekelayo">
+<!ENTITY useAutoScroll.accesskey         "u">
+<!ENTITY useSmoothScrolling.label        "Sebenzisa ukuhambahamba kokubhaliweyo okugudileyo">
+<!ENTITY useSmoothScrolling.accesskey    "g">
+<!ENTITY checkUserSpelling.label         "Khangela upelo lwakho njengoko uchwetheza">
+<!ENTITY checkUserSpelling.accesskey     "u">
+
+<!ENTITY dataChoicesTab.label            "Okukhethwayo kwengcombolo">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Kukunceda ukuqonde ukusebenza kwebhrawuza yakho kwaye wabelane ngengcombolo yakho ne-&vendorShortName; malungi nempilo yebhrawuza yakho">
+<!ENTITY enableHealthReport.label        "Yenza isebenze i-&brandShortName; iNgxelo yeMpilo">
+<!ENTITY enableHealthReport.accesskey    "y">
+
+
+<!ENTITY telemetryDesc.label             "Yabelana ngomsebenzi, usetyenziso, ihadiwe kunye nolungiselelo lwengcombolo emalunga nebhrawuza yakho ye-&vendorShortName; ukusinceda ekwenzeni i-&brandShortName; ibe ngcono">
+<!ENTITY enableTelemetryData.label       "Yabelana ngeNgcombolo eyoNgezelelweyo (oko kukuthi yi-Telemetry)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+
+
+<!ENTITY crashReporterDesc2.label         "Uncedo lweengxelo zokukhresha &vendorShortName; lungisa iingxaki wenze ibhrawuza yakho izinze ngakumbi kwaye ikhuseleke">
+<!ENTITY alwaysSubmitCrashReports.label   "Vumela &brandShortName; lithumele iingxelo ezifumbileyo egameni lakho">
+<!ENTITY alwaysSubmitCrashReports.accesskey "f">
+
+
+<!ENTITY networkTab.label                "Inethiwekhi">
+
+<!ENTITY connection.label                "Umdibaniso">
+
+<!ENTITY connectionDesc.label            "Lungiselela indlela i-&brandShortName; enxibelela ngayo kwi-Intanethi">
+<!ENTITY connectionSettings.label        "Isetingi…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Umxholo wewebhu okhutshelweyo">
+
+<!ENTITY offlineStorage2.label           "Umxholo wewebhu wangaphandle kwenethiwekhi neengcombolo zomsebenzisi">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "IDatha yeSayithi">
+<!ENTITY clearSiteData.label             "Cima Yonke iDatha">
+<!ENTITY clearSiteData.accesskey         "i">
+<!ENTITY siteDataSettings.label          "Iietingi…">
+<!ENTITY siteDataSettings.accesskey      "e">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Linganisela imemori esisikhupheli">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "I-MB yesithuba">
+<!ENTITY clearCacheNow.label             "Susa ngoku">
+<!ENTITY clearCacheNow.accesskey         "S">
+<!ENTITY clearOfflineAppCacheNow.label   "Gutyula ngoku">
+<!ENTITY clearOfflineAppCacheNow.accesskey "G">
+<!ENTITY overrideSmartCacheSize.label    "Cima ulawulo lwememori esisikhupheli ezenzekelayo">
+<!ENTITY overrideSmartCacheSize.accesskey "C">
+
+<!ENTITY updateTab.label                 "Hlaziya">
+
+<!ENTITY updateApplication.label         "I-&brandShortName; iZihlaziyi">
+<!ENTITY updateAuto1.label               "fakela uhlaziyo ngokuzenzekela (kucetyiswa njalo: ukhuseleko olungaphezulu)">
+<!ENTITY updateAuto1.accesskey           "f">
+<!ENTITY updateCheckChoose.label         "i-Khangela uhlaziyo, kodwa ikuvumela ukuba ukhethe ukuba ungazifaka na">
+<!ENTITY updateCheckChoose.accesskey     "K">
+<!ENTITY updateManual.label              "Ungaze ukhangele uhlaziyo (akucetyiswa oko: yingozi kukhuseleko)">
+<!ENTITY updateManual.accesskey          "U">
+
+<!ENTITY updateHistory.label             "Bonisa iMbali yoHlaziyo">
+<!ENTITY updateHistory.accesskey         "B">
+
+<!ENTITY useService.label                "Sebenzisa inkonzo yokungasemva ukufakela uhlaziyo">
+<!ENTITY useService.accesskey            "y">
+
+<!ENTITY autoUpdateOthers.label          "UHlaziyo oluZenzekelayo">
+<!ENTITY enableSearchUpdate.label        "IiNjini zokukhangela">
+<!ENTITY enableSearchUpdate.accesskey    "I">
+
+<!ENTITY offlineStorageNotify.label               "Iyakuxelela xa iwebhusayithi icela ukugcina iingcombolo ezinokusetyenziswa xa ingekho kwinethiwekhi">
+<!ENTITY offlineStorageNotify.accesskey           "I">
+<!ENTITY offlineStorageNotifyExceptions.label     "Izinxaxhi…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "z">
+
+<!ENTITY offlineAppsList2.label          "Ezi webhusayithi zilandelayo zivunyelwe ukugcina iingcombolo ezisetyenziswa ngaphandle kwenethiwekhi:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Susa…">
+<!ENTITY offlineAppsListRemove.accesskey "S">
+<!ENTITY offlineAppRemove.confirm        "Shenxisa ingcombolo yangaphandle kweintanethi">
+
+<!ENTITY certificateTab.label            "Izatifikethi">
+<!ENTITY certPersonal.label              "Izicelo">
+<!ENTITY certPersonal.description        "Xa iseva icela isatifikethi sakho:">
+<!ENTITY selectCerts.auto                "Khetha esinye ngokuzenzekela">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Iyakubuza ngawo onke amaxesha">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Buza iiseva zomphenduli ze-OCSP ukuqinisekisa ukugqibelela kwangoku kwezatifikethi">
+<!ENTITY enableOCSP.accesskey            "B">
+<!ENTITY viewCerts.label                 "Bona izatifikethi">
+<!ENTITY viewCerts.accesskey             "i">
+<!ENTITY viewSecurityDevices.label       "Izixhobo zokhuseleko">
+<!ENTITY viewSecurityDevices.accesskey   "z">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Sebenzisa ukhawuleziso lwehadiwe xa lufumaneka">
+<!ENTITY allowHWAccel.accesskey          "d">
+
+<!ENTITY crashReporterLearnMore.label     "Learn more">
+
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY telemetryLearnMore.label        "Learn more">
+
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

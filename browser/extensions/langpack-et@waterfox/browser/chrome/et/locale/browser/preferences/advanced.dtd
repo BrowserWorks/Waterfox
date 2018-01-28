@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Üldine">
+
+<!ENTITY useCursorNavigation.label       "Veebis liikumiseks kasutatakse alati kursori klahve">
+<!ENTITY useCursorNavigation.accesskey   "a">
+<!ENTITY searchOnStartTyping.label       "Sisestamise alustamisel otsitakse teksti">
+<!ENTITY searchOnStartTyping.accesskey   "e">
+<!ENTITY useOnScreenKeyboard.label       "Vajadusel kuvatakse puutetundlikku klaviatuuri">
+<!ENTITY useOnScreenKeyboard.accesskey   "j">
+
+<!ENTITY browsing.label                  "Lehitsemine">
+
+<!ENTITY useAutoScroll.label             "Kasutatakse automaatset kerimist">
+<!ENTITY useAutoScroll.accesskey         "u">
+<!ENTITY useSmoothScrolling.label        "Kasutatakse sujuvat kerimist">
+<!ENTITY useSmoothScrolling.accesskey    "s">
+<!ENTITY checkUserSpelling.label         "Sisestamisel kontrollitakse õigekirja">
+<!ENTITY checkUserSpelling.accesskey     "m">
+
+<!ENTITY dataChoicesTab.label            "Saadetavad andmed">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Selle kompileerimise konfiguratsiooniga on andmete raporteerimine keelatud">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName;il lubatakse automaatselt saata tehnilisi andmeid Mozillale">
+<!ENTITY enableHealthReport1.accesskey   "t">
+<!ENTITY healthReportLearnMore.label     "Rohkem teavet">
+
+<!ENTITY dataCollection.label            "&brandShortName;i andmete kogumine ja kasutamine">
+<!ENTITY dataCollectionDesc.label        "Me pingutame, et pakkuda sulle erinevaid valikuvõimalusi, ja kogume ainult neid andmeid, mis aitavad meil &brandShortName;i paremaks muuta kõigi jaoks. Isiklike andmete puhul küsime me alati enne saatmist luba.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privaatsusreeglid">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName;il lubatakse Mozillale vearaporteid saata">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "v">
+<!ENTITY crashReporterLearnMore.label    "Rohkem teavet">
+
+<!ENTITY networkTab.label                "Võrk">
+
+<!ENTITY networkProxy.label              "Võrgu puhverserver">
+
+<!ENTITY connectionDesc.label            "&brandShortName;i internetiga ühendumise häälestamine.">
+<!ENTITY connectionSettings.label        "Sätted...">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Veebisisu vahemälu">
+
+<!ENTITY offlineStorage2.label           "Võrguta režiimi veebisisu ja kasutaja andmed">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Saidi andmed">
+<!ENTITY clearSiteData.label             "Kustuta kõik andmed">
+<!ENTITY clearSiteData.accesskey         "u">
+<!ENTITY siteDataSettings.label          "Sätted…">
+<!ENTITY siteDataSettings.accesskey      "d">
+<!ENTITY siteDataLearnMoreLink.label     "Rohkem teavet">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Vahemälu kasutus piiratakse">
+<!ENTITY limitCacheSizeBefore.accesskey  "V">
+<!ENTITY limitCacheSizeAfter.label       "MiB kettaruumiga">
+<!ENTITY clearCacheNow.label             "Tühjenda">
+<!ENTITY clearCacheNow.accesskey         "T">
+<!ENTITY clearOfflineAppCacheNow.label   "Tühjenda">
+<!ENTITY clearOfflineAppCacheNow.accesskey "h">
+<!ENTITY overrideSmartCacheSize.label    "Keelatakse automaatne vahemälu haldamine">
+<!ENTITY overrideSmartCacheSize.accesskey "K">
+
+<!ENTITY updateTab.label                 "Uuendamine">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName;i uuendused">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Hoia &brandShortName; värske, et saada osa parimast võimekusest, stabiilsusest ja turvalisusest.">
+<!ENTITY updateApplication.version.pre   "Versioon ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName;i uuendused">
+<!ENTITY updateAuto3.label               "Uuendused paigaldatakse automaatselt (soovitatav)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "Kontrollitakse uuenduste olemasolu, paigaldamise kohta küsitakse kinnitust">
+<!ENTITY updateCheckChoose2.accesskey    "K">
+<!ENTITY updateManual2.label             "Ära otsi värskendusi (mittesoovitatav)">
+<!ENTITY updateManual2.accesskey         "r">
+
+<!ENTITY updateHistory2.label            "Näita uuenduste ajalugu…">
+<!ENTITY updateHistory2.accesskey        "N">
+
+<!ENTITY useService.label                "Uuenduste paigaldamiseks kasutatakse taustateenust">
+<!ENTITY useService.accesskey            "d">
+
+<!ENTITY enableSearchUpdate2.label       "Otsingumootoreid uuendatakse automaatselt">
+<!ENTITY enableSearchUpdate2.accesskey   "O">
+
+<!ENTITY offlineStorageNotify.label               "Hoiatatakse, kui veebileht soovib salvestada andmeid võrguta režiimis kasutamiseks">
+<!ENTITY offlineStorageNotify.accesskey           "o">
+<!ENTITY offlineStorageNotifyExceptions.label     "Erandid…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "r">
+
+<!ENTITY offlineAppsList2.label          "Järgmistel veebilehtedel on lubatud salvestada andmeid võrguta režiimis kasutamiseks:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Eemalda">
+<!ENTITY offlineAppsListRemove.accesskey "E">
+<!ENTITY offlineAppRemove.confirm        "Eemalda võrguta kasutatavad andmed">
+
+<!ENTITY certificateTab.label            "Sertifikaadid">
+<!ENTITY certPersonal2.description       "Kui server nõuab kasutaja isiklikku sertifikaati, siis">
+<!ENTITY selectCerts.auto                "valitakse üks automaatselt">
+<!ENTITY selectCerts.auto.accesskey      "v">
+<!ENTITY selectCerts.ask                 "küsitakse iga kord">
+<!ENTITY selectCerts.ask.accesskey       "k">
+<!ENTITY enableOCSP.label                "Sertifikaatide valideeruvust kontrollitakse OCSP abil">
+<!ENTITY enableOCSP.accesskey            "e">
+<!ENTITY viewCerts2.label                "Kuva sertifikaate…">
+<!ENTITY viewCerts2.accesskey            "s">
+<!ENTITY viewSecurityDevices2.label      "Turvaseadmed…">
+<!ENTITY viewSecurityDevices2.accesskey  "T">
+
+<!ENTITY performance.label               "Jõudlus">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Kasutatakse soovitatud jõudluse sätteid">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Need sätted on kohandatud sinu arvuti riistvarale ja operatsioonisüsteemile.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "j">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Rohkem teavet">
+<!ENTITY limitContentProcessOption.label "Sisu protsesside limiit">
+<!ENTITY limitContentProcessOption.description
+                                         "Täiendavad sisu protsessid võivad parandada võimekust mitme kaardi kasutamisel, aga kasutavad ka rohkem mälu.">
+<!ENTITY limitContentProcessOption.accesskey   "s">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Sisu protsesside arvu muutmine on võimalik ainult mitme protsessi toega &brandShortName;is.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Vaata, kuidas kontrollida, kas mitme protsessi tugi on lubatud">
+<!ENTITY allowHWAccel.label              "Võimalusel kasutatakse riistvaralist kiirendust">
+<!ENTITY allowHWAccel.accesskey          "i">

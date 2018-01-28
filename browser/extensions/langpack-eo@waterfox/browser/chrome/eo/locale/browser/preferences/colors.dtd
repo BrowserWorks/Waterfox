@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Koloroj">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Superregi la kolorojn specifitajn de la paĝo per viaj supraj elektoj:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "S">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Ĉiam">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Nur en etosojkun granda konstrasto">
+<!ENTITY  overrideDefaultPageColors.never.label  "Neniam">
+
+<!ENTITY  color                           "Teksto kaj fono">
+<!ENTITY  textColor.label                 "Teksto:">
+<!ENTITY  textColor.accesskey             "t">
+<!ENTITY  backgroundColor.label           "Fono:">
+<!ENTITY  backgroundColor.accesskey       "f">
+<!ENTITY  useSystemColors.label           "Uzi la kolorojn de la sistemo">
+<!ENTITY  useSystemColors.accesskey       "z">
+
+<!ENTITY  underlineLinks.label            "Substreki ligojn">
+<!ENTITY  underlineLinks.accesskey        "s">
+<!ENTITY  links                           "Ligaj koloroj">
+<!ENTITY  linkColor.label                 "Nevizititaj ligoj:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Vizititaj ligoj:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

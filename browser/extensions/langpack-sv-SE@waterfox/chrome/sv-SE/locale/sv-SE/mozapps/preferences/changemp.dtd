@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Ändra huvudlösenord">
+<!ENTITY setPassword.tokenName.label       "Säkerhetsenhet">
+<!ENTITY setPassword.oldPassword.label     "Aktuellt lösenord:">
+<!ENTITY setPassword.newPassword.label     "Ange nytt lösenord:">
+<!ENTITY setPassword.reenterPassword.label "Bekräfta lösenordet:">
+<!ENTITY setPassword.meter.label           "Kvalitetsmätare för lösenord">
+<!ENTITY setPassword.meter.loading         "Laddar">
+<!ENTITY masterPasswordDescription.label   "Ett huvudlösenord används för att skydda känsliga uppgifter såsom lösenord för webbplatser.  Om du skapar ett huvudlösenord kommer du att tillfrågas om det en gång per session när &brandShortName; använder sparade uppgifter som skyddas av huvudlösenordet.">
+<!ENTITY masterPasswordWarning.label       "Var noga med att inte glömma bort ditt huvudlösenord.  Om du glömmer bort huvudlösenordet kommer du inte längre att kunna komma åt de uppgifter som skyddas av det.">

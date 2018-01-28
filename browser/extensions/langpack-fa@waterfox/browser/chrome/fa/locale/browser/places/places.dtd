@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "مخزن">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "سازمان‌دهی">
+<!ENTITY organize.accesskey    "س">
+<!ENTITY organize.tooltip      "سازمان‌دهی نشانک‌ها">
+
+<!ENTITY file.close.label               "بستن">
+<!ENTITY file.close.accesskey           "ب">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "نماها">
+<!ENTITY views.accesskey                "ن">
+<!ENTITY views.tooltip                  "تغییر نما">
+<!ENTITY view.columns.label             "نمایش ستون‌ها">
+<!ENTITY view.columns.accesskey         "ن">
+<!ENTITY view.sort.label                "مرتب‌سازی">
+<!ENTITY view.sort.accesskey            "م">
+<!ENTITY view.unsorted.label            "نامرتب">
+<!ENTITY view.unsorted.accesskey        "ن">
+<!ENTITY view.sortAscending.label       "ترتیب الفبایی الف تا ی">
+<!ENTITY view.sortAscending.accesskey   "ت">
+<!ENTITY view.sortDescending.label      "ترتیب الفبایی ی تا الف">
+<!ENTITY view.sortDescending.accesskey  "ت">
+
+<!ENTITY importBookmarksFromHTML.label     "وارد کردن نشانک‌ها از HTML...">
+<!ENTITY importBookmarksFromHTML.accesskey "و">
+<!ENTITY exportBookmarksToHTML.label       "فرستادن نشانک‌ها به HTML...">
+<!ENTITY exportBookmarksToHTML.accesskey   "ف">
+<!ENTITY importOtherBrowser.label          "وارد کردن داده‌ها از برنامه‌های دیگر...">
+<!ENTITY importOtherBrowser.accesskey      "د">
+
+<!ENTITY cmd.backup.label               "پشتیبان‌گیری…">
+<!ENTITY cmd.backup.accesskey           "پ">
+<!ENTITY cmd.restore2.label             "برگرداندن">
+<!ENTITY cmd.restore2.accesskey         "ب">
+<!ENTITY cmd.restoreFromFile.label      "انتخاب پرونده…">
+<!ENTITY cmd.restoreFromFile.accesskey  "پ">
+
+<!ENTITY cmd.deleteDomainData.label     "فراموش کردن این سایت">
+<!ENTITY cmd.deleteDomainData.accesskey "ف">
+
+<!ENTITY cmd.open.label                  "باز کردن">
+<!ENTITY cmd.open.accesskey              "ب">
+<!ENTITY cmd.open_window.label           "باز کردن در پنجرهٔ جدید">
+<!ENTITY cmd.open_window.accesskey       "پ">
+<!ENTITY cmd.open_private_window.label     "باز کردن پنجرهٔ ناشناس جدید">
+<!ENTITY cmd.open_private_window.accesskey "ن">
+<!ENTITY cmd.open_tab.label              "باز کردن در زبانهٔ جدید">
+<!ENTITY cmd.open_tab.accesskey          "ج">
+<!ENTITY cmd.open_all_in_tabs.label      "باز کردن همه در زبانه‌های خاص خود">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "ب">
+
+<!ENTITY cmd.properties.label      "ویژگی‌ها">
+<!ENTITY cmd.properties.accesskey  "و">
+
+<!ENTITY cmd.sortby_name.label              "مرتب‌سازی بر حسب نام">
+<!ENTITY cmd.sortby_name.accesskey          "ن">
+<!ENTITY cmd.context_sortby_name.accesskey  "ن">
+
+<!ENTITY cmd.new_bookmark.label            "نشانک جدید…">
+<!ENTITY cmd.new_bookmark.accesskey        "ن">
+<!ENTITY cmd.new_folder.label              "پوشهٔ جدید…">
+<!ENTITY cmd.new_folder.accesskey          "ش">
+<!ENTITY cmd.context_new_folder.accesskey  "پ">
+<!ENTITY cmd.new_separator.label           "جداساز جدید">
+<!ENTITY cmd.new_separator.accesskey       "س">
+
+<!ENTITY cmd.reloadLivebookmark.label      "بازآوردن نشانک زنده">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "ب">
+
+<!ENTITY cmd.moveBookmarks.label                  "انتقال…">
+<!ENTITY cmd.moveBookmarks.accesskey              "ق">
+
+<!ENTITY col.name.label          "نام">
+<!ENTITY col.tags.label          "برچسب‌ها">
+<!ENTITY col.url.label           "مکان">
+<!ENTITY col.mostrecentvisit.label "جدیدترین بازدید">
+<!ENTITY col.visitcount.label    "تعداد بازدید">
+<!ENTITY col.description.label   "شرح">
+<!ENTITY col.dateadded.label     "تاریخ افزوده شدن">
+<!ENTITY col.lastmodified.label  "زمان آخرین تغییر">
+
+<!ENTITY search.placeholder  "جست‌وجو">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "وارد کردن و پشتیبان‌گیری">
+<!ENTITY maintenance.accesskey  "و">
+<!ENTITY maintenance.tooltip    "وارد کردن و پشتیبان‌گیری از نشانک‌ها">
+
+<!ENTITY backButton.tooltip  "برگشتن">
+
+<!ENTITY forwardButton.tooltip  "جلو رفتن">
+
+<!ENTITY detailsPane.more.label "بیشتر">
+<!ENTITY detailsPane.more.accesskey "ب">
+<!ENTITY detailsPane.less.label "کمتر">
+<!ENTITY detailsPane.less.accesskey "ک">
+<!ENTITY detailsPane.selectAnItemText.description "یک مورد را برای مشاهده و ویرایش انتخاب کنید">
+
+<!ENTITY view.label               "نما">
+<!ENTITY view.accesskey           "ن">
+<!ENTITY byDate.label             "‌بر حسب تاریخ">
+<!ENTITY byDate.accesskey         "ت">
+<!ENTITY bySite.label             "بر حسب پایگاه">
+<!ENTITY bySite.accesskey         "پ">
+<!ENTITY byMostVisited.label      "بر حسب بیشترین بازدید">
+<!ENTITY byMostVisited.accesskey  "ب">
+<!ENTITY byLastVisited.label      "بر حسب آخرین بازدید">
+<!ENTITY byLastVisited.accesskey  "خ">
+<!ENTITY byDayAndSite.label       "بر حسب تاریخ و پایگاه">
+<!ENTITY byDayAndSite.accesskey   "ر">

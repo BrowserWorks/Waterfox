@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "แอปพลิเคชัน">
+<!ENTITY  applications.description "เลือกวิธีที่ &brandShortName; จัดการกับไฟล์ที่คุณดาวน์โหลดจากเว็บหรือแอปพลิเคชันที่คุณใช้ขณะท่องเว็บ">
+
+<!ENTITY  typeColumn.label        "ชนิดเนื้อหา">
+<!ENTITY  typeColumn.accesskey    "ช">
+
+<!ENTITY  actionColumn2.label     "การกระทำ">
+<!ENTITY  actionColumn2.accesskey "ก">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "ค้นหาชนิดไฟล์หรือแอปพลิเคชัน">

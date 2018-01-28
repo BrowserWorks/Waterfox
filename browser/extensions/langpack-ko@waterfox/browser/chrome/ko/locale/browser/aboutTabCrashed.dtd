@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "이 탭 닫기">
+<!ENTITY tabCrashed.restoreTab "이 탭 복원">
+<!ENTITY tabCrashed.restoreAll "모든 망가진 탭 복원">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "이런. 탭이 망가졌습니다.">
+<!ENTITY tabCrashed.offerHelp "저희가 도와드릴 수 있습니다!">
+<!ENTITY tabCrashed.single.offerHelpMessage "페이지를 새로고침 하려면 &tabCrashed.restoreTab;을 선택해 주세요.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "페이지를 새로고침 하려면 &tabCrashed.restoreTab; 또는 &tabCrashed.restoreAll;를 고르세요.">
+<!ENTITY tabCrashed.requestHelp "저희 좀 도와주시겠습니까?">
+<!ENTITY tabCrashed.requestHelpMessage "충돌 보고서는 저희가 문제를 진단하고 &brandShortName;를 더 향상시키는 것을 돕습니다.">
+<!ENTITY tabCrashed.requestReport "이 탭 보고하기">
+<!ENTITY tabCrashed.sendReport2 "보고있는 탭의 충돌 보고서 보내기">
+<!ENTITY tabCrashed.commentPlaceholder2 "추가 의견(외부에 공개됨)">
+<!ENTITY tabCrashed.includeURL2 "충돌 보고서에 해당 페이지의 URL 포함">
+<!ENTITY tabCrashed.emailPlaceholder "이메일 주소를 입력하세요">
+<!ENTITY tabCrashed.emailMe "추가 정보가 있을 경우 이메일 받기">
+<!ENTITY tabCrashed.reportSent "충돌 보고서를 이미 전송했습니다. &brandShortName;가 보다 나아지도록 도와주셔서 고맙습니다!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "배경탭 보고">
+<!ENTITY tabCrashed.autoSubmit2 "이 세션과 향후 세션에 대해 발생하는 백그라운드 탭의 오류 보고를 포함한 오류 보고를 자동으로 보내도록 설정">

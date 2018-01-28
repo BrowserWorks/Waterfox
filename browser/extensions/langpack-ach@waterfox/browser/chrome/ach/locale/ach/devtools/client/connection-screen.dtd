@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Kube">
+<!ENTITY header     "Kube ki nyonyo ma tye kama bor">
+<!ENTITY host       "Lami kube:">
+<!ENTITY port       "Bur:">
+<!ENTITY connect    "Kube">
+<!ENTITY connecting "Tye ka kube…">
+<!ENTITY availableAddons "Med-ikome ma gi nonge ki kama bor:">
+<!ENTITY availableTabs "Dirica matino ma nonge ki kama bor:">
+<!ENTITY availableProcesses "Yo ma gi nonge ki kama bor:">
+<!ENTITY connectionError "Bal:">
+<!ENTITY errorTimeout "Bal: cawa me kube otum woko.">
+<!ENTITY errorRefused "Bal: kube pe oye.">
+<!ENTITY errorUnexpected "Bal ma pe kibedo ka kuro.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Gitic pa Ludiro me Waterfox romo nongo bal ki i nyonyo ma tye kama bor (Waterfox pi Android kacel ki Waterfox OS, macalo labolle). Myero inen ni i cako ter me ‘Nongo bal ki kama bor’ i nyonyo ma tye kama bor ni. Pi mapol nen ">
+<!ENTITY remoteDocumentation "kit me tic kwede">
+<!ENTITY remoteHelpSuffix ".">
+

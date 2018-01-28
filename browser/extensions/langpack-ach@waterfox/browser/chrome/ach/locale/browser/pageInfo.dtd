@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Lok">
+<!ENTITY  copy.accesskey        "L">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Yer weng">
+<!ENTITY  selectall.accesskey   "w">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Lumuku">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Wiye madit:">
+<!ENTITY  generalURL            "Kanonge:">
+<!ENTITY  generalType           "Kit:">
+<!ENTITY  generalMode           "Kit me nyuto:">
+<!ENTITY  generalSize           "Dit:">
+<!ENTITY  generalReferrer       "URL ma tiko:">
+<!ENTITY  generalSource         "Kama kakano nonge iye:">
+<!ENTITY  generalModified       "Kiyubu:">
+<!ENTITY  generalEncoding2      "Loko coc i kod:">
+<!ENTITY  generalMetaName       "Nying">
+<!ENTITY  generalMetaContent    "Gin manonge iye">
+
+<!ENTITY  mediaTab              "Adyere">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Kabedo:">
+<!ENTITY  mediaText             "Coc marwate:">
+<!ENTITY  mediaAltHeader        "Coc ma leyo aleya">
+<!ENTITY  mediaAddress          "Kanonge">
+<!ENTITY  mediaType             "Kit">
+<!ENTITY  mediaSize             "Dit">
+<!ENTITY  mediaCount            "Kwano">
+<!ENTITY  mediaDimension        "Kit dite:">
+<!ENTITY  mediaLongdesc         "Lok ikome mabor:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Gwok calo…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Neno adyere:">
+
+<!ENTITY  feedTab               "Lok">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Cone">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Rukuca">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Tii ki makwongo">
+<!ENTITY  permAskAlways         "Peny jwijwi">
+<!ENTITY  permAllow             "Ye">
+<!ENTITY  permAllowSession      "Ye pi kare">
+<!ENTITY  permBlock             "Geng">
+<!ENTITY  permissionsFor        "Rukuca pi:">
+<!ENTITY  permPlugins           "Cak larwak">
+
+<!ENTITY  permClearStorage           "Jwa kakano">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "Ber bedo">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Nen karatac lok ada">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Pe ngene">
+
+
+<!ENTITY  securityView.identity.header   "Gin ma moko ada pa kakube">
+<!ENTITY  securityView.identity.owner    "Rwode:">
+<!ENTITY  securityView.identity.domain   "Kakube:">
+<!ENTITY  securityView.identity.verifier "Lamoko ne aye:">
+
+
+<!ENTITY  securityView.privacy.header                   "Mung ki gin mukato">
+<!ENTITY  securityView.privacy.history                  "Mono alimo kakube man con mapat ki tin?">
+<!ENTITY  securityView.privacy.cookies                  "Kakube man tye kakano ngec (angija) i komputa mamega?">
+<!ENTITY  securityView.privacy.viewCookies              "Nen angija">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Mono agwoko mung me donyo pi kakube man?">
+<!ENTITY  securityView.privacy.viewPasswords            "Nen mung me donyo ma kigwoko">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Lok matut pi ludiro ne">
+
+<!ENTITY  helpButton.label                              "Kony">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

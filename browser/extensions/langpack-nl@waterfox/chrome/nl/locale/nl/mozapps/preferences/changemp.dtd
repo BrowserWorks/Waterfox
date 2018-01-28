@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Hoofdwachtwoord wijzigen">
+<!ENTITY setPassword.tokenName.label       "Beveiligingsapparaat">
+<!ENTITY setPassword.oldPassword.label     "Huidige wachtwoord:">
+<!ENTITY setPassword.newPassword.label     "Voer nieuw wachtwoord in:">
+<!ENTITY setPassword.reenterPassword.label "Voer wachtwoord nogmaals in:">
+<!ENTITY setPassword.meter.label           "Wachtwoordkwaliteitsmeter">
+<!ENTITY setPassword.meter.loading         "Laden">
+<!ENTITY masterPasswordDescription.label   "Een hoofdwachtwoord wordt gebruikt om gevoelige gegevens te beschermen, zoals wachtwoorden voor websites. Als u een hoofdwachtwoord aanmaakt, zal eenmaal per sessie aan u worden gevraagd dit in te voeren zodra &brandShortName; door het wachtwoord beschermde opgeslagen gegevens ophaalt.">
+<!ENTITY masterPasswordWarning.label       "Verzeker u ervan dat u het ingestelde hoofdwachtwoord onthoudt. Als u uw hoofdwachtwoord vergeet, zult u geen toegang tot de hierdoor beschermde gegevens kunnen krijgen.">

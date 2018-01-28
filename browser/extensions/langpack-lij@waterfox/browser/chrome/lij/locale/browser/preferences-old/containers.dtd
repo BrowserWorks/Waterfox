@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Azonzi neuvo contegnitô">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "Preferense">
+<!ENTITY removeButton.label   "Scancella">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Vanni inderê a-a Privacy">
+
+<!ENTITY window.title         "Azonzi neuvo contegnitô">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nomme:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Scrivi o nomme do contegnitô">
+<!ENTITY icon.label           "Icònn-a:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Cô:">
+<!ENTITY color.accesskey      "C">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Fæto">
+<!ENTITY button.ok.accesskey  "F">
+

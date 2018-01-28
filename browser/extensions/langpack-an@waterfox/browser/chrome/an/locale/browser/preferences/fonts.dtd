@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Tipo de letra">
+
+<!ENTITY  language.label                          "Tipo de letra ta:">
+<!ENTITY  language.accesskey                      "T">
+
+<!ENTITY  size.label                              "Mida:">
+<!ENTITY  sizeProportional.accesskey              "i">
+<!ENTITY  sizeMonospace.accesskey                 "a">
+
+<!ENTITY  proportional.label                      "Proporcional:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Monospaciau:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Latino">
+<!ENTITY  font.langGroup.japanese                 "Chaponés">
+<!ENTITY  font.langGroup.trad-chinese             "Chinés tradicional (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Chinés simplificau">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Chinés tradicional (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Coreán">
+<!ENTITY  font.langGroup.cyrillic                 "Cirilico">
+<!ENTITY  font.langGroup.el                       "Griego">
+<!ENTITY  font.langGroup.other                    "Atros sistemas d'escritura">
+<!ENTITY  font.langGroup.thai                     "Tailandés">
+<!ENTITY  font.langGroup.hebrew                   "Hebreu">
+<!ENTITY  font.langGroup.arabic                   "Arabe">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Armenio">
+<!ENTITY  font.langGroup.bengali                  "Bengalí">
+<!ENTITY  font.langGroup.canadian                 "Silabario canadenco unificau">
+<!ENTITY  font.langGroup.ethiopic                 "Etiope">
+<!ENTITY  font.langGroup.georgian                 "Cheorchiano">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayo">
+<!ENTITY  font.langGroup.math                     "Matematicas">
+<!ENTITY  font.langGroup.odia                     "Oriya">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetano">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Mida minima d'a letra:">
+<!ENTITY minSize.accesskey                        "l">
+<!ENTITY minSize.none                             "Garra">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Permitir a las pachinas amostrar os suyos tipos de letra propios, en cuenta d'os trigaus alto">
+<!ENTITY  allowPagesToUseOwn.accesskey            "e">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Codificación d'o texto ta os contenius antigos">
+<!ENTITY languages.customize.Fallback2.label      "Codificación d'os textos alternativa:">
+<!ENTITY languages.customize.Fallback2.accesskey  "t">
+<!ENTITY languages.customize.Fallback2.desc       "Ista codificación d'os textos ye emplegada ta contenius antigos que no declaran a suya codificación.">
+
+<!ENTITY languages.customize.Fallback.auto        "Por defecto en a luenga actual">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabe">
+<!ENTITY languages.customize.Fallback.baltic      "Baltico">
+<!ENTITY languages.customize.Fallback.ceiso       "Centroeuropeu, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Centroeuropeu, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Chinés, simplificau">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Chinés, tradicional">
+<!ENTITY languages.customize.Fallback.cyrillic    "Cirilico">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Griego">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebreu">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Chaponés">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Coreán">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Tailandés">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Baltico">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnamés">
+<!ENTITY languages.customize.Fallback.other       "Atros (incl. europeu occidental)">

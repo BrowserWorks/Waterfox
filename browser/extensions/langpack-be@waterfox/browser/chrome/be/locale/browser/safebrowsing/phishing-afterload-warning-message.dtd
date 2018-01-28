@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Пакінуць гэта месца!">
+<!ENTITY safeb.palm.decline.label "Ігнараваць гэтае папярэджанне">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Гэта не падманлівы сайт…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "в">
+<!ENTITY safeb.palm.reportPage.label "Чаму гэтая старонка заблакавана?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Парады ад <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Вядомая нападная старонка!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Гэтая старонка <span id='malware_sitename'/> вядомая як нападная і была заблакавана паводле вашых перавагаў бяспекі.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Нападныя старонкі спрабуюць усталёўваць праграмы, якія крадуць асабістыя звесткі, скарыстоўваюць ваш камп'ютар, каб нападаць на іншыя, або псуюць вашу сістэму.</p><p>Асобныя нападныя старонкі наўмысна распаўсюджваюць шкодныя праграмы, але шмат з іх былі скампраметаваны без ведаму і дазволу іх уладальнікаў.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Вядомая непажаданымі праграмамі старонка!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Пра гэту старонку сеціва <span id='unwanted_sitename'/> вядома, што яна ўтрымлівае непажаданыя праграмы. Заблакавана паводле вашых перавагаў бяспекі.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Старонкі з непажаданымі праграмамі спрабуюць ўсталяваць праграмы, якія могуць быць падманлівымі, і ўздзейнічаць на камп'ютар нечаканым чынам.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Падманлівы сайт!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Пра гэту старонку на <span id='phishing_sitename'/> вядома, што яна падманлівая. Заблакавана паводле вашых перавагаў бяспекі.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Падманлівыя сайты зроблены такім чынам, каб падманам пераканаць вас зрабіць што-небудзь небяспечнае, кшталту ўсталявання праграмы ці адкрыцця вашай персанальнай інфармацыі: пароляў, тэлефонных нумароў ці крэдытных карт.</p><p>Упісванне любой інфармацыі ў гэтую старонку можа прывесці да выкрадання асабістых звестак і іншага махлярства.</p>">
+

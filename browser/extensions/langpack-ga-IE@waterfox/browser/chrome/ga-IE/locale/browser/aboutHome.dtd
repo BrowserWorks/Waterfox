@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+<!-- These strings are used in the about:home page -->
+
+
+<!ENTITY abouthome.pageTitle "Leathanach Tosaigh &brandFullName;">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+
+<!ENTITY abouthome.defaultSnippet1.v1 "Go raibh maith agat as Waterfox a roghnú! Leis an tairbhe is mó a bhaint as an mbrabhsálaí, féach ar <a>na gnéithe is nua</a>.">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "Tá sé éasca Waterfox a chur in oiriúint duit féin. <a>Roghnaigh ó na mílte breiseán</a>.">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "Is saorbhogearra de chuid Fhondúireacht neamhbhrabúis Mozilla é &brandFullName;. <a>Bíodh do chearta ar eolas agat…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "Leabharmharcanna">
+<!ENTITY abouthome.historyButton.label   "Stair">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "Roghanna">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "Sainroghanna">
+<!ENTITY abouthome.addonsButton.label    "Breiseáin">
+<!ENTITY abouthome.downloadsButton.label "Íoslódálacha">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+
+<!ENTITY abouthome.aboutMozilla.label    "Maidir le Mozilla">

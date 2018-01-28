@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Bu sekmeyi kapat">
+<!ENTITY tabCrashed.restoreTab "Bu sekmeyi geri yükle">
+<!ENTITY tabCrashed.restoreAll "Çöken tüm sekmeleri geri yükle">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Sekmeniz çöktü.">
+<!ENTITY tabCrashed.offerHelp "Size yardım edebiliriz!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Sayfa içeriğini yeniden yüklemek için “&tabCrashed.restoreTab;” seçeneğini seçin.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Sayfa içeriğini yeniden yüklemek için “&tabCrashed.restoreTab;” veya “&tabCrashed.restoreAll;” seçeneğini seçin.">
+<!ENTITY tabCrashed.requestHelp "Bize yardım eder misiniz?">
+<!ENTITY tabCrashed.requestHelpMessage "Çökme raporları, sorunları anlamamızı ve &brandShortName; tarayıcısını iyileştirmemizi sağlar.">
+<!ENTITY tabCrashed.requestReport "Bu sekmeyi rapor edin">
+<!ENTITY tabCrashed.sendReport2 "Görüntülediğim sekmenin çökme raporunu gönder">
+<!ENTITY tabCrashed.commentPlaceholder2 "İsteğe bağlı yorumunuz (Yorumlar herkes tarafından görülebilir.)">
+<!ENTITY tabCrashed.includeURL2 "Sayfa adresini de çökme raporuna ekle">
+<!ENTITY tabCrashed.emailPlaceholder "Buraya e-posta adresinizi yazın">
+<!ENTITY tabCrashed.emailMe "Daha fazla bilgi ortaya çıktığında bana e-posta gönder">
+<!ENTITY tabCrashed.reportSent "Çökme raporu gönderildi. Daha iyi bir &brandShortName; yarattığınız için teşekkürler!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Arka plan sekmelerini rapor edin">
+<!ENTITY tabCrashed.autoSubmit2 "Bu oturumda çöken ve gelecekte çökebilecek arka plan sekmelerinin çökme raporlarını otomatik olarak göndermek için tercihlerimi güncelle">

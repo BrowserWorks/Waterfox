@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Treu-me d'aquí!">
+<!ENTITY safeb.palm.decline.label "Ignora aquest avís">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "No és cap lloc maliciós…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "m">
+<!ENTITY safeb.palm.reportPage.label "Per què s'ha blocat aquesta pàgina?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Assessorament proporcionat per <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "S'ha informat que el lloc web és atacant!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "S'ha informat que aquesta pàgina web de <span id='malware_sitename'/> és atacant i s'ha blocat d'acord amb les vostres preferències de seguretat.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Els llocs atacants proven d'instal·lar programari que roba informació privada, utilitzen el vostre ordinador per atacar-ne d'altres, o fan malbé el vostre sistema.</p><p>Alguns llocs atacants distribueixen de forma intencionada programari maligne, tot i que molts estan compromesos sense el coneixement o permís dels propietaris.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Aquest lloc pot contenir programari indesitjable!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "S'ha informat que aquesta pàgina web de <span id='unwanted_sitename'/> conté programari indesitjable i s'ha blocat d'acord amb les vostres preferències de seguretat.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Les pàgines amb programari indesitjable intenten instal·lar programari que pot portar a enganys i afectar el vostre sistema de formes inesperades.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Aquest lloc pot ser maliciós!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "S'ha informat que aquesta pàgina web de <span id='phishing_sitename'/> és maliciosa i s'ha blocat d'acord amb les vostres preferències de seguretat.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Els llocs web maliciosos estan dissenyats per enganyar-vos i que feu alguna acció perillosa, com instal·lar programari o revelar la vostra informació personal, ja siguin contrasenyes, números de telèfon o targetes de crèdit.</p><p>Introduir-hi cap tipus d'informació pot resultar en una suplantació d'identitat o altra mena de fraus.</p>">
+

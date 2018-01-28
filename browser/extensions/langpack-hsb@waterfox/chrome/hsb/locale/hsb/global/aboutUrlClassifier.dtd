@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informacije wo URL-klasifikatorje">
+<!ENTITY aboutUrlClassifier.providerTitle               "Poskićowar">
+<!ENTITY aboutUrlClassifier.provider                    "Poskićowar">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Čas poslednjeje aktualizacije">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Čas přichodneje aktualizacije">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Wróćostajenski čas">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Status poslednjeje aktualizacije">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Aktualizacija">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Pufrowak">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Aktualizować">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Zhašeć">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabelowe mjeno">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Ličba zapiskow negatiwneho pufrowaka">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Ličba zapiskow pozitiwneho pufrowaka">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Zapiski pokazać">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Zapiski pufrowaka">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Spadnjenje negatiwneho pufrowaka">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Połny hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Spadnjenje pozitiwneho pufrowaka">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Zmylki pytać">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Protokolowe module postajić">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Protokolowu dataju postajić">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Javaskriptowy protokol postajić">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Protokolowe module wěsteho přehladowanja">
+<!ENTITY aboutUrlClassifier.debugModules                "Aktualne protokolowe module">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Javaskriptowy protokol wěsteho přehladowanja">
+<!ENTITY aboutUrlClassifier.debugFile                   "Aktualna protokolowa dataja">

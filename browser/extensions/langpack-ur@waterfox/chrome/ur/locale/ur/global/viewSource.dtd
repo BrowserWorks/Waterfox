@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "کا ماخذ: ">
+
+<!ENTITY fileMenu.label "مسل">
+<!ENTITY fileMenu.accesskey "م">
+<!ENTITY savePageCmd.label "صفحہ محفوظ کریں بطور…">
+<!ENTITY savePageCmd.accesskey "ب">
+<!ENTITY savePageCmd.commandkey "س">
+<!ENTITY pageSetupCmd.label "صفحہ سیٹ اپ…">
+<!ENTITY pageSetupCmd.accesskey "س">
+<!ENTITY printPreviewCmd.label "چھپائی پیش نظارہ">
+<!ENTITY printPreviewCmd.accesskey "پ">
+<!ENTITY printCmd.label "چھاپیں…">
+<!ENTITY printCmd.accesskey "چ">
+<!ENTITY printCmd.commandkey "پ">
+<!ENTITY closeCmd.label "بند کریں">
+<!ENTITY closeCmd.accesskey "ب">
+<!ENTITY closeCmd.commandkey "و">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "سطر پر جائیں…">
+<!ENTITY goToLineCmd.accesskey "س">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "نظارہ">
+<!ENTITY viewMenu.accesskey       "ن">
+<!ENTITY reloadCmd.label "پھر لوڈ کریں">
+<!ENTITY reloadCmd.accesskey "پ">
+<!ENTITY reloadCmd.commandkey "ر">
+<!ENTITY menu_wrapLongLines.title "لمبی سطریں ملفوف کریں"> 
+<!ENTITY menu_wrapLongLines.accesskey "ل">
+<!ENTITY menu_highlightSyntax.label "نحو نمایاں کاری">
+<!ENTITY menu_highlightSyntax.accesskey "ن">
+<!ENTITY menu_textSize.label "متن کا سائز">
+<!ENTITY menu_textSize.accesskey "م">
+<!ENTITY menu_textEnlarge.label "بڑھائیں">
+<!ENTITY menu_textEnlarge.accesskey "ب">
+<!ENTITY menu_textReduce.label "گھٹائیں">
+<!ENTITY menu_textReduce.accesskey "گ">
+<!ENTITY menu_textReset.label "عام">
+<!ENTITY menu_textReset.accesskey "ع">
+
+<!ENTITY findOnCmd.label     "اس صفحے میں ڈھونڈیں…">
+<!ENTITY findOnCmd.accesskey "ڈ">
+<!ENTITY findOnCmd.commandkey "ف">
+<!ENTITY findAgainCmd.label  "دوبارہ ڈھونڈیں">
+<!ENTITY findAgainCmd.accesskey "د">
+<!ENTITY findAgainCmd.commandkey "گ">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "واپس">
+<!ENTITY backCmd.accesskey "و">
+<!ENTITY forwardCmd.label "آگے کریں">
+<!ENTITY forwardCmd.accesskey "گ">
+<!ENTITY goBackCmd.commandKey "]">
+<!ENTITY goForwardCmd.commandKey "[">
+
+<!ENTITY copyLinkCmd.label "ربط محل وقوع نقل کریں">
+<!ENTITY copyLinkCmd.accesskey "ر">
+<!ENTITY copyEmailCmd.label "ای میل پتہ نقل کریں">
+<!ENTITY copyEmailCmd.accesskey "ا">

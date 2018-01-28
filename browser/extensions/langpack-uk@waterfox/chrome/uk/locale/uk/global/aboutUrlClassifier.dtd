@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Інформація про url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Постачальник">
+<!ENTITY aboutUrlClassifier.provider                    "Постачальник">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Час останнього оновлення">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Час наступного оновлення">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Час повернення назад">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Стан останнього оновлення">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Оновити">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Кеш">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Оновити">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Стерти">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Назва таблиці">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Число негативних записів кешу">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Число позитивних записів кешу">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Показати записи">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Записи кешу">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Префікс">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Негативний кеш завершується">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Повний хеш">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Негативний кеш завершується">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Зневадження">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Встановити модулі журналу">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Встановити файл журналу">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Встановити журнал JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Модулі журналу Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugModules                "Поточні модулі журналу">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Журнал Safe Browsing JS">
+<!ENTITY aboutUrlClassifier.debugFile                   "Поточний файл журналу">

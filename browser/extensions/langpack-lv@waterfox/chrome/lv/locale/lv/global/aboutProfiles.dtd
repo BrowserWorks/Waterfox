@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Profili">
+<!ENTITY aboutProfiles.subtitle "Šī lapa palīdz pārvaldīt profilus. Katrs profils ir neatkarīga pasaule ar savu vēsturi, grāmatzīmēm, iestatījumiem un papildinājumiem.">
+<!ENTITY aboutProfiles.create "Izveidot jaunu profilu">
+<!ENTITY aboutProfiles.restart.title "Pārstartēt">
+<!ENTITY aboutProfiles.restart.inSafeMode "Pārstartēt ar deaktivētiem papildinājumiem…">
+<!ENTITY aboutProfiles.restart.normal "Pārstartēt parasti…">

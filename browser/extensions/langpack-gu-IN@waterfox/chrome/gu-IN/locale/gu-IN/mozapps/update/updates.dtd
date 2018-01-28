@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "સોફ્ટવેર સુધારો">
+
+<!ENTITY  checking.title                  "સુધારાઓ માટે ચકાસી રહ્યા છીએ">
+<!ENTITY  updateCheck.label               "&brandShortName; ની નવી આવૃત્તિઓ માટે જોઈ રહ્યા છીએ…">
+
+<!ENTITY  noupdatesfound.title            "કોઈ સુધારાઓ મળ્યા નહિં">
+<!ENTITY  noupdatesautoenabled.intro      "ત્યાં કોઈ સુધારાઓ ઉપલબ્ધ નથી. &brandShortName; સુધારાઓ માટે સામયિક રીતે ચકાસી શકશે.">
+<!ENTITY  noupdatesautodisabled.intro     "ત્યાં કોઈ સુધારો ઉપલબ્ધ નથી. મહેરબાની કરીને પછી ફરીથી ચકાસો અથવા &brandShortName; ના આપોઆપ સુધારા ચકાસણીને સક્રિય કરો.">
+
+<!ENTITY  manualUpdate.title              "સુધારો કરવામાં અસમર્થ">
+<!ENTITY  manualUpdate.desc               "આગ્રહણીય સુરક્ષા અને સુગમતા સુધારો ઉપલબ્ધ છે, પરંતુ તમારી પાસે તેને સ્થાપિત કરવા માટે સિસ્ટમ પરવાનગીઓ નથી. મહેરબાની કરીને તમારા સિસ્ટમ સંચાલકનો સંપર્ક કરો અથવા એવા ખાતામાંથી ફરીથી પ્રયાસ કરો કે જેને આ કમ્પ્યૂટર પર સોફ્ટવેર સ્થાપિત કરવાની પરવાનગી હોય.">
+<!ENTITY  manualUpdate.space.desc         "અગ્રહણીય સુરક્ષા અને સ્થિરતા સુધારા ઉપલબ્ધ છે, પરંતુ તેને સ્થાપિત કરવા માટે તમારી પાસે પૂરતી જગ્યા નથી.">
+<!ENTITY  manualUpdateGetMsg.label        "તમે અહીંથી &brandShortName; ની તાજેતરની આવૃત્તિ હંમેશા પ્રાપ્ત કરી શકો છો:">
+
+<!ENTITY  unsupported.title               "સિસ્ટમ બિનઆધારભૂત">
+<!ENTITY  unsupported.label               "તમારી &brandShortName; ની તારીખની સમાપ્તિ છે, પરંતુ તાજેતરની આવૃત્તિ તમારી સિસ્ટમ પર આધારભૂત નથી. મહેરબાની કરીને તમારી સિસ્ટમને સુધારો, પછી ફરી પ્રયત્ન કરો. તમે ફરી આ સૂચનાને જોશો નહિં, પરંતુ તમે કરી શકો છો">
+<!ENTITY  unsupportedLink.label           "વધારે શીખો.">
+
+<!ENTITY  clickHere.label                 "અહીં ક્લિક કરો">
+
+<!ENTITY  evangelism.desc                 "એ ખૂબ આગ્રહણીય છે કે તમે  &brandShortName; માટે શક્ય એટલો જલદી સુધારો લાગુ કરો.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; ને ડાઉનલોડ કરી રહ્યા છે">
+<!ENTITY  downloading.intro               "સુધારાઓ ડાઉનલોડ કરી રહ્યા છીએ:">
+<!ENTITY  connecting.label                "સુધારા સર્વર સાથે જોડાઈ રહ્યા છીએ...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; એ વધાતા જતા સુધારાની સંકલનતા ચકાસવામાં અસમર્થ હતું કે જે તેણે ડાઉનલોડ કર્યું છે, તેથી તે હવે સંપૂર્ણ સુધારા પેકેજ ડાઉનલોડ કરી રહ્યું છે.">
+
+<!ENTITY  viewDetails.tooltip             "આ સુધારા માટેની વિગતો જુઓ">
+
+<!ENTITY  details.link                    "વિગતો">
+
+<!ENTITY  error.title                     "સુધારો નિષ્ફળ">
+
+<!ENTITY  error.label                     "આ સુધારો સ્થાપિત કરવા માટે ત્યાં થોડી સમસ્યાઓ હતી. &brandShortName; સુધારી શકાયો નહિં કારણ કે:">
+                                           
+<!ENTITY  errorManual.label               "તમે આ કડી પર ક્લિક કરીને અને તાજેતરની આવૃત્તિ ડાઉનલોડ કરીને &brandShortName; ને સુધારી શકો છો:">
+                                           
+<!ENTITY  errorpatching.intro             "અંશતઃ સુધારો લાગુ પાડી શકાયો નહિં. &brandShortName; સંપૂર્ણ સુધારો ડાઉનલોડ કરીને ફરીથી પ્રયત્ન કરશે.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; ને નક્કી કરવાનું અસમર્થ જો ત્યાં સુધારો ઉપલબ્ધ હોય તો. મહેરબાની કરીને ચકાસો કે તમારી પાસે &brandShortName; ની તાજેતરની આવૃત્તિ છે:">
+
+<!ENTITY  finishedPage.title              "સુધારો સ્થાપન કરવા માટે તૈયાર છે">
+<!ENTITY  finishedPage.text               "સુધારો ફરીવાર જ્યારે તમે &brandShortName; શરૂ કરો ત્યારે સ્થાપિત થઈ જશે. તમે &brandShortName; ને હમણાં પુનઃશરૂ કરી શકો, કે પછી કામ કરવાનું ચાલુ રાખો અને પછીથી પુનઃશરૂ કરો.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; માટે સુરક્ષા અને સુગમતા સુધારો ડાઉનલોડ થઈ ગયેલ છે અને તે સ્થાપિત થવા માટે તૈયાર છે.">
+<!ENTITY  finishedBackground.name         "સુધારો:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "સુધારો ફરીવાર જ્યારે તમે &brandShortName; શરૂ કરો ત્યારે સ્થાપિત થઈ જશે. તમે &brandShortName; ને હમણાં પુનઃશરૂ કરી શકો, કે પછી કામ કરવાનું ચાલુ રાખો અને પછીથી પુનઃશરૂ કરો.">
+
+
+<!ENTITY  update.details.label            "વિગતો">
+<!ENTITY  update.installedOn.label        "પર સ્થાપિત થયેલ:">
+<!ENTITY  update.status.label             "પરિસ્થિતિ:">
+
+<!ENTITY  finishedBackground.moreElevated "This update requires administrator privileges. The update will be
+                                           installed the next time &brandShortName; starts. You can restart
+                                           &brandShortName; now, continue working and restart later, or decline this
+                                           update.">
+

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Винятки">
+<!ENTITY window.width                 "36em">
+
+<!ENTITY treehead.sitename2.label     "Веб-сайт">
+<!ENTITY treehead.status.label        "Стан">
+<!ENTITY removepermission2.label      "Вилучити веб-сайт">
+<!ENTITY removepermission2.accesskey  "л">
+<!ENTITY removeallpermissions2.label  "Вилучити всі веб-сайти">
+<!ENTITY removeallpermissions2.accesskey "с">
+<!ENTITY address.label                "Адреса сайта:">
+<!ENTITY address.accesskey            "А">
+<!ENTITY block.label                  "Блокувати">
+<!ENTITY block.accesskey              "Б">
+<!ENTITY session.label                "Дозволити на сеанс">
+<!ENTITY session.accesskey            "о">
+<!ENTITY allow.label                  "Дозволити">
+<!ENTITY allow.accesskey              "Д">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Скасувати">
+<!ENTITY button.cancel.accesskey      "С">
+<!ENTITY button.ok.label              "Зберегти зміни">
+<!ENTITY button.ok.accesskey          "З">
+

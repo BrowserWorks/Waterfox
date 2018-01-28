@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Rychle odsud pryč!">
+<!ENTITY safeb.palm.decline.label "Ignorovat toto upozornění">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Tato stránka není klamavá…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "l">
+<!ENTITY safeb.palm.reportPage.label "Proč byla tato stránka zablokována?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Rady poskytnuty společností <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Nahlášená útočná stránka!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Tato webová stránka na serveru <span id='malware_sitename'/> byla nahlášena jako útočná a byla zablokována na základě vašeho bezpečnostního nastavení.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Útočné stránky se pokouší nainstalovat programy, které kradou vaše důvěrná data, používají váš počítač k dalším útokům, nebo jakkoliv poničí váš systém.</p><p>Některé stránky poskytují škodlivý software záměrně, řada z nich byla ale sama napadena a činí tak bez vědomí jejich vlastníků.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Nahlášená stránka s nežádoucím softwarem!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Tato webová stránka na serveru <span id='unwanted_sitename'/> byla nahlášena jako stránka s nežádoucím softwarem a byla zablokována na základě vašeho bezpečnostního nastavení.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Stránky s nežádoucím softwarem se pokouší nainstalovat software, který může být klamavý a může nečekaným způsobem ovlivnit váš systém.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Klamavá stránka!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Tato webová stránka na serveru <span id='phishing_sitename'/> byla nahlášena jako klamavá a byla zablokována na základě vašeho bezpečnostního nastavení.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Klamavé stránky jsou takové, které se vás snaží přimět k něčemu nebezpečnému, jako je instalace softwaru nebo prozrazení osobních informací, např. hesel, telefonního čísla nebo čísla kreditní karty.</p><p>Zadání jakýchkoliv informací na této stránce může vést ke krádeži vaší identity nebo jejímu zneužití.</p>">
+

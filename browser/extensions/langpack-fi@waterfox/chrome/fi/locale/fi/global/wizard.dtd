@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Edellinen">
+<!ENTITY  button-back-mac.accesskey    "E">
+<!ENTITY  button-next-mac.label        "Jatka">
+<!ENTITY  button-next-mac.accesskey    "J">
+<!ENTITY  button-finish-mac.label      "Valmis">
+<!ENTITY  button-cancel-mac.label      "Peru">
+
+<!ENTITY  button-back-unix.label       "Takaisin">
+<!ENTITY  button-back-unix.accesskey   "T">
+<!ENTITY  button-next-unix.label       "Seuraava">
+<!ENTITY  button-next-unix.accesskey   "S">
+<!ENTITY  button-finish-unix.label     "Valmis">
+<!ENTITY  button-cancel-unix.label     "Peru">
+
+<!ENTITY  button-back-win.label        "&lt; Edellinen">
+<!ENTITY  button-back-win.accesskey    "E">
+<!ENTITY  button-next-win.label        "Seuraava &gt;">
+<!ENTITY  button-next-win.accesskey    "S">
+<!ENTITY  button-finish-win.label      "Valmis">
+<!ENTITY  button-cancel-win.label      "Peruuta">

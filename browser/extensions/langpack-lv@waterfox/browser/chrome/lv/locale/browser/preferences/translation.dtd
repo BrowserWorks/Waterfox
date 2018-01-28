@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Tulkošanas izņēmumi">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Tulkošana netiks piedāvāta sekojošām valodām:">
+<!ENTITY treehead.languageName.label      "Valodas">
+<!ENTITY removeLanguage.label             "Aizvākt valodu">
+<!ENTITY removeLanguage.accesskey         "z">
+<!ENTITY removeAllLanguages.label         "Aizvākt visas valodas">
+<!ENTITY removeAllLanguages.accesskey     "v">
+
+<!ENTITY noTranslationForSites.label      "Tulkošana netiks piedāvāta sekojošām lapām:">
+<!ENTITY treehead.siteName.label          "Lapas">
+<!ENTITY removeSite.label                 "Aizvākt lapu">
+<!ENTITY removeSite.accesskey             "l">
+<!ENTITY removeAllSites.label             "Aizvākt visas lapas">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Aizvērt">
+<!ENTITY button.close.accesskey           "A">
+
+<!ENTITY treehead.siteName2.label         "Websites">

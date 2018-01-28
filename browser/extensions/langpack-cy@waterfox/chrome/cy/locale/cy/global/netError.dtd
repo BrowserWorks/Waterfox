@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Gwall Llwytho Tudalen">
+<!ENTITY retry.label "Ceisiwch Eto">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Methu Cysylltu">
+<!ENTITY connectionFailure.longDesc "<p>Er bod y wefan i'w weld yn ddilys, nid oedd y porwr yn gallu creu cysylltiad.</p><ul><li>Efallai nad yw'r wefan ar gael dros dro? Ceisiwch eto.</li><li>Methu pori safleoedd eraill?  Gwiriwch gysylltiad y cyfrifiadur â'r rhwydwaith.</li><li>A yw eich cyfrifiadur a'r rhwydwaith wedi eu hamddiffyn gan fur cadarn neu ddirprwy? Mae gosodiadau anghywir yn gallu ymyrryd â phori'r we.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Cyfyngwyd ar y Porth am Resymau Diogelwch">
+<!ENTITY deniedPortAccess.longDesc "<p>Gofynnodd y cyfeiriad am borth (e.e. <q>mozilla.org:80</q> sef porth 80 ar mozilla.org) sy'n cael ei ddefnyddio am resymau <em>heblaw</em> pori'r We. Mae'r porwr wedi diddymu eich cais er eich diogelwch.</p>">
+
+<!ENTITY dnsNotFound.title "Heb Ganfod Cyfeiriad">
+<!ENTITY dnsNotFound.longDesc "<p>Nid yw'r porwr yn gallu canfod y gweinydd gwestai ar gyfer y cyfeiriad yma.</p><ul><li>A wnaethoch gamgymeriad wrth deipio'r cyfeiriad? (e.e. <q><strong>ww</strong>.mozilla.org</q> yn lle <q><strong>www</strong>.mozilla.org</q>)</li><li>Ydych chi'n siŵr fod yr enw parth yn bodoli?   Efallai bod ei gofrestriad wedi dod i ben.</li><li>Ydych chi'n methu pori i wefannau eraill?   Gwiriwch eich cysylltiad rhwydwaith a gweinydd DNS.</li><li>A yw eich cyfrifiadur wedi ei amddiffyn gyda mur cadarn a dirprwy?  Gall gosodiadau anghywir ymyrryd â phori'r We.</li></ul>">
+
+<!ENTITY fileNotFound.title "Heb Ganfod Ffeil">
+<!ENTITY fileNotFound.longDesc "<ul><li>Efallai bod yr eitem wedi cael ei hailenwi, ei thynnu neu ei symud?</li><li>Oes yna wall sillafu, llythrennu neu wall teipio arall yn y cyfeiriad?</li><li>A oes gennych hawl digonol i gael mynediad at yr eitem hon?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Mae mynediad i'r ffeil wedi ei wrthod">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Gall ei fod wedi ei dynnu, symud neu fod caniatâd ffeiliau yn rhwystro mynediad.</li></ul>">
+
+<!ENTITY generic.title "Methu Cyflawni'r Cais">
+<!ENTITY generic.longDesc "<p>Nid oes gwybodaeth ar gael am y gwall neu broblem yma ar hyn o bryd.</p>">
+
+<!ENTITY malformedURI.title "Cyfeiriad Annilys">
+<!ENTITY malformedURI.longDesc "<p>Nid yw'r cyfeiriad yma mewn fformat adnabyddus. Gwiriwch y bar lleoliad a cheisiwch eto.</p>">
+
+<!ENTITY netInterrupt.title "Tarfu ar Drosglwyddo Data">
+<!ENTITY netInterrupt.longDesc "<p>Mae'r porwr wedi cysylltu'n llwyddiannus, ond cafodd y cysylltiad ei darfu wrth drosglwyddo gwybodaeth.   Ceisiwch eto.</p><ul><li>Methu pori gwefannau eraill? Gwiriwch gysylltiad y cyfrifiadur â'r rhwydwaith.</li><li>Yn dal i gael trwbl? Cysylltwch â'ch gweinyddwr rhwydwaith neu ddarparwr Rhyngrwyd am gymorth.</li></ul>">
+
+<!ENTITY notCached.title "Daeth y Ddogfen i Ben">
+<!ENTITY notCached.longDesc "<p>Nid yw'r ddogfen hon ar gael yn storfa'r porwr.</p><ul><li>Fel modd i ddiogelu nid yw'r porwr yn gofyn eto yn awtomatig am ddogfennau sensitif.</li><li>Cliciwch Ceisiwch Eto i ofyn eto am y ddogfen gan y wefan.</li></ul>">
+
+<!ENTITY netOffline.title "Modd All-lein">
+<!ENTITY netOffline.longDesc2 "<p>Mae&apos;r porwr yn gweithredu mewn modd all-lein ac nid oes modd cysylltu â&apos;r eitem hon.</p><ul><li>A yw&apos;r cyfrifiadur wedi cysylltu i rwydwaith fyw?</li><li>Cliciwch &quot;Ceisiwch Eto&quot; er mwyn newid i&apos;r modd ar-lein ac ail lwytho&apos;r dudalen.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Gwall Amgodio Cynnwys">
+<!ENTITY contentEncodingError.longDesc "<p>Nid oes modd dangos y dudalen hon am ei bod yn defnyddio ffurf o gywasgiad sy'n anhysbys neu sydd ddim yn cael ei gynnal o .</p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Math Anniogel o Ffeil">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Cysylltwch â pherchnogion y wefan i'w hysbysu o'r anhawster.</li> </ul>">
+
+<!ENTITY netReset.title "Tarfu ar y Cyswllt">
+<!ENTITY netReset.longDesc "<p>Cafodd y cysylltiad rhwydwaith ei dorri wrth negydu cysylltiad. Ceisiwch eto.</p>">
+
+<!ENTITY netTimeout.title "Amser Allan y Rhwydwaith">
+<!ENTITY netTimeout.longDesc "<p>Nid yw'r wefan wedi ymateb i gais am gyswllt ac mae'r porwr wedi peidio aros am ateb.</p><ul><li>Gall fod y gweinydd yn profi galw uchel neu ataliad dros dro?  Ceisiwch eto.</li><li>A ydych yn methu pori i wefannau eraill? Gwiriwch gysylltiad rhwydwaith y cyfrifiadur.</li><li>A yw eich cyfrifiadur wedi ei ddiogelu gan fur cadarn neu ddirprwy?  Gall osodiadau anghywir effeithio ar bori'r we.</li><li>Dal yn cael problemau? Cysylltwch â'ch gweinyddwr rhwydwaith neu ddarparwr rhyngrwyd am gymorth.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protocol Anhysbys">
+<!ENTITY unknownProtocolFound.longDesc "<p>Mae'r cyfeiriad yn pennu protocol (e.e. <q>wxyz://</q>) nad yw'r porwr yn ei adnabod, felly nid yw'r porwr yn gallu cysylltu'n iawn â'r wefan.</p><ul><li>Ydych chi'n ceisio cael mynediad at wasanaethau aml-gyfrwng neu destun yn unig? Gwiriwch y wefan am yr anghenion ychwanegol hyn.</li><li>Mae rhai protocolau angen meddalwedd trydydd parti neu ategion cyn bod modd i'r porwr eu hadnabod.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Gwrthododd y Gweinydd Dirprwyo'r cysylltiad">
+<!ENTITY proxyConnectFailure.longDesc "<p>Mae'r porwr wedi ei ffurfweddu i ddefnyddio gweinydd dirprwy, ond mae'r dirprwy wedi gwrthod cysylltiad.</p><ul><li>A yw ffurfweddiad dirprwy'r porwr yn gywir? Gwiriwch y gosodiadau a cheisio eto.</li><li>A yw'r gwasanaeth dirprwy yn caniatáu cysylltiadau o'r rhwydwaith?</li><li>Dal yn cael problemau? Cysylltwch â'ch gweinyddwr rhwydwaith neu ddarparwr rhyngrwyd am gymorth.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Heb ganfod y Gweinydd Dirprwyol">
+<!ENTITY proxyResolveFailure.longDesc "<p>Mae'r porwr wedi ei ffurfweddu i ddefnyddio gweinydd dirprwy, ond nid oes modd canfod y dirprwy.</p><ul><li>A yw ffurfweddiad dirprwy'r porwr yn gywir? Gwiriwch y gosodiadau a cheisio eto.</li><li>A yw'r gwasanaeth dirprwy yn caniatáu cysylltiadau o'r rhwydwaith?</li><li>Dal yn cael problemau? Cysylltwch â'ch gweinyddwr rhwydwaith neu ddarparwr rhyngrwyd am gymorth.</li></ul>">
+
+<!ENTITY redirectLoop.title "Cylch Ailgyfeirio">
+<!ENTITY redirectLoop.longDesc "<p>Mae'r porwr wedi peidio ceisio estyn yr eitem. Mae'r safle'n ailgyfeirio'r cais mewn ffordd na fydd yn cael ei gwblhau.</p><ul><li>A ydych wedi analluogi neu rwystro cwcis angenrheidiol y wefan?</li><li><em>NODYN</em>: Os nad yw derbyn cwcis y safle'n datrys y broblem, mae'n debygol o fod yn fater ffurfweddiad y gweinydd ac nid eich cyfrifiadur.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Ymateb Anghywir">
+<!ENTITY unknownSocketType.longDesc "<p>Ymatebodd y wefan i'r cais rhwydwaith mewn ffordd annisgwyl ac nid yw'r porwr yn gallu parhau.</p>">
+
+<!ENTITY nssFailure2.title "Methodd Cysylltiad Diogel">
+<!ENTITY nssFailure2.longDesc2 "<p>Nid oes modd dangos y dudalen rydych yn ceisio ei darllen gan nad oes modd gwirio dilysrwydd y data derbyniwyd.</p><ul><li>Cysylltwch â pherchennog y wefan i'w hysbysu o'r anhawster.</li></ul>">
+
+<!ENTITY nssBadCert.title "Methodd Cysylltiad Diogel">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Gall hyn fod yn anhawster gyda ffurfweddiad y gweinydd, neu gall fod bod rhywun yn ceisio ffugio'r gweinydd.</li> <li>Os ydych wedi cysylltu'n llwyddiannus a'r gweinydd yn y gorffennol, efallai mai gwall dros dro ydyw a gallwch geisio eto yn hwyrach.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Neu mae modd ychwanegu eithriad…">
+<!ENTITY securityOverride.warningContent "<p>Ni ddylech ychwanegu eithriad os ydych yn defnyddio cyswllt gwe nad ydych yn ymddiried yn llwyr ynddo neu os nad ydych wedi arfer a gweld negeseuon rhybudd ar gyfer y gweinydd hwn.</p> <p>Os ydych yn parhau i fod yn awyddus i ychwanegu eithriad i'r wefan, gallwch wneud hynny yng ngosodiadau uwch amgryptio.</p>">
+
+<!ENTITY cspBlocked.title "Rhwystrwyd gan Bolisi Diogelwch Cynnwys">
+<!ENTITY cspBlocked.longDesc "<p>Mae'r porwr wedi atal y dudalen rhag cael ei llwytho yn y ffordd yma gan fod gan y dudalen bolisi diogelwch cynnwys sy'n atal hynny.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Gwall Cynnwys Llygredig">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Nid oes modd dangos y dudalen rycydch yn ceisio ei darllen gan fod gwall wedi ei ganfod yn y trosglwyddiad data.</p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu am yr anhawster.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL pell">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Cysylltwch â pherchnogion y wefan i'w hysbysu am y broblem..</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Nid yw eich cysylltiad yn ddiogel">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Mae <p><span class='hostname'></span> yn defnyddio technoleg diogelwch sy'n hen ac yn agored i ymosodiad. Gall yr ymosodwr weld manylion am hyn roeddech yn meddwl ei fod yn ddiogel. Mae angen i weinyddwr y wefan drwsio'r gweinydd yn gyntaf cyn bod modd i chi ymweld â' r wefan.</p><p>Cod gwall: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

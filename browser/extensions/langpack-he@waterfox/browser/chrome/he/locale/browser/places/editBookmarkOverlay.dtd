@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "שם:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "ש">
+<!ENTITY editBookmarkOverlay.location.label                  "כתובת:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "כ">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "כתובת הזנה:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "ז">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "כתובת אתר:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "א">
+<!ENTITY editBookmarkOverlay.folder.label                    "תיקייה:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "הצגת כל תיקיות הסימניות">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "הסתרה">
+<!ENTITY editBookmarkOverlay.tags.label                      "תגיות:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "ג">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "יש להפריד בין תגיות באמצעות פסיקים">
+<!ENTITY editBookmarkOverlay.description.label               "תיאור:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ת">
+<!ENTITY editBookmarkOverlay.keyword.label                   "מילת מפתח:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "מ">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "הצגת כל התגיות">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "טעינת סימניה זו בסרגל הצד">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ס">
+<!ENTITY editBookmarkOverlay.choose.label                    "בחירה…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "תיקייה חדשה">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "ת">

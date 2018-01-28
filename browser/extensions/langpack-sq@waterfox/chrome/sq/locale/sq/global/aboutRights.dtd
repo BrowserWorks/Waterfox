@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Mbi të Drejtat Tuaja">
+<!ENTITY rights.intro "&brandFullName;-i është software i lirë dhe me burim të hapur, krijuar nga një bashkësi disamijëshe anembanë botës. Ka pak gjëra që do të duhej t&apos;i dinit:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName;-i ju jepet sipas kushteve të ">
+<!ENTITY rights.intro-point1b "Licencës Publike Mozilla">
+<!ENTITY rights.intro-point1c ". Kjo do të thotë që &brandShortName;-in mund ta përdorni, kopjoni dhe tua shpërndani të tjerëve. Jeni gjithashtu të lirë ta ndryshoni kodin burim të &brandShortName;-it në përputhje me nevojat tuaja. Licenca Publike Mozilla ju jep po ashtu të drejtën të shpërndani versionet tuaj të ndryshuar.">
+
+<!ENTITY rights.intro-point2-a "Mozilla nuk ju jep ndonjë të drejtë mbi shenja tregtare ose mbi licenca shenjash tregtare të Waterfox-it ose të çfarëdo pale të tretë, përfshi, pa kufizim, emrin dhe stemën e Waterfox-it. Më tepër të dhëna rreth shenjave tregtare (trademarks) mund të gjeni ">
+<!ENTITY rights.intro-point2-b "këtu">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Disa veçori te &brandShortName;-i, të tilla si Njoftuesi i Vithisjeve, ju ofrojnë mundësinë të jepni përshtypjet te &vendorShortName;. Duke zgjedhur parashtrim përshtypjesh, i jepni leje &vendorShortName;-s t&apos;i përdorë përshtypjet për të përmirësuar produktet e veta, të botojë përshtypje te sajtet e veta, dhe t&apos;i shpërndajë përshtypjet.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Se si i përdorim ne të dhënat tuaja vetjake dhe përshtypjet tuaja e dhëna te &vendorShortName; përmes &brandShortName;-it përshkruhet te ">
+<!ENTITY rights2.intro-point3b "Rregullat e Privatësisë për &brandShortName;-in">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Çfarëdo rregullash privatësie të zbatueshme mbi këtë produkt do të duheshin radhitur këtu.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Disa veçori të &brandShortName;-it përdorin shërbime të dhënash me bazë web-in, sidoqoftë, nuk garantojmë dot që të jenë 100&#37; të përpikta ose pa gabime. Më tepër hollësi, përfshi të dhëna rreth se si të çaktivizohen veçoritë, mund të gjenden te ">
+<!ENTITY rights.intro-point4b "kushtet e shërbimit">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Nëse ky produkt përmban shërbime web, çfarëdo kushtesh të zbatueshëm për shërbimin(et) do të duhej të tregoheshin me një lidhje te ">
+<!ENTITY rights.intro-point4b-unbranded "ndarja">
+<!ENTITY rights.intro-point4c-unbranded " Shërbime Sajtesh.">
+
+<!ENTITY rights2.webservices-header "Shërbime Sajtesh të &brandFullName;-it">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Që të mund të luajë disa lloje lënde video, &brandShortName;-i shkarkon nga palë të treta disa module shfshehtëzimi lënde.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName;-i përdor shërbime të dhënash me bazë web (&quot;Shërbimet&quot;) për të bërë të mundur funksionimin e disa veçorive që ju ofrohen për përdorim përmes këtij versioni dyor të &brandShortName;-it, sipas kushteve të përshkruara më poshtë. Nëse nuk dëshironi të përdorni një ose më tepër prej Shërbimeve, ose nëse kushtet më poshtë janë të papranueshme për ju, mund ta çaktivizoni veçorinë ose Shërbimin(t). Udhëzimet se si të çaktivizohet një veçori ose Shërbim i caktuar mund të gjenden ">
+<!ENTITY rights2.webservices-b "këtu">
+<!ENTITY rights3.webservices-c ". Të tjera veçori dhe Shërbime mund të çaktivizohen te parapëlqimet e aplikacionit.">
+
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Shfletim i Parrezik: ">
+<!ENTITY rights.safebrowsing-b "Nuk këshillohet çaktivizimi i veçorisë Shfletim i Parrezik, pasi mund të bëjë që të shkoni te sajte jo të parrezik. Nëse dëshironi ta çaktivizoni tërësisht këtë veçori, ndiqni hapat vijues:">
+<!ENTITY rights.safebrowsing-term1 "Hapni parapëlqimet e aplikacionit">
+<!ENTITY rights.safebrowsing-term2 "Përzgjidhni ndarjen Siguri">
+<!ENTITY rights2.safebrowsing-term3 "Hiqjani shenjën mundësisë te &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Shfletimi i Parrezik Sigurt tani është çaktivizuar">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Shfletimi i Ndjeshëm Ndaj Vendit: ">
+<!ENTITY rights.locationawarebrowsing-b "është përherë në dorën tuaj ta përdorni a jo. Kurrë nuk dërgohen të dhëna vendi pa lejen tuaj. Nëse dëshironi ta çaktivizoni tërësisht veçorinë, ndiqni hapat vijues:">
+<!ENTITY rights.locationawarebrowsing-term1a "Te shtylla e URL-ve, shtypni ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Shtypni geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Dyklikoni mbi parapëlqimin geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Shfletimi i Ndjeshëm Ndaj Vendit tani është joveprues">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Një përmbledhje shërbimesh sajtesh të përfshirë në produkt, bashkë me udhëzimet se si të çaktivizohen ato, në pastë, do të duhej të përfshiheshin këtu.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Këtu do të duheshin radhitur çfarëdo kushtesh shërbimi të zbatueshme mbi këtë produkt.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; dhe kontribuesit e saj, të licencuarit prej saj dhe partnerët përpiqen të ofrojnë Shërbimet më të përpikta dhe më të përditësuara. Sidoqoftë, nuk garantojmë dot që këto të dhëna janë të plota dhe pa gabim. Për shembull, Shërbimi i Shfletimi të Parrezik, gabimisht, mundet të mos identifikojë dot disa sajte me rrezik, apo të identifikojë sajte që nuk janë të tillë dhe, në lidhje me Shërbimin Shfletim i Ndjeshëm ndaj Vendit, krejt vendet e furnizuara nga shërbimi ynë janë vetëm propozime dhe as ne, as furnizuesit tanë të shërbimit nuk garantojnë përpikërinë e vendeve të furnizuara.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; mund t&apos;i ndërpresë ose ndryshojë Shërbimet kur dhe si të dojë.">
+<!ENTITY rights2.webservices-term3 "Mirëpresim përdorimin e këtyre Shërbimeve me versionin shoqërues të &brandShortName;-it, dhe gëzoni tërë të drejtat e nevojshme në lidhje me këtë. &vendorShortName; dhe të licencuarit prej saj ruajnë tërë të drejtat e tjera mbi Shërbimet. Këto kushte nuk janë hartuar për kufizimin e ndonjë të drejte dhënë sipas licencash burimi të hapur, të zbatueshme mbi &brandShortName;-in dhe versionet përgjegjëse të kodit burim të &brandShortName;-it.">
+<!ENTITY rights.webservices-term4 "Shërbimet jepen &quot;siç janë.&quot;  &vendorShortName;, kontribuesit në të, të licencuarit prej saj, dhe shpërndarësit, nuk marrin përsipër asnjë garanci, qoftë shprehimisht apo të nënkuptuar, përfshi pa kufizime, garanci që Shërbimet janë të tregtueshme dhe të përshtatshme për qëllimet tuaja të veçanta. Merrni mbi vete tërë rrezikun e përzgjedhjes së Shërbimeve për qëllimet tuaja dhe për cilësinë dhe funksionimin e Shërbimeve. Disa juridiksione nuk e lejojnë përjashtimin ose kufizimin e garancive të nënkuptuara, ndaj kjo klauzolë mund të mos ketë vlerë për rastin tuaj.">
+<!ENTITY rights.webservices-term5 "Hiq rastet kur e kërkon ligji, &vendorShortName;, kontribuesit e saj, të licencuarit prej saj, dhe shpërndarësit e produkteve të saj, nuk do të jenë përgjegjës për çfarëdo dëmesh të tërthorta, speciale, të ardhura si incident, si pasojë, si ndëshkim, ose si shembull, që ka rrjedhur prej ose lidhet në çfarëdo mënyre me përdorimin e &brandShortName;-it dhe Shërbimeve. Detyrimi kolektiv sipas këtyre kushteve nuk do të tejkalojë vlerën $500 (pesëqind dollarë). Disa juridiksione nuk e lejojnë përjashtimin ose kufizimin e disa dëmeve, ndaj ky përjashtim dhe kufizim mund të jetë i pazbatueshëm për rastin tuaj.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; mund t&apos;i përditësojë këto kushte sipas nevojës, kohë pas kohe. Këto kushte nuk mund të ndryshohen apo bëhen të pavlefshme pa miratimin me shkrim nga &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Këto kushte administrohen nga ligjet e shtetit të Kalifornisë, U.S.A., me përjashtim të konflikteve me dispozita ligjore. Po qe se ndonjë pjesë e këtyre kushteve shihet si e pavlefshme apo e padetyrueshme, pjesët e mbetura do të mbesin në fuqi dhe me efekt të plotë. Në rast përplasjeje mes versionit të përkthyer të këtyre kushteve dhe versionit në gjuhën angleze, kontrollin e merr versioni në gjuhën angleze.">
+
+<!ENTITY rights.title "About Your Rights">

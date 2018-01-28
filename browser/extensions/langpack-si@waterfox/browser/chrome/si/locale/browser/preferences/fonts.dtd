@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "අකුරු හැඩ">
+
+<!ENTITY  language.label                          "අකුරු හැඩ:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "විශාලත්වය:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "සමානුපාතික:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Monospace:">
+<!ENTITY  monospace.accesskey                     "M">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "ලතින්">
+<!ENTITY  font.langGroup.japanese                 "ජපන්">
+<!ENTITY  font.langGroup.trad-chinese             "සම්ප්‍රදායික චීන(තායිවානු)">
+<!ENTITY  font.langGroup.simpl-chinese            "සම්ප්‍රදායික චීන">
+<!ENTITY  font.langGroup.trad-chinese-hk          "සම්ප්‍රදායික චීන (හොංග් කොංග්)">
+<!ENTITY  font.langGroup.korean                   "කොරියානු">
+<!ENTITY  font.langGroup.cyrillic                 "සිරිලික්">
+<!ENTITY  font.langGroup.el                       "ග්‍රීක">
+<!ENTITY  font.langGroup.other                    "වෙනත් ලිවීම් පද්ධති">
+<!ENTITY  font.langGroup.thai                     "තායි">
+<!ENTITY  font.langGroup.hebrew                   "හීබෲ">
+<!ENTITY  font.langGroup.arabic                   "අරාබි">
+<!ENTITY  font.langGroup.devanagari               "දෙවනගිරි">
+<!ENTITY  font.langGroup.tamil                    "දමිළ">
+<!ENTITY  font.langGroup.armenian                 "ඇමරිකානු">
+<!ENTITY  font.langGroup.bengali                  "බෙංගාලී">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Syllabary">
+<!ENTITY  font.langGroup.ethiopic                 "ඊතියෝපියානු">
+<!ENTITY  font.langGroup.georgian                 "ජොර්ජියානු">
+<!ENTITY  font.langGroup.gujarati                 "ගුජරාති">
+<!ENTITY  font.langGroup.gurmukhi                 "ගර්මුකි">
+<!ENTITY  font.langGroup.khmer                    "ක්මේර්">
+<!ENTITY  font.langGroup.malayalam                "මලයාලම්">
+<!ENTITY  font.langGroup.math                     "ගණිතය">
+<!ENTITY  font.langGroup.telugu                   "තෙලිගු">
+<!ENTITY  font.langGroup.kannada                  "කන්නඩ">
+<!ENTITY  font.langGroup.sinhala                  "සිංහල">
+<!ENTITY  font.langGroup.tibetan                  "Tibetan">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "අවම අකුරු හැඩ විශාලත්වය:">
+<!ENTITY minSize.accesskey                        "o">
+<!ENTITY minSize.none                             "කිසිවක් නැත">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans-serif">
+
+<!ENTITY  allowPagesToUseOwn.accesskey            "A">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+
+<!ENTITY languages.customize.Fallback.auto        "දැනට ඇති පෙරනිමි ප්‍රාදේශිකය">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "අරාබි">
+<!ENTITY languages.customize.Fallback.baltic      "බොල්ටික්">
+<!ENTITY languages.customize.Fallback.ceiso       "මධ්‍යම යුරෝපීය, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "මධ්‍යම යුරෝපීය, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "චීන, සරල">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "චීන, සාම්ප්‍රදායික">
+<!ENTITY languages.customize.Fallback.cyrillic    "සිරිලික්">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "ග්‍රීක">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "හීබෲ">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "ජපන්">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "කොරියානු">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "තායි">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "තුර්කී">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "වියට්නාමියානු">
+<!ENTITY languages.customize.Fallback.other       "වෙනත් (ඇතුළ. බටහිර යුරෝපීය)">
+
+<!ENTITY  allowPagesToUseOwn.label                "Allow pages to choose their own fonts, instead of your selections above">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY languages.customize.Fallback2.desc       "This text encoding is used for legacy content that fails to declare its encoding.">
+
+<!ENTITY languages.customize.Fallback2.label      "Fallback Text Encoding:">

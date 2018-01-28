@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "موتور جست‌وجو پیش‌فرض">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "انتخاب یک موتور جست‌وجو پیش فرض برای استفاده در نوار ادرس و نوار جست‌وجو">
+
+<!ENTITY provideSearchSuggestions.label        "عرضه پیشنهادهای جست‌وجو">
+<!ENTITY provideSearchSuggestions.accesskey    "ج">
+
+<!ENTITY showURLBarSuggestions2.label           "نمایش نتایج پیشنهادهای جستجو در نوار آدرس">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "پیشنهادهای جست‌وجو در نوار مکان نمایش داده نخواهد شده زیرا شما &brandShortName; را به گونه‌ای تنظیم کرده‌اید که هیچ تاریخچه‌ای را نگه ندارد.">
+
+<!ENTITY oneClickSearchEngines.label           "موتورهای جست‌وجوی تک-کلیکی">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "در هنگام وارد کردن کلید واژه‌ها جهت جست‌وجو، موتورهای جست‌وجو جایگزین را از قسمت پایینی نوار آدرس یا نوار جست‌وجو انتخاب کنید.">
+
+<!ENTITY engineNameColumn.label                "موتور جست‌وجو">
+<!ENTITY engineKeywordColumn.label             "کلیدواژه">
+
+<!ENTITY restoreDefaultSearchEngines.label     "برگرداندن موتور جست‌وجوی پیش‌فرض">
+<!ENTITY restoreDefaultSearchEngines.accesskey "پ">
+
+<!ENTITY removeEngine.label                    "حذف">
+<!ENTITY removeEngine.accesskey                "ح">
+
+<!ENTITY findMoreSearchEngines.label           "پیدا کردن موتورهای جستجوی بیشتر">

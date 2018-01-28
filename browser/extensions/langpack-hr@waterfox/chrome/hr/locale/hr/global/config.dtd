@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Ovo bi moglo poništiti vašu garanciju!">
+<!ENTITY aboutWarningText.label "Mijenjanje ovih naprednih postavki može biti štetno za stabilnost, sigurnost i učinak ovog programa. Nastavite samo ako znate što radite.">
+<!ENTITY aboutWarningButton2.label "Prihvaćam rizik!">
+<!ENTITY aboutWarningCheckbox.label "Prikaži ovo upozorenje sljedeći put">
+
+<!ENTITY searchPrefs.label "Traži:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Naziv postavke">
+<!ENTITY lockColumn.label "Stanje">
+<!ENTITY typeColumn.label "Vrsta">
+<!ENTITY valueColumn.label "Vrijednost">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Kliknite za razvrstavanje"> 
+<!ENTITY columnChooser.tooltip "Kliknite za odabir stupaca koji će biti prikazani"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopiraj">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopiraj naziv">
+<!ENTITY copyName.accesskey "n">
+<!ENTITY copyValue.label "Kopiraj vrijednost">
+<!ENTITY copyValue.accesskey "v">
+<!ENTITY modify.label "Izmijeni">
+<!ENTITY modify.accesskey "I">
+<!ENTITY toggle.label "Prekidač">
+<!ENTITY toggle.accesskey "P">
+<!ENTITY reset.label "Poništi">
+<!ENTITY reset.accesskey "P">
+<!ENTITY new.label "Novi">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Izraz">
+<!ENTITY string.accesskey "I">
+<!ENTITY integer.label "Cijeli broj">
+<!ENTITY integer.accesskey "b">
+<!ENTITY boolean.label "Boolean">
+<!ENTITY boolean.accesskey "B">

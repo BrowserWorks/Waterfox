@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Hesɗitin &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Fuɗɗito keso ngam ñawndude caɗe e artirde jaawgol.">
+<!ENTITY refreshProfile.dialog.description2  "Ɗuum maa:">
+<!ENTITY refreshProfile.dialog.items.label1  "Momtu ɓeyditte maa e keertine maa">
+<!ENTITY refreshProfile.dialog.items.label2  "Artir teelte wanngorde maa e goowaaɗe">
+<!ENTITY refreshProfile.dialog.button.label  "Hesɗitin &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Hokku &brandShortName; ƴellital">
+<!ENTITY refreshProfile.button.label         "Hesɗitin &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Ena wayi no gasii…">

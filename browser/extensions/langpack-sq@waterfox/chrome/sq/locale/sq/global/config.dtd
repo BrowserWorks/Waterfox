@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!ENTITY boolean.accesskey "B">
+<!ENTITY boolean.label "Buleane">
+<!ENTITY columnChooser.tooltip "Klikoni që të përzgjidhni shtylla për t&apos;u shfaqur">
+<!ENTITY copyName.accesskey "o">
+<!ENTITY copyName.label "Kopjoji Emrin">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY copyValue.label "Kopjoji Vlerën">
+
+<!ENTITY searchPrefs.label "Kërkoni:">
+<!ENTITY searchPrefs.accesskey "K">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!ENTITY integer.accesskey "p">
+<!ENTITY integer.label "Numër i plotë">
+<!ENTITY lockColumn.label "Gjendje">
+<!ENTITY modify.accesskey "N">
+<!ENTITY modify.label "Ndryshoje">
+<!ENTITY new.accesskey "E">
+<!ENTITY new.label "E re">
+<!ENTITY prefColumn.label "Emër Parapëlqim">
+<!ENTITY prefColumnHeader.tooltip "Klikoni për t&apos;i renditur">
+<!ENTITY reset.accesskey "R">
+<!ENTITY reset.label "Riktheji">
+<!ENTITY string.accesskey "V">
+<!ENTITY string.label "Varg">
+<!ENTITY toggle.accesskey "M">
+<!ENTITY toggle.label "Këmbe">
+<!ENTITY typeColumn.label "Lloj">
+<!ENTITY valueColumn.label "Vlerë">
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopjoje">
+<!ENTITY copyPref.accesskey "K">
+
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Kjo mund të bënte të pavlefshme garancinë tuaj!">
+<!ENTITY aboutWarningText.label "Ndryshimi i vlerave për këto rregullime të mëtejshme mund të jetë me rrezik për qëndrueshmërinë, sigurinë, dhe punimin e këtij aplikacioni. Do të ishte mirë të vazhdonit vetëm nëse e dini se ç&apos;jeni duke bërë.">
+<!ENTITY aboutWarningButton2.label "E pranoj rrezikun!">
+<!ENTITY aboutWarningCheckbox.label "Shfaqe këtë sinjalizim herës tjetër">

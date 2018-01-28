@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "İstisnalar - Tərcümə">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Tərcümə aşağıdakı dillər üçün təklif olunmayacaq:">
+<!ENTITY treehead.languageName.label      "Dillər">
+<!ENTITY removeLanguage.label             "Dili Sil">
+<!ENTITY removeLanguage.accesskey         "S">
+<!ENTITY removeAllLanguages.label         "Bütün Dilləri Sil">
+<!ENTITY removeAllLanguages.accesskey     "B">
+
+<!ENTITY noTranslationForSites.label      "Tərcümə aşağıdakı saytlar üçün təklif olunmayacaq:">
+<!ENTITY treehead.siteName.label          "Saytlar">
+<!ENTITY removeSite.label                 "Saytı Sil">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Bütün Saytları Sil">
+<!ENTITY removeAllSites.accesskey         "t">
+
+<!ENTITY button.close.label               "Qapat">
+<!ENTITY button.close.accesskey           "p">
+
+<!ENTITY treehead.siteName2.label         "Websites">

@@ -1,0 +1,218 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "IThulbhoks yeBhrawuza yokuvula iMposiso:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Iisetingi ezihambele phambili">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Umhloli">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Bonisa Izimbo ZeBhrawuza">
+<!ENTITY options.showUserAgentStyles.tooltip "Ukuvulela oku kuza kubonisa izimbo zesiqhelo ezifakwa yibhrawuza.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Iimpawu ze-DOM eFutshanisiweyo">
+<!ENTITY options.collapseAttrs.tooltip "Iimpawu ezinde eziFutshanisiweyo kumhloli">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Icandelo lombala wesiQhelo">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "n">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Njengoko iBhaliwe">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "I-Hex">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "I-HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "I-RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "AmaGama emiBala">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Iseshoni ekhoyo kuphela iyaphinda ilowuda iphepha">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Vulela ibhrawuza yekhrowum uze wongezelele iithulbhoks zokukhupha ibhagi">
+<!ENTITY options.enableChrome.tooltip3  "Ukuvulela olu khetho kuya kukwenza usebenzise izixhobo zomphuhlisi ezikwikhonteksti yebhrawuza (via Tools > Web Developer > Browser Toolbox) nangokukhupha ibhagi kuMphathi weZongezelelo">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Vumela ukususa ibhagi kwerimoti">
+<!ENTITY options.enableRemote.tooltip2  "Ukuvulela olu khetho kuya kwenza izixhobo zokukhupha ibhagi zibe kude njengeWaterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Yenza ingasebenzi i-JavaScript*">
+<!ENTITY options.disableJavaScript.tooltip   "Ukulayita olu khetho kuya kucima iJavaScript yale thebhu ikhoyo. Ukuba ithebhu okanye ithulbhoksi ivaliwe ngoko le setingi iya kulityalwa.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Yekisa iKhetshi yeHTTP (xa ithulbhoksi ivuliwe)">
+<!ENTITY options.disableHTTPCache.tooltip   "Ukuvulela olu khetho kuza kuvala uvimba weHTTP kuzo zonke iithebhu ezivule ithulbhoks. AbaSebenzi beeNkonzo abachatshazelwa bona lolu khetho.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Vulela abaSebenzi beeNkonzo kwiHTTP (xa ithulbhoks ivuliwe)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Ukujija olu khetho  kuya kuvulela abasebenzi benkonzo ngaphezu kwe-HTTP yazo zonke iithebhu ezinethulbhoksi evuliweyo">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "IziXhobo zomPhuhlisi zesiQhelo">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Izixhobo Zomphuhlisi zifakwe ngezongezelelo">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "AmaQhosha eThulbhoks aFumanekayo">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Ayixhaswa kwithulbhoks ekhoyo">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Imixholo">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Sebenzisa umxholo webhrawza woHlelo Lomphuhlisi">
+<!ENTITY options.usedeveditiontheme.tooltip "Sebenzisa umxholo webhrawza woHlelo Lomphuhlisi.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Ikhonsoli Yewebhu">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Vumela izitampu zexesha">
+<!ENTITY options.timestampMessages.tooltip    "Ukuba uvumela imiyalelo yolu khetho nemveliso kwiKhonsoli yeWebhu iya kuvela kwistampu sexesha">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "I-Debugger">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Vumela iiMephu zoMthombo">
+<!ENTITY options.sourceMaps.tooltip    "Ukuba uvumela olu khetho imithombo iya kuba kwimephu ekwiDebugger neKhonsoli.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Umlungisi Wesimbo">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Bonisa oovimba bokuqala">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Bonisa imithombo yokuqala (umz. iifayile zeSass) kwiSilungisi neSihloli seSimbo">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "Gqibezela ngokuzenzekelayo iCSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Gqibezela ngokuzenzekelayo iipropati zeCSS, amaxabiso nezikhethi kwiSilungisi seSimbo njengoko utayipha">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "iiPrefrensi eziQhelekileyo">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Vula iilogi ezingayekiyo">
+<!ENTITY options.enablePersistentLogs.tooltip  "Ukuba uvula olu khetho iKhonsoli yeWebhu neSihloli seNethwekhi asisayi kucima imveliso sihlandlo ngasiye ujonga iphepha elitsha">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Bonisa idatha yeGecko platfom">
+<!ENTITY options.showPlatformData.tooltip  "Ukuba uvula olu khetho, ingxelo yoMenzi-Profayili weJavaScript iya kuquka izimbo zeplatfom yeGecko">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Iipriferensi Zomhleli">
+<!ENTITY options.sourceeditor.detectindentation.label   "Khangela ii-indenti">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "I-indenti eqikelelwayo esekelwe kwisiqulatho esingumthombo">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Zivale ngokuzenzekelayo izibiyeli">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Ngokuzenzekelayo faka izibiyeli ezivalayo">
+<!ENTITY options.sourceeditor.expandtab.label           "Indenta usebenzisa izithuba">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Sebenzisa izithuba endaweni yekharektha yethebhu">
+<!ENTITY options.sourceeditor.tabsize.label             "Isayizi yethebhu">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "I">
+<!ENTITY options.sourceeditor.keybinding.label          "Izibophelelo eziyintloko">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "I">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Idifolti">
+
+<!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
+<!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!ENTITY options.screenshot.clipboard.label      "Screenshot to clipboard">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saves to the screenshot directly to the clipboard">
+
+<!ENTITY options.screenshot.label            "Screenshot Behavior">
+

@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fontsDialog.title "Caratteri">
+<!ENTITY language.label "Caratteri per:">
+<!ENTITY language.accesskey "C">
+<!ENTITY size.label "Dim.:">
+<!ENTITY sizeProportional.accesskey "D">
+<!ENTITY sizeMonospace.accesskey "m">
+<!ENTITY proportional.label "Proporzionale:">
+<!ENTITY proportional.accesskey "P">
+<!ENTITY serif.label "Con grazie:">
+<!ENTITY serif.accesskey "r">
+<!ENTITY sans-serif.label "Senza grazie:">
+<!ENTITY sans-serif.accesskey "S">
+<!ENTITY monospace.label "Larghezza fissa:">
+<!ENTITY monospace.accesskey "L">
+<!ENTITY font.langGroup.latin "Latino">
+<!ENTITY font.langGroup.japanese "Giapponese">
+<!ENTITY font.langGroup.trad-chinese "Cinese tradizionale (Taiwan)">
+<!ENTITY font.langGroup.simpl-chinese "Cinese semplificato">
+<!ENTITY font.langGroup.trad-chinese-hk "Cinese tradizionale (Hong Kong)">
+<!ENTITY font.langGroup.korean "Coreano">
+<!ENTITY font.langGroup.cyrillic "Cirillico">
+<!ENTITY font.langGroup.el "Greco">
+<!ENTITY font.langGroup.other "Altri sistemi di scrittura">
+<!ENTITY font.langGroup.thai "Tailandese">
+<!ENTITY font.langGroup.hebrew "Ebraico">
+<!ENTITY font.langGroup.arabic "Arabo">
+<!ENTITY font.langGroup.devanagari "Devanagari">
+<!ENTITY font.langGroup.tamil "Tamil">
+<!ENTITY font.langGroup.armenian "Armeno">
+<!ENTITY font.langGroup.bengali "Bengalese">
+<!ENTITY font.langGroup.canadian "Sillabario unificato canadese">
+<!ENTITY font.langGroup.ethiopic "Etiope">
+<!ENTITY font.langGroup.georgian "Georgiano">
+<!ENTITY font.langGroup.gujarati "Gujarati">
+<!ENTITY font.langGroup.gurmukhi "Gurmukhi">
+<!ENTITY font.langGroup.khmer "Khmer">
+<!ENTITY font.langGroup.malayalam "Malayalam">
+<!ENTITY font.langGroup.math "Matematica">
+<!ENTITY font.langGroup.odia "Odia">
+<!ENTITY font.langGroup.telugu "Telugu">
+<!ENTITY font.langGroup.kannada "Kannada">
+<!ENTITY font.langGroup.sinhala "Singalese">
+<!ENTITY font.langGroup.tibetan "Tibetano">
+<!ENTITY minSize.label "Dimensione min. carattere:">
+<!ENTITY minSize.accesskey "n">
+<!ENTITY minSize.none "Nessuna">
+<!ENTITY useDefaultFontSerif.label "Con grazie">
+<!ENTITY useDefaultFontSansSerif.label "Senza grazie">
+<!ENTITY allowPagesToUseOwn.label "Consenti alle pagine di scegliere i propri caratteri invece di quelli impostati">
+<!ENTITY allowPagesToUseOwn.accesskey "e">
+<!ENTITY languages.customize.Fallback2.grouplabel "Codifica del testo per contenuti datati">
+<!ENTITY languages.customize.Fallback2.label "Codifica del testo da utilizzare:">
+<!ENTITY languages.customize.Fallback2.accesskey "o">
+<!ENTITY languages.customize.Fallback2.desc "Questa codifica del testo viene utilizzata per contenuti datati che non specificano una propria codifica.">
+<!ENTITY languages.customize.Fallback.auto "Predefinita per la lingua corrente">
+<!ENTITY languages.customize.Fallback.arabic "Arabo">
+<!ENTITY languages.customize.Fallback.baltic "Baltico">
+<!ENTITY languages.customize.Fallback.ceiso "Europa centrale, ISO">
+<!ENTITY languages.customize.Fallback.cewindows "Europa centrale, Microsoft">
+<!ENTITY languages.customize.Fallback.simplified "Cinese semplificato">
+<!ENTITY languages.customize.Fallback.traditional "Cinese tradizionale">
+<!ENTITY languages.customize.Fallback.cyrillic "Cirillico">
+<!ENTITY languages.customize.Fallback.greek "Greco">
+<!ENTITY languages.customize.Fallback.hebrew "Ebraico">
+<!ENTITY languages.customize.Fallback.japanese "Giapponese">
+<!ENTITY languages.customize.Fallback.korean "Coreano">
+<!ENTITY languages.customize.Fallback.thai "Tailandese">
+<!ENTITY languages.customize.Fallback.turkish "Turco">
+<!ENTITY languages.customize.Fallback.vietnamese "Vietnamita">
+<!ENTITY languages.customize.Fallback.other "Altro (incl. Europa occidentale)">

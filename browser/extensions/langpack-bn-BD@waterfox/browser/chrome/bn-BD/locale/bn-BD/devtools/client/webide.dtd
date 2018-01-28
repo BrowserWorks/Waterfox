@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "প্রকল্প">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "নতুন অ্যাপ...">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "প্যাকেজড অ্যাপ খুলুন...">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "হোস্টটেড অ্যাপ খুলুন...">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "অ্যাপ খুলুন…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "ইনস্টল ও চালু করুন">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "অ্যাপ বন্ধ">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "ডিবাগ অ্যাপ">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "প্রকল্প অপসারণ করুন">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "পছন্দসমূহ">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "বাড়তি কম্পোনেন্ট ব্যবস্থাপনা">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "ট্যাব রিফ্রেশ">
+
+<!ENTITY runtimeMenu_label "রানটাইম">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "বিচ্ছিন্ন">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "স্ক্রিনশট">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "রানটাইম তথ্য">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "মনিটর">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "সাইট সংক্রান্ত পছন্দসমূহ">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "ডিভাইস সেটিং">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "প্রদর্শন">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "বড় আকারে প্রদর্শন">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "ছোট আকারে প্রদর্শন">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "জুম রিসেট">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "অ্যাপ খুলুন">
+<!ENTITY runtimeButton_label "রানটাইম নির্বাচন">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "আমার প্রকল্প">
+<!ENTITY projectPanel_runtimeApps "রানটাইম অ্যাপ">
+<!ENTITY projectPanel_tabs "ট্যাব">
+<!ENTITY runtimePanel_usb "USB ডিভাইস">
+<!ENTITY runtimePanel_wifi "Wi-Fi ডিভাইস">
+<!ENTITY runtimePanel_simulator "সিমুলেটর">
+<!ENTITY runtimePanel_other "অন্যান্য">
+<!ENTITY runtimePanel_installsimulator "সিমুলেটর ইনস্টল করুন">
+<!ENTITY runtimePanel_noadbhelper "ইনস্টল ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "আপনার ডিভাইস দেখতে পাচ্ছেন না?">
+<!ENTITY runtimePanel_refreshDevices_label "ডিভাইসগুলো রিফ্রেস করুন">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "বৈধ">
+<!ENTITY details_warning_header "সতর্কবার্তা">
+<!ENTITY details_error_header "ত্রুটিসমূহ">
+<!ENTITY details_description "বিবরণ/বর্ণনা">
+<!ENTITY details_location "অবস্থান">
+<!ENTITY details_manifestURL "অ্যাপ ID">
+<!ENTITY details_removeProject_button "প্রকল্প অপসারণ করুন">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "নতুন অ্যাপ">
+<!ENTITY newAppHeader "টেমপ্লেট নির্বাচন">
+<!ENTITY newAppLoadingTemplate "টেমপ্লেট লোড করা হচ্ছে…">
+<!ENTITY newAppProjectName "প্রকল্পের নাম:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "বন্ধ">
+<!-- Addons -->
+
+<!ENTITY addons_title "অতিরিক্ত উপাদানগুলো">
+<!ENTITY addons_aboutaddons "অ্যাড-অন ব্যবস্থাপক খুলুন">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "পছন্দসমূহ">
+<!ENTITY prefs_editor_title "এডিটর">
+<!ENTITY prefs_general_title "সাধারণ">
+<!ENTITY prefs_restore "ডিফল্ট মান পুনরায় স্থাপন">
+<!ENTITY prefs_manage_components "বাড়তি উপাদান ব্যবস্থাপনা">
+<!ENTITY prefs_options_autoconnectruntime "পূর্ববর্তী রানটাইম পুনঃসংযোগ করুন">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE আরম্ভ হলে আগের রানটাইম পুনঃসংযোগ করুন">
+<!ENTITY prefs_options_rememberlastproject "সর্বশেষ প্রকল্প স্বরণ করুন">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE শুরু করার আগে পূর্ববর্তী প্রকল্পটি পুনরুদ্ধার করুন">
+<!ENTITY prefs_options_templatesurl "টেমপ্লেট URL">
+<!ENTITY prefs_options_templatesurl_tooltip "পর্যাপ্ত টেমপ্লেটের সূচিপত্র">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "রানটাইম তথ্য">
+<!ENTITY runtimedetails_adbIsRoot "ADB রুট: ">
+<!ENTITY runtimedetails_summonADBRoot "root ডিভাইস">
+<!ENTITY runtimedetails_ADBRootWarning "(লকহীন বুটলোডার প্রয়োজন)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "অবাধ DevTools-এর অধিকার: ">
+<!ENTITY runtimedetails_requestPrivileges "উচ্চ অধিকারের অনুরোধ করুন">
+<!ENTITY runtimedetails_privilegesWarning "(ডিভাইস পুনরায় বুট করা হবে। রুটের অধিকার প্রয়োজন।)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "বুলিয়ান">
+<!ENTITY device_typenumber "পূর্ণসংখ্যা">
+<!ENTITY device_typestring "স্ট্রিং">
+<!ENTITY device_typeobject "অবজেক্ট">
+<!ENTITY device_typenone "একটি ধরন নির্বাচন করুন">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "সাইট সংক্রান্ত পছন্দসমূহ">
+<!ENTITY devicepreference_search "সার্চের পছন্দসমূহ">
+<!ENTITY devicepreference_newname "নতুন পছন্দের নাম">
+<!ENTITY devicepreference_newtext "পছন্দের মান">
+<!ENTITY devicepreference_addnew "নতুন পছন্দ যোগ করুন">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "ডিভাইস সেটিং">
+<!ENTITY devicesetting_search "সেটিং খুঁজুন">
+<!ENTITY devicesetting_newname "সেটিং এর নতুন নাম">
+<!ENTITY devicesetting_newtext "সেটিং এর মান">
+<!ENTITY devicesetting_addnew "নতুন সেটিং যোগ করুন">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "মনিটর">
+<!ENTITY monitor_help "সাহায্য">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "ক্লায়েন্ট পরিচয় প্রমাণ প্রক্রিয়া">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "আপনি যে প্রান্তে সংজুক্ত হচ্ছেন তা নির্ভরযোগ্য প্রমানে আরো তথ্য প্রয়োজন।  অনুগ্রহ করে আপনার ডিভাইসের prompt এর মাধ্যমে নিচের QR কোড স্ক্যান করুন।">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "কোন উত্তেজিত QR scanner নেই?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "একটি QR স্ক্যানার প্রম্পট আছে?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "আপনার অন্য ডিভাইস যদি QR কোড স্ক্যানিং এর পরিবর্তে একটি টোকেন চায়, তবে অনুগ্রহ করে সেই ডিভাইসের নিচের মানটি অনুলিপি করে রাখুন:">
+<!ENTITY wifi_auth_qr_size_note "সফলভাবে সংযোগ করতে গিয়ে যদি কিউআর কোডের আকার ছোট মনে হয়, তাহলে উইন্ডো বড় করুন বা জুম করুন।">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "প্রি-প্যাকেজ কমান্ড লগ">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "সিমুলেটর অপশনস">
+<!ENTITY simulator_remove "সিমুলেটর মুছে ফেলুন">
+<!ENTITY simulator_reset "ডিফল্ট মান পুনরায় স্থাপন">
+<!ENTITY simulator_name "নাম">
+<!ENTITY simulator_software "সফ্টওয়্যার">
+<!ENTITY simulator_version "সংস্করণ">
+<!ENTITY simulator_profile "প্রোফাইল">
+<!ENTITY simulator_hardware "হার্ডওয়্যার">
+<!ENTITY simulator_device "ডিভাইস">
+<!ENTITY simulator_screenSize "পর্দা">
+<!ENTITY simulator_pixelRatio "পিক্সেল অনুপাত">
+<!ENTITY simulator_tv_data "টিভি সিমুলেশন">
+<!ENTITY simulator_tv_data_open "উপাত্ত কনফিগ">
+<!ENTITY simulator_tv_data_open_button "কনফিগ ডিরেক্টরী খুলুন...">

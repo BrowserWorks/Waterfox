@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; ਨੂੰ ਤਾਜ਼ਾ ਕਰੋ">
+<!ENTITY refreshProfile.dialog.description1  "ਸਮੱਸਿਆਵਾਂ ਠੀਕ ਕਰਨ ਅਤੇ ਕਾਰਗੁਜ਼ਾਰੀ ਸੁਧਾਰਨ ਲਈ ਤਾਜ਼ਾ ਸ਼ੁਰੂਆਤ ਕਰੋ।">
+<!ENTITY refreshProfile.dialog.description2  "ਇਹ ਹੋਵੇਗਾ:">
+<!ENTITY refreshProfile.dialog.items.label1  "ਤੁਹਾਡੀਆਂ ਐਡ-ਆਨ ਅਤੇ ਕਸਟਮਾਈਜ਼ੇਸ਼ਨਾਂ ਨੂੰ ਹਟਾਇਆ ਜਾਵੇਗਾ">
+<!ENTITY refreshProfile.dialog.items.label2  "ਤੁਹਾਡੇ ਬਰਾਊਜ਼ਰ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਨੂੰ ਉਹਨਾਂ ਦੇ ਡਿਫਾਲਟ ਲਈ ਬਹਾਲ ਕੀਤਾ ਜਾਵੇਗਾ">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; ਨੂੰ ਤਾਜ਼ਾ ਕਰੋ">
+
+<!ENTITY refreshProfile.title                "&brandShortName; ਨੂੰ ਅਨੁਕੂਲ ਬਣਾਓ">
+<!ENTITY refreshProfile.button.label         "…&brandShortName; ਨੂੰ ਤਾਜ਼ਾ ਕਰੋ">
+
+<!ENTITY refreshProfile.cleaning.description "…ਬੱਸ ਹੋ ਗਿਆ">
+

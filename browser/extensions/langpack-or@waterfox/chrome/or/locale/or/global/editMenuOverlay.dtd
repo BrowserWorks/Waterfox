@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "ସମ୍ପାଦନ କରନ୍ତୁ">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label             "ପଦେକ୍ଷେପ ବାତିଲ କରନ୍ତୁ">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "U">
+<!ENTITY redoCmd.label             "ପୁଣିଥରେ କରନ୍ତୁ">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "R">
+<!ENTITY cutCmd.label              "କାଟନ୍ତୁ">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "t">
+<!ENTITY copyCmd.label             "ନକଲ କରନ୍ତୁ">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "C">
+<!ENTITY pasteCmd.label            "ଲଗାନ୍ତୁ">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "P">
+<!ENTITY deleteCmd.label           "ଅପସାରଣ କରନ୍ତୁ">
+<!ENTITY deleteCmd.accesskey       "D">
+<!ENTITY selectAllCmd.label        "ସମସ୍ତଙ୍କୁ ବାଛନ୍ତୁ">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "A">
+<!ENTITY findCmd.label             "ଖୋଜନ୍ତୁ">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "F">
+<!ENTITY findAgainCmd.label        "ପୁଣିଥରେ ଖୋଜନ୍ତୁ">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "g">
+<!ENTITY findPreviousCmd.label     "ପୂର୍ବବର୍ତ୍ତିକୁ ଖୋଜନ୍ତୁ">
+<!ENTITY findPreviousCmd.accesskey "v">

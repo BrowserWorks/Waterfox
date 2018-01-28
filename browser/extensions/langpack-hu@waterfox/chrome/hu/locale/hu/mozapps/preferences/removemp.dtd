@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Mesterjelszó törlése">
+<!ENTITY removeInfo.label                  "A továbblépéshez meg kell adnia a jelenlegi jelszót:">
+<!ENTITY removeWarning1.label              "A mesterjelszó érzékeny adatok, például webhelyek belépési jelszavai védelmére használható. ">
+<!ENTITY removeWarning2.label              "Ha törli a mesterjelszót, az adatait nem fogja semmi védeni, ha a számítógépét feltörik.">
+<!ENTITY setPassword.oldPassword.label     "Jelenlegi jelszó:">
+

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Aangaande profiele">
+<!ENTITY aboutProfiles.subtitle "Dié bladsy help om profiele te bestuur. Elke profiel is sy eie wêreld wat afsonderlike geskiedenis, boekmerke, instelling en byvoegings bevat.">
+<!ENTITY aboutProfiles.create "Skep 'n nuwe profiel">
+<!ENTITY aboutProfiles.restart.title "Herbegin">
+<!ENTITY aboutProfiles.restart.inSafeMode "Herbegin met byvoegings gedeaktiveer…">
+<!ENTITY aboutProfiles.restart.normal "Herbegin gewoonweg…">

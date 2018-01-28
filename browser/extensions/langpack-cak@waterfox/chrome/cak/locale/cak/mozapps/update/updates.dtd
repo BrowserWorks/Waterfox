@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "K'exoj ruwäch ri kema'">
+
+<!ENTITY  checking.title                  "Tajin ninik'öx ri taq k'exoj ruwäch">
+<!ENTITY  updateCheck.label               "Tajin nikanöx ri k'ak'a' ruwäch &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Majun taq k'exoj ruwäch xe'ilitäj ">
+<!ENTITY  noupdatesautoenabled.intro      "Majun k'exoj ruwäch k'o wakami. &brandShortName; junelïk xtunik'ola' we e k'o taq k'exoj ruwäch.">
+<!ENTITY  noupdatesautodisabled.intro     "Majun taq k'exoj ruwäch e k'o. Takanoj jun chik q'ij, ütz chuqa' natzïj ri ruyonil taq k'exoj ruwäch ri &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "Man nitikïr ta nuk'ëx ruwäch">
+<!ENTITY  manualUpdate.desc               "Niq'alajin jun k'exoj ruwäch, ri chilab'en richin chajinïk chuqa' richin nik'ase', xa xe chi  majun kiya'on qij chawe pa q'inoj richin nayäk qa. Kab'etzijon  rik'in ri anuk'samajel richin q'inoj, chuqa' ütz natojtob'ej chik pa jun retal taqoya'l ri ya'on q'ij chi re richin nuyäk ri kema' pa re samajib'äl re'.">
+<!ENTITY  manualUpdate.space.desc         "Niwachin pe jun k'exoj ruäch, ri chilab'en richin chajinïk chuqa' richin nik'ase', xa xe chi nub'än ta rupam rujolom richin niyak chi ronojel.">
+<!ENTITY  manualUpdateGetMsg.label        "Junelïk yatikïr nawïl ri ruk'isib'äl ruwäch ri &brandShortName; pa:">
+
+<!ENTITY  unsupported.title               "Man nuk'äm ta ri' ri q'inoj">
+<!ENTITY  unsupported.label               "Ri &brandShortName; man k'exon ta ruwäch, xa xe chi ri ruk'isib'äl ruwäch man nuk'äm ta ri' rik'in ri aq'inoj. Tak'exa' ruwäch ri aq'inoj k'a ri' tatojtob'ej chik. Man xtatz'ët ta chik re rutzijol re', po yatikïr">
+<!ENTITY  unsupportedLink.label           "tawetamaj ch'aqa' chik taq etamab'äl.">
+
+<!ENTITY  clickHere.label                 "Titz'et ch'aqa' chik rutzijol chi rij re k'exoj ruwäch re'">
+
+<!ENTITY  evangelism.desc                 "Nichilab'ëx chi tiyak re  Ruk'exoj ruwäch ri &brandShortName; pa aninäq.">
+
+<!ENTITY  downloadPage.title              "Tajin niqasäx &brandShortName;">
+<!ENTITY  downloading.intro               "Tajin niqasäx ri k'exoj ruwäch…">
+<!ENTITY  connecting.label                "Tajin nok pa ruk'u'x samaj kichin ri taq k'exoj ruwäch…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; man xtikïr ta xunik'oj ri rutzil ri  xqasäx yan ri nimirisan k'exoj ruwäch, wakami xtiqasäx chijun ri pisoj k'exoj ruwäch.">
+
+<!ENTITY  viewDetails.tooltip             "Ketz'et ri taq rub'anikil re k'exoj ruwäch re'">
+
+<!ENTITY  details.link                    "Taq b'anikil">
+
+<!ENTITY  error.title                     "Man xtikïr ta ri k'exoj ruwäch.">
+
+<!ENTITY  error.label                     "Xk'oje' k'ayetal toq xnik'öx, xqasäx o xyak re  k'exoj ruwäch. &brandShortName; man xtikïr ta xuk'ëx ruwäch ruma:">
+                                           
+<!ENTITY  errorManual.label               "Ütz nik'ex ruwäch ri &brandShortName; chi q'ab'aj we yab'etz'eton pa re jun ximöy chuqa' we naqasaj ri ruk'isib'äl ruwäch:">
+                                           
+<!ENTITY  errorpatching.intro             "Man xtikïr ta xsamajïx nik'aj k'exoj ruwäch.  &brandShortName; xtutojtob'ej chik toq xtuqasaj chijun ri k'exoj ruwäch.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; man nitikïr ta nuya' retal we wachel jun k'exoj ruwäch. Tab'ana' utzil, tajikib'a' awi' chi k'o awik'in ri ruk'isib'äl ruwäch ri &brandShortName; pa:">
+
+<!ENTITY  finishedPage.title              "Ütz chik ri k'exoj ruwäch richin niyak">
+<!ENTITY  finishedPage.text               "Xtiyake ri k'exoj ruwäch toq xtatikirisaj chik &brandShortName;. Wakami ütz natikirisaj chik &brandShortName; ütz chuqa' yasamäj chuqa' natikirisaj chik el pa jun chik ti mej.">
+
+<!ENTITY  finishedBackgroundPage.text     "Xqasäx jun k'exoj ruwäch richin chajinïk chuqa' richin chi k'äs ri &brandShortName; chuqa' ütz chik richin niyak chupam.">
+<!ENTITY  finishedBackground.name         "K'exoj ruwäch:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Xtiyake ri k'exoj ruwäch toq xtatikirisaj chik &brandShortName;. Wakami ütz natikirisaj chik &brandShortName; ütz chuqa' yasamäj chuqa' natikirisaj chik el pa jun chik ti mej.">
+<!ENTITY  finishedBackground.moreElevated "Re k'exoj ruwäch re' nrajo' runa'oj nuk'samajel. Ri k'exoj ruwäch xtiyak pa ri jun chik ramaj &brandShortName; titikirisäx. Tikirel natikirisaj chik &brandShortName; wakami, kasamäj chik el chuqa' tatikirisaj chik pa jun ti mej, o taxutuj re k'exoj ruwäch re'.">
+
+<!ENTITY  update.details.label            "Taq b'anikil">
+<!ENTITY  update.installedOn.label        "Xyak pa:">
+<!ENTITY  update.status.label             "B'anikil:">

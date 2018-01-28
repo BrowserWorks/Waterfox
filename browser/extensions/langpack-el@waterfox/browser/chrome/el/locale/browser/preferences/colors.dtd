@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Χρώματα">
+<!ENTITY  window.width                    "44em">
+<!ENTITY  window.macWidth                 "44em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Παράβλεψη των ορισμένων χρωμάτων σελίδας με τις παραπάνω επιλογές:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "Π">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Πάντα">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Μόνο με θέματα υψηλής αντίθεσης">
+<!ENTITY  overrideDefaultPageColors.never.label  "Ποτέ">
+
+<!ENTITY  color                           "Κείμενο και παρασκήνιο">
+<!ENTITY  textColor.label                 "Κείμενο:">
+<!ENTITY  textColor.accesskey             "μ">
+<!ENTITY  backgroundColor.label           "Παρασκήνιο:">
+<!ENTITY  backgroundColor.accesskey       "ρ">
+<!ENTITY  useSystemColors.label           "Χρήση χρωμάτων συστήματος">
+<!ENTITY  useSystemColors.accesskey       "σ">
+
+<!ENTITY  underlineLinks.label            "Υπογράμμιση συνδέσμων">
+<!ENTITY  underlineLinks.accesskey        "Υ">
+<!ENTITY  links                           "Χρώμα συνδέσμων">
+<!ENTITY  linkColor.label                 "Σύνδεσμοι που δεν έχετε επισκεφθεί:">
+<!ENTITY  linkColor.accesskey             "ν">
+<!ENTITY  visitedLinkColor.label          "Σύνδεσμοι που έχετε επισκεφθεί:">
+<!ENTITY  visitedLinkColor.accesskey      "γ">

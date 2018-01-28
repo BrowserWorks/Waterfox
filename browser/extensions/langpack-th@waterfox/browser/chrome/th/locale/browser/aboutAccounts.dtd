@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "ยินดีต้อนรับสู่ &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "ลงชื่อเข้าเพื่อซิงค์แท็บ, ที่คั่นหน้า, รหัสผ่าน และอื่น ๆ ของคุณ">
+<!ENTITY aboutAccountsConfig.startButton.label "เริ่มต้นใช้งาน">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "ค่ากำหนด Sync">
+<!ENTITY aboutAccounts.noConnection.title "ไม่มีการเชื่อมต่อ">
+<!ENTITY aboutAccounts.noConnection.description "คุณต้องเชื่อมต่ออินเทอร์เน็ตเพื่อลงชื่อเข้า">
+<!ENTITY aboutAccounts.noConnection.retry "ลองอีกครั้ง">
+<!ENTITY aboutAccounts.badConfig.title "การกำหนดค่าไม่ดี">
+<!ENTITY aboutAccounts.badConfig.description "ไม่สามารถตรวจสอบการกำหนดค่าเซิร์ฟเวอร์บัญชี Waterfox ของคุณ โปรดลองอีกครั้งในภายหลัง">

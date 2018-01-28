@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "மென்பொருள் மேம்படுத்தல்">
+
+<!ENTITY  checking.title                  "மேம்படுத்தலுக்கு சரிபார்க்கிறது">
+<!ENTITY  updateCheck.label               "&brandShortName;இன் புதிய பதிப்பை தேடுகிறது…">
+
+<!ENTITY  noupdatesfound.title            "மேம்படுத்தல்கள் காணப்படவில்லை">
+<!ENTITY  noupdatesautoenabled.intro      "மேம்படுத்தல்கள் எதுவும் இல்லை. &brandShortName; கால வரையறை மேம்படுத்தல்களை சரிபார்க்கும்.">
+<!ENTITY  noupdatesautodisabled.intro     "மேம்படுத்தல்கள் எதுவும் இல்லை. மீண்டும் பின்னர் சரிபார்க்கவும் அல்லது &brandShortName;இன் தானியக்க மேம்படுத்தல் சரிபார்த்தலை செயல்படுத்தவும்.">
+
+<!ENTITY  manualUpdate.title              "மேம்படுத்த முடியவில்லை">
+<!ENTITY  manualUpdate.desc               "ஒரு பரிந்துரைக்கப்பட்ட பாதுகாப்பு மற்றும் நிலைப்பு மேம்படுத்தல் உள்ளது. ஆனால் உங்களுக்கு அதனை நிறுவ போதிய அனுமதிகள் இல்லை. உங்கள் கணினி நிர்வாகியை அணுகவும் அல்லது அனுமதியுள்ள கணக்கிலிருந்து இந்த மென்பொருளை நிறுவவும்.">
+<!ENTITY  manualUpdate.space.desc         "பரிந்துரைக்கப்படும் ஒரு நிலைத்தன்மை மற்றும் பாதுகாப்புக்கான புதுப்பிப்பு கிடைப்பதாக உள்ளது, ஆனால் அதை நிறுவ உங்களிடம் போதிய இடம் இல்லை.">
+<!ENTITY  manualUpdateGetMsg.label        "நீங்கள் எப்போதும் &brandShortName;இன் சமீபத்திய பதிப்பை இங்கு பெறலாம்:">
+
+<!ENTITY  unsupported.title               "கணினிக்கு ஆதரவில்லை">
+<!ENTITY  unsupported.label               "உங்கள் &brandShortName; காலாவதியாகிவிட்டது, ஆனால் சமீபத்திய பதிப்புக்கு உங்கள் கணினியில் ஆதரவில்லை. உங்கள் கணினியை மேம்படுத்திவிட்டு, மீண்டும் முயற்சிக்கவும். இந்த அறிவிப்பு மீண்டும் காண்பிக்கப்படாது, ஆனால் நீங்கள் இவற்றைச் செய்யலாம்">
+<!ENTITY  unsupportedLink.label           "மேலும் அறிக.">
+
+<!ENTITY  clickHere.label                 "இந்த மேம்படுத்தல் பற்றிய மேலும் தகவல்களை காண">
+
+<!ENTITY  evangelism.desc                 "&brandShortName;க்கு சீக்கிரமாக இந்த மேம்படுத்தலை நிறுவ கடுமையாக பரிந்துரைக்கப்படுகிறது.">
+
+<!ENTITY  downloadPage.title              "&brandShortName;ஐ பதிவிறக்குகிறது">
+<!ENTITY  downloading.intro               "மேம்படுத்தலை பதிவிறக்குகிறது…">
+<!ENTITY  connecting.label                "சேவையகத்தை மேம்படுத்த இணைக்கிறது…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; பதிவிறக்கிய ஒருங்கிணைப்பு அதிகரிப்பு மேம்படுத்தலை சரிபார்க்க முடியவில்லை, எனவே இப்போது முழு மேம்படுத்திய தொகுப்பை பதிவிறக்குகிறது.">
+
+<!ENTITY  viewDetails.tooltip             "இந்த மேம்படுத்தலுக்கான விவரங்கள்">
+
+<!ENTITY  details.link                    "விவரங்கள்">
+
+<!ENTITY  error.title                     "புதுப்பித்தல் தோல்வியுற்றது">
+
+<!ENTITY  error.label                     "இந்த மேம்படுத்தலை பதிவிறக்க அல்லது நிறுவ சிக்கல் உள்ளது. &brandShortName; மேம்படுத்த முடியவில்லை, ஏனெனில்:">
+                                           
+<!ENTITY  errorManual.label               "நீங்கள் &brandShortName;ஐ இந்த இணைப்பை பார்த்து சமீபத்திய பதிப்பை பதிவிறக்குவது மூலம் கைமுறையாக நிறுவலாம்:">
+                                           
+<!ENTITY  errorpatching.intro             "பகுதி மேம்படுத்தலை செயல்படுத்த முடியாது. &brandShortName; முழு மேம்படுத்தலையும் பதிவிறக்க மீண்டும் முயற்சிக்கும்.">
+
+<!ENTITY  genericBackgroundError.label    "புதுப்பிப்பு ஏதேனும் உள்ளதா என்று &brandShortName; ஆல் தீர்மானிக்க முடியவில்லை. உங்களிடம் இங்கிருந்து பெற்ற&brandShortName; இன் சமீபத்திய பதிப்பு உள்ளதா என உறுதிப்படுத்திக்கொள்ளவும்:">
+
+<!ENTITY  finishedPage.title              "மேம்படுத்தல் நிறுவ தயாராக உள்ளது">
+<!ENTITY  finishedPage.text               "அடுத்த முறை &brandShortName; ஐ துவக்கும் போது மேம்படுத்தல் நிறுவப்படும். இப்போது &brandShortName;ஐ மறுதுவக்கலாம் அல்லது தொடர்ந்து வேலை செய்து பின்னர் மறுதுவக்கலாம்.">
+
+<!ENTITY  finishedBackgroundPage.text     "ஒரு பாதுகாப்பு மற்றும் நிலைப்பு மேம்படுத்தல்  &brandShortName;க்கு பதிவிறக்கப்பட்டு நிறுவ தயாராக உள்ளது.">
+<!ENTITY  finishedBackground.name         "மேம்படுத்தல்:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "அடுத்த முறை &brandShortName; ஐ துவக்கும் போது மேம்படுத்தல் நிறுவப்படும். இப்போது &brandShortName;ஐ மறுதுவக்கலாம் அல்லது தொடர்ந்து வேலை செய்து பின்னர் மறுதுவக்கலாம்.">
+<!ENTITY  finishedBackground.moreElevated "இந்தப் புதுபிப்பிற்கு நிர்வாகிக்கான சிறப்பரிமைத் தேவை. அடுத்த முறை துவங்கும்போது &brandShortName; புதுப்பிக்கப்படும். &brandShortName; உலாவியை இப்ப மீட்துவக்கு (அ) வேலையை முடித்து பின்னர் மீட்துவக்கு (அ) மறுக்கவும்.">
+
+<!ENTITY  update.details.label            "விவரங்கள்">
+<!ENTITY  update.installedOn.label        "நிறுவப்பட்ட நாள்:">
+<!ENTITY  update.status.label             "நிலை:">

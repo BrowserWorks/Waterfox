@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Смена мастер-пароля">
+<!ENTITY setPassword.tokenName.label       "Устройство защиты">
+<!ENTITY setPassword.oldPassword.label     "Текущий пароль:">
+<!ENTITY setPassword.newPassword.label     "Введите новый пароль:">
+<!ENTITY setPassword.reenterPassword.label "Повторите ввод пароля:">
+<!ENTITY setPassword.meter.label           "Уровень качества пароля">
+<!ENTITY setPassword.meter.loading         "Загрузка">
+<!ENTITY masterPasswordDescription.label   "Мастер-пароль используется для защиты личной информации, такой как пароли на сайты. После создания мастер-пароля вам нужно будет вводить его один раз в сессию, когда &brandShortName; затребует информацию, защищённую паролем.">
+<!ENTITY masterPasswordWarning.label       "Убедитесь, что вы запомнили мастер-пароль, который установили. Если вы его забудете, вам не удастся получить доступ к любой информации защищённой мастер-паролем.">

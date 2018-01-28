@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Makwako Twero ni">
+<!ENTITY rights.intro "&brandFullName; tye me nono ki purugram mape giculo pire, lwak jo maromo alib ki i twok lobo guyubu. Tye gin manok mamyero inge:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; kimino nonge boti ite cik me ">
+<!ENTITY rights.intro-point1b "Lanycec pa Lwak me Mozilla">
+<!ENTITY rights.intro-point1c ". Man nyutu ni iromo tic kwede, lok ki ipok &brandShortName; bot jo mukene.  in dong wajoli me yubu ka ma coc oaa iye pi &brandShortName; kit macalo imito rwate ki miti mamegi. Dul maloyo lanycec me Mozilla bot Lwak mini twero me gabo cik mamegi ma iyubu.">
+
+<!ENTITY rights.intro-point2-a "Pe ki mii twero mo keken me cat onyo lanycec bot alama me cat pi Guti me Mozilla onyo pati mo keken, kun medo ki labongo gengo nying onyo cal me Waterfox. Ngec mukene i kom .alama me cat romo nonge ">
+<!ENTITY rights.intro-point2-b "kany">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Jami mogo ma i &brandShortName;, macalo riport me Bal, mini gin ayera pi poko lagam i &vendorShortName;. Kun iyero me cwalo lagam, i mino &vendorShortName;, twero me tic ki lagam pi yubo jami ne, pi cwalo lagam bot lwak i di bar me Web ne, ki gabo lagam.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Kit ma wan watiyo ki ngec mamegi ki lagam ma kicwalo bot &brandShortName;, kun kato ki &vendorShortName; kityeko tito pire iyi ">
+<!ENTITY rights2.intro-point3b "&brandShortName;, Cik Pa dano">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Cik mo keken pa dano me aketa pi jami man myero guket nyinge kany.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Kit &brandShortName; mogo tiyo ki tic me ngec majenge ikom kakube, kono, pe watwero cung ni gi tye 100&#037; atir onyo labongo-bal. LOk mukene mapol, medo ki ngec i kom kite me juko kit matiyo ki tice man, romo nonge i ">
+<!ENTITY rights.intro-point4b "cik me tic">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Ka jami man oripe itic ki kakube, kit tic mo keken me cik pi tic myero kikub bot ">
+<!ENTITY rights.intro-point4b-unbranded "Tic me kakube me Web">
+<!ENTITY rights.intro-point4c-unbranded " dul.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; Nyec tic me Web-Based">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Me tuko cut lakit vidio mogo, &brandShortName; gamo dul jami moni me gonyo ne ki bot pati me adek.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; tiyo ki tic me ngec majenge ikom kakube (&quot;Services&quot;) me poko kit mogo ma kimiyo pi tic mamegi ki kit marom man me &brandShortName; ite cik ma kitito pinyi. Ka ce pe imito tic ki acel onyo makato onyo cik ma pinyi pe lare, i romo juko kite ne onyo tic(ce). Yo me juko kit moni kikome onyo tic romo nonge ">
+<!ENTITY rights2.webservices-b "kany">
+<!ENTITY rights3.webservices-c ". Kit mukene kadong ticce kiromo juko ki i ma imaro me purugram.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Yengo Maber: ">
+<!ENTITY rights.safebrowsing-b "Juko woko kit me yengo pe kimoko calo twero kelo woti i kakube mape tye maber.  Ka ce imito juko kit jami odoco, lub yoo magi:">
+<!ENTITY rights.safebrowsing-term1 "Yab tter me purugram">
+<!ENTITY rights.safebrowsing-term2 "Yer lagwok kuc">
+<!ENTITY rights2.safebrowsing-term3 "Kwany lagwet woko me &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Pe kijuko Yengo Maber">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Kabedo Ngeyo Yengo: ">
+<!ENTITY rights.locationawarebrowsing-b "pol kare geno-iye.  Pe tye kit ngec mo keken me kabedo ma kicwalo labongo twero mamegi.  Ka ce imito juko kit jami odoco, lub yoo magi:">
+<!ENTITY rights.locationawarebrowsing-term1a "I yi URL bar, kit ">
+<!ENTITY rights.locationawarebrowsing-term1b "ikom:can">
+<!ENTITY rights.locationawarebrowsing-term2 "Type geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Dii kom geo.enabled preference wang iryo">
+<!ENTITY rights.locationawarebrowsing-term4 "Kabedo-Ngeyo Yengo kityeko kwanyo woko">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Neno wiyewiye i ripo jami tic me di bar me kakube, kacel ki cik ikom kit mamyero ki kwany gi, ke twere, myero guket kany.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Kit cik tic mo keken matwero kete pi jami man myero gican kany.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; ki lupok, lumi lanycec ki jo maripe tiyo me poko tic cokki loyo.  Kono, wan pe watwero cung ni ngec man tye ki weng kadong bal me peke iye.  Labolle tic me yeny maber mogo pe nyutu kakube ma bal romo poto iye atura kadong mogo nyutu kakube mogo mabeco i bal kadong tic me nyutu kabedo, kabede weng ma lumi tic wa dwoko obedo me byek keken kadong wan onyo lumi tic wa pe twero moko atir pa kabede ma kimiyo ni.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; mogo juko onyo loko Tic itwero ne.">
+<!ENTITY rights2.webservices-term3 "Gijoli pi tic ki Tice magi kwede cik malwoko kor &brandShortName;, ki &vendorShortName; mini twero ne me timo kumeno.   &vendorShortName; ki lumi lanycec ne gwoko twero weng mapat me tic.  Cik man pe gutimo tetek me gengo twero mo keken ma kimino ite dul me open source licenses applicable bot &brandShortName; ki ka magamo cik me coc pi &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Kimiyo ticce &quot;kit-matye.&quot;  &vendorShortName;, lumi ne, lumi lancic, ki lupoke, gin pe mito cung, kadi me coc onyo dog, medo ki labongo giko, kare mo ni tic cate kadong ber me tic mamegi.  I tingo ngec nipeko romo poto atura calo yero ticce pi tic mamegi ki calo ber ki kit ma tic woto kwede me ticce. Cik mogo pe ye weko woko onyo giko gen ma pe kiketo icoc, dong kwe man mogo pe tiyo piri.">
+<!ENTITY rights.webservices-term5 "Kwanyo mite kwede cik, &vendorShortName;, lupok, lumi lanycec, ki lugab pe romo nonge pi gin mogo ma kore pe niange, mapire tek, me atura, karekare,mape yot, onyo me bal ma lapor ma donyo woko onyo i kore kubo gi itic me &brandShortName;, ki tic.  Ajog me jami ite cik magi pe romo kato $500 (Cente me lobo America maromo Alib mia abic). Jo mukene pe guye weko woko onyo gengo bale mogo, dong weko woko man ki gengo pe romo tic boti.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; romo mino ngec manyen pi cik macalo ki cawa ki cawa. Cik man pe romo yupe onyo juke labongo &vendorShortName; coc me winye.">
+<!ENTITY rights.webservices-term7 "Cik magi tye ite cik me lobo Califonia, U.S.A., kiweko lweny pi poko cik. Ka nucu me cik man kinongo pe tye katic onyo pe guketo tek, nucu ma odong gu biketo itic me oyoto. I lweny i kin cik ma kiloko pi cik magi ki cik me Leb munu, Cik me Leb munu en aye bino gwoko ne.">

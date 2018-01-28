@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Custom.label "Vetjake…">
+<!ENTITY ShrinkToFit.label "Tkurre Ta Nxërë">
+<!ENTITY close.accesskey "M">
+<!ENTITY close.label "Mbylle">
+<!ENTITY customPrompt.title "Shkallë Vetjake…">
+<!ENTITY landscape.accesskey "G">
+<!ENTITY landscape.label "Së gjeri">
+<!ENTITY of.label "e">
+<!ENTITY p100.label "100&#037;">
+<!ENTITY p125.label "125&#037;">
+<!ENTITY p150.label "150&#037;">
+<!ENTITY p175.label "175&#037;">
+<!ENTITY p200.label "200&#037;">
+<!ENTITY p30.label "30&#037;">
+<!ENTITY p40.label "40&#037;">
+<!ENTITY p50.label "50&#037;">
+<!ENTITY p60.label "60&#037;">
+<!ENTITY p70.label "70&#037;">
+<!ENTITY p80.label "80&#037;">
+<!ENTITY p90.label "90&#037;">
+<!ENTITY page.label "Faqe:">
+<!ENTITY pageSetup.accesskey "R">
+<!ENTITY pageSetup.label "Rregullim Faqeje…">
+<!ENTITY portrait.accesskey "P">
+<!ENTITY portrait.label "Portret">
+<!ENTITY print.accesskey "Y">
+<!ENTITY print.label "Shtypni…">
+<!ENTITY scale.label "Shkallë:">
+<!ENTITY page.accesskey       "F">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY simplifyPage.label   "Thjeshtoje Faqen">
+<!ENTITY simplifyPage.accesskey "T">
+<!ENTITY simplifyPage.enabled.tooltip  "Ndryshoni skemën, për lexim më të lehtë">
+<!ENTITY simplifyPage.disabled.tooltip "Kjo faqe s&apos;mund të thjeshtëzohet vetvetiu">
+
+<!ENTITY homearrow.tooltip    "Faqja e parë">
+<!ENTITY endarrow.tooltip     "Faqja e fundit">
+<!ENTITY nextarrow.tooltip    "Faqja pasuese">
+<!ENTITY previousarrow.tooltip "Faqja e mëparshme">

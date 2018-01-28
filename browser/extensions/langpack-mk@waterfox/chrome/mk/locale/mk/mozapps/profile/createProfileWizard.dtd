@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Волшебник за креирање профили">
+<!ENTITY window.size                  "width: 51em; height: 38em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; ги чува информациите за Вашите поставки и преференции во Вашиот личен профил.">
+<!ENTITY profileCreationExplanation_2.text  "Ако ја делите оваа копија на &brandShortName; со други корисници, можете да ги користите профилите за да чувате информациите за секој од нив на посебно место. За да се направи ова, секој корисник треба да си направи сопствен профил.">
+<!ENTITY profileCreationExplanation_3.text  "Ако вие сте единствените кои ја користите оваа копија на &brandShortName;, тогаш мора да имате барем еден профил. Ако сакате, можете да креирате повеќе профили за себе, за да чувате различни поставки и преференции. На пример, можете да имате профили за лична и бизнис употреба.">
+<!ENTITY profileCreationExplanation_4.text  "За да почнете да го креирате Вашиот профил, кликнете „Напред“.">
+<!ENTITY profileCreationExplanation_4Mac.text  "За да почнете да го креирате Вашиот профил, кликнете „Напред“.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "За да почнете да го креирате Вашиот профил, кликнете „Напред“.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Ако креирате повеќе профили можете да ги разликувате по нивните имиња. Можете да ги користите имињата наведени овде или да користите Ваши имиња.">
+<!ENTITY profilePrompt.label            "Внесете име за новиот профил:">
+<!ENTITY profilePrompt.accesskey        "е">
+<!ENTITY profileDirectoryExplanation.text   "Вашите поставки, преференции и други кориснички податоци ќе бидат снимени во:">
+<!ENTITY profileDefaultName             "Основен корисник">
+<!ENTITY button.choosefolder.label      "Изберете папка…">
+<!ENTITY button.choosefolder.accesskey  "з">
+<!ENTITY button.usedefault.label        "Користи ја основната папка">
+<!ENTITY button.usedefault.accesskey    "о">

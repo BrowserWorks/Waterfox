@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "An t-einnsean-luirg bunaiteach">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Tagh an t-einnsean-luirg bunaiteach a thèid a chleachdadh ann am bàr an t-seòlaidh is bàr nan lorg.">
+
+<!ENTITY provideSearchSuggestions.label        "Thoir dhomh molaidhean-luirg">
+<!ENTITY provideSearchSuggestions.accesskey    "T">
+
+<!ENTITY showURLBarSuggestions2.label           "Seall molaidhean luirg ann an toraidhean bàr an t-seòlaidh">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Cha dèid molaidhean luirg a shealltainn ann an toraidhean bàr an t-seòlaidh a chionn ’s gun do dh’iarr thu air &brandShortName; gun a bhith a’ cumail na h-eachdraidh sa chuimhne.">
+
+<!ENTITY oneClickSearchEngines.label           "Einnseanan-luirg aon-bhriogaidh">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Tagh na h-einnseanan-luirg eile a nochdas fo bhàr an t-seòlaidh is bàr nan lorg nuair a thòisicheas tu air facal-luirg a chur a-steach.">
+
+<!ENTITY engineNameColumn.label                "Einnseanan-luirg">
+<!ENTITY engineKeywordColumn.label             "Facal-luirg">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Aisig na h-einnseanan-luirg bunaiteach">
+<!ENTITY restoreDefaultSearchEngines.accesskey "s">
+
+<!ENTITY removeEngine.label                    "Thoir air falbh">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY findMoreSearchEngines.label           "Faigh barrachd einnseanan-luirg">

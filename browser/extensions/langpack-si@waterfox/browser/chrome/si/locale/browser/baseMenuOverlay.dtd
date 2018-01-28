@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "හකුලන්න">
+<!ENTITY bringAllToFront.label    "සියල්ල ඉදිරියට ගෙන එන්න">
+<!ENTITY zoomWindow.label         "විශාලනය">
+<!ENTITY windowMenu.label         "කවුළුව">
+
+<!ENTITY helpMenu.label           "උදව්"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "සහාය"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "&brandShorterName; පිළිබඳ">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "&brandShorterName; උදව්">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "යතුරු පුවරු කෙටිමං">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpSafeMode.label       "ඇඩෝන දුබල කර යළි-අරඹන්න…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "සක්‍රීය කළ ඇඩෝන සමඟ යළි අරඹන්න">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "&brandShorterName; බිද වැටුම් වාර්ථා">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "දෝෂ සෙවීමේ තොරතුරු">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+
+<!ENTITY helpFeedbackPage.label      "ප්‍රතිචාරය යවන්න…">
+<!ENTITY helpFeedbackPage.accesskey  "S">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; සංචාරය">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "අභිරුචීන්...">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "සේවා">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; සඟවන්න">
+<!ENTITY hideThisAppCmdMac2.commandkey  "එච්">
+
+<!ENTITY hideOtherAppsCmdMac.label      "අනෙක්වා සඟවන්න">
+<!ENTITY hideOtherAppsCmdMac.commandkey "එච්">
+
+<!ENTITY showAllAppsCmdMac.label        "සියල්ල ම පෙන්වන්න">

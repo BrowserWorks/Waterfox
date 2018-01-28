@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "ತಂತ್ರಾಂಶ ನವೀಕರಣ">
+
+<!ENTITY  checking.title                  "ನವೀಕರಣಗಳಿಗಾಗಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ">
+<!ENTITY  updateCheck.label               "&brandShortName; ನ ಹೊಸ ಆವೃತ್ತಿಗಾಗಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ…">
+
+<!ENTITY  noupdatesfound.title            "ಯಾವುದೆ ನವೀಕರಣಗಳು ಕಂಡು ಬಂದಿಲ್ಲ">
+<!ENTITY  noupdatesautoenabled.intro      "ಯಾವುದೆ ಅಪ್‌ಡೇಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ. &brandShortName; ಕಾಲಕಾಲಕ್ಕೆ ಅಪ್‌ಡೇಟ್‌ಗಳಿಗಾಗಿ ಹುಡುಕುತ್ತದೆ.">
+<!ENTITY  noupdatesautodisabled.intro     "ಯಾವುದೆ ಅಪ್‌ಡೇಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ. ದಯವಿಟ್ಟು ನಂತರ ಪ್ರಯತ್ನಿಸಿ ಅಥವ &brandShortName; ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಅಪ್‌ಡೇಟ್‌ಗಳಿಗಾಗಿ ಪರಿಶೀಲಿಸುವಂತೆ ಸಜ್ಜುಗೊಳಿಸಿ.">
+
+<!ENTITY  manualUpdate.title              "ಅಪ್‌ಡೇಟ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ">
+<!ENTITY  manualUpdate.desc               "ಸಲಹೆ ಮಾಡಲಾಗುವ ಒಂದು ಸುರಕ್ಷತಾ ಅಪ್‌ಡೇಟ್ ಲಭ್ಯವಿದೆ, ಆದರೆ ಅದನ್ನು ಅನುಸ್ಥಾಪಿಸಲು ಅಗತ್ಯವಿರುವ ವ್ಯವಸ್ಥೆಯ ಅನುಮತಿಗಳು ನಿಮ್ಮಲ್ಲಿ ಇಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವ್ಯವಸ್ಥೆಯ ನಿರ್ವಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ, ಅಥವ ಈ ಗಣಕದಲ್ಲಿ ತಂತ್ರಾಂಶವನ್ನು ಅನುಸ್ಥಾಪಿಸಲು ಅನುಮತಿ ಇರುವ ಬೇರೊಂದು ಖಾತೆಯನ್ನು ಬಳಸಿಕೊಂಡು ಇನ್ನೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.">
+<!ENTITY  manualUpdate.space.desc         "ಸಲಹೆ ಮಾಡಲಾಗುವ ಒಂದು ಸುರಕ್ಷತಾ ಅಪ್‌ಡೇಟ್ ಲಭ್ಯವಿದೆ, ಆದರೆ ಅದನ್ನು ಅನುಸ್ಥಾಪಿಸಲುಅಗತ್ಯವಿರುವ ಸ್ಥಳವು ನಿಮ್ಮಲ್ಲಿ ಇಲ್ಲ.">
+<!ENTITY  manualUpdateGetMsg.label        "ನೀವು ಯಾವಾಗಲೂ ಇಲ್ಲಿಂದ &brandShortName; ನ ಒಂದು ಇತ್ತೀಚಿನ ಆವೃತ್ತಿಯನ್ನು ಪಡೆದುಕೊಳ್ಳಬಹುದು:">
+
+<!ENTITY  unsupported.title               "ವ್ಯವಸ್ಥೆಗೆ ಬೆಂಬಲವಿಲ್ಲ">
+<!ENTITY  unsupported.label               "ನಿಮ್ಮ &brandShortName; ಹಳೆಯ ಕಾಲದ್ದಾಗಿದೆ, ಆದರೆ ಇತ್ತೀಚಿನ ಆವೃತ್ತಿಗೆ ನಿಮ್ಮ ವ್ಯವಸ್ಥೆಯಲ್ಲಿಬೆಂಬಲವಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವ್ಯವಸ್ಥೆಯನ್ನು ನವೀಕರಿಸಿ, ನಂತರ ಇನ್ನೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ. ನಿಮಗೆ ಈ ಸೂಚನೆ ಮತ್ತೊಮ್ಮೆ ಕಾಣಿಸುವುದಿಲ್ಲ, ಆದರೆ ನೀವು">
+<!ENTITY  unsupportedLink.label           "ಇನ್ನಷ್ಟು ತಿಳಿದುಕೊಳ್ಳಬಹುದು.">
+
+<!ENTITY  clickHere.label                 "ಈ ನವೀಕರಣದ ಬಗೆಗಿನ ಹೆಚ್ಚಿನ ಮಾಹಿತಿಗಾಗಿ ನೋಡಿ">
+
+<!ENTITY  evangelism.desc                 "ನಿಮಗೆ ಸಾಧ್ಯವಿದ್ದಷ್ಟು ಬೇಗ ಈ ಅಪ್‌ಡೇಟ್ ಅನ್ನು &brandShortName; ಗೆ ಅನ್ವಯಿಸಿ ಎಂದು ಸಲಹೆ ಮಾಡಲಾಗುತ್ತದೆ.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; ಅನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ">
+<!ENTITY  downloading.intro               "ನವೀಕರಣವನ್ನು ಡೌನ್‍ಲೋಡ್‍ ಮಾಡಲಾಗುತ್ತಿದೆ...">
+<!ENTITY  connecting.label                "ನವೀಕರಣ ಪರಿಚಾರಕಕ್ಕೆ ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ಡೌನ್‍ಲೋಡ್‍ ಮಾಡಿದಂತಹ ಏರಿಕೆಯ (ಇನ್‌ಕ್ರಿಮೆಂಟಲ್) ನವೀಕರಣದ ಸಮಗ್ರತೆಯನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿಲ್ಲ. ಆದ್ದರಿಂದ ಈಗ ಅದು ಸಂಪೂರ್ಣ ಪ್ಯಾಕೇಜನ್ನು ಡೌನ್‍ಲೋಡ್ ಮಾಡುತ್ತಿದೆ.">
+
+<!ENTITY  viewDetails.tooltip             "ಈ ಅಪ್‌ಡೇಟ್‌ಗಾಗಿನ ವಿವರಗಳನ್ನು ನೋಡು">
+
+<!ENTITY  details.link                    "ವಿವರಗಳು">
+
+<!ENTITY  error.title                     "ಅಪ್‌ಡೇಟ್ ವಿಫಲಗೊಂಡಿದೆ">
+
+<!ENTITY  error.label                     "ಈ ನವೀಕರಣವನ್ನು ಹುಡುಕುವಾಗ, ಡೌನ್‍ಲೋಡ್ ಮಾಡುವಾಗ ಅಥವ ಅನುಸ್ಥಾಪಿಸುವಾಗ ತೊಂದರೆಗಳು ಎದುರಾಗಿದೆ. &brandShortName; ಈ ನವೀಕರಣವನ್ನು ಅನುಸ್ಥಾಪಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ ಏಕೆಂದರೆ">
+                                           
+<!ENTITY  errorManual.label               "ನೀವು ಈ ಕೊಂಡಿಗೆ ಭೇಟಿ ನೀಡಿ ಅಲ್ಲಿಂದ ಇತ್ತೀಚಿನ ಒಂದು ಆವೃತ್ತಿಯನ್ನು ಡೌನ್‍ಲೋಡ್ ಮಾಡುವ ಮೂಲಕ  &brandShortName; ಅನ್ನು ಹಸ್ತಮುಖೇನ ನವೀಕರಿಸಬಹುದಾಗಿದೆ:">
+                                           
+<!ENTITY  errorpatching.intro             "ಆಂಶಿಕ ನವೀಕರಣವನ್ನು ಅನ್ವಯಿಸಲಾಗಿಲ್ಲ. ಒಂದು ಸಂಪೂರ್ಣ ನವೀಕರಣವನ್ನು ನವೀಕರಿಸುವ ಮೂಲಕ &brandShortName; ಮರಳಿ ಪ್ರಯತ್ನಿಸುತ್ತದೆ.">
+
+<!ENTITY  genericBackgroundError.label    "ಅಪ್‌ಡೇಟ್ ಲಭ್ಯವಿದೆಯೆ ಎಂದು ಪತ್ತೆ ಮಾಡಲು &brandShortName; ನಿಂದ ಸಾಧ್ಯವಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮಲ್ಲಿ ಇಲ್ಲಿಂದ ಪಡೆಯಲಾದ &brandShortName; ಒಂದು ಇತ್ತೀಚಿನ ಆವೃತ್ತಿ ಇದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ:">
+
+<!ENTITY  finishedPage.title              "ಅನುಸ್ಥಾಪಿಸಲು ಅಪ್‌ಡೇಟ್ ಸಿದ್ಧಗೊಂಡಿದೆ">
+<!ENTITY  finishedPage.text               "ಮುಂದಿನ ಬಾರಿ &brandShortName; ಆರಂಭಗೊಂಡಾಗ ಅಪ್‌ಡೇಟ್ ಅನುಸ್ಥಾಪಿತಗೊಳ್ಳುತ್ತದೆ. ನೀವು &brandShortName; ಅನ್ನು ಈಗ ಆರಂಭಿಸಬಹುದು, ಅಥವ  ನಿಮ್ಮ ಕೆಲಸವನ್ನು ಮುಂದುವರೆಸಿ ತದನಂತರ ಮರು ಆರಂಭಿಸಿ.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; ಗಾಗಿನ ಸುರಕ್ಷತೆ ಹಾಗು ದೃಢತೆಯ ಅಪ್‌ಡೇಟ್ ಒಂದನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಲಾಗಿದ್ದು  ಅನುಸ್ಥಾಪನೆಗೆ ಅದು ಸಿದ್ಧಗೊಂಡಿದೆ.">
+<!ENTITY  finishedBackground.name         "ಅಪ್‌ಡೇಟ್:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "ಮುಂದಿನ ಬಾರಿ &brandShortName; ಆರಂಭಗೊಂಡಾಗ ಅಪ್‌ಡೇಟ್ ಅನುಸ್ಥಾಪಿತಗೊಳ್ಳುತ್ತದೆ. ನೀವು &brandShortName; ಅನ್ನು ಈಗ ಆರಂಭಿಸಬಹುದು, ಅಥವ  ನಿಮ್ಮ ಕೆಲಸವನ್ನು ಮುಂದುವರೆಸಿ ತದನಂತರ ಮರು ಆರಂಭಿಸಿ.">
+<!ENTITY  finishedBackground.moreElevated "ಈ ಪರಿಷ್ಕರಣೆಗೆ ನಿರ್ವಾಹಕರ ಅನುಮತಿ ಅವಶ್ಯವಿದೆ. ಪರಿಷ್ಕರಣೆಯು ಮುಂದಿನ ಬಾರಿ &brandShortName; ಪ್ರಾರಂಭವಾದಾಗ ಅನುಸ್ಥಾಪಿಸಲ್ಪಡುತ್ತದೆ. ನೀವು ಈಗ &brandShortName; ಮತ್ತೆ ಶುರುಮಾಡಬಹುದು, ಕೆಲಸವನ್ನು ಮುಂದುವರೆಸಬಹುದು ಮತ್ತು ನಂತರ ಮರು ಪ್ರಾರಂಭಿಸಬಹುದು, ಅಥವಾ ಈ ಪರಿಷ್ಕರಣೆಯನ್ನು ರದ್ದುಗೊಳಿಸಬಹುದು.">
+
+<!ENTITY  update.details.label            "ವಿವರಗಳು">
+<!ENTITY  update.installedOn.label        "ಅನುಸ್ಥಾಪಿತವಾದ ದಿನಾಂಕ:">
+<!ENTITY  update.status.label             "ಸ್ಥಿತಿ:">

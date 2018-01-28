@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Yazdır">
+
+<!ENTITY printDialog.title "Yazdır">
+
+<!ENTITY fpDialog.title "Dosyayı Kaydet">
+
+<!ENTITY fileCheck.label "Dosyaya yazdır">
+<!ENTITY fileCheck.accesskey "D">
+<!ENTITY propertiesButton.label "Özellikler…">
+<!ENTITY propertiesButton.accesskey "z">
+<!ENTITY descText.label "Yazıcı açıklaması:">
+<!ENTITY printer.label "Yazıcı">
+<!ENTITY printerInput.label "Yazıcı adı:">
+<!ENTITY printerInput.accesskey "a">
+
+<!ENTITY printrangeGroup.label "Yazdırma aralığı">
+<!ENTITY allpagesRadio.label "Tüm sayfalar">
+<!ENTITY allpagesRadio.accesskey "T">
+<!ENTITY rangeRadio.label  "Sayfalar">
+<!ENTITY rangeRadio.accesskey  "S">
+<!ENTITY frompageInput.label  "ilk">
+<!ENTITY frompageInput.accesskey  "k">
+<!ENTITY topageInput.label  "son">
+<!ENTITY topageInput.accesskey  "o">
+<!ENTITY selectionRadio.label "Seçim">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "Kopyalar">
+<!ENTITY numCopies.label "Kopya sayısı:">
+<!ENTITY numCopies.accesskey "K">
+
+<!ENTITY printframeGroup.label "Çerçeveleri yazdır">
+<!ENTITY aslaidoutRadio.label "Ekranda göründüğü gibi">
+<!ENTITY aslaidoutRadio.accesskey "E">
+<!ENTITY selectedframeRadio.label  "Seçilen çerçeve">
+<!ENTITY selectedframeRadio.accesskey  "e">
+<!ENTITY eachframesepRadio.label  "Her çerçeveyi ayrı ayrı">
+<!ENTITY eachframesepRadio.accesskey  "H">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Ñemboheko - Mba'ekuaarã renda">
+<!ENTITY     hostCol.label                 "Tenda">
+<!ENTITY     statusCol.label               "Tekotee">
+<!ENTITY     usageCol.label                "Mbyatyrenda">
+<!ENTITY     searchTextboxPlaceHolder             "Ñanduti renda jeheka">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Jeporavope mboguete">
+<!ENTITY     removeSelected.accesskey      "J">
+<!ENTITY     save.label                    "Moambuepyre ñongatu">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Heja">
+<!ENTITY     cancel.accesskey              "H">
+<!ENTITY     removingDialog.title          "Tenda mba'ekuaarã ñemboguete">
+<!ENTITY     removingSelected.description  "Tenda mba'ekuaarã ñemboguete avei omboguetéta umi kookie ojojoguanungáva ha ñanduti retepy ñanduti'ỹ rehegua. Kóva ikatu osẽ ñanduti rendágui. ¿Añetépa emoambuese ko'ã mba'e?">
+<!ENTITY     siteTree.label                "Oñemboguetéta ko'ã kookie ñanduti rendágui:">

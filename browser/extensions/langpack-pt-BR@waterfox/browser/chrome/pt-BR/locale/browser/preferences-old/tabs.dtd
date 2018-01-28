@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab alterna entre as abas por ordem de uso">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Em vez de abrir novas janelas, abrir novas abas">
+<!ENTITY newWindowsAsTabs.accesskey   "j">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avisar quando fechar múltiplas abas">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Avisar que quando abrir muitas abas, o &brandShortName; pode ficar lento">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Quando abrir um link em uma nova aba, alterne para ela imediatamente">
+<!ENTITY switchLinksToNewTabs.accesskey    "u">
+
+<!ENTITY showTabsInTaskbar.label          "Mostrar a visualização das abas na barra de tarefas do Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "v">
+<!ENTITY tabsGroup.label          "Abas">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Gosod Ychwanegion">
+<!ENTITY intro           "Mae rhaglen arall ar eich cyfrifiadur eisiau newid &brandShortName; gyda'r ychwanegyn canlynol:">
+<!ENTITY warning         "Gosodwch ychwanegion gan awduron rydych yn ymddiried ynddynt.">
+<!ENTITY allow           "Caniatáu'r gosodiad">
+<!ENTITY later           "Mae modd newid eich meddwl drwy fynd i'r Rheolwr Ychwanegion.">
+<!ENTITY continue        "Parhau">
+<!ENTITY restartMessage  "Rhaid ail gychwyn &brandShortName; i orffen gosod yr ychwanegyn.">
+<!ENTITY restartButton   "Ailgychwyn &brandShortName;">
+<!ENTITY cancelButton    "Diddymu">

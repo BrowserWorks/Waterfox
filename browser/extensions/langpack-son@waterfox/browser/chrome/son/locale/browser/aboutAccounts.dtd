@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Kubayni &syncBrand.shortName.label; ga">
+
+<!ENTITY aboutAccountsConfig.description "Huru ka war kanjey, doo-šilbawey, šennikufaley nda taney hangandi.">
+<!ENTITY aboutAccountsConfig.startButton.label "Soobay">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Ceecikaw hangandiyan ibaayey">
+<!ENTITY aboutAccounts.noConnection.title "Interneti ciyari kul šii">
+<!ENTITY aboutAccounts.noConnection.description "War ga hima ka dobu interneti ga ka huru.">
+<!ENTITY aboutAccounts.noConnection.retry "Ceeci koyne">
+<!ENTITY aboutAccounts.badConfig.title "Hanseyan laala">
+<!ENTITY aboutAccounts.badConfig.description "Ši hin ka Waterfox kontu feršikaa hanseyanoo tabatandi. Ceeci koyne nd'a too kayna.">

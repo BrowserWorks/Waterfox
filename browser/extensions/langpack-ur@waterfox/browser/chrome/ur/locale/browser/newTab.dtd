@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "نیا ٹیب ">
+
+<!ENTITY newtab.customize.cog.enhanced "تجویز کردہ سائٹ شامل کریں">
+<!ENTITY newtab.customize.cog.title2 "نئے ٹیب کنٹرول">
+<!ENTITY newtab.customize.cog.learn "نئے ٹیب کے بارے میں سیکھیں">
+<!ENTITY newtab.customize.title "اپنا نیا ٹیب صفحہ تخصیص کریں">
+<!ENTITY newtab.customize.blank2 "خالی صفحہ دکھائیں">
+<!ENTITY newtab.undo.removedLabel "مجمل ہٹا دیا گیا۔ ">
+<!ENTITY newtab.undo.undoButton "کالعدم کریں۔ ">
+<!ENTITY newtab.undo.restoreButton "تمام بحال کریں۔ ">
+<!ENTITY newtab.undo.closeTooltip "چھپائیں ">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

@@ -1,0 +1,118 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Dìon o thracadh">
+<!ENTITY  trackingProtection2.description      "Tha tracadh a’ ciallachadh gu bheil cuideigin a’ cumail sùil air an dàta bhrabhsaidh agad air feadh grunn làraichean-lìn. ’S urrainn do dhaoine pròifil a chruthachadh le dàta tracaidh mar seo, stèidhichte air an dàta bhrabhsaidh agus an dàta phearsanta agad.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Cleachd dìon o thracadh airson casg a chur air tracaichean aithnichte">
+<!ENTITY  trackingProtectionAlways.label       "An-còmhnaidh">
+<!ENTITY  trackingProtectionAlways.accesskey   "n">
+<!ENTITY  trackingProtectionPrivate.label      "Ann an uinneagan prìobhaideach a-mhàin">
+<!ENTITY  trackingProtectionPrivate.accesskey  "p">
+<!ENTITY  trackingProtectionNever.label        "Chan ann idir">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Barrachd fiosrachaidh">
+<!ENTITY  trackingProtectionExceptions.label   "Eisgeachdan…">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Cleachd dìon o thracadh ann an uinneagan prìobhaideach">
+<!ENTITY trackingProtectionPBM5.accesskey     "u">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Cleachd dìon o thracadh sa bhrabhsadh phrìobhaideach airson casg a chur air tracaichean aithnichte">
+<!ENTITY trackingProtectionPBM6.accesskey     "p">
+<!ENTITY trackingProtectionPBMLearnMore.label "Barrachd fiosrachaidh">
+<!ENTITY changeBlockList2.label               "Atharrai&amp;ch an liosta bacaidh...">
+<!ENTITY changeBlockList2.accesskey           "c">
+
+<!ENTITY  doNotTrack.description        "Cuir sanas “Na dèan tracadh orm” gu làraichean-lìn a dh’innseas nach eil thu ag iarraidh gun dèanar tracadh ort">
+<!ENTITY  doNotTrack.learnMore.label    "Barrachd fiosrachaidh">
+<!ENTITY  doNotTrack.default.label      "Dìreach nuair a chleachdar dìon o thracadh">
+<!ENTITY  doNotTrack.always.label       "An-còmhnaidh">
+
+<!ENTITY  history.label                 "Eachdraidh">
+<!ENTITY  permissions.label             "Ceadan">
+
+<!ENTITY  addressBar.label              "Bàr an t-seòlaidh">
+<!ENTITY  addressBar.suggest.label      "Nuair a chleachdas mi bàr an t-seòlaidh, mol dhomh">
+<!ENTITY  locbar.history2.label         "Eachdraidh brabhsaidh">
+<!ENTITY  locbar.history2.accesskey     "h">
+<!ENTITY  locbar.bookmarks.label        "Comharran-lìn">
+<!ENTITY  locbar.bookmarks.accesskey    "o">
+<!ENTITY  locbar.openpage.label         "Tabaichean fosgailte">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Luirg cho-cheangailte on einnsean-luirg bhunaiteach">
+<!ENTITY  locbar.searches.accesskey     "L">
+
+<!ENTITY  suggestionSettings2.label     "Atharraich na roghainnean a thaobh mholaidhean o einnseanan-luirg">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Gabh ri briosgaidean treas pàrtaidh:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "G">
+<!ENTITY  acceptThirdParty.always.label   "An-còmhnaidh">
+<!ENTITY  acceptThirdParty.never.label    "Chan ann idir">
+<!ENTITY  acceptThirdParty.visited.label  "O fheadhainn air an deach tadhal">
+
+<!ENTITY  keepUntil.label               "Cum gus:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "am falbh an ùine orra">
+<!ENTITY  close.label                   "an dùin mi &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Eisgeachdan…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Seall na briosgaidean…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "Nì &brandShortName; na leanas:">
+<!ENTITY  historyHeader2.pre.accesskey     "N">
+<!ENTITY  historyHeader.remember.label     "Cuimhnich an eachdraidh">
+<!ENTITY  historyHeader.dontremember.label "Na cuimhnich an eachdraidh idir">
+<!ENTITY  historyHeader.custom.label       "Cleachd roghainnean gnàthaichte airson na h-eachdraidh">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "Cuimhnichidh &brandShortName; eachdraidh brabhsaidh, eachdraidh na chaidh a luchdadh a-nuas is na lorg thu is cumaidh e briosgaidean o na làraichean air a thadhlas tu.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "'S dòcha gum b' fheairrde dhut ">
+<!ENTITY  rememberActions.clearHistory.label  "an eachdraidh faisg ort a ghlanadh">
+<!ENTITY  rememberActions.middle.label        ", no ">
+<!ENTITY  rememberActions.removeCookies.label "briosgaidean fa leth a thoirt air falbh">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "Cleachdaidh &brandShortName; na dearbh roghainnean 's a tha agad ann an brabhsadh prìobhaideach agus cha chuimhnich e eachdraidh sam bith 's tu a' brabhsadh an lìn.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "'S dòcha gum b' fheairrde dhut cuideachd ">
+<!ENTITY  dontrememberActions.clearHistory.label "an eachdraidh làithreach gu lèir a ghlanadh">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Dèan brabhsadh prìobhaideach an-còmhnaidh">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Cuimhnich an eachdraidh brabhsaidh 's luchdaidh agam">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Cuimhnich eachdraidh nan lorg is nam foirmichean">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Glan an eachdraidh nuair a dhùineas &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Roghainnean…">
+<!ENTITY  clearOnCloseSettings.accesskey "n">
+
+<!ENTITY  browserContainersLearnMore.label      "Barrachd fiosrachaidh">
+<!ENTITY  browserContainersEnabled.label        "Cuir an comas tabaichean soithich">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Roghainnean…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

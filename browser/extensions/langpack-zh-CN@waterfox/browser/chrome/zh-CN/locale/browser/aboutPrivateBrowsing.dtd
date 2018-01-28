@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "您当前不在隐私窗口中。">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "打开隐私窗口">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "隐私浏览模式">
+<!ENTITY privateBrowsing.title.tracking                  "隐私浏览模式 + 跟踪保护">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "当您在隐私窗口中浏览时，Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "不会保存">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        "：">
+<!ENTITY aboutPrivateBrowsing.info.visited               "访问过的页面">
+<!ENTITY aboutPrivateBrowsing.info.searches              "搜索记录">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "临时文件">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "将保存">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "您的：">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "下载项">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "书签">
+<!ENTITY aboutPrivateBrowsing.note.before                "隐私浏览模式">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "无法让您">
+<!ENTITY aboutPrivateBrowsing.note.after                 "在互联网上匿名。您的雇主或者网络服务提供商仍然可以知道您访问了什么页面。">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "详细了解">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "隐私浏览">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           "。">
+
+<!ENTITY trackingProtection.title                        "跟踪保护">
+<!ENTITY trackingProtection.description2                 "一些网站使用跟踪器技术监控您在网上的活动。具有“跟踪保护”功能的 Waterfox 可以拦截多种跟踪器，防止它们收集有关您网上行为的信息。">
+<!ENTITY trackingProtection.startTour1                   "看看怎么用">

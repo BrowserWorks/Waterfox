@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Запуск">
+
+<!ENTITY startupPage.label         "При запуску &brandShortName;:">
+<!ENTITY startupPage.accesskey     "з">
+<!ENTITY startupUserHomePage.label "Показувати домівку">
+<!ENTITY startupBlankPage.label    "Показувати чисту сторінку">
+<!ENTITY startupPrevSession.label  "Показувати вікна і вкладки з минулого разу">
+
+<!ENTITY homepage.label            "Домівка:">
+<!ENTITY homepage.accesskey        "м">
+<!ENTITY useCurrentPage.label      "Використати поточну сторінку">
+<!ENTITY useCurrentPage.accesskey  "п">
+<!ENTITY useMultiple.label         "Використати поточні сторінки">
+<!ENTITY chooseBookmark.label      "Використати закладку…">
+<!ENTITY chooseBookmark.accesskey  "к">
+<!ENTITY restoreDefault.label      "Відновити типову">
+<!ENTITY restoreDefault.accesskey  "н">
+
+<!ENTITY downloads.label     "Завантаження">
+
+<!ENTITY saveTo.label "Зберігати файли до">
+<!ENTITY saveTo.accesskey "л">
+<!ENTITY chooseFolderWin.label        "Вибрати…">
+<!ENTITY chooseFolderWin.accesskey    "В">
+<!ENTITY chooseFolderMac.label        "Вибрати…">
+<!ENTITY chooseFolderMac.accesskey    "В">
+<!ENTITY alwaysAskWhere.label         "Завжди запитувати де зберегти файли">
+<!ENTITY alwaysAskWhere.accesskey     "З">
+
+<!ENTITY alwaysCheckDefault2.label        "Завжди перевіряти чи є &brandShortName; типовим браузером">
+<!ENTITY alwaysCheckDefault2.accesskey    "б">
+<!ENTITY setAsMyDefaultBrowser2.label     "Зробити типовим">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "т">
+<!ENTITY isDefault.label                  "&brandShortName; зараз ваш типовий браузер">
+<!ENTITY isNotDefault.label               "&brandShortName; не є вашим типовим браузером">
+
+<!ENTITY separateProfileMode.label        "Дозволити &brandShortName; та Waterfox виконуватись одночасно">
+<!ENTITY useWaterfoxSync.label             "Підказка: При цьому використовуються окремі профілі. Скористайтеся синхронізацією для обміну даними між ними.">
+<!ENTITY getStarted.notloggedin.label     "Увійти в Синхронізацію…">
+<!ENTITY getStarted.configured.label      "Відкрити налаштування Синхронізації">
+
+<!ENTITY e10sEnabled.label                "Увімкнути багатопроцесність &brandShortName;">

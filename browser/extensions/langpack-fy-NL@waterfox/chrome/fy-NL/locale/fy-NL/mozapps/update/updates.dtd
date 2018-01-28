@@ -1,0 +1,77 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Programma-fernijing">
+
+<!ENTITY  checking.title                  "Kontrolearje op fernijingen">
+<!ENTITY  updateCheck.label               "Kontrolearret no op fernijingen fan &brandShortName;…">
+
+<!ENTITY  noupdatesfound.title            "Gjin fernijingen fûn">
+<!ENTITY  noupdatesautoenabled.intro      "Der binne gjin fernijingen beskikber. &brandShortName; sil
+                                           periodyk kontrolearje op fernijingen.">
+<!ENTITY  noupdatesautodisabled.intro     "Der binne gjin fernijingen beskikber. Kontrolearje it letter opnij of skeakel
+                                           &brandShortName; syn automatyske fernijingskontrole yn.">
+
+<!ENTITY  manualUpdate.title              "Net yn steat om te fernijen">
+<!ENTITY  manualUpdate.desc               "In oanrekommandearre feilichheids- en stabileitsfernijing is beskikber, mar jo
+                                           hawwe net de systeemrjochten dy't nedich binne om it te ynstallearjen. Nim kontakt op mei jo
+                                           systeembehearder, of probearje it nochris mei in account dy't wol de rjochten hat om
+                                           programma's te ynstallearjen op dizze kompjûter.">
+<!ENTITY  manualUpdate.space.desc         "In oanrekommandearre feilichheids- en stabileitsfernijing is beskikber, mar jo
+                                           hawwe net genôch skiifromte om it te ynstallearjen.">
+<!ENTITY  manualUpdateGetMsg.label        "Jo kinne altyd de lêste ferzje fan &brandShortName; krije fan:">
+
+<!ENTITY  unsupported.title               "Systeem net stipe">
+<!ENTITY  unsupported.label               "Jo &brandShortName; is út de tiid, mar de lêste ferzje wurdt net
+                                           stipe troch jo systeem. Fernij jo systeem en probearje dan nochris.
+                                           Jo sille dit berjocht net wer sjen, mar it kin wol">
+<!ENTITY  unsupportedLink.label           "mear ynfo.">
+
+<!ENTITY  clickHere.label                 "Besjoch mear ynformaasje oer dizze fernijing">
+
+<!ENTITY  evangelism.desc                 "It wurdt oanrêt dizze fernijing foar &brandShortName; sa fluch 
+                                           as mooglik ta te passen.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; wurdt downloaden">
+<!ENTITY  downloading.intro               "Fernijing downloade…">
+<!ENTITY  connecting.label                "Ferbine mei de fernijingsserver…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; wie net yn steat om de yntegriteit fan de
+                                           ynkremintele fernijing dy't downloaden is te kontrolearjen en downloadt
+                                           derom no it folsleine fernijingspakket.">
+
+<!ENTITY  viewDetails.tooltip             "Details foar dizze fernijing toane">
+
+<!ENTITY  details.link                    "Details">
+
+<!ENTITY  error.title                     "Bywurkjen mislearre">
+
+<!ENTITY  error.label                     "Der wie in probleem by it kontrolearjen op, of it downloaden of ynstallearjen
+                                           fan dizze fernijing. &brandShortName; koe net bywurke wurde omdat:">
+                                           
+<!ENTITY  errorManual.label               "Jo kinne &brandShortName; mei de hân bywurkje troch dizze keppeling te
+                                           probearjen en de lêste ferzje yn te laden:">
+                                           
+<!ENTITY  errorpatching.intro             "It part fan de fernijing koe net tapast wurde. 
+                                           &brandShortName; sil it opnij probearje troch in folsleine fernijing yn te laden.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; is net yn steat om te sjen oft der in fernijing beskikber is.
+                                           Kontrolearje oft jo de lêste ferzje fan &brandShortName; hawwe fan:">
+
+<!ENTITY  finishedPage.title              "Fernijing klear foar ynstallaasje">
+<!ENTITY  finishedPage.text               "De fernijing sil ynstallearre wurde as &brandShortName; opnij start. 
+                                           Jo kinne &brandShortName; no opnij starte of fierder gean en letter opnij starte.">
+
+<!ENTITY  finishedBackgroundPage.text     "In feilichheids- en stabliliteitsfernijing foar &brandShortName; is krekt downloaden
+                                           en is ree om ynstallearre te wurden.">
+<!ENTITY  finishedBackground.name         "Fernijing:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "De fernijing sil ynstallearre wurde as &brandShortName; de folgjende kear start. Jo
+                                           kinne no &brandShortName; opnij starte, of fierder gean en letter opnij starte.">
+<!ENTITY  finishedBackground.moreElevated "Dizze fernijing hat administratorrjochten nedich. De fernjing sil 
+                                           de folgjende kear as &brandShortName; start installearre wurde. Jo kinne
+                                           &brandShortName; no werstarte, trochgean mei wurkjen en letter werstarte, of dizze
+                                           fernijing annulearje.">
+
+<!ENTITY  update.details.label            "Details">
+<!ENTITY  update.installedOn.label        "Ynstallearre op:">
+<!ENTITY  update.status.label             "Steat:">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Personalizza Bara">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Ti peu azonze ò scancelâ i ògetti rebelandoli inte ò feua de bare.">
+<!ENTITY show.label               "Fanni vedde:">
+<!ENTITY iconsAndText.label       "Icone e Testo">
+<!ENTITY icons.label              "Icone">
+<!ENTITY text.label               "Testo">
+<!ENTITY useSmallIcons.label      "Adeuvia icone picinn-e">
+<!ENTITY restoreDefaultSet.label  "Metti torna predefinio">
+<!ENTITY addNewToolbar.label      "Azonzi Neuva Bara">
+<!ENTITY saveChanges.label        "Fæto">
+<!ENTITY undoChanges.label        "Anulla i cangi">
+

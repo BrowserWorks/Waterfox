@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Tereg̃uahẽporãite &syncBrand.shortName.label;-pe">
+
+<!ENTITY aboutAccountsConfig.description "Eñepyrũ tembiapo embojuehe hag̃ua tendayke, techaukaha, ñe'ẽñemi ha hetave. ">
+<!ENTITY aboutAccountsConfig.startButton.label "Eñepyrũ">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Jerohoryvéva mbojuehe">
+<!ENTITY aboutAccounts.noConnection.title "Jeikekatu'ỹ">
+<!ENTITY aboutAccounts.noConnection.description "Eikeva'erã ñandutípe eñepyrũ hag̃ua ko tembiapo.">
+<!ENTITY aboutAccounts.noConnection.retry "Eha'ã jey">
+<!ENTITY aboutAccounts.badConfig.title "Ñemboheko ivaíva">
+<!ENTITY aboutAccounts.badConfig.description "Ndaikatúi ojehecha ñemboheko mohendahavusu Waterfox mba'etéva. Ikatu piko eha'ã jey ág̃a mieve.">

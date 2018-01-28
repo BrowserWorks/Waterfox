@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "অনুলিপি">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "সব নির্বাচন">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "সাধারণ">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "শিরোনাম:">
+<!ENTITY  generalURL            "ঠিকানা:">
+<!ENTITY  generalType           "শ্রেণী:">
+<!ENTITY  generalMode           "রেন্ডার মোড:">
+<!ENTITY  generalSize           "আকার:">
+<!ENTITY  generalReferrer       "নির্দেশকারী URL:">
+<!ENTITY  generalSource         "ক্যাশের উৎস:">
+<!ENTITY  generalModified       "পরিবর্তিত:">
+<!ENTITY  generalEncoding2      "টেক্সট এনকোডিংঃ">
+<!ENTITY  generalMetaName       "নাম">
+<!ENTITY  generalMetaContent    "বিষয়বস্তু">
+
+<!ENTITY  mediaTab              "মিডিয়া">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "অবস্থান:">
+<!ENTITY  mediaText             "সংশ্লিষ্ট টেক্সট:">
+<!ENTITY  mediaAltHeader        "বিকল্প টেক্সট:">
+<!ENTITY  mediaAddress          "ঠিকানা">
+<!ENTITY  mediaType             "শ্রেণী">
+<!ENTITY  mediaSize             "আকার">
+<!ENTITY  mediaCount            "মোট">
+<!ENTITY  mediaDimension        "মাত্রা:">
+<!ENTITY  mediaLongdesc         "বিস্তারিত বিবরণ:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "অন্যভাবে সংরক্ষণ...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "মিডিয়ার প্রাকদর্শন:">
+
+<!ENTITY  feedTab               "ফিড">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "সাবস্ক্রাইব">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "অনুমোদন">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "ডিফল্ট ব্যবহার করা হবে">
+<!ENTITY  permAskAlways         "সবসময় জিজ্ঞেস করা হবে">
+<!ENTITY  permAllow             "অনুমোদন করা হবে">
+<!ENTITY  permAllowSession      "এই সেশনের জন্য অনুমোদন করা হবে">
+<!ENTITY  permBlock             "প্রতিরোধ করা হবে">
+<!ENTITY  permissionsFor        "অনুমোদন:">
+<!ENTITY  permPlugins           "প্লাগইন সক্রিয় করুন">
+
+<!ENTITY  permClearStorage           "স্টোরেজ পরিষ্কার">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "নিরাপত্তা">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "সার্টিফিকেট প্রদর্শন">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "অজানা">
+
+
+<!ENTITY  securityView.identity.header   "ওয়েবসাইটের পরিচয়">
+<!ENTITY  securityView.identity.owner    "মালিকানা:">
+<!ENTITY  securityView.identity.domain   "ওয়েবসাইট:">
+<!ENTITY  securityView.identity.verifier "যাচাইকারী:">
+
+
+<!ENTITY  securityView.privacy.header                   "গোপণীয়তা এবং ইতিহাস">
+<!ENTITY  securityView.privacy.history                  "আগে কোন সময় এই ওয়েবসাইট আমি পরিদর্শন করেছি কি?">
+<!ENTITY  securityView.privacy.cookies                  "এই ওয়েবসাইট কি আমার কম্পিউটারে তথ্য (কুকি) সংরক্ষণ করছে?">
+<!ENTITY  securityView.privacy.viewCookies              "কুকি পরিদর্শন">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "এই ওয়েবসাইটের জন্য কি আমি কোনো পাসওয়ার্ড সংরক্ষণ করেছি?">
+<!ENTITY  securityView.privacy.viewPasswords            "সংরক্ষিত পাসওয়ার্ড পরিদর্শন">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "প্রযুক্তিগত বিবরণ">
+
+<!ENTITY  helpButton.label                              "সাহায্য">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

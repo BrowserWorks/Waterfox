@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Sa'y">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Emyengovia sa'ykuéra kuatiarogue omoha'eñóva umi che aiporavova'ekuégui:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Katui">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Tema oho'ỹetéva oñondive">
+<!ENTITY  overrideDefaultPageColors.never.label  "Araka'eve">
+
+<!ENTITY  color                           "Moñe'ẽrã ha Tugua">
+<!ENTITY  textColor.label                 "Moñe'ẽrã:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Mba'erugua:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "Eipuru apopyvusu sa'ykuéra">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Jojuha Jehaiguy">
+<!ENTITY  underlineLinks.accesskey        "J">
+<!ENTITY  links                           "Jaojuha sa'y">
+<!ENTITY  linkColor.label                 "Joajuhakuéra ojeike'ỹha:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "Joajuhakuéra ojeikepyréva:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

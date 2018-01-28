@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Σύντομος τίτλος"> 
+<!ENTITY message.label    "Κάποιο δείγμα κειμένου μπαίνει εδώ.">
+<!ENTITY editfield0.label "Όνομα χρήστη"> 
+<!ENTITY editfield1.label "Κωδικός πρόσβασης:"> 
+<!ENTITY checkbox.label   "επιλογή">
+<!ENTITY copyCmd.label    "Αντιγραφή">
+<!ENTITY copyCmd.accesskey "γ">
+<!ENTITY selectAllCmd.label "Επιλογή όλων">
+<!ENTITY selectAllCmd.accesskey "λ">

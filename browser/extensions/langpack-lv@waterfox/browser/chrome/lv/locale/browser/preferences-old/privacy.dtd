@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Izmantot izsekošanas aizsardzību">
+<!ENTITY  trackingProtectionAlways.label       "Vienmēr">
+<!ENTITY  trackingProtectionAlways.accesskey   "m">
+<!ENTITY  trackingProtectionPrivate.label      "Tikai privātajos logos">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Nekad">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Uzzināt vairāk">
+<!ENTITY  trackingProtectionExceptions.label   "Izņēmumi…">
+<!ENTITY  trackingProtectionExceptions.accesskey "I">
+
+<!ENTITY tracking.label                 "Uzskaite internetā">
+<!ENTITY trackingProtectionPBM5.label         "Izmantot izsekošanas aizsardzību privātajos logos">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Uzzināt vairāk">
+<!ENTITY changeBlockList.label          "Mainīt bloķēto sarakstu">
+<!ENTITY changeBlockList.accesskey      "M">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Jūs varat arī ">
+<!ENTITY  doNotTrack.settings.label     "pārvaldīt savus izsekošanas iestatījumus">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Vēsture">
+
+<!ENTITY  locationBar.label             "Atrašanās vietas josla">
+
+<!ENTITY  locbar.suggest.label          "Meklējot adreses joslā, ieteikt:">
+<!ENTITY  locbar.history.label          "Vēsturi">
+<!ENTITY  locbar.history.accesskey      "V">
+<!ENTITY  locbar.bookmarks.label        "Grāmatzīmes">
+<!ENTITY  locbar.bookmarks.accesskey    "m">
+<!ENTITY  locbar.openpage.label         "Atvērtās cilnes">
+<!ENTITY  locbar.openpage.accesskey     "t">
+<!ENTITY  locbar.searches.label         "Saistītie meklēšanas rezultāti no noklusētā meklētāja">
+<!ENTITY  locbar.searches.accesskey     "r">
+
+<!ENTITY  suggestionSettings.label      "Izmainiet meklētāju iestatījumus…">
+<!ENTITY  suggestionSettings.accesskey  "m">
+
+<!ENTITY  acceptCookies2.label          "Pieņemt sīkdatnes no lapām">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Pieņemt trešo pušu sīkdatnes:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Vienmēr">
+<!ENTITY  acceptThirdParty.never.label    "Nekad">
+<!ENTITY  acceptThirdParty.visited.label  "Tikai no lapām, kuras esmu apmeklējis">
+
+<!ENTITY  keepUntil.label               "Glabāt līdz:">
+<!ENTITY  keepUntil.accesskey           "G">
+
+<!ENTITY  expire.label                  "beidzas to derīgums">
+<!ENTITY  close.label                   "es aizveru &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Izņēmumi…">
+<!ENTITY  cookieExceptions.accesskey    "I">
+
+<!ENTITY  showCookies.label             "Parādīt sīkdatnes…">
+<!ENTITY  showCookies.accesskey         "s">
+
+<!ENTITY  historyHeader.pre.label          "Mans &brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "a">
+<!ENTITY  historyHeader.remember.label     "Atcerēsies vēsturi">
+<!ENTITY  historyHeader.dontremember.label "Nekad neatcerēsies vēsturi">
+<!ENTITY  historyHeader.custom.label       "Izmantos pielāgotus vēstures iestatījumus">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; atcerēsies jūsu pārlūkošanas, lejupielāžu, aizpildīto formu un meklēšanu vēsturi, kā arī saglabās apmeklēto lapu sīkdatnes.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Iespējams jūs vēlaties ">
+<!ENTITY  rememberActions.clearHistory.label  "dzēst nesenās pārlūkošanas vēsturi">
+<!ENTITY  rememberActions.middle.label        " vai ">
+<!ENTITY  rememberActions.removeCookies.label "dzēst atsevišķas sīkdatnes">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; izmantos tādus pat iestatījumus kā privātās pārlūkošanas režīmā un pārlūkojot internetu nesaglabās vēsturi.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Jūs varētu vēlēties arī ">
+<!ENTITY  dontrememberActions.clearHistory.label "dzēst šobrīd saglabāto vēsturi">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Vienmēr izmantot privātās pārlūkošanas režīmu">
+<!ENTITY  privateBrowsingPermanent2.accesskey "z">
+
+<!ENTITY  rememberHistory2.label      "Atcerēties manu pārlūkošanas un lejupielāžu vēsturi">
+<!ENTITY  rememberHistory2.accesskey  "c">
+
+<!ENTITY  rememberSearchForm.label       "Atcerēties meklēšanas un formu vēsturi">
+<!ENTITY  rememberSearchForm.accesskey   "v">
+
+<!ENTITY  clearOnClose.label             "Dzēst aizverot &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "D">
+
+<!ENTITY  clearOnCloseSettings.label     "Iestatījumi…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Saturošās cilnes">
+<!ENTITY  browserContainersLearnMore.label      "Uzzināt vairāk">
+<!ENTITY  browserContainersEnabled.label        "Aktivēt saturošās cilnes">
+<!ENTITY  browserContainersEnabled.accesskey    "u">
+<!ENTITY  browserContainersSettings.label        "Iestatījumi...">
+<!ENTITY  browserContainersSettings.accesskey    "i">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "غيّر كلمة السرّ الرئيسيّة">
+<!ENTITY setPassword.tokenName.label "جهاز الأمن">
+<!ENTITY setPassword.oldPassword.label "كلمة السرّ الحاليّة:">
+<!ENTITY setPassword.newPassword.label "كلمة السرّ الجّديدة:">
+<!ENTITY setPassword.reenterPassword.label "كلمة السرّ الجّديدة (مرّة ثانية):">
+<!ENTITY setPassword.meter.label "مقياس جودة كلمة السرّ">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "صفّر">
+<!ENTITY resetPassword.title  "صفّر كلمة السرّ الرّئيسية">
+<!ENTITY resetPassword.text  "إذا صفّرت كلمة السرّ الرئيسية، ستُنسى كلّ كلمات سرّ البريد الإلكتروني و وِب، وبيانات الاستمارات، والشّهادات الشّخصيّة، والمفاتيح السرّية المخزّنة. متأكّد أنّك تريد إعادة ضبط كلمة السرّ الرّئيسية؟">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "يجري تنزيل الشّهادات">
+<!ENTITY downloadCert.message1 "يُطلب منك الوثوق بسلطة شهادات جديدة.">
+<!ENTITY downloadCert.trustSSL "ثِق في سلطة الشّهادات هذه لتعريف مواقع وِب.">
+<!ENTITY downloadCert.trustEmail "ثِق في سلطة الشّهادات هذه لتعريف مستخدمي البريد الإلكتروني.">
+<!ENTITY downloadCert.trustObjSign "ثِق في سلطة الشّهادات هذه لتعريف مطوري البرامج.">
+<!ENTITY downloadCert.message3 "قبل الوثوق بسلطة الشّهادات هذه لأي سبب، عليك فحص شهادتها و سياستها و إجراءاتها (في حال توفّرها).">
+<!ENTITY downloadCert.viewCert.label "اعرض">
+<!ENTITY downloadCert.viewCert.text "افحص شهادة سلطة الشّهادات">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "طلب تعريف مستخدم">
+<!ENTITY clientAuthAsk.message1 "طلب هذا الموقع أن تعرّف نفسك بشهادة:">
+<!ENTITY clientAuthAsk.message2 "اختر شهادة لتقدّمها كتعريف:">
+<!ENTITY clientAuthAsk.message3 "تفاصيل الشّهادة المختارة:">
+
+<!ENTITY pkcs12.setpassword.title  "اختر كلمة سرّ النّسخة الاحتياطيّة للشّهادة">
+<!ENTITY pkcs12.setpassword.message  "تحمي كلمة سرّ النّسخة الاحتياطيّة للشّهادة التي تعيّنها الملفّ الاحتياطي الذي توشك على إنشائه.  عليك ضبط كلمة السرّ هذه لمتابعة النسخ الاحتياطي.">
+<!ENTITY pkcs12.setpassword.label1 "كلمة سرّ النّسخة الاحتياطيّة للشّهادة:">
+<!ENTITY pkcs12.setpassword.label2 "كلمة سرّ النّسخة الاحتياطيّة للشّهادة (مرّة ثانية):">
+<!ENTITY pkcs12.setpassword.reminder "هامّ: إذا نسيت كلمة سرّ النّسخة الاحتياطيّة للشّهادة، لن تكون قادرًا على استعادة هذه النّسخة الاحتياطيّة لاحقًا.  الرجاء تسجيلها بمكان آمن.">
+
+<!ENTITY chooseToken.title  "اختر حوار العلامة">
+<!ENTITY chooseToken.message1 "الرّجاء اختيار علامة.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "يجري توليد مفتاح سري">
+<!ENTITY createCertInfo.msg1 "يجري توليد المفتاح… قد يستغرق هذا بضعة دقائق….">
+<!ENTITY createCertInfo.msg2 "من فضلك انتظر…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "استيثاق علامة محمية">
+<!ENTITY protectedAuth.msg "من فضلك استوثق من هذه العلامة. تعتمد طريقة الاستيثاق على نوع علامتك.">
+<!ENTITY protectedAuth.tokenName.label "علامة:">

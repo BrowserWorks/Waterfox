@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Chijun">
+
+<!ENTITY accessibility.label             "Okel">
+
+<!ENTITY useCursorNavigation.label       "Junelïk ke'awokisaj ri taq rupitz'b'al retal ch'oy richin yatok pa taq ruxaq k'amaya'l">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Tikanöx taq rucholajem tzij toq tajin yatz'ib'an">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY blockAutoReload.label           "Tiya' rutzijol chi re toq jun ruxaq k'amaya'l nrajo' yiruk'waj juk'an chik chuqa' toq nujïk' jub'ey chik re ruxaq k'amaya'l re'.">
+<!ENTITY blockAutoReload.accesskey       "m">
+<!ENTITY useOnScreenKeyboard.label       "Tik'ut pe ri na'onel pitzb'äl toq xtik'atzin">
+<!ENTITY useOnScreenKeyboard.accesskey   "p">
+
+<!ENTITY browsing.label                  "Okik'amaya'l">
+
+<!ENTITY useAutoScroll.label             "Tokisäx ruyonil rusiloxik">
+<!ENTITY useAutoScroll.accesskey         "r">
+<!ENTITY useSmoothScrolling.label        "Tokisäx jeb'ël q'axanïk">
+<!ENTITY useSmoothScrolling.accesskey    "e">
+<!ENTITY checkUserSpelling.label         "Tinik'öx ri nutz'ib'anik toq yitz'ib'an">
+<!ENTITY checkUserSpelling.accesskey     "n">
+
+<!ENTITY dataChoicesTab.label            "Kicha'ik taq tzij">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Chupül ri kitzijol taq tzij richin nib'an kinuk'ulem re taq alk'walaxinem re'">
+
+<!ENTITY healthReportDesc.label          "Xkaruto' richin niq'ax pan awi' rub'eyal nisamäj ri owokik'amaya'l chuqa' nukomonij taq tzij rik'in &vendorShortName; chi rij ri raxnaqil">
+<!ENTITY enableHealthReport.label        "Rutzijol Raxnaqil &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "Tetamäx ch'aqa' chik">
+
+<!ENTITY telemetryDesc.label             "Takomonij ri na'oj pa ruwi' rub'eyal nisamäj, ri rokisaxik, ch'akulakem chuqa' richinaxik awokik'amaya'l rik'in &vendorShortName; richin chi ri &brandShortName; nel ütz">
+<!ENTITY enableTelemetryData.label       "Tikomonïx kitz'aqat taq tzij (achi'el, Telemetry)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Tetamäx ch'aqa' chik">
+
+<!ENTITY crashReporterDesc2.label         "Ri rutzijol taq sachoj &vendorShortName; yeruchojmirisaj taq k'ayewal chuqa' nub'än chi k'o ruchuq'a' chuqa' jikil ri awokik'amaya'l">
+<!ENTITY alwaysSubmitCrashReports.label   "Tiya' q'ij chi re &brandShortName; nutäq backlogged pan ab'i' ri rutzijol taq sachoj">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "Tetamäx ch'aqa' chik">
+
+<!ENTITY networkTab.label                "K'amab'ey">
+
+<!ENTITY connection.label                "Okem pa k'amaya'l:">
+
+<!ENTITY connectionDesc.label            "Tanuk'samajij ri rub'eyal nok ri &brandShortName; pa k'amaya'l">
+<!ENTITY connectionSettings.label        "Tinuk'…">
+<!ENTITY connectionSettings.accesskey    "n">
+
+<!ENTITY httpCache.label                 "Rupam k'amaya'l pa jumejyak">
+
+<!ENTITY offlineStorage2.label           "Rupam chuqa' taq rutzij winäq majun kokem">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Ruxaq k'amaya'l tzij">
+<!ENTITY clearSiteData.label             "Tijosq'ïx ronojel ri tzij">
+<!ENTITY clearSiteData.accesskey         "j">
+<!ENTITY siteDataSettings.label          "Tinuk'…">
+<!ENTITY siteDataSettings.accesskey      "n">
+<!ENTITY siteDataLearnMoreLink.label     "Tetamäx ch'aqa' chik">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Q'aton ri jumejyak pa">
+<!ENTITY limitCacheSizeBefore.accesskey  "Q">
+<!ENTITY limitCacheSizeAfter.label       "MB rupam">
+<!ENTITY clearCacheNow.label             "Tijosq'ïx wakami">
+<!ENTITY clearCacheNow.accesskey         "T">
+<!ENTITY clearOfflineAppCacheNow.label   "Wakami kajosq'in">
+<!ENTITY clearOfflineAppCacheNow.accesskey "W">
+<!ENTITY overrideSmartCacheSize.label    "Tiyuj runuk'samajixïk ruyonil jumejyak">
+<!ENTITY overrideSmartCacheSize.accesskey "T">
+
+<!ENTITY updateTab.label                 "Tik'ex">
+
+<!ENTITY updateApplication.label         "&brandShortName; Taq k'exoj ruwäch">
+<!ENTITY updateAuto1.label               "Keyak ruyonil taq k'exoj ruwäch (chilab'en: nrutzilaj ri chajinïk)">
+<!ENTITY updateAuto1.accesskey           "r">
+<!ENTITY updateCheckChoose.label         "Kenik'öx ri taq k'exoj ruwäch, xa xe chi tiya' q'ij chi re we ninwajo' chi yenyäk">
+<!ENTITY updateCheckChoose.accesskey     "K">
+<!ENTITY updateManual.label              "Mani nikanöx taq k'exoj ruwäch (man chilab'en ta: ruk'ayewal chajinïk)">
+<!ENTITY updateManual.accesskey          "M">
+
+<!ENTITY updateHistory.label             "Tik'ut pe ri kinatab'al taq k'exoj ruwäch">
+<!ENTITY updateHistory.accesskey         "k">
+
+<!ENTITY useService.label                "Tokisäx jun samaj pa ruka'n b'ey richin yeyak ri taq k'exoj ruwäch">
+<!ENTITY useService.accesskey            "r">
+
+<!ENTITY autoUpdateOthers.label          "Tik'extäj ruyon">
+<!ENTITY enableSearchUpdate.label        "Samajel chi kanob'äl">
+<!ENTITY enableSearchUpdate.accesskey    "k">
+
+<!ENTITY offlineStorageNotify.label               "Taya' rutzijol we k'o jun k'amaya'l nrajo' nuyäk taq tzij richin nrokisaj toq majun okem pa k'amaya'l">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "Taq man relik ta…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "e">
+
+<!ENTITY offlineAppsList2.label          "Re taq ruxaq k'amaya'l re' ya'on q'ij chi ke richin nikiyäk kan ri taq tzij richin nokisäx pa rub'eyal majun okem pa k'amaya'l:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Telesäx…">
+<!ENTITY offlineAppsListRemove.accesskey "T">
+<!ENTITY offlineAppRemove.confirm        "Tiyuj el na'oj pa rub'eyal majun okem pa k'amaya'l">
+
+<!ENTITY certificateTab.label            "Taq ruwujil b'i'aj:">
+<!ENTITY certPersonal.label              "Taq k'utuj">
+<!ENTITY certPersonal.description        "Toq ri ruk'u'x samaj xtrajo' pe ri nuwujil ab'i':">
+<!ENTITY selectCerts.auto                "Pa ruyonil ticha' jun">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Junelïk tik'utüx pe">
+<!ENTITY selectCerts.ask.accesskey       "J">
+<!ENTITY enableOCSP.label                "Rutzolixik rutzij ri OCSP peyon tzij, ri ruk'u'x taq samaj nikijikib'a' ri kutzil ri taq ruwujil rub'i'">
+<!ENTITY enableOCSP.accesskey            "p">
+<!ENTITY viewCerts.label                 "Titz'et taq ruwujil b'i'aj">
+<!ENTITY viewCerts.accesskey             "r">
+<!ENTITY viewSecurityDevices.label       "Taq okisaxel richin jikomal">
+<!ENTITY viewSecurityDevices.accesskey   "o">
+
+<!ENTITY performance.label               "Rub'eyal nisamäj">
+<!ENTITY useRecommendedPerformanceSettings.label "Tokisäx runuk'ulem rub'eyal nisamäj chilab'en pe">
+<!ENTITY useRecommendedPerformanceSettings.description "Re taq nuk'ulem re' nikik'äm ki' kik'in ri ch'akulakem chuqa' rik'in ri samajel ruq'inoj akematz'ib'.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "T">
+<!ENTITY performanceSettingsLearnMore.label "Tetamäx ch'aqa' chik">
+<!ENTITY limitContentProcessOption.label "ruchi' ri ruxenab'al rupam">
+<!ENTITY limitContentProcessOption.description "Ri taq ruxenab'al rutz'aqat rupam yetikïr nikutzilaj rub'eyal nisamäj toq nrokisaj k'ïy taq ruwi', xa chuqa' xtrokisaj k'ïy rutzatzq'ob'al.">
+<!ENTITY limitContentProcessOption.accesskey   "r">
+<!ENTITY limitContentProcessOption.disabledDescription "Ri rujalwachinik rajilab'al rutajinik rupam xa okel rik'in ri k'ïy tajinïk &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Tawetamaj nanik'oj we tzijïl ri k'ïy tajinïk">
+<!ENTITY allowHWAccel.label              "Tokisäx rupararexik ch'akulakem toq xtiwachin pe">
+<!ENTITY allowHWAccel.accesskey          "a">

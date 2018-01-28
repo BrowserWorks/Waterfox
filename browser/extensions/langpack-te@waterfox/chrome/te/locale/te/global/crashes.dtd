@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "క్రాష్ నివేదికలు">
+<!ENTITY crashesUnsubmitted.label   "సమర్పించని క్రాష్ నివేదికలు">
+<!ENTITY crashesSubmitted.label     "సమర్పించిన క్రాష్ నివేదికలు">
+<!ENTITY id.heading                 "నివేదిక ID">
+<!ENTITY dateCrashed.heading        "క్రాషయిన తేదీ">
+<!ENTITY dateSubmitted.heading      "సమర్పించిన తేది">
+<!ENTITY noReports.label            "ఏ క్రాష్ నివేదికలు సమర్పించబడలేదు">
+<!ENTITY noConfig.label             "క్రాష్ నివేదికలు ప్రదర్శించుటకు ఈ అనువర్తనం ఆకృతీకరించబడిలేదు. అభీష్టం <code>breakpad.reportURL</code> తప్పక అమర్చాలి.">
+<!ENTITY clearAllReports.label      "నివేదికలను తొలగించండి">

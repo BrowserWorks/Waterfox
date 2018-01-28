@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "ಈ ಸಂದೇಶವನ್ನು  ಮುಚ್ಚು">
+
+<!ENTITY checkForUpdates "ಅಪ್‌ಡೇಟ್‌ಗಳಿಗಾಗಿ ಪರಿಶೀಲಿಸು…">
+
+<!ENTITY learnMore "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ...">
+
+
+
+<!ENTITY defaultButton.accesskey "O">
+<!ENTITY defaultButton.label "OK!">

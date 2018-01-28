@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                  "Vaihda pääsalasanaa">
+<!ENTITY setPassword.tokenName.label        "Turvallisuuslaite">
+<!ENTITY setPassword.oldPassword.label      "Nykyinen salasana:">
+<!ENTITY setPassword.newPassword.label      "Kirjoita uusi salasana:">
+<!ENTITY setPassword.reenterPassword.label  "Toista salasana:">
+<!ENTITY setPassword.meter.label            "Salasanan laadun mittari">
+<!ENTITY setPassword.meter.loading          "Ladataan">
+<!ENTITY masterPasswordDescription.label    "Pääsalasanalla suojataan tärkeitä tietoja, kuten sivustojen salasanoja. Jos luot pääsalasanan, &brandShortName; kysyy sitä kerran istunnossa jos se tarvitsee sen suojaamia tietoja.">
+<!ENTITY masterPasswordWarning.label        "Säilytä pääsalasanasi turvallisessa paikassa. Jos unohdat sen, et pääse käsiksi sen suojaamiin tietoihin.">

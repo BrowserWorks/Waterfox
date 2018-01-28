@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Nastavení připojení">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Nastavení proxy serverů pro přístup k internetu">
+<!ENTITY  noProxyTypeRadio.label        "Bez proxy serveru">
+<!ENTITY  noProxyTypeRadio.accesskey    "B">
+<!ENTITY  systemTypeRadio.label         "Použít nastavení proxy serverů v systému">
+<!ENTITY  systemTypeRadio.accesskey     "u">
+<!ENTITY  WPADTypeRadio.label           "Automatické zjištění konfigurace proxy serverů">
+<!ENTITY  WPADTypeRadio.accesskey       "A">
+<!ENTITY  manualTypeRadio.label         "Ruční konfigurace proxy serverů:">
+<!ENTITY  manualTypeRadio.accesskey     "k">
+<!ENTITY  autoTypeRadio.label           "URL pro automatickou konfiguraci proxy serverů:">
+<!ENTITY  autoTypeRadio.accesskey       "m">
+<!ENTITY  reload.label                  "Obnovit">
+<!ENTITY  reload.accesskey              "i">
+<!ENTITY  ftp.label                     "FTP proxy:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP proxy:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL proxy:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS server:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "Použít proxy server pro DNS při použití SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPport.accesskey            "p">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Nepoužívat pro:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "Příklad: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Pro všechny protokoly používat tento proxy server">
+<!ENTITY  shareproxy.accesskey          "e">
+<!ENTITY  autologinproxy.label          "Nedotazovat se na autentizaci, pokud je heslo uloženo">
+<!ENTITY  autologinproxy.accesskey      "e">
+<!ENTITY  autologinproxy.tooltip        "Tato volba zajistí provedení tiché autentizace k proxy, pokud pro ni máte uloženy přihlašovací údaje. Pokud autentizace selže, budete na ně dotázání.">

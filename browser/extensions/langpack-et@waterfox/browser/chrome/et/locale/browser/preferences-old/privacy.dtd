@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Jälitamisvastast kaitset kasutatakse">
+<!ENTITY  trackingProtectionAlways.label       "alati">
+<!ENTITY  trackingProtectionAlways.accesskey   "a">
+<!ENTITY  trackingProtectionPrivate.label      "ainult privaatsetes akendes">
+<!ENTITY  trackingProtectionPrivate.accesskey  "r">
+<!ENTITY  trackingProtectionNever.label        "mitte kunagi">
+<!ENTITY  trackingProtectionNever.accesskey    "g">
+<!ENTITY  trackingProtectionLearnMore.label    "Rohkem teavet">
+<!ENTITY  trackingProtectionExceptions.label   "Erandid…">
+<!ENTITY  trackingProtectionExceptions.accesskey "d">
+
+<!ENTITY tracking.label                 "Jälitamine">
+<!ENTITY trackingProtectionPBM5.label         "Privaatsetes akendes takistatakse veebilehtedel kasutaja jälitamist">
+<!ENTITY trackingProtectionPBM5.accesskey     "t">
+<!ENTITY trackingProtectionPBMLearnMore.label "Rohkem teavet">
+<!ENTITY changeBlockList.label          "Muuda blokkimise nimekirja">
+<!ENTITY changeBlockList.accesskey      "M">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Samuti võid hallata jälitamisvastase kaitse sätteid ">
+<!ENTITY  doNotTrack.settings.label     "siit">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Ajalugu">
+
+<!ENTITY  locationBar.label             "Asukohariba">
+
+<!ENTITY  locbar.suggest.label          "Asukohariba abil otsitakse soovitusi:">
+<!ENTITY  locbar.history.label          "ajaloost">
+<!ENTITY  locbar.history.accesskey      "a">
+<!ENTITY  locbar.bookmarks.label        "järjehoidjatest">
+<!ENTITY  locbar.bookmarks.accesskey    "j">
+<!ENTITY  locbar.openpage.label         "avatud kaartide seast">
+<!ENTITY  locbar.openpage.accesskey     "v">
+<!ENTITY  locbar.searches.label         "vaikeotsingumootori pakutavate seonduvate otsingute seast">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Muuda otsingumootorite soovituste sätteid…">
+<!ENTITY  suggestionSettings.accesskey  "u">
+
+<!ENTITY  acceptCookies2.label          "Küpsised lubatakse">
+<!ENTITY  acceptCookies2.accesskey      "p">
+
+<!ENTITY  acceptThirdParty.pre.label      "Kolmanda osapoole küpsised lubatakse:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "o">
+<!ENTITY  acceptThirdParty.always.label   "alati">
+<!ENTITY  acceptThirdParty.never.label    "mitte kunagi">
+<!ENTITY  acceptThirdParty.visited.label  "varem külastatud saitidelt">
+
+<!ENTITY  keepUntil.label               "Säilitatakse kuni:">
+<!ENTITY  keepUntil.accesskey           "i">
+
+<!ENTITY  expire.label                  "nad aeguvad">
+<!ENTITY  close.label                   "&brandShortName; suletakse">
+
+<!ENTITY  cookieExceptions.label        "Erandid…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Näita küpsiseid…">
+<!ENTITY  showCookies.accesskey         "N">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName;">
+<!ENTITY  historyHeader.pre.accesskey      "F">
+<!ENTITY  historyHeader.remember.label     "säilitab ajaloo">
+<!ENTITY  historyHeader.dontremember.label "ei säilita ajalugu">
+<!ENTITY  historyHeader.custom.label       "kasutab ajaloo säilitamiseks kohandatud sätteid">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; säilitab veebilehitsemise, allalaadimiste, vormide ja otsingu ajaloo ning salvestab küpsised veebilehtedelt, mida külastad.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Sa võid tahta ">
+<!ENTITY  rememberActions.clearHistory.label  "kustutada hiljutise ajaloo">
+<!ENTITY  rememberActions.middle.label        " või ">
+<!ENTITY  rememberActions.removeCookies.label "ainult üksikuid küpsiseid">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; kasutab samu sätteid, mida kasutatakse privaatse veebilehitsemise korral, veebilehitsemise ajalugu ei säilitata.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Sa võid tahta ">
+<!ENTITY  dontrememberActions.clearHistory.label "kustutada ka kogu praeguse ajaloo">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Alati kasutatakse privaatse veebilehitsemise režiimi">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Lehitsemise ja allalaadimiste ajalugu säilitatakse">
+<!ENTITY  rememberHistory2.accesskey  "L">
+
+<!ENTITY  rememberSearchForm.label       "Vormide ja otsingu ajalugu säilitatakse">
+<!ENTITY  rememberSearchForm.accesskey   "V">
+
+<!ENTITY  clearOnClose.label             "&brandShortName;i sulgemisel ajalugu kustutatakse">
+<!ENTITY  clearOnClose.accesskey         "s">
+
+<!ENTITY  clearOnCloseSettings.label     "Sätted…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Konteinerkaardid">
+<!ENTITY  browserContainersLearnMore.label      "Rohkem teavet">
+<!ENTITY  browserContainersEnabled.label        "Konteinerkaardid lubatakse">
+<!ENTITY  browserContainersEnabled.accesskey    "o">
+<!ENTITY  browserContainersSettings.label        "Sätted…">
+<!ENTITY  browserContainersSettings.accesskey    "d">

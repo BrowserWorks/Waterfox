@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "ปิดแท็บนี้">
+<!ENTITY tabCrashed.restoreTab "เรียกคืนแท็บนี้">
+<!ENTITY tabCrashed.restoreAll "เรียกคืนแท็บที่ขัดข้องทั้งหมด">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "อ้าก แท็บของคุณเพิ่งขัดข้อง">
+<!ENTITY tabCrashed.offerHelp "เราสามารถช่วยคุณได้!">
+<!ENTITY tabCrashed.single.offerHelpMessage "เลือก &tabCrashed.restoreTab; เพื่อโหลดเนื้อหาหน้าใหม่">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "เลือก &tabCrashed.restoreTab; หรือ &tabCrashed.restoreAll; เพื่อโหลดเนื้อหาหน้าใหม่">
+<!ENTITY tabCrashed.requestHelp "คุณจะช่วยเราได้หรือไม่?">
+<!ENTITY tabCrashed.requestHelpMessage "รายงานข้อขัดข้องช่วยเราวินิจฉัยปัญหาและทำ &brandShortName; ให้ดีขึ้น">
+<!ENTITY tabCrashed.requestReport "รายงานแท็บนี้">
+<!ENTITY tabCrashed.sendReport2 "ส่งรายงานข้อขัดข้องสำหรับแท็บที่คุณกำลังดูอยู่">
+<!ENTITY tabCrashed.commentPlaceholder2 "ความคิดเห็นเพิ่มเติม (ความคิดเห็นจะปรากฏต่อสาธารณะ)">
+<!ENTITY tabCrashed.includeURL2 "รวม URL ของหน้าไว้ในรายงานข้อขัดข้องนี้">
+<!ENTITY tabCrashed.emailPlaceholder "ป้อนที่อยู่อีเมลของคุณที่นี่">
+<!ENTITY tabCrashed.emailMe "ส่งอีเมลหาฉันเมื่อมีข้อมูลเพิ่มเติม">
+<!ENTITY tabCrashed.reportSent "ส่งรายงานข้อขัดข้องแล้ว; ขอบคุณที่ช่วยทำ &brandShortName; ให้ดีขึ้น!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "รายงานแท็บเบื้องหลัง">
+<!ENTITY tabCrashed.autoSubmit2 "อัปเดตค่ากำหนดให้ส่งรายงานข้อขัดข้องโดยอัตโนมัติ รวมทั้งรายงานสำหรับแท็บเบื้องหลังที่ขัดข้องจากวาระนี้และวาระในอนาคต">

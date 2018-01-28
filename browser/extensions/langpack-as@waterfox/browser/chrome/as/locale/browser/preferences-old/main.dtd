@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "আৰম্ভণি">
+
+<!ENTITY startupPage.label         "যেতিয়া &brandShortName; আৰম্ভ হয়:">
+<!ENTITY startupPage.accesskey     "s">
+
+<!ENTITY startupBlankPage.label    "ৰিক্ত পৃষ্ঠা দেখুৱাওক">
+
+
+<!ENTITY homepage.label            "ঘৰ পৃষ্ঠা:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "বৰ্ত্তমানৰ পৃষ্ঠা ব্যৱহাৰ কৰক">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "বৰ্ত্তমানৰ পৃষ্ঠাসমূহ ব্যৱহাৰ কৰক">
+<!ENTITY chooseBookmark.label      "পত্ৰচিহ্ন ব্যৱহাৰ কৰক…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "অবিকল্পিতলৈ পুনঃ স্থাপন কৰক">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "ডাউনল'ডসমূহ">
+
+<!ENTITY saveTo.label "ফাইলসমূহ চিহ্নিত স্থানত সংৰক্ষণ কৰিব">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ব্ৰাউছ কৰক…">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "নিৰ্বাচন কৰক…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+
+
+
+
+
+
+<!ENTITY isDefault.label                  "&brandShortName; বৰ্তমানে আপোনাৰ অবিকল্পিত ব্ৰাউছাৰ">
+<!ENTITY isNotDefault.label               "&brandShortName; বৰ্তমানে আপোনাৰ অবিকল্পিত ব্ৰাউছাৰ নহয়">
+
+
+
+
+
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY alwaysCheckDefault2.label        "Always check if &brandShortName; is your default browser">
+<!ENTITY e10sEnabled.label                "Enable multi-process &brandShortName;">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY separateProfileMode.label        "Allow &brandShortName; and Waterfox to run at the same time">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser2.label     "Make Default">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">
+<!ENTITY useWaterfoxSync.label             "Tip: This uses separate profiles. Use Sync to share data between them.">

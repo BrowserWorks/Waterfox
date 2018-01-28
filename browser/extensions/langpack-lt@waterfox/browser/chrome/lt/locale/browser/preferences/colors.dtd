@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Spalvos">
+<!ENTITY  window.width                    "42em">
+<!ENTITY  window.macWidth                 "45em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Naudoti ne tinklalapio nurodytas, o mano parinktas spalvas:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "N">
+
+<!ENTITY  overrideDefaultPageColors.always.label "visada">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Tik naudojant grafinius apvalkalus su dideliu kontrastu">
+<!ENTITY  overrideDefaultPageColors.never.label  "niekada">
+
+<!ENTITY  color                           "Tekstas ir fonas">
+<!ENTITY  textColor.label                 "Tekstas:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Fonas:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Spalvas imti iš operacinės sistemos">
+<!ENTITY  useSystemColors.accesskey       "o">
+
+<!ENTITY  underlineLinks.label            "Saitus pabraukti">
+<!ENTITY  underlineLinks.accesskey        "b">
+<!ENTITY  links                           "Saitų spalvos">
+<!ENTITY  linkColor.label                 "nelankytų:">
+<!ENTITY  linkColor.accesskey             "n">
+<!ENTITY  visitedLinkColor.label          "aplankytų:">
+<!ENTITY  visitedLinkColor.accesskey      "a">

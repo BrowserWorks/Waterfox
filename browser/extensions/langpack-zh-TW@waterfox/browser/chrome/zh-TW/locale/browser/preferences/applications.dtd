@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "應用程式">
+<!ENTITY  applications.description "選擇 &brandShortName; 要如何處理您上網時下載的檔案。">
+
+<!ENTITY  typeColumn.label        "內容類型">
+<!ENTITY  typeColumn.accesskey    "t">
+
+<!ENTITY  actionColumn2.label     "動作">
+<!ENTITY  actionColumn2.accesskey "A">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "搜尋檔案類型或應用程式">

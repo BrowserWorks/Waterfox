@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Geri">
+<!ENTITY  button-back-mac.accesskey    "G">
+<!ENTITY  button-next-mac.label        "İrəli">
+<!ENTITY  button-next-mac.accesskey    "l">
+<!ENTITY  button-finish-mac.label      "Oldu">
+<!ENTITY  button-cancel-mac.label      "ləğv et">
+
+<!ENTITY  button-back-unix.label       "Geri qayıt">
+<!ENTITY  button-back-unix.accesskey   "G">
+<!ENTITY  button-next-unix.label       "Növbətini tap">
+<!ENTITY  button-next-unix.accesskey   "N">
+<!ENTITY  button-finish-unix.label     "Tamamlandı">
+<!ENTITY  button-cancel-unix.label     "ləğv et">
+
+<!ENTITY  button-back-win.label        "&lt; Back">
+<!ENTITY  button-back-win.accesskey    "B">
+<!ENTITY  button-next-win.label        "İrəli &gt;">
+<!ENTITY  button-next-win.accesskey    "l">
+<!ENTITY  button-finish-win.label      "Tamamlandı">
+<!ENTITY  button-cancel-win.label      "ləğv et">

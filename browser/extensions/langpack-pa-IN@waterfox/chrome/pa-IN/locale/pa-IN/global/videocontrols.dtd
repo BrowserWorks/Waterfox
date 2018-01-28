@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<!ENTITY playButton.playLabel "ਚਲਾਓ">
+<!ENTITY playButton.pauseLabel "ਵਿਰਾਮ">
+<!ENTITY muteButton.muteLabel "ਚੁੱਪ">
+<!ENTITY muteButton.unmuteLabel "ਸੁਣਾਓ">
+
+<!ENTITY fullscreenButton.enterfullscreenlabel "ਪੂਰੀ ਸਕਰੀਨ">
+<!ENTITY fullscreenButton.exitfullscreenlabel "ਪੂਰੀ ਸਕਰੀਨ ਤੋਂ ਬਾਹਰ ਜਾਓ">
+<!ENTITY castingButton.castingLabel "ਸਕਰੀਨ ਉੱਤੇ ਕਾਸਟ ਕਰੋ">
+<!ENTITY closedCaption.off "ਬੰਦ">
+
+<!ENTITY stats.media "ਮੀਡਿਆ">
+<!ENTITY stats.size "ਆਕਾਰ">
+<!ENTITY stats.activity "ਸਰਗਰਮੀ">
+<!ENTITY stats.activityPaused "ਵਿਰਾਮ ਹੈ">
+<!ENTITY stats.activityPlaying "ਚੱਲਦੀ ਹੈ">
+<!ENTITY stats.activityEnded "ਖਤਮ ਹੋਈ">
+<!ENTITY stats.activitySeeking "(ਪ੍ਰਾਪਤ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ)">
+<!ENTITY stats.volume "ਵਾਲੀਅਮ">
+<!ENTITY stats.framesParsed "ਪਾਰਸ ਕੀਤੇ ਫਰੇਮ">
+<!ENTITY stats.framesDecoded "ਡੀਕੋਡ ਫਰੇਮ">
+<!ENTITY stats.framesPresented "ਪੇਸ਼ ਕੀਤੇ ਫਰੇਮ">
+<!ENTITY stats.framesPainted "ਪੇਂਟ ਕੀਤੇ ਫਰੇਮ">
+
+
+<!ENTITY error.aborted "ਵੀਡੀਓ ਲੋਡ ਹੋਣ ਤੋਂ ਰੁਕ ਗਈ ਹੈ">
+<!ENTITY error.network "ਨੈੱਟਵਰਕ ਗਲਤੀ ਕਰਕੇ ਵਿਡੀਓ ਪਲੇਅਬੈਕ ਨੂੰ ਅਧੂਰਾ ਛੱਡਿਆ।">
+<!ENTITY error.decode "ਫਾਈਲ ਖਰਾਬ ਹੋਣ ਕਰਕੇ ਵਿਡੀਓ ਚਲਾਈ ਨਹੀਂ ਜਾ ਸਕਦੀ।">
+<!ENTITY error.srcNotSupported "ਵਿਡੀਓ ਫਾਰਮੈਟ ਜਾਂ MIME ਕਿਸਮ ਸਹਾਇਕ ਨਹੀਂ ਹੈ।">
+<!ENTITY error.noSource2 "ਸਹਾਇਕ ਫਾਰਮੈਟ ਤੇ MIME ਕਿਸਮ ਵਾਲੀ ਕੋਈ ਵਿਡੀਓ ਨਹੀਂ ਲੱਭੀ।">
+<!ENTITY error.generic "ਵੀਡੀਓ ਪਲੇਅਬੈਕ ਨੂੰ ਅਣਜਾਣ ਕਾਰਨ ਕਰਕੇ ਛੱਡਿਆ ਗਿਆ।">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "#2 ਵਿੱਚੋਂ #1 ਪੂਰੇ ਹੋਏ">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

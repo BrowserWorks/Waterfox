@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Hizivaat Meziantoù">
+
+<!ENTITY  checking.title                  "O wiriañ an hizivadurioù">
+<!ENTITY  updateCheck.label               "Emañ &brandShortName; o klask an hizivadurioù…">
+
+<!ENTITY  noupdatesfound.title            "Hizivadur ebet bet kavet">
+<!ENTITY  noupdatesautoenabled.intro      "N'eus hizivadur ebet hegerz. Gallout a ra &brandShortName; gwiriañ ur wech an amzer mard ez eus hizivadurioù hegerz.">
+<!ENTITY  noupdatesautodisabled.intro     "N'eus hizivadur ebet hegerz. Gwiriit en-dro diwezhatoc'h pe gweredekait gwiriadur emgefreek an hizivadurioù evit &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "N'eo ket c'hallus da hizivaat">
+<!ENTITY  manualUpdate.desc               "Un hizivadur erbedet zo hegerz, met n'hoc'h eus ket an aotreoù da staliañ anezhañ. Klaskit en-dro gant un arveriad aotreet pe git e darempred gant hoc'h ardoer.">
+<!ENTITY  manualUpdate.space.desc         "Un hizivadenn erbedet a-fet diogelroez ha stabilded zo hegerz, koulskoude n'hoc'h eus ket plas a-walc'h a-benn he staliañ.">
+<!ENTITY  manualUpdateGetMsg.label        "Gallout a rit kavout an handelv diwezhañ evit &brandShortName; war :">
+
+<!ENTITY  unsupported.title               "Ar reizhiad n'eo ket skoret">
+<!ENTITY  unsupported.label               "Diamzeret eo ho handelv eus &brandShortName; met n'eo ket skoret an handelv diwezhañ war ho reizhiad. Hizivait ho reizhiad ha klaskit en-dro. Ne welot ket ken an evezhiadenn-mañ en-dro met gallout a rit">
+<!ENTITY  unsupportedLink.label           "gouzout hiroc'h.">
+
+<!ENTITY  clickHere.label                 "Gwelout muioc'h a ditouroù a-zivout an hizivadur-mañ">
+
+<!ENTITY  evangelism.desc                 "Aliet groñs eo deoc'h arloañ an hizivadur-mañ evit &brandShortName; an abretañ ar gwellañ.">
+
+<!ENTITY  downloadPage.title              "O pellgargañ &brandShortName;">
+<!ENTITY  downloading.intro               "O pellgargañ an hizivadur…">
+<!ENTITY  connecting.label                "O kennaskañ ouzh an dafariad hizivadur…">
+<!ENTITY  verificationFailedText.label    "Ne oa ket gouest &brandShortName; da wiriañ anterinder an hizivadur dre live bet pellgarget gantañ, abalamour d'an dra-se emañ bremañ o pellgargañ ar pakad en e bezh.">
+
+<!ENTITY  viewDetails.tooltip             "Gwelout ar munudoù evit an hizivadur-mañ">
+
+<!ENTITY  details.link                    "Munudoù">
+
+<!ENTITY  error.title                     "C'hwitadenn war an hizivaat">
+
+<!ENTITY  error.label                     "Kudennoù zo bet evit klask, pellgargañ pe staliañ an hizivadur-mañ. &brandShortName; n'eo ket bet hizivaet rak :">
+                                           
+<!ENTITY  errorManual.label               "Posupl eo deoc'h hizivaat &brandShortName; dre zorn en ur weladenniñ an ere-mañ ha pellgargañ an handelv diwezhañ :">
+                                           
+<!ENTITY  errorpatching.intro             "N'hall ket bezañ arloet an hizivadur darnel. Klasket e vo en-dro gant &brandShortName; pellgargañ un hizivadur klok.">
+
+<!ENTITY  genericBackgroundError.label    "N'eo ket gouest &brandShortName; da c'houzout hag-eñ ez eus un hizivadenn hegerz. Bezit sur hoc'h eus an handelv diwezhañ eus &brandShortName; digant :">
+
+<!ENTITY  finishedPage.title              "An hizivadur zo prest da vezañ staliet">
+<!ENTITY  finishedPage.text               "Staliet e vo an hizivadur ar wech a zeu ma vo loc'het &brandShortName;. Gallout a rit adloc'hañ &brandShortName; bremañ, pe kenderc'hel gant ho labour.">
+
+<!ENTITY  finishedBackgroundPage.text     "Pellgarget ez eus bet un hizivadur pouezus gant &brandShortName; ha prest eo da vezañ staliet.">
+<!ENTITY  finishedBackground.name         "Hizivaat :">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Staliet e vo an hizivadur ar wech a zeu ma vo loc'het &brandShortName;. Gallout a rit adloc'hañ &brandShortName; bremañ, pe genderc'hel gant ho labour.">
+<!ENTITY  finishedBackground.moreElevated "Aotreoù ardead a zo azgoulennet gant an hizivadenn. Staliet eo vo ar wech a zeu ma vo loc'het &brandShortName;. Gallout a rit adloc'hañ &brandShortName; diouzhtu, kenderc'hel da labourat hag adloc'hañ diwezhatoc'h pe nac'hañ an hizivadenn.">
+
+<!ENTITY  update.details.label            "Munudoù">
+<!ENTITY  update.installedOn.label        "staliet war :">
+<!ENTITY  update.status.label             "Stad :">

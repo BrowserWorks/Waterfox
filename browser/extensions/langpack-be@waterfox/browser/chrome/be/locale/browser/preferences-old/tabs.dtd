@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab пераключае паміж карткамі ў парадку апошняга выкарыстання">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "е">
+
+<!ENTITY newWindowsAsTabs.label       "Адкрываць новыя вокны ў новых картках">
+<!ENTITY newWindowsAsTabs.accesskey   "в">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Папярэджваць пры закрыцці некалькіх картак">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "ь">
+
+<!ENTITY warnOnOpenManyTabs.label       "Папярэджваць, калі адкрыццё некалькіх картак можа запаволіць &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "в">
+
+<!ENTITY switchLinksToNewTabs.label        "Пры адкрыцці спасылкі ў новай картцы адразу пераключацца на яе">
+<!ENTITY switchLinksToNewTabs.accesskey    "р">
+
+<!ENTITY showTabsInTaskbar.label          "Паказваць мініяцюры картак у панэлі задач Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "л">
+<!ENTITY tabsGroup.label          "Карткі">

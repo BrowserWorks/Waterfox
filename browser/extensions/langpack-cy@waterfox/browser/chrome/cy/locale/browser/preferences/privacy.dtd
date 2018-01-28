@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Diogelu Rhag Tracio">
+<!ENTITY  trackingProtection2.description      "Tracio yw casglu eich data pori chi ar draws gwefannau lluosog. Mae modd defnyddio tracio i adeiladu proffil a dangos cynnwys y seiliedig ar eich pori a'ch manylion personol.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Defnyddio Diogelu Tracio i rwystro tracwyr hysbys">
+<!ENTITY  trackingProtectionAlways.label       "Bob tro">
+<!ENTITY  trackingProtectionAlways.accesskey   "B">
+<!ENTITY  trackingProtectionPrivate.label      "Dim ond mewn ffenestri preifat">
+<!ENTITY  trackingProtectionPrivate.accesskey  "D">
+<!ENTITY  trackingProtectionNever.label        "Byth">
+<!ENTITY  trackingProtectionNever.accesskey    "y">
+<!ENTITY  trackingProtectionLearnMore.label    "Dysgu rhagor">
+<!ENTITY  trackingProtectionExceptions.label   "Eithriadau…">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Defnyddio Diogelu Rhag Tracio mewn Ffenestri Preifat">
+<!ENTITY trackingProtectionPBM5.accesskey     "P">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Defnyddio Diogelwch rhag Tracio yn Pori Preifat i rwystro tracwyr hysbys">
+<!ENTITY trackingProtectionPBM6.accesskey     "P">
+<!ENTITY trackingProtectionPBMLearnMore.label "Dysgu rhagor">
+<!ENTITY changeBlockList2.label               "Newid y Rhestr Rhwystro…">
+<!ENTITY changeBlockList2.accesskey           "N">
+
+<!ENTITY  doNotTrack.description        "Anfon neges “Dim Tracio” at wefannau nad ydych am gael eich tracio">
+<!ENTITY  doNotTrack.learnMore.label    "Dysgu rhagor">
+<!ENTITY  doNotTrack.default.label      "Dim ond pan yn defnyddio Diogelwch rhag Tracio">
+<!ENTITY  doNotTrack.always.label       "Bob tro">
+
+<!ENTITY  history.label                 "Hanes">
+<!ENTITY  permissions.label             "Caniatâd">
+
+<!ENTITY  addressBar.label              "Bar Cyfeiriadau">
+<!ENTITY  addressBar.suggest.label      "Pan yn defnyddio'r bar cyfeiriad, cynnig">
+<!ENTITY  locbar.history2.label         "Hanes pori">
+<!ENTITY  locbar.history2.accesskey     "p">
+<!ENTITY  locbar.bookmarks.label        "Nodau Tudalen">
+<!ENTITY  locbar.bookmarks.accesskey    "N">
+<!ENTITY  locbar.openpage.label         "Tabiau ar agor">
+<!ENTITY  locbar.openpage.accesskey     "T">
+<!ENTITY  locbar.searches.label         "Chwiliadau perthnasol o'r peiriant chwilio rhagosodedig">
+<!ENTITY  locbar.searches.accesskey     "h">
+
+<!ENTITY  suggestionSettings2.label     "Newid dewisiadau am awgrymiadau peiriannau chwilio">
+
+<!ENTITY  acceptCookies2.label          "Derbyn cwcis o wefannau">
+<!ENTITY  acceptCookies2.accesskey      "w">
+
+<!ENTITY  acceptThirdParty.pre.label      "Derbyn cwcis trydydd parti:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Bob tro">
+<!ENTITY  acceptThirdParty.never.label    "Byth">
+<!ENTITY  acceptThirdParty.visited.label  "O'r ymwelwyd">
+
+<!ENTITY  keepUntil.label               "Cadw tan:">
+<!ENTITY  keepUntil.accesskey           "C">
+
+<!ENTITY  expire.label                  "byddant yn dod i ben">
+<!ENTITY  close.label                   "Cau &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Eithriadau…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Dangos Cwcis…">
+<!ENTITY  showCookies.accesskey         "C">
+
+<!ENTITY  historyHeader2.pre.label         "Bydd &brandShortName; yn">
+<!ENTITY  historyHeader2.pre.accesskey     "B">
+<!ENTITY  historyHeader.remember.label     "Cofio hanes">
+<!ENTITY  historyHeader.dontremember.label "Peidio cofio hanes">
+<!ENTITY  historyHeader.custom.label       "Defnyddio gosodiadau cyfaddasu ar gyfer hanes">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "Bydd &brandShortName; yn cofio eich hanes pori, llwytho, ffurflenni a chwilio ac yn cadw eich cwcis rhag gwefannau byddwch yn ymweld â nhw.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Efallai'r hoffech ">
+<!ENTITY  rememberActions.clearHistory.label  "glirio eich hanes diweddar">
+<!ENTITY  rememberActions.middle.label        ", neu ">
+<!ENTITY  rememberActions.removeCookies.label "dynnu cwcis unigol">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "Bydd &brandShortName; yn defnyddio'r un gosodiadau â phori preifat, ond ni fydd yn cofio unrhyw hanes wrth i chi bori'r We.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Efallai y byddwch eisiau ">
+<!ENTITY  dontrememberActions.clearHistory.label "clirio'r holl hanes presennol">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Defnyddio'r modd pori preifat bob tro">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Cofio fy hanes pori a hanes llwytho i lawr">
+<!ENTITY  rememberHistory2.accesskey  "o">
+
+<!ENTITY  rememberSearchForm.label       "Cofio hanes chwilio a ffurflen">
+<!ENTITY  rememberSearchForm.accesskey   "C">
+
+<!ENTITY  clearOnClose.label             "Clirio hanes pan fydd &brandShortName; yn cau">
+<!ENTITY  clearOnClose.accesskey         "l">
+
+<!ENTITY  clearOnCloseSettings.label     "Gosodiadau…">
+<!ENTITY  clearOnCloseSettings.accesskey "G">
+
+<!ENTITY  browserContainersLearnMore.label      "Dysgu rhagor">
+<!ENTITY  browserContainersEnabled.label        "Galluogi Tabiau Cynwysyddion">
+<!ENTITY  browserContainersEnabled.accesskey    "G">
+<!ENTITY  browserContainersSettings.label        "Gosodiadau…">
+<!ENTITY  browserContainersSettings.accesskey    "G">

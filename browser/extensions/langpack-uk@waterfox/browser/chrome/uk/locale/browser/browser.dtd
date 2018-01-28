@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Приватний перегляд)">
+
+<!ENTITY appmenu.tooltip                     "Відкрити меню">
+<!ENTITY navbarOverflow.label                "Інші інструменти…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Оновити вкладку">
+<!ENTITY  reloadTab.accesskey                "О">
+<!ENTITY  reloadAllTabs.label                "Оновити всі вкладки">
+<!ENTITY  reloadAllTabs.accesskey            "с">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Закрити вкладки праворуч">
+<!ENTITY  closeTabsToTheEnd.accesskey        "п">
+<!ENTITY  closeOtherTabs.label               "Закрити інші вкладки">
+<!ENTITY  closeOtherTabs.accesskey           "З">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Прикріпити вкладку">
+<!ENTITY  pinTab.accesskey                   "П">
+<!ENTITY  unpinTab.label                     "Відкріпити вкладку">
+<!ENTITY  unpinTab.accesskey                 "В">
+<!ENTITY  sendTabToDevice.label              "Відправити вкладку на пристрій">
+<!ENTITY  sendTabToDevice.accesskey          "т">
+<!ENTITY  sendPageToDevice.label             "Відправити сторінку на пристрій">
+<!ENTITY  sendPageToDevice.accesskey         "с">
+<!ENTITY  sendLinkToDevice.label             "Відправити посилання на пристрій">
+<!ENTITY  sendLinkToDevice.accesskey         "л">
+<!ENTITY  moveToNewWindow.label              "Перенести в нове вікно">
+<!ENTITY  moveToNewWindow.accesskey          "е">
+<!ENTITY  bookmarkAllTabs.label              "Закласти всі вкладки…">
+<!ENTITY  bookmarkAllTabs.accesskey          "к">
+<!ENTITY  undoCloseTab.label                 "Відновити закриту вкладку">
+<!ENTITY  undoCloseTab.accesskey             "о">
+<!ENTITY  closeTab.label                     "Закрити вкладку">
+<!ENTITY  closeTab.accesskey                 "к">
+
+<!ENTITY  listAllTabs.label      "Список усіх вкладок">
+
+<!ENTITY tabCmd.label "Нова вкладка">
+<!ENTITY tabCmd.accesskey "л">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Відкрити розташування…">
+<!ENTITY openFileCmd.label "Відкрити файл…">
+<!ENTITY openFileCmd.accesskey "а">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Параметри сторінки…">
+<!ENTITY printSetupCmd.accesskey "П">
+<!ENTITY printPreviewCmd.label "Попередній перегляд">
+<!ENTITY printPreviewCmd.accesskey "г">
+<!ENTITY printCmd.label "Друкувати…">
+<!ENTITY printCmd.accesskey "к">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Працювати автономно">
+<!ENTITY goOfflineCmd.accesskey "ю">
+
+<!ENTITY menubarCmd.label "Панель меню">
+<!ENTITY menubarCmd.accesskey "н">
+<!ENTITY navbarCmd.label "Панель навігації">
+<!ENTITY personalbarCmd.label "Панель закладок">
+<!ENTITY personalbarCmd.accesskey "к">
+<!ENTITY bookmarksToolbarItem.label "Елементи панелі закладок">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Перезавантажити всі вкладки">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "П">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Закласти всі вкладки…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "З">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Відновити закриту вкладку">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "В">
+
+<!ENTITY pageSourceCmd.label "Програмний код сторінки">
+<!ENTITY pageSourceCmd.accesskey "а">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Інформація про сторінку">
+<!ENTITY pageInfoCmd.accesskey "І">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Дзеркальна вкладка">
+<!ENTITY mirrorTabCmd.accesskey "з">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "На весь екран">
+<!ENTITY enterFullScreenCmd.accesskey "е">
+<!ENTITY exitFullScreenCmd.label "Вийти з повноекранного режиму">
+<!ENTITY exitFullScreenCmd.accesskey "п">
+<!ENTITY fullScreenCmd.label "На весь екран">
+<!ENTITY fullScreenCmd.accesskey "е">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Показати всі вкладки">
+<!ENTITY showAllTabsCmd.accesskey "в">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Увійти в Синхронізацію">
+<!ENTITY fxaSignedIn.tooltip "Відкрити налаштування Синхронізації">
+<!ENTITY fxaSignInError.label "Повторно підключитись до Синхронізації">
+<!ENTITY fxaUnverified.label "Підтвердити свій обліковий запис">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Згорнути">
+<!ENTITY fullScreenRestore.tooltip "Відновити">
+<!ENTITY fullScreenClose.tooltip "Закрити">
+<!ENTITY fullScreenAutohide.label "Приховати панелі">
+<!ENTITY fullScreenAutohide.accesskey "П">
+<!ENTITY fullScreenExit.label "Вийти з повноекранного режиму">
+<!ENTITY fullScreenExit.accesskey "В">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "тепер у повноекранному режимі">
+<!ENTITY fullscreenWarning.generic.label "Цей документ тепер у повноекранному режимі">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Вийти з повноекранного режиму (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Вийти з повноекранного режиму (esc)">
+<!ENTITY leaveDOMFullScreen.label "Вийти з повноекранного режиму">
+<!ENTITY leaveDOMFullScreen.accesskey "В">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "отримав контроль над вашим вказівником. Натисніть Esc для повернення контролю.">
+<!ENTITY pointerlockWarning.generic.label "Цей документ отримав контроль над вашим вказівником. Натисніть Esc для повернення контролю.">
+
+<!ENTITY closeWindow.label "Закрити вікно">
+<!ENTITY closeWindow.accesskey "а">
+
+<!ENTITY bookmarksMenu.label "Закладки">
+<!ENTITY bookmarksMenu.accesskey "З">
+<!ENTITY bookmarkThisPageCmd.label "Закласти цю сторінку">
+<!ENTITY editThisBookmarkCmd.label "Редагувати цю закладку">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Знайти інші служби поширення…">
+<!ENTITY sharePageCmd.label "Поділитися сторінкою">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "д">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Поділитися цим посиланням">
+<!ENTITY shareLink.accesskey "п">
+<!ENTITY shareImage.label "Поділитися цим зображенням">
+<!ENTITY shareImage.accesskey "з">
+<!ENTITY shareSelect.label "Поділитися вибраним">
+<!ENTITY shareSelect.accesskey "в">
+<!ENTITY shareVideo.label "Поділитися цим відео">
+<!ENTITY shareVideo.accesskey "і">
+<!ENTITY feedsMenu2.label "Підписатися на цю сторінку">
+<!ENTITY subscribeToPageMenupopup.label "Підписатися на цю сторінку">
+<!ENTITY subscribeToPageMenuitem.label "Підписатися на цю сторінку…">
+<!ENTITY addCurPagesCmd.label "Закласти всі вкладки…">
+<!ENTITY showAllBookmarks2.label "Показати всі закладки">
+<!ENTITY recentBookmarks.label "Останні закладки">
+<!ENTITY otherBookmarksCmd.label "Інші закладки">
+<!ENTITY mobileBookmarksCmd.label "Мобільні закладки">
+<!ENTITY bookmarksToolbarChevron.tooltip "Показати інші закладки">
+<!ENTITY showRecentlyBookmarked.label     "Показати останні закладки">
+<!ENTITY showRecentlyBookmarked.accesskey "о">
+<!ENTITY hideRecentlyBookmarked.label     "Приховати останні закладки">
+<!ENTITY hideRecentlyBookmarked.accesskey "х">
+
+<!ENTITY backCmd.label                "Назад">
+<!ENTITY backButton.tooltip           "Назад на одну сторінку">
+<!ENTITY forwardCmd.label             "Вперед">
+<!ENTITY forwardButton.tooltip        "Вперед на одну сторінку">
+<!ENTITY backForwardButtonMenu.tooltip "Натисніть праву клавішу чи потягніть вниз, щоб показати історію вкладки">
+<!ENTITY backForwardButtonMenuMac.tooltip "Потягніть вниз, щоб показати історію вкладки">
+<!ENTITY reloadCmd.label              "Оновити">
+<!ENTITY stopCmd.label                "Зупинити">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Перейти за адресою з панелі адреси">
+<!ENTITY printButton.label            "Друкувати">
+<!ENTITY printButton.tooltip          "Надрукувати поточну сторінку">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Перегляд інформації про сайт">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Відкрити панель повідомлень">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Відкрити панель запитів розташування">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Відкрити панель повідомлень встановлення додатків">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Відкрити панель повідомлень автономного сховища">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Відкрити панель повідомлень збереження паролів">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Керувати використанням плагінів">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Налаштувати отримання сповіщень від сайту">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Зберігати дані в постійному сховищі">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Браузер знаходиться під віддаленим керуванням">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Керувати доступом сайту до ваших камери та/або мікрофону">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Керувати доступом сайту до вашого мікрофону">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Керувати доступом сайту до ваших вікон чи екрану">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Відкрити панель повідомлень встановлення">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Перекласти цю сторінку">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Керувати перекладом сторінок">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Керувати використанням програмного забезпечення DRM">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Ви заблокували камеру для цього веб-сайту.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Ви заблокували мікрофон для цього веб-сайту.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Ви заблокували доступ до екрану для цього веб-сайту.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Ви заблокували інформацію розташування для цього веб-сайту.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Ви заблокували сховище даних для цього веб-сайту.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Ви заблокували сповіщення для цього веб-сайту.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Ви заблокували постійне сховище для цього веб-сайту.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Показати історію">
+
+<!ENTITY searchItem.title             "Пошук">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Домівка">
+
+<!ENTITY bookmarksButton.label          "Закладки">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Закладки">
+<!ENTITY bookmarksMenuButton.other.label "Інші закладки">
+<!ENTITY bookmarksMenuButton.mobile.label "Мобільні закладки">
+<!ENTITY viewBookmarksSidebar2.label        "Показати панель закладок">
+<!ENTITY viewBookmarksToolbar.label         "Показати панель закладок">
+<!ENTITY searchBookmarks.label              "Пошук закладок">
+
+<!ENTITY containersMenu.label "Контейнери">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Історія">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Інструменти">
+<!ENTITY toolsMenu.accesskey          "с"> 
+
+<!ENTITY keywordfield.label           "Створити скорочення для цього пошуку…">
+<!ENTITY keywordfield.accesskey       "д">
+
+<!ENTITY downloads.label              "Завантаження">
+<!ENTITY downloads.accesskey          "З">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Додатки">
+<!ENTITY addons.accesskey             "Д">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Веб-розробка">
+<!ENTITY webDeveloperMenu.accesskey   "В">
+
+<!ENTITY inspectContextMenu.label     "Дослідити елемент">
+<!ENTITY inspectContextMenu.accesskey "Д">
+
+<!ENTITY fileMenu.label         "Файл"> 
+<!ENTITY fileMenu.accesskey       "Ф">
+<!ENTITY newUserContext.label             "Нова вкладка в контейнері">
+<!ENTITY newUserContext.accesskey         "н">
+<!ENTITY newNavigatorCmd.label        "Нове вікно">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "в">
+<!ENTITY newPrivateWindow.label     "Приватне вікно">
+<!ENTITY newPrivateWindow.accesskey "т">
+<!ENTITY newNonRemoteWindow.label   "Однопроцесне вікно">
+
+<!ENTITY editMenu.label         "Редагувати"> 
+<!ENTITY editMenu.accesskey       "Р"> 
+<!ENTITY undoCmd.label            "Повернути">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "н"> 
+<!ENTITY redoCmd.label            "Повторити">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "в"> 
+<!ENTITY cutCmd.label           "Вирізати">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "и"> 
+<!ENTITY copyCmd.label            "Копіювати">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "п"> 
+<!ENTITY pasteCmd.label           "Вставити">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "т"> 
+<!ENTITY deleteCmd.label          "Видалити">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "В"> 
+<!ENTITY selectAllCmd.label         "Виділити все">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "с"> 
+<!ENTITY preferencesCmd2.label       "Налаштування">
+<!ENTITY preferencesCmd2.accesskey     "Н">
+<!ENTITY preferencesCmdUnix.label       "Налаштування">
+<!ENTITY preferencesCmdUnix.accesskey     "Н"> 
+
+<!ENTITY clearRecentHistory.label               "Стерти недавню історію…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Вигляд"> 
+<!ENTITY viewMenu.accesskey       "В"> 
+<!ENTITY viewToolbarsMenu.label       "Панелі інструментів"> 
+<!ENTITY viewToolbarsMenu.accesskey     "П"> 
+<!ENTITY viewSidebarMenu.label "Бічна панель">
+<!ENTITY viewSidebarMenu.accesskey "ч">
+<!ENTITY viewCustomizeToolbar.label       "Пристосування…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "П">
+<!ENTITY overflowCustomizeToolbar.label       "Налаштувати панель інструментів…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "Н">
+
+<!ENTITY historyMenu.label "Історія">
+<!ENTITY historyMenu.accesskey "І">
+<!ENTITY historyUndoMenu.label "Недавно закриті вкладки">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Недавно закриті вікна">
+<!ENTITY historyRestoreLastSession.label "Відновити попередній сеанс">
+
+<!ENTITY showAllHistoryCmd2.label "Показати всю історію">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Пристосування">
+<!ENTITY appMenuCustomize.tooltip "Пристосувати меню та панелі">
+<!ENTITY appMenuCustomizeExit.label "Вийти з пристосування">
+<!ENTITY appMenuCustomizeExit.tooltip "Завершити пристосування">
+<!ENTITY appMenuHistory.label "Історія">
+<!ENTITY appMenuHistory.showAll.label "Показати всю історію">
+<!ENTITY appMenuHistory.clearRecent.label "Стерти недавню історію…">
+<!ENTITY appMenuHistory.restoreSession.label "Відновити попередній сеанс">
+<!ENTITY appMenuHistory.viewSidebar.label "Показати панель історії">
+<!ENTITY appMenuHistory.recentHistory.label "Недавня історія">
+<!ENTITY appMenuHelp.label "Довідка">
+<!ENTITY appMenuHelp.tooltip "Відкрити меню довідки">
+
+<!ENTITY appMenuRemoteTabs.label "Синхронізовані вкладки">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Немає відкритих вкладок">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Показати більше">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Показати більше вкладок з цього пристрою">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Показати всі">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Показати всі вкладки з цього пристрою">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Увімкнути синхронізацію вкладок для можливості перегляду вашого списку вкладок з інших пристроїв.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Немає синхронізованих вкладок… поки що!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Хочете побачити тут свої вкладки з інших пристроїв?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Налаштування синхронізації">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Увійдіть, щоб переглядати список вкладок з інших ваших пристроїв.">
+<!ENTITY appMenuRemoteTabs.signin.label "Увійти в Синхронізацію">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Керувати пристроями…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Переглянути бічну панель синхронізованих вкладок">
+
+<!ENTITY customizeMenu.addToToolbar.label "Додати на панель">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Д">
+<!ENTITY customizeMenu.addToPanel.label "Додати в меню">
+<!ENTITY customizeMenu.addToPanel.accesskey "М">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Додати до розширеного меню">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "ш">
+<!ENTITY customizeMenu.moveToToolbar.label "Перенести на панель">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "н">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Перенести в меню">
+<!ENTITY customizeMenu.moveToPanel.accesskey "м">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Прикріпити до розширеного меню">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "к">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Відкріпити від розширеного меню">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "п">
+<!ENTITY customizeMenu.removeFromToolbar.label "Вилучити з панелі">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "В">
+<!ENTITY customizeMenu.removeFromMenu.label "Вилучити з меню">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "В">
+<!ENTITY customizeMenu.addMoreItems.label "Додати інші елементи…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "Д">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Більше">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Введіть пошуковий запит чи адресу">
+<!ENTITY urlbar.accesskey             "с">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Розширення:">
+<!ENTITY urlbar.switchToTab.label     "Перемкнутись на вкладку:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Чи бажаєте покращити свій пошук з пошуковими пропозиціями?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Докладніше…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "о">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Ні">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "Н">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Так">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "Т">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Порада:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Отримуйте допомогу з пошуком! &#x1F50E; навпроти пошукових пропозицій.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Змінити налаштування…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "З">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Змінити налаштування…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "З">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Черга пошуку">
+<!ENTITY contentSearchSubmit.tooltip  "Відправити пошуковий запит">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Пошук">
+<!ENTITY searchIcon.tooltip           "Пошук">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Пошук ">
+<!ENTITY searchWith.label             " за допомогою:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Пошук в ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Шукати з:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Налаштувати пошук">
+<!ENTITY changeSearchSettings.tooltip "Змінити налаштування пошуку">
+
+<!ENTITY searchInNewTab.label         "Пошук в новій вкладці">
+<!ENTITY searchInNewTab.accesskey     "в">
+<!ENTITY searchSetAsDefault.label     "Встановити типовим засобом пошуку">
+<!ENTITY searchSetAsDefault.accesskey "т">
+
+<!ENTITY openLinkCmdInTab.label       "Відкрити посилання в новій вкладці">
+<!ENTITY openLinkCmdInTab.accesskey   "л">
+<!ENTITY openLinkCmd.label            "Відкрити посилання в новому вікні">
+<!ENTITY openLinkCmd.accesskey        "к">
+<!ENTITY openLinkInPrivateWindowCmd.label "Відкрити в приватному вікні">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "и">
+<!ENTITY openLinkCmdInCurrent.label     "Відкрити посилання">
+<!ENTITY openLinkCmdInCurrent.accesskey "В">
+<!ENTITY openFrameCmdInTab.label      "Відкрити фрейм в новій вкладці">
+<!ENTITY openFrameCmdInTab.accesskey  "ц">
+<!ENTITY openFrameCmd.label           "Відкрити фрейм в новому вікні">
+<!ENTITY openFrameCmd.accesskey       "ф">
+<!ENTITY openLinkCmdInContainerTab.label "Відкрити посилання в новій вкладці контейнера">
+<!ENTITY openLinkCmdInContainerTab.accesskey "к">
+<!ENTITY showOnlyThisFrameCmd.label     "Показати тільки цей фрейм">
+<!ENTITY showOnlyThisFrameCmd.accesskey "з">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Оновити фрейм">
+<!ENTITY reloadFrameCmd.accesskey     "в">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Програмний код вибірки">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Програмний код MathML">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "к">
+<!ENTITY viewPageSourceCmd.label      "Програмний код сторінки">
+<!ENTITY viewPageSourceCmd.accesskey  "а">
+<!ENTITY viewFrameSourceCmd.label     "Програмний код фрейма">
+<!ENTITY viewFrameSourceCmd.accesskey "й">
+<!ENTITY viewPageInfoCmd.label        "Інформація про сторінку">
+<!ENTITY viewPageInfoCmd.accesskey    "І">
+<!ENTITY viewFrameInfoCmd.label       "Інформація про фрейм">
+<!ENTITY viewFrameInfoCmd.accesskey   "ф">
+<!ENTITY reloadImageCmd.label         "Перезавантажити зображення">
+<!ENTITY reloadImageCmd.accesskey     "з">
+<!ENTITY viewImageCmd.label           "Переглянути зображення">
+<!ENTITY viewImageCmd.accesskey       "г">
+<!ENTITY viewImageInfoCmd.label       "Інформація про зображення">
+<!ENTITY viewImageInfoCmd.accesskey   "І">
+<!ENTITY viewImageDescCmd.label       "Переглянути опис">
+<!ENTITY viewImageDescCmd.accesskey   "о">
+<!ENTITY viewVideoCmd.label           "Переглянути відео">
+<!ENTITY viewVideoCmd.accesskey       "г">
+<!ENTITY viewBGImageCmd.label         "Переглянути зображення тла">
+<!ENTITY viewBGImageCmd.accesskey     "т">
+<!ENTITY setDesktopBackgroundCmd.label      "Встановити як тло робочого столу…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "с">
+<!ENTITY bookmarkPageCmd2.label       "Закласти цю сторінку">
+<!ENTITY bookmarkThisLinkCmd.label      "Закласти це посилання">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "с">
+<!ENTITY bookmarkThisFrameCmd.label      "Закласти цей фрейм">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "ф">
+<!ENTITY copyURLCmd.label             "Копіювати адресу">
+<!ENTITY emailPageCmd.label           "Переслати посилання…">
+<!ENTITY emailPageCmd.accesskey       "с">
+<!ENTITY savePageCmd.label            "Зберегти як…">
+<!ENTITY savePageCmd.accesskey        "З">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "б">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Зберегти фрейм як…">
+<!ENTITY saveFrameCmd.accesskey       "ф">
+<!ENTITY printFrameCmd.label          "Друкувати фрейм…">
+<!ENTITY printFrameCmd.accesskey      "ф">
+<!ENTITY saveLinkCmd.label            "Зберегти посилання як…">
+<!ENTITY saveLinkCmd.accesskey        "п">
+<!ENTITY saveImageCmd.label           "Зберегти зображення як…">
+<!ENTITY saveImageCmd.accesskey       "б">
+<!ENTITY saveVideoCmd.label           "Зберегти відео як…">
+<!ENTITY saveVideoCmd.accesskey       "в">
+<!ENTITY saveAudioCmd.label           "Зберегти аудіо як…">
+<!ENTITY saveAudioCmd.accesskey       "а">
+<!ENTITY emailImageCmd.label          "Переслати зображення…">
+<!ENTITY emailImageCmd.accesskey      "ж">
+<!ENTITY emailVideoCmd.label          "Переслати відео…">
+<!ENTITY emailVideoCmd.accesskey      "с">
+<!ENTITY castVideoCmd.label           "Відправити відео на пристрій">
+<!ENTITY castVideoCmd.accesskey       "д">
+<!ENTITY emailAudioCmd.label          "Переслати аудіо…">
+<!ENTITY emailAudioCmd.accesskey      "с">
+<!ENTITY playPluginCmd.label          "Активувати цей плагін">
+<!ENTITY playPluginCmd.accesskey      "А">
+<!ENTITY hidePluginCmd.label          "Приховати цей плагін">
+<!ENTITY hidePluginCmd.accesskey      "П">
+<!ENTITY copyLinkCmd.label            "Копіювати посилання">
+<!ENTITY copyLinkCmd.accesskey        "п">
+<!ENTITY copyImageCmd.label           "Копіювати адресу зображення">
+<!ENTITY copyImageCmd.accesskey       "р">
+<!ENTITY copyImageContentsCmd.label   "Копіювати зображення">
+<!ENTITY copyImageContentsCmd.accesskey  "з"> 
+<!ENTITY copyVideoURLCmd.label        "Копіювати адресу відео">
+<!ENTITY copyVideoURLCmd.accesskey    "в">
+<!ENTITY copyAudioURLCmd.label        "Копіювати адресу аудіо">
+<!ENTITY copyAudioURLCmd.accesskey    "у">
+<!ENTITY copyEmailCmd.label           "Копіювати адресу електронної пошти">
+<!ENTITY copyEmailCmd.accesskey       "п">
+<!ENTITY thisFrameMenu.label              "У цьому фреймі">
+<!ENTITY thisFrameMenu.accesskey          "ь">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Відтворити">
+<!ENTITY mediaPlay.accesskey         "т">
+<!ENTITY mediaPause.label            "Пауза">
+<!ENTITY mediaPause.accesskey        "а">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Вимкнути звук">
+<!ENTITY mediaMute.accesskey         "и">
+<!ENTITY mediaUnmute.label           "Увімкнути звук">
+<!ENTITY mediaUnmute.accesskey       "и">
+<!ENTITY mediaPlaybackRate2.label     "Швидкість відтворення">
+<!ENTITY mediaPlaybackRate2.accesskey "в">
+<!ENTITY mediaPlaybackRate050x2.label "Повільно (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "П">
+<!ENTITY mediaPlaybackRate100x2.label "Нормально">
+<!ENTITY mediaPlaybackRate100x2.accesskey "Н">
+<!ENTITY mediaPlaybackRate125x2.label "Швидко (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "к">
+<!ENTITY mediaPlaybackRate150x2.label "Швидше (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "е">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Надшвидко (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "о">
+<!ENTITY mediaLoop.label             "Цикл">
+<!ENTITY mediaLoop.accesskey         "л">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Показати керувальники">
+<!ENTITY mediaShowControls.accesskey "к">
+<!ENTITY mediaHideControls.label     "Приховати керувальники">
+<!ENTITY mediaHideControls.accesskey "к">
+<!ENTITY videoFullScreen.label       "Повний екран">
+<!ENTITY videoFullScreen.accesskey   "е">
+<!ENTITY videoSaveImage.label        "Зберегти кадр як…">
+<!ENTITY videoSaveImage.accesskey    "я">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Показати статистику">
+<!ENTITY videoShowStats.accesskey    "с">
+<!ENTITY videoHideStats.label        "Приховати статистику">
+<!ENTITY videoHideStats.accesskey    "с">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Збільшити">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "л">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Зменшити">
+<!ENTITY fullZoomReduceCmd.accesskey    "н">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Звичайний">
+<!ENTITY fullZoomResetCmd.accesskey     "ч">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Збільшувати лише текст">
+<!ENTITY fullZoomToggleCmd.accesskey    "т">
+<!ENTITY fullZoom.label                 "Масштаб">
+<!ENTITY fullZoom.accesskey             "ш">
+
+<!ENTITY sidebarCloseButton.tooltip     "Закрити бічну панель">
+<!ENTITY sidebarMenuClose.label         "Закрити бічну панель">
+
+<!ENTITY quitApplicationCmdWin2.label       "Вийти">
+<!ENTITY quitApplicationCmdWin2.accesskey   "й">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Вийти з &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Вийти"> 
+<!ENTITY quitApplicationCmd.accesskey   "В">
+<!ENTITY quitApplicationCmdMac2.label   "Вийти з &brandShorterName;">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Закрити">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "к">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Стиль сторінки">
+<!ENTITY pageStyleMenu.accesskey "С">
+<!ENTITY pageStyleNoStyle.label "Без стилю">
+<!ENTITY pageStyleNoStyle.accesskey "Б">
+<!ENTITY pageStylePersistentOnly.label "Основний стиль сторінки">
+<!ENTITY pageStylePersistentOnly.accesskey "О">
+
+<!ENTITY pageReportIcon.tooltip            "Змінити параметри блокування виринаючих вікон для цього сайту">
+
+<!ENTITY allowPopups.accesskey "о">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Змінити налаштування блокування виринаючих вікон…">
+<!ENTITY editPopupSettings.label "Змінити налаштування блокування виринаючих вікон…">
+<!ENTITY editPopupSettings.accesskey "З">
+<!ENTITY dontShowMessage.accesskey "е">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Перемкнути напрям тексту на сторінці">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "м">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Перемкнути напрям тексту на сторінці">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "к">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Знайти на цій сторінці…">
+<!ENTITY findOnCmd.accesskey "ц">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Знайти знову">
+<!ENTITY findAgainCmd.accesskey "т">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Додати словники…">
+<!ENTITY spellAddDictionaries.accesskey "л">
+
+<!ENTITY editBookmark.done.label                     "Готово">
+<!ENTITY editBookmark.removeBookmark.accessKey       "П">
+
+<!ENTITY identity.connectionSecure "Захищене з'єднання">
+<!ENTITY identity.connectionNotSecure "Незахищене з'єднання">
+<!ENTITY identity.connectionFile "Ця сторінка збережена на вашому комп'ютері.">
+<!ENTITY identity.connectionVerified2 "Ви безпечно підключились до цього сайту, власником якого є:">
+<!ENTITY identity.connectionInternal "Це захищена сторінка &brandShortName;.">
+<!ENTITY identity.extensionPage "Ця сторінка завантажена з розширення.">
+<!ENTITY identity.insecureLoginForms2 "Паролі, введені на цій сторінці, можуть бути скомпрометовані.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; заблокував небезпечні частини цієї сторінки.">
+<!ENTITY identity.passiveLoaded "Частини цієї сторінки (такі як зображення) незахищені.">
+<!ENTITY identity.activeLoaded "Ви вимкнули захист на цій сторінці.">
+<!ENTITY identity.weakEncryption "Ця сторінка використовує слабке шифрування.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Ваше з'єднання з цим сайтом не є приватним. Інформація, яку ви відправляєте може бути переглянута іншими (наприклад, паролі, повідомлення, дані кредитних карт та ін.).">
+<!ENTITY identity.description.insecureLoginForms "Введені на цій сторінці дані входу не захищені і можуть бути перехоплені.">
+<!ENTITY identity.description.weakCipher "Ваше з'єднання з цим веб-сайтом використовує слабке шифрування і не є приватним.">
+<!ENTITY identity.description.weakCipher2 "Інші люди можуть переглядати вашу інформацію чи змінювати поведінку веб-сайту.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; заблокував небезпечні частини цієї сторінки.">
+<!ENTITY identity.description.passiveLoaded "Ваше з'єднання не є приватним й інформація, якою ви ділитесь з сайтом може бути переглянута іншими.">
+<!ENTITY identity.description.passiveLoaded2 "Цей веб-сайт має вміст, який не є безпечним (наприклад, зображення).">
+<!ENTITY identity.description.passiveLoaded3 "Хоча &brandShortName; заблокував деякий вміст, все ж на сторінці ще залишається вміст, який не є безпечним (наприклад, зображення).">
+<!ENTITY identity.description.activeLoaded "Цей веб-сайт має вміст, який не є безпечним (наприклад, сценарії) і ваше з'єднання з ним не є приватним.">
+<!ENTITY identity.description.activeLoaded2 "Інформація, якою ви ділитесь з цим сайтом може бути переглянута іншими (наприклад, паролі, повідомлення, дані кредитних карт та ін.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Увімкнути захист">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "У">
+<!ENTITY identity.disableMixedContentBlocking.label "Тимчасово вимкнути захист">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "в">
+<!ENTITY identity.learnMore "Докладніше">
+
+<!ENTITY identity.removeCertException.label "Вилучити виняток">
+<!ENTITY identity.removeCertException.accesskey "В">
+
+<!ENTITY identity.moreInfoLinkText2 "Докладніше">
+
+<!ENTITY identity.permissions "Дозволи">
+<!ENTITY identity.permissionsEmpty "Ви не надали цьому сайту жодних спеціальних дозволів.">
+<!ENTITY identity.permissionsReloadHint "Можливо, вам знадобиться перезавантажити сторінку для застосування змін.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Вкладок браузера">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Синхронізовані вкладки">
+
+<!ENTITY syncedTabs.sidebar.label              "Синхронізовані вкладки">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Увійдіть у Waterfox з інших пристроїв, щоб переглядати їх вкладки тут.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Немає синхронізованих вкладок… поки що!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Хочете побачити тут свої вкладки з інших пристроїв?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Увійдіть, щоб переглядати список вкладок з інших ваших пристроїв.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Немає відкритих вкладок">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Відкрити налаштування Синхронізації">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Увімкніть синхронізацію вкладок для перегляду списку вкладок з інших пристроїв.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Відкрити">
+<!ENTITY syncedTabs.context.open.accesskey                   "В">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Відкрити в новій вкладці">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "н">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Відкрити в новому вікні">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "о">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Відкрити в приватному вікні">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "п">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Закласти цю вкладку…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "З">
+<!ENTITY syncedTabs.context.copy.label                       "Копіювати">
+<!ENTITY syncedTabs.context.copy.accesskey                   "К">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Відкрити всі у вкладках">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "л">
+<!ENTITY syncedTabs.context.managedevices.label              "Керувати пристроями…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "К">
+
+
+<!ENTITY syncBrand.shortName.label    "Синхронізація">
+
+<!ENTITY syncSignIn.label             "Увійти в Синхронізацію…">
+<!ENTITY syncSignIn.accesskey         "У">
+<!ENTITY syncSyncNowItem.label        "Синхронізувати зараз">
+<!ENTITY syncSyncNowItem.accesskey    "С">
+<!ENTITY syncReAuthItem.label         "Перепідключитись до Синхронізації…">
+<!ENTITY syncReAuthItem.accesskey     "П">
+<!ENTITY syncToolbarButton.label      "Синхронізація">
+
+<!ENTITY social.addons.label "Керування службами…">
+
+<!ENTITY social.directory.label "Каталог активації">
+<!ENTITY social.directory.text "Ви можете активувати засоби поширення з каталогу.">
+<!ENTITY social.directory.button "Перейти туди!">
+<!ENTITY social.directory.introText "Натисніть на службу, щоб додати її до &brandShortName;.">
+<!ENTITY social.directory.viewmore.text "Дивитися більше">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Додаткові інструменти та можливості">
+<!ENTITY customizeMode.menuAndToolbars.empty "Потрібно більше інструментів?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Оберіть з тисяч додатків">
+<!ENTITY customizeMode.restoreDefaults "Відновити типові">
+<!ENTITY customizeMode.done "Готово">
+<!ENTITY customizeMode.titlebar "Панель заголовка">
+<!ENTITY customizeMode.toolbars2 "Панелі інструментів">
+<!ENTITY customizeMode.lwthemes "Теми">
+<!ENTITY customizeMode.lwthemes.myThemes "Мої теми">
+<!ENTITY customizeMode.lwthemes.recommended "Рекомендовані">
+<!ENTITY customizeMode.lwthemes.menuManage "Керувати">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "К">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Отримати більше тем">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "б">
+<!ENTITY customizeMode.emptyOverflowList.description "Переміщуйте елементи сюди, щоб мати їх під рукою, але не на панелі інструментів…">
+<!ENTITY customizeMode.uidensity "Щільність">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Звичайна">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Звичайна">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "Н">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Компактна">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Компактна">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "К">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Дотик">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Дотик">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "т">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Використовувати дотик для планшетного режиму">
+
+<!ENTITY getUserMedia.selectCamera.label "Доступ до камери:">
+<!ENTITY getUserMedia.selectCamera.accesskey "к">
+<!ENTITY getUserMedia.selectMicrophone.label "Доступ до мікрофону:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "м">
+<!ENTITY getUserMedia.audioCapture.label "Аудіо з вкладки буде загальнодоступним.">
+<!ENTITY getUserMedia.allWindowsShared.message "Буде надано доступ до всіх видимих вікон на вашому дисплеї.">
+
+<!ENTITY trackingProtection.title "Захист від стеження">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; блокує частини сторінки, які можуть стежити за вашим переглядом.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Цей сайт включає елементи, які можуть стежити за вашим переглядом. Ви вимкнули захист.">
+<!ENTITY trackingProtection.notDetected3 "На цій сторінці не виявлено елементів стеження.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Вимкнути захист для цього сайту">
+<!ENTITY trackingProtection.unblock.accesskey "В">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Вимкнути захист для цього сеансу">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "В">
+<!ENTITY trackingProtection.block2.label "Увімкнути захист">
+<!ENTITY trackingProtection.block2.accesskey "У">
+
+<!ENTITY trackingContentBlocked.message "Стеження">
+<!ENTITY trackingContentBlocked.moreinfo "Частини сторінки, які стежать за вашою активністю в Інтернеті заблоковано.">
+<!ENTITY trackingContentBlocked.learnMore "Дізнатися більше">
+<!ENTITY trackingContentBlocked.options "Налаштування">
+<!ENTITY trackingContentBlocked.unblock2.label "Вимкнути захист для цього сайту">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "з">
+<!ENTITY trackingContentBlocked.block.label "Увімкнути захист">
+<!ENTITY trackingContentBlocked.block.accesskey "У">
+<!ENTITY trackingContentBlocked.disabled.message "Захист від стеження вимкнено">
+
+<!ENTITY pluginNotification.showAll.label "Показати всі">
+<!ENTITY pluginNotification.showAll.accesskey "в">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "Дозволити зараз">
+<!ENTITY pluginActivateAlways.label "Дозволити і запам’ятати">
+<!ENTITY pluginBlockNow.label "Заблокувати плагін">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Закрити">
+
+<!ENTITY appMenuSidebars.label         "Бічні панелі">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Забути останні:">
+<!ENTITY panicButton.view.5min                    "П’ять хвилин">
+<!ENTITY panicButton.view.2hr                     "Дві години">
+<!ENTITY panicButton.view.day                     "24 години">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "При цьому будуть:">
+<!ENTITY panicButton.view.deleteCookies           "Видалені недавні <html:strong>Куки</html:strong>">
+<!ENTITY panicButton.view.deleteHistory           "Видалена недавня <html:strong>Історія</html:strong>">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Закриті всі <html:strong>Вкладки</html:strong> та <html:strong>Вікна</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "Відкрито нове чисте вікно">
+
+<!ENTITY panicButton.view.undoWarning             "Цю дію неможливо відмінити.">
+<!ENTITY panicButton.view.forgetButton            "Забути!">
+
+<!ENTITY panicButton.thankyou.msg1                "Ваша недавня історія була видалена.">
+<!ENTITY panicButton.thankyou.msg2                "Безпечний перегляд!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Дякую!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Докладніше про DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "Д">
+
+<!ENTITY updateAvailable.message "Оновіть &brandShorterName; для підвищення рівня швидкодії та приватності.">
+<!ENTITY updateAvailable.whatsnew.label "Перегляньте, що нового.">
+<!ENTITY updateAvailable.header.message "Доступна нова версія &brandShorterName;.">
+<!ENTITY updateAvailable.acceptButton.label "Завантажити оновлення">
+<!ENTITY updateAvailable.acceptButton.accesskey "З">
+<!ENTITY updateAvailable.cancelButton.label "Не зараз">
+<!ENTITY updateAvailable.cancelButton.accesskey "Н">
+<!ENTITY updateAvailable.panelUI.label "Завантажте оновлення &brandShorterName;">
+
+<!ENTITY updateManual.message "Завантажте нову версію &brandShorterName; і ми допоможемо вам її встановити.">
+<!ENTITY updateManual.whatsnew.label "Перегляньте, що нового.">
+<!ENTITY updateManual.header.message "&brandShorterName; не може оновитися до останньої версії.">
+<!ENTITY updateManual.acceptButton.label "Завантажити &brandShorterName;">
+<!ENTITY updateManual.acceptButton.accesskey "З">
+<!ENTITY updateManual.cancelButton.label "Не зараз">
+<!ENTITY updateManual.cancelButton.accesskey "Н">
+<!ENTITY updateManual.panelUI.label "Завантажте нову версію &brandShorterName;">
+
+<!ENTITY updateRestart.message "Після швидкого перезапуску &brandShorterName; відновить всі відкриті вкладки й вікна.">
+<!ENTITY updateRestart.header.message2 "Перезапуск для оновлення &brandShorterName;.">
+<!ENTITY updateRestart.acceptButton.label "Перезапустити й відновити">
+<!ENTITY updateRestart.acceptButton.accesskey "П">
+<!ENTITY updateRestart.cancelButton.label "Не зараз">
+<!ENTITY updateRestart.cancelButton.accesskey "Н">
+<!ENTITY updateRestart.panelUI.label2 "Перезапуск для оновлення &brandShorterName;">
+
+<!ENTITY pageActionButton.tooltip "Дії сторінки">
+<!ENTITY pageAction.addToUrlbar.label "Додати до панелі адреси">
+<!ENTITY pageAction.removeFromUrlbar.label "Вилучити з панелі адреси">
+
+<!ENTITY sendToDevice.label2 "Надіслати на пристрій">
+<!ENTITY sendToDevice.syncNotReady.label "Синхронізовані пристрої…">

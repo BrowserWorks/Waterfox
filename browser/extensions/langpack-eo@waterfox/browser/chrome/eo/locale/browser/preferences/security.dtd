@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Sekureco">
+<!ENTITY  phishingProtection.label       "Protekto kontraŭ trompaj retejoj">
+
+<!ENTITY  warnOnAddonInstall2.label       "Averti min kiam retejoj volas instali aldonaĵojn">
+<!ENTITY  warnOnAddonInstall2.accesskey   "A">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Bloki danĝeran aŭ trompan enhavon">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloki danĝerajn elŝutojn">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Averti min pri evitendaj kaj maloftaj programoj">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "p">
+
+<!ENTITY  addonExceptions.label         "Esceptoj…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "Formularoj kaj pasvortoj">
+
+<!ENTITY  rememberLogins2.label         "Memori akreditilojn kaj pasvortojn por retejoj">
+<!ENTITY  rememberLogins2.accesskey     "M">
+<!ENTITY  passwordExceptions.label      "Esceptoj…">
+<!ENTITY  passwordExceptions.accesskey  "c">
+
+<!ENTITY  useMasterPassword.label        "Uzi ĉefan pasvorton">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "Ŝanĝi ĉefan pasvorton…">
+<!ENTITY  changeMasterPassword.accesskey "v">
+
+<!ENTITY  savedLogins.label              "Konservitaj akreditiloj…">
+<!ENTITY  savedLogins.accesskey          "a">

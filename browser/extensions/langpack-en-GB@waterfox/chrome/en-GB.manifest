@@ -1,0 +1,14 @@
+locale alerts en-GB en-GB/locale/en-GB/alerts/
+locale autoconfig en-GB en-GB/locale/en-GB/autoconfig/
+locale global en-GB en-GB/locale/en-GB/global/
+locale global-platform en-GB en-GB/locale/en-GB/global-platform/mac/ os=Darwin
+locale global-platform en-GB en-GB/locale/en-GB/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform en-GB en-GB/locale/en-GB/global-platform/win/ os=WINNT
+locale mozapps en-GB en-GB/locale/en-GB/mozapps/
+locale necko en-GB en-GB/locale/en-GB/necko/
+locale passwordmgr en-GB en-GB/locale/en-GB/passwordmgr/
+locale pipnss en-GB en-GB/locale/en-GB/pipnss/
+locale pippki en-GB en-GB/locale/en-GB/pippki/
+locale places en-GB en-GB/locale/en-GB/places/
+locale pluginproblem en-GB en-GB/locale/en-GB/pluginproblem/
+locale weave en-GB en-GB/locale/en-GB/services/

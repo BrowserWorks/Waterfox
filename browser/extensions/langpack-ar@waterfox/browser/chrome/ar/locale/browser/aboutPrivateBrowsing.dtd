@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "لستَ حاليا في نافذة خاصة.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "افتح نافذة خاصة">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "خ">
+
+<!ENTITY privateBrowsing.title                           "التصفح الخاص">
+<!ENTITY privateBrowsing.title.tracking                  "التصفح الخاص مع الحماية من التعقب">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "عندما تتصفح في نافذة خاصة، ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "لا يحفظ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        " فَيَرفُكس:">
+<!ENTITY aboutPrivateBrowsing.info.visited               "الصفحات المُزارة">
+<!ENTITY aboutPrivateBrowsing.info.searches              "عمليات البحث">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "الكعكات">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "الملفات المؤقتة">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "​">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "سيحفظ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " فَيَرفُكس:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "تنزيلاتك">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "علاماتك">
+<!ENTITY aboutPrivateBrowsing.note.before                "التصفح الخاص ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "لا يجعل هويتك مجهولة">
+<!ENTITY aboutPrivateBrowsing.note.after                 " على الإنترنت. باستطاعة رب عملك أو مزود خدمة الإنترنت معرفة الصفحات التي زرتها.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "اعرف المزيد عن ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "التصفح الخاص">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "الحماية من التعقّب">
+<!ENTITY trackingProtection.description2                 "تستخدم بعض المواقع متعقبات تستطيع مراقبتك نشاطك عبر الإنترنت. مع الحماية من التعقب سيحجب فَيَرفُكس الكثير من المتعقبات التي تجمع معلومات عن سلوكك على الإنترنت.">
+<!ENTITY trackingProtection.startTour1                   "اطلع على طريقة عملها">

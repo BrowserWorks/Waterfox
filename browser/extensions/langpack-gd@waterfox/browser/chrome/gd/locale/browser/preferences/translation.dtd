@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Eisgeachdan - Eadar-theangachadh">
+<!ENTITY window.width                     "42em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Chan dèid na cànain a leanas eadar-theangachadh:">
+<!ENTITY treehead.languageName.label      "Cànain">
+<!ENTITY removeLanguage.label             "Thoir air falbh an cànan">
+<!ENTITY removeLanguage.accesskey         "r">
+<!ENTITY removeAllLanguages.label         "Thoir air falbh gach cànan">
+<!ENTITY removeAllLanguages.accesskey     "o">
+
+<!ENTITY noTranslationForSites.label      "Cha bhi eadar-theangachadh ri làimh air na làraichean a leanas:">
+
+<!ENTITY removeSite.label                 "Thoir air falbh an làrach">
+<!ENTITY removeSite.accesskey             "r">
+<!ENTITY removeAllSites.label             "Thoir air falbh a h-uile làrach">
+<!ENTITY removeAllSites.accesskey         "e">
+
+<!ENTITY button.close.label               "Dùin">
+<!ENTITY button.close.accesskey           "D">
+
+<!ENTITY treehead.siteName2.label         "Websites">

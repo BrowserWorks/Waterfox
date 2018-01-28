@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "આ ટેબ ને બંદ કરો">
+<!ENTITY tabCrashed.restoreTab "આ ટેબ પુનઃસ્થાપિત કરો">
+<!ENTITY tabCrashed.restoreAll "બધા ક્રેશ થયેલા ટેબ્સ ને પુનઃસ્થાપિત કરો">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "અરે રે . તમારું ટૅબ હમણાંજ ક્રેશ થયું.">
+<!ENTITY tabCrashed.offerHelp "અમે તમને મદદ કરી શકીએ છીએ!">
+<!ENTITY tabCrashed.single.offerHelpMessage "પસંદ કરો &tabCrashed.restoreTab; પાનું સામગ્રી ફરીથી લોડ કરવા માટે.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "પસંદ કરો &tabCrashed.restoreTab; અથવા &tabCrashed.restoreAll; પાનું સામગ્રી ફરીથી લોડ કરવા માટે.">
+<!ENTITY tabCrashed.requestHelp "તમે અમને મદત કરશો?">
+<!ENTITY tabCrashed.requestHelpMessage "ક્રેશ રિપોર્ટ્સ અમને સમસ્યાઓનું નિદાન કરવામાં સહાય કરે છે અને &brandShortName; વધુ સારું બનાવવા.">
+<!ENTITY tabCrashed.requestReport "આ ટેબની જાણ કરો">
+<!ENTITY tabCrashed.sendReport2 "તમે જોઈ રહ્યાં છો તે ટેબ માટે ક્રેશ રિપોર્ટ મોકલો">
+<!ENTITY tabCrashed.commentPlaceholder2 "વૈકલ્પિક ટિપ્પણી (ટિપ્પણીઓ જાહેર રીતે દૃશ્યમાન છે)">
+<!ENTITY tabCrashed.includeURL2 "આ ક્રેશ રિપોર્ટ સાથે પૃષ્ઠ URL શામેલ કરો">
+<!ENTITY tabCrashed.emailPlaceholder "તમારું ઇમેઇલ સરનામું અહીં દાખલ કરો">
+<!ENTITY tabCrashed.emailMe "જ્યારે વધુ માહિતી ઉપલબ્ધ હોય ત્યારે મને ઇમેઇલ કરો">
+<!ENTITY tabCrashed.reportSent "ક્રેશ રિપોર્ટ પહેલાંથી સબમિટ કરેલ; &brandShortName; વધુ સારું બનાવવા મદદ કરવા માટે આભાર!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "પૃષ્ઠભૂમિ ટૅબ્સની જાણ કરો">
+<!ENTITY tabCrashed.autoSubmit2 "આપમેળે ક્રેશ રિપોર્ટ્સ મોકલવા માટે પસંદગીઓને અપડેટ કરો, આ સત્ર અને ભાવિ સત્રોમાંથી ક્રેશ કરેલ પૃષ્ઠભૂમિ ટેબ્સ માટે રિપોર્ટ્સ સહિત">

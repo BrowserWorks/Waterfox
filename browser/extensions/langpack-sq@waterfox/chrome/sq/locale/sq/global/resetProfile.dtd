@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Rifreskoni &brandShortName;-in">
+<!ENTITY refreshProfile.dialog.description1  "Fillojani nga e para, që të ndreqni probleme dhe t&apos;i riktheni punimin e mbarë.">
+<!ENTITY refreshProfile.dialog.description2  "Kjo do të shkaktojë:">
+<!ENTITY refreshProfile.dialog.items.label1  "Heqjen e shtesave dhe përshtatjeve tuaja">
+<!ENTITY refreshProfile.dialog.items.label2  "Rikthimin e rregullimeve të shfletuesit te parazgjedhjet për to">
+<!ENTITY refreshProfile.dialog.button.label  "Rifreskoje &brandShortName;-in">
+
+<!ENTITY refreshProfile.title                "Bëjini një servis &brandShortName;-it">
+<!ENTITY refreshProfile.button.label         "Rifreskoje &brandShortName;-in…">
+
+<!ENTITY refreshProfile.cleaning.description "Thuajse mbaruam…">

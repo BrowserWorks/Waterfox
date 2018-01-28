@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Zavrieť túto kartu">
+<!ENTITY tabCrashed.restoreTab "Obnoviť túto kartu">
+<!ENTITY tabCrashed.restoreAll "Obnoviť všetky zlyhané karty">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Hups. Vaša karta zlyhala.">
+<!ENTITY tabCrashed.offerHelp "Môžeme vám pomôcť!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Zvoľte &tabCrashed.restoreTab; pre opätovné načítanie obsahu stránky.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Zvoľte &tabCrashed.restoreTab; alebo &tabCrashed.restoreAll; pre opätovné načítanie obsahu stránky.">
+<!ENTITY tabCrashed.requestHelp "Pomôžete nám?">
+<!ENTITY tabCrashed.requestHelpMessage "Správy o zlyhaní nám pomáhajú diagnostikovať problémy a &brandShortName; naďalej vylepšovať.">
+<!ENTITY tabCrashed.requestReport "Nahlásiť túto kartu">
+<!ENTITY tabCrashed.sendReport2 "Odoslať správu o zlyhaní zobrazenej karty">
+<!ENTITY tabCrashed.commentPlaceholder2 "Voliteľný komentár (komentáre sú verejne dostupné)">
+<!ENTITY tabCrashed.includeURL2 "Zahrnúť do tohoto hlásenia aj adresu stránky">
+<!ENTITY tabCrashed.emailPlaceholder "Zadajte e-mailovú adresu">
+<!ENTITY tabCrashed.emailMe "Informujte ma, keď budú dostupné ďalšie informácie">
+<!ENTITY tabCrashed.reportSent "Správa o zlyhaní už bola odoslaná. Ďakujeme, že pomáhate urobiť &brandShortName; lepším!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Nahlásiť karty na pozadí">
+<!ENTITY tabCrashed.autoSubmit2 "Nastaviť automatické odosielanie správ o zlyhaní, vrátane informácií o kartách z tejto relácie a z budúcich relácii">

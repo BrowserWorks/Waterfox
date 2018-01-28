@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Wó profilowach">
+<!ENTITY aboutProfiles.subtitle "Toś ten bok wam pomaga, waše profile zastojaś. Kuždy profil jo wósebny swět, kótaryž wopśimujo wósebnu historiju, wósebne cytańske znamjenja, nastajenja a dodanki.">
+<!ENTITY aboutProfiles.create "Nowy profil załožyś">
+<!ENTITY aboutProfiles.restart.title "Znowego startowaś">
+<!ENTITY aboutProfiles.restart.inSafeMode "Ze znjemóžnjonymi dodankami znowego startowaś…">
+<!ENTITY aboutProfiles.restart.normal "Normalnje znowego startowaś…">

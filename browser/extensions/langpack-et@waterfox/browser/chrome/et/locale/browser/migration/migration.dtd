@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title         "Importimise nõustaja">
+
+<!ENTITY importFrom.label              "Sätete, järjehoidjate, ajaloo, paroolide ja muude andmete importimine rakendusest:">
+<!ENTITY importFromUnix.label          "Eelistuste, järjehoidjate, ajaloo, paroolide ja muude andmete importimine rakendusest:">
+<!ENTITY importFromBookmarks.label     "Järjehoidjate importimine rakendusest:">
+
+<!ENTITY importFromIE.label            "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey        "M">
+<!ENTITY importFromEdge.label          "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey      "E">
+<!ENTITY importFromNothing.label       "Midagi ei impordita">
+<!ENTITY importFromNothing.accesskey   "d">
+<!ENTITY importFromSafari.label        "Safari">
+<!ENTITY importFromSafari.accesskey    "S">
+<!ENTITY importFromCanary.label        "Chrome Canary">
+<!ENTITY importFromCanary.accesskey    "n">
+<!ENTITY importFromChrome.label        "Chrome">
+<!ENTITY importFromChrome.accesskey    "C">
+<!ENTITY importFromChromium.label      "Chromium">
+<!ENTITY importFromChromium.accesskey  "u">
+<!ENTITY importFromWaterfox.label       "Waterfox">
+<!ENTITY importFromWaterfox.accesskey   "x">
+<!ENTITY importFrom360se.label         "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey     "3">
+
+<!ENTITY noMigrationSources.label      "Rakendusi, mis sisaldavad järjehoidjaid, ajalugu või paroole, ei leitud.">
+
+<!ENTITY importSource.title            "Sätete ja andmete importimine">
+<!ENTITY importItems.title             "Imporditavad elemendid">
+<!ENTITY importItems.label             "Vali, millised elemendid imporditakse:">
+
+<!ENTITY migrating.title               "Importimine...">
+<!ENTITY migrating.label               "Toimub järgnevate elementide importimine...">
+
+<!ENTITY selectProfile.title           "Profiili valimine">
+<!ENTITY selectProfile.label           "Importimiseks on saadaval järgnevad profiilid:">
+
+<!ENTITY done.title                    "Importimine on lõpetatud">
+<!ENTITY done.label                    "Järgnevate elementide importimine õnnestus:">
+
+<!ENTITY closeSourceBrowser.label      "Enne jätkamist kontrolli, et valitud brauser oleks suletud.">

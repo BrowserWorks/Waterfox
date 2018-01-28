@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Настройки">
+<!ENTITY  prefWindow.title        "Настройки">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Настройки &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 51.5em; min-height: 46em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 58em; min-height: 42em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 54em; min-height: 42em;">
+
+<!ENTITY  paneSearchResults.title       "Результаты поиска">
+<!ENTITY  paneGeneral.title             "Основные">
+<!ENTITY  paneSearch.title              "Поиск">
+<!ENTITY  paneFilesApplications.title   "Файлы и Приложения">
+<!ENTITY  panePrivacySecurity.title     "Приватность и Защита">
+<!ENTITY  paneContainers.title          "Вкладки в контейнере">
+<!ENTITY  paneUpdates.title             "Обновления">
+
+<!ENTITY  languageAndAppearance.label   "Язык и внешний вид">
+<!ENTITY  filesAndApplications.label    "Файлы и Приложения">
+<!ENTITY  browserPrivacy.label          "Приватность браузера">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Аккаунт Waterfox">
+
+<!ENTITY  helpButton2.label        "Поддержка &brandShortName;">

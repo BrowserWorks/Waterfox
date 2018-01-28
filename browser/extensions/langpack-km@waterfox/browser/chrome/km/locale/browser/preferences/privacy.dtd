@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "ការពារ​ការ​តាមដាន">
+<!ENTITY  trackingProtection.description       "ការ​តាមដាន​គឺ​នៅពេល​ដែល​ក្រុមហ៊ុន​ប្រមូល​ព័ត៌មាន​អំពី​អ្នក​ដើម្បី​បង្កើត​ប្រវត្តិរូប ហើយ​បង្ហាញ​មាតិកា​ដោយ​ផ្អែក​លើ​ការ​រកមើល​និង​ទិន្នន័យ​ផ្ទាល់ខ្លួន​របស់​អ្នក។">
+<!ENTITY  trackingProtection.radioGroupLabel   "ទប់ស្កាត់​ក្រុមហ៊ុន​តាមដាន​ដែល​ស្គាល់​កុំឲ្យ​បង្ហាញ​មាតិកា">
+<!ENTITY  trackingProtectionAlways.label       "ជានិច្ច">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "តែ​នៅ​ក្នុង​បង្អួច​ឯកជន​ប៉ុណ្ណោះ">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "កុំ">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "ស្វែងយល់​បន្ថែម​">
+<!ENTITY  trackingProtectionExceptions.label   "ករណី​លើកលែង…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "តាមដាន">
+<!ENTITY trackingProtectionPBM5.label         "ប្រើ​ការ​ទប់​ស្កាត់​ការ​តាម​ដាន​នៅ​ក្នុង​បង្អួចឯកជន​">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "ស្វែងយល់​បន្ថែម​">
+<!ENTITY changeBlockList.label          "ផ្លាស់ប្ដូរ​បញ្ជី​ទប់​ស្កាត់">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "អ្នក​ក៏​អាច ">
+<!ENTITY  doNotTrack.settings.label     "គ្រប់គ្រង​ការ​កំណត់ &quot;កុំ​តាមដាន&quot; របស់​អ្នក">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "ប្រវត្តិ">
+
+<!ENTITY  locationBar.label             "របារ​ទីតាំង">
+
+<!ENTITY  locbar.suggest2.label         "ពេល​ប្រើ​របារ​ទីតាំង ស្នើ">
+<!ENTITY  locbar.history.label          "ប្រវត្តិ">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "ចំណាំ">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "បើក​ផ្ទាំង">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "ការ​ស្វែង​រក​ដែល​ពាក់​ព័ន្ធ​ពី​ម៉ាសុីន​ស្វែង​រក​លំនាំ​ដើម​">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "ប្ដូរ​ចំណូលចិត្ត​សម្រាប់​ការ​សំណើ​ម៉ាស៊ីន​ស្វែងរក">
+
+<!ENTITY  acceptCookies.label           "ទទួលយក​ខូគី​ពី​តំបន់​បណ្ដាញ">
+<!ENTITY  acceptCookies.accesskey       "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "ព្រម​ទទួល​ខូគី​ភាគី​ទីបី៖">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "ជានិច្ច">
+<!ENTITY  acceptThirdParty.never.label    "កុំ">
+<!ENTITY  acceptThirdParty.visited.label  "ពី​អ្វី​ដែល​ទស្សនា">
+
+<!ENTITY  keepUntil.label               "ទុក​រហូត​ដល់៖">
+<!ENTITY  keepUntil.accesskey           "ដ">
+
+<!ENTITY  expire.label                  "ពួកវា​ផុត​កំណត់">
+<!ENTITY  close.label                   "ខ្ញុំ​បិទ &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "ករណី​លើកលែង…">
+<!ENTITY  cookieExceptions.accesskey    "រ">
+
+<!ENTITY  showCookies.label             "បង្ហាញ​ខូគី... ">
+<!ENTITY  showCookies.accesskey         "ប">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; នឹង">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "ចងចាំ​ប្រវត្តិ">
+<!ENTITY  historyHeader.dontremember.label "កុំ​ចងចាំ​ប្រវត្តិ">
+<!ENTITY  historyHeader.custom.label       "ប្រើ​ការ​កំណត់​ផ្ទាល់ខ្លួន​សម្រាប់​ប្រវត្តិ">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; នឹង​ចងចាំ​ការ​រកមើល​ ការ​ទាញ​យក ប្រវត្តិ​ស្វែងរក និង​សំណុំ​បែបបទ​របស់​អ្នក ហើយ​នឹង​រក្សាទុក​ខូគី​ឲ្យ​ឆ្ងាយ​ពី​តំបន់បណ្ដាញ​ដែល​អ្នក​ទស្សនា ។">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "អ្នក​អាច​ចង់ ">
+<!ENTITY  rememberActions.clearHistory.label  "សម្អាត​ប្រវត្តិ​ថ្មីៗ">
+<!ENTITY  rememberActions.middle.label        " ឬ">
+<!ENTITY  rememberActions.removeCookies.label "យក​ខូគី​នីមួយៗ​ចេញ">
+<!ENTITY  rememberActions.post.label          "។">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; នឹង​ប្រើ​ការ​កំណត់​ដូច​គ្នា​ជា​ការ​​រក​មើល​ឯកជន ហើយ​នឹង​មិន​ចងចាំ​ប្រវត្តិ​ណាមួយ ពេល​ដែល​អ្នក​រក​មើល​តំបន់​បណ្ដាញ​នោះ​ទេ ។">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "អ្នក​ក៏​អាច​ចង់">
+<!ENTITY  dontrememberActions.clearHistory.label "សម្អាត​ប្រវត្តិ​ថ្មីៗ​ទាំងអស់">
+<!ENTITY  dontrememberActions.post.label         "។">
+
+<!ENTITY  privateBrowsingPermanent2.label "ប្រើ​របៀប​រកមើល​ឯកជន​ជានិច្ច">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ប">
+
+<!ENTITY  rememberHistory2.label      "ចងចាំ​ប្រវត្តិ​ទាញយក និង​ការ​រុករក​របស់​ខ្ញុំ">
+<!ENTITY  rememberHistory2.accesskey  "ច">
+
+<!ENTITY  rememberSearchForm.label       "ចងចាំ​ប្រវត្តិ​ស្វែងរក និង​សំណុំ​បែបបទ">
+<!ENTITY  rememberSearchForm.accesskey   "ទ">
+
+<!ENTITY  clearOnClose.label             "សម្អាតប្រវត្តិ​នៅ​ពេល &brandShortName; បិទ">
+<!ENTITY  clearOnClose.accesskey         "ប">
+
+<!ENTITY  clearOnCloseSettings.label     "កំពុង​កំណត់…">
+<!ENTITY  clearOnCloseSettings.accesskey "ង">
+
+<!ENTITY  browserContainersHeader.label         "ផ្ទាំង​ឧបករណ៍​ផ្ទុក">
+<!ENTITY  browserContainersLearnMore.label      "ស្វែងយល់​បន្ថែម">
+<!ENTITY  browserContainersEnabled.label        "បើក​ផ្ទាំង​ឧបករណ៍​ផ្ទុក">
+<!ENTITY  browserContainersEnabled.accesskey    "​">
+<!ENTITY  browserContainersSettings.label        "ការ​កំណត់...">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

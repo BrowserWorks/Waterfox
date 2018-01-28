@@ -1,0 +1,195 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nova aplikacija...">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Otvori zapakiranu aplikaciju...">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Otvori hostanu aplikaciju...">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Otvori aplikaciju...">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Instaliraj i pokreni">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Zaustavi aplikaciju">
+<!ENTITY projectMenu_stop_accesskey "Z">
+<!ENTITY projectMenu_debug_label "Otklanjanje grešaka aplikacije">
+<!ENTITY projectMenu_debug_accesskey "g">
+<!ENTITY projectMenu_remove_label "Ukloni projekt">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Osobitosti">
+<!ENTITY projectMenu_showPrefs_accesskey "s">
+<!ENTITY projectMenu_manageComponents_label "Upravljanje dodatnim komponentama">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "Osvježi kartice">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Prekini vezu">
+<!ENTITY runtimeMenu_disconnect_accesskey "k">
+<!ENTITY runtimeMenu_takeScreenshot_label "Slika zaslona">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Informacije o vremenu izvršavanja">
+
+<!ENTITY runtimeMenu_showMonitor_label "Zaslon">
+<!ENTITY runtimeMenu_showMonitor_accesskey "N">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Postavke uređaja">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "Postavke uređaja">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "Pogled">
+<!ENTITY viewMenu_accesskey "l">
+<!ENTITY viewMenu_zoomin_label "Uvećaj">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "Uvećaj">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "Poništi uvećanje">
+<!ENTITY viewMenu_resetzoom_accesskey "U">
+
+<!ENTITY projectButton_label "Otvori aplikaciju">
+<!ENTITY runtimeButton_label "Odaberi runtime">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Moji projekti">
+<!ENTITY projectPanel_runtimeApps "Runtime aplikacije">
+<!ENTITY projectPanel_tabs "Kartice">
+<!ENTITY runtimePanel_usb "USB uređaji">
+<!ENTITY runtimePanel_wifi "Wi-Fi uređaji">
+<!ENTITY runtimePanel_simulator "Simulatori">
+<!ENTITY runtimePanel_other "Drugi">
+<!ENTITY runtimePanel_installsimulator "Instaliraj Simulator">
+<!ENTITY runtimePanel_noadbhelper "Instaliraj ADB pomoćnika">
+<!ENTITY runtimePanel_nousbdevice "Ne vidite svoj uređaj?">
+<!ENTITY runtimePanel_refreshDevices_label "Osvježi uređaje">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "vrijedi">
+<!ENTITY details_warning_header "upozorenja">
+<!ENTITY details_error_header "greške">
+<!ENTITY details_description "Opis">
+<!ENTITY details_location "Lokacija">
+<!ENTITY details_manifestURL "ID aplikacije">
+<!ENTITY details_removeProject_button "Ukloni projekt">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "Nova aplikacija">
+<!ENTITY newAppHeader "Odaberi predložak">
+<!ENTITY newAppLoadingTemplate "Učitavanje predložaka...">
+<!ENTITY newAppProjectName "Naziv projekta:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "Zatvori">
+<!-- Addons -->
+
+<!ENTITY addons_title "Dodatne komponente">
+<!ENTITY addons_aboutaddons "Otvori upravitelja dodacima">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "Postavke">
+<!ENTITY prefs_editor_title "Uređivač">
+<!ENTITY prefs_general_title "Općenito">
+<!ENTITY prefs_restore "Vrati zadano">
+<!ENTITY prefs_manage_components "Upravljanje dodatnim komponentama">
+<!ENTITY prefs_options_autoconnectruntime "Povezivanje na prijašnji runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Povezuje se na prijašnji runtime kad se WebIDE pokreće">
+<!ENTITY prefs_options_rememberlastproject "Zapamti zadnji projekt">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Vrati prijašnji projekt kad se WebIDE pokrene">
+<!ENTITY prefs_options_templatesurl "URL predložaka">
+<!ENTITY prefs_options_templatesurl_tooltip "Indeks dostupnih predložaka">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "Informacije o vremenu izvršavanja">
+<!ENTITY runtimedetails_adbIsRoot "ADB je root: ">
+<!ENTITY runtimedetails_summonADBRoot "root uređaj">
+<!ENTITY runtimedetails_ADBRootWarning "(zahtjeva otključani bootloader)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Neograničene DevTools ovlasti: ">
+<!ENTITY runtimedetails_requestPrivileges "zatraži veća dopuštenja">
+<!ENTITY runtimedetails_privilegesWarning "(Ponovno će pokrenuti uređaj. Zahtijeva root pristup.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenumber "Cijeli broj">
+<!ENTITY device_typestring "Znakovni niz">
+<!ENTITY device_typeobject "Objekt">
+<!ENTITY device_typenone "Odaberi vrstu">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "Postavke uređaja">
+<!ENTITY devicepreference_search "Postavke pretraživanja">
+<!ENTITY devicepreference_newname "Naziv nove postavke">
+<!ENTITY devicepreference_newtext "Vrijednost postavke">
+<!ENTITY devicepreference_addnew "Dodaj novu postavku">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "Postavke uređaja">
+<!ENTITY devicesetting_search "Postavke pretraživanja">
+<!ENTITY devicesetting_newname "Naziv nove postavke">
+<!ENTITY devicesetting_newtext "Vrijednost postavke">
+<!ENTITY devicesetting_addnew "Dodaj novu postavku">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "Zaslon">
+<!ENTITY monitor_help "Pomoć">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "Identifikacija klijenta">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Krajnja točka na koju se povezujete zahtijeva dodatne informacije za autentikaciju ove veze.  Molim skenirajte QR kôd prikazan na ekranu drugog uređaja.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Nema dijaloga QR skenera?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Imate dijalog QR skenera?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Ako vas drugi uređaj traži token umjesto skeniranja QR kôda, kopirajte navedenu vrijednost na drugi uređaj:">
+<!ENTITY wifi_auth_qr_size_note "Ako se QR kôd čini premalim za uspješnu uspostavu veze, pokušajte uvećati ili proširiti prozor.">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "Pre-packaging command zapisnik">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "Mogućnosti simulatora">
+<!ENTITY simulator_remove "Obriši simulator">
+<!ENTITY simulator_reset "Vrati zadano">
+
+<!ENTITY simulator_software "Softver">
+<!ENTITY simulator_version "Inačica">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Hardver">
+<!ENTITY simulator_device "Uređaj">
+<!ENTITY simulator_screenSize "Zaslon">
+<!ENTITY simulator_pixelRatio "Odnos piksela">
+<!ENTITY simulator_tv_data "TV simulacija">
+<!ENTITY simulator_tv_data_open "Konfiguracijski podaci">
+<!ENTITY simulator_tv_data_open_button "Otvori konfiguracijski direktorij…">
+
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY simulator_name "Name">

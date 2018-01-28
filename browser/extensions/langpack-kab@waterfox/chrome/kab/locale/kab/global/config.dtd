@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ɣef:tawila">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Ɣuṛ-k, aya yezmer ad k-iḍuṛṛ!">
+<!ENTITY aboutWarningText.label "Asnifel n ismenyifen-agi zemren ad sexṣeren arkad, taɣellist d timellit n usnas-agi. Tzemreḍ kan ad kemleḍ ma yella teẓriḍ ayen tmahaleḍ.">
+<!ENTITY aboutWarningButton2.label "Gziɣ uguren!">
+<!ENTITY aboutWarningCheckbox.label "Sken alɣu-yagi tikelt d-iteddun">
+
+<!ENTITY searchPrefs.label "Nadi:">
+<!ENTITY searchPrefs.accesskey "N">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Isem n usmenyaf">
+<!ENTITY lockColumn.label "Addad">
+<!ENTITY typeColumn.label "Tawsit">
+<!ENTITY valueColumn.label "Azal">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Sit i wesmizzwer"> 
+<!ENTITY columnChooser.tooltip "Fren tigejda ad sekneḍ"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Nɣel">
+<!ENTITY copyPref.accesskey "N">
+<!ENTITY copyName.label "Nɣel isem">
+<!ENTITY copyName.accesskey "s">
+<!ENTITY copyValue.label "Nɣel azal">
+<!ENTITY copyValue.accesskey "a">
+<!ENTITY modify.label "snifel">
+<!ENTITY modify.accesskey "s">
+<!ENTITY toggle.label "Tti">
+<!ENTITY toggle.accesskey "i">
+<!ENTITY reset.label "Wennez tikelt nniḍen">
+<!ENTITY reset.accesskey "W">
+<!ENTITY new.label "Amaynut">
+<!ENTITY new.accesskey "m">
+<!ENTITY string.label "Azrir n isekkilen">
+<!ENTITY string.accesskey "A">
+<!ENTITY integer.label "Ummid">
+<!ENTITY integer.accesskey "U">
+<!ENTITY boolean.label "Abulan">
+<!ENTITY boolean.accesskey "b">

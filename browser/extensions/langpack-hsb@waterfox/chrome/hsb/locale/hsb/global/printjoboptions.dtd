@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Kajkosće ćišćaka">
+
+<!ENTITY paperInput.label "Wulkosć papjery:">
+<!ENTITY paperInput.accesskey "W">
+
+<!ENTITY jobTitleInput.label "Titul procesa:">
+<!ENTITY jobTitleInput.accesskey "T">
+
+<!ENTITY colorGroup.label "Barba:">
+<!ENTITY grayRadio.label "Nuansy šěrosće">
+<!ENTITY grayRadio.accesskey "u">
+<!ENTITY colorRadio.label "Barba">
+<!ENTITY colorRadio.accesskey "B">
+
+<!ENTITY edgeMarginInput.label "Mjezera wot hrany papjery ke kromje">
+<!ENTITY topInput.label "Horjeka:">
+<!ENTITY topInput.accesskey "H">
+<!ENTITY bottomInput.label "Deleka:">
+<!ENTITY bottomInput.accesskey "D">
+<!ENTITY leftInput.label "Nalěwo:">
+<!ENTITY leftInput.accesskey "l">
+<!ENTITY rightInput.label "Naprawo:">
+<!ENTITY rightInput.accesskey "N">

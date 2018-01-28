@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Parameters - Datas da websites">
+<!ENTITY     hostCol.label                 "Website">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Memoria">
+<!ENTITY     searchTextboxPlaceHolder             "Tschertgar websites">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "s">
+<!ENTITY     removeSelected.label          "Stizzar las tschernidas">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Memorisar las midadas">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Interrumper">
+<!ENTITY     cancel.accesskey              "m">
+<!ENTITY     removingDialog.title          "Stizzar las datas da la website">
+<!ENTITY     removingSelected.description  "Cun allontanar las datas da la website vegnan era ils cookies ed il cuntegn offline appartegnent allontanads. Quai ta po deconnectar da websites. Vuls ti propi far questas midadas?">
+<!ENTITY     siteTree.label                "Ils suandants cookies vegnan stizzads:">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Εξαιρέσεις - Μετάφραση">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Η μετάφραση δεν είναι διαθέσιμη για τις ακόλουθες γλώσσες:">
+<!ENTITY treehead.languageName.label      "Γλώσσες">
+<!ENTITY removeLanguage.label             "Αφαίρεση γλώσσας">
+<!ENTITY removeLanguage.accesskey         "π">
+<!ENTITY removeAllLanguages.label         "Αφαίρεση όλων των γλωσσών">
+<!ENTITY removeAllLanguages.accesskey     "λ">
+
+<!ENTITY noTranslationForSites.label      "Η μετάφραση δεν είναι διαθέσιμη για τις ακόλουθες ιστοσελίδες:">
+<!ENTITY treehead.siteName2.label         "Ιστοσελίδες">
+<!ENTITY removeSite.label                 "Αφαίρεση ιστοσελίδας">
+<!ENTITY removeSite.accesskey             "μ">
+<!ENTITY removeAllSites.label             "Αφαίρεση όλων των ιστοσελίδων">
+<!ENTITY removeAllSites.accesskey         "ν">
+
+<!ENTITY button.close.label               "Κλείσιμο">
+<!ENTITY button.close.accesskey           "Κ">

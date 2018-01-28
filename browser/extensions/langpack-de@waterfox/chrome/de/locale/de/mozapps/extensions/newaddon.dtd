@@ -1,0 +1,11 @@
+<!ENTITY title           "Add-on installieren">
+<!ENTITY intro           "Ein anderes Programm auf Ihrem Computer möchte
+                          &brandShortName; durch folgendes Add-on modifizieren:">
+<!ENTITY warning         "Installieren Sie Add-ons nur von Autoren, denen Sie vertrauen.">
+<!ENTITY allow           "Diese Installation erlauben">
+<!ENTITY later           "Sie können jederzeit Ihre Entscheidung ändern, indem
+                          Sie die Add-ons-Verwaltung öffnen.">
+<!ENTITY continue        "Weiter">
+<!ENTITY restartMessage  "Sie müssen &brandShortName; neu starten, um die Installation dieses Add-ons fertigzustellen.">
+<!ENTITY restartButton   "&brandShortName; neu starten">
+<!ENTITY cancelButton    "Abbrechen">

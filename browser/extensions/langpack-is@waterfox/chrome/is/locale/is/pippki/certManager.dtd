@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Umsýsla skilríkja">
+
+<!ENTITY certmgr.tab.mine                     "Skilríkin þín">
+<!ENTITY certmgr.tab.others2                  "Fólk">
+<!ENTITY certmgr.tab.websites3                "Netþjónar">
+<!ENTITY certmgr.tab.ca                       "Vottunarstöðvar">
+<!ENTITY certmgr.tab.orphan2                  "Annað">
+
+<!ENTITY certmgr.mine                         "Skilríki frá stofnunum sem auðkenna þig:">
+<!ENTITY certmgr.others                       "Skilríki sem auðkenna þetta fólk:">
+<!ENTITY certmgr.websites2                    "Skilríki sem auðkenna þessi vefsvæði:">
+<!ENTITY certmgr.cas                          "Skilríki sem auðkenna þessar vottunarstöðvar:">
+<!ENTITY certmgr.orphans                      "Skilríki sem passa ekki í neina aðra flokka:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Almennt">
+<!ENTITY certmgr.detail.general_tab.accesskey "A">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Nánar">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "N">
+
+<!ENTITY certmgr.pending.label                "Er að sannvotta skilríki…">
+<!ENTITY certmgr.subjectinfo.label            "Gefið út fyrir">
+<!ENTITY certmgr.issuerinfo.label             "Gefið út af">
+<!ENTITY certmgr.periodofvalidity.label       "Tímabil í gildi" >
+<!ENTITY certmgr.fingerprints.label           "Fingraför">
+<!ENTITY certmgr.certdetail.title             "Nánar um skilríki">
+<!ENTITY certmgr.certdetail.cn                "Almennt nafn (CN)">
+<!ENTITY certmgr.certdetail.o                 "Stofnun (O)">
+<!ENTITY certmgr.certdetail.ou                "Stofnunareining (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Raðnúmer">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 fingrafar">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 fingrafar">
+
+<!ENTITY certmgr.editcacert.title             "Breyta stillingum CA skilríkja trausts">
+<!ENTITY certmgr.editcert.edittrust           "Breyta traust stillingum:">
+<!ENTITY certmgr.editcert.trustssl            "Þetta skilríki getur auðkennt vefsvæði.">
+<!ENTITY certmgr.editcert.trustemail          "Þetta skilríki getur auðkennt póst notendur.">
+<!ENTITY certmgr.editcert.trustobjsign        "Þetta skilríki getur auðkennt hugbúnaðarframleiðendur.">
+
+<!ENTITY certmgr.deletecert.title             "Eyða skilríki">
+
+<!ENTITY certmgr.certname                     "Nafn skilríkis">
+<!ENTITY certmgr.certserver                   "Netþjónn">
+<!ENTITY certmgr.override_lifetime            "Æviskeið">
+<!ENTITY certmgr.tokenname                    "Öryggistæki">
+<!ENTITY certmgr.begins                       "Byrjar þann">
+<!ENTITY certmgr.expires                      "Rennur út">
+<!ENTITY certmgr.email                        "Netfang">
+<!ENTITY certmgr.serial                       "Raðnúmer">
+
+<!ENTITY certmgr.close.label                  "Loka">
+<!ENTITY certmgr.close.accesskey              "L">
+<!ENTITY certmgr.view2.label                  "Skoða…">
+<!ENTITY certmgr.view2.accesskey              "S">
+<!ENTITY certmgr.edit3.label                  "Breyta trausti…">
+<!ENTITY certmgr.edit3.accesskey              "e">
+<!ENTITY certmgr.export.label                 "Flytja út…">
+<!ENTITY certmgr.export.accesskey             "F">
+<!ENTITY certmgr.delete2.label                "Eyða…">
+<!ENTITY certmgr.delete2.accesskey            "E">
+<!ENTITY certmgr.delete_builtin.label         "Eyða eða vantreysta…">
+<!ENTITY certmgr.delete_builtin.accesskey     "E">
+<!ENTITY certmgr.backup2.label                "Afrita…">
+<!ENTITY certmgr.backup2.accesskey            "A">
+<!ENTITY certmgr.backupall2.label             "Afrita allt…">
+<!ENTITY certmgr.backupall2.accesskey         "f">
+<!ENTITY certmgr.restore2.label               "Flytja inn…">
+<!ENTITY certmgr.restore2.accesskey           "i">
+<!ENTITY certmgr.details.label                "Skilríkjasvæði">
+<!ENTITY certmgr.details.accesskey            "S">
+<!ENTITY certmgr.fields.label                 "Gildi">
+<!ENTITY certmgr.fields.accesskey             "G">
+<!ENTITY certmgr.hierarchy.label              "Stigskipting skilríkja">
+<!ENTITY certmgr.hierarchy.accesskey2         "S">
+<!ENTITY certmgr.addException.label           "Bæta við undantekningu…">
+<!ENTITY certmgr.addException.accesskey       "u">
+
+<!ENTITY exceptionMgr.title                   "Bæta við öryggisfráviki">
+<!ENTITY exceptionMgr.exceptionButton.label   "Staðfesta öryggisfrávik">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "S">
+<!ENTITY exceptionMgr.supplementalWarning     "Löglegir bankar, verslanir, og aðrar opinberar stofnanir munu ekki biðja þig um að gera þetta.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Netþjónn">
+<!ENTITY exceptionMgr.certlocation.url        "Staðsetning:">
+<!ENTITY exceptionMgr.certlocation.download   "Ná í skilríki">
+<!ENTITY exceptionMgr.certlocation.accesskey  "N">
+<!ENTITY exceptionMgr.certstatus.caption      "Staða skilríkis">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Skoða…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "k">
+<!ENTITY exceptionMgr.permanent.label         "Geyma þessa undanþágu til frambúðar">
+<!ENTITY exceptionMgr.permanent.accesskey     "G">

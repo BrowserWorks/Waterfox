@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Versteksoekenjin">
+
+
+<!ENTITY provideSearchSuggestions.label        "Verskaf soekvoorstelle">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Soekvoorstelle sal nie in die liggingbalk gewys word nie omdat &brandShortName; opgestel is om nooit geskiedenis te onthou nie.">
+
+<!ENTITY oneClickSearchEngines.label           "Enkelklik-soekenjins">
+
+
+<!ENTITY engineNameColumn.label                "Soekenjin">
+<!ENTITY engineKeywordColumn.label             "Sleutelwoord">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Stel versteksoekenjins terug">
+<!ENTITY restoreDefaultSearchEngines.accesskey "v">
+
+<!ENTITY removeEngine.label                    "Verwyder">
+<!ENTITY removeEngine.accesskey                "V">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Տառատեսակներ">
+
+<!ENTITY  language.label                          "Տառատեսակներ՝">
+<!ENTITY  language.accesskey                      "Տ">
+
+<!ENTITY  size.label                              "Չափը.">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "ի">
+
+<!ENTITY  proportional.label                      "Համամասնորեն.">
+<!ENTITY  proportional.accesskey                  "Հ">
+
+<!ENTITY  serif.label                             "Գծիկավոր.">
+<!ENTITY  serif.accesskey                         "Գ">
+<!ENTITY  sans-serif.label                        "Հստակ-գծիկավոր.">
+<!ENTITY  sans-serif.accesskey                    "ս">
+<!ENTITY  monospace.label                         "Համաչափ.">
+<!ENTITY  monospace.accesskey                     "չ">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Լատիներեն">
+<!ENTITY  font.langGroup.japanese                 "Ճապոներեն">
+<!ENTITY  font.langGroup.trad-chinese             "Ավանդական Չիներեն (Թայվան)">
+<!ENTITY  font.langGroup.simpl-chinese            "Պարզեցված Չիներեն">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Ավանդական Չիներեն (Հոնգ­Կոնգ)">
+<!ENTITY  font.langGroup.korean                   "Կորեերեն">
+<!ENTITY  font.langGroup.cyrillic                 "Կիրիլյան">
+<!ENTITY  font.langGroup.el                       "Հունարեն">
+<!ENTITY  font.langGroup.other                    "Այլ գրահամակարգ">
+<!ENTITY  font.langGroup.thai                     "Թայլանդերեն">
+<!ENTITY  font.langGroup.hebrew                   "Եբրայերեն">
+<!ENTITY  font.langGroup.arabic                   "Արաբերեն">
+<!ENTITY  font.langGroup.devanagari               "Դևանագարի">
+<!ENTITY  font.langGroup.tamil                    "Թամիլերեն">
+<!ENTITY  font.langGroup.armenian                 "ՀԱՅԵՐԵՆ">
+<!ENTITY  font.langGroup.bengali                  "Բենգալի">
+<!ENTITY  font.langGroup.canadian                 "Միացյալ Կանադական Սիլաբարի">
+<!ENTITY  font.langGroup.ethiopic                 "Եթովպերեն">
+<!ENTITY  font.langGroup.georgian                 "Վրացերեն">
+<!ENTITY  font.langGroup.gujarati                 "Գույարաթի">
+<!ENTITY  font.langGroup.gurmukhi                 "Գուրմուխի">
+<!ENTITY  font.langGroup.khmer                    "Խմեր">
+<!ENTITY  font.langGroup.malayalam                "Մալայլամ">
+<!ENTITY  font.langGroup.math                     "Մաթեմատիկա">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Թելուգու">
+<!ENTITY  font.langGroup.kannada                  "Կաննադա">
+<!ENTITY  font.langGroup.sinhala                  "Սինգալյան">
+<!ENTITY  font.langGroup.tibetan                  "Թիբեթերեն">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Նվազագույն տառաչափը.">
+<!ENTITY minSize.accesskey                        "ա">
+<!ENTITY minSize.none                             "Չնշված">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Հստակ">
+<!ENTITY  useDefaultFontSansSerif.label           "Գծիկավոր">
+
+<!ENTITY  allowPagesToUseOwn.label                "Էջերին թույլատրել օգտագործել իրենց սեփական տառատեսակները">
+<!ENTITY  allowPagesToUseOwn.accesskey            "Է">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Գրանշանի կոդավորումը տարբերանշանի բովանդակության համար">
+<!ENTITY languages.customize.Fallback2.label      "Վերականգնել Գրանշանների կոդավորումը.">
+<!ENTITY languages.customize.Fallback2.accesskey  "Գ">
+<!ENTITY languages.customize.Fallback2.desc       "Գրանշանի կոդավորումը օգտագործվում է այն տարբերանշանի բովանդակության համար, որը չի կարողանում որոշել իր կոդավորումը:">
+
+<!ENTITY languages.customize.Fallback.auto        "Ծրագրայինը տվյալ լեզվի համար">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Արաբերեն">
+<!ENTITY languages.customize.Fallback.baltic      "Բալթյան">
+<!ENTITY languages.customize.Fallback.ceiso       "Կենտրոնաեվրոպական, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Կենտրոնաեվրոպական, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Չինարեն, Պարզեցված">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Չիներեն, Պարզեցված">
+<!ENTITY languages.customize.Fallback.cyrillic    "Կիրիլյան">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Հունարեն">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Եբրայերեն">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Ճապոներեն">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Կորեերեն">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Թայլանդերեն">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Թրքերեն">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Վիետնամերեն">
+<!ENTITY languages.customize.Fallback.other       "Այլ (ներ. Արևմտաեվրոպականը)">

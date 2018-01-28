@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Arverañ ar gwarez heuliañ">
+<!ENTITY  trackingProtectionAlways.label       "Atav">
+<!ENTITY  trackingProtectionAlways.accesskey   "t">
+<!ENTITY  trackingProtectionPrivate.label      "Er prenestroù prevez hepken">
+<!ENTITY  trackingProtectionPrivate.accesskey  "p">
+<!ENTITY  trackingProtectionNever.label        "Morse">
+<!ENTITY  trackingProtectionNever.accesskey    "M">
+<!ENTITY  trackingProtectionLearnMore.label    "Gouzout hiroc'h">
+<!ENTITY  trackingProtectionExceptions.label   "Nemedennoù…">
+<!ENTITY  trackingProtectionExceptions.accesskey "N">
+
+<!ENTITY tracking.label                 "Heuliañ ho roudoù">
+<!ENTITY trackingProtectionPBM5.label         "Arverañ ar gwarez heuliañ er prenestroù prevez">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Gouzout hiroc'h">
+<!ENTITY changeBlockList.label          "Kemmañ ar roll stankañ">
+<!ENTITY changeBlockList.accesskey      "K">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Gallout a rit ivez ">
+<!ENTITY  doNotTrack.settings.label     "Merañ hoc&apos;h arventennoù &quot;Na heuliañ ma roudoù&quot;">
+<!ENTITY  doNotTrack.post.label         " a c'hallit ober ivez.">
+
+<!ENTITY  history.label                 "Roll istor">
+
+<!ENTITY  locationBar.label             "Barrenn chomlec'hioù">
+
+<!ENTITY  locbar.suggest.label          "Pa 'z implijan ar varrenn chomlec'hioù, aliañ:">
+<!ENTITY  locbar.history.label          "Roll istor">
+<!ENTITY  locbar.history.accesskey      "R">
+<!ENTITY  locbar.bookmarks.label        "Sinedoù">
+<!ENTITY  locbar.bookmarks.accesskey    "S">
+<!ENTITY  locbar.openpage.label         "Digeriñ ivinelloù">
+<!ENTITY  locbar.openpage.accesskey     "D">
+<!ENTITY  locbar.searches.label         "Enklaskoù kar adalek al lusker enklask dre ziouer ">
+<!ENTITY  locbar.searches.accesskey     "o">
+
+<!ENTITY  suggestionSettings.label      "Kemmañ ar gwellvezioù evit ar c'hinnigoù luskerioù enklask...">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Degemer toupinoù un trede:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "g">
+<!ENTITY  acceptThirdParty.always.label   "Atav">
+<!ENTITY  acceptThirdParty.never.label    "Morse">
+<!ENTITY  acceptThirdParty.visited.label  "Adalek lec'hiennoù gweladennet">
+
+<!ENTITY  keepUntil.label               "Mirout betek :">
+<!ENTITY  keepUntil.accesskey           "b">
+
+<!ENTITY  expire.label                  "ez echuont">
+<!ENTITY  close.label                   "ma serrin &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Nemedennoù…">
+<!ENTITY  cookieExceptions.accesskey    "N">
+
+<!ENTITY  showCookies.label             "Diskouez an toupinoù…">
+<!ENTITY  showCookies.accesskey         "i">
+
+<!ENTITY  historyHeader.pre.label          "Gant &brandShortName; e vo:">
+<!ENTITY  historyHeader.pre.accesskey      "v">
+<!ENTITY  historyHeader.remember.label     "Derc'hel soñj ar roll istor">
+<!ENTITY  historyHeader.dontremember.label "Ne zerc'hel ket soñj ar roll istor">
+<!ENTITY  historyHeader.custom.label       "Implijout arventennoù personelaet evit ar roll istor">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; a zalc'ho soñj al lec'hiennoù gweladennet, ar pellgargadurioù, ar furmskridoù hag ar c'hlaskoù. Eñ a zalc'ho ivez an toupinoù eus al lec'hiennoù gweladennet.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Marteze fellout a ra deoc'h ">
+<!ENTITY  rememberActions.clearHistory.label  "skarzhañ ho roll istor nevez">
+<!ENTITY  rememberActions.middle.label        ", pe ">
+<!ENTITY  rememberActions.removeCookies.label "dilemel un toupin">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; a implijo ar memes arventennoù hag ar merdeiñ prevez, ha ne zalc'ho ket soñj ar roll istor.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Marteze fellout a ra deoc'h ivez ">
+<!ENTITY  dontrememberActions.clearHistory.label "skarzhañ ar roll istor a-bezh">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Atav arverañ mod merdeiñ prevez">
+<!ENTITY  privateBrowsingPermanent2.accesskey "m">
+
+<!ENTITY  rememberHistory2.label      "Derc'hel soñj ma roll istor ha ma fellgargadurioù">
+<!ENTITY  rememberHistory2.accesskey  "r">
+
+<!ENTITY  rememberSearchForm.label       "Derc'hel soñj ar c'hlaskoù hag ar furmskridoù">
+<!ENTITY  rememberSearchForm.accesskey   "h">
+
+<!ENTITY  clearOnClose.label             "Skarzhañ ar roll istor pa guitaan &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "k">
+
+<!ENTITY  clearOnCloseSettings.label     "Arventennoù…">
+<!ENTITY  clearOnCloseSettings.accesskey "v">
+
+<!ENTITY  browserContainersHeader.label         "Ivinelloù endalc'her">
+<!ENTITY  browserContainersLearnMore.label      "Gouzout hiroc'h">
+<!ENTITY  browserContainersEnabled.label        "Gweredekaat an ivinelloù endalc'her">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Arventennoù…">
+<!ENTITY  browserContainersSettings.accesskey    "v">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

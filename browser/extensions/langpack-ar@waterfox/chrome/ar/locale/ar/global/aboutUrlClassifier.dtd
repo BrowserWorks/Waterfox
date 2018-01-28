@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "معلومات عن url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "المزوِّد">
+<!ENTITY aboutUrlClassifier.provider                    "المزوِّد">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "وقت آخر تحديث">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "وقت التحديث التالي">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "وقت التراجع">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "حالة آخر تحديث">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "حدِّث">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "الخبيئة">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "حدّث">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "امسح">
+<!ENTITY aboutUrlClassifier.cacheTableName              "اسم الجدول">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "عدد مُدخلات الخبيئة السالبة">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "عدد مُدخلات الخبيئة الموجبة">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "أظهر المدخلات">
+<!ENTITY aboutUrlClassifier.cacheEntries                "مُدخلات الخبيئة">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "السابقة">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "انتهاء صلاحية الخبيئة السالبة">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "التلبيدة الكاملة">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "انتهاء صلاحية الخبيئة الموجبة">
+<!ENTITY aboutUrlClassifier.debugTitle                  "التنقيح">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "حدد وحدات السجل">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "حدد ملف السجل">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "حدد سجل جافاسكربت">
+<!ENTITY aboutUrlClassifier.debugSBModules              "وحدات سجل التصفح الآمن">
+<!ENTITY aboutUrlClassifier.debugModules                "وحدات السجل الحالية">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "سجل جافاسكربت التصفح الآمن">
+<!ENTITY aboutUrlClassifier.debugFile                   "ملف السجل الحالي">

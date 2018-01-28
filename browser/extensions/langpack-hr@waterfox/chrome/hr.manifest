@@ -1,0 +1,14 @@
+locale alerts hr hr/locale/hr/alerts/
+locale autoconfig hr hr/locale/hr/autoconfig/
+locale global hr hr/locale/hr/global/
+locale global-platform hr hr/locale/hr/global-platform/mac/ os=Darwin
+locale global-platform hr hr/locale/hr/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform hr hr/locale/hr/global-platform/win/ os=WINNT
+locale mozapps hr hr/locale/hr/mozapps/
+locale necko hr hr/locale/hr/necko/
+locale passwordmgr hr hr/locale/hr/passwordmgr/
+locale pipnss hr hr/locale/hr/pipnss/
+locale pippki hr hr/locale/hr/pippki/
+locale places hr hr/locale/hr/places/
+locale pluginproblem hr hr/locale/hr/pluginproblem/
+locale weave hr hr/locale/hr/services/

@@ -1,0 +1,202 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "ഫയര്‍ഫോക്സ് WebIDE">
+
+<!ENTITY projectMenu_label "പ്രോജെക്റ്റ്">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "പുതിയ ആപ്പ്...">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "പാക്ക് ചെയ്ത ആപ്പ് തുറക്കുക...">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "ഹോസ്റ്റ് ചെയ്ത ആപ്പ് തുറക്കുക…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "പ്രയോഗം തുറക്കുക…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "ഇന്‍സ്റ്റോള്‍ ചെയ്തു് റണ്‍ ആക്കുക">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "ആപ്പ് നിര്‍ത്തുക">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "ആപ്പ് ഡീബഗ് ചെയ്യുക">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "പ്രോജെക്റ്റ് നീക്കം ചെയ്യുക">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "മുന്‍ഗണനകള്‍">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "അധികമായ ഘടകങ്ങള്‍ കൈകാര്യം ചെയ്യുക">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "ടാബുകള്‍ റീഫ്രഷ്‌ ചെയ്യുക">
+
+<!ENTITY runtimeMenu_label "പ്രവര്‍ത്തനസമയം">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "വിഛേദിക്കുക">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "സ്ക്രീന്‍ഷോട്ട്">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "റണ്‍ ടൈം വിവരം">
+
+<!ENTITY runtimeMenu_showMonitor_label "മോണിറ്റര്‍">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "ഡിവൈസ് മുന്‍ഗണനകള്‍">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "ഡിവൈസ് സജ്ജീകരണങ്ങള്‍">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "കാണുക ">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "വലുതാക്കുക">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "ചെറുതാക്കുക">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "സൂം പുനഃക്രമീകരിക്കുക">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "ആപ്പ് തുറക്കുക">
+<!ENTITY runtimeButton_label "റണ്‍ടൈം തെരഞ്ഞെടുക്കുക">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "എന്റെ പ്രോജെക്റ്റുകള്‍">
+<!ENTITY projectPanel_runtimeApps "റണ്‍ടൈം ആപ്പുകള്‍">
+<!ENTITY projectPanel_tabs "ടാബുകള്‍">
+<!ENTITY runtimePanel_usb "യുഎസ്ബി ഡിവൈസുകള്‍">
+<!ENTITY runtimePanel_wifi "വൈഫൈ ഡിവൈസുകള്‍">
+<!ENTITY runtimePanel_simulator "സിമുലേറ്ററുകള്‍">
+<!ENTITY runtimePanel_other "വേറെ">
+<!ENTITY runtimePanel_installsimulator "സിമുലേറ്റര്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY runtimePanel_noadbhelper "എഡിബി സഹായി ഇന്‍സ്റ്റോള്‍ ചെയ്യുക">
+<!ENTITY runtimePanel_nousbdevice "നിങ്ങളുടെ ഡിവൈസ് കാണുന്നില്ലേ?">
+
+<!-- Lense -->
+
+<!ENTITY details_valid_header "വാലിഡ്‌ ">
+<!ENTITY details_warning_header "മുന്നറിയിപ്പുകള്‍">
+<!ENTITY details_error_header "പിശകുകള്‍">
+<!ENTITY details_description "വിവരണം">
+<!ENTITY details_location "സ്ഥാനം">
+<!ENTITY details_manifestURL "ആപ്പ് ഐഡി">
+<!ENTITY details_removeProject_button "പ്രോജെക്റ്റ് നീക്കം ചെയ്യുക">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "പുതിയ ആപ്പ്">
+<!ENTITY newAppHeader "ടെംപ്ലേറ്റ് തെരഞ്ഞെടുക്കുക">
+<!ENTITY newAppLoadingTemplate "ടെംപ്ലേറ്റ് ലഭ്യമാക്കുന്നു…">
+<!ENTITY newAppProjectName "പ്രോജെക്റ്റ് പേരു്:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "അടയ്ക്കുക">
+<!-- Addons -->
+
+<!ENTITY addons_title "അധികമായ ഘടകങ്ങള്‍">
+<!ENTITY addons_aboutaddons "ആഡ്-ഓണ്‍ മാനേജര്‍ തുറക്കുക">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "മുന്‍ഗണനകള്‍">
+<!ENTITY prefs_editor_title "എഡിറ്റര്‍">
+<!ENTITY prefs_general_title "പൊതുവായവ">
+<!ENTITY prefs_restore "സ്വതവേയുള്ളവ പുനഃസ്ഥാപിക്കുക">
+<!ENTITY prefs_manage_components "അധികമായ ഘടകങ്ങള്‍ കൈകാര്യം ചെയ്യുക">
+<!ENTITY prefs_options_autoconnectruntime "മുമ്പുള്ള പ്രവര്‍ത്തന സമയത്തിലേക്കു് വീണ്ടും കണക്ട് ചെയ്യുക">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE ആരംഭിയ്ക്കുമ്പോള്‍ മുമ്പുള്ള പ്രവര്‍ത്തന സമയത്തിലേക്ക് വീണ്ടും കണക്ട് ചെയ്യുക">
+<!ENTITY prefs_options_rememberlastproject "ഒടുവിലുള്ള സംരംഭം ഓര്‍ത്തു് വയ്ക്കുക">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE ആരംഭിയ്ക്കുമ്പോള്‍ മുമ്പുള്ള പ്രോജെക്റ്റ് വീണ്ടെടുക്കുക">
+<!ENTITY prefs_options_templatesurl "ടെംപ്ലേറ്റ്സ് യു ആര്‍ എല്‍">
+<!ENTITY prefs_options_templatesurl_tooltip "ലഭ്യമായ ടെംപ്ലേറ്റ്സ് സൂചിക">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "റണ്‍ ടൈം വിവരം">
+<!ENTITY runtimedetails_adbIsRoot "ADB റൂട്ടാകുന്നു:">
+<!ENTITY runtimedetails_summonADBRoot "റൂട്ട് ഡിവൈസ്">
+<!ENTITY runtimedetails_ADBRootWarning "(പൂട്ടിയിട്ടില്ലാത്ത bootloader ആവശ്യമാകുന്നു)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "പരിമിതികളില്ലാത്ത DevTools മുന്‍ഗണനകള്‍:">
+<!ENTITY runtimedetails_requestPrivileges "കൂടുതല്‍ മുന്‍ഗണനകള്‍ക്കായി ആവശ്യപ്പെടുക">
+<!ENTITY runtimedetails_privilegesWarning "(ഡിവൈസ് റീബൂട്ട് ചെയ്യുന്നു. റൂട്ട് അനുമതി ആവശ്യമാണു്.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "ബൂളിയന്‍">
+<!ENTITY device_typenumber "ഇന്റിജര്‍">
+<!ENTITY device_typestring " സ്ട്രിങ്">
+<!ENTITY device_typeobject "ഒബ്ജെക്റ്റ്‌">
+<!ENTITY device_typenone "ഒരു ടൈപ്പ് തെരഞ്ഞെടുക്കുക">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "ഡിവൈസ് മുന്‍ഗണനകള്‍">
+<!ENTITY devicepreference_search "തിരച്ചില്‍ മുന്‍ഗണനകള്‍">
+<!ENTITY devicepreference_newname "പുതിയ മുന്‍ഗണനയുടെ പേരു്">
+<!ENTITY devicepreference_newtext "മുന്‍ഗണനയുടെ മൂല്ല്യം">
+<!ENTITY devicepreference_addnew "പുതിയ മുന്‍ഗണന ചേര്‍ക്കുക">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "ഡിവൈസ് സജ്ജീകരണങ്ങള്‍">
+<!ENTITY devicesetting_search "തെരച്ചില്‍ സജ്ജീകരണങ്ങള്‍">
+<!ENTITY devicesetting_newname "പുതിയ സജ്ജീകരണ പേര്">
+<!ENTITY devicesetting_newtext "സജ്ജീകരണ മൂല്ല്യം">
+<!ENTITY devicesetting_addnew "പുതിയ സജ്ജീകരണം ചേര്‍ക്കുക">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "മോണിറ്റര്‍">
+<!ENTITY monitor_help "സഹായം ">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "ക്ലയന്റ് തിരിച്ചറിയല്‍">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "നിങ്ങള്‍ കണക്ട് ചെയ്യുന്ന എന്‍ഡ്പോയിന്റുകള്‍ക്കു് ഈ കണക്ഷന്‍ തിരിച്ചറിയുന്നതിനുള്ള കൂടുതല്‍ വിവരങ്ങള്‍ ആവശ്യമാണു്.  നിങ്ങളുടെ മറ്റൊരു ഡിവൈസിലുള്ള പ്രോംപ്റ്റ് വഴി താഴെ നിങ്ങളുടെ QR കോഡ് സ്കാന്‍ ചെയ്യുക.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "QR സ്കാനര്‍ പ്രോംപ്റ്റ് ഇല്ലേ?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR സ്കാനര്‍ പ്രോംപ്റ്റുണ്ടോ ?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "ഒരു QR കോഡ് സ്കാന്‍ ചെയ്യുന്നതിനു് പകരം മറ്റൊരു ഡിവൈസ് ടോക്കനു് വേണ്ടി ആവശ്യപ്പെട്ടാല്‍, ആ ഡിവൈസിലേക്കു് താഴെയുള്ള മൂല്ല്യം പകര്‍ത്തുക:">
+
+<!-- Logs panel -->
+
+<!ENTITY logs_title "പാക്കേജിങിനു് മുമ്പുള്ള കമാന്‍ഡ് ലോഗുകള്‍">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "സിമുലേറ്റര്‍ ഉപാധി">
+<!ENTITY simulator_remove "സിമുലേറ്റർ ഇല്ലാതാക്കുക">
+<!ENTITY simulator_reset "സ്വതവേയുള്ളവ പുനഃസ്ഥാപിക്കുക">
+
+<!ENTITY simulator_software "സോഫ്റ്റ്‌വെയർ">
+<!ENTITY simulator_version "പതിപ്പു്">
+<!ENTITY simulator_profile "പ്രൊഫൈല്‍">
+<!ENTITY simulator_hardware "ഹാര്‍ഡ്‌വെയര്‍">
+<!ENTITY simulator_device "ഉപകരണം">
+<!ENTITY simulator_screenSize "സ്ക്രീന്‍">
+<!ENTITY simulator_pixelRatio "പിക്സൽ അനുപാതം">
+
+
+
+
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimePanel_refreshDevices_label "Refresh Devices">
+
+<!ENTITY simulator_name "Name">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Open Config Directory…">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+

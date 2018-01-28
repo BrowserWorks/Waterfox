@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width			"36em">
+
+<!ENTITY     cookiesonsystem.label	"以下の Cookie が保存されています:">
+<!ENTITY     cookiename.label		"Cookie 名">
+<!ENTITY     cookiedomain.label		"サイト">
+
+<!ENTITY     props.name.label		"名前:">
+<!ENTITY     props.value.label		"内容:">
+<!ENTITY     props.domain.label		"ホスト:">
+<!ENTITY     props.path.label		"パス:">
+<!ENTITY     props.secure.label		"送信制限:"><!-- en-US: Send For: -->
+<!ENTITY     props.expires.label	"有効期限:">
+<!ENTITY     props.container.label	"コンテナー:">
+
+<!ENTITY     window.title		"Cookie">
+<!ENTITY     windowClose.key		"w">
+<!ENTITY     focusSearch1.key		"f">
+<!ENTITY     focusSearch2.key		"k">
+
+<!ENTITY     searchFilter.label		"検索">
+<!ENTITY     searchFilter.accesskey	"S">
+
+<!ENTITY     button.close.label		"閉じる">
+<!ENTITY     button.close.accesskey	"C">
+

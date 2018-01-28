@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Lumuku">
+
+<!ENTITY accessibility.label             "Kite me nongo">
+
+<!ENTITY useCursorNavigation.label       "Jwijwi tii ki lagony me cursor me wot iye pot buk">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Yeny coc ka acako coyo coc">
+<!ENTITY searchOnStartTyping.accesskey   "c">
+<!ENTITY blockAutoReload.label           "Miyi ngec kace kakube tye katemo me wiro onyo nwoyo cano pot buk">
+<!ENTITY blockAutoReload.accesskey       "k">
+<!ENTITY useOnScreenKeyboard.label       "Nyut kadiyo coc ma ki gudo aguda ka mite">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Yenyo">
+
+<!ENTITY useAutoScroll.label             "Tii ki makobo pire kene">
+<!ENTITY useAutoScroll.accesskey         "m">
+<!ENTITY useSmoothScrolling.label        "Tii ki kob mapwot">
+<!ENTITY useSmoothScrolling.accesskey    "a">
+<!ENTITY checkUserSpelling.label         "Rot nukta ni kun nongo itye kacoc">
+<!ENTITY checkUserSpelling.accesskey     "a">
+
+<!ENTITY dataChoicesTab.label            "Yer me tic">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Konyo yin me niang kit ma layent tye katic kwede kadong nywako tic ki &vendorShortName; ikom yot kom pa layeny mamegi">
+<!ENTITY enableHealthReport.label        "Ye &brandShortName; Ripot me yot kom">
+<!ENTITY enableHealthReport.accesskey    "i">
+<!ENTITY healthReportLearnMore.label     "Nong ngec mapol">
+
+<!ENTITY telemetryDesc.label             "Poko kit ma tic tye kawot kwede, tc kwede, nyonyo kadong yub me tic ikom layeny mamegi ki &vendorShortName; wek okony wa me yubu &brandShortName; maber">
+<!ENTITY enableTelemetryData.label       "Nywak data mukenen (calo, Pimo data)">
+<!ENTITY enableTelemetryData.accesskey   "P">
+<!ENTITY telemetryLearnMore.label        "Nong ngec mapol">
+
+<!ENTITY crashReporterDesc2.label         "Ripot me poto konyo &vendorShortName; me yubo bal ki weko layeny mamegi cung matek dok ki ber bedo">
+<!ENTITY alwaysSubmitCrashReports.label   "Yee &brandShortName; me cwalo ripot me poto ma odure pi in">
+<!ENTITY alwaysSubmitCrashReports.accesskey "d">
+<!ENTITY crashReporterLearnMore.label     "Nong ngec mapol">
+
+<!ENTITY networkTab.label                "Kube">
+
+<!ENTITY connection.label                "Kube">
+
+<!ENTITY connectionDesc.label            "Yik kit ma &brandShortName; kube kwede ki intanet">
+<!ENTITY connectionSettings.label        "Tero…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Gin manonge iye me kakube ma kikano">
+
+<!ENTITY offlineStorage2.label           "Gin manonge iye me kakube ma pe iwiyamo kacel ki tic pa ngat matiyo kwede">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Data me kakube">
+<!ENTITY clearSiteData.label             "Jwa data weng">
+<!ENTITY clearSiteData.accesskey         "a">
+<!ENTITY siteDataSettings.label          "Ter…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Nong ngec mapol">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Wek kakano obed">
+<!ENTITY limitCacheSizeBefore.accesskey  "W">
+<!ENTITY limitCacheSizeAfter.label       "MB me kabedo">
+<!ENTITY clearCacheNow.label             "Jwa Kombedi">
+<!ENTITY clearCacheNow.accesskey         "J">
+<!ENTITY clearOfflineAppCacheNow.label   "Jwa Kombedi">
+<!ENTITY clearOfflineAppCacheNow.accesskey "K">
+<!ENTITY overrideSmartCacheSize.label    "Kwe lalo kakano ma pire kene">
+<!ENTITY overrideSmartCacheSize.accesskey "K">
+
+<!ENTITY updateTab.label                 "Ngec manyen">
+
+<!ENTITY updateApplication.label         "Ngec manyen me &brandShortName;">
+<!ENTITY updateAuto1.label               "Ket ngec manyen pire kene (kicwako: ber bedo i rwom mamalo)">
+<!ENTITY updateAuto1.accesskey           "n">
+<!ENTITY updateCheckChoose.label         "Rot pi ngec manyen, ento weko iyero kace imito keto gi">
+<!ENTITY updateCheckChoose.accesskey     "R">
+<!ENTITY updateManual.label              "Pe i rot pi ngec manyen matwal (pe kicwako: ber bedo pe gene)">
+<!ENTITY updateManual.accesskey          "P">
+
+<!ENTITY updateHistory.label             "Nyut gin mukato me Ngec manyen">
+<!ENTITY updateHistory.accesskey         "g">
+
+<!ENTITY useService.label                "Tii ki tic ma angec me keto ngec manyennen pi keto ngec">
+<!ENTITY useService.accesskey            "t">
+
+<!ENTITY autoUpdateOthers.label          "Ket ngec manyen pire kene">
+<!ENTITY enableSearchUpdate.label        "Gin me Yeny">
+<!ENTITY enableSearchUpdate.accesskey    "i">
+
+<!ENTITY offlineStorageNotify.label               "Miyi ngec kace kakube penyo me kano tic pi tic kwede ma nongo pe okube iwi yamo">
+<!ENTITY offlineStorageNotify.accesskey           "M">
+<!ENTITY offlineStorageNotifyExceptions.label     "Ma kiweko woko…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "i">
+
+<!ENTITY offlineAppsList2.label          "Kakube magi ki ye ki gin me kano tic p tic kwedgi ma nongo pe okube iwi yamo:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Kwany…">
+<!ENTITY offlineAppsListRemove.accesskey "K">
+<!ENTITY offlineAppRemove.confirm        "Kwany tic ma nongo pe okube iwi yamo">
+
+<!ENTITY certificateTab.label            "Waraga">
+<!ENTITY certPersonal.label              "Kwac">
+<!ENTITY certPersonal.description        "Kace lapok tic okwayo pi catibiket mamega:">
+<!ENTITY selectCerts.auto                "Yer acel pire kene">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Penyi cawa weng">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Yeny lapok tic ma miyo lagam pa OCSP me moko kare me tic ma kombedi pa waraga">
+<!ENTITY enableOCSP.accesskey            "Y">
+<!ENTITY viewCerts.label                 "Nen karatac lok ada">
+<!ENTITY viewCerts.accesskey             "t">
+<!ENTITY viewSecurityDevices.label       "Nyonyo me ber bedo">
+<!ENTITY viewSecurityDevices.accesskey   "o">
+
+
+
+
+<!ENTITY performanceSettingsLearnMore.label "Nong ngec mapol">
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Tii ki lamed dwiro pa nyonyo ka tye">
+<!ENTITY allowHWAccel.accesskey          "o">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

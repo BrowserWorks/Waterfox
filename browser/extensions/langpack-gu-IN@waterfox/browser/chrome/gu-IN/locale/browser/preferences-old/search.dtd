@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "મૂળભૂત શોધ એંજીન">
+
+
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.accesskey       "I">
+
+
+
+<!ENTITY engineNameColumn.label                "શોધ એન્જિન">
+<!ENTITY engineKeywordColumn.label             "મુખ્ય શબ્દ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "મૂળભૂત શોધ એંજીન તરીકે પુનઃસંગ્રહો">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "દૂર કરો">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines.label            "વધુ શોધ યંત્ર ઉમેરો…">
+
+<!ENTITY chooseWhichOneToDisplay.label         "The search bar lets you search alternate engines directly. Choose which ones to display.">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Choose your default search engine. &brandShortName; uses it in the location bar, search bar, and start page.">
+
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+
+<!ENTITY provideSearchSuggestions.label        "Provide search suggestions">
+<!ENTITY showURLBarSuggestions.label           "Show search suggestions in location bar results">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Search suggestions will not be shown in location bar results because you have configured &brandShortName; to never remember history.">
+

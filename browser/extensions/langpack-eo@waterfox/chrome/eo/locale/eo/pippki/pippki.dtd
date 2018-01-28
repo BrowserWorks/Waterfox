@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Ŝanĝi ĉefan pasvorton">
+<!ENTITY setPassword.tokenName.label "Sekureca aparato">
+<!ENTITY setPassword.oldPassword.label "Nuna pasvorto:">
+<!ENTITY setPassword.newPassword.label "Nova pasvorto:">
+<!ENTITY setPassword.reenterPassword.label "Nova pasvorto (denove):">
+<!ENTITY setPassword.meter.label "Mezurilo de pasvorta kvalito">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Rekomenci">
+<!ENTITY resetPassword.title  "Nuligi ĉefan pasvorton">
+<!ENTITY resetPassword.text  "Se vi nuligas vian ĉefan pasvorton ĉiuj viaj konservitaj TTTaj kaj retpoŝtaj pasvortoj estos forgesitaj, kune kun via formulara informo, personaj atestiloj kaj privataj ŝlosiloj. Ĉu vi certe volas nuligi vian ĉefan pasvorton?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Elŝutanta atestilon">
+<!ENTITY downloadCert.message1 "Fido je nova atestila aŭtoritato (CA) estis petita al vi.">
+<!ENTITY downloadCert.trustSSL "Fidi tiun ĉi CAn por identigi TTTajn retejojn.">
+<!ENTITY downloadCert.trustEmail "Fidi tiun ĉi CAn por identigi retpoŝtajn uzantojn.">
+<!ENTITY downloadCert.trustObjSign "Fidi tiun ĉi CAn por identigi programistojn.">
+<!ENTITY downloadCert.message3 "Antaŭ ol fidi je tiu ĉi CA por ĉiuj celoj vi devus ekzameni ĝian atestilon kaj ĝiajn politikojn kaj procedurojn (se tio disponeblas).">
+<!ENTITY downloadCert.viewCert.label "Vidi">
+<!ENTITY downloadCert.viewCert.text "Ekzameni atestilon de CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Peto por identigo de uzanto">
+<!ENTITY clientAuthAsk.message1 "Tiu ĉi retejo petis ke vi identigu vin per atestilo:">
+<!ENTITY clientAuthAsk.message2 "Elekti atestilon por prezenti kiel identigilo:">
+<!ENTITY clientAuthAsk.message3 "Detaloj de la elektita atestilo:">
+
+<!ENTITY pkcs12.setpassword.title  "Elekti pasvorton por sekurkopio de atestilo">
+<!ENTITY pkcs12.setpassword.message  "La sekurkopio de la atestila pasvorto kiun vi difinos ĉi tie protektos la rezervan kopion de la dosiero kiun vi pretas krei. Vi devas difini ĉi tiun pasvorton por daŭrigi la sekurkopion.">
+<!ENTITY pkcs12.setpassword.label1 "Pasvorto por atestila sekurkopio:">
+<!ENTITY pkcs12.setpassword.label2 "Pasvorto por atestila sekurkopio (denove):">
+<!ENTITY pkcs12.setpassword.reminder "Grava rimarko: Se vi forgesas la pasvorton  de via atestila sekurkopio vi ne povos uzi la sekurkopion poste. Bonvolu registri la pasvorton en sekuran lokon.">
+
+<!ENTITY chooseToken.title  "Elekti ĵetonan dialogon">
+<!ENTITY chooseToken.message1 "Bonvolu elekti ĵetonon.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Kreado de privata ŝlosilo">
+<!ENTITY createCertInfo.msg1 "Kreado de ŝlosilo… Tio povas postuli kelkajn minutojn….">
+<!ENTITY createCertInfo.msg2 "Bonvolu atendi…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Protektita aŭtentiga ĵetono">
+<!ENTITY protectedAuth.msg "Bonvolu aŭtentigi vin laŭ la ĵetono. La maniero aŭtentigi dependas de la tipo de via ĵetono.">
+<!ENTITY protectedAuth.tokenName.label "Ĵetono:">

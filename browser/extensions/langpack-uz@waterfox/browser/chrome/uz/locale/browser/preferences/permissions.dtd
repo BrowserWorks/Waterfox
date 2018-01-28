@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Istisnolar">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.status.label        "Holati">
+
+
+
+
+<!ENTITY address.label                "Vebsayt manzili:">
+<!ENTITY address.accesskey            "m">
+<!ENTITY block.label                  "Bloklash">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Seans uchun ruxsat berish">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "Ruxsat berish">
+<!ENTITY allow.accesskey              "a">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Bekor qilish">
+<!ENTITY button.cancel.accesskey      "B">
+<!ENTITY button.ok.label              "O‘zgarishlarni saqlash">
+<!ENTITY button.ok.accesskey          "s">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

@@ -1,0 +1,135 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "נתוני Telemetry">
+
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+נתוני הפינג הנוכחיים
+">
+
+
+<!ENTITY aboutTelemetry.raw "
+JSON גולמי
+">
+
+
+<!ENTITY aboutTelemetry.choosePing "
+בחירת פינג:
+">
+
+
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+שבוע
+">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+פינג
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+היום
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+אתמול
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+ישן יותר
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "  מידע כללי">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  נתונים סביבתיים
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  יומן טלמטריה
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  משפטי SQL איטיים">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  תקיעות דפדפן">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  תקיעות תהליכונים">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  היסטוגרמות">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  היסטוגרמות ממופתחות">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  אירועים
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  מדדים פשוטים">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  פרטי תוספת">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  כתיבה מאוחרת">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  פרטי הפעלה
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  הערה: ניפוי שגיאות עבור משפטי SQL איטיים פעילה. מחרוזות SQL מלאות אמנם יוצגו, אבל הן לא תישלחנה אל Telemetry.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  סינון (מחרוזות או /ביטויים.רגולריים/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  מטען
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping data source:
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Archived ping data
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Newer ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Older ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Show subsession data
+">
+

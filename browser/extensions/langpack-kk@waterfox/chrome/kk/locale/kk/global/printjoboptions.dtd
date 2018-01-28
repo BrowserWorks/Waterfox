@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Принтер баптаулары">
+
+<!ENTITY paperInput.label "Қағаз өлшемі:">
+<!ENTITY paperInput.accesskey "ш">
+
+<!ENTITY jobTitleInput.label "Тапсырма аты:">
+<!ENTITY jobTitleInput.accesskey "а">
+
+<!ENTITY colorGroup.label "Түсі:">
+<!ENTITY grayRadio.label "Сұр түс реңі">
+<!ENTITY grayRadio.accesskey "р">
+<!ENTITY colorRadio.label "Түс">
+<!ENTITY colorRadio.accesskey "Т">
+
+<!ENTITY edgeMarginInput.label "Аймақ ені">
+<!ENTITY topInput.label "Үстінен:">
+<!ENTITY topInput.accesskey "т">
+<!ENTITY bottomInput.label "Астынан:">
+<!ENTITY bottomInput.accesskey "ы">
+<!ENTITY leftInput.label "Сол жақтан:">
+<!ENTITY leftInput.accesskey "о">
+<!ENTITY rightInput.label "Оң жақтан:">
+<!ENTITY rightInput.accesskey "ж">

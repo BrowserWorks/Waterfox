@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Guqula Igama Lokugqithisa Elingumalathindlela">
+
+<!ENTITY setPassword.oldPassword.label "Igama lokugqithisa langoku:">
+<!ENTITY setPassword.newPassword.label "Igama lokugqithisa elitsha:">
+<!ENTITY setPassword.reenterPassword.label "Igama lokugqithisa (kwakhona):">
+<!ENTITY setPassword.meter.label "Umlinganiselo womgangatho wegama lokugqithisa">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Phinda umisele">
+<!ENTITY resetPassword.title  "Phinda Umisele Igama Lokugqithisa Elingumalathindlela">
+<!ENTITY resetPassword.text  "Ukuba uphinda umisele igama lokugqithisa elingumalathindlela, onke amagama akho okugqithisa othungelwano nawemeyile alondoloziweyo, enza iinkcukacha, izatifikethi zobuqu bomntu, namaqhosha abucala aya kulityalwa. Uqinisekile ufuna ukuphinda umisele igama lakho lokugqithisa elingumalathindlela?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Kuthotywa Umthwalo Wesatifikethi">
+<!ENTITY downloadCert.message1 "Ucelwe ukuba uthembe Ugunyaziwe Wesatifikethi omtsha (CA).">
+
+<!ENTITY downloadCert.trustEmail "Themba le-CA ukuchonga abasebenzisi bemeyile.">
+<!ENTITY downloadCert.trustObjSign "Themba le-CA ukuchonga abaphuhlisi benkqubo.">
+<!ENTITY downloadCert.message3 "Phambi kokuyithemba le-CA ngaso nasiphi isizathu, kufuneka uqale uhlole isatifikethi sayo nomgaqonkqubo kunye neendlela zokuqhuba (ukuba zikhona).">
+<!ENTITY downloadCert.viewCert.label "Jonga">
+<!ENTITY downloadCert.viewCert.text "Hlola isatifikethi se-CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Isicelo Sokuchongeka Somsebenzisi">
+<!ENTITY clientAuthAsk.message1 "Esi siza sicele ukuba uzichonge ngesatifikethi:">
+<!ENTITY clientAuthAsk.message2 "Khetha isatifikethi osinikela nengendlela yokuchongeka:">
+
+
+<!ENTITY pkcs12.setpassword.title  "Khetha Isatifikethi Segama Lokugqithisa Lekopi Egciniweyo">
+<!ENTITY pkcs12.setpassword.message  "Igama lokugqithisa lekopi yesatifikethi osimiselayo apho sikhusela ifayili yekopi eciniweyo oza kuyiyila msinyane.  Kufuneka umisele eli gama lokugqithisa ukuze uqhube ngekopi egcinwayo.">
+<!ENTITY pkcs12.setpassword.label1 "Igama lokugqithisa lekopi egcinwayo yesatifikethi:">
+<!ENTITY pkcs12.setpassword.label2 "Igama lokugqithisa lekopi egcinwayo yesatifikethi (kwakhona):">
+<!ENTITY pkcs12.setpassword.reminder "Okubalulekileyo: Ukuba ulibala igama lokugqithisa lekopi egcinwayo yesatifikethi sakho, akusayi kukwazi ukubuyisela ikopi egcinwayo emva kwethuba.  Nceda yigcine ngokuyibhala kwindawo yokugcina ekhuselekileyo.">
+
+<!ENTITY chooseToken.title  "Khetha Ingxoxo Yomqondiso">
+<!ENTITY chooseToken.message1 "Nceda khetha umqondiso.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Kudalwa Iqhosha Labucala">
+<!ENTITY createCertInfo.msg1 "Ukudalwa Kweqhosha kuyaqhuba… Oku kunokuthatha imizuzu embalwa….">
+<!ENTITY createCertInfo.msg2 "Nceda linda…">
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.msg "Nceda ugunyaze kwitokeni. Inkqubo yogunyazo ixhomekeka kuhlobo lwetokeni yakho.">
+
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+
+<!ENTITY downloadCert.trustSSL "Trust this CA to identify websites.">
+<!ENTITY protectedAuth.title "Protected Token Authentication">
+<!ENTITY protectedAuth.tokenName.label "Token:">
+<!ENTITY setPassword.tokenName.label "Security Device">

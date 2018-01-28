@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Yeni Vərəq">
+<!ENTITY newtab.customize.classic "Tez-tez ziyarət edilənləri göstər">
+<!ENTITY newtab.customize.cog.enhanced "Təklif edilən saytları göstər">
+<!ENTITY newtab.customize.cog.title2 "YENİ VƏRƏQ İDARƏLƏRİ">
+<!ENTITY newtab.customize.cog.learn "Yeni Vərəq haqqında öyrənin">
+<!ENTITY newtab.customize.title "Yeni Vərəq səhifənizi Özəlləşdirin">
+<!ENTITY newtab.customize.blank2 "Boş səhifə göstər">
+<!ENTITY newtab.undo.removedLabel "Eskiz silindi.">
+<!ENTITY newtab.undo.undoButton "Qaytar.">
+<!ENTITY newtab.undo.restoreButton "Hamısını bərpa et.">
+<!ENTITY newtab.undo.closeTooltip "Gizlə">

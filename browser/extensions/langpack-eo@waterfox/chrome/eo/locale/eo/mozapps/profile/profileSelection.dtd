@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Elekti profilon de uzanto">
+
+<!ENTITY            profilename.label      "Nomo de profilo:">
+
+<!ENTITY            start.label            "Start &brandShortName;">
+<!ENTITY            exit.label             "Eliri">
+
+<!ENTITY            availprofiles.label    "Disponeblaj profiloj">
+
+<!ENTITY            newButton.label        "Krei profilon…">
+<!ENTITY            newButton.accesskey    "K">
+<!ENTITY            renameButton.label     "Renomi profilon…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "Forviŝi profilon…">
+<!ENTITY            deleteButton.accesskey "F">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; konservas en via profilo de uzanto informon pri viaj agordoj, preferoj kaj aliaj elementoj de uzanto.">
+
+<!ENTITY            offlineState.label    "Labori malkonektite">
+<!ENTITY            offlineState.accesskey "a">
+
+<!ENTITY            useSelected.label       "Uzi la elektitan profilon sen konsulti je la starto">
+<!ENTITY            useSelected.accesskey   "U">

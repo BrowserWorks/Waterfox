@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Villa við að hlaða inn síðu">
+<!ENTITY retry.label "Reyna aftur">
+<!ENTITY returnToPreviousPage.label "Til baka">
+<!ENTITY advanced.label "Ítarlegt">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Get ekki tengst">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Aðgangur að gátt er ekki leyfður">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Netþjónn fannst ekki">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Athugaðu hvort netfang inniheldur innsláttarvillur til dæmis <strong>ww</strong>.mozilla.org í staðinn fyrir <strong>www</strong>.mozilla.org</li> <li>Ef þú getur ekki tengst öðrum síðum, athugaðu þá nettengingu tölvunnar.</li> <li>Ef tölvan þín er varin af eldvegg eða milliþjóni, vertu viss um að &brandShortName; hafi aðgang til að tengjast vefnum.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Skrá fannst ekki">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Athugaðu hvort þú hefur slegið inn skráarnafnið með hástafaritun eða aðra innsláttarvillu.</li> <li>Athugaðu hvort skráin hefur verið færð, endurnefnt eða eytt.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Aðgangur að skránni ekki leyfður">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Vera má að skráin hafi verið fjarlægð, færð til eða réttindi leyfi ekki aðgengi.</li> </ul>">
+
+<!ENTITY generic.title "Ææ.">
+<!ENTITY generic.longDesc "<p>Af einhverri ástæðu getur &brandShortName; ekki hlaðið inn þessari síðu.</p>">
+
+<!ENTITY captivePortal.title "Innskráning á net">
+<!ENTITY captivePortal.longDesc2 "<p>Þú verður að skrá þig inn á þetta netkerfi áður en þú færð aðgang að Internetinu.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Opna net innskráningar síðu">
+
+<!ENTITY malformedURI.title "Veffang ekki löglegt">
+<!ENTITY malformedURI.longDesc "<ul> <li>Veffang er venjulega skrifað sem <strong>http://www.example.com/</strong></li> <li>Vertu viss um að þú sért að slá inn skástrik (þ.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Tenging slitnaði">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Skjal er útrunnið">
+<!ENTITY notCached.longDesc "<p>Umbeðið skjal er ekki til í skyndiminni &brandShortName;.</p><ul><li>Vegna öryggisástæðna, nær &brandShortName; ekki sjálfkrafa aftur í viðkvæm skjöl.</li><li>Smelltu á reyna aftur til að ná aftur í skjalið frá vefsvæðinu.</li></ul>">
+
+<!ENTITY netOffline.title "Ónettengdur hamur">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Smelltu á &quot;Reyna aftur&quot; til að tengjast netinu og endurnýja síðuna.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Kóðunarvilla">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Hafðu samband við vefstjóra vefsvæðisins og láttu hann vita af þessu vandamáli.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Óörugg skráartegund">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Hafðu samband við vefstjóra vefsvæðisins og láttu hann vita af þessu vandamáli.</li> </ul>">
+
+<!ENTITY netReset.title "Tenging slitnaði">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Tengingin svaraði ekki tímanlega">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Óþekkt samskiptaregla">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Til að opna þetta veffang gætir þú þurft að hlaða inn öðrum hugbúnaði.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Milliþjónn neitar tengingum">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Athugaðu milliþjóna stillingar netþjóns til að ganga úr skugga um að þær séu réttar.</li> <li>Hafðu samband við netkerfisstjóra til að athuga hvort milliþjónn sé virkur.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Fann ekki milliþjónn">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Athugaðu milliþjóna stillingar netþjóns til að ganga úr skugga um að þær séu réttar.</li> <li>Athugaðu hvort tölvan þín sé tengd við netið.</li> <li>Ef tölvan eða netið er varið af eldvegg eða milliþjóni, athugaðu þá hvort &brandShortName; hefur leyfi til að tengjast netinu.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Síðan er ekki að endurbeina rétt">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Þetta vandamál getur verið vegna þess að lokað er á smákökur eða þær hafa verið aftengdar.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Rangt svar frá netþjóni">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Athugaðu hvort tölvan þín sé með persónulegan öryggisstjóra uppsettann.</li> <li>Þetta vandamál gæti verið vegna óstaðlaða stillinga á netþjóni.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Örugg tenging mistókst">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Ekki er hægt að sýna síðuna vegna þess að ekki var hægt að auðkenna gögnin.</li> <li>Hafið samband við vefstjóra svæðisins til að láta hann vita af þessu vandamáli.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Tenging er ekki örugg">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Eigandi <span class='hostname'/> hefur stillt vefsvæðið sitt rangt.  Til að koma í veg fyrir að upplýsingunum þínum verði stolið, mun &brandShortName; ekki tengjast þessu vefsvæði.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Vefsvæðið er kannski ekki aðgengilegt eins og stendur eða er upptekið. Reyndu aftur seinna.</li> <li>Ef þú getur ekki hlaðið inn neinni síðu, athugaðu þá nettengingu tölvunnar.</li> <li>Ef tölvan eða netið er varið af eldvegg eða milliþjóni, athugaðu þá hvort &brandShortName; hafi aðgang til þess að fara á netið.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Lokað á vegna öryggisreglu">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; kom í veg fyrir að þessi síða birtist á þennan hátt þar sem síðan inniheldur öryggisreglu sem kemur í veg fyrir það.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Villa skemmd gögn">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ekki er hægt að sýna síðuna vegna villu í gagnasendingu.</p><ul><li>Hafðu samband við vefsíðueiganda til að láta hann vita af vandamálinu.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Bæta við undantekningu…">
+
+<!ENTITY errorReporting.automatic2 "Tilkynntu villur eins og þessa til að hjálpa Mozilla að bera kennsl á og loka á hættuleg vefsvæði">
+<!ENTITY errorReporting.learnMore "Fræðast meira…">
+
+<!ENTITY remoteXUL.title "Fjarlægt XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Hafðu samband við eigendur vefsvæðins til að láta þá vita af þessu vandamáli.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Get ekki tengst á öruggan hátt">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Ítarlegar upplýsingar: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; tókst ekki að koma á öruggri tengingu við <span id='wrongSystemTime_URL'/> þar sem klukkan þín virðist vera röng.</p> <p>Tölvan þín heldur að tíminn sé <span id='wrongSystemTime_systemDate'/>, þegar hann ætti að vera <span id='wrongSystemTime_actualDate'/>. Til að laga þetta vandamál, breyttu þá dagsetningu og tíma til að passa við réttan tíma.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; tókst ekki að koma á öruggri tengingu við <span id='wrongSystemTimeWithoutReference_URL'/> þar sem klukkan þín virðist vera röng.</p> <p>Tölvan þín er með tíma <span id='wrongSystemTimeWithoutReference_systemDate'/>. Til að laga þetta vandamál, breyttu þá dagsetningu og tíma til að passa við réttan tíma.</p>">
+
+<!ENTITY certerror.pagetitle1  "Óörugg tenging">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Þetta vefsvæði notar HTTP Strict Transport Security (HSTS) til að skilgreina að &brandShortName; megi aðeins tengjast með öryggum hætti. Það þýðir, að það er ekki hægt að bæta við undantekningu fyrir þetta skilríki.">
+<!ENTITY certerror.copyToClipboard.label "Afrita texta á klemmuspjald">
+
+<!ENTITY inadequateSecurityError.title "Tenging er ekki örugg">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> notast við öryggistækni sem er úreld og ekki lengur örugg. Árásaraðili gæti auðveldlega komist í upplýsingar sem þú telur vera öruggar. Vefumsjónaraðilinn verður að laga miðlarann áður en þú getur heimsótt vefsvæðið .</p><p>Villu kóði: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Svo virðist sem netöryggisstillingar gætu valdið þessu. Viltu endurheimta sjálfgefnar stillingar?">
+<!ENTITY prefReset.label "Endurheimta sjálfgefnar stillingar">

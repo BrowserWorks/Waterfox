@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "កម្មវិធី​គ្រប់គ្រង​ឧបករណ៍">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "ឧបករណ៍​ និង​​ម៉ូឌុល​សុវត្ថិភាព">
+<!ENTITY devmgr.details.title                   "សេចក្ដី​លម្អិត">
+<!ENTITY devmgr.details.title2                  "តម្លៃ">
+
+<!ENTITY devmgr.button.login.label              "ចូល">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "ចេញ">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "ផ្លាស់ប្ដូរ​ពាក្យ​សម្ងាត់">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "ផ្ទុក">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "មិន​ផ្ទុក">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "បញ្ចូល​ព័ត៌មាន​សម្រាប់​ម៉ូឌុល​ដែល​អ្នក​ចង់​បន្ថែម ។">
+<!ENTITY loaddevice.modname                     "ឈ្មោះ​ម៉ូឌុល ៖">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "ម៉ូឌុល​ PKCS#11 ថ្មី">
+<!ENTITY loaddevice.filename                    "ឈ្មោះ​ឯកសារ​ម៉ូឌុល ៖">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "រក​មើល…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

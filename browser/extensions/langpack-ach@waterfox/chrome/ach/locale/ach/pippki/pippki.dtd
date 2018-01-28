@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Lok mung me donyo madit">
+<!ENTITY setPassword.tokenName.label "Nyonyo me Gwoko kuc">
+<!ENTITY setPassword.oldPassword.label "Mung me donyo matye:">
+<!ENTITY setPassword.newPassword.label "Mung me donyo manyen:">
+<!ENTITY setPassword.reenterPassword.label "Mung me donyo manyen (doki):">
+<!ENTITY setPassword.meter.label "Mita me kit mung me donyo">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Ter nitit">
+<!ENTITY resetPassword.title  "Ter mung me donyo Madit">
+<!ENTITY resetPassword.text  "Ka i tero mung me donyo mamegi madit nitit, web megi weng ma kigwoko ki mung me e-mail, ket waraga me tic pari, ki wic bi wil ki lagony pa dano. I moko ada ni imito tero mung me donyo madit nitit?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Gamo Waraga">
+<!ENTITY downloadCert.message1 "Gipenyi me geno Twero me Waraga manyen (CA).">
+<!ENTITY downloadCert.trustSSL "Gen CA man me nyutu kakube me web.">
+<!ENTITY downloadCert.trustEmail "Gen CA man pi nyutu lutic ki email.">
+<!ENTITY downloadCert.trustObjSign "Gen CA man pi nyutu luyub purugram.">
+<!ENTITY downloadCert.message3 "Mapwod pe i geno CA man pi tic mo keken, myero i pim waraga ne ki cik (ka tye).">
+<!ENTITY downloadCert.viewCert.label "Nen">
+<!ENTITY downloadCert.viewCert.text "Pim waraga me CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Kwac me Nyutu Latic kwede">
+<!ENTITY clientAuthAsk.message1 "Di bar man openyo ni myero i nyute keni kwede waraga:">
+<!ENTITY clientAuthAsk.message2 "Yer waraga me mic calo nyutu:">
+<!ENTITY clientAuthAsk.message3 "Matut ikom catibiket ma kiyero ni:">
+
+<!ENTITY pkcs12.setpassword.title  "Yer i cwil pi Gwok me Waraga">
+<!ENTITY pkcs12.setpassword.message  "Mung me gwok me waraga ma itero kany kano Pwail ma onongo icok ki cweno.  Myero i ter i mung me donyo man pi mede kwede kano mukene.">
+<!ENTITY pkcs12.setpassword.label1 "Mung me donyo pi kano waraga:">
+<!ENTITY pkcs12.setpassword.label2 "Mung me donyo me waraga (doki):">
+<!ENTITY pkcs12.setpassword.reminder "Pire tek: Ka wiyi owil ki mung me kano waraga, pe iromo dong gwoko man lacen.  Tim ber i ket rekod ne i kabedo ma ogwoke maber.">
+
+<!ENTITY chooseToken.title  "Yer Pora me Pwoc">
+<!ENTITY chooseToken.message1 "Tim ber i yer pwoc.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Kelo Lagony pa dano">
+<!ENTITY createCertInfo.msg1 "Kelo Lagony tye kawot anyim… Man romo tero dakika manok….">
+<!ENTITY createCertInfo.msg2 "Tim ber i kur…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Gwok Twero me Pwoc">
+<!ENTITY protectedAuth.msg "Tim ber imi twero bot pwoc. Kore me twero jenge ikom kit pwoc mamegi.">
+<!ENTITY protectedAuth.tokenName.label "Pwoc:">

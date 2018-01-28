@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY downloads.title "Descargas">
+<!ENTITY downloadDetails.width "50ch">
+<!ENTITY downloadsSummary.minWidth2 "21ch">
+<!ENTITY cmd.pause.label "Pausar">
+<!ENTITY cmd.pause.accesskey "P">
+<!ENTITY cmd.resume.label "Continuar">
+<!ENTITY cmd.resume.accesskey "R">
+<!ENTITY cmd.cancel.label "Cancelar">
+<!ENTITY cmd.show.label "Abrir la carpeta que lo contiene">
+<!ENTITY cmd.show.accesskey "b">
+<!ENTITY cmd.showMac.label "Mostrar en Finder">
+<!ENTITY cmd.showMac.accesskey "F">
+<!ENTITY cmd.retry.label "Reintentar">
+<!ENTITY cmd.goToDownloadPage.label "Ir a la página de la descarga">
+<!ENTITY cmd.goToDownloadPage.accesskey "G">
+<!ENTITY cmd.copyDownloadLink.label "Copiar enlace de la descarga">
+<!ENTITY cmd.copyDownloadLink.accesskey "L">
+<!ENTITY cmd.removeFromHistory.label "Eliminar del historial">
+<!ENTITY cmd.removeFromHistory.accesskey "e">
+<!ENTITY cmd.clearList2.label "Limpiar panel de vista previa">
+<!ENTITY cmd.clearList2.accesskey "A">
+<!ENTITY cmd.clearDownloads.label "Limpiar descargas">
+<!ENTITY cmd.clearDownloads.accesskey "D">
+<!ENTITY cmd.unblock2.label "Permitir descarga">
+<!ENTITY cmd.unblock2.accesskey "m">
+<!ENTITY cmd.removeFile.label "Eliminar archivo">
+<!ENTITY cmd.chooseUnblock.label "Eliminar archivo o permitir descarga">
+<!ENTITY cmd.chooseOpen.label "Abrir o eliminar archivo">
+<!ENTITY showMoreInformation.label "Mostrar más información">
+<!ENTITY openFile.label "Abrir archivo">
+<!ENTITY retryDownload.label "Reintentar descarga">
+<!ENTITY cancelDownload.label "Cancelar descarga">
+<!ENTITY blocked.label "BLOQUEADO">
+<!ENTITY learnMore.label "Saber más">
+<!ENTITY downloadsHistory.label "Mostrar todas las descargas">
+<!ENTITY downloadsHistory.accesskey "S">
+<!ENTITY openDownloadsFolder.label "Abrir carpeta de descargas">
+<!ENTITY clearDownloadsButton.label "Limpiar descargas">
+<!ENTITY clearDownloadsButton.tooltip "Limpia las descargas completas, canceladas y fallidas">
+<!ENTITY downloadsListEmpty.label "No hay descargas.">
+<!ENTITY downloadsPanelEmpty.label "No hay descargas en esta sesión.">
+<!ENTITY downloadsListNoMatch.label "No se encuentra ninguna descarga que concuerde.">

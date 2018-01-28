@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "چاپ">
+
+<!ENTITY printDialog.title "چاپ">
+
+<!ENTITY fpDialog.title "ذخیرهٔ پرونده">
+
+<!ENTITY fileCheck.label "چاپ در پرونده">
+<!ENTITY fileCheck.accesskey "پ">
+<!ENTITY propertiesButton.label "ویژگی‌ها…">
+<!ENTITY propertiesButton.accesskey "و">
+<!ENTITY descText.label "شرح چاپگر:">
+<!ENTITY printer.label "چاپگر">
+<!ENTITY printerInput.label "نام چاپگر:">
+<!ENTITY printerInput.accesskey "ن">
+
+<!ENTITY printrangeGroup.label "محدودهٔ چاپ">
+<!ENTITY allpagesRadio.label "همهٔ صفحات">
+<!ENTITY allpagesRadio.accesskey "ه">
+<!ENTITY rangeRadio.label  "صفحات">
+<!ENTITY rangeRadio.accesskey  "ص">
+<!ENTITY frompageInput.label  "از">
+<!ENTITY frompageInput.accesskey  "ا">
+<!ENTITY topageInput.label  "تا">
+<!ENTITY topageInput.accesskey  "ت">
+<!ENTITY selectionRadio.label "انتخاب">
+<!ENTITY selectionRadio.accesskey "خ">
+
+<!ENTITY copies.label "نسخه">
+<!ENTITY numCopies.label "تعداد نسخه‌ها:">
+<!ENTITY numCopies.accesskey "ت">
+
+<!ENTITY printframeGroup.label "چاپ چارچوب‌ها">
+<!ENTITY aslaidoutRadio.label "همانطور که در صفحه نمایش داده شده">
+<!ENTITY aslaidoutRadio.accesskey "ه">
+<!ENTITY selectedframeRadio.label  "چارچوب انتخاب شده">
+<!ENTITY selectedframeRadio.accesskey  "چ">
+<!ENTITY eachframesepRadio.label  "هر چارچوب به طور جداگانه">
+<!ENTITY eachframesepRadio.accesskey  "ج">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Tikirisab'äl">
+
+<!ENTITY startupPage2.label        "Toq &brandShortName; tatikirisaj">
+<!ENTITY startupPage2.accesskey    "t">
+<!ENTITY startupUserHomePage.label "Tik'ut pe ri tikirib'äl ruxaq ruk'amaya'l">
+<!ENTITY startupBlankPage.label    "Tik'ut pe jun kowöl ruxaq">
+<!ENTITY startupPrevSession.label  "Kek'ut ri taq rutzuwäch chuqa' taq ruwi' ruk'isib'äl rumolojri'ïl">
+
+<!ENTITY homepage2.label           "Tikirib'äl ruxaq">
+<!ENTITY homepage2.accesskey       "r">
+<!ENTITY useCurrentPage.label      "Tokisäx ri ruxaq k'amaya'l k'o wakami">
+<!ENTITY useCurrentPage.accesskey  "w">
+<!ENTITY useMultiple.label         "Ke'okisäx ri taq ruxaq k'amaya'l e k'o wakami">
+<!ENTITY chooseBookmark.label      "Tokisäx yaketal…">
+<!ENTITY chooseBookmark.accesskey  "y">
+<!ENTITY restoreDefault.label      "Titzolïx ruwäch ri rajil achi'el ruk'amon pe">
+<!ENTITY restoreDefault.accesskey  "T">
+
+<!ENTITY downloads.label     "Taq qasa'n">
+
+<!ENTITY saveTo.label "Tiyak pa ruyonil">
+<!ENTITY saveTo.accesskey "y">
+<!ENTITY chooseFolderWin.label        "Tinik'öx…">
+<!ENTITY chooseFolderWin.accesskey    "n">
+<!ENTITY chooseFolderMac.label        "Ticha'…">
+<!ENTITY chooseFolderMac.accesskey    "T">
+<!ENTITY alwaysAskWhere.label         "Jantape' tik'utüx pe akuchi' yeyak wi kan ri taq yakb'äl">
+<!ENTITY alwaysAskWhere.accesskey     "J">
+
+<!ENTITY alwaysCheckDefault2.label        "Junelïk tinik'öx we &brandShortName; ja ri' ri awokik'amaya'l">
+<!ENTITY alwaysCheckDefault2.accesskey    "e">
+<!ENTITY setAsMyDefaultBrowser3.label     "Tib'an chi K'o wi…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "K">
+<!ENTITY isDefault.label                  "&brandShortName; ja awokik'amaya'l kan k'o wi">
+<!ENTITY isNotDefault.label               "&brandShortName; man ja ta ri awokik'amaya'l kan k'o wi">
+
+<!ENTITY separateProfileMode.label        "Tiya' q'ij chi ri &brandShortName; chuqa' Waterfox ketzije' junam">
+<!ENTITY useWaterfoxSync.label             "Pixa': Re re' nrokisaj jachon taq ruwäch b'i'aj. Tawokisaj Ximoj richin nakomonij na'oj chi kikojol.">
+<!ENTITY getStarted.notloggedin.label     "Tatz'ib'aj ab'i' pa &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Tijaq &syncBrand.shortName.label; taq rajowab'al">
+
+<!ENTITY e10sEnabled.label                "Titzij ri k'ïy tajin richin &brandShortName;">

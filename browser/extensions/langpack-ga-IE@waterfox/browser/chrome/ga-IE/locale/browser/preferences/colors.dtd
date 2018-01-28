@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Dathanna">
+<!ENTITY  window.width                    "46em">
+<!ENTITY  window.macWidth                 "49em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Úsáid mo rogha dathanna thuas in áit na ndathanna atá sonraithe ag an leathanach:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "I gCónaí">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Le téamaí Ardchodarsnachta amháin">
+<!ENTITY  overrideDefaultPageColors.never.label  "Riamh">
+
+<!ENTITY  color                           "Téacs agus Cúlra">
+<!ENTITY  textColor.label                 "Téacs:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Cúlra:">
+<!ENTITY  backgroundColor.accesskey       "C">
+<!ENTITY  useSystemColors.label           "Úsáid dathanna an chórais">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Cuir líne faoi naisc">
+<!ENTITY  underlineLinks.accesskey        "f">
+<!ENTITY  links                           "Dathanna Nasc">
+<!ENTITY  linkColor.label                 "Naisc gan Chuairt:">
+<!ENTITY  linkColor.accesskey             "g">
+<!ENTITY  visitedLinkColor.label          "Naisc Fheicthe:">
+<!ENTITY  visitedLinkColor.accesskey      "e">

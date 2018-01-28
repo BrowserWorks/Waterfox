@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Báo cáo lỗi">
+<!ENTITY crashesUnsubmitted.label   "Các báo cáo lỗi chưa gửi">
+<!ENTITY crashesSubmitted.label     "Các báo cáo lỗi đã gửi">
+<!ENTITY id.heading                 "Định danh báo cáo">
+<!ENTITY dateCrashed.heading        "Ngày xảy ra lỗi">
+<!ENTITY dateSubmitted.heading      "Ngày gửi">
+<!ENTITY noReports.label            "Chưa có báo cáo lỗi nào được gửi.">
+<!ENTITY noConfig.label             "Ứng dụng này không thể hiển thị các báo cáo lỗi. Tùy chỉnh <code>breakpad.reportURL</code> phải được thiết lập.">
+<!ENTITY clearAllReports.label      "Xóa toàn bộ báo cáo">

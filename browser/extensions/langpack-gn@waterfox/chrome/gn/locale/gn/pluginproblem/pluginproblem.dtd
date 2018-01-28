@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Ko tenda oipuru tembipuru'i ikatúva omombegue &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Epoko ko'ápe emyandy hag̃ua mboguerã'i.">
+<!ENTITY clickToActivatePlugin                               "Mba'ejoajurã myendy.">
+<!ENTITY checkForUpdates                                     "Ñembohekopyahu jeheka…">
+<!ENTITY blockedPlugin.label                                 "Ko mba'ejoajurã ojejokóma neñemo'ãrã.">
+<!ENTITY hidePluginBtn.label                                 "Mba'ejoajurã moñemi">
+<!ENTITY managePlugins                                       "Mba'ejoajurã ñangareko…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Kuatiarogue ñembohekopyahu">
+<!ENTITY reloadPlugin.post                                   " eha'ãjey hag̃ua.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Marandu jejavyguáva mondo">
+<!ENTITY report.submitting                                   "Emondo marandu'i…">
+<!ENTITY report.submitted                                    "Crash marandu'i mondopyre.">
+<!ENTITY report.disabled                                     "Crash marandu'i mboguepyre.">
+<!ENTITY report.failed                                       "Ojavy chehechauka.">
+<!ENTITY report.unavailable                                  "Ndaipóri marandu'i eipurukuaáva.">
+<!ENTITY report.comment                                      "Embojuaju peteĩ je'epyre (umi je'epyre ohecháta opavavete)">
+<!ENTITY report.pageURL                                      "URL kuatiarogue ñemoinge">
+
+<!ENTITY plugin.file                                         "Marandurenda">
+<!ENTITY plugin.mimeTypes                                    "MIME peteĩchagua:">
+<!ENTITY plugin.flashProtectedMode.label                     "Embojuruja Flash reko ñemo'ãva">
+<!ENTITY plugin.enableBlocklists.label                       "Ejoko tetepy Flash kyhyjerã ha imarãva">

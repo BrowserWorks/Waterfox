@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Umphathi Wesatifikethi">
+
+<!ENTITY certmgr.tab.mine                     "Izatifikethi Zakho">
+
+
+<!ENTITY certmgr.tab.ca                       "Oogunyaziwe">
+
+
+<!ENTITY certmgr.mine                         "Unezatifikethi ezivela kule mibutho ekuchongileyo:">
+<!ENTITY certmgr.others                       "Unezatifikethi efayilini echonga aba bantu:">
+<!ENTITY certmgr.websites2                    "Unezatifikethi efayilini echonga ezi seva:">
+<!ENTITY certmgr.cas                          "Unezatifikethi efayilini echonga aba gunyaziwe bezatifikethi:">
+
+
+
+
+
+
+<!ENTITY certmgr.subjectinfo.label            "Zinikelwa Ku">
+<!ENTITY certmgr.issuerinfo.label             "Zinikelwa Ngu">
+<!ENTITY certmgr.periodofvalidity.label       "Ithuba Lokusebenza" >
+<!ENTITY certmgr.fingerprints.label           "Izishicilelo zeminwe">
+<!ENTITY certmgr.certdetail.title             "Iinkcukacha Ngesatifikethi">
+<!ENTITY certmgr.certdetail.cn                "Igama Eliqhelekileyo (CN)">
+<!ENTITY certmgr.certdetail.o                 "Umbutho (O)">
+<!ENTITY certmgr.certdetail.ou                "Icandelo Lombutho (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Inombolo Yolandelelwano">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Ushicilelo lweminwe lwe-SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Ushicileleo lweminwe lwe-SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Hlela Imimiselo yentembeko yesatifikethi se-CA">
+<!ENTITY certmgr.editcert.edittrust           "Hlela imimiselo yentembeko:">
+
+<!ENTITY certmgr.editcert.trustemail          "Esi satifikethi sinako ukuchonga abasebenzisi bemeyile.">
+<!ENTITY certmgr.editcert.trustobjsign        "Esi satifikethi sinako ukuchonga abenzi benkqubo ekhohliweyo.">
+
+<!ENTITY certmgr.deletecert.title             "Cima Isatifikethi">
+
+<!ENTITY certmgr.certname                     "Igama Lesatifikethi">
+
+
+<!ENTITY certmgr.tokenname                    "Isixhobo Sokhuseleko">
+<!ENTITY certmgr.begins                       "Iqala Ngo">
+<!ENTITY certmgr.expires                      "Iphelelwa Ngeli Xesha">
+<!ENTITY certmgr.email                        "Idilesi Yemeyile">
+<!ENTITY certmgr.serial                       "Inombolo Yolandelelwano">
+
+
+<!ENTITY certmgr.view2.label                  "Jonga…">
+<!ENTITY certmgr.view2.accesskey              "J">
+
+
+<!ENTITY certmgr.export.label                 "Thumela ngaphandle…">
+<!ENTITY certmgr.export.accesskey             "p">
+
+
+<!ENTITY certmgr.delete_builtin.label         "Cima okanye Ungathembi…">
+<!ENTITY certmgr.delete_builtin.accesskey     "C">
+<!ENTITY certmgr.backup2.label                "Eyogcino…">
+<!ENTITY certmgr.backup2.accesskey            "E">
+<!ENTITY certmgr.backupall2.label             "Gcina Iikopi Zako Konke…">
+<!ENTITY certmgr.backupall2.accesskey         "G">
+<!ENTITY certmgr.restore2.label               "Okuthathwa ngaphandle…">
+<!ENTITY certmgr.restore2.accesskey           "t">
+<!ENTITY certmgr.details.label                "IsatifikethiImimandla">
+<!ENTITY certmgr.details.accesskey            "I">
+<!ENTITY certmgr.fields.label                 "IfildiIxabiso">
+<!ENTITY certmgr.fields.accesskey             "I">
+<!ENTITY certmgr.hierarchy.label              "Amabakala Ezatifikethi">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Yongeza ieksepshini…">
+<!ENTITY certmgr.addException.accesskey       "e">
+
+
+
+
+
+
+
+
+
+<!ENTITY exceptionMgr.certstatus.viewCert     "Jonga…">
+
+
+
+
+<!ENTITY certmgr.certserver                   "Server">
+<!ENTITY certmgr.close.accesskey              "C">
+<!ENTITY certmgr.close.label                  "Close">
+<!ENTITY certmgr.delete2.accesskey            "D">
+<!ENTITY certmgr.delete2.label                "Delete…">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.general_tab.title     "General">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.detail.prettyprint_tab.title "Details">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.edit3.label                  "Edit Trust…">
+<!ENTITY certmgr.editcert.trustssl            "This certificate can identify websites.">
+<!ENTITY certmgr.orphans                      "You have certificates on file that do not fit in any of the other categories:">
+
+<!ENTITY certmgr.override_lifetime            "Lifetime">
+<!ENTITY certmgr.pending.label                "Currently verifying certificate…">
+<!ENTITY certmgr.tab.orphan2                  "Others">
+
+<!ENTITY certmgr.tab.others2                  "People">
+<!ENTITY certmgr.tab.websites3                "Servers">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certlocation.caption2   "Server">
+<!ENTITY exceptionMgr.certlocation.download   "Get Certificate">
+<!ENTITY exceptionMgr.certlocation.url        "Location:">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.certstatus.caption      "Certificate Status">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.exceptionButton.label   "Confirm Security Exception">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">
+<!ENTITY exceptionMgr.permanent.label         "Permanently store this exception">
+<!ENTITY exceptionMgr.supplementalWarning     "Legitimate banks, stores, and other public sites will not ask you to do this.">
+<!ENTITY exceptionMgr.title                   "Add Security Exception">

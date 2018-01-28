@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Etsi seuraava osuma">
+<!ENTITY previous.tooltip "Etsi edellinen osuma">
+<!ENTITY findCloseButton.tooltip "Sulje etsintäpalkki">
+<!ENTITY highlightAll.label "Korosta kaikki">
+<!ENTITY highlightAll.accesskey "K">
+<!ENTITY highlightAll.tooltiptext "Korosta kaikki osumat">
+<!ENTITY caseSensitive.label "Huomioi kirjainkoko">
+<!ENTITY caseSensitive.accesskey "H">
+<!ENTITY caseSensitive.tooltiptext "Etsi osumia huomioiden kirjainkoko">
+<!ENTITY entireWord.label "Kokonaiset sanat">
+<!ENTITY entireWord.accesskey "s">
+<!ENTITY entireWord.tooltiptext "Etsi vain kokonaisia sanoja">

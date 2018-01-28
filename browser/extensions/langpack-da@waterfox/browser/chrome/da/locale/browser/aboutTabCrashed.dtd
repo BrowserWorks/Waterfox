@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Luk dette faneblad">
+<!ENTITY tabCrashed.restoreTab "Gendan dette faneblad">
+<!ENTITY tabCrashed.restoreAll "Gendan alle faneblade">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Fanebladet er gået ned.">
+<!ENTITY tabCrashed.offerHelp "Vi kan hjælpe!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Klik på &tabCrashed.restoreTab; for at indlæse sidens indhold igen.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Klik på &tabCrashed.restoreTab; eller &tabCrashed.restoreAll; for at indlæse sidens indhold igen.">
+<!ENTITY tabCrashed.requestHelp "Vil du hjælpe os?">
+<!ENTITY tabCrashed.requestHelpMessage "Fejlrapporter hjælper os med at diagnosticere problemer og gøre &brandShortName; bedre.">
+<!ENTITY tabCrashed.requestReport "Indrapporter dette faneblad">
+<!ENTITY tabCrashed.sendReport2 "Indsend en fejlrapport for det nuværende faneblad.">
+<!ENTITY tabCrashed.commentPlaceholder2 "Har du kommentarer (kommentarer er offentligt tilgængelige)">
+<!ENTITY tabCrashed.includeURL2 "Inkluder sidens adresse i fejlrapporten">
+<!ENTITY tabCrashed.emailPlaceholder "Indtast din mailadresse her">
+<!ENTITY tabCrashed.emailMe "Send mig en mail, når der er mere information om problemet">
+<!ENTITY tabCrashed.reportSent "Fejlrapporten er allerede indsendt. Mange tak fordi du hjælper med at gøre &brandShortName; bedre!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Indrapporter faneblade i baggrunden">
+<!ENTITY tabCrashed.autoSubmit2 "Opdater dine indstillinger til automatisk at indsende fejlrapporter">

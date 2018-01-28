@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Поставке">
+<!ENTITY  prefWindow.title        "Поставке">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; поставке">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 43em; min-height: 38.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 57em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneGeneral.title       "Опште">
+<!ENTITY  paneTabs.title          "Језичци">
+<!ENTITY  paneSearch.title        "Претрага">
+<!ENTITY  paneContent.title       "Садржај">
+<!ENTITY  paneApplications.title  "Апликације">
+<!ENTITY  panePrivacy.title       "Приватност">
+<!ENTITY  paneContainers.title    "Контејнер језичци">
+<!ENTITY  paneSecurity.title      "Безбедност">
+<!ENTITY  paneAdvanced.title      "Додатно">
+
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync.title          "Sync">
+
+<!ENTITY  helpButton.label        "Помоћ">

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Gestor de certificados">
+
+<!ENTITY certmgr.tab.mine                     "Os seus certificados">
+<!ENTITY certmgr.tab.others2                  "Pessoas">
+<!ENTITY certmgr.tab.websites3                "Servidores">
+<!ENTITY certmgr.tab.ca                       "Autoridades">
+<!ENTITY certmgr.tab.orphan2                  "Outros">
+
+<!ENTITY certmgr.mine                         "Tem certificados destas organizações que lhe identificam:">
+<!ENTITY certmgr.others                       "Tem certificados num ficheiro que identificam estas pessoas:">
+<!ENTITY certmgr.websites2                    "Tem certificados num ficheiro que identificam estes servidores:">
+<!ENTITY certmgr.cas                          "Tem certificados num ficheiro que identificam estas autoridades certificadas:">
+<!ENTITY certmgr.orphans                      "Tem certificados num ficheiro que identificam que não se enquadram em nenhuma das outras categorias:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Geral">
+<!ENTITY certmgr.detail.general_tab.accesskey "G">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Detalhes">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "A verificar certificado…">
+<!ENTITY certmgr.subjectinfo.label            "Emitido para">
+<!ENTITY certmgr.issuerinfo.label             "Emitido por">
+<!ENTITY certmgr.periodofvalidity.label       "Período de validade" >
+<!ENTITY certmgr.fingerprints.label           "Assinaturas">
+<!ENTITY certmgr.certdetail.title             "Detalhe do certificado">
+<!ENTITY certmgr.certdetail.cn                "Nome comum (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organização (O)">
+<!ENTITY certmgr.certdetail.ou                "Unidade organizacional (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Número de série">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Assinatura SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Assinatura SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Editar definições de confiança do certificado CA">
+<!ENTITY certmgr.editcert.edittrust           "Editar definições de confiança:">
+<!ENTITY certmgr.editcert.trustssl            "Este certificado pode identificar websites.">
+<!ENTITY certmgr.editcert.trustemail          "Este certificado pode identificar utilizadores de e-mail.">
+<!ENTITY certmgr.editcert.trustobjsign        "Este certificado pode identificar criadores de aplicações.">
+
+<!ENTITY certmgr.deletecert.title             "Apagar certificado">
+
+<!ENTITY certmgr.certname                     "Nome do certificado">
+<!ENTITY certmgr.certserver                   "Servidor">
+<!ENTITY certmgr.override_lifetime            "Validade">
+<!ENTITY certmgr.tokenname                    "Dispositivo de segurança">
+<!ENTITY certmgr.begins                       "Inicia a">
+<!ENTITY certmgr.expires                      "Expira em">
+<!ENTITY certmgr.email                        "Endereço de e-mail">
+<!ENTITY certmgr.serial                       "Número de série">
+
+<!ENTITY certmgr.close.label                  "Fechar">
+<!ENTITY certmgr.close.accesskey              "c">
+<!ENTITY certmgr.view2.label                  "Ver…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Editar confiança…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "Exportar…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Apagar…">
+<!ENTITY certmgr.delete2.accesskey            "A">
+<!ENTITY certmgr.delete_builtin.label         "Apagar/remover confiança…">
+<!ENTITY certmgr.delete_builtin.accesskey     "A">
+<!ENTITY certmgr.backup2.label                "Cópia de segurança…">
+<!ENTITY certmgr.backup2.accesskey            "s">
+<!ENTITY certmgr.backupall2.label             "Copiar todos…">
+<!ENTITY certmgr.backupall2.accesskey         "t">
+<!ENTITY certmgr.restore2.label               "Importar…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Campos do certificado">
+<!ENTITY certmgr.details.accesskey            "f">
+<!ENTITY certmgr.fields.label                 "Valor do campo">
+<!ENTITY certmgr.fields.accesskey             "o">
+<!ENTITY certmgr.hierarchy.label              "Hierarquia do certificado">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Adicionar exceção…">
+<!ENTITY certmgr.addException.accesskey       "A">
+
+<!ENTITY exceptionMgr.title                   "Adicionar exceção de segurança">
+<!ENTITY exceptionMgr.exceptionButton.label   "Confirmar exceção de segurança">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "Bancos, lojas e outros sites públicos legítimos não lhe irão pedir para fazer isto.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Servidor">
+<!ENTITY exceptionMgr.certlocation.url        "Localização:">
+<!ENTITY exceptionMgr.certlocation.download   "Obter certificado">
+<!ENTITY exceptionMgr.certlocation.accesskey  "O">
+<!ENTITY exceptionMgr.certstatus.caption      "Estado do certificado">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Ver…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Guardar exceção permanentemente">
+<!ENTITY exceptionMgr.permanent.accesskey     "p">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; फेर सेट करू">
+<!ENTITY refreshProfile.dialog.description1  "समस्या केँ सही करए आओर प्रदर्शन केँ पुनर्स्थापित करबाक लेल नवीन तरीका सँ आरंभ करू.">
+<!ENTITY refreshProfile.dialog.description2  "ई हाएत:">
+<!ENTITY refreshProfile.dialog.items.label1  "अपन ऐड-ऑन्स आओर अनुकूलन निकालू">
+<!ENTITY refreshProfile.dialog.items.label2  "अपन ब्राउजर सेटिंग्स डिफ़ॉल्ट रूप मे पुनर्स्थापित करू">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; फेर सेट करू">
+
+<!ENTITY refreshProfile.title                "&brandShortName; एकटा धुन द' दिअ">
+<!ENTITY refreshProfile.button.label         "&brandShortName; ताजा करू…">
+
+<!ENTITY refreshProfile.cleaning.description "तकरीबन पूरा भ गेल...">

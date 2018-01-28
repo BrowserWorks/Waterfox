@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Prenta…">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "Uppsetning síðu…">
+<!ENTITY pageSetup.accesskey  "U">
+<!ENTITY page.label           "Bls:">
+<!ENTITY page.accesskey       "B">
+<!ENTITY of.label             "af">
+<!ENTITY scale.label          "Skali:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "Skammsnið">
+<!ENTITY portrait.accesskey   "S">
+<!ENTITY landscape.label      "Langsnið">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "Loka">
+<!ENTITY close.accesskey      "o">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Sérsniðið…">
+<!ENTITY ShrinkToFit.label    "Minnka svo passi á síðu">
+<!ENTITY customPrompt.title   "Skali…">
+<!ENTITY simplifyPage.label   "Einfalda síðu">
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.enabled.tooltip  "Breyta útliti til að auðveldara sé að lesa">
+<!ENTITY simplifyPage.disabled.tooltip "Ekki er hægt að einfalda þessa síðu">
+
+<!ENTITY homearrow.tooltip    "Fyrsta síða">
+<!ENTITY endarrow.tooltip     "Seinasta síða">
+<!ENTITY nextarrow.tooltip    "Næsta síða">
+<!ENTITY previousarrow.tooltip "Fyrri síða">

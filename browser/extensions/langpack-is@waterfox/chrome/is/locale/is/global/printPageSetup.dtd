@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Uppsetning síðu">
+
+<!ENTITY basic.tab           "Snið og stillingar">
+
+<!ENTITY formatGroup.label   "Snið">
+
+<!ENTITY orientation.label   "Stefna:">
+<!ENTITY portrait.label      "Skammsnið">
+<!ENTITY portrait.accesskey  "S">
+<!ENTITY landscape.label     "Langsnið">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "Skali:">
+<!ENTITY scale.accesskey     "k">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Minnka þannig að passi á síðu">
+<!ENTITY shrinkToFit.accesskey "M">
+
+<!ENTITY optionsGroup.label  "Valkostir">
+
+<!ENTITY printBG.label       "Prenta bakgrunn (liti og myndir)">
+<!ENTITY printBG.accesskey   "b">
+
+<!ENTITY advanced.tab        "Spássía og síðuhaus/síðufótur">
+
+<!ENTITY marginGroup.label   "Spássía (#1)">
+<!ENTITY marginUnits.inches  "tommur">
+<!ENTITY marginUnits.metric  "millimetrar">
+<!ENTITY marginTop.label     "Efst:">
+<!ENTITY marginTop.accesskey "t">
+<!ENTITY marginBottom.label  "Neðst:">
+<!ENTITY marginBottom.accesskey "N">
+<!ENTITY marginLeft.label    "Vinstri:">
+<!ENTITY marginLeft.accesskey "V">
+<!ENTITY marginRight.label   "Hægri:">
+<!ENTITY marginRight.accesskey "r">
+
+<!ENTITY headerFooter.label  "Síðuhausar og síðufætur">
+
+<!ENTITY hfLeft.label        "Vinstri:">
+<!ENTITY hfCenter.label      "Miðja:">
+<!ENTITY hfRight.label       "Hægri:">
+<!ENTITY headerLeft.tip      "Vinstri síðuhaus">
+<!ENTITY headerCenter.tip    "Miðju síðuhaus">
+<!ENTITY headerRight.tip     "Hægri síðuhaus">
+<!ENTITY footerLeft.tip      "Vinstri síðufótur">
+<!ENTITY footerCenter.tip    "Miðju síðufótur">
+<!ENTITY footerRight.tip     "Hægri síðufótur">
+
+<!ENTITY hfTitle             "Titill">
+<!ENTITY hfURL               "Slóð">
+<!ENTITY hfDateAndTime       "Dagsetning/Tími">
+<!ENTITY hfPage              "Síða #">
+<!ENTITY hfPageAndTotal      "Síða # af #">
+<!ENTITY hfBlank             "--tómt--">
+<!ENTITY hfCustom            "Sérsniðið…">
+
+<!ENTITY customPrompt.title  "Sérsniðið…">
+<!ENTITY customPrompt.prompt "Sláðu inn sérsniðinn síðuhaus/síðufót texta">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Obnovi sejo">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "No, to je pa nerodno.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ima težave z obnavljanjem vaših oken in zavihkov, kar ponavadi povzroči ena izmed zadnjih odprtih strani.">
+<!ENTITY restorepage.tryThis        "Poskusite lahko naslednje:">
+<!ENTITY restorepage.restoreSome    "Odstranite enega ali več zavihkov, ki bi lahko povzročali težave">
+<!ENTITY restorepage.startNew       "Začnite povsem novo sejo brskanja">
+
+<!ENTITY restorepage.tryagainButton "Obnovi">
+<!ENTITY restorepage.restore.access "O">
+<!ENTITY restorepage.closeButton    "Zapri">
+<!ENTITY restorepage.close.access   "Z">
+
+<!ENTITY restorepage.restoreHeader  "Obnovi">
+<!ENTITY restorepage.listHeader     "Okna in zavihki">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Okno &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Pojdi!">
+<!ENTITY welcomeback2.restoreButton.access "P">
+
+<!ENTITY welcomeback2.tabtitle      "Uspelo je!">
+
+<!ENTITY welcomeback2.pageTitle     "Uspelo je!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; je pripravljen.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Obnovi vsa okna in zavihke">
+<!ENTITY welcomeback2.restoreSome.label "Obnovi samo izbrano">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Vaši dodatki in prilagoditve so bili odstranjeni, nastavitve brskalnika pa povrnjene na privzete vrednosti. Če vaša težava še vedno ni odpravljena, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "se pozanimajte o nadaljnjih korakih.">
+

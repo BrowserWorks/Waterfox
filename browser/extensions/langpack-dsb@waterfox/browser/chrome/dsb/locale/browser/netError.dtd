@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Zmólka pśi cytanju boka">
+<!ENTITY retry.label "Hyšći raz wopytaś">
+<!ENTITY returnToPreviousPage.label "Slědk hyś">
+<!ENTITY advanced.label "Rozšyrjone">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Zwisk njejo móžny">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Toś ta adresa jo wobgranicowana">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serwer njejo se namakał">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Pśeglědajśo adresu za pisańskimi zmólkami kaž <strong>ww</strong>.example.com město <strong>www</strong>.example.com</li> <li>Jolic njamóžośo někotare boki cytaś, pśekontrolěrujśo seśowy zwisk swójogo licadła.</li> <li>Jolic wašo licadło abo seś šćita se z wognjoweju murju abo proksy, zawěsććo, až &brandShortName; ma pšawo na Web pśistup měś.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Dataja njejo se namakała">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Pśeglědajśo datajowe mě za wjelikopisańskimi abo hynakšymi pisańskimi zmólkami.</li> <li>Pśespytajśo, lěć dataja jo se pśesunuła, pśemjeniła abo wótpórała.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Pśistup na dataju jo se wótpokazał">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Snaź jo se wótpórała, pśesunuła, abo datajowe pšawa zajźuju pśistupoju.</li> </ul>">
+
+<!ENTITY generic.title "Hopla.">
+<!ENTITY generic.longDesc "<p>&brandShortName; njamóžo toś ten bok někakeje pśicyny dla cytaś.</p>">
+
+<!ENTITY captivePortal.title "Se pla seśi pśizjawiś">
+<!ENTITY captivePortal.longDesc2 "<p>Musyśo se pla toś teje seśi pśizjawiś, nježli až móžośo pśistup na internet měś.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Pśizjawjeński bok seśi wócyniś">
+
+<!ENTITY malformedURI.title "Adresa njejo płaśiwa">
+<!ENTITY malformedURI.longDesc "<ul> <li>Webadrese pišu se zwětšego <strong>http://www.example.com/</strong>.</li> <li>Zawěsććo, až wužywaśo doprědka schylone nakósne smužki (t.j. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Zwisk jo se pśetergnuł">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument jo wótběgnuł">
+<!ENTITY notCached.longDesc "<p>Póžedany dokument njestoj w pufrowaku &brandShortName; k dispoziciji.</p><ul><li>Ako wěstotna napšawa &brandShortName; njewótwołujo sensibelne dokumenty awtomatiski znowego.</li><li>Klikniśo na Hyšći raz, aby dokument hyšći raz z websedła wótwołał.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-modus">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Klikniśo na &quot;Hyšći raz&quot;, aby do online-modusa pśejšeł a bok znowego zacytał.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Zmólka pśi koděrowanju wopśimjeśa">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Pšosym stejśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Njewěsty datajowy typ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Pšosym stejśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY netReset.title "Zwisk jo se slědk stajił">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Zwisk jo cas pśekšocył">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa njejo se zrozměła">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Snaź musyśo druge programy instalěrowaś, aby se toś ta adresa wócyniła.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proksy-serwer wótpokazujo zwiski">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Pśekontrolěrujśo proksy-nastajenja, aby se zawěsćiło, až wóne su korektne.</li> <li>Stajśo ze swójim seśowym administratorom, aby zawěsćił, až proksy-serwer źěła.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Njejo móžno, proksy-serwer namakaś">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Pśekontrolěrujśo proksy-nastajenja, aby zawěsćił, až su korektne.</li> <li>Skontrolěrujśo, lěc wašo licadło ma funkcioněrujucy seśowy zwisk.</li> <li>Jolic wašo licadło abo waša seś šćita se z wognjoweju murju abo proksy, zawěsććo, až &brandShortName; ma pšawo na Web pśistup měś.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Bok pšawje njepósrědnja">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Toś ten problem zawinujo se wótergi pśez znjemóžnjanje abo wótpokaowanje cookiejow.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Njewótčakane wótegrono ze serwera">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Skontrolěrujśo, lěc Personal Security Manager jo instalěrowany na wašom systemje.</li> <li>Pśicyna jo snaź njestandardna konfiguracija na serwerje.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Wěsty zwisk njejo móžny">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž awtentiskosć dostanych datow njedajo se pśeglědaś.</li> <li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Waš zwisk njejo wěsty">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Mějaŕ <span class='hostname'/> jo swójo websedło wopak konfigurěrował. Aby swóje informacije pśeśiwo tomu šćitał, až se kšadnu, njejo &brandShortName; z toś tym websedłom zwězało.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Sedło njeby mógło nachylu k dispoziciji staś abo by mógło pśeśěžone byś. Wopytajśo za mało wokognuśow hyšći raz.</li> <li>Jolic njamóžośo někotare boki cytaś, pśespytajśo zwisk wašeje licadłoweje seśi.</li> <li>Jolic wašo licadło abo waša seś šćita se z wognjoweju murju abo proksy, zawěsććo, až &brandShortName; ma pšawo na web pśistup měś.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Pśez wěstotne pšawidła za wopśimjeśe zablokěrowany">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; jo zacytowanjoju toś togo boka na toś ten nałog zajźował, dokulaž bok ma wěstotne pšawidła za wopśimjeśe, kótarež to njedowóluju.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Zmólka - wobškóźone wopśimjeśe">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž jo se zmólka pśi pśenosowanju datow namakała.</p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Wuwześe pśidaś…">
+
+<!ENTITY errorReporting.automatic2 "Dajśo zmólki ako toś te k wěsći, aby Mozilla pomagał, złosne sedła identificěrował a blokěrował">
+<!ENTITY errorReporting.learnMore "Dalšne informacije…">
+
+<!ENTITY remoteXUL.title "Daloki XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby je wó problemje informěrował.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Wěsty zwisk njejo móžny">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Rozšyrjona info: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; njejo z <span id='wrongSystemTime_URL'/> zwězał, dokulaž zda se, až zeger wašogo licadała pokazujo wopacny cas a to zajźujo wěstemu zwiskoju.</p> <p>Wašo licadło jo se na <span id='wrongSystemTime_systemDate'/> stajił, gaž pódaśe měło <span id='wrongSystemTime_actualDate'/> byś. Aby toś ten problem rozwězał, změńśo swóje datumowe a casowe nastajenja, aby korektny cas nastajił.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; njejo z <span id='wrongSystemTimeWithoutReference_URL'/> zwězał, dokulaž zda se, až zeger wašogo licadła pokazujo wopacny cas a to zajźujo wěstemu zwiskoju.</p> <p>Wašo licadło jo se na <span id='wrongSystemTimeWithoutReference_systemDate'/> stajił. Aby toś ten problem rozwězał, změńśo swóje datumowe a casowe nastajenja, aby korektny cas nastajił.</p>">
+
+<!ENTITY certerror.pagetitle1  "Njewěsty zwisk">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Toś to sedło wužywa HTTP Strict Transport Security (HSTS), aby pódało, až &brandShortName; ma jano wěsćej z nim zwězaś. Pótakem njejo móžno, wuwześe za toś ten certifikat pśidaś.">
+<!ENTITY certerror.copyToClipboard.label "Tekst do mjazywótkłada kopěrowaś">
+
+<!ENTITY inadequateSecurityError.title "Waš zwisk njejo wěsty">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> wužywa wěstotnu technologiju, kótaraž jo zestarjona a sensibelna za napady. Napadowaŕ by mógał informacije lažko namakaś, kótarež maśo za wěste. Websedłowy administrator musy problem na serwerje rozwězaś, nježli až móžośo se k sedłoju woglědaś.</p><p>Zmólkowy kod: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Zda se, až waše nastajenja seśoweje wěstoty by mógli to zawinowaś. Cośo standardne nastajenja wótnowiś?">
+<!ENTITY prefReset.label "Standardne nastajenja wótnowiś">

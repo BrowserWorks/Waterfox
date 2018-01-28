@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "တင်သွင်းခြင်းဆိုင်ရာ လုပ်ငန်းစဉ်">
+
+<!ENTITY importFrom.label               "ရွေးစရာများ၊ မှတ်သားချက်များ၊ မှတ်တမ်း၊ စကားဝှက်များနဲ့ အ​ခြား အချက်အလက်ကြမ်း တင်သွင်းမဲ့ နေရာ၊ ">
+<!ENTITY importFromUnix.label           "Import Preferences, Bookmarks, History, Passwords and other data from:">
+<!ENTITY importFromBookmarks.label      "မှတ်သားချက်များ တင်သွင်းမဲ့ နေရာ၊">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "မည်သည့်အရာကိုမျှ မတင်သွင်းပါနှင့်">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "မီးမြေခွေး">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 လုံခြုံသော ဘရောင်ဇာ">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "မှတ်သားချက်များ၊ မှတ်တမ်း သို့ စကားဝှက် အချက်အလက်ကြမ်း ပါ၀င်တဲ့ ဘယ် ပရိုဂရမ်များမှ မတွေ့ရဘူး။">
+
+<!ENTITY importSource.title             "အပြင်အဆင်များနဲ့ အချက်အလက်ကြမ်း တင်သွင်းပါ">
+<!ENTITY importItems.title              "တင်သွင်းရန် အချက်‌များ">
+<!ENTITY importItems.label              "တင်သွင်းရန် ဘယ်အချက်များကို ရွေးမလဲ၊">
+
+<!ENTITY migrating.title                "တင်သွင်းနေသည်…">
+<!ENTITY migrating.label                "အောက်ပါ အချက်များကို လောလောဆယ် တင်သွင်းနေတယ်...">
+
+<!ENTITY selectProfile.title            "ရွေးပိုင်သုံးစွဲမှု ရွေးချယ်ပါ">
+<!ENTITY selectProfile.label            "အောက်ပါ ကိုယ်ရေးမှတ်တမ်းများကို တင်သွင်းလို့ ရနိုင်တဲ့နေရာ၊">
+
+<!ENTITY done.title                     "တင်သွင်းချက် ပြီးသွားပြီ">
+<!ENTITY done.label                     "အောက်ပါ အချက်‌များကို အောင်မြင်စွာ တင်သွင်းခဲ့ပြီ၊">
+
+<!ENTITY closeSourceBrowser.label       "ဆက်လက် မဆောင်ရွက်ခင် ကျေးဇူးပြု၍ ရွေးထားသည့် ဘရောင်ဇာသည် ပိတ်ထားခြင်း ရှိ/မရှိ စစ်ပါ။">

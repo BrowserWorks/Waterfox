@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Түстер">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Парақ көрсеткен түстерді cенің төмендегі таңдауымен алмастыру:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "л">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Әрқашан">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Тек жоғары контрастты темалармен">
+<!ENTITY  overrideDefaultPageColors.never.label  "Ешқашан">
+
+<!ENTITY  color                           "Мәтін мен аясы">
+<!ENTITY  textColor.label                 "Мәтін:">
+<!ENTITY  textColor.accesskey             "т">
+<!ENTITY  backgroundColor.label           "Аясы:">
+<!ENTITY  backgroundColor.accesskey       "я">
+<!ENTITY  useSystemColors.label           "Жүйе түстерін қолдану">
+<!ENTITY  useSystemColors.accesskey       "й">
+
+<!ENTITY  underlineLinks.label            "Сілтемелердің астын сызу">
+<!ENTITY  underlineLinks.accesskey        "С">
+<!ENTITY  links                           "Сілтеме түсі">
+<!ENTITY  linkColor.label                 "Ашылмаған сілтемелер:">
+<!ENTITY  linkColor.accesskey             "м">
+<!ENTITY  visitedLinkColor.label          "Ашылған сілтемелер:">
+<!ENTITY  visitedLinkColor.accesskey      "ш">

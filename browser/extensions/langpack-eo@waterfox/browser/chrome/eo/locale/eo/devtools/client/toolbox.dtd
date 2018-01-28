@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage          "Eraro dum malfermo de la ilujo de retumilo:">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings "Spertulaj agordoj">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector "Inspektilo">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label "Montri stilojn de retumilo">
+<!ENTITY options.showUserAgentStyles.tooltip "Se tio ĉi estas ŝaltita, la normaj stiloj ŝargitaj de la retumilo estos montritaj.">
+
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+<!ENTITY options.collapseAttrs.label "Trunki atributojn de DOM">
+<!ENTITY options.collapseAttrs.tooltip "Trunki longajn atributojn en la inspektilo">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label "Norma unuo de koloro">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey "u">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.authored "Originala unuo">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex "Hex">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name "Nomoj de koloroj">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh  "* Nur en la nuna seanco, tio reŝargas la paĝon">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5    "Aktivigi la sencimigan ilujon por la retumila chrome kaj por la aldonaĵoj">
+<!ENTITY options.enableChrome.tooltip3  "Ŝalto de tiu ĉi elekteblo permesos al vi uzi plurajn ilojn por programistoj en la kunteksto de la retumilo (Iloj > Teksaĵa programistoj > Retumila ilujo) kaj uzi sencimigajn aldonaĵojn el la administro de aldonaĵoj">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3    "Ebligi foran sencimigon">
+<!ENTITY options.enableRemote.tooltip2  "Ŝalto de tiu ĉi elekteblo permesos al la programistaj iloj sencimigon de foraj instancoj, kiel tiuj de Waterfox OS">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "Aktivigi sencimigon de worker (dum programado)">
+<!ENTITY options.enableWorkers.tooltip  "Ŝalto de tiu ĉi elekteblo permesos al la iloj de programisto, sencimigi worker">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label     "Malŝalti JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Ŝalto de tiu elekteblo malaktivigos JavaScript en la nuna langeto. Se la langeton aŭ la ilujon oni fermas, tiu agordo estos forgesita.">
+
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+<!ENTITY options.disableHTTPCache.label     "Malaktivigi la staplon de HTTP (kiam la ilujo estas malfermita)">
+<!ENTITY options.disableHTTPCache.tooltip   "Ŝalto de tiu ĉi elekteblo malaktivigos la staplon de HTTP por ĉiuj langetoj, kiuj havas la ilujon malfermita. Tio ne koncernas la Service Workers.">
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label     "Aktivigi Service Workers sur HTTP (kiam la ilujo estas malfermita)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Ŝalto de tiu ĉi elekteblo aktivigos la service workers su HTTP por ĉiuj langetoj kiuj havas la ilujon malfermita.">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!ENTITY options.selectDefaultTools.label2    "Normaj iloj por programistoj">
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label  "Iloj por programistoj instalitaj de aldonaĵoj">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label     "Haveblaj butonoj de ilujo">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label  "* Ne subtenata por la nuna celo de la ilujo">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2   "Etosoj">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label   "Uzi la etoson de la retumilo Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Ŝalti/malŝalti la etoson de la retumilo Developer Edition.">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label            "Teksaĵa konzolo">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label      "Aktivigi tempostampojn">
+<!ENTITY options.timestampMessages.tooltip    "Se vi aktivigas tiun ĉi elekteblon, ordonoj kaj eligo en la Teksaĵa konzolo montros tempostampon">
+
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!ENTITY options.debugger.label            "Sencimigilo">
+
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+<!ENTITY options.sourceMaps.label      "Aktivigi mapojn de fontoj">
+<!ENTITY options.sourceMaps.tooltip    "Se vi aktivigas tiun ĉi elekteblon, fontoj estos mapitaj en la sencimigilo kaj en la konzolo.">
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label            "Redaktilo de stiloj">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "Montri originalajn fontojn">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Montri originalajn fontojn (ekz. dosierojn Sass) en la Redaktilo de stiloj kaj Inspektilo">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label      "Aŭtomate kompletigi CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Dum vi tajpas, aŭtomate kompletigi atributojn, valorojn kaj elektilojn de CSS en la Redaktilo de stiloj kaj Inspektilo">
+
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!ENTITY options.screenshot.label            "Konduto de ekrankopio">
+
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+<!ENTITY options.screenshot.clipboard.label      "Ekrankopio al tondujo">
+<!ENTITY options.screenshot.clipboard.tooltip    "Tio ĉi konservas la ekrankopion rekte en la tondujo">
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+<!ENTITY options.screenshot.audio.label      "Ludi la sonon de obturilo de filmilo">
+<!ENTITY options.screenshot.audio.tooltip    "Tio ĉi aktivigas la sonon de la filmilo, kiam oni faras ekrankopion.">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "Komunaj preferoj">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "Aktivigi daŭrajn registrojn">
+<!ENTITY options.enablePersistentLogs.tooltip  "Se vi aktivigas tiun ĉi elekteblon, nek la Teksaĵa konzolo nek la Reta kontrolilo viŝos la eligon ĉiufoje kiam vi vizitas novan paĝon">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label    "Montri datumojn de la soklo de Gecko">
+<!ENTITY options.showPlatformData.tooltip  "Se vi aktivigas tiun elekteblon, la raportoj de la rulanalizilo de JavaScript enhavos simbolojn de la soklo de Gecko.">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label                     "Preferoj de redaktilo">
+<!ENTITY options.sourceeditor.detectindentation.label   "Eltrovi krommarĝenon">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Diveni krommarĝenon surbaze de la enhavo de fonto">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Aŭtomate fermi krampojn">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Aŭtomate enmeti fermajn krampojn">
+<!ENTITY options.sourceeditor.expandtab.label           "Krei krommarĝenojn per spacoj">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Uzi spacojn anstataŭ tabojn">
+<!ENTITY options.sourceeditor.tabsize.label             "Spacoj po tabo">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "Klavkombinoj">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Normaj">

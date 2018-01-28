@@ -1,0 +1,108 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Pimo tic ki kama bor">
+
+<!ENTITY aboutTelemetry.pingDataSource "Nong kama data oa iye:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Data pi nong ma kombedi">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Data me nong ma okato">
+
+
+<!ENTITY aboutTelemetry.showSubsessionData "Nyut data me but kare">
+
+<!ENTITY aboutTelemetry.choosePing "Yer nong:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nong manyen">
+
+<!ENTITY aboutTelemetry.showOlderPing "Nong macon &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Cabit">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Nong">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Tic lumuku">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Data me kama orumu wa">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Gwok me Telemetry">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Lok me SQL ma woto mot">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Layeny omoko woko">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Tol omoko woko">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  Cura me tic">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Wel ma kimungo">
+
+<!ENTITY aboutTelemetry.eventsSection "  Gin matime">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Pim mayot">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Matut ikom med-ikome">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Nyoc me lacen">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Ngec me Kare">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  Ngec: Nongo bal i SQL mawoto mot kiye. Tol SQL ma opong mogo ki romo yaro piny ento pe ki bicwalo bot pimo tic.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Li (tol onyo /regexp/)">
+
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+

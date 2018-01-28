@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "ප්‍රධාන රහස්පදය වෙනස් කරන්න">
+<!ENTITY setPassword.tokenName.label "ආරක්‍ෂක උපාංගය">
+<!ENTITY setPassword.oldPassword.label "වත්මන් රහස්පදය:">
+<!ENTITY setPassword.newPassword.label "නව රහස්පදය:">
+<!ENTITY setPassword.reenterPassword.label "නව රහස්පදය (යළි):">
+<!ENTITY setPassword.meter.label "රහස්පද තත්ත්ව දර්ශකය">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "නැවත සකසන්න">
+<!ENTITY resetPassword.title  "ප්‍රධාන රහස්පදය නැවත සකසන්න">
+<!ENTITY resetPassword.text  "ඔබගේ ප්‍රධාන රහස්පදය නැවත සැකසුවහොත්, ඔබගේ සියලු වියුණු සහ විද්‍යුත් තැපැල් රහස්පද, පොරම දත්ත, පුද්ගලික සහතික, පෞද්ගලික යතුරු මතකයෙන් ඉවත්වනු ඇත. ඔබට විශ්වාස ද ඔබගේ ප්‍රධාන රහස්පදය නැවත සැකසීමට අවශ්‍ය බවට?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "සහතිකය බාගතවෙමින් පවතී">
+<!ENTITY downloadCert.message1 "ඔබ නව සහතික අධිකාරියක් (CA) විශ්වාස කිරීමට ඉල්ලා සිටි.">
+<!ENTITY downloadCert.trustSSL "වියුණු වල හඳුනාගැනීමට මෙම CA (සහතික අධිකාරිය) විශ්වාස කරන්න.">
+<!ENTITY downloadCert.trustEmail "විද්‍යුත් තැපැල් භාවිතා කරන්නන්ගේ හඳුනාගැනීමට මෙම CA (සහතික අධිකාරිය) විශ්වාස කරන්න.">
+<!ENTITY downloadCert.trustObjSign "මෘදුකාංග ශිල්පීන් හඳුනාගැනීමට මෙම CA (සහතික අධිකාරිය) විශ්වාස කරන්න.">
+<!ENTITY downloadCert.message3 "කිසිම කාරණාවකට මෙම CA විශ්වාස කිරීමට පළමුව, ඔබ එහි සහතිකය සහ එහි ප්‍රතිපත්තීන් සහ කාර්ය පටිපාටිය (ඇත්නම්) පිරික්සා බැලිය යුතුය.">
+<!ENTITY downloadCert.viewCert.label "දක්වන්න">
+<!ENTITY downloadCert.viewCert.text "CA සහතිකය පිරික්සා බලන්න">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "පරිශීලක හදුනා ගැනීමේ ඉල්ලීම">
+<!ENTITY clientAuthAsk.message1 "ඔබ විසින්ම සහතිකයක් ආදාරයෙන් හදුනාගන්න ලෙස මෙම අඩවිය ඉල්ලා සිටී:">
+<!ENTITY clientAuthAsk.message2 "අනන්‍යතාවය ලෙස ඉදිරිපත් කිරීමට සහතිකයක් තෝරන්න:">
+<!ENTITY clientAuthAsk.message3 "තෝරන ලද සහතිකයේ තොරතුරු:">
+
+<!ENTITY pkcs12.setpassword.title  "සහතික බැකප් රහස්පදයක් තෝරාගන්න">
+<!ENTITY pkcs12.setpassword.message  "ඔබ මෙහි ඇතුළත් කළ බැකප් රහස්පදය ඔබ නිර්මාණය කිරීමට නියමිත බැකප් ගොනුව සුරක්‍ෂිත කරයි. බැකප් කිරීම ඉදිරීයට කරගෙන යාම සඳහා ඔබ මෙම රහස්පදය සැකසිය යුතු වේ.">
+<!ENTITY pkcs12.setpassword.label1 "සහතික බැකප් රහස්පදය :">
+<!ENTITY pkcs12.setpassword.label2 "සහතික බැකප් රහස්පදය (යළි):">
+<!ENTITY pkcs12.setpassword.reminder "වැදගත්: ඔබ ඔබගේ බැකප් රහස්පදය අමතක කළ හොත් ඔබට එම බැකප් දත්ත යළි පිහිටවිය නොහැකි වනු ඇත.  කරුණාකර එය සුරක්ෂිත ස්ථානයක ලියා තබන්න.">
+
+<!ENTITY chooseToken.title  "ටෝකන සංවාදය තෝරන්න">
+<!ENTITY chooseToken.message1 "කරුණාකර ටෝකනයක් තෝරන්න.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "පෞද්ගලික යතුරු නිශ්පාදනය වෙමින්">
+<!ENTITY createCertInfo.msg1 "යතුරු නිර්මාණය වෙමින්... මේ සඳහා විනාඩි කීපයක් ගතවේවි....">
+<!ENTITY createCertInfo.msg2 "මඳක් ඉවසන්න...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "ආරක්‍ෂිත ටෝකන සහතික කිරීම">
+<!ENTITY protectedAuth.msg "කරුණාකර ටෝකනයට සහතික කරන්න. යෙදුමේ ආකාරය ඔබේ ටෝකනයේ වර්ගය මත රදාපවති.">
+<!ENTITY protectedAuth.tokenName.label "ටෝකනය:">

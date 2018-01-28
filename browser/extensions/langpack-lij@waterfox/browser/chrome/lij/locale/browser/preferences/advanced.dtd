@@ -1,0 +1,180 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Generale">
+
+<!ENTITY accessibility.label             "Acesibilitæ">
+
+<!ENTITY useCursorNavigation.label       "Adeuvia de longo i pomelli de direçion pe navegâ in sce pagine">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Çerca tanto che son derê a scrive">
+<!ENTITY searchOnStartTyping.accesskey   "s">
+<!ENTITY blockAutoReload.label           "Avizime quande o scito o preuva a ridireçionâ ò recaregâ a pagina">
+<!ENTITY blockAutoReload.accesskey       "q">
+<!ENTITY useOnScreenKeyboard.label       "Mostra a tastea da tocâ quande a serve">
+<!ENTITY useOnScreenKeyboard.accesskey   "t">
+
+<!ENTITY browsing.label                  "Çerca">
+
+<!ENTITY useAutoScroll.label             "Adeuvia rebelamento aotomatico">
+<!ENTITY useAutoScroll.accesskey         "d">
+<!ENTITY useSmoothScrolling.label        "Adeuvia rebelamento regolâ">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "Contròlla l'òrtografia quande scrivo">
+<!ENTITY checkUserSpelling.accesskey     "l">
+
+<!ENTITY dataChoicesTab.label            "Dæti çernûi">
+
+<!ENTITY healthReportDesc.label          "Analizza e prestaçioin do navegatô e condividdi informaçioin con &vendorShortName; in sciô stæto d'integritæ do software">
+<!ENTITY enableHealthReport.label        "Ativa valutaçion d'integritæ de &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "v">
+<!ENTITY healthReportLearnMore.label     "Atre informaçioin">
+
+<!ENTITY telemetryDesc.label             "Condividdi con &vendorShortName; informaçioin in sce prestaçioin, uzo, hardware e personalizaçioin do navegatô pe contribuî a-o megioamento de &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Condividdi atri dæti (telemetria)">
+<!ENTITY enableTelemetryData.accesskey   "t">
+<!ENTITY telemetryLearnMore.label        "Atre informaçioin">
+
+<!ENTITY crashReporterDesc2.label         "I report di cianti agiutan &vendorShortName; a scistemâ problemi e fâ 'n navegatô ciù stabile e seguo">
+<!ENTITY alwaysSubmitCrashReports.label   "Permetti a &brandShortName; de mandâ in backgroud di report a-o teu pòsto">
+<!ENTITY alwaysSubmitCrashReports.accesskey "m">
+<!ENTITY crashReporterLearnMore.label     "Atre informaçioin">
+
+<!ENTITY networkTab.label                "Ræ de lou">
+
+<!ENTITY connection.label                "Conescion">
+
+<!ENTITY connectionDesc.label            "Definisci comme &brandShortName; o se conette a Internet">
+<!ENTITY connectionSettings.label        "Inpostaçioin…">
+<!ENTITY connectionSettings.accesskey    "I">
+
+<!ENTITY httpCache.label                 "Contegnuo Web inta cache">
+
+<!ENTITY offlineStorage2.label           "Contegnuo web e dæti utente feua linia">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Dæti di scito">
+<!ENTITY clearSiteData.label             "Scancella tutti i dæti">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Inpostaçioin…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Pe saveine de ciù">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Limita a cache a">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB de spaçio">
+<!ENTITY clearCacheNow.label             "Scancelâ Oua">
+<!ENTITY clearCacheNow.accesskey         "c">
+<!ENTITY clearOfflineAppCacheNow.label   "Scancelâ Oua">
+<!ENTITY clearOfflineAppCacheNow.accesskey "n">
+<!ENTITY overrideSmartCacheSize.label    "Ignòra a gestion aotomatica da cache">
+<!ENTITY overrideSmartCacheSize.accesskey "o">
+
+<!ENTITY updateTab.label                 "Agiorna">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "Agiornamenti de &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "Verscion ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Permetti a &brandShortName; de">
+<!ENTITY updateAuto2.label               "Instalâ in outomatico i agiornamenti (racomandou pe avei 'na megio seguessa)">
+<!ENTITY updateAuto2.accesskey           "I">
+<!ENTITY updateCheckChoose2.label        "Contròlla se gh'é agiornamenti, ma famme decidde se instalali">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "No controlâ mai se gh'é agiornamenti (no racomandou)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Fanni vedde a stöia di agiornamenti…">
+<!ENTITY updateHistory2.accesskey        "g">
+
+<!ENTITY useService.label                "Uzâ 'n serviçio ascozo pe instalâ i agiornamenti">
+<!ENTITY useService.accesskey            "z">
+
+<!ENTITY enableSearchUpdate2.label       "Agiorna in outomatico i motoî de riçerca">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY reports.label                   "Dimme">
+
+<!ENTITY offlineStorageNotify.label               "Dimme quando un scito o veu sarvâ di dæti da êse adeuviæ feua linia">
+<!ENTITY offlineStorageNotify.accesskey           "D">
+<!ENTITY offlineStorageNotifyExceptions.label     "Eceçioin…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "c">
+
+<!ENTITY offlineAppsList2.label          "Sti sciti chi peuan sarvâ dæti pe l'uzo feua linia:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Leva da mezo…">
+<!ENTITY offlineAppsListRemove.accesskey "L">
+<!ENTITY offlineAppRemove.confirm        "Leva da mezo i dæti feua linia">
+
+<!ENTITY certificateTab.label            "Certificati">
+<!ENTITY certPersonal2.description       "Quande 'n server o domanda o teu certificato personale">
+<!ENTITY selectCerts.auto                "Seleçionn-a un in outomatico">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Domandimòu tutte e vòtte">
+<!ENTITY selectCerts.ask.accesskey       "D">
+<!ENTITY enableOCSP.label                "Domanda a-i risponditoî OCSP pe confermâ a validitæ di certificati oua">
+<!ENTITY enableOCSP.accesskey            "o">
+<!ENTITY viewCerts.label                 "Fanni vedde certificati">
+<!ENTITY viewCerts.accesskey             "F">
+<!ENTITY viewSecurityDevices.label       "Aparati">
+<!ENTITY viewSecurityDevices.accesskey   "p">
+
+<!ENTITY performance.label               "Prestaçioin">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Saccine de ciù">
+<!ENTITY allowHWAccel.label              "Adeuvia l'aceleraçion hardware se a gh'é">
+<!ENTITY allowHWAccel.accesskey          "h">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Use recommended performance settings">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY appManager.title     "Lok matut ikom purugram">
+<!ENTITY appManager.style     "width: 40em; min-height: 30em;">
+<!ENTITY remove.label         "Kwany">
+<!ENTITY remove.accesskey     "K">

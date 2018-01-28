@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informasjon om url-klassifisereren.">
+<!ENTITY aboutUrlClassifier.providerTitle               "Leverandør">
+<!ENTITY aboutUrlClassifier.provider                    "Leverandør">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Sist oppdatert">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Neste oppdatering">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off tid">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Siste oppdateringsstatus">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Oppdater">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Hurtiglager">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Oppdater">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Tøm">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabellnavn">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Antall negative hurtiglageroppføringer">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Antall positive hurtiglageroppføringer">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Vis oppføringer">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Hurtiglageroppføringer">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negativ hurtiglagerutløp">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Fullstendig hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positiv hurtiglagerutløp">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Feilsøking">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Velg loggmoduler">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Velg loggfil">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Velg JS-logg">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Loggmoduler for trygg nettlesing">
+<!ENTITY aboutUrlClassifier.debugModules                "Gjeldende loggmoduler">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS-logg for trygg nettlesing">
+<!ENTITY aboutUrlClassifier.debugFile                   "Gjeldende loggfil">

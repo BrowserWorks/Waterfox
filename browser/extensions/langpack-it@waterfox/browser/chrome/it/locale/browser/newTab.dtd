@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newtab.pageTitle "Nuova scheda">
+<!ENTITY newtab.customize.classic "Visualizza i siti principali">
+<!ENTITY newtab.customize.cog.enhanced "Includi i siti consigliati">
+<!ENTITY newtab.customize.cog.title2 "CONTROLLI NUOVA SCHEDA">
+<!ENTITY newtab.customize.cog.learn "Ulteriori informazioni su Nuova scheda">
+<!ENTITY newtab.customize.title "Personalizza la pagina Nuova scheda">
+<!ENTITY newtab.customize.blank2 "Pagina bianca">
+<!ENTITY newtab.undo.removedLabel "Miniatura rimossa.">
+<!ENTITY newtab.undo.undoButton "Annulla.">
+<!ENTITY newtab.undo.restoreButton "Ripristina tutto.">
+<!ENTITY newtab.undo.closeTooltip "Nascondi">

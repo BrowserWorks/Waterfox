@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Error messages that are likely to be overridden by applications go in this
+     file, all messages that likely don't need to tie into app-specific UI
+     should go into netError.dtd -->
+
+<!ENTITY securityOverride.linkText "Ti pos era agiuntar ina regla d'excepziun...">
+<!ENTITY securityOverride.warningContent "
+<p>Ti na duessas betg agiuntar ina regla d'excepziun, sche ti utiliseschas ina connexiun a l'internet, da la quala ti na ta fidas betg dal tut, u sche ti na vesas normalmain betg in avertiment en connex cun quest server. </p> 
+<p>Sche ti vuls tuttina agiuntar ina regla d'excepziun per quest server, pos ti far quai en las preferenzas da criptadi extendidas.</p> ">

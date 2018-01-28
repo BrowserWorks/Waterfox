@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Information om url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Leverandør">
+<!ENTITY aboutUrlClassifier.provider                    "Leverandør">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Seneste opdateringstidspunkt">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Næste opdateringstidspunkt">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Seneste opdateringsstatus">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Opdatering">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Genindlæs">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Ryd">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabelnavn">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Antal negative cacheposter">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Antal positive cacheposter">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Vis poster">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cacheposter">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Præfiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Udløbstidspunkt negativ cache">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Komplet hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Udløbstidspunkt positiv cache">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debug">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Angiv logmoduler">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Angiv logfil">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Angiv JS-log">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Safe Browsing-logmoduler">
+<!ENTITY aboutUrlClassifier.debugModules                "Nuværende logmoduler">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Safe Browsing-JS-log">
+<!ENTITY aboutUrlClassifier.debugFile                   "Nuværende logfil">

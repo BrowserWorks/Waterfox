@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "ย่อ">
+<!ENTITY bringAllToFront.label    "นำทั้งหมดมาข้างหน้า">
+<!ENTITY zoomWindow.label         "ซูม">
+<!ENTITY windowMenu.label         "หน้าต่าง">
+
+<!ENTITY helpMenu.label           "ช่วยเหลือ"> 
+<!ENTITY helpMenu.accesskey       "ช"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "ช่วยเหลือ"> 
+<!ENTITY helpMenuWin.accesskey    "ช">
+<!ENTITY aboutProduct2.label      "เกี่ยวกับ &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "ก">
+<!ENTITY productHelp2.label       "ความช่วยเหลือของ &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "ช">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "แป้นพิมพ์ลัด">
+<!ENTITY helpKeyboardShortcuts.accesskey "ล">
+
+<!ENTITY helpSafeMode.label       "เริ่มการทำงานใหม่และปิดใช้งานส่วนเสริม…">
+<!ENTITY helpSafeMode.accesskey   "ร">
+<!ENTITY helpSafeMode.stop.label       "เริ่มการทำงานใหม่และเปิดใช้งานส่วนเสริม">
+<!ENTITY helpSafeMode.stop.accesskey   "ร">
+
+<!ENTITY healthReport2.label      "รายงานสุขภาพ &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "ข">
+
+<!ENTITY helpTroubleshootingInfo.label      "ข้อมูลการแก้ไขปัญหา">
+<!ENTITY helpTroubleshootingInfo.accesskey  "ป">
+
+<!ENTITY helpFeedbackPage.label      "ส่งข้อคิดเห็น…">
+<!ENTITY helpFeedbackPage.accesskey  "ส">
+
+<!ENTITY helpShowTour2.label            "เที่ยวชม &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "ท">
+
+<!ENTITY preferencesCmdMac.label        "ค่ากำหนด…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "บริการ">
+
+<!ENTITY hideThisAppCmdMac2.label       "ซ่อน &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "ซ่อนอื่น ๆ">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "แสดงทั้งหมด">

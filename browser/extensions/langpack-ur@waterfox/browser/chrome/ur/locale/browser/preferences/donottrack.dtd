@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "ٹریک مت کریں">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "30em">
+
+<!ENTITY doNotTrackCheckbox2.label    "ہمہشہ سراغ راہ مت کریں لگائیں">
+<!ENTITY doNotTrackCheckbox2.accesskey "ہ">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; سگنل ارسال کرے گا جب کبھی آپ سراغ راہ نہیں لگواانا چاہتے جب کبھی بھی سراغ راہ حفاظت چالو ہو۔">
+<!ENTITY doNotTrackLearnMore.label    "مزید سیکھیں">

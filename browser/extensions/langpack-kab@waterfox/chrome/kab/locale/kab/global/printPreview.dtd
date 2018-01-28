@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Siggez…">
+<!ENTITY print.accesskey      "g">
+<!ENTITY pageSetup.label      "Tarusi n usebter…">
+<!ENTITY pageSetup.accesskey  "a">
+<!ENTITY page.label           "Asebter:">
+<!ENTITY page.accesskey       "s">
+<!ENTITY of.label             "ɣef">
+<!ENTITY scale.label          "Sellum:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "S teɣzi">
+<!ENTITY portrait.accesskey   "e">
+<!ENTITY landscape.label      "S tehri">
+<!ENTITY landscape.accesskey  "h">
+<!ENTITY close.label          "Mdel">
+<!ENTITY close.accesskey      "M">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Sagen…">
+<!ENTITY ShrinkToFit.label    "Serwes ɣer usebter">
+<!ENTITY customPrompt.title   "Sellum yugnen…">
+<!ENTITY simplifyPage.label   "Sefres asebter">
+<!ENTITY simplifyPage.accesskey "f">
+<!ENTITY simplifyPage.enabled.tooltip  "Snifek taneɣruft i tɣuri fessusen">
+<!ENTITY simplifyPage.disabled.tooltip "Asebter-agi ur yettwasefras ara s wudem awurman">
+
+<!ENTITY homearrow.tooltip    "Asebter amezwaru">
+<!ENTITY endarrow.tooltip     "Asebter aneggaru">
+<!ENTITY nextarrow.tooltip    "Asebter d-iteddun">
+<!ENTITY previousarrow.tooltip "Asebter izrin">

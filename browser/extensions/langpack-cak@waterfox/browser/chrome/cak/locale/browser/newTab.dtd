@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "K'ak'a' ruwi'">
+<!ENTITY newtab.customize.classic "Kek'ut pe ri utziläj taq ruxaq ruk'amaya'l">
+<!ENTITY newtab.customize.cog.enhanced "Ke'atz'aqtisaj ri taq ruxaq k'amaya'l echilab'en">
+<!ENTITY newtab.customize.cog.title2 "K'AK'A' TAQ CHAJINEL RUWI'">
+<!ENTITY newtab.customize.cog.learn "Ke'awetamaj ch'aqa' chik taq K'ak'a' Ruwi'">
+<!ENTITY newtab.customize.title "Tawichinaj ri ruxaq richin K'ak'a' Ruwi'">
+<!ENTITY newtab.customize.blank2 "Tik'üt pe ri kowöl ruxaq">
+<!ENTITY newtab.undo.removedLabel "Elesan Ch'uti'n.">
+<!ENTITY newtab.undo.undoButton "Titzolïx.">
+<!ENTITY newtab.undo.restoreButton "Titzolïx kiwäch konojel.">
+<!ENTITY newtab.undo.closeTooltip "Tewäx">

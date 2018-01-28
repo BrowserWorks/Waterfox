@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "យក​ខ្ញុំ​ចេញ​ពី​ទីនេះ!">
+<!ENTITY safeb.palm.decline.label "មិន​អើពើ​ការ​ព្រមាន​នេះ">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "នេះ​មិនមែន​ជា​វេបសាយ​បញ្ឆោត​ទេ…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "ហេតុអ្វី​ទំព័រ​នេះ​ត្រូវ​បាន​ទប់ស្កាត់?">
+
+<!ENTITY safeb.blocked.malwarePage.title "បាន​រាយការ​ទំព័រ​វាយប្រហារ !">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "ទំព័រ​បណ្ដាញ <span id='malware_sitename'/> ត្រូវបាន​រាយការ​ថា​ជា​ទំព័រ​វាយប្រហារ ហើយ​វា​ត្រូវបាន​ទប់ស្កាត់ ដោយ​ផ្អែក​លើ​ចំណង់ចំណូល​ចិត្ត​សុវត្ថិភាព​របស់​អ្នក ។">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>ទំព័រ​វាយប្រហារ បាន​ព្យាយាម​ដំឡើង​កម្មវិធី​ដែល​អាច​លួច​យក​ព័ត៌មាន​ផ្ទាល់ខ្លួន​របស់​អ្នក ឬ​ប្រើ​កុំព្យូទ័រ​របស់​អ្នក​ដើម្បី​វាយប្រហារ​កុំព្យូទ័រ​អ្នក​ដទៃ ឬ​អាច​បំផ្លាញ​ប្រព័ន្ធ​របស់​អ្នក ។</p><p>ទំព័រ​វាយប្រហារ​មួយ​ចំនួន​មាន​ចេតនា​ចែកចាយ​នូវ​កម្មវិធី​ដែល​គេ​ហាមប្រាម ប៉ុន្តែ​ទំព័រ​ជា​ច្រើន​ទៀត​គឺ​ត្រូវ​បាន​ធ្វើ​ឡើង​ដោយ​​មិនបាន​យល់​ដឹង ឬ​មិន​មាន​សិទ្ធិ​ពី​អ្នកគ្រប់គ្រង ឬ​ម្ចាស់​របស់​វា ។</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "បាន​រាយការណ៍ទំព័រ​កម្មវិធី​​ដែល​មិន​ចង់​បាន!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "ទំព័រ​បណ្ដាញ​នេះ​​នៅ <span id='unwanted_sitename'/> ត្រូវ​បាន​រាយការណ៍​ថា​មាន​កម្មវិធី​ដែល​មិន​ចង់​បាន និង​ត្រូវ​បាន​ទប់ស្កាត់​​ដោយ​ផ្អែក​តាម​ចំណូលចិត្ត​សុវត្ថិភាព​របស់​អ្នក។">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>ទំព័រ​កម្មវិធី​ដែល​មិន​ចង់​បាន​​ព្យាយាម​ដំឡើង​កម្មវិធី​ដែល​អាច​ឆបោក និង​ប៉ះពាល់​ប្រព័ន្ធ​របស់​អ្នក​តាម​មធ្យោបាយ​ដែល​មិន​នឹក​​ស្មាន​ដល់។</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "វេបសាយ​បញ្ឆោត!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "ទំព័រ​បណ្ដាញ​នេះ​នៅត្រង់ <span id='phishing_sitename'/> ត្រូវ​​បាន​រាយការណ៍​ជា​តំបន់បណ្ដាញ​បន្លំ និង​ត្រូវ​បាន​ទប់ស្កាត់​អាស្រ័យ​តាម​ចំណូលចិត្ត​សុវត្ថិភាព​របស់​អ្នក។">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>វេបសាយ​បោក​បញ្ឆោត ត្រូវបាន​បង្កើត​ឡើង​ក្នុងបំណង​បញ្ឆោត​ឲ្យ​អ្នក​ធ្លាក់​ចូល​ទៅ​ក្នុង​រឿងរ៉ាវ​គ្រោះថ្នាក់​នានា ដូចជា​ការ​ដំឡើង​កម្មវិធី​ផ្សេងៗ ឬ​ក៏​ការ​បង្ហាញ​ព័ត៌មាន​ផ្ទាល់​ខ្លួន​របស់​អ្នក​ដូចជា​ពាក្យ​សម្ងាត់ លេខ​ទូរសព្ទ ឬ​ក៏​ប័ណ្ណឥណទាន។</p><p>ការ​វាយ​បញ្ចូល​ព័ត៌មាន​ណា​មួយ​នៅ​លើ​ទំព័រ​នេះ អាច​នាំ​ឲ្យ​មាន​ការ​លួច​យក​អត្តសញ្ញាណ​ទៅ​ប្រើប្រាស់​ ឬ​ការ​លួច​បន្លំ​នានា។</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

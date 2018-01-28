@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Εκτύπωση">
+
+<!ENTITY printDialog.title "Εκτύπωση">
+
+<!ENTITY fpDialog.title "Αποθήκευση αρχείου">
+
+<!ENTITY fileCheck.label "Εκτύπωση σε αρχείο">
+<!ENTITY fileCheck.accesskey "χ">
+<!ENTITY propertiesButton.label "Ιδιότητες…">
+<!ENTITY propertiesButton.accesskey "δ">
+<!ENTITY descText.label "Περιγραφή εκτυπωτή:">
+<!ENTITY printer.label "Εκτυπωτής">
+<!ENTITY printerInput.label "Εκτυπωτής:">
+<!ENTITY printerInput.accesskey "Ε">
+
+<!ENTITY printrangeGroup.label "Επιλογή σελίδων">
+<!ENTITY allpagesRadio.label "Όλες οι σελίδες">
+<!ENTITY allpagesRadio.accesskey "λ">
+<!ENTITY rangeRadio.label  "Σελίδες">
+<!ENTITY rangeRadio.accesskey  "ε">
+<!ENTITY frompageInput.label  "από">
+<!ENTITY frompageInput.accesskey  "π">
+<!ENTITY topageInput.label  "ως">
+<!ENTITY topageInput.accesskey  "ω">
+<!ENTITY selectionRadio.label "Επιλογή">
+<!ENTITY selectionRadio.accesskey "γ">
+
+<!ENTITY copies.label "Αντίγραφα">
+<!ENTITY numCopies.label "Αριθμός αντιγράφων:">
+<!ENTITY numCopies.accesskey "ρ">
+
+<!ENTITY printframeGroup.label "Εκτύπωση πλαισίων">
+<!ENTITY aslaidoutRadio.label "Όπως φαίνονται στη σελίδα">
+<!ENTITY aslaidoutRadio.accesskey "φ">
+<!ENTITY selectedframeRadio.label  "Το επιλεγμένο πλαίσιο">
+<!ENTITY selectedframeRadio.accesskey  "α">
+<!ENTITY eachframesepRadio.label  "Κάθε πλαίσιο ξεχωριστά">
+<!ENTITY eachframesepRadio.accesskey  "θ">

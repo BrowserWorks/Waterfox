@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Excepcions">
+<!ENTITY window.width                 "48em">
+
+<!ENTITY treehead.status.label        "Estau">
+
+
+
+
+<!ENTITY address.label                "Adreza d'o puesto web:">
+<!ENTITY address.accesskey            "A">
+<!ENTITY block.label                  "Blocar">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Permitir por ista sesión">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Permitir">
+<!ENTITY allow.accesskey              "P">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Cancelar">
+<!ENTITY button.cancel.accesskey      "C">
+<!ENTITY button.ok.label              "Alzar os cambios">
+<!ENTITY button.ok.accesskey          "A">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

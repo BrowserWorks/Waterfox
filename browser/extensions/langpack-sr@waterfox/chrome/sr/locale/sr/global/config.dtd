@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Ово може да поништи гаранцију!">
+<!ENTITY aboutWarningText.label "Мењање ових напредних поставки може да нашкоди стабилности, безбедности и брзини овог програма. Наставите само ако сте сигурни да знате шта радите.">
+<!ENTITY aboutWarningButton2.label "Прихватам ризик!">
+<!ENTITY aboutWarningCheckbox.label "Прикажи ово упозорење и следећи пут">
+
+<!ENTITY searchPrefs.label "Тражи:">
+<!ENTITY searchPrefs.accesskey "р">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Име својства">
+<!ENTITY lockColumn.label "Стање">
+<!ENTITY typeColumn.label "Тип">
+<!ENTITY valueColumn.label "Вредност">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Притисните за сортирање"> 
+<!ENTITY columnChooser.tooltip "Кликните да изаберете колоне за приказ"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Копирај">
+<!ENTITY copyPref.accesskey "К">
+<!ENTITY copyName.label "Копирај име">
+<!ENTITY copyName.accesskey "и">
+<!ENTITY copyValue.label "Копирај вредност">
+<!ENTITY copyValue.accesskey "в">
+<!ENTITY modify.label "Измени">
+<!ENTITY modify.accesskey "м">
+<!ENTITY toggle.label "Промени">
+<!ENTITY toggle.accesskey "б">
+<!ENTITY reset.label "Врати">
+<!ENTITY reset.accesskey "т">
+<!ENTITY new.label "Нови">
+<!ENTITY new.accesskey "Н">
+<!ENTITY string.label "Стринг">
+<!ENTITY string.accesskey "С">
+<!ENTITY integer.label "Цео број">
+<!ENTITY integer.accesskey "Ц">
+<!ENTITY boolean.label "Булово (boolean)">
+<!ENTITY boolean.accesskey "л">

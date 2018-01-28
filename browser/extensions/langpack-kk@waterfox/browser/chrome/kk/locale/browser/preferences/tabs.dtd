@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab беттер арасында соңғы қолданылу реті бойынша ауысады">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Терезелерді жаңа бетте ашу">
+<!ENTITY newWindowsAsTabs.accesskey   "Т">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Бірнеше беттер бірге жабылған кезде ескерту">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "с">
+
+<!ENTITY warnOnOpenManyTabs.label       "Беттердің көп санын ашу әрекеті &brandShortName; жұмысын тежей алатын кезде ескерту">
+<!ENTITY warnOnOpenManyTabs.accesskey   "т">
+
+<!ENTITY switchLinksToNewTabs.label        "Сілтеме жаңа бетте ашылған кезде ол бетке ауысу">
+<!ENTITY switchLinksToNewTabs.accesskey    "ы">
+
+<!ENTITY showTabsInTaskbar.label          "Windows тапсырмалар панелінде беттер көріністерін көрсету">
+<!ENTITY showTabsInTaskbar.accesskey      "п">
+<!ENTITY tabsGroup.label          "Беттер">

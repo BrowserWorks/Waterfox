@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Hibajelentések">
+<!ENTITY crashesUnsubmitted.label   "Be nem küldött hibajelentések">
+<!ENTITY crashesSubmitted.label     "Beküldött jelentések az összeomlásokról">
+<!ENTITY id.heading                 "Jelentésazonosító">
+<!ENTITY dateCrashed.heading        "Összeomlás dátuma">
+<!ENTITY dateSubmitted.heading      "Beküldés dátuma">
+<!ENTITY noReports.label            "Nem volt még beküldve jelentés.">
+<!ENTITY noConfig.label             "Ez az alkalmazás nincs az összeomlási jelentések megjelenítésére beállítva. Be kell állítani a <code>breakpad.reportURL</code> paramétert.">
+<!ENTITY clearAllReports.label      "Minden jelentés törlése">

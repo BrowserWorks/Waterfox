@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Lisa uus konteiner">
+<!ENTITY addButton.accesskey  "L">
+<!ENTITY preferencesButton.label "Eelistused">
+<!ENTITY removeButton.label   "Eemalda">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; tagasi privaatsuse sätete juurde">
+
+<!ENTITY window.title         "Uue konteineri lisamine">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nimi:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Sisesta konteineri nimi">
+<!ENTITY icon.label           "Ikoon:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Värv:">
+<!ENTITY color.accesskey      "V">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Valmis">
+<!ENTITY button.ok.accesskey  "a">
+

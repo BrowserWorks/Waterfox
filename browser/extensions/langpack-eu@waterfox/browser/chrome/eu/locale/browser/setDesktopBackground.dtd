@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Kokalekua:">
+<!ENTITY tile.label                 "Mosaikoa">
+<!ENTITY center.label               "Erdiratua">
+<!ENTITY stretch.label              "Zabaldu">
+<!ENTITY fill.label                 "Bete">
+<!ENTITY fit.label                  "Doitu">
+<!ENTITY preview.label              "Aurrebista">
+<!ENTITY color.label                "Kolorea:">
+<!ENTITY setDesktopBackground.title "Ezarri mahaigaineko atzeko planoa">
+<!ENTITY openDesktopPrefs.label     "Ireki mahaigaineko hobespenak">
+<!ENTITY closeWindow.key            "w">

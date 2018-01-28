@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Moo fasalyan">
+
+<!ENTITY basic.tab           "Takari nda suubarey">
+
+<!ENTITY formatGroup.label   "Takari">
+
+<!ENTITY orientation.label   "Honnandiyan:">
+<!ENTITY portrait.label      "Gandebii">
+<!ENTITY portrait.accesskey  "G">
+<!ENTITY landscape.label     "Gandakanje">
+<!ENTITY landscape.accesskey "G">
+
+<!ENTITY scale.label         "Zimamari:">
+<!ENTITY scale.accesskey     "Z">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Kaccandi ka sawandi nda moo hayri">
+<!ENTITY shrinkToFit.accesskey "h">
+
+<!ENTITY optionsGroup.label  "Suubarey">
+
+<!ENTITY printBG.label       "Bandafaari kar (noonawey nda biyey)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "Hiirey, boŋdeke nda ceedeke ra">
+
+<!ENTITY marginGroup.label   "Moo-hirrey (#1)">
+<!ENTITY marginUnits.inches  "kabaarey">
+<!ENTITY marginUnits.metric  "milimeetarey">
+<!ENTITY marginTop.label     "Beene:">
+<!ENTITY marginTop.accesskey "B">
+<!ENTITY marginBottom.label  "Kore:">
+<!ENTITY marginBottom.accesskey "K">
+<!ENTITY marginLeft.label    "Wowa:">
+<!ENTITY marginLeft.accesskey "W">
+<!ENTITY marginRight.label   "Guma:">
+<!ENTITY marginRight.accesskey "G">
+
+<!ENTITY headerFooter.label  "Boŋdekey nda ceedekey">
+
+<!ENTITY hfLeft.label        "Wowa:">
+<!ENTITY hfCenter.label      "Game:">
+<!ENTITY hfRight.label       "Guma:">
+<!ENTITY headerLeft.tip      "Boŋdeke wowa">
+<!ENTITY headerCenter.tip    "Gam boŋdeke">
+<!ENTITY headerRight.tip     "Boŋdeke guma">
+<!ENTITY footerLeft.tip      "Ceedeke wowa">
+<!ENTITY footerCenter.tip    "Gam ceedeke">
+<!ENTITY footerRight.tip     "Ceedeke guma">
+
+<!ENTITY hfTitle             "Tiiramaa">
+<!ENTITY hfURL               "URL nungu">
+<!ENTITY hfDateAndTime       "Han/Waati">
+<!ENTITY hfPage              "Moo hinna">
+<!ENTITY hfPageAndTotal      "Moo # kaŋ hun # ra">
+<!ENTITY hfBlank             "--koonu--">
+<!ENTITY hfCustom            "Hanse war boŋ še…">
+
+<!ENTITY customPrompt.title  "Hanse war boŋ še…">
+<!ENTITY customPrompt.prompt "War kalimaɲaa kuroo boŋ boŋdeke/ceedeke dam">

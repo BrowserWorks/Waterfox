@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Սեղմեք՝ բաղադրիչը ակտիվացնելու համար։">
+<!ENTITY clickToActivatePlugin                               "Ակտիվացնել բաղադրիչը:">
+<!ENTITY checkForUpdates                                     "Ստուգել թարմացումները...">
+<!ENTITY blockedPlugin.label                                 "Անվտանգության նկատառումներով այս բաղադրիչը արգելափակված է:">
+<!ENTITY hidePluginBtn.label                                 "Թաքցնել բաղադրիչը">
+<!ENTITY managePlugins                                       "Կարգավորել բաղադրիչները…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "Անվավեր ձևաչափ">
+<!ENTITY reloadPlugin.middle                                 "Կրկին բեռնել էջը">
+<!ENTITY reloadPlugin.post                                   " կրկին փորձելու համար:">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Ուղարկել վթարի զեկույց">
+<!ENTITY report.submitting                                   "Զեկույցն ուղարկվում է…">
+<!ENTITY report.submitted                                    "Վթարի զեկույցը ուղարկված է:">
+<!ENTITY report.disabled                                     "Վթարի զեկույցը անջատված է:">
+<!ENTITY report.failed                                       "Անհաջող փոխանցում:">
+<!ENTITY report.unavailable                                  "Ոչ մի զեկույց չկա:">
+<!ENTITY report.comment                                      "Ավելացնել մեկնաբանություն (մեկնաբանությունները հանրային են)">
+<!ENTITY report.pageURL                                      "Ներառել էջերի URL-ները">
+
+<!ENTITY plugin.file                                         "Ֆայլ">
+<!ENTITY plugin.mimeTypes                                    "MIME տեսակներ">
+<!ENTITY plugin.flashProtectedMode.label                     "Միացնել Adobe Flash-ի պաշտպանված կերպը">
+<!ENTITY plugin.enableBlocklists.label                       "Արգելափակել վտանգավոր և կպչուն Flash բովանդակությունը">
+
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Követés elleni védelem">
+<!ENTITY  trackingProtection2.description      "A követés a webhelyek közti böngészésének adatgyűjtése. A követés profilépítésre, és a böngészési valamint személyes információi alapján megjelenített tartalomhoz használható.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Használja a követésvédelmet az ismert követők blokkolására">
+<!ENTITY  trackingProtectionAlways.label       "Mindig">
+<!ENTITY  trackingProtectionAlways.accesskey   "d">
+<!ENTITY  trackingProtectionPrivate.label      "Csak privát ablakokban">
+<!ENTITY  trackingProtectionPrivate.accesskey  "C">
+<!ENTITY  trackingProtectionNever.label        "Soha">
+<!ENTITY  trackingProtectionNever.accesskey    "o">
+<!ENTITY  trackingProtectionLearnMore.label    "További tudnivalók">
+<!ENTITY  trackingProtectionExceptions.label   "Kivételek…">
+<!ENTITY  trackingProtectionExceptions.accesskey "K">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Követés elleni védelem használata privát ablakokban">
+<!ENTITY trackingProtectionPBM5.accesskey     "p">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Követésvédelem használata privát böngészésben, az ismert követők blokkolására">
+<!ENTITY trackingProtectionPBM6.accesskey     "p">
+<!ENTITY trackingProtectionPBMLearnMore.label "További tudnivalók">
+<!ENTITY changeBlockList2.label               "Blokkolási lista módosítása…">
+<!ENTITY changeBlockList2.accesskey           "m">
+
+<!ENTITY  doNotTrack.description        "„Do Not Track” jelzés küldése a webhelyeknek, jelezve, hogy nem szeretné, hogy kövessék">
+<!ENTITY  doNotTrack.learnMore.label    "További tudnivalók">
+<!ENTITY  doNotTrack.default.label      "Csak, ha követésvédelmet használ">
+<!ENTITY  doNotTrack.always.label       "Mindig">
+
+<!ENTITY  history.label                 "Előzmények">
+<!ENTITY  permissions.label             "Engedélyek">
+
+<!ENTITY  addressBar.label              "Címsáv">
+<!ENTITY  addressBar.suggest.label      "A címsáv használatakor jelenjen meg">
+<!ENTITY  locbar.history2.label         "Böngészési előzmények">
+<!ENTITY  locbar.history2.accesskey     "e">
+<!ENTITY  locbar.bookmarks.label        "Könyvjelzők">
+<!ENTITY  locbar.bookmarks.accesskey    "K">
+<!ENTITY  locbar.openpage.label         "Nyitott lapok">
+<!ENTITY  locbar.openpage.accesskey     "N">
+<!ENTITY  locbar.searches.label         "Kapcsolódó keresések az alapértelmezett keresőszolgáltatásból">
+<!ENTITY  locbar.searches.accesskey     "c">
+
+<!ENTITY  suggestionSettings2.label     "Keresőszolgáltatás-javaslatok beállításainak módosítása">
+
+<!ENTITY  acceptCookies2.label          "Sütik elfogadása webhelyekről">
+<!ENTITY  acceptCookies2.accesskey      "e">
+
+<!ENTITY  acceptThirdParty.pre.label      "Harmadik féltől származó sütik elfogadása:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "H">
+<!ENTITY  acceptThirdParty.always.label   "Mindig">
+<!ENTITY  acceptThirdParty.never.label    "Soha">
+<!ENTITY  acceptThirdParty.visited.label  "Meglátogatottól">
+
+<!ENTITY  keepUntil.label               "Sütik megtartása:">
+<!ENTITY  keepUntil.accesskey           "m">
+
+<!ENTITY  expire.label                  "amíg le nem járnak">
+<!ENTITY  close.label                   "a &brandShortName; bezárásáig">
+
+<!ENTITY  cookieExceptions.label        "Kivételek…">
+<!ENTITY  cookieExceptions.accesskey    "K">
+
+<!ENTITY  showCookies.label             "Sütik megtekintése…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "A &brandShortName;">
+<!ENTITY  historyHeader2.pre.accesskey     "A">
+<!ENTITY  historyHeader.remember.label     "Megjegyzi az előzményeket">
+<!ENTITY  historyHeader.dontremember.label "Nem jegyzi meg az előzményeket">
+<!ENTITY  historyHeader.custom.label       "Egyéni beállításokat használ az előzményekhez">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "A &brandShortName; megjegyzi a böngészés, a letöltések, az űrlapok és a keresőmezők előzményeit.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Lehetősége van ">
+<!ENTITY  rememberActions.clearHistory.label  "törölni az előzményeket">
+<!ENTITY  rememberActions.middle.label        ", vagy ">
+<!ENTITY  rememberActions.removeCookies.label "eltávolítani az egyes sütiket">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "A &brandShortName; ugyanazokat a beállításokat fogja használni, mint a privát böngészés, és nem fogja megjegyezni az internethasználat előzményeit.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Lehetősége van ">
+<!ENTITY  dontrememberActions.clearHistory.label "minden előzmény törlésére">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Mindig a privát böngészési módot használja">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Böngészési és letöltési előzmények megőrzése">
+<!ENTITY  rememberHistory2.accesskey  "l">
+
+<!ENTITY  rememberSearchForm.label       "Keresőmezők és űrlapmezők előzményeinek megőrzése">
+<!ENTITY  rememberSearchForm.accesskey   "K">
+
+<!ENTITY  clearOnClose.label             "Előzmények törlése a &brandShortName; bezárásakor">
+<!ENTITY  clearOnClose.accesskey         "E">
+
+<!ENTITY  clearOnCloseSettings.label     "Beállítások…">
+<!ENTITY  clearOnCloseSettings.accesskey "B">
+
+<!ENTITY  browserContainersLearnMore.label      "További tudnivalók">
+<!ENTITY  browserContainersEnabled.label        "Konténer lapok engedélyezése">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Beállítások…">
+<!ENTITY  browserContainersSettings.accesskey    "B">

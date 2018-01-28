@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Pokretanje">
+
+<!ENTITY startupPage.label         "Kad se &brandShortName; pokrene:">
+<!ENTITY startupPage.accesskey     "K">
+
+<!ENTITY startupBlankPage.label    "Prikaži praznu stranicu">
+
+
+<!ENTITY homepage.label            "Početna stranica:">
+<!ENTITY homepage.accesskey        "č">
+<!ENTITY useCurrentPage.label      "Koristi trenutnu stranicu">
+<!ENTITY useCurrentPage.accesskey  "c">
+<!ENTITY useMultiple.label         "Koristi trenutne stranice">
+<!ENTITY chooseBookmark.label      "Koristi zabilješku…">
+<!ENTITY chooseBookmark.accesskey  "š">
+<!ENTITY restoreDefault.label      "Vrati na uobičajeno">
+<!ENTITY restoreDefault.accesskey  "j">
+
+<!ENTITY downloads.label     "Preuzimanja">
+
+<!ENTITY saveTo.label "Spremi datoteke u">
+<!ENTITY saveTo.accesskey "u">
+<!ENTITY chooseFolderWin.label        "Pretraži...">
+<!ENTITY chooseFolderWin.accesskey    "i">
+<!ENTITY chooseFolderMac.label        "Odaberi...">
+<!ENTITY chooseFolderMac.accesskey    "e">
+
+
+
+<!ENTITY alwaysCheckDefault2.label        "Uvijek provjeri je li &brandShortName; zadani preglednik">
+<!ENTITY alwaysCheckDefault2.accesskey    "z">
+<!ENTITY setAsMyDefaultBrowser2.label     "Označi zadanim">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "z">
+<!ENTITY isDefault.label                  "&brandShortName; je trenutno vaš zadani preglednik">
+<!ENTITY isNotDefault.label               "&brandShortName; trenutno nije vaš zadani preglednik">
+
+<!ENTITY separateProfileMode.label        "Dozvoli da se &brandShortName; i Waterfox pokreću u isto vrijeme">
+<!ENTITY useWaterfoxSync.label             "Savjet: Ovo koristi odvojene profile. Koristi Sync za dijeljenje podataka između njih.">
+
+
+
+<!ENTITY e10sEnabled.label                "Omogući više-procesni &brandShortName;">
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">

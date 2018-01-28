@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Uruchamianie">
+
+<!ENTITY startupPage.label         "Po uruchomieniu programu &brandShortName;:">
+<!ENTITY startupPage.accesskey "P">
+<!ENTITY startupUserHomePage.label "wyświetl stronę startową">
+<!ENTITY startupBlankPage.label    "wyświetl pustą stronę">
+<!ENTITY startupPrevSession.label "wyświetl okna i karty z poprzedniej sesji">
+
+<!ENTITY homepage.label            "Strona startowa:">
+<!ENTITY homepage.accesskey        "S">
+<!ENTITY useCurrentPage.label      "Użyj bieżącej strony">
+<!ENTITY useCurrentPage.accesskey  "b">
+<!ENTITY useMultiple.label         "Użyj bieżących stron">
+<!ENTITY chooseBookmark.label      "Użyj zakładki…">
+<!ENTITY chooseBookmark.accesskey  "z">
+<!ENTITY restoreDefault.label      "Przywróć domyślną">
+<!ENTITY restoreDefault.accesskey  "d">
+
+<!ENTITY downloads.label     		"Pobieranie">
+
+<!ENTITY saveTo.label 			"Pobierane pliki zapisuj do:">
+<!ENTITY saveTo.accesskey 		"o">
+<!ENTITY chooseFolderWin.label        	"Przeglądaj…">
+<!ENTITY chooseFolderWin.accesskey    	"g">
+<!ENTITY chooseFolderMac.label        	"Wybierz…">
+<!ENTITY chooseFolderMac.accesskey    	"y">
+<!ENTITY alwaysAskWhere.label "Pytaj, gdzie zapisać każdy plik">
+<!ENTITY alwaysAskWhere.accesskey "t">
+
+<!ENTITY alwaysCheckDefault2.label "Sprawdzanie, czy &brandShortName; jest domyślną przeglądarką">
+<!ENTITY alwaysCheckDefault2.accesskey "e">
+<!ENTITY setAsMyDefaultBrowser2.label "Ustaw jako domyślną">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "U">
+<!ENTITY isDefault.label "&brandShortName; jest obecnie domyślną przeglądarką">
+<!ENTITY isNotDefault.label "&brandShortName; nie jest obecnie domyślną przeglądarką">
+
+<!ENTITY separateProfileMode.label "Jednoczesne działanie programu &brandShortName; oraz Firefoksa">
+<!ENTITY useWaterfoxSync.label "Podczas jednoczesnego działania wykorzystywane są oddzielne profile. Można wykorzystać synchronizację, aby dzielić dane między nimi.">
+<!ENTITY getStarted.notloggedin.label "Zaloguj się, aby synchronizować…">
+<!ENTITY getStarted.configured.label "Otwórz ustawienia synchronizacji">
+
+<!ENTITY e10sEnabled.label "&brandShortName; w wielu procesach">

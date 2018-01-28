@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Тарихты тазартуды баптау">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "40em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "40em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+
+<!ENTITY sanitizeDialog2.title         "Жуырдағы тарихты өшіру">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "Мен &brandShortName; жапқанда, ол келесілерді өшіру керек:">
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "Жойылатын деректер мерзімі: ">
+<!ENTITY clearTimeDuration.accesskey      "Ж">
+<!ENTITY clearTimeDuration.lastHour       "Соңғы сағат">
+<!ENTITY clearTimeDuration.last2Hours     "Соңғы 2 сағат">
+<!ENTITY clearTimeDuration.last4Hours     "Соңғы 4 сағат">
+<!ENTITY clearTimeDuration.today          "бүгінгі тарихымды">
+<!ENTITY clearTimeDuration.everything     "Барлығы">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "Ақпараты">
+<!ENTITY detailsProgressiveDisclosure.accesskey "п">
+
+<!ENTITY historySection.label         "Тарихы">
+<!ENTITY dataSection.label            "Мәліметтер">
+
+<!ENTITY itemHistoryAndDownloads.label     "Қарап шығу және жүктемелер тарихы">
+<!ENTITY itemHistoryAndDownloads.accesskey "ш">
+<!ENTITY itemFormSearchHistory.label       "Формалар және іздеу тарихы">
+<!ENTITY itemFormSearchHistory.accesskey   "Ф">
+<!ENTITY itemCookies.label                 "Cookies">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "Кэш">
+<!ENTITY itemCache.accesskey               "К">
+<!ENTITY itemOfflineApps.label             "Дербес веб-сайттар деректері">
+<!ENTITY itemOfflineApps.accesskey         "Д">
+<!ENTITY itemActiveLogins.label            "Белсенді сеанстар">
+<!ENTITY itemActiveLogins.accesskey        "Б">
+<!ENTITY itemSitePreferences.label         "Сайттар баптаулары">
+<!ENTITY itemSitePreferences.accesskey     "С">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "Бұл әрекетті болдырмау мүмкін емес болады.">

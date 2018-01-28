@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Värit">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Korvaa sivun määrittelemät värit yllä olevilla valinnoilla:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "r">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Aina">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Vain suuren kontrastin teemojen kanssa">
+<!ENTITY  overrideDefaultPageColors.never.label  "Ei koskaan">
+
+<!ENTITY  color                           "Tekstin ja taustan asetukset">
+<!ENTITY  textColor.label                 "Teksti:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Tausta:">
+<!ENTITY  backgroundColor.accesskey       "u">
+<!ENTITY  useSystemColors.label           "Käytä järjestelmän värejä">
+<!ENTITY  useSystemColors.accesskey       "K">
+
+<!ENTITY  underlineLinks.label            "Alleviivaa linkit">
+<!ENTITY  underlineLinks.accesskey        "A">
+<!ENTITY  links                           "Linkkien värit">
+<!ENTITY  linkColor.label                 "Avaamattomat linkit:">
+<!ENTITY  linkColor.accesskey             "m">
+<!ENTITY  visitedLinkColor.label          "Avatut linkit:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

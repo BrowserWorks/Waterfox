@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Enavos">
+<!ENTITY  button-back-mac.accesskey    "E">
+<!ENTITY  button-next-mac.label        "Enavant">
+<!ENTITY  button-next-mac.accesskey    "v">
+<!ENTITY  button-finish-mac.label      "Terminar">
+<!ENTITY  button-cancel-mac.label      "Interrumper">
+
+<!ENTITY  button-back-unix.label       "Enavos">
+<!ENTITY  button-back-unix.accesskey   "E">
+<!ENTITY  button-next-unix.label       "Enavant">
+<!ENTITY  button-next-unix.accesskey   "v">
+<!ENTITY  button-finish-unix.label     "Terminar">
+<!ENTITY  button-cancel-unix.label     "Interrumper">
+
+<!ENTITY  button-back-win.label        "&lt; Enavos">
+<!ENTITY  button-back-win.accesskey    "E">
+<!ENTITY  button-next-win.label        "Enavant &gt;">
+<!ENTITY  button-next-win.accesskey    "v">
+<!ENTITY  button-finish-win.label      "Terminar">
+<!ENTITY  button-cancel-win.label      "Interrumper">

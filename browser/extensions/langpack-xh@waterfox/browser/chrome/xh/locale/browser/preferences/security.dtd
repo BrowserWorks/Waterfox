@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Ukhuseleko">
+
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Bloka isiqulatho esiyingozi nesiqhathayo">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloka ukudawnlowuda okuyingozi">
+<!ENTITY  blockDownloads.accesskey        "u">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Ndilkuumkise ngesoftwe engafunwayo nengaqhelekanga">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "a">
+
+<!ENTITY  addonExceptions.label         "Izinxaxhi…">
+<!ENTITY  addonExceptions.accesskey     "I">
+
+
+<!ENTITY  formsAndPasswords.label       "Iifomu neePhaswedi">
+
+
+<!ENTITY  passwordExceptions.label      "Izinxaxhi…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "Sebenzisa iphaswedi eyimasta">
+<!ENTITY  useMasterPassword.accesskey    "S">
+<!ENTITY  changeMasterPassword.label     "Guqula iPhaswedi eyiMasta…">
+<!ENTITY  changeMasterPassword.accesskey "P">
+
+<!ENTITY  savedLogins.label              "Ezigciniweyo Logini…">
+<!ENTITY  savedLogins.accesskey          "L">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

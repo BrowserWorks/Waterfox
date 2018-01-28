@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Сақ болыңыз, кепілдемеден айрылуыңыз мүмкін!">
+<!ENTITY aboutWarningText.label "Осы баптауларды өзгерту тұрақсыздық, қауіпсіздік пен өнімділіктің құлдырауына әкеп соғуы мүмкін. Сенімді болсаңыз ғана, өзгертіңіз.">
+<!ENTITY aboutWarningButton2.label "Осыны қабылдаймын!">
+<!ENTITY aboutWarningCheckbox.label "Осы ескертуді келесі ретте көрсету">
+
+<!ENTITY searchPrefs.label "Іздеу:">
+<!ENTITY searchPrefs.accesskey "з">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "е">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Баптау атауы">
+<!ENTITY lockColumn.label "Күйі">
+<!ENTITY typeColumn.label "Түрі">
+<!ENTITY valueColumn.label "Мәні">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Сұрыптау үшін басыңыз"> 
+<!ENTITY columnChooser.tooltip "Көрсетілетін бағандарды таңдау үшін басыңыз"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Көшіріп алу">
+<!ENTITY copyPref.accesskey "К">
+<!ENTITY copyName.label "Атын көшіріп алу">
+<!ENTITY copyName.accesskey "А">
+<!ENTITY copyValue.label "Мәнін көшіріп алу">
+<!ENTITY copyValue.accesskey "М">
+<!ENTITY modify.label "Өзгерту">
+<!ENTITY modify.accesskey "з">
+<!ENTITY toggle.label "Ауыстыру">
+<!ENTITY toggle.accesskey "А">
+<!ENTITY reset.label "Тастау">
+<!ENTITY reset.accesskey "с">
+<!ENTITY new.label "Жаңа">
+<!ENTITY new.accesskey "а">
+<!ENTITY string.label "Жол">
+<!ENTITY string.accesskey "о">
+<!ENTITY integer.label "Бүтін">
+<!ENTITY integer.accesskey "Б">
+<!ENTITY boolean.label "Логикалық">
+<!ENTITY boolean.accesskey "Л">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "ზოგადი">
+
+<!ENTITY useCursorNavigation.label       "გვერდებს შიგნით მოძრაობისას ყოველთვის კურსორის კლავიშების გამოყენება">
+<!ENTITY useCursorNavigation.accesskey   "რ">
+<!ENTITY searchOnStartTyping.label       "ტექსტის ძიება აკრეფის დაწყებისთანავე">
+<!ENTITY searchOnStartTyping.accesskey   "ტ">
+<!ENTITY useOnScreenKeyboard.label       "სენსორული კლავიატურის ჩვენება საჭიროების შემთხვევაში">
+<!ENTITY useOnScreenKeyboard.accesskey   "კ">
+
+<!ENTITY browsing.label                  "ჩვენება">
+
+<!ENTITY useAutoScroll.label             "თვითგადაადგილების გამოყენება">
+<!ENTITY useAutoScroll.accesskey         "თ">
+<!ENTITY useSmoothScrolling.label        "გლუვი გადაადგილების გამოყენება">
+<!ENTITY useSmoothScrolling.accesskey    "გ">
+<!ENTITY checkUserSpelling.label         "მართლწერის შემოწმება ტექსტის აკრეფისას">
+<!ENTITY checkUserSpelling.accesskey     "მ">
+
+<!ENTITY dataChoicesTab.label            "მონაცემთა შერჩევა">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "მოხსენებები გამორთულია ანაწყობის ამ კონფიგურაციისთვის">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName;-ისთვის ნების დართვა, ტექნიკური მონაცემების ავტომატურად გასაგზავნად Mozilla-სთვის">
+<!ENTITY enableHealthReport1.accesskey   "ხ">
+<!ENTITY healthReportLearnMore.label     "შეიტყვეთ მეტი">
+
+<!ENTITY dataCollection.label            "&brandShortName; მონაცემთა აღრიცხვა და გამოყენება">
+<!ENTITY dataCollectionDesc.label        "ჩვენ ვცდილობთ მოგცეთ არჩევანის უფლება და აღვრიცხოთ მხოლოდ ის მონაცემები, რაც საჭიროა &brandShortName;-ის გასაუმჯობესებლად. ჩვენ ყოველთვის დაგეკითხებით, პირადი ინფორმაციის მიღებამდე.">
+<!ENTITY dataCollectionPrivacyNotice.label    "პირადი მონაცემების დაცვის დებულება">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName;-სთვის ნების დართვა, ავარიული დახურვების მოხსენების გასაგზავნად Mozilla-სთვის">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "ვ">
+<!ENTITY crashReporterLearnMore.label    "შეიტყვეთ მეტი">
+
+<!ENTITY networkTab.label                "ქსელი">
+
+<!ENTITY networkProxy.label              "ქსელის პროქსი">
+
+<!ENTITY connectionDesc.label            "მითითება თუ როგორ დაუკავშირდეს &brandShortName; ინტერნეტს">
+<!ENTITY connectionSettings.label        "პარამეტრები…">
+<!ENTITY connectionSettings.accesskey    "პ">
+
+<!ENTITY httpCache.label                 "კეშირებული ვებშიგთავსი">
+
+<!ENTITY offlineStorage2.label           "კავშირგარეშე ვებშიგთავსი და მომხმარებლის მონაცემები">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "საიტის მონაცემები">
+<!ENTITY clearSiteData.label             "ყველა მონაცემის წაშლა">
+<!ENTITY clearSiteData.accesskey         "ყ">
+<!ENTITY siteDataSettings.label          "პარამეტრები…">
+<!ENTITY siteDataSettings.accesskey      "ტ">
+<!ENTITY siteDataLearnMoreLink.label     "შეიტყვეთ მეტი">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "კეშის შეზღუდვა:">
+<!ENTITY limitCacheSizeBefore.accesskey  "კ">
+<!ENTITY limitCacheSizeAfter.label       "MB დისკზე">
+<!ENTITY clearCacheNow.label             "გასუფთავება">
+<!ENTITY clearCacheNow.accesskey         "ფ">
+<!ENTITY clearOfflineAppCacheNow.label   "გასუფთავება">
+<!ENTITY clearOfflineAppCacheNow.accesskey "გ">
+<!ENTITY overrideSmartCacheSize.label    "კეშის ზომის ავტომატურად განსაზღვრის უგულებელყოფა">
+<!ENTITY overrideSmartCacheSize.accesskey "უ">
+
+<!ENTITY updateTab.label                 "განახლება">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName;-ის განახლებები">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "მუდმივად განაახლეთ &brandShortName;, რომ შეინარჩუნოთ წარმადობა, მდგრადობა და უსაფრთხოება.">
+<!ENTITY updateApplication.version.pre   "ვერსია ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "ნების დართვა &brandShortName;-ისთვის">
+<!ENTITY updateAuto3.label               "ავტომატურად დააყენოს განახლებები (რეკომენდებულია)">
+<!ENTITY updateAuto3.accesskey           "ტ">
+<!ENTITY updateCheckChoose2.label        "შემოწმდეს განახლებებზე, მაგრამ თავად მიუთითებთ, დაყენდეს თუ არა">
+<!ENTITY updateCheckChoose2.accesskey    "ე">
+<!ENTITY updateManual2.label             "არასდროს შემოწმდეს განახლებებზე (არარეკომენდებულია)">
+<!ENTITY updateManual2.accesskey         "ა">
+
+<!ENTITY updateHistory2.label            "განახლებების ისტორიის ჩვენება…">
+<!ENTITY updateHistory2.accesskey        "ი">
+
+<!ENTITY useService.label                "განახლებების დასაყენებლად ფონური მომსახურების გამოყენება">
+<!ENTITY useService.accesskey            "ფ">
+
+<!ENTITY enableSearchUpdate2.label       "საძიებო სისტემების ავტომატური განახლება">
+<!ENTITY enableSearchUpdate2.accesskey   "ს">
+
+<!ENTITY offlineStorageNotify.label               "გაფრთხილება, საიტის მიერ მონაცემების კავშირგარეშე გამოყენებისთვის შენახვისას">
+<!ENTITY offlineStorageNotify.accesskey           "ფ">
+<!ENTITY offlineStorageNotifyExceptions.label     "გამონაკლისები…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ნ">
+
+<!ENTITY offlineAppsList2.label          "მოცემულ ვებსაიტებს მონაცემების კავშირგარეშე გამოყენებისთვის შენახვის უფლება აქვთ:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "ამოღება…">
+<!ENTITY offlineAppsListRemove.accesskey "ა">
+<!ENTITY offlineAppRemove.confirm        "გარე მონაცემთა ამოღება">
+
+<!ENTITY certificateTab.label            "სერთიფიკატები">
+<!ENTITY certPersonal2.description       "როცა სერვერი თქვენს პირად სერთიფიკატს ითხოვს">
+<!ENTITY selectCerts.auto                "შეირჩეს ავტომატურად">
+<!ENTITY selectCerts.auto.accesskey      "ა">
+<!ENTITY selectCerts.ask                 "ყოველ ჯერზე კითხვა">
+<!ENTITY selectCerts.ask.accesskey       "ყ">
+<!ENTITY enableOCSP.label                "OCSP სერვერებისთვის სერთიფიკატების მიმდინარე მდგომარეობის კითხვა">
+<!ENTITY enableOCSP.accesskey            "O">
+<!ENTITY viewCerts2.label                "სერთიფიკატების ნახვა…">
+<!ENTITY viewCerts2.accesskey            "ნ">
+<!ENTITY viewSecurityDevices2.label      "უსაფრთხოების მოწყობილობები…">
+<!ENTITY viewSecurityDevices2.accesskey  "მ">
+
+<!ENTITY performance.label               "წარმადობა">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "გამოიყენეთ წარმადობის რეკომენდებული პარამეტრები">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "ეს პარამეტრები მორგებულია თქვენი კომპიუტერის აპარატურასა და საოპერაციო სისტემაზე.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "წ">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "შეიტყვეთ მეტი">
+<!ENTITY limitContentProcessOption.label "შიგთავსის პროცესების შეზღუდვა">
+<!ENTITY limitContentProcessOption.description
+                                         "შიგთავსის დამატებით პროცესებს, ბევრი ჩანართით სარგებლობისას, შეუძლია წარმადობის გაუმჯობესება, მაგრამ ასევე გამოიყენებს მეტ მეხსიერებას.">
+<!ENTITY limitContentProcessOption.accesskey   "ზ">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "შიგთავსის პროცესების რაოდენობის შეცვლა, მხოლოდ მრავალპროცესიან &brandShortName;-შია შესაძლებელი.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "შეიტყვეთ, თუ როგორ უნდა შემოწმდეს ჩართულია თუ არა მრავალპროცესიანობა">
+<!ENTITY allowHWAccel.label              "ხელმისაწვდომობის შემთხვევაში აპარატული აჩქარების გამოყენება">
+<!ENTITY allowHWAccel.accesskey          "მ">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Dovoljenja">
+
+<!ENTITY  blockPopups.label           "Prepovej pojavna okna">
+<!ENTITY  blockPopups.accesskey       "r">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Več o tem">
+<!ENTITY  notificationsPolicyDesc4.label       "Izberite, katere spletne strani vam lahko pošiljajo obvestila">
+<!ENTITY  notificationsPolicyButton.accesskey  "z">
+<!ENTITY  notificationsPolicyButton.label      "Izberi …">
+<!ENTITY  notificationsDoNotDisturb.label      "Ne moti me">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "N">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Obvestila se ne bodo prikazovala do ponovnega zagona &brandShortName;a">
+
+<!ENTITY  popupExceptions.label       "Izjeme …">
+<!ENTITY  popupExceptions.accesskey   "I">
+
+<!ENTITY  fontsAndColors.label        "Pisave in barve">
+
+<!ENTITY  defaultFont2.label          "Privzeta pisava">
+<!ENTITY  defaultFont2.accesskey      "P">
+<!ENTITY  defaultSize2.label          "Velikost">
+<!ENTITY  defaultSize2.accesskey      "V">
+
+<!ENTITY  advancedFonts.label         "Napredno …">
+<!ENTITY  advancedFonts.accesskey     "D">
+
+<!ENTITY  colors.label                "Barve …">
+<!ENTITY  colors.accesskey            "B">
+
+
+<!ENTITY language2.label              "Jezik">
+<!ENTITY chooseLanguage.label         "Izberite prednosten jezik za prikazovanje strani">
+<!ENTITY chooseButton.label           "Izberi …">
+<!ENTITY chooseButton.accesskey       "e">
+
+<!ENTITY translateWebPages.label      "Prevajanje spletne vsebine">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Izjeme …">
+<!ENTITY translateExceptions.accesskey "I">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Prevode zagotavlja">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Vsebina upravljanja digitalnih pravic (DRM)">
+
+<!ENTITY  playDRMContent2.label          "Predvajaj vsebino, zaščiteno z DRM">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent.learnMore.label "Več o tem">

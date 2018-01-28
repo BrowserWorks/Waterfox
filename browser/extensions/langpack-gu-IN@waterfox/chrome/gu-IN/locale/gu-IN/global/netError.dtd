@@ -1,0 +1,98 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "પાનુ લાવવામાં ભૂલ">
+<!ENTITY retry.label "ફરી પ્રયત્ન કરો">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "સંપર્ક નિષ્ફળ જવાની ભૂલ">
+<!ENTITY connectionFailure.longDesc "તે સાઈટ અસ્તિત્વ ધરાવતી હોય તો પણ બ્રાઉઝર તેની સાથે સંપર્ક કરી શકતુ નથી. કારણ કે આ સાઈટ તમારા કોમ્પ્યુટરનુ જોડાણ સ્વીકારતુ નથી, કદાચ સેવા ધીમી હોય, અથવા સાઈટ તમે જોડાણ કરતા પોર્ટ કે સેવાને આધાર ન આપતી હોય.">
+
+<!ENTITY deniedPortAccess.title "સુરક્ષા કારણોસર પોર્ટ આરક્ષિત છે">
+<!ENTITY deniedPortAccess.longDesc "[p]અરજી થયેલ સરનામાએ પોર્ટ સ્પષ્ટ કર્યો (e.g. [q]mozilla.org:80[/q] for port 80 on mozilla.org) જે સામાન્ય રીતે વેબ બ્રાઉઝીંગ સિવાયના  [em]અન્ય[/em] હેતુઓ માટે વપરાય છે. બ્રાઉઝરે રક્ષણ અને સુરક્ષા માટેની અરજીઓ રદ કરી દીધી છે.[/p]">
+
+<!ENTITY dnsNotFound.title "સરનામુ મળતુ નથી દર્શાવતી ભૂલ">
+<!ENTITY dnsNotFound.longDesc "સરનામુ જાણીતી સાઇટને અનુરૂપ થતુ નથી અને લાવી શકાતુ નથી. આ સરનામાની જોડણીની ભૂલ અથવા તે સાઇટ અસ્તિત્વ ધરાવતી નથી તે કારણથી થઈ શક્યુ. જો સરનામુ યોગ્ય તરીકે જાણી શકાય, અથવા જો ઘણી બધી સાઇટો માટે સમસ્યા આવે તો, તે કદાચ તમારા પ્રોક્સી સર્વરની બાબત હોઈ શકે (જો તમે તે વાપરો તો) અથવા ડીરેક્ટરીનાં નામની સેવાની બાબત હોઈ શકે. આ બધી સ્થિતિમાં તમારી સિસ્ટમનું દસ્તાવેજીકરણ, સંચાલક કે ઈન્ટરનેટ સેવા પૂરી પાડનાર (ISP)ની મદદ લેવી જોઈએ.">
+
+<!ENTITY fileNotFound.title "ફાઇલ મળતી નથી દર્શાવતી ભૂલ">
+<!ENTITY fileNotFound.longDesc "સરનામા દ્વારા સ્પષ્ટ થતી ફાઇલ મળી શકી નહિ. તપાસો કે ફાઇલ અસ્તિત્વ ધરાવે છે અને તમારી પાસે જોવાની પૂરતી પરવાનગી છે.">
+
+
+
+<!ENTITY generic.title "અરજી પૂર્ણ કરી શકતા નથી">
+<!ENTITY generic.longDesc "પાનુ લાવી શકાયુ નહિ કારણ કે કદાચ તે અસ્તિત્વ ધરાવતુ નથી અથવા સ્થાન ખોટુ છે. <br/> ચકાસો કે સરનામુ (URL) યોગ્ય છે અને બરાબર રીતે બંધારણ થયેલુ છે.">
+
+<!ENTITY malformedURI.title "અયોગ્ય સરનામું">
+<!ENTITY malformedURI.longDesc "<p>પૂરુ પાડેલ સરનામું ઓળખી શકાય તેવા બંધારણમાં નથી. મહેરબાની કરીને ભૂલો માટે સ્થાન પટ્ટીને ચકાસો અને ફરીથી પ્રયત્ન કરો.</p>">
+
+<!ENTITY netInterrupt.title "માહિતી પરિવહન અટકાવી દેવાયું">
+<!ENTITY netInterrupt.longDesc "[p]બ્રાઉઝર સફળતાપૂર્વક જોડાયું, પરંતુ જાણકારીનું પરિવહન કરતી વખતે બ્રાઉઝર અટકાવી દેવાયું હતું. મહેરબાની કરીને ફરીથી પ્રયત્ન કરો.[/p][ul][li]શું તમે અન્ય સાઈટો બ્રાઉઝ કરવા અમસમર્થ છો? કમ્પ્યૂટરનું નેટવર્ક જોડાણ ચકાસો.[/li][li]શું હજુ પણ સમસ્યા છે? મદદ માટે તમારા નેટવર્ક સંચાલક અથવા ઈન્ટરનેટ પ્રોવાઈડરનો સંપર્ક કરો.[/li][/ul]">
+
+<!ENTITY notCached.title "દસ્તાવેજ નિવૃત્ત થઇ ગયું">
+<!ENTITY notCached.longDesc "<p>અરજી થયેલ દસ્તાવેજ બ્રાઉઝરની કેશમાં ઉપલબ્ધ નથી.</p><ul><li>સુરક્ષાની પૂર્વકાળજીરૂપે, બ્રાઉઝર આપોઆપ સંવેદનશીલ દસ્તાવેજોની પુનઃઅરજી કરતું નથી.</li><li>વેબસાઇટમાંથી દસ્તાવેજની પુનઃઅરજી કરવા માટે ફરી પ્રયાસ કરો પર ક્લિક કરો.</li></ul>">
+
+<!ENTITY netOffline.title "ઓફલાઈન ભૂલ">
+<!ENTITY netOffline.longDesc2 "<p>બ્રાઉઝર તેની ઑફલાઇન સ્થિતિમાં ચાલી રહ્યું છે અને અરજી થયેલ વસ્તુ સાથે જોડાઇ શકે નહિં.</p><ul><li>શું કમ્પ્યૂટર સક્રિય નેટવર્કમાં જોડાયેલ છે?</li><li>ઓનલાઇન સ્થિતિમાં આવવા માટે &quot;ફરી પ્રયાસ કરો&quot; દબાવો અને પાનું ફરી લાવો.</li></ul>">
+
+<!ENTITY contentEncodingError.title "વિષયસુચી સંગ્રહપદ્ધતિ ભૂલ">
+<!ENTITY contentEncodingError.longDesc "<p>તમે જે પાનું જોવાનો પ્રયાસ કરી રહ્યા છો તે બતાવી શકાતું નથી કારણ કે તે સંકોચનનું અયોગ્ય અને બિનઆધારભૂત બંધારણ વાપરે છે.</p><ul><li>મહેરબાની કરીને વેબસાઈટ માલિકોને સંપર્ક કરો તેમને આ સમસ્યાની જાણ કરવા માટે.</li></ul>">
+
+<!ENTITY unsafeContentType.title "અસુરક્ષિત ફાઈલ પ્રકાર">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>આ સમસ્યાની જાણ વેબસાઈટ માલિકોને કરવા માટે મહેરબાની કરીને તેમનો સંપર્ક કરો.</li> </ul>">
+
+<!ENTITY netReset.title "નેટ ફરી સુયોજીત થવાની ભૂલ">
+<!ENTITY netReset.longDesc "જ્યારે જોડાણ સ્વીકારે અથવા માહિતીનુ સ્થાનાંતર કરે ત્યારે સાઈટની કડી અનિચ્છિત તે રીતે તૂટી જાય છે. આ કદાચ કોમ્પ્યુટર અને સાઈટ વચ્ચે નેટવર્કની ખામીને લીધે હોઈ શકે. આ બધી સ્થિતિમાં તમારી સિસ્ટમનું દસ્તાવેજીકરણ, સંચાલક કે ઈન્ટરનેટ સેવા પૂરી પાડનાર (ISP)ની મદદ લેવી જોઈએ.">
+
+<!ENTITY netTimeout.title "નેટનો સમય સમાપ્તની ભૂલ">
+<!ENTITY netTimeout.longDesc "સ્પષ્ટ થયેલી સાઈટ સાથે જોડાણ કરતી વખતે બ્રાઉઝરનો સમય સમાપ્ત. કદાચ સાઈટ વધુ લોડ ધરાવે છે તેથી ધીમુ પડી ગયુ, અથવા નેટવર્કની સમસ્યાઓ તેને પૂરતા સમયમાં જોડતુ અટકાવે છે.">
+
+<!ENTITY unknownProtocolFound.title "અજ્ઞાત પ્રોટોકોલ">
+<!ENTITY unknownProtocolFound.longDesc "<p>સરનામું પ્રોટોકોલ (દા.ત. <q>wxyz://</q>) સ્પષ્ટ કરે કે જેને બ્રાઉઝર સમજી શકે નહિં, તેથી બ્રાઉઝર સાઇટ સાથે યોગ્ય રીતે જોડાઇ શકતું નથી.</p><ul><li>શું તમે મલ્ટીમીડિયા અથવા અન્ય બિન-લખાણ સેવાઓ વાપરવાનો પ્રયાસ કરી રહ્યા છો? વધારાની જરૂરીયાતો માટે સાઇટ ચકાસો.</li><li>અમુક પ્રોટોકોલને બ્રાઉઝર સમજી શકે તે પહેલાં તેમના માટે ત્રીજી-વ્યક્તિ સોફ્ટવેર અથવા પ્લગઇનોની જરૂર પડી શકે.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "પ્રોક્સી સર્વરે જોડાણ તોડી નાંખ્યું">
+<!ENTITY proxyConnectFailure.longDesc "[p]બ્રાઉઝર પ્રોક્સી સર્વર વાપરવા માટે રૂપરેખાંકિત થયેલ છે, પરંતુ પ્રોક્સીએ જોડાણ તોડી નાંખ્યું.[/p][ul][li]શું બ્રાઉઝરનું પ્રોક્સી રૂપરેખાંકન યોગ્ય છે? સેટીંગ ચકાસો અને ફરીથી પ્રયત્ન કરો.[/li][li]શું પ્રોક્સી સેવા નેટવર્કમાંથી જોડાણોને પરવાનગી આપે છે?[/li][li]શું હજું પણ મુશ્કેલી છે? મદદ માટે તમારા નેટવર્ક સંચાલક અથવા ઈન્ટરનેટ પ્રોવાઈડરનો સંપર્ક કરો.[/li][/ul]">
+
+<!ENTITY proxyResolveFailure.title "પ્રોક્સી સર્વર મળ્યું નથી">
+<!ENTITY proxyResolveFailure.longDesc "[p]બ્રાઉઝર પ્રોક્સી સર્વર વાપરવા માટે રૂપરેખાંકિત થયેલ છે, પરંતુ પ્રોક્સી શોધી શકાયું નહિં.[/p][ul][li]શું બ્રાઉઝરનું પ્રોક્સી રૂપરેખાંકન યોગ્ય છે? સેટીંગ ચકાસો અને ફરીથી પ્રયત્ન કરો.[/li][li]શું  કમ્પ્યૂટર ક્રિયાશીલ નેટવર્ક સાથે જોડાયેલ છે?[/li][li]શું હજુ પણ મુશ્કેલી છે? મદદ માટે તમારા નેટવર્ક સંચાલક અથવા ઈન્ટરનેટ પ્રોવાઈડરનો સંપર્ક કરો.[/li][/ul]">
+
+<!ENTITY redirectLoop.title "રીડાયરેક્ટ લુપની ભૂલ">
+<!ENTITY redirectLoop.longDesc "બ્રાઉઝરે જોડાણ અટકાવી દીધુ કારણ કે સાઈટ પોતાને પૂરુ કરવા માટે અટકાવે તે રીતે બોલાવતુ હતુ">
+
+<!ENTITY unknownSocketType.title "અજાણી સોકેટની ભૂલ">
+<!ENTITY unknownSocketType.longDesc "અનિચ્છિત રીતે સાઈટ નેટવર્કની વિનંતીને જવાબ આપે છે. આ કદાચ સરનામુ ખોટો પ્રોટોકોલ વાપરતુ હોય તેથી અથવા પ્રમાણભૂત ન હોય તેવા રૂપરેખાંકન સાઈટ ઉપર હોય જે જૂદી સેવાઓ માટે ચાલે છે.">
+
+<!ENTITY nssFailure2.title "સુરક્ષિત જોડાણ નિષ્ફળ">
+<!ENTITY nssFailure2.longDesc2 "<p>પાનું જે બતાવા માટે તમે પ્રયત્ન કરી રહ્યા છો કારણ કે મળેલ માહિતીનું સત્તાધિકરણને ચકાસી શક્યા નહિં.</p><ul><li>મહેરબાની કરીને આ સમસ્યાને તેઓને જણાવવા માટે વેબસાઇટનાં માલિકીનો સંપર્ક કરો.</li></ul>">
+
+<!ENTITY nssBadCert.title "સુરક્ષિ જોડાણ નિષ્ફળ">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>આ સર્વરના રૂપરેખાંકન સાથે સમસ્યા હોઈ શકે નહિં, અથવા તે સર્વર સાથે કોઈક કંઈક ખોટું કરવાનો પ્રયાસ કરી રહ્યો હશે.</li> <li>જો તમે ભૂતકાળમાં આ સર્વર સાથે સફળતાપૂર્વક જોડાયા હોવ, તો ક્ષતિ કામચલાઉ હોઈ શકે, અને તમે પછીથી ફરીથી પ્રયાસ કરી શકો.</li> </ul>">
+
+
+
+
+
+<!ENTITY corruptedContentErrorv2.title "બગડેલ સમાવિષ્ટોની ક્ષતિ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>તમે જે પાનું જોવાનો પ્રયાસ કરી રહ્યા છો તે બતાવી શકાશે નહિં કારણ કે માહિતી પરિવહનમાં ક્ષતિ મળી આવી હતી.</p><ul><li>મહેરબાની કરીને આ સમસ્યા વિશે વેબસાઇટના માલિકોને જાણ કરવા માટે તેમને સંપર્ક કરો.</li></ul>">
+
+<!ENTITY remoteXUL.title "દૂરસ્થ XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>મહેરબાની કરીને આ સમસ્યાને તેઓને જણાવવા માટે વેબસાઇટ માલિકોનો સંપર્ક કરો.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY cspBlocked.longDesc "<p>The browser prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>It may have been removed, moved, or file permissions may be preventing access.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+">
+

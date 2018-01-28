@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+
+<!ENTITY window.title "Tadiwent web">
+<!ENTITY browserConsole.title "Tadiwent n iminig">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+
+<!ENTITY openURL.label     "Ldi aseɣwan deg iccer amaynut">
+<!ENTITY openURL.accesskey "L">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+
+<!ENTITY btnPageNet.label   "Azeṭṭa">
+<!ENTITY btnPageNet.tooltip "Sniɣmes inekcam n uzeṭṭa">
+<!ENTITY btnPageNet.accesskey "A">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Sniɣmes alɣuten d tuccḍiwin CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Kles tisuraf n JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Taɣellist">
+<!ENTITY btnPageSecurity.tooltip "Sniɣmes alɣuten d tuccḍiwin n tɣellist">
+<!ENTITY btnPageSecurity.accesskey "T">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "Aɣmis">
+<!ENTITY btnPageLogging.tooltip "Sniɣmes iznan iţwacegɛen i tɣawsa window.console">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "Tuccḍiwin">
+<!ENTITY btnConsoleInfo         "Talɣut">
+<!ENTITY btnConsoleWarnings     "Ilɣuten">
+<!ENTITY btnConsoleLog          "Aɣmis">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Reflows">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "Aqeddac">
+<!ENTITY btnServerLogging.tooltip     "Sniɣmes iznan id remseḍ seg uqeddac web.">
+<!ENTITY btnServerLogging.accesskey   "A">
+<!ENTITY btnServerErrors              "Tuccḍiwin">
+<!ENTITY btnServerInfo                "Talɣut">
+<!ENTITY btnServerWarnings            "Ilɣuten">
+<!ENTITY btnServerLog                 "Aɣmis">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "Inmahalen ibḍan">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Ameẓlu Workers">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Workers n izegrar neɣ n chrome ">
+
+<!ENTITY filterOutput.placeholder "Zizdeg">
+<!ENTITY btnClear.label        "Sfeḍ tadiwent">
+<!ENTITY btnClear.tooltip      "Sfeḍ tadiwent web">
+<!ENTITY btnClear.accesskey    "S">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Nɣel tansa n useɣwen">
+<!ENTITY copyURLCmd.accesskey "N">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Ldi ɣef tmeẓri n imuţiyen">
+<!ENTITY openInVarViewCmd.accesskey "m">
+<!ENTITY storeAsGlobalVar.label "Sekles-it d amutti amatu">
+<!ENTITY storeAsGlobalVar.accesskey "k">

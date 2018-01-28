@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Во моментов не сте во приватен прозорец.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Отвори приватен прозорецw">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "п">
+
+<!ENTITY privateBrowsing.title                           "Приватно прелистување">
+<!ENTITY privateBrowsing.title.tracking                  "Приватно прелистување со Заштита од следење">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Кога прелистувате во Приватен прозорец, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "не ги снима">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "посетени страници">
+<!ENTITY aboutPrivateBrowsing.info.searches              "пребарувања">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "колачиња">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "привремени датотеки">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ќе ги сочува ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " вашите:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "преземања">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "обележувачи">
+<!ENTITY aboutPrivateBrowsing.note.before                "Приватното прелистување ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "не ве прави анонимни">
+<!ENTITY aboutPrivateBrowsing.note.after                 " на Интернет. Вашиот работодавач или провајдерот на Интернет сеуште може да знаат кои страници ги посетувате.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Дознајте повеќе за ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Приватно прелистување">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Заштита од следење">
+<!ENTITY trackingProtection.description2                 "Некои мрежни места користат следачи кои може ја мониторираат вашата активност на Интернет. Со Заштита од следење Waterfox ќе блокира многу следачи кои собираат информации за Вашата навика при користење на Интернет.">
+<!ENTITY trackingProtection.startTour1                   "Погледнете како работи">

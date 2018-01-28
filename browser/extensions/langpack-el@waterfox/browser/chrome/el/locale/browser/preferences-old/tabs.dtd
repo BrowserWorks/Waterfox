@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Εναλλαγή καρτελών με το Ctrl+Tab σε σειρά πρόσφατης χρήσης">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Άνοιγμα νέων παραθύρων σε νέα καρτέλα">
+<!ENTITY newWindowsAsTabs.accesskey   "τ">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Προειδοποίηση κατά το κλείσιμο πολλαπλών καρτελών">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "π">
+
+<!ENTITY warnOnOpenManyTabs.label       "Προειδοποίηση όταν το άνοιγμα πολλαπλών καρτελών ενδέχεται να επιβραδύνει το &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "β">
+
+<!ENTITY switchLinksToNewTabs.label        "Κατά το άνοιγμα ενός συνδέσμου σε νέα καρτέλα, άμεση εναλλαγή σε αυτή">
+<!ENTITY switchLinksToNewTabs.accesskey    "η">
+
+<!ENTITY showTabsInTaskbar.label          "Προβολή προεπισκόπησης καρτελών στη γραμμή εργασιών των Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "ε">
+<!ENTITY tabsGroup.label          "Καρτέλες">

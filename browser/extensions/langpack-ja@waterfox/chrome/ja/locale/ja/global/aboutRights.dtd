@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction	"ltr">
+<!ENTITY rights.title			"あなたの権利について">
+<!ENTITY rights.intro			"&brandFullName; は無料のオープンソースソフトウェアであり、世界中の多数のコミュニティによって開発されています。ご利用に際してはいくつか知っておいていただきたいことがあります:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a		"&brandShortName; は ">
+<!ENTITY rights.intro-point1b		"Mozilla Public License">
+<!ENTITY rights.intro-point1c		" の条項下で提供されます。これにより、あなたは &brandShortName; を使用、複製、配布することができます。あなたはまた、&brandShortName; のソースコードを必要に応じて修正することもできます。Mozilla Public License では、あなたが修正したバージョンを配布することも認めています。">
+
+<!ENTITY rights.intro-point2-a		"Waterfox とその関係団体の商標およびロゴについては、Waterfox の製品名およびロゴを含めこれに限定されず、何らの権利もあなたに与えるものではありません。商標について詳しくは ">
+<!ENTITY rights.intro-point2-b		"Mozilla 商標ポリシー">
+<!ENTITY rights.intro-point2-c		" をご確認ください。">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5		"クラッシュレポータなど &brandShortName; の一部の機能には、&vendorShortName; へフィードバックを送信するオプションがあります。あなたがフィードバックの送信を選択することにより、&vendorShortName; がそのフィードバックを製品の改善および &vendorShortName; ウェブサイトでの公開、配布のために使用する許可を &vendorShortName; に与えるものとします。">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a		"あなたの個人情報と &brandShortName; を通して &vendorShortName; へ送信されるフィードバックの取り扱いについては ">
+<!ENTITY rights2.intro-point3b		"&brandShortName; プライバシーポリシー">
+<!ENTITY rights.intro-point3c		" をご確認ください。">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded	"この製品に関する適切なプライバシーポリシーをここに記述すること。">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a		"&brandShortName; の一部の機能は、ウェブベースの情報サービスを利用します。ただし、それらのサービスが 100&#37; 正確であることやエラーが起きないことは保証できません。それらのサービスを利用する機能を無効化する方法を含め、詳しくは ">
+<!ENTITY rights.intro-point4b		"サービス利用規約">
+<!ENTITY rights.intro-point4c		" をご確認ください。">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded	"この製品がウェブサービスと連携する場合、適切なサービス利用規約を ">
+<!ENTITY rights.intro-point4b-unbranded	"ウェブサイトサービス">
+<!ENTITY rights.intro-point4c-unbranded	" セクションからリンクさせること。">
+
+<!ENTITY rights2.webservices-header	"&brandFullName; ウェブベースの情報サービス">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "特定の形式の動画コンテンツを再生するため、&brandShortName; がサードパーティからコンテンツ復号モジュールをダウンロードします。">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; は、搭載された機能のために用意されたウェブベースの情報サービス (以下「本サービス」と呼びます) を利用しており、これらは下記の通り &brandShortName; のバイナリ版とともに利用できます。本サービスのいずれかをご利用になりたくない場合、または以下の利用規約を受け入れられない場合は、その機能またはサービスを無効化できます。 ">
+<!ENTITY rights2.webservices-b "機能やサービスを無効化する手順">
+<!ENTITY rights3.webservices-c " をお読みください。その他の機能やサービスはアプリケーションの設定から無効化できます。">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a		"セーフブラウジング機能: ">
+<!ENTITY rights.safebrowsing-b		"サイトが安全でなくなる恐れがあるため、セーフブラウジング機能を無効にすることはお勧めしません。この機能を完全に無効にしたい場合は以下の手順に従ってください:">
+<!ENTITY rights.safebrowsing-term1	"プログラムの設定またはオプションを開きます。">
+<!ENTITY rights.safebrowsing-term2	"セキュリティ設定を選択します。">
+<!ENTITY rights2.safebrowsing-term3	"&quot;&enableSafeBrowsing.label;&quot; のチェックを外してください。">
+<!ENTITY rights.safebrowsing-term4	"セーフブラウジング機能が無効になります。">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a		"位置情報検出機能: ">
+<!ENTITY rights.locationawarebrowsing-b		"この機能は常にオプトインです。位置情報があなたの許可なしに送信されることはありません。この機能を完全に無効にしたい場合は以下の手順に従ってください:">
+<!ENTITY rights.locationawarebrowsing-term1a	"URL バーに次の文字列を入力します: ">
+<!ENTITY rights.locationawarebrowsing-term1b	"about:config">
+<!ENTITY rights.locationawarebrowsing-term2	"フィルター欄に geo.enabled と入力します。">
+<!ENTITY rights.locationawarebrowsing-term3	"geo.enabled 設定をダブルクリックして値を false に変更してください。">
+<!ENTITY rights.locationawarebrowsing-term4	"位置情報検出機能が無効になります。">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded	"この製品と連携するウェブサイトサービスの概要と、可能であればそれを無効化する手順をここに記述すること。">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded	"この製品に関する適切なサービス利用規約をここに記述すること。">
+
+<!-- 以下サービス利用規約本文(それに合わせた表現に) -->
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1	"&vendorShortName; ならびにその貢献者、ライセンサ、およびパートナーは、最も正確かつ最新のサービス提供に努めています。ただし、この情報が完全で誤りがないことは保証できません。例えば、セーフブラウジングサービスが危険なサイトを適切に識別しない、または安全なサイトを誤って危険なサイトとして識別する可能性があります。また、位置情報検出サービスによるすべての位置情報は評価のためだけに使用され、提供された位置の正確さを保証するものではありません。">
+<!ENTITY rights.webservices-term2	"&vendorShortName; は、独自の判断に基づいて本サービスを変更または中止することがあります。">
+<!ENTITY rights2.webservices-term3	"本サービスは、&brandShortName; に付属するバージョンとともにご利用いただけます。&vendorShortName; は、そのための権利をあなたに与えます。&vendorShortName; およびそのライセンサは、本サービスに関するそれ以外のすべての権利を留保しています。本利用規約の規定は、&brandShortName; および &brandShortName; のソースコードについて、オープンソースライセンスにより許諾される権利を何ら制限するものではありません。">
+<!ENTITY rights.webservices-term4	"本サービスは、「現状のまま」で提供されるものです。&vendorShortName; ならびにその貢献者、ライセンサ、およびディストリビュータは、あらゆる明示的および黙示的な保証を否認します。否認される保証には、本サービスに商業性があること、および本サービスが特定の目的に適合することの保証が含まれますが、これらに限定されません。目的に対するサービスの選択、ならびにサービスの品質および性能に関するリスクは、すべてあなたが負います。国や地域によっては黙示的な保証の除外または制限が法律上認められない場合がありますが、その場合にはこの条項は適用されません。">
+<!ENTITY rights.webservices-term5	"法の定めによる場合を除き、&vendorShortName; ならびにその貢献者、ライセンサ、およびディストリビュータは、&brandShortName;、または本サービスの使用もしくは使用できないことに起因またはいかなる形においても関連して生じた、間接的損害、特別損害、付随的損害、派生的損害、または懲罰的損害に関して一切責任を負いません。本利用規約に基づく責任の総額は、500 米ドルを上限とします。国や地域によっては特定の損害の除外または制限が法律上認められない場合がありますが、その場合にはこの条項は適用されません。">
+<!ENTITY rights.webservices-term6	"&vendorShortName; では、本利用規約を必要に応じて改訂することがあります。本利用規約は、&vendorShortName; の書面による合意なしに変更もしくは終了されることはありません。">
+<!ENTITY rights.webservices-term7	"本利用規約は、法の抵触に関する規定を除いて米国カリフォルニア州法に準拠するものとします。本契約の一部が無効または執行不能と判断された場合でも、残りの部分は引き続き有効に存続するものとします。本利用規約は、参考のために作成した日本語訳文であり、ライセンスの内容を表示するものではありません。利用規約の内容については英文の規約によるものとします。本訳文と英文の規約に矛盾があった場合には英文の規約が優先します。">
+<!-- 利用規約やライセンス関連の参考 URL:
+http://www.mozilla.com/en-US/legal/eula/firefox-ja.html
+http://www.mozilla-japan.org/MPL/MPL-1.1J.html
+http://www.microsoft.com/japan/windows/products/windowsvista/useterms/default.mspx
+http://www.microsoft.com/japan/windowsserver2008/howtobuy/licensing/eula/web.mspx
+http://www.apple.com/jp/legal/
+http://www.apple.com/legal/itunes/jp/service.html
+http://www.google.com/chrome/intl/ja/eula_text.html
+http://www.opensource.jp/gpl/gpl.ja.html
+ -->

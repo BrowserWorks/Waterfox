@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Seansı bərpa et">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Üzr istəyirik amma...">
+<!ENTITY restorepage.problemDesc    "&brandShortName; pəncərələrinizi və vərəqlərinizi bərpa edərkən problemlə qarşılaşdı. Adətən bunun səbəbi yeni açılan bir səhifə olur.">
+<!ENTITY restorepage.tryThis        "Bunları yoxlaya bilərsiniz:">
+<!ENTITY restorepage.restoreSome    "Problemə səbəb ola biləcək bir və ya bir neçə vərəqi bağlamaq">
+<!ENTITY restorepage.startNew       "Tam yeni bir seans başlatmaq">
+
+<!ENTITY restorepage.tryagainButton "Bərpa et">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Qapat">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Bərpa et">
+<!ENTITY restorepage.listHeader     "Pəncərələr və vərəqlər">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "&#037;S. pəncərə">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Başlayaq!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Uğurlu!">
+
+<!ENTITY welcomeback2.pageTitle     "Uğurlu!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; başlamağa hazırdır.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Bütün pəncərə və vərəqləri bərpa et">
+<!ENTITY welcomeback2.restoreSome.label "Ancaq seçdiklərinizi bərpa et">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Əlavələriniz və şəxsiləşdirmələriniz silindi, səyyah tənzimləmələriniz standart tənzimləmələrə qaytarıldı. Bu da probleminizi həll etmədisə, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "başqa nə edə biləcəyinizi öyrənin.">
+

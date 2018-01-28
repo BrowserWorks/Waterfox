@@ -1,0 +1,14 @@
+locale alerts pa-IN pa-IN/locale/pa-IN/alerts/
+locale autoconfig pa-IN pa-IN/locale/pa-IN/autoconfig/
+locale global pa-IN pa-IN/locale/pa-IN/global/
+locale global-platform pa-IN pa-IN/locale/pa-IN/global-platform/mac/ os=Darwin
+locale global-platform pa-IN pa-IN/locale/pa-IN/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform pa-IN pa-IN/locale/pa-IN/global-platform/win/ os=WINNT
+locale mozapps pa-IN pa-IN/locale/pa-IN/mozapps/
+locale necko pa-IN pa-IN/locale/pa-IN/necko/
+locale passwordmgr pa-IN pa-IN/locale/pa-IN/passwordmgr/
+locale pipnss pa-IN pa-IN/locale/pa-IN/pipnss/
+locale pippki pa-IN pa-IN/locale/pa-IN/pippki/
+locale places pa-IN pa-IN/locale/pa-IN/places/
+locale pluginproblem pa-IN pa-IN/locale/pa-IN/pluginproblem/
+locale weave pa-IN pa-IN/locale/pa-IN/services/

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Në kompjuterin tuaj janë depozituar cookie-t vijuese:">
+<!ENTITY     cookiename.label               "Emër Cookie">
+<!ENTITY     cookiedomain.label             "Sajt">
+
+<!ENTITY     props.name.label               "Emër:">
+<!ENTITY     props.value.label              "Lëndë:">
+<!ENTITY     props.domain.label             "Strehë:">
+<!ENTITY     props.path.label               "Shteg:">
+<!ENTITY     props.secure.label             "Dërgo Për:">
+<!ENTITY     props.expires.label            "Skadon:">
+<!ENTITY     props.container.label          "Përmbajtës:">
+
+<!ENTITY     window.title                   "Cookie">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Kërko">
+<!ENTITY     searchFilter.accesskey         "K">
+
+<!ENTITY     button.close.label             "Mbylle">
+<!ENTITY     button.close.accesskey         "M">

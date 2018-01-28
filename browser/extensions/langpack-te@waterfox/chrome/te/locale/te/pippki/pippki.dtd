@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "ముఖ్య సంకేతపదాన్ని మార్చు">
+<!ENTITY setPassword.tokenName.label "రక్షణ సాధనం">
+<!ENTITY setPassword.oldPassword.label "ప్రస్తుత సంకేతపదం:">
+<!ENTITY setPassword.newPassword.label "కొత్త సంకేతపదం:">
+<!ENTITY setPassword.reenterPassword.label "కొత్త సంకేతపదం (మరలా):">
+<!ENTITY setPassword.meter.label "సంకేతపదం నాణ్యతా మీటర్">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "తిరిగివుంచు">
+<!ENTITY resetPassword.title  "ముఖ్య సంకేతపదాన్ని తిరిగివుంచు">
+<!ENTITY resetPassword.text  "మీరు మీ ముఖ్య సంకేతపదాన్ని తిరిగిఉంచేటట్లైతే , మీ నిల్వవున్న వెబ్ మరియు ఇ-మెయిల్ సంకేతపదాలు, ఫారము డాటా, వ్యక్తిగత ధృవీకరణపత్రాలు, మరియు వ్యక్తిగత కీలు మర్చిపోబడతాయి.మీరు ఖచ్చితంగా ముఖ్య సంకేతపదాన్ని తిరిగివుంచాలి అనుకుంటున్నారా?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "ధృవీకరణపత్రాన్ని దింపుకుంటోంది">
+<!ENTITY downloadCert.message1 "కొత్త ధృవీకరణపత్ర అధారిటీ (CA)ని నమ్మమని మీరు అడగబడుతున్నారు.">
+<!ENTITY downloadCert.trustSSL "వెబ్ సైటులను గుర్తించుటకు CAను నమ్మండి.">
+<!ENTITY downloadCert.trustEmail "ఇమెయిల్ వాడుకరులను గుర్తించుటకు CAను నమ్మండి.">
+<!ENTITY downloadCert.trustObjSign "సాఫ్టువేరు అభివృద్దికారులను గుర్తించుటకు CAను నమ్మండి.">
+<!ENTITY downloadCert.message3 "ఏదైనా ప్రయోజనం కొరకు CAను నమ్ముటకు మునుపు , (వీలైతే) మీరు ధృవీకరణపత్రం మరియు దాని విధానాన్ని మరియు పద్దతులను పరీక్షించుట మంచిది.">
+<!ENTITY downloadCert.viewCert.label "దర్శించు">
+<!ENTITY downloadCert.viewCert.text "CA ధృవీకరణపత్రాన్ని పరీక్షించు">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "వినియోగాదారుని గుర్తింపు అభ్యర్దన">
+<!ENTITY clientAuthAsk.message1 "మీ అంతట మీరే దృవీకరణపత్రంతో గుర్తించబడాలని ఈ సైటు అభ్యర్దించటమైనది:">
+<!ENTITY clientAuthAsk.message2 "గుర్తింపుగా ప్రవేశపెట్టుటకు ఒక ధృవీకరణపత్రాన్ని ఎన్నుకొనుము:">
+<!ENTITY clientAuthAsk.message3 "ఎంపికచేసుకొన్న ధృవీకరణపత్రం వివరాలు:">
+
+<!ENTITY pkcs12.setpassword.title  "ధృవీకరణపత్రం బ్యాక్అప్ సంకేతపదాన్ని ఎన్నుకొనుము">
+<!ENTITY pkcs12.setpassword.message  "మీరు అమర్చినటువంటి ధృవీకరణపత్రం బ్యాక్అప్ సంకేతపదం మీరు సృష్టించేటటువంటి బ్యాక్అప్ ఫైల్ ను రక్షిస్తుంది. బ్యాక్అప్‌తో కొనసాగింపునకు మీరు తప్పక సంకేతపదాన్ని అమర్చాలి.">
+<!ENTITY pkcs12.setpassword.label1 "ధృవీకరణపత్రం బ్యాక్అప్ సంకేతపదం:">
+<!ENTITY pkcs12.setpassword.label2 "ధృవీకరణపత్రం బ్యాక్అప్ సంకేతపదం(మరలా):">
+<!ENTITY pkcs12.setpassword.reminder "ముఖ్యమైనది: మీరు మీ ధృవీకరణపత్రం బ్యాక్అప్ సంకేతపదాన్ని మరిచిపోయినట్లైతే, మీరు ఈ బ్యాక్అప్‌ను తర్వాత తిరిగిపొందలేరు. దయచేసి దీనిని భద్రమైన స్థానమునందు వుంచుకోండి.">
+
+<!ENTITY chooseToken.title  "టోకెన్ డైలాగ్‌ను ప్రవేశపెట్టండి">
+<!ENTITY chooseToken.message1 "దయచేసి టోకెన్‌ను ఎన్నుకోండి.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "ఒక ప్రవేట్ కీ ను సంభవింపచేయుట">
+<!ENTITY createCertInfo.msg1 "కీ సంభవం జరుగుతోంది... ఇది కొన్ని నిమషముల సమయం తీసుకుంటుంది....">
+<!ENTITY createCertInfo.msg2 "దయచేసి వేచివుండండి...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "రక్షించబడిన టోకెన్ ధృవీకరణ">
+<!ENTITY protectedAuth.msg "దయచేసి ఈటోకెన్‌కు ధృవీకరించు. ధృవీకరణ విధానం మీటోకెన్‌యొక్క రకముపై ఆధారపడుతుంది.">
+<!ENTITY protectedAuth.tokenName.label "టోకెన్:">

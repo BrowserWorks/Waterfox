@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "מנהל התקנים">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "מודולי והתקני אבטחה">
+<!ENTITY devmgr.details.title                   "פרטים">
+<!ENTITY devmgr.details.title2                  "ערך">
+
+<!ENTITY devmgr.button.login.label              "התחברות">
+<!ENTITY devmgr.button.login.accesskey          "ח">
+<!ENTITY devmgr.button.logout.label             "התנתקות">
+<!ENTITY devmgr.button.logout.accesskey         "נ">
+<!ENTITY devmgr.button.changepw.label           "שינוי ססמה">
+<!ENTITY devmgr.button.changepw.accesskey       "ס">
+<!ENTITY devmgr.button.load.label               "טעינה">
+<!ENTITY devmgr.button.load.accesskey           "ט">
+<!ENTITY devmgr.button.unload.label             "פריקה">
+<!ENTITY devmgr.button.unload.accesskey         "פ">
+<!ENTITY devmgr.button.fips.accesskey           "א">
+
+<!ENTITY loaddevice.info                        "נא להכניס את המידע עבור המודול שברצונך להוסיף.">
+<!ENTITY loaddevice.modname                     "שם המודול:">
+<!ENTITY loaddevice.modname.accesskey           "ד">
+<!ENTITY loaddevice.modname.default             "מודול PKCS#11 חדש">
+<!ENTITY loaddevice.filename                    "שם קובץ המודול:">
+<!ENTITY loaddevice.filename.accesskey          "ב">
+<!ENTITY loaddevice.browse                      "עיון...">
+<!ENTITY loaddevice.browse.accesskey            "ע">
+
+<!ENTITY loaddevice.title2                      "טעינת מנהל התקן PKCS#11">

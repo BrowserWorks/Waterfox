@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; қауіпсіз режимі">
+<!ENTITY window.maxWidth              "600">
+
+<!ENTITY startSafeMode.label          "Қауіпсіз режимде іске қосылу">
+<!ENTITY refreshProfile.label         "&brandShortName; жаңғырту">
+
+<!ENTITY safeModeDescription3.label   "Қауіпсіз режим &brandShortName; үшін жұмыс істеудің арнайы режимі болып табылады, оны мәселелерді шешу үшін қолдануға болады.">
+<!ENTITY safeModeDescription4.label   "Сіздің кеңейтулер мен өзгертілген баптауларыңыз уақытша сөндірілетін болады.">
+
+<!ENTITY refreshProfileInstead.label  "Мәселелерді шешуді аттап кетіп, &brandShortName; өнімін жаңғыртуды қалауға болады.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; іске қосылу кезінде күтпегенде жабылды. Бұл кеңейтулер не басқа мәселелермен туғызылған болуы мүмкін. Мәселені кетіру мақсатында қолданбаның қауіпсіз режимде ол мәселені жөндеп көре аласыз.">

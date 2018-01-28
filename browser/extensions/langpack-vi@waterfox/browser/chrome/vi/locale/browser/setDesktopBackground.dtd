@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Vị trí:">
+<!ENTITY tile.label                 "Lợp">
+<!ENTITY center.label               "Giữa">
+<!ENTITY stretch.label              "Trải ra">
+<!ENTITY fill.label                 "Lấp đầy">
+<!ENTITY fit.label                  "Vừa vặn">
+<!ENTITY preview.label              "Xem trước">
+<!ENTITY color.label                "Màu sắc:">
+<!ENTITY setDesktopBackground.title "Đặt Làm Ảnh Nền">
+<!ENTITY openDesktopPrefs.label     "Mở tùy chọn máy tính bàn">
+<!ENTITY closeWindow.key            "w">

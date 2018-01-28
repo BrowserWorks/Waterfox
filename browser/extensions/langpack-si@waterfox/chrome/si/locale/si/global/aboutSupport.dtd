@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "දොස් සෙවීම් තොරතුරු">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  This page contains technical information that might be useful when you're 
+trying to solve a problem. If you are looking for answers to common questions 
+about &brandShortName;, check out our <a id='supportLink'>support web site</a>.">
+
+<!ENTITY aboutSupport.crashes.title "බිදවැටුම් වාර්තා">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "වාර්තා අංකය">
+<!ENTITY aboutSupport.crashes.sendDate "පළකළ">
+<!ENTITY aboutSupport.crashes.allReports "සියළු බිදවැටුම් වාර්තා">
+<!ENTITY aboutSupport.crashes.noConfig "මෙම යෙදුම බිඳවැටුම් වාර්ථා පෙන්වීමට සකසා නොමැත.">
+
+<!ENTITY aboutSupport.extensionsTitle "දිගුකිරීම්">
+<!ENTITY aboutSupport.extensionName "නම">
+<!ENTITY aboutSupport.extensionEnabled "බලැති (Enabled)">
+<!ENTITY aboutSupport.extensionVersion "නිකුතුව">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "පරීක්ශණාත්මක විශේෂාංග">
+<!ENTITY aboutSupport.experimentName "නම">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "විස්තරය">
+<!ENTITY aboutSupport.experimentActive "සක්‍රීය">
+<!ENTITY aboutSupport.experimentEndDate "අවසන් දිනය">
+<!ENTITY aboutSupport.experimentHomepage "මුල්පිටුව">
+<!ENTITY aboutSupport.experimentBranch "ශාඛාව">
+
+<!ENTITY aboutSupport.appBasicsTitle "යෙදුම් මූලිකාංග">
+<!ENTITY aboutSupport.appBasicsName "නම">
+<!ENTITY aboutSupport.appBasicsVersion "නිකුතුව">
+<!ENTITY aboutSupport.appBasicsBuildID "නිකුතු ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "යාවත් නාලිකාව">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "යාවත්කාලීන ඉතිහාසය">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "යාවත්කාලීන ඉතිහාසය පෙන්වන්න">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "ප්‍රොපයිල ඩිරෙක්ටරිය">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "ෆ්‍රොපයිල ෆෝල්ඩරය">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "ප්ලගීන බලැති (Enable) කරන්න">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Build Configuration">
+<!ENTITY aboutSupport.appBasicsUserAgent "User Agent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "මෙමරි භාවිතය">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "ලියාපදිංචි කළ Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "පැතිකඩයන්">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "බහුසැකසුම් කවුළු">
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "ආරක්ෂිත ප්‍රකාරය">
+
+<!ENTITY aboutSupport.showDir.label "ඩිරෙක්ටරිය විවෘත කරන්න">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "සෙවීම්තීරය තුළ පෙන්වන්න">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ආයාතකළ වෙනස්කළ මනාපයන්">
+<!ENTITY aboutSupport.modifiedPrefsName "නම">
+<!ENTITY aboutSupport.modifiedPrefsValue "අගය">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js අභිප්‍රේත">
+<!ENTITY aboutSupport.userJSDescription "ඔබේ පැතිකඩ බහලුම සතුව &brandShortName; මගින් නිර්මාණය නොකල අභිප්‍රේතද අඩංගු <a id='prefs-user-js-link'>user.js file</a> පවතී.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "වැදගත් අගුළුලූ අභිප්‍රේත">
+<!ENTITY aboutSupport.lockedPrefsName "නම">
+<!ENTITY aboutSupport.lockedPrefsValue "අගය">
+
+<!ENTITY aboutSupport.graphicsTitle "පිංතූර">
+
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "ප්‍රවේශතාව">
+<!ENTITY aboutSupport.a11yActivated "සක්‍රීය කළ">
+<!ENTITY aboutSupport.a11yForceDisabled "පිවිසුම අබල කරන්න">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "පුස්තකාල නිකුතුව">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ස්ථාපන ඉතිහාසය">
+<!ENTITY aboutSupport.updateHistoryTitle "යාවත්කාලීන ඉතිහාසය">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "පෙළ පසුරු පුවරුවට පිටපත් කරන්න">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "අමු දත්ත පසුරු පුවරුවට පිටපත් කරන්න">
+
+<!ENTITY aboutSupport.sandboxTitle "සෑන්ඩ්බොක්ස්">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+
+<!ENTITY aboutSupport.safeModeTitle "ආරක්ෂිත ප්‍රකාරය උත්සහ කරන්න">
+<!ENTITY aboutSupport.restartInSafeMode.label "ඇඩෝන අක්‍රීය කර යළි ආරම්භ කරන්න…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "විශේෂාංග">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "දෝෂ නිර්ණය">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "අසමර්ථ වාර්ථාව">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsPerformance "Performance">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseTitle "Places Database">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verify Integrity">
+
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "س">
+<!ENTITY  copy.label            "نقل کریں ">
+<!ENTITY  copy.accesskey        "ن">
+<!ENTITY  selectall.key         "آ">
+<!ENTITY  selectall.label       "تمام منتخب کریں">
+<!ENTITY  selectall.accesskey   "ت">
+<!ENTITY  closeWindow.key       "و">
+
+<!ENTITY  generalTab            "عمومی">
+<!ENTITY  generalTab.accesskey  "ج">
+<!ENTITY  generalTitle          "عنوان:">
+<!ENTITY  generalURL            "پتہ:">
+<!ENTITY  generalType           "قسم:">
+<!ENTITY  generalMode           "رینڈر موڈ:">
+<!ENTITY  generalSize           "سائز:">
+<!ENTITY  generalReferrer       "یو آر ایل کا حوالہ دے رہا ہے:">
+<!ENTITY  generalSource         "کیسہ ماخذ:">
+<!ENTITY  generalModified       "ترمیم شدہ:">
+<!ENTITY  generalEncoding2      "متن کی ضابطہ بندی:">
+<!ENTITY  generalMetaName       "نام">
+<!ENTITY  generalMetaContent    "مشمول">
+
+<!ENTITY  mediaTab              "میڈیا">
+<!ENTITY  mediaTab.accesskey    "م">
+<!ENTITY  mediaLocation         "محل وقوع :">
+<!ENTITY  mediaText             "متصل متن :">
+<!ENTITY  mediaAltHeader        "متبادل متن">
+<!ENTITY  mediaAddress          "پتہ">
+<!ENTITY  mediaType             "قسم">
+<!ENTITY  mediaSize             "سائز">
+<!ENTITY  mediaCount            "شمار">
+<!ENTITY  mediaDimension        "ابعاد:">
+<!ENTITY  mediaLongdesc         "طویل تصریح">
+<!ENTITY  mediaBlockImage.accesskey "ب">
+<!ENTITY  mediaSaveAs           "محفوظ کریں بطور...">
+<!ENTITY  mediaSaveAs.accesskey "آ">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "میڈیا پیش نظارہ">
+
+<!ENTITY  feedTab               "فیڈ">
+<!ENTITY  feedTab.accesskey     "ف">
+<!ENTITY  feedSubscribe         "رکن بنیں">
+<!ENTITY  feedSubscribe.accesskey "ر">
+
+<!ENTITY  permTab               "اجازتیں">
+<!ENTITY  permTab.accesskey     "ا">
+<!ENTITY  permUseDefault        "طے شدہ استعمال کریں">
+<!ENTITY  permAskAlways         "ہمیشہ پوچھیں">
+<!ENTITY  permAllow             "اجازت دیں">
+<!ENTITY  permAllowSession      "سیشن کے لیے اجازت دیں">
+<!ENTITY  permBlock             "بلاک کریں">
+<!ENTITY  permissionsFor        "اجازتیں بر:">
+<!ENTITY  permPlugins           "پلگ ان متحرک کریں">
+
+<!ENTITY  permClearStorage           "ذخیرہ خالی کریں">
+<!ENTITY  permClearStorage.accesskey "س">
+
+<!ENTITY  securityTab           "سلامتی">
+<!ENTITY  securityTab.accesskey "س">
+<!ENTITY  securityView.certView "تصدیق نامہ نظارہ کریں">
+<!ENTITY  securityView.accesskey "ن">
+<!ENTITY  securityView.unknown   "نامعلوم">
+
+
+<!ENTITY  securityView.identity.header   "ویب سائٹ تشخص">
+<!ENTITY  securityView.identity.owner    "مالک:">
+<!ENTITY  securityView.identity.domain   "ویب سائٹ:">
+<!ENTITY  securityView.identity.verifier "توثیق کردہ برائے:">
+
+
+<!ENTITY  securityView.privacy.header                   "نجی نوعیت &amp; سابقات">
+<!ENTITY  securityView.privacy.history                  "میں نے آج سے پہلے یہ ویب سائٹ دیکھی ہے؟">
+<!ENTITY  securityView.privacy.cookies                  "کیا یہ ویب سائٹ میرے کمپیوٹر پر معلومات (کوکیاں) سٹور کر رہی ہے؟">
+<!ENTITY  securityView.privacy.viewCookies              "کوکیاں نظارہ کریں">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "ن">
+<!ENTITY  securityView.privacy.passwords                "کیا میں نے اس ویب سائٹ کے لیے کوئی پاس ورڈ محفوظ کیے ہیں؟">
+<!ENTITY  securityView.privacy.viewPasswords            "محفوظ شدہ پاس ورڈ نظارہ کریں">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "ن">
+
+<!ENTITY  securityView.technical.header                 "تکنیکی تفاصیل">
+
+<!ENTITY  helpButton.label                              "مدد">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

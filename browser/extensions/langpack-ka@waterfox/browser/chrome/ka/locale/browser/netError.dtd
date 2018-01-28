@@ -1,0 +1,195 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "გვერდის ჩატვირთვის შეცდომა">
+<!ENTITY retry.label "სცადეთ ხელახლა">
+<!ENTITY returnToPreviousPage.label "უკან დაბრუნება">
+<!ENTITY advanced.label "დამატებითი">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "დაკავშირება ვერ მოხერხდა">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "უსაფრთხოების მიზნით პორტი აკრძალულია">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "გვერდი ვერ მოიძებნა">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>შეამოწმეთ აკრეფილი მისამართის სისწორე. მაგალითად
+    <strong>ww</strong>.example.com-ის ნაცვლად უნდა იყოს
+    <strong>www</strong>.example.com</li>
+  <li>თუ ვერცერთი საიტის გახსნას ვერ ახერხებთ, შეამოწმეთ მოწყობილობის ინტერნეტთან
+    კავშირი.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი დაცულია ქსელის ფარით ან პროქსით, გადაამოწმეთ რომ
+    &brandShortName;-ს აქვს ინტერნეტთან წვდომის უფლება</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "ფაილი ვერ მოიძებნა">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>შეამოწმეთ ფაილის სახელი მთავრულების გათვალისწინებით ან სხვა შეცდომებზე.</li> 
+<li>შეამოწმეთ, ხომ არაა ფაილი გადატანილი, გადარქმეული ან წაშლილი.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "ფაილზე წვდომა უარყოფილია.">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>ის შესაძლოა წაშლილიყო, გადატანილიყო ან ფაილის უფლებები წვდომას არ უშვებს.</li>
+</ul>
+">
+
+<!ENTITY generic.title "მოთხოვნის დასრულება ვერ ხერხდება">
+<!ENTITY generic.longDesc "<p>&brandShortName; ვერ ახერხებს ამ გვერდის ჩატვირთვას გარკვეული მიზეზით.</p>">
+
+<!ENTITY captivePortal.title "ქსელში შესვლა">
+<!ENTITY captivePortal.longDesc2 "
+<p>ინტერნეტთან დასაკავშირებლად, საჭიროა ამ ქსელში შესვლა.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "ქსელში შესასვლელი გვერდის გახსნა">
+
+<!ENTITY malformedURI.title "მისამართი არასწორია">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>საიტის მისამართები, ჩვეულებრივ, ასე იწერება
+    <strong>http://www.example.com/</strong></li>
+  <li>დარწმუნდით, რომ წინ გადახრილ ხაზებს იყენებთ (ანუ, ასეთს
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "კავშირი გაწყდა">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "დოკუმენტი ვადაგასულია">
+<!ENTITY notCached.longDesc "<p>მოთხოვნილი დოკუმენტი არაა ხელმისაწვდომი &brandShortName;-ის კეშში.</p><ul><li>უსაფრთხოების დაცვის მიზნით, &brandShortName; მნიშვნელოვან დოკუმენტებს ხელმეორედ ავტომატურად არ ჩამოტვირთავს.</li><li>კვლავ სცადეთ დაწკაპება, საიტიდან დოკუმენტის ხელმეორედ მოთხოვნისთვის.</li></ul>">
+
+<!ENTITY netOffline.title "კავშირგარეშე რეჟიმი">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>დააწექით &quot;სცადეთ ხელახლა&quot; ღილაკს ინტერნეტში გასასვლელად და გვერდის ხელახლა გასახსნელად.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "შეცდომა შიგთავსის კოდირებაში">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>გთხოვთ დაუკავშირდეთ ვებსაიტის მფლობელებს და აცნობოთ ამ პრობლემის შესახებ.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "ფაილის სახიფათი ტიპი">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>გთხოვთ, დაუკავშირდეთ საიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "კავშირი გაწყდა">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "კავშირის ვადა გავიდა">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "უცნობი ოქმი">
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li>ამ მისამართის გასახსნელად შესაძლოა სხვა პროგრამის ჩადგმა მოგიწიოთ.</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "პროქსი სერვერმა კავშირი უარყო">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>გადაამოწმეთ პროქსის პარამეტრები და დარწმუნდით მათ მართებულობაში.</li> 
+<li>დაუკავშირდით ქსელის ადმინისტრატორს და დარწმუნდით, რომ პროქსი სერვერი 
+მუშაობს.</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "პროქსი სერვერის პოვნა ვერ ხერხდება">
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>გადაამოწმეთ პროქსის პარამეტრები და დარწმუნდით მათ მართებულობაში.</li> 
+<li>შეამოწმეთ და დარწმუნდით, რომ თქვენი კომპიუტერის ქსელური კავშირი გამართულია.</li> 
+<li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ აქვს თუ არა 
+&brandShortName; პროგრამას ქსელის წვდომის უფლება.</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "ეს გვერდი მცდარად გადამისამართდა">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>ამ ხარვეზს, ზოგჯერ იწვევს უარყოფა, ან გამორთვა
+    ფუნთუშების.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "გაუთვალისწინებელი პასუხი სერვერიდან">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>შეამოწმეთ და დარწმუნდით რომ თქვენს სისტემაში პირადი უსაფრთხოების მმართველი 
+ჩადგმულია.</li> 
+<li>ამის მიზეზი შესაძლოა სერვერის არასტანდარტული კონფიგურაცია იყოს.</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "უსაფრთხო დაკავშირება ვერ მოხერხდა">
+<!ENTITY nssFailure2.longDesc2 "<ul> 
+<li>თქვენს მიერ მოთხოვნილი გვერდის ვერ გამოჩნდება, რადგან მიღებული მონაცემების ნამდვილობის დადასტურება ვერ ხერხდება.</li> 
+<li>გთხოვთ დაუკავშირდით ვებ-საიტის მფლობელებს და შეატყობინეთ ამ პრობლემის შესახებ.</li> 
+</ul>">
+
+<!ENTITY certerror.longpagetitle1 "თქვენი კავშირი დაუცველია">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/>-ის მფლობელს ვებსაიტი არასწორად აქვს გამართული.  თქვენი ინფორმაციის მოპარვისგან დაცვის მიზნით, &brandShortName; ამ ვებ-საიტს არ დაუკავშირდება.">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>საიტი დროებით მიუწვდომელი ან გადატვირთულია. სცადეთ ხელახლა რამდენიმე
+    წამში.</li>
+  <li>თუ სხვა გვერდების ჩატვირთვასაც ვერ ახერხებთ, შეამოწმეთ კომპიუტერის ქსელთან
+    კავშირი.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ
+    აქვს თუ არა &brandShortName;-ს ინტერნეტთან წვდომის უფლება.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "დაბლოკილია, შიგთავსის უსაფრთხოების დებულების შესაბამისად.">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;-მა შეზღუდა გვერდის ჩატვირთვა, რადგან შეიცავს შიგთავსს, რომელიც მიუღებელია უსაფრთხოების დებულების შესაბამისად.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "დაზიანებული შიგთავსის შეცდომა">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>თქვენთვის სასურველი გვერდი ვერ გაიხსნება, რადგან მონაცემთა გაცვლისას მოხდა შეცდომა.</p><ul><li>გთხოვთ დაუკავშირდით საიტის მფლობელებს და შეარტყობინეთ ამ შეცდომაზე.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "გამონაკლისის დამატება…">
+
+<!ENTITY errorReporting.automatic2 "შეატყობინეთ მსგავსი შეცდომები რათა დაეხმაროთ Mozilla-ს მავნე საიტების დადგენაში და მათ დაბლოკვაში.">
+<!ENTITY errorReporting.learnMore "შეიტყვეთ მეტი…">
+
+<!ENTITY remoteXUL.title "დისტანციური XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>გთხოვთ დაუკავშირდით ვებსაიტის მფლობელებს და შეატყობინეთ ამ პრობლემის შესახებ.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "უსაფრთხო კავშირი ვერ ხერხდება">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "დამატებითი ინფორმაცია: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; ვერ უკავშირდება <span id='wrongSystemTime_URL'/> -ს, რადგან როგორც ჩანს, თქვენი კომპიუტერის საათი არასწორ დროს აჩვენებს, რაც ხელს უშლის უსაფრთხო კავშირის დამყარებას.</p><p>თქვენს კომპიუტერზე არის <span id='wrongSystemTime_systemDate'/> , მაშინ როცა, უნდა იყოს <span id='wrongSystemTime_actualDate'/>. პრობლების აღმოსაფხვრელად, გაასწორეთ სისტემის დრო და თარიღი.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; ვერ უკავშირდება <span id='wrongSystemTimeWithoutReference_URL'/> -ს, რადგან როგორც ჩანს, თქვენი კომპიუტერის საათი არასწორ დროს აჩვენებს, რაც ხელს უშლის უსაფრთხო კავშირის დამყარებას.</p> <p>თქვენს კომპიუტერზე არის <span id='wrongSystemTimeWithoutReference_systemDate'/>. პრობლების აღმოსაფხვრელად, გაასწორეთ სისტემის დრო და თარიღი.</p>">
+
+<!ENTITY certerror.pagetitle1  "დაუცველი კავშირი">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "ეს საიტი HTTP-ს იყენებს 
+Strict Transport Security (HSTS) რათა მიუთითოთ, რომ &brandShortName; დაუკავშირდეს მხოლოდ 
+დაცულად. შედეგად, შეუძლებელია ამ სერტიფიკატისთვის გამონაკლისის 
+დამატება.">
+<!ENTITY certerror.copyToClipboard.label "ტექსტის ბუფერში დაკოპირება">
+
+<!ENTITY inadequateSecurityError.title "თქვენი კავშირი დაუცველია">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> იყენებს დაცვის ტექნოლოგიას, რომელიც მოძველებული და მარტივად შესატევია. თავდამსხმელმა შესაძლოა მარტივად იხილოს ის ინფორმაცია, რომელიც უსაფრთხო გეგონათ. სანამ საიტზე შეხვალთ, აუცილებელია მისმა ადმინისტრატორმა ეს შეცდომა მოაგვაროს.</p><p>შეცდომის კოდი: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "შესაძლოა ამას თქვენი ქსელის უსაფრთხოების პარამეტრები იწვევდეს. გსურთ ნაგულისხმევი პარამეტრების აღდგენა?">
+<!ENTITY prefReset.label "ნაგულისხმევი პარამეტრების აღდგენა">

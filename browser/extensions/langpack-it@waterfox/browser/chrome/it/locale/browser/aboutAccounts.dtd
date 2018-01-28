@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Benvenuto in &syncBrand.shortName.label;">
+<!ENTITY aboutAccountsConfig.description "Accedi per sincronizzare schede, segnalibri, password e altri elementi.">
+<!ENTITY aboutAccountsConfig.startButton.label "Inizia">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferenze Sync">
+<!ENTITY aboutAccounts.noConnection.title "Connessione non disponibile">
+<!ENTITY aboutAccounts.noConnection.description "È necessaria una connessione a Internet per effettuare l’accesso.">
+<!ENTITY aboutAccounts.noConnection.retry "Riprova">
+<!ENTITY aboutAccounts.badConfig.title "Configurazione errata">
+<!ENTITY aboutAccounts.badConfig.description "Impossibile determinare la configurazione del server Waterfox Account. Riprovare più tardi.">

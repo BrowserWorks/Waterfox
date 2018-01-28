@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "คุณสมบัติเครื่องพิมพ์">
+
+<!ENTITY paperInput.label "ขนาดกระดาษ:">
+<!ENTITY paperInput.accesskey "น">
+
+<!ENTITY jobTitleInput.label "ชื่องาน:">
+<!ENTITY jobTitleInput.accesskey "ง">
+
+<!ENTITY colorGroup.label "สี:">
+<!ENTITY grayRadio.label "ระดับเทา">
+<!ENTITY grayRadio.accesskey "ท">
+<!ENTITY colorRadio.label "สี">
+<!ENTITY colorRadio.accesskey "ส">
+
+<!ENTITY edgeMarginInput.label "ระยะจากขอบกระดาษถึงขอบพิมพ์">
+<!ENTITY topInput.label "หัว:">
+<!ENTITY topInput.accesskey "ห">
+<!ENTITY bottomInput.label "ท้าย:">
+<!ENTITY bottomInput.accesskey "ท">
+<!ENTITY leftInput.label "ซ้าย:">
+<!ENTITY leftInput.accesskey "ซ">
+<!ENTITY rightInput.label "ขวา:">
+<!ENTITY rightInput.accesskey "ข">

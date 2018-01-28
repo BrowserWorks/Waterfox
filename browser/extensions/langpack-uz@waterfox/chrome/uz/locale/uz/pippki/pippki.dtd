@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Parol ustasini oʻzgartirish">
+<!ENTITY setPassword.tokenName.label "Xavfsiz qurilma">
+<!ENTITY setPassword.oldPassword.label "Joriy parol:">
+<!ENTITY setPassword.newPassword.label "Yangi parol:">
+<!ENTITY setPassword.reenterPassword.label "Yangi parol (yana):">
+<!ENTITY setPassword.meter.label "Parolning mustahkamlik darajasi">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Tiklash">
+<!ENTITY resetPassword.title  "Parol ustasini tiklash">
+<!ENTITY resetPassword.text  "Agar parol ustasini tiklasangiz, barcha internetdagi va e-pochta mazillaringiz, to‘ldirish shakllari ma’lumotlari, shaxsiy sertifikatlar va maxfiy kalitlaringiz parollari unutiladi. Parol ustasini tiklashni xohlashingizga ishonchingiz komilmi?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Sertifikat yuklab olinmoqda">
+<!ENTITY downloadCert.message1 "Sizdan yangi sertifikat tasdig‘i (CA)ga ishonishingiz so‘ralgan edi.">
+<!ENTITY downloadCert.trustSSL "Ushbu CA tasdiqli vebsaytlarga ishonish.">
+<!ENTITY downloadCert.trustEmail "Ushbu CA tasdiqli e-pochta foydalanuvchilariga ishonish.">
+<!ENTITY downloadCert.trustObjSign "Ushbu CA tasdiqli dasturchilarga ishonish.">
+<!ENTITY downloadCert.message3 "Ushbu CA’ga boshqa maqsadlarda ishonch bildirishdan oldin, uning sertifikati, siyosati va jarayonlarini (agar mavjud bo‘lsa) sinovdan o‘tkazishingiz kerak.">
+<!ENTITY downloadCert.viewCert.label "Ko‘rinishi">
+<!ENTITY downloadCert.viewCert.text "CA sertifikatini sinovdan o‘tkazish">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Foydalanuvchini tasdiqdan o‘tkazish so‘rovi">
+<!ENTITY clientAuthAsk.message1 "Bu sayt sertifikat yordamida identifikatsiyalanishni so‘ramoqda:">
+<!ENTITY clientAuthAsk.message2 "Tasdiqdan o‘tish sifatida ko‘rsatiladigan sertifikatni tanlang:">
+
+
+<!ENTITY pkcs12.setpassword.title  "Sertifikat zahira parolini tanlang">
+<!ENTITY pkcs12.setpassword.message  "Siz o‘rnatgan sertifikat zahira paroli siz yaratmoqchi bo‘lgan zahira fayllarini himoya qiladi. Siz ushbu parolni zahira jarayoni bilan o‘rnatishingiz kerak.">
+<!ENTITY pkcs12.setpassword.label1 "Sertifikat zahira paroli:">
+<!ENTITY pkcs12.setpassword.label2 "Sertifikat zahira paroli (yana):">
+<!ENTITY pkcs12.setpassword.reminder "Muhim: agar siz sertifikat zahira parolini unutsangiz, ushbu zahiralashni keyinroq tiklay olmaysiz. Uni xavfsiz joyga yozib qo‘ying.">
+
+<!ENTITY chooseToken.title  "Ulam dialogini tanlang">
+<!ENTITY chooseToken.message1 "Ulamni tanlang">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Maxfiy kalit yaratish">
+<!ENTITY createCertInfo.msg1 "Kalit yaratilmoqda… Bu bir necha daqiqa olishi mumkin….">
+<!ENTITY createCertInfo.msg2 "Kutib turing…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Himoyalangan ulam tasdig‘i">
+<!ENTITY protectedAuth.msg "Ulamga tasdiqdan o‘tkazing. Tasdiqdan o‘tkazish uslubi ulamingiz turiga bog‘liq.">
+<!ENTITY protectedAuth.tokenName.label "Ulam:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

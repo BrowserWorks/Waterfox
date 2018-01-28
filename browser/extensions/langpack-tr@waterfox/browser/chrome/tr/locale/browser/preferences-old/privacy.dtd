@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "İzlenme korumasını kullan">
+<!ENTITY  trackingProtectionAlways.label       "Her zaman">
+<!ENTITY  trackingProtectionAlways.accesskey   "H">
+<!ENTITY  trackingProtectionPrivate.label      "Yalnızca gizli pencerelerde">
+<!ENTITY  trackingProtectionPrivate.accesskey  "z">
+<!ENTITY  trackingProtectionNever.label        "Asla">
+<!ENTITY  trackingProtectionNever.accesskey    "A">
+<!ENTITY  trackingProtectionLearnMore.label    "Daha fazla bilgi al">
+<!ENTITY  trackingProtectionExceptions.label   "İstisnalar…">
+<!ENTITY  trackingProtectionExceptions.accesskey "r">
+
+<!ENTITY tracking.label                 "İzleme">
+<!ENTITY trackingProtectionPBM5.label         "Gizli pencerelerde izlenme korumasını kullan">
+<!ENTITY trackingProtectionPBM5.accesskey     "G">
+<!ENTITY trackingProtectionPBMLearnMore.label "Daha fazla bilgi al">
+<!ENTITY changeBlockList.label          "Engelleme listesini değiştir">
+<!ENTITY changeBlockList.accesskey      "E">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "İsterseniz ">
+<!ENTITY  doNotTrack.settings.label     "Beni İzleme ayarlarınızı da yönetebilirsiniz">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Geçmiş">
+
+<!ENTITY  locationBar.label             "Konum çubuğu">
+
+<!ENTITY  locbar.suggest.label          "Konum çubuğunu kullanırken şunları öner:">
+<!ENTITY  locbar.history.label          "Geçmiş">
+<!ENTITY  locbar.history.accesskey      "G">
+<!ENTITY  locbar.bookmarks.label        "Yer imleri">
+<!ENTITY  locbar.bookmarks.accesskey    "Y">
+<!ENTITY  locbar.openpage.label         "Açık sekmeler">
+<!ENTITY  locbar.openpage.accesskey     "s">
+<!ENTITY  locbar.searches.label         "Varsayılan arama motorundan gelen ilgili aramalar">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Arama motoru önerileri için tercihleri değiştir…">
+<!ENTITY  suggestionSettings.accesskey  "m">
+
+<!ENTITY  acceptCookies2.label          "Sitelerden çerezleri kabul et">
+<!ENTITY  acceptCookies2.accesskey      "K">
+
+<!ENTITY  acceptThirdParty.pre.label      "Üçüncü taraf çerezlerini kabul et:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "Her zaman">
+<!ENTITY  acceptThirdParty.never.label    "Asla">
+<!ENTITY  acceptThirdParty.visited.label  "Ziyaret edilenlerden">
+
+<!ENTITY  keepUntil.label               "Tutma sınırı:">
+<!ENTITY  keepUntil.accesskey           "T">
+
+<!ENTITY  expire.label                  "süresi dolana dek">
+<!ENTITY  close.label                   "&brandShortName; kapatılana dek">
+
+<!ENTITY  cookieExceptions.label        "İstisnalar…">
+<!ENTITY  cookieExceptions.accesskey    "r">
+
+<!ENTITY  showCookies.label             "Çerezleri göster…">
+<!ENTITY  showCookies.accesskey         "ö">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; uygulaması">
+<!ENTITY  historyHeader.pre.accesskey      "u">
+<!ENTITY  historyHeader.remember.label     "geçmişi hatırlasın">
+<!ENTITY  historyHeader.dontremember.label "geçmişi asla hatırlamasın">
+<!ENTITY  historyHeader.custom.label       "geçmiş için özel ayarları kullansın">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; tarama, indirme, form ve arama geçmişlerinizi hatırlayacak; ziyaret ettiğiniz web sitelerinin çerezlerini saklayacak.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "İsterseniz ">
+<!ENTITY  rememberActions.clearHistory.label  "yakın geçmişinizi silebilir">
+<!ENTITY  rememberActions.middle.label        " veya ">
+<!ENTITY  rememberActions.removeCookies.label "çerezleri tek tek kaldırabilirsiniz">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; Gizli Gezinti ile aynı ayarları kullanacak ve siz internette gezerken geçmişle ilgili hiçbir şeyi hatırlamayacak.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Ayrıca ">
+<!ENTITY  dontrememberActions.clearHistory.label "tüm mevcut geçmişinizi de silebilirsiniz">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Her zaman gizli gezinti kipini kullan">
+<!ENTITY  privateBrowsingPermanent2.accesskey "m">
+
+<!ENTITY  rememberHistory2.label      "Tarama ve indirme geçmişimi hatırla">
+<!ENTITY  rememberHistory2.accesskey  "h">
+
+<!ENTITY  rememberSearchForm.label       "Arama ve form geçmişini hatırla">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; kapatılınca geçmişi temizle">
+<!ENTITY  clearOnClose.accesskey         "e">
+
+<!ENTITY  clearOnCloseSettings.label     "Ayarlar…">
+<!ENTITY  clearOnCloseSettings.accesskey "A">
+
+<!ENTITY  browserContainersHeader.label         "Kapsayıcı sekmeler">
+<!ENTITY  browserContainersLearnMore.label      "Daha fazla bilgi al">
+<!ENTITY  browserContainersEnabled.label        "Kapsayıcı sekmeleri etkinleştir">
+<!ENTITY  browserContainersEnabled.accesskey    "K">
+<!ENTITY  browserContainersSettings.label        "Ayarlar…">
+<!ENTITY  browserContainersSettings.accesskey    "A">

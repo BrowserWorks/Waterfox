@@ -1,0 +1,261 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "កម្មវិធី​គ្រប់គ្រង​កម្មវិធី​បន្ថែម">
+
+<!ENTITY search.placeholder                   "ស្វែងរក​កម្មវិធី​បន្ថែម​ទាំងអស់">
+<!ENTITY search.buttonlabel                   "ស្វែងរក">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "កំពុង​ផ្ទុក…">
+<!ENTITY listEmpty.installed.label            "អ្នក​មិន​មាន​កម្មវិធី​បន្ថែម​ប្រភេទ​ណាមួយ​ដែល​ត្រូវ​បាន​ដំឡើង​ទេ">
+<!ENTITY listEmpty.availableUpdates.label     "រក​មិន​ឃើញ​បច្ចុប្បន្នភាព">
+<!ENTITY listEmpty.recentUpdates.label        "បច្ចុប្បន្ន​នេះ អ្នក​មិន​បាន​ធ្វើ​បច្ចុប្បន្នភាព​កម្មវិធី​បន្ថែម​ទេ">
+<!ENTITY listEmpty.findUpdates.label          "រកមើល​បច្ចុប្បន្នភាព">
+<!ENTITY listEmpty.search.label               "មិន​អាច​រក​ឃើញ​កម្មវិធី​បន្ថែម​ណាមួយ​ដែល​ផ្គូផ្គង​គ្នា​ទេ">
+<!ENTITY listEmpty.button.label               "សិក្សា​បន្ថែម​អំពី​កម្មវិធី​បន្ថែម">
+<!ENTITY installAddonFromFile.label           "ដំឡើង​កម្មវិធី​បន្ថែម​ពី​ឯកសារ…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "ឧបករណ៍​សម្រាប់​កម្មវិធី​បន្ថែម​ទាំងអស់">
+
+
+<!ENTITY cmd.back.tooltip                     "ថយក្រោយ​មួយ​ទំព័រ">
+<!ENTITY cmd.forward.tooltip                  "ទៅមុខ​មួយ​ទំព័រ">
+
+<!ENTITY showUnsignedExtensions.button.label  "ផ្នែក​បន្ថែម​ខ្លះ​មិន​អាច​បញ្ជាក់​បាន​ទេ">
+<!ENTITY showAllExtensions.button.label       "បង្ហាញ​ផ្នែក​បន្ថែម​ទាំងអស់">
+<!ENTITY debugAddons.label                    "បំបាត់​កំហុស​ផ្នែក​បន្ថែម">
+<!ENTITY debugAddons.accesskey                "B">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "កម្មវិធី​បន្ថែម​ទាំងអស់​ត្រូវ​បាន​បិទ​ដោយ​របៀប​សុវត្ថិភាព ។">
+<!ENTITY warning.checkcompatibility.label          "ការ​ត្រួតពិនិត្យ​ភាព​ឆបគ្នា​នៃ​កម្មវិធី​បន្ថែម​នេះ​ត្រូវ​បាន​បិទ ។ អ្នក​អាច​នឹង​មាន​កម្មវិធី​បន្ថែម​ដែល​មិន​ឆប​គ្នា ។">
+<!ENTITY warning.checkcompatibility.enable.label   "បើក">
+<!ENTITY warning.checkcompatibility.enable.tooltip "បើក​ការ​ត្រួតពិនិត្យ​មើល​ភាព​ឆបគ្នា​នៃ​កម្មវិធី​បន្ថែម">
+<!ENTITY warning.updatesecurity.label              "ការ​ត្រួតពិនិត្យ​សុវត្ថិភាព​នៃ​បច្ចុប្បន្នភាព​របស់​កម្មវិធី​បន្ថែម​ត្រូវ​បាន​បិទ ។ អ្នក​អាច​នឹង​ត្រូវ​បាន​សម្របសម្រួល​ទៅតាម​បច្ចុប្បន្នភាព ។">
+<!ENTITY warning.updatesecurity.enable.label       "បើក">
+<!ENTITY warning.updatesecurity.enable.tooltip     "បើក​ការ​ត្រួតពិនិត្យមើល​សុវត្ថិភាព​នៃ​បច្ចុប្បន្នភាព​របស់​កម្មវិធី​បន្ថែម">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "ស្វែងរក">
+<!ENTITY view.discover.label                  "យក​កម្មវិធី​បន្ថែម">
+<!ENTITY view.recentUpdates.label             "បច្ចុប្បន្នភាព​ថ្មី​ៗ">
+<!ENTITY view.availableUpdates.label          "មាន​បច្ចុប្បន្នភាព">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "ពិនិត្យមើល​បច្ចុប្បន្នភាព">
+<!ENTITY updates.checkForUpdates.accesskey    "ព">
+<!ENTITY updates.viewUpdates.label            "មើល​បច្ចុប្បន្នភាព​ថ្មីៗ">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "ធ្វើ​បច្ចុប្បន្នភាព​កម្មវិធី​បន្ថែម​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "កំណត់​កម្មវិធី​បន្ថែម​ទាំងអស់​ឡើង​វិញ ដើម្បី​ធ្វើ​បច្ចុប្បន្នភាព​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "កំណត់​កម្មវិធី​បន្ថែម​ទាំងអស់​ឡើង​វិញ ដើម្បី​ធ្វើ​បច្ចុប្បន្នភាព​ដោយ​ដៃ">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "កំពុង​ធ្វើ​បច្ចុប្បន្នភាព​កម្មវិធី​បន្ថែម">
+<!ENTITY updates.installed.label              "កម្មវិធី​បន្ថែម​របស់​អ្នក​ត្រូវ​បាន​ធ្វើ​បច្ចុប្បន្នភាព ។">
+<!ENTITY updates.downloaded.label             "បច្ចុប្បន្នភាព​នៃ​កម្មវិធី​បន្ថែម​របស់​អ្នក​ត្រូវ​បាន​ទាញ​យក ។">
+<!ENTITY updates.restart.label                "ចាប់ផ្ដើម​ឡើងវិញ​ឥឡូវនេះ ដើម្បី​បញ្ចប់​ការ​ដំឡើង">
+<!ENTITY updates.noneFound.label              "រក​មិន​ឃើញ​បច្ចុប្បន្នភាព">
+<!ENTITY updates.manualUpdatesFound.label     "មើល​បច្ចុប្បន្នភាព​ដែល​មាន">
+<!ENTITY updates.updateSelected.label         "ដំឡើង​បច្ចុប្បន្នភាព">
+<!ENTITY updates.updateSelected.tooltip       "ដំឡើង​បច្ចុប្បន្នភាព​ដែល​មាន​នៅ​ក្នុង​បញ្ជី​នេះ">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "បង្ហាញ​ព័ត៌មាន​បន្ថែម">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "រក​បច្ចុប្បន្នភាព">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "ជម្រើស">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "ចំណូលចិត្ត">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "អំពី">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "បើក">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "បិទ">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "ដាក់​ស្បែក">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "បញ្ឈប់​ការ​ដាក់​ស្បែក">
+<!ENTITY cmd.disableTheme.accesskey           "ប">
+<!ENTITY cmd.askToActivate.label              "ស្នើ​ឲ្យ​ធ្វើ​ឲ្យ​សកម្ម">
+<!ENTITY cmd.askToActivate.tooltip            "ស្នើ​ឲ្យ​ប្រើ​​ក​ផ្នែក​បន្ថែម​នេះ​រាល់​ពេល">
+<!ENTITY cmd.alwaysActivate.label             "ធ្វើ​ឲ្យ​សកម្ម​ជា​និច្ច">
+<!ENTITY cmd.alwaysActivate.tooltip           "ប្រើ​ផ្នែក​បន្ថែម​នេះ​ជា​និច្ច">
+<!ENTITY cmd.neverActivate.label              "កុំ​ធ្វើ​ឲ្យ​សកម្ម">
+<!ENTITY cmd.neverActivate.tooltip            "កុំ​ប្រើផ្នែក​បន្ថែម​នេះ">
+<!ENTITY cmd.stateMenu.tooltip                "ប្ដូរ​ពេល​ផ្នែក​បន្ថែម​នេះ​ដំណើរការ">
+<!ENTITY cmd.installAddon.label               "ដំឡើង">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "យកចេញ">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "ជម្រើស">
+<!ENTITY cmd.showPreferencesWin.tooltip       "ផ្លាស់ប្ដូរ​ជម្រើស​របស់​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY cmd.showPreferencesUnix.label        "ចំណូលចិត្ត">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "ផ្លាស់ប្ដូរ​ចំណូលចិត្ត​របស់​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY cmd.contribute.label                 "រួមចំណែក">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "ចូលរួម​ក្នុង​ការ​អភិវឌ្ឍ​កម្មវិធី​បន្ថែម​នេះ">
+
+<!ENTITY cmd.showReleaseNotes.label           "បង្ហាញ​ឯកសារ​ចេញផ្សាយ">
+<!ENTITY cmd.showReleaseNotes.tooltip         "បង្ហាញ​ឯកសារ​ចេញផ្សាយ​សម្រាប់​បច្ចុប្បន្នភាព​នេះ">
+<!ENTITY cmd.hideReleaseNotes.label           "លាក់​ឯកសារ​ចេញផ្សាយ">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "លាក់​ឯកសារ​ចេញផ្សាយ​សម្រាប់​បច្ចុប្បន្នភាព​នេះ">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "តើ​អ្វី​ជា​កម្មវិធី​បន្ថែម ?">
+<!ENTITY discover.description2                "កម្មវិធី​បន្ថែម គឺជា​កម្មវិធី​ដែល​អនុញ្ញាត​ឲ្យ​អ្នក​ផ្លាស់ប្ដូរ &brandShortName; ដែល​មាន​ មុខងារ ឬ​រចនាប័ទ្ម​ផ្សេងៗ​ទៀត​តាម​តម្រូវការ​ ។ សាកល្បង​ប្រើ​របារ​ចំហៀង​សន្សំ​ពេលវេលា កម្មវិធី​ជូនដំណឹង​អំពី​អាកាសធាតុ ឬ​រូបរាង​ស្បែក​ដើម្បី​ធ្វើឲ្យ &brandShortName; មាន​លក្ខណៈ​ជា​​របស់​អ្នក​ផ្ទាល់ ។">
+<!ENTITY discover.footer                      "នៅ​ពេល​ដែល​អ្នក​បាន​តភ្ជាប់​ទៅ​កាន់​អ៊ីនធឺណិត បន្ទះ​នេះ​នឹង​ធ្វើឲ្យ​​ កម្មវិធី​បន្ថែម​ដ៏​ពេញ​និយម​មួយចំនួន​របស់​អ្នក​មាន​លក្ខណៈ​កាន់តែ​ពិសេស​ឡើង​សម្រាប់​​អ្នក​ព្យាយាម។">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "កំណែ">
+<!ENTITY detail.lastupdated.label             "បាន​ធ្វើ​បច្ចុប្បន្នភាព​លើក​ចុងក្រោយ">
+<!ENTITY detail.creator.label                 "អ្នក​អភិវឌ្ឍន៍">
+<!ENTITY detail.homepage.label                "គេហទំព័រ">
+<!ENTITY detail.numberOfDownloads.label       "ទាញ​យក">
+
+<!ENTITY detail.contributions.description     "អ្នក​អភិវឌ្ឍន៍​កម្មវិធី​បន្ថែម​នេះ​ស្នើសុំ​ឲ្យ​អ្នក​ជួយ​គាំទ្រ​ដោយ​ការ​ចូលរួម​បរិច្ចាគ​បន្តិចបន្តួច​ដើម្បី​ធ្វើឲ្យ​ការ​អភិវឌ្ឍ​មាន​ដំណើរការ​បន្ត​ទៅមុខ​ទៀត ។">
+
+<!ENTITY detail.updateType                    "បច្ចុប្បន្នភាព​ស្វ័យប្រវត្តិ">
+<!ENTITY detail.updateDefault.label           "លំនាំ​ដើម">
+<!ENTITY detail.updateDefault.tooltip         "អាច​ដំឡើង​បច្ចុប្បន្នភាព​ដោយ​ស្វ័យប្រវត្តិ​បាន លុះត្រាតែ​វា​ជា​លំនាំដើម">
+<!ENTITY detail.updateAutomatic.label         "បើក">
+<!ENTITY detail.updateAutomatic.tooltip       "ដំឡើង​បច្ចុប្បន្នភាព​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY detail.updateManual.label            "បិទ">
+<!ENTITY detail.updateManual.tooltip          "កុំ​ដំឡើង​បច្ចុប្បន្នភាព​ដោយ​ស្វ័យប្រវត្តិ">
+<!ENTITY detail.home                          "គេហទំព័រ">
+<!ENTITY detail.repository                    "ទម្រង់​កម្មវិធី​បន្ថែម">
+<!ENTITY detail.size                          "ទំហំ">
+
+<!ENTITY detail.checkForUpdates.label         "ពិនិត្យមើល​បច្ចុប្បន្នភាព">
+<!ENTITY detail.checkForUpdates.accesskey     "ព">
+<!ENTITY detail.checkForUpdates.tooltip       "រកមើល​បច្ចុប្បន្នភាព​សម្រាប់​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY detail.showPreferencesWin.label      "ជម្រើស">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "ផ្លាស់ប្ដូរ​ជម្រើស​របស់​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY detail.showPreferencesUnix.label     "ចំណូលចិត្ត">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "ផ្លាស់ប្ដូរ​ចំណូលចិត្ត​របស់​កម្មវិធី​បន្ថែម​នេះ">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "ការ​វាយតម្លៃ">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "ផ្អាក">
+<!ENTITY progress.cancel.tooltip              "បោះបង់">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "ឈ្មោះ">
+<!ENTITY sort.name.tooltip                    "តម្រៀប​តាម​ឈ្មោះ">
+<!ENTITY sort.dateUpdated.label               "បាន​ធ្វើ​បច្ចុប្បន្នភាព​លើក​ចុងក្រោយ">
+<!ENTITY sort.dateUpdated.tooltip             "តម្រៀប​តាម​កាលបរិច្ឆេទ​ដែល​បាន​ធ្វើ​បច្ចុប្បន្នភាព">
+<!ENTITY sort.relevance.label                 "ការ​ផ្គូផ្គង​ដែល​ប្រសើរ​បំផុត">
+<!ENTITY sort.relevance.tooltip               "តម្រៀប​តាម​ទំនាក់ទំនង">
+<!ENTITY sort.price.label                     "តម្លៃ">
+<!ENTITY sort.price.tooltip                   "តម្រៀប​តាម​តម្លៃ">
+
+<!ENTITY search.filter2.label                 "ស្វែងរក ៖">
+<!ENTITY search.filter2.installed.label       "កម្មវិធី​បន្ថែម​របស់​ខ្ញុំ">
+<!ENTITY search.filter2.installed.tooltip     "បង្ហាញ​កម្មវិធី​បន្ថែម​ដែល​បាន​ដំឡើង">
+<!ENTITY search.filter2.available.label       "មាន​កម្មវិធី​បន្ថែម">
+<!ENTITY search.filter2.available.tooltip     "បង្ហាញ​កម្មវិធី​បន្ថែម​ដែល​មាន ដើម្បី​ដំឡើង">
+
+<!ENTITY addon.homepage                       "គេហទំព័រ">
+<!ENTITY addon.details.label                  "ច្រើន​ទៀត">
+<!ENTITY addon.details.tooltip                "បង្ហាញ​ព័ត៌មាន​បន្ថែម​អំពី​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY addon.unknownDate                    "មិន​ស្គាល់">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(បិទ)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "ធ្វើ​បច្ចុប្បន្នភាព">
+<!ENTITY addon.undoAction.label               "មិនធ្វើវិញ">
+<!ENTITY addon.undoAction.tooltip             "មិន​ធ្វើ​សកម្មភាព​នេះ​វិញ">
+<!ENTITY addon.undoRemove.label               "មិនធ្វើវិញ">
+<!ENTITY addon.undoRemove.tooltip             "បន្ត​ដំឡើង​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY addon.restartNow.label               "ចាប់ផ្ដើម​ឡើងវិញ​ឥឡូវនេះ">
+<!ENTITY addon.install.label                  "ដំឡើង">
+<!ENTITY addon.install.tooltip                "ដំឡើង​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY addon.updateNow.label                "ធ្វើ​បច្ចុប្បន្នភាព​ឥឡូវនេះ">
+<!ENTITY addon.updateNow.tooltip              "ដំឡើង​បច្ចុប្បន្នភាព​សម្រាប់​កម្មវិធី​បន្ថែម​នេះ">
+<!ENTITY addon.includeUpdate.label            "រួមបញ្ចូល​ទៅ​ក្នុង​បច្ចុប្បន្នភាព​នេះ">
+<!ENTITY addon.updateAvailable.label          "មាន​បច្ចុប្បន្នភាព">
+<!ENTITY addon.checkingForUpdates.label       "កំពុង​រក​មើល​បច្ចុប្បន្នភាព...">
+<!ENTITY addon.releaseNotes.label             "ឯកសារ​ចេញផ្សាយ ៖">
+<!ENTITY addon.loadingReleaseNotes.label      "កំពុង​ផ្ទុក…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "សូម​ទោស ប៉ុន្តែ​មាន​កំហុស​ ខណៈ​ពេល​កំពុង​ផ្ទុក​ឯកសារ​ចេញផ្សាយ ។">
+
+<!ENTITY addon.createdBy.label                "តាម">
+
+<!ENTITY eula.title                           "កិច្ច​ព្រមព្រៀង​អាជ្ញាប័ណ្ណ​អ្នក​ប្រើ​">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "យល់ព្រម និង​ដំឡើង...">
+
+<!ENTITY settings.path.button.label           "រក​មើល…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "តើ​នេះ​ជា​អ្វី? Telemetry អាច​ដំឡើង និង​ដំណើរការ​ការ​សាកល្បង​ពី​ពេល​មួយ​ទៅ​ពេល​មួយ។">
+<!ENTITY experiment.info.learnmore "សិក្សា​​បន្ថែម">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "ការ​កំណត់ Telemetry">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "ស្វែងយល់​បន្ថែម...">
+
+<!ENTITY disabledUnsigned.heading "កម្មវិធី​ផ្នែក​បន្ថែម​ខ្លះ​ត្រូវ​បាន​បិទ">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "កម្មវិធី​ផ្នែក​បន្ថែម​ខាងក្រោម​មិន​ទាន់​បាន​បញ្ជាក់​​ឲ្យ​ប្រើប្រាស់​នៅ​ក្នុង &brandShortName; នៅ​ឡើយ​ទេ។ អ្នក​អាច ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "រក​កម្មវិធី​ជំនួស">
+<!ENTITY disabledUnsigned.description.end " ឬ​សួរ​​អ្នក​អភិវឌ្ឍ​ដើម្បី​ឲ្យ​ពួកគេ​បញ្ជាក់​វា។">
+<!ENTITY disabledUnsigned.learnMore "ស្វែងយល់​បន្ថែម​អំពី​ការ​ព្យាយាម​របស់​យើង​ដើម្បី​ជួយ​រក្សា​សុវត្ថិភាព​របស់​អ្នក​នៅ​លើ​អ៊ីនធឺណិត។">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "អ្នក​អភិវឌ្ឍ​ដែល​ចាប់អារម្មណ៍​​ដើម្បី​​បញ្ជាក់​កម្មវិធី​​ផ្នែក​បន្ថែម​របស់​ពួកគេ​អាច​បន្ត​ដោយ​អាន ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "ដោយដៃ">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "មាន​បាត់​អ្វី​មែន​ទេ? ផ្នែក​បន្ថែម​មួយ​ចំនួន​មិន​គាំទ្រ​ដោយ &brandShortName; ទៀត​ទេ។">
+<!ENTITY pluginDeprecation.learnMore "ស្វែងយល់បន្ថែម">
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY getThemes.description                "Looking to personalize your browser?">
+<!ENTITY getThemes.learnMore                  "Choose from thousands of themes.">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">

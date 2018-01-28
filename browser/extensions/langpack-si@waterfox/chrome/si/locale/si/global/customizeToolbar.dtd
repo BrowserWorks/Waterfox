@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "මෙවලම් තීරු රිසිකරණය">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "මෙවලම් තීරුව මතට ඇදගෙන ඒමෙන් හෝ ඒ මතින් ඇදගෙන යාමෙන් අයිතමයන් එක්කිරීමට හෝ ඉවත්කිරීමට හැකිය">
+<!ENTITY show.label               "පෙන්වන්න:">
+<!ENTITY iconsAndText.label       "අයිකන සහ පෙළ">
+<!ENTITY icons.label              "අයිකන">
+<!ENTITY text.label               "පෙළ">
+<!ENTITY useSmallIcons.label      "කුඩා අයිකනයන් භාවිතා කරන්න">
+<!ENTITY restoreDefaultSet.label  "පෙරනිමි කුළකය නැත ස්ථාපනය කරන්න">
+<!ENTITY addNewToolbar.label      "නව මෙවලම් තීරුවක් එක් කරන්න">
+<!ENTITY saveChanges.label        "කළා">
+<!ENTITY undoChanges.label        "වෙනස්කම් අහෝසි කරන්න.">

@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Pelayaran Peribadi)">
+
+<!ENTITY appmenu.tooltip                     "Buka menu">
+<!ENTITY navbarOverflow.label                "Alatan seterusnya…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Muat Semula Tab">
+<!ENTITY  reloadTab.accesskey                "M">
+<!ENTITY  reloadAllTabs.label                "Muat Semula Semua Tab">
+<!ENTITY  reloadAllTabs.accesskey            "S">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Tutup Tab ke Kanan">
+<!ENTITY  closeTabsToTheEnd.accesskey        "e">
+<!ENTITY  closeOtherTabs.label               "Tutup Tab Lain">
+<!ENTITY  closeOtherTabs.accesskey           "u">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Pin Tab">
+<!ENTITY  pinTab.accesskey                   "P">
+<!ENTITY  unpinTab.label                     "Nyahpin Tab">
+<!ENTITY  unpinTab.accesskey                 "b">
+<!ENTITY  sendTabToDevice.label              "Hantar Tab Ke Peranti">
+<!ENTITY  sendTabToDevice.accesskey          "H">
+<!ENTITY  sendPageToDevice.label             "Hantar Halaman ke Peranti">
+<!ENTITY  sendPageToDevice.accesskey         "P">
+<!ENTITY  sendLinkToDevice.label             "Hantar Pautan ke Peranti">
+<!ENTITY  sendLinkToDevice.accesskey         "P">
+<!ENTITY  moveToNewWindow.label              "Pindah ke Tetingkap Baru">
+<!ENTITY  moveToNewWindow.accesskey          "T">
+<!ENTITY  bookmarkAllTabs.label              "Tandabuku Semua Tab…">
+<!ENTITY  bookmarkAllTabs.accesskey          "T">
+<!ENTITY  undoCloseTab.label                 "Batal Tutup Tab">
+<!ENTITY  undoCloseTab.accesskey             "B">
+<!ENTITY  closeTab.label                     "Tutup Tab">
+<!ENTITY  closeTab.accesskey                 "b">
+
+<!ENTITY  listAllTabs.label      "Senarai semua tab">
+
+<!ENTITY tabCmd.label "Tab Baru">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Buka Lokasi…">
+<!ENTITY openFileCmd.label "Buka Fail…">
+<!ENTITY openFileCmd.accesskey "B">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Tatacara Halaman…">
+<!ENTITY printSetupCmd.accesskey "T">
+<!ENTITY printPreviewCmd.label "Previu Cetakan">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Cetak…">
+<!ENTITY printCmd.accesskey "C">
+<!ENTITY printCmd.commandkey "c">
+
+<!ENTITY goOfflineCmd.label "Kerja Luar Talian">
+<!ENTITY goOfflineCmd.accesskey "K">
+
+<!ENTITY menubarCmd.label "Bar Menu">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "Bar Alat Navigasi">
+<!ENTITY personalbarCmd.label "Bar alat Tandabuku">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "Item Bar alat Tandabuku">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Muat semula Semua Tab">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "S">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Tandabuku Semua Tab…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "T">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Batal Tutup Tab">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "B">
+
+<!ENTITY pageSourceCmd.label "Sumber Halaman">
+<!ENTITY pageSourceCmd.accesskey "H">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Info Halaman">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "L">
+<!ENTITY mirrorTabCmd.label "Mirror Tab">
+<!ENTITY mirrorTabCmd.accesskey "m">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Masuk Skrin Penuh">
+<!ENTITY enterFullScreenCmd.accesskey "P">
+<!ENTITY exitFullScreenCmd.label "Keluar Skrin Penuh">
+<!ENTITY exitFullScreenCmd.accesskey "K">
+<!ENTITY fullScreenCmd.label "Skrin Penuh">
+<!ENTITY fullScreenCmd.accesskey "r">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Papar Semua Tab">
+<!ENTITY showAllTabsCmd.accesskey "S">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Daftar masuk ke &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "Buka &syncBrand.shortName.label; keutamaan">
+<!ENTITY fxaSignInError.label "Sambung semula ke &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Sahkan Akaun Anda">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Minimum">
+<!ENTITY fullScreenRestore.tooltip "Pulih">
+<!ENTITY fullScreenClose.tooltip "Tutup">
+<!ENTITY fullScreenAutohide.label "Sorok Bar Alat">
+<!ENTITY fullScreenAutohide.accesskey "B">
+<!ENTITY fullScreenExit.label "Keluar Mod Skrin Penuh">
+<!ENTITY fullScreenExit.accesskey "M">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "kini skrin penuh">
+<!ENTITY fullscreenWarning.generic.label "Dokumen ini skrin penuh">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Keluar dari Skrin Penuh (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Keluar dari Skrin Penuh (esc)">
+<!ENTITY leaveDOMFullScreen.label "Keluar Skrin Penuh">
+<!ENTITY leaveDOMFullScreen.accesskey "u">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "mempunyai kawalan ke atas penunjuk anda. Tekan Esc untuk mengambil kembali kawalan.">
+<!ENTITY pointerlockWarning.generic.label "Dokumen ini mempunyai kawalan ke atas penunjuk anda. Tekan Esc untuk mengambil kembali kawalan.">
+
+<!ENTITY closeWindow.label "Tutup Tetingkap">
+<!ENTITY closeWindow.accesskey "u">
+
+<!ENTITY bookmarksMenu.label "Tandabuku">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY bookmarkThisPageCmd.label "Tandabuku Halaman Ini">
+<!ENTITY editThisBookmarkCmd.label "Edit Tandabuku Ini">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Cari lanjutan Share services…">
+<!ENTITY sharePageCmd.label "Kongsi Halaman Ini">
+<!ENTITY sharePageCmd.commandkey "K">
+<!ENTITY sharePageCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Kongsi Pautan Ini">
+<!ENTITY shareLink.accesskey "a">
+<!ENTITY shareImage.label "Kongsi Imej Ini">
+<!ENTITY shareImage.accesskey "n">
+<!ENTITY shareSelect.label "Kongsi Pilihan">
+<!ENTITY shareSelect.accesskey "i">
+<!ENTITY shareVideo.label "Kongsi Video Ini">
+<!ENTITY shareVideo.accesskey "n">
+<!ENTITY feedsMenu2.label "Langgan Halaman Ini">
+<!ENTITY subscribeToPageMenupopup.label "Langgan Halaman Ini">
+<!ENTITY subscribeToPageMenuitem.label "Langgan Halaman Ini…">
+<!ENTITY addCurPagesCmd.label "Tandabuku Semua Tab…">
+<!ENTITY showAllBookmarks2.label "Papar Semua Tandabuku">
+<!ENTITY recentBookmarks.label "Tandabuku Terkini">
+<!ENTITY otherBookmarksCmd.label "Tandabuku Lain">
+<!ENTITY mobileBookmarksCmd.label "Tandabuku Telefon">
+<!ENTITY bookmarksToolbarChevron.tooltip "Papar tandabuku selanjutnya">
+<!ENTITY showRecentlyBookmarked.label     "Papar Tandabuku Terkini">
+<!ENTITY showRecentlyBookmarked.accesskey "n">
+<!ENTITY hideRecentlyBookmarked.label     "Sorok Tandabuku Terkini">
+<!ENTITY hideRecentlyBookmarked.accesskey "S">
+
+<!ENTITY backCmd.label                "Kembali">
+<!ENTITY backButton.tooltip           "Undur satu halaman">
+<!ENTITY forwardCmd.label             "Seterusnya">
+<!ENTITY forwardButton.tooltip        "Maju sehalaman">
+<!ENTITY backForwardButtonMenu.tooltip "Klik-kanan atau tarik turun untuk papar sejarah">
+<!ENTITY backForwardButtonMenuMac.tooltip "Tarik turun untuk papar sejarah">
+<!ENTITY reloadCmd.label              "Muat semula">
+<!ENTITY stopCmd.label                "Berhenti">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Pergi ke alamat dalam Bar Lokasi">
+<!ENTITY printButton.label            "Cetak">
+<!ENTITY printButton.tooltip          "Cetak halaman ini">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Papar maklumat laman">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Buka panel mesej">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Buka lokasi panel permintaan">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Buka panel mesej pemasangan add-on">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Buka panel mesej storan luar talian">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Buka panel mesej kata laluan disimpan">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Urus kegunaan plugin">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Tukar pilihan samada anda boleh menerima notifikasi dari laman">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Simpan data Persistent Storage">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Pelayar berada dalam kawalan jauh">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Urus perkongsian kamera dan/atau mikrofon anda dengan laman">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Urus perkongsian mikrofon anda dengan laman">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Urus perkongsian tetingkap atau skrin anda dengan laman">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Buka panel mesej pemasangan">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Terjemahkan halaman ini">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Urus terjemahan halaman">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Urus penggunaan perisian DRM">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Anda telah menyekat kamera anda untuk laman web ini.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Anda telah menyekat mikrofon anda untuk laman web ini.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Anda telah menyekat laman web ini daripada berkongsi skrin anda.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Anda telah menyekat maklumat lokasi untuk laman web ini.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Anda telah menyekat storan data untuk laman web ini.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Anda telah menyekat notifikasi untuk laman web ini.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Anda telah menghalang storan gigih untuk laman web ini.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Papar sejarah">
+
+<!ENTITY searchItem.title             "Cari">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Halaman utama">
+
+<!ENTITY bookmarksButton.label          "Tandabuku">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Tandabuku">
+<!ENTITY bookmarksMenuButton.other.label "Tandabuku Lain">
+<!ENTITY bookmarksMenuButton.mobile.label "Tandabuku Telefon">
+<!ENTITY viewBookmarksSidebar2.label        "Papar Tandabuku Bar Sisi">
+<!ENTITY viewBookmarksToolbar.label         "Papar Bar alat Tandabuku">
+<!ENTITY searchBookmarks.label              "Cari Tandabuku">
+
+<!ENTITY containersMenu.label "Kontena">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "e">
+
+<!ENTITY historyButton.label            "Sejarah">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Alatan">
+<!ENTITY toolsMenu.accesskey          "A"> 
+
+<!ENTITY keywordfield.label           "Tambah satu Kata Kunci untuk pencarian ini…">
+<!ENTITY keywordfield.accesskey       "K">
+
+<!ENTITY downloads.label              "Muat Turun">
+<!ENTITY downloads.accesskey          "u">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Add-ons">
+<!ENTITY addons.accesskey             "A">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Pembangun Web">
+<!ENTITY webDeveloperMenu.accesskey   "W">
+
+<!ENTITY inspectContextMenu.label     "Pemeriksaan Elemen">
+<!ENTITY inspectContextMenu.accesskey "i">
+
+<!ENTITY fileMenu.label         "Fail"> 
+<!ENTITY fileMenu.accesskey       "F">
+<!ENTITY newUserContext.label             "Bekas Tab Baru">
+<!ENTITY newUserContext.accesskey         "B">
+<!ENTITY newNavigatorCmd.label        "Tetingkap Baru">
+<!ENTITY newNavigatorCmd.key        "B">
+<!ENTITY newNavigatorCmd.accesskey      "B">
+<!ENTITY newPrivateWindow.label     "Tetingkap Peribadi Baru">
+<!ENTITY newPrivateWindow.accesskey "T">
+<!ENTITY newNonRemoteWindow.label   "Tetingkap Non-e10s Baru">
+
+<!ENTITY editMenu.label         "Edit"> 
+<!ENTITY editMenu.accesskey       "E"> 
+<!ENTITY undoCmd.label            "Batal">  
+<!ENTITY undoCmd.key            "B">  
+<!ENTITY undoCmd.accesskey          "B"> 
+<!ENTITY redoCmd.label            "Buat semula">  
+<!ENTITY redoCmd.key            "B">  
+<!ENTITY redoCmd.accesskey          "B"> 
+<!ENTITY cutCmd.label           "Potong">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "g"> 
+<!ENTITY copyCmd.label            "Salin">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "S"> 
+<!ENTITY pasteCmd.label           "Tampal">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "T"> 
+<!ENTITY deleteCmd.label          "Buang">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "B"> 
+<!ENTITY selectAllCmd.label         "Pilih Semua">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "S"> 
+<!ENTITY preferencesCmd2.label       "Pilihan">
+<!ENTITY preferencesCmd2.accesskey     "h">
+<!ENTITY preferencesCmdUnix.label       "Keutamaan">
+<!ENTITY preferencesCmdUnix.accesskey     "n"> 
+
+<!ENTITY clearRecentHistory.label               "Buang Sejarah Terkini…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Papar"> 
+<!ENTITY viewMenu.accesskey       "p"> 
+<!ENTITY viewToolbarsMenu.label       "Bar alat"> 
+<!ENTITY viewToolbarsMenu.accesskey     "B"> 
+<!ENTITY viewSidebarMenu.label "Bar sisi">
+<!ENTITY viewSidebarMenu.accesskey "B">
+<!ENTITY viewCustomizeToolbar.label       "Penyesuaian…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "u">
+<!ENTITY overflowCustomizeToolbar.label       "Penyesuaian Bar Alatan…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Sejarah">
+<!ENTITY historyMenu.accesskey "s">
+<!ENTITY historyUndoMenu.label "Tab Terkini Ditutup">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Tetingkap Terkini Ditutup">
+<!ENTITY historyRestoreLastSession.label "Pulih Sesi Terdahulu">
+
+<!ENTITY showAllHistoryCmd2.label "Papar Semua Sejarah">
+<!ENTITY showAllHistoryCmd.commandkey "S">
+
+<!ENTITY appMenuCustomize.label "Penyesuaian">
+<!ENTITY appMenuCustomize.tooltip "Penyesuaian Menu dan Bar alat">
+<!ENTITY appMenuCustomizeExit.label "Keluar Penyesuaian">
+<!ENTITY appMenuCustomizeExit.tooltip "Siap Penyesuaian">
+<!ENTITY appMenuHistory.label "Sejarah">
+<!ENTITY appMenuHistory.showAll.label "Papar Semua Sejarah">
+<!ENTITY appMenuHistory.clearRecent.label "Buang Sejarah Terkini…">
+<!ENTITY appMenuHistory.restoreSession.label "Pulih Sesi Terdahulu">
+<!ENTITY appMenuHistory.viewSidebar.label "Papar Bar sisi Sejarah">
+<!ENTITY appMenuHistory.recentHistory.label "Sejarah Terkini">
+<!ENTITY appMenuHelp.label "Bantuan">
+<!ENTITY appMenuHelp.tooltip "Buka Menu Bantuan">
+
+<!ENTITY appMenuRemoteTabs.label "Tab Sync">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Tiada tab terbuka">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Papar Selanjutnya">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Papar selanjutnya tab dari peranti ini">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Papar Semua">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Papar semua tab dari peranti ini">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Mengaktifkan sync tab untuk papar senarai tab dari peranti anda yang lain.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Tiada tab sync… lagi!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Mahu melihat tab anda daripada peranti lain di sini?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Sync keutamaan">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Daftar masuk untuk papar senarai tab dari peranti anda yang lain.">
+<!ENTITY appMenuRemoteTabs.signin.label "Daftar masuk untuk Sync">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Urus Peranti…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Papar Bar sisi Sync Tab">
+
+<!ENTITY customizeMenu.addToToolbar.label "Tambah ke Bar Alat">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!ENTITY customizeMenu.addToPanel.label "Tambah ke Menu">
+<!ENTITY customizeMenu.addToPanel.accesskey "M">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Tambah ke Menu Limpahan">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.moveToToolbar.label "Pindah ke Bar Alat">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "d">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Pindah ke Menu">
+<!ENTITY customizeMenu.moveToPanel.accesskey "d">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Pin ke Menu Overflow">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "P">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Nyahpin daripada Menu Overflow">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "N">
+<!ENTITY customizeMenu.removeFromToolbar.label "Buang daripada Bar alatan">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "B">
+<!ENTITY customizeMenu.removeFromMenu.label "Buang daripada Menu">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "B">
+<!ENTITY customizeMenu.addMoreItems.label "Tambah Lagi Item… ">
+<!ENTITY customizeMenu.addMoreItems.accesskey "T">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Selanjutnya">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Cari atau masukkan alamat">
+<!ENTITY urlbar.accesskey             "u">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Ekstensi:">
+<!ENTITY urlbar.switchToTab.label     "Tukar ke tab:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Adakah anda ingin meningkatkan pengalaman carian anda dengan cadangan?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Ketahui selanjutnya…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "l">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Tidak">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ya">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "y">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Panduan:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Dapatkan bantuan! Lihat &#x1F50E; di sebelah cadangan carian.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Tukar Pilihan…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "T">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Tukar Keutamaan…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "T">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Cari pertanyaan">
+<!ENTITY contentSearchSubmit.tooltip  "Hantar carian">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Cari">
+<!ENTITY searchIcon.tooltip           "Cari">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Mencari: ">
+<!ENTITY searchWith.label             " dengan:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Cari ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Cari dengan:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Ubah Tetapan Carian">
+<!ENTITY changeSearchSettings.tooltip "Ubah tetapan carian">
+
+<!ENTITY searchInNewTab.label         "Cari dalam Tab Baru">
+<!ENTITY searchInNewTab.accesskey     "T">
+<!ENTITY searchSetAsDefault.label     "Tetapkan sebagai Enjin Carian Piawai">
+<!ENTITY searchSetAsDefault.accesskey "T">
+
+<!ENTITY openLinkCmdInTab.label       "Buka Pautan dalam Tab Baru">
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+<!ENTITY openLinkCmd.label            "Buka Pautan dalam Tetingkap Baru">
+<!ENTITY openLinkCmd.accesskey        "a">
+<!ENTITY openLinkInPrivateWindowCmd.label "Buka Pautan dalam Tetingkap Privasi Baru">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "P">
+<!ENTITY openLinkCmdInCurrent.label     "Buka Pautan">
+<!ENTITY openLinkCmdInCurrent.accesskey "B">
+<!ENTITY openFrameCmdInTab.label      "Buka Bingkai dalam Tab Baru">
+<!ENTITY openFrameCmdInTab.accesskey  "T">
+<!ENTITY openFrameCmd.label           "Buka Bingkai dalam Tetingkap Baru">
+<!ENTITY openFrameCmd.accesskey       "i">
+<!ENTITY openLinkCmdInContainerTab.label "Buka Pautan dalam Tab Bekas Baru">
+<!ENTITY openLinkCmdInContainerTab.accesskey "B">
+<!ENTITY showOnlyThisFrameCmd.label     "Papar Hanya Bingkai Ini">
+<!ENTITY showOnlyThisFrameCmd.accesskey "i">
+<!ENTITY reloadCmd.commandkey         "m">
+<!ENTITY reloadFrameCmd.label         "Muat semula Bingkai">
+<!ENTITY reloadFrameCmd.accesskey     "e">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Papar Sumber Dipilih">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Papar Sumber MathML">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Papar Sumber Halaman">
+<!ENTITY viewPageSourceCmd.accesskey  "P">
+<!ENTITY viewFrameSourceCmd.label     "Papar Sumber Bingkai">
+<!ENTITY viewFrameSourceCmd.accesskey "u">
+<!ENTITY viewPageInfoCmd.label        "Lihat Info Laman">
+<!ENTITY viewPageInfoCmd.accesskey    "I">
+<!ENTITY viewFrameInfoCmd.label       "Lihat Info Bingkai">
+<!ENTITY viewFrameInfoCmd.accesskey   "I">
+<!ENTITY reloadImageCmd.label         "Muat Semula Imej">
+<!ENTITY reloadImageCmd.accesskey     "e">
+<!ENTITY viewImageCmd.label           "Papar Imej">
+<!ENTITY viewImageCmd.accesskey       "I">
+<!ENTITY viewImageInfoCmd.label       "Papar Info Imej">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewImageDescCmd.label       "Papar Keterangan">
+<!ENTITY viewImageDescCmd.accesskey   "g">
+<!ENTITY viewVideoCmd.label           "Papar Video">
+<!ENTITY viewVideoCmd.accesskey       "I">
+<!ENTITY viewBGImageCmd.label         "Papar Imej Latar belakang">
+<!ENTITY viewBGImageCmd.accesskey     "g">
+<!ENTITY setDesktopBackgroundCmd.label      "Tetapkan Sebagai Latar Belakang Desktop…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "S">
+<!ENTITY bookmarkPageCmd2.label       "Tandabuku Halaman Ini">
+<!ENTITY bookmarkThisLinkCmd.label      "Tandabuku Pautan Ini">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "T">
+<!ENTITY bookmarkThisFrameCmd.label      "Tandabuku Bingkai Ini">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "u">
+<!ENTITY copyURLCmd.label             "Salin URL">
+<!ENTITY emailPageCmd.label           "E-mel Pautan…">
+<!ENTITY emailPageCmd.accesskey       "E">
+<!ENTITY savePageCmd.label            "Simpan Halaman Sebagai…">
+<!ENTITY savePageCmd.accesskey        "A">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "P">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Simpan Bingkai Sebagai…">
+<!ENTITY saveFrameCmd.accesskey       "i">
+<!ENTITY printFrameCmd.label          "Cetak Bingkai…">
+<!ENTITY printFrameCmd.accesskey      "C">
+<!ENTITY saveLinkCmd.label            "Simpan Pautan Sebagai…">
+<!ENTITY saveLinkCmd.accesskey        "a">
+<!ENTITY saveImageCmd.label           "Simpan Imej Sebagai…">
+<!ENTITY saveImageCmd.accesskey       "j">
+<!ENTITY saveVideoCmd.label           "Simpan Video Sebagai…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Simpan Audio Sebagai…">
+<!ENTITY saveAudioCmd.accesskey       "S">
+<!ENTITY emailImageCmd.label          "E-mel Imej…">
+<!ENTITY emailImageCmd.accesskey      "E">
+<!ENTITY emailVideoCmd.label          "E-mel Video…">
+<!ENTITY emailVideoCmd.accesskey      "E">
+<!ENTITY castVideoCmd.label           "Hantar Video Ke Peranti">
+<!ENTITY castVideoCmd.accesskey       "e">
+<!ENTITY emailAudioCmd.label          "E-mel Audio…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "Aktifkan plugin ini">
+<!ENTITY playPluginCmd.accesskey      "u">
+<!ENTITY hidePluginCmd.label          "Sorok plugin ini">
+<!ENTITY hidePluginCmd.accesskey      "i">
+<!ENTITY copyLinkCmd.label            "Salin Lokasi Pautan">
+<!ENTITY copyLinkCmd.accesskey        "a">
+<!ENTITY copyImageCmd.label           "Salin Lokasi Imej">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyImageContentsCmd.label   "Salin Imej">
+<!ENTITY copyImageContentsCmd.accesskey  "n"> 
+<!ENTITY copyVideoURLCmd.label        "Salin Lokasi Video">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Salin Lokasi Audio">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "Salin Alamat E-mel">
+<!ENTITY copyEmailCmd.accesskey       "E">
+<!ENTITY thisFrameMenu.label              "Bingkai Ini">
+<!ENTITY thisFrameMenu.accesskey          "n">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Mainkan">
+<!ENTITY mediaPlay.accesskey         "n">
+<!ENTITY mediaPause.label            "Jeda">
+<!ENTITY mediaPause.accesskey        "e">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Senyap">
+<!ENTITY mediaMute.accesskey         "p">
+<!ENTITY mediaUnmute.label           "Nyahsenyap">
+<!ENTITY mediaUnmute.accesskey       "N">
+<!ENTITY mediaPlaybackRate2.label     "Kelajuan Permainan">
+<!ENTITY mediaPlaybackRate2.accesskey "a">
+<!ENTITY mediaPlaybackRate050x2.label "Perlahan (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "e">
+<!ENTITY mediaPlaybackRate100x2.label "Normal">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate125x2.label "Laju (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "L">
+<!ENTITY mediaPlaybackRate150x2.label "Lebih laju (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "a">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Ludicrous (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "L">
+<!ENTITY mediaLoop.label             "Gelung">
+<!ENTITY mediaLoop.accesskey         "L">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Papar Kawalan">
+<!ENTITY mediaShowControls.accesskey "n">
+<!ENTITY mediaHideControls.label     "Sorok Kawalan">
+<!ENTITY mediaHideControls.accesskey "a">
+<!ENTITY videoFullScreen.label       "Skrin Penuh">
+<!ENTITY videoFullScreen.accesskey   "u">
+<!ENTITY videoSaveImage.label        "Simpan Snapshot Sebagai…">
+<!ENTITY videoSaveImage.accesskey    "S">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Papar Statistik">
+<!ENTITY videoShowStats.accesskey    "t">
+<!ENTITY videoHideStats.label        "Sorok Statistik">
+<!ENTITY videoHideStats.accesskey    "t">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Zum Masuk">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "s">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Zum Keluar">
+<!ENTITY fullZoomReduceCmd.accesskey    "u">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Set Semula">
+<!ENTITY fullZoomResetCmd.accesskey     "l">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Zum Teks Sahaja">
+<!ENTITY fullZoomToggleCmd.accesskey    "T">
+<!ENTITY fullZoom.label                 "Zum">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "Tutup bar sisi">
+<!ENTITY sidebarMenuClose.label         "Tutup Bar Sisi">
+
+<!ENTITY quitApplicationCmdWin2.label       "Keluar">
+<!ENTITY quitApplicationCmdWin2.accesskey   "K">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Keluar &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Keluar"> 
+<!ENTITY quitApplicationCmd.accesskey   "a">
+<!ENTITY quitApplicationCmdMac2.label   "Keluar &brandShorterName;">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Tutup">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "u">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Page Style">
+<!ENTITY pageStyleMenu.accesskey "y">
+<!ENTITY pageStyleNoStyle.label "No Style">
+<!ENTITY pageStyleNoStyle.accesskey "n">
+<!ENTITY pageStylePersistentOnly.label "Basic Page Style">
+<!ENTITY pageStylePersistentOnly.accesskey "b">
+
+<!ENTITY pageReportIcon.tooltip            "Tukar tetapan sekatan popup untuk laman web ini">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Edit Keutamaan Penyekat Popup…">
+<!ENTITY editPopupSettings.label "Edit Pilihan Penyekat Popup…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Tukar Hala Halaman">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "k">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Tukar Hala Teks">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "u">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Cari dalam Halaman Ini…">
+<!ENTITY findOnCmd.accesskey "H">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Cari Lagi">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Tambah Perbendaharaan kata…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!ENTITY editBookmark.done.label                     "Siap">
+<!ENTITY editBookmark.removeBookmark.accessKey       "B">
+
+<!ENTITY identity.connectionSecure "Sambungan Selamat">
+<!ENTITY identity.connectionNotSecure "Sambungan Tidak Selamat">
+<!ENTITY identity.connectionFile "Halaman ini disimpan dalam komputer anda.">
+<!ENTITY identity.connectionVerified2 "Anda disambungkan dengan selamat ke laman ini, yang dimiliki oleh:">
+<!ENTITY identity.connectionInternal "Ini adalah halaman &brandShortName; yang selamat.">
+<!ENTITY identity.extensionPage "Halaman ini dimuatkan dari ekstensi.">
+<!ENTITY identity.insecureLoginForms2 "Log masuk yang dimasukkan dalam halaman ini boleh dikompromi.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; telah menyekat sebahagian halaman ini yang tidak selamat.">
+<!ENTITY identity.passiveLoaded "Sebahagian daripada halaman ini tidak selamat (seperti imej).">
+<!ENTITY identity.activeLoaded "Anda telah menyahdayakan perlindungan untuk halaman ini.">
+<!ENTITY identity.weakEncryption "Halaman ini menggunakan enkripsi yang lemah.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Sambungan anda ke laman ini adalah terbuka. Maklumat yang anda hantar mampu dilihat oleh orang lain (seperti kata laluan, mesej, kad kredit, dll.).">
+<!ENTITY identity.description.insecureLoginForms "Maklumat log masuk yang anda masukkan dalam halaman ini tidak selamat dan boleh dikompromi.">
+<!ENTITY identity.description.weakCipher "Sambungan anda ke laman web ini menggunakan enkripsi yang lemah dan bukan secara persendirian.">
+<!ENTITY identity.description.weakCipher2 "Orang lain boleh melihat maklumat anda atau mengubah tingkah laku laman web.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; telah menyekat sebahagian halaman ini yang tidak selamat">
+<!ENTITY identity.description.passiveLoaded "Sambungan anda adalah terbuka dan maklumat yang anda kongsi dengan halaman ini mampu dilihat oleh orang lain.">
+<!ENTITY identity.description.passiveLoaded2 "Laman web ini mengandungi kandungan yang tidak selamat (seperti imej).">
+<!ENTITY identity.description.passiveLoaded3 "Walaupun &brandShortName; telah menyekat beberapa kandungan, masih ada kandungan pada halaman ini yang tidak selamat (seperti imej).">
+<!ENTITY identity.description.activeLoaded "Laman web ini mengandungi kandungan yang tidak selamat (seperti skrip) dan sambungan anda kepadanya adalah terbuka.">
+<!ENTITY identity.description.activeLoaded2 "Maklumat yang anda kongsi dengan laman ini boleh dilihat oleh orang lain (seperti kata laluan, mesej, kad kredit, dll.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Dayakan perlindungan">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "E">
+<!ENTITY identity.disableMixedContentBlocking.label "Nyahdayakan perlindungan buat masa ni">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Ketahui Selanjutnya">
+
+<!ENTITY identity.removeCertException.label "Buang Pengecualian">
+<!ENTITY identity.removeCertException.accesskey "B">
+
+<!ENTITY identity.moreInfoLinkText2 "Maklumat Lanjut">
+
+<!ENTITY identity.permissions "Keizinan">
+<!ENTITY identity.permissionsEmpty "Anda tidak memberikan laman ini sebarang keizinan khas.">
+<!ENTITY identity.permissionsReloadHint "Anda mungkin perlu memuat semula halaman supaya perubahan ini dilaksanakan.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Tab pelayar">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Tab Sync">
+
+<!ENTITY syncedTabs.sidebar.label              "Tab Sync">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Daftar masuk ke Waterfox dari peranti anda yang lain untuk melihat tab tersebut di sini.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Tiada tab sync... lagi!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Mahu melihat tab anda daripada peranti lain di sini?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Daftar masuk untuk papar senarai tab dari peranti anda yang lain.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Tiada tab terbuka">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Buka &syncBrand.shortName.label; Keutamaan">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Mengaktifkan sync tab untuk papar senarai tab dari peranti anda yang lain.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Buka">
+<!ENTITY syncedTabs.context.open.accesskey                   "B">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Buka dalam Tab Baru">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "B">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Buka dalam Tetingkap Baru">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "T">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Buka dalam Tetingkap Peribadi Baru">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "P">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Tandabuku Tab Ini…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "T">
+<!ENTITY syncedTabs.context.copy.label                       "Salin">
+<!ENTITY syncedTabs.context.copy.accesskey                   "S">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Buka Semua dalam Tab">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "S">
+<!ENTITY syncedTabs.context.managedevices.label              "Urus Peranti…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "P">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Daftar Masuk Ke &syncBrand.shortName.label;...">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Sync Sekarang">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Sambung semula ke &syncBrand.shortName.label;…">
+<!ENTITY syncReAuthItem.accesskey     "S">
+<!ENTITY syncToolbarButton.label      "Sync">
+
+<!ENTITY social.addons.label "Urus Servis…">
+
+<!ENTITY social.directory.label "Direktori Pengaktifan">
+<!ENTITY social.directory.text "Anda boleh mengaktifkan perkhidmatan Kongsi dari direktori. ">
+<!ENTITY social.directory.button "Bawa saya ke sana!">
+<!ENTITY social.directory.introText "Klik pada perkhidmatan untuk menambahkannya ke &brandShortName;.">
+<!ENTITY social.directory.viewmore.text "Papar Selanjutnya">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Alatan dan Ciri Tambahan ">
+<!ENTITY customizeMode.menuAndToolbars.empty "Inginkan lebih alatan?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Pilih daripada beribu add-ons">
+<!ENTITY customizeMode.restoreDefaults "Pulih Piawai">
+<!ENTITY customizeMode.done "Siap">
+<!ENTITY customizeMode.titlebar "Bar Tajuk">
+<!ENTITY customizeMode.toolbars2 "Bar alat">
+<!ENTITY customizeMode.lwthemes "Tema">
+<!ENTITY customizeMode.lwthemes.myThemes "Tema Saya">
+<!ENTITY customizeMode.lwthemes.recommended "Disyorkan">
+<!ENTITY customizeMode.lwthemes.menuManage "Urus">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "M">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Dapatkan Lebih Banyak Tema">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "G">
+<!ENTITY customizeMode.emptyOverflowList.description "Seret dan lepas item di sini untuk memastikan mudah dicapai, tetapi di luar bar alatan anda…">
+<!ENTITY customizeMode.uidensity "Ketumpatan">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Padat">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Padat">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "P">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Sentuh">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Sentuh">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "S">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Guna Sentuh untuk Mod Tablet">
+
+<!ENTITY getUserMedia.selectCamera.label "Kamera untuk dikongsi:">
+<!ENTITY getUserMedia.selectCamera.accesskey "K">
+<!ENTITY getUserMedia.selectMicrophone.label "Mikrofon untuk dikongsi:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Audio dari tab akan dikongsi.">
+<!ENTITY getUserMedia.allWindowsShared.message "Semua tetingkap yang kelihatan pada skrin anda akan dikongsi.">
+
+<!ENTITY trackingProtection.title "Perlindungan Penjejakan">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; sedang menyekat sebahagian halaman yang mungkin menjejaki pelayaran anda.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Laman ini mengandungi elemen yang boleh menjejaki pelayaran anda. Anda telah melumpuhkan perlindungan.">
+<!ENTITY trackingProtection.notDetected3 "Tiada elemen penjejak yang dikesan dalam halaman ini.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Nyahdayakan perlindungan untuk laman ini">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Nyahdayakan perlindungan untuk sesi ini">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "Dayakan perlindungan">
+<!ENTITY trackingProtection.block2.accesskey "E">
+
+<!ENTITY trackingContentBlocked.message "Penjejakan">
+<!ENTITY trackingContentBlocked.moreinfo "Sebahagian daripada halaman yang menjejaki aktiviti dalam talian anda telah disekat.">
+<!ENTITY trackingContentBlocked.learnMore "Ketahui Selanjutnya">
+<!ENTITY trackingContentBlocked.options "Pilihan">
+<!ENTITY trackingContentBlocked.unblock2.label "Nyahdayakan perlindungan pada laman ini">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "D">
+<!ENTITY trackingContentBlocked.block.label "Dayakan perlindungan">
+<!ENTITY trackingContentBlocked.block.accesskey "E">
+<!ENTITY trackingContentBlocked.disabled.message "Perlindungan penjejakan dinyahdayakan">
+
+<!ENTITY pluginNotification.showAll.label "Papar Semua">
+<!ENTITY pluginNotification.showAll.accesskey "S">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "Izinkan Sekarang">
+<!ENTITY pluginActivateAlways.label "Izinkan dan Ingat">
+<!ENTITY pluginBlockNow.label "Sekat Plugin">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Tutup">
+
+<!ENTITY appMenuSidebars.label         "Bar sisi">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Lupakan untuk:">
+<!ENTITY panicButton.view.5min                    "Lima minit">
+<!ENTITY panicButton.view.2hr                     "Dua jam">
+<!ENTITY panicButton.view.day                     "24 jam">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Dengan meneruskan akan:">
+<!ENTITY panicButton.view.deleteCookies           "Buang <html:strong>Kuki</html:strong> Terkini">
+<!ENTITY panicButton.view.deleteHistory           "Buang <html:strong>Sejarah</html:strong> Terkini">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Tutup semua <html:strong>Tab</html:strong> dan <html:strong>Tetingkap</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "Buka Tetingkap baru">
+
+<!ENTITY panicButton.view.undoWarning             "Tindakan ini tidak boleh dibatalkan.">
+<!ENTITY panicButton.view.forgetButton            "Lupakan!">
+
+<!ENTITY panicButton.thankyou.msg1                "Sejarah terbaru anda telah dibersihkan.">
+<!ENTITY panicButton.thankyou.msg2                "Safe browsing!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Terima kasih!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Ketahui selanjutnya mengenai DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Kemaskini &brandShorterName; anda untuk kepantasan dan privasi terkini.">
+<!ENTITY updateAvailable.whatsnew.label "Lihat perkembangan terbaru.">
+<!ENTITY updateAvailable.header.message "Kemaskini &brandShorterName; baru sudah tersedia.">
+<!ENTITY updateAvailable.acceptButton.label "Muat turun Kemaskini">
+<!ENTITY updateAvailable.acceptButton.accesskey "M">
+<!ENTITY updateAvailable.cancelButton.label "Bukan Sekarang">
+<!ENTITY updateAvailable.cancelButton.accesskey "B">
+<!ENTITY updateAvailable.panelUI.label "Muat turun kemaskini &brandShorterName;">
+
+<!ENTITY updateManual.message "Muat turun versi baru &brandShorterName; dan kami akan bantu anda untuk memasangnya.">
+<!ENTITY updateManual.whatsnew.label "Lihat perkembangan terbaru.">
+<!ENTITY updateManual.header.message "&brandShorterName; tidak dapat dikemaskini ke versi terbaru.">
+<!ENTITY updateManual.acceptButton.label "Muat turun &brandShorterName;">
+<!ENTITY updateManual.acceptButton.accesskey "M">
+<!ENTITY updateManual.cancelButton.label "Bukan Sekarang">
+<!ENTITY updateManual.cancelButton.accesskey "B">
+<!ENTITY updateManual.panelUI.label "Muat turun versi baru &brandShorterName;">
+
+<!ENTITY updateRestart.message "Selepas mula semula, &brandShorterName; akan memulihkan semua tab dan tetingkap yang anda buka.">
+<!ENTITY updateRestart.header.message2 "Mula semula untuk mengemaskini &brandShorterName;.">
+<!ENTITY updateRestart.acceptButton.label "Mula semula dan Pulihkan">
+<!ENTITY updateRestart.acceptButton.accesskey "S">
+<!ENTITY updateRestart.cancelButton.label "Bukan Sekarang">
+<!ENTITY updateRestart.cancelButton.accesskey "B">
+<!ENTITY updateRestart.panelUI.label2 "Mula semula untuk mengemaskini &brandShorterName;">
+
+<!ENTITY pageActionButton.tooltip "Tindakan halaman">
+<!ENTITY pageAction.addToUrlbar.label "Tambah ke Bar Alamat">
+<!ENTITY pageAction.removeFromUrlbar.label "Buang daripada Bar Alamat">
+
+<!ENTITY sendToDevice.label2 "Hantar ke Peranti">
+<!ENTITY sendToDevice.syncNotReady.label "Sync Peranti…">

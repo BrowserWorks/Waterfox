@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Modifier le mot de passe principal">
+<!ENTITY setPassword.tokenName.label       "Périphérique de sécurité">
+<!ENTITY setPassword.oldPassword.label     "Mot de passe actuel :">
+<!ENTITY setPassword.newPassword.label     "Saisissez le nouveau mot de passe :">
+<!ENTITY setPassword.reenterPassword.label "Saisissez-le à nouveau :">
+<!ENTITY setPassword.meter.label           "Mesure de la qualité du mot de passe">
+<!ENTITY setPassword.meter.loading         "Chargement">
+<!ENTITY masterPasswordDescription.label   "Un mot de passe principal sert à protéger des informations sensibles comme les mots de passe utilisés sur les sites. Si vous en créez un, il vous sera demandé de le saisir une fois par session lorsque &brandShortName; accède aux informations enregistrées qui sont protégées par ce mot de passe.">
+<!ENTITY masterPasswordWarning.label       "Faites attention à ne pas oublier le mot de passe principal. Si vous l’oubliez, vous n’aurez plus accès aux informations qu’il protège.">

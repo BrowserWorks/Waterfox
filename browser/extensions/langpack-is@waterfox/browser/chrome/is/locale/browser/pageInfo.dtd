@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Afrita">
+<!ENTITY  copy.accesskey        "A">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Velja allt">
+<!ENTITY  selectall.accesskey   "j">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Almennt">
+<!ENTITY  generalTab.accesskey  "A">
+<!ENTITY  generalTitle          "Titill:">
+<!ENTITY  generalURL            "Staðsetning:">
+<!ENTITY  generalType           "Tegund:">
+<!ENTITY  generalMode           "Teiknihamur:">
+<!ENTITY  generalSize           "Stærð:">
+<!ENTITY  generalReferrer       "URL bakvísun:">
+<!ENTITY  generalSource         "Uppruni skyndiminnis:">
+<!ENTITY  generalModified       "Breytt:">
+<!ENTITY  generalEncoding2      "Stafatafla:">
+<!ENTITY  generalMetaName       "Nafn">
+<!ENTITY  generalMetaContent    "Innihald">
+
+<!ENTITY  mediaTab              "Gögn">
+<!ENTITY  mediaTab.accesskey    "G">
+<!ENTITY  mediaLocation         "Staðsetning:">
+<!ENTITY  mediaText             "Tengdur texti:">
+<!ENTITY  mediaAltHeader        "Aukatexti">
+<!ENTITY  mediaAddress          "Staðsetning">
+<!ENTITY  mediaType             "Tegund">
+<!ENTITY  mediaSize             "Stærð">
+<!ENTITY  mediaCount            "Fjöldi">
+<!ENTITY  mediaDimension        "Víddir:">
+<!ENTITY  mediaLongdesc         "Löng lýsing:">
+<!ENTITY  mediaBlockImage.accesskey "L">
+<!ENTITY  mediaSaveAs           "Vista sem…">
+<!ENTITY  mediaSaveAs.accesskey "V">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Forsýning gagna:">
+
+<!ENTITY  feedTab               "Straumar">
+<!ENTITY  feedTab.accesskey     "S">
+<!ENTITY  feedSubscribe         "Gerast áskrifandi">
+<!ENTITY  feedSubscribe.accesskey "r">
+
+<!ENTITY  permTab               "Heimildir">
+<!ENTITY  permTab.accesskey     "H">
+<!ENTITY  permUseDefault        "Nota sjálfgefið">
+<!ENTITY  permAskAlways         "Spyrja alltaf">
+<!ENTITY  permAllow             "Leyfa">
+<!ENTITY  permAllowSession      "Leyfa í þessari vafralotu">
+<!ENTITY  permBlock             "Loka á">
+<!ENTITY  permissionsFor        "Heimildir fyrir:">
+<!ENTITY  permPlugins           "Virkja viðbætur">
+
+<!ENTITY  permClearStorage           "Hreinsa geymslu">
+<!ENTITY  permClearStorage.accesskey "H">
+
+<!ENTITY  securityTab           "Öryggi">
+<!ENTITY  securityTab.accesskey "Ö">
+<!ENTITY  securityView.certView "Skoða skilríki">
+<!ENTITY  securityView.accesskey "S">
+<!ENTITY  securityView.unknown   "Óþekkt">
+
+
+<!ENTITY  securityView.identity.header   "Auðkenni vefsvæðis">
+<!ENTITY  securityView.identity.owner    "Eigandi:">
+<!ENTITY  securityView.identity.domain   "Vefsetur:">
+<!ENTITY  securityView.identity.verifier "Staðfest af:">
+
+
+<!ENTITY  securityView.privacy.header                   "Friðhelgi og ferill">
+<!ENTITY  securityView.privacy.history                  "Hef ég skoðað þetta vefsvæði áður?">
+<!ENTITY  securityView.privacy.cookies                  "Geymir þetta vefsvæði upplýsingar (smákökur) á tölvunni minni?">
+<!ENTITY  securityView.privacy.viewCookies              "Skoða smákökur">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Hef ég vistað eitthvað lykilorð fyrir þetta vefsvæði?">
+<!ENTITY  securityView.privacy.viewPasswords            "Skoða vistuð lykilorð">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "S">
+
+<!ENTITY  securityView.technical.header                 "Tæknileg atriði">
+
+<!ENTITY  helpButton.label                              "Help">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

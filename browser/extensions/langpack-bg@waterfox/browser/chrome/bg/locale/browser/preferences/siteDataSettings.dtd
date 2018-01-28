@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Настройки - Данни на сайтове">
+<!ENTITY     hostCol.label                 "Сайт">
+<!ENTITY     statusCol.label               "Състояние">
+<!ENTITY     usageCol.label                "Хранилище">
+<!ENTITY     searchTextboxPlaceHolder             "Търсене на сайтове">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "т">
+<!ENTITY     removeSelected.label          "Премахване на избраните">
+<!ENTITY     removeSelected.accesskey      "и">
+<!ENTITY     save.label                    "Запазване">
+<!ENTITY     save.accesskey                "з">
+<!ENTITY     cancel.label                  "Отказ">
+<!ENTITY     cancel.accesskey              "з">
+<!ENTITY     removingDialog.title          "Премахване на данните за сайта">
+<!ENTITY     removingSelected.description  "С премахване на данните на сайта ще бъдат премахнати неговите бисквитки и данните за работа извън мрежа. По такъв начин може да се наложи да се впишете отново в този сайт. Наистина ли желаете да направите тези промени?">
+<!ENTITY     siteTree.label                "Следните бисквитки от сайта ще бъдат премахнати:">

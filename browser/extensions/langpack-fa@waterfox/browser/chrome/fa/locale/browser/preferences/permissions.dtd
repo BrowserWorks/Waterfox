@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "استثناها">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "پایگاه اینترنتی">
+<!ENTITY treehead.status.label        "وضعیت">
+<!ENTITY removepermission2.label      "حذف پایگاه اینترنتی">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removeallpermissions2.label  "حذف تمامی پایگاه‌های اینترنتی">
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY address.label                "نشانی پایگاه وب">
+<!ENTITY address.accesskey            "ن">
+<!ENTITY block.label                  "باز داشتن">
+<!ENTITY block.accesskey              "ب">
+<!ENTITY session.label                "اجازه دادن برای این نشست">
+<!ENTITY session.accesskey            "د">
+<!ENTITY allow.label                  "اجازه دادن">
+<!ENTITY allow.accesskey              "ج">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "انصراف">
+<!ENTITY button.cancel.accesskey      "ن">
+<!ENTITY button.ok.label              "ذخیره تغییرات">
+<!ENTITY button.ok.accesskey          "ذ">
+

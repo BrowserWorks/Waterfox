@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "ನಿಮ್ಮ ಹಕ್ಕುಗಳ ಬಗ್ಗೆ">
+<!ENTITY rights.intro "&brandFullName; ಒಂದು ಸ್ವತಂತ್ರ ಮತ್ತು ಮುಕ್ತ ತಂತ್ರಾಂಶವಾಗಿದ್ದು, ಇದನ್ನು ವಿಶ್ವದಾದ್ಯಂತ ಹರಡಿರುವ ಸಾವಿರಾರು ಸಂಖ್ಯೆಯ ಸಮುದಾಯ ರಚಿಸಲಾಗಿದೆ. ನೀವು ತಿಳಿಯಬೇಕಾದ ಕೆಲವು ವಿಷಯಗಳಿವೆ:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ಅನ್ನು ಮೋಝಿಲ್ಲಾ ಸಾರ್ವಜನಿಕ ಲೈಸೆನ್ಸಿನ ಅಡಿಯಲ್ಲಿ">
+<!ENTITY rights.intro-point1b "ನಿಮಗೆ ಲಭ್ಯವಾಗುವಂತೆ ಮಾಡಲಾಗಿದೆ">
+<!ENTITY rights.intro-point1c ". This means you may use, copy and distribute &brandShortName; to others.  You are also welcome to modify the source code of &brandShortName; as you want to meet your needs. The Mozilla Public License also gives you the right to distribute your modified versions.">
+
+<!ENTITY rights.intro-point2-a "You are not granted any trademark rights or licenses to the trademarks of the Waterfox or any party, including without limitation the Waterfox name or logo. Additional information on trademarks may be found ">
+<!ENTITY rights.intro-point2-b "ಇಲ್ಲಿ">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "ಕುಸಿತ ವರದಿಗಾರನಂತಹ &brandShortName; ನಲ್ಲಿನ ಕೆಲವು ಸೌಲಭ್ಯಗಳು, &vendorShortName; ಕುರಿತು ನಿಮ್ಮ ಅಭಿಪ್ರಾಯವನ್ನು ಒದಗಿಸಲು ಅವಕಾಶವನ್ನು ಒದಗಿಸುತ್ತದೆ. ಅಭಿಪ್ರಾಯವನ್ನು ಒದಗಿಸು ಎನ್ನುವುದನ್ನು ಆರಿಸುವ ಮೂಲಕ, ನೀವು &vendorShortName; ಗೆ ತನ್ನ ಉತ್ಪನ್ನಗಳನ್ನು ಉತ್ತಮಗೊಳಿಸಲು ಅಭಿಪ್ರಾಯಗಳನ್ನು ಬಳಸಿಕೊಳ್ಳಲು, ತನ್ನ ಜಾಲತಾಣಗಳಲ್ಲಿ ಅಭಿಪ್ರಾಯವನ್ನು ಪ್ರಕಟಿಸಲು, ಮತ್ತು ಅಭಿಪ್ರಾಯವನ್ನು ವಿತರಿಸಲು ನೀವು ಅನುಮತಿಯನ್ನು ನೀಡುತ್ತೀರಿ.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "&brandShortName; ಮೂಲಕ &vendorShortName; ಗೆ ಸಲ್ಲಿಸಿದ ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಮಾಹಿತಿ ಮತ್ತು ಅಭಿಪ್ರಾಯವನ್ನು ನಾವು ಹೇಗೆ ಬಳಸುತ್ತೇವೆ ಎನ್ನುವುದು ">
+<!ENTITY rights2.intro-point3b "&brandShortName; ಗೌಪ್ಯತಾ ನೀತಿಯಲ್ಲಿ ವಿವರಿಸಲಾಗಿರುತ್ತದೆ">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "ಈ ಉತ್ಪನ್ನಕ್ಕಾಗಿ ಅನ್ವಯಿಸಲ್ಪಡುವ ಗೌಪ್ಯತಾ ನೀತಿಗಳನ್ನು ಇಲ್ಲಿ ಪಟ್ಟಿ ಮಾಡಬೇಕು.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "ಕೆಲವು &brandShortName; ಸೌಲಭ್ಯಗಳು ಜಾಲ-ಆಧರಿತವಾದ ಮಾಹಿತಿ ಸೇವೆಗಳನ್ನು ಬಳಸುತ್ತವೆ, ಆದರೆ, ಅವುಗಳು 100&#037; ನಿಖರವಾಗಿವೆ ಅಥವ ದೋಷ-ಮುಕ್ತವಾಗಿವೆ ಎಂದು ನಾವು ಖಚಿತತೆಯನ್ನು ನೀಡುವುದಿಲ್ಲ. ಈ ಸೇವೆಗಳನ್ನು ಬಳಸುವ ಸೌಲಭ್ಯಗಳನ್ನು ಹೇಗೆ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಬೇಕು ಎನ್ನುವ ಕುರಿತಾದ ಮಾಹಿತಿಯೂ ಸೇರಿದಂತೆ ಹೆಚ್ಚಿನ ವಿವರಗಳನ್ನು ">
+<!ENTITY rights.intro-point4b "ಸೇವೆಯ ನಿಯಮಗಳಲ್ಲಿ ಕಾಣಬಹುದು">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "ಈ ಉತ್ಪನ್ನವು ಜಾಲ ಸೇವೆಗಳನ್ನು ಅಳವಡಿಸಿದಲ್ಲಿ, ಸೇವೆಗಾಗಿ(ಗಳಿಗಾಗಿ) ಅನ್ವಯಿಸಲ್ಪಡುವ ಸೇವೆಯ ನಿಯಮಗಳನ್ನು ಇಲ್ಲಿಗೆ ಕೊಂಡಿ ಜೋಡಿಸಬೇಕು">
+<!ENTITY rights.intro-point4b-unbranded "ಜಾಲತಾಣ ಸೇವೆಗಳು">
+<!ENTITY rights.intro-point4c-unbranded "ವಿಭಾಗ.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; ಜಾಲ-ಆಧರಿತ ಮಾಹಿತಿ ಸೇವೆಗಳು">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "ಕೆಲವು ತರಹದ ವೀಡಿಯೋಗಳನ್ನು ತೋರಿಸಲು, &brandShortName; ಕೆಲವು ವಿಷಯ ಡೀಕ್ರಿಪ್ಷನ್ ಮೊಡ್ಯುಲ್‌ಗಳನ್ನು ಮೂರನೆಯವರಿಂದ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿಕೊಳ್ಳಲಾಗುವುದು.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; uses web-based information services (&quot;Services&quot;) to provide some of the features provided for your use with this binary version of &brandShortName; under the terms described below. If you do not want to use one or more of the Services or the terms below are unacceptable, you may disable the feature or Service(s). Instructions on how to disable a particular feature or Service may be found ">
+<!ENTITY rights2.webservices-b "ಇಲ್ಲಿ">
+<!ENTITY rights3.webservices-c ". ಅನ್ವಯದ ಆದ್ಯತೆಗಳಲ್ಲಿ ಇತರೆ ಸೌಲಭ್ಯಗಳನ್ನು ಮತ್ತು ಸೇವೆಗಳನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಬಹುದು.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "ಸುರಕ್ಷಿತವೀಕ್ಷಣೆ:">
+<!ENTITY rights.safebrowsing-b "ಸುರಕ್ಷಿತ ಜಾಲವೀಕ್ಷಣೆ ಸೌಲಭ್ಯವನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸುವುದನ್ನು ಸಲಹೆ ಮಾಡಲಾಗುವುದಿಲ್ಲ ಏಕೆಂದರೆ ಇದು ಸುರಕ್ಷಿತವಲ್ಲದ ತಾಣಗಳಿಗೆ ನೀವು ಹೋಗುವ ಸಾಧ್ಯತೆ ಇದೆ.  ನೀವು ಈ ಸೌಲಭ್ಯವನ್ನು ಸಂಪೂರ್ಣವಾಗಿ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲು ಬಯಸಿದರೆ, ಈ ಹಂತಗಳನ್ನು ಅನುಸರಿಸಿ:">
+<!ENTITY rights.safebrowsing-term1 "ಅನ್ವಯದ ಆದ್ಯತೆಗಳನ್ನು ತೆರೆಯಿರಿ">
+<!ENTITY rights.safebrowsing-term2 "ಸುರಕ್ಷತಾ ಆಯ್ಕೆಯನ್ನು ಆರಿಸು">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot; ಆಯ್ಕೆಯನ್ನು ತೆಗೆ">
+<!ENTITY rights.safebrowsing-term4 "ಸುರಕ್ಷತ ವೀಕ್ಷಣೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಂಡಿದೆ">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "ಸ್ಥಳದ ಅರಿವಿರುವ ಜಾಲವೀಕ್ಷಣೆ:  ">
+<!ENTITY rights.locationawarebrowsing-b "ಯಾವಾಗಲೂ ಆರಿಸಲಾಗಿರುತ್ತದೆ.  ಯಾವುದೆ ಸ್ಥಳದ ಮಾಹಿತಿಯನ್ನು ಎಂದಿಗೂ ಸಹ ನಿಮ್ಮ ಅನುಮತಿ ಇಲ್ಲದೆ ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ.  ನೀವು ಈ ಸೌಲಭ್ಯವನ್ನು ಸಂಪೂರ್ಣವಾಗಿ ಬಳಸಲು ನೀವು ಬಯಸಿದರೆ, ಈ ಕೆಳಗಿನ ಹಂತಗಳನ್ನು ಬಳಸಿ:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL ಪಟ್ಟಿಯಲ್ಲಿ, ಹೀಗೆ ನಮೂದಿಸಿ ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled ಎಂದು ನಮೂದಿಸಿ">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled ಆದ್ಯತೆಯ ಮೇಲೆ ಎರಡು ಬಾರಿ ಕ್ಲಿಕ್ ಮಾಡಿ">
+<!ENTITY rights.locationawarebrowsing-term4 "ಸ್ಥಳದ-ಅರಿವಿರುವ ಜಾಲವೀಕ್ಷಣೆಯನ್ನು ಈ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "An overview of the website services the product incorporates, along with instructions on how to disable them, if applicable, should be included here.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "ಈ ಉತ್ಪನ್ನಕ್ಕಾಗಿ ಅನ್ವಯಿಸಲ್ಪಡುವ ಯಾವುದೆ ಸೇವೆಯ ನಿಯಮಗಳನ್ನು ಇಲ್ಲಿ ಪಟ್ಟಿ ಮಾಡಲಾಗುತ್ತದೆ.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; and its contributors, licensors and partners work to provide the most accurate and up-to-date Services.  However, we cannot guarantee that this information is comprehensive and error-free.  For example, the Safe Browsing Service may not identify some risky sites and may identify some safe sites in error and the Location Aware Service all locations returned by our service providers are estimates only and neither we nor our service providers guarantee the accuracy of the locations provided.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; may discontinue or change the Services at its discretion.">
+<!ENTITY rights2.webservices-term3 "You are welcome to use these Services with the accompanying version of &brandShortName;, and &vendorShortName; grants you its rights to do so.  &vendorShortName; and its licensors reserve all other rights in the Services.  These terms are not intended to limit any rights granted under open source licenses applicable to &brandShortName; and to corresponding source code versions of &brandShortName;.">
+<!ENTITY rights.webservices-term4 "The Services are provided &quot;as-is.&quot;  &vendorShortName;, its contributors, licensors, and distributors, disclaim all warranties, whether express or implied, including without limitation, warranties that the Services are merchantable and fit for your particular purposes.  You bear the entire risk as to selecting the Services for your purposes and as to the quality and performance of the Services. Some jurisdictions do not allow the exclusion or limitation of implied warranties, so this disclaimer may not apply to you.">
+<!ENTITY rights.webservices-term5 "Except as required by law, &vendorShortName;, its contributors, licensors, and distributors will not be liable for any indirect, special, incidental, consequential, punitive, or exemplary damages arising out of or in any way relating to the use of &brandShortName; and the Services.  The collective liability under these terms will not exceed $500 (five hundred dollars). Some jurisdictions do not allow the exclusion or limitation of certain damages, so this exclusion and limitation may not apply to you.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; may update these terms as necessary from time to time. These terms may not be modified or canceled without &vendorShortName;'s written agreement.">
+<!ENTITY rights.webservices-term7 "These terms are governed by the laws of the state of California, U.S.A., excluding its conflict of law provisions. If any portion of these terms is held to be invalid or unenforceable, the remaining portions will remain in full force and effect. In the event of a conflict between a translated version of these terms and the English language version, the English language version shall control.">

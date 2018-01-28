@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Moimbaha ikatúva omoapañuãi">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; omoha'eñóma ko'ã moimbaha ojekuaaha apañuãi tekopyta ha tekorosã moñepyrũhárarõ:">
+<!ENTITY blocklist.softblocked       "Neñemo'ãrã, ikatueténte emoñepyrũjey ko'ã moĩmbaha oñemongepyréva ndive.">
+<!ENTITY blocklist.hardblocked       "Ko'ã moimbaha oguereko ijehe apañuãi tekoku'e térã tekorosã reheguáva, ha upéva rehe oñembotyetéma, hákatu oikotevẽ oñemoñepyrũjey oguepaitekuaa hag̃uáicha.">
+<!ENTITY blocklist.softandhard       "Umi moĩmbaha oguerekóva ijehe apañuãi tekopyta térã tekorosã reheguáva oñembotýma. Umi ambuéva sa'ive ikatu omoapañuãi, hákatu oñemombe'u ndéve emoñepyrũjeykuaaha hendivekuéra oñemonge jave.">
+<!ENTITY blocklist.moreinfo          "Maranduve">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; moñepyrũjey">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "Jokopyre">
+<!ENTITY blocklist.checkbox.label    "Monge">

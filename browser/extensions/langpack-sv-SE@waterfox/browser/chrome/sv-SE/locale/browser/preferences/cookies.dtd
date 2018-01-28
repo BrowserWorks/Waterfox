@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Följande kakor lagras på datorn:">
+<!ENTITY     cookiename.label               "Kakans namn">
+<!ENTITY     cookiedomain.label             "Webbplats">
+
+<!ENTITY     props.name.label               "Namn:">
+<!ENTITY     props.value.label              "Innehåll:">
+<!ENTITY     props.domain.label             "Värd:">
+<!ENTITY     props.path.label               "Sökväg:">
+<!ENTITY     props.secure.label             "Skicka vid:">
+<!ENTITY     props.expires.label            "Förfaller:">
+<!ENTITY     props.container.label          "Container:">
+
+<!ENTITY     window.title                   "Kakor">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Sök">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "Stäng">
+<!ENTITY     button.close.accesskey         "ä">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistente de importação">
+
+<!ENTITY importFrom.label               "Importar opções, favoritos, histórico, senhas e outras informações do:">
+<!ENTITY importFromUnix.label           "Importar preferências, favoritos, histórico, senhas e outras informações do:">
+<!ENTITY importFromBookmarks.label      "Importar favoritos do:">
+
+<!ENTITY importFromIE.label             "Internet Explorer">
+<!ENTITY importFromIE.accesskey         "I">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Não importar nada">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "F">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Não foi encontrado nenhum aplicativo que contivesse favoritos, histórico ou informações de senhas.">
+
+<!ENTITY importSource.title             "Importar dados e configurações">
+<!ENTITY importItems.title              "Itens">
+<!ENTITY importItems.label              "Importar estes itens:">
+
+<!ENTITY migrating.title                "Importando…">
+<!ENTITY migrating.label                "Estes itens estão sendo importados…">
+
+<!ENTITY selectProfile.title            "Selecionar perfil">
+<!ENTITY selectProfile.label            "Estes perfis estão disponíveis para importação:">
+
+<!ENTITY done.title                     "Importação concluída">
+<!ENTITY done.label                     "Estes itens foram importados com êxito:">
+
+<!ENTITY closeSourceBrowser.label       "Verifique se o navegador selecionado está fechado antes de continuar.">

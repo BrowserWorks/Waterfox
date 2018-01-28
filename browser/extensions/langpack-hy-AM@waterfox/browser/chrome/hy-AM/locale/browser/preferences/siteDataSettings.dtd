@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Կարգավորումներ՝ կայքի տվյալ">
+<!ENTITY     hostCol.label                 "Կայքը">
+<!ENTITY     statusCol.label               "Կարգավիճակը">
+<!ENTITY     usageCol.label                "Պահեստը">
+<!ENTITY     searchTextboxPlaceHolder             "Որոնել կայքեր">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Հեռացնել ընտրվածը">
+<!ENTITY     removeSelected.accesskey      "Հ">
+<!ENTITY     save.label                    "Պահպանել փոփոխությունները">
+<!ENTITY     save.accesskey                "ա">
+<!ENTITY     cancel.label                  "Չեղարկել">
+<!ENTITY     cancel.accesskey              "Չ">
+<!ENTITY     removingDialog.title          "Կայքի տվյալները հեռացվում են">
+<!ENTITY     removingSelected.description  "Կայքի տվյալների ջնջելու հետևանքով կջնջվեն նաև դրա հետ կապված cookie-ները և անցանց վեբ բովանդակությունը: Դա կարող է ձեզ դուրս գրել կայքերից: Կատարե՞լ:">
+<!ENTITY     siteTree.label                "Հետևյալ կայքի cookie-ները կհեռացվեն.">

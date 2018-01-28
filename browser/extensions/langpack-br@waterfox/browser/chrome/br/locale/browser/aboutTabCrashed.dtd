@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Serriñ an Ivinell-mañ">
+<!ENTITY tabCrashed.restoreTab "Assav an Ivinell-mañ">
+<!ENTITY tabCrashed.restoreAll "Assav an holl ivinelloù sac'het">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Chaous, sac'het eo hoc'h ivinell.">
+<!ENTITY tabCrashed.offerHelp "Ho sikour a c'hallomp!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Dibabit &tabCrashed.restoreTab; evit adkargañ endalc'had ar bajenn.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Dibabit &tabCrashed.restoreTab; pe &tabCrashed.restoreAll; evit adkargañ endalc'had ar bajenn.">
+<!ENTITY tabCrashed.requestHelp "Skoazell a reot ac'hanomp?">
+<!ENTITY tabCrashed.requestHelpMessage "An danevelloù sac'hadenn a skoazell ac'hanomp da wellaat &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Danevelliñ an ivinell-mañ">
+<!ENTITY tabCrashed.sendReport2 "Kas un danevell sac'hadenn evit an ivinell emaoc'h o welet">
+<!ENTITY tabCrashed.commentPlaceholder2 "Ouzhpennañ un askelenn (gwelus eo an askelennoù d'an holl)">
+<!ENTITY tabCrashed.includeURL2 "Enkorfañ URL ar bajenn en danevell sac'hadenn">
+<!ENTITY tabCrashed.emailPlaceholder "Bizskrivit ho chomlec'h postel amañ">
+<!ENTITY tabCrashed.emailMe "Kas ur postel din pa vo muioc'h a ditouroù">
+<!ENTITY tabCrashed.reportSent "Kinniget eo bet ar rentañ-kont sac'hadenn. Trugarez deoc'h evit ho sikour a-benn gwellaat &brandShortName; !">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Danevelliñ ivinelloù en drekleur">
+<!ENTITY tabCrashed.autoSubmit2 "Hizivaat ar gwellvezioù evit kas danevelloù sac'hadenn ent emgefreek, danevelloù an ivinelloù drekleur sac'het en o zouez, evit an estez-mañ hag ar re da zont.">

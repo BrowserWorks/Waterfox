@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Itxi fitxa">
+<!ENTITY tabCrashed.restoreTab "Berreskuratu fitxa">
+<!ENTITY tabCrashed.restoreAll "Berreskuratu huts egindako fitxa guztiak">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Kontxo. Fitxa honek huts egin berri du.">
+<!ENTITY tabCrashed.offerHelp "Laguntzeko moduan gara!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Aukeratu '&tabCrashed.restoreTab;' orriaren edukiak berriro kargatzeko.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Aukeratu '&tabCrashed.restoreTab;' edo '&tabCrashed.restoreAll;' orriaren edukiak berriro kargatzeko.">
+<!ENTITY tabCrashed.requestHelp "Lagunduko diguzu?">
+<!ENTITY tabCrashed.requestHelpMessage "Hutsegite-txostenek arazoak diagnostikatu eta &brandShortName; hobetzen laguntzen digute.">
+<!ENTITY tabCrashed.requestReport "Eman fitxa honen berri">
+<!ENTITY tabCrashed.sendReport2 "Bidali bisitatzen ari zaren fitxaren hutsegite-txostena">
+<!ENTITY tabCrashed.commentPlaceholder2 "Aukerazko iruzkinak (iruzkinak publikoki ikus daitezke)">
+<!ENTITY tabCrashed.includeURL2 "Sartu orriaren URLa hutsegite-txostenean">
+<!ENTITY tabCrashed.emailPlaceholder "Sartu zure helbide elektronikoa hemen">
+<!ENTITY tabCrashed.emailMe "Jakinarazi postaz informazio gehiago erabilgarri dagoenean">
+<!ENTITY tabCrashed.reportSent "Hutsegite-txostena bidalita dago; eskerrik asko &brandShortName; hobetzen laguntzeagatik!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Eman atzeko planoko fitxen berri">
+<!ENTITY tabCrashed.autoSubmit2 "Eguneratu hobespenak hutsegite-txostenak automatikoki bidaltzeko, saio honetan eta etorkizuneanatzeko planoan huts egindako fitxen txostenak barne.">

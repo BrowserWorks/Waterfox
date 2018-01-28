@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "အခက်အခဲဆိုင်ရာဖြေရှင်းခြင်းနည်းလမ်းများ။">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  This page contains technical information that might be useful when you're trying to solve a problem. If you are looking for answers to common questions about &brandShortName;, check out our <a id='supportLink'>support website</a>.">
+
+<!ENTITY aboutSupport.crashes.title "ပျက်ဆီးချက်တင်ပြသူ">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ထုတ်ပြန်ချက် ID">
+<!ENTITY aboutSupport.crashes.sendDate "တင်သွင်းခဲ့သောအချိန်">
+<!ENTITY aboutSupport.crashes.allReports "အပျက်အစီး အစီရင်ခံစာများ">
+<!ENTITY aboutSupport.crashes.noConfig "ယခု အက်ပလီကေးရှင်းသည် အပျက်အစီး အစီရင်ခံစာများအား​ ပြရန် စီမံမထားပါ">
+
+<!ENTITY aboutSupport.extensionsTitle "တိုးချဲ့ချက်များ">
+<!ENTITY aboutSupport.extensionName "အမည်">
+<!ENTITY aboutSupport.extensionEnabled "ဖွင့်ထားတယ်">
+<!ENTITY aboutSupport.extensionVersion "မူအဆင့်">
+<!ENTITY aboutSupport.extensionId "အိုင်ဒီ">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; တွင် ပါဝင်သော လုပ်ဆောင်ချက်များ">
+<!ENTITY aboutSupport.featureName "အမည်">
+<!ENTITY aboutSupport.featureVersion "ဗားရှင်း">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "စမ်းသပ်နေဆဲ လုပ်ဆောင်ချက်များ">
+<!ENTITY aboutSupport.experimentName "အမည်">
+<!ENTITY aboutSupport.experimentId "အိုင်ဒီ">
+<!ENTITY aboutSupport.experimentDescription "ဖေါ်ပြချက်">
+<!ENTITY aboutSupport.experimentActive "ဖွင့်ထားပါ">
+<!ENTITY aboutSupport.experimentEndDate "နောက်ဆုံး ရက်">
+<!ENTITY aboutSupport.experimentHomepage "မူလအစ">
+<!ENTITY aboutSupport.experimentBranch "အခွဲ">
+
+<!ENTITY aboutSupport.appBasicsTitle "အပ္ပလီကေးရှင်း အခြေခံ">
+<!ENTITY aboutSupport.appBasicsName "အမည်">
+<!ENTITY aboutSupport.appBasicsVersion "မူအဆင့်">
+<!ENTITY aboutSupport.appBasicsBuildID "တည်ဆောင်မှု အိုင်ဒီ">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "အဆင့်မြှင့်လိုင်း">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "အဆင့်မြှင့်တင်ချက် မှတ်တမ်း">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "အဆင့်မြှင့်တင်ချက် မှတ်တမ်းကို ပြသပါ">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "ပရိုဖိုင် လမ်းညွှန်">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "ပရိုဖိုင် ဖိုဒါ">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "ပက်လက်အင် အားဖွင့်ပါ">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Configuration တည်ဆောက်ပါ">
+<!ENTITY aboutSupport.appBasicsUserAgent "အသုံးပြုသူ အေးဂျင့်">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "မှတ်ဉာဏ်သုံးဆွဲမှူ">
+<!ENTITY aboutSupport.appBasicsPerformance "လုပ်ဆောင်မှု">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "စာရင်းပြုထားသည့် Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "ပရိုဖိုင်များ">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "တစ်ပြိုင်နက်လုပ်ဆောင်ချက် ဝင်းဒိုးများ">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "အန္တရာယ်ကင်း စနစ်">
+
+<!ENTITY aboutSupport.showDir.label "ဖွင့်ထားသော လမ်းညွှန်">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "ရှာဖွေကိရိယာမှာ ဖေါ်ပြပါ">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "ဖိုလ်ဒါအားဖွင့်ပါ">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Important Modified Preferences">
+<!ENTITY aboutSupport.modifiedPrefsName "အမည်">
+<!ENTITY aboutSupport.modifiedPrefsValue "တန်ဖိုး">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js Preferences">
+<!ENTITY aboutSupport.userJSDescription "Your profile folder contains a <a id='prefs-user-js-link'>user.js file</a>, which includes preferences that were not created by &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "အရေးကြီးသော အပြင်အဆင်များ">
+<!ENTITY aboutSupport.lockedPrefsName "အမည်">
+<!ENTITY aboutSupport.lockedPrefsValue "တန်ဖိုး">
+
+<!ENTITY aboutSupport.graphicsTitle "ဂရပ်ဖစ်">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "ဒေတာဘေ့စ်ထားရန်">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrity">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Integrity ကို အတည်ပြုရန်">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC တိုးတက်မှု">
+
+<!ENTITY aboutSupport.a11yTitle "ဆက်စပ်ပစ္စည်း">
+<!ENTITY aboutSupport.a11yActivated "လှုပ်ရှားခဲ့ပြီး">
+<!ENTITY aboutSupport.a11yForceDisabled "အသုံးပြုရန် တားဆီးထား">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "လိုက်ဘရီ ဗားရှင်း">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ထည့်သွင်းခြင်းမှတ်တမ်း">
+<!ENTITY aboutSupport.updateHistoryTitle "အဆင့်မြှင့်တင်ချက် မှတ်တမ်း">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "ကလစ်ဘုတ်သို့ ကူးသောစာ">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ကူးထားသောဒေတာအကြမ်းကို ကလစ်ဘုတ်သို့">
+
+<!ENTITY aboutSupport.sandboxTitle "စမ်းသပ်">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "လွန်ခဲ့သော စက္ကန့်က">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "လုပ်ငန်းစဉ် အမျိုးအစား">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.safeModeTitle "လုံခြုံရေးသုံးပုံစံ အားသုံးကြည့်မည်">
+<!ENTITY aboutSupport.restartInSafeMode.label "ထပ်ပေါင်းဆော့ဝဲများ ပိတ်ပြီး ပြန်စမည်...">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "လုပ်ဆောင်ချက်များ">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "ချွတ်ယွင်းချက်ဖော်ထုတ်မှုများ">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "အမှားဆိုင်ရာ မှတ်တမ်း">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "ဆုံးဖြတ်မှုဆိုင်ရာ မှတ်တမ်း">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "အပျက်အစီးကာကွယ်မှုစနစ်ကြောင့် ပိတ်ထားသည့် လုပ်ဆောင်ချက်များ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "ယာယီအစားထိုးဆောင်ရွက်နိုင်သည်များ">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; עדכון">
+
+<!ENTITY  offline.title                   "&brandShortName; נמצא במצב לא־מקוון">
+<!ENTITY  offline.description             "&brandShortName; צריך להיות במצב מקוון כדי לבדוק אם ישנם עדכונים זמינים עבור התוספות שלך כדי להפוך אותן לתואמות עם גרסה זו.">
+<!ENTITY  offline.toggleOffline.label     "עבור למצב מקוון כעת.">
+<!ENTITY  offline.toggleOffline.accesskey "ע">
+
+<!ENTITY  mismatch.win.title              "תוספת לא תואמת">
+<!ENTITY  mismatch.top.label              "התוספות הבאות אינן תואמות עם גרסה זו של &brandShortName; ולכן נוטרלו:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; יכול לבדוק אם ישנן גרסאות תואמות של תוספות אלו זמינות.">
+
+<!ENTITY  checking.wizard.title           "בודק עבור תוספות תואמות">
+<!ENTITY  checking.top.label              "בודק עדכונים עבור תוספות לא תואמות…">
+<!ENTITY  checking.status                 "זה יכול לקחת מספר דקות…">
+
+<!ENTITY  found.wizard.title               "נמצאו תוספות תואמות">
+<!ENTITY  found.top.label                 "בחירת התוספות שברצונך להתקין:">
+<!ENTITY  found.disabledXPinstall.label   "עדכונים אלו לא ניתנים להתקנה מאחר שהתקנת תכנה כרגע מנוטרלת. ניתן לשנות זאת בהמשך.">
+<!ENTITY  found.enableXPInstall.label     "אפשר לאתרים להתקין תוכנה">
+<!ENTITY  found.enableXPInstall.accesskey "ת">
+
+<!ENTITY  installing.wizard.title         "מתקין תוספות תואמות">
+<!ENTITY  installing.top.label            "מוריד ומתקין עדכונים לתוספות…">
+
+<!ENTITY  noupdates.wizard.title          "לא נמצאו תוספות תואמות">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; לא הצליח לחפש עדכונים להרחבות הלא תואמות שברשותך.">
+<!ENTITY  noupdates.error.desc            "בעיה כלשהי אירעה בניסיון לחפש עדכונים.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; יבדוק באופן תדיר ויודיע לך כאשר עדכונים תואמים להרחבות אלו זמינים.">
+
+<!ENTITY  finished.wizard.title           "תוספות תואמות עודכנו">
+<!ENTITY  finished.top.label              "&brandShortName; התקין עדכונים לתוספות שברשותך.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; יכול לבדוק באופן תדיר ולהודיע כאשר עדכונים תואמים להרחבות אלו זמינים.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; יבדוק באופן תדיר ויודיע כאשר עדכונים תואמים להרחבות אלו זמינים.">
+
+<!ENTITY  adminDisabled.wizard.title      "לא ניתן לבדוק עדכונים">
+<!ENTITY  adminDisabled.warning.label     "לא ניתן לבדוק עדכונים לתוספות לא תואמות מאחר שהתקנת תוכנות עבור &brandShortName; מנוטרלת. בבקשה צור קשר עם מנהל המערכת שלך לסיוע.">
+
+<!ENTITY  versioninfo.wizard.title        "בדיקת תאימות תוספות">
+<!ENTITY  versioninfo.top.label           "התוספות שלך בבדיקת תאימות עם גרסה זו של &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "זה יכול לקחת מספר דקות…">
+
+<!ENTITY  installerrors.wizard.title      "בעיה בהתקנת עדכונים">
+<!ENTITY  installerrors.intro.label       "&brandShortName; חווה בעיות בעדכון חלק מהתוספות שלך.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "לחץ על סיום כדי להמשיך בהפעלת &brandShortName;">
+<!ENTITY  clickFinish.labelMac            "לחץ על סיום כדי להמשיך בהפעלת &brandShortName;.">
+<!ENTITY  enableChecking.label            "אפשר ל־&brandShortName; לבדוק עדכונים.">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "600">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Copiar">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Selecziunar tut">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "General">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "Adressa:">
+<!ENTITY  generalType           "Tip:">
+<!ENTITY  generalMode           "Modus da vista:">
+<!ENTITY  generalSize           "Grondezza:">
+<!ENTITY  generalReferrer       "URL che renviescha:">
+<!ENTITY  generalSource         "Funtauna da cache:">
+<!ENTITY  generalModified       "Modifitgà:">
+<!ENTITY  generalEncoding2      "Codaziun dal text:">
+<!ENTITY  generalMetaName       "Num">
+<!ENTITY  generalMetaContent    "Cuntegn">
+
+<!ENTITY  mediaTab              "Medias">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adressa:">
+<!ENTITY  mediaText             "Text allocà:">
+<!ENTITY  mediaAltHeader        "Text alternativ">
+<!ENTITY  mediaAddress          "Adressa">
+<!ENTITY  mediaType             "Tip">
+<!ENTITY  mediaSize             "Grondezza">
+<!ENTITY  mediaCount            "Dumber">
+<!ENTITY  mediaDimension        "Dimensiun:">
+<!ENTITY  mediaLongdesc         "Descripziun detagliada:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Memorisar sut…">
+<!ENTITY  mediaSaveAs.accesskey "s">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Prevista da las medias:">
+
+<!ENTITY  feedTab               "Feeds">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Abunar">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Autorisaziuns">
+<!ENTITY  permTab.accesskey     "A">
+<!ENTITY  permUseDefault        "Utilisar il standard">
+<!ENTITY  permAskAlways         "Adina dumandar">
+<!ENTITY  permAllow             "Permetter">
+<!ENTITY  permAllowSession      "Permetter per questa sesida">
+<!ENTITY  permBlock             "Bloccar">
+<!ENTITY  permissionsFor        "Autorisaziuns per:">
+<!ENTITY  permPlugins           "Activar ils plug-ins">
+
+<!ENTITY  permClearStorage           "Stizzar la memoria">
+<!ENTITY  permClearStorage.accesskey "z">
+
+<!ENTITY  securityTab           "Segirezza">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Mussar il certificat">
+<!ENTITY  securityView.accesskey "c">
+<!ENTITY  securityView.unknown   "Betg enconuschent">
+
+
+<!ENTITY  securityView.identity.header   "Identitad da la website">
+<!ENTITY  securityView.identity.owner    "Possessur:">
+<!ENTITY  securityView.identity.domain   "Website:">
+<!ENTITY  securityView.identity.verifier "Verifitgà da:">
+<!ENTITY  securityView.identity.validity "Scroda ils:">
+
+<!ENTITY  securityView.privacy.header                   "Protecziun da datas &amp; cronica">
+<!ENTITY  securityView.privacy.history                  "Hai jau gia visità ina giada questa website?">
+<!ENTITY  securityView.privacy.cookies                  "Memorisescha questa website datas (cookies) sin mes computer?">
+<!ENTITY  securityView.privacy.viewCookies              "Mussar ils cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Hai jau memorisà pleds-clav per questa website?">
+<!ENTITY  securityView.privacy.viewPasswords            "Mussar ils pleds-clav">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "u">
+
+<!ENTITY  securityView.technical.header                 "Detagls tecnics">
+
+<!ENTITY  helpButton.label                              "Agid">

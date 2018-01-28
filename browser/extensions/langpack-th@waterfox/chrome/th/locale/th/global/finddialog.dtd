@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "ค้นหาในหน้านี้">
+<!ENTITY findField.label "ค้นหาสิ่งใด:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "ตัวพิมพ์ใหญ่เล็กตรงกัน">
+<!ENTITY caseSensitiveCheckbox.accesskey "ล">
+<!ENTITY wrapCheckbox.label "ปัดบรรทัดล้น">
+<!ENTITY wrapCheckbox.accesskey "ป">
+<!ENTITY findButton.label "ค้นหาต่อไป">
+<!ENTITY findButton.accesskey "ต">
+<!ENTITY cancelButton.label "ยกเลิก">
+<!ENTITY closeButton.label "ปิด">
+<!ENTITY up.label "ขึ้น">
+<!ENTITY up.accesskey "ข">
+<!ENTITY down.label "ลง">
+<!ENTITY down.accesskey "ล">
+<!ENTITY direction.label "ทิศทาง">

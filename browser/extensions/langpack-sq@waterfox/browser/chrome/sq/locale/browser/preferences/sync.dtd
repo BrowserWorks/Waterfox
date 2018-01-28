@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Faqerojtësit e Mi">
+<!ENTITY engine.bookmarks.accesskey "F">
+<!ENTITY engine.tabs.label2         "Hapi Skedat">
+<!ENTITY engine.tabs.accesskey      "S">
+<!ENTITY engine.history.label       "Historikun Tim">
+<!ENTITY engine.history.accesskey   "H">
+<!ENTITY engine.prefs.label         "Parapëlqimet e Mia">
+<!ENTITY engine.prefs.accesskey     "P">
+<!ENTITY engine.addons.label        "Shtesat e Mia">
+<!ENTITY engine.addons.accesskey    "t">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Emër Pajisjeje">
+<!ENTITY cancelChangeSyncDeviceName.label "Anuloje">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "A">
+<!ENTITY saveChangeSyncDeviceName.label "Ruaje">
+<!ENTITY saveChangeSyncDeviceName.accesskey "u">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Kushte Shërbimi">
+<!ENTITY fxaPrivacyNotice.link.label "Shënim Mbi Privatësinë">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "nuk është i verifikuar.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Ju lutemi, bëni hyrjen që të rilidheni">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "S&apos;jeni i futur.">
+<!ENTITY signIn.label                "Hyni">
+<!ENTITY signIn.accesskey            "y">
+<!ENTITY profilePicture.tooltip      "Ndryshoni foto profili">
+<!ENTITY verifiedManage.label        "Administroni Llogari">
+<!ENTITY verifiedManage.accesskey    "A">
+<!ENTITY verify.label                "Verifikoni Email">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "Harroje këtë Email">
+<!ENTITY forget.accesskey            "H">
+
+<!ENTITY signedOut.caption            "Merreni Web-in me vete">
+<!ENTITY signedOut.description        "Njëkohësoni nëpër krejt pajisjet tuaja faqerojtësit, historikun e shfletimeve, skedat, fjalëkalimet, shtesat dhe parapëlqimet tuaja.">
+<!ENTITY signedOut.accountBox.title   "Lidhuni përmes një &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Krijoje Llogarinë">
+<!ENTITY signedOut.accountBox.create.accesskey  "K">
+<!ENTITY signedOut.accountBox.signin  "Hyni">
+<!ENTITY signedOut.accountBox.signin.accesskey  "H">
+
+<!ENTITY signedIn.settings.label       "Rregullime Njëkohësimesh">
+<!ENTITY signedIn.settings.description "Zgjidhni ç&apos;të njëkohësohet në pajisjet tuaja duke përdorur &brandShortName;-in.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Shkarkoni Waterfox-in për ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " ose ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " që të kryeni njëkohësim te pajisja juaj celulare.">
+
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY changeSyncDeviceName2.label "Change Device Name…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY disconnect3.label           "Disconnect…">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">

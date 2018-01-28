@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Sahifani yuklashda muammo">
+<!ENTITY retry.label "Yana urinib ko‘rish">
+<!ENTITY returnToPreviousPage.label "Orqaga">
+<!ENTITY advanced.label "Qo‘shimcha">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Ulana olmadi">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Bu manzil cheklangan">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server topilmadi">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Manzil to‘g‘ri kiritilganligini tekshiring. Masalan, <strong>www</strong>.example.com o‘rniga<strong>ww</strong>.example.com kiritilgan bo‘lishi mumkin.</li> <li>Agar birorta ham sahifa yuklanmagan bo‘lsa, kompyuterning tarmoqqa ulanganini tekshirib ko‘ring.</li> <li>Agar kompyuter yoki tarmoq fayervol bilan himoyalangan bo‘lsa, &brandShortName;ning internetga kirishdan to‘silmaganligini tekshirib ko‘ring.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fayl topilmadi">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Fayl nomlarining katta-kichik harfdaligi yoki matndagi boshqa xatolarini tekshiring.</li> <li>Fayl o‘chirilgan, nomi o‘zgargan yoki ko‘chirilgan bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Fayldan foydalanishga ruxsat berilmadi">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>O‘chirib tashlangan, ko‘chirilgan yoki foydalanishga ruxsat berilmagan bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY generic.title "Obbo.">
+<!ENTITY generic.longDesc "<p>&brandShortName; ushbu sahifani ba’zi sabablarga ko‘ra yuklay olmadi.</p>">
+
+<!ENTITY captivePortal.title "Tarmoqda ro‘yxatdan o‘ting">
+<!ENTITY captivePortal.longDesc2 "<p>Internetdan foydalanish uchun tarmoqda ro‘yxatdan o‘tishingiz lozim.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Tarmoqda ro‘yxatdan o‘tish sahifasini oching">
+
+<!ENTITY malformedURI.title "Xato manzil">
+<!ENTITY malformedURI.longDesc "<ul> <li>Veb manzillar, odatda, quyidagicha:<strong>http://www.example.com/</strong> yoziladi</li> <li>/ belgisini to‘g‘ri yozilganligini tekshirib ko‘ring <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Aloqa uzilib qoldi">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Hujjat mavjud emas">
+<!ENTITY notCached.longDesc "<p>So‘ralgan hujjat &brandShortName;’ning keshida mavjud emas.</p><ul><li>Xavfsizlik sabablariga ko‘ra, &brandShortName; maxfiy hujjatlarni avtomatik qayta so‘ramaydi.</li><li>Hujjatni saytdan qayta so‘rash uchun &quot;Yana urinib ko‘ring&quot;ni bosing.</li></ul>">
+
+<!ENTITY netOffline.title "Oflayn usuli">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Onlayn usuliga o‘tish va sahifani qayta yuklash uchun &quot;Yana urinib ko‘rish&quot;ni bosing.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Kontentni kodlashda xato">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Ushbu muammo haqida xabar berish uchun vebsahifa egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Xavfli fayl turi">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Ushbu muammo haqida xabar berish uchun vebsahifa egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY netReset.title "Ulanish uzilib qolgan">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Ulanish vaqti o‘tib ketdi">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Manzil tushunilmadi">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Ushbu manzilni ochish uchun boshqa dasturni o‘rnatishingiz kerak.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proksi server ulanishlarni rad qilmoqda">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Proksi moslamalari to‘g‘ri ekanligini tekshirib ko‘ring.</li> <li>Proksi server ishlayotganligiga ishonch hosil qilish uchun tarmoq administratori bilan bog‘laning.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Proksi server topilmadi">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Proksining to‘g‘ri moslanganligini tekshirib ko‘ring.</li> <li>Kompyuteringizning tarmoqqa ulanganligini tekshirib ko‘ring.</li> <li>Agar kompyuteringiz yoki tarmog‘ingiz fayervol yoki proksi bilan himoyalanganbo‘lsa, &brandShortName;ning internetga kirishi cheklanmaganligini tekshirib ko‘ring.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Sahifa to‘g‘ri yo‘naltirilmagan">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ushbu muammo ba’zida kukilarni o‘chirilishiga yoki rozilikni rad qilinishiga sabab bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Serverdan kutilmagan javob">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Shaxsiy xavfsizlik boshqaruvchisi (PSM) tizimingizda o‘rnatilganligini tekshirib ko‘ring.</li> <li>Bu serveringizning nostandart moslanganligidan ham bo‘lishi mumkin.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Xavfsiz ulanib bo‘lmadi">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Siz ko‘rmoqchi bo‘lgan sahifani ko‘rsatib bo‘lmaydi, chunki olingan fayllar tasdiqdan o‘tmagan.</li> <li>Ushbu muammo haqida xabar berish uchun vebsahifa egasi bilan bog‘laning.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Ulanish xavfsiz emas">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "<span class='hostname'/> egasi veb-saytini noto‘g‘ri sozlagan. Ma’lumotlaringizni o‘g‘irlanishdan himoyalash maqsadida, &brandShortName; bu veb-saytga ulanmadi.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Bu sayt vaqtinchalik ishlamayotgan yoki juda band bo‘lishi mumkin. Bir ozdan so‘ng urinib ko‘ring.</li> <li>Agar birorta ham sahifa yuklanmasa, kompyuteringizni tarmoqqa ulanishini tekshirib ko‘ring.</li> <li>Agar kompyuter yoki tarmog‘ingiz fayervol yoki proksi bilan himoyalangan bo‘lsa, &brandShortName;ning internetga kirishi cheklanmaganligini tekshirib ko‘ring.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Kontent xavfsizlik nazorati tomonidan bloklangan">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ushbu sahifani bu yo‘lda yuklashga to‘sqinlik qildi, chunki sahifadagi xavfsizlik siyosati bunga ruxsat bermadi.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Buzilgan kontent xatosi">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Siz ko‘rmoqchi bo‘lgan sahifani ko‘rsatib bo‘lmaydi, chunki ma’lumotlarni uzatishda xato aniqlandi.</p><ul><li>Ushbu muammo haqida xabar berish uchun veb sayt egasi bilan bog‘laning.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Istisno qo‘shish">
+
+<!ENTITY errorReporting.automatic2 "Shu kabi xatolik hisobotlari Mozillaga zararli saytlarni aniqlash va bloklashda yordam beradi">
+<!ENTITY errorReporting.learnMore "Ko‘proq o‘rganish…">
+
+<!ENTITY remoteXUL.title "Masofadagi XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Muammo haqida xabar berish uchun veb sayt egasi bilan bog‘laning.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Xavfsiz ulanish amalga oshmadi">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Qo‘shimcha ma’lumot: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; <span id='wrongSystemTime_URL'/>ga ulana olmadi, chunki kompyuteringizning soati noto‘g‘ri. Shu sababli xavfsiz ulana olmayapti.</p> <p>Kompyuteringizning soati: <span id='wrongSystemTime_systemDate'/>, lekin real vaqt: <span id='wrongSystemTime_actualDate'/>. Bu muammoni hal etish uchun sana va vaqt sozlamalarini to‘g‘rilang.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> &brandShortName; <span id='wrongSystemTimeWithoutReference_URL'/>ga ulana olmadi, chunki kompyuteringizning soati noto‘g‘ri. Shu sababli xavfsiz ulana olmayapti.</p> <p>Kompyuteringizning soati: <span id='wrongSystemTimeWithoutReference_systemDate'/>. Bu muammoni hal etish uchun sana va vaqt sozlamalarini to‘g‘rilang.</p>">
+
+<!ENTITY certerror.pagetitle1  "Xavfli ulanish">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Ushbu sayt HTTP Strict Transport Security (HSTS)dan &brandShortName; faqat xavfsuz ulanganini  ko‘rsatish uchun foydalanadi. Natija sifatida ushbu sertifikat uchun istisnoni qo‘shib bo‘lmaydi.">
+<!ENTITY certerror.copyToClipboard.label "Matndan vaqtinchalik xotiraga nusxa olish">
+
+<!ENTITY inadequateSecurityError.title "Ulanish xavfsiz emas">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> hujumlarga chidamsiz va eskirgan xavfsizlik texnonolgiyasidan foydalanadi. Xakker siz xavfsiz deb o‘ylaydigan ma’lumotlarni osongina ochib ko‘rishi mumkin. Siz saytga kira olishingiz uchun avvalo sayt administratori serverni to‘g‘rilashi kerak.</p><p>Xatolik kodi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Tarmoq xavfsizligi bo‘yicha sozlamalar bunga sabab bo‘lishi mumkin. Standart sozlamalarni tiklashni xohlaysizmi?">
+<!ENTITY prefReset.label "Standart sozlamalarni tiklash">

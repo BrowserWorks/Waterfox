@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "بروزرسانی &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; در حالت منفصل است">
+<!ENTITY  offline.description             "&brandShortName; باید برای یافتن بروزرسانی‌های احتمالی موجود برای افزودنی‌های شما و سازگار کردن آن‌ها با این نسخه، به اینترنت متصل شد.">
+<!ENTITY  offline.toggleOffline.label     "رفتن به حالت متصل">
+<!ENTITY  offline.toggleOffline.accesskey "م">
+
+<!ENTITY  mismatch.win.title              "افزودنی‌های ناسازگار">
+<!ENTITY  mismatch.top.label              "افزودنی‌های زیر با این نسخه از &brandShortName; سازگار نیستند و غیرفعال شده‌اند:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; می‌تواند وجود نسخه‌های سازگار این افزودنی‌ها  را بررسی نماید.">
+
+<!ENTITY  checking.wizard.title           "در حال جمع‌آوری اطلاعات در مورد افزودنی‌های سازگار">
+<!ENTITY  checking.top.label              "در حال جمع‌آوری اطلاعات در موردافزودنی‌های ناسازگار برای بروزرسانی…">
+<!ENTITY  checking.status                 "این کار ممکن است چند دقیقه‌ای طول بکشد…">
+
+<!ENTITY  found.wizard.title               "افزودنی‌های سازگاری پیدا شدند">
+<!ENTITY  found.top.label                 "افزودنی‌هایی که می‌خواهید نصب شوند را انتخاب کنید:">
+<!ENTITY  found.disabledXPinstall.label   "این بروزرسانی‌ها قابل نصب‌کردن نمی‌باشند زیرا نصب نرم‌افزار غیرفعال شده است. در ادامه می‌توانید این تنظیم را تغییر دهید.">
+<!ENTITY  found.enableXPInstall.label     "وب‌گاه‌ها مجاز به نصب نرم‌افزار باشند">
+<!ENTITY  found.enableXPInstall.accesskey "گ">
+
+<!ENTITY  installing.wizard.title         "نصب افزودنی‌های سازگار">
+<!ENTITY  installing.top.label            "درحال دریافت و نصب بروزرسانی‌های افزودنی‌های شما…">
+
+<!ENTITY  noupdates.wizard.title          "بروزرسانیِ سازگاری پیدا نشد">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; نتوانست هیچ بروزرسانی مناسبی برای افزودنی‌های ناسازگار پیدا کند.">
+<!ENTITY  noupdates.error.desc            "در هنگام بررسی برای بروزرسانی مشکلاتی به وجود آمد.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; به طور مرتب به جستجو می‌پردازد و هر زمان بروزرسانی سازگار با این افزودنی‌ها یافت، شما را مطلع می‌کند.">
+
+<!ENTITY  finished.wizard.title           "بروزرسانی‌های سازگار نصب شدند">
+<!ENTITY  finished.top.label              "&brandShortName; بروزرسانی افزودنی‌ها را نصب کرده است.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; می‌تواند به طور مرتب به جستجو بپردازد و هر زمان بروزرسانی‌ای برای افزودنی‌ها یافت، شما را مطلع می‌کند.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; به طور مرتب به جستجو می‌پردازد و هر زمان بروزرسانی‌ای برای افزودنی‌ها یافت، شما را مطلع می‌کند.">
+
+<!ENTITY  adminDisabled.wizard.title      "امکان بررسی برای بروزرسانی‌ها نمی‌باشد">
+<!ENTITY  adminDisabled.warning.label     "یافتن بروزرسانی‌های احتمالی موجود برای افزودنی‌های ناسازگار ممکن نیست زیرا نصب نرم‌افزار برای &brandShortName; غیر فعال است. لطفاً برای دریافت راهنمایی به مدیر سیستم خود رجوع کنید.">
+
+<!ENTITY  versioninfo.wizard.title        "در حال جمع‌آوری اطلاعات در مورد سازگاری افزودنی‌ها">
+<!ENTITY  versioninfo.top.label           "بررسی افزودنی‌ها برای سازگاری  با نسخهٔ فعلی &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "این کار ممکن است چند دقیقه‌ای طول بکشد…">
+
+<!ENTITY  installerrors.wizard.title      "مشکلات در نصب بروزرسانی‌ها">
+<!ENTITY  installerrors.intro.label       "&brandShortName; در زمان بروزرسانی بعضی از افزودنی‌ها دچار مشکل شد.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "برای آن که &brandShortName; شروع به کار کند، دکمهٔ «پایان» را فشار دهید.">
+<!ENTITY  clickFinish.labelMac            "برای ادامه دادن به شروع &brandShortName;، دکمهٔ «انجام شد» را فشار دهید.">
+<!ENTITY  enableChecking.label            "اجازه دادن به &brandShortName; برای جمع‌آوری اطلاعات در مورد بروزرسانی‌ها.">

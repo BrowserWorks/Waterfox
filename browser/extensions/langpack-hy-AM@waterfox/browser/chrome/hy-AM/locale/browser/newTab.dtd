@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Նոր Ներդիր">
+<!ENTITY newtab.customize.classic "Ցուցադրել լավագույն կայքերը">
+<!ENTITY newtab.customize.cog.enhanced "Ներառյալ առաջարկվող կայքերը">
+<!ENTITY newtab.customize.cog.title2 "ՆՈՐ ՆԵՐԴԻՐԻ ԿԱՌԱՎԱՐՈՒՄ">
+<!ENTITY newtab.customize.cog.learn "Կարդալ Նոր Ներդիրի մասին">
+<!ENTITY newtab.customize.title "Հարմարեցնել Նոր ներդիրը">
+<!ENTITY newtab.customize.blank2 "Ցուցադրել դատարկ էջ">
+<!ENTITY newtab.undo.removedLabel "Մանրապատկերը հեռացվել է:">
+<!ENTITY newtab.undo.undoButton "Հետարկել:">
+<!ENTITY newtab.undo.restoreButton "Վերականգնել բոլորը:">
+<!ENTITY newtab.undo.closeTooltip "Թաքցնել">

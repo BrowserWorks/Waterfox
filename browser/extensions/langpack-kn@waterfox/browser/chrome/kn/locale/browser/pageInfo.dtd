@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "ಪ್ರತಿ ಮಾಡು">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "ಎಲ್ಲವನ್ನೂ ಆರಿಸು">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "ಸಾಮಾನ್ಯ">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "ಶೀರ್ಷಿಕೆ:">
+<!ENTITY  generalURL            "ವಿಳಾಸ:">
+<!ENTITY  generalType           "ಬಗೆ:">
+<!ENTITY  generalMode           "ನಿರೂಪಣಾ(ರೆಂಡರ್) ಕ್ರಮ:">
+<!ENTITY  generalSize           "ಗಾತ್ರ:">
+<!ENTITY  generalReferrer       "ಉಲ್ಲೇಖಿಸಲಾದ URL:">
+<!ENTITY  generalSource         "ಕ್ಯಾಶೆ ಮೂಲ:">
+<!ENTITY  generalModified       "ಮಾರ್ಪಡಿಸಲಾದ:">
+<!ENTITY  generalEncoding2      "ಪಠ್ಯದ ಎನ್‍ಕೋಡಿಂಗ್:">
+<!ENTITY  generalMetaName       "ಹೆಸರು">
+<!ENTITY  generalMetaContent    "ಅಂಶಗಳು">
+
+<!ENTITY  mediaTab              "ಮಾಧ್ಯಮ">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "ಸ್ಥಳ:">
+<!ENTITY  mediaText             "ಸಂಬಂಧಿತ ಪಠ್ಯ:">
+<!ENTITY  mediaAltHeader        "ಪರ್ಯಾಯ ಪಠ್ಯ">
+<!ENTITY  mediaAddress          "ವಿಳಾಸ">
+<!ENTITY  mediaType             "ಬಗೆ">
+<!ENTITY  mediaSize             "ಗಾತ್ರ">
+<!ENTITY  mediaCount            "ಎಣಿಕೆ(ಕೌಂಟ್)">
+<!ENTITY  mediaDimension        "ಆಕಾರ:">
+<!ENTITY  mediaLongdesc         "ವಿಸ್ತೃತ ವಿವರಣೆ:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "ಹೀಗೆ ಉಳಿಸು...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "ಮಾಧ್ಯಮ ಪೂರ್ವಾವಲೋಕನ:">
+
+<!ENTITY  feedTab               "ಫೀಡ್‌ಗಳು">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "ಚಂದಾದಾರನಾಗು">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "ಅನುಮತಿಗಳು">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "ಡೀಫಾಲ್ಟ್‍ ಆದುದನ್ನು ಬಳಸು">
+<!ENTITY  permAskAlways         "ಯಾವಾಗಲೂ ಕೇಳು">
+<!ENTITY  permAllow             "ಅನುಮತಿಸು">
+<!ENTITY  permAllowSession      "ಅಧಿವೇಶನಕ್ಕೆ ಅನುಮತಿಸು">
+<!ENTITY  permBlock             "ನಿರ್ಬಂಧಿಸು">
+<!ENTITY  permissionsFor        "ಇದಕ್ಕಾಗಿನ ಅನುಮತಿಗಳು:">
+<!ENTITY  permPlugins           "ಪ್ಲಗ್‌ಇನ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸು">
+
+<!ENTITY  permClearStorage           "ಶೇಖರಣೆಯನ್ನು ಅಳಿಸು">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "ಸುರಕ್ಷತೆ">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "ಪ್ರಮಾಣಪತ್ರವನ್ನು ನೋಡು">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "ಅಜ್ಞಾತ">
+
+
+<!ENTITY  securityView.identity.header   "ಜಾಲ ತಾಣದ ಗುರುತು">
+<!ENTITY  securityView.identity.owner    "ಮಾಲಿಕ:">
+<!ENTITY  securityView.identity.domain   "ಜಾಲ ತಾಣ:">
+<!ENTITY  securityView.identity.verifier "ಇವರಿಂದ ಪರಿಶೀಲಿಸಲ್ಪಟ್ಟಿದೆ:">
+
+
+<!ENTITY  securityView.privacy.header                   "ಗೌಪ್ಯತೆ ಹಾಗು ಇತಿಹಾಸ">
+<!ENTITY  securityView.privacy.history                  "ನಾನು ಈ ತಾಣಕ್ಕೆ  ಈ ದಿನ ಇದಕ್ಕೂ ಮೊದಲು ಭೇಟಿ ನೀಡಿದ್ದೆನೆಯೆ?">
+<!ENTITY  securityView.privacy.cookies                  "ನನ್ನ ಗಣಕದಲ್ಲಿ ಮಾಹಿತಿಯನ್ನು (ಕುಕಿಗಳು) ಶೇಖರಿಸಿಡುವ ಜಾಲತಾಣವು ಇದೇನಾ?">
+<!ENTITY  securityView.privacy.viewCookies              "ಕುಕಿಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "ನಾನು ಈ ತಾಣಕ್ಕಾಗಿ ಯಾವುದಾದರೂ ಗುಪ್ತಪದವನ್ನು ಶೇಖರಿಸಿಟ್ಟಿದ್ದೇನೆಯೆ?">
+<!ENTITY  securityView.privacy.viewPasswords            "ಶೇಖರಿಸಲಾದ ಗುಪ್ತಪದವನ್ನು ತೋರಿಸು">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "ತಾಂತ್ರಿಕ ವಿವರಗಳು">
+
+<!ENTITY  helpButton.label                              "ನೆರವು">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

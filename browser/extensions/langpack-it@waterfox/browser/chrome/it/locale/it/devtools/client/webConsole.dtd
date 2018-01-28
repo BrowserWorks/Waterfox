@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Console web">
+<!ENTITY openURL.label "Apri URL in una nuova scheda">
+<!ENTITY openURL.accesskey "A">
+<!ENTITY btnPageNet.label "Rete">
+<!ENTITY btnPageNet.tooltip "Registra gli accessi alla rete">
+<!ENTITY btnPageNet.accesskey "R">
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Registra errori e avvisi nell’analisi CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label "JS">
+<!ENTITY btnPageJS.tooltip "Registra le eccezioni JavaScript">
+<!ENTITY btnPageJS.accesskey "J">
+<!ENTITY btnPageSecurity.label "Sicurezza">
+<!ENTITY btnPageSecurity.tooltip "Registra errori e avvisi di sicurezza">
+<!ENTITY btnPageSecurity.accesskey "S">
+<!ENTITY btnPageLogging.label "Registro">
+<!ENTITY btnPageLogging.tooltip "Registra i messaggi inviati all’oggetto window.console">
+<!ENTITY btnPageLogging.accesskey3 "R">
+<!ENTITY btnConsoleErrors "Errori">
+<!ENTITY btnConsoleInfo "Info">
+<!ENTITY btnConsoleWarnings "Avvisi">
+<!ENTITY btnConsoleLog "Log">
+<!ENTITY btnConsoleXhr "XHR">
+<!ENTITY btnConsoleReflows "Reflow">
+<!ENTITY btnServerLogging.label "Server">
+<!ENTITY btnServerLogging.tooltip "Registra i messaggi ricevuti da un server web">
+<!ENTITY btnServerLogging.accesskey "R">
+<!ENTITY btnServerErrors "Errori">
+<!ENTITY btnServerInfo "Info">
+<!ENTITY btnServerWarnings "Avvisi">
+<!ENTITY btnServerLog "Log">
+<!ENTITY btnConsoleSharedWorkers "Worker condivisi">
+<!ENTITY btnConsoleServiceWorkers "Service worker">
+<!ENTITY btnConsoleWindowlessWorkers "Comp. aggiuntivi o Chrome worker">
+<!ENTITY filterOutput.placeholder "Filtra messaggi">
+<!ENTITY btnClear.label "Cancella">
+<!ENTITY btnClear.tooltip "Cancella il contenuto della Console web">
+<!ENTITY btnClear.accesskey "n">
+<!ENTITY fullZoomEnlargeCmd.commandkey "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "=">
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomReduceCmd.commandkey "-">
+<!ENTITY fullZoomReduceCmd.commandkey2 "">
+<!ENTITY fullZoomResetCmd.commandkey "0">
+<!ENTITY fullZoomResetCmd.commandkey2 "">
+<!ENTITY copyURLCmd.label "Copia indirizzo">
+<!ENTITY copyURLCmd.accesskey "o">
+<!ENTITY closeCmd.key "W">
+<!ENTITY findCmd.key "F">
+<!ENTITY clearOutputCtrl.key "L">
+<!ENTITY openInVarViewCmd.label "Apri in Visualizzazione variabili">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "Salva come variabile globale">
+<!ENTITY storeAsGlobalVar.accesskey "S">

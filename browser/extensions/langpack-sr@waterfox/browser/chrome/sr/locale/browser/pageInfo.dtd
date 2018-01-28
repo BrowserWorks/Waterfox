@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "600">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Копирај">
+<!ENTITY  copy.accesskey        "К">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Изабери све">
+<!ENTITY  selectall.accesskey   "И">
+<!ENTITY  closeWindow.key       "З">
+
+<!ENTITY  generalTab            "Опште">
+<!ENTITY  generalTab.accesskey  "О">
+<!ENTITY  generalTitle          "Наслов:">
+<!ENTITY  generalURL            "Адреса:">
+<!ENTITY  generalType           "Тип:">
+<!ENTITY  generalMode           "Тип приказа:">
+<!ENTITY  generalSize           "Величина:">
+<!ENTITY  generalReferrer       "Референтни URL:">
+<!ENTITY  generalSource         "Извор кеша:">
+<!ENTITY  generalModified       "Последња измена:">
+<!ENTITY  generalEncoding2      "Кодирање текста:">
+<!ENTITY  generalMetaName       "Назив">
+<!ENTITY  generalMetaContent    "Садржај">
+
+<!ENTITY  mediaTab              "Медији">
+<!ENTITY  mediaTab.accesskey    "М">
+<!ENTITY  mediaLocation         "Адреса:">
+<!ENTITY  mediaText             "Придружени текст:">
+<!ENTITY  mediaAltHeader        "Резервни текст">
+<!ENTITY  mediaAddress          "Адреса">
+<!ENTITY  mediaType             "Тип">
+<!ENTITY  mediaSize             "Величина">
+<!ENTITY  mediaCount            "Укупно">
+<!ENTITY  mediaDimension        "Димензије:">
+<!ENTITY  mediaLongdesc         "Дуги опис:">
+<!ENTITY  mediaBlockImage.accesskey "ж">
+<!ENTITY  mediaSaveAs           "Сачувај као…">
+<!ENTITY  mediaSaveAs.accesskey "А">
+<!ENTITY  mediaSaveAs2.accesskey "С">
+<!ENTITY  mediaPreview          "Преглед медија:">
+
+<!ENTITY  feedTab               "Извор вести">
+<!ENTITY  feedTab.accesskey     "И">
+<!ENTITY  feedSubscribe         "Претплати се">
+<!ENTITY  feedSubscribe.accesskey "П">
+
+<!ENTITY  permTab               "Дозволе">
+<!ENTITY  permTab.accesskey     "Д">
+<!ENTITY  permUseDefault        "Користи изворно">
+<!ENTITY  permAskAlways         "Увек питај">
+<!ENTITY  permAllow             "Дозволи">
+<!ENTITY  permAllowSession      "Дозволи за ову сесију">
+<!ENTITY  permBlock             "Блокирај">
+<!ENTITY  permissionsFor        "Дозволе за:">
+<!ENTITY  permPlugins           "Активирај прикључке">
+
+<!ENTITY  permClearStorage           "Очисти складиште">
+<!ENTITY  permClearStorage.accesskey "ч">
+
+<!ENTITY  securityTab           "Безбедност">
+<!ENTITY  securityTab.accesskey "Б">
+<!ENTITY  securityView.certView "Преглед сертификата">
+<!ENTITY  securityView.accesskey "с">
+<!ENTITY  securityView.unknown   "Непознат">
+
+
+<!ENTITY  securityView.identity.header   "Идентитет сајта">
+<!ENTITY  securityView.identity.owner    "Власник:">
+<!ENTITY  securityView.identity.domain   "Веб сајт:">
+<!ENTITY  securityView.identity.verifier "Проверио:">
+
+<!ENTITY  securityView.privacy.header                   "Приватност и историјат">
+<!ENTITY  securityView.privacy.history                  "Да ли сте раније посетили овај сајт?">
+<!ENTITY  securityView.privacy.cookies                  "Да ли овај сајт чува колачиће на мом рачунару?">
+<!ENTITY  securityView.privacy.viewCookies              "Преглед колачића">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "П">
+<!ENTITY  securityView.privacy.passwords                "Да ли чувам неку лозинку за овај сајт?">
+<!ENTITY  securityView.privacy.viewPasswords            "Преглед сачуваних лозинки">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "л">
+
+<!ENTITY  securityView.technical.header                 "Технички детаљи">
+
+<!ENTITY  helpButton.label                              "Помоћ">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

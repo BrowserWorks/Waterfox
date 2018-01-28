@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName;- veilige modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Begin in veilige modus">
+<!ENTITY refreshProfile.label         "Verfris &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Veilige modus is 'n spesiale modus vir &brandShortName; wat gebruik kan word om foute op te spoor.">
+<!ENTITY safeModeDescription4.label   "Die byvoegings en pasgemaakte instellings sal tydelik gedeaktiveer word.">
+
+<!ENTITY refreshProfileInstead.label  "Dis ook moontlik om op te hou fout soek en eerder &brandShortName; te verfris.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; het onverwags afgesluit tydens begin. Dit kan deur byvoegings of ander probleme veroorsaak word. Die probleem kan moontlik opgelos word deur die fout te probeer opspoor in Veilige modus.">

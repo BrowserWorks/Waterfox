@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Dìon o thracadh mi">
+<!ENTITY  trackingProtectionAlways.label       "An-còmhnaidh">
+<!ENTITY  trackingProtectionAlways.accesskey   "n">
+<!ENTITY  trackingProtectionPrivate.label      "Ann an uinneagan prìobhaideach a-mhàin">
+<!ENTITY  trackingProtectionPrivate.accesskey  "p">
+<!ENTITY  trackingProtectionNever.label        "Chan ann idir">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Barrachd fiosrachaidh">
+<!ENTITY  trackingProtectionExceptions.label   "Eisgeachdan…">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+
+<!ENTITY tracking.label                 "Tracadh">
+<!ENTITY trackingProtectionPBM5.label         "Cleachd dìon o thracadh ann an uinneagan prìobhaideach">
+<!ENTITY trackingProtectionPBM5.accesskey     "u">
+<!ENTITY trackingProtectionPBMLearnMore.label "Barrachd fiosrachaidh">
+<!ENTITY changeBlockList.label          "Cleachd liosta bacaidh eile">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "’S urrainn dhut ">
+<!ENTITY  doNotTrack.settings.label     "roghainnean an dìon o thracadh a chur air gleus">
+<!ENTITY  doNotTrack.post.label         "cuideachd.">
+
+<!ENTITY  history.label                 "Eachdraidh">
+
+<!ENTITY  locationBar.label             "Bàr an t-seòlaidh">
+
+<!ENTITY  locbar.suggest.label          "Nuair a chleachdas mi bàr an t-seòlaidh, mol dhomh:">
+<!ENTITY  locbar.history.label          "Eachdraidh">
+<!ENTITY  locbar.history.accesskey      "h">
+<!ENTITY  locbar.bookmarks.label        "Comharran-lìn">
+<!ENTITY  locbar.bookmarks.accesskey    "o">
+<!ENTITY  locbar.openpage.label         "Tabaichean fosgailte">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Luirg cho-cheangailte on einnsean-luirg bhunaiteach">
+<!ENTITY  locbar.searches.accesskey     "L">
+
+<!ENTITY  suggestionSettings.label      "Atharraich na roghainnean a thaobh mholaidhean o einnseanan-luirg…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Gabh ri briosgaidean treas pàrtaidh:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "G">
+<!ENTITY  acceptThirdParty.always.label   "An-còmhnaidh">
+<!ENTITY  acceptThirdParty.never.label    "Chan ann idir">
+<!ENTITY  acceptThirdParty.visited.label  "O fheadhainn air an deach tadhal">
+
+<!ENTITY  keepUntil.label               "Cum gus:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "am falbh an ùine orra">
+<!ENTITY  close.label                   "an dùin mi &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Eisgeachdan…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Seall na briosgaidean…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "Dè nì &brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "D">
+<!ENTITY  historyHeader.remember.label     "Cuimhnich an eachdraidh">
+<!ENTITY  historyHeader.dontremember.label "Na cuimhnich an eachdraidh idir">
+<!ENTITY  historyHeader.custom.label       "Cleachd roghainnean gnàthaichte airson na h-eachdraidh">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "Cuimhnichidh &brandShortName; eachdraidh brabhsaidh, eachdraidh na chaidh a luchdadh a-nuas is na lorg thu is cumaidh e briosgaidean o na làraichean air a thadhlas tu.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "'S dòcha gum b' fheairrde dhut ">
+<!ENTITY  rememberActions.clearHistory.label  "an eachdraidh faisg ort a ghlanadh">
+<!ENTITY  rememberActions.middle.label        ", no ">
+<!ENTITY  rememberActions.removeCookies.label "briosgaidean fa leth a thoirt air falbh">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "Cleachdaidh &brandShortName; na dearbh roghainnean 's a tha agad ann an brabhsadh prìobhaideach agus cha chuimhnich e eachdraidh sam bith 's tu a' brabhsadh an lìn.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "'S dòcha gum b' fheairrde dhut cuideachd ">
+<!ENTITY  dontrememberActions.clearHistory.label "an eachdraidh làithreach gu lèir a ghlanadh">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Dèan brabhsadh prìobhaideach an-còmhnaidh">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Cuimhnich an eachdraidh brabhsaidh 's luchdaidh agam">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Cuimhnich eachdraidh nan lorg is nam foirmichean">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Glan an eachdraidh nuair a dhùineas &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Roghainnean…">
+<!ENTITY  clearOnCloseSettings.accesskey "n">
+
+<!ENTITY  browserContainersHeader.label         "Tabaichean soithich">
+<!ENTITY  browserContainersLearnMore.label      "Barrachd fiosrachaidh">
+<!ENTITY  browserContainersEnabled.label        "Cuir an comas tabaichean soithich">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Roghainnean…">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

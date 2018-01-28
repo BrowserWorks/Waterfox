@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Buang Kata laluan Induk">
+<!ENTITY removeInfo.label                  "Anda mesti masukkan kata laluan semasa anda untuk meneruskannya:">
+<!ENTITY removeWarning1.label              "Kata laluan Induk anda digunakan untuk melindungi maklumat sensitif contohnya kata laluan laman.">
+<!ENTITY removeWarning2.label              "Jika anda buang Kata laluan Induk, maklumat anda tidak akan dapat dilindungi jika komputer anda terjejas.">
+<!ENTITY setPassword.oldPassword.label     "Kata laluan semasa:">
+

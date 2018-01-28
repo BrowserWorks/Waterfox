@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; oppdatering">
+
+<!ENTITY  offline.title                   "&brandShortName; arbeider fråkopla">
+<!ENTITY  offline.description             "&brandShortName; må kople til for å sjå om oppdateringar er tilgjengelege for utvidingane dine, for å gjera dei kompatible med denne versjonen.">
+<!ENTITY  offline.toggleOffline.label     "Gå til tilkopla modus no.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "Inkompatible utvidingar">
+<!ENTITY  mismatch.top.label              "Følgande utvidingar er ikkje kompatible med den nye versjonen av &brandShortName; og vert difor slått av">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; kan sjå etter kompatible versjonar for desse utvidingane.">
+
+<!ENTITY  checking.wizard.title           "Søkjer etter kompatible utvidingar">
+<!ENTITY  checking.top.label              "Søkjer etter oppdateringar for inkompatible utvidingar…">
+<!ENTITY  checking.status                 "Dette kan ta nokre minutt …">
+
+<!ENTITY  found.wizard.title               "Oppdateringar funne">
+<!ENTITY  found.top.label                 "Vel dei oppdateringane du ønskjer å installere:">
+<!ENTITY  found.disabledXPinstall.label   "Desse oppdateringane kan ikkje installerast fordi programvareinstallering er slått av. Du kan endra denne i innstillinga nedanfor.">
+<!ENTITY  found.enableXPInstall.label     "Tillat nettsider å installera programvare.">
+<!ENTITY  found.enableXPInstall.accesskey "T">
+
+<!ENTITY  installing.wizard.title         "Installerer oppdateringar">
+<!ENTITY  installing.top.label            "Lastar ned og installerer oppdateringane…">
+
+<!ENTITY  noupdates.wizard.title          "Ingen oppdateringar funne">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; klarte ikkje å finna oppdateringar for dei inkompatible innlegga.">
+<!ENTITY  noupdates.error.desc            "Problem oppstod under søket etter oppdateringar.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; ser jamnleg etter oppdateringar, og informerer deg når kompatible oppdateringar er tilgjengelege for desse utvidingane.">
+
+<!ENTITY  finished.wizard.title           "Kompatible utvingar er installerte">
+<!ENTITY  finished.top.label              "&brandShortName; har installert oppdateringar for utvidingane dine.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; kan med jamne mellomrom sjå etter, og gje informasjon om, når oppdateringar for utvidingar er tilgjengelege.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ser jamnleg etter oppdateringar, og informera deg om oppdateringar for utvidingar.">
+
+<!ENTITY  adminDisabled.wizard.title      "Klarte ikkje å søkja etter oppdateringar">
+<!ENTITY  adminDisabled.warning.label     "Det er ikkje muleg å søkja etter oppdateringar for inkompatible utvidingar 
+                                           fordi programvareinstallasjon for &brandShortName; er slått av. 
+                                           Kontakt systemansvarleg for vidare hjelp.">
+
+<!ENTITY  versioninfo.wizard.title        "Kontrollerer kompatibliteten til programtillegga">
+<!ENTITY  versioninfo.top.label           "Kontrollerer om utvidingane er kompatible med denne versjonen av &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Dette kan ta nokre minutt…">
+
+<!ENTITY  installerrors.wizard.title      "Problem med å installera oppdateringar">
+<!ENTITY  installerrors.intro.label       "&brandShortName; støytte på problem under oppdateringa av nokre utvidingar.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Trykk «Fullfør» for å halda fram oppstartinga av &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Trykk «Ferdig» for å fullføra oppstartinga av &brandShortName;.">
+<!ENTITY  enableChecking.label            "Tillat &brandShortName; å søkja etter oppdateringar.">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Отсечи">
+<!ENTITY cutCmd.accesskey "с">
+<!ENTITY copyCmd.label "Копирај">
+<!ENTITY copyCmd.accesskey "К">
+<!ENTITY pasteCmd.label "Залепи">
+<!ENTITY pasteCmd.accesskey "п">
+<!ENTITY undoCmd.label "Врати">
+<!ENTITY undoCmd.accesskey "р">
+<!ENTITY selectAllCmd.label "Избери сè">
+<!ENTITY selectAllCmd.accesskey "е">
+<!ENTITY deleteCmd.label "Избриши">
+<!ENTITY deleteCmd.accesskey "з">
+
+<!ENTITY spellAddToDictionary.label "Додај во речник">
+<!ENTITY spellAddToDictionary.accesskey "о">
+<!ENTITY spellUndoAddToDictionary.label "Врати и додај во речник">
+<!ENTITY spellUndoAddToDictionary.accesskey "р">
+<!ENTITY spellNoSuggestions.label "(Нема предлози)">
+<!ENTITY spellDictionaries.label "Јазици">
+<!ENTITY spellDictionaries.accesskey "Ј">
+
+<!ENTITY spellCheckToggle.accesskey "п">
+<!ENTITY spellCheckToggle.label "Провери правопис">
+
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillLoginMenu.label          "Fill Login">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillPasswordMenu.label       "Fill Password">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "Fill Username">
+<!ENTITY noLoginSuggestions.label     "(No Login Suggestions)">
+<!ENTITY searchTextBox.clear.label "Clear">
+
+<!ENTITY viewSavedLogins.label        "View Saved Logins">

@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nowe nałoženje…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Spakowane nałoženje wočinić…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "S">
+<!ENTITY projectMenu_importHostedApp_label "Hosćene nałoženje wočinić…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Nałoženje wočinić…">
+<!ENTITY projectMenu_selectApp_accesskey "w">
+<!ENTITY projectMenu_play_label "Instalować a startować">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Nałoženje zastajić">
+<!ENTITY projectMenu_stop_accesskey "z">
+<!ENTITY projectMenu_debug_label "Nałoženje za zmylkami přepytać">
+<!ENTITY projectMenu_debug_accesskey "m">
+<!ENTITY projectMenu_remove_label "Projekt wotstronić">
+<!ENTITY projectMenu_remove_accesskey "w">
+<!ENTITY projectMenu_showPrefs_label "Nastajenja">
+<!ENTITY projectMenu_showPrefs_accesskey "s">
+<!ENTITY projectMenu_manageComponents_label "Ekstrakomponenty zrjadować">
+<!ENTITY projectMenu_manageComponents_accesskey "E">
+<!ENTITY projectMenu_refreshTabs_label "Rajtarki aktualizować">
+
+<!ENTITY runtimeMenu_label "Běžny čas">
+<!ENTITY runtimeMenu_accesskey "B">
+<!ENTITY runtimeMenu_disconnect_label "Zwisk dźělić">
+<!ENTITY runtimeMenu_disconnect_accesskey "d">
+<!ENTITY runtimeMenu_takeScreenshot_label "Foto wobrazowki">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "F">
+<!ENTITY runtimeMenu_showDetails_label "Informacije běžneho časa">
+<!ENTITY runtimeMenu_showDetails_accesskey "I">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Gratowe nastajenja">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "G">
+<!ENTITY runtimeMenu_showSettings_label "Gratowe nastajenja">
+<!ENTITY runtimeMenu_showSettings_accesskey "n">
+
+<!ENTITY viewMenu_label "Napohlad">
+<!ENTITY viewMenu_accesskey "h">
+<!ENTITY viewMenu_zoomin_label "Powjetšić">
+<!ENTITY viewMenu_zoomin_accesskey "w">
+<!ENTITY viewMenu_zoomout_label "Pomjeńšić">
+<!ENTITY viewMenu_zoomout_accesskey "m">
+<!ENTITY viewMenu_resetzoom_label "Skalowanje wróćo stajić">
+<!ENTITY viewMenu_resetzoom_accesskey "S">
+
+<!ENTITY projectButton_label "Nałoženje wočinić">
+<!ENTITY runtimeButton_label "Běžny čas wubrać">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Moje Projekty">
+<!ENTITY projectPanel_runtimeApps "Nałoženja běžneho časa">
+<!ENTITY projectPanel_tabs "Rajtarki">
+<!ENTITY runtimePanel_usb "USB-graty">
+<!ENTITY runtimePanel_wifi "WLAN-graty">
+<!ENTITY runtimePanel_simulator "Simulatory">
+<!ENTITY runtimePanel_other "Druhi">
+<!ENTITY runtimePanel_installsimulator "Simulator instalować">
+<!ENTITY runtimePanel_noadbhelper "ADB Helper instalować">
+<!ENTITY runtimePanel_nousbdevice "Njemóžeće swój grat widźeć?">
+<!ENTITY runtimePanel_refreshDevices_label "Graty aktualizować">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "płaćiwy">
+<!ENTITY details_warning_header "warnowanja">
+<!ENTITY details_error_header "zmylki">
+<!ENTITY details_description "Wopisanje">
+<!ENTITY details_location "Městno">
+<!ENTITY details_manifestURL "ID nałoženja">
+<!ENTITY details_removeProject_button "Projekt wotstronić">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "Nowe nałoženje">
+<!ENTITY newAppHeader "Předłohu wubrać">
+<!ENTITY newAppLoadingTemplate "Předłohi so začituja…">
+<!ENTITY newAppProjectName "Projektowe mjeno:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "Začinić">
+<!-- Addons -->
+
+<!ENTITY addons_title "Wosebite komponenty">
+<!ENTITY addons_aboutaddons "Zrjadowak přidatkow wočinić">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "Nastajenja">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Powšitkowne">
+<!ENTITY prefs_restore "Standard wobnowić">
+<!ENTITY prefs_manage_components "Ekstrakomponenty zrjadować">
+<!ENTITY prefs_options_autoconnectruntime "Z předchadnym běžnym časom znowa zwjazać">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Z předchadnym běžnym časom znowa zwjazać, hdyž WebIDE startuje">
+<!ENTITY prefs_options_rememberlastproject "Sej posledni projekt spomjatkować">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Předchadny projekt wobnowić, hdyž WebIDE startuje">
+<!ENTITY prefs_options_templatesurl "URL předłohow">
+<!ENTITY prefs_options_templatesurl_tooltip "Indeks k dispoziciji stejacych předłohow">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "Informacije běžneho časa">
+<!ENTITY runtimedetails_adbIsRoot "ADB je korjeń: ">
+<!ENTITY runtimedetails_summonADBRoot "korjenjowy grat">
+<!ENTITY runtimedetails_ADBRootWarning "(trjeba njezawrjeny startowy program)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Njewobmjezowane priwilegije wuwiwarskich nastrojow: ">
+<!ENTITY runtimedetails_requestPrivileges "wo wyše priwilegije prosyć">
+<!ENTITY runtimedetails_privilegesWarning "(Budźe grat znowa startować. Trjeba administratorowy přistup.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "Boolean">
+<!ENTITY device_typenumber "Integer">
+<!ENTITY device_typestring "String">
+<!ENTITY device_typeobject "Objekt">
+<!ENTITY device_typenone "Typ wubrać">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "Gratowe nastajenja">
+<!ENTITY devicepreference_search "Pytanske nastajenja">
+<!ENTITY devicepreference_newname "Nowe mjeno nastajenja">
+<!ENTITY devicepreference_newtext "Hódnota nastajenja">
+<!ENTITY devicepreference_addnew "Nowe nastajenje přidać">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "Gratowe nastajenja">
+<!ENTITY devicesetting_search "Pytanske nastajenja">
+<!ENTITY devicesetting_newname "Mjeno noweho nastajenja">
+<!ENTITY devicesetting_newtext "Hódnota nastajenja">
+<!ENTITY devicesetting_addnew "Nowe nastajenje přidać">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Pomoc">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "Identifikacija klienta">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Kónčny dypk, z kotrymž so zwjazujeće, trjeba dalše informacije, zo by tutón zwisk awtentifikował. Prošu skenujće slědowacy QR-kod přez zapodawanske polo na swojim druhim graće.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Njeje žane zapodawanske polo za QR-skener?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Maće zapodawanske polo za QR-skener?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Jeli waš druhi grat so za znamješkowym slědom praša, město zo QR-kod skenuje, kopěrujće prošu slědowacu hódnotu do druheho grata:">
+<!ENTITY wifi_auth_qr_size_note "Je-li QR-kod přemały, zo by so zwisk wuspěšnje wutworił, pospytujće jón skalować ab wokno powjetšeć.">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "Přikazowe protokole za předpakowanje">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "Simulatorowe nastajenja">
+<!ENTITY simulator_remove "Simulator zhašeć">
+<!ENTITY simulator_reset "Standard wobnowić">
+<!ENTITY simulator_name "Mjeno">
+<!ENTITY simulator_software "Softwara">
+<!ENTITY simulator_version "Wersija">
+<!ENTITY simulator_profile "Analyza běžneho časa">
+<!ENTITY simulator_hardware "Hardwara">
+<!ENTITY simulator_device "Grat">
+<!ENTITY simulator_screenSize "Wobrazowka">
+<!ENTITY simulator_pixelRatio "Pikselowy poměr">
+<!ENTITY simulator_tv_data "Telewizijna simulacija">
+<!ENTITY simulator_tv_data_open "Konfiguraciske daty">
+<!ENTITY simulator_tv_data_open_button "Konfiguraciski zapis wočinić…">

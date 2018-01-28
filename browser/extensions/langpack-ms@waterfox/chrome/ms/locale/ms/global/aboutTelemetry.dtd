@@ -1,0 +1,134 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Data Telemetri">
+
+<!ENTITY aboutTelemetry.pingDataSource "Sumber data ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Data ping semasa">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Data ping diarkibkan">
+
+<!ENTITY aboutTelemetry.raw "
+JSON Mentah
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Papar data sub-sesi
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Pilih ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Ping lebih baru
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ping lebih lama &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Minggu
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Jenis Ping
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping ">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Hari ini
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Semalam
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Lebih lama
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Data Umum
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Data Persekitaran
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Log Telemetri
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Penyata SQL Perlahan
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Pelayar Tersekat
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Thread Tersekat
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Tangkapan Stacks
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skala
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Skala Dikunci
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogram">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histogram Dikunci
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Acara
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Pengukuran Mudah
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Butiran Add-on
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Penulisan Lewat
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Maklumat Sesi
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOTA; Menyahpepijat SQL secara perlahan sedang aktif. String penuh SQL mungkin dipaparkan di bawah ini tapi tidak akan dihantar ke Telemetri.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Mendapatkan nama fungsi stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Papar data susunan mentah
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Penapis (string atau /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Muatan
+">

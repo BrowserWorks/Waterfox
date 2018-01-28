@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "K'ojlib'äl:">
+<!ENTITY tile.label                 "Ch'utiwäch">
+<!ENTITY center.label               "Pa nik'aj">
+<!ENTITY stretch.label              "Tiyuq">
+<!ENTITY fill.label                 "Tinojisäx">
+<!ENTITY fit.label                  "Tinuk'">
+<!ENTITY preview.label              "Nab'ey tzub'al">
+<!ENTITY color.label                "B'onil:">
+<!ENTITY setDesktopBackground.title "Ticha' richin rupam ch'atal">
+<!ENTITY openDesktopPrefs.label     "Kejaq ri taq rajowab'al kematz'ib'ab'äl">
+<!ENTITY closeWindow.key            "w">

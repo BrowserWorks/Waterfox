@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Pháp sư Tạo mới Hồ sơ">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; lưu các thông tin thiết lập và tùy chọn của bạn trong hồ sơ cá nhân.">
+<!ENTITY profileCreationExplanation_2.text  "Nếu dùng chung &brandShortName; với người khác, bạn có thể dùng hồ sơ để lưu các thông tin riêng cho từng người. Để làm việc này, mỗi người nên tạo một hồ sơ riêng cho mình.">
+<!ENTITY profileCreationExplanation_3.text  "Nếu là người duy nhất dùng &brandShortName;, bạn phải có ít nhất một hồ sơ. Nếu muốn, bạn có thể tạo nhiều hồ sơ cho chính mình để lưu các thiết lập và tùy chọn khác nhau. Ví dụ, có thể bạn muốn có các hồ sơ riêng rẽ cho công việc và cá nhân.">
+<!ENTITY profileCreationExplanation_4.text  "Để bắt đầu tạo hồ sơ, nhấn Tiến.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Để bắt đầu tạo hồ sơ, nhấn Tiếp tục.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Để bắt đầu tạo hồ sơ, nhấn Tiến.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Nếu tạo vài hồ sơ, bạn có thể tách biệt chúng bằng cách đặt tên. Có thể dùng tên được cung cấp ở đây hoặc tự đặt theo ý bạn.">
+<!ENTITY profilePrompt.label            "Nhập tên hồ sơ mới:">
+<!ENTITY profilePrompt.accesskey        "N">
+<!ENTITY profileDirectoryExplanation.text   "Thiết lập, tùy chọn và những dữ liệu liên quan đến người dùng sẽ được lưu tại:">
+<!ENTITY profileDefaultName             "Nguoi dung Mac dinh">
+<!ENTITY button.choosefolder.label      "Chọn Thư Mục…">
+<!ENTITY button.choosefolder.accesskey  "C">
+<!ENTITY button.usedefault.label        "Sử dụng Thư mục Mặc định">
+<!ENTITY button.usedefault.accesskey    "S">

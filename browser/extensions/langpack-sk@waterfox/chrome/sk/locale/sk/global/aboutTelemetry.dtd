@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Údaje telemetrie">
+
+<!ENTITY aboutTelemetry.pingDataSource "Zdroj údajov pre ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Aktuálne údaje príkazu ping">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Archivované údaje príkazu ping">
+
+<!ENTITY aboutTelemetry.raw "Dáta JSON v nespracovanom tvare">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Zobraziť údaje sub-relácie">
+
+<!ENTITY aboutTelemetry.choosePing "Zvoľte ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Novší ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Starší ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Týždeň">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Typ pingu
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Dnes
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Včera
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Staršie
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "Všeobecné údaje">
+
+<!ENTITY aboutTelemetry.environmentDataSection "Údaje prostredia">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "Záznamy telemetrie">
+
+<!ENTITY aboutTelemetry.slowSqlSection "Pomalé výrazy SQL">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "Zlyhania prehliadača">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "Zlyhania vlákien">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Zachytené zásobníky
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Skaláre
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Kľúčové skaláre
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "Histogramy">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "Histogramy s kľúčom">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Udalosti
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "Jednoduché merania">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "Podrobnosti o doplnkoch">
+
+<!ENTITY aboutTelemetry.lateWritesSection "Neskoré zápisy">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Informácia o relácii">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "Poznámka: Je zapnuté ladenie pomalých výrazov SQL. Nižšie môžu byť zobrazené celé výrazy SQL, avšak tieto nebudú odosielané pomocou telemetrie.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Získať názvy funkcií pre zásobníky zlyhaní
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Zobraziť nespracované údaje zásobníka
+">
+
+<!ENTITY aboutTelemetry.filterText "Filter (reťazec alebo /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "Obsah">

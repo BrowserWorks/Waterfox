@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "建立設定檔精靈">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; 把您的設定、偏好等各種資料存於您的個人設定檔 (Profile) 中。">
+<!ENTITY profileCreationExplanation_2.text  "如果您與人共用電腦，只需要為每個使用者各自建立 &brandShortName; 設定檔即可將各個使用者的資訊分開。">
+<!ENTITY profileCreationExplanation_3.text  "如果只有自己使用，至少還是要建立一個設定檔。當然您若想把工作跟個人用途的資料分開，也可以建立多個 &brandShortName; 設定檔。">
+<!ENTITY profileCreationExplanation_4.text  "要開始建立設定檔請按「下一步」。">
+<!ENTITY profileCreationExplanation_4Mac.text  "要開始建立設定檔請按「繼續」。">
+<!ENTITY profileCreationExplanation_4Gnome.text  "要開始建立設定檔請按「下一步」。">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "若您建立多個設定檔則可用名稱來區分，請參考下面的建議名稱或用您自己喜歡的名字。">
+<!ENTITY profilePrompt.label            "輸入新設定檔名稱:">
+<!ENTITY profilePrompt.accesskey        "E">
+<!ENTITY profileDirectoryExplanation.text   "您的使用者設定、偏好設定和其他個人資料會存放於:">
+<!ENTITY profileDefaultName             "Default User">
+<!ENTITY button.choosefolder.label      "選擇資料夾…">
+<!ENTITY button.choosefolder.accesskey  "C">
+<!ENTITY button.usedefault.label        "使用預設資料夾">
+<!ENTITY button.usedefault.accesskey    "U">
+

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "צא מכאן!">
+<!ENTITY safeb.palm.decline.label "התעלמות מאזהרה זו">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "אתר זה אינו אתר מטעה…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "א">
+<!ENTITY safeb.palm.reportPage.label "למה דף זה נחסם?">
+
+<!ENTITY safeb.blocked.malwarePage.title "דף תקיפה מדווח!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "הדף בכתובת  <span id='malware_sitename'/> דווח בתור דף תקיפה ונחסם בהתאם להגדרות האבטחה שלך.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>דפי תקיפה מנסים להתקין תוכנות שגונבות נתונים פרטיים, עושות שימוש במחשב שלך כדי לתקוף אחרים, או בפוגעות במערכת שלך.</p><p>חלק מדפי התקיפה מפיצים בכוונה תוכנות מסוכנות, בעוד דפים אחרים שובשו ללא ידיעת בעלי האתר או בהסכמתם.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "דף תכנה בלתי רצויה מדווח!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "הדף בכתובת <span id='unwanted_sitename'/> דווח כיוון שהוא מכיל תכנה בלתי רצויה ולכן נחסם בהתאם להעדפות האבטחה שלך.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>דפי תכנה בלתי רצויה מנסים להתקין תכניות שעשויות להוליך שולל ולהשפיע על המערכת שלך בדרכים בלתי צפויות.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "אתר מטעה!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "הדף בכתובת <span id='phishing_sitename'/> דווח כאתר מטעה ונחסם בהתאם להעדפות האבטחה שלך.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>אתרים מטעים נועדו לגרום לך לבצע פעולות מסוכנות, כמו התקנת תוכנה, חשיפה של מידע אישי כגון ססמאות, מספרי טלפון או כרטיס אשראי.</p><p>הכנסת מידע בדף זה עלולה לגרום לגניבת זהות או הונאה אחרת.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

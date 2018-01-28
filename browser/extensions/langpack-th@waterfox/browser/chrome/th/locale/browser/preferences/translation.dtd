@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ข้อยกเว้น - การแปล">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "การแปลจะไม่ถูกนำเสนอในภาษาเหล่านี้:">
+<!ENTITY treehead.languageName.label      "ภาษา">
+<!ENTITY removeLanguage.label             "เอาภาษาออก">
+<!ENTITY removeLanguage.accesskey         "อ">
+<!ENTITY removeAllLanguages.label         "เอาภาษาทั้งหมดออก">
+<!ENTITY removeAllLanguages.accesskey     "ท">
+
+<!ENTITY noTranslationForSites.label      "การแปลจะไม่ถูกนำเสนอในไซต์เหล่านี้:">
+<!ENTITY treehead.siteName.label          "ไซต์">
+<!ENTITY removeSite.label                 "เอาไซต์ออก">
+<!ENTITY removeSite.accesskey             "ต">
+<!ENTITY removeAllSites.label             "เอาไซต์ทั้งหมดออก">
+<!ENTITY removeAllSites.accesskey         "ท">
+
+<!ENTITY button.close.label               "ปิด">
+<!ENTITY button.close.accesskey           "ป">
+
+<!ENTITY treehead.siteName2.label         "Websites">

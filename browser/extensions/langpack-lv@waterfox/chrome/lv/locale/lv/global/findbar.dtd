@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Meklēt frāzi turpmākajā tekstā">
+<!ENTITY previous.tooltip "Meklēt frāzi virzienā uz sākumu">
+<!ENTITY findCloseButton.tooltip "Aizvērt meklēšanas joslu">
+<!ENTITY highlightAll.label "Izcelt visas">
+<!ENTITY highlightAll.accesskey "a">
+<!ENTITY highlightAll.tooltiptext "Izcelt frāzi visā tekstā">
+<!ENTITY caseSensitive.label "Lielo, mazo burtu atbilstība">
+<!ENTITY caseSensitive.accesskey "l">
+<!ENTITY caseSensitive.tooltiptext "Meklēt uztverot lielos un mazos burtus kā atšķirīgus simbolus">
+<!ENTITY entireWord.label "Veselus vārdus">
+<!ENTITY entireWord.accesskey "v">
+<!ENTITY entireWord.tooltiptext "Meklēt tikai kā pilnus vārdus">

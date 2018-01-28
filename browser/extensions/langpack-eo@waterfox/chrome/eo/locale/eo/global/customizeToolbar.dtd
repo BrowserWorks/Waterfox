@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Personecigi ilaron">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Vi povas aldoni aŭ forviŝi elementojn trenante ilin el aŭ al la ilaroj.">
+<!ENTITY show.label               "Montri:">
+<!ENTITY iconsAndText.label       "Bildsimboloj kaj teksto">
+<!ENTITY icons.label              "Bildsimboloj">
+<!ENTITY text.label               "Teksto">
+<!ENTITY useSmallIcons.label      "Uzi etajn bildsimbolojn">
+<!ENTITY restoreDefaultSet.label  "Remeti la originalan aron">
+<!ENTITY addNewToolbar.label      "Aldoni novan ilaron">
+<!ENTITY saveChanges.label        "Preta">
+<!ENTITY undoChanges.label        "Malfari ŝanĝojn">

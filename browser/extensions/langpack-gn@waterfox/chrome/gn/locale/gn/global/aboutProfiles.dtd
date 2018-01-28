@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Mba'ete Rehegua">
+<!ENTITY aboutProfiles.subtitle "Ko kuatiarogue nepytyvõkuaa eñangarekóvo ne mba'etére. Mayma mba'ete niko ijojaha'ỹva ojejuhuhápe tapicha rembiasakue, rechaukaha, ñemboheko ha moĩmbaha.">
+<!ENTITY aboutProfiles.create "Mba'ete Pyahu Ñemoheñói">
+<!ENTITY aboutProfiles.restart.title "Moñepyrũjey">
+<!ENTITY aboutProfiles.restart.inSafeMode "Moĩmbaha oguepyréva ndive moñepyrũjey...">
+<!ENTITY aboutProfiles.restart.normal "Jepiveguáicha ñemoñepyrũjey...">

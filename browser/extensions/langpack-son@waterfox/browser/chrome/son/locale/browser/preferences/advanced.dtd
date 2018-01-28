@@ -1,0 +1,180 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Hayakul">
+
+<!ENTITY useCursorNavigation.label       "Waati kul ma moo dirandikaw kufaley ka naaru moɲey ra">
+<!ENTITY useCursorNavigation.accesskey   "d">
+<!ENTITY searchOnStartTyping.label       "Hantum ceeci waati kaŋ ay šintin ka hantum">
+<!ENTITY searchOnStartTyping.accesskey   "H">
+<!ENTITY useOnScreenKeyboard.label       "Maate walha cebe nd'a ga hima">
+<!ENTITY useOnScreenKeyboard.accesskey   "h">
+
+<!ENTITY browsing.label                  "Ceeciyan">
+
+<!ENTITY useAutoScroll.label             "Boŋ-cendiyan goyandi">
+<!ENTITY useAutoScroll.accesskey         "c">
+<!ENTITY useSmoothScrolling.label        "Cendiyan baana goyandi">
+<!ENTITY useSmoothScrolling.accesskey    "a">
+<!ENTITY checkUserSpelling.label         "War boŋhantumoo koroši waati kaŋ ay ga hantum">
+<!ENTITY checkUserSpelling.accesskey     "h">
+
+<!ENTITY dataChoicesTab.label            "Bayhaya suubarey">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+
+
+
+
+
+
+
+
+
+<!ENTITY networkTab.label                "Sankay">
+
+
+<!ENTITY connectionDesc.label            "Hanse taka kaŋ nda &brandShortName; ga Interneti ciya">
+<!ENTITY connectionSettings.label        "Kayandiyaney…">
+<!ENTITY connectionSettings.accesskey    "a">
+
+<!ENTITY httpCache.label                 "Interneti gundekuna lanbante">
+
+<!ENTITY offlineStorage2.label           "Bila nda ciya Interneti gundekuna lanbante nda goykaw bayhayey">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Nungu bayhayey">
+<!ENTITY clearSiteData.label             "Bayhayey kul tuusu">
+<!ENTITY clearSiteData.accesskey         "u">
+<!ENTITY siteDataSettings.label          "Kayandiyaney…">
+<!ENTITY siteDataSettings.accesskey      "i">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Tugudoo kayandi">
+<!ENTITY limitCacheSizeBefore.accesskey  "d">
+<!ENTITY limitCacheSizeAfter.label       "MB jišidoo dimma">
+<!ENTITY clearCacheNow.label             "Koonandi sohõ">
+<!ENTITY clearCacheNow.accesskey         "K">
+<!ENTITY clearOfflineAppCacheNow.label   "Koonandi sohõ">
+<!ENTITY clearOfflineAppCacheNow.accesskey "h">
+<!ENTITY overrideSmartCacheSize.label    "Boŋdirandi tugudoo juwalyan daaru">
+<!ENTITY overrideSmartCacheSize.accesskey "d">
+
+<!ENTITY updateTab.label                 "Taagandiri">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName; taagandirey">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Naŋ &brandShortName; ma">
+
+
+<!ENTITY updateCheckChoose2.label        "Taagandirey guna, amma naŋ ma sinji dogoo suuba">
+<!ENTITY updateCheckChoose2.accesskey    "g">
+<!ENTITY updateManual2.label             "Ma ši taagandirey ceeci abada (ši yaamarandi)">
+<!ENTITY updateManual2.accesskey         "b">
+
+<!ENTITY updateHistory2.label            "Taagandiri taariki cebe…">
+<!ENTITY updateHistory2.accesskey        "a">
+
+<!ENTITY useService.label                "Goy bandafaari zaa ka taagarandirey sinji">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Ceecijinawey ma taagandi ngi boŋ se">
+<!ENTITY enableSearchUpdate2.accesskey   "a">
+
+<!ENTITY offlineStorageNotify.label               "Har war se waati kaŋ interneti nungu ga hãa ka bayhayey jiši bila nda interneti-ciyari">
+<!ENTITY offlineStorageNotify.accesskey           "H">
+<!ENTITY offlineStorageNotifyExceptions.label     "Hasarawey…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "a">
+
+<!ENTITY offlineAppsList2.label          "Interneti nungey wey duu fondo ka bayhayey jiši bila-nda-ciyari goyyan se:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Kaa…">
+<!ENTITY offlineAppsListRemove.accesskey "K">
+<!ENTITY offlineAppRemove.confirm        "Bila-nda-ciyari kaa">
+
+<!ENTITY certificateTab.label            "Tabatiyan-tiirawey">
+<!ENTITY certPersonal2.description       "Waati kaŋ feršikaw n'ay boŋ tabatiyan-tiiraa wiri">
+<!ENTITY selectCerts.auto                "Affoo suuba boŋse">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Hãa waati foo kul">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Hayyan OCSP zaabi feršikey ka sohõda tabatandi tiira booriyanoo cimandi.">
+<!ENTITY enableOCSP.accesskey            "H">
+
+
+
+
+
+<!ENTITY performance.label               "Teeyan sahã">
+<!ENTITY useRecommendedPerformanceSettings2.label "Goy nda goy sahã kayandiyan yaamarantey">
+
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "o">
+
+<!ENTITY limitContentProcessOption.label "Gundekuna goyandiyan adadu">
+
+<!ENTITY limitContentProcessOption.accesskey   "d">
+
+
+<!ENTITY allowHWAccel.label              "Goy nda jinay šenda cahãndikaw nd'a ga bara">
+<!ENTITY allowHWAccel.accesskey          "j">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY crashReporterLearnMore.label    "Learn more">
+
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY updateApplication.version.pre   "Version ">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

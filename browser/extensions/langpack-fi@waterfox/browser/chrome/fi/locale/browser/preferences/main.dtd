@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Käynnistys">
+
+<!ENTITY startupPage2.label        "Kun &brandShortName; käynnistetään">
+<!ENTITY startupPage2.accesskey    "F">
+<!ENTITY startupUserHomePage.label "Avaa aloitussivu">
+<!ENTITY startupBlankPage.label    "Avaa tyhjä sivu">
+<!ENTITY startupPrevSession.label  "Avaa viime istunnon ikkunat ja välilehdet">
+
+<!ENTITY homepage2.label           "Aloitussivu">
+<!ENTITY homepage2.accesskey       "A">
+<!ENTITY useCurrentPage.label      "Käytä avointa sivua">
+<!ENTITY useCurrentPage.accesskey  "K">
+<!ENTITY useMultiple.label         "Käytä avoimia sivuja">
+<!ENTITY chooseBookmark.label      "Käytä kirjanmerkkiä…">
+<!ENTITY chooseBookmark.accesskey  "m">
+<!ENTITY restoreDefault.label      "Palauta oletusasetus">
+<!ENTITY restoreDefault.accesskey  "P">
+
+<!ENTITY downloads.label     "Lataukset">
+
+<!ENTITY saveTo.label "Tallenna kansioon">
+<!ENTITY saveTo.accesskey "T">
+<!ENTITY chooseFolderWin.label        "Selaa…">
+<!ENTITY chooseFolderWin.accesskey    "S">
+<!ENTITY chooseFolderMac.label        "Valitse…">
+<!ENTITY chooseFolderMac.accesskey    "V">
+<!ENTITY alwaysAskWhere.label         "Kysy aina tiedoston tallennuskansio">
+<!ENTITY alwaysAskWhere.accesskey     "n">
+
+<!ENTITY alwaysCheckDefault2.label        "Tarkista aina, onko &brandShortName; oletusselain">
+<!ENTITY alwaysCheckDefault2.accesskey    "i">
+<!ENTITY setAsMyDefaultBrowser3.label     "Aseta oletukseksi…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "e">
+<!ENTITY isDefault.label                  "&brandShortName; on järjestelmän oletusselain">
+<!ENTITY isNotDefault.label               "&brandShortName; ei ole järjestelmän oletusselain">
+
+<!ENTITY separateProfileMode.label        "Salli &brandShortName;in ja Waterfoxin olla käynnissä samaan aikaan">
+<!ENTITY useWaterfoxSync.label             "Vinkki: Tämä vaatii erilliset käyttäjäprofiilit. Synkronoi profiilien tiedot Sync-palvelulla.">
+<!ENTITY getStarted.notloggedin.label     "Kirjaudu &syncBrand.shortName.label;-palveluun…">
+<!ENTITY getStarted.configured.label      "Avaa &syncBrand.shortName.label;-asetukset">
+
+<!ENTITY e10sEnabled.label                "&brandShortName; hyödyntää useaa prosessia">

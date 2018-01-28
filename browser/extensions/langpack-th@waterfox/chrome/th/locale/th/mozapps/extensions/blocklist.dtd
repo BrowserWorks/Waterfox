@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "ส่วนเสริมที่อาจก่อให้เกิดปัญหา">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; ได้ตรวจสอบแล้วว่าส่วนเสริมดังกล่าวอาจจะสร้างปัญหาด้านเสถียรภาพและความปลอดภัย:">
+<!ENTITY blocklist.softblocked       "เพื่อปกป้องคุณ จึงแนะนำเป็นอย่างสูงให้คุณเริ่มการทำงานใหม่และปิดใช้งานส่วนเสริมเหล่านี้">
+<!ENTITY blocklist.hardblocked       "ส่วนเสริมเหล่านี้ถูกปิดกั้นเพราะมีความเสี่ยงสูงที่จะก่อให้เกิดปัญหาด้านเสถียรภาพและความปลอดภัย การเริ่มเบราเซอร์ใหม่จะเป็นการปิดการใช้งานส่วนเสริมเหล่านั้นอย่างถาวร">
+<!ENTITY blocklist.softandhard       "ส่วนเสริมเหล่านี้ถูกปิดกั้นเพราะมีความเสี่ยงสูงที่จะก่อให้เกิดปัญหาด้านเสถียรภาพและความปลอดภัย ส่วนเสริมอื่น ๆ นั้นมีความเสี่ยงต่ำกว่า แต่เราแนะนำให้คุณปิดใช้งานส่วนเสริมเหล่านั้นและเริ่มเบราเซอร์ใหม่">
+<!ENTITY blocklist.moreinfo          "ข้อมูลเพิ่มเติม">
+
+<!ENTITY blocklist.accept.label      "เริ่มการทำงาน &brandShortName; ใหม่">
+<!ENTITY blocklist.accept.accesskey  "ร">
+
+<!ENTITY blocklist.blocked.label     "ถูกปิดกั้น">
+<!ENTITY blocklist.checkbox.label    "ปิดใช้งาน">

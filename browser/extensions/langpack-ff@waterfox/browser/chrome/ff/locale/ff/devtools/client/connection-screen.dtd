@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Seŋondir">
+<!ENTITY header     "seŋaade e masiŋ goɗɗuɗo">
+<!ENTITY host       "Koɗol:">
+<!ENTITY port       "Poor:">
+<!ENTITY connect    "Seŋo">
+<!ENTITY connecting "Nana seŋoo…">
+<!ENTITY availableAddons "Ɓeyditte goɗɗuɗe ina ngoodi">
+<!ENTITY availableTabs "Tabbe goɗɗuɗe ina ngoodi:">
+<!ENTITY availableProcesses "rewindo woodngo woɗɗungo">
+<!ENTITY connectionError "Juumre:">
+<!ENTITY errorTimeout "juumre:daawal panndagol seŋo ɓennungo">
+<!ENTITY errorRefused "ceŋol calangol">
+<!ENTITY errorUnexpected "Juumre nde tijjaaka.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Kuutorɗe topirɗe Waterfox ina mbaawi momtude ella catiiɗe deestiiɗe (Waterfox mo Android walla Waterfox mo OS, e yeru). Yenane a hurminii suɓannde 'Momtugol ella deestingol' e kaɓirgel deestingel ngel. Ngam yaajnaade heen, yah to">
+<!ENTITY remoteDocumentation "defterdu">
+<!ENTITY remoteHelpSuffix ".">
+

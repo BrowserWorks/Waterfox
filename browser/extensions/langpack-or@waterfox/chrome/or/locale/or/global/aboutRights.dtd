@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "ଆପଣଙ୍କର ଅଧିକାର ବିଷୟରେ">
+<!ENTITY rights.intro "&brandFullName; ଟି ମାଗଣା ଏବଂ  ମୁକ୍ତ ଉତ୍ସ ସଫ୍ଟୱେର ଅଟେ, ସମଗ୍ର ବିଶ୍ୱର ହଜାର ହଜାର ସଦସ୍ୟଙ୍କୁ ନେଇ ଗଠିତ ସମ୍ପ୍ରଦାୟ ଦ୍ୱାରା ନିର୍ମିତ। ଆପଣଙ୍କ ଜାଣିବା ପାଇଁ ଥିବା କିଛି ବିଷୟବସ୍ତୁ:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ଟି Mozilla ସର୍ବସାଧାରଣ ଅନୁମତିପତ୍ର ନିତୀ ଅନ୍ତର୍ଗତରେ ଆପଣଙ୍କ ପାଇଁ">
+<!ENTITY rights.intro-point1b "ଉପଲବ୍ଧ ହୋଇଥାଏ">
+<!ENTITY rights.intro-point1c "। ଏହା ଅର୍ଥ ଆପଣ  &brandShortName; କୁ ଅନ୍ୟମାନଙ୍କ ପାଇଁ ବ୍ୟବହାର କରିପାରିବେ, ନକଲ କରିପାରିବେ ଏବଂ ବଣ୍ଟନ କରିପାରିବେ। ଆପଣ &brandShortName; ର ଉତ୍ସ ସଂକେତକୁ ମଧ୍ଯ ଆପଣଙ୍କ ଆବଶ୍ୟକତା ଅନୁସାରେ ପରିବର୍ତ୍ତନ କରିପାରିବେ। Mozilla ସର୍ବସାଧାରଣ ଅନୁମତିପତ୍ର ଆପଣଙ୍କୁ ନିଜର ପରିବର୍ତ୍ତିତ ସଂସ୍କରଣକୁ ବଣ୍ଟନ କରିବାର ଅଧିକାର ମଧ୍ଯ ପ୍ରଦାନ କରିଥାଏ।">
+
+<!ENTITY rights.intro-point2-a "ଆପଣଙ୍କୁ Mozilla ଅନୁଷ୍ଠାନ କିମ୍ବା ଅନ୍ୟ କୌଣସି ପକ୍ଷ ତରଫରୁ କୌଣସି ବ୍ୟବସାୟୀକ ଚିହ୍ନ ଅଧିକାର କିମ୍ବା ଅନୁମତି ପ୍ରଦାନ କରାଯାଇନଥାଏ , Waterfox ନାମ କିମ୍ବା ପ୍ରତୀକକୁ ଅନ୍ତର୍ଭୁକ୍ତ କରି। ବ୍ୟବସାୟୀକ ଚିହ୍ନ ବିଷୟରେ ଅତିରିକ୍ତ ସୂଚନା  ">
+<!ENTITY rights.intro-point2-b "ଏଠାରେ ମିଳି ପାରିବ">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 " &brandShortName; ରେ ଥିବା କିଛି ବିଶେଷଗୁଣ, ଯେପରିକି ନଷ୍ଟ ବିବରଣୀ, ଆପଣଙ୍କୁ &vendorShortName; କୁ ମତାମତ ଦେବା ପାଇଁ ବିକଳ୍ପ ପ୍ରଦାନ କରିଥାଏ। ମତାମତ ଦାଖଲ କରିବା ପାଇଁ ବାଛିବା ଦ୍ୱାରା, ଆପଣ &vendorShortName; କୁ ଏହାର ଉତ୍ପାଦନ ବୃଦ୍ଧିକରିବା ପାଇଁ ମତାମତକୁ ବ୍ୟବହାର କରିବା ପାଇଁ, ଏହାର ୱେବସାଇଟରେ ମତାମତକୁ ପ୍ରକାଶ କରିବା ପାଇଁ, ଏବଂ ମତାମତକୁ ବଣ୍ଟନ କରିବା ପାଇଁ  ଅନୁମତି ଦେଇଥାନ୍ତି।">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a " &vendorShortName;ରେ &brandShortName; ମାଧ୍ଯମରେ ଦାଖଲ ହୋଇଥିବା ବ୍ୟକ୍ତିଗତ ସୂଚନା ଏବଂ ମତାମତକୁ କିପରି ବ୍ୟବହାର କରାଯିବ ତାହା ଏଠାରେ ବର୍ଣ୍ଣନା କରାଯାଇଛି ">
+<!ENTITY rights2.intro-point3b "&brandShortName; ଗୋପନୀୟତା ନିତୀ">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "ଏହି ଉତ୍ପାଦ ପାଇଁ କୌଣସି ଉପଯୁକ୍ତ ଗୋପନୀୟ ନିତି ଏଠାରେ ତାଲିକାଭୁକ୍ତ ହେବା ଉଚିତ।">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Some &brandShortName; features make use of web-based information services, however, we cannot guarantee they are 100&#037; accurate or error-free. More details, including information on how to disable the features that use these services, can be found in the ">
+<!ENTITY rights.intro-point4b "service terms">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "ଯଦି ଏହି ଉତ୍ପାଦ ୱେବ ସର୍ଭିସଗୁଡ଼ିକୁ ଚଲାଉଥାଏ, ତେବେ ସର୍ଭିସଗୁଡ଼ିକ ପାଇଁ ଯେକୌଣସି ଯୋଗ୍ୟ ସର୍ଭିସ ନିୟମାବଳୀକୁ ">
+<!ENTITY rights.intro-point4b-unbranded "ୱେବ ସାଇଟ ସର୍ଭିସ ବିଭାଗ ସହିତ ">
+<!ENTITY rights.intro-point4c-unbranded " ସଂଯୁକ୍ତ କରାଯାଇଥାଏ।">
+
+<!ENTITY rights2.webservices-header "&brandFullName; ୱେବ ସାଇଟ ସର୍ଭିସଗୁଡ଼ିକ">
+<!-- point 5 -->
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; ୱେବ ସାଇଟ ସୂଚନା ସର୍ଭିସଗୁଡ଼ିକୁ ବ୍ୟବହାର କରିଥାଏ(&quot;Services&quot;), ଯାହାକି ନିମ୍ନରେ ବର୍ଣ୍ଣନା କରାଯାଇଥିବା ପରି ଏହି &brandShortName;ର ଦ୍ୱିମିକ ସଂସ୍କରଣ ସହିତ ଆପଣଙ୍କର ବ୍ୟବହାର ପାଇଁ ଉପଲବ୍ଧ ହୋଇଥାଏ। ଯଦି ଆପଣ ସେହି ସର୍ଭିସକୁ ବ୍ୟବହାର କରିବାକୁ ଚାହୁଁନାହାନ୍ତି କିମ୍ବା ଆପଣଙ୍କୁ ନିମ୍ନଲିଖିତ ନିୟମାବଳୀ ଗ୍ରହଣୀୟ ନୁହଁ, ତେବେ ଆପଣ ପ୍ରୟୋଗ ପସନ୍ଦକୁ ଖୋଲି ସୁରକ୍ଷା ବିଭାଗକୁ ଚୟନ କରି,">
+<!ENTITY rights2.webservices-b "ସର୍ଭିସକୁ ନିଷ୍କ୍ରିୟ କରିଥାଏ">
+<!ENTITY rights3.webservices-c ". ଅନ୍ୟାନ୍ୟ ବିଶେଷତା ଏବଂ ସର୍ଭିସଗୁଡ଼ିକୁ ପ୍ରୟୋଗ ପସନ୍ଦଗୁଡ଼ିକରେ ନିଷ୍କ୍ରିୟ କରିପାରିବେ।">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "ସୁରକ୍ଷିତ ବ୍ରାଉଜିଙ୍ଗ: ">
+<!ENTITY rights.safebrowsing-b "ସୁରକ୍ଷିତ ବ୍ରାଉଜିଙ୍ଗ ବିଶେଷତାକୁ ନିଷ୍କ୍ରିୟ କରିବା ଫଳରେଏହା ଅସୁରକ୍ଷିତ ସାଇଟକୁ ଯାଇପାରେ। ଯଦି ଆପଣ ଏହି ବିଶେଷତାକୁ ସମ୍ପୂର୍ଣ୍ଣ ଭାବରେ  ନିଷ୍କ୍ରିୟ କରିବା ପାଇଁ ଚାହୁଁଛନ୍ତି, ତେବେ ନିମ୍ନଲିଖିତ ପଦକ୍ଷେପଗୁଡ଼ିକୁ ଅନୁସରଣ କରନ୍ତୁ:">
+<!ENTITY rights.safebrowsing-term1 "ପ୍ରୟୋଗ ପସନ୍ଦଗୁଡ଼ିକୁ ଖୋଲନ୍ତୁ">
+<!ENTITY rights.safebrowsing-term2 "ସୁରକ୍ଷା ଚୟନକୁ ବାଛନ୍ତୁ">
+
+<!ENTITY rights.safebrowsing-term4 "ସୁରକ୍ଷିତ ବ୍ରାଉଜିଙ୍ଗକୁ ବର୍ତ୍ତମାନ ନିଷ୍କ୍ରିୟ କରାଯାଇଛି">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "ଅବସ୍ଥାନ ସଚେତନ ବ୍ରାଉଜିଙ୍ଗକୁ: ">
+<!ENTITY rights.locationawarebrowsing-b "ସର୍ବଦା ଗ୍ରହଣ କରାଯାଇଥାଏ।  କୌଣସି ଅବସ୍ଥାନ ସୂଚନାକୁ ଆପଣଙ୍କ ବିନା ଅନୁମତିରେ ପଠାଯାଇନାହିଁ।  ଯଦି ଆପଣ ଏହି ବିଶେଷତାକୁ ସମ୍ପୂର୍ଣ୍ଣ ଭାବରେ ନିଷ୍କ୍ରିୟ କରିବାକୁ ଇଚ୍ଛାକରନ୍ତି, ତେବେ ନିମ୍ନଲିଖିତ ପଦକ୍ଷେପଗୁଡ଼ିକୁ ଅନୁସରଣ କରନ୍ତୁ:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL ପଟିରେ, ଲେଖନ୍ତୁ ">
+<!ENTITY rights.locationawarebrowsing-term1b "ବିଷୟ:ସଂରଚନା">
+<!ENTITY rights.locationawarebrowsing-term2 " geo.enabled ଲେଖନ୍ତୁ">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled ପସନ୍ଦ ଉପରେ ଦୁଇଥର କ୍ଲିକ କରନ୍ତୁ">
+<!ENTITY rights.locationawarebrowsing-term4 "ଅବସ୍ଥାନ ସଚେତନ ବ୍ରାଉଜିଙ୍ଗକୁ ବର୍ତ୍ତମାନ ନିଷ୍କ୍ରିୟ କରାଯାଇଛି">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "ସେହି ଉତ୍ପାଦ ଚଲାଉଥିବା ୱେବ ସାଇଟ ସର୍ଭିସର  ଗୋଟିଏ ସମୀକ୍ଷା, ସେମାନଙ୍କୁ କିପରି ନିଷ୍କ୍ରିୟ କରାଯିବ ତାହା ବିଷୟରେ ସୂଚନା ସହିତ, ଯଦି ଉପଯୁକ୍ତ ହୁଏ, ତେବେ ଏଠାରେ ଅନ୍ତର୍ଭୁକ୍ତ କରିବା ଉଚିତ।">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "ଏହି ଉତ୍ପାଦ ପାଇଁ ଯେ କୌଣସି ଉପଯୁକ୍ତ ସର୍ଭିସ ନିୟମାବଳୀକୁ ଏଠାରେ ତାଲିକାଭୁକ୍ତ କରିବା ଉଚିତ।">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; ଏବଂ ଏହାର ସହଯୋଗୀ, ପ୍ରମାଣପତ୍ରଧାରୀ ଏବଂ ଭାଗିଦାରମାନେ ସଠିକ  ଏବଂ ସମ୍ପୂର୍ଣ୍ଣ ଫିସିଙ୍ଗ ଏବଂ ମାଲୱେର ସୂଚନା ପ୍ରଦାନ କରିବା ପାଇଁ କାର୍ଯ୍ୟ କରିଥାନ୍ତି। ତଥାପି, ସେମାନେ ଏହି ସୂଚନାଟି ବୋଧଗମ୍ୟ ଏବଂ ତ୍ରୁଟିମୁକ୍ତ ବୋଲି ନିର୍ଭରୋକ୍ତି ଦେଇପାରିବେ ନାହିଁ: କିଛି ବିପଦପୂର୍ଣ୍ଣ ସାଇଟଗୁଡ଼ିକୁ ଜାଣିହୁଏ ନାହିଁଏବଂ କିଛି ସୁରକ୍ଷିତ ସାଇଟ ତ୍ରୁଟିଯୁକ୍ତ ବୋଲି ଚିହ୍ନାପଡ଼ିଥାଏ।">
+<!ENTITY rights.webservices-term2 "&vendorShortName; ବିଚ୍ଚିନ୍ନ ହୋଇପାରେ କିମ୍ବା ଏହାର  ବୃଦ୍ଧିରେ ସର୍ଭିସଗୁଡ଼ିକୁ ପରିବର୍ତ୍ତନ କରିଥାଏ।">
+<!ENTITY rights2.webservices-term3 "&brandShortName;ର ପ୍ରଚଳିତ ସଂସ୍କରଣ ସହିତ ଏହି ସର୍ଭିସଗୁଡ଼ିକୁ ବ୍ୟବହାର କରିବା ପାଇଁ ଆପଣଙ୍କୁ ସ୍ୱାଗତ କରୁଅଛୁ, ଏବଂ ଏହା କରିବା ପାଇଁ ଆପଣଙ୍କୁ ଆବଶ୍ୟକୀୟ ଅଧିକାର ପ୍ରଦାନ କରାଯାଇଛି।  &vendorShortName; ଏବଂ ଏହାର ଅନୁମତିପତ୍ର ପ୍ରଦାନକାରୀ ସେହି ସର୍ଭିସଗୁଡ଼ିକରେ ସମସ୍ତ ଅଧିକାରକୁ ସଂରକ୍ଷଣ କରିଥାଏ।  &brandShortName; ଏବଂ &brandShortName; ଅନୁରୂପ ଉତ୍ସ ସଂକେତ ସଂସ୍କରଣ ପାଇଁ ଏହି ବସ୍ତୁଗୁଡ଼ିକୁ ମୁକ୍ତ ଉତ୍ସ ଅନୁମତି ପତ୍ରରୁ ମିଳିଥିବା କୌଣସି ଅଧିକାରକୁ ସୀମାବଦ୍ଧ କରିବାକୁ ଲକ୍ଷ୍ଯ କରାଯାଇନଥିଲା।">
+<!ENTITY rights.webservices-term4 "ଏହି ସର୍ଭିସଗୁଡ଼ିକ &quot;  &vendorShortName;ପରି &quot;ପ୍ରଦାନ କରିଥାଏ,ଏହାର ସହଯୋଗୀ, ପ୍ରମାଣପତ୍ର ଦାତା, ବଣ୍ଟନକାରୀମାନେ ସମସ୍ତ ନିର୍ଭରୋକ୍ତିକୁ ଅସ୍ୱୀକାର କରିଥାନ୍ତି, ଅଭିବ୍ୟକ୍ତ କରାଯାଇଥିଲେ ଅଥବା ପ୍ରୟୋଗ କରାଯାଇଥିଲେ, ସମସ୍ତ ବାରଣ, ନିର୍ଭରୋକ୍ତିକୁ ଅନ୍ତର୍ଭୁକ୍ତ କରି, ଯାହାକି ସେହି ସର୍ଭିସଗୁଡ଼ିକୁ ବାଣିଜ୍ୟ ଉପଯୋଗୀ କରିଥାଏ ଏବଂ ଆପଣଙ୍କର ନିର୍ଦ୍ଦିଷ୍ଟ ଉଦ୍ଦେଶ୍ୟ ପାଇଁ ଉପଯୁକ୍ତ ହୋଇଥାଏ। ଆପଣ ଏହାର ସମଗ୍ର ବିପଦକୁ ଧାରଣ କରିବେ ଯେପରିକି ଆପଣଙ୍କ ଉଦ୍ଦେଶ୍ୟ ପାଇଁ ସର୍ଭିସ ଏବଂ ଗୁଣ ଏବଂ କାର୍ଯ୍ୟକ୍ଷମତା ଚୟନ କରିବେ। କିଛି କ୍ଷେତ୍ରରେ ଏହି ନିର୍ଭେରୋକ୍ତି ଏବଂ ବାରଣକୁ ତ୍ୟାଗ କରିଥାଏ, ଯାହାଫଳରେ ଏହା ଆପଣଙ୍କ ପାଇଁ ପ୍ରୟୋଗ ହୋଇନଥାଏ।">
+<!ENTITY rights.webservices-term5 "ନିୟମରେ ଆବଶ୍ୟକତା ବ୍ୟତୀତ, &vendorShortName;, ଏହାର ସହଯୋଗୀ, ଅନୁମତି ଧାରଣକର୍ତ୍ତା, ଏବଂ ବଣ୍ଟନକାରୀମାନେ କୋଣସି ଅପ୍ରତ୍ୟକ୍ଷ,ବିଶେଷ, ଘଟଣାକ୍ରମିକ, ଫଳସ୍ୱରୂପ, ଦଣ୍ଡାତ୍ମକ, କିମ୍ବା ଘଟିତ କୌଣସି ଅନୁକରଣୀୟ କ୍ଷତି କିମ୍ବା ଯେକୌଣସି ଉପାୟରେ &brandShortName;ର ବ୍ୟବହାର  ଏବଂ ତାହାର ସର୍ଭିସ ସହିତ ସମ୍ପୃକ୍ତ।  ଏହି ନିତୀ ଅନ୍ତର୍ଗତରେ ସମୁଦାୟ କ୍ଷତି $500 (ପାଞ୍ଚ ଶହ ଡଲର)କୁ ଅତିକ୍ରମ କରୁନଥିବ। କିଛି କ୍ଷେତ୍ରରେ ଏହାକୁ ଅଥବା କିଛି ନିର୍ଦ୍ଦିଷ୍ଟ କ୍ଷତିକୁ ମାନ୍ୟତା ଦେଇନଥାଏ, ତେଣୁ ଏହି ବହିର୍ଗତ ଏବଂ ସୀମା ଆପଣଙ୍କ କ୍ଷେତରେ ଲାଗୁ ହୋଇନପାରେ।">
+<!ENTITY rights.webservices-term6 "&vendorShortName; may update these terms as necessary from time to time. These terms may not be modified or canceled without &vendorShortName;'s written agreement.">
+<!ENTITY rights.webservices-term7 "These terms are governed by the laws of the state of California, U.S.A., excluding its conflict of law provisions. If any portion of these terms is held to be invalid or unenforceable, the remaining portions will remain in full force and effect. In the event of a conflict between a translated version of these terms and the English language version, the English language version shall control.">
+
+<!ENTITY rights.intro-point5 "In order to play back certain types of video content, &brandShortName; downloads certain content decryption modules from third parties.">
+
+<!ENTITY rights2.safebrowsing-term3 "Uncheck the option to &quot;&enableSafeBrowsing.label;&quot;">

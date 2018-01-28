@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "نام:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "ن">
+<!ENTITY editBookmarkOverlay.location.label                  "محل وقوع:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "م">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "فیڈ محل وقوع:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "ف">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "سائٹ محل وقوع:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "س">
+<!ENTITY editBookmarkOverlay.folder.label                    "پوشہ:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "تمام نشانیاں پوشے دکھائیں">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "چھپائیں">
+<!ENTITY editBookmarkOverlay.tags.label                      "ٹیگ:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "ٹ">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "ٹیگ کاموں سے الگ کریں">
+<!ENTITY editBookmarkOverlay.description.label               "تصریح:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ت">
+<!ENTITY editBookmarkOverlay.keyword.label                   "کلیدی لفظ:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "ک">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "تمام ٹیگ دکھائیں">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "یہ نشانی بغلی بار میں لوڈ کریں">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ی">
+<!ENTITY editBookmarkOverlay.choose.label                    "انتخاب کریں ...">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "نیا پوشہ">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "پ">

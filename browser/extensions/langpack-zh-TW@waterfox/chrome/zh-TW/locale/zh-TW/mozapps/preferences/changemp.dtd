@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "變更主控密碼">
+<!ENTITY setPassword.tokenName.label       "安全裝置">
+<!ENTITY setPassword.oldPassword.label     "目前密碼:">
+<!ENTITY setPassword.newPassword.label     "輸入新密碼:">
+<!ENTITY setPassword.reenterPassword.label "重新輸入密碼:">
+<!ENTITY setPassword.meter.label           "密碼品質測量計">
+<!ENTITY setPassword.meter.loading         "載入中">
+<!ENTITY masterPasswordDescription.label   "主控密碼可用來保護敏感的資訊，如網站密碼。 若您建立主控密碼，每次執行 &brandShortName; 後要用到此類資訊時都要打入密碼。">
+<!ENTITY masterPasswordWarning.label       "請確實記住您所設定的主控密碼。 若不幸忘了，則會完全無法再存取所有被主控密碼保護的資料。">
+

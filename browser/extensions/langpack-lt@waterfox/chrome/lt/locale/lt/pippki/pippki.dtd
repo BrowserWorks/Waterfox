@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Pagrindinio slaptažodžio pakeitimas">
+<!ENTITY setPassword.tokenName.label "Saugumo priemonė">
+<!ENTITY setPassword.oldPassword.label "Dabartinis slaptažodis:">
+<!ENTITY setPassword.newPassword.label "Naujas slaptažodis:">
+<!ENTITY setPassword.reenterPassword.label "Naujas slaptažodis (pakartoti):">
+<!ENTITY setPassword.meter.label "Slaptažodžio kokybės matavimas">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Atšaukti">
+<!ENTITY resetPassword.title  "Pagrindinio slaptažodžio atšaukimas">
+<!ENTITY resetPassword.text  "Jei atšauksite pagrindinį slaptažodį, prarasite visus įrašytus svetainių ir el. pašto dėžučių slaptažodžius, formų duomenis, liudijimus ir asmeninius raktus. Ar atšaukti?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Liudijimo atsiuntimas">
+<!ENTITY downloadCert.message1 "Jūsų prašoma nurodyti, ką patikite naujai liudijimų įstaigai (LĮ).">
+<!ENTITY downloadCert.trustSSL "Patikėti šiai LĮ paliudyti svetainių tapatumą.">
+<!ENTITY downloadCert.trustEmail "Patikėti šiai LĮ paliudyti el. pašto abonentų tapatumą.">
+<!ENTITY downloadCert.trustObjSign "Patikėti šiai LĮ paliudyti programinės įrangos gamintojų tapatumą.">
+<!ENTITY downloadCert.message3 "Prieš ką nors patikint liudijimo įstaigai, reikėtų susipažinti su jos liudijimu, politika ir veikla (jei tokia galimybė yra).">
+<!ENTITY downloadCert.viewCert.label "Peržiūra">
+<!ENTITY downloadCert.viewCert.text "Susipažinti su LĮ liudijimu">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Naudotojo tapatybės nustatymas">
+<!ENTITY clientAuthAsk.message1 "Svetainė prašo pateikti jūsų tapatybę patvirtinantį liudijimą.">
+<!ENTITY clientAuthAsk.message2 "Pasirinkite liudijimą tapatybei patvirtinti:">
+<!ENTITY clientAuthAsk.message3 "Išsamesnė informacija apie pasirinktą liudijimą:">
+
+<!ENTITY pkcs12.setpassword.title  "Liudijimo atsarginės kopijos slaptažodis">
+<!ENTITY pkcs12.setpassword.message  "Atsarginės kopijos slaptažodis, kurį čia įvedate, apsaugos kopijos failą, kurį ketinate sukurti. Jį reikia parinkti prieš darant atsarginę kopiją.">
+<!ENTITY pkcs12.setpassword.label1 "Liudijimo atsarginės kopijos slaptažodis:">
+<!ENTITY pkcs12.setpassword.label2 "Liudijimo atsarginės kopijos slaptažodis (pakartoti):">
+<!ENTITY pkcs12.setpassword.reminder "Svarbu. Jei pamiršite atsarginės kopijos slaptažodį, jo atkurti negalėsite. Todėl jį užsirašykite ir paslėpkite saugioje vietoje.">
+
+<!ENTITY chooseToken.title  "Saugumo priemonės pasirinkimas">
+<!ENTITY chooseToken.message1 "Pasirinkite saugumo priemonę.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Privačiojo rakto generavimas">
+<!ENTITY createCertInfo.msg1 "Generuojamas privatusis raktas… Tai gali užtrukti keletą minučių…">
+<!ENTITY createCertInfo.msg2 "Prašom palaukti…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Tapatumo patvirtinimas saugumo priemone">
+<!ENTITY protectedAuth.msg "Prašome patvirtinti savo tapatumą saugumo priemonei. Tapatumo patvirtinimo būdas priklauso nuo šios priemonės tipo.">
+<!ENTITY protectedAuth.tokenName.label "Priemonė:">

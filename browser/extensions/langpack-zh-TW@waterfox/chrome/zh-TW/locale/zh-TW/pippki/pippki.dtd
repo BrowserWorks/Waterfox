@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "變更主控密碼">
+<!ENTITY setPassword.tokenName.label "安全裝置">
+<!ENTITY setPassword.oldPassword.label "目前密碼:">
+<!ENTITY setPassword.newPassword.label "新密碼:">
+<!ENTITY setPassword.reenterPassword.label "新密碼 (再輸入一次):">
+<!ENTITY setPassword.meter.label "密碼品質測量計">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "重設">
+<!ENTITY resetPassword.title  "重設主控密碼">
+<!ENTITY resetPassword.text  "如果您要重設主控密碼，您所有的網頁與電子郵件密碼、表單資料、個人憑證、私密金鑰等資訊都會被清除。您確定要重設主控密碼嗎？">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "下載憑證">
+<!ENTITY downloadCert.message1 "您被要求信任一個新憑證機構 (CA)。">
+<!ENTITY downloadCert.trustSSL "信任此憑證機構以識別網站。">
+<!ENTITY downloadCert.trustEmail "信任此憑證機構以識別郵件用戶。">
+<!ENTITY downloadCert.trustObjSign "信任此憑證機構以識別軟體製造商。">
+<!ENTITY downloadCert.message3 "在信任此憑證機構前，您應該確認它的憑證及政策程序（如果有的話）。">
+<!ENTITY downloadCert.viewCert.label "檢視">
+<!ENTITY downloadCert.viewCert.text "檢查憑證機構的憑證">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "使用者識別需求">
+<!ENTITY clientAuthAsk.message1 "此網站要求您提供可用來識別您自己的憑證:">
+<!ENTITY clientAuthAsk.message2 "選擇一項憑證以做為識別:">
+<!ENTITY clientAuthAsk.message3 "所選憑證細節:">
+
+<!ENTITY pkcs12.setpassword.title  "選擇憑證備份密碼">
+<!ENTITY pkcs12.setpassword.message  "在此設定的憑證備份密碼可保護您要建立的備份。 您必須設定此密碼以繼續備份。">
+<!ENTITY pkcs12.setpassword.label1 "憑證備份密碼:">
+<!ENTITY pkcs12.setpassword.label2 "憑證備份密碼 (再輸入一次):">
+<!ENTITY pkcs12.setpassword.reminder "重要: 如果您忘了憑證備份密碼，將會無法回存備份。請多備一份到安全的地方。">
+
+<!ENTITY chooseToken.title  "選擇 Token 對話窗">
+<!ENTITY chooseToken.message1 "請選擇一個 Token">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "產生私密金鑰">
+<!ENTITY createCertInfo.msg1 "製造金鑰中… 請稍待幾分鐘…">
+<!ENTITY createCertInfo.msg2 "請稍候…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "被保護的 Token 鑑別">
+<!ENTITY protectedAuth.msg "請鑑別此 Token，鑑別方法會隨 Token 類型而不同。">
+<!ENTITY protectedAuth.tokenName.label "Token:">

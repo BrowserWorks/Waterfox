@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "চফ্টৱেৰৰ আপডেইট">
+
+<!ENTITY  checking.title                  "আপডেইটৰ বাবে পৰীক্ষা কৰা হৈছে">
+<!ENTITY  updateCheck.label               "&brandShortName; ৰ নতুন সংস্কৰণৰ কাৰণে বিচৰা হৈছে…">
+
+<!ENTITY  noupdatesfound.title            "কোনো আপডেইট পোৱা নগল">
+<!ENTITY  noupdatesautoenabled.intro      "কোনো আপডেইট নাই। &brandShortName; এ সময়ে সময়ে আপডেইটৰ কাৰণে পৰীক্ষা কৰিব।">
+<!ENTITY  noupdatesautodisabled.intro     "কোনো আপডেইট নাই। পিছত আকৌ পৰীক্ষা কৰক বা &brandShortName; ৰ স্বয়ংক্ৰিয় আপডেইট পৰীক্ষা সক্ৰিয় কৰক।">
+
+<!ENTITY  manualUpdate.title              "আপডেইট কৰিব নোৱাৰি">
+<!ENTITY  manualUpdate.desc               "এটা উপদেশিত সুৰক্ষা আৰু স্থিৰতাৰ আপডেইট পোৱা গৈছে, কিন্তু তাক ইনস্টল কৰিবলৈ আপোনাৰ ওচৰত চিস্টেমৰ অনুমতি নাই। আপোনাৰ চিস্টেমৰ প্ৰশাসকক লগ ধৰক, বা এই কমপিউটাৰত চফ্টৱেৰ ইনস্টল কৰাৰ অনুমতি থকা অন্য এটা হিচাপৰ পৰা আকৌ চেষ্টা কৰক।">
+<!ENTITY  manualUpdate.space.desc         "এটা উপদেশীত সুৰক্ষা আৰু স্থিৰতা আপডেইট উপলব্ধ আছে কিন্তু আপোনাৰ ইয়াক ইনস্টল কৰিবলে পৰ্যাপ্ত স্থান নাই।">
+<!ENTITY  manualUpdateGetMsg.label        "ইয়াত আপুনি সদায়ে &brandShortName; ৰ শেহতীয়া সংস্কৰণ পাব:">
+
+<!ENTITY  unsupported.title               "চিস্টেম অসমৰ্থিত">
+<!ENTITY  unsupported.label               "আপোনাৰ &brandShortName; পুৰনি হৈছে, কিন্তু শেহতীয়া সংস্কৰণ আপোনাৰ চিস্টেমত সমৰ্থিত নহয়। অনুগ্ৰহ কৰি আপোনাৰ চিস্টেম উন্নত কৰক, তাৰ পিছত পুনৰ চেষ্টা কৰক। আপুনি এই সূচনা আকৌ দেখা নাপাব, কিন্তু আপুনি কৰিব পাৰিব">
+<!ENTITY  unsupportedLink.label           "অধিক জানক।">
+
+<!ENTITY  clickHere.label                 "এই আপডেইটৰ বিষয়ে অধিক তথ্য চাওক">
+
+<!ENTITY  evangelism.desc                 "এইটো উপদেশিত যে আপুনি &brandShortName; ৰ কাৰণে যিমান পাৰে সোণকালে এই আপডেইট প্ৰয়োগ কৰে।">
+
+<!ENTITY  downloadPage.title              "&brandShortName; ডাউনল'ড কৰা হৈছে">
+<!ENTITY  downloading.intro               "আপডেইট ডাউনল'ড কৰা হৈছে…">
+<!ENTITY  connecting.label                "আপডেইটৰ চাৰ্ভাৰলৈ সংযোগ কৰা হৈছে…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; এ ডাউনল'ড কৰা ইন্ক্ৰিমেন্টেল আপডেইটৰ ঐক্যতা পৰীক্ষা কৰিব নোৱাৰিলে, সেইকাৰণে এতিয়া সম্পূৰ্ণ পেকেইজ ডাউনল'ড কৰিছে।">
+
+<!ENTITY  viewDetails.tooltip             "এই আপডেইটৰ বিৱৰণ চাওক">
+
+<!ENTITY  details.link                    "বিৱৰণ">
+
+<!ENTITY  error.title                     "আপডেইট ব্যৰ্থ">
+
+<!ENTITY  error.label                     "এই আপডেইটক পৰীক্ষা কৰা, ডাউনল'ড বা ইনস্টলত সমস্যা আছে। &brandShortName; ক উন্নত কৰিব নোৱাৰা হ'ল কাৰণ:">
+                                           
+<!ENTITY  errorManual.label               "আপুনি &brandShortName; ক নিজেই আপডেইট কৰিব পাৰে এই সংযোগ দৰ্শন কৰি আৰু শেহতীয়া সংস্কৰণ ডাউনল'ড কৰি:">
+                                           
+<!ENTITY  errorpatching.intro             "আংশিক আপডেইট প্ৰয়োগ কৰিব পৰা ন'গ'ল। &brandShortName; এ এটা সম্পূৰ্ণ আপডেইট ডাউনল'ড কৰাৰ চেষ্টা কৰিব।">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; এটা আপডেইট উপলব্ধ হয় নে নহয় নিৰ্ধাৰন কৰিবলে অক্ষম। অনুগ্ৰহ নিশ্চিত কৰক যে আপোনাৰ &brandShortName; ৰ শেহতীয়া সংস্কৰণ আছে:">
+
+<!ENTITY  finishedPage.title              "আপডেইট ইনস্টলৰ কাৰণে প্ৰস্তুত">
+<!ENTITY  finishedPage.text               "এই আপডেইট পিছৰ বাৰ &brandShortName; আৰম্ভ হওঁতে ইনস্টল্ড হ'ব। আপুনি &brandShortName; এতিয়া পুনাৰম্ভ কৰিব পাৰে, বা এতিয়া কামত আগবাঢ়ি পিছত পুনাৰম্ভ কৰক।">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; ৰ কাৰণে এটা সুৰক্ষা আৰু স্থিৰতাৰ আপডেইট ডাউনল'ড কৰা হৈছে আৰু ইনস্টলৰ কাৰণে সাজু।">
+<!ENTITY  finishedBackground.name         "আপডেইট:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "ইয়াৰ পিছৰ বা &brandShortName; আৰম্ভ হ'লে এই আপডেইট ইনস্টল কৰা হ'ব। আপুনি &brandShortName; এতিয়া পুনাৰম্ভ কৰিব পাৰে, বা এতিয়া কামত আগবাঢ়ি পিছত পুনাৰম্ভ কৰিব পাৰে।">
+
+
+<!ENTITY  update.details.label            "বিৱৰণ">
+<!ENTITY  update.installedOn.label        "চিহ্নিত স্থানত ইনস্টল্ড:">
+<!ENTITY  update.status.label             "অৱস্থা:">
+
+<!ENTITY  finishedBackground.moreElevated "This update requires administrator privileges. The update will be
+                                           installed the next time &brandShortName; starts. You can restart
+                                           &brandShortName; now, continue working and restart later, or decline this
+                                           update.">
+

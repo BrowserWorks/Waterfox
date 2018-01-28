@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Innde:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "I">
+<!ENTITY editBookmarkOverlay.location.label                  "Nokkuure:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "N">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Nokkuure Balol:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "N">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Nokkuure Lowre:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "N">
+<!ENTITY editBookmarkOverlay.folder.label                    "Runngere:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Hollu dunnge maantore ɗee fof">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Suuɗ">
+<!ENTITY editBookmarkOverlay.tags.label                      "Tage:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Seerndir tagge piccal">
+<!ENTITY editBookmarkOverlay.description.label               "Cifagol:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "C">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Helmere yiylorde:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "H">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Hollu tage fof">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Loow ngol maantorol e palal sawndo">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "o">
+<!ENTITY editBookmarkOverlay.choose.label                    "Suɓo…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Runngere Hesere">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "R">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; আপডেট ব্যবস্থা">
+
+<!ENTITY  offline.title                   "&brandShortName; বর্তমানে অফ-লাইন অবস্থায় চলছে">
+<!ENTITY  offline.description             "ব্যবহৃত অতিরিক্ত সামগ্রীগুলি বর্তমান সংস্করণের সাথে সুসংগত করার উদ্দেশ্যে আপডেট পরীক্ষণের জন্য &brandShortName; অন-লাইন অবস্থায় স্থাপন করা আবশ্যক।">
+<!ENTITY  offline.toggleOffline.label     "অন-লাইন অবস্থায় চলুন">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "বিসংগত বস্তু">
+<!ENTITY  mismatch.top.label              "নিম্নলিখিত বস্তুগুলি &brandShortName;-র এই সংস্করণের সাথে সুসংগত নয়  এবং নিষ্ক্রিয় করা হয়েছে:">
+<!ENTITY  mismatch.bottom.label           "চিহ্নিত অতিরিক্ত সামগ্রীর জন্য সুসংগত সংস্করণের উপস্থিতি &brandShortName; দ্বারা পরীক্ষা করা সম্ভব।">
+
+<!ENTITY  checking.wizard.title           "সুসংগত অতিরিক্ত সামগ্রী পরীক্ষা করা হচ্ছে">
+<!ENTITY  checking.top.label              "বিসংগত অতিরিক্ত সামগ্রীর আপডেট পরীক্ষা করা হচ্ছে...">
+<!ENTITY  checking.status                 "এই কাজে কিছু সময় ব্যয় হবে...">
+
+<!ENTITY  found.wizard.title               "সুসংগত অতিরিক্ত সামগ্রী সনাক্ত হয়েছে">
+<!ENTITY  found.top.label                 "ইনস্টল করার উদ্দেশ্যে অতিরিক্ত সামগ্রী নির্বাচন করুন:">
+<!ENTITY  found.disabledXPinstall.label   "সফ্টওয়্যার ইনস্টলেশন বর্তমানে নিষ্ক্রিয় থাকার ফলে এই আপডেটগুলি ইনস্টল করা সম্ভব হবে না। নিম্নলিখিত স্থানে এই বৈশিষ্ট্য পরিবর্তন করা যাবে।">
+<!ENTITY  found.enableXPInstall.label     "ওয়েব-সাইট দ্বারা সফ্টওয়্যার ইনস্টল করার অনুমতি প্রদান করা হবে">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "সুসংগত অতিরিক্ত সামগ্রী ইনস্টলেশন">
+<!ENTITY  installing.top.label            "উপস্থিত অতিরিক্ত সামগ্রী সংক্রান্ত আপডেট ডাউনলোড করে ইনস্টল করা হচ্ছে...">
+
+<!ENTITY  noupdates.wizard.title          "সুসংগত অতিরিক্ত সামগ্রী পাওয়া যায়নি">
+<!ENTITY  noupdates.intro.desc            "বিসংগত অতিরিক্ত সামগ্রীর জন্য  &brandShortName; দ্বারা কোনো আপডেট সনাক্ত হয়নি।">
+<!ENTITY  noupdates.error.desc            "আপডেট অনুসন্ধানকালে সমস্যা দেখা দিয়েছে।">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName;  দ্বারা নিয়মিতরূপে এই অতিরিক্ত সামগ্রীগুলির জন্য সুসংগত আপডেট অনুসন্ধান করা হবে ও সনাক্ত হলে আপনাকে সূচিত করা হবে">
+
+<!ENTITY  finished.wizard.title           "সুসংগত অতিরিক্ত সামগ্রী ইনস্টল করা হয়েছে">
+<!ENTITY  finished.top.label              "&brandShortName; দ্বারা অতিরিক্ত সামগ্রীর আপডেট ইনস্টল করা হয়েছে।">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; নিয়মিতরূপে অতিরিক্ত সামগ্রীর আপডেটের উপস্থিতি পরীক্ষা করে আপনাকে সূচিত করতে সক্ষম।">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; নিয়মিতরূপে অতিরিক্ত সামগ্রীর আপডেটের উপস্থিতি পরীক্ষা করে আপনাকে সূচিত করবে।">
+
+<!ENTITY  adminDisabled.wizard.title      "আপডেট পরীক্ষা করতে ব্যর্থ">
+<!ENTITY  adminDisabled.warning.label     "&brandShortName;-র মধ্যে সফ্টওয়্যার ইনস্টলেশন প্রক্রিয়া নিষ্ক্রিয় থাকার ফলে বিসংগত অতিরিক্ত সামগ্রীর জন্য আপডেট পরীক্ষা করা সম্ভব হয়নি। অনুগ্রহ করে সিস্টেম অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করে সাহায্যে নিন।">
+
+<!ENTITY  versioninfo.wizard.title        "অতিরিক্ত সামগ্রীর সুসংগতি পরীক্ষা করা হচ্ছে">
+<!ENTITY  versioninfo.top.label           "&brandShortName;-র বর্তমান সংস্করণের সাথে উপস্থিত অতিরিক্ত সামগ্রীর সুসংগতি পরীক্ষা করা হচ্ছে।">
+<!ENTITY  versioninfo.waiting             "এই কাজে কিছু সময় ব্যয় হতে পারে...">
+
+<!ENTITY  installerrors.wizard.title      "আপডেট ইনস্টল করতে সমস্যা">
+<!ENTITY  installerrors.intro.label       "কয়েকট উপস্থিত অতিরিক্ত সামগ্রী আপডেট করার সময় &brandShortName; সমস্যার সম্মুখীন হয়েছে।">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; আরম্ভের জন্য সমাপ্তি ক্লিক করুন।">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; আরম্ভের জন্য Done ক্লিক করুন।">
+<!ENTITY  enableChecking.label            "&brandShortName; দ্বারা আপডেট পরীক্ষণের অনুমতি প্রদান করা হবে।">

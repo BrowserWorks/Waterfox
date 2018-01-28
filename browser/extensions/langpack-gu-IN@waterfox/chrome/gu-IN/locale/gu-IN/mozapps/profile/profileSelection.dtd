@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; વપરાશકર્તા રુપરેખા પસંદ કરો">
+
+<!ENTITY            profilename.label      "રુપરેખા નામ:">
+
+<!ENTITY            start.label            "&brandShortName; શરુ કરો">
+<!ENTITY            exit.label             "બહાર નીકળો">
+
+<!ENTITY            availprofiles.label    "ઉપલબ્ધ રુપરેખાઓ">
+
+<!ENTITY            newButton.label        "રુપરેખા બનાવો...">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "રુપરેખાને ફરી નામ આપો...">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "રુપરેખા દૂર કરો...">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; તમારી વપરાશકર્તા રુપરેખામાં તમારી ગોઠવણીઓ, પસંદગીઓ, અને બીજી વપરાશકર્તા વસ્તુઓની માહિતી સંગ્રહે છે.">
+
+<!ENTITY            offlineState.label    "ઓફલાઇન કાર્ય કરો">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "શરૂઆતમાં પૂછ્યા વિના પસંદ કરેલ રૂપરેખા વાપરો">
+<!ENTITY            useSelected.accesskey   "s">

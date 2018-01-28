@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Informations réseau">
+<!ENTITY aboutNetworking.warning               "Cette fonctionnalité est très expérimentale. À n’utiliser que sous la surveillance d’un adulte.">
+<!ENTITY aboutNetworking.showNextTime          "Afficher cet avertissement la prochaine fois">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Actualiser">
+<!ENTITY aboutNetworking.autoRefresh           "Actualiser toutes les 3 secondes">
+<!ENTITY aboutNetworking.hostname              "Nom d’hôte">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Actif">
+<!ENTITY aboutNetworking.idle                  "Inactif">
+<!ENTITY aboutNetworking.host                  "Hôte">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Envoyés">
+<!ENTITY aboutNetworking.received              "Reçus">
+<!ENTITY aboutNetworking.family                "Famille">
+<!ENTITY aboutNetworking.addresses             "Adresses">
+<!ENTITY aboutNetworking.expires               "Expiration (secondes)">
+<!ENTITY aboutNetworking.messagesSent          "Messages envoyés">
+<!ENTITY aboutNetworking.messagesReceived      "Messages reçus">
+<!ENTITY aboutNetworking.bytesSent             "Octets envoyés">
+<!ENTITY aboutNetworking.bytesReceived         "Octets reçus">
+<!ENTITY aboutNetworking.logging               "Journalisation">
+<!ENTITY aboutNetworking.logTutorial           "Consultez <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> pour obtenir des informations sur l’utilisation de cet outil.">
+<!ENTITY aboutNetworking.currentLogFile        "Fichier de journalisation actuel :">
+<!ENTITY aboutNetworking.currentLogModules     "Modules de journalisation actuels :">
+<!ENTITY aboutNetworking.setLogFile            "Définir un fichier de journalisation">
+<!ENTITY aboutNetworking.setLogModules         "Définir des modules de journalisation">
+<!ENTITY aboutNetworking.startLogging          "Lancer la journalisation">
+<!ENTITY aboutNetworking.stopLogging           "Arrêter la journalisation">
+<!ENTITY aboutNetworking.dnsLookup             "Recherche DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Résolution">
+<!ENTITY aboutNetworking.dnsDomain             "Domaine">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "Adresses IP">
+<!ENTITY aboutNetworking.rcwn                  "Statistiques RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "État RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Nombre de victoires du cache">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Nombre de victoires du réseau">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Nombre total de requêtes réseau">
+<!ENTITY aboutNetworking.rcwnOperation         "Opérations du cache">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Ouvertures">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Lectures">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Écritures">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Ouvertures d’entrées">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Petite moyenne">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Grande moyenne">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Grand écart-type">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Nombre de fois où le cache est lent">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Nombre de fois où le cache est rapide">

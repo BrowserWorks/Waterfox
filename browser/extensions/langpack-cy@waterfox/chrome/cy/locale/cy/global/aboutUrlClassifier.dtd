@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Gwybodaeth am yr url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Darparwr">
+<!ENTITY aboutUrlClassifier.provider                    "Darparwr">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Amser y diweddariad diwethaf">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Amser y diweddariad nesaf">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Amser atal">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Statws y diweddariad diwethaf">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Diweddaru">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Storfa">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Adnewyddu">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Clirio">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Enw tabl">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Nifer o gofnodion storfa negyddol">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Nifer o gofnodion storfa negyddol">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Dangos y cofnodion">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Cofnodion Storfa">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Rhagddodiad">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Storfa negyddol yn dod i ben">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Hash llawn">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Storfa positif yn dod i ben">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Dadfygio">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Gosod Modiwlau Cofnodi">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Gosod Ffeil Cofnodi">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Gosod Cofnod JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Modiwlau cofnodi Pori Diogel">
+<!ENTITY aboutUrlClassifier.debugModules                "Y modiwlau cofnodi cyfredol">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Cofnod Pori Diogel JS">
+<!ENTITY aboutUrlClassifier.debugFile                   "Ffeil cofnod cyfredol">

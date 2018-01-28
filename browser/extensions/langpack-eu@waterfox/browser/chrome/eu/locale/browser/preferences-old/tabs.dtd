@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ktrl+Tab konbinazioak fitxaz aldatzen du azkenekoz erabilitako ordenan">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Ireki leiho berriak fitxa berrietan">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Abisatu hainbat fitxa ixterakoan">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "b">
+
+<!ENTITY warnOnOpenManyTabs.label       "Abisatu hainbat fitxa irekitzean honek &brandShortName; moteldu balezake">
+<!ENTITY warnOnOpenManyTabs.accesskey   "A">
+
+<!ENTITY switchLinksToNewTabs.label        "Aldatu fitxa berrira lotura bat fitxa berrian irekitzean">
+<!ENTITY switchLinksToNewTabs.accesskey    "A">
+
+<!ENTITY showTabsInTaskbar.label          "Erakutsi fitxen aurrebistak Windowseko ataza-barran">
+<!ENTITY showTabsInTaskbar.accesskey      "z">
+<!ENTITY tabsGroup.label          "Fitxak">

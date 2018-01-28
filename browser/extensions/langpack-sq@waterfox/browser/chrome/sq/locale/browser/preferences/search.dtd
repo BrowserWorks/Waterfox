@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Motor Parazgjedhje Kërkimesh">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Zgjidhni motorin tuaj parazgjedhje për kërkimet. &brandShortName;-i e përdor atë te shtylla e vendeve, shtylla e kërkimeve, dhe faqja e fillimit.">
+
+<!ENTITY provideSearchSuggestions.label        "Ofro këshillime kërkimesh">
+<!ENTITY provideSearchSuggestions.accesskey    "O">
+
+<!ENTITY showURLBarSuggestions.label           "Shfaq te përfundimet për shtyllë vendesh këshillime kërkimi">
+<!ENTITY showURLBarSuggestions.accesskey       "k">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Këshillimet për kërkime nuk do të shfaqen te shtylla e vendeve, ngaqë e keni formësuar &brandShortName;-in të mos mbajë kurrë mend historikun e shfletimeve.">
+
+<!ENTITY oneClickSearchEngines.label           "Motorë kërkimesh me një klikim">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Shtylla e kërkimeve ju lejon të kërkoni drejtpërsëdrejti përmes motorësh alternativë kërkimesh. Zgjidhni cili të shfaqet.">
+
+<!ENTITY engineNameColumn.label                "Motor Kërkimesh">
+<!ENTITY engineKeywordColumn.label             "Fjalëkyç">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Rikthe Motorët Parazgjedhje të Kërkimeve">
+<!ENTITY restoreDefaultSearchEngines.accesskey "R">
+
+<!ENTITY removeEngine.label                    "Hiqe">
+<!ENTITY removeEngine.accesskey                "H">
+
+<!ENTITY addMoreSearchEngines2.label           "Shtoni më tepër motorë kërkimesh">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

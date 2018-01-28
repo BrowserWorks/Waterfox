@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+
+<!ENTITY translation.thisPageIsIn.label         "இடத்தில் இந்த பக்கம்">
+<!ENTITY translation.translateThisPage.label    "இந்த பக்கத்தை மொழிபெயர்க்கவா?">
+<!ENTITY translation.translate.button           "மொழிபெயர்">
+<!ENTITY translation.notNow.button              "இப்போது வேண்டாம்">
+
+<!ENTITY translation.translatingContent.label   "பக்கத்தை மொழிபெயர்க்கிறது...">
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+
+<!ENTITY translation.translatedFrom.label       "இலிருந்து இந்த பக்கம் மொழிபெயர்க்கப்பட்டது">
+<!ENTITY translation.translatedTo.label         "முடிவு">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "அசலை காண்பி">
+<!ENTITY translation.showTranslation.button     "மொழிபெயர்ப்பை காண்பி">
+
+<!ENTITY translation.errorTranslating.label     "இந்த பக்கத்தை மொழிபெயர்ப்பதில் பிழை.">
+<!ENTITY translation.tryAgain.button            "மீண்டும் முயற்சிக்கவும்">
+
+<!ENTITY translation.serviceUnavailable.label   "தற்போது மொழியாக்கம் கிடைக்கவில்லை. பிறகு மீண்டும் முயற்சி செய்.">
+
+<!ENTITY translation.options.menu               "விருப்பங்கள்">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "இந்த தளத்தை மொழியாக்கம் செய்யாதே (e)">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "மொழியாக்க முன்னுரிமைகள்(T)">
+<!ENTITY translation.options.preferences.accesskey "T">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "ஆல் மொழிபெயர்ப்பு">
+<!ENTITY translation.options.attribution.afterLogo "">
+<!-- LOCALIZATION NOTE (translation.options.attribution.poweredByYandex,
+                        translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  translation.options.attribution.poweredByYandex is displayed instead of
+  -  the other two strings when yandex translation engine is preferred by the
+  -  user.
+  -->
+
+<!ENTITY translation.options.attribution.yandexTranslate "Yandex. மொழிபெயர்ப்பால் வலுவூட்டப்பட்டது">

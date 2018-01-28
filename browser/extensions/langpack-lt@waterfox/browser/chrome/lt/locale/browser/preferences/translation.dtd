@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Tinklalapių vertimo išimtys">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Nesiūlyti versti tinklalapių iš šių kalbų:">
+<!ENTITY treehead.languageName.label      "Kalbos">
+<!ENTITY removeLanguage.label             "Pašalinti kalbą">
+<!ENTITY removeLanguage.accesskey         "k">
+<!ENTITY removeAllLanguages.label         "Pašalinti visas kalbas">
+<!ENTITY removeAllLanguages.accesskey     "a">
+
+<!ENTITY noTranslationForSites.label      "Nesiūlyti versti tinklalapių šiose svetainėse:">
+<!ENTITY treehead.siteName2.label         "Svetainės">
+<!ENTITY removeSite.label                 "Pašalinti svetainę">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Pašalinti visas svetaines">
+<!ENTITY removeAllSites.accesskey         "v">
+
+<!ENTITY button.close.label               "Užverti">
+<!ENTITY button.close.accesskey           "U">

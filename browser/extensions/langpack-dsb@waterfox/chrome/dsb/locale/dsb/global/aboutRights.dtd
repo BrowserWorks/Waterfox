@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Wó wašych pšawach">
+<!ENTITY rights.intro "&brandFullName; jo dermotna softwara wótwórjonego žrědła, napórana wót zgromaźeństwa tysacych luźi z cełego swěta. Su někotare wěcy, kótarež wy by měł wěźeś:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; staja se k dispoziciji pód wuměnjenjami ">
+<!ENTITY rights.intro-point1b "licence Mozilla Public License">
+<!ENTITY rights.intro-point1c ". To co se groniś, až móžośo &brandShortName; wužywaś a kopěrowaś a jen na drugich rozdźěliś. Wóstanjo wam pśewóstajone, žrědłowy kode &brandShortName; pó wašom dobrozdaśu změniś, aby wón wašym pótrjebam wótpowědował. Licenca Mozilla Public License teke wam dajo pšawo, waše změnjone wersije rozdźěliś.">
+
+<!ENTITY rights.intro-point2-a "Njegarantěruju wam žedne pšawa na wikowańskich znamjenjach abo licence na wikowańskich znamjenjach załožby Waterfox abo někakeje drugego boka, bźez wobgranicowanja na mě abo logo Waterfox. Pśidatne informacije wó wikowańskich znamjenjach namakajośo ">
+<!ENTITY rights.intro-point2-b "how">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Někotare funkcije w &brandShortName;, na pś. pśizjawjanje wowalenjow, dawaju wam móžnosć, waše pósudki na &vendorShortName; pósłaś. Gaž wótpósćełaśo waše pósudki, dajośo &vendorShortName; dowólenje, pósudki wužywaś, jogo produkty pólěpšyś, pósudki na jogo websedłach wózjawiś a pósudki rozdźěliś.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "Kak wužywamy waše wósobinske informacije a pósudki, kótarež sćo na &vendorShortName; pśez &brandShortName; pósłał, wopisujo se w ">
+<!ENTITY rights2.intro-point3b "pšawidłach priwatnosći &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Wšykne nałožujobne pšawidła priwatnosći za toś ten produkt by měli se how pódaś.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Někotare funkcije w &brandShortName; wužywaju informaciske websłužby, ale njamóžomy garantěrowaś, až wóne su 100&#037; w pórěźe abo bźez zmólkow. Dalšne drobnostki, inkluziwne informacije kak móžośo funkcije znjemóžniś, kótarež wužywaju toś te słužby, namakajośo we ">
+<!ENTITY rights.intro-point4b "słužbnych wuměnjenjach">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "Jolic toś ten produkt wopśimujo websłužby, nałožujobne wužywańske wuměnjenja za słužby měli byś zwězane z ">
+<!ENTITY rights.intro-point4b-unbranded "wotrězkom">
+<!ENTITY rights.intro-point4c-unbranded " websedłowych słužbow.">
+
+<!ENTITY rights2.webservices-header "Informaciske websłužby &brandFullName;">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Aby wěste typy wideowopśimjeśa wótgrał, zesěgnijo &brandShortName; wěste module za dešifrěrowanje wopśimjeśa wót tśeśich póbitowarjow.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; wužywa informaciske websłužby (&quot;słužby&quot;), aby někotare funkcije k dispoziciji stajił, kótarež su myslone za wužywanje z toś teju binarneju wersiju &brandShortName; pód dołojce wopisanymi wuměnjenjami. Jolic njocośo jadnu z toś tych słužbow abo někotare z nich wužywaś, abo slědujuce wuměnjenja su njeakceptěrujobne, móžośo funkciju słužbow znjemóžniś. Instrukcije, kak wěsta funkcija słužby dajo se znjemóžniś, namakajośo ">
+<!ENTITY rights2.webservices-b "how">
+<!ENTITY rights3.webservices-c ". Druge funkcije a słužby daju se w nastajenjach nałoženja znjemóžniś.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "Wěste pśeglědowanje: ">
+<!ENTITY rights.safebrowsing-b "Njepśiraźijo se funkciju wěstego pśeglědowanja znjemóžniś, dokulaž to móžo k tomu wjasć, až dostanjośo se do njewěstych sedłow. Jolic cośo toś tu funkciju dopołnje znjemóžniś, wuwjaźćo slědujuce kšace:">
+<!ENTITY rights.safebrowsing-term1 "Wócyńśo nastajenja nałoženja">
+<!ENTITY rights.safebrowsing-term2 "Wubjeŕśo rejtark Wěstota">
+<!ENTITY rights2.safebrowsing-term3 "Nastajenje za &quot;&enableSafeBrowsing.label;&quot; znjemóžniś">
+<!ENTITY rights.safebrowsing-term4 "Wěste pśeglědowanje jo něnto znjemóžnjone">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Pśeglědowanje z lokalizaciju stojnišća: ">
+<!ENTITY rights.locationawarebrowsing-b "jo pśeco z přizjawjenim. Žedne informacije wó stojnišću njerozesćeła se nigda bźez wašeje dowólnosći. Jolic cośo toś tu funkciju dopołnje znjemóžniś, wuwjaźćo slědujue kšace:">
+<!ENTITY rights.locationawarebrowsing-term1a "Zapišćo do adresowego póla ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Zapisćo geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Klikniśo dwójcy na nastajenje geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Pśeglědowanje z lokalizaciju stójnišća jo něnto znjemóžnjone">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Pśeglěd websedłowych słužbow, kótarež produkt wopśimujo, gromaźe z instrukcijami, kak daju se znjemóžniś, jo-lic móžno, by měł se how zapśimjeś.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Nałožujobne słužbne wuměnjenja za toś ten produkt by měli se how pódaś.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; a jogo sobustatkujuce, licencedawarje a partnarje źěłaju, aby nejdokradnjejše a nejaktualnjejše słužby k dispoziciji stajili. Ale njamóžomy garantěrowaś, až toś te informacije su dopołne a bźez zmólkow. Jo na pśikład móžno, až słužba wěstego pśeglědowanja njeidentificěrujo wšykne tšašne sědła a ma někotare wěste sedła za tšašne a pśeglědowanje z lokalizaciju stojnišća a za słužbu pśeglědowanja z lokalizaciju stojnišća by mógło płaśiś, až wšykne městna, kótarež naše póbitowarje słužby dodawaju, su jano pówoblicenja a daniž my daniž póbitowarje słužby njegarantěruju dokradnosć pódanych městnow.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; móžo słužby pó swójom dobrozdaśu zastajiś abo změniś.">
+<!ENTITY rights2.webservices-term3 "Sćo pśepšosone, toś te słužby z toś teju wersiju &brandShortName; wužywaś, a &vendorShortName; garantěrujo wam pšawa, aby wy to cynił. &vendorShortName; a jogo licencedawarje wuměnjaju sebje wšykne druge pšawa na toś tych słužbach. Toś te wuměnjenja njamaju pšawa wobgranicowaś, kótarež garantěruju se pód licencami zjawnego žrědła a daju se na &brandShortName; a na wótpowědne wersije žrědłowego koda &brandShortName; nałožowaś.">
+<!ENTITY rights.webservices-term4 "Słužby libruju se &quot;kaž wóne su.&quot; &vendorShortName;, jogo sobuźěłaśerje, licencedawarje a rozdźělowarje wótpokazuju wšykne rukowanja, lěc wurazne lěc zapśimjete, inkluziwnje take, kótarež su bźez wobgranicowanja, rukowanja, až słužby su kupne a wótpowěduju wašyim wósebnym zaměram. Njasośo połne riziko, což nastupa wuběranje słužbow za waše zaměry a kwalitu a wugbaśe słužbow. Někotare suźenja njedowóluju wuzamknjenje abo wobgranicowanje zapśimjetych rukowanjow, tak toś ta wuzamknjeńska klawsula njedajo se na was nałožyś.">
+<!ENTITY rights.webservices-term5 "Samo gaby kazń to pominała, &vendorShortName;, jogo sobuźěłaśerje, licencedawarje a rozdźělowarje njerukuju za indirektne, specialne, pśipadne, naslědujuce, pokuśeńske abo eksemplariske škódy, kótrež wuchadaju z wašnje wužywanja &brandShortName; a słužbow. Kolektiwne rukowanje pód toś tymi wuměnjenjami njepśesegujo 500$ (pěś stow dolarow). Někotare suźenja njedowóluju wuzamknjenje abo wobgranicowanje wěstych škódow, tak toś tej wuzamknjenje a wobgranicowanje njedajotej se na was nałožyś.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; móžo toś te wuměnjenja, jolic trěbne, pśi góźbje aktualizěrowaś. Toś te wuměnjenja njedaju se bźez pisnego zwólenja &vendorShortName; změniś abo anulěrowaś.">
+<!ENTITY rights.webservices-term7 "Toś te wuměnjenja pódlaže kaznjam stata Kalifornija, USA, mimo pšawniskich póstajenjow, kótarež su w konflikśe z nimi. Jolic maju se źěl toś tych wuměnjenjow za njepłaśiwy abo njepśesajźujobny, zbytne źěle wobchowaju swóju połnu statkowność a płaśiwosć. Jolic jo konflikt mjazy pśełožoneju wersiju a engelskeju wersiju, engelska wersija płaśi.">

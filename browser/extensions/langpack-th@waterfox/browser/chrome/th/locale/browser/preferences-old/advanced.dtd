@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "ทั่วไป">
+
+<!ENTITY accessibility.label             "การช่วยเข้าถึง">
+
+<!ENTITY useCursorNavigation.label       "ใช้ปุ่มลูกศรเพื่อนำทางภายในหน้าเสมอ">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "ค้นหาข้อความเมื่อคุณเริ่มพิมพ์">
+<!ENTITY searchOnStartTyping.accesskey   "ว">
+<!ENTITY blockAutoReload.label           "เตือนคุณเมื่อเว็บไซต์พยายามจะเปลี่ยนเส้นทางหรือโหลดหน้าใหม่">
+<!ENTITY blockAutoReload.accesskey       "ย">
+<!ENTITY useOnScreenKeyboard.label       "แสดงแป้นพิมพ์แบบสัมผัสเมื่อจำเป็น">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "การท่องเว็บ">
+
+<!ENTITY useAutoScroll.label             "ใช้การเลื่อนหน้าอัตโนมัติ">
+<!ENTITY useAutoScroll.accesskey         "ช">
+<!ENTITY useSmoothScrolling.label        "ใช้การเลื่อนหน้าแบบลื่นไหล">
+<!ENTITY useSmoothScrolling.accesskey    "ก">
+<!ENTITY checkUserSpelling.label         "ตรวจสอบการสะกดคำของคุณเมื่อคุณพิมพ์">
+<!ENTITY checkUserSpelling.accesskey     "จ">
+
+<!ENTITY dataChoicesTab.label            "ตัวเลือกข้อมูล">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "ช่วยให้คุณเข้าใจประสิทธิภาพเบราว์เซอร์ของคุณและแบ่งปันข้อมูลกับ &vendorShortName; เกี่ยวกับสุขภาพเบราว์เซอร์ของคุณ">
+<!ENTITY enableHealthReport.label        "เปิดใช้งานรายงานสุขภาพ &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "เรียนรู้เพิ่มเติม">
+
+<!ENTITY telemetryDesc.label             "แบ่งปันข้อมูลประสิทธิภาพ, การใช้งาน, ฮาร์ดแวร์ และการปรับแต่งเกี่ยวกับเบราว์เซอร์ของคุณกับ &vendorShortName; เพื่อช่วยเราทำ &brandShortName; ให้ดีขึ้น">
+<!ENTITY enableTelemetryData.label       "แบ่งปันข้อมูลเพิ่มเติม (เช่น การวัดและส่งข้อมูลทางไกล)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "เรียนรู้เพิ่มเติม">
+
+<!ENTITY crashReporterDesc2.label         "รายงานข้อขัดข้องช่วยให้ &vendorShortName; แก้ไขปัญหาและทำให้เบราว์เซอร์ของคุณเสถียรและปลอดภัยขึ้น">
+<!ENTITY alwaysSubmitCrashReports.label   "อนุญาตให้ &brandShortName; ส่งรายงานข้อขัดข้องที่ค้างอยู่ในนามของคุณ">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "เรียนรู้เพิ่มเติม">
+
+<!ENTITY networkTab.label                "เครือข่าย">
+
+<!ENTITY connection.label                "การเชื่อมต่อ">
+
+<!ENTITY connectionDesc.label            "กำหนดค่าวิธีที่ &brandShortName; เชื่อมต่อกับอินเทอร์เน็ต">
+<!ENTITY connectionSettings.label        "การตั้งค่า…">
+<!ENTITY connectionSettings.accesskey    "ต">
+
+<!ENTITY httpCache.label                 "เนื้อหาเว็บที่ถูกแคชไว้">
+
+<!ENTITY offlineStorage2.label           "เนื้อหาเว็บออฟไลน์และข้อมูลผู้ใช้">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "ข้อมูลไซต์">
+<!ENTITY clearSiteData.label             "ล้างข้อมูลทั้งหมด">
+<!ENTITY clearSiteData.accesskey         "ง">
+<!ENTITY siteDataSettings.label          "การตั้งค่า…">
+<!ENTITY siteDataSettings.accesskey      "ต">
+<!ENTITY siteDataLearnMoreLink.label     "เรียนรู้เพิ่มเติม">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "จำกัดแคชไว้ที่">
+<!ENTITY limitCacheSizeBefore.accesskey  "ว">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "ล้างตอนนี้">
+<!ENTITY clearCacheNow.accesskey         "ล">
+<!ENTITY clearOfflineAppCacheNow.label   "ล้างตอนนี้">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ล">
+<!ENTITY overrideSmartCacheSize.label    "เขียนทับการจัดการแคชอัตโนมัติ">
+<!ENTITY overrideSmartCacheSize.accesskey "ข">
+
+<!ENTITY updateTab.label                 "อัปเดต">
+
+<!ENTITY updateApplication.label         "อัปเดต &brandShortName;">
+<!ENTITY updateAuto1.label               "ติดตั้งการอัปเดตโดยอัตโนมัติ (แนะนำ: ช่วยเพิ่มความปลอดภัย)">
+<!ENTITY updateAuto1.accesskey           "ด">
+<!ENTITY updateCheckChoose.label         "ตรวจสอบการอัปเดต แต่ให้คุณเลือกว่าจะติดตั้งหรือไม่">
+<!ENTITY updateCheckChoose.accesskey     "ว">
+<!ENTITY updateManual.label              "ไม่ตรวจสอบการอัปเดตเสมอ (ไม่แนะนำ: เสี่ยงต่อความปลอดภัย)">
+<!ENTITY updateManual.accesskey          "ม">
+
+<!ENTITY updateHistory.label             "แสดงประวัติการอัปเดต">
+<!ENTITY updateHistory.accesskey         "ส">
+
+<!ENTITY useService.label                "ใช้บริการเบื้องหลังเพื่อติดตั้งการอัปเดต">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY autoUpdateOthers.label          "อัปเดตโดยอัตโนมัติ">
+<!ENTITY enableSearchUpdate.label        "เครื่องมือค้นหา">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+<!ENTITY offlineStorageNotify.label               "แจ้งคุณเมื่อเว็บไซต์ขอจัดเก็บข้อมูลสำหรับใช้งานออฟไลน์">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "ข้อยกเว้น…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "เว็บไซต์ดังต่อไปนี้ได้รับอนุญาตให้จัดเก็บข้อมูลสำหรับใช้งานออฟไลน์:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "เอาออก…">
+<!ENTITY offlineAppsListRemove.accesskey "อ">
+<!ENTITY offlineAppRemove.confirm        "เอาข้อมูลออฟไลน์ออก">
+
+<!ENTITY certificateTab.label            "ใบรับรอง">
+<!ENTITY certPersonal.label              "คำร้องขอ">
+<!ENTITY certPersonal.description        "เมื่อเซิร์ฟเวอร์ร้องขอใบรับรองส่วนบุคคลของคุณ:">
+<!ENTITY selectCerts.auto                "เลือกมาหนึ่งโดยอัตโนมัติ">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "ถามคุณทุกครั้ง">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "สืบค้นเซิร์ฟเวอร์ตอบกลับ OCSP เพื่อยืนยันความถูกต้องของใบรับรองปัจจุบัน">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts.label                 "ดูใบรับรอง">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "อุปกรณ์ความปลอดภัย">
+<!ENTITY viewSecurityDevices.accesskey   "D">
+
+<!ENTITY performance.label               "ประสิทธิภาพ">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "ใช้การตั้งค่าประสิทธิภาพที่แนะนำ">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "เรียนรู้เพิ่มเติม">
+<!ENTITY limitContentProcessOption.label "ขีดจำกัดโปรเซสเนื้อหา">
+<!ENTITY limitContentProcessOption.description
+                                         "โปรเซสเนื้อหาที่เพิ่มขึ้นสามารถปรับปรุงประสิทธิภาพเมื่อใช้หลายแท็บ แต่จะใช้หน่วยความจำมากขึ้นเช่นกัน">
+<!ENTITY limitContentProcessOption.accesskey   "ข">
+<!ENTITY allowHWAccel.label              "ใช้การเร่งความเร็วด้วยฮาร์ดแวร์เมื่อใช้งานได้">
+<!ENTITY allowHWAccel.accesskey          "ง">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">

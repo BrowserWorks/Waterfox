@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Duilgheadas le luchdadh na duilleige">
+<!ENTITY retry.label "Feuch ris a-rithist">
+<!ENTITY returnToPreviousPage.label "Air ais">
+<!ENTITY advanced.label "Adhartach">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Cha ghabh ceangal a dhèanamh ris">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Tha an seòladh seo cuingichte">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Cha deach am frithealaiche a lorg">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Dèan cinnteach nach eil mearachdan litreachaidh san t-seòladh mar <strong>ww</strong>.example.com seach <strong>www</strong>example.com</li> <li>Mur urrainn dhut duilleag sam bith a ruigsinn, cuir sùil air ceangal a’ choimpiutair agad ris an lìonra.</li> <li>Ma tha an coimpiutair agad no an lìonra agad ’ga dhìon le cachaileith-theine no progsaidh, dèan cinnteach gu bheil cead aig &brandShortName; ceangal ris an lìon.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Cha deach am faidhle a lorg">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Dèan cinnteach nach eile litrichean mòra no beaga san àite chearr no mearachdan litreachaidh eile.</li> <li>Saoil an deach am faidhle a ghluasad, a sguabadh às no gun deach ainm ùr a chur air?</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Chaidh inntrigeadh dhan fhaidhle a dhiùltadh">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Dh’fhaoidte gun deach a thoirt air falbh no a ghluasad no gu bheil bacadh air inntrigeadh an cois ceadan an fhaidhle.</li> </ul>">
+
+<!ENTITY generic.title "Mo chreach!">
+<!ENTITY generic.longDesc "<p>Chan urrainn dha &brandShortName; an duilleag seo a luchdadh air sgàth adhbhar air choireigin.</p>">
+
+<!ENTITY captivePortal.title "Clàraich a-steach dhan lìonra">
+<!ENTITY captivePortal.longDesc2 "<p>Feumaidh tu clàradh a-steach dhan lìonra seo mus fhaigh thu cothrom air an eadar-lìon.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Fosgail an duilleag airson clàradh a-steach do lìonra">
+
+<!ENTITY malformedURI.title "Chan e seòladh dligheach a tha ann">
+<!ENTITY malformedURI.longDesc "<ul> <li>Bidh seòlaidhean-lìn coltach ris an fhear seo a ghnàth: <strong>http://www.example.com/</strong></li> <li>Dèan cinnteach gu bheil thu a’ cleachdadh slaisichean (.i. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Bhris rudeigin a-steach air a' cheangal">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dh'fhalbh an ùine air an sgrìobhainn">
+<!ENTITY notCached.longDesc "<p>Chan eil an sgrìobhainn a dh’iarr thu ri làimh san tasgadan aig &brandShortName;.</p><ul><li>Air sgàth adhbharan tèarainteachd, cha dèan &brandShortName; ath-iarrtas airson sgrìobhainnean cugallach gu fèin-obrachail.</li><li>Briog air “Feuch ris a-rithist” gus iarrtas eile a chur dhan làrach-lìn airson na sgrìobhainne.</li></ul>">
+
+<!ENTITY netOffline.title "Am modh far loidhne">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Brùth &quot;Feuch ris a-rithist&quot; gus a dhol air loidhne is luchdaich an duilleag a-rithist an uairsin.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Mearachd le còdachadh na susbaint">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Nach leig thu fios air an duilgheadas seo gun fheadhainn aig a bheil an làrach-lìn?</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Faidhle de sheòrsa neo-thèarainte">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Nach leig thu fios air an duilgheadas seo gun fheadhainn aig a bheil an làrach-lìn?</li> </ul>">
+
+<!ENTITY netReset.title "Chaidh an ceangal ath-shuidheachadh">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Dh'fhalbh an ùine air a' cheangal">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Cha deach an seòladh a thuigsinn">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Dh'fhaodadh gum bi agad bathar-bog a bharrachd a stàladh mus fosgail thu an seòladh seo.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Tha am frithealaiche progsaidh a' diùltadh cheanglaichean">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Dèan cinnteach gu bheil na roghainnean progsaidh ceart.</li> <li>Cuir fios gu rianaire an lìonra agad gus dèanamh cinnteach gu bheil am progsaidh ag obair.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Cha ghabh am frithealaiche progsaidh a lorg">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Dèan cinnteach gu bheil na roghainnean progsaidh ceart.</li> <li>Dèan cinnteach gu bheil ceangal a' choimpiutair agad ris an lìonra ag obair.</li> <li>Ma tha an coimpiutair no an lìonra agad 'ga dhìon le cachaileith-theine no progsaidh, dèan cinnteach gu bheil cead aig &brandShortName; ceangal ris an lìon.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Chan eil an duilleag ag ath-stiùireadh mar bu chòir">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Tachraidh seo uaireannan mur eil briosgaidean an comas no 'gan diùltadh.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Freagairt ris nach robh dùil on fhrithealaiche">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Dèan cinnteach gu bheil manaidsear na tèarainteachd phearsanta air an t-siostam agad.</li> <li>Dh'fhaodadh seo tachairt an cois rèiteachadh neo-stannardach air an fhrithealaiche.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Dh’fhàillig an ceangal tèarainte">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Cha ghabh an duilleag a bha thu airson faicinn a shealltainn a chionn 's nach do ghabh fìrinneachd an dàta a fhuaradh a dhearbhadh.</li> <li>Leig fios gu na daoine aig a bheil an làrach mun duilgheadas seo.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Chan eil an ceangal agad tèarainte">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Chaidh an làrach <span class='hostname'/> a dhroch-rèiteachadh. Cha do rinn &brandShortName; ceangal ris an làrach seo air eagal ’s gun rachadh dàta a ghoid ort.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Dh’fhaodadh nach eil an làrach seo ri faighinn rè seal no gu bheil e ro thrang. Feuch ris a-rithist an ceann tamaill.</li> <li>Mur urrainn dhut duilleag sam bith a ruigsinn, cuir sùil air ceangal a’ choimpiutair agad ris an lìonra.</li> <li>Ma tha an coimpiutair no an lìonra agad ’ga dhìon le chachaileith-theine no progsaidh, dèan cinnteach gu bheil cead aig &brandShortName; ceangal ris an lìon.</li> </ul>">
+
+<!ENTITY cspBlocked.title "'Ga chasgadh le poileasaidh tèarainteachd susbainte">
+<!ENTITY cspBlocked.longDesc "<p>Chuir &brandShortName; casg air luchdadh na duilleige seo air an dòigh seo a chionn 's gu bheil poileasaidh tèarainteachd susbainte ann nach eil 'ga cheadachadh.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Mearachd air sgàth susbaint thruaillte">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Cha ghabh an duilleag a dh'iarr thu a shealltainn a chionn 's gun deach mearachd a lorg ann an tar-chur an dàta.</p><ul><li>Nach leig thu fios do sheilbheadairean na làraich-lìn mun duilgheadas seo?</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Cuir eisgeachd ris…">
+
+<!ENTITY errorReporting.automatic2 "Nach cuir thu aithisg mu mhearachdan d’ a leithid dha Mozilla ach an urrainn dhuinn làraichean droch-rùnach mar seo a bhacadh?">
+<!ENTITY errorReporting.learnMore "Barrachd fiosrachaidh…">
+
+<!ENTITY remoteXUL.title "XUL cèin">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Cuir fios gu seilbheadairean na làraich mun duilgheadas seo.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Chan urrainn dhuinn ceangal tèarainte a dhèanamh">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Fiosrachadh adhartach: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p>Cha b’ urrainn dha &brandShortName; ceangal ri <span id='wrongSystemTime_URL'/> a chionn ’s gu bheil an cleoc agad a’ sealltainn an ama chearr agus cha ghabh ceangal tèarainte a stèidheachadh ri linn sin.</p> <p>Tha an coimpiutair agad dhen bheachd gu bheil e <span id='wrongSystemTime_systemDate'/> ach tha e <span id='wrongSystemTime_actualDate'/>. Cuir ceart an t-àm is an ceann-là gus an duilgheadas seo a chàradh.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>Cha b’ urrainn dha &brandShortName; ceangal ri <span id='wrongSystemTimeWithoutReference_URL'/> a chionn ’s gu bheil an cleoc agad a’ sealltainn an ama chearr agus cha ghabh ceangal tèarainte a stèidheachadh ri linn sin.</p> <p>Tha an coimpiutair agad dhen bheachd gu bheil e <span id='wrongSystemTimeWithoutReference_systemDate'/>. Cuir ceart an t-àm is an ceann-là gus an duilgheadas seo a chàradh.</p>">
+
+<!ENTITY certerror.pagetitle1  "Ceangal nach eil tèarainte">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Tha an làrach seo a’ cleachdadh HTTP Strict Transport Security (HSTS) gus a chur an cèill nach urrainn dha &brandShortName; ceangal ris ach gu tèarainte. Ri linn sin, chan urrainnear eisgeachd a chur ris airson an teisteanais seo.">
+<!ENTITY certerror.copyToClipboard.label "Cuir lethbhreac dhen teacsa air an stòr-bhòrd">
+
+<!ENTITY inadequateSecurityError.title "Chan eil an ceangal agad tèarainte">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>Tha <span class='hostname'></span> a’ cleachdadh seann-teicneolas tèarainteachd a tha so-leònte. Cha bhiodh e doirbh do chuideigin dàta a leigeil ris a bha tèarainte ’nad bheachd. Bidh aig rianaire na làraich am frithealaiche a chàradh mus urrainn dhut tadhal air an làrach.</p><p>Còd na mearachd: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Tha coltas gur e roghainnean tèarainteachd an lìonraidh agad ag adhbharachadh seo. A bheil thu airson na roghainnean bunaiteach a thilleadh?">
+<!ENTITY prefReset.label "Aisig na roghainnean bunaiteach">

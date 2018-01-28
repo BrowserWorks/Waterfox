@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Colores">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+
+<!ENTITY  overrideDefaultPageColors.always.label "Siempres">
+<!ENTITY  overrideDefaultPageColors.never.label  "Enxamás">
+
+<!ENTITY  color                           "Testu y fondu">
+<!ENTITY  textColor.label                 "Testu:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Fondu:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Utilizar los colores del sistema">
+<!ENTITY  useSystemColors.accesskey       "U">
+
+<!ENTITY  underlineLinks.label            "Sorrayar enllaces">
+<!ENTITY  underlineLinks.accesskey        "S">
+<!ENTITY  links                           "Color de los enllaces">
+<!ENTITY  linkColor.label                 "Enllaces non visitaos:">
+<!ENTITY  linkColor.accesskey             "E">
+<!ENTITY  visitedLinkColor.label          "Enllaces visitaos:">
+<!ENTITY  visitedLinkColor.accesskey      "n">
+
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.auto.label   "Only with High Contrast themes">
+<!ENTITY  overrideDefaultPageColors.label        "Override the colors specified by the page with your selections above:">

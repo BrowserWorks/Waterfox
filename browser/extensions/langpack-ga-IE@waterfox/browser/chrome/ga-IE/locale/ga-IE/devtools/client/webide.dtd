@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Tionscadal">
+<!ENTITY projectMenu_accesskey "T">
+<!ENTITY projectMenu_newApp_label "Aip Nua…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Oscail Aip Phacáistithe…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Oscail Aip Óstáilte…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Oscail Aip…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Suiteáil agus Rith">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Stop an Aip">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "Dífhabhtaigh an Aip">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Bain an Tionscadal">
+<!ENTITY projectMenu_remove_accesskey "B">
+<!ENTITY projectMenu_showPrefs_label "Sainroghanna">
+<!ENTITY projectMenu_showPrefs_accesskey "l">
+<!ENTITY projectMenu_manageComponents_label "Bainistigh Comhpháirteanna Breise">
+<!ENTITY projectMenu_manageComponents_accesskey "B">
+<!ENTITY projectMenu_refreshTabs_label "Athnuaigh Cluaisíní">
+
+<!ENTITY runtimeMenu_label "Am rite">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Dícheangail">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "Seat den Scáileán">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Faoin Chóras Ama Rite">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Monatóir">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Sainroghanna Gléis">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "G">
+<!ENTITY runtimeMenu_showSettings_label "Socruithe an Ghléis">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "Amharc">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "Súmáil Isteach">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "Súmáil Amach">
+<!ENTITY viewMenu_zoomout_accesskey "A">
+<!ENTITY viewMenu_resetzoom_label "Athshocraigh an Leibhéal Súmála">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "Oscail Aip">
+<!ENTITY runtimeButton_label "Roghnaigh Córas Ama Rite">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Mo Chuid Tionscadal">
+<!ENTITY projectPanel_runtimeApps "Aipeanna Ama Rite">
+<!ENTITY projectPanel_tabs "Cluaisíní">
+<!ENTITY runtimePanel_usb "Gléasanna USB">
+<!ENTITY runtimePanel_wifi "Gléasanna Wi-Fi">
+<!ENTITY runtimePanel_simulator "Ionsamhlóirí">
+<!ENTITY runtimePanel_other "Eile">
+<!ENTITY runtimePanel_installsimulator "Suiteáil Ionsamhlóir">
+<!ENTITY runtimePanel_noadbhelper "Suiteáil Cúntóir ADB">
+<!ENTITY runtimePanel_nousbdevice "Nach bhfuil tú in ann do ghléas a fheiceáil?">
+<!ENTITY runtimePanel_refreshDevices_label "Athnuaigh na Gléasanna">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "bailí">
+<!ENTITY details_warning_header "rabhaidh">
+<!ENTITY details_error_header "earráidí">
+<!ENTITY details_description "Cur Síos">
+<!ENTITY details_location "Suíomh">
+<!ENTITY details_manifestURL "Aitheantas na hAipe">
+<!ENTITY details_removeProject_button "Bain Tionscadal">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "Aip Nua">
+<!ENTITY newAppHeader "Roghnaigh teimpléad">
+<!ENTITY newAppLoadingTemplate "Teimpléid á lódáil…">
+<!ENTITY newAppProjectName "Ainm an Tionscadail:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "Dún">
+<!-- Addons -->
+
+<!ENTITY addons_title "Comhpháirteanna Breise">
+<!ENTITY addons_aboutaddons "Oscail Bainisteoir na mBreiseán">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "Sainroghanna">
+<!ENTITY prefs_editor_title "Eagarthóir">
+<!ENTITY prefs_general_title "Ginearálta">
+<!ENTITY prefs_restore "Athchóirigh na Réamhshocruithe">
+<!ENTITY prefs_manage_components "Bainistigh Comhpháirteanna Breise">
+<!ENTITY prefs_options_autoconnectruntime "Athcheangail leis an gcóras am-rite roimhe seo">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Athcheangail leis an gcóras am-rite roimhe seo nuair a thosaíonn WebIDE">
+<!ENTITY prefs_options_rememberlastproject "Meabhraigh an tionscadal is déanaí">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Athoscail an tionscadal deireanach nuair a thosaíonn WebIDE">
+<!ENTITY prefs_options_templatesurl "URL na dTeimpléad">
+<!ENTITY prefs_options_templatesurl_tooltip "Innéacs na dteimpléad atá ar fáil">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "Faoin Chóras Ama Rite">
+<!ENTITY runtimedetails_adbIsRoot "Is é ADB an fréamh: ">
+<!ENTITY runtimedetails_summonADBRoot "fréamhghléas">
+<!ENTITY runtimedetails_ADBRootWarning "(lódálaí tosaithe díghlasáilte de dhíth)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Ceadanna DevTools gan srian: ">
+<!ENTITY runtimedetails_requestPrivileges "iarr ceadanna níos airde">
+<!ENTITY runtimedetails_privilegesWarning "(Atosófar an gléas. An forúsáideoir amháin.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "Boole">
+<!ENTITY device_typenumber "Slánuimhir">
+<!ENTITY device_typestring "Teaghrán">
+<!ENTITY device_typeobject "Réad">
+<!ENTITY device_typenone "Roghnaigh cineál">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "Sainroghanna an Ghléis">
+<!ENTITY devicepreference_search "Sainroghanna cuardaigh">
+<!ENTITY devicepreference_newname "Ainm na sainrogha">
+<!ENTITY devicepreference_newtext "Luach na sainrogha">
+<!ENTITY devicepreference_addnew "Sainrogha nua">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "Socruithe an Ghléis">
+<!ENTITY devicesetting_search "Socruithe cuardaigh">
+<!ENTITY devicesetting_newname "Ainm nua an tsocraithe">
+<!ENTITY devicesetting_newtext "Luach an tsocraithe">
+<!ENTITY devicesetting_addnew "Cruthaigh socrú nua">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "Monatóir">
+<!ENTITY monitor_help "Cabhair">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "Aitheantas an Chliaint">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Teastaíonn tuilleadh eolais ón chríochphointe a bhfuil tú ag ceangal leis. Déan scanadh den chód QR thíos tríd an leid ar do ghléas eile.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Nach bhfeiceann tú leid don scanóir QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "An bhfuil leid don scanóir QR agat?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Má tá do ghléas eile ag iarraidh ceadcomhartha in ionad cód QR a scanadh, cóipeáil an luach thíos go dtí an gléas eile:">
+<!ENTITY wifi_auth_qr_size_note "Má tá an chuma ar an gcód QR go bhfuil sé róbheag chun ceangal a bhunú air, zúmáil isteach air nó méadaigh sa bhfuinneog é.">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "Logchomhad Réamhphacáistithe">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "Roghanna an Ionsamhlóra">
+<!ENTITY simulator_remove "Scrios an tIonsamhlóir">
+<!ENTITY simulator_reset "Athchóirigh na Réamhshocruithe">
+<!ENTITY simulator_name "Ainm">
+<!ENTITY simulator_software "Bogearra">
+<!ENTITY simulator_version "Leagan">
+<!ENTITY simulator_profile "Próifíl">
+<!ENTITY simulator_hardware "Crua-earra">
+<!ENTITY simulator_device "Gléas">
+<!ENTITY simulator_screenSize "Scáileán">
+<!ENTITY simulator_pixelRatio "Cóimheas Picteilíní">
+<!ENTITY simulator_tv_data "Ionsamhlúchán TV">
+<!ENTITY simulator_tv_data_open "Sonraí Cumraíochta">
+<!ENTITY simulator_tv_data_open_button "Oscail Comhadlann Chumraíochta…">

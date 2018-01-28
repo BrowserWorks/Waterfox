@@ -1,0 +1,273 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Qoʻshimcha dasturlar boshqaruvchisi">
+
+<!ENTITY search.placeholder                   "Barcha qoʻshimcha dasturlarni izlash">
+<!ENTITY search.buttonlabel                   "Izlash">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Yuklanmoqda...">
+<!ENTITY listEmpty.installed.label            "Ushbu turdagi oʻrnatilgan birorta ham qoʻshimcha dasturingiz yoʻq">
+<!ENTITY listEmpty.availableUpdates.label     "Yangilanishlar topilmadi">
+<!ENTITY listEmpty.recentUpdates.label        "Yaqinda birorta ham qoʻshimcha dasturlarni yangilamagansiz">
+<!ENTITY listEmpty.findUpdates.label          "Yangilanishlar uchun tekshirish">
+<!ENTITY listEmpty.search.label               "Mos qoʻshimcha dasturlar topilmadi">
+<!ENTITY listEmpty.button.label               "Qoʻshimcha dasturlar haqida koʻproq oʻrganish">
+<!ENTITY installAddonFromFile.label           "Qoʻshimcha dasturlarni fayldan oʻrnatish">
+<!ENTITY installAddonFromFile.accesskey       "o">
+<!ENTITY toolsMenu.tooltip                    "Barcha qoʻshimcha dasturlar uchun asboblar">
+
+
+
+<!ENTITY cmd.back.tooltip                     "Bir sahifa orqaga qaytish">
+<!ENTITY cmd.forward.tooltip                  "Bir sahifa oldinga oʻtish">
+
+<!ENTITY showUnsignedExtensions.button.label  "Ba’zi kengaytmalar tasdiqlanmadi">
+<!ENTITY showAllExtensions.button.label       "Barcha kengaytmalarni ko‘rsatish">
+<!ENTITY debugAddons.label                    "Qo‘shimcha dasturlarni tuzatish">
+<!ENTITY debugAddons.accesskey                "t">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "&quot;Xavfsiz usuli&quot; tomonidan  barcha qoʻshimcha dasturlar oʻchirilgan">
+<!ENTITY warning.checkcompatibility.label          "Qoʻshimcha dasturning mosligini tekshirish oʻchirilgan. Sizda tugallanmagan qoʻshimcha dasturlar boʻlishi mumkin.">
+<!ENTITY warning.checkcompatibility.enable.label   "Yoqish">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Qoʻshimcha dasturning mosligini tekshirishni yoqish">
+<!ENTITY warning.updatesecurity.label              "Qoʻshimcha dasturlarni xavfsiz yangilash oʻchirilgan. Yangilanishlar uchun xavf ostida boʻlishi mumkin.">
+<!ENTITY warning.updatesecurity.enable.label       "Yoqish">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Qoʻshimcha dasturni xavfsiz yangilashni tekshirishni yoqish">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Izlash">
+<!ENTITY view.discover.label                  "Qoʻshimcha dasturlarni olish">
+<!ENTITY view.recentUpdates.label             "Soʻnggi yangilanishlar">
+<!ENTITY view.availableUpdates.label          "Mavjud yangilanishlar">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Yangilanishlar uchun tekshirish">
+<!ENTITY updates.checkForUpdates.accesskey    "t">
+<!ENTITY updates.viewUpdates.label            "Soʻnggi yangilanishlarni koʻrish">
+<!ENTITY updates.viewUpdates.accesskey        "k">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Qoʻshimcha dasturlarni avtomatik yangilash">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "Q">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Barcha qoʻshimcha dasturlarni avtomatik yangilash uchun tiklash">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "t">
+<!ENTITY updates.resetUpdatesToManual.label          "Qoʻlbola yangilash uchun barcha qoʻshimcha dasturlarni tiklash">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "t">
+<!ENTITY updates.updating.label               "Qoʻshimcha dasturlarni yangilash">
+<!ENTITY updates.installed.label              "Qoʻshimcha dasturingiz yangilandi.">
+<!ENTITY updates.downloaded.label             "Qoʻshimcha dastur yangilanishlari yuklab olindi.">
+<!ENTITY updates.restart.label                "Oʻrnatishni tugatish uchun hozir qayta ishga tushirish">
+<!ENTITY updates.noneFound.label              "Yangilanishlar topilmadi">
+<!ENTITY updates.manualUpdatesFound.label     "Mavjud yangilanishlarni koʻrish">
+<!ENTITY updates.updateSelected.label         "Yangilanishlarni oʻrnatish">
+<!ENTITY updates.updateSelected.tooltip       "Ushbu roʻyxatdagi mavjud yangilanishlarni oʻrnatish">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Koʻproq ma`lumotlarni koʻrsatish">
+<!ENTITY cmd.showDetails.accesskey            "k">
+<!ENTITY cmd.findUpdates.label                "Yangilanishlarni topish">
+<!ENTITY cmd.findUpdates.accesskey            "t">
+<!ENTITY cmd.preferencesWin.label             "Moslamalar">
+<!ENTITY cmd.preferencesWin.accesskey         "M">
+<!ENTITY cmd.preferencesUnix.label            "Moslamalar">
+<!ENTITY cmd.preferencesUnix.accesskey        "M">
+<!ENTITY cmd.about.label                      "Haqida">
+<!ENTITY cmd.about.accesskey                  "H">
+
+<!ENTITY cmd.enableAddon.label                "Yoqish">
+<!ENTITY cmd.enableAddon.accesskey            "Y">
+<!ENTITY cmd.disableAddon.label               "Oʻchirish">
+<!ENTITY cmd.disableAddon.accesskey           "O">
+<!ENTITY cmd.enableTheme.label                "Mavzu oʻrnatish">
+<!ENTITY cmd.enableTheme.accesskey            "o">
+<!ENTITY cmd.disableTheme.label               "Mavzu oʻrnatishni toʻxtatish">
+<!ENTITY cmd.disableTheme.accesskey           "t">
+<!ENTITY cmd.askToActivate.label              "Faollashtirish uchun soʻralsin">
+<!ENTITY cmd.askToActivate.tooltip            "Doimo ushbu q-cha dasturdan foydalanish soʻralsin">
+<!ENTITY cmd.alwaysActivate.label             "Doimo faollashtirilsin">
+<!ENTITY cmd.alwaysActivate.tooltip           "Ushbu q-cha dasturdan doimo foydalanilsin">
+<!ENTITY cmd.neverActivate.label              "Hech qachon faollashtirilmasin">
+<!ENTITY cmd.neverActivate.tooltip            "Ushbu q-cha dasturdan hech qachon foydalanilmasin">
+<!ENTITY cmd.stateMenu.tooltip                "Ushbu q-cha dastur ishlga tushirilganda oʻzgartirilsin">
+<!ENTITY cmd.installAddon.label               "Oʻrnatish">
+<!ENTITY cmd.installAddon.accesskey           "O">
+<!ENTITY cmd.uninstallAddon.label             "Oʻchirish">
+<!ENTITY cmd.uninstallAddon.accesskey         "O">
+<!ENTITY cmd.showPreferencesWin.label         "Moslamalar">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Ushbu qoʻshimcha dastur moslamalarini oʻzgartirish">
+<!ENTITY cmd.showPreferencesUnix.label        "Moslamalar">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Ushbu qoʻshimcha dastur moslamalarini oʻzgartirish">
+<!ENTITY cmd.contribute.label                 "Hissa qoʻshish">
+<!ENTITY cmd.contribute.accesskey             "H">
+<!ENTITY cmd.contribute.tooltip               "Ushbu qoʻshimcha dasturni rivojlantirishga hissa qoʻshish">
+
+<!ENTITY cmd.showReleaseNotes.label           "Relez eslatmalarini koʻrsatish">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Ushbu yangilanish uchun relez eslatmalarini koʻrsatish">
+<!ENTITY cmd.hideReleaseNotes.label           "Relez eslatmalarini yashirish">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Ushbu yangilanishlar uchun relez eslatmalarini yashirish">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Qoʻshimcha dasturlar nima?">
+<!ENTITY discover.description2                "Qoʻshimcha dasturlar &brandShortName;ni keng imkoniyatlaridan foydalanib, moslash imkonini beradi. &brandShortName;ni didingiz boʻyicha moslash uchun vaqtni tejash yon paneli, ob-havo ma`lumoti yoki mavzulardan foydalaning.">
+<!ENTITY discover.footer                      "Siz internetga ulanganingizda, ushbu panel ba`zi mashhur va eng zoʻz qoʻshimcha dasturlarni sinab koʻrishni takli qiladi.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Versiyasi">
+<!ENTITY detail.lastupdated.label             "Soʻnggi yangilangan">
+<!ENTITY detail.creator.label                 "Dasturchi">
+<!ENTITY detail.homepage.label                "Uy sahifasi">
+<!ENTITY detail.numberOfDownloads.label       "Yuklab olishlar">
+
+<!ENTITY detail.contributions.description     "Ushbu qoʻshimcha dastur muallifi sizdan dasturni rivojlantirish uchun ozroq hissangizni qoʻshishni soʻramoqda.">
+
+<!ENTITY detail.updateType                    "Avtomatik yangilanishlar">
+<!ENTITY detail.updateDefault.label           "Standart">
+<!ENTITY detail.updateDefault.tooltip         "Agar faqat ular standart boʻlsa avtomatik yangilanishlar oʻrnatilsin">
+<!ENTITY detail.updateAutomatic.label         "Yoqilgan">
+<!ENTITY detail.updateAutomatic.tooltip       "Yangilanishlarni avtomatik oʻrnatish">
+<!ENTITY detail.updateManual.label            "Oʻchirilgan">
+<!ENTITY detail.updateManual.tooltip          "Yangilanishlar avtomatik oʻrnatilmasin">
+<!ENTITY detail.home                          "Uy sahifasi">
+<!ENTITY detail.repository                    "Qoʻshimcha dastur profili">
+<!ENTITY detail.size                          "Hajmi">
+
+<!ENTITY detail.checkForUpdates.label         "Yangilanishlar uchun tekshirish">
+<!ENTITY detail.checkForUpdates.accesskey     "Y">
+<!ENTITY detail.checkForUpdates.tooltip       "Ushbu qoʻshimcha dastur uchun yangilanishlarni tekshirish">
+<!ENTITY detail.showPreferencesWin.label      "Moslamalar">
+<!ENTITY detail.showPreferencesWin.accesskey  "M">
+<!ENTITY detail.showPreferencesWin.tooltip    "Ushbu qoʻshimcha dastur moslamalarini oʻzgartirish">
+<!ENTITY detail.showPreferencesUnix.label     "Moslamalar">
+<!ENTITY detail.showPreferencesUnix.accesskey "M">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Ushbu qoʻshimcha dastur moslamalarini oʻzgartirish">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Reyting">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Pauza">
+<!ENTITY progress.cancel.tooltip              "Bekor qilish">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Nomi">
+<!ENTITY sort.name.tooltip                    "Nomi boʻyicha saralash">
+<!ENTITY sort.dateUpdated.label               "Soʻnggi yangilangan">
+<!ENTITY sort.dateUpdated.tooltip             "Yangilanish sanasi boʻyicha saralash">
+<!ENTITY sort.relevance.label                 "Eng mosi">
+<!ENTITY sort.relevance.tooltip               "Aloqadorligi boʻyicha saralash">
+<!ENTITY sort.price.label                     "Narxi">
+<!ENTITY sort.price.tooltip                   "Narxi boʻyicha saralash">
+
+<!ENTITY search.filter2.label                 "Izlash:">
+<!ENTITY search.filter2.installed.label       "Qoʻshimcha dasturlarim">
+<!ENTITY search.filter2.installed.tooltip     "Oʻrnatilgan qoʻshimcha dasturlarni koʻrsatish">
+<!ENTITY search.filter2.available.label       "Mavjud qoʻshimcha dasturlar">
+<!ENTITY search.filter2.available.tooltip     "Oʻrnatish uchun mavjud boʻlgan qoʻshimcha dasturlarni koʻrsatish">
+
+<!ENTITY addon.homepage                       "Uy sahifasi">
+<!ENTITY addon.details.label                  "Koʻproq">
+<!ENTITY addon.details.tooltip                "Ushbu qoʻshimcha dastur haqida koʻproq ma`lumotlarni koʻrsat">
+<!ENTITY addon.unknownDate                    "Noma`lum">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(oʻchirilgan)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Yangilash">
+<!ENTITY addon.undoAction.label               "Bekor qilish">
+<!ENTITY addon.undoAction.tooltip             "Ushbu amalni bekor qilish">
+<!ENTITY addon.undoRemove.label               "Bekor qilish">
+<!ENTITY addon.undoRemove.tooltip             "Ushbu qoʻshimcha dasturni oʻrnatilgan holda saqlash">
+<!ENTITY addon.restartNow.label               "Hozir qayta ishga tushirish">
+<!ENTITY addon.install.label                  "Oʻrnatish">
+<!ENTITY addon.install.tooltip                "Bu qoʻshimcha dasturni oʻrnatish">
+<!ENTITY addon.updateNow.label                "Hozir yangilash">
+<!ENTITY addon.updateNow.tooltip              "Ushbu qoʻshimcha dastur uchun yangilanishni oʻrnatish">
+<!ENTITY addon.includeUpdate.label            "Yangilanishga qoʻshilgan">
+<!ENTITY addon.updateAvailable.label          "Yangilanish mavjud">
+<!ENTITY addon.checkingForUpdates.label       "Yangilanishlar uchun tekshirlmoqda...">
+<!ENTITY addon.releaseNotes.label             "Relez eslatmalari">
+<!ENTITY addon.loadingReleaseNotes.label      "Yuklanmoqda...">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Kechirasiz, relez eslatmalari yuklanayotganda xato yuz berdi.">
+
+<!ENTITY addon.createdBy.label                "tomonidan:">
+
+<!ENTITY eula.title                           "Litsenziya shartnomasi">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Rozi boʻlish va oʻrnatish">
+
+<!ENTITY settings.path.button.label           "Koʻrish">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Bu nima? Telemetriya vaqtdan vaqtga holatidan tajribalarni ishga tushirishi va o‘rnatishi mumkin.">
+<!ENTITY experiment.info.learnmore "Koʻproq oʻrganish">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetriya sozlamalari">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Koʻproq oʻrganish...">
+
+<!ENTITY disabledUnsigned.heading "Ba’zi qo‘shimcha dasturlar o‘chirib qo‘yildi">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Quyidagi qo‘shimcha dasturlar &brandShortName; brauzerida foydalanish uchun tasdiqdan o‘tmagan. Siz ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "almashtiriladiganlarini topishingiz">
+<!ENTITY disabledUnsigned.description.end " yoki dasturchidan ularni tasdiqlashini so‘rashingiz mumkin.">
+<!ENTITY disabledUnsigned.learnMore "Onlayn xavfsizligingizni ta’minlash uchun qilayotgan harakatlarimiz haqida batafsil ma’lumot oling.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Dasturchilar qo‘shimcha dasturlarini bizning qo‘llanmamizni o‘qib, tasdiqdan o‘tkazishga ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "qiziqishadi">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+
+
+
+
+
+
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY getThemes.description                "Looking to personalize your browser?">
+<!ENTITY getThemes.learnMore                  "Choose from thousands of themes.">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">
+<!ENTITY pluginDeprecation.description "Missing something? Some plugins are no longer supported by &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Learn More.">
+

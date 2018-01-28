@@ -1,0 +1,98 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Alama me buk">
+<!ENTITY engine.bookmarks.accesskey "l">
+<!ENTITY engine.tabs.label2         "Yab dirica matino">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Gin mukato">
+<!ENTITY engine.history.accesskey   "m">
+
+
+<!ENTITY engine.prefs.label         "Ma imaro">
+<!ENTITY engine.prefs.accesskey     "m">
+<!ENTITY engine.addons.label        "Med-ikome">
+<!ENTITY engine.addons.accesskey    "M">
+
+
+
+
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Nying Nyonyo">
+<!ENTITY changeSyncDeviceName.label "Lok nying nyonyo…">
+<!ENTITY changeSyncDeviceName.accesskey "o">
+<!ENTITY cancelChangeSyncDeviceName.label "Ngol">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "o">
+<!ENTITY saveChangeSyncDeviceName.label "Gwoki">
+<!ENTITY saveChangeSyncDeviceName.accesskey "o">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Cik me Tic">
+<!ENTITY fxaPrivacyNotice.link.label "Ngec me mung">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "pe ki moko ada ne.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Tim ber i dony me kube odoco">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Pe i donyo iye.">
+<!ENTITY signIn.label                "Dony iyie">
+<!ENTITY signIn.accesskey            "o">
+<!ENTITY profilePicture.tooltip      "Lok cal me propwail">
+<!ENTITY verifiedManage.label        "Lo Akaunt">
+<!ENTITY verifiedManage.accesskey    "a">
+<!ENTITY disconnect.label            "Juk kube…">
+<!ENTITY disconnect.accesskey        "J">
+<!ENTITY verify.label                "Mok ada pa email">
+<!ENTITY verify.accesskey            "M">
+<!ENTITY forget.label                "Wek wiyi owil ikom email man">
+<!ENTITY forget.accesskey            "e">
+
+<!ENTITY signedOut.caption            "Ter Kakube ni kwedi">
+<!ENTITY signedOut.description        "Rib alamabuk, gin mukato, dirica matino, mung me donyo, med-ikome ki ter i nyonyo ni weng.">
+<!ENTITY signedOut.accountBox.title   "Kube ki &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Cwe akaunt">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Dony iyie">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.engines.label       "Rib i nyonyo weng">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Gam Waterfox pi ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " onyo ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " me ribo ki nyonyo mamegi me cing.">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">

@@ -1,0 +1,94 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Mooru-neešiyan bayhayey">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ɲooje bayhaya aššil:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Sohõda ɲooje bayhaya">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Ɲooje bayhaya jisante">
+
+<!ENTITY aboutTelemetry.raw "JSON gani">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Batu-ize bayhayey cebe">
+
+<!ENTITY aboutTelemetry.choosePing "Ɲooje suuba:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ɲooje taaga">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ɲooje žeena &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Jirbiyye">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ɲooje">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection " Yamma bayhayey">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Windila bayhayey">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Mooruneešiyan zaaritiira">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  SQL yaamar cee-yaynayaŋ">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "Interneti ceecikaw fokuyan">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Šilli deejarey">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "   Dekeri zaantey">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Alkadarey">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Alkadar kufalantey">
+
+<!ENTITY aboutTelemetry.histogramsSection "--Titilawey">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection " Bayhaya titila kufalantey">
+
+<!ENTITY aboutTelemetry.eventsSection "  Batey">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Neešiyan faalantey">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Šilbayhaya tontoni">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Hantum kokorantey">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Dabariɲaa alhabar">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  HAWGAY: SQL hasaraw kayyan n' k atunandi. SQL tenjiri timmantey ši hin ka cebande ganda amma i ga sanbandi mooru-neešiyan bande.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Fay (tenjirey wala /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Jeeje">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

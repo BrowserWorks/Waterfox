@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Buscador predeterminado">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Elige tu buscador predeterminado. &brandShortName; lo usa en la barra de direcciones, la barra de búsqueda y la página de inicio.">
+
+<!ENTITY provideSearchSuggestions.label        "Proporcionar sugerencias de búsqueda">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Mostrar sugerencias de búsqueda en los resultados de la barra de direcciones">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Las sugerencias de búsqueda no se mostrarán en los resultados de la barra de direcciones porque has configurado &brandShortName; para que nunca recuerde el historial.">
+
+<!ENTITY oneClickSearchEngines.label           "Buscadores con un clic">
+
+<!ENTITY chooseWhichOneToDisplay.label         "La barra de búsqueda te permite usar otros buscadores directamente. Elige cuáles se mostrarán.">
+
+<!ENTITY engineNameColumn.label                "Motor de búsqueda">
+<!ENTITY engineKeywordColumn.label             "Palabra clave">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaurar motores de búsqueda predeterminados">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Eliminar">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY addMoreSearchEngines.label            "Añadir más buscadores…">

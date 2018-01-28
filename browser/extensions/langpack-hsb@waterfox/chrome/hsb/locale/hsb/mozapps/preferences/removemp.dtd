@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Hłowne hesło wotstronić">
+<!ENTITY removeInfo.label                  "Dyrbiće swoje tuchwilne hesło zapisać, zo by so pokročowało:">
+<!ENTITY removeWarning1.label              "Waše hłowne hesło so wužiwa, zo by so diskretne informacije kaž sydłowe hesła škitali.">
+<!ENTITY removeWarning2.label              "Jeli swoje hłowne hesło wotstroniće, njebudu so waše informacije škitać, jeli waš ličak so wohroža.">
+<!ENTITY setPassword.oldPassword.label     "Aktualne hesło:">
+

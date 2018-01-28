@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY webAudioEditorUI.reloadNotice1 "Recarega">
+<!ENTITY webAudioEditorUI.reloadNotice2 "A pagina pe vedde e cangiâ i contesti aodio.">
+<!ENTITY webAudioEditorUI.emptyNotice "Aspeto a creaçion de 'n contesto aodio…">
+<!ENTITY webAudioEditorUI.tab.properties2 "Proprietæ">
+<!ENTITY webAudioEditorUI.tab.automation  "Aotomaçion">
+<!ENTITY webAudioEditorUI.inspectorTitle "Analixi AudioNode">
+<!ENTITY webAudioEditorUI.inspectorEmpty "Nisciun AudioNode seleçionou.">
+<!ENTITY webAudioEditorUI.propertiesEmpty "O groppo o no l'à de proprietæ.">
+<!ENTITY webAudioEditorUI.automationEmpty "O groppo o no l'à AudioParam.">
+<!ENTITY webAudioEditorUI.automationNoEvents "AudioParam o no gh'à eventi d'aotomaçion.">

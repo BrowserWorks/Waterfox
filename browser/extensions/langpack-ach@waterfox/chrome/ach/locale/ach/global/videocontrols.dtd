@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Tuki">
+<!ENTITY playButton.pauseLabel "Cung manok">
+<!ENTITY muteButton.muteLabel "Kany dwon">
+<!ENTITY muteButton.unmuteLabel "Dwok dwon">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Wang komputa ma opong">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Kat woko ki i wang komputa ma opong">
+<!ENTITY castingButton.castingLabel "Ket i wang komputa">
+<!ENTITY closedCaption.off "Pe tye">
+
+<!ENTITY stats.media "Adyere">
+<!ENTITY stats.size "Dit">
+<!ENTITY stats.activity "Tic">
+<!ENTITY stats.activityPaused "Ocung woko">
+<!ENTITY stats.activityPlaying "Tuku">
+<!ENTITY stats.activityEnded "Ogik woko">
+<!ENTITY stats.activitySeeking "(yenyo)">
+<!ENTITY stats.volume "Dwone">
+<!ENTITY stats.framesParsed "Kingiyo purem">
+<!ENTITY stats.framesDecoded "Kigonyo purem">
+<!ENTITY stats.framesPresented "Purem ma kinyutu">
+<!ENTITY stats.framesPainted "Purem ma kiwero">
+
+<!ENTITY error.aborted "Kijuko woko cano vidio.">
+<!ENTITY error.network "Kijuko woko tuko vidio malube ki bal me netwak.">
+<!ENTITY error.decode "Pe kitwero tuko vidio pien pwail ne obale woko.">
+<!ENTITY error.srcNotSupported "Pe kicwako kit onyo MIME me vidio ne.">
+<!ENTITY error.noSource2 "Pe kinongo vidio mo ki kit ma kicwako onyo MIME.">
+<!ENTITY error.generic "Kijuko woko tuko vidio malube ki bal me pe ngene.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 pi #2 otum woko">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

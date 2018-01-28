@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Επιλογές">
+<!ENTITY  prefWindow.title        "Προτιμήσεις">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Προτιμήσεις του &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 60em; min-height: 42em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 63em; min-height: 45em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 66em; min-height: 42em;">
+
+<!ENTITY  paneSearchResults.title       "Αποτελέσματα αναζήτησης">
+<!ENTITY  paneGeneral.title             "Γενικά">
+<!ENTITY  paneSearch.title              "Αναζήτηση">
+<!ENTITY  paneFilesApplications.title   "Αρχεία &amp; εφαρμογές">
+<!ENTITY  panePrivacySecurity.title     "Απόρρητο &amp; ασφάλεια">
+<!ENTITY  paneContainers.title          "Θεματικές καρτέλες">
+<!ENTITY  paneUpdates.title             "Ενημερώσεις">
+
+<!ENTITY  languageAndAppearance.label   "Γλώσσα και εμφάνιση">
+<!ENTITY  filesAndApplications.label    "Αρχεία και εφαρμογές">
+<!ENTITY  browserPrivacy.label          "Απόρρητο προγράμματος περιήγησης">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Λογαριασμός Waterfox">
+
+<!ENTITY  helpButton2.label        "Υποστήριξη &brandShortName;">

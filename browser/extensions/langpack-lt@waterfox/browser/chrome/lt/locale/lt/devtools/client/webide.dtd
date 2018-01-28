@@ -1,0 +1,192 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projektas">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nauja programa…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Nauja supakuotoji programa…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "p">
+<!ENTITY projectMenu_importHostedApp_label "Atverti talpinamą programą…">
+<!ENTITY projectMenu_importHostedApp_accesskey "t">
+<!ENTITY projectMenu_selectApp_label "Atverti programą…">
+<!ENTITY projectMenu_selectApp_accesskey "A">
+<!ENTITY projectMenu_play_label "Įdiegti ir paleisti">
+<!ENTITY projectMenu_play_accesskey "l">
+<!ENTITY projectMenu_stop_label "Stabdyti programą">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "Derinti programą">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Pašalinti projektą">
+<!ENTITY projectMenu_remove_accesskey "š">
+<!ENTITY projectMenu_showPrefs_label "Nuostatos">
+<!ENTITY projectMenu_showPrefs_accesskey "o">
+<!ENTITY projectMenu_manageComponents_label "Tvarkyti papildomus komponentus">
+<!ENTITY projectMenu_manageComponents_accesskey "k">
+<!ENTITY projectMenu_refreshTabs_label "Atnaujinti korteles">
+
+<!ENTITY runtimeMenu_label "Įrenginys">
+<!ENTITY runtimeMenu_accesskey "n">
+<!ENTITY runtimeMenu_disconnect_label "Atsijungti">
+<!ENTITY runtimeMenu_disconnect_accesskey "A">
+<!ENTITY runtimeMenu_takeScreenshot_label "Ekrano nuotrauka">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "E">
+<!ENTITY runtimeMenu_showDetails_label "Įrenginio duomenys">
+<!ENTITY runtimeMenu_showDetails_accesskey "o">
+<!ENTITY runtimeMenu_showMonitor_label "Stebyklė">
+<!ENTITY runtimeMenu_showMonitor_accesskey "S">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Įrenginio nuostatos">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "n">
+<!ENTITY runtimeMenu_showSettings_label "Įrenginio nustatymai">
+<!ENTITY runtimeMenu_showSettings_accesskey "n">
+
+<!ENTITY viewMenu_label "Rodymas">
+<!ENTITY viewMenu_accesskey "R">
+<!ENTITY viewMenu_zoomin_label "Padidinti">
+<!ENTITY viewMenu_zoomin_accesskey "d">
+<!ENTITY viewMenu_zoomout_label "Sumažinti">
+<!ENTITY viewMenu_zoomout_accesskey "m">
+<!ENTITY viewMenu_resetzoom_label "Originalus mastelis">
+<!ENTITY viewMenu_resetzoom_accesskey "O">
+
+<!ENTITY projectButton_label "Atverti programą">
+<!ENTITY runtimeButton_label "Pasirinkite įrenginį">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Jūsų projektai">
+<!ENTITY projectPanel_runtimeApps "Programos įrenginyje">
+<!ENTITY projectPanel_tabs "Kortelės">
+<!ENTITY runtimePanel_usb "USB įrenginiai">
+<!ENTITY runtimePanel_wifi "Belaidžiai įrenginiai">
+<!ENTITY runtimePanel_simulator "Simuliatoriai">
+<!ENTITY runtimePanel_other "Kita…">
+<!ENTITY runtimePanel_installsimulator "Įdiegti simuliatorių">
+<!ENTITY runtimePanel_noadbhelper "Įdiegti ADB pagelbiklį">
+<!ENTITY runtimePanel_nousbdevice "Nematote savo įrenginio?">
+<!ENTITY runtimePanel_refreshDevices_label "Atnaujinti įrenginius">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "patikra sėkminga">
+<!ENTITY details_warning_header "įspėjimai">
+<!ENTITY details_error_header "klaidos">
+<!ENTITY details_description "Aprašas">
+<!ENTITY details_location "Adresas">
+<!ENTITY details_manifestURL "Programos ID">
+<!ENTITY details_removeProject_button "Šalinti projektą">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "Nauja programa">
+<!ENTITY newAppHeader "Pasirinkite šabloną">
+<!ENTITY newAppLoadingTemplate "Įkeliami šablonai…">
+<!ENTITY newAppProjectName "Projekto vardas:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "Užverti">
+<!-- Addons -->
+
+<!ENTITY addons_title "Papildomi komponentai">
+<!ENTITY addons_aboutaddons "Atverti priedų tvarkytuvę">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "Nuostatos">
+<!ENTITY prefs_editor_title "Rengyklė">
+<!ENTITY prefs_general_title "Bendrosios">
+<!ENTITY prefs_restore "Grąžinti numatytąsias nuostatas">
+<!ENTITY prefs_manage_components "Tvarkyti papildomus komponentus">
+<!ENTITY prefs_options_autoconnectruntime "Prisijungti prie ankstesnio įrenginio">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Prisijungti prie ankstesnio įrenginio startavus „WebIDE“">
+<!ENTITY prefs_options_rememberlastproject "Įsiminti paskutinį projektą">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Atverti ankstesnį projektą, paleidus „WebIDE“">
+<!ENTITY prefs_options_templatesurl "Šablonų URL adresas">
+<!ENTITY prefs_options_templatesurl_tooltip "Galimų šablonų sąrašo URL adresas">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "Įrenginio duomenys">
+<!ENTITY runtimedetails_adbIsRoot "„ADB“ vykdoma administratoriaus teisėmis: ">
+<!ENTITY runtimedetails_summonADBRoot "gauti įrenginio administratoriaus teises">
+<!ENTITY runtimedetails_ADBRootWarning "(reikalinga atrakinta paleidyklė)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Neapribotos „DevTools“ privilegijos: ">
+<!ENTITY runtimedetails_requestPrivileges "prašyti aukštesnių privilegijų">
+<!ENTITY runtimedetails_privilegesWarning "(Įrenginys bus perleistas. Reikalingos „root“ teisės.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "Loginis">
+<!ENTITY device_typenumber "Sveikasis skaičius">
+<!ENTITY device_typestring "Simbolių eilutė">
+<!ENTITY device_typeobject "objektas">
+<!ENTITY device_typenone "Parinkite tipą">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "Įrenginio nuostatos">
+<!ENTITY devicepreference_search "Paieškos nuostatos">
+<!ENTITY devicepreference_newname "Naujo nuostatų parametro pavadinimas">
+<!ENTITY devicepreference_newtext "Parametro reikšmė">
+<!ENTITY devicepreference_addnew "Pridėti naują nuostatų parametrą">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "Įrenginio nustatymai">
+<!ENTITY devicesetting_search "Paieškos nustatymai">
+<!ENTITY devicesetting_newname "Naujo nustatymo pavadinimas">
+<!ENTITY devicesetting_newtext "Nustatymo reikšmė">
+<!ENTITY devicesetting_addnew "Pridėti naują nustatymą">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "Stebyklė">
+<!ENTITY monitor_help "Žinynas">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "Kliento identifikacija">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Galinis taškas, prie kurio jungiatės, reikalauja daugiau informacijos, kad galėtų patvirtinti šio ryšio tapatumą.  Prašome nuskaityti žemiau esantį QR kodą pagal nurodymus kitame įrenginyje.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Nėra QR nuskaitymo galimybės?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Yra QR nuskaitymo galimybė?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Jei jūsų kitas įrenginys vietoj QR kodo nuskaitymo prašo prieigos rakto, prašome į tą įrenginį nukopijuoti žemiau esančią reikšmę:">
+<!ENTITY wifi_auth_qr_size_note "Jei QR kodas atrodo per mažas sėkmingam susijungimui, pabandykite priartinti vaizdą arba padidinti langą.">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "Paruošimo komandų žurnalas">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "Simuliatoriaus nuostatos">
+<!ENTITY simulator_remove "Pašalinti simuliatorių">
+<!ENTITY simulator_reset "Grąžinti numatytąsias nuostatas">
+<!ENTITY simulator_name "Pavadinimas">
+<!ENTITY simulator_software "Programinė įranga">
+<!ENTITY simulator_version "Laida">
+<!ENTITY simulator_profile "Profilis">
+<!ENTITY simulator_hardware "Aparatinė įranga">
+<!ENTITY simulator_device "Įrenginys">
+<!ENTITY simulator_screenSize "Ekranas">
+<!ENTITY simulator_pixelRatio "Taškų santykis">
+<!ENTITY simulator_tv_data "TV simuliatorius">
+<!ENTITY simulator_tv_data_open "Konfigūracijos duomenys">
+<!ENTITY simulator_tv_data_open_button "Atverti konfigūracijos aplanką…">

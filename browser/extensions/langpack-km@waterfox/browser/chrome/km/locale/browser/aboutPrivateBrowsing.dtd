@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "បច្ចុប្បន្ន​អ្នក​មិន​នៅ​ក្នុង​បង្អួច​ឯកជន​ទេ។">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "បើក​បង្អួច​ឯកជន">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "">
+
+<!ENTITY privateBrowsing.title                           "ការ​រក​មើល​ឯកជន">
+<!ENTITY privateBrowsing.title.tracking                  "ការ​រក​មើល​ជា​ឯកជន​ជាមួយ​ការ​​ទប់ស្កាត់​ការ​តាមដាន">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "នៅ​ពេល​អ្នក​រក​មើល​នៅ​ក្នុង​បង្អួច​ឯកជន Waterfox">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "កុំ​រក្សាទុក">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "ទំព័រ​ដែល​បាន​ទស្សនា">
+<!ENTITY aboutPrivateBrowsing.info.searches              "ស្វែងរក">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "ខូគី">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ឯកសារ​បណ្ដោះអាសន្ន">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "នឹង​រក្សាទុក">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " របស់​អ្នក៖">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ទាញ​យក">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ចំណាំ">
+<!ENTITY aboutPrivateBrowsing.note.before                "ការ​រក​មើល​ជា​ឯកជន ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "កុំ​ធ្វើ​អ្នក​ជា​អនាមិក">
+<!ENTITY aboutPrivateBrowsing.note.after                 " នៅ​លើ​អ៊ីនធឺណិត។ និយោជក​ ឬ​អ្នក​ផ្ដល់​សេវាកម្ម​អ៊ីនធឺណិត​របស់​អ្នក​​នៅ​តែ​អាច​ដឹង​​ថា​ទំព័រ​ណា​ដែល​អ្នក​បាន​ចូល​មើល។">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "ស្វែងយល់​បន្ថែម​អំពី">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "ការ​រក​មើល​ឯកជន">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ការ​ទប់ស្កាត់​ការ​តាមដាន">
+<!ENTITY trackingProtection.description2                 "វេបសាយ​ខ្លះ​ប្រើ​កម្មវិធី​តាមដាន​ដែល​អាច​ត្រួតពិនិត្យ​មើល​សកម្មភាព​របស់​អ្នក​នៅ​លើ​អ៊ីនធឺណិត។ ជាមួយ​​ការ​ការពារ​ការ​តាមដាន Waterfox នឹង​បិទ​កម្មវិធី​តាមដាន​ជា​ច្រើន​ដែល​អាច​ប្រមូល​ព័ត៌មាន​អំពី​​ការ​ប្រព្រឹត្តិ​នៃ​ការ​រក​មើល​របស់​អ្នក។">
+<!ENTITY trackingProtection.startTour1                   "មើល​​ថា​វា​ដំណើរការ​ដូច​ម្ដេច">

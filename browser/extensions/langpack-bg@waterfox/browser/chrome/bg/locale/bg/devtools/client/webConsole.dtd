@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "Уеб конзола">
+<!ENTITY browserConsole.title "Конзола на браузъра">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "Отваряне в раздел">
+<!ENTITY openURL.accesskey "р">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "Мрежа">
+<!ENTITY btnPageNet.tooltip "Журнал на мрежовия достъп">
+<!ENTITY btnPageNet.accesskey "М">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Журнал на грешките и предупрежденията за CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Журнал на изключенията в JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Защита">
+<!ENTITY btnPageSecurity.tooltip "Журнал на грешките и предупрежденията по безопасността">
+<!ENTITY btnPageSecurity.accesskey "З">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "Журнал">
+<!ENTITY btnPageLogging.tooltip "Журнал на съобщенията, изпратени до обекта window.console">
+<!ENTITY btnPageLogging.accesskey3 "Ж">
+<!ENTITY btnConsoleErrors       "Грешки">
+<!ENTITY btnConsoleInfo         "Информация">
+<!ENTITY btnConsoleWarnings     "Предупреждения">
+<!ENTITY btnConsoleLog          "Журнал">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Пренареждане">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "Сървър">
+<!ENTITY btnServerLogging.tooltip     "Следене на съобщенията, получавани от уеб сървъра">
+<!ENTITY btnServerLogging.accesskey   "С">
+<!ENTITY btnServerErrors              "Грешки">
+<!ENTITY btnServerInfo                "Информация">
+<!ENTITY btnServerWarnings            "Предупреждения">
+<!ENTITY btnServerLog                 "Журнал">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "Споделени обслужващи нишки">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Обслужващи нишки">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Добавка или Worker на хрома">
+
+<!ENTITY filterOutput.placeholder "Филтриране на изхода">
+<!ENTITY btnClear.label        "Изчистване">
+<!ENTITY btnClear.tooltip      "Изчистване на съдържанието на уеб конзолата">
+<!ENTITY btnClear.accesskey    "ч">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "+">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "-">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "0">
+
+<!ENTITY copyURLCmd.label     "Копиране на препратката">
+<!ENTITY copyURLCmd.accesskey "а">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Отваряне в изгледа за променливи">
+<!ENTITY openInVarViewCmd.accesskey "п">
+<!ENTITY storeAsGlobalVar.label "Дефиниране като глобална променлива">
+<!ENTITY storeAsGlobalVar.accesskey "г">

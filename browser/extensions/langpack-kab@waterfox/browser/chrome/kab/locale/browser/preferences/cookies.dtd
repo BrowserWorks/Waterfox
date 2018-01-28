@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Inagan-a n tuqqna kelsen deg uselkim-inek:">
+<!ENTITY     cookiename.label               "Isem n unagi n tuqqna">
+<!ENTITY     cookiedomain.label             "Asmel">
+
+<!ENTITY     props.name.label               "Isem:">
+<!ENTITY     props.value.label              "Agbur:">
+<!ENTITY     props.domain.label             "Asenneftaɣ:">
+<!ENTITY     props.path.label               "Abrid:">
+<!ENTITY     props.secure.label             "Azen i:">
+<!ENTITY     props.expires.label            "Ad immet:">
+<!ENTITY     props.container.label          "Amagbar:">
+
+<!ENTITY     window.title                   "Inagan n tuqqna">
+<!ENTITY     windowClose.key                "f">
+<!ENTITY     focusSearch1.key               "c">
+<!ENTITY     focusSearch2.key               "d">
+
+<!ENTITY     searchFilter.label             "Nadi">
+<!ENTITY     searchFilter.accesskey         "N">
+
+<!ENTITY     button.close.label             "Mdel">
+<!ENTITY     button.close.accesskey         "M">

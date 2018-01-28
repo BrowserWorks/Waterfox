@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "நிறங்கள்">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "மேலே தேர்ந்தெடுக்கப்பட்டதன் மூலம் பக்கத்தில் குறிப்பிடப்பட்ட நிறங்களை மேலெழுதவும்:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "எப்போதும்">
+<!ENTITY  overrideDefaultPageColors.auto.label   "உயரிய தொற்றக்கருக்களுடன் மட்டுமே">
+<!ENTITY  overrideDefaultPageColors.never.label  "ஒரு போதும் இல்லை">
+
+<!ENTITY  color                           "உரை மற்றும் பின்னணி">
+<!ENTITY  textColor.label                 "உரை:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "பின்னணி:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "கணினி நிறங்களை பயன்படுத்து">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "அடிக்கோடு தொடுப்புகள்">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "இணைப்பு நிறங்கள்">
+<!ENTITY  linkColor.label                 "பார்வையிடாத தொடுப்புகள்:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "பார்வையிட்ட தொடுப்புகள்:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

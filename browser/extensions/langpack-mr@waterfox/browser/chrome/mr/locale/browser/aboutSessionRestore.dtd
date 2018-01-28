@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "सत्र पूर्वस्थितीत आणा">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "हे खूप गोंधळास्पद आहे.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ला विंडो व टॅब पुन्ह प्राप्त करतेवेळी अडचण निर्माण झाले. हे सहसा अलिकडील वेब पृष्ठ उघडल्यामुळे घडले.">
+<!ENTITY restorepage.tryThis        "आपण प्रयत्न करून पहा:">
+<!ENTITY restorepage.restoreSome    "अडचणीस कारणीभूत ठरणारे एक किंवा त्यापेक्षा जास्त टॅब काढूण पहा">
+<!ENTITY restorepage.startNew       "संपूर्णतया नवीन ब्राऊजींग सत्र सुरू करत आहे">
+
+<!ENTITY restorepage.tryagainButton "पूर्वस्थितीत आणा">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "बंद करा">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "पूर्वस्थितीत आणा">
+<!ENTITY restorepage.listHeader     "चौकट व टॅब">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "चौकट &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "चला सुरू करा !">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "यशस्वी!">
+
+<!ENTITY welcomeback2.pageTitle     "यशस्वी!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; चालायला तयार.">
+
+<!ENTITY welcomeback2.restoreAll.label  "सर्व पटल आणि टॅब पूर्वस्थितीत आणा">
+<!ENTITY welcomeback2.restoreSome.label "आपल्याला हवे असेल तेच पूर्वस्थितीत आणा">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "आपले ॲड-ऑन्स् आणि कस्टमायझेशन्स काढले गेले आहे आणि आपले ब्राऊझर सेटिंग्स त्यांच्या मूळ सेटिंग्स ला पूर्ववत करण्यात आली आहेत. जर याच्यामुळे आपली समस्या सुटली नसेल तर, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "‌">
+
+<!ENTITY welcomeback2.link.pageInfo2        "जाणा आपण आणखी काय करु शकता.">
+

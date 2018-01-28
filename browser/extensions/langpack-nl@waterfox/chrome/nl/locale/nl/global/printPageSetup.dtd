@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Pagina-instellingen">
+
+<!ENTITY basic.tab           "Formaat &amp; opties">
+
+<!ENTITY formatGroup.label   "Formaat">
+
+<!ENTITY orientation.label   "Oriëntatie:">
+<!ENTITY portrait.label      "Staand">
+<!ENTITY portrait.accesskey  "S">
+<!ENTITY landscape.label     "Liggend">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "Schaal:">
+<!ENTITY scale.accesskey     "c">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Verkleinen tot papierformaat">
+<!ENTITY shrinkToFit.accesskey "V">
+
+<!ENTITY optionsGroup.label  "Opties">
+
+<!ENTITY printBG.label       "Achtergrond afdrukken (kleuren &amp; afbeeldingen)">
+<!ENTITY printBG.accesskey   "A">
+
+<!ENTITY advanced.tab        "Marges &amp; kop-/voetteksten">
+
+<!ENTITY marginGroup.label   "Marges (#1)">
+<!ENTITY marginUnits.inches  "inches">
+<!ENTITY marginUnits.metric  "millimeters">
+<!ENTITY marginTop.label     "Boven:">
+<!ENTITY marginTop.accesskey "B">
+<!ENTITY marginBottom.label  "Onder:">
+<!ENTITY marginBottom.accesskey "O">
+<!ENTITY marginLeft.label    "Links:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "Rechts:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "Kop- &amp; voetteksten">
+
+<!ENTITY hfLeft.label        "Links:">
+<!ENTITY hfCenter.label      "Midden:">
+<!ENTITY hfRight.label       "Rechts:">
+<!ENTITY headerLeft.tip      "Linker koptekst">
+<!ENTITY headerCenter.tip    "Middelste koptekst">
+<!ENTITY headerRight.tip     "Rechter koptekst">
+<!ENTITY footerLeft.tip      "Linker voettekst">
+<!ENTITY footerCenter.tip    "Middelste voettekst">
+<!ENTITY footerRight.tip     "Rechter voettekst">
+
+<!ENTITY hfTitle             "Titel">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Datum/Tijd">
+<!ENTITY hfPage              "Pagina #">
+<!ENTITY hfPageAndTotal      "Pagina # van #">
+<!ENTITY hfBlank             "--blanco--">
+<!ENTITY hfCustom            "Aangepast…">
+
+<!ENTITY customPrompt.title  "Aangepast…">
+<!ENTITY customPrompt.prompt "Geef uw eigen kop-/voettekst">

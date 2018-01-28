@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "អ្នក​ជំនួយ​ការ​នាំចូល">
+
+<!ENTITY importFrom.label               "នាំចូល​ជម្រើស​ ចំណាំ​ ប្រវត្តិ ពាក្យសម្ងាត់ និង ទិន្នន័យ​ផ្សេងៗ​ពី ៖">
+<!ENTITY importFromUnix.label           "នាំចូល​ចំណង់​ចំណូល​ចិត្ត ចំណាំ​ ប្រវត្តិ ពាក្យ​សម្ងាត់ និង ទិន្នន័យ​ផ្សេងៗ​ពី ៖">
+<!ENTITY importFromBookmarks.label      "នាំចូល​ចំណាំ​ពី ៖">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "កុំ​នាំចូល​អ្វីៗ​ទាំងអស់">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "F">
+<!ENTITY importFrom360se.label          "កម្មវិធី​អ៊ីនធឺណិត​សុវត្ថិភាព 360">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "រក​មិន​ឃើញ​កម្មវិធី​ដែល​មាន ចំណាំ ប្រវត្តិ ឬ​ទិន្នន័យ​ពាក្យ​សម្ងាត់​ទេ ។">
+
+<!ENTITY importSource.title             "នាំចូល​ការ​កំណត់ និង​ទិន្នន័យ">
+<!ENTITY importItems.title              "ធាតុ​ដែល​ត្រូវ​នាំចូល">
+<!ENTITY importItems.label              "ជ្រើស​វត្ថុ​ណាមួយ​ ដែល​ត្រូវ​នាំចូល ៖">
+
+<!ENTITY migrating.title                "កំពុង​នាំចូល...">
+<!ENTITY migrating.label                "ធាតុ​ដូច​ខាង​ក្រោយ​បច្ចុប្បន្ន​កំពុង​ត្រូវ​បាននាំចូល...">
+
+<!ENTITY selectProfile.title            "ជ្រើស​ទម្រង់">
+<!ENTITY selectProfile.label            "ទម្រង់​ខាងក្រោម​ អាច​នាំចូល​បាន​ពី ៖">
+
+<!ENTITY done.title                     "ការ​នាំ​ចូល​បញ្ចប់​ទាំងស្រុង">
+<!ENTITY done.label                     "ធាតុ​ខាងក្រោម ត្រូវ​បាន​នាំចូល​ដោយ​ជោគជ័យ ៖">
+
+<!ENTITY closeSourceBrowser.label       "សូម​ប្រាកដ​ថា​​បាន​បិទ​កម្មវិធី​អ៊ីនធឺណិត​​ដែល​បាន​ជ្រើស​​មុន​ពេល​បន្ត។">

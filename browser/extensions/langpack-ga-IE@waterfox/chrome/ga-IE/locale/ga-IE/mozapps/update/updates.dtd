@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "Nuashonrú Bogearraí">
+
+<!ENTITY  checking.title                  "Nuashonruithe á seiceáil">
+<!ENTITY  updateCheck.label               "Leaganacha nua de &brandShortName; á lorg…">
+
+<!ENTITY  noupdatesfound.title            "Ní bhfuarthas nuashonruithe">
+<!ENTITY  noupdatesautoenabled.intro      "Níl nuashonrú ar bith le fáil. Seiceálfaidh &brandShortName; ó am go chéile an bhfuil nuashonruithe nua ann.">
+<!ENTITY  noupdatesautodisabled.intro     "Níl nuashonruithe ar fáil. Lorg arís iad níos déanaí, nó cumasaigh seiceáil nuashonruithe uathoibríoch &brandShortName;.">
+
+<!ENTITY  manualUpdate.title              "Ní féidir nuashonrú">
+<!ENTITY  manualUpdate.desc               "Tá nuashonrú molta slándála agus cobhsaíochta ar fáil, ach níl cead agat é a shuiteáil. Téigh i dteagmháil le riarthóir do chórais, nó déan iarracht eile ó chuntas le cead suiteála bogearraí ar an ríomhaire seo.">
+<!ENTITY  manualUpdate.space.desc         "Tá nuashonrú molta slándála agus cobhsaíochta ar fáil ach níl go leorspáis agat chun é a shuiteáil.">
+<!ENTITY  manualUpdateGetMsg.label        "Tá an leagan is déanaí de &brandShortName; ar fáil i gcónaí ó:">
+
+<!ENTITY  unsupported.title               "Ní thacaítear leis an gcóras seo">
+<!ENTITY  unsupported.label               "Tá &brandShortName; as dáta, ach níl an leagan is déanaí ar fáil ar do chóras. Ba chóir duit do chóras a nuashonrú, ansin déan iarracht eile. Ní fheicfidh tú an fógra arís, ach is féidir leat">
+<!ENTITY  unsupportedLink.label           "tuilleadh eolais a fháil.">
+
+<!ENTITY  clickHere.label                 "Tuilleadh eolais faoin nuashonrú seo">
+
+<!ENTITY  evangelism.desc                 "Moltar duit an nuashonrú seo ar &brandShortName; a shuiteáil chomh luath agus is féidir.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; á íoslódáil">
+<!ENTITY  downloading.intro               "Nuashonrú á íoslódáil…">
+<!ENTITY  connecting.label                "Ag dul i dteagmháil le freastalaí na nuashonruithe…">
+<!ENTITY  verificationFailedText.label    "Níorbh fhéidir le &brandShortName; sláine an nuashonraithe incrimintigh a fhíorú tar éis é a íoslódáil. Dá bhrí sin, tá an pacáiste nuashonraithe á íoslódáil ina iomláine.">
+
+<!ENTITY  viewDetails.tooltip             "Mionsonraí faoin nuashonrú seo">
+
+<!ENTITY  details.link                    "Mionsonraí">
+
+<!ENTITY  error.title                     "Theip ar Nuashonrú">
+
+<!ENTITY  error.label                     "Bhí fadhbanna ann agus an nuashonrú seo á lorg, á íoslódáil nó á shuiteáil. Níorbh fhéidir &brandShortName; a nuashonrú de bharr:">
+                                           
+<!ENTITY  errorManual.label               "Tig leat &brandShortName; a nuashonrú de láimh tríd an nasc seo a leanúint agus an leagan is nuaí a íoslódáil:">
+                                           
+<!ENTITY  errorpatching.intro             "Níorbh fhéidir an páirt-nuashonrú a chur i bhfeidhm. Déanfaidh &brandShortName; iarracht eile trí nuashonrú iomlán a íoslódáil.">
+
+<!ENTITY  genericBackgroundError.label    "Ní féidir le &brandShortName; a dhéanamh amach an bhfuil nuashonrú ar fáil. Bí cinnte go bhfuil an leagan is déanaí de &brandShortName; agat ó:">
+
+<!ENTITY  finishedPage.title              "Nuashonrú Réidh le Suiteáil">
+<!ENTITY  finishedPage.text               "Suiteálfar an nuashonrú an chéad uair eile a atosóidh &brandShortName;. Is féidir leat &brandShortName; a atosú anois nó leanúint ag obair agus é a atosú níos déanaí.">
+
+<!ENTITY  finishedBackgroundPage.text     "Tá nuashonrú slándála agus cobhsaíochta ar &brandShortName; íoslódáilte agus réidh le suiteáil.">
+<!ENTITY  finishedBackground.name         "Nuashonrú:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Suiteálfar an nuashonrú an chéad uair eile a atosóidh &brandShortName;. Is féidir leat &brandShortName; a atosú anois nó leanúint ag obair agus é a atosú níos déanaí.">
+<!ENTITY  finishedBackground.moreElevated "Is é riarthóir an chórais amháin atá in ann an nuashonrú seo a chur i bhfeidhm. Suiteálfar é an chéad uair eile a atosóidh &brandShortName;. Is féidir leat &brandShortName; a atosú anois, leanúint ag obair agus é a atosú ar ball, nó an nuashonrú seo a dhiúltú.">
+
+<!ENTITY  update.details.label            "Mionsonraí">
+<!ENTITY  update.installedOn.label        "Suiteáilte ar:">
+<!ENTITY  update.status.label             "Stádas:">

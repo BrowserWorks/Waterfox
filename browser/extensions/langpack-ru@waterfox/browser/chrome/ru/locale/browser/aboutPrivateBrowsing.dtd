@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Сейчас вы не находитесь в приватном окне.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Открыть приватное окно">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "о">
+
+<!ENTITY privateBrowsing.title                           "Приватный просмотр">
+<!ENTITY privateBrowsing.title.tracking                  "Приватный просмотр с Защитой от отслеживания">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Когда вы находитесь в приватном окне, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "не будет сохранять">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "посещённые страницы">
+<!ENTITY aboutPrivateBrowsing.info.searches              "поиски">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "куки">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "временные файлы">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "будет сохранять">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ваши:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "загрузки">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "закладки">
+<!ENTITY aboutPrivateBrowsing.note.before                "Приватный просмотр ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "не обеспечивает вам анонимность">
+<!ENTITY aboutPrivateBrowsing.note.after                 " в Интернете. Ваш работодатель или интернет-провайдер всё ещё могут знать, какую страницу вы посещаете.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Узнайте больше о ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Приватном просмотре">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Защита от отслеживания">
+<!ENTITY trackingProtection.description2                 "Некоторые веб-сайты используют трекеры, которые могут следить за вашими действиями в Интернете. С Защитой от отслеживания, Waterfox будет блокировать множество трекеров, которые могут собирать информацию о вашем поведении в Интернете.">
+<!ENTITY trackingProtection.startTour1                   "Посмотреть, как это работает">

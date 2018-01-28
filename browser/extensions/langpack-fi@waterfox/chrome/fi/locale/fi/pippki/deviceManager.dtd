@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Turvalaitteiden hallinta">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Turvallisuusmoduulit ja laitteet">
+<!ENTITY devmgr.details.title                   "Yksityiskohdat">
+<!ENTITY devmgr.details.title2                  "Arvo">
+
+<!ENTITY devmgr.button.login.label              "Kirjaudu sisään">
+<!ENTITY devmgr.button.login.accesskey          "K">
+<!ENTITY devmgr.button.logout.label             "Kirjaudu ulos">
+<!ENTITY devmgr.button.logout.accesskey         "i">
+<!ENTITY devmgr.button.changepw.label           "Vaihda salasanaa">
+<!ENTITY devmgr.button.changepw.accesskey       "a">
+<!ENTITY devmgr.button.load.label               "Lataa">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Poista">
+<!ENTITY devmgr.button.unload.accesskey         "P">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Kirjoita tiedot lisättävälle moduulille.">
+<!ENTITY loaddevice.modname                     "Moduulin nimi:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Uusi PKCS#11-moduuli">
+<!ENTITY loaddevice.filename                    "Moduulin tiedostonimi:">
+<!ENTITY loaddevice.filename.accesskey          "d">
+<!ENTITY loaddevice.browse                      "Selaa…">
+<!ENTITY loaddevice.browse.accesskey            "S">
+
+<!ENTITY loaddevice.title2                      "Lataa PKCS#11-laiteajuri">

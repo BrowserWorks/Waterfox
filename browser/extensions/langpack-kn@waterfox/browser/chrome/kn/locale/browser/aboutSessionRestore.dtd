@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "ಅಧಿವೇಶನವನ್ನು ಮರಳಿ ಸ್ಥಾಪಿಸು">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "ನಿಜ, ಇದು ಕಿರಿಕಿರಿಯುಂಟುಮಾಡುತ್ತದೆ.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ನಿಮ್ಮ ವಿಂಡೊಗಳನ್ನು ಹಾಗು ಹಾಳೆಗಳನ್ನು ಮರಳಿ ಸ್ಥಾಪಿಸುವಲ್ಲಿ ತೊಂದರೆಯನ್ನು ಎದುರಿಸುತ್ತಿದೆ. ಇದು ಸಾಮಾನ್ಯವಾಗಿ ಇತ್ತೀಚೆಗೆ ತೆರೆಯಲಾದ ಜಾಲ ಪುಟದ ಕಾರಣದಿಂದಾಗಿ ಉಂಟಾಗಿದೆ.">
+<!ENTITY restorepage.tryThis        "ಇದನ್ನು ಪ್ರಯತ್ನಿಸಿ:">
+<!ENTITY restorepage.restoreSome    "ತೊಂದರೆಗೆ ಕಾರಣವಾಗುತ್ತಿದೆ ಎಂದು ನಿಮಗನ್ನಿಸಿದ ಒಂದು ಅಥವ ಹೆಚ್ಚಿನ ಹಾಳೆಗಳಲ್ಲಿ ಮುಚ್ಚಿ">
+<!ENTITY restorepage.startNew       "ಒಂದು ಹೊಚ್ಚ ಹೊಸ ಜಾಲ ವೀಕ್ಷನಾ ಅಧಿವೇಶನವನ್ನು ತೆರೆಯಿರಿ">
+
+<!ENTITY restorepage.tryagainButton "ಮರಳಿ ಸ್ಥಾಪಿಸು">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "ಮುಚ್ಚು">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "ಮರಳಿ ಸ್ಥಾಪಿಸು">
+<!ENTITY restorepage.listHeader     "ವಿಂಡೋಗಳು ಹಾಗು ಹಾಳೆಗಳು">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "ಕಿಟಕಿ &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "ಬನ್ನಿ ಹೋಗೋಣ!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "ಯಶಸ್ವಿಯಾಗಿದೆ!">
+
+<!ENTITY welcomeback2.pageTitle     "ಯಶಸ್ವಿಯಾಗಿದೆ!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; ನಿಮ್ಮ ಬಳಕೆಗೆ ಸಿದ್ಧವಿದೆ.">
+
+<!ENTITY welcomeback2.restoreAll.label  "ಎಲ್ಲಾ ಕಿಟಕಿಗಳನ್ನು ಹಾಗು ಟ್ಯಾಬ್‌ಗಳನ್ನು ಪುನಃಸ್ಥಾಪಿಸು">
+<!ENTITY welcomeback2.restoreSome.label "ನಿಮಗೆ ಬೇಕಾದವುಗಳನ್ನು ಮಾತ್ರ ಪುನಃಸ್ಥಾಪಿಸಿ">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "ನಿಮ್ಮ ಆಡ್-ಆನ್‌ಗಳು ಮತ್ತು ಅಗತ್ಯಾನುಗುಣವಾಗಿಸಿದ್ದವನ್ನು ತೆಗೆಯಲಾಗಿದೆ ಮತ್ತು ನಿಮ್ಮ ವೀಕ್ಷಕದ ಸಿದ್ದತೆಗಳನ್ನು ಪೂರ್ವನಿಯೋಜಿತಗೊಳಿಸಲಾಗಿದೆ. ಇದು ನಿಮ್ಮ ತೊಂದರೆಯನ್ನು ಸರಿಪಡಿಸದಿದ್ದಲ್ಲಿ, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "‍">
+
+<!ENTITY welcomeback2.link.pageInfo2        "ನೀವು ಏನೆಲ್ಲಾ ಮಾಡಬಹುದು ಎಂಬ ಬಗ್ಗೆ ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ.">
+

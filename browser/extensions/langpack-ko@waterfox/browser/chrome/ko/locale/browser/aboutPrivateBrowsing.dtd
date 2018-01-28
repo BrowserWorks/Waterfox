@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "현재 사생활 보호 창에 있지 않습니다.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "새 사생활 보호 창 시작">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "사생활 보호 브라우징">
+<!ENTITY privateBrowsing.title.tracking                  "추적 방지된 사생활 보호 브라우징">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "사생활 보호 창에서 브라우징을 할 때, Waterfox는 ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "다음을 저장하지 않습니다">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "방문한 페이지">
+<!ENTITY aboutPrivateBrowsing.info.searches              "검색">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "쿠키">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "임시 파일">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox는 ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "다음을 저장합니다">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "다운로드">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "북마크">
+<!ENTITY aboutPrivateBrowsing.note.before                "사생활 보호 브라우징이 ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "사용자를 인터넷에서 완전히 감추는 것은">
+<!ENTITY aboutPrivateBrowsing.note.after                 " 아닙니다. 고용주나 인터넷 서비스 제공자는 여전히 방문한 페이지를 알 수 있습니다.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "더 알아보기 ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "사생활 보호 모드">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "추적 보호">
+<!ENTITY trackingProtection.description2                 "어떤 사이트들은 사용자의 인터넷 활동을 추적할 수 있는 방법을 사용합니다. Waterfox의 추적 방지 기능은 사용자 브라우징 행동을 수집하는 다양한 추적 방법을 막아줍니다.">
+<!ENTITY trackingProtection.startTour1                   "작동 원리 살펴보기">

@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+
+<!ENTITY window.title "Tīmekļa konsole">
+<!ENTITY browserConsole.title "Pārlūka konsole">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+
+<!ENTITY openURL.label     "Atvērt adresi jaunā cilnē">
+<!ENTITY openURL.accesskey "t">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+
+<!ENTITY btnPageNet.label   "Net">
+<!ENTITY btnPageNet.tooltip "Reģistrē tīkla piekļuvi">
+<!ENTITY btnPageNet.accesskey "N">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Reģistrēt CSS kļūdas un brīdinājumus">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "Reģistrē JavaScript izņēmumus">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "Drošība">
+<!ENTITY btnPageSecurity.tooltip "Reģistrē drošības paziņojumus un kļūdas">
+<!ENTITY btnPageSecurity.accesskey "D">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "Ziņojumi">
+<!ENTITY btnPageLogging.tooltip "Reģistrēt ziņojumus, kas tiek sūtīti window.console objektam">
+<!ENTITY btnPageLogging.accesskey3 "Z">
+<!ENTITY btnConsoleErrors       "Kļūdas">
+<!ENTITY btnConsoleInfo         "Informācija">
+<!ENTITY btnConsoleWarnings     "Brīdinājumi">
+<!ENTITY btnConsoleLog          "Ziņojumi">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "Pārzīmējumi">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "Serveris">
+<!ENTITY btnServerLogging.tooltip     "Apkopo no tīmekļa servera saņemtos ziņojumus">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerErrors              "Kļūdas">
+<!ENTITY btnServerInfo                "Informācija">
+<!ENTITY btnServerWarnings            "Brīdinājumi">
+<!ENTITY btnServerLog                 "Ziņojumi">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "Kopīgotie darbinieiki">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "Pakalpojuma darbinieki">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "Papildinājuma vai Chrome darbinieki">
+
+<!ENTITY filterOutput.placeholder "Filtrēšanas rezultāti">
+<!ENTITY btnClear.label        "Notīrīt">
+<!ENTITY btnClear.tooltip      "Notīrīt tīmekļa konsoles saturu">
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Kopēt saites adresi">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "Atvērt mainīgo skatā">
+<!ENTITY openInVarViewCmd.accesskey "v">
+<!ENTITY storeAsGlobalVar.label "Saglabāt kā globālo mainīgo">
+<!ENTITY storeAsGlobalVar.accesskey "S">

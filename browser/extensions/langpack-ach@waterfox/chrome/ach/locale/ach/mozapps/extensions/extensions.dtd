@@ -1,0 +1,271 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Lalo med-ikome">
+
+<!ENTITY search.placeholder                   "Yeny med-ikome weng">
+<!ENTITY search.buttonlabel                   "Yeny">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Cano…">
+<!ENTITY listEmpty.installed.label            "Pe itye ki med-ikome ma kit man ma kiketo">
+<!ENTITY listEmpty.availableUpdates.label     "Ngec manyen pe ononge">
+<!ENTITY listEmpty.recentUpdates.label        "Pwod pe i keto ngec manyen i med-ikome cokki">
+<!ENTITY listEmpty.findUpdates.label          "Rot pi ngec manyen">
+<!ENTITY listEmpty.search.label               "Pe onongo romo nongo med-ikome marwate">
+<!ENTITY listEmpty.button.label               "Nong ngec mapol ikom med-ikome">
+<!ENTITY installAddonFromFile.label           "Ket med-ikome ki i pwail…">
+<!ENTITY installAddonFromFile.accesskey       "K">
+<!ENTITY toolsMenu.tooltip                    "Gintic pi med-ikome weng">
+
+<!ENTITY getThemes.description                "Imito ni layenyi obed megi keni?">
+<!ENTITY getThemes.learnMore                  "Yer ki ikin theme alip ki alip.">
+
+<!ENTITY cmd.back.tooltip                     "Dok cen pot buk acel">
+<!ENTITY cmd.forward.tooltip                  "Wot anyim ki pot buk acel">
+
+<!ENTITY showUnsignedExtensions.button.label  "Pe onongo kiromo moko ada pa lamed mogo">
+<!ENTITY showAllExtensions.button.label       "Nyut lamed weng">
+<!ENTITY debugAddons.label                    "Nong bal i Med-ikome">
+<!ENTITY debugAddons.accesskey                "o">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Kit maber ojuko woko med-ikome weng.">
+<!ENTITY warning.checkcompatibility.label          "Med ikome kityeko juko woko roto rwate ne. I romo bedo ki med ikome mape rwate.">
+<!ENTITY warning.checkcompatibility.enable.label   "Ye">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Ye ngiyo rwate me tic pa med-ikome">
+<!ENTITY warning.updatesecurity.label              "Ngiyo ber bedo pa ngec manyen me med-ikome kijuko woko. Mogo nongo inongo peko ki bot ngec manyen.">
+<!ENTITY warning.updatesecurity.enable.label       "Ye">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Ye ngiyo ber bedo pa ngec mayen">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Yeny">
+<!ENTITY view.discover.label                  "Gam med-ikome">
+<!ENTITY view.recentUpdates.label             "Ngec manyen ma cokki">
+<!ENTITY view.availableUpdates.label          "Ngec manyen matye">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Rot pi ngec manyen">
+<!ENTITY updates.checkForUpdates.accesskey    "R">
+<!ENTITY updates.viewUpdates.label            "Nen ngec manyen macocoki">
+<!ENTITY updates.viewUpdates.accesskey        "N">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Ket ngec manyen i med-ikome pire kene">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "m">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Nwo tero med-ikome weng me keto ngec manyen pire kene">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "N">
+<!ENTITY updates.resetUpdatesToManual.label          "Nwo tero med-ikome weng me keto ngec manyen ki cing">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "N">
+<!ENTITY updates.updating.label               "Keto ngec manyen iye med-ikome">
+<!ENTITY updates.installed.label              "Ki tyeko keto ngec mayen iye med-ikome mamegi.">
+<!ENTITY updates.downloaded.label             "Kigamo ngec manyen me med-ikome mamegi.">
+<!ENTITY updates.restart.label                "Cak nitit kombedi pi tyeko keto">
+<!ENTITY updates.noneFound.label              "Pe ki nongo ngec manyen">
+<!ENTITY updates.manualUpdatesFound.label     "Nen ngec manyen matye">
+<!ENTITY updates.updateSelected.label         "Ket ngec manyen">
+<!ENTITY updates.updateSelected.tooltip       "Ket ngec manyen matye i nying jami man">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Nyut Ngec Mukene">
+<!ENTITY cmd.showDetails.accesskey            "N">
+<!ENTITY cmd.findUpdates.label                "Nong ngec manyen">
+<!ENTITY cmd.findUpdates.accesskey            "N">
+<!ENTITY cmd.preferencesWin.label             "Gin ayera">
+<!ENTITY cmd.preferencesWin.accesskey         "G">
+<!ENTITY cmd.preferencesUnix.label            "Ter">
+<!ENTITY cmd.preferencesUnix.accesskey        "T">
+<!ENTITY cmd.about.label                      "Makwako">
+<!ENTITY cmd.about.accesskey                  "M">
+
+<!ENTITY cmd.enableAddon.label                "Mi tii">
+<!ENTITY cmd.enableAddon.accesskey            "M">
+<!ENTITY cmd.disableAddon.label               "Kwany woko">
+<!ENTITY cmd.disableAddon.accesskey           "K">
+<!ENTITY cmd.enableTheme.label                "Gin me aloka iye ma laol jo">
+<!ENTITY cmd.enableTheme.accesskey            "G">
+<!ENTITY cmd.disableTheme.label               "Juk Gin me aloka iye ma laol jo">
+<!ENTITY cmd.disableTheme.accesskey           "G">
+<!ENTITY cmd.askToActivate.label              "Peny me cako">
+<!ENTITY cmd.askToActivate.tooltip            "Peny me tic ki med-ikome man">
+<!ENTITY cmd.alwaysActivate.label             "Jwijwi cak">
+<!ENTITY cmd.alwaysActivate.tooltip           "Jwijwi tii ki med-ikome man">
+<!ENTITY cmd.neverActivate.label              "Pe i cak matwal">
+<!ENTITY cmd.neverActivate.tooltip            "Pe i tii ki med-ikome man matwal">
+<!ENTITY cmd.stateMenu.tooltip                "Lokke kace med-ikome man tiyo">
+<!ENTITY cmd.installAddon.label               "Keti">
+<!ENTITY cmd.installAddon.accesskey           "K">
+<!ENTITY cmd.uninstallAddon.label             "Kwany woko">
+<!ENTITY cmd.uninstallAddon.accesskey         "K">
+<!ENTITY cmd.showPreferencesWin.label         "Gin ayera">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Lok gin ayera me med-ikome man">
+<!ENTITY cmd.showPreferencesUnix.label        "Ter">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Lok ter me med-ikome man">
+<!ENTITY cmd.contribute.label                 "Jogi">
+<!ENTITY cmd.contribute.accesskey             "J">
+<!ENTITY cmd.contribute.tooltip               "Mi bot pi yubo med-ikome man">
+
+<!ENTITY cmd.showReleaseNotes.label           "Nyut Gonyo Coc">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Nyut gonyo coc pi ngec manyen man">
+<!ENTITY cmd.hideReleaseNotes.label           "Kan Gonyo Coc">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Kan gonyo coc pi ngec manyen man">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Ngo ma med-ikome obedo?">
+<!ENTITY discover.description2                "Med-ikome obedo purugram ma weko i yiko imiti ni &brandShortName; kwedetic mogo madwong onyo kit. Tem gintic ma inget me gwoko cawa, lami ngec me kot, onyo poro lok me weko &brandShortName; bed megi.">
+<!ENTITY discover.footer                      "Ka ikube i intanet, dirica man bi nyutu med-ikome mogo ma beco loyo dok ngen tutwal pi yin me temo gi.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Kite">
+<!ENTITY detail.lastupdated.label             "Kiketo ngec manyen me agiki">
+<!ENTITY detail.creator.label                 "Ladong">
+<!ENTITY detail.homepage.label                "Pot buk me acaki">
+<!ENTITY detail.numberOfDownloads.label       "Gam">
+
+<!ENTITY detail.contributions.description     "Ngat ma oyubo med-ikome man kwayo ni i kony me cwako mede me yubo ne kun imiyo ajog matidi mo.">
+
+<!ENTITY detail.updateType                    "Ngec manyen mapire kene">
+<!ENTITY detail.updateDefault.label           "En matye">
+<!ENTITY detail.updateDefault.tooltip         "Ket ngec manyen pire kene keken kace meno aye mapire kene">
+<!ENTITY detail.updateAutomatic.label         "Cwiny">
+<!ENTITY detail.updateAutomatic.tooltip       "Ket ngec manyen pire kene">
+<!ENTITY detail.updateManual.label            "Neki">
+<!ENTITY detail.updateManual.tooltip          "Pe i ket ngec manyen pire kene">
+<!ENTITY detail.home                          "Pot buk me acaki">
+<!ENTITY detail.repository                    "Profile me med-ikome">
+<!ENTITY detail.size                          "Dite">
+
+<!ENTITY detail.checkForUpdates.label         "Rot pi ngec manyen">
+<!ENTITY detail.checkForUpdates.accesskey     "p">
+<!ENTITY detail.checkForUpdates.tooltip       "Rot pi ngec manyen pi med-ikome man">
+<!ENTITY detail.showPreferencesWin.label      "Gin ayera">
+<!ENTITY detail.showPreferencesWin.accesskey  "G">
+<!ENTITY detail.showPreferencesWin.tooltip    "Lok gin ayera me med-ikome man">
+<!ENTITY detail.showPreferencesUnix.label     "Ter">
+<!ENTITY detail.showPreferencesUnix.accesskey "T">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Lok ter me med-ikome man">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Mino wel ne">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Juk kong manok">
+<!ENTITY progress.cancel.tooltip              "Juki">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Nying">
+<!ENTITY sort.name.tooltip                    "Yer ki nying">
+<!ENTITY sort.dateUpdated.label               "Kiketo ngec manyen me agiki">
+<!ENTITY sort.dateUpdated.tooltip             "Yek ki nino dwe ma kiketo iye ngec manyen">
+<!ENTITY sort.relevance.label                 "Ma kikubo maber">
+<!ENTITY sort.relevance.tooltip               "Yer ki en ma pire tek">
+<!ENTITY sort.price.label                     "Welle">
+<!ENTITY sort.price.tooltip                   "Yer ki welle">
+
+<!ENTITY search.filter2.label                 "Yeny:">
+<!ENTITY search.filter2.installed.label       "Med-ikome mamega">
+<!ENTITY search.filter2.installed.tooltip     "Nyut med-ikome ma kiketo">
+<!ENTITY search.filter2.available.label       "Med-ikome matye">
+<!ENTITY search.filter2.available.tooltip     "Nyut med-ikome matye me aketa">
+
+<!ENTITY addon.homepage                       "Pot buk me gang">
+<!ENTITY addon.details.label                  "Mukene">
+<!ENTITY addon.details.tooltip                "Nuyt matut mapol ikom med-ikome man">
+<!ENTITY addon.unknownDate                    "Pe ngene">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(kikwanyo woko)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Ngec manyen">
+<!ENTITY addon.undoAction.label               "Dok cen">
+<!ENTITY addon.undoAction.tooltip             "Dok cen odoco">
+<!ENTITY addon.undoRemove.label               "Dok cen">
+<!ENTITY addon.undoRemove.tooltip             "Gwok med-ikome man ma okete">
+<!ENTITY addon.restartNow.label               "Cak odoco kombedi">
+<!ENTITY addon.install.label                  "Keti">
+<!ENTITY addon.install.tooltip                "Ket med-ikome man">
+<!ENTITY addon.updateNow.label                "Ket ngec manyen kombedi">
+<!ENTITY addon.updateNow.tooltip              "Ket ngec manyen pi med-ikome man">
+<!ENTITY addon.includeUpdate.label            "Med i ngec manyen">
+<!ENTITY addon.updateAvailable.label          "Ngec manyen tye">
+<!ENTITY addon.checkingForUpdates.label       "Roto pi ngec manyen…">
+<!ENTITY addon.releaseNotes.label             "Gony Coc:">
+<!ENTITY addon.loadingReleaseNotes.label      "Tye ka cano…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Tim wa kica, ento bal otime i cano coc me cwalo woko.">
+
+<!ENTITY addon.createdBy.label                "Ki ">
+
+<!ENTITY eula.title                           "Pora me Lancec pa Dano matiyo kwede me agiki">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Yee ki i keti…">
+
+<!ENTITY settings.path.button.label           "Yabi…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Man ngo? Pimo tic romo keto ki timo kwed kare ki kare.">
+<!ENTITY experiment.info.learnmore "Nong ngec Mapol">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Ter me Pimo tic">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Nong ngec Mapol…">
+
+<!ENTITY disabledUnsigned.heading "Kijuko med-ikome mogo woko">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Med-ikome magi pe kimoko ada gi me tic i &brandShortName;. Itwero ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "nong lale kakagi">
+<!ENTITY disabledUnsigned.description.end " onyo peny layub wek omoko ada gi.">
+<!ENTITY disabledUnsigned.learnMore "Nong ngec mapol ikom tute wa me gwoki ma ber i wiyamo.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Luyub ma mito moko ada pa med-ikome gi twero mede ki kwano ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "ki cing">
+
+
+<!ENTITY pluginDeprecation.description "Gino mo orem? &brandShortName; pe dong cwako larwak mogo.">
+<!ENTITY pluginDeprecation.learnMore "Nong ngec mapol.">
+
+
+
+
+
+
+<!ENTITY addon.legacy.label                   "LEGACY">
+<!ENTITY cmd.findReplacement.label            "Find a Replacement">
+
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY legacyExtensions.description "These extensions do not meet current &brandShortName; standards so they have been deactivated.">
+<!ENTITY legacyExtensions.learnMore "Learn about the changes to add-ons">
+<!ENTITY legacyExtensions.title "Legacy Extensions">
+<!ENTITY legacyWarning.description "Missing something? Some extensions are no longer supported by &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Show legacy extensions">

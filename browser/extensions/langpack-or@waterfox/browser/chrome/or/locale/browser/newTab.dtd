@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "ନୂତନ ଟ୍ୟାବ">
+
+
+
+
+<!ENTITY newtab.customize.title "ଆପଣଙ୍କର ନୂତନ ଟ୍ୟାବ ପୃଷ୍ଠାକୁ ଇଚ୍ଛାରୂପଣ କରନ୍ତୁ">
+
+<!ENTITY newtab.undo.removedLabel "ଅଙ୍ଗୁଳି ଚିହ୍ନକୁ ବାହାର କରାଯାଇଛି।">
+<!ENTITY newtab.undo.undoButton "ପଦକ୍ଷେପ ବାତିଲ କରନ୍ତୁ।">
+<!ENTITY newtab.undo.restoreButton "ସମସ୍ତଙ୍କୁ ପୁନଃସ୍ଥାପନ କରନ୍ତୁ।">
+<!ENTITY newtab.undo.closeTooltip "ଲୁଚାନ୍ତୁ">
+
+<!ENTITY newtab.customize.blank2 "Show blank page">
+<!ENTITY newtab.customize.classic "Show your top sites">
+<!ENTITY newtab.customize.cog.enhanced "Include suggested sites">
+<!ENTITY newtab.customize.cog.learn "Learn about New Tab">
+<!ENTITY newtab.customize.cog.title2 "NEW TAB CONTROLS">

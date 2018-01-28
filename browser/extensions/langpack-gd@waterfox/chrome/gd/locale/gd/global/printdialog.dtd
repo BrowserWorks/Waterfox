@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Clò-bhuail">
+
+<!ENTITY printDialog.title "Clò-bhuail">
+
+<!ENTITY fpDialog.title "Sàbhail am faidhle">
+
+<!ENTITY fileCheck.label "Clò-bhuail gu faidhle">
+<!ENTITY fileCheck.accesskey "f">
+<!ENTITY propertiesButton.label "Roghainnean…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Tuairisgeul a' chlò-bhualadair:">
+<!ENTITY printer.label "Clò-bhualadair">
+<!ENTITY printerInput.label "Ainm a' chlò-bhualadair:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Raon a' chlò-bhualaidh">
+<!ENTITY allpagesRadio.label "A h-uile duilleag">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "Duilleagan">
+<!ENTITY rangeRadio.accesskey  "D">
+<!ENTITY frompageInput.label  "o">
+<!ENTITY frompageInput.accesskey  "o">
+<!ENTITY topageInput.label  "gu">
+<!ENTITY topageInput.accesskey  "g">
+<!ENTITY selectionRadio.label "Na chaidh a thaghadh">
+<!ENTITY selectionRadio.accesskey "N">
+
+<!ENTITY copies.label "Lethbhric">
+<!ENTITY numCopies.label "Àireamh de lethbhric:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "Clò-bhuail frèamaichean">
+<!ENTITY aslaidoutRadio.label "Mar a chithear air an sgrìn">
+<!ENTITY aslaidoutRadio.accesskey "M">
+<!ENTITY selectedframeRadio.label  "Am frèam a chaidh a thaghadh">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "Gach frèam 'na aonar">
+<!ENTITY eachframesepRadio.accesskey  "G">

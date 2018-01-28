@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Adroddiadau Chwalu">
+<!ENTITY crashesUnsubmitted.label   "Adroddiadau Chwalu heb eu Cyflwyno">
+<!ENTITY crashesSubmitted.label     "Adroddiadau Chwalu">
+<!ENTITY id.heading                 "Enw'r Adroddiad">
+<!ENTITY dateCrashed.heading        "Dyddiad y Chwalu">
+<!ENTITY dateSubmitted.heading      "Dyddiad Cyflwynwyd">
+<!ENTITY noReports.label            "Does dim adroddiadau chwalu wedi eu cyflwyno.">
+<!ENTITY noConfig.label             "Mae'r rhaglen wedi ei ffurfweddu i ddangos adroddiadau chwalu. Rhaid gosod y <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Tynnu pob Adroddiad">

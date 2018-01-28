@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when logged in... -->
+
+
+<!ENTITY engine.bookmarks.label     "Taq etal">
+<!ENTITY engine.bookmarks.accesskey "e">
+<!ENTITY engine.tabs.label2         "Kejaq taq ruwi'">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "K'ulwachinel">
+<!ENTITY engine.history.accesskey   "e">
+<!ENTITY engine.logins.label        "Ketikirisäx molojri'ïl">
+<!ENTITY engine.logins.accesskey    "K">
+<!ENTITY engine.prefs.label         "Taq ajowab'äl">
+<!ENTITY engine.prefs.accesskey     "a">
+<!ENTITY engine.addons.label        "Taq tz'aqat">
+<!ENTITY engine.addons.accesskey    "t">
+<!ENTITY engine.addresses.label     "Taq Ochochib'äl">
+<!ENTITY engine.addresses.accesskey "i">
+<!ENTITY engine.creditcards.label   "Taq Ch'utit'im pwäq">
+<!ENTITY engine.creditcards.accesskey "C">
+<!-- Device Settings -->
+
+<!ENTITY fxaSyncDeviceName.label       "Rub'i' ri okisaxel">
+<!ENTITY changeSyncDeviceName2.label "Tijal rub'i' okisaxel…">
+<!ENTITY changeSyncDeviceName2.accesskey "j">
+<!ENTITY cancelChangeSyncDeviceName.label "Tiq'at">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "q">
+<!ENTITY saveChangeSyncDeviceName.label "Tiyak">
+<!ENTITY saveChangeSyncDeviceName.accesskey "a">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Ketal Samaj">
+<!ENTITY fxaPrivacyNotice.link.label "Ichinan na'oj">
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "man jikib'an ta.">
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+
+<!ENTITY signedInLoginFailure.beforename.label "Tatikirisaj molojri'ïl richin yatok chik">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Man atikirisan ta molojri'ïl.">
+<!ENTITY signIn.label                "Tatikirisaj molojri'ïl">
+<!ENTITY signIn.accesskey            "t">
+<!ENTITY profilePicture.tooltip      "Tijal ruwachib'al ruwäch b'i'aj">
+<!ENTITY verifiedManage.label        "Tinuk'samajïx rub'i' taqoya'l">
+<!ENTITY verifiedManage.accesskey    "y">
+<!ENTITY disconnect3.label           "Tichup…">
+<!ENTITY disconnect3.accesskey       "c">
+<!ENTITY verify.label                "Tinik'öx taqoya'l">
+<!ENTITY verify.accesskey            "n">
+<!ENTITY forget.label                "Tamestaj re taqoya'l re'">
+<!ENTITY forget.accesskey            "m">
+
+<!ENTITY signedOut.caption            "Tak'waj awik'in ri Ajk'amaya'l">
+<!ENTITY signedOut.description        "Ke'axima' ri taq ayaketal, natab'äl, taq ruwi', taq ewan tzij, taq tz'aqat chuqa' taq ajowab'äl chi kikojol konojel ri taq awokisaxel.">
+<!ENTITY signedOut.accountBox.title   "Tib'an okem rik'in jun &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Titz'uk rub'i' taqoya'l">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "Titikirisäx molojri'ïl">
+<!ENTITY signedOut.accountBox.signin.accesskey  "l">
+
+<!ENTITY signedIn.settings.label       "Taq Runuk'ulem Ximojri'ïl">
+<!ENTITY signedIn.settings.description "Tacha' achike ye'axïm pa taq awokisaxel rik'in &brandShortName;.">
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+
+<!ENTITY mobilePromo3.start            "Taqasaj Waterfox richin ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+
+<!ENTITY mobilePromo3.iOSBefore         " chuqa' ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " richin naxïm rik'in ri awoyonib'al okisaxel.">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Buyisela iseshoni">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Kodwa, kubanga iintloni oku.">
+<!ENTITY restorepage.problemDesc    "I-&brandShortName; inengxaki ekubuyiseleni i-windows neethebhu. Oku kudla ngokubangelwa likhasi lewebhu elivulwe kutshanje.">
+<!ENTITY restorepage.tryThis        "Ungazama:">
+<!ENTITY restorepage.restoreSome    "Ukususa ithebhu enye nangaphezulu ocinga ukuba yiyo ebangela ingxaki">
+<!ENTITY restorepage.startNew       "Ukuqalisa iseshoni yokubhrawuza entsha ngokupheleleyo">
+
+<!ENTITY restorepage.tryagainButton "Buyisela">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Vala">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Buyisela">
+<!ENTITY restorepage.listHeader     "I-Windows neethebhu">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ifestile &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Masihambe!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Impumelelo!">
+
+<!ENTITY welcomeback2.pageTitle     "Impumelelo!">
+<!ENTITY welcomeback2.pageInfo1     "I-&brandShortName; sele ikulungele ukuhamba.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Gcina zonke ii-windows neethebhu">
+<!ENTITY welcomeback2.restoreSome.label "Gcina kuphela ozifunayo">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Izongezelelo zakho nolungiselelo lususiwe kwaye iisetingi zebhrawza zigciniwe kwizinto zazo zendalo. Ukuba oku akukhange kuyilungise imeko yakho,">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "funda ngakumbi malunga nento onokuyenza.">
+

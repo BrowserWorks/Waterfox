@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Майстар імпарту">
+
+<!ENTITY importFrom.label               "Імпартаваць налады, закладкі, гісторыю, паролі і іншыя дадзеныя з:">
+<!ENTITY importFromUnix.label           "Імпарт Налад, Закладак, Гісторыі, Пароляў ці іншых дадзеных з:">
+<!ENTITY importFromBookmarks.label      "Імпарт Закладак з:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Не імпартаваць нічога">
+<!ENTITY importFromNothing.accesskey    "Н">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Не знойдзены ніякія праграмы, якія б утрымлівалі закладкі, гісторыю або паролі.">
+
+<!ENTITY importSource.title             "Імпарт налад і дадзеных">
+<!ENTITY importItems.title              "Элементы для імпарту">
+<!ENTITY importItems.label              "Выберыце, якія элементы трэба імпартаваць:">
+
+<!ENTITY migrating.title                "Імпарт…">
+<!ENTITY migrating.label                "Наступныя адзінкі зараз імпартуюцца…">
+
+<!ENTITY selectProfile.title            "Выбар Профілю">
+<!ENTITY selectProfile.label            "Наступныя профілі даступныя для імпарту з:">
+
+<!ENTITY done.title                     "Імпарт Выкананы">
+<!ENTITY done.label                     "Наступныя адзінкі паспяхова імпартаваны:">
+
+<!ENTITY closeSourceBrowser.label       "Калі ласка, упэўніцеся перад працягам, што выбраны браўзер закрыты.">

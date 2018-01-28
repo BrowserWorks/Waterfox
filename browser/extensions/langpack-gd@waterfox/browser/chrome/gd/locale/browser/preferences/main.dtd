@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Aig an toiseach">
+
+<!ENTITY startupPage2.label        "Nuair a thòisicheas &brandShortName;">
+<!ENTITY startupPage2.accesskey    "t">
+<!ENTITY startupUserHomePage.label "Seall an duilleag-dhachaigh agad">
+<!ENTITY startupBlankPage.label    "Seall duilleag bhàn">
+<!ENTITY startupPrevSession.label  "Seall na h-uinneagan is tabaichean a bha agad san t-seisean mu dheireadh">
+
+<!ENTITY homepage2.label           "An duilleag-dhachaidh">
+<!ENTITY homepage2.accesskey       "A">
+<!ENTITY useCurrentPage.label      "Cleachd an duilleag làithreach">
+<!ENTITY useCurrentPage.accesskey  "u">
+<!ENTITY useMultiple.label         "Cleachd na duilleagan làithreach">
+<!ENTITY chooseBookmark.label      "Cleachd comharra-lìn…">
+<!ENTITY chooseBookmark.accesskey  "c">
+<!ENTITY restoreDefault.label      "Aisig na roghainnean bunaiteach">
+<!ENTITY restoreDefault.accesskey  "r">
+
+<!ENTITY downloads.label     "Luchdaidhean a-nuas">
+
+<!ENTITY saveTo.label "Sàbhail faidhlichean ann an">
+<!ENTITY saveTo.accesskey "S">
+<!ENTITY chooseFolderWin.label        "Brabhsaich…">
+<!ENTITY chooseFolderWin.accesskey    "B">
+<!ENTITY chooseFolderMac.label        "Tagh…">
+<!ENTITY chooseFolderMac.accesskey    "T">
+<!ENTITY alwaysAskWhere.label         "Faighnich càit an dèid faidhlichean a shàbhaladh an-còmhnaidh">
+<!ENTITY alwaysAskWhere.accesskey     "a">
+
+<!ENTITY alwaysCheckDefault2.label        "Dèan cinnteach an-còmhnaidh an e &brandShortName; fhèin do roghainn brabhsair">
+<!ENTITY alwaysCheckDefault2.accesskey    "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Cleachd mar am brabhsair bunaiteach...">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "b">
+<!ENTITY isDefault.label                  "'S e &brandShortName; am brabhsair bunaiteach agad an-dràsta">
+<!ENTITY isNotDefault.label               "Chan e &brandShortName; am brabhsair bunaiteach agad an-dràsta">
+
+<!ENTITY separateProfileMode.label        "Leig le &brandShortName; agus Waterfox ruith aig an aon àm">
+<!ENTITY useWaterfoxSync.label             "Gliocas: Cleachdaidh seo pròifilean eadar-dhealaichte. Cleachd an sioncronachadh gus dàta a ghluasad eadar an dà dhiubh.">
+<!ENTITY getStarted.notloggedin.label     "Clàraich a-steach gu &syncBrand.shortName.label;...">
+<!ENTITY getStarted.configured.label      "Fosgail roghainnean &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Cuir an comas multi-process &brandShortName;">

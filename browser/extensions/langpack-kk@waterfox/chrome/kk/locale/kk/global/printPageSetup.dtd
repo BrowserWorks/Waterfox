@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Парақ баптаулары">
+
+<!ENTITY basic.tab           "Пішімі мен қасиеттері">
+
+<!ENTITY formatGroup.label   "Формат">
+
+<!ENTITY orientation.label   "Бағыты:">
+<!ENTITY portrait.label      "Тік">
+<!ENTITY portrait.accesskey  "Т">
+<!ENTITY landscape.label     "Жатық">
+<!ENTITY landscape.accesskey "Ж">
+
+<!ENTITY scale.label         "Масштаб:">
+<!ENTITY scale.accesskey     "М">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Парақтың еніне дейін сығу">
+<!ENTITY shrinkToFit.accesskey "П">
+
+<!ENTITY optionsGroup.label  "Қасиеттері">
+
+<!ENTITY printBG.label       "Фонды баспаға шығару (түстер мен суреттер)">
+<!ENTITY printBG.accesskey   "Ф">
+
+<!ENTITY advanced.tab        "Шеттер мен колонтитулдар">
+
+<!ENTITY marginGroup.label   "Поля (#1)">
+<!ENTITY marginUnits.inches  "дюйм">
+<!ENTITY marginUnits.metric  "миллиметр">
+<!ENTITY marginTop.label     "Үстінен:">
+<!ENTITY marginTop.accesskey "т">
+<!ENTITY marginBottom.label  "Астынан:">
+<!ENTITY marginBottom.accesskey "А">
+<!ENTITY marginLeft.label    "Сол жақтан:">
+<!ENTITY marginLeft.accesskey "С">
+<!ENTITY marginRight.label   "Оң жақтан:">
+<!ENTITY marginRight.accesskey "О">
+
+<!ENTITY headerFooter.label  "Колонтитулдар">
+
+<!ENTITY hfLeft.label        "Сол жақтан:">
+<!ENTITY hfCenter.label      "Ортасынан:">
+<!ENTITY hfRight.label       "Оң жақтан:">
+<!ENTITY headerLeft.tip      "Жоғарғы колонтитул (сол жақ)">
+<!ENTITY headerCenter.tip    "Жоғарғы колонтитул (ортасында)">
+<!ENTITY headerRight.tip     "Жоғарғы колонтитул (оң жақ)">
+<!ENTITY footerLeft.tip      "Төмеңгі колонтитул (сол жақ)">
+<!ENTITY footerCenter.tip    "Төмеңгі колонтитул (ортасында)">
+<!ENTITY footerRight.tip     "Төмеңгі колонтитул (оң жақ)">
+
+<!ENTITY hfTitle             "Парақ тақырыбы">
+<!ENTITY hfURL               "Парақ адресі">
+<!ENTITY hfDateAndTime       "Күні мен уақыты">
+<!ENTITY hfPage              "Парақ нөмірі">
+<!ENTITY hfPageAndTotal      "Парақ #, барлығы #">
+<!ENTITY hfBlank             "--бос--">
+<!ENTITY hfCustom            "Баптау…">
+
+<!ENTITY customPrompt.title  "Баптау…">
+<!ENTITY customPrompt.prompt "Өзіңіздің колонтитул мәтінің енгізіңіз">

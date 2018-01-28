@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Аты:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "А">
+<!ENTITY editBookmarkOverlay.location.label                  "Адресі:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "д">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Жаңалықтар таспасының адресі:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "р">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Сайт адресі:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "а">
+<!ENTITY editBookmarkOverlay.folder.label                    "Бума:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Бетбелгілер бумаларының барлығын көрсету">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Жасыру">
+<!ENTITY editBookmarkOverlay.tags.label                      "Белгілер:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "л">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Белгілерді үтірлермен ажыратып жазыңыз">
+<!ENTITY editBookmarkOverlay.description.label               "Анықтамасы:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ы">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Қысқаша кілт сөзі:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "ш">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Белгілердің барлығын көрсету">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Бетбелгіні бүйір панелінде жүктеу">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ж">
+<!ENTITY editBookmarkOverlay.choose.label                    "Таңдау…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Жаңа бума">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "б">

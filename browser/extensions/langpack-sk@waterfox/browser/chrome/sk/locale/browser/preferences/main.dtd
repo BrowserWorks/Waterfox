@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Spustenie">
+
+<!ENTITY startupPage2.label        "Po spustení prehliadača &brandShortName; zobraziť:">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "domovskú stránku">
+<!ENTITY startupBlankPage.label    "prázdnu stránku">
+<!ENTITY startupPrevSession.label  "naposledy otvorené okná a karty">
+
+<!ENTITY homepage2.label           "Domovská stránka">
+<!ENTITY homepage2.accesskey       "m">
+<!ENTITY useCurrentPage.label      "Použiť aktuálnu stránku">
+<!ENTITY useCurrentPage.accesskey  "s">
+<!ENTITY useMultiple.label         "Použiť aktuálne stránky">
+<!ENTITY chooseBookmark.label      "Použiť záložku…">
+<!ENTITY chooseBookmark.accesskey  "z">
+<!ENTITY restoreDefault.label      "Obnoviť predvolené">
+<!ENTITY restoreDefault.accesskey  "O">
+
+<!ENTITY downloads.label     "Preberanie súborov">
+
+<!ENTITY saveTo.label "Všetky súbory ukladať do">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Prehľadávať…">
+<!ENTITY chooseFolderWin.accesskey    "h">
+<!ENTITY chooseFolderMac.label        "Vybrať…">
+<!ENTITY chooseFolderMac.accesskey    "V">
+<!ENTITY alwaysAskWhere.label         "Vždy sa opýtať, kam uložiť súbory">
+<!ENTITY alwaysAskWhere.accesskey     "k">
+
+<!ENTITY alwaysCheckDefault2.label        "Vždy kontrolovať, či je &brandShortName; predvoleným prehliadačom">
+<!ENTITY alwaysCheckDefault2.accesskey    "r">
+<!ENTITY setAsMyDefaultBrowser3.label     "Nastaviť ako predvolený…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "d">
+<!ENTITY isDefault.label                  "&brandShortName; je nastavený ako predvolený prehliadač">
+<!ENTITY isNotDefault.label               "&brandShortName; nie je váš predvolený prehliadač">
+
+<!ENTITY separateProfileMode.label        "Umožniť, aby &brandShortName; a Waterfox mohli byť spustené v rovnakom čase">
+<!ENTITY useWaterfoxSync.label             "Tip: použijú sa oddelené používateľské profily. Ak chcete medzi nimi zdieľať údaje, môžete využiť službu Sync.">
+<!ENTITY getStarted.notloggedin.label     "Prihlásiť sa do služby &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Otvoriť nastavenia služby &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Zapnúť režim viacerých procesov prehliadača &brandShortName;">

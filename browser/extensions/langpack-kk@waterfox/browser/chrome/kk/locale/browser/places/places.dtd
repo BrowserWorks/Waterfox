@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Жинақталған">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Басқару">
+<!ENTITY organize.accesskey    "с">
+<!ENTITY organize.tooltip      "Бетбелгілеріңізді басқару">
+
+<!ENTITY file.close.label               "Жабу">
+<!ENTITY file.close.accesskey           "Ж">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Түрі">
+<!ENTITY views.accesskey                "р">
+<!ENTITY views.tooltip                  "Көрінісіңізді ауыстыру">
+<!ENTITY view.columns.label             "Бағандарды көрсету">
+<!ENTITY view.columns.accesskey         "к">
+<!ENTITY view.sort.label                "Сұрыптау">
+<!ENTITY view.sort.accesskey            "С">
+<!ENTITY view.unsorted.label            "Сұрыптаусыз">
+<!ENTITY view.unsorted.accesskey        "п">
+<!ENTITY view.sortAscending.label       "Алфавит бойынша сұрыптау">
+<!ENTITY view.sortAscending.accesskey   "б">
+<!ENTITY view.sortDescending.label      "Алфавит бойынша кері сұрыптау">
+<!ENTITY view.sortDescending.accesskey  "т">
+
+<!ENTITY importBookmarksFromHTML.label     "Бетбелгілерді HTML ішінен импорттау…">
+<!ENTITY importBookmarksFromHTML.accesskey "и">
+<!ENTITY exportBookmarksToHTML.label       "Бетбелгілерді HTML ішіне экспорттау…">
+<!ENTITY exportBookmarksToHTML.accesskey   "э">
+<!ENTITY importOtherBrowser.label          "Мәліметті басқа браузерден импорттау…">
+<!ENTITY importOtherBrowser.accesskey      "М">
+
+<!ENTITY cmd.backup.label               "Резервті көшіру…">
+<!ENTITY cmd.backup.accesskey           "в">
+<!ENTITY cmd.restore2.label             "Қалпына келтіру">
+<!ENTITY cmd.restore2.accesskey         "к">
+<!ENTITY cmd.restoreFromFile.label      "Файлды таңдау…">
+<!ENTITY cmd.restoreFromFile.accesskey  "д">
+
+<!ENTITY cmd.deleteDomainData.label     "Бұл парақты өшіру">
+<!ENTITY cmd.deleteDomainData.accesskey "Б">
+
+<!ENTITY cmd.open.label                  "Ашу">
+<!ENTITY cmd.open.accesskey              "А">
+<!ENTITY cmd.open_window.label           "Жаңа терезеде ашу">
+<!ENTITY cmd.open_window.accesskey       "т">
+<!ENTITY cmd.open_private_window.label     "Жаңа жекелік терезесінде ашу">
+<!ENTITY cmd.open_private_window.accesskey "к">
+<!ENTITY cmd.open_tab.label              "Жаңа бетте ашу">
+<!ENTITY cmd.open_tab.accesskey          "т">
+<!ENTITY cmd.open_all_in_tabs.label      "Әрқайсысын жаңа бетте ашу">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "с">
+
+<!ENTITY cmd.properties.label      "Қасиеттері">
+<!ENTITY cmd.properties.accesskey  "е">
+
+<!ENTITY cmd.sortby_name.label              "Аты бойынша сұрыптау">
+<!ENTITY cmd.sortby_name.accesskey          "ы">
+<!ENTITY cmd.context_sortby_name.accesskey  "й">
+
+<!ENTITY cmd.new_bookmark.label            "Жаңа бетбелгі…">
+<!ENTITY cmd.new_bookmark.accesskey        "б">
+<!ENTITY cmd.new_folder.label              "Жаңа бума…">
+<!ENTITY cmd.new_folder.accesskey          "у">
+<!ENTITY cmd.context_new_folder.accesskey  "м">
+<!ENTITY cmd.new_separator.label           "Жаңа ажыратқыш">
+<!ENTITY cmd.new_separator.accesskey       "а">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Жаңалықтар таспасының бетбелгісін жаңарту">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "р">
+
+<!ENTITY cmd.moveBookmarks.label                  "Басқа жерге ауыстыру…">
+<!ENTITY cmd.moveBookmarks.accesskey              "у">
+
+<!ENTITY col.name.label          "Аты">
+<!ENTITY col.tags.label          "Белгілер">
+<!ENTITY col.url.label           "Орналасқан жері">
+<!ENTITY col.mostrecentvisit.label "Ең соңғы шолу">
+<!ENTITY col.visitcount.label    "Қараулар саны">
+<!ENTITY col.description.label   "Анықтамасы">
+<!ENTITY col.dateadded.label     "Қосылған">
+<!ENTITY col.lastmodified.label  "Соңғы рет өзгертілген">
+
+<!ENTITY search.placeholder  "Іздеу">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Импорт және резервілеу">
+<!ENTITY maintenance.accesskey  "И">
+<!ENTITY maintenance.tooltip    "Бетбелгілеріңізді импорттау мен қор көшіру">
+
+<!ENTITY backButton.tooltip  "Алдыңғы бетке қайту">
+
+<!ENTITY forwardButton.tooltip  "Келесі бетке өту">
+
+<!ENTITY detailsPane.more.label "Көбірек">
+<!ENTITY detailsPane.more.accesskey "е">
+<!ENTITY detailsPane.less.label "Аздау">
+<!ENTITY detailsPane.less.accesskey "з">
+<!ENTITY detailsPane.selectAnItemText.description "Қарап шығу мен қасиеттерін түзету үшін элементті таңдаңыз">
+
+<!ENTITY view.label               "Қарау">
+<!ENTITY view.accesskey           "р">
+<!ENTITY byDate.label             "Күні бойынша">
+<!ENTITY byDate.accesskey         "н">
+<!ENTITY bySite.label             "Сайт бойынша">
+<!ENTITY bySite.accesskey         "й">
+<!ENTITY byMostVisited.label      "Көбірек қаралғаны бойынша">
+<!ENTITY byMostVisited.accesskey  "е">
+<!ENTITY byLastVisited.label      "Соңғы қаралғаны бойынша">
+<!ENTITY byLastVisited.accesskey  "о">
+<!ENTITY byDayAndSite.label       "Күн мен сайт бойынша">
+<!ENTITY byDayAndSite.accesskey   "м">

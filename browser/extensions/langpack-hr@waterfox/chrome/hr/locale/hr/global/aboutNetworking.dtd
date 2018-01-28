@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "O umrežavanju">
+<!ENTITY aboutNetworking.warning               "Ovo je eksperimentalno. Nemojte koristiti bez nadzora odrasle osobe.">
+<!ENTITY aboutNetworking.showNextTime          "Prikaži ovo upozorenje sljedeći put">
+<!ENTITY aboutNetworking.ok                    "U redu">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Osvježi">
+<!ENTITY aboutNetworking.autoRefresh           "Automatski osviježi svake 3 sekunde">
+<!ENTITY aboutNetworking.hostname              "Adresa poslužitelja">
+<!ENTITY aboutNetworking.port                  "Ulaz">
+
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktivno">
+<!ENTITY aboutNetworking.idle                  "U pripravi">
+<!ENTITY aboutNetworking.host                  "Poslužitelj">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Poslano">
+<!ENTITY aboutNetworking.received              "Primljeno">
+<!ENTITY aboutNetworking.family                "Obitelj">
+<!ENTITY aboutNetworking.addresses             "Adrese">
+<!ENTITY aboutNetworking.expires               "Ističe (sekunde)">
+<!ENTITY aboutNetworking.messagesSent          "Poruka poslana">
+<!ENTITY aboutNetworking.messagesReceived      "Poruka primljena">
+<!ENTITY aboutNetworking.bytesSent             "Poslano bajtova">
+<!ENTITY aboutNetworking.bytesReceived         "Primljeno bajtova">
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.dnsLookup             "DNS upit">
+<!ENTITY aboutNetworking.dnsLookupButton       "Razrješi">
+<!ENTITY aboutNetworking.dnsDomain             "Domena">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP adrese">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.currentLogFile        "Current Log File:">
+<!ENTITY aboutNetworking.currentLogModules     "Current Log Modules:">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.logTutorial           "See <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> for instructions on how to use this tool.">
+<!ENTITY aboutNetworking.logging               "Logging">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.setLogFile            "Set Log File">
+<!ENTITY aboutNetworking.setLogModules         "Set Log Modules">
+<!ENTITY aboutNetworking.startLogging          "Start Logging">
+<!ENTITY aboutNetworking.stopLogging           "Stop Logging">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

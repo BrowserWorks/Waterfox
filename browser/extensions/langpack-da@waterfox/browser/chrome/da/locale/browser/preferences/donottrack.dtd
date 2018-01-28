@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Spor mig ikke">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Brug altid Spor mig ikke">
+<!ENTITY doNotTrackCheckbox2.accesskey "B">
+
+<!ENTITY doNotTrackTPInfo.description "Når Beskyttelse mod sporing er slået til sender &brandShortName; et signal om at du ikke vil spores.">
+<!ENTITY doNotTrackLearnMore.label    "Læs mere">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Jít zpět">
+<!ENTITY  button-back-mac.accesskey    "z">
+<!ENTITY  button-next-mac.label        "Pokračovat">
+<!ENTITY  button-next-mac.accesskey    "P">
+<!ENTITY  button-finish-mac.label      "Hotovo">
+<!ENTITY  button-cancel-mac.label      "Zrušit">
+
+<!ENTITY  button-back-unix.label       "Zpět">
+<!ENTITY  button-back-unix.accesskey   "Z">
+<!ENTITY  button-next-unix.label       "Další">
+<!ENTITY  button-next-unix.accesskey   "D">
+<!ENTITY  button-finish-unix.label     "Dokončit">
+<!ENTITY  button-cancel-unix.label     "Zrušit">
+
+<!ENTITY  button-back-win.label        "&lt; Zpět">
+<!ENTITY  button-back-win.accesskey    "Z">
+<!ENTITY  button-next-win.label        "Další &gt;">
+<!ENTITY  button-next-win.accesskey    "D">
+<!ENTITY  button-finish-win.label      "Dokončit">
+<!ENTITY  button-cancel-win.label      "Zrušit">

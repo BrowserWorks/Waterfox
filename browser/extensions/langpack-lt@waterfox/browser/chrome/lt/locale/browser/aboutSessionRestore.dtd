@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Seanso atkūrimas">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Et, nemalonu…">
+<!ENTITY restorepage.problemDesc    "„&brandShortName;“ nepavyksta atkurti langų ir kortelių. Paprastai dėl to kalta kuri nors vėliausiai atverta kortelė.">
+<!ENTITY restorepage.tryThis        "Jūs galite:">
+<!ENTITY restorepage.restoreSome    "pašalinti vieną ar daugiau kortelių, kurios, jūsų manymu, gali būti šios problemos priežastimi">
+<!ENTITY restorepage.startNew       "pradėti naują naršymo seansą">
+
+<!ENTITY restorepage.tryagainButton "Atkurti">
+<!ENTITY restorepage.restore.access "A">
+<!ENTITY restorepage.closeButton    "Užverti">
+<!ENTITY restorepage.close.access   "U">
+
+<!ENTITY restorepage.restoreHeader  "Atkurti">
+<!ENTITY restorepage.listHeader     "Langai ir kortelės">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Langas nr. &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Pirmyn!">
+<!ENTITY welcomeback2.restoreButton.access "m">
+
+<!ENTITY welcomeback2.tabtitle      "Pavyko!">
+
+<!ENTITY welcomeback2.pageTitle     "Pavyko!">
+<!ENTITY welcomeback2.pageInfo1     "„&brandShortName;“ jau pasiruošė.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Atkurti visus langus ir korteles">
+<!ENTITY welcomeback2.restoreSome.label "Atkurti tik pageidaujamus">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Jūsų priedai ir suasmeninimai buvo pašalinti, o naršyklės nuostatos sugrąžintos į numatytąsias. Jeigu tai neišsprendė problemos, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "sužinokite, ką dar galite išbandyti.">
+

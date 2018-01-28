@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Prisijungimas">
+<!ENTITY header     "Prisijungimas prie nutolusio įrenginio">
+<!ENTITY host       "Įrenginys:">
+<!ENTITY port       "Prievadas:">
+<!ENTITY connect    "Jungtis">
+<!ENTITY connecting "Jungiamasi…">
+<!ENTITY availableAddons "Pasiekiami priedai:">
+<!ENTITY availableTabs "Pasiekiamos kortelės:">
+<!ENTITY availableProcesses "Pasiekiami procesai:">
+<!ENTITY connectionError "Klaida:">
+<!ENTITY errorTimeout "Klaida: baigėsi ryšiui užmegzti skirtas laikas.">
+<!ENTITY errorRefused "Klaida: ryšys atmestas.">
+<!ENTITY errorUnexpected "Netikėta klaida.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "„Waterfox“ saityno kūrėjų priemonėmis galima derinti kitus įrenginius (pavyzdžiui, „Waterfox“ naršyklę „Android“ ar „Waterfox OS“ įrenginyje). Norimame įrenginyje reikia įgalinti nuotolinį derinimą. Išsamiau apie tai skaitykite ">
+<!ENTITY remoteDocumentation "dokumentacijoje">
+<!ENTITY remoteHelpSuffix ".">
+

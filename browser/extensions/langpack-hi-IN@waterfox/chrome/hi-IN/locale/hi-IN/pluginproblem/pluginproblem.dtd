@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "प्लगिन सक्रिय करने के लिए यहाँ टैप करें.">
+<!ENTITY clickToActivatePlugin                               "प्लगिन सक्रिय करें.">
+<!ENTITY checkForUpdates                                     "अद्यतन के लिए जाँचें...">
+<!ENTITY blockedPlugin.label                                 "यह प्लगिन आपकी सुरक्षा के लिए रोका गया है |">
+<!ENTITY hidePluginBtn.label                                 "प्लगइन छिपाएँ |">
+<!ENTITY managePlugins                                       "प्लगइन को प्रबंधित करें…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "‍">
+<!ENTITY reloadPlugin.middle                                 "पेज को रिलोड करो">
+<!ENTITY reloadPlugin.post                                   " फिर आजमाने के लिए.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "क्रैश रिपोर्ट भेजें">
+<!ENTITY report.submitting                                   "रिपोर्ट भेजी जा रही है">
+<!ENTITY report.submitted                                    "क्रैश रिपोर्ट भेजा गया.">
+<!ENTITY report.disabled                                     "क्रैश रिपोर्टिंग निष्क्रिय किया गया |">
+<!ENTITY report.failed                                       "सुपुर्दगी विफल.">
+<!ENTITY report.unavailable                                  "कोई रिपोर्ट उपलब्ध नहीं.">
+<!ENTITY report.comment                                      "टिप्पणी जोड़ें (टिप्पणियाँ सार्वजनिक हैं)">
+<!ENTITY report.pageURL                                      "पृष्ठ का यूआरएल सम्मिलित करें">
+
+<!ENTITY plugin.file                                         "फ़ाइल ">
+<!ENTITY plugin.mimeTypes                                    "माइम क़िस्म">
+<!ENTITY plugin.flashProtectedMode.label                     "एडोब फ्लैश सुरक्षित मोड सक्रिय करें">
+
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

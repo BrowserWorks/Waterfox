@@ -1,0 +1,141 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+<!ENTITY projectMenu_label "Progetto">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Nuova app…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Apri app locale (packaged)…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "k">
+<!ENTITY projectMenu_importHostedApp_label "Apri app remota (hosted)…">
+<!ENTITY projectMenu_importHostedApp_accesskey "h">
+<!ENTITY projectMenu_selectApp_label "Apri app…">
+<!ENTITY projectMenu_selectApp_accesskey "A">
+<!ENTITY projectMenu_play_label "Installa ed esegui">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Interrompi app">
+<!ENTITY projectMenu_stop_accesskey "n">
+<!ENTITY projectMenu_debug_label "Debug app">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Rimuovi progetto">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Preferenze">
+<!ENTITY projectMenu_showPrefs_accesskey "P">
+<!ENTITY projectMenu_manageComponents_label "Gestione componenti extra">
+<!ENTITY projectMenu_manageComponents_accesskey "G">
+<!ENTITY projectMenu_refreshTabs_label "Aggiorna schede">
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Disconnetti">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "Cattura schermata">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "s">
+<!ENTITY runtimeMenu_showDetails_label "Informazioni runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "n">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Preferenze dispositivo">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "z">
+<!ENTITY runtimeMenu_showSettings_label "Impostazioni dispositivo">
+<!ENTITY runtimeMenu_showSettings_accesskey "I">
+<!ENTITY viewMenu_label "Visualizza">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "Aumenta zoom">
+<!ENTITY viewMenu_zoomin_accesskey "A">
+<!ENTITY viewMenu_zoomout_label "Riduci zoom">
+<!ENTITY viewMenu_zoomout_accesskey "R">
+<!ENTITY viewMenu_resetzoom_label "Ripristina zoom">
+<!ENTITY viewMenu_resetzoom_accesskey "i">
+<!ENTITY projectButton_label "Apri app">
+<!ENTITY runtimeButton_label "Seleziona runtime">
+<!ENTITY key_quit "W">
+<!ENTITY key_showProjectPanel "O">
+<!ENTITY key_play "R">
+<!ENTITY key_toggleToolbox "VK_F12">
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+<!ENTITY projectPanel_myProjects "I miei progetti">
+<!ENTITY projectPanel_runtimeApps "App runtime">
+<!ENTITY projectPanel_tabs "Schede">
+<!ENTITY runtimePanel_usb "Dispositivi USB">
+<!ENTITY runtimePanel_wifi "Dispositivi Wi-Fi">
+<!ENTITY runtimePanel_simulator "Simulatori">
+<!ENTITY runtimePanel_other "Altro">
+<!ENTITY runtimePanel_installsimulator "Installa simulatore">
+<!ENTITY runtimePanel_noadbhelper "Installa ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Il dispositivo non è visibile?">
+<!ENTITY runtimePanel_refreshDevices_label "Aggiorna dispositivi">
+<!ENTITY details_valid_header "valido">
+<!ENTITY details_warning_header "avvisi">
+<!ENTITY details_error_header "errori">
+<!ENTITY details_description "Descrizione">
+<!ENTITY details_location "Indirizzo">
+<!ENTITY details_manifestURL "ID app">
+<!ENTITY details_removeProject_button "Rimuovi progetto">
+<!ENTITY newAppWindowTitle "Nuova app">
+<!ENTITY newAppHeader "Seleziona modello">
+<!ENTITY newAppLoadingTemplate "Caricamento modelli…">
+<!ENTITY newAppProjectName "Nome progetto:">
+<!ENTITY deck_close "Chiudi">
+<!ENTITY addons_title "Componenti aggiuntivi">
+<!ENTITY addons_aboutaddons "Apri gestione componenti aggiuntivi">
+<!ENTITY prefs_title "Preferenze">
+<!ENTITY prefs_editor_title "Editor">
+<!ENTITY prefs_general_title "Generale">
+<!ENTITY prefs_restore "Ripristina predefiniti">
+<!ENTITY prefs_manage_components "Gestione componenti extra">
+<!ENTITY prefs_options_autoconnectruntime "Riconnetti al runtime precedente">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "All’avvio di WebIDE riconnetti al runtime utilizzato in precedenza">
+<!ENTITY prefs_options_rememberlastproject "Ricorda l’ultimo progetto">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Ripristina il progetto precedente all’avvio di WebIDE">
+<!ENTITY prefs_options_templatesurl "URL modelli">
+<!ENTITY prefs_options_templatesurl_tooltip "Indice dei modelli disponibili">
+<!ENTITY runtimedetails_title "Informazioni runtime">
+<!ENTITY runtimedetails_adbIsRoot "ADB è root: ">
+<!ENTITY runtimedetails_summonADBRoot "dispositivo root">
+<!ENTITY runtimedetails_ADBRootWarning "(richiede bootloader sbloccato)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Permessi illimitati per strumenti di sviluppo: ">
+<!ENTITY runtimedetails_requestPrivileges "richiede permessi più elevati">
+<!ENTITY runtimedetails_privilegesWarning "(Il dispositivo verrà riavviato. Richiede accesso root.)">
+<!ENTITY device_typeboolean "booleano">
+<!ENTITY device_typenumber "intero">
+<!ENTITY device_typestring "stringa">
+<!ENTITY device_typeobject "oggetto">
+<!ENTITY device_typenone "Seleziona un tipo">
+<!ENTITY devicepreference_title "Preferenze dispositivo">
+<!ENTITY devicepreference_search "Cerca preferenza">
+<!ENTITY devicepreference_newname "Nome nuova preferenza">
+<!ENTITY devicepreference_newtext "Valore preferenza">
+<!ENTITY devicepreference_addnew "Aggiungi nuova preferenza">
+<!ENTITY devicesetting_title "Impostazioni dispositivo">
+<!ENTITY devicesetting_search "Cerca impostazione">
+<!ENTITY devicesetting_newname "Nome nuova impostazione">
+<!ENTITY devicesetting_newtext "Valore impostazione">
+<!ENTITY devicesetting_addnew "Aggiungi nuova impostazione">
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Aiuto">
+<!ENTITY wifi_auth_header "Identificazione client">
+<!ENTITY wifi_auth_scan_request "Il terminale con cui si sta cercando di connettersi richiede ulteriori informazioni per autenticare questa connessione. Effettuare la scansione del codice QR utilizzando l’altro dispositivo.">
+<!ENTITY wifi_auth_no_scanner "Nessuna richiesta di scansione del QR?">
+<!ENTITY wifi_auth_yes_scanner "Viene visualizzata una richiesta di scansione del QR?">
+<!ENTITY wifi_auth_token_request "Se l’altro dispositivo richiede un token invece della scansione di un codice QR, inserire il seguente codice:">
+<!ENTITY wifi_auth_qr_size_note "Se il codice QR risulta troppo piccolo per effettuare la scansione, provare a ingrandire la finestra o aumentare lo zoom.">
+<!ENTITY logs_title "Registro comandi pre-packaging">
+<!ENTITY simulator_title "Opzioni simulatore">
+<!ENTITY simulator_remove "Elimina simulatore">
+<!ENTITY simulator_reset "Ripristina predefiniti">
+<!ENTITY simulator_name "Nome">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_version "Versione">
+<!ENTITY simulator_profile "Profilo">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_device "Dispositivo">
+<!ENTITY simulator_screenSize "Schermo">
+<!ENTITY simulator_pixelRatio "Proporzioni pixel">
+<!ENTITY simulator_tv_data "Simulazione TV">
+<!ENTITY simulator_tv_data_open "Dati di configurazione">
+<!ENTITY simulator_tv_data_open_button "Apri cartella di configurazione…">

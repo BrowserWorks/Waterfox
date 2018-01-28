@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "附加组件管理器">
+
+<!ENTITY search.placeholder                   "在全部的附加组件中搜索">
+<!ENTITY search.buttonlabel                   "搜索">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "载入中…">
+<!ENTITY listEmpty.installed.label            "您没有安装任何此类型的附加组件">
+<!ENTITY listEmpty.availableUpdates.label     "没有找到可用的更新">
+<!ENTITY listEmpty.recentUpdates.label        "您最近没有更新任何附加组件">
+<!ENTITY listEmpty.findUpdates.label          "检查更新">
+<!ENTITY listEmpty.search.label               "找不到任何匹配的附加组件">
+<!ENTITY listEmpty.button.label               "进一步了解附加组件">
+<!ENTITY installAddonFromFile.label           "从文件安装附加组件…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "用于所有附加组件的工具">
+
+<!ENTITY getThemes.description                "想个性化你的浏览器吗？">
+<!ENTITY getThemes.learnMore                  "来挑选成千上万的主题吧。">
+
+<!ENTITY cmd.back.tooltip                     "转到上一页">
+<!ENTITY cmd.forward.tooltip                  "转到下一页">
+
+<!ENTITY showUnsignedExtensions.button.label  "一些扩展未通过验证">
+<!ENTITY showAllExtensions.button.label       "显示所有扩展">
+<!ENTITY debugAddons.label                    "调试附加组件">
+<!ENTITY debugAddons.accesskey                "B">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "所有附加组件都已被安全模式暂时禁用。">
+<!ENTITY warning.checkcompatibility.label          "附加组件兼容性检查已禁用。您可能有不兼容的附加组件。">
+<!ENTITY warning.checkcompatibility.enable.label   "启用">
+<!ENTITY warning.checkcompatibility.enable.tooltip "启用附加组件兼容性检查">
+<!ENTITY warning.updatesecurity.label              "附加组件更新安全检查已被禁用。您可能会受到更新带来的安全威胁。">
+<!ENTITY warning.updatesecurity.enable.label       "启用">
+<!ENTITY warning.updatesecurity.enable.tooltip     "启用附加组件安全更新检查">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "搜索">
+<!ENTITY view.discover.label                  "获取附加组件">
+<!ENTITY view.recentUpdates.label             "最近更新">
+<!ENTITY view.availableUpdates.label          "可用更新">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "检查更新">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "查看最近更新">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "自动更新附加组件">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "重设所有附加组件为自动更新">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "重设所有附加组件为手动更新">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "正在更新附加组件">
+<!ENTITY updates.installed.label              "您的附加组件更新完毕。">
+<!ENTITY updates.downloaded.label             "您的附加组件更新已经下载。">
+<!ENTITY updates.restart.label                "立即重启以完成安装">
+<!ENTITY updates.noneFound.label              "没有找到可用的更新">
+<!ENTITY updates.manualUpdatesFound.label     "查看可用更新">
+<!ENTITY updates.updateSelected.label         "安装选中的更新">
+<!ENTITY updates.updateSelected.tooltip       "安装在此列表选中的可用更新">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "显示详细信息">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "查找更新">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "选项">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "首选项">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "关于">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "启用">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "禁用">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "使用主题">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "停用主题">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "需要启用时问我">
+<!ENTITY cmd.askToActivate.tooltip            "每次询问是否使用此附加组件">
+<!ENTITY cmd.alwaysActivate.label             "总是激活">
+<!ENTITY cmd.alwaysActivate.tooltip           "总是使用此附加组件">
+<!ENTITY cmd.neverActivate.label              "永不激活">
+<!ENTITY cmd.neverActivate.tooltip            "永不使用此附加组件">
+<!ENTITY cmd.stateMenu.tooltip                "在此附加组件执行时变更">
+<!ENTITY cmd.installAddon.label               "安装">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "移除">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "选项">
+<!ENTITY cmd.showPreferencesWin.tooltip       "更改此附加组件的选项">
+<!ENTITY cmd.showPreferencesUnix.label        "首选项">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "更改此附加组件的首选项">
+<!ENTITY cmd.contribute.label                 "捐助">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "捐助此附加组件的开发">
+
+<!ENTITY cmd.showReleaseNotes.label           "显示发行说明">
+<!ENTITY cmd.showReleaseNotes.tooltip         "显示此更新的发行说明">
+<!ENTITY cmd.hideReleaseNotes.label           "隐藏发行说明">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "隐藏此更新的发行说明">
+<!ENTITY cmd.findReplacement.label            "查找替代品">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "什么是附加组件？">
+<!ENTITY discover.description2                "附加组件是一些帮助您个性化 &brandShortName; 的应用程序。使用附加组件可以让 &brandShortName; 拥有更加强大的功能和更加漂亮的外观。您可以试试帮您省时的侧边栏、天气通知或美观的主题，让 &brandShortName; 有您的个性。">
+<!ENTITY discover.footer                      "在您连上网络后，这里会为您推荐一些很棒或新潮的附加组件供您体验。">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "版本">
+<!ENTITY detail.lastupdated.label             "上次更新">
+<!ENTITY detail.creator.label                 "开发者">
+<!ENTITY detail.homepage.label                "主页">
+<!ENTITY detail.numberOfDownloads.label       "下载次数">
+
+<!ENTITY detail.contributions.description     "此附加组件的开发者希望通过您的小额捐款，帮助支持其持续开发。">
+
+<!ENTITY detail.updateType                    "自动更新">
+<!ENTITY detail.updateDefault.label           "默认">
+<!ENTITY detail.updateDefault.tooltip         "仅对有默认设置者自动安装更新">
+<!ENTITY detail.updateAutomatic.label         "开">
+<!ENTITY detail.updateAutomatic.tooltip       "自动安装更新">
+<!ENTITY detail.updateManual.label            "关">
+<!ENTITY detail.updateManual.tooltip          "不要自动安装更新">
+<!ENTITY detail.home                          "主页">
+<!ENTITY detail.repository                    "附加组件配置文件">
+<!ENTITY detail.size                          "大小">
+
+<!ENTITY detail.checkForUpdates.label         "检查更新">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "检查此附加组件的更新">
+<!ENTITY detail.showPreferencesWin.label      "选项">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "更改此附加组件的选项">
+<!ENTITY detail.showPreferencesUnix.label     "首选项">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "更改此附加组件的首选项">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "评分">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "暂停">
+<!ENTITY progress.cancel.tooltip              "取消">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "名称">
+<!ENTITY sort.name.tooltip                    "按名称排列">
+<!ENTITY sort.dateUpdated.label               "上次更新">
+<!ENTITY sort.dateUpdated.tooltip             "按最后更新日期排列">
+<!ENTITY sort.relevance.label                 "最佳匹配">
+<!ENTITY sort.relevance.tooltip               "根据关联度排序">
+<!ENTITY sort.price.label                     "价格">
+<!ENTITY sort.price.tooltip                   "按价格排序">
+
+<!ENTITY search.filter2.label                 "搜索：">
+<!ENTITY search.filter2.installed.label       "我的附加组件">
+<!ENTITY search.filter2.installed.tooltip     "显示已安装附加组件">
+<!ENTITY search.filter2.available.label       "其他可用的附加组件">
+<!ENTITY search.filter2.available.tooltip     "显示可安装附加组件">
+
+<!ENTITY addon.homepage                       "主页">
+<!ENTITY addon.details.label                  "更多信息">
+<!ENTITY addon.details.tooltip                "显示关于此附加组件的详情">
+<!ENTITY addon.unknownDate                    "未知">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "旧式">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "（已禁用）">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "更新">
+<!ENTITY addon.undoAction.label               "撤销">
+<!ENTITY addon.undoAction.tooltip             "撤销此操作">
+<!ENTITY addon.undoRemove.label               "撤销">
+<!ENTITY addon.undoRemove.tooltip             "保持此附加组件安装">
+<!ENTITY addon.restartNow.label               "立即重启">
+<!ENTITY addon.install.label                  "安装">
+<!ENTITY addon.install.tooltip                "安装此附加组件">
+<!ENTITY addon.updateNow.label                "立即更新">
+<!ENTITY addon.updateNow.tooltip              "安装该附加组件的更新">
+<!ENTITY addon.includeUpdate.label            "包括在此次更新中">
+<!ENTITY addon.updateAvailable.label          "有可用更新">
+<!ENTITY addon.checkingForUpdates.label       "正在检查更新…">
+<!ENTITY addon.releaseNotes.label             "发行说明：">
+<!ENTITY addon.loadingReleaseNotes.label      "载入中…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "抱歉，载入发行说明遇到错误。">
+
+<!ENTITY addon.createdBy.label                "创建者 ">
+
+<!ENTITY eula.title                           "最终用户许可协议">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "接受并安装…">
+
+<!ENTITY settings.path.button.label           "浏览…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "想问这是什么？“遥测”会不时地安装和运行一些实验项目。">
+<!ENTITY experiment.info.learnmore "详细了解">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "遥测设置">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "详细了解…">
+
+<!ENTITY disabledUnsigned.heading "一些附加组件已被禁用">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "下列附加组件未通过针对是否适用于 &brandShortName; 的验证。您可以">
+<!ENTITY disabledUnsigned.description.findAddonsLink "找找有无替代品">
+<!ENTITY disabledUnsigned.description.end "或者请开发者申请验证。">
+<!ENTITY disabledUnsigned.learnMore "了解我们为保障您的网上安全做了哪些努力。">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "想要自己的附加组件获得验证的开发者可继续阅读我们的">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "相关手册">
+<!ENTITY disabledUnsigned.devInfo.end "。">
+
+<!ENTITY pluginDeprecation.description "少些东西？某些插件已不再被 &brandShortName; 支持。">
+<!ENTITY pluginDeprecation.learnMore "详细了解。">
+
+<!ENTITY legacyWarning.description "少些东西？&brandShortName; 已不再支持某些扩展。">
+<!ENTITY legacyWarning.showLegacy "显示旧式扩展">
+<!ENTITY legacyExtensions.title "旧式扩展">
+<!ENTITY legacyExtensions.description "这些扩展不符合现今的 &brandShortName; 标准，因此已被停用。">
+<!ENTITY legacyExtensions.learnMore "了解附加组件的变化">

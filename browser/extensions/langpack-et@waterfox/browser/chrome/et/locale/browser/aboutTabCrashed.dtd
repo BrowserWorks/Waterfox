@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Sulge see kaart">
+<!ENTITY tabCrashed.restoreTab "Taasta see kaart">
+<!ENTITY tabCrashed.restoreAll "Taasta kõik kokkujooksnud kaardid">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Uhh. Kaart jooksis just kokku.">
+<!ENTITY tabCrashed.offerHelp "Me saame sind aidata!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Lehe sisu uuesti laadimiseks klõpsa &tabCrashed.restoreTab;.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Lehe sisu uuesti laadimiseks klõpsa &tabCrashed.restoreTab; või &tabCrashed.restoreAll;.">
+<!ENTITY tabCrashed.requestHelp "Kas sa aitad meid?">
+<!ENTITY tabCrashed.requestHelpMessage "Vearaportid aitavad meil probleeme uurida ja &brandShortName; paremaks muuta.">
+<!ENTITY tabCrashed.requestReport "Anna sellest kaardist teada">
+<!ENTITY tabCrashed.sendReport2 "Saada vaadatava kaardi kohta vearaport">
+<!ENTITY tabCrashed.commentPlaceholder2 "Valikulised kommentaarid (need on avalikult nähtavad)">
+<!ENTITY tabCrashed.includeURL2 "Vearaportile lisatakse lehe URL">
+<!ENTITY tabCrashed.emailPlaceholder "Sisesta siia oma e-posti aadress">
+<!ENTITY tabCrashed.emailMe "Saadetakse e-kiri, kui tekib rohkem teavet">
+<!ENTITY tabCrashed.reportSent "Vearaport on juba saadetud. Täname, et aitad &brandShortName;i paremaks teha!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Taustal töötavate kaartide kohta raporteerimine">
+<!ENTITY tabCrashed.autoSubmit2 "Eelistusi uuendatakse nii, et vearaporteid saadetakse nii selle kui ka edaspidiste seanside puhul ka taustal töötavate kaartide veaga lõpetamiste kohta">

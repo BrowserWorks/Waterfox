@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Svojstva pisača">
+
+<!ENTITY paperInput.label "Dimenzije papira:">
+<!ENTITY paperInput.accesskey "p">
+
+<!ENTITY jobTitleInput.label "Naziv zadatka:">
+<!ENTITY jobTitleInput.accesskey "z">
+
+<!ENTITY colorGroup.label "Boja:">
+<!ENTITY grayRadio.label "Sivi tonovi">
+<!ENTITY grayRadio.accesskey "S">
+<!ENTITY colorRadio.label "U boji">
+<!ENTITY colorRadio.accesskey "b">
+
+<!ENTITY edgeMarginInput.label "Razmak između ruba papira i margine?">
+<!ENTITY topInput.label "Vrh:">
+<!ENTITY topInput.accesskey "V">
+<!ENTITY bottomInput.label "Dno:">
+<!ENTITY bottomInput.accesskey "D">
+<!ENTITY leftInput.label "Lijevo:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "Desno:">
+<!ENTITY rightInput.accesskey "D">

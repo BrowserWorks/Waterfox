@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+
+
+
+<!ENTITY tracking.label                 "ଅନୁସରଣ କରୁଅଛି">
+
+
+
+
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+
+
+
+<!ENTITY  locationBar.label             "ଅବସ୍ଥାନ ପଟି">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY  acceptThirdParty.always.label   "ସର୍ବଦା">
+<!ENTITY  acceptThirdParty.never.label    "କଦାପି ନୁହଁ">
+<!ENTITY  acceptThirdParty.visited.label  "ପରିଦର୍ଶନ କରିଥିବା ପୃଷ୍ଠାରୁ">
+
+
+
+<!ENTITY  expire.label                  "ରୁହନ୍ତୁ">
+<!ENTITY  close.label                   "&brandShortName; କୁ ମୁଁ ବନ୍ଦକରିଥାଏ">
+
+<!ENTITY  cookieExceptions.label        "ବ୍ୟତିକ୍ରମ…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "କୁକିଗୁଡ଼ିକୁ ଦର୍ଶାନ୍ତୁ…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; କରିଥାଏ:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "ପୁରୁଣା ତଥ୍ୟକୁ ମନେ ରଖନ୍ତୁ">
+<!ENTITY  historyHeader.dontremember.label "ପୁରୁଣା ତଥ୍ୟକୁ କଦାପି ମନେ ରଖନ୍ତୁ ନାହିଁ">
+<!ENTITY  historyHeader.custom.label       "ପୁରୁଣା ତଥ୍ୟ ପାଇଁ ଇଚ୍ଛାମୁତାବକ ସଂରଚନାକୁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ଆପଣଙ୍କର ବ୍ରାଉଜିଙ୍ଗ, ଆହରଣ, ଫର୍ମ ଏବଂ ସନ୍ଧାନ ପୁରୁଣା ତଥ୍ୟକୁ କୁ ମନେ ରଖିବ, ଏବଂ ଆପଣ ପରିଦର୍ଶନ କରିଥିବା ୱେବ ସାଇଟଗୁଡ଼ିକର କୁକିଗୁଡ଼ିକୁ ରଖିବ।">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "ଆପଣ ନିଜର">
+<!ENTITY  rememberActions.clearHistory.label  "ସାମ୍ପ୍ରତିକ ପୁରୁଣା ତଥ୍ୟକୁ ସଫା କରିବା ପାଇଁ ଇଚ୍ଛା କରିପାରିନ୍ତି">
+<!ENTITY  rememberActions.middle.label        ", କିମ୍ବା ">
+<!ENTITY  rememberActions.removeCookies.label "ବ୍ୟକ୍ତିଗତ କୁକିଗୁଡ଼ିକୁ କାଢି ପାରନ୍ତି">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ବ୍ୟକ୍ତିଗତ ବ୍ରାଉଜିଙ୍ଗ ପରି ସମାନ ସଂରଚନାକୁ ବ୍ୟବହାର କରିବ, ଏବଂ ଆପଣ ବ୍ରାଉଜ କରୁଥିବା ସମୟରେ କୌଣସି ପୁରୁଣା ତଥ୍ୟକୁ ମନେ ରଖିବ ନାହିଁ।">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "ଆପଣ ମଧ୍ଯ ସମସ୍ତ ସାମ୍ପ୍ରତିକ ପୁରୁଣା ତଥ୍ୟକୁ ">
+<!ENTITY  dontrememberActions.clearHistory.label "ସଫା କରିବା ପାଇଁ ଇଚ୍ଛା କରିପାରନ୍ତି">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "ସର୍ବଦା ବ୍ଯକ୍ତିଗତ ବ୍ରାଉଜିଙ୍ଗ ପଦ୍ଧତିକୁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "ମୋର ବ୍ରାଉଜର ଏବଂ  ଆହରଣ ପୁରୁଣା ତଥ୍ୟକୁ ମନେରଖନ୍ତୁ">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "ସନ୍ଧାନ ଏବଂ ଫର୍ମ ପୁରୁମା ତଥ୍ୟକୁ ମନେ ରଖନ୍ତୁ">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; ବନ୍ଦ ହେବା ସମୟରେ ପୁରୁଣା ତଥ୍ୟକୁ ସଫା କରନ୍ତୁ">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "ବିନ୍ୟାସ…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+
+
+
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersEnabled.label        "Enable Container Tabs">
+<!ENTITY  browserContainersHeader.label         "Container Tabs">
+<!ENTITY  browserContainersLearnMore.label      "Learn more">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!ENTITY changeBlockList.label          "Change Block List">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  doNotTrack.pre.label          "You can also ">
+<!ENTITY  doNotTrack.settings.label     "manage your Do Not Track settings">
+<!ENTITY  history.label                 "History">
+
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  keepUntil.label               "Keep until:">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.bookmarks.label        "Bookmarks">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.history.label          "History">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.openpage.label         "Open tabs">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  locbar.searches.label         "Related searches from the default search engine">
+<!ENTITY  locbar.suggest.label          "When using the location bar, suggest:">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  suggestionSettings.label      "Change preferences for search engine suggestions…">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionAlways.label       "Always">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
+<!ENTITY  trackingProtectionHeader.label       "Use Tracking Protection">
+<!ENTITY  trackingProtectionLearnMore.label    "Learn more">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionNever.label        "Never">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBM5.label         "Use Tracking Protection in Private Windows">
+<!ENTITY trackingProtectionPBMLearnMore.label "Learn more">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionPrivate.label      "Only in private windows">

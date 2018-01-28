@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Уладкаванне старонкі">
+
+<!ENTITY basic.tab           "Фармат &amp; налады">
+
+<!ENTITY formatGroup.label   "Фармат">
+
+<!ENTITY orientation.label   "Арыентацыя:">
+<!ENTITY portrait.label      "Кніжная">
+<!ENTITY portrait.accesskey  "К">
+<!ENTITY landscape.label     "Альбомная">
+<!ENTITY landscape.accesskey "А">
+
+<!ENTITY scale.label         "Павялічэнне:">
+<!ENTITY scale.accesskey     "в">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Сціснуць да шырыні старонкі">
+<!ENTITY shrinkToFit.accesskey "ш">
+
+<!ENTITY optionsGroup.label  "Налады">
+
+<!ENTITY printBG.label       "Друкаваць фон (колеры і выявы)">
+<!ENTITY printBG.accesskey   "ф">
+
+<!ENTITY advanced.tab        "Прымежкі і калантытулы">
+
+<!ENTITY marginGroup.label   "Прымежкі (#1)">
+<!ENTITY marginUnits.inches  "цаляў">
+<!ENTITY marginUnits.metric  "міліметраў">
+<!ENTITY marginTop.label     "Угары:">
+<!ENTITY marginTop.accesskey "г">
+<!ENTITY marginBottom.label  "Знізу:">
+<!ENTITY marginBottom.accesskey "н">
+<!ENTITY marginLeft.label    "Злева:">
+<!ENTITY marginLeft.accesskey "л">
+<!ENTITY marginRight.label   "Справа:">
+<!ENTITY marginRight.accesskey "п">
+
+<!ENTITY headerFooter.label  "Калантытулы">
+
+<!ENTITY hfLeft.label        "Злева:">
+<!ENTITY hfCenter.label      "Цэнтр:">
+<!ENTITY hfRight.label       "Справа:">
+<!ENTITY headerLeft.tip      "Левая шапка">
+<!ENTITY headerCenter.tip    "Сярэдняя шапка">
+<!ENTITY headerRight.tip     "Правая шапка">
+<!ENTITY footerLeft.tip      "Левы падмурак">
+<!ENTITY footerCenter.tip    "Сярэдні падмурак">
+<!ENTITY footerRight.tip     "Правы падмурак">
+
+<!ENTITY hfTitle             "Загаловак">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Дата/Час">
+<!ENTITY hfPage              "Старонка #">
+<!ENTITY hfPageAndTotal      "Старонка # з #">
+<!ENTITY hfBlank             "--пусты--">
+<!ENTITY hfCustom            "Выбарачна…">
+
+<!ENTITY customPrompt.title  "Выбарачнае…">
+<!ENTITY customPrompt.prompt "Увядзіце ваш выбарачны тэкст калантытулаў">

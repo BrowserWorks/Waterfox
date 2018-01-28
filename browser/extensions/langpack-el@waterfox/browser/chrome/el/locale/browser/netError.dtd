@@ -1,0 +1,211 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Πρόβλημα φόρτωσης σελίδας">
+<!ENTITY retry.label "Δοκιμή ξανά">
+<!ENTITY returnToPreviousPage.label "Επιστροφή">
+<!ENTITY advanced.label "Για προχωρημένους">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Αδυναμία σύνδεσης">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Αυτή η διεύθυνση είναι περιορισμένη">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Δεν βρέθηκε ο διακομιστής">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Ελέγξτε τη διεύθυνση για τυχόν ορθογραφικά λάθη όπως
+    <strong>ww</strong>.example.com αντί για
+    <strong>www</strong>.example.com</li>
+  <li>Αν δεν μπορείτε να φορτώσετε καμία σελίδα, ελέγξτε τη σύνδεση του υπολογιστή σας
+    στο δίκτυο.</li>
+  <li>Αν ο υπολογιστής ή το δίκτυό σας προστατεύονται από ένα τείχος προστασίας (firewall) ή ένα μεσολαβητή (proxy), βεβαιωθείτε ότι
+    επιτρέπεται στο &brandShortName; η πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Το αρχείο δεν βρέθηκε">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Ελέγξτε το όνομα του αρχείου για εσφαλμένα κεφαλαία ή άλλα ορθογραφικά λάθη.</li>
+  <li>Ελέγξτε αν το αρχείο έχει μετακινηθεί, μετονομαστεί ή διαγραφεί.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Άρνηση πρόσβασης στο αρχείο">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Ενδέχεται να έχει διαγραφεί, μετακινηθεί, ή να μην επιτρέπεται η πρόσβαση λόγω των δικαιωμάτων του αρχείου.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Ωχ!">
+<!ENTITY generic.longDesc "
+<p>Για κάποιο λόγο, το &brandShortName; δεν μπορεί να φορτώσει αυτή τη σελίδα.</p>
+">
+
+<!ENTITY captivePortal.title "Σύνδεση στο δίκτυο">
+<!ENTITY captivePortal.longDesc2 "
+<p>Πρέπει να συνδεθείτε σε αυτό το δίκτυο πριν μπορέσετε να αποκτήσετε πρόσβαση στο διαδίκτυο.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Άνοιγμα σελίδας σύνδεσης δικτύου">
+
+<!ENTITY malformedURI.title "Η διεύθυνση δεν είναι έγκυρη">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Οι διαδικτυακές διευθύνσεις γράφονται συνήθως ως εξής:
+    <strong>http://www.example.com/</strong></li>
+  <li>Βεβαιωθείτε ότι χρησιμοποιείτε δεξιές καθέτους (δηλ.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Η σύνδεση διακόπηκε">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Το έγγραφο έληξε">
+<!ENTITY notCached.longDesc "<p>Το ζητούμενο έγγραφο δεν είναι διαθέσιμο στην προσωρινή μνήμη του &brandShortName;.</p><ul><li>Ως μέτρο ασφαλείας, το &brandShortName; δεν ζητά εκ νέου τα ευαίσθητα έγγραφα.</li><li>Κάντε κλικ στο Δοκιμή ξανά για να εκ νέου αίτηση του εγγράφου από την ιστοσελίδα.</li></ul>">
+
+<!ENTITY netOffline.title "Λειτουργία εκτός σύνδεσης">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Πατήστε το &quot;Δοκιμή ξανά&quot; για εναλλαγή σε λειτουργία εντός σύνδεσης και εκ νέου φόρτωση της σελίδας.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Σφάλμα κωδικοποίησης περιεχομένου">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Παρακαλώ επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε σχετικά με αυτό το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Επισφαλής τύπος αρχείου">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Παρακαλώ επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε σχετικά με αυτό το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Έγινε επαναφορά της σύνδεσης">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Το χρονικό όριο σύνδεσης έληξε">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Η διεύθυνση δεν έγινε κατανοητή">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Ίσως να χρειάζεται να εγκαταστήσετε κάποιο άλλο λογισμικό για το άνοιγμα αυτής της διεύθυνσης.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Ο διαμεσολαβητής αρνείται συνδέσεις">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Ελέγξτε αν είναι σωστές οι ρυθμίσεις του διαμεσολαβητή.</li>
+  <li>Επικοινωνήστε με το διαχειριστή του συστήματος σας για να βεβαιωθείτε ότι ο διαμεσολαβητής
+λειτουργεί.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Δεν ήταν δυνατή η εύρεση διαμεσολαβητή">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>>Ελέγξτε αν είναι σωστές οι ρυθμίσεις του διαμεσολαβητή.</li>
+  <li>Βεβαιωθείτε ότι είναι ενεργή η σύνδεση σας στο δίκτυο.</li>
+  <li>Αν ο υπολογιστής σας ή το δίκτυο σας προστατεύεται από ένα firewall ή χρησιμοποιεί ένα διαμεσολαβητή (proxy), βεβαιωθείτε ότι
+    επιτρέπεται στο &brandShortName; να έχει πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Η σελίδα δεν ανακατευθύνει σωστά">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Αυτό το πρόβλημα μπορεί να προέρχεται από την απενεργοποίηση ή την άρνηση αποδοχής των
+    cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Απρόσμενη απάντηση από τον εξυπηρετητή">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Βεβαιωθείτε ότι έχετε εγκατεστημένο τον Personal Security
+    Manager.</li>
+  <li>Αυτό μπορεί να προέρχεται από μια μη-τυπική ρύθμιση του εξυπηρετητή.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Αποτυχία ασφαλούς σύνδεσης">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Η σελίδα που προσπαθείτε να δείτε δεν μπορεί να εμφανιστεί επειδή δεν είναι δυνατή η πιστοποίηση της αυθεντικότητας των ληφθέντων δεδομένων.</li>
+  <li>Επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους πληροφορήσετε για το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "Η σύνδεση σας δεν είναι ασφαλής">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Ο ιδιοκτήτης του <span class='hostname'/> δεν έχει ρυθμίσει την ιστοσελίδα του σωστά.  Για να προστατευτούν οι πληροφορίες σας από κλοπή, ο &brandShortName; δεν συνδέθηκε στην συγκεκριμένη ιστοσελίδα.">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Η σελίδα μπορεί να είναι προσωρινά μη διαθέσιμη ή πολύ απασχολημένη. Προσπαθήστε ξανά
+   σε λίγο.</li>
+  <li>Αν δεν μπορείτε να φορτώσετε καμία σελίδα ελέγξτε τη σύνδεση του υπολογιστή σας
+στο δίκτυο.</li>
+  <li>Αν ο υπολογιστής σας ή το δίκτυο σας προστατεύεται από ένα firewall ή ένα διαμεσολαβητή, βεβαιωθείτε ότι
+    επιτρέπεται στο &brandShortName; να έχει πρόσβαση στον ιστό.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Έχει φραγεί από την πολιτική προστασίας περιεχομένου">
+<!ENTITY cspBlocked.longDesc "<p>Ο &brandShortName; εμπόδισε τη φόρτωση της σελίδας με αυτό τον τρόπο, επειδή η σελίδα έχει μια πολιτική προστασίας περιεχομένου που δεν το επιτρέπει.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Σφάλμα κατεστραμμένου περιεχομένου">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Η σελίδα που προσπαθείτε να προβάλετε δεν μπορεί να εμφανιστεί, λόγω σφάλματος στην μετάδοση των δεδομένων.</p><ul><li>Ενημερώστε τους ιδιοκτήτες της ιστοσελίδας για αυτό το πρόβλημα.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Προσθήκη εξαίρεσης">
+
+<!ENTITY errorReporting.automatic2 "Αναφέρετε σφάλματα όπως αυτό για να βοηθήσετε το Mozilla στον εντοπισμό και αποκλεισμό κακόβουλων ιστοσελίδων">
+<!ENTITY errorReporting.learnMore "Μάθετε περισσότερα…">
+
+<!ENTITY remoteXUL.title "Απομακρυσμένο XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Παρακαλούμε επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε για αυτό το πρόβλημα.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Αδύνατη η ασφαλής σύνδεση">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Πληροφορίες για προχωρημένους: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p>Το &brandShortName; δεν συνδέθηκε με <span id='wrongSystemTime_URL'/> γιατί το ρολόι του υπολογιστή σας φαίνεται να έχει λανθασμένη ώρα και αυτό δεν επιτρέπει ασφαλή σύνδεση.</p> <p>Ο υπολογιστής σας έχει ημερομηνία <span id='wrongSystemTime_systemDate'/>, ενώ θα έπρεπε να είναι <span id='wrongSystemTime_actualDate'/>. Για να διορθώσετε το πρόβλημα, αλλάξτε την ημερομηνία και ώρα στα σωστά.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>Το &brandShortName; δεν συνδέθηκε με <span id='wrongSystemTime_URL'/> γιατί το ρολόι του υπολογιστή σας φαίνεται να έχει λανθασμένη ώρα και αυτό δεν επιτρέπει ασφαλή σύνδεση.</p> <p>Ο υπολογιστής σας έχει ημερομηνία <span id='wrongSystemTime_systemDate'/>. Για να διορθώσετε το πρόβλημα, αλλάξτε την ημερομηνία και ώρα στα σωστά.</p>">
+
+<!ENTITY certerror.pagetitle1  "Μη ασφαλής σύνδεση">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Αυτός ο ιστότοπος χρησιμοποιεί ασφάλεια
+HTTP Strict Transport Security (HSTS) που καθορίζει ότι ο &brandShortName; μπορεί να συνδεθεί
+μόνο με ασφαλή τρόπο σε αυτόν. Ως εκ τούτου, είναι αδύνατον να προσθέσετε εξαίρεση
+για αυτό το πιστοποιητικό.">
+<!ENTITY certerror.copyToClipboard.label "Αντιγραφή κειμένου στο πρόχειρο">
+
+<!ENTITY inadequateSecurityError.title "Η σύνδεση σας δεν είναι ασφαλής">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Το <p><span class='hostname'></span> χρησιμοποιεί παρωχημένη και ευάλωτη σε επίθεση τεχνολογία ασφάλειας. Ένας εισβολέας θα μπορούσε εύκολα να αποκαλύψει πληροφορίες που θεωρείτε ασφαλείς. Ο διαχειριστής του ιστότοπου θα πρέπει να τον διορθώσει προτού μπορέσετε να τον επισκεφθείτε.</p><p>Κωδικός σφάλματος: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Μοιάζει να προκαλείται από τις ρυθμίσεις ασφαλείας του δικτύου σας. Θέλετε να αποκατασταθούν οι προεπιλεγμένες ρυθμίσεις;">
+<!ENTITY prefReset.label "Επαναφορά προεπιλεγμένων ρυθμίσεων">

@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Закладки">
+<!ENTITY engine.bookmarks.accesskey "к">
+<!ENTITY engine.tabs.label2         "Открытые вкладки">
+<!ENTITY engine.tabs.accesskey      "л">
+<!ENTITY engine.history.label       "Историю">
+<!ENTITY engine.history.accesskey   "т">
+<!ENTITY engine.logins.label        "Логины">
+<!ENTITY engine.logins.accesskey    "ы">
+<!ENTITY engine.prefs.label         "Настройки">
+<!ENTITY engine.prefs.accesskey     "й">
+<!ENTITY engine.addons.label        "Дополнения">
+<!ENTITY engine.addons.accesskey    "п">
+<!ENTITY engine.addresses.label     "Адреса">
+<!ENTITY engine.addresses.accesskey "с">
+<!ENTITY engine.creditcards.label   "Банковские карты">
+<!ENTITY engine.creditcards.accesskey "н">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Имя устройства">
+<!ENTITY changeSyncDeviceName2.label "Изменить имя устройства…">
+<!ENTITY changeSyncDeviceName2.accesskey "м">
+<!ENTITY cancelChangeSyncDeviceName.label "Отмена">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "е">
+<!ENTITY saveChangeSyncDeviceName.label "Сохранить">
+<!ENTITY saveChangeSyncDeviceName.accesskey "х">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Условия службы">
+<!ENTITY fxaPrivacyNotice.link.label "Уведомление о приватности">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "не подтверждён.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Войдите для повтора соединения с">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Вы не вошли.">
+<!ENTITY signIn.label                "Войти">
+<!ENTITY signIn.accesskey            "о">
+<!ENTITY profilePicture.tooltip      "Изменить фотографию в профиле">
+<!ENTITY verifiedManage.label        "Управление аккаунтом">
+<!ENTITY verifiedManage.accesskey    "в">
+<!ENTITY disconnect3.label           "Отсоединить…">
+<!ENTITY disconnect3.accesskey       "н">
+<!ENTITY verify.label                "Подтвердить эл. почту">
+<!ENTITY verify.accesskey            "э">
+<!ENTITY forget.label                "Забыть об этой эл. почте">
+<!ENTITY forget.accesskey            "ы">
+
+<!ENTITY signedOut.caption            "Возьмите свой Интернет с собой">
+<!ENTITY signedOut.description        "Синхронизируйте свои закладки, историю, вкладки, пароли, дополнения и настройки на всех ваших устройствах.">
+<!ENTITY signedOut.accountBox.title   "Соединитесь с Аккаунтом Waterfox">
+<!ENTITY signedOut.accountBox.create  "Создать аккаунт">
+<!ENTITY signedOut.accountBox.create.accesskey  "з">
+<!ENTITY signedOut.accountBox.signin  "Войти">
+<!ENTITY signedOut.accountBox.signin.accesskey  "и">
+
+<!ENTITY signedIn.settings.label       "Параметры синхронизации">
+<!ENTITY signedIn.settings.description "Выберите, что нужно синхронизировать на ваших устройствах при помощи &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Загрузите Waterfox для ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " или ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS,">
+
+<!ENTITY mobilePromo3.end              " чтобы синхронизироваться со своим мобильным устройством.">

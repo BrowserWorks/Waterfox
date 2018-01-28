@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Mu dhèidhinn lìonraidhean">
+<!ENTITY aboutNetworking.warning               "Tha seo air leth deuchainneil, na cleachd seo gun inbheach ri do thaobh.">
+<!ENTITY aboutNetworking.showNextTime          "Seall an rabhadh seo an ath-thuras">
+<!ENTITY aboutNetworking.ok                    "Ceart ma-tha">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Socaidean">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Ath-nuadhaich">
+<!ENTITY aboutNetworking.autoRefresh           "Ath-nuadhaich a h-uile 3 diogan">
+<!ENTITY aboutNetworking.hostname              "Ainm an òstair">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Gnìomhach">
+<!ENTITY aboutNetworking.idle                  "Idle">
+<!ENTITY aboutNetworking.host                  "Òstair">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Air a chur">
+<!ENTITY aboutNetworking.received              "Air fhaighinn">
+<!ENTITY aboutNetworking.family                "Teaghlach">
+<!ENTITY aboutNetworking.addresses             "Seòlaidhean">
+<!ENTITY aboutNetworking.expires               "Falbhaidh an ùine air (ann an diogan)">
+<!ENTITY aboutNetworking.messagesSent          "Teachdaireachdan a chaidh a chur">
+<!ENTITY aboutNetworking.messagesReceived      "Teachdaireachdan a fhuaradh">
+<!ENTITY aboutNetworking.bytesSent             "Bytes a chaidh a chur">
+<!ENTITY aboutNetworking.bytesReceived         "Bytes a fhuaradh">
+<!ENTITY aboutNetworking.logging               "Logadh">
+<!ENTITY aboutNetworking.logTutorial           "Faic <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Logadh HTTP</a> airson stiùireadh mun inneal seo.">
+<!ENTITY aboutNetworking.currentLogFile        "Am faidhle logaidh làithreach:">
+<!ENTITY aboutNetworking.currentLogModules     "Na mòidealan logaidh làithreach:">
+<!ENTITY aboutNetworking.setLogFile            "Suidhich faidhle logaidh">
+<!ENTITY aboutNetworking.setLogModules         "Suidhich mòidealan logaidh">
+<!ENTITY aboutNetworking.startLogging          "Tòisich air logadh">
+<!ENTITY aboutNetworking.stopLogging           "Sguir dhen logadh">
+<!ENTITY aboutNetworking.dnsLookup             "Lorg DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Fuasgail">
+<!ENTITY aboutNetworking.dnsDomain             "Àrainn">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPan">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">

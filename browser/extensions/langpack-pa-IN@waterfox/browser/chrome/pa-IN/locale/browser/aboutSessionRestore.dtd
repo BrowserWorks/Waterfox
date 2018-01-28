@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "ਸ਼ੈਸ਼ਨ ਬਹਾਲ ਕਰੋ">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "ਹਾਂ, ਇਹ ਸਮੱਸਿਆ ਖੜ੍ਹੀ ਕਰ ਰਿਹਾ ਹੈ।">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ਨੂੰ ਤੁਹਾਡੀਆਂ ਵਿੰਡੋ ਅਤੇ ਟੈਬਾਂ ਨੂੰ ਮੁੜ-ਪ੍ਰਾਪਤ ਕਰਨ ਦੌਰਾਨ ਸਮੱਸਿਆ ਹੈ। ਇਹ ਅਕਰਸ ਇੱਕ ਤਾਜ਼ਾ ਖੋਲ੍ਹੇ ਵੈੱਬ ਸਫ਼ੇ ਕਰਕੇ ਹੁੰਦਾ ਹੈ।">
+<!ENTITY restorepage.tryThis        "ਤੁਸੀਂ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦੇ ਹੋ:">
+<!ENTITY restorepage.restoreSome    "ਇੱਕ ਜਾਂ ਵੱਧ ਟੈਬਾਂ ਨੂੰ ਹਟਾਓ, ਜੋ ਕਿ ਤੁਹਾਨੂੰ ਲੱਗਦਾ ਹੈ ਕਿ ਸਮੱਸਿਆ ਪੈਦਾ ਕਰ ਰਹੀਆਂ ਹਨ">
+<!ENTITY restorepage.startNew       "ਪੂਰਾ ਨਵਾਂ ਬਰਾਊਜ਼ਿੰਗ ਸ਼ੈਸ਼ਨ ਸ਼ੁਰੂ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ">
+
+<!ENTITY restorepage.tryagainButton "ਬਹਾਲ ਕਰੋ">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "ਬੰਦ ਕਰੋ">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "ਬਹਾਲ ਕਰੋ">
+<!ENTITY restorepage.listHeader     "ਵਿੰਡੋ ਤੇ ਟੈਬਾਂ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "ਵਿੰਡੋ &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "ਆਓ ਚੱਲੀਏ!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "ਕਾਮਯਾਬ!">
+
+<!ENTITY welcomeback2.pageTitle     "ਕਾਮਯਾਬ!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; ਤਿਆਰ ਹੈ।">
+
+<!ENTITY welcomeback2.restoreAll.label  "ਸਾਰੀਆਂ ਵਿੰਡੋ ਤੇ ਟੈਬਾਂ ਨੂੰ ਬਹਾਲ ਕਰੋ">
+<!ENTITY welcomeback2.restoreSome.label "ਸਿਰਫ਼ ਉਹੀ ਬਹਾਲ ਕਰੋ, ਜਿਹਨਾਂ ਨੂੰ ਤੁਸੀਂ ਚਾਹੁੰਦੇ ਹੋ">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "ਤੁਹਾਡੇ ਐਡ-ਆਨ ਤੇ ਕਸਟਮਾਈਜ਼ੇਸ਼ਨ ਨੂੰ ਹਟਾਇਆ ਜਾ ਚੁੱਕਿਆ ਹੈ ਤੇ ਤੁਹਾਡੇ ਬਰਾਊਜ਼ਰ ਸੈਟਿੰਗ ਨੂੰ ਉਹਨਾਂ ਦੇ ਮੂਲ ਲਈ ਮੁੜ-ਸਟੋਰ ਕੀਤਾ ਜਾ ਚੁੱਕਾ ਹੈ। ਜੇ ਇਸ ਨਾਲ ਤੁਹਾਡਾ ਮਸਲਾ ਠੀਕ ਨਹੀਂ ਹੋਇਆ ਤਾਂ ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "ਰਾਹੀਂ ਸਿੱਖੋ ਕਿ ਤੁਸੀਂ ਹੋਰ ਕੀ ਕਰ ਸਕਦੇ ਹੋ।">
+

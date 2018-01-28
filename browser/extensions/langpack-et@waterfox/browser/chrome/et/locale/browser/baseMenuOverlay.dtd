@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key                 "M">
+<!ENTITY minimizeWindow.label               "Minimeeri">
+<!ENTITY bringAllToFront.label              "Too kõik ette">
+<!ENTITY zoomWindow.label                   "Suurenda">
+<!ENTITY windowMenu.label                   "Aken">
+
+<!ENTITY helpMenu.label                     "Abi">
+<!ENTITY helpMenu.accesskey                 "b">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label                  "Abi">
+<!ENTITY helpMenuWin.accesskey              "b">
+<!ENTITY aboutProduct2.label                "&brandShorterName;i teave">
+<!ENTITY aboutProduct2.accesskey            "e">
+<!ENTITY productHelp2.label                 "&brandShorterName;i käsiraamat">
+<!ENTITY productHelp2.accesskey             "k">
+<!ENTITY helpMac.commandkey                 "?">
+
+<!ENTITY helpKeyboardShortcuts.label        "Kiirklahvid">
+<!ENTITY helpKeyboardShortcuts.accesskey    "i">
+
+<!ENTITY helpSafeMode.label                 "Taaskäivita koos lisade keelamisega…">
+<!ENTITY helpSafeMode.accesskey             "T">
+<!ENTITY helpSafeMode.stop.label            "Taaskäivita koos lisade lubamisega">
+<!ENTITY helpSafeMode.stop.accesskey        "T">
+
+<!ENTITY healthReport2.label                "&brandShorterName;i terviseraport">
+<!ENTITY healthReport2.accesskey            "r">
+
+<!ENTITY helpTroubleshootingInfo.label      "Probleemide lahendamise teave">
+<!ENTITY helpTroubleshootingInfo.accesskey  "P">
+
+<!ENTITY helpFeedbackPage.label             "Anna tagasisidet…">
+<!ENTITY helpFeedbackPage.accesskey         "A">
+
+<!ENTITY helpShowTour2.label                "&brandShorterName;i ringkäik">
+<!ENTITY helpShowTour2.accesskey            "r">
+
+<!ENTITY preferencesCmdMac.label            "Eelistused...">
+<!ENTITY preferencesCmdMac.commandkey       ",">
+
+<!ENTITY servicesMenuMac.label              "Teenused">
+
+<!ENTITY hideThisAppCmdMac2.label           "Varja &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey      "H">
+
+<!ENTITY hideOtherAppsCmdMac.label          "Varja teised">
+<!ENTITY hideOtherAppsCmdMac.commandkey     "H">
+
+<!ENTITY showAllAppsCmdMac.label            "Näita kõiki">

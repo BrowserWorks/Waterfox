@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Updategeschiedenis">
+<!ENTITY  history.intro             "De volgende updates zijn geïnstalleerd:">
+<!ENTITY  closebutton.label         "Sluiten">
+                                     
+<!ENTITY  noupdates.label           "Er zijn nog geen updates geïnstalleerd">
+
+<!ENTITY  name.header               "Updatenaam">
+<!ENTITY  date.header               "Installatiedatum">
+<!ENTITY  type.header               "Type">
+<!ENTITY  state.header              "Staat">

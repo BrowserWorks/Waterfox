@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ตัวจัดการอุปกรณ์">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "โมดูลและอุปกรณ์รักษาความปลอดภัย">
+<!ENTITY devmgr.details.title                   "รายละเอียด">
+<!ENTITY devmgr.details.title2                  "ค่า">
+
+<!ENTITY devmgr.button.login.label              "เข้าสู่ระบบ">
+<!ENTITY devmgr.button.login.accesskey          "ข">
+<!ENTITY devmgr.button.logout.label             "ออกจากระบบ">
+<!ENTITY devmgr.button.logout.accesskey         "อ">
+<!ENTITY devmgr.button.changepw.label           "เปลี่ยนรหัสผ่าน">
+<!ENTITY devmgr.button.changepw.accesskey       "ป">
+<!ENTITY devmgr.button.load.label               "เรียกข้อมูล">
+<!ENTITY devmgr.button.load.accesskey           "ร">
+<!ENTITY devmgr.button.unload.label             "ถอนข้อมูล">
+<!ENTITY devmgr.button.unload.accesskey         "ถ">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "ใส่ข้อมูลโมดูลที่ต้องการ">
+<!ENTITY loaddevice.modname                     "ชื่อโมดูล:">
+<!ENTITY loaddevice.modname.accesskey           "ม">
+<!ENTITY loaddevice.modname.default             "สร้างโมดูล PKCS#11">
+<!ENTITY loaddevice.filename                    "ชื่อไฟล์โมดูล:">
+<!ENTITY loaddevice.filename.accesskey          "ฟ">
+<!ENTITY loaddevice.browse                      "เรียกดู…">
+<!ENTITY loaddevice.browse.accesskey            "ร">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

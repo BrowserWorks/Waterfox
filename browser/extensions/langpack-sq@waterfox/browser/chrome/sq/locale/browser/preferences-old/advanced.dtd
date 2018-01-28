@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Të përgjithshme">
+
+<!ENTITY accessibility.label             "Përdorshmëri">
+
+<!ENTITY useCursorNavigation.label       "Përdor përherë taste kursori për lëvizje brenda faqesh">
+<!ENTITY useCursorNavigation.accesskey   "t">
+<!ENTITY searchOnStartTyping.label       "Kërko për tekst kur niset të shtypet">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY blockAutoReload.label           "Sinjalizo kur sajte rreken të ridrejtojnë ose ringarkojnë faqen">
+<!ENTITY blockAutoReload.accesskey       "S">
+<!ENTITY useOnScreenKeyboard.label       "Shfaq një tastierë virtuale, kur duhet">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Shfletim">
+
+<!ENTITY useAutoScroll.label             "Përdor vetërrëshqitje">
+<!ENTITY useAutoScroll.accesskey         "v">
+<!ENTITY useSmoothScrolling.label        "Përdor rrëshqitje të butë">
+<!ENTITY useSmoothScrolling.accesskey    "b">
+<!ENTITY checkUserSpelling.label         "Kontrollo drejtshkrimin në shtypje e sipër">
+<!ENTITY checkUserSpelling.accesskey     "o">
+
+<!ENTITY dataChoicesTab.label            "Mundësi të Dhënash">
+
+<!ENTITY healthReportDesc.label          "Ju ndihmon të vlerësoni funksionimin e shfletuesit tuaj dhe të ndani me &vendorShortName;-n të dhëna rreth shëndetit të shfletuesit tuaj">
+<!ENTITY enableHealthReport.label        "Aktivizoji Raportet Mbi Shëndetin e &brandShortName;-it">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "Mësoni Më Tepër">
+
+<!ENTITY telemetryDesc.label             "Ndani me &vendorShortName;-n të dhëna rreth funksionimit, përdorimit, hardware-it dhe përshtatjeve të shfletuesit tuaj, që të ndihmoni në përmirësimin e &brandShortName;-it">
+<!ENTITY enableTelemetryData.label       "Ndani të dhëna shtesë (d.m.th., Telemetry-e)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Mësoni Më Tepër">
+
+<!ENTITY crashReporterDesc2.label         "Njoftimet mbi vithisje e ndihmojnë &vendorShortName;-n të ndreqë probleme dhe ta bëjë shfletuesin tuaj më të qëndrueshëm dhe të sigurt">
+<!ENTITY alwaysSubmitCrashReports.label   "Lejoje &brandShortName;-in të dërgojë njoftime vithisjesh në emrin tuaj">
+<!ENTITY alwaysSubmitCrashReports.accesskey "L">
+<!ENTITY crashReporterLearnMore.label     "Mësoni Më Tepër">
+
+<!ENTITY networkTab.label                "Rrjet">
+
+<!ENTITY connection.label                "Lidhje">
+
+<!ENTITY connectionDesc.label            "Formësoni mënyrën se si &brandShortName;-i lidhet në Internet">
+<!ENTITY connectionSettings.label        "Rregullime…">
+<!ENTITY connectionSettings.accesskey    "R">
+
+<!ENTITY httpCache.label                 "Lëndë Web Në Fshehtinë">
+
+<!ENTITY offlineStorage2.label           "Lëndë Web dhe të Dhëna Përdoruesi Jashtë Linje">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Të dhëna Sajti">
+<!ENTITY clearSiteData.label             "Pastro Krejt të Dhënat">
+<!ENTITY clearSiteData.accesskey         "K">
+<!ENTITY siteDataSettings.label          "Rregullime…">
+<!ENTITY siteDataSettings.accesskey      "R">
+<!ENTITY siteDataLearnMoreLink.label     "Mësoni më tepër">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Kufizoje fshehtinën në">
+<!ENTITY limitCacheSizeBefore.accesskey  "K">
+<!ENTITY limitCacheSizeAfter.label       "MB hapësirë">
+<!ENTITY clearCacheNow.label             "Pastroje Tani">
+<!ENTITY clearCacheNow.accesskey         "T">
+<!ENTITY clearOfflineAppCacheNow.label   "Pastroje Tani">
+<!ENTITY clearOfflineAppCacheNow.accesskey "a">
+<!ENTITY overrideSmartCacheSize.label    "Anashkalo administrimin e vetvetishëm të fshehtinës">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Përditësim">
+
+<!ENTITY updateApplication.label         "Përditësime &brandShortName;-i">
+<!ENTITY updateAuto1.label               "Instaloji vetvetiu përditësimet (e këshillueshme: përmirësohet siguria)">
+<!ENTITY updateAuto1.accesskey           "I">
+<!ENTITY updateCheckChoose.label         "Kontrollo për përditësime, por lejomë të zgjedh t&apos;i instaloj apo jo">
+<!ENTITY updateCheckChoose.accesskey     "K">
+<!ENTITY updateManual.label              "Mos kontrollo kurrë për përditësime (e pakëshillueshme: rrezik sigurie)">
+<!ENTITY updateManual.accesskey          "o">
+
+<!ENTITY updateHistory.label             "Shfaq Historik Përditësimesh">
+<!ENTITY updateHistory.accesskey         "H">
+
+<!ENTITY useService.label                "Përdor shërbim në prapaskenë për të instaluar përditësimet">
+<!ENTITY useService.accesskey            "P">
+
+<!ENTITY autoUpdateOthers.label          "Përditësoje vetvetiu">
+<!ENTITY enableSearchUpdate.label        "Motorë Kërkimi">
+<!ENTITY enableSearchUpdate.accesskey    "M">
+
+<!ENTITY offlineStorageNotify.label               "Bëma të ditur kur një sajt kërkon të depozitojë të dhëna për përdorim të palidhur">
+<!ENTITY offlineStorageNotify.accesskey           "B">
+<!ENTITY offlineStorageNotifyExceptions.label     "Përjashtime…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "P">
+
+<!ENTITY offlineAppsList2.label          "Sajteve vijues u është lejuar të depozitojnë të dhëna për përdorim të palidhur:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Hiqeni…">
+<!ENTITY offlineAppsListRemove.accesskey "H">
+<!ENTITY offlineAppRemove.confirm        "Hiqi të dhënat jashtë linje">
+
+<!ENTITY certificateTab.label            "Dëshmi">
+<!ENTITY certPersonal.label              "Kërkesa">
+<!ENTITY certPersonal.description        "Kur një shërbyes kërkon dëshminë tuaj personale:">
+<!ENTITY selectCerts.auto                "Përzgjidh një vetvetiu">
+<!ENTITY selectCerts.auto.accesskey      "z">
+<!ENTITY selectCerts.ask                 "Pyetmë çdo herë">
+<!ENTITY selectCerts.ask.accesskey       "y">
+<!ENTITY enableOCSP.label                "Kërkojuni shërbyesve me përgjigje OCSP të ripohojnë vlefshmërinë e tanishme të dëshmive">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts.label                 "Shihni Dëshmitë">
+<!ENTITY viewCerts.accesskey             "S">
+<!ENTITY viewSecurityDevices.label       "Pajisje Sigurie">
+<!ENTITY viewSecurityDevices.accesskey   "P">
+
+<!ENTITY allowHWAccel.label              "Kur mundet, përdor përshpejtim hardware">
+<!ENTITY allowHWAccel.accesskey          "u">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

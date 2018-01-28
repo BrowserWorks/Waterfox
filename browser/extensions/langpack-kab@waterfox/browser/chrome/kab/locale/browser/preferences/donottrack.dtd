@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Ur tteḍfaṛ ara">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Snas yal tikelt Ur Sfuɣul Ara">
+<!ENTITY doNotTrackCheckbox2.accesskey "U">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; ad yazen tamuli d akken ur tebɣid ara ad tettwasfuɣleḍ ticki ammesten mgal asfuɣel yettwarmed.">
+<!ENTITY doNotTrackLearnMore.label    "Issin ugar">

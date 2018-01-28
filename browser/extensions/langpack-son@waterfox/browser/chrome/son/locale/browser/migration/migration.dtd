@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Bida cendi ka dam">
+
+<!ENTITY importFrom.label               "Suubarey, doo-šilbawey, šennikufaley nda bayhaya tanayaŋ bere ka hun ne:">
+<!ENTITY importFromUnix.label           "Ibaayey, doo-šilbawey, šennikufaley nda bayhaya tanayaŋ bere ka hun ne:">
+<!ENTITY importFromBookmarks.label      "Doo-šilbawey bere ka hun ne:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "War ma ši haya kul zaa">
+<!ENTITY importFromNothing.accesskey    "W">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Ceecikaw saajante">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Porogaramey kul ši kaŋ goo nda doo-šilbayyaŋ, taariki wala šennikufal kaŋ ga duwandi.">
+
+<!ENTITY importSource.title             "Cendi ka zaa kayandiyaney nda bayhayey">
+<!ENTITY importItems.title              "Hayiizey kaŋ ga cendi ka zaandi">
+<!ENTITY importItems.label              "Suuba hayiizey kaŋ ga cendi ka zaandi:">
+
+<!ENTITY migrating.title                "Cendi ga zaandi…">
+<!ENTITY migrating.label                "Hayiizey wey goo ma cenda ka zaandi…">
+
+<!ENTITY selectProfile.title            "Alhal suuba">
+<!ENTITY selectProfile.label            "Alhaaley wey goo no cendi ka zaa ne se:">
+
+<!ENTITY done.title                     "Cendi ka zaayan timme">
+<!ENTITY done.label                     "Hayiizey wey n' ka bere ka ben:">
+
+<!ENTITY closeSourceBrowser.label       "Soobay ka ceecikaw suubantaa daabu jina ka koy jine.">

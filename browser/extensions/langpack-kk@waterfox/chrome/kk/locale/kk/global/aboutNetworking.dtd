@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Желі туралы">
+<!ENTITY aboutNetworking.warning               "Бұл әлі сыналуда. Үлкендердің көмегі болмаса, қолданбаңыз.">
+<!ENTITY aboutNetworking.showNextTime          "Осы ескертуді келесі ретте көрсету">
+<!ENTITY aboutNetworking.ok                    "ОК">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Сокеттер">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Жаңарту">
+<!ENTITY aboutNetworking.autoRefresh           "Әр 3 секунд сайын жаңарту">
+<!ENTITY aboutNetworking.hostname              "Хост аты">
+<!ENTITY aboutNetworking.port                  "Порт">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Белсенді">
+<!ENTITY aboutNetworking.idle                  "Іссіз">
+<!ENTITY aboutNetworking.host                  "Хост">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Жіберілген">
+<!ENTITY aboutNetworking.received              "Алынған">
+<!ENTITY aboutNetworking.family                "Отбасы">
+<!ENTITY aboutNetworking.addresses             "Адрестер">
+<!ENTITY aboutNetworking.expires               "Мерзімі бітеді (секунд)">
+<!ENTITY aboutNetworking.messagesSent          "Жіберілген хабарламалар">
+<!ENTITY aboutNetworking.messagesReceived      "Алынған хабарламалар">
+<!ENTITY aboutNetworking.bytesSent             "Жіберілген байттар">
+<!ENTITY aboutNetworking.bytesReceived         "Алынған байттар">
+<!ENTITY aboutNetworking.logging               "Журналдау">
+<!ENTITY aboutNetworking.logTutorial           "Бұл сайманды қолдану нұсқаулығын <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> адресінен қараңыз.">
+<!ENTITY aboutNetworking.currentLogFile        "Ағымдағы журналдау файлы:">
+<!ENTITY aboutNetworking.currentLogModules     "Ағымдағы журналдау модульдері:">
+<!ENTITY aboutNetworking.setLogFile            "Журналдау файлын орнату">
+<!ENTITY aboutNetworking.setLogModules         "Журналдау модульдерін орнату">
+<!ENTITY aboutNetworking.startLogging          "Журналдауды бастау">
+<!ENTITY aboutNetworking.stopLogging           "Журналдауды аяқтау">
+<!ENTITY aboutNetworking.dnsLookup             "DNS іздеуі">
+<!ENTITY aboutNetworking.dnsLookupButton       "Шешу">
+<!ENTITY aboutNetworking.dnsDomain             "Домен">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP адрестері">
+<!ENTITY aboutNetworking.rcwn                  "RCWN статистикасы">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN қалып-күйі">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Кэшке сәтті қатынаудың саны">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Желіге қатынаудың саны">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Желілік сұранымдардың жалпы саны">
+<!ENTITY aboutNetworking.rcwnOperation         "Кэш операциялары">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Ашу">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Оқу">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Жазу">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Нәрсе ашық">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Қысқа орташа мәні">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Ұзақ орташа мәні">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Ұзақ стандартты ауытқу">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Кэшке баяу қатынаудың саны">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Кэшке баяу емес қатынаудың саны">

@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Konsola WWW">
+
+<!ENTITY openURL.label     "Otwórz adres URL w nowej karcie">
+<!ENTITY openURL.accesskey "k">
+
+<!ENTITY btnPageNet.label   "Sieć">
+<!ENTITY btnPageNet.tooltip "Zapisuj połączenia sieciowe">
+<!ENTITY btnPageNet.accesskey "S">
+<!ENTITY btnPageNet.accesskeyMacOSX "S">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "Zapisuj błędy i ostrzeżenia CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip "Zapisuj wyjątki JavaScriptu">
+<!ENTITY btnPageJS.accesskey "J">
+<!ENTITY btnPageSecurity.label "Bezpieczeństwo">
+<!ENTITY btnPageSecurity.tooltip "Zapisuj wyjątki i ostrzeżenia bezpieczeństwa">
+<!ENTITY btnPageSecurity.accesskey "B">
+
+<!ENTITY btnPageLogging.label "Dziennik">
+<!ENTITY btnPageLogging.tooltip "Wpisy dziennika wysłane do obiektu „console”">
+<!ENTITY btnPageLogging.accesskey3 "d">
+<!ENTITY btnConsoleErrors       "Błędy">
+<!ENTITY btnConsoleInfo "Informacje">
+<!ENTITY btnConsoleWarnings     "Ostrzeżenia">
+<!ENTITY btnConsoleLog "Wpisy dziennika">
+<!ENTITY btnConsoleXhr "XHR">
+<!ENTITY btnConsoleReflows "Reflows">
+
+<!ENTITY btnServerLogging.label "Serwer">
+<!ENTITY btnServerLogging.accesskey "S">
+<!ENTITY btnServerLogging.tooltip "Wpisy dziennika otrzymywane z serwera">
+<!ENTITY btnServerErrors "Błędy">
+<!ENTITY btnServerInfo "Informacje">
+<!ENTITY btnServerWarnings "Ostrzeżenia">
+<!ENTITY btnServerLog "Wpisy dziennika">
+
+<!ENTITY btnConsoleSharedWorkers "Wątki współdzielone">
+<!ENTITY btnConsoleServiceWorkers "Wątki usługowe">
+<!ENTITY btnConsoleWindowlessWorkers "Wątki chrome lub dodatków">
+
+<!ENTITY filterOutput.placeholder "Filtruj wyjście">
+<!ENTITY btnClear.label        "Wyczyść">
+<!ENTITY btnClear.tooltip      "Wyczyść wyjście konsoli WWW">
+<!ENTITY btnClear.accesskey "W">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "=">
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2 "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "Kopiuj adres odnośnika">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key "L">
+
+<!ENTITY openInVarViewCmd.label "Otwórz w panelu zmiennych">
+<!ENTITY openInVarViewCmd.accesskey "O">
+<!ENTITY storeAsGlobalVar.label "Zachowaj jako globalną zmienną">
+<!ENTITY storeAsGlobalVar.accesskey "Z">

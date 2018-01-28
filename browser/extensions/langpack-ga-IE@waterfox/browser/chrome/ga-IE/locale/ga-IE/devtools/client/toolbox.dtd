@@ -1,0 +1,215 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Earráid agus Bosca Uirlisí an Bhrabhsálaí á oscailt:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Ardsocruithe">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Scrúdaitheoir">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Taispeáin Stíleanna Brabhsálaí">
+<!ENTITY options.showUserAgentStyles.tooltip "Leis an rogha seo, taispeánfar stíleanna réamhshocraithe a lódálann an brabhsálaí.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "Teasc aitreabúidí DOM">
+<!ENTITY options.collapseAttrs.tooltip "Teasc aitreabúid fhada sa scrúdaitheoir">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Aonad réamhshocraithe datha">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "d">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Mar a scríobhadh é">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Heics">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Ainmneacha Dathanna">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* An seisiún seo amháin; athlódálann sé an leathanach">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Cumasaigh boscaí uirlisí do chrome agus dífhabhtú breiseán">
+<!ENTITY options.enableChrome.tooltip3  "Leis an rogha seo, is féidir leat uirlisí éagsúla forbartha a úsáid i gcomhthéacs an bhrabhsálaí (via Uirlisí > Forbróir Gréasáin > Bosca Uirlisí an Bhrabhsálaí) agus breiseáin a dhífhabhtú i mBainisteoir na mBreiseán">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Cumasaigh cian-dífhabhtú">
+<!ENTITY options.enableRemote.tooltip2  "Leis an rogha seo, beidh tú in ann na huirlisí forbartha a úsáid chun cóip de Waterfox i gcéin a dhífhabhtú, mar shampla ar Waterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "Díchumasaigh JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Díchumasóidh an rogha seo JavaScript sa chluaisín reatha. Dá ndúnfaí an cluaisín nó an bosca uirlisí, dhéanfaí dearmad ar an socrú seo.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "Díchumasaigh an Taisce HTTP (nuair a bhíonn an bosca uirlisí oscailte)">
+<!ENTITY options.disableHTTPCache.tooltip   "Díchumasaíonn an rogha seo an taisce HTTP do chluaisíní a bhfuil an bosca uirlisí oscailte iontu. Ní théann an rogha seo i bhfeidhm ar Oibrithe Seirbhíse.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Cumasaigh Oibrithe Seirbhíse thar HTTP (nuair a bhíonn an bosca uirlisí oscailte)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Cumasaíonn an rogha seo na hoibrithe seirbhíse thar HTTP i gcluaisíní a bhfuil an bosca uirlisí oscailte iontu.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Uirlisí Réamhshocraithe Forbartha">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Uirlisí Forbartha a shuiteáil breiseáin">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Cnaipí Bosca Uirlisí atá ar fáil">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Gan tacaíocht i sprioc reatha an bhosca uirlisí">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Téamaí">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Úsáid an Leagan d'Fhorbróirí">
+<!ENTITY options.usedeveditiontheme.tooltip "Déanann sé seo scoránú den Leagan d'Fhorbróirí.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Consól Gréasáin">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Cumasaigh stampaí ama">
+<!ENTITY options.timestampMessages.tooltip    "Leis an rogha seo, taispeánfar stampa ama in aice le orduithe agus aschur sa Chonsól Gréasáin">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Dífhabhtóir">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Cumasaigh Mapaí Foinse">
+<!ENTITY options.sourceMaps.tooltip    "Leis an rogha seo, déanfar mapáil ar na foinsí sa Dífhabhtóir agus sa Chonsól.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Eagarthóir Stíle">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Taispeáin na bunfhoinsí">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Taispeáin na bunfhoinsí (m.sh. comhaid Sass) san Eagarthóir Stíle agus sa Scrúdaitheoir">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "CSS a uathlíonadh">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Déan uathlíonadh beo d'airíonna, luachanna, agus roghnóirí CSS san Eagarthóir Stíle ">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+
+<!ENTITY options.screenshot.label            "Láimhseáil Seatanna den Scáileán">
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!ENTITY options.screenshot.clipboard.label      "Cóipeáil sa ghearrthaisce">
+<!ENTITY options.screenshot.clipboard.tooltip    "Sábhálfar seat den scáileán go díreach sa ghearrthaisce">
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!ENTITY options.screenshot.audio.label      "Seinn fuaim an chomhla">
+<!ENTITY options.screenshot.audio.tooltip    "Cumasaíonn seo fuaim cheamara agus seat den scáileán á thógáil">
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Gnáthroghanna">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Cumasaigh logchomhaid leanúnacha">
+<!ENTITY options.enablePersistentLogs.tooltip  "Leis an rogha seo, ní ghlanfaidh an Consól Gréasáin agus Monatóir an Líonra an t-aschur nuair a osclóidh tú leathanach nua">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Taispeáin sonraí faoin ardán Gecko">
+<!ENTITY options.showPlatformData.tooltip  "Leis an rogha seo, cuirfidh an próifíleoir JavaScript siombailí ardáin Gecko  san áireamh">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Sainroghanna an Eagarthóra">
+<!ENTITY options.sourceeditor.detectindentation.label   "Braith an stíl eangaithe">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Tomhais an stíl eangaithe bunaithe ar inneachar na foinse">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Dún lúibíní go huathoibríoch">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Cuir lúibíní deiridh isteach go huathoibríoch">
+<!ENTITY options.sourceeditor.expandtab.label           "Eangaigh le spásanna">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Úsáid spásanna in ionad táb">
+<!ENTITY options.sourceeditor.tabsize.label             "Méid táib">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "t">
+<!ENTITY options.sourceeditor.keybinding.label          "Aicearraí">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "A">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Réamhshocrú">

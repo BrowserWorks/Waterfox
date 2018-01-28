@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Splošno">
+
+<!ENTITY useCursorNavigation.label       "Vselej uporabi tipke na tipkovnici za navigacijo po straneh">
+<!ENTITY useCursorNavigation.accesskey   "t">
+<!ENTITY searchOnStartTyping.label       "Začni iskati ob začetku tipkanja">
+<!ENTITY searchOnStartTyping.accesskey   "k">
+<!ENTITY useOnScreenKeyboard.label       "Prikaži tipkovnico na dotik, ko je potrebno">
+<!ENTITY useOnScreenKeyboard.accesskey   "o">
+
+<!ENTITY browsing.label                  "Brskanje">
+
+<!ENTITY useAutoScroll.label             "Uporabljaj samodrsenje">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Uporabljaj gladko drsenje">
+<!ENTITY useSmoothScrolling.accesskey    "g">
+<!ENTITY checkUserSpelling.label         "Preverjaj črkovanje med tipkanjem">
+<!ENTITY checkUserSpelling.accesskey     "v">
+
+<!ENTITY dataChoicesTab.label            "Podatkovne možnosti">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Pošiljanje podatkov je onemogočeno za to nastavitev graditve">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName;u dovoli samodejno pošiljanje tehničnih podatkov in podatkov o uporabi Mozilli">
+<!ENTITY enableHealthReport1.accesskey   "t">
+<!ENTITY healthReportLearnMore.label     "Več o tem">
+
+<!ENTITY dataCollection.label            "Zbiranje in uporaba podatkov &brandShortName;a">
+<!ENTITY dataCollectionDesc.label        "Trudimo se, da vam ponudimo izbiro in da zbiramo samo tisto, kar potrebujemo za razvoj in izboljšave &brandShortName;a za vse uporabnike. Pred sprejemanjem osebnih podatkov vas vedno vprašamo za dovoljenje.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Obvestilo o zasebnosti">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Dovoli &brandShortName;u pošiljanje poročil o sesutjih Mozilli">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "p">
+<!ENTITY crashReporterLearnMore.label    "Več o tem">
+
+<!ENTITY networkTab.label                "Omrežje">
+
+<!ENTITY networkProxy.label              "Omrežni posrednik">
+
+<!ENTITY connectionDesc.label            "Določite, kako naj se &brandShortName; poveže na internet.">
+<!ENTITY connectionSettings.label        "Nastavitve …">
+<!ENTITY connectionSettings.accesskey    "n">
+
+<!ENTITY httpCache.label                 "Vsebina v predpomnilniku">
+
+<!ENTITY offlineStorage2.label           "Vsebina in uporabniški podatki za delo brez povezave">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Podatki strani">
+<!ENTITY clearSiteData.label             "Počisti vse podatke">
+<!ENTITY clearSiteData.accesskey         "č">
+<!ENTITY siteDataSettings.label          "Nastavitve …">
+<!ENTITY siteDataSettings.accesskey      "v">
+<!ENTITY siteDataLearnMoreLink.label     "Več o tem">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Omeji velikost predpomnilnika na">
+<!ENTITY limitCacheSizeBefore.accesskey  "l">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "Počisti zdaj">
+<!ENTITY clearCacheNow.accesskey         "O">
+<!ENTITY clearOfflineAppCacheNow.label   "Počisti zdaj">
+<!ENTITY clearOfflineAppCacheNow.accesskey "Z">
+<!ENTITY overrideSmartCacheSize.label    "Prezri samodejno upravljanje predpomnilnika">
+<!ENTITY overrideSmartCacheSize.accesskey "E">
+
+<!ENTITY updateTab.label                 "Posodobitve">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "Posodobitve &brandShortName;a">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Ohranite &brandShortName; posodobljen za najboljšo zmogljivost, stabilnost in varnost.">
+<!ENTITY updateApplication.version.pre   "Različica ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&brandShortName; naj">
+<!ENTITY updateAuto3.label               "Samodejno nameščaj posodobitve (priporočeno)">
+<!ENTITY updateAuto3.accesskey           "S">
+<!ENTITY updateCheckChoose2.label        "Preverja posodobitve, vendar vam prepusti odločitev o nameščanju">
+<!ENTITY updateCheckChoose2.accesskey    "o">
+<!ENTITY updateManual2.label             "Nikoli ne preverja posodobitev (ni priporočeno)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Prikaži zgodovino posodobitev …">
+<!ENTITY updateHistory2.accesskey        "z">
+
+<!ENTITY useService.label                "Uporabi storitev za nameščanje posodobitev v ozadju">
+<!ENTITY useService.accesskey            "s">
+
+<!ENTITY enableSearchUpdate2.label       "Samodejno posodabljaj iskalnike">
+<!ENTITY enableSearchUpdate2.accesskey   "i">
+
+<!ENTITY offlineStorageNotify.label               "Sporoči, ko želi stran shraniti podatke za delo brez povezave">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Izjeme …">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "I">
+
+<!ENTITY offlineAppsList2.label          "Naslednje strani lahko shranjujejo podatke za delo brez povezave:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Odstrani ...">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "Odstrani ">
+
+<!ENTITY certificateTab.label            "Digitalna potrdila">
+<!ENTITY certPersonal2.description       "Ko strežnik zahteva vaše osebno digitalno potrdilo,">
+<!ENTITY selectCerts.auto                "ga izberi samodejno">
+<!ENTITY selectCerts.auto.accesskey      "s">
+<!ENTITY selectCerts.ask                 "vsakokrat vprašaj">
+<!ENTITY selectCerts.ask.accesskey       "k">
+<!ENTITY enableOCSP.label                "Uporabi strežnike OCSP za potrditev trenutne veljavnosti digitalnih potrdil">
+<!ENTITY enableOCSP.accesskey            "U">
+<!ENTITY viewCerts2.label                "Preglej digitalna potrdila …">
+<!ENTITY viewCerts2.accesskey            "D">
+<!ENTITY viewSecurityDevices2.label      "Varnostne naprave …">
+<!ENTITY viewSecurityDevices2.accesskey  "V">
+
+<!ENTITY performance.label               "Učinkovitost">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Uporabi priporočene nastavitve učinkovitosti">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Te nastavitve so prikrojene strojni opremi in operacijskemu sistemu vašega računalnika.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "p">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Več o tem">
+<!ENTITY limitContentProcessOption.label "Omejitev procesov vsebine">
+<!ENTITY limitContentProcessOption.description
+                                         "Dodatni procesi vsebine lahko pospešijo delovanje pri uporabi večjega števila zavihkov, a tudi porabijo več pomnilnika.">
+<!ENTITY limitContentProcessOption.accesskey   "O">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Število procesov vsebine je mogoče spreminjati samo v večprocesnem &brandShortName;u.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Kako izveste, ali je večprocesni način omogočen">
+<!ENTITY allowHWAccel.label              "Uporabljaj strojno pospeševanje, ko je na voljo">
+<!ENTITY allowHWAccel.accesskey          "U">

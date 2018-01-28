@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Nastavenie tlačiarne">
+
+<!ENTITY paperInput.label "Veľkosť papiera:">
+<!ENTITY paperInput.accesskey "V">
+
+<!ENTITY jobTitleInput.label "Názov:">
+<!ENTITY jobTitleInput.accesskey "z">
+
+<!ENTITY colorGroup.label "Farba:">
+<!ENTITY grayRadio.label "Odtiene sivej">
+<!ENTITY grayRadio.accesskey "O">
+<!ENTITY colorRadio.label "Farba">
+<!ENTITY colorRadio.accesskey "F">
+
+<!ENTITY edgeMarginInput.label "Medzera od hrany papiera k okraju (v palcoch)">
+<!ENTITY topInput.label "Hore:">
+<!ENTITY topInput.accesskey "H">
+<!ENTITY bottomInput.label "Dole:">
+<!ENTITY bottomInput.accesskey "D">
+<!ENTITY leftInput.label "Vľavo:">
+<!ENTITY leftInput.accesskey "a">
+<!ENTITY rightInput.label "Vpravo:">
+<!ENTITY rightInput.accesskey "r">

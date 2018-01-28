@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Achustes - Datos d'o puesto">
+<!ENTITY     hostCol.label                 "Puesto">
+<!ENTITY     statusCol.label               "Estau">
+<!ENTITY     usageCol.label                "Almagazenamiento">
+<!ENTITY     searchTextboxPlaceHolder             "Mirar en puestos web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Borrar los seleccionaus">
+<!ENTITY     removeSelected.accesskey      "B">
+<!ENTITY     save.label                    "Alzar los cambios">
+<!ENTITY     save.accesskey                "A">
+<!ENTITY     cancel.label                  "Cancelar">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Borrar los datos d'o puesto">
+<!ENTITY     removingSelected.description  "Si borrar los datos d'o puesto tamién borrará las cookies relacionadas y lo conteniu offiline. Isto puede sacar-te de sesión en los puestos web. Ye seguro que quiere fer los cambios?">
+<!ENTITY     siteTree.label                "Se van a borrar las siguients cookes d'o puesto web:">

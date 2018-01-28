@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "নিম্নলিখিত কুকি আপোনাৰ কম্পিউটাৰত আছে:">
+<!ENTITY     cookiename.label               "কুকিৰ নাম">
+<!ENTITY     cookiedomain.label             "ছাইট">
+
+<!ENTITY     props.name.label               "নাম:">
+<!ENTITY     props.value.label              "সমল:">
+<!ENTITY     props.domain.label             "হস্ট:">
+<!ENTITY     props.path.label               "পথ:">
+<!ENTITY     props.secure.label             "চিহ্নিত বস্তুৰ বাবে পঠিয়াওক:">
+<!ENTITY     props.expires.label            "অন্ত হয়:">
+
+
+<!ENTITY     window.title                   "কুকিসমূহ">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+
+
+<!ENTITY     button.close.label             "বন্ধ কৰক">
+<!ENTITY     button.close.accesskey         "C">
+
+<!ENTITY     props.container.label          "Container:">
+
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     searchFilter.label             "Search">

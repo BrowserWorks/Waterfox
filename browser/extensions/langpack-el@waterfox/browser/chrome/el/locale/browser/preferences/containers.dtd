@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Προσθήκη νέας θεματικής ενότητας">
+<!ENTITY addButton.accesskey  "Π">
+<!ENTITY preferencesButton.label "Προτιμήσεις">
+<!ENTITY removeButton.label   "Αφαίρεση">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Επιστροφή">
+
+<!ENTITY window.title         "Προσθήκη νέας θεματικής ενότητας">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Όνομα:">
+<!ENTITY name.accesskey       "Ο">
+<!ENTITY name.placeholder     "Εισάγετε όνομα θεματικής ενότητας">
+<!ENTITY icon.label           "Εικονίδιο:">
+<!ENTITY icon.accesskey       "Ε">
+<!ENTITY color.label          "Χρώμα:">
+<!ENTITY color.accesskey      "ρ">
+<!ENTITY windowClose.key      "κ">
+
+<!ENTITY button.ok.label      "Τέλος">
+<!ENTITY button.ok.accesskey  "Τ">
+

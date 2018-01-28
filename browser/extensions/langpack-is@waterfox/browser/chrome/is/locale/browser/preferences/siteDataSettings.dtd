@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Stillingar - Gögn vefsvæðis">
+<!ENTITY     hostCol.label                 "Vefsvæði">
+<!ENTITY     statusCol.label               "Staða">
+<!ENTITY     usageCol.label                "Geymsla">
+<!ENTITY     searchTextboxPlaceHolder             "Leita á vefsvæðum">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "s">
+<!ENTITY     removeSelected.label          "Fjarlægja valið">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Vista breytingar">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Hætta við">
+<!ENTITY     cancel.accesskey              "H">
+<!ENTITY     removingDialog.title          "Fjarlægja gögn vefsvæðis">
+<!ENTITY     removingSelected.description  "Ef þú fjarlægir gögn frá vefsvæði mun það einnig eyða tengdum smákökum og aftengdum gögnum. Þetta gæti leitt til þess að þú myndir aftengjast sumum vefsvæðum. Ertu viss um að þú viljir framkvæma þessar breytingar?">
+<!ENTITY     siteTree.label                "Eftirfarandi smákökur verða fjarlægðar:">

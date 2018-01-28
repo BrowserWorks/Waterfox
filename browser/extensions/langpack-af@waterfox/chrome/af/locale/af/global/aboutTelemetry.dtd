@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrie-data">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Algemene data">
+
+
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Stadige SQL-stellings">
+
+
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramme">
+
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Eenvoudige mates">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Byvoegingbesonderhede">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Laat geskryf">
+
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  LET WEL: Ontvouting van stadige SQL is geaktiveer. Volledige SQL-stringe word dalk hier onder vertoon, maar sal nie ingedien word aan Telemetry nie.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Filtreer (stringe of /reg.uitdruk./)">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Week
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Choose ping:
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Browser Hangs
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Environment Data
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Keyed Histograms
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping data source:
+">
+
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Archived ping data
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Current ping data
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Newer ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Older ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Show subsession data
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry Log
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Thread Hangs
+">
+

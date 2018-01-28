@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Nodrezhoù">
+
+<!ENTITY  language.label                          "Nodrezhoù evit :">
+<!ENTITY  language.accesskey                      "N">
+
+<!ENTITY  size.label                              "Ment :">
+<!ENTITY  sizeProportional.accesskey              "M">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "Kenfeur :">
+<!ENTITY  proportional.accesskey                  "K">
+
+<!ENTITY  serif.label                             "Serif :">
+<!ENTITY  serif.accesskey                         "f">
+<!ENTITY  sans-serif.label                        "Hep-serif:">
+<!ENTITY  sans-serif.accesskey                    "H">
+<!ENTITY  monospace.label                         "Unegor :">
+<!ENTITY  monospace.accesskey                     "U">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Latin">
+<!ENTITY  font.langGroup.japanese                 "Japaneg">
+<!ENTITY  font.langGroup.trad-chinese             "Sinaeg hengounel (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Sinaeg eeunaet">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Sinaeg hengounel (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreaneg">
+<!ENTITY  font.langGroup.cyrillic                 "Kirillek">
+<!ENTITY  font.langGroup.el                       "Gresianeg">
+<!ENTITY  font.langGroup.other                    "Reizhiadoù skrivañ all">
+<!ENTITY  font.langGroup.thai                     "Thaieg">
+<!ENTITY  font.langGroup.hebrew                   "Hebraeg">
+<!ENTITY  font.langGroup.arabic                   "Arabeg">
+<!ENTITY  font.langGroup.devanagari               "Devanagarieg">
+<!ENTITY  font.langGroup.tamil                    "Tamileg">
+<!ENTITY  font.langGroup.armenian                 "Armenieg">
+<!ENTITY  font.langGroup.bengali                  "Bengalieg">
+<!ENTITY  font.langGroup.canadian                 "Arouezenneg Unvan Kanadian">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopeg">
+<!ENTITY  font.langGroup.georgian                 "Jorjianeg">
+<!ENTITY  font.langGroup.gujarati                 "Gujaratieg">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhieg">
+<!ENTITY  font.langGroup.khmer                    "Khmereg">
+<!ENTITY  font.langGroup.malayalam                "Malayalameg">
+<!ENTITY  font.langGroup.math                     "Matematikoù">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugueg">
+<!ENTITY  font.langGroup.kannada                  "Kannadeg">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetaneg">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Ment izek an nodrezh :">
+<!ENTITY minSize.accesskey                        "t">
+<!ENTITY minSize.none                             "Tra ebet">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Hep Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Aotren ar pajennadoù da zibab o nodrezhoù dezho e-lec'h ma diuzad a-us">
+<!ENTITY  allowPagesToUseOwn.accesskey            "A">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Bonegañ an arouezennoù evit an endalc'hadoù diamzeret">
+<!ENTITY languages.customize.Fallback2.label      "Bonegañ an destenn dre ziouer : ">
+<!ENTITY languages.customize.Fallback2.accesskey  "d">
+<!ENTITY languages.customize.Fallback2.desc       "Arveret eo bonegañ an arouezennoù-mañ evit an endalc'hadoù diamzeret na zisklerint ket o bonegañ.">
+
+<!ENTITY languages.customize.Fallback.auto        "Diouer evit ar yezh vremanel">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabeg">
+<!ENTITY languages.customize.Fallback.baltic      "Balteg">
+<!ENTITY languages.customize.Fallback.ceiso       "Kreiz Europa, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Kreiz Europa, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Sinaeg, eeunaet">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Sinaeg, hengounel">
+<!ENTITY languages.customize.Fallback.cyrillic    "Kirillek">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Gresianeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebraeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japaneg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Koreaneg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Thaieg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turkeg">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnameg">
+<!ENTITY languages.customize.Fallback.other       "All (Kornôg Europa e-barzh)">

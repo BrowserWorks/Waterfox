@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Lùi">
+<!ENTITY  button-back-mac.accesskey    "L">
+<!ENTITY  button-next-mac.label        "Tiếp tục">
+<!ENTITY  button-next-mac.accesskey    "i">
+<!ENTITY  button-finish-mac.label      "Xong">
+<!ENTITY  button-cancel-mac.label      "Hủy bỏ">
+
+<!ENTITY  button-back-unix.label       "Lùi">
+<!ENTITY  button-back-unix.accesskey   "L">
+<!ENTITY  button-next-unix.label       "Tiến">
+<!ENTITY  button-next-unix.accesskey   "T">
+<!ENTITY  button-finish-unix.label     "Hoàn thành">
+<!ENTITY  button-cancel-unix.label     "Hủy bỏ">
+
+<!ENTITY  button-back-win.label        "&lt; Lùi">
+<!ENTITY  button-back-win.accesskey    "L">
+<!ENTITY  button-next-win.label        "Tiến &gt;">
+<!ENTITY  button-next-win.accesskey    "T">
+<!ENTITY  button-finish-win.label      "Hoàn thành">
+<!ENTITY  button-cancel-win.label      "Hủy bỏ">

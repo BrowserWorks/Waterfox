@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "മുറിക്കുക ">
+<!ENTITY cutCmd.accesskey "t">
+<!ENTITY copyCmd.label "പകര്‍ത്തുക ">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "പതിക്കുക">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "പൂര്‍വ്വാവസ്ഥയിലാക്കുക">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY selectAllCmd.label "എല്ലാം തെരഞ്ഞെടുക്കുക">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY deleteCmd.label "മായിക്കുക">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "നിഘണ്ടു ചേര്‍ക്കുക">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "നിഘണ്ടുവിലേക്കു് ചേര്‍ക്കുന്നതു് വേണ്ടെന്നു് വയ്ക്കുക">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "അക്ഷരത്തെറ്റ് പരിശോധിയ്ക്കുക">
+<!ENTITY spellCheckToggle.accesskey "അ">
+<!ENTITY spellNoSuggestions.label "(അക്ഷരത്തെറ്റിനുള്ള നിറ്‍ദ്ദേങ്ങള്‍ ലഭ്യമല്ല)">
+<!ENTITY spellDictionaries.label "ഭാഷകള്‍ ">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "നീക്കം ചെയ്യുക">
+
+<!ENTITY fillLoginMenu.label          "ലോഗിന്‍ പൂരിപ്പിക്കുക">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "രഹസ്യവാക്ക് പൂരിപ്പിക്കുക">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "ഉപയോക്തൃനാമം നിറയ്ക്കുക">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(ലോഗിന്‍ നിര്‍ദ്ദേശങ്ങള്‍ ലഭ്യമല്ല)">
+<!ENTITY viewSavedLogins.label        "ശേഖരിച്ചിട്ടുള്ള പ്രവേശനങ്ങള്‍ കാണുക">

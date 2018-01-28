@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Profil ustasini yaratish">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; barcha moslamalar va parametrlar ma`lumotlarini shaxsiy profilingizga saqlaydi.">
+<!ENTITY profileCreationExplanation_2.text  "Agar siz &brandShortName; nusxasini boshqa foydalanuvchilar bilan boʻlishsangiz, har bir foydalanuvchining ma`lumotlarini alohida saqlashingiz mumkin. Bu bilan har bir foydalanuvchi oʻzining shaxsiy profilini yaratishi mumkin.">
+<!ENTITY profileCreationExplanation_3.text  "Agar siz &brandShortName; nusxasidan foydalanayotgan yagona shaxs boʻsangiz, bitta profilingiz boʻlishi kerak. Agar bir nechta profil yaratmoqchi boʻlsangiz, parametrlar va moslamalarga oʻzgartirish kiritishingiz kerak. Masalan, profillaringizni ish va shaxsiy foydalanish uchun ajratishingiz mumkin.">
+<!ENTITY profileCreationExplanation_4.text  "Profilingizni yaratishni boshlashni xohlasangiz, &quot;Keyingi&quot;ni bosing.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Profilingizni yaratishni boshlashni xohlasangiz, &quot;Davom etish&quot;ni bosing.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Profilingizni yaratishni boshlashni xohlasangiz, &quot;Keyingi&quot;ni bosing.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Agar bir nechta profil yaratmoqchi boʻlsangiz, ularga alohida profil nomlari qoʻyishingiz mumkin. Bu yerda keltirilgan nomlardan birini yoki oʻzingiz xohlagan nomdan foydalanishingiz mumkin.">
+<!ENTITY profilePrompt.label            "Yangi profil nomini kiriting:">
+<!ENTITY profilePrompt.accesskey        "k">
+<!ENTITY profileDirectoryExplanation.text   "Parametrlar, moslamalar va boshqa kerakli ma`lumotlaringizni bu yerda saqlab qolishingiz mumkin:">
+<!ENTITY profileDefaultName             "Standart foydalanuvchi">
+<!ENTITY button.choosefolder.label      "Jildni tanlash">
+<!ENTITY button.choosefolder.accesskey  "t">
+<!ENTITY button.usedefault.label        "Standart jilddan foydalanish">
+<!ENTITY button.usedefault.accesskey    "f">

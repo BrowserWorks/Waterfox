@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Pokretanje">
+
+<!ENTITY startupPage.label         "Kada se &brandShortName; pokrene:">
+<!ENTITY startupPage.accesskey     "s">
+<!ENTITY startupUserHomePage.label "Prikazati vašu početnu stranicu">
+<!ENTITY startupBlankPage.label    "Prikaži praznu stranicu">
+<!ENTITY startupPrevSession.label  "Prikazati vaše prozore i tabove od zadnjeg puta">
+
+<!ENTITY homepage.label            "Početna stranica:">
+<!ENTITY homepage.accesskey        "č">
+<!ENTITY useCurrentPage.label      "Koristi trenutnu stranicu">
+<!ENTITY useCurrentPage.accesskey  "c">
+<!ENTITY useMultiple.label         "Koristi trenutne stranice">
+<!ENTITY chooseBookmark.label      "Koristi zabilješku…">
+<!ENTITY chooseBookmark.accesskey  "b">
+<!ENTITY restoreDefault.label      "Vrati na izvorne vrijednosti">
+<!ENTITY restoreDefault.accesskey  "r">
+
+<!ENTITY downloads.label     "Preuzimanja">
+
+<!ENTITY saveTo.label "Spasi fajlove u">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Pregled…">
+<!ENTITY chooseFolderWin.accesskey    "P">
+<!ENTITY chooseFolderMac.label        "Izaberi…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Uvijek vas pitati gdje želite spasiti fajl">
+<!ENTITY alwaysAskWhere.accesskey     "a">
+
+<!ENTITY alwaysCheckDefault2.label        "Uvijek provjeravaj da li je &brandShortName; glavni browser">
+<!ENTITY alwaysCheckDefault2.accesskey    "g">
+<!ENTITY setAsMyDefaultBrowser2.label     "Učini izvornim">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "i">
+<!ENTITY isDefault.label                  "&brandShortName; je trenutno vaš glavni browser">
+<!ENTITY isNotDefault.label               "&brandShortName; trenutno nije vaš glavni browser">
+
+<!ENTITY separateProfileMode.label        "Dozvoli da se &brandShortName; i Waterfox pokreću u isto vrijeme">
+<!ENTITY useWaterfoxSync.label             "Savjet: Ovo koristi odvojene profile. Koristite Sync za dijeljenje podataka između njih.">
+<!ENTITY getStarted.notloggedin.label     "Prijava u &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Otvori &syncBrand.shortName.label; postavke">
+
+<!ENTITY e10sEnabled.label                "Omogući multiprocesni &brandShortName;">

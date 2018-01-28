@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Debugger strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (webAudioEditorUI.reloadNotice1): This is the label shown
+  -  on the button that triggers a page refresh. -->
+
+
+
+<!ENTITY webAudioEditorUI.reloadNotice1   "फेर लोड करू ">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.reloadNotice2): This is the label shown
+  -  along with the button that triggers a page refresh. -->
+
+<!ENTITY webAudioEditorUI.reloadNotice2   "पृष्ठ कए जेकरा मे ऑडिटो संदर्भ देखनाए आओर संपादित केनाए अछि.">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.emptyNotice): This is the label shown
+  -  while the page is refreshing and the tool waits for a audio context. -->
+
+<!ENTITY webAudioEditorUI.emptyNotice     "ऑडियो संदर्भ बनाएल जाए कलेल प्रतीक्षा कएल जाए रहल अछि…">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.tab.properties2): This is the label shown
+  -  for the properties tab view. -->
+
+<!ENTITY webAudioEditorUI.tab.properties2 "गुण">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.tab.automation): This is the label shown
+  -  for the automation tab view. -->
+
+<!ENTITY webAudioEditorUI.tab.automation  "स्वचलन">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.inspectorTitle): This is the title for the
+  -  AudioNode inspector view. -->
+
+<!ENTITY webAudioEditorUI.inspectorTitle  "ऑडियो नोड इंस्पेक्टर">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.inspectorEmpty): This is the title for the
+  -  AudioNode inspector view empty message. -->
+
+<!ENTITY webAudioEditorUI.inspectorEmpty  "कोनो ऑडियो नोड नहि चुनल गेल">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.propertiesEmpty): This is the title for the
+  -  AudioNode inspector view properties tab empty message. -->
+
+<!ENTITY webAudioEditorUI.propertiesEmpty "नोड केर कोनो गुण नहि अछि">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.automationEmpty): This is the title for the
+  -  AudioNode inspector view automation tab empty message. -->
+
+<!ENTITY webAudioEditorUI.automationEmpty "नोड सँग कोनो ऑडियोपरम नहि अछि.">
+<!-- LOCALIZATION NOTE (webAudioEditorUI.automationNoEvents): This is the title for the
+  -  AudioNode inspector view automation tab message when there are no automation
+  -  events. -->
+
+<!ENTITY webAudioEditorUI.automationNoEvents "ऑडियोपरम सँग कोनो स्वचालन घटना नहि अछि.">

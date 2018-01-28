@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; යාවත්කාල කිරීම">
+
+<!ENTITY  offline.title                   "&brandShortName; නොබැදි ලෙස ක්‍රියා කරයි">
+<!ENTITY  offline.description             "මෙම වෙළුම සමග ගැළපෙන ඔබගේ ඇඩෝන සඳහා යාවත්කාල කිරීම්  
+තිබේද දැයි වීමසීමට බැලීමට සබැඳි ප්‍රකාරයට යාමට &brandShortName; 
+හට අවශ්‍යව ඇත.">
+<!ENTITY  offline.toggleOffline.label     "දැන් සබැදි ලෙස යන්න.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "නොගැළපෙන ඇඩෝනය">
+<!ENTITY  mismatch.top.label              "පහත ඇඩෝන &brandShortName; වන වෙළුම  
+සමග නොගැළපේ සහ අක්‍රීය වී ඇත:">
+<!ENTITY  mismatch.bottom.label           "දැනට ඇති මේම ඇඩෝන මේම වෙළුම සමග ගැළපේද යන්න  
+&brandShortName; හට පරීක්‍ෂා කිරීමට හැක.">
+
+<!ENTITY  checking.wizard.title           "ගැළපෙන ඇඩෝන සඳහා පරීක්‍ෂාව">
+<!ENTITY  checking.top.label              "යාවත්කාල කිරීම සඳහා ඔබගේ අසම්පූර්ණ ඇඩෝන පරීක්‍ෂාව...">
+<!ENTITY  checking.status                 "මේ සඳහා විනාඩි කිහිපයක් ගතවේ...">
+
+<!ENTITY  found.wizard.title               "ගැළපෙන ඇඩෝන හමුවිය">
+<!ENTITY  found.top.label                 "ඔබට ස්ථාපනය කිරීමට අවෂ්‍ය ඇඩෝනය තෝරන්න:">
+<!ENTITY  found.disabledXPinstall.label   "මෘදුකාංග ස්ථාපනය දැනට අක්‍රීය ව ඇති නිසා මෙම යාවත්කාල කිරීම ස්ථාපනය කළ නොහැක.
+ඔබට මෙම සැකසුම් පහතින් වෙනස්කල හැක.">
+<!ENTITY  found.enableXPInstall.label     "වෙබ් අඩවි මෘදුකාංග ස්ථාපනයට  අවසර දෙන්න">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "ගැළපෙන ඇඩෝන ස්ථාපනය වේ">
+<!ENTITY  installing.top.label            "ඔබගේ ඇඩෝන වලට යාවත්කාල කිරීම් බාගතවේ සහ ස්ථාපනය වේ...">
+
+<!ENTITY  noupdates.wizard.title          "ගැළපෙන ඇඩෝන හමු නොවිනි">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; හට ඔබගේ නොගැළපෙන ඇඩෝන සඳහා යාවත්කාල කිරීම් 
+සොයාගත නොහැක.">
+<!ENTITY  noupdates.error.desc            "යාවත්කාල කිරීම් සෙවීමට යතුරුකරණයේදී සමහර ගැටලු හමුවේ.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; කලින් කල පරීක්‍ෂා කර මෙම ඇඩෝන සඳහා ගැළපෙන යාවත් කිරීම් 
+ තිබේනම් ඔබ දැනුවත් කරයි.">
+
+<!ENTITY  finished.wizard.title           "ගැළපෙන ඇඩෝන ස්ථාපනය කලේය">
+<!ENTITY  finished.top.label              "&brandShortName; විසින් ඔබගේ ඇඩෝන යාවත්කාල කිරීම් ස්ථාපනය කර ඇත.">
+<!ENTITY  finished.checkDisabled.desc     "ඇඩෝන සඳහා යාවත්කාල කිරීම් තිබේනම් &brandShortName; විසින් වරින් වරි පිරික්සා 
+ ඔබව දැනුවත් කරයි.">
+<!ENTITY  finished.checkEnabled.desc      "ඇඩෝන සඳහා යාවත්කාල කිරීම් තිබේනම් &brandShortName; විසින් වරින් වර 
+පරීක්‍ෂා කර ඔබව දැනුවත් කරයි.">
+
+<!ENTITY  adminDisabled.wizard.title      "යාවත්කාල කිරීම් පරීක්‍ෂාව කල නොහැක">
+<!ENTITY  adminDisabled.warning.label     "&brandShortName; සඳහා මෘදුකාංග ස්ථාපනය අක්‍රීය කර ඇති නිසා නොගැළපෙන ඇඩෝන 
+ සඳහා යාවත් කිරීම් පරීක්‍ෂාව ප්‍රායෝගික නොවේ. 
+සහාය සඳහා ඔබගේ පද්ධති පරිපාලක හා සම්බන්ධ වන්න.">
+
+<!ENTITY  versioninfo.wizard.title        "ඇඩෝනවල ගැළපීම පරීක්‍ෂා කරයි">
+<!ENTITY  versioninfo.top.label           "මෙම &brandShortName; වෙළුමට ගැළපෙන ඔබ ස්ථාපනය කර ඇති 
+ඇඩෝන පරීක්‍ෂා කරයි.">
+<!ENTITY  versioninfo.waiting             "මේ සඳහා විනාඩි කිහිපයක් ගතවේ...">
+
+<!ENTITY  installerrors.wizard.title      "යාවත්කාල කිරීම් ස්ථාපනයේ දෝෂ">
+<!ENTITY  installerrors.intro.label       "ඔබේ සමහර ඇඩෝන යාවත් කිරීමේදි &brandShortName; විසින් 
+ගැටලුවක් අනාවරණය කරගන්නා ලදි.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; පටන්ගැනීමට අවසන් මත ක්ලික් කරන්න.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; ආරම්භ කිරීමට කළා ක්ලික් කරන්න.">
+<!ENTITY  enableChecking.label            "යාවත්කාල කිරීම් පරීක්‍ෂාවට &brandShortName; අනුමත කරන්න.">

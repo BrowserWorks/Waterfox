@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+
+<!-- These strings are used in the about:home page -->
+
+<!ENTITY abouthome.pageTitle "&brandFullName; 開始頁">
+
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+<!ENTITY abouthome.defaultSnippet1.v1 "感謝您選擇使用 Waterfox！<br />用最快的速度了解您的瀏覽器，看看 <a>最新功能</a>。">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "您可以很簡單地把 Waterfox 設定成您想要的樣子。<br /><a>看看數以千計的附加元件</a>。">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; 是一套自由且開放原始碼的軟體，來自非營利的 Mozilla 基金會。<a>瞭解您的權利…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "書籤">
+<!ENTITY abouthome.historyButton.label   "瀏覽紀錄">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "選項">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "偏好設定">
+<!ENTITY abouthome.addonsButton.label    "附加元件">
+<!ENTITY abouthome.downloadsButton.label "下載項目">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+<!ENTITY abouthome.aboutMozilla.label    "關於 Mozilla">
+

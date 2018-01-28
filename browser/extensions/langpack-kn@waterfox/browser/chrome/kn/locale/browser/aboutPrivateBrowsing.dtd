@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "ನೀವು ಪ್ರಸ್ತುತ ಒಂದು ಖಾಸಗಿ ಕಿಟಕಿಯಲ್ಲಿ ಇಲ್ಲ.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "ಒಂದು Private ಕಿಟಕಿಯನ್ನು ತೆರೆ">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "ಖಾಸಗಿ ವೀಕ್ಷಣೆ">
+<!ENTITY privateBrowsing.title.tracking                  "ಖಾಸಗಿ ಜಾಲಾಟ ಜಾಡುಹಿಡಿಯುವಿಕೆ ಸುರಕ್ಷತೆಯೊಂದಿಗೆ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "ನೀವು ಖಾಸಗಿ ಕಿಟಕಿಯಲ್ಲಿ ಜಾಲಾಡುವಾಗ, ‌Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ಉಳಿಸಬೇಡ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "ಭೇಟಿಕೊಟ್ಟ ಪುಟಗಳು">
+<!ENTITY aboutPrivateBrowsing.info.searches              "ಹುಡುಕಾಟಗಳು">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "ಕುಕಿಗಳು">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ತಾತ್ಕಾಲಿಕ ಕಡತಗಳು">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ಉಳಿಸುತ್ತದೆ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ನಿಮ್ಮ:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ಡೌನ್‍ಲೋಡುಗಳು">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ಪುಟಗುರುತುಗಳು">
+<!ENTITY aboutPrivateBrowsing.note.before                "ಖಾಸಗಿ ವೀಕ್ಷಣೆ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ಅಂತರಜಾಲದಲ್ಲಿ ನೀವು ಅನಾಮಧೇಯರಾಗಿ">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ಇರಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಉದ್ಯೋಗದಾತರು ಅಥವಾ ನಿಮಗೆ ಅಂತರಜಾಲವನ್ನು ಸೇವೆಯನ್ನು ಒದಗಿಸುವವರು ನೀವು ಭೇಟಿ ನೀಡುವ ಪುಟವನ್ನು ಗಮನಿಸುವ ಸಾಧ್ಯತೆ ಇರುತ್ತದೆ.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "ಇದರ ಬಗ್ಗೆ ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "ಖಾಸಗಿ ವೀಕ್ಷಣೆ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ಜಾಡು ಇರಿಸುವಿಕೆಗೆ ರಕ್ಷಣೆ">
+<!ENTITY trackingProtection.description2                 "ಕೆಲವು ಜಾಲತಾಣಗಳು ಅಂತರಜಾಲದಲ್ಲಿ ನಿಮ್ಮ ಚಟುವಟಿಕೆಯ ಜಾಡನ್ನು ಇರಿಸಲು ಟ್ರ್ಯಾಕರ್‌ಗಳನ್ನು ಬಳಸುತ್ತವೆ. ಟ್ರ್ಯಾಕಿಂಗ್ ಸಂರಕ್ಷಣೆಯೊಂದಿಗೆ, ನಿಮ್ಮ ಜಾಲವೀಕ್ಷಣಾ ವರ್ತನೆಯ ಬಗ್ಗೆ ಮಾಹಿತಿಯನ್ನು ಸಂಗ್ರಹಿಸುವ ಹಲವಾರು ಟ್ರ್ಯಾಕರ್‌ಗಳನ್ನು Waterfox ನಿರ್ಬಂಧಿಸುತ್ತದೆ.">
+<!ENTITY trackingProtection.startTour1                   "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ ಎಂದು ನೋಡಿ">

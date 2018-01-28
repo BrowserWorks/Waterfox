@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "新增容器">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "偏好設定">
+<!ENTITY removeButton.label   "移除">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; 回到隱私權">
+
+<!ENTITY window.title         "新增容器">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "名稱:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "輸入容器名稱">
+<!ENTITY icon.label           "圖示:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "色彩:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "完成">
+<!ENTITY button.ok.accesskey  "D">
+

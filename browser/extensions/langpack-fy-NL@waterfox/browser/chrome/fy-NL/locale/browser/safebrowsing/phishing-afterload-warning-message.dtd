@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Helje my hjir út!">
+<!ENTITY safeb.palm.decline.label "Dizze warskôging negearje">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Dit is gjin misliedende website…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "m">
+<!ENTITY safeb.palm.reportPage.label "Wêrom waard dizze side blokkearre?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Advys útjûn troch <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Rapportearre oanfalside!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Dizze webside op <span id='malware_sitename'/> is rapportearre as in oanfalside en is blokkearre op basis fan jo befeiligingsfoarkarren.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Oanfalsiden probearje programma’s te ynstallearjen dy't priveeynformaasje stelle, jo kompjûter brûke om oaren oan te fallen, of jo systeem skansearje.</p><p>Guon oanfalsiden ferspriede bewust gefaarlike software, mar in protte binne kompromittearre sûnder de kunde of tastimming fan harren eigeners.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Rapportearre side mei net-winske software!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Dizze webside op <span id='unwanted_sitename'/> is rapportearre as in webside dy't net-winske software befettet en is blokkearre op basis fan jo befeiligingsfoarkarren.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Siden mei net-winske software probearje software te ynstallearjen dy't misliedend wêze kin en jo systeem op ûnferwachte manieren beynfloedzje kin.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Misliedende website!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "De website op <span id='phishing_sitename'/> is rapportearre as in misliedende website en is blokkearre op basis fan jo befeiligingsfoarkarren.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Misliedende websites binne makke om jo wat gefaarliks dwaan te litten, lykas it ynstallearjen fan software, of it dielen fan jo persoanlike gegevens, lykas wachtwurden, telefoannûmers of creditcardgegevens.</p><p>It ynfieren fan persoanlike gegevens op dizze webside kin liede ta stellerij fan identiteitsgegevens of oare fraude.</p>">
+

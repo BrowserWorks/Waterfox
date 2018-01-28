@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Umphathi Wesixhobo">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "Iimodyuli Zokhuseleko Nezixhobo">
+<!ENTITY devmgr.details.title                   "Iinkcukacha">
+<!ENTITY devmgr.details.title2                  "Ixabiso">
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY loaddevice.info                        "Ngenisa ulwazi lwemodyuli ofuna ukuyifakela.">
+<!ENTITY loaddevice.modname                     "Igam Lemodyuli:">
+
+<!ENTITY loaddevice.modname.default             "Imodyuli Entsha ye-PKCS#11">
+<!ENTITY loaddevice.filename                    "Igama lefayili yemodyuli:">
+
+<!ENTITY loaddevice.browse                      "Khangela…">
+
+
+
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.changepw.label           "Change Password">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.load.label               "Load">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.login.label              "Log In">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.logout.label             "Log Out">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.unload.label             "Unload">
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

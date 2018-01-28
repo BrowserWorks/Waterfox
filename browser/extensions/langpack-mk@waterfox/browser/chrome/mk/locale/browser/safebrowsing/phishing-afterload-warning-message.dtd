@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Да бегаме!">
+<!ENTITY safeb.palm.decline.label "Игнорирај го ова предупредување">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.reportPage.label "Зошто беше блокирана оваа страна?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Пријавенo напаѓачко мрежно место!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Мрежнoто место на <span id='phishing_sitename'/> е пријавено како напаѓачко и е блокирано врз основа на Вашите безбедносни преференции.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Напаѓачките места се обидуваат да инсталираат програми кои крадат приватни информации, го користат Вашиот компјутер за да нападнат други или да му наштетат на Вашиот систем.</p><p>Некои напаѓачки места намерно дистрибуираат штетен софтвер, но многу тоа го прават и без знаење или дозвола од нивните сопственици.</p>">
+
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Deceptive sites are designed to trick you into doing something dangerous, like installing software, or revealing your personal information, like passwords, phone numbers or credit cards.</p><p>Entering any information on this web page may result in identity theft or other fraud.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "This web page at <span id='phishing_sitename'/> has been reported as a deceptive site and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.phishingPage.title2 "Deceptive Site!">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Unwanted software pages try to install software that can be deceptive and affect your system in unexpected ways.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "This web page at <span id='unwanted_sitename'/> has been reported to contain unwanted software and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.unwantedPage.title "Reported Unwanted Software Page!">
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.notdeceptive.label "This isn’t a deceptive site…">

@@ -1,0 +1,14 @@
+locale alerts cy cy/locale/cy/alerts/
+locale autoconfig cy cy/locale/cy/autoconfig/
+locale global cy cy/locale/cy/global/
+locale global-platform cy cy/locale/cy/global-platform/mac/ os=Darwin
+locale global-platform cy cy/locale/cy/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform cy cy/locale/cy/global-platform/win/ os=WINNT
+locale mozapps cy cy/locale/cy/mozapps/
+locale necko cy cy/locale/cy/necko/
+locale passwordmgr cy cy/locale/cy/passwordmgr/
+locale pipnss cy cy/locale/cy/pipnss/
+locale pippki cy cy/locale/cy/pippki/
+locale places cy cy/locale/cy/places/
+locale pluginproblem cy cy/locale/cy/pluginproblem/
+locale weave cy cy/locale/cy/services/

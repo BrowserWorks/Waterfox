@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Asistent za založenje profilow">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; składujo informacije wó wašych nastajenjach a preferencach we wašom wósobinskem profilu.">
+<!ENTITY profileCreationExplanation_2.text  "Jolic wužywaśo toś tu kopiju &brandShortName; zgromadnje z drugimi wužywarjami, móžośo rozdźelne profile wužywaś, aby informacije kuždego wužywarja rozdźělone źaržał. Za to by dejał kuždy wužywaŕ swój profil załožyś.">
+<!ENTITY profileCreationExplanation_3.text  "Jolic sćo jadnučka wósoba, kótaraž wužywa toś tu kopiju &brandShortName;, musyśo nanejmjenjej jaden profil měś. Jolic cośo, móžośo někotare profile za sebje załožyś, aby rozdźělne kupki nastajenjow a preference składował. Na pśikład cośo snaź separatne profile za pówołańske a priwatne wužywanje měś.">
+<!ENTITY profileCreationExplanation_4.text  "Aby swój profil załožył, klikniśo na Dalej.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Aby swój profil załožył, klikniśo na Pókšacowaś.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Aby swój profil založył, klikniśo na Dalej.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Jolic založujośo někotare profile, móžośo je z profilowymi mjenjami rozeznaś. Móžośo how pódane abo swójske mě wužywaś.">
+<!ENTITY profilePrompt.label            "Zapódajśo nowe profilowe mě:">
+<!ENTITY profilePrompt.accesskey        "Z">
+<!ENTITY profileDirectoryExplanation.text   "Waše wužywarske nastajenja, preference a druge daty, kótarež pósěguju se na wužywarja, budu se składowaś w:">
+<!ENTITY profileDefaultName             "Standardny wužywaŕ">
+<!ENTITY button.choosefolder.label      "Zarědnik wubraś…">
+<!ENTITY button.choosefolder.accesskey  "r">
+<!ENTITY button.usedefault.label        "Standardny zarědnik wužywaś">
+<!ENTITY button.usedefault.accesskey    "S">

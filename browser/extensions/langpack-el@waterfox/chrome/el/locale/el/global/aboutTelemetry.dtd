@@ -1,0 +1,144 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Δεδομένα τηλεμετρίας">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Πηγή δεδομένων ping:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Δεδομένα τρέχοντος ping
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Αρχειοθετημένα δεδομένα ping
+">
+
+<!ENTITY aboutTelemetry.raw "
+Ακατέργαστη JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Εμφάνιση δεδομένων υποσυνεδρίας
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Επιλογή ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Νεότερο ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Παλαιότερο ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Εβδομάδα">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Τύπος ping
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Σήμερα
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Χθες
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Παλαιότερα
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Γενικά δεδομένα
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Δεδομένα περιβάλλοντος
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Αρχείο καταγραφής τηλεμετρίας
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Αργές εντολές SQL
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection '
+  "Κολλήματα" προγράμματος περιήγησης
+'>
+
+<!ENTITY aboutTelemetry.threadHangStatsSection '
+  "Κολλήματα" νήματος
+'>
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Κατειλημμένες Στοίβες
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Μονόμετρα μεγέθη
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Μονόμετρα μεγέθη με κλειδί
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Ιστογράμματα
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Ιστογράμματα με κλειδί
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Γεγονότα
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Απλές μετρήσεις
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Λεπτομέρειες προσθέτου
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Καθυστερημένες εγγραφές
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Πληροφορίες συνεδρίας
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  ΣΗΜΕΙΩΣΗ: Η αργή αποσφαλμάτωση SQL είναι ενεργή. Τα πλήρη νήματα SQL ενδέχεται να εμφανίζονται παρακάτω, αλλά δεν θα υποβάλλονται στην Τηλεμετρία.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Λήψη ονομάτων συναρτήσεων για στοίβες
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Εμφάνιση ακατέργαστων δεδομένων στοίβας
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Φίλτρο (συμβολοσειρές ή /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Ωφέλιμο φορτίο
+">

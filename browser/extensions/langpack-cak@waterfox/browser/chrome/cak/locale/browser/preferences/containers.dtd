@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Titz'aqatisäx k'ak'a' k'wayöl">
+<!ENTITY addButton.accesskey  "t">
+<!ENTITY preferencesButton.label "Taq cha'oj">
+<!ENTITY removeButton.label   "Tiyuj">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Titzolin">
+
+<!ENTITY window.title         "Titz'aqatisäx k'ak'a' k'wayöl">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "B'i'aj:">
+<!ENTITY name.accesskey       "B">
+<!ENTITY name.placeholder     "Tatz'ib'aj jun rub'i' k'wayöl">
+<!ENTITY icon.label           "Wachib'äl:">
+<!ENTITY icon.accesskey       "W">
+<!ENTITY color.label          "B'onil:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Xk'is">
+<!ENTITY button.ok.accesskey  "X">
+

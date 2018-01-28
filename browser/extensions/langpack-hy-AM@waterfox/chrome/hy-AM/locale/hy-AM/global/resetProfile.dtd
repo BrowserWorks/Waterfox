@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Թարմացնել &brandShortName;-ը">
+<!ENTITY refreshProfile.dialog.description1  "Թարմ պահեք՝ սխալները ուղղելու և արտադրողականության համար:">
+<!ENTITY refreshProfile.dialog.description2  "Կկատարվի՝">
+<!ENTITY refreshProfile.dialog.items.label1  "Հեռացնել հավելումները և հարմարեցումները">
+<!ENTITY refreshProfile.dialog.items.label2  "Վերակայել դիտարկիչի կարգավորումները">
+<!ENTITY refreshProfile.dialog.button.label  "Թարմացնել &brandShortName;-ը">
+
+<!ENTITY refreshProfile.title                "Տալ &brandShortName;-ին լարում">
+<!ENTITY refreshProfile.button.label         "Թարմացնել &brandShortName;-ը…">
+
+<!ENTITY refreshProfile.cleaning.description "Գրեթե պատրաստ է...">

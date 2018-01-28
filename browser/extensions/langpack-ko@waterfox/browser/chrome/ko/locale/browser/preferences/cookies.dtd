@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "다음의 쿠키가 사용자 컴퓨터에 저장되어 있습니다:">
+<!ENTITY     cookiename.label               "쿠키 이름">
+<!ENTITY     cookiedomain.label             "사이트">
+
+<!ENTITY     props.name.label               "이름:">
+<!ENTITY     props.value.label              "내용:">
+<!ENTITY     props.domain.label             "호스트:">
+<!ENTITY     props.path.label               "경로:">
+<!ENTITY     props.secure.label             "보안:">
+<!ENTITY     props.expires.label            "만료:">
+<!ENTITY     props.container.label          "컨테이너:">
+
+<!ENTITY     window.title                   "쿠키 관리자">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "검색">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "닫기">
+<!ENTITY     button.close.accesskey         "C">

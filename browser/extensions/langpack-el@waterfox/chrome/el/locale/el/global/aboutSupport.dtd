@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Πληροφορίες αντιμετώπισης προβλημάτων">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Αυτή η σελίδα περιέχει τεχνικές πληροφορίες που πιθανόν να σας φανούν χρήσιμες στην επίλυση κάποιων  
+  προβλημάτων. Αν ψάχνετε για απαντήσεις σε συχνές ερωτήσεις για τον 
+  &brandShortName;, επισκεφτείτε την <a id='supportLink'>σελίδα υποστήριξης</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Αναφορές κατάρρευσης">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID Αναφοράς">
+<!ENTITY aboutSupport.crashes.sendDate "Υποβλήθηκε">
+<!ENTITY aboutSupport.crashes.allReports "Όλες οι αναφορές κατάρρευσης">
+<!ENTITY aboutSupport.crashes.noConfig "Αυτή η εφαρμογή δεν έχει ρυθμιστεί για εμφάνιση αναφορών κατάρρευσης.">
+
+<!ENTITY aboutSupport.extensionsTitle "Επεκτάσεις">
+<!ENTITY aboutSupport.extensionName "Όνομα">
+<!ENTITY aboutSupport.extensionEnabled "Ενεργές">
+<!ENTITY aboutSupport.extensionVersion "Έκδοση">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Χαρακτηριστικά του &brandShortName;">
+<!ENTITY aboutSupport.featureName "Όνομα">
+<!ENTITY aboutSupport.featureVersion "Έκδοση">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Πειραματικές λειτουργίες">
+<!ENTITY aboutSupport.experimentName "Όνομα">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Περιγραφή">
+<!ENTITY aboutSupport.experimentActive "Ενεργό">
+<!ENTITY aboutSupport.experimentEndDate "Ημερομηνία λήξης">
+<!ENTITY aboutSupport.experimentHomepage "Αρχική σελίδα">
+<!ENTITY aboutSupport.experimentBranch "Διακλάδωση">
+
+<!ENTITY aboutSupport.appBasicsTitle "Βασικά εφαρμογής">
+<!ENTITY aboutSupport.appBasicsName "Όνομα">
+<!ENTITY aboutSupport.appBasicsVersion "Έκδοση">
+<!ENTITY aboutSupport.appBasicsBuildID "ID έκδοσης">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Κανάλι ενημερώσεων">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Ιστορικό ενημερώσεων">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Προβολή ιστορικού ενημερώσεων">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Κατάλογος προφίλ">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Φάκελος προφίλ">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Ενεργές πρόσθετες λειτουργίες">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Ρύθμιση δομής">
+<!ENTITY aboutSupport.appBasicsUserAgent "Λειτουργία χρήσης">
+<!ENTITY aboutSupport.appBasicsOS "ΛΣ">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Χρήση μνήμης">
+<!ENTITY aboutSupport.appBasicsPerformance "Επιδόσεις">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Εγγεγραμμένα Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Προφίλ">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Παράθυρα πολυδιεργασιών">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Διεργασίες διαδικτυακού περιεχομένου">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Κλειδί Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Κλειδί υπηρεσίας τοποθεσίας Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Ασφαλής λειτουργία">
+
+<!ENTITY aboutSupport.showDir.label "Άνοιγμα καταλόγου">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Προβολή στον Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Άνοιγμα φακέλου">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Σημαντικές τροποποιημένες προτιμήσεις">
+<!ENTITY aboutSupport.modifiedPrefsName "Όνομα">
+<!ENTITY aboutSupport.modifiedPrefsValue "Τιμή">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Προτιμήσεις user.js">
+<!ENTITY aboutSupport.userJSDescription "Ο φάκελος του προφίλ σας περιέχει το <a id='prefs-user-js-link'>αρχείο user.js</a>, που περιέχει προτιμήσεις που δεν δημιουργήθηκαν από τον &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Σημαντικές Κλειδωμένες Προτιμήσεις">
+<!ENTITY aboutSupport.lockedPrefsName "Όνομα">
+<!ENTITY aboutSupport.lockedPrefsValue "Τιμή">
+
+<!ENTITY aboutSupport.graphicsTitle "Γραφικά">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Βάση δεδομένων τοποθεσιών">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Ακεραιότητα">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Επαλήθευση ακεραιότητας">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Αυξητική ΣΣ">
+
+<!ENTITY aboutSupport.a11yTitle "Προσιτότητα">
+<!ENTITY aboutSupport.a11yActivated "Ενεργοποιήθηκε">
+<!ENTITY aboutSupport.a11yForceDisabled "Να μην επιτρέπεται η προσιτότητα">
+<!ENTITY aboutSupport.a11yHandlerUsed "Προσβάσιμο όνομα χρήστη σε χρήση">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Εκδόσεις βιβλιοθήκης">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Ιστορικό εγκατάστασης">
+<!ENTITY aboutSupport.updateHistoryTitle "Ιστορικό ενημερώσεων">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Αντιγραφή κειμένου στο πρόχειρο">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Αντιγραφή δεδομένων raw στο πρόχειρο">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Απορριφθήσες κλήσεις συστήματος">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "δευτερόλεπτα πριν">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Τύπος διεργασίας">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Επιχειρήματα">
+
+<!ENTITY aboutSupport.safeModeTitle "Δοκιμή ασφαλούς λειτουργίας">
+<!ENTITY aboutSupport.restartInSafeMode.label "Επανεκκίνηση με τα πρόσθετα απενεργοποιημένα…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Λειτουργίες">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Διαγνωστικά">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Αρχείο καταγραφής αποτυχιών">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Αρχείο καταγραφής αποφάσεων">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Απενεργοποιημένες λειτουργίες φύλαξης κατάρρευσης">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Λύσεις">
+
+<!ENTITY aboutSupport.mediaTitle "Πολυμέσα">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Συσκευές εξόδου">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Συσκευές εισόδου">
+<!ENTITY aboutSupport.mediaDeviceName "Όνομα">
+<!ENTITY aboutSupport.mediaDeviceGroup "Ομάδα">
+<!ENTITY aboutSupport.mediaDeviceVendor "Κατασκευαστής">
+<!ENTITY aboutSupport.mediaDeviceState "Κατάσταση">
+<!ENTITY aboutSupport.mediaDevicePreferred "Προτίμηση">
+<!ENTITY aboutSupport.mediaDeviceFormat "Τύπος">
+<!ENTITY aboutSupport.mediaDeviceChannels "Κανάλια">
+<!ENTITY aboutSupport.mediaDeviceRate "Ρυθμός">
+<!ENTITY aboutSupport.mediaDeviceLatency "Καθυστέρηση">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+<!-- These strings are used in the about:home page -->
+
+
+<!ENTITY abouthome.pageTitle "&brandFullName; ទំព័រ​ដើម">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+
+<!ENTITY abouthome.defaultSnippet1.v1 "សូម​អរគុណ​ចំពោះ​ការ​ជ្រើសរើស Waterfox! ដើម្បី​ទទួល​​ប្រយោជន៍​កាន់​តែ​ច្រើន​ពី​កម្មវិធី​រុក​រក​របស់​អ្នក សូម​ស្វែងយល់​បន្ថែម​​អំពី <a>លក្ខណ​ពិសេស​ចុងក្រោយ</a> ។">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "វា​ងាយស្រួល​ប្ដូរ Waterfox របស់​អ្នក​​តាម​បំណង​ជាក់ស្ដែង​​តាម​​មធ្យោបាយ​ដែល​អ្នក​​ចង់​បាន។ <a>ជ្រើស​ពី​កម្មវិធី​បន្ថែម​រាប់​ពាន់</a>។">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; គឺ​ជា​កម្មវិធី​ប្រភព​កូដ​ចំហ និង​ឥត​គិត​ថ្លៃ​ពី​មូលនិធិ​ Mozilla ដែលមិន​រក​ប្រាក់​កម្រៃ។ <a>ស្គាល់​​សិទ្ធិ​របស់​អ្នក…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "ចំណាំ">
+<!ENTITY abouthome.historyButton.label   "ប្រវត្តិ">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "ជម្រើស">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "ចំណូលចិត្ត">
+<!ENTITY abouthome.addonsButton.label    "កម្មវិធី​បន្ថែម">
+<!ENTITY abouthome.downloadsButton.label "ទាញ​យក">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+
+<!ENTITY abouthome.aboutMozilla.label    "អំពី Mozilla">

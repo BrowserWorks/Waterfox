@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Chwetha apha ukuze isifakelo sisebenze.">
+<!ENTITY clickToActivatePlugin                               "Vuselela isifakelo.">
+<!ENTITY checkForUpdates                                     "Khangela izihlaziyo…">
+<!ENTITY blockedPlugin.label                                 "Isifakelo sibhlokiwe ukukhusela wena.">
+<!ENTITY hidePluginBtn.label                                 "Fihla isifakelo">
+<!ENTITY managePlugins                                       "Lawula izifakelo…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Layisha kwakhona iphepha">
+<!ENTITY reloadPlugin.post                                   " ukuzama kwakhona.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Thumela ingxelo yokukhresha">
+<!ENTITY report.submitting                                   "Ithumela ingxelo…">
+<!ENTITY report.submitted                                    "Ingxelo yekhreshi ithunyelwe.">
+<!ENTITY report.disabled                                     "Ingxelo yekhreshi iyekisiwe.">
+<!ENTITY report.failed                                       "Ukuthunyelwa akuphumelelanga.">
+<!ENTITY report.unavailable                                  "Akukho ngxelo ifumanekayo.">
+<!ENTITY report.comment                                      "Yongeza amagqabaza (amagqabaza abonakala ngokuphandle)">
+<!ENTITY report.pageURL                                      "Quka i-URL yephepha">
+
+<!ENTITY plugin.file                                         "Ifayile">
+<!ENTITY plugin.mimeTypes                                    "Iintlobo ze-MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Yenza isebenze imo yokusebenza ekhuselekileyo ye-Adobe Flash">
+
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

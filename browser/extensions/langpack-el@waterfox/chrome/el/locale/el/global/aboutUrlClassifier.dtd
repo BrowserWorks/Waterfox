@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Πληροφορίες για το url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Πάροχος">
+<!ENTITY aboutUrlClassifier.provider                    "Πάροχος">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Χρόνος τελευταίας ενημέρωσης">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Χρόνος επόμενης ενημέρωσης">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Χρόνος διακοπής">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Τελευταία ενημέρωση κατάστασης">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Ενημέρωση">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Ανανέωση">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Απαλοιφή">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Όνομα πίνακα">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Αριθμός αρνητικών εκχωρήσεων cache">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Αριθμός θετικών εκχωρήσεων cache">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Εμφάνιση εκχωρήσεων">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Εκχωρήσεις cache">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Πρόθεμα">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Λήξη αρνητικής cache">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Πλήρες hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Λήξη θετικής cache">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Αποσφαλμάτωση">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Ορισμός μονάδων καταγραφής">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Ορισμός αρχείου καταγραφής">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Ορισμός καταγραφής JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Μονάδες καταγραφής ασφαλούς περιήγησης">
+<!ENTITY aboutUrlClassifier.debugModules                "Τρέχουσες μονάδες καταγραφής">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Αρχείο καταγραφής JS ασφαλούς περιήγησης">
+<!ENTITY aboutUrlClassifier.debugFile                   "Τρέχον αρχείο καταγραφής">

@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY window.title                 "Ardoise JavaScript">
+
+<!ENTITY fileMenu.label               "Fichier">
+<!ENTITY fileMenu.accesskey           "F">
+
+<!ENTITY newWindowCmd.label           "Nouvelle fenêtre">
+<!ENTITY newWindowCmd.accesskey       "u">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Ouvrir un fichier…">
+<!ENTITY openFileCmd.accesskey        "O">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Fichiers récents">
+<!ENTITY openRecentMenu.accesskey     "r">
+
+<!ENTITY revertCmd.label              "Revenir au dernier enregistrement…">
+<!ENTITY revertCmd.accesskey          "d">
+
+<!ENTITY saveFileCmd.label            "Enregistrer">
+<!ENTITY saveFileCmd.accesskey        "s">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Enregistrer sous…">
+<!ENTITY saveFileAsCmd.accesskey      "E">
+
+<!ENTITY closeCmd.label               "Fermer">
+<!ENTITY closeCmd.key                 "w">
+<!ENTITY closeCmd.accesskey           "F">
+
+<!ENTITY viewMenu.label               "Affichage">
+<!ENTITY viewMenu.accesskey           "i">
+
+<!ENTITY lineNumbers.label             "Afficher les numéros de ligne">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY wordWrap.label                "Retour à la ligne">
+<!ENTITY wordWrap.accesskey            "R">
+
+<!ENTITY highlightTrailingSpace.label     "Afficher les espaces en fin de ligne">
+<!ENTITY highlightTrailingSpace.accesskey "H">
+
+<!ENTITY largerFont.label             "Augmenter la taille de police">
+<!ENTITY largerFont.accesskey         "A">
+<!ENTITY largerFont.commandkey        "+">
+<!ENTITY largerFont.commandkey2       "="> <!-- + is above this key on many keyboards -->
+
+<!ENTITY smallerFont.label            "Diminuer la taille de police">
+<!ENTITY smallerFont.accesskey        "D">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "Taille normale">
+<!ENTITY normalSize.accesskey         "T">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Édition">
+<!ENTITY editMenu.accesskey           "n">
+
+<!ENTITY run.label                    "Exécuter">
+<!ENTITY run.accesskey                "u">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "Examiner">
+<!ENTITY inspect.accesskey            "x">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Afficher">
+<!ENTITY display.accesskey            "A">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Formater et indenter">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "m">
+
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+<!ENTITY environmentMenu.label        "Environnement">
+<!ENTITY environmentMenu.accesskey    "v">
+
+
+<!ENTITY contentContext.label         "Contenu">
+<!ENTITY contentContext.accesskey     "C">
+
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+<!ENTITY browserContext.label         "Navigateur">
+<!ENTITY browserContext.accesskey     "a">
+
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+<!ENTITY helpMenu.label               "Aide">
+<!ENTITY helpMenu.accesskey           "e">
+<!ENTITY helpMenuWin.label            "?">
+<!ENTITY helpMenuWin.accesskey        "?">
+
+<!ENTITY documentationLink.label      "Aide pour l’ardoise JavaScript sur MDN">
+<!ENTITY documentationLink.accesskey  "A">
+
+
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+<!ENTITY resetContext2.label          "Réinitialiser les variables">
+<!ENTITY resetContext2.accesskey      "T">
+
+<!ENTITY reloadAndRun.label           "Recharger et exécuter">
+<!ENTITY reloadAndRun.accesskey       "h">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Exécuter">
+<!ENTITY executeMenu.accesskey        "x">
+
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+<!ENTITY errorConsoleCmd.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+<!ENTITY evalFunction.label "Évaluer la fonction courante">
+<!ENTITY evalFunction.accesskey "v">
+<!ENTITY evalFunction.key "e">

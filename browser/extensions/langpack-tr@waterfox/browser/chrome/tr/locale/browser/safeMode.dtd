@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; Güvenli Kip">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Güvenli kipte başlat">
+<!ENTITY refreshProfile.label         "&brandShortName; tarayıcısını yenile">
+
+<!ENTITY safeModeDescription3.label   "Güvenli kip, sorun gidermek için kullanılabilecek özel bir &brandShortName; kipidir.">
+<!ENTITY safeModeDescription4.label   "Eklentileriniz ve özel ayarlarınız geçici olarak devre dışı bırakılacak.">
+
+<!ENTITY refreshProfileInstead.label  "Ayrıca sorun gidermeyi atlayarak &brandShortName; tarayıcısını yenilemeyi deneyebilirsiniz.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; başlarken beklenmeyen bir şekilde kapandı. Bu, eklentilerden veya başka sorunlardan kaynaklanmış olabilir. Güvenli kipi başlatarak sorunu gidermeyi deneyebilirsiniz.">

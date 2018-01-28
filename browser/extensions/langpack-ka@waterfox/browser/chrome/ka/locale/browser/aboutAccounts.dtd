@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "მოგესალმებათ &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "შედით სისტემაში თქვენი ჩანართების, სანიშნეების, პაროლების &amp; ა.შ. დასინქრონებისთვის.">
+<!ENTITY aboutAccountsConfig.startButton.label "დაწყება">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "სინქრონიზაციის პარამეტრები">
+<!ENTITY aboutAccounts.noConnection.title "კავშირი არაა">
+<!ENTITY aboutAccounts.noConnection.description "შესასვლელად საჭიროა ინტერნეთთან კავშირი.">
+<!ENTITY aboutAccounts.noConnection.retry "ხელახლა ცდა">
+<!ENTITY aboutAccounts.badConfig.title "არასწორი კონფიგურაცია">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox ანგარიშის სერვერის კონფიგურაციის დადგენა ვერ ხერხდება. გთხოვთ სცადოთ მოგვიანებით.">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Информације о url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Провајдер">
+<!ENTITY aboutUrlClassifier.provider                    "Провајдер">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Време последњег ажурирања">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Време следећег ажурирања">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Време одбијања">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Статус последњег ажурирања">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Ажурирање">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Кеш">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Освежи">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Очисти">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Име табеле">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Број негативних уноса кеша">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Број позитивних уноса кеша">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Прикажи уносе">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Уноси кеша">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Префикс">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Истек негативног кеша">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Пун hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Истек позитивног кеша">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debug">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Постави модуле записника">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Постави запис података">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Постави JS запис">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Модули записника безбедног прегледања">
+<!ENTITY aboutUrlClassifier.debugModules                "Тренутни модули записника">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS запис безбедног прегледања">
+<!ENTITY aboutUrlClassifier.debugFile                   "Тренутни запис података">

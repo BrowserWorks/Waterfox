@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Kivételek - fordítás">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "A fordítás nem lesz felajánlva ezen nyelvekhez:">
+<!ENTITY treehead.languageName.label      "Nyelvek">
+<!ENTITY removeLanguage.label             "Nyelv eltávolítása">
+<!ENTITY removeLanguage.accesskey         "N">
+<!ENTITY removeAllLanguages.label         "Minden nyelv eltávolítása">
+<!ENTITY removeAllLanguages.accesskey     "M">
+
+<!ENTITY noTranslationForSites.label      "A fordítás nem lesz felajánlva ezen oldalakhoz:">
+<!ENTITY treehead.siteName2.label         "Webhelyek">
+<!ENTITY removeSite.label                 "Webhely eltávolítása">
+<!ENTITY removeSite.accesskey             "W">
+<!ENTITY removeAllSites.label             "Minden webhely eltávolítása">
+<!ENTITY removeAllSites.accesskey         "d">
+
+<!ENTITY button.close.label               "Bezárás">
+<!ENTITY button.close.accesskey           "B">

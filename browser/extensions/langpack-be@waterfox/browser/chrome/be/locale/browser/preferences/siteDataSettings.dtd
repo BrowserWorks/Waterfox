@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Налады - Дадзеныя сайта">
+<!ENTITY     hostCol.label                 "Сайт">
+<!ENTITY     statusCol.label               "Статус">
+<!ENTITY     usageCol.label                "Сховішча">
+<!ENTITY     searchTextboxPlaceHolder             "Пошук вэб-сайтаў">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "П">
+<!ENTITY     removeSelected.label          "Выдаліць абранае">
+<!ENTITY     removeSelected.accesskey      "в">
+<!ENTITY     save.label                    "Захаваць змены">
+<!ENTITY     save.accesskey                "а">
+<!ENTITY     cancel.label                  "Скасаваць">
+<!ENTITY     cancel.accesskey              "С">
+<!ENTITY     removingDialog.title          "Выдаліць дадзеныя сайта">
+<!ENTITY     removingSelected.description  "Выдаленне дадзеных сайтаў таксама выдаліць звязаныя кукі і аўтаномнае вэб-змесціва. Гэта можа прывесці да вашага выхаду з вэб-сайтаў. Вы сапраўды хочаце зрабіць змены?">
+<!ENTITY     siteTree.label                "Будуць выдалены наступныя кукі вэб-сайтаў:">

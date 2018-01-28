@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashesSubmitted.label     "ಕುಸಿತ ವರದಿಗಳನ್ನು ಸಲ್ಲಿಸಲಾಗಿದೆ">
+<!ENTITY id.heading                 "ವರದಿ ID">
+
+<!ENTITY dateSubmitted.heading      "ಸಲ್ಲಿಸಲಾದ ದಿನಾಂಕ">
+<!ENTITY noReports.label            "ಯಾವುದೆ ಕುಸಿತ ವರದಿಗಳನ್ನು ಸಲ್ಲಿಸಲಾಗಿಲ್ಲ.">
+<!ENTITY noConfig.label             "ಈ ಅನ್ವಯವು ಕುಸಿತ ವರದಿಗಳನ್ನು ತೋರಿಸುವಂತೆ ಸಂರಚಿತಗೊಂಡಿಲ್ಲ. ಆದ್ಯತೆ <code>breakpad.reportURL</code> ಅನ್ನು ಅಗತ್ಯವಾಗಿ ಹೊಂದಿಸುಬೇಕು.">
+<!ENTITY clearAllReports.label      "ಎಲ್ಲಾ ವರದಿಗಳನ್ನು ತೆಗೆದು ಹಾಕು">
+
+<!ENTITY crashReports.title         "Crash Reports">
+<!ENTITY crashesUnsubmitted.label   "Unsubmitted Crash Reports">
+<!ENTITY dateCrashed.heading        "Date Crashed">

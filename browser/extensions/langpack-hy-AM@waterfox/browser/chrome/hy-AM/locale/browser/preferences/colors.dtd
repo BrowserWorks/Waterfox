@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Գույներ">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Վերագրել էջում հատկորոշված գույները հետևյալ նշվածներով՝">
+<!ENTITY  overrideDefaultPageColors.accesskey    "Վ">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Միշտ">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Միայն Բարձր ցայտունության ձևավորումների համար">
+<!ENTITY  overrideDefaultPageColors.never.label  "Երբեք">
+
+<!ENTITY  color                           "Տեքստ և Խորապատկեր">
+<!ENTITY  textColor.label                 "Տեքստ.">
+<!ENTITY  textColor.accesskey             "Տ">
+<!ENTITY  backgroundColor.label           "Խորապատկերը.">
+<!ENTITY  backgroundColor.accesskey       "Խ">
+<!ENTITY  useSystemColors.label           "Օգտագործել համակարգի գույները">
+<!ENTITY  useSystemColors.accesskey       "գ">
+
+<!ENTITY  underlineLinks.label            "Հղումներն ընդգծել">
+<!ENTITY  underlineLinks.accesskey        "ղ">
+<!ENTITY  links                           "Հղումների Գույները">
+<!ENTITY  linkColor.label                 "Չայցելած հղումներ.">
+<!ENTITY  linkColor.accesskey             "հ">
+<!ENTITY  visitedLinkColor.label          "Այցելած հղումները.">
+<!ENTITY  visitedLinkColor.accesskey      "Ա">

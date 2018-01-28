@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "सेटिंग्स - साइट माहिती">
+<!ENTITY     hostCol.label                 "साइट">
+<!ENTITY     statusCol.label               "स्थिती">
+<!ENTITY     usageCol.label                "स्टोरेज">
+<!ENTITY     searchTextboxPlaceHolder             "वेबसाईट शोधा">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "निवडलेले काढून टाका">
+<!ENTITY     removeSelected.accesskey      "R">
+<!ENTITY     save.label                    "बदल जतन करा">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "रद्द करा">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "साईटची माहिती काढून टाकत आहे">
+<!ENTITY     removingSelected.description  "साईटची माहिती काढून टाकल्यास संबंधित कुकीज आणि ऑफलाईन वेब मजकूर पण काढून टाकला जाईल. यामुळे तुम्ही वेब साईट्स मधून लॉग आऊट होऊ शकता. आपल्याला हे बदल करायचे आहेत का?">
+<!ENTITY     siteTree.label                "खालील वेबसाईट्सच्या कुकीज नष्ट होतील:">

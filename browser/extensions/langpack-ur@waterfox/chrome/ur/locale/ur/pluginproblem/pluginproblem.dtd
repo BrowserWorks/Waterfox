@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "پلگ ان کو متحرک کرنے کے لیے ادھر کلک کریں۔">
+<!ENTITY clickToActivatePlugin                               "پلگ ان متحرک کریں۔">
+<!ENTITY checkForUpdates                                     "تازہ کاریوں کے لیے پڑتال کریں...">
+<!ENTITY blockedPlugin.label                                 "یہ پلگ ان آپ کی حفاظت کے لیے بلاک کر دیا گیا ہے۔">
+<!ENTITY hidePluginBtn.label                                 "پلگ ان چھپائیں">
+<!ENTITY managePlugins                                       "پلگ ان کا بندوبست کریں...">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "صفحہ پھر لوڈ کریں">
+<!ENTITY reloadPlugin.post                                   " پھر کوشش کرنے کے لیے۔">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "کریش رپورٹ بھیجیں">
+<!ENTITY report.submitting                                   "رپورٹ بھیج رہا ہے...">
+<!ENTITY report.submitted                                    "کریش رپورٹ بھیج دی گئی۔">
+<!ENTITY report.disabled                                     "کریش رپورٹ کاری نا اہل ہے۔">
+<!ENTITY report.failed                                       "جمع کاری ناکام۔">
+<!ENTITY report.unavailable                                  "کوئی رپورٹ دستیاب نہیں۔">
+<!ENTITY report.comment                                      "تبصرہ ڈالیں (تبصرے عوامی طور پر سب کو نظر آتے ہیں)">
+<!ENTITY report.pageURL                                      "صفحات کا URL شامل کریں">
+
+<!ENTITY plugin.file                                         "فائل">
+<!ENTITY plugin.mimeTypes                                    "MIME اقسام">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash محفوز شدہ موڈ اہل بنائیں">
+
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

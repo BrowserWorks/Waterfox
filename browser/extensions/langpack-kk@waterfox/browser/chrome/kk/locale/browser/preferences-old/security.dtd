@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Жалпы">
+
+<!ENTITY  warnOnAddonInstall2.label       "Вебсайттар кеңейтулерді орнатқысы келсе, ескерту">
+<!ENTITY  warnOnAddonInstall2.accesskey   "В">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Қауіпті және алдамшы құраманы блоктау">
+<!ENTITY  enableSafeBrowsing.accesskey    "б">
+
+<!ENTITY  blockDownloads.label            "Қауіпті жүктемелерді блоктау">
+<!ENTITY  blockDownloads.accesskey        "п">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Талап етілмеген және қалыпты емес БҚ жөнінде хабарлау">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "п">
+
+<!ENTITY  addonExceptions.label         "Ережелерден бөлек…">
+<!ENTITY  addonExceptions.accesskey     "Е">
+
+
+<!ENTITY  logins.label                  "Логиндер">
+
+<!ENTITY  rememberLogins2.label         "Вебсайттар үшін логиндерді сақтау">
+<!ENTITY  rememberLogins2.accesskey     "т">
+<!ENTITY  passwordExceptions.label      "Ережелерден бөлек…">
+<!ENTITY  passwordExceptions.accesskey  "р">
+
+<!ENTITY  useMasterPassword.label        "Мастер-парольді қолдану">
+<!ENTITY  useMasterPassword.accesskey    "М">
+<!ENTITY  changeMasterPassword.label     "Мастер-парольді өзгерту…">
+<!ENTITY  changeMasterPassword.accesskey "т">
+
+<!ENTITY  savedLogins.label              "Сақталған логиндер…">
+<!ENTITY  savedLogins.accesskey          "л">

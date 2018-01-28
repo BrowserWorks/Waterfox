@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry माहिती">
+
+<!ENTITY aboutTelemetry.pingDataSource "पिंग डाटा स्रोत:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "सद्याचा पिंग डाटा">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "संग्रहित पिंग डाटा">
+
+<!ENTITY aboutTelemetry.raw "मूळ JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "सबसेशन डाटा दाखवा">
+
+<!ENTITY aboutTelemetry.choosePing "पिंग निवडा:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; नवीनतम पिंग">
+
+<!ENTITY aboutTelemetry.showOlderPing "जुना पिंग &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "आठवडा">
+
+<!ENTITY aboutTelemetry.archivePingType "पिंग प्रकार">
+
+<!ENTITY aboutTelemetry.archivePingHeader "पिंग">
+
+<!ENTITY aboutTelemetry.optionGroupToday "आज">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "काल">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "जुने">
+
+<!ENTITY aboutTelemetry.generalDataSection "  सामान्य माहिती">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  वातावरण डाटा">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetry नोंद">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  हळू SQL विधाने">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  ब्राउझर हँग्ज">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  थ्रेड हँग्ज">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  पकडलेले स्टॅक">
+
+<!ENTITY aboutTelemetry.scalarsSection "  स्केलर">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  दिलेले स्केलर्स">
+
+<!ENTITY aboutTelemetry.histogramsSection "  हिस्टोग्राम्स">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "भडक रंग असलेला स्तंभालेख">
+
+<!ENTITY aboutTelemetry.eventsSection "  घटना">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  सोपे मापन">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  ॲड-ऑन तपशील">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  विलंबीत लिखाणे">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  सत्र माहिती">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  टीप: हळू SQL डीबगिंग सुरू आहे. पूर्ण SQL स्ट्रींग्स दाखवणे शक्य आहे परंतु ते Telemetryकडे सुपूर्द होणार नाही.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  स्टॅक्सकरिता फंक्शन नावे घ्या">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  स्टॅक मधील कच्ची माहिती दाखवा">
+
+<!ENTITY aboutTelemetry.filterText "  फिल्टर (स्ट्रिंग्ज किंवा /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  पेलोड">

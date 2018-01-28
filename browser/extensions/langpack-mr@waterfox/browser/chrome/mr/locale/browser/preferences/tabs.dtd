@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab वापरलेल्या क्रमामध्ये टॅब्स बदली करते">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "त्याऐवजी नविन चौकटांना नविन टॅबमध्ये उघडा">
+<!ENTITY newWindowsAsTabs.accesskey   "w">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "एकापेक्षा जास्त टॅब बंद करतेवेळी मला सावध करा">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "एकापेक्षा जास्त टॅब उघडताना मला सावध करा कारण त्यामुळे &brandShortName; हळु होऊ शकते">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "नवीन टॅबमध्ये लिंक उघडल्यावर, लगेच त्याकडे जा">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "पटलाच्या कार्यपट्टीत टॅब पूर्वावलोकन दाखवा">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "टॅब्ज">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "تغییر گذرواژهٔ اصلی">
+<!ENTITY setPassword.tokenName.label "دستگاه امنیتی">
+<!ENTITY setPassword.oldPassword.label "گذرواژهٔ فعلی:">
+<!ENTITY setPassword.newPassword.label "گذرواژهٔ جدید:">
+<!ENTITY setPassword.reenterPassword.label "گذرواژهٔ جدید (دوباره وارد کنید):">
+<!ENTITY setPassword.meter.label "کیفیت‌سنج گذرواژه">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "صفر کردن">
+<!ENTITY resetPassword.title  "صفر کردن گذرواژهٔ اصلی">
+<!ENTITY resetPassword.text  "اگر گذرواژهٔ اصلی خود را صفر کنید، همهٔ گذرواژه‌های وبی و پست الکترونیکی، اطلاعات فرم‌ها و گواهی‌های شخصی و کلید‌های خصوصی  ذخیره شدهٔ شما فراموش خواهند شد. آیا مطمئنید که می‌خواهید گذرواژهٔ اصلی خود را صفر کنید؟">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "در حال بارگیری گواهی">
+<!ENTITY downloadCert.message1 "از شما تقاضا شده به یک مرجع صدور گواهی جدید اعتماد کنید.">
+<!ENTITY downloadCert.trustSSL "برای تشخیص هویت وب‌گاه‌ها به این مرجع صدور گواهی اعتماد شود.">
+<!ENTITY downloadCert.trustEmail "برای تشخیص هویت کاربران پست الکترونیکی به این مرجع صدور گواهی اعتماد شود.">
+<!ENTITY downloadCert.trustObjSign "برای تشخیص هویت برنامه‌سازان به این مرجع صدور گواهی اعتماد شود.">
+<!ENTITY downloadCert.message3 "پیش از آن که برای هر منظوری به این مرجع صدور گواهی اعتماد کنید، باید گواهی و سیاست و رویه‌های آن را (در صورت وجود) بررسی کنید.">
+<!ENTITY downloadCert.viewCert.label "نمایش">
+<!ENTITY downloadCert.viewCert.text "بررسی گواهی مرجع صدور">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "درخواست تشخیص هویت کاربر">
+<!ENTITY clientAuthAsk.message1 "این وب‌گاه درخواست کرده شما خود را با ارائهٔ یک گواهی معرفی کنید:">
+<!ENTITY clientAuthAsk.message2 "یک گواهی به عنوان مدرک شناسایی انتخاب کنید:">
+<!ENTITY clientAuthAsk.message3 "جزئیات گواهی انتخاب شده:">
+
+<!ENTITY pkcs12.setpassword.title  "یک گذرواژهٔ پشتیبان برای گواهی انتخاب کنید">
+<!ENTITY pkcs12.setpassword.message  "گذرواژهٔ پشتیبان گواهی که اینجا تنظیم می‌شود از پروندهٔ پشتیبانی که در آستانهٔ ایجاد آن هستید محافظت می‌کند. برای ادامهٔ پشتیبان‌سازی باید این گذرواژه را تنظیم کنید.">
+<!ENTITY pkcs12.setpassword.label1 "گذرواژهٔ پشتیبان گواهی:">
+<!ENTITY pkcs12.setpassword.label2 "گذرواژهٔ پشتیبان گواهی (دوباره وارد کنید):">
+<!ENTITY pkcs12.setpassword.reminder "مهم: اگر گذرواژهٔ پشتیبان گواهی‌تان را فراموش کنید، بغداً قادر نخواهید بود از این پشتیبان برای بازگرداندن سیستم به حالت قدیم استقاده کنید. لطفاً گذرواژه را در محل امنی ضبط کنید.">
+
+<!ENTITY chooseToken.title  "محاورهٔ انتخاب نشانه">
+<!ENTITY chooseToken.message1 "لطفاً یک نشانه انتخاب کنید.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "در حال ایجاد کلید خصوصی">
+<!ENTITY createCertInfo.msg1 "تولید کلید در دست اقدام است… این کار ممکن است چند دقیقه طول بکشد….">
+<!ENTITY createCertInfo.msg2 "لطفاً صبر کنید…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "تصدیق هویت توسط نشانهٔ حفاظت شده">
+<!ENTITY protectedAuth.msg "لطفأ در برابر این نشانه هویت خود را تصدیق کنید. روش تصدیق هویت به نوع نشانه‌تان بستگی دارد.">
+<!ENTITY protectedAuth.tokenName.label "نشانه:">

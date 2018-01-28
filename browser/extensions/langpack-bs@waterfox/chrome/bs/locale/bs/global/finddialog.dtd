@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Pronađi na ovoj stranici">
+<!ENTITY findField.label "Traži:">
+<!ENTITY findField.accesskey "T">
+<!ENTITY caseSensitiveCheckbox.label "Potpuno isto">
+<!ENTITY caseSensitiveCheckbox.accesskey "P">
+<!ENTITY wrapCheckbox.label "Prijelom">
+<!ENTITY wrapCheckbox.accesskey "P">
+<!ENTITY findButton.label "Traži dalje">
+<!ENTITY findButton.accesskey "T">
+<!ENTITY cancelButton.label "Otkaži">
+<!ENTITY closeButton.label "Zatvori">
+<!ENTITY up.label "Gore">
+<!ENTITY up.accesskey "G">
+<!ENTITY down.label "Dolje">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "Smjer">

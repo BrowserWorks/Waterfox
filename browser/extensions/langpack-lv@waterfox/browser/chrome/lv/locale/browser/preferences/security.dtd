@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Drošība">
+
+<!ENTITY  warnOnAddonInstall.label        "Brīdināt mani, ja lapas mēģina instalēt papildinājumus">
+<!ENTITY  warnOnAddonInstall.accesskey    "B">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Bloķēt bīstamu un maldinošu saturu">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bloķēt bīstamas lejupielādes">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Brīdināt mani par nevēlamu vai neparastu programmatūru">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "R">
+
+<!ENTITY  addonExceptions.label         "Izņēmumi...">
+<!ENTITY  addonExceptions.accesskey     "I">
+
+
+<!ENTITY  formsAndPasswords.label       "Formas un paroles">
+
+<!ENTITY  rememberLogins1.label          "Atcerieties, lietotājvārdi un paroles vietnēm">
+<!ENTITY  rememberLogins1.accesskey      "R">
+<!ENTITY  passwordExceptions.label      "Izņēmumi...">
+<!ENTITY  passwordExceptions.accesskey  "z">
+
+<!ENTITY  useMasterPassword.label        "Izmantot galveno paroli">
+<!ENTITY  useMasterPassword.accesskey    "m">
+<!ENTITY  changeMasterPassword.label     "Nomainīt galveno paroli...">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Saglabātās paroles…">
+<!ENTITY  savedLogins.accesskey          "l">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

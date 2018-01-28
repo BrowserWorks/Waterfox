@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Positsioon:">
+<!ENTITY tile.label                 "paanidena">
+<!ENTITY center.label               "keskjoondatud">
+<!ENTITY stretch.label              "keskjoondatud maksimeeritud">
+<!ENTITY fill.label                 "täidetud taust">
+<!ENTITY fit.label                  "taustale sobitatud">
+<!ENTITY preview.label              "Eelvaade">
+<!ENTITY color.label                "Värv:">
+<!ENTITY setDesktopBackground.title "Määra töölaua taustapildiks">
+<!ENTITY openDesktopPrefs.label     "Ava töölaua eelistused">
+<!ENTITY closeWindow.key            "W">

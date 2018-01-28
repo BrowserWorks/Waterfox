@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry データ">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping データソース:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+現在の Ping データ
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+アーカイブされた Ping データ
+">
+
+<!ENTITY aboutTelemetry.raw "
+生の JSON 形式
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+送信データを表示
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Ping の選択:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; 新しい Ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+古い Ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+週
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping 形式
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+今日
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+昨日
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+それ以前
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  一般データ
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  環境データ
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry ログ
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  動作の遅い SQL ステートメント
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  ブラウザーの動作停止
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  スレッドの停止
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  捕捉したスタック
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  スカラー
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  主要なスカラー
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  ヒストグラム
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  主要なヒストグラム
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  イベント
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  統計情報
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  アドオンの詳細
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  遅延書き込み
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  セッション情報
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOTE: 動作の遅い SQL のデバッグが有効です。SQL 全文が以下に表示されますが、Telemetry には送信されません。
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  スタックの関数名を読み込む
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  生のスタックデータを表示する
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  フィルター (文字列または /正規表現/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  ペイロード
+">

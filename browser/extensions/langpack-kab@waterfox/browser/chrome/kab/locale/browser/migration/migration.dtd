@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Amarag n ukter">
+
+<!ENTITY importFrom.label               "Kter iɣewwaṛen, ticṛaḍ n isebtar, amazray, awalen uffiren d isefka nniḍen seg:">
+<!ENTITY importFromUnix.label           "Kter ismenyifen, ticṛaḍ n isebtar, amazray, awalen uffiren d isefka nniḍen seg: ">
+<!ENTITY importFromBookmarks.label      "Kter ticṛaḍ n isebtar seg: ">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ur keter-ara kan">
+<!ENTITY importFromNothing.accesskey    "U">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Iminig aɣelsan">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Ulac aseɣẓan i igebren ticraḍ n isebtar, amazray, neɣ awalen uffiren ikelsen.">
+
+<!ENTITY importSource.title             "Aktar n iɣewwaṛen d isefka">
+<!ENTITY importItems.title              "Iferdisen ara yeţwaketren">
+<!ENTITY importItems.label              "Fren iferdisen ara yeţwaketren ">
+
+<!ENTITY migrating.title                "Aktar…">
+<!ENTITY migrating.label                "Iferdisen-a la d-ttwaktaren akka tura…">
+
+<!ENTITY selectProfile.title            "Fren amaɣnu">
+<!ENTITY selectProfile.label            "Imaɣnuten-a heggan iwakken ad ttwaketren seg:">
+
+<!ENTITY done.title                     "Aktar immed">
+<!ENTITY done.label                     "Iferdisen-a ttwaketren akken iwata:">
+
+<!ENTITY closeSourceBrowser.label       "Ma ulac aɣilif, wali ma yella iminig inek yemdel send ad tedduḍ deg umahil-inek.">

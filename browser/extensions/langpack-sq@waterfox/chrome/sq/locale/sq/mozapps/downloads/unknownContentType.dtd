@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Keni zgjedhur të hapni:">
+
+<!ENTITY  saveFile.label              "Ruaje Kartelën">
+<!ENTITY  saveFile.accesskey          "r">
+<!ENTITY actionQuestion.label "Ç&apos;duhet të bëjë &brandShortName;-i me këtë kartelë?">
+<!ENTITY chooseHandler.accesskey "S">
+<!ENTITY chooseHandler.label "Shfletoni…">
+<!ENTITY chooseHandlerMac.accesskey "Z">
+<!ENTITY chooseHandlerMac.label "Zgjidhni…">
+<!ENTITY from.label "prej:">
+<!ENTITY openWith.accesskey "h">
+<!ENTITY openWith.label "Hape me">
+<!ENTITY other.label "Tjetër…">
+<!ENTITY rememberChoice.accesskey "T">
+<!ENTITY rememberChoice.label "Tani e tutje, për kartela si kjo, bëje këtë vetvetiu. ">
+<!ENTITY  whichIs.label              "që është një:">
+<!ENTITY  unknownPromptText.label     "Do të donit ta ruanit këtë kartelë?">

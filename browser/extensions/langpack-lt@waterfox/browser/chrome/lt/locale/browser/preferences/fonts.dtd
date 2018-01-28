@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Šriftai">
+
+<!ENTITY  language.label                          "Rašto sistema:">
+<!ENTITY  language.accesskey                      "R">
+
+<!ENTITY  size.label                              "Dydis (taškais)">
+<!ENTITY  sizeProportional.accesskey              "D">
+<!ENTITY  sizeMonospace.accesskey                 "y">
+
+<!ENTITY  proportional.label                      "Įvairiaplotis:">
+<!ENTITY  proportional.accesskey                  "v">
+
+<!ENTITY  serif.label                             "Su užraitais:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Be užraitų:">
+<!ENTITY  sans-serif.accesskey                    "B">
+<!ENTITY  monospace.label                         "Lygiaplotis:">
+<!ENTITY  monospace.accesskey                     "L">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Lotynų">
+<!ENTITY  font.langGroup.japanese                 "Japonų">
+<!ENTITY  font.langGroup.trad-chinese             "Tradicinė kinų (Taivanis)">
+<!ENTITY  font.langGroup.simpl-chinese            "Supaprastintoji kinų">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tradicinė kinų (Honkongas)">
+<!ENTITY  font.langGroup.korean                   "Korėjiečių">
+<!ENTITY  font.langGroup.cyrillic                 "Kirilica">
+<!ENTITY  font.langGroup.el                       "Graikų">
+<!ENTITY  font.langGroup.other                    "Kitos rašto sistemos">
+<!ENTITY  font.langGroup.thai                     "Tajų">
+<!ENTITY  font.langGroup.hebrew                   "Hebrajų">
+<!ENTITY  font.langGroup.arabic                   "Arabų">
+<!ENTITY  font.langGroup.devanagari               "Devanagarių">
+<!ENTITY  font.langGroup.tamil                    "Tamilų">
+<!ENTITY  font.langGroup.armenian                 "Armėnų">
+<!ENTITY  font.langGroup.bengali                  "Bengalų">
+<!ENTITY  font.langGroup.canadian                 "Unifikuota Kanados sinabarų">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopų">
+<!ENTITY  font.langGroup.georgian                 "Gruzinų">
+<!ENTITY  font.langGroup.gujarati                 "Gudžarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmerų">
+<!ENTITY  font.langGroup.malayalam                "Malajalamų">
+<!ENTITY  font.langGroup.math                     "Matematika">
+<!ENTITY  font.langGroup.odia                     "Orijų">
+<!ENTITY  font.langGroup.telugu                   "Telugų">
+<!ENTITY  font.langGroup.kannada                  "Kanadų">
+<!ENTITY  font.langGroup.sinhala                  "Singalų">
+<!ENTITY  font.langGroup.tibetan                  "Tibetiečių">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimalus šrifto dydis:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Nenurodyti">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Su užraitais">
+<!ENTITY  useDefaultFontSansSerif.label           "Be užraitų">
+
+<!ENTITY  allowPagesToUseOwn.label                "Leisti tinklalapiams nurodyti šriftus, naudotinus vietoje jūsų parinktų">
+<!ENTITY  allowPagesToUseOwn.accesskey            "t">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Simbolių koduotė senam turiniui">
+<!ENTITY languages.customize.Fallback2.label      "Atsarginė teksto koduotė:">
+<!ENTITY languages.customize.Fallback2.accesskey  "t">
+<!ENTITY languages.customize.Fallback2.desc       "Ši simbolių koduotė bus naudojama atvaizduojant turinį, kuris neturi nurodytos koduotės.">
+
+<!ENTITY languages.customize.Fallback.auto        "Numatytoji šiai lokalei">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabų">
+<!ENTITY languages.customize.Fallback.baltic      "Baltų">
+<!ENTITY languages.customize.Fallback.ceiso       "Vidurio Europos (ISO)">
+<!ENTITY languages.customize.Fallback.cewindows   "Vidurio Europos (Microsoft)">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Kinų supaprastintoji">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Kinų tradicinė">
+<!ENTITY languages.customize.Fallback.cyrillic    "Kirilica">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Graikų">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebrajų">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japonų">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Korėjiečių">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Tajų">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turkų">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnamiečių">
+<!ENTITY languages.customize.Fallback.other       "Kita (įsk. Vakarų Europos)">

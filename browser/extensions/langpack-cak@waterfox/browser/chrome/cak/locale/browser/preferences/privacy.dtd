@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Chajinïk chuwäch Ojqanïk">
+<!ENTITY  trackingProtection2.description      "Ri ojqanïk ja ri kimolik taq atzij ye'awokisaj pa k'amaya'l pa k'ïy ruxaq k'amaya'l. Ri ojqanïk tikirel nokisäx richin ninuk' jun ruwäch b'i'aj chuqa' tikirel nik'ut pe rupam na'oj elesan pe chi rij ri awokem pa k'amaya'l chuqa' awetamab'al.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Tokisäx ri Chajinïk chuwäch Ojqanïk richin yeq'at ri kanonela' etaman kiwäch">
+<!ENTITY  trackingProtectionAlways.label       "Junelïk">
+<!ENTITY  trackingProtectionAlways.accesskey   "e">
+<!ENTITY  trackingProtectionPrivate.label      "Xa xe pa taq ichinan tzuwäch">
+<!ENTITY  trackingProtectionPrivate.accesskey  "x">
+<!ENTITY  trackingProtectionNever.label        "Majub'ey">
+<!ENTITY  trackingProtectionNever.accesskey    "M">
+<!ENTITY  trackingProtectionLearnMore.label    "Tetamäx ch'aqa' chik">
+<!ENTITY  trackingProtectionExceptions.label   "Taq man relik ta…">
+<!ENTITY  trackingProtectionExceptions.accesskey "e">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Tokisäx Chajinïk chuwäch Ojqanïk pan ichinan taq tzuwäch">
+<!ENTITY trackingProtectionPBM5.accesskey     "a">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Tokisäx ri Chajinïk chuwäch Ojqanïk pan ichinan okem pa k'amaya'l richin yeq'at ri kanonela' etaman kiwäch">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Tetamäx ch'aqa' chik">
+<!ENTITY changeBlockList2.label               "Tijal Rucholajem q'atoj…">
+<!ENTITY changeBlockList2.accesskey           "T">
+
+<!ENTITY  doNotTrack.description        "Ketaq ri taq ruxaq ajk'amaya'l jun “Mani Tojqäx” raqän kumal chi man nojowäx ta chi tikanöx">
+<!ENTITY  doNotTrack.learnMore.label    "Tetamäx ch'aqa' chik">
+<!ENTITY  doNotTrack.default.label      "Xa xe toq nokisäx Chajinïk chuwäch Ojqanïk">
+<!ENTITY  doNotTrack.always.label       "Junelïk">
+
+<!ENTITY  history.label                 "Natab'äl">
+<!ENTITY  permissions.label             "Taq ya'oj q'ij">
+
+<!ENTITY  addressBar.label              "Kikajtz'ik Ochochib'äl">
+<!ENTITY  addressBar.suggest.label      "Jampe' toq nawokisaj ri rukajtz'ik ochochib'äl, tichilab'ëx">
+<!ENTITY  locbar.history2.label         "Runatab'al okem pa k'amaya'l">
+<!ENTITY  locbar.history2.accesskey     "n">
+<!ENTITY  locbar.bookmarks.label        "Taq etal">
+<!ENTITY  locbar.bookmarks.accesskey    "e">
+<!ENTITY  locbar.openpage.label         "Kejaq taq ruwi'">
+<!ENTITY  locbar.openpage.accesskey     "K">
+<!ENTITY  locbar.searches.label         "Taq kanoxïk kiximon ki' pa ri kanob'äl k'o wi">
+<!ENTITY  locbar.searches.accesskey     "ï">
+
+<!ENTITY  suggestionSettings2.label     "Kek'ex ri taq kajowab'al ri taq kichilab'enik kisamajinel taq kanob'äl">
+
+<!ENTITY  acceptCookies2.label          "Kek'ulutäj taq rukaxlanwey ri ruxaq ajk'amaya'l">
+<!ENTITY  acceptCookies2.accesskey      "K">
+
+<!ENTITY  acceptThirdParty.pre.label      "Kek'ul taq kaxlanwey kichin aj rox winaqi':">
+<!ENTITY  acceptThirdParty.pre.accesskey  "o">
+<!ENTITY  acceptThirdParty.always.label   "Junelïk">
+<!ENTITY  acceptThirdParty.never.label    "Majub'ey">
+<!ENTITY  acceptThirdParty.visited.label  "Etz'eton">
+
+<!ENTITY  keepUntil.label               "Tik'oje' k'a:">
+<!ENTITY  keepUntil.accesskey           "T">
+
+<!ENTITY  expire.label                  "tik'o iq'ij">
+<!ENTITY  close.label                   "Tatz'apij &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Taq man relik ta…">
+<!ENTITY  cookieExceptions.accesskey    "r">
+
+<!ENTITY  showCookies.label             "Kek'ut taq kaxlanwey…">
+<!ENTITY  showCookies.accesskey         "K">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; xtipo'">
+<!ENTITY  historyHeader2.pre.accesskey     "x">
+<!ENTITY  historyHeader.remember.label     "Tinatäx ri natab'äl">
+<!ENTITY  historyHeader.dontremember.label "Mani ninatäx ri natab'äl">
+<!ENTITY  historyHeader.custom.label       "Tokisäx jun ichinan runuk'ulem re natab'äl">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; xtunataj ri runatab'al okik'amaya'l, taq qasanïk, taq nojwuj chuqa' taq kanob'äl, chuqa' xkeruyäk kan ri taq kikaxlanwey ri taq ruxaq k'amaya'l xe'atz'ët.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Rik'in jub'a' nawajo' ">
+<!ENTITY  rememberActions.clearHistory.label  "Tijosq'ïx ri k'ak'a' natab'äl">
+<!ENTITY  rememberActions.middle.label        ", chuqa' ">
+<!ENTITY  rememberActions.removeCookies.label "keyuj el ri taq kaxlanwey pa yonil">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; xtrokisaj ri junam runuk'ulem achi'el pa ichinan okem pa k'amaya'l, chuqa' man xkerunataj ta ri taq rutzij natab'äl toq tajin nok pa ajk'amaya'l.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Rik'in jub'a' chuqa' ütz natz'ët ">
+<!ENTITY  dontrememberActions.clearHistory.label "tijosq'ïx ronojel ri natab'äl">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Junelïk tokisäx pa rub'eyal ichinan okem pa k'amaya'l">
+<!ENTITY  privateBrowsingPermanent2.accesskey "i">
+
+<!ENTITY  rememberHistory2.label      "Tinatäx ri nunatab'al richin taq qasanïk chuqa' okik'amaya'l">
+<!ENTITY  rememberHistory2.accesskey  "T">
+
+<!ENTITY  rememberSearchForm.label       "Tinatäx ri runatab'al kanob'äl chuqa' taq nojwuj">
+<!ENTITY  rememberSearchForm.accesskey   "n">
+
+<!ENTITY  clearOnClose.label             "Tijoxq'ïx ri natab'äll toq nitz'apïx &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "j">
+
+<!ENTITY  clearOnCloseSettings.label     "Nuk'ulem…">
+<!ENTITY  clearOnCloseSettings.accesskey "N">
+
+<!ENTITY  browserContainersLearnMore.label      "Tetamäx ch'aqa' chik">
+<!ENTITY  browserContainersEnabled.label        "Ketzij Ajk'wayöl taq ruwi'">
+<!ENTITY  browserContainersEnabled.accesskey    "t">
+<!ENTITY  browserContainersSettings.label        "Taq nuk'ulem…">
+<!ENTITY  browserContainersSettings.accesskey    "l">

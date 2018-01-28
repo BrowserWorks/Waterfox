@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Configuración de páxina">
+
+<!ENTITY basic.tab           "Formatu y opciones">
+
+<!ENTITY formatGroup.label   "Formatu">
+
+<!ENTITY orientation.label   "Orientación:">
+<!ENTITY portrait.label      "Vertical">
+<!ENTITY portrait.accesskey  "V">
+<!ENTITY landscape.label     "Horizontal">
+<!ENTITY landscape.accesskey "H">
+
+<!ENTITY scale.label         "Escala:">
+<!ENTITY scale.accesskey     "s">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Axustar al anchor de páxina">
+<!ENTITY shrinkToFit.accesskey "u">
+
+<!ENTITY optionsGroup.label  "Opciones">
+
+<!ENTITY printBG.label       "Imprentar fondu (colores ya imáxenes)">
+<!ENTITY printBG.accesskey   "f">
+
+<!ENTITY advanced.tab        "Márxenes y testera/pie">
+
+<!ENTITY marginGroup.label   "Márxenes (#1)">
+<!ENTITY marginUnits.inches  "pulgaes">
+<!ENTITY marginUnits.metric  "milímetros">
+<!ENTITY marginTop.label     "Cimero:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Baxero:">
+<!ENTITY marginBottom.accesskey "I">
+<!ENTITY marginLeft.label    "Izquierda:">
+<!ENTITY marginLeft.accesskey "z">
+<!ENTITY marginRight.label   "Drecha:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Testeres y pies">
+
+<!ENTITY hfLeft.label        "Izquierda:">
+<!ENTITY hfCenter.label      "Centru:">
+<!ENTITY hfRight.label       "Drecha:">
+<!ENTITY headerLeft.tip      "Testera esquierda">
+<!ENTITY headerCenter.tip    "Testera central">
+<!ENTITY headerRight.tip     "Testera drecha">
+<!ENTITY footerLeft.tip      "Pie esquierdu">
+<!ENTITY footerCenter.tip    "Pie central">
+<!ENTITY footerRight.tip     "Pie drechu">
+
+<!ENTITY hfTitle             "Títulu">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Data/hora">
+<!ENTITY hfPage              "Páxina #">
+<!ENTITY hfPageAndTotal      "Páxina # de #">
+<!ENTITY hfBlank             "--balero--">
+<!ENTITY hfCustom            "Personalizáu…">
+
+<!ENTITY customPrompt.title  "Personalizáu…">
+<!ENTITY customPrompt.prompt "Introduz el to testu personalizáu de testera/pie">

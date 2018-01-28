@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "સ્થિતિ:">
+<!ENTITY tile.label                 "શીર્ષક">
+<!ENTITY center.label               "કેન્દ્ર">
+<!ENTITY stretch.label              "ખેંચો">
+<!ENTITY fill.label                 "ભરો">
+<!ENTITY fit.label                  "યોગ્ય">
+<!ENTITY preview.label              "પૂર્વદર્શન">
+<!ENTITY color.label                "રંગ:">
+<!ENTITY setDesktopBackground.title "ડેસ્કટોપ પાશ્વ ભાગ સુયોજિત કરો">
+<!ENTITY openDesktopPrefs.label     "ડેસ્કટોપ પસંદગીઓ ખોલો">
+<!ENTITY closeWindow.key            "w">

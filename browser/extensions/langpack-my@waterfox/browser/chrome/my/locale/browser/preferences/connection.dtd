@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "ချိတ်ဆက်မှု အပြင်အဆင်များ">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "အင်တာနက်အသုံးပြုရန် ကြားခံဆာဗာကို ပြင်ဆင်သတ်မှတ်ရန်">
+<!ENTITY  noProxyTypeRadio.label        "ကြားခံဆာဗာ မသုံးပါ">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "စနစ်တွင် သတ်မှတ်ထားသော ကြားခံဆာဗာ အပြင်အဆင်များကို အသုံးပြုပါ">
+<!ENTITY  systemTypeRadio.accesskey     "u">
+<!ENTITY  WPADTypeRadio.label           "ယခုကွန်ယက်အတွက် ကြားခံဆာဗာ အပြင်အဆင်များကို အလိုအလျောက် ရှာပြီး ချိတ်ဆက်ပါ">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "ကြားခံဆာဗာ အပြင်အဆင်ကို ကိုယ်တိုင်ပြင်ဆင်သတ်မှတ်ရန်">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "အလိုအလျောက် ကြားခံဆာဗာ အပြင်အဆင် သတ်မှတ်သည့် URL">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "ပြန်ဖွင့်ပါ">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP ကြားခံဆာဗာ">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP ကြားခံဆာဗာ">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL ကြားခံဆာဗာ">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS ဆာဗာ">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "SOCKS v5 ကို အသုံးပြုသည့်အခါ DNS ကို ကြားခံအနေဖြင့် အသုံးပြုပါ">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "ပို့နံပါတ်">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "ယခုအတွက် ကြားခံဆာဗာ မသုံးပါနှင့်">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "ဥပမာ။ .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ပရိုတိုကောလ်အားလုံးတွင် ယခုကြားခံဆာဗာကို အသုံးပြုပါ">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "စကားဝှက် သိမ်းပြီးသားရှိပါက အတည်ပြုခြင်းအတွက် ထပ်မမေးပါနှင့်">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "ကြားခံဆာဗာများအတွက် အတည်ပြုအချက်အလက်များကို သိမ်းထားပါက ယခုအပြင်အဆင်သည် ကြားခံဆာဗာများနှင့် အတည်ပြုရာတွင် တိတ်ဆိတ်စွာ ဆောင်ရွက်ပေးသည်။ အကယ်၍ အတည်ပြုခြင်း မအောင်မြင်ပါက အတည်ပြုအချက်အလက်ကို တောင်းခံပါမည်။">

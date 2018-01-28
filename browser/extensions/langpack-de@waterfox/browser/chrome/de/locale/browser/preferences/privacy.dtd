@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Schutz vor Aktivitätenverfolgung">
+<!ENTITY  trackingProtection2.description      "Um Aktivitätenverfolgung handelt es sich, wenn Website-übergreifend Daten über Ihr Surfverhalten gesammelt werden. Aktivitätenverfolgung kann dazu eingesetzt werden, ein Profil von Ihnen zu erstellen, und Inhalte an Hand Ihrer besuchten Webseiten und persönlichen Daten anzuzeigen.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Bekannte Aktivitäten verfolgende Skripte blockieren">
+<!ENTITY  trackingProtectionAlways.label       "Immer">
+<!ENTITY  trackingProtectionAlways.accesskey   "m">
+<!ENTITY  trackingProtectionPrivate.label      "Nur in privaten Fenstern">
+<!ENTITY  trackingProtectionPrivate.accesskey  "P">
+<!ENTITY  trackingProtectionNever.label        "Nie">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Weitere Informationen">
+<!ENTITY  trackingProtectionExceptions.label   "Ausnahmen…">
+<!ENTITY  trackingProtectionExceptions.accesskey "u">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Schutz vor Aktivitätenverfolgung in privaten Fenstern verwenden">
+<!ENTITY trackingProtectionPBM5.accesskey     "p">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Schutz vor Aktivitätenverfolgung im Privaten Modus verwenden, um Aktivitäten verfolgende Skripte zu blockieren">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Weitere Informationen">
+<!ENTITY changeBlockList2.label               "Blockierliste ändern…">
+<!ENTITY changeBlockList2.accesskey           "B">
+
+<!ENTITY  doNotTrack.description        "Websites eine &quot;Do Not Track&quot;-Information senden, dass die eigenen Aktivitäten nicht verfolgt werden sollen">
+<!ENTITY  doNotTrack.learnMore.label    "Weitere Informationen">
+<!ENTITY  doNotTrack.default.label      "Nur wenn der Schutz vor Aktivitätenverfolgung aktiv ist">
+<!ENTITY  doNotTrack.always.label       "Immer">
+
+<!ENTITY  history.label                 "Chronik">
+<!ENTITY  permissions.label             "Berechtigungen">
+
+<!ENTITY  addressBar.label              "Adressleiste">
+<!ENTITY  addressBar.suggest.label      "Beim Verwenden der Adressleiste Folgendes vorschlagen:">
+<!ENTITY  locbar.history2.label         "Einträge aus der Chronik">
+<!ENTITY  locbar.history2.accesskey     "C">
+<!ENTITY  locbar.bookmarks.label        "Einträge aus den Lesezeichen">
+<!ENTITY  locbar.bookmarks.accesskey    "L">
+<!ENTITY  locbar.openpage.label         "Offene Tabs">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Verwandte Suchanfragen mit der Standardsuchmaschine">
+<!ENTITY  locbar.searches.accesskey     "S">
+
+<!ENTITY  suggestionSettings2.label     "Einstellungen für Suchvorschläge ändern">
+
+<!ENTITY  acceptCookies2.label          "Cookies von Websites akzeptieren">
+<!ENTITY  acceptCookies2.accesskey      "C">
+
+<!ENTITY  acceptThirdParty.pre.label      "Cookies von Drittanbietern akzeptieren:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "k">
+<!ENTITY  acceptThirdParty.always.label   "Immer">
+<!ENTITY  acceptThirdParty.never.label    "Nie">
+<!ENTITY  acceptThirdParty.visited.label  "Nur von besuchten Drittanbietern">
+
+<!ENTITY  keepUntil.label               "Behalten, bis:">
+<!ENTITY  keepUntil.accesskey           "B">
+
+<!ENTITY  expire.label                  "sie nicht mehr gültig sind">
+<!ENTITY  close.label                   "&brandShortName; geschlossen wird">
+
+<!ENTITY  cookieExceptions.label        "Ausnahmen…">
+<!ENTITY  cookieExceptions.accesskey    "A">
+
+<!ENTITY  showCookies.label             "Cookies anzeigen…">
+<!ENTITY  showCookies.accesskey         "o">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; wird eine Chronik">
+<!ENTITY  historyHeader2.pre.accesskey     "F">
+<!ENTITY  historyHeader.remember.label     "anlegen">
+<!ENTITY  historyHeader.dontremember.label "niemals anlegen">
+<!ENTITY  historyHeader.custom.label       "nach benutzerdefinierten Einstellungen anlegen">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; wird besuchte Seiten, Downloads, Formulardaten, eingegebene Suchbegriffe und Cookies speichern."> 
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Sie können auch die ">
+<!ENTITY  rememberActions.clearHistory.label  "kürzlich angelegte Chronik">
+<!ENTITY  rememberActions.middle.label        " oder ">
+<!ENTITY  rememberActions.removeCookies.label "einzelne Cookies">
+<!ENTITY  rememberActions.post.label          " löschen.">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; wird dieselben Einstellungen wie im Privaten Modus verwenden und keinerlei Chronik anlegen, während Sie &brandShortName; benutzen.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Sie können auch die ">
+<!ENTITY  dontrememberActions.clearHistory.label "gesamte bisherige Chronik">
+<!ENTITY  dontrememberActions.post.label         " löschen.">
+
+<!ENTITY  privateBrowsingPermanent2.label "Immer den Privaten Modus verwenden">
+<!ENTITY  privateBrowsingPermanent2.accesskey "M">
+
+<!ENTITY  rememberHistory2.label      "Besuchte Seiten und Download-Chronik speichern">
+<!ENTITY  rememberHistory2.accesskey  "w">
+
+<!ENTITY  rememberSearchForm.label       "Eingegebene Suchbegriffe und Formulardaten speichern">
+<!ENTITY  rememberSearchForm.accesskey   "S">
+
+<!ENTITY  clearOnClose.label             "Die Chronik löschen, wenn &brandShortName; geschlossen wird">
+<!ENTITY  clearOnClose.accesskey         "g">
+
+<!ENTITY  clearOnCloseSettings.label     "Einstellungen…">
+<!ENTITY  clearOnCloseSettings.accesskey "E">
+
+<!ENTITY  browserContainersLearnMore.label      "Weitere Informationen">
+<!ENTITY  browserContainersEnabled.label        "Tab-Umgebungen aktivieren">
+<!ENTITY  browserContainersEnabled.accesskey    "a">
+<!ENTITY  browserContainersSettings.label        "Einstellungen…">
+<!ENTITY  browserContainersSettings.accesskey    "u">

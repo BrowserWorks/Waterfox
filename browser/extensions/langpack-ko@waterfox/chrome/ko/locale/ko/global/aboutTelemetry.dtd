@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "수집 데이터">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+핑 데이터 소스:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+현재 핑 데이터
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+저장된 핑 데이터
+">
+
+<!ENTITY aboutTelemetry.raw "
+원본 JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+하위 세션 데이터 보기
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+핑 선택:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; 새로운 핑
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+이전 핑 &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+약함
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+핑 종류
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+핑
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+오늘
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+어제
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+이전
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  일반 데이타
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  환경 데이타
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  수집 기능 로그
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  느린 SQL 문
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  브라우저 중단
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  쓰레드 중단
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  스택 캡춰
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  스칼라
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  키 스칼라
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  히스토그램
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  키가 들어간 히스토그램
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  이벤트
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  단순 측정
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  부가 기능 상세
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  최종 작성
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  세션 정보
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  주의E: 느린 SQL 디버깅이 시작합니다. 전체 SQL 문자열이 표시되나 데이터 측정에는 포함되지 않습니다.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  스택에 대한 함수 이름 가져오기
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  원본 스택 데이터 보기
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  필터 (문자열이나 /정규식/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  페이로드
+">

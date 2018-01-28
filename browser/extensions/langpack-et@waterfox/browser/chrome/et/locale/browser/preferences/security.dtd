@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Turvalisus">
+<!ENTITY  phishingProtection.label       "Veebivõltsingute vastane kaitse">
+
+<!ENTITY  warnOnAddonInstall2.label       "Hoiatus, kui veebilehed üritavad paigaldada lisasid">
+<!ENTITY  warnOnAddonInstall2.accesskey   "H">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Ohtlik ja petlik sisu blokitakse">
+<!ENTITY  enableSafeBrowsing.accesskey    "O">
+
+<!ENTITY  blockDownloads.label            "Ohtlikud allalaadimised blokitakse">
+<!ENTITY  blockDownloads.accesskey        "a">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Hoiatatakse soovimatu või ebahariliku tarkvara eest">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "k">
+
+<!ENTITY  addonExceptions.label         "Erandid…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "Vormid ja paroolid">
+
+<!ENTITY  rememberLogins2.label         "Saitide kasutajanimed ja paroolid peetakse meeles">
+<!ENTITY  rememberLogins2.accesskey     "t">
+<!ENTITY  passwordExceptions.label      "Erandid…">
+<!ENTITY  passwordExceptions.accesskey  "r">
+
+<!ENTITY  useMasterPassword.label        "Kasutatakse ülemparooli">
+<!ENTITY  useMasterPassword.accesskey    "m">
+<!ENTITY  changeMasterPassword.label     "Muuda ülemparooli…">
+<!ENTITY  changeMasterPassword.accesskey "p">
+
+<!ENTITY  savedLogins.label              "Salvestatud kasutajakontod…">
+<!ENTITY  savedLogins.accesskey          "l">

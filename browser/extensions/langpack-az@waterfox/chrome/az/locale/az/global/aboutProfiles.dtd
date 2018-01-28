@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Profillər Haqqında">
+<!ENTITY aboutProfiles.subtitle "Bu səhifə profillərinizi idarə etməyə kömək edir. Hər bir profil ayrıca tarixçə, əlfəcin, tənzimləmə və əlavələri tutan ayrı bir dünyadır.">
+<!ENTITY aboutProfiles.create "Yeni Profil Yarat">
+<!ENTITY aboutProfiles.restart.title "Yenidən başlat">
+<!ENTITY aboutProfiles.restart.inSafeMode "Əlavələr sönülü olaraq yenidən başlat…">
+<!ENTITY aboutProfiles.restart.normal "Normal yenidən başlat…">

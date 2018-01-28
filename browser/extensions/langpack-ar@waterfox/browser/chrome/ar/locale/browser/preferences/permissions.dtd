@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "الاستثناءات">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "موقع وِب">
+<!ENTITY treehead.status.label        "الحالة">
+<!ENTITY removepermission2.label      "احذف موقع الوِب">
+<!ENTITY removepermission2.accesskey  "ح">
+<!ENTITY removeallpermissions2.label  "احذف كل مواقع الوِب">
+<!ENTITY removeallpermissions2.accesskey "ذ">
+<!ENTITY address.label                "عنوان موقع وِب:">
+<!ENTITY address.accesskey            "و">
+<!ENTITY block.label                  "احجب">
+<!ENTITY block.accesskey              "ح">
+<!ENTITY session.label                "اسمح للجلسة">
+<!ENTITY session.accesskey            "ج">
+<!ENTITY allow.label                  "اسمح">
+<!ENTITY allow.accesskey              "س">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "ألغِ">
+<!ENTITY button.cancel.accesskey      "ل">
+<!ENTITY button.ok.label              "احفظ التغييرات">
+<!ENTITY button.ok.accesskey          "ح">
+

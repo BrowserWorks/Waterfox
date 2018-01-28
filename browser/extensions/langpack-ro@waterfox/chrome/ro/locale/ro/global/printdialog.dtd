@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Tipărește">
+
+<!ENTITY printDialog.title "Tipărire">
+
+<!ENTITY fpDialog.title "Salvare fișier">
+
+<!ENTITY fileCheck.label "Tipărește în fișier">
+<!ENTITY fileCheck.accesskey "f">
+<!ENTITY propertiesButton.label "Proprietăți…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Descriere imprimantă:">
+<!ENTITY printer.label "Imprimantă">
+<!ENTITY printerInput.label "Imprimantă:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Interval de tipărire">
+<!ENTITY allpagesRadio.label "Toate paginile">
+<!ENTITY allpagesRadio.accesskey "a">
+<!ENTITY rangeRadio.label  "Paginile">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "de la">
+<!ENTITY frompageInput.accesskey  "d">
+<!ENTITY topageInput.label  "la">
+<!ENTITY topageInput.accesskey  "l">
+<!ENTITY selectionRadio.label "Selecția">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "Copii">
+<!ENTITY numCopies.label "Număr de copii:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "Tipărire cadre">
+<!ENTITY aslaidoutRadio.label "În aranjarea de pe ecran">
+<!ENTITY aslaidoutRadio.accesskey "n">
+<!ENTITY selectedframeRadio.label  "Doar cadrul selectat">
+<!ENTITY selectedframeRadio.accesskey  "D">
+<!ENTITY eachframesepRadio.label  "Fiecare cadru separat">
+<!ENTITY eachframesepRadio.accesskey  "e">

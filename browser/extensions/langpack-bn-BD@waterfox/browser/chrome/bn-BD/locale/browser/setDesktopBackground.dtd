@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "অবস্থান:">
+<!ENTITY tile.label                 "টালি">
+<!ENTITY center.label               "কেন্দ্রে">
+<!ENTITY stretch.label              "প্রসারিত">
+<!ENTITY fill.label                 "পূরণ করুন">
+<!ENTITY fit.label                  "মানানসই">
+<!ENTITY preview.label              "প্রাকদর্শন">
+<!ENTITY color.label                "রং:">
+<!ENTITY setDesktopBackground.title "ডেস্কটপের পটভূমি নির্ধারণ">
+<!ENTITY openDesktopPrefs.label     "ডেস্কটপ সংক্রান্ত পছন্দসমূহ">
+<!ENTITY closeWindow.key            "w">

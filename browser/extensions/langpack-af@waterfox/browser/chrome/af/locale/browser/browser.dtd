@@ -1,0 +1,1028 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Private blaaiery)">
+
+<!ENTITY appmenu.tooltip                     "Wys kieslys">
+<!ENTITY navbarOverflow.label                "Meer gereedskap…">
+<!-- Tab context menu -->
+
+<!ENTITY  reloadTab.label                    "Herlaai oortjie">
+<!ENTITY  reloadTab.accesskey                "H">
+<!ENTITY  reloadAllTabs.label                "Herlaai alle oortjies">
+<!ENTITY  reloadAllTabs.accesskey            "a">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Sluit oortjies wat regs lê">
+<!ENTITY  closeTabsToTheEnd.accesskey        "e">
+<!ENTITY  closeOtherTabs.label               "Sluit ander oortjies">
+<!ENTITY  closeOtherTabs.accesskey           "a">
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+
+<!ENTITY  pinTab.label                       "Sluit oortjie vas">
+<!ENTITY  pinTab.accesskey                   "S">
+<!ENTITY  unpinTab.label                     "Trek oortjie los">
+<!ENTITY  unpinTab.accesskey                 "t">
+<!ENTITY  sendTabToDevice.label              "Stuur oortjie na toestel">
+<!ENTITY  sendTabToDevice.accesskey          "r">
+<!ENTITY  sendPageToDevice.label             "Stuur bladsy na toestel">
+<!ENTITY  sendPageToDevice.accesskey         "r">
+<!ENTITY  sendLinkToDevice.label             "Stuur skakel na toestel">
+<!ENTITY  sendLinkToDevice.accesskey         "r">
+<!ENTITY  moveToNewWindow.label              "Skuif na nuwe venster">
+<!ENTITY  moveToNewWindow.accesskey          "v">
+<!ENTITY  bookmarkAllTabs.label              "Boekmerk alle oortjies…">
+<!ENTITY  bookmarkAllTabs.accesskey          "o">
+<!ENTITY  undoCloseTab.label                 "Ontdoen sluit van oortjie">
+<!ENTITY  undoCloseTab.accesskey             "O">
+<!ENTITY  closeTab.label                     "Sluit oortjie">
+<!ENTITY  closeTab.accesskey                 "S">
+
+<!ENTITY  listAllTabs.label      "Lys alle oortjies">
+
+<!ENTITY tabCmd.label "Nuwe oortjie">
+<!ENTITY tabCmd.accesskey "o">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Open ligging…">
+<!ENTITY openFileCmd.label "Open lêer…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Bladsyopstelling…">
+<!ENTITY printSetupCmd.accesskey "t">
+<!ENTITY printPreviewCmd.label "Drukvoorskou">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Druk…">
+<!ENTITY printCmd.accesskey "D">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Werk vanlyn">
+<!ENTITY goOfflineCmd.accesskey "k">
+
+<!ENTITY menubarCmd.label "Kieslysbalk">
+<!ENTITY menubarCmd.accesskey "K">
+<!ENTITY navbarCmd.label "Navigasienutsbalk">
+<!ENTITY personalbarCmd.label "Boekmerknutsbalk">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "Boekmerknutsbalk-items">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Herlaai alle oortjies">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "a">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Boekmerk alle oortjies…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "o">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Ontdoen sluit van oortjie">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "O">
+
+<!ENTITY pageSourceCmd.label "Bladsybron">
+<!ENTITY pageSourceCmd.accesskey "r">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Bladsyinfo">
+<!ENTITY pageInfoCmd.accesskey "i">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Dupliseer oortjie">
+<!ENTITY mirrorTabCmd.accesskey "D">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Betree volskermmodus">
+<!ENTITY enterFullScreenCmd.accesskey "v">
+<!ENTITY exitFullScreenCmd.label "Sluit volskermmodus af">
+<!ENTITY exitFullScreenCmd.accesskey "v">
+<!ENTITY fullScreenCmd.label "Volskerm">
+<!ENTITY fullScreenCmd.accesskey "V">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Wys alle oortjies">
+<!ENTITY showAllTabsCmd.accesskey "a">
+
+
+<!ENTITY fxaSignIn.label "Meld aan by &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "Open &syncBrand.shortName.label;-voorkeure">
+<!ENTITY fxaSignInError.label "Herkoppel aan &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Verifieer u rekening">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Minimeer">
+<!ENTITY fullScreenRestore.tooltip "Stel terug">
+<!ENTITY fullScreenClose.tooltip "Sluit">
+<!ENTITY fullScreenAutohide.label "Verskuil nutsbalke">
+<!ENTITY fullScreenAutohide.accesskey "V">
+<!ENTITY fullScreenExit.label "Sluit volskermmodus af">
+<!ENTITY fullScreenExit.accesskey "v">
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "beslaan nou die volle skerm">
+<!ENTITY fullscreenWarning.generic.label "Dié dokument beslaan nou die volle skerm">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+
+<!ENTITY exitDOMFullscreen.button "Verlaat volskerm (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Verlaat volskerm (esc)">
+<!ENTITY leaveDOMFullScreen.label "Verlaat volskerm">
+<!ENTITY leaveDOMFullScreen.accesskey "o">
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "beheer tans die wyser. Druk Esc om beheer terug te kry.">
+<!ENTITY pointerlockWarning.generic.label "Dié dokument beheer tans die wyser. Druk Esc om beheer terug te kry.">
+
+<!ENTITY closeWindow.label "Sluit venster">
+<!ENTITY closeWindow.accesskey "v">
+
+<!ENTITY bookmarksMenu.label "Boekmerke">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY bookmarkThisPageCmd.label "Boekmerk hierdie bladsy">
+<!ENTITY editThisBookmarkCmd.label "Redigeer hierdie boekmerk">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Kry meer dienste om mee te deel…">
+<!ENTITY sharePageCmd.label "Deel dié bladsy">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "D">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Deel dié skakel">
+<!ENTITY shareLink.accesskey "D">
+<!ENTITY shareImage.label "Deel dié beeld">
+<!ENTITY shareImage.accesskey "D">
+<!ENTITY shareSelect.label "Deel seleksie">
+<!ENTITY shareSelect.accesskey "D">
+<!ENTITY shareVideo.label "Deel dié video">
+<!ENTITY shareVideo.accesskey "D">
+<!ENTITY feedsMenu2.label "Skryf in op hierdie bladsy">
+<!ENTITY subscribeToPageMenupopup.label "Skryf in op hierdie bladsy">
+<!ENTITY subscribeToPageMenuitem.label "Teken in op hierdie bladsy…">
+<!ENTITY addCurPagesCmd.label "Boekmerk alle oortjies…">
+<!ENTITY showAllBookmarks2.label "Wys alle boekmerke">
+<!ENTITY recentBookmarks.label "Onlangs geboekmerk">
+<!ENTITY otherBookmarksCmd.label "Ander boekmerke">
+
+<!ENTITY bookmarksToolbarChevron.tooltip "Wys meer boekmerke">
+<!ENTITY showRecentlyBookmarked.label     "Wys onlangs geboekmerk">
+<!ENTITY showRecentlyBookmarked.accesskey "b">
+<!ENTITY hideRecentlyBookmarked.label     "Versteek onlangs geboekmerk">
+<!ENTITY hideRecentlyBookmarked.accesskey "b">
+
+<!ENTITY backCmd.label                "Terug">
+<!ENTITY backButton.tooltip           "Gaan een bladsy terug">
+<!ENTITY forwardCmd.label             "Vorentoe">
+<!ENTITY forwardButton.tooltip        "Gaan een bladsy vorentoe">
+<!ENTITY backForwardButtonMenu.tooltip "Klik regs of trek af om geskiedenis te wys">
+<!ENTITY backForwardButtonMenuMac.tooltip "Trek af om geskiedenis te wys">
+<!ENTITY reloadCmd.label              "Herlaai">
+<!ENTITY stopCmd.label                "Stop">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Gaan na die adres in die adresbalk">
+<!ENTITY printButton.label            "Druk">
+<!ENTITY printButton.tooltip          "Druk hierdie bladsy">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Wys werfinligting">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Open boodskappaneel">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Open liggingversoek-paneel">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Open paneel met boodskappe oor byvoeginginstallasie">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Open paneel met boodskappe oor stoorplek vanlyn">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Open paneel vir die stoor van wagwoorde">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Bestuur gebruik van inproppe">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Verander of boodskappe van dié werf ontvang kan word">
+
+
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Bestuur die deel van die kamera en/of mikrofoon met die werf">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Bestuur die deel van die mikrofoon met die werf">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Bestuur die deel van vensters of die skerm met die werf">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Open paneel met installasieboodskappe">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Vertaal dié bladsy">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Bestuur bladsyvertaling">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Bestuur die gebruik van DRM-sagteware">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "U het die kamera geblok vir dié webwerf.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "U het die mikrofoon geblok vir dié webwerf.">
+<!ENTITY urlbar.screenBlocked.tooltip            "U het dié webwerf geblok om die skerm te deel.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "U het ligginginligting geblok vir dié webwerf.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "U het die datastoorplek geblok vir dié webwerf.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "U het kennisgewings geblok vir dié webwerf.">
+
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Wys geskiedenis">
+
+<!-- Toolbar items -->
+
+<!ENTITY homeButton.label             "Tuis">
+
+<!ENTITY bookmarksButton.label          "Boekmerke">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Boekmerke">
+<!ENTITY bookmarksMenuButton.other.label "Ander boekmerke">
+
+<!ENTITY viewBookmarksSidebar2.label        "Wys boekmerkkantbalk">
+<!ENTITY viewBookmarksToolbar.label         "Vertoon boekmerknutsbalk">
+<!ENTITY searchBookmarks.label              "Deursoek boekmerke">
+
+<!ENTITY containersMenu.label "Kontekste">
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Geskiedenis">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Nutsgoed">
+<!ENTITY toolsMenu.accesskey          "u"> 
+
+<!ENTITY keywordfield.label           "Voeg 'n sleutelwoord vir dié soektog by…">
+<!ENTITY keywordfield.accesskey       "s">
+
+<!ENTITY downloads.label              "Afgelaai">
+<!ENTITY downloads.accesskey          "A">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Byvoegings">
+<!ENTITY addons.accesskey             "B">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Webontwikkelaar">
+<!ENTITY webDeveloperMenu.accesskey   "W">
+
+<!ENTITY inspectContextMenu.label     "Inspekteer element">
+<!ENTITY inspectContextMenu.accesskey "n">
+
+<!ENTITY fileMenu.label         "Lêer"> 
+<!ENTITY fileMenu.accesskey       "L">
+<!ENTITY newUserContext.label             "Nuwe konteksoortjie">
+<!ENTITY newUserContext.accesskey         "r">
+<!ENTITY newNavigatorCmd.label        "Nuwe venster">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "N">
+<!ENTITY newPrivateWindow.label     "Nuwe private venster">
+<!ENTITY newPrivateWindow.accesskey "v">
+
+
+<!ENTITY editMenu.label         "Redigeer"> 
+<!ENTITY editMenu.accesskey       "e"> 
+<!ENTITY undoCmd.label            "Ontdoen">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "O"> 
+<!ENTITY redoCmd.label            "Herdoen">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "H"> 
+<!ENTITY cutCmd.label           "Knip">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "p"> 
+<!ENTITY copyCmd.label            "Kopieer">  
+
+<!ENTITY copyCmd.accesskey          "K"> 
+<!ENTITY pasteCmd.label           "Plak">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "P"> 
+<!ENTITY deleteCmd.label          "Skrap">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "S"> 
+<!ENTITY selectAllCmd.label         "Merk alles">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "a"> 
+<!ENTITY preferencesCmd2.label       "Opsies">
+<!ENTITY preferencesCmd2.accesskey     "O">
+<!ENTITY preferencesCmdUnix.label       "Voorkeure">
+<!ENTITY preferencesCmdUnix.accesskey     "k"> 
+
+<!ENTITY clearRecentHistory.label               "Maak onlangse geskiedenis skoon…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Bekyk"> 
+<!ENTITY viewMenu.accesskey       "k"> 
+<!ENTITY viewToolbarsMenu.label       "Nutsbalke"> 
+<!ENTITY viewToolbarsMenu.accesskey     "N"> 
+<!ENTITY viewSidebarMenu.label "Kantbalk">
+<!ENTITY viewSidebarMenu.accesskey "b">
+<!ENTITY viewCustomizeToolbar.label       "Doelmaak…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "D">
+
+
+
+<!ENTITY historyMenu.label "Geskiedenis">
+<!ENTITY historyMenu.accesskey "s">
+<!ENTITY historyUndoMenu.label "Onlangs gesluite oortjies">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Onlangs gesluite vensters">
+<!ENTITY historyRestoreLastSession.label "Laai vorige sessie terug">
+
+<!ENTITY showAllHistoryCmd2.label "Wys hele geskiedenis">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Doelmaak">
+<!ENTITY appMenuCustomize.tooltip "Doelmaak die kieslys en nutsbalke">
+<!ENTITY appMenuCustomizeExit.label "Sluit aanpassing af">
+<!ENTITY appMenuCustomizeExit.tooltip "Klaar met aanpassing">
+<!ENTITY appMenuHistory.label "Geskiedenis">
+<!ENTITY appMenuHistory.showAll.label "Wys hele geskiedenis">
+<!ENTITY appMenuHistory.clearRecent.label "Maak onlangse geskiedenis skoon…">
+<!ENTITY appMenuHistory.restoreSession.label "Laai vorige sessie terug">
+<!ENTITY appMenuHistory.viewSidebar.label "Wys geskiedeniskantbalk">
+
+<!ENTITY appMenuHelp.label "Hulp">
+<!ENTITY appMenuHelp.tooltip "Open Hulpkieslys">
+
+<!ENTITY appMenuRemoteTabs.label "Gesinkroniseerde oortjies">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Geen oop oortjies nie">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Wys meer">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Wys meer oortjies van dié toestel">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Wys almal">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Wys alle oortjies van dié toestel">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Skakel oortjiesinkronisering aan om 'n lys oortjies op ander toestelle te sien.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Nog geen gesinkroniseerde oortjies nie!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Lus om oortjies van ander toestelle hier te sien?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Sync-voorkeure">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Meld aan om 'n lys oortjies van ander toestelle te sien.">
+<!ENTITY appMenuRemoteTabs.signin.label "Meld aan by Sync">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Bestuur toestelle…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Wys kantbalk met gesinkroniseerde oortjies">
+
+<!ENTITY customizeMenu.addToToolbar.label "Voeg by nutsbalk">
+<!ENTITY customizeMenu.addToToolbar.accesskey "V">
+<!ENTITY customizeMenu.addToPanel.label "Voeg by kieslys">
+<!ENTITY customizeMenu.addToPanel.accesskey "k">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+
+<!ENTITY customizeMenu.moveToToolbar.label "Skuif na nutsbalk">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "u">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Skuif na kieslys">
+<!ENTITY customizeMenu.moveToPanel.accesskey "u">
+
+
+
+
+<!ENTITY customizeMenu.removeFromToolbar.label "Skrap vanaf nutsbalk">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "r">
+<!ENTITY customizeMenu.removeFromMenu.label "Skrap vanaf kieslys">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Voeg meer items by…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "V">
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY moreMenu.label "Meer">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Soek of tik adres in">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Uitbreiding:">
+<!ENTITY urlbar.switchToTab.label     "Verwissel na oortjie:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Wil u die soek-ervaring verbeter met voorstelle?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Meer inligting…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "M">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Nee">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ja">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "j">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Wenk:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Kry hulp met soektogte! Kyk uit vir die &#x1F50E; langs soekvoorstelle.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Verander keuses…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "V">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Verander voorkeure…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "V">
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+
+<!ENTITY contentSearchInput.label     "Soeknavraag">
+<!ENTITY contentSearchSubmit.tooltip  "Dien soektog in">
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!ENTITY searchInput.placeholder      "Soek">
+<!ENTITY searchIcon.tooltip           "Soek">
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+
+<!ENTITY searchFor.label              "Soek ">
+<!ENTITY searchWith.label             " met:">
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+
+<!ENTITY search.label                 "Soek met ">
+<!ENTITY searchAfter.label            "">
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+
+<!ENTITY searchWithHeader.label       "Soek met:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Verander soekinstellings">
+<!ENTITY changeSearchSettings.tooltip "Verander soekinstellings">
+
+<!ENTITY searchInNewTab.label         "Soek in nuwe oortjie">
+<!ENTITY searchInNewTab.accesskey     "t">
+<!ENTITY searchSetAsDefault.label     "Stel as verstek-soekenjin">
+<!ENTITY searchSetAsDefault.accesskey "v">
+
+<!ENTITY openLinkCmdInTab.label       "Open skakel in nuwe oortjie">
+<!ENTITY openLinkCmdInTab.accesskey   "o">
+<!ENTITY openLinkCmd.label            "Open skakel in nuwe venster">
+<!ENTITY openLinkCmd.accesskey        "v">
+<!ENTITY openLinkInPrivateWindowCmd.label "Open skakel in nuwe private venster">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "p">
+<!ENTITY openLinkCmdInCurrent.label     "Open skakel">
+<!ENTITY openLinkCmdInCurrent.accesskey "O">
+<!ENTITY openFrameCmdInTab.label      "Open raam in nuwe oortjie">
+<!ENTITY openFrameCmdInTab.accesskey  "o">
+<!ENTITY openFrameCmd.label           "Open raam in nuwe venster">
+<!ENTITY openFrameCmd.accesskey       "v">
+<!ENTITY openLinkCmdInContainerTab.label "Open skakel in nuwe konteksoortjie">
+<!ENTITY openLinkCmdInContainerTab.accesskey "t">
+<!ENTITY showOnlyThisFrameCmd.label     "Vertoon net hierdie raam">
+<!ENTITY showOnlyThisFrameCmd.accesskey "r">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Herlaai raam">
+<!ENTITY reloadFrameCmd.accesskey     "H">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Bekyk bron van gemerkte deel">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Bekyk MathML-bron">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Bekyk bron van bladsy">
+<!ENTITY viewPageSourceCmd.accesskey  "B">
+<!ENTITY viewFrameSourceCmd.label     "Bekyk bron van raam">
+<!ENTITY viewFrameSourceCmd.accesskey "B">
+<!ENTITY viewPageInfoCmd.label        "Bekyk bladsyinfo">
+<!ENTITY viewPageInfoCmd.accesskey    "i">
+<!ENTITY viewFrameInfoCmd.label       "Bekyk raaminfo">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY reloadImageCmd.label         "Herlaai prent">
+<!ENTITY reloadImageCmd.accesskey     "H">
+<!ENTITY viewImageCmd.label           "Bekyk prent">
+<!ENTITY viewImageCmd.accesskey       "p">
+<!ENTITY viewImageInfoCmd.label       "Bekyk prentinfo">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewImageDescCmd.label       "Bekyk beskrywing">
+<!ENTITY viewImageDescCmd.accesskey   "b">
+<!ENTITY viewVideoCmd.label           "Bekyk video">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Bekyk agtergrondprent">
+<!ENTITY viewBGImageCmd.accesskey     "k">
+<!ENTITY setDesktopBackgroundCmd.label      "As werkskermagtergrond…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "A">
+<!ENTITY bookmarkPageCmd2.label       "Boekmerk hierdie bladsy">
+<!ENTITY bookmarkThisLinkCmd.label      "Boekmerk hierdie skakel">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "s">
+<!ENTITY bookmarkThisFrameCmd.label      "Boekmerk hierdie raam">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "r">
+<!ENTITY copyURLCmd.label             "Kopieer URL">
+<!ENTITY emailPageCmd.label           "E-pos skakel…">
+<!ENTITY emailPageCmd.accesskey       "E">
+<!ENTITY savePageCmd.label            "Stoor bladsy as…">
+<!ENTITY savePageCmd.accesskey        "a">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "b">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Stoor raam as…">
+<!ENTITY saveFrameCmd.accesskey       "r">
+<!ENTITY printFrameCmd.label          "Druk raam…">
+<!ENTITY printFrameCmd.accesskey      "D">
+<!ENTITY saveLinkCmd.label            "Stoor skakel as…">
+<!ENTITY saveLinkCmd.accesskey        "e">
+<!ENTITY saveImageCmd.label           "Stoor prent as…">
+<!ENTITY saveImageCmd.accesskey       "o">
+<!ENTITY saveVideoCmd.label           "Stoor video as…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Stoor klank as…">
+<!ENTITY saveAudioCmd.accesskey       "o">
+<!ENTITY emailImageCmd.label          "E-pos prent…">
+<!ENTITY emailImageCmd.accesskey      "t">
+<!ENTITY emailVideoCmd.label          "E-pos video…">
+<!ENTITY emailVideoCmd.accesskey      "o">
+<!ENTITY castVideoCmd.label           "Stuur video na toestel">
+<!ENTITY castVideoCmd.accesskey       "t">
+<!ENTITY emailAudioCmd.label          "E-pos klank…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "Aktiveer dié inprop">
+<!ENTITY playPluginCmd.accesskey      "k">
+<!ENTITY hidePluginCmd.label          "Versteek dié inprop">
+<!ENTITY hidePluginCmd.accesskey      "V">
+<!ENTITY copyLinkCmd.label            "Kopieer skakelligging">
+<!ENTITY copyLinkCmd.accesskey        "K">
+<!ENTITY copyImageCmd.label           "Kopieer prentligging">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyImageContentsCmd.label   "Kopieer prent">
+<!ENTITY copyImageContentsCmd.accesskey  "K"> 
+<!ENTITY copyVideoURLCmd.label        "Kopieer videoligging">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Kopieer klankligging">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "Kopieer e-posadres">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label              "Hierdie raam">
+<!ENTITY thisFrameMenu.accesskey          "i">
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+
+<!ENTITY mediaPlay.label             "Speel">
+<!ENTITY mediaPlay.accesskey         "S">
+<!ENTITY mediaPause.label            "Laat wag">
+<!ENTITY mediaPause.accesskey        "L">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Dower">
+<!ENTITY mediaMute.accesskey         "D">
+<!ENTITY mediaUnmute.label           "Ontdower">
+<!ENTITY mediaUnmute.accesskey       "d">
+<!ENTITY mediaPlaybackRate2.label     "Speelspoed">
+<!ENTITY mediaPlaybackRate2.accesskey "d">
+<!ENTITY mediaPlaybackRate050x2.label "Stadig (0,5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "S">
+
+
+<!ENTITY mediaPlaybackRate125x2.label "Vinnig (1,25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "V">
+<!ENTITY mediaPlaybackRate150x2.label "Vinniger (1,5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "n">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Blitsvinnig (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "B">
+<!ENTITY mediaLoop.label             "Speel in lus">
+<!ENTITY mediaLoop.accesskey         "l">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Wys kontroles">
+<!ENTITY mediaShowControls.accesskey "W">
+<!ENTITY mediaHideControls.label     "Versteek kontroles">
+<!ENTITY mediaHideControls.accesskey "V">
+<!ENTITY videoFullScreen.label       "Volskerm">
+<!ENTITY videoFullScreen.accesskey   "V">
+<!ENTITY videoSaveImage.label        "Stoor kiekie as…">
+<!ENTITY videoSaveImage.accesskey    "S">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Wys statistiek">
+<!ENTITY videoShowStats.accesskey    "t">
+<!ENTITY videoHideStats.label        "Versteek statistiek">
+<!ENTITY videoHideStats.accesskey    "t">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomEnlargeCmd.label       "Zoem in">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "i">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Zoem uit">
+<!ENTITY fullZoomReduceCmd.accesskey    "u">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Stel terug">
+<!ENTITY fullZoomResetCmd.accesskey     "r">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Zoem net teks">
+<!ENTITY fullZoomToggleCmd.accesskey    "t">
+<!ENTITY fullZoom.label                 "Zoem">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "Sluit kantbalk">
+<!ENTITY sidebarMenuClose.label         "Sluit kantbalk">
+
+<!ENTITY quitApplicationCmdWin2.label       "Afsluit">
+<!ENTITY quitApplicationCmdWin2.accesskey   "s">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Sluit &brandShorterName; af">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Afsluit"> 
+<!ENTITY quitApplicationCmd.accesskey   "A">
+<!ENTITY quitApplicationCmdMac2.label   "Sluit &brandShorterName; af">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Sluit">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "S">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Bladsystyl">
+<!ENTITY pageStyleMenu.accesskey "t">
+<!ENTITY pageStyleNoStyle.label "Geen styl nie">
+<!ENTITY pageStyleNoStyle.accesskey "G">
+<!ENTITY pageStylePersistentOnly.label "Basiese bladsystyl">
+<!ENTITY pageStylePersistentOnly.accesskey "B">
+
+<!ENTITY pageReportIcon.tooltip            "Wysig instellings vir opspringerblokkering op hierdie webwerf">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Redigeer voorkeure vir opspringerblokkering…">
+<!ENTITY editPopupSettings.label "Redigeer opsies vir opspringerblokkering…">
+<!ENTITY editPopupSettings.accesskey "e">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Verwissel bladsyrigting">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "r">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Wissel teksrigting">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "i">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Vind op hierdie bladsy…">
+<!ENTITY findOnCmd.accesskey "V">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Vind weer">
+<!ENTITY findAgainCmd.accesskey "e">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Voeg woordeboeke by…">
+<!ENTITY spellAddDictionaries.accesskey "V">
+
+<!ENTITY editBookmark.done.label                     "Klaar">
+<!ENTITY editBookmark.removeBookmark.accessKey       "V">
+
+<!ENTITY identity.connectionSecure "Beveiligde verbinding">
+<!ENTITY identity.connectionNotSecure "Verbinding is nié beveilig nie">
+<!ENTITY identity.connectionFile "Dié blad word op u rekenaar gestoor.">
+<!ENTITY identity.connectionVerified2 "U is veilig verbind aan dié werf besit deur:">
+<!ENTITY identity.connectionInternal "Hierdie is 'n beveiligde &brandShortName;-bladsy.">
+<!ENTITY identity.extensionPage "Dié bladsy is uit 'n uitbreiding gelaai.">
+<!ENTITY identity.insecureLoginForms2 "Aanmeldinligting ingetik op dié bladsy kan gekompromitteer word. ">
+<!-- Strings for connection state warnings. -->
+
+<!ENTITY identity.activeBlocked "&brandShortName; het dele van dié blad geblok wat nie beveilig is nie.">
+<!ENTITY identity.passiveLoaded "Dele van dié blad is nie beveilig nie (soos prente).">
+<!ENTITY identity.activeLoaded "U het beskerming vir dié blad gedeaktiveer.">
+<!ENTITY identity.weakEncryption "Dié bladsy gebruik swak enkripsie.">
+<!-- Strings for connection state warnings in the subview. -->
+
+<!ENTITY identity.description.insecure "U verbinding aan dié werf is nie privaat nie. Inligting wat ingedien word kan deur ander gesien word (bv. wagwoorde, boodskappe, kredietkaartnommers, ens.)">
+<!ENTITY identity.description.insecureLoginForms "Die aanmeldinligting wat u op hierdie bladsy intik, is nie beveilig nie en kan gekompromitteer word. ">
+<!ENTITY identity.description.weakCipher "U verbinding aan dié werf gebruik swak enkripsie en is nie privaat nie.">
+<!ENTITY identity.description.weakCipher2 "Ander mense kan u inligting sien of die webwerf se gedrag verander.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; het dele van dié blad geblok wat nie beveilig is nie.">
+<!ENTITY identity.description.passiveLoaded "U verbinding is nie privaat nie en inligting wat met die werf gedeel word kan deur ander gesien word.">
+<!ENTITY identity.description.passiveLoaded2 "Dié webwerf bevat inhoud wat nie beveilig is nie (soos prente).">
+<!ENTITY identity.description.passiveLoaded3 "Alhoewel &brandShortName; sommige inhoud geblok het, is daar steeds inhoud op die bladsy wat nie beveilig is nie (soos prente).">
+<!ENTITY identity.description.activeLoaded "Dié webwerf bevat inhoud wat nie beveilig is nie (soos skripte) en u verbinding daaraan is nie privaat nie.">
+<!ENTITY identity.description.activeLoaded2 "Inligting wat gedeel word met die werf kan deur ander gesien word (bv. wagwoorde, boodskappe, kredietkaartnommers, ens.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Aktiveer beskerming">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "A">
+<!ENTITY identity.disableMixedContentBlocking.label "Deaktiveer beskerming tydelik">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Meer inligting">
+
+<!ENTITY identity.removeCertException.label "Verwyder uitsondering">
+<!ENTITY identity.removeCertException.accesskey "r">
+
+<!ENTITY identity.moreInfoLinkText2 "Meer inligting">
+
+<!ENTITY identity.permissions "Toestemming">
+<!ENTITY identity.permissionsEmpty "U het geen spesiale toestemming aan dié werf gegee nie. ">
+<!ENTITY identity.permissionsReloadHint "Dit is dalk nodig om die bladsy te herlaai voor veranderinge toegepas word.">
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+
+<!ENTITY tabsToolbar.label "Blaaieroortjies">
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+
+<!ENTITY syncTabsMenu3.label     "Gesinkroniseerde oortjies">
+
+<!ENTITY syncedTabs.sidebar.label              "Gesinkroniseerde oortjies">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Meld aan by Waterfox vanaf ander toestelle om hulle oortjies hier te sien.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Nog geen gesinkroniseerde oortjies nie!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Lus om oortjies van ander toestelle hier te sien?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Meld aan om 'n lys oortjies van ander toestelle te sien.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Geen oop oortjies nie">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Open &syncBrand.shortName.label;-voorkeure">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Skakel oortjiesinkronisering aan om 'n lys oortjies van ander toestelle te sien.">
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+
+<!ENTITY syncedTabs.context.open.label                       "Open">
+<!ENTITY syncedTabs.context.open.accesskey                   "O">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Open in nuwe oortjie">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "w">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Open in 'n nuwe venster">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "n">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Open in nuwe private venster">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "p">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Boekmerk hierdie oortjie…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "B">
+<!ENTITY syncedTabs.context.copy.label                       "Kopieer">
+<!ENTITY syncedTabs.context.copy.accesskey                   "K">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Open almal in oortjies">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "O">
+<!ENTITY syncedTabs.context.managedevices.label              "Bestuur toestelle…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "t">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Meld aan by &syncBrand.shortName.label;…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Sinkroniseer nou">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Herkoppel aan &syncBrand.shortName.label;…">
+<!ENTITY syncReAuthItem.accesskey     "r">
+<!ENTITY syncToolbarButton.label      "Sync">
+
+<!ENTITY social.addons.label "Bestuur dienste…">
+
+<!ENTITY social.directory.label "Aktiveringsgids">
+<!ENTITY social.directory.text "Deel-dienste kan vanuit die gids geaktiveer word.">
+<!ENTITY social.directory.button "Laat ek sien!">
+<!ENTITY social.directory.introText "Klik op 'n diens om dit by &brandShortName; te voeg.">
+<!ENTITY social.directory.viewmore.text "Sien meer">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Addisionele gereedskap en funksies">
+<!ENTITY customizeMode.menuAndToolbars.empty "Lus vir meer gereedskap?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Kies uit duisende byvoegings">
+<!ENTITY customizeMode.restoreDefaults "Laai verstek terug">
+<!ENTITY customizeMode.done "Klaar">
+<!ENTITY customizeMode.titlebar "Titelbalk">
+<!ENTITY customizeMode.toolbars2 "Nutsbalke">
+<!ENTITY customizeMode.lwthemes "Temas">
+<!ENTITY customizeMode.lwthemes.myThemes "My temas">
+<!ENTITY customizeMode.lwthemes.recommended "Aanbeveel">
+<!ENTITY customizeMode.lwthemes.menuManage "Bestuur">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "B">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Kry meer temas">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "K">
+<!ENTITY customizeMode.emptyOverflowList.description "Sleep en los items hier om hulle byderhand, maar uit die nutsbalk te haal…">
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Kompak">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Kompak">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "K">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Aanraking">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Aanraking">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "r">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Gebruik aanraking vir tabletmodus">
+
+<!ENTITY getUserMedia.selectCamera.label "Kamera om te deel:">
+<!ENTITY getUserMedia.selectCamera.accesskey "K">
+<!ENTITY getUserMedia.selectMicrophone.label "Mikrofoon om te deel:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Klank van die oortjie sal gedeel word.">
+<!ENTITY getUserMedia.allWindowsShared.message "Alle sigbare vensters op die skerm sal gedeel word.">
+
+<!ENTITY trackingProtection.title "Volgbeskerming">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; blok dele van die blad wat dalk blaaigedrag dophou.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Dié werf bevat elemente wat dalk blaaigedrag dophou. U het die beskerming gedeaktiveer.">
+<!ENTITY trackingProtection.notDetected3 "Geen volg-elemente op dié bladsy bespeur nie.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Deaktiveer beskerming vir dié werf">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Deaktiveer beskerming vir dié sessie">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "Aktiveer beskerming">
+<!ENTITY trackingProtection.block2.accesskey "A">
+
+<!ENTITY trackingContentBlocked.message "Monitering">
+<!ENTITY trackingContentBlocked.moreinfo "Dele van die bladsy wat u aanlyn aktiwiteit beloer is geblok.">
+<!ENTITY trackingContentBlocked.learnMore "Meer inligting">
+<!ENTITY trackingContentBlocked.options "Opsies">
+<!ENTITY trackingContentBlocked.unblock2.label "Deaktiveer beskerming vir dié werf">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "D">
+<!ENTITY trackingContentBlocked.block.label "Aktiveer beskerming">
+<!ENTITY trackingContentBlocked.block.accesskey "A">
+<!ENTITY trackingContentBlocked.disabled.message "Volgbeskerming is gedeaktiveer">
+
+<!ENTITY pluginNotification.showAll.label "Wys almal">
+<!ENTITY pluginNotification.showAll.accesskey "s">
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+
+<!ENTITY pluginActivateNow.label "Laat nou toe">
+<!ENTITY pluginActivateAlways.label "Laat toe en onthou">
+<!ENTITY pluginBlockNow.label "Blokkeer inprop">
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Sluit">
+
+<!ENTITY appMenuSidebars.label         "Kantstawe">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+
+<!ENTITY panicButton.view.mainTimeframeDesc       "Vergeet die afgelope:">
+<!ENTITY panicButton.view.5min                    "vyf minute">
+<!ENTITY panicButton.view.2hr                     "twee ure">
+<!ENTITY panicButton.view.day                     "24 uur">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+
+<!ENTITY panicButton.view.mainActionDesc          "Deur voort te gaan sal:">
+<!ENTITY panicButton.view.deleteCookies           "onlangse <html:strong>koekies</html:strong> uitgevee word">
+<!ENTITY panicButton.view.deleteHistory           "onlangse <html:strong>geskiedenis</html:strong> uitgevee word">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "alle <html:strong>oortjies</html:strong> en <html:strong>vensters</html:strong> gesluit word">
+<!ENTITY panicButton.view.openNewWindow           "Open 'n nuwe skoon venster">
+
+<!ENTITY panicButton.view.undoWarning             "Hierdie aksie kan nie ontdoen word nie.">
+<!ENTITY panicButton.view.forgetButton            "Vergeet!">
+
+<!ENTITY panicButton.thankyou.msg1                "Die onlangse geskiedenis is vergeet.">
+<!ENTITY panicButton.thankyou.msg2                "Blaai veilig!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Dankie!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Meer inligting oor DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Werk &brandShorterName; by vir die nuutste spoed en privaatheid.">
+<!ENTITY updateAvailable.whatsnew.label "Sien wat is nuut.">
+<!ENTITY updateAvailable.header.message "'n Nuwe bywerking vir &brandShorterName; is beskikbaar.">
+<!ENTITY updateAvailable.acceptButton.label "Laai bywerking af">
+<!ENTITY updateAvailable.acceptButton.accesskey "L">
+<!ENTITY updateAvailable.cancelButton.label "Nie nou nie">
+<!ENTITY updateAvailable.cancelButton.accesskey "N">
+<!ENTITY updateAvailable.panelUI.label "Laai &brandShorterName;-bywerking af">
+
+<!ENTITY updateManual.message "Laai 'n nuwe kopie van &brandShorterName; af en ons sal help om dit te installeer.">
+<!ENTITY updateManual.whatsnew.label "Sien wat is nuut.">
+<!ENTITY updateManual.header.message "&brandShorterName; kan nie bywerk na die jongste weergawe nie.">
+<!ENTITY updateManual.acceptButton.label "Laai &brandShorterName; af">
+<!ENTITY updateManual.acceptButton.accesskey "L">
+<!ENTITY updateManual.cancelButton.label "Nie nou nie">
+<!ENTITY updateManual.cancelButton.accesskey "N">
+<!ENTITY updateManual.panelUI.label "Laai 'n nuwe kopie van &brandShorterName; af">
+
+<!ENTITY updateRestart.message "&brandShorterName; sal vinnig herbegin en daarna alle oop oortjies en vensters weer wys.">
+<!ENTITY updateRestart.header.message2 "Herbegin om &brandShorterName; by te werk.">
+<!ENTITY updateRestart.acceptButton.label "Herbegin en herstel">
+<!ENTITY updateRestart.acceptButton.accesskey "r">
+<!ENTITY updateRestart.cancelButton.label "Nie nou nie">
+<!ENTITY updateRestart.cancelButton.accesskey "N">
+<!ENTITY updateRestart.panelUI.label2 "Herbegin om &brandShorterName; by te werk">
+
+
+
+
+
+
+<!ENTITY appMenuHistory.recentHistory.label "Recent History">
+<!ENTITY bookmarksMenuButton.mobile.label "Mobile Bookmarks">
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.addToOverflowMenu.label "Add to Overflow Menu">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "P">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Pin to Overflow Menu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Unpin from Overflow Menu">
+<!ENTITY customizeMode.uidensity "Density">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normal">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate100x2.label "Normal">
+<!ENTITY mobileBookmarksCmd.label "Mobile Bookmarks">
+<!ENTITY newNonRemoteWindow.label   "New Non-e10s Window">
+
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY overflowCustomizeToolbar.label       "Customize Toolbar…">
+<!ENTITY pageAction.addToUrlbar.label "Add to Address Bar">
+<!ENTITY pageAction.removeFromUrlbar.label "Remove from Address Bar">
+
+<!ENTITY pageActionButton.tooltip "Page actions">
+<!ENTITY searchItem.title             "Search">
+
+<!ENTITY sendToDevice.label2 "Send to Device">
+<!ENTITY sendToDevice.syncNotReady.label "Syncing Devices…">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "You have blocked persistent storage for this website.">
+
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Store data in Persistent Storage">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Browser is under remote control">
+

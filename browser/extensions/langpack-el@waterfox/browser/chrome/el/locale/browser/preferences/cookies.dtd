@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "38em">
+
+<!ENTITY     cookiesonsystem.label          "Τα ακόλουθα cookies είναι αποθηκευμένα στον υπολογιστή σας:">
+<!ENTITY     cookiename.label               "Όνομα cookie">
+<!ENTITY     cookiedomain.label             "Ιστοσελίδα">
+
+<!ENTITY     props.name.label               "Όνομα:">
+<!ENTITY     props.value.label              "Περιεχόμενο:">
+<!ENTITY     props.domain.label             "Σύστημα:">
+<!ENTITY     props.path.label               "Διαδρομή:">
+<!ENTITY     props.secure.label             "Στάλθηκε για:">
+<!ENTITY     props.expires.label            "Λήγει:">
+<!ENTITY     props.container.label          "Περιβάλλον:">
+
+<!ENTITY     window.title                   "Cookies">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Αναζήτηση">
+<!ENTITY     searchFilter.accesskey         "Α">
+
+<!ENTITY     button.close.label             "Κλείσιμο">
+<!ENTITY     button.close.accesskey         "Κ">

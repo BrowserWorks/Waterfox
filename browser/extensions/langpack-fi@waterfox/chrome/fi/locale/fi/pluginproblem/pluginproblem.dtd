@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Tämä sivusto käyttää liitännäistä, joka voi hidastaa &brandShortName;ia.">
+<!ENTITY tapToPlayPlugin                                     "Käynnistä liitännäinen napsauttamalla tätä.">
+<!ENTITY clickToActivatePlugin                               "Käynnistä liitännäinen.">
+<!ENTITY checkForUpdates                                     "Hae päivitystä…">
+<!ENTITY blockedPlugin.label                                 "Tämä liitännäinen on estetty turvallisuusyistä.">
+<!ENTITY hidePluginBtn.label                                 "Piilota liitännäinen">
+<!ENTITY managePlugins                                       "Hallinnoi liitännäisiä…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "Yritä uudestaan ">
+<!ENTITY reloadPlugin.middle                                 "lataamalla sivu uudestaan">
+<!ENTITY reloadPlugin.post                                   ".">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Lähetä kaatumisilmoitus">
+<!ENTITY report.submitting                                   "Lähetetään ilmoitusta…">
+<!ENTITY report.submitted                                    "Kaatumisilmoitus lähetettiin.">
+<!ENTITY report.disabled                                     "Kaatumisilmoitusten lähettäminen poistettu käytöstä.">
+<!ENTITY report.failed                                       "Kaatumisilmoituksen lähettäminen epäonnistui.">
+<!ENTITY report.unavailable                                  "Kaatumisilmoitusta ei ole saatavilla.">
+<!ENTITY report.comment                                      "Lisää kommentti (kommentit ovat näkyvillä kaikille)">
+<!ENTITY report.pageURL                                      "Liitä avoimen sivun osoite">
+
+<!ENTITY plugin.file                                         "Tiedosto">
+<!ENTITY plugin.mimeTypes                                    "MIME-tyypit">
+<!ENTITY plugin.flashProtectedMode.label                     "Ota käyttöön Adobe Flashin suojattu tila">
+<!ENTITY plugin.enableBlocklists.label                       "Estä vaarallinen ja päällekäyvä Flash-sisältö">

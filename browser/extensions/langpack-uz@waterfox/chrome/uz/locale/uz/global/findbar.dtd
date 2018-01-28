@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Iboradagi keyingi hodisani topish">
+<!ENTITY previous.tooltip "Iboradagi oldingi hodisani topish">
+<!ENTITY findCloseButton.tooltip "Topish panelini yopish">
+
+
+<!ENTITY highlightAll.tooltiptext "Iboradagi barcha hodisalarni ajratib koʻrsatish">
+<!ENTITY caseSensitive.label "Katta-kichik harflarni farqlash">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "Harflar katta-kichikligini farqlab izlash">
+<!ENTITY entireWord.label "Butun so‘zlar">
+<!ENTITY entireWord.accesskey "B">
+<!ENTITY entireWord.tooltiptext "Faqat butun so‘zlar izlansin">
+
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.label "Highlight All">

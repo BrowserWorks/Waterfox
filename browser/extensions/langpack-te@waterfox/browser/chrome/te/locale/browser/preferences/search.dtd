@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "అప్రమేయ శోధన యంత్రం">
+
+
+<!ENTITY provideSearchSuggestions.label        "వెతుకుడు సలహాలను చూపించు">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.accesskey       "I">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "స్థాన పట్టీ ఫలితాలలో వెతుకుడు సలహాలను చూపించలేము ఎందుకంటే &brandShortName; మీ చరిత్రను ఎప్పుడూ గుర్తుంచుకోకుండా అమర్చుకున్నారు.">
+
+<!ENTITY oneClickSearchEngines.label           "ఒక్క-నొక్కు శోధన యంత్రాలు">
+
+
+<!ENTITY engineNameColumn.label                "శోధన యంత్రం">
+<!ENTITY engineKeywordColumn.label             "కీపదం">
+
+<!ENTITY restoreDefaultSearchEngines.label     "అప్రమేయ శోధన యంత్రాలను పునరుద్ధరించు">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "తీసివేయి">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY findMoreSearchEngines.label           "మరిన్ని శోధన యంత్రాలను కనుగొనండి">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Премахване на главна парола">
+<!ENTITY removeInfo.label                  "Трябва да въведете текущата си парола, за да продължите:">
+<!ENTITY removeWarning1.label              "Вашата главна парола се използва за защитаване на чувствителна информация като напр. пароли за сайтове.">
+<!ENTITY removeWarning2.label              "Ако премахнете главната парола, вашата информация няма да бъде защитена, ако има пробив в компютъра ви.">
+<!ENTITY setPassword.oldPassword.label     "Текуща парола:">
+

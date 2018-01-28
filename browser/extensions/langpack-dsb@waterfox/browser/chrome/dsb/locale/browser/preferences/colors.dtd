@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Barwy">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Barwy pódane pśez bok pśez mój wuběrki górjejce pśepisaś:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "B">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Pśecej">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Jano z drastwami z wusokim kontrastom">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nigda">
+
+<!ENTITY  color                           "Tekst a slězyna">
+<!ENTITY  textColor.label                 "Tekst:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Slězyna:">
+<!ENTITY  backgroundColor.accesskey       "S">
+<!ENTITY  useSystemColors.label           "Systemowe barwy wužywaś">
+<!ENTITY  useSystemColors.accesskey       "t">
+
+<!ENTITY  underlineLinks.label            "Wótkaze pódšmarnuś">
+<!ENTITY  underlineLinks.accesskey        "m">
+<!ENTITY  links                           "Barwy wótkazow">
+<!ENTITY  linkColor.label                 "Njewoglědane wótkaze:">
+<!ENTITY  linkColor.accesskey             "N">
+<!ENTITY  visitedLinkColor.label          "Woglědane wótkaze:">
+<!ENTITY  visitedLinkColor.accesskey      "W">

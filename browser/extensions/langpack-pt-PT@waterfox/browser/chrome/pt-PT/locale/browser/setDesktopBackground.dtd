@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Posição:">
+<!ENTITY tile.label                 "Emparelhar">
+<!ENTITY center.label               "Centro">
+<!ENTITY stretch.label              "Esticar">
+<!ENTITY fill.label                 "Preencher">
+<!ENTITY fit.label                  "Ajustar">
+<!ENTITY preview.label              "Pré-visualizar">
+<!ENTITY color.label                "Cor:">
+<!ENTITY setDesktopBackground.title "Definir fundo do ambiente de trabalho">
+<!ENTITY openDesktopPrefs.label     "Abrir preferências do ambiente de trabalho">
+<!ENTITY closeWindow.key            "w">

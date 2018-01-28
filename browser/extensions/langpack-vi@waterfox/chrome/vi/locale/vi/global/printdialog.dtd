@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "In">
+
+<!ENTITY printDialog.title "In">
+
+<!ENTITY fpDialog.title "Lưu Tập Tin">
+
+<!ENTITY fileCheck.label "In thành Tập tin">
+<!ENTITY fileCheck.accesskey "I">
+<!ENTITY propertiesButton.label "Thuộc tính…">
+<!ENTITY propertiesButton.accesskey "T">
+<!ENTITY descText.label "Mô tả Máy in:">
+<!ENTITY printer.label "Máy In">
+<!ENTITY printerInput.label "Tên Máy In:">
+<!ENTITY printerInput.accesskey "T">
+
+<!ENTITY printrangeGroup.label "Khoảng muốn In">
+<!ENTITY allpagesRadio.label "Tất cả Các trang">
+<!ENTITY allpagesRadio.accesskey "T">
+<!ENTITY rangeRadio.label  "Trang">
+<!ENTITY rangeRadio.accesskey  "T">
+<!ENTITY frompageInput.label  "từ">
+<!ENTITY frompageInput.accesskey  "t">
+<!ENTITY topageInput.label  "đến">
+<!ENTITY topageInput.accesskey  "n">
+<!ENTITY selectionRadio.label "Phần được chọn">
+<!ENTITY selectionRadio.accesskey "P">
+
+<!ENTITY copies.label "Bản sao">
+<!ENTITY numCopies.label "Số bản sao:">
+<!ENTITY numCopies.accesskey "S">
+
+<!ENTITY printframeGroup.label "In Khung">
+<!ENTITY aslaidoutRadio.label "Như hiển thị trên màn hình">
+<!ENTITY aslaidoutRadio.accesskey "N">
+<!ENTITY selectedframeRadio.label  "Khung đã chọn">
+<!ENTITY selectedframeRadio.accesskey  "K">
+<!ENTITY eachframesepRadio.label  "Mỗi khung riêng biệt">
+<!ENTITY eachframesepRadio.accesskey  "M">

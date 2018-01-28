@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Varsayılan arama motoru">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Adres çubuğunda ve arama çubuğunda kullanılacak varsayılan arama motorunu seçin.">
+
+<!ENTITY provideSearchSuggestions.label        "Arama önerileri sun">
+<!ENTITY provideSearchSuggestions.accesskey    "ö">
+
+<!ENTITY showURLBarSuggestions2.label           "Adres çubuğu sonuçlarında arama önerilerini göster">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "&brandShortName; tarayıcısını geçmişi hatırlamayacak şekilde ayarladığınız için konum çubuğu sonuçlarında arama önerileri gösterilmeyecektir.">
+
+<!ENTITY oneClickSearchEngines.label           "Tek tıklamalı arama motorları">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Anahtar kelimeleri yazmaya başladığınızda adres çubuğunun ve arama çubuğunun altında görünen alternatif arama motorlarını seçin.">
+
+<!ENTITY engineNameColumn.label                "Arama motoru">
+<!ENTITY engineKeywordColumn.label             "Anahtar kelime">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Varsayılan arama motorlarını geri yükle">
+<!ENTITY restoreDefaultSearchEngines.accesskey "V">
+
+<!ENTITY removeEngine.label                    "Kaldır">
+<!ENTITY removeEngine.accesskey                "K">
+
+<!ENTITY findMoreSearchEngines.label           "Daha fazla arama motoru bul">

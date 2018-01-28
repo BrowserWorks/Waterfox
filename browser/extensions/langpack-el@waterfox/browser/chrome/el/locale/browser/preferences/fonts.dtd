@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Γραμματοσειρές">
+
+<!ENTITY  language.label                          "Γραμματοσειρές για:">
+<!ENTITY  language.accesskey                      "ρ">
+
+<!ENTITY  size.label                              "Μέγεθος:">
+<!ENTITY  sizeProportional.accesskey              "γ">
+<!ENTITY  sizeMonospace.accesskey                 "θ">
+
+<!ENTITY  proportional.label                      "Μεταβλητού πλάτους:">
+<!ENTITY  proportional.accesskey                  "Μ">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Σταθερού πλάτους:">
+<!ENTITY  monospace.accesskey                     "τ">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Λατινική">
+<!ENTITY  font.langGroup.japanese                 "Ιαπωνική">
+<!ENTITY  font.langGroup.trad-chinese             "Παραδοσιακή Κινεζική (Ταϊβάν)">
+<!ENTITY  font.langGroup.simpl-chinese            "Απλοποιημένη Κινεζική">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Παραδοσιακή Κινεζική (Χονγκ Κονγκ)">
+<!ENTITY  font.langGroup.korean                   "Κορεάτικη">
+<!ENTITY  font.langGroup.cyrillic                 "Κυριλλική">
+<!ENTITY  font.langGroup.el                       "Ελληνική">
+<!ENTITY  font.langGroup.other                    "Άλλα συστήματα γραφής">
+<!ENTITY  font.langGroup.thai                     "Ταϊλανδική">
+<!ENTITY  font.langGroup.hebrew                   "Εβραϊκή">
+<!ENTITY  font.langGroup.arabic                   "Αραβική">
+<!ENTITY  font.langGroup.devanagari               "Ντεβανγκάρι">
+<!ENTITY  font.langGroup.tamil                    "Ταμίλ">
+<!ENTITY  font.langGroup.armenian                 "Αρμενική">
+<!ENTITY  font.langGroup.bengali                  "Μπενγκάλι">
+<!ENTITY  font.langGroup.canadian                 "Ενοποιημένο καναδικό συλλαβάριο">
+<!ENTITY  font.langGroup.ethiopic                 "Αιθιοπική">
+<!ENTITY  font.langGroup.georgian                 "Γεωργιανή">
+<!ENTITY  font.langGroup.gujarati                 "Γκουαρατί">
+<!ENTITY  font.langGroup.gurmukhi                 "Γκουρμούχι">
+<!ENTITY  font.langGroup.khmer                    "Χμερ">
+<!ENTITY  font.langGroup.malayalam                "Μαλαισιανή">
+<!ENTITY  font.langGroup.math                     "Μαθηματικά">
+<!ENTITY  font.langGroup.odia                     "Οντία">
+<!ENTITY  font.langGroup.telugu                   "Τελούγκου">
+<!ENTITY  font.langGroup.kannada                  "Κανναντα">
+<!ENTITY  font.langGroup.sinhala                  "Σινχάλα">
+<!ENTITY  font.langGroup.tibetan                  "Θιβετιανή">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Ελάχιστο μέγεθος γραμματοσειράς:">
+<!ENTITY minSize.accesskey                        "χ">
+<!ENTITY minSize.none                             "Κανένα">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Να επιτρέπεται στις ιστοσελίδες να επιλέγουν τις δικές τους γραμματοσειρές, αντί για τις παραπάνω επιλογές">
+<!ENTITY  allowPagesToUseOwn.accesskey            "Ε">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Κωδικοποίηση κειμένου για συμβατότητα παλαιού περιεχόμενου">
+<!ENTITY languages.customize.Fallback2.label      "Εφεδρική κωδικοποίηση κειμένου:">
+<!ENTITY languages.customize.Fallback2.accesskey  "φ">
+<!ENTITY languages.customize.Fallback2.desc       "Αυτή η κωδικοποίηση κειμένου χρησιμοποιείται για περιεχόμενο παλαιών σελίδων που δεν δηλώνουν την κωδικοποίηση τους.">
+
+<!ENTITY languages.customize.Fallback.auto        "Προεπιλογή για την τρέχουσα γλώσσα">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Αραβική">
+<!ENTITY languages.customize.Fallback.baltic      "Βαλτική">
+<!ENTITY languages.customize.Fallback.ceiso       "Κεντρική Ευρωπαϊκή, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Κεντρική Ευρωπαϊκή, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Κινεζική, Απλοποιημένη">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Κινεζική, Παραδοσιακή">
+<!ENTITY languages.customize.Fallback.cyrillic    "Κυριλλική">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Ελληνική">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Εβραϊκή">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Ιαπωνική">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Κορεάτικη">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Ταϊλανδέζικη">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Τουρκική">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Βιετναμέζικη">
+<!ENTITY languages.customize.Fallback.other       "Άλλη (συμπ. Δυτικής Ευρωπαϊκής)">

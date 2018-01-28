@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Thiết lập - Dữ liệu trang">
+<!ENTITY     hostCol.label                 "Trang">
+<!ENTITY     statusCol.label               "Trạng thái">
+<!ENTITY     usageCol.label                "Lưu trữ">
+<!ENTITY     searchTextboxPlaceHolder             "Tìm kiếm trang web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Xóa mục đã chọn">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Lưu thay đổi">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Hủy bỏ">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Xóa dữ liệu trang web">
+<!ENTITY     removingSelected.description  "Xóa dữ liệu trang sẽ đồng thời xóa các cookie và các nội dung web ngoại tuyến. Điều này có thể khiến bạn đăng xuất ra khỏi các trang web. Bạn có chắc chắn về sự thay đổi này chứ?">
+<!ENTITY     siteTree.label                "Cookie của những trang web dưới đây sẽ bị xóa:">

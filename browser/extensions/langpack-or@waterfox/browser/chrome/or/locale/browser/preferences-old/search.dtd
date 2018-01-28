@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+
+
+<!ENTITY engineKeywordColumn.label             "ସୂଚକ ଶବ୍ଦ">
+
+
+
+
+
+
+<!ENTITY addMoreSearchEngines.label            "Add more search engines…">
+<!ENTITY chooseWhichOneToDisplay.label         "The search bar lets you search alternate engines directly. Choose which ones to display.">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Choose your default search engine. &brandShortName; uses it in the location bar, search bar, and start page.">
+
+<!ENTITY defaultSearchEngine.label             "Default Search Engine">
+
+<!ENTITY engineNameColumn.label                "Search Engine">
+<!ENTITY oneClickSearchEngines.label           "One-click Search Engines">
+
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY provideSearchSuggestions.label        "Provide search suggestions">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY removeEngine.label                    "Remove">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restore Default Search Engines">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY showURLBarSuggestions.label           "Show search suggestions in location bar results">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Search suggestions will not be shown in location bar results because you have configured &brandShortName; to never remember history.">
+

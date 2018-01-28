@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "டெலிமெட்ரி தரவு">
+
+<!ENTITY aboutTelemetry.pingDataSource "தரவு மூலத்தை பிங் பன்னு:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "நடப்பு பிங் தரவு">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "காக்கப்பட்ட பிங் தரவு">
+
+<!ENTITY aboutTelemetry.raw "பதனிடப்படாத JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "துணையமர்வு தரவைக் காட்டு">
+
+<!ENTITY aboutTelemetry.choosePing "பிங்கைத் தேர்:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; புதிய பிங்">
+
+<!ENTITY aboutTelemetry.showOlderPing "பழைய பிங் &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "வாரம்">
+
+<!ENTITY aboutTelemetry.archivePingType "பிங் வகை">
+
+<!ENTITY aboutTelemetry.archivePingHeader "பிங்">
+
+<!ENTITY aboutTelemetry.optionGroupToday "இன்று">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "நேற்று">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "பழையவை">
+
+<!ENTITY aboutTelemetry.generalDataSection "  பொது தரவு">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  சூழல் தரவு">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  தொலையளவு பதிவு">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  மெதுவான SQL கூற்றுகள்">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  உலாவி உறைதல்கள்">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  தொங்கிய நூல்">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  கைப்பற்றிய அடுக்குகள்">
+
+<!ENTITY aboutTelemetry.scalarsSection "  அளவுகள்">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  விசை திசையிலிகள்">
+
+<!ENTITY aboutTelemetry.histogramsSection "  செவ்வக வரைபடங்கள்">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  விசையாலான செவ்வகப்படங்கள்">
+
+<!ENTITY aboutTelemetry.eventsSection "நிகழ்வுகள்">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  எளிய அளவீடுகள்">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  கூடுதல் இணைப்புகளின் விவரங்கள்">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  தாமத எழுதல்கள்">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  கணினி தகவல்">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  குறிப்பு: மெதுவான SQL வழுநீக்கல் செயல்படுத்தப்பட்டுள்ளது. முழு SQL சரங்கள் கீழே காண்பிக்கப்படலாம்ஆனால் அவை டெலிமெட்ரிக்கு சமர்ப்பிக்கப்படாது.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  ஸ்டேக்குகளுக்காக செயல்தொகுதி பெயர்களைப் பெறு">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  அடுக்கின் பதனிடாத தரவைக் காண்பி">
+
+<!ENTITY aboutTelemetry.filterText "  வடிகட்டு(சரளங்கள் அல்லது /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  சுமை">

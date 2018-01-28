@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Cuairtichidh Ctrl+Tab thu tro na tabaichean san robh iad agad o chionn goirid">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Fosgail uinneagan ùra ann an taba ùr 'na àite">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Thoir rabhadh mus dùin mi iomadh taba còmhla">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Ma tha cunnart gun cuir cus thabaichean maille air &brandShortName;, thoir rabhadh">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Nuair a dh’hosglas tu ceangal ann an taba ùr, thoir leum ann sa bhad">
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY showTabsInTaskbar.label          "Seall ro-shealladh nan tabaichean ann am bàr-ghnìomhan Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "S">
+<!ENTITY tabsGroup.label          "Tabaichean">

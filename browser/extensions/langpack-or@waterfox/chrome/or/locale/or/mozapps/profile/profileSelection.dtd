@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - ଚାଳକ ରୂପରେଖ ବାଛନ୍ତୁ">
+
+<!ENTITY            profilename.label      "ରୂପରେଖ ନାମ:">
+
+<!ENTITY            start.label            "&brandShortName;କୁ ଆରମ୍ଭ କରନ୍ତୁ">
+<!ENTITY            exit.label             "ପ୍ରସ୍ଥାନ">
+
+<!ENTITY            availprofiles.label    "ଉପଲବ୍ଧ ରୂପରେଖ">
+
+<!ENTITY            newButton.label        "ରୂପରେଖ ନିର୍ମାଣ କରନ୍ତୁ…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "ରୂପରେଖର ନାମ ବଦଳାନ୍ତୁ…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "ରୂପରେଖ ଅପସାରଣ କରନ୍ତୁ…">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; ଆପଣଙ୍କର ବିନ୍ୟାସ, ପସନ୍ଦ,ଏବଂ ଆପଣଙ୍କର ଚାଳକ ରୂପରେଖରେ ଥିବା ଅନ୍ୟାନ୍ୟ ଚାଳକ ବସ୍ତୁ ବିଷୟରେ ସୂଚନା ସଂଗ୍ରହ କରେ.">
+
+<!ENTITY            offlineState.label    "ଅଫ ଲାଇନରେ କାମ କରନ୍ତୁ">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "ଆରମ୍ଭ ସମୟରେ ନପଚାରି ବଚ୍ଛିତ ରୂପରେଖାକୁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY            useSelected.accesskey   "s">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instalacja dodatku">
+<!ENTITY intro           "Inny program uruchomiony na tym komputerze chce zmodyfikować program
+                          &brandShortName; poprzez instalację dodatku:">
+<!ENTITY warning         "Należy instalować tylko dodatki od zaufanych autorów.">
+<!ENTITY allow           "Pozwól na instalację">
+<!ENTITY later           "Decyzję tę można zawsze zmienić, przechodząc do menedżera dodatków.">
+<!ENTITY continue        "Kontynuuj">
+<!ENTITY restartMessage  "Do ukończenia instalacji tego dodatku konieczne jest ponowne uruchomienie programu &brandShortName;.">
+<!ENTITY restartButton   "Uruchom ponownie">
+<!ENTITY cancelButton    "Anuluj">

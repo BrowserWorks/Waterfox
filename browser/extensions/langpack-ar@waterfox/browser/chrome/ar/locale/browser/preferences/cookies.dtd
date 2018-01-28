@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "الكعكات التّالية مخزّنة على حاسوبك:">
+<!ENTITY     cookiename.label               "اسم الكعكة">
+<!ENTITY     cookiedomain.label             "الموقع">
+
+<!ENTITY     props.name.label               "الاسم:">
+<!ENTITY     props.value.label              "المحتوى:">
+<!ENTITY     props.domain.label             "المستضيف:">
+<!ENTITY     props.path.label               "المسار:">
+<!ENTITY     props.secure.label             "أرسل ل‍‌:">
+<!ENTITY     props.expires.label            "تنقضي في:">
+<!ENTITY     props.container.label          "الحاوية:">
+
+<!ENTITY     window.title                   "كعكات">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "ابحث">
+<!ENTITY     searchFilter.accesskey         "ب">
+
+<!ENTITY     button.close.label             "أغلق">
+<!ENTITY     button.close.accesskey         "غ">

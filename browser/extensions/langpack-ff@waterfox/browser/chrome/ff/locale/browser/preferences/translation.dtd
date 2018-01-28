@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Paltooje - Firo">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Firo e ɗee-ɗoo ɗemɗe waawaataa heɓaade:">
+<!ENTITY treehead.languageName.label      "Ɗemɗe">
+<!ENTITY removeLanguage.label             "Momtu Ɗemngal">
+<!ENTITY removeLanguage.accesskey         "M">
+<!ENTITY removeAllLanguages.label         "Momtu Ɗemɗe Kala">
+<!ENTITY removeAllLanguages.accesskey     "o">
+
+<!ENTITY noTranslationForSites.label      "Firo e ɗee-ɗoo lowe waawaataa heɓaade:">
+
+<!ENTITY removeSite.label                 "Momtu Lowre">
+<!ENTITY removeSite.accesskey             "L">
+<!ENTITY removeAllSites.label             "Momtu Lowe Fof">
+<!ENTITY removeAllSites.accesskey         "o">
+
+<!ENTITY button.close.label               "Uddu">
+<!ENTITY button.close.accesskey           "U">
+
+<!ENTITY treehead.siteName2.label         "Websites">

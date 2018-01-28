@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "移除主控密碼">
+<!ENTITY removeInfo.label                  "請輸入密碼以繼續:">
+<!ENTITY removeWarning1.label              "主控密碼可以用來保護敏感資料 (如網站密碼)。">
+<!ENTITY removeWarning2.label              "若移除主控密碼，則您的私人資料在有別人可以存取您的電腦時有可能會洩露出去。">
+<!ENTITY setPassword.oldPassword.label     "目前密碼:">
+
+

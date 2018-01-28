@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Vaihda pääsalasana">
+<!ENTITY setPassword.tokenName.label "Turvallisuuslaite">
+<!ENTITY setPassword.oldPassword.label "Nykyinen salasana:">
+<!ENTITY setPassword.newPassword.label "Uusi salasana:">
+<!ENTITY setPassword.reenterPassword.label "Uusi salasana (uudestaan):">
+<!ENTITY setPassword.meter.label "Salasanan laadun mittari">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Poista">
+<!ENTITY resetPassword.title  "Poista pääsalasana">
+<!ENTITY resetPassword.text  "Jos pääsalasana poistetaan, kaikki tallennetut sivusto- ja sähköpostisalasanat, lomaketiedot, henkilökohtaiset varmenteet ja salaiset avaimet unohdetaan. Poistetaanko pääsalasana?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Ladataan varmennetta">
+<!ENTITY downloadCert.message1 "Aseta uuden varmentajan luotettavuus.">
+<!ENTITY downloadCert.trustSSL "Sivustojen todentajana.">
+<!ENTITY downloadCert.trustEmail "Sähköpostien lähettäjien todentajana.">
+<!ENTITY downloadCert.trustObjSign "Ohjelmiston kehittäjien todentajana.">
+<!ENTITY downloadCert.message3 "Ennen kuin varmentaja lisätään yhdellekään luotettujen varmentajien listalle, tulisi sen varmenne, turvallisuuskäytännöt ja menettelytavat tarkistaa (jos ne ovat saatavilla).">
+<!ENTITY downloadCert.viewCert.label "Näytä">
+<!ENTITY downloadCert.viewCert.text "Tarkastele varmentajan varmennetta">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Käyttäjän todentamispyyntö">
+<!ENTITY clientAuthAsk.message1 "Sivusto pyytää sinua todentamaan itsesi varmenteella:">
+<!ENTITY clientAuthAsk.message2 "Valitse todentavana esitettävä varmenne:">
+<!ENTITY clientAuthAsk.message3 "Valitun varmenteen yksityiskohdat:">
+
+<!ENTITY pkcs12.setpassword.title  "Valitse varmenteen varmuuskopion salasana">
+<!ENTITY pkcs12.setpassword.message  "Varmenteen varmuuskopion salasana suojaa varmuuskopiota, jota ollaan luomassa. Salasana täytyy asettaa varmuuskopiolle.">
+<!ENTITY pkcs12.setpassword.label1 "Varmenteen varmuuskopion salasana:">
+<!ENTITY pkcs12.setpassword.label2 "Varmenteen varmuuskopion salasana (uudelleen):">
+<!ENTITY pkcs12.setpassword.reminder "Tärkeää: Jos varmenteen varmuuskopion salasana unohtuu, niin varmennetta ei voi palauttaa myöhemmin. Säilytä salasana turvallisessa paikassa.">
+
+<!ENTITY chooseToken.title  "Valitse tunniste">
+<!ENTITY chooseToken.message1 "Valitse tunniste.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Luodaan salaista avainta">
+<!ENTITY createCertInfo.msg1 "Avaimen luonti käynnissä… Tämä saattaa kestää muutaman minuutin….">
+<!ENTITY createCertInfo.msg2 "Odota…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Suojattu vuoromerkkitodennus">
+<!ENTITY protectedAuth.msg "Todenna vuoromerkille. Todennustapa riippuu vuoromerkin tyypistä.">
+<!ENTITY protectedAuth.tokenName.label "Vuoromerkki:">

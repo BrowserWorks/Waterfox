@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label			"起動">
+
+<!ENTITY startupPage2.label		"&brandShortName; を起動するとき">
+<!ENTITY startupPage2.accesskey		"s">
+<!ENTITY startupUserHomePage.label	"ホームページを表示する">
+<!ENTITY startupBlankPage.label		"空白ページを表示する">
+<!ENTITY startupPrevSession.label	"前回終了時のウィンドウとタブを表示する">
+
+<!ENTITY homepage2.label		"ホームページ">
+<!ENTITY homepage2.accesskey		"P">
+<!ENTITY useCurrentPage.label		"現在のページを使用">
+<!ENTITY useCurrentPage.accesskey	"C">
+<!ENTITY useMultiple.label		"現在のタブグループを使用">
+<!ENTITY chooseBookmark.label		"ブックマークを使う...">
+<!ENTITY chooseBookmark.accesskey	"B">
+<!ENTITY restoreDefault.label		"初期設定に戻す">
+<!ENTITY restoreDefault.accesskey	"R">
+
+<!ENTITY downloads.label		"ダウンロード">
+
+<!ENTITY saveTo.label			"次のフォルダーに保存する">
+<!ENTITY saveTo.accesskey		"v">
+<!ENTITY chooseFolderWin.label		"参照...">
+<!ENTITY chooseFolderWin.accesskey	"o">
+<!ENTITY chooseFolderMac.label		"選択...">
+<!ENTITY chooseFolderMac.accesskey	"e">
+<!ENTITY alwaysAskWhere.label		"ファイルごとに保存先を指定する">
+<!ENTITY alwaysAskWhere.accesskey	"A">
+
+<!ENTITY alwaysCheckDefault2.label	"&brandShortName; が既定のブラウザーか確認する">
+<!ENTITY alwaysCheckDefault2.accesskey	"y">
+<!ENTITY setAsMyDefaultBrowser3.label	"既定のブラウザーにする...">
+<!ENTITY setAsMyDefaultBrowser3.accesskey	"D">
+<!ENTITY isDefault.label		"&brandShortName; は既定のブラウザーに設定されています">
+<!ENTITY isNotDefault.label		"&brandShortName; は既定のブラウザーに設定されていません">
+
+<!ENTITY separateProfileMode.label	"&brandShortName; と Waterfox の同時起動を許可する">
+<!ENTITY useWaterfoxSync.label		"ヒント: これは別のプロファイルを使用します。データを共有するには Sync を使用してください。">
+<!ENTITY getStarted.notloggedin.label	"&syncBrand.shortName.label; にログインする...">
+<!ENTITY getStarted.configured.label	"&syncBrand.shortName.label; 設定を開く">
+
+<!ENTITY e10sEnabled.label		"マルチプロセス &brandShortName; を有効にする">

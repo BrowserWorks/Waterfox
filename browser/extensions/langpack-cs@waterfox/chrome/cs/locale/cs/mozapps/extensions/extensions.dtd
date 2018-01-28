@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Správce doplňků">
+
+<!ENTITY search.placeholder                   "Hledat doplňky">
+<!ENTITY search.buttonlabel                   "Hledat">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Načítání…">
+<!ENTITY listEmpty.installed.label            "Žádný doplněk tohoto typu není nainstalován">
+<!ENTITY listEmpty.availableUpdates.label     "Nebyly nalezeny žádné aktualizace">
+<!ENTITY listEmpty.recentUpdates.label        "Žádný doplněk nebyl aktualizován">
+<!ENTITY listEmpty.findUpdates.label          "Zkontrolovat aktualizace">
+<!ENTITY listEmpty.search.label               "Nepodařilo se najít žádný odpovídající doplněk">
+<!ENTITY listEmpty.button.label               "Zjistěte více informací o doplňcích">
+<!ENTITY installAddonFromFile.label           "Instalovat doplněk ze souboru…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Nástroje doplňků">
+
+<!ENTITY getThemes.description                "Chcete si přizpůsobit svůj prohlížeč?">
+<!ENTITY getThemes.learnMore                  "Vyberte si některý z tisíce vzhledů.">
+
+<!ENTITY cmd.back.tooltip                     "Přejde na předchozí stránku">
+<!ENTITY cmd.forward.tooltip                  "Přejde na následující stránku">
+
+<!ENTITY showUnsignedExtensions.button.label  "Některá rozšíření nemohla být ověřena">
+<!ENTITY showAllExtensions.button.label       "Zobrazit všechna rozšíření">
+<!ENTITY debugAddons.label                    "Ladění doplňků">
+<!ENTITY debugAddons.accesskey                "L">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "V nouzovém režimu jsou všechny doplňky zakázány.">
+<!ENTITY warning.checkcompatibility.label          "Kontrola kompatibility doplňků je zakázána. Aplikace může obsahovat nekompatibilní doplňky.">
+<!ENTITY warning.checkcompatibility.enable.label   "Povolit">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Povolí kontrolu kompatibility doplňků">
+<!ENTITY warning.updatesecurity.label              "Kontrola bezpečné aktualizace doplňků je zakázána. Aplikace může být pomocí aktualizací napadena.">
+<!ENTITY warning.updatesecurity.enable.label       "Povolit">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Povolí kontrolu bezpečné aktualizace doplňků">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Hledat">
+<!ENTITY view.discover.label                  "Získání doplňků">
+<!ENTITY view.recentUpdates.label             "Nedávné aktualizace">
+<!ENTITY view.availableUpdates.label          "Dostupné aktualizace">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Zkontrolovat aktualizace">
+<!ENTITY updates.checkForUpdates.accesskey    "k">
+<!ENTITY updates.viewUpdates.label            "Zobrazit nedávné aktualizace">
+<!ENTITY updates.viewUpdates.accesskey        "Z">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Automaticky aktualizovat doplňky">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Nastavit všem doplňkům automatickou aktualizaci">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "N">
+<!ENTITY updates.resetUpdatesToManual.label          "Nastavit všem doplňkům manuální aktualizaci">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "N">
+<!ENTITY updates.updating.label               "Probíhá aktualizace doplňků">
+<!ENTITY updates.installed.label              "Doplňky byly aktualizovány.">
+<!ENTITY updates.downloaded.label             "Doplňky byly staženy.">
+<!ENTITY updates.restart.label                "Restartovat pro dokončení instalace">
+<!ENTITY updates.noneFound.label              "Nebyly nalezeny žádné aktualizace">
+<!ENTITY updates.manualUpdatesFound.label     "Zobrazit dostupné aktualizace">
+<!ENTITY updates.updateSelected.label         "Instalovat aktualizace">
+<!ENTITY updates.updateSelected.tooltip       "Nainstaluje vybrané aktualizace">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Zobrazit více informací">
+<!ENTITY cmd.showDetails.accesskey            "v">
+<!ENTITY cmd.findUpdates.label                "Aktualizovat">
+<!ENTITY cmd.findUpdates.accesskey            "A">
+<!ENTITY cmd.preferencesWin.label             "Možnosti">
+<!ENTITY cmd.preferencesWin.accesskey         "M">
+<!ENTITY cmd.preferencesUnix.label            "Předvolby">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "O doplňku">
+<!ENTITY cmd.about.accesskey                  "O">
+
+<!ENTITY cmd.enableAddon.label                "Povolit">
+<!ENTITY cmd.enableAddon.accesskey            "P">
+<!ENTITY cmd.disableAddon.label               "Zakázat">
+<!ENTITY cmd.disableAddon.accesskey           "Z">
+<!ENTITY cmd.enableTheme.label                "Použít motiv vzhledu">
+<!ENTITY cmd.enableTheme.accesskey            "m">
+<!ENTITY cmd.disableTheme.label               "Nepoužívat motiv vzhledu">
+<!ENTITY cmd.disableTheme.accesskey           "m">
+<!ENTITY cmd.askToActivate.label              "Spustit na vyžádání">
+<!ENTITY cmd.askToActivate.tooltip            "Na spuštění zásuvného modulu se vždy zeptat">
+<!ENTITY cmd.alwaysActivate.label             "Vždy spustit">
+<!ENTITY cmd.alwaysActivate.tooltip           "Zásuvný modul bude vždy spuštěn">
+<!ENTITY cmd.neverActivate.label              "Nespouštět">
+<!ENTITY cmd.neverActivate.tooltip            "Zásuvný modul nebude nikdy spuštěn">
+<!ENTITY cmd.stateMenu.tooltip                "Změní způsob spouštění zásuvného modulu">
+<!ENTITY cmd.installAddon.label               "Instalovat">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Odebrat">
+<!ENTITY cmd.uninstallAddon.accesskey         "d">
+<!ENTITY cmd.showPreferencesWin.label         "Možnosti">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Umožní změnit možnosti doplňku">
+<!ENTITY cmd.showPreferencesUnix.label        "Předvolby">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Umožní změnit předvolby doplňku">
+<!ENTITY cmd.contribute.label                 "Přispět">
+<!ENTITY cmd.contribute.accesskey             "s">
+<!ENTITY cmd.contribute.tooltip               "Zobrazí informace jak přispět na vývoj doplňku">
+
+<!ENTITY cmd.showReleaseNotes.label           "Zobrazit poznámky k vydání">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Zobrazí poznámky k vydání této aktualizace">
+<!ENTITY cmd.hideReleaseNotes.label           "Skrýt poznámky k vydání">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Skryje poznámky k vydání této aktualizace">
+<!ENTITY cmd.findReplacement.label            "Najít náhradu">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Co jsou doplňky?">
+<!ENTITY discover.description2                "Doplňky jsou aplikace, které vám umožní přizpůsobit si aplikaci &brandShortName; pomocí nových funkcí či stylů. Vyzkoušejte čas šetřící postranní lištu či motiv vzhledu, který přizpůsobí aplikaci &brandShortName; do vašeho stylu.">
+<!ENTITY discover.footer                      "V případě dostupného připojení k internetu bude tato stránka zobrazovat některé z nejoblíbenějších doplňků, které si můžete vyzkoušet.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Verze">
+<!ENTITY detail.lastupdated.label             "Poslední aktualizace">
+<!ENTITY detail.creator.label                 "Autor">
+<!ENTITY detail.homepage.label                "Domovská stránka">
+<!ENTITY detail.numberOfDownloads.label       "Počet stažení">
+
+<!ENTITY detail.contributions.description     "Vývojář tohoto doplňku vás žádá o malý příspěvek, kterým pomůžete podpořit další vývoj.">
+
+<!ENTITY detail.updateType                    "Automatické aktualizace">
+<!ENTITY detail.updateDefault.label           "Výchozí">
+<!ENTITY detail.updateDefault.tooltip         "Aktualizace se instalují automaticky, je-li to výchozí nastavení">
+<!ENTITY detail.updateAutomatic.label         "Povoleny">
+<!ENTITY detail.updateAutomatic.tooltip       "Aktualizace se instalují automaticky">
+<!ENTITY detail.updateManual.label            "Zakázány">
+<!ENTITY detail.updateManual.tooltip          "Aktualizace se instalují manuálně">
+<!ENTITY detail.home                          "Domovská stránka">
+<!ENTITY detail.repository                    "Profil doplňku">
+<!ENTITY detail.size                          "Velikost">
+
+<!ENTITY detail.checkForUpdates.label         "Zkontrolovat aktualizace">
+<!ENTITY detail.checkForUpdates.accesskey     "Z">
+<!ENTITY detail.checkForUpdates.tooltip       "Zkontroluje dostupnost aktualizace doplňku">
+<!ENTITY detail.showPreferencesWin.label      "Možnosti">
+<!ENTITY detail.showPreferencesWin.accesskey  "M">
+<!ENTITY detail.showPreferencesWin.tooltip    "Umožní změnit možnosti doplňku">
+<!ENTITY detail.showPreferencesUnix.label     "Předvolby">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Umožní změnit předvolby doplňku">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Hodnocení">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Pozastavit">
+<!ENTITY progress.cancel.tooltip              "Zrušit">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Název">
+<!ENTITY sort.name.tooltip                    "Seřadit podle názvu">
+<!ENTITY sort.dateUpdated.label               "Poslední aktualizace">
+<!ENTITY sort.dateUpdated.tooltip             "Řadit dle aktualizace">
+<!ENTITY sort.relevance.label                 "Nejlepší shody">
+<!ENTITY sort.relevance.tooltip               "Řadit dle nejlepší shody">
+<!ENTITY sort.price.label                     "Cena">
+<!ENTITY sort.price.tooltip                   "Řadit dle ceny">
+
+<!ENTITY search.filter2.label                 "Hledat:">
+<!ENTITY search.filter2.installed.label       "Mé doplňky">
+<!ENTITY search.filter2.installed.tooltip     "Zobrazí nainstalované doplňky">
+<!ENTITY search.filter2.available.label       "Dostupné doplňky">
+<!ENTITY search.filter2.available.tooltip     "Zobrazí doplňky dostupné k instalaci">
+
+<!ENTITY addon.homepage                       "Domovská stránka">
+<!ENTITY addon.details.label                  "Více">
+<!ENTITY addon.details.tooltip                "Zobrazí více informací o doplňku">
+<!ENTITY addon.unknownDate                    "Neznámá">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ZASTARALÉ">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(zakázáno)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "(aktualizovat)">
+<!ENTITY addon.undoAction.label               "Zpět">
+<!ENTITY addon.undoAction.tooltip             "Vrátí tuto akci">
+<!ENTITY addon.undoRemove.label               "Zpět">
+<!ENTITY addon.undoRemove.tooltip             "Ponechá doplněk nainstalovaný">
+<!ENTITY addon.restartNow.label               "Restartovat">
+<!ENTITY addon.install.label                  "Instalovat">
+<!ENTITY addon.install.tooltip                "Nainstaluje doplněk">
+<!ENTITY addon.updateNow.label                "Aktualizovat">
+<!ENTITY addon.updateNow.tooltip              "Nainstaluje aktualizaci doplňku">
+<!ENTITY addon.includeUpdate.label            "Vybrat k instalaci">
+<!ENTITY addon.updateAvailable.label          "Aktualizace je dostupná">
+<!ENTITY addon.checkingForUpdates.label       "Kontrola aktualizací…">
+<!ENTITY addon.releaseNotes.label             "Poznámky k vydání:">
+<!ENTITY addon.loadingReleaseNotes.label      "Načítání…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Omlouváme se, ale při načítání poznámek k vydání nastala chyba.">
+
+<!ENTITY addon.createdBy.label                "Od ">
+
+<!ENTITY eula.title                           "Licenční smlouva s koncovým uživatelem">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Přijmout a instalovat…">
+
+<!ENTITY settings.path.button.label           "Procházet…">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "O co se jedná? Vzdálené měření může čas od času nainstalovat a spustit experimenty.">
+<!ENTITY experiment.info.learnmore "Zjistit více">
+<!ENTITY experiment.info.learnmore.accesskey "Z">
+<!ENTITY experiment.info.changetelemetry "Nastavení měření">
+<!ENTITY experiment.info.changetelemetry.accesskey "N">
+
+<!ENTITY setting.learnmore "Zjistit více…">
+
+<!ENTITY disabledUnsigned.heading "Některé doplňky byly zablokovány">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Následující doplňky nebyly ověřeny pro použití v aplikaci &brandShortName;. Můžete ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "za ně najít náhrady">
+<!ENTITY disabledUnsigned.description.end " nebo požádat vývojáře, aby je nechal ověřit.">
+<!ENTITY disabledUnsigned.learnMore "Zjistěte více o naší snaze o vaši bezpečnost.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Vývojáři, kteří mají zájem o ověření svých rozšíření, mohou pokračovat přečtením ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "našeho manuálu">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Něco chybí? Některé zásuvné moduly už &brandShortName; nepodporuje.">
+<!ENTITY pluginDeprecation.learnMore "Zjistit více.">
+
+<!ENTITY legacyWarning.description "Něco chybí? Některá rozšíření už &brandShortName; nepodporuje.">
+<!ENTITY legacyWarning.showLegacy "Zobrazit zastaralá rozšíření">
+<!ENTITY legacyExtensions.title "Zastaralá rozšíření">
+<!ENTITY legacyExtensions.description "Tato rozšíření byla zakázána, protože neodpovídají současným standardům aplikace &brandShortName;.">
+<!ENTITY legacyExtensions.learnMore "Zjistit více o změnách pro doplňky">

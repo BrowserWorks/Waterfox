@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Datas da telemetria">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Funtauna da datas da ping:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Datas da ping actualas
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Datas da ping archivadas
+">
+
+<!ENTITY aboutTelemetry.raw "
+JSON brut
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Mussar datas da sesidas subordinadas
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Tscherner il ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Ping pli nov
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ping pli vegl &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Emna
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Tip da ping
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Oz
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Ier
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Pli vegl
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Datas generalas
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Datas dal conturn
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Protocol da telemetria
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Statements da SQL plauns
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Bloccadas dal navigatur
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Bloccadas dal thread
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Stacks Registrads
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Scalars cun clav
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Istograms
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Istograms cun clav
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Eveniments
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Mesiraziuns simplas
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Detagls dal supplement
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Inscripziuns retardadas
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Infurmaziuns davart la sessiun
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  REMARTGA: Il debugging da SQL plaun è activà. Eventualmain vegnan entirs strings da SQL mussads sutvart. Quels na vegnan dentant betg tramess a Telemetry.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Retschaiver ils nums da funcziuns per ils stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Mussar las datas bruttas dal stack
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filter (strings u /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Cuntegn
+">

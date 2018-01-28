@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Mani nikanöx">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Junelïk tisamajïx Mani Q'ojom">
+<!ENTITY doNotTrackCheckbox2.accesskey "J">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; xtutäq jun etal chi rat man nawajo' ta yatojqan junelïk toq tzijïl ri Chajinïk chuwäch Ojqanïk.">
+<!ENTITY doNotTrackLearnMore.label    "Tetamäx ch'aqa' chik">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "स्क्रॅचपॅड">
+
+<!ENTITY fileMenu.label               "फाइल">
+<!ENTITY fileMenu.accesskey           "F">
+
+<!ENTITY newWindowCmd.label           "नवीन पटल">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "फाइल उघडा…">
+<!ENTITY openFileCmd.accesskey        "O">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "अलिकडील उघडा">
+<!ENTITY openRecentMenu.accesskey     "R">
+
+<!ENTITY revertCmd.label              "पूर्वस्थितीत आणा...">
+<!ENTITY revertCmd.accesskey          "t">
+
+<!ENTITY saveFileCmd.label            "साठवा">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "असे साठवा…">
+<!ENTITY saveFileAsCmd.accesskey      "A">
+
+<!ENTITY closeCmd.label               "बंद करा">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "C">
+
+<!ENTITY viewMenu.label               "दृष्य">
+<!ENTITY viewMenu.accesskey           "V">
+
+<!ENTITY lineNumbers.label             "ओळ क्रमांक दाखवा">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY wordWrap.label                "पाठ व्रॅप रचनाबध्द करा">
+<!ENTITY wordWrap.accesskey            "W">
+
+<!ENTITY highlightTrailingSpace.label     "समाप्तिची मोकळी जागा ठळक करत आहे">
+<!ENTITY highlightTrailingSpace.accesskey "H">
+
+<!ENTITY largerFont.label             "मोठे टंक">
+<!ENTITY largerFont.accesskey         "a">
+<!ENTITY largerFont.commandkey        "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY largerFont.commandkey2       "="> 
+
+<!ENTITY smallerFont.label            "लहान टंक">
+<!ENTITY smallerFont.accesskey        "m">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "सामान्य आकार">
+<!ENTITY normalSize.accesskey         "N">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "संपादित करा">
+<!ENTITY editMenu.accesskey           "E">
+
+<!ENTITY run.label                    "चालवा">
+<!ENTITY run.accesskey                "R">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "चौकशी करा">
+<!ENTITY inspect.accesskey            "I">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "दृश्य">
+<!ENTITY display.accesskey            "D">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "सुरेख छपाई">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "P">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "वातावरण">
+<!ENTITY environmentMenu.accesskey    "n">
+
+
+<!ENTITY contentContext.label         "अंतर्भूत माहिती">
+<!ENTITY contentContext.accesskey     "C">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "ब्राउझर">
+<!ENTITY browserContext.accesskey     "B">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "मदत">
+<!ENTITY helpMenu.accesskey           "H">
+<!ENTITY helpMenuWin.label            "मदत">
+<!ENTITY helpMenuWin.accesskey        "H">
+
+<!ENTITY documentationLink.label      "MDN वरील स्क्रॅचपॅड मदत">
+<!ENTITY documentationLink.accesskey  "D">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "वेरियेबल्स् मूळस्थितीत आणा">
+<!ENTITY resetContext2.accesskey      "t">
+
+<!ENTITY reloadAndRun.label           "पुन्हा लोड करा व चालवा">
+<!ENTITY reloadAndRun.accesskey       "e">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "चालवा">
+<!ENTITY executeMenu.accesskey        "x">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+<!ENTITY evalFunction.label "सध्याच्या फंक्शनचे विश्लेषण करा">
+<!ENTITY evalFunction.accesskey "v">
+<!ENTITY evalFunction.key "e">

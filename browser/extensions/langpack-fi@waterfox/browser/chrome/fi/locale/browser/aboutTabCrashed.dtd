@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Sulje välilehti">
+<!ENTITY tabCrashed.restoreTab "Palauta välilehti">
+<!ENTITY tabCrashed.restoreAll "Palauta kaikki kaatuneet välilehdet">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Välilehti kaatui.">
+<!ENTITY tabCrashed.offerHelp "Voimme auttaa!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Päivitä sivun sisältö valitsemalla &tabCrashed.restoreTab;.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Päivitä sivun sisältö valitsemalla joko &tabCrashed.restoreTab; tai &tabCrashed.restoreAll;.">
+<!ENTITY tabCrashed.requestHelp "Autatko meitä?">
+<!ENTITY tabCrashed.requestHelpMessage "Kaatumisilmoitukset auttavat meitä tunnistamaan ongelmia ja tekemään &brandShortName;ista paremman.">
+<!ENTITY tabCrashed.requestReport "Ilmoita tästä välilehdestä">
+<!ENTITY tabCrashed.sendReport2 "Lähetä kaatumisilmoitus tästä välilehdestä">
+<!ENTITY tabCrashed.commentPlaceholder2 "Vapaaehtoisia kommentteja (kommentit ovat julkisia)">
+<!ENTITY tabCrashed.includeURL2 "Liitä sivun verkko-osoite kaatumisilmoitukseen">
+<!ENTITY tabCrashed.emailPlaceholder "Kirjoita sähköpostiosoitteesi">
+<!ENTITY tabCrashed.emailMe "Lähettäkää minulle sähköpostia kun lisätietoja on saatavilla">
+<!ENTITY tabCrashed.reportSent "Kaatumisilmoitus on jo lähetetty. Kiitos avustasi &brandShortName;in kehittämiseksi!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Ilmoita taustalla olevista välilehdistä">
+<!ENTITY tabCrashed.autoSubmit2 "Päivitä asetukset lähettämään automaattisesti kaatumisilmoitukset, mukaan lukien kaatuneet taustalla olleet välilehdet tältä ja tulevilta käyttökerroilta">

@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - נא לבחור פרופיל משתמש">
+
+<!ENTITY            profilename.label      "שם פרופיל:">
+
+<!ENTITY            start.label            "הפעלת &brandShortName;">
+<!ENTITY            exit.label             "יציאה">
+
+<!ENTITY            availprofiles.label    "פרופילים זמינים">
+
+<!ENTITY            newButton.label        "יצירת פרופיל…">
+<!ENTITY            newButton.accesskey    "צ">
+<!ENTITY            renameButton.label     "שינוי שם פרופיל…">
+<!ENTITY            renameButton.accesskey "פ">
+<!ENTITY            deleteButton.label     "מחיקת פרופיל...">
+<!ENTITY            deleteButton.accesskey "ח">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; מאכסן מידע על ההגדרות, ההעדפות, ופריטי משתמש אחרים שלך בפרופיל המשתמש שלך.">
+
+<!ENTITY            offlineState.label    "עבוד לא־מקוון">
+<!ENTITY            offlineState.accesskey "ע">
+
+<!ENTITY            useSelected.label       "להשתמש בפרופיל הנבחר מבלי לשאול בהפעלה">
+<!ENTITY            useSelected.accesskey   "נ">

@@ -1,0 +1,174 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informații de depanare">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Această pagină conține informații tehnice care ar putea fi utile atunci când încerci să rezolvi o problemă. Dacă ești în căutarea de răspunsuri la întrebări comune despre &brandShortName;, verifică <a id='supportLink'>site-ul nostru de suport</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Rapoarte de defecțiuni">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID raport">
+<!ENTITY aboutSupport.crashes.sendDate "Trimis">
+<!ENTITY aboutSupport.crashes.allReports "Toate rapoartele de defecțiuni">
+<!ENTITY aboutSupport.crashes.noConfig "Această aplicație nu a fost configurată pentru afișarea rapoartelor de defecțiuni.">
+
+<!ENTITY aboutSupport.extensionsTitle "Extensii">
+<!ENTITY aboutSupport.extensionName "Nume">
+<!ENTITY aboutSupport.extensionEnabled "Activat">
+<!ENTITY aboutSupport.extensionVersion "Versiune">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featureName "Nume">
+<!ENTITY aboutSupport.featureVersion "Versiune">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Funcții experimentale">
+<!ENTITY aboutSupport.experimentName "Nume">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Descriere">
+<!ENTITY aboutSupport.experimentActive "Activ">
+<!ENTITY aboutSupport.experimentEndDate "Data finală">
+<!ENTITY aboutSupport.experimentHomepage "Pagina de start">
+<!ENTITY aboutSupport.experimentBranch "Ramură">
+
+<!ENTITY aboutSupport.appBasicsTitle "Informații de bază privind aplicația">
+<!ENTITY aboutSupport.appBasicsName "Nume">
+<!ENTITY aboutSupport.appBasicsVersion "Versiune">
+<!ENTITY aboutSupport.appBasicsBuildID "ID-ul versiunii compilate">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Canal de actualizare">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Istoricul actualizărilor">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Afișează istoricul actualizărilor">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Directorul de profiluri">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Dosarul profilului">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Pluginuri activate">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Configurația versiunii compilate">
+<!ENTITY aboutSupport.appBasicsUserAgent "Agent de utilizator">
+<!ENTITY aboutSupport.appBasicsOS "SO">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Utilizare memorie">
+<!ENTITY aboutSupport.appBasicsPerformance "Performanță">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service workeri înregistrați">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiluri">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Ferestre multiproces">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mod în siguranță">
+
+<!ENTITY aboutSupport.showDir.label "Deschide directorul">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Arată în Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Deschide dosarul">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Preferințe importante modificate">
+<!ENTITY aboutSupport.modifiedPrefsName "Nume">
+<!ENTITY aboutSupport.modifiedPrefsValue "Valoare">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Preferințe user.js">
+<!ENTITY aboutSupport.userJSDescription "Dosarul profilului conține un <a id='prefs-user-js-link'>fișier user.js</a>, care include preferințe ce nu au fost create de &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Preferințe importante blocate">
+<!ENTITY aboutSupport.lockedPrefsName "Nume">
+<!ENTITY aboutSupport.lockedPrefsValue "Valoare">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafică">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Bază de date cu locuri">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integritate">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verifică integritatea">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "GC incremental">
+
+<!ENTITY aboutSupport.a11yTitle "Accesibilitate">
+<!ENTITY aboutSupport.a11yActivated "Activat">
+<!ENTITY aboutSupport.a11yForceDisabled "Împiedică accesibilitatea">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Versiuni ale bibliotecii">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Istoricul instalării">
+<!ENTITY aboutSupport.updateHistoryTitle "Istoricul actualizărilor">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Copiază textul în clipboard">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Copiază datele brute în clipboard">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+
+
+
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+
+
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumente">
+
+<!ENTITY aboutSupport.safeModeTitle "Încearcă modul în siguranță">
+<!ENTITY aboutSupport.restartInSafeMode.label "Repornește cu suplimente dezactivate…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funcționalități">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostic">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Jurnal de erori">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Jurnal de decizii">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Funcții dezactivate de Crash Guard">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Alternative">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Printera iestatījumi">
+
+<!ENTITY paperInput.label "Papīra izmērs:">
+<!ENTITY paperInput.accesskey "z">
+
+<!ENTITY jobTitleInput.label "Darba nosaukums:">
+<!ENTITY jobTitleInput.accesskey "n">
+
+<!ENTITY colorGroup.label "Krāsas:">
+<!ENTITY grayRadio.label "Melnbalts">
+<!ENTITY grayRadio.accesskey "M">
+<!ENTITY colorRadio.label "Krāsains">
+<!ENTITY colorRadio.accesskey "K">
+
+<!ENTITY edgeMarginInput.label "Atstarpe no dokumenta līdz papīra malai">
+<!ENTITY topInput.label "Augšā:">
+<!ENTITY topInput.accesskey "A">
+<!ENTITY bottomInput.label "Apakšā:">
+<!ENTITY bottomInput.accesskey "p">
+<!ENTITY leftInput.label "Kreisā:">
+<!ENTITY leftInput.accesskey "e">
+<!ENTITY rightInput.label "Labā:">
+<!ENTITY rightInput.accesskey "L">

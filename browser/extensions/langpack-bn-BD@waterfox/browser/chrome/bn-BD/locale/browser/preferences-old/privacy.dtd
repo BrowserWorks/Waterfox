@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "ট্রাকিং সুরক্ষা ব্যবহার করুন">
+<!ENTITY  trackingProtectionAlways.label       "সবসময় y">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "শুধুমাত্র ব্যক্তিগত ব্রাউজিং উইন্ডোতে">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "কখনো নয় N">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "আরো জানতে">
+<!ENTITY  trackingProtectionExceptions.label   "ব্যতিক্রম… E">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+
+<!ENTITY tracking.label                 "অনুসরণ">
+<!ENTITY trackingProtectionPBM5.label         "ব্যক্তিগত উইন্ডোতে ট্রাকিং সুরক্ষা ব্যবহার করুন v">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "আরও জানুন">
+<!ENTITY changeBlockList.label          "ব্লক তালিকা পরিবর্তন করুন C">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "এছাড়াও আপনি ">
+<!ENTITY  doNotTrack.settings.label     "আপনার Do Not Track পরিচালনা করুন">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "ইতিহাস">
+
+<!ENTITY  locationBar.label             "অবস্থান সূচক বার">
+
+<!ENTITY  locbar.suggest.label          "অবস্থান বার ব্যবহার করার সময় পরামর্শ দিন:">
+<!ENTITY  locbar.history.label          "ইতিহাস">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "বুকমার্কসমূহ k">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "ট্যাব খুলুন O">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "পূর্বনির্ধারিত অনুসন্ধান ইঞ্জিন থেকে সংশ্লিষ্ট অনুসন্ধানসমূহ d">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "সার্চ ইঞ্জিন পরামর্শের জন্য অগ্রাধিকার পরিবর্তন করুন g...">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "তৃতীয়-পক্ষের কুকি গ্রহণ করা হবে">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "সর্বদা">
+<!ENTITY  acceptThirdParty.never.label    "কখনো নয়">
+<!ENTITY  acceptThirdParty.visited.label  "প্রদর্শিত হতে">
+
+<!ENTITY  keepUntil.label               "সংরক্ষণের সময়কাল: u">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "তাদের মেয়াদ উত্তীর্ণ হয়েছে">
+<!ENTITY  close.label                   "আমি &brandShortName; বন্ধ করি">
+
+<!ENTITY  cookieExceptions.label        "ব্যতিক্রম… E">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "কুকি প্রদর্শন করো... S">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; হবে:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "ইতিহাস মনে রাখবে">
+<!ENTITY  historyHeader.dontremember.label "কখনোই ইতিহাস মনে রাখবে না">
+<!ENTITY  historyHeader.custom.label       "ইতিহাসের জন্য স্বনির্বাচিত সেটিং ব্যবহার করবে">
+<!ENTITY  historyHeader.post.label         "ইতিহাস">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; আপনার ব্রাউজিং, ডাউনলোড, ফরম এবং অনুসন্ধানের ইতিহাস মনে রাখবে এবং পরিদর্শিত ওয়েবসাইটের কুকি সংরক্ষণ করবে।">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "আপনি প্রয়োজনে ">
+<!ENTITY  rememberActions.clearHistory.label  "আপনার সাম্প্রতিক ইতিহাস মুছে ফেলতে">
+<!ENTITY  rememberActions.middle.label        ", বা ">
+<!ENTITY  rememberActions.removeCookies.label "কুকিগুলো পৃথকভাবে অপসারণ করতে পারেন">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; একান্ত ব্রাউজিং এর মতোই সেটিং ব্যবহার করবে, এবং আপনার ব্রাউজিং এর কোন তথ্য সংরক্ষণ করবে না।">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "আপনি চাইলে ">
+<!ENTITY  dontrememberActions.clearHistory.label "বর্তমান সব ইতিহাস মুছে ফেলা হবে">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "সবসময় একান্ত ব্রাউজিং মোড ব্যবহার করুন p">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "আমার ব্রাউজিং এবং ডাউনলোড ইতিহাস মনে রাখুন b">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "অনুসন্ধান ও ফরমের ইতিহাস মনে রাখা হবে">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; বন্ধ করার সময় ইতিহাস মুছে ফেলা হবে">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "সেটিং…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "কন্টেইনার ট্যাব">
+<!ENTITY  browserContainersLearnMore.label      "আরো জানতে">
+<!ENTITY  browserContainersEnabled.label        "কন্টেইনার ট্যাব সক্রিয় করুন">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "সেটিং">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

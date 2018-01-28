@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "默认搜索引擎">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "请选择您的默认搜索引擎。&brandShortName; 会在地址栏和搜索栏使用该搜索引擎。">
+
+<!ENTITY provideSearchSuggestions.label        "提供搜索建议">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "在地址栏结果中显示搜索建议">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "由于您已经设置 &brandShortName; 不要记住浏览历史，地址栏中将不会显示搜索建议。">
+
+<!ENTITY oneClickSearchEngines.label           "快捷搜索引擎列表">
+
+<!ENTITY chooseWhichOneToDisplay.label         "您可以在搜索栏中直接使用不同搜索引擎进行搜索。请选择要显示哪些搜索引擎。">
+
+<!ENTITY engineNameColumn.label                "搜索引擎">
+<!ENTITY engineKeywordColumn.label             "关键词">
+
+<!ENTITY restoreDefaultSearchEngines.label     "恢复默认搜索引擎">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "移除">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines.label            "添加其他搜索引擎…">

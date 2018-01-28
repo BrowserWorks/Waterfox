@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "கருவிப் பட்டியைத் தனிப்பயனாக்கு">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "கருவிப்பட்டியிலிருந்து உருப்படிகளை இழுத்து சேர்க்கலாம் நீக்கலாம்.">
+<!ENTITY show.label               "காட்டு:">
+<!ENTITY iconsAndText.label       "சின்னங்கள் மற்றும் உரைகள்">
+<!ENTITY icons.label              "சின்னங்கள்">
+<!ENTITY text.label               "உரை">
+<!ENTITY useSmallIcons.label      "சிறிய சின்னங்களை பயன்படுத்து">
+<!ENTITY restoreDefaultSet.label  "முன்னிருப்பு அமை மறுசேமி">
+<!ENTITY addNewToolbar.label      "புதிய கருவிப்பட்டியை சேர்">
+<!ENTITY saveChanges.label        "முடிந்தது">
+<!ENTITY undoChanges.label        "மாற்றங்களை ரத்து செய்">

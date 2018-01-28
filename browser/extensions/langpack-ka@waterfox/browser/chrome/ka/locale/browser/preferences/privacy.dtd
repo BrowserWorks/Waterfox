@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "თვალთვალისგან დაცვა">
+<!ENTITY  trackingProtection2.description      "თვალთვალი ნიშნავს თქვენი მოქმედებების აღრიცხვას სხვადასხვა საიტების მეშვეობით. თვალთვალს იყენებენ, პირადი მონაცემების საფუძველზე, მომხმარებელზე, უფრო მეტად მორგებული მომსახურების შეთავაზებისთვის.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "თვალთვალისგან დაცვის საშუალებით, შეგიძლიათ ცნობილი მეთვალყურე ელემენტების შეზღუდვა">
+<!ENTITY  trackingProtectionAlways.label       "ყოველთვის">
+<!ENTITY  trackingProtectionAlways.accesskey   "ყ">
+<!ENTITY  trackingProtectionPrivate.label      "მხოლოდ პირად ფანჯრებში">
+<!ENTITY  trackingProtectionPrivate.accesskey  "პ">
+<!ENTITY  trackingProtectionNever.label        "არასდროს">
+<!ENTITY  trackingProtectionNever.accesskey    "ა">
+<!ENTITY  trackingProtectionLearnMore.label    "შეიტყვეთ მეტი">
+<!ENTITY  trackingProtectionExceptions.label   "გამონაკლისები…">
+<!ENTITY  trackingProtectionExceptions.accesskey "კ">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "თვალთვალისგან დაცვა პირადი ფანჯრით სარგებლობისას">
+<!ENTITY trackingProtectionPBM5.accesskey     "რ">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "თვალთვალისგან დაცვის საშუალებით, პირადი თვალიერებისას, შეგიძლიათ ცნობილი მეთვალყურე ელემენტების შეზღუდვა">
+<!ENTITY trackingProtectionPBM6.accesskey     "თ">
+<!ENTITY trackingProtectionPBMLearnMore.label "შეიტყვეთ მეტი">
+<!ENTITY changeBlockList2.label               "შეზღუდულთა სიის ჩასწორება…">
+<!ENTITY changeBlockList2.accesskey           "შ">
+
+<!ENTITY  doNotTrack.description        "საიტებისთვის “არ მითვალთვალო” მოთხოვნის გაგზავნა">
+<!ENTITY  doNotTrack.learnMore.label    "შეიტყვეთ მეტი">
+<!ENTITY  doNotTrack.default.label      "მხოლოდ, თვალთვალისგან დაცვის დროს">
+<!ENTITY  doNotTrack.always.label       "ყოველთვის">
+
+<!ENTITY  history.label                 "ისტორია">
+<!ENTITY  permissions.label             "უფლებები">
+
+<!ENTITY  addressBar.label              "მისამართების ზოლი">
+<!ENTITY  addressBar.suggest.label      "შემოთავაზებები, მისამართების ზოლით სარგებლობისას">
+<!ENTITY  locbar.history2.label         "დათვალიერების ისტორია">
+<!ENTITY  locbar.history2.accesskey     "ი">
+<!ENTITY  locbar.bookmarks.label        "სანიშნეები">
+<!ENTITY  locbar.bookmarks.accesskey    "ს">
+<!ENTITY  locbar.openpage.label         "გახსნილი ჩანართები">
+<!ENTITY  locbar.openpage.accesskey     "გ">
+<!ENTITY  locbar.searches.label         "მსგავსი ძიებები ნაგულისხმევი საძიებო სისტემიდან">
+<!ENTITY  locbar.searches.accesskey     "ს">
+
+<!ENTITY  suggestionSettings2.label     "საძიებო სისტემის შემოთავაზებების პარამეტრები">
+
+<!ENTITY  acceptCookies2.label          "ფუნთუშების მიღება საიტებიდან">
+<!ENTITY  acceptCookies2.accesskey      "ფ">
+
+<!ENTITY  acceptThirdParty.pre.label      "მესამე მხარის ფუნთუშების მიღება:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ღ">
+<!ENTITY  acceptThirdParty.always.label   "ყოველთვის">
+<!ENTITY  acceptThirdParty.never.label    "არასდროს">
+<!ENTITY  acceptThirdParty.visited.label  "მხოლოდ მონახულებულიდან">
+
+<!ENTITY  keepUntil.label               "შენახვა სანამ:">
+<!ENTITY  keepUntil.accesskey           "ს">
+
+<!ENTITY  expire.label                  "ვადა გაუვა">
+<!ENTITY  close.label                   "&brandShortName; დაიხურება">
+
+<!ENTITY  cookieExceptions.label        "გამონაკლისები…">
+<!ENTITY  cookieExceptions.accesskey    "გ">
+
+<!ENTITY  showCookies.label             "ფუნთუშების ნახვა…">
+<!ENTITY  showCookies.accesskey         "ფ">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; ბრაუზერი">
+<!ENTITY  historyHeader2.pre.accesskey     "ბ">
+<!ENTITY  historyHeader.remember.label     "დაიმახსოვრებს ისტორიას">
+<!ENTITY  historyHeader.dontremember.label "არასოდეს დაიმახსოვრებს ისტორიას">
+<!ENTITY  historyHeader.custom.label       "ისარგებლებს თქვენი მითითებებით">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; დაიმახსოვრებს დათვალიერებული გვერდების, ჩამოტვირთვების, ველების და ძიების ისტორიას, ასევე შეინახავს ნაჭდევებს მონახულებული საიტებიდან.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "შესაძლოა მოისურვოთ ">
+<!ENTITY  rememberActions.clearHistory.label  "თქვენი უახლესი ისტორიის გასუფთავება">
+<!ENTITY  rememberActions.middle.label        ", ან ">
+<!ENTITY  rememberActions.removeCookies.label "ცალკეული ფუნთუშების წაშლა">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ბრაუზერი ისარგებლებს პირადი ფანჯრის პარამეტრებით და არ შეინახვს თქვენ მიერ მონახულებული საიტების ისტორიას.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "შესაძლოა ასევე მოისურვოთ ">
+<!ENTITY  dontrememberActions.clearHistory.label "მიმდინარე ისტორიის გასუფთავება">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "ყოველთვის პირადი სეანსის გამოყენება">
+<!ENTITY  privateBrowsingPermanent2.accesskey "პ">
+
+<!ENTITY  rememberHistory2.label      "დათვალიერებული გვერდების და ჩამოტვირთვების ისტორიის დამახსოვრება">
+<!ENTITY  rememberHistory2.accesskey  "დ">
+
+<!ENTITY  rememberSearchForm.label       "ძიებისა და ფორმების ისტორიის დამახსოვრება">
+<!ENTITY  rememberSearchForm.accesskey   "ფ">
+
+<!ENTITY  clearOnClose.label             "ისტორიის გასუფთავება &brandShortName;-ის დახურვისას">
+<!ENTITY  clearOnClose.accesskey         "ფ">
+
+<!ENTITY  clearOnCloseSettings.label     "პარამეტრები…">
+<!ENTITY  clearOnCloseSettings.accesskey "ტ">
+
+<!ENTITY  browserContainersLearnMore.label      "შეიტყვეთ მეტი">
+<!ENTITY  browserContainersEnabled.label        "სათავსი ჩანართების ჩართვა">
+<!ENTITY  browserContainersEnabled.accesskey    "ჩ">
+<!ENTITY  browserContainersSettings.label        "პარამეტრები…">
+<!ENTITY  browserContainersSettings.accesskey    "პ">

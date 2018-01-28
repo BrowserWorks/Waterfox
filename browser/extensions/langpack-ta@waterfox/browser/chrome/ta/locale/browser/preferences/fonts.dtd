@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "எழுத்துருக்கள்">
+
+<!ENTITY  language.label                          "என்பதற்கான எழுத்துருக்கள்:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "அளவு:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "e">
+
+<!ENTITY  proportional.label                      "விகிதப்படி:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "ஷெரிஃப்:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "ஸான்ஸ்-ஷெரிஃப்:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "மோனோஸ்பேஸ்:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "இலத்தீன்">
+<!ENTITY  font.langGroup.japanese                 "ஜப்பானிய">
+<!ENTITY  font.langGroup.trad-chinese             "மரபார்ந்த சீனம் (தைவான்)">
+<!ENTITY  font.langGroup.simpl-chinese            "எளிய சீனம்">
+<!ENTITY  font.langGroup.trad-chinese-hk          "மரபார்ந்த சீனா (ஹாங்காங்)">
+<!ENTITY  font.langGroup.korean                   "கொரியன்">
+<!ENTITY  font.langGroup.cyrillic                 "சிரில்லிக்">
+<!ENTITY  font.langGroup.el                       "கிரேக்கம்">
+<!ENTITY  font.langGroup.other                    "மற்ற எழுதும் முறைகள்">
+<!ENTITY  font.langGroup.thai                     "தாய்">
+<!ENTITY  font.langGroup.hebrew                   "ஹீப்ரு">
+<!ENTITY  font.langGroup.arabic                   "அரபு">
+<!ENTITY  font.langGroup.devanagari               "தேவநாகரி">
+<!ENTITY  font.langGroup.tamil                    "தமிழ்">
+<!ENTITY  font.langGroup.armenian                 "அர்மேனியன்">
+<!ENTITY  font.langGroup.bengali                  "பெங்காலி">
+<!ENTITY  font.langGroup.canadian                 "கன்னடியன்">
+<!ENTITY  font.langGroup.ethiopic                 "எத்தியோபிக்">
+<!ENTITY  font.langGroup.georgian                 "ஜார்ஜியன்">
+<!ENTITY  font.langGroup.gujarati                 "குஜராத்தி">
+<!ENTITY  font.langGroup.gurmukhi                 "குர்முஹி">
+<!ENTITY  font.langGroup.khmer                    "கெமெர்">
+<!ENTITY  font.langGroup.malayalam                "மலையாளம்">
+<!ENTITY  font.langGroup.math                     "கணிதம்">
+<!ENTITY  font.langGroup.odia                     "ஒடியா">
+<!ENTITY  font.langGroup.telugu                   "தெலுங்கு">
+<!ENTITY  font.langGroup.kannada                  "கன்னடம்">
+<!ENTITY  font.langGroup.sinhala                  "சிங்களம்">
+<!ENTITY  font.langGroup.tibetan                  "திபேத்தியன்">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "குறைந்தபட்ச எழுத்துருவின் அளவு:">
+<!ENTITY minSize.accesskey                        "o">
+<!ENTITY minSize.none                             "ஒன்றுமில்லை">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "ஷெரிஃப்">
+<!ENTITY  useDefaultFontSansSerif.label           "ஸான்ஸ் ஷெரிஃப்">
+
+<!ENTITY  allowPagesToUseOwn.label                "உங்கள் தேர்வுகளுக்குப் பதிலாக பக்கங்கள் அதன் சொந்த எழுத்துருக்களைத் தேர்வு செய்ய அனுமதிக்கவும்">
+<!ENTITY  allowPagesToUseOwn.accesskey            "A">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "பழமையான உள்ளடக்கத்திற்கான உரை குறியீடாக்கம்">
+<!ENTITY languages.customize.Fallback2.label      "பின்சார்பு உரை குறிமுறை:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "தனது குறியீடாக்கத்தை அறிவிக்காத பழமையான உள்ளடக்கத்திற்கு இந்த உரை குறியீடாக்கம் பயன்படுத்தப்படும்.">
+
+<!ENTITY languages.customize.Fallback.auto        "தற்பொதைய மொழிக்கு முன்னிருப்பு">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "அராபிக்">
+<!ENTITY languages.customize.Fallback.baltic      "பால்டிக்">
+<!ENTITY languages.customize.Fallback.ceiso       "மத்திய ஐரோப்பா, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "மத்திய ஐரோப்பா, மைக்ரோசாப்ட்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "எளிய சீனம்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "பாரம்பரிய சீனம்">
+<!ENTITY languages.customize.Fallback.cyrillic    "சைரிலிக்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "கிரேக்கம்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "எபிரேயம்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "ஜப்பானிஸ்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "கொரியன்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "தாய்">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "துருக்கி">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "வியட்னாமிய">
+<!ENTITY languages.customize.Fallback.other       "மற்றவை(மேற்கத்திய ஐரோப்பவையும் உள்ளடக்கியவை)">

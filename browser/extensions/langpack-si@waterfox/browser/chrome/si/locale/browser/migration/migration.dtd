@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ආයාත විශාරද">
+
+<!ENTITY importFrom.label               "වරණ, පිටු සලකුණු, පෙරදෑ, රහස්පද සහ අනෙකුත් දත්ත ආයාත කළ යුත්තේ:">
+<!ENTITY importFromUnix.label           "මනාපයන්, පිටු සලකුණු, පෙරදෑ, රහස්පද සහ අනෙකුත් දත්ත ආයාත කළ යුත්තේ:">
+<!ENTITY importFromBookmarks.label      "පිටු සලකුණු ආයාත කිරීම:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "කිසිවක් ආයාත නොකරන්න">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "සෆාරි (Safari)">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "ක්‍රෝම් (Chrome)">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "පිටු සලකුණු, අතීතය හෝ රහස්පද දත්ත අඩංගු වන කිසිදු වැඩසටහනක් සොයාගත නොහැකි විය.">
+
+<!ENTITY importSource.title             "සැකසුම් සහ දත්ත ආයාත කිරීම">
+<!ENTITY importItems.title              "ආයාත කරන අයිතමයන්">
+<!ENTITY importItems.label              "ආයාත කරන්නේ කුමක් දැයි තෝරන්න:">
+
+<!ENTITY migrating.title                "ආයාත කරමින්...">
+<!ENTITY migrating.label                "පහත අයිතමයන් ආයාත කරමින් සිටියි...">
+
+<!ENTITY selectProfile.title            "පැතිකඩ තෝරන්න">
+<!ENTITY selectProfile.label            "පහත සඳහන් පැතිකඩ ආයාත කිරිම සඳහා භාවිතයට ඇත:">
+
+<!ENTITY done.title                     "ආයාත කිරීම සම්පූර්ණයි">
+<!ENTITY done.label                     "පහත අයිතමයන් සාර්ථකව ආයාත කරන ලදී:">
+
+<!ENTITY closeSourceBrowser.label       "ඉදිරියට ක්‍රියාත්මක වීමට පෙර තෝරාගත් ගවේශකය වසා ඇති බව තහවුරු කරගන්න.">

@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Eipuru Ñemo'ã Tapykuehógui">
+<!ENTITY  trackingProtection2.description      "Jehapykueho ha'e kundaha mba'ekuaarã aty heta ñanduti rendápe. Pe jehapykueho ikatu eipuru emoheñói hag̃ua peteĩ mba'ete y ehechauka tetepy ne kundaha ha marandu nemba'etéva rehegua.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Eipuru tapykueho ñemo'ã ejoko hag̃ua jeporekaha kuaapyréva">
+<!ENTITY  trackingProtectionAlways.label       "Akóinte">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "Ovetã ñemiguáva añónte">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Araka'eve">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Kuaave">
+<!ENTITY  trackingProtectionExceptions.label   "Oĩ'ỹva…">
+<!ENTITY  trackingProtectionExceptions.accesskey "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Eipuru ñemo'ãha ovetã rapykueho ñemiguáva">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Eipuru tapykueho ñemo'ã kundaha ñemigua ejoko hag̃ua jeporekeha kuaapyréva">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Kuaave">
+<!ENTITY changeBlockList2.label               "Jokoha rysýi moambue…">
+<!ENTITY changeBlockList2.accesskey           "J">
+
+<!ENTITY  doNotTrack.description        "Emondo ñanduti rendápe peteĩ kuaaharã “Jehapykueho'ỹ” ndereipotáiva ojehapykueho">
+<!ENTITY  doNotTrack.learnMore.label    "Kuaave">
+<!ENTITY  doNotTrack.default.label      "Eipuru jave añónte tapykueho ñemo'ã">
+<!ENTITY  doNotTrack.always.label       "Katui">
+
+<!ENTITY  history.label                 "Tembiasakue">
+<!ENTITY  permissions.label             "Ñemoneĩkuéra">
+
+<!ENTITY  addressBar.label              "Kundaharape renda">
+<!ENTITY  addressBar.suggest.label      "Eipurúramo kundaharape renda, eñemoñe'ẽ">
+<!ENTITY  locbar.history2.label         "Kundaha rembiasakue">
+<!ENTITY  locbar.history2.accesskey     "h">
+<!ENTITY  locbar.bookmarks.label        "Techaukaha">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Tendayke ijurujáva">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Jehekakuéra ojueheguáva jeheka mongu'eha ypyguáva guive">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "Jerohoryvéva jehekaha mongu'eha je'epyre mombue">
+
+<!ENTITY  acceptCookies2.label          "Emoneĩ kookie ñanduti rendágui">
+<!ENTITY  acceptCookies2.accesskey      "E">
+
+<!ENTITY  acceptThirdParty.pre.label      "Emoneĩ kookie ambue mba'éva:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "Katui">
+<!ENTITY  acceptThirdParty.never.label    "Araka'eve">
+<!ENTITY  acceptThirdParty.visited.label  "Jehopyre">
+
+<!ENTITY  keepUntil.label               "Eguereko ág̃ave peve:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "ndoikóiva">
+<!ENTITY  close.label                   "Emboty &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Oĩ'ỹva…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Kookie Jehechauka…">
+<!ENTITY  showCookies.accesskey         "J">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; ikatútapa">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "Tembiasakuére ñemandu'a">
+<!ENTITY  historyHeader.dontremember.label "Ani nemandu'a tembiasakuére">
+<!ENTITY  historyHeader.custom.label       "Eiporu peteĩ ñemboheko mba'etéva tembiasakuépe g̃uarã">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; imandu'áta nekundaha rembiasakue, ñemboguejy, myanyhẽha ha jehekaha, ha oñongatúta avei ñanduti renda cookie eike hague.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Katui ikatútapa">
+<!ENTITY  rememberActions.clearHistory.label  "Tembiasakue ramovegua mopotï">
+<!ENTITY  rememberActions.middle.label        ", or">
+<!ENTITY  rememberActions.removeCookies.label "cookie peteĩteĩ mboguete">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; oipurujeýta pe ñemboheko kundaha ñemigua pegua, ha noñongatumo'ãi mba'evéichagua mba'ekuaarã tembiasakuéva oikundahakuévo ñandutípe.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Ikatu avei reipota ">
+<!ENTITY  dontrememberActions.clearHistory.label "Tembiasakue mopotïmba">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Kundaha ñemi jepuru tapia">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Tembiasakue mboguejy ha kundaha rehegua Mandu'a">
+<!ENTITY  rememberHistory2.accesskey  "M">
+
+<!ENTITY  rememberSearchForm.label       "Tembiasakue myanyhẽha ha jehekaha momangu'a">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Tembiasakue Mopotï &brandShortName; oñembotývo">
+<!ENTITY  clearOnClose.accesskey         "M">
+
+<!ENTITY  clearOnCloseSettings.label     "Ñemboheko…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "Kuaave">
+<!ENTITY  browserContainersEnabled.label        "Embojuruja tendayke guerekoha">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Ñemboheko…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

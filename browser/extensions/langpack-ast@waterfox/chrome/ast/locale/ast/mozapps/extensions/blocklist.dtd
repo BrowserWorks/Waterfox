@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Complementos que pueden tar causando problemes">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; determinó que los siguientes complementos son conocíos por causar problemes d'estabilidá o seguridá:">
+<!ENTITY blocklist.softblocked       "Por proteición, encamiéntase que reanicies con estos complementos desactivaos.">
+<!ENTITY blocklist.hardblocked       "Estos complementos tienen un altu riesgu de causar problemes d'inestabilidá o seguridá, y bloquiáronse, pero requierse reaniciar pa desactivalos dafechu.">
+<!ENTITY blocklist.softandhard       "Bloquiáronse los complementos que tienen un altu riesgu de causar problemes d'estabilidá o seguridá. El restu tienen menos riesgu, pero encamiéntase que reanicies con ellos desactivaos.">
+<!ENTITY blocklist.moreinfo          "Más información">
+
+<!ENTITY blocklist.accept.label      "Reaniciar &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "R">
+<!ENTITY blocklist.blocked.label "Bloquiáu">
+<!ENTITY blocklist.checkbox.label "Desactivar">

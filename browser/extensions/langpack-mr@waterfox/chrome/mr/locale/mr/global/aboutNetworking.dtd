@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "नेटवर्किंग विषयी">
+<!ENTITY aboutNetworking.warning               "हे अतिशय प्रायोगिक आहे. प्रौढांच्या निरिक्षणाशिवाय वापरु नये.">
+<!ENTITY aboutNetworking.showNextTime          "सावधानता पुढच्यावेळी दर्शवा">
+<!ENTITY aboutNetworking.ok                    "ठिक आहे">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "सॉकेट्स">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "वेबसॉकेट्स">
+<!ENTITY aboutNetworking.refresh               "ताजे करा">
+<!ENTITY aboutNetworking.autoRefresh           "दर ३ सेकंदाला स्वतः ताजे करा.">
+<!ENTITY aboutNetworking.hostname              "यजमाननाव">
+<!ENTITY aboutNetworking.port                  "पोर्ट">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "सक्रीय करा">
+<!ENTITY aboutNetworking.idle                  "निष्क्रिय">
+<!ENTITY aboutNetworking.host                  "यजमान">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "पाठवा">
+<!ENTITY aboutNetworking.received              "प्राप्त झाले">
+<!ENTITY aboutNetworking.family                "परिवार">
+<!ENTITY aboutNetworking.addresses             "पत्ता">
+<!ENTITY aboutNetworking.expires               "वेळ समाप्ति (सेकंद)">
+<!ENTITY aboutNetworking.messagesSent          "पाठवलेले संदेश">
+<!ENTITY aboutNetworking.messagesReceived      "प्राप्त संदेश">
+<!ENTITY aboutNetworking.bytesSent             "पाठवलेले बाइट्स">
+<!ENTITY aboutNetworking.bytesReceived         "प्राप्त बाइट्स">
+<!ENTITY aboutNetworking.logging               "लॉगिंग">
+<!ENTITY aboutNetworking.logTutorial           "हे साधन कसे वापरावे याची माहिती घेण्यासाठी <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP लॉगींग </a> वरील माहिती पहा.">
+<!ENTITY aboutNetworking.currentLogFile        "सद्याची लॉग फाईल:">
+<!ENTITY aboutNetworking.currentLogModules     "सद्याचे लॉग मॉड्यूल्स:">
+<!ENTITY aboutNetworking.setLogFile            "लॉग फाईल ठरवा">
+<!ENTITY aboutNetworking.setLogModules         "लॉग मॉड्यूल्स ठरवा">
+<!ENTITY aboutNetworking.startLogging          "लॉगिंग सुरु करा">
+<!ENTITY aboutNetworking.stopLogging           "लॉगिंग बंद करा">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Lookup">
+<!ENTITY aboutNetworking.dnsLookupButton       "समाधान करा">
+<!ENTITY aboutNetworking.dnsDomain             "डोमेन">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "RCWN स्टॅट्स">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN स्थिती">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "सफल कॅश मोजणी">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "एकूण कॅश मोजणी">
+<!ENTITY aboutNetworking.totalNetworkRequests  "एकूण नेटवर्क विनंती मोजणी">
+<!ENTITY aboutNetworking.rcwnOperation         "कॅशे ऑपरेशन">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "उघडा">
+<!ENTITY aboutNetworking.rcwnPerfRead          "वाचन">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "लेखन">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "नोंद उघडा">
+<!ENTITY aboutNetworking.rcwnAvgShort          "छोटी सरासरी">
+<!ENTITY aboutNetworking.rcwnAvgLong           "लांब सरासरी">
+<!ENTITY aboutNetworking.rcwnStddevLong        "लॉंग स्टेंडर्ड डेव्हिएशन">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "कॅशे हळु मोजणी">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "कॅशे हळु मोजणी नाही">

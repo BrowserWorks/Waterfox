@@ -1,0 +1,167 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Información ta solucionar problemas">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Ista pachina contiene información tecnica que puede estar util quan prebe de resolver un problema. Si ye buscando respuestas a preguntas freqüents sobre &brandShortName;, mire o <a id='supportLink'>puesto d'asistencia</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Informes de fallos">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID d'o informe">
+<!ENTITY aboutSupport.crashes.sendDate "Ninviau">
+<!ENTITY aboutSupport.crashes.allReports "Totz os informes de fallo">
+<!ENTITY aboutSupport.crashes.noConfig "Ista aplicación no ye configurada ta amostrar informes de fallos.">
+
+<!ENTITY aboutSupport.extensionsTitle "Extensions">
+<!ENTITY aboutSupport.extensionName "Nombre">
+<!ENTITY aboutSupport.extensionEnabled "Activada">
+<!ENTITY aboutSupport.extensionVersion "Versión">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Caracteristicas de &brandShortName;">
+<!ENTITY aboutSupport.featureName "Nombre">
+<!ENTITY aboutSupport.featureVersion "Versión">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Caracteristicas experimentals">
+<!ENTITY aboutSupport.experimentName "Nombre">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Descripción">
+<!ENTITY aboutSupport.experimentActive "Activo">
+<!ENTITY aboutSupport.experimentEndDate "Data de finalización">
+<!ENTITY aboutSupport.experimentHomepage "Pachina d'inicio">
+<!ENTITY aboutSupport.experimentBranch "Branca">
+
+<!ENTITY aboutSupport.appBasicsTitle "Configuración basica de l'aplicación">
+<!ENTITY aboutSupport.appBasicsName "Nombre">
+<!ENTITY aboutSupport.appBasicsVersion "Versión">
+<!ENTITY aboutSupport.appBasicsBuildID "Construir ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Esviellar a Canal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Historial d'actualizacions">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Amostrar l'historial d'actualizacions">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Directorio de perfil">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Carpeta de perfil">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Plugins activaus">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Configuración de compilación">
+<!ENTITY aboutSupport.appBasicsUserAgent "Achent d'usuario">
+<!ENTITY aboutSupport.appBasicsOS "SO">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Uso de memoria">
+<!ENTITY aboutSupport.appBasicsPerformance "Rendimiento">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Service Workers rechistraus">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Perfils">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Finestras multiproceso">
+
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Clau d'o servicio de plazamiento de Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Modo seguro">
+
+<!ENTITY aboutSupport.showDir.label "Ubrir o directorio">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Amostrar en o Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Ubrir la carpeta">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Preferencias modificadas importants">
+<!ENTITY aboutSupport.modifiedPrefsName "Nombre">
+<!ENTITY aboutSupport.modifiedPrefsValue "Valura">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Preferencias de user.js">
+<!ENTITY aboutSupport.userJSDescription "A suya carpeta de perfil contien un <a id='prefs-user-js-link'>fichero user.js</a> que bi incluye as preferencias que no estioron creyadas por &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Preferencias importants blocadas">
+<!ENTITY aboutSupport.lockedPrefsName "Nombre">
+<!ENTITY aboutSupport.lockedPrefsValue "Valura">
+
+<!ENTITY aboutSupport.graphicsTitle "Graficos">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Base de datos de puestos">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integridat">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verificar Integridat">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Contexto grafico (GC) incremental">
+
+<!ENTITY aboutSupport.a11yTitle "Accesibilidat">
+<!ENTITY aboutSupport.a11yActivated "Activau">
+<!ENTITY aboutSupport.a11yForceDisabled "Privar accesibilidat">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Versions d'a biblioteca">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Historial d'instalacions">
+<!ENTITY aboutSupport.updateHistoryTitle "Historial d'actualizacions">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Copiar o texto en o portafuellas">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Copiar os datos crudos en o portafuellas">
+
+<!ENTITY aboutSupport.sandboxTitle "Borrador">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Gritadas a lo sistema refusadas">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Fa bells segundos">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Tipo de proceso">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumentos">
+
+<!ENTITY aboutSupport.safeModeTitle "Intentar en Modo Seguro">
+<!ENTITY aboutSupport.restartInSafeMode.label "Reiniciar con os complementos desactivaus…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Caracteristicas">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnosticos">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Rechistro de fallos">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Rechistro de decisions">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Caracteristicas Crash Guard desactivadas">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Solucions temporals">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

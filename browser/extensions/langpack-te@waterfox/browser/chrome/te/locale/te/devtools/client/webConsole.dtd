@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "వెబ్ కన్సోల్">
+<!ENTITY browserConsole.title "విహారిణి కన్సోల్">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "URL కొత్త ట్యాబులో తెరువు">
+<!ENTITY openURL.accesskey "T">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "నెట్">
+<!ENTITY btnPageNet.tooltip "లాగ్ నెట్వర్క్ యాక్సెస్">
+<!ENTITY btnPageNet.accesskey "N">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "CSS దోషాలు మరియు హెచ్చరికలు లాగ్ చేయి">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "లాగ్ జావాస్క్రిప్ట్ యెక్సెప్షన్స్">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "భద్రత">
+<!ENTITY btnPageSecurity.tooltip "రక్షణ దోషాలు మరియు హెచ్చరికలు లాగ్ చేయి">
+<!ENTITY btnPageSecurity.accesskey "u">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "లాగింగ్">
+<!ENTITY btnPageLogging.tooltip "window.console ఆబ్జక్టునకు పంపిన లాగ్ సందేశాలు">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "లోపాలు">
+<!ENTITY btnConsoleInfo         "సమాచారం">
+<!ENTITY btnConsoleWarnings     "హెచ్చరికలు">
+<!ENTITY btnConsoleLog          "లాగ్">
+<!ENTITY btnConsoleXhr          "XHR">
+<!ENTITY btnConsoleReflows      "రీఫ్లోస్">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "సర్వర్">
+<!ENTITY btnServerLogging.tooltip     "వెబ్ సర్వర్ నుండి అందుకున్న సందేశాలను నమోదుచేయి">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerErrors              "లోపాల">
+<!ENTITY btnServerInfo                "సమాచారం">
+<!ENTITY btnServerWarnings            "హెచ్చరికలు">
+<!ENTITY btnServerLog                 "చిట్టా">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "పంచుకున్న వర్కర్స్">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "సర్వీస్ వర్కర్స్">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "యాడ్ ఆన్ లేదా క్రోం వర్కర్స్">
+
+<!ENTITY filterOutput.placeholder "వడపోత అవుట్పుట్">
+<!ENTITY btnClear.label        "శుభ్రం">
+<!ENTITY btnClear.tooltip      "వెబ్ కన్సోల్ అవుట్‌పుట్ తుడిచివేయి">
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "లంకె స్థానాన్ని కాపీచేయి">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "వేరియబుల్స్ వీక్షణలో తెరవండి">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "సార్వత్రిక వేరియబుల్‌గా నిల్వచేయి">
+<!ENTITY storeAsGlobalVar.accesskey "S">

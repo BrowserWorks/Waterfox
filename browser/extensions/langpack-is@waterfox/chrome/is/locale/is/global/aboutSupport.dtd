@@ -1,0 +1,165 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Upplýsingar fyrir úrræðaleit">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Þessi síða inniheldur tæknilegar upplýsingar sem gætu verið hjálplegar ef þú ert að reyna að leysa eitthvað vandamál. Ef þú ert að leita að svörum við algengum spurningum um &brandShortName;, athugaðu þá <a id='supportLink'>hjálparvefsvæðið okkar</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Hrunskýrslur">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Skýrslu auðkenni">
+<!ENTITY aboutSupport.crashes.sendDate "Sent">
+<!ENTITY aboutSupport.crashes.allReports "Allar hrunskýrslur">
+<!ENTITY aboutSupport.crashes.noConfig "Ekki er búið að stilla þetta forrit til að birta hrunskýrslur.">
+
+<!ENTITY aboutSupport.extensionsTitle "Viðbætur">
+<!ENTITY aboutSupport.extensionName "Nafn">
+<!ENTITY aboutSupport.extensionEnabled "Virk">
+<!ENTITY aboutSupport.extensionVersion "Útgáfa">
+<!ENTITY aboutSupport.extensionId "Auðkenni">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; eiginleikar">
+<!ENTITY aboutSupport.featureName "Nafn">
+<!ENTITY aboutSupport.featureVersion "Útgáfa">
+<!ENTITY aboutSupport.featureId "Auðkenni">
+
+<!ENTITY aboutSupport.experimentsTitle "Tilraunakenndir eiginleikar">
+<!ENTITY aboutSupport.experimentName "Nafn">
+<!ENTITY aboutSupport.experimentId "Auðkenni">
+<!ENTITY aboutSupport.experimentDescription "Lýsing">
+<!ENTITY aboutSupport.experimentActive "Virkur">
+<!ENTITY aboutSupport.experimentEndDate "Lokadagsetning">
+<!ENTITY aboutSupport.experimentHomepage "Heimasíða">
+<!ENTITY aboutSupport.experimentBranch "Grein">
+
+<!ENTITY aboutSupport.appBasicsTitle "Grunnupplýsingar forrits">
+<!ENTITY aboutSupport.appBasicsName "Nafn">
+<!ENTITY aboutSupport.appBasicsVersion "Útgáfa">
+<!ENTITY aboutSupport.appBasicsBuildID "Byggingarauðkenni">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Uppfærslurás">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Uppfærslusaga">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Sýna uppfærslusögu">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Notandamappa">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Notandamappa">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Virk tengiforrit">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Smíð stillingar">
+<!ENTITY aboutSupport.appBasicsUserAgent "Auðkenni forrits">
+<!ENTITY aboutSupport.appBasicsOS "Stýrikerfi">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Notað minni">
+<!ENTITY aboutSupport.appBasicsPerformance "Afköst">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Skráðir Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Notendur">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Margþráða gluggi">
+
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google lykill">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service lykill">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Öryggishamur">
+
+<!ENTITY aboutSupport.showDir.label "Opna möppu">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Sýna í Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Opna möppu">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Mikilvægar breyttar stillingar">
+<!ENTITY aboutSupport.modifiedPrefsName "Nafn">
+<!ENTITY aboutSupport.modifiedPrefsValue "Gildi">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js stillingar">
+<!ENTITY aboutSupport.userJSDescription "Notandamappan þín inniheldur <a id='prefs-user-js-link'>user.js skrá</a>, sem inniheldur stillingar sem voru ekki búnar til af &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Mikilvægir læstir valkostir">
+<!ENTITY aboutSupport.lockedPrefsName "Nafn">
+<!ENTITY aboutSupport.lockedPrefsValue "Gildi">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafík">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Gagnagrunnur fyrir staði">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Áreiðanleiki">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Sannprófa áreiðanleika">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Stigvaxandi GC">
+
+<!ENTITY aboutSupport.a11yTitle "Auðveldað aðgengi">
+<!ENTITY aboutSupport.a11yActivated "Virkt">
+<!ENTITY aboutSupport.a11yForceDisabled "Koma í veg fyrir aðgengi">
+<!ENTITY aboutSupport.a11yHandlerUsed "Aðgengishjálpari notaður">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Útgáfa forritasafns">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Uppsetningarsaga">
+<!ENTITY aboutSupport.updateHistoryTitle "Uppfærslusaga">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Afrita texta á klemmuspjald">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Afrita hrá gögn á klemmuspjald">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Hunsuð kerfisköll">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Fyrir nokkrum sekúndum">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Tegund ferlis">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Breytur">
+
+<!ENTITY aboutSupport.safeModeTitle "Prófaðu öryggisham">
+<!ENTITY aboutSupport.restartInSafeMode.label "Endurræsa með viðbætur óvirkar…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Eiginleikar">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Greining">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Villu loggur">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Atburðaskrá fyrir ákvarðanir">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Óvirkar stillingar fyrir hrunvara">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Leiðir framhjá villum">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

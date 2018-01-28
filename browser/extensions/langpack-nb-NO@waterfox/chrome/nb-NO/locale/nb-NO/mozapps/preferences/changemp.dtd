@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Endre hovedpassord">
+<!ENTITY setPassword.tokenName.label       "Sikkerhetsenhet">
+<!ENTITY setPassword.oldPassword.label     "Nåværende passord:">
+<!ENTITY setPassword.newPassword.label     "Nytt passord:">
+<!ENTITY setPassword.reenterPassword.label "Gjenta nytt passord:">
+<!ENTITY setPassword.meter.label           "Måling av passordkvalitet">
+<!ENTITY setPassword.meter.loading         "Laster">
+<!ENTITY masterPasswordDescription.label   "Dersom du trenger å beskytte sensitiv informasjon, som for eksempel nettsidepassord, kan du bruke et hovedpassord.  Dersom du oppretter et hovedpassord, må du oppgi passordet for hver programøkt der &brandShortName; henter ut lagret informasjon som er beskyttet av passordet.">
+<!ENTITY masterPasswordWarning.label       "Vær sikker på at du husker hovedpassordet.  Dersom du glemmer hovedpassordet vil du ikke få tilgang til informasjonen som er beskyttet av det.">

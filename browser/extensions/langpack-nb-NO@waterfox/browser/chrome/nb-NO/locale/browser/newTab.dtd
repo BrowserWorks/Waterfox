@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Ny fane">
+<!ENTITY newtab.customize.classic "Vis dine populære sider">
+<!ENTITY newtab.customize.cog.enhanced "Ta med foreslåtte sider">
+<!ENTITY newtab.customize.cog.title2 "NY FANE-KONTROLLER">
+<!ENTITY newtab.customize.cog.learn "Les mer om Ny Fane">
+<!ENTITY newtab.customize.title "Tilpass Ny fane-siden">
+<!ENTITY newtab.customize.blank2 "Vis tom side">
+<!ENTITY newtab.undo.removedLabel "Miniatyrbilde fjernet.">
+<!ENTITY newtab.undo.undoButton "Angre.">
+<!ENTITY newtab.undo.restoreButton "Gjenopprett alle.">
+<!ENTITY newtab.undo.closeTooltip "Skjul">

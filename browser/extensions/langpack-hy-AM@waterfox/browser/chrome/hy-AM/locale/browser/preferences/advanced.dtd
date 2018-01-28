@@ -1,0 +1,167 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Հիմնական">
+
+<!ENTITY useCursorNavigation.label       "Էջերում ուղղորդման համար միշտ օգտագործել կուրսորի սեղմակները:">
+<!ENTITY useCursorNavigation.accesskey   "կ">
+<!ENTITY searchOnStartTyping.label       "Տեքստ մուտքագրելու դեպքում փնտրել այն">
+<!ENTITY searchOnStartTyping.accesskey   "ք">
+<!ENTITY useOnScreenKeyboard.label       "Անհրաժեշտության դեպքում ցուցադրել հպաստեղնաշարը">
+<!ENTITY useOnScreenKeyboard.accesskey   "հ">
+
+<!ENTITY browsing.label                  "Դիտարկում">
+
+<!ENTITY useAutoScroll.label             "Օգտագործել ինքնաթերթումը">
+<!ENTITY useAutoScroll.accesskey         "ի">
+<!ENTITY useSmoothScrolling.label        "Օգտագործել կոկիկ թերթումը">
+<!ENTITY useSmoothScrolling.accesskey    "ո">
+<!ENTITY checkUserSpelling.label         "Տեքստ մուտքագրելիս ստուգել ուղղագրությունը">
+<!ENTITY checkUserSpelling.accesskey     "մ">
+
+<!ENTITY dataChoicesTab.label            "Ընտրել տվյալները">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+
+<!ENTITY healthReportLearnMore.label     "Իմանալ ավելին">
+
+
+
+
+
+<!ENTITY crashReporterLearnMore.label    "Իմանալ ավելին">
+
+<!ENTITY networkTab.label                "Ցանցը">
+
+
+<!ENTITY connectionDesc.label            "Կարգավորեք համացանցին միանալու &brandShortName;-ի ցուցիչները">
+<!ENTITY connectionSettings.label        "Կարգավորել...">
+<!ENTITY connectionSettings.accesskey    "ա">
+
+<!ENTITY httpCache.label                 "Կուտակել ցանցային բովանդակությունը">
+
+<!ENTITY offlineStorage2.label           "Ցանցից դուրս ցանցային բովանդակություն և օգտատերի տվյալներ">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Կայքի տվյալը">
+<!ENTITY clearSiteData.label             "Մաքրել բոլոր տվյալները">
+<!ENTITY clearSiteData.accesskey         "ա">
+<!ENTITY siteDataSettings.label          "Կարգավորումներ...">
+<!ENTITY siteDataSettings.accesskey      "վ">
+<!ENTITY siteDataLearnMoreLink.label     "Իմանալ ավելին">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Սահմանափակել պահոցը՝">
+<!ENTITY limitCacheSizeBefore.accesskey  "Ս">
+<!ENTITY limitCacheSizeAfter.label       "ՄԲ">
+<!ENTITY clearCacheNow.label             "Մաքրել հիմա">
+<!ENTITY clearCacheNow.accesskey         "Մ">
+<!ENTITY clearOfflineAppCacheNow.label   "Մաքրել հիմա">
+<!ENTITY clearOfflineAppCacheNow.accesskey "հ">
+<!ENTITY overrideSmartCacheSize.label    "Վերակարգավորել պահոցի կառավարումը">
+<!ENTITY overrideSmartCacheSize.accesskey "Վ">
+
+<!ENTITY updateTab.label                 "Թարմացնել">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "&brandShortName;-ի թարմացումներ">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "Տարբերակ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Թույլատրել &brandShortName;-ին">
+
+
+<!ENTITY updateCheckChoose2.label        "Ստուգել թարմացումները, բայց ես կընտրեմ, թե որը տեղադրել">
+<!ENTITY updateCheckChoose2.accesskey    "Ս">
+<!ENTITY updateManual2.label             "Երբեք չստուգել թարմացումները (խորհուրդ չի տրվում)">
+<!ENTITY updateManual2.accesskey         "Ե">
+
+<!ENTITY updateHistory2.label            "Ցուցադրել Թարմացումների Պատմությունը...">
+<!ENTITY updateHistory2.accesskey        "ա">
+
+<!ENTITY useService.label                "Թարմացումները տեղադրելիս օգտվել խորքային ծառայությունից">
+<!ENTITY useService.accesskey            "խ">
+
+<!ENTITY enableSearchUpdate2.label       "Ինքնաբար թարմացնել որոնիչները">
+<!ENTITY enableSearchUpdate2.accesskey   "լ">
+
+<!ENTITY offlineStorageNotify.label               "Տեղեկացնել, երբ վեբ կայքը խնդրում է պահել ֆայլեր՝ անցանց աշխատելու համար">
+<!ENTITY offlineStorageNotify.accesskey           "Տ">
+<!ENTITY offlineStorageNotifyExceptions.label     "Բացառություններ…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ց">
+
+<!ENTITY offlineAppsList2.label          "Տվյալ կայքերին արտոնված է տվյալներ պահել՝ անցանց աշխատելու համար.">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Ջնջել…">
+<!ENTITY offlineAppsListRemove.accesskey "Ջ">
+<!ENTITY offlineAppRemove.confirm        "Ջնջել անցանց ֆայլերը">
+
+<!ENTITY certificateTab.label            "Վկայագրեր">
+<!ENTITY certPersonal2.description       "Երբ սպասարկիչը հարցնում է ձեր անձնական վկայագիրը">
+<!ENTITY selectCerts.auto                "Ընտրել ինքնաշխատ">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Ամեն անգամ հարցնել">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Հարցում OCSP պատասխանիչի սպասարկիչին՝ հաստատելու հավաստագրի իսկությունը">
+<!ENTITY enableOCSP.accesskey            "Հ">
+
+
+
+
+
+<!ENTITY performance.label               "Արտադրողականություն">
+<!ENTITY useRecommendedPerformanceSettings2.label "Օգտ. արտադրողականության հանձնարարելի կարգավորումները">
+<!ENTITY useRecommendedPerformanceSettings2.description "Այս կարգավորումները հարմարեցված են ձեր համակարգչի սարքաշարին և օպերացիոն համակարգին:">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "Օ">
+<!ENTITY performanceSettingsLearnMore.label "Իմանալ ավելին">
+<!ENTITY limitContentProcessOption.label "Բովանդակության ընթացքի սահմանափակում">
+<!ENTITY limitContentProcessOption.description "Բովանդակության լրացուցիչ ընթացքները կարող են լավարկել արտադրողականությունը, երբ օգտագործվում են բազմակի ներդիրներ, բայց միևնույն ժամանակ՝ դրանք ավելի շատ հիշողություն կխլեն:">
+<!ENTITY limitContentProcessOption.accesskey   "ս">
+
+
+<!ENTITY allowHWAccel.label              "Հնարավորության դեպքում օգտագործել սարքակազմի արագացումը ">
+<!ENTITY allowHWAccel.accesskey          "ր">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

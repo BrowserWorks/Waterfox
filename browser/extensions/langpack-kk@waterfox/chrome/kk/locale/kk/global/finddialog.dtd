@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Осы парақтан іздеу">
+<!ENTITY findField.label "Мәтінді іздеу:">
+<!ENTITY findField.accesskey "т">
+<!ENTITY caseSensitiveCheckbox.label "Регистрді ескеру">
+<!ENTITY caseSensitiveCheckbox.accesskey "и">
+<!ENTITY wrapCheckbox.label "Парақ басынан">
+<!ENTITY wrapCheckbox.accesskey "П">
+<!ENTITY findButton.label "Келесіні табу">
+<!ENTITY findButton.accesskey "К">
+<!ENTITY cancelButton.label "Бас тарту">
+<!ENTITY closeButton.label "Жабу">
+<!ENTITY up.label "Жоғары">
+<!ENTITY up.accesskey "Ж">
+<!ENTITY down.label "Төмен">
+<!ENTITY down.accesskey "Т">
+<!ENTITY direction.label "Бағыты">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "Tandabuku">
+<!ENTITY engine.bookmarks.accesskey "a">
+<!ENTITY engine.tabs.label2         "Buka tab">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Sejarah">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "Log masuk">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "Keutamaan">
+<!ENTITY engine.prefs.accesskey     "a">
+<!ENTITY engine.addons.label        "Add-ons">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "Alamat">
+<!ENTITY engine.addresses.accesskey "a">
+<!ENTITY engine.creditcards.label   "Kad kredit">
+<!ENTITY engine.creditcards.accesskey "K">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "Nama Peranti">
+<!ENTITY changeSyncDeviceName.label "Tukar Nama Peranti…">
+<!ENTITY changeSyncDeviceName.accesskey "u">
+<!ENTITY cancelChangeSyncDeviceName.label "Batal">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "t">
+<!ENTITY saveChangeSyncDeviceName.label "Simpan">
+<!ENTITY saveChangeSyncDeviceName.accesskey "m">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Terma dan Syarat Perkhidmatan">
+<!ENTITY fxaPrivacyNotice.link.label "Notis Privasi">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "tidak disahkan.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "Sila daftar masuk untuk menyambung semula">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "Anda tidak mendaftar masuk.">
+<!ENTITY signIn.label                "Daftar masuk">
+<!ENTITY signIn.accesskey            "d">
+<!ENTITY profilePicture.tooltip      "Tukar gambar profil">
+<!ENTITY verifiedManage.label        "Urus Akaun">
+<!ENTITY verifiedManage.accesskey    "s">
+<!ENTITY disconnect.label            "Memutuskan…">
+<!ENTITY disconnect.accesskey        "M">
+<!ENTITY verify.label                "Sahkan E-mel">
+<!ENTITY verify.accesskey            "S">
+<!ENTITY forget.label                "Lupakan E-mel ini">
+<!ENTITY forget.accesskey            "A">
+
+<!ENTITY signedOut.caption            "Bawa Web dengan anda">
+<!ENTITY signedOut.description        "Sync tandabuku, sejarah, tab, kata laluan, add-ons dan pilihan anda pada semua peranti anda.">
+<!ENTITY signedOut.accountBox.title   "Sambung dengan &syncBrand.fxAccount.label;">
+<!ENTITY signedOut.accountBox.create  "Cipta Akaun">
+<!ENTITY signedOut.accountBox.create.accesskey  "B">
+<!ENTITY signedOut.accountBox.signin  "Daftar Masuk">
+<!ENTITY signedOut.accountBox.signin.accesskey  "M">
+
+<!ENTITY signedIn.engines.label       "Sync pada semua peranti">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Muat turun Waterfox untuk">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " atau ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " untuk sync dengan peranti mudah alih anda.">

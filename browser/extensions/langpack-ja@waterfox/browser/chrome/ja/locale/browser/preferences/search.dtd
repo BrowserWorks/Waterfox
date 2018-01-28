@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label		"既定の検索エンジン">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label	"アドレスバーと検索バーで使用される既定の検索エンジンを選択してください。">
+
+<!ENTITY provideSearchSuggestions.label		"検索候補を使用する">
+<!ENTITY provideSearchSuggestions.accesskey	"s">
+
+<!ENTITY showURLBarSuggestions2.label		"アドレスバーに検索候補を表示する">
+<!ENTITY showURLBarSuggestions2.accesskey	"l">
+<!ENTITY urlBarSuggestionsPermanentPB.label	"履歴を保存しない設定となっているため、ロケーションバーに検索候補が表示されません。">
+
+<!ENTITY oneClickSearchEngines.label		"ワンクリック検索エンジン">
+
+<!ENTITY chooseWhichOneToDisplay2.label		"キーワードの入力開始時にアドレスバーや検索バーの下に現れる代替検索エンジンを選んでください。">
+
+<!ENTITY engineNameColumn.label			"検索エンジン">
+<!ENTITY engineKeywordColumn.label		"キーワード">
+
+<!ENTITY restoreDefaultSearchEngines.label	"既定の検索エンジンを復元">
+<!ENTITY restoreDefaultSearchEngines.accesskey	"d">
+
+<!ENTITY removeEngine.label			"削除">
+<!ENTITY removeEngine.accesskey			"r">
+
+<!ENTITY findMoreSearchEngines.label		"他の検索エンジンを追加">

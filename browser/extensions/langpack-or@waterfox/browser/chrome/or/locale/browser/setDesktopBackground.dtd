@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "ସ୍ଥିତି:">
+<!ENTITY tile.label                 "ଟାଇଲ">
+<!ENTITY center.label               "କେନ୍ଦ୍ର">
+<!ENTITY stretch.label              "ବିସ୍ତୃତି">
+<!ENTITY fill.label                 "ପୁରଣ କରନ୍ତୁ">
+<!ENTITY fit.label                  "ଖାପ ଖୁଆନ୍ତୁ">
+<!ENTITY preview.label              "ପ୍ରାକଦର୍ଶନ">
+<!ENTITY color.label                "ରଙ୍ଗ:">
+<!ENTITY setDesktopBackground.title "ଡ଼େସ୍କଟପ ପୃଷ୍ଠଭୂମି ବିନ୍ୟାସ କରନ୍ତୁ">
+<!ENTITY openDesktopPrefs.label     "ଡ଼େସ୍କଟପ ପସନ୍ଦଗୁଡ଼ିକୁ ଖୋଲନ୍ତୁ">
+<!ENTITY closeWindow.key            "w">

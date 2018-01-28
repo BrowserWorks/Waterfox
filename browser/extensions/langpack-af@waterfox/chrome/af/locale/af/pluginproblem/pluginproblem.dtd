@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Raak hier om die inprop te aktiveer.">
+<!ENTITY clickToActivatePlugin                               "Aktiveer inprop.">
+<!ENTITY checkForUpdates                                     "Kontroleer vir bywerkings…">
+<!ENTITY blockedPlugin.label                                 "Hierdie inprop is vir u beskerming geblokkeer.">
+<!ENTITY hidePluginBtn.label                                 "Versteek inprop">
+<!ENTITY managePlugins                                       "Bestuur inproppe…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Herlaai die bladsy">
+<!ENTITY reloadPlugin.post                                   " om weer te probeer.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Stuur omvalverslag">
+<!ENTITY report.submitting                                   "Stuur tans verslag…">
+<!ENTITY report.submitted                                    "Omvalverslag gestuur.">
+<!ENTITY report.disabled                                     "Omvalrapportering gedeaktiveer.">
+<!ENTITY report.failed                                       "Kon nie indien nie.">
+<!ENTITY report.unavailable                                  "Geen verslag beskikbaar nie.">
+<!ENTITY report.comment                                      "Voeg 'n opmerking by (kommentaar is publiek sigbaar)">
+<!ENTITY report.pageURL                                      "Sluit die bladsy se URL in">
+
+<!ENTITY plugin.file                                         "Lêer">
+<!ENTITY plugin.mimeTypes                                    "MIME-soorte">
+<!ENTITY plugin.flashProtectedMode.label                     "Aktiveer Adobe Flash beskermde modus">
+<!ENTITY plugin.enableBlocklists.label                       "Blokkeer gevaarlike en indringerige Flash-inhoud">
+
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

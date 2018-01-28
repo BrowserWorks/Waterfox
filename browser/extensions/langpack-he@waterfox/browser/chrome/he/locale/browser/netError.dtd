@@ -1,0 +1,185 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "בעיה בטעינת דף">
+<!ENTITY retry.label "נסה שוב">
+<!ENTITY returnToPreviousPage.label "חזרה">
+<!ENTITY advanced.label "מתקדם">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "כישלון בהתחברות">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "כתובת זו מוגבלת">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "שרת לא נמצא">
+<!ENTITY dnsNotFound.longDesc "<ul> 
+<li>בדוק כי הכתובת הוקלדה ללא שגיאות כגון 
+<strong>ww</strong>.example.com במקום <strong>www</strong>.example.com</li> 
+<li>אם אין באפשרותך לטעון כל דף, עליך לבדוק את החיבור לרשת של המחשב.</li> 
+<li>אם המחשב או הרשת מוגנים בחומת אש או בשרת מתווך, יש לוודא כי &brandShortName; מורשה לגשת לרשת.</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "קובץ לא נמצא">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>בדוק ששם הקובץ אוית נכון, שנעשה שימוש נכון באותיות רישיות ושאין שגיאות הקלדה אחרות.</li> 
+<li>בדוק אם הקובץ הועבר, שינה שם או נמחק.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "הגישה לקובץ נדחתה">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>יתכן שהקובץ הוסר, הועבר או שההרשאות מונעות את הגישה אליו.</li>
+</ul>
+">
+
+<!ENTITY generic.title "שגיאה כללית">
+<!ENTITY generic.longDesc "<p>&brandShortName; אינו יכול לטעון דף זה מסיבה לא ידועה.</p>">
+
+<!ENTITY captivePortal.title "כניסה לרשת">
+<!ENTITY captivePortal.longDesc2 "
+<p>עליך להתחבר לרשת זו כדי לגלוש באינטרנט.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "פתיחת דף התחברות לרשת">
+
+<!ENTITY malformedURI.title "כתובת לא חוקית">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>כתובות אתרים נכתבות בדרך־כלל בתבנית
+    <strong>http://www.example.com/‎</strong></li>
+  <li>נא לוודא שהלוכסנים הם קדמיים (למשל
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "החיבור הופסק">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "תוקף המסמך פג">
+<!ENTITY notCached.longDesc "<p>המסמך המבוקש לא זמין במטמון של &brandShortName;.</p><ul><li>כאמצעי זהירות, &brandShortName; לא יבקש שוב אוטומטית מסמכים רגישים.</li><li>לחץ נסה שוב כדי לבקש מחדש את המסמך מאתר האינטרנט.</li></ul>">
+
+<!ENTITY netOffline.title "מצב לא־מקוון">
+<!ENTITY netOffline.longDesc2 "<ul> 
+<li>לחץ על &quot;נסה שוב&quot; כדי לעבור למצב מקוון ולטעון מחדש את הדף.</li> 
+</ul>">
+
+<!ENTITY contentEncodingError.title "שגיאה בקידוד תוכן">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>אנא צור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "סוג קובץ מסוכן">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>בבקשה צור קשר עם בעלי האתר כדי ליידע אותם על בעיה זו.</li> 
+</ul>">
+
+<!ENTITY netReset.title "החיבור הופסק">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "תם הזמן המוקצב לחיבור">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "כתובת זו אינה מובנת">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>
+    ייתכן שצריך להתקין יישום אחר כדי לגשת לכתובת זו.
+  </li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "השרת המתווך דחה את ההתחברות">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>בדוק כי הגדרות השרת המתווך שלך נכונות.</li> 
+<li>צור קשר עם מנהל הרשת שלך וודא כי השרת המתווך מתפקד</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "שרת מתווך לא נמצא">
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>בדוק כי הגדרות השרת המתווך שלך נכונות.</li> 
+<li>ודא כי חיבור המחשב שלך לרשת פעיל.</li> 
+<li>אם המחשב או הרשת שלך מוגנים באמצעות חומת אש או שרת מתווך, ודא כי &brandShortName; מורשה לגישה לרשת.</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "הדף מבצע העברה לא תקינה">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>בעיה זו נגרמת לעיתים מסירוב לקבל עוגיות או ניטרולן.</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.title "תגובה לא צפויה מהשרת">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>ודא כי מותקן על המערכת שלך מנהל האבטחה האישי.</li> 
+<li>ייכתן וההגדרות השרת אינן תקניות</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "קישור מאובטח נכשל">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>
+    דף זה לא ניתן להצגה כי לא ניתן לאמת את מהיימנות הנתונים שהתקבלו.
+  </li>
+  <li>
+    נא ליצור קשר עם בעלי האתר וליידע אותם על בעיה זו.
+  </li>
+</ul>
+">
+
+<!ENTITY certerror.longpagetitle1 "החיבור שלך אינו מאובטח">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "הבעלים של <span class='hostname'/> הגדירו את האתר שלהם בצורה לקויה.  על מנת להגן על המידע שלך מפני גניבה, &brandShortName; לא התחבר לאתר זה.">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>האתר איננו זמין כרגע או שהוא עמוס מדי. אנא נסה שוב בעוד מספר רגעים.</li> 
+<li>אם אינך מצליח לטעון דפים כלשהם, בדוק את הקישוריות של המחשב שלך לרשת.</li> 
+<li>אם המחשב או הרשת שלך מוגנים באמצעות חומת אש או שרת מתווך, ודא כי &brandShortName; מורשה לגישה לרשת.</li> 
+</ul>">
+
+<!ENTITY cspBlocked.title "נחסם בהתאם למדיניות האבטחה של התוכן">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; מונע מדף זה להיטען בצורה זו מאחר שהדף כולל מדיניות אבטחת תוכן שמונעת זאת.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "שגיאת תוכן פגום">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>לא ניתן להציג דף זה מכיון שאותרה שגיאה בתעבורת הנתונים.</p><ul><li>נא ליצור קשר עם בעלי האתר כדי לדווח להם על בעיה זו.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "הוספת חריגה…">
+
+<!ENTITY errorReporting.automatic2 "דיווח על תקלות מסוג זה כדי לסייע ל־Mozilla לזהות ולחסום אתרים מסוכנים">
+<!ENTITY errorReporting.learnMore "מידע נוסף…">
+
+<!ENTITY remoteXUL.title "XUL מרוחק">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>פנה אל בעלי האתר כדי ליידע אותם על הבעיה.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "לא ניתן להיכנס באופן מאובטח">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "מידע מתקדם: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; לא התחבר אל <span id='wrongSystemTime_URL'/> מכיוון שנראה ששעון המחשב שלך לא מכוון כראוי, מה שמונע חיבור מאובטח.</p> <p>שעון המחשב שלך מכוון ל־<span id='wrongSystemTime_systemDate'/>, כשהוא אמור להיות <span id='wrongSystemTime_actualDate'/>. לתיקון הבעיה, יש לשנות את הגדרות התאריך והשעה כך שיהיו תואמים לזמן הנוכחי.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; לא התחבר אל <span id='wrongSystemTimeWithoutReference_URL'/> מכיוון שנראה ששעון המחשב שלך לא מכוון כראוי, מה שמונע חיבור מאובטח.</p> <p>שעון המחשב שלך מכוון ל־<span id='wrongSystemTimeWithoutReference_systemDate'/>. לתיקון הבעיה, יש לשנות את הגדרות התאריך והשעה כך שיהיו תואמים לזמן הנוכחי.</p>">
+
+<!ENTITY certerror.pagetitle1  "חיבור בלתי מאובטח">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "אתר זה משתמש ב־HTTP
+Strict Transport Security (HSTS) כדי לציין ש־&brandShortName; יוכל
+להתחבר אליו
+באופן מאובטח בלבד. כתוצאה מכך, לא ניתן להוסיף חריגה עבור אישור זה.">
+<!ENTITY certerror.copyToClipboard.label "העתקת טקסט ללוח">
+
+<!ENTITY inadequateSecurityError.title "החיבור שלך אינו מאובטח">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>האתר בכתובת <span class='hostname'></span> משתמש בטכנולוגית אבטחה שאינה עדכנית וחשופה להתקפות. תוקף יכול בקלות לחשוף מידע שלכאורה אמור היה להיות מוגן. על מנהל האתר לתקן את השרת לפני שיהיה ניתן לבקר באתר זה.</p><p>קוד שגיאה: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "נראה שהגדרות אבטחת הרשת שלך עשוי לגרום לכך. האם ברצונך לשחזר להגדרות ברירת מחדל?">
+<!ENTITY prefReset.label "שחזור הגדרות בררת המחדל">

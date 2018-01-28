@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Paramètres d’effacement de l’historique">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "36em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "56em">
+<!ENTITY sanitizePrefs2.inContent.column.width "30em">
+
+<!ENTITY sanitizeDialog2.title         "Effacer l’historique récent">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "Lorsque je quitte &brandShortName;, supprimer automatiquement les éléments suivants :">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "Intervalle à effacer : ">
+<!ENTITY clearTimeDuration.accesskey      "I">
+<!ENTITY clearTimeDuration.lastHour       "la dernière heure">
+<!ENTITY clearTimeDuration.last2Hours     "les deux dernières heures">
+<!ENTITY clearTimeDuration.last4Hours     "les quatre dernières heures">
+<!ENTITY clearTimeDuration.today          "aujourd’hui">
+<!ENTITY clearTimeDuration.everything     "tout">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "Détails">
+<!ENTITY detailsProgressiveDisclosure.accesskey "D">
+
+<!ENTITY historySection.label         "Historique">
+<!ENTITY dataSection.label            "Données">
+
+<!ENTITY itemHistoryAndDownloads.label     "Historique de navigation et des téléchargements">
+<!ENTITY itemHistoryAndDownloads.accesskey "H">
+<!ENTITY itemFormSearchHistory.label       "Historique des formulaires et des recherches">
+<!ENTITY itemFormSearchHistory.accesskey   "F">
+<!ENTITY itemCookies.label                 "Cookies">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "Cache">
+<!ENTITY itemCache.accesskey               "a">
+<!ENTITY itemOfflineApps.label             "Données de site web hors connexion">
+<!ENTITY itemOfflineApps.accesskey         "W">
+<!ENTITY itemActiveLogins.label            "Connexions actives">
+<!ENTITY itemActiveLogins.accesskey        "x">
+<!ENTITY itemSitePreferences.label         "Préférences de site">
+<!ENTITY itemSitePreferences.accesskey     "P">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "Cette action est irréversible.">

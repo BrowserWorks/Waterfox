@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Iniçio">
+
+<!ENTITY startupPage2.label        "Quande &brandShortName; o s'arve">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Fanni vedde a pagina iniçiâ">
+<!ENTITY startupBlankPage.label    "Fanni vedde 'na pagina gianca">
+<!ENTITY startupPrevSession.label  "Fanni vedde i barcoin e feuggi averti l'urtima vòtta">
+
+<!ENTITY homepage2.label           "Pagina Prinçipâ">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "Adeuvia a pagina corente">
+<!ENTITY useCurrentPage.accesskey  "c">
+<!ENTITY useMultiple.label         "Adeuvia e pagine corenti">
+<!ENTITY chooseBookmark.label      "Adeuvia o segnalibbro…">
+<!ENTITY chooseBookmark.accesskey  "s">
+<!ENTITY restoreDefault.label      "Metti torna predefinio">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "Descaregamenti">
+
+<!ENTITY saveTo.label "Sarva file in">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Çerca…">
+<!ENTITY chooseFolderWin.accesskey    "Ç">
+<!ENTITY chooseFolderMac.label        "Çerni…">
+<!ENTITY chooseFolderMac.accesskey    "i">
+<!ENTITY alwaysAskWhere.label         "Domanda de longo donde sarvâ i file">
+<!ENTITY alwaysAskWhere.accesskey     "D">
+
+<!ENTITY alwaysCheckDefault2.label        "Contròlla de longo se &brandShortName; o l'é o navegatô predefinio">
+<!ENTITY alwaysCheckDefault2.accesskey    "t">
+<!ENTITY setAsMyDefaultBrowser2.label     "Inpòsta comme navegatô predefinio">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "o">
+<!ENTITY isDefault.label                  "&brandShortName; o l'é o navegatô predefinio">
+<!ENTITY isNotDefault.label               "&brandShortName; o no l'é o navegatô predefinio">
+
+<!ENTITY separateProfileMode.label        "Consenti l’ezegoçion de &brandShortName; e Waterfox a-o mæximo tenpo">
+<!ENTITY useWaterfoxSync.label             "Conseggio: coscì ti devi adeuviâ di profî diversci. Ti peu adeuviâ Sync pe-a scincronizaçion di dæti.">
+<!ENTITY getStarted.notloggedin.label     "Intra in&syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Arvi e inpostaçioin de &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Deuvia &brandShortName; in modalitæ moltiprocesso">
+
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

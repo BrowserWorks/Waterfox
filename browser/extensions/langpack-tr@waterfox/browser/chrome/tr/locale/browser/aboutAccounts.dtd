@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label;’e hoş geldiniz">
+
+<!ENTITY aboutAccountsConfig.description "Sekmelerinizi, yer imlerinizi, parolalarınızı ve daha fazlasını eşitlemek için giriş yapın.">
+<!ENTITY aboutAccountsConfig.startButton.label "Başlayın">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Eşitleme tercihleri">
+<!ENTITY aboutAccounts.noConnection.title "Bağlantı yok">
+<!ENTITY aboutAccounts.noConnection.description "Giriş yapmak için internete bağlı olmalısınız.">
+<!ENTITY aboutAccounts.noConnection.retry "Yeniden dene">
+<!ENTITY aboutAccounts.badConfig.title "Hatalı yapılandırma">
+<!ENTITY aboutAccounts.badConfig.description "Waterfox Hesabı sunucu yapılandırmanız tespit edilemedi. Lütfen daha sonra yeniden deneyin.">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "ਨੈੱਟਵਰਕਿੰਗ ਬਾਰੇ">
+<!ENTITY aboutNetworking.warning               "ਇਹ ਹਾਲੇ ਤਜਰਬੇ ਅਧੀਨ ਹੈ। ਬਿਨਾਂ ਬਾਲਗ ਦੀ ਨਿਗਰਾਨੀ ਦੇ ਨਾ ਵਰਤੋਂ।">
+<!ENTITY aboutNetworking.showNextTime          "ਇਹ ਚੇਤਾਵਨੀ ਅਗਲੀ ਵਾਰ ਵੇਖਾਓ">
+<!ENTITY aboutNetworking.ok                    "ਠੀਕ ਹੈ">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "ਸਾਕਟ">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "ਵੈੱਬਸਾਕਟ">
+<!ENTITY aboutNetworking.refresh               "ਤਾਜ਼ਾ">
+<!ENTITY aboutNetworking.autoRefresh           "ਹਰ 3 ਸਕਿੰਟ ਬਾਅਦ ਆਪਣੇ-ਆਪ ਤਾਜ਼ਾ">
+<!ENTITY aboutNetworking.hostname              "ਹੋਸਟ-ਨਾਂ">
+<!ENTITY aboutNetworking.port                  "ਪੋਰਟ">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "ਸਰਗਰਮ">
+<!ENTITY aboutNetworking.idle                  "ਵੇਹਲਾ">
+<!ENTITY aboutNetworking.host                  "ਹੋਸਟ">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "ਭੇਜੇ">
+<!ENTITY aboutNetworking.received              "ਪ੍ਰਾਪਤ ਕੀਤੇ">
+<!ENTITY aboutNetworking.family                "ਪਰਿਵਾਰ">
+<!ENTITY aboutNetworking.addresses             "ਸਿਰਨਾਵੇਂ">
+<!ENTITY aboutNetworking.expires               "ਮਿਆਦ (ਸਕਿੰਟ)">
+<!ENTITY aboutNetworking.messagesSent          "ਭੇਜੇ ਸੁਨੇਹੇ">
+<!ENTITY aboutNetworking.messagesReceived      "ਪ੍ਰਾਪਤ ਕੀਤੇ ਸੁਨੇਹੇ">
+<!ENTITY aboutNetworking.bytesSent             "ਭੇਜੇ ਬਾਈਟ">
+<!ENTITY aboutNetworking.bytesReceived         "ਪ੍ਰਾਪਤ ਕੀਤੇ ਬਾਈਟ">
+<!ENTITY aboutNetworking.logging               "ਲਾਗ ਰੱਖਣਾ">
+<!ENTITY aboutNetworking.logTutorial           "ਇਹ ਟੂਲ ਦੀ ਵਰਤੋਂ ਸਿ਼ਖਣ ਲਈ ਹਦਾਇਤਾਂ ਵਾਸਤੇ <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> ਨੂੰ ਵੇਖੋ">
+<!ENTITY aboutNetworking.currentLogFile        "ਮੌਜੂਦਾ ਲਾਗ ਫਾਈਲ:">
+<!ENTITY aboutNetworking.currentLogModules     "Current Log Modules:">
+<!ENTITY aboutNetworking.setLogFile            "Set Log File">
+<!ENTITY aboutNetworking.setLogModules         "Set Log Modules">
+<!ENTITY aboutNetworking.startLogging          "Start Logging">
+<!ENTITY aboutNetworking.stopLogging           "Stop Logging">
+<!ENTITY aboutNetworking.dnsLookup             "DNS ਖੋਜ">
+<!ENTITY aboutNetworking.dnsLookupButton       "ਹੱਲ਼">
+<!ENTITY aboutNetworking.dnsDomain             "ਡੋਮੇਨ">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

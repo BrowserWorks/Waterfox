@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "שינוי ססמה ראשית">
+<!ENTITY setPassword.tokenName.label "התקן אבטחה">
+<!ENTITY setPassword.oldPassword.label "ססמה נוכחית:">
+<!ENTITY setPassword.newPassword.label "ססמה חדשה:">
+<!ENTITY setPassword.reenterPassword.label "ססמה חדשה (שוב):">
+<!ENTITY setPassword.meter.label "מד איכות ססמה">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "אתחול">
+<!ENTITY resetPassword.title  "אפס ססמה ראשית">
+<!ENTITY resetPassword.text  "אם תאפס את הססמה הראשית שלך, כל הססמאות לאתרים ולדוא״ל, נתוני טפסים, האישורים האישיים והמפתחות הפרטיים המאוחסנים ישכחו. האם אתה בטוח שברצונך לאפס את הססמה הראשית שלך?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "מוריד אישור">
+<!ENTITY downloadCert.message1 "התבקשת לבטוח ברשות אישורים (CA) חדשה.">
+<!ENTITY downloadCert.trustSSL "בטח ברשות אישורים זו לזיהוי אתרים.">
+<!ENTITY downloadCert.trustEmail "בטח ברשות אישורים זו לזיהוי משתמשי דוא״ל.">
+<!ENTITY downloadCert.trustObjSign "בטח ברשות אישורים זו לזיהוי מפתחי תוכנה.">
+<!ENTITY downloadCert.message3 "לפני שתבטח ברשות אישורים זו לכל מטרה, עליך לבחון את האישור שלה, המדיניות שלה והנהלים שלה (אם הם זמינים).">
+<!ENTITY downloadCert.viewCert.label "תצוגה">
+<!ENTITY downloadCert.viewCert.text "בחן אישור של רשות אישורים">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "בקשה לזיהוי המשתמש">
+<!ENTITY clientAuthAsk.message1 "אתר זה ביקש שתזהה את עצמך עם אישור:">
+<!ENTITY clientAuthAsk.message2 "בחר אישור להצגה בתור זיהוי:">
+<!ENTITY clientAuthAsk.message3 "פרטי האישור שנבחר:">
+
+<!ENTITY pkcs12.setpassword.title  "בחר ססמה לגיבוי אישור">
+<!ENTITY pkcs12.setpassword.message  "הססמה לגיבוי אישור שתקבע כאן מגינה על קובץ הגיבוי שאתה עומד ליצור. עליך לקבוע ססמה זו כדי להמשיך בגיבוי.">
+<!ENTITY pkcs12.setpassword.label1 "ססמה לגיבוי אישור:">
+<!ENTITY pkcs12.setpassword.label2 "ססמה לגיבוי אישור (שוב):">
+<!ENTITY pkcs12.setpassword.reminder "חשוב: אם תשכח את הססמה לגיבוי האישור שלך, לא תוכל לשחזר גיבוי זה מאוחר יותר. אנא רשום אותה במקום בטוח.">
+
+<!ENTITY chooseToken.title  "דו־שיח בחירת אסימון">
+<!ENTITY chooseToken.message1 "אנא בחר אסימון.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "מייצר מפתח פרטי">
+<!ENTITY createCertInfo.msg1 "יצור מפתח מתבצע... זה עשוי לקחת מספר דקות....">
+<!ENTITY createCertInfo.msg2 "אנא המתן...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "הזדהות לאסימון מוגן">
+<!ENTITY protectedAuth.msg "בבקשה הזדהה לאסימון. צורות ההזדהות תלויות בסוג האסימון שבידך.">
+<!ENTITY protectedAuth.tokenName.label "אסימון:">

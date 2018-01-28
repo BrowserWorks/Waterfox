@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ടെലിമെട്രി ഡേറ്റാ">
+
+<!ENTITY aboutTelemetry.pingDataSource "പിങ് ഡാറ്റയുടെ ശ്രോതസ്സ്">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "ഇപ്പോഴത്തെ പിങ് ഡാറ്റ">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "ശേഖരിച്ചുവെക്കപ്പെട്ട പിങ് ഡാറ്റ">
+
+
+<!ENTITY aboutTelemetry.showSubsessionData "സബ്മിഷൻ ഡാറ്റ കാണിക്കുക">
+
+<!ENTITY aboutTelemetry.choosePing "പിങ് തിരഞ്ഞെടുക്കുക:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; പുതിയ പിങ്">
+
+<!ENTITY aboutTelemetry.showOlderPing "പഴയ പിങ് &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "ആഴ്ച">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "പിങ്">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  പൊതു വിവരം">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  എൻവയോൺമെന്റ് ഡാറ്റ">
+
+<!ENTITY aboutTelemetry.telemetryLogSection " ടെലിമെട്രി ലോഗ്">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  എസ്‌ക്യൂഎല്‍ വാചകങ്ങളുടെ വേഗത കുറയ്ക്കുക">
+
+<!ENTITY aboutTelemetry.chromeHangsSection " ബ്രൌസര്‍ ഹാങ്സ്">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  ത്രെഡ് ഹാങ്സ്">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  ഹിസ്റ്റോഗ്രാം">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  കീഡ് ഹിസ്റ്റോഗ്രാമുകൾ">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection " ലളിതമായ അളവുകള്‍">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  ആഡ്-ഓണ്‍ വിവരങ്ങള്‍">
+
+<!ENTITY aboutTelemetry.lateWritesSection " ലേറ്റ് റൈറ്റുകള്‍">
+
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  കുറിപ്പു്: പതിയെയുള്ള എസക്യൂഎല്‍ ഡീബഗ്ഗിങ് പ്രവര്‍ത്തന സജ്ജമാക്കിയിരിയ്ക്കുന്നു. പൂര്‍ണ്ണ എസ്‌ക്യൂഎല്‍ സ്ട്രിങുകള്‍ ലഭ്യമാക്കുന്നു, പക്ഷേ അവ ടെലിമെട്രിയിലേക്കു് സമര്‍പ്പിയ്ക്കുന്നതല്ല.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  ഫില്‍റ്റര്‍ (സ്ട്രിങ്ങുകള്‍ അല്ലെങ്കില്‍ /regexp/)">
+
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+

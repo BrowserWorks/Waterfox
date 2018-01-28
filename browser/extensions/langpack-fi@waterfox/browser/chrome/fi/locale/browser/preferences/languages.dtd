@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                    "30em">
+
+<!ENTITY languages.customize.Header                      "Kielet">
+<!ENTITY languages.customize.description                "Sivuista on joskus useammankielisiä versioita. Järjestä kielet niin, että ensimmäisenä on mieluiten lukemasi kieli:">
+<!ENTITY languages.customize.moveUp.label                "Siirrä ylös">
+<!ENTITY languages.customize.moveUp.accesskey            "y">
+<!ENTITY languages.customize.moveDown.label              "Siirrä alas">
+<!ENTITY languages.customize.moveDown.accesskey          "a">
+<!ENTITY languages.customize.deleteButton.label          "Poista">
+<!ENTITY languages.customize.deleteButton.accesskey      "P">
+<!ENTITY languages.customize.selectLanguage.label        "Valitse lisättävä kieli…">
+<!ENTITY languages.customize.addButton.label             "Lisää">
+<!ENTITY languages.customize.addButton.accesskey         "L">
+

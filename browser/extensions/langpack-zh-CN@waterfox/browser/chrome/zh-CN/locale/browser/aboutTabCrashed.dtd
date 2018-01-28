@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "关闭此标签页">
+<!ENTITY tabCrashed.restoreTab "恢复此标签页">
+<!ENTITY tabCrashed.restoreAll "恢复所有已崩溃的标签页">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "糟糕，您的标签页崩溃了。">
+<!ENTITY tabCrashed.offerHelp "我们可以帮你！">
+<!ENTITY tabCrashed.single.offerHelpMessage "点击 &tabCrashed.restoreTab; 可重新载入页面内容。">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "点击 &tabCrashed.restoreTab; 或 &tabCrashed.restoreAll; 可重新载入页面内容。">
+<!ENTITY tabCrashed.requestHelp "你愿意帮我们个忙吗？">
+<!ENTITY tabCrashed.requestHelpMessage "反馈崩溃报告能帮助我们找出问题所在，不断改进 &brandShortName;。">
+<!ENTITY tabCrashed.requestReport "反馈此标签页">
+<!ENTITY tabCrashed.sendReport2 "发送有关此标签页的错误报告">
+<!ENTITY tabCrashed.commentPlaceholder2 "加上附注（选填且公开可见）">
+<!ENTITY tabCrashed.includeURL2 "在崩溃报告中附上此页网址">
+<!ENTITY tabCrashed.emailPlaceholder "请在这里输入您的电子邮件地址">
+<!ENTITY tabCrashed.emailMe "当有更多信息时给我发送电子邮件">
+<!ENTITY tabCrashed.reportSent "崩溃报告已提交。感谢您帮助 &brandShortName; 变得更好！">
+<!ENTITY tabCrashed.requestAutoSubmit2 "反馈后台标签页">
+<!ENTITY tabCrashed.autoSubmit2 "更新首选项为自动发送崩溃报告，包括此次浏览和未来浏览时在后台崩溃的标签页的报告">

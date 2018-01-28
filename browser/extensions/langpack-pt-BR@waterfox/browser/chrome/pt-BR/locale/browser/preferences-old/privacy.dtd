@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Usar proteção contra rastreamento">
+<!ENTITY  trackingProtectionAlways.label       "Sempre">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "Só em janelas privativas">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Nunca">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "Saber mais">
+<!ENTITY  trackingProtectionExceptions.label   "Exceções…">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "Rastreamento">
+<!ENTITY trackingProtectionPBM5.label         "Usar proteção contra rastreamento em janelas privativas">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Saber mais">
+<!ENTITY changeBlockList.label          "Alterar Lista de Bloqueios">
+<!ENTITY changeBlockList.accesskey      "A">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Você também pode ">
+<!ENTITY  doNotTrack.settings.label     "gerenciar as configurações Não rastrear">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Histórico">
+
+<!ENTITY  locationBar.label             "Barra de endereço">
+
+<!ENTITY  locbar.suggest.label          "Ao digitar um endereço, sugerir:">
+<!ENTITY  locbar.history.label          "Histórico">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Favoritos">
+<!ENTITY  locbar.bookmarks.accesskey    "F">
+<!ENTITY  locbar.openpage.label         "Abas abertas">
+<!ENTITY  locbar.openpage.accesskey     "A">
+<!ENTITY  locbar.searches.label         "Pesquisas relacionadas do mecanismo de pesquisa padrão">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Alterar preferências das sugestões do mecanismo de pesquisa…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "Aceitar cookies de sites">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Aceitar cookies de terceiros:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "f">
+<!ENTITY  acceptThirdParty.always.label   "Sempre">
+<!ENTITY  acceptThirdParty.never.label    "Nunca">
+<!ENTITY  acceptThirdParty.visited.label  "De sites visitados">
+
+<!ENTITY  keepUntil.label               "Preservar cookies até:">
+<!ENTITY  keepUntil.accesskey           "P">
+
+<!ENTITY  expire.label                  "expirarem">
+<!ENTITY  close.label                   "Sair do &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Exceções…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Mostrar cookies…">
+<!ENTITY  showCookies.accesskey         "x">
+
+<!ENTITY  historyHeader.pre.label          "O &brandShortName; irá:">
+<!ENTITY  historyHeader.pre.accesskey      "i">
+<!ENTITY  historyHeader.remember.label     "Memorizar tudo">
+<!ENTITY  historyHeader.dontremember.label "Nunca memorizar">
+<!ENTITY  historyHeader.custom.label       "Usar minhas configurações">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "O &brandShortName; memorizará o seu histórico de navegação, downloads, formulários, pesquisa e os cookies de sites visitados.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Você pode querer ">
+<!ENTITY  rememberActions.clearHistory.label  "limpar seu histórico recente">
+<!ENTITY  rememberActions.middle.label        " ou ">
+<!ENTITY  rememberActions.removeCookies.label "remover cookies individualmente">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "O &brandShortName; usará as mesmas configurações da navegação privativa e não memorizará o histórico de navegação.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Você também pode querer ">
+<!ENTITY  dontrememberActions.clearHistory.label "limpar todo o histórico">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Sempre usar o modo de navegação privativa">
+<!ENTITY  privateBrowsingPermanent2.accesskey "v">
+
+<!ENTITY  rememberHistory2.label      "Memorizar histórico de navegação e downloads">
+<!ENTITY  rememberHistory2.accesskey  "M">
+
+<!ENTITY  rememberSearchForm.label       "Memorizar histórico de pesquisa e formulários">
+<!ENTITY  rememberSearchForm.accesskey   "z">
+
+<!ENTITY  clearOnClose.label             "Limpar histórico quando o &brandShortName; fechar">
+<!ENTITY  clearOnClose.accesskey         "i">
+
+<!ENTITY  clearOnCloseSettings.label     "Configurar…">
+<!ENTITY  clearOnCloseSettings.accesskey "C">
+
+<!ENTITY  browserContainersHeader.label         "Abas contêineres">
+<!ENTITY  browserContainersLearnMore.label      "Saber mais">
+<!ENTITY  browserContainersEnabled.label        "Habilitar abas contêineres">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Configurações…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

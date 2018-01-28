@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "ფრთხილად, ეს იარაღი დატენილია!">
+<!ENTITY aboutWarningText.label "ამ დამატებითი პარამეტრების ცვლილებამ შესაძლოა პროგრამის მდგრადობა, უსაფრთხოება და წარმადობა დააზიანოს. მხოლოდ იმ შემთხვევაში განაგრძეთ, თუ დარწმუნებული ხართ რომ იცით, რასაც აკეთებთ.">
+<!ENTITY aboutWarningButton2.label "ვცნობ რისკებს!">
+<!ENTITY aboutWarningCheckbox.label "გაფრთხილების ჩვენება ყოველ ჯერზე">
+
+<!ENTITY searchPrefs.label "ძიება:">
+<!ENTITY searchPrefs.accesskey "ძ">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "პარამეტრი">
+<!ENTITY lockColumn.label "მდგომარეობა">
+<!ENTITY typeColumn.label "ტიპი">
+<!ENTITY valueColumn.label "მნიშვნელობა">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "დააწკაპეთ დასალაგებლად"> 
+<!ENTITY columnChooser.tooltip "დააწკაპეთ სვეტების ასარჩევად"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "დაკოპირება">
+<!ENTITY copyPref.accesskey "დ">
+<!ENTITY copyName.label "სახელის დაკოპირება">
+<!ENTITY copyName.accesskey "ს">
+<!ENTITY copyValue.label "მნიშვნელობის დაკოპირება">
+<!ENTITY copyValue.accesskey "მ">
+<!ENTITY modify.label "შეცვლა">
+<!ENTITY modify.accesskey "შ">
+<!ENTITY toggle.label "გადართვა">
+<!ENTITY toggle.accesskey "თ">
+<!ENTITY reset.label "აღდგენა">
+<!ENTITY reset.accesskey "ღ">
+<!ENTITY new.label "ახალი">
+<!ENTITY new.accesskey "ა">
+<!ENTITY string.label "ტექსტი">
+<!ENTITY string.accesskey "ტ">
+<!ENTITY integer.label "მთელი რიცხვი">
+<!ENTITY integer.accesskey "რ">
+<!ENTITY boolean.label "ლოგიკური ოპერატორი">
+<!ENTITY boolean.accesskey "ლ">

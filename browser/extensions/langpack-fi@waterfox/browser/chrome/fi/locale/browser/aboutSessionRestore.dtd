@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Palauta istunto">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Oho, nyt kävi nolosti...">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ei onnistunut palauttamaan avattuja ikkunoita ja välilehtiä. Tämä yleisimmin johtuu jostakin äskettäin avatusta sivusta.">
+<!ENTITY restorepage.tryThis        "Voit yrittää:">
+<!ENTITY restorepage.restoreSome    "Poistaa yhden tai useamman välilehden, jonka voisit kuvitella aiheuttavan ongelman">
+<!ENTITY restorepage.startNew       "Aloittaa uuden istunnon">
+
+<!ENTITY restorepage.tryagainButton "Palauta edellinen istunto">
+<!ENTITY restorepage.restore.access "P">
+<!ENTITY restorepage.closeButton    "Sulje">
+<!ENTITY restorepage.close.access   "S">
+
+<!ENTITY restorepage.restoreHeader  "Palauta">
+<!ENTITY restorepage.listHeader     "Ikkunat ja välilehdet">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ikkuna &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Palauta!">
+<!ENTITY welcomeback2.restoreButton.access "P">
+
+<!ENTITY welcomeback2.tabtitle      "Valmista!">
+
+<!ENTITY welcomeback2.pageTitle     "Valmista!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; on valmis käytettäväksi.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Palauta kaikki ikkunat ja välilehdet">
+<!ENTITY welcomeback2.restoreSome.label "Palauta vain haluamasi">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Lisäosasi ja selaimen muokkaukset on poistettu ja selaimen oletusasetukset palautettu. Jos tämä ei korjannut ongelmaa, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "lue lisää, mitä on tehtävissä.">
+

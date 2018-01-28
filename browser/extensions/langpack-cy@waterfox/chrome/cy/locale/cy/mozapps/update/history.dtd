@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Hanes Diweddaru">
+<!ENTITY  history.intro             "Mae'r diweddariadau canlynol wedi eu gosod:">
+<!ENTITY  closebutton.label         "Cau">
+                                     
+<!ENTITY  noupdates.label           "Dim diweddariadau wedi eu gosod eto">
+
+<!ENTITY  name.header               "Enw'r Diweddariad">
+<!ENTITY  date.header               "Dyddiad Gosod">
+<!ENTITY  type.header               "Math">
+<!ENTITY  state.header              "Sir/Talaith">
+

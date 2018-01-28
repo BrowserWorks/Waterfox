@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Kinuk'samajel taq okisaxel">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Taq rujuperaj jikomal chuqa' taq okisaxel">
+<!ENTITY devmgr.details.title                   "Kib'anikil">
+<!ENTITY devmgr.details.title2                  "Retal">
+
+<!ENTITY devmgr.button.login.label              "Titikirisäx molojri'ïl">
+<!ENTITY devmgr.button.login.accesskey          "t">
+<!ENTITY devmgr.button.logout.label             "Tik'isb'ëx molojri'ïl">
+<!ENTITY devmgr.button.logout.accesskey         "T">
+<!ENTITY devmgr.button.changepw.label           "Tijal ewan tzij">
+<!ENTITY devmgr.button.changepw.accesskey       "e">
+<!ENTITY devmgr.button.load.label               "Tisamajib'ëx">
+<!ENTITY devmgr.button.load.accesskey           "T">
+<!ENTITY devmgr.button.unload.label             "Tiqasäx">
+<!ENTITY devmgr.button.unload.accesskey         "T">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Tatz'ib'aj ri etamab'äl richin ri juperaj nawajo' natz'aqatisaj.">
+<!ENTITY loaddevice.modname                     "Rub'i' juperaj:">
+<!ENTITY loaddevice.modname.accesskey           "K">
+<!ENTITY loaddevice.modname.default             "K'ak'a' PKCS#11 Juperaj">
+<!ENTITY loaddevice.filename                    "Ruyakb'al juperaj:">
+<!ENTITY loaddevice.filename.accesskey          "a">
+<!ENTITY loaddevice.browse                      "Tinik'öx…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Tisamajib'ëx PKCS#11 Okisaxel Chajinel">

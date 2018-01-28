@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; — выбор профиля пользователя">
+
+<!ENTITY            profilename.label      "Имя профиля:">
+
+<!ENTITY            start.label            "Запуск &brandShortName;">
+<!ENTITY            exit.label             "Выход">
+
+<!ENTITY            availprofiles.label    "Доступные профили">
+
+<!ENTITY            newButton.label        "Создать…">
+<!ENTITY            newButton.accesskey    "о">
+<!ENTITY            renameButton.label     "Переименовать…">
+<!ENTITY            renameButton.accesskey "е">
+<!ENTITY            deleteButton.label     "Удалить…">
+<!ENTITY            deleteButton.accesskey "и">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; хранит информацию о ваших настройках, закладках и т.д. в личном профиле.">
+
+<!ENTITY            offlineState.label    "Работать автономно">
+<!ENTITY            offlineState.accesskey "а">
+
+<!ENTITY            useSelected.label       "Запускать выделенный профиль без запроса">
+<!ENTITY            useSelected.accesskey   "п">

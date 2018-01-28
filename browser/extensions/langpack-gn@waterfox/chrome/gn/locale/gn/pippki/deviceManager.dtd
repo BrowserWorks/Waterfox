@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Mba'e'oka ñangarekohára">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Tekorosãrã ha mba'e'oka ra'ãha">
+<!ENTITY devmgr.details.title                   "Mba'emimi">
+<!ENTITY devmgr.details.title2                  "Hepykue">
+
+<!ENTITY devmgr.button.login.label              "Tembiapo Ñepyrũ">
+<!ENTITY devmgr.button.login.accesskey          "e">
+<!ENTITY devmgr.button.logout.label             "Tembiapo mbopaha">
+<!ENTITY devmgr.button.logout.accesskey         "m">
+<!ENTITY devmgr.button.changepw.label           "Ñe'ẽñemi moambue">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "Myenyhẽ">
+<!ENTITY devmgr.button.load.accesskey           "M">
+<!ENTITY devmgr.button.unload.label             "Mboguejy">
+<!ENTITY devmgr.button.unload.accesskey         "M">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Emoĩnge marandu vore rembojuapysévape g̃uarã.">
+<!ENTITY loaddevice.modname                     "Ha'ãha réra:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Ha'ãha pyahu PKCS#11">
+<!ENTITY loaddevice.filename                    "Marandurenda ra'ãha:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Poravo…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Emyenyhẽ mba'e'oka ñangarekoha PKCS#11">

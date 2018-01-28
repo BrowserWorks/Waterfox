@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Barby">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Barby podate přez stronu přez mój wuběry horjeka přepisać:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "B">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Přeco">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Jenož z drastami z wysokim kontrastom">
+<!ENTITY  overrideDefaultPageColors.never.label  "Ženje">
+
+<!ENTITY  color                           "Tekst a pozadk">
+<!ENTITY  textColor.label                 "Tekst:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Pozadk:">
+<!ENTITY  backgroundColor.accesskey       "P">
+<!ENTITY  useSystemColors.label           "Systemowe barby wužiwać">
+<!ENTITY  useSystemColors.accesskey       "S">
+
+<!ENTITY  underlineLinks.label            "Wotkazy podšmórnyć">
+<!ENTITY  underlineLinks.accesskey        "m">
+<!ENTITY  links                           "Barby wotkazow">
+<!ENTITY  linkColor.label                 "Njewopytane wotkazy:">
+<!ENTITY  linkColor.accesskey             "N">
+<!ENTITY  visitedLinkColor.label          "Wopytane wotkazy:">
+<!ENTITY  visitedLinkColor.accesskey      "W">

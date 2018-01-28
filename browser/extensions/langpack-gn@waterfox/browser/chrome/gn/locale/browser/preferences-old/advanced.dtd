@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Tuichakue">
+
+<!ENTITY accessibility.label             "Jeikekuaa">
+
+<!ENTITY useCursorNavigation.label       "Eipuru tapia tairenda hu'ykuéra aikundaha kuatiaroguépe">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Eheka moñe'ẽrã ehaikuévo">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY blockAutoReload.label           "Ehechakuaa oĩramo peteĩ ñanduti kuatiarogue omboguata'ykese térã omyenyhẽsejeýramo pe kuatiarogue">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Ehechauka peteĩ tairenda jepokokuaáva oñeikotevẽ jave">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Kundaha">
+
+<!ENTITY useAutoScroll.label             "Oku'éva ijehegui jepuru">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Oku'éva mbeguemi jepuru">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "Haingatu jehaikuévo jehechajey">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Mba'ekuaarã poravo">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Pe mba'ekuaarã momarandu oñembogue ko ñemboheko guasúpe g̃uarã">
+
+<!ENTITY healthReportDesc.label          "Oipytyvõ chupe oikumby hag̃ua ikundahára rembiapo ha ombohasa mba'ekuaarã &vendorShortName; ndive mbaéichapa oĩhína kóva">
+<!ENTITY enableHealthReport.label        "Emomarandu mba'éichapa oĩ &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "Kuaave">
+
+<!ENTITY telemetryDesc.label             "Embohasa mba'ekuaarã rembiapokue, jepuru, hardware ha ñemomba'egua ikundahára rehegua &vendorShortName; ndive oipytyvõ hag̃ua &brandShortName;-pe oikoporãvévo">
+<!ENTITY enableTelemetryData.label       "Emoherakuã mba'ekuarã ykepeguáva (i.e., Telemetría)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Kuaave">
+
+<!ENTITY crashReporterDesc2.label         "Marandu ñepytyvõ jejavy rehegua &vendorShortName; omoĩporã apañuãi ha ha ojapóta nekundahágui hkopyta ha hekorosãva">
+<!ENTITY alwaysSubmitCrashReports.label   "Emoneĩ &brandShortName; omondóvo marandu jejavygua nde rérape hasypeterei">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "Kuaave">
+
+<!ENTITY networkTab.label                "Ñanduti">
+
+<!ENTITY connection.label                "Jeikeha">
+
+<!ENTITY connectionDesc.label            "Emboheko &brandShortName;-ramo; Ñandutípe jeike">
+<!ENTITY connectionSettings.label        "Ñemboheko…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Ñanduti rechapyrã kachépe">
+
+<!ENTITY offlineStorage2.label           "Ñanduti rechapyrã jeikekatu'ỹre há puruhára mba'ekuaarã">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Mba'ekuaarã tenda rehegua">
+<!ENTITY clearSiteData.label             "Embogue opaite mba'ekuaarã">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Ñemboheko…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Kuaave">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Kache mombyky">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB pa'ũ">
+<!ENTITY clearCacheNow.label             "Emopotĩ ko'ág̃a">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "Emopotĩ ko'ág̃a">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "Kache ñangarekoha ijeheguíva jehejarei">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "Mbohekopyahu">
+
+<!ENTITY updateApplication.label         "&brandShortName; mbohekopyahu">
+<!ENTITY updateAuto1.label               "Tekopyahu ijeheguíva mohenda (jeroviapyrãva: omohekorosãvéta)">
+<!ENTITY updateAuto1.accesskey           "A">
+<!ENTITY updateCheckChoose.label         "Eheka mbohekopyahu, hákatu eheja toiporavo amboguejysépa">
+<!ENTITY updateCheckChoose.accesskey     "E">
+<!ENTITY updateManual.label              "Tekopyahu jejhechajey'ỹva, (jerovia'ỹva: hekorosã kyhyjéta)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Tembiasakue rekopyahu jehechauka">
+<!ENTITY updateHistory.accesskey         "p">
+
+<!ENTITY useService.label                "Eipuru peteĩ mba'epytyvõrã mokõiha pegua remboguejy hag̃ua tekopyahu">
+<!ENTITY useService.accesskey            "m">
+
+<!ENTITY autoUpdateOthers.label          "Mbohekopyahu ijeheguíva">
+<!ENTITY enableSearchUpdate.label        "Jehekaha">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+<!ENTITY offlineStorageNotify.label               "Chemomarandu peteĩ ñanduti renda ojerurérõ mba'ekuaarã mbyatypy jeikekatu'ỹre ojepuru hag̃ua">
+<!ENTITY offlineStorageNotify.accesskey           "C">
+<!ENTITY offlineStorageNotifyExceptions.label     "Oĩ'ỹva">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "Ko'ã ñanduti renda oguereko moneĩ oñongatúvo mba'ekuaarã jeikekatu'ỹre ojepuru hag̃ua:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Mboguete…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "Mba'ekuaarã jeikekatu'ỹre mboguete">
+
+<!ENTITY certificateTab.label            "Mboajepyréva">
+<!ENTITY certPersonal.label              "Mba'ejerure">
+<!ENTITY certPersonal.description        "Peteĩ mohendahavusu oikotevẽramo che mboajepyre:">
+<!ENTITY selectCerts.auto                "Eiporavo peteĩ ijeheguíva">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Porandu katui">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Mohendahavusu mbohovái porandu OCSP rehegua emoañete hag̃ua oiko gueteriha umi mboajepyre ag̃aguáva.">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts.label                 "Mboajepyre jehecha">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "Tekorosã mba'e'oka rehegua">
+<!ENTITY viewSecurityDevices.accesskey   "D">
+
+<!ENTITY performance.label               "Mba'eaporã">
+<!ENTITY useRecommendedPerformanceSettings.label "Eipuru ñemboheko tembiapokue oje'epyréva">
+<!ENTITY useRecommendedPerformanceSettings.description "Ko'ã ñemoĩporã oñombojuehe hardware ha ne mohendaha apopyvusu rembiapo rehe.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "E">
+<!ENTITY performanceSettingsLearnMore.label "Kuaave">
+<!ENTITY limitContentProcessOption.label "Tembe'y tetepy taperekoguáva">
+<!ENTITY limitContentProcessOption.description "Umi taperekogua tetepy mbohetapy ikatu omopu'ã apopyre oipurúvo heta tendayke, hákatu avei oipurúta hetave mandu'arenda.">
+<!ENTITY limitContentProcessOption.accesskey   "l">
+<!ENTITY limitContentProcessOption.disabledDescription "Pe mba'eapo papapy moambue retepy ikatu oiko mba'eapoita &brandShortName; ndive añónte.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Eikuaápa mba'éichapa eha'ãjeýta multiproceso ijurujáva">
+<!ENTITY allowHWAccel.label              "Hardware mbopya'eha oĩmba vove jepuru">
+<!ENTITY allowHWAccel.accesskey          "r">

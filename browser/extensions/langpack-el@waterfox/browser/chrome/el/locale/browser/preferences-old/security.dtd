@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Γενικά">
+
+<!ENTITY  warnOnAddonInstall2.label       "Προειδοποίηση όταν οι ιστοσελίδες προσπαθούν να εγκαταστήσουν πρόσθετα">
+<!ENTITY  warnOnAddonInstall2.accesskey   "Π">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Φραγή επικίνδυνου και παραπλανητικού περιεχομένου">
+<!ENTITY  enableSafeBrowsing.accesskey    "Α">
+
+<!ENTITY  blockDownloads.label            "Φραγή επικίνδυνων λήψεων">
+<!ENTITY  blockDownloads.accesskey        "λ">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Προειδοποίηση για ανεπιθύμητο και ασυνήθιστο λογισμικό">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "Σ">
+
+<!ENTITY  addonExceptions.label         "Εξαιρέσεις…">
+<!ENTITY  addonExceptions.accesskey     "Ε">
+
+
+<!ENTITY  logins.label                  "Λογαριασμοί">
+
+<!ENTITY  rememberLogins2.label         "Απομνημόνευση στοιχείων σύνδεσης σε ιστοσελίδες">
+<!ENTITY  rememberLogins2.accesskey     "μ">
+<!ENTITY  passwordExceptions.label      "Εξαιρέσεις…">
+<!ENTITY  passwordExceptions.accesskey  "ξ">
+
+<!ENTITY  useMasterPassword.label        "Χρήση κύριου κωδικού">
+<!ENTITY  useMasterPassword.accesskey    "ρ">
+<!ENTITY  changeMasterPassword.label     "Αλλαγή κύριου κωδικού…">
+<!ENTITY  changeMasterPassword.accesskey "γ">
+
+<!ENTITY  savedLogins.label              "Αποθηκευμένοι λογαριασμοί…">
+<!ENTITY  savedLogins.accesskey          "π">

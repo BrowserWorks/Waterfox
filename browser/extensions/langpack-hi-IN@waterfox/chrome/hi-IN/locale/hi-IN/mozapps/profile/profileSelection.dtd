@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - उपयोक्ता प्रोफाइल चुनें">
+
+<!ENTITY            profilename.label      "प्रोफाइल नाम:">
+
+<!ENTITY            start.label            "&brandShortName; आरम्भ करें">
+<!ENTITY            exit.label             "बाहर निकलें">
+
+<!ENTITY            availprofiles.label    "उपलब्ध प्रोफाइल ">
+
+<!ENTITY            newButton.label        "प्रोफाइल बनायें…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "प्रोफाइल का पुनःनामांकरण…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "प्रोफाइल हटायें…">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; आपकी सेटिंग सूचना, वरीयतायें एवं अन्य उपयोक्ता वस्तुओं को आपके उपयोक्ता प्रोफाइल में सहेजता है.">
+
+<!ENTITY            offlineState.label    "ऑफ़लाइन कार्य">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "स्टार्टअप पर बिना पूछे चुनें प्रोफ़ाइल का उपयोग करें">
+<!ENTITY            useSelected.accesskey   "s">

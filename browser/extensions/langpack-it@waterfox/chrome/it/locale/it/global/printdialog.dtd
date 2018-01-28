@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printButton.label "Stampa">
+<!ENTITY printDialog.title "Stampa">
+<!ENTITY fpDialog.title "Salva file">
+<!ENTITY fileCheck.label "Stampa su file">
+<!ENTITY fileCheck.accesskey "S">
+<!ENTITY propertiesButton.label "Proprietà…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Descrizione stampante:">
+<!ENTITY printer.label "Stampante">
+<!ENTITY printerInput.label "Stampante:">
+<!ENTITY printerInput.accesskey "m">
+<!ENTITY printrangeGroup.label "Intervallo di stampa">
+<!ENTITY allpagesRadio.label "Tutte le pagine">
+<!ENTITY allpagesRadio.accesskey "u">
+<!ENTITY rangeRadio.label "Pagine">
+<!ENTITY rangeRadio.accesskey "P">
+<!ENTITY frompageInput.label "da">
+<!ENTITY frompageInput.accesskey "d">
+<!ENTITY topageInput.label "a">
+<!ENTITY topageInput.accesskey "a">
+<!ENTITY selectionRadio.label "Selezione">
+<!ENTITY selectionRadio.accesskey "z">
+<!ENTITY copies.label "Copie">
+<!ENTITY numCopies.label "Numero di copie:">
+<!ENTITY numCopies.accesskey "N">
+<!ENTITY printframeGroup.label "Stampa riquadri">
+<!ENTITY aslaidoutRadio.label "Come visualizzati a schermo">
+<!ENTITY aslaidoutRadio.accesskey "v">
+<!ENTITY selectedframeRadio.label "Il riquadro selezionato">
+<!ENTITY selectedframeRadio.accesskey "r">
+<!ENTITY eachframesepRadio.label "Ciascun riquadro separatamente">
+<!ENTITY eachframesepRadio.accesskey "C">

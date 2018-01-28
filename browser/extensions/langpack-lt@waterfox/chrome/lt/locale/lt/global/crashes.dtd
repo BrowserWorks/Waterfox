@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Strigčių pranešimai">
+<!ENTITY crashesUnsubmitted.label   "Neišsiųsti strigčių pranešimai">
+<!ENTITY crashesSubmitted.label     "Išsiųsti strigčių pranešimai">
+<!ENTITY id.heading                 "Pranešimo ID">
+<!ENTITY dateCrashed.heading        "Strigties data">
+<!ENTITY dateSubmitted.heading      "Pranešimo data">
+<!ENTITY noReports.label            "Išsiųstų strigčių pranešimų nėra.">
+<!ENTITY noConfig.label             "Ši programa nėra suderinta, siųsti strigčių pranešimus. Tam reikia, kad būtų nurodyta nuostatos <code>breakpad.reportURL</code> reikšmė.">
+<!ENTITY clearAllReports.label      "Pašalinti visus pranešimus">

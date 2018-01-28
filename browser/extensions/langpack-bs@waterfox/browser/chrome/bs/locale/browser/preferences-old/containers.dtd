@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Dodaj novi Container">
+<!ENTITY addButton.accesskey  "a">
+<!ENTITY preferencesButton.label "Postavke">
+<!ENTITY removeButton.label   "Ukloni">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Nazad na Privatnost">
+
+<!ENTITY window.title         "Dodaj novi Container">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Ime:">
+<!ENTITY name.accesskey       "I">
+<!ENTITY name.placeholder     "Unesite naziv containera">
+<!ENTITY icon.label           "Ikona:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Boja:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Gotovo">
+<!ENTITY button.ok.accesskey  "G">
+

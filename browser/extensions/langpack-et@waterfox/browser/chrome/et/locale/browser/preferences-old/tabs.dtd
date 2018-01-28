@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab liigub kaartide vahel viimase kasutamise järjekorras">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Uued aknad avatakse uuel kaardil">
+<!ENTITY newWindowsAsTabs.accesskey   "U">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Hoiatus, kui suletakse mitu kaarti korraga">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "H">
+
+<!ENTITY warnOnOpenManyTabs.label       "Hoiatus, kui mitme kaardi avamine võib aeglustada &brandShortName;i tööd">
+<!ENTITY warnOnOpenManyTabs.accesskey   "i">
+
+<!ENTITY switchLinksToNewTabs.label        "Uue kaardi avamisel lülitutakse sellele koheselt">
+<!ENTITY switchLinksToNewTabs.accesskey    "U">
+
+<!ENTITY showTabsInTaskbar.label          "Kaartide eelvaateid näidatakse Windowsi tegumiribal">
+<!ENTITY showTabsInTaskbar.accesskey      "K">
+<!ENTITY tabsGroup.label          "Kaardid">

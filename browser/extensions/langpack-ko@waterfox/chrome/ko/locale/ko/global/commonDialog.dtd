@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "제목"> 
+<!ENTITY message.label    "예제 문자:">
+<!ENTITY editfield0.label "사용자 이름:"> 
+<!ENTITY editfield1.label "암호:"> 
+<!ENTITY checkbox.label   "확인">
+<!ENTITY copyCmd.label    "복사하기">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "모두 선택">
+<!ENTITY selectAllCmd.accesskey "A">

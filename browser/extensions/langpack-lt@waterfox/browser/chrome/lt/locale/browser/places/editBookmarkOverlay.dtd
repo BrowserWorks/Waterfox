@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Pavadinimas:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "P">
+<!ENTITY editBookmarkOverlay.location.label                  "Adresas:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Kanalo adresas:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "K">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Svetainės adresas:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "Aplankas:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Rodyti visus adresyno aplankus">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Nerodyti">
+<!ENTITY editBookmarkOverlay.tags.label                      "Gairės:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "G">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Gaires atskirkite kableliais">
+<!ENTITY editBookmarkOverlay.description.label               "Aprašas:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "r">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Reikšminis žodis:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "ž">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Rodyti visas gaires">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Atverti šį adresą parankinėje">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "v">
+<!ENTITY editBookmarkOverlay.choose.label                    "Parinkti…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Naujas aplankas">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "N">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Permisiuni">
+
+<!ENTITY  blockPopups.label           "Blochează ferestrele pop-up">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Află mai multe">
+<!ENTITY  notificationsPolicyDesc4.label       "Alege ce site-uri web au permisiunea de a-ți trimite notificări">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "Alege…">
+<!ENTITY  notificationsDoNotDisturb.label      "Nu mă deranja">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "N">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Nicio notificare nu va fi afișată până la repornirea lui &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Excepții…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "Fonturi și culori">
+
+<!ENTITY  defaultFont2.label          "Font implicit:">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "Mărime:">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "Avansat…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "Culori…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY language2.label              "Limbă">
+<!ENTITY chooseLanguage.label         "Alege limba în care preferi să vezi paginile">
+<!ENTITY chooseButton.label           "Alege…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "Traduceți conținutul web">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Excepții…">
+<!ENTITY translateExceptions.accesskey "x">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Traduceri de">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Conținut Digital Rights Management (DRM)">
+
+<!ENTITY  playDRMContent2.label          "Redă conținut controlat prin DRM">
+<!ENTITY  playDRMContent2.accesskey      "p">
+<!ENTITY  playDRMContent.learnMore.label "Află mai multe">

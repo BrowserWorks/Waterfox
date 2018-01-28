@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Chi kij ri taq ruwäch b'i'aj">
+<!ENTITY aboutProfiles.subtitle "Re ruxaq k'amaya'l re' nito'on chi nib'an runuk'ulem ri taq ruwäch ab'i'. Chi jujun taq ruwäch b'i'aj junwi chi ruwachulew, ri k'o runatab'al, taq yaketal, taq runuk'ulem chuqa' taq rutz'aqat.">
+<!ENTITY aboutProfiles.create "Tinuk' jun k'ak'a' ruwäch b'i'aj">
+<!ENTITY aboutProfiles.restart.title "Titikirisäx chik">
+<!ENTITY aboutProfiles.restart.inSafeMode "Titikirisäx chik kik'in ri chupül taq tz'aqat…">
+<!ENTITY aboutProfiles.restart.normal "Titikirisäx chik achi'el jantape'…">

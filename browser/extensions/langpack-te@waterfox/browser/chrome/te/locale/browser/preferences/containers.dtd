@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "కొత్త కంటేయినర్ జోడించు">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "అభిరుచులు">
+<!ENTITY removeButton.label   "తొలగించు">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; వెనక్కి వెళ్ళు">
+
+<!ENTITY window.title         "కొత్త కంటేయినర్ జోడించు">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "పేరు:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "ఒక కంటైనర్ పేరును ఇవ్వండి">
+<!ENTITY icon.label           "ఐకాన్:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "రంగు:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "పూర్తయింది">
+<!ENTITY button.ok.accesskey  "D">
+

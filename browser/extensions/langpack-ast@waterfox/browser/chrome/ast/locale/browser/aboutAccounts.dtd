@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Bienllegáu a &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Anicia sesión pa sincronizar les tos llingüetes, marcadores, contraseñes y más.">
+<!ENTITY aboutAccountsConfig.startButton.label "Entamar">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferencies de Sync">
+<!ENTITY aboutAccounts.noConnection.title "Ensin conexón">
+<!ENTITY aboutAccounts.noConnection.description "Has tar coneutáu a internet p'aniciar sesión.">
+<!ENTITY aboutAccounts.noConnection.retry "Tentar de nueves">
+<!ENTITY aboutAccounts.badConfig.title "Configuración incorreuta">
+<!ENTITY aboutAccounts.badConfig.description "Nun pue determinase la to configuración del sirvidor de cuentes de Waterfox. Volvi tentalo más sero, por favor.">

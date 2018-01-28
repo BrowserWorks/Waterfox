@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Danevelloù sac'hadenn">
+<!ENTITY crashesUnsubmitted.label   "Danevelloù sac'hadenn n'int ket treuzkaset">
+<!ENTITY crashesSubmitted.label     "Danevelloù sac'hadenn treuzkaset">
+<!ENTITY id.heading                 "Naoudi an danevell">
+<!ENTITY dateCrashed.heading        "Deiziad ar sac'hadenn">
+<!ENTITY dateSubmitted.heading      "Deiziad an danevell">
+<!ENTITY noReports.label            "Danevell sac'hadenn ebet bet treuzkaset.">
+<!ENTITY noConfig.label             "N'eo ket kefluniet an arload-mañ evit diskouez an danevelloù sac'hadenn. Ret eo d'an arventenn <code>breakpad.reportURL</code> bezañ spisaet.">
+<!ENTITY clearAllReports.label      "Dilemel an holl zanevelloù">

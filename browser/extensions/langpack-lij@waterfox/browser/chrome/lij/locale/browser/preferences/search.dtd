@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Motô de riçerca predefinio">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Seleçionn-a o motô de riçerca predefinio: saiâ deuviou pe-a bara de indirissi, a bara de riçerca e a pagina prinçipâ de &brandShortName;.">
+
+<!ENTITY provideSearchSuggestions.label        "Fanni vedde conseggi de riçerca">
+<!ENTITY provideSearchSuggestions.accesskey    "V">
+
+<!ENTITY showURLBarSuggestions.label           "Fanni vedde conseggi de riçerca tra i rizoltæ da bara di indirissi">
+<!ENTITY showURLBarSuggestions.accesskey       "s">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "I conseggi de riçerca no saian mostræ tra i exiti da-a bara di indirissi perché &brandShortName; o l'é inpostou pe no sarvâ a stöia.">
+
+<!ENTITY oneClickSearchEngines.label           "Motoî de riçerca in un sciacco">
+
+<!ENTITY chooseWhichOneToDisplay.label         "A bara de riçerca a permette de fâ riçerche diretamente in diversci sciti. Ti peu çerne quæ motoî mostrâ tra quelli che gh'é.">
+
+<!ENTITY engineNameColumn.label                "Motô de riçerca">
+<!ENTITY engineKeywordColumn.label             "Paròlla ciave">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Ripiggia i motoî de riçerca predefinii">
+<!ENTITY restoreDefaultSearchEngines.accesskey "R">
+
+<!ENTITY removeEngine.label                    "Scancella">
+<!ENTITY removeEngine.accesskey                "E">
+
+<!ENTITY addMoreSearchEngines2.label           "Azonzi ciù motoî de riçerca">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

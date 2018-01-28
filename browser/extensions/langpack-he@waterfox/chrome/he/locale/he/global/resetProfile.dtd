@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "רענון &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "הפעלת פרופיל רענן כדי לתקן בעיות ולשחזר ביצועים.">
+<!ENTITY refreshProfile.dialog.description2  "פעולה זו:">
+<!ENTITY refreshProfile.dialog.items.label1  "תסיר את ההתאמות האישיות ואת התוספות שלך">
+<!ENTITY refreshProfile.dialog.items.label2  "תשחזר את הגדרות הדפדפן לבררות המחדל">
+<!ENTITY refreshProfile.dialog.button.label  "רענון &brandShortName;">
+
+<!ENTITY refreshProfile.title                "לכוונן מחדש את &brandShortName; ">
+<!ENTITY refreshProfile.button.label         "רענון &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "כמעט סיימנו…">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab yordamida ichki oynalarga so‘nggi foydalanish tartibida o‘tish mumkin">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Yangi oynalarni yangi ichki oyna o‘rniga ochish">
+<!ENTITY newWindowsAsTabs.accesskey   "i">
+
+
+
+
+
+
+
+<!ENTITY showTabsInTaskbar.label          "Ichki oynalarni oldindan ko‘rishni vazifalar panelida ko‘rsatish">
+<!ENTITY showTabsInTaskbar.accesskey      "v">
+<!ENTITY tabsGroup.label          "Ichki oynalar">
+
+<!ENTITY switchLinksToNewTabs.accesskey    "h">
+
+<!ENTITY switchLinksToNewTabs.label        "When you open a link in a new tab, switch to it immediately">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Warn you when closing multiple tabs">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY warnOnOpenManyTabs.label       "Warn you when opening multiple tabs might slow down &brandShortName;">

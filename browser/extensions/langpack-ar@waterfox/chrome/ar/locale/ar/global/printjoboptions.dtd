@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "خصائص الطّابعة">
+
+<!ENTITY paperInput.label "مقاس الورق:">
+<!ENTITY paperInput.accesskey "و">
+
+<!ENTITY jobTitleInput.label "اسم العمل:">
+<!ENTITY jobTitleInput.accesskey "ع">
+
+<!ENTITY colorGroup.label "اللّون:">
+<!ENTITY grayRadio.label "تدرّج رمادي">
+<!ENTITY grayRadio.accesskey "د">
+<!ENTITY colorRadio.label "ملوّن">
+<!ENTITY colorRadio.accesskey "ن">
+
+<!ENTITY edgeMarginInput.label "الفراغ من طرف الورقة للهامش">
+<!ENTITY topInput.label "أعلى:">
+<!ENTITY topInput.accesskey "ى">
+<!ENTITY bottomInput.label "أسفل:">
+<!ENTITY bottomInput.accesskey "ف">
+<!ENTITY leftInput.label "يسار:">
+<!ENTITY leftInput.accesskey "س">
+<!ENTITY rightInput.label "يمين:">
+<!ENTITY rightInput.accesskey "ي">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; 안전 모드">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "안전 모드로 열기">
+<!ENTITY refreshProfile.label         "&brandShortName; 새것처럼 만들기">
+
+<!ENTITY safeModeDescription3.label   "안전 모드는 특정 문제를 해결할 때 사용하는 &brandShortName;의 특수 기능입니다.">
+<!ENTITY safeModeDescription4.label   "이 때 모든 부가 기능과 사용자 설정은 중지 됩니다.">
+
+<!ENTITY refreshProfileInstead.label  "문제 해결을 하는 대신 &brandShortName;를 새것처럼 만들 수도 있습니다.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName;를 실행하다  문제가 생겨 종료하였습니다. 부가 기능이나 다른 원인으로 인해 일어났을 수 있습니다. 안전 모드에서 원인을 찾아봄으로서 문제를 해결할 수 있습니다.">

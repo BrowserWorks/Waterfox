@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Värvid">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Ülalolevaid määranguid kasutatakse veebilehe värvide asemel:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "l">
+
+<!ENTITY  overrideDefaultPageColors.always.label "alati">
+<!ENTITY  overrideDefaultPageColors.auto.label   "ainult koos suure kontrastiga teemadega">
+<!ENTITY  overrideDefaultPageColors.never.label  "mitte kunagi">
+
+<!ENTITY  color                           "Tekst ja taust">
+<!ENTITY  textColor.label                 "Tekst:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Taust:">
+<!ENTITY  backgroundColor.accesskey       "a">
+<!ENTITY  useSystemColors.label           "Kasutatakse süsteemi värve">
+<!ENTITY  useSystemColors.accesskey       "u">
+
+<!ENTITY  underlineLinks.label            "Lingid joonitakse alla">
+<!ENTITY  underlineLinks.accesskey        "j">
+<!ENTITY  links                           "Lingi värvid">
+<!ENTITY  linkColor.label                 "Külastamata lingid:">
+<!ENTITY  linkColor.accesskey             "K">
+<!ENTITY  visitedLinkColor.label          "Külastatud lingid">
+<!ENTITY  visitedLinkColor.accesskey      "d">

@@ -1,0 +1,137 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Données télémétriques">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Source des données de ping :
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Données de ping actuelles
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Données de ping archivées
+">
+
+<!ENTITY aboutTelemetry.raw "
+JSON brut
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Afficher les données de sous-session
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Sélectionner le ping :
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Ping plus récent
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ping plus ancien &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Semaine
+">
+
+<!ENTITY aboutTelemetry.archivePingType "Type de ping">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Aujourd’hui">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Hier">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Plus ancien">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Données générales
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Données de l’environnement
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Journal de la télémétrie
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Requêtes SQL lentes
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Blocages du navigateur
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Blocages des fils d’exécution
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Piles d’allocations capturées
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalaires
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Scalaires avec mots-clés
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogrammes
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histogrammes avec mots-clés
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Évènements
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Mesures simples
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Détails sur les modules complémentaires
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Écritures tardives
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Informations sur la session
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOTE : Le débogage des requêtes SQL lentes est activé. Des requêtes SQL complètes peuvent être affichées ci-dessous, mais elles ne seront pas envoyées par télémétrie.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Récupérer les noms de fonctions pour les piles
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Afficher les données brutes des piles
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtrer (chaîne de caractères ou expression régulière)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Charge
+">

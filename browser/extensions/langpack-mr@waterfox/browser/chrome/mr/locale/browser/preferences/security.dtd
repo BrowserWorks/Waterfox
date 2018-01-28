@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "सुरक्षा">
+<!ENTITY  phishingProtection.label       "फिशिंग संरक्षण">
+
+<!ENTITY  warnOnAddonInstall2.label       "वेबसाईट ॲड-ऑन स्थापन करण्याचा प्रयत्न करताना मला सावध करा">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "धोकादायक आणि भ्रामक सामग्री अवरोधित करा">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "धोकादायक डाउनलोड अवरोधित करा">
+<!ENTITY  blockDownloads.accesskey        "d">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "नको असलेल्या आणि असामान्य सॉफ्टवेअर बद्दल मला सुचना द्या">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "c">
+
+<!ENTITY  addonExceptions.label         "अपवाद…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "फॉर्म व पासवर्ड">
+
+<!ENTITY  rememberLogins2.label         "वेबसाईटसाठी लॉगिन व पासवर्ड लक्षात ठेवा">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "अपवाद…">
+<!ENTITY  passwordExceptions.accesskey  "x">
+
+<!ENTITY  useMasterPassword.label        "मास्टर पासवर्डचा वापर करा">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "मास्टर पासवर्ड बदलवा…">
+<!ENTITY  changeMasterPassword.accesskey "M">
+
+<!ENTITY  savedLogins.label              "साठवलेले लॉगइन्स…">
+<!ENTITY  savedLogins.accesskey          "L">

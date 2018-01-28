@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "425">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "പകര്‍ത്തുക ">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "എല്ലാം തെരഞ്ഞെടുക്കുക">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "പൊതുവായവ">
+<!ENTITY  generalTab.accesskey  "G">
+
+<!ENTITY  generalURL            "വിലാസം">
+<!ENTITY  generalType           "ഏതു് തരം:">
+<!ENTITY  generalMode           "ആവിഷ്കരണ രീതി">
+<!ENTITY  generalSize           "വലിപ്പം :">
+<!ENTITY  generalReferrer       "റെഫര്‍ ചെയ്യുന്ന URL ">
+<!ENTITY  generalSource         "കാഷ്‌ സ്രോതസ്സ്‌:">
+<!ENTITY  generalModified       "പരിഷ്കരിച്ചത്‌:">
+<!ENTITY  generalEncoding2      "­പദാവലിയുടെ എന്‍കോഡിങ്ങ്:">
+<!ENTITY  generalMetaName       "പേര്‌ ">
+<!ENTITY  generalMetaContent    "ഉള്ളടക്കം">
+
+<!ENTITY  mediaTab              "മീഡിയ">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "സ്ഥാനം:">
+<!ENTITY  mediaText             "സംബന്ധിച്ചുള്ള വാചകം:">
+<!ENTITY  mediaAltHeader        "പകരം ടെക്സ്റ്റ്‌">
+<!ENTITY  mediaAddress          "വിലാസം">
+<!ENTITY  mediaType             "ഏതു് തരം">
+<!ENTITY  mediaSize             "വ്യാപ്തി">
+<!ENTITY  mediaCount            "എണ്ണം">
+<!ENTITY  mediaDimension        "അളവുകള്‍:">
+<!ENTITY  mediaLongdesc         "നീണ്ട വിവരണം ">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "മാറ്റി സൂക്ഷിക്കുക">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "മീഡിയ പ്രിവ്യൂ ">
+
+<!ENTITY  feedTab               "ഫീഡുകള്‍">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "അംഗത്വം നേടുക">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "ആനുകൂല്യങ്ങള്‍">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "സ്വതവേയുള്ളതു് ഉപയോഗിക്കുക">
+<!ENTITY  permAskAlways         "എല്ലായ്പ്പോഴും ചോദിക്കുക">
+<!ENTITY  permAllow             "അനുവദിക്കുക">
+<!ENTITY  permAllowSession      "ഈ സെഷനു് വേണ്ടി അനുവദിക്കുക">
+<!ENTITY  permBlock             "തടയുക">
+<!ENTITY  permissionsFor        "ആനുകൂല്യങ്ങള്‍:">
+<!ENTITY  permPlugins           "പ്ലഗിനുകള്‍ സജീവമാക്കുക">
+
+<!ENTITY  permClearStorage           "സംഭരണം വെടിപ്പാക്കുക">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "സുരക്ഷ">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "സര്‍ട്ടിഫിക്കേറ്റ് കാണുക">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "അപരിചിതം">
+
+
+<!ENTITY  securityView.identity.header   "വെബ് സൈറ്റ് തിരിച്ചറിയല്‍">
+<!ENTITY  securityView.identity.owner    "ഉടമസ്ഥന്‍: ">
+<!ENTITY  securityView.identity.domain   "വെബ് സൈറ്റ്: ">
+<!ENTITY  securityView.identity.verifier "ഉറപ്പാക്കിയതു്:: ">
+
+
+<!ENTITY  securityView.privacy.header                   "സ്വകാര്യതയും നാള്‍വഴിയും">
+<!ENTITY  securityView.privacy.history                  "ഇതിനു് മുമ്പു് ഈ വെബ് സൈറ്റ് സന്ദര്‍ശിച്ചിട്ടുണ്ടോ?">
+<!ENTITY  securityView.privacy.cookies                  "ഈ വെബ്സൈറ്റ് വിവരങ്ങള്‍ (കുക്കികള്‍) കമ്പ്യൂട്ടറില്‍ സൂക്ഷിക്കുന്നുണ്ടോ?">
+<!ENTITY  securityView.privacy.viewCookies              "കുക്കികള്‍ കാണുക">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "ഈ വെബ് സൈറ്റിനു് വേണ്ടി രഹസ്യവാക്കുകള്‍ സൂക്ഷിച്ചിട്ടുണ്ടോ?">
+<!ENTITY  securityView.privacy.viewPasswords            "കമ്പ്യൂട്ടറില്‍ സൂക്ഷിച്ചിട്ടുള്ള രഹസ്യവാക്കുകള്‍ കാണുക">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "സാങ്കേതിക വിശദാംശങ്ങള്‍">
+
+<!ENTITY  helpButton.label                              "സഹായം ">
+
+<!ENTITY  generalTitle          "Title:">
+<!ENTITY  securityView.identity.validity "Expires on:">
+

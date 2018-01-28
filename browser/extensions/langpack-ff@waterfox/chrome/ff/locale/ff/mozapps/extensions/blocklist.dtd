@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Ɓeyditte ena mbaawi tawa ena ngadda caɗeele">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; hollitii wonde ɗee-ɗoo ɓeyditte ena nganndiraa addude caɗeele jamɗugol walla kisal:">
+<!ENTITY blocklist.softblocked       "Ngam kisal maa, ena teeŋtinaa wasiya yo a hurmitin tawa ɗee ɓeyditte ena ndaaƴaa.">
+<!ENTITY blocklist.hardblocked       "Ɗee-ɗoo ɓeyditte ena ngonndi e caɗeele mawɗe kisal walla jamɗugol tee ɗe ndaaƴaama, kono alaa e sago kurmitinaa ngam teeŋtinde daaƴgol majje.">
+<!ENTITY blocklist.softandhard       "Ɓeyditte gonnduɗe e caɗeele mawɗe kisal walla jamɗugol ndaaƴaama. Goɗɗe ɗee ɓuri famɗude caɗeele ena wasiyaa yo a hurmitin tawa ko ɗe daaƴaaɗe.">
+<!ENTITY blocklist.moreinfo          "Ɓeydu humpito">
+
+<!ENTITY blocklist.accept.label      "Hurmitin &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "H">
+
+<!ENTITY blocklist.blocked.label     "Ko daaƴaaɗo">
+<!ENTITY blocklist.checkbox.label    "Daaƴ">

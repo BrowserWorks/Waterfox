@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Általános">
+
+<!ENTITY  warnOnAddonInstall2.label       "Figyelmeztetés kiegészítők telepítése előtt">
+<!ENTITY  warnOnAddonInstall2.accesskey   "F">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Veszélyes és félrevezető tartalom blokkolása">
+<!ENTITY  enableSafeBrowsing.accesskey    "V">
+
+<!ENTITY  blockDownloads.label            "Veszélyes letöltések blokkolása">
+<!ENTITY  blockDownloads.accesskey        "b">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Figyelmeztetés a nem kívánatos és szokatlan szoftverekre">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "F">
+
+<!ENTITY  addonExceptions.label         "Kivételek…">
+<!ENTITY  addonExceptions.accesskey     "K">
+
+
+<!ENTITY  logins.label                  "Bejelentkezések">
+
+<!ENTITY  rememberLogins2.label         "Bejelentkezések megjegyzése a webhelyekhez">
+<!ENTITY  rememberLogins2.accesskey     "m">
+<!ENTITY  passwordExceptions.label      "Kivételek…">
+<!ENTITY  passwordExceptions.accesskey  "v">
+
+<!ENTITY  useMasterPassword.label        "Mesterjelszó használata">
+<!ENTITY  useMasterPassword.accesskey    "M">
+<!ENTITY  changeMasterPassword.label     "Mesterjelszó megváltoztatása…">
+<!ENTITY  changeMasterPassword.accesskey "z">
+
+<!ENTITY  savedLogins.label              "Mentett bejelentkezések…">
+<!ENTITY  savedLogins.accesskey          "t">

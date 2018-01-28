@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Moullañ">
+
+<!ENTITY printDialog.title "Moullañ">
+
+<!ENTITY fpDialog.title "Enrollañ ar restr">
+
+<!ENTITY fileCheck.label "Moullañ en ur restr">
+<!ENTITY fileCheck.accesskey "M">
+<!ENTITY propertiesButton.label "Perzhioù …">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Deskrivadur ar voullerez :">
+<!ENTITY printer.label "Moullerez">
+<!ENTITY printerInput.label "Anv ar voullerez :">
+<!ENTITY printerInput.accesskey "A">
+
+<!ENTITY printrangeGroup.label "Skeuliadig ar moullañ">
+<!ENTITY allpagesRadio.label "An holl bajennadoù">
+<!ENTITY allpagesRadio.accesskey "h">
+<!ENTITY rangeRadio.label  "Pajennadoù">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "adalek">
+<!ENTITY frompageInput.accesskey  "l">
+<!ENTITY topageInput.label  "da">
+<!ENTITY topageInput.accesskey  "d">
+<!ENTITY selectionRadio.label "Diuzad">
+<!ENTITY selectionRadio.accesskey "z">
+
+<!ENTITY copies.label "Eiladennoù">
+<!ENTITY numCopies.label "Niver a eiladennoù :">
+<!ENTITY numCopies.accesskey "N">
+
+<!ENTITY printframeGroup.label "Moullañ ar frammadoù">
+<!ENTITY aslaidoutRadio.label "Evel ma'z eo kempennet war ar skramm">
+<!ENTITY aslaidoutRadio.accesskey "v">
+<!ENTITY selectedframeRadio.label  "Ar frammad diuzet">
+<!ENTITY selectedframeRadio.accesskey  "f">
+<!ENTITY eachframesepRadio.label  "Pep frammad e-unan">
+<!ENTITY eachframesepRadio.accesskey  "e">

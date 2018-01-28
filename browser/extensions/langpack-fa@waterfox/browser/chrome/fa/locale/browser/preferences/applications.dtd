@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  applications.label       "برنامه‌ها">
+<!ENTITY  applications.description "هم اکنون &brandShortName; را برای مدیریت پرونده‌هایی که از اینترنت دریافت کرده اید انتخاب کنید. یا برنامه‌هایی که در طول مرور کردن از آن استفاده می‌کنید.">
+
+<!ENTITY  typeColumn.label        "نوع محتوا">
+<!ENTITY  typeColumn.accesskey    "ن">
+
+<!ENTITY  actionColumn2.label     "عمل">
+<!ENTITY  actionColumn2.accesskey "ع">
+
+<!ENTITY  focusSearch1.key        "f">
+<!ENTITY  focusSearch2.key        "k">
+
+<!ENTITY  filter2.emptytext        "جست‌وجو نوعِ پرونده‌ها یا برنامه‌ها">

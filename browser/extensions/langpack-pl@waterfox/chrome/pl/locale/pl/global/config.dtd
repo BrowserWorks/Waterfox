@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+    - License, v. 2.0. If a copy of the MPL was not distributed with this
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!ENTITY aboutWarningTitle.label    "Groźba utraty gwarancji!">
+<!ENTITY aboutWarningText.label     "Modyfikacja tych ustawień może spowodować problemy, takie jak utrata stabilności i wydajności programu oraz zagrożenie bezpieczeństwa. Kontynuuj tylko wtedy, gdy masz pewność tego, co robisz.">
+<!ENTITY aboutWarningButton2.label "Akceptuję ryzyko!">
+<!ENTITY aboutWarningCheckbox.label "Wyświetl to ostrzeżenie następnym razem">
+
+<!ENTITY searchPrefs.label "Szukaj:" >
+<!ENTITY searchPrefs.accesskey "S" >
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!ENTITY prefColumn.label "Nazwa" >
+<!ENTITY lockColumn.label "Status" >
+<!ENTITY typeColumn.label "Typ" >
+<!ENTITY valueColumn.label "Wartość" >
+
+<!ENTITY prefColumnHeader.tooltip "Kliknij, aby posortować" >
+<!ENTITY columnChooser.tooltip "Kliknij, aby wybrać kolumny, które zostaną wyświetlone" >
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopiuj">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopiuj nazwę" >
+<!ENTITY copyName.accesskey "n" >
+<!ENTITY copyValue.label "Kopiuj wartość" >
+<!ENTITY copyValue.accesskey "w" >
+<!ENTITY modify.label "Modyfikuj" >
+<!ENTITY modify.accesskey "M" >
+<!ENTITY toggle.label "Przełącz">
+<!ENTITY toggle.accesskey "P">
+<!ENTITY reset.label "Resetuj" >
+<!ENTITY reset.accesskey "R" >
+<!ENTITY new.label "Dodaj ustawienie typu" >
+<!ENTITY new.accesskey "D" >
+<!ENTITY string.label "Łańcuch (string)" >
+<!ENTITY string.accesskey "s" >
+<!ENTITY integer.label "Liczba całkowita (Integer)" >
+<!ENTITY integer.accesskey "I" >
+<!ENTITY boolean.label "Wartość logiczna (Boolean)" >
+<!ENTITY boolean.accesskey "B" >

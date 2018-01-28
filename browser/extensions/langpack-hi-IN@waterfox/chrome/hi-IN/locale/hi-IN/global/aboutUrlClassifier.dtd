@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.providerTitle               "प्रदाता">
+<!ENTITY aboutUrlClassifier.provider                    "प्रदाता">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "अंतिम अद्यतन समय">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "अगला अद्यतन समय">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "अंतिम अद्यतन स्थिति">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "अद्यतन">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "कैश">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "ताज़ा करें">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "साफ करें">
+<!ENTITY aboutUrlClassifier.cacheTableName              "सारणी नाम">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "नकारात्मक कैश प्रविष्टियों की संख्या">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "सकारात्मक कैश प्रविष्टियों की संख्या">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "प्रविष्टियाँ दिखाएँ">
+<!ENTITY aboutUrlClassifier.cacheEntries                "कैश प्रविष्टियाँ">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "उपसर्ग">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "पूर्ण हैश">
+<!ENTITY aboutUrlClassifier.debugTitle                  "दोषसुधार">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "लॉग मॉड्यूल सेट करें">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "लॉग फ़ाइल सेट करें">
+<!ENTITY aboutUrlClassifier.debugFile                   "वर्तमान लॉग फ़ाइल">
+
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positive cache expiry">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Set JS Log">
+<!ENTITY aboutUrlClassifier.debugModules                "Current log modules">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Safe Browsing JS log">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Safe Browsing log modules">
+<!ENTITY aboutUrlClassifier.pageTitle                   "Information about the url-classifier">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">

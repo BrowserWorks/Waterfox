@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Jinay juwalkaw">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Saajaw nda jinay dunbey">
+<!ENTITY devmgr.details.title                   "Šilbayhayey">
+<!ENTITY devmgr.details.title2                  "Hinna">
+
+<!ENTITY devmgr.button.login.label              "Ciyari">
+<!ENTITY devmgr.button.login.accesskey          "C">
+<!ENTITY devmgr.button.logout.label             "Ciyari benandi">
+<!ENTITY devmgr.button.logout.accesskey         "C">
+<!ENTITY devmgr.button.changepw.label           "Šennikufal barmay">
+<!ENTITY devmgr.button.changepw.accesskey       "k">
+<!ENTITY devmgr.button.load.label               "Zumandi">
+<!ENTITY devmgr.button.load.accesskey           "Z">
+<!ENTITY devmgr.button.unload.label             "Jeeje zumandi">
+<!ENTITY devmgr.button.unload.accesskey         "J">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Alhabar dam dunboo kaŋ war baa k'a tonton še.">
+<!ENTITY loaddevice.modname                     "Dunbu maa:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "PKCS#11 dunbu taaga">
+<!ENTITY loaddevice.filename                    "Dunbu tukumaa:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Naaru…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

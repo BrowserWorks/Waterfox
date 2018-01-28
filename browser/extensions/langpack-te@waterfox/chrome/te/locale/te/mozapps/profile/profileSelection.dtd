@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "f&brandShortName; - వాడుకరి ప్రొఫైల్ ను ఎన్నుకొనుము">
+
+<!ENTITY            profilename.label      "ప్రొఫైల్ పేరు:">
+
+<!ENTITY            start.label            "&brandShortName; ప్రారంభించు">
+<!ENTITY            exit.label             "నిష్క్రమించు">
+
+<!ENTITY            availprofiles.label    "అందుబాటులో ఉన్న ప్రొఫైల్లు">
+
+<!ENTITY            newButton.label        "ప్రొఫైల్ ను సృష్టించు...">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "ప్రొఫైల్ పేరు మార్చు…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "ప్రొఫైల్ తొలగించు...">
+<!ENTITY            deleteButton.accesskey "D">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "మీ వాడుకరి ప్రొఫైల్ నందువున్న మీ అమరికల, అభీష్టాల, మరియు ఇతర అంశముల సమాచారాన్ని &brandShortName; నిల్వవుంచుతుంది.">
+
+<!ENTITY            offlineState.label    "ఆఫ్‌లైన్ లో పనిచేయి">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "మొదలయ్యేప్పుడు అడగకుండా ఎంచుకున్న ప్రొఫైలుని వాడు">
+<!ENTITY            useSelected.accesskey   "s">

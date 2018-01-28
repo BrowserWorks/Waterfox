@@ -1,0 +1,195 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Porože">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Porogaram-ize taaga…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Porogaram-ize hawante feeri…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Porogaram-ize zunbante feeri…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Porogaram-ize feeri…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "Sinji nda tunandi">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Porogaram-ize kayandi ">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "Hanseyan porogaram">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Porožewoo kaa">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Ibaayey">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Jinay-ize tontoney juwal">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+<!ENTITY projectMenu_refreshTabs_label "Kanjey taagandi">
+
+<!ENTITY runtimeMenu_label "Dirandi waati">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Ciyari dunbu">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "Dijibii">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Dirandi waati alhabar">
+
+<!ENTITY runtimeMenu_showMonitor_label "Diji">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Jinay ibaayey">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "Jinay kayandiyaney">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "Gunari">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "Bebbeerandi">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "Nakasandi">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "Azzaati barmayyan yeeti">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "Porogaram-ize feeri">
+<!ENTITY runtimeButton_label "Dirandi waati suuba">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Ay porožewey">
+<!ENTITY projectPanel_runtimeApps "Dirandi waati porogaram-izey">
+<!ENTITY projectPanel_tabs "Kanjey">
+<!ENTITY runtimePanel_usb "USB jinawey">
+<!ENTITY runtimePanel_wifi "Wi-Fi jinawey">
+<!ENTITY runtimePanel_simulator "Dendenkey">
+<!ENTITY runtimePanel_other "Haya tana">
+<!ENTITY runtimePanel_installsimulator "Dendenkaw sinji">
+<!ENTITY runtimePanel_noadbhelper "ADB faabakaw sinji">
+<!ENTITY runtimePanel_nousbdevice "Ši hin ka dii war jinaa?">
+<!ENTITY runtimePanel_refreshDevices_label "Jinawey taagandi">
+<!-- Lense -->
+
+<!ENTITY details_valid_header "Boryo">
+<!ENTITY details_warning_header "Yaamarey">
+<!ENTITY details_error_header "firkawey">
+<!ENTITY details_description "Šilbayyan">
+<!ENTITY details_location "Gorodoo">
+<!ENTITY details_manifestURL "Porogaram-ize tammaasa">
+<!ENTITY details_removeProject_button "Porožewoo kaa">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "Porogaram-ize taaga">
+<!ENTITY newAppHeader "Leeti suuba">
+<!ENTITY newAppLoadingTemplate "Goo ma leetey zumandi…">
+<!ENTITY newAppProjectName "Porože maa:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "Daabu">
+<!-- Addons -->
+
+<!ENTITY addons_title "Jere tontonantey">
+<!ENTITY addons_aboutaddons "Tontoney juwalkaa feeri">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "Ibaayey">
+<!ENTITY prefs_editor_title "Fasalkaw">
+<!ENTITY prefs_general_title "Hankul">
+<!ENTITY prefs_restore "Tilasey yeeti">
+<!ENTITY prefs_manage_components "Jinay-ize tontoney juwal">
+<!ENTITY prefs_options_autoconnectruntime "Dirandi waati bisantaa cee taaga">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Dirandi waati bisante cee taaga waati kaŋ WebIDE ga šintin">
+<!ENTITY prefs_options_rememberlastproject "Honga porože koraa">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Porože bisantaa yeeti nda WebIDE ga šintin">
+<!ENTITY prefs_options_templatesurl "URL leetey">
+<!ENTITY prefs_options_templatesurl_tooltip "Leeti barantey maaboŋoo">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "Dirandi waati alhabar">
+<!ENTITY runtimedetails_adbIsRoot "ADB ti linjoo: ">
+<!ENTITY runtimedetails_summonADBRoot "linji jinay">
+<!ENTITY runtimedetails_ADBRootWarning "(tunandikaw feerante ga waažibi)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "DevTools fondo suubarey bila nda kaydoo: ">
+<!ENTITY runtimedetails_requestPrivileges "goyfondo beeriyaŋ ga waažibi">
+<!ENTITY runtimedetails_privilegesWarning "(Ga jinay tunandi taaga. Linji huruyan ga waažibi.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "Cimi wala taari hãayan">
+<!ENTITY device_typenumber "Hinna timmante">
+<!ENTITY device_typestring "Tenjiri">
+<!ENTITY device_typeobject "Haya">
+<!ENTITY device_typenone "Dumi foo suuba">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "Jinay ibaayey">
+<!ENTITY devicepreference_search "Ibaayey ceeci">
+<!ENTITY devicepreference_newname "Ibaayi maa taaga">
+<!ENTITY devicepreference_newtext "Ibaayi hinna">
+<!ENTITY devicepreference_addnew "Ibaayi taaga tonton">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "Jinay kayandiyaney">
+<!ENTITY devicesetting_search "Ceeci kayandiyaney">
+<!ENTITY devicesetting_newname "Kayandiyan taaga maa">
+<!ENTITY devicesetting_newtext "Kayandiyan hinna">
+<!ENTITY devicesetting_addnew "Kayandiyan taaga tonton">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "Diji">
+<!ENTITY monitor_help "Faaba">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "Daykaw tammaasayan">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Bendogoo kaŋ war goo m'a cee ga baa alhabar tontoni ka ciyaroo woo lasaloo tabatandi.  QR ašariya biyoo bere ganda nda war jinay tanaa hãayanoo.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "QR biiberekaw hãayan kul šii wala?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR biiberekaw hãayan goo wala?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Nda jinay tana na war hãa nda tammaasa QR ašariya biibereyan doo ra, wa hinnaa kaŋ goo jinay faa din cire berandi:">
+<!ENTITY wifi_auth_qr_size_note "Nd'a ga hima kaŋ QR ašariyaa ga hansa ka kacca ciyaroo se ka bisa ka boori, ceeci ka zanfunoo moorandi wal'a hayandi.">
+<!-- Logs panel -->
+
+<!ENTITY logs_title "Soolu-waate juwal zaaritiirawey">
+<!-- Simulator Options -->
+
+<!ENTITY simulator_title "Himari-cebekaw suubarey">
+<!ENTITY simulator_remove "Himari-cebekaw tuusu">
+<!ENTITY simulator_reset "Tilasey yeeti">
+
+<!ENTITY simulator_software "Goy porogaram">
+<!ENTITY simulator_version "Dumi">
+<!ENTITY simulator_profile "Alhaali">
+<!ENTITY simulator_hardware "Jinay šenda">
+<!ENTITY simulator_device "Jinay">
+<!ENTITY simulator_screenSize "Diji">
+<!ENTITY simulator_pixelRatio "Biitonbi hinna">
+<!ENTITY simulator_tv_data "Teele himari-cebeyan">
+<!ENTITY simulator_tv_data_open "Hanseyan bayhayey">
+<!ENTITY simulator_tv_data_open_button "Hanseyan fooloɲaa feeri…">
+
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY simulator_name "Name">

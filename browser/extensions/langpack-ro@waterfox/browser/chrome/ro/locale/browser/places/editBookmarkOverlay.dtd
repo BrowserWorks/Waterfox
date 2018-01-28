@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Nume:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Adresă:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Adresa fluxului:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "A">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Adresa site-ului:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "s">
+<!ENTITY editBookmarkOverlay.folder.label                    "Dosar:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Afișează toate dosarele cu marcaje">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Ascunde">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etichete:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "E">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Separă etichetele prin virgulă">
+<!ENTITY editBookmarkOverlay.description.label               "Descriere:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Cuvânt cheie:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "C">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Afișează toate etichetele">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Încarcă acest marcaj în bara laterală">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "Alege…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Dosar nou">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "n">

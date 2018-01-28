@@ -1,0 +1,187 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Općenito">
+
+<!ENTITY accessibility.label             "Pristupačnost">
+
+<!ENTITY useCursorNavigation.label       "Uvijek koristi tipke pokazivača za navigaciju unutar stranica">
+<!ENTITY useCursorNavigation.accesskey   "c">
+
+
+
+
+<!ENTITY useOnScreenKeyboard.label       "Prikaži tipkovnicu na zaslonu kada je potrebno">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Pregledavanje">
+
+<!ENTITY useAutoScroll.label             "Koristi automatsko klizanje">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Koristi uglađeno klizanje">
+<!ENTITY useSmoothScrolling.accesskey    "u">
+
+
+
+<!ENTITY dataChoicesTab.label            "Izbori podataka">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Pomaže vam shvatiti performanse vašeg preglednika, te šalje podatke kako bi &vendorShortName; bila upoznata o zdravlju vašeg preglednika">
+<!ENTITY enableHealthReport.label        "Omogući &brandShortName; izvještaj zdravlja">
+<!ENTITY enableHealthReport.accesskey    "z">
+
+
+<!ENTITY telemetryDesc.label             "Dijeli podatke o performansama, korištenju hardveru i prilagodbama vašeg preglednika, kako bi &vendorShortName; mogla unaprijediti &brandShortName;">
+
+
+
+
+<!ENTITY crashReporterDesc2.label         "Izvještaji o rušenju pomažu &vendorShortName; da ispravi probleme i učini vaš preglednik stabilnijim i sigurnijim">
+<!ENTITY alwaysSubmitCrashReports.label   "Dopusti da &brandShortName; šalje izvještaje o rušenju u tvoje ime">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+
+
+<!ENTITY networkTab.label                "Mreža">
+
+<!ENTITY connection.label                "Veza">
+
+<!ENTITY connectionDesc.label            "Postavi kako se &brandShortName; spaja na Internet">
+<!ENTITY connectionSettings.label        "Postavke...">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Web sadržaj u priručnoj memoriji">
+
+<!ENTITY offlineStorage2.label           "Izvanmrežni web sadržaj i korisnički podaci">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+
+
+
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Ograniči priručnu memoriju na">
+<!ENTITY limitCacheSizeBefore.accesskey  "m">
+<!ENTITY limitCacheSizeAfter.label       "MB prostora">
+<!ENTITY clearCacheNow.label             "Očisti sada">
+<!ENTITY clearCacheNow.accesskey         "č">
+<!ENTITY clearOfflineAppCacheNow.label   "Očisti sada">
+<!ENTITY clearOfflineAppCacheNow.accesskey "č">
+<!ENTITY overrideSmartCacheSize.label    "Premosti automatsko upravljanje priručnom memorijom">
+<!ENTITY overrideSmartCacheSize.accesskey "a">
+
+<!ENTITY updateTab.label                 "Nadogradnje">
+
+<!ENTITY updateAuto1.label               "Automatski instaliraj dopune (preporučeno: sigurnije)">
+<!ENTITY updateAuto1.accesskey           "A">
+
+
+<!ENTITY updateManual.label              "Nikada ne provjeravaj dostupnost dopuna (nije preporučeno: sigurnosni rizik)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Prikaži povijest nadogradnji">
+<!ENTITY updateHistory.accesskey         "d">
+
+<!ENTITY useService.label                "Koristi pozadinski servis za instalaciju dopuna">
+<!ENTITY useService.accesskey            "K">
+
+<!ENTITY enableSearchUpdate.label        "Pretraživače">
+<!ENTITY enableSearchUpdate.accesskey    "t">
+
+
+<!ENTITY offlineStorageNotifyExceptions.label     "Iznimke…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "z">
+
+<!ENTITY offlineAppsList2.label          "Sljedeće web stranice imaju dopuštenje spremiti podatke za izvanmrežno korištenje:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Ukloni…">
+<!ENTITY offlineAppsListRemove.accesskey "U">
+<!ENTITY offlineAppRemove.confirm        "Ukloni izvanmrežne podatke">
+
+<!ENTITY certificateTab.label            "Certifikati">
+<!ENTITY certPersonal.label              "Zahtjevi">
+
+<!ENTITY selectCerts.auto                "Automatski označi jednoga">
+
+
+
+<!ENTITY enableOCSP.label                "Upitajte OCSP poslužitelje da biste potvrdili validnost certifikata">
+<!ENTITY enableOCSP.accesskey            "U">
+<!ENTITY viewCerts.label                 "Prikaz certifikata">
+<!ENTITY viewCerts.accesskey             "c">
+<!ENTITY viewSecurityDevices.label       "Sigurnosni uređaji">
+<!ENTITY viewSecurityDevices.accesskey   "S">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Koristi hardversku akceleraciju kad je moguće">
+<!ENTITY allowHWAccel.accesskey          "h">
+
+<!ENTITY autoUpdateOthers.label          "Automatically Update">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY blockAutoReload.label           "Warn you when websites try to redirect or reload the page">
+<!ENTITY certPersonal.description        "When a server requests your personal certificate:">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY checkUserSpelling.label         "Check your spelling as you type">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY clearSiteData.label             "Clear All Data">
+<!ENTITY crashReporterLearnMore.label     "Learn more">
+
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY enableTelemetryData.label       "Share Additional Data (i.e., Telemetry)">
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotify.label               "Tell you when a website asks to store data for offline use">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY searchOnStartTyping.label       "Search for text when you start typing">
+<!ENTITY selectCerts.ask                 "Ask you every time">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY siteData.label                  "Site Data">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataSettings.label          "Settings…">
+<!ENTITY telemetryLearnMore.label        "Learn more">
+
+<!ENTITY updateApplication.label         "&brandShortName; Updates">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateCheckChoose.label         "Check for updates, but let you choose whether to install them">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

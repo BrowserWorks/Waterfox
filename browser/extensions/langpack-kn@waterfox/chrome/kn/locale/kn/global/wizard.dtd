@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "ಹಿಂದಕ್ಕೆ ತೆರಳು">
+<!ENTITY  button-back-mac.accesskey    "B">
+<!ENTITY  button-next-mac.label        "ಮುಂದುವರೆ">
+<!ENTITY  button-next-mac.accesskey    "C">
+<!ENTITY  button-finish-mac.label      "ಆಯಿತು">
+<!ENTITY  button-cancel-mac.label      "ರದ್ದು ಮಾಡು">
+
+<!ENTITY  button-back-unix.label       "ಹಿಂದಕ್ಕೆ">
+<!ENTITY  button-back-unix.accesskey   "B">
+<!ENTITY  button-next-unix.label       "ಮುಂದಕ್ಕೆ">
+<!ENTITY  button-next-unix.accesskey   "N">
+<!ENTITY  button-finish-unix.label     "ಪೂರ್ಣಗೊಳಿಸು">
+<!ENTITY  button-cancel-unix.label     "ರದ್ದು ಮಾಡು">
+
+<!ENTITY  button-back-win.label        "ಹಿಂದಿನ &lt;">
+<!ENTITY  button-back-win.accesskey    "B">
+<!ENTITY  button-next-win.label        "ಮುಂದಿನ &gt;">
+<!ENTITY  button-next-win.accesskey    "N">
+<!ENTITY  button-finish-win.label      "ಪೂರ್ಣಗೊಳಿಸು">
+<!ENTITY  button-cancel-win.label      "ರದ್ದು ಮಾಡು">

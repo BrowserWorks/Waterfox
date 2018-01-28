@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "اطبع…">
+<!ENTITY print.accesskey      "ط">
+<!ENTITY pageSetup.label      "إعداد الصفحة…">
+<!ENTITY pageSetup.accesskey  "ع">
+<!ENTITY page.label           "الصفحة:">
+<!ENTITY page.accesskey       "ص">
+<!ENTITY of.label             "من">
+<!ENTITY scale.label          "المقياس:">
+<!ENTITY scale.accesskey      "م">
+<!ENTITY portrait.label       "طوليّ">
+<!ENTITY portrait.accesskey   "ط">
+<!ENTITY landscape.label      "عرضيّ">
+<!ENTITY landscape.accesskey  "ض">
+<!ENTITY close.label          "أغلق">
+<!ENTITY close.accesskey      "غ">
+<!ENTITY p30.label            "٣٠٪">
+<!ENTITY p40.label            "٤٠٪">
+<!ENTITY p50.label            "٥٠٪">
+<!ENTITY p60.label            "٦٠٪">
+<!ENTITY p70.label            "٧٠٪">
+<!ENTITY p80.label            "٨٠٪">
+<!ENTITY p90.label            "٩٠٪">
+<!ENTITY p100.label           "١٠٠٪">
+<!ENTITY p125.label           "١٢٥٪">
+<!ENTITY p150.label           "١٥٠٪">
+<!ENTITY p175.label           "١٧٥٪">
+<!ENTITY p200.label           "٢٠٠٪">
+<!ENTITY Custom.label         "مخصص…">
+<!ENTITY ShrinkToFit.label    "قلّص ليناسب">
+<!ENTITY customPrompt.title   "مقياس مخصص…">
+<!ENTITY simplifyPage.label   "بسّط الصفحة">
+<!ENTITY simplifyPage.accesskey "س">
+<!ENTITY simplifyPage.enabled.tooltip  "غيّر الترتيب لتسهيل القراءة">
+<!ENTITY simplifyPage.disabled.tooltip "تعذّر تبسيط هذه الصفحة تلقائيًا">
+
+<!ENTITY homearrow.tooltip    "الصفحة الأولى">
+<!ENTITY endarrow.tooltip     "الصفحة الأخيرة">
+<!ENTITY nextarrow.tooltip    "الصفحة التالية">
+<!ENTITY previousarrow.tooltip "الصفحة السابقة">

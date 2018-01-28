@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+<!-- These strings are used in the about:home page -->
+
+
+<!ENTITY abouthome.pageTitle "&brandFullName; आरंभ पृष्ठ">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+
+<!ENTITY abouthome.defaultSnippet1.v1 "Waterfox चुनने के लिए आपका शुक्रिया! अपने ब्राउज़र का अधिक का अधिक फ़ायदा पाने के लिए, <a>नवीनतम सुविधाओं</a> के बारे में अधिक जानकारी लें.">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "अपने Waterfox को मनमुताबिक अनुकूलित करना अब आसान है. <a>हजारों सहयुक्तियों में से चुनें</a>.">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; गैर लाभकारी Mozilla प्रतिष्ठान का मुफ्त और मुक्त स्रोत सॉफ्टवेयर है. <a>अपने अधिकार जानें…</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "पुस्तचिह्न">
+<!ENTITY abouthome.historyButton.label   "इतिहास">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "विकल्पों">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "वरीयताएँ">
+<!ENTITY abouthome.addonsButton.label    "सहयुक्तियाँ">
+<!ENTITY abouthome.downloadsButton.label "डाउनलोड">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+
+<!ENTITY abouthome.aboutMozilla.label    "Mozilla परिचय">

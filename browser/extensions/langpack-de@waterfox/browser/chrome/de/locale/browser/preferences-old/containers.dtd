@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Neue Umgebung hinzufügen">
+<!ENTITY addButton.accesskey  "N">
+<!ENTITY preferencesButton.label "Einstellungen">
+<!ENTITY removeButton.label   "Löschen">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Zurück zu Datenschutz">
+
+<!ENTITY window.title         "Neue Umgebung hinzufügen">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Name:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Umgebungsnamen eingeben">
+<!ENTITY icon.label           "Symbol:">
+<!ENTITY icon.accesskey       "S">
+<!ENTITY color.label          "Farbe:">
+<!ENTITY color.accesskey      "F">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Fertig">
+<!ENTITY button.ok.accesskey  "e">
+

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Rregullime - Të dhëna Sajti">
+<!ENTITY     hostCol.label                 "Sajt">
+<!ENTITY     statusCol.label               "Gjendje">
+<!ENTITY     usageCol.label                "Depozitë">
+<!ENTITY     searchTextboxPlaceHolder             "Kërko në sajte">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "K">
+<!ENTITY     removeSelected.label          "Hiq të Përzgjedhurën">
+<!ENTITY     removeSelected.accesskey      "H">
+<!ENTITY     save.label                    "Ruaji Ndryshimet">
+<!ENTITY     save.accesskey                "R">
+<!ENTITY     cancel.label                  "Anuloje">
+<!ENTITY     cancel.accesskey              "A">
+<!ENTITY     removingDialog.title          "Po Hiqen të Dhëna Sajti">
+<!ENTITY     removingSelected.description  "Heqja e të dhënave mbi sajtin do të sjellë edhe heqje cookie-sh dhe të dhënash për shfletim pa u lidhur në internet. Kjo mund të shkaktojë daljen nga sajte. Jeni i sigurt se doni të bëhen ndryshimet?">
+<!ENTITY     siteTree.label                "Cookie-t vijuese do të hiqen:">

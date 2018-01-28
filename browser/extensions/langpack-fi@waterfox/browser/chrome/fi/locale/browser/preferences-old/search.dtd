@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Oletushakukone">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Valitse oletushakukone. &brandShortName; käyttää sitä osoitepalkin, hakupalkin ja aloitussivun hakukoneena.">
+
+<!ENTITY provideSearchSuggestions.label        "Näytä hakuehdotuksia">
+<!ENTITY provideSearchSuggestions.accesskey    "N">
+
+<!ENTITY showURLBarSuggestions.label           "Näytä hakuehdotukset osoitepalkkihauissa">
+<!ENTITY showURLBarSuggestions.accesskey       "o">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Hakuehdotuksia ei näytetä osoitepalkista tehtävistä hauista, koska olet kieltänyt sivuhistorian tallentamisen.">
+
+<!ENTITY oneClickSearchEngines.label           "Hakukoneet pikavalikossa">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Hakukoneita voi vaihtaa nopeasti hakupalkin pikavalikosta. Valitse pikavalikon hakukoneet.">
+
+<!ENTITY engineNameColumn.label                "Hakukone">
+<!ENTITY engineKeywordColumn.label             "Pikakomento">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Palauta oletushakukoneet">
+<!ENTITY restoreDefaultSearchEngines.accesskey "a">
+
+<!ENTITY removeEngine.label                    "Poista">
+<!ENTITY removeEngine.accesskey                "P">
+
+<!ENTITY addMoreSearchEngines.label            "Lisää hakukoneita…">

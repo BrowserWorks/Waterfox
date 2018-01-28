@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Felsökningsinformation">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  Den här sidan innehåller teknisk information som kan vara till hjälp när du försöker lösa ett problem. Vill du se svaren på några av de vanligaste frågorna om &brandShortName;, kan du besöka vår <a id='supportLink'>supportwebbplats</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Kraschrapporter">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Rapport-ID">
+<!ENTITY aboutSupport.crashes.sendDate "Datum">
+<!ENTITY aboutSupport.crashes.allReports "Alla kraschrapporter">
+<!ENTITY aboutSupport.crashes.noConfig "Det här programmet är inte konfigurerat att visa kraschrapporter.">
+
+<!ENTITY aboutSupport.extensionsTitle "Tillägg">
+<!ENTITY aboutSupport.extensionName "Namn">
+<!ENTITY aboutSupport.extensionEnabled "Aktiverad">
+<!ENTITY aboutSupport.extensionVersion "Version">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Funktioner">
+<!ENTITY aboutSupport.featureName "Namn">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Experimentella funktioner">
+<!ENTITY aboutSupport.experimentName "Namn">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Beskrivning">
+<!ENTITY aboutSupport.experimentActive "Aktiverad">
+<!ENTITY aboutSupport.experimentEndDate "Slutdatum">
+<!ENTITY aboutSupport.experimentHomepage "Hemsida">
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.appBasicsTitle "Programfakta">
+<!ENTITY aboutSupport.appBasicsName "Namn">
+<!ENTITY aboutSupport.appBasicsVersion "Version">
+<!ENTITY aboutSupport.appBasicsBuildID "Versions-ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Uppdateringskanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Uppdateringshistorik">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Visa uppdateringshistorik">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilmapp">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilmapp">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Aktiva insticksmoduler">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Byggkonfiguration">
+<!ENTITY aboutSupport.appBasicsUserAgent "Användaragent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Minnesanvändning">
+<!ENTITY aboutSupport.appBasicsPerformance "Prestanda">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registrerade  Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiler">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocess fönster">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Webbinnehållsprocesser">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google-nyckel">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service-nyckel">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Felsäkert läge">
+
+<!ENTITY aboutSupport.showDir.label "Öppna katalog">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Visa i Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Öppna mapp">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Viktiga ändrade inställningar">
+<!ENTITY aboutSupport.modifiedPrefsName "Namn">
+<!ENTITY aboutSupport.modifiedPrefsValue "Värde">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js-inställningar">
+<!ENTITY aboutSupport.userJSDescription "Din profilmapp innehåller en <a id='prefs-user-js-link'>user.js-fil</a> som inkluderar inställningar som inte har skapats av &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Viktiga låsta inställningar">
+<!ENTITY aboutSupport.lockedPrefsName "Namn">
+<!ENTITY aboutSupport.lockedPrefsValue "Värde">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafik">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Platser databas">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integritet">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verifiera integritet">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "Tillgänglighet">
+<!ENTITY aboutSupport.a11yActivated "Aktiverad">
+<!ENTITY aboutSupport.a11yForceDisabled "Förhindra tillgänglighet">
+<!ENTITY aboutSupport.a11yHandlerUsed "Tillgänglig hanterare använd">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Biblioteksversioner">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Installationshistorik">
+<!ENTITY aboutSupport.updateHistoryTitle "Uppdateringshistorik">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopiera text till urklipp">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopiera rådata till urklipp">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Avvisade systemanrop">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekunder sedan">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Processtyp">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argument">
+
+<!ENTITY aboutSupport.safeModeTitle "Prova felsäkert läge">
+<!ENTITY aboutSupport.restartInSafeMode.label "Starta om utan tillägg…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funktioner">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostik">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Fellogg">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Beslutslogg">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Kraschskydd inaktiverade funktioner">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Lösningar">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Utmatningsenheter">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Inmatningsenheter">
+<!ENTITY aboutSupport.mediaDeviceName "Namn">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grupp">
+<!ENTITY aboutSupport.mediaDeviceVendor "Leverantör">
+<!ENTITY aboutSupport.mediaDeviceState "Status">
+<!ENTITY aboutSupport.mediaDevicePreferred "Önskad">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanaler">
+<!ENTITY aboutSupport.mediaDeviceRate "Hastighet">
+<!ENTITY aboutSupport.mediaDeviceLatency "Fördröjning">

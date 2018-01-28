@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newButton.label "Nuovo">
+<!ENTITY newButton.tooltip "Crea un nuovo foglio di stile e lo aggiunge al documento">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY importButton.label "Importa…">
+<!ENTITY importButton.tooltip "Importa un foglio di stile esistente e lo aggiunge al documento">
+<!ENTITY importButton.accesskey "m">
+<!ENTITY visibilityToggle.tooltip "Cambia visibilità del foglio di stile">
+<!ENTITY saveButton.label "Salva">
+<!ENTITY saveButton.tooltip "Salva questo foglio di stile in un file">
+<!ENTITY saveButton.accesskey "S">
+<!ENTITY mediaRules.label "Regole @media">
+<!ENTITY editorTextbox.placeholder "Inserire qui il CSS.">
+<!ENTITY noStyleSheet.label "Questa pagina non ha un foglio di stile.">
+<!ENTITY noStyleSheet-tip-start.label "">
+<!ENTITY noStyleSheet-tip-action.label "Aggiungere un nuovo foglio di stile">
+<!ENTITY noStyleSheet-tip-end.label "?">
+<!ENTITY openLinkNewTab.label "Apri link in nuova scheda">
+<!ENTITY optionsButton.tooltip "Opzioni Editor stili">
+<!ENTITY showOriginalSources.label "Visualizza sorgenti originali">
+<!ENTITY showOriginalSources.accesskey "o">
+<!ENTITY showMediaSidebar.label "Visualizza barra laterale @media">
+<!ENTITY showMediaSidebar.accesskey "V">

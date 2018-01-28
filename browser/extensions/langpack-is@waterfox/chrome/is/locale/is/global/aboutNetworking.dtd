@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Um net">
+<!ENTITY aboutNetworking.warning               "Þetta er á tilraunastigi. Ekki mælt með notkun án hjálpar.">
+<!ENTITY aboutNetworking.showNextTime          "Sýna þessa aðvörun í næsta skipti">
+<!ENTITY aboutNetworking.ok                    "Í lagi">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Tengill">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Endurlesa">
+<!ENTITY aboutNetworking.autoRefresh           "Endurnýja sjálfkrafa á 3 sekúndna fresti">
+<!ENTITY aboutNetworking.hostname              "Hýsitölva">
+<!ENTITY aboutNetworking.port                  "Gátt">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Virkur">
+<!ENTITY aboutNetworking.idle                  "Aðgerðalaus">
+<!ENTITY aboutNetworking.host                  "Hýsill">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Send">
+<!ENTITY aboutNetworking.received              "Móttekið">
+<!ENTITY aboutNetworking.family                "Fjölskylda">
+<!ENTITY aboutNetworking.addresses             "Netföng">
+<!ENTITY aboutNetworking.expires               "Rennur út (Sekúndur)">
+<!ENTITY aboutNetworking.messagesSent          "Skilaboð send">
+<!ENTITY aboutNetworking.messagesReceived      "Skilaboð móttekin">
+<!ENTITY aboutNetworking.bytesSent             "Send bæti">
+<!ENTITY aboutNetworking.bytesReceived         "Móttekin bæti">
+<!ENTITY aboutNetworking.logging               "Skráningar">
+<!ENTITY aboutNetworking.logTutorial           "Kíktu á<a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> fyrir upplýsngar um hvernig á að nota þetta verkfæri.">
+<!ENTITY aboutNetworking.currentLogFile        "Núverandi skráningarskrá:">
+<!ENTITY aboutNetworking.currentLogModules     "Núverandi skráningar einingar:">
+<!ENTITY aboutNetworking.setLogFile            "Setja skráningarskrá">
+<!ENTITY aboutNetworking.setLogModules         "Setja skráningar einingar">
+<!ENTITY aboutNetworking.startLogging          "Hefja skráningu">
+<!ENTITY aboutNetworking.stopLogging           "Stöðva skráningu">
+<!ENTITY aboutNetworking.dnsLookup             "DNS uppfletting">
+<!ENTITY aboutNetworking.dnsLookupButton       "Finna">
+<!ENTITY aboutNetworking.dnsDomain             "Lén">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP tölur">
+<!ENTITY aboutNetworking.rcwn                  "RCWN upplýsingar">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN staða">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Skyndiminni vann talninguna">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Netið vann talninguna">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Heildarfjöldi net beiðna">
+
+
+<!ENTITY aboutNetworking.rcwnPerfRead          "Lesa">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Skrifa">
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">

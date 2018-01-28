@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "முதன்மை கடவுச்சொல்லை மாற்று">
+<!ENTITY setPassword.tokenName.label "பாதுகாப்பு சாதனம்">
+<!ENTITY setPassword.oldPassword.label "தற்போதைய கடவுச்சொல்:">
+<!ENTITY setPassword.newPassword.label "புதிய கடவுச்சொல்:">
+<!ENTITY setPassword.reenterPassword.label "புதிய கடவுச்சொல் (மீண்டும்):">
+<!ENTITY setPassword.meter.label "கடவுச்சொல் தர மீட்டர்">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "திரும்ப அமை">
+<!ENTITY resetPassword.title  "முதன்மை கடவுச்சொல்லை மீட்டமை">
+<!ENTITY resetPassword.text  "உங்கள் முதன்மை கடவுச்சொல்லை மீட்டமைத்தால், நீங்கள் சேமித்துவைத்துள்ள இணைய மற்றும் மின்னஞ்சல் கடவுச்சொற்கள், அவைகளுக்கான தகவல்கள் மற்றும் தனி சான்றிதழ்கள், தனி விசைகள் அத்தனையும் மறந்து போகும். உங்கள் முதன்மை கடவுச்சொல்லை மீட்டமைக்க விருப்பமா?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "சான்றிதழ் பதிவிறக்கம் செய்யப்படுகிறது">
+<!ENTITY downloadCert.message1 "புதிய் சான்றிதழ் உரிமம் (CA) பெற்றவர்களை நம்ப சொல்கிறார்கள்.">
+<!ENTITY downloadCert.trustSSL "இணையதளத்தை கண்டுபிடிக்க இந்த CA வை நம்பு.">
+<!ENTITY downloadCert.trustEmail "மின்னஞ்சல் பயனரை கண்டுபிடிக்க இந்த CA வை நம்பு.">
+<!ENTITY downloadCert.trustObjSign "மென்பொருள் உருவாக்குபவர்களை கண்டுபிடிக்க இந்த CA வை நம்பு.">
+<!ENTITY downloadCert.message3 "இந்த CA வை நம்பும் முன் சான்றிதழ் மற்றும் கொள்கைகளை சரிபார்ப்பது நல்லது (இருந்தால்).">
+<!ENTITY downloadCert.viewCert.label "பார்">
+<!ENTITY downloadCert.viewCert.text "CA சான்றிதழை சோதி">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "பயனர் கண்டுபிடிக்கும் கோரிக்கை">
+<!ENTITY clientAuthAsk.message1 "இந்த தளம் நீங்களாகவே சான்றிதழுடன் சரிபார்க்க சொல்கிறது:">
+<!ENTITY clientAuthAsk.message2 "அடையாளமாக காட்ட வேண்டிய சான்றிதழ தேர்வு செய்யவும்:">
+<!ENTITY clientAuthAsk.message3 "தேர்ந்தெடுக்கப்பட்ட சான்றிதழின் விவரங்கள்:">
+
+<!ENTITY pkcs12.setpassword.title  "சான்றிதழ் காப்பு கடவுச்சொல்லை தேர்வு செய்">
+<!ENTITY pkcs12.setpassword.message  "சான்றிதழ் கடவுச்சொல் காப்பு கோப்பு நீங்கள் உருவாக்கவிருக்கும் காப்பு கோப்புகளை பாதுகாக்கும். காப்பெடுக்க இந்த கடவுச்சொல்லை அமைத்து பின் தொடரவும்.">
+<!ENTITY pkcs12.setpassword.label1 "சான்றிதழ் காப்பு கடவுச்சொல்:">
+<!ENTITY pkcs12.setpassword.label2 "சான்றிதழ் காப்பு கடவுச்சொல் (மீண்டும்):">
+<!ENTITY pkcs12.setpassword.reminder "முக்கியம்: உங்கள் சான்றிதழ் காப்பு கடவுச்சொல்லை நீங்கள் மறந்திருந்தால், கோப்பை மீட்க முடியாது. எனவே பாதுகாப்பான இடத்தில் கடவுச்சொல்லை பதிவு செய்துகொள்ளவும்.">
+
+<!ENTITY chooseToken.title  "டோக்கன் உரையாடலை தேர்வு செய்யவும்">
+<!ENTITY chooseToken.message1 "டோக்கனை தேர்வு செய்யவும்.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "தனி விசையை உருவாக்குகிறது">
+<!ENTITY createCertInfo.msg1 "விசை உருவாக்கப்படுகிறது... இதற்கு சிறிது நேரம் ஆகும்....">
+<!ENTITY createCertInfo.msg2 "தயவு செய்து காத்திருக்கவும்...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "பாதுகாக்கப்பட்ட டோக்கன் அங்கீகாரம்">
+<!ENTITY protectedAuth.msg "டோக்கனை அங்கீகரிக்கவும். அங்கீகார முறை உங்கள் டோக்கனை சார்ந்து இருக்கும்.">
+<!ENTITY protectedAuth.tokenName.label "டோக்கன்:">

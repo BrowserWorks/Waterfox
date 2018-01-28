@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Mód Sábháilteachta &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Tosaigh sa Mhód Slán">
+<!ENTITY refreshProfile.label         "Athnuaigh &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Is éard atá sa Mhód Slán ná mód speisialta &brandShortName; lenar féidir fadhbanna a cheartú.">
+<!ENTITY safeModeDescription4.label   "Cuirfear do chuid breiseán agus sainroghanna ó chumas go sealadach.">
+
+<!ENTITY refreshProfileInstead.label  "Nó is féidir leat &brandShortName; a athnuachan gan bac le fabhtcheartú.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "Thuairteáil &brandShortName; gan choinne le linn tosaithe. Seans gurb é breiseán nó fadhb eile ba chúis leis seo. Is féidir iarracht a dhéanamh an fhadhb a réiteach trí atosú sa Mhód Slán.">

@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Έργο">
+<!ENTITY projectMenu_accesskey "Ε">
+<!ENTITY projectMenu_newApp_label "Νέα εφαρμογή…">
+<!ENTITY projectMenu_newApp_accesskey "Ν">
+<!ENTITY projectMenu_importPackagedApp_label "Άνοιγμα πακεταρισμένης εφαρμογής…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "Π">
+<!ENTITY projectMenu_importHostedApp_label "Άνοιγμα φιλοξενούμενης εφαρμογής…">
+<!ENTITY projectMenu_importHostedApp_accesskey "Φ">
+<!ENTITY projectMenu_selectApp_label "Άνοιγμα εφαρμογής…">
+<!ENTITY projectMenu_selectApp_accesskey "Α">
+<!ENTITY projectMenu_play_label "Εγκατάσταση και εκτέλεση">
+<!ENTITY projectMenu_play_accesskey "γ">
+<!ENTITY projectMenu_stop_label "Διακοπή εφαρμογής">
+<!ENTITY projectMenu_stop_accesskey "Δ">
+<!ENTITY projectMenu_debug_label "Αποσφαλμάτωση εφαρμογής">
+<!ENTITY projectMenu_debug_accesskey "π">
+<!ENTITY projectMenu_remove_label "Αφαίρεση έργου">
+<!ENTITY projectMenu_remove_accesskey "φ">
+<!ENTITY projectMenu_showPrefs_label "Προτιμήσεις">
+<!ENTITY projectMenu_showPrefs_accesskey "ρ">
+<!ENTITY projectMenu_manageComponents_label "Διαχείριση επιπλέον στοιχείων">
+<!ENTITY projectMenu_manageComponents_accesskey "Δ">
+<!ENTITY projectMenu_refreshTabs_label "Ανανέωση καρτελών">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Αποσύνδεση">
+<!ENTITY runtimeMenu_disconnect_accesskey "ο">
+<!ENTITY runtimeMenu_takeScreenshot_label "Στιγμιότυπο">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "τ">
+<!ENTITY runtimeMenu_showDetails_label "Πληροφορίες Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "λ">
+<!ENTITY runtimeMenu_showMonitor_label "Εποπτεία">
+<!ENTITY runtimeMenu_showMonitor_accesskey "α">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Προτιμήσεις συσκευής">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "υ">
+<!ENTITY runtimeMenu_showSettings_label "Ρυθμίσεις συσκευής">
+<!ENTITY runtimeMenu_showSettings_accesskey "ρ">
+
+<!ENTITY viewMenu_label "Προβολή">
+<!ENTITY viewMenu_accesskey "Π">
+<!ENTITY viewMenu_toggleEditor_label "Εναλλαγή επεξεργαστή">
+<!ENTITY viewMenu_toggleEditor_accesskey "ε">
+<!ENTITY viewMenu_zoomin_label "Μεγέθυνση">
+<!ENTITY viewMenu_zoomin_accesskey "Μ">
+<!ENTITY viewMenu_zoomout_label "Σμίκρυνση">
+<!ENTITY viewMenu_zoomout_accesskey "Σ">
+<!ENTITY viewMenu_resetzoom_label "Επαναφορά ζουμ">
+<!ENTITY viewMenu_resetzoom_accesskey "Ε">
+
+<!ENTITY projectButton_label "Άνοιγμα εφαρμογής">
+<!ENTITY runtimeButton_label "Επιλογή Runtime">
+
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "Κ">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "Α">
+<!-- reload app -->
+<!ENTITY key_play "π">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "Π">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Τα έργα μου">
+<!ENTITY projectPanel_runtimeApps "Εφαρμογές Runtime">
+<!ENTITY projectPanel_tabs "Καρτέλες">
+<!ENTITY runtimePanel_usb "Συσκευές USB">
+<!ENTITY runtimePanel_wifi "Συσκευές Wi-Fi">
+<!ENTITY runtimePanel_simulator "Προσομοιωτές">
+<!ENTITY runtimePanel_other "Άλλο">
+<!ENTITY runtimePanel_installsimulator "Εγκατάσταση προσομοιωτή">
+<!ENTITY runtimePanel_noadbhelper "Εγκατάσταση βοηθού ADB">
+<!ENTITY runtimePanel_nousbdevice "Δεν μπορείτε να δείτε τη συσκευή σας;">
+<!ENTITY runtimePanel_refreshDevices_label "Ανανέωση συσκευών">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "έγκυρο">
+<!ENTITY details_warning_header "προειδοποιήσεις">
+<!ENTITY details_error_header "σφάλματα">
+<!ENTITY details_description "Περιγραφή">
+<!ENTITY details_location "Τοποθεσία">
+<!ENTITY details_manifestURL "ID εφαρμογής">
+<!ENTITY details_removeProject_button "Αφαίρεση έργου">
+<!ENTITY details_showPrepackageLog_button "Εμφάνιση καταγραφής προ-πακεταρίσματος">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Νέα εφαρμογή">
+<!ENTITY newAppHeader "Επιλογή προτύπου">
+<!ENTITY newAppLoadingTemplate "Φόρτωση προτύπων…">
+<!ENTITY newAppProjectName "Όνομα έργου:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Κλείσιμο">
+
+<!-- Addons -->
+<!ENTITY addons_title "Επιπλέον στοιχεία">
+<!ENTITY addons_aboutaddons "Άνοιγμα διαχείρισης προσθέτων">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Προτιμήσεις">
+<!ENTITY prefs_editor_title "Επεξεργαστής">
+<!ENTITY prefs_general_title "Γενικά">
+<!ENTITY prefs_restore "Επαναφορά προεπιλογών">
+<!ENTITY prefs_manage_components "Διαχείριση επιπλέον στοιχείων">
+<!ENTITY prefs_options_autoconnectruntime "Επανασύνδεση σε προηγούμενο runtime">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Επανασύνδεση σε προηγούμενο runtime όταν ξεκινά το WebIDE">
+<!ENTITY prefs_options_rememberlastproject "Απομνημόνευση τελευταίου έργου">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Επαναφορά προηγούμενου έργου όταν ξεκινά το WebIDE">
+<!ENTITY prefs_options_templatesurl "URL προτύπων">
+<!ENTITY prefs_options_templatesurl_tooltip "Ευρετήριο διαθέσιμων προτύπων">
+<!ENTITY prefs_options_showeditor "Εμφάνιση επεξεργαστή">
+<!ENTITY prefs_options_showeditor_tooltip "Εμφάνιση εσωτερικού επεξεργαστή">
+<!ENTITY prefs_options_tabsize "Μέγεθος καρτέλας">
+<!ENTITY prefs_options_expandtab "Soft καρτέλες">
+<!ENTITY prefs_options_expandtab_tooltip "Χρήση διαστημάτων αντί του χαρακτήρα στηλοθέτη">
+<!ENTITY prefs_options_detectindentation "Αυτόματες εσοχές">
+<!ENTITY prefs_options_detectindentation_tooltip "Να μαντεύεται η εσοχή βάσει του περιεχομένου του κώδικα">
+<!ENTITY prefs_options_autocomplete "Αυτόματη συμπλήρωση">
+<!ENTITY prefs_options_autocomplete_tooltip "Ενεργοποίηση αυτόματης συμπλήρωσης κώδικα">
+<!ENTITY prefs_options_autoclosebrackets "Αυτόματο κλείσιμο παρενθέσεων">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Αυτόματη εισαγωγή παρενθέσεων κλεισίματος">
+<!ENTITY prefs_options_keybindings "Δεσμοί πληκτρολογίου">
+<!ENTITY prefs_options_keybindings_default "Προεπιλογή">
+<!ENTITY prefs_options_autosavefiles "Αυτόματη αποθήκευση αρχείων">
+<!ENTITY prefs_options_autosavefiles_tooltip "Να γίνεται αυτόματη αποθήκευση των τροποποιημένων αρχείων πριν την εκτέλεση του έργου">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Πληροφορίες Runtime">
+<!ENTITY runtimedetails_adbIsRoot "Το ADB είναι root: ">
+<!ENTITY runtimedetails_summonADBRoot "root συσκευής">
+<!ENTITY runtimedetails_ADBRootWarning "(απαιτεί ξεκλειδωμένο bootloader)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Απεριόριστα προνόμια DevTools: ">
+<!ENTITY runtimedetails_requestPrivileges "απαίτηση υψηλότερων προνομίων">
+<!ENTITY runtimedetails_privilegesWarning "(Η συσκευή θα επανεκκινηθεί. Απαιτεί πρόσβαση root.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Αληθείας">
+<!ENTITY device_typenumber "Ακέραια">
+<!ENTITY device_typestring "Συμβολοσειρά">
+<!ENTITY device_typeobject "Αντικείμενο">
+<!ENTITY device_typenone "Επιλογή τύπου">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Προτιμήσεις συσκευής">
+<!ENTITY devicepreference_search "Προτιμήσεις αναζήτησης">
+<!ENTITY devicepreference_newname "Όνομα νέας προτίμησης">
+<!ENTITY devicepreference_newtext "Τιμή προτίμησης">
+<!ENTITY devicepreference_addnew "Προσθήκη νέας προτίμησης">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Ρυθμίσεις συσκευής">
+<!ENTITY devicesetting_search "Ρυθμίσεις αναζήτησης">
+<!ENTITY devicesetting_newname "Όνομα νέας ρύθμισης">
+<!ENTITY devicesetting_newtext "Τιμή ρύθμισης">
+<!ENTITY devicesetting_addnew "Προσθήκη νέας ρύθμισης">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Εποπτεία">
+<!ENTITY monitor_help "Βοήθεια">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Αναγνώριση πελάτη">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Το τελικό σημείο στο οποίο συνδέεστε χρειάζεται περισσότερες πληροφορίες για την πιστοποίηση αυτής της σύνδεσης.  Παρακαλώ σαρώστε τον παρακάτω κωδικό QR μέσω της ειδοποίησης στην άλλη σας συσκευή.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Καμία ένδειξη σαρωτή QR;">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Υπάρχει ένδειξη σαρωτή QR;">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Αν η άλλη σας συσκευή ζητά ένα διακριτικό αντί για τη σάρωση ενός κωδικού QR, παρακαλώ αντιγράψτε την παρακάτω τιμή στην άλλη συσκευή:">
+<!ENTITY wifi_auth_qr_size_note "Αν ο κωδικός QR εμφανίζεται τόσο μικρός, ώστε να μην μπορεί να πραγματοποιηθεί επιτυχώς η σύνδεση, δοκιμάστε να κάνετε ζουμ ή να μεγεθύνετε το παράθυρο.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Καταγραφές εντολών προ-πακεταρίσματος">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Επιλογές προσομοιωτή">
+<!ENTITY simulator_remove "Διαγραφή προσομοιωτή">
+<!ENTITY simulator_reset "Επαναφορά προεπιλογών">
+<!ENTITY simulator_name "Όνομα">
+<!ENTITY simulator_software "Λογισμικό">
+<!ENTITY simulator_version "Έκδοση">
+<!ENTITY simulator_profile "Προφίλ">
+<!ENTITY simulator_hardware "Υλικό">
+<!ENTITY simulator_device "Συσκευή">
+<!ENTITY simulator_screenSize "Οθόνη">
+<!ENTITY simulator_pixelRatio "Αναλογία εικονοστοιχείων">
+<!ENTITY simulator_tv_data "Προσομοίωση τηλεόρασης">
+<!ENTITY simulator_tv_data_open "Δεδομένα ρυθμίσεων">
+<!ENTITY simulator_tv_data_open_button "Άνοιγμα καταλόγου ρυθμίσεων…">

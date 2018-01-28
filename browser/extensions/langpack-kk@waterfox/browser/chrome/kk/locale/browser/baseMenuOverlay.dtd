@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Қайыру">
+<!ENTITY bringAllToFront.label    "Барлығын алдына қою">
+<!ENTITY zoomWindow.label         "Масштаб">
+<!ENTITY windowMenu.label         "Терезе">
+
+<!ENTITY helpMenu.label           "Көмек"> 
+<!ENTITY helpMenu.accesskey       "К"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Көмек"> 
+<!ENTITY helpMenuWin.accesskey    "К">
+<!ENTITY aboutProduct2.label      "&brandShorterName; туралы">
+<!ENTITY aboutProduct2.accesskey  "а">
+<!ENTITY productHelp2.label       "&brandShorterName; көмегі">
+<!ENTITY productHelp2.accesskey   "к">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Пернетақта жарлықтары">
+<!ENTITY helpKeyboardShortcuts.accesskey "е">
+
+<!ENTITY helpSafeMode.label       "Сөндірілген кеңейтулермен қайта қосу…">
+<!ENTITY helpSafeMode.accesskey   "р">
+<!ENTITY helpSafeMode.stop.label       "Сөндірілген кеңейтулермен қайта қосу">
+<!ENTITY helpSafeMode.stop.accesskey   "р">
+
+<!ENTITY healthReport2.label      "&brandShorterName; денсаулық есептемесі">
+<!ENTITY healthReport2.accesskey  "е">
+
+<!ENTITY helpTroubleshootingInfo.label      "Техникалық ақпарат">
+<!ENTITY helpTroubleshootingInfo.accesskey  "а">
+
+<!ENTITY helpFeedbackPage.label      "Кері байланыс хабарламасын жіберу…">
+<!ENTITY helpFeedbackPage.accesskey  "е">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName; ішіне cаяхат">
+<!ENTITY helpShowTour2.accesskey        "я">
+
+<!ENTITY preferencesCmdMac.label        "Баптаулар…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Қызметтер">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; жасыру">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Басқаларын жасыру">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Барлығын көрсету">

@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Ginearálta">
+
+<!ENTITY useCursorNavigation.label       "Úsáid eochracha cúrsóra i gcónaí chun bogadh laistigh de leathanaigh">
+<!ENTITY useCursorNavigation.accesskey   "e">
+<!ENTITY searchOnStartTyping.label       "Cuardaigh téacs nuair a thosóidh mé ag clóscríobh">
+<!ENTITY searchOnStartTyping.accesskey   "t">
+<!ENTITY useOnScreenKeyboard.label       "Taispeáin méarchlár tadhaill nuair is gá">
+<!ENTITY useOnScreenKeyboard.accesskey   "m">
+
+<!ENTITY browsing.label                  "Brabhsáil">
+
+<!ENTITY useAutoScroll.label             "Úsáid uathscrollú">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Úsáid mínscrollú">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "Seiceáil litriú le linn clóscríofa">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Roghanna Sonraí">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Díchumasaíodh tuairisciú sonraí don chumraíocht leagain seo">
+
+<!ENTITY enableHealthReport1.label       "Tabhair cead do &brandShortName; sonraí teicniúla agus gníomhaíochta a sheoladh chuig Mozilla go huathoibríoch">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Tuilleadh eolais">
+
+<!ENTITY dataCollection.label            "Bailiúchán agus Úsáid Sonraí &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Déanaimid ár ndícheall roghanna a thabhairt duit agus an méid is lú sonraí a bhailiú chun feabhas a chur ar &brandShortName; ar son an phobail. Iarraimid cead ort i gcónaí sula mbailímid sonraí pearsanta uait.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Fógra Príobháideachais">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Tabhair cead do &brandShortName; tuairiscí tuairteála a sheoladh chuig Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "Tuilleadh eolais">
+
+<!ENTITY networkTab.label                "Líonra">
+
+<!ENTITY networkProxy.label              "Seachfhreastalaí Líonra">
+
+<!ENTITY connectionDesc.label            "Cumraigh conas a cheanglófar &brandShortName; leis an Idirlíon">
+<!ENTITY connectionSettings.label        "Socruithe…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Ábhar Gréasáin i dTaisce">
+
+<!ENTITY offlineStorage2.label           "Ábhar Gréasáin As Líne agus Sonraí Úsáideora">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Sonraí an tSuímh">
+<!ENTITY clearSiteData.label             "Glan Gach Sonra">
+<!ENTITY clearSiteData.accesskey         "G">
+<!ENTITY siteDataSettings.label          "Socruithe…">
+<!ENTITY siteDataSettings.accesskey      "e">
+<!ENTITY siteDataLearnMoreLink.label     "Tuilleadh eolais">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Cuir teorainn leis an taisce">
+<!ENTITY limitCacheSizeBefore.accesskey  "l">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "Bánaigh Anois">
+<!ENTITY clearCacheNow.accesskey         "B">
+<!ENTITY clearOfflineAppCacheNow.label   "Bánaigh Anois">
+<!ENTITY clearOfflineAppCacheNow.accesskey "n">
+<!ENTITY overrideSmartCacheSize.label    "Sáraigh bainistíocht uathoibríoch na taisce">
+<!ENTITY overrideSmartCacheSize.accesskey "r">
+
+<!ENTITY updateTab.label                 "Nuashonrú">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "Nuashonruithe &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "Coinnigh &brandShortName; cothrom le dáta chun an fheidhmíocht, an chobhsaíocht, agus an tslándáil is fearr a dheimhniú.">
+<!ENTITY updateApplication.version.pre   "Leagan ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Lig do &brandShortName;">
+<!ENTITY updateAuto3.label               "Suiteáil nuashonruithe go huathoibríoch (molta)">
+<!ENTITY updateAuto3.accesskey           "a">
+<!ENTITY updateCheckChoose2.label        "Lorg nuashonruithe, ach lig dom iad a shuiteáil nuair is mian liom">
+<!ENTITY updateCheckChoose2.accesskey    "L">
+<!ENTITY updateManual2.label             "Ná lorg nuashonruithe (ní mholtar é seo)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "Taispeáin Stair na Nuashonruithe…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "Úsáid seirbhís sa chúlra chun nuashonruithe a shuiteáil">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Nuashonraigh innill chuardaigh go huathoibríoch">
+<!ENTITY enableSearchUpdate2.accesskey   "c">
+
+<!ENTITY offlineStorageNotify.label               "Inis dom nuair a iarrann suíomh Gréasáin sonraí a stóráil le haghaidh úsáide as líne">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Eisceachtaí…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "s">
+
+<!ENTITY offlineAppsList2.label          "Tá cead ag na suímh Ghréasáin seo a leanas sonraí a stóráil le húsáid as líne:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Bain…">
+<!ENTITY offlineAppsListRemove.accesskey "B">
+<!ENTITY offlineAppRemove.confirm        "Bain sonraí as líne">
+
+<!ENTITY certificateTab.label            "Teastais">
+<!ENTITY certPersonal2.description       "Nuair atá freastalaí ag iarraidh mo theastas pearsanta">
+<!ENTITY selectCerts.auto                "Roghnaigh go huathoibríoch">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Fiafraigh díom i gcónaí">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Iarr ar fhreastalaí freagróra OCSP bailíocht teastais a dheimhniú">
+<!ENTITY enableOCSP.accesskey            "O">
+<!ENTITY viewCerts2.label                "Taispeáin Teastais…">
+<!ENTITY viewCerts2.accesskey            "s">
+<!ENTITY viewSecurityDevices2.label      "Gléasanna Slándála…">
+<!ENTITY viewSecurityDevices2.accesskey  "d">
+
+<!ENTITY performance.label               "Feidhmíocht">
+<!ENTITY useRecommendedPerformanceSettings2.label "Bain úsáid as na socruithe feidhmíochta a mholtar">
+<!ENTITY useRecommendedPerformanceSettings2.description "Cuireadh na socruithe seo in oiriúint do chrua-earraí agus do chóras oibriúcháin do ríomhaire.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "B">
+<!ENTITY performanceSettingsLearnMore.label "Tuilleadh eolais">
+<!ENTITY limitContentProcessOption.label "Teorainn próiseála ábhair">
+<!ENTITY limitContentProcessOption.description "Beidh an brabhsálaí níos freagraí agus tuilleadh próiseas ábhair ar siúl má úsáidtear cluaisíní iomadúla, cé go n-úsáideann sé níos mó cuimhne.">
+<!ENTITY limitContentProcessOption.accesskey   "T">
+<!ENTITY limitContentProcessOption.disabledDescription "Ní féidir mionathrú a dhéanamh ar an líon próisis ábhair ach le hilphróiseáil &brandShortName; amháin.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Foghlaim conas seiceáil má tá an ilphróiseáil cumasaithe.">
+<!ENTITY allowHWAccel.label              "Úsáid luasghéarú crua-earraí más féidir">
+<!ENTITY allowHWAccel.accesskey          "r">

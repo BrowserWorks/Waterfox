@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Iɣewwaṛen - isefka n usmel">
+<!ENTITY     hostCol.label                 "Asmel">
+<!ENTITY     statusCol.label               "addad">
+<!ENTITY     usageCol.label                "Aklas">
+<!ENTITY     searchTextboxPlaceHolder             "Nadi ismal web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "R">
+<!ENTITY     removeSelected.label          "Kkes tafrant">
+<!ENTITY     removeSelected.accesskey      "K">
+<!ENTITY     save.label                    "Sekles asnifel">
+<!ENTITY     save.accesskey                "S">
+<!ENTITY     cancel.label                  "Sefsex">
+<!ENTITY     cancel.accesskey              "S">
+<!ENTITY     removingDialog.title          "Tuksa n isefka n usmel">
+<!ENTITY     removingSelected.description  "S tuksa n isefka n usmel ad ikkes daγen inagan n tuqna akked ugbur n war tuqna. aya izmer ad k-d-isufeγ seg ismal. tebγiḍ ad tkemleḍ?">
+<!ENTITY     siteTree.label                "Inagan n usmel-a web ad ttwakksen:">

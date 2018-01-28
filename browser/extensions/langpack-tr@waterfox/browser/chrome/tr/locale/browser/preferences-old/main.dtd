@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Başlangıç">
+
+<!ENTITY startupPage.label         "&brandShortName; açıldığında:">
+<!ENTITY startupPage.accesskey     "d">
+<!ENTITY startupUserHomePage.label "Giriş sayfamı göster">
+<!ENTITY startupBlankPage.label    "Boş bir sayfa göster">
+<!ENTITY startupPrevSession.label  "Son oturumdaki pencereleri ve sekmeleri göster">
+
+<!ENTITY homepage.label            "Giriş sayfası:">
+<!ENTITY homepage.accesskey        "G">
+<!ENTITY useCurrentPage.label      "Geçerli sayfayı kullan">
+<!ENTITY useCurrentPage.accesskey  "s">
+<!ENTITY useMultiple.label         "Geçerli sayfaları kullan">
+<!ENTITY chooseBookmark.label      "Yer imi kullan…">
+<!ENTITY chooseBookmark.accesskey  "m">
+<!ENTITY restoreDefault.label      "Varsayılanı geri getir">
+<!ENTITY restoreDefault.accesskey  "r">
+
+<!ENTITY downloads.label     "İndirme">
+
+<!ENTITY saveTo.label "Dosya kayıt yeri">
+<!ENTITY saveTo.accesskey "a">
+<!ENTITY chooseFolderWin.label        "Gözat…">
+<!ENTITY chooseFolderWin.accesskey    "z">
+<!ENTITY chooseFolderMac.label        "Seç…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Dosyaların nereye kaydedileceğini her zaman sor">
+<!ENTITY alwaysAskWhere.accesskey     "o">
+
+<!ENTITY alwaysCheckDefault2.label        "Her zaman &brandShortName; tarayıcısının varsayılan olup olmadığını denetle">
+<!ENTITY alwaysCheckDefault2.accesskey    "H">
+<!ENTITY setAsMyDefaultBrowser2.label     "Varsayılan yap">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "V">
+<!ENTITY isDefault.label                  "&brandShortName; şu anda varsayılan tarayıcınız">
+<!ENTITY isNotDefault.label               "&brandShortName; varsayılan tarayıcınız değil">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; ve Waterfox’un aynı anda çalışmasına izin ver">
+<!ENTITY useWaterfoxSync.label             "İpucu: Bu ayarda farklı profiller kullanılır. Tarayıcılar arasında veri paylaşmak için Sync’i kullanın.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label;’e giriş yap…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; tercihlerini aç">
+
+<!ENTITY e10sEnabled.label                "Çok işlemli &brandShortName; tarayıcısını etkinleştir">

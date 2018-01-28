@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Alege profilul de utilizator">
+
+<!ENTITY            profilename.label      "Nume profil:">
+
+<!ENTITY            start.label            "Pornește &brandShortName;">
+<!ENTITY            exit.label             "Ieși">
+
+<!ENTITY            availprofiles.label    "Profiluri disponibile">
+
+<!ENTITY            newButton.label        "Creează profil…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Redenumește profilul…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "Șterge profilul…">
+<!ENTITY            deleteButton.accesskey "g">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; păstrează informații despre setări, preferințe, precum și alte elemente personale în profilul tău individual.">
+
+<!ENTITY            offlineState.label    "Lucrează offline">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "Utilizează profilul selectat fără a mai întreba la pornire">
+<!ENTITY            useSelected.accesskey   "s">

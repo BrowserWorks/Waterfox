@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "সফ্টওয়্যার আপডেট ব্যবস্থা">
+
+<!ENTITY  checking.title                  "আপডেট পরীক্ষা করা হয়েছে">
+<!ENTITY  updateCheck.label               "&brandShortName;-র নতুন সংস্করণ অনুসন্ধান করা হচ্ছে…">
+
+<!ENTITY  noupdatesfound.title            "কোনো আপডেট পাওয়া যায়নি">
+<!ENTITY  noupdatesautoenabled.intro      "কোনো আপডেট উপলব্ধ নেই। &brandShortName; দ্বারা নিয়মিতরূপে আপডেটের উপস্থিতি পরীক্ষা করা হবে।">
+<!ENTITY  noupdatesautodisabled.intro     "কোনো আপডেট উপলব্ধ নেই। অনুগ্রহ করে পরে কোনো সময় পরীক্ষা করুন অথবা &brandShortName;-র স্বয়ংক্রিয় আপডেট পরীক্ষণ ব্যবস্থা সক্রিয় করুন।">
+
+<!ENTITY  manualUpdate.title              "আপডেট করতে ব্যর্থ">
+<!ENTITY  manualUpdate.desc               "নিরাপত্তা ও স্থায়ীত্ব বৃদ্ধির জন্য প্রস্তাবিত একটি আপডেট উপস্থিত থাকলেও, এটি ইনস্টল করার জন্য পর্যাপ্ত অনুমতি আপনার নেই। অনুগ্রহ করে আপনার সিস্টেম অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করুন অথবা বর্তমান কম্পিউটারে সফ্টওয়্যার ইনস্টল করার জন্য পর্যাপ্ত অনুমতিপ্রাপ্ত অ্যাকাউন্ট প্রয়োগ করে পুনরায় প্রচেষ্টা করুন।">
+<!ENTITY  manualUpdate.space.desc         "নিরাপত্তা ও স্থায়ীত্ব বৃদ্ধির জন্য প্রস্তাবিত একটি আপডেট উপস্থিত থাকলেও, এটি ইনস্টল করার জন্য পর্যাপ্ত স্থান উপস্থিত নেই।">
+<!ENTITY  manualUpdateGetMsg.label        "&brandShortName;-র সাম্প্রতিকতম সংস্করণ নিম্নলিখিত স্থানে সর্বদা উপলব্ধ রয়েছে:">
+
+<!ENTITY  unsupported.title               "অসমর্থিত সিস্টেম">
+<!ENTITY  unsupported.label               "তোমার &brandShortName; তারিখ সীমার বাইরে, কিন্তু সর্বশেষ সংস্করণআপনার সিস্টেম সমর্থিত নয়। আপনার সিস্টেম আপগ্রেড করার জন্য, দয়া করে পরে আবার চেষ্টা করুন আপনি যদি আবার এই বিজ্ঞপ্তি দেখতে পাবেন না, কিন্তু আপনি পারেন">
+<!ENTITY  unsupportedLink.label           "আরও জানুন">
+
+<!ENTITY  clickHere.label                 "চিহ্নিত আপডেট সম্পর্কে অধিক তথ্য জানুন">
+
+<!ENTITY  evangelism.desc                 "&brandShortName;-র এই আপডেটটি অবিলম্বে প্রয়োগ করা অতিমাত্রায় বাঞ্ছনীয়।">
+
+<!ENTITY  downloadPage.title              "Downloading &brandShortName;">
+<!ENTITY  downloading.intro               "আপডেট ডাউনলোড করা হচ্ছে...">
+<!ENTITY  connecting.label                "আপডেট সার্ভারের সাথে সংযোগ করা হচ্ছে...">
+<!ENTITY  verificationFailedText.label    "&brandShortName;-র দ্বারা ডাউনলোড করার ক্রমবর্ধমান আপডেটের অখন্ডতা পরীক্ষা করা সম্ভব হয়নি যার ফলে এই মুহূর্তে সম্পূর্ণ আপডেট প্যাকেজ ডাউনলোড করা হচ্ছে।">
+
+<!ENTITY  viewDetails.tooltip             "চিহ্নিত আপডেট সম্পর্কে অধিক তথ্য জানুন">
+
+<!ENTITY  details.link                    "বিবরণ">
+
+<!ENTITY  error.title                     "আপডেট করতে ব্যর্থ">
+
+<!ENTITY  error.label                     "চিহ্নিত আপডেট অনুসন্ধান, ডাউনলোড অথবা ইনস্টল করতে সমস্যা উৎপন্ন হয়েছে। উল্লিখিত কারণের জন্য &brandShortName; আপডেট করা যায়নি:">
+                                           
+<!ENTITY  errorManual.label               "উল্লিখিত লিঙ্ক থেকে আপনি সর্বশেষ উপলব্ধ সংস্করণ ডাউনলোড করে নিজে &brandShortName; ইনস্টল করতে পারবেন:">
+                                           
+<!ENTITY  errorpatching.intro             "আংশিক আপডেট প্রয়োগ করা যায়নি। সম্পূর্ণ আপডেট ডাউনলোড করে &brandShortName;-র দ্বারা পুনরায় প্রচেষ্টা করা হবে।">
+
+<!ENTITY  genericBackgroundError.label    "আপডেট উপস্থিত রয়েছে কি না তা &brandShortName; দ্বারা নির্ধারণ করা সম্ভব হয়নি। অনুগ্রহ করে নিশ্চিত করুন যে নিম্নলিখিত স্থান থেকে প্রাপ্ত &brandShortName;-র সাম্প্রতিকতম সংস্করণ ব্যবহার করা হচ্ছে:">
+
+<!ENTITY  finishedPage.title              "আপডেট ইনস্টল করতে প্রস্তুত">
+<!ENTITY  finishedPage.text               "&brandShortName; পরবর্তীবার আরম্ভ করা হলে চিহ্নিত আপডেটটি ইনস্টল করা হবে। এখন &brandShortName; পুনরায় আরম্ভ করুন অথবা বর্তমান কর্ম অবিঘ্নিত রাখতে হলে পরে কোনো সময় পুনরারম্ভ করুন।">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName;-র নিরাপত্তা ও স্থায়ীত্ব সংক্রান্ত আপডেটটি ডাউনলোড করা হয়েছে এবং ইনস্টল করার জন্য প্রস্তুত।">
+<!ENTITY  finishedBackground.name         "আপডেট করুন:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "&brandShortName; পরবর্তীবার আরম্ভ করা হলে চিহ্নিত আপডেটটি ইনস্টল করা হবে। এখন &brandShortName; পুনরায় আরম্ভ করুন অথবা বর্তমান কর্ম অবিঘ্নিত রাখতে হলে পরে কোনো সময় পুনরারম্ভ করুন।">
+<!ENTITY  finishedBackground.moreElevated "এই আপডেটের জন্য প্রশাসকের বিশেষাধিকার প্রয়োজন। এই আপডেটটি ইন্সটল হবে এর পরেই যখন &brandShortName; শুরু হবে। আপনি &brandShortName; পুনরারম্ভ করতে পারেন এখন, কাজ করতে থাকুন এবং পরে পুনরারম্ভ করুন বা এই আপডেটটি প্রত্যাখান করুন। ">
+
+<!ENTITY  update.details.label            "বিবরণ">
+<!ENTITY  update.installedOn.label        "ইনস্টলেশনের তারিখ:">
+<!ENTITY  update.status.label             "অবস্থা:">

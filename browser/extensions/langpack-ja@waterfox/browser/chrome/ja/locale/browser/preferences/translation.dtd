@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "例外 - 翻訳">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "以下の言語は翻訳しない:">
+<!ENTITY treehead.languageName.label      "言語">
+<!ENTITY removeLanguage.label             "言語を削除">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "すべての言語を削除">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "以下のサイトは翻訳しない:">
+<!ENTITY treehead.siteName2.label         "ウェブサイト">
+<!ENTITY removeSite.label                 "サイトを削除">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "すべてのサイトを削除">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "閉じる">
+<!ENTITY button.close.accesskey           "C">

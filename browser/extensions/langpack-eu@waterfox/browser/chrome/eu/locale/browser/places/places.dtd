@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Biltegia">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Antolatu">
+<!ENTITY organize.accesskey    "o">
+<!ENTITY organize.tooltip      "Antolatu laster-markak">
+
+<!ENTITY file.close.label               "Itxi">
+<!ENTITY file.close.accesskey           "I">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Ikuspegiak">
+<!ENTITY views.accesskey                "I">
+<!ENTITY views.tooltip                  "Aldatu ikuspegia">
+<!ENTITY view.columns.label             "Erakutsi zutabeak">
+<!ENTITY view.columns.accesskey         "s">
+<!ENTITY view.sort.label                "Ordenatu">
+<!ENTITY view.sort.accesskey            "O">
+<!ENTITY view.unsorted.label            "Ordenatu gabe">
+<!ENTITY view.unsorted.accesskey        "u">
+<!ENTITY view.sortAscending.label       "A > Z ordena">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A ordena">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Inportatu laster-markak HTMLtik…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Esportatu laster-markak HTMLra…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Inportatu datuak beste nabigatzaile batetik…">
+<!ENTITY importOtherBrowser.accesskey      "b">
+
+<!ENTITY cmd.backup.label               "Babeskopia…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "Berreskuratu">
+<!ENTITY cmd.restore2.accesskey         "r">
+<!ENTITY cmd.restoreFromFile.label      "Aukeratu fitxategia…">
+<!ENTITY cmd.restoreFromFile.accesskey  "A">
+
+<!ENTITY cmd.deleteDomainData.label     "Ahaztu gune honetaz">
+<!ENTITY cmd.deleteDomainData.accesskey "A">
+
+<!ENTITY cmd.open.label                  "Ireki">
+<!ENTITY cmd.open.accesskey              "I">
+<!ENTITY cmd.open_window.label           "Ireki leiho berri batean">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "Ireki leiho pribatu berrian">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Ireki fitxa berri batean">
+<!ENTITY cmd.open_tab.accesskey          "x">
+<!ENTITY cmd.open_all_in_tabs.label      "Ireki guztiak fitxetan">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "I">
+
+<!ENTITY cmd.properties.label      "Propietateak">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Sailkatu izenez">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "S">
+
+<!ENTITY cmd.new_bookmark.label            "Laster-marka berria…">
+<!ENTITY cmd.new_bookmark.accesskey        "b">
+<!ENTITY cmd.new_folder.label              "Karpeta berria…">
+<!ENTITY cmd.new_folder.accesskey          "a">
+<!ENTITY cmd.context_new_folder.accesskey  "K">
+<!ENTITY cmd.new_separator.label           "Bereizle berria">
+<!ENTITY cmd.new_separator.accesskey       "z">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Berritu laster-marka dinamikoa">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "d">
+
+<!ENTITY cmd.moveBookmarks.label                  "Aldatu lekuz…">
+<!ENTITY cmd.moveBookmarks.accesskey              "l">
+
+<!ENTITY col.name.label          "Izena">
+<!ENTITY col.tags.label          "Etiketak">
+<!ENTITY col.url.label           "Kokalekua">
+<!ENTITY col.mostrecentvisit.label "Azken bisita">
+<!ENTITY col.visitcount.label    "Bisita kopurua">
+<!ENTITY col.description.label   "Azalpena">
+<!ENTITY col.dateadded.label     "Gehituta">
+<!ENTITY col.lastmodified.label  "Azken aldaketa">
+
+<!ENTITY search.placeholder  "Bilatu">
+
+<!ENTITY cmd.find.key  "b">
+
+<!ENTITY maintenance.label      "Inportatze eta babeskopia">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Inportatu laster-markak eta egin hauen babeskopia">
+
+<!ENTITY backButton.tooltip  "Joan atzera">
+
+<!ENTITY forwardButton.tooltip  "Joan aurrera">
+
+<!ENTITY detailsPane.more.label "Gehiago">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Gutxiago">
+<!ENTITY detailsPane.less.accesskey "u">
+<!ENTITY detailsPane.selectAnItemText.description "Hautatu elementu bat bere propietateak ikusi eta editatzeko">
+
+<!ENTITY view.label               "Ikusi">
+<!ENTITY view.accesskey           "s">
+<!ENTITY byDate.label             "Dataren arabera">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "Gunearen arabera">
+<!ENTITY bySite.accesskey         "G">
+<!ENTITY byMostVisited.label      "Gehien bisitatuaren arabera">
+<!ENTITY byMostVisited.accesskey  "b">
+<!ENTITY byLastVisited.label      "Azken bisitaren arabera">
+<!ENTITY byLastVisited.accesskey  "A">
+<!ENTITY byDayAndSite.label       "Data eta gunearen arabera">
+<!ENTITY byDayAndSite.accesskey   "t">

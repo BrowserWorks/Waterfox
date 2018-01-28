@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Назад">
+<!ENTITY  button-back-mac.accesskey    "Н">
+<!ENTITY  button-next-mac.label        "Продолжить">
+<!ENTITY  button-next-mac.accesskey    "П">
+<!ENTITY  button-finish-mac.label      "Готово">
+<!ENTITY  button-cancel-mac.label      "Отменить">
+
+<!ENTITY  button-back-unix.label       "Назад">
+<!ENTITY  button-back-unix.accesskey   "Н">
+<!ENTITY  button-next-unix.label       "Далее">
+<!ENTITY  button-next-unix.accesskey   "Д">
+<!ENTITY  button-finish-unix.label     "Готово">
+<!ENTITY  button-cancel-unix.label     "Отмена">
+
+<!ENTITY  button-back-win.label        "&lt; Назад">
+<!ENTITY  button-back-win.accesskey    "Н">
+<!ENTITY  button-next-win.label        "Далее &gt;">
+<!ENTITY  button-next-win.accesskey    "Д">
+<!ENTITY  button-finish-win.label      "Готово">
+<!ENTITY  button-cancel-win.label      "Отмена">

@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Viðbótastjóri">
+
+<!ENTITY search.placeholder                   "Leita í öllum viðbótum">
+<!ENTITY search.buttonlabel                   "Leita">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Hleður…">
+<!ENTITY listEmpty.installed.label            "Engar viðbætur af þessari tegund hafa verið settar inn">
+<!ENTITY listEmpty.availableUpdates.label     "Engar uppfærslur fundust">
+<!ENTITY listEmpty.recentUpdates.label        "Þú hefur ekki uppfært neinar viðbætur nýlega">
+<!ENTITY listEmpty.findUpdates.label          "Athuga með uppfærslur">
+<!ENTITY listEmpty.search.label               "Fann ekki viðbætur sem pössuðu">
+<!ENTITY listEmpty.button.label               "Fræðast meira um viðbætur">
+<!ENTITY installAddonFromFile.label           "Setja inn viðbót frá skrá…">
+<!ENTITY installAddonFromFile.accesskey       "i">
+<!ENTITY toolsMenu.tooltip                    "Verkfæri fyrir allar viðbætur">
+
+<!ENTITY getThemes.description                "Ertu að leita eftir að gera vafrann persónulegri?">
+<!ENTITY getThemes.learnMore                  "Veldu frá þúsundum þema.">
+
+<!ENTITY cmd.back.tooltip                     "Til baka um eina síðu">
+<!ENTITY cmd.forward.tooltip                  "Áfram um eina síðu">
+
+<!ENTITY showUnsignedExtensions.button.label  "Ekki tókst að staðfesta sumar viðbætur">
+<!ENTITY showAllExtensions.button.label       "Sýna allar viðbætur">
+<!ENTITY debugAddons.label                    "Kemba viðbætur">
+<!ENTITY debugAddons.accesskey                "b">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Allar viðbætur hafa verið gerðar óvirkar vegna öryggishams.">
+<!ENTITY warning.checkcompatibility.label          "Samhæfnisathugun viðbóta er óvirk. Hugsanlegt er að þú sért með ósamhæfðar viðbætur.">
+<!ENTITY warning.checkcompatibility.enable.label   "Virkja">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Virkja samhæfnisathugun viðbóta">
+<!ENTITY warning.updatesecurity.label              "Öryggisuppfærslur fyrir viðbætur eru óvirkar. Þú gætir verið í hættu vegna uppfærslu.">
+<!ENTITY warning.updatesecurity.enable.label       "Virkja">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Virkja öryggisuppfærslur fyrir viðbætur">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Leita">
+<!ENTITY view.discover.label                  "Ná í viðbætur">
+<!ENTITY view.recentUpdates.label             "Nýlegar uppfærslur">
+<!ENTITY view.availableUpdates.label          "Fáanlegar uppfærslur">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Leita að uppfærslum">
+<!ENTITY updates.checkForUpdates.accesskey    "L">
+<!ENTITY updates.viewUpdates.label            "Skoða nýlegar uppfærslur">
+<!ENTITY updates.viewUpdates.accesskey        "S">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Uppfæra viðbætur sjálfvirkt">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "a">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Endurstilla allar viðbætur á sjálfvirka uppfærslu">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "r">
+<!ENTITY updates.resetUpdatesToManual.label          "Endurstilla allar viðbætur á handvirka uppfærslu">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "r">
+<!ENTITY updates.updating.label               "Uppfæri viðbætur">
+<!ENTITY updates.installed.label              "Búið er að uppfæra viðbætur.">
+<!ENTITY updates.downloaded.label             "Búið er að niðurhala viðbótum.">
+<!ENTITY updates.restart.label                "Endurræstu núna til að ljúka uppsetningu">
+<!ENTITY updates.noneFound.label              "Engar uppfærslur fundust">
+<!ENTITY updates.manualUpdatesFound.label     "Skoða fáanlegar uppfærslur">
+<!ENTITY updates.updateSelected.label         "Setja inn uppfærslur">
+<!ENTITY updates.updateSelected.tooltip       "Setja inn allar uppfærslur í þessum lista">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Sýna meiri upplýsingar">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "Leita að uppfærslum">
+<!ENTITY cmd.findUpdates.accesskey            "f">
+<!ENTITY cmd.preferencesWin.label             "Valkostir">
+<!ENTITY cmd.preferencesWin.accesskey         "o">
+<!ENTITY cmd.preferencesUnix.label            "Valkostir">
+<!ENTITY cmd.preferencesUnix.accesskey        "o">
+<!ENTITY cmd.about.label                      "Um">
+<!ENTITY cmd.about.accesskey                  "U">
+
+<!ENTITY cmd.enableAddon.label                "Virkja">
+<!ENTITY cmd.enableAddon.accesskey            "i">
+<!ENTITY cmd.disableAddon.label               "Slökkva">
+<!ENTITY cmd.disableAddon.accesskey           "l">
+<!ENTITY cmd.enableTheme.label                "Nota þema">
+<!ENTITY cmd.enableTheme.accesskey            "þ">
+<!ENTITY cmd.disableTheme.label               "Hætta að nota þema">
+<!ENTITY cmd.disableTheme.accesskey           "þ">
+<!ENTITY cmd.askToActivate.label              "Spyrja hvort eigi að virkja">
+<!ENTITY cmd.askToActivate.tooltip            "Spyrja hvort eigi að nota þessa viðbót í hvert skipti">
+<!ENTITY cmd.alwaysActivate.label             "Alltaf virkja">
+<!ENTITY cmd.alwaysActivate.tooltip           "Alltaf nota þessa viðbót">
+<!ENTITY cmd.neverActivate.label              "Aldrei virkja">
+<!ENTITY cmd.neverActivate.tooltip            "Aldrei nota þessa viðbót">
+<!ENTITY cmd.stateMenu.tooltip                "Breyta hvenær þessi viðbót keyrir">
+<!ENTITY cmd.installAddon.label               "Setja upp">
+<!ENTITY cmd.installAddon.accesskey           "t">
+<!ENTITY cmd.uninstallAddon.label             "Fjarlægja">
+<!ENTITY cmd.uninstallAddon.accesskey         "r">
+<!ENTITY cmd.showPreferencesWin.label         "Valkostir">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Breyta stillingum fyrir þessa viðbót">
+<!ENTITY cmd.showPreferencesUnix.label        "Valkostir">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Breyta stillingum viðbótar">
+<!ENTITY cmd.contribute.label                 "Gefa">
+<!ENTITY cmd.contribute.accesskey             "G">
+<!ENTITY cmd.contribute.tooltip               "Hjálpa til með þróunina á þessari viðbót">
+
+<!ENTITY cmd.showReleaseNotes.label           "Sýna útgáfuupplýsingar">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Sýna útgáfuupplýsingar fyrir þessa uppfærslu">
+<!ENTITY cmd.hideReleaseNotes.label           "Fela útgáfuupplýsingar">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Fela útgáfuupplýsingar fyrir þessa uppfærslu">
+<!ENTITY cmd.findReplacement.label            "Finna staðgengil">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Hvað eru viðbætur?">
+<!ENTITY discover.description2                "Viðbætur eru forrit sem gera þér kleyft að sérsníða &brandShortName; með fleiri eiginleikum eða stílum. Prófaðu flýtihliðarslá, veðuráminningu, eða þema til að gera &brandShortName; að þínum.">
+<!ENTITY discover.footer                      "Þegar þú ert tengdur við netið, mun þessi gluggi birta bestu og vinsælustu viðbætur fyrir þig að prófa.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Útgáfa">
+<!ENTITY detail.lastupdated.label             "Síðast uppfært">
+<!ENTITY detail.creator.label                 "Forritari">
+<!ENTITY detail.homepage.label                "Heimasíða">
+<!ENTITY detail.numberOfDownloads.label       "Niðurhal">
+
+<!ENTITY detail.contributions.description     "Höfundur þessarar viðbótar biður þig um að styðja við áframhaldandi þróun með því að styrkja viðkomandi með smá upphæð.">
+
+<!ENTITY detail.updateType                    "Sjálfvirkar uppfærslur">
+<!ENTITY detail.updateDefault.label           "Sjálfgefið">
+<!ENTITY detail.updateDefault.tooltip         "Setja sjálfvirkt inn uppfærslur aðeins ef það er ekki sjálfgefið">
+<!ENTITY detail.updateAutomatic.label         "Virkt">
+<!ENTITY detail.updateAutomatic.tooltip       "Setja sjálfvirkt inn uppfærslur">
+<!ENTITY detail.updateManual.label            "Óvirkt">
+<!ENTITY detail.updateManual.tooltip          "Ekki setja sjálfvirkt inn uppfærslur">
+<!ENTITY detail.home                          "Heimasíða">
+<!ENTITY detail.repository                    "Lýsing viðbótar">
+<!ENTITY detail.size                          "Stærð">
+
+<!ENTITY detail.checkForUpdates.label         "Leita að uppfærslum">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "Athuga uppfærslur fyrir þessa viðbót">
+<!ENTITY detail.showPreferencesWin.label      "Valkostir">
+<!ENTITY detail.showPreferencesWin.accesskey  "o">
+<!ENTITY detail.showPreferencesWin.tooltip    "Breyta stillingum fyrir þessa viðbót">
+<!ENTITY detail.showPreferencesUnix.label     "Valkostir">
+<!ENTITY detail.showPreferencesUnix.accesskey "o">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Breyta stillingum viðbótar">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Einkunn">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Bið">
+<!ENTITY progress.cancel.tooltip              "Hætta við">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Nafn">
+<!ENTITY sort.name.tooltip                    "Raða eftir heiti">
+<!ENTITY sort.dateUpdated.label               "Síðast uppfært">
+<!ENTITY sort.dateUpdated.tooltip             "Raða eftir uppsetningardagsetningu">
+<!ENTITY sort.relevance.label                 "Passar best við">
+<!ENTITY sort.relevance.tooltip               "Raða eftir mikilvægi">
+<!ENTITY sort.price.label                     "Verð">
+<!ENTITY sort.price.tooltip                   "Raða eftir verði">
+
+<!ENTITY search.filter2.label                 "Leita:">
+<!ENTITY search.filter2.installed.label       "Mínar viðbætur">
+<!ENTITY search.filter2.installed.tooltip     "Sýna uppsettar viðbætur">
+<!ENTITY search.filter2.available.label       "Tiltækar viðbætur">
+<!ENTITY search.filter2.available.tooltip     "Sýna viðbætur sem er hægt að setja inn">
+
+<!ENTITY addon.homepage                       "Heimasíða">
+<!ENTITY addon.details.label                  "Meira">
+<!ENTITY addon.details.tooltip                "Sýna meiri upplýsingar um þessa viðbót">
+<!ENTITY addon.unknownDate                    "Óþekkt">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "GAMALT">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(óvirk)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Uppfæra">
+<!ENTITY addon.undoAction.label               "Afturkalla">
+<!ENTITY addon.undoAction.tooltip             "Hætta við þessa aðgerð">
+<!ENTITY addon.undoRemove.label               "Afturkalla">
+<!ENTITY addon.undoRemove.tooltip             "Halda þessari viðbót uppsettri">
+<!ENTITY addon.restartNow.label               "Endurræsa núna">
+<!ENTITY addon.install.label                  "Setja upp">
+<!ENTITY addon.install.tooltip                "Setja inn þessa viðbót">
+<!ENTITY addon.updateNow.label                "Uppfæra nú">
+<!ENTITY addon.updateNow.tooltip              "Setja inn uppfærslu fyrir þessa viðbót">
+<!ENTITY addon.includeUpdate.label            "Taka með í uppfærslu">
+<!ENTITY addon.updateAvailable.label          "Uppfærsla er fáanleg">
+<!ENTITY addon.checkingForUpdates.label       "Athuga með uppfærslur…">
+<!ENTITY addon.releaseNotes.label             "Útgáfuupplýsingar:">
+<!ENTITY addon.loadingReleaseNotes.label      "Hleður…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Því miður kom upp villa við að sýna útgáfuupplýsingar.">
+
+<!ENTITY addon.createdBy.label                "Frá ">
+
+<!ENTITY eula.title                           "Leyfisskilmálar notanda">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Samþykkja og setja inn…">
+
+<!ENTITY settings.path.button.label           "Velja…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Hvað er þetta? Fjarmæling getur sett inn og keyrt tilraunir öðru hverju.">
+<!ENTITY experiment.info.learnmore "Fræðast meira">
+<!ENTITY experiment.info.learnmore.accesskey "F">
+<!ENTITY experiment.info.changetelemetry "Stillingar fjarmælingar">
+<!ENTITY experiment.info.changetelemetry.accesskey "t">
+
+<!ENTITY setting.learnmore "Fræðast meira…">
+
+<!ENTITY disabledUnsigned.heading "Búið er að gera sumar viðbætur óvirkar">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Ekki tókst að sannreyna eftirfarandi viðbætur fyrir notkun í &brandShortName;. Þú getur ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "reynt að finna aðrar viðbætur">
+<!ENTITY disabledUnsigned.description.end " eða beðið forritara um að staðfesta viðbót.">
+<!ENTITY disabledUnsigned.learnMore "Fræðast meira um hvað við gerum til að þú sért öruggur á netinu.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Þeir forritarar sem eru áhugasamir um að staðfesta viðbæturnar sínar geta prófað að lesa ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "handbókina">
+<!ENTITY disabledUnsigned.devInfo.end " okkar.">
+
+<!ENTITY pluginDeprecation.description "Vantar eitthvað? Sum tengiforrit eru ekki lengur stutt af &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Lesa meira.">
+
+<!ENTITY legacyWarning.description "Vantar eitthvað? Sum tengiforrit eru ekki lengur stutt af &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Sýna allar gamlar viðbætur">
+<!ENTITY legacyExtensions.title "Gamlar viðbætur">
+<!ENTITY legacyExtensions.description "Þessar viðbætur standast ekki núverandi staðla í &brandShortName; þannig að þær hafa verið gerðar óvirkar.">
+<!ENTITY legacyExtensions.learnMore "Fræðast um breytingar á viðbótum">

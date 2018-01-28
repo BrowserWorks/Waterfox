@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Ulac-ik deg usfaylu n tunigin uslig. ">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Ldi asfaylu n tunigin tusligt ">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "s">
+
+<!ENTITY privateBrowsing.title                           "Tunigin tusligt ">
+<!ENTITY privateBrowsing.title.tracking                  "Tunigin tusligt s ummesten mgal asfuɣel ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Ticki tettinigeḍ deg usfaylu uslig, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ur yesseklas ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ": ">
+<!ENTITY aboutPrivateBrowsing.info.visited               "isebtar yettwarzan ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "anadi ">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "inagan n tuqqna ">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ifuyla iskudanen ">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox  ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ad isekles ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " sγur-k:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "isidar ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "ticraḍ n isebtar ">
+<!ENTITY aboutPrivateBrowsing.note.before                "Tunigin tusligt  ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ur k-yettarra d udrig">
+<!ENTITY aboutPrivateBrowsing.note.after                 " deg Internet, asemras-ik neɣ aseǧǧaw-ik n tuqqna internet zemren ad ẓren isebtar ɣur trezzuḍ.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Issin ugar ɣef ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Tunigin tusligt">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Ammesten n usfuɣel ">
+<!ENTITY trackingProtection.description2                 "Kra n yesmal web zemren ad sqedcen imsfuɣal akken ad walin armud-inek deg Internet. S ummesten mgal asfuɣel, Waterfox ad isewḥel ddeqs n imsfuɣal seg ulqaḍ n telɣut ɣef amek itteddu yiminig-inek.">
+<!ENTITY trackingProtection.startTour1                   "Wali amek i itteddu">

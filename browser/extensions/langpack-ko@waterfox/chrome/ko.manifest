@@ -1,0 +1,14 @@
+locale alerts ko ko/locale/ko/alerts/
+locale autoconfig ko ko/locale/ko/autoconfig/
+locale global ko ko/locale/ko/global/
+locale global-platform ko ko/locale/ko/global-platform/mac/ os=Darwin
+locale global-platform ko ko/locale/ko/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform ko ko/locale/ko/global-platform/win/ os=WINNT
+locale mozapps ko ko/locale/ko/mozapps/
+locale necko ko ko/locale/ko/necko/
+locale passwordmgr ko ko/locale/ko/passwordmgr/
+locale pipnss ko ko/locale/ko/pipnss/
+locale pippki ko ko/locale/ko/pippki/
+locale places ko ko/locale/ko/places/
+locale pluginproblem ko ko/locale/ko/pluginproblem/
+locale weave ko ko/locale/ko/services/

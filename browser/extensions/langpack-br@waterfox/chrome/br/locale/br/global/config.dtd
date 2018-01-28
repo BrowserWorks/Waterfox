@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "a-zivout : kefluniañ">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Ho kwarant a vefe nullet ganti !">
+<!ENTITY aboutWarningText.label "Mekaus evit stabilder, diogelroez ha digonusted an arload e c'hall bezañ kemmañ an arventennoù kempleshoc'h. Kendalc'hit mard oc'h sur n'emaoc'h ket oc'h ober ur fazi.">
+<!ENTITY aboutWarningButton2.label "Kemer a ran ar riskl!">
+<!ENTITY aboutWarningCheckbox.label "Diskouez ar c'hemenn-mañ ar wech a zeu">
+
+<!ENTITY searchPrefs.label "Klask :">
+<!ENTITY searchPrefs.accesskey "K">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Anv ar gwellvezioù">
+<!ENTITY lockColumn.label "Stad">
+<!ENTITY typeColumn.label "Rizh">
+<!ENTITY valueColumn.label "Gwerzh">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Klikit evit rummañ"> 
+<!ENTITY columnChooser.tooltip "Klikit da ziuz ar bannoù da skrammañ"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Eilañ">
+<!ENTITY copyPref.accesskey "l">
+<!ENTITY copyName.label "Eilañ an anv">
+<!ENTITY copyName.accesskey "l">
+<!ENTITY copyValue.label "Eilañ ar werzh">
+<!ENTITY copyValue.accesskey "l">
+<!ENTITY modify.label "Daskemmañ">
+<!ENTITY modify.accesskey "m">
+<!ENTITY toggle.label "Trec'haoliñ">
+<!ENTITY toggle.accesskey "r">
+<!ENTITY reset.label "Adderaouekaat">
+<!ENTITY reset.accesskey "A">
+<!ENTITY new.label "Nevez">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Hedad">
+<!ENTITY string.accesskey "d">
+<!ENTITY integer.label "Kevan">
+<!ENTITY integer.accesskey "K">
+<!ENTITY boolean.label "Boulean">
+<!ENTITY boolean.accesskey "B">

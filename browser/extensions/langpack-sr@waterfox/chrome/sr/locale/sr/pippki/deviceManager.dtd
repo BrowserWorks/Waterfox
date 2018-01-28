@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Управљач уређајима">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Безбедносни модули и уређаји">
+<!ENTITY devmgr.details.title                   "Детаљи">
+<!ENTITY devmgr.details.title2                  "Вредност">
+
+<!ENTITY devmgr.button.login.label              "Пријава">
+<!ENTITY devmgr.button.login.accesskey          "П">
+<!ENTITY devmgr.button.logout.label             "Одјава">
+<!ENTITY devmgr.button.logout.accesskey         "О">
+<!ENTITY devmgr.button.changepw.label           "Промена лозинке">
+<!ENTITY devmgr.button.changepw.accesskey       "л">
+<!ENTITY devmgr.button.load.label               "Учитај">
+<!ENTITY devmgr.button.load.accesskey           "ч">
+<!ENTITY devmgr.button.unload.label             "Уклони">
+<!ENTITY devmgr.button.unload.accesskey         "к">
+<!ENTITY devmgr.button.fips.accesskey           "г">
+
+<!ENTITY loaddevice.info                        "Унесите податке о модулу који желите да додате.">
+<!ENTITY loaddevice.modname                     "Име модула:">
+<!ENTITY loaddevice.modname.accesskey           "И">
+<!ENTITY loaddevice.modname.default             "Нови модул PKCS#11">
+<!ENTITY loaddevice.filename                    "Датотека модула:">
+<!ENTITY loaddevice.filename.accesskey          "м">
+<!ENTITY loaddevice.browse                      "Преглед…">
+<!ENTITY loaddevice.browse.accesskey            "П">
+
+<!ENTITY loaddevice.title2                      "Учитај драјвер PKCS#11 уређаја">

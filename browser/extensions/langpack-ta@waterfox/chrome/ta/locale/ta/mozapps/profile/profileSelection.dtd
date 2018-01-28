@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - பயனர் சுயவிவரத்தைத் தேர்வு செய்க">
+
+<!ENTITY            profilename.label      "விவரம் பெயர்:">
+
+<!ENTITY            start.label            "&brandShortName; ஐ துவக்கு">
+<!ENTITY            exit.label             "வெளியேறு">
+
+<!ENTITY            availprofiles.label    "உள்ள விவரக்குறிப்புகள்">
+
+<!ENTITY            newButton.label        "விவரக்குறிப்பை உருவாக்கு...">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "விவரக்குறிப்பின் பெயரை மாற்று...">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "விவரக்குறிப்பை நீக்கு...">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; உங்கள் அமைப்பு, விருப்பங்கள் மற்றும் பற்ற பயனர் தகவல்களை உங்கள் விவரக்குறிப்பில் சேமித்து வைக்கும்.">
+
+<!ENTITY            offlineState.label    "இணையத்தில் இல்லாமல் வேலை செய்">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "துவங்கும்போது கேட்காமலே தேர்ந்தெடுத்த விவரக்குறிப்பை பயன்படுத்தவும்(s)">
+<!ENTITY            useSelected.accesskey   "s">

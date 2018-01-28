@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Etamab'äl chi rij ri url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Ajya'öl">
+<!ENTITY aboutUrlClassifier.provider                    "Ajya'öl">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Ruk'isib'äl ruq'ijul toq xk'ex">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Jun chik ruq'ijul toq xtik'ex">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Ramaj richin chi rij">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Rub'anikil ri ruk'isib'äl k'exoj">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Tik'ex">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Jumejyak">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Titzolïx">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Tijosq'ïx">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Rutz'ajalil b'i'aj">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Kajlab'al taq rokitz'ib' ri xokonil jumejyak">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Kajlab'al taq rokitz'ib' ri ikiq'alil jumejyak">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Kek'ut pe ri taq okitz'ib'">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Jumejyak taq okitz'ib'">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Ruwäch tzij">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Q'ij nik'is ri xokonil jumejyak">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Tz'aqät jax">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Q'ij nik'is ri ikiq'alil jumejyak">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Tichojmirisäx">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Tijikib'äx taq rujuperaj tz'ib'anïk">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Tijikib'äx nitz'ib'äx yakb'äl">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Tijikib'äx JS nitz'ib'äx">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Taq rujuperaj rutz'ibaxik ütz okem pa k'amaya'l">
+<!ENTITY aboutUrlClassifier.debugModules                "Wakami taq rujuperaj tz'ib'anïk">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Ütz okem pa k'amaya'l JS nitz'ib'äx">
+<!ENTITY aboutUrlClassifier.debugFile                   "Ruyakb'al tz'ib'anïk k'o wakami">

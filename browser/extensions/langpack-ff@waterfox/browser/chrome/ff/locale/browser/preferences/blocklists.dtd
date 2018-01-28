@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Doggi Daaƴol">
+<!ENTITY window.width                 "55em">
+
+<!ENTITY treehead.list.label          "Doggol">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Haaytu">
+<!ENTITY button.cancel.accesskey      "H">
+<!ENTITY button.ok.label              "Danndu bayle">
+<!ENTITY button.ok.accesskey          "S">

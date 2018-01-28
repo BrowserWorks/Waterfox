@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Ɓeydu Mooftiree Hesere">
+<!ENTITY addButton.accesskey  "Ɓ">
+<!ENTITY preferencesButton.label "Cuɓe">
+<!ENTITY removeButton.label   "Momtu">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Rutto to Suturo">
+
+<!ENTITY window.title         "Ɓeydu Mooftiree Hesere">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Innde:">
+<!ENTITY name.accesskey       "I">
+<!ENTITY name.placeholder     "Winndu innde mooftirde">
+<!ENTITY icon.label           "Maandel:">
+<!ENTITY icon.accesskey       "M">
+<!ENTITY color.label          "Goobu:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Gasii">
+<!ENTITY button.ok.accesskey  "G">
+

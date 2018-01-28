@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Šiuo metu jūs esate ne privačiajame lange.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Atverti privatųjį langą">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privatusis naršymas">
+<!ENTITY privateBrowsing.title.tracking                  "Privatusis naršymas su apsauga nuo stebėjimo">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Kai naršote privačiajame lange, „Waterfox“ ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "neįsimena">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "aplankytų tinklalapių">
+<!ENTITY aboutPrivateBrowsing.info.searches              "paieškų">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "slapukų">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "laikinųjų failų">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "„Waterfox“ ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "įrašys">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " jūsų:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "atsiuntimus">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "adresyną">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privatusis naršymas ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nepadaro jūsų anonimu">
+<!ENTITY aboutPrivateBrowsing.note.after                 " internete. Jūsų darbdavys ar interneto paslaugų teikėjas vis tiek gali sekti kur naršote.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Sužinoti daugiau apie ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "privatųjį naršymą">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Apsauga nuo stebėjimo">
+<!ENTITY trackingProtection.description2                 "Kai kurios svetainės naudoja elementus, galinčius stebėti jūsų veiklą internete. Su apsauga nuo stebėjimo „Waterfox“ blokuos daugumą tokių elementų, galinčių rinkti informaciją apie jūsų naršymo įpročius.">
+<!ENTITY trackingProtection.startTour1                   "Pamatykite kaip tai veikia">

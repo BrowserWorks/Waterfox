@@ -1,0 +1,14 @@
+locale alerts fy-NL fy-NL/locale/fy-NL/alerts/
+locale autoconfig fy-NL fy-NL/locale/fy-NL/autoconfig/
+locale global fy-NL fy-NL/locale/fy-NL/global/
+locale global-platform fy-NL fy-NL/locale/fy-NL/global-platform/mac/ os=Darwin
+locale global-platform fy-NL fy-NL/locale/fy-NL/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform fy-NL fy-NL/locale/fy-NL/global-platform/win/ os=WINNT
+locale mozapps fy-NL fy-NL/locale/fy-NL/mozapps/
+locale necko fy-NL fy-NL/locale/fy-NL/necko/
+locale passwordmgr fy-NL fy-NL/locale/fy-NL/passwordmgr/
+locale pipnss fy-NL fy-NL/locale/fy-NL/pipnss/
+locale pippki fy-NL fy-NL/locale/fy-NL/pippki/
+locale places fy-NL fy-NL/locale/fy-NL/places/
+locale pluginproblem fy-NL fy-NL/locale/fy-NL/pluginproblem/
+locale weave fy-NL fy-NL/locale/fy-NL/services/

@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "ပေါ့အပ်ဝင်းဒိုးများ">
+
+<!ENTITY  blockPopups.label           "ပေါ့အပ်ဝင်းဒိုးများကို မဖွင့်ပါနှင့်">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "အသိပေးချက်များ">
+<!ENTITY  notificationsPolicyLearnMore.label   "ပိုမိုလေ့လာရန်">
+<!ENTITY  notificationsPolicyDesc3.label       "သင့်ထံ အသိပေးချက်များ ပေးပို့မည့် ဝဘ်ဆိုက်များကို ရွေးချယ်ပါ">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "ရွေးပါ…">
+<!ENTITY  notificationsDoNotDisturb.label      "မနှောင့်ယှက်ပါနှင့်">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "သင် &brandShortName; ကို ပြန်လည်စတင်ခြင်း မဆောင်ရွက်သည့်အချိန်ထိ မည်သည့် အသိပေးချက်မျှ ပြသမည်မဟုတ်ပါ">
+
+<!ENTITY  popupExceptions.label       "ခြွင်းချက်များ...">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "ဖောင့်များ &amp; အရောင်များ">
+
+<!ENTITY  defaultFont2.label          "မူသေ ဖောင့်">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "အရွယ်အ​စား">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "အဆင့်မြင့်…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "အရောင်များ...">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "ဘာသာစကားများ">
+<!ENTITY chooseLanguage.label         "စာမျက်နှာများကို ပြသရန် နှစ်သက်ရာဘာသာစကားကို ရွေးပါ">
+<!ENTITY chooseButton.label           "ရွေးပါ...">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "ဝဘ်စာမျက်နှာရှိ အကြောင်းအရာများကို ဘာသာပြန်ပါ">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "ခြွင်းချက်များ...">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "ဘာသာပြန်ဆိုသူ">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM အကြောင်းအရာ">
+
+<!ENTITY  playDRMContent.label         "DRM အကြောင်းအရာများကို ဖွင့်ပါ">
+<!ENTITY  playDRMContent.accesskey     "P">
+<!ENTITY  playDRMContent.learnMore.label "ပိုမိုလေ့လာရန်">
+
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

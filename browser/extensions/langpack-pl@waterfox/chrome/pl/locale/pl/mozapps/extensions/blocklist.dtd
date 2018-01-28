@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Dodatki mogące stwarzać problemy">
+<!ENTITY blocklist.style             "width: 48em; height: 30em">
+<!ENTITY blocklist.summary           "Program &brandShortName; ustalił, że poniższe dodatki stwarzają zagrożenia bezpieczeństwa lub utraty stabilności:">
+<!ENTITY blocklist.softblocked       "Dla zachowania bezpieczeństwa zaleca się ponowne uruchomienie z wyłączeniem tych dodatków.">
+<!ENTITY blocklist.hardblocked       "Dodatki te obarczone są wysokim ryzykiem problemów ze stabilnością i bezpieczeństwem, ale do ich całkowitego wyłączenia wymagane jest ponowne uruchomienie programu.">
+<!ENTITY blocklist.softandhard       "Dodatki obarczone wysokim ryzykiem problemów ze stabilnością i bezpieczeństwem zostały zablokowane. Pozostałe obarczone są mniejszym ryzykiem, ale zaleca się ponowne uruchomienie programu z ich wyłączeniem.">
+<!ENTITY blocklist.moreinfo          "Więcej informacji">
+
+<!ENTITY blocklist.accept.label      "Uruchom ponownie program &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "U">
+
+<!ENTITY blocklist.blocked.label     "Zablokowany">
+<!ENTITY blocklist.checkbox.label    "Wyłącz">
+

@@ -1,0 +1,183 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "ತೊಂದರೆ ನಿವಾರಣಾ ಮಾಹಿತಿ">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  ನೀವು ಒಂದು ಸಮಸ್ಯೆಗೆ ಪರಿಹಾರ ಹುಡುಕುವಾಗ ನಿಮಗೆ ನೆರವಾಗುವಂತಹ ಮಾಹಿತಿಗಳನ್ನು ಈ ಪುಟವು ಹೊಂದಿರುತ್ತದೆ. ನೀವು &brandShortName; ಕುರಿತಾದ ಸಾಮಾನ್ಯವಾದ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರವನ್ನು ಹುಡುಕುತ್ತಿದ್ದಲ್ಲಿ, <a id='supportLink'>ಬೆಂಬಲ ಜಾಲ ತಾಣ</a>ವನ್ನು ನೋಡಿ.">
+
+<!ENTITY aboutSupport.crashes.title "ಕ್ರಿಯಾವೈಫಲ್ಯ ವರದಿಗಳು">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ವರದಿ ID">
+<!ENTITY aboutSupport.crashes.sendDate "ಸಲ್ಲಿಸಲಾಗಿದೆ">
+<!ENTITY aboutSupport.crashes.allReports "ಎಲ್ಲ ಕ್ರಿಯಾವೈಫಲ್ಯಗಳ ವರದಿಗಾರ">
+<!ENTITY aboutSupport.crashes.noConfig "ಈ ಅನ್ವಯವನ್ನು ಕ್ರಿಯಾವೈಫಲ್ಯ ವರದಿಗಳನ್ನು ಪ್ರದರ್ಶಿಸುವಂತೆ ಸಂರಚಿಸಲಾಗಿಲ್ಲ.">
+
+<!ENTITY aboutSupport.extensionsTitle "ವಿಸ್ತರಣೆಗಳು">
+<!ENTITY aboutSupport.extensionName "ಹೆಸರು">
+<!ENTITY aboutSupport.extensionEnabled "ಶಕ್ತಗೊಳಿಸಲಾದ">
+<!ENTITY aboutSupport.extensionVersion "ಆವೃತ್ತಿ">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "ಪ್ರಯೋಗಾತ್ಮಕ ವೈಶಿಷ್ಟ್ಯಗಳು">
+<!ENTITY aboutSupport.experimentName "ಹೆಸರು">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "ವಿವರಣೆ">
+<!ENTITY aboutSupport.experimentActive "ಸಕ್ರಿಯ">
+<!ENTITY aboutSupport.experimentEndDate "ಅಂತ್ಯದ ದಿನಾಂಕ">
+<!ENTITY aboutSupport.experimentHomepage "ನೆಲೆಪುಟ">
+<!ENTITY aboutSupport.experimentBranch "ಶಾಖೆ">
+
+<!ENTITY aboutSupport.appBasicsTitle "ಅನ್ವಯದ ಮೂಲತತ್ವಗಳು">
+<!ENTITY aboutSupport.appBasicsName "ಹೆಸರು">
+<!ENTITY aboutSupport.appBasicsVersion "ಆವೃತ್ತಿ">
+<!ENTITY aboutSupport.appBasicsBuildID "ನಿರ್ಮಿತಿ ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "ಪರಿಷ್ಕರಿಸು ವಾಹಿನಿ">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "ಅಪ್‌ಡೇಟ್‌ ಇತಿಹಾಸ">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "ಅಪ್ಡೇಟ್ ಇತಿಹಾಸವನ್ನು ತೋರಿಸು">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "ಪ್ರೊಫೈಲ್ ಕೋಶ">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "ಪ್ರೊಫೈಲ್ ಕಡತಕೋಶ">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "ಪ್ಲಗ್‌ಇನ್‌ಗಳನ್ನು ಶಕ್ತಗೊಳಿಸು">
+<!ENTITY aboutSupport.appBasicsBuildConfig "ನಿರ್ಮಾಣದ ಸಂರಚನೆ">
+<!ENTITY aboutSupport.appBasicsUserAgent "ಬಳಕೆದಾರ ಮಧ್ಯವರ್ತಿ">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "ಮೆಮೊರಿಯ ಬಳಕೆ">
+<!ENTITY aboutSupport.appBasicsPerformance "ಕಾರ್ಯಕ್ಷಮತೆ">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "ನೊಂದಾಯಿಸಿಕೊಂಡ ಸೇವಾ ಕೆಲಸಗಾರರು">
+
+<!ENTITY aboutSupport.appBasicsProfiles "ಪ್ರೊಫೈಲ್‌ಗಳು">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "ಬಹುಪ್ರಕ್ರಿಯೆ ಕಿಟಕಿಗಳು">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "ಸುರಕ್ಷಾ ಸ್ಥಿತಿ">
+
+<!ENTITY aboutSupport.showDir.label "ಕೋಶವನ್ನು ತೆರೆ">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "ಶೋಧಕದಲ್ಲಿ ತೋರಿಸು">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ಪ್ರಮುಖ ಮಾರ್ಪಡಿಕೆ ಮಾಡಲಾದ ಆದ್ಯತೆಗಳು">
+<!ENTITY aboutSupport.modifiedPrefsName "ಹೆಸರು">
+<!ENTITY aboutSupport.modifiedPrefsValue "ಮೌಲ್ಯ">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js ಆದ್ಯತೆಗಳು">
+<!ENTITY aboutSupport.userJSDescription "ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ <a id='prefs-user-js-link'>user.js file</a> ಅನ್ನು ಹೊಂದಿದ್ದು, ಅದರಲ್ಲಿ &brandShortName; ನಲ್ಲಿ ಇರದೆ ಇರುವಂತಹ ಆದ್ಯತೆಗಳನ್ನು ಒಳಗೊಂಡಿದೆ.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "ಪ್ರಮುಖ ಲಾಕ್ ಮಾಡಲಾದ ಆದ್ಯತೆಗಳು">
+<!ENTITY aboutSupport.lockedPrefsName "ಹೆಸರು">
+<!ENTITY aboutSupport.lockedPrefsValue "ಮೌಲ್ಯ">
+
+<!ENTITY aboutSupport.graphicsTitle "ಗ್ರಾಫಿಕ್ಸ್‍">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "ಸ್ಥಳಗಳ ದತ್ತಸಂಚಯ">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "ಸಮಗ್ರತೆ">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "ಸಮಗ್ರತೆ ದೃಢಪಡಿಸು">
+
+<!ENTITY aboutSupport.jsTitle "ಜಾವಾಸ್ಕ್ರಿಪ್ಟ್‍">
+<!ENTITY aboutSupport.jsIncrementalGC "ಏರಿಕೆಯ GC">
+
+<!ENTITY aboutSupport.a11yTitle "ನಿಲುಕಣೆ">
+<!ENTITY aboutSupport.a11yActivated "ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ">
+<!ENTITY aboutSupport.a11yForceDisabled "ನಿಲುಕಣೆಯನ್ನು ನಿಯಂತ್ರಿಸು">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "ಲೈಬ್ರರಿ ಆವೃತ್ತಿಗಳು">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ಅನುಸ್ಥಾಪನಾ ಇತಿಹಾಸ">
+<!ENTITY aboutSupport.updateHistoryTitle "ಅಪ್‌ಡೇಟ್‌ ಇತಿಹಾಸ">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "ಪಠ್ಯವನ್ನು ನಕಲುಫಲಕಕ್ಕೆ  ಪ್ರತಿಮಾಡು">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ಕಚ್ಛಾ ದತ್ತಾಂಶವನ್ನು ನಕಲುಫಲಕಕ್ಕೆ ಪ್ರತಿ ಮಾಡು">
+
+<!ENTITY aboutSupport.sandboxTitle "ಪ್ರಯೋಗಶಾಲೆ">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "ಸುರಕ್ಷಾ ಸ್ಥಿತಿ ಪ್ರಯತ್ನಿಸಿ">
+<!ENTITY aboutSupport.restartInSafeMode.label "ಆಡ್‌-ಆನ್‌ಗಳನ್ನು ಅಶಕ್ತಗೊಳಿಸಿ ಆರಂಭಿಸು…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "ವೈಶಿಷ್ಟ್ಯಗಳು">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "ತಪಾಸಣೆ">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "ವಿಫಲತೆಯ ದಿನಚರಿ">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "ನಿರ್ಣಯ ದಿನಚರಿ">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "ಕುಸಿತ ರಕ್ಷಕ ವೈಶಿಷ್ಟ್ಯ ಗಳನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿದೆ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "ಪರ್ಯಾಯಮಾರ್ಗಗಳು">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

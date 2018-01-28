@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "690">
+<!ENTITY  pageInfoWindow.height "610">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Копировать">
+<!ENTITY  copy.accesskey        "п">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Выделить всё">
+<!ENTITY  selectall.accesskey   "д">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Основная">
+<!ENTITY  generalTab.accesskey  "н">
+<!ENTITY  generalTitle          "Заголовок:">
+<!ENTITY  generalURL            "Адрес:">
+<!ENTITY  generalType           "Тип:">
+<!ENTITY  generalMode           "Тип визуализации:">
+<!ENTITY  generalSize           "Размер:">
+<!ENTITY  generalReferrer       "Ссылающийся URL:">
+<!ENTITY  generalSource         "Источник кэширования:">
+<!ENTITY  generalModified       "Последнее изменение:">
+<!ENTITY  generalEncoding2      "Кодировка текста:">
+<!ENTITY  generalMetaName       "Имя">
+<!ENTITY  generalMetaContent    "Содержимое">
+
+<!ENTITY  mediaTab              "Мультимедиа">
+<!ENTITY  mediaTab.accesskey    "л">
+<!ENTITY  mediaLocation         "Адрес:">
+<!ENTITY  mediaText             "Связанный текст:">
+<!ENTITY  mediaAltHeader        "Альтернативный текст">
+<!ENTITY  mediaAddress          "Адрес">
+<!ENTITY  mediaType             "Тип">
+<!ENTITY  mediaSize             "Размер">
+<!ENTITY  mediaCount            "Количество">
+<!ENTITY  mediaDimension        "Размеры:">
+<!ENTITY  mediaLongdesc         "Длинное описание:">
+<!ENTITY  mediaBlockImage.accesskey "л">
+<!ENTITY  mediaSaveAs           "Сохранить как…">
+<!ENTITY  mediaSaveAs.accesskey "к">
+<!ENTITY  mediaSaveAs2.accesskey "х">
+<!ENTITY  mediaPreview          "Предпросмотр мультимедиа:">
+
+<!ENTITY  feedTab               "Ленты новостей">
+<!ENTITY  feedTab.accesskey     "н">
+<!ENTITY  feedSubscribe         "Подписаться">
+<!ENTITY  feedSubscribe.accesskey "д">
+
+<!ENTITY  permTab               "Разрешения">
+<!ENTITY  permTab.accesskey     "з">
+<!ENTITY  permUseDefault        "По умолчанию">
+<!ENTITY  permAskAlways         "Всегда спрашивать">
+<!ENTITY  permAllow             "Разрешить">
+<!ENTITY  permAllowSession      "Разрешить на сессию">
+<!ENTITY  permBlock             "Блокировать">
+<!ENTITY  permissionsFor        "Разрешения для:">
+<!ENTITY  permPlugins           "Включать плагины">
+
+<!ENTITY  permClearStorage           "Очистить хранилище">
+<!ENTITY  permClearStorage.accesskey "и">
+
+<!ENTITY  securityTab           "Защита">
+<!ENTITY  securityTab.accesskey "щ">
+<!ENTITY  securityView.certView "Просмотреть сертификат">
+<!ENTITY  securityView.accesskey "с">
+<!ENTITY  securityView.unknown   "Неизвестно">
+
+
+<!ENTITY  securityView.identity.header   "Подлинность веб-сайта">
+<!ENTITY  securityView.identity.owner    "Владелец:">
+<!ENTITY  securityView.identity.domain   "Веб-сайт:">
+<!ENTITY  securityView.identity.verifier "Подтверждено:">
+<!ENTITY  securityView.identity.validity "Действителен по:">
+
+<!ENTITY  securityView.privacy.header                   "Приватность и История">
+<!ENTITY  securityView.privacy.history                  "Посещал ли я этот веб-сайт до сегодняшнего дня?">
+<!ENTITY  securityView.privacy.cookies                  "Хранит ли этот веб-сайт информацию (куки) на моём компьютере?">
+<!ENTITY  securityView.privacy.viewCookies              "Просмотреть куки">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "м">
+<!ENTITY  securityView.privacy.passwords                "Сохранял ли я для этого веб-сайта какие-либо пароли?">
+<!ENTITY  securityView.privacy.viewPasswords            "Просмотреть сохранённые пароли">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "о">
+
+<!ENTITY  securityView.technical.header                 "Технические детали">
+
+<!ENTITY  helpButton.label                              "Справка">

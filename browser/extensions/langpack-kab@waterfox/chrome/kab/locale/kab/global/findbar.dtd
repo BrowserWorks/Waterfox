@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Aff-d timseḍriwt n twinest d-iteddun">
+<!ENTITY previous.tooltip "Aff-d tamseḍriwt n twinest n deffir">
+<!ENTITY findCloseButton.tooltip "Mdel affeggag n unadi">
+<!ENTITY highlightAll.label "Sebṛureq i meṛṛa">
+<!ENTITY highlightAll.accesskey "b">
+<!ENTITY highlightAll.tooltiptext "Err izirig ɣef temsedriwin n twinest">
+<!ENTITY caseSensitive.label "Qadeṛ amasal n isekkilen">
+<!ENTITY caseSensitive.accesskey "Q">
+<!ENTITY caseSensitive.tooltiptext "Nadi s uqadeṛ n umasal n usekkil">
+<!ENTITY entireWord.label "Awalen iččuranen">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "Nadi kan awalen ukmilen">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width					"30em">
+
+<!ENTITY languages.customize.Header			"ウェブページの言語">
+<!ENTITY languages.customize.description		"一部のウェブページは複数の言語で提供されています。これらのページで使用する言語とその優先順位を設定してください。">
+<!ENTITY languages.customize.moveUp.label		"上へ">
+<!ENTITY languages.customize.moveUp.accesskey		"U">
+<!ENTITY languages.customize.moveDown.label		"下へ">
+<!ENTITY languages.customize.moveDown.accesskey		"D">
+<!ENTITY languages.customize.deleteButton.label		"削除">
+<!ENTITY languages.customize.deleteButton.accesskey	"R">
+<!ENTITY languages.customize.selectLanguage.label	"追加する言語を選択...">
+<!ENTITY languages.customize.addButton.label		"追加">
+<!ENTITY languages.customize.addButton.accesskey	"A">

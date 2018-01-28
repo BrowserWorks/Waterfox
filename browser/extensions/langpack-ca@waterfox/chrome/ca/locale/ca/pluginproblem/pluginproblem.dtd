@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Aquest lloc utilitza un connector que pot alentir el &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Toqueu aquí per activar el connector.">
+<!ENTITY clickToActivatePlugin                               "Activa el connector.">
+<!ENTITY checkForUpdates                                     "Cerca actualitzacions…">
+<!ENTITY blockedPlugin.label                                 "S'ha blocat aquest connector per a la vostra protecció.">
+<!ENTITY hidePluginBtn.label                                 "Amaga el connector">
+<!ENTITY managePlugins                                       "Gestiona els connectors…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Actualitzeu la pàgina">
+<!ENTITY reloadPlugin.post                                   " per tornar-ho a provar.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Envia un informe de fallada">
+<!ENTITY report.submitting                                   "S'està enviant l'informe…">
+<!ENTITY report.submitted                                    "S'ha enviat l'informe de fallada.">
+<!ENTITY report.disabled                                     "S'han inhabilitat els informes de fallada.">
+<!ENTITY report.failed                                       "La tramesa ha fallat.">
+<!ENTITY report.unavailable                                  "No hi ha cap informe disponible.">
+<!ENTITY report.comment                                      "Afegiu-hi un comentari (els comentaris són visibles públicament)">
+<!ENTITY report.pageURL                                      "Inclou l'URL de la pàgina">
+
+<!ENTITY plugin.file                                         "Fitxer">
+<!ENTITY plugin.mimeTypes                                    "Tipus MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Habilita el mode protegit d'Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Bloca el contingut Flash perillós i intrusiu">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Relatórios de travamentos">
+<!ENTITY crashesUnsubmitted.label   "Relatórios de travamentos não enviados">
+<!ENTITY crashesSubmitted.label     "Relatórios de travamentos enviados">
+<!ENTITY id.heading                 "ID do relatório">
+<!ENTITY dateCrashed.heading        "Data do travamento">
+<!ENTITY dateSubmitted.heading      "Data de envio">
+<!ENTITY noReports.label            "Nenhum relatório de travamento foi enviado.">
+<!ENTITY noConfig.label             "Este aplicativo não foi configurado para exibir relatórios de travamento. A preferência <code>breakpad.reportURL</code> deve ser definida.">
+<!ENTITY clearAllReports.label      "Remover todos os relatórios">

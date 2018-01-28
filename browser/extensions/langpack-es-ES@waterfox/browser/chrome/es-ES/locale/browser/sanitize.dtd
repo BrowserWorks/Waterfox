@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title "Preferencias para la limpieza del historial">
+<!ENTITY sanitizePrefs2.modal.width "34em">
+<!ENTITY sanitizePrefs2.column.width "17em">
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+<!ENTITY sanitizeDialog2.title "Limpiar el historial reciente">
+<!ENTITY sanitizeDialog2.width "34em">
+<!ENTITY clearDataSettings2.label "Cuando cierre &brandShortName;, se debería borrar automáticamente:">
+<!ENTITY clearTimeDuration.label "Rango temporal a limpiar: ">
+<!ENTITY clearTimeDuration.accesskey "T">
+<!ENTITY clearTimeDuration.lastHour "Última hora">
+<!ENTITY clearTimeDuration.last2Hours "Últimas dos horas">
+<!ENTITY clearTimeDuration.last4Hours "Últimas cuatro horas">
+<!ENTITY clearTimeDuration.today "Hoy">
+<!ENTITY clearTimeDuration.everything "Todo">
+<!ENTITY clearTimeDuration.suffix "">
+<!ENTITY detailsProgressiveDisclosure.label "Detalles">
+<!ENTITY detailsProgressiveDisclosure.accesskey "e">
+<!ENTITY historySection.label "Historial">
+<!ENTITY dataSection.label "Datos">
+<!ENTITY itemHistoryAndDownloads.label "Historial de navegación y descargas">
+<!ENTITY itemHistoryAndDownloads.accesskey "g">
+<!ENTITY itemFormSearchHistory.label "Formularios e historial de búsquedas">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemCookies.label "Cookies">
+<!ENTITY itemCookies.accesskey "C">
+<!ENTITY itemCache.label "Caché">
+<!ENTITY itemCache.accesskey "A">
+<!ENTITY itemOfflineApps.label "Datos de sitios web sin conexión">
+<!ENTITY itemOfflineApps.accesskey "O">
+<!ENTITY itemActiveLogins.label "Sesiones activas">
+<!ENTITY itemActiveLogins.accesskey "S">
+<!ENTITY itemSitePreferences.label "Preferencias del sitio">
+<!ENTITY itemSitePreferences.accesskey "r">
+<!ENTITY sanitizeEverythingUndoWarning "Esta acción no se puede deshacer.">

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "1tr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "သင်လိုက်နာရန်အချက်များ">
+<!ENTITY rights.intro "&brandFullName; အားကမ္ဘာတစ်ဝှမ်းရှိ ထောင်ချီသော အဖွဲ့ဝင်များ မှတည်ဆောက်ခဲ့ပြီး အခမဲ့ပြီး အရင်းအမြစ် ရယူနိုင်သော ဆော့ဝဲတစ်ခုဖြစ်သည်။ ဤတွင်သင်သိရှိထားရန် အချက်အလက် အချို့ရှိသည်၊">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; အားသင်သုံးစွဲနေသည်မှာအောက်ပါ သဘောတူညီချက်အရဖြစ်သည်">
+<!ENTITY rights.intro-point1b "မော်ဇီလာ၏ဖြန့်ချီရေးလိုင်စင်">
+<!ENTITY rights.intro-point1c "သင်သည် &brandShortName; အား ကူးယူခြင်းသော်လည်ကောင်း၊ဖြန့်ချီခြင်းသော်လည်းကောင်းလုပ်နိုင်ပါသည်။သင်သည်  &brandShortName; ၏အခြေခံ ကုဒ်များအားသင်၏လိုအပ်ချက်အတိုင်းပြောင်းလဲသုံးဆွဲနိုင်ပါသည်။ မော်ဇီလာ၏ဖြန့်ချီရေးလိုင်စင်သည်သင်ပြင်ဆင်ထားသော ဗားရှင်းကိုလည်းပိုင်ဆိုင်ဖြန့်ချီခွင့်ပေးပါသည်။">
+
+<!ENTITY rights.intro-point2-a "သင်သည် မီးမြေခွေး နာမည်နှင့် တံဆိပ်အပါအဝင် မော်ဇီလာ အဖွဲ့အစည်း (သို့မဟုတ်)  အခြားသူများ၏ ကုန်အမှတ်တံဆိပ်နှင့် ဖြန့်ချီရေးလိုင်စင်များ အသုံးပြုပိုင်ခွင့် မရှိပါ။ နောက်ထပ် ကုန်အမှတ်တံဆိပ်နှင့် ပတ်သက်သော အချက်အလက်များကို ရှာတွေ့နိုင်ပါသည် ">
+<!ENTITY rights.intro-point2-b "ဒီမှာ">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "&brandShortName; တွင်ပါဝင်သောအချို့စွမ်းဆောင်ရေးများ (ပြသာနာတင်ပြပေးသူကဲ့သို) သည်သင့်အား တုန့်ပြန်ထင်မြင်ချက်  &vendorShortName; သို့ပေးပို့ခွင့်ပြုပါသည်။တုန့်ပြန်ထင်မြင်ချက်ပေးပို့ ခြင်းအား ရွေချယ်ခြင်းအားဖြင့် သင်သည် &vendorShortName; အား တုန့်ပြန်ထင်မြင်ချက် အသုံးပြုပြီး၎င်း၏ ထုတ်ကုန်အားအဆင့်တိုးမြှင့်ခြင်း၊တုန့်ပြန်ထင်မြင်ချက် ကို ဝတ်ဆိုက်တွင် တင်ပြခွင့်ပြုခြင်း ဖြန့်ဝင်ခြင်းပြုခြင်း သဘောမည်ပါသည်။">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "သင် &vendorShortName; သို့ပေးပို့ခဲ့သော  &brandShortName; နှင့်ပတ်သတ်သည် တုန့်ပြန်ထင်မြင်ချက်များ နှင့် ပုဂ္ဂိုလ်ရေးအချက်အလက် များအားမည်သို့အသုံးပြုသည် ကိုဤတွင်ဖော်ပြထားသည်">
+<!ENTITY rights2.intro-point3b "&brandShortName;၏ပရိုက်ဗစ်ဆီပေါ်လစီ">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "ဤထုတ်ကုန်နှင့်ပတ်သတ်သောမည်သည့်ပရိုက်ဗစ်ဆီပေါ်လစီများအား ဒီတွင် စာရင်းပြုစုထားသည်။">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "အချို့ &brandShortName; ကွန်ယက်အခြေခံ သတင်းအချက်အလက် ဝန်ဆောင်မှုများ အသုံးပြုထားပါသည်။ သို့သော် ကျွန်ုပ်တို့သည် ထိုဝန်ဆောင်မှုများ ရာနှုန်းပြည့် မှန်ကန်ကြောင်း အာမခံချက် မပေးနိုင်ပါ။ ထိုဝန်ဆောင်မှုများကို ရပ်တန့်ခြင်း အစရှိသည့် အသေးစိတ် အကြောင်းအရာများကို ရှာဖွေနိုင်ပါသည်။ ">
+<!ENTITY rights.intro-point4b "ဝန်ဆောင်မှူဆိုင်ရာစည်းမျဉ်းများ">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "အကယ်လို့ဒီထုတ်ကုန်ဟာ ဝတ်ဆိုက်ဝန်ဆောင်မှူများဖြင့်အလုပ်လုပ်သောအရာမဟုတ်ပါက မည်သည့်အသုံးချနိုင်သောဝန်ဆောင်မှူသဘောတူညီချက်များအားလုံးလင်ခ့်ပေးရန်နေရာမှာ">
+<!ENTITY rights.intro-point4b-unbranded "ဝတ်ဆိုက်ဝန်ဆောင်မှူများ">
+<!ENTITY rights.intro-point4c-unbranded "section.">
+
+<!ENTITY rights2.webservices-header "&brandFullName;၏အင်တာနက်ခြေခံသတင်းအချက်အလက်ဝန်ဆောင်မှူ">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "အမျိုးအစားသေချာပါရှိသည့် ဗွီဒီယိုများကို ဖွင့်ရန်၊ &brandShortName; သည် ဖိုင်အမျိုးအစားနှင့် ပတ်သက်သည့် အခြားအဖွဲ့ထံမှ ဝှက်စာဖြည်အစိတ်အပိုင်းကို ကူးယူဆွဲချပါမည်။">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; သည်သင်အသုံးပြုရန်အတွက်အောက်တွင်ဖော်ပြထားသောသဘောတူညီချက်များဖြင့် &brandShortName; အားသင်အသုံးပြုရန် အတွက် ဝတ်အခြေခံသတင်းအချက်အလက် ဝန်ဆောင်မှူများအားအသုံးပြုသည်(&quot;Services&quot;)။အကယ်လို့ သင်သည်တစ်ခုသို့မဟုတ် တစ်ခုထက်ပိုသော သဘောတူညီချက်များအားလက်မခံနိုင်ပါက အဆိုပါဝန်ဆောင်မှူသို့ဆားဗစ်အားပိတ်ထားနိုင်ပါသည်။ထိုသို့ပိတ်ပင်ရန်အတွက်လုပ်ဆောင်ချက်အဆင့်ဆင့်အားဖော်ပြထားသည်မှာ ..">
+<!ENTITY rights2.webservices-b "ဒီမှာ">
+<!ENTITY rights3.webservices-c "ဆော့ဝဲ၏ အပြင်အဆင်ဆက်တင်များတွင် အခြားလုပ်ဆောင်ချက်များအား ပိတ်ထားနိုင်ပါသှ်">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "လုံခြုံစိတ်ချရသောအင်တာနက်ရှာဖွေခြင်း၊">
+<!ENTITY rights.safebrowsing-b "လုံခြုံသော ရှာဖွေခြင်းအား ပိတ်ထားခြင်းကို အားမပေးပါအဘယ့်ကြောင့်ဆိုသော် မလုံခြုံသော ဝတ်ဆိုက်များမှ တိုက်ခိုက်ခြင်းကို ခံရနိုင်ဖွယ်ရှိသောကြောင့်ဖြစ်သည်။၎င်းအောင်း သင်အမှန်တကယ် ဖြုတ်ချင်လိုပါက အောက်ပါအချက်များကိုလိုက်လံဆောင်ရွက်ပါ :">
+<!ENTITY rights.safebrowsing-term1 "အက်ပလီးကေးရှင်းအပြင်အဆင်များအားဖွင့်ပါ။">
+<!ENTITY rights.safebrowsing-term2 "လုံခြုံရေးအပြင်အဆင်အားရွေးပါ">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot; ကို ရွေးချယ်ထားခြင်းမှ ဖြုတ်ရန်">
+<!ENTITY rights.safebrowsing-term4 "လုံခြုံသောအင်တာနက်အသုံးပြုခြင်းအပြင်အဆင်အား ဖျက်သိမ်းပြီး။">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "တည်နေရာအလိုက်အင်တာနက်အသုံးပြုခြင်း">
+<!ENTITY rights.locationawarebrowsing-b "is always opt-in.  No location information is ever sent without your permission.  If you wish to disable the feature completely, follow these steps:">
+<!ENTITY rights.locationawarebrowsing-term1a "URL ဘားတွင်၊ရိုက်ထည့်ပါ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled လို့ ရိုက်ထည့်ပါ ">
+<!ENTITY rights.locationawarebrowsing-term3 "Double click on the geo.enabled preference">
+<!ENTITY rights.locationawarebrowsing-term4 "တည်နေရာအလိုက်အင်တာနက်အသုံးပြုခြင်းအား ပိတ်ပြီး။">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "ဝတ်ဆိုက်ဝန်ဆောင်မှူများ၏အကျဉ်းချုံးဖော်ပြချက်။အကယ်လို့ထောက်ပံ့ပေးထားပါကဤတွင်ပေါ်ရမည်ဖြစ်သည်။">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "ဒီထုတ်ကုန်အတွက် မည်သည့်အသုံးချနိုင်သော ဝန်ဆောင်မှူသဘောတူညီချက်အားလုံးဤတွင် စာရင်းပြုစုထားသင့်သည်။">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; နှင့် စေတနာ့ဝန်ထမ်းများ၊ လိုင်စင်ပေးသူများ နှင့်ပါတနာများသည် အတတ်နိုင်ဆုံး တိကျသော ခေတ်မှီသော ဝန်ဆောင်မှူများကို ပေးရန်လုပ်ဆောင်နေကြပါသည်။သို့သော်လည်း ဤသတင်းအချက်အလက် သည် အမှားလုံးဝကင်းပါသည်ဟု ကျွန်ုပ်တို့ အာမမခံပါ။ဥမာအားဖြင့် လုံးခြုံစိတ်ချ အင်တာနက်သုံးစွဲခြင်း ဆားဗစ်သည်အချို့သောဝတ်ဆိုက်များ အား အန္တရာယ်ရှိသည် ဟုမုချမသိနိုင်ကောင်း မသိနိုင်လိမ့်မည်။ ဝန်ဆောင်မှူများအားလုံးသည် ခန့်မှန်းတွက်ချက်ထားသော ဝန်ဆောင်မှူများဖြစ်သည်ကို သတိထားစေလိုပါသည်။">
+<!ENTITY rights.webservices-term2 "&vendorShortName;သည်ပြုလုပ်နေခြင်းကိုရပ်တန့်သွားလိမ့်မည် သို့မဟုတ်ပါက ဝန်ဆောင်မှူများအားရည်ညွှန်းချက်အတိုင်းပြောင်းသွားလိမ့်မည်။">
+<!ENTITY rights2.webservices-term3 "You are welcome to use these Services with the accompanying version of &brandShortName;, and &vendorShortName; grants you its rights to do so. &vendorShortName; and its licensors reserve all other rights in the Services. These terms are not intended to limit any rights granted under open source licenses applicable to &brandShortName; and to corresponding source code versions of &brandShortName;.">
+<!ENTITY rights.webservices-term4 "The Services are provided &quot;as-is.&quot; &vendorShortName;, its contributors, licensors, and distributors, disclaim all warranties, whether express or implied, including without limitation, warranties that the Services are merchantable and fit for your particular purposes. You bear the entire risk as to selecting the Services for your purposes and as to the quality and performance of the Services. Some jurisdictions do not allow the exclusion or limitation of implied warranties, so this disclaimer may not apply to you.">
+<!ENTITY rights.webservices-term5 "Except as required by law, &vendorShortName;, its contributors, licensors, and distributors will not be liable for any indirect, special, incidental, consequential, punitive, or exemplary damages arising out of or in any way relating to the use of &brandShortName; and the Services.  The collective liability under these terms will not exceed $500 (five hundred dollars). Some jurisdictions do not allow the exclusion or limitation of certain damages, so this exclusion and limitation may not apply to you.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; သည် ဤသဘောတူညီချက်များအားအချိန်နှင့်အမျှ လိုအပ်သလို သစ်လွင်အောင်လုပ်နေပါမည်။ဤသဘောတူညီချက်များသည် &vendorShortName; ၏ ရေးသားထားသော ခံယူ၀န်မပါပဲ ပြင်ဆင်ခြင်းဖျက်ပစ်ခြင်းမပြုခံရနိုင်ပါ။">
+<!ENTITY rights.webservices-term7 "ဤစည်းကမ်းချက်များကို အမေရိကန်နိုင်ငံ၊ ကယ်လီဖိုးနီးယားပြည်နယ်၏ အငြင်းပွားနိုင်သော ဥပဒေခံစားခွင့်များ မပါဝင်သည့်  ဥပဒေများနှင့် ကာကွယ်ထားပါသည်။ အကယ်၍ အချို့စည်းကမ်းချက်များမှာ အကျုံးမဝင် သို့မဟုတ် အတည်မပြုနိုင်ဖြစ်လာပါက ကျန်ရှိသော စည်းကမ်းချက်များမှာ ဆက်လက်၍ အပြည့်အဝ အကျိုးသက်ရောက်မှု ရှိအုံးမည် ဖြစ်သည်။ ဤစည်းကမ်းချက်များကို ဘာသာပြန်ဆိုမှုများနှင့် အင်္ဂလိပ်မူ တို့ ကွဲပြားအငြင်းပွားစရာ ဖြစ်လာခဲ့ပါက အင်္ဂလိပ်မူကသာ အတည်ဖြစ်သည်။ ">
+
+<!ENTITY rights.title "About Your Rights">

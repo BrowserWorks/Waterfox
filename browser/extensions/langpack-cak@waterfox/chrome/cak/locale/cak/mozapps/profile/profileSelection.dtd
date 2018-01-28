@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Tacha' jun ruwäch rub'i' winäq">
+
+<!ENTITY            profilename.label      "Rub'i' ruwäch b'i'aj:">
+
+<!ENTITY            start.label            "Titikirisäx &brandShortName;">
+<!ENTITY            exit.label             "Tel el">
+
+<!ENTITY            availprofiles.label    "Wachel taq kiwäch b'i'aj">
+
+<!ENTITY            newButton.label        "Tinuk' ruwäch b'i'aj…">
+<!ENTITY            newButton.accesskey    "T">
+<!ENTITY            renameButton.label     "Titz'ib'äx chi rub'i' ri ruwäch b'i'aj…">
+<!ENTITY            renameButton.accesskey "T">
+<!ENTITY            deleteButton.label     "Tiyuj el ri ruwäch b'i'aj…">
+<!ENTITY            deleteButton.accesskey "T">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; nuyäk etamab'äl pa ruwi' ri anuk'ulem, taq awajowab'äl chuqa' juley chik taq ch'akulal pa ri ruwäch ab'i'.">
+
+<!ENTITY            offlineState.label    "Tisamäj rik'in majun okem pa k'amaya'l">
+<!ENTITY            offlineState.accesskey "T">
+
+<!ENTITY            useSelected.label       "Tokisäx ri ruwäch b'i'aj cha'on, majun tik'utüx toq nitikirisäx.">
+<!ENTITY            useSelected.accesskey   "T">

@@ -1,0 +1,212 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Projekt">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Aplikacion i Ri…">
+<!ENTITY projectMenu_newApp_accesskey "R">
+<!ENTITY projectMenu_importPackagedApp_label "Hapni Aplikacion të Paketuar…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Hapni Aplikacion të Strehuar…">
+<!ENTITY projectMenu_importHostedApp_accesskey "S">
+<!ENTITY projectMenu_selectApp_label "Hapni Aplikacion…">
+<!ENTITY projectMenu_selectApp_accesskey "A">
+<!ENTITY projectMenu_play_label "Instaloje dhe Xhiroje">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Ndale Aplikacionin">
+<!ENTITY projectMenu_stop_accesskey "N">
+<!ENTITY projectMenu_debug_label "Diagnostikojeni Aplikacionin">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Hiqe Projektin">
+<!ENTITY projectMenu_remove_accesskey "q">
+<!ENTITY projectMenu_showPrefs_label "Parapëlqime">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Administroini Përbërës Ekstra">
+<!ENTITY projectMenu_manageComponents_accesskey "A">
+<!ENTITY projectMenu_refreshTabs_label "Rifresko Skedat">
+
+<!ENTITY runtimeMenu_label "Runtime">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Shkëputu">
+<!ENTITY runtimeMenu_disconnect_accesskey "k">
+<!ENTITY runtimeMenu_takeScreenshot_label "Foto ekrani">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "F">
+<!ENTITY runtimeMenu_showDetails_label "Të dhëna Runtime">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Parapëlqime Mbi Pajisjen">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "P">
+<!ENTITY runtimeMenu_showSettings_label "Rregullime mbi Pajisjen">
+<!ENTITY runtimeMenu_showSettings_accesskey "R">
+
+<!ENTITY viewMenu_label "Pamje">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_toggleEditor_label "Hapni/Mbyllni Përpunuesin">
+<!ENTITY viewMenu_toggleEditor_accesskey "P">
+<!ENTITY viewMenu_zoomin_label "Zmadhojeni">
+<!ENTITY viewMenu_zoomin_accesskey "m">
+<!ENTITY viewMenu_zoomout_label "Zvogëlojeni">
+<!ENTITY viewMenu_zoomout_accesskey "v">
+<!ENTITY viewMenu_resetzoom_label "Sa origjinali">
+<!ENTITY viewMenu_resetzoom_accesskey "o">
+
+<!ENTITY projectButton_label "Hapni Aplikacion">
+<!ENTITY runtimeButton_label "Përzgjidhni Runtime">
+
+<!-- We try to replicate Waterfox' bindings: -->
+<!-- quit app -->
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- toggle sidebar -->
+<!ENTITY key_toggleEditor "B">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Projektet e Mia">
+<!ENTITY projectPanel_runtimeApps "Aplikacione Runtime">
+<!ENTITY projectPanel_tabs "Skeda">
+<!ENTITY runtimePanel_usb "Pajisje USB">
+<!ENTITY runtimePanel_wifi "Pajisje Wi-Fi">
+<!ENTITY runtimePanel_simulator "Simulues">
+<!ENTITY runtimePanel_other "Tjetër">
+<!ENTITY runtimePanel_installsimulator "Instaloni Simulues">
+<!ENTITY runtimePanel_noadbhelper "Instaloni ADB Helper">
+<!ENTITY runtimePanel_nousbdevice "Nuk e shihni pajisjen tuaj?">
+<!ENTITY runtimePanel_refreshDevices_label "Rifresko Pajisjet">
+
+<!-- Lense -->
+<!ENTITY details_valid_header "e vlefshme">
+<!ENTITY details_warning_header "sinjalizime">
+<!ENTITY details_error_header "gabime">
+<!ENTITY details_description "Përshkrim">
+<!ENTITY details_location "Vendndodhje">
+<!ENTITY details_manifestURL "ID Aplikacioni">
+<!ENTITY details_removeProject_button "Hiqe Projektin">
+<!ENTITY details_showPrepackageLog_button "Shfaq Regjistrim Pre-package">
+
+<!-- New App -->
+<!ENTITY newAppWindowTitle "Aplikacion i Ri">
+<!ENTITY newAppHeader "Përzgjidhni gjedhe">
+<!ENTITY newAppLoadingTemplate "Po ngarkohen gjedhet…">
+<!ENTITY newAppProjectName "Emër Projekti:">
+
+
+<!-- Decks -->
+
+<!ENTITY deck_close "Mbylle">
+
+<!-- Addons -->
+<!ENTITY addons_title "Përbërës Ekstra">
+<!ENTITY addons_aboutaddons "Hapni Përgjegjësin e Shtesave">
+
+<!-- Prefs -->
+<!ENTITY prefs_title "Parapëlqime">
+<!ENTITY prefs_editor_title "Përpunues">
+<!ENTITY prefs_general_title "Të përgjithshme">
+<!ENTITY prefs_restore "Rikthe Parazgjedhjet">
+<!ENTITY prefs_manage_components "Administroni Përbërës Ekstra">
+<!ENTITY prefs_options_autoconnectruntime "Rilidhu me runtime-in e mëparshëm">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "Kur riniset WebIDE, rilidhu me runtime-in e mëparshëm">
+<!ENTITY prefs_options_rememberlastproject "Mba mend projektin e fundit">
+<!ENTITY prefs_options_rememberlastproject_tooltip "Rikthe projektin e mëparshëm, kur niset WebIDE-ja">
+<!ENTITY prefs_options_templatesurl "URL Gjedhesh">
+<!ENTITY prefs_options_templatesurl_tooltip "Tregues i gjedheve të gatshme">
+<!ENTITY prefs_options_showeditor "Shfaq përpunuesin">
+<!ENTITY prefs_options_showeditor_tooltip "Shfaq përpunuesin e brendshëm">
+<!ENTITY prefs_options_tabsize "Madhësi tabulacioni">
+<!ENTITY prefs_options_expandtab "Tabulacione me hapësira">
+<!ENTITY prefs_options_expandtab_tooltip "Përdor hapësira, në vend se shenjën e tabulacionit">
+<!ENTITY prefs_options_detectindentation "Vetëdhëmbëzoje">
+<!ENTITY prefs_options_detectindentation_tooltip "Vlerësoja dhëmbëzimin duke u bazuar në lëndën burim">
+<!ENTITY prefs_options_autocomplete "Vetëplotësim">
+<!ENTITY prefs_options_autocomplete_tooltip "Aktivizoni vetëplotësim kodi">
+<!ENTITY prefs_options_autoclosebrackets "Vetëmbylli kllapat">
+<!ENTITY prefs_options_autoclosebrackets_tooltip "Fut vetvetiu kllapa mbyllëse">
+<!ENTITY prefs_options_keybindings "Shkurtore">
+<!ENTITY prefs_options_keybindings_default "Parazgjedhje">
+<!ENTITY prefs_options_autosavefiles "Vetëruaji kartelat">
+<!ENTITY prefs_options_autosavefiles_tooltip "Ruajini vetvetiu kartelat e përpunuara, përpara se të xhirohet projekt">
+
+<!-- Runtime Details -->
+<!ENTITY runtimedetails_title "Të dhëna Runtime">
+<!ENTITY runtimedetails_adbIsRoot "ADB-ja është rrënjë: ">
+<!ENTITY runtimedetails_summonADBRoot "pajisje rrënjë">
+<!ENTITY runtimedetails_ADBRootWarning "(lyp nisjengarkues të zhbllokuar)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Privilegje DevTools të pakufizuara: ">
+<!ENTITY runtimedetails_requestPrivileges "kërko privilegje më të mëdha">
+<!ENTITY runtimedetails_privilegesWarning "(Do të rinisë pajisjen. Lyp akses si rrënjë.)">
+
+<!-- Device Preferences and Settings -->
+<!ENTITY device_typeboolean "Buleane">
+<!ENTITY device_typenumber "E plotë">
+<!ENTITY device_typestring "Varg">
+<!ENTITY device_typeobject "Objekt">
+<!ENTITY device_typenone "Përzgjidhni një lloj">
+
+<!-- Device Preferences -->
+<!ENTITY devicepreference_title "Parapëlqime Mbi Pajisjen">
+<!ENTITY devicepreference_search "Parapëlqime mbi kërkimin">
+<!ENTITY devicepreference_newname "Emër parapëlqimi të ri">
+<!ENTITY devicepreference_newtext "Vlerë parapëlqimi">
+<!ENTITY devicepreference_addnew "Shtoni parapëlqim të ri">
+
+<!-- Device Settings -->
+<!ENTITY devicesetting_title "Rregullime mbi Pajisjen">
+<!ENTITY devicesetting_search "Rregullime mbi kërkimin">
+<!ENTITY devicesetting_newname "Emër rregullimi të ri">
+<!ENTITY devicesetting_newtext "Vlerë rregullimi">
+<!ENTITY devicesetting_addnew "Shtoni rregullim të ri">
+
+<!-- Monitor -->
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Nidhmë">
+
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!ENTITY wifi_auth_header "Identifikim Klienti">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Ana tjetër me të cilën po lidheni lyp më tepër të dhëna që të mirëfilltësojë këtë lidhje. Ju lutemi skanoni kodin QR më poshtë që prej kërkesës te pajisja juaj tjetër.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "Nuk hapet skaneri QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "Keni një dritare skaneri QR?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Nëse pajisja juaj tjetër kërkon një token, në vend se të skanimit të një kodi QR, ju lutemi, kopjoni te pajisja tjetër vlerën më poshtë:">
+<!ENTITY wifi_auth_qr_size_note "Nëse kodi QR duket shumë i vogël që lidhja të vendoset me sukses, provoni ta zmadhoni ose zgjeroni dritaren.">
+
+<!-- Logs panel -->
+<!ENTITY logs_title "Regjistrime Urdhrash Pre-packaging">
+
+<!-- Simulator Options -->
+<!ENTITY simulator_title "Mundësi Simuluesi">
+<!ENTITY simulator_remove "Fshije Simuluesin">
+<!ENTITY simulator_reset "Rikthe Parazgjedhjet">
+<!ENTITY simulator_name "Emër">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_version "Version">
+<!ENTITY simulator_profile "Profil">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_device "Pajisje">
+<!ENTITY simulator_screenSize "Ekran">
+<!ENTITY simulator_pixelRatio "Përpjestim Pikselash">
+<!ENTITY simulator_tv_data "Simulim TV-je">
+<!ENTITY simulator_tv_data_open "Të dhëna Formësimi">
+<!ENTITY simulator_tv_data_open_button "Hapni Drejtori Formësimesh…">

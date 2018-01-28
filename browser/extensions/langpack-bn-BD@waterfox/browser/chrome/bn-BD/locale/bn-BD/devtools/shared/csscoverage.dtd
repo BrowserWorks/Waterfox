@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the CSS Coverage Report
+   - strings. See the 'csscoverage' command for more information, and
+   - devtools/client/styleeditor/styleeditor.xul for context -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+   - keep it in English, or another language commonly spoken among web developers.
+   - You want to make that choice consistent across the developer tools.
+   - A good criteria is the language in which you'd find the best
+   - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (csscoverage.backButton):
+  -  Text on the button to go back to the main style editor -->
+
+
+
+<!ENTITY csscoverage.backButton "পূর্ববর্তী">
+<!-- LOCALIZATION NOTE (csscoverage.unused, csscoverage.noMatches):
+  -  This is the heading and body text for the CSS usage part of the report -->
+
+<!ENTITY csscoverage.unused "অব্যবহৃত নিয়মসমূহ">
+<!ENTITY csscoverage.noMatches "নিম্নলিখিত নিয়মসমূহের জন্য কোন মিল পাওয়া যায়নি:">
+<!-- LOCALIZATION NOTE (csscoverage.optimize.header):
+  -  This is the heading for the CSS optimization part of the report -->
+
+<!ENTITY csscoverage.optimize.header "অপটিমাইজযোগ্য পাতাসমূহ">
+<!-- LOCALIZATION NOTE (csscoverage.preload1, csscoverage.preload2,
+  -  csscoverage.preload3): These 3 are part of a paragraph with 1 and 2
+  -  separated by a styled <link> tag and 2 and 3 separated by a styled
+  -  <style> tag -->
+
+<!ENTITY csscoverage.optimize.body1 "আপনি কখনো স্থানান্তর করেও গতি বাড়াতে পারেন">
+<!ENTITY csscoverage.optimize.body2 "পৃষ্ঠার নিচে ট্যাগ করে এবং একটি নতুন ইনলাইন তৈরি করে">
+<!ENTITY csscoverage.optimize.body3 "'লোড' হওয়ার পূর্বে প্রয়োজনীয় স্টাইলের সাথে উপাদান আবশ্যক। আপনার প্রয়োজনীয় স্টাইল ব্লক দেওয়া আছে:">
+<!-- LOCALIZATION NOTE (csscoverage.optimize.bodyX):
+  -  This is what we say when we have no optimization suggestions -->
+
+<!ENTITY csscoverage.optimize.bodyX "সমস্যা নিরয়ম ইনলাইন করা আছে।">
+<!-- LOCALIZATION NOTE (csscoverage.footer1, csscoverage.footer2a,
+  -  csscoverage.footer3, csscoverage.footer4): The text displayed at the
+  -  bottom of the page, with 2a being the URL opened when the link text in 3
+  -  is clicked -->
+
+<!ENTITY csscoverage.footer1 "দেখুন">
+<!ENTITY csscoverage.footer2a "https://developer.mozilla.org/docs/Tools/CSS_Coverage">
+<!ENTITY csscoverage.footer3 "CSS কভারেজ টুল নেভিগেশনের MDN নিবন্ধ">
+<!ENTITY csscoverage.footer4 "এই রিপোর্ট তৈরী হবার আদেশ।">

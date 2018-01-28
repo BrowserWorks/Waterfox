@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Brug beskyttelse mod sporing">
+<!ENTITY  trackingProtectionAlways.label       "Altid">
+<!ENTITY  trackingProtectionAlways.accesskey   "A">
+<!ENTITY  trackingProtectionPrivate.label      "Kun i private vinduer">
+<!ENTITY  trackingProtectionPrivate.accesskey  "p">
+<!ENTITY  trackingProtectionNever.label        "Aldrig">
+<!ENTITY  trackingProtectionNever.accesskey    "l">
+<!ENTITY  trackingProtectionLearnMore.label    "Læs mere">
+<!ENTITY  trackingProtectionExceptions.label   "Undtagelser…">
+<!ENTITY  trackingProtectionExceptions.accesskey "u">
+
+<!ENTITY tracking.label                 "Sporing">
+<!ENTITY trackingProtectionPBM5.label         "Brug beskyttelse mod sporing i private vinduer">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Læs mere">
+<!ENTITY changeBlockList.label          "Skift blokerings-liste">
+<!ENTITY changeBlockList.accesskey      "S">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Du kan også ">
+<!ENTITY  doNotTrack.settings.label     "håndtere dine indstillinger for Spor mig ikke">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historik">
+
+<!ENTITY  locationBar.label             "Adresselinje">
+
+<!ENTITY  locbar.suggest.label          "Når jeg bruger adresselinjen ønsker jeg forslag fra:">
+<!ENTITY  locbar.history.label          "Historik">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Bogmærker">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Åbne faneblade">
+<!ENTITY  locbar.openpage.accesskey     "f">
+<!ENTITY  locbar.searches.label         "Relaterede søgninger med standard-søgetjenesten">
+<!ENTITY  locbar.searches.accesskey     "R">
+
+<!ENTITY  suggestionSettings.label      "Skift indstillinger for søgeforslag…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "Accepter cookies fra websteder">
+<!ENTITY  acceptCookies2.accesskey      "c">
+
+<!ENTITY  acceptThirdParty.pre.label      "Accepter tredjeparts cookies:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Altid">
+<!ENTITY  acceptThirdParty.never.label    "Aldrig">
+<!ENTITY  acceptThirdParty.visited.label  "Fra besøgte">
+
+<!ENTITY  keepUntil.label               "Behold indtil:">
+<!ENTITY  keepUntil.accesskey           "e">
+
+<!ENTITY  expire.label                  "De udløber">
+<!ENTITY  close.label                   "Jeg lukker &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Undtagelser…">
+<!ENTITY  cookieExceptions.accesskey    "U">
+
+<!ENTITY  showCookies.label             "Vis cookies…">
+<!ENTITY  showCookies.accesskey         "V">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; vil:">
+<!ENTITY  historyHeader.pre.accesskey      "i">
+<!ENTITY  historyHeader.remember.label     "Gemme historik">
+<!ENTITY  historyHeader.dontremember.label "Aldrig gemme historik">
+<!ENTITY  historyHeader.custom.label       "Bruge tilpassede indstillinger for historik">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; vil gemme din browser-, filhentnings-, formular- og søgehistorik, samt gemme cookies fra de websteder, du besøger.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Du har mulighed for at ">
+<!ENTITY  rememberActions.clearHistory.label  "rydde din historik">
+<!ENTITY  rememberActions.middle.label        " eller ">
+<!ENTITY  rememberActions.removeCookies.label "fjerne individuelle cookies">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; vil bruge de samme indstillinger som privat browsing, og vil ikke gemme nogen historik, mens du surfer på nettet.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Du har også mulighed for at ">
+<!ENTITY  dontrememberActions.clearHistory.label "rydde al din historik">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Brug altid privat browsing-tilstand">
+<!ENTITY  privateBrowsingPermanent2.accesskey "P">
+
+<!ENTITY  rememberHistory2.label      "Husk min browser- og filhentningshistorik">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "Husk formular- og søgehistorik">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Ryd historik når &brandShortName; lukkes">
+<!ENTITY  clearOnClose.accesskey         "R">
+
+<!ENTITY  clearOnCloseSettings.label     "Indstillinger…">
+<!ENTITY  clearOnCloseSettings.accesskey "I">
+
+<!ENTITY  browserContainersHeader.label         "Kontekst-faneblade">
+<!ENTITY  browserContainersLearnMore.label      "Læs mere">
+<!ENTITY  browserContainersEnabled.label        "Aktiver kontekst-faneblade">
+<!ENTITY  browserContainersEnabled.accesskey    "A">
+<!ENTITY  browserContainersSettings.label        "Indstillinger…">
+<!ENTITY  browserContainersSettings.accesskey    "n">

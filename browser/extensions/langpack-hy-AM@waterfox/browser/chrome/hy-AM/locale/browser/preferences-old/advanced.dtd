@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Հիմնական">
+
+<!ENTITY accessibility.label             "Մատչելիություն">
+
+<!ENTITY useCursorNavigation.label       "Էջերում ուղղորդման համար միշտ օգտագործել կուրսորի սեղմակները:">
+<!ENTITY useCursorNavigation.accesskey   "կ">
+<!ENTITY searchOnStartTyping.label       "Տեքստ մուտքագրելու դեպքում փնտրել այն">
+<!ENTITY searchOnStartTyping.accesskey   "ք">
+<!ENTITY blockAutoReload.label           "Զգուշացնել, երբ վեբ կայքերը փորձում են վերահասցեավորել կամ կրկին բեռնել էջը">
+<!ENTITY blockAutoReload.accesskey       "յ">
+<!ENTITY useOnScreenKeyboard.label       "Անհրաժեշտության դեպքում ցուցադրել հպաստեղնաշարը">
+<!ENTITY useOnScreenKeyboard.accesskey   "հ">
+
+<!ENTITY browsing.label                  "Դիտարկում">
+
+<!ENTITY useAutoScroll.label             "Օգտագործել ինքնաթերթումը">
+<!ENTITY useAutoScroll.accesskey         "ի">
+<!ENTITY useSmoothScrolling.label        "Օգտագործել կոկիկ թերթումը">
+<!ENTITY useSmoothScrolling.accesskey    "ո">
+<!ENTITY checkUserSpelling.label         "Տեքստ մուտքագրելիս ստուգել ուղղագրությունը">
+<!ENTITY checkUserSpelling.accesskey     "մ">
+
+<!ENTITY dataChoicesTab.label            "Ընտրել տվյալները">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Օգնում է տեղեկանալ դիտարկիչի արագագործությանը և համօգտագործել տվյալները &vendorShortName;-ի համար">
+<!ENTITY enableHealthReport.label        "Միացնել &brandShortName;-ի Վիճակի Զեկույցը">
+<!ENTITY enableHealthReport.accesskey    "Զ">
+<!ENTITY healthReportLearnMore.label     "Իմանալ ավելին">
+
+<!ENTITY telemetryDesc.label             "Կիսվում է արագագործության, օգտագործման, սարքակազմի և ձեր դիտարկիչի կարգավորումներով &vendorShortName;-ի հետ՝ &brandShortName;-ը էլ ավելի լավարկելու համար">
+<!ENTITY enableTelemetryData.label       "Տարածեք լրացուցիչ տվյալներ (օր.՝ Telemetry)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Իմանալ ավելին">
+
+<!ENTITY crashReporterDesc2.label         "Վթարի զեկույցները օգնում են &vendorShortName;-ին ուղղել խնդիրները և դարձնել դիտարկիչը ավելի կայուն և անվտանգ:">
+<!ENTITY alwaysSubmitCrashReports.label   "Թույլատրել &brandShortName;-ին ուղարկել վթարների պահված զեկույցները առանց ձեր գիտության">
+<!ENTITY alwaysSubmitCrashReports.accesskey "վ">
+<!ENTITY crashReporterLearnMore.label     "Իմանալ ավելին">
+
+<!ENTITY networkTab.label                "Ցանցը">
+
+<!ENTITY connection.label                "Կապակցում">
+
+<!ENTITY connectionDesc.label            "Կարգավորեք համացանցին միանալու &brandShortName;-ի ցուցիչները">
+<!ENTITY connectionSettings.label        "Կարգավորել...">
+<!ENTITY connectionSettings.accesskey    "ա">
+
+<!ENTITY httpCache.label                 "Կուտակել ցանցային բովանդակությունը">
+
+<!ENTITY offlineStorage2.label           "Ցանցից դուրս ցանցային բովանդակություն և օգտատերի տվյալներ">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Կայքի տվյալը">
+<!ENTITY clearSiteData.label             "Մաքրել բոլոր տվյալները">
+<!ENTITY clearSiteData.accesskey         "ա">
+<!ENTITY siteDataSettings.label          "Կարգավորումներ...">
+<!ENTITY siteDataSettings.accesskey      "վ">
+<!ENTITY siteDataLearnMoreLink.label     "Իմանալ ավելին">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Սահմանափակել պահոցը՝">
+<!ENTITY limitCacheSizeBefore.accesskey  "Ս">
+<!ENTITY limitCacheSizeAfter.label       "ՄԲ">
+<!ENTITY clearCacheNow.label             "Մաքրել հիմա">
+<!ENTITY clearCacheNow.accesskey         "Մ">
+<!ENTITY clearOfflineAppCacheNow.label   "Մաքրել հիմա">
+<!ENTITY clearOfflineAppCacheNow.accesskey "հ">
+<!ENTITY overrideSmartCacheSize.label    "Վերակարգավորել պահոցի կառավարումը">
+<!ENTITY overrideSmartCacheSize.accesskey "Վ">
+
+<!ENTITY updateTab.label                 "Թարմացնել">
+
+<!ENTITY updateApplication.label         "&brandShortName;-ի թարմացումներ">
+<!ENTITY updateAuto1.label               "Թարմացումների ինքնավար տեղադրում (խորհուրդ է տրվում. լավարկում է անվտանգությունը)">
+<!ENTITY updateAuto1.accesskey           "Թ">
+<!ENTITY updateCheckChoose.label         "Ստուգել թարմացումները, բայց ընտրել, թե որը տեղադրել">
+<!ENTITY updateCheckChoose.accesskey     "Ս">
+<!ENTITY updateManual.label              "Երբեք չստուգել թարմացումները (խուրհուրդ չի տրվում. անվտանգության վտանգ)">
+<!ENTITY updateManual.accesskey          "Ե">
+
+<!ENTITY updateHistory.label             "Ցուցադրել Թարմացումների Պատմությունը">
+<!ENTITY updateHistory.accesskey         "Ց">
+
+<!ENTITY useService.label                "Թարմացումները տեղադրելիս օգտվել խորքային ծառայությունից">
+<!ENTITY useService.accesskey            "խ">
+
+<!ENTITY autoUpdateOthers.label          "Ինքնաբար թարմացնել">
+<!ENTITY enableSearchUpdate.label        "Փնտրամեքենաներ">
+<!ENTITY enableSearchUpdate.accesskey    "ք">
+
+<!ENTITY offlineStorageNotify.label               "Տեղեկացնել, երբ վեբ կայքը խնդրում է պահել ֆայլեր՝ անցանց աշխատելու համար">
+<!ENTITY offlineStorageNotify.accesskey           "Տ">
+<!ENTITY offlineStorageNotifyExceptions.label     "Բացառություններ…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ց">
+
+<!ENTITY offlineAppsList2.label          "Տվյալ կայքերին արտոնված է տվյալներ պահել՝ անցանց աշխատելու համար.">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Ջնջել…">
+<!ENTITY offlineAppsListRemove.accesskey "Ջ">
+<!ENTITY offlineAppRemove.confirm        "Ջնջել անցանց ֆայլերը">
+
+<!ENTITY certificateTab.label            "Վկայագրեր">
+<!ENTITY certPersonal.label              "Հայցումներ">
+<!ENTITY certPersonal.description        "Երբ սպասարկիչը հարցնում է ձեր անձնական վկայագիրը`">
+<!ENTITY selectCerts.auto                "Ընտրել ինքնաշխատ">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Ամեն անգամ հարցնել">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Հարցում OCSP պատասխանիչի սպասարկիչին՝ հաստատելու հավաստագրի իսկությունը">
+<!ENTITY enableOCSP.accesskey            "Հ">
+<!ENTITY viewCerts.label                 "Դիտել վկայագրերը">
+<!ENTITY viewCerts.accesskey             "վ">
+<!ENTITY viewSecurityDevices.label       "Անվտանգության Սարքեր">
+<!ENTITY viewSecurityDevices.accesskey   "Ս">
+
+<!ENTITY performance.label               "Արտադրողականություն">
+<!ENTITY useRecommendedPerformanceSettings.label "Օգտ. արտադրողականության հանձնարարելի կարգավորումները">
+<!ENTITY useRecommendedPerformanceSettings.description "Այս կարգավորումները հարմարեցված են ձեր համակարգչի սարքաշարին և օպերացիոն համակարգին:">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "Օ">
+
+<!ENTITY limitContentProcessOption.label "Բովանդակության ընթացքի սահմանափակում">
+<!ENTITY limitContentProcessOption.description "Բովանդակության լրացուցիչ ընթացքները կարող են լավարկել արտադրողականությունը, երբ օգտագործվում են բազմակի ներդիրներ, բայց միևնույն ժամանակ՝ դրանք ավելի շատ հիշողություն կխլեն:">
+<!ENTITY limitContentProcessOption.accesskey   "ս">
+
+
+<!ENTITY allowHWAccel.label              "Հնարավորության դեպքում օգտագործել սարքակազմի արագացումը ">
+<!ENTITY allowHWAccel.accesskey          "ր">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">

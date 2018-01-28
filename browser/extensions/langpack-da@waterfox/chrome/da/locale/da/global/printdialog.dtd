@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "Udskriv">
+
+<!ENTITY printDialog.title "Udskriv">
+
+<!ENTITY fpDialog.title "Gem fil">
+
+<!ENTITY fileCheck.label "Udskriv til fil">
+<!ENTITY fileCheck.accesskey "U">
+<!ENTITY propertiesButton.label "Egenskaber…">
+<!ENTITY propertiesButton.accesskey "E">
+<!ENTITY descText.label "Printerbeskrivelse:">
+<!ENTITY printer.label "Printer">
+<!ENTITY printerInput.label "Printernavn:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Udskrivningsområde">
+<!ENTITY allpagesRadio.label "Alle sider">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "Sider">
+<!ENTITY rangeRadio.accesskey  "S">
+<!ENTITY frompageInput.label  "fra">
+<!ENTITY frompageInput.accesskey  "f">
+<!ENTITY topageInput.label  "til">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "Markeringen">
+<!ENTITY selectionRadio.accesskey "M">
+
+<!ENTITY copies.label "Kopier">
+<!ENTITY numCopies.label "Antal kopier:">
+<!ENTITY numCopies.accesskey "k">
+
+<!ENTITY printframeGroup.label "Udskriv rammer">
+<!ENTITY aslaidoutRadio.label "Som på skærmen">
+<!ENTITY aslaidoutRadio.accesskey "o">
+<!ENTITY selectedframeRadio.label  "Den valgte ramme">
+<!ENTITY selectedframeRadio.accesskey  "v">
+<!ENTITY eachframesepRadio.label  "Hver ramme for sig">
+<!ENTITY eachframesepRadio.accesskey  "H">

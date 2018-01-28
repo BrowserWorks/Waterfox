@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "एतयसँ हमरा निकालू!">
+<!ENTITY safeb.palm.decline.label "ई चेतावनी केँ अनदेखा  करू ">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "रिपोर्ट कएल वेब हमला!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "This web page at <span id='malware_sitename'/> has been reported as an attack page and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>हमला पृष्ठ प्रोग्राम केँ संस्थापित करबाक लेल कोशिश करैत अछि  जे निज सूचना केँ चोराबैछ, अहाँक कंप्यूटर केँ दोसरक हमला अथवा अपन सिस्टमकेँ क्षतिसँ बचाबैक लेल प्रयोग करू .</p><p>किछु हमला साइट जान बूझकए नुकसान दिअबला साफ्टवेयरकेँ वितरित करैत अछि,  मुदा बहुत लोकनिसभकेँ हुनकर मालिक कए अनुमति अथवा ज्ञान कए क्षति पहुँचाएल जाइछ.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "आवांछित सॉफ्टवेयर पृष्ठ केर खबर देलक">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "एहि वेब पेज <span id='unwanted_sitename'/> अवांछित सॉफ्टवेयर रखबा लेल सूचित कैल गेल अछि आओर अहाँक सुरक्षा वरीयता क आधार पर अवरोध कए देल गेल अछि.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>अवांछित सॉफ्टवेयर पृष्ठ ओ सॉफ्टवेयर स्थापित करए केर प्रयास करैत अछि जेभ्रामक भ सकैछ आओर अप्रत्याशित तरीका मे अहाँक तंत्र केँ प्रभावित कए सकैत अछि.</p>">
+
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+
+
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Deceptive sites are designed to trick you into doing something dangerous, like installing software, or revealing your personal information, like passwords, phone numbers or credit cards.</p><p>Entering any information on this web page may result in identity theft or other fraud.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "This web page at <span id='phishing_sitename'/> has been reported as a deceptive site and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.phishingPage.title2 "Deceptive Site!">
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.notdeceptive.label "This isn’t a deceptive site…">
+<!ENTITY safeb.palm.reportPage.label "Why was this page blocked?">

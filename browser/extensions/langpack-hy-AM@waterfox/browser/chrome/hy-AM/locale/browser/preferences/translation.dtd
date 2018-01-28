@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Բացառություններ - Թարգմանություն">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Թարգմանություն չի առաջարկվի հետևյալ լեզուների համար.">
+<!ENTITY treehead.languageName.label      "Լեզուներ">
+<!ENTITY removeLanguage.label             "Հեռացնել լեզուն">
+<!ENTITY removeLanguage.accesskey         "Հ">
+<!ENTITY removeAllLanguages.label         "Հեռացնել բոլոր լեզուները">
+<!ENTITY removeAllLanguages.accesskey     "ե">
+
+<!ENTITY noTranslationForSites.label      "Թարգմանություն չի առաջարկվի հետևյալ կայքերի համար.">
+
+<!ENTITY removeSite.label                 "Հեռացնել կայքը">
+<!ENTITY removeSite.accesskey             "կ">
+<!ENTITY removeAllSites.label             "Հեռացնել Բոլոր Կայքերը">
+<!ENTITY removeAllSites.accesskey         "ա">
+
+<!ENTITY button.close.label               "Փակել">
+<!ENTITY button.close.accesskey           "Փ">
+
+<!ENTITY treehead.siteName2.label         "Websites">

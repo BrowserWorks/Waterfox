@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "சுயவிவரங்கள் பற்றிய">
+<!ENTITY aboutProfiles.subtitle "இப்பக்கம் உங்கள் விவரங்களை நிர்வகிக்க உதவுகிறது. ஒவ்வொரு விவரமும் வரலாறு, புத்தகக்குறிகள், அமைவுகள் மற்றும்துணை நிரல்கள் கொண்ட தனி உலகம்.">
+<!ENTITY aboutProfiles.create "புதிய சுயவிவரத்தை உருவாக்கு">
+<!ENTITY aboutProfiles.restart.title "மறுதுவக்கு">
+<!ENTITY aboutProfiles.restart.inSafeMode "துணை நிரல்கள் முடக்கத்துடன் மறுதுவக்கு…">
+<!ENTITY aboutProfiles.restart.normal "இயல்பாக மறுதுவக்கு...">

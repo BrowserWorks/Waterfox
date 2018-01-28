@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Мовы">
+<!ENTITY languages.customize.description                "Часам старонкі сеціва даступны на некалькіх мовах. Выберыце мовы для прагляду старонак сеціва, у парадку пераваг:">
+<!ENTITY languages.customize.moveUp.label               "Рухаць угору">
+<!ENTITY languages.customize.moveUp.accesskey           "г">
+<!ENTITY languages.customize.moveDown.label             "Рухаць уніз">
+<!ENTITY languages.customize.moveDown.accesskey         "н">
+<!ENTITY languages.customize.deleteButton.label         "Выдаліць">
+<!ENTITY languages.customize.deleteButton.accesskey     "ц">
+<!ENTITY languages.customize.selectLanguage.label       "Выбраць мову для дадання…">
+<!ENTITY languages.customize.addButton.label            "Дадаць">
+<!ENTITY languages.customize.addButton.accesskey        "Д">
+

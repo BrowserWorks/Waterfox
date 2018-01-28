@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "పొడిగింతను సంస్థాపించు">
+<!ENTITY intro           "మీ కంప్యుటర్లో వేరొక ప్రోగ్రామ్
+                          &brandShortName;ను ఈ కింది పొడిగింతతో సంవరించాలనుకుంటోంది:">
+<!ENTITY warning         "మీరు నమ్మే మూలకర్తల నుండి మాత్రమే పొడిగింతలను సంస్థాపించండి.">
+<!ENTITY allow           "ఈ సంస్థాపనను అనుమతించు">
+<!ENTITY later           "పొడిగింతల నిర్వాహికకు వెళ్ళి
+                           ఎప్పుడైనా మీరు మీ అభిప్రాయమును మార్చుకొనవచ్చు.">
+<!ENTITY continue        "కొనసాగించు">
+<!ENTITY restartMessage  "ఈ పొడిగింత సంస్థాపనను పూర్తిచేయుటకు మీరు తప్పక &brandShortName; ను పునఃప్రారంభించాలి.">
+<!ENTITY restartButton   "&brandShortName; పునఃప్రారంభించు">
+<!ENTITY cancelButton    "రద్దుచేయి">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Torri">
+<!ENTITY cutCmd.accesskey "T">
+<!ENTITY copyCmd.label "Copïo">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "Gludo">
+<!ENTITY pasteCmd.accesskey "G">
+<!ENTITY undoCmd.label "Dadwneud">
+<!ENTITY undoCmd.accesskey "w">
+<!ENTITY selectAllCmd.label "Dewis Popeth">
+<!ENTITY selectAllCmd.accesskey "P">
+<!ENTITY deleteCmd.label "Dileu">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "Ychwanegu at y Geiriadur">
+<!ENTITY spellAddToDictionary.accesskey "Y">
+<!ENTITY spellUndoAddToDictionary.label "Dadwneud Ychwanegu at y Geiriadur">
+<!ENTITY spellUndoAddToDictionary.accesskey "D">
+<!ENTITY spellCheckToggle.label "Gwirio Sillafu">
+<!ENTITY spellCheckToggle.accesskey "G">
+<!ENTITY spellNoSuggestions.label "(Dim Awgrymiadau Sillafu)">
+<!ENTITY spellDictionaries.label "Ieithoedd">
+<!ENTITY spellDictionaries.accesskey "I">
+
+<!ENTITY searchTextBox.clear.label "Clirio">
+
+<!ENTITY fillLoginMenu.label          "Llanw'r Mewngofnodi">
+<!ENTITY fillLoginMenu.accesskey      "L">
+<!ENTITY fillPasswordMenu.label       "Llanw'r Cyfrinair">
+<!ENTITY fillPasswordMenu.accesskey   "L">
+<!ENTITY fillUsernameMenu.label       "Llanw'r Enw Defnyddiwr">
+<!ENTITY fillUsernameMenu.accesskey   "L">
+<!ENTITY noLoginSuggestions.label     "(Dim Awgrymiadau Mewngofnodi)">
+<!ENTITY viewSavedLogins.label        "Gweld y Mewngofnodi Lanwyd">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ներմուծման Օգնական">
+
+<!ENTITY importFrom.label               "Ներմուծել Ընտրանքները, Էջանիշերը, Պատմությունը, Գաղտնաբառերը և այլ տվյալներ այստեղից՝">
+<!ENTITY importFromUnix.label           "Ներմուծել Կարգավորումները, էջանիշները, Գաղտնաբառերը և այլ տվյալներ՝">
+<!ENTITY importFromBookmarks.label      "Ներմուծել էջանիշները՝">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer-­ից">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Ոչինչ չներմուծել">
+<!ENTITY importFromNothing.accesskey    "Ո">
+<!ENTITY importFromSafari.label         "Safari­-ից">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome-ից">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 անվտանգ դիտարկիչ">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Չգտնվեց ծրագիր, որը պարունակում է էջանիշեր, պատմություն կամ գաղտնաբառ:">
+
+<!ENTITY importSource.title             "Ներմուծել Կարգավորումները ու Տվյալները">
+<!ENTITY importItems.title              "Ինչն է ներմուծվելու">
+<!ENTITY importItems.label              "Ընտրեք, թե ինչ պետք է ներմուծվի">
+
+<!ENTITY migrating.title                "Ներմուծվում է…">
+<!ENTITY migrating.label                "Հետևյալ բաղադրիչները ներմուծվում են…">
+
+<!ENTITY selectProfile.title            "Ընտրեք Պրոֆիլը">
+<!ENTITY selectProfile.label            "Կարող եք ներմուծել հետևյալ պրոֆիլներից.">
+
+<!ENTITY done.title                     "Ներմուծումն ավարտվեց">
+<!ENTITY done.label                     "Հետևյալ բաղադրիչները հաջողությամբ ներմուծվեցին՝">
+
+<!ENTITY closeSourceBrowser.label       "Շարունակելուց առաջ խնդրում ենք համոզվել, որ ընտրված դիտարկիչը փակ է:">

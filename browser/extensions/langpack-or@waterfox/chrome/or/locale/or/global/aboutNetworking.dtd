@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "ନେଟୱର୍କିଙ୍ଗ ବିଷୟରେ">
+<!ENTITY aboutNetworking.warning               "ଏହା ଅତ୍ୟଧିକ ପରୀକ୍ଷାମୂଳକ ଅଟେ। ବୟସ୍କ ବ୍ୟକ୍ତିଙ୍କ ନିରୀକ୍ଷଣ ବିନା ଏହାକୁ ବ୍ୟବହାର କରନ୍ତୁ ନାହିଁ।">
+<!ENTITY aboutNetworking.showNextTime          "ଏହି ଚେତାବନୀକୁ ପରବର୍ତ୍ତି ସମୟରେ ଦର୍ଶାନ୍ତୁ">
+<!ENTITY aboutNetworking.ok                    "ଠିକ ଅଛି">
+
+<!ENTITY aboutNetworking.sockets               "ସକେଟଗୁଡ଼ିକ">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "ୱେବ ସକେଟଗୁଡ଼ିକ">
+<!ENTITY aboutNetworking.refresh               "ସତେଜ କରନ୍ତୁ">
+<!ENTITY aboutNetworking.autoRefresh           "ପ୍ରତ୍ୟେକ 3 ସେକେଣ୍ଡରେ ସ୍ୱୟଂଚାଳିତ ଭାବରେ ସତେଜ କରନ୍ତୁ">
+<!ENTITY aboutNetworking.hostname              "ହୋଷ୍ଟ ନାମ">
+<!ENTITY aboutNetworking.port                  "ପୋର୍ଟ">
+
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "ସକ୍ରିୟ">
+<!ENTITY aboutNetworking.idle                  "ନିଷ୍କ୍ରିୟ ହୋଇଛି">
+<!ENTITY aboutNetworking.host                  "ହୋଷ୍ଟ">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "ପଠାଯାଇଛି">
+<!ENTITY aboutNetworking.received              "ପ୍ର୍ରାପ୍ତ ହେଲା">
+<!ENTITY aboutNetworking.family                "ପରିବାର">
+<!ENTITY aboutNetworking.addresses             "ଠିକଣାଗୁଡିକ">
+<!ENTITY aboutNetworking.expires               "ସମୟ ସମାପ୍ତି (ସେକେଣ୍ଡ)">
+<!ENTITY aboutNetworking.messagesSent          "ସନ୍ଦେଶଗୁଡ଼ିକୁ ପଠାସରିଛି">
+<!ENTITY aboutNetworking.messagesReceived      "ସନ୍ଦେଶଗୁଡ଼ିକୁ ପାଇଛି">
+<!ENTITY aboutNetworking.bytesSent             "ପଠାଯାଇଥିବା ବାଇଟ">
+<!ENTITY aboutNetworking.bytesReceived         "ପ୍ରାପ୍ତ ହୋଇଥିବା ବାଇଟ">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.currentLogFile        "Current Log File:">
+<!ENTITY aboutNetworking.currentLogModules     "Current Log Modules:">
+<!ENTITY aboutNetworking.dnsDomain             "Domain">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Lookup">
+<!ENTITY aboutNetworking.dnsLookupButton       "Resolve">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.logTutorial           "See <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> for instructions on how to use this tool.">
+<!ENTITY aboutNetworking.logging               "Logging">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.setLogFile            "Set Log File">
+<!ENTITY aboutNetworking.setLogModules         "Set Log Modules">
+<!ENTITY aboutNetworking.startLogging          "Start Logging">
+<!ENTITY aboutNetworking.stopLogging           "Stop Logging">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

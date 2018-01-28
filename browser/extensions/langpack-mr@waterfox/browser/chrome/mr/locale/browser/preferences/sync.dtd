@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "वाचनखुणा">
+<!ENTITY engine.bookmarks.accesskey "m">
+<!ENTITY engine.tabs.label2         "टॅब्स उघडा">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "इतिहास">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.logins.label        "लॉगिन्स">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.prefs.label         "पसंती">
+<!ENTITY engine.prefs.accesskey     "s">
+<!ENTITY engine.addons.label        "ॲड-ऑन्स्">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.addresses.label     "पत्ते">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.label   "क्रेडिट कार्ड्स">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "साधनाचे नाव:">
+<!ENTITY changeSyncDeviceName2.label "साधनाचे नाव बदला…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "रद्द करा">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "जतन करा">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "सेवा अटी">
+<!ENTITY fxaPrivacyNotice.link.label "गोपणीयता सूचना">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "‌">
+<!ENTITY signedInUnverified.aftername.label "चाचणी झाली नाही.">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "पुन्हा जोडणीकरिता कृपया साइन करा">
+<!ENTITY signedInLoginFailure.aftername.label "‌">
+
+<!ENTITY notSignedIn.label           "आपण साइन इन केले नाही.">
+<!ENTITY signIn.label                "साइन इन">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "प्रोफाइल प्रतिमा बदला">
+<!ENTITY verifiedManage.label        "खाते व्यवस्थापित करा">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect3.label           "जोडणी मोडा…">
+<!ENTITY disconnect3.accesskey       "D">
+<!ENTITY verify.label                "ईमेल सत्यापित करा">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "हा ईमेल विसरा">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "आपला वेब आपल्याबरोबर घेऊन चला">
+<!ENTITY signedOut.description        "आपल्या सर्व साधणांकरीता आपल्या वाचनखूणा, इतिहास, टॅब, पासवर्ड, ॲड-ऑन्स्, आणि प्राधान्ये समक्रमित करा.">
+<!ENTITY signedOut.accountBox.title   "&syncBrand.fxAccount.label; सह जोडा">
+<!ENTITY signedOut.accountBox.create  "खाते बनवा">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "साइन इन">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.settings.label       "ताळमेळ सेटिंग्ज">
+<!ENTITY signedIn.settings.description "&brandShortName; वापरून आपल्या उपकरणांवर काय सिंक्रोनाईझ करायचे ते निवडा.">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "साठी डाउनलोड करा ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " किंवा ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " आपल्या उपकरणाबरोबर समक्रमण करण्यासाठी ">

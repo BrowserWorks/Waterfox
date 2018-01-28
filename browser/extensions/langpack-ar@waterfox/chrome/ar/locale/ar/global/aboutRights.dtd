@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "rtl">
+<!ENTITY rights.title "حقوقك">
+<!ENTITY rights.intro "&brandFullName; برنامج حرّ مفتوح المصدر، اشترك في بنائه الآلاف من أنحاء العالم. هناك بضعة أمور ينبغي أن تعلمها:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "يُتاح لك &brandShortName; وفق بنود ">
+<!ENTITY rights.intro-point1b "رخصة موزيلا العامة">
+<!ENTITY rights.intro-point1c ". يعني هذا أنك تستطيع استخدام &brandShortName; ونسخه وتوزيعه إلى الآخرين.  تستطيع أيضًا تعديل كود &brandShortName; المصدري كما تشاء لموافقة احتياجاتك. كما تعطيك رخصة موزيلا العامة الحق في توزيع نسخك المعدلة.">
+
+<!ENTITY rights.intro-point2-a "لا يعطيك هذا أي حقوق أو تراخيص للعلامات التجارية لمؤسسة موزيلا أو أي طرف آخر، متضمنًا على سبيل المثال لا الحصر اسم فَيَرفُكس وشعاره. يمكنك الاطلاع على مزيد من المعلومات عن العلامات التجارية ">
+<!ENTITY rights.intro-point2-b "هنا">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "بعض مزايا &brandShortName;، مثل مبلّغ الانهيارات، تتيح إرسال تعليقاتك إلى &vendorShortName;. باختيارك إرسال تعليق فأنت تعطي &vendorShortName; الإذن باستخدامه لتحسين منتجاتها، ونشره على مواقعها، وتوزيعه.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "كيفية استخدامنا لمعلوماتك الشخصية والتعليقات التي ترسلها إلى &vendorShortName; عبر &brandShortName; مشروحة في ">
+<!ENTITY rights2.intro-point3b "سياسة خصوصية &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "كل سياسات الخصوصية المطبقة في هذا المنتج مسرودة هنا.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "بعض مزايا &brandShortName; تستفيد من خدمات للمعلومات في الوب، ولكننا لا نضمن دقتها التامة أو خلوها من الأخطاء. يمكن الاطلاع على مزيد من التفاصيل، بما فيها كيفية تعطيل المزايا التي تستخدم هذه الخدمات، في ">
+<!ENTITY rights.intro-point4b "بنود الخدمة">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "في حال احتوى هذا المنتج على أي من خدمات الوب فيمكن الوصول إلى بنود استخدام تلك الخدمة من قِسم ">
+<!ENTITY rights.intro-point4b-unbranded "خدمات مواقع الوب">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "خدمات &brandFullName; للمعلومات على الوب">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "لتمكين تشغيل أنواع معينة من الڤديو، يُنزّل &brandShortName; وحدات تعمية محتوي معينة من أطراف خارجية.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "يستخدم &brandFullName; خدمات للمعلومات على الوب (”الخدمات“) للحصول على بعض المزايا التي يوفرها لك في هذه النسخة الثنائية من &brandShortName; وفق الشروط المذكورة أدناه. إن لم ترغب باستخدام خدمة أو أكثر أو كنت لا توافق على الشروط أدناه فيمكنك تعطيل الميزة أو الخدمة. يمكنك الاطلاع على تعليمات عن تعطيل ميزة أو خدمة معينة ">
+<!ENTITY rights2.webservices-b "هنا">
+<!ENTITY rights3.webservices-c ". يمكن تعطيل الخصائص و الخدمات الأخرى من تفضيلات التطبيق.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "التصفح الآمن: ">
+<!ENTITY rights.safebrowsing-b "لا يُنصح بتعطيل ميزة التصفح الآمن لأنه قد يؤدي إلى الوصول إلى مواقع غير آمنة.  إذا أردت تعطيل هذه الميزة كليًا فاتبع الخطوات التالية:">
+<!ENTITY rights.safebrowsing-term1 "افتح تفضيلات البرنامج">
+<!ENTITY rights.safebrowsing-term2 "اختر الأمن">
+<!ENTITY rights2.safebrowsing-term3 "ألغ تحديد الخيار لأجل &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "أصبح التصفح الآمن معطلًا الآن">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "التصفح المُدرِك للمكان: ">
+<!ENTITY rights.locationawarebrowsing-b "هو دائمًا اختياري.  لن تُرسل معلومات عن مكانك من غير إذنك.  إذا أردت تعطيل هذه الميزة كليًا، اتبع الخطوات التالية:">
+<!ENTITY rights.locationawarebrowsing-term1a "في شريط العنوان، اكتب ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "اكتب geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "انقر مرتين على تفضيل geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "أصبح التصفح المُدرك للمكان معطلًا الآن">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "ينبغي أن يُضمّن هنا - إن أمكن - نظرة عامة على خدمات مواقع الوب التي يتحد معها المنتج، متضمنة تعليمات عن كيفية تعطيلها.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "ينبغي أن تُسرد جميع بنود الخدمة القابلة للتطبيق لهذا المنتج هنا.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "تعمل &vendorShortName; و مساهموها و مرخصوها و شركاؤها لتوفير أدق الخدمات و أحدثها.  غير أننا لا نضمن أن هذه المعلومة شاملة و خالية من الخطأ.  مثلًا، قد لا يتمكن التصفح الآمن من التعرف على بعض المواقع الخطرة و قد يتعرف على بعض المواقع الآمنة بالخطأ على أنها خطرة. و بالنسبة لخدمة التموضع الجغرافي فالنتيجة التي تعطيها هي تقديرية فحسب، و لا نحن و لا مزوّدو هذه الخدمة نضمن دقة تحديد الأماكن المعطاة.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; قد يلغي أو يغير الخدمات حسب مشيئته.">
+<!ENTITY rights2.webservices-term3 "يحق لك استخدام هذه الخدمات مع نسختك من &brandShortName;، و &vendorShortName; تضمن لك حقوقك لفعل ذلك.  تحتفظ &vendorShortName; ومرخصوها بكامل الحقوق الأخرى على الخدمات.  هذه الشروط لا تهدف لتقييد أي حقوق ممنوحة في ترخيصات المصادر المفتوحة المطبقة على &brandShortName; وعلى الكود المصدري لنُسَخ &brandShortName;.">
+<!ENTITY rights.webservices-term4 "تُزوّد الخدمات ”كما هي“.  يتنصّل &vendorShortName; ومساهموه ومرخّصوه وموزّعوه من جميع الضمانات، سواءً المصرّحة منها أو الضمنية، ويشمل ذلك بدون تحديد، الضمانات بأن الخدمات صالحة للمتاجرة أو تتلاءم مع أغراضك الخاصة.  أنت تتحمل كامل المسؤولية عن اختيارك الخدمات لأغراضك وعن قبولك بجودة وأداء الخدمات كما هي. بعض السلطات القضائية لا تسمح باستثناء أو تقييد الكفالات الضمنية، لذا فهذا التنصل قد لا ينطبق عليك.">
+<!ENTITY rights.webservices-term5 "باستثناء تطلّب القانون لذلك، لا يُعدّ &vendorShortName; ومساهموه ومرخّصوه وموزعوه مسؤولين عن أي أضرار غير مباشرة أو خاصة أو حادثية أو جزائية أو نموذجية أو بسبب الاستخدام تنتج عن أو تتعلق بأي وسيلة باستخدام &brandShortName; والخدمات.  المسؤولية الجماعية وفق هذه البنود يجب ألا تتعدى 500$ (خمس مئة دولار). بعض السلطات القضائية لا تسمح باستثناء أو تقييد بعض الأضرار، لذا فهذا الاستثناء والتقييد قد لا ينطبق عليك.">
+<!ENTITY rights.webservices-term6 "قد يحدّث &vendorShortName; هذه البنود كما تقتضي الضرورة من وقت لآخر. لا يمكن تعديل هذه البنود أو إلغاؤها من دون موافقة &vendorShortName; الخطية.">
+<!ENTITY rights.webservices-term7 "هذه البنود تخضع لقوانين كاليفورنيا في الولايات المتحدة الامريكية، مستثنية الاختلاف في بنود القوانين. إن صار جزء من هذه البنود غير صالح أو لا يمكن تطبيقه، تبقى بقية الأجزاء صالحة للعمل والتطبيق. في حال وجود اختلاف بين نسخة مترجمة عن هذه البنود ونسخة اللغة الإنجليزية، تكون نسخة اللغة الإنجليزية هي الفيصل.">

@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "సాఫ్టువేరు తాజాకరణ">
+
+<!ENTITY  checking.title                  "తాజాకరణలకై చూస్తున్నాం">
+<!ENTITY  updateCheck.label               "&brandShortName; కొత్త సంచికలకై చూస్తున్నాం…">
+
+<!ENTITY  noupdatesfound.title            "తాజాకరణలు ఏమీ కనబడలేదు">
+<!ENTITY  noupdatesautoenabled.intro      "అక్కడ ఏ కొత్త నవీకరణలు అందుబాటులో లేవు. &brandShortName; సమయానుసారం కొత్తవాటి కొరకు
+                                            పరశీలించవచ్చు.">
+<!ENTITY  noupdatesautodisabled.intro     "అక్కడ ఏ కొత్త నవీకరణలు అందుబాటులో లేవు. తరువాత మరలు వెతకండి లేక
+                                            &brandShortName; స్వయంచాలనంగా కొత్తవాటి కొరకు పరశీలించటాన్ని చేతనంచేయండి.">
+
+<!ENTITY  manualUpdate.title              "నవీకరణ చేయలేకపోతున్నది">
+<!ENTITY  manualUpdate.desc               "సిఫారస్ చేయబడిన రక్షణ మరియి  మెరుగైన  నవీకరణ  అందుబాటులో ఉంది. అది స్థాపించుటకు  నీకు అనుమతులు లేవు.  మీ సిస్టమ్ నిర్వహణాధికారిని  అడుగు లేక అనుమతికలిగిన వేరే ఎకౌంటు నుండి  ప్రయత్నించు.">
+<!ENTITY  manualUpdate.space.desc         "సిఫార్సు చేయబడిన రక్షణ మరియు స్థిరత్వపు నవీకరణ అందుబాటులో ఉంది, అయితే దానిని సంస్థాపించుటకు మీ వద్ద సరిపోవునంత జాగాలేదు.">
+<!ENTITY  manualUpdateGetMsg.label        "&brandShortName; తాజా నవీకరణ మీకు ఎప్పుడు దొరకు స్థలము:">
+
+<!ENTITY  unsupported.title               "వ్యవస్థ తోడ్పాటులేదు">
+<!ENTITY  unsupported.label               "మీ &brandShortName; పాతబడింది, కానీ సరికొత్త సంచికకు మీ వ్యవస్థలో తోడ్పాటు లేదు. దయచేసి మీ వ్యవస్థను నవీకరించి, ప్రయత్నించండి. మీ గమనిక మీకు మళ్ళీ కనిపించదు, కానీ మీరు">
+<!ENTITY  unsupportedLink.label           "మరింత తెలుసుకోవచ్చు.">
+
+<!ENTITY  clickHere.label                 "ఈ నవీకరణ గురించి ఎక్కువ సమాచారాన్ని చూడుము">
+
+<!ENTITY  evangelism.desc                 "&brandShortName; కి ఈ  నవీకరణ  త్వరగా చేయటంమంచిది.">
+
+<!ENTITY  downloadPage.title              "$BrandShortName; ను దింపుకుంటోంది">
+<!ENTITY  downloading.intro               "నవీకరణను దింపుకుంటోంది…">
+<!ENTITY  connecting.label                "నవీకరణ సేవికకు అనుసంధానించబడుతోంది...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; అది డౌనులోడు  చేసిన  పురోగమన నవీకరణ యొక్క ఐక్యతను  నిర్దారించలేకపోతోంది,అందుకని అది యిప్పుడు  పూర్తి  నవీకరణ ప్యాకేజ్‌ను డౌనులోడుచేస్తోంది.">
+
+<!ENTITY  viewDetails.tooltip             "ఈ నవీకరణ వివరాలు చూడు">
+
+<!ENTITY  details.link                    "వివరాలు">
+
+<!ENTITY  error.title                     "నవీకరణ విఫలమైంది">
+
+<!ENTITY  error.label                     "ఈ నవీకరణ సంస్థాపనకు  లేదా  డౌనులోడింగ్‌‌కు , పరిశీలనజరుపుటకు  సమస్యలు  వున్నవి. &brandShortName; నవీకరించబడదు  ఎంచేతంటే:">
+                                           
+<!ENTITY  errorManual.label               "ఈ లింకు దర్శించట 
+                                           మరియు సరికొత్త వర్షన్ ను డౌనులోడుచేయుట ద్వారా మీరు &brandShortName;ను మానవీయంగా  నవీకరించవచ్చు:">
+                                           
+<!ENTITY  errorpatching.intro             "పరోక్ష నవీకరణ ఆపాదించబడదు. 
+                                           &brandShortName; పూర్తి నవీకరణను డౌనులోడుచేసి తిరిగి ప్రయత్నించాలి.">
+
+<!ENTITY  genericBackgroundError.label    "నవీకరణ అందుబాటులో వుందో లేదో &brandShortName; నిర్థారించలేక పోవుచున్నది. మీరు 
+                                           &brandShortName; యొక్క సరికొత్త వర్షన్‌ను యిచట నుండి కలిగివుండునట్లు చూచుకొనుము:">
+
+<!ENTITY  finishedPage.title              "నవీకరణ సంస్థాపనకు సిద్దంగా వున్నది">
+<!ENTITY  finishedPage.text               "&brandShortName;  పునఃప్రారంభం చేసినపుడు ఈ నవీకరణ స్థాపించబడుతుంది. మీరు &brandShortName;ను ఇప్పుడు   పునఃప్రారంభం చేయండి లేక  పని కొనసాగించి ఆతరువాత పునఃప్రారంభం చేయండి.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; కొరకు ఒక రక్షణ మరియు స్థిరత్వపు నవీకరణ దింపుకొనబడింది మరియు సంస్థాపనకు సిద్ధంగా ఉంది.">
+<!ENTITY  finishedBackground.name         "తాజాకరణ:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "&brandShortName;  పునఃప్రారంభం    చేసినపుడు ఈ నవీకరణ స్థాపించబడుతుంది . మీరు &brandShortName; ను ఇప్పుడు   పునఃప్రారంభం చేయండి లేక  పని కొనసాగించి ఆతరువాత   పునఃప్రారంభం చేయండి.">
+<!ENTITY  finishedBackground.moreElevated "ఈ నవీకరణకి నిర్వాహక అధికారాలు అవసరం. ఈ నవీకరణ
+                                            తదుపరి సమయం &brandShortName; ప్రారంభమైనప్పుడు ఇన్స్టాల్ అవుతుంది; మీరు 
+                                           &brandShortName;ను పునఃప్రారంభించవవచ్చు ఇప్పుడు, పని కొనసాగించండి మరియు తరువాత పునఃప్రారంభించు, లేదా ఈ నవీకరణ
+                                            క్షీణిస్తుంది.">
+
+<!ENTITY  update.details.label            "వివరాలు">
+<!ENTITY  update.installedOn.label        "సంస్థాపించబడింది:">
+<!ENTITY  update.status.label             "స్థితి:">

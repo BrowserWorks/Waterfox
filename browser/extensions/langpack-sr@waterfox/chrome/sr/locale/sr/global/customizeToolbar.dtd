@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Прилагоди алатну траку">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Можете да додате или уклоните ставке превлачећи их до или од алатне траке.">
+<!ENTITY show.label               "Прикажи:">
+<!ENTITY iconsAndText.label       "Иконице и текст">
+<!ENTITY icons.label              "Иконице">
+<!ENTITY text.label               "Текст">
+<!ENTITY useSmallIcons.label      "Користи мале иконице">
+<!ENTITY restoreDefaultSet.label  "Врати изворне иконице">
+<!ENTITY addNewToolbar.label      "Додај нову алатну траку">
+<!ENTITY saveChanges.label        "Готово">
+<!ENTITY undoChanges.label        "Опозови измене">

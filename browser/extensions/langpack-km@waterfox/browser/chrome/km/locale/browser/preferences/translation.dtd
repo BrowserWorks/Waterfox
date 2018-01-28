@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ករណី​លើកលែង - ការ​បកប្រែ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ការ​បកប្រែ​នឹង​មិន​ត្រូវ​បាន​ផ្ដល់​ឲ្យ​សម្រាប់​ភាសា​ខាងក្រោម៖">
+<!ENTITY treehead.languageName.label      "ភាសា">
+<!ENTITY removeLanguage.label             "លុប​ភាសា​ចេញ">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "លុប​ភាសា​ទាំងអស់​ចេញ">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "ការ​បកប្រែ​នឹង​មិន​ត្រូវ​បាន​ផ្ដល់​ឲ្យ​សម្រាប់​តំបន់​បណ្ដាញ​ដូច​ខាងក្រោម៖">
+<!ENTITY treehead.siteName.label          "តំបន់​បណ្ដាញ">
+<!ENTITY removeSite.label                 "លុប​តំបន់​បណ្ដាញ​ចេញ">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "លុប​តំបន់​បណ្ដាញ​ទាំងអស់​ចេញ">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "បិទ">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

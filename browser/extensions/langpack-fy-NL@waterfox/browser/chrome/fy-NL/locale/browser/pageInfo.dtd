@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "610">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopiearje">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Alles selektearje">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Algemien">
+<!ENTITY  generalTab.accesskey  "A">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "URL:">
+<!ENTITY  generalType           "Type:">
+<!ENTITY  generalMode           "Rendermodus:">
+<!ENTITY  generalSize           "Grutte:">
+<!ENTITY  generalReferrer       "Ferwizende URL:">
+<!ENTITY  generalSource         "Bufferboarne:">
+<!ENTITY  generalModified       "Wizige:">
+<!ENTITY  generalEncoding2      "Tekstkodearring:">
+<!ENTITY  generalMetaName       "Namme">
+<!ENTITY  generalMetaContent    "Ynhâld">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Lokaasje:">
+<!ENTITY  mediaText             "Assosjearre tekst:">
+<!ENTITY  mediaAltHeader        "Alternative tekst">
+<!ENTITY  mediaAddress          "Adres">
+<!ENTITY  mediaType             "Type">
+<!ENTITY  mediaSize             "Grutte">
+<!ENTITY  mediaCount            "Oantal">
+<!ENTITY  mediaDimension        "Ofmjittingen:">
+<!ENTITY  mediaLongdesc         "Lange omskriuwing:">
+<!ENTITY  mediaBlockImage.accesskey "l">
+<!ENTITY  mediaSaveAs           "Bewarje as…">
+<!ENTITY  mediaSaveAs.accesskey "j">
+<!ENTITY  mediaSaveAs2.accesskey "j">
+<!ENTITY  mediaPreview          "Mediafoarbyld:">
+
+<!ENTITY  feedTab               "Feeds">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "abonnearje">
+<!ENTITY  feedSubscribe.accesskey "a">
+
+<!ENTITY  permTab               "Tastimmingen">
+<!ENTITY  permTab.accesskey     "T">
+<!ENTITY  permUseDefault        "Standert brûke">
+<!ENTITY  permAskAlways         "Altyd freegje">
+<!ENTITY  permAllow             "Tastean">
+<!ENTITY  permAllowSession      "Tastean foar sesje">
+<!ENTITY  permBlock             "Blokkearje">
+<!ENTITY  permissionsFor        "Tastimmingen foar:">
+<!ENTITY  permPlugins           "Ynstekkers aktivearje">
+
+<!ENTITY  permClearStorage           "Wiskje opslach">
+<!ENTITY  permClearStorage.accesskey "W">
+
+<!ENTITY  securityTab           "Befeiliging">
+<!ENTITY  securityTab.accesskey "B">
+<!ENTITY  securityView.certView "Sertifikaat besjen">
+<!ENTITY  securityView.accesskey "b">
+<!ENTITY  securityView.unknown   "Unbekend">
+
+
+<!ENTITY  securityView.identity.header   "Website-identiteit">
+<!ENTITY  securityView.identity.owner    "Eigener: ">
+<!ENTITY  securityView.identity.domain   "Website: ">
+<!ENTITY  securityView.identity.verifier "Befêstige troch: ">
+<!ENTITY  securityView.identity.validity "Ferrint op:">
+
+<!ENTITY  securityView.privacy.header                   "Privacy &amp; skiednis">
+<!ENTITY  securityView.privacy.history                  "Haw ik dizze website al earder as hjoed besocht?">
+<!ENTITY  securityView.privacy.cookies                  "Bewarret dizze website ynformaasje (cookies) op myn kompjûter?">
+<!ENTITY  securityView.privacy.viewCookies              "Cookies besjen">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Haw ik wachtwurden bewarre foar dizze website?">
+<!ENTITY  securityView.privacy.viewPasswords            "Bewarre wachtwurden besjen">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Technyske details">
+
+<!ENTITY  helpButton.label                              "Help">

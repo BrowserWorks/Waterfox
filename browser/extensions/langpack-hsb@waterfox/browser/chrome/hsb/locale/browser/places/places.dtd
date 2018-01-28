@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Biblioteka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizować">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Waše zapołožki organizować">
+
+<!ENTITY file.close.label               "Začinić">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Napohlady">
+<!ENTITY views.accesskey                "h">
+<!ENTITY views.tooltip                  "Waš napohlad wuměnić">
+<!ENTITY view.columns.label             "Špalty pokazać">
+<!ENTITY view.columns.accesskey         "l">
+<!ENTITY view.sort.label                "Sortěrować">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Njesortěrowany">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Sortěrowanski porjad A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sortěrowanski porjad Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Zapołožki z HTML importować…">
+<!ENTITY importBookmarksFromHTML.accesskey "H">
+<!ENTITY exportBookmarksToHTML.label       "Zapołožki do HTML eksportować…">
+<!ENTITY exportBookmarksToHTML.accesskey   "Z">
+<!ENTITY importOtherBrowser.label          "Daty z druheho wobhladowaka importować…">
+<!ENTITY importOtherBrowser.accesskey      "D">
+
+<!ENTITY cmd.backup.label               "Zawěsćić…">
+<!ENTITY cmd.backup.accesskey           "Z">
+<!ENTITY cmd.restore2.label             "Wobnowić">
+<!ENTITY cmd.restore2.accesskey         "n">
+<!ENTITY cmd.restoreFromFile.label      "Dataju wubrać…">
+<!ENTITY cmd.restoreFromFile.accesskey  "D">
+
+<!ENTITY cmd.deleteDomainData.label     "Na tute sydło zabyć">
+<!ENTITY cmd.deleteDomainData.accesskey "N">
+
+<!ENTITY cmd.open.label                  "Wočinić">
+<!ENTITY cmd.open.accesskey              "o">
+<!ENTITY cmd.open_window.label           "W nowym woknje wočinić">
+<!ENTITY cmd.open_window.accesskey       "k">
+<!ENTITY cmd.open_private_window.label     "W nowym priwatnym woknje wočinić">
+<!ENTITY cmd.open_private_window.accesskey "n">
+<!ENTITY cmd.open_tab.label              "W nowym rajtarku wočinić">
+<!ENTITY cmd.open_tab.accesskey          "r">
+<!ENTITY cmd.open_all_in_tabs.label      "Wšě w rajtarkach wočinić">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "W">
+
+<!ENTITY cmd.properties.label      "Kajkosće">
+<!ENTITY cmd.properties.accesskey  "K">
+
+<!ENTITY cmd.sortby_name.label              "Po mjenje sortěrować">
+<!ENTITY cmd.sortby_name.accesskey          "m">
+<!ENTITY cmd.context_sortby_name.accesskey  "m">
+
+<!ENTITY cmd.new_bookmark.label            "Nowa zapołožka…">
+<!ENTITY cmd.new_bookmark.accesskey        "N">
+<!ENTITY cmd.new_folder.label              "Nowy rjadowak…">
+<!ENTITY cmd.new_folder.accesskey          "r">
+<!ENTITY cmd.context_new_folder.accesskey  "r">
+<!ENTITY cmd.new_separator.label           "Nowa dźělenska linija">
+<!ENTITY cmd.new_separator.accesskey       "l">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Dynamisku zapołožku znowa začitać">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "z">
+
+<!ENTITY cmd.moveBookmarks.label                  "Přesunyć…">
+<!ENTITY cmd.moveBookmarks.accesskey              "P">
+
+<!ENTITY col.name.label          "Mjeno">
+<!ENTITY col.tags.label          "Znački">
+<!ENTITY col.url.label           "Městno">
+<!ENTITY col.mostrecentvisit.label "Najnowši wopyt">
+<!ENTITY col.visitcount.label    "Wopytowe ličenje">
+<!ENTITY col.description.label   "Wopisanje">
+<!ENTITY col.dateadded.label     "Přidaty">
+<!ENTITY col.lastmodified.label  "Poslednja změna">
+
+<!ENTITY search.placeholder  "Pytać">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importować a zawěsćić">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Waše zapołožki importować a zawěsćić">
+
+<!ENTITY backButton.tooltip  "Wróćo hić">
+
+<!ENTITY forwardButton.tooltip  "Doprědka hić">
+
+<!ENTITY detailsPane.more.label "Wjace">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Mjenje">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "Zapisk wubrać, zo bychu so jeho kajkosće wobhladali a wobdźěłali">
+
+<!ENTITY view.label               "Napohlad">
+<!ENTITY view.accesskey           "N">
+<!ENTITY byDate.label             "po datumje">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "po sydle">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "po najhusto wopytanych">
+<!ENTITY byMostVisited.accesskey  "h">
+<!ENTITY byLastVisited.label      "po jako poslednje wopytanych">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "po datumje a sydle">
+<!ENTITY byDayAndSite.accesskey   "t">

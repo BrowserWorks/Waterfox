@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "သင်သည် လက်ရှိတွင် သီးသန့်ဝင်းဒိုးတွင် ရှိမနေပါ။">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "သီးသန့်ဝင်းဒိုးကို ဖွင့်ပါ">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "လုံခြုံစွာ ဝဘ်ဆိုက်ကြည့်ရှုခြင်း">
+<!ENTITY privateBrowsing.title.tracking                  "ခြေရာခံကာကွယ်မှုပါဝင်သော လုံခြုံစွာ ဝဘ်ဆိုက်ကြည့်ရှုခြင်း">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "သင် သီးသန့်ဝင်းဒိုးအသုံးပြုသောအခါ၊ Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "သည် မသိမ်းဆည်းပါ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        "။">
+<!ENTITY aboutPrivateBrowsing.info.visited               "ကြည့်ရှုခဲ့သည့် စာမျက်နှာများ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "ရှာဖွေမှုများ">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "ကွတ်ကီးများ">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ယာယီ ဖိုင်များ">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "မီးမြေခွေး ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "သိမ်းပါမည်">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " သင်၏။ ။">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ဆွဲယူထားသည့်ဖိုင်များ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "စာမှတ်များ">
+<!ENTITY aboutPrivateBrowsing.note.before                "လုံခြုံစွာ ဝဘ်ဆိုက်ကြည့်ရှုခြင်း ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "သည် သင့်ကို အမည်မသိအသုံးပြုသူ မဖြစ်စေနိုင်ပါ">
+<!ENTITY aboutPrivateBrowsing.note.after                 "အင်တာနက်ပေါ်တွင်။ သင့် အလုပ်ရှင် သို့မဟုတ် အင်တာနက်ဝန်ဆောင်မှုပေးသူသည် သင်ကြည့်ရှုခဲ့သည်များကို သိနိုင်ပါသေးသည်။">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "ဆက်လက်လေ့လာပါ ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "တစ်ကိုယ်ရေအင်တာနက်သုံး">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "ခြေရာခံ ကာကွယ်မှု">
+<!ENTITY trackingProtection.description2                 "အချို့ဝဘ်ဆိုက်များသည် သင့်လှုပ်ရှားမှုများကို ခြေရာခံသည့် တန်ဆာပလာများကို အသုံးပြုကြသည်။ ခြေရာခံကာကွယ်ခြင်းပါဝင်သော မီးမြေခွေးသည် သင့်လှုပ်ရှားမှုများကို စုစည်းမှတ်တမ်းတင်နိုင်သည့် ခြေရာခံတန်ဆာပလာများကို ပိတ်ပင်တားဆီးပါလိမ့်မည်။">
+<!ENTITY trackingProtection.startTour1                   "ဆောင်ရွက်ပုံကို ကြည့်ရန်">

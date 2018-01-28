@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogCancel.label "Anuloje">
+<!ENTITY dialogClose.label "Mbylle">
+<!ENTITY percentPrint "#1&#037;">
+<!ENTITY preparing "Po përgatitet…">
+<!ENTITY printComplete "Shtypja u Plotësua.">
+<!ENTITY printWindow.title "Po shtypet">
+<!ENTITY progress "Përparim:">
+<!ENTITY title "Titull:">

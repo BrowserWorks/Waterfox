@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Coitcheann">
+
+<!ENTITY accessibility.label             "Inntrigeachd">
+
+<!ENTITY useCursorNavigation.label       "Cleachd na putanan-saigheid gus gluasad am broinn nan duilleagan an-còmhnaidh">
+<!ENTITY useCursorNavigation.accesskey   "C">
+<!ENTITY searchOnStartTyping.label       "Lorg teacsa cho luath ’s a thòisicheas tu air sgrìobhadh">
+<!ENTITY searchOnStartTyping.accesskey   "L">
+<!ENTITY blockAutoReload.label           "Thoir rabhadh nuair a dh’fheuchas làraichean-lìn ri m’ ath-sheòladh no ris an duilleag ath-luchdadh">
+<!ENTITY blockAutoReload.accesskey       "f">
+<!ENTITY useOnScreenKeyboard.label       "Seall meur-chlàr suathaidh ma bhios feum air">
+<!ENTITY useOnScreenKeyboard.accesskey   "m">
+
+<!ENTITY browsing.label                  "A' brabhsadh">
+
+<!ENTITY useAutoScroll.label             "Cleachd sgroladh fèin-obrachail">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Cleachd sgroladh caoin">
+<!ENTITY useSmoothScrolling.accesskey    "o">
+<!ENTITY checkUserSpelling.label         "Ceartaich an litreachadh is tu a’ sgrìobhadh rud">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Roghainnean dàta">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Tha aithriseadh dàta à comas airson rèiteachadh a’ bhuild seo">
+
+<!ENTITY healthReportDesc.label          "Bheir seo fiosrachadh dhut air dèanadas a' bhrabhsair agad agus cuiridh e dàta air slàinte a' bhrabhsair agad dha &vendorShortName;">
+<!ENTITY enableHealthReport.label        "Cuir an comas aithisg slàinte &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "s">
+<!ENTITY healthReportLearnMore.label     "Barrachd fiosrachaidh">
+
+<!ENTITY telemetryDesc.label             "Cuiridh seo dàta air dèanadas, cleachdadh, bathar-cruaidh agus gnàthachadh a' bhrabhsair agad dha &vendorShortName; ach an urrainn dhuinn &brandShortName; a dhèanamh nas fhearr">
+<!ENTITY enableTelemetryData.label       "Co-roinn dàta a bharrachd (m.e. telemeatraidh)">
+<!ENTITY enableTelemetryData.accesskey   "t">
+<!ENTITY telemetryLearnMore.label        "Barrachd fiosrachaidh">
+
+<!ENTITY crashReporterDesc2.label         "Cuidichidh aithisgean tuislidh &vendorShortName; a’ càradh duilgheadasan is nì iad am brabhsair agad nas seasmhaiche agus nas tèarainte">
+<!ENTITY alwaysSubmitCrashReports.label   "Leig le &brandShortName; aithisgean tuislidh a chàirn roimhe as do leth">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY crashReporterLearnMore.label     "Barrachd fiosrachaidh">
+
+<!ENTITY networkTab.label                "Lìonra">
+
+<!ENTITY connection.label                "Ceangal">
+
+<!ENTITY connectionDesc.label            "Rèitich mar a cheanglas &brandShortName; ris an lìon">
+<!ENTITY connectionSettings.label        "Roghainnean…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Susbaint-lìn san tasglann">
+
+<!ENTITY offlineStorage2.label           "Susbaint-lìn is dàta cleachdaiche far loidhne">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Dàta na làraich">
+<!ENTITY clearSiteData.label             "Falamhaich an dàta air fad">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Roghainnean…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Barrachd fiosrachaidh">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Cuingich an tasgadan gu">
+<!ENTITY limitCacheSizeBefore.accesskey  "C">
+<!ENTITY limitCacheSizeAfter.label       "MB a dh'àite">
+<!ENTITY clearCacheNow.label             "Falamhaich an-dràsta">
+<!ENTITY clearCacheNow.accesskey         "F">
+<!ENTITY clearOfflineAppCacheNow.label   "Falamhaich an-dràsta">
+<!ENTITY clearOfflineAppCacheNow.accesskey "c">
+<!ENTITY overrideSmartCacheSize.label    "Leig seachad stiùireadh fèin-obrachail an tasgadain">
+<!ENTITY overrideSmartCacheSize.accesskey "o">
+
+<!ENTITY updateTab.label                 "Ùraich">
+
+<!ENTITY updateApplication.label         "Ùrachaidhean &brandShortName;">
+<!ENTITY updateAuto1.label               "Stàlaich na h-ùrachaidhean gu fèin-obrachail (mholamaid seo airson tèarainteachd na b' fhearr)">
+<!ENTITY updateAuto1.accesskey           "S">
+<!ENTITY updateCheckChoose.label         "Thoir sùil airson ùrachaidhean ann leig leam co-dhùnadh a bheil mi airson an stàladh">
+<!ENTITY updateCheckChoose.accesskey     "c">
+<!ENTITY updateManual.label              "Na thoir sùil airson ùrachaidhean idir (cha mholamaid seo oir adhbharaichidh seo cunnartan tèarainteachd)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Seall eachdraidh nan ùrachaidhean">
+<!ENTITY updateHistory.accesskey         "h">
+
+<!ENTITY useService.label                "Cleachd seirbheis a stàlaicheas na h-ùrachaidhean sa chùlaibh">
+<!ENTITY useService.accesskey            "C">
+
+<!ENTITY autoUpdateOthers.label          "Ùraich gu fèin-obrachail">
+<!ENTITY enableSearchUpdate.label        "Einnseanan-luirg">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+<!ENTITY offlineStorageNotify.label               "Innis ma bhios làrach-lìn ag iarraidh dàta a stòradh a chum cleachdaidh far loidhne">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Eisgeachdan…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "E">
+
+<!ENTITY offlineAppsList2.label          "Tha cead aig na làraichean-lìn a leanas dàta a stòradh a chum cleachdaidh far loidhne:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Thoir air falbh…">
+<!ENTITY offlineAppsListRemove.accesskey "r">
+<!ENTITY offlineAppRemove.confirm        "Thoir air falbh an dàta far loidhne">
+
+<!ENTITY certificateTab.label            "Teisteanasan">
+<!ENTITY certPersonal.label              "Iarrtasan">
+<!ENTITY certPersonal.description        "Nuair a dh’iarras frithealaiche an teisteanas pearsanta agad:">
+<!ENTITY selectCerts.auto                "Taghar fear leis fhèin">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "Faighnich dhìot gach turas">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Cuir iarrtas gu frithealaichean OCSP Responder gus dligheachd nan teisteanasan làithreach a dhearbhadh">
+<!ENTITY enableOCSP.accesskey            "C">
+<!ENTITY viewCerts.label                 "Seall na teisteanasan">
+<!ENTITY viewCerts.accesskey             "S">
+<!ENTITY viewSecurityDevices.label       "Uidheaman tèarainteachd">
+<!ENTITY viewSecurityDevices.accesskey   "n">
+
+<!ENTITY performance.label               "Dèanadas">
+<!ENTITY useRecommendedPerformanceSettings.label "Cleachd na roghainnean dèanadais a mholamaid-ne">
+<!ENTITY useRecommendedPerformanceSettings.description "Chaidh na roghainnean seo a thaghadh airson ’s gum freagair iad air bathar-cruaidh agus siostam-obrachaidh a’ choimpiutair agad.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey "o">
+<!ENTITY performanceSettingsLearnMore.label "Barrachd fiosrachaidh">
+<!ENTITY limitContentProcessOption.label "Crìoch pròiseasadh na susbaint">
+<!ENTITY limitContentProcessOption.description "Ma cheadaicheas tu pròiseasan susbaint a bharrachd, dh﻿﻿’fhaoidte gum faigh thu dèanadas nas fhearr ach feumaidh e barrachd cuimhne aig an aon àm.">
+<!ENTITY limitContentProcessOption.accesskey   "n">
+<!ENTITY limitContentProcessOption.disabledDescription "Chan urrainn dhut àireamh nam pròiseasan susbaint atharrachadh ach ann am &brandShortName; ioma-phròiseasach.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Mar a dh’fhiosraicheas tu a bheil ioma-phròiseasadh an comas">
+<!ENTITY allowHWAccel.label              "Cleachd luathachadh a' bhathar-bhog ma bhios e ri làimh">
+<!ENTITY allowHWAccel.accesskey          "m">

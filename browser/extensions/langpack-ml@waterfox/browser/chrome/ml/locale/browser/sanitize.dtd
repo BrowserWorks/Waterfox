@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "നാള്‍വഴി വെടിപ്പാക്കുന്നതിനുള്ള ക്രമീകരണങ്ങള്‍">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!ENTITY sanitizePrefs2.modal.width    "34em">
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.inContent.column.width "34em">
+
+<!ENTITY sanitizeDialog2.title         "ഏറ്റവും ഒടുവിലുള്ള നാള്‍വഴി വെടിപ്പാക്കുക">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY clearDataSettings2.label     "&brandShortName;-ല്‍ നിന്നും പുറത്തുകടക്കുമ്പോള്‍, എല്ലാം സ്വയം വെടിപ്പാക്കുക:">
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+
+<!ENTITY clearTimeDuration.label          "വെടിപ്പാക്കുന്നതിനുള്ള സമയക്രമം: ">
+<!ENTITY clearTimeDuration.accesskey      "T">
+<!ENTITY clearTimeDuration.lastHour       "കഴിഞ്ഞ മണിക്കൂര്‍">
+<!ENTITY clearTimeDuration.last2Hours     "കഴിഞ്ഞ രണ്ടു മണിക്കൂര്‍">
+<!ENTITY clearTimeDuration.last4Hours     "കഴിഞ്ഞ നാലു മണിക്കൂര്‍">
+<!ENTITY clearTimeDuration.today          "ഇന്നു്">
+<!ENTITY clearTimeDuration.everything     "എല്ലാം">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "‌‌">
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+
+<!ENTITY detailsProgressiveDisclosure.label     "വിശദവിവരങ്ങള്‍">
+<!ENTITY detailsProgressiveDisclosure.accesskey "e">
+
+<!ENTITY historySection.label         "നാള്‍വഴി">
+<!ENTITY dataSection.label            "ഡേറ്റാ">
+
+<!ENTITY itemHistoryAndDownloads.label     "ബ്രൗ&amp;സിങ്ങും ഡൗണ്‍ലോഡ് നാള്‍വഴിയും">
+<!ENTITY itemHistoryAndDownloads.accesskey "ഡ">
+<!ENTITY itemFormSearchHistory.label       "&amp;ഫോമും തെരച്ചില്‍ നാള്‍വഴിയും">
+<!ENTITY itemFormSearchHistory.accesskey   "ര">
+<!ENTITY itemCookies.label                 "കുക്കികള്‍ ">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "കാഷ്">
+<!ENTITY itemCache.accesskey               "a">
+<!ENTITY itemOfflineApps.label             "ഓഫ്‌ലൈന്‍ ആയ വെബ്സൈറ്റിനുള്ള ഡേറ്റാ">
+<!ENTITY itemOfflineApps.accesskey         "O">
+<!ENTITY itemActiveLogins.label            "സജീവമായ ലോഗിനുകള്‍">
+<!ENTITY itemActiveLogins.accesskey        "L">
+<!ENTITY itemSitePreferences.label         "സൈറ്റ് മുന്‍ഗണനകള്‍">
+<!ENTITY itemSitePreferences.accesskey     "S">
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+
+<!ENTITY sanitizeEverythingUndoWarning     "ഈ പ്രവര്‍ത്തനം ചെയ്തു കഴിഞ്ഞാല്‍ പിന്നെ മാറ്റാന്‍ സാദ്ധ്യമല്ല.">

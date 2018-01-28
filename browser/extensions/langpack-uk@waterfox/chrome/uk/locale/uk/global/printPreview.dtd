@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Друкувати…">
+<!ENTITY print.accesskey      "Д">
+<!ENTITY pageSetup.label      "Параметри сторінки…">
+<!ENTITY pageSetup.accesskey  "П">
+<!ENTITY page.label           "Сторінка:">
+<!ENTITY page.accesskey       "С">
+<!ENTITY of.label             "з">
+<!ENTITY scale.label          "Масштаб:">
+<!ENTITY scale.accesskey      "М">
+<!ENTITY portrait.label       "Книжна">
+<!ENTITY portrait.accesskey   "К">
+<!ENTITY landscape.label      "Альбомна">
+<!ENTITY landscape.accesskey  "А">
+<!ENTITY close.label          "Закрити">
+<!ENTITY close.accesskey      "З">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Інше…">
+<!ENTITY ShrinkToFit.label    "Вмістити">
+<!ENTITY customPrompt.title   "Нетипова шкала…">
+<!ENTITY simplifyPage.label   "Спростити сторінку">
+<!ENTITY simplifyPage.accesskey "п">
+<!ENTITY simplifyPage.enabled.tooltip  "Змінити макет для полегшення читання">
+<!ENTITY simplifyPage.disabled.tooltip "Автоматичне спрощення сторінки неможливе">
+
+<!ENTITY homearrow.tooltip    "Перша сторінка">
+<!ENTITY endarrow.tooltip     "Остання сторінка">
+<!ENTITY nextarrow.tooltip    "Наступна сторінка">
+<!ENTITY previousarrow.tooltip "Попередня сторінка">

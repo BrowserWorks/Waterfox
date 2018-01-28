@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Honako cookie hauek daude gorderik zure ordenagailuan:">
+<!ENTITY     cookiename.label               "Cookiearen izena">
+<!ENTITY     cookiedomain.label             "Gunea">
+
+<!ENTITY     props.name.label               "Izena:">
+<!ENTITY     props.value.label              "Edukia:">
+<!ENTITY     props.domain.label             "Ostalaria:">
+<!ENTITY     props.path.label               "Bidea:">
+<!ENTITY     props.secure.label             "Hona bidalia:">
+<!ENTITY     props.expires.label            "Iraungitzea:">
+<!ENTITY     props.container.label          "Edukiontzia:">
+
+<!ENTITY     window.title                   "Cookieak">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Bilatu">
+<!ENTITY     searchFilter.accesskey         "B">
+
+<!ENTITY     button.close.label             "Itxi">
+<!ENTITY     button.close.accesskey         "I">

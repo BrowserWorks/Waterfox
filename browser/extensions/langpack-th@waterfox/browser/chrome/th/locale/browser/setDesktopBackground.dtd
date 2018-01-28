@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "ตำแหน่ง:">
+<!ENTITY tile.label                 "ไทล์">
+<!ENTITY center.label               "กึ่งกลาง">
+<!ENTITY stretch.label              "ยืดเต็มหน้าจอ">
+<!ENTITY fill.label                 "ขยายเต็มหน้าจอ">
+<!ENTITY fit.label                  "พอดีหน้าจอ">
+<!ENTITY preview.label              "แสดงตัวอย่าง">
+<!ENTITY color.label                "สี:">
+<!ENTITY setDesktopBackground.title "ตั้งพื้นหลังเดสก์ท็อป">
+<!ENTITY openDesktopPrefs.label     "เปิดค่ากำหนดเดสก์ท็อป">
+<!ENTITY closeWindow.key            "w">

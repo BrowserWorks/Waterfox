@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pageInfoWindow.width "650">
+<!ENTITY pageInfoWindow.height "525">
+
+<!ENTITY  copy.key              "K">
+<!ENTITY  copy.label            "Kopiuj">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "a">
+<!ENTITY  selectall.label       "Zaznacz wszystko">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Ogólne" >
+<!ENTITY  generalTab.accesskey  "O">
+<!ENTITY generalTitle "Tytuł:">
+<!ENTITY  generalURL            "URL:" >
+<!ENTITY  generalType           "Typ:" >
+<!ENTITY  generalMode           "Tryb wyświetlania:">
+<!ENTITY  generalSize           "Rozmiar:" >
+<!ENTITY  generalReferrer       "Odsyłający URL:" >
+<!ENTITY  generalSource         "Źródło:" >
+<!ENTITY  generalModified       "Zmodyfikowany:" >
+<!ENTITY generalEncoding2 "Kodowanie tekstu:">
+<!ENTITY  generalMetaName       "Nazwa" >
+<!ENTITY  generalMetaContent    "Treści" >
+
+<!ENTITY  mediaTab              "Media" >
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adres:">
+<!ENTITY  mediaText             "Powiązany tekst:">
+<!ENTITY  mediaAltHeader        "Tekst alternatywny" >
+<!ENTITY  mediaAddress          "Adres" >
+<!ENTITY  mediaType             "Typ" >
+<!ENTITY  mediaSize             "Rozmiar">
+<!ENTITY  mediaCount            "Ilość">
+<!ENTITY  mediaDimension        "Wymiary:">
+<!ENTITY  mediaLongdesc         "Długi opis:" >
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Zapisz jako…" >
+<!ENTITY  mediaSaveAs.accesskey "Z" >
+<!ENTITY  mediaSaveAs2.accesskey "s">
+<!ENTITY  mediaPreview          "Podgląd">
+
+<!ENTITY  feedTab               "Kanały">
+<!ENTITY  feedTab.accesskey     "K">
+<!ENTITY  feedSubscribe         "Subskrybuj">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Uprawnienia">
+<!ENTITY  permTab.accesskey     "U">
+<!ENTITY  permUseDefault "Używaj domyślnych">
+<!ENTITY  permAskAlways         "Zawsze pytaj">
+<!ENTITY  permAllow             "Zezwalaj">
+<!ENTITY  permAllowSession      "Zezwalaj na czas sesji">
+<!ENTITY  permBlock             "Blokuj">
+<!ENTITY  permissionsFor        "Uprawnienia dla:">
+<!ENTITY  permPlugins "Aktywowanie wtyczek">
+
+<!ENTITY  permClearStorage           "Wyczyść dane offline">
+<!ENTITY  permClearStorage.accesskey "d">
+
+<!ENTITY  securityTab           "Bezpieczeństwo">
+<!ENTITY  securityTab.accesskey "B">
+<!ENTITY  securityView.certView  "Wyświetl certyfikat">
+<!ENTITY  securityView.accesskey "c">
+<!ENTITY  securityView.unknown   "Nieznany">
+
+
+<!ENTITY  securityView.identity.header   "Tożsamość witryny">
+<!ENTITY  securityView.identity.owner    "Właściciel: ">
+<!ENTITY  securityView.identity.domain   "Witryna: ">
+<!ENTITY securityView.identity.verifier "Zweryfikowana przez: ">
+<!ENTITY securityView.identity.validity "Wygasa:">
+
+<!ENTITY  securityView.privacy.header                   "Prywatność i historia">
+<!ENTITY  securityView.privacy.history                  "Czy ta witryna była wcześniej odwiedzana?">
+<!ENTITY  securityView.privacy.cookies                  "Czy ta witryna przechowuje informacje na tym komputerze (ciasteczka)?">
+<!ENTITY  securityView.privacy.viewCookies              "Wyświetl ciasteczka">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "a">
+<!ENTITY securityView.privacy.passwords "Czy hasła użyte na tej witrynie zostały zachowane?">
+<!ENTITY securityView.privacy.viewPasswords "Wyświetl zachowane hasła">
+<!ENTITY securityView.privacy.viewPasswords.accessKey "h">
+
+<!ENTITY  securityView.technical.header                 "Szczegóły techniczne">
+<!ENTITY helpButton.label "Pomoc">

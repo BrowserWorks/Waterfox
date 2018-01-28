@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Eftirfarandi smákökur eru geymdar á tölvunni þinni:">
+<!ENTITY     cookiename.label               "Heiti smáköku">
+<!ENTITY     cookiedomain.label             "Vefsvæði">
+
+<!ENTITY     props.name.label               "Nafn:">
+<!ENTITY     props.value.label              "Innihald:">
+<!ENTITY     props.domain.label             "Vél:">
+<!ENTITY     props.path.label               "Slóð:">
+<!ENTITY     props.secure.label             "Send fyrir:">
+<!ENTITY     props.expires.label            "Rennur út:">
+<!ENTITY     props.container.label          "Geymir:">
+
+<!ENTITY     window.title                   "Smákökur">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Leita">
+<!ENTITY     searchFilter.accesskey         "e">
+
+<!ENTITY     button.close.label             "Loka">
+<!ENTITY     button.close.accesskey         "L">

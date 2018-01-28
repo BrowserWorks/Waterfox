@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Байланысу">
+<!ENTITY header     "Қашықтағы құрылғыға байланысу">
+<!ENTITY host       "Торап:">
+<!ENTITY port       "Порт:">
+<!ENTITY connect    "Байланысты орнату">
+<!ENTITY connecting "Байланысу…">
+<!ENTITY availableAddons "Қолжетерлік қашықтағы қосымшалар:">
+<!ENTITY availableTabs "Қолжетерлік қашықтағы беттер:">
+<!ENTITY availableProcesses "Қолжетерлік қашықтағы үрдістер:">
+<!ENTITY connectionError "Қате:">
+<!ENTITY errorTimeout "Қате: байланысты күту уақыты бітті.">
+<!ENTITY errorRefused "Қате: байланысқа рұқсат етілмеді.">
+<!ENTITY errorUnexpected "Күтпеген қате.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox өндіруші саймандары қашықтағы құрылғыларды (мыс. Android үшін Waterfox және Waterfox OS) жөндей алады. Қашықтағы құрылғыда 'Қашықтан жөндеу' мүмкіндігін іске қосылғанын тексеріңіз. Көбірек білу үшін ">
+<!ENTITY remoteDocumentation "құжаттаманы оқыңыз">
+<!ENTITY remoteHelpSuffix ".">
+

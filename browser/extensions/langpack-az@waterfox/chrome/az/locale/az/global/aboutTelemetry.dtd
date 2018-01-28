@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetriya Məlumatları">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping məlumatı mənbəsi:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "İndiki ping məlumatı">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arxivlənmiş ping məlumatı">
+
+<!ENTITY aboutTelemetry.raw "Xam JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Alt seans məlumatlarını göstər">
+
+<!ENTITY aboutTelemetry.choosePing "Ping-i seçin">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Yeni ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Əvvəlki ping &gt;&gt; ">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Həftə">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Növü
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Bu gün
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Dünən
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Daha əvvəl
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Ümumi Məlumat">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Mühit Məlumatları">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetry Qeydi">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Zəif SQL İfadələr">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Səyyahın Donması">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Əlaqənin donması">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Tutulan Dəstələr
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skalyarlar">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Açarlı Skalyarlar
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histoqram">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Açarlanmış Histogramlar">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Tədbirlər
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Sadə Ölçülər">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Əlavə Detalları">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Gecikmiş Yazılar">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Sessiya Məlumatı">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTE: Slow SQL debugging is enabled. Full SQL strings may be displayed below but they will not be submitted to Telemetry.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Dəstələr üçün funksiya adlarını çək
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Xam dəstə məlumatlarını göstər
+">
+
+<!ENTITY aboutTelemetry.filterText "  Filtr (sətir və ya /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Yük">

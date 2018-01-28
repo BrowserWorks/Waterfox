@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Përditësim &brandShortName;-i ">
+<!ENTITY  offline.title                   "&brandShortName;-i po punon jashtë linje">
+<!ENTITY  offline.description             "&brandShortName;-i lypset të kalojë në linjë që të mund të shohë nëse ka përditësime gati për shtesat tuaja për t&amp;i bërë ato të përputhshme me këtë version.">
+<!ENTITY  offline.toggleOffline.label     "Kalo në linjë tani.">
+<!ENTITY  offline.toggleOffline.accesskey "K">
+
+<!ENTITY  mismatch.win.title              "Shtesa të Papërputhshme">
+<!ENTITY  mismatch.top.label              "Shtesat vijuese nuk janë të përputhshme me këtë version të &brandShortName;-it, ndaj u çaktivizuan:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName;-i mund të kontrollojë në ka gati versione të përputhshëm të këtyre shtesave.">
+
+<!ENTITY  checking.wizard.title           "Po kontrollohet për Shtesa të Përputhshme">
+<!ENTITY  checking.top.label              "Po kontrollohet për përditësime për shtesat tuaja të papërputhshme…">
+<!ENTITY  checking.status                 "Kjo mund të hajë ca minuta…">
+
+<!ENTITY  found.wizard.title               "U gjetën Shtesa të Përputhshme">
+<!ENTITY  found.top.label                 "Përzgjidhni shtesat që do të donit të instalonit:">
+<!ENTITY  found.disabledXPinstall.label   "Këta përditësime s&apos;mund të instalohen, sepse instalimi i programeve është i çaktivizuar hëpërhë. Mund ta ndryshoni këtë rregullim më poshtë.">
+<!ENTITY  found.enableXPInstall.label     "Lejo sajte të instalojnë programe">
+<!ENTITY  found.enableXPInstall.accesskey "L">
+
+<!ENTITY  installing.wizard.title         "Instalim Shtesash të Përputhshme">
+<!ENTITY  installing.top.label            "Po shkarkohen dhe instalohen përditësime për shtesat tuaja…">
+
+<!ENTITY  noupdates.wizard.title          "Nuk u Gjetën Shtesa të Përputhshme">
+<!ENTITY  noupdates.intro.desc            "&brandShortName;-i nuk qe në gjendje të gjejë përditësime për shtesat tuaja të papërputhshme.">
+<!ENTITY  noupdates.error.desc            "U hasën disa probleme gjatë provës për gjetje përditësimesh.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName;-i do të kontrollojë rregullisht dhe do t&apos;ju njoftojë
+                                           kur të gjejë përditësime të përputhshëm për këto shtesa.">
+
+<!ENTITY  finished.wizard.title           "U instaluan Shtesa të Përputhshme">
+<!ENTITY  finished.top.label              "&brandShortName;-i instaloi përditësime për shtesat tuaja.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName;-i mund të kontrollojë rregullisht dhe njoftojë kur gjen përditësime për shtesat.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName;-i do të kontrollojë periodikisht dhe njoftojë kur të gjejë përditësime për shtesat.">
+
+<!ENTITY  adminDisabled.wizard.title      "I pazoti të Kontrollojë për Përditësime">
+<!ENTITY  adminDisabled.warning.label     "Është e pamundur të kontrollojë për përditësime për shtesat e papërputhshme, sepse është i çaktivizuar instalimi i programeve për &brandShortName;-in. Ju lutemi, lidhuni me Përgjegjësin e Sistemit tuaj për ndihmë.">
+
+<!ENTITY  versioninfo.wizard.title        "Kontroll Përputhshmërie të Shtesave">
+<!ENTITY  versioninfo.top.label           "Po kontrollohet përputhshmëria e shtesave për përputhshmëri me këtë version të &brandShortName;-it.">
+<!ENTITY  versioninfo.waiting             "Kjo mund të hajë ca minuta…">
+
+<!ENTITY  installerrors.wizard.title      "Probleme në Instalim Përditësimesh">
+<!ENTITY  installerrors.intro.label       "&brandShortName;-i hasi në probleme kur përditësoi disa prej shtesave tuaja.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Klikoni mbi Përfundoje që të vazhdohet me nisjen e &brandShortName;-it.">
+<!ENTITY  enableChecking.label            "Lejo &brandShortName;-in të kontrollojë për përditësime.">
+<!ENTITY  clickFinish.labelMac            "Klikoni mbi U bë që të vazhdohet me nisjen e &brandShortName;-it.">

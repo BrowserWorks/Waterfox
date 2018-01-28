@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab kroži med zavihki po vrsti, kot so bili nazadnje uporabljeni">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Nova okna odpiraj v novih zavihkih">
+<!ENTITY newWindowsAsTabs.accesskey   "n">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Opozori ob zapiranju več zavihkov hkrati">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "z">
+
+<!ENTITY warnOnOpenManyTabs.label       "Opozori, ko lahko odpiranje veliko zavihkov hkrati upočasni &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "v">
+
+<!ENTITY switchLinksToNewTabs.label        "Ko odprete povezavo v novem zavihku, takoj preklopi nanj">
+<!ENTITY switchLinksToNewTabs.accesskey    "t">
+
+<!ENTITY showTabsInTaskbar.label          "Prikaži predoglede zavihkov v opravilni vrstici Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Zavihki">

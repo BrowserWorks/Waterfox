@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "О умрежавању">
+<!ENTITY aboutNetworking.warning               "Ово је веома експериментално. Не користите без надзора родитеља.">
+<!ENTITY aboutNetworking.showNextTime          "Прикажи ово упозорење следећи пут">
+<!ENTITY aboutNetworking.ok                    "У реду">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Освежи">
+<!ENTITY aboutNetworking.autoRefresh           "Аутоматски освежи сваке 3 секунде">
+<!ENTITY aboutNetworking.hostname              "Име сервера">
+<!ENTITY aboutNetworking.port                  "Порт">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Активно">
+<!ENTITY aboutNetworking.idle                  "Чекање">
+<!ENTITY aboutNetworking.host                  "Хост">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Послато">
+<!ENTITY aboutNetworking.received              "Примљено">
+<!ENTITY aboutNetworking.family                "Породица">
+<!ENTITY aboutNetworking.addresses             "Адресе">
+<!ENTITY aboutNetworking.expires               "Истиче (секунде)">
+<!ENTITY aboutNetworking.messagesSent          "Поруке послате">
+<!ENTITY aboutNetworking.messagesReceived      "Поруке примљене">
+<!ENTITY aboutNetworking.bytesSent             "Бајтова послато">
+<!ENTITY aboutNetworking.bytesReceived         "Бајтова примљено">
+<!ENTITY aboutNetworking.logging               "Бележење">
+<!ENTITY aboutNetworking.logTutorial           "Погледајте <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP бележење</a> за инструкције о коришћењу овог алата.">
+<!ENTITY aboutNetworking.currentLogFile        "Тренутна датотека за бележење:">
+<!ENTITY aboutNetworking.currentLogModules     "Тренутни модули за бележење:">
+<!ENTITY aboutNetworking.setLogFile            "Подеси датотеку за бележење">
+<!ENTITY aboutNetworking.setLogModules         "Подеси модуле за бележење">
+<!ENTITY aboutNetworking.startLogging          "Покрени бележење">
+<!ENTITY aboutNetworking.stopLogging           "Заустави бележење">
+<!ENTITY aboutNetworking.dnsLookup             "DNS Lookup">
+<!ENTITY aboutNetworking.dnsLookupButton       "Решити">
+<!ENTITY aboutNetworking.dnsDomain             "Домен">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP адресе">
+<!ENTITY aboutNetworking.rcwn                  "RCWN статистика">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN стање">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Кеш је победио">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net је победио">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Укупан број мрежних захтева">
+<!ENTITY aboutNetworking.rcwnOperation         "Кеш операције">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Отвори">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Читај">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Пиши">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Унос отворен">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Кратка просечна">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Дужа просечна">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Дугачко подразумевано одступање">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Број успореног кеша">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Брз неуспореног кеша">

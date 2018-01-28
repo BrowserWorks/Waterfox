@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Utsûnderingen">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Website">
+<!ENTITY treehead.status.label        "Steat">
+<!ENTITY removepermission2.label      "Website fuortsmite">
+<!ENTITY removepermission2.accesskey  "W">
+<!ENTITY removeallpermissions2.label  "Alle websites fuortsmite">
+<!ENTITY removeallpermissions2.accesskey "f">
+<!ENTITY address.label                "Adres fan de website:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Blokkearje">
+<!ENTITY block.accesskey              "B">
+<!ENTITY session.label                "Tastean foar sesje">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Tastean">
+<!ENTITY allow.accesskey              "T">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Annulearje">
+<!ENTITY button.cancel.accesskey      "n">
+<!ENTITY button.ok.label              "Wizigingen bewarje">
+<!ENTITY button.ok.accesskey          "i">
+

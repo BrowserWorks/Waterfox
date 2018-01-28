@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standart qidiruv tizimi">
+
+
+<!ENTITY provideSearchSuggestions.label        "Qidiruv tavsiyalarini keltirish">
+<!ENTITY provideSearchSuggestions.accesskey    "Q">
+
+
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Qidiruv tavsiyalari manzil qatorida ko‘rsatilmaydi, chunki &brandShortName; brauzerini tarixni eslab qolmaydigan qilib sozlagansiz.">
+
+<!ENTITY oneClickSearchEngines.label           "Bir bosishda izlash qidiruv tizimlari">
+
+
+<!ENTITY engineNameColumn.label                "Qidiruv tizimlari">
+<!ENTITY engineKeywordColumn.label             "Kalit so‘z">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Standart qidiruv tizimlarini tiklash">
+<!ENTITY restoreDefaultSearchEngines.accesskey "S">
+
+<!ENTITY removeEngine.label                    "Olib tashlash">
+<!ENTITY removeEngine.accesskey                "O">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

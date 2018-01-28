@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "ជម្រើស">
+<!ENTITY  prefWindow.title        "ចំណូលចិត្ត">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "ចំណូលចិត្ត &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 52em; min-height: 47.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 57em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 55.5em; min-height: 40.5em;">
+
+<!ENTITY  paneGeneral.title       "ទូទៅ">
+<!ENTITY  paneTabs.title          "ផ្ទាំង">
+<!ENTITY  paneSearch.title        "ស្វែងរក">
+<!ENTITY  paneContent.title       "មាតិកា">
+<!ENTITY  paneApplications.title  "កម្មវិធី">
+<!ENTITY  panePrivacy.title       "ភាព​ឯកជន">
+<!ENTITY  paneContainers.title    "ផ្ទាំង​ប្រអប់​ផ្ទុក">
+<!ENTITY  paneSecurity.title      "សុវត្ថិភាព">
+<!ENTITY  paneAdvanced.title      "កម្រិត​ខ្ពស់">
+
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync.title          "ធ្វើ​សមកាលកម្ម">
+
+<!ENTITY  helpButton.label        "ជំនួយ">

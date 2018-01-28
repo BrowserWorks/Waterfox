@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - เลือกโปรไฟล์ผู้ใช้">
+
+<!ENTITY            profilename.label      "ชื่อโปรไฟล์:">
+
+<!ENTITY            start.label            "เริ่ม &brandShortName;">
+<!ENTITY            exit.label             "ออก">
+
+<!ENTITY            availprofiles.label    "โปรไฟล์ที่ใช้ได้">
+
+<!ENTITY            newButton.label        "สร้างโปรไฟล์…">
+<!ENTITY            newButton.accesskey    "ส">
+<!ENTITY            renameButton.label     "เปลี่ยนชื่อโปรไฟล์…">
+<!ENTITY            renameButton.accesskey "ป">
+<!ENTITY            deleteButton.label     "ลบโปรไฟล์…">
+<!ENTITY            deleteButton.accesskey "ล">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; จัดเก็บข้อมูลเกี่ยวกับการตั้งค่า, ค่ากำหนด และข้อมูลผู้ใช้อื่น ๆ ในโปรไฟล์ผู้ใช้ของคุณ">
+
+<!ENTITY            offlineState.label    "ทำงานออฟไลน์">
+<!ENTITY            offlineState.accesskey "ฟ">
+
+<!ENTITY            useSelected.label       "ใช้โปรไฟล์ที่เลือกโดยไม่ต้องถามเมื่อเริ่มการทำงาน">
+<!ENTITY            useSelected.accesskey   "ช">

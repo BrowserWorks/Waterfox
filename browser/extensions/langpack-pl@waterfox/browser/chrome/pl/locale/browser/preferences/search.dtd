@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label "Domyślna wyszukiwarka">
+<!ENTITY chooseYourDefaultSearchEngine2.label "Wybierz domyślną wyszukiwarkę paska adresu i paska wyszukiwania.">
+<!ENTITY provideSearchSuggestions.label "Podpowiedzi wyszukiwania">
+<!ENTITY provideSearchSuggestions.accesskey "">
+<!ENTITY showURLBarSuggestions2.label "Podpowiedzi wyszukiwania w podpowiedziach paska adresu">
+<!ENTITY showURLBarSuggestions2.accesskey "">
+<!ENTITY urlBarSuggestionsPermanentPB.label "Podpowiedzi wyszukiwania nie będą wyświetlane w podpowiedziach paska adresu, ponieważ wyłączono zachowywanie historii przeglądania programu &brandShortName;.">
+
+<!ENTITY oneClickSearchEngines.label "Dodatkowe wyszukiwarki">
+<!ENTITY chooseWhichOneToDisplay2.label "Wybierz dodatkowe wyszukiwarki wyświetlane na dole wyników wyszukiwania w pasku adresu i pasku wyszukiwania.">
+<!ENTITY engineNameColumn.label "Nazwa">
+<!ENTITY engineKeywordColumn.label "Słowo kluczowe">
+<!ENTITY restoreDefaultSearchEngines.label "Przywróć domyślne">
+<!ENTITY restoreDefaultSearchEngines.accesskey "">
+<!ENTITY removeEngine.label "Usuń">
+<!ENTITY removeEngine.accesskey "">
+<!ENTITY findMoreSearchEngines.label "Więcej wyszukiwarek">

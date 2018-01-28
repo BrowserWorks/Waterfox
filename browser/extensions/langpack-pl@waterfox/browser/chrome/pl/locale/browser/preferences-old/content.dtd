@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY popups.label "Wyskakujące okna">
+<!ENTITY blockPopups.label "Blokowanie wyskakujących okien">
+<!ENTITY blockPopups.accesskey "B">
+
+<!ENTITY notificationsPolicy.label "Powiadomienia">
+<!ENTITY notificationsPolicyLearnMore.label "Więcej informacji">
+<!ENTITY notificationsPolicyDesc4.label "Wybierz witryny mogące wyświetlać powiadomienia">
+<!ENTITY notificationsPolicyButton.label "Wybierz…">
+<!ENTITY notificationsPolicyButton.accesskey "z">
+<!ENTITY notificationsDoNotDisturb.label "Nie przeszkadzać">
+<!ENTITY notificationsDoNotDisturb.accesskey "N">
+<!ENTITY notificationsDoNotDisturbDetails.value "Powiadomienia nie będą wyświetlane do czasu ponownego uruchomienia programu &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Wyjątki…">
+<!ENTITY  popupExceptions.accesskey   "W">
+
+<!ENTITY  fontsAndColors.label        "Czcionki i kolory">
+<!ENTITY  defaultFont.label           "Domyślna czcionka:">
+<!ENTITY  defaultFont.accesskey       "d">
+<!ENTITY  defaultSize.label           "Rozmiar:">
+<!ENTITY  defaultSize.accesskey       "R">
+
+<!ENTITY  advancedFonts.label         "Zaawansowane…">
+<!ENTITY advancedFonts.accesskey "s">
+
+<!ENTITY  colors.label                "Kolory…">
+<!ENTITY  colors.accesskey            "K">
+
+<!ENTITY languages.label              "Języki">
+<!ENTITY chooseLanguage.label         "Wybierz preferowany język, w jakim mają być wyświetlane strony">
+<!ENTITY chooseButton.label           "Wybierz…">
+<!ENTITY chooseButton.accesskey       "e">
+
+<!ENTITY translateWebPages.label "Tłumaczenie stron WWW">
+<!ENTITY translateWebPages.accesskey "T">
+<!ENTITY translateExceptions.label "Wyjątki…">
+<!ENTITY translateExceptions.accesskey "i">
+<!ENTITY translation.options.attribution.beforeLogo "Tłumaczeń dostarcza">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY drmContent.label "DRM">
+<!ENTITY playDRMContent.label "Odtwarzanie treści chronionych przez DRM">
+<!ENTITY playDRMContent.accesskey "O">
+<!ENTITY playDRMContent.learnMore.label "Więcej informacji">

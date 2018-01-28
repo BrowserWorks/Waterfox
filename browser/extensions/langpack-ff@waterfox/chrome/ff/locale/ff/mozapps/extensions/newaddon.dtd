@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Aaf Ɓeyditere">
+<!ENTITY intro           "Jaaɓnirde woɗnde e ordinateer maa ena yiɗi waylude &brandShortName; huutoraade ngal ɓeydital:">
+<!ENTITY warning         "Aaf ɓeyditte tan so iwɗe e topayɓe ɓe kooli-ɗaa.">
+<!ENTITY allow           "Yamir ngol aafgol">
+<!ENTITY later           "Aɗa waawi haaytude sahaa kala so yahde to Toppitorde Ɓeyditte toh.">
+<!ENTITY continue        "Jokku">
+<!ENTITY restartMessage  "Maa kurmitinaa &brandShortName; ngam jokkitde aafgol ngal ɓeydital.">
+<!ENTITY restartButton   "Hurmitin &brandShortName;">
+<!ENTITY cancelButton    "Haaytu">

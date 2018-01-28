@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Бұл бетті жабу">
+<!ENTITY tabCrashed.restoreTab "Бұл бетті қалпына келтіру">
+<!ENTITY tabCrashed.restoreAll "Барлық құлап түскен беттерді қалпына келтіру">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Қап. Браузер беті құлап түсті.">
+<!ENTITY tabCrashed.offerHelp "Біз сізге көмектесе аламыз!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Парақ құрамасын қайта жүктеу үшін &tabCrashed.restoreTab; таңдаңыз.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Парақ құрамасын қайта жүктеу үшін &tabCrashed.restoreTab; немесе &tabCrashed.restoreAll; таңдаңыз.">
+<!ENTITY tabCrashed.requestHelp "Ал сіз бізге көмектесесіз бе?">
+<!ENTITY tabCrashed.requestHelpMessage "Құлау жөніндегі хабарламалар бізге мәселелерді шешуге және &brandShortName; жақсартуға көмектеседі.">
+<!ENTITY tabCrashed.requestReport "Бұл бетті хабарлау">
+<!ENTITY tabCrashed.sendReport2 "Сіз қарап отырған бет үшін құлау хабарламасын жіберу">
+<!ENTITY tabCrashed.commentPlaceholder2 "Міндетті емес түсініктеме (түсініктеме әркімге көрінеді)">
+<!ENTITY tabCrashed.includeURL2 "Құлау хабарламасымен парақ сілтемесін қосып жіберу">
+<!ENTITY tabCrashed.emailPlaceholder "Электрондық пошта адресін енгізіңіз">
+<!ENTITY tabCrashed.emailMe "Көбірек ақпарат бар болған кезде, маған хат жазыңыз">
+<!ENTITY tabCrashed.reportSent "Құлау хабарламасы жіберілген; &brandShortName; жақсырақ қылуға көмегіңіз үшін рахмет!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Фондағы беттерді хабарлау">
+<!ENTITY tabCrashed.autoSubmit2 "Бұл және болашақ сессияларда құлап түскен фон беттері хабарламаларын қоса құлау жөніндегі хабарламаларды автоматты түрде жіберіп отыру үшін баптауларды жаңарту">

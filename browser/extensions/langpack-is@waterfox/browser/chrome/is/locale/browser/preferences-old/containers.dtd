@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Bæta við nýjum innihaldsflipa">
+<!ENTITY addButton.accesskey  "a">
+<!ENTITY preferencesButton.label "Stillingar">
+<!ENTITY removeButton.label   "Fjarlægja">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Til baka í friðhelgi">
+
+<!ENTITY window.title         "Bæta við nýjum innihaldsflipa">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Heiti:">
+<!ENTITY name.accesskey       "H">
+<!ENTITY name.placeholder     "Sláðu inn nafn innihaldsflipa">
+<!ENTITY icon.label           "Táknmynd:">
+<!ENTITY icon.accesskey       "y">
+<!ENTITY color.label          "Litur:">
+<!ENTITY color.accesskey      "L">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Lokið">
+<!ENTITY button.ok.accesskey  "ð">
+

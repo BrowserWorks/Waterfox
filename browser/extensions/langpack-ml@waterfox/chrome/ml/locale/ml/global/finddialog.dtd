@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "ഈ  താളില്‍ കണ്ടെത്തുക ">
+<!ENTITY findField.label "എന്താണു് കണ്ടത്തേണ്ടതു്‌: ">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "അക്ഷരങ്ങള്‍ ഒത്തുനോക്കുക">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "ഒതുക്കുക ">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY findButton.label "അടുത്തതു കണ്ടെത്തുക">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "റദ്ദാക്കുക">
+<!ENTITY closeButton.label "അടയ്ക്കുക ">
+<!ENTITY up.label "മുകളില്‍">
+<!ENTITY up.accesskey "ക">
+<!ENTITY down.label "താഴേയ്ക്കു്">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "ദിശ ">

@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Diflugelloù">
+
+<!ENTITY  blockPopups.label           "Herzel an diflugelloù">
+<!ENTITY  blockPopups.accesskey       "H">
+
+<!ENTITY  notificationsPolicy.label            "Rebuzadurioù">
+<!ENTITY  notificationsPolicyLearnMore.label   "Gouzout hiroc'h">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "i">
+<!ENTITY  notificationsPolicyButton.label      "Dibab…">
+<!ENTITY  notificationsDoNotDisturb.label      "Arabat direnkañ ac'hanon">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "d">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Ne vo skrammet rebuzadur ebet betek ma vo adlañset &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Nemedennoù">
+<!ENTITY  popupExceptions.accesskey   "N">
+
+<!ENTITY  fontsAndColors.label        "Nodrezhoù ha Livioù">
+
+<!ENTITY  defaultFont.label           "Nodrezh dre ziouer :">
+<!ENTITY  defaultFont.accesskey       "o">
+<!ENTITY  defaultSize.label           "Ment :">
+<!ENTITY  defaultSize.accesskey       "t">
+
+<!ENTITY  advancedFonts.label         "Kempleshoc'h…">
+<!ENTITY  advancedFonts.accesskey     "p">
+
+<!ENTITY  colors.label                "Livioù…">
+<!ENTITY  colors.accesskey            "L">
+
+
+<!ENTITY languages.label              "Yezhoù">
+<!ENTITY chooseLanguage.label         "Dibabit ho yezh muiañ plijet evit skrammañ ar pajennadoù">
+<!ENTITY chooseButton.label           "Dibab…">
+<!ENTITY chooseButton.accesskey       "i">
+
+<!ENTITY translateWebPages.label      "Treiñ an endalc'had web">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Nemedennoù…">
+<!ENTITY translateExceptions.accesskey "N">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Troidigezhioù gant">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Endalc'had DRM">
+
+<!ENTITY  playDRMContent.label         "Lenn an endalc'had DRM">
+<!ENTITY  playDRMContent.accesskey     "L">
+<!ENTITY  playDRMContent.learnMore.label "Gouzout hiroc'h">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

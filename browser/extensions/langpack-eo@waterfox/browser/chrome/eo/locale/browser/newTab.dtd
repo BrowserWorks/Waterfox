@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Nova langeto">
+<!ENTITY newtab.customize.classic "Montri viajn preferatajn retejojn">
+<!ENTITY newtab.customize.cog.enhanced "Inkluzivi sugestitajn retejojn">
+<!ENTITY newtab.customize.cog.title2 "REGILOJ DE NOVA LANGETO">
+<!ENTITY newtab.customize.cog.learn "Pli da informo pri: Nova langeto">
+<!ENTITY newtab.customize.title "Personecigi la paĝon por novaj langetoj">
+<!ENTITY newtab.customize.blank2 "Montri malplenan paĝon">
+<!ENTITY newtab.undo.removedLabel "Forigita miniaturo.">
+<!ENTITY newtab.undo.undoButton "Malfari.">
+<!ENTITY newtab.undo.restoreButton "Restarigi ĉiujn.">
+<!ENTITY newtab.undo.closeTooltip "Kaŝi">

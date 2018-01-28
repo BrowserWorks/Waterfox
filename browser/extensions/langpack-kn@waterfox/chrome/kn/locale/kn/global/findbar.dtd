@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "ವಾಕ್ಯದ ಮುಂದಿನ ಇರುವಿಕೆಯನ್ನು ಹುಡುಕು">
+<!ENTITY previous.tooltip "ವಾಕ್ಯದ ಹಿಂದಿನ ಇರುವಿಕೆಯನ್ನು ಹುಡುಕು">
+<!ENTITY findCloseButton.tooltip "ಹುಡುಕು ಪಟ್ಟಿಯನ್ನು ಮುಚ್ಚು">
+
+
+<!ENTITY highlightAll.tooltiptext "ನುಡಿಗಟ್ಟಿನ ಎಲ್ಲಾ ಇರುವಿಕೆಯನ್ನು ಹೈಲೈಟ್ ಮಾಡಿ">
+<!ENTITY caseSensitive.label "ಕೇಸನ್ನು Match">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "ಕೇಸ್‌ನ ಸಂವೇದನೆಯೊಂದಿಗೆ ಹುಡುಕಿ">
+<!ENTITY entireWord.label "ಸಂಪೂರ್ಣ ಪದಗಳು">
+<!ENTITY entireWord.accesskey "W">
+<!ENTITY entireWord.tooltiptext "ಸಂಪೂರ್ಣ ಪದಗಳನ್ನು ಮಾತ್ರ ಹುಡುಕು">
+
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.label "Highlight All">

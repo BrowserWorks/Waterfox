@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "عنوان مختصر"> 
+<!ENTITY message.label    "چند متن نمونه از این قرار است.">
+<!ENTITY editfield0.label "نام کاربر:"> 
+<!ENTITY editfield1.label "گذرواژه:"> 
+<!ENTITY checkbox.label   "بررسی">
+<!ENTITY copyCmd.label    "رونوشت برداشتن">
+<!ENTITY copyCmd.accesskey "ن">
+<!ENTITY selectAllCmd.label "انتخاب همه">
+<!ENTITY selectAllCmd.accesskey "ا">

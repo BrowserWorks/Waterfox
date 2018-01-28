@@ -1,0 +1,171 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Titouroù disac'hañ">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Ar bajenn-mañ a endalc'h stlennoù teknikel hag a c'hallfe bezañ talvoudus pa glaskit  dirouestlañ ur gudenn. Mar klaskit respontoù da c'houlennoù boutin a-zivout  &brandShortName;, e c'hallit klask war hol <a id='supportLink'>lec'hienn skoazell</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Danevelloù sac'hadenn">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Naoudi an danevell">
+<!ENTITY aboutSupport.crashes.sendDate "Kaset">
+<!ENTITY aboutSupport.crashes.allReports "An holl zanevelloù sac'hadenn">
+<!ENTITY aboutSupport.crashes.noConfig "N'eo ket bet kefluniet an arload-mañ evit skrammañ danevelloù sac'hadenn.">
+
+<!ENTITY aboutSupport.extensionsTitle "Askouezhioù">
+<!ENTITY aboutSupport.extensionName "Anv">
+<!ENTITY aboutSupport.extensionEnabled "Gweredekaet">
+<!ENTITY aboutSupport.extensionVersion "Handelv">
+<!ENTITY aboutSupport.extensionId "Naoudi">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "Keweriusterioù arnodel">
+<!ENTITY aboutSupport.experimentName "Anv">
+<!ENTITY aboutSupport.experimentId "Naoudi">
+<!ENTITY aboutSupport.experimentDescription "Deskrivadenn">
+<!ENTITY aboutSupport.experimentActive "Oberiant">
+<!ENTITY aboutSupport.experimentEndDate "Deiziad echuiñ">
+<!ENTITY aboutSupport.experimentHomepage "Pennbajenn">
+<!ENTITY aboutSupport.experimentBranch "Skourr">
+
+<!ENTITY aboutSupport.appBasicsTitle "Arventennoù diazez an arload">
+<!ENTITY aboutSupport.appBasicsName "Anv">
+<!ENTITY aboutSupport.appBasicsVersion "Handelv">
+<!ENTITY aboutSupport.appBasicsBuildID "Naoudi ar c'hempunañ">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Sanell hizivadur">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Roll istor an hizivadurioù">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Diskouez roll istor an hizivadurioù">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Kavlec'h an aelad">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Teuliad an aelad">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Enlugelladoù gweredekaet">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Kefluniad kempunadur">
+<!ENTITY aboutSupport.appBasicsUserAgent "Gwezher arveriad">
+<!ENTITY aboutSupport.appBasicsOS "Reizhiad Korvoiñ">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Arver ar vemor">
+<!ENTITY aboutSupport.appBasicsPerformance "Digonusted">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Labourerien gwazerezh marilhet">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Aeladoù">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Prenestroù liesargerzh">
+
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Alc'hwez Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Alc'hwez Gwazerezh Lec'hiadur Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mod diarvar">
+
+<!ENTITY aboutSupport.showDir.label "Digeriñ ar c'havlec'h">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Diskouez e-barzh Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Digeriñ ar poull-traezh">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Gwellvezioù pouezus kemmet">
+<!ENTITY aboutSupport.modifiedPrefsName "Anv">
+<!ENTITY aboutSupport.modifiedPrefsValue "Gwerzh">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Gwellvezioù eus user.js">
+<!ENTITY aboutSupport.userJSDescription "Teuliad hoc'h aelad a endalc'h ur <a id='prefs-user-js-link'>restr user.js</a> a enlaka gwellvezioù nad int ket bet krouet gant &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Gwellvezioù prennet pouezus">
+<!ENTITY aboutSupport.lockedPrefsName "Anv">
+<!ENTITY aboutSupport.lockedPrefsValue "Gwerzh">
+
+<!ENTITY aboutSupport.graphicsTitle "Reizhiad kevregañ">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Stlennvon &quot;Places&quot;">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Kevanded">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Gwiriañ ar gevanded">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Karzher azvuiadel">
+
+<!ENTITY aboutSupport.a11yTitle "Haezadusted">
+<!ENTITY aboutSupport.a11yActivated "Gweredekaet">
+<!ENTITY aboutSupport.a11yForceDisabled "Mirout ouzh an haezadusted">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Handelvoù ar mezarc'hioù">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Roll istor staliadur">
+<!ENTITY aboutSupport.updateHistoryTitle "Roll istor hizivadur">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Eilañ an destenn er golver">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Eilañ ar roadenn diaoz er golver">
+
+<!ENTITY aboutSupport.sandboxTitle "Bailh traezh">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Galvoù reizhiad nac'het">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "a eilennoù 'zo">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Doare argerzh">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguzennoù">
+
+<!ENTITY aboutSupport.safeModeTitle "Klask ar mod diarvar">
+<!ENTITY aboutSupport.restartInSafeMode.label "Adloc'hañ gant an askouezhioù diweredekaet…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Perzhioù">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Deznaouiñ">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Kerzhlevr c'hwitadennoù">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Kerzhlevr divizoù">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Keweriusterioù diweredekaet gant ar gwarez e-enep d'ar sac'hadennoù">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Tremen e-biou">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

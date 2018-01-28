@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Tanúsítványkezelő">
+
+<!ENTITY certmgr.tab.mine                     "Saját tanúsítványok">
+<!ENTITY certmgr.tab.others2                  "Emberek">
+<!ENTITY certmgr.tab.websites3                "Kiszolgálók">
+<!ENTITY certmgr.tab.ca                       "Hitelesítésszolgáltatók">
+<!ENTITY certmgr.tab.orphan2                  "Egyebek">
+
+<!ENTITY certmgr.mine                         "A következő szervezetektől vannak Önt azonosító tanúsítványok:">
+<!ENTITY certmgr.others                       "A következő embereket lehet azonosítani a meglevő tanúsítványokkal:">
+<!ENTITY certmgr.websites2                    "A következő kiszolgálókat lehet azonosítani a meglevő tanúsítványokkal:">
+<!ENTITY certmgr.cas                          "A következő hitelesítésszolgáltatókat lehet azonosítani a meglevő tanúsítványokkal:">
+<!ENTITY certmgr.orphans                      "Vannak olyan tanúsítványai, amelyek nem tartoznak a fenti kategóriákba:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Általános">
+<!ENTITY certmgr.detail.general_tab.accesskey "l">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Részletek">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "R">
+
+<!ENTITY certmgr.pending.label                "Tanúsítvány ellenőrzése folyamatban…">
+<!ENTITY certmgr.subjectinfo.label            "Tulajdonos">
+<!ENTITY certmgr.issuerinfo.label             "Kibocsátó">
+<!ENTITY certmgr.periodofvalidity.label       "Érvényesség időtartama" >
+<!ENTITY certmgr.fingerprints.label           "Ujjlenyomatok">
+<!ENTITY certmgr.certdetail.title             "Tanúsítvány részletek">
+<!ENTITY certmgr.certdetail.cn                "Általános név (CN)">
+<!ENTITY certmgr.certdetail.o                 "Szervezet (O)">
+<!ENTITY certmgr.certdetail.ou                "Szervezeti egység (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Sorozatszám">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA256-ujjlenyomat">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1-ujjlenyomat">
+
+<!ENTITY certmgr.editcacert.title             "Hitelesítésszolgáltató tanúsítványa megbízhatóságának beállítása">
+<!ENTITY certmgr.editcert.edittrust           "Megbízhatósági beállítások megadása:">
+<!ENTITY certmgr.editcert.trustssl            "Ez a tanúsítvány használható webhelyek azonosítására.">
+<!ENTITY certmgr.editcert.trustemail          "Ez a tanúsítvány használható elektronikus levelek feladóinak azonosítására.">
+<!ENTITY certmgr.editcert.trustobjsign        "Ez a tanúsítvány használható szoftverkészítők azonosítására.">
+
+<!ENTITY certmgr.deletecert.title             "Tanúsítvány törlése">
+
+<!ENTITY certmgr.certname                     "Tanúsítvány neve">
+<!ENTITY certmgr.certserver                   "Kiszolgáló">
+<!ENTITY certmgr.override_lifetime            "Élettartam">
+<!ENTITY certmgr.tokenname                    "Adatvédelmi eszköz">
+<!ENTITY certmgr.begins                       "Kezdődik">
+<!ENTITY certmgr.expires                      "Lejárat dátuma">
+<!ENTITY certmgr.email                        "E-mail cím">
+<!ENTITY certmgr.serial                       "Sorozatszám">
+
+<!ENTITY certmgr.close.label                  "Bezárás">
+<!ENTITY certmgr.close.accesskey              "B">
+<!ENTITY certmgr.view2.label                  "Megtekintés…">
+<!ENTITY certmgr.view2.accesskey              "M">
+<!ENTITY certmgr.edit3.label                  "Bizalom szerkesztése…">
+<!ENTITY certmgr.edit3.accesskey              "B">
+<!ENTITY certmgr.export.label                 "Exportálás…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Törlés…">
+<!ENTITY certmgr.delete2.accesskey            "T">
+<!ENTITY certmgr.delete_builtin.label         "Törlés vagy bizalom visszavonása…">
+<!ENTITY certmgr.delete_builtin.accesskey     "v">
+<!ENTITY certmgr.backup2.label                "Mentés…">
+<!ENTITY certmgr.backup2.accesskey            "e">
+<!ENTITY certmgr.backupall2.label             "Biztonsági mentés mindenről…">
+<!ENTITY certmgr.backupall2.accesskey         "s">
+<!ENTITY certmgr.restore2.label               "Importálás…">
+<!ENTITY certmgr.restore2.accesskey           "I">
+<!ENTITY certmgr.details.label                "Tanúsítványmezők">
+<!ENTITY certmgr.details.accesskey            "a">
+<!ENTITY certmgr.fields.label                 "Mezőérték">
+<!ENTITY certmgr.fields.accesskey             "e">
+<!ENTITY certmgr.hierarchy.label              "Tanúsítványhierarchia">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Kivétel hozzáadása…">
+<!ENTITY certmgr.addException.accesskey       "h">
+
+<!ENTITY exceptionMgr.title                   "Biztonsági kivétel hozzáadása">
+<!ENTITY exceptionMgr.exceptionButton.label   "Biztonsági kivétel megerősítése">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "B">
+<!ENTITY exceptionMgr.supplementalWarning     "Törvényesen működő bankok, üzletek és nyilvános webhelyek nem kérnek ilyesmit.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Kiszolgáló">
+<!ENTITY exceptionMgr.certlocation.url        "Hely:">
+<!ENTITY exceptionMgr.certlocation.download   "Tanúsítvány letöltése">
+<!ENTITY exceptionMgr.certlocation.accesskey  "T">
+<!ENTITY exceptionMgr.certstatus.caption      "Tanúsítvány állapota">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Megtekintés…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "M">
+<!ENTITY exceptionMgr.permanent.label         "Kivétel megőrzése">
+<!ENTITY exceptionMgr.permanent.accesskey     "K">

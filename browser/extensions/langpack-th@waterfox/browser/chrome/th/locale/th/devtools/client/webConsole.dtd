@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY window.title "คอนโซลเว็บ">
+<!ENTITY browserConsole.title "คอนโซลเบราว์เซอร์">
+
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "เปิด URL ในแท็บใหม่">
+<!ENTITY openURL.accesskey "ป">
+
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "เน็ต">
+<!ENTITY btnPageNet.tooltip "บันทึกกิจกรรมของการใช้เครือข่าย">
+<!ENTITY btnPageNet.accesskey "เ">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "CSS">
+<!ENTITY btnPageCSS.tooltip2 "บันทึกข้อผิดพลาดและคำเตือน CSS">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "บันทึกข้อยกเว้น JavaScript">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "ความปลอดภัย">
+<!ENTITY btnPageSecurity.tooltip "บันทึกข้อผิดพลาดและคำเตือนความปลอดภัย">
+<!ENTITY btnPageSecurity.accesskey "ล">
+
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+<!ENTITY btnPageLogging.label   "การบันทึก">
+<!ENTITY btnPageLogging.tooltip "บันทึกข้อความที่ส่งไปยัง window.console">
+<!ENTITY btnConsoleErrors       "ข้อผิดพลาด">
+<!ENTITY btnConsoleInfo         "ข้อมูล">
+<!ENTITY btnConsoleWarnings     "คำเตือน">
+<!ENTITY btnConsoleLog          "รายการบันทึก">
+<!ENTITY btnConsoleXhr          "XHR">
+
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+<!ENTITY btnServerLogging.label       "เซิร์ฟเวอร์">
+<!ENTITY btnServerErrors              "ข้อผิดพลาด">
+<!ENTITY btnServerInfo                "ข้อมูล">
+<!ENTITY btnServerWarnings            "คำเตือน">
+<!ENTITY btnServerLog                 "รายการบันทึก">
+
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleSharedWorkers "ตัวทำงานที่แบ่งปัน">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "ตัวทำงานบริการ">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+
+<!ENTITY filterOutput.placeholder "กรองค่าออก">
+<!ENTITY btnClear.label        "ล้าง">
+<!ENTITY btnClear.tooltip      "ล้างค่าออกของคอนโซลเว็บ">
+<!ENTITY btnClear.accesskey    "ง">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY copyURLCmd.label     "คัดลอกตำแหน่งที่ตั้งลิงก์">
+<!ENTITY copyURLCmd.accesskey "ค">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY openInVarViewCmd.label "เปิดในมุมมองตัวแปร">
+
+<!ENTITY btnConsoleReflows      "Reflows">
+
+<!ENTITY btnConsoleWindowlessWorkers "Add-on or Chrome Workers">
+
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerLogging.tooltip     "Log messages received from a web server">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.accesskey "S">
+<!ENTITY storeAsGlobalVar.label "Store as global variable">

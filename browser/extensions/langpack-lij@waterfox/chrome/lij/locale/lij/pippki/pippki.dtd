@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Cangia a paròlla segreta prinçipâ">
+<!ENTITY setPassword.tokenName.label "Aparato de seguessa">
+<!ENTITY setPassword.oldPassword.label "Paròlla segreta corente:">
+<!ENTITY setPassword.newPassword.label "Neuva paròlla segreta:">
+<!ENTITY setPassword.reenterPassword.label "Neuva paròlla segreta (ancon):">
+<!ENTITY setPassword.meter.label "Qualitæ da paròlla segreta">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Inpòsta torna">
+<!ENTITY resetPassword.title  "Inpòsta torna a paròlla segreta prinçipâ">
+<!ENTITY resetPassword.text  "Se ti ti inposti torna a teu paròlla segreta prinçipâ tutte e teu paròlle segrete de mail, web, dæti di mòdoli, certificati personali e ciavi privæ saian scancelæ. T'ê seguo de inpostâ torna a teu paròlla segreta prinçipâ?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Descarego o certificato">
+<!ENTITY downloadCert.message1 "Te vegne domandou de dâ a fiduccia a sta neuva Aotoritæ di Certicati (CA).">
+<!ENTITY downloadCert.trustSSL "Fiate de sta CA pe identificâ i sciti web.">
+<!ENTITY downloadCert.trustEmail "Fiate de sta CA pe identificâ e email.">
+<!ENTITY downloadCert.trustObjSign "Danni a fiduccia a sta CA a identificâ i svilupatoî de aplicaçioin.">
+<!ENTITY downloadCert.message3 "Primma de dâ a fiduccia a sta CA ti dovesci ezaminâ o seu certificato, a seu politica e procedue (se ghe son).">
+<!ENTITY downloadCert.viewCert.label "Fanni vedde">
+<!ENTITY downloadCert.viewCert.text "Ezamina o certificato CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "L'é domandâ a identitæ de l'utente">
+<!ENTITY clientAuthAsk.message1 "Sto scito o veu savei a teu identificaçion co-o certificato:">
+<!ENTITY clientAuthAsk.message2 "Çerni un certificato da fâ vedde comme identificaçion:">
+<!ENTITY clientAuthAsk.message3 "Detalli in sciô certificato Seleçionou:">
+
+<!ENTITY pkcs12.setpassword.title  "Çerni 'na paròlla segreta pe-a còpia de seguessa di certificati">
+<!ENTITY pkcs12.setpassword.message  "A paròlla segreta pe-a còpia de seguessa di certificati serve a protezze e còpie de seguessa che ti crei.  Ti devi inserî sta paròlla segreta pe continoâ.">
+<!ENTITY pkcs12.setpassword.label1 "Paròlla segreta pe-a còpia de seguessa:">
+<!ENTITY pkcs12.setpassword.label2 "Paròlla segreta pe-a còpia de seguessa (torna):">
+<!ENTITY pkcs12.setpassword.reminder "Inportante: Se ti t'ascòrdi a paròlla segreta di certificati, no ti saiê ciù in graddo de repigiâ sta còpia de seguessa. Pe piaxei sarvila inte 'n leugo seguo.">
+
+<!ENTITY chooseToken.title  "Çerni o Token">
+<!ENTITY chooseToken.message1 "Pe piaxei çerni o token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Genera a mæ ciave privâ">
+<!ENTITY createCertInfo.msg1 "A generaçion da ciave l'é in progresso… Ghe veu quarche menuto….">
+<!ENTITY createCertInfo.msg2 "Pe piaxei aspeta…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Aotenticaçion protezua dò-u Token">
+<!ENTITY protectedAuth.msg "Pe piaxei aotenticate a-o Token.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

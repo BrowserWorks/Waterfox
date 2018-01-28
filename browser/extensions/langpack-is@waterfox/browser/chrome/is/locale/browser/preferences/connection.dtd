@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Net stillingar">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Stilla milliþjóna (Proxy) til að tengjast netinu">
+<!ENTITY  noProxyTypeRadio.label        "Enginn milliþjónn">
+<!ENTITY  noProxyTypeRadio.accesskey    "þ">
+<!ENTITY  systemTypeRadio.label         "Nota milliþjóna stillingar">
+<!ENTITY  systemTypeRadio.accesskey     "N">
+<!ENTITY  WPADTypeRadio.label           "Sjálfvirk uppgötvun á milliþjónum á þessu neti">
+<!ENTITY  WPADTypeRadio.accesskey       "u">
+<!ENTITY  manualTypeRadio.label         "Handvirk stilling á milliþjónum:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  autoTypeRadio.label           "Sjálfvirkt URL fyrir stillingar á milliþjónum:">
+<!ENTITY  autoTypeRadio.accesskey       "a">
+<!ENTITY  reload.label                  "Endurnýja">
+<!ENTITY  reload.accesskey              "E">
+<!ENTITY  ftp.label                     "FTP milliþjónn:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP milliþjónn:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL milliþjónn:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS netþjónn:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "DNS milliþjónn ef notað er SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "D">
+<!ENTITY  port.label                    "Gátt:">
+<!ENTITY  HTTPport.accesskey            "G">
+<!ENTITY  SSLport.accesskey             "t">
+<!ENTITY  FTPport.accesskey             "t">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Ekki nota milliþjóna fyrir:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Til dæmis: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Nota þennan milliþjón fyrir allar samskiptareglur">
+<!ENTITY  shareproxy.accesskey          "o">
+<!ENTITY  autologinproxy.label          "Ekki spyrja um auðkenningu ef búið er að vista lykilorð">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Þessi valmöguleiki auðkennir þig á bakvið við milliþjóna ef búið er að vista auðkenni. Spurt verður um auðkenni ef innskráning misheppnast.">

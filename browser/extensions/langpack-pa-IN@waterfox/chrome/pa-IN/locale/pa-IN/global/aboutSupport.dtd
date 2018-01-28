@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "ਸਮੱਸਿਆ ਹੱਲ਼ ਜਾਣਕਾਰੀ">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  ਇਹ ਸਫ਼ੇ ਉੱਤੇ ਤਕਨੀਕੀ ਜਾਣਕਾਰੀ ਹੈ, ਜੋ ਕਿ ਤੁਹਾਨੂੰ ਸਮੱਸਿਆ ਹੱਲ਼ ਕਰਨ ਲਈ ਫਾਇਦੇਮੰਦ
+  ਹੋ ਸਕਦੀ ਹੈ। ਜੇ ਤੁਸੀਂ &brandShortName; ਬਾਰੇ ਆਮ ਸਵਾਦ ਦੇ ਜਵਾਬ ਲੱਭ ਰਹੇ ਹੋ ਤਾਂ
+ ਸਾਡੀ <a id='supportLink'>ਸਪੋਰਟ ਵੈੱਬ ਸਾਈਟ</a> ਨੂੰ ਵੇਖੋ ਜੀ।
+">
+
+<!ENTITY aboutSupport.crashes.title "ਕਰੈਸ਼ ਰਿਪੋਰਟਾਂ">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ਰਿਪੋਰਟ ID">
+<!ENTITY aboutSupport.crashes.sendDate "ਭੇਜੀਆਂ">
+<!ENTITY aboutSupport.crashes.allReports "ਸਭ ਕਰੈਸ਼ ਰਿਪੋਰਟ">
+<!ENTITY aboutSupport.crashes.noConfig "ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਕਰੈਸ਼ ਰਿਪੋਰਟਾਂ ਵਿਖਾਉਣ ਲਈ ਹਾਲੇ ਸੰਰਚਿਤ ਨਹੀਂ ਹੈ।">
+
+<!ENTITY aboutSupport.extensionsTitle "ਇਕਸਟੈਨਸ਼ਨ">
+<!ENTITY aboutSupport.extensionName "ਨਾਂ">
+<!ENTITY aboutSupport.extensionEnabled "ਚਾਲੂ ਹੈ">
+<!ENTITY aboutSupport.extensionVersion "ਵਰਜ਼ਨ">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "ਤਜਰਬੇ ਅਧੀਨ ਫੀਚਰ">
+<!ENTITY aboutSupport.experimentName "ਨਾਂ">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "ਵੇਰਵਾ">
+<!ENTITY aboutSupport.experimentActive "ਸਰਗਰਮ">
+<!ENTITY aboutSupport.experimentEndDate "ਅੰਤ ਮਿਤੀ">
+<!ENTITY aboutSupport.experimentHomepage "ਮੁੱਖ ਸਫ਼ਾ">
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.appBasicsTitle "ਐਪਲੀਕੇਸ਼ਨ ਬੇਸਿਕ">
+<!ENTITY aboutSupport.appBasicsName "ਨਾਂ">
+<!ENTITY aboutSupport.appBasicsVersion "ਵਰਜ਼ਨ">
+<!ENTITY aboutSupport.appBasicsBuildID "ਬਿਲਡ ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "ਅੱਪਡੇਟ ਚੈਨਲ">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "ਅੱਪਡੇਟ ਅਤੀਤ">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "ਅੱਪਡੇਟ ਅਤੀਤ ਨੂੰ ਵੇਖਾਓ">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "ਪਰੋਫਾਈਲ ਡਾਇਰੈਕਟਰੀ">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "ਪਰੋਫਾਈਲ ਫੋਲਡਰ">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "ਚਾਲੂ ਪਲੱਗਇਨ">
+<!ENTITY aboutSupport.appBasicsBuildConfig "ਬਿਲਡ ਸੰਰਚਨਾ">
+<!ENTITY aboutSupport.appBasicsUserAgent "ਯੂਜ਼ਰ ਏਜੰਟ">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "ਮੈਮੋਰੀ ਵਰਤੋਂ">
+<!ENTITY aboutSupport.appBasicsPerformance "ਕਾਰਗੁਜ਼ਾਰੀ">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "ਰਜਿਸਟਰ ਕੀਤੇ Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "ਪਰੋਫਾਈਲ">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "ਬਹੁ-ਕਾਰਜ ਵਿੰਡੋਜ਼">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "ਸੁਰੱਖਿਅਤ ਮੋਡ">
+
+<!ENTITY aboutSupport.showDir.label "ਡਾਇਰੈਕਟਰੀ ਖੋਲ੍ਹੋ">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Finder ਵਿੱਚ ਵੇਖਾਓ">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "ਫੋਲਡਰ ਨੂੰ ਖੋਲ੍ਹੋ">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "ਖਾਸ ਬਦਲੀਆਂ ਗਈਆਂ ਪਸੰਦ">
+<!ENTITY aboutSupport.modifiedPrefsName "ਨਾਂ">
+<!ENTITY aboutSupport.modifiedPrefsValue "ਮੁੱਲ">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js ਪਸੰਦ">
+<!ENTITY aboutSupport.userJSDescription "ਤੁਹਾਡੇ ਪਰੋਫਾਈਲ ਫੋਲਡਰ ਵਿੱਚ ਇੱਕ <a id='prefs-user-js-link'>user.js ਫਾਈਲ</a> ਹੈ, ਜਿਸ ਵਿੱਚ ਪਸੰਦ ਸ਼ਾਮਿਲ ਹੈ, ਜੋ ਕਿ  &brandShortName; ਵਲੋਂ ਨਹੀਂ ਬਣਾਈ ਗਈ ਹੈ।">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "ਖਾਸ ਲਾਕ ਕਰਨ ਪਸੰਦ">
+<!ENTITY aboutSupport.lockedPrefsName "ਨਾਂ">
+<!ENTITY aboutSupport.lockedPrefsValue "ਮੁੱਲ">
+
+<!ENTITY aboutSupport.graphicsTitle "ਗਰਾਫਿਕਸ">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "ਥਾਵਾਂ ਦਾ ਡਾਟਾਬੇਸ">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "ਇਕਸਾਰਤਾ">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "ਇਕਸਾਰਤਾ ਨੂੰ ਤਸਦੀਕ ਕਰੋ">
+
+<!ENTITY aboutSupport.jsTitle "ਜਾਵਾਸਕ੍ਰਿਪਟ">
+<!ENTITY aboutSupport.jsIncrementalGC "ਵਾਧਾ GC">
+
+<!ENTITY aboutSupport.a11yTitle "ਅਸੈਸਬਿਲਟੀ">
+<!ENTITY aboutSupport.a11yActivated "ਸਰਗਰਮ ਹੈ">
+<!ENTITY aboutSupport.a11yForceDisabled "ਅਸੈਸਬਿਲਟੀ ਰੋਕੋ">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "ਲਾਇਬਰੇਰੀ ਵਰਜ਼ਨ">
+
+<!ENTITY aboutSupport.installationHistoryTitle "ਇੰਸਟਾਲੇਸ਼ਨ ਅਤੀਤ">
+<!ENTITY aboutSupport.updateHistoryTitle "ਅੱਪਡੇਟ ਅਤੀਤ">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "ਟੈਕਸਟ ਕਲਿੱਪਬੋਰਡ ਵਿੱਚ ਕਾਪੀ ਕਰੋ">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "ਰਾਅ ਡਾਟਾ ਕਲਿੱਪਬੋਰਡ ਵਿੱਚ ਕਾਪੀ ਕਰੋ">
+
+<!ENTITY aboutSupport.sandboxTitle "ਸੈਂਡਬਾਕਸ">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "ਸਕਿੰਟ ਪਹਿਲਾਂ">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.safeModeTitle "ਸੁਰੱਖਿਅਤ ਮੋਡ ਵਰਤ ਕੇ ਦੇਖੋ">
+<!ENTITY aboutSupport.restartInSafeMode.label "…ਐਡ-ਆਨ ਬੰਦ ਕਰਕੇ ਮੁੜ-ਚਾਲੂ ਕਰੋ">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "ਫੀਚਰ">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "ਅਲਾਮਤਾਂ">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "ਫੇਲ੍ਹ ਹੋਣ ਦੇ ਲਾਗ">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "ਫ਼ੈਸਲਾ ਲਾਗ">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "ਕਰੈਸ਼ ਗਾਰਡ ਆਯੋਗ ਫੀਚਰ">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "ਜੁਗਾੜ">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

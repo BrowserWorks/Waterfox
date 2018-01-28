@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Ceangail">
+<!ENTITY header     "Ceangail le gléas i gcéin">
+<!ENTITY host       "Óstach:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Ceangail">
+<!ENTITY connecting "Ag ceangal…">
+<!ENTITY availableAddons "Breiseáin i gcéin le fáil:">
+<!ENTITY availableTabs "Cluaisíní cianda atá ar fáil:">
+<!ENTITY availableProcesses "Cianphróisis atá ar fáil:">
+<!ENTITY connectionError "Earráid:">
+<!ENTITY errorTimeout "Earráid: ceangal thar am.">
+<!ENTITY errorRefused "Earráid: diúltaíodh an ceangal.">
+<!ENTITY errorUnexpected "Earráid gan choinne.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Is féidir cianghléasanna a dhífhabhtú le hUirlisí Forbartha Waterfox (mar shampla Waterfox ar Android agus Waterfox OS). Bí cinnte go bhfuil ‘Cian-dhífhabhtú’ roghnaithe agat ar an ngléas. Le tuilleadh eolais a fháil, léigh an ">
+<!ENTITY remoteDocumentation "doiciméadú">
+<!ENTITY remoteHelpSuffix ".">
+

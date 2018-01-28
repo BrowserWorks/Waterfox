@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Pajennaozañ">
+
+<!ENTITY basic.tab           "Mentrezh ha Dibarzhioù">
+
+<!ENTITY formatGroup.label   "Mentrezh">
+
+<!ENTITY orientation.label   "Reteradur :">
+<!ENTITY portrait.label      "Poltred">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Gweledva">
+<!ENTITY landscape.accesskey "G">
+
+<!ENTITY scale.label         "Skeul :">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Strishaat evit kenglotañ gant led ar bajenn">
+<!ENTITY shrinkToFit.accesskey "t">
+
+<!ENTITY optionsGroup.label  "Dibarzhioù">
+
+<!ENTITY printBG.label       "Moullañ an drekleur (livioù ha skeudennoù)">
+<!ENTITY printBG.accesskey   "M">
+
+<!ENTITY advanced.tab        "Marzioù ha talbennoù/diaz-pajenn">
+
+<!ENTITY marginGroup.label   "Marzioù (#1)">
+<!ENTITY marginUnits.inches  "a veutadoù">
+<!ENTITY marginUnits.metric  "a vilimetroù">
+<!ENTITY marginTop.label     "Krec'h :">
+<!ENTITY marginTop.accesskey "K">
+<!ENTITY marginBottom.label  "Diaz :">
+<!ENTITY marginBottom.accesskey "D">
+<!ENTITY marginLeft.label    "Kleiz :">
+<!ENTITY marginLeft.accesskey "l">
+<!ENTITY marginRight.label   "Dehou :">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Talbennoù ha Diaz-pajenn">
+
+<!ENTITY hfLeft.label        "Kleiz :">
+<!ENTITY hfCenter.label      "Kreiz :">
+<!ENTITY hfRight.label       "Dehou :">
+<!ENTITY headerLeft.tip      "Talbenn kleiz">
+<!ENTITY headerCenter.tip    "Kreizañ an talbenn">
+<!ENTITY headerRight.tip     "Talbenn dehou">
+<!ENTITY footerLeft.tip      "Diaz pajenn war an tu kleiz">
+<!ENTITY footerCenter.tip    "Kreizañ an diaz pajenn">
+<!ENTITY footerRight.tip     "Diaz pajenn dehou">
+
+<!ENTITY hfTitle             "Titl">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Deiziad/Eur">
+<!ENTITY hfPage              "Pajennad #">
+<!ENTITY hfPageAndTotal      "Pajenn # eus #">
+<!ENTITY hfBlank             "--gwenn--">
+<!ENTITY hfCustom            "Personelaat…">
+
+<!ENTITY customPrompt.title  "Personelaat…">
+<!ENTITY customPrompt.prompt "Roit ho testenn talbenn/troad-pajenn personelaet">

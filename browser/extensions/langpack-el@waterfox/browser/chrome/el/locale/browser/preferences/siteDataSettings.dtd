@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Ρυθμίσεις - Δεδομένα Ιστοτόπου">
+<!ENTITY     hostCol.label                 "Ιστοτόπος">
+<!ENTITY     statusCol.label               "Κατάσταση">
+<!ENTITY     usageCol.label                "Αποθήκευση">
+<!ENTITY     searchTextboxPlaceHolder             "Αναζήτηση ιστοσελίδων">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "Α">
+<!ENTITY     removeSelected.label          "Αφαίρεση επιλεγμένων">
+<!ENTITY     removeSelected.accesskey      "α">
+<!ENTITY     save.label                    "Αποθήκευση αλλαγών">
+<!ENTITY     save.accesskey                "λ">
+<!ENTITY     cancel.label                  "Ακύρωση">
+<!ENTITY     cancel.accesskey              "Α">
+<!ENTITY     removingDialog.title          "Αφαίρεση δεδομένων ιστοσελίδας">
+<!ENTITY     removingSelected.description  "Η αφαίρεση δεδομένων ιστοσελίδων θα διαγράψει, επίσης, τα σχετικά cookies και το διαδικτυακό περιεχόμενο εκτός σύνδεσης. Αυτό ενδέχεται να σάς αποσυνδέσει από ιστοσελίδες. Θέλετε σίγουρα να πραγματοποιήσετε τις αλλαγές;">
+<!ENTITY     siteTree.label                "Θα αφαιρεθούν τα ακόλουθα cookies ιστοσελίδων:">

@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Uzi protekton kontraŭ spurado">
+<!ENTITY  trackingProtectionAlways.label       "Ĉiam">
+<!ENTITY  trackingProtectionAlways.accesskey   "m">
+<!ENTITY  trackingProtectionPrivate.label      "Nur en privataj fenestroj">
+<!ENTITY  trackingProtectionPrivate.accesskey  "p">
+<!ENTITY  trackingProtectionNever.label        "Neniam">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Pli da informo">
+<!ENTITY  trackingProtectionExceptions.label   "Esceptoj…">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+
+<!ENTITY tracking.label                 "Spurado">
+<!ENTITY trackingProtectionPBM5.label         "Uzi protekton kontraŭ spurado en privataj fenestroj">
+<!ENTITY trackingProtectionPBM5.accesskey     "f">
+<!ENTITY trackingProtectionPBMLearnMore.label "Pli da informo">
+<!ENTITY changeBlockList.label          "Ŝanĝi liston de blokado">
+<!ENTITY changeBlockList.accesskey      "l">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Vi ankaŭ povas ">
+<!ENTITY  doNotTrack.settings.label     "administri viajn agordojn pri Ne spuri">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historio">
+
+<!ENTITY  locationBar.label             "Retadresa strio">
+
+<!ENTITY  locbar.suggest.label          "Dum uzado de la retadresa strio, sugesti el:">
+<!ENTITY  locbar.history.label          "Historio">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Legosignoj">
+<!ENTITY  locbar.bookmarks.accesskey    "L">
+<!ENTITY  locbar.openpage.label         "Malfermitaj langetoj">
+<!ENTITY  locbar.openpage.accesskey     "M">
+<!ENTITY  locbar.searches.label         "Rilatitaj serĉoj el la norma serĉilo">
+<!ENTITY  locbar.searches.accesskey     "R">
+
+<!ENTITY  suggestionSettings.label      "Ŝanĝi preferojn por serĉilaj sugestoj…">
+<!ENTITY  suggestionSettings.accesskey  "s">
+
+<!ENTITY  acceptCookies2.label          "Akcepti kuketojn el retejoj">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Akcepti nerektajn kuketojn:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "Ĉiam">
+<!ENTITY  acceptThirdParty.never.label    "Neniam">
+<!ENTITY  acceptThirdParty.visited.label  "El vizititaj">
+
+<!ENTITY  keepUntil.label               "Konservi ĝis:">
+<!ENTITY  keepUntil.accesskey           "K">
+
+<!ENTITY  expire.label                  "ili senvalidiĝas">
+<!ENTITY  close.label                   "mi finas &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Esceptoj…">
+<!ENTITY  cookieExceptions.accesskey    "t">
+
+<!ENTITY  showCookies.label             "Montri kuketojn…">
+<!ENTITY  showCookies.accesskey         "M">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; :">
+<!ENTITY  historyHeader.pre.accesskey      "F">
+<!ENTITY  historyHeader.remember.label     "memoros historion">
+<!ENTITY  historyHeader.dontremember.label "neniam memoros historion">
+<!ENTITY  historyHeader.custom.label       "uzos personajn agordojn por la historio">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; memoros la historion de via retumado, elŝutado, serĉadoj kaj formularoj, kaj ĝi konservos kuketojn de retejoj kiujn vi vizitas.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Vi eble volos ">
+<!ENTITY  rememberActions.clearHistory.label  "forviŝi vian ĵusan historion">
+<!ENTITY  rememberActions.middle.label        ", aŭ ">
+<!ENTITY  rememberActions.removeCookies.label "forviŝi individuajn kuketojn">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; uzos la samajn agordojn de privata retumado, kaj ĝi ne memoros iun historion dum vi esploras la reton.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Vi eble volos ankaŭ ">
+<!ENTITY  dontrememberActions.clearHistory.label "forviŝi la tutan aktualan historion">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Ĉiam uzi la reĝimon de privata retumado">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Memori mian historion de retumado kaj elŝutado">
+<!ENTITY  rememberHistory2.accesskey  "h">
+
+<!ENTITY  rememberSearchForm.label       "Memori historion de serĉadoj kaj formularoj">
+<!ENTITY  rememberSearchForm.accesskey   "s">
+
+<!ENTITY  clearOnClose.label             "Forviŝi historion kiam &brandShortName; finas">
+<!ENTITY  clearOnClose.accesskey         "v">
+
+<!ENTITY  clearOnCloseSettings.label     "Agordoj…">
+<!ENTITY  clearOnCloseSettings.accesskey "g">
+
+<!ENTITY  browserContainersHeader.label         "Ingaj langetoj">
+<!ENTITY  browserContainersLearnMore.label      "Pli da informo">
+<!ENTITY  browserContainersEnabled.label        "Aktivigi ingajn langetojn">
+<!ENTITY  browserContainersEnabled.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Agordoj…">
+<!ENTITY  browserContainersSettings.accesskey    "A">

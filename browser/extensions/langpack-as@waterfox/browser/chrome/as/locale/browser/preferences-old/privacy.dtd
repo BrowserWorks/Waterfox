@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+
+
+
+<!ENTITY tracking.label                 "অনুসৰণ কৰা">
+
+
+
+
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+
+
+
+<!ENTITY  locationBar.label             "অৱস্থান বাৰ">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY  acceptThirdParty.always.label   "সদায়">
+<!ENTITY  acceptThirdParty.never.label    "কেতিয়াও নহয়">
+<!ENTITY  acceptThirdParty.visited.label  "ভ্ৰমণ কৰা ছাইটসমূহৰ পৰা">
+
+
+
+<!ENTITY  expire.label                  "তেওলোক অস্তিত্বহীন হয়">
+<!ENTITY  close.label                   "মই বন্ধ কৰো &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "ব্যতিক্ৰমসমূহ…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "কুকিসমূহ দেখুৱাওক…">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; এ চিহ্নিত কাৰ্য্য কৰিব:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "ইতিহাস মনত ৰাখক">
+<!ENTITY  historyHeader.dontremember.label "ইতিহাস কেতিয়াও মনত নাৰাখিব">
+<!ENTITY  historyHeader.custom.label       "ইতিহাসৰ বাবে স্বনিৰ্বাচিত সংহতিসমূহ ব্যৱহাৰ কৰক">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; এ আপোনাৰ ব্ৰাউছিং, ডাউনল'ড, বিন্যাস আৰু সন্ধান ইতিহাস মনত ৰাখিব আৰু আপুনি চোৱা ছাইটসমূহৰ কুকি ৰাখিব।">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "আপুনি হয়তো বিচাৰি পাৰে ">
+<!ENTITY  rememberActions.clearHistory.label  "আপোনাৰ শেহতীয়া ইতিহাস পৰিষ্কাৰ কৰক">
+<!ENTITY  rememberActions.middle.label        ", অথবা ">
+<!ENTITY  rememberActions.removeCookies.label "সুকীয়া কুকিসমূহ আতৰাওক">
+<!ENTITY  rememberActions.post.label          "।">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; এ ব্যক্তিগত ব্ৰাউছিংৰ সংহতিসমূহ ব্যৱহাৰ কৰিব, আৰু আপুনি ৱেব ব্ৰাউছ কৰি থাকোতে কোনো ইতিহাস মনত নাৰাখে।">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "আপুনি হয়তো অতিৰিক্তভাৱে বিচাৰিব পাৰে ">
+<!ENTITY  dontrememberActions.clearHistory.label "সকলো বৰ্তমান ইতিহাস পৰিষ্কাৰ কৰক">
+<!ENTITY  dontrememberActions.post.label         "।">
+
+<!ENTITY  privateBrowsingPermanent2.label "সদায় ব্যক্তিগত ব্ৰাউছিং অৱস্থা ব্যৱহাৰ কৰিব">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "মোৰ ব্ৰাউছিং আৰু ডাউনল'ড ইতিহাস মনত ৰাখিব">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "সন্ধান আৰু বিন্যাস ইতিহাস মনত ৰাখিব">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "যেতিয়া &brandShortName; বন্ধ হব শেহতীয়া ইতিহাস পৰিষ্কাৰ কৰিব">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "সংহতিসমূহ…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+
+
+
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersEnabled.label        "Enable Container Tabs">
+<!ENTITY  browserContainersHeader.label         "Container Tabs">
+<!ENTITY  browserContainersLearnMore.label      "Learn more">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!ENTITY changeBlockList.label          "Change Block List">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  doNotTrack.pre.label          "You can also ">
+<!ENTITY  doNotTrack.settings.label     "manage your Do Not Track settings">
+<!ENTITY  history.label                 "History">
+
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  keepUntil.label               "Keep until:">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.bookmarks.label        "Bookmarks">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.history.label          "History">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.openpage.label         "Open tabs">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  locbar.searches.label         "Related searches from the default search engine">
+<!ENTITY  locbar.suggest.label          "When using the location bar, suggest:">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  suggestionSettings.label      "Change preferences for search engine suggestions…">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionAlways.label       "Always">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
+<!ENTITY  trackingProtectionHeader.label       "Use Tracking Protection">
+<!ENTITY  trackingProtectionLearnMore.label    "Learn more">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionNever.label        "Never">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBM5.label         "Use Tracking Protection in Private Windows">
+<!ENTITY trackingProtectionPBMLearnMore.label "Learn more">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionPrivate.label      "Only in private windows">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Iingxelo Zokukresha">
+<!ENTITY crashesUnsubmitted.label   "Iingxelo Zokukhresha Ezingafakwanga">
+<!ENTITY crashesSubmitted.label     "Iingxelo Zokonakala Ezifakiweyo">
+<!ENTITY id.heading                 "Isazisi sengxelo">
+<!ENTITY dateCrashed.heading        "Umhla Wokukhresha">
+<!ENTITY dateSubmitted.heading      "Umhla Efakwe Ngawo">
+<!ENTITY noReports.label            "Akukho ngxelo yokonakala efakiweyo.">
+<!ENTITY noConfig.label             "Le aplikeyishini ayilungiselelwanga ukubonisa iingxelo zokonakala. Ikhowudi yepriferensi <code>breakpad.reportURL</code> kufuneka isetwe.">
+<!ENTITY clearAllReports.label      "Shenxisa Zonke Iingxelo">

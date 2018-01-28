@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Atualização do &brandShortName;">
+
+<!ENTITY  offline.title                   "O &brandShortName; está no modo offline">
+<!ENTITY  offline.description             "Tem que ativar o modo online para que o &brandShortName;se ligue à rede e procure atualizações dos seus extras paraos tornar compatíveis com esta versão.">
+<!ENTITY  offline.toggleOffline.label     "Ativar modo online agora.">
+<!ENTITY  offline.toggleOffline.accesskey "g">
+
+<!ENTITY  mismatch.win.title              "Extras incompatíveis">
+<!ENTITY  mismatch.top.label              "Os extras indicados não são compatíveis com esta versãodo &brandShortName; e foram desativados:">
+<!ENTITY  mismatch.bottom.label           "O &brandShortName; pode verificar se há versões compatíveis destes extras disponíveis.">
+
+<!ENTITY  checking.wizard.title           "A verificar se existem extras compatíveis">
+<!ENTITY  checking.top.label              "A verificar se existem atualizações para os extras incompatíveis…">
+<!ENTITY  checking.status                 "Isto poderá demorar alguns minutos…">
+
+<!ENTITY  found.wizard.title               "Encontrados extras compatíveis">
+<!ENTITY  found.top.label                 "Escolha os extras que deseja instalar:">
+<!ENTITY  found.disabledXPinstall.label   "Estas atualizações não podem ser instaladas agora porque a instalação de software está atualmente desativada. Pode alterar esta definição abaixo.">
+<!ENTITY  found.enableXPInstall.label     "Permitir que os websites instalem software">
+<!ENTITY  found.enableXPInstall.accesskey "P">
+
+<!ENTITY  installing.wizard.title         "A instalar extras compatíveis">
+<!ENTITY  installing.top.label            "A descarregar e instalar atualizações para os seus extras…">
+
+<!ENTITY  noupdates.wizard.title          "Não foram encontrados extras compatíveis">
+<!ENTITY  noupdates.intro.desc            "O &brandShortName; não conseguiu encontrar atualizações para os seus extras incompatíveis.">
+<!ENTITY  noupdates.error.desc            "Ocorreram alguns problemas durante a procura de atualizações.">
+<!ENTITY  noupdates.checkEnabled.desc     "O &brandShortName; verificará periodicamente e informar-lhe-à quando atualizações compatíveis para estes extras forem encontradas.">
+
+<!ENTITY  finished.wizard.title           "Extras compatíveis instalados">
+<!ENTITY  finished.top.label              "O &brandShortName; instalou atualizações dos seus extras.">
+<!ENTITY  finished.checkDisabled.desc     "O &brandShortName; pode verificar periodicamente e informar-lhe quando atualizações para os seus extras forem encontradas.">
+<!ENTITY  finished.checkEnabled.desc      "O &brandShortName; verificará periodicamente e informar-lhe-à quando atualizações para os seus extras forem encontradas.">
+
+<!ENTITY  adminDisabled.wizard.title      "Incapaz de verificar a existência de atualizações">
+<!ENTITY  adminDisabled.warning.label     "Não foi possível procurar por atualizações para os extras incompatíveis, porque a instalação de software no &brandShortName; está desativada. Por favor, contacte o seu administrador de sistemas para assistência.">
+
+<!ENTITY  versioninfo.wizard.title        "A verificar compatibilidade dos extras">
+<!ENTITY  versioninfo.top.label           "A verificar os seus extras para compatibilidade com esta versão do &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Isto poderá demorar alguns minutos…">
+
+<!ENTITY  installerrors.wizard.title      "Problemas na instalação de atualizações">
+<!ENTITY  installerrors.intro.label       "O &brandShortName; encontrou problemas ao atualizar alguns dos seus extras.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Clique em Concluir para conteinuar a iniciar o &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Clique em Feito para continuar a iniciar o &brandShortName;.">
+<!ENTITY  enableChecking.label            "Permitir que o &brandShortName; procure atualizações.">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Maklumat mengenai url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Pengendali">
+<!ENTITY aboutUrlClassifier.provider                    "Pengendali">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Kali terakhir dikemas kini">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Waktu kemas kini seterusnya">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Tempoh undur">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Status kemas kini terakhir">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Kemas kini">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Cache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Muat semula">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Buang">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Nama jadual">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Bilangan cache negatif">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Bilangan cache positif">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Papar entri">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Entri Cache">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefiks">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Tempoh tamat cache negatif">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Tempoh tamat cache positif">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Nyahpepijat">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Set Modul Log">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Set Fail Log">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Set Log JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Modul log Pelayaran Selamat">
+<!ENTITY aboutUrlClassifier.debugModules                "Modul log semasa">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Log JS Pelayaran Selamat">
+<!ENTITY aboutUrlClassifier.debugFile                   "Fail log semasa">

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/">
+	<ShortName>StartPage</ShortName>
+	<Description>Startpage Web Search</Description>
+	<InputEncoding>UTF-8</InputEncoding>
+	<Image height="16" width="16">resource://search-plugins/images/startpage.png</Image>
+	<Url type="application/x-suggestions+json" method="GET" template="https://startpage.com/do/search?query={searchTerms}"/>
+	<Url type="text/html" method="POST" template="https://startpage.com/do/search">
+		<Param name="c" value="web"/>
+		<Param name="q" value="{searchTerms}"/>
+	</Url>
+</SearchPlugin>

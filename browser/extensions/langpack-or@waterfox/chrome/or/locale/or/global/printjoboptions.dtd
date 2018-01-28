@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "ମୁଦ୍ରଣୀ ଗୁଣଧର୍ମ">
+
+<!ENTITY paperInput.label "କାଗଜ ଆକାର:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "କାର୍ଯ୍ୟ ଶୀର୍ଷକ:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "ରଙ୍ଗ:">
+<!ENTITY grayRadio.label "Grayscale">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "ରଙ୍ଗ">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "କାଗଜ ଧାର ପାଖରୁ ମାର୍ଜିନ ମଧ୍ଯରେ ଥିବା ଖାଲି ସ୍ଥାନ">
+<!ENTITY topInput.label "ଉପର:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "ତଳ:">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "ବାମ:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "ଡ଼ାହାଣ:">
+<!ENTITY rightInput.accesskey "R">

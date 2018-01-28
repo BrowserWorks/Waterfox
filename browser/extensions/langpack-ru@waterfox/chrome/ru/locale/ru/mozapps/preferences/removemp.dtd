@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Удаление мастер-пароля">
+<!ENTITY removeInfo.label                  "Для продолжения вы должны ввести текущий пароль:">
+<!ENTITY removeWarning1.label              "Мастер-пароль используется для защиты важной информации, например паролей для доступа к веб-сайтам.">
+<!ENTITY removeWarning2.label              "При удалении мастер-пароля сохранённая в браузере информация не будет защищена в случае, если посторонние лица получат доступ к вашему компьютеру.">
+<!ENTITY setPassword.oldPassword.label     "Текущий пароль:">
+

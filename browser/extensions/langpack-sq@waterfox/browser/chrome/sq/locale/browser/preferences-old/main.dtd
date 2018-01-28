@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Nisje">
+
+<!ENTITY startupPage.label         "Kur niset &brandShortName;-i:">
+<!ENTITY startupPage.accesskey     "i">
+<!ENTITY startupUserHomePage.label "Shfaq kreun tim">
+<!ENTITY startupBlankPage.label    "Shfaq një faqe të zbrazët">
+<!ENTITY startupPrevSession.label  "Shfaq dritaret dhe skedat e mia të herës së fundit">
+
+<!ENTITY homepage.label            "Kreu:">
+<!ENTITY homepage.accesskey        "K">
+<!ENTITY useCurrentPage.label      "Përdor Faqen e Tanishme">
+<!ENTITY useCurrentPage.accesskey  "T">
+<!ENTITY useMultiple.label         "Përdor Faqet e Tanishme">
+<!ENTITY chooseBookmark.label      "Përdorni Faqerojtës…">
+<!ENTITY chooseBookmark.accesskey  "F">
+<!ENTITY restoreDefault.label      "Riktheje te Parazgjedhja">
+<!ENTITY restoreDefault.accesskey  "P">
+
+<!ENTITY downloads.label     "Shkarkime">
+
+<!ENTITY saveTo.label "Ruaji kartelat te">
+<!ENTITY saveTo.accesskey "R">
+<!ENTITY chooseFolderWin.label        "Shfletoni…">
+<!ENTITY chooseFolderWin.accesskey    "S">
+<!ENTITY chooseFolderMac.label        "Zgjidhni…">
+<!ENTITY chooseFolderMac.accesskey    "Z">
+<!ENTITY alwaysAskWhere.label         "Pyet përherë ku të ruhen kartelat">
+<!ENTITY alwaysAskWhere.accesskey     "u">
+
+<!ENTITY alwaysCheckDefault2.label        "Kontrollo përherë për të parë nëse &brandShortName;-i është shfletuesi parazgjedhje">
+<!ENTITY alwaysCheckDefault2.accesskey    "o">
+<!ENTITY setAsMyDefaultBrowser2.label     "Kaloje Parazgjedhje">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "K">
+<!ENTITY isDefault.label                  "&brandShortName;-i është shfletuesi juaj parazgjedhje">
+<!ENTITY isNotDefault.label               "&brandShortName;-i s&apos;është shfletuesi juaj parazgjedhje">
+
+<!ENTITY separateProfileMode.label        "Lejojeni &brandShortName;-in dhe Waterfox-in të xhirojnë në të njëjtën kohë">
+<!ENTITY useWaterfoxSync.label             "Ndihmëz: Kjo përdor profile ndaras. Për ndarje të dhënash mes tyre përdorni Sync-n.">
+<!ENTITY getStarted.notloggedin.label     "Hyni në &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Hapni parapëlqimet për &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Aktivizo multiproces &brandShortName;-i">

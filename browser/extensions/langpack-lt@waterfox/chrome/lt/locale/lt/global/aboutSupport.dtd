@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informacija problemų sprendimui">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Šiame tinklalapyje rasite visą techninę informaciją, kuri gali praversti sprendžiant su „&brandShortName;“ iškilusias problemas. Jei ieškote atsakymų į dažniausius klausimus apie šią programą, apsilankykite <a id='supportLink'>pagalbos svetainėje</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Strigčių pranešimai">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Pranešimo ID">
+<!ENTITY aboutSupport.crashes.sendDate "Pranešimo data">
+<!ENTITY aboutSupport.crashes.allReports "Visi strigčių pranešimai">
+<!ENTITY aboutSupport.crashes.noConfig "Ši programa nėra parengta rodyti strigčių pranešimus.">
+
+<!ENTITY aboutSupport.extensionsTitle "Plėtiniai">
+<!ENTITY aboutSupport.extensionName "Pavadinimas">
+<!ENTITY aboutSupport.extensionEnabled "Įjungtas">
+<!ENTITY aboutSupport.extensionVersion "Laida">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "„&brandShortName;“ savybės">
+<!ENTITY aboutSupport.featureName "Pavadinimas">
+<!ENTITY aboutSupport.featureVersion "Laida">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperimentinės funkcijos">
+<!ENTITY aboutSupport.experimentName "Pavadinimas">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Aprašas">
+<!ENTITY aboutSupport.experimentActive "Aktyvi">
+<!ENTITY aboutSupport.experimentEndDate "Galioja iki">
+<!ENTITY aboutSupport.experimentHomepage "Tinklalapis">
+<!ENTITY aboutSupport.experimentBranch "Šaka">
+
+<!ENTITY aboutSupport.appBasicsTitle "Pagrindinės programos savybės">
+<!ENTITY aboutSupport.appBasicsName "Pavadinimas">
+<!ENTITY aboutSupport.appBasicsVersion "Laida">
+<!ENTITY aboutSupport.appBasicsBuildID "Versijos ID">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Atnaujinimų kanalas">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Atnaujinimo žurnalas">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Rodyti atnaujinimo žurnalą">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilio aplankas">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilio aplankas">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Įjungti priedai">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Darinio konfigūracija">
+<!ENTITY aboutSupport.appBasicsUserAgent "Naršyklės identifikacinė eilutė">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Atminties naudojimas">
+<!ENTITY aboutSupport.appBasicsPerformance "Našumas">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registruoti aptarnavimo scenarijai">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiliai">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Daugiaprocesiai langai">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Saityno turinio procesai">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "„Google“ raktas">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "„Mozillos“ buvimo vietos nustatymo paslaugos raktas">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Ribotoji veiksena">
+
+<!ENTITY aboutSupport.showDir.label "Atverti aplanką">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Parodyti programoje „Finder“">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Atverti aplanką">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Svarbios pakeistos nuostatos">
+<!ENTITY aboutSupport.modifiedPrefsName "Vardas">
+<!ENTITY aboutSupport.modifiedPrefsValue "Reikšmė">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Nuostatos „user.js“ faile">
+<!ENTITY aboutSupport.userJSDescription "Jūsų profilio aplanke yra <a id='prefs-user-js-link'>„user.js“ failas</a>, kuriame įrašytos nuostatos, sukurtos ne „&brandShortName;“ programoje.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Svarbios užrakintos nuostatos">
+<!ENTITY aboutSupport.lockedPrefsName "Vardas">
+<!ENTITY aboutSupport.lockedPrefsValue "Reikšmė">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Vietų duomenų bazė">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Nepažeistumas">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Patikrinti nepažeistumą">
+
+<!ENTITY aboutSupport.jsTitle "„JavaScript“">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementinis šiukšlių rinkimas">
+
+<!ENTITY aboutSupport.a11yTitle "Pritaikymas neįgaliesiems">
+<!ENTITY aboutSupport.a11yActivated "Aktyvintas">
+<!ENTITY aboutSupport.a11yForceDisabled "Pritaikymas neįgaliesiems uždraustas">
+<!ENTITY aboutSupport.a11yHandlerUsed "Panaudota pasiekiama doroklė ">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Bibliotekų versijos">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Įdiegimo žurnalas">
+<!ENTITY aboutSupport.updateHistoryTitle "Atnaujinimo žurnalas">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopijuoti tekstą į iškarpinę">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopijuoti neapdorotus duomenis į iškarpinę">
+
+<!ENTITY aboutSupport.sandboxTitle "Izoliavimas">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Atmesti kreipimaisi į sistemą">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekundės prieš">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Proceso tipas">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Kreipimasis į sistemą">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumentai">
+
+<!ENTITY aboutSupport.safeModeTitle "Išbandykite ribotąją veikseną">
+<!ENTITY aboutSupport.restartInSafeMode.label "Perleisti išjungus priedus…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Savybės">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostika">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Klaidų žurnalas">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Sprendimų žurnalas">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Strigčių apsaugos išjungtos funkcijos">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Apėjimai">
+
+<!ENTITY aboutSupport.mediaTitle "Laikmenos">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Išvedimo įrenginiai">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Įvedimo įrenginiai">
+<!ENTITY aboutSupport.mediaDeviceName "Pavadinimas">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grupė">
+<!ENTITY aboutSupport.mediaDeviceVendor "Gamintojas">
+<!ENTITY aboutSupport.mediaDeviceState "Būsena">
+<!ENTITY aboutSupport.mediaDevicePreferred "Pageidautinas">
+<!ENTITY aboutSupport.mediaDeviceFormat "Formatas">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanalai">
+<!ENTITY aboutSupport.mediaDeviceRate "Dažnis">
+<!ENTITY aboutSupport.mediaDeviceLatency "Delsa">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Nyomtatás">
+
+<!ENTITY printDialog.title "Nyomtatás">
+
+<!ENTITY fpDialog.title "Fájl mentése">
+
+<!ENTITY fileCheck.label "Nyomtatás fájlba">
+<!ENTITY fileCheck.accesskey "f">
+<!ENTITY propertiesButton.label "Tulajdonságok…">
+<!ENTITY propertiesButton.accesskey "T">
+<!ENTITY descText.label "Nyomtató leírása:">
+<!ENTITY printer.label "Nyomtató">
+<!ENTITY printerInput.label "Nyomtató neve:">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "Nyomtatási tartomány">
+<!ENTITY allpagesRadio.label "Minden oldal">
+<!ENTITY allpagesRadio.accesskey "M">
+<!ENTITY rangeRadio.label  "Adott oldalak">
+<!ENTITY rangeRadio.accesskey  "A">
+<!ENTITY frompageInput.label  "ettől:">
+<!ENTITY frompageInput.accesskey  "e">
+<!ENTITY topageInput.label  "eddig:">
+<!ENTITY topageInput.accesskey  "d">
+<!ENTITY selectionRadio.label "Kijelölés">
+<!ENTITY selectionRadio.accesskey "K">
+
+<!ENTITY copies.label "Példányok">
+<!ENTITY numCopies.label "Példányszám:">
+<!ENTITY numCopies.accesskey "P">
+
+<!ENTITY printframeGroup.label "Keretek nyomtatása">
+<!ENTITY aslaidoutRadio.label "Ahogy a képernyőn elhelyezkednek">
+<!ENTITY aslaidoutRadio.accesskey "A">
+<!ENTITY selectedframeRadio.label  "A kijelölt keretet">
+<!ENTITY selectedframeRadio.accesskey  "r">
+<!ENTITY eachframesepRadio.label  "Minden keretet külön">
+<!ENTITY eachframesepRadio.accesskey  "i">

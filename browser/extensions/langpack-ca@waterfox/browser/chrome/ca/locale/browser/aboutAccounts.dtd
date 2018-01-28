@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Us donem la benvinguda al &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Inicieu la sessió per sincronitzar les pestanyes, adreces d'interès, contrasenyes i més.">
+<!ENTITY aboutAccountsConfig.startButton.label "Primers passos">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferències del Sync">
+<!ENTITY aboutAccounts.noConnection.title "Sense connexió">
+<!ENTITY aboutAccounts.noConnection.description "Heu d'estar connectat a Internet per iniciar la sessió.">
+<!ENTITY aboutAccounts.noConnection.retry "Torna-ho a provar">
+<!ENTITY aboutAccounts.badConfig.title "Configuració incorrecta">
+<!ENTITY aboutAccounts.badConfig.description "No s'ha pogut determinar la configuració del servidor del compte del Waterfox. Torneu-ho a provar més tard.">

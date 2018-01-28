@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "کمینه کردن">
+<!ENTITY bringAllToFront.label    "آوردن همه به جلو">
+<!ENTITY zoomWindow.label         "زوم">
+<!ENTITY windowMenu.label         "پنجره">
+
+<!ENTITY helpMenu.label           "راهنما"> 
+<!ENTITY helpMenu.accesskey       "ر"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "راهنما"> 
+<!ENTITY helpMenuWin.accesskey    "ر">
+<!ENTITY aboutProduct2.label      "دربارهٔ &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+<!ENTITY productHelp2.label       "راهنمای &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "؟">
+
+<!ENTITY helpKeyboardShortcuts.label     "میانبرهای صفحه کلید">
+<!ENTITY helpKeyboardShortcuts.accesskey "م">
+
+<!ENTITY helpSafeMode.label       "راه‌اندازی مجدد به همراه غیرفعال کردن افزودنی‌ها…">
+<!ENTITY helpSafeMode.accesskey   "ر">
+<!ENTITY helpSafeMode.stop.label       "راه‌اندازی مجدد به همراه غیرفعال کردن افزودنی‌ها">
+<!ENTITY helpSafeMode.stop.accesskey   "ر">
+
+<!ENTITY healthReport2.label      "گزارش سلامتی &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "اطلاعات رفع اشکال">
+<!ENTITY helpTroubleshootingInfo.accesskey  "ر">
+
+<!ENTITY helpFeedbackPage.label      "ارسال نظر…">
+<!ENTITY helpFeedbackPage.accesskey  "ا">
+
+<!ENTITY helpShowTour2.label            "تور معرفی &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "o">
+
+<!ENTITY preferencesCmdMac.label        "ترجیحات…">
+<!ENTITY preferencesCmdMac.commandkey   "،">
+
+<!ENTITY servicesMenuMac.label          "خدمات">
+
+<!ENTITY hideThisAppCmdMac2.label       "پنهان کردن &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "دیگر برنامه‌ها را مخفی کن">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "نشان دادن همه">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Krāsas">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Pārrakstīt lapas noteiktās krāsas ar manām izvēlētajām:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Vienmēr">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Tikai ar augsta kontrasta tēmām">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nekad">
+
+<!ENTITY  color                           "Teksts un fons">
+<!ENTITY  textColor.label                 "Teksts:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Fons:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Lietot sistēmas krāsas">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Pasvītrot saites">
+<!ENTITY  underlineLinks.accesskey        "r">
+<!ENTITY  links                           "Saišu krāsas">
+<!ENTITY  linkColor.label                 "Neapmeklētās saites:">
+<!ENTITY  linkColor.accesskey             "l">
+<!ENTITY  visitedLinkColor.label          "Apmeklētās saites:">
+<!ENTITY  visitedLinkColor.accesskey      "m">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; સુધારો">
+
+<!ENTITY  offline.title                   "&brandShortName; એ ઓફલાઈન કામ કરી રહ્યું છે">
+<!ENTITY  offline.description             "&brandShortName; ને શું તમારા સુધારાઓ એડ-ઓન માટે ઉપલબ્ધ છે કે નહિં તે જોવા માટે ઓનલાઈન જવાની જરૂર છે તેમને આ આવૃત્તિ સાથે સુસંગત બનાવવા માટે.">
+<!ENTITY  offline.toggleOffline.label     "હમણાં ઓનલાઈન થાવ.">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "અસુસંગત એડ-ઓન">
+<!ENTITY  mismatch.top.label              "નીચેના એડ-ઓન &brandShortName; ની આ આવૃત્તિ સાથે સુસંગત થયેલ નથી અને તેઓ નિષ્ક્રિય કરવામાં આવેલ છે:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ચકાસી શકે છે કે શું ત્યાં આ એડ-ઓનની સુસંગત આવૃત્તિઓ ઉપલબ્ધ છે.">
+
+<!ENTITY  checking.wizard.title           "સુસંગત એડ-ઓન માટે ચકાસી રહ્યા છીએ">
+<!ENTITY  checking.top.label              "સુધારાઓ માટે તમારા અસુસંગત એડ-ઓન માટે ચકાસી રહ્યા છીએ...">
+<!ENTITY  checking.status                 "આ થોડી મિનિટો લઈ શકશે...">
+
+<!ENTITY  found.wizard.title               "સુસંગત એડ-ઓન મળ્યા">
+<!ENTITY  found.top.label                 "તમે જે એડ-ઓન સ્થાપિત કરવા ઈચ્છો છો તે પસંદ કરો:">
+<!ENTITY  found.disabledXPinstall.label   "આ સુધારાઓ સ્થાપિત કરી શકાતા નથી કારણ કે સોફ્ટવેર સ્થાપન વર્તમાનમાં નિષ્ક્રિય કરવામાં આવેલ છે. તમે આ સુયોજન નીચે બદલી શકો છો.">
+<!ENTITY  found.enableXPInstall.label     "વેબ સાઈટોને સોફ્ટવેર સ્થાપિત કરવા માટે પરવાનગી આપો">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "સુસંગત એડ-ઓન સ્થાપિત કરી રહ્યા છીએ">
+<!ENTITY  installing.top.label            "તમારા એડ-ઓનમાં સુધારાઓ ડાઉનલોડ અને સ્થાપિત કરી રહ્યા છીએ...">
+
+<!ENTITY  noupdates.wizard.title          "કોઈ સુસંગત એડ-ઓન મળ્યા નહિં">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; એ તમારા અસુસંગત એડ-ઓન શોધવામાં અસમર્થ હતું.">
+<!ENTITY  noupdates.error.desc            "જ્યારે સુધારાઓ શોધવાનો પ્રયાસ કરી રહ્યા હતા ત્યારે અમુક સમસ્યાઓ ઉદ્ભવી હતી.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; સામયિક રીતે ચકાસશે અને તમને જ્યારે આ એડ-ઓન માટે સુસંગત સુધારાઓ મળે ત્યારે તમને જાણ કરશે.">
+
+<!ENTITY  finished.wizard.title           "સુસંગત એડ-ઓન સ્થાપિત થયા">
+<!ENTITY  finished.top.label              "&brandShortName; એ તમારા એડ-ઓન માટે સુધારાઓ સ્થાપિત કર્યા.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; સામયિક રીતે મળેલ એડ-ઓન માટે ચકાસશે અને તમને જાણ કરશે.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; તમને જ્યારે પણ એડ-ઓન માટે સુધારાઓ મળે તો સામયિક રીતે ચકાસશે અને તમને જાણ કરશે.">
+
+<!ENTITY  adminDisabled.wizard.title      "સુધારાઓ માટે ચકાસવામાં અસમર્થ">
+<!ENTITY  adminDisabled.warning.label     "અસુસંગત એડ-ઓન માટે સુધારાઓ માટે ચકાસવાનું શક્ય નથી કારણ કે &brandShortName; માટેનું સોફ્ટવેર સ્થાપન નિષ્ક્રિય કરવામાં આવેલ છે. સહાય માટે મહેરબાની કરીને તમારા સિસ્ટમ સંચાલકનો સંપર્ક કરો.">
+
+<!ENTITY  versioninfo.wizard.title        "એડ-ઓનની સુસંગતતા માટે ચકાસી રહ્યા છીએ">
+<!ENTITY  versioninfo.top.label           "&brandShortName; ની આ આવૃત્તિની તમારા એડ-ઓન સાથેની સુસંગતતા માટે ચકાસી રહ્યા છીએ.">
+<!ENTITY  versioninfo.waiting             "આ થોડી મિનિટો લેશે...">
+
+<!ENTITY  installerrors.wizard.title      "સુધારાઓ સ્થાપિત કરવામાં સમસ્યાઓ">
+<!ENTITY  installerrors.intro.label       "&brandShortName; ને જ્યારે તમારા એડ-ઓનમાંના અમુક સુધારી રહ્યા હતા ત્યારે સમસ્યાઓ ઉદ્ભવી.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; શરૂ કરવાનું ચાલુ કરવા માટે સમાપ્ત ક્લિક કરો.">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; શરૂ કરવાનું ચાલુ રાખવા માટે પૂર્ણ ક્લિક કરો.">
+<!ENTITY  enableChecking.label            "&brandShortName; ને સુધારાઓ માટે ચકાસવા માટે પરવાનગી આપો.">

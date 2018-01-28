@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashesSubmitted.label     "Poslani izvještaji rušenja">
+<!ENTITY id.heading                 "ID izvještaja">
+
+<!ENTITY dateSubmitted.heading      "Datum slanja">
+<!ENTITY noReports.label            "Nije poslan niti jedan izvještaj rušenja.">
+<!ENTITY noConfig.label             "Ovaj program nije podešen za prikazivanje izvještaja rušenja. Osobitost <code>breakpad.reportURL</code> mora biti postavljena.">
+<!ENTITY clearAllReports.label      "Ukloni sve izvještaje">
+
+<!ENTITY crashReports.title         "Crash Reports">
+<!ENTITY crashesUnsubmitted.label   "Unsubmitted Crash Reports">
+<!ENTITY dateCrashed.heading        "Date Crashed">

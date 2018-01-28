@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nastajenja - sydłowe daty">
+<!ENTITY     hostCol.label                 "Sydło">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Składowak">
+<!ENTITY     searchTextboxPlaceHolder             "Websydła pytać">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "s">
+<!ENTITY     removeSelected.label          "Wubrane wotstronić">
+<!ENTITY     removeSelected.accesskey      "u">
+<!ENTITY     save.label                    "Změny składować">
+<!ENTITY     save.accesskey                "s">
+<!ENTITY     cancel.label                  "Přetorhnyć">
+<!ENTITY     cancel.accesskey              "P">
+<!ENTITY     removingDialog.title          "Daty sydła wotstronić">
+<!ENTITY     removingSelected.description  "Hdyž daty sydła wotstronjeće, budu so tež přisłušne placki a webwobsah offline wotstronjeć. Přez to so snano z websydłow wotzjewiće. Chceće změny woprawdźe přewjesć?">
+<!ENTITY     siteTree.label                "Slědowace placki websydła so wotstronja:">

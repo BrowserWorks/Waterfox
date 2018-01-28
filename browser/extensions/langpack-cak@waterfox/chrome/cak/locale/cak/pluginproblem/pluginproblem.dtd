@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Re ruxaq re' nrokisaj jun nak'ab'äl ri nub'än eqal chi re ri &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Tapitz'a' wawe' richin nitzijtäj ri nak'ab'äl.">
+<!ENTITY clickToActivatePlugin                               "Titzij nak'ab'äl.">
+<!ENTITY checkForUpdates                                     "Kekanöx taq k'exoj ruwäch…">
+<!ENTITY blockedPlugin.label                                 "Xq'eleb'ëx rusamaj re jun nak'ab'äl re' richin yachajïx.">
+<!ENTITY hidePluginBtn.label                                 "Tewäx ri nak'ab'äl">
+<!ENTITY managePlugins                                       "Tinuk'samajïx ri nak'ab'äl…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Tok chik pa ri ruxaq k'amaya'l">
+<!ENTITY reloadPlugin.post                                   " richin nitojtob'ëx chik.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Titaq rutzijol sachoj">
+<!ENTITY report.submitting                                   "Tajin nitaq ri rutzijol…">
+<!ENTITY report.submitted                                    "Xtaq ri rutzijol sachoj.">
+<!ENTITY report.disabled                                     "Xchup ri rutzijol sachoj.">
+<!ENTITY report.failed                                       "Man xtikïr ta xutäq.">
+<!ENTITY report.unavailable                                  "Majun rutzijol niwachin.">
+<!ENTITY report.comment                                      "Titz'aqatisäx jun rutzijol (konojel winaqi' yetz'eto ri taq rutzijol)">
+<!ENTITY report.pageURL                                      "Tatz'aqatisaj ri URL richin ri ruxaq k'amaya'l">
+
+<!ENTITY plugin.file                                         "Yakb'äl">
+<!ENTITY plugin.mimeTypes                                    "MIME ruwäch">
+<!ENTITY plugin.flashProtectedMode.label                     "Titzij ri rub'anikil ruchajinik ri Adobe flash">
+<!ENTITY plugin.enableBlocklists.label                       "Tiq'eleb'ëx ruwäch etamab'äl Flash itzelal chuqa' ka'ayel">

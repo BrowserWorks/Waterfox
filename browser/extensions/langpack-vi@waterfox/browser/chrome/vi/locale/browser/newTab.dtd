@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Thẻ mới">
+<!ENTITY newtab.customize.classic "Hiện các trang thường dùng">
+<!ENTITY newtab.customize.cog.enhanced "Giới thiệu thêm các trang mới">
+<!ENTITY newtab.customize.cog.title2 "ĐIỀU KHIỂN THẺ MỚI">
+<!ENTITY newtab.customize.cog.learn "Tìm hiểu thêm về tính năng thẻ mới">
+<!ENTITY newtab.customize.title "Tùy biến trang thẻ mới">
+<!ENTITY newtab.customize.blank2 "Hiện một trang trống">
+<!ENTITY newtab.undo.removedLabel "Ảnh thu nhỏ đã bị xóa.">
+<!ENTITY newtab.undo.undoButton "Hoàn tác.">
+<!ENTITY newtab.undo.restoreButton "Khôi phục tất cả.">
+<!ENTITY newtab.undo.closeTooltip "Ẩn">

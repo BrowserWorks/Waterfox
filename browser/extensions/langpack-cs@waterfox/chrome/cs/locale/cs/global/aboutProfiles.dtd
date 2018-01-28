@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "O profilech">
+<!ENTITY aboutProfiles.subtitle "Tato stránka vám pomůže spravovat vaše profily. Každý profil funguje jako zcela oddělený svět, obsahující oddělenou historii prohlížení, záložky, nastavení a doplňky.">
+<!ENTITY aboutProfiles.create "Vytvořit nový profil">
+<!ENTITY aboutProfiles.restart.title "Restartovat">
+<!ENTITY aboutProfiles.restart.inSafeMode "Restartovat se zakázanými doplňky…">
+<!ENTITY aboutProfiles.restart.normal "Restartovat obvyklým způsobem…">

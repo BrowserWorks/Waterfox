@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName;-ի Թարմացում">
+
+<!ENTITY  offline.title                   "&brandShortName;-ը աշխատում է անցանց եղանակում">
+<!ENTITY  offline.description             "&brandShortName;-ը պետք է անցնի առցանց եղանակի, որպեսզի ստուգի հավելումների  թարմացումները, որոնք հավելումներն կդարձնեն այս տարբերակի հետ համատեղելի:">
+<!ENTITY  offline.toggleOffline.label     "Միանալ ցանցին:">
+<!ENTITY  offline.toggleOffline.accesskey "Մ">
+
+<!ENTITY  mismatch.win.title              "Անհամատեղելի Հավելումներ">
+<!ENTITY  mismatch.top.label              "Հետևյալ հավելումները պասիվացվել են, քանի որ անհամատեղելի են &brandShortName;-ի այս տարբերակի հետ`">
+<!ENTITY  mismatch.bottom.label           "&brandShortName;-ը կարող է ստուգել այս հավելումների համապատասխան տարբերակները:">
+
+<!ENTITY  checking.wizard.title           "Համապատասխանող Հավելումների որոնում">
+<!ENTITY  checking.top.label              "Ձեր անհամապատասխան հավելումների թարմացումների որոնում...">
+<!ENTITY  checking.status                 "Սա կարող է մի որոշ ժամանակ տևել…">
+
+<!ENTITY  found.wizard.title               "Գտնվեցին Համապատասխան Հավելումներ">
+<!ENTITY  found.top.label                 "Ընտրեք հավելումները որոնք դուք կցանկանաիք տեղակայել`">
+<!ENTITY  found.disabledXPinstall.label   "Թարմացումները չեն կարող տեղադրվել, քանի որ ծրագրերի տեղակայումը  ժամանակավորապես պասիվ է: Դուք կարող էք փոխել այս կարգավորումը ներքևում:">
+<!ENTITY  found.enableXPInstall.label     "Թույլատրել վեբ կայքերին տեղակայել ծրագրեր">
+<!ENTITY  found.enableXPInstall.accesskey "Թ">
+
+<!ENTITY  installing.wizard.title         "Համապատասխան Հավելումների Տեղակայում">
+<!ENTITY  installing.top.label            "Ձեր հավելումների թարմացումների բեռնում և տեղակայում...">
+
+<!ENTITY  noupdates.wizard.title          "Ոչ մի Համապատասխան Հավելում Չի Գտնվել">
+<!ENTITY  noupdates.intro.desc            "&brandShortName;-ը չկարողացավ հայտնաբերել թարմացումներ ձեր անհամապատասխան հավելումների համար:">
+<!ENTITY  noupdates.error.desc            "Որոշ խնդիրներ տեղի ունեցան, երբ փորձ էր արվում փնտրել թարմացումներ:">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName;-ը պարբերաբար կստուգի և տեղյակ կպահի, երբ գտնվեն թարմացումներ հետևյալ հավելումների համար:">
+
+<!ENTITY  finished.wizard.title           "Համապատասխան Հավելումները Բարեհաջող Տեղակայվեցին">
+<!ENTITY  finished.top.label              "&brandShortName; -ը տեղակայեց ձեր հավելումների թարմացումները:">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName;-ը կարող է պարբերաբար ստուգել և տեղեկացնել, երբ գտնվեն հավելումների թարմացումներ:">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName;-ը պարբերաբար կստուգի և կտեղեկացնի, երբ գտնվեն հավելումների թարմացումներ:">
+
+<!ENTITY  adminDisabled.wizard.title      "Չի ստացվում ստուգել թարմացումների առկայությունը">
+<!ENTITY  adminDisabled.warning.label     "Անհնար է ստուգել անհամատեղելի հավելումների թարմացումների առկայությունը, քանզի &brandShortName;-ի ծրագրերի տեղադրումը անջատված է: Խնդրեմ օգնության համար դիմել ձեր համակարգի ադմինիստրատորին:">
+
+<!ENTITY  versioninfo.wizard.title        "Ստուգվում է հավելումների համատեղելիությունը">
+<!ENTITY  versioninfo.top.label           "Ստուգվում է հավելումների համատեղելիությունը &brandShortName;-ի այս տարբերակի հետ:">
+<!ENTITY  versioninfo.waiting             "Սա կարող է մի որոշ ժամանակ տևել…">
+
+<!ENTITY  installerrors.wizard.title      "Խնդիրներ թարմացումների տեղակայման ժամանակ">
+<!ENTITY  installerrors.intro.label       "&brandShortName;-ը որոշ հավելումների թարմացման ժամանակ հանգեց խնդիրների:">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Սեղմիր Ավարտել որպեսզի շարունակվի &brandShortName;-ի մեկնարկը:">
+<!ENTITY  clickFinish.labelMac            "Սեղմիր Կատարված որպեսզի շարունակվի &brandShortName;-ի մեկնարկը:">
+<!ENTITY  enableChecking.label            "Թույլ տալ &brandShortName;-ին փնտրել նոր թարմացումներ:">

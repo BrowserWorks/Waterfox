@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Asistent pentru importare">
+
+<!ENTITY importFrom.label               "Importă opțiuni, marcaje, istoric, parole și alte date din:">
+<!ENTITY importFromUnix.label           "Importă preferințe, marcaje, istoric, parole și alte date din:">
+<!ENTITY importFromBookmarks.label      "Importă marcaje din:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Nu importa nimic">
+<!ENTITY importFromNothing.accesskey    "u">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Niciun program care conține date cu marcaje, istoric sau parole nu a putut fi găsit.">
+
+<!ENTITY importSource.title             "Importă configurații și date">
+<!ENTITY importItems.title              "Elemente pentru importare">
+<!ENTITY importItems.label              "Selectați care elemente să se importe:">
+
+<!ENTITY migrating.title                "Se importă…">
+<!ENTITY migrating.label                "Următoarele elemente se importă în prezent…">
+
+<!ENTITY selectProfile.title            "Selectați profilul">
+<!ENTITY selectProfile.label            "Următoarele profiluri sunt disponibile pentru a se importa din acestea:">
+
+<!ENTITY done.title                     "Importare încheiată">
+<!ENTITY done.label                     "Următoarele elemente au fost importate cu succes:">
+
+<!ENTITY closeSourceBrowser.label       "Te rugăm să te asiguri că browserul selectat este închis înainte de a continua.">

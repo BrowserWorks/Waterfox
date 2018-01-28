@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Odabrali ste pokrenuti:">
+<!ENTITY  from.label                  "iz:">
+<!ENTITY  actionQuestion.label        "Što bi &brandShortName; trebao učiniti s ovom datotekom?">
+
+<!ENTITY  openWith.label              "Otvori s">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Drugo...">
+
+<!ENTITY  saveFile.label              "Spremi datoteku">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "Od sada učini to automatski za datoteke poput ove.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "koja je:">
+
+<!ENTITY  chooseHandlerMac.label      "Odaberi...">
+<!ENTITY  chooseHandlerMac.accesskey  "O">
+<!ENTITY  chooseHandler.label         "Pretraži...">
+<!ENTITY  chooseHandler.accesskey     "P">
+
+<!ENTITY  unknownPromptText.label     "Želite li spremiti ovu datoteku?">

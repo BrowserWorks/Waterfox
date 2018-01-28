@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Sveiki! Čia „&syncBrand.shortName.label;“">
+
+<!ENTITY aboutAccountsConfig.description "Prisijunkite, jeigu norite sinchronizuoti savo korteles, adresyną, slaptažodžius ir kitką.">
+<!ENTITY aboutAccountsConfig.startButton.label "Pradėti">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sinchronizavimo nuostatos">
+<!ENTITY aboutAccounts.noConnection.title "Nėra ryšio">
+<!ENTITY aboutAccounts.noConnection.description "Norėdami prisijungti, turite būti prisijungę prie interneto.">
+<!ENTITY aboutAccounts.noConnection.retry "Bandyti dar kartą">
+<!ENTITY aboutAccounts.badConfig.title "Bloga sąranka">
+<!ENTITY aboutAccounts.badConfig.description "Nepavyko nustatyti jūsų „Waterfox“ paskyros serverio sąrankos. Pabandykite vėliau.">

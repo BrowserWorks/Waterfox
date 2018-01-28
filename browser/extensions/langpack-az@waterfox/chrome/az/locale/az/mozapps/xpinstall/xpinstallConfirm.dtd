@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from institems.xul -->
+
+
+<!ENTITY dialog.title            "Proqram quraşdırılması">
+<!ENTITY dialog.style            "width: 45em">
+<!ENTITY warningPrimary.label    "Sadəcə inandığınız əlavə yazanların əlavələrini endirin.">
+<!ENTITY warningSecondary.label  "Zərərli proqramlar kompüterinizə zərər verə bilər və ya şəxsi məxfiliyinizin pozulmasına səbəb ola bilər.">
+
+<!ENTITY from.label "ünvan:">
+

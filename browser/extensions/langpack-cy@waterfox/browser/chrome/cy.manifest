@@ -1,0 +1,11 @@
+locale branding cy cy/locale/branding/
+locale browser cy cy/locale/browser/
+locale browser-region cy cy/locale/browser-region/
+locale devtools cy cy/locale/cy/devtools/client/
+locale devtools-shared cy cy/locale/cy/devtools/shared/
+locale formautofill cy cy/locale/cy/
+locale pdf.js cy cy/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

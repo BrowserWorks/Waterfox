@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopiraj">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Odaberi sve">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Općenito">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Naslov:">
+<!ENTITY  generalURL            "Adresa:">
+<!ENTITY  generalType           "Vrsta:">
+<!ENTITY  generalMode           "Način renderiranja:">
+<!ENTITY  generalSize           "Veličina:">
+<!ENTITY  generalReferrer       "Odnosni URL:">
+<!ENTITY  generalSource         "Izvor međumemorije:">
+<!ENTITY  generalModified       "Izmijenjeno:">
+<!ENTITY  generalEncoding2      "Kôdna stranica teksta:">
+<!ENTITY  generalMetaName       "Naziv">
+<!ENTITY  generalMetaContent    "Sadržaj">
+
+<!ENTITY  mediaTab              "Multimedija">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Lokacija:">
+<!ENTITY  mediaText             "Asocirani tekst:">
+<!ENTITY  mediaAltHeader        "Alternativni tekst">
+<!ENTITY  mediaAddress          "Adresa">
+<!ENTITY  mediaType             "Vrsta">
+<!ENTITY  mediaSize             "Veličina">
+<!ENTITY  mediaCount            "Zbroj">
+<!ENTITY  mediaDimension        "Dimenzije:">
+<!ENTITY  mediaLongdesc         "Dugi opis:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Spremi kao...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Pregled:">
+
+<!ENTITY  feedTab               "Kanali">
+<!ENTITY  feedTab.accesskey     "K">
+<!ENTITY  feedSubscribe         "Odjavi">
+<!ENTITY  feedSubscribe.accesskey "d">
+
+<!ENTITY  permTab               "Dozvole">
+<!ENTITY  permTab.accesskey     "D">
+<!ENTITY  permUseDefault        "Koristi uobičajene">
+<!ENTITY  permAskAlways         "Uvijek upitaj">
+<!ENTITY  permAllow             "Dozvoli">
+<!ENTITY  permAllowSession      "Dozvoli za sesiju">
+<!ENTITY  permBlock             "Blokiraj">
+<!ENTITY  permissionsFor        "Dozvole za:">
+<!ENTITY  permPlugins           "Aktiviraj priključke">
+
+<!ENTITY  permClearStorage           "Obriši izvanmrežnu arhivu">
+<!ENTITY  permClearStorage.accesskey "i">
+
+<!ENTITY  securityTab           "Sigurnost">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Pregled certifikata">
+<!ENTITY  securityView.accesskey "r">
+<!ENTITY  securityView.unknown   "Nepoznato">
+
+
+<!ENTITY  securityView.identity.header   "Identitet web stranice">
+<!ENTITY  securityView.identity.owner    "Vlasnik: ">
+<!ENTITY  securityView.identity.domain   "Web stranica: ">
+<!ENTITY  securityView.identity.verifier "Potvrdio: ">
+
+
+<!ENTITY  securityView.privacy.header                   "Privatnost i povijest">
+<!ENTITY  securityView.privacy.history                  "Jesam li posjetio ovu stranicu prije današnjeg dana?">
+<!ENTITY  securityView.privacy.cookies                  "Sprema li ova stranica informacije (kolačiće) na moje računalo?">
+<!ENTITY  securityView.privacy.viewCookies              "Pregled kolačića">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Jesam li spremao zaporke za ovu web stranicu?">
+<!ENTITY  securityView.privacy.viewPasswords            "Pregled spremljenih zaporki">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "z">
+
+<!ENTITY  securityView.technical.header                 "Tehnički detalji">
+
+<!ENTITY  helpButton.label                              "Pomoć">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

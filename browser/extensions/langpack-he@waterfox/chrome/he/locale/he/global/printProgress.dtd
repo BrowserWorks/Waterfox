@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE printProgress.dtd Main UI for Print Progress Dialog -->
+<!ENTITY printWindow.title "מדפיס"> 
+<!ENTITY title    "כותרת:"> 
+<!ENTITY progress "התקדמות:">
+<!ENTITY preparing "מכין...">
+<!ENTITY printComplete "הדפסה הושלמה.">
+
+<!ENTITY dialogCancel.label "ביטול"> 
+<!ENTITY dialogClose.label "סגירה">
+
+<!-- LOCALIZATION NOTE (percentPrint):
+
+    This string is used to format the text to the right of the progress
+    meter.
+
+    #1 will be replaced by the percentage of the file that has been saved -->
+<!ENTITY percentPrint "#1&#037;">

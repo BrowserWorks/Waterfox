@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "隨便亂搞會讓保固失效！">
+<!ENTITY aboutWarningText.label "變更這些進階的設定值可能會影響程式的穩定性、安全性及執行效能。在修改前請確定您知道您在做什麼，或者確定您所參考的文件值得信賴。">
+<!ENTITY aboutWarningButton2.label "我發誓，我一定會小心的！">
+<!ENTITY aboutWarningCheckbox.label "下次顯示此警告訊息">
+
+<!ENTITY searchPrefs.label "搜尋:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "偏好設定名稱">
+<!ENTITY lockColumn.label "狀態">
+<!ENTITY typeColumn.label "類型">
+<!ENTITY valueColumn.label "值">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "按此排序"> 
+<!ENTITY columnChooser.tooltip "點此選擇要顯示的欄位"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "複製">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "複製名稱">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "複製值">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "修改">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "切換">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "重設">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "新增">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "字串">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "整數">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "布林（Boolean）值">
+<!ENTITY boolean.accesskey "B">
+

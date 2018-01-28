@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Loka flipa">
+<!ENTITY tabCrashed.restoreTab "Endurheimta flipa">
+<!ENTITY tabCrashed.restoreAll "Endurheimta alla flipa sem hrundu">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ææ. Því miður hrundi flipinn.">
+<!ENTITY tabCrashed.offerHelp "Við getum hjálpað!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Veldu &tabCrashed.restoreTab; til að endurheimta innihald síðu.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Veldu &tabCrashed.restoreTab; eða &tabCrashed.restoreAll; til að endurheimta innihald síðu.">
+<!ENTITY tabCrashed.requestHelp "Viltu hjálpa okkur?">
+<!ENTITY tabCrashed.requestHelpMessage "Hrunskýrslur hjálpa til við að greina villur og gera &brandShortName; betri.">
+<!ENTITY tabCrashed.requestReport "Tilkynna þennan flipa">
+<!ENTITY tabCrashed.sendReport2 "Senda hrunskýrslu úr flipanum sem þú ert að skoða">
+<!ENTITY tabCrashed.commentPlaceholder2 "Valfrjáls athugasemd (athugasemdir eru sýnilegar almenningi)">
+<!ENTITY tabCrashed.includeURL2 "Láta slóð síðunnar fylgja með í hrunskýrslu">
+<!ENTITY tabCrashed.emailPlaceholder "Sláðu inn tölvupóstfang hér">
+<!ENTITY tabCrashed.emailMe "Senda mér póst þegar meiri upplýsingar eru tiltækar">
+<!ENTITY tabCrashed.reportSent "Búið er að senda inn hrunskýrslu; takk fyrir að hjálpa að gera &brandShortName; betri!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Senda bakgrunnsflipa">
+<!ENTITY tabCrashed.autoSubmit2 "Uppfæra stillingar sjálkrafa til að senda hrunskýrslur, það inniheldur þá skýrslur fyrir hrunda flipa í þessari lotu og lotum í framtíðinni">

@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Style Editor window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : The correct localization of this file might be to keep
+     it in English, or another language commonly spoken among web developers.
+     You want to make that choice consistent across the developer tools.
+     A good criteria is the language in which you'd find the best documentation
+     on web development on the web. -->
+
+
+<!ENTITY newButton.label            "নতুন">
+<!ENTITY newButton.tooltip          "দস্তাবেজলে এটা নতুন শৈলী পৰ্দা সৃষ্টি আৰু সংযোজন কৰক">
+<!ENTITY newButton.accesskey        "N">
+
+<!ENTITY importButton.label         "ইমপোৰ্ট কৰক…">
+<!ENTITY importButton.tooltip       "দস্তাবেজলে এটা স্থায়ী শৈলী পৰ্দা ইমপোৰ্ট আৰু সংযোজন কৰক">
+<!ENTITY importButton.accesskey     "I">
+
+<!ENTITY visibilityToggle.tooltip   "শৈলী পৰ্দাৰ দৃশ্যমানতা অদল বদল কৰক">
+
+<!ENTITY saveButton.label           "সংৰক্ষণ কৰক">
+<!ENTITY saveButton.tooltip         "এই শৈলী পৰ্দাক এটা ফাইললে সংৰক্ষণ কৰক">
+<!ENTITY saveButton.accesskey       "S">
+
+<!ENTITY optionsButton.tooltip      "শৈলী সম্পাদক বিকল্পসমূহ">
+<!-- LOCALIZATION NOTE  (showOriginalSources.label): This is the label on the context
+     menu item to toggle showing original sources in the editor. -->
+
+<!ENTITY showOriginalSources.label     "প্ৰকৃত উৎসবোৰ দেখুৱাওক">
+<!-- LOCALIZATION NOTE  (showOriginalSources.accesskey): This is the access key for
+     the menu item to toggle showing original sources in the editor. -->
+
+<!ENTITY showOriginalSources.accesskey  "o">
+<!-- LOCALIZATION NOTE  (showMediaSidebar.label): This is the label on the context
+     menu item to toggle showing @media rule shortcuts in a sidebar. -->
+
+<!ENTITY showMediaSidebar.label     "@media কাষবাৰ দেখুৱাওক">
+<!-- LOCALIZATION NOTE  (showMediaSidebar.accesskey): This is the access key for
+     the menu item to toggle showing the @media sidebar. -->
+
+<!ENTITY showMediaSidebar.accesskey     "m">
+<!-- LOCALICATION NOTE  (mediaRules.label): This is shown above the list of @media rules
+     in each stylesheet editor sidebar. -->
+
+<!ENTITY mediaRules.label           "@media নিয়মসমূহ">
+
+<!ENTITY editorTextbox.placeholder  "ইয়াত CSS টাইপ কৰক।">
+<!-- LOCALICATION NOTE  (noStyleSheet.label): This is shown when a page has no
+     stylesheet. -->
+
+<!ENTITY noStyleSheet.label         "এই পৃষ্ঠাৰ কোনো শৈলী পৰ্দা নাই।">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-start.label): This is the start of a
+     tip sentence shown when there is no stylesheet. It suggests to create a new
+     stylesheet and provides an action link to do so. -->
+
+<!ENTITY noStyleSheet-tip-start.label  "হয়তো আপুনি ">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-action.label): This is text for the
+     link that triggers creation of a new stylesheet. -->
+<!ENTITY noStyleSheet-tip-action.label "এটা নতুন শৈলী পৰ্দা সংযোজন কৰিব বিচাৰিব পাৰে">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-end.label): End of the tip sentence -->
+<!ENTITY noStyleSheet-tip-end.label    "?">
+<!-- LOCALIZATION NOTE (openLinkNewTab.label): This is the text for the
+     context menu item that opens a stylesheet in a new tab -->
+
+<!ENTITY openLinkNewTab.label     "Open Link in New Tab">

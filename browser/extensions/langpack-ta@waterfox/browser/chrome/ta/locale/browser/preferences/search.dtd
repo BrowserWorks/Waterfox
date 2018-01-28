@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "முன்னிருப்பு தேடுப்பொறி">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "இடப்பட்டையிலும் தேடுபட்டையிலும் பாவிக்க இயல்புநிலைத் தேடுபொறியைத் தேர்ந்தெடு ">
+
+<!ENTITY provideSearchSuggestions.label        "தேடல் பரிந்துரைகளை வழங்கு">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.label           "தேடல் பரிந்துரைகளை இடப்பட்டை முடிவுகளில் காண்பி">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "தேடல் பரிந்துரைகள் இடப்பட்டையில் காட்டப்படாது ஏனெனில் நீங்கள் &brandShortName; என்பதை வரலாற்றில் நினைவு கொள்ளாமல் இருக்கும்படி கட்டமைத்துள்ளீர்கள்.">
+
+<!ENTITY oneClickSearchEngines.label           "ஒரு சொடுக்கு தேடுபொறிகள்">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "நீங்கள் உள்ளிட துவங்கும்போது, இடப்பட்டை மற்றும் தேடுபட்டையின் அடியில் இடம்பெறும் மாற்று தேடுபொறியைத் தேர்ந்தெடுக">
+
+<!ENTITY engineNameColumn.label                "தேடுபொறி">
+<!ENTITY engineKeywordColumn.label             "முக்கியச்சொல்">
+
+<!ENTITY restoreDefaultSearchEngines.label     "முன்னிருப்பு தேடுபொறிகளை மீட்டமை">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "நீக்கு">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY findMoreSearchEngines.label           "மேலும் பல தேடு பொறிகளைக் கண்டுபிடி">

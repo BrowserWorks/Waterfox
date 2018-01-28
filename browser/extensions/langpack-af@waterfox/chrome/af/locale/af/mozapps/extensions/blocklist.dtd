@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Byvoegings kan dalk probleme veroorsaak">
+<!ENTITY blocklist.style             "width: 45em; height: 30em;">
+<!ENTITY blocklist.summary           "&brandShortName; het bepaal dat die volgende byvoegings daarvoor bekend is dat dit stabiliteit- of sekuriteitsprobleme het:">
+<!ENTITY blocklist.softblocked       "Vir u beskerming word dit ernstig aanbeveel dat u weer begin, met hierdie byvoegings gedeaktiveer.">
+<!ENTITY blocklist.hardblocked       "Hierdie byvoegings dra 'n hoë risiko van stabiliteit- of sekuriteitprobleme, en is geblokkeer, maar u moet nog herbegin om dit volledig te deaktiveer.">
+<!ENTITY blocklist.softandhard       "Die byvoegings met 'n hoë risiko van stabiliteit- of sekuriteitprobleme is geblokkeer. Die ander het 'n laer risiko, maar daar word aanbeveel dat u hebegin, met hulle gedeaktiveer.">
+<!ENTITY blocklist.moreinfo          "Meer inligting">
+
+<!ENTITY blocklist.accept.label      "Herbegin &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "H">
+
+<!ENTITY blocklist.blocked.label     "Geblokkeer">
+<!ENTITY blocklist.checkbox.label    "Deaktiveer">

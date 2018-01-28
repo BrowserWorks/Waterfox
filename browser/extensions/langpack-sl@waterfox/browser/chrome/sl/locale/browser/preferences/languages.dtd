@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Jeziki">
+<!ENTITY languages.customize.description                "Spletne strani so včasih na voljo v več jezikih. Izberite jezike za prikaz strani v prednostnem vrstnem redu:">
+<!ENTITY languages.customize.moveUp.label               "Premakni gor">
+<!ENTITY languages.customize.moveUp.accesskey           "G">
+<!ENTITY languages.customize.moveDown.label             "Premakni dol">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+<!ENTITY languages.customize.deleteButton.label         "Odstrani">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.selectLanguage.label       "Izberite dodaten jezik …">
+<!ENTITY languages.customize.addButton.label            "Dodaj">
+<!ENTITY languages.customize.addButton.accesskey        "D">
+

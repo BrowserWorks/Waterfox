@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Eisgeachdan">
+<!ENTITY window.width                 "49em">
+
+<!ENTITY treehead.status.label        "Staid">
+
+
+
+
+<!ENTITY address.label                "Seòladh na làraich-lìn:">
+<!ENTITY address.accesskey            "d">
+<!ENTITY block.label                  "Cuir bacadh air">
+<!ENTITY block.accesskey              "b">
+<!ENTITY session.label                "Ceadaich fad an t-seisein">
+<!ENTITY session.accesskey            "s">
+<!ENTITY allow.label                  "Ceadaich">
+<!ENTITY allow.accesskey              "a">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Sguir dheth">
+<!ENTITY button.cancel.accesskey      "S">
+<!ENTITY button.ok.label              "Sàbhail na h-atharraichean">
+<!ENTITY button.ok.accesskey          "S">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Culori">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Înlocuiește culorile specificate de pagină cu selecțiile mele de mai sus:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Întotdeauna">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Numai cu teme cu contrast puternic">
+<!ENTITY  overrideDefaultPageColors.never.label  "Niciodată">
+
+<!ENTITY  color                           "Text și fundal">
+<!ENTITY  textColor.label                 "Text:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Fundal:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Folosește culorile sistemului">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Subliniază linkurile">
+<!ENTITY  underlineLinks.accesskey        "u">
+<!ENTITY  links                           "Culori pentru linkuri">
+<!ENTITY  linkColor.label                 "Linkuri nevizitate:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "Linkuri vizitate:">
+<!ENTITY  visitedLinkColor.accesskey      "v">

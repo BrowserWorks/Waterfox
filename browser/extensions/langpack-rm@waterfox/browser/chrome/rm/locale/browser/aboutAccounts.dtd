@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Bainvegni tar &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "T'annunzia per sincronisar tes tabs, segnapaginas, pleds-clav e dapli.">
+<!ENTITY aboutAccountsConfig.startButton.label "Cumenzar">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferenzas dal sincronisar">
+<!ENTITY aboutAccounts.noConnection.title "Nagina connexiun">
+<!ENTITY aboutAccounts.noConnection.description "Ti stos esser connectà cun l'internet per t'annunziar.">
+<!ENTITY aboutAccounts.noConnection.retry "Empruvar danovamain">
+<!ENTITY aboutAccounts.badConfig.title "Configuraziun nuncorrecta">
+<!ENTITY aboutAccounts.badConfig.description "Impussibel da determinar la configuraziun dal server da tes conto da Waterfox. Emprova pli tard anc ina giada.">

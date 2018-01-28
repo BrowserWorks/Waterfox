@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Paràmetres - Dades dels llocs">
+<!ENTITY     hostCol.label                 "Lloc">
+<!ENTITY     statusCol.label               "Estat">
+<!ENTITY     usageCol.label                "Emmagatzematge">
+<!ENTITY     searchTextboxPlaceHolder             "Cerca llocs web">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "r">
+<!ENTITY     removeSelected.label          "Elimina la selecció">
+<!ENTITY     removeSelected.accesskey      "l">
+<!ENTITY     save.label                    "Desa els canvis">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Cancel·la">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Eliminació de les dades dels llocs">
+<!ENTITY     removingSelected.description  "Si elimineu les dades dels llocs, també s'eliminaran les galetes i el contingut web fora de línia d'aquests llocs. Això pot fer que es tanqui la sessió dels llocs web. Segur que voleu fer aquests canvis?">
+<!ENTITY     siteTree.label                "S'eliminaran les galetes de lloc web següents:">

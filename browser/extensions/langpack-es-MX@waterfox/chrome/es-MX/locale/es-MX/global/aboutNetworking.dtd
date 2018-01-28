@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Acerca del tráfico de red">
+<!ENTITY aboutNetworking.warning               "Esto es muy experimental. No debe usarse sin supervisión de un adulto.">
+<!ENTITY aboutNetworking.showNextTime          "Mostrar siempre esta advertencia.">
+<!ENTITY aboutNetworking.ok                    "Aceptar">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Refrescar">
+<!ENTITY aboutNetworking.autoRefresh           "Refrescar automáticamente cada 3 segundos">
+<!ENTITY aboutNetworking.hostname              "Nombre del servidor">
+<!ENTITY aboutNetworking.port                  "Puerto">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Activo">
+<!ENTITY aboutNetworking.idle                  "Inactivo">
+<!ENTITY aboutNetworking.host                  "Servidor">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Enviar">
+<!ENTITY aboutNetworking.received              "Recibido">
+<!ENTITY aboutNetworking.family                "Familia">
+<!ENTITY aboutNetworking.addresses             "Dirección">
+<!ENTITY aboutNetworking.expires               "Expira (Segundos)">
+<!ENTITY aboutNetworking.messagesSent          "Mensajes enviados">
+<!ENTITY aboutNetworking.messagesReceived      "Mensajes recibidos">
+<!ENTITY aboutNetworking.bytesSent             "Bytes enviados">
+<!ENTITY aboutNetworking.bytesReceived         "Bytes recibidos">
+<!ENTITY aboutNetworking.logging               "Registro">
+<!ENTITY aboutNetworking.logTutorial           "Vea<a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Registro HTTP</a> para instrucciones sobre como usar esta herramienta.">
+<!ENTITY aboutNetworking.currentLogFile        "Archivo de registro actual:">
+<!ENTITY aboutNetworking.currentLogModules     "Módulos de registro actuales:">
+<!ENTITY aboutNetworking.setLogFile            "Establecer archivo de registro">
+<!ENTITY aboutNetworking.setLogModules         "Establecer módulos de registro">
+<!ENTITY aboutNetworking.startLogging          "Iniciar registro">
+<!ENTITY aboutNetworking.stopLogging           "Detener registro">
+<!ENTITY aboutNetworking.dnsLookup             "Búsqueda de DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Resolver">
+<!ENTITY aboutNetworking.dnsDomain             "Dominio">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "Estadísticas RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Estatus RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cuenta de caché ganado">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Cuenta de red ganada">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Cuenta total de peticiones de red">
+<!ENTITY aboutNetworking.rcwnOperation         "Operación caché">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Abrir">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Leer">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Escribir">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entrada abierta">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Promedio corto">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Promedio largo">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Desviación estándar larga ">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cuenta lenta de caché">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cuenta de caché no lenta">

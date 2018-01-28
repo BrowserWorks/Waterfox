@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Расположение:">
+<!ENTITY tile.label                 "Замостить">
+<!ENTITY center.label               "По центру">
+<!ENTITY stretch.label              "Растянуть">
+<!ENTITY fill.label                 "Заполнение">
+<!ENTITY fit.label                  "По размеру">
+<!ENTITY preview.label              "Предпросмотр">
+<!ENTITY color.label                "Цвет:">
+<!ENTITY setDesktopBackground.title "Сделать фоном рабочего стола">
+<!ENTITY openDesktopPrefs.label     "Открыть настройки рабочего стола">
+<!ENTITY closeWindow.key            "w">

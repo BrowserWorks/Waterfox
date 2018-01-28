@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Bir sonrakı uyğun gələn ifadəni tap">
+<!ENTITY previous.tooltip "Bir öncəki uyğun gələn ifadəni tap">
+<!ENTITY findCloseButton.tooltip "Axtarış sətrini bağla">
+<!ENTITY highlightAll.label "Hamısını işıqlandır">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.tooltiptext "Mətndə uyğun gələn bütün ifadələri işıqlandır">
+<!ENTITY caseSensitive.label "Reqistri nəzərə al">
+<!ENTITY caseSensitive.accesskey "n">
+<!ENTITY caseSensitive.tooltiptext "Böyük/kiçik hərf həssaslığı ilə axtar">
+<!ENTITY entireWord.label "Tam Sözlər">
+<!ENTITY entireWord.accesskey "T">
+<!ENTITY entireWord.tooltiptext "Sadəcə tam sözləri axtar">

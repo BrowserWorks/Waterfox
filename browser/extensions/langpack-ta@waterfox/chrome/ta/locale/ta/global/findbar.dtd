@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "இந்த சொற்றொடரின் அடுத்த நிகழ்வை தேடு">
+<!ENTITY previous.tooltip "இந்த சொற்றொடரின் முந்தைய நிகழ்வை தேடு">
+<!ENTITY findCloseButton.tooltip "தேடு பட்டியை மூடு">
+<!ENTITY highlightAll.label "எல்லாத்தையும் முன்னிலைப்படுத்த">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.tooltiptext "சொற்றொடரின் அனைத்து நிகழ்வுகளை முன்னிலைப்படுத்து">
+<!ENTITY caseSensitive.label "வழக்கு பொருத்தும் (c)">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "உணர்திறன் வழக்கத்துடன் தேடு">
+<!ENTITY entireWord.label "முழுச்சொற்கள்">
+<!ENTITY entireWord.accesskey "W">
+<!ENTITY entireWord.tooltiptext "முழுச்சொற்களை மட்டும் தேடு">

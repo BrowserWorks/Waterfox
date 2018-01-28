@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Změna hlavního hesla">
+<!ENTITY setPassword.tokenName.label "Bezpečnostní zařízení">
+<!ENTITY setPassword.oldPassword.label "Současné heslo:">
+<!ENTITY setPassword.newPassword.label "Nové heslo:">
+<!ENTITY setPassword.reenterPassword.label "Nové heslo (znovu):">
+<!ENTITY setPassword.meter.label "Kvalita hesla">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Obnovit">
+<!ENTITY resetPassword.title  "Obnovení hlavního hesla">
+<!ENTITY resetPassword.text  "Pokud obnovíte hlavní heslo, všechna vaše uložená hesla z webových stránek a e-mailů, vyplněná data z formulářů, osobní certifikáty a klíče budou ztraceny. Chcete přesto obnovit hlavní heslo?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Stažení certifikátu">
+<!ENTITY downloadCert.message1 "Byli jste požádáni o uznání nové Certifikační Autority (CA).">
+<!ENTITY downloadCert.trustSSL "Uznat tuto CA pro identifikaci serverů.">
+<!ENTITY downloadCert.trustEmail "Uznat tuto CA pro identifikaci uživatelů pošty.">
+<!ENTITY downloadCert.trustObjSign "Uznat tuto CA pro identifikaci výrobců softwaru.">
+<!ENTITY downloadCert.message3 "Před uznáním této CA, a to pro jakýkoliv účel, byste měli prozkoumat její certifikát, její pravidla a podmínky (pokud jsou dostupné).">
+<!ENTITY downloadCert.viewCert.label "Zobrazit">
+<!ENTITY downloadCert.viewCert.text "Zobrazit certifikát CA">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Požadavek na identifikaci uživatele">
+<!ENTITY clientAuthAsk.message1 "Tato stránka vyžaduje vaši identifikaci certifikátem:">
+<!ENTITY clientAuthAsk.message2 "Vyberte certifikát, který vás identifikuje:">
+<!ENTITY clientAuthAsk.message3 "Podrobnosti o vybraném certifikátu:">
+
+<!ENTITY pkcs12.setpassword.title  "Zvolte heslo zálohy certifikátu">
+<!ENTITY pkcs12.setpassword.message  "Heslo zálohy certifikátu, které si zde nastavíte, chrání vaše soubory zálohy, kterou se chystáte vytvořit. Abyste mohli pokračovat dále, musíte toto heslo zadat.">
+<!ENTITY pkcs12.setpassword.label1 "Heslo zálohy certifikátu:">
+<!ENTITY pkcs12.setpassword.label2 "Heslo zálohy certifikátu (znovu):">
+<!ENTITY pkcs12.setpassword.reminder "Důležité: Pokud zapomenete svoje heslo zálohy certifikátu, nebude později možno tuto zálohu obnovit. Heslo si poznamenejte na BEZPEČNÉ místo.">
+
+<!ENTITY chooseToken.title  "Výběr autentizačního tokenu">
+<!ENTITY chooseToken.message1 "Vyberte prosím autentizační token.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Generování osobního klíče">
+<!ENTITY createCertInfo.msg1 "Probíhá generování klíče… Může to chvíli trvat…">
+<!ENTITY createCertInfo.msg2 "Čekejte prosím…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Zabezpečený autentizační token">
+<!ENTITY protectedAuth.msg "Autentizujte se prosím k vašemu tokenu. Autentizační postup závisí na druhu vašeho tokenu.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

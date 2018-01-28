@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; Ngec manyen">
+
+<!ENTITY  offline.title                   "&brandShortName; tye ka tic mape okube iwi yamo">
+<!ENTITY  offline.description             "&brandShortName; mito cito iyamo me neno kace ngec manyen tye pi med-ikome mamegi me weko gi rwate me tic ki kit man.">
+<!ENTITY  offline.toggleOffline.label     "Woti iwi yamo kombedi.">
+<!ENTITY  offline.toggleOffline.accesskey "W">
+
+<!ENTITY  mismatch.win.title              "Med-ikome mape rwate me tic">
+<!ENTITY  mismatch.top.label              "Med-ikome magi pe rwate me tic ki kit &brandShortName; man kadong kijuko woko:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; twero roto kace kit marwate me med-ikome magi tye.">
+
+<!ENTITY  checking.wizard.title           "Roto pi med-ikome marwate">
+<!ENTITY  checking.top.label              "Roto med-ikome mamegi mape rwate pi keto ngec manyen…">
+<!ENTITY  checking.status                 "Gin ma eni ni amaro tero dakika manok…">
+
+<!ENTITY  found.wizard.title               "Kinongo med-ikome marwate">
+<!ENTITY  found.top.label                 "Yer med-ikome ma imito keto:">
+<!ENTITY  found.disabledXPinstall.label   "Ngec manyen magi pe kitwero keto gi pien keto purugram kombedi kigengo woko. Itwero loko ter man piny.">
+<!ENTITY  found.enableXPInstall.label     "Wek kakube me web ket purugram me kompiuta">
+<!ENTITY  found.enableXPInstall.accesskey "W">
+
+<!ENTITY  installing.wizard.title         "Keto med-ikome marwate">
+<!ENTITY  installing.top.label            "Tye ka gamo kadong keto ngec manyen iye med-ikome mamegi…">
+
+<!ENTITY  noupdates.wizard.title          "Med-ikome marwate pe ononge">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; pe otwero nongo ngec manyen me med-ikome mamegi mape rwate.">
+<!ENTITY  noupdates.error.desc            "Peki mogo mukene ononge ikare me temo nongo en manyen.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; bi roto kare ki kare kadong miyi ngec kace ngec manyen marwate pi med-ikome magi ononge.">
+
+<!ENTITY  finished.wizard.title           "Med-ikome marwate kiketo">
+<!ENTITY  finished.top.label              "&brandShortName; oketo ngec manyen i med-ikome mamegi.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; romo roto kare ki kare kadong miyi ngec kace ngec manyen pi med-ikome ononge.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; bi roto kare ki kare kadong miyi ngec kace ngec manyen pi med-ikome ononge.">
+
+<!ENTITY  adminDisabled.wizard.title      "Pe otwero roto pi En manyen">
+<!ENTITY  adminDisabled.warning.label     "Roto pi ngec manyen me med-ikome marwate pe twere pien keto purugram pi &brandShortName; kijuko woko. Tim ber i kube ki lalo nyonyo mamegi pi kony.">
+
+<!ENTITY  versioninfo.wizard.title        "Roto rwate pa med-ikome">
+<!ENTITY  versioninfo.top.label           "Roto med-ikome mamegi pi rwate me tic ki kit me &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Gin ma eni ni amaro tero dakika manok…">
+
+<!ENTITY  installerrors.wizard.title      "Peki mogo ononge i kare me keto En manyen">
+<!ENTITY  installerrors.intro.label       "&brandShortName; orwate ki peko ma onongo tye ka keto ngec manyen iye med-ikome mamegi mogo.">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "Dii Tyeko ki mede cako &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Dii Otum ki made cako &brandShortName;.">
+<!ENTITY  enableChecking.label            "Weki &brandShortName; ki irot pi en manyen.">

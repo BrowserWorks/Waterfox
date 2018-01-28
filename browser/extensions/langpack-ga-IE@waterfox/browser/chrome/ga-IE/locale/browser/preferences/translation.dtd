@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Eisceachtaí - Aistriúchán">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Ní thairgfear aistriúchán ó na teangacha seo a leanas:">
+<!ENTITY treehead.languageName.label      "Teangacha">
+<!ENTITY removeLanguage.label             "Bain Teanga">
+<!ENTITY removeLanguage.accesskey         "B">
+<!ENTITY removeAllLanguages.label         "Bain Gach Teanga">
+<!ENTITY removeAllLanguages.accesskey     "a">
+
+<!ENTITY noTranslationForSites.label      "Ní thairgfear aistriúchán ar na suímh seo a leanas:">
+
+<!ENTITY removeSite.label                 "Bain Suíomh">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Bain Gach Suíomh">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Dún">
+<!ENTITY button.close.accesskey           "D">
+
+<!ENTITY treehead.siteName2.label         "Websites">

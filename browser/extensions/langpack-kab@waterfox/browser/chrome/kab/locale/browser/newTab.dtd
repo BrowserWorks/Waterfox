@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Iccer amaynut">
+<!ENTITY newtab.customize.classic "Sken ismal web yettwarzan aṭas">
+<!ENTITY newtab.customize.cog.enhanced "Suddu iselmen iţusumren">
+<!ENTITY newtab.customize.cog.title2 "ASENQED N YICCER AMAYNUT">
+<!ENTITY newtab.customize.cog.learn "Issin ɣef iccer amaynut">
+<!ENTITY newtab.customize.title "Sagen asebter n yiccer amaynut">
+<!ENTITY newtab.customize.blank2 "Sken asebter ilem">
+<!ENTITY newtab.undo.removedLabel "Tanfult tettwakkes.">
+<!ENTITY newtab.undo.undoButton "Sefsex">
+<!ENTITY newtab.undo.restoreButton "Err-d imaṛṛa.">
+<!ENTITY newtab.undo.closeTooltip "Ffer">

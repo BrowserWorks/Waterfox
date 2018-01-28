@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "પાનાનું સેટઅપ">
+
+<!ENTITY basic.tab           "બંધારણ &amp; વિકલ્પો">
+
+<!ENTITY formatGroup.label   "બંધારણ">
+
+<!ENTITY orientation.label   "દિશા">
+<!ENTITY portrait.label      "ઊભું">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "આડું">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "માપ:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "પાનાની પહોળાઈમાં બંધ બેસાડવા સંકોચો">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "વિકલ્પો">
+
+<!ENTITY printBG.label       "પાશ્વભાગ છાપો (રંગો &amp; ચિત્રો)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "સીમા &amp; હેડર/ફુટર">
+
+<!ENTITY marginGroup.label   "સીમા (#1)">
+<!ENTITY marginUnits.inches  "ઈંચ">
+<!ENTITY marginUnits.metric  "મિલિમીટર">
+<!ENTITY marginTop.label     "ઉપર:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "નીચે:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "ડાબી બાજુ:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "જમણી બાજુ:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "હેડર &amp; ફુટર">
+
+<!ENTITY hfLeft.label        "Left:">
+<!ENTITY hfCenter.label      "મધ્યમાં:">
+<!ENTITY hfRight.label       "Right:">
+<!ENTITY headerLeft.tip      "ડાબી હેડર">
+<!ENTITY headerCenter.tip    "વચ્ચેની હેડર">
+<!ENTITY headerRight.tip     "જમણી હેડર">
+<!ENTITY footerLeft.tip      "ડાબી ફુટર">
+<!ENTITY footerCenter.tip    "વચ્ચેની ફુટર">
+<!ENTITY footerRight.tip     "જમણી ફુટર">
+
+<!ENTITY hfTitle             "શીર્ષક">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "તારીખ/સમય">
+<!ENTITY hfPage              "પાનુ #">
+<!ENTITY hfPageAndTotal      "# નું પાનુ #">
+<!ENTITY hfBlank             "--ખાલી--">
+<!ENTITY hfCustom            "કસ્ટમ">
+
+<!ENTITY customPrompt.title  "વૈવિધ્યપૂર્ણ...">
+<!ENTITY customPrompt.prompt "તમારા કસ્ટમ હેડર/ફુટર લખાણ દાખલ કરો">

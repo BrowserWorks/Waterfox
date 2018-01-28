@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Yangi konteyner qo‘shish">
+<!ENTITY addButton.accesskey  "q">
+<!ENTITY preferencesButton.label "Parametrlar">
+<!ENTITY removeButton.label   "Olib tashlash">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+
+<!ENTITY window.title         "Yangi konteyner qo‘shish">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nomi:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Konteyner nomini kiriting">
+<!ENTITY icon.label           "Nishoncha:">
+<!ENTITY icon.accesskey       "N">
+<!ENTITY color.label          "Rangi:">
+<!ENTITY color.accesskey      "R">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Tayyor">
+<!ENTITY button.ok.accesskey  "T">
+
+
+<!ENTITY backLink2.label      "&#171; Go Back">
+

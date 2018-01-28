@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Khôi Phục Phiên Làm Việc">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Hừm, thật là ngại quá.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; gặp vấn đề khi đang khôi phục các cửa sổ và thẻ của bạn. Việc này thường có nguyên nhân từ một trang web được mở gần đây.">
+<!ENTITY restorepage.tryThis        "Bạn có thể thử:">
+<!ENTITY restorepage.restoreSome    "Xóa các thẻ mà bạn nghĩ là nguyên nhân gây ra vấn đề">
+<!ENTITY restorepage.startNew       "Khởi tạo một phiên duyệt web mới hoàn toàn">
+
+<!ENTITY restorepage.tryagainButton "Khôi phục">
+<!ENTITY restorepage.restore.access "K">
+<!ENTITY restorepage.closeButton    "Đóng">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Khôi phục">
+<!ENTITY restorepage.listHeader     "Cửa Sổ và Thẻ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Cửa sổ &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Bắt đầu nào!">
+<!ENTITY welcomeback2.restoreButton.access "B">
+
+<!ENTITY welcomeback2.tabtitle      "Thành công!">
+
+<!ENTITY welcomeback2.pageTitle     "Thành công!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; đã sẵn sàng.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Khôi phục lại toàn bộ các thẻ &amp; cửa sổ">
+<!ENTITY welcomeback2.restoreSome.label "Chỉ khôi phục những cái bạn muốn">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Phần mở rộng và tùy biến của bạn đã xóa và các thiết lập của trình duyệt sẽ được khôi phục về trạng thái mặc định. Nếu điều này không giải quyết được vấn đề của bạn, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "tìm hiểu thêm về những gì bạn có thể làm.">
+

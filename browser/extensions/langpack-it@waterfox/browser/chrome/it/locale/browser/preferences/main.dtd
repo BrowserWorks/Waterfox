@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label "Avvio">
+<!ENTITY startupPage2.label "Quando si avvia &brandShortName;">
+<!ENTITY startupPage2.accesskey "Q">
+<!ENTITY startupUserHomePage.label "Mostra la pagina iniziale">
+<!ENTITY startupBlankPage.label "Mostra una pagina vuota">
+<!ENTITY startupPrevSession.label "Mostra le finestre e le schede dell’ultima sessione">
+<!ENTITY homepage2.label "Pagina iniziale">
+<!ENTITY homepage2.accesskey "n">
+<!ENTITY useCurrentPage.label "Usa la pagina corrente">
+<!ENTITY useCurrentPage.accesskey "U">
+<!ENTITY useMultiple.label "Usa le pagine correnti">
+<!ENTITY chooseBookmark.label "Usa un segnalibro…">
+<!ENTITY chooseBookmark.accesskey "b">
+<!ENTITY restoreDefault.label "Ripristina la pagina predefinita">
+<!ENTITY restoreDefault.accesskey "f">
+<!ENTITY downloads.label "Download">
+<!ENTITY saveTo.label "Salva i file in">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label "Sfoglia…">
+<!ENTITY chooseFolderWin.accesskey "f">
+<!ENTITY chooseFolderMac.label "Scegli…">
+<!ENTITY chooseFolderMac.accesskey "c">
+<!ENTITY alwaysAskWhere.label "Chiedi dove salvare ogni file">
+<!ENTITY alwaysAskWhere.accesskey "e">
+<!ENTITY alwaysCheckDefault2.label "Controlla sempre se &brandShortName; è il browser predefinito">
+<!ENTITY alwaysCheckDefault2.accesskey "t">
+<!ENTITY setAsMyDefaultBrowser3.label "Imposta come browser predefinito…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "o">
+<!ENTITY isDefault.label "&brandShortName; è attualmente il browser predefinito">
+<!ENTITY isNotDefault.label "&brandShortName; non è il browser predefinito">
+<!ENTITY separateProfileMode.label "Consenti l’esecuzione in contemporanea di &brandShortName; e Waterfox">
+<!ENTITY useWaterfoxSync.label "Consiglio: questo comporta l’utilizzo di profili diversi. È possibile appoggiarsi a Sync per la sincronizzazione dei dati.">
+<!ENTITY getStarted.notloggedin.label "Accedi a &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label "Apri preferenze di &syncBrand.shortName.label;">
+<!ENTITY e10sEnabled.label "Utilizza &brandShortName; in modalità multiprocesso">

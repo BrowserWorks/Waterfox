@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Zastojnik certifikatow">
+
+<!ENTITY certmgr.tab.mine                     "Waše certifikaty">
+<!ENTITY certmgr.tab.others2                  "Luźe">
+<!ENTITY certmgr.tab.websites3                "Serwery">
+<!ENTITY certmgr.tab.ca                       "Awtority">
+<!ENTITY certmgr.tab.orphan2                  "Druge">
+
+<!ENTITY certmgr.mine                         "Maśo certifikaty z toś tych organizacijow, kótarež was identificěruju:">
+<!ENTITY certmgr.others                       "Maśo certifikaty wó dataji, kótarež identificěruju toś tych luźi:">
+<!ENTITY certmgr.websites2                    "Maśo certifikaty w dataji, kótarež identificěruju toś te serwery:">
+<!ENTITY certmgr.cas                          "Maśo certifikaty w dataji, kótarež identificěruju toś te certifikatowe awtority:">
+<!ENTITY certmgr.orphans                      "Maśo certifikaty w dataji, kótarež njepasuju w jadnej z drugich kategorijow:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Powšykne">
+<!ENTITY certmgr.detail.general_tab.accesskey "P">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Drobnostki">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Certifikat se tuchylu pśespytujo…">
+<!ENTITY certmgr.subjectinfo.label            "Wudany za">
+<!ENTITY certmgr.issuerinfo.label             "Wudany wót">
+<!ENTITY certmgr.periodofvalidity.label       "Cas płaśiwosći" >
+<!ENTITY certmgr.fingerprints.label           "Palcowe wótśišće">
+<!ENTITY certmgr.certdetail.title             "Drobnostka certifikata">
+<!ENTITY certmgr.certdetail.cn                "Powšykne mě (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organizacija (O)">
+<!ENTITY certmgr.certdetail.ou                "Organizaciska jadnotka (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Serijowy numer">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Palcowy wótśišć SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Palcowy wótśišć SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Nastajenja dowěrygódnosći certifikata certifikatoweje awtority wobźěłaś">
+<!ENTITY certmgr.editcert.edittrust           "Nastajenja dowěrygódnosći:">
+<!ENTITY certmgr.editcert.trustssl            "Toś ten certifikat móžo websedła identificěrowaś.">
+<!ENTITY certmgr.editcert.trustemail          "Toś ten certifikat móžo e-mailowych wužywarjow identificěrowaś.">
+<!ENTITY certmgr.editcert.trustobjsign        "Toś ten certifikat móžo softwarych zgótowarjow identificěrowaś.">
+
+<!ENTITY certmgr.deletecert.title             "Certifikat lašowaś">
+
+<!ENTITY certmgr.certname                     "Mě certifikata">
+<!ENTITY certmgr.certserver                   "Serwer">
+<!ENTITY certmgr.override_lifetime            "Cas žywjenja">
+<!ENTITY certmgr.tokenname                    "Wěstotny rěd">
+<!ENTITY certmgr.begins                       "Zachopijo se">
+<!ENTITY certmgr.expires                      "Płaśiwy do">
+<!ENTITY certmgr.email                        "E-mailowa adresa">
+<!ENTITY certmgr.serial                       "Serijowy numer">
+
+<!ENTITY certmgr.close.label                  "Zacyniś">
+<!ENTITY certmgr.close.accesskey              "Z">
+<!ENTITY certmgr.view2.label                  "Naglěd…">
+<!ENTITY certmgr.view2.accesskey              "N">
+<!ENTITY certmgr.edit3.label                  "Dowěru wobźěłaś…">
+<!ENTITY certmgr.edit3.accesskey              "o">
+<!ENTITY certmgr.export.label                 "Eksportěrowaś…">
+<!ENTITY certmgr.export.accesskey             "E">
+<!ENTITY certmgr.delete2.label                "Wulašowaś…">
+<!ENTITY certmgr.delete2.accesskey            "l">
+<!ENTITY certmgr.delete_builtin.label         "Wulašowaś abo dowěru zajmjeś…">
+<!ENTITY certmgr.delete_builtin.accesskey     "d">
+<!ENTITY certmgr.backup2.label                "Zawěsćiś…">
+<!ENTITY certmgr.backup2.accesskey            "Z">
+<!ENTITY certmgr.backupall2.label             "Wšykno zawěsćiś…">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "Importěrowaś…">
+<!ENTITY certmgr.restore2.accesskey           "I">
+<!ENTITY certmgr.details.label                "Póla certifikata">
+<!ENTITY certmgr.details.accesskey            "c">
+<!ENTITY certmgr.fields.label                 "Gódnota póla">
+<!ENTITY certmgr.fields.accesskey             "G">
+<!ENTITY certmgr.hierarchy.label              "Certifikatowa hierarchija">
+<!ENTITY certmgr.hierarchy.accesskey2         "h">
+<!ENTITY certmgr.addException.label           "Wuwześe pśidaś…">
+<!ENTITY certmgr.addException.accesskey       "z">
+
+<!ENTITY exceptionMgr.title                   "Wěstotne wuwześe pśidaś">
+<!ENTITY exceptionMgr.exceptionButton.label   "Wěstotne wuwześe wobkšuśiś">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "u">
+<!ENTITY exceptionMgr.supplementalWarning     "Banki, wobchody a druge zjawne městna njebudu was pšosyś to cyniś.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Serwer">
+<!ENTITY exceptionMgr.certlocation.url        "Městno:">
+<!ENTITY exceptionMgr.certlocation.download   "Certifikat se wobstaraś">
+<!ENTITY exceptionMgr.certlocation.accesskey  "b">
+<!ENTITY exceptionMgr.certstatus.caption      "Status certifikata">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Pokazaś…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "k">
+<!ENTITY exceptionMgr.permanent.label         "Toś to wuwześe na pśecej składowaś">
+<!ENTITY exceptionMgr.permanent.accesskey     "T">

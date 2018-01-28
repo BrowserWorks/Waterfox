@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Serrar quest tab">
+<!ENTITY tabCrashed.restoreTab "Restaurar quest tab">
+<!ENTITY tabCrashed.restoreAll "Restaurar tut ils tabs collabads">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Oh Dieu! Tes tab è gist collabà.">
+<!ENTITY tabCrashed.offerHelp "Nus pudain gidar!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Tscherna «&tabCrashed.restoreTab;» per rechargiar il cuntegn da la pagina.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Tscherna «&tabCrashed.restoreTab;» u «&tabCrashed.restoreAll;» per rechargiar il cuntegn da la pagina.">
+<!ENTITY tabCrashed.requestHelp "Ans gidas?">
+<!ENTITY tabCrashed.requestHelpMessage "Annunzias da collaps ans gidan da chattar problems e da meglierar &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Rapportar quest tab">
+<!ENTITY tabCrashed.sendReport2 "Trametter ina annunzia da collaps per il tab che ti vesas gist">
+<!ENTITY tabCrashed.commentPlaceholder2 "Commentari facultativ (attenziun: ils commentaris vegnan publitgads)">
+<!ENTITY tabCrashed.includeURL2 "Integrar l'URL da la pagina en questa annunzia da collaps">
+<!ENTITY tabCrashed.emailPlaceholder "Endatescha qua tia adressa dad e-mail">
+<!ENTITY tabCrashed.emailMe "M'infurmar per e-mail sch'i dat novas infurmaziuns">
+<!ENTITY tabCrashed.reportSent "Il rapport da collaps è gia vegnì tramess; grazia per gidar a meglierar &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Trametter rapports per tabs inactivs">
+<!ENTITY tabCrashed.autoSubmit2 "Midar las preferenzas e trametter automaticamain rapports da collaps, inclus ils rapports per ils tabs inactivs da questa sesida e da sesidas futuras">

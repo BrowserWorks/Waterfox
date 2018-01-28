@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; تازہ کریں">
+<!ENTITY refreshProfile.dialog.description1  "تازہ شروع کریں تاکہ مسائل پیوست کریں اور سرانجام دہی بحال کریں">
+<!ENTITY refreshProfile.dialog.description2  "یہ:">
+<!ENTITY refreshProfile.dialog.items.label1  "اپنے ایڈ اون اور تخصیص کاری ہٹائیں">
+<!ENTITY refreshProfile.dialog.items.label2  "اپنے براؤزر کی ترتیبات کو طےشدہ پہ بحال کریں">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; تازہ کریں">
+
+<!ENTITY refreshProfile.title                "&brandShortName; کی صفائی کریں">
+<!ENTITY refreshProfile.button.label         "&brandShortName; تازہ کریں…">
+
+<!ENTITY refreshProfile.cleaning.description "تقریبا ختم…">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Šobrīd jūs neesat privātajā logā.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Atvērt privāto logu">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privātā pārlūkošana">
+<!ENTITY privateBrowsing.title.tracking                  "Privātā pārlūkošana ar izsekošanas aizsardzību">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Kad pārlūkojat privātajā režīmā, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nesaglabā">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "apmeklētās lapas">
+<!ENTITY aboutPrivateBrowsing.info.searches              "meklējumus">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "sīkdatnes">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "pagaidu failus">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "saglabās">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " jūsu:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "lejupielādes">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "grāmatzīmes">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privātā pārlūkošana ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nepadara jūs anonīmus">
+<!ENTITY aboutPrivateBrowsing.note.after                 " internetā. Ņemiet vērā, ka jūsu darba devējs vai interneta pakalpojumu sniedzējs joprojām var noteikt lapas, kuras apmeklējat.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Uzziniet vairāk par ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Privātā pārlūkošana">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Izsekošanas aizsardzība">
+<!ENTITY trackingProtection.description2                 "Dažas lapas izmanto sekotājus, kas var izsekot jūsu aktivitātei internetā. Ar izsekošanas aizsardzību Waterfox bloķēs daudzus no sekotājiem, kas vāc informāciju par jūsu aktivitātēm internetā.">
+<!ENTITY trackingProtection.startTour1                   "Apskatiet kā tas strādā">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title       "Lehekülje sätted">
+
+<!ENTITY basic.tab              "Formaat ja sätted">
+
+<!ENTITY formatGroup.label      "Formaat">
+
+<!ENTITY orientation.label      "Asend:">
+<!ENTITY portrait.label         "Püstpaigutus">
+<!ENTITY portrait.accesskey     "P">
+<!ENTITY landscape.label        "Rõhtpaigutus">
+<!ENTITY landscape.accesskey    "R">
+
+<!ENTITY scale.label            "Mõõtkava:">
+<!ENTITY scale.accesskey        "M">
+<!ENTITY scalePercent           "&#037;">
+
+<!ENTITY shrinkToFit.label      "Mahutatakse lehekülje laiusele">
+<!ENTITY shrinkToFit.accesskey  "h">
+
+<!ENTITY optionsGroup.label     "Sätted">
+
+<!ENTITY printBG.label          "Tausta printimine (värvid ja pildid)">
+<!ENTITY printBG.accesskey      "T">
+
+<!ENTITY advanced.tab           "Veerised ja päis/jalus">
+
+<!ENTITY marginGroup.label      "Veerised (#1)">
+<!ENTITY marginUnits.inches     "tollides">
+<!ENTITY marginUnits.metric     "millimeetrites">
+<!ENTITY marginTop.label        "Ülemine:">
+<!ENTITY marginTop.accesskey    "Ü">
+<!ENTITY marginBottom.label     "Alumine:">
+<!ENTITY marginBottom.accesskey "A">
+<!ENTITY marginLeft.label       "Vasak:">
+<!ENTITY marginLeft.accesskey   "V">
+<!ENTITY marginRight.label      "Parem:">
+<!ENTITY marginRight.accesskey  "P">
+
+<!ENTITY headerFooter.label     "Päised ja jalused">
+
+<!ENTITY hfLeft.label           "Vasak:">
+<!ENTITY hfCenter.label         "Keskmine:">
+<!ENTITY hfRight.label          "Parem:">
+<!ENTITY headerLeft.tip         "Vasak päis">
+<!ENTITY headerCenter.tip       "Keskmine päis">
+<!ENTITY headerRight.tip        "Parem päis">
+<!ENTITY footerLeft.tip         "Vasak jalus">
+<!ENTITY footerCenter.tip       "Keskmine jalus">
+<!ENTITY footerRight.tip        "Parem jalus">
+
+<!ENTITY hfTitle                "Pealkiri">
+<!ENTITY hfURL                  "URL">
+<!ENTITY hfDateAndTime          "Kuupäev/aeg">
+<!ENTITY hfPage                 "Lehekülje nr">
+<!ENTITY hfPageAndTotal         "Lehekülg #/#">
+<!ENTITY hfBlank                "--tühi--">
+<!ENTITY hfCustom               "Kohandatud...">
+
+<!ENTITY customPrompt.title     "Kohandatud...">
+<!ENTITY customPrompt.prompt    "Sisesta päise/jaluse tekst">

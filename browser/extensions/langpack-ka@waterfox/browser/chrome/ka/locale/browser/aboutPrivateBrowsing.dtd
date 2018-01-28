@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "ამჟმად პირად ფანჯარაში არ იმყოფებით.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "პირადი ფანჯრის გახსნა">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "პ">
+
+<!ENTITY privateBrowsing.title                           "პირადი თვალიერების რეჟიმი">
+<!ENTITY privateBrowsing.title.tracking                  "პირადი დათვალიერების რეჟიმი თვალთვალისგან დაცვით">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "პირადი ფანჯრით სარგებლობისას, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "არ შეინახავს">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "მონახულებულ გვერდებს">
+<!ENTITY aboutPrivateBrowsing.info.searches              "მოძიებულ ფრაზებს">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "ფუნთუშებს">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "დროებით ფაილებს">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "შეინახავს">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " თქვენს:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ჩამოტვირთვებს">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "სანიშნეებს">
+<!ENTITY aboutPrivateBrowsing.note.before                "პირადი თვალიერების რეჟიმი ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "არ უზრუნველყოფს თქვენს ანონიმურობას">
+<!ENTITY aboutPrivateBrowsing.note.after                 " ინტერნეტში. თქვენს დამსაქმებელს ან ინტერნეტ მომსახურების მომწოდებელს, მაინც შეუძლიათ გაიგონ, რომელ გვერდებს ეწვიეთ.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "გაიგეთ მეტი ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "პირადი თვალიერების რეჟიმზე">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "თვალყურის დევნისგან დაცვა">
+<!ENTITY trackingProtection.description2                 "ვებსაიტების ნაწილი იყენებს მეთვალყურე ელემენტებს, რომლითაც შესაძლებელია ინტერნეტში თქვენს მოქმედებებზე თვალის მიდევნება. Waterfox თვალყურის დევნისგან დაცვა კი უზრუნველჰყოფს, მსგავსი სახის ინფორმაციის შეგროვებისგან თავის არიდებას.">
+<!ENTITY trackingProtection.startTour1                   "ნახეთ, როგორ მუშაობს">

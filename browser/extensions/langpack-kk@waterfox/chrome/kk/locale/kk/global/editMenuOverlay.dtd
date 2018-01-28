@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "Түзету">
+<!ENTITY editMenu.accesskey        "Т">
+<!ENTITY undoCmd.label             "Болдырмау">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "Б">
+<!ENTITY redoCmd.label             "Қайталау">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "а">
+<!ENTITY cutCmd.label              "Қиып алу">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "ы">
+<!ENTITY copyCmd.label             "Көшіру">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "ш">
+<!ENTITY pasteCmd.label            "Кірістіру">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "р">
+<!ENTITY deleteCmd.label           "Өшіру">
+<!ENTITY deleteCmd.accesskey       "р">
+<!ENTITY selectAllCmd.label        "Барлығын ерекшелеу">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "Б">
+<!ENTITY findCmd.label             "Іздеу">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "з">
+<!ENTITY findAgainCmd.label        "Қайта табу">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "а">
+<!ENTITY findPreviousCmd.label     "Алдыңғы сәйкестікті табу">
+<!ENTITY findPreviousCmd.accesskey "с">

@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Sinu õigustest">
+<!ENTITY rights.intro "&brandFullName; on vaba ja avatud koodiga tarkvara, mille on loonud kogukond, mis moodustub tuhandetest inimestest üle maailma. On mõned asjad, mida sa peaksid teadma:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; on tehtud kättesaadavaks järgneva litsentsi all: ">
+<!ENTITY rights.intro-point1b "Mozilla avalik litsents (MPL - Mozilla Public License)">
+<!ENTITY rights.intro-point1c ". See tähendab, et sa võid &brandShortName;i kasutada, kopeerida ja teistele jagada. Sa võid ka igati muuta &brandShortName;i lähtekoodi, kui tahad, et see paremini sobiks sinu vajadustega. Samuti annab Mozilla avalik litsents (MPL) sulle õiguse oma muudetud versiooni edasi levitada.">
+
+<!ENTITY rights.intro-point2-a "Mozilla ei anna sulle mingeid õigusi ega litsentse Mozilla ja Waterfoxi kaubamärkide või logode üle. Lisainfot kaubamärkide kohta võib leida ">
+<!ENTITY rights.intro-point2-b "siit">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Mõned &brandShortName;i komponendid, nagu näiteks vigadest teatamise rakendus, annavad sulle võimaluse saata tagasisidet &vendorShortName;le. Valides tagasiside saatmise kasuks, annad sa &vendorShortName;le õiguse kasutada seda tagasisidet toote täiustamiseks, tagasiside avaldamiseks veebilehel ja tagasiside edasijagamiseks.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Kuidas me sinu läbi &brandShortName;i &vendorShortName;le edastatud isiklikku infot ja tagasisidet kasutame, on ära kirjeldatud ">
+<!ENTITY rights2.intro-point3b "&brandShortName;i privaatsuse reeglites">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Kõik selle tootega seonduvad privaatsusreeglid peaks olema ära toodud siin.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; pakub ka lisanduvaid veebipõhiseid infoteenuseid; siiski ei garanteeri me, et need on 100&#37; täpsed või veavabad. Rohkem teavet, sealhulgas nende teenuste keelamise kohta, võib leida ">
+<!ENTITY rights.intro-point4b "teenuse tingimustest">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Kui see toode sisaldab endas veebiteenuseid, siis kõigile seonduvatele teenuse/teenuste tingimustele peaks olema viidatud ">
+<!ENTITY rights.intro-point4b-unbranded "veebiteenuste">
+<!ENTITY rights.intro-point4c-unbranded " sektsioonis.">
+
+<!ENTITY rights2.webservices-header "&brandFullName;i veebipõhised infoteenused">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Teatud tüüpi videote esitamiseks tõmbab &brandShortName; kolmandatelt osapooltelt vajalikke sisu dekrüptimise mooduleid.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; kasutab veebipõhiseid infoteenuseid (&quot;teenused&quot;), mis on saadaval selles &brandShortName;i binaarses versioonis, nagu on kirjeldatud allpool. Kui sa ei taha kasutada neid teenuseid või allolevad tingimused on sulle vastuvõetamatud, siis võid sa antud komponendi või teenuse(d) välja lülitada. Juhtnöörid konkreetse komponendi või teenuse väljalülitamiseks võib leida ">
+<!ENTITY rights2.webservices-b "siit">
+<!ENTITY rights3.webservices-c ". Muid teenusi või funktsionaalsusi on võimalik keelata rakenduse sätetest.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Turvaline veebilehitsemine: ">
+<!ENTITY rights.safebrowsing-b "Turvalise veebilehitsemise teenuse väljalülitamine ei ole soovitatav, kuna nii võid sattuda ebaturvalisele veebilehele.  Teenuse täielikuks väljalülitamiseks järgi neid samme:">
+<!ENTITY rights.safebrowsing-term1 "Ava rakenduse eelistused/sätted">
+<!ENTITY rights.safebrowsing-term2 "Liigu kaardile Turvalisus">
+<!ENTITY rights2.safebrowsing-term3 "Eemalda linnuke valikult &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Turvaline veebilehitsemine on nüüd keelatud">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Asukohateadlik veebilehitsemine: ">
+<!ENTITY rights.locationawarebrowsing-b "on alati valikuline.  Mingit asukoha infot ei saadeta ilma sinu nõusolekuta.  Teenuse täielikuks väljalülitamiseks järgi neid samme:">
+<!ENTITY rights.locationawarebrowsing-term1a "Trüki aadressireale ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Trüki geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Tee eelistusel geo.enabled topeltklõps">
+<!ENTITY rights.locationawarebrowsing-term4 "Asukohateadlik veebilehitsemine on nüüd keelatud">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Ülevaate veebipõhistest teenustest, mida toode sisaldab, ning juhenditest, kuidas neid vajaduse korral keelata, peaks leidma siit.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Kõik vajalikud teenuste tingimused peaks leidma siit.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; ja selle kaasautorid, litsentsiaarid ning partnerid töötavad selle heaks, et pakkuda kõige täpsemaid ja värskemaid teenuseid.  Siiski pole neil võimalik garanteerida, et see info on kõikehõlmav ja veatu.  Näiteks turvalise veebilehitsemise teenusel võib jääda mõni ohtlik veebileht tuvastamata ja mõni turvaline veebileht võidakse märkida ohtlikuks ning asukohapõhise teenuse poolt tagastatud asukohad on umbkaudsed ja ei meie ega meie teenusepakkujad ei garanteeri tagastatud asukohtade täpsust.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; võib omal valikul teenuseid muuta või nende pakkumise lõpetada.">
+<!ENTITY rights2.webservices-term3 "Oled teretulnud kasutama neid teenuseid kaasneva &brandShortName;i versiooniga ja &vendorShortName; annab sulle selleks oma õigused.  &vendorShortName; ja selle litsentsiaarid on kaitsnud kõik muud teenuste õigused.  Need tingimused ei ole mõeldud piirama mistahes õigusi, mis on tagatud  &brandShortName;ile ja vastavale &brandShortName;i lähtekoodi versioonile rakenduvate avatud koodi litsentsidega.">
+<!ENTITY rights.webservices-term4 "Teenuseid osutatakse &quot;nii, nagu nad on&quot; ning &vendorShortName;, selle kaasautorid, litsentsiaarid ja levitajad ütlevad lahti igasugustest garantiidest, nii otsestest kui kaudsetest, sealhulgas ilma piiranguta garantiist, et teenused on turustatavad ja sobivad sinu vajadustele. Sa kannad kogu riski oma vajadustele vastavate teenuste valimise ning nende kvaliteedi ja toimimise eest. Mõnes õigusruumis ei ole kaudsete garantiide välistamine või piiramine lubatud; sel juhul ei pruugi lahtiütlus sinu kohta kehtida.">
+<!ENTITY rights.webservices-term5 "Kui seadusega ei ole teisiti ette nähtud, ei vastuta &vendorShortName;, selle kaasautorid, litsentsiaarid ega levitajad mitte mingisuguse kaudse, erakordse, ettenägematu ega millestki muust tulenenud rahalist hüvitust või hoiatust nõudva kahju eest, mis võib tekkida &brandShortName;i ja selle teenuste kasutamisest või on mingil viisil seotud nende kasutamisega. Nende tingimuste kohane kollektiivne vastutus ei ületa 500 dollarit. Mõnes õigusruumis ei ole teatud kahjude välistamine või piiramine lubatud; sel juhul ei pruugi see välistamine ja piiramine sinu kohta kehtida.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; võib neid tingimusi vajadusel aeg-ajalt muuta. Tingimuste muutmine või nendest loobumine &vendorShortName; kirjaliku loata on keelatud.">
+<!ENTITY rights.webservices-term7 "Need tingimused vastavad USA California osariigi seadustele, mis välistab konflikti seadustega. Kui mingi osa neist tingimustest osutub kehtetuks või ei ole jõustatavad, jäävad teised osad täielikult jõusse. Konflikti korral nende tingimuste tõlgitud ja ingliskeelse versiooni vahel kehtib ingliskeelne
+versioon.">

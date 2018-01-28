@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Tisuraf">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Asmel Web">
+<!ENTITY treehead.status.label        "Addad">
+<!ENTITY removepermission2.label      "Kkes asmel web">
+<!ENTITY removepermission2.accesskey  "Z">
+<!ENTITY removeallpermissions2.label  "Kkes akk ismal web">
+<!ENTITY removeallpermissions2.accesskey "w">
+<!ENTITY address.label                "Tansa n usmel web.">
+<!ENTITY address.accesskey            "T">
+<!ENTITY block.label                  "Sewḥel">
+<!ENTITY block.accesskey              "S">
+<!ENTITY session.label                "Sireg i tɣimit">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "Sireg">
+<!ENTITY allow.accesskey              "i">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Sefsex">
+<!ENTITY button.cancel.accesskey      "S">
+<!ENTITY button.ok.label              "Sekles asnifel">
+<!ENTITY button.ok.accesskey          "S">
+

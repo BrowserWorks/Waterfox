@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Arazoak konpontzeko informazioa">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Orri honek arazo bat konpontzeko erabilgarria izan daitekeen informazio teknikoa du. &brandShortName;(r)i buruzko ohiko galderen erantzunen bila bazabiltza, bisitatu gure <a id='supportLink'>laguntzaren webgunea</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Hutsegite-txostenak">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Txostenaren IDa">
+<!ENTITY aboutSupport.crashes.sendDate "Noiz bidalia">
+<!ENTITY aboutSupport.crashes.allReports "Hutsegite-txosten guztiak">
+<!ENTITY aboutSupport.crashes.noConfig "Aplikazioa ez da konfiguratu hutsegite-txostenak bistaratzeko.">
+
+<!ENTITY aboutSupport.extensionsTitle "Hedapenak">
+<!ENTITY aboutSupport.extensionName "Izena">
+<!ENTITY aboutSupport.extensionEnabled "Gaituta">
+<!ENTITY aboutSupport.extensionVersion "Bertsioa">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;(r)en eginbideak">
+<!ENTITY aboutSupport.featureName "Izena">
+<!ENTITY aboutSupport.featureVersion "Bertsioa">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eginbide esperimentalak">
+<!ENTITY aboutSupport.experimentName "Izena">
+<!ENTITY aboutSupport.experimentId "IDa">
+<!ENTITY aboutSupport.experimentDescription "Azalpena">
+<!ENTITY aboutSupport.experimentActive "Aktibo">
+<!ENTITY aboutSupport.experimentEndDate "Amaiera-data">
+<!ENTITY aboutSupport.experimentHomepage "Webgunea">
+<!ENTITY aboutSupport.experimentBranch "Adarra">
+
+<!ENTITY aboutSupport.appBasicsTitle "Aplikazioaren oinarrizko konfigurazioa">
+<!ENTITY aboutSupport.appBasicsName "Izena">
+<!ENTITY aboutSupport.appBasicsVersion "Bertsioa">
+<!ENTITY aboutSupport.appBasicsBuildID "Eraikitze IDa">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Eguneraketa-kanala">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Eguneraketen historia">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Erakutsi eguneraketen historia">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilaren direktorioa">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilaren karpeta">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Gaitutako pluginak">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Eraikitze-konfigurazioa">
+<!ENTITY aboutSupport.appBasicsUserAgent "Erabiltzaile-agentea">
+<!ENTITY aboutSupport.appBasicsOS "SEa">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Memoriaren erabilpena">
+<!ENTITY aboutSupport.appBasicsPerformance "Errendimendua">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Erregistratutako zerbitzu-langileak">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profilak">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprozesu leihoak">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Webeko eduki-prozesuak">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google gakoa">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service gakoa">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Modu segurua">
+
+<!ENTITY aboutSupport.showDir.label "Ireki direktorioa">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Erakutsi Finder-en">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Ireki karpeta">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Aldatutako hobespen garrantzitsuak">
+<!ENTITY aboutSupport.modifiedPrefsName "Izena">
+<!ENTITY aboutSupport.modifiedPrefsValue "Balioa">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js hobespenak">
+<!ENTITY aboutSupport.userJSDescription "Zure profil-karpetak <a id='prefs-user-js-link'>user.js fitxategia</a> dauka, zeinak &brandShortName;(e)k sortu ez dituen hobespenak dauzkan.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Blokeatutako hobespen garrantzitsuak">
+<!ENTITY aboutSupport.lockedPrefsName "Izena">
+<!ENTITY aboutSupport.lockedPrefsValue "Balioa">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafikoak">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Lekuen datu-basea">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Osotasuna">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Egiaztatu osotasuna">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "ZB inkrementala">
+
+<!ENTITY aboutSupport.a11yTitle "Erabilgarritasuna">
+<!ENTITY aboutSupport.a11yActivated "Aktibatuta">
+<!ENTITY aboutSupport.a11yForceDisabled "Eragotzi erabilgarritasuna">
+<!ENTITY aboutSupport.a11yHandlerUsed "Maneiatzaile erabilerraza erabilita">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Liburutegien bertsioak">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Instalazioaren historia">
+<!ENTITY aboutSupport.updateHistoryTitle "Eguneraketen historia">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopiatu testua arbelean">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopiatu datu gordinak arbelean">
+
+<!ENTITY aboutSupport.sandboxTitle "Isolamendua">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Baztertutako sistema-deiak">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Duela zenbat segundo">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Prozesu mota">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Sistema-deia">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumentuak">
+
+<!ENTITY aboutSupport.safeModeTitle "Probatu modu segurua">
+<!ENTITY aboutSupport.restartInSafeMode.label "Berrabiarazi gehigarriak desgaituta…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Eginbideak">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostikoak">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Hutsegitearen loga">
+<!ENTITY aboutSupport.graphicsGPU1Title "1. GPUa">
+<!ENTITY aboutSupport.graphicsGPU2Title "2. GPUa">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Erabakien erregistroa">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Babestu desgaitutako eginbideen hutsegiteak">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Behin-behineko konponbideak">
+
+<!ENTITY aboutSupport.mediaTitle "Multimedia">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Irteerako gailuak">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Sarrerako gailuak">
+<!ENTITY aboutSupport.mediaDeviceName "Izena">
+<!ENTITY aboutSupport.mediaDeviceGroup "Taldea">
+<!ENTITY aboutSupport.mediaDeviceVendor "Hornitzailea">
+<!ENTITY aboutSupport.mediaDeviceState "Egoera">
+<!ENTITY aboutSupport.mediaDevicePreferred "Hobetsia">
+<!ENTITY aboutSupport.mediaDeviceFormat "Formatua">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanalak">
+<!ENTITY aboutSupport.mediaDeviceRate "Emaria">
+<!ENTITY aboutSupport.mediaDeviceLatency "Atzerapena">

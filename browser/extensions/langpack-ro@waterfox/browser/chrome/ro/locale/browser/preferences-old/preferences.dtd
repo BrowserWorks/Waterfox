@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Opțiuni">
+<!ENTITY  prefWindow.title        "Preferințe">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Preferințe &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 56em; min-height: 39em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 56em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 50em; min-height: 40.5em;">
+
+<!ENTITY  paneGeneral.title       "General">
+<!ENTITY  paneTabs.title          "File">
+<!ENTITY  paneSearch.title        "Caută">
+<!ENTITY  paneContent.title       "Conținut">
+<!ENTITY  paneApplications.title  "Aplicații">
+<!ENTITY  panePrivacy.title       "Confidențialitate">
+<!ENTITY  paneContainers.title    "File container">
+<!ENTITY  paneSecurity.title      "Securitate">
+<!ENTITY  paneAdvanced.title      "Avansat">
+<!-- LOCALIZATION NOTE (paneSync.title): This should match syncBrand.shortName.label in ../syncBrand.dtd -->
+
+<!ENTITY  paneSync.title          "Sincronizare">
+
+<!ENTITY  helpButton.label        "Ajutor">

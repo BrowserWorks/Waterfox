@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "ဆော့ဗ်ဝဲ မွမ်းမံချက်">
+
+<!ENTITY  checking.title                  "မွမ်းမံချက်များကို စစ်ဆေးနေတယ်">
+<!ENTITY  updateCheck.label               "&brandShortName; မူအဆင့်သစ်များကို ရှာနေတယ်...">
+
+<!ENTITY  noupdatesfound.title            "မွမ်းမံချက်များ မတွေ့ရဘူး">
+<!ENTITY  noupdatesautoenabled.intro      "မွမ်းမံချက်များ မရှိဘူး။ &brandShortName; က မွမ်းမံချက်များကို အချိန်တိုင်း စစ်ဆေးပေးမယ်။">
+<!ENTITY  noupdatesautodisabled.intro     "မွမ်းမံချက်များ မရှိဘူး။ နောက်တခါ ထပ်ကြိုးစားပါ သို့ &brandShortName;  ရဲ့ အလိုအလျှောက် မွမ်းမံချက် စစ်ဆေးမှုကို ဖွင့်ထားပါ။">
+
+<!ENTITY  manualUpdate.title              "မွမ်းမံလို့ မရနိုင်ဘူး">
+<!ENTITY  manualUpdate.desc               "အကြံပြုထားတဲ့ လုံခြုံရေးနဲ့ ကြံ့ခိုင်တဲ့ မွမ်းမံချက် တခု ရနိုင်တယ်၊ ဒါပေမဲ့ ၄င်းကို တပ်ဆင်ဖို့ စက်ရဲ့ ခွင့်ပြုချက်များကို သင် ရယူဖို့ မလိုဘူး။ သင့်ရဲ့ စက် စီမံခန့်ခွဲသူကို ဆက်သွယ်ပါ၊ (သို့) ဒီကွန်ပျူတာမှာ တပ်ဆင်ဖို့ ခွင့်ပြုချက်ရှိတဲ့ အ​ကောင့်တခုကို ထပ်ကြိုးစားပါ။">
+<!ENTITY  manualUpdate.space.desc         "တစ်ခု သောလုံခြုံရေး နှင့် တည်ငြိမ်ရေး အဆင့်မြှင့်တင်ချက်ရနေပါသည် သို့သော သင့်တွင် ၎င်းအားတပ်ဆင်ရန်နေရာအလုံအလောက်မရှိပါ။                 ">
+<!ENTITY  manualUpdateGetMsg.label        "&brandShortName;ရဲ့ နောက်ဆုံးထွက် မူအဆင့်ကို သင်အမြဲရနိုင်တဲ့ နေရာ -">
+
+<!ENTITY  unsupported.title               "ဤကွန်ပျူတာစနစ်ပေါ်တွင် အလုပ်မလုပ်ပါ">
+<!ENTITY  unsupported.label               "သင်၏ &brandShortName; သည် ဟောင်းနွမ်းနေသော ထုတ်ကုန်တစ်ခုဖြစ်ပြီးသင်အသုံးပြုသော ကွန်ပျူတာစနစ်တွင် နောက်ဆုံးထွက်လဲ မထုတ်တော့ပါနောက်တစ်ကြိမ် ကြိုးစားကြည့်ပါက ယခု သတိပေးချက်ကို မပေးတော့ပါ">
+<!ENTITY  unsupportedLink.label           "ပိုမိုလေ့လာပါ">
+
+<!ENTITY  clickHere.label                 "ဒီမွမ်းမံချက် အကြောင်း ပိုမို အချက်အလက်ကို ရှုမြင်ပါ">
+
+<!ENTITY  evangelism.desc                 "&brandShortName; အတွက် မွမ်းမံချက်ကို စောနိုင်မမျှ​ စောစော အသုံးချဖို့ သင့်ကို အထူး အကြံပြုထားတယ်။">
+
+<!ENTITY  downloadPage.title              "&brandShortName; အားဒေါင်းလုဒ်ချနေသှ်">
+<!ENTITY  downloading.intro               "မွမ်းမံချက်ကို ဆွဲချနေတယ်...">
+<!ENTITY  connecting.label                "မွမ်းမံတဲ့ ဆာဗာကို ချိတ်ဆက်နေတယ်...">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ဟာ ၄င်းဆွဲချလိုက်တဲ့ တိုးပွား မွမ်းမံချက်ရဲ့ခိုင်မြဲမှုကို အတည်မပြုနိုင်ဘူး၊ဒါကြောင့် ပြည့်စုံတဲ့ မွမ်းမံချက်ကုန်ထုတ် ပစ္စည်းကို အခု ဆွဲချနေတယ်။">
+
+<!ENTITY  viewDetails.tooltip             "ဒီမွမ်းမံချက်ရဲ့ အသေးစိတ်များကို ရှုမြင်ပါ">
+
+<!ENTITY  details.link                    "အသေးစိတ်များ">
+
+<!ENTITY  error.title                     "ပြုပြင်မှု မအောင်မြင်ပါ">
+
+<!ENTITY  error.label                     "ဒီမွမ်းမံချက်အတွက် ဆွဲချနေမှု (သို့) တပ်ဆင်နေမှု စစ်ဆေးချက်မှာ ပြဿနာများ ရှိနေတယ် &brandShortName; ကို မွမ်းမံလို့ မနိုင်တဲ့ အကြောင်းရင်းက -">
+                                           
+<!ENTITY  errorManual.label               "ဒီအချိတ်အဆက်ကို လည်ပတ်ပြီး နောက်ဆုံးထွက် မူအဆင့်ကို ဆွဲချခြင်းဖြင့် &brandShortName; ကို လက်ဖြင့် သင်မွမ်းမံနိုင်တယ်:">
+                                           
+<!ENTITY  errorpatching.intro             "တပိုင်းတစ မွမ်းမံချက်ကို အသုံးချလို့ မရနိုင်ဘူး။ ပြည့်စုံတဲ့ မွမ်းမံချက်တခုကို ဆွဲချပြီး &brandShortName; က ထပ်ကြိုးစားမယ်။">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName;  သည်အဆင့်မြှင့်တင်ခြင်း ရှိမရှိ မဆုံးဖြတ်နိုင်ပါ။ ကျေးဇူးပြုပြီး သင်၏ &brandShortName;  ဗားရှင်းတပ်ဆင်ထားခြင်း ရှိမရှိစစ်ပါ:">
+
+<!ENTITY  finishedPage.title              "မွမ်းမံချက် တပ်ဆင်ဖို့ အသင့် ဖြစ်နေတယ်">
+<!ENTITY  finishedPage.text               "နောက်တခါ &brandShortName; စတင်တဲ့အခါ မွမ်းမံချက်ကို တပ်ဆင်လိမ့်မယ်။ &brandShortName; ကို ယခု သင် ပြန်ဖွင်နိုင်တယ်၊ (သို့) ဆက်လက် လုပ်ဆောင်ပြီး နောက်တခါမှ ပြန်ဖွင့်လိုက်ပါ။">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; အတွက် လုံခြုံရေးနဲ့ ကြံ့ခိုင်တဲ့ မွမ်းမံချက် တခုကို ဆွဲချထားပြီး တပ်ဆင်ဖို့ အသင့် ဖြစ်နေပြီ။">
+<!ENTITY  finishedBackground.name         "မွမ်းမံချက် -">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "မွမ်းမံချက်ကို နောက်တကြိမ် &brandShortName; စတင်တဲ့အခါ တပ်ဆင်လိမ့်မယ်။ &brandShortName; ကို အခု သင် ပြန်ဖွင့်နိုင်တယ်၊ (သို့) ဆက်လက် လုပ်ဆောင်ပြီး နောက်တခါ ပြန်ဖွင့်လိုက်ပါ။">
+<!ENTITY  finishedBackground.moreElevated "ဒီမွမ်းမံချက်သည် စီမံသူ၏ အထူးခွင့်ပြုချက် လိုအပ်ပါသည်။ &brandShortName;ကို နောက်တစ်ကြိမ် ဖွင့်သောအခါတွင် ထိုမွမ်းမံချက်ကို ထည့်သွင်းတပ်ဆင်ပါလိမ့်မည်။ &brandShortName;ကို ယခုပင် ပြန်လည်စတင်နိုင်ပါသည်။ သို့မဟုတ် ဆက်လက်ဆောင်ရွက်ပြီးမှ ပြန်လည်စတင်နိုင်သည်။ သို့မဟုတ် ဒီမွမ်းမံချက်တပ်ဆင်မှုကို ငြင်းပယ်နိုင်သည်။">
+
+<!ENTITY  update.details.label            "အသေးစိတ်များ">
+<!ENTITY  update.installedOn.label        "တပ်ဆင်ထားတဲ့ နေရာ -">
+<!ENTITY  update.status.label             "အနေအထား -">

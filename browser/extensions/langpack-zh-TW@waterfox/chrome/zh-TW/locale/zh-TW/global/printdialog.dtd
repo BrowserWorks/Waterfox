@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printdialog.xul -->
+
+<!ENTITY printButton.label "列印">
+
+<!ENTITY printDialog.title "列印">
+
+<!ENTITY fpDialog.title "儲存檔案">
+
+<!ENTITY fileCheck.label "列印至檔案">
+<!ENTITY fileCheck.accesskey "F">
+<!ENTITY propertiesButton.label "屬性…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "印表機說明:">
+<!ENTITY printer.label "印表機">
+<!ENTITY printerInput.label "印表機名稱:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "列印範圍">
+<!ENTITY allpagesRadio.label "所有頁面">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "頁">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "從">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "到">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "選取範圍">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "備份">
+<!ENTITY numCopies.label "份數:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "列印頁框">
+<!ENTITY aslaidoutRadio.label "如螢幕顯示">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label  "已選取的頁框">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "各頁框獨立列印">
+<!ENTITY eachframesepRadio.accesskey  "E">
+

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Kraschrapporter">
+<!ENTITY crashesUnsubmitted.label   "Ej Inskickade kraschrapporter">
+<!ENTITY crashesSubmitted.label     "Inskickade kraschrapporter">
+<!ENTITY id.heading                 "Rapport-ID">
+<!ENTITY dateCrashed.heading        "Datum för krasch">
+<!ENTITY dateSubmitted.heading      "Datum">
+<!ENTITY noReports.label            "Inga kraschrapporter har skickats in.">
+<!ENTITY noConfig.label             "Det här programmet är inte konfigurerat att visa kraschrapporter. Inställningen <code>breakpad.reportURL</code> måste anges.">
+<!ENTITY clearAllReports.label      "Ta bort alla rapporter">

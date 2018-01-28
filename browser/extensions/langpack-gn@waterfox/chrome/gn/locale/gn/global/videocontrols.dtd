@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Mboheta">
+<!ENTITY playButton.pauseLabel "Mombyta">
+<!ENTITY muteButton.muteLabel "Mokirirĩ">
+<!ENTITY muteButton.unmuteLabel "Mba'epu mbojevy">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Mba'erechaha tuichavéva">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Mba'erechaha tuichavévagui ñesẽ">
+<!ENTITY castingButton.castingLabel "Mba'erechaha ojuehéva">
+<!ENTITY closedCaption.off "Mboguepyre">
+
+<!ENTITY stats.media "Hupytyha">
+<!ENTITY stats.size "Tuichakue">
+<!ENTITY stats.activity "Tembiapo">
+<!ENTITY stats.activityPaused "Mombytapyre">
+<!ENTITY stats.activityPlaying "Ñemboheta">
+<!ENTITY stats.activityEnded "Opámava">
+<!ENTITY stats.activitySeeking "(ohekahína)">
+<!ENTITY stats.volume "Mbopuha">
+<!ENTITY stats.framesParsed "Mba'era'ãnga oĩmbapyréva">
+<!ENTITY stats.framesDecoded "Mba'era'ãnga papapy'óva">
+<!ENTITY stats.framesPresented "Mba'era'ãnga jehechaukapyre">
+<!ENTITY stats.framesPainted "Mba'era'ãnga jehechaukapyréva">
+
+<!ENTITY error.aborted "Ojejoko ta'ãngamýi ñemyenyhẽ.">
+<!ENTITY error.network "Ta'ãndamýi ñemboheta ojejokóma ñanduti jejavy rupi.">
+<!ENTITY error.decode "Ndaikatúi emboheta ta'ãngamýi pe marandurenda imarã rupi.">
+<!ENTITY error.srcNotSupported "Ysaja térã MIME ta'ãngamýi rehegua noñemoneĩri.">
+<!ENTITY error.noSource2 "Ndojejuhúi mba'eveichagua ta'ãngamýi oguerekóva ysaja térã peteĩva MIME ojokupytýva.">
+<!ENTITY error.generic "Pe ta'ãngamýi ñemboheta ndoikomo'ãi peteĩ jejavy jeikuaa'ỹva rupi.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 of #2 ohasapyréva">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

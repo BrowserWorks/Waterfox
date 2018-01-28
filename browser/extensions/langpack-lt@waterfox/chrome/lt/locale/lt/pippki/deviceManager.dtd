@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Saugumo priemonių tvarkytuvė">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Saugumo moduliai ir priemonės">
+<!ENTITY devmgr.details.title                   "Išsamiau">
+<!ENTITY devmgr.details.title2                  "Reikšmė">
+
+<!ENTITY devmgr.button.login.label              "Pradėti seansą">
+<!ENTITY devmgr.button.login.accesskey          "P">
+<!ENTITY devmgr.button.logout.label             "Baigti seansą">
+<!ENTITY devmgr.button.logout.accesskey         "B">
+<!ENTITY devmgr.button.changepw.label           "Pakeisti slaptažodį">
+<!ENTITY devmgr.button.changepw.accesskey       "s">
+<!ENTITY devmgr.button.load.label               "Įkelti">
+<!ENTITY devmgr.button.load.accesskey           "k">
+<!ENTITY devmgr.button.unload.label             "Iškelti">
+<!ENTITY devmgr.button.unload.accesskey         "š">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Surinkite informaciją apie pridedamą modulį.">
+<!ENTITY loaddevice.modname                     "Modulio vardas:">
+<!ENTITY loaddevice.modname.accesskey           "v">
+<!ENTITY loaddevice.modname.default             "Naujas PKCS Nr. 11 modulis">
+<!ENTITY loaddevice.filename                    "Modulio failo vardas:">
+<!ENTITY loaddevice.filename.accesskey          "m">
+<!ENTITY loaddevice.browse                      "Parinkti failą…">
+<!ENTITY loaddevice.browse.accesskey            "r">
+
+<!ENTITY loaddevice.title2                      "Įkelti PKCS#11 įrenginio tvarkyklę">

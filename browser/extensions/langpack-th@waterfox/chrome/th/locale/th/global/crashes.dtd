@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "รายงานข้อขัดข้อง">
+<!ENTITY crashesUnsubmitted.label   "รายงานข้อขัดข้องที่ยังไม่ได้ส่ง">
+<!ENTITY crashesSubmitted.label     "รายงานข้อขัดข้องที่ส่งแล้ว">
+<!ENTITY id.heading                 "ID รายงาน">
+<!ENTITY dateCrashed.heading        "วันที่ขัดข้อง">
+<!ENTITY dateSubmitted.heading      "วันที่ส่ง">
+<!ENTITY noReports.label            "ยังไม่เคยมีการรายงานข้อขัดข้อง">
+<!ENTITY noConfig.label             "แอปพลิเคชันนี้ไม่ได้ถูกกำหนดค่าให้แสดงผลรายงานข้อขัดข้อง ค่ากำหนด <code>breakpad.reportURL</code> ต้องถูกตั้ง">
+<!ENTITY clearAllReports.label      "เอารายงานทั้งหมดออก">

@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Använd skydd mot spårning">
+<!ENTITY  trackingProtectionAlways.label       "Alltid">
+<!ENTITY  trackingProtectionAlways.accesskey   "i">
+<!ENTITY  trackingProtectionPrivate.label      "Bara i privata fönster">
+<!ENTITY  trackingProtectionPrivate.accesskey  "r">
+<!ENTITY  trackingProtectionNever.label        "Aldrig">
+<!ENTITY  trackingProtectionNever.accesskey    "A">
+<!ENTITY  trackingProtectionLearnMore.label    "Lär dig mer">
+<!ENTITY  trackingProtectionExceptions.label   "Undantag…">
+<!ENTITY  trackingProtectionExceptions.accesskey "n">
+
+<!ENTITY tracking.label                 "Spårning">
+<!ENTITY trackingProtectionPBM5.label         "Använd skydd mot spårning i privat fönster ">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Lär dig mer">
+<!ENTITY changeBlockList.label          "Ändra blockeringslista">
+<!ENTITY changeBlockList.accesskey      "n">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Du kan också ">
+<!ENTITY  doNotTrack.settings.label     "hantera dina inställningar för Spåra inte">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historik">
+
+<!ENTITY  locationBar.label             "Adressfältet">
+
+<!ENTITY  locbar.suggest.label          "Ge förslag i adressfältet från:">
+<!ENTITY  locbar.history.label          "Historik">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Bokmärken">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Öppna flikar">
+<!ENTITY  locbar.openpage.accesskey     "Ö">
+<!ENTITY  locbar.searches.label         "Relaterade sökningar från standardsökmotor">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Ändra inställningar för förslag från sökmotorn…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "Tillåt att webbplatser lagrar kakor">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Tillåt tredjepartskakor:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "T">
+<!ENTITY  acceptThirdParty.always.label   "alltid">
+<!ENTITY  acceptThirdParty.never.label    "aldrig">
+<!ENTITY  acceptThirdParty.visited.label  "från platser jag besökt">
+
+<!ENTITY  keepUntil.label               "Behåll tills:">
+<!ENTITY  keepUntil.accesskey           "B">
+
+<!ENTITY  expire.label                  "de förfaller">
+<!ENTITY  close.label                   "&brandShortName; stängs">
+
+<!ENTITY  cookieExceptions.label        "Undantag…">
+<!ENTITY  cookieExceptions.accesskey    "U">
+
+<!ENTITY  showCookies.label             "Visa kakor…">
+<!ENTITY  showCookies.accesskey         "V">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; kommer att:">
+<!ENTITY  historyHeader.pre.accesskey      "k">
+<!ENTITY  historyHeader.remember.label     "Spara historik">
+<!ENTITY  historyHeader.dontremember.label "Inte spara någon historik">
+<!ENTITY  historyHeader.custom.label       "Använda anpassade inställningar för historik">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; kommer att spara information om besökta webbsidor, filhämtningar, formulär- och sökhistorik, samt spara kakor från webbplatser du besöker.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Du kanske vill ">
+<!ENTITY  rememberActions.clearHistory.label  "rensa ut tidigare historik">
+<!ENTITY  rememberActions.middle.label        ", eller ">
+<!ENTITY  rememberActions.removeCookies.label "ta bort enskilda kakor">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; kommer att använda samma inställningar som för privat surfning och kommer inte att spara någon historik när du surfar.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Du kanske också vill ">
+<!ENTITY  dontrememberActions.clearHistory.label "rensa ut tidigare historik">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Använd alltid läget privat surfning">
+<!ENTITY  privateBrowsingPermanent2.accesskey "A">
+
+<!ENTITY  rememberHistory2.label      "Spara historik över besökta sidor och filhämtningar">
+<!ENTITY  rememberHistory2.accesskey  "S">
+
+<!ENTITY  rememberSearchForm.label       "Spara sök- och formulärhistorik">
+<!ENTITY  rememberSearchForm.accesskey   "ö">
+
+<!ENTITY  clearOnClose.label             "Rensa historiken när &brandShortName; avslutas">
+<!ENTITY  clearOnClose.accesskey         "R">
+
+<!ENTITY  clearOnCloseSettings.label     "Inställningar…">
+<!ENTITY  clearOnCloseSettings.accesskey "n">
+
+<!ENTITY  browserContainersHeader.label         "Innehållsflikar">
+<!ENTITY  browserContainersLearnMore.label      "Lär dig mer">
+<!ENTITY  browserContainersEnabled.label        "Aktivera innehållsflikar">
+<!ENTITY  browserContainersEnabled.accesskey    "k">
+<!ENTITY  browserContainersSettings.label        "Inställningar…">
+<!ENTITY  browserContainersSettings.accesskey    "s">

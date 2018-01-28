@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "ਸਰੋਤ: ">
+
+<!ENTITY fileMenu.label "ਫਾਈਲ">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "…ਸਫ਼ਾ ਇੰਝ ਸੰਭਾਲੋ">
+<!ENTITY savePageCmd.accesskey "A">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "…ਸਫ਼ਾ ਸੈੱਟਅੱਪ">
+<!ENTITY pageSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "ਪਰਿੰਟ ਝਲਕ">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "…ਪਰਿੰਟ ਕਰੋ">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "ਬੰਦ ਕਰੋ">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "…ਲਾਈਨ ਉੱਤੇ ਜਾਓ">
+<!ENTITY goToLineCmd.accesskey "G">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "ਵੇਖੋ">
+<!ENTITY viewMenu.accesskey       "V">
+<!ENTITY reloadCmd.label "ਮੁੜ ਲੋਡ">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "ਲੰਮੀਆਂ ਲਾਈਨਾਂ ਸਮੇਟੋ"> 
+<!ENTITY menu_wrapLongLines.accesskey "W">
+<!ENTITY menu_highlightSyntax.label "ਸੰਟੈਕਸ ਹਾਈਲਾਈਟ">
+<!ENTITY menu_highlightSyntax.accesskey "H">
+<!ENTITY menu_textSize.label "ਟੈਕਸਟ ਆਕਾਰ">
+<!ENTITY menu_textSize.accesskey "Z">
+<!ENTITY menu_textEnlarge.label "ਵਧਾਓ">
+<!ENTITY menu_textEnlarge.accesskey "I">
+<!ENTITY menu_textReduce.label "ਘਟਾਓ">
+<!ENTITY menu_textReduce.accesskey "D">
+<!ENTITY menu_textReset.label "ਸਧਾਰਨ">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "ਇਸ ਸਫ਼ੇ ਵਿੱਚ ਖੋਜ">
+<!ENTITY findOnCmd.accesskey "F">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "ਮੁੜ ਖੋਜ">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "ਪਿੱਛੇ">
+<!ENTITY backCmd.accesskey "B">
+<!ENTITY forwardCmd.label "ਅੱਗੇ">
+<!ENTITY forwardCmd.accesskey "F">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "ਲਿੰਕ ਟਿਕਾਣੇ ਨੂੰ ਕਾਪੀ ਕਰੋ">
+<!ENTITY copyLinkCmd.accesskey "L">
+<!ENTITY copyEmailCmd.label "ਈਮੇਲ ਸਿਰਨਾਵੇ ਨੂੰ ਕਾਪੀ ਕਰੋ">
+<!ENTITY copyEmailCmd.accesskey "E">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Баспаға шығару">
+
+<!ENTITY printDialog.title "Баспаға шығару">
+
+<!ENTITY fpDialog.title "Файлды сақтау">
+
+<!ENTITY fileCheck.label "Баспаны файлға шығару">
+<!ENTITY fileCheck.accesskey "ф">
+<!ENTITY propertiesButton.label "Қасиеттері…">
+<!ENTITY propertiesButton.accesskey "с">
+<!ENTITY descText.label "Принтер сипаттамасы:">
+<!ENTITY printer.label "Принтер">
+<!ENTITY printerInput.label "Принтер:">
+<!ENTITY printerInput.accesskey "П">
+
+<!ENTITY printrangeGroup.label "Баспа диапазоны">
+<!ENTITY allpagesRadio.label "Барлық парақтар">
+<!ENTITY allpagesRadio.accesskey "Б">
+<!ENTITY rangeRadio.label  "Парақтар">
+<!ENTITY rangeRadio.accesskey  "П">
+<!ENTITY frompageInput.label  "бастап">
+<!ENTITY frompageInput.accesskey  "т">
+<!ENTITY topageInput.label  "дейін">
+<!ENTITY topageInput.accesskey  "д">
+<!ENTITY selectionRadio.label "Ерекшеленген аймақ">
+<!ENTITY selectionRadio.accesskey "Е">
+
+<!ENTITY copies.label "Көшірмелер">
+<!ENTITY numCopies.label "Көшірме саны:">
+<!ENTITY numCopies.accesskey "с">
+
+<!ENTITY printframeGroup.label "Баспаға фреймдерді шығару">
+<!ENTITY aslaidoutRadio.label "Экранда көрсетілгенді">
+<!ENTITY aslaidoutRadio.accesskey "Э">
+<!ENTITY selectedframeRadio.label  "Таңдалған фреймді">
+<!ENTITY selectedframeRadio.accesskey  "Т">
+<!ENTITY eachframesepRadio.label  "Барлық фреймдерді жеке-жеке">
+<!ENTITY eachframesepRadio.accesskey  "ф">

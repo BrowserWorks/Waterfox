@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Taq nuk'ulem - Ruxaq ruk'amaya'l tzij">
+<!ENTITY     hostCol.label                 "Ruxaq k'amaya'l">
+<!ENTITY     statusCol.label               "Rub'eyal">
+<!ENTITY     usageCol.label                "Yakoj">
+<!ENTITY     searchTextboxPlaceHolder             "Kekanöx taq ruxaq k'amaya'l">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "K">
+<!ENTITY     removeSelected.label          "Tiyuj ri cha'on">
+<!ENTITY     removeSelected.accesskey      "T">
+<!ENTITY     save.label                    "Keyak taq jaloj">
+<!ENTITY     save.accesskey                "y">
+<!ENTITY     cancel.label                  "Tiq'at">
+<!ENTITY     cancel.accesskey              "T">
+<!ENTITY     removingDialog.title          "Tajin niyuj rutzij ruxaq k'amaya'l">
+<!ENTITY     removingSelected.description  "Ri kiyujik taq tzij chupam ri ruxaq k'amaya'l chuqa' xkeruyüj el ri taq kaxlanwey kiximon ki' chuqa' ri taq ruwa retamab'al ajk'amaya'l toq man jun okem pa k'amaya'l. Re re' nitikïr nel el chi kipan ri taq ruxaq k'amaya'l. ¿La kan nawajo' yeb'än kan re taq jaloj re'?">
+<!ENTITY     siteTree.label                "Xkeyujtäj el re taq kaxlanwey re' chupam re ruxaq k'amaya'l:">

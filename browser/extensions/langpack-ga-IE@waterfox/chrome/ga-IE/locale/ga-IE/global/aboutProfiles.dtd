@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Maidir le Próifílí">
+<!ENTITY aboutProfiles.subtitle "Tá cuidiú ar an leathanach seo don té a bheas ag bainistiú próifíle. Is domhan ar leith gach aon phróifíl a bhfuil stair ar leith, leabharmharcanna ar leith, socruithe ar leith, agus breiseáin ar leith leo.">
+<!ENTITY aboutProfiles.create "Cruthaigh Próifíl Nua">
+<!ENTITY aboutProfiles.restart.title "Atosaigh">
+<!ENTITY aboutProfiles.restart.inSafeMode "Atosaigh agus Breiseáin Díchumasaithe…">
+<!ENTITY aboutProfiles.restart.normal "Atosaigh sa ghnáthshlí…">

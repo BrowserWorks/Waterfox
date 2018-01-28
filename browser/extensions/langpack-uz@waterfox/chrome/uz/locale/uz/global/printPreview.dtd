@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Chop qilish">
+<!ENTITY print.accesskey      "C">
+<!ENTITY pageSetup.label      "Sahifani moslash:">
+<!ENTITY pageSetup.accesskey  "m">
+<!ENTITY page.label           "Sahifa:">
+<!ENTITY page.accesskey       "S">
+<!ENTITY of.label             "/">
+<!ENTITY scale.label          "Masshtab:">
+<!ENTITY scale.accesskey      "M">
+<!ENTITY portrait.label       "Boʻyiga">
+<!ENTITY portrait.accesskey   "B">
+<!ENTITY landscape.label      "Eniga">
+<!ENTITY landscape.accesskey  "E">
+<!ENTITY close.label          "Yopish">
+<!ENTITY close.accesskey      "Y">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Boshqa">
+<!ENTITY ShrinkToFit.label    "Joylashguncha choʻzish">
+<!ENTITY customPrompt.title   "Boshqacha kattalashtirish">
+<!ENTITY simplifyPage.label   "Sahifani soddalashtirish">
+<!ENTITY simplifyPage.accesskey "S">
+<!ENTITY simplifyPage.enabled.tooltip  "Oson o‘qish uchun o‘zgartirilgan tartib">
+<!ENTITY simplifyPage.disabled.tooltip "Bu sahifani avtomatik ravishda soddalashtirib bo‘lmaydi">
+
+<!ENTITY homearrow.tooltip    "Birinchi sahifa">
+<!ENTITY endarrow.tooltip     "Soʻnggi sahifa">
+<!ENTITY nextarrow.tooltip    "Keyingi sahifa">
+<!ENTITY previousarrow.tooltip "Oldingi sahifa">

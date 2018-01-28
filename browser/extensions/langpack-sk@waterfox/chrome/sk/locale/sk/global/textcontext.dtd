@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Vystrihnúť">
+<!ENTITY cutCmd.accesskey "V">
+<!ENTITY copyCmd.label "Kopírovať">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Prilepiť">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "Späť">
+<!ENTITY undoCmd.accesskey "S">
+<!ENTITY selectAllCmd.label "Vybrať všetko">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Odstrániť">
+<!ENTITY deleteCmd.accesskey "O">
+
+<!ENTITY spellAddToDictionary.label "Pridať do slovníka">
+<!ENTITY spellAddToDictionary.accesskey "n">
+<!ENTITY spellUndoAddToDictionary.label "Vrátiť späť pridanie do slovníka">
+<!ENTITY spellUndoAddToDictionary.accesskey "r">
+<!ENTITY spellCheckToggle.label "Skontrolovať pravopis">
+<!ENTITY spellCheckToggle.accesskey "t">
+<!ENTITY spellNoSuggestions.label "(Žiadne pravopisné návrhy)">
+<!ENTITY spellDictionaries.label "Jazyky">
+<!ENTITY spellDictionaries.accesskey "J">
+
+<!ENTITY searchTextBox.clear.label "Vymazať">
+
+<!ENTITY fillLoginMenu.label          "Vyplniť prihlasovacie údaje">
+<!ENTITY fillLoginMenu.accesskey      "V">
+<!ENTITY fillPasswordMenu.label       "Vyplniť heslo">
+<!ENTITY fillPasswordMenu.accesskey   "V">
+<!ENTITY fillUsernameMenu.label       "Vyplniť používateľské meno">
+<!ENTITY fillUsernameMenu.accesskey   "V">
+<!ENTITY noLoginSuggestions.label     "(žiadne návrhy prihlasovacích údajov)">
+<!ENTITY viewSavedLogins.label        "Zobraziť uložené prihlásenia">

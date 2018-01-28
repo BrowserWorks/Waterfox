@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Trouver la prochaine occurrence de la phrase">
+<!ENTITY previous.tooltip "Trouver l’occurrence précédente de la phrase">
+<!ENTITY findCloseButton.tooltip "Fermer la barre de recherche">
+<!ENTITY highlightAll.label "Tout surligner">
+<!ENTITY highlightAll.accesskey "u">
+<!ENTITY highlightAll.tooltiptext "Surligner toutes les occurrences de la phrase">
+<!ENTITY caseSensitive.label "Respecter la casse">
+<!ENTITY caseSensitive.accesskey "R">
+<!ENTITY caseSensitive.tooltiptext "Effectuer une recherche en respectant la casse">
+<!ENTITY entireWord.label "Mots entiers">
+<!ENTITY entireWord.accesskey "M">
+<!ENTITY entireWord.tooltiptext "Rechercher seulement les mots entiers">

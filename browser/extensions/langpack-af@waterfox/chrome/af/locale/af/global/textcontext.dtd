@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Knip">
+<!ENTITY cutCmd.accesskey "p">
+<!ENTITY copyCmd.label "Kopieer">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Plak">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "Ontdoen">
+<!ENTITY undoCmd.accesskey "O">
+<!ENTITY selectAllCmd.label "Merk alles">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Skrap">
+<!ENTITY deleteCmd.accesskey "S">
+
+<!ENTITY spellAddToDictionary.label "Voeg by woordeboek">
+<!ENTITY spellAddToDictionary.accesskey "b">
+<!ENTITY spellUndoAddToDictionary.label "Ontdoen byvoeging by woordeboek">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Toets spelling">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(Geen spelvoorstelle nie)">
+<!ENTITY spellDictionaries.label "Tale">
+<!ENTITY spellDictionaries.accesskey "T">
+
+<!ENTITY searchTextBox.clear.label "Maak skoon">
+
+<!ENTITY fillLoginMenu.label          "Vul aanmeldinligting in">
+<!ENTITY fillLoginMenu.accesskey      "V">
+<!ENTITY fillPasswordMenu.label       "Vul wagwoord in">
+<!ENTITY fillPasswordMenu.accesskey   "V">
+<!ENTITY fillUsernameMenu.label       "Vul gebruikernaam in">
+<!ENTITY fillUsernameMenu.accesskey   "V">
+<!ENTITY noLoginSuggestions.label     "(Geen aanmeldvoorstelle nie)">
+<!ENTITY viewSavedLogins.label        "Bekyk gestoorde aanmeldings">

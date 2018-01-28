@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "कापा">
+<!ENTITY cutCmd.accesskey "t">
+<!ENTITY copyCmd.label "प्रत बनवा">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "चिटकवा">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "पूर्ववत् करा">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY selectAllCmd.label "सर्व निवडा">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY deleteCmd.label "नष्ट करा">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "शब्दकोशात समाविष्ट करा">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "शब्दकोशात समाविष्ट करणे पूर्ववत् करा">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "शुध्दलेखनची तपासणी करा">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(शुध्दलेखन विचारार्थ मांडले नाही)">
+<!ENTITY spellDictionaries.label "भाषा">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "नष्ट करा">
+
+<!ENTITY fillLoginMenu.label          "लॉग-इन माहिती भरा">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "पासवर्ड भरा">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "वापरकर्तानाव भरा">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(शुध्दलेखन विचारार्थ मांडले नाही)">
+<!ENTITY viewSavedLogins.label        "साठविलेले लॉगिन्स दर्शवा">

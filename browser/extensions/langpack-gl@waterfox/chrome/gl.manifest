@@ -1,0 +1,14 @@
+locale alerts gl gl/locale/gl/alerts/
+locale autoconfig gl gl/locale/gl/autoconfig/
+locale global gl gl/locale/gl/global/
+locale global-platform gl gl/locale/gl/global-platform/mac/ os=Darwin
+locale global-platform gl gl/locale/gl/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform gl gl/locale/gl/global-platform/win/ os=WINNT
+locale mozapps gl gl/locale/gl/mozapps/
+locale necko gl gl/locale/gl/necko/
+locale passwordmgr gl gl/locale/gl/passwordmgr/
+locale pipnss gl gl/locale/gl/pipnss/
+locale pippki gl gl/locale/gl/pippki/
+locale places gl gl/locale/gl/places/
+locale pluginproblem gl gl/locale/gl/pluginproblem/
+locale weave gl gl/locale/gl/services/

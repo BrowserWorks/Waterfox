@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Aizvērt šo cilni">
+<!ENTITY tabCrashed.restoreTab "Atjaunot šo cilni">
+<!ENTITY tabCrashed.restoreAll "Atjaunot visas avarējušās cilnes">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Pff. Jūsu cilne nupat avarēja.">
+<!ENTITY tabCrashed.offerHelp "Mēs varam jums palīdzēt!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Izvēlieties &tabCrashed.restoreTab;, lai atjaunotu lapas saturu.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Izvēlieties &tabCrashed.restoreTab; vai &tabCrashed.restoreAll;, lai atjaunotu lapu.">
+<!ENTITY tabCrashed.requestHelp "Vai palīdzēsiet mums?">
+<!ENTITY tabCrashed.requestHelpMessage "Avāriju ziņojumi palīdz mums noteikt problēmas un uzlabot &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Ziņot par šo cilni">
+<!ENTITY tabCrashed.sendReport2 "Nosūtiet avārijas ziņojumu par cilni, ko šobrīd aplūkojat">
+<!ENTITY tabCrashed.commentPlaceholder2 "Komentārs, nav obligāts (komentārs būs redzams publiski)">
+<!ENTITY tabCrashed.includeURL2 "Nosūtīt arī lapas adresi">
+<!ENTITY tabCrashed.emailPlaceholder "Šeit ievadiet savu epasta adresi">
+<!ENTITY tabCrashed.emailMe "Paziņot man kad ir pieejama papildu informācija">
+<!ENTITY tabCrashed.reportSent "Avārijas ziņojums ir nosūtīts, paldies, ka palīdzat uzlabot &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Ziņot par fona cilnēm">
+<!ENTITY tabCrashed.autoSubmit2 "Atjauniniet iestatījumus, lai automātiski nosūtītu avāriju ziņojumus, iekļaujot avāriju ziņojumus no fona cilnēm šajā un nākotnes sesijās">

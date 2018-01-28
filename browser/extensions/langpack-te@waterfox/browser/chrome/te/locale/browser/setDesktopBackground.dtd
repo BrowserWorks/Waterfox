@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "స్థాయి:">
+<!ENTITY tile.label                 "శీర్షిక">
+<!ENTITY center.label               "మధ్య">
+<!ENTITY stretch.label              "సాగదీయు">
+<!ENTITY fill.label                 "నింపు">
+<!ENTITY fit.label                  "అమర్చు">
+<!ENTITY preview.label              "ఉపదర్శనం">
+<!ENTITY color.label                "రంగు:">
+<!ENTITY setDesktopBackground.title "డెస్క్‌టాప్  బ్యాక్‌గ్రౌండ్ అమర్చు">
+<!ENTITY openDesktopPrefs.label     "డెస్క్‌టాప్   అభీష్టాలను తెరువు">
+<!ENTITY closeWindow.key            "w">

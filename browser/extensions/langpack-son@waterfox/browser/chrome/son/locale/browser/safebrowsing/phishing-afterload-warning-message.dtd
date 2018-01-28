@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Ay kaa ne!">
+<!ENTITY safeb.palm.decline.label "Yaamaroo woo muray">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Woo manti darga nungu…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "Macin se moɲoo woo gagayandi?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "Hawgay, darga moo!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Interneti moɲoo woo <span id='malware_sitename'/> ga bayrandi ka tee darga moo nda a gagayndi war saajaw ibaayey bande.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Darga moɲey ga wiri ka porogaramey sinji kaŋ ga sutura alhabar zay, i ga war ordinateroo ka boro waaney ordineratey tooɲe, wala ka war dabariɲaŋoo hasara.</p><p>Darga moɲey jerey ga tee hawandi ka goyjinay laalayaŋ žemna, amma iboobo ga hasaraw nda koyey mana bay wala i ma yadda.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Goyjinay laala moo foo bangay!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Interneti moɲoo woo <span id='unwanted_sitename'/> ga bayrandi ka tee darga moo nda a gagayndi war saajaw ibaayey bande.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Goyjinay laala mooyaŋ ga ceeci ka goyjinay sinji kaŋ ga hin ka tee zanbahaya nd'a ga hin ka war dabariɲaŋoo laybu nda taka kaŋ mana naatandi.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Darga nungu no!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Interneti moɲoo woo <span id='phishing_sitename'/> ga ga bayrandi ka tee darga moo nda a gagayndi war saajaw ibaayey bande.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Darga nungey n' ka tee ka war darga ka mise laala tee, sanda ka porogaram sinji wala ka war boŋ gundu alhabar bangandi, sanda šennikufal, talfon lanba wala garaw katta.</p><p>Nda war n'alhabar tana dam interneti moɲoo woo ga boro tana ga hin ka war tammaasawey zay wal'a ma war zanba.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "पृष्ठ सेटअप">
+
+<!ENTITY basic.tab           "प्रारूप &amp; विकल्प">
+
+<!ENTITY formatGroup.label   "प्रारूप">
+
+<!ENTITY orientation.label   "दिशा:">
+<!ENTITY portrait.label      "व्यक्तिचित्र">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "भूदृश्य">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "पैमानाः">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "पृष्ठ चौड़ाई में रखने के लिये सिकोड़ें">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "विकल्प">
+
+<!ENTITY printBG.label       "छपाई पृष्ठभूमि (रंग व छवि)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "हाशिया व शीर्षिका/पादिका">
+
+<!ENTITY marginGroup.label   "हाशिया (#1)">
+<!ENTITY marginUnits.inches  "इंच">
+<!ENTITY marginUnits.metric  "मिलीमीटर">
+<!ENTITY marginTop.label     "शिखर:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "तल:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "बाएँ:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "दाएँ:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "शीर्षिका व पादिका">
+
+<!ENTITY hfLeft.label        "बायें:">
+<!ENTITY hfCenter.label      "मध्य:">
+<!ENTITY hfRight.label       "दायें:">
+<!ENTITY headerLeft.tip      "बायां शीर्षिका">
+<!ENTITY headerCenter.tip    "केंद्रीय शीर्षिका">
+<!ENTITY headerRight.tip     "दायां शीर्षिका">
+<!ENTITY footerLeft.tip      "बायां पादिका">
+<!ENTITY footerCenter.tip    "केंद्र पादिका">
+<!ENTITY footerRight.tip     "दायां पादिका">
+
+<!ENTITY hfTitle             "शीर्षक">
+<!ENTITY hfURL               "यूआरएल">
+<!ENTITY hfDateAndTime       "तिथि/समय">
+<!ENTITY hfPage              "पृष्ठ #">
+<!ENTITY hfPageAndTotal      "पृष्ठ # # का">
+<!ENTITY hfBlank             "--रिक्त--">
+<!ENTITY hfCustom            "मनपसंद...">
+
+<!ENTITY customPrompt.title  "मनपसंद...">
+<!ENTITY customPrompt.prompt "अपनी मनपसंद शीर्षिका/पादिका पाठ दाखिल करें.">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle "Ripristino impostazioni di ricerca">
+<!ENTITY searchreset.pageTitle "Ripristinare le impostazioni di ricerca?">
+<!ENTITY searchreset.pageInfo1 "Le impostazioni di ricerca attuali potrebbero essere obsolete. Se lo si desidera è possibile ripristinare le impostazioni predefinite di &brandShortName;.">
+<!ENTITY searchreset.selector.label "Questa operazione imposterà come motore di ricerca predefinito:">
+<!ENTITY searchreset.beforelink.pageInfo2 "È possibile modificare le impostazioni di ricerca in qualunque momento nelle ">
+<!ENTITY searchreset.afterlink.pageInfo2 ".">
+<!ENTITY searchreset.link.pageInfo2 "Impostazioni">
+<!ENTITY searchreset.noChangeButton "Non cambiare">
+<!ENTITY searchreset.noChangeButton.access "N">
+<!ENTITY searchreset.changeEngineButton "Cambia il motore di ricerca">
+<!ENTITY searchreset.changeEngineButton.access "C">

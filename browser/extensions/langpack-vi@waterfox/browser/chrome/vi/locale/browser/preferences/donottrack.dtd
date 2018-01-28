@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Không theo dõi">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Luôn áp dụng chế độ không theo dõi">
+<!ENTITY doNotTrackCheckbox2.accesskey "L">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; sẽ báo rằng bạn không muốn bị theo dõi mỗi khi chế độ chống theo dõi được bật.">
+<!ENTITY doNotTrackLearnMore.label    "Tìm hiểu thêm">

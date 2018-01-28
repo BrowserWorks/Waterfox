@@ -1,0 +1,76 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry 資料">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping 資料來源:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "目前的 ping 資料">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "已封存的 ping 資料">
+
+<!ENTITY aboutTelemetry.raw "原始 JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "顯示 subsession 資料">
+
+<!ENTITY aboutTelemetry.choosePing "選擇 ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; 較新的 ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "較舊的 ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "週">
+
+<!ENTITY aboutTelemetry.archivePingType "Ping 類型">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "今天">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "昨天">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "較舊">
+
+<!ENTITY aboutTelemetry.generalDataSection "一般資料">
+
+<!ENTITY aboutTelemetry.environmentDataSection "環境資料">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "Telemetry 紀錄">
+
+<!ENTITY aboutTelemetry.slowSqlSection "慢速的 SQL 陳述句">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "瀏覽器停滯">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "執行緒遲滯">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "捕捉到的堆疊">
+
+<!ENTITY aboutTelemetry.scalarsSection "Scalars">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "柱狀圖">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "Keyed Histograms">
+
+<!ENTITY aboutTelemetry.eventsSection "事件">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "簡易測量">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "附加元件詳情">
+
+<!ENTITY aboutTelemetry.lateWritesSection "慢速寫入">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "使用階段資訊">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "注意: 已啟用慢速 SQL 除錯。完整的 SQL 字串將會在下面顯示，但將不會被送出給 Telemetry。">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "取得堆疊的函數名稱">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "顯示原始堆疊資料">
+
+<!ENTITY aboutTelemetry.filterText "篩選（字串或 /regexp/）">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "酬載">

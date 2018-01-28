@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "500">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "복사">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "모두 선택">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "일반">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "제목:">
+<!ENTITY  generalURL            "주소:">
+<!ENTITY  generalType           "형식:">
+<!ENTITY  generalMode           "렌더링 방식:">
+<!ENTITY  generalSize           "파일 용량:">
+<!ENTITY  generalReferrer       "참조 URL:">
+<!ENTITY  generalSource         "소스:">
+<!ENTITY  generalModified       "수정:">
+<!ENTITY  generalEncoding2      "글자 인코딩:">
+<!ENTITY  generalMetaName       "이름">
+<!ENTITY  generalMetaContent    "내용">
+
+<!ENTITY  mediaTab              "미디어">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "위치:">
+<!ENTITY  mediaText             "추가 내용:">
+<!ENTITY  mediaAltHeader        "대체 텍스트">
+<!ENTITY  mediaAddress          "주소">
+<!ENTITY  mediaType             "유형">
+<!ENTITY  mediaSize             "이미지 크기">
+<!ENTITY  mediaCount            "카운트">
+<!ENTITY  mediaDimension        "사이즈:">
+<!ENTITY  mediaLongdesc         "설명:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "다른 이름으로 저장…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "미리 보기:">
+
+<!ENTITY  feedTab               "피드">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "구독하기">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "이용 권한">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "기본 설정 이용">
+<!ENTITY  permAskAlways         "항상 물어보기">
+<!ENTITY  permAllow             "허가">
+<!ENTITY  permAllowSession      "세션에 허가">
+<!ENTITY  permBlock             "차단">
+<!ENTITY  permissionsFor        "이용 권한:">
+<!ENTITY  permPlugins           "플러그인 활성화">
+
+<!ENTITY  permClearStorage           "저장소 삭제">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "보안">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "인증서 보기">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "알 수 없음">
+
+
+<!ENTITY  securityView.identity.header   "웹 사이트 정보">
+<!ENTITY  securityView.identity.owner    "소유자: ">
+<!ENTITY  securityView.identity.domain   "사이트 정보: ">
+<!ENTITY  securityView.identity.verifier "신원 확인자: ">
+<!ENTITY  securityView.identity.validity "만료일:">
+
+<!ENTITY  securityView.privacy.header                   "개인 정보 및 방문 기록">
+<!ENTITY  securityView.privacy.history                  "이전에 현재 웹 사이트 방문 여부">
+<!ENTITY  securityView.privacy.cookies                  "컴퓨터 내에 각종 정보(쿠키) 저장 여부">
+<!ENTITY  securityView.privacy.viewCookies              "쿠키 정보 보기">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "현재 웹 사이트 내 각종 암호 저장 여부">
+<!ENTITY  securityView.privacy.viewPasswords            "저장 암호 보기">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "세부 사항">
+
+<!ENTITY  helpButton.label                              "도움말">

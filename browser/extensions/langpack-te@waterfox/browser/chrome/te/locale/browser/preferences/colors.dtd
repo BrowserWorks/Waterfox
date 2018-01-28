@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "రంగులు">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "పేజీ పేర్కొన్న రంగులను మీరు ఎంచుకున్న వాటితో భర్తీచేయును:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "ఎల్లప్పుడూ">
+<!ENTITY  overrideDefaultPageColors.auto.label   "అధిక కాంట్రాస్ట్ థీములకు మాత్రమే">
+<!ENTITY  overrideDefaultPageColors.never.label  "ఎప్పటికీ కాదు">
+
+<!ENTITY  color                           "పాఠ్యము మరియు బ్యాక‌గ్రౌండ్">
+<!ENTITY  textColor.label                 "పాఠ్యము:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "బ్యాక్‌గ్రౌండ్:">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "సిస్టము రంగులను వాడు">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "లింక్‌ల‌కు కిందిగీత">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "లింకు రంగులు">
+<!ENTITY  linkColor.label                 "దర్శించని లింకులు:">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "దర్శించిన లింకులు:">
+<!ENTITY  visitedLinkColor.accesskey      "V">

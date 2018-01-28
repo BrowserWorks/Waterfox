@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Başlanğıc">
+
+<!ENTITY startupPage2.label        "&brandShortName; başladığında">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Ana səhifəni göstər">
+<!ENTITY startupBlankPage.label    "Boş səhifəni göstər">
+<!ENTITY startupPrevSession.label  "Son seansdan olan pəncərə və vərəqləri göstər">
+
+<!ENTITY homepage2.label           "Ana Səhifə">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "Hazırki səhifədən istifadə et">
+<!ENTITY useCurrentPage.accesskey  "H">
+<!ENTITY useMultiple.label         "Hazırki səhifələri istifadə et">
+<!ENTITY chooseBookmark.label      "Əlfəcin istifadə et…">
+<!ENTITY chooseBookmark.accesskey  "Ə">
+<!ENTITY restoreDefault.label      "İlkin vəziyyətə qaytar">
+<!ENTITY restoreDefault.accesskey  "S">
+
+<!ENTITY downloads.label     "Endirilənlər">
+
+<!ENTITY saveTo.label "Faylların saxlandığı yer">
+<!ENTITY saveTo.accesskey "y">
+<!ENTITY chooseFolderWin.label        "Bax…">
+<!ENTITY chooseFolderWin.accesskey    "B">
+<!ENTITY chooseFolderMac.label        "Seçin…">
+<!ENTITY chooseFolderMac.accesskey    "S">
+<!ENTITY alwaysAskWhere.label         "Faylların saxlanacağı yeri həmişə soruş">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "&brandShortName; səyyahının əsas səyyahınız olub olmadığını hər dəfə yoxla">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser3.label     "Əsas səyyahım et…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; hazırda əsas səyyahınızdır">
+<!ENTITY isNotDefault.label               "&brandShortName; əsas səyyahınız deyil">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; və Waterfox-un eyni anda işləməsinə icazə ver">
+<!ENTITY useWaterfoxSync.label             "Məsləhət: Bu fərqli profillər işlədir. Aralarında məlumatları paylaşmaq üçün Sync işlət.">
+<!ENTITY getStarted.notloggedin.label     "&syncBrand.shortName.label; üçün daxil ol…">
+<!ENTITY getStarted.configured.label      "&syncBrand.shortName.label; nizamlamalarını aç">
+
+<!ENTITY e10sEnabled.label                "Çox əməliyyatlı &brandShortName; səyyahını aktiv et">

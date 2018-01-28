@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Dibabit un aelad arveriad">
+
+<!ENTITY            profilename.label      "Anv an aelad :">
+
+<!ENTITY            start.label            "Loc'hañ &brandShortName;">
+<!ENTITY            exit.label             "Kuitaat">
+
+<!ENTITY            availprofiles.label    "Aeladoù hegerz">
+
+<!ENTITY            newButton.label        "Krouiñ an aelad…">
+<!ENTITY            newButton.accesskey    "a">
+<!ENTITY            renameButton.label     "Adenvel an aelad…">
+<!ENTITY            renameButton.accesskey "n">
+<!ENTITY            deleteButton.label     "Dilemel an aelad…">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; a vir stlennoù a-zivout hoc'h arventennoù, ho kwellvezioù hag ergorennoù an arveriaded all e-barzh hoc'h aelad deoc'h-c'hwi.">
+
+<!ENTITY            offlineState.label    "Labourat ezlinenn">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "Arverañ an aelad bet diuzet hep goulenn diganin">
+<!ENTITY            useSelected.accesskey   "A">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "ମୁଦ୍ରଣ କରନ୍ତୁ…">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "ପୃଷ୍ଠା ବିନ୍ୟାସ…">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "ପୃଷ୍ଠା:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "ର">
+<!ENTITY scale.label          "ମାପ:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "ଚିତ୍ରପଟ">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "କଡ଼ୁଆ">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "ବନ୍ଦ କରନ୍ତୁ">
+<!ENTITY close.accesskey      "C">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "ଇଚ୍ଛାରୂପଣ କରନ୍ତୁ…">
+<!ENTITY ShrinkToFit.label    "ଖାପ ଖାଇବା ପାଇଁ ଛୋଟ କରନ୍ତୁ">
+<!ENTITY customPrompt.title   "ଇଚ୍ଛାରୂପଣ ମାପ…">
+
+
+
+
+
+<!ENTITY homearrow.tooltip    "ପ୍ରଥମ ପୃଷ୍ଠା">
+<!ENTITY endarrow.tooltip     "ଶେଷ ପୃଷ୍ଠା">
+<!ENTITY nextarrow.tooltip    "ପରବର୍ତ୍ତୀ ପୃଷ୍ଠା">
+<!ENTITY previousarrow.tooltip "ପୂର୍ବବର୍ତ୍ତୀ ପୃଷ୍ଠା">
+
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.disabled.tooltip "This page cannot be automatically simplified">
+
+<!ENTITY simplifyPage.enabled.tooltip  "Change layout for easier reading">
+<!ENTITY simplifyPage.label   "Simplify Page">

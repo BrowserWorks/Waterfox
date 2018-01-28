@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Beállítások – Oldal adatai">
+<!ENTITY     hostCol.label                 "Oldal">
+<!ENTITY     statusCol.label               "Állapot">
+<!ENTITY     usageCol.label                "Tárhely">
+<!ENTITY     searchTextboxPlaceHolder             "Weboldalak keresése">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "k">
+<!ENTITY     removeSelected.label          "Kijelölt eltávolítása">
+<!ENTITY     removeSelected.accesskey      "e">
+<!ENTITY     save.label                    "Változások mentése">
+<!ENTITY     save.accesskey                "V">
+<!ENTITY     cancel.label                  "Mégse">
+<!ENTITY     cancel.accesskey              "M">
+<!ENTITY     removingDialog.title          "Oldaladatok törlése">
+<!ENTITY     removingSelected.description  "Az oldal adatainak eltávolítása a kapcsolódó sütiket és kapcsolat nélküli webes tartalmat is eltávolítja. Emiatt egyes weboldalakra majd újra be kell jelentkezni. Biztosan végrehajtja a módosításokat?">
+<!ENTITY     siteTree.label                "A következő sütik kerülnek eltávolításra:">

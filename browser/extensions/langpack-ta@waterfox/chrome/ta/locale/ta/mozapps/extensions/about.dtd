@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "உருவாக்கியவர்:">
+<!ENTITY  developers.label            "வல்லுநர்கள்:">
+<!ENTITY  translators.label           "மொழிபெயர்ப்பாளர்கள்:">
+<!ENTITY  contributors.label          "உதவியவர்கள்:">
+<!ENTITY  homepage.label              "முதன்மை பக்கத்தை பார்க்கவும்">

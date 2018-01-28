@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "설정 - 사이트 데이터">
+<!ENTITY     hostCol.label                 "사이트">
+<!ENTITY     statusCol.label               "상태">
+<!ENTITY     usageCol.label                "저장소">
+<!ENTITY     searchTextboxPlaceHolder             "웹사이트 검색">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "선택된 값 삭제">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "변경된 내용 저장">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "취소">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "사이트 데이타 삭제">
+<!ENTITY     removingSelected.description  "웹사이트 데이터를 제거하면 관련된 쿠키나 오프라인 콘텐츠도 함께 삭제됩니다. 이렇게 되면 웹사이트에 대한 자동 로그인이 해제될 수 있습니다. 그대로 진행할까요?">
+<!ENTITY     siteTree.label                "다음의 웹사이트 쿠키가 제거됩니다:">

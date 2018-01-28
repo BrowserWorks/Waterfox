@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "सामान्य">
+
+<!ENTITY useCursorNavigation.label       "पृष्ठ के अंदर संचरण के लिए हमेशा कर्सर का प्रयोग करें">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "जब टाइप करना शुरू करते हैं तभी पाठ के लिए खोजें">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "आवश्यकता अनुसार स्पर्श वाला कीबोर्ड दिखाएँ">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "ब्राउज़िंग">
+
+<!ENTITY useAutoScroll.label             "स्वतः स्क्रॉलिंग का प्रयोग करें">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "सुगम स्क्रॉलिंग का प्रयोग करें">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "टाइप करते समय अपना वर्तनी जाँचें">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "आँकड़ा पसंद">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "अधिक जानें">
+
+<!ENTITY dataCollectionPrivacyNotice.label    "गोपनीयता नीति">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "अधिक जानें">
+
+<!ENTITY networkTab.label                "संजाल">
+
+<!ENTITY networkProxy.label              "नेटवर्क प्रॉक्सी">
+
+<!ENTITY connectionDesc.label            "विन्यस्त करें कि कैसे &brandShortName; इंटरनेट से जुड़ता है">
+<!ENTITY connectionSettings.label        "सेटिंग…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "कैश्च वेब कंटेंट">
+
+<!ENTITY offlineStorage2.label           "ऑफ़ाइल वेबकंटेंट और उपयोक्ता आँकड़े">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "साइट आँकड़ा">
+<!ENTITY clearSiteData.label             "सभी आँकड़े साफ करें">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "सेटिंग…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "अधिक जानें">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "इसमें कैश परिसीमित करें">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB स्थान">
+<!ENTITY clearCacheNow.label             "अब साफ करें">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "अभी साफ करें">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "स्वचालित कैश प्रबंधन को अधिरोहित करें">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "अद्यतन">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; अद्यतन">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplication.version.pre   "संस्करण">
+<!ENTITY updateApplication.version.post  "‌">
+<!ENTITY updateApplication.description   "के लिए &brandShortName; को अनुमति दें">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "अद्यतन हेतु जाँचें; लेकिन आपको उन्हें संस्थापित करने के लिए चुनने दें">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "अद्यतन के लिए कभी मत जाँचें (अनुशंसित नहीं)">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "अद्यतन इतिहास दिखाएँ…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "अद्यतन संस्थापित करने के लिए पृष्ठभूमि सेवा का उपयोग करें">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "स्वचालित रूप से खोज इंजन का अद्यतन करें">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "आपको बताएँ कि कब वेबसाइट ऑफ़लाइन प्रयोग के लिए आँकड़ा जमा करने के लिए पूछता है">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "अपवाद…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "निम्नलिखित वेबसाइट ऑफलाइन उपयोग के लिए आँकड़ा जमा करने में सक्षम है:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "हटाएँ…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "ऑफ़लाइन आँकड़ा हटाएँ">
+
+<!ENTITY certificateTab.label            "प्रमाणपत्र">
+<!ENTITY certPersonal2.description       "जब एक सर्वर आपके निजी प्रमाणपत्र का आग्रह करता है">
+<!ENTITY selectCerts.auto                "कोई एक स्वतः चुनें">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "आपसे हमेशा पूछें">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "Query OCSP responder servers to confirm the current validity of certificates">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "प्रदर्शन">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "अनुशंसित प्रदर्शन सेटिंग्स का उपयोग करें">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "और जानें">
+<!ENTITY limitContentProcessOption.label "सामग्री प्रक्रिया सीमा">
+<!ENTITY limitContentProcessOption.description
+                                         "एक से अधिक टैब का उपयोग करते समय अतिरिक्त सामग्री प्रक्रियाओं के प्रदर्शन में सुधार हो सकता है, लेकिन यह अधिक मेमोरी का भी उपयोग करेगा.">
+<!ENTITY limitContentProcessOption.accesskey   "l">
+<!ENTITY allowHWAccel.label              "उपलब्ध होने पर हार्ड त्वरण का उपयोग करें">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

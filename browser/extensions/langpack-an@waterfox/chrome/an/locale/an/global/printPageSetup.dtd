@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Configuración d'a pachina">
+
+<!ENTITY basic.tab           "Formato &amp; opcions">
+
+<!ENTITY formatGroup.label   "Formato">
+
+<!ENTITY orientation.label   "Orientación:">
+<!ENTITY portrait.label      "Vertical">
+<!ENTITY portrait.accesskey  "V">
+<!ENTITY landscape.label     "Horizontal">
+<!ENTITY landscape.accesskey "H">
+
+<!ENTITY scale.label         "Escala:">
+<!ENTITY scale.accesskey     "s">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Achustar a l'amplaria d'a pachina">
+<!ENTITY shrinkToFit.accesskey "u">
+
+<!ENTITY optionsGroup.label  "Opcions">
+
+<!ENTITY printBG.label       "Imprentar o fondo (colors y imachens)">
+<!ENTITY printBG.accesskey   "f">
+
+<!ENTITY advanced.tab        "Marguins &amp; capitero/piet de pachina">
+
+<!ENTITY marginGroup.label   "Marguins (#1)">
+<!ENTITY marginUnits.inches  "pulzadas">
+<!ENTITY marginUnits.metric  "milimetros">
+<!ENTITY marginTop.label     "Superior:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Inferior:">
+<!ENTITY marginBottom.accesskey "I">
+<!ENTITY marginLeft.label    "Cucha:">
+<!ENTITY marginLeft.accesskey "h">
+<!ENTITY marginRight.label   "Dreita:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Capiters &amp; pietz de pachina">
+
+<!ENTITY hfLeft.label        "Cucha:">
+<!ENTITY hfCenter.label      "Centro:">
+<!ENTITY hfRight.label       "Dreita:">
+<!ENTITY headerLeft.tip      "Encabezado cucho">
+<!ENTITY headerCenter.tip    "Encabezado central">
+<!ENTITY headerRight.tip     "Encabezado dreito">
+<!ENTITY footerLeft.tip      "Piet cucho">
+<!ENTITY footerCenter.tip    "Piet central">
+<!ENTITY footerRight.tip     "Piet dreito">
+
+<!ENTITY hfTitle             "Titol">
+<!ENTITY hfURL               "Adreza URL">
+<!ENTITY hfDateAndTime       "Calendata/hora">
+<!ENTITY hfPage              "Pachina #">
+<!ENTITY hfPageAndTotal      "Pachina # de #">
+<!ENTITY hfBlank             "--cosa--">
+<!ENTITY hfCustom            "Personalizau…">
+
+<!ENTITY customPrompt.title  "Personalizau…">
+<!ENTITY customPrompt.prompt "Introduzca o suyo texto personalizau d'encabezado/piet">

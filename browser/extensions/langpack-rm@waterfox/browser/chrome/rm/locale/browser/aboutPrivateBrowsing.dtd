@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Ti n'es actualmain betg en ina fanestra privata.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Avrir ina fanestra privata">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Modus privat">
+<!ENTITY privateBrowsing.title.tracking                  "Modus privat cun protecziun cunter il fastizar">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Sche ti navigheschas en ina fanestra privata, na ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "memorisescha Waterfox betg">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "paginas visitadas">
+<!ENTITY aboutPrivateBrowsing.info.searches              "Tschertgas">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "Datotecas temporaras">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "memorisescha">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "Telechargiadas">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "Segnapaginas">
+<!ENTITY aboutPrivateBrowsing.note.before                "Il modus privat ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "na ta renda betg anonim">
+<!ENTITY aboutPrivateBrowsing.note.after                 " en l'internet. Tes patrun u purschider d'internet pon tuttina registrar las paginas che ti visiteschas.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Ulteriuras infurmaziuns davart ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "il modus privat">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protecziun cunter il fastizar:">
+<!ENTITY trackingProtection.description2                 "Intginas websites utiliseschan sistems da fastizar che pon suandar tias activitads en l'internet. Cun la protecziun cunter il fastizar blochescha Waterfox blers fastizaders che rimnan infurmaziuns davart tia navigaziun en l'internet.">
+<!ENTITY trackingProtection.startTour1                   "Mussar co che quai funcziunescha">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Amsefrak n ibenkan">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Izegrar d ibenkan n tɣellist">
+<!ENTITY devmgr.details.title                   "Aglam leqqayen">
+<!ENTITY devmgr.details.title2                  "Azal">
+
+<!ENTITY devmgr.button.login.label              "Tuqqna">
+<!ENTITY devmgr.button.login.accesskey          "q">
+<!ENTITY devmgr.button.logout.label             "Tuffɣa">
+<!ENTITY devmgr.button.logout.accesskey         "T">
+<!ENTITY devmgr.button.changepw.label           "Snifel awal uffir">
+<!ENTITY devmgr.button.changepw.accesskey       "w">
+<!ENTITY devmgr.button.load.label               "Sali">
+<!ENTITY devmgr.button.load.accesskey           "S">
+<!ENTITY devmgr.button.unload.label             "Sers">
+<!ENTITY devmgr.button.unload.accesskey         "S">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Sekcem talɣut ɣef uzegrir i tebɣiḍ aţernuḍ.">
+<!ENTITY loaddevice.modname                     "Isem n uzegrir:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Azegrir amaynut PKCS#11">
+<!ENTITY loaddevice.filename                    "Isem n ufaylu n uzegrir:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "ɛiwed nadi ...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Sali-d PKCS#11 anuḍaf n ibenk">

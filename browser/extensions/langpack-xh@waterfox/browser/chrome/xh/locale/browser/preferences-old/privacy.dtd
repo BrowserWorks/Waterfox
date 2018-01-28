@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Sebenzisa Ukhuseleko Lokutreka">
+<!ENTITY  trackingProtectionAlways.label       "Qho">
+<!ENTITY  trackingProtectionAlways.accesskey   "o">
+<!ENTITY  trackingProtectionPrivate.label      "Kuphela kwiiwindow zabucala">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Ungaze">
+<!ENTITY  trackingProtectionNever.accesskey    "U">
+<!ENTITY  trackingProtectionLearnMore.label    "Funda ngakumbi">
+<!ENTITY  trackingProtectionExceptions.label   "Ezikhethekileyo…">
+<!ENTITY  trackingProtectionExceptions.accesskey "z">
+
+<!ENTITY tracking.label                 "Ukutreka">
+<!ENTITY trackingProtectionPBM5.label         "Sebenzisa Ukhuseleko Lokutreka Kwiifestile Zabucala">
+<!ENTITY trackingProtectionPBM5.accesskey     "c">
+<!ENTITY trackingProtectionPBMLearnMore.label "Funda okungakumbi">
+<!ENTITY changeBlockList.label          "Tshintsha Uludwe Lokubloka">
+<!ENTITY changeBlockList.accesskey      "T">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Kanti unako">
+<!ENTITY  doNotTrack.settings.label     "lawula iisetingi zakho zethi Musa Ukutreka">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Imbali">
+
+<!ENTITY  locationBar.label             "Ibha yendawo">
+
+<!ENTITY  locbar.suggest.label          "Cebisa xa usebenzisa ibha yendawo:">
+<!ENTITY  locbar.history.label          "Imbali">
+<!ENTITY  locbar.history.accesskey      "I">
+<!ENTITY  locbar.bookmarks.label        "Iibhukhmakhi">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Vula iithebhu">
+<!ENTITY  locbar.openpage.accesskey     "V">
+<!ENTITY  locbar.searches.label         "Ukukhangela okufana noku ukusuka kwinjini yokukhangela esisiseko">
+<!ENTITY  locbar.searches.accesskey     "a">
+
+<!ENTITY  suggestionSettings.label      "Tshintsha iipreferensi zamacebiso enjini yokukhangela…">
+<!ENTITY  suggestionSettings.accesskey  "n">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Yamkela iikhukhi zomnye umntu:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "m">
+<!ENTITY  acceptThirdParty.always.label   "Qho">
+<!ENTITY  acceptThirdParty.never.label    "Ungaze">
+<!ENTITY  acceptThirdParty.visited.label  "Isuka kwetyelelweyo">
+
+<!ENTITY  keepUntil.label               "Gcina zide:">
+<!ENTITY  keepUntil.accesskey           "z">
+
+<!ENTITY  expire.label                  "ziphelelwe">
+<!ENTITY  close.label                   "Ndivala i-&brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Izinxaxhi…">
+<!ENTITY  cookieExceptions.accesskey    "z">
+
+<!ENTITY  showCookies.label             "Bonisa iiKhukhi…">
+<!ENTITY  showCookies.accesskey         "B">
+
+<!ENTITY  historyHeader.pre.label          "I-&brandShortName; iya:">
+<!ENTITY  historyHeader.pre.accesskey      "i">
+<!ENTITY  historyHeader.remember.label     "Khumbula imbali">
+<!ENTITY  historyHeader.dontremember.label "Ungaze ukhumbule imbali">
+<!ENTITY  historyHeader.custom.label       "Sebenzisa iisethingi zesiqhelo kwimbali">
+<!ENTITY  historyHeader.post.label         "​‌">
+
+<!ENTITY  rememberDescription.label      "I-&brandShortName; iya kukhumbula imbali yakho yokubhrawuza, yokukhutshelwayo, yefom neyokukhangela ize igcine iikhukhi kwiwebhusayithi oyityelelayo.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Ungafuna ">
+<!ENTITY  rememberActions.clearHistory.label  "ukususa imbali yakho yakutshanje">
+<!ENTITY  rememberActions.middle.label        ", okanye ">
+<!ENTITY  rememberActions.removeCookies.label "susa iikhukhi ezinganye">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "i-&brandShortName; iya kusebenzisa iisethingi ezifanayo njengokubhrawuza kwangasese kwaye ayiyi kukhumbula nayiphi na imbali njengokuba ubhrawuza iwebhu.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Kwakhona usenokufuna ">
+<!ENTITY  dontrememberActions.clearHistory.label "ukususa yonke imbali yakutshanje">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Soloko usebenzisa imo yokubhrawuza yangasese">
+<!ENTITY  privateBrowsingPermanent2.accesskey "o">
+
+<!ENTITY  rememberHistory2.label      "Khumbula imbali yokubhrawuza nokukhuphela kwam">
+<!ENTITY  rememberHistory2.accesskey  "K">
+
+<!ENTITY  rememberSearchForm.label       "Khumbula imbali yokukhangela neyefom">
+<!ENTITY  rememberSearchForm.accesskey   "a">
+
+<!ENTITY  clearOnClose.label             "Susa imbali xa i-&brandShortName; ivala">
+<!ENTITY  clearOnClose.accesskey         "S">
+
+<!ENTITY  clearOnCloseSettings.label     "Imimiselo…">
+<!ENTITY  clearOnCloseSettings.accesskey "m">
+
+<!ENTITY  browserContainersHeader.label         "Iithebhu Zekhonteyina">
+<!ENTITY  browserContainersLearnMore.label      "Funda ngakumbi">
+<!ENTITY  browserContainersEnabled.label        "Vumela iiThebhu zeKhonteyina">
+<!ENTITY  browserContainersEnabled.accesskey    "u">
+<!ENTITY  browserContainersSettings.label        "Iisetingi…">
+<!ENTITY  browserContainersSettings.accesskey    "s">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

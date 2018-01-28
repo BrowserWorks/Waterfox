@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ਛੋਟ - ਉਲੱਥਾ">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ਹੇਠ ਦਿੱਤੀਆਂ ਭਾਸ਼ਾਂਵਾਂ ਲਈ ਲਈ ਉਲੱਥਾ ਪੇਸ਼ ਨਹੀਂ ਕੀਤਾ ਜਾਵੇਗਾ:">
+<!ENTITY treehead.languageName.label      "ਭਾਸ਼ਾਵਾਂ">
+<!ENTITY removeLanguage.label             "ਭਾਸ਼ਾ ਨੂੰ ਹਟਾਓ">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "ਸਭ ਭਾਸ਼ਾਵਾਂ ਨੂੰ ਹਟਾਓ">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "ਹੇਠ ਦਿੱਤੀਆਂ ਸਾਈਟਾਂ ਲਈ ਉਲੱਥਾ ਪੇਸ਼ ਨਹੀਂ ਕੀਤਾ ਜਾਵੇਗਾ:">
+<!ENTITY treehead.siteName.label          "ਸਾਈਟਾਂ">
+<!ENTITY removeSite.label                 "ਸਾਈਟ ਨੂੰ ਹਟਾਓ">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "ਸਭ ਸਾਈਟਾਂ ਨੂੰ ਹਟਾਓ">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "ਬੰਦ ਕਰੋ">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

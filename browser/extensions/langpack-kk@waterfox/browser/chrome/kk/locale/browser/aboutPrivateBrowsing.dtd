@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Сіз қазір жекелік шолу терезесінде емессіз.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Жекелік шолу режиміндегі терезені ашу">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "е">
+
+<!ENTITY privateBrowsing.title                           "Жекелік шолу">
+<!ENTITY privateBrowsing.title.tracking                  "Бақылаудан қорғанысы бар жекелік шолу">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Жекелік шолу терезесінде шолу кезінде, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "келесіні сақтамайды">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "қаралған парақтар">
+<!ENTITY aboutPrivateBrowsing.info.searches              "іздеулер">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "уақытша файлдар">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "сақтайды">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " келесіні:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "жүктемелер">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "бетбелгілер">
+<!ENTITY aboutPrivateBrowsing.note.before                "Жекелік шолу ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "сізді интернет желісінде анонимды">
+<!ENTITY aboutPrivateBrowsing.note.after                 " етпейді. Жұмыс берушіңіз немесе интернет провайдеріңіз сонда да сіз қараған беттер тарихын біле алады.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Ол туралы көбірек білу - ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Жекелік шолу">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Бақылаудан қорғаныс">
+<!ENTITY trackingProtection.description2                 "Кейбір вебсайттар сіздің интернеттегі белсенділігіңізді бақылай алатын бақылаушыларды қолданады. Бақылаудан қорғанысты қолданатын Waterfox сіздің шолу әрекеттеріңіз туралы ақпаратты жинайтын біраз бақылаушыларды блоктай алады.">
+<!ENTITY trackingProtection.startTour1                   "Бұл қалай жұмыс жасайтынын қарау">

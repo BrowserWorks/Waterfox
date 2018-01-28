@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Ανανέωση του &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Ξεκινήστε από την αρχή για να διορθώσετε προβλήματα και να επαναφέρετε την επίδοση.">
+<!ENTITY refreshProfile.dialog.description2  "Αυτό θα:">
+<!ENTITY refreshProfile.dialog.items.label1  "Αφαιρέσει τα πρόσθετα και τις προσαρμογές που έχετε κάνει">
+<!ENTITY refreshProfile.dialog.items.label2  "Επαναφέρει τις ρυθμίσεις του περιηγητή σας στις προκαθορισμένες">
+<!ENTITY refreshProfile.dialog.button.label  "Ανανέωση του &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Δώστε στο &brandShortName; ένα φρεσκάρισμα">
+<!ENTITY refreshProfile.button.label         "Ανανέωση του &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Σχεδόν τελειώσαμε…">

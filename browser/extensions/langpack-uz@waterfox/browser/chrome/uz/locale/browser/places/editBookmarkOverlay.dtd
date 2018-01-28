@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Nomi:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Manzili:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "M">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Tasma manzili:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "T">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Sayt manzili:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "Jild:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Barcha xatchoʻplar jildini koʻrsatish">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Yashirish">
+<!ENTITY editBookmarkOverlay.tags.label                      "Teglar:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Teglarni vergul bilan ajratish">
+<!ENTITY editBookmarkOverlay.description.label               "Ta`rifi:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "T">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Kalit soʻz:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Barcha teglarni koʻrsatish">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Ushbu xatcho'pni yon panelda yuklash">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "U">
+<!ENTITY editBookmarkOverlay.choose.label                    "Tanlash">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Yangi jild">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "j">

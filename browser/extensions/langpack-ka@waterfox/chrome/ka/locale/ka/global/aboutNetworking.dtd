@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "ქსელის შესახებ">
+<!ENTITY aboutNetworking.warning               "ეს მეტად ექსპერიმენტულია. 
+უფროსების ნებართვის გარეშე არ გამოიყენოთ.">
+<!ENTITY aboutNetworking.showNextTime          "გაფრთხილების ჩვენება ყოველ ჯერზე">
+<!ENTITY aboutNetworking.ok                    "გასაგებია">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "სოკეტები:">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "გაახლება">
+<!ENTITY aboutNetworking.autoRefresh           "განახლება ყოველ 3 წამში">
+<!ENTITY aboutNetworking.hostname              "ჰოტის სახელი">
+<!ENTITY aboutNetworking.port                  "პორტი">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "მოქმედი">
+<!ENTITY aboutNetworking.idle                  "უქმი">
+<!ENTITY aboutNetworking.host                  "ჰოსტი">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "გაგზავნილია">
+<!ENTITY aboutNetworking.received              "მიღებულია">
+<!ENTITY aboutNetworking.family                "ოჯახი">
+<!ENTITY aboutNetworking.addresses             "მისამართები">
+<!ENTITY aboutNetworking.expires               "მოქმედების ვადა (წამებში)">
+<!ENTITY aboutNetworking.messagesSent          "გაგზავნილი შეტყობინებები">
+<!ENTITY aboutNetworking.messagesReceived      "მიღებული შეტყობინებები">
+<!ENTITY aboutNetworking.bytesSent             "გაგზავნილი ბაიტი">
+<!ENTITY aboutNetworking.bytesReceived         "მიღებული ბაიტი">
+<!ENTITY aboutNetworking.logging               "აღრიცხვა">
+<!ENTITY aboutNetworking.logTutorial           "იხილეთ <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP აღრიცხვა</a> ამ ხელსაწყოს გამოყენების წესების გასაცნობად.">
+<!ENTITY aboutNetworking.currentLogFile        "მიმდინარე აღრიცხვის ფაილი:">
+<!ENTITY aboutNetworking.currentLogModules     "მიმდინარე აღრიცხვის მოდულები:">
+<!ENTITY aboutNetworking.setLogFile            "აღრიცხვის ფაილის მითითება">
+<!ENTITY aboutNetworking.setLogModules         "აღრიცხვის მოდულების მითითება">
+<!ENTITY aboutNetworking.startLogging          "აღრიცხვის დაწყება">
+<!ENTITY aboutNetworking.stopLogging           "აღრიცხვის შეჩერება">
+<!ENTITY aboutNetworking.dnsLookup             "DNS მოძიება">
+<!ENTITY aboutNetworking.dnsLookupButton       "გადაჭრა">
+<!ENTITY aboutNetworking.dnsDomain             "დომეინი">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "RCWN სტატისტიკა">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN სტატუსი">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "კეშის გამოყენება">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "ქსელით კეშის ჩანაცვლება">
+<!ENTITY aboutNetworking.totalNetworkRequests  "ქსელის მოთხოვნები სულ">
+<!ENTITY aboutNetworking.rcwnOperation         "ოპერაცია ქეშზე">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "გახსნა">
+<!ENTITY aboutNetworking.rcwnPerfRead          "წაკითხვა">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "ჩაწერა">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "შესაყვანის გახსნა">
+<!ENTITY aboutNetworking.rcwnAvgShort          "მოკლე საშუალო">
+<!ENTITY aboutNetworking.rcwnAvgLong           "გრძელი საშუალო">
+<!ENTITY aboutNetworking.rcwnStddevLong        "გრძელი სტანდარტული გადახრა">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "ქეშის შენელების რაოდენობა">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "ქეშის რაოდენობა შენელების გარეშე">

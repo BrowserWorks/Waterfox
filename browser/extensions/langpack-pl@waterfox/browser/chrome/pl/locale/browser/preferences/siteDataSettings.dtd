@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ustawienia – dane stron">
+<!ENTITY hostCol.label "Witryna">
+<!ENTITY statusCol.label "Status">
+<!ENTITY usageCol.label "Rozmiar">
+<!ENTITY searchTextboxPlaceHolder "Szukaj witryny">
+<!ENTITY searchTextboxPlaceHolder.accesskey "">
+<!ENTITY removeSelected.label "Usuń zaznaczone">
+<!ENTITY removeSelected.accesskey "">
+<!ENTITY save.label "Zapisz zmiany">
+<!ENTITY save.accesskey "">
+<!ENTITY cancel.label "Anuluj">
+<!ENTITY cancel.accesskey "">
+<!ENTITY removingDialog.title "Usuwanie danych stron">
+<!ENTITY removingSelected.description "Podczas usuwania danych stron zostaną również usunięte powiązane z nią ciasteczka i przechowywane dane. Może to spowodować wylogowanie z niektórych witryn. Czy wprowadzić zmiany?">
+<!ENTITY siteTree.label "Ciasteczka następujących witryn zostaną usunięte:">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Obnovi sesiju">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Ups, ovo je neugodno.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ima problema s vraćanjem vaših kartica i prozora. Ovo je često zbog nedavno otvorenih web stranica.">
+<!ENTITY restorepage.tryThis        "Možete pokušati:">
+<!ENTITY restorepage.restoreSome    "Ukloniti jednu ili više kartica za koje smatrate da bi mogle biti uzrok problema">
+<!ENTITY restorepage.startNew       "Pokrenuti potpuno novu sesiju pretraživanja">
+
+<!ENTITY restorepage.tryagainButton "Vrati">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Zatvori">
+<!ENTITY restorepage.close.access   "Z">
+
+<!ENTITY restorepage.restoreHeader  "Vrati">
+<!ENTITY restorepage.listHeader     "Prozore i kartice">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Prozor &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Krenimo!">
+<!ENTITY welcomeback2.restoreButton.access "K">
+
+<!ENTITY welcomeback2.tabtitle      "Uspjeh!">
+
+<!ENTITY welcomeback2.pageTitle     "Uspjeh!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; je spreman.">
+
+<!ENTITY welcomeback2.restoreSome.label "Vrati samo one koje želiš">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Vaši dodaci i prilagodbe su uklonjeni i postavke vašeg preglednika su vraćene na zadane. Ukoliko ovo nije popravilo vaš problem, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "saznajte više o tome šta možete uraditi.">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">

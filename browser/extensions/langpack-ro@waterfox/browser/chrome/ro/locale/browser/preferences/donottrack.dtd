@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Nu mă urmări">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Aplică întotdeauna Nu mă urmări">
+<!ENTITY doNotTrackCheckbox2.accesskey "a">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; va trimite un semnal prin care nu dorești să fii urmărit ori de câte ori protecția față de urmărire este activată.">
+<!ENTITY doNotTrackLearnMore.label    "Află mai multe">

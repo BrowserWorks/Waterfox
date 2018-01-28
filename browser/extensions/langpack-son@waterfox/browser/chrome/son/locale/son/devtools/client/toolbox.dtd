@@ -1,0 +1,218 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+
+<!ENTITY browserToolboxErrorMessage          "Firka foo bangay kaŋ feecikaa goyjinay bataa ga feera:">
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+
+<!ENTITY options.context.advancedSettings "Hanseyan koyjinantey">
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+
+<!ENTITY options.context.inspector "Hawgaykaw">
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+
+<!ENTITY options.showUserAgentStyles.label "Interneti ceecikaw fasaley cebe">
+<!ENTITY options.showUserAgentStyles.tooltip "Woo tunandioo ka tilasu fasaley cebe kaŋyaŋ zumandi war ceecikaa ra.">
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+
+<!ENTITY options.collapseAttrs.label "DOM alhaaley zafa">
+<!ENTITY options.collapseAttrs.tooltip "Alhaali kukey zafa korošikaa ra">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.label "Tilasu noone ize ">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.accesskey "u">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.authored "Hantumkaw">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hex "Ferši-16">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+
+<!ENTITY options.defaultColorUnit.name "Noone maaɲey">
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+
+<!ENTITY options.context.triggersPageRefresh  "* Goywaatoo hinne se, moɲoo zumandi taaga">
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableChrome.label5    "Ceecikaw kungaa feeri nda hansari goyjinawey tunandi">
+<!ENTITY options.enableChrome.tooltip3  "Suubaaroo woo tunandiyanoo ga too war ma hin ka goy nda cinakaw goyjinay dumi booboyaŋ ceecikaa ra (nda Goyjinawey > Ceecikaw goyjinay bata) nda ka tontoney hanse tontoney juwalkaa ra">
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+
+<!ENTITY options.enableRemote.label3    "Hasarawkaayan moora tunandi">
+<!ENTITY options.enableRemote.tooltip2  "Suubarooo woo tunandiyanoo ka too cinakaw goyjinawey ka hasaraw kaa Waterfox teera moora doo ra sanda Waterfox OS">
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+
+<!ENTITY options.disableJavaScript.label     "JavaScript kayandi *">
+<!ENTITY options.disableJavaScript.tooltip   "Suubaroo tunandiroo ga JavaScript kayandi kanjoo ra. Nda kanjoo wala goyjinay bataa daaba kul kayandiyanoo mma dere.">
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+
+<!ENTITY options.disableHTTPCache.label     "HTTP tugudoo kayandi (nda goyjinay bata ga feera)">
+<!ENTITY options.disableHTTPCache.tooltip   "Nda suubaroo woo tun, HTTP tugudogoo ga kay kanjey kul se kaŋ na goyjinay bataa feeri. Service Workers ši suubaroo woo kanboo maate.">
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+
+<!ENTITY options.enableServiceWorkersHTTP.label     "Service Workers tunandi HTTP boŋ (nda bataa ga feeri)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Suubaroo woo tunandiroo ga service workers kul tunandi HTTP boŋ kanjey kaŋ na goyjinay bataa feeri kul se.">
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+
+<!ENTITY options.selectDefaultTools.label2    "Waterfox cinakaw goyjinawey">
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+
+<!ENTITY options.selectAdditionalTools.label  "Tontoney na cinakaw goyjinawey sinjandi">
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+
+<!ENTITY options.selectEnabledToolboxButtons.label     "Goyjinay bata butoŋ kaŋ ga bara">
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+
+<!ENTITY options.toolNotSupported.label  "* Ši kanbe nda sohõ goyjinay bata toodogoo">
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+
+<!ENTITY options.selectDevToolsTheme.label2   "Furarey">
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+
+<!ENTITY options.usedeveditiontheme.label   "Goy nda cinakaw fasalyan ceecikaw leeti">
+<!ENTITY options.usedeveditiontheme.tooltip "Ga cinakaw fasalyan ceecikaw leetoo kanji.">
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+
+<!ENTITY options.webconsole.label            "Interneti diji-walha">
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+
+<!ENTITY options.timestampMessages.label      "Waati tammaasey tunandi">
+<!ENTITY options.timestampMessages.tooltip    "Nda war ns suubari juwaley nda fattari tunandi interneti diji-walhaa ra waati tammaasa ga cebe">
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+
+<!ENTITY options.debugger.label            "Hasaraw kaakaw">
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+
+<!ENTITY options.sourceMaps.label      "Aššil dawtiirawey tunandi">
+<!ENTITY options.sourceMaps.tooltip    "Nda war n'aššil suubarey tunandi, alhaaloo ga fatta hasaraw kaakaa nda diji-walhaa ra.">
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+
+<!ENTITY options.styleeditor.label            "Kaymi fasalkaw">
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+
+<!ENTITY options.stylesheetSourceMaps.label      "Lasal aššil-dogey cebe">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Lasal aššiley cebe (sanda Sass tukey) takari fasalkaa nda hawgaykaa ra ">
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+
+<!ENTITY options.stylesheetAutocompletion.label      "CSS boŋtimmandi">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "CSS boŋtimmandi mayrawey, hinnawey nda suubakey takari fasalkaa ra waati kaŋ war ga hantum">
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+
+<!ENTITY options.commonPrefs.label           "Hankul ibaayey">
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+
+<!ENTITY options.enablePersistentLogs.label    "Zaaritiira willantey tunandi">
+<!ENTITY options.enablePersistentLogs.tooltip  "Nda war na suubaroo woo tunandi interneti diji-walhaa ši haya fattantey tuusu waati kul kaŋ war na moo taaga guna">
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+
+<!ENTITY options.showPlatformData.label    "Gecko goydaari bayhayey cebe">
+<!ENTITY options.showPlatformData.tooltip  "Nda war na suubaroo woo tunandi JavaScript alhaalikoy bayrandiyaney goo nda Gecko goydaari jinay tammaasayaŋ">
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+
+<!ENTITY options.sourceeditor.label                     "Fasalkaw ibaayey">
+<!ENTITY options.sourceeditor.detectindentation.label   "Hirri-noryan maate">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Hirri-noryan hiise aššil gundekuna bande">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Boŋdaabu holgey">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Holgu daabuyan dam nga boŋ se">
+<!ENTITY options.sourceeditor.expandtab.label           "Hirri nor nda farrey">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Goy nda farrey, manti nor loku harfu ">
+<!ENTITY options.sourceeditor.tabsize.label             "Kanji azzaati">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "K">
+<!ENTITY options.sourceeditor.keybinding.label          "Kufalhawarey">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Tilasu">
+
+<!ENTITY options.screenshot.audio.label      "Play camera shutter sound">
+<!ENTITY options.screenshot.audio.tooltip    "Enables the camera audio sound when taking screenshot">
+
+<!ENTITY options.screenshot.clipboard.label      "Screenshot to clipboard">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saves to the screenshot directly to the clipboard">
+
+<!ENTITY options.screenshot.label            "Screenshot Behavior">
+

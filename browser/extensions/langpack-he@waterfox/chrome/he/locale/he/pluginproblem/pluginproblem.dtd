@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "אתר זה משתמש בתוסף חיצוני אשר עלול להאט את &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "נא ללחוץ כאן להפעלת התוסף החיצוני.">
+<!ENTITY clickToActivatePlugin                               "הפעלת תוסף חיצוני.">
+<!ENTITY checkForUpdates                                     "בדיקת עדכונים…">
+<!ENTITY blockedPlugin.label                                 "תוסף חיצוני זה נחסם כדי להגן עליך.">
+<!ENTITY hidePluginBtn.label                                 "הסתרת תוסף חיצוני">
+<!ENTITY managePlugins                                       "ניהול תוספים חיצוניים…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "טעינה מחדש של דף זה">
+<!ENTITY reloadPlugin.post                                   " כדי לנסות שוב.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "שליחת דיווח קריסה">
+<!ENTITY report.submitting                                   "דיווח קריסה בשליחה…">
+<!ENTITY report.submitted                                    "דיווח קריסה נשלח.">
+<!ENTITY report.disabled                                     "דיווחי קריסה מנוטרלים.">
+<!ENTITY report.failed                                       "שליחה כשלה.">
+<!ENTITY report.unavailable                                  "אין דיווח זמין.">
+<!ENTITY report.comment                                      "הוספת הערה (הערות חשופות לקהל)">
+<!ENTITY report.pageURL                                      "לכלול את כתובת הדף">
+
+<!ENTITY plugin.file                                         "קובץ">
+<!ENTITY plugin.mimeTypes                                    "סוגי MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "הפעלת Adobe Flash במצב מוגן">
+<!ENTITY plugin.enableBlocklists.label                       "חסימת תוכן Flash מסוכן ומטעה">

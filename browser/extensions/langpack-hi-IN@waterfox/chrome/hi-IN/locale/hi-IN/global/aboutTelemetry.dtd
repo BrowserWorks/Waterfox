@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle " दूरमापी आंकड़ा">
+
+<!ENTITY aboutTelemetry.pingDataSource "डेटा स्रोत को पिंग करे:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "वर्तमान पिंग डेटा">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "पिंग डेटा का अभिलेख किया गया">
+
+<!ENTITY aboutTelemetry.raw "कच्चा JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "उपसत्र डेटा दिखाएँ">
+
+<!ENTITY aboutTelemetry.choosePing "पिंग चुनें:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; नवीन पिंग">
+
+<!ENTITY aboutTelemetry.showOlderPing " पुराना पिंग &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "सप्ताह">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "पिंग">
+
+<!ENTITY aboutTelemetry.optionGroupToday "आज">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "कल">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "पुराना">
+
+<!ENTITY aboutTelemetry.generalDataSection "        सामान्य आंकड़ा">
+
+<!ENTITY aboutTelemetry.environmentDataSection "वातावरण डेटा">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "टेलीमेटरी लॉग">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  धीरे sql निवेदन">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "ब्राउज़र  लटकाव">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "लड़ी लटका">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  अदिश">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  की स्केलर">
+
+<!ENTITY aboutTelemetry.histogramsSection "आयत छवि">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "    keyed histograms">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "साधारण  माप ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  सहयुक्ति विवरण">
+
+<!ENTITY aboutTelemetry.lateWritesSection " कुछ देर से लिखें">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "तंत्र जानकारी">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "टिप्पणी: धीरे sql दोषसुधार सक्षम है. पूर्ण रूप से sql  वाक्यांश नीचे दिखाई  दे सकता है लेकिन वे दूरमापी को जमा किये जा सकते है ">
+
+
+
+<!ENTITY aboutTelemetry.filterText "फ़िल्टर (स्ट्रिंग या /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "भार">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+

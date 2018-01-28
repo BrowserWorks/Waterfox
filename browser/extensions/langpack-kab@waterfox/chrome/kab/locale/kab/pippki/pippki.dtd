@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Sbadu awal uffir agejdan">
+<!ENTITY setPassword.tokenName.label "Ibenk n tɣellist">
+<!ENTITY setPassword.oldPassword.label "Awal uffir aqbuṛ:">
+<!ENTITY setPassword.newPassword.label "Awal uffir amaynut">
+<!ENTITY setPassword.reenterPassword.label "Sentem Awal uffir">
+<!ENTITY setPassword.meter.label "Asɣel n tɣaṛa n wawal uffir">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Sfeḍ">
+<!ENTITY resetPassword.title  "Ales awennez n wawal uffir agejdan">
+<!ENTITY resetPassword.text  "Me tsefḍeḍ awal-ik uffir agejdan, akk awallen uffiren n web neɣ n imaylen, ifekfa n tferkitin, iselkinen udmawanen, tisura tusligin ad ttwattun. Tebɣiḍ ad tekseḍ awal uffir agejdan? ">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Asider n uselkin">
+<!ENTITY downloadCert.message1 "Sutren-ak-d asentem n udabu n uselken amaynut (CA).">
+<!ENTITY downloadCert.trustSSL "Sentem abadu-yagi n uselken akken ad suluḍ ismal web.">
+<!ENTITY downloadCert.trustEmail "Sentem adabu-yagi n uselken i wesulu n iseqdacen n yimayl. ">
+<!ENTITY downloadCert.trustObjSign "Sentem adabu-yagi n uselken i wesulu n ineflayen n iseɣẓanen.">
+<!ENTITY downloadCert.message3 "Send ad tesentmeḍ adabu-yagi n uselken CA, issefk ad ittusekyed, ad ttusekeydent tarrayin ines d tisekkirin ines (ma yella wamek).">
+<!ENTITY downloadCert.viewCert.label "Timeẓri">
+<!ENTITY downloadCert.viewCert.text "Sekyed aselkin n udabu n selken">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Asuter n usulu n useqdac">
+<!ENTITY clientAuthAsk.message1 "Asmel-agi ad yessutur asulu s uselkin n tɣellist:">
+<!ENTITY clientAuthAsk.message2 "Fren aselkin i usulay">
+<!ENTITY clientAuthAsk.message3 "Talqayt n uselkin yettwafernen:">
+
+<!ENTITY pkcs12.setpassword.title  "Fen awal uffir n uḥraz n uselkin">
+<!ENTITY pkcs12.setpassword.message  "Awal uffir n usekles n uselkin i tesbaduḍ yakan, iḥrez ayaylu n usekles i terniḍ. Issefk ad muddeḍ awal uffir i wesenker n usekles-agi.">
+<!ENTITY pkcs12.setpassword.label1 "Awal uffir n usekles n uselkin:">
+<!ENTITY pkcs12.setpassword.label2 "Awal uffir n usekles n uselkin (tikelt nniḍen): ">
+<!ENTITY pkcs12.setpassword.reminder "Ɣuṛ-k: Ma yella tettuḍ awal uffir n uḥraz n uselkin-inek, ur tettizmireḍ ara ad d-erreḍ aḥraz-agi sya ɣer zdat.  Ma ulac aɣilif sekles-it deg adig aɣelsan.">
+
+<!ENTITY chooseToken.title  "Afran n ujiṭun">
+<!ENTITY chooseToken.message1 "Ma ulac aɣilif, fren ajiṭun.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Asirew n tsaruţ tusligt">
+<!ENTITY createCertInfo.msg1 "Asirew n tsaruţ iteddu… Izmer ad yeṭṭef kra n tesdatin….">
+<!ENTITY createCertInfo.msg2 "Ṛǧǧu ma ulac aɣilif…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Asesteb iţummesten  s ujiṭnu">
+<!ENTITY protectedAuth.msg "Ma ulac aɣilif, sesteb s ujitun. Tarrayt n usesteb tcudd ɣeṛ tewsit n ujiṭun-inek.">
+<!ENTITY protectedAuth.tokenName.label "Ajiṭun:">

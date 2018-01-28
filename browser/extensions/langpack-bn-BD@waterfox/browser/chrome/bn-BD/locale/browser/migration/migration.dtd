@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ইমপোর্ট উইজার্ড">
+
+<!ENTITY importFrom.label               "উল্লেখিত স্থান থেকে অপশনসমূহ, বুকমার্ক, ইতিহাস, পাসওয়ার্ড ও অন্যান্য তথ্য ইমপোর্ট করা হবে:">
+<!ENTITY importFromUnix.label           "উল্লেখিত স্থান থেকে পছন্দসমূহ, বুকমার্ক, ইতিহাস, পাসওয়ার্ড ও অন্যান্য তথ্য ইমপোর্ট করা হবে:">
+<!ENTITY importFromBookmarks.label      "উল্লেখিত স্থান থেকে বুকমার্ক ইমপোর্ট করা হবে:">
+
+<!ENTITY importFromIE.label             "মাইক্রোসফট ইন্টারনেট এক্সপ্লোরার">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "মাইক্রোসফট Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "কিছুই ইমপোর্ট করা হবে না">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "সাফারি">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "ক্রোম ক্যানারি">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "ক্রোম C">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "ক্রোমিয়াম">
+<!ENTITY importFromChromium.accesskey   "য়">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 নিরাপদ ব্রাউজার">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "বুকমার্ক, ইতিহাস অথবা পাসওয়ার্ড ধারণকারী কোনো প্রোগ্রাম পাওয়া যায়নি।">
+
+<!ENTITY importSource.title             "উল্লেখিত স্থান থেকে সেটিংসমূহ ও তথ্য ইমপোর্ট করা হবে">
+<!ENTITY importItems.title              "ইমপোর্ট করা হবে">
+<!ENTITY importItems.label              "ইমপোর্ট করার জন্য আইটেম নির্বাচন:">
+
+<!ENTITY migrating.title                "ইমপোর্ট করা হচ্ছে...">
+<!ENTITY migrating.label                "বর্তমানে নিম্নলিখিত আইটেম ইমপোর্ট করা হচ্ছে...">
+
+<!ENTITY selectProfile.title            "প্রোফাইল নির্বাচন">
+<!ENTITY selectProfile.label            "নিম্নলিখিত প্রোফাইলগুলি থেকে বর্তমানে ইমপোর্ট করা সম্ভব:">
+
+<!ENTITY done.title                     "ইমপোর্ট সমাপ্ত">
+<!ENTITY done.label                     "নিম্নলিখিত আইটেমের ইমপোর্ট সফল হয়েছে:">
+
+<!ENTITY closeSourceBrowser.label       "কন্টিনিউ করার পূর্বে এটি নিশ্চিত করুন যে আপনার ব্রাউসারটি বন্ধ।">

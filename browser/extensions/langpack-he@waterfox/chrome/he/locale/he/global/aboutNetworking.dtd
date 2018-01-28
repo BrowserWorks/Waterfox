@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "מידע על רכיב התקשורת">
+<!ENTITY aboutNetworking.warning               "רכיב זה הוא בשלבי ניסוי. אין להשתמש ללא השגחת מבוגר.">
+<!ENTITY aboutNetworking.showNextTime          "להציג בפני את ההודעה הזאת בפעם הבאה">
+<!ENTITY aboutNetworking.ok                    "אישור">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "רענון">
+<!ENTITY aboutNetworking.autoRefresh           "רענון אוטומטי בכל 3 שניות">
+<!ENTITY aboutNetworking.hostname              "שם מארח">
+<!ENTITY aboutNetworking.port                  "פתחה">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "פעיל">
+<!ENTITY aboutNetworking.idle                  "בהמתנה">
+<!ENTITY aboutNetworking.host                  "מארח">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "נשלחו">
+<!ENTITY aboutNetworking.received              "התקבלו">
+<!ENTITY aboutNetworking.family                "משפחה">
+<!ENTITY aboutNetworking.addresses             "כתובות">
+<!ENTITY aboutNetworking.expires               "תפוגה (בשניות)">
+<!ENTITY aboutNetworking.messagesSent          "הודעות שנשלחו">
+<!ENTITY aboutNetworking.messagesReceived      "הודעות שהתקבלו">
+<!ENTITY aboutNetworking.bytesSent             "בתים שנשלחו">
+<!ENTITY aboutNetworking.bytesReceived         "בתים שהתקבלו">
+<!ENTITY aboutNetworking.logging               "רישום">
+<!ENTITY aboutNetworking.logTutorial           "לקבלת הוראות לגבי השימוש בכלי זה, נא לפנות אל המאמר <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>רישום HTTP</a>.">
+<!ENTITY aboutNetworking.currentLogFile        "קובץ רישום נוכחי:">
+<!ENTITY aboutNetworking.currentLogModules     "מודולי רישום נוכחיים:">
+<!ENTITY aboutNetworking.setLogFile            "קביעת קובץ רישום">
+<!ENTITY aboutNetworking.setLogModules         "קביעת מודולי רישום">
+<!ENTITY aboutNetworking.startLogging          "התחלת רישום">
+<!ENTITY aboutNetworking.stopLogging           "הפסקת רישום">
+<!ENTITY aboutNetworking.dnsLookup             "חיפוש ב־DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "זיהוי">
+<!ENTITY aboutNetworking.dnsDomain             "שם מתחם">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "כתובות">
+<!ENTITY aboutNetworking.rcwn                  "סטטיסטיקת RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "מצב RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "ספירת ניצחונות מטמון">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "ספירת ניצחונות רשת">
+<!ENTITY aboutNetworking.totalNetworkRequests  "ספירת סה״כ בקשות רשת">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "פתיחה">
+<!ENTITY aboutNetworking.rcwnPerfRead          "קריאה">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "כתיבה">
+<!ENTITY aboutNetworking.rcwnAvgShort          "ממוצע קצר">
+<!ENTITY aboutNetworking.rcwnAvgLong           "ממוצע ארוך">
+<!ENTITY aboutNetworking.rcwnStddevLong        "סטיית תקן ארוכה">
+
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">

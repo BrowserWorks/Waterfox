@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(პირადი ფანჯარა)">
+
+<!ENTITY appmenu.tooltip                     "მენიუს გახსნა">
+<!ENTITY navbarOverflow.label                "დამატებითი ხელსაწყოები...">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "ჩანართის განახლება">
+<!ENTITY  reloadTab.accesskey                "გ">
+<!ENTITY  reloadAllTabs.label                "ყველა ჩანართის განახლება">
+<!ENTITY  reloadAllTabs.accesskey            "ყ">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "მარჯვენა ჩანართების დახურვა">
+<!ENTITY  closeTabsToTheEnd.accesskey        "ჯ">
+<!ENTITY  closeOtherTabs.label               "სხვა ჩანართების დახურვა">
+<!ENTITY  closeOtherTabs.accesskey           "ს">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ჩანართის მიმაგრება">
+<!ENTITY  pinTab.accesskey                   "რ">
+<!ENTITY  unpinTab.label                     "ჩანართის მოხსნა">
+<!ENTITY  unpinTab.accesskey                 "ხ">
+<!ENTITY  sendTabToDevice.label              "ჩანართის გაგზავნა მოწყობილობაზე">
+<!ENTITY  sendTabToDevice.accesskey          "ჩ">
+<!ENTITY  sendPageToDevice.label             "გვერდის გაგზავნა მოწყობილობაზე">
+<!ENTITY  sendPageToDevice.accesskey         "გ">
+<!ENTITY  sendLinkToDevice.label             "ბმულის გაგზავნა მოწყობილობაზე">
+<!ENTITY  sendLinkToDevice.accesskey         "ბ">
+<!ENTITY  moveToNewWindow.label              "ახალ ფანჯარაში გადატანა">
+<!ENTITY  moveToNewWindow.accesskey          "ფ">
+<!ENTITY  bookmarkAllTabs.label              "ყველა ჩანართის ჩანიშვნა…">
+<!ENTITY  bookmarkAllTabs.accesskey          "ყ">
+<!ENTITY  undoCloseTab.label                 "დახურული ჩანართის დაბრუნება">
+<!ENTITY  undoCloseTab.accesskey             "დ">
+<!ENTITY  closeTab.label                     "ჩანართის დახურვა">
+<!ENTITY  closeTab.accesskey                 "უ">
+
+<!ENTITY  listAllTabs.label      "ყველა ჩანართის სია">
+
+<!ENTITY tabCmd.label "ახალი ჩანართი">
+<!ENTITY tabCmd.accesskey "რ">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "მდებარეობის გახსნა...">
+<!ENTITY openFileCmd.label "ფაილის გახსნა...">
+<!ENTITY openFileCmd.accesskey "გ">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "გვერდის პარამეტრები...">
+<!ENTITY printSetupCmd.accesskey "ტ">
+<!ENTITY printPreviewCmd.label "ნახვა ამობეჭდვამდე">
+<!ENTITY printPreviewCmd.accesskey "ს">
+<!ENTITY printCmd.label "ამობეჭდვა…">
+<!ENTITY printCmd.accesskey "ა">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "კავშირგარეშე რეჟიმი">
+<!ENTITY goOfflineCmd.accesskey "გ">
+
+<!ENTITY menubarCmd.label "მენიუს ზოლი">
+<!ENTITY menubarCmd.accesskey "მ">
+<!ENTITY navbarCmd.label "ნავიგაციის ხელსაწყოთა ზოლი">
+<!ENTITY personalbarCmd.label "სანიშნეების ხელსაწყოთა ზოლი">
+<!ENTITY personalbarCmd.accesskey "ს">
+<!ENTITY bookmarksToolbarItem.label "სანიშნეების ზოლის ხელსაწყოები">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "ყველა ჩანართის განახლება">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "ყ">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "ყველა ჩანართის ჩანიშვნა…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "ა">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "დახურული ჩანართის დაბრუნება">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "დ">
+
+<!ENTITY pageSourceCmd.label "გვერდის წყარო">
+<!ENTITY pageSourceCmd.accesskey "წ">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "გვერდის მონაცემები">
+<!ENTITY pageInfoCmd.accesskey "ი">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "ჩანართის გადაცემა">
+<!ENTITY mirrorTabCmd.accesskey "ს">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "სრულ ეკრანზე გაშლა">
+<!ENTITY enterFullScreenCmd.accesskey "ს">
+<!ENTITY exitFullScreenCmd.label "სრულეკრანიანი რეჟიმიდან გასვლა">
+<!ENTITY exitFullScreenCmd.accesskey "ს">
+<!ENTITY fullScreenCmd.label "სრული ეკრანი">
+<!ENTITY fullScreenCmd.accesskey "ს">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "ყველა ჩანართის ჩვენება">
+<!ENTITY showAllTabsCmd.accesskey "ყ">
+<!ENTITY toggleReaderMode.key "წ">
+
+<!ENTITY fxaSignIn.label "&syncBrand.shortName.label; - შესვლა">
+<!ENTITY fxaSignedIn.tooltip "&syncBrand.shortName.label;-ის პარამეტრების გახსნა">
+<!ENTITY fxaSignInError.label "&syncBrand.shortName.label; - ხელახლა დაკავშირება">
+<!ENTITY fxaUnverified.label "თქვენი ანგარიშის დადასტურება">
+
+
+<!ENTITY fullScreenMinimize.tooltip "ჩაკეცვა">
+<!ENTITY fullScreenRestore.tooltip "აღდგენა">
+<!ENTITY fullScreenClose.tooltip "დახურვა">
+<!ENTITY fullScreenAutohide.label "ხელსაწყოთა ზოლების დამალვა">
+<!ENTITY fullScreenAutohide.accesskey "დ">
+<!ENTITY fullScreenExit.label "სრულეკრანიანი რეჟიმიდან გამოსვლა">
+<!ENTITY fullScreenExit.accesskey "ს">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "სრულ ეკრანზეა">
+<!ENTITY fullscreenWarning.generic.label "დოკუმენტი სრულ ეკრანზეა">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "სრული ეკრანიდან გამოსვლა (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "სრული ეკრანიდან გამოსვლა (esc)">
+<!ENTITY leaveDOMFullScreen.label "სრულეკრანიანი რეჟიმიდან გამოსვლა">
+<!ENTITY leaveDOMFullScreen.accesskey "გ">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "თქვენს მიმთითებელს აკონტროლებს. კონტროლის დასაბრუნებლად დააჭირეთ Esc ღილაკს.">
+<!ENTITY pointerlockWarning.generic.label "ეს დოკუმენტი მიმთითებლს აკონტროლებს. კონტროლის დასაბრუნებლად დააჭირეთ Esc ღილაკს.">
+
+<!ENTITY closeWindow.label "ფანჯრის დახურვა">
+<!ENTITY closeWindow.accesskey "ხ">
+
+<!ENTITY bookmarksMenu.label "სანიშნეები">
+<!ENTITY bookmarksMenu.accesskey "ს">
+<!ENTITY bookmarkThisPageCmd.label "გვერდის ჩანიშვნა">
+<!ENTITY editThisBookmarkCmd.label "სანიშნის ჩასწორება">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "სხვა გაზიარების მომსახურებების მოძიება…">
+<!ENTITY sharePageCmd.label "გვერდის გაზიარება">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "გ">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "ბმულის გაზიარება">
+<!ENTITY shareLink.accesskey "ბ">
+<!ENTITY shareImage.label "სურათის გაზიარება">
+<!ENTITY shareImage.accesskey "ს">
+<!ENTITY shareSelect.label "არჩეულის გაზიარება">
+<!ENTITY shareSelect.accesskey "ა">
+<!ENTITY shareVideo.label "ვიდეოს გაზიარება">
+<!ENTITY shareVideo.accesskey "ვ">
+<!ENTITY feedsMenu2.label "გვერდის გამოწერა">
+<!ENTITY subscribeToPageMenupopup.label "გვერდის გამოწერა">
+<!ENTITY subscribeToPageMenuitem.label "გვერდის გამოწერა...">
+<!ENTITY addCurPagesCmd.label "ყველა ჩანართის ჩანიშვნა...">
+<!ENTITY showAllBookmarks2.label "ყველა სანიშნის ჩვენება">
+<!ENTITY recentBookmarks.label "ბოლოს ჩანიშნულები">
+<!ENTITY otherBookmarksCmd.label "სხვა სანიშნეები">
+<!ENTITY mobileBookmarksCmd.label "მობილურის სანიშნეები">
+<!ENTITY bookmarksToolbarChevron.tooltip "მეტი სანიშნის ჩვენება">
+<!ENTITY showRecentlyBookmarked.label     "ბოლოს ჩანიშნულების ჩვენება">
+<!ENTITY showRecentlyBookmarked.accesskey "ჩ">
+<!ENTITY hideRecentlyBookmarked.label     "ბოლოს ჩანიშნულების დამალვა">
+<!ENTITY hideRecentlyBookmarked.accesskey "დ">
+
+<!ENTITY backCmd.label                "უკან">
+<!ENTITY backButton.tooltip           "ერთი გვერდით უკან">
+<!ENTITY forwardCmd.label             "წინ">
+<!ENTITY forwardButton.tooltip        "ერთი გვერდით წინ">
+<!ENTITY backForwardButtonMenu.tooltip "ისტორიის საჩვენებლად გამოიყენეთ მარჯვენა წკაპი ან ჩამოქაჩეთ">
+<!ENTITY backForwardButtonMenuMac.tooltip "ისტორიის საჩვენებლად ჩამოქაჩეთ">
+<!ENTITY reloadCmd.label              "განახლება">
+<!ENTITY stopCmd.label                "გაჩერება">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "მისამართზე გადასვლა">
+<!ENTITY printButton.label            "ამობეჭდვა">
+<!ENTITY printButton.tooltip          "გვერდის ამობეჭდვა">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "საიტის ინფორმაციის ჩვენება">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "შეტყობინებების პანელის გახსნა">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "მდებარეობის მოთხოვნის პანელის გახსნა">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "დამატების ჩადგმისას შეტყობინების არის გახსნა">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "კავშირგარეშე საცავის შეტყობინების პანელის გახსნა">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "პაროლის შენახვის შეტყობინების პანელის გახსნა">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "გამოყენებული მოდულების მართვა">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "აირჩიეთ მიიღოთ თუ არა შეტყობინებები ამ საიტისგან">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "მონაცემების შენახვა მუდმივ მეხსიერებაზე">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "ბრაუზერი იმყოფება დისტანციური მართვის ქვეშ">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "საიტისთვის თქვენი კამერის და/ან მიკროფონის გაზიარების მართვა">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "საიტისთვის თქვენი მიკროფონის გაზიარების მართვა">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "საიტისთვის თქვენი ფანჯრების ან ეკრანის გაზიარების მართვა">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "ჩადგმისას შეტყობინების არის გახსნა">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "გვერდის თარგმნა">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "გვერდის თარგმნის მართვა">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "DRM პროგრამის გამოყენების მართვა">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "ამ საიტისთვის თქვენი კამერის გამოყენების უფლება შეზღუდული გაქვთ.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "ამ საიტისთვის თქვენი მიკროფონის გამოყენების უფლება შეზღუდული გაქვთ.">
+<!ENTITY urlbar.screenBlocked.tooltip            "ამ საიტისთვის თქვენი ეკრანის გაზიარების უფლება შეზღუდული გაქვთ.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "ამ საიტისთვის თქვენს მდებარეობაზე წვდომა შეზღუდული გაქვთ.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "ამ საიტისთვის მონაცემების საცავის გამოყენების უფლება შეზღუდული გაქვთ.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "ამ საიტისთვის შეტყობინებების ჩვენების უფლება შეზღუდული გაქვთ.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "ამ საიტისთვის, მუდმივ მეხსიერებასთან წვდომა შეზღუდული გაქვთ.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "ისტორიის ჩვენება">
+
+<!ENTITY searchItem.title             "ძიება">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "სახლი">
+
+<!ENTITY bookmarksButton.label          "სანიშნეები">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "სანიშნეები">
+<!ENTITY bookmarksMenuButton.other.label "სხვა სანიშნეები">
+<!ENTITY bookmarksMenuButton.mobile.label "მობილურის სანიშნეები">
+<!ENTITY viewBookmarksSidebar2.label        "სანიშნეთა გვერდითი ზოლის ჩვენება">
+<!ENTITY viewBookmarksToolbar.label         "სანიშნეთა ხელსაწყოთა ზოლის ჩვენება">
+<!ENTITY searchBookmarks.label              "სანიშნეების ძიება">
+
+<!ENTITY containersMenu.label "სათავსები">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "ისტორია">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "ხელსაწყოები">
+<!ENTITY toolsMenu.accesskey          "ხ"> 
+
+<!ENTITY keywordfield.label           "ძიებისთვის მალსახმობის შექმნა…">
+<!ENTITY keywordfield.accesskey       "მ">
+
+<!ENTITY downloads.label              "ჩამოტვირთვები">
+<!ENTITY downloads.accesskey          "ჩ">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "დამატებები">
+<!ENTITY addons.accesskey             "მ">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "ვებდეველოპერი">
+<!ENTITY webDeveloperMenu.accesskey   "ვ">
+
+<!ENTITY inspectContextMenu.label     "ელემენტზე დაკვირვება">
+<!ENTITY inspectContextMenu.accesskey "ტ">
+
+<!ENTITY fileMenu.label         "ფაილი"> 
+<!ENTITY fileMenu.accesskey       "ფ">
+<!ENTITY newUserContext.label             "ახალი სათავსი ჩანართი">
+<!ENTITY newUserContext.accesskey         "ს">
+<!ENTITY newNavigatorCmd.label        "ახალი ფანჯარა">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "ა">
+<!ENTITY newPrivateWindow.label     "ახალი პირადი ფანჯარა">
+<!ENTITY newPrivateWindow.accesskey "ფ">
+<!ENTITY newNonRemoteWindow.label   "ერთპროცესიანი ფანჯარა">
+
+<!ENTITY editMenu.label         "ჩასწორება"> 
+<!ENTITY editMenu.accesskey       "რ"> 
+<!ENTITY undoCmd.label            "დაბრუნება">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "დ"> 
+<!ENTITY redoCmd.label            "კვლავ შესრულება">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "კ"> 
+<!ENTITY cutCmd.label           "ამოჭრა">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "ა"> 
+<!ENTITY copyCmd.label            "დაკოპირება">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "კ"> 
+<!ENTITY pasteCmd.label           "ჩასმა">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "ჩ"> 
+<!ENTITY deleteCmd.label          "წაშლა">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "წ"> 
+<!ENTITY selectAllCmd.label         "ყველაფრის მონიშვნა">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "მ"> 
+<!ENTITY preferencesCmd2.label       "პარამეტრები">
+<!ENTITY preferencesCmd2.accesskey     "პ">
+<!ENTITY preferencesCmdUnix.label       "პარამეტრები">
+<!ENTITY preferencesCmdUnix.accesskey     "ტ"> 
+
+<!ENTITY clearRecentHistory.label               "უახლესი ისტორიის გასუფთავება...">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "ხედი"> 
+<!ENTITY viewMenu.accesskey       "ხ"> 
+<!ENTITY viewToolbarsMenu.label       "ხელსაწყოთა ზოლები"> 
+<!ENTITY viewToolbarsMenu.accesskey     "ხ"> 
+<!ENTITY viewSidebarMenu.label "გვერდითი ზოლი">
+<!ENTITY viewSidebarMenu.accesskey "ზ">
+<!ENTITY viewCustomizeToolbar.label       "მორგება…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "მ">
+<!ENTITY overflowCustomizeToolbar.label       "ხელსაწყოთა ზოლის მორგება…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ზ">
+
+<!ENTITY historyMenu.label "ისტორია">
+<!ENTITY historyMenu.accesskey "ი">
+<!ENTITY historyUndoMenu.label "ბოლოს დახურული ჩანართები">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "ბოლოს დახურული ფანჯრები">
+<!ENTITY historyRestoreLastSession.label "წინა სეანსის აღდგენა">
+
+<!ENTITY showAllHistoryCmd2.label "სრული ისტორიის ჩვენება">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "მორგება">
+<!ENTITY appMenuCustomize.tooltip "მენიუს და ხელსაწყოთა ზოლების მორგება">
+<!ENTITY appMenuCustomizeExit.label "მორგებიდან გამოსვლა">
+<!ENTITY appMenuCustomizeExit.tooltip "მორგების დასრულება">
+<!ENTITY appMenuHistory.label "ისტორია">
+<!ENTITY appMenuHistory.showAll.label "სრული ისტორიის ჩვენება">
+<!ENTITY appMenuHistory.clearRecent.label "უახლესი ისტორიის გასუფთავება…">
+<!ENTITY appMenuHistory.restoreSession.label "წინა სეანსის აღდგენა">
+<!ENTITY appMenuHistory.viewSidebar.label "ისტორიის გვერდითი ზოლის ჩვენება">
+<!ENTITY appMenuHistory.recentHistory.label "უახლესი ისტორია">
+<!ENTITY appMenuHelp.label "დახმარება">
+<!ENTITY appMenuHelp.tooltip "დახმარების მენიუს გახსნა">
+
+<!ENTITY appMenuRemoteTabs.label "დასინქრონებული ჩანართები">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "გახსნილი ჩანართები არაა">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "მეტის ჩვენება">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "მეტი ჩანართის ჩვენება ამ მოწყობილობიდან">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "ყველას ჩვენება">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "ყველა ჩანართის ჩვენება ამ მოწყობილობიდან">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "ჩართეთ ჩანართების სინქრონიზაცია თქვენი სხვა მოწყობილობებიდან ჩანართების სიის სანახავად.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "დასინქრონებული ჩანართები არაა… ჯერ!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "გსურთ სხვა მოწყობილობების ჩანართების აქ ნახვა?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "სინქრონიზაციის პარამეტრები">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "შედით თქვენი სხვა მოწყობილობებიდან ჩანართების სიის სანახავად.">
+<!ENTITY appMenuRemoteTabs.signin.label "Sync-ში შესვლა">
+<!ENTITY appMenuRemoteTabs.managedevices.label "მოწყობილობების მართვა…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "დასინქრონებული ჩანართების გვერდითი ზოლის ნახვა">
+
+<!ENTITY customizeMenu.addToToolbar.label "ხელსაწყოთა ზოლში დამატება">
+<!ENTITY customizeMenu.addToToolbar.accesskey "დ">
+<!ENTITY customizeMenu.addToPanel.label "მენიუში დამატება">
+<!ENTITY customizeMenu.addToPanel.accesskey "დ">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "მენიუს დაფარულ არეში დამატება">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "დ">
+<!ENTITY customizeMenu.moveToToolbar.label "ხელსაწყოთა ზოლში გადატანა">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "გ">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "მენიუში გადატანა">
+<!ENTITY customizeMenu.moveToPanel.accesskey "გ">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "მენიუს დაფარულ არეში მიმაგრება">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "მ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "მენიუს დაფარული არიდან ამოღება">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "ა">
+<!ENTITY customizeMenu.removeFromToolbar.label "ხელსაწყოთა ზოლიდან ამოღება">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "ა">
+<!ENTITY customizeMenu.removeFromMenu.label "მენიუდან ამოღება">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "ა">
+<!ENTITY customizeMenu.addMoreItems.label "მეტი ელემენტის დამატება…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "დ">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "მეტი">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "მოძებნეთ ან შეიყვანეთ მისამართი">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "გაფართოება:">
+<!ENTITY urlbar.switchToTab.label     "გადასვლა დაფაზე:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "გსურთ ძიების პროცესის შემოთავაზებებით გაუმჯობესება?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "გაიგეთ მეტი…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "გ">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "არა">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "ა">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "დიახ">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "დ">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "რჩევა:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "გაიადვილეთ ძებნა! მონახეთ &#x1F50E; შემოთავაზებული შედეგების გვერდით.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "პარამეტრების შეცვლა…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "პ">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "პარამეტრების შეცვლა…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "პ">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "ძებნის მოთხოვნა">
+<!ENTITY contentSearchSubmit.tooltip  "მოძებნა">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "ძიება">
+<!ENTITY searchIcon.tooltip           "ძიება">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "მოძებნეთ ">
+<!ENTITY searchWith.label             " სხვა საძიებოთი:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "ძიება ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "მოძებნეთ:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "ძიების პარამეტრების შეცვლა">
+<!ENTITY changeSearchSettings.tooltip "ძიების პარამეტრების შეცვლა">
+
+<!ENTITY searchInNewTab.label         "ძიება ახალ ჩანართში">
+<!ENTITY searchInNewTab.accesskey     "ნ">
+<!ENTITY searchSetAsDefault.label     "ნაგულისხმევ საძიებო სისტემად დაყენება">
+<!ENTITY searchSetAsDefault.accesskey "გ">
+
+<!ENTITY openLinkCmdInTab.label       "ბმულის გახსნა ახალ ჩანართში">
+<!ENTITY openLinkCmdInTab.accesskey   "ჩ">
+<!ENTITY openLinkCmd.label            "ბმულის გახსნა ახალ ფანჯარაში">
+<!ENTITY openLinkCmd.accesskey        "ფ">
+<!ENTITY openLinkInPrivateWindowCmd.label "ბმულის ახალ პირად ფანჯარაში გახსნა">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "პ">
+<!ENTITY openLinkCmdInCurrent.label     "ბმულის გახსნა">
+<!ENTITY openLinkCmdInCurrent.accesskey "გ">
+<!ENTITY openFrameCmdInTab.label      "ჩარჩოს ახალ ჩანართში გახსნა">
+<!ENTITY openFrameCmdInTab.accesskey  "ნ">
+<!ENTITY openFrameCmd.label           "ჩარჩოს ახალ ფანჯარაში გახსნა">
+<!ENTITY openFrameCmd.accesskey       "ფ">
+<!ENTITY openLinkCmdInContainerTab.label "ბმულის გახსნა ახალ სათავს ჩანართში">
+<!ENTITY openLinkCmdInContainerTab.accesskey "ს">
+<!ENTITY showOnlyThisFrameCmd.label     "მხოლოდ ამ ჩარჩოს ჩვენება">
+<!ENTITY showOnlyThisFrameCmd.accesskey "მ">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "ჩარჩოს განახლება">
+<!ENTITY reloadFrameCmd.accesskey     "ხ">
+<!ENTITY viewPartialSourceForSelectionCmd.label "მონიშნულის წყაროს ჩვენება">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML წყაროს ჩვენება">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "წ">
+<!ENTITY viewPageSourceCmd.label      "გვერდის წყაროს ჩვენება">
+<!ENTITY viewPageSourceCmd.accesskey  "წ">
+<!ENTITY viewFrameSourceCmd.label     "ჩარჩოს წყაროს ჩვენება">
+<!ENTITY viewFrameSourceCmd.accesskey "წ">
+<!ENTITY viewPageInfoCmd.label        "გვერდის მონაცემების ჩვენება">
+<!ENTITY viewPageInfoCmd.accesskey    "მ">
+<!ENTITY viewFrameInfoCmd.label       "ჩარჩოს მონაცემების ჩვენება">
+<!ENTITY viewFrameInfoCmd.accesskey   "მ">
+<!ENTITY reloadImageCmd.label         "გამოსახულების განახლება">
+<!ENTITY reloadImageCmd.accesskey     "გ">
+<!ENTITY viewImageCmd.label           "სურათის ნახვა">
+<!ENTITY viewImageCmd.accesskey       "ს">
+<!ENTITY viewImageInfoCmd.label       "გამოსახულების მონაცემთა ჩვენება">
+<!ENTITY viewImageInfoCmd.accesskey   "ხ">
+<!ENTITY viewImageDescCmd.label       "აღწერის ნახვა">
+<!ENTITY viewImageDescCmd.accesskey   "ა">
+<!ENTITY viewVideoCmd.label           "ვიდეოს ჩვენება">
+<!ENTITY viewVideoCmd.accesskey       "ვ">
+<!ENTITY viewBGImageCmd.label         "ფონური სურათის ნახვა">
+<!ENTITY viewBGImageCmd.accesskey     "ფ">
+<!ENTITY setDesktopBackgroundCmd.label      "ფონად დაყენება სამუშაო მაგიდაზე…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "ს">
+<!ENTITY bookmarkPageCmd2.label       "გვერდის ჩანიშვნა">
+<!ENTITY bookmarkThisLinkCmd.label      "ბმულის ჩანიშვნა">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "ბ">
+<!ENTITY bookmarkThisFrameCmd.label      "ჩარჩოს ჩანიშვნა">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "ჩ">
+<!ENTITY copyURLCmd.label             "URL-ს დაკოპირება">
+<!ENTITY emailPageCmd.label           "ბმულის გაგზავნა ელფოსტით…">
+<!ENTITY emailPageCmd.accesskey       "ე">
+<!ENTITY savePageCmd.label            "გვერდის შენახვა როგორც…">
+<!ENTITY savePageCmd.accesskey        "შ">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "რ">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "ჩარჩოს შენახვა როგორც…">
+<!ENTITY saveFrameCmd.accesskey       "შ">
+<!ENTITY printFrameCmd.label          "ჩარჩოს ამობეჭდვა…">
+<!ENTITY printFrameCmd.accesskey      "ჭ">
+<!ENTITY saveLinkCmd.label            "ბმულის შენახვა როგორც…">
+<!ENTITY saveLinkCmd.accesskey        "ბ">
+<!ENTITY saveImageCmd.label           "სურათის შენახვა როგორც…">
+<!ENTITY saveImageCmd.accesskey       "ს">
+<!ENTITY saveVideoCmd.label           "ვიდეოს შენახვა როგორც...">
+<!ENTITY saveVideoCmd.accesskey       "ვ">
+<!ENTITY saveAudioCmd.label           "აუდიოს შენახვა როგორც…">
+<!ENTITY saveAudioCmd.accesskey       "ა">
+<!ENTITY emailImageCmd.label          "სურათის გაგზავნა ელფოსტით…">
+<!ENTITY emailImageCmd.accesskey      "ს">
+<!ENTITY emailVideoCmd.label          "ვიდეოს გაგზავნა ელფოსტით…">
+<!ENTITY emailVideoCmd.accesskey      "ვ">
+<!ENTITY castVideoCmd.label           "ვიდეოს გაგზავნა მოწყობილობაში">
+<!ENTITY castVideoCmd.accesskey       "წ">
+<!ENTITY emailAudioCmd.label          "აუდიოს გაგზავნა ელფოსტით…">
+<!ENTITY emailAudioCmd.accesskey      "ა">
+<!ENTITY playPluginCmd.label          "ამ მოდულის ჩართვა">
+<!ENTITY playPluginCmd.accesskey      "ჩ">
+<!ENTITY hidePluginCmd.label          "ამ მოდულის დამალვა">
+<!ENTITY hidePluginCmd.accesskey      "დ">
+<!ENTITY copyLinkCmd.label            "ბმულის დაკოპირება">
+<!ENTITY copyLinkCmd.accesskey        "ბ">
+<!ENTITY copyImageCmd.label           "სურათის მისამართის დაკოპირება">
+<!ENTITY copyImageCmd.accesskey       "კ">
+<!ENTITY copyImageContentsCmd.label   "სურათის დაკოპირება">
+<!ENTITY copyImageContentsCmd.accesskey  "ს"> 
+<!ENTITY copyVideoURLCmd.label        "ვიდეოს მისამართის დაკოპირება">
+<!ENTITY copyVideoURLCmd.accesskey    "კ">
+<!ENTITY copyAudioURLCmd.label        "აუდიოს მისამართის დაკოპირება">
+<!ENTITY copyAudioURLCmd.accesskey    "კ">
+<!ENTITY copyEmailCmd.label           "ელფოსტის მისამართის დაკოპირება">
+<!ENTITY copyEmailCmd.accesskey       "ე">
+<!ENTITY thisFrameMenu.label              "ჩარჩო">
+<!ENTITY thisFrameMenu.accesskey          "ჩ">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "დაკვრა">
+<!ENTITY mediaPlay.accesskey         "დ">
+<!ENTITY mediaPause.label            "შეჩერება">
+<!ENTITY mediaPause.accesskey        "შ">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "დადუმება">
+<!ENTITY mediaMute.accesskey         "დ">
+<!ENTITY mediaUnmute.label           "ხმის ჩართვა">
+<!ENTITY mediaUnmute.accesskey       "ხ">
+<!ENTITY mediaPlaybackRate2.label     "დაკვრის სიჩქარე">
+<!ENTITY mediaPlaybackRate2.accesskey "ქ">
+<!ENTITY mediaPlaybackRate050x2.label "ნელი (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "ნ">
+<!ENTITY mediaPlaybackRate100x2.label "ჩვეულებრივი">
+<!ENTITY mediaPlaybackRate100x2.accesskey "ჩ">
+<!ENTITY mediaPlaybackRate125x2.label "სწრაფი (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "ს">
+<!ENTITY mediaPlaybackRate150x2.label "უფრო სწრაფი (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "უ">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "გიჟური (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "გ">
+<!ENTITY mediaLoop.label             "ციკლი">
+<!ENTITY mediaLoop.accesskey         "ც">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "სამართავის ჩვენება">
+<!ENTITY mediaShowControls.accesskey "ჩ">
+<!ENTITY mediaHideControls.label     "სამართავის დამალვა">
+<!ENTITY mediaHideControls.accesskey "დ">
+<!ENTITY videoFullScreen.label       "სრული ეკრანი">
+<!ENTITY videoFullScreen.accesskey   "ს">
+<!ENTITY videoSaveImage.label        "ანაბეჭდის შენახვა როგორც…">
+<!ENTITY videoSaveImage.accesskey    "ა">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "სტატისტიკის ჩვენება">
+<!ENTITY videoShowStats.accesskey    "ჩ">
+<!ENTITY videoHideStats.label        "სტატისტიკის დამალვა">
+<!ENTITY videoHideStats.accesskey    "დ">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "გაზრდა">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "გ">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "შემცირება">
+<!ENTITY fullZoomReduceCmd.accesskey    "შ">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "ჩვეულებრივი">
+<!ENTITY fullZoomResetCmd.accesskey     "ჩ">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "მხოლოდ ტექსტის ზომის შეცვლა">
+<!ENTITY fullZoomToggleCmd.accesskey    "ტ">
+<!ENTITY fullZoom.label                 "ზომის ცვლილება">
+<!ENTITY fullZoom.accesskey             "მ">
+
+<!ENTITY sidebarCloseButton.tooltip     "გვერდითი პანელის დახურვა">
+<!ENTITY sidebarMenuClose.label         "გვერდითი ზოლის დახურვა">
+
+<!ENTITY quitApplicationCmdWin2.label       "გასვლა">
+<!ENTITY quitApplicationCmdWin2.accesskey   "ლ">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName;-დან გამოსვლა">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "გამოსვლა"> 
+<!ENTITY quitApplicationCmd.accesskey   "გ">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName;-დან გამოსვლა">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "დახურვა">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "დ">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "გვერდის სტილი">
+<!ENTITY pageStyleMenu.accesskey "ს">
+<!ENTITY pageStyleNoStyle.label "სტილის გარეშე">
+<!ENTITY pageStyleNoStyle.accesskey "გ">
+<!ENTITY pageStylePersistentOnly.label "გვერდის ძირითადი სტილი">
+<!ENTITY pageStylePersistentOnly.accesskey "ძ">
+
+<!ENTITY pageReportIcon.tooltip            "ვებსაიტზე ამომხტარი ფირნიშების ამკრძალავი პარამეტრების შეცვლა">
+
+<!ENTITY allowPopups.accesskey "დ">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "ფირნიშების აკრძალვის პარამეტრების შეცვლა…">
+<!ENTITY editPopupSettings.label "ფირნიშების აკრძალვის პარამეტრების ჩასწორება…">
+<!ENTITY editPopupSettings.accesskey "ჩ">
+<!ENTITY dontShowMessage.accesskey "დ">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "გვერდის მიმართულების შეცვლა">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "მ">
+<!ENTITY bidiSwitchTextDirectionItem.label        "ტექსტის მიმართულების შეცვლა">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "ტ">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "პოვნა გვერდზე…">
+<!ENTITY findOnCmd.accesskey "პ">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "კვლავძიება">
+<!ENTITY findAgainCmd.accesskey "კ">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "ლექსიკონების დამატება…">
+<!ENTITY spellAddDictionaries.accesskey "ლ">
+
+<!ENTITY editBookmark.done.label                     "მზადაა">
+<!ENTITY editBookmark.removeBookmark.accessKey       "ს">
+
+<!ENTITY identity.connectionSecure "დაცული კავშირი">
+<!ENTITY identity.connectionNotSecure "კავშირი დაუცველია">
+<!ENTITY identity.connectionFile "ეს გვერდი თქვენს კომპიუტერშია შენახული.">
+<!ENTITY identity.connectionVerified2 "თქვენ საიმედოდ ხართ დაკავშირებული საიტთან, რომელის მფლობელიცაა:">
+<!ENTITY identity.connectionInternal "ეს &brandShortName;-ს დაცული გვერდია.">
+<!ENTITY identity.extensionPage "ეს გვერდი გახსნილია გაფართოების მიერ.">
+<!ENTITY identity.insecureLoginForms2 "ამ გვერდზე შეყვანილი შესვლის მონაცემები შესაძლოა მოიპარონ.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName;-მა გვერდის დაუცველი ნაწილები შეზღუდა.">
+<!ENTITY identity.passiveLoaded "ამ გვერდის ნაწილები დაუცველია (მაგალითად სურათები).">
+<!ENTITY identity.activeLoaded "ამ გვერდზე დაცვა გამორთული გაქვთ.">
+<!ENTITY identity.weakEncryption "ეს გვერდი სუსტ დაშიფვრას იყენებს.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "კავშირი ამ საიტთან დაცული არ არის. თქვენ მიერ გადაგზავნილი ინფორმაცია შესაძლოა სხვებმაც ნახონ (მაგალითად პაროლები, შეტყობინებები, საკრედიტო ბარათები, ა.შ.).">
+<!ENTITY identity.description.insecureLoginForms "ამ გვერდზე შეყვანილი შესვლის მონაცემები დაუცველია და შესაძლოა მოიპარონ.">
+<!ENTITY identity.description.weakCipher "ამ ვებსაიტთან კავშირი სუსტ დაშიფვრას იყენებს და დაუცველია.">
+<!ENTITY identity.description.weakCipher2 "სხვებსაც შეუძლიათ თქვენი ინფორმაციის ნახვა ან ვებსაიტის ქცევის შეცვლა.">
+<!ENTITY identity.description.activeBlocked "&brandShortName;-მა გვერდის დაუცველი ნაწილები შეზღუდა.">
+<!ENTITY identity.description.passiveLoaded "კავშირი დაუცველია და თქვენ მიერ ამ საიტთან გაზიარებული ინფორმაცია შესაძლოა სხვებმაც ნახონ.">
+<!ENTITY identity.description.passiveLoaded2 "ეს ვებსაიტი შეიცავს შიგთავსს, რომელიც დაუცველია (მაგალითად სურათები).">
+<!ENTITY identity.description.passiveLoaded3 "მიუხედავად იმისა, რომ &brandShortName;-მა გარკვეული შიგთავსი შეზღუდა, დაუცველი ნაწილი მაინც დარჩა (მაგალითად სურათები).">
+<!ENTITY identity.description.activeLoaded "ეს ვებსაიტი შეიცავს შიგთავსს, რომელიც დაუცველია (მაგალითად სკრიპტები) და თქვენი კავშირი პირადი არაა.">
+<!ENTITY identity.description.activeLoaded2 "ინფორმაცია, რომელსაც ამ საიტს გაუზიარებთ შესაძლოა სხვებმაც ნახონ (მაგალითად პაროლები, შეტყობინებები, საკრედიტო ბარათები, ა.შ.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "დაცვის ჩართვა">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "რ">
+<!ENTITY identity.disableMixedContentBlocking.label "დაცვის გამორთვა დროებით">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "დ">
+<!ENTITY identity.learnMore "გაიგეთ მეტი">
+
+<!ENTITY identity.removeCertException.label "გამონაკლისის წაშლა">
+<!ENTITY identity.removeCertException.accesskey "წ">
+
+<!ENTITY identity.moreInfoLinkText2 "მეტი ინფორმაცია">
+
+<!ENTITY identity.permissions "უფლებები">
+<!ENTITY identity.permissionsEmpty "ამ საიტისთვის განსაკუთრებული უფლებები არ მიგიციათ.">
+<!ENTITY identity.permissionsReloadHint "ცვლილებების ასამოქმედებლად შესაძლოა გვერდის ხელახლა ჩატვირთვა დაგჭირდეთ.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "ბრაუზერის ჩანართები">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "დასინქრონებული ჩანართები">
+
+<!ENTITY syncedTabs.sidebar.label              "დასინქრონებული ჩანართები">
+<!ENTITY syncedTabs.sidebar.noclients.label    "შედით Waterfox-ში თქვენი სხვა მოწყობილობებიდან მათი ჩანართების აქ სანახავად.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "დასინქრონებული ჩანართები არაა… ჯერ!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "გსურთ სხვა მოწყობილობების ჩანართების აქ ნახვა?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "შედით თქვენი სხვა მოწყობილობებიდან ჩანართების სიის სანახავად.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "გახსნილი ჩანართები არაა">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "&syncBrand.shortName.label; მითითებების გახსნა">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "ჩართეთ ჩანართების სინქრონიზაცია თქვენი სხვა მოწყობილობებიდან ჩანართების სიის სანახავად.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "გახსნა">
+<!ENTITY syncedTabs.context.open.accesskey                   "გ">
+<!ENTITY syncedTabs.context.openInNewTab.label               "გახსნა ახალ ჩანართში">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "ხ">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "გახსნა ახალ ფანჯარაში">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "ფ">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "გახსნა ახალ პირად ფანჯარაში">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "პ">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "ჩანართის ჩანიშვნა…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "ჩ">
+<!ENTITY syncedTabs.context.copy.label                       "დაკოპირება">
+<!ENTITY syncedTabs.context.copy.accesskey                   "კ">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "ყველას ჩანართებში გახსნა">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "ყ">
+<!ENTITY syncedTabs.context.managedevices.label              "მოწყობილობების მართვა…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "მ">
+
+
+<!ENTITY syncBrand.shortName.label    "სინქრონიზაცია">
+
+<!ENTITY syncSignIn.label             "&syncBrand.shortName.label; - შესვლა…">
+<!ENTITY syncSignIn.accesskey         "შ">
+<!ENTITY syncSyncNowItem.label        "დასინქრონება ახლავე">
+<!ENTITY syncSyncNowItem.accesskey    "ს">
+<!ENTITY syncReAuthItem.label         "&syncBrand.shortName.label; - ხელახლა დაკავშირება…">
+<!ENTITY syncReAuthItem.accesskey     "ხ">
+<!ENTITY syncToolbarButton.label      "სინქრონიზაცია">
+
+<!ENTITY social.addons.label "მომსახურებების მართვა…">
+
+<!ENTITY social.directory.label "აქტივაციების დირექტორია">
+<!ENTITY social.directory.text "გაზიარების მომსახურებების გააქტიურება დირექტორიიდან შეგიძლიათ.">
+<!ENTITY social.directory.button "იქ გადამიყვანეთ!">
+<!ENTITY social.directory.introText "დააწკაპეთ მომსახურებს &brandShortName;-ს დასამატებლად.">
+<!ENTITY social.directory.viewmore.text "მეტის ნახვა">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "დამატებითი ხელსაწყოები და ფუნქციები">
+<!ENTITY customizeMode.menuAndToolbars.empty "მეტი ხელსაწყო გსურთ?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "აირჩიეთ სასურველი ათასობით დამატებიდან">
+<!ENTITY customizeMode.restoreDefaults "ნაგულისხმევების აღდგენა">
+<!ENTITY customizeMode.done "მზადაა">
+<!ENTITY customizeMode.titlebar "სათაურის ზოლი">
+<!ENTITY customizeMode.toolbars2 "ხელსაწყოთა ზოლები">
+<!ENTITY customizeMode.lwthemes "თემები">
+<!ENTITY customizeMode.lwthemes.myThemes "ჩემი დეკორაციები">
+<!ENTITY customizeMode.lwthemes.recommended "რეკომენდებული">
+<!ENTITY customizeMode.lwthemes.menuManage "მართვა">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "მ">
+<!ENTITY customizeMode.lwthemes.menuGetMore "მეტი გაფორმებები">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "ფ">
+<!ENTITY customizeMode.emptyOverflowList.description "გადმოიტანეთ და მოათავსეთ ხელსაწყოები აქ, მეტი ხელმისაწვდომობისთვის, ხელსაწყოთა ზოლის გარეთ…">
+<!ENTITY customizeMode.uidensity "სიმჭიდროვე">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "ჩვეულებრივი">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "ჩვეულებრივი">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "ჩ">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "კომპაქტური">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "კომპაქტური">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "კ">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "შეხება">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "შეხება">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "შ">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "შეხებაზე რეაგირება პლანშეტის რეჟიმისას">
+
+<!ENTITY getUserMedia.selectCamera.label "გასაზიარებელი კამერა:">
+<!ENTITY getUserMedia.selectCamera.accesskey "კ">
+<!ENTITY getUserMedia.selectMicrophone.label "გასაზიარებელი მიკროფონი:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "მ">
+<!ENTITY getUserMedia.audioCapture.label "ჩანართიდან აუდიო გაზიარდება.">
+<!ENTITY getUserMedia.allWindowsShared.message "ეკრანზე ნაჩვენები ყველა ფანჯარა გაზიარდება.">
+
+<!ENTITY trackingProtection.title "თვალყურისგან დაცვა">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; ზღუდავს საიტის იმ ნაწილებს, რომლებსაც თქვენს მოქმედებებზე თვალყურის დევნება შეუძლია.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "საიტი შეიცავს ნაწილებს, რომელის შესაძლოა თქვენს მოქმედებებს აღრიცხავდეს. თქვენ გამორთული გაქვთ დაცვა.">
+<!ENTITY trackingProtection.notDetected3 "ამ გვერდზე მოთვალთვალე ელემენტები არ აღმოჩენილა.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "ამ საიტზე დაცვის გამორთვა">
+<!ENTITY trackingProtection.unblock.accesskey "გ">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "ამ სეანსზე დაცვის გამორთვა">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "გ">
+<!ENTITY trackingProtection.block2.label "დაცვის ჩართვა">
+<!ENTITY trackingProtection.block2.accesskey "რ">
+
+<!ENTITY trackingContentBlocked.message "თვალყური">
+<!ENTITY trackingContentBlocked.moreinfo "გვერდის ნაწილები, რომელიც შესაძლოა თქვენს მოქმედებებს აღრიცხავდეს, შეიზღუდა.">
+<!ENTITY trackingContentBlocked.learnMore "გაიგეთ მეტი">
+<!ENTITY trackingContentBlocked.options "პარამეტრები">
+<!ENTITY trackingContentBlocked.unblock2.label "ამ საიტზე დაცვის გამორთვა">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "გ">
+<!ENTITY trackingContentBlocked.block.label "დაცვის ჩართვა">
+<!ENTITY trackingContentBlocked.block.accesskey "რ">
+<!ENTITY trackingContentBlocked.disabled.message "თვალყურისგან დაცვა გამორთულია">
+
+<!ENTITY pluginNotification.showAll.label "ყველას ჩვენება">
+<!ENTITY pluginNotification.showAll.accesskey "ყ">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "დაშვება ახლა">
+<!ENTITY pluginActivateAlways.label "დაშვება და დამახსოვრება">
+<!ENTITY pluginBlockNow.label "შეჩერება">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "დახურვა">
+
+<!ENTITY appMenuSidebars.label         "გვერდითი პანელები">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "დავიწყება ბოლო:">
+<!ENTITY panicButton.view.5min                    "ხუთი წუთის">
+<!ENTITY panicButton.view.2hr                     "ორი საათის">
+<!ENTITY panicButton.view.day                     "24 საათის">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "გაგრძელებისას:">
+<!ENTITY panicButton.view.deleteCookies           "წაიშლება <html:strong>ფუნთუშები</html:strong>">
+<!ENTITY panicButton.view.deleteHistory           "წაიშლება <html:strong>ისტორია</html:strong>">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "დაიხურება ყველა <html:strong>ჩანართი</html:strong> და <html:strong>ფანჯარა</html:strong>">
+<!ENTITY panicButton.view.openNewWindow           "გაიხსნება ახალი სუფთა ფანჯარა">
+
+<!ENTITY panicButton.view.undoWarning             "ეს ქმედება შეუქცევადია.">
+<!ENTITY panicButton.view.forgetButton            "დავიწყება!">
+
+<!ENTITY panicButton.thankyou.msg1                "ბოლოს მონახულებული გვერდების ისტორია გასუფთავებულია.">
+<!ENTITY panicButton.thankyou.msg2                "მოინახულეთ გვერდები უსაფრთხოდ!">
+<!ENTITY panicButton.thankyou.buttonlabel         "გმადლობთ!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "გაიგეთ მეტი DRM-ის შესახებ…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "ტ">
+
+<!ENTITY updateAvailable.message "განაახლეთ &brandShorterName; გაუმჯობესებული სიჩქარისა და უსაფრთხოებისთვის.">
+<!ENTITY updateAvailable.whatsnew.label "იხილეთ სიახლეები.">
+<!ENTITY updateAvailable.header.message "ახალი &brandShorterName; განახლება ხელმისაწვდომია.">
+<!ENTITY updateAvailable.acceptButton.label "განახლების ჩამოტვირთვა">
+<!ENTITY updateAvailable.acceptButton.accesskey "ჩ">
+<!ENTITY updateAvailable.cancelButton.label "ახლა არა">
+<!ENTITY updateAvailable.cancelButton.accesskey "ა">
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; განახლების ჩამოტვირთვა">
+
+<!ENTITY updateManual.message "ჩამოტვირთეთ &brandShorterName; -ის ახალი ვერსია და ჩვენ დაგეხმარებით მის დაყენებაში.">
+<!ENTITY updateManual.whatsnew.label "იხილეთ, სიახლეები.">
+<!ENTITY updateManual.header.message "&brandShorterName; -ის უახლეს ვერსიამდე განახლება ვერ ხერხდება.">
+<!ENTITY updateManual.acceptButton.label "&brandShorterName; -ის ჩამოტვირთვა">
+<!ENTITY updateManual.acceptButton.accesskey "ჩ">
+<!ENTITY updateManual.cancelButton.label "ახლა არა">
+<!ENTITY updateManual.cancelButton.accesskey "ა">
+<!ENTITY updateManual.panelUI.label "&brandShorterName; -ის ახალი ვერსიის ჩამოტვირთვა">
+
+<!ENTITY updateRestart.message "ხელმეორედ სწრაფად გაშვების შემდეგ, &brandShorterName; ყველა თქვენს მიერ გახსნილ ჩანართს და ფანჯარას აღადგენს.">
+<!ENTITY updateRestart.header.message2 "&brandShorterName;-ის გასაახლებლად, გაუშვით ხელახლა.">
+<!ENTITY updateRestart.acceptButton.label "ხელახლა გაშვება და აღდგენა">
+<!ENTITY updateRestart.acceptButton.accesskey "ხ">
+<!ENTITY updateRestart.cancelButton.label "ახლა არა">
+<!ENTITY updateRestart.cancelButton.accesskey "ა">
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName;-ის გასაახლებლად, გაუშვით ხელახლა">
+
+<!ENTITY pageActionButton.tooltip "ვებგვერდზე მოქმედებები">
+<!ENTITY pageAction.addToUrlbar.label "მისამართების ზოლში დამატება">
+<!ENTITY pageAction.removeFromUrlbar.label "მისამართების ზოლიდან ამოღება">
+
+<!ENTITY sendToDevice.label2 "მოწყობილობაზე გაგზავნა">
+<!ENTITY sendToDevice.syncNotReady.label "მოწყობილობების დასინქრონება…">

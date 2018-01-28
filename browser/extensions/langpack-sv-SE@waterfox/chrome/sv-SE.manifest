@@ -1,0 +1,14 @@
+locale alerts sv-SE sv-SE/locale/sv-SE/alerts/
+locale autoconfig sv-SE sv-SE/locale/sv-SE/autoconfig/
+locale global sv-SE sv-SE/locale/sv-SE/global/
+locale global-platform sv-SE sv-SE/locale/sv-SE/global-platform/mac/ os=Darwin
+locale global-platform sv-SE sv-SE/locale/sv-SE/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform sv-SE sv-SE/locale/sv-SE/global-platform/win/ os=WINNT
+locale mozapps sv-SE sv-SE/locale/sv-SE/mozapps/
+locale necko sv-SE sv-SE/locale/sv-SE/necko/
+locale passwordmgr sv-SE sv-SE/locale/sv-SE/passwordmgr/
+locale pipnss sv-SE sv-SE/locale/sv-SE/pipnss/
+locale pippki sv-SE sv-SE/locale/sv-SE/pippki/
+locale places sv-SE sv-SE/locale/sv-SE/places/
+locale pluginproblem sv-SE sv-SE/locale/sv-SE/pluginproblem/
+locale weave sv-SE sv-SE/locale/sv-SE/services/

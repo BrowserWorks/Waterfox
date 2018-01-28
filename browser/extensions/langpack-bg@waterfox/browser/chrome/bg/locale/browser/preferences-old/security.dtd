@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Основни">
+
+<!ENTITY  warnOnAddonInstall2.label       "Предупреждаване при опит на уебстраница да инсталира добавки">
+<!ENTITY  warnOnAddonInstall2.accesskey   "д">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Блокиране на опасно и измамно съдържание">
+<!ENTITY  enableSafeBrowsing.accesskey    "Б">
+
+<!ENTITY  blockDownloads.label            "Блокиране на опасни изтегляния">
+<!ENTITY  blockDownloads.accesskey        "т">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Предупреждаване при нежелан или рядко срещан софтуер">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "н">
+
+<!ENTITY  addonExceptions.label         "Изключения…">
+<!ENTITY  addonExceptions.accesskey     "И">
+
+
+<!ENTITY  logins.label                  "Регистрации">
+
+<!ENTITY  rememberLogins2.label         "Запомняне на регистрации в уебстраници">
+<!ENTITY  rememberLogins2.accesskey     "р">
+<!ENTITY  passwordExceptions.label      "Изключения…">
+<!ENTITY  passwordExceptions.accesskey  "к">
+
+<!ENTITY  useMasterPassword.label        "Използване на главна парола">
+<!ENTITY  useMasterPassword.accesskey    "г">
+<!ENTITY  changeMasterPassword.label     "Смяна на главната парола…">
+<!ENTITY  changeMasterPassword.accesskey "л">
+
+<!ENTITY  savedLogins.label              "Запазени регистрации…">
+<!ENTITY  savedLogins.accesskey          "р">

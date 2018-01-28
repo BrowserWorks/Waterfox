@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "ပျက်ဆီးမှု အစီရင်ခံစာများ">
+<!ENTITY crashesUnsubmitted.label   "မပေးပို့ရသေးသော ပျက်ဆီးမှု အစီရင်ခံစာများ">
+<!ENTITY crashesSubmitted.label     "ပေးပို့ထားသော အစီရင်ခံစာများ">
+<!ENTITY id.heading                 "ထုတ်ပြန်ချက် ID">
+<!ENTITY dateCrashed.heading        "ရက်စွဲ">
+<!ENTITY dateSubmitted.heading      "ပေးပို့ထားသော ရက်စွဲ">
+<!ENTITY noReports.label            "ပျက်စီးမှု ထုတ်ပြန်ချက်များကို တင်သွင်းမထားဘူး။">
+<!ENTITY noConfig.label             "ဒီလုပ်ငန်းသုံးကိရိယာကို ပျက်စီးမှု ထုတ်ပြန်ချက်များ ပြသဖို့ ဖန်တီးမထားဘူး။ ဦးစားပေးချက် <code>breakpad.reportURL</code> ကို ချမှတ်ရမယ်။">
+<!ENTITY clearAllReports.label      "တင်ပြချက်အားလုံးကိုဖျက်ပစ်မည်။">

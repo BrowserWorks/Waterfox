@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Обновление &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; работает в автономном режиме">
+<!ENTITY  offline.description             "&brandShortName; требуется подключение к сети, чтобы проверить наличие новых версий установленных дополнений и сделать их совместимыми с этой версией программы.">
+<!ENTITY  offline.toggleOffline.label     "Подключиться к сети сейчас.">
+<!ENTITY  offline.toggleOffline.accesskey "о">
+
+<!ENTITY  mismatch.win.title              "Несовместимые дополнения">
+<!ENTITY  mismatch.top.label              "Следующие дополнения не совместимы с текущей версией &brandShortName;, и были отключены:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; может проверить наличие совместимых версий этих дополнений.">
+
+<!ENTITY  checking.wizard.title           "Идёт проверка наличия совместимых дополнений">
+<!ENTITY  checking.top.label              "Идёт проверка наличия обновлений для несовместимых дополнений…">
+<!ENTITY  checking.status                 "Это может занять пару минут…">
+
+<!ENTITY  found.wizard.title               "Найдены совместимые дополнения">
+<!ENTITY  found.top.label                 "Выберите дополнения, которые вы хотите установить:">
+<!ENTITY  found.disabledXPinstall.label   "Обновления не могут быть установлены, так как установка программного обеспечения в данное время отключена. Вы можете изменить эту настройку, установив расположенный ниже флажок.">
+<!ENTITY  found.enableXPInstall.label     "Разрешить веб-сайтам устанавливать программное обеспечение">
+<!ENTITY  found.enableXPInstall.accesskey "а">
+
+<!ENTITY  installing.wizard.title         "Установка совместимых дополнений">
+<!ENTITY  installing.top.label            "Идёт загрузка и применение обновлений для установленных дополнений…">
+
+<!ENTITY  noupdates.wizard.title          "Совместимые версии дополнений не найдены">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; не удалось найти обновления для установленных у вас несовместимых дополнений.">
+<!ENTITY  noupdates.error.desc            "При попытке поиска обновлений возникли некоторые проблемы.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; будет периодически проверять и информировать, не появились ли совместимые версии этих дополнений.">
+
+<!ENTITY  finished.wizard.title           "Совместимые дополнения успешно установлены">
+<!ENTITY  finished.top.label              "&brandShortName; завершил установку обновлений для ваших дополнений. ">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; может периодически проверять и информировать вас о появлении обновлений для дополнений. ">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; будет периодически проверять и информировать вас о появлении обновлений для дополнений. ">
+
+<!ENTITY  adminDisabled.wizard.title      "Проверка наличия обновлений не удалась">
+<!ENTITY  adminDisabled.warning.label     "Проверка наличия обновлений для несовместимых дополнений невозможна, так как установка программного обеспечения для &brandShortName; отключена. Для решения проблемы свяжитесь с вашим системным администратором.">
+
+<!ENTITY  versioninfo.wizard.title        "Идёт проверка совместимости ваших дополнений">
+<!ENTITY  versioninfo.top.label           "Идёт проверка ваших дополнений на предмет их совместимости с этой версией &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Это может занять несколько минут…">
+
+<!ENTITY  installerrors.wizard.title      "Проблемы при  установке обновлений">
+<!ENTITY  installerrors.intro.label       "&brandShortName; столкнулся с проблемами при обновлении некоторых из установленных дополнений.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Для продолжения запуска &brandShortName; нажмите кнопку «Готово».">
+<!ENTITY  clickFinish.labelMac            "Для продолжения запуска &brandShortName; нажмите кнопку «Готово».">
+<!ENTITY  enableChecking.label            "Разрешить &brandShortName; проверять наличие обновлений.">

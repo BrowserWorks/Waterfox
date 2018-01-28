@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "ပင်မ စကားဝှက်ကို ပြောင်းလဲပါ">
+<!ENTITY setPassword.tokenName.label       "လုံခြုံရေး ကိရိယာ">
+<!ENTITY setPassword.oldPassword.label     "လက်ရှိ စကားဝှက် -">
+<!ENTITY setPassword.newPassword.label     "စကားဝှက်သစ်ကို ရေးထည့်ပါ -">
+<!ENTITY setPassword.reenterPassword.label "စကားဝှက်ကို ထပ်မံ ရေးထည့်ပါ">
+<!ENTITY setPassword.meter.label           "စကားဝှက် အရည်အသွေးပြ မီတာ">
+<!ENTITY setPassword.meter.loading         "ဖွင့်နေတယ်">
+<!ENTITY masterPasswordDescription.label   "ပင်ရင်း စကားဝှက်တခုကို ကွန်ရက် စကားဝှက်များကဲ့သို့ အရေးကြီးတဲ့ အချက်အလက်ကို ကာကွယ်ဖို့ သုံးစွဲထားတယ်။ စကားဝှက်နဲ့ ကာကွယ်ထားတဲ့ သိမ်းဆည်းခံအချက်အလက်ကို &brandShortName; က ပြန်ထုတ်တဲ့အခါ အခန်းတခုစီမှာ ပင်ရင်း စကားဝှက်တခုကို ရေးထည့်ဖို့ တောင်းလာလိမ့်မယ်။">
+<!ENTITY masterPasswordWarning.label       "သင်ချမှတ်ထားတဲ့ ပင်ရင်းစကားဝှက်ကို သင်မှတ်ထားဖို့ သေချာစေပါ။  သင့်ပင်ရင်း စကားဝှက်ကို မေ့သွားရင် ၄င်းက ကာကွယ်ထားတဲ့ ဘယ်အချက်အလက်မဆို သင် ဝင်ရောက်နိုင်မှာ မဟုတ်ဘူး။">

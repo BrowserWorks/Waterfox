@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "ସଂଯୋଗ ବିନ୍ୟାସ">
+
+
+
+<!ENTITY  proxyTitle.label              "ଇଣ୍ଟରନେଟରେ ପ୍ରବେଶ କରିବାପାଇଁ ପ୍ରକ୍ସିସବୁକୁ ବିନ୍ୟାସ କରନ୍ତୁ">
+<!ENTITY  noProxyTypeRadio.label        "ପ୍ରକ୍ସି ନାହିଁ">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "ତନ୍ତ୍ର ପ୍ରକ୍ସି ବିନ୍ୟାସ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "ଏହି ନେଟୱର୍କ ପାଇଁ ପ୍ରକ୍ସି ବିନ୍ୟାସକୁ  ସ୍ୱୟଂ-ଯାଞ୍ଚ କରନ୍ତୁ">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "ହସ୍ତକୃତ ପ୍ରକ୍ସି ବିନ୍ୟାସ:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "ସ୍ୱୟଂଚାଳିତ ପ୍ରକ୍ସି ବିନ୍ୟାସ URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "ପୁନର୍ଧାରଣ କରନ୍ତୁ">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP ପ୍ରକ୍ସି:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP ପ୍ରକ୍ସି:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL ପ୍ରକ୍ସି:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS ହୋଷ୍ଟ:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+
+
+<!ENTITY  port.label                    "ସଂଯୋଗିକୀ:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "ପାଇଁ କୌଣସି ପ୍ରକ୍ସି ନାହିଁ:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "ଉଦାହରଣ: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ଏହି ପ୍ରକ୍ସି ସର୍ଭରକୁ ସମସ୍ତ ପ୍ରୋଟୋକଲ ପାଇଁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "ପ୍ରବେଶ ସଂକେତକୁ ସଂରକ୍ଷଣ କରିବା ସମୟରେ ବୈଧିକରଣ ପାଇଁ ପଚାରନ୍ତୁ ନାହିଁ">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "ଏହି ବିକଳ୍ପଟି ନିରବରେ ଆପଣଙ୍କୁ ପ୍ରକ୍ସିଗୁଡ଼ିକରେ ବୈଧିକୃତ କରିଥାଏ ଯେତେବେଳେ ଆପଣ ସେଗୁଡ଼ିକ ପାଇଁ ଅଧିକାରକୁ ସଂରକ୍ଷଣ କରିଥାନ୍ତି। ବୈଧିକରଣ ବିଫଳ ହେଲେ ଆପଣଙ୍କୁ ପଚରାଯିବ।">
+
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS when using SOCKS v5">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  window.width2                 "49em">

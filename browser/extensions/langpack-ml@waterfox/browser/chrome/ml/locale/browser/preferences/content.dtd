@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "പോപ്പപ്‌ ജാലകങ്ങള്‍ തടയുക">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "കൂടുതല്‍ മനസിലാക്കൂ">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "തെരഞ്ഞെടുക്കൂ…">
+<!ENTITY  notificationsDoNotDisturb.label      "എന്നെ ശല്യം ചെയ്യരുത്">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName;റീസ്റ്റാര്‍ട്ട്‌ ചെയ്യുന്നത് വരെ അറിയിപ്പുകള്‍ കാണിക്കുന്നതല്ല">
+
+<!ENTITY  popupExceptions.label       "വിട്ടുവീഴ്ചകള്‍...">
+<!ENTITY  popupExceptions.accesskey   "ക">
+
+<!ENTITY  fontsAndColors.label        "അക്ഷരസഞ്ചയങ്ങളും നിറങ്ങളും">
+
+
+
+
+
+<!ENTITY  advancedFonts.label         "സങ്കീര്‍ണ്ണമായവ...">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "നിറങ്ങള്‍…">
+<!ENTITY  colors.accesskey            "റ">
+
+<!ENTITY chooseLanguage.label         "താളുകള്‍ക്കുള്ള ഭാഷ തെരഞ്ഞെടുക്കുക">
+<!ENTITY chooseButton.label           "തെരഞ്ഞെടുക്കുക…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "വെബിലുള്ളവ തര്‍ജ്ജമ ചെയ്യുക">
+<!ENTITY translateWebPages.accesskey  "ത">
+<!ENTITY translateExceptions.label    "വിട്ടുവീഴ്ചകള്‍…">
+<!ENTITY translateExceptions.accesskey "ക">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "തര്‍ജ്ജമ ചെയ്തത്">
+<!ENTITY translation.options.attribution.afterLogo "‌‌">
+
+
+
+<!ENTITY  playDRMContent.learnMore.label "കൂടുതല്‍ മനസിലാക്കൂ">
+
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultFont2.label          "Default font">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  defaultSize2.label          "Size">
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

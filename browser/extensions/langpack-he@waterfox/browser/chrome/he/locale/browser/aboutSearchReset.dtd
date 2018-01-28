@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle       "שחזור הגדרות חיפוש">
+
+<!ENTITY searchreset.pageTitle      "האם לשחזר את הגדרות החיפוש שלך?">
+
+<!ENTITY searchreset.pageInfo1      "יתכן שהגדרות החיפוש שלך אינן עדכניות. &brandShortName; יוכל לעזור לך בשחזור להגדרות חיפוש בררת המחדל.">
+
+
+<!-- LOCALIZATION NOTE (searchreset.selector.label): this string is
+followed by a dropdown of all the built-in search engines. -->
+<!ENTITY searchreset.selector.label "פעולה זו תשנה את בררת המחדל של מנוע החיפוש שלך אל">
+
+<!-- LOCALIZATION NOTE (searchreset.beforelink.pageInfo,
+searchreset.afterlink.pageInfo): these two string are used respectively
+before and after the "Settings page" link (searchreset.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language. -->
+<!ENTITY searchreset.beforelink.pageInfo2 "ניתן לשנות את הגדרות אלו בכל עת מ">
+<!ENTITY searchreset.afterlink.pageInfo2  ".">
+
+<!ENTITY searchreset.link.pageInfo2       "עמוד הגדרות">
+
+<!ENTITY searchreset.noChangeButton        "לא לשנות">
+<!ENTITY searchreset.noChangeButton.access "ל">
+
+<!ENTITY searchreset.changeEngineButton        "שינוי מנוע חיפוש">
+<!ENTITY searchreset.changeEngineButton.access "ש">

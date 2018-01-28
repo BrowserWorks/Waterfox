@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; - wěsty modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "We wěstym modusu startować">
+<!ENTITY refreshProfile.label         "&brandShortName; wobnowić">
+
+<!ENTITY safeModeDescription3.label   "Wěsty modus je specialny modus programa &brandShortName;, kotryž da so za pytanje za problemami wužiwać.">
+<!ENTITY safeModeDescription4.label   "Waše přidatki a swójske nastajenja so nachwilu znjemóžnja.">
+
+<!ENTITY refreshProfileInstead.label  "Móžeće rozrisowanje problemow přeskočić a pospytować, &brandShortName; wobnowić.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; je so při startowanju njejapcy skónčił. To su snano přidatki abo druhe problemy zawinowali. Móžeće pospytowác, problem we wěstym modusu rozrisać.">

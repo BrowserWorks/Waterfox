@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Beskerming tsjin folgjen">
+<!ENTITY  trackingProtection2.description      "Folgjen is it sammeljen fan jo sneupgegevens op mear websites. Folgjen kin brûkt wurde om in profyl op te bouwen en ynhâld wer te jaan op basis fan jo persoanlike en sneupgegevens.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Beskerming tsjin folgjen brûke om bekende folgers te blokkearjen">
+<!ENTITY  trackingProtectionAlways.label       "Altyd">
+<!ENTITY  trackingProtectionAlways.accesskey   "A">
+<!ENTITY  trackingProtectionPrivate.label      "Allinnich yn priveefinsters">
+<!ENTITY  trackingProtectionPrivate.accesskey  "r">
+<!ENTITY  trackingProtectionNever.label        "Nea">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Mear ynfo">
+<!ENTITY  trackingProtectionExceptions.label   "Utsûnderingen…">
+<!ENTITY  trackingProtectionExceptions.accesskey "i">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Beskerming tsjin folgjen brûke yn priveefinsters">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Beskerming tsjin folgjen brûke yn Priveenavigaasje om bekende folgers te blokkearjen">
+<!ENTITY trackingProtectionPBM6.accesskey     "f">
+<!ENTITY trackingProtectionPBMLearnMore.label "Mear ynfo">
+<!ENTITY changeBlockList2.label               "Blokkearlist wizigje…">
+<!ENTITY changeBlockList2.accesskey           "B">
+
+<!ENTITY  doNotTrack.description        "Websites in ‘Net folgje’-sinjaal stjoere om litte te witten dat jo net folge wurde wolle">
+<!ENTITY  doNotTrack.learnMore.label    "Mear ynfo">
+<!ENTITY  doNotTrack.default.label      "Allinnich by gebrûk fan Beskerming tsjin folgjen">
+<!ENTITY  doNotTrack.always.label       "Altyd">
+
+<!ENTITY  history.label                 "Skiednis">
+<!ENTITY  permissions.label             "Tastimmingen">
+
+<!ENTITY  addressBar.label              "Adresbalke">
+<!ENTITY  addressBar.suggest.label      "By gebrûk fan de adresbalke, suggestjes werjaan út">
+<!ENTITY  locbar.history2.label         "Navigaasjeskiednis">
+<!ENTITY  locbar.history2.accesskey     "N">
+<!ENTITY  locbar.bookmarks.label        "Blêdwizers">
+<!ENTITY  locbar.bookmarks.accesskey    "d">
+<!ENTITY  locbar.openpage.label         "Iepen ljeplêden">
+<!ENTITY  locbar.openpage.accesskey     "I">
+<!ENTITY  locbar.searches.label         "Relatearre sykopdrachten fan de standertsykmasine">
+<!ENTITY  locbar.searches.accesskey     "k">
+
+<!ENTITY  suggestionSettings2.label     "Foarkarren foar sykmasinesuggestjes wizigje">
+
+<!ENTITY  acceptCookies2.label          "Cookies fan websites akseptearje">
+<!ENTITY  acceptCookies2.accesskey      "C">
+
+<!ENTITY  acceptThirdParty.pre.label      "Cookies fan tredden akseptearje:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "o">
+<!ENTITY  acceptThirdParty.always.label   "Altyd">
+<!ENTITY  acceptThirdParty.never.label    "Nea">
+<!ENTITY  acceptThirdParty.visited.label  "Fan besochte">
+
+<!ENTITY  keepUntil.label               "Bewarje oant:">
+<!ENTITY  keepUntil.accesskey           "B">
+
+<!ENTITY  expire.label                  "se ferrinne">
+<!ENTITY  close.label                   "ik &brandShortName; ôfslút">
+
+<!ENTITY  cookieExceptions.label        "Utsûnderingen…">
+<!ENTITY  cookieExceptions.accesskey    "d">
+
+<!ENTITY  showCookies.label             "Cookies toane…">
+<!ENTITY  showCookies.accesskey         "k">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; sil">
+<!ENTITY  historyHeader2.pre.accesskey     "s">
+<!ENTITY  historyHeader.remember.label     "Skiednis ûnthâlde">
+<!ENTITY  historyHeader.dontremember.label "Nea skiednis ûnthâlde">
+<!ENTITY  historyHeader.custom.label       "Oanpaste ynstellingen brûke foar skiednis">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; sil jo browsing, downloaden bestannen, formulier- en sykskiednis ûnthâlde en cookies fan websites dy't jo besykje bewarje.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Jo wolle miskien ">
+<!ENTITY  rememberActions.clearHistory.label  "jo resinte skiednis wiskje">
+<!ENTITY  rememberActions.middle.label        ", of ">
+<!ENTITY  rememberActions.removeCookies.label "yndividuele cookies fuortsmite">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; sil deselde ynstellingen brûke as privee sneupe en sil gjin skiednis ûnthâlde as jo sneupe oer it ynternet.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Jo wolle miskien ek ">
+<!ENTITY  dontrememberActions.clearHistory.label "alle aktuele skiednis wiskje">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Altyd de priveenavigaasje brûke">
+<!ENTITY  privateBrowsingPermanent2.accesskey "P">
+
+<!ENTITY  rememberHistory2.label      "Myn navigaasje- en downloadskiednis ûnthâlde">
+<!ENTITY  rememberHistory2.accesskey  "a">
+
+<!ENTITY  rememberSearchForm.label       "Syk- en formulierskiednis ûnthâlde">
+<!ENTITY  rememberSearchForm.accesskey   "S">
+
+<!ENTITY  clearOnClose.label             "Skiednis wiskje as &brandShortName; slút">
+<!ENTITY  clearOnClose.accesskey         "w">
+
+<!ENTITY  clearOnCloseSettings.label     "Ynstellingen…">
+<!ENTITY  clearOnCloseSettings.accesskey "Y">
+
+<!ENTITY  browserContainersLearnMore.label      "Mear ynfo">
+<!ENTITY  browserContainersEnabled.label        "Kontenerljepblêden ynskeakelje">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Ynstellingen…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

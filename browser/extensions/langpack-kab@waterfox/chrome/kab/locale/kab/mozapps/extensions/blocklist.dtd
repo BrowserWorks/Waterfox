@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Izegrar izemren ad d-egen uguren">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; yufa-d d akken izegrar-agi i yernan sarawen-d uguren n urkad ne n tɣellist:">
+<!ENTITY blocklist.softblocked       "I ummesten-inek, yelha limer ad tekkseḍ izegrar sakin ales asenker.">
+<!ENTITY blocklist.hardblocked       "Izegrar-agi ur d-ttawin ara arkad akked tɣellist, ihi ttusweḥlen, acukan yessefk ad talseḍ asenker akken ad yettwakkes urmad nsen.">
+<!ENTITY blocklist.softandhard       "Izegrar i d-yettawin ugur ameqqran deg urkad akked tɣellist ttusweḥlen. Wiyaḍ ur d ttawin ara aṭas n wuguren acukan yelha ad tekkseḍ armad nsen sakin ales asenker n usnas.">
+<!ENTITY blocklist.moreinfo          "Ugar n telɣut">
+
+<!ENTITY blocklist.accept.label      "Ales asenker n &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "A">
+
+<!ENTITY blocklist.blocked.label     "Iwḥel">
+<!ENTITY blocklist.checkbox.label    "Ssens">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Asistent creare profil">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; stochează informații despre setări și preferințe în profilul personal.">
+<!ENTITY profileCreationExplanation_2.text  "Dacă mai folosiți această copie de &brandShortName; împreună cu alți utilizatori, profilurile păstrează separate datele fiecărui utilizator. Pentru aceasta, fiecare utilizator ar trebui să-și creeze propriul profil.">
+<!ENTITY profileCreationExplanation_3.text  "Dacă ești singurul utilizator al acestei copii de &brandShortName;, trebuie să ai cel puțin un profil. Dacă dorești, poți să îți creezi mai multe profiluri, pentru a stoca mai multe seturi diferite de setări de configurare și preferințe. De exemplu, poți avea profiluri separate pentru serviciu și pentru uzul personal.">
+<!ENTITY profileCreationExplanation_4.text  "Pentru a începe să vă creați profilul, apăsați „Înainte >”.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Pentru a începe să vă creați profilul, apăsați Continuă.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Pentru a începe să vă creați profilul, apăsați „Înainte >”.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Dacă creezi mai multe profiluri, le poți deosebi după numele profilurilor. Poți folosi numele sugerat aici sau numele pe care îl dorești tu.">
+<!ENTITY profilePrompt.label            "Introduceți numele noului profil:">
+<!ENTITY profilePrompt.accesskey        "e">
+<!ENTITY profileDirectoryExplanation.text   "Setările utilizatorului, preferințele, și alte date legate de utilizator vor fi stocate în:">
+<!ENTITY profileDefaultName             "Utilizator implicit">
+<!ENTITY button.choosefolder.label      "Alege dosarul…">
+<!ENTITY button.choosefolder.accesskey  "d">
+<!ENTITY button.usedefault.label        "Utilizează dosarul implicit">
+<!ENTITY button.usedefault.accesskey    "U">

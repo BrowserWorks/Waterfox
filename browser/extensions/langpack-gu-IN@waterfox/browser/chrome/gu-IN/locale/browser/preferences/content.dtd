@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "પરવાનગીઓ">
+
+<!ENTITY  blockPopups.label           "પોપ-અપ વિન્ડો અટકાવો">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "વધુ શીખો">
+<!ENTITY  notificationsPolicyDesc3.label       "કઈ સાઇટ્સને તમને સૂચનાઓ મોકલવાની મંજૂરી છે તે પસંદ કરો">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "પસંદ કરો…">
+<!ENTITY  notificationsDoNotDisturb.label      "મને હેરાન કરશો નહી">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "કોઈ સૂચના બતાવવામાં આવશે નહી જ્યાં સુધી તમે &brandShortName; પુન: શરૂ ન કરો">
+
+<!ENTITY  popupExceptions.label       "અપવાદો...">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "ફોન્ટ &amp; રંગો">
+
+<!ENTITY  defaultFont2.label          "મૂળભૂત ફોન્ટ">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "માપ">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "અદ્યતન...">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "રંગો...">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY language2.label              "ભાષા">
+<!ENTITY chooseLanguage.label         "પાનાંઓ દર્શાવવા માટે તમારી પ્રાધાન્યવાળી ભાષા પસંદ કરો">
+<!ENTITY chooseButton.label           "પસંદ કરો...">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "વેબ સમાવિષ્ટ અનુવાદ કરો">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "અપવાદ…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "નાં વડે અનુવાદ">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "ડિજિટલ અધિકાર સંચાલન (DRM) કન્ટેન્ટ">
+
+<!ENTITY  playDRMContent2.label          "DRM-નિયંત્રિત સામગ્રીને ચાલુ કરો">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent.learnMore.label "વધુ શીખો">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

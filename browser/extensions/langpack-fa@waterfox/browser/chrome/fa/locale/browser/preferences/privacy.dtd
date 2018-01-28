@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "محافظت در برابر ردگیری">
+<!ENTITY  trackingProtection2.description      "دنبال کننده مجموعه از اطلاعات مرورگر شما از چندین پایگاه اینترنتی در دست دارد. دنبال کننده می‌تواند از این اطلاعات برای ایجاد نمایه ها و نمایش آن بر اساس محتوا مرور شما و اطلاعات شخصی شما استفاده می‌کند.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "استفاده از محافظ دنبال کردن برای مسدود کردن دنبال کنندگان ناشناس">
+<!ENTITY  trackingProtectionAlways.label       "همیشه">
+<!ENTITY  trackingProtectionAlways.accesskey   "م">
+<!ENTITY  trackingProtectionPrivate.label      "تنها در پنجره‌های ناشناس">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ت">
+<!ENTITY  trackingProtectionNever.label        "هرگز">
+<!ENTITY  trackingProtectionNever.accesskey    "ه">
+<!ENTITY  trackingProtectionLearnMore.label    "اطلاعات بیشتر">
+<!ENTITY  trackingProtectionExceptions.label   "استثناها…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ت">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "از محافظت ردگیری در پنجره‌های ناشناس استفاده کنید">
+<!ENTITY trackingProtectionPBM5.accesskey     "ن">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "استفاده از محافظ دنبال کنندگان در مرورگر خصوصی برای مسدود کردن دنبال کننده های ناشناس">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "اطلاعات بیشتر">
+<!ENTITY changeBlockList2.label               "تغییر فهرست مسدودی‌ها…">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY  doNotTrack.description        "سیگنال «من را ردیابی نکن» به وب‌سایت‌ها ارسال کنید، تا به آنها بگویید که نمی‌خواهید ردیابی شوید">
+<!ENTITY  doNotTrack.learnMore.label    "اطلاعات بیشتر">
+<!ENTITY  doNotTrack.default.label      "تنها زمانی که از محافظ دنبال کردن استفاده ‌می‌شود">
+<!ENTITY  doNotTrack.always.label       "همیشه">
+
+<!ENTITY  history.label                 "تاریخچه">
+<!ENTITY  permissions.label             "مجوزها">
+
+<!ENTITY  addressBar.label              "نوار نشانی">
+<!ENTITY  addressBar.suggest.label      "هنگام استفاده از نوار مکان، پیشنهاد بده">
+<!ENTITY  locbar.history2.label         "تاریخچه مرور">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.bookmarks.label        "نشانک‌ها">
+<!ENTITY  locbar.bookmarks.accesskey    "ن">
+<!ENTITY  locbar.openpage.label         "زبانه‌های باز">
+<!ENTITY  locbar.openpage.accesskey     "ز">
+<!ENTITY  locbar.searches.label         "جست‌وجو‌های مرتبط از موتور جست‌وجوی پیش‌فرض">
+<!ENTITY  locbar.searches.accesskey     "م">
+
+<!ENTITY  suggestionSettings2.label     "تغییر ترجیحات مربوط به پیشنهادهای موتورهای جست‌وجو">
+
+<!ENTITY  acceptCookies2.label          "به سایت‌ها اجازه‌ی استفاده از کوکی داده شود">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "پذیرفتن کوکی‌های شخص ثالث:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ث">
+<!ENTITY  acceptThirdParty.always.label   "همیشه">
+<!ENTITY  acceptThirdParty.never.label    "هرگز">
+<!ENTITY  acceptThirdParty.visited.label  "از بازدید">
+
+<!ENTITY  keepUntil.label               "نگهداری شوند تا:">
+<!ENTITY  keepUntil.accesskey           "ن">
+
+<!ENTITY  expire.label                  "منقضی شوند">
+<!ENTITY  close.label                   "&brandShortName; بسته شود">
+
+<!ENTITY  cookieExceptions.label        "استثناها…">
+<!ENTITY  cookieExceptions.accesskey    "ت">
+
+<!ENTITY  showCookies.label             "نمایش کوکی‌ها…">
+<!ENTITY  showCookies.accesskey         "ک">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; will">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "تاریخچه را به خاطر خواهد داشت">
+<!ENTITY  historyHeader.dontremember.label "هرگز تاریخچه را به خاطر نمی‌سپارد">
+<!ENTITY  historyHeader.custom.label       "تنظیمات خاصی را برای تاریخچه استفاده می‌کند">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; تاریخچهٔ مرور، بارگیری، فرم‌ها و جست‌وجوهای شما را به خاطر خواهد داشت، و کوکی‌های پایگاه‌هایی که بازدید می‌کنید را خواهد پذیرفت.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "ممکن است بخواهید ">
+<!ENTITY  rememberActions.clearHistory.label  "تاریخچهٔ اخیر خود را پاک کنید">
+<!ENTITY  rememberActions.middle.label        "، یا ">
+<!ENTITY  rememberActions.removeCookies.label "برخی کوکی‌ها را حذف کنید">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; تنظیمات حالت مرور ناشناس را استفاده خواهد کرد، و هیچ تاریخچه‌ای از مرور شما در وب نگه نخواهد داشت.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "ممکن است همچنین بخواهید ">
+<!ENTITY  dontrememberActions.clearHistory.label "تمام تاریخچهٔ موجود را پاک کنید">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "همیشه از حالت  مرور خصوصی استفاده کن">
+<!ENTITY  privateBrowsingPermanent2.accesskey "م">
+
+<!ENTITY  rememberHistory2.label      "مرور و بارگذاری های مرا به خاطر بسپار">
+<!ENTITY  rememberHistory2.accesskey  "خ">
+
+<!ENTITY  rememberSearchForm.label       "اطلاعاتی که در فرم‌های صفحات وب و نوار جست‌وجو وارد می‌شوند به خاطر سپرده شود">
+<!ENTITY  rememberSearchForm.accesskey   "ط">
+
+<!ENTITY  clearOnClose.label             "تاریخچه همیشه هنگام بستن &brandShortName; پاک شود">
+<!ENTITY  clearOnClose.accesskey         "ه">
+
+<!ENTITY  clearOnCloseSettings.label     "تنظیمات">
+<!ENTITY  clearOnCloseSettings.accesskey "ت">
+
+<!ENTITY  browserContainersLearnMore.label      "اطلاعات بیشتر">
+<!ENTITY  browserContainersEnabled.label        "فعال‌سازی زبانه‌های حامل">
+<!ENTITY  browserContainersEnabled.accesskey    "ع">
+<!ENTITY  browserContainersSettings.label        "تنظیمات…">
+<!ENTITY  browserContainersSettings.accesskey    "ت">

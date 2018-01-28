@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Rutto">
+<!ENTITY  button-back-mac.accesskey    "R">
+<!ENTITY  button-next-mac.label        "Jokku">
+<!ENTITY  button-next-mac.accesskey    "J">
+<!ENTITY  button-finish-mac.label      "Gasii">
+<!ENTITY  button-cancel-mac.label      "Haaytu">
+
+<!ENTITY  button-back-unix.label       "Caggal">
+<!ENTITY  button-back-unix.accesskey   "C">
+<!ENTITY  button-next-unix.label       "Jokku">
+<!ENTITY  button-next-unix.accesskey   "J">
+<!ENTITY  button-finish-unix.label     "Gaynu">
+<!ENTITY  button-cancel-unix.label     "Haaytu">
+
+<!ENTITY  button-back-win.label        "&lt; Rutto">
+<!ENTITY  button-back-win.accesskey    "R">
+<!ENTITY  button-next-win.label        "Yeeso &gt;">
+<!ENTITY  button-next-win.accesskey    "Y">
+<!ENTITY  button-finish-win.label      "Gaynu">
+<!ENTITY  button-cancel-win.label      "Haaytu">

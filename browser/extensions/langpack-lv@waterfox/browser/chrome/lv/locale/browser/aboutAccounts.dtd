@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Laipni lūgti &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Pierakstieties, lai sinhronizētu cilnes, grāmatzīmes, paroles un citas lietas.">
+<!ENTITY aboutAccountsConfig.startButton.label "Ar ko sākt">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync iestatījumi">
+<!ENTITY aboutAccounts.noConnection.title "Nav savienojuma">
+<!ENTITY aboutAccounts.noConnection.description "Jums ir jābūt savienotām ar Internetu lai pierakstītos.">
+<!ENTITY aboutAccounts.noConnection.retry "Mēģiniet vēlreiz">
+<!ENTITY aboutAccounts.badConfig.title "Slikta konfigurācija">
+<!ENTITY aboutAccounts.badConfig.description "Neizdevās noteikt jūsu Waterfox konta servera konfigurāciju. Lūdzu mēģiniet vēlreiz nedaudz vēlāk.">

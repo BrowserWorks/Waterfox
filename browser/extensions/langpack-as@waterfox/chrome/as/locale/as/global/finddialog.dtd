@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "এই পৃষ্ঠাত সন্ধান কৰক">
+<!ENTITY findField.label "কি সন্ধান কৰা হব:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "ফলা মিলাওক">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "মেৰিৱাওক">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY findButton.label "পৰৱৰ্তী সন্ধান কৰক">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "বাতিল কৰক">
+<!ENTITY closeButton.label "বন্ধ কৰক">
+<!ENTITY up.label "ওপৰ">
+<!ENTITY up.accesskey "U">
+<!ENTITY down.label "তল">
+<!ENTITY down.accesskey "D">
+<!ENTITY direction.label "দিশ">

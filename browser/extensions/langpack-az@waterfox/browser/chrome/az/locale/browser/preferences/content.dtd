@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "İcazələr">
+
+<!ENTITY  blockPopups.label           "Peyda olan pəncərələri blokla">
+<!ENTITY  blockPopups.accesskey       "b">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Ətraflı öyrən">
+<!ENTITY  notificationsPolicyDesc3.label       "Hansı saytların sizə bildiriş göndərə biləcəklərini seçin">
+<!ENTITY  notificationsPolicyButton.accesskey  "e">
+<!ENTITY  notificationsPolicyButton.label      "Seç…">
+<!ENTITY  notificationsDoNotDisturb.label      "Məni narahat etmə">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName; yenidən başladılana qədər heç bir bildiriş göstərilməyəcək">
+
+<!ENTITY  popupExceptions.label       "İstisnalar…">
+<!ENTITY  popupExceptions.accesskey   "a">
+
+<!ENTITY  fontsAndColors.label        "Şriftlər və Rənglər">
+
+<!ENTITY  defaultFont2.label          "Əsas şrift">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "Ölçü">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "Təkmilləşmiş…">
+<!ENTITY  advancedFonts.accesskey     "T">
+
+<!ENTITY  colors.label                "Rənglər…">
+<!ENTITY  colors.accesskey            "R">
+
+
+<!ENTITY language2.label              "Dil">
+<!ENTITY chooseLanguage.label         "Səhifələrin göstəriləcəyi dili seçin">
+<!ENTITY chooseButton.label           "Seçin…">
+<!ENTITY chooseButton.accesskey       "S">
+
+<!ENTITY translateWebPages.label      "Web məzmunu tərcümə et">
+<!ENTITY translateWebPages.accesskey  "t">
+<!ENTITY translateExceptions.label    "İstisnalar…">
+<!ENTITY translateExceptions.accesskey "t">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Tərcüməçilər">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Rəqəmsal Hüquqların İdarəsi (DRM) Məzmunu">
+
+<!ENTITY  playDRMContent2.label          "DRM-idarəli məzmunu oxut (güvənilir deyil)">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent.learnMore.label "Ətraflı öyrən">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

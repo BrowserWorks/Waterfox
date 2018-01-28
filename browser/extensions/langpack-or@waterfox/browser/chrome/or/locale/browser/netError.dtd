@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "ପୃଷ୍ଠା ଧାରଣ କରିବାରେ ସମସ୍ୟା">
+<!ENTITY retry.label "ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ">
+
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "ସଂଯୋଗ କରିବାରେ ଅସମର୍ଥ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "ଏହି ଠିକଣାଟି ପ୍ରତିବନ୍ଧିତ">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "ସର୍ଭର ମିଳୁନାହିଁ">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>ଲିଖନ ତ୍ରୁଟିଗୁଡ଼ିକ ପାଇଁ ଠିକଣାଟି ପରଖିନିଅନ୍ତୁ ଯଥା <strong>ww</strong>.example.com <strong>www</strong>.example.com</li> ବଦଳରେ ଥାଏ ।<li>ଆପଣ କୌଣସି ପୃଷ୍ଠା ଲୋଡ଼ ନ କରିପାରିଲେ ନିଜ କମ୍ପୁଟରର ନେଟୱର୍କ ସଂଯୋଗ ପରଖିନିଅନ୍ତୁ ।</li> <li>ଆପଣଙ୍କ କମ୍ପୁଟର କିମ୍ବା ନେଟୱାର୍କଟି ଫାୟାରୱାଲ ବା ପ୍ରକ୍ସି ଦ୍ୱାରା ସୁରକ୍ଷିତ ଥିଲେ &brandShortName; ୱେବରେ ଖୋଲିବା ପାଇଁ ଅନୁମୋଦିତ କି ନାଁ ନିଶ୍ଚିତ କରନ୍ତୁ ।</li> </ul>">
+
+<!ENTITY fileNotFound.title "ଫାଇଲ ମିଳୁନାହିଁ">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ଅକ୍ଷର ପ୍ରକାର କିମ୍ବା ଅନ୍ୟାନ୍ୟ ଟାଇପ ତ୍ରୁଟିଗୁଡ଼ିକୁ ଯାଞ୍ଚ କରିବା ପାଇଁ ଫାଇଲନାମକୁ ଯାଞ୍ଚ କରନ୍ତୁ</li> <li>ଫାଇଲଟି କଢ଼ାଯାଇଛି କି ନାହିଁ , ପୁନଃନାମକରଣ ଅଥବା ଅପସାରଣ ହୋଇଛି କି ନାହିଁ ଦେଖିବା ପାଇଁ ଯାଞ୍ଚ କରନ୍ତୁ।</li> </ul>">
+
+
+
+<!ENTITY generic.title "ଆହାଃ">
+<!ENTITY generic.longDesc "<p>&brandShortName; କୌଣସି କାରଣବଶତଃ ଏହି ପୃଷ୍ଠାକୁ ଧାରଣ କରିପାରିବ ନାହିଁ।</p>">
+
+
+
+
+<!ENTITY malformedURI.title "ଏହି ଠିକଣାଟି ବୈଧ ନୁହେଁ">
+<!ENTITY malformedURI.longDesc "<ul> <li>ୱେବ ଠିକଣାଗୁଡ଼ିକ ସାଧାରଣତଃ ଏହି ପ୍ରକାରେ ଲେଖାଯାଇଥାଏ <strong>http://www.example.com/</strong></li> <li>ନିଶ୍ଚିତ କରନ୍ତୁ ଯେ ଆପଣ  ତୀର୍ଯକ ରେଖା ବ୍ୟବହାର କରୁଛନ୍ତି (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "ସଂଯୋଗଟି ବାଧାପ୍ରାପ୍ତ ହୋଇଛି">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "ଦଲିଲର ସମୟ ସମାପ୍ତ ହୋଇଛି">
+<!ENTITY notCached.longDesc "<p>ଅନୁରୋଧ କରାଯାଇଥିବା ଦଲିଲଟି &brandShortName; ର କ୍ୟାଶେରେ ଉପଲବ୍ଧ ନାହିଁ।</p><ul><li>ସୁରକ୍ଷା ଦୃଷ୍ଟିକୋଣରୁ, &brandShortName; ଜରୁଜୀ ଦଲିଲଗୁଡ଼ିକୁ ସ୍ୱୟଂଚାଳିତ ଭାବରେ ପୁନଃ-ଅନୁରୋଧ କରିନଥାଏ।</li><li>ୱେବସାଇଟରୁ ଦଲିଲକୁ ପୁନଃ-ଅନୁରୋଧ କରିବା ପାଇଁ ପୁଣଥରେ ଚେଷ୍ଟାକରନ୍ତୁ କୁ କ୍ଲିକ କରନ୍ତୁ।</li></ul>">
+
+<!ENTITY netOffline.title "ଅଫଲାଇନ ଅବସ୍ଥା">
+<!ENTITY netOffline.longDesc2 "<ul> <li>&quot; କୁ ଦବାଇ ଅନଲାଇନ ଧାରାକୁ ପରିବର୍ତ୍ତନ କରିବା ପାଇଁ ଏବଂ ପୃଷ୍ଠାକୁ ପୁନର୍ଦ୍ଧାରଣ କରିବା ପାଇଁ &quot; କୁ ପୁଣିଥରେ ଚେଷ୍ଟା କରନ୍ତୁ।</li> </ul>">
+
+<!ENTITY contentEncodingError.title "ସୂଚୀ ସାଙ୍କେତିକରଣ ତ୍ରୁଟି">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>ଏହି ସମସ୍ୟା ବିଷୟରେ ସୂଚାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକମାନଙ୍କୁ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li> </ul>">
+
+<!ENTITY unsafeContentType.title "ଅସୁରକ୍ଷିତ ଫାଇଲ ପ୍ରକାର">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>ଏହି ସମସ୍ୟା ବିଷୟରେ ସୂଚାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକମାନଙ୍କୁ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li> </ul>">
+
+<!ENTITY netReset.title "ସଂଯୋଗ ପୁନର୍ବିନ୍ୟାସ ହୋଇଥିଲା">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "ସଂଯୋଗ ସମୟ ସମାପ୍ତ ହୋଇଯାଇଛି">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "ଠିକଣାଟି ବୁଝାପଡ଼ିନଥିଲା">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>ଏହି ଠିକଣାକୁ ଖୋଲିବା ପାଇଁ ଆପଣଙ୍କୁ ହୁଏତଃ ଅନ୍ୟ ସଫ୍ଟୱେର ସ୍ଥାପନ କରିବାକୁ ଆବଶ୍ୟକ ହୋଇପାରେ।</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ପ୍ରକ୍ସି ସର୍ଭର ସଂଯୋଗଗୁଡ଼ଡିକୁ ବାରଣ କରୁଛି">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ସେଗୁଡ଼ିକ ଠିକ ଅଛି କି ନାହିଁ ନିଶ୍ଚିତ ହେବା ପାଇଁ ପ୍ରକ୍ସି ସଂରଚନାକୁ ଯାଞ୍ଚ କରନ୍ତୁ।</li> <li>ଆପଣଙ୍କ ପ୍ରକ୍ସି ସର୍ଭର ସଠିକ ଭାବରେ କାର୍ଯ୍ୟକରୁଛି ନାହିଁ ନିଶ୍ଚିତ କରିବା ପାଇଁ ଯାଞ୍ଚ କରନ୍ତୁ।</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "ପ୍ରକ୍ସି ସର୍ଭରକୁ ଖୋଜିବାରେ ଅସମର୍ଥ">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>ପ୍ରକ୍ସି ସଂରଚନା ଠିକ ଅଛି କି ନାହିଁ ନିଶ୍ଚିତ ହେବା ପାଇଁ ସେଗୁଡ଼ିକୁ ପରଖିନିଅନ୍ତୁ ।</li> <li>ଆପଣଙ୍କ କମ୍ପୁଟରରେ ସକ୍ରିୟ ନେଟୱାର୍କ ସଂଯୋଗ ଅଛି କି ନାହିଁ ପରଖିନିଅନ୍ତୁ ।</li> <li>ନିଜ କମ୍ପୁଟର କିମ୍ବା ନେଟୱାର୍କ କୌଣସି ଫାୟାରୱାଲ କିମ୍ବା ପ୍ରକ୍ସି ଦ୍ୱାରା ସୁରକ୍ଷିତ ଥିଲେ&brandShortName; ୱେବରେ ଖୋଲିବା ପାଇଁ ଅନୁମୋଦିତ କି ନାଁ ନିଶ୍ଚିତ କରନ୍ତୁ ।</li> </ul>">
+
+<!ENTITY redirectLoop.title "ଏହି ପୃଷ୍ଠାଟି ସଠିକ ଭାବରେ ପୁନଃପ୍ରେରଣ କରିପାରୁନାହିଁ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ଏହି ସମସ୍ୟା ବେଳେବେଳେ କୁକିଗୁଡ଼ିକୁ ଗ୍ରହଣ କରିବାରୁ ନିଷ୍କ୍ରିୟକରିବା କିମ୍ବା ବାରଣ କରିବା ହେତୁ ଘଟିଥାଏ।</li> </ul>">
+
+<!ENTITY unknownSocketType.title "ସର୍ଭରରୁ ଅପ୍ରତ୍ୟାଶିତ ଉତ୍ତର">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>ନିଶ୍ଚିତ କରିବା ପାଇଁ ଯାଞ୍ଚକରନ୍ତୁ ଯେ ଆପଣଙ୍କର ତନ୍ତ୍ରରେ ବ୍ୟକ୍ତିଗତ ସୁରକ୍ଷା ପରିଚାଳକ ସ୍ଥାପିତ ଅଛି।</li> <li>ଏହା ହୁଏତଃ ସର୍ଭରରେ କୌଣସି ମାନ୍ୟତାପ୍ରାପ୍ତ ହୋଇନଥିବା ସଂରଚନା ହେତୁ ହୋଇଥାଏ।</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>ଆପଣ ଦେଖିବାକୁ ଚାହୁଁଥିବା ପୃଷ୍ଠାକୁ ଦର୍ଶାଯାଇ ପାରିବ ନାହିଁ କାରଣ ଗ୍ରହଣ କରାଯାଇଥିବା ତଥ୍ୟର ବୈଧିକରଣକୁ ଯାଞ୍ଚ କରାଯାଇନାହିଁ।</li> <li>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅଗଚର କରାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ସମ୍ପର୍କ କରନ୍ତୁ।</li> </ul>">
+
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+<!ENTITY sharedLongDesc "<ul> <li>ସାଇଟଟି ଅସ୍ଥାୟୀ ଭାବରେ ଉପଲବ୍ଧ ହେଉନାହିଁ ଅଥବା ଅତି ବ୍ୟସ୍ତ । ଟିକେ ପରେ ପୁଣିଥରେ ଚେଷ୍ଟାକରନ୍ତୁ ।</li> <li>ପୃଷ୍ଠାଟିଏ ଲୋଡ଼ କରିନପାରିଲେ ନିଜ କମ୍ପୁଟରର ନେଟୱାର୍କ ସଂଯୋଗ ପରଖିନିଅନ୍ତୁ ।</li> <li>ନିଜ କମ୍ପୁଟର କିମ୍ବା ନେଟୱାର୍କ ଫାୟାରୱାଲ କିମ୍ବା ପ୍ରକ୍ସି ଦ୍ୱାରା ସୁରକ୍ଷିତ ଥିଲେ&brandShortName; ୱେବରେ ଖୋଲିବା ପାଇଁ ଅନୁମୋଦିତ କି ନାଁ ନିଶ୍ଚିତ କରନ୍ତୁ ।</li> </ul>">
+
+<!ENTITY cspBlocked.title "ବିଷୟବସ୍ତୁ ସୁରକ୍ଷା ନିତୀ ଦ୍ୱାରା ଅଟକ ରଖାଯାଇଛି">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ଏହି ପୃଷ୍ଠାକୁ ଏହି ଉପାୟରେ ଧାରଣ କରିବାରୁ ବାରଣ କରିଥାଏ କାରଣ ସେହି ପୃଷ୍ଠାରେ ବିଷୟବସ୍ତୁ ସୁରକ୍ଷା ନିତୀ ଅଛି ଯାହାକି ଏହାକୁ ଅନୁମତି ଦେଇନଥାଏ।</p>">
+
+<!ENTITY corruptedContentErrorv2.title "ତ୍ରୁଟିଯୁକ୍ତ ବିଷୟବସ୍ତୁ ତ୍ରୁଟି">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ଆପଣ ଦେଖିବାକୁ ଇଚ୍ଛାକରୁଥିବା ପୃଷ୍ଠାକୁ ଦର୍ଶାଯାଇପାରିବ ନାହିଁ କାରଣ ତଥ୍ୟ ପରିବହନରେ ଗୋଟିଏ ତ୍ରୁଟି ଦେଖାଦେଇଛି।</p><ul><li>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅଗଚର କରାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "ବ୍ୟତିକ୍ରମ ଯୋଗକରନ୍ତୁ…">
+
+<!ENTITY errorReporting.learnMore "ଅଧିକ ଜ୍ଞାନ ଆହରଣ କରନ୍ତୁ…">
+
+<!ENTITY remoteXUL.title "ସୁଦୂର XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>ଏହି ସମସ୍ୟା ବିଷୟରେ ଅବଗତ କରାଇବା ପାଇଁ ଦୟାକରି ୱେବସାଇଟ ମାଲିକଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+
+
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+
+
+<!ENTITY advanced.label "Advanced">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.copyToClipboard.label "Copy text to clipboard">
+
+<!ENTITY certerror.introPara "The owner of <span class='hostname'/> has configured their website improperly.  To protect your information from being stolen, &brandShortName; has not connected to this website.">
+
+<!ENTITY certerror.longpagetitle1 "Your connection is not secure">
+<!ENTITY certerror.pagetitle1  "Insecure Connection">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "This site uses HTTP
+Strict Transport Security (HSTS) to specify that &brandShortName; may only connect
+to it securely. As a result, it is not possible to add an exception for this
+certificate.">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY errorReporting.automatic2 "Report errors like this to help Mozilla identify and block malicious sites">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>It may have been removed, moved, or file permissions may be preventing access.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY nssFailure2.title "Secure Connection Failed">
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+
+<!ENTITY prefReset.label "Restore default settings">
+<!ENTITY prefReset.longDesc "It looks like your network security settings might be causing this. Do you want the default settings to be restored?">
+<!ENTITY returnToPreviousPage.label "Go Back">
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY sslv3Used.title "Unable to Connect Securely">

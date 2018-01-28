@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - صارف پروفائل منتخب کریں">
+
+<!ENTITY            profilename.label      "نام پروفائل:">
+
+<!ENTITY            start.label            "&brandShortName; شروع کریں">
+<!ENTITY            exit.label             "خروج">
+
+<!ENTITY            availprofiles.label    "دستیاب پروفائل">
+
+<!ENTITY            newButton.label        "پروفائل بنائیں...">
+<!ENTITY            newButton.accesskey    "ب">
+<!ENTITY            renameButton.label     "پروفائل کو نیا نام دیں...">
+<!ENTITY            renameButton.accesskey "ن">
+<!ENTITY            deleteButton.label     "پروفائل حذف کریں…">
+<!ENTITY            deleteButton.accesskey "ح">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName; آپ کی سیٹنگوں، ترجیحات اور دیگر صارفی اشیا کے متعلق معلومات آپ کے صارف پروفائل میں ذخیرہ کرتا ہے۔">
+
+<!ENTITY            offlineState.label    "آف لائن کام کریں">
+<!ENTITY            offlineState.accesskey "ک">
+
+<!ENTITY            useSelected.label       "استعمال کریں منتخب شد پروفائل بعیر پوچھے آغاز میں">
+<!ENTITY            useSelected.accesskey   "s">

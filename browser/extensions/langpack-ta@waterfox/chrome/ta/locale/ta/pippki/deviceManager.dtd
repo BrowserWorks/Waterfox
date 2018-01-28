@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "சாதன மேலாளர்">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "பாதுகாப்பு பகுதிகள் மற்றும் சாதனங்கள்">
+<!ENTITY devmgr.details.title                   "விளக்கங்கள்">
+<!ENTITY devmgr.details.title2                  "மதிப்பு">
+
+<!ENTITY devmgr.button.login.label              "புகுப்பதிகை">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "வெளியேறு">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "கடவுச்சொல்லை மாற்று">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "ஏற்று">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "இறக்கு">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "சேர்க்க விரும்பும் பகுதி பற்றிய தகவலை உள்ளிடவும்.">
+<!ENTITY loaddevice.modname                     "பகுதி பெயர்:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "புதிய PKCS#11 பகுதி">
+<!ENTITY loaddevice.filename                    "பகுதி கோப்பு பெயர்:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "உலாவு...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

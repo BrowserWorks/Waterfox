@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Mallonga titolo"> 
+<!ENTITY message.label    "Ekzempla teksto estos ĉi tie.">
+<!ENTITY editfield0.label "Nomo de uzanto:"> 
+<!ENTITY editfield1.label "Pasvorto:"> 
+<!ENTITY checkbox.label   "kontroli">
+<!ENTITY copyCmd.label    "Kopii">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY selectAllCmd.label "Elekti ĉion">
+<!ENTITY selectAllCmd.accesskey "E">

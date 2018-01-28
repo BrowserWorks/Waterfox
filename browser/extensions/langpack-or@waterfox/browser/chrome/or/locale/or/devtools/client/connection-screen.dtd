@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "ସଂଯୋଗ କରନ୍ତୁ">
+<!ENTITY header     "ସୁଦୂର ଉପକରଣ ସହିତ ସଂଯୋଗ କରନ୍ତୁ">
+<!ENTITY host       "ହୋଷ୍ଟ:">
+<!ENTITY port       "ପୋର୍ଟ:">
+<!ENTITY connect    "ସଂଯୋଗ କରନ୍ତୁ">
+<!ENTITY connecting "ସଂଯୋଗ କରୁଅଛି…">
+<!ENTITY availableAddons "ଉପଲବ୍ଧ ସୁଦୂର ଏଡ଼ଅନଗୁଡ଼ିକ:">
+<!ENTITY availableTabs "ଉପଲବ୍ଧ ସୁଦୂର ଟ୍ୟାବଗୁଡ଼ିକ:">
+<!ENTITY availableProcesses "ଉପଲବ୍ଧ ସୁଦୂର କାର୍ଯ୍ୟଗୁଡ଼ିକ:">
+<!ENTITY connectionError "ତ୍ରୁଟି:">
+<!ENTITY errorTimeout "ତ୍ରୁଟି: ସଂଯୋଗ ସମୟ ସମାପ୍ତ।">
+<!ENTITY errorRefused "ତ୍ରୁଟି: ସଂଯୋଗକୁ ବାରଣ କରାଯାଇଛି।">
+<!ENTITY errorUnexpected "ଅପ୍ରତ୍ୟାଶିତ ତ୍ରୁଟି।">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox ବିକାଶକାରୀ ସାଧନଗୁଡ଼ିକ ସୁଦୂର ଉପକରଣଗୁଡ଼ିକର ତୃଟିନିବାରଣ କରିପାରିବ (ଉଦାହରଣ ସ୍ୱରୂପ, ଏଣ୍ଡ୍ରଏଡ ପାଇଁ Waterfox ଏବଂWaterfox OS)। 'ସୁଦୂର ତୃଟିନିବାରଣ' ବିକଳ୍ପକୁ ସୁଦୂର ଉପକରଣରେ ଅନ କରିଛନ୍ତି କି ନାହିଁ ନିଶ୍ଚିତ କରନ୍ତୁ। ଅଧିକ ବିବରଣୀ ପାଇଁ, ଏହାକୁ ଦେଖନ୍ତୁ">
+<!ENTITY remoteDocumentation "ଦଲିଲକରଣ">
+<!ENTITY remoteHelpSuffix ".">
+

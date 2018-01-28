@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Tatacara Halaman">
+
+<!ENTITY basic.tab           "Format &amp; Pilihan">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Orientasi:">
+<!ENTITY portrait.label      "Potret">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Lanskap">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "Skala:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Kecilkan supaya muat Lebar Halaman">
+<!ENTITY shrinkToFit.accesskey "c">
+
+<!ENTITY optionsGroup.label  "Pilihan">
+
+<!ENTITY printBG.label       "Cetak Latar belakang (warna &amp; imej)">
+<!ENTITY printBG.accesskey   "j">
+
+<!ENTITY advanced.tab        "Margin &amp; Pengepala/Footer">
+
+<!ENTITY marginGroup.label   "Margin (#1)">
+<!ENTITY marginUnits.inches  "inci">
+<!ENTITY marginUnits.metric  "milimeter">
+<!ENTITY marginTop.label     "Atas:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "Bawah:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "Kiri:">
+<!ENTITY marginLeft.accesskey "K">
+<!ENTITY marginRight.label   "Kanan:">
+<!ENTITY marginRight.accesskey "n">
+
+<!ENTITY headerFooter.label  "Pengepala &amp; Pengaki">
+
+<!ENTITY hfLeft.label        "Kiri:">
+<!ENTITY hfCenter.label      "Tengah:">
+<!ENTITY hfRight.label       "Kanan:">
+<!ENTITY headerLeft.tip      "Pengepala kiri">
+<!ENTITY headerCenter.tip    "Pengepala tengah">
+<!ENTITY headerRight.tip     "Pengepala kanan">
+<!ENTITY footerLeft.tip      "Pekaki kiri">
+<!ENTITY footerCenter.tip    "Pekaki tengah">
+<!ENTITY footerRight.tip     "Pekaki kanan">
+
+<!ENTITY hfTitle             "Tajuk">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Tarikh/Masa">
+<!ENTITY hfPage              "Laman #">
+<!ENTITY hfPageAndTotal      "Laman # daripada #">
+<!ENTITY hfBlank             "--kosong--">
+<!ENTITY hfCustom            "Adat...">
+
+<!ENTITY customPrompt.title  "Adat...">
+<!ENTITY customPrompt.prompt "Masukkan teks adat pengepala/pekaki">

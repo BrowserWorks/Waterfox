@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Tambah Penyimpan Baru">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "Keutamaan">
+<!ENTITY removeButton.label   "Buang">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Pergi ke Privasi">
+
+<!ENTITY window.title         "Tambah Penyimpan Baru">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nama:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Masukkan nama penyimpan">
+<!ENTITY icon.label           "Ikon:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Warna:">
+<!ENTITY color.accesskey      "w">
+<!ENTITY windowClose.key      "t">
+
+<!ENTITY button.ok.label      "Siap">
+<!ENTITY button.ok.accesskey  "S">
+

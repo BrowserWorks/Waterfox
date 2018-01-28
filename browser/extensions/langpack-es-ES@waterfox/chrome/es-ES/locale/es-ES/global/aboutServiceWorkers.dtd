@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutServiceWorkers.title "Acerca de los Service Workers">
+<!ENTITY aboutServiceWorkers.maintitle "Service Workers registrados">
+<!ENTITY aboutServiceWorkers.warning_not_enabled "Los Service Workers no están activados.">
+<!ENTITY aboutServiceWorkers.warning_no_serviceworkers "No hay Service Workers registrados.">

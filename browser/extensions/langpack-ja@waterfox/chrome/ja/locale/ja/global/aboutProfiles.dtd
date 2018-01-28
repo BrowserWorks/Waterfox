@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title			"プロファイルについて">
+<!ENTITY aboutProfiles.subtitle			"このページは、プロファイルの管理を助けます。プロファイルごとに環境が分けられており、それぞれに履歴、ブックマーク、設定、アドオンが含まれています。">
+<!ENTITY aboutProfiles.create			"新しいプロファイルを作成">
+<!ENTITY aboutProfiles.restart.title		"再起動">
+<!ENTITY aboutProfiles.restart.inSafeMode	"アドオンを無効にして再起動...">
+<!ENTITY aboutProfiles.restart.normal		"通常の再起動...">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Configurar página">
+
+<!ENTITY basic.tab           "Geral">
+
+<!ENTITY formatGroup.label   "Formato">
+
+<!ENTITY orientation.label   "Orientação:">
+<!ENTITY portrait.label      "Retrato">
+<!ENTITY portrait.accesskey  "R">
+<!ENTITY landscape.label     "Paisagem">
+<!ENTITY landscape.accesskey "P">
+
+<!ENTITY scale.label         "Escala:">
+<!ENTITY scale.accesskey     "E">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Diminuir até caber na largura da página">
+<!ENTITY shrinkToFit.accesskey "D">
+
+<!ENTITY optionsGroup.label  "Opções">
+
+<!ENTITY printBG.label       "Imprimir cores e imagens do plano de fundo">
+<!ENTITY printBG.accesskey   "I">
+
+<!ENTITY advanced.tab        "Margens">
+
+<!ENTITY marginGroup.label   "Margens (em #1)">
+<!ENTITY marginUnits.inches  "polegadas">
+<!ENTITY marginUnits.metric  "milímetros">
+<!ENTITY marginTop.label     "Superior:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Inferior:">
+<!ENTITY marginBottom.accesskey "I">
+<!ENTITY marginLeft.label    "Esquerda:">
+<!ENTITY marginLeft.accesskey "E">
+<!ENTITY marginRight.label   "Direita:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Cabeçalho e rodapé">
+
+<!ENTITY hfLeft.label        "Lado esquerdo">
+<!ENTITY hfCenter.label      "Centro">
+<!ENTITY hfRight.label       "Lado direito">
+<!ENTITY headerLeft.tip      "Cabeçalho esquerdo">
+<!ENTITY headerCenter.tip    "Cabeçalho do centro">
+<!ENTITY headerRight.tip     "Cabeçalho direito">
+<!ENTITY footerLeft.tip      "Rodapé esquerdo">
+<!ENTITY footerCenter.tip    "Rodapé do centro">
+<!ENTITY footerRight.tip     "Rodapé direito">
+
+<!ENTITY hfTitle             "Título">
+<!ENTITY hfURL               "Endereço">
+<!ENTITY hfDateAndTime       "Data/Hora">
+<!ENTITY hfPage              "Página #">
+<!ENTITY hfPageAndTotal      "Página # de #">
+<!ENTITY hfBlank             "--em branco--">
+<!ENTITY hfCustom            "Personalizar…">
+
+<!ENTITY customPrompt.title  "Personalizar">
+<!ENTITY customPrompt.prompt "Forneça o texto do cabeçalho/rodapé:">

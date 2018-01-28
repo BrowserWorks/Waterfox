@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Inicio">
+
+<!ENTITY startupPage.label         "Quan s'enchegue o &brandShortName;:">
+<!ENTITY startupPage.accesskey     "e">
+<!ENTITY startupUserHomePage.label "Amostrar la mía pachina d'inicio">
+<!ENTITY startupBlankPage.label    "Amostrar una pachina en blanco">
+<!ENTITY startupPrevSession.label  "Amostrar las finestras y pestanyas d'a zaguer vegada">
+
+<!ENTITY homepage.label            "Pachina d'inicio:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "Usar pachina actual">
+<!ENTITY useCurrentPage.accesskey  "c">
+<!ENTITY useMultiple.label         "Usar pachinas actuals">
+<!ENTITY chooseBookmark.label      "Usar o marcapachinas…">
+<!ENTITY chooseBookmark.accesskey  "m">
+<!ENTITY restoreDefault.label      "Restaurar ta la valura por defecto">
+<!ENTITY restoreDefault.accesskey  "v">
+
+<!ENTITY downloads.label     "Descargas">
+
+<!ENTITY saveTo.label "Alzar os fichers en">
+<!ENTITY saveTo.accesskey "A">
+<!ENTITY chooseFolderWin.label        "Examinar…">
+<!ENTITY chooseFolderWin.accesskey    "x">
+<!ENTITY chooseFolderMac.label        "Trigar…">
+<!ENTITY chooseFolderMac.accesskey    "T">
+<!ENTITY alwaysAskWhere.label         "Preguntar-me siempre a ón alzar os fichers">
+<!ENTITY alwaysAskWhere.accesskey     "r">
+
+<!ENTITY alwaysCheckDefault2.label        "Comprebar siempre si lo &brandShortName; ye o suyo navegador por defecto">
+<!ENTITY alwaysCheckDefault2.accesskey    "o">
+<!ENTITY setAsMyDefaultBrowser2.label     "Fer o navegador por defecto">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "d">
+<!ENTITY isDefault.label                  "&brandShortName; ye agora o suyo navegador por defecto">
+<!ENTITY isNotDefault.label               "&brandShortName; no ye o suyo navegador por defecto">
+
+<!ENTITY separateProfileMode.label        "Permitir que &brandShortName; y Waterfox corran de vez">
+<!ENTITY useWaterfoxSync.label             "Consello: Isto fa servir perfils deseparaus. Faiga servir Sync pa compartir datos entre ells.">
+<!ENTITY getStarted.notloggedin.label     "Iniciar la sesión en &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Ubrir las preferencias de &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Activar &brandShortName;  multiproceso">

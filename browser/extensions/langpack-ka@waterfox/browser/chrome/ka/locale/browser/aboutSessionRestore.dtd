@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "სეანსის აღდგენა">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "ოჰო, რაღაც ხარვეზებია.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ბრაუზერი ვერ ახერხებს წინა სეანსის ფანჯრების და ჩანართების აღდგენას. ჩვეულებრივ, ამის მიზეზი ბოლოს გახსნილი ვებგვერდია.">
+<!ENTITY restorepage.tryThis        "შეგიძლიათ სცადოთ:">
+<!ENTITY restorepage.restoreSome    "მოაცილეთ ის ჩანართები, რომელთა გაუმართაობაზეც ეჭვობთ">
+<!ENTITY restorepage.startNew       "დაიწყოთ სრულიად ახალი სეანსი">
+
+<!ENTITY restorepage.tryagainButton "აღდგენა">
+<!ENTITY restorepage.restore.access "ა">
+<!ENTITY restorepage.closeButton    "დახურვა">
+<!ENTITY restorepage.close.access   "დ">
+
+<!ENTITY restorepage.restoreHeader  "აღდგენა">
+<!ENTITY restorepage.listHeader     "ფანჯრები და ჩანართები">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "სარკმელი &#037;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "წინ! ">
+<!ENTITY welcomeback2.restoreButton.access "წ">
+
+<!ENTITY welcomeback2.tabtitle      "მზადაა!">
+
+<!ENTITY welcomeback2.pageTitle     "მზადაა!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; გასაშვებად მზადაა.">
+
+<!ENTITY welcomeback2.restoreAll.label  "ყველა ფანჯრის &amp; ჩანართის აღდგენა">
+<!ENTITY welcomeback2.restoreSome.label "მხოლოდ სასურველის აღდგენა">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "დამატებები წაიშალა და ბრაუზერის მორგებული პარამეტრები დაუბრუნდა ნაგულისხმევს. თუ ამან მაინც ვერ აღმოფხვრა გაუმართაობა, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "გაიგეთ, კიდევ რა შეგიძლიათ მოიმოქმედოთ.">
+

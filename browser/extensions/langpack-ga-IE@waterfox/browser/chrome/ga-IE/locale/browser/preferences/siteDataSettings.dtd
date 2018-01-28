@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Socruithe - Sonraí Suímh">
+<!ENTITY     hostCol.label                 "Suíomh">
+<!ENTITY     statusCol.label               "Stádas">
+<!ENTITY     usageCol.label                "Stóras">
+<!ENTITY     searchTextboxPlaceHolder             "Cuardaigh suímh">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Bain na Cinn Roghnaithe">
+<!ENTITY     removeSelected.accesskey      "R">
+<!ENTITY     save.label                    "Sábháil na hAthruithe">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Cealaigh">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Sonraí Suímh á Scriosadh">
+<!ENTITY     removingSelected.description  "Má scriosann tú na sonraí suímh, scriosfar fianáin ghaolmhara agus ábhar Gréasáin as líne freisin. Seans go mbeidh tú logáilte amach as suímh áirithe. An bhfuil tú cinnte gur mhaith leat an t-athrú seo a chur i bhfeidhm?">
+<!ENTITY     siteTree.label                "Scriosfar na fianáin seo a leanas:">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Wótgraś">
+<!ENTITY playButton.pauseLabel "Pawza">
+<!ENTITY muteButton.muteLabel "Bźez zuka">
+<!ENTITY muteButton.unmuteLabel "Ze zukom">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Połna wobrazowka">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Połnu wobrazowku spušćiś">
+<!ENTITY castingButton.castingLabel "Na wobrazowku projicěrowaś">
+<!ENTITY closedCaption.off "Wušaltowany">
+
+<!ENTITY stats.media "Medije">
+<!ENTITY stats.size "Wjelikosć">
+<!ENTITY stats.activity "Aktiwita">
+<!ENTITY stats.activityPaused "Zastajony">
+<!ENTITY stats.activityPlaying "Wótgrawanje">
+<!ENTITY stats.activityEnded "Skóńcony">
+<!ENTITY stats.activitySeeking "(pyta se)">
+<!ENTITY stats.volume "Głosnosć">
+<!ENTITY stats.framesParsed "Analyzěrowane wobłuki">
+<!ENTITY stats.framesDecoded "Zdekoděrowane wobłuki">
+<!ENTITY stats.framesPresented "Prezentěrowane wobłuki">
+<!ENTITY stats.framesPainted "Nakreslone wobłuki">
+
+<!ENTITY error.aborted "Zacytowanje wideo jo se zastajiło.">
+<!ENTITY error.network "Wótgrawanje wideo jo se seśoweje zmólki dla pśetergnuło.">
+<!ENTITY error.decode "Wideo njedajo se wótgraś, dokulaž dataja jo wobškóźona.">
+<!ENTITY error.srcNotSupported "Wideowy format abo MIME-typ se njepódpěra.">
+<!ENTITY error.noSource2 "Wideo z pódpěranym formatom a MIME-typom njejo so namakało.">
+<!ENTITY error.generic "Wotgrawanje wideo jo se njeznateje zmólki dla pśetergnuło.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 z #2 jo se minuło">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle "Informacje o url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle "Dostawca">
+<!ENTITY aboutUrlClassifier.provider "Dostawca">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime "Ostatnie uaktualnienie">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime "Następne uaktualnienie">
+<!ENTITY aboutUrlClassifier.providerBackOffTime "Wycofano">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus "Status ostatniego uaktualnienia">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn "Uaktualnij">
+<!ENTITY aboutUrlClassifier.cacheTitle "Pamięć podręczna">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn "Odśwież">
+<!ENTITY aboutUrlClassifier.cacheClearBtn "Wyczyść">
+<!ENTITY aboutUrlClassifier.cacheTableName "Nazwa tabeli">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries "Liczba negatywnych wpisów pamięci podręcznej">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries "Liczba pozytywnych wpisów pamięci podręcznej">
+<!ENTITY aboutUrlClassifier.cacheShowEntries "Wyświetl wpisy">
+<!ENTITY aboutUrlClassifier.cacheEntries "Wpisy pamięci podręcznej">
+<!ENTITY aboutUrlClassifier.cachePrefix "Przedrostek">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry "Data wygasania negatywnych wpisów pamięci podręcznej">
+<!ENTITY aboutUrlClassifier.cacheFullhash "Pełna wartość skrótu">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry "Data wygasania pozytywnych wpisów pamięci podręcznej">
+<!ENTITY aboutUrlClassifier.debugTitle "Debugowanie">
+<!ENTITY aboutUrlClassifier.debugModuleBtn "Wybierz moduły dziennika">
+<!ENTITY aboutUrlClassifier.debugFileBtn "Wybierz plik dziennika">
+<!ENTITY aboutUrlClassifier.debugJSLogChk "Dziennik JavaScript">
+<!ENTITY aboutUrlClassifier.debugSBModules "Moduły dziennika bezpiecznego przeglądania">
+<!ENTITY aboutUrlClassifier.debugModules "Bieżące moduły dziennika">
+<!ENTITY aboutUrlClassifier.debugSBJSModules "Moduły dziennika bezpiecznego przeglądania JavaScript">
+<!ENTITY aboutUrlClassifier.debugFile "Bieżący plik dziennika">

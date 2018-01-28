@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "พิมพ์…">
+<!ENTITY print.accesskey      "พ">
+<!ENTITY pageSetup.label      "ตั้งค่าหน้ากระดาษ…">
+<!ENTITY pageSetup.accesskey  "ง">
+<!ENTITY page.label           "หน้า:">
+<!ENTITY page.accesskey       "ห">
+<!ENTITY of.label             "จาก">
+<!ENTITY scale.label          "มาตราส่วน:">
+<!ENTITY scale.accesskey      "ม">
+<!ENTITY portrait.label       "แนวตั้ง">
+<!ENTITY portrait.accesskey   "น">
+<!ENTITY landscape.label      "แนวนอน">
+<!ENTITY landscape.accesskey  "ว">
+<!ENTITY close.label          "ปิด">
+<!ENTITY close.accesskey      "ด">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "กำหนดเอง…">
+<!ENTITY ShrinkToFit.label    "ย่อให้พอดี">
+<!ENTITY customPrompt.title   "มาตราส่วนที่กำหนดเอง…">
+<!ENTITY simplifyPage.label   "หน้าแบบเรียบง่าย">
+<!ENTITY simplifyPage.accesskey "ร">
+<!ENTITY simplifyPage.enabled.tooltip  "เปลี่ยนเค้าโครงเพื่อการอ่านที่ง่ายขึ้น">
+<!ENTITY simplifyPage.disabled.tooltip "หน้านี้ไม่สามารถทำให้เรียบง่ายได้โดยอัตโนมัติ">
+
+<!ENTITY homearrow.tooltip    "หน้าแรก">
+<!ENTITY endarrow.tooltip     "หน้าสุดท้าย">
+<!ENTITY nextarrow.tooltip    "หน้าถัดไป">
+<!ENTITY previousarrow.tooltip "หน้าก่อนหน้า">

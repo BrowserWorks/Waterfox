@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Tilkoblingsinnstillinger">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Konfigurer proxy for tilgang til Internett">
+<!ENTITY  noProxyTypeRadio.label        "Ingen proxy">
+<!ENTITY  noProxyTypeRadio.accesskey    "I">
+<!ENTITY  systemTypeRadio.label         "Bruk systemets innstillinger">
+<!ENTITY  systemTypeRadio.accesskey     "y">
+<!ENTITY  WPADTypeRadio.label           "Automatisk oppdag innstillinger">
+<!ENTITY  WPADTypeRadio.accesskey       "A">
+<!ENTITY  manualTypeRadio.label         "Manuelle innstillinger:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "Automatisk oppsettadresse:">
+<!ENTITY  autoTypeRadio.accesskey       "u">
+<!ENTITY  reload.label                  "Oppdater">
+<!ENTITY  reload.accesskey              "O">
+<!ENTITY  ftp.label                     "FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Proxy DNS når du bruker SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPport.accesskey            "p">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Ingen MT for:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Eksempel: .mozilla.org, .online.no, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Bruk denne proxyen for alle protokoller">
+<!ENTITY  shareproxy.accesskey          "B">
+<!ENTITY  autologinproxy.label          "Ikke spør om autentisering hvis passordet er lagret">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "Dette valget autentiserer deg stille mot proxier når du har lagrede innloggingsdetaljer for de. Du vil få spørsmål dersom autentisering er mislykket.">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Penyesuaian Bar Alat">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Anda boleh tambah atau alih keluar item dengan seret keluar atau dari dalam bar alat.">
+<!ENTITY show.label               "Papar:">
+<!ENTITY iconsAndText.label       "Ikon dan Teks">
+<!ENTITY icons.label              "Ikon">
+<!ENTITY text.label               "Teks">
+<!ENTITY useSmallIcons.label      "Guna Ikon Kecil">
+<!ENTITY restoreDefaultSet.label  "Pulih Set Piawai">
+<!ENTITY addNewToolbar.label      "Tambah Bar Alat Baru">
+<!ENTITY saveChanges.label        "Selesai">
+<!ENTITY undoChanges.label        "Batal Perubahan">

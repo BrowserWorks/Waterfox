@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Powšitkowny">
+
+<!ENTITY useCursorNavigation.label       "Přeco kursorowe tasty za pohibowanje na stronach wužiwać">
+<!ENTITY useCursorNavigation.accesskey   "k">
+<!ENTITY searchOnStartTyping.label       "Při pisanju tekst pytać">
+<!ENTITY searchOnStartTyping.accesskey   "P">
+<!ENTITY useOnScreenKeyboard.label       "Dótknjensku tastaturu pokazać, jeli trěbne">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Přehladowanje">
+
+<!ENTITY useAutoScroll.label             "Awtomatiske přesuwanje wužiwać">
+<!ENTITY useAutoScroll.accesskey         "A">
+<!ENTITY useSmoothScrolling.label        "Łahodne přesuwanje wužiwać">
+<!ENTITY useSmoothScrolling.accesskey    "h">
+<!ENTITY checkUserSpelling.label         "Při pisanju prawopis kontrolować">
+<!ENTITY checkUserSpelling.accesskey     "P">
+
+<!ENTITY dataChoicesTab.label            "Datowy wuběr">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "Datowe rozprawjenje je znjemóžnjene za tutu programowu konfiguraciju">
+
+<!ENTITY enableHealthReport1.label       "&brandShortName; zmóžnić, awtomatisce techniske a interakciske daty na Mozilla pósłać">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Dalše informacije">
+
+<!ENTITY dataCollection.label            "Hromadźenje a wužiwanje daotw &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Chcemy was z wuběrami wobstarać a jenož to zběrać, štož dyrbimy poskićić, zo bychmy &brandShortName; za kóždeho polěpšili. Prosymy přeco wo dowolnosć, prjedy hač wosobinske daty dóstanjemy.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Zdźělenka priwatnosće">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "&brandShortName; zmóžnić, spadowe rozprawy na Mozilla pósłać">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "s">
+<!ENTITY crashReporterLearnMore.label    "Dalše informacije">
+
+<!ENTITY networkTab.label                "Syć">
+
+<!ENTITY networkProxy.label              "Syćowy proksy">
+
+<!ENTITY connectionDesc.label            "Konfigurować, kak &brandShortName; ma z internetom zwjazać">
+<!ENTITY connectionSettings.label        "Nastajenja…">
+<!ENTITY connectionSettings.accesskey    "N">
+
+<!ENTITY httpCache.label                 "Pufrowany webwobsah">
+
+<!ENTITY offlineStorage2.label           "Webwobsah a wužiwarske daty offline">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Sydłowe daty">
+<!ENTITY clearSiteData.label             "Wšě daty zhašeć">
+<!ENTITY clearSiteData.accesskey         "h">
+<!ENTITY siteDataSettings.label          "Nastajenja…">
+<!ENTITY siteDataSettings.accesskey      "N">
+<!ENTITY siteDataLearnMoreLink.label     "Dalše informacije">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Pufrowak wobmjezować na">
+<!ENTITY limitCacheSizeBefore.accesskey  "P">
+<!ENTITY limitCacheSizeAfter.label       "MB ruma">
+<!ENTITY clearCacheNow.label             "Nětko wuprózdnić">
+<!ENTITY clearCacheNow.accesskey         "u">
+<!ENTITY clearOfflineAppCacheNow.label   "Nětko wuprózdnić">
+<!ENTITY clearOfflineAppCacheNow.accesskey "r">
+<!ENTITY overrideSmartCacheSize.label    "Awtomatiske rjadowanje pufrowaka přepisać">
+<!ENTITY overrideSmartCacheSize.accesskey "m">
+
+<!ENTITY updateTab.label                 "Aktualizować">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "Aktualizacije &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "Dźeržće &brandShortName; aktualny, za najlěpši wukon, stabilnosć a wěstotu.">
+<!ENTITY updateApplication.version.pre   "Wersija ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "&amp;brandShortName dowolić,">
+<!ENTITY updateAuto3.label               "Aktualizacije awtomatisce instalować (doporučene)">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "Za aktualizacijemi pytać, ale prjedy so prašeć, hač maja so instalować">
+<!ENTITY updateCheckChoose2.accesskey    "Z">
+<!ENTITY updateManual2.label             "Ženje za aktualizacijemi njepytać (njeporuča so)">
+<!ENTITY updateManual2.accesskey         "e">
+
+<!ENTITY updateHistory2.label            "Aktualizacisku historiju pokazać…">
+<!ENTITY updateHistory2.accesskey        "h">
+
+<!ENTITY useService.label                "Pozadkowu słužbu za instalowanje aktualizacijow wužiwać">
+<!ENTITY useService.accesskey            "P">
+
+<!ENTITY enableSearchUpdate2.label       "Pytawy awtomatisce aktualizować">
+<!ENTITY enableSearchUpdate2.accesskey   "k">
+
+<!ENTITY offlineStorageNotify.label               "Informować, hdyž websydło chce daty za wužiwanje offline składować">
+<!ENTITY offlineStorageNotify.accesskey           "I">
+<!ENTITY offlineStorageNotifyExceptions.label     "Wuwzaća…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "u">
+
+<!ENTITY offlineAppsList2.label          "Slědowace websydła smědźa daty za wužiwanje offline składować:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Wotstronić…">
+<!ENTITY offlineAppsListRemove.accesskey "o">
+<!ENTITY offlineAppRemove.confirm        "Daty offline wotstronić">
+
+<!ENTITY certificateTab.label            "Certifikaty">
+<!ENTITY certPersonal2.description       "Hdyž sej serwer waš wosobinski certifikat žada">
+<!ENTITY selectCerts.auto                "Awtomatisce wubrać">
+<!ENTITY selectCerts.auto.accesskey      "s">
+<!ENTITY selectCerts.ask                 "Kóždy raz so prašeć">
+<!ENTITY selectCerts.ask.accesskey       "K">
+<!ENTITY enableOCSP.label                "Pola wotmołwnych serwerow OCSP so naprašować, zo by aktualnu płaćiwosć certifikatow wobkrućiło">
+<!ENTITY enableOCSP.accesskey            "P">
+<!ENTITY viewCerts2.label                "Certifikaty pokazać…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "Wěstotne graty…">
+<!ENTITY viewSecurityDevices2.accesskey  "t">
+
+<!ENTITY performance.label               "Wukon">
+<!ENTITY useRecommendedPerformanceSettings2.label "Doporučene wukonowe nastajenja wužiwać">
+<!ENTITY useRecommendedPerformanceSettings2.description "Tute nastajenja su na hardwaru a dźěłowy system wašeho ličaka přiměrjene.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "D">
+<!ENTITY performanceSettingsLearnMore.label "Dalše informacije">
+<!ENTITY limitContentProcessOption.label "Mjeza wobsahoweho procesa">
+<!ENTITY limitContentProcessOption.description "Wjace wobsahowych procesow móže wukon polěpšować, hdyž so wjacore rajtarki wužiwaja, budźe wšak tež wjace składa přetrjebować.">
+<!ENTITY limitContentProcessOption.accesskey   "M">
+<!ENTITY limitContentProcessOption.disabledDescription "Ličba wobsahowych procesow da so jenož z wjaceprocesowym &brandShortName; změnić.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Zhońće, kak móžeće kontrolować, hač wjaceprocesowa funkcija je zmóžnjena">
+<!ENTITY allowHWAccel.label              "Hardwarowe pospěšenje wužiwać, jeli k dispoziciji">
+<!ENTITY allowHWAccel.accesskey          "H">

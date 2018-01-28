@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "ရွေးစရာများ">
+<!ENTITY  prefWindow.title        "နှစ်သက်ရာ အပြင်အဆင်များ">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; နှစ်သက်ရာ အပြင်အဆင်များ">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "ရှာဖွေမှု ရလဒ်များ">
+<!ENTITY  paneGeneral.title             "အထွေထွေ">
+<!ENTITY  paneFilesApplications.title   "ဖိုင်များ &amp; အက်ပလီကေးရှင်းများ">
+<!ENTITY  panePrivacySecurity.title     "ကိုယ်ရေးကာကွယ်မှု &amp; လုံခြုံမှု">
+<!ENTITY  paneContainers.title          "ကွန်တိန်နာတပ်ဗ်များ">
+<!ENTITY  paneUpdates.title             "အဆင့်မြှင့်မှုများ">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Waterfox အကောင့်">
+
+<!ENTITY  helpButton2.label        "&brandShortName; အထောက်အပံ့">
+
+<!ENTITY  searchInput.label        "ရှာဖွေရန်">
+
+<!ENTITY  browserPrivacy.label          "Browser Privacy">
+
+<!ENTITY  filesAndApplications.label    "Files and Applications">
+<!ENTITY  languageAndAppearance.label   "Language and Appearance">
+<!ENTITY  paneSearch.title              "Search">

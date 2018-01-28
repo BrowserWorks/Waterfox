@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Ynformaasje oer de url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Provider">
+<!ENTITY aboutUrlClassifier.provider                    "Provider">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Tiid fan lêste fernijing">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Tiid fan folgjende fernijing">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-offtiid">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Steat fan lêste fernijing">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Bywurkje">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Buffer">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Fernije">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Wiskje">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabelnamme">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Oantal negative-bufferfermeldingen">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Oantal positive-bufferfermeldingen">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Fermeldingen toane">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Bufferfermeldingen">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Foarheaksel">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Ferrin fan negative buffer">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Folsleine hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Ferrin fan positive buffer">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debugge">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Lochodules ynstelle">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Lochbestân ynstelle">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS-registraasje ynstelle">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Lochmodules fan Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugModules                "Aktuele lochmodules">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "JS-registraasje fan Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugFile                   "Aktuele lochbestân">

@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Προστασία από παρακολούθηση">
+<!ENTITY  trackingProtection2.description      "Παρακολούθηση είναι η συλλογή των δεδομένων περιήγησής σας σε πολλαπλές ιστοσελίδες. Η παρακολούθηση μπορεί να χρησιμοποιηθεί για τη δημιουργία ενός προφίλ και την προβολή περιεχομένου βάσει των διαδικτυακών και προσωπικών πληροφοριών σας.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Χρήση προστασίας από παρακολούθηση για φραγή γνωστών ιχνηλατών">
+<!ENTITY  trackingProtectionAlways.label       "Πάντα">
+<!ENTITY  trackingProtectionAlways.accesskey   "α">
+<!ENTITY  trackingProtectionPrivate.label      "Μόνο σε ιδιωτικά παράθυρα">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ο">
+<!ENTITY  trackingProtectionNever.label        "Ποτέ">
+<!ENTITY  trackingProtectionNever.accesskey    "π">
+<!ENTITY  trackingProtectionLearnMore.label    "Μάθετε περισσότερα">
+<!ENTITY  trackingProtectionExceptions.label   "Εξαιρέσεις…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ξ">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "Χρήση Προστασίας από καταγραφή στα ιδιωτικά παράθυρα">
+<!ENTITY trackingProtectionPBM5.accesskey     "ρ">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Χρήση της προστασίας από παρακολούθηση στην ιδιωτική περιήγηση για φραγή γνωστών ιχνηλατών">
+<!ENTITY trackingProtectionPBM6.accesskey     "δ">
+<!ENTITY trackingProtectionPBMLearnMore.label "Μάθετε περισσότερα">
+<!ENTITY changeBlockList2.label               "Αλλαγή λίστας αποκλεισμού…">
+<!ENTITY changeBlockList2.accesskey           "λ">
+
+<!ENTITY  doNotTrack.description        "Αποστολή σήματος “Αποτροπή καταγραφής” που σημαίνει ότι δεν θέλετε να καταγράφεστε από τις ιστοσελίδες">
+<!ENTITY  doNotTrack.learnMore.label    "Μάθετε περισσότερα">
+<!ENTITY  doNotTrack.default.label      "Μόνο κατά τη χρήση προστασίας από παρακολούθηση">
+<!ENTITY  doNotTrack.always.label       "Πάντα">
+
+<!ENTITY  history.label                 "Ιστορικό">
+<!ENTITY  permissions.label             "Δικαιώματα">
+
+<!ENTITY  addressBar.label              "Γραμμή διευθύνσεων">
+<!ENTITY  addressBar.suggest.label      "Κατά τη χρήση της γραμμής διευθύνσεων, να γίνεται πρόταση">
+<!ENTITY  locbar.history2.label         "Ιστορικό περιήγησης">
+<!ENTITY  locbar.history2.accesskey     "Ι">
+<!ENTITY  locbar.bookmarks.label        "Σελιδοδεικτών">
+<!ENTITY  locbar.bookmarks.accesskey    "δ">
+<!ENTITY  locbar.openpage.label         "Ανοικτών καρτελών">
+<!ENTITY  locbar.openpage.accesskey     "Ο">
+<!ENTITY  locbar.searches.label         "Σχετικές αναζητήσεις από την προεπιλεγμένη μηχανή αναζήτησης">
+<!ENTITY  locbar.searches.accesskey     "ς">
+
+<!ENTITY  suggestionSettings2.label     "Αλλαγή προτιμήσεων για τις προτάσεις μηχανών αναζήτησης">
+
+<!ENTITY  acceptCookies2.label          "Αποδοχή cookies από ιστοσελίδες">
+<!ENTITY  acceptCookies2.accesskey      "Α">
+
+<!ENTITY  acceptThirdParty.pre.label      "Αποδοχή cookies τρίτων:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "η">
+<!ENTITY  acceptThirdParty.always.label   "Πάντα">
+<!ENTITY  acceptThirdParty.never.label    "Ποτέ">
+<!ENTITY  acceptThirdParty.visited.label  "Από επισκέψεις">
+
+<!ENTITY  keepUntil.label               "Διατήρηση μέχρι:">
+<!ENTITY  keepUntil.accesskey           "μ">
+
+<!ENTITY  expire.label                  "τη λήξη τους">
+<!ENTITY  close.label                   "το κλείσιμο του &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Εξαιρέσεις…">
+<!ENTITY  cookieExceptions.accesskey    "Ε">
+
+<!ENTITY  showCookies.label             "Προβολή Cookies…">
+<!ENTITY  showCookies.accesskey         "Π">
+
+<!ENTITY  historyHeader2.pre.label         "Το &brandShortName; θα">
+<!ENTITY  historyHeader2.pre.accesskey     "θ">
+<!ENTITY  historyHeader.remember.label     "Διατηρεί το ιστορικό">
+<!ENTITY  historyHeader.dontremember.label "Δεν θα διατηρεί ποτέ το ιστορικό">
+<!ENTITY  historyHeader.custom.label       "Κάνει χρήση προσαρμοσμένων ρυθμίσεων ιστορικού">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "Το &brandShortName; θα διατηρεί το ιστορικό περιήγησης, λήψεων, φορμών και αναζήτησης, καθώς και τα cookies από τις ιστοσελίδες που επισκέπτεστε.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Αν θέλετε, μπορείτε να ">
+<!ENTITY  rememberActions.clearHistory.label  "εκκαθαρίσετε όλο το πρόσφατο ιστορικό σας">
+<!ENTITY  rememberActions.middle.label        ", ή ">
+<!ENTITY  rememberActions.removeCookies.label "να διαγράψετε συγκεκριμένα cookies">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "Το &brandShortName; θα χρησιμοποιεί τις ίδιες ρυθμίσεις με την ιδιωτική περιήγηση και δεν θα διατηρεί το ιστορικό περιήγησης σας.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Αν θέλετε, μπορείτε να ">
+<!ENTITY  dontrememberActions.clearHistory.label "εκκαθαρίσετε όλο το τρέχον ιστορικό σας">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Μόνιμη λειτουργία ιδιωτικής περιήγησης">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ι">
+
+<!ENTITY  rememberHistory2.label      "Διατήρηση του ιστορικού περιήγησης και λήψεων">
+<!ENTITY  rememberHistory2.accesskey  "τ">
+
+<!ENTITY  rememberSearchForm.label       "Διατήρηση ιστορικού αναζήτησης και φορμών">
+<!ENTITY  rememberSearchForm.accesskey   "φ">
+
+<!ENTITY  clearOnClose.label             "Εκκαθάριση ιστορικού όταν κλείνει το &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "κ">
+
+<!ENTITY  clearOnCloseSettings.label     "Ρυθμίσεις…">
+<!ENTITY  clearOnCloseSettings.accesskey "θ">
+
+<!ENTITY  browserContainersLearnMore.label      "Μάθετε περισσότερα">
+<!ENTITY  browserContainersEnabled.label        "Ενεργοποίηση θεματικών καρτελών">
+<!ENTITY  browserContainersEnabled.accesskey    "ν">
+<!ENTITY  browserContainersSettings.label        "Ρυθμίσεις…">
+<!ENTITY  browserContainersSettings.accesskey    "ι">

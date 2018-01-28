@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Kinuk'samajel kiwujil taq b'i'aj">
+
+<!ENTITY certmgr.tab.mine                     "Ri taq ruwujil ab'i'">
+<!ENTITY certmgr.tab.others2                  "Winaqi'">
+<!ENTITY certmgr.tab.websites3                "Taq ruk'u'x samaj">
+<!ENTITY certmgr.tab.ca                       "K'amöl taq b'ey">
+<!ENTITY certmgr.tab.orphan2                  "Juley chik">
+
+<!ENTITY certmgr.mine                         "E k'o taq ruwujil kib'i' re taq moloj re', ri nikiya' awetal:">
+<!ENTITY certmgr.others                       "K'o taq ruwujil b'i'aj ri eyakon, ri nikiya' ketal re taq winaqi' re':">
+<!ENTITY certmgr.websites2                    "K'o taq ruwujil b'i'aj ri eyakon, ri nikiya' ketal re ruk'u'x taq samaj:">
+<!ENTITY certmgr.cas                          "K'o taq ruwujil b'i'aj ri eyakon, ri nikiya' ketal re taqanel taq ya'öl ruwujil b'i'aj:">
+<!ENTITY certmgr.orphans                      "K'o taq ruwujil ab'i' pa ri yakb'äl, ri man nikik'äm ta ki' pa nijun chi ke ri ch'aqa' chik taq ruwäch:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Chijun">
+<!ENTITY certmgr.detail.general_tab.accesskey "C">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Kib'anikil">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "K">
+
+<!ENTITY certmgr.pending.label                "Tajin ninik'öx wakami ri ruwujil b'i'aj…">
+<!ENTITY certmgr.subjectinfo.label            "Elesan richin">
+<!ENTITY certmgr.issuerinfo.label             "Elesan ruma">
+<!ENTITY certmgr.periodofvalidity.label       "Ruq'ijul ruk'aslem" >
+<!ENTITY certmgr.fingerprints.label           "Retal taq ruwi' q'ab'aj">
+<!ENTITY certmgr.certdetail.title             "Rub'anikil ruwujil b'i'aj">
+<!ENTITY certmgr.certdetail.cn                "Relik b'i'aj (CN)">
+<!ENTITY certmgr.certdetail.o                 "Moloj (MO)">
+<!ENTITY certmgr.certdetail.ou                "Ruq'a' moloj (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Rucholajem rajilab'al">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 Retal ruwi' q'ab'aj">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1 Retal ruwi' q'ab'aj">
+
+<!ENTITY certmgr.editcacert.title             "Tinuk' runuk'ulem qukub'äl k'u'x richin CA">
+<!ENTITY certmgr.editcert.edittrust           "Kenuk' taq kuqub'äl taq nuk'ulem:">
+<!ENTITY certmgr.editcert.trustssl            "Re ruwujil b'i'aj re' nitikïr yerutz'ët ruxaq k'amaya'l.">
+<!ENTITY certmgr.editcert.trustemail          "Re ruwujil b'i'aj re' nitikïr yerutz'ët ri e ruwinaq taqoya'l.">
+<!ENTITY certmgr.editcert.trustobjsign        "Re ruwujil b'i'aj re' nitikïr yerutz'ët taq ajb'anöy kema'.">
+
+<!ENTITY certmgr.deletecert.title             "Tiyuj ruwujil b'i'aj">
+
+<!ENTITY certmgr.certname                     "Rub'i' ruwujil b'i'aj">
+<!ENTITY certmgr.certserver                   "Ruk'u'x samaj">
+<!ENTITY certmgr.override_lifetime            "Rutzil k'aslem">
+<!ENTITY certmgr.tokenname                    "Okisaxel richin jikomal">
+<!ENTITY certmgr.begins                       "Tatikirisaj pa">
+<!ENTITY certmgr.expires                      "Nik'is ruq'ijul pa">
+<!ENTITY certmgr.email                        "Rochochib'al taqoya'l">
+<!ENTITY certmgr.serial                       "Rucholajem rajilab'al">
+
+<!ENTITY certmgr.close.label                  "Titz'apïx">
+<!ENTITY certmgr.close.accesskey              "T">
+<!ENTITY certmgr.view2.label                  "Titz'et…">
+<!ENTITY certmgr.view2.accesskey              "T">
+<!ENTITY certmgr.edit3.label                  "Tinuk' kuqub'äl k'u'x…">
+<!ENTITY certmgr.edit3.accesskey              "T">
+<!ENTITY certmgr.export.label                 "Tik'wäx el…">
+<!ENTITY certmgr.export.accesskey             "k">
+<!ENTITY certmgr.delete2.label                "Tiyuj…">
+<!ENTITY certmgr.delete2.accesskey            "T">
+<!ENTITY certmgr.delete_builtin.label         "Tiyuj o man takuqub'a' ta chik ak'u'x chi rij…">
+<!ENTITY certmgr.delete_builtin.accesskey     "T">
+<!ENTITY certmgr.backup2.label                "Tiwachib'ëx…">
+<!ENTITY certmgr.backup2.accesskey            "T">
+<!ENTITY certmgr.backupall2.label             "Tiwachib'ëx ronojel…">
+<!ENTITY certmgr.backupall2.accesskey         "i">
+<!ENTITY certmgr.restore2.label               "Tijik' pe…">
+<!ENTITY certmgr.restore2.accesskey           "i">
+<!ENTITY certmgr.details.label                "Taq ruk'ojlib'al ruwujil b'i'aj">
+<!ENTITY certmgr.details.accesskey            "r">
+<!ENTITY certmgr.fields.label                 "Rejqalem k'ojlib'äl">
+<!ENTITY certmgr.fields.accesskey             "R">
+<!ENTITY certmgr.hierarchy.label              "Ruwujil b'i'aj ach'alanïk">
+<!ENTITY certmgr.hierarchy.accesskey2         "O">
+<!ENTITY certmgr.addException.label           "Titz'aqtisäx man relik ta…">
+<!ENTITY certmgr.addException.accesskey       "e">
+
+<!ENTITY exceptionMgr.title                   "Tz'aqatisäx me'elik ta jikomal">
+<!ENTITY exceptionMgr.exceptionButton.label   "Tijikib'äl man relik ta richin jikomal">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "T">
+<!ENTITY exceptionMgr.supplementalWarning     "Ri qitzij taq pwaqb'äl, taq k'ayij chuqa' juley chik aj winäq ruxaq k'amaya'l, man xtikik'utuj ta chawe chi xtab'än re'.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Ruk'u'x samaj">
+<!ENTITY exceptionMgr.certlocation.url        "Rochochib'al:">
+<!ENTITY exceptionMgr.certlocation.download   "Tik'ul ruwujil b'i'aj">
+<!ENTITY exceptionMgr.certlocation.accesskey  "O">
+<!ENTITY exceptionMgr.certstatus.caption      "Rub'anikil ruwujil b'i'aj">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Titz'et…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "W">
+<!ENTITY exceptionMgr.permanent.label         "Jumul tiyak kan re me'elik re'">
+<!ENTITY exceptionMgr.permanent.accesskey     "J">

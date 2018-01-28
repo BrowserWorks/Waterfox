@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-ms@waterfox"
+               em:name="Bahasa Melayu (ms) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="mozilla.org">
+    <em:contributor>Mahrazi Mohd Kamal</em:contributor><em:contributor>Syafiq Mazli</em:contributor><em:contributor>Haryati Salehin</em:contributor><em:contributor>Fahmi Fisal</em:contributor><em:contributor>Muhammad Hafiz Hidzir</em:contributor><em:contributor>Syakir Sudar</em:contributor><em:contributor>Adnan Shukor</em:contributor><em:contributor>Timothy</em:contributor><em:contributor>Amirol Ahmad</em:contributor><em:contributor>Amin Abdullah</em:contributor><em:contributor>M Ilham Ramadhan</em:contributor><em:contributor>Ahmad Noor Kader Mustajir</em:contributor><em:contributor>Muazam Hadi</em:contributor><em:contributor>Mohd Fadzil</em:contributor><em:contributor>Amin Abdullah</em:contributor><em:contributor>Paie</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

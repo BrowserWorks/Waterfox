@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Հեռացնել Հիմնական Գաղտնաբառը">
+<!ENTITY removeInfo.label                  "Շարունակելու համար պիտի մուտքագրեք Ձեր առկա գաղտնաբառը.">
+<!ENTITY removeWarning1.label              "Հիմնական Գաղտնաբառն օգտագործվում է կարևոր տեղեկությունները, ինչպես օրինակ կայքերում գաղտնաբառերը պաշտպանելու համար:">
+<!ENTITY removeWarning2.label              "Եթե հեռացնեք Ձեր Հիմնական Գաղտնաբառն, ապա Ձեր ինֆորմացիան պաշտպանված չի լինի եթե Ձեր համակարգիչը վտանգվի:">
+<!ENTITY setPassword.oldPassword.label     "Առկա Գաղտնաբառը.">
+

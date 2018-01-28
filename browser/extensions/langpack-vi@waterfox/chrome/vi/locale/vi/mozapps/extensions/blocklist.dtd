@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Có thể do các Tiện ích gây ra lỗi">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; nhận thấy rằng các tiện ích sau đã từng gây ra các vấn đề bảo mật và ổn định:">
+<!ENTITY blocklist.softblocked       "Để bảo vệ bạn, lời khuyên tốt nhất là bạn hãy vô hiệu hóa các tiện ích này và khởi động lại trình duyệt.">
+<!ENTITY blocklist.hardblocked       "Những tiện ích này có nguy cơ cao gây ra các vấn đề bảo mật và ổn định nên đã bị chặn, nhưng cần phải khởi động lại để có thể vô hiệu hóa chúng hoàn toàn.">
+<!ENTITY blocklist.softandhard       "Những tiện ích có nguy cơ cao gây ra các vấn đề bảo mật và ổn định đã bị chặn. Những cái khác có nguy cơ thấp hơn, nhưng lời khuyên tốt nhất là bạn hãy vô hiệu hóa chúng và khởi động lại.">
+<!ENTITY blocklist.moreinfo          "Thông tin chi tiết">
+
+<!ENTITY blocklist.accept.label      "Khởi động lại &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "K">
+
+<!ENTITY blocklist.blocked.label     "Đã bị chặn">
+<!ENTITY blocklist.checkbox.label    "Vô hiệu hóa">

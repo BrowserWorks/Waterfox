@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeCmd.key "W">
+<!ENTITY toggleToolbox.key "I">
+<!ENTITY toggleToolboxF12.keycode "VK_F12">
+<!ENTITY toggleToolboxF12.keytext "F12">
+<!ENTITY browserToolboxErrorMessage "Error al abrir la caja de herramientas del navegador:">
+<!ENTITY options.context.advancedSettings "Ajustes avanzados">
+<!ENTITY options.context.inspector "Inspector">
+<!ENTITY options.showUserAgentStyles.label "Mostrar estilos del navegador">
+<!ENTITY options.showUserAgentStyles.tooltip "Activar esto mostrará los estilos por defecto que se cargan por el navegador.">
+<!ENTITY options.collapseAttrs.label "Truncar atributos DOM">
+<!ENTITY options.collapseAttrs.tooltip "Truncar atributos largos en el inspector">
+<!ENTITY options.defaultColorUnit.label "Unidad de color por defecto">
+<!ENTITY options.defaultColorUnit.accesskey "U">
+<!ENTITY options.defaultColorUnit.authored "como indicó el autor">
+<!ENTITY options.defaultColorUnit.hex "Hex">
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+<!ENTITY options.defaultColorUnit.name "Nombres de colores">
+<!ENTITY options.context.triggersPageRefresh "* Sólo sesión actual, recarga la página">
+<!ENTITY options.enableChrome.label5 "Activar cajas herr. depur. chrome del navegador y de complementos">
+<!ENTITY options.enableChrome.tooltip3 "Activar esta opción le permitirá usar varias herramientas de desarrollador en el contexto del navegador (a través de Herramientas > Desarrollador web > Caja de herramientas del navegador) y depurar complementos desde el administrador de complementos">
+<!ENTITY options.enableRemote.label3 "Activar depuración remota">
+<!ENTITY options.enableRemote.tooltip2 "Activar esta opción permitirá a las herramientas de desarrollo depurar una instancia remota como Waterfox OS">
+<!ENTITY options.disableJavaScript.label "Desactivar JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip "Activar esta opción desactivará JavaScript en la pestaña actual. Si la pestaña o la caja de herramientas se cierra entonces este ajuste será descartado.">
+<!ENTITY options.disableHTTPCache.label "Desactivar caché HTTP (cuando la caja de herramientas está abierta)">
+<!ENTITY options.disableHTTPCache.tooltip "Activar esta opción desactivará el caché HTTP en todas las pestañas que tengan abierta la caja de herramientas. Los Service Workers no se ven afectados por esta opción.">
+<!ENTITY options.enableServiceWorkersHTTP.label "Activar service workers bajo HTTP (si la caja de herramientas está abierta)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip "Activar esta opción permitirá funcionar a los service workers bajo HTTP en todas las pestañas que tengan abierta la caja de herramientas.">
+<!ENTITY options.selectDefaultTools.label2 "Herramientas de desarrollo por defecto">
+<!ENTITY options.selectAdditionalTools.label "Herr. desarr. instaladas por complementos">
+<!ENTITY options.selectEnabledToolboxButtons.label "Botones en la caja de herramientas">
+<!ENTITY options.toolNotSupported.label "* No compatible con el elemento actual de la caja de herramientas">
+<!ENTITY options.selectDevToolsTheme.label2 "Temas">
+<!ENTITY options.usedeveditiontheme.label "Usar el tema del navegador Developer Edition">
+<!ENTITY options.usedeveditiontheme.tooltip "Alterna el tema del navegador Developer Edition.">
+<!ENTITY options.webconsole.label "Consola web">
+<!ENTITY options.timestampMessages.label "Activar marcas de tiempo">
+<!ENTITY options.timestampMessages.tooltip "Si activa esta opción, las órdenes y sus salidas en la consola web mostrarán una marca de tiempo">
+<!ENTITY options.debugger.label "Depurador">
+<!ENTITY options.sourceMaps.label "Activar mapas de código fuente">
+<!ENTITY options.sourceMaps.tooltip "Si activa esta opción el código fuente se mapeará en el depurador y la consola.">
+<!ENTITY options.styleeditor.label "Editor de estilos">
+<!ENTITY options.stylesheetSourceMaps.label "Mostrar fuentes originales">
+<!ENTITY options.stylesheetSourceMaps.tooltip "Mostrar fuentes originales (p.e., archivos Sass) en el editor y el inspector de estilos">
+<!ENTITY options.stylesheetAutocompletion.label "Autocompletar CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip "Autocompletar propiedades, valores y selectores CSS en el editor de estilos a medida que escribe">
+<!ENTITY options.screenshot.label "Comportamiento de pantalla">
+<!ENTITY options.screenshot.clipboard.label "Captura de pantalla al portapapeles">
+<!ENTITY options.screenshot.clipboard.tooltip "Guardar la captura de pantalla directamente en el portapapeles">
+<!ENTITY options.screenshot.audio.label "Reproducir sonido del obturador de la cámara">
+<!ENTITY options.screenshot.audio.tooltip "Activa el sonido de la cámara al tomar una captura">
+<!ENTITY options.commonPrefs.label "Preferencias comunes">
+<!ENTITY options.enablePersistentLogs.label "Activar registros persistentes">
+<!ENTITY options.enablePersistentLogs.tooltip "Si activa esta opción, la consola web y el monitor de red no inicializarán la salida cada vez que navegue a una página nueva">
+<!ENTITY options.showPlatformData.label "Mostrar datos de la plataforma Gecko">
+<!ENTITY options.showPlatformData.tooltip "Si activa esta opción los informes del analizador JavaScript incluirán los símbolos de la plataforma Gecko">
+<!ENTITY options.sourceeditor.label "Preferencias del editor">
+<!ENTITY options.sourceeditor.detectindentation.label "Detectar sangrado">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Deducir sangrado basándose en el contenido del código fuente">
+<!ENTITY options.sourceeditor.autoclosebrackets.label "Cerrar llaves automáticamente">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Insertar llaves de cerrado automáticamente">
+<!ENTITY options.sourceeditor.expandtab.label "Sangrar usando espacios">
+<!ENTITY options.sourceeditor.expandtab.tooltip "Usar espacios en lugar del carácter de tabulación">
+<!ENTITY options.sourceeditor.tabsize.label "Tamaño de la pestaña">
+<!ENTITY options.sourceeditor.tabsize.accesskey "T">
+<!ENTITY options.sourceeditor.keybinding.label "Combinaciones de teclas">
+<!ENTITY options.sourceeditor.keybinding.accesskey "C">
+<!ENTITY options.sourceeditor.keybinding.default.label "Predeterminado">

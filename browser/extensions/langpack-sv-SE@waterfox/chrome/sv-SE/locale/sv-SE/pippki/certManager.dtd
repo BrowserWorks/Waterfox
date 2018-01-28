@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Certifikathanteraren">
+
+<!ENTITY certmgr.tab.mine                     "Dina certifikat">
+<!ENTITY certmgr.tab.others2                  "Personer">
+<!ENTITY certmgr.tab.websites3                "Servrar">
+<!ENTITY certmgr.tab.ca                       "Utfärdare">
+<!ENTITY certmgr.tab.orphan2                  "Övriga">
+
+<!ENTITY certmgr.mine                         "Du har certifikat från dessa organisationer som identifierar dig:">
+<!ENTITY certmgr.others                       "Du har certifikat lagrade som identifierar dessa personer:">
+<!ENTITY certmgr.websites2                    "Du har certifikat lagrade som identifierar dessa servrar:">
+<!ENTITY certmgr.cas                          "Du har certifikat lagrade som identifierar dessa certifikatutfärdare:">
+<!ENTITY certmgr.orphans                      "Du har certifikat lagrade som inte passar i någon av de andra kategorierna:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Allmänt">
+<!ENTITY certmgr.detail.general_tab.accesskey "A">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Detaljer">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Verifierar certifikat…">
+<!ENTITY certmgr.subjectinfo.label            "Utfärdat till">
+<!ENTITY certmgr.issuerinfo.label             "Utfärdat av">
+<!ENTITY certmgr.periodofvalidity.label       "Giltighetstid" >
+<!ENTITY certmgr.fingerprints.label           "Fingeravtryck">
+<!ENTITY certmgr.certdetail.title             "Certifikatdetaljer">
+<!ENTITY certmgr.certdetail.cn                "Common Name (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organisation (O)">
+<!ENTITY certmgr.certdetail.ou                "Organisationsenhet (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Serienummer">
+<!ENTITY certmgr.certdetail.sha256fingerprint "SHA-256 fingeravtryck">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "SHA1-fingeravtryck">
+
+<!ENTITY certmgr.editcacert.title             "Redigera tillitsinställningarna för CA-certifikat">
+<!ENTITY certmgr.editcert.edittrust           "Redigera tillitsinställningarna:">
+<!ENTITY certmgr.editcert.trustssl            "Detta certifikat får identifiera webbplatser.">
+<!ENTITY certmgr.editcert.trustemail          "Detta certifikat får identifiera e-postanvändare.">
+<!ENTITY certmgr.editcert.trustobjsign        "Detta certifikat får identifiera programutvecklare.">
+
+<!ENTITY certmgr.deletecert.title             "Ta bort certifikat">
+
+<!ENTITY certmgr.certname                     "Certifikatnamn">
+<!ENTITY certmgr.certserver                   "Server">
+<!ENTITY certmgr.override_lifetime            "Livslängd">
+<!ENTITY certmgr.tokenname                    "Säkerhetsenhet">
+<!ENTITY certmgr.begins                       "Börjar på ">
+<!ENTITY certmgr.expires                      "Förfaller">
+<!ENTITY certmgr.email                        "E-postadress">
+<!ENTITY certmgr.serial                       "Serienummer">
+
+<!ENTITY certmgr.close.label                  "Stäng">
+<!ENTITY certmgr.close.accesskey              "ä">
+<!ENTITY certmgr.view2.label                  "Visa…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Redigera tillit…">
+<!ENTITY certmgr.edit3.accesskey              "R">
+<!ENTITY certmgr.export.label                 "Exportera…">
+<!ENTITY certmgr.export.accesskey             "x">
+<!ENTITY certmgr.delete2.label                "Ta bort…">
+<!ENTITY certmgr.delete2.accesskey            "T">
+<!ENTITY certmgr.delete_builtin.label         "Ta bort eller misstro…">
+<!ENTITY certmgr.delete_builtin.accesskey     "T">
+<!ENTITY certmgr.backup2.label                "Säkerhetskopiera…">
+<!ENTITY certmgr.backup2.accesskey            "S">
+<!ENTITY certmgr.backupall2.label             "Säkerhetskopiera alla…">
+<!ENTITY certmgr.backupall2.accesskey         "a">
+<!ENTITY certmgr.restore2.label               "Importera…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Certifikatfält">
+<!ENTITY certmgr.details.accesskey            "e">
+<!ENTITY certmgr.fields.label                 "Fältvärde">
+<!ENTITY certmgr.fields.accesskey             "F">
+<!ENTITY certmgr.hierarchy.label              "Certifikathierarki">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Lägg till undantag…">
+<!ENTITY certmgr.addException.accesskey       "ä">
+
+<!ENTITY exceptionMgr.title                   "Lägg till säkerhetsundantag">
+<!ENTITY exceptionMgr.exceptionButton.label   "Bekräfta säkerhetsundantag">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "B">
+<!ENTITY exceptionMgr.supplementalWarning     "Legitima banker, butiker och andra offentliga webbplatser kommer inte att be dig göra detta.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Server">
+<!ENTITY exceptionMgr.certlocation.url        "Adress:">
+<!ENTITY exceptionMgr.certlocation.download   "Hämta certifikat">
+<!ENTITY exceptionMgr.certlocation.accesskey  "H">
+<!ENTITY exceptionMgr.certstatus.caption      "Certifikatstatus">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Visa…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Lagra detta undantag permanent">
+<!ENTITY exceptionMgr.permanent.accesskey     "L">

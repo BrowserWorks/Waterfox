@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "નામ:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "સ્થાન:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "વળતર સ્થાન:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "સાઈટ સ્થાન:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "ફોલ્ડર:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "બધા બુકમાર્કો ફોલ્ડરો બતાવો">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "છુપાવો">
+<!ENTITY editBookmarkOverlay.tags.label                      "ટેગો:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "ટેગોને અલ્પવિરામથી અલગ પાડો.">
+<!ENTITY editBookmarkOverlay.description.label               "વર્ણન:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "મુખ્ય શબ્દ:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "બધા ટેગો બતાવો">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "બાજુપટ્ટીમાં આ બુકમાર્ક લાવો">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "પસંદ કરો…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "નવું ફોલ્ડર">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

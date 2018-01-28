@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Hekaha ypykuéva">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Eiporavo hekaha mongu'eha ijypykuéva eipuru hag̃ua kundaharape ha jehekaha rendápe.">
+
+<!ENTITY provideSearchSuggestions.label        "Ehechauka ñe'ẽreka joguaha">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions2.label           "Ehechauka ñe'ẽreka joguaha kundaharape ha avei jejuhu hague rendápe">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Jeheka je'epyréva ndojekuaamo'ãi kundaharape renda apopyrépe, oñembohekóma rupi &brandShortName; aníke nemandu'a tembiasakuére.">
+
+<!ENTITY oneClickSearchEngines.label           "Jehekaha mongu'eha jekutu peteĩva">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Eiporavo hekaha mongu'eha mbojopyrukuaáva ojekuaáva kundaharape ha jehekaha renda guýpe eñepyrũvo emoinge peteĩ ñe'ẽ ñemigua.">
+
+<!ENTITY engineNameColumn.label                "Jehekaha">
+<!ENTITY engineKeywordColumn.label             "Jehero">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Embojevy ijypykuéva ha jehekaha mongu'eha">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "Pe'a">
+<!ENTITY removeEngine.accesskey                "R">
+
+<!ENTITY findMoreSearchEngines.label           "Ejuhu hetave hekaha mongu'eha">

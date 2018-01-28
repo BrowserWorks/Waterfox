@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Ræsing">
+
+<!ENTITY startupPage.label         "Þegar &brandShortName; ræsist:">
+<!ENTITY startupPage.accesskey     "s">
+<!ENTITY startupUserHomePage.label "Sýna mína heimasíðu">
+<!ENTITY startupBlankPage.label    "Sýna tóma síðu">
+<!ENTITY startupPrevSession.label  "Sýna flipa og glugga frá seinustu keyrslu">
+
+<!ENTITY homepage.label            "Heimasíða:">
+<!ENTITY homepage.accesskey        "i">
+<!ENTITY useCurrentPage.label      "Nota núverandi síðu">
+<!ENTITY useCurrentPage.accesskey  "o">
+<!ENTITY useMultiple.label         "Nota núverandi síður">
+<!ENTITY chooseBookmark.label      "Nota bókamerki…">
+<!ENTITY chooseBookmark.accesskey  "b">
+<!ENTITY restoreDefault.label      "Endurstilla">
+<!ENTITY restoreDefault.accesskey  "r">
+
+<!ENTITY downloads.label     "Niðurhal">
+
+<!ENTITY saveTo.label "Vista skrár yfir á">
+<!ENTITY saveTo.accesskey "V">
+<!ENTITY chooseFolderWin.label        "Velja…">
+<!ENTITY chooseFolderWin.accesskey    "e">
+<!ENTITY chooseFolderMac.label        "Velja…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "Alltaf spyrja hvert á að vista skrár">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "Alltaf athuga hvort &brandShortName; sé sjálfgefin vafri">
+<!ENTITY alwaysCheckDefault2.accesskey    "l">
+<!ENTITY setAsMyDefaultBrowser2.label     "Gera sjálfgefið">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "G">
+<!ENTITY isDefault.label                  "&brandShortName; er núna sjálfgefinn vafri">
+<!ENTITY isNotDefault.label               "&brandShortName; er ekki sjálfgefinn vafri">
+
+<!ENTITY separateProfileMode.label        "Leyfa &brandShortName; og Waterfox að keyra á sama tíma">
+<!ENTITY useWaterfoxSync.label             "Ábending: Þetta notar aðskilda reikninga. Notaðu Sync til að deila gögnum á milli þeirra.">
+<!ENTITY getStarted.notloggedin.label     "Skráðu þig inn í &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Opna &syncBrand.shortName.label; stillingar">
+
+<!ENTITY e10sEnabled.label                "Virkja fjölþráða &brandShortName;">

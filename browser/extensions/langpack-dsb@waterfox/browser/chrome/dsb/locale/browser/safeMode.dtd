@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; - wěsty modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "We wěstem modusu startowaś">
+<!ENTITY refreshProfile.label         "&brandShortName; wótnowiś">
+
+<!ENTITY safeModeDescription3.label   "Wěsty modus jo specialny modus programa &brandShortName;, kótaryž dajo se za pytanje za problemami wužywaś.">
+<!ENTITY safeModeDescription4.label   "Waše dodanki a swójske nastajenja se nachylu znjemóžniju.">
+
+<!ENTITY refreshProfileInstead.label  "Móžośo rozwězowanje problemow pśeskócyś a wopytowaś, &brandShortName; wótnowiś.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; jo se pśi startowanju napśiski skóńcył. To su snaź dodanki abo druge problemy zawinowali. Móžośo wopytowaś, problem we wěstem modusu rozwězaś.">

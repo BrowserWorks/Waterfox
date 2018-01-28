@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Այժմ դուք Գաղտնի դիտարկման էջում չեք։">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Սկսել Գաղտնի դիտարկում">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "Գ">
+
+<!ENTITY privateBrowsing.title                           "Գաղտնի Դիտարկում">
+<!ENTITY privateBrowsing.title.tracking                  "Գաղտնի Դիտարկում՝ Հետագծման պաշտպանությամբ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Երբ դիտարկում եք Գաղտնի Պատուհանով, Waterfox-ը ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "չի պահի">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "այցելած էջերը">
+<!ENTITY aboutPrivateBrowsing.info.searches              "որոնումները">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookie-ները">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ժամանակավոր ֆայլերը">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox-ը ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "կպահի">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " ձեր">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ներբեռնումները">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "էջանիշերը">
+<!ENTITY aboutPrivateBrowsing.note.before                "Գաղտնի Դիտարկումը ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "չի դարձնում ձեզ անանուն">
+<!ENTITY aboutPrivateBrowsing.note.after                 " համացանցում: Ձեր գործատուն կամ ինտերնետի մատակարարը դեռ կարող է հետագծել ձեր այցելած էջերը:">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Իմացեք ավելին՝">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Գաղտնի Դիտարկում">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Պաշտպանություն հետագծումից">
+<!ENTITY trackingProtection.description2                 "Որոշ կայքեր օգտագործում են հետագծումներ, որոնք կարող են հետևել ձեր ակտիվությանը համացանցում: Հետագծման պաշտպանությունը Waterfox-ում հնարավորություն է տալիս արգելափակել հետագծումները, որոնք կարող են հավաքել տեղեկություններ ձեր դիտարկումների մասին:">
+<!ENTITY trackingProtection.startTour1                   "Տեսեք, թե ինչպես է այն աշխատում">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Kaŋyan bayrandiyaney">
+<!ENTITY crashesUnsubmitted.label   "Kaŋyan bayrandey kaŋ mana sanbandi">
+<!ENTITY crashesSubmitted.label     "Kaŋyan bayrandiri sanbantey">
+<!ENTITY id.heading                 "Bayrandi boŋtammaasa">
+<!ENTITY dateCrashed.heading        "Kaŋyan hanoo">
+<!ENTITY dateSubmitted.heading      "Sanbari han">
+<!ENTITY noReports.label            "Kaŋyan bayrandiri kul mana sanbandi.">
+<!ENTITY noConfig.label             "Porogaram woo mana hansandi ka kaŋyan bayrandirey cebe. <code>breakpad.reportURL</code> ibaayi ga hima ka kayandi.">
+<!ENTITY clearAllReports.label      "Bayrandirey kul kaa">

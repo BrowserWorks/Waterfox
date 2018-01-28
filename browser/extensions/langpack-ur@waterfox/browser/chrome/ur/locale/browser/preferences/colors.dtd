@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "رنگ">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "جو رنگ اس صفحہ پر مخصوص کردہ ہیں ان کو میرے انتخاپ سے زیر کریں:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "ز">
+
+<!ENTITY  overrideDefaultPageColors.always.label "ہمیشہ">
+<!ENTITY  overrideDefaultPageColors.auto.label   "صرف گہرا تناسب امتزاج خیالیات کے ساتھ">
+<!ENTITY  overrideDefaultPageColors.never.label  "کبھی نہیں">
+
+<!ENTITY  color                           "متن و پس منظر">
+<!ENTITY  textColor.label                 "متن:">
+<!ENTITY  textColor.accesskey             "م">
+<!ENTITY  backgroundColor.label           "پس منظر:">
+<!ENTITY  backgroundColor.accesskey       "پ">
+<!ENTITY  useSystemColors.label           "نظام رنگ استعمال کریں">
+<!ENTITY  useSystemColors.accesskey       "ن">
+
+<!ENTITY  underlineLinks.label            "روابط خط کشیدہ کریں">
+<!ENTITY  underlineLinks.accesskey        "خ">
+<!ENTITY  links                           "ربط کے رنگ">
+<!ENTITY  linkColor.label                 "ملاحظہ نہ کیے گئے روابط:">
+<!ENTITY  linkColor.accesskey             "ر">
+<!ENTITY  visitedLinkColor.label          "ملاحظہ کیے گئے روابط:">
+<!ENTITY  visitedLinkColor.accesskey      "م">

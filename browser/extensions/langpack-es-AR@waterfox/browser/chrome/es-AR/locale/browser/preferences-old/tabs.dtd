@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab rota las pestañas según su uso reciente">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Abrir páginas nuevas en nuevas pestañas">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avisarme cuando cierre múltiples pestañas">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Avisarme cuando abrir múltiples pestañas pueda hacer más lento a &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Cuando abra un enlace en una nueva pestaña, cambiar a ella inmediatamente">
+<!ENTITY switchLinksToNewTabs.accesskey    "u">
+
+<!ENTITY showTabsInTaskbar.label          "Mostrar vista previa de pestañas en la barra de tareas de Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "v">
+<!ENTITY tabsGroup.label          "Pestañas">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Zapri zavihek">
+<!ENTITY tabCrashed.restoreTab "Obnovi zavihek">
+<!ENTITY tabCrashed.restoreAll "Obnovi vse sesute zavihke">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Jejhata. Zavihek se je sesul.">
+<!ENTITY tabCrashed.offerHelp "Lahko vam pomagamo!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Izberite &tabCrashed.restoreTab;, da ponovno naložite vsebino strani.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Izberite &tabCrashed.restoreTab; ali &tabCrashed.restoreAll;, da ponovno naložite vsebino strani.">
+<!ENTITY tabCrashed.requestHelp "Ali bi nam pomagali?">
+<!ENTITY tabCrashed.requestHelpMessage "Poročila o sesutju nam pomagajo prepoznati težave in izboljšati &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Poročilo o tem zavihku">
+<!ENTITY tabCrashed.sendReport2 "Pošljite poročilo o sesutju za prikazan zavihek">
+<!ENTITY tabCrashed.commentPlaceholder2 "Neobvezni komentarji (vidni javnosti)">
+<!ENTITY tabCrashed.includeURL2 "Poročilu o sesutju dodaj naslov strani">
+<!ENTITY tabCrashed.emailPlaceholder "Vnesite svoj e-poštni naslov">
+<!ENTITY tabCrashed.emailMe "Obvesti me po e-pošti, ko bo na voljo več informacij">
+<!ENTITY tabCrashed.reportSent "Poročilo o sesutju je že bilo poslano. Hvala, da pomagate izboljševati &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Poročilo o zavihkih v ozadju">
+<!ENTITY tabCrashed.autoSubmit2 "Posodobite nastavitve za samodejno pošiljanje poročila o sesutju, vključno s poročili o sesutju zavihkov v ozadju iz te in prihodnjih sej">

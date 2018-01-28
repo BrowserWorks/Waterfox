@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "U bevindt zich momenteel niet in een privévenster.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Een privévenster openen">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privénavigatie">
+<!ENTITY privateBrowsing.title.tracking                  "Privénavigatie met Bescherming tegen volgen">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Als u in een privévenster surft, zal Waterfox het volgende ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "niet opslaan">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "bezochte pagina’s">
+<!ENTITY aboutPrivateBrowsing.info.searches              "zoekopdrachten">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tijdelijke bestanden">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox zal het volgende ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "wel opslaan">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "downloads">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "bladwijzers">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privénavigatie ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "maakt u niet anoniem">
+<!ENTITY aboutPrivateBrowsing.note.after                 " op het internet. Uw werkgever of internetserviceprovider kan nog steeds zien welke pagina’s u bezoekt.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Lees meer over ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Privénavigatie">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Bescherming tegen volgen">
+<!ENTITY trackingProtection.description2                 "Sommige websites maken gebruik van volgers (‘trackers’) die uw activiteit op het internet kunnen bijhouden. Met Bescherming tegen volgen zal Waterfox veel volgers blokkeren die informatie over uw surfgedrag kunnen verzamelen.">
+<!ENTITY trackingProtection.startTour1                   "Zien hoe dit werkt">

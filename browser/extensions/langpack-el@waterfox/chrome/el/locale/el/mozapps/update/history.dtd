@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "Ιστορικό ενημερώσεων">
+<!ENTITY  history.intro             "Οι παρακάτω ενημερώσεις έχουν εγκατασταθεί:">
+<!ENTITY  closebutton.label         "Κλείσιμο">
+                                     
+<!ENTITY  noupdates.label           "Δεν έχουν εγκατασταθεί ενημερώσεις">
+
+<!ENTITY  name.header               "Όνομα ενημέρωσης">
+<!ENTITY  date.header               "Ημερομηνία εγκατάστασης">
+<!ENTITY  type.header               "Τύπος">
+<!ENTITY  state.header              "Κατάσταση">
+

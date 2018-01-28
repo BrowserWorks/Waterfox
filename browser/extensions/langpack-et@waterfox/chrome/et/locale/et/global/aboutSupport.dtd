@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Probleemide lahendamise teave">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+                                                See leht sisaldab tehnilist teavet, mis võib olla kasulik probleemide lahendamisel. 
+                                                Kui otsid vastuseid &brandShortName;i puudutavatele enamlevinud küsimustele, siis 
+                                                külasta meie <a id='supportLink'>tugiveebi</a>.
+                                               ">
+
+<!ENTITY aboutSupport.crashes.title "Vearaportid">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Raporti ID">
+<!ENTITY aboutSupport.crashes.sendDate "Saatmise aeg">
+<!ENTITY aboutSupport.crashes.allReports "Kõik vearaportid">
+<!ENTITY aboutSupport.crashes.noConfig "See rakendus pole häälestatud vearaporteid kuvama.">
+
+<!ENTITY aboutSupport.extensionsTitle "Laiendused">
+<!ENTITY aboutSupport.extensionName "Nimi">
+<!ENTITY aboutSupport.extensionEnabled "Lubatud">
+<!ENTITY aboutSupport.extensionVersion "Versioon">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;i erifunktsioonid">
+<!ENTITY aboutSupport.featureName "Nimi">
+<!ENTITY aboutSupport.featureVersion "Versioon">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperimendid">
+<!ENTITY aboutSupport.experimentName "Nimi">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Kirjeldus">
+<!ENTITY aboutSupport.experimentActive "Aktiivne">
+<!ENTITY aboutSupport.experimentEndDate "Lõpeb">
+<!ENTITY aboutSupport.experimentHomepage "Koduleht">
+<!ENTITY aboutSupport.experimentBranch "Branch">
+
+<!ENTITY aboutSupport.appBasicsTitle "Rakendusest">
+<!ENTITY aboutSupport.appBasicsName "Nimi">
+<!ENTITY aboutSupport.appBasicsVersion "Versioon">
+<!ENTITY aboutSupport.appBasicsBuildID "Kompileerimise ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Uuendustekanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Uuenduste ajalugu">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Kuva uuenduste ajalugu">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profiili kaust">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profiili kaust">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Lubatud pluginad">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Kompileerimise konfiguratsioon">
+<!ENTITY aboutSupport.appBasicsUserAgent "Identifikaator">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Mälukasutus">
+<!ENTITY aboutSupport.appBasicsPerformance "Jõudlus">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registreeritud Service Workerid">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profiilid">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Mitme protsessiga aknad">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google võti">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla asukohateenuse võti">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Ohutu režiim">
+
+<!ENTITY aboutSupport.showDir.label "Ava kaust">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Näita Finderis">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Ava kaust">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Olulised muudetud eelistused">
+<!ENTITY aboutSupport.modifiedPrefsName "Nimi">
+<!ENTITY aboutSupport.modifiedPrefsValue "Väärtus">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js eelistused">
+<!ENTITY aboutSupport.userJSDescription "Sinu profiili kaust sisaldab <a id='prefs-user-js-link'>user.js faili</a>, milles on kirjas eelistused, mida pole loonud &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Olulised lukustatud eelistused">
+<!ENTITY aboutSupport.lockedPrefsName "Nimi">
+<!ENTITY aboutSupport.lockedPrefsValue "Väärtus">
+
+<!ENTITY aboutSupport.graphicsTitle "Graafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Asukohtade andmebaas">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Terviklus">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Verifitseeri terviklus
+">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementaalne GC">
+
+<!ENTITY aboutSupport.a11yTitle "Hõlbustus">
+<!ENTITY aboutSupport.a11yActivated "Aktiveeritud">
+<!ENTITY aboutSupport.a11yForceDisabled "Hõlbustus on keelatud">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Teekide versioonid">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Paigalduste ajalugu">
+<!ENTITY aboutSupport.updateHistoryTitle "Uuenduste ajalugu">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopeeri tekst">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopeeri vormindamata andmed">
+
+<!ENTITY aboutSupport.sandboxTitle "Aedik">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Tagasilükatud süsteemikutsed">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "sekundit tagasi">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Protsessi tüüp">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Süsteemikutse">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumendid">
+
+<!ENTITY aboutSupport.safeModeTitle "Proovi ohutut režiimi">
+<!ENTITY aboutSupport.restartInSafeMode.label "Taaskäivita koos lisade keelamisega…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funktsionaalsus">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostika">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Vealogi">
+<!ENTITY aboutSupport.graphicsGPU1Title "1. GPU">
+<!ENTITY aboutSupport.graphicsGPU2Title "2. GPU">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Otsuste logi">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Vigade vältimise tõttu keelatud funktsionaalsus">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Hädalahendused">
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">

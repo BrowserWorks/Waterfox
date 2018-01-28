@@ -1,0 +1,77 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "პროგრამის განახლება">
+
+<!ENTITY  checking.title                  "განახლებების შემოწმება">
+<!ENTITY  updateCheck.label               "&brandShortName; ბოლო ვერსიების შემოწმება…">
+
+<!ENTITY  noupdatesfound.title            "განახლება ვერ მოიძებნა">
+<!ENTITY  noupdatesautoenabled.intro      "შესაძლო განახლებები არაა. &brandShortName; ბრაუზერი 
+პერიოდულად შეამოწმებს განახლებებს.">
+<!ENTITY  noupdatesautodisabled.intro     "შესაძლო განახლებები არაა. გთხოვთ კვლავ საცდოთ მოგვიანებით ან ნება დართოთ 
+&brandShortName; ბრაუზერს ეს თქვენს ნაცვლად გააკეთოს.">
+
+<!ENTITY  manualUpdate.title              "განახლება ვერ ხერხდება">
+<!ENTITY  manualUpdate.desc               "უსაფრთხოების და მდგრადობის რეკომენდებული განახლება ხელმისაწვდომია, მაგრამ
+                                           თქვენ არ გაქვთ საჭირო უფლებები სისტემაში მის დასაყენებლად. გთხოვთ მიმართოთ
+                                           თქვენი სისტემის ადმინისტრატორს, ან სცადოთ ხელახლა იმ მომხმარებლის
+                                           ანგარიშით, რომელსაც კომპიუტერზე პროგრამის დაყენების უფლება გააჩნია.">
+<!ENTITY  manualUpdate.space.desc         "უსაფრთხოების და მდგრადობის რეკომენდებული განახლება ხელმისაწვდომია, მაგრამ თქვენ
+                                           მის დასაყენებლად საკმარისი ადგილი არ გაქვთ.">
+<!ENTITY  manualUpdateGetMsg.label        "&brandShortName; პროგრამის უახლესი ვერსიის გადაწერა ყოველთვის შეგიძლიათ ბმულიდან:">
+
+<!ENTITY  unsupported.title               "სისტემა მხარდაუჭერელია">
+<!ENTITY  unsupported.label               "თქვენი &brandShortName; ვადაგასულია, მაგრამ უახლესი ვერსია
+                                           თქვენს სისტემაზე მხარდაჭერილი არაა. გთხოვთ განაახლეთ თქვენი სისტემა, შემდეგ კი ახლიდან სცადეთ.
+                                           ეს ცნობა აღარ გამოჩნდება, მაგრამ თქვენ შეგიძლიათ">
+<!ENTITY  unsupportedLink.label           "გაიგოთ მეტი.">
+
+<!ENTITY  clickHere.label                 "ამ განახლების შესახებ დამატებითი ინფორმაციის ნახვა">
+
+<!ENTITY  evangelism.desc                 "მკაცრად რეკომენდებულია,რომ &brandShortName; 
+რაც შეიძლება სწრაფად განაახლოთ.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; იტვირთება">
+<!ENTITY  downloading.intro               "განახლება იტვირთება…">
+<!ENTITY  connecting.label                "დაკავშირება განახლების სერვერთან…">
+<!ENTITY  verificationFailedText.label    "&brandShortName; ვერ ამოწმებს ჩამოტვირთული ზრდადი 
+განახლების მთლიანობას, ასე რომ, იგი ჩამოტვირთავს 
+განახლების სრულ პაკეტს.">
+
+<!ENTITY  viewDetails.tooltip             "განახლების მონაცემების ნახვა">
+
+<!ENTITY  details.link                    "ვრცლად">
+
+<!ENTITY  error.title                     "განახლება არ შედგა">
+
+<!ENTITY  error.label                     "პრობლემა ამ განახლების ჩამოტვირთვისას ან ჩადგმისას. 
+&brandShortName; ვერ განახლდება რადგან:">
+                                           
+<!ENTITY  errorManual.label               "&brandShortName; შეგიძლიათ ხელით განაახლოთ თუ მოინახულებთ 
+ამ ბმას და გადმოტვირთავთ ბოლო ვერსიას:">
+                                           
+<!ENTITY  errorpatching.intro             "ნაწილობრივი განახლება შეუძლებელია. 
+&brandShortName; კვლავ შეეცდება სრული განახლების გადმოტვირთვის გზით.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName;-მა ვერ შეძლო დაედგინა ხელმისაწვდომია თუ არა განახლება. გთხოვთ
+                                           დარწმუნდით, რომ &brandShortName;-ის ბოლო ვერსი გაქვთ, მდებარეობიდან:">
+
+<!ENTITY  finishedPage.title              "განახლება მზადაა ჩასადგმელად">
+<!ENTITY  finishedPage.text               "განახლება ჩაიდგმება &brandShortName; შემდეგ სეანსზე. შეგიძლიათ დახუროთ და ხელახლა 
+გახსნათ &brandShortName; ან გააგრძელოთ მუშაობა და გააკეთოთ ეს მოგვიანებით.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; უსაფრთხოებისა და მდგრადობის განახლებები ჩამოიტვირთა 
+და მზადაა ჩასადგმელად.">
+<!ENTITY  finishedBackground.name         "განახლება:">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "განახლება ჩაიდგმება &brandShortName; შემდეგ სეანსზე. შეგიძლიათ დახუროთ და ხელახლა 
+გახსნათ &brandShortName; ან გააგრძელოთ მუშაობა და გააკეთოთ ეს მოგვიანებით.">
+<!ENTITY  finishedBackground.moreElevated "ეს განახლება ითხოვს ადმინისტრატორის უფლებებს. განახლება
+                                           დაყენდება &brandShortName;-ის მომდევნო გაშვებისას. შეგიძლიათ
+                                           ხელახლა გაუშვათ &brandShortName; ახლვე, ან განაგრძოთ მუშაობა და მოგვიანებით გაუშვათ ხელახლა, ან უარი თქვათ
+                                           განახლებაზე.">
+
+<!ENTITY  update.details.label            "ვრცლად">
+<!ENTITY  update.installedOn.label        "ჩაიდგა:">
+<!ENTITY  update.status.label             "მდგომარეობა:">

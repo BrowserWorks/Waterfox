@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Alterar senha mestra">
+<!ENTITY setPassword.tokenName.label       "Dispositivo de segurança">
+<!ENTITY setPassword.oldPassword.label     "Senha mestra atual:">
+<!ENTITY setPassword.newPassword.label     "Forneça a nova senha:">
+<!ENTITY setPassword.reenterPassword.label "Confirme a nova senha:">
+<!ENTITY setPassword.meter.label           "Medidor de qualidade da senha">
+<!ENTITY setPassword.meter.loading         "Carregando">
+<!ENTITY masterPasswordDescription.label   "A senha mestra é usada para proteger informações confidenciais como senhas de sites. Ao criar uma senha mestra, você precisará fornecê-la uma vez por sessão: quando o &brandShortName; precisar de informações protegidas pela senha.">
+<!ENTITY masterPasswordWarning.label       "Certifique-se de que vai lembrar da senha mestra. Caso a esqueça, você não conseguirá acessar nenhuma informação protegida por ela.">

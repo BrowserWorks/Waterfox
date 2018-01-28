@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "40em">
+
+<!ENTITY     cookiesonsystem.label          "Hi ha les galetes següents emmagatzemades al vostre ordinador:">
+<!ENTITY     cookiename.label               "Nom de la galeta">
+<!ENTITY     cookiedomain.label             "Lloc">
+
+<!ENTITY     props.name.label               "Nom:">
+<!ENTITY     props.value.label              "Contingut:">
+<!ENTITY     props.domain.label             "Servidor central:">
+<!ENTITY     props.path.label               "Camí:">
+<!ENTITY     props.secure.label             "Enviat per a:">
+<!ENTITY     props.expires.label            "Venciment:">
+<!ENTITY     props.container.label          "Contenidor:">
+
+<!ENTITY     window.title                   "Galetes">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Cerca">
+<!ENTITY     searchFilter.accesskey         "a">
+
+<!ENTITY     button.close.label             "Tanca">
+<!ENTITY     button.close.accesskey         "c">

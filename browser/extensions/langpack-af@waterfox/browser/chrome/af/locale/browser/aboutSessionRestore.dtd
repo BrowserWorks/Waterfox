@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Laai sessie terug">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Wel, dis nou 'n verleentheid.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; sukkel om die vensters en oortjies te herwin. Dit word gewoonlik veroorsaak deur 'n onlangs geopende bladsy.">
+<!ENTITY restorepage.tryThis        "Probeer die volgende:">
+<!ENTITY restorepage.restoreSome    "Verwyder een of meer oortjies wat u dink die probleem dalk veroorsaak">
+<!ENTITY restorepage.startNew       "Begin 'n heeltemal nuwe blaaisessie">
+
+<!ENTITY restorepage.tryagainButton "Laai terug">
+<!ENTITY restorepage.restore.access "L">
+<!ENTITY restorepage.closeButton    "Sluit">
+<!ENTITY restorepage.close.access   "S">
+
+<!ENTITY restorepage.restoreHeader  "Laai terug">
+<!ENTITY restorepage.listHeader     "Vensters en oortjies">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Venster &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Laat wiel!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Sukses!">
+
+<!ENTITY welcomeback2.pageTitle     "Sukses!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; is reg om te rol.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Herstel alle vensters en oortjies">
+<!ENTITY welcomeback2.restoreSome.label "Herstel slegs dié wat ek kies">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Byvoegings en aanpassings is verwyder en die blaaierinstellings is teruggestel na verstekwaardes. As dit nie probleme oplos nie, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "kry meer inligting oor wat om te doen.">
+

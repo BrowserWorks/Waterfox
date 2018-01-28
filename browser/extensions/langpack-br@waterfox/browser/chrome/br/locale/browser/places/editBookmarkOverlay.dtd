@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Anv :">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "n">
+<!ENTITY editBookmarkOverlay.location.label                  "Lec'hiadur :">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Lec'hiadur al lanv">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "L">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Lec'hiadur al lec'hienn :">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "e">
+<!ENTITY editBookmarkOverlay.folder.label                    "Teuliad :">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Diskouez holl sinedoù an teuliadoù">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Kuzhat">
+<!ENTITY editBookmarkOverlay.tags.label                      "Ivinelloù :">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "I">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Disrannañ an ivinelloù gant skejoù">
+<!ENTITY editBookmarkOverlay.description.label               "Deskrivadur :">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Ger alc'hwez :">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "r">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Diskouez an holl skritelligoù">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Kargañ ar sined-mañ er varrenn gostez">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "r">
+<!ENTITY editBookmarkOverlay.choose.label                    "Dibab…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Ouzhpennañ un teuliad">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "O">

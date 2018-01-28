@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "Përpunim">
+<!ENTITY editMenu.accesskey        "P">
+<!ENTITY undoCmd.label             "Zhbëje">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "Z">
+<!ENTITY redoCmd.label             "Ribëje">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "R">
+<!ENTITY cutCmd.label              "Prije">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "P">
+<!ENTITY copyCmd.label             "Kopjoje">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "K">
+<!ENTITY pasteCmd.label            "Ngjite">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "N">
+<!ENTITY deleteCmd.label           "Fshije">
+<!ENTITY deleteCmd.accesskey       "F">
+<!ENTITY selectAllCmd.label        "Përzgjidhi Krejt">
+<!ENTITY selectAllCmd.key          "j">
+<!ENTITY selectAllCmd.accesskey    "T">
+<!ENTITY findCmd.label             "Gjej">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "G">
+<!ENTITY findAgainCmd.label        "Gjeje Sërish">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "S">
+<!ENTITY findPreviousCmd.label     "Gjej të Mëparshmin">
+<!ENTITY findPreviousCmd.accesskey "M">

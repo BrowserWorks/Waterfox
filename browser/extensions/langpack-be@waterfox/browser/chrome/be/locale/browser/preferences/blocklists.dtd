@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Спісы блакавання">
+<!ENTITY window.width                 "55em">
+
+<!ENTITY treehead.list.label          "Спіс">
+<!ENTITY windowClose.key              "ц">
+
+<!ENTITY button.cancel.label          "Скасаваць">
+<!ENTITY button.cancel.accesskey      "С">
+<!ENTITY button.ok.label              "Захаваць змены">
+<!ENTITY button.ok.accesskey          "З">

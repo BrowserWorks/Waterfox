@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "টেলিমেট্রি ডেটা">
+
+<!ENTITY aboutTelemetry.changeDataChoices "  পরিবর্তন করুন">
+
+<!ENTITY aboutTelemetry.uploadEnabled "  FHR ডাটা আপলোড <span>enabled</span>।">
+
+<!ENTITY aboutTelemetry.uploadDisabled "  FHR ডাটা আপলোড is <span>disabled</span>।">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "  অতিরিক্ত টেলিমেট্রি রেকর্ডিং <span>enabled</span>।">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "  অতিরিক্ত টেলিমেট্রি রেকর্ডিং <span>disabled</span>।">
+
+<!ENTITY aboutTelemetry.pingDataSource "পিং ডেটা সোর্স:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "বর্তমান পিং ডেটা">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "আর্কাইভ পিং ডেটা">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "পিং ডাটা পরিদর্শন:">
+
+<!ENTITY aboutTelemetry.structured "কাঠামোবদ্ধ">
+
+<!ENTITY aboutTelemetry.raw "র JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "subsession তথ্য প্রদর্শন করা হোক">
+
+<!ENTITY aboutTelemetry.choosePing "পিং বাছুন:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; নতুন পিং">
+
+<!ENTITY aboutTelemetry.showOlderPing "পুরন পিং &gt;&gt;">
+
+<!ENTITY aboutTelemetry.rawPingData "র পিং ডাটা…">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "সপ্তাহ">
+
+<!ENTITY aboutTelemetry.archivePingHeader "পিং">
+
+<!ENTITY aboutTelemetry.generalDataSection "  সাধারণ ডাটা">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  পরিবেশ তথ্য">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  টেলেমেট্রি লগ">
+
+<!ENTITY aboutTelemetry.slowSqlSection "স্লো এসকিউএল স্টেটমেন্ট">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "ব্রাউজার হ্যাং">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "থ্রেড হ্যাং">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  স্কেলারস">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars">
+
+<!ENTITY aboutTelemetry.histogramsSection "স্তম্ভচিত্র">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  উদ্দীপিত হিস্টোগ্রামসমূহ">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "সরল মাপ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Add-on বিবরণ">
+
+<!ENTITY aboutTelemetry.lateWritesSection "লেট রাইটস্">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  সেশন সংক্রান্ত তথ্য">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "অ্যাড-অনস দ্বারা সংগৃহীত স্তম্ভচিত্র">
+
+<!ENTITY aboutTelemetry.toggle "  সেকসান প্রসারিত করারা জন্য ক্লিক করুন">
+
+<!ENTITY aboutTelemetry.emptySection "(No data collected)">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "উল্লেখ্য: স্লো এসকিউএল ডিবাগিং সক্রিয় করা হয়. সম্পূর্ণ এসকিউএল স্ট্রিং নিচে দেখানো হতে পারে কিন্তু তাদের দ্বারা টেলিমেট্রিতে দাখিল করা হইনি.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "ফিল্টার (স্ট্রিং অথবা /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  পে-লোড">
+
+<!ENTITY aboutTelemetry.rawPayload "  র পে-লোড">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

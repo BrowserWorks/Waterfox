@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Xestor de certificaos">
+
+<!ENTITY certmgr.tab.mine                     "Los tos certificaos">
+<!ENTITY certmgr.tab.others2                  "Persones">
+<!ENTITY certmgr.tab.websites3                "Sirvidores">
+<!ENTITY certmgr.tab.ca                       "Autoridaes">
+<!ENTITY certmgr.tab.orphan2                  "Otros">
+
+<!ENTITY certmgr.mine                         "Tienes certificaos d'estes organizaciones que t'identifiquen:">
+<!ENTITY certmgr.others                       "Tienes certificaos archivaos qu'identifiquen a estes persones:">
+<!ENTITY certmgr.websites2                    "Tienes certificaos archivaos qu'identifiquen a estos sirvidores:">
+<!ENTITY certmgr.cas                          "Tienes certificaos archivaos qu'identifiquen a estes autoridaes certificadores:">
+<!ENTITY certmgr.orphans                      "Tienes certificaos archivaos que nun encaxen en nenguna de les demás categoríes:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Xeneral">
+<!ENTITY certmgr.detail.general_tab.accesskey "X">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Detalles">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "D">
+
+<!ENTITY certmgr.pending.label                "Verificando agora'l certificáu…">
+<!ENTITY certmgr.subjectinfo.label            "Emitíu pa">
+<!ENTITY certmgr.issuerinfo.label             "Emitíu por">
+<!ENTITY certmgr.periodofvalidity.label       "Periodu de validez" >
+<!ENTITY certmgr.fingerprints.label           "Buelgues dixitales">
+<!ENTITY certmgr.certdetail.title             "Detalle del certificáu">
+<!ENTITY certmgr.certdetail.cn                "Nome común (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organización (O)">
+<!ENTITY certmgr.certdetail.ou                "Unidá organizativa (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Númberu de serie">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Buelga dixital SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Buelga dixital SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Iguar configuración de confianza de la CA">
+<!ENTITY certmgr.editcert.edittrust           "Iguar configuraciones de confianza:">
+<!ENTITY certmgr.editcert.trustssl            "Esti certificáu pue identificar sitios web.">
+<!ENTITY certmgr.editcert.trustemail          "Esti certificáu pue identificar a los usuarios de corréu.">
+<!ENTITY certmgr.editcert.trustobjsign        "Esti certificáu pue identificar desendolcadores de software.">
+
+<!ENTITY certmgr.deletecert.title             "Desaniciar certificáu">
+
+<!ENTITY certmgr.certname                     "Nome del certificáu">
+<!ENTITY certmgr.certserver                   "Sirvidor">
+<!ENTITY certmgr.override_lifetime            "Vida útil">
+<!ENTITY certmgr.tokenname                    "Preséu de seguridá">
+<!ENTITY certmgr.begins                       "Entama'l">
+<!ENTITY certmgr.expires                      "Espira el">
+<!ENTITY certmgr.email                        "Direición de corréu electrónicu.">
+<!ENTITY certmgr.serial                       "Númberu de serie">
+
+<!ENTITY certmgr.close.label                  "Zarrar">
+<!ENTITY certmgr.close.accesskey              "Z">
+<!ENTITY certmgr.view2.label                  "Ver…">
+<!ENTITY certmgr.view2.accesskey              "V">
+<!ENTITY certmgr.edit3.label                  "Editar confianza…">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "Esportar…">
+<!ENTITY certmgr.export.accesskey             "s">
+<!ENTITY certmgr.delete2.label                "Desaniciar…">
+<!ENTITY certmgr.delete2.accesskey            "e">
+<!ENTITY certmgr.delete_builtin.label         "Desaniciar o dexar de confiar…">
+<!ENTITY certmgr.delete_builtin.accesskey     "n">
+<!ENTITY certmgr.backup2.label                "Facer copia…">
+<!ENTITY certmgr.backup2.accesskey            "F">
+<!ENTITY certmgr.backupall2.label             "Facer copia de too…">
+<!ENTITY certmgr.backupall2.accesskey         "c">
+<!ENTITY certmgr.restore2.label               "Importar…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Campos del certificáu">
+<!ENTITY certmgr.details.accesskey            "p">
+<!ENTITY certmgr.fields.label                 "Valor del campu">
+<!ENTITY certmgr.fields.accesskey             "V">
+<!ENTITY certmgr.hierarchy.label              "Xerarquía de certificaos">
+<!ENTITY certmgr.hierarchy.accesskey2         "J">
+<!ENTITY certmgr.addException.label           "Amestar esceición…">
+<!ENTITY certmgr.addException.accesskey       "e">
+
+<!ENTITY exceptionMgr.title                   "Amestar esceición de seguridá">
+<!ENTITY exceptionMgr.exceptionButton.label   "Confirmar esceición de seguridá">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "Los bancos, tiendes y otros sitios públicos llexítimos nun-y van pidir facer esto.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Sirvidor">
+<!ENTITY exceptionMgr.certlocation.url        "Direición:">
+<!ENTITY exceptionMgr.certlocation.download   "Obtener certificáu">
+<!ENTITY exceptionMgr.certlocation.accesskey  "O">
+<!ENTITY exceptionMgr.certstatus.caption      "Estáu del certificáu">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Ver…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Atroxar esta esceición de mou permanente">
+<!ENTITY exceptionMgr.permanent.accesskey     "t">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Særa sto feuggio">
+<!ENTITY tabCrashed.restoreTab "Arvi torna sto feuggio">
+<!ENTITY tabCrashed.restoreAll "Arvi torna tutti i feuggi ciantæ">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Belin. O teu feuggio o s'é ciantou.">
+<!ENTITY tabCrashed.offerHelp "Niatri te poemmo agiutâ!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Çerni &tabCrashed.restoreTab; pe caregâ torna a pagina.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Çerni &tabCrashed.restoreTab; ò &tabCrashed.restoreAll; pe recaregâ a pagina.">
+<!ENTITY tabCrashed.requestHelp "T'eu agiutane?">
+<!ENTITY tabCrashed.requestHelpMessage "I report di cianti ne agiutan a diagnosticâ problemi e megiorâ &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Segnala sto feuggio">
+<!ENTITY tabCrashed.sendReport2 "Manda 'n report do cianto pe-a pagina che ti veddi">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comenti no òbligatöi (i comenti i vedan tutti)">
+<!ENTITY tabCrashed.includeURL2 "Includi l'URL da pagina">
+<!ENTITY tabCrashed.emailPlaceholder "Scrivi l’indirisso email">
+<!ENTITY tabCrashed.emailMe "Manda 'n'email quande gh'é de atre informaçioin">
+<!ENTITY tabCrashed.reportSent "A segnalaçion do cianto anòmalo a l'é za stæta manda. Graçie de avei contribuio a-o migioramento de &brandShortName;.">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Segnala i feuggi in background">
+<!ENTITY tabCrashed.autoSubmit2 "Agiorna e preferense in mòddo da mandâ in outomatico report di cianti, incluzo i report di feuggi in background pe sta sescion e-e future">

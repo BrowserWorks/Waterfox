@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "បង្ហាញ​ក្នុង​ការ​ផ្ទុក​ទំព័រ">
+<!ENTITY retry.label "ព្យាយាម​ម្តងទៀត">
+<!ENTITY returnToPreviousPage.label "ថយក្រោយ">
+<!ENTITY advanced.label "កម្រិត​ខ្ពស់">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "មិន​អាច​តភ្ជាប់">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "អាសយដ្ឋាន​នេះ​ត្រូវ​បាន​ដាក់កម្រិត">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "រក​មិន​ឃើញ​ម៉ាស៊ីន​មេ">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>ពិនិត្យ​អាសយដ្ឋាន​ដើម្បី​រក​មើល​កំហុស​ដែល​បាន​វាយ​ដូចជា <strong>ww</strong>.example.com ជំនួសឲ្យ <strong>www</strong>.example.com</li> <li>ប្រសិនបើ អ្នក​មិន​អាច​ផ្ទុក​ទំព័រ​ណាមួយ​បាន​ទេ ពិនិត្យមើល​ការ​តភ្ជាប់​បណ្ដាញ​​​កុំព្យូទ័រ  របស់​អ្នក។</li> <li>ប្រសិនបើ កុំព្យូទ័រ ឬ​បណ្ដាញ​របស់​អ្នក​ត្រូវ​បាន​ការពារ​ដោយ​ជញ្ជាំងភ្លើង ឬ​ប្រូកស៊ី សូម​ប្រាកដ​ថា ​&brandShortName; ត្រូវ​បាន​អនុញ្ញាត​ឲ្យ​ចូល​ដំណើរការ​បណ្ដាញ ។</li> </ul>">
+
+<!ENTITY fileNotFound.title "រក​មិន​ឃើញ​ឯកសារ">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ពិនិត្យ​ឈ្មោះ​ឯកសារ​រក​មើល​អក្សរពុម្ព​ ឬ​កំហុស​ក្នុង​ការ​វាយ​ផ្សេងទៀត​ ។</li> <li>ពិនិត្យមើល​ថា តើ​ឯកសារ​ត្រូវ​បាន​ផ្លាស់ទី ប្ដូរ​ឈ្មោះ ឬ​លុប​ដែរ​ឬ​ទេ ។</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "ការ​ចូល​ប្រើប្រាស់​ឯកសារ​ត្រូវបាន​បដិសេធ">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>វា​ប្រហែល​ជា​ត្រូវបាន​លុប ផ្លាស់ប្ដូរ​ទីតាំង ឬ​ក៏​មក​ពី​ការ​កំណត់​សិទ្ធិ​ចូល​ប្រើប្រាស់​ឯកសារ។</li> </ul>">
+
+<!ENTITY generic.title "អ្ហុះ !">
+<!ENTITY generic.longDesc "<p>&brandShortName; មិន​អាច​ផ្ទុក​ទំព័រ​នេះ​បាន​ទេ ពីព្រោះ​តែ​ហេតុផល​មួយ​ចំនួន ។</p>">
+
+<!ENTITY captivePortal.title "ចូល​បណ្ដាញ">
+<!ENTITY captivePortal.longDesc2 "<p> អ្នក​ត្រូវ​តែ​ចូល​ទៅ​កាន់​បណ្ដាញ​នេះ​មុន​ពេល​អ្នក​អាច​ចូល​ប្រើ​អ៊ីន​ធឺណិត។ </p>">
+
+<!ENTITY openPortalLoginPage.label2 "បើក​ទំព័រ​ចូល​ទៅកាន់​បណ្ដាញ">
+
+<!ENTITY malformedURI.title "អាសយដ្ឋាន​មិនត្រឹមត្រូវ">
+<!ENTITY malformedURI.longDesc "<ul> <li>ជាទូទៅ អាសយដ្ឋាន​បណ្ដាញ​ត្រូវ​បាន​សរសេរ​ដូចនេះ <strong>http://www.example.com/</strong></li> <li>សូម​ប្រាកដ​ថា អ្នក​កំពុង​តែ​ប្រើ​សញ្ញា (/) (ឧ. <strong>/</strong>)។</li> </ul>">
+
+<!ENTITY netInterrupt.title "ការ​តភ្ជាប់​ត្រូវ​បាន​កាត់​ផ្តាច់">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "ឯកសារ​បាន​ផុត​កំណត់">
+<!ENTITY notCached.longDesc "<p>ឯកសារ​ដែល​បាន​ស្នើ មិន​មាន​នៅ​ក្នុង​ឃ្លាំង​សម្ងាត់​របស់ &brandShortName; ទេ ។</p><ul><li>ជា​ការ​ប្រុងប្រយ័ត្ន​សុវត្ថិភាព​ជាមុន &brandShortName; មិន​ស្នើ​ឯកសារ​សម្ងាត់​ឡើងវិញ​ដោយ​ស្វ័យប្រវត្តិ​ឡើយ ។</li><li>ចុច​ព្យាយាម​ម្ដងទៀត ដើម្បី​ស្នើ​ឯកសារ​ម្ដងទៀត​ពី​តំបន់​បណ្ដាញ ។</li></ul>">
+
+<!ENTITY netOffline.title "របៀប​ក្រៅ​បណ្ដាញ">
+<!ENTITY netOffline.longDesc2 "<ul> <li>ចុច &quot;ព្យាយាម​ម្ដងទៀត&quot; ដើម្បី​ប្ដូរ​ទៅជា​របៀប​លើ​បណ្ដាញ រួច​ផ្ទុក​ទំព័រ​នេះ​ឡើង​វិញ ។</li> </ul>">
+
+<!ENTITY contentEncodingError.title "កំហុស​ក្នុង​ការ​អ៊ិនកូដ​មាតិកា">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>សូមទាក់ទងម្ចាស់វេបសាយដើម្បីប្រាប់ពួកគេអំពីបញ្ហានេះ។</li> </ul>">
+
+<!ENTITY unsafeContentType.title "ប្រភេទ​ឯកសារ​គ្មាន​សុវត្ថិភាព">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>សូមទាក់ទងម្ចាស់វេបសាយដើម្បីប្រាប់ពួកគេអំពីបញ្ហានេះ។</li> </ul>">
+
+<!ENTITY netReset.title "ការ​តភ្ជាប់​ត្រូវ​បាន​កំណត់​ឡើង​វិញ">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "អស់​ពេល​ក្នុង​ការ​តភ្ជាប់">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "មិន​ស្គាល់​អាសយដ្ឋាន​នេះ">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>អ្នក​អាច​នឹង​ត្រូវ​ដំឡើង​កម្មវិធី​ផ្សេងទៀត ដើម្បី​បើក​អាសយដ្ឋាន​នេះ  ។</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ម៉ាស៊ីន​បម្រើ​ប្រូកស៊ី​កំពុងតែ​បដិសេធ​ការ​តភ្ជាប់">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ពិនិត្យ​ការ​កំណត់​ប្រូកស៊ី​ដើម្បី​ប្រាកដ​ថា​​វា​ត្រឹមត្រូវ។</li> <li>ទាក់ទង​អ្នក​គ្រប់គ្រង​បណ្ដាញ​ដើម្បី​ប្រាកដ​ថា​ម៉ាស៊ីន​មេ​ប្រូកស៊ី ដំណើរការ។</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "មិន​អាច​រក​ឃើញ​ម៉ាស៊ីន​បម្រើ​ប្រូកស៊ី​">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>ពិនិត្យមើល​ការ​កំណត់​ប្រូកស៊ី ដើម្បី​ឲ្យ​ប្រាកដ​ថា​ពួកវា​ត្រឹមត្រូវ ។</li> <li>ពិនិត្យមើល​ដើម្បី​ឲ្យ​ប្រាកដ​ថា​កុំព្យូទ័រ​របស់​អ្នក​មាន​ការ​តភ្ជាប់​បណ្ដាញ​ដែល​ដំណើរការ ។</li> <li>ប្រសិនបើ​កុំព្យូទ័រ​ ឬ​បណ្ដាញ​របស់​អ្នក​ត្រូវ​បាន​ការពារ​ដោយ​ជញ្ជាំងភ្លើង ឬ​ប្រូកស៊ី សូម​ប្រាកដ​ថា &brandShortName; ត្រូវ​បាន​អនុញ្ញាត​ឲ្យ​ចូល​ប្រើ​បណ្ដាញ ។</li> </ul>">
+
+<!ENTITY redirectLoop.title "ទំព័រ​មិន​កំពុងតែ​ប្ដូរ​ទិស​យ៉ាង​ត្រឹមត្រូវ​ទេ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ពេល​ខ្លះ បញ្ហា​នេះ​អាច​កើតឡើង​ដោយសារ​តែ​ការ​បិទ ឬ​ការ​បដិសេធ​ក្នុង​ការ​ទទួល​យក ​ខូគី ។</li> </ul>">
+
+<!ENTITY unknownSocketType.title "ចម្លើយតប​ពី​ម៉ាស៊ីន​បម្រើ​ដែល​មិន​បាន​រំពឹងទុក">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>ពិនិត្យមើល​ ដើម្បី​ឲ្យ​ប្រាកដ​ថា​ប្រព័ន្ធ​​របស់​អ្នក​មាន​កម្មវិធី​គ្រប់គ្រង​សុវត្ថិភាព​ផ្ទាល់ខ្លួន​ដែល​បាន​ដំឡើង​ រួចហើយ ។</li> <li>នេះ​ក៏​ព្រោះតែ​ការ​កំណត់​រចនាសម្ព័ន្ធ​មិន​ស្តង់ដារ​នៅ​លើ​ម៉ាស៊ីន​បម្រើ ។</li> </ul>">
+
+<!ENTITY nssFailure2.title "​ការ​តភ្ជាប់​សុវត្ថិភាព​បរាជ័យ">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>មិន​អាច​បង្ហាញ​ទំព័រ​ដែល​អ្នក​កំពុង​ព្យាយាម​មើល​ដោយ​សារ​មិន​អាច​ផ្ទៀងផ្ទាត់​ទិន្នន័យ​ដែល​បាន​ទទួល។</li> <li>សូម​​ទាក់ទង​ម្ចាស់​តំបន់​បណ្ដាញ ដើម្បី​ប្រាប់​អំពី​បញ្ហា​នេះ។</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "ការ​ត​ភ្ជាប់​របស់​អ្នក​មិន​មាន​សុវត្ថិភាពឡើយ​">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "ម្ចាស់​នៃ <span class='hostname'/> បាន​កំណត់​រចនាសម្ព័ន្ធ​វេបសាយ​របស់​ពួកគេ​មិន​ត្រឹមត្រូវ។ ដើម្បី​ការពារ​ព័ត៌មាន​របស់​អ្នក​ពី​ការ​លួច &brandShortName; មិន​បាន​ភ្ជាប់​ទៅ​វេបសាយ​នេះ​ទេ។">
+
+<!ENTITY sharedLongDesc "<ul> <li>តំបន់បណ្ដាញ​នេះ​អាច​នឹង​មិន​ដំណើរការ​ជា​បណ្ដោះអាសន្ន ឬ​ក៏​វា​រវល់​ពេក ។ ព្យាយាម​ម្ដងទៀត​ក្នុង​រយៈ​ពេល ​ពីរបី​​នាទី​ក្រោយ ។</li> <li>ប្រសិនបើ​ អ្នក​មិន​អាច​ផ្ទុក​​ទំព័រ​ណាមួយ​បាន​ទេ សូម​ពិនិត្យមើល​ការ​តភ្ជាប់​បណ្ដាញ​ កុំព្យូទ័រ​របស់​អ្នក ។</li> <li>ប្រសិនបើ​ កុំព្យូទ័រ ឬ​បណ្ដាញ​របស់​អ្នក​ត្រូវ​បាន​ការពារ​ដោយ​ជញ្ជាំងភ្លើង​ ឬ​ប្រូកស៊ី សូម​ប្រាកដ​ថា &brandShortName; អនុញ្ញាត​ឲ្យ​ចូល​ប្រើ​បណ្ដាញ ។</li> </ul>">
+
+<!ENTITY cspBlocked.title "បាន​ទប់ស្កាត់​ដោយ​គោលការណ៍​អំពី​សុវត្ថិភាព​មាតិកា">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; បាន​រារាំង​ទំព័រ​នេះ​មិន​ឲ្យ​ផ្ទុក​តាម​មធ្យោបាយ​នេះ​ទេ ពីព្រោះ​ទំព័រ​មាន​គោលការណ៍​អំពី​សុវត្ថិភាព​មាតិកា​ដែល​មិន​អនុញ្ញាត​ចំពោះ​វា ។</p>">
+
+<!ENTITY corruptedContentErrorv2.title "កំហុស​មាតិកា​ដែល​ខូច">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ទំព័រ​ដែល​អ្នក​កំពុងតែ​ព្យាយាម​មើល​ មិន​អាច​បង្ហាញ​បាន​ទេ ពីព្រោះ​បាន​រក​ឃើញ​កំហុស​នៅ​ក្នុង​ការ​ផ្ទេរ​ទិន្នន័យ ។</p><ul><li>សូម​ទាក់ទង​ម្ចាស់​តំបន់បណ្ដាញ​ ដើម្បី​ប្រាប់​ឲ្យ​ពួក​គេ​ដឹង​អំពី​បញ្ហា​នេះ ។</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "បន្ថែម​ករណី​លើកលែង…">
+
+<!ENTITY errorReporting.automatic2 "សូម​រាយការណ៍​កំហុស​បែប​នេះ​ដើម្បី​ជួយ​ដល់ Mozilla ក្នុង​ការ​កំណត់ និង​ទប់​ស្កាត់​វេបសាយ​ដែល​មាន​បំណង​អាក្រក់">
+<!ENTITY errorReporting.learnMore "ស្វែងយល់​បន្ថែម...">
+
+<!ENTITY remoteXUL.title "XUL ពី​ចម្ងាយ">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>សូម​ទាក់ទង​ម្ចាស់​តំបន់បណ្ដាញ​ ដើម្បី​ប្រាប់​ពួក​គេ​ឲ្យ​ដឹង​អំពី​បញ្ហា​នេះ ។</li></ul></p>">
+
+<!ENTITY sslv3Used.title "មិន​អាច​តភ្ជាប់​ដោយ​សុវត្ថិភាព​ឡើយ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "ព័ត៌មាន​កម្រិត​ខ្ពស់៖ SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; មិន​បាន​តភ្ជាប់​ទៅ <span id='wrongSystemTime_URL'/> ព្រោះ​ម៉ោង​ក្នុង​កុំព្យូទ័រ​របស់​អ្នក​​បង្ហាញ​ពេលវេលា​ខុស ហើយ​​វាកំពុង​ទប់ស្កាត់​ការ​តភ្ជាប់​សុវត្ថិភាព។</p> <p>កុំព្យូទ័​រ​របស់​អ្នក​ត្រូវ​បាន​កំណត់​ជា <span id='wrongSystemTime_systemDate'/> នៅ​ពេល​ដែល​វា​គួរ​តែ​ជា <span id='wrongSystemTime_actualDate'/>។ ដើម្បី​កែ​បញ្ហា​នេះ សូម​ផ្លាស់ប្ដូរ​​ការ​កំណត់​កាលបរិច្ឆេទ និង​ពេលវេលា​របស់​អ្នក ដើម្បី​ឲ្យ​ត្រូវគ្នា​នឹង​ពេលវេលា​​ត្រឹមត្រូវ។</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> &brandShortName; មិន​បាន​តភ្ជាប់​ទៅ <span id='wrongSystemTimeWithoutReference_URL'/> ព្រោះ​ម៉ោង​ក្នុង​កុំព្យូទ័រ​របស់​អ្នក​​បង្ហាញ​ពេលវេលា​ខុស ហើយ​​វាកំពុង​ទប់ស្កាត់​ការ​តភ្ជាប់​សុវត្ថិភាព។</p> <p>កុំព្យូទ័​រ​របស់​អ្នក​ត្រូវ​បាន​កំណត់​ជា <span id='wrongSystemTimeWithoutReference_systemDate'/>។ ដើម្បី​កែ​បញ្ហា​នេះ សូម​ផ្លាស់ប្ដូរ​​ការ​កំណត់​កាលបរិច្ឆេទ និង​ពេលវេលា​របស់​អ្នក ដើម្បី​ឲ្យ​ត្រូវគ្នា​នឹង​ពេលវេលា​​ត្រឹមត្រូវ។</p>">
+
+<!ENTITY certerror.pagetitle1  "ការ​តភ្ជាប់​ដែល​មិន​មាន​សុវត្ថិភាព​">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "វេបសាយ​នេះ​ប្រើ HTTP Strict Transport Security (HSTS) ដើម្បី​បញ្ជាក់​ថា &brandShortName; អាច​ភ្ជាប់​វា​បាន​តែតាម​វិធី​ដែល​មាន​សុវត្ថិភាព​ប៉ុណ្ណោះ។ ជា​លទ្ធផល វា​មិនអាច​បន្ថែម​ការ​លើកលែង​បាន​សម្រាប់​វិញ្ញាបនបត្រ​នេះ​ទេ។">
+<!ENTITY certerror.copyToClipboard.label "ចម្លង​អត្ថបទ​ទៅ​ក្ដារ​តម្បៀត​ខ្ទាស់">
+
+<!ENTITY inadequateSecurityError.title "ការ​ត​ភ្ជាប់​របស់​អ្នក​មិន​មាន​សុវត្ថិភាពឡើយ​">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ប្រើ​បច្ចេកវិទ្យា​សុវត្ថិភាព​ដែល​ហួស​សម័យ និង​​ងាយរង​ការ​វាយប្រហារ។ អ្នក​វាយប្រហារ​អាច​​​បញ្ចេញ​ព័ត៌មាន​ដែល​អ្នក​គិត​ថា​​មាន​សុវត្ថិភាព​ឲ្យ​គេ​ដឹង​បាន​យ៉ាង​ងាយស្រួល។ អ្នក​គ្រប់គ្រង​វេបសាយ​នឹង​ត្រូវ​​ជួសជុល​ម៉ាស៊ីន​មេ​ជា​មុន​ មុន​ពេល​អ្នក​អាច​ចូល​មើ​លវេបសាយ​បាន។</p><p>កូដ​កំហុស៖ NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "វា​ហាក់​ដូចជា​ការ​កំណត់​សុវត្ថិភាព​បណ្ដាញ​របស់​អ្នក​អាច​បង្ក​ឲ្យ​មាន​បញ្ហា​នេះ។ តើ​អ្នក​​ចង់​កំណត់​ជា​លំនាំដើម​ដើម្បី​សារ​បញ្ហា​នេះ​ដែរ ឬ​ទេ?">
+<!ENTITY prefReset.label "ស្ដារ​ការ​កំណត់​លំនាំដើម">

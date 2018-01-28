@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Semẓi">
+<!ENTITY bringAllToFront.label    "Awi-d akk ɣer zdat">
+<!ENTITY zoomWindow.label         "Semɣeṛ/Semẓi">
+<!ENTITY windowMenu.label         "Asfaylu">
+
+<!ENTITY helpMenu.label           "Tallalt"> 
+<!ENTITY helpMenu.accesskey       "T"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Tallalt"> 
+<!ENTITY helpMenuWin.accesskey    "T">
+<!ENTITY aboutProduct2.label      "Ɣef &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "Γ">
+<!ENTITY productHelp2.label       "Tallalt &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "a">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Inegzumen n unasiw">
+<!ENTITY helpKeyboardShortcuts.accesskey "I">
+
+<!ENTITY helpSafeMode.label       "Ales asenker s izegrar irurmiden…">
+<!ENTITY helpSafeMode.accesskey   "A">
+<!ENTITY helpSafeMode.stop.label       "Ales asenker s izegrar urmiden">
+<!ENTITY helpSafeMode.stop.accesskey   "A">
+
+<!ENTITY healthReport2.label      "Tacrawt n tezmert n &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "T">
+
+<!ENTITY helpTroubleshootingInfo.label      "Talɣut n usellek">
+<!ENTITY helpTroubleshootingInfo.accesskey  "Γ">
+
+<!ENTITY helpFeedbackPage.label      "Mudd-ed tamuɣli-inek…">
+<!ENTITY helpFeedbackPage.accesskey  "M">
+
+<!ENTITY helpShowTour2.label            "Tirza fessusen ɣer &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "r">
+
+<!ENTITY preferencesCmdMac.label        "Ismenyifen...">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Tanfiwin">
+
+<!ENTITY hideThisAppCmdMac2.label       "Ffer &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ffer wiyaḍ">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Sken akk">

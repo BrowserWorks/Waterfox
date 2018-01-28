@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Менување на главната лозинка">
+<!ENTITY setPassword.tokenName.label "Безбедносен уред">
+<!ENTITY setPassword.oldPassword.label "Актуелна лозинка:">
+<!ENTITY setPassword.newPassword.label "Нова лозинка:">
+<!ENTITY setPassword.reenterPassword.label "Нова лозинка (повторно):">
+<!ENTITY setPassword.meter.label "Мерач на квалитетот на лозинките">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Ресетирај">
+<!ENTITY resetPassword.title  "Ресетирање на главната лозинка">
+<!ENTITY resetPassword.text  "Ако ја ресетирате главната лозинка сите Ваши снимени лозикни, податоци за обрасци, сертификати и приватни клучеви ќе бидат загубени. Сигурно сакате да ја ресетирате главната лозинка?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Преземање на сертификат">
+<!ENTITY downloadCert.message1 "Од вас е побарано да му верувате на нов авторитет за сертификати (CA).">
+<!ENTITY downloadCert.trustSSL "Верувај му на овој CA во идентифукувањето на мрежни места.">
+<!ENTITY downloadCert.trustEmail "Верувај му на овој CA во идентифукувањето на поштенски корисници.">
+<!ENTITY downloadCert.trustObjSign "Верувај му на овој CA во идентифукувањето на програмери.">
+<!ENTITY downloadCert.message3 "Пред да му верувате на овој CA за било што, треба да го испитате неговиот сертификат и неговата политика и процедури (доколку ги има).">
+<!ENTITY downloadCert.viewCert.label "Поглед">
+<!ENTITY downloadCert.viewCert.text "Испитај го CA сертификатот">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Барање за идентификација на корисникот">
+<!ENTITY clientAuthAsk.message1 "Ова место побара од вас да се идентификувате со сертификат:">
+<!ENTITY clientAuthAsk.message2 "Изберете сертификат кој ќе служи како идентификација:">
+<!ENTITY clientAuthAsk.message3 "Детали за избраниот сертификат:">
+
+<!ENTITY pkcs12.setpassword.title  "Избор на резервна лозинка за сертификатот">
+<!ENTITY pkcs12.setpassword.message  "Лозинка за резервниот сертификат која ќе ја поставите овде, ќе ја заштитува резервната датотека која сакате да ја креирата.  Мора да ја поставите оваа лозинка пред да продолжите.">
+<!ENTITY pkcs12.setpassword.label1 "Резервна лозинка за сертификатот:">
+<!ENTITY pkcs12.setpassword.label2 "Резервна лозинка за сертификатот (повторно):">
+<!ENTITY pkcs12.setpassword.reminder "Важно: ако ја заборавите лозинката за резервниот сертификат, нема да можете да му пристапите на истиот. Чувајте ја лозинката на сигурно место.">
+
+<!ENTITY chooseToken.title  "Дијалог за избор на секвенца">
+<!ENTITY chooseToken.message1 "Избери секвенца.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Генерирање на приватен клуч">
+<!ENTITY createCertInfo.msg1 "Генерирањето на клуч е во тек… Ова може да потрае неколку минути…">
+<!ENTITY createCertInfo.msg2 "Почекај…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Проверка со зашитетен белег">
+<!ENTITY protectedAuth.msg "Проверете се со белегот. Методот зависи од типот на белегот.">
+<!ENTITY protectedAuth.tokenName.label "Белег:">

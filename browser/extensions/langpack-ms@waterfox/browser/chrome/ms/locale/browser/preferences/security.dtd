@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Keselamatan">
+<!ENTITY  phishingProtection.label       "Perlindungan Phishing">
+
+<!ENTITY  warnOnAddonInstall2.label       "Beri amaran apabila laman web cuba memasang add-ons">
+<!ENTITY  warnOnAddonInstall2.accesskey   "B">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Sekat isi kandung berbahaya dan memperdayakan">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Sekat muat turun berbahaya">
+<!ENTITY  blockDownloads.accesskey        "a">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Beri amaran mengenai perisian yang tidak dikehendaki dan yang luar biasa">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "L">
+
+<!ENTITY  addonExceptions.label         "Pengecualian…">
+<!ENTITY  addonExceptions.accesskey     "E">
+
+
+<!ENTITY  formsAndPasswords.label       "Borang &amp; Kata laluan">
+
+<!ENTITY  rememberLogins2.label         "Ingati log masuk dan kata laluan bagi laman web">
+<!ENTITY  rememberLogins2.accesskey     "I">
+<!ENTITY  passwordExceptions.label      "Pengecualian…">
+<!ENTITY  passwordExceptions.accesskey  "g">
+
+<!ENTITY  useMasterPassword.label        "Guna kata laluan induk">
+<!ENTITY  useMasterPassword.accesskey    "U">
+<!ENTITY  changeMasterPassword.label     "Tukar Kata laluan Induk…">
+<!ENTITY  changeMasterPassword.accesskey "T">
+
+<!ENTITY  savedLogins.label              "Log masuk Tersimpan…">
+<!ENTITY  savedLogins.accesskey          "L">

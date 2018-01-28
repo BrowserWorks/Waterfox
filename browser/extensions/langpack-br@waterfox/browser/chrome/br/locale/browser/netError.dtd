@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Kudenn o kargañ ar bajennad">
+<!ENTITY retry.label "Klask en-dro">
+<!ENTITY returnToPreviousPage.label "Distreiñ">
+<!ENTITY advanced.label "Kempleshoc'h">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "N'haller ket kennaskañ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Dindan strishadurioù emañ ar porzh-mañ">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "N'eo ket bet kavet ar chomlec'h">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Gwiriekait n’ez eus fazi bizskrivañ ebet evel <strong>ww</strong>.example.com e-lec'h <strong>www</strong>.example.com</li><li>Ma n'oc'h gouest da gargañ pajenn ebet, gwiriekait eo kennasket ho urzhiataer d'ar rouedad.</li><li>Ma ’z eo gwarezet hoc'h urzhiataer gant un tanvoger pe ur proksi, gwiriekait eo aotreet &brandShortName; da dizhout ar web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Restr dianav ">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Gwiriañ anv ar chomlec'h rak marteze ez eus fazioù pennlizherennoù pe fazioù skrivañ all.</li> <li>Gwiriañ ha dilec'hiet eo bet, adanvet pe dilamet an ergorenn.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Nac'het eo bet haeziñ d'ar restr">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Gallout a ra bezañ dilamet, dilec'hiet, pe n'eus ket ar gwirioù a-zere evit an haeziñ.</li> </ul>">
+
+<!ENTITY generic.title "N'haller ket echuiñ an azgoulenn-mañ.">
+<!ENTITY generic.longDesc "<p>N’hall ket &brandShortName; kargañ ar bajennad-mañ.</p>">
+
+<!ENTITY captivePortal.title "Kennaskañ d'ar rouedad">
+<!ENTITY captivePortal.longDesc2 "<p>Ret eo deoc'h kennaskañ d'ar rouedad-mañ a-raok bezañ gouest da haeziñ an Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Digeriñ ar bajenn gennaskañ d'ar rouedad">
+
+<!ENTITY malformedURI.title "N'eo ket talvoudek ar chomlec’h">
+<!ENTITY malformedURI.longDesc "<ul> <li>Peurvuiañ e vez skrivet ar chomlec’hioù web evel-mañ  <strong>http://www.example.com/</strong></li> <li>Gwiriekait e vez implijet barennoù stouet ganeoc'h (d.l.e <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Harzet eo bet treuzkas ar roadennoù">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Diamzeret eo an teul">
+<!ENTITY notCached.longDesc "<p>N’eo ket hegerz an teul goulennet e-barzh krubuilh &brandShortName;.</p><ul><li>&brandShortName; ne c’houlenn ket en-dro teulioù kizidik ent emgefreek evit ho tiogelroez.</li><li>Klikit war Klask en-dro a-benn goulenn an teul digant al lec’hienn en-dro.</li></ul>">
+
+<!ENTITY netOffline.title "Mod ezlinenn">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Pouezit war &quot;Klask en-dro&quot; evit trec&apos;haoliñ etrezek ar mod enlinenn hag adkargañ ar bajennad.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Fazi enrinegañ an endalc'had">
+<!ENTITY contentEncodingError.longDesc " <ul> <li>Kit e darempred gant perc'henned al lec'hienn evit kas keloù dezho a-zivout ar gudenn-mañ.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Rizh restr arvarus ">
+<!ENTITY unsafeContentType.longDesc " <ul> <li>Kit e darempred gant perc'henned al lec'hienn evit kas keloù dezho a-zivout ar gudenn-mañ.</li> </ul>">
+
+<!ENTITY netReset.title "Ehanet eo bet ar c'hennaskañ">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Troc'het eo bet ar c'hennask rak re hir e oa">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "N'eo ket bet komprenet ar chomlec’h">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li> Marteze ho peus ezhomm da staliañ meziantoù all evit digeriñ ar chomlec'h-mañ.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Dafariad ar proksi zo o nac'hañ ar c'hennaskañ">
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>Gwiriekait arventennoù ar proksi evit bezañ sur int reizh.</li><li> Kit e darempred gant ardoer ar rouedad evit bezañ sur ez a en-dro dafariad ar proksi.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "N'eo ket bet kavet an dafariad proksi">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Gwiriekait arventennoù ar proxy evit bezañ sur int reizh.</li> <li>Gwiriekait ez a en-dro kennaskadur ho urzhiataer d'ar rouedad</li> <li>Ma 'z eo gwarezet ho urzhiataer gant un tanvoger pe ur proksi, gwiriekait eo aotreet &brandShortName; da dizhout ar web</li></ul> ">
+
+<!ENTITY redirectLoop.title "Adheñchañ ar bajenn n'eo ket dereat">
+<!ENTITY redirectLoop.longDesc "<ul><li>A-wechoù e c'hoarvez ar gudenn-mañ rak diweredekaet pe nac'het eo bet an toupinoù.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Respont direizh">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Gwiriekait eo staliet ar Ardoer Diogelroez Personel war ho reizhad.</li> <li>Marteze eo kefluniet an dafariad en un doare divoutin.</li> </ul>">
+
+<!ENTITY nssFailure2.title "C'hwitadenn war ar c'hennaskañ diarvar">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>N'hall ket bezañ diskouezet ar bajennad emaoc'h o klask gwelout rak n'hall ket bezañ gwiriet dilested ar roadennoù bet degemeret.</li> <li>Kit e darempred gant perc'henned al lec'hienn evit kas keloù dezho a-zivout ar gudenn-mañ.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "N'eo ket diarvar ho kennask">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Direizh eo ket bet kefluniet o lec'hienn wiad gant perc'henned <span class='hostname'/>. Kuit na vefe laeret ho stlennoù n'oc'h ket bet kennasket ouzh al lec'hienn-mañ gant &brandShortName;.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Marteze n'eo ket hegerz al lec'hienn evit un nebeud amzer. Klaskit en-dro diwezhatoc'h.</li> <li>Ma n'oc'h ket gouest da verdeiñ war lec'hiennoù all, gwiriit kennaskañ hoc'h urzhiataer ouzh ar rouedad.</li> <li>Ma'z eo gwaredet hoc'h urzhiataer pe ho rouedad gant un tanvoger pe ur proksi, gwiriit ez eo aotreet &brandShortName; da gennaskañ ouzh ar rouedad</li> </ul>">
+
+<!ENTITY cspBlocked.title "Harzet gant ur reolenn diogelroez a-fet endalc'hadoù">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; en deus miret ar bajennad-mañ ouzh bezañ pellgarget gant an doare-mañ rak reolennoù a-fet diogelroez ez eus er bajennad o tisaotren d'hen ober.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fazi a-fet endalc'had bet kontronet">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ar bajenn emaoc'h o klask gweladenniñ n'hall ket bezañ skrammet rak degouezhet ez eus bet ur fazi e-pad treuzkas ar roadennoù.</p><ul><li>Mar plij, kit e darempred gant perc'henned al lec'hienn a-benn kelaouiñ anezho eus ar gudenn-mañ.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Ouzhpennañ un nemedenn…">
+
+<!ENTITY errorReporting.automatic2 "Danevellit kudennoù evel-se evit sikour Mozilla da naoudiañ ha stankañ al lec'hiennoù droukrañsus">
+<!ENTITY errorReporting.learnMore "Gouzout hiroc'h…">
+
+<!ENTITY remoteXUL.title "XUL a-bell">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Mar plij, kit e darempred gant perc'henned al lec'hienn evit kelaouiñ anezho diwar-benn ar gudenn-mañ.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "N'haller ket kennaskañ outi ent diarvar">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Titouroù kempleshoc'h : SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; n'eo ket kennasket da <span id='wrongSystemTime_URL'/> peogwir n'eo ket d'an eur horolaj hoc'h urzhiataer, ar pezh a vir da gaout ur c'hennask diogel.</p><p><span id='wrongSystemTime_systemDate'/> eo war hoc'h urzhiataer padel e rankfe bezañ <span id='wrongSystemTime_actualDate'/>. Evit diskoulmañ ar gudenn-mañ, kemmit ho teiziad evit ma vefe d'an eur reizh.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> &brandShortName; n'eo ket kennasket da <span id='wrongSystemTimeWithoutReference_URL'/> peogwir n'eo ket d'an eur horolaj hoc'h urzhiataer, ar pezh a vir da gaout ur c'hennask diogel.</p><p><span id='wrongSystemTimeWithoutReference_systemDate'/> eo war hoc'h urzhiataer. Evit reizhañ ar gudenn-mañ, kemmit hoc'h arventennoù deiziad hag eur evit lakaat an eur dereat.</p>">
+
+<!ENTITY certerror.pagetitle1  "Kennask arvarus">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Al lec'hienn-mañ a arver HTTP Strict Transport Security (HSTS) evit erspizañ e rank &brandShortName; kennaskañ outi gant un doare diogel. N'haller ket ouzhpennañ un nemedenn evit an testeni-mañ eta.">
+<!ENTITY certerror.copyToClipboard.label "Eilañ an destenn er golver">
+
+<!ENTITY inadequateSecurityError.title "N'eo ket diarvar ho kennask">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> a arver ur c'halverezh diogelroez diamzeret ha bresk. Gallout a rafe un tager dizoloiñ titouroù a gredec'h diarvar. Ret vo da verour al lec'hienn ratreañ an dafariad a-raok ma c'hallfec'h gweladenniñ al lec'hienn.</p><p>Boneg fazi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Gallout a ra hoc'h arventennoù rouedad bezañ kaoz eus kement-se. Fellout a ra deoc'h assav an arventennoù dre ziouer?">
+<!ENTITY prefReset.label "Assav an arventennoù dre ziouer">

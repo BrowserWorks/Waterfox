@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Date telemetrice">
+
+<!ENTITY aboutTelemetry.pingDataSource "Sursa datelor pentru ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Date actuale ping">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Date ping arhivate">
+
+<!ENTITY aboutTelemetry.raw "JSON brut">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Arată datele pentru subsesiune">
+
+<!ENTITY aboutTelemetry.choosePing "Alege ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; ping mai recent">
+
+<!ENTITY aboutTelemetry.showOlderPing "&gt;&gt; ping mai vechi">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Săptămână">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Date generale">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Date mediu">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Jurnalul telemetriei">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Declarații SQL lente">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Blocări ale browserului">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Fire de execuție blocate">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  Scalari">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Scalari codificați">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histograme">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histograme de chei">
+
+<!ENTITY aboutTelemetry.eventsSection "  Evenimente">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Măsurători simple">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Detalii supliment">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Scrieri întârziate">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Informații privind sesiunea">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTĂ: Depanarea lentă SQL este activată. Șirurile SQL pot fi afișate mai jos, dar ele nu vor fi transmise de Telemetrie.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  Filtru (șir caracter sau /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Payload">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

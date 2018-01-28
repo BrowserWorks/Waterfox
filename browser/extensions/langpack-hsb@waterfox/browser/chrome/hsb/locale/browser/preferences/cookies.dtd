@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Slědowace placki su na wašim ličaku składowane:">
+<!ENTITY     cookiename.label               "Mjeno placka">
+<!ENTITY     cookiedomain.label             "Sydło">
+
+<!ENTITY     props.name.label               "Mjeno:">
+<!ENTITY     props.value.label              "Wobsah:">
+<!ENTITY     props.domain.label             "Hosćićel:">
+<!ENTITY     props.path.label               "Šćežka:">
+<!ENTITY     props.secure.label             "Pósłać za:">
+<!ENTITY     props.expires.label            "Spadnje:">
+<!ENTITY     props.container.label          "Kontejner:">
+
+<!ENTITY     window.title                   "Placki">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Pytać">
+<!ENTITY     searchFilter.accesskey         "P">
+
+<!ENTITY     button.close.label             "Začinić">
+<!ENTITY     button.close.accesskey         "Z">

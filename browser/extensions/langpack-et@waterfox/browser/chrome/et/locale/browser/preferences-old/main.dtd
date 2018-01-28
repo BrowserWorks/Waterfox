@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Käivitamine">
+
+<!ENTITY startupPage.label         "&brandShortName;i käivitamisel:">
+<!ENTITY startupPage.accesskey     "t">
+<!ENTITY startupUserHomePage.label "Kuvatakse avalehte">
+<!ENTITY startupBlankPage.label    "Kuvatakse tühja lehte">
+<!ENTITY startupPrevSession.label  "Kuvatakse viimati avatud aknaid ja kaarte">
+
+<!ENTITY homepage.label            "Avaleht:">
+<!ENTITY homepage.accesskey        "h">
+<!ENTITY useCurrentPage.label      "Kasuta aktiivset veebilehte">
+<!ENTITY useCurrentPage.accesskey  "K">
+<!ENTITY useMultiple.label         "Kasuta aktiivseid veebilehti">
+<!ENTITY chooseBookmark.label      "Kasuta järjehoidjat…">
+<!ENTITY chooseBookmark.accesskey  "j">
+<!ENTITY restoreDefault.label      "Taasta vaikeväärtus">
+<!ENTITY restoreDefault.accesskey  "r">
+
+<!ENTITY downloads.label     "Allalaadimised">
+
+<!ENTITY saveTo.label "Failid salvestatakse asukohta">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Lehitse...">
+<!ENTITY chooseFolderWin.accesskey    "e">
+<!ENTITY chooseFolderMac.label        "Vali...">
+<!ENTITY chooseFolderMac.accesskey    "a">
+<!ENTITY alwaysAskWhere.label         "Alati küsitakse, kuhu failid salvestada">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "Alati kontrollitakse, kas &brandShortName; on vaikebrauser">
+<!ENTITY alwaysCheckDefault2.accesskey    "a">
+<!ENTITY setAsMyDefaultBrowser2.label     "Määra vaikebrauseriks">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "M">
+<!ENTITY isDefault.label                  "&brandShortName; on määratud vaikebrauseriks">
+<!ENTITY isNotDefault.label               "&brandShortName; pole vaikebrauseriks määratud">
+
+<!ENTITY separateProfileMode.label        "Lubatakse &brandShortName;i ja Waterfoxi samaaegne töötamine">
+<!ENTITY useWaterfoxSync.label             "Vihje: kasutatakse erinevaid profiile. Andmete jagamiseks nende profiilide vahel kasuta Synci.">
+<!ENTITY getStarted.notloggedin.label     "Logi &syncBrand.shortName.label;i sisse…">
+<!ENTITY getStarted.configured.label      "Ava &syncBrand.shortName.label;i sätted">
+
+<!ENTITY e10sEnabled.label                "Lubatakse mitme protsessiga &brandShortName;">

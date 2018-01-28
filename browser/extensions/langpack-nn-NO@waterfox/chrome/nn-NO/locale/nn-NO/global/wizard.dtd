@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Gå tilbake">
+<!ENTITY  button-back-mac.accesskey    "G">
+<!ENTITY  button-next-mac.label        "Hald fram">
+<!ENTITY  button-next-mac.accesskey    "H">
+<!ENTITY  button-finish-mac.label      "Fullfør">
+<!ENTITY  button-cancel-mac.label      "Avbryt">
+
+<!ENTITY  button-back-unix.label       "Tilbake">
+<!ENTITY  button-back-unix.accesskey   "T">
+<!ENTITY  button-next-unix.label       "Neste">
+<!ENTITY  button-next-unix.accesskey   "N">
+<!ENTITY  button-finish-unix.label     "Fullfør">
+<!ENTITY  button-cancel-unix.label     "Avbryt">
+
+<!ENTITY  button-back-win.label        "&lt; Tilbake">
+<!ENTITY  button-back-win.accesskey    "T">
+<!ENTITY  button-next-win.label        "Neste &gt;">
+<!ENTITY  button-next-win.accesskey    "N">
+<!ENTITY  button-finish-win.label      "Fullfør">
+<!ENTITY  button-cancel-win.label      "Avbryt">

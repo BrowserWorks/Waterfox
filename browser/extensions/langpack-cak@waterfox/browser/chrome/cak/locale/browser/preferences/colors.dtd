@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Taq b'onil">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Kejalwachïx ri taq b'onil ya'on rutzijol richin re ruxaq rik'in ri nucha'oj nib'anon chik:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "K">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Jantape'">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Xa xe q'equ'm taq chumal kichin taq ruwachinel">
+<!ENTITY  overrideDefaultPageColors.never.label  "Majub'ey">
+
+<!ENTITY  color                           "Rucholajem tzij chuqa' rupam">
+<!ENTITY  textColor.label                 "Rucholajem tzij:">
+<!ENTITY  textColor.accesskey             "R">
+<!ENTITY  backgroundColor.label           "Rupam:">
+<!ENTITY  backgroundColor.accesskey       "R">
+<!ENTITY  useSystemColors.label           "Ke'okisäx ri taq rub'onil q'inoj">
+<!ENTITY  useSystemColors.accesskey       "a">
+
+<!ENTITY  underlineLinks.label            "Tijux kixe' ri ximonela'">
+<!ENTITY  underlineLinks.accesskey        "T">
+<!ENTITY  links                           "Kib'onil ri taq ximonel">
+<!ENTITY  linkColor.label                 "Manjun etz'eton ri taq ximöy:">
+<!ENTITY  linkColor.accesskey             "x">
+<!ENTITY  visitedLinkColor.label          "Taq ximonel etz'eton:">
+<!ENTITY  visitedLinkColor.accesskey      "e">

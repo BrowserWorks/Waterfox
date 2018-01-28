@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Lingvoj">
+<!ENTITY languages.customize.description                "Retpaĝoj estas kelkfoje proponataj en el pli ol unu lingvo. Elektu lingvojn por montri tiujn retpaĝojn, ordigitaj laŭ prefero:">
+<!ENTITY languages.customize.moveUp.label               "Movi supren">
+<!ENTITY languages.customize.moveUp.accesskey           "S">
+<!ENTITY languages.customize.moveDown.label             "Movi malsupren">
+<!ENTITY languages.customize.moveDown.accesskey         "M">
+<!ENTITY languages.customize.deleteButton.label         "Forigi">
+<!ENTITY languages.customize.deleteButton.accesskey     "F">
+<!ENTITY languages.customize.selectLanguage.label       "Elekti lingvon aldonotan…">
+<!ENTITY languages.customize.addButton.label            "Aldoni">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+

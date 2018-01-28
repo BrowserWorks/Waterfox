@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Wo syćowych zwiskach">
+<!ENTITY aboutNetworking.warning               "Tuta funkcija je jara eksperimentelna. Njewužijće ju bjez dohlada dorosćenych.">
+<!ENTITY aboutNetworking.showNextTime          "Tute warnowanje přichodny raz pokazać">
+<!ENTITY aboutNetworking.ok                    "W porjadku">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sokety">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Websokety">
+<!ENTITY aboutNetworking.refresh               "Aktualizować">
+<!ENTITY aboutNetworking.autoRefresh           "Kóžde 3 sekundy aktualizować">
+<!ENTITY aboutNetworking.hostname              "Hostmjeno">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktiwny">
+<!ENTITY aboutNetworking.idle                  "Njeaktiwny">
+<!ENTITY aboutNetworking.host                  "Host">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Pósłany">
+<!ENTITY aboutNetworking.received              "Přijaty">
+<!ENTITY aboutNetworking.family                "Swójba">
+<!ENTITY aboutNetworking.addresses             "Adresy">
+<!ENTITY aboutNetworking.expires               "Spadnje (sekundy)">
+<!ENTITY aboutNetworking.messagesSent          "Pósłane powěsće">
+<!ENTITY aboutNetworking.messagesReceived      "Přijate powěsće">
+<!ENTITY aboutNetworking.bytesSent             "Pósłane bajty">
+<!ENTITY aboutNetworking.bytesReceived         "Přijate bajty">
+<!ENTITY aboutNetworking.logging               "Protokolowanje">
+<!ENTITY aboutNetworking.logTutorial           "Hlejće <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP-protokolowanje</a> za instrukcije wo tym, kak so tutón nastroj wužiwa.">
+<!ENTITY aboutNetworking.currentLogFile        "Aktualna protokolowa dataja:">
+<!ENTITY aboutNetworking.currentLogModules     "Aktualne protokolowe module:">
+<!ENTITY aboutNetworking.setLogFile            "Protokolowu dataju postajić">
+<!ENTITY aboutNetworking.setLogModules         "Protokolowe module postajić">
+<!ENTITY aboutNetworking.startLogging          "Protokolowanje započeć">
+<!ENTITY aboutNetworking.stopLogging           "Protokolowanje skónčić">
+<!ENTITY aboutNetworking.dnsLookup             "DNS-pytanje">
+<!ENTITY aboutNetworking.dnsLookupButton       "Rozeznać">
+<!ENTITY aboutNetworking.dnsDomain             "Domena">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+<!ENTITY aboutNetworking.rcwn                  "Statistika RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Status RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Ličba wužiwanjow pufrowaka">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Ličba wužiwanjow syće">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Ličba syćowych naprašenjow dohromady">
+<!ENTITY aboutNetworking.rcwnOperation         "Operacija pufrowaka">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Wočinić">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Čitać">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Pisać">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Zapisk wočinjeny">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Krótki přerězk">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Dołhi přerězk">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Dołhe standardne wotchilenje">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Pomałe ličenje pufrować">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Pomałe ličenje njepufrować">

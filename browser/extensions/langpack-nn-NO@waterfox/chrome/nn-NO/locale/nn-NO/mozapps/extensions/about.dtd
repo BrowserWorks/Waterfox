@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  creator.label               "Laga av:">
+<!ENTITY  developers.label            "Utviklarar:">
+<!ENTITY  translators.label           "Omsettarar:">
+<!ENTITY  contributors.label          "Bidragsytarar:">
+<!ENTITY  homepage.label              "Besøk nettsida">

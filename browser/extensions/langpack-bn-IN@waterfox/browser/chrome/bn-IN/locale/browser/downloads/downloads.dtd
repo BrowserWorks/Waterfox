@@ -1,0 +1,142 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!-- LOCALIZATION NOTE (downloads.title):
+     Used by screen readers to describe the Downloads Panel.
+     -->
+<!ENTITY downloads.title                  "ডাউনলোড">
+
+<!-- LOCALIZATION NOTE (downloadDetails.width):
+     Width of details for a Downloads Panel item (which directly influences the
+     width of the Downloads Panel) expressed using a CSS unit. The longest
+     labels that should fit in the item width are usually those of in-progress
+     downloads and those of blocked downloads.
+
+     A good rule of thumb is to try to determine the longest string possible
+     that an in-progress download could display, and use that value in ch
+     units.
+
+     For example, in English, a long string would be:
+
+     59m 59s left - 1022 of 1023 KB (120.5 KB/sec)
+
+     Since Downloads Panel is redesigned to show the detail string including
+     the hovering case for an item or an action button.
+     Bug 1328519 is for discussing the detail rule of `downloadDetails.width`.
+     -->
+<!ENTITY downloadDetails.width            "50ch">
+
+<!-- LOCALIZATION NOTE (downloadsSummary.minWidth2):
+     Minimum width for the main description of the downloads summary,
+     which is displayed at the bottom of the Downloads Panel if the
+     number of downloads exceeds the limit that the panel can display.
+
+     A good rule of thumb here is to look at the otherDownloads3 string
+     in downloads.properties, and make a reasonable estimate of its
+     maximum length. For English, this seems like a reasonable limit:
+
+     999 files downloading
+
+     that's 21 characters, so we set the minimum width to 21ch.
+     -->
+<!ENTITY downloadsSummary.minWidth2       "21ch">
+
+<!ENTITY cmd.pause.label                  "থামান">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "পুনরারম্ভ">
+<!ENTITY cmd.resume.accesskey             "R">
+<!ENTITY cmd.cancel.label                 "বাতিল">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                   "ধারণকারী ফোল্ডার খুলুন">
+<!ENTITY cmd.show.accesskey               "F">
+<!ENTITY cmd.showMac.label                "দূরবীক্ষন যন্ত্রে প্রদর্শন">
+<!ENTITY cmd.showMac.accesskey            "F">
+<!ENTITY cmd.retry.label                  "পুনরায় প্রচেষ্টা">
+<!ENTITY cmd.goToDownloadPage.label       "ডাউনলোড পৃষ্ঠায় চলুন">
+<!ENTITY cmd.goToDownloadPage.accesskey   "G">
+<!ENTITY cmd.copyDownloadLink.label       "ডাউনলোডের লিঙ্ক কপি করুন">
+<!ENTITY cmd.copyDownloadLink.accesskey   "L">
+<!ENTITY cmd.removeFromHistory.label      "তালিকা থেকে মুছে ফেলুন">
+<!ENTITY cmd.removeFromHistory.accesskey  "e">
+<!ENTITY cmd.clearList2.label             "পূর্ব প্রদর্শন প্যানেল পরিষ্কার করুন">
+<!ENTITY cmd.clearList2.accesskey         "a">
+<!ENTITY cmd.clearDownloads.label         "ডাউনলোড পরিশ্রুত করুন">
+<!ENTITY cmd.clearDownloads.accesskey     "D">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "ডাউনলোড অনুমোদন করুন">
+<!ENTITY cmd.unblock2.accesskey           "o">
+<!-- LOCALIZATION NOTE (cmd.removeFile.label):
+     This is the tooltip of the action button shown when malware is blocked.
+     -->
+<!ENTITY cmd.removeFile.label             "ফাইল সরিয়ে ফেলুন">
+<!-- LOCALIZATION NOTE (cmd.chooseUnblock.tooltip):
+     This is the tooltip of the action button shown when potentially unwanted
+     downloads are blocked. This opens a dialog where the user can choose
+     whether to unblock or remove the download. Removing is the default option.
+     -->
+<!ENTITY cmd.chooseUnblock.label          "ফাইল মুছে ফেলুন বা ডাউনলোডের অনুমতি দিন">
+<!-- LOCALIZATION NOTE (cmd.chooseOpen.tooltip):
+     This is the tooltip of the action button shown when uncommon downloads are
+     blocked.This opens a dialog where the user can choose whether to open the
+     file or remove the download. Opening is the default option.
+     -->
+<!ENTITY cmd.chooseOpen.label             "ফাইলটি খুলুন বা মুছে ফেলুন">
+
+<!-- LOCALIZATION NOTE (blocked.label):
+     Shown as a tag before the file name for some types of blocked downloads.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+<!ENTITY blocked.label                    "BLOCKED">
+
+<!-- LOCALIZATION NOTE (learnMore.label):
+     Shown as a text link for some types of blocked downloads, for example
+     malware, when there is an associated explanation page on the Mozilla site.
+     Note: This string doesn't exist in the UI yet.  See bug 1053890.
+     -->
+<!ENTITY learnMore.label                  "আরও জানুন">
+
+<!-- LOCALIZATION NOTE (downloadsHistory.label, downloadsHistory.accesskey):
+     This string is shown at the bottom of the Downloads Panel when all the
+     downloads fit in the available space, or when there are no downloads in
+     the panel at all.
+     -->
+<!ENTITY downloadsHistory.label           "সকল ডাউনলোড দেখাও">
+<!ENTITY downloadsHistory.accesskey       "S">
+
+<!ENTITY openDownloadsFolder.label       "ডাউনলোড ফোল্ডার খুলুন">
+
+<!ENTITY clearDownloadsButton.label       "ডাউনলোড পরিষ্কার করুন">
+<!ENTITY clearDownloadsButton.tooltip     "সকল ডাউনলোড মুছে ফেলা হোক">
+
+<!-- LOCALIZATION NOTE (downloadsListEmpty.label):
+     This string is shown when there are no items in the Downloads view, when it
+     is displayed inside a browser tab.
+     -->
+<!ENTITY downloadsListEmpty.label         "কোন ডাউনলোড অবশিষ্ট নেই।">
+
+<!-- LOCALIZATION NOTE (downloadsPanelEmpty.label):
+     This string is shown when there are no items in the Downloads Panel.
+     -->
+<!ENTITY downloadsPanelEmpty.label        "এই সেশনের জন্য কোন ডাউনলোড নেই।">
+
+<!-- LOCALIZATION NOTE (downloadsListNoMatch.label):
+     This string is shown when some search terms are specified, but there are no
+     results in the Downloads view.
+     -->
+<!ENTITY downloadsListNoMatch.label       "কোনো সুংগত অতিরিক্ত সামগ্রী পাওয়া যায়নি">
+
+<!ENTITY cancelDownload.label             "Cancel Download">
+
+<!ENTITY openFile.label                   "Open File">
+
+<!ENTITY retryDownload.label              "Retry Download">
+
+<!ENTITY showMoreInformation.label        "Show more information">
+

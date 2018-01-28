@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Allontanar il pled-clav universal">
+<!ENTITY removeInfo.label                  "Endatar il pled-clav universal actual per cuntinuar:">
+<!ENTITY removeWarning1.label              "Tes pled-clav universal protegia datas sensiblas sco pleds-clav memorisads u certificats. ">
+<!ENTITY removeWarning2.label              "Sche ti allontaneschas tes pled-clav universal, n'èn tias datas betg pli protegidas cunter l'access da terzas persunas.">
+<!ENTITY setPassword.oldPassword.label     "Pled-clav actual:">
+

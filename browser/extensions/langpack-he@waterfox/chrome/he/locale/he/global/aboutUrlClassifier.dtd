@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "מידע על ה־url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "ספק">
+<!ENTITY aboutUrlClassifier.provider                    "ספק">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "מועד עדכון אחרון">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "מועד העדכון הבא">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "מצב העדכון האחרון">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "עדכון">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "מטמון">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "רענון">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "פינוי">
+<!ENTITY aboutUrlClassifier.cacheTableName              "שם טבלה">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "מספר רשומות מטמון שלילי">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "מספר רשומות מטמון חיובי">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "הצגת רשומות">
+<!ENTITY aboutUrlClassifier.cacheEntries                "רשומות במטמון">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "קידומת">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "תפוגת מטמון שלילית">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "גיבוב מלא">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "תפוגת מטמון חיובית">
+<!ENTITY aboutUrlClassifier.debugTitle                  "ניפוי שגיאות">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "הגדרת מודולי רישום">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "הגדרת קובץ רישום">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "הגדרת רישום JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "מודולי רישום לגלישה בטוחה">
+<!ENTITY aboutUrlClassifier.debugModules                "המודולים הנוכחיים לרישום">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "רישום JS לגלישה בטוחה">
+<!ENTITY aboutUrlClassifier.debugFile                   "קובץ הרישום הנוכחי">
+
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Back-off time">

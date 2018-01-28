@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Printereigenschappen">
+
+<!ENTITY paperInput.label "Papierformaat:">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "Opdrachttitel:">
+<!ENTITY jobTitleInput.accesskey "t">
+
+<!ENTITY colorGroup.label "Kleur:">
+<!ENTITY grayRadio.label "Grijstinten">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "Kleur">
+<!ENTITY colorRadio.accesskey "K">
+
+<!ENTITY edgeMarginInput.label "Ruimte tussen papierrand en marge">
+<!ENTITY topInput.label "Boven:">
+<!ENTITY topInput.accesskey "B">
+<!ENTITY bottomInput.label "Onder:">
+<!ENTITY bottomInput.accesskey "O">
+<!ENTITY leftInput.label "Links:">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "Rechts:">
+<!ENTITY rightInput.accesskey "R">

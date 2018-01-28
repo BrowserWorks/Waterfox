@@ -1,0 +1,168 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Cheneral">
+
+<!ENTITY accessibility.label             "Accesibilidat">
+
+<!ENTITY useCursorNavigation.label       "Fer servir siempre as teclas d'o cursor ta navegar endentro d'as pachinas">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "Buscar lo texto malas que s'escomienza a tecliar">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY blockAutoReload.label           "Alvertir quan una pachina web mirará de reendrezar-me u de recargar a pachina">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Amostrar un teclau tactil quan siga necesario">
+<!ENTITY useOnScreenKeyboard.accesskey   "t">
+
+<!ENTITY browsing.label                  "Navegación">
+
+<!ENTITY useAutoScroll.label             "Usar o desplazamiento automatico">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Usar o desplazamiento suau">
+<!ENTITY useSmoothScrolling.accesskey    "d">
+<!ENTITY checkUserSpelling.label         "Comprebar la ortografía mientres que escribo">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Triga de datos">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "Li aduya a entender o rendimiento d'o suyo navegador y comparte datos con &vendorShortName; sobre a salut d'o suyo navegador">
+<!ENTITY enableHealthReport.label        "Activar l'informe de salut de &brandShortName;">
+<!ENTITY enableHealthReport.accesskey    "r">
+
+
+<!ENTITY telemetryDesc.label             "Comparte datos de rendimiento, uso, hardware y personalizacions sobre o suyo navegador con &vendorShortName; ta aduyar a amillorar o &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Compartir datos adicionals (p. eix., Telemetría)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+
+
+<!ENTITY crashReporterDesc2.label         "Los reportes de fallos aduyan a &vendorShortName; a apanyar los problems y fer mas estable y seguro lo suyo navegador">
+<!ENTITY alwaysSubmitCrashReports.label   "Permitir que &brandShortName; ninvie de partes suya los reportes de fallos rechistraus previament">
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+
+
+<!ENTITY networkTab.label                "Ret">
+
+<!ENTITY connection.label                "Connexión">
+
+<!ENTITY connectionDesc.label            "Configurar cómo o &brandShortName; se connecta ta Internet">
+<!ENTITY connectionSettings.label        "Configuración…">
+<!ENTITY connectionSettings.accesskey    "o">
+
+<!ENTITY httpCache.label                 "Conteniu web d'a caché">
+
+<!ENTITY offlineStorage2.label           "Conteniu web sin connexión y datos de l'usuario">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Datos d'o puesto">
+<!ENTITY clearSiteData.label             "Limpiar totz los datos">
+<!ENTITY clearSiteData.accesskey         "L">
+<!ENTITY siteDataSettings.label          "Configuración…">
+<!ENTITY siteDataSettings.accesskey      "o">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Limitar o caché a">
+<!ENTITY limitCacheSizeBefore.accesskey  "m">
+<!ENTITY limitCacheSizeAfter.label       "MB d'espacio">
+<!ENTITY clearCacheNow.label             "Limpiar-la agora">
+<!ENTITY clearCacheNow.accesskey         "L">
+<!ENTITY clearOfflineAppCacheNow.label   "Limpiar-lo agora">
+<!ENTITY clearOfflineAppCacheNow.accesskey "m">
+<!ENTITY overrideSmartCacheSize.label    "No fer caso a la chestión automatica d'a memoria caché">
+<!ENTITY overrideSmartCacheSize.accesskey "N">
+
+<!ENTITY updateTab.label                 "Esviellar">
+
+<!ENTITY updateApplication.label         "Actualizacions d'o &brandShortName;:">
+<!ENTITY updateAuto1.label               "Instalar as actualizacions automaticament (ye a opción recomendada, por seguranza)">
+<!ENTITY updateAuto1.accesskey           "a">
+<!ENTITY updateCheckChoose.label         "Comprebar las actualizacions, pero deixar-me trigar si las quiero instalar">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateManual.label              "No comprebar nunca si i hai actualizacions (no se recomienda por os risgos de seguranza que comporta)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Amostrar l'historial d'actualizacions">
+<!ENTITY updateHistory.accesskey         "h">
+
+<!ENTITY useService.label                "Instalar as actualizacions en un segundo plan">
+<!ENTITY useService.accesskey            "p">
+
+<!ENTITY autoUpdateOthers.label          "Esviellar automaticament">
+<!ENTITY enableSearchUpdate.label        "Motors de busca">
+<!ENTITY enableSearchUpdate.accesskey    "M">
+
+<!ENTITY offlineStorageNotify.label               "Alvertir-me si bell puesto pide almagazenar datos ta usar-los en modo sin connexión">
+<!ENTITY offlineStorageNotify.accesskey           "t">
+<!ENTITY offlineStorageNotifyExceptions.label     "Excepcions…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "O puestos web siguients permiten alzar datos ta emplegar-los en modo sin connexión:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Eliminar…">
+<!ENTITY offlineAppsListRemove.accesskey "l">
+<!ENTITY offlineAppRemove.confirm        "Eliminar os datos d'uso en modo sin connexión">
+
+<!ENTITY certificateTab.label            "Certificaus">
+<!ENTITY certPersonal.label              "Demandas">
+<!ENTITY certPersonal.description        "Quan un servidor requerirá o mío certificau personal:">
+<!ENTITY selectCerts.auto                "Trigar-ne un automaticament">
+<!ENTITY selectCerts.auto.accesskey      "e">
+<!ENTITY selectCerts.ask                 "Preguntar-lo cada vegada">
+<!ENTITY selectCerts.ask.accesskey       "m">
+<!ENTITY enableOCSP.label                "Consultar a os servidors respondedors OCSP ta confirmar a valideza actual d'os certificaus">
+<!ENTITY enableOCSP.accesskey            "u">
+<!ENTITY viewCerts.label                 "Veyer os Certificaus">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "Dispositivos de seguranza">
+<!ENTITY viewSecurityDevices.accesskey   "o">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Usar l'acceleración d'hardware quan sía disponible">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY crashReporterLearnMore.label     "Learn more">
+
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY telemetryLearnMore.label        "Learn more">
+
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

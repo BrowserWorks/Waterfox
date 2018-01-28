@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Shtesat mund të shkaktojnë probleme">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName;-i gjeti se shtesat vijuese dihen se shkaktojnë probleme qëndrueshmërie ose sigurie:">
+<!ENTITY blocklist.softblocked       "Për mbrojtjen tuaj, këshillohet me forcë që ta rinisni pas çaktivizimit të tyre.">
+<!ENTITY blocklist.hardblocked       "Këto shtesa kanë një rrezikshmëri të lartë dhe për shkaktim problemesh qëndrueshmërie ose sigurie, ndaj edhe janë bllokuar, por për t&apos;i çaktivizuar plotësisht është e domosdoshme rinisja.">
+<!ENTITY blocklist.softandhard       "Shtesat që kanë një rrezikshmëri të lartë për shkaktim problemesh qëndrueshmërie ose sigurie janë bllokuar. Të tjerat janë me rrezikshmëri të ulët, por këshillohet me forcë që ta rinisni pas çaktivizimit të tyre.">
+<!ENTITY blocklist.moreinfo          "Më tepër të dhëna">
+
+<!ENTITY blocklist.accept.label      "Riniseni &brandShortName;-in">
+<!ENTITY blocklist.accept.accesskey  "R">
+
+<!ENTITY blocklist.blocked.label     "I bllokuar">
+<!ENTITY blocklist.checkbox.label    "Çaktivizoje">

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Дыспетчар сертыфікатаў">
+
+<!ENTITY certmgr.tab.mine                     "Вашы сертыфікаты">
+<!ENTITY certmgr.tab.others2                  "Людзі">
+<!ENTITY certmgr.tab.websites3                "Серверы">
+<!ENTITY certmgr.tab.ca                       "Установы">
+<!ENTITY certmgr.tab.orphan2                  "Іншыя">
+
+<!ENTITY certmgr.mine                         "Вы маеце сертыфікаты наступных устаноў, якія вызначаюць вас:">
+<!ENTITY certmgr.others                       "Вы маеце сертыфікаты, якія вызначаюць наступных асоб:">
+<!ENTITY certmgr.websites2                    "Вы маеце сертыфікаты, якія вызначаюць наступныя серверы:">
+<!ENTITY certmgr.cas                          "Вы маеце сертыфікаты, якія вызначаюць наступныя сертыфікацыйныя ўстановы:">
+<!ENTITY certmgr.orphans                      "Вы маеце сертыфікаты, якія не пападаюць ні ў адну з іншых катэгорый:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Асноўныя">
+<!ENTITY certmgr.detail.general_tab.accesskey "А">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Падрабязнасці">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "П">
+
+<!ENTITY certmgr.pending.label                "Зараз правяраецца сертыфікат…">
+<!ENTITY certmgr.subjectinfo.label            "Выдадзены (каму):">
+<!ENTITY certmgr.issuerinfo.label             "Выдадзены (кім)">
+<!ENTITY certmgr.periodofvalidity.label       "Перыяд дзеяння" >
+<!ENTITY certmgr.fingerprints.label           "Адбіткі">
+<!ENTITY certmgr.certdetail.title             "Падрабязнасці сертыфіката">
+<!ENTITY certmgr.certdetail.cn                "Агульная назва (CN)">
+<!ENTITY certmgr.certdetail.o                 "Установа (O)">
+<!ENTITY certmgr.certdetail.ou                "Падраздзяленне (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Серыйны нумар">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Адбітак SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Адбітак SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Рэдагаванне наладаў даверу да сертыфіката ЦС">
+<!ENTITY certmgr.editcert.edittrust           "Рэдагаваць налады даверу:">
+<!ENTITY certmgr.editcert.trustssl            "Гэты сертыфікат можа ідэнтыфікаваць сайт.">
+<!ENTITY certmgr.editcert.trustemail          "Гэты сертыфікат можа вызначаць карыстальнікаў пошты.">
+<!ENTITY certmgr.editcert.trustobjsign        "Гэты сертыфікат можа ідэнтыфікаваць вытворцаў праграмнага забеспячэння.">
+
+<!ENTITY certmgr.deletecert.title             "Выдаленне сертыфіката">
+
+<!ENTITY certmgr.certname                     "Назва сертыфіката">
+<!ENTITY certmgr.certserver                   "Сервер">
+<!ENTITY certmgr.override_lifetime            "Час жыцця">
+<!ENTITY certmgr.tokenname                    "Прылада бяспекі">
+<!ENTITY certmgr.begins                       "Пачынаецца (калі)">
+<!ENTITY certmgr.expires                      "Высільваецца (калі)">
+<!ENTITY certmgr.email                        "Эл.паштовы адрас">
+<!ENTITY certmgr.serial                       "Серыйны нумар">
+
+<!ENTITY certmgr.close.label                  "Закрыць">
+<!ENTITY certmgr.close.accesskey              "З">
+<!ENTITY certmgr.view2.label                  "Прагляд…">
+<!ENTITY certmgr.view2.accesskey              "г">
+<!ENTITY certmgr.edit3.label                  "Правіць давер…">
+<!ENTITY certmgr.edit3.accesskey              "П">
+<!ENTITY certmgr.export.label                 "Экспарт…">
+<!ENTITY certmgr.export.accesskey             "Э">
+<!ENTITY certmgr.delete2.label                "Выдаліць…">
+<!ENTITY certmgr.delete2.accesskey            "д">
+<!ENTITY certmgr.delete_builtin.label         "Выдаліць або не давяраць…">
+<!ENTITY certmgr.delete_builtin.accesskey     "д">
+<!ENTITY certmgr.backup2.label                "Рэзерв.капіяванне…">
+<!ENTITY certmgr.backup2.accesskey            "Р">
+<!ENTITY certmgr.backupall2.label             "Рэзерв.капіяванне для ўсіх…">
+<!ENTITY certmgr.backupall2.accesskey         "ў">
+<!ENTITY certmgr.restore2.label               "Імпарт…">
+<!ENTITY certmgr.restore2.accesskey           "І">
+<!ENTITY certmgr.details.label                "Палі сертыфіката">
+<!ENTITY certmgr.details.accesskey            "п">
+<!ENTITY certmgr.fields.label                 "Значэнне поля">
+<!ENTITY certmgr.fields.accesskey             "З">
+<!ENTITY certmgr.hierarchy.label              "Іерархія сертыфікатаў">
+<!ENTITY certmgr.hierarchy.accesskey2         "І">
+<!ENTITY certmgr.addException.label           "Дадаць выключэнне…">
+<!ENTITY certmgr.addException.accesskey       "в">
+
+<!ENTITY exceptionMgr.title                   "Даданне выключэння бяспекі">
+<!ENTITY exceptionMgr.exceptionButton.label   "Пацвердзіць выключэнне бяспекі">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "ц">
+<!ENTITY exceptionMgr.supplementalWarning     "Правамоцныя банкі, біржы і іншыя публічныя сайты ніколі не будуць прасіць вас рабіць гэта.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Сервер">
+<!ENTITY exceptionMgr.certlocation.url        "Адрас:">
+<!ENTITY exceptionMgr.certlocation.download   "Атрымаць сертыфікат">
+<!ENTITY exceptionMgr.certlocation.accesskey  "А">
+<!ENTITY exceptionMgr.certstatus.caption      "Статус сертыфіката">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Прагляд…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "П">
+<!ENTITY exceptionMgr.permanent.label         "Стала захаваць гэта выключэнне">
+<!ENTITY exceptionMgr.permanent.accesskey     "з">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; হালনাগাদ">
+
+<!ENTITY  offline.title                   "&brandShortName; বর্তমানে অফলাইনে কাজ করছে">
+<!ENTITY  offline.description             "&brandShortName; এর বর্তমান সংস্করণের উপযুক্ত করার জন্য আপনার বিদ্যমান অ্যাড-অনগুলোর হালনাগাদ পরীক্ষার জন্য অনলাইন হওয়া আবশ্যক।">
+<!ENTITY  offline.toggleOffline.label     "এখনই অনলাইনে যান। (G)">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "অসংগত অ্যাড-অন">
+<!ENTITY  mismatch.top.label              "নিম্নলিখিত অ্যাড-অনগুলো &brandShortName; এর এই সংস্করণের জন্য উপযুক্ত নয় এবং নিষ্ক্রিয় করা হয়েছে:">
+<!ENTITY  mismatch.bottom.label           "এই অ্যাড-অনগুলোর উপযুক্ত সংস্করণ বিদ্যমান আছে কিনা &brandShortName; তা পরীক্ষা করতে পারে।">
+
+<!ENTITY  checking.wizard.title           "উপযুক্ত অ্যাড-অনের জন্য পরীক্ষা করা হচ্ছে">
+<!ENTITY  checking.top.label              "অনুপোযুক্ত অ্যাড-অনের হালনাগাদের জন্য পরীক্ষা করা হচ্ছে…">
+<!ENTITY  checking.status                 "এতে কিছু সময় লাগতে পারে…">
+
+<!ENTITY  found.wizard.title               "সুসংগত অ্যাড-অন পাওয়া গেছে">
+<!ENTITY  found.top.label                 "ইনস্টল করার জন্য অ্যাড-অন নির্বাচন করুন:">
+<!ENTITY  found.disabledXPinstall.label   "সফটওয়্যার ইনস্টলেশন নিষ্ক্রিয় থাকার ফলে এই হালনাগাদগুলো ইনস্টল করা সম্ভব নয়। নিম্নলিখিত স্থানে এই সেটিং পরিবর্তন করা যাবে।">
+<!ENTITY  found.enableXPInstall.label     "ওয়েবসাইটগুলোকে সফটওয়্যার ইনস্টল করার অনুমোদন দেয়া হবে (A)">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "সুসংগত অ্যাড-অন ইনস্টল করা হচ্ছে">
+<!ENTITY  installing.top.label            "আপনার অ্যাড-অনে হালনাগাদ ডাউনলোড করে ইনস্টল করা হচ্ছে…">
+
+<!ENTITY  noupdates.wizard.title          "কোনো সুসংগত অ্যাড-অন পাওয়া যায়নি">
+<!ENTITY  noupdates.intro.desc            "অসংগত অ্যাড-অনের জন্য &brandShortName; কোনো হালনাগাদ খুঁজে পায়নি।">
+<!ENTITY  noupdates.error.desc            "আপডেট খোঁজার সময় কিছু সমস্যা হয়েছে।">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; নিয়মিতভাবে এই অ্যাড-অনগুলোর জন্য হালনাগাদ খুঁজবে এবং পেলে তা আপনাকে জানাবে।">
+
+<!ENTITY  finished.wizard.title           "উপযুক্ত অ্যাড-অন ইনস্টল করা হয়েছে">
+<!ENTITY  finished.top.label              "&brandShortName; আপনার অ্যাড-অনে হালনাগাদ ইনস্টল করেছে।">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; নিয়মিতভাবে এই অ্যাড-অনগুলোর জন্য হালনাগাদ খুঁজতে পারে এবং পেলে আপনাকে তা জানাতে পারে।">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; নিয়মিতভাবে এই অ্যাড-অনগুলোর জন্য হালনাগাদ খুঁজবে এবং পেলে আপনাকে তা জানাবে।">
+
+<!ENTITY  adminDisabled.wizard.title      "হালনাগাদের জন্য পরীক্ষা করতে ব্যর্থ">
+<!ENTITY  adminDisabled.warning.label     "&brandShortName; এর সফটওয়্যার ইনস্টলেশন প্রক্রিয়া নিষ্ক্রিয় থাকার কারণে অসংগত অ্যাড-অনের হালনাগাদের জন্য পরীক্ষা করা সম্ভব হয়নি। অনুগ্রহ করে আপনার সিস্টেম প্রশাসকের সাথে যোগাযোগ করে সাহায্য নিন।">
+
+<!ENTITY  versioninfo.wizard.title        "অ্যাড-অনের সুসংগতি পরীক্ষা করা হচ্ছে">
+<!ENTITY  versioninfo.top.label           "&brandShortName;-র বর্তমান সংস্করণের সাথে বিদ্যমান অ্যাড-অনের সুসংগতি পরীক্ষা করা হচ্ছে।">
+<!ENTITY  versioninfo.waiting             "এতে কিছু সময় লাগতে পারে…">
+
+<!ENTITY  installerrors.wizard.title      "হালনাগাদ ইনস্টল করার সময় সমস্যা">
+<!ENTITY  installerrors.intro.label       "কিছু অ্যাড-অন হালনাগাদ করার সময় &brandShortName; সমস্যার সম্মুখীন হয়েছে।">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; আরম্ভের জন্য &quot;সমাপ্ত&quot; ক্লিক করুন।">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; আরম্ভের জন্য &quot;সম্পন্ন&quot; ক্লিক করুন।">
+<!ENTITY  enableChecking.label            "&brandShortName; কে হালনাগাদের জন্য পরীক্ষা করার অনুমোদন দেয়া হবে।">

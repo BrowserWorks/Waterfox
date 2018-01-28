@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "הגדרות חיבור">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "קבע תצורה לשרתים מתווכים לגישה לאינטרנט">
+<!ENTITY  noProxyTypeRadio.label        "ללא שרת מתווך">
+<!ENTITY  noProxyTypeRadio.accesskey    "ל">
+<!ENTITY  systemTypeRadio.label         "השתמש בהגדרות השרת המתווך של המערכת">
+<!ENTITY  systemTypeRadio.accesskey     "מ">
+<!ENTITY  WPADTypeRadio.label           "זיהוי אוטומטי של הגדרות שרת המתווך עבור רשת זו">
+<!ENTITY  WPADTypeRadio.accesskey       "ז">
+<!ENTITY  manualTypeRadio.label         "הגדרות שרת מתווך ידניות:">
+<!ENTITY  manualTypeRadio.accesskey     "ה">
+<!ENTITY  autoTypeRadio.label           "URL לתצורה אוטומטית של שרת מתווך:">
+<!ENTITY  autoTypeRadio.accesskey       "ת">
+<!ENTITY  reload.label                  "טעינה מחדש">
+<!ENTITY  reload.accesskey              "ט">
+<!ENTITY  ftp.label                     "שרת מתווך FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "שרת מתווך HTTP‏:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "שרת מתווך SSL:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "שרת מארח SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "שימוש ב־DNS דרך מתווך בעת שימוש ב־SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "מ">
+<!ENTITY  port.label                    "שער:">
+<!ENTITY  HTTPport.accesskey            "ש">
+<!ENTITY  SSLport.accesskey             "ע">
+<!ENTITY  FTPport.accesskey             "ר">
+<!ENTITY  SOCKSport.accesskey           "ש">
+<!ENTITY  noproxy.label                 "אין צורך בשרת מתווך עבור:">
+<!ENTITY  noproxy.accesskey             "ב">
+<!ENTITY  noproxyExplain.label          "דוגמה: mozilla.org.,‏ net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "שימוש בשרת מתווך זה עבור כל הפרוטוקולים">
+<!ENTITY  shareproxy.accesskey          "פ">
+<!ENTITY  autologinproxy.label          "לא לבקש ססמת הזדהות אם נשמרה הססמה">
+<!ENTITY  autologinproxy.accesskey      "ס">
+<!ENTITY  autologinproxy.tooltip        "אפשרות זו מבצעת הזדהות שקטה מול שרתים מתווכים כאשר נשמרו פרטי ההתחברות עבורם. בקשת ההזדהות תופיע אם האימות נכשל.">

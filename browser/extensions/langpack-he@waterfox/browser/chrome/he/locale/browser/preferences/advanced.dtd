@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "כללי">
+
+<!ENTITY useCursorNavigation.label       "השתמש תמיד במקשי הסמן לניווט בתוך דפים">
+<!ENTITY useCursorNavigation.accesskey   "ס">
+<!ENTITY searchOnStartTyping.label       "חיפוש מלל עם תחילת הקלדה">
+<!ENTITY searchOnStartTyping.accesskey   "מ">
+<!ENTITY useOnScreenKeyboard.label       "הצגת מקלדת מגע בעת הצורך">
+<!ENTITY useOnScreenKeyboard.accesskey   "מ">
+
+<!ENTITY browsing.label                  "דפדוף">
+
+<!ENTITY useAutoScroll.label             "שימוש בגלילה אוטומטית">
+<!ENTITY useAutoScroll.accesskey         "ב">
+<!ENTITY useSmoothScrolling.label        "שימוש בגלילה חלקה">
+<!ENTITY useSmoothScrolling.accesskey    "ח">
+<!ENTITY checkUserSpelling.label         "בדיקת איות תוך כדי הקלדה">
+<!ENTITY checkUserSpelling.accesskey     "ב">
+
+<!ENTITY dataChoicesTab.label            "בחירות מידע">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "דיווח נתונים מנוטרל עבור תצורת בנייה זו">
+
+<!ENTITY enableHealthReport1.label       "לאפשר ל־&brandShortName; לשלוח אל Mozilla נתונים טכניים ופעולות שבוצעו בדפדפן">
+<!ENTITY enableHealthReport1.accesskey   "ש">
+<!ENTITY healthReportLearnMore.label     "מידע נוסף">
+
+<!ENTITY dataCollection.label            "איסוף המידע של &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "אנו חותרים לספק לך זכות בחירה ולאסוף רק מה שנדרש לנו כדי לספק ולשפר את &brandShortName; לטובת הכלל. אנו תמיד נבקש את רשותך לפני קבלת פרטים אישיים.">
+<!ENTITY dataCollectionPrivacyNotice.label    "הצהרת פרטיות">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "לאפשר ל־&brandShortName; לשלוח דיווחי קריסה ל־Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "ד">
+<!ENTITY crashReporterLearnMore.label    "מידע נוסף">
+
+<!ENTITY networkTab.label                "רשת">
+
+<!ENTITY networkProxy.label              "מתווך רשת">
+
+<!ENTITY connectionDesc.label            "הגדרת אופן החיבור של &brandShortName; לאינטרנט">
+<!ENTITY connectionSettings.label        "הגדרות...">
+<!ENTITY connectionSettings.accesskey    "ה">
+
+<!ENTITY httpCache.label                 "תוכן רשת במטמון">
+
+<!ENTITY offlineStorage2.label           "תוכן רשת לא מקוון ונתוני משתמש">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "נתוני אתר">
+<!ENTITY clearSiteData.label             "מחיקת כל הנתונים">
+<!ENTITY clearSiteData.accesskey         "מ">
+<!ENTITY siteDataSettings.label          "הגדרות…">
+<!ENTITY siteDataSettings.accesskey      "ה">
+<!ENTITY siteDataLearnMoreLink.label     "מידע נוסף">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "הגבלת גודל המטמון ל־">
+<!ENTITY limitCacheSizeBefore.accesskey  "ה">
+<!ENTITY limitCacheSizeAfter.label       "מ״ב של מקום">
+<!ENTITY clearCacheNow.label             "מחיקה כעת">
+<!ENTITY clearCacheNow.accesskey         "מ">
+<!ENTITY clearOfflineAppCacheNow.label   "מחיקה כעת">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ח">
+<!ENTITY overrideSmartCacheSize.label    "עקיפת ניהול המטמון האוטומטי">
+<!ENTITY overrideSmartCacheSize.accesskey "א">
+
+<!ENTITY updateTab.label                 "עדכון">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "עדכוני &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "כדאי להשאיר את &brandShortName; עדכני לטובת ביצועים, יציבות ואבטחה ברמה הטובה ביותר.">
+<!ENTITY updateApplication.version.pre   "גרסה ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "לאפשר ל־&brandShortName;">
+<!ENTITY updateAuto3.label               "להתקין עדכונים באופן אוטומטי (מומלץ)">
+<!ENTITY updateAuto3.accesskey           "א">
+<!ENTITY updateCheckChoose2.label        "לבדוק אם קיימים עדכונים אבל לדרוש אישור כדי להתקין אותם">
+<!ENTITY updateCheckChoose2.accesskey    "ב">
+<!ENTITY updateManual2.label             "לעולם לא לבדוק לעדכונים (לא מומלץ)">
+<!ENTITY updateManual2.accesskey         "ל">
+
+<!ENTITY updateHistory2.label            "הצגת היסטורית עדכונים…">
+<!ENTITY updateHistory2.accesskey        "ה">
+
+<!ENTITY useService.label                "שימוש בשירות רקע לשם התקנת עדכונים">
+<!ENTITY useService.accesskey            "ר">
+
+<!ENTITY enableSearchUpdate2.label       "עדכון מנועי חיפוש באופן אוטומטי">
+<!ENTITY enableSearchUpdate2.accesskey   "ע">
+
+<!ENTITY offlineStorageNotify.label               "דיווח כאשר אתר מבקש לשמור נתונים לשימוש לא מקוון">
+<!ENTITY offlineStorageNotify.accesskey           "ד">
+<!ENTITY offlineStorageNotifyExceptions.label     "חריגות…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ח">
+
+<!ENTITY offlineAppsList2.label          "האתרים הבאים מורשים לשמור נתונים לשימוש לא מקוון:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "הסר...">
+<!ENTITY offlineAppsListRemove.accesskey "ה">
+<!ENTITY offlineAppRemove.confirm        "הסרת נתונים לא מקוונים">
+
+<!ENTITY certificateTab.label            "אישורים">
+<!ENTITY certPersonal2.description       "כאשר שרת מבקש את האישור האישי שלך">
+<!ENTITY selectCerts.auto                "לבחור אחד באופן אוטומטי">
+<!ENTITY selectCerts.auto.accesskey      "ב">
+<!ENTITY selectCerts.ask                 "לשאול אותך כל פעם">
+<!ENTITY selectCerts.ask.accesskey       "ש">
+<!ENTITY enableOCSP.label                "תשאול שרתי OCSP לאימות תקפות נוכחית של אישורי אבטחה">
+<!ENTITY enableOCSP.accesskey            "ת">
+<!ENTITY viewCerts2.label                "הצגת אישורים…">
+<!ENTITY viewCerts2.accesskey            "א">
+<!ENTITY viewSecurityDevices2.label      "התקני אבטחה…">
+<!ENTITY viewSecurityDevices2.accesskey  "א">
+
+<!ENTITY performance.label               "ביצועים">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "שימוש בהגדרות הביצועים המומלצות">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "הגדרות אלו מותאמות לחומרת המחשב ולמערכת ההפעלה שלך.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "ש">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "מידע נוסף">
+<!ENTITY limitContentProcessOption.label "הגבלת תהליך תוכן">
+<!ENTITY limitContentProcessOption.description
+                                         "תהליכי תוכן נוספים עשויים לשפר את הביצועים בעת שימוש במספר לשוניות, עם זאת יעשה שימוש ביותר זיכרון.">
+<!ENTITY limitContentProcessOption.accesskey   "ה">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "שינוי מספר תהליכי תוכן אפשרי רק עם &brandShortName; מרובה תהליכים.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "כיצד לבדוק אם ריבוי תהליכים מופעל">
+<!ENTITY allowHWAccel.label              "שימוש בהאצת חומרה כשניתן">
+<!ENTITY allowHWAccel.accesskey          "ה">

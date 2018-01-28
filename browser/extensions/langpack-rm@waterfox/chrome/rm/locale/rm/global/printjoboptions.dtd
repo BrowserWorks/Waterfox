@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Caracteristicas dal stampader">
+
+<!ENTITY paperInput.label "Grondezza dal palpiri:">
+<!ENTITY paperInput.accesskey "p">
+
+<!ENTITY jobTitleInput.label "Incumbensa da stampar:">
+<!ENTITY jobTitleInput.accesskey "I">
+
+<!ENTITY colorGroup.label "Colur:">
+<!ENTITY grayRadio.label "Tuns grischs">
+<!ENTITY grayRadio.accesskey "g">
+<!ENTITY colorRadio.label "Colurs">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "Distanza tranter l'ur dal palpiri e l'ur da la stampa">
+<!ENTITY topInput.label "Sura:">
+<!ENTITY topInput.accesskey "S">
+<!ENTITY bottomInput.label "Sut:">
+<!ENTITY bottomInput.accesskey "S">
+<!ENTITY leftInput.label "A sanestera:">
+<!ENTITY leftInput.accesskey "A">
+<!ENTITY rightInput.label "A dretga:">
+<!ENTITY rightInput.accesskey "r">

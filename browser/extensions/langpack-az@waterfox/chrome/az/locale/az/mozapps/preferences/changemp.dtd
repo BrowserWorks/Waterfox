@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Ana Şifrəni dəyiş">
+<!ENTITY setPassword.tokenName.label       "Təhlükəsizlik cihazları">
+<!ENTITY setPassword.oldPassword.label     "Hazırkı şifrə:">
+<!ENTITY setPassword.newPassword.label     "Yeni şifrə:">
+<!ENTITY setPassword.reenterPassword.label "Yeni şifrə (təkrar):">
+<!ENTITY setPassword.meter.label           "Şifrənin gücü">
+<!ENTITY setPassword.meter.loading         "Yüklənir">
+<!ENTITY masterPasswordDescription.label   "Ana şifrə ilə digər şifrələrinizi qoruya bilərsiniz. Ana şifrə yaradsanız &brandShortName; her seansda yadda saxlanmış məlumatlardan istifadə etmək istəyəndə, sizdən ana şifrəni istəyəcək.">
+<!ENTITY masterPasswordWarning.label       "Lütfən ana şifrəni bir yerə qeyd eləməyi unutmayın. Çünki ana şifrəni unutsanız yadda saxlanan şifrələrdən istifadə imkanınız olmuyacaq.">

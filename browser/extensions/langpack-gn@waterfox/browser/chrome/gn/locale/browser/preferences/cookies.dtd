@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Ko'ã cookie oñeñongatúma nemohendahápe:">
+<!ENTITY     cookiename.label               "Kookie réra">
+<!ENTITY     cookiedomain.label             "Tenda">
+
+<!ENTITY     props.name.label               "Téra">
+<!ENTITY     props.value.label              "Pypegua:">
+<!ENTITY     props.domain.label             "Mohendahavusu:">
+<!ENTITY     props.path.label               "Tape:">
+<!ENTITY     props.secure.label             "Eguerahauka">
+<!ENTITY     props.expires.label            "Ndoikovéima:">
+<!ENTITY     props.container.label          "Tyru:">
+
+<!ENTITY     window.title                   "Kookie">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Heka">
+<!ENTITY     searchFilter.accesskey         "H">
+
+<!ENTITY     button.close.label             "Mboty">
+<!ENTITY     button.close.accesskey         "C">

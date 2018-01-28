@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "அனுமதிகள்">
+
+<!ENTITY  blockPopups.label           "பாப் அப் (துள்ளும்) சாளரங்களை தடுக்கவும்">
+<!ENTITY  blockPopups.accesskey       "ப">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "மேலும் அறிய">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "தேர்ந்தெடு…">
+<!ENTITY  notificationsDoNotDisturb.label      "தொந்தரவு செய்ய வேண்டாம்">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "&brandShortName; மறுதொடக்கம் செய்யும் வரை எந்த அறிவிப்புகளும் காட்டப்படாது">
+
+<!ENTITY  popupExceptions.label       "விதிவிலக்குகள்...">
+<!ENTITY  popupExceptions.accesskey   "வ">
+
+<!ENTITY  fontsAndColors.label        "எழுத்துருக்கள் &amp; நிறங்கள்">
+
+<!ENTITY  defaultFont2.label          "முன்னிருப்பு எழுத்துரு">
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultSize2.label          "அளவு">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  advancedFonts.label         "உயர்நிலை...">
+<!ENTITY  advancedFonts.accesskey     "உ">
+
+<!ENTITY  colors.label                "நிறங்கள்...">
+<!ENTITY  colors.accesskey            "ந">
+
+
+<!ENTITY language2.label              "மொழி">
+<!ENTITY chooseLanguage.label         "பக்கங்களை காட்ட உங்களுக்கு பிடித்தமான முதன்மை மொழியைத் தேர்ந்தெடுக்கவும்">
+<!ENTITY chooseButton.label           "தேர்ந்தெடு...">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "வலை உள்ளடக்கத்தை மொழிபெயர்">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "விதிவிலக்குகள்...">
+<!ENTITY translateExceptions.accesskey "x">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "ஆல் மொழிபெயர்ப்பு">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "எண்முறை உரிமைகள் மேலாண்மை (DRM) உள்ளடக்கம்">
+
+<!ENTITY  playDRMContent2.label          "DRM உள்ளடக்கங்கத்தை இயக்கு">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent.learnMore.label "மேலும் அறிய">
+
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">

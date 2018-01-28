@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "ॲड-ऑन प्रतिष्ठापीत करा">
+<!ENTITY intro           "खालील ॲड-ऑनसह संगणकावरील इतर प्रोग्राम्स्ला &brandShortName; संपादित करायला आवडेल:">
+<!ENTITY warning         "फक्त विश्वासर्ह लेखकांपासून ॲड-ऑन्स् प्रतिष्ठापीत करा.">
+<!ENTITY allow           "हे प्रतिष्ठापन स्वीकारा">
+<!ENTITY later           "ॲड-ऑन्स् व्यवस्थापकाचा वापर करून कोणत्याही क्षणी बदल शक्य आहे.">
+<!ENTITY continue        "पुढे चालू ठेवा">
+<!ENTITY restartMessage  "ह्या ॲड-ऑनचे प्रतिष्ठापन पूर्ण करण्यासाठी &brandShortName; पुनःसुरू करणे आवश्यक आहे.">
+<!ENTITY restartButton   "&brandShortName; पुनःसुरू करा">
+<!ENTITY cancelButton    "रद्द करा">

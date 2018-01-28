@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Pe i lub kor">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Pol kare tim Pe i lub kor">
+<!ENTITY doNotTrackCheckbox2.accesskey "o">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; bicwalo lanyut ni pe imito ni ki lub kor in teke kicako Gwoke ikom lubo kor">
+<!ENTITY doNotTrackLearnMore.label    "Nong ngec mapol">

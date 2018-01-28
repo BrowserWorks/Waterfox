@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab o gia fra i feuggi averti de frésco">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Arvi inte 'n atro barcon">
+<!ENTITY newWindowsAsTabs.accesskey   "b">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avertime quande særo ciù feuggi insemme">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Avertime quando l'arvetua de ciù feuggi a peu fâ anâ ciù lento &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Quando arvo un colegamento inte un neuvo feuggio ti devi pasâ subito a st'urtimo">
+<!ENTITY switchLinksToNewTabs.accesskey    "s">
+
+<!ENTITY showTabsInTaskbar.label          "Fanni vedde l'anteprimma inta bara di task do Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "feuggi">

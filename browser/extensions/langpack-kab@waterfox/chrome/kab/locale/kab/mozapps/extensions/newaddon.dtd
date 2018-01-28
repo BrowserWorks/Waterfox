@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Asebded n uzegrir">
+<!ENTITY intro           "Ahil nniḍen ɣef uselkim-inek yebɣa ad isnifel&brandShortName; s izegrar imernan-agi:">
+<!ENTITY warning         "Sebded kan izegrar imarnan n imeskaren deg wid teggiḍ taflest.">
+<!ENTITY allow           "Sireg asebded-agi">
+<!ENTITY later           "Tzemreḍ yal tikelt ad ţnifleḍ izegrar imernan deg umsefrak n izegrar isemmaden.">
+<!ENTITY continue        "Kemmel">
+<!ENTITY restartMessage  "Issefk ad yales usenker n &brandShortName; akken ad tfakeḍ asebded n uzegrir-agi.">
+<!ENTITY restartButton   "Ales asenker n &brandShortName;">
+<!ENTITY cancelButton    "Sefsex">

@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Colecție">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizare">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organizează marcajele">
+
+<!ENTITY file.close.label               "Închide">
+<!ENTITY file.close.accesskey           "c">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vizualizări">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Schimbă vizualizarea">
+<!ENTITY view.columns.label             "Arată coloane">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Sortează">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Nesortat">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "De la A la Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "De la Z la A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importă marcaje dintr-un fișier HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportă marcaje într-un fișier HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importă date din alt browser…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Copie de siguranță…">
+<!ENTITY cmd.backup.accesskey           "g">
+<!ENTITY cmd.restore2.label             "Restaurează">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Alege fișierul…">
+<!ENTITY cmd.restoreFromFile.accesskey  "l">
+
+<!ENTITY cmd.deleteDomainData.label     "Uită totul despre acest site">
+<!ENTITY cmd.deleteDomainData.accesskey "d">
+
+<!ENTITY cmd.open.label                  "Deschide">
+<!ENTITY cmd.open.accesskey              "D">
+<!ENTITY cmd.open_window.label           "Deschide într-o fereastră nouă">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "Deschide într-o fereastră privată nouă">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Deschide într-o filă nouă">
+<!ENTITY cmd.open_tab.accesskey          "e">
+<!ENTITY cmd.open_all_in_tabs.label      "Deschide toate în file">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "o">
+
+<!ENTITY cmd.properties.label      "Proprietăți">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Sortează după nume">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Marcaj nou…">
+<!ENTITY cmd.new_bookmark.accesskey        "B">
+<!ENTITY cmd.new_folder.label              "Dosar nou…">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "o">
+<!ENTITY cmd.new_separator.label           "Separator nou">
+<!ENTITY cmd.new_separator.accesskey       "S">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Reîncarcă semnul actualizabil">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY cmd.moveBookmarks.label                  "Mută…">
+<!ENTITY cmd.moveBookmarks.accesskey              "M">
+
+<!ENTITY col.name.label          "Nume">
+<!ENTITY col.tags.label          "Etichete">
+<!ENTITY col.url.label           "Locație">
+<!ENTITY col.mostrecentvisit.label "Cea mai recentă vizită">
+<!ENTITY col.visitcount.label    "Număr de vizite">
+<!ENTITY col.description.label   "Descriere">
+<!ENTITY col.dateadded.label     "Adăugat">
+<!ENTITY col.lastmodified.label  "Ultima modificare">
+
+<!ENTITY search.placeholder  "Caută">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importare și copie de siguranță">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importă și fă copie de siguranță marcajelor">
+
+<!ENTITY backButton.tooltip  "Mergi înapoi">
+
+<!ENTITY forwardButton.tooltip  "Mergi înainte">
+
+<!ENTITY detailsPane.more.label "Mai mult">
+<!ENTITY detailsPane.more.accesskey "M">
+<!ENTITY detailsPane.less.label "Mai puțin">
+<!ENTITY detailsPane.less.accesskey "M">
+<!ENTITY detailsPane.selectAnItemText.description "Selectați un element pentru a-l vedea și a-i edita proprietățile">
+
+<!ENTITY view.label               "Vizualizare">
+<!ENTITY view.accesskey           "V">
+<!ENTITY byDate.label             "După dată">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "După site">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "După cele mai vizitate">
+<!ENTITY byMostVisited.accesskey  "v">
+<!ENTITY byLastVisited.label      "După ultimele vizitate">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "După dată și site">
+<!ENTITY byDayAndSite.accesskey   "t">

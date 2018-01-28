@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "पीछा न करें">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "हमेशा पता नहीं लगाना लागू करें">
+<!ENTITY doNotTrackCheckbox2.accesskey "A">
+
+<!ENTITY doNotTrackTPInfo.description "&brandShortName; एक संकेत भेजेगा कि आप पीछा नहीं किया जाना चाहते हैं जब भी पीछा किया जाना सुरक्षा चालू हो.">
+<!ENTITY doNotTrackLearnMore.label    "अधिक जानें">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Buscador predeterminado">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Escolla o seu buscador predeterminado. &brandShortName; úsao na barra de localización, na barra de busca e na páxina de inicio.">
+
+<!ENTITY provideSearchSuggestions.label        "Fornecer suxestións de busca">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.label           "Amosar as suxestións de busca nos resultados da barra de localización">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "As suxestións de busca non se amosarán nos resultados da barra de localización porque configurou &brandShortName; para que non lembre o historial.">
+
+<!ENTITY oneClickSearchEngines.label           "Buscadores nun clic">
+
+<!ENTITY chooseWhichOneToDisplay.label         "A barra de busca permítelle usar outros buscadores directamente. Escolla cales quere amosar.">
+
+<!ENTITY engineNameColumn.label                "Buscador">
+<!ENTITY engineKeywordColumn.label             "Palabra clave">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Restaurar os buscadores predeterminados">
+<!ENTITY restoreDefaultSearchEngines.accesskey "d">
+
+<!ENTITY removeEngine.label                    "Retirar">
+<!ENTITY removeEngine.accesskey                "r">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">

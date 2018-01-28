@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Ɗum ena waawi boynude gaaranti maa!">
+<!ENTITY aboutWarningText.label "Waylude ɗee teelte ceeɓtore ena waawi addude caɗeele jamɗugol, kisal e jaawgol ngal jaaɓnirgal. Pot-ɗaa jokkude tan ko so tawii aɗa yenanaa aɗa anndi ko mbaɗataa koo.">
+<!ENTITY aboutWarningButton2.label "Mi jaɓii jeemaade!">
+<!ENTITY aboutWarningCheckbox.label "Hollu ngoo reentino laawol garowol">
+
+<!ENTITY searchPrefs.label "Yiylo:">
+<!ENTITY searchPrefs.accesskey "i">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Innde Cuɓoraaɗe">
+<!ENTITY lockColumn.label "Ngonka">
+<!ENTITY typeColumn.label "Fannu">
+<!ENTITY valueColumn.label "Kiisol">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Dobo ngam leemtaade"> 
+<!ENTITY columnChooser.tooltip "Dobo ngam labaade dati kollirteeɗi"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "D">
+<!ENTITY copyPref.label "Natto">
+<!ENTITY copyPref.accesskey "N">
+<!ENTITY copyName.label "Natto Innde">
+<!ENTITY copyName.accesskey "I">
+<!ENTITY copyValue.label "Natto Kiisol">
+<!ENTITY copyValue.accesskey "K">
+<!ENTITY modify.label "Waylu">
+<!ENTITY modify.accesskey "W">
+<!ENTITY toggle.label "Toggilo">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "Firlit">
+<!ENTITY reset.accesskey "F">
+<!ENTITY new.label "Kesum">
+<!ENTITY new.accesskey "e">
+<!ENTITY string.label "Ɓoggol">
+<!ENTITY string.accesskey "o">
+<!ENTITY integer.label "Timmunde">
+<!ENTITY integer.accesskey "T">
+<!ENTITY boolean.label "Buleaare">
+<!ENTITY boolean.accesskey "B">

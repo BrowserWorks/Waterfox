@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab წრიულად გადართვა ჩანართებზე, ბოლო გამოყენების რიგითობით.">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "ც">
+
+<!ENTITY newWindowsAsTabs.label       "ახალი ფანჯრების ნაცვლად ახალი ჩანართების გახსნა">
+<!ENTITY newWindowsAsTabs.accesskey   "ჩ">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "გაფრთხილება რამდენიმე ჩანართის ერთბაშად დახურვისას">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "ე">
+
+<!ENTITY warnOnOpenManyTabs.label       "გაფრთხილება, როცა ბევრი ჩანართის გახსნამ შესაძლოა შეანელოს &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "ე">
+
+<!ENTITY switchLinksToNewTabs.label        "ბმულის ახალ ჩანართში გახსნისას, მაშინვე მასზე გადასვლა">
+<!ENTITY switchLinksToNewTabs.accesskey    "დ">
+
+<!ENTITY showTabsInTaskbar.label          "ჩანართების ესკიზების ჩვენება Windows-ის დავალებათა ზოლში">
+<!ENTITY showTabsInTaskbar.accesskey      "ტ">
+<!ENTITY tabsGroup.label          "ჩანართები">

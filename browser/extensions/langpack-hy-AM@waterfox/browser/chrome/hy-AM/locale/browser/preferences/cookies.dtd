@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Հետևյալ cookie-ները պահպանված են ձեր համակարգչում.">
+<!ENTITY     cookiename.label               "Cookie-ի անունը">
+<!ENTITY     cookiedomain.label             "Կայքը">
+
+<!ENTITY     props.name.label               "Անունը.">
+<!ENTITY     props.value.label              "Բովանդակություն.">
+<!ENTITY     props.domain.label             "Հանգույցը.">
+<!ENTITY     props.path.label               "Ճ-ը.">
+<!ENTITY     props.secure.label             "Ում.">
+<!ENTITY     props.expires.label            "Ավարտվելու է.">
+<!ENTITY     props.container.label          "Զետեղարան.">
+
+<!ENTITY     window.title                   "Cookie-ներ">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Որոնում">
+<!ENTITY     searchFilter.accesskey         "Ո">
+
+<!ENTITY     button.close.label             "Փակել">
+<!ENTITY     button.close.accesskey         "ա">

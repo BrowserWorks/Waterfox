@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Tilføj ny kontekst">
+<!ENTITY addButton.accesskey  "T">
+<!ENTITY preferencesButton.label "Indstillinger">
+<!ENTITY removeButton.label   "Fjern">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Gå tilbage til privatliv">
+
+<!ENTITY window.title         "Tilføj ny kontekst">
+<!ENTITY window.width         "33em">
+
+<!ENTITY name.label           "Navn:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Indtast et navn til konteksten">
+<!ENTITY icon.label           "Ikon:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Farve:">
+<!ENTITY color.accesskey      "a">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Færdig">
+<!ENTITY button.ok.accesskey  "F">
+

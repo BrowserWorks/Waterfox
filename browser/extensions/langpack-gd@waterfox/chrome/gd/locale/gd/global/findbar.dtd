@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Lorg ath-làthair na h-abairt seo">
+<!ENTITY previous.tooltip "Lorg làthair roimhe na h-abairt seo">
+<!ENTITY findCloseButton.tooltip "Dùin am bàr luirg">
+<!ENTITY highlightAll.label "Soillsich na h-uile">
+<!ENTITY highlightAll.accesskey "l">
+<!ENTITY highlightAll.tooltiptext "Soillsich gach làthair na h-abairt seo">
+<!ENTITY caseSensitive.label "Aire do litrichean mòra is beaga">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "Lorg agus an aire do litrichean mòra 's beaga">
+<!ENTITY entireWord.label "Faclan-slàna">
+<!ENTITY entireWord.accesskey "F">
+<!ENTITY entireWord.tooltiptext "Na lorg ach faclan slàna">

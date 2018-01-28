@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Poveži se">
+<!ENTITY header     "Poveži se na udaljeni uređaj">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Poveži se">
+<!ENTITY connecting "Povezujem se…">
+<!ENTITY availableAddons "Dostupni udaljeni add-oni:">
+<!ENTITY availableTabs "Dostupni udaljeni tabovi:">
+<!ENTITY availableProcesses "Dostupni udaljeni procesi:">
+<!ENTITY connectionError "Greška:">
+<!ENTITY errorTimeout "Greška: isteklo vrijeme za povezivanje.">
+<!ENTITY errorRefused "Greška: povezivanje odbijeno.">
+<!ENTITY errorUnexpected "Neočekivana greška.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox razvojni alati mogu debagirati udaljene uređaje (Waterfox za Android i Waterfox OS, naprimjer). Provjerite da li ste na udaljenom uređaju uključili opciju 'Udaljeno debagiranje'.">
+<!ENTITY remoteDocumentation "dokumentaciju">
+<!ENTITY remoteHelpSuffix ".">
+

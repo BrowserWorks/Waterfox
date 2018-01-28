@@ -1,0 +1,144 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Datos de Telemetry">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+Fuente de datos de ping:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Datos de ping actuales
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Datos de ping archivados
+">
+
+<!ENTITY aboutTelemetry.raw "
+JSON en bruto
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Mostrar datos de subsesión
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Elegir ping:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Ping más reciente
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Ping más antiguo &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Semana
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Tipo de ping
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Hoy
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Ayer
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Antiguo
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  Datos generales
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Datos de entorno
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Registro de Telemetry
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  Sentencias SQL lentas
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  Colgadas del navegador
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  Colgadas del hilo
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  
+  Pilas capturadas">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+ Escalares">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  
+  Escalares con clave">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  Histogramas
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Histogramas con clave
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Eventos
+">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  Medidas simples
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  Detalles de complementos
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  Últimas escrituras
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Información de sesión
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  NOTE: Slow SQL debugging is enabled. Full SQL strings may be displayed below but they will not be submitted to Telemetry.
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Obtener nombres de función para pilas
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Mostrar datos de pila en bruto
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  Filtro (cadenas o /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">

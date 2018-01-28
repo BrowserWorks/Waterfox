@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "साफ्टवेयर अद्यतन">
+
+<!ENTITY  checking.title                  "अद्यतन कलेल जाँच रहल अछि ">
+<!ENTITY  updateCheck.label               "&brandShortName; क नव संस्करण  कलेल  जाँच रहल  अछि ...…">
+
+<!ENTITY  noupdatesfound.title            "कोनो अद्यतन नहि भेटल">
+<!ENTITY  noupdatesautoenabled.intro      "कोनो अद्यतन उपलब्ध नहि अछि . &brandShortName; अद्यतन कलेल समय समय पर जाँचताह.">
+<!ENTITY  noupdatesautodisabled.intro     "कोनो अद्यतन उपलब्ध नहि अछि . कृपया फेर जाँचू अथवा &brandShortName; क स्वचालित अद्यतन जाँच क लेल चेक करू .">
+
+<!ENTITY  manualUpdate.title              "अद्यतन मे असमर्थ">
+<!ENTITY  manualUpdate.desc               "A recommended security and stability update is available, but you do not have the system permissions required to install it. Please contact your system administrator, or try again from an account that has permission to install software on this computer.">
+<!ENTITY  manualUpdate.space.desc         "A recommended security and stability update is available, but you do not have enough space to install it.">
+<!ENTITY  manualUpdateGetMsg.label        "अहाँ एतय सँ  हरदम  &brandShortName; क नवीनतम संस्करण पा सकैत  अछि :">
+
+<!ENTITY  unsupported.title               "तंत्र असमर्थित">
+<!ENTITY  unsupported.label               "अहाँ &brandShortName; समयातीत अछि, मुदा नवीनतम संस्करणअहाँक तंत्र पर समर्थित नहि अछि. अपन तंत्रकेँ उन्नत बनाउ फेर कोसिस करू. अहाँ ई सूचनाक फेर नहि देखब मुदा अहाँ कए सकैछी">
+<!ENTITY  unsupportedLink.label           "आओर जानू.">
+
+<!ENTITY  clickHere.label                 "ई अद्यतनक संबंध मे बेसी सूचना देखू">
+
+<!ENTITY  evangelism.desc                 "एकर अनुशंसा कएल जाएत अछि जे अहाँ एहि अद्यतनकेँ &brandShortName; क लेल यथाशीघ्र लागू करू.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; डाउनलोड कए रहल अछि">
+<!ENTITY  downloading.intro               "ई अद्यतन डाउनलोड कए रहल अछि …">
+<!ENTITY  connecting.label                "अद्यतन सर्वर सँ कनेक्ट हो रहल अछि …">
+<!ENTITY  verificationFailedText.label    "&brandShortName; असमर्थ छला ई जांचबक लेल डाउनलोड कएल संवर्द्धित अद्यतन, एहिलेल ई आब पूरा अद्यतन संकुल डाउनलोड कए रहल अछि .">
+
+<!ENTITY  viewDetails.tooltip             "ई अद्यतन क लेल विवरण देखू">
+
+<!ENTITY  details.link                    "विवरण">
+
+<!ENTITY  error.title                     "अद्यतन विफल">
+
+<!ENTITY  error.label                     "ई अद्यतनक जाँचबा, डाउनलोडिंग अथवा संस्थापन कलेल समस्या छल. &brandShortName; केँ अद्यतन नहि कएल जाए सकल किएक:">
+                                           
+<!ENTITY  errorManual.label               "अहाँ &brandShortName; दस्ती रूप सँ अद्यतन कए सकैत छी लिंक पर जाए कए आओर नवीनतम संस्करण डाउनलोड कएक:">
+                                           
+<!ENTITY  errorpatching.intro             "आंशिक अद्यतन लागू नहि कएल जाए सकल. &brandShortName; एकटा पूरा अद्यतनक डाउनलोड सँ एकर कोशिश करताह.">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName; is unable to determine if there is an update available. Please make sure that you have the latest version of &brandShortName; from:">
+
+<!ENTITY  finishedPage.title              "अद्यतन संस्थापन क लेल तैआर">
+<!ENTITY  finishedPage.text               "ई अद्यतन केँ अगिला बेर तखन संस्थापित कएल जएताह जखन &brandShortName; आरंभ होइछ.अहाँ &brandShortName; केँ आब फेर आरंभ कए सकैत अछि, अथवा काम कएनाइ जारी राखबाक बाद मे फेर आरंभ कए सकैत अछि.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName; क लेल स्थायित्व आ सुरक्षा अद्यतन डाउनलोड कएल जाए चुकल अछि आओर संस्थापित कएल जाएक लेल तैआर अछि.">
+<!ENTITY  finishedBackground.name         "अद्यतन  करू :">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "ई अद्यतन केँ अगिला बेर तखन संस्थापित कएल जएताह जखन &brandShortName; आरंभ होइछ. अहाँ &brandShortName; केँ आब फेर आरंभ कए सकैत छी, अथवा काम कएनाइ जारी राखबाक बादमे फेर आरंभ कए सकैत छी.">
+
+
+<!ENTITY  update.details.label            "विवरण">
+<!ENTITY  update.installedOn.label        "ई पर संस्थापित:">
+<!ENTITY  update.status.label             "स्थिति:">
+
+<!ENTITY  finishedBackground.moreElevated "This update requires administrator privileges. The update will be
+                                           installed the next time &brandShortName; starts. You can restart
+                                           &brandShortName; now, continue working and restart later, or decline this
+                                           update.">
+

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Allmänt">
+
+<!ENTITY useCursorNavigation.label       "Använd alltid piltangenterna för att navigera i sidor">
+<!ENTITY useCursorNavigation.accesskey   "A">
+<!ENTITY searchOnStartTyping.label       "Sök efter text när jag börjar skriva">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "Visa ett pektangentbord vid behov">
+<!ENTITY useOnScreenKeyboard.accesskey   "t">
+
+<!ENTITY browsing.label                  "Webbläsning">
+
+<!ENTITY useAutoScroll.label             "Använd autorullning">
+<!ENTITY useAutoScroll.accesskey         "n">
+<!ENTITY useSmoothScrolling.label        "Använd mjuk rullning">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "Kontrollera stavning medan du skriver">
+<!ENTITY checkUserSpelling.accesskey     "k">
+
+<!ENTITY dataChoicesTab.label            "Dataval">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Datarapportering är inaktiverad för den här byggkonfigurationen">
+
+<!ENTITY enableHealthReport1.label       "Tillåt &brandShortName; att automatiskt skicka teknisk och interaktionsdata till Mozilla">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "Läs mer">
+
+<!ENTITY dataCollection.label            "Datainsamling och använd för &brandShortName;">
+<!ENTITY dataCollectionDesc.label        "Vi strävar alltid efter att ge dig val och samlar endast in vad vi behöver för tillhandahålla och förbättra &brandShortName; för alla. Vi ber alltid om tillåtelse innan vi tar emot personliga uppgifter.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Sekretesspolicy">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "Tillåt &brandShortName; att skicka kraschrapporter till Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "k">
+<!ENTITY crashReporterLearnMore.label    "Läs mer">
+
+<!ENTITY networkTab.label                "Nätverk">
+
+<!ENTITY networkProxy.label              "Nätverksproxy">
+
+<!ENTITY connectionDesc.label            "Ange hur &brandShortName; ansluter till Internet">
+<!ENTITY connectionSettings.label        "Inställningar…">
+<!ENTITY connectionSettings.accesskey    "n">
+
+<!ENTITY httpCache.label                 "Cachat webbinnehåll">
+
+<!ENTITY offlineStorage2.label           "Nedkopplad lagring av webbinnehåll och användardata">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Webbplatsdata">
+<!ENTITY clearSiteData.label             "Rensa all data">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Inställningar…">
+<!ENTITY siteDataSettings.accesskey      "n">
+<!ENTITY siteDataLearnMoreLink.label     "Läs mer">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Begränsa cacheutrymmet till">
+<!ENTITY limitCacheSizeBefore.accesskey  "B">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "Rensa nu">
+<!ENTITY clearCacheNow.accesskey         "R">
+<!ENTITY clearOfflineAppCacheNow.label   "Rensa nu">
+<!ENTITY clearOfflineAppCacheNow.accesskey "e">
+<!ENTITY overrideSmartCacheSize.label    "Åsidosätt automatisk cachehantering">
+<!ENTITY overrideSmartCacheSize.accesskey "Å">
+
+<!ENTITY updateTab.label                 "Uppdateringar">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; uppdaterar">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "Håll &brandShortName; uppdaterad för bästa prestanda, stabilitet och säkerhet.">
+<!ENTITY updateApplication.version.pre   "Version ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "Tillåt &brandShortName; att">
+<!ENTITY updateAuto3.label               "Installera uppdateringar automatiskt (rekommenderas)">
+<!ENTITY updateAuto3.accesskey           "a">
+<!ENTITY updateCheckChoose2.label        "Sök efter uppdateringar, men låt mig välja om jag vill installera dem">
+<!ENTITY updateCheckChoose2.accesskey    "S">
+<!ENTITY updateManual2.label             "Sök aldrig efter uppdateringar (rekommenderas inte)">
+<!ENTITY updateManual2.accesskey         "a">
+
+<!ENTITY updateHistory2.label            "Visa uppdateringshistorik…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "Använd en bakgrundstjänst för att installera uppdateringar">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "Uppdatera automatiskt sökmotorer">
+<!ENTITY enableSearchUpdate2.accesskey   "m">
+
+<!ENTITY offlineStorageNotify.label               "Meddela mig när en webbplats vill lagra data vid nedkopplad användning">
+<!ENTITY offlineStorageNotify.accesskey           "M">
+<!ENTITY offlineStorageNotifyExceptions.label     "Undantag…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "n">
+
+<!ENTITY offlineAppsList2.label          "Följande webbplatser tillåts lagra data för nedkopplad användning:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Ta bort…">
+<!ENTITY offlineAppsListRemove.accesskey "T">
+<!ENTITY offlineAppRemove.confirm        "Ta bort lagrad data">
+
+<!ENTITY certificateTab.label            "Certifikat">
+<!ENTITY certPersonal2.description       "När en server begär ditt personliga certifikat">
+<!ENTITY selectCerts.auto                "Välj ett automatiskt">
+<!ENTITY selectCerts.auto.accesskey      "V">
+<!ENTITY selectCerts.ask                 "Fråga mig varje gång">
+<!ENTITY selectCerts.ask.accesskey       "F">
+<!ENTITY enableOCSP.label                "Fråga OCSP responder-servrar för att bekräfta certifikatens aktuella giltighet">
+<!ENTITY enableOCSP.accesskey            "F">
+<!ENTITY viewCerts2.label                "Visa certifikat…">
+<!ENTITY viewCerts2.accesskey            "c">
+<!ENTITY viewSecurityDevices2.label      "Säkerhetsenheter…">
+<!ENTITY viewSecurityDevices2.accesskey  "e">
+
+<!ENTITY performance.label               "Prestanda">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Använd rekommenderade prestandainställningar">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "Dessa inställningar är anpassade till din dators hårdvara och operativsystem.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "A">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Läs mer">
+<!ENTITY limitContentProcessOption.label "Gräns för innehållsprocesser">
+<!ENTITY limitContentProcessOption.description
+                                         "Ytterligare innehållsprocesser kan förbättra prestanda när du använder flera flikar, men kommer också att använda mer minne.">
+<!ENTITY limitContentProcessOption.accesskey   "G">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Ändring av antalet innehållsprocesser är endast möjligt med multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Lär dig hur du kontrollerar om multiprocess är aktiverat">
+<!ENTITY allowHWAccel.label              "Använd om möjligt hårdvaruacceleration">
+<!ENTITY allowHWAccel.accesskey          "ä">

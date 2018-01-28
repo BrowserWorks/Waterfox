@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "တည်နေရာ၊">
+<!ENTITY tile.label                 "အခင်း">
+<!ENTITY center.label               "ဗဟို">
+<!ENTITY stretch.label              "ဆွဲဆန့်ပါ">
+<!ENTITY fill.label                 "ဖြည့်ပါ">
+<!ENTITY fit.label                  "ပြင်ဆင်ပါ">
+<!ENTITY preview.label              "အစမ်းမြင်ကွင်း">
+<!ENTITY color.label                "အရောင်-">
+<!ENTITY setDesktopBackground.title "စားပွဲတင် နောက်ခံ ချမှတ်ပါ">
+<!ENTITY openDesktopPrefs.label     "စားပွဲတင် ဦးစားပေးအချက်များ ဖွင့်ပါ">
+<!ENTITY closeWindow.key            "w">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Goywaatoo yeeti">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Aywaa, woo ga boŋ haw.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; ga dii šenday war zanfuney nda kanjey williroo fondaa ra. Interneti moo kaŋ kokor k'a feeri ma doona ka woo tee.">
+<!ENTITY restorepage.tryThis        "War ga hin ka ceeci:">
+<!ENTITY restorepage.restoreSome    "Kanji foo wala hinna kazaa kaŋ war g'a šikka nda šendaa aššiloo tuusu">
+<!ENTITY restorepage.startNew       "Goo ma ceeciyan taaga banzaŋ goowaati šintin">
+
+<!ENTITY restorepage.tryagainButton "Willi taka jinaa ga">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Daabu">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Yeeti">
+<!ENTITY restorepage.listHeader     "Zanfuney nda kanjey">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Zanfun &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Ir ma koy!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Zaame!">
+
+<!ENTITY welcomeback2.pageTitle     "Zaama!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; soolu ka koy.">
+
+<!ENTITY welcomeback2.restoreSome.label "Wey kaŋ war ga baa hinne yeeti">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "War tontoney nda hanseyaney ga hin ka hun nda war ceecikaw kayandiyaney n' ka yeeri ngi tilasu alhaaley ga. Nda woo mana misoo hanse, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "caw ka tonton woo kaŋ war ga hin k'a tee ga.">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">

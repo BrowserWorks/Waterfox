@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashesSubmitted.label     "Yuborilgan nosozlik ma’lumotlari">
+<!ENTITY id.heading                 "Hisobot ID raqami">
+
+<!ENTITY dateSubmitted.heading      "Yuborilgan sana">
+<!ENTITY noReports.label            "Nosozlik ma’lumotlari yuborilmagan.">
+<!ENTITY noConfig.label             "Ushbu dastur nosozlik ma’lumotlarini ko‘rsatish uchun moslanmagan.  <code>breakpad.reportURL</code> parametri o‘rnatilishi kerak.">
+<!ENTITY clearAllReports.label      "Hamma hisobotlarni oʻchirish">
+
+<!ENTITY crashReports.title         "Crash Reports">
+<!ENTITY crashesUnsubmitted.label   "Unsubmitted Crash Reports">
+<!ENTITY dateCrashed.heading        "Date Crashed">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "පෙරනිමි සෙවුම් එළවුම">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "ඔබේ පෙරනිමි සෙවුම් එළවුම තෝරන්න. &brandShortName; විසින් එය ස්ථානීය තීරුව, සෙවුම් තීරුව හා ආරම්භක පිටුවේ යොදාගනු ඇත.">
+
+<!ENTITY provideSearchSuggestions.label        "සෙවුම් යෝජනා ලබාදෙන්න">
+<!ENTITY provideSearchSuggestions.accesskey    "s">
+
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+
+<!ENTITY oneClickSearchEngines.label           "ඒක-ක්ලික් සෙවුම් එළවුම්">
+
+<!ENTITY chooseWhichOneToDisplay.label         "සෙවුම් තීරුව ඔබට අමතර එළවුම් කෙලින්ම තෝරාගැනීමට ඉඩදෙයි. දර්ශණය වන්නේ කුමක්දැයි තෝරන්න.">
+
+<!ENTITY engineNameColumn.label                "සෙචුම් එළවුම">
+<!ENTITY engineKeywordColumn.label             "මූල පදය">
+
+<!ENTITY restoreDefaultSearchEngines.label     "පෙරනිමි සෙවුම් එළවුමට යළි සකසන්න">
+<!ENTITY restoreDefaultSearchEngines.accesskey "D">
+
+<!ENTITY removeEngine.label                    "ඉවත් කරන්න">
+<!ENTITY removeEngine.accesskey                "R">
+
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Choose the alternative search engines that appear below the address bar and search bar when you start to enter a keyword.">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Choose the default search engine to use in the address bar and search bar.">
+
+<!ENTITY findMoreSearchEngines.label           "Find more search engines">
+<!ENTITY showURLBarSuggestions2.accesskey       "l">
+<!ENTITY showURLBarSuggestions2.label           "Show search suggestions in address bar results">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Search suggestions will not be shown in location bar results because you have configured &brandShortName; to never remember history.">
+

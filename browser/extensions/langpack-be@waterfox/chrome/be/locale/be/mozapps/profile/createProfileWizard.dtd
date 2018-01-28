@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Майстар стварэння профіляў">
+<!ENTITY window.size                  "width: 55em; height: 34em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; захоўвае звесткі пра вашы налады і перавагі ў вашым асабістым профілі.">
+<!ENTITY profileCreationExplanation_2.text  "Калі вы падзяляеце гэтую копію &brandShortName; з іншымі карыстальнікамі, вы можаце стварыць профілі, каб трымаць звесткі карыстальнікаў паасобку. Каб зрабіць гэта, кожны карыстальнік павінны стварыць свой асабісты профіль.">
+<!ENTITY profileCreationExplanation_3.text  "Калі вы адзін карыстаецеся гэтай копіяй &brandShortName;, вы мусіце мець, прынамсі, адзін профіль. Вы можаце стварыць, калі хочаце, некалькі профіляў для сябе, каб захаваць розныя наборы налад і пераваг. Напрыклад, вы можаце мець розныя профілі для справаў і для асабістага карыстання.">
+<!ENTITY profileCreationExplanation_4.text  "Каб пачаць стварэнне новага профілю, націсніце Далей.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Каб пачаць стварэнне новага профілю, націсніце Працяг.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Каб пачаць стварэнне новага профілю, націсніце Далей.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Калі вы ствараеце некалькі профіляў, яны будуць мець розныя назвы. Вы можаце карыстацца прапанаванаю назваю, ці выбраць сваю ўласную.">
+<!ENTITY profilePrompt.label            "Увядзіце назву новага профілю:">
+<!ENTITY profilePrompt.accesskey        "У">
+<!ENTITY profileDirectoryExplanation.text   "Вашы карыстальніцкія налады, перавагі і іншыя ўласныя звесткі будуць захоўвацца ў:">
+<!ENTITY profileDefaultName             "Прадвызначаны карыстальнік">
+<!ENTITY button.choosefolder.label      "Выбраць папку…">
+<!ENTITY button.choosefolder.accesskey  "В">
+<!ENTITY button.usedefault.label        "Выкарыстоўваць прадвызначанаю папку">
+<!ENTITY button.usedefault.accesskey    "г">

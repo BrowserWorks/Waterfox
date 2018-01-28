@@ -1,0 +1,14 @@
+locale alerts sq sq/locale/sq/alerts/
+locale autoconfig sq sq/locale/sq/autoconfig/
+locale global sq sq/locale/sq/global/
+locale global-platform sq sq/locale/sq/global-platform/mac/ os=Darwin
+locale global-platform sq sq/locale/sq/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform sq sq/locale/sq/global-platform/win/ os=WINNT
+locale mozapps sq sq/locale/sq/mozapps/
+locale necko sq sq/locale/sq/necko/
+locale passwordmgr sq sq/locale/sq/passwordmgr/
+locale pipnss sq sq/locale/sq/pipnss/
+locale pippki sq sq/locale/sq/pippki/
+locale places sq sq/locale/sq/places/
+locale pluginproblem sq sq/locale/sq/pluginproblem/
+locale weave sq sq/locale/sq/services/

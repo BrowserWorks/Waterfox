@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Standardsuchmaschine">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Wählen Sie Ihre Standardsuchmaschine. &brandShortName; verwendet diese für Suchen über die Adressleiste, die Suchleiste und Startseiten.">
+
+<!ENTITY provideSearchSuggestions.label        "Suchvorschläge anzeigen">
+<!ENTITY provideSearchSuggestions.accesskey    "S">
+
+<!ENTITY showURLBarSuggestions.label           "Suchvorschläge in Adressleiste anzeigen">
+<!ENTITY showURLBarSuggestions.accesskey       "v">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Suchvorschläge werden nicht in der Adressleiste angezeigt, weil &brandShortName; angewiesen wurde, keine Chronik zu speichern.">
+
+<!ENTITY oneClickSearchEngines.label           "Ein-Klick-Suchmaschinen">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Die Suchleiste ermöglicht das direkte Suchen mit einer anderen Suchmaschine. Die anzuzeigenden Suchmaschinen können hier ausgewählt werden.">
+
+<!ENTITY engineNameColumn.label                "Suchmaschine">
+<!ENTITY engineKeywordColumn.label             "Schlüsselwort">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Standardsuchmaschinen wiederherstellen">
+<!ENTITY restoreDefaultSearchEngines.accesskey "w">
+
+<!ENTITY removeEngine.label                    "Entfernen">
+<!ENTITY removeEngine.accesskey                "E">
+
+<!ENTITY addMoreSearchEngines.label            "Weitere Suchmaschinen hinzufügen…">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "ခြွင်းချက်များ - ဘာသာပြန်ခြင်း">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "ဘာသာပြန်ခြင်းအား အောက်ပါ ဘာသာစကားများအတွက် ထောက်ပံပေးမည်မဟုတ်ပါ ၊">
+<!ENTITY treehead.languageName.label      "ဘာသာစကားများ">
+<!ENTITY removeLanguage.label             "(R)ဘာသာစကားအား ဖျက်ပါ">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "(e)ဘာသာစကားအားလုံးအား ဖျက်ပါ">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "အောက်ပါ ဆိုဒ်များသို့ ဘာသာပြန်ခြင်း ပြုလုပ်ပေးမည် မဟုတ်ပါ ၊">
+<!ENTITY treehead.siteName.label          "ဝတ်ဆိုဒ်များ">
+<!ENTITY removeSite.label                 "(S) ဝတ်ဆိုဒ်ကို ဖျက်">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "ဆိုက်i အားလုံးကို ဖယ်ရှားပါ">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Cပိတ်ပါ">
+<!ENTITY button.close.accesskey           "C">
+
+<!ENTITY treehead.siteName2.label         "Websites">

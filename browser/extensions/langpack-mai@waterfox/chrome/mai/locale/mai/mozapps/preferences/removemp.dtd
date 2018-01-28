@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "मुख्य गुड़किल्ली हटाउ">
+<!ENTITY removeInfo.label                  "अहाँकेँ जरूर अपन मोजुदा गुड़किल्ली डालनाइ चाही:">
+<!ENTITY removeWarning1.label              "अहाँक मुख्य गुड़किल्ली केँ संवेदनशील सूचनाक सुरक्षा कलेल  प्रयोग कएल जाइत अछि  साइट गुड़किल्लीक तरह.">
+<!ENTITY removeWarning2.label              "जँ अहाँ अपन मुख्य गुड़किल्ली हटाबैछी अहाँक सूचना सुरक्षित नहि रहत जँ अहाँक कंप्यूटर क सँग छेडछाड़ कएल जाएत अछि .">
+<!ENTITY setPassword.oldPassword.label     " मोजुदा गुड़किल्ली:">
+

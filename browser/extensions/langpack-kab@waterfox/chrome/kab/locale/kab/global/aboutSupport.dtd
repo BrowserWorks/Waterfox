@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Talɣut n usellek">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "  Asebter-agi igber talɣut tatiknikant ig zemren attwulem ticki tettaɛraḍeḍ ad tefruḍ ugur. Ma yella tettnadiḍ tiririt ɣef isteqsiyen n &brandShortName;,senqed <a id='supportLink'> asmel nneɣ Web</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Ineqqisen n uɣelluy">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Asulay n ussaɣ">
+<!ENTITY aboutSupport.crashes.sendDate "Azemz n tuzzna">
+<!ENTITY aboutSupport.crashes.allReports "Akk ineqqisen n uɣelluy">
+<!ENTITY aboutSupport.crashes.noConfig "Asnas-agi ur ittuswel ara akken ad isken ineqqisen n uɣelluy.">
+
+<!ENTITY aboutSupport.extensionsTitle "Isiɣzaf">
+<!ENTITY aboutSupport.extensionName "Isem">
+<!ENTITY aboutSupport.extensionEnabled "Yettwarmed">
+<!ENTITY aboutSupport.extensionVersion "Lqem">
+<!ENTITY aboutSupport.extensionId "Asulay">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Timahilin">
+<!ENTITY aboutSupport.featureName "Isem">
+<!ENTITY aboutSupport.featureVersion "Lqem">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Timahihilin tirmitanin">
+<!ENTITY aboutSupport.experimentName "Isem">
+<!ENTITY aboutSupport.experimentId "Asulay">
+<!ENTITY aboutSupport.experimentDescription "Aglam">
+<!ENTITY aboutSupport.experimentActive "Urmid">
+<!ENTITY aboutSupport.experimentEndDate "Azemz n tagara">
+<!ENTITY aboutSupport.experimentHomepage "Asebter agejdan">
+<!ENTITY aboutSupport.experimentBranch "Taseṭṭa">
+
+<!ENTITY aboutSupport.appBasicsTitle "Iɣewwaṛen izaduren n usnas">
+<!ENTITY aboutSupport.appBasicsName "Isem">
+<!ENTITY aboutSupport.appBasicsVersion "Lqem">
+<!ENTITY aboutSupport.appBasicsBuildID "Asulay n usefsu">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Abadu n uleqqem">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Amazray n ileqman">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Sken amazray n ileqman">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Akaram n umaɣnu">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Akaram n umaɣnu">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Izegrar iremden">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Aswel n usefsu">
+<!ENTITY aboutSupport.appBasicsUserAgent "Ameggi aseqdac">
+<!ENTITY aboutSupport.appBasicsOS "NGR.MMD">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Aseqdec n tkatut">
+<!ENTITY aboutSupport.appBasicsPerformance "Tamellit">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Tanfa Workers iţwaklesen">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Imeɣna">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Isfuyla agetakala">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Ikalan n ugbur web">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Tasarut Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Tasarutt n umeẓlu n wadi Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Askar aɣelsan">
+
+<!ENTITY aboutSupport.showDir.label "Ldi akaram">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Ldi di Finder">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Ldi akaram">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Ismenyifen ixataren ittusniflen">
+<!ENTITY aboutSupport.modifiedPrefsName "Isem">
+<!ENTITY aboutSupport.modifiedPrefsValue "Azal">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Ismenyifen n user.js">
+<!ENTITY aboutSupport.userJSDescription "Akaram-inek n umaɣni ɣuṛ-s<a id='prefs-user-js-link'> afaylu user.js</a> igebren imenyifen ur yerni ara &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Ismenyifen ixataren ittusekwren">
+<!ENTITY aboutSupport.lockedPrefsName "Isem">
+<!ENTITY aboutSupport.lockedPrefsValue "Azal">
+
+<!ENTITY aboutSupport.graphicsTitle "udlifen">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Taffa n isefka n idigen">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Timmad">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Senqed timmad">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Amḥettit (GC) aseffansan">
+
+<!ENTITY aboutSupport.a11yTitle "Tuffart">
+<!ENTITY aboutSupport.a11yActivated "Irmed">
+<!ENTITY aboutSupport.a11yForceDisabled "Sewḥel tuffart">
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler ittwaseqdec">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Ileqman n temkarḍiyin">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Amazray n usebded">
+<!ENTITY aboutSupport.updateHistoryTitle "Lqem amazray">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Nɣel aḍris ɣeṛ &quot;ɣef affus&quot;">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Nɣel talɣut tarewwayt ɣeṛ &quot;ɣef affus&quot;">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Isawalen n unagraw ttwagin">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Tisdatin aya">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Anaw n ukala">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Asiwel n unagraw">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Tiɣiriyin">
+
+<!ENTITY aboutSupport.safeModeTitle "Ɛreḍ deg uskar aɣelsan">
+<!ENTITY aboutSupport.restartInSafeMode.label "Ales asenker s izegrar irurmiden…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Timahilin">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Tasleṭ">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Aɣmis n tuccḍiwin">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Aɣmis n ugemmen">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Timhalin ur nermid ara n uɛessas n uɣelluy">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Tifrat n usellek">
+
+<!ENTITY aboutSupport.mediaTitle "Allalen n teγwalt">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Ibenkan n tuffɣa">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Ibenkan n n unekcum">
+<!ENTITY aboutSupport.mediaDeviceName "Isem">
+<!ENTITY aboutSupport.mediaDeviceGroup "Agraw">
+<!ENTITY aboutSupport.mediaDeviceVendor "Asaǧǧaw">
+<!ENTITY aboutSupport.mediaDeviceState "Addad">
+<!ENTITY aboutSupport.mediaDevicePreferred "imsenyafen">
+<!ENTITY aboutSupport.mediaDeviceFormat "Amasal">
+<!ENTITY aboutSupport.mediaDeviceChannels "Ibuda">
+<!ENTITY aboutSupport.mediaDeviceRate "Afmiḍi">
+<!ENTITY aboutSupport.mediaDeviceLatency "Akud n ugani">

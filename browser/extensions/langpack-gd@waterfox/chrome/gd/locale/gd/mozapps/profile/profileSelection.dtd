@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Tagh pròifil cleachdaiche">
+
+<!ENTITY            profilename.label      "Ainm na pròifile:">
+
+<!ENTITY            start.label            "Tòisich &brandShortName;">
+<!ENTITY            exit.label             "Fàg an-seo">
+
+<!ENTITY            availprofiles.label    "Pròifilean ri am faighinn">
+
+<!ENTITY            newButton.label        "Cruthaich pròifil…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Cuir ainm ùr air pròifil…">
+<!ENTITY            renameButton.accesskey "r">
+<!ENTITY            deleteButton.label     "Sguab às pròifil…">
+<!ENTITY            deleteButton.accesskey "S">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "Sàbhalaidh &brandShortName; fiosrachadh mu na roghainnean is rudan eile agad 'nad phròifil.">
+
+<!ENTITY            offlineState.label    "Dèan obair far loidhne">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "Cleachd a' phròifil a thagh mi 's na faighnich dhìom nuair a thòisicheas e">
+<!ENTITY            useSelected.accesskey   "s">

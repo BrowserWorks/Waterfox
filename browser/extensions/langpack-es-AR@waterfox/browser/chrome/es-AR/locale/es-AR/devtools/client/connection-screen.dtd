@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remove Connection strings.
+  - The Remote Connection window can be start by running the command:
+  - `devtools connect`
+  - -->
+
+<!ENTITY title      "Conectar">
+<!ENTITY header     "Conectar a dispositivo remoto">
+<!ENTITY host       "Servidor:">
+<!ENTITY port       "Puerto:">
+<!ENTITY connect    "Conectar">
+<!ENTITY connecting "Conectando…">
+<!ENTITY availableAddons "Complementos remotos disponibles:">
+<!ENTITY availableTabs "Pestañas remotas disponibles:">
+<!ENTITY availableProcesses "Procesos remotos disponibles:">
+<!ENTITY connectionError "Error:">
+<!ENTITY errorTimeout "Error: tiempo de conexión excedido.">
+<!ENTITY errorRefused "Error: conexión rechazada.">
+<!ENTITY errorUnexpected "Error inesperado.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Las herramientas de desarrollador de Waterfox pueden depurar dispositivos remotos (Waterfox para Android y Waterfox OS, por ejemplo). Asegúrese que tiene encendida la opción 'Depuración remota' en el dispositivo remoto. Para más información, vea la">
+<!ENTITY remoteDocumentation "documentación">
+<!ENTITY remoteHelpSuffix ".">
+

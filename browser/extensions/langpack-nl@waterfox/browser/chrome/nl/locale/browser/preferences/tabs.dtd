@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab doorloopt tabbladen in onlangs gebruikte volgorde">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Nieuwe vensters openen in een nieuw tabblad">
+<!ENTITY newWindowsAsTabs.accesskey   "v">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Waarschuwen bij het sluiten van meerdere tabbladen">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Waarschuwen als het openen van meerdere tabbladen &brandShortName; zou kunnen vertragen">
+<!ENTITY warnOnOpenManyTabs.accesskey   "o">
+
+<!ENTITY switchLinksToNewTabs.label        "Als u een koppeling opent in een nieuw tabblad, er meteen naartoe gaan">
+<!ENTITY switchLinksToNewTabs.accesskey    "w">
+
+<!ENTITY showTabsInTaskbar.label          "Tabbladvoorbeelden in de Windows-taakbalk tonen">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Tabbladen">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Asistente para la creación de perfiles">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; guarda información sobre tu configuración y preferencias en tu perfil personal.">
+<!ENTITY profileCreationExplanation_2.text  "Si compartes esta copia de &brandShortName; con otros usuarios, puedes usar perfiles para mantener separada la información de cada usuario. Para ello, cada usuario debe crear su propio perfil.">
+<!ENTITY profileCreationExplanation_3.text  "Si solamente tu usas esta copia de &brandShortName;, debes tener al menos un perfil. Si lo deseas, puedes crear múltiples perfiles con el fin de guardar diferentes conjuntos de configuraciones y preferencias. Por ejemplo, puedes tener perfiles separados para uso personal y uso profesional.">
+<!ENTITY profileCreationExplanation_4.text  "Para comenzar a crear tu perfil, haz clic en Siguiente.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Para comenzar a crear tu perfil, haz clic en Continuar.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Para comenzar a crear tu perfil, haz clic en Siguiente.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Si creas distintos perfiles puedes distinguirlos por sus nombres. Puedes usar el nombre que te hemos proporcionado o crear uno nuevo por tu cuenta.">
+<!ENTITY profilePrompt.label            "Ingresa un nuevo nombre de perfil:">
+<!ENTITY profilePrompt.accesskey        "i">
+<!ENTITY profileDirectoryExplanation.text   "Tus configuraciones, preferencias y otros datos relacionados al usuario serán almacenados en:">
+<!ENTITY profileDefaultName             "Usuario predeterminado">
+<!ENTITY button.choosefolder.label      "Selecciona carpeta…">
+<!ENTITY button.choosefolder.accesskey  "c">
+<!ENTITY button.usedefault.label        "Usar la Carpeta Predeterminada">
+<!ENTITY button.usedefault.accesskey    "U">

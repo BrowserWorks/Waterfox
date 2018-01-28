@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "ಆಯ್ಕೆಗಳು">
+<!ENTITY  prefWindow.title        "ಆದ್ಯತೆಗಳು">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "&brandShortName; ಆದ್ಯತೆಗಳು">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneGeneral.title             "ಸಾಮಾನ್ಯ">
+<!ENTITY  paneSearch.title              "ಹುಡುಕು">
+
+
+<!ENTITY  paneContainers.title          "ಕಂಟೈನರ್ ಟ್ಯಾಬ್‍‍ಗಳು‍">
+
+
+
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+
+
+<!ENTITY  browserPrivacy.label          "Browser Privacy">
+
+<!ENTITY  filesAndApplications.label    "Files and Applications">
+<!ENTITY  helpButton2.label        "&brandShortName; Support">
+<!ENTITY  languageAndAppearance.label   "Language and Appearance">
+<!ENTITY  paneFilesApplications.title   "Files &amp; Applications">
+<!ENTITY  panePrivacySecurity.title     "Privacy &amp; Security">
+<!ENTITY  paneSearchResults.title       "Search Results">
+<!ENTITY  paneSync1.title          "Waterfox Account">
+
+<!ENTITY  paneUpdates.title             "Updates">
+

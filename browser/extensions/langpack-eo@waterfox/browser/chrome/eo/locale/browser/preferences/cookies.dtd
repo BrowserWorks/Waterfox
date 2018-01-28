@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "La jenaj kuketoj estas konservitaj en via komputilo:">
+<!ENTITY     cookiename.label               "Nomo de kuketo">
+<!ENTITY     cookiedomain.label             "Retejo">
+
+<!ENTITY     props.name.label               "Nomo:">
+<!ENTITY     props.value.label              "Enhavo:">
+<!ENTITY     props.domain.label             "Servilo:">
+<!ENTITY     props.path.label               "Vojo:">
+<!ENTITY     props.secure.label             "Sendi por:">
+<!ENTITY     props.expires.label            "Senvalidiĝos:">
+<!ENTITY     props.container.label          "Ingo:">
+
+<!ENTITY     window.title                   "Kuketoj">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Serĉi">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "Fermi">
+<!ENTITY     button.close.accesskey         "F">

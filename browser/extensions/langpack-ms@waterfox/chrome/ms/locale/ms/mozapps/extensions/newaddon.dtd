@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Pasang Add-on">
+<!ENTITY intro           "Program laindalam komputer anda mahu mengubah
+                          &brandShortName; dengan add-on berikut:">
+<!ENTITY warning         "Pasang add-ons daripada pembangun yang anda percayai sahaja.">
+<!ENTITY allow           "Izinkan pemasangan ini">
+<!ENTITY later           "Anda boleh tukar fikiran pada bila-bila masa sahaja dengan pergi
+                          ke Pengurus Add-ons.">
+<!ENTITY continue        "Teruskan">
+<!ENTITY restartMessage  "Anda perlu memulakan semula &brandShortName; untuk menyiapkan pemasangan add-on ini.">
+<!ENTITY restartButton   "Mula semula &brandShortName;">
+<!ENTITY cancelButton    "Batal">

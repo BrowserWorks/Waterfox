@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "பின்வரும் நினைவிகள் உங்கள் கணினியில் சேமிக்கப்பட்டுள்ளன:">
+<!ENTITY     cookiename.label               "நினைவி பெயர்">
+<!ENTITY     cookiedomain.label             "தளம்">
+
+<!ENTITY     props.name.label               "பெயர்:">
+<!ENTITY     props.value.label              "உள்ளடக்கம்:">
+<!ENTITY     props.domain.label             "புரவலன்:">
+<!ENTITY     props.path.label               "பாதை:">
+<!ENTITY     props.secure.label             "இதற்கு அனுப்பு:">
+<!ENTITY     props.expires.label            "காலாவதியாகிவிட்டது:">
+<!ENTITY     props.container.label          "கொள்கலம்:">
+
+<!ENTITY     window.title                   "நினைவிகள்">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "தேடு">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "மூடுக">
+<!ENTITY     button.close.accesskey         "C">

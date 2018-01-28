@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Zarrar esta llingüeta">
+<!ENTITY tabCrashed.restoreTab "Restaurar esta llingüeta">
+<!ENTITY tabCrashed.restoreAll "Restaurar toles llingüetes que cascaron">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Meca, les tos llingüetes ta acabante de cascar.">
+<!ENTITY tabCrashed.offerHelp "¡Podemos ayudate!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Esbilla &tabCrashed.restoreTab; pa recargar el conteníu de la páxina.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Esbilla &tabCrashed.restoreTab; o &tabCrashed.restoreAll; pa recargar el conteníu de la páxina.">
+<!ENTITY tabCrashed.requestHelp "¿Ayúdesnos?">
+<!ENTITY tabCrashed.requestHelpMessage "Los reportes de fallos ayúdennos a diagnosticar problemes y facer un &brandShortName; meyor.">
+<!ENTITY tabCrashed.requestReport "Reportar esta llingüeta">
+<!ENTITY tabCrashed.sendReport2 "Unviar un reporte de fallos pa la llingüeta que tas viendo">
+<!ENTITY tabCrashed.commentPlaceholder2 "Comentarios opcionales (los comentarios son públicos y visibles)">
+<!ENTITY tabCrashed.includeURL2 "Incluyir páxina URL con esti informe de fallu">
+<!ENTITY tabCrashed.emailPlaceholder "Introduz equí la to direición de corréu">
+<!ENTITY tabCrashed.emailMe "Unviáime un corréu cuando heba más información disponible">
+<!ENTITY tabCrashed.reportSent "Yá s'unvió l'informe de fallos; ¡gracies por ayudar a ameyorar &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Informar de llingüetes de fondu">
+
+<!ENTITY tabCrashed.autoSubmit2 "Update preferences to automatically send crash reports, including reports for crashed background tabs from this session and future sessions">

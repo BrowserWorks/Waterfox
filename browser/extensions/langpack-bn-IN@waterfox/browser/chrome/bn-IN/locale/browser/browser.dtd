@@ -1,0 +1,1003 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(ব্যক্তিগত ব্রাউজিং ব্যবস্থা)">
+
+<!ENTITY appmenu.tooltip                     "মেনু খুলুন">
+<!ENTITY navbarOverflow.label                "অতিরিক্ত সরঞ্জাম…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "ট্যাব পুনরায় লোড করুন">
+<!ENTITY  reloadTab.accesskey                "R">
+<!ENTITY  reloadAllTabs.label                "সকল ট্যাব পুনরায় লোড করুন">
+<!ENTITY  reloadAllTabs.accesskey            "A">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "ডান দিকের ট্যাব বন্ধ করুন">
+<!ENTITY  closeTabsToTheEnd.accesskey        "i">
+<!ENTITY  closeOtherTabs.label               "অন্যান্য ট্যাব বন্ধ করুন">
+<!ENTITY  closeOtherTabs.accesskey           "অ">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ট্যাব পিন করুন">
+<!ENTITY  pinTab.accesskey                   "P">
+<!ENTITY  unpinTab.label                     "ট্যাব আনপিন করুন">
+<!ENTITY  unpinTab.accesskey                 "b">
+<!ENTITY  sendTabToDevice.label              "ট্যাব থেকে Device-এ পাঠান">
+<!ENTITY  sendTabToDevice.accesskey          "D">
+<!ENTITY  sendPageToDevice.label             "পেজ থেকে Device-এ পাঠান">
+<!ENTITY  sendPageToDevice.accesskey         "D">
+<!ENTITY  sendLinkToDevice.label             "Device-এ লিঙ্ক পাঠান">
+<!ENTITY  sendLinkToDevice.accesskey         "D">
+<!ENTITY  moveToNewWindow.label              "নতুন উইন্ডোর মধ্যে স্থানান্তর করুন">
+<!ENTITY  moveToNewWindow.accesskey          "W">
+<!ENTITY  bookmarkAllTabs.label              "সকল ট্যাব বুকমার্ক করুন…">
+<!ENTITY  bookmarkAllTabs.accesskey          "T">
+<!ENTITY  undoCloseTab.label                 "বন্ধ করা ট্যাব পুনরায় খুলুন">
+<!ENTITY  undoCloseTab.accesskey             "U">
+<!ENTITY  closeTab.label                     "ট্যাব বন্ধ করুন">
+<!ENTITY  closeTab.accesskey                 "C">
+
+<!ENTITY  listAllTabs.label      "সকল ট্যাবের তালিকা প্রদর্শন করা হবে">
+
+<!ENTITY tabCmd.label "নতুন ট্যাব">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "অবস্থান খুলুন…">
+<!ENTITY openFileCmd.label "ফাইল খুলুন...">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "পৃষ্টা'র বৈশিষ্ট্য...">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "প্রিন্টের পূর্বরূপ">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "প্রিন্ট করুন...">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "অফলাইন অবস্থায় কর্ম">
+<!ENTITY goOfflineCmd.accesskey "k">
+
+<!ENTITY menubarCmd.label "মেনু-বার">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "মূলপরিচালনার টুল-বার">
+<!ENTITY personalbarCmd.label "বুকমার্কের টুলবার">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "বুকমার্ক টুলবারের বিষয়-বস্তু">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "সকল ট্যাব পুনরায় লোড করুন">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "A">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "সকল ট্যাব বুকমার্ক করুন…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "T">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "বন্ধ করা ট্যাব পুনরায় খুলুন">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "U">
+
+<!ENTITY pageSourceCmd.label "পৃষ্ঠার উৎস">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "পৃষ্ঠা সংক্রান্ত তথ্য">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "মিরর ট্যাব">
+<!ENTITY mirrorTabCmd.accesskey "M">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "সম্পূর্ণ পর্দায় প্রদর্শন আরম্ভ করা হবে">
+<!ENTITY enterFullScreenCmd.accesskey "F">
+<!ENTITY exitFullScreenCmd.label "সম্পূর্ণ পর্দায় প্রদর্শন বন্ধ করুন">
+<!ENTITY exitFullScreenCmd.accesskey "F">
+<!ENTITY fullScreenCmd.label "সম্পূর্ণ পর্দা জুড়ে প্রদর্শন">
+<!ENTITY fullScreenCmd.accesskey "F">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "সকল ট্যাব প্রদর্শন">
+<!ENTITY showAllTabsCmd.accesskey "A">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "&syncBrand.shortName.label; প্রস্তুত করুন">
+<!ENTITY fxaSignedIn.tooltip "&syncBrand.shortName.label; খুলুন পছন্দসমূহ">
+<!ENTITY fxaSignInError.label "&syncBrand.shortName.label; প্রস্তুত করুন">
+<!ENTITY fxaUnverified.label "অ্যাকাউন্ট যাচাই করুন">
+
+
+<!ENTITY fullScreenMinimize.tooltip "আড়াল করুন">
+<!ENTITY fullScreenRestore.tooltip "পূর্ববর্তী অবস্থা">
+<!ENTITY fullScreenClose.tooltip "বন্ধ">
+<!ENTITY fullScreenAutohide.label "টুল-বার আড়াল করুন">
+<!ENTITY fullScreenAutohide.accesskey "H">
+<!ENTITY fullScreenExit.label "সম্পূর্ণ পর্দায় প্রদর্শন থেকে প্রস্থান করুন">
+<!ENTITY fullScreenExit.accesskey "F">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "স্ক্রিন পূর্ণভাবে ব্যবহৃত হচ্ছে">
+<!ENTITY fullscreenWarning.generic.label "নথিটি পূর্ণ স্ক্রিনে স্থাপিত হয়েছে">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "সম্পূর্ণ স্ক্রীন হইতে প্রস্থান করুন">
+<!ENTITY exitDOMFullscreenMac.button "পূর্ণ স্ক্রিন প্রস্থান করুন (esc)">
+<!ENTITY leaveDOMFullScreen.label "সম্পূর্ণ পর্দায় প্রদর্শন বন্ধ করুন">
+<!ENTITY leaveDOMFullScreen.accesskey "স">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "আপনার পয়েন্টারের নিয়ন্ত্রণ আছে। Esc মারুন নিয়ন্ত্রন ফিরিয়ে নেওয়ার জন্য।">
+<!ENTITY pointerlockWarning.generic.label "এই ডকুমেন্টের আপনার পয়েন্টারের নিয়ন্ত্রণ আছে। Esc মারুন নিয়ন্ত্রণ ফিরিয়ে নেওয়ার জন্য।">
+
+<!ENTITY closeWindow.label "উইন্ডো বন্ধ করুন">
+<!ENTITY closeWindow.accesskey "d">
+
+<!ENTITY bookmarksMenu.label "বুকমার্ক">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY bookmarkThisPageCmd.label "চিহ্নিত পৃষ্ঠা বুকমার্ক করুন">
+<!ENTITY editThisBookmarkCmd.label "চিহ্নিত বুকমার্ক পরিবর্তন করুন">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "আরও শেয়ার সার্ভিস খুঁজুন…">
+<!ENTITY sharePageCmd.label "এই পৃষ্ঠাটি শেয়ার করুন">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "প">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "এই লিঙ্কটি শেয়ার করুন">
+<!ENTITY shareLink.accesskey "ল">
+<!ENTITY shareImage.label "এই ছবিটি শেয়ার করুন">
+<!ENTITY shareImage.accesskey "ছ">
+<!ENTITY shareSelect.label "নির্বাচন শেয়ার করুন">
+<!ENTITY shareSelect.accesskey "য়">
+<!ENTITY shareVideo.label "এই ভিডিওটি শেয়ার করুন">
+<!ENTITY shareVideo.accesskey "ভ">
+<!ENTITY feedsMenu2.label "বর্তমানে পৃষ্ঠায় সাবস্ক্রাইব করুন">
+<!ENTITY subscribeToPageMenupopup.label "বর্তমানে পৃষ্ঠায় সাবস্ক্রাইব করুন">
+<!ENTITY subscribeToPageMenuitem.label "বর্তমানে পৃষ্ঠায় সাবস্ক্রাইব করুন...">
+<!ENTITY addCurPagesCmd.label "সমস্ত ট্যাব বুকমার্ক করুন...">
+<!ENTITY showAllBookmarks2.label "সকল বুকমার্ক প্রদর্শন">
+<!ENTITY recentBookmarks.label "সম্প্রতি বুকমার্ক করা">
+<!ENTITY otherBookmarksCmd.label "অন্যান্য বুকমার্ক">
+<!ENTITY bookmarksToolbarChevron.tooltip "অতিরিক্ত বুকমার্ক প্রদর্শন করা হবে">
+<!ENTITY showRecentlyBookmarked.label     "Show সম্প্রতি করা বুকমার্ক">
+<!ENTITY showRecentlyBookmarked.accesskey "h">
+<!ENTITY hideRecentlyBookmarked.label     "Hide সম্প্রতি বুকমার্ক করা">
+<!ENTITY hideRecentlyBookmarked.accesskey "H">
+
+<!ENTITY backCmd.label                "পূর্ববর্তী">
+<!ENTITY backButton.tooltip           "সর্বশেষ পূর্ববর্তী পৃষ্ঠায় প্রত্যাবর্তন করুন">
+<!ENTITY forwardCmd.label             "পরবর্তী">
+<!ENTITY forwardButton.tooltip        "প্রদর্শিত পৃষ্ঠার অনুক্রম অনুযায়ী, পরবর্তী পৃষ্ঠায় এগিয়ে চলুন">
+<!ENTITY backForwardButtonMenu.tooltip "পূর্ববর্তী তথ্য প্রদর্শনের জন্য মাউসের ডানদিকের বাটক ক্লিক করুন অথবা মেনু টেনে নামান">
+<!ENTITY backForwardButtonMenuMac.tooltip "পূর্ববর্তী তথ্য প্রদর্শনের জন্য মেনু টেনে নামান">
+<!ENTITY reloadCmd.label              "নতুন করে প্রদর্শন করুন">
+<!ENTITY stopCmd.label                "থামান">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "ঠিকানার ক্ষেত্রর মধ্যে লেখা অবস্থান প্রদর্শন করা হবে">
+<!ENTITY printButton.label            "প্রিন্ট করুন">
+<!ENTITY printButton.tooltip          "বর্তমানে প্রদর্শিত পৃষ্ঠা প্রিন্ট করুন">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "সাইটের তথ্য দেখুন">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "উন্মুক্ত ম্যাসেজ প্যানেল">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "অবস্থান আবেদনের প্যানেল খুলুন">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "অ্যাড-অন ইন্সটল করার ম্যাসেজ প্যানেল খুলুন">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "অফলাইন স্টোরেজ ম্যাসেজ প্যানেল খুলুন">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "পাসওয়ার্ড সংরক্ষণ ম্যাসেজ প্যানেল খুলুন">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "প্লাগ-ইনের ব্যবহার পরিচালনা করুন">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "বদলান যে আপনি এই সাইট থেকে বিজ্ঞপ্তি পেতে পারেন কি না ">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "সাইটের সাথে আপনার ক্যামেরা/বা মাইক্রোফোন শেয়ার করাকে পরিচালনা করুন">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "এই সাইটের সাথে আপনার মাইক্রোফোন শেয়ার করাকে পরিচালনা করুন">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "আপনার উইন্ডোস বা স্ক্রিন এই সাইটের সাথে শেয়ার করাকে পরিচালনা করুন">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "ম্যাসেজ প্যানেল ইন্সটল খুলুন">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "এই পাতা অনুবাদ করুন">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "পৃষ্ঠার অনুবাদ পরিচালনা করুন">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "DRM সফটওয়্যারের ব্যবহার পরিচালনা করুন">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "আপনি এই ওয়েবসাইট থেকে আপনার ক্যামেরা ব্লক করেছেন।">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "আপনি এই ওয়েবসাইট থেকে আপনার মাইক্রোফোন ব্লক করেছেন।">
+<!ENTITY urlbar.screenBlocked.tooltip            "আপনি এই ওয়েবসাইট থেকে আপনার স্ক্রিন শেয়ার করা ব্লক করেছেন।">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "আপনি এই ওয়েবসাইট থেকে আপনার অবস্থানের তথ্য ব্লক করেছেন।">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "আপনি এই ওয়েবসাইটের ক্ষেত্রে ডাটা স্টোরেজ ব্লক করেছেন।">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "আপনি এই ওয়েবসাইটের ক্ষেত্রে নোটিফিকেশন ব্লক করেছেন।">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "ইতিহাস দেখান">
+
+<!ENTITY searchItem.title             "অনুসন্ধান">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "হোম">
+
+<!ENTITY bookmarksButton.label          "বুকমার্ক">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "বুকমার্ক">
+<!ENTITY bookmarksMenuButton.other.label "অন্যান্য বুকমার্ক">
+<!ENTITY viewBookmarksSidebar2.label        "বুকমার্ক টুল-বার প্রদর্শন করা হবে">
+<!ENTITY viewBookmarksToolbar.label         "বুকমার্ক টুল-বার প্রদর্শন করা হবে">
+
+<!ENTITY containersMenu.label "কন্টেইনারস">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "ইতিহাস">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "সরঞ্জাম">
+<!ENTITY toolsMenu.accesskey          "T"> 
+
+<!ENTITY keywordfield.label           "অনুসন্ধান করার উদ্দেশ্যে কোনো শব্দ লিখুন...">
+<!ENTITY keywordfield.accesskey       "K">
+
+<!ENTITY downloads.label              "ডাউনলোড">
+<!ENTITY downloads.accesskey          "D">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "অতিরিক্ত সামগ্রী">
+<!ENTITY addons.accesskey             "A">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "ওয়েব ডিভেলপর">
+<!ENTITY webDeveloperMenu.accesskey   "W">
+
+<!ENTITY inspectContextMenu.label     "সামগ্রী নিরীক্ষণ করুন">
+<!ENTITY inspectContextMenu.accesskey "Q">
+
+<!ENTITY fileMenu.label         "ফাইল"> 
+<!ENTITY fileMenu.accesskey       "F">
+<!ENTITY newUserContext.label             "নতুন কন্টেইনার ট্যাব">
+<!ENTITY newUserContext.accesskey         "b">
+<!ENTITY newNavigatorCmd.label        "নতুন উইন্ডো">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "N">
+<!ENTITY newPrivateWindow.label     "নতুন ব্যক্তিগত উইন্ডো">
+<!ENTITY newPrivateWindow.accesskey "W">
+<!ENTITY newNonRemoteWindow.label   "নতুন Non-e10s window">
+
+<!ENTITY editMenu.label         "সম্পাদনা"> 
+<!ENTITY editMenu.accesskey       "E"> 
+<!ENTITY undoCmd.label            "পূর্বাবস্থা">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "U"> 
+<!ENTITY redoCmd.label            "পুনরাবৃত্তি">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "R"> 
+<!ENTITY cutCmd.label           "কাট করুন">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "t"> 
+<!ENTITY copyCmd.label            "কপি করুন">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "C"> 
+<!ENTITY pasteCmd.label           "পেস্ট করুন">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "P"> 
+<!ENTITY deleteCmd.label          "মুছে ফেলুন">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "D"> 
+<!ENTITY selectAllCmd.label         "সমগ্র নির্বাচন করুন">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "A"> 
+<!ENTITY preferencesCmd2.label       "বিকল্প">
+<!ENTITY preferencesCmd2.accesskey     "O">
+<!ENTITY preferencesCmdUnix.label       "বিবিধ বৈশিষ্ট্য">
+<!ENTITY preferencesCmdUnix.accesskey     "ব"> 
+
+<!ENTITY clearRecentHistory.label               "সম্প্রতি ব্যবহারের পূর্ববর্তী তথ্য মুছে ফেলুন…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "প্রদর্শন"> 
+<!ENTITY viewMenu.accesskey       "V"> 
+<!ENTITY viewToolbarsMenu.label       "টুলবার"> 
+<!ENTITY viewToolbarsMenu.accesskey     "T"> 
+<!ENTITY viewSidebarMenu.label "সাইডবার">
+<!ENTITY viewSidebarMenu.accesskey "স">
+<!ENTITY viewCustomizeToolbar.label       "পছন্দ অনুযায়ী নির্বাচন..."> 
+<!ENTITY viewCustomizeToolbar.accesskey     "C">
+
+<!ENTITY historyMenu.label "পূর্ববর্তী তথ্য">
+<!ENTITY historyMenu.accesskey "প">
+<!ENTITY historyUndoMenu.label "সম্প্রতি বন্ধ করা ট্যাব">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "সম্প্রতি বন্ধ করা উইন্ডো">
+<!ENTITY historyRestoreLastSession.label "পূর্ববর্তী সেশান পুনরুদ্ধার করুন">
+
+<!ENTITY showAllHistoryCmd2.label "সকল পূর্ববর্তী তথ্য প্রদর্শন করা হবে">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "স্বনির্ধারণ">
+<!ENTITY appMenuCustomize.tooltip "টুলবার এবং মেনু স্বনির্ধারণ করুন">
+<!ENTITY appMenuCustomizeExit.label "স্বনির্ধারণ প্রস্থান">
+<!ENTITY appMenuCustomizeExit.tooltip "স্বনির্ধারণ সমাপ্ত">
+<!ENTITY appMenuHistory.label "ইতিহাস">
+<!ENTITY appMenuHistory.showAll.label "সকল পূর্ববর্তী তথ্য প্রদর্শন করা হবে">
+<!ENTITY appMenuHistory.clearRecent.label "সম্প্রতি ব্যবহারের পূর্ববর্তী তথ্য মুছে ফেলুন…">
+<!ENTITY appMenuHistory.restoreSession.label "পূর্ববর্তী সেশান পুনরুদ্ধার করুন">
+<!ENTITY appMenuHistory.viewSidebar.label "ইতিহাস সাইড বার দেখুন">
+<!ENTITY appMenuHelp.tooltip "সাহায্য তালিকা খুলুন">
+
+<!ENTITY appMenuRemoteTabs.label "সিঙ্ক হওয়া ট্যাব">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "কোনো খোলা ট্যাব নেই">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "আরও দেখান">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "এই ডিভাইস থেকে আরো ট্যাব দেখান">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "সমস্ত প্রদর্শন করা হবে">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "ট্যাব সিঙ্কিং খুলুন আপনার অন্যান্য ডিভাইস থেকে ট্যাবের তালিকা দেখুন।">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "কোনো সিঙ্ক ট্যাব নেই… এখনো অবধি!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "এখানে আপনার অন্যান্য ডিভাইসের ট্যাব দেখতে চান?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "সিঙ্ক পছন্দসমূহ">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "আপনার অন্যান্য ডিভাইস থেকে ট্যাব দেখতে সাইন ইন করুন।">
+<!ENTITY appMenuRemoteTabs.signin.label "সিঙ্কে সাইন ইন করুন">
+<!ENTITY appMenuRemoteTabs.sidebar.label "সিঙ্ক হওয়া ট্যাবের সাইডবার দেখুন">
+
+<!ENTITY customizeMenu.addToToolbar.label "টুল-বারে যোগ করুন">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!ENTITY customizeMenu.addToPanel.label "মেনুতে যুক্ত করুন">
+<!ENTITY customizeMenu.addToPanel.accesskey "M">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.moveToToolbar.label "টুল-বারে যোগ করুন">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "য">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "মেনু তে সরিয়ে নিয়ে যান">
+<!ENTITY customizeMenu.moveToPanel.accesskey "o">
+<!ENTITY customizeMenu.removeFromToolbar.label "টুলবার থেকে অপসারণ করুন">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.removeFromMenu.label "মেনু থেকে মুছে ফেলুন">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "আরও উপাদান যোগ করুন">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "অনুসন্ধান করুন অথবা ঠিকানা প্রবেশ করুন">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "এক্সটেনশন:">
+<!ENTITY urlbar.switchToTab.label     "চিহ্নিত ট্যাবে পরিবর্তন করুন:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "আপনি পরামর্শ দিয়ে আপনার অনুসন্ধান অভিজ্ঞতা উন্নত করতে চান?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "আরও জানুন...">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "I">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "না">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "হ্যাঁ">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "y">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "অনুসনধান করুন">
+<!ENTITY contentSearchSubmit.tooltip  "অনুসন্ধান জমা করুন">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "অনুসন্ধান করুন ">
+<!ENTITY searchWith.label             " সাথে:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "অনুসন্ধান ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "অনুসন্ধান করুন:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "সার্চ সেটিংস বদল করুন">
+<!ENTITY changeSearchSettings.tooltip "সার্চ সেটিংস বদল করুন">
+
+<!ENTITY searchInNewTab.label         "নতুন ট্যাবের মধ্যে খুলুন">
+<!ENTITY searchInNewTab.accesskey     "T">
+<!ENTITY searchSetAsDefault.label     "অনুসন্ধান ইঞ্জিনকে ডিফল্ট হিসাবে সংকলন করুন">
+<!ENTITY searchSetAsDefault.accesskey "D">
+
+<!ENTITY openLinkCmdInTab.label       "নতুন ট্যাবের মধ্যে লিঙ্ক প্রদর্শন করা হবে">
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+<!ENTITY openLinkCmd.label            "নতুন উইন্ডোর মধ্যে লিঙ্ক প্রদর্শন করা হবে">
+<!ENTITY openLinkCmd.accesskey        "W">
+<!ENTITY openLinkInPrivateWindowCmd.label "নতুন প্রাইভেট উইন্ডোর মধ্যে লিঙ্ক প্রদর্শন করা হবে">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "P">
+<!ENTITY openLinkCmdInCurrent.label     "লিংক খুলুন">
+<!ENTITY openLinkCmdInCurrent.accesskey "O">
+<!ENTITY openFrameCmdInTab.label      "নতুন ট্যাবের মধ্যে ফ্রেম খোলা হবে">
+<!ENTITY openFrameCmdInTab.accesskey  "T">
+<!ENTITY openFrameCmd.label           "নতুন উইন্ডোর মধ্যে ফ্রেম খোলা হবে">
+<!ENTITY openFrameCmd.accesskey       "W">
+<!ENTITY openLinkCmdInContainerTab.label "নতুন কন্টেইনার ট্যাবে লিঙ্ক খুলুন">
+<!ENTITY openLinkCmdInContainerTab.accesskey "z">
+<!ENTITY showOnlyThisFrameCmd.label     "শুধুমাত্র বর্তমান ফ্রেম প্রদর্শন করা হবে">
+<!ENTITY showOnlyThisFrameCmd.accesskey "S">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "ফ্রেম পুনরায় লোড করু">
+<!ENTITY reloadFrameCmd.accesskey     "R">
+<!ENTITY viewPartialSourceForSelectionCmd.label "নির্বাচিত অংশের উৎস প্রদর্শন">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML-র উৎস প্রদর্শন">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "পৃষ্ঠার উৎস প্রদর্শন">
+<!ENTITY viewPageSourceCmd.accesskey  "V">
+<!ENTITY viewFrameSourceCmd.label     "ফ্রেমের উৎস প্রদর্শন">
+<!ENTITY viewFrameSourceCmd.accesskey "V">
+<!ENTITY viewPageInfoCmd.label        "পৃষ্ঠা সংক্রান্ত তথ্য পড়ুন">
+<!ENTITY viewPageInfoCmd.accesskey    "I">
+<!ENTITY viewFrameInfoCmd.label       "ফ্রেম সংক্রান্ত তথ্য পড়ুন">
+<!ENTITY viewFrameInfoCmd.accesskey   "I">
+<!ENTITY reloadImageCmd.label         "ছবি নতুন করে প্রদর্শন করা হবে">
+<!ENTITY reloadImageCmd.accesskey     "R">
+<!ENTITY viewImageCmd.label           "ছবি প্রদর্শন">
+<!ENTITY viewImageCmd.accesskey       "I">
+<!ENTITY viewImageInfoCmd.label       "ছবি সংক্রান্ত তথ্য দেখুন">
+<!ENTITY viewImageInfoCmd.accesskey   "ছ">
+<!ENTITY viewImageDescCmd.label       "দৃশ্যাবলী এবং বিবরণী">
+<!ENTITY viewImageDescCmd.accesskey   "D">
+<!ENTITY viewVideoCmd.label           "ভিডিও দেখুন">
+<!ENTITY viewVideoCmd.accesskey       "ভ">
+<!ENTITY viewBGImageCmd.label         "পটভূমির ছবি প্রদর্শন">
+<!ENTITY viewBGImageCmd.accesskey     "প">
+<!ENTITY setDesktopBackgroundCmd.label      "ডেস্কটপের পটভূমি রূপে নির্ধারণ করুন…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "S">
+<!ENTITY bookmarkPageCmd2.label       "চিহ্নিত পৃষ্ঠা বুকমার্ক করুন">
+<!ENTITY bookmarkThisLinkCmd.label      "চিহ্নিত লিঙ্ক বুকমার্ক করুন">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "L">
+<!ENTITY bookmarkThisFrameCmd.label      "বর্তমান ফ্রেম বুকমার্ক করুন">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "ব">
+<!ENTITY emailPageCmd.label           "লিংক ই-মেইল করুন…">
+<!ENTITY emailPageCmd.accesskey       "E">
+<!ENTITY savePageCmd.label            "নতুন নামে পৃষ্ঠা সংরক্ষণ করুন…">
+<!ENTITY savePageCmd.accesskey        "A">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "p">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "নতুন নামে ফ্রেম সংরক্ষণ করুন...">
+<!ENTITY saveFrameCmd.accesskey       "F">
+<!ENTITY printFrameCmd.label          "ফ্রেম প্রিন্ট করা হবে">
+<!ENTITY printFrameCmd.accesskey      "P">
+<!ENTITY saveLinkCmd.label            "নতুন নামে লিঙ্ক সংরক্ষণ করুন…">
+<!ENTITY saveLinkCmd.accesskey        "ন">
+<!ENTITY saveImageCmd.label           "নতুন নামে ছবি সংরক্ষণ করুন…">
+<!ENTITY saveImageCmd.accesskey       "ন">
+<!ENTITY saveVideoCmd.label           "নতুন রূপে ভিডিও সংরক্ষণ করুন…">
+<!ENTITY saveVideoCmd.accesskey       "স">
+<!ENTITY saveAudioCmd.label           "নতুন রূপে অডিও সংরক্ষণ করুন…">
+<!ENTITY saveAudioCmd.accesskey       "ন">
+<!ENTITY emailImageCmd.label          "ছবি ই-মেইল করুন…">
+<!ENTITY emailImageCmd.accesskey      "ছ">
+<!ENTITY emailVideoCmd.label          "ভিডিও ই-মেইল করুন…">
+<!ENTITY emailVideoCmd.accesskey      "a">
+<!ENTITY castVideoCmd.label           "ডিভাইসে ভিডিও পাঠান">
+<!ENTITY castVideoCmd.accesskey       "ঠ">
+<!ENTITY emailAudioCmd.label          "অডিও ই-মেইল করুন…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "এই প্লাগিনটি সক্রিয় করুন">
+<!ENTITY playPluginCmd.accesskey      "c">
+<!ENTITY hidePluginCmd.label          "এই প্লাগইনটি আড়াল করুন">
+<!ENTITY hidePluginCmd.accesskey      "H">
+<!ENTITY copyLinkCmd.label            "লিঙ্কের দ্বারা চিহ্নিত অবস্থান কপি করুন">
+<!ENTITY copyLinkCmd.accesskey        "a">
+<!ENTITY copyImageCmd.label           "ছবির অবস্থান কপি করুন">
+<!ENTITY copyImageCmd.accesskey       "ছ">
+<!ENTITY copyImageContentsCmd.label   "ছবি কপি করুন">
+<!ENTITY copyImageContentsCmd.accesskey  "ছ"> 
+<!ENTITY copyVideoURLCmd.label        "ভিডিও-র অবস্থান কপি করুন">
+<!ENTITY copyVideoURLCmd.accesskey    "ভ">
+<!ENTITY copyAudioURLCmd.label        "অডিও-র অবস্থান কপি করুন">
+<!ENTITY copyAudioURLCmd.accesskey    "অ">
+<!ENTITY copyEmailCmd.label           "ই-মেইল ঠিকানা কপি করুন">
+<!ENTITY copyEmailCmd.accesskey       "E">
+<!ENTITY thisFrameMenu.label              "বর্তমান ফ্রেম">
+<!ENTITY thisFrameMenu.accesskey          "ব">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "চালান">
+<!ENTITY mediaPlay.accesskey         "P">
+<!ENTITY mediaPause.label            "থামান">
+<!ENTITY mediaPause.accesskey        "P">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "নীরব">
+<!ENTITY mediaMute.accesskey         "M">
+<!ENTITY mediaUnmute.label           "সরব">
+<!ENTITY mediaUnmute.accesskey       "স">
+<!ENTITY mediaPlaybackRate2.label     "চলার গতি">
+<!ENTITY mediaPlaybackRate2.accesskey "d">
+<!ENTITY mediaPlaybackRate050x2.label "ধীরে (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "S">
+<!ENTITY mediaPlaybackRate100x2.label "স্বাভাবিক">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate125x2.label "দ্রুত (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "F">
+<!ENTITY mediaPlaybackRate150x2.label "দ্রুততর (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "a">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "হাস্যকর (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "L">
+<!ENTITY mediaLoop.label             "লুপ">
+<!ENTITY mediaLoop.accesskey         "L">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "নিয়ন্ত্রণের বাটন প্রদর্শন করা হবে">
+<!ENTITY mediaShowControls.accesskey "C">
+<!ENTITY mediaHideControls.label     "নিয়ন্ত্রণের বাটন আড়াল করা হবে">
+<!ENTITY mediaHideControls.accesskey "C">
+<!ENTITY videoFullScreen.label       "সম্পূর্ণ পর্দা জুড়ে প্রদর্শন">
+<!ENTITY videoFullScreen.accesskey   "F">
+<!ENTITY videoSaveImage.label        "নতুন রূপে স্ন্যাপ-শট সংরক্ষণ করুন…">
+<!ENTITY videoSaveImage.accesskey    "S">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "পরিসংখ্যান প্রদর্শন করা হবে">
+<!ENTITY videoShowStats.accesskey    "প">
+<!ENTITY videoHideStats.label        "পরিসংখ্যান আড়াল করা হবে">
+<!ENTITY videoHideStats.accesskey    "প">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "বড় মাপে প্রদর্শন">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "I">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "ছোট মাপে প্রদর্শন">
+<!ENTITY fullZoomReduceCmd.accesskey    "O">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "স্বাভাবিক অবস্থা">
+<!ENTITY fullZoomResetCmd.accesskey     "R">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "শুধুমাত্র লেখা প্রদর্শিত হবে">
+<!ENTITY fullZoomToggleCmd.accesskey    "T">
+<!ENTITY fullZoom.label                 "প্রদর্শনের মাপ">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "সাইডবার বন্ধ করুন">
+
+<!ENTITY quitApplicationCmdWin2.label       "প্রস্থান">
+<!ENTITY quitApplicationCmdWin2.accesskey   "প">
+<!ENTITY quitApplicationCmdWin2.tooltip     "প্রস্থান &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "প্রস্থান"> 
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "প্রস্থান &brandShorterName;">
+
+<!ENTITY closeCmd.label                 "বন্ধ করুন">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "C">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "পৃষ্ঠার বিন্যাস">
+<!ENTITY pageStyleMenu.accesskey "প">
+<!ENTITY pageStyleNoStyle.label "বিন্যাস বিহীন">
+<!ENTITY pageStyleNoStyle.accesskey "N">
+<!ENTITY pageStylePersistentOnly.label "পৃষ্ঠার মৌলিক বিন্যাস">
+<!ENTITY pageStylePersistentOnly.accesskey "B">
+
+<!ENTITY pageReportIcon.tooltip            "বর্তমান ওয়েব-সাইটে পপ-আপ উইন্ডো প্রদর্শন রোধ করার জন্য নির্ধারিত বৈশিষ্ট্য পরিবর্তন করুন">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "পপ-আপ প্রদর্শন রোধ সংক্রান্ত পছন্দ সম্পাদন করুন...">
+<!ENTITY editPopupSettings.label "পপ-আপ প্রদর্শন রোধ সংক্রান্ত বিকল্প সম্পাদন করুন…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "পৃষ্ঠার দিশা পরিবর্তন করুন">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "D">
+<!ENTITY bidiSwitchTextDirectionItem.label        "লেখনির দিশা পরিবর্তন করুন">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "ল">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "বর্তমান পৃষ্ঠায় অনুসন্ধান">
+<!ENTITY findOnCmd.accesskey "F">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "পুনরায় অনুসন্ধান করুন">
+<!ENTITY findAgainCmd.accesskey "প">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "অভিধান যোগ করুন...">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!ENTITY editBookmark.done.label                     "সমাপ্ত">
+<!ENTITY editBookmark.removeBookmark.accessKey       "R">
+
+<!ENTITY identity.connectionSecure "সুরক্ষিত সংযোগ">
+<!ENTITY identity.connectionNotSecure "সংযোগ সুরক্ষিত নয়">
+<!ENTITY identity.connectionFile "এই পাতাটি আপনার কম্পিউটার এ সংরক্ষন করা হয়েছে।">
+<!ENTITY identity.connectionVerified2 "আপনি সুরখিতভাবে বর্তমান সাইটির সাথে সংযুক্ত রয়েছেন, চালনা করুন:">
+<!ENTITY identity.connectionInternal "এটি একটি সুরক্ষিত &brandShortName; পৃষ্ঠা।">
+<!ENTITY identity.insecureLoginForms2 "এই পেজে হওয়া লগইন সংকটাপন্ন হতে পারে।">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; এই পৃষ্ঠাতে কিছু নিরাপদ নয় এমন উপাদানকে অবরোধ করেছে।">
+<!ENTITY identity.passiveLoaded "এই পাতাটির অংশ নিরাপদ নয় (যেমন ছবি)।">
+<!ENTITY identity.activeLoaded "আপনি নিরাপদ নয় এমন উপাদানের থেকে সুরক্ষা নিষ্ক্রিয় করে রেখেছেন।">
+<!ENTITY identity.weakEncryption "এই পৃষ্ঠাটি দুর্বল এনক্রিপশন ব্যবহার করে।">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "এই সাইট টি তে আপনার কানেক্সন নিরাপদ নয়। আপনি যে তথ্যগুলি জমা করেছেন, সেগুলি অন্ন কেউ দেখতে পেতে পারেন(পাসওয়ার্ড, বার্তা, ক্রেডিট কার্ড ইত্যাদি )।">
+<!ENTITY identity.description.insecureLoginForms "আপনার দ্বারা পৃষ্ঠাটিতে প্রবেশ করানো তথ্যগুলি নিরাপদ নয় এবং এগুলি বিপদের সম্মুখীন হতে পারে।">
+<!ENTITY identity.description.weakCipher "এই ওয়েবসাইটে আপনার সংযোগ দুর্বল এনক্রিপশন ব্যবহার করে এবং ব্যক্তিগত নয়।">
+<!ENTITY identity.description.weakCipher2 "অন্ন কেউ আপনার তথ্য দেখে নিয়ে সেটিকে পরিবরতন করতে পারে।">
+<!ENTITY identity.description.activeBlocked "&brandShortName; এই পৃষ্ঠাতে কিছু নিরাপদ নয় উপাদান অবরোধ করেছে।">
+<!ENTITY identity.description.passiveLoaded "আপনার সংযোগ সুরক্ষিত নয় এবনং সেটি অন্য কেউ দেখতে পেতে পারে।">
+<!ENTITY identity.description.passiveLoaded2 "এই ওয়েবসাইটে নিরাপদ নয় এমন সামগ্রী রয়েছে (যেমন ছবি)।">
+<!ENTITY identity.description.passiveLoaded3 "&brandShortName; যদিও কিছু বিপজ্জনক সামগ্রী প্রতিরোধ করেছে, তাও সেটি পুরপুরি নিরাপদ নয় (যেমন ছবি)।">
+<!ENTITY identity.description.activeLoaded "এই ওয়েবসাইট থেকে সংযোগ সম্পূর্ণরূপে নিরাপদ নয় কারণ এটিতে এনক্রিপশনবিহীন উপাদান (যেমন ছবি) উপস্থিত রয়েছে।">
+<!ENTITY identity.description.activeLoaded2 "আপনি কি এই সাইটের সাথে তথ্য শেয়ার করলে সবাই দেখতে পারে (পাসওয়ার্ড, বার্তা, ক্রেডিট কার্ড ইত্যাদি)।">
+
+<!ENTITY identity.enableMixedContentBlocking.label "সুরক্ষা সক্রিয় করুন">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "E">
+<!ENTITY identity.disableMixedContentBlocking.label "এখনকার জন্য সুরক্ষা নিষ্ক্রিয় করুন">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "আরও জানুন">
+
+<!ENTITY identity.removeCertException.label "ব্যাতিক্রম মুছে ফেলুন">
+<!ENTITY identity.removeCertException.accesskey "R">
+
+<!ENTITY identity.moreInfoLinkText2 "অধিক বিবরণ">
+
+<!ENTITY identity.permissions "অনুমতি">
+<!ENTITY identity.permissionsEmpty "আপনি বর্তমান সাইটটিকে কোনও বিশেষ অনুমতি দেননি।">
+<!ENTITY identity.permissionsReloadHint "আপনাকে হয়তো বদলগুলো দেখবার জন্য পেজটা রিলোড করতে হতে পারে।">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "ব্রাইজারের ট্যাব">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "সিঙ্ক হওয়া ট্যাব">
+
+<!ENTITY syncedTabs.sidebar.label              "সিঙ্ক হওয়া ট্যাব">
+<!ENTITY syncedTabs.sidebar.noclients.label    "সাইন ইন করুন ফিরেওফক্সে অন্য ডিভাইসগুলি থেকে তাদের ট্যাবগুলি দেখার জন্য ">
+<!ENTITY syncedTabs.sidebar.noclients.title    "কোনো সিঙ্ক ট্যাব নেই… এখনো অবধি!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "এখানে আপনার অন্যান্য ডিভাইসের ট্যাব দেখতে চান?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "আপনার অন্যান্য ডিভাইস থেকে ট্যাব দেখতে সাইন ইন করুন।">
+<!ENTITY syncedTabs.sidebar.notabs.label       "কোনো খোলা ট্যাব নেই">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "&syncBrand.shortName.label; খুলুন পছন্দসমূহ">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "ট্যাব সিঙ্কিং খুলুন আপনার অন্যান্য ডিভাইস থেকে ট্যাবের তালিকা দেখুন।">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "খুলুন">
+<!ENTITY syncedTabs.context.open.accesskey                   "O">
+<!ENTITY syncedTabs.context.openInNewTab.label               "নতুন ট্যাবের মধ্যে খোলা হবে">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "w">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "নতুন উইন্ডোর মধ্যে লিঙ্ক প্রদর্শন করা হবে">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "N">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "নতুন প্রাইভেট উইন্ডোর মধ্যে লিঙ্ক প্রদর্শন করা হবে">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "P">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "এই ট্যাবটি বুকমার্ক করুন…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "B">
+<!ENTITY syncedTabs.context.copy.label                       "কপি করুন">
+<!ENTITY syncedTabs.context.copy.accesskey                   "C">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "সব কিছু ট্যাবে খুলুন">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "O">
+
+
+<!ENTITY syncBrand.shortName.label    "সুসংগতি">
+
+<!ENTITY syncSignIn.label             "&syncBrand.shortName.label; সাইন ইন করুন…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "অবিলম্বে সুসংগত করুন">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "&syncBrand.shortName.label; সংযোগ করুন…">
+<!ENTITY syncReAuthItem.accesskey     "R">
+<!ENTITY syncToolbarButton.label      "সুসংগতি">
+
+<!ENTITY social.addons.label "ডিভাইস পরিচালনা করুন...">
+
+<!ENTITY social.directory.label "অ্যাক্টিভেশানের পঞ্জি">
+<!ENTITY social.directory.text "এই ডাইরেক্টরি থেকে আপনি শেয়ার পরিষেবা সক্রিয় করতে পারবেন।">
+<!ENTITY social.directory.button "আমাকে সেখানে নিয়ে যান!">
+<!ENTITY social.directory.introText "কোন পরিষেবা তে ক্লিক করে তাকে &brandShortName; এর সাথে যুক্ত করতে পারবেন।">
+<!ENTITY social.directory.viewmore.text "আরো দেখুন">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "অতিরিক্ত বৈশিষ্ট্য এবং টুল">
+<!ENTITY customizeMode.menuAndToolbars.empty "আরও টুল দরকার?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "হাজার হাজার অ্যাড-অন এর মধ্যে থেকে বাছুন">
+<!ENTITY customizeMode.restoreDefaults "ডিফল্ট মান পুনরায় স্থাপন করা হবে">
+<!ENTITY customizeMode.titlebar "শিরোনাম বার">
+<!ENTITY customizeMode.lwthemes "থিমসমূহ">
+<!ENTITY customizeMode.lwthemes.myThemes "আমার থিমসমূহ">
+<!ENTITY customizeMode.lwthemes.recommended "প্রস্তাবিত">
+<!ENTITY customizeMode.lwthemes.menuManage "পরিচালনা">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "M">
+<!ENTITY customizeMode.lwthemes.menuGetMore "আরও থিম দেখুন">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "G">
+
+<!ENTITY getUserMedia.selectCamera.label "শেয়ার করার ক্যামেরা:">
+<!ENTITY getUserMedia.selectCamera.accesskey "C">
+<!ENTITY getUserMedia.selectMicrophone.label "শেয়ার করার মাইক্রোফোন :">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "ট্যাব থেকে অডিও শেয়ার করা হবে।">
+<!ENTITY getUserMedia.allWindowsShared.message "আপনার স্ক্রিনে সব দৃশ্যমান উইন্ডো শেয়ার করা হবে।">
+
+<!ENTITY trackingProtection.title "ট্র্যাকিং সুরক্ষা">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; পৃষ্ঠার যে অংশগুলি আপনার অন-লাইন কার্যকলাপ ট্র্যাক করে সেগুলি প্রতিরোধ করা হয়েছে।">
+<!ENTITY trackingProtection.detectedNotBlocked3 "এই সাইটটিতে আপনার ব্রাউজিং ট্র্যাক করতে পারে এমন উপাদান রয়েছে। আপনি সুরক্ষা বন্ধ করেছেন।">
+<!ENTITY trackingProtection.notDetected3 "এই পৃষ্ঠাতে নিরাপদ নয় এমন উপাদান ধরা পরেনি।">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "এই সাইটে সুরক্ষা নিষ্ক্রিয় করুন">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "এই সেশনে সুরক্ষা নিষ্ক্রিয় করুন">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "সুরক্ষা সক্রিয় করুন">
+<!ENTITY trackingProtection.block2.accesskey "E">
+
+<!ENTITY trackingContentBlocked.message "অনুসরণকরণ">
+<!ENTITY trackingContentBlocked.moreinfo "পৃষ্ঠার যে অংশগুলি অাপনার অন-লাইন কার্যকলাপ ট্র্যাক করে সেগুলি প্রতিরোধ করা হয়েছে।">
+<!ENTITY trackingContentBlocked.learnMore "আরও জানুন">
+<!ENTITY trackingContentBlocked.options "বিকল্প">
+<!ENTITY trackingContentBlocked.unblock2.label "এই সাইটে সুরক্ষা নিষ্ক্রিয় করুন">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "D">
+<!ENTITY trackingContentBlocked.block.label "সুরক্ষা সক্রিয় করুন">
+<!ENTITY trackingContentBlocked.block.accesskey "E">
+<!ENTITY trackingContentBlocked.disabled.message "ট্র্যাকিং সুরক্ষা নিষ্ক্রিয় করা হয়েছে">
+
+<!ENTITY pluginNotification.showAll.label "সব প্রদর্শন">
+<!ENTITY pluginNotification.showAll.accesskey "S">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "এখনি অনুমোদন করুন">
+<!ENTITY pluginActivateAlways.label "অনুমোদন করুন এবং মনে রাখুন">
+<!ENTITY pluginBlockNow.label "প্লাগ-ইন আটকান">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "বন্ধ">
+
+<!ENTITY appMenuSidebars.label         "সাইড-বার">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "শেষের টি ভুলে যান:">
+<!ENTITY panicButton.view.5min                    "পাঁচ মিনিট">
+<!ENTITY panicButton.view.2hr                     "দুই ঘণ্টা">
+<!ENTITY panicButton.view.day                     "24 ঘন্টা">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "যদি আপনি আগে এগোন:">
+<!ENTITY panicButton.view.deleteCookies           "সাম্প্রতিক<html:strong>কুকিগুলি</html:strong> মুছে ফেলুন">
+<!ENTITY panicButton.view.deleteHistory           "সাম্প্রতিক <html:strong> ইতিহাস </html:strong> মুছে ফেলুন">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "সব <html:strong>ট্যাবগুলি</html:strong> এবং <html:strong>উইন্ডো</html:strong> বন্ধ করুন">
+<!ENTITY panicButton.view.openNewWindow           "একটি নতুন পরিষ্কার উইন্ডো খুলুন">
+
+<!ENTITY panicButton.view.undoWarning             "এই কাজ নাকচ করা সম্ভব নয়।">
+<!ENTITY panicButton.view.forgetButton            "ভুলে যান!">
+
+<!ENTITY panicButton.thankyou.msg1                "আপনার সাম্প্রতিক ইতিহাস মুছে গেছে।">
+<!ENTITY panicButton.thankyou.msg2                "সুরক্ষিত ব্রাউজিং!">
+<!ENTITY panicButton.thankyou.buttonlabel         "ধন্যবাদ!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "DRM সম্পর্কে আরও জানুন...">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.acceptButton.label "আপডেট ডাউনলোড করুন">
+
+<!ENTITY updateManual.cancelButton.label "এই মুহূর্তে নয়">
+
+<!ENTITY updateRestart.cancelButton.label "এই মুহূর্তে নয়">
+
+
+
+<!ENTITY appMenuHelp.label "Help">
+<!ENTITY appMenuHistory.recentHistory.label "Recent History">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Manage Devices…">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Show all tabs from this device">
+<!ENTITY bookmarksMenuButton.mobile.label "Mobile Bookmarks">
+<!ENTITY copyURLCmd.label             "Copy URL">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.addToOverflowMenu.label "Add to Overflow Menu">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "P">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Pin to Overflow Menu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Unpin from Overflow Menu">
+<!ENTITY customizeMode.done "Done">
+<!ENTITY customizeMode.emptyOverflowList.description "Drag and drop items here to keep them within reach but out of your toolbar…">
+<!ENTITY customizeMode.toolbars2 "Toolbars">
+<!ENTITY customizeMode.uidensity "Density">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Use Touch for Tablet Mode">
+
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "C">
+<!ENTITY customizeMode.uidensity.menuCompact.label "Compact">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Compact">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normal">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "T">
+<!ENTITY customizeMode.uidensity.menuTouch.label "Touch">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Touch">
+<!ENTITY identity.extensionPage "This page is loaded from an extension.">
+<!ENTITY mobileBookmarksCmd.label "Mobile Bookmarks">
+<!ENTITY moreMenu.label "More">
+
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY overflowCustomizeToolbar.label       "Customize Toolbar…">
+<!ENTITY pageAction.addToUrlbar.label "Add to Address Bar">
+<!ENTITY pageAction.removeFromUrlbar.label "Remove from Address Bar">
+
+<!ENTITY pageActionButton.tooltip "Page actions">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY searchBookmarks.label              "Search Bookmarks">
+
+<!ENTITY searchIcon.tooltip           "Search">
+
+<!ENTITY searchInput.placeholder      "Search">
+<!ENTITY sendToDevice.label2 "Send to Device">
+<!ENTITY sendToDevice.syncNotReady.label "Syncing Devices…">
+<!ENTITY sidebarMenuClose.label         "Close Sidebar">
+
+<!ENTITY syncedTabs.context.managedevices.accesskey          "D">
+
+
+<!ENTITY syncedTabs.context.managedevices.label              "Manage Devices…">
+<!ENTITY updateAvailable.acceptButton.accesskey "D">
+<!ENTITY updateAvailable.cancelButton.accesskey "N">
+<!ENTITY updateAvailable.cancelButton.label "Not Now">
+<!ENTITY updateAvailable.header.message "A new &brandShorterName; update is available.">
+<!ENTITY updateAvailable.message "Update your &brandShorterName; for the latest in speed and privacy.">
+<!ENTITY updateAvailable.panelUI.label "Download &brandShorterName; update">
+
+<!ENTITY updateAvailable.whatsnew.label "See what’s new.">
+<!ENTITY updateManual.acceptButton.accesskey "D">
+<!ENTITY updateManual.acceptButton.label "Download &brandShorterName;">
+<!ENTITY updateManual.cancelButton.accesskey "N">
+<!ENTITY updateManual.header.message "&brandShorterName; can’t update to the latest version.">
+<!ENTITY updateManual.message "Download a fresh copy of &brandShorterName; and we’ll help you to install it.">
+<!ENTITY updateManual.panelUI.label "Download a fresh copy of &brandShorterName;">
+
+<!ENTITY updateManual.whatsnew.label "See what’s new.">
+<!ENTITY updateRestart.acceptButton.accesskey "R">
+<!ENTITY updateRestart.acceptButton.label "Restart and Restore">
+<!ENTITY updateRestart.cancelButton.accesskey "N">
+<!ENTITY updateRestart.header.message2 "Restart to update &brandShorterName;.">
+<!ENTITY updateRestart.message "After a quick restart, &brandShorterName; will restore all your open tabs and windows.">
+<!ENTITY updateRestart.panelUI.label2 "Restart to update &brandShorterName;">
+
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "You have blocked persistent storage for this website.">
+
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Store data in Persistent Storage">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Browser is under remote control">
+
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Change Preferences…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "C">
+
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Change Options…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "C">
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Get help finding things! Look for the &#x1F50E; next to search suggestions.">
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tip:">

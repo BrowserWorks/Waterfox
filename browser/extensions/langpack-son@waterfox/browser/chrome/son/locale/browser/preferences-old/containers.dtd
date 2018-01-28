@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Sun taaga tonton">
+<!ENTITY addButton.accesskey  "o">
+
+<!ENTITY removeButton.label   "Kaa">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Willi sutura ga">
+
+<!ENTITY window.title         "Sun taaga tonton">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Maa:">
+<!ENTITY name.accesskey       "M">
+<!ENTITY name.placeholder     "Sun maa dam">
+<!ENTITY icon.label           "Bii:">
+<!ENTITY icon.accesskey       "i">
+<!ENTITY color.label          "Noone:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "A ben">
+<!ENTITY button.ok.accesskey  "b">
+
+
+<!ENTITY preferencesButton.label "Preferences">

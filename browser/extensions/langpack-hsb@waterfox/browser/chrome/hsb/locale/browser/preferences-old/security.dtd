@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Powšitkowny">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warnować, hdyž sydła pospytuja přidatki instalować">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Strašny a wobšudny wobsah blokować">
+<!ENTITY  enableSafeBrowsing.accesskey    "S">
+
+<!ENTITY  blockDownloads.label            "Strašne sćehnjenja blokować">
+<!ENTITY  blockDownloads.accesskey        "s">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Před njewitanej a njewšědnej softwaru warnować">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "w">
+
+<!ENTITY  addonExceptions.label         "Wuwzaća…">
+<!ENTITY  addonExceptions.accesskey     "W">
+
+
+<!ENTITY  logins.label                  "Přizjewjenja">
+
+<!ENTITY  rememberLogins2.label         "Přizjewjenja za sydła sej spomjatkować">
+<!ENTITY  rememberLogins2.accesskey     "P">
+<!ENTITY  passwordExceptions.label      "Wuwzaća…">
+<!ENTITY  passwordExceptions.accesskey  "u">
+
+<!ENTITY  useMasterPassword.label        "Hłowne hesło wužiwać">
+<!ENTITY  useMasterPassword.accesskey    "o">
+<!ENTITY  changeMasterPassword.label     "Hłowne hesło změnić…">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Składowane přizjewjenja…">
+<!ENTITY  savedLogins.accesskey          "S">

@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY trackingProtectionHeader2.label "Protezione antitracciamento">
+<!ENTITY trackingProtection2.description "Il tracciamento consiste nella raccolta di informazioni sul visitatore attraverso siti diversi. Può essere utilizzato per costruire un vero e proprio profilo e visualizzare contenuti basati sulle abitudini di navigazione e sui dati personali.">
+<!ENTITY trackingProtection2.radioGroupLabel "Utilizza la protezione antitracciamento per bloccare i tracciatori conosciuti">
+<!ENTITY trackingProtectionAlways.label "Sempre">
+<!ENTITY trackingProtectionAlways.accesskey "p">
+<!ENTITY trackingProtectionPrivate.label "Solo in finestre anonime">
+<!ENTITY trackingProtectionPrivate.accesskey "f">
+<!ENTITY trackingProtectionNever.label "Mai">
+<!ENTITY trackingProtectionNever.accesskey "a">
+<!ENTITY trackingProtectionLearnMore.label "Ulteriori informazioni">
+<!ENTITY trackingProtectionExceptions.label "Eccezioni…">
+<!ENTITY trackingProtectionExceptions.accesskey "E">
+<!ENTITY trackingProtectionPBM5.label "Attiva la protezione antitracciamento in modalità Navigazione anonima">
+<!ENTITY trackingProtectionPBM5.accesskey "g">
+<!ENTITY trackingProtectionPBM6.label "Attiva la protezione antitracciamento in modalità Navigazione anonima per bloccare i tracciatori conosciuti">
+<!ENTITY trackingProtectionPBM6.accesskey "g">
+<!ENTITY trackingProtectionPBMLearnMore.label "Ulteriori informazioni">
+<!ENTITY changeBlockList2.label "Seleziona elenco…">
+<!ENTITY changeBlockList2.accesskey "l">
+<!ENTITY doNotTrack.description "Invia ai siti web un segnale “Do Not Track” per chiedere di non effettuare alcun tracciamento">
+<!ENTITY doNotTrack.learnMore.label "Ulteriori informazioni">
+<!ENTITY doNotTrack.default.label "Solo quando è attiva la protezione antitracciamento">
+<!ENTITY doNotTrack.always.label "Sempre">
+<!ENTITY history.label "Cronologia">
+<!ENTITY permissions.label "Permessi">
+<!ENTITY addressBar.label "Barra degli indirizzi">
+<!ENTITY addressBar.suggest.label "Nella barra degli indirizzi visualizza suggerimenti da">
+<!ENTITY locbar.history2.label "cronologia di navigazione">
+<!ENTITY locbar.history2.accesskey "n">
+<!ENTITY locbar.bookmarks.label "segnalibri">
+<!ENTITY locbar.bookmarks.accesskey "g">
+<!ENTITY locbar.openpage.label "schede aperte">
+<!ENTITY locbar.openpage.accesskey "d">
+<!ENTITY locbar.searches.label "ricerche correlate dal motore di ricerca predefinito">
+<!ENTITY locbar.searches.accesskey "h">
+<!ENTITY suggestionSettings2.label "Modifica le impostazioni relative ai suggerimenti dei motori di ricerca">
+<!ENTITY acceptCookies2.label "Accetta i cookie dai siti web">
+<!ENTITY acceptCookies2.accesskey "k">
+<!ENTITY acceptThirdParty.pre.label "Accetta i cookie di terze parti:">
+<!ENTITY acceptThirdParty.pre.accesskey "t">
+<!ENTITY acceptThirdParty.always.label "sempre">
+<!ENTITY acceptThirdParty.never.label "mai">
+<!ENTITY acceptThirdParty.visited.label "dai siti visitati">
+<!ENTITY keepUntil.label "Conservali fino:">
+<!ENTITY keepUntil.accesskey "v">
+<!ENTITY expire.label "alla loro scadenza">
+<!ENTITY close.label "alla chiusura di &brandShortName;">
+<!ENTITY cookieExceptions.label "Eccezioni…">
+<!ENTITY cookieExceptions.accesskey "z">
+<!ENTITY showCookies.label "Mostra i cookie…">
+<!ENTITY showCookies.accesskey "r">
+<!ENTITY historyHeader2.pre.label "Impostazioni cronologia">
+<!ENTITY historyHeader2.pre.accesskey "m">
+<!ENTITY historyHeader.remember.label "salva la cronologia">
+<!ENTITY historyHeader.dontremember.label "non salvare la cronologia">
+<!ENTITY historyHeader.custom.label "utilizza impostazioni personalizzate">
+<!ENTITY historyHeader.post.label "">
+<!ENTITY rememberDescription.label "Verranno salvate la cronologia di navigazione, i download, le informazioni inserite nei moduli o nei campi di ricerca e i cookie impostati dai siti visitati.">
+<!ENTITY rememberActions.pre.label "È possibile ">
+<!ENTITY rememberActions.clearHistory.label "cancellare la cronologia recente">
+<!ENTITY rememberActions.middle.label " o ">
+<!ENTITY rememberActions.removeCookies.label "rimuovere i singoli cookie">
+<!ENTITY rememberActions.post.label ".">
+<!ENTITY dontrememberDescription.label "Verranno utilizzate le stesse impostazioni della Navigazione anonima: in questo modo non verrà salvata alcuna cronologia relativa alla navigazione.">
+<!ENTITY dontrememberActions.pre.label "È inoltre possibile ">
+<!ENTITY dontrememberActions.clearHistory.label "cancellare tutta la cronologia corrente">
+<!ENTITY dontrememberActions.post.label ".">
+<!ENTITY privateBrowsingPermanent2.label "Utilizza sempre la modalità Navigazione anonima">
+<!ENTITY privateBrowsingPermanent2.accesskey "U">
+<!ENTITY rememberHistory2.label "Conserva la cronologia di navigazione e dei download">
+<!ENTITY rememberHistory2.accesskey "d">
+<!ENTITY rememberSearchForm.label "Conserva la cronologia delle ricerche e dei moduli">
+<!ENTITY rememberSearchForm.accesskey "g">
+<!ENTITY clearOnClose.label "Cancella la cronologia alla chiusura di &brandShortName;">
+<!ENTITY clearOnClose.accesskey "C">
+<!ENTITY clearOnCloseSettings.label "Impostazioni…">
+<!ENTITY clearOnCloseSettings.accesskey "I">
+<!ENTITY browserContainersLearnMore.label "Ulteriori informazioni">
+<!ENTITY browserContainersEnabled.label "Attiva schede contenitore">
+<!ENTITY browserContainersEnabled.accesskey "h">
+<!ENTITY browserContainersSettings.label "Impostazioni…">
+<!ENTITY browserContainersSettings.accesskey "o">

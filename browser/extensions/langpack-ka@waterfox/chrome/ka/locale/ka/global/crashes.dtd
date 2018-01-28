@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "ავარიული დახურვის მოხსენებები">
+<!ENTITY crashesUnsubmitted.label   "გადაუგზავნელი მოხსენებები">
+<!ENTITY crashesSubmitted.label     "გადაგზავნილი მოხსენებები">
+<!ENTITY id.heading                 "ანგარიშგების ID">
+<!ENTITY dateCrashed.heading        "ავარიული დახურვის თარიღი">
+<!ENTITY dateSubmitted.heading      "გაგზავნის თარიღი">
+<!ENTITY noReports.label            "ავარიული დახურვის მოხსენებები არ არის.">
+<!ENTITY noConfig.label             "ეს პროგრამა ავარიული დახურვის მოხსენებების საჩვენებლად არაა გამართული. უნდა მიეთითოს პარამეტრი <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "ყველა მოხსენების წაშლა">

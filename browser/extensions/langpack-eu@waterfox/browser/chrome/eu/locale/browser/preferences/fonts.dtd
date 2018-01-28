@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Letra-tipoak">
+
+<!ENTITY  language.label                          "Letra-tipoa:">
+<!ENTITY  language.accesskey                      "r">
+
+<!ENTITY  size.label                              "Tamaina:">
+<!ENTITY  sizeProportional.accesskey              "T">
+<!ENTITY  sizeMonospace.accesskey                 "a">
+
+<!ENTITY  proportional.label                      "Proportzionala:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Tarte bakarrekoa:">
+<!ENTITY  monospace.accesskey                     "e">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Latina">
+<!ENTITY  font.langGroup.japanese                 "Japoniera">
+<!ENTITY  font.langGroup.trad-chinese             "Txinatar arrunta (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Txinatar soildua">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Txinatar arrunta (Honk Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreera">
+<!ENTITY  font.langGroup.cyrillic                 "Zirilikoa">
+<!ENTITY  font.langGroup.el                       "Grekoa">
+<!ENTITY  font.langGroup.other                    "Beste idazketa-sistemak">
+<!ENTITY  font.langGroup.thai                     "Thailandiera">
+<!ENTITY  font.langGroup.hebrew                   "Hebreera">
+<!ENTITY  font.langGroup.arabic                   "Arabiera">
+<!ENTITY  font.langGroup.devanagari               "Devanagariarra">
+<!ENTITY  font.langGroup.tamil                    "Tamilera">
+<!ENTITY  font.langGroup.armenian                 "Armeniera">
+<!ENTITY  font.langGroup.bengali                  "Bengaliera">
+<!ENTITY  font.langGroup.canadian                 "Kanadiar Syllabary Batua">
+<!ENTITY  font.langGroup.ethiopic                 "Ethiopiera">
+<!ENTITY  font.langGroup.georgian                 "Georgiera">
+<!ENTITY  font.langGroup.gujarati                 "Gujaratiera">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhiera">
+<!ENTITY  font.langGroup.khmer                    "Khmerera">
+<!ENTITY  font.langGroup.malayalam                "Malayera">
+<!ENTITY  font.langGroup.math                     "Matematikak">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetera">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Gutxieneko letra tamaina:">
+<!ENTITY minSize.accesskey                        "x">
+<!ENTITY minSize.none                             "Ezer ez">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans-serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Baimendu orriak beraien letra-tipoak aukeratzea goiko nire aukeren ordez">
+<!ENTITY  allowPagesToUseOwn.accesskey            "B">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Legatu-edukiarentzat karaktere-kodeketa">
+<!ENTITY languages.customize.Fallback2.label      "Testu-kodeketa lehenetsia:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "Testu-kodeketa hau kodeketa deklaratzen ez duen legatu-edukiarentzat erabiltzen da.">
+
+<!ENTITY languages.customize.Fallback.auto        "Uneko hizkuntzaren lehenetsia">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabiarra">
+<!ENTITY languages.customize.Fallback.baltic      "Baltikokoa">
+<!ENTITY languages.customize.Fallback.ceiso       "Europa erdialdekoa, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Europa erdialdekoa, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Txinatar soildua">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Txinatar tradizionala">
+<!ENTITY languages.customize.Fallback.cyrillic    "Zirilikoa">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Grekoa">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Hebrearra">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Japoniarra">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Korearra">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Thailandiarra">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turkiarra">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnamdarra">
+<!ENTITY languages.customize.Fallback.other       "Bestelakoa (Europa mendebaldekoak barne)">

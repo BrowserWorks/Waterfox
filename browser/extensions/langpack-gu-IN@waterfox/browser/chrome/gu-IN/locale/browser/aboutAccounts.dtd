@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "&syncBrand.shortName.label; માં સ્વાગત છે">
+
+<!ENTITY aboutAccountsConfig.description "તમારાં ટૅબ, બુકમાર્ક, પાસવર્ડ અને વધારેનું સુમેળ કરવા માટે પ્રવેશો.">
+<!ENTITY aboutAccountsConfig.startButton.label "પ્રારંભ કરો">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "પસંદગીઓનો સમન્વયન">
+<!ENTITY aboutAccounts.noConnection.title "જોડાણ નથી">
+<!ENTITY aboutAccounts.noConnection.description "સાઇન ઇન કરવા માટે તમે ઇન્ટરનેટ સાથે જોડાયેલ હોવું જ જોઈએ.">
+<!ENTITY aboutAccounts.noConnection.retry "ફરીથી પ્રયત્ન કરો">
+<!ENTITY aboutAccounts.badConfig.title "ખરાબ રૂપરેખાંકન">
+<!ENTITY aboutAccounts.badConfig.description "તમારા ફાયરફોક્સ એકાઉન્ટ સર્વર રૂપરેખાંકન નક્કી કરવા માટે અસમર્થ. પછીથી ફરી પ્રયત્ન કરો.">

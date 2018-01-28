@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Ovetã apysẽ">
+
+<!ENTITY  blockPopups.label           "Ovetã apysẽ joko">
+<!ENTITY  blockPopups.accesskey       "B">
+
+<!ENTITY  notificationsPolicy.label            "Marandu'i">
+<!ENTITY  notificationsPolicyLearnMore.label   "Kuaave">
+<!ENTITY  notificationsPolicyDesc4.label       "Eiporavo mba'e tendápa oñemoneĩ omondóvo ndéve marandu'i">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "Poravo…">
+<!ENTITY  notificationsDoNotDisturb.label      "Ani chemyangekói">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Mba'evéichagua marandu'i nderehechamo'ãi emoñepyrũjey peve &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Oĩ'ỹva…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "Taity ha sa'ykuéra">
+
+<!ENTITY  defaultFont.label           "Teñoiha ijypykuéva:">
+<!ENTITY  defaultFont.accesskey       "D">
+<!ENTITY  defaultSize.label           "Tuichakue:">
+<!ENTITY  defaultSize.accesskey       "S">
+
+<!ENTITY  advancedFonts.label         "Opanungáva…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "Sa'y…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "Ñe'ẽita">
+<!ENTITY chooseLanguage.label         "Eipoiravo pe ñe'ẽ erohoryvéva ehechauka hag̃ua ñanduti kuatiarogue">
+<!ENTITY chooseButton.label           "Poravo…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "Ñanduti retepy ñe'ẽasa">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Oĩ'ỹva…">
+<!ENTITY translateExceptions.accesskey "ĩ">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Ñe'ẽasaha">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "DRM retepy">
+
+<!ENTITY  playDRMContent.label         "DRM retepýre eñembosarái">
+<!ENTITY  playDRMContent.accesskey     "P">
+<!ENTITY  playDRMContent.learnMore.label "Kuaave">

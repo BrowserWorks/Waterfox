@@ -1,0 +1,118 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Kuzatuvdan himoyalanish">
+<!ENTITY  trackingProtectionAlways.label       "Doimo">
+<!ENTITY  trackingProtectionAlways.accesskey   "D">
+<!ENTITY  trackingProtectionPrivate.label      "Faqat maxfiy oynalar uchun">
+<!ENTITY  trackingProtectionPrivate.accesskey  "F">
+<!ENTITY  trackingProtectionNever.label        "Hech qachon">
+<!ENTITY  trackingProtectionNever.accesskey    "H">
+<!ENTITY  trackingProtectionLearnMore.label    "Batafsil ma’lumot">
+<!ENTITY  trackingProtectionExceptions.label   "Istisnolar…">
+<!ENTITY  trackingProtectionExceptions.accesskey "I">
+
+<!ENTITY tracking.label                 "Kuzatish">
+<!ENTITY trackingProtectionPBM5.label         "Maxfiy oynalarda kuzatuvdan himoya ishlatish">
+<!ENTITY trackingProtectionPBM5.accesskey     "M">
+<!ENTITY trackingProtectionPBMLearnMore.label "Batafsil ma’lumot">
+<!ENTITY changeBlockList.label          "Blok ro‘yxatini o‘zgartirish">
+<!ENTITY changeBlockList.accesskey      "B">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Siz, shuningdek, ">
+<!ENTITY  doNotTrack.settings.label     "&quot;Kuzatilmasin&quot; sozlamalarini boshqarishingiz mumkin">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Tarix">
+
+<!ENTITY  locationBar.label             "Manzil paneli">
+
+<!ENTITY  locbar.suggest.label          "Manzil panelidan foydalanilganda, tavsiya qilinsin:">
+<!ENTITY  locbar.history.label          "Tarix">
+<!ENTITY  locbar.history.accesskey      "T">
+<!ENTITY  locbar.bookmarks.label        "Xatcho‘plar">
+<!ENTITY  locbar.bookmarks.accesskey    "X">
+<!ENTITY  locbar.openpage.label         "Ichki oynalarni ochish">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Asosiy qidiruv tizimidan aloqador natijalar">
+<!ENTITY  locbar.searches.accesskey     "A">
+
+<!ENTITY  suggestionSettings.label      "Qidiruv tizimi tavsiyalari parametrlarini o‘zgartirish…">
+<!ENTITY  suggestionSettings.accesskey  "Q">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "Begona taraf kukilariga ruxsat berish:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "r">
+<!ENTITY  acceptThirdParty.always.label   "Doimo">
+<!ENTITY  acceptThirdParty.never.label    "Hech qachon">
+<!ENTITY  acceptThirdParty.visited.label  "Kirilganlardan">
+
+<!ENTITY  keepUntil.label               "Saqlansin:">
+<!ENTITY  keepUntil.accesskey           "S">
+
+<!ENTITY  expire.label                  "ular eskirguncha">
+<!ENTITY  close.label                   "Men &brandShortName;ni yopaman">
+
+<!ENTITY  cookieExceptions.label        "Istisnolar…">
+<!ENTITY  cookieExceptions.accesskey    "I">
+
+<!ENTITY  showCookies.label             "Kukilarni ko‘rsatish">
+<!ENTITY  showCookies.accesskey         "k">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; bajaradi:">
+<!ENTITY  historyHeader.pre.accesskey      "b">
+<!ENTITY  historyHeader.remember.label     "Tarix eslab qolinsin">
+<!ENTITY  historyHeader.dontremember.label "Tarix hech qachon eslab qolinmasin">
+<!ENTITY  historyHeader.custom.label       "Tarix uchun boshqa sozlamalardan foydalanish">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; kirgan saytlaringizni, yuklab olishlarni, turli shakllar va izlash tarixini hamda kirgan saytlaringiz uchun saqlagan kukilarni eslab qoladi.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Siz ">
+<!ENTITY  rememberActions.clearHistory.label  "so‘nggi tarixingizni tozalashni xohlayotgandirsiz">
+<!ENTITY  rememberActions.middle.label        ", yoki ">
+<!ENTITY  rememberActions.removeCookies.label " individual kukilarni o‘chirishni xohlayotgandirsiz">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; xuddi shu moslamalardan shaxsiy ko‘rish sifatida foydalanadi va tarixni saqlab qolmaydi.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Siz, balki,">
+<!ENTITY  dontrememberActions.clearHistory.label " barcha joriy tarixni tozalashni xohlayotgandirsiz">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Doimo maxfiy ko‘rish usulidan foydalanish">
+<!ENTITY  privateBrowsingPermanent2.accesskey "m">
+
+<!ENTITY  rememberHistory2.label      "Kirgan saytlarim va yuklab olish tarixini eslab qolinsin">
+<!ENTITY  rememberHistory2.accesskey  "e">
+
+<!ENTITY  rememberSearchForm.label       "Izlash va tarix shakli eslab qolinsin">
+<!ENTITY  rememberSearchForm.accesskey   "s">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; yopilganda tarix tozalansin">
+<!ENTITY  clearOnClose.accesskey         "t">
+
+<!ENTITY  clearOnCloseSettings.label     "Sozlamalar…">
+<!ENTITY  clearOnCloseSettings.accesskey "l">
+
+<!ENTITY  browserContainersHeader.label         "Konteyner ichki oynalar">
+<!ENTITY  browserContainersLearnMore.label      "Batafsil ma’lumot">
+<!ENTITY  browserContainersEnabled.label        "Konteyner ichki oynalarni yoqib qo‘yish">
+<!ENTITY  browserContainersEnabled.accesskey    "y">
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">

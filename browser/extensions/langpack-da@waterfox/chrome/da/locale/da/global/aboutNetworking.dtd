@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Om netværk">
+<!ENTITY aboutNetworking.warning               "Dette er meget eksperimentalt. Brug ikke uden opsyn af en voksen.">
+<!ENTITY aboutNetworking.showNextTime          "Vis denne advarsel igen næste gang">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Opdater">
+<!ENTITY aboutNetworking.autoRefresh           "Opdater hvert 3. sekund">
+<!ENTITY aboutNetworking.hostname              "Værtsnavn">
+<!ENTITY aboutNetworking.port                  "Port">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktiv">
+<!ENTITY aboutNetworking.idle                  "Inaktiv">
+<!ENTITY aboutNetworking.host                  "Vært">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Sendt">
+<!ENTITY aboutNetworking.received              "Modtaget">
+<!ENTITY aboutNetworking.family                "Familie">
+<!ENTITY aboutNetworking.addresses             "Adresser">
+<!ENTITY aboutNetworking.expires               "Udløber (sekunder)">
+<!ENTITY aboutNetworking.messagesSent          "Meddelelser sendt">
+<!ENTITY aboutNetworking.messagesReceived      "Meddelelser modtaget">
+<!ENTITY aboutNetworking.bytesSent             "Bytes sendt">
+<!ENTITY aboutNetworking.bytesReceived         "Bytes modtaget">
+<!ENTITY aboutNetworking.logging               "Logning">
+<!ENTITY aboutNetworking.logTutorial           "Læs <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> for vejledning til at bruge dette værktøj.">
+<!ENTITY aboutNetworking.currentLogFile        "Aktuel logfil:">
+<!ENTITY aboutNetworking.currentLogModules     "Aktuelle logmoduler:">
+<!ENTITY aboutNetworking.setLogFile            "Angiv logfil">
+<!ENTITY aboutNetworking.setLogModules         "Angiv logmoduler">
+<!ENTITY aboutNetworking.startLogging          "Start logning">
+<!ENTITY aboutNetworking.stopLogging           "Stop logning">
+<!ENTITY aboutNetworking.dnsLookup             "DNS-opslag">
+<!ENTITY aboutNetworking.dnsLookupButton       "Slå op">
+<!ENTITY aboutNetworking.dnsDomain             "Domæne">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-adresser">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">

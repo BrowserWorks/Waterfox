@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "نشانیاں">
+<!ENTITY engine.bookmarks.accesskey "ن">
+<!ENTITY engine.tabs.label2         "ٹیب کھولیں">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "سابقات">
+<!ENTITY engine.history.accesskey   "س">
+<!ENTITY engine.logins.label        "لاگ ان">
+<!ENTITY engine.logins.accesskey    "ل">
+<!ENTITY engine.prefs.label         "ترجیحات">
+<!ENTITY engine.prefs.accesskey     "ت">
+<!ENTITY engine.addons.label        "ایڈ اون">
+<!ENTITY engine.addons.accesskey    "ا">
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "آلہ کا نام">
+<!ENTITY changeSyncDeviceName.label "ڈیوائس کا نام تبدیل کریں…">
+<!ENTITY changeSyncDeviceName.accesskey "ب">
+<!ENTITY cancelChangeSyncDeviceName.label "منسوخ کریں">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "محفوظ کریں">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "سروس کی ٹرمز">
+<!ENTITY fxaPrivacyNotice.link.label "اطلاع نامہ نجی نوعیت">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "توثیق شدہ نہیں ہے۔">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "پھر جڑنے کے لیے سائن ان کریں">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "آپ سائن ان نہیں ہیں۔">
+<!ENTITY signIn.label                "سائن ان کریں">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "پروفائل کی تصویر تبدیل کریں">
+<!ENTITY verifiedManage.label        "اکاؤنٹ کا بندوبست کریں">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect.label            "منقطع کریں…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY verify.label                "ای میل کی توثیق کریں">
+<!ENTITY verify.accesskey            "ت">
+<!ENTITY forget.label                "اس ای میل کو بھول جائیں">
+<!ENTITY forget.accesskey            "ب">
+
+<!ENTITY signedOut.caption            "اپنی ویب اپنے ساتھ رکھیں">
+<!ENTITY signedOut.description        "اپنے تمام ڈیوائس اپنے بک مارکس، تاریخ، ٹیب، پاس ورڈ، ایڈ اون، اور ترجیحات کو ہم وقت ساز کریں۔">
+<!ENTITY signedOut.accountBox.title   "کسی &syncBrand.fxAccount.label; کے ساتھ جڑیں">
+<!ENTITY signedOut.accountBox.create  "اکاؤنٹ بنائیں">
+<!ENTITY signedOut.accountBox.create.accesskey  "س">
+<!ENTITY signedOut.accountBox.signin  "سائن ان کریں">
+<!ENTITY signedOut.accountBox.signin.accesskey  "ی">
+
+<!ENTITY signedIn.engines.label       "تمام آلات کے درمیان ہم وقت سازی کریں">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Waterfox ڈاؤن لوڈ کریں ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " یا ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              "آپ کے موبائل ڈیوائس کے ساتھ ہمہ وقت ساز">
+
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.label   "Credit cards">

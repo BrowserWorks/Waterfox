@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+	<ShortName>findx</ShortName>
+	<Description>findx - your new search engine. No logging. No tracking. Transparent algorithms. Hosted in Europe. Users like you help shape the results.</Description>
+	<InputEncoding>UTF-8</InputEncoding>
+	<Image height="16" width="16">resource://search-plugins/images/findx.ico</Image>
+	<Url type="text/html" method="GET" template="https://www.findx.com/search?type=web&amp;q={searchTerms}&amp;client=opensearch"/>
+	<Url type="application/x-suggestions+json" template="https://www.findx.com/api/web-search/suggestions/?q={searchTerms}&amp;type=opensearch"/>
+</OpenSearchDescription>

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Zwjazać">
+<!ENTITY header     "Do zdaleneho grata zwjazać">
+<!ENTITY host       "Host:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "Zwjazać">
+<!ENTITY connecting "Zwjazuje so…">
+<!ENTITY availableAddons "K dispoziciji stejace zdalene přidatki:">
+<!ENTITY availableTabs "K dispoziciji stejace zdalene rajtarki:">
+<!ENTITY availableProcesses "K dispoziciji stejace zdalene procesy:">
+<!ENTITY connectionError "Zmylk:">
+<!ENTITY errorTimeout "Zmylk: zwisk je čas překročił.">
+<!ENTITY errorRefused "Zmylk: zwisk je so wotpokazał.">
+<!ENTITY errorUnexpected "Njewočakowany zmylk.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Wuwiwarske nastroje Waterfox móža zdalene graty za zmylkami přepytować (na přikład Waterfox za Android a Waterfox OS). Zawěsćće, zo sće nastajenje 'Zdalene pytanje za zmylkami' na zdalenym graće zmóžnił. Za dalše informacije, hlejće ">
+<!ENTITY remoteDocumentation "dokumentaciju">
+<!ENTITY remoteHelpSuffix ".">
+

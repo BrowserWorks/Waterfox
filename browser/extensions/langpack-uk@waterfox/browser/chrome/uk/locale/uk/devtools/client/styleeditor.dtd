@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Style Editor window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : The correct localization of this file might be to keep
+     it in English, or another language commonly spoken among web developers.
+     You want to make that choice consistent across the developer tools.
+     A good criteria is the language in which you'd find the best documentation
+     on web development on the web. -->
+
+<!ENTITY newButton.label            "Створити">
+<!ENTITY newButton.tooltip          "Створити і додати нову таблицю стилів у документ">
+<!ENTITY newButton.accesskey        "С">
+
+<!ENTITY importButton.label         "Імпортувати…">
+<!ENTITY importButton.tooltip       "Імпортувати і додати наявну таблицю стилів у документ">
+<!ENTITY importButton.accesskey     "І">
+
+<!ENTITY visibilityToggle.tooltip   "Перемкнути видимість таблиці стилів">
+
+<!ENTITY saveButton.label           "Зберегти">
+<!ENTITY saveButton.tooltip         "Зберегти цю таблицю стилів у файл">
+<!ENTITY saveButton.accesskey       "З">
+
+<!ENTITY optionsButton.tooltip      "Налаштування редактора стилів">
+
+<!-- LOCALIZATION NOTE  (showOriginalSources.label): This is the label on the context
+     menu item to toggle showing original sources in the editor. -->
+<!ENTITY showOriginalSources.label     "Показати оригінальні джерела">
+
+<!-- LOCALIZATION NOTE  (showOriginalSources.accesskey): This is the access key for
+     the menu item to toggle showing original sources in the editor. -->
+<!ENTITY showOriginalSources.accesskey  "о">
+
+<!-- LOCALIZATION NOTE  (showMediaSidebar.label): This is the label on the context
+     menu item to toggle showing @media rule shortcuts in a sidebar. -->
+<!ENTITY showMediaSidebar.label     "Показати бічну панель @media">
+
+<!-- LOCALIZATION NOTE  (showMediaSidebar.accesskey): This is the access key for
+     the menu item to toggle showing the @media sidebar. -->
+<!ENTITY showMediaSidebar.accesskey     "б">
+
+<!-- LOCALICATION NOTE  (mediaRules.label): This is shown above the list of @media rules
+     in each stylesheet editor sidebar. -->
+<!ENTITY mediaRules.label           "Правила @media">
+
+<!ENTITY editorTextbox.placeholder  "Введіть код CSS тут.">
+
+<!-- LOCALICATION NOTE  (noStyleSheet.label): This is shown when a page has no
+     stylesheet. -->
+<!ENTITY noStyleSheet.label         "Ця сторінка не має таблиці стилів.">
+
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-start.label): This is the start of a
+     tip sentence shown when there is no stylesheet. It suggests to create a new
+     stylesheet and provides an action link to do so. -->
+<!ENTITY noStyleSheet-tip-start.label  "Можливо, бажаєте ">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-action.label): This is text for the
+     link that triggers creation of a new stylesheet. -->
+<!ENTITY noStyleSheet-tip-action.label "додати нову таблицю стилів">
+<!-- LOCALICATION NOTE  (noStyleSheet-tip-end.label): End of the tip sentence -->
+<!ENTITY noStyleSheet-tip-end.label    "?">
+
+<!-- LOCALIZATION NOTE (openLinkNewTab.label): This is the text for the
+     context menu item that opens a stylesheet in a new tab -->
+<!ENTITY openLinkNewTab.label     "Відкрити посилання в новій вкладці">

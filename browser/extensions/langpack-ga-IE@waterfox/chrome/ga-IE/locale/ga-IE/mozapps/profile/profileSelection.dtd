@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Bainisteoir Próifíle">
+
+<!ENTITY            profilename.label      "Ainm Próifíle:">
+
+<!ENTITY            start.label            "Tosaigh &brandShortName;">
+<!ENTITY            exit.label             "Scoir">
+
+<!ENTITY            availprofiles.label    "Próifílí ar Fáil">
+
+<!ENTITY            newButton.label        "Cruthaigh Próifíl…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Athainmnigh Próifíl…">
+<!ENTITY            renameButton.accesskey "r">
+<!ENTITY            deleteButton.label     "Scrios Próifíl…">
+<!ENTITY            deleteButton.accesskey "S">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "Sábhálann &brandShortName; eolas faoi do shocruithe, sainroghanna, agus míreanna úsáideora eile i do phróifíl phearsanta.">
+
+<!ENTITY            offlineState.label    "Oibrigh as líne">
+<!ENTITY            offlineState.accesskey "O">
+
+<!ENTITY            useSelected.label       "Úsáid an phróifíl roghnaithe ag am tosaithe gan fiafraí">
+<!ENTITY            useSelected.accesskey   "s">

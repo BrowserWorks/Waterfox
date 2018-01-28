@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  blockPopups.label           "ପପ୍-ଅପ୍ ୱିଣ୍ଡୋକୁ ବ୍ଲକ କରନ୍ତୁ">
+<!ENTITY  blockPopups.accesskey       "B">
+
+
+
+
+
+
+
+
+<!ENTITY  popupExceptions.label       "ବ୍ୟତିକ୍ରମ…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "ଅକ୍ଷରରୂପ  ଏବଂ ରଙ୍ଗ">
+
+
+
+
+
+<!ENTITY  advancedFonts.label         "ଉନ୍ନତ…">
+<!ENTITY  advancedFonts.accesskey     "A">
+
+<!ENTITY  colors.label                "ରଙ୍ଗ…">
+<!ENTITY  colors.accesskey            "C">
+
+<!ENTITY chooseLanguage.label         "ପୃଷ୍ଠାଗୁଡ଼ିକୁ ଦର୍ଶାଇବା ପାଇଁ ଆପଣଙ୍କର ପସନ୍ଦଯୋଗ୍ୟ ଭାଷା ବାଛନ୍ତୁ">
+<!ENTITY chooseButton.label           "ବାଛନ୍ତୁ…">
+<!ENTITY chooseButton.accesskey       "o">
+
+<!ENTITY translateWebPages.label      "ୱେବ ବିଷୟବସ୍ତୁକୁ ଅନୁବାଦ କରନ୍ତୁ">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "ବ୍ଯତିକ୍ରମଗୁଡ଼ିକ…">
+<!ENTITY translateExceptions.accesskey "x">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "ଅନୁବାଦକ">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+
+
+
+
+<!ENTITY  defaultFont2.accesskey      "D">
+<!ENTITY  defaultFont2.label          "Default font">
+<!ENTITY  defaultSize2.accesskey      "S">
+
+<!ENTITY  defaultSize2.label          "Size">
+<!ENTITY  drmContent2.label              "Digital Rights Management (DRM) Content">
+
+<!ENTITY language2.label              "Language">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "n">
+<!ENTITY  notificationsDoNotDisturb.label      "Do not disturb me">
+<!ENTITY  notificationsDoNotDisturbDetails.value "No notification will be shown until you restart &brandShortName;">
+
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "Choose…">
+<!ENTITY  notificationsPolicyDesc4.label       "Choose which websites are allowed to send you notifications">
+<!ENTITY  notificationsPolicyLearnMore.label   "Learn more">
+<!ENTITY  permissions.label           "Permissions">
+
+<!ENTITY  playDRMContent.learnMore.label "Learn more">
+<!ENTITY  playDRMContent2.accesskey      "P">
+<!ENTITY  playDRMContent2.label          "Play DRM-controlled content">

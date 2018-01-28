@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Obnovení relace">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Ale toto je nepříjemné.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; má potíže s obnovením otevřených oken a panelů, což je většinou způsobeno některou z naposledy otevřených webových stránek.">
+<!ENTITY restorepage.tryThis        "Můžete zkusit:">
+<!ENTITY restorepage.restoreSome    "Odebrat jeden nebo více problémových panelů">
+<!ENTITY restorepage.startNew       "Začít s prohlížením v nové relaci">
+
+<!ENTITY restorepage.tryagainButton "Obnovit">
+<!ENTITY restorepage.restore.access "b">
+<!ENTITY restorepage.closeButton    "Zavřít">
+<!ENTITY restorepage.close.access   "Z">
+
+<!ENTITY restorepage.restoreHeader  "Obnovit">
+<!ENTITY restorepage.listHeader     "Okna a panely">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Okno #&#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Pojďme na to!">
+<!ENTITY welcomeback2.restoreButton.access "P">
+
+<!ENTITY welcomeback2.tabtitle      "Úspěch!">
+
+<!ENTITY welcomeback2.pageTitle     "Úspěch!">
+<!ENTITY welcomeback2.pageInfo1     "Aplikace &brandShortName; je připravená.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Obnovit všechna okna a panely">
+<!ENTITY welcomeback2.restoreSome.label "Obnovit pouze ty, které chcete">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Vaše přizpůsobení a doplňky byly odebrány a prohlížeč obnoven do výchozího nastavení. Pokud to nevyřeší váš problém, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "přečtěte si více o tom, co můžete dělat.">
+

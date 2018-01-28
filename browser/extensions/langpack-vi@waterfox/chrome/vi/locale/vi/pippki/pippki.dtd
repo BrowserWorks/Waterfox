@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Thay đổi Mật khẩu Chính">
+<!ENTITY setPassword.tokenName.label "Thiết bị Bảo mật">
+<!ENTITY setPassword.oldPassword.label "Mật khẩu hiện tại:">
+<!ENTITY setPassword.newPassword.label "Mật khẩu mới:">
+<!ENTITY setPassword.reenterPassword.label "Mật khẩu mới (nhập lại):">
+<!ENTITY setPassword.meter.label "Độ an toàn mật khẩu">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Đặt lại">
+<!ENTITY resetPassword.title  "Đặt lại Mật khẩu Chính">
+<!ENTITY resetPassword.text  "Nếu bạn đặt lại mật khẩu chính, toàn bộ các mật khẩu web, email, dữ liệu biểu mẫu, chứng chỉ và khóa cá nhân đã lưu sẽ bị xóa. Bạn có chắc muốn xóa mật khẩu chính của mình không?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Đang tải Chứng chỉ">
+<!ENTITY downloadCert.message1 "Bạn được hỏi có tin tưởng một CA (Bên thẩm định Chứng chỉ) mới hay không.">
+<!ENTITY downloadCert.trustSSL "Tin CA này để nhận diện các trang web.">
+<!ENTITY downloadCert.trustEmail "Tin CA này để nhận diện những người dùng email.">
+<!ENTITY downloadCert.trustObjSign "Tin CA để nhận diện các nhà phát triển phần mềm.">
+<!ENTITY downloadCert.message3 "Trước khi tin vào CA này với bất kì mục đích nào, bạn nên kiểm định chứng chỉ, điều khoản và thủ tục của nó (nếu có).">
+<!ENTITY downloadCert.viewCert.label "Xem">
+<!ENTITY downloadCert.viewCert.text "Kiểm định chứng chỉ của CA">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Yêu cầu Nhận diện Người dùng">
+<!ENTITY clientAuthAsk.message1 "Trang này yêu cầu bạn tự nhận diện chính mình với một chứng chỉ:">
+<!ENTITY clientAuthAsk.message2 "Chọn một chứng chỉ để thực hiện việc nhận diện này:">
+
+
+<!ENTITY pkcs12.setpassword.title  "Chọn một Mật khẩu Sao lưu Chứng chỉ">
+<!ENTITY pkcs12.setpassword.message  "Mật khẩu sao lưu chứng chỉ mà bạn đặt ở đây bảo vệ tập tin sao lưu mà bạn sẽ tạo. Bạn phải đặt mật khẩu để tiến hành sao lưu.">
+<!ENTITY pkcs12.setpassword.label1 "Mật khẩu sao lưu chứng chỉ:">
+<!ENTITY pkcs12.setpassword.label2 "Mật khẩu sao lưu chứng chỉ (nhập lại):">
+<!ENTITY pkcs12.setpassword.reminder "Quan trọng: Nếu bạn quên mật khẩu sao lưu chứng chỉ, sau này bạn sẽ không thể phục hồi bản sao lưu này. Hãy lưu vào một nơi an toàn.">
+
+<!ENTITY chooseToken.title  "Hộp thoại Chọn Token">
+<!ENTITY chooseToken.message1 "Vui lòng chọn một mã thông báo.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Tạo một Khóa Cá nhân">
+<!ENTITY createCertInfo.msg1 "Đang trong tiến trình Tạo Khóa… Việc này có thể mất vài phút….">
+<!ENTITY createCertInfo.msg2 "Vui lòng chờ…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Xác thực Mã thông báo được Bảo vệ">
+<!ENTITY protectedAuth.msg "Vui lòng xác thực cho mã thông báo. Phương thức xác thực tùy thuộc vào kiểu mã thông báo của bạn.">
+<!ENTITY protectedAuth.tokenName.label "Mã thông báo:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

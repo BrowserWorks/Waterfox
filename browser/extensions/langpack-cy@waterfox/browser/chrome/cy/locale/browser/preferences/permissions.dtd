@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Eithriadau">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.sitename2.label     "Gwefan">
+<!ENTITY treehead.status.label        "Statws">
+<!ENTITY removepermission2.label      "Tynnu Gwefan">
+<!ENTITY removepermission2.accesskey  "T">
+<!ENTITY removeallpermissions2.label  "Tynnu Pob Gwefan">
+<!ENTITY removeallpermissions2.accesskey "G">
+<!ENTITY address.label                "Cyfeiriad y wefan:">
+<!ENTITY address.accesskey            "y">
+<!ENTITY block.label                  "Rhwystro">
+<!ENTITY block.accesskey              "R">
+<!ENTITY session.label                "Caniatâu ar gyfer y Sesiwn">
+<!ENTITY session.accesskey            "S">
+<!ENTITY allow.label                  "Caniatáu">
+<!ENTITY allow.accesskey              "a">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Diddymu">
+<!ENTITY button.cancel.accesskey      "D">
+<!ENTITY button.ok.label              "Cadw Newidiadau">
+<!ENTITY button.ok.accesskey          "N">
+

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Ynghylch Proffiliau">
+<!ENTITY aboutProfiles.subtitle "Mae'r dudalen hon yn eich helpu i reoli eich proffiliau. Mae pob proffil yn fyd ar wahân sy'n cynnwys hanes, nodau tudalen, gosodiadau ac yn ychwanegion gwahanol.">
+<!ENTITY aboutProfiles.create "Creu Proffil Newydd">
+<!ENTITY aboutProfiles.restart.title "Ailgychwyn">
+<!ENTITY aboutProfiles.restart.inSafeMode "Ailgychwyn gydag Ychwanegion wedi eu Hanablu…">
+<!ENTITY aboutProfiles.restart.normal "Ailgychwyn fel arfer…">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab evit mont d'an ivinell implijet da ziwezhañ">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Digeriñ un ivinell nevez e-lec'h ur prenestr nevez">
+<!ENTITY newWindowsAsTabs.accesskey   "D">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Kas keloù din pa vez serret meur a ivinell war un taol">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "K">
+
+<!ENTITY warnOnOpenManyTabs.label       "Kas keloù din ma vez gorrekaet &brandShortName; gant digoradur meur a ivinell">
+<!ENTITY warnOnOpenManyTabs.accesskey   "m">
+
+<!ENTITY switchLinksToNewTabs.label        "Pa zigoran un ere a zo e-barzh un ivinell nevez, diskouez anezhi diouzhtu">
+<!ENTITY switchLinksToNewTabs.accesskey    "P">
+
+<!ENTITY showTabsInTaskbar.label          "Diskouez alberzioù an ivinelloù e-barzh barrenn an trevelloù">
+<!ENTITY showTabsInTaskbar.accesskey      "i">
+<!ENTITY tabsGroup.label          "Ivinelloù">

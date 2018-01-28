@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Algemien">
+
+<!ENTITY accessibility.label             "Tagonklikheid">
+
+<!ENTITY useCursorNavigation.label       "Hieltyd de pylktoetsen brûke om te navigearjen yn siden">
+<!ENTITY useCursorNavigation.accesskey   "p">
+<!ENTITY searchOnStartTyping.label       "Nei tekst sykje as ik begjin mei typen">
+<!ENTITY searchOnStartTyping.accesskey   "N">
+<!ENTITY blockAutoReload.label           "Warskôgje as websites probearje om om te lieden of de side opnij te laden">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "In skermtoetseboerd toane wannear nedich">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Navigearje">
+
+<!ENTITY useAutoScroll.label             "Automatysk skowe brûke">
+<!ENTITY useAutoScroll.accesskey         "m">
+<!ENTITY useSmoothScrolling.label        "Floeiend skowe brûke">
+<!ENTITY useSmoothScrolling.accesskey    "l">
+<!ENTITY checkUserSpelling.label         "Kontrolearje jo stavering as jo type">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Gegevensopsjes">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Gegevensrapporten binne foar dizze build-konfiguraasje útskeakele">
+
+<!ENTITY healthReportDesc.label          "Helpt jo jo browserprestaasjes te begripen en dielt gegevens mei &vendorShortName; oer jo browsersûnens">
+<!ENTITY enableHealthReport.label        "&brandShortName;-steatrapport ynskeakelje">
+<!ENTITY enableHealthReport.accesskey    "R">
+<!ENTITY healthReportLearnMore.label     "Mear ynfo">
+
+<!ENTITY telemetryDesc.label             "Dielt prestaasje-, hardware-, gebrûk- en oanpassingsgegevens oer jo browser mei &vendorShortName; om &brandShortName; te helpen te ferbetterjen">
+<!ENTITY enableTelemetryData.label       "Ekstra gegevens diele (byg. Telemetry)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Mear ynfo">
+
+<!ENTITY crashReporterDesc2.label         "Ungelokrapporten helpe &vendorShortName; problemen op te lossen en jo browser stabiler en feiliger te meitsjen">
+<!ENTITY alwaysSubmitCrashReports.label   "&brandShortName; tastean om út jo namme sammele ûngelokrapporten te ferstjoeren">
+<!ENTITY alwaysSubmitCrashReports.accesskey "s">
+<!ENTITY crashReporterLearnMore.label     "Mear ynfo">
+
+<!ENTITY networkTab.label                "Netwurk">
+
+<!ENTITY connection.label                "Ferbining">
+
+<!ENTITY connectionDesc.label            "Bepaal hoe't &brandShortName; ferbining makket mei ynternet">
+<!ENTITY connectionSettings.label        "Ynstellingen…">
+<!ENTITY connectionSettings.accesskey    "Y">
+
+<!ENTITY httpCache.label                 "Buffere webynhâld">
+
+<!ENTITY offlineStorage2.label           "Offlinewebynhâld en brûkersgegevens">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Websitegegevens">
+<!ENTITY clearSiteData.label             "Alle gegevens wiskje">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "Ynstellingen…">
+<!ENTITY siteDataSettings.accesskey      "Y">
+<!ENTITY siteDataLearnMoreLink.label     "Mear ynfo">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Limitearje buffer oant">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB romte">
+<!ENTITY clearCacheNow.label             "No wiskje">
+<!ENTITY clearCacheNow.accesskey         "w">
+<!ENTITY clearOfflineAppCacheNow.label   "No wiskje">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "Automatysk bufferbehear net brûke">
+<!ENTITY overrideSmartCacheSize.accesskey "A">
+
+<!ENTITY updateTab.label                 "Fernijing">
+
+<!ENTITY updateApplication.label         "&brandShortName;-fernijingen">
+<!ENTITY updateAuto1.label               "Fernijingen automatysk ynstallearje (oanrekommandearre: ferbettere feilichheid)">
+<!ENTITY updateAuto1.accesskey           "F">
+<!ENTITY updateCheckChoose.label         "Kontrolearje op fernijingen, mar lit my kieze oft ik se ynstallearje wol">
+<!ENTITY updateCheckChoose.accesskey     "K">
+<!ENTITY updateManual.label              "Nea kontrolearje op fernijingen (net oanrekommandearre: feilichheidsrisiko)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Fernijingsskiednis toane">
+<!ENTITY updateHistory.accesskey         "t">
+
+<!ENTITY useService.label                "Brûk in eftergrûntsjinst om fernijingen te ynstallearjen">
+<!ENTITY useService.accesskey            "a">
+
+<!ENTITY autoUpdateOthers.label          "Automatysk fernije">
+<!ENTITY enableSearchUpdate.label        "Sykmasinen">
+<!ENTITY enableSearchUpdate.accesskey    "S">
+
+<!ENTITY offlineStorageNotify.label               "Jo fertelle as in website freget om gegevens te bewarjen foar offline gebrûk">
+<!ENTITY offlineStorageNotify.accesskey           "J">
+<!ENTITY offlineStorageNotifyExceptions.label     "Utsûnderingen…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "t">
+
+<!ENTITY offlineAppsList2.label          "De folgjende websites hawwe tastimming om gegevens te bewarjen foar offlinegebrûk:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Fuortsmite…">
+<!ENTITY offlineAppsListRemove.accesskey "F">
+<!ENTITY offlineAppRemove.confirm        "Bewarre gegevens fuortsmite">
+
+<!ENTITY certificateTab.label            "Sertifikaten">
+<!ENTITY certPersonal.label              "Oanfragen">
+<!ENTITY certPersonal.description        "As in server jo persoanlike sertifikaat freget:">
+<!ENTITY selectCerts.auto                "Automatysk ien selektearje">
+<!ENTITY selectCerts.auto.accesskey      "A">
+<!ENTITY selectCerts.ask                 "My elke kear freegje">
+<!ENTITY selectCerts.ask.accesskey       "M">
+<!ENTITY enableOCSP.label                "Freegje OCSP-responderservers om de aktuele faliditeit fan sertifikaten te befêstigjen">
+<!ENTITY enableOCSP.accesskey            "F">
+<!ENTITY viewCerts.label                 "Sertifikaten besjen">
+<!ENTITY viewCerts.accesskey             "S">
+<!ENTITY viewSecurityDevices.label       "Feilichheidsapparaten">
+<!ENTITY viewSecurityDevices.accesskey   "p">
+
+<!ENTITY performance.label               "Prestaasjes">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Oanrekommandearre prestaasjeynstellingen brûke">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Dizze ynstellingen binne ôfstimd op de hardware en it bestjoeringssysteem fan jo kompjûter.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "D">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Lês mear">
+<!ENTITY limitContentProcessOption.label "Limyt fan ynhâldsprosessen">
+<!ENTITY limitContentProcessOption.description
+                                         "Ekstra ynhâldsprosessen kinne de prestaasjes by it gebrûk fan mear ljepblêden ferbetterje, mar sille ek mear ûnthâld brûke.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Oanpassen fan it oantal ynhâldsprosessen is allinnich mooglik mei multiproses-&brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Ynformaasje oer it kontrolearjen of multiproses ynskeakele is">
+<!ENTITY allowHWAccel.label              "Brûk hardware-acceleratie as it beskikber is">
+<!ENTITY allowHWAccel.accesskey          "B">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Baɗte Keftinirɗe">
+<!ENTITY aboutProfiles.subtitle "Ngoo hello wallat-ma toppitaade keftinirɗe. Heen heftinirde fof ko lowre seertunde mooftoore aslol, maantore, teelte e ɓeyditte.">
+<!ENTITY aboutProfiles.create "Sos Heftinirde Hesere">
+<!ENTITY aboutProfiles.restart.title "Hurmitin">
+<!ENTITY aboutProfiles.restart.inSafeMode "Hurmitin tawa Ɓeyditte ena Ndaaƴaa…">
+<!ENTITY aboutProfiles.restart.normal "Hurmitin goowangal…">

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Pengurus Sijil">
+
+<!ENTITY certmgr.tab.mine                     "Sijil Anda">
+<!ENTITY certmgr.tab.others2                  "Manusia">
+<!ENTITY certmgr.tab.websites3                "Pelayan">
+<!ENTITY certmgr.tab.ca                       "Autoriti">
+<!ENTITY certmgr.tab.orphan2                  "Lain-lain">
+
+<!ENTITY certmgr.mine                         "Anda memiliki sijil daripada organisasi ini yang mengenali anda:">
+<!ENTITY certmgr.others                       "Anda memiliki sijil pada fail yang mengenal orang ini:">
+<!ENTITY certmgr.websites2                    "Anda ada sijil pada fail yang mengenal pasti pelayan ini:">
+<!ENTITY certmgr.cas                          "Anda memiliki sijil pada fail yang mengenal autoriti sijil ini:">
+<!ENTITY certmgr.orphans                      "Anda mempunyai sijil pada fail yang tidak sesuai dalam mana-mana katogori:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Umum">
+<!ENTITY certmgr.detail.general_tab.accesskey "u">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Perincian">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "P">
+
+<!ENTITY certmgr.pending.label                "Sijil sedang disahkan...">
+<!ENTITY certmgr.subjectinfo.label            "Dikeluarkan Untuk">
+<!ENTITY certmgr.issuerinfo.label             "Dikeluarkan Oleh">
+<!ENTITY certmgr.periodofvalidity.label       "Tempoh Sahlaku" >
+<!ENTITY certmgr.fingerprints.label           "Cap-jari">
+<!ENTITY certmgr.certdetail.title             "Perincian Sijil">
+<!ENTITY certmgr.certdetail.cn                "Nama Biasa (CN)">
+<!ENTITY certmgr.certdetail.o                 "Organisasi (0)">
+<!ENTITY certmgr.certdetail.ou                "Unit Organisasi (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Nombor Siri">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Cap jari SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Cap jari SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Edit tetapan sijil CA dipercaya">
+<!ENTITY certmgr.editcert.edittrust           "Edit tetapan dipercaya:">
+<!ENTITY certmgr.editcert.trustssl            "Sijil ini boleh mengenal pasti identiti laman web.">
+<!ENTITY certmgr.editcert.trustemail          "Sijil ini boleh mengenal pasti pengguna e-mel.">
+<!ENTITY certmgr.editcert.trustobjsign        "Sijil boleh mengenal penipta perisian.">
+
+<!ENTITY certmgr.deletecert.title             "Buang Sijil">
+
+<!ENTITY certmgr.certname                     "Nama Sijil">
+<!ENTITY certmgr.certserver                   "Pelayan">
+<!ENTITY certmgr.override_lifetime            "Seumur hidup">
+<!ENTITY certmgr.tokenname                    "Peranti Sekuriti">
+<!ENTITY certmgr.begins                       "Bermula Pada">
+<!ENTITY certmgr.expires                      "Luput Pada">
+<!ENTITY certmgr.email                        "Alamat E-Mel">
+<!ENTITY certmgr.serial                       "Nombor Siri">
+
+<!ENTITY certmgr.close.label                  "Tutup">
+<!ENTITY certmgr.close.accesskey              "T">
+<!ENTITY certmgr.view2.label                  "Papar...">
+<!ENTITY certmgr.view2.accesskey              "P">
+<!ENTITY certmgr.edit3.label                  "Mengubahkan kepercayaan...">
+<!ENTITY certmgr.edit3.accesskey              "E">
+<!ENTITY certmgr.export.label                 "Eksport…">
+<!ENTITY certmgr.export.accesskey             "r">
+<!ENTITY certmgr.delete2.label                "Buang…">
+<!ENTITY certmgr.delete2.accesskey            "B">
+<!ENTITY certmgr.delete_builtin.label         "Buang atau Tidak Percaya…">
+<!ENTITY certmgr.delete_builtin.accesskey     "B">
+<!ENTITY certmgr.backup2.label                "Sandar…">
+<!ENTITY certmgr.backup2.accesskey            "S">
+<!ENTITY certmgr.backupall2.label             "Backup Semua">
+<!ENTITY certmgr.backupall2.accesskey         "k">
+<!ENTITY certmgr.restore2.label               "Import…">
+<!ENTITY certmgr.restore2.accesskey           "m">
+<!ENTITY certmgr.details.label                "Sijil Bidang">
+<!ENTITY certmgr.details.accesskey            "S">
+<!ENTITY certmgr.fields.label                 "Bidang Nilai">
+<!ENTITY certmgr.fields.accesskey             "n">
+<!ENTITY certmgr.hierarchy.label              "Hierarki Sijil">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Tambah Pengecualian...">
+<!ENTITY certmgr.addException.accesskey       "T">
+
+<!ENTITY exceptionMgr.title                   "Tambah Pengecualian Keselamatan">
+<!ENTITY exceptionMgr.exceptionButton.label   "Sahkan Pengecualian Keselamatan">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "C">
+<!ENTITY exceptionMgr.supplementalWarning     "Bank, kedai dan laman awam yang sah tidak akan meminta anda untuk melakukan ini.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Pelayan">
+<!ENTITY exceptionMgr.certlocation.url        "Lokasi:">
+<!ENTITY exceptionMgr.certlocation.download   "Mendapatkan sijil">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Status sijil">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Papar...">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Simpan pengecualian ini secara tetap">
+<!ENTITY exceptionMgr.permanent.accesskey     "P">

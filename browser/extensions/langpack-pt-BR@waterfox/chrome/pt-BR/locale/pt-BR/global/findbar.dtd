@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Localizar a próxima ocorrência do texto">
+<!ENTITY previous.tooltip "Localizar a ocorrência anterior do texto">
+<!ENTITY findCloseButton.tooltip "Fechar a barra de localizar">
+<!ENTITY highlightAll.label "Realçar tudo">
+<!ENTITY highlightAll.accesskey "a">
+<!ENTITY highlightAll.tooltiptext "Realçar todas as ocorrências do texto">
+<!ENTITY caseSensitive.label "Diferenciar maiúsculas/minúsculas">
+<!ENTITY caseSensitive.accesskey "c">
+<!ENTITY caseSensitive.tooltiptext "Pesquisar ignorando maiúsculas de minúsculas">
+<!ENTITY entireWord.label "Palavras completas">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "Só pesquisar palavras inteiras">

@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Мәселелерді шешу ақпараты">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Бұл парақта мәселелерді шешуде пайдалы бола алатын техникалық ақпарат бар. Егер сіз &brandShortName; туралы жалпы сұрақтарға жауапты іздесеңіз, біздің <a id='supportLink'>қолдау көрсету</a> сайтын шолыңыз.">
+
+<!ENTITY aboutSupport.crashes.title "Құлау туралы хабарлар">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Хабарлама ID">
+<!ENTITY aboutSupport.crashes.sendDate "Жіберілген">
+<!ENTITY aboutSupport.crashes.allReports "Барлық құлау туралы хабарламалары">
+<!ENTITY aboutSupport.crashes.noConfig "Бұл қолданба құлау хабарламаларын көрсетуге бапталмаған.">
+
+<!ENTITY aboutSupport.extensionsTitle "Кеңейтулер">
+<!ENTITY aboutSupport.extensionName "Аты">
+<!ENTITY aboutSupport.extensionEnabled "Іске қосулы">
+<!ENTITY aboutSupport.extensionVersion "Нұсқасы">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; мүмкіндіктері">
+<!ENTITY aboutSupport.featureName "Аты">
+<!ENTITY aboutSupport.featureVersion "Нұсқасы">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Эксперименталды мүмкіндіктер">
+<!ENTITY aboutSupport.experimentName "Аты">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Анықтамасы">
+<!ENTITY aboutSupport.experimentActive "Белсенді">
+<!ENTITY aboutSupport.experimentEndDate "Аяқталу күні">
+<!ENTITY aboutSupport.experimentHomepage "Үй парағы">
+<!ENTITY aboutSupport.experimentBranch "Бранч">
+
+<!ENTITY aboutSupport.appBasicsTitle "Қолданба негіздері">
+<!ENTITY aboutSupport.appBasicsName "Аты">
+<!ENTITY aboutSupport.appBasicsVersion "Нұсқасы">
+<!ENTITY aboutSupport.appBasicsBuildID "Жинақ ID-і">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Жаңарту арнасы">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Жаңартулар тарихы">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Жаңартулар тарихын көрсету">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Профайл бумасы">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Профиль сақталатын бума">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Іске қосулы плагиндер">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Жинау баптаулары">
+<!ENTITY aboutSupport.appBasicsUserAgent "User Agent">
+<!ENTITY aboutSupport.appBasicsOS "ОЖ">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Жады қолданылуы">
+<!ENTITY aboutSupport.appBasicsPerformance "Өнімділік">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Тіркелген жұмыс үрдістері">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Профильдер">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Мультипроцесс терезелері">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Веб құрамасы процестері">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google кілті">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla орналасулар қызметінің кілті">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Қауіпсіз режимі">
+
+<!ENTITY aboutSupport.showDir.label "Буманы ашу">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Finder ішінен көрсету">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Буманы ашу">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Өзгертілген маңызды баптаулар">
+<!ENTITY aboutSupport.modifiedPrefsName "Аты">
+<!ENTITY aboutSupport.modifiedPrefsValue "Мәні">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js баптаулары">
+<!ENTITY aboutSupport.userJSDescription "Профиль сақталатын бумада <a id='prefs-user-js-link'>user.js файлды</a> бар, оның ішінде &brandShortName; жасамаған баптаулары сақталған.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Маңызды бекітілген баптаулар">
+<!ENTITY aboutSupport.lockedPrefsName "Аты">
+<!ENTITY aboutSupport.lockedPrefsValue "Мәні">
+
+<!ENTITY aboutSupport.graphicsTitle "Графика">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Орналасулар дерекқоры">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Бүтіндігі">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Бүтіндігін тексеру">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Өспелі GC">
+
+<!ENTITY aboutSupport.a11yTitle "Қолжетерлілік">
+<!ENTITY aboutSupport.a11yActivated "Белсендірілген">
+<!ENTITY aboutSupport.a11yForceDisabled "Кеңейтілген мүмкіндіктерге  тыйым салу">
+<!ENTITY aboutSupport.a11yHandlerUsed "Қолжетерліліктің қолданылған талдаушысы">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Жинақтар нұсқалары">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Орнатулар тарихы">
+<!ENTITY aboutSupport.updateHistoryTitle "Жаңартулар тарихы">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Мәтінді алмасу буферіне көшіріп алу">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Өнделмеген мәліметтерді алмасу буферіне көшіріп алу">
+
+<!ENTITY aboutSupport.sandboxTitle "Құмсалғыш">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Тайдырылған жүйелік шақырулар">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "секунд бұрын">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Процесс түрі">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Жүйелік шақыру">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Аргументтер">
+
+<!ENTITY aboutSupport.safeModeTitle "Қауіпсіз режимін қолданып көру">
+<!ENTITY aboutSupport.restartInSafeMode.label "Сөндірілген кеңейтулермен қайта қосу…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Мүмкіндіктер">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Диагностика">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Ақаулықтар журналы">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Шешімдер журналы">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Қулаудан қорғаныс сөндірген мүмкіндіктері">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Арнайы қолдау">
+
+<!ENTITY aboutSupport.mediaTitle "Мультимедиа">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Шығыс құрылғылары">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Енгізу құрылғылары">
+<!ENTITY aboutSupport.mediaDeviceName "Аты">
+<!ENTITY aboutSupport.mediaDeviceGroup "Топ">
+<!ENTITY aboutSupport.mediaDeviceVendor "Өндіруші">
+<!ENTITY aboutSupport.mediaDeviceState "Күйі">
+<!ENTITY aboutSupport.mediaDevicePreferred "Таңдамалы">
+<!ENTITY aboutSupport.mediaDeviceFormat "Пішімі">
+<!ENTITY aboutSupport.mediaDeviceChannels "Арналар">
+<!ENTITY aboutSupport.mediaDeviceRate "Жиілігі">
+<!ENTITY aboutSupport.mediaDeviceLatency "Кідірісі">

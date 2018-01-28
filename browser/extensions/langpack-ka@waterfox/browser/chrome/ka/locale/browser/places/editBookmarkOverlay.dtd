@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "სახელი:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "ს">
+<!ENTITY editBookmarkOverlay.location.label                  "მისამართი:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "მ">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "არხის მისამართი:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "ხ">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "საიტის მისამართი:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "ტ">
+<!ENTITY editBookmarkOverlay.folder.label                    "საქაღალდე:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "ყველა საქაღალდის გამოჩენა">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "დამალვა">
+<!ENTITY editBookmarkOverlay.tags.label                      "ჭდეები:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "ჭ">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "გამოყავით ჭდეები მძიმეებით">
+<!ENTITY editBookmarkOverlay.description.label               "აღწერილობა:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "ღ">
+<!ENTITY editBookmarkOverlay.keyword.label                   "საკვანძო სიტყვა:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "კ">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "ყველა ჭდის ჩვენება">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "სანიშნის გვერდითა პანელში ჩატვირთვა">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "პ">
+<!ENTITY editBookmarkOverlay.choose.label                    "შერჩევა…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "ახალი საქაღალდე">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "დ">

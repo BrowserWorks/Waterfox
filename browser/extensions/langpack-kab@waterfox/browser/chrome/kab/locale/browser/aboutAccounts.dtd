@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Ansuf yis-k γer &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Kcem akken ad temtawiḍ iccaren, ticraḍ n isebtar, awalen uffiren d wayen nniḍen.">
+<!ENTITY aboutAccountsConfig.startButton.label "Bdu">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Ismenyifen n Sync ">
+<!ENTITY aboutAccounts.noConnection.title "Ur telli tuqqna">
+<!ENTITY aboutAccounts.noConnection.description "Yessefk ad teqqneḍ γeṛ Internet akken ad tkecmeḍ.">
+<!ENTITY aboutAccounts.noConnection.retry "Σreḍ tikkelt nniḍen">
+<!ENTITY aboutAccounts.badConfig.title "Yir tawila ">
+<!ENTITY aboutAccounts.badConfig.description "Ur yezmir ara ad d-yaf tawila n uqeddac n umiḍan Waterfox. Ma ulac aγilif εreḍ tikkelt nniḍen.">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Выдаленне галоўнага пароля">
+<!ENTITY removeInfo.label                  "Вы мусіце ўвесці ваш цяперашні пароль для працягу:">
+<!ENTITY removeWarning1.label              "Ваш галоўны пароль ужываецца для абароны важнай інфармацыі, такой, напрыклад, як паролі да сайтаў.">
+<!ENTITY removeWarning2.label              "Калі вы выдаліце ваш галоўны пароль, вашы звесткі не будуць абаронены ў выпадку захопу вашага камп'ютара.">
+<!ENTITY setPassword.oldPassword.label     "Цяперашні пароль:">
+

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Mergi înapoi">
+<!ENTITY  button-back-mac.accesskey    "B">
+<!ENTITY  button-next-mac.label        "Continuă">
+<!ENTITY  button-next-mac.accesskey    "C">
+<!ENTITY  button-finish-mac.label      "Terminat">
+<!ENTITY  button-cancel-mac.label      "Renunță">
+
+<!ENTITY  button-back-unix.label       "Înapoi">
+<!ENTITY  button-back-unix.accesskey   "n">
+<!ENTITY  button-next-unix.label       "Înainte">
+<!ENTITY  button-next-unix.accesskey   "i">
+<!ENTITY  button-finish-unix.label     "Încheiere">
+<!ENTITY  button-cancel-unix.label     "Renunță">
+
+<!ENTITY  button-back-win.label        "&lt; Înapoi">
+<!ENTITY  button-back-win.accesskey    "p">
+<!ENTITY  button-next-win.label        "Înainte &gt;">
+<!ENTITY  button-next-win.accesskey    "n">
+<!ENTITY  button-finish-win.label      "Încheiere">
+<!ENTITY  button-cancel-win.label      "Renunță">

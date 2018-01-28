@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Gehigarrien kudeatzailea">
+
+<!ENTITY search.placeholder                   "Bilatu gehigarri guztiak">
+<!ENTITY search.buttonlabel                   "Bilaketa">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Kargatzen…">
+<!ENTITY listEmpty.installed.label            "Ez daukazu mota honetako gehigarririk instalatuta">
+<!ENTITY listEmpty.availableUpdates.label     "Ez da eguneraketarik aurkitu">
+<!ENTITY listEmpty.recentUpdates.label        "Azkenaldian ez duzu gehigarririk eguneratu">
+<!ENTITY listEmpty.findUpdates.label          "Bilatu eguneraketak">
+<!ENTITY listEmpty.search.label               "Ezin izan da bat datorren gehigarririk aurkitu">
+<!ENTITY listEmpty.button.label               "Gehigarriei buruzko argibide gehiago">
+<!ENTITY installAddonFromFile.label           "Instalatu gehigarria fitxategitik…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Tresnak gehigarri guztientzat">
+
+<!ENTITY getThemes.description                "Nabigatzailea pertsonalizatu nahi duzu?">
+<!ENTITY getThemes.learnMore                  "Aukeratu milaka itxuren artetik.">
+
+<!ENTITY cmd.back.tooltip                     "Joan orri bat atzera">
+<!ENTITY cmd.forward.tooltip                  "Joan orri bat aurrera">
+
+<!ENTITY showUnsignedExtensions.button.label  "Zenbait gehigarri ezin izan dira egiaztatu">
+<!ENTITY showAllExtensions.button.label       "Erakutsi gehigarri guztiak">
+<!ENTITY debugAddons.label                    "Araztu gehigarriak">
+<!ENTITY debugAddons.accesskey                "z">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "Modu seguruak gehigarri guztiak desgaitu ditu.">
+<!ENTITY warning.checkcompatibility.label          "Gehigarrien bateragarritasuna egiaztatzea desgaituta dago. Gehigarri bateraezinak izan ditzakezu.">
+<!ENTITY warning.checkcompatibility.enable.label   "Gaitu">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Gaitu gehigarrien bateragarritasuna egiaztatzea">
+<!ENTITY warning.updatesecurity.label              "Gehigarrien eguneraketa-segurtasuna egiaztatzea desgaituta dago. Eguneraketek arriskuan jar zaitzakete.">
+<!ENTITY warning.updatesecurity.enable.label       "Gaitu">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Gaitu gehigarrien eguneraketa-segurtasuna egiaztatzea">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Bilaketa">
+<!ENTITY view.discover.label                  "Eskuratu gehigarriak">
+<!ENTITY view.recentUpdates.label             "Azken eguneraketak">
+<!ENTITY view.availableUpdates.label          "Eguneraketak eskura">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Bilatu eguneraketak">
+<!ENTITY updates.checkForUpdates.accesskey    "B">
+<!ENTITY updates.viewUpdates.label            "Ikusi azken eguneraketak">
+<!ENTITY updates.viewUpdates.accesskey        "I">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Eguneratu gehigarriak automatikoki">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "g">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Berrezarri gehigarri guztiak automatikoki egunera daitezen">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "B">
+<!ENTITY updates.resetUpdatesToManual.label          "Berrezarri gehigarri guztiak eskuz egunera daitezen">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "B">
+<!ENTITY updates.updating.label               "Gehigarriak eguneratzen">
+<!ENTITY updates.installed.label              "Gehigarriak eguneratu egin dira.">
+<!ENTITY updates.downloaded.label             "Gehigarrien eguneraketak deskargatu egin dira.">
+<!ENTITY updates.restart.label                "Berrabiarazi orain instalazioa osatzeko">
+<!ENTITY updates.noneFound.label              "Ez da eguneraketarik aurkitu">
+<!ENTITY updates.manualUpdatesFound.label     "Ikusi eskura dauden eguneraketak">
+<!ENTITY updates.updateSelected.label         "Instalatu eguneraketak">
+<!ENTITY updates.updateSelected.tooltip       "Instalatu zerrenda honetan eskura dauden eguneraketak">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Erakutsi informazio gehiago">
+<!ENTITY cmd.showDetails.accesskey            "E">
+<!ENTITY cmd.findUpdates.label                "Bilatu eguneraketak">
+<!ENTITY cmd.findUpdates.accesskey            "B">
+<!ENTITY cmd.preferencesWin.label             "Aukerak">
+<!ENTITY cmd.preferencesWin.accesskey         "A">
+<!ENTITY cmd.preferencesUnix.label            "Hobespenak">
+<!ENTITY cmd.preferencesUnix.accesskey        "H">
+<!ENTITY cmd.about.label                      "Honi buruz">
+<!ENTITY cmd.about.accesskey                  "b">
+
+<!ENTITY cmd.enableAddon.label                "Gaitu">
+<!ENTITY cmd.enableAddon.accesskey            "G">
+<!ENTITY cmd.disableAddon.label               "Desgaitu">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "Jantzi itxura">
+<!ENTITY cmd.enableTheme.accesskey            "J">
+<!ENTITY cmd.disableTheme.label               "Erantzi itxura">
+<!ENTITY cmd.disableTheme.accesskey           "E">
+<!ENTITY cmd.askToActivate.label              "Galdetu aktibatzea">
+<!ENTITY cmd.askToActivate.tooltip            "Galdetu aldiro gehigarri hau erabiltzea">
+<!ENTITY cmd.alwaysActivate.label             "Aktibatu beti">
+<!ENTITY cmd.alwaysActivate.tooltip           "Erabili beti gehigarri hau">
+<!ENTITY cmd.neverActivate.label              "Ez aktibatu inoiz">
+<!ENTITY cmd.neverActivate.tooltip            "Ez erabili inoiz gehigarri hau">
+<!ENTITY cmd.stateMenu.tooltip                "Aldatu gehigarri hau exekutatzean">
+<!ENTITY cmd.installAddon.label               "Instalatu">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Kendu">
+<!ENTITY cmd.uninstallAddon.accesskey         "K">
+<!ENTITY cmd.showPreferencesWin.label         "Aukerak">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Aldatu gehigarri honen aukerak">
+<!ENTITY cmd.showPreferencesUnix.label        "Hobespenak">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Aldatu gehigarri honen hobespenak">
+<!ENTITY cmd.contribute.label                 "Lagundu">
+<!ENTITY cmd.contribute.accesskey             "L">
+<!ENTITY cmd.contribute.tooltip               "Lagundu gehigarri honen garapenean">
+
+<!ENTITY cmd.showReleaseNotes.label           "Erakutsi bertsio-oharrak">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Erakutsi eguneraketa honen bertsio-oharrak">
+<!ENTITY cmd.hideReleaseNotes.label           "Ezkutatu bertsio-oharrak">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Ezkutatu eguneraketa honen bertsio-oharrak">
+<!ENTITY cmd.findReplacement.label            "Bilatu ordezkoa">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Zer dira gehigarriak?">
+<!ENTITY discover.description2                "&brandShortName; aparteko funtzionaltasun edo estiloarekin pertsonalizatzeko aplikazioak dira gehigarriak. Proba ezazu denbora aurrezteko alboko barra bat, eguraldiaren jakinarazlea edo &brandShortName;(r)en itxura zeure egiteko itxura bat.">
+<!ENTITY discover.footer                      "Internetera konektatuta zaudenean, panel honetan gehigarri on eta ezagunenetako batzuk agertuko dira proba ditzazun.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Bertsioa">
+<!ENTITY detail.lastupdated.label             "Azken eguneraketa">
+<!ENTITY detail.creator.label                 "Garatzailea">
+<!ENTITY detail.homepage.label                "Webgunea">
+<!ENTITY detail.numberOfDownloads.label       "Deskargak">
+
+<!ENTITY detail.contributions.description     "Ekarpen txiki bat eginda garapenerako laguntza eskatzen dizu gehigarri honen garatzaileak.">
+
+<!ENTITY detail.updateType                    "Eguneraketa automatikoak">
+<!ENTITY detail.updateDefault.label           "Lehenetsia">
+<!ENTITY detail.updateDefault.tooltip         "Instalatu eguneraketak automatikoki lehenetsia bada soilik">
+<!ENTITY detail.updateAutomatic.label         "Aktibatuta">
+<!ENTITY detail.updateAutomatic.tooltip       "Instalatu eguneraketak automatikoki">
+<!ENTITY detail.updateManual.label            "Desaktibatuta">
+<!ENTITY detail.updateManual.tooltip          "Ez instalatu eguneraketak automatikoki">
+<!ENTITY detail.home                          "Webgunea">
+<!ENTITY detail.repository                    "Gehigarriaren profila">
+<!ENTITY detail.size                          "Tamaina">
+
+<!ENTITY detail.checkForUpdates.label         "Bilatu eguneraketak">
+<!ENTITY detail.checkForUpdates.accesskey     "B">
+<!ENTITY detail.checkForUpdates.tooltip       "Bilatu gehigarri honen eguneraketak">
+<!ENTITY detail.showPreferencesWin.label      "Aukerak">
+<!ENTITY detail.showPreferencesWin.accesskey  "A">
+<!ENTITY detail.showPreferencesWin.tooltip    "Aldatu gehigarri honen aukerak">
+<!ENTITY detail.showPreferencesUnix.label     "Hobespenak">
+<!ENTITY detail.showPreferencesUnix.accesskey "H">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Aldatu gehigarri honen hobespenak">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Puntuazioa">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Pausatu">
+<!ENTITY progress.cancel.tooltip              "Utzi">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Izena">
+<!ENTITY sort.name.tooltip                    "Ordenatu izenez">
+<!ENTITY sort.dateUpdated.label               "Azken eguneratzea">
+<!ENTITY sort.dateUpdated.tooltip             "Ordenatu eguneratze-dataz">
+<!ENTITY sort.relevance.label                 "Bat datorren onena">
+<!ENTITY sort.relevance.tooltip               "Ordenatu garrantziaz">
+<!ENTITY sort.price.label                     "Prezioa">
+<!ENTITY sort.price.tooltip                   "Ordenatu prezioz">
+
+<!ENTITY search.filter2.label                 "Bilatu:">
+<!ENTITY search.filter2.installed.label       "Nire gehigarriak">
+<!ENTITY search.filter2.installed.tooltip     "Erakutsi instalatutako gehigarriak">
+<!ENTITY search.filter2.available.label       "Eskura dauden gehigarriak">
+<!ENTITY search.filter2.available.tooltip     "Erakutsi instalatzeko eskura dauden gehigarriak">
+
+<!ENTITY addon.homepage                       "Webgunea">
+<!ENTITY addon.details.label                  "Gehiago">
+<!ENTITY addon.details.tooltip                "Erakutsi gehigarri honi buruzko xehetasun gehiago">
+<!ENTITY addon.unknownDate                    "Ezezaguna">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "LEGATUA">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(desgaituta)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "— Eguneraketa">
+<!ENTITY addon.undoAction.label               "Desegin">
+<!ENTITY addon.undoAction.tooltip             "Desegin ekintza hau">
+<!ENTITY addon.undoRemove.label               "Desegin">
+<!ENTITY addon.undoRemove.tooltip             "Mantendu gehigarri hau instalatuta">
+<!ENTITY addon.restartNow.label               "Berrabiarazi orain">
+<!ENTITY addon.install.label                  "Instalatu">
+<!ENTITY addon.install.tooltip                "Instalatu gehigarri hau">
+<!ENTITY addon.updateNow.label                "Eguneratu orain">
+<!ENTITY addon.updateNow.tooltip              "Instalatu gehigarri honen eguneraketa">
+<!ENTITY addon.includeUpdate.label            "Sartu eguneraketan">
+<!ENTITY addon.updateAvailable.label          "Eguneraketa eskura dago">
+<!ENTITY addon.checkingForUpdates.label       "Eguneraketak bilatzen…">
+<!ENTITY addon.releaseNotes.label             "Bertsio-oharrak:">
+<!ENTITY addon.loadingReleaseNotes.label      "Kargatzen…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Errorea gertatu da bertsio-oharrak kargatzean.">
+
+<!ENTITY addon.createdBy.label                "Egilea: ">
+
+<!ENTITY eula.title                           "Azken erabiltzailearen lizentzia-kontratua">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Onartu eta instalatu…">
+
+<!ENTITY settings.path.button.label           "Arakatu…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Zer da hau? Noizean behin esperimentuak instala eta exekuta litzake Telemetry-k.">
+<!ENTITY experiment.info.learnmore "Argibide gehiago">
+<!ENTITY experiment.info.learnmore.accesskey "A">
+<!ENTITY experiment.info.changetelemetry "Telemetry ezarpenak">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Argibide gehiago…">
+
+<!ENTITY disabledUnsigned.heading "Zenbait gehigarri desgaitu egin dira">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Ondorengo gehigarriak ez dira egiaztatu &brandShortName;(r)ekin erabilgarriak diren. ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "Ordezko gehigarriak bilatu">
+<!ENTITY disabledUnsigned.description.end " edo garatzaileari egiaztapena burutzeko eska diezaiokezu.">
+<!ENTITY disabledUnsigned.learnMore "Zure lineako jarduera seguru mantentzeko gure esfortzuei buruzko argibide gehiago.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Gehigarriak egiaztatu nahi dituzten garatzaileek gure ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "eskuliburua">
+<!ENTITY disabledUnsigned.devInfo.end " irakurtzen jarrai dezakete.">
+
+<!ENTITY pluginDeprecation.description "Zerbait falta da? &brandShortName;(e)k ez ditu dagoeneko zenbait plugin onartzen.">
+<!ENTITY pluginDeprecation.learnMore "Argibide gehiago.">
+
+<!ENTITY legacyWarning.description "Zerbait falta da? &brandShortName;(e)k ez ditu dagoeneko zenbait hedapen onartzen.">
+<!ENTITY legacyWarning.showLegacy "Erakutsi legatu-hedapenak">
+<!ENTITY legacyExtensions.title "Legatu-hedapenak">
+<!ENTITY legacyExtensions.description "Hedapen hauek ez dira &brandShortName;(r)en gutxieneko kalitatera heltzen eta desaktibatu egin dira.">
+<!ENTITY legacyExtensions.learnMore "Gehigarrien aldaketei buruzko argibide gehiago">

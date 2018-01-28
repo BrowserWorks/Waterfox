@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "url वर्गीकारकाबद्दल माहिती">
+<!ENTITY aboutUrlClassifier.providerTitle               "पुरविणारा">
+<!ENTITY aboutUrlClassifier.provider                    "पुरविणारा">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "या आधी अद्ययावत केले ती वेळ">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "पुढील अद्ययावत करायची वेळ">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "बॅक-ऑफ वेळ">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "या आधी अद्ययावत केले त्याची स्थिती">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "अद्ययावत करा">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "कॅशे">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "पुनःदाखल करा">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "पुसा">
+<!ENTITY aboutUrlClassifier.cacheTableName              "तक्ता नाव">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "ऋण कॅशे नोंदी गणना">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "धन कॅशे नोंदी गणना">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "नोंदी दर्शवा">
+<!ENTITY aboutUrlClassifier.cacheEntries                "कॅशे नोंदी">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "उपसर्ग">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "ऋण कॅशे मुदत समाप्ती">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "फुल हॅश">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "धन कॅशे मुदत समाप्ती">
+<!ENTITY aboutUrlClassifier.debugTitle                  "डिबग">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "लॉग मॉड्यूल्स ठरवा">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "लॉग फाईल ठरवा">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS लॉग सेट करा">
+<!ENTITY aboutUrlClassifier.debugSBModules              "सुरक्षित ब्राऊझिंग लॉग मॉड्युल">
+<!ENTITY aboutUrlClassifier.debugModules                "सध्याचे लॉग मॉड्युल">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "सुरक्षित ब्राऊझिंग JS मॉड्युल">
+<!ENTITY aboutUrlClassifier.debugFile                   "सद्याची लॉग फाईल">

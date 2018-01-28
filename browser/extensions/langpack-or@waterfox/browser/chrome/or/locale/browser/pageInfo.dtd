@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "ନକଲ କରନ୍ତୁ">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "ସମସ୍ତଙ୍କୁ ଚୟନକରନ୍ତୁ">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "ସାଧାରଣ">
+<!ENTITY  generalTab.accesskey  "G">
+
+<!ENTITY  generalURL            "ଠିକଣା:">
+<!ENTITY  generalType           "ପ୍ରକାର:">
+<!ENTITY  generalMode           "ଚିତ୍ରଣ ଅବସ୍ଥା:">
+<!ENTITY  generalSize           "ଆକାର:">
+<!ENTITY  generalReferrer       "Referring URL:">
+<!ENTITY  generalSource         "ଉତ୍ସକୁ ସ୍ୱଳ୍ପସମୟ ପାଇଁ ସଞ୍ଚୟକରନ୍ତୁ:">
+<!ENTITY  generalModified       "ପରିବର୍ତ୍ତିତ:">
+
+<!ENTITY  generalMetaName       "ନାମ">
+<!ENTITY  generalMetaContent    "ସୂଚୀ">
+
+<!ENTITY  mediaTab              "ସଞ୍ଚାର ମାଧ୍ୟମ">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "ସ୍ଥାନ:">
+<!ENTITY  mediaText             "ସଂଯୁକ୍ତ ପାଠ୍ୟ:">
+<!ENTITY  mediaAltHeader        "ବୈକଳ୍ପିକ ପାଠ୍ୟ">
+<!ENTITY  mediaAddress          "ଠିକଣା">
+<!ENTITY  mediaType             "ପ୍ରକାର">
+<!ENTITY  mediaSize             "ଆକାର">
+<!ENTITY  mediaCount            "ଗଣତି">
+<!ENTITY  mediaDimension        "ପରିସର:">
+<!ENTITY  mediaLongdesc         "ବିସ୍ତୃତ ବର୍ଣ୍ଣନା:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "ଏହିପରି ସଂରକ୍ଷଣ କରନ୍ତୁ…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "ମାଧ୍ୟମ ପ୍ରାକଦର୍ଶନ:">
+
+<!ENTITY  feedTab               "ଭରଣଗୁଡ଼ିକ">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Subscribe">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "ଅନୁମତି">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "ପୂର୍ବନିର୍ଦ୍ଧାରିତକୁ ବ୍ୟବହାର କରନ୍ତୁ">
+<!ENTITY  permAskAlways         "ସର୍ବଦା ପଚାରନ୍ତୁ">
+<!ENTITY  permAllow             "ଅନୁମତି ଦିଅନ୍ତୁ">
+<!ENTITY  permAllowSession      "ଅଧିବେଶନ ପାଇଁ ଅନୁମତି ଦିଅନ୍ତୁ">
+<!ENTITY  permBlock             "ବ୍ଲକ">
+<!ENTITY  permissionsFor        "ପାଇଁ ଅନୁମତି:">
+<!ENTITY  permPlugins           "ପ୍ଲଗଇନଗୁଡ଼ିକୁ ସକ୍ରିୟ କରନ୍ତୁ">
+
+<!ENTITY  permClearStorage           "ସଂରକ୍ଷଣ ସ୍ଥାନକୁ ସଫାକରନ୍ତୁ">
+<!ENTITY  permClearStorage.accesskey "C">
+
+<!ENTITY  securityTab           "ସୁରକ୍ଷା">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "ପ୍ରମାଣ ପତ୍ର ଦେଖନ୍ତୁ">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "ଅଜଣା">
+
+
+<!ENTITY  securityView.identity.header   "ୱେବ ସାଇଟ ପରିଚୟ">
+<!ENTITY  securityView.identity.owner    "ମାଲିକ: ">
+<!ENTITY  securityView.identity.domain   "ୱେବ ସାଇଟ: ">
+<!ENTITY  securityView.identity.verifier "ଦ୍ୱାରା ପ୍ରମାଣିତ: ">
+
+
+<!ENTITY  securityView.privacy.header                   "ଗୋପନୀୟତା ଏବଂ ପୁରୁଣା ତଥ୍ୟ">
+<!ENTITY  securityView.privacy.history                  "ଏହା ପୂର୍ବରୁ ମୁଁ କେବେ ଏହି ୱେବ ସାଇଟକୁ ପରିଦର୍ଶନ କରିଥିଲି କି?">
+<!ENTITY  securityView.privacy.cookies                  "କଣ ଏହି ୱେବ ସାଇଟ ମୋର କମ୍ପୁଟରରେ ସୂଚନା (କୁକିଗୁଡ଼ିକୁ) ସଞ୍ଚୟ କରୁଅଛି?">
+<!ENTITY  securityView.privacy.viewCookies              "କୁକିଗୁଡ଼ିକୁ ଦେଖନ୍ତୁ">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "ଏହି ୱେବ ସାଇଟ ପାଇଁ ମୁଁ କୌଣସି ପ୍ରବେଶ ସଂକେତ ସଂରକ୍ଷଣ କରିଅଛି କି?">
+<!ENTITY  securityView.privacy.viewPasswords            "ସଂରକ୍ଷିତ ପ୍ରବେଶ ସଂକେତ ଦେଖନ୍ତୁ">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "ଯାନ୍ତ୍ରିକ ବିବରଣୀ">
+
+<!ENTITY  helpButton.label                              "ସହାୟତା">
+
+<!ENTITY  generalEncoding2      "Text Encoding:">
+<!ENTITY  generalTitle          "Title:">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  securityView.identity.validity "Expires on:">
+

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "מזער חלון">
+<!ENTITY bringAllToFront.label    "הבא הכול לקדמה">
+<!ENTITY zoomWindow.label         "הגדל חלון">
+<!ENTITY windowMenu.label         "חלון">
+
+<!ENTITY helpMenu.label           "עזרה"> 
+<!ENTITY helpMenu.accesskey       "ז"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "עזרה"> 
+<!ENTITY helpMenuWin.accesskey    "ז">
+<!ENTITY aboutProduct2.label      "על אודות &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "א">
+<!ENTITY productHelp2.label       "עזרה עבור &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "ע">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "קיצורי מקלדת">
+<!ENTITY helpKeyboardShortcuts.accesskey "ק">
+
+<!ENTITY helpSafeMode.label       "הפעלה מחדש עם תוספות מנוטרלות…">
+<!ENTITY helpSafeMode.accesskey   "מ">
+<!ENTITY helpSafeMode.stop.label       "הפעלה מחדש עם תוספות פעילות">
+<!ENTITY helpSafeMode.stop.accesskey   "ח">
+
+<!ENTITY healthReport2.label      "דיווח בריאות עבור &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "ב">
+
+<!ENTITY helpTroubleshootingInfo.label      "מידע לפתרון בעיות">
+<!ENTITY helpTroubleshootingInfo.accesskey  "מ">
+
+<!ENTITY helpFeedbackPage.label      "שליחת משוב…">
+<!ENTITY helpFeedbackPage.accesskey  "ש">
+
+<!ENTITY helpShowTour2.label            "סיור ב־&brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "ס">
+
+<!ENTITY preferencesCmdMac.label        "העדפות…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "שירותים">
+
+<!ENTITY hideThisAppCmdMac2.label       "הסתרת &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "הסתרת אחרים">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "להציג הכול">

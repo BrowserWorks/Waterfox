@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Ko abbitii e geese.">
+<!ENTITY aboutNetworking.warning               "Ɗum ko jarribuya tan, Woto huutoro tawa mawɗo tawaaka.">
+<!ENTITY aboutNetworking.showNextTime          "Hollu ngoo reentino laawol garowol">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Ceŋirɗe">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "GeeseSoket">
+<!ENTITY aboutNetworking.refresh               "Wultin">
+<!ENTITY aboutNetworking.autoRefresh           "Wultin hoore mum kala maje 3">
+<!ENTITY aboutNetworking.hostname              "Innde mooftoowo">
+<!ENTITY aboutNetworking.port                  "Poor">
+
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Ena hurmi">
+<!ENTITY aboutNetworking.idle                  "Aami">
+<!ENTITY aboutNetworking.host                  "Koɗnoowo">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Nelaaɗe">
+<!ENTITY aboutNetworking.received              "Keɓaaɗe">
+<!ENTITY aboutNetworking.family                "Galle">
+<!ENTITY aboutNetworking.addresses             "Ñiiɓirɗe">
+<!ENTITY aboutNetworking.expires               "Buuntata (Maje)">
+<!ENTITY aboutNetworking.messagesSent          "Ɓatakuuji nuldaaɗi">
+<!ENTITY aboutNetworking.messagesReceived      "Ɓatakuuji keɓaaɗi">
+<!ENTITY aboutNetworking.bytesSent             "Bayte nuldaaɗe">
+<!ENTITY aboutNetworking.bytesReceived         "Bayte Keɓaaɗe">
+<!ENTITY aboutNetworking.logging               "Ceŋorɗe">
+<!ENTITY aboutNetworking.logTutorial           "Yiy <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTPSeŋorde</a> ngam fammineede no ɗum huutortee.">
+<!ENTITY aboutNetworking.currentLogFile        "Fiilde logagol wonaande:">
+<!ENTITY aboutNetworking.currentLogModules     "Gulle logagol wonaande:">
+<!ENTITY aboutNetworking.setLogFile            "Suɓo Fiilde Logagol">
+<!ENTITY aboutNetworking.setLogModules         "Suɓo Gulle logagol">
+<!ENTITY aboutNetworking.startLogging          "Fuɗɗo Logagol">
+<!ENTITY aboutNetworking.stopLogging           "Dartin Logagol">
+<!ENTITY aboutNetworking.dnsLookup             "Yiylo DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Jiɓtu">
+<!ENTITY aboutNetworking.dnsDomain             "Domen">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

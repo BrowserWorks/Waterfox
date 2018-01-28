@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Velkominn í &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Skráðu þig inn til að samstilla flipa, bókamerki, lykilorð &amp; fleira.">
+<!ENTITY aboutAccountsConfig.startButton.label "Til að byrja">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync stillingar">
+<!ENTITY aboutAccounts.noConnection.title "Engin tenging">
+<!ENTITY aboutAccounts.noConnection.description "Þú verður að vera tengdur við Internetið til að geta skráð þig inn.">
+<!ENTITY aboutAccounts.noConnection.retry "Reyndu aftur">
+<!ENTITY aboutAccounts.badConfig.title "Gallaðar stillingar">
+<!ENTITY aboutAccounts.badConfig.description "Get ekki staðfest stillingar fyrir Waterfox reikning. Reyndu aftur seinna.">

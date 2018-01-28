@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Rikthim Sesioni">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Hmmm, kjo na vë në siklet.">
+<!ENTITY restorepage.problemDesc    "&brandShortName;-i po ka probleme me rikthimin e dritareve dhe skedave tuaja. Kjo shkaktohet zakonisht nga një faqe web e hapur së fundi.">
+<!ENTITY restorepage.tryThis        "Mund të bëni provë:">
+<!ENTITY restorepage.restoreSome    "Të hiqni një ose më shumë skeda që mendoni se mund të jenë shkak i problemit">
+<!ENTITY restorepage.startNew       "Të filloni një sesion krejtësisht të ri shfletimi">
+
+<!ENTITY restorepage.tryagainButton "Riktheji">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Mbylle">
+<!ENTITY restorepage.close.access   "M">
+
+<!ENTITY restorepage.restoreHeader  "Rikthim">
+<!ENTITY restorepage.listHeader     "Dritare dhe Skeda">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Dritaren &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Oburra!">
+<!ENTITY welcomeback2.restoreButton.access "O">
+
+<!ENTITY welcomeback2.tabtitle      "Sukses!">
+
+<!ENTITY welcomeback2.pageTitle     "Sukses!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName;-i është gati.">
+
+<!ENTITY welcomeback2.label.restoreAll  "Riktheni krejt Dritaret dhe Skedat">
+<!ENTITY welcomeback2.label.restoreSome "Riktheni vetëm ato që doni">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Shtesat dhe përshtatjet tuaja janë hequr dhe rregullimet e shfletuesit tuaj janë kthyer te parazgjedhjet për to. Nëse kjo nuk e zgjidh problemin tuaj, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "mësoni më tepër rreth asaj çka mund të bëni.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">
+<!ENTITY welcomeback2.restoreSome.label "Restore only the ones you want">
+
+

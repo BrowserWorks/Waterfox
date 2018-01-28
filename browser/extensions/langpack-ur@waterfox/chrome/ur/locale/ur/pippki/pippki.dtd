@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "ماسٹر پاس ورڈ تبدیل کریں">
+<!ENTITY setPassword.tokenName.label "سلامتی آلہ">
+<!ENTITY setPassword.oldPassword.label "حالیہ پاس ورڈ:">
+<!ENTITY setPassword.newPassword.label "نیا پاس ورڈ:">
+<!ENTITY setPassword.reenterPassword.label "نیا پاس ورڈ (دوبارہ):">
+<!ENTITY setPassword.meter.label "پاس ورڈ کوالٹی میٹر">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "پھر سیٹ کریں">
+<!ENTITY resetPassword.title  "ماسٹر پاس ورڈ پھر سیٹ کریں">
+<!ENTITY resetPassword.text  "اگر آپ اپنا ماسٹر پاس ورڈ پھر سیٹ کرتے ہیں تو آپ کے تمام ذخیرہ شدہ ویب اور ای میل پاس ورڈ، فارم کوائف، ذاتی تصدیق نامے اور نجی کلیدیں بھلا دی جائیں گی۔ کیا آپ واقعی اپنا ماسٹر پاس ورڈ پھر سیٹ کرنا چاہتے ہیں؟">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "تصدیق نامہ ڈاؤن لوڈ کر رہا ہے">
+<!ENTITY downloadCert.message1 "آپ کو نئی مقتدرہ تصدیق نامہ (سی اے) پر بھروسے کے لیے کہا گیا ہے۔">
+<!ENTITY downloadCert.trustSSL "ویب سائٹیں شناخت کرنے کے لیے اس CA پر بھروسا کریں۔">
+<!ENTITY downloadCert.trustEmail "ای میل صارفین شناخت کرنے کے لیے اس سی اے پر بھروسا کریں۔">
+<!ENTITY downloadCert.trustObjSign "سافٹ ویئر تکمیل کار شناخت کرنے کے لیے اس سی اے پر بھروسا کریں۔">
+<!ENTITY downloadCert.message3 "کسی مقصد کے لیے اس مصدق پر بھروسے سے قبل آپ کو اس کے تصدیق نامے اور اس کی پالیسی وطریق عمل کا معائنہ کرنا چاہیے(اگردستیاب ہو)۔">
+<!ENTITY downloadCert.viewCert.label "نظارہ">
+<!ENTITY downloadCert.viewCert.text "سی اے تصدیق نامہ معائنہ کریں">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "صارف شناختی فرمائش">
+<!ENTITY clientAuthAsk.message1 "اس سائٹ نے فرمائش کی ہے کہ آپ خود کو ایک تصدیق نامے کے ذریعے شناخت کرائیں:">
+<!ENTITY clientAuthAsk.message2 "وئی تصدیق نامہ بطور شناخت  پیش کرنے کے لیےانتخاب کریں:">
+<!ENTITY clientAuthAsk.message3 "منتخب شدہ تصدیق ناموں کی تفصیلات:">
+
+<!ENTITY pkcs12.setpassword.title  "کوئی تصدیق نامہ پشتارہ پاس ورڈ انتخاب کریں">
+<!ENTITY pkcs12.setpassword.message  "آپ کا یہاں سیٹ کردہ تصدیق نامہ پشتارہ پاس ورڈ اس پشتارہ مسل کی حفاظت کرتا ہے جو آپ یہاں بنانے لگے ہیں۔ پشتارہ عمل پذیر کرنے کےلیے آپ کو یہ پاس ورڈ سیٹ سیٹ کرنا ہو گا۔">
+<!ENTITY pkcs12.setpassword.label1 "تصدیق نامہ پشتارہ پاس ورڈ:">
+<!ENTITY pkcs12.setpassword.label2 "تصدیق نامہ پشتارہ پاس ورڈ (دوبارہ):">
+<!ENTITY pkcs12.setpassword.reminder "اہم: اگر آپ اپنا تصدیق نامہ پشتارہ پاس ورڈ بھول جاتے ہیں تو بعد میں آپ یہ پشتارہ بحال کرنے کے اہل نہیں رہیں گے۔ لہذہٰ اسے محفوظ محل وقوع میں ریکارڈ کریں۔">
+
+<!ENTITY chooseToken.title  "ٹوکن مکالمہ انتخاب کریں">
+<!ENTITY chooseToken.message1 "کوئی ٹوکن انتخاب کریں۔">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "نجی کلید تخلیق کر رہا ہے">
+<!ENTITY createCertInfo.msg1 "کلید کی تخلیق در پیش رفت ہے… یہ چند منٹ لے سکتی ہے…۔">
+<!ENTITY createCertInfo.msg2 "انتظار کریں…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "تحفظ شدہ ٹوکن توثیق کاری">
+<!ENTITY protectedAuth.msg "برا ئے مہربانی ٹوکن کو توثیق کریں۔ توثیق کاری کا طریقہ آپ کے ٹوکن کی قسم پر انحصار کرتا ہے۔">
+<!ENTITY protectedAuth.tokenName.label "ٹوکن:">

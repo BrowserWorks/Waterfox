@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Sareari buruz">
+<!ENTITY aboutNetworking.warning               "Oso esperimentala da hau. Ez erabili nagusien zaintzapean ez bada.">
+<!ENTITY aboutNetworking.showNextTime          "Erakutsi ohar hau hurrengoan">
+<!ENTITY aboutNetworking.ok                    "Ados">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Socketak">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSocketak">
+<!ENTITY aboutNetworking.refresh               "Berritu">
+<!ENTITY aboutNetworking.autoRefresh           "Berritu automatikoki 3 segundoro">
+<!ENTITY aboutNetworking.hostname              "Ostalari-izena">
+<!ENTITY aboutNetworking.port                  "Ataka">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktibo">
+<!ENTITY aboutNetworking.idle                  "Inaktibo">
+<!ENTITY aboutNetworking.host                  "Ostalaria">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Bidalitakoak">
+<!ENTITY aboutNetworking.received              "Jasotakoak">
+<!ENTITY aboutNetworking.family                "Familia">
+<!ENTITY aboutNetworking.addresses             "Helbideak">
+<!ENTITY aboutNetworking.expires               "Iraungitzea (segundoak)">
+<!ENTITY aboutNetworking.messagesSent          "Bidalitako mezuak">
+<!ENTITY aboutNetworking.messagesReceived      "Jasotako mezuak">
+<!ENTITY aboutNetworking.bytesSent             "Bidalitako byteak">
+<!ENTITY aboutNetworking.bytesReceived         "Jasotako byteak">
+<!ENTITY aboutNetworking.logging               "Erregistroa">
+<!ENTITY aboutNetworking.logTutorial           "Ikusi <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP erregistora</a> orria tresna hau erabiltzeko argibideetarako.">
+<!ENTITY aboutNetworking.currentLogFile        "Uneko erregistro-fitxategia:">
+<!ENTITY aboutNetworking.currentLogModules     "Uneko erregistro-moduluak:">
+<!ENTITY aboutNetworking.setLogFile            "Ezarri erregistro-fitxategia">
+<!ENTITY aboutNetworking.setLogModules         "Ezarri erregistro-moduluak:">
+<!ENTITY aboutNetworking.startLogging          "Hasi erregistratzen">
+<!ENTITY aboutNetworking.stopLogging           "Gelditu erregistratzen">
+<!ENTITY aboutNetworking.dnsLookup             "DNS bilaketa">
+<!ENTITY aboutNetworking.dnsLookupButton       "Ebatzi">
+<!ENTITY aboutNetworking.dnsDomain             "Domeinua">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPak">
+<!ENTITY aboutNetworking.rcwn                  "RCWN estatistikak">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN egoera">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cachearen irabazi kopurua">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Sarearen irabazi kopurua">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Sareko eskaera kopurua guztira">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache eragiketa">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Ireki">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Irakurri">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Idatzi">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Sarrera irekita">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Batez besteko laburra">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Batez besteko luzea">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Desbideratze estandar luzea">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache motel kopurua">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache ez motel kopurua">

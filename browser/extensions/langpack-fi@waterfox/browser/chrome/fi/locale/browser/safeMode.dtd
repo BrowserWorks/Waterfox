@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName;in vikasietotila">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Käynnistä vikasietotilassa">
+<!ENTITY refreshProfile.label         "Palauta &brandShortName; uudeksi">
+
+<!ENTITY safeModeDescription3.label   "Vikasietotila on &brandShortName;in erikoistila, jota voi käyttää käyttöongelmien syiden löytämiseen ja niiden ratkomiseen.">
+<!ENTITY safeModeDescription4.label   "Lisäosat ja asetuksiin tehdyt muutokset otetaan väliaikaisesti pois käytöstä.">
+
+<!ENTITY refreshProfileInstead.label  "Voit myös ohittaa vian syyn etsimisen ja kokeilla suoraan &brandShortName;in palauttamista uuden veroiseksi.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription2.label safeModeInstead.label resetProfileFooter.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; yllättäen sulkeutui käynnistettäessä. Tämä voi johtua viallisista lisäosista tai muista syistä. Voit yrittää etsiä vian syytä vikasietotilassa.">

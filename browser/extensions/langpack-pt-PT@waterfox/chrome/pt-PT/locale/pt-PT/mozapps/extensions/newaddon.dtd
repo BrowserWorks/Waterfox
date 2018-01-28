@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instalar extra">
+<!ENTITY intro           "Outro programa no seu computador gostava de modificar o &brandShortName; com o seguinte extra:">
+<!ENTITY warning         "Apenas deve instalar extras de autores em que confia.">
+<!ENTITY allow           "Permitir esta instalação">
+<!ENTITY later           "Pode sempre mudar de ideais a qualquer altura acedendo ao gestor de extras.">
+<!ENTITY continue        "Continuar">
+<!ENTITY restartMessage  "Tem de reiniciar o &brandShortName; para concluir a instalação deste extra.">
+<!ENTITY restartButton   "Reiniciar o &brandShortName;">
+<!ENTITY cancelButton    "Cancelar">

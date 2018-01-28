@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Ynghylch Rhwydweithio">
+<!ENTITY aboutNetworking.warning               "Mae hyn yn arbrofol iawn. Peidiwch ei ddefnyddio heb oruchwyliaeth oedolyn.">
+<!ENTITY aboutNetworking.showNextTime          "Dangos y rhybudd y tro nesaf">
+<!ENTITY aboutNetworking.ok                    "Iawn">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Socedi">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Adnewyddu">
+<!ENTITY aboutNetworking.autoRefresh           "Adnewyddu pob 3 eiliad">
+<!ENTITY aboutNetworking.hostname              "Enw Gwesteiwr">
+<!ENTITY aboutNetworking.port                  "Porth">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Gweithredol">
+<!ENTITY aboutNetworking.idle                  "Segur">
+<!ENTITY aboutNetworking.host                  "Gwesteiwr">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Anfonwyd">
+<!ENTITY aboutNetworking.received              "Derbyniwyd">
+<!ENTITY aboutNetworking.family                "Teulu">
+<!ENTITY aboutNetworking.addresses             "Cyfeiriad">
+<!ENTITY aboutNetworking.expires               "Daw i ben (Eiliadau)">
+<!ENTITY aboutNetworking.messagesSent          "Negeseuon Anfonwyd">
+<!ENTITY aboutNetworking.messagesReceived      "Negeseuon Derbyniwyd">
+<!ENTITY aboutNetworking.bytesSent             "Didau Wedi'u Hanfon">
+<!ENTITY aboutNetworking.bytesReceived         "Didau Wedi'u Derbyn">
+<!ENTITY aboutNetworking.logging               "Cofnodi">
+<!ENTITY aboutNetworking.logTutorial           "Gw <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> am wybodaeth ar sut i ddefnyddio'r teclyn hwn.">
+<!ENTITY aboutNetworking.currentLogFile        "Ffeil Cofnodi Cyfredol:">
+<!ENTITY aboutNetworking.currentLogModules     "Modiwlau Cofnodi Cyfredol:">
+<!ENTITY aboutNetworking.setLogFile            "Gosod Ffeil Cofnodi">
+<!ENTITY aboutNetworking.setLogModules         "Gosod Modiwlau Cofnodi">
+<!ENTITY aboutNetworking.startLogging          "Cychwyn Cofnodi">
+<!ENTITY aboutNetworking.stopLogging           "Peidio Cofnodi">
+<!ENTITY aboutNetworking.dnsLookup             "Chwilio DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Datrys">
+<!ENTITY aboutNetworking.dnsDomain             "Parth">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPau">
+<!ENTITY aboutNetworking.rcwn                  "Statws RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Statws RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cyfrif storfa wedi ei ennill">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Cyfrif rhwyd wedi ei ennill">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Cyfanswm cyfrif ceisiadau rhwydwaith">
+<!ENTITY aboutNetworking.rcwnOperation         "Gweithred Storfa">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Ar Agor">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Darllen">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Ysgrifennu">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Cofnod Ar Agor">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Cyfartaledd Hir">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Cyfartaledd Hir">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Gwyriad Safonol Hir">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cyfrif araf storfa">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cyfrif nid araf storfa">

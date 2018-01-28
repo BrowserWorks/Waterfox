@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "নতুন অতিরিক্ত সামগ্রী ইনস্টল করুন">
+<!ENTITY intro           "আপনার কম্পিউটারে উপস্থিত অন্য একটি প্রোগ্রাম, নিম্নলিখিত অতিরিক্ত সামগ্রী সহযোগে &brandShortName;-কে পরিবর্তন করতে ইচ্ছুক:">
+<!ENTITY warning         "শুধুমাত্র বিশ্বস্ত নির্মাতাদের থেকে প্রাপ্ত অতিরিক্ত সামগ্রী ইনস্টল করুন।">
+<!ENTITY allow           "এই ইনস্টলেশনের অনুমতি প্রদান করা হবে">
+<!ENTITY later           "অতিরিক্ত সামগ্রী পরিচালন ব্যবস্থা থেকে আপনি যে কোনো সময় আপনার নির্ণয় করা পছন্দ পরিবর্তন করতে পারবেন।">
+<!ENTITY continue        "এগিয়ে চলুন">
+<!ENTITY restartMessage  "এই অতিরিক্ত সামগ্রী ইনস্টল করার কাজ সমাপ্ত করার জন্য &brandShortName; পুনরায় আরম্ভ করা আবশ্যক।">
+<!ENTITY restartButton   "&brandShortName; পুনরায় আরম্ভ করুন">
+<!ENTITY cancelButton    "বাতিল করুন">

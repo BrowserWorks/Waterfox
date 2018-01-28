@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Iznimke - prijevod">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Prijevod neće biti ponuđen za sljedeće jezike:">
+<!ENTITY treehead.languageName.label      "Jezici">
+<!ENTITY removeLanguage.label             "Ukloni jezik">
+<!ENTITY removeLanguage.accesskey         "U">
+<!ENTITY removeAllLanguages.label         "Ukloni sve jezike">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Prijevod neće biti ponuđen za sljedeće stranice:">
+
+<!ENTITY removeSite.label                 "Ukloni stranicu">
+<!ENTITY removeSite.accesskey             "r">
+<!ENTITY removeAllSites.label             "Ukloni sve stranice">
+<!ENTITY removeAllSites.accesskey         "e">
+
+<!ENTITY button.close.label               "Zatvori">
+<!ENTITY button.close.accesskey           "Z">
+
+<!ENTITY treehead.siteName2.label         "Websites">

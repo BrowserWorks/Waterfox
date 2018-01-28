@@ -1,0 +1,219 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Debugger strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (debuggerUI.closeButton.tooltip): This is the tooltip for
+  -  the button that closes the debugger UI. -->
+
+
+
+<!ENTITY debuggerUI.closeButton.tooltip "বন্ধ কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.panesButton.tooltip): This is the tooltip for
+  -  the button that toggles the panes visible or hidden in the debugger UI. -->
+
+<!ENTITY debuggerUI.panesButton.tooltip "পেইনসমূহ ট'গল কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.blackBoxMessage.label): This is the message
+  - displayed to users when they select a black boxed source from the sources
+  - list in the debugger. -->
+
+<!ENTITY debuggerUI.blackBoxMessage.label "এই উৎস ব্লেক বস্কক্ড: ইয়াৰ ভগ্নবিন্দুসমূহ অসামৰ্থবান কৰা আছে, আৰু কিছুমান স্তৰ বাদ দিয়া হৈছে।">
+<!-- LOCALIZATION NOTE (debuggerUI.blackBoxMessage.unBlackBoxButton): This is
+  - the text displayed in the button to stop black boxing the currently selected
+  - source. -->
+
+<!ENTITY debuggerUI.blackBoxMessage.unBlackBoxButton "এই উৎস ব্লেক বক্স কৰা বন্ধ কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.optsButton.tooltip): This is the tooltip for
+  -  the button that opens up an options context menu for the debugger UI. -->
+
+<!ENTITY debuggerUI.optsButton.tooltip  "ডিবাগাৰ বিকল্পসমূহ">
+<!-- LOCALIZATION NOTE (debuggerUI.sources.blackBoxTooltip): This is the tooltip
+  -  for the button that black boxes the selected source. -->
+
+<!ENTITY debuggerUI.sources.blackBoxTooltip "ব্লেক বক্সিং টগল কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.sources.prettyPrint): This is the tooltip for the
+  -  button that pretty prints the selected source. -->
+
+<!ENTITY debuggerUI.sources.prettyPrint "উৎসক প্ৰেটি প্ৰিন্ট কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.autoPrettyPrint): This is the label for the
+  -  checkbox that toggles auto pretty print. -->
+
+<!ENTITY debuggerUI.autoPrettyPrint     "সৰু কৰা উৎসসমূহক স্বচালিতভাৱে ধুনীয়া কৰক">
+<!ENTITY debuggerUI.autoPrettyPrint.accesskey "P">
+<!-- LOCALIZATION NOTE (debuggerUI.sources.toggleBreakpoints): This is the tooltip for the
+  -  button that toggles all breakpoints for all sources. -->
+
+<!ENTITY debuggerUI.sources.toggleBreakpoints "সকলো ভগ্নবিন্দু সামৰ্থবান/অসামৰ্থবান কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.clearButton): This is the label for
+  -  the button that clears the collected tracing data in the tracing tab. -->
+
+<!ENTITY debuggerUI.clearButton "আতৰাওক">
+<!-- LOCALIZATION NOTE (debuggerUI.clearButton.tooltip): This is the tooltip for
+  -  the button that clears the collected tracing data in the tracing tab. -->
+
+<!ENTITY debuggerUI.clearButton.tooltip "সংগ্ৰহ কৰা ট্ৰেইচসমূহ পৰিষ্কাৰ কৰক">
+<!-- LOCALIZATION NOTE (debuggerUI.pauseExceptions): This is the label for the
+  -  checkbox that toggles pausing on exceptions. -->
+
+<!ENTITY debuggerUI.pauseExceptions           "ব্যতিক্ৰমসমূহত বিৰাম">
+<!ENTITY debuggerUI.pauseExceptions.accesskey "E">
+<!-- LOCALIZATION NOTE (debuggerUI.ignoreCaughtExceptions): This is the label for the
+  -  checkbox that toggles ignoring caught exceptions. -->
+
+<!ENTITY debuggerUI.ignoreCaughtExceptions           "ধৰা ব্যতিক্ৰমসমূহ উপেক্ষা কৰক">
+
+<!-- LOCALIZATION NOTE (debuggerUI.showPanesOnInit): This is the label for the
+  -  checkbox that toggles visibility of panes when opening the debugger. -->
+
+<!ENTITY debuggerUI.showPanesOnInit           "আৰম্ভণিত পেইনসমূহ দেখুৱাওক">
+<!ENTITY debuggerUI.showPanesOnInit.accesskey "S">
+<!-- LOCALIZATION NOTE (debuggerUI.showVarsFilter): This is the label for the
+  -  checkbox that toggles visibility of a designated variables filter box. -->
+
+<!ENTITY debuggerUI.showVarsFilter           "চলকসমূহ ফিল্টাৰ বাকচ দেখুৱাওক">
+<!ENTITY debuggerUI.showVarsFilter.accesskey "V">
+<!-- LOCALIZATION NOTE (debuggerUI.showOnlyEnum): This is the label for the
+  -  checkbox that toggles visibility of hidden (non-enumerable) variables and
+  -  properties in stack views. The "enumerable" flag is a state of a property
+  -  defined in JavaScript. When in doubt, leave untranslated. -->
+
+<!ENTITY debuggerUI.showOnlyEnum           "কেৱল ইনুমাৰেবুল বৈশিষ্ট্যসমূহ দেখুৱাওক">
+<!ENTITY debuggerUI.showOnlyEnum.accesskey "P">
+<!-- LOCALIZATION NOTE (debuggerUI.showOriginalSource): This is the label for
+  -  the checkbox that toggles the display of original or sourcemap-derived
+  -  sources. -->
+
+<!ENTITY debuggerUI.showOriginalSource           "প্ৰকৃত উৎসবোৰ দেখুৱাওক">
+<!ENTITY debuggerUI.showOriginalSource.accesskey "O">
+<!-- LOCALIZATION NOTE (debuggerUI.autoBlackBox): This is the label for
+  -  the checkbox that toggles whether sources that we suspect are minified are
+  -  automatically black boxed or not. -->
+
+<!ENTITY debuggerUI.autoBlackBox           "সৰু উৎসবোৰ স্বচালিতভাৱে ব্লেক বক্স কৰক">
+<!ENTITY debuggerUI.autoBlackBox.accesskey "B">
+<!-- LOCALIZATION NOTE (debuggerUI.searchPanelOperators): This is the text that
+  -  appears in the filter panel popup as a header for the operators part. -->
+
+<!ENTITY debuggerUI.searchPanelOperators    "অপাৰেটৰসমূহ:">
+<!-- LOCALIZATION NOTE (debuggerUI.searchFile): This is the text that appears
+  -  in the source editor's context menu for the scripts search operation. -->
+
+<!ENTITY debuggerUI.searchFile           "ফিল্টাৰ স্ক্ৰিপ্টসমূহ">
+<!ENTITY debuggerUI.searchFile.key       "P">
+<!ENTITY debuggerUI.searchFile.altkey    "O">
+<!ENTITY debuggerUI.searchFile.accesskey "P">
+<!-- LOCALIZATION NOTE (debuggerUI.searchGlobal): This is the text that appears
+  -  in the source editor's context menu for the global search operation. -->
+
+<!ENTITY debuggerUI.searchGlobal           "সকলো ফাইলত সন্ধান কৰক">
+<!ENTITY debuggerUI.searchGlobal.key       "F">
+<!ENTITY debuggerUI.searchGlobal.accesskey "F">
+<!-- LOCALIZATION NOTE (debuggerUI.searchFunction): This is the text that appears
+  -  in the source editor's context menu for the function search operation. -->
+
+<!ENTITY debuggerUI.searchFunction           "ফলনৰ বিৱৰণৰ বাবে সন্ধান কৰক">
+<!ENTITY debuggerUI.searchFunction.key       "D">
+<!ENTITY debuggerUI.searchFunction.accesskey "D">
+<!-- LOCALIZATION NOTE (debuggerUI.searchToken): This is the text that appears
+  -  in the source editor's context menu for the token search operation. -->
+
+<!ENTITY debuggerUI.searchToken           "সন্ধান কৰক">
+<!ENTITY debuggerUI.searchToken.key       "F">
+<!ENTITY debuggerUI.searchToken.accesskey "F">
+<!-- LOCALIZATION NOTE (debuggerUI.searchLine): This is the text that appears
+  -  in the source editor's context menu for the line search operation. -->
+
+<!ENTITY debuggerUI.searchGoToLine           "শাৰীলৈ যাওক…">
+<!ENTITY debuggerUI.searchGoToLine.key       "L">
+<!ENTITY debuggerUI.searchGoToLine.accesskey "L">
+<!-- LOCALIZATION NOTE (debuggerUI.searchVariable): This is the text that appears
+  -  in the source editor's context menu for the variables search operation. -->
+
+<!ENTITY debuggerUI.searchVariable           "ফিল্টাৰ চলকসমূহ">
+<!ENTITY debuggerUI.searchVariable.key       "V">
+<!ENTITY debuggerUI.searchVariable.accesskey "V">
+<!-- LOCALIZATION NOTE (debuggerUI.focusVariables): This is the text that appears
+  -  in the source editor's context menu for the variables focus operation. -->
+
+<!ENTITY debuggerUI.focusVariables           "ফকাচ চলকসমূহ ট্ৰি">
+<!ENTITY debuggerUI.focusVariables.key       "V">
+<!ENTITY debuggerUI.focusVariables.accesskey "V">
+<!-- LOCALIZATION NOTE (debuggerUI.condBreakPanelTitle): This is the text that
+  -  appears in the conditional breakpoint panel popup as a description. -->
+
+<!ENTITY debuggerUI.condBreakPanelTitle "এই ভগ্নবিন্দু এক্সিকিউষণ বন্ধ কৰিব যদি নিম্নলিখিত অভিব্যক্তি সত্য হয়">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuBreak): This is the text that
+  -  appears in the source editor context menu for adding a breakpoint. -->
+
+<!ENTITY debuggerUI.seMenuBreak     "ভগ্নবিন্দু যোগ কৰক">
+<!ENTITY debuggerUI.seMenuBreak.key "B">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuCondBreak): This is the text that
+  -  appears in the source editor context menu for adding a conditional
+  -  breakpoint. -->
+
+<!ENTITY debuggerUI.seMenuCondBreak     "চৰ্তসাপেক্ষ ভগ্নবিন্দু যোগ কৰক">
+<!ENTITY debuggerUI.seMenuCondBreak.key "B">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuBreak): This is the text that
+  -  appears in the source editor context menu for editing a breakpoint. -->
+
+<!-- LOCALIZATION NOTE (debuggerUI.tabs.*): This is the text that
+  -  appears in the debugger's side pane tabs. -->
+<!ENTITY debuggerUI.tabs.sources        "উৎসসমূহ">
+<!ENTITY debuggerUI.tabs.traces         "ট্ৰেইচসমূহ">
+<!ENTITY debuggerUI.tabs.callstack      "ক'ল ষ্টেক">
+<!ENTITY debuggerUI.tabs.variables      "চলকসমূহ">
+<!ENTITY debuggerUI.tabs.events         "ঘটনাবোৰ">
+<!-- LOCALIZATION NOTE (debuggerUI.seMenuAddWatch): This is the text that
+  -  appears in the source editor context menu for adding an expression. -->
+
+<!ENTITY debuggerUI.seMenuAddWatch      "ৱাচ অভিব্যক্তিৰ বাবে নিৰ্বাচন">
+<!ENTITY debuggerUI.seMenuAddWatch.key  "E">
+<!-- LOCALIZATION NOTE (debuggerUI.addWatch): This is the text that
+  -  appears in the watch expressions context menu for adding an expression. -->
+
+<!ENTITY debuggerUI.addWatch            "ৱাচ অভিব্যক্তি যোগ কৰক">
+<!ENTITY debuggerUI.addWatch.accesskey  "E">
+<!-- LOCALIZATION NOTE (debuggerUI.removeWatch): This is the text that
+  -  appears in the watch expressions context menu for removing all expressions. -->
+
+<!ENTITY debuggerUI.removeAllWatch           "সকলো ৱাচ অভিব্যক্তি আতৰাওক">
+<!ENTITY debuggerUI.removeAllWatch.key       "E">
+<!ENTITY debuggerUI.removeAllWatch.accesskey "E">
+<!-- LOCALIZATION NOTE (debuggerUI.stepping): These are the keycodes that
+  -  control the stepping commands in the debugger (continue, step over,
+  -  step in and step out). -->
+
+<!ENTITY debuggerUI.stepping.resume1    "VK_F8">
+<!ENTITY debuggerUI.stepping.stepOver1  "VK_F10">
+<!ENTITY debuggerUI.stepping.stepIn1    "VK_F11">
+<!ENTITY debuggerUI.stepping.stepOut1   "VK_F11">
+<!-- LOCALIZATION NOTE (debuggerUI.context.newTab):  This is the label
+  -  for the Open in New Tab menu item displayed in the context menu of the
+  -  debugger sources side menu. This should be the same as
+  -  netmonitorUI.context.newTab  -->
+
+<!ENTITY debuggerUI.context.newTab           "নতুন টেবত খোলক">
+
+<!-- LOCALIZATION NOTE (debuggerUI.context.copyUrl): This is the label displayed
+  -  on the context menu that copies the selected request's url. This should be
+  -  the same as netmonitorUI.context.copyUrl -->
+
+<!ENTITY debuggerUI.context.copyUrl           "URL কপি কৰক">
+
+
+
+<!ENTITY debuggerUI.context.copyUrl.accesskey "C">
+<!ENTITY debuggerUI.context.copyUrl.key "C">
+<!ENTITY debuggerUI.context.newTab.accesskey "O">
+
+<!ENTITY debuggerUI.ignoreCaughtExceptions.accesskey "C">
+
+<!ENTITY debuggerUI.seEditMenuCondBreak     "Edit Conditional Breakpoint">
+<!ENTITY debuggerUI.seEditMenuCondBreak.key "B">
+
+<!ENTITY debuggerUI.tabs.workers        "Workers">

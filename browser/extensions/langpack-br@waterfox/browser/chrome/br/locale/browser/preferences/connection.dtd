@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Arventennoù kennaskañ">
+<!ENTITY  window.width2                 "39em">
+<!ENTITY  window.macWidth2              "39em">
+
+<!ENTITY  proxyTitle.label              "Kefluniañ proksioù evit haeziñ Internet">
+<!ENTITY  noProxyTypeRadio.label        "Proksi ebet">
+<!ENTITY  noProxyTypeRadio.accesskey    "b">
+<!ENTITY  systemTypeRadio.label         "Arverañ arventennoù proksi ar reizhiad">
+<!ENTITY  systemTypeRadio.accesskey     "r">
+<!ENTITY  WPADTypeRadio.label           "EmZinoiñ an arventennoù proksi evit ar ristenn-mañ">
+<!ENTITY  WPADTypeRadio.accesskey       "Z">
+<!ENTITY  manualTypeRadio.label         "Kefluniadur proksi dre zorn :">
+<!ENTITY  manualTypeRadio.accesskey     "p">
+<!ENTITY  autoTypeRadio.label           "URL ar c'hefluniañ proksi emgefreek :">
+<!ENTITY  autoTypeRadio.accesskey       "a">
+<!ENTITY  reload.label                  "Adkargañ">
+<!ENTITY  reload.accesskey              "k">
+<!ENTITY  ftp.label                     "Proksi FTP :">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Proksi HTTP :">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "Proksi SSL :">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "Ostiz SOCKS :">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "DNS Proksi p'eo arveret SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Porzh :">
+<!ENTITY  HTTPport.accesskey            "p">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "z">
+<!ENTITY  noproxy.label                 "Proksi ebet evit :">
+<!ENTITY  noproxy.accesskey             "b">
+<!ENTITY  noproxyExplain.label          "Skouer : .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Arverañ ar proksi-mañ evit an holl gomenadoù">
+<!ENTITY  shareproxy.accesskey          "p">
+<!ENTITY  autologinproxy.label          "Na c'houlenn diganin en em zilesa ma'z eus ur ger-tremen enrollet">
+<!ENTITY  autologinproxy.accesskey      "N">
+<!ENTITY  autologinproxy.tooltip        "An dibarzh-mañ a zilesa ac'hanoc'h ent emgefreek war ar proksioù ma'z eus naoudioù kennaskañ enrollet evito. Goulennet e vo anezho diganeoc'h ma vez c'hwitet an dilesa.">

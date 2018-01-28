@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Endurheimta vafralotu">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Jæja, þetta er vandræðalegt.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; á í vandræðum með að endurheimta glugga og flipa. Ástæðan gæti verið vefsíða sem var opnuð nýlega.">
+<!ENTITY restorepage.tryThis        "Þú getur prufað:">
+<!ENTITY restorepage.restoreSome    "Fjarlægt einn eða fleiri flipa ef þú heldur að þeir séu að valda vandamálum">
+<!ENTITY restorepage.startNew       "Byrjað nýja vafralotu">
+
+<!ENTITY restorepage.tryagainButton "Endurheimta">
+<!ENTITY restorepage.restore.access "r">
+<!ENTITY restorepage.closeButton    "Loka">
+<!ENTITY restorepage.close.access   "L">
+
+<!ENTITY restorepage.restoreHeader  "Endurheimta">
+<!ENTITY restorepage.listHeader     "Gluggar og flipar">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Gluggi &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "Áfram!">
+<!ENTITY welcomeback2.restoreButton.access "f">
+
+<!ENTITY welcomeback2.tabtitle      "Aðgerð tókst!">
+
+<!ENTITY welcomeback2.pageTitle     "Aðgerð tókst!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; er tilbúinn.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Endurheimta alla glugga og flipa">
+<!ENTITY welcomeback2.restoreSome.label "Endurheimta bara það sem þú vilt">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Búið er að fjarlægja viðbætur og sérsniðnar stillingar og búið er að setja vafrastillingar á sjálfgefnar stillingar. Ef þetta lagaði ekki vandamálið, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "fá meiri upplýsingar um hvað er hægt að gera.">
+

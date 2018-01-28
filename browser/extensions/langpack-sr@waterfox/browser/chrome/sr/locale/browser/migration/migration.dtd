@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Чаробњак за увоз">
+
+<!ENTITY importFrom.label               "Увези подешавања, забелешке, историјат, лозинке и друге податке из:">
+<!ENTITY importFromUnix.label           "Увези подешавања, забелешке, историјат, лозинке и друге податке из:">
+<!ENTITY importFromBookmarks.label      "Увези забелешке из:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Не увози ништа">
+<!ENTITY importFromNothing.accesskey    "Н">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "F">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Није пронађен ниједан програм који садржи забелешке, историјат или лозинке.">
+
+<!ENTITY importSource.title             "Увези подешавања и податке">
+<!ENTITY importItems.title              "Ставке за увоз">
+<!ENTITY importItems.label              "Изаберите ставке за увоз:">
+
+<!ENTITY migrating.title                "Увоз…">
+<!ENTITY migrating.label                "Наредне ставке се тренутно увозе…">
+
+<!ENTITY selectProfile.title            "Избор профила">
+<!ENTITY selectProfile.label            "Следеће профиле можете увести из:">
+
+<!ENTITY done.title                     "Увоз је завршен">
+<!ENTITY done.label                     "Следеће ставке су успешно увезене:">
+
+<!ENTITY closeSourceBrowser.label       "Затворите одабрани прегледач пре него што наставите.">

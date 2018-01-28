@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Slědowanski škit wužiwać">
+<!ENTITY  trackingProtectionAlways.label       "Přeco">
+<!ENTITY  trackingProtectionAlways.accesskey   "c">
+<!ENTITY  trackingProtectionPrivate.label      "Jenož w priwatnych woknach">
+<!ENTITY  trackingProtectionPrivate.accesskey  "o">
+<!ENTITY  trackingProtectionNever.label        "Ženje">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionLearnMore.label    "Dalše informacije">
+<!ENTITY  trackingProtectionExceptions.label   "Wuwzaća…">
+<!ENTITY  trackingProtectionExceptions.accesskey "u">
+
+<!ENTITY tracking.label                 "Slědowanje">
+<!ENTITY trackingProtectionPBM5.label         "Slědowanski škit w priwatnych woknach wužiwać">
+<!ENTITY trackingProtectionPBM5.accesskey     "r">
+<!ENTITY trackingProtectionPBMLearnMore.label "Dalše informacije">
+<!ENTITY changeBlockList.label          "Blokowansku lisćinu změnić">
+<!ENTITY changeBlockList.accesskey      "z">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Móžeće tež ">
+<!ENTITY  doNotTrack.settings.label     "swoje nastajenja za funkciju Njeslědować rjadować">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historija">
+
+<!ENTITY  locationBar.label             "Adresowe polo">
+
+<!ENTITY  locbar.suggest.label          "Při wužiwanju adresoweho pola namjetować:">
+<!ENTITY  locbar.history.label          "Historija">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Zapołožki">
+<!ENTITY  locbar.bookmarks.accesskey    "Z">
+<!ENTITY  locbar.openpage.label         "Wočinjene rajtarki">
+<!ENTITY  locbar.openpage.accesskey     "o">
+<!ENTITY  locbar.searches.label         "Přiwuzne pytanja ze standardnej pytawu">
+<!ENTITY  locbar.searches.accesskey     "u">
+
+<!ENTITY  suggestionSettings.label      "Nastajenja za namjety pytawy změnić…">
+<!ENTITY  suggestionSettings.accesskey  "s">
+
+<!ENTITY  acceptCookies2.label          "Placki ze sydłow akceptować">
+<!ENTITY  acceptCookies2.accesskey      "c">
+
+<!ENTITY  acceptThirdParty.pre.label      "Placki třećich poskićowarjow akceptować:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "t">
+<!ENTITY  acceptThirdParty.always.label   "Přeco">
+<!ENTITY  acceptThirdParty.never.label    "Ženje">
+<!ENTITY  acceptThirdParty.visited.label  "Jenož wot wopytanych třećich">
+
+<!ENTITY  keepUntil.label               "Wobchować:">
+<!ENTITY  keepUntil.accesskey           "c">
+
+<!ENTITY  expire.label                  "doniž njespadnu">
+<!ENTITY  close.label                   "doniž so &brandShortName; njezačini">
+
+<!ENTITY  cookieExceptions.label        "Wuwzaća…">
+<!ENTITY  cookieExceptions.accesskey    "W">
+
+<!ENTITY  showCookies.label             "Placki pokazać…">
+<!ENTITY  showCookies.accesskey         "c">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; budźe:">
+<!ENTITY  historyHeader.pre.accesskey      "b">
+<!ENTITY  historyHeader.remember.label     "Sej historiju spomjatkować">
+<!ENTITY  historyHeader.dontremember.label "Sej historiju ženje njespomjatkować">
+<!ENTITY  historyHeader.custom.label       "Swójske nastajenja za historiju wužiwać">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; budźe sej wobhladowansku, sćehnjensku, formularnu a pytansku historiju spomjatkować a wobchowa placki z websydłow, kotrež wopytujeće.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Chceće snano ">
+<!ENTITY  rememberActions.clearHistory.label  "swoju najnowšu historiju wuprózdnić">
+<!ENTITY  rememberActions.middle.label        " abo ">
+<!ENTITY  rememberActions.removeCookies.label "jednotliwe placki wuprózdnić">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; budźe samsne nastajenja kaž w priwatnym modusu wužiwać a njebuźde sej historiju spomjatkować, hdyž Web přehladujeće.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Chceće snano ">
+<!ENTITY  dontrememberActions.clearHistory.label "wšu tuchwilnu historiju wuprózdnić">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Přeco priwatny modus wužiwać">
+<!ENTITY  privateBrowsingPermanent2.accesskey "P">
+
+<!ENTITY  rememberHistory2.label      "Sej přehladowansku a sćehnjensku historiju spomjatkować">
+<!ENTITY  rememberHistory2.accesskey  "h">
+
+<!ENTITY  rememberSearchForm.label       "Pytansku a formularnu historiju sej spomjatkować">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Historiju wuprózdnić, hdyž so &brandShortName; začinja">
+<!ENTITY  clearOnClose.accesskey         "H">
+
+<!ENTITY  clearOnCloseSettings.label     "Nastajenja…">
+<!ENTITY  clearOnCloseSettings.accesskey "N">
+
+<!ENTITY  browserContainersHeader.label         "Kontejnerowe rajtarki">
+<!ENTITY  browserContainersLearnMore.label      "Dalše informacije">
+<!ENTITY  browserContainersEnabled.label        "Kontejnerowe rajtarki zmóžnić">
+<!ENTITY  browserContainersEnabled.accesskey    "m">
+<!ENTITY  browserContainersSettings.label        "Nastajenja…">
+<!ENTITY  browserContainersSettings.accesskey    "s">

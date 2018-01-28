@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Skedë e Re">
+<!ENTITY newtab.customize.classic "Shfaqni sajtet tuaj kryesues">
+<!ENTITY newtab.customize.cog.enhanced "Përfshi sajte të këshilluar">
+<!ENTITY newtab.customize.cog.title2 "KONTROLLE PËR SKEDË TË RE">
+<!ENTITY newtab.customize.cog.learn "Mësoni rreth Skedës së Re">
+<!ENTITY newtab.customize.title "Personalizoni faqen tuaj Skedë e Re">
+<!ENTITY newtab.customize.blank2 "Shfaq faqe të zbrazët">
+<!ENTITY newtab.undo.removedLabel "Miniatura u hoq.">
+<!ENTITY newtab.undo.undoButton "Zhbëje.">
+<!ENTITY newtab.undo.restoreButton "Riktheji Krejt.">
+<!ENTITY newtab.undo.closeTooltip "Fshihe">

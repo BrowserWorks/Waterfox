@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "បន្ថែម​ប្រអប់​ផ្ទុក​ថ្មី">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "ចំណូលចិត្ត">
+<!ENTITY removeButton.label   "លុប​ចេញ">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; ត្រឡប់​ទៅ​ភាព​ឯកជន">
+
+<!ENTITY window.title         "បន្ថែម​ប្រអប់​ផ្ទុក​ថ្មី">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "ឈ្មោះ៖">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "បញ្ចូល​ឈ្មោះ​ប្រអប់">
+<!ENTITY icon.label           "រូបតំណាង៖">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "ពណ៌៖">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "ធ្វើ​រួច">
+<!ENTITY button.ok.accesskey  "D">
+
+
+<!ENTITY backLink2.label      "&#171; Go Back">
+

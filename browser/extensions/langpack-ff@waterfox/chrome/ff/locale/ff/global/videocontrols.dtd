@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Tar">
+<!ENTITY playButton.pauseLabel "Sabbo">
+<!ENTITY muteButton.muteLabel "Muumɗin">
+<!ENTITY muteButton.unmuteLabel "Ittu muumɗinal">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Njaajeendi Yaynirde">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Yaltu Njaajeendi Yaynirde">
+<!ENTITY castingButton.castingLabel "Neldu to Yaynirde">
+<!ENTITY closedCaption.off "Ñifii">
+
+<!ENTITY stats.media "Mejaaje">
+<!ENTITY stats.size "Ɓetol:">
+<!ENTITY stats.activity "Dille">
+<!ENTITY stats.activityPaused "Ena sabbii">
+<!ENTITY stats.activityPlaying "Ena tara">
+<!ENTITY stats.activityEnded "Gasii">
+<!ENTITY stats.activitySeeking "(ena yiyloo)">
+<!ENTITY stats.volume "Daande">
+<!ENTITY stats.framesParsed "Kaareeje parsitaaɗe">
+<!ENTITY stats.framesDecoded "Kareeje dokkitaaɗe">
+<!ENTITY stats.framesPresented "Kaareeje kolliraaɗe">
+<!ENTITY stats.framesPainted "Kaareeje nataaɗe">
+
+<!ENTITY error.aborted "Loowgol widewoo dartinaama.">
+<!ENTITY error.network "Tartol widewoo dartiima sabu juumre laylaytol.">
+<!ENTITY error.decode "Widewoo oo waawaa tareede sabu fiilde ndee ko moƴƴaani.">
+<!ENTITY error.srcNotSupported "Mbayka widewoo walla fannu MIME tammbitaaka.">
+<!ENTITY error.noSource2 "Alaa widewoo baɗɗo mbayka tammbitaaka yiytaa.">
+<!ENTITY error.generic "Tartol widewoo dartiima sabu juumre nde anndaaka.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 e nder #2 ɓennii">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

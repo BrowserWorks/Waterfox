@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "পৃষ্ঠার বৈশিষ্ট্য নির্ধারণ">
+
+<!ENTITY basic.tab           "বিন্যাস &amp; বিকল্প">
+
+<!ENTITY formatGroup.label   "বিন্যাস">
+
+<!ENTITY orientation.label   "দিশা:">
+<!ENTITY portrait.label      "প্রতিকৃতি">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "আড়াআড়ি">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "মাপ:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "পৃষ্ঠার প্রস্থ অনুসারে সংকুচন করা হবে">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "বিকল্প">
+
+<!ENTITY printBG.label       "ব্যাকগ্রাউন্ড প্রিন্ট করা হবে (রং ও ছবি)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "মার্জিন &amp; হেডার/Footer">
+
+<!ENTITY marginGroup.label   "মার্জিন (#1)">
+<!ENTITY marginUnits.inches  "ইঞ্চি">
+<!ENTITY marginUnits.metric  "মিলিমিটার">
+<!ENTITY marginTop.label     "ঊর্ধ্বে:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "নীচে:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "বাঁদিকে">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "ডানদিকে:">
+<!ENTITY marginRight.accesskey "ড">
+
+<!ENTITY headerFooter.label  "হেডার &amp; ফুটার">
+
+<!ENTITY hfLeft.label        "বাঁদিকে:">
+<!ENTITY hfCenter.label      "কেন্দ্রস্থিত:">
+<!ENTITY hfRight.label       "ডানদিকে:">
+<!ENTITY headerLeft.tip      "বাঁদিকের হেডার">
+<!ENTITY headerCenter.tip    "কেন্দ্রস্থিত হেডার">
+<!ENTITY headerRight.tip     "ডানদিকের হেডার">
+<!ENTITY footerLeft.tip      "বাঁদিকের ফুটার">
+<!ENTITY footerCenter.tip    "কেন্দ্রস্থিত ফুটার">
+<!ENTITY footerRight.tip     "ডানদিকের ফুটার">
+
+<!ENTITY hfTitle             "শিরোনাম">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "তারিখ/সময়">
+<!ENTITY hfPage              "পৃষ্ঠা #">
+<!ENTITY hfPageAndTotal      "সর্বমোট পৃষ্ঠা #, বর্তমান পৃষ্ঠা #">
+<!ENTITY hfBlank             "--শূণ্য--">
+<!ENTITY hfCustom            "স্বনির্ধারিত...">
+
+<!ENTITY customPrompt.title  "স্বনির্ধারিত পংক্তি...">
+<!ENTITY customPrompt.prompt "হেডার/ফুটার হিসাবে ব্যবহারের উদ্দেশ্যে নিজের পছন্দসই পংক্তি লিখুন">

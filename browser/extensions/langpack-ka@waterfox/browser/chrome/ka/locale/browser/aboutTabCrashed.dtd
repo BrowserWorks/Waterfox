@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "ჩანართის დახურვა">
+<!ENTITY tabCrashed.restoreTab "ჩანართის აღდგენა">
+<!ENTITY tabCrashed.restoreAll "ყველა ავარულად დახურული ჩანართის აღდგენა">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "უჰ. ჩანართი ავარიულად დაიხურა.">
+<!ENTITY tabCrashed.offerHelp "შეგვიძლია დაგეხმაროთ!">
+<!ENTITY tabCrashed.single.offerHelpMessage "აირჩიეთ &tabCrashed.restoreTab; გვერდის შიგთავსის ხელახლა ჩასატვირთად.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "აირჩიეთ &tabCrashed.restoreTab; ან &tabCrashed.restoreAll; გვერდის შიგთავსის ხელახლა ჩასატვირთად.">
+<!ENTITY tabCrashed.requestHelp "დაგვეხმარებით?">
+<!ENTITY tabCrashed.requestHelpMessage "მოხსენებები ავარიული დახურვის შესახებ, დაგვეხმარება გამოვავლინოთ გამუმართაობები და გავხადოთ &brandShortName; უკეთესი.">
+<!ENTITY tabCrashed.requestReport "მოხსენების გაგზავნა ჩანართის შესახებ">
+<!ENTITY tabCrashed.sendReport2 "ჩანართის ავარიული დახურვის შესახებ მოხსენების გაგზავნა">
+<!ENTITY tabCrashed.commentPlaceholder2 "დამატებითი კომენტარი (კომენტარები ხილულია საჯაროდ)">
+<!ENTITY tabCrashed.includeURL2 "URL-ს დამატება მოხსენებაში">
+<!ENTITY tabCrashed.emailPlaceholder "შეიყვანეთ თქვენი ელფოსტის მისამართი">
+<!ENTITY tabCrashed.emailMe "მომწერეთ, როდესაც მეტი ინფრომაცია გახდება ცნობილი">
+<!ENTITY tabCrashed.reportSent "ავარიული დახურვის შეტყობინება უკვე გადმოგზავნილია; მადლობას გიხდით &brandShortName;-ის გაუმჯობესებაში დახმარებისთვის!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "გააგზავნეთ მოხსენება ფონურ ჩანართებზე">
+<!ENTITY tabCrashed.autoSubmit2 "შეცვალეთ მოხსენებების ავტომატურად გაგზავნის პარამეტრები, მათ შორის ფონური ჩანართების შესახებ შეტყობინებების, ამჟამინდელი და მომავალი სეანსებისთვის">

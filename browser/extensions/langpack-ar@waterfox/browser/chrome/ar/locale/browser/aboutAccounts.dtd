@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "مرحبًا مع &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "لِج لمزامنة ألسنتك و علاماتك و كلمات السر و غيرهم المزيد.">
+<!ENTITY aboutAccountsConfig.startButton.label "ابدأ">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "تفضيلات «تزامُن»">
+<!ENTITY aboutAccounts.noConnection.title "لا اتصال">
+<!ENTITY aboutAccounts.noConnection.description "يجب أن تكون متصلًا بالإنترنت للولوج.">
+<!ENTITY aboutAccounts.noConnection.retry "جرب ثانية">
+<!ENTITY aboutAccounts.badConfig.title "ضبط سيئ">
+<!ENTITY aboutAccounts.badConfig.description "تعذّر التعرف على ضبط خادوم حسابات فيَرفُكس. رجاء إعادة المحاولة لاحقا.">

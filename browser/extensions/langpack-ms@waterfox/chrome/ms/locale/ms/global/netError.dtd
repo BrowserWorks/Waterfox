@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Ralat Memuat Halaman">
+<!ENTITY retry.label "Cuba Lagi">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Tidak dapat Menyambung">
+<!ENTITY connectionFailure.longDesc "<p>Walaupun laman ini nampak sah, tetapi pelayar tidak dapat menyediakan sambungan.</p><ul><li>Mungkin laman ini dinyahdaya buat sementara waktu? Cuba lagi nanti.</li><li>Adakah anda juga tidak dapat melayari laman lain? Semak sambungan rangkaian komputer.</li><li>Adakah komputer atau rangkaian anda dilindungi firewall atau proksi? Tetapan yang tidak betul boleh mengganggu pelayaran Web.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Port Dihadkan atas Alasan Keselamatan">
+<!ENTITY deniedPortAccess.longDesc "<p>Alamat yang diminta mengkhususkan port (cth. <q>mozilla.org:80</q> untuk port 80 pada mozilla.org) kebiasaannya digunakan untuk kegunaan  <em>selain</em> daripada pelugsuran Web. Pelungsur telah membatalkan permintaan untuk perlindungan dan sekuriti anda.</p>">
+
+<!ENTITY dnsNotFound.title "Alamat Tidak Ditemui">
+<!ENTITY dnsNotFound.longDesc "<p>Pelayar tidak menemui hos pelayan  alamat yang diberi.</p><ul><li>Adakah anda telah melakukan kesilapan menaip domain? (e.g. <q><strong>ww</strong>.mozilla.org</q> Sepatutnya  <q><strong>www</strong>.mozilla.org</q>)</li><li>Adakah anda pasti alamat ini wujud?  Pendaftarannya mungkin telah luput.</li><li>Adakah anda tidak dapat melayari laman lain?  Semak sambungan rangkaian dan tetapan pelayan DNS.</li><li>Adakah komputer atau rangkaian anda dilindungi oleh firewall atau proksi?  Tetapan yang tidak betul boleh mengganggu pelayaran Web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Fail tidak ditemui">
+<!ENTITY fileNotFound.longDesc "<ul><li>Adakah item boleh dinamakan, dialih keluar, atau dipindahkan?</li><li>Adakah terdapat kesilapan ejaan, penggunaan huruf besar, atau kesilapan menaip alamat?</li><li>Adakah anda memiliki keizinan yang mencukupi untuk memohon item?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Akses kepada fail ditolak">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>mungkin telah dialih keluar, dipindah, atau keizinan fail yang menyekat aksesnya.</li></ul> ">
+
+<!ENTITY generic.title "Gagal Menyudahkan Permintaan">
+<!ENTITY generic.longDesc "<p>Maklumat tambahan perihal masalah atau ralat ini belum lagi wujud.</p>">
+
+<!ENTITY malformedURI.title "Alamat Tidak Sah">
+<!ENTITY malformedURI.longDesc "<p>Alamat yang diberikan tidak dapat bentuk yang dikenali. Sila semak kesilapan pada bar lokasi dan cuba lagi.</p>">
+
+<!ENTITY netInterrupt.title "Pemindahan Data Terganggu">
+<!ENTITY netInterrupt.longDesc "<p>Sambungan pelayar berjaya, tetapi sambungan terganggu semasa pemindahan maklumat. Sila cuba lagi.</p><ul><li>Adakah anda tidak dapat melayari laman lain? Semak sambungan rangkaian komputer anda.</li><li>Masih bermasalah? Hubungi pentadbir rangkaian atau penyedia Internet anda untuk bantuan.</li></ul>">
+
+<!ENTITY notCached.title "Dokumen Luput">
+<!ENTITY notCached.longDesc "<p>Dokumen yang diminta tidak berada didalam cache pelayar.</p><ul><li>Untuk langkah keselamatan, dokumen sensitif tidak akan diminta semula oleh pelayar secara automatik.</li><li>Sila klik Cuba Lagi untuk meminta semula dokumen tersebut dari laman web.</li></ul>">
+
+<!ENTITY netOffline.title "Mod Luar Talian">
+<!ENTITY netOffline.longDesc2 "<p>Pelayar ini beroperasi dalam mod offline dan tidak boleh disambungkan ke item yang diminta.</p><ul><li>Komputer ini bersambung dengan jaringan aktif?</li><li>Tekan &quot;Cuba Lagi&quot; untuk tukar ke mod di talian dan memuatkan laman kembali.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Mengandungi Ralat Pengekodan">
+<!ENTITY contentEncodingError.longDesc "<p>Halaman yang anda cuba lihat tidak dapat dipaparkan kerana menggunakan bentuk pemampatan yang tidak sah atau tidak disokong.</p><ul><li>Sila hubungi pemilik laman web untuk memaklumkan masalah ini.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Jenis Fail yang Tidak Selamat">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Sila hubungi pemilik laman web untuk menyelesaikan masalah ini.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Sambungan Terganggu">
+<!ENTITY netReset.longDesc "<p>Talian rangkaian terganggu ketika perundingan rangkaian. Sila cuba lagi.</p>">
+
+<!ENTITY netTimeout.title "Sambungan Tamat Tempoh">
+<!ENTITY netTimeout.longDesc "<p>Laman yang meminta tidak memberi respon kepada permintaan sambungan dan pelayar telah berhenti menunggu balasan.</p><ul><li>Kemungkinan pelayan mengalami permintaan tinggi atau gagal sementara? Cuba lagi kemudian.</li><li>Adakah anda gagal melayari laman lain? Semak konfigurasi rangkaian komputer.</li><li>Adakah komputer atau rangkaian anda dilindungi firewall atau proksi? Tetapan yang tidak betul boleh mengganggu pelayaran Web.</li><li>Masih ada masalah? Hubungi pentadbir rangkaian atau penyedia Internet anda untuk bantuan.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protokol Tidak Diketahui">
+<!ENTITY unknownProtocolFound.longDesc "<p>Alamat yang menentukan protokol (cth. <q>wxyz://</q>) yang pelungsur tidak kenali, jadi pelungsur tidak disambung kepada tapak dengan betul.</p><ul><li>Adakah anda cuba untuk mencapai multimedia atau servis bukan teks lain? Periksa laman untuk keperluan tambahan.</li><li>Sebahagian protokol boleh jadi memerlukan perisian atau plugin pihak-ketiga sebelum pelungsur dapat mengenalinya.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Pelayan proksi Menolak Sambungan">
+<!ENTITY proxyConnectFailure.longDesc "<p>Pelayar dikonfigurasi untuk menggunakan pelayan proksi, tetapi proksi menafikan sambungan.</p><ul><li>Adakah konfigurasi proksi pelayar betul? Periksa tetapan dan cuba lagi.</li><li>Adakah pelayan proksi membenarkan sambungan daripada rangkaian ini?</li><li>Masih bermasalah? Dapatkan nasihat pentadbir rangkaian atau penyedia Internet anda untuk bantuan.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Pelayan Proksi Tidak Ditemui">
+<!ENTITY proxyResolveFailure.longDesc "<p>Pelayar dikonfigurasi untuk menggunakan pelayan proksi, tetapi proksi tidak dapat ditemui.</p><ul><li>Adakah konfigurasi proksi pelayar betul? Periksa tetapan dan cuba lagi.</li><li>Adakah komputer disambungkan kepada rangkaian aktif?</li><li>Masih bermasalah? Dapatkan nasihat pentadbir rangkaian atau penyedia Internet anda untuk bantuan.</li></ul>">
+
+<!ENTITY redirectLoop.title "Gelung Lencongan">
+<!ENTITY redirectLoop.longDesc "<p>Pelayar berhenti daripada cuba mendapatkan item diminta. Laman mengalihkan permintaan dengan cara yang tidak akan selesai.</p><ul><li>Sudahkan anda menyahdaya atau menyekat keperluan kuki oleh laman ini?</li><li><em>NOTA</em>: Jika terima kuki dari laman ini juga tidak dapat menyelesaikan masalah, berkemungkinan adalah masalah konfigurasi pelayan dan bukannya komputer anda.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Tindak Balas Salah">
+<!ENTITY unknownSocketType.longDesc "<p>Laman memberi respons kepada rangkaian yang meminta dengan cara yang tidak dijangka dan pelayar  tidak dapat diteruskan.</p>">
+
+<!ENTITY nssFailure2.title "Sambungan yang selamat gagal">
+<!ENTITY nssFailure2.longDesc2 "<p>Halaman yang anda sedang lihat tidak dapat ditunjuk kerana data penerima tidak boleh disahkan</p><ul><li>Sila hubungi pemilik laman web tentang masalah ini.</li></ul>">
+
+<!ENTITY nssBadCert.title "Sambungan yang selamat gagal">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ini kemungkinan masalah pada konfigurasi server, atau mungkin seseorang cuba menyamar server tersebut</li> <li>Jikalau anda berjaya bersambung dengan server dahulu, kesalahan ini mungkin berlaku seketika, anda boleh cuba semula nanti.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Atau anda boleh tambah pengecualian…">
+<!ENTITY securityOverride.warningContent "
+<p>Anda tidak perlu menambah pengecualian jika anda menggunakan sambungan yang anda tidak percayai sepenuhnya atau jika anda belum pernah melihat amaran ini untuk pelayan ini.</p>
+<p>Jika anda masih ingin menambah pengecualian bagi laman ini, anda boleh berbuat demikian dalam tetapan enkripsi lanjutan.</p>
+">
+
+<!ENTITY cspBlocked.title "Disekat oleh Polisi Keselamatan Kandungan">
+<!ENTITY cspBlocked.longDesc "<p>Pelayar menghalang laman ini daripada dipaparkan kerana ia mempunyai kandungan yang tidak dibenarkan oleh polisi keselamatan.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Ralat Kandungan Rosak">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Halaman yang anda cuba lihat tidak dapat dipapar kerana disyaki ada ralat dalam transmisi data.</p><ul><li>Sila hubungi pemilik laman web ini untuk memaklumkan  masalah ini.</li></ul>">
+
+<!ENTITY remoteXUL.title "Capaian jauh XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Sila hubungi pemilik laman web dan memaklumkan masalah ini.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Sambungan internet anda tidak selamat">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> menggunakan teknologi keselamatan yang sudah usang dan terdedah kepada serangan. Penyerang boleh mendedahkan maklumat yang anda fikir selamat. Pentadbir laman web perlu membaik pulih pelayan terlebih dulu sebelum anda boleh melawat laman ini. </p><p> Kod ralat: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "ကွန်ယက်ချိတ်ဆက်မှုအကြောင်း">
+<!ENTITY aboutNetworking.warning               "ဒီဟာသည် လုံးဝ စမ်းသပ်ဆဲဖြစ်ပါသည်။ အုပ်ချုပ်သူ၏ ထိန်းကွပ်မှုမပါပဲ အသုံးမပြုပါနှင့်။">
+<!ENTITY aboutNetworking.showNextTime          "ယခု သတိပေးချက်အား နောက်တစ်ခါတွင်ပါ">
+<!ENTITY aboutNetworking.ok                    "ကောင်းပြီ">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "ပြန်စ">
+<!ENTITY aboutNetworking.autoRefresh           "အလိုအလျောက် 3 စက္ကန့်တစ်ခါ ပြန်စပါ">
+<!ENTITY aboutNetworking.hostname              "လက်ခံအမည်">
+<!ENTITY aboutNetworking.port                  "ပို့နံပါတ်">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "ဖွင့်ထားသည်">
+<!ENTITY aboutNetworking.idle                  "အားနေသည်">
+<!ENTITY aboutNetworking.host                  "လက်ခံအမည်">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "ပို့ပြီး">
+<!ENTITY aboutNetworking.received              "လက်ခံပြီး">
+<!ENTITY aboutNetworking.family                "မိသားစု">
+<!ENTITY aboutNetworking.addresses             "လိပ်စာများ">
+<!ENTITY aboutNetworking.expires               "သက်တမ်းကုန်ချိန် (စက္ကန့်များ)">
+<!ENTITY aboutNetworking.messagesSent          "စာတိုပို့ပြီး">
+<!ENTITY aboutNetworking.messagesReceived      "စာတိုလက်ခံရရှိပြီး">
+<!ENTITY aboutNetworking.bytesSent             "ပို့ထားပြီးသော ဘိုက်များ">
+<!ENTITY aboutNetworking.bytesReceived         "ရရှိပြီးသော ဘိုက်များ">
+<!ENTITY aboutNetworking.logging               "ခြေရာမှတ်တမ်းများ">
+<!ENTITY aboutNetworking.logTutorial           "<a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP ခြေရာမှတ်တမ်း</a> အား ယခု တူးလ်ကို သုံးရန်လေ့လာပါ">
+<!ENTITY aboutNetworking.currentLogFile        "လက်ရှိ ခြေရာခံဖိုင် -">
+<!ENTITY aboutNetworking.currentLogModules     "လက်ရှိခြေရာခံနေသော အစိတ်အပိုင်းများ -">
+<!ENTITY aboutNetworking.setLogFile            "ခြေရာခံဖိုင်သတ်မှတ်မည်">
+<!ENTITY aboutNetworking.setLogModules         "အစိတ်အပိုင်များအား စတင်ခြေရာခံမည်">
+<!ENTITY aboutNetworking.startLogging          "ခြေရာခံခြင်းစပါ">
+<!ENTITY aboutNetworking.stopLogging           "ခြေရာခံခြင်းရပ်ပါ">
+<!ENTITY aboutNetworking.dnsLookup             "DNS ကြည့်">
+<!ENTITY aboutNetworking.dnsLookupButton       "ဖြေရှင်းပါ">
+<!ENTITY aboutNetworking.dnsDomain             "ဒိုမိန်း">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "อัปเดต &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; กำลังทำงานออฟไลน์">
+<!ENTITY  offline.description             "&brandShortName; จำเป็นต้องออนไลน์เพื่อดูว่ามีอัปเดตที่ใช้งานได้สำหรับส่วนเสริมของคุณหรือไม่ เพื่อทำให้เข้ากันได้กับรุ่นนี้">
+<!ENTITY  offline.toggleOffline.label     "ออนไลน์ตอนนี้">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "ส่วนเสริมที่เข้ากันไม่ได้">
+<!ENTITY  mismatch.top.label              "ส่วนเสริมดังต่อไปนี้เข้ากันไม่ได้กับ &brandShortName; รุ่นนี้และถูกปิดใช้งาน:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; สามารถตรวจสอบว่าส่วนเสริมเหล่านี้มีรุ่นที่เข้ากันได้หรือไม่">
+
+<!ENTITY  checking.wizard.title           "กำลังตรวจสอบส่วนเสริมที่เข้ากันได้">
+<!ENTITY  checking.top.label              "กำลังตรวจสอบการอัปเดตสำหรับส่วนเสริมที่เข้ากันไม่ได้ของคุณ…">
+<!ENTITY  checking.status                 "อาจใช้เวลาสักครู่…">
+
+<!ENTITY  found.wizard.title               "พบส่วนเสริมที่เข้ากันได้">
+<!ENTITY  found.top.label                 "เลือกส่วนเสริมที่คุณต้องการติดตั้ง:">
+<!ENTITY  found.disabledXPinstall.label   "ไม่สามารถติดตั้งการอัปเดตเหล่านี้เนื่องจากการติดตั้งซอฟต์แวร์ถูกปิดใช้งานอยู่ในขณะนี้ คุณสามารถเปลี่ยนการตั้งค่านี้ได้ด้านล่าง">
+<!ENTITY  found.enableXPInstall.label     "อนุญาตให้เว็บไซต์ติดตั้งซอฟต์แวร์">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "ติดตั้งส่วนเสริมที่เข้ากันได้">
+<!ENTITY  installing.top.label            "กำลังดาวน์โหลดและติดตั้งการอัปเดตให้กับส่วนเสริมของคุณ…">
+
+<!ENTITY  noupdates.wizard.title          "ไม่พบส่วนเสริมที่เข้ากันได้">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; ไม่สามารถค้นหาการอัปเดตสำหรับส่วนเสริมที่เข้ากันไม่ได้ของคุณ">
+<!ENTITY  noupdates.error.desc            "เกิดปัญหาบางอย่างขณะกำลังพยายามค้นหาการอัปเดต">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; จะตรวจสอบเป็นระยะและแจ้งให้คุณทราบเมื่อพบการอัปเดตที่เข้ากันได้สำหรับส่วนเสริมเหล่านี้">
+
+<!ENTITY  finished.wizard.title           "ติดตั้งส่วนเสริมที่เข้ากันได้แล้ว">
+<!ENTITY  finished.top.label              "&brandShortName; ได้ติดตั้งการอัปเดตให้กับส่วนเสริมของคุณ">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; สามารถตรวจสอบเป็นระยะและแจ้งให้คุณทราบเมื่อพบการอัปเดตสำหรับส่วนเสริม">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; จะตรวจสอบเป็นระยะและแจ้งให้คุณทราบเมื่อพบการอัปเดตสำหรับส่วนเสริม">
+
+<!ENTITY  adminDisabled.wizard.title      "ไม่สามารถตรวจสอบการอัปเดต">
+<!ENTITY  adminDisabled.warning.label     "ไม่สามารถตรวจสอบการอัปเดตสำหรับส่วนเสริมที่เข้ากันไม่ได้ได้เนื่องจากการติดตั้งซอฟต์แวร์สำหรับ &brandShortName; ถูกปิดใช้งาน โปรดติดต่อผู้ดูแลระบบของคุณเพื่อขอรับความช่วยเหลือ">
+
+<!ENTITY  versioninfo.wizard.title        "กำลังตรวจสอบความเข้ากันได้ของส่วนเสริม">
+<!ENTITY  versioninfo.top.label           "กำลังตรวจสอบความเข้ากันได้ของส่วนเสริมของคุณกับ &brandShortName; รุ่นนี้">
+<!ENTITY  versioninfo.waiting             "อาจใช้เวลาสักครู่…">
+
+<!ENTITY  installerrors.wizard.title      "เกิดปัญหาในการติดตั้งการอัปเดต">
+<!ENTITY  installerrors.intro.label       "&brandShortName; พบปัญหาขณะกำลังอัปเดตส่วนเสริมบางส่วนของคุณ">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "คลิก เสร็จสิ้น เพื่อเริ่มการทำงานของ &brandShortName;">
+<!ENTITY  clickFinish.labelMac            "คลิก เสร็จสิ้น เพื่อเริ่มการทำงานของ &brandShortName;">
+<!ENTITY  enableChecking.label            "อนุญาตให้ &brandShortName; ตรวจสอบการอัปเดต">

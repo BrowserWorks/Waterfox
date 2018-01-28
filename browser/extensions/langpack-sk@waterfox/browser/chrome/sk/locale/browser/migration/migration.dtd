@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Sprievodca importom">
+
+<!ENTITY importFrom.label               "Importovať nastavenia, záložky, históriu, heslá a ostatné údaje z:">
+<!ENTITY importFromUnix.label           "Importovať nastavenia, záložky, históriu, heslá a ostatné údaje z:">
+<!ENTITY importFromBookmarks.label      "Importovať záložky z:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Nič neimportovať">
+<!ENTITY importFromNothing.accesskey    "r">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "F">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Nebol nájdený žiadny program, ktorý by obsahoval záložky, históriu alebo uložené heslá.">
+
+<!ENTITY importSource.title             "Import nastavení a údajov">
+<!ENTITY importItems.title              "Položky na import">
+<!ENTITY importItems.label              "Vyberte, ktoré položky chcete importovať:">
+
+<!ENTITY migrating.title                "Importuje sa…">
+<!ENTITY migrating.label                "Práve sa importujú tieto položky…">
+
+<!ENTITY selectProfile.title            "Výber profilu">
+<!ENTITY selectProfile.label            "Importovať možno tieto profily:">
+
+<!ENTITY done.title                     "Import dokončený">
+<!ENTITY done.label                     "Úspešne boli importované tieto položky:">
+
+<!ENTITY closeSourceBrowser.label       "Pred pokračovaním sa uistite, že zvolený prehliadač nie je spustený.">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Eklentiyi yükle">
+<!ENTITY intro           "Bilgisayarınızdaki başka bir program &brandShortName; uygulamasını aşağıdaki eklentiyle değiştirmek istiyor:">
+<!ENTITY warning         "Sadece güvendiğiniz eklenti yazarlarının eklentilerini kurun.">
+<!ENTITY allow           "Bu kuruluma izin ver">
+<!ENTITY later           "İstediğiniz zaman Eklenti Yöneticisi'ne girerek fikrinizi değiştirebilirsiniz.">
+<!ENTITY continue        "Devam et">
+<!ENTITY restartMessage  "Eklenti kurulumunun tamamlanması için &brandShortName; yeniden başlatılmalıdır.">
+<!ENTITY restartButton   "&brandShortName; yeniden başlasın">
+<!ENTITY cancelButton    "Vazgeç">

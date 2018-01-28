@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "¡Sacáime d'equí!">
+<!ENTITY safeb.palm.decline.label "Inorar esta alvertencia">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Esti nun ye un sitiu fraudulentu…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "f">
+<!ENTITY safeb.palm.reportPage.label "¿Por qué se bloquió esta páxina?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Informóse de páxina atacante!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Esta páxina web en <span id='malware_sitename'/> calificóse como una páxina atacante y bloquióse siguiendo les tos preferencies de seguridá.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Les páxines atacantes, intenten instalar programes pa robar información, usar el to equipu pa atacar a otros, o frañar el to sistema.</p><p>Dalgunes páxines atacantes distribúin intencionadamente software dañible, y actúen ensin el conocimientu o permisu de los propietarios.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "¡Informóse de sitiu de software non queríu!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Informóse d'esta páxina web en <span id='unwanted_sitename'/> como un sitiu fraudulentu y bloquióse basándose nes tos preferencies de seguranza.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Les páxines de software indeseables tenten d'instalar software que pue ser fraudulentu y afeutar al to sistema de formes inesperaes.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "¡Sitiu fraudulentu!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Informóse d'esta páxina web en <span id='phishing_sitename'/> como un sitiu fraudulentu y bloquióse basándose nes tos preferencies de seguranza.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Los sitios fraudulentos tán diseñaos pa engañifate y facer coses peligroses, como instalar software, o revelar información personal, como contraseñes, númberos de teléfonu o tarxetes de creitu.</p><p>Ingresando cualquier información nesta páxina web pue resultar en robu d'identidá o otru fraude.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

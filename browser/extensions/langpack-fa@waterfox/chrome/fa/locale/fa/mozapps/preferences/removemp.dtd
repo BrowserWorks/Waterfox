@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "حذف گذرواژهٔ اصلی">
+<!ENTITY removeInfo.label                  "برای پیش‌روی باید گذرواژهٔ فعلی خود را وارد کنید:">
+<!ENTITY removeWarning1.label              "گذرواژهٔ اصلی برای محافظت از اطلاعات حساسی مانند گذرواژه‌های وب‌گاه‌ها تنظیم شده است.">
+<!ENTITY removeWarning2.label              "اگر گذرواژهٔ اصلی را تنظیم نکنید، اطلاعات حساس شما در صورتی که رایانه‌تان مورد نفوذ واقع شود محافظت نخواهد گردید.">
+<!ENTITY setPassword.oldPassword.label     "گذرواژهٔ فعلی:">
+

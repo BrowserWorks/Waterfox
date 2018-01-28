@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Εύρεση της επόμενης εμφάνισης της φράσης">
+<!ENTITY previous.tooltip "Εύρεση της προηγούμενης εμφάνισης της φράσης">
+<!ENTITY findCloseButton.tooltip "Κλείσιμο μπάρας εύρεσης">
+<!ENTITY highlightAll.label "Επισήμανση όλων">
+<!ENTITY highlightAll.accesskey "λ">
+<!ENTITY highlightAll.tooltiptext "Επισήμανση όλων των εμφανίσεων της φράσης">
+<!ENTITY caseSensitive.label "Συμφωνία πεζών-κεφαλαίων">
+<!ENTITY caseSensitive.accesskey "φ">
+<!ENTITY caseSensitive.tooltiptext "Εύρεση με συμφωνία πεζών-κεφαλαίων">
+<!ENTITY entireWord.label "Ολόκληρες λέξεις">
+<!ENTITY entireWord.accesskey "w">
+<!ENTITY entireWord.tooltiptext "Αναζήτηση μόνο ολόκληρων λέξεων">

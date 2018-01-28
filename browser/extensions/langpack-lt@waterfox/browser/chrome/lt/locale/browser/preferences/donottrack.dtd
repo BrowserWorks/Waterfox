@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Do Not Track">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Visada naudoti „Do Not Track“">
+<!ENTITY doNotTrackCheckbox2.accesskey "V">
+
+<!ENTITY doNotTrackTPInfo.description "„&brandShortName;“ svetainėms praneš, kad nenorite būti sekami, kuomet yra įjungta apsauga nuo stebėjimo.">
+<!ENTITY doNotTrackLearnMore.label    "Sužinoti daugiau">

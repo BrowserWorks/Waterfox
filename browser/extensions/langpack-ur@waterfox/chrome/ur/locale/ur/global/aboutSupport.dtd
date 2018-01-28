@@ -1,0 +1,178 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "ازالہ کاری معلومات">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "اس صفحے کو آپ ایک مسئلہ کو حل کرنے کی کوشش کر رہے ہیں جب مفید ہو سکتا ہے کہ تکنیکی معلومات پر مشتمل ہے. آپ &brandShortName;,  بارے میں عمومی سوالات کے جوابات کے لئے تلاش کر رہے ہیں تو ؛، ہمارے <a id='supportLink'> حمایت کی ویب سائٹ کو چیک کریں</a>.">
+
+<!ENTITY aboutSupport.crashes.title "کریش رپورٹیں">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "شناخت رپورٹ کریں">
+<!ENTITY aboutSupport.crashes.sendDate "ارسال کردہ">
+<!ENTITY aboutSupport.crashes.allReports "تمام کریش رپورٹیں">
+<!ENTITY aboutSupport.crashes.noConfig "یہ ایپلی کیشن کریش رپورٹیں دکھانے کے لیے تشکیل کردہ نہیں ہے۔">
+
+<!ENTITY aboutSupport.extensionsTitle "توسیعات">
+<!ENTITY aboutSupport.extensionName "نام">
+<!ENTITY aboutSupport.extensionEnabled "اہل بنایا گیا">
+<!ENTITY aboutSupport.extensionVersion "ورژن">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "تجرباتی فیچر">
+<!ENTITY aboutSupport.experimentName "نام">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "تصریح">
+<!ENTITY aboutSupport.experimentActive "فعال">
+<!ENTITY aboutSupport.experimentEndDate "تاریخ اختتام">
+<!ENTITY aboutSupport.experimentHomepage "ابتدائی صفحہ">
+<!ENTITY aboutSupport.experimentBranch "شاخ">
+
+<!ENTITY aboutSupport.appBasicsTitle "ایپلی کیشن BASIC">
+<!ENTITY aboutSupport.appBasicsName "نام">
+<!ENTITY aboutSupport.appBasicsVersion "ورژن">
+<!ENTITY aboutSupport.appBasicsBuildID "بلڈ-آی ڈی">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "چینل کی تازہ کاری کریں">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "سابقات تازہ کریں">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "تبدیلیوں کی تاریخ دکھائیں">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "پروفائل ڈائریکٹری">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "پروفائل فولڈر">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "چالو پلگ ان">
+<!ENTITY aboutSupport.appBasicsBuildConfig "بلڈ تشکیل">
+<!ENTITY aboutSupport.appBasicsUserAgent "صارف ایجنٹ">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse " میموری استعمال کریں">
+<!ENTITY aboutSupport.appBasicsPerformance "کارکردگی">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "رجسٹر شدہ خدمت کے کارکنان">
+
+<!ENTITY aboutSupport.appBasicsProfiles "پروفا ئلز">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "ملٹی عمل دریچہ">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "محفوظ موڈ">
+
+<!ENTITY aboutSupport.showDir.label "ڈائریکٹری کھولیں">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "ڈھونڈ کار میں دکھائیں">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "پوشہ کھولیں">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "اہم ترمیمی ترجیحات">
+<!ENTITY aboutSupport.modifiedPrefsName "نام">
+<!ENTITY aboutSupport.modifiedPrefsValue "قدر">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js ترجیحات">
+<!ENTITY aboutSupport.userJSDescription "آپ کے پروفائل میں ایک<a id='prefs-user-js-link'> user.js مسل</a> ہے، جس میں وہ ترجیحات شامپ ہیں جو &brandShortName; نے نہیں بنائیں تھیں۔">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "اہم ترمیمی ترجیحات">
+<!ENTITY aboutSupport.lockedPrefsName "نام">
+<!ENTITY aboutSupport.lockedPrefsValue "قدر">
+
+<!ENTITY aboutSupport.graphicsTitle "گرافکس">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "مقامات ڈیٹا بیس">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "تکمیلیت">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "تکمیلیت کی توثیق کریں">
+
+<!ENTITY aboutSupport.jsTitle "جاوا سکرپٹ">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "رسائی پزیری">
+<!ENTITY aboutSupport.a11yActivated "عمل میں لائیں">
+<!ENTITY aboutSupport.a11yForceDisabled "رسائی پزیری روکیں">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "لائبریری ورژن">
+
+<!ENTITY aboutSupport.installationHistoryTitle "انسٹا لیشن سابقات">
+<!ENTITY aboutSupport.updateHistoryTitle "سابقات تازہ کریں">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "متن کو تختہ تراشہ پر نقل کریں">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "تختہ تراشہ پر خام کوائف نقل کریں">
+
+<!ENTITY aboutSupport.sandboxTitle "سینڈ باکس">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "چند سیکنڈ پہلے">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "محفوظ موڈ آزمائیں">
+<!ENTITY aboutSupport.restartInSafeMode.label "ایڈز آن نا اہل کر کے دوبارہ شروع کریں...">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "فیچر">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "تشخیصیات">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "ناکامی لاگ">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "فیصلہ لاگ">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "حادثے گارڈ معذور خصوصیات">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "متبادل راستے">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">

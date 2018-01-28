@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Αποτροπή καταγραφής (Do Not Track)">
+<!ENTITY window.width                 "50em">
+<!ENTITY window.height                "10em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Πάντα εφαρμογή της αποτροπής καταγραφής">
+<!ENTITY doNotTrackCheckbox2.accesskey "Π">
+
+<!ENTITY doNotTrackTPInfo.description "Το &brandShortName; θα στέλνει ένδειξη ότι δεν επιθυμείτε να καταγράφεστε όταν η προστασία από παρακολούθηση είναι ενεργή.">
+<!ENTITY doNotTrackLearnMore.label    "Μάθετε περισσότερα">

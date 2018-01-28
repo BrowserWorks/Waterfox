@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Seadmehaldur">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Turvamoodulid ja -seadmed">
+<!ENTITY devmgr.details.title                   "Üksikasjad">
+<!ENTITY devmgr.details.title2                  "Väärtus">
+
+<!ENTITY devmgr.button.login.label              "Logi sisse">
+<!ENTITY devmgr.button.login.accesskey          "i">
+<!ENTITY devmgr.button.logout.label             "Logi välja">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "Muuda parooli">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "Laadi">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Eemalda">
+<!ENTITY devmgr.button.unload.accesskey         "E">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Sisesta lisatava mooduli teave.">
+<!ENTITY loaddevice.modname                     "Mooduli nimi:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Uus PKCS#11 moodul">
+<!ENTITY loaddevice.filename                    "Mooduli failinimi:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Lehitse...">
+<!ENTITY loaddevice.browse.accesskey            "L">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 seadme draiveri laadimine">

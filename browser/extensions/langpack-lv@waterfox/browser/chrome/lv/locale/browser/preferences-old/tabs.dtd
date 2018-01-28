@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab slēdzas starp cilnēm to izmantošanas secībā">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Vērt jaunus logus jaunās cilnēs">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Brīdināt, pirms aizvērt vairākas cilnes">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Brīdināt, kad vairāku ciļņu atvēršana varētu sabremzēt &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Kad es atveru saiti jaunā cilnē, pārslēgties uz šo cilni">
+<!ENTITY switchLinksToNewTabs.accesskey    "c">
+
+<!ENTITY showTabsInTaskbar.label          "Rādīt cilņu bildītes Windows palodzē">
+<!ENTITY showTabsInTaskbar.accesskey      "R">
+<!ENTITY tabsGroup.label          "Cilnes">

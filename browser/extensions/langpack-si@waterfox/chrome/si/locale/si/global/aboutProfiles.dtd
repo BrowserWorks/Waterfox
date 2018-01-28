@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.create "නව පැතිකඩක් තනන්න">
+<!ENTITY aboutProfiles.restart.title "යළි අරඹන්න">
+
+<!ENTITY aboutProfiles.restart.inSafeMode "Restart with Add-ons Disabled…">
+<!ENTITY aboutProfiles.restart.normal "Restart normally…">
+<!ENTITY aboutProfiles.subtitle "This page helps you to manage your profiles. Each profile is a separate world which contains separate history, bookmarks, settings and add-ons.">
+<!ENTITY aboutProfiles.title "About Profiles">

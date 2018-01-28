@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Lenn">
+<!ENTITY playButton.pauseLabel "Ehan">
+<!ENTITY muteButton.muteLabel "Mud">
+<!ENTITY muteButton.unmuteLabel "Heglev">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Mod skramm a-bezh">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Kuitaat ar mod skramm a-bezh">
+<!ENTITY castingButton.castingLabel "Skignañ war ar skramm">
+<!ENTITY closedCaption.off "Diweredekaet">
+
+<!ENTITY stats.media "Media">
+<!ENTITY stats.size "Ment">
+<!ENTITY stats.activity "Oberiantiz">
+<!ENTITY stats.activityPaused "Ehanet">
+<!ENTITY stats.activityPlaying "O lenn">
+<!ENTITY stats.activityEnded "Echu">
+<!ENTITY stats.activitySeeking "(o klask)">
+<!ENTITY stats.volume "Tregern">
+<!ENTITY stats.framesParsed "Anneuennoù dezrannet">
+<!ENTITY stats.framesDecoded "Anneuennoù ezvoneget">
+<!ENTITY stats.framesPresented "Anneuennoù kinniget">
+<!ENTITY stats.framesPainted "Anneuennoù treset">
+
+<!ENTITY error.aborted "Paouezet eo bet kargadur ar video.">
+<!ENTITY error.network "Paouezet eo bet lenn ar video en abeg d'ur fazi rouedad.">
+<!ENTITY error.decode "N'haller ket lenn ar video rak kontronet eo ar restr.">
+<!ENTITY error.srcNotSupported "N'eo ket skoret mentrezh ar video pe ar rizh MIME.">
+<!ENTITY error.noSource2 "N'eo ket bet kavet video ebet gant ur mentrezh pe ur rizh MIME skoret.">
+<!ENTITY error.generic "Paouezet eo bet lenn ar video en abeg d'ur fazi dianav.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 dre #2 tremenet">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

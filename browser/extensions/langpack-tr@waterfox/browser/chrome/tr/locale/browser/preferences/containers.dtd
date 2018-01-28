@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Yeni kapsayıcı ekle">
+<!ENTITY addButton.accesskey  "e">
+<!ENTITY preferencesButton.label "Tercihler">
+<!ENTITY removeButton.label   "Sil">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Geri dön">
+
+<!ENTITY window.title         "Yeni kapsayıcı ekle">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "İsim:">
+<!ENTITY name.accesskey       "İ">
+<!ENTITY name.placeholder     "Bir kapsayıcı ismi yazın">
+<!ENTITY icon.label           "Simge:">
+<!ENTITY icon.accesskey       "S">
+<!ENTITY color.label          "Renk:">
+<!ENTITY color.accesskey      "R">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Tamam">
+<!ENTITY button.ok.accesskey  "m">
+

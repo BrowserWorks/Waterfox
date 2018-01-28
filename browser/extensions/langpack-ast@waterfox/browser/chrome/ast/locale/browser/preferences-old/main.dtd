@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Aniciu">
+
+<!ENTITY startupPage.label         "Al aniciase &brandShortName;:">
+<!ENTITY startupPage.accesskey     "i">
+<!ENTITY startupUserHomePage.label "Amosar la to páxina d'aniciu">
+<!ENTITY startupBlankPage.label    "Amosar una páxina balera">
+
+<!ENTITY homepage.label            "Páxina d'aniciu:">
+<!ENTITY homepage.accesskey        "P">
+<!ENTITY useCurrentPage.label      "Usar páxina actual">
+<!ENTITY useCurrentPage.accesskey  "U">
+<!ENTITY useMultiple.label         "Usar páxines actuales">
+<!ENTITY chooseBookmark.label      "Usar marcador…">
+<!ENTITY chooseBookmark.accesskey  "m">
+<!ENTITY restoreDefault.label      "Reafitar valores">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "Descargues">
+
+<!ENTITY saveTo.label "Guardar ficheros en">
+<!ENTITY saveTo.accesskey "G">
+<!ENTITY chooseFolderWin.label        "Restolar…">
+<!ENTITY chooseFolderWin.accesskey    "l">
+<!ENTITY chooseFolderMac.label        "Escoyer…">
+<!ENTITY chooseFolderMac.accesskey    "e">
+
+<!ENTITY alwaysCheckDefault2.label        "Comprobar siempres si &brandShortName; ye'l to restolador por defeutu">
+<!ENTITY alwaysCheckDefault2.accesskey    "o">
+<!ENTITY setAsMyDefaultBrowser2.label     "Predeterminar">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "d">
+<!ENTITY isDefault.label                  "&brandShortName; ye'l to restolador web predetermináu">
+<!ENTITY isNotDefault.label               "&brandShortName; nun ye'l to restolador web predetermináu">
+
+<!ENTITY separateProfileMode.label        "Permitir a &brandShortName; y Waterfox executase al empar">
+<!ENTITY useWaterfoxSync.label             "Conseyu: esto usa perfiles separtaos. Usa Sync pa compartir datos ente ellos.">
+<!ENTITY getStarted.label                 "Entama a usar Sync…">
+
+<!ENTITY e10sEnabled.label                "Habilitar el multiprocesu de &brandShortName;">
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+

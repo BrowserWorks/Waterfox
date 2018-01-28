@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Ardoer trevnad">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Molladoù ha trevnadoù diogelroez">
+<!ENTITY devmgr.details.title                   "Munudoù">
+<!ENTITY devmgr.details.title2                  "Gwerzh">
+
+<!ENTITY devmgr.button.login.label              "Kennaskañ">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Digennaskañ">
+<!ENTITY devmgr.button.logout.accesskey         "g">
+<!ENTITY devmgr.button.changepw.label           "Kemm ar ger-tremen">
+<!ENTITY devmgr.button.changepw.accesskey       "g">
+<!ENTITY devmgr.button.load.label               "Kargañ">
+<!ENTITY devmgr.button.load.accesskey           "r">
+<!ENTITY devmgr.button.unload.label             "Diskargañ">
+<!ENTITY devmgr.button.unload.accesskey         "s">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Roit ar stlennoù evit ar mollad a fell deoc'h ouzhpennañ.">
+<!ENTITY loaddevice.modname                     "Anv mollad :">
+<!ENTITY loaddevice.modname.accesskey           "m">
+<!ENTITY loaddevice.modname.default             "Mollad Nevez PKCS#11">
+<!ENTITY loaddevice.filename                    "Anv restr ar mollad :">
+<!ENTITY loaddevice.filename.accesskey          "r">
+<!ENTITY loaddevice.browse                      "Furchal…">
+<!ENTITY loaddevice.browse.accesskey            "r">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

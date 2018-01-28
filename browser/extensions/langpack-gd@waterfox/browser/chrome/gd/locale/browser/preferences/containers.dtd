@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Cuir soitheach ùr ris">
+<!ENTITY addButton.accesskey  "a">
+<!ENTITY preferencesButton.label "Roghainnean">
+<!ENTITY removeButton.label   "Thoir air falbh">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Air ais">
+
+<!ENTITY window.title         "Cuir soitheach ùr ris">
+<!ENTITY window.width         "50em">
+
+<!ENTITY name.label           "Ainm:">
+<!ENTITY name.accesskey       "n">
+<!ENTITY name.placeholder     "Cuir a-steach ainm dhan t-soitheach">
+<!ENTITY icon.label           "Ìomhaigheag:">
+<!ENTITY icon.accesskey       "i">
+<!ENTITY color.label          "Dath:">
+<!ENTITY color.accesskey      "h">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Deiseil">
+<!ENTITY button.ok.accesskey  "D">
+

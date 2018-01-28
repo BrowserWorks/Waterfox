@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Paieška">
+<!ENTITY findField.label "Ko ieškoti:">
+<!ENTITY findField.accesskey "š">
+<!ENTITY caseSensitiveCheckbox.label "Skirti didžiąsias ir mažąsias raides">
+<!ENTITY caseSensitiveCheckbox.accesskey "S">
+<!ENTITY wrapCheckbox.label "Priėjus pabaigą, tęsti paiešką nuo pradžios">
+<!ENTITY wrapCheckbox.accesskey "ė">
+<!ENTITY findButton.label "Tęsti paiešką">
+<!ENTITY findButton.accesskey "e">
+<!ENTITY cancelButton.label "Atsisakyti">
+<!ENTITY closeButton.label "Užverti">
+<!ENTITY up.label "pradžios">
+<!ENTITY up.accesskey "r">
+<!ENTITY down.label "pabaigos">
+<!ENTITY down.accesskey "b">
+<!ENTITY direction.label "Ieškoti link">

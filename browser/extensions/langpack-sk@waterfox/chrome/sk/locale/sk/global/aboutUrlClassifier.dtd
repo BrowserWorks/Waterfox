@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "Informácie o url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Poskytovateľ">
+<!ENTITY aboutUrlClassifier.provider                    "Poskytovateľ">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Čas poslednej aktualizácie">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Čas ďalšej aktualizácie">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Čas návratu">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Stav poslednej aktualizácie">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Aktualizovať">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Vyrovnávacia pamäť">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Obnoviť">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Vymazať">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Názov tabuľky">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Počet záporných položiek vo vyrovnávacej pamäti">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Počet kladných položiek vo vyrovnávacej pamäti">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Zobraziť položky">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Položky vo vyrovnávacej pamäti">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Prefix">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Záporná platnosť v medzipamäti">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Plný hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Kladná platnosť v medipamäti">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Ladenie">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Nastaviť moduly protokolu">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Nastaviť súbor protokolu">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Nastaviť protokol JS">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Moduly protokolu pre službu Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugModules                "Aktuálne moduly protokolu">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Protokol JS pre službu Safe Browsing">
+<!ENTITY aboutUrlClassifier.debugFile                   "Aktuálny súbor protokolu">

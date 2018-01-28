@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY advanced.tab "Mënjana &amp; Kryefaqe/Fundfaqe">
+<!ENTITY basic.tab "Formate &amp; Mundësi">
+<!ENTITY customPrompt.prompt "Jepni tekst tuajin vetjak për kryefaqe/fundfaqe">
+<!ENTITY customPrompt.title "Vetjake…">
+<!ENTITY formatGroup.label "Format">
+<!ENTITY headerFooter.label "Kryefaqe &amp; Fundfaqe">
+<!ENTITY hfBlank "--e zbrazët--">
+<!ENTITY hfCenter.label "Në Qendër:">
+<!ENTITY hfCustom "Vetjake…">
+<!ENTITY hfDateAndTime "Datë/Kohë">
+<!ENTITY hfLeft.label "Majtas:">
+<!ENTITY hfPage "Faqe #">
+<!ENTITY hfPageAndTotal "Faqja # nga #">
+<!ENTITY hfRight.label "Djathtas:">
+<!ENTITY hfTitle "Titull">
+<!ENTITY hfURL "URL">
+<!ENTITY landscape.label "Së gjeri">
+<!ENTITY landscape.accesskey "G">
+
+<!ENTITY marginBottom.label "Fund:">
+<!ENTITY marginBottom.accesskey "F">
+<!ENTITY marginGroup.label "Mënjana (#1)">
+<!ENTITY marginLeft.label "Majtas:">
+<!ENTITY marginLeft.accesskey "M">
+<!ENTITY marginRight.label "Djathtas:">
+<!ENTITY marginRight.accesskey "D">
+<!ENTITY marginTop.label "Krye:">
+<!ENTITY marginTop.accesskey "K">
+<!ENTITY marginUnits.inches "inç">
+<!ENTITY marginUnits.metric "milimetra">
+<!ENTITY optionsGroup.label "Mundësi">
+<!ENTITY orientation.label "Drejtim:">
+<!ENTITY portrait.label "Portret">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY printBG.label "Sfond Shtypjeje (ngjyra &amp; figura)">
+<!ENTITY printBG.accesskey   "S">
+<!ENTITY printSetup.title "Rregullime Faqeje">
+<!ENTITY scale.label "Shkallë:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent "&#037;">
+<!ENTITY shrinkToFit.label "Tkurre ta Nxërë Gjerësia e Faqes">
+<!ENTITY shrinkToFit.accesskey "T">
+<!ENTITY footerCenter.tip    "Fundfaqe në qendër">
+<!ENTITY footerLeft.tip      "Fundfaqe majtas">
+<!ENTITY headerCenter.tip    "Kryefaqe në qendër">
+<!ENTITY headerRight.tip     "Kryefaqe djathtas">
+<!ENTITY headerLeft.tip      "Kryefaqe majtas">
+<!ENTITY footerRight.tip     "Fundfaqe djathtas">

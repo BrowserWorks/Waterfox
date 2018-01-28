@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Абнаўленне &brandShortName;">
+
+<!ENTITY  offline.title                   "&brandShortName; працуе па-за сеткай">
+<!ENTITY  offline.description             "&brandShortName; мусіць увайсці ў сетку, каб пабачыць, ці існуюць абнаўленні вашых дадаткаў, якія зробяць іх сумяшчальнымі з гэтай версіяй.">
+<!ENTITY  offline.toggleOffline.label     "Увайсці ў сетку зараз.">
+<!ENTITY  offline.toggleOffline.accesskey "У">
+
+<!ENTITY  mismatch.win.title              "Несумяшчальныя дадаткі">
+<!ENTITY  mismatch.top.label              "Наступныя дадаткі не сумяшчальныя з гэтай версіяй &brandShortName;, таму яны забаронены:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; можа праверыць, ці існуюць сумяшчальныя версіі гэтых дадаткаў.">
+
+<!ENTITY  checking.wizard.title           "Праверка існавання сумяшчальных дадаткаў.">
+<!ENTITY  checking.top.label              "Праверка існавання абнаўленняў несумяшчальных дадаткаў…">
+<!ENTITY  checking.status                 "Магчыма, патрабуецца некалькі хвілінаў…">
+
+<!ENTITY  found.wizard.title               "Знойдзены сумяшчальныя дадаткі">
+<!ENTITY  found.top.label                 "Вылучыце дадаткі, якія вы хочаце ўсталяваць:">
+<!ENTITY  found.disabledXPinstall.label   "Гэтыя абнаўленні не могуць быць усталяваны, бо ўсталявання праграмнага забеспячэння зараз забаронена. Вы можаце змяніць гэтае наладжванне ўнізе.">
+<!ENTITY  found.enableXPInstall.label     "Дазволіць вэб-сайтам усталёўваць праграмнае забеспячэнне">
+<!ENTITY  found.enableXPInstall.accesskey "Д">
+
+<!ENTITY  installing.wizard.title         "Усталяванне сумяшчальных дадаткаў">
+<!ENTITY  installing.top.label            "Сцягванне і ўсталяванне абнаўленняў вашых дадаткаў…">
+
+<!ENTITY  noupdates.wizard.title          "Не знойдзены сумяшчальныя дадаткі">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; не здольны знайсці абнаўленні вашых несумяшчальных дадаткаў.">
+<!ENTITY  noupdates.error.desc            "Сутыкнуліся з асобнымі праблемамі падчас спробы знайсці абнаўленні.">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; будзе рабіць праверку час ад часу і паведаміць вам, калі сумяшчальныя версіі гэтых дадаткаў будуць знойдзены.">
+
+<!ENTITY  finished.wizard.title           "Сумяшчальныя дадаткі ўсталяваны">
+<!ENTITY  finished.top.label              "&brandShortName; усталяваў абнаўленні вашых дадаткаў.">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; будзе рабіць праверку час ад часу і паведаміць вам, калі абнаўленні дадаткаў будуць знойдзены.">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; будзе рабіць праверку час ад часу і паведаміць вам, калі абнаўленні дадаткаў будуць знойдзены.">
+
+<!ENTITY  adminDisabled.wizard.title      "Немагчыма праверыць існаванне абнаўленняў">
+<!ENTITY  adminDisabled.warning.label     "Немагчыма праверыць, ці існуюць абнаўленні несумяшчальных дадаткаў, бо ўсталяванне праграмнага забеспячэння для &brandShortName; забаронена. Звярніцеся да вашага сістэмнага спраўніка, каб атрымаць дапамогу.">
+
+<!ENTITY  versioninfo.wizard.title        "Праверка сумяшчальнасці дадаткаў">
+<!ENTITY  versioninfo.top.label           "Праверка сумяшчальнасці вашых дадаткаў з гэтай                                            версіяй &brandShortName;.">
+<!ENTITY  versioninfo.waiting             "Магчыма, будзе патрэбна некалькі хвілінаў…">
+
+<!ENTITY  installerrors.wizard.title      "Праблемы ў час усталявання абнаўленняў">
+<!ENTITY  installerrors.intro.label       "&brandShortName; сутыкнуўся з праблемамі, калі абнаўляў вашы дадаткі.">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "Пстрыкніце Скончыць, каб працягнуць запуск &brandShortName;.">
+<!ENTITY  clickFinish.labelMac            "Пстрыкніце Гатова, каб працягнуць запуск &brandShortName;.">
+<!ENTITY  enableChecking.label            "Дазволіць &brandShortName; правяраць, ці існуюць абнаўленні.">

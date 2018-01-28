@@ -1,0 +1,132 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+<!ENTITY  trackingProtectionLearnMore.label    "आओर जानू">
+
+
+
+<!ENTITY tracking.label                 "ट्रैकिंग">
+<!ENTITY trackingProtectionPBM5.label         "निज विंडो मे ट्रैकिंग सुरक्षा उपयोग करू">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "आओर जानू">
+<!ENTITY changeBlockList.label          "अवरोधित सूची बदलू">
+<!ENTITY changeBlockList.accesskey      "अ">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+
+
+<!ENTITY  history.label                 "इतिहास">
+
+<!ENTITY  locationBar.label             "स्थान पट्टी">
+
+<!ENTITY  locbar.suggest.label          "जखन स्थान पट्टीक प्रयोग कएल जाए रहल अछि, सलाह दिअ':">
+<!ENTITY  locbar.history.label          "इतिहास">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "पुस्तकचिह्न">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "टैब खोलू">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "डिफ़ॉल्ट खोज इंजिन द्वारा संबंधित खोज">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "खोज इंजिन सुझाव कलेल वरीयता बदलू...">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+
+<!ENTITY  acceptThirdParty.always.label   "हमेशा">
+<!ENTITY  acceptThirdParty.never.label    "कखनो नहि">
+<!ENTITY  acceptThirdParty.visited.label  "भ्रमण कएलसँ">
+
+<!ENTITY  keepUntil.label               "जारी राखू जखनतक:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "हुनकर मियाद पूर्ण होइछ">
+<!ENTITY  close.label                   "हम &brandShortName; बन्न करैत छी">
+
+<!ENTITY  cookieExceptions.label        "अपवाद...">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "कुकी देखाउ...">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; करताह:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "इतिहास याद राखू">
+<!ENTITY  historyHeader.dontremember.label "इतिहास  कहियो  याद नहि राखू">
+<!ENTITY  historyHeader.custom.label       "Use custom settings for history">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; अहाँक ब्राउजिंग, डाउनलोड, फार्म, आओर खोज इतिहास केँ याद राखताह आओर वेबसाइटसँ कुकीज जमा राखताह जखन अहाँ साइट पर जाइत छी.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "अहाँ चाह सकैत छी ">
+<!ENTITY  rememberActions.clearHistory.label  " अपन हालक इतिहास साफ कएनाइ ">
+<!ENTITY  rememberActions.middle.label        ", अथवा ">
+<!ENTITY  rememberActions.removeCookies.label "व्यक्तिगत कुकीज हटैनाइ">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; निज ब्राउजिंगक तरह सेटिंग प्रयोग करताह आओर अहाँक वेब ब्राउज़ करबाक दौरान कोनो इतिहास याद नहि रखताह.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "अहाँ ई कएनाइ चाह सकैत छी ">
+<!ENTITY  dontrememberActions.clearHistory.label "सभटा मोजुदा इतिहास साफ  करू ">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "हमेशा निज ब्राउजिंग विधिक उपयोग करू">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "हमर ब्राउजिंग आओर डाउनलोड इतिहास याद राखू">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "खोज आओर फार्म इतिहास याद राखू">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "इतिहास साफ करू जखन &brandShortName; बन्न होइछ">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "सेटिंग…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+
+
+
+
+
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.pre.label      "Accept third-party cookies:">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersEnabled.label        "Enable Container Tabs">
+<!ENTITY  browserContainersHeader.label         "Container Tabs">
+<!ENTITY  browserContainersLearnMore.label      "Learn more">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY  browserContainersSettings.label        "Settings…">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  doNotTrack.pre.label          "You can also ">
+<!ENTITY  doNotTrack.settings.label     "manage your Do Not Track settings">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionAlways.label       "Always">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
+<!ENTITY  trackingProtectionHeader.label       "Use Tracking Protection">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionNever.label        "Never">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionPrivate.label      "Only in private windows">

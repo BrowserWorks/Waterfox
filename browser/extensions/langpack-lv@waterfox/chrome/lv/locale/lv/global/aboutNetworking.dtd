@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Par tīklu">
+<!ENTITY aboutNetworking.warning               "Šis ir ļoti eksperimentāls. Nelietojiet šo bez pieredzes vai pieaugušo uzraudzības.">
+<!ENTITY aboutNetworking.showNextTime          "Rādīt šo paziņojumu nākamreiz">
+<!ENTITY aboutNetworking.ok                    "Labi">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Atjaunināt">
+<!ENTITY aboutNetworking.autoRefresh           "Automātiski atjaunināt katras 3 sekundes">
+<!ENTITY aboutNetworking.hostname              "Adrese">
+<!ENTITY aboutNetworking.port                  "Ports">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Aktīvs">
+<!ENTITY aboutNetworking.idle                  "Dīkstāvē">
+<!ENTITY aboutNetworking.host                  "Adrese">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Nosūtīts">
+<!ENTITY aboutNetworking.received              "Saņemts">
+<!ENTITY aboutNetworking.family                "Saime">
+<!ENTITY aboutNetworking.addresses             "Adreses">
+<!ENTITY aboutNetworking.expires               "Noilgums (sekundes)">
+<!ENTITY aboutNetworking.messagesSent          "Nosūtītie ziņojumi">
+<!ENTITY aboutNetworking.messagesReceived      "Saņemtie ziņojumi">
+<!ENTITY aboutNetworking.bytesSent             "Nosūtītie baiti">
+<!ENTITY aboutNetworking.bytesReceived         "Saņemtie baiti">
+<!ENTITY aboutNetworking.logging               "Reģistrēšana">
+<!ENTITY aboutNetworking.logTutorial           "Apskatiet <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP reģistrēšana</a>, lai iegūtu papildu informāciju, kā lietot šo rīku.">
+<!ENTITY aboutNetworking.currentLogFile        "Pašreizējais reģistrācijas fails:">
+<!ENTITY aboutNetworking.currentLogModules     "Pašreizējais reģistrācijas modulis:">
+<!ENTITY aboutNetworking.setLogFile            "Iestatīt reģistrēšanas failu">
+<!ENTITY aboutNetworking.setLogModules         "Iestatīt reģistrēšanas moduli">
+<!ENTITY aboutNetworking.startLogging          "Sākt reģistrēšanu">
+<!ENTITY aboutNetworking.stopLogging           "Pārtraukt reģistrēšanu">
+<!ENTITY aboutNetworking.dnsLookup             "DNS uzmeklēšana">
+<!ENTITY aboutNetworking.dnsLookupButton       "Atrast">
+<!ENTITY aboutNetworking.dnsDomain             "Domēns">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+<!ENTITY aboutNetworking.rcwn                  "RCWN statistika">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN statuss">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Kešatmiņas uzvaru skaits">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Tīkla uzvaru skaits">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Kopējais tīkla pieprasījumu skaits">
+
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">

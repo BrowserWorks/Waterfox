@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Spreminjanje glavnega gesla">
+<!ENTITY setPassword.tokenName.label "Varnostna naprava">
+<!ENTITY setPassword.oldPassword.label "Trenutno geslo:">
+<!ENTITY setPassword.newPassword.label "Novo geslo:">
+<!ENTITY setPassword.reenterPassword.label "Novo geslo (ponovno):">
+<!ENTITY setPassword.meter.label "Merilnik kakovosti gesla">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Ponastavi">
+<!ENTITY resetPassword.title  "Ponastavitev glavnega gesla">
+<!ENTITY resetPassword.text  "Če ponastavite glavno geslo, bodo vsi vaši osebni podatki pozabljeni (shranjena spletna in e-poštna gesla, podatki o obrazcih, osebna digitalna potrdila in zasebni ključi). Ste prepričani, da želite ponastaviti svoje glavno geslo?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Prenos digitalnega potrdila">
+<!ENTITY downloadCert.message1 "Ali zaupate novemu overitelju?">
+<!ENTITY downloadCert.trustSSL "Overitelju zaupaj identifikacijo spletnih strani.">
+<!ENTITY downloadCert.trustEmail "Overitelju zaupaj identifikacijo e-poštnih uporabnikov.">
+<!ENTITY downloadCert.trustObjSign "Overitelju zaupaj identifikacijo razvijalcev programske opreme.">
+<!ENTITY downloadCert.message3 "Preden overitelju zaupate katerokoli opravilo, si oglejte njegovo digitalno potrdilo in politiko (če sta na voljo).">
+<!ENTITY downloadCert.viewCert.label "Ogled">
+<!ENTITY downloadCert.viewCert.text "Preveri digitalno potrdilo overitelja">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Zahteva po identifikaciji uporabnika">
+<!ENTITY clientAuthAsk.message1 "Ta stran zahteva, da se predstavite z digitalnim potrdilom:">
+<!ENTITY clientAuthAsk.message2 "Izberite digitalno potrdilo, ki vas predstavlja:">
+<!ENTITY clientAuthAsk.message3 "Podrobnosti o izbranem digitalnem potrdilu:">
+
+<!ENTITY pkcs12.setpassword.title  "Izbira gesla za varnostne kopije digitalnih potrdil">
+<!ENTITY pkcs12.setpassword.message  "Tukaj nastavite geslo za zaščito datoteke z varnostno kopijo digitalnega potrdila, ki jo pravkar ustvarjate. Preden nadaljujete, morate nastaviti geslo.">
+<!ENTITY pkcs12.setpassword.label1 "Geslo varnostne kopije digitalnega potrdila:">
+<!ENTITY pkcs12.setpassword.label2 "Geslo varnostne kopije digitalnega potrdila (ponovno):">
+<!ENTITY pkcs12.setpassword.reminder "Pomembno: Če pozabite geslo varnostne kopije digitalnega potrdila, je pozneje ne boste mogli obnoviti. Geslo shranite na varnem mestu.">
+
+<!ENTITY chooseToken.title  "Pogovorno okno izbiranja figure">
+<!ENTITY chooseToken.message1 "Prosim, izberite figuro.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Ustvarjam zasebni ključ">
+<!ENTITY createCertInfo.msg1 "Ustvarjanje ključa poteka ... To lahko traja nekaj minut ...">
+<!ENTITY createCertInfo.msg2 "Prosim, počakajte ...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Prijava v zaščiteno figuro">
+<!ENTITY protectedAuth.msg "Prosim, prijavite se v figuro. Metoda overovitve je odvisna od vrste vaše figure.">
+<!ENTITY protectedAuth.tokenName.label "Figura:">

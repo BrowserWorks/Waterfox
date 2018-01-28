@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "شما در حال حاضر در پنجره‌ی ناشناس قرار ندارید.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "یک پنجره‌ی ناشناس باز کن">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "ن">
+
+<!ENTITY privateBrowsing.title                           "مرور ناشناس">
+<!ENTITY privateBrowsing.title.tracking                  "مرور ناشناس با امکان محافظت در برابر ردگیری">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "هنگامی که شما در یک پنجره ناشناس شروع به مرور وب می‌کنید، فایرفاکس موارد زیر را ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ذخیره نمی‌کند">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "صفحات بازدید شده">
+<!ENTITY aboutPrivateBrowsing.info.searches              "جست‌وجوها">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "کوکی‌ها">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "پرونده‌های موقتی">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "فایرفاکس ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "اطلاعات زیر را ذخیره خواهد کرد">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "بارگیری‌ها">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "نشانک‌ها">
+<!ENTITY aboutPrivateBrowsing.note.before                "مرور ناشناس ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "شما را در اینترنت ناشناس نمی‌کند.">
+<!ENTITY aboutPrivateBrowsing.note.after                 " کارفرما یا ارائه‌دهنده خدمات اینترنتی شما همچنان می‌تواند از صفحاتی که بازدید می‌کنید اطلاع داشته باشد.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "در مورد‌ آن بیشتر بدانید">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "مرور خصوصی">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "محافظت در برابر ردگیری">
+<!ENTITY trackingProtection.description2                 "بعضی از سایت‌ها از ردیاب‌هایی برای پایش فعالیت‌های اینترنتی شما استفاده می‌کنند. با استفاده از «محافظت در برابر ردیابی» فایرفاکس تعداد زیادی از ردیاب‌هایی که اطلاعاتِ مرور شما را جمع‌آوری می‌کنند را مسدود می‌کند.">
+<!ENTITY trackingProtection.startTour1                   "ببینید چگونه کار می‌کند">

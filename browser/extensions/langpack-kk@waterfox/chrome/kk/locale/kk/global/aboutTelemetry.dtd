@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Телеметрия мәліметтері">
+
+<!ENTITY aboutTelemetry.pingDataSource "Пинг деректерінің көзі:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Ағымдағы пинг деректері">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Архивтелген пинг деректері">
+
+<!ENTITY aboutTelemetry.raw "Шикі JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Ішкі сессия деректерін көрсету">
+
+<!ENTITY aboutTelemetry.choosePing "Пингті таңдау:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Жаңалау пинг">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ескілеу пинг &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Апта">
+
+<!ENTITY aboutTelemetry.archivePingType "Пинг түрі">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Пинг">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Бүгін">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Кеше">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Ескілеу">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Жалпы деректер">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Қоршам деректері">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Телеметрия логы">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Баяу SQL сұраныстары">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Браузердің тоқталуы">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Ағын тоқталуы">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Түсірілген стектер">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Скалярлы шамалар">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Кілт бойынша скалярлы шамалар">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Гистограммалар">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Пернелер гистограммалары">
+
+<!ENTITY aboutTelemetry.eventsSection "  Оқиғалар">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Қарапайым өлшемдер">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Қосымша ақпараты">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Кеш жазулар">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Сессия ақпараты">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  Ескерту: Баяу SQL-ді жөндеу режимі іске қосулы тұр. Толық SQL жолдары төмен көрсетілуі мүмкін, бірақ олар телеметрияға жіберілмейді.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Стектер үшін функциялар аттарын алу ">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Шикі стек деректерін көрсету">
+
+<!ENTITY aboutTelemetry.filterText "  Сүзгі (жолдар не /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Жүктемесі">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Awukho kwifestile yangasese okwangoku.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Vula ifestile yangasese">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "i">
+
+<!ENTITY privateBrowsing.title                           "Ukubhrawuza Kwangasese">
+<!ENTITY privateBrowsing.title.tracking                  "UBhrawuzo Lwabucala olunoKhuseleko Lokutreka">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Xa ubhrawza kwiFestile yaNgasese, uWaterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "akagcini">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "amaphepha atyelelweyo">
+<!ENTITY aboutPrivateBrowsing.info.searches              "ukhangelo">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "iikuki">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "iifayile zexeshana">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "I-Waterfox">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "iya kugcina">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          "izinto zakho:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "ozidawnlowudileyo">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "iibhukhmakhi">
+<!ENTITY aboutPrivateBrowsing.note.before                "Ukubhrawuza Kwangasese">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "akukwenzi ungaziwa igama lakho">
+<!ENTITY aboutPrivateBrowsing.note.after                 "kwi-intanethi. Umqeshi wakho okanye umnikezeli wakho we-Intanethi useza kuwazi amaphepha owatyelelayo.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Funda okungakumbi">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Ukubhrawuza Kwangasese">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Itreka Ukhuseleko">
+<!ENTITY trackingProtection.description2                 "Ezinye iiwebhsayithi zisebenzisa iitreka ezinokubek' esweni into oyenzayo kuyo yonke i-intanethi. Ngokhuseleko lokuTreka iWaterfox iya kubloka iitreka ezininzi ezinokuqokelelayo inkcazelo ngendlela obrawuza ngayo.">
+<!ENTITY trackingProtection.startTour1                   "Bona indlela okusebenza ngayo oku">

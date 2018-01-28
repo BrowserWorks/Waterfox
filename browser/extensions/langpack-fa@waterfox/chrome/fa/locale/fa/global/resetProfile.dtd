@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "بازآوری &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "برای حل مشکلات و بازیابی کارایی، فایرفاکس را نوسازی کنید.">
+<!ENTITY refreshProfile.dialog.description2  "این کار باعث خواهد شد:">
+<!ENTITY refreshProfile.dialog.items.label1  "افزودنی‌ها و تنظیمات سفارشی شما حذف شوند">
+<!ENTITY refreshProfile.dialog.items.label2  "تنظیمات مرورگر شما به حالت پیش‌فرض برگردد">
+<!ENTITY refreshProfile.dialog.button.label  "بازآوری &brandShortName;">
+
+<!ENTITY refreshProfile.title                "&brandShortName; را تنظیم کنید">
+<!ENTITY refreshProfile.button.label         "بازآوری &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "تقریبا تمام است...">

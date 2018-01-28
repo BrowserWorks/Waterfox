@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "ဖွင့်ပါ">
+<!ENTITY playButton.pauseLabel "ခေတ္တရပ်တန့်ပါ">
+<!ENTITY muteButton.muteLabel "အသံပိတ်ထားပါ">
+<!ENTITY muteButton.unmuteLabel "အသံပြန်ဖွင့်ပါ">
+<!ENTITY fullscreenButton.enterfullscreenlabel "အပြည့်ကြည့်ရန်">
+<!ENTITY fullscreenButton.exitfullscreenlabel "အပြည့်ကြည့်ခြင်းမှ ထွက်ပါ">
+<!ENTITY castingButton.castingLabel "စကရင်ဆီသို့ ရွှေ့ပါ">
+<!ENTITY closedCaption.off "ပိတ်">
+
+<!ENTITY stats.media "မီဒီယာ">
+<!ENTITY stats.size "အရွယ်အ​စား">
+<!ENTITY stats.activity "လှုပ်ရှားမှု">
+<!ENTITY stats.activityPaused "ခေတ္တရပ်ထားသည်">
+<!ENTITY stats.activityPlaying "ဖွင့်နေသည်">
+<!ENTITY stats.activityEnded "ပြီးဆုံးပြီ">
+<!ENTITY stats.activitySeeking "(ရှာဖွေနေသည်)">
+<!ENTITY stats.volume "အသံအတိုးအကျယ်">
+<!ENTITY stats.framesParsed "Frames parsed">
+<!ENTITY stats.framesDecoded "Frames decoded">
+<!ENTITY stats.framesPresented "Frames presented">
+<!ENTITY stats.framesPainted "Frames painted">
+
+<!ENTITY error.aborted "ဗီဒီယို ဆွဲတင်ခြင်း ရပ်ဆိုင်းသွားသည်။">
+<!ENTITY error.network "ကွန်ရက်အမှား တစ်ခုကြောင့် ဗီဒီယို ပြန်ဖွင့်ခြင်း ရပ်တန့်သွားပါတယ်။">
+<!ENTITY error.decode "ဖိုင်ပျက်နေပါသောကြောင့် ဗီဒီယိုဖွင့်၍ မရနိုင်ပါ။">
+<!ENTITY error.srcNotSupported "ဗီဒီယို ဖောမက် သို့ MIME အမျိုးအစားကို အထောက်အပံ့ မပေးပါ။">
+<!ENTITY error.noSource2 "အထောက်အပံ့ပေးသော ဗီဒီယိုဖောမက်နဲ့ MIME အမျိုးအစားကို မတွေ့ပါ။">
+<!ENTITY error.generic "အမျိုးအမည်မသိသော အမှားတစ်ခုကြောင့် ဗီဒီယို ပြန်ဖွင့်ခြင်း ရပ်တန့်သွားပါတယ်။">
+
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+<!ENTITY scrubberScale.nameFormat "#1 of #2 elapsed">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

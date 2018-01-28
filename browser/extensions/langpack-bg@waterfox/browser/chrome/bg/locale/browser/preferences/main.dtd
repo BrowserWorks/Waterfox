@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Начална страница">
+
+<!ENTITY startupPage2.label        "Когато &brandShortName; стартира">
+<!ENTITY startupPage2.accesskey    "с">
+<!ENTITY startupUserHomePage.label "Показва началната страница">
+<!ENTITY startupBlankPage.label    "Показва празна страница">
+<!ENTITY startupPrevSession.label  "Показва прозорците и разделите от последния път">
+
+<!ENTITY homepage2.label           "Начална страница">
+<!ENTITY homepage2.accesskey       "Н">
+<!ENTITY useCurrentPage.label      "Текущата страница">
+<!ENTITY useCurrentPage.accesskey  "Т">
+<!ENTITY useMultiple.label         "Текущите страници">
+<!ENTITY chooseBookmark.label      "Отметка…">
+<!ENTITY chooseBookmark.accesskey  "О">
+<!ENTITY restoreDefault.label      "Стандартната страница">
+<!ENTITY restoreDefault.accesskey  "С">
+
+<!ENTITY downloads.label     "Изтегляния">
+
+<!ENTITY saveTo.label "Запазване на файловете в">
+<!ENTITY saveTo.accesskey "З">
+<!ENTITY chooseFolderWin.label        "Разглеждане…">
+<!ENTITY chooseFolderWin.accesskey    "Р">
+<!ENTITY chooseFolderMac.label        "Избиране…">
+<!ENTITY chooseFolderMac.accesskey    "И">
+<!ENTITY alwaysAskWhere.label         "Винаги да пита къде да бъдат запазвани файловете">
+<!ENTITY alwaysAskWhere.accesskey     "В">
+
+<!ENTITY alwaysCheckDefault2.label        "Проверяване дали &brandShortName; е стандартният браузър">
+<!ENTITY alwaysCheckDefault2.accesskey    "б">
+<!ENTITY setAsMyDefaultBrowser3.label     "Задаване като стандартен…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "с">
+<!ENTITY isDefault.label                  "&brandShortName; е вашият стандартен браузър">
+<!ENTITY isNotDefault.label               "&brandShortName; не е вашият стандартен браузър">
+
+<!ENTITY separateProfileMode.label        "Разрешаване на &brandShortName; и Waterfox да работят едновременно">
+<!ENTITY useWaterfoxSync.label             "Съвет: Ще бъдат използвани отделни профили. Използвайте Sync, за да споделяте данни между тях.">
+<!ENTITY getStarted.notloggedin.label     "Вписване в &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Настройки на &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Активиране на многопроцесността във &brandShortName;">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "ಸ್ಥಾನ:">
+<!ENTITY tile.label                 "ಹೆಂಚು (ಟೈಲ್)">
+<!ENTITY center.label               "ಮಧ್ಯ">
+<!ENTITY stretch.label              "ಎಳೆಯಲ್ಪಟ್ಟ">
+<!ENTITY fill.label                 "ತುಂಬಿಸಿದ">
+<!ENTITY fit.label                  "ಸರಿಹೊಂದಿಸಿದ">
+<!ENTITY preview.label              "ಮುನ್ನೋಟ">
+<!ENTITY color.label                "ಬಣ್ಣ:">
+<!ENTITY setDesktopBackground.title "ಗಣಕತೆರೆ ಹಿನ್ನಲೆಯನ್ನು ಹೊಂದಿಸು">
+<!ENTITY openDesktopPrefs.label     "ಗಣಕತೆರೆ ಆದ್ಯತೆಗಳನ್ನು ತೆರೆ">
+<!ENTITY closeWindow.key            "w">

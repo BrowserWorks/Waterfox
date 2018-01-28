@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Qoʻshimcha dasturni oʻrnatish">
+<!ENTITY intro           "Kompyuteringizdagi boshqa dastur quyidagi qoʻshimcha dastur bilan &brandShortName;ni oʻzgartirishni xohlaydi:">
+<!ENTITY warning         "Oʻzingiz ishongan mualliflarga tegishli qoʻshimcha dasturlarni oʻrnating.">
+<!ENTITY allow           "Bu oʻrnatishga ruxsat berish">
+<!ENTITY later           "&quot; Qoʻshimcha dasturlar boshqaruvchisi&quot;ga oʻtib,doimo miyangizni oʻzgartirishingiz mumkin.">
+<!ENTITY continue        "Davom etish">
+<!ENTITY restartMessage  "Ushbu qoʻshimcha dasturni oʻrnatish uchun &brandShortName;ni qayta ishga tushiring.">
+<!ENTITY restartButton   "&brandShortName;ni qayta ishga tushirish">
+<!ENTITY cancelButton    "Bekor qilish">

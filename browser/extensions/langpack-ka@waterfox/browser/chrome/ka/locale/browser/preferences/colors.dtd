@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "ფერები">
+<!ENTITY  window.width                    "64em">
+<!ENTITY  window.macWidth                 "60em">
+
+<!ENTITY  overrideDefaultPageColors.label        "გვერდის მიერ მითითებული ფერების ნაცვლად, თქვენ მიერ ზემოთ შერჩეულების გამოყენება:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "ფ">
+
+<!ENTITY  overrideDefaultPageColors.always.label "ყოველთვის">
+<!ENTITY  overrideDefaultPageColors.auto.label   "მხოლოდ მაღალი კონტრასტის თემებთან">
+<!ENTITY  overrideDefaultPageColors.never.label  "არასდროს">
+
+<!ENTITY  color                           "ტექსტი და ფონი">
+<!ENTITY  textColor.label                 "ტექსტი:">
+<!ENTITY  textColor.accesskey             "ტ">
+<!ENTITY  backgroundColor.label           "ფონი:">
+<!ENTITY  backgroundColor.accesskey       "ფ">
+<!ENTITY  useSystemColors.label           "სისტემის ფერების გამოყენება">
+<!ENTITY  useSystemColors.accesskey       "ს">
+
+<!ENTITY  underlineLinks.label            "ბმულების ხაზგასმა">
+<!ENTITY  underlineLinks.accesskey        "ხ">
+<!ENTITY  links                           "ბმულის ფერები">
+<!ENTITY  linkColor.label                 "მოუნახულებელი ბმულები:">
+<!ENTITY  linkColor.accesskey             "ბ">
+<!ENTITY  visitedLinkColor.label          "მონახულებული ბმულები:">
+<!ENTITY  visitedLinkColor.accesskey      "მ">

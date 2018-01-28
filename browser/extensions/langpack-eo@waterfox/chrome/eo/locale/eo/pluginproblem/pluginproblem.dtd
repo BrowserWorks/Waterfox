@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Tiu ĉi retejo uzas kromprogramon, kiu povas malrapidigi &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Tuŝetu ĉi tie por aktivigi komprogramon.">
+<!ENTITY clickToActivatePlugin                               "Aktivigi kromprogramon.">
+<!ENTITY checkForUpdates                                     "Kontroli ĉu estas ĝisdatigoj…">
+<!ENTITY blockedPlugin.label                                 "Tiu ĉi kromprogramo estis blokita por protekti vin.">
+<!ENTITY hidePluginBtn.label                                 "Kaŝi kromprogramon">
+<!ENTITY managePlugins                                       "Administrado de kromprogramoj…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Reŝargi la paĝon">
+<!ENTITY reloadPlugin.post                                   " por klopodi denove.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Sendi raporton pri paneo">
+<!ENTITY report.submitting                                   "Raporto sendata…">
+<!ENTITY report.submitted                                    "Raporto pri paneo estis sendita.">
+<!ENTITY report.disabled                                     "Raportado de paneoj ne estas aktiva.">
+<!ENTITY report.failed                                       "Sendado malsukcesa.">
+<!ENTITY report.unavailable                                  "Neniu raporto haveblas.">
+<!ENTITY report.comment                                      "Aldoni komenton (komentoj estas publike videblaj)">
+<!ENTITY report.pageURL                                      "Inkluzivigi la URL de la paĝo">
+
+<!ENTITY plugin.file                                         "Dosiero">
+<!ENTITY plugin.mimeTypes                                    "Tipoj MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Aktivigi protektitan reĝimon de Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Bloki danĝeran kaj trudiĝeman Flash-an enhavon">

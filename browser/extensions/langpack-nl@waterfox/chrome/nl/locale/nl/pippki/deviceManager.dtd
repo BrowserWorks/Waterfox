@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Apparaatbeheerder">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Beveiligingsmodules en -apparaten">
+<!ENTITY devmgr.details.title                   "Details">
+<!ENTITY devmgr.details.title2                  "Waarde">
+
+<!ENTITY devmgr.button.login.label              "Aanmelden">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Afmelden">
+<!ENTITY devmgr.button.logout.accesskey         "m">
+<!ENTITY devmgr.button.changepw.label           "Wachtwoord wijzigen">
+<!ENTITY devmgr.button.changepw.accesskey       "W">
+<!ENTITY devmgr.button.load.label               "Laden">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Ontladen">
+<!ENTITY devmgr.button.unload.accesskey         "O">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Voer de informatie in voor de module die u wilt toevoegen.">
+<!ENTITY loaddevice.modname                     "Modulenaam:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Nieuwe PKCS#11-module">
+<!ENTITY loaddevice.filename                    "Modulebestandsnaam:">
+<!ENTITY loaddevice.filename.accesskey          "b">
+<!ENTITY loaddevice.browse                      "Bladeren…">
+<!ENTITY loaddevice.browse.accesskey            "a">
+
+<!ENTITY loaddevice.title2                      "PKCS#11-apparaatstuurprogramma laden">

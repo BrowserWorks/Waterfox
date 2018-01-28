@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Opcje">
+<!ENTITY  prefWindow.title "Preferencje">
+<!ENTITY  prefWindow.titleGNOME   "Preferencje programu &brandShortName;">
+
+<!ENTITY prefWinMinSize.styleWin2 "width: 47em; min-height: 37.5em;">
+<!ENTITY prefWinMinSize.styleMac "width: 50em; min-height: 40em;">
+<!ENTITY prefWinMinSize.styleGNOME "width: 51.5em; min-height: 40.5em;">
+
+<!ENTITY  paneGeneral.title       "Ogólne">
+<!ENTITY  paneTabs.title          "Karty">
+<!ENTITY  paneSearch.title "Wyszukiwanie">
+<!ENTITY  paneContent.title       "Treść">
+<!ENTITY  paneApplications.title  "Aplikacje">
+<!ENTITY  panePrivacy.title       "Prywatność">
+<!ENTITY paneContainers.title "Karty z kontekstem">
+<!ENTITY  paneSecurity.title      "Bezpieczeństwo">
+<!ENTITY  paneAdvanced.title      "Zaawansowane">
+<!ENTITY paneSync.title "Synchronizacja">
+
+<!ENTITY helpButton.label "Pomoc">

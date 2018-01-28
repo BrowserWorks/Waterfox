@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Ionad:">
+<!ENTITY tile.label                 "Leacaich">
+<!ENTITY center.label               "Cuir sa mheadhan">
+<!ENTITY stretch.label              "Sìn">
+<!ENTITY fill.label                 "Lìon">
+<!ENTITY fit.label                  "Co-fhreagair">
+<!ENTITY preview.label              "Ro-sheall">
+<!ENTITY color.label                "Dath:">
+<!ENTITY setDesktopBackground.title "Suidhich cùlaibh an deasg">
+<!ENTITY openDesktopPrefs.label     "Fosgail roghainnean an deasg">
+<!ENTITY closeWindow.key            "w">

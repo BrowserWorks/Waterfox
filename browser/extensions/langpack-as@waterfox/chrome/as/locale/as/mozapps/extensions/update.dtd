@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; আপডেইট">
+
+<!ENTITY  offline.title                   "&brandShortName; অফ-লাইন কাম কৰিছে">
+<!ENTITY  offline.description             "&brandShortName; অন-লাইন হ'ব লাগিব আপোনাৰ এড-অ'নৰ কাৰণে আপডেইট আছে নে নাই চাবলৈ যাতে সিহঁতক এই সংস্কৰণৰ সৈতে সুসঙ্গত কৰিব পাৰি।">
+<!ENTITY  offline.toggleOffline.label     "এতিয়া অন-লাইন হওক।">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "অসঙ্গত এড-অ'ন">
+<!ENTITY  mismatch.top.label              "এই এড-অ'নসমূহ &brandShortName; ৰ সৈতে সুসঙ্গত নহয় আৰু নিষ্ক্ৰিয় কৰা হৈছে:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; এ এই এড-অ'নসমূহৰ সুসঙ্গত সংস্কৰণ পোৱা যায় নে নাযায় পৰীক্ষা কৰিব পাৰে।">
+
+<!ENTITY  checking.wizard.title           "সুসঙ্গত এড-অ'নৰ কাৰণে পৰীক্ষা কৰা হৈছে">
+<!ENTITY  checking.top.label              "আপডেইটৰ কাৰণে আপোনাৰ অসঙ্গত এড-অ'ন পৰীক্ষা কৰা হৈছে...">
+<!ENTITY  checking.status                 "কিছু সময়ৰ প্ৰয়োজন হ'ব...">
+
+<!ENTITY  found.wizard.title               "সুসঙ্গত এড-অ'ন পোৱা গৈছে">
+<!ENTITY  found.top.label                 "ইনস্টল কৰিব বিচৰা এড-অ'নসমূহ বাচি লওক:">
+<!ENTITY  found.disabledXPinstall.label   "এই আপডেইট ইনস্টল কৰিব নোৱাৰি কাৰণ চফ্টৱেৰৰ ইনস্টল বৰ্ত্তমানে নিষ্ক্ৰিয়। এই পছন্দ আপুনি তলত সলনি কৰিব পাৰে।">
+<!ENTITY  found.enableXPInstall.label     "ৱেব ছাইটক চফ্টৱেৰ ইনস্টল কৰিব দিব">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "সুসঙ্গত এড-অ'ন ইনস্টল কৰা হৈছে">
+<!ENTITY  installing.top.label            "আপোনাৰ এড-অ'নলৈ আপডেইট ডাউনল'ড কৰি ইনস্টল কৰা গৈছে...">
+
+<!ENTITY  noupdates.wizard.title          "কোনো সুসঙ্গত এড-অ'ন পোৱা নগল">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; এ আপোনাৰ অসঙ্গত এড-অ'নৰ কাৰণে আপডেইট নাপালে।">
+<!ENTITY  noupdates.error.desc            "আপডেইট বিচাৰোঁতে কিছুমান সমস্যা দেখা গ'ল।">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; এ সময়ে সময়ে পৰীক্ষা কৰি এই এড-অ'নৰ কাৰণে সুসঙ্গত আপডেইট কেতিয়া পোৱা যায় আপোনাক ক'ব।">
+
+<!ENTITY  finished.wizard.title           "সুসঙ্গত এড-অ'ন সংস্থাপিত">
+<!ENTITY  finished.top.label              "&brandShortName; এ আপোনাৰ এড-অ'নত আপডেইট ইনস্টল কৰিলে।">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; এ সময়ে সময়ে পৰীক্ষা কৰিব আৰু এড-অ'নৰ কাৰণে আপডেইট কেতিয়া পোৱা যায় আপোনাক ক'ব।">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; এ সময়ে সময়ে পৰীক্ষা কৰিব আৰু এড-অ'নৰ কাৰণে আপডেইট কেতিয়া পোৱা যায় আপোনাক ক'ব।">
+
+<!ENTITY  adminDisabled.wizard.title      "আপডেইটৰ কাৰণে পৰীক্ষা কৰিব নোৱাৰি">
+<!ENTITY  adminDisabled.warning.label     "অসঙ্গত এড-অ'নৰ কাৰণে আপডেইট পৰীক্ষা কৰিব নোৱাৰি কাৰণ &brandShortName; ৰ কাৰণে চফ্টৱেৰৰ ইনস্টল নিষ্ক্ৰিয় কৰা হৈছে। সহায়ৰ কাৰণে আপোনাৰ চিস্টেমৰ প্ৰশাসকক লগ ধৰক।">
+
+<!ENTITY  versioninfo.wizard.title        "এড-অ'ন সুসঙ্গত হোৱা পৰীক্ষা কৰা হৈছে">
+<!ENTITY  versioninfo.top.label           "&brandShortName; ৰ এই সংস্কৰণৰ সৈতে এড-অ'ন সুসঙ্গত হোৱা পৰীক্ষা কৰা হৈছে।">
+<!ENTITY  versioninfo.waiting             "কিছু সময়ৰ প্ৰয়োজন হ'ব পাৰে...">
+
+<!ENTITY  installerrors.wizard.title      "আপডেইট ইনস্টল কৰিবলৈ সমস্যা">
+<!ENTITY  installerrors.intro.label       "আপোনাৰ কিছুমান এড-অ'ন আপডেইট কৰোঁতে &brandShortName; এ কিছুমান সমস্যা পাইছে।">
+<!-- general strings used by several of the finish pages -->
+
+<!ENTITY  clickFinish.label               "&brandShortName; আৰম্ভ কৰা কাৰ্য্যত আগবাঢ়িবলৈ সমাপ্ত টিপক।">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; আৰম্ভ কৰা কাৰ্য্যত আগবাঢ়িবলৈ হৈ গ'ল টিপক।">
+<!ENTITY  enableChecking.label            "&brandShortName; ক আপডেইট পৰীক্ষা কৰিব দিব।">

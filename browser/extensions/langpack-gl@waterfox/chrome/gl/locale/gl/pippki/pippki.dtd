@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Mudar o contrasinal principal">
+<!ENTITY setPassword.tokenName.label "Dispositivo de seguranza">
+<!ENTITY setPassword.oldPassword.label "Contrasinal actual:">
+<!ENTITY setPassword.newPassword.label "Novo contrasinal:">
+<!ENTITY setPassword.reenterPassword.label "Novo contrasinal (outra vez):">
+<!ENTITY setPassword.meter.label "Medidor de calidade de contrasinais">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Restabelecer">
+<!ENTITY resetPassword.title  "Restabelecer o contrasinal principal">
+<!ENTITY resetPassword.text  "Se restabelece o contrasinal principal esqueceranse os contrasinais de web e correo electrónico, os datos dos formularios, os certificados persoais e as chaves privadas que estean almacenados. Confirma que quere restabelecelo?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Descargando certificado">
+<!ENTITY downloadCert.message1 "Solicitouse que confíe nunha nova entidade de acreditación (AC).">
+<!ENTITY downloadCert.trustSSL "Confiar nesta AC para identificar sitios web.">
+<!ENTITY downloadCert.trustEmail "Confiar nesta AC para identificar usuarios de correo electrónico.">
+<!ENTITY downloadCert.trustObjSign "Confiar nesta AC para identificar os desenvolvedores de software.">
+<!ENTITY downloadCert.message3 "Antes de confiar nesta AC para calquera finalidade, debería examinar o seu certificado e a súa política e procedementos (se están dispoñíbeis).">
+<!ENTITY downloadCert.viewCert.label "Ver">
+<!ENTITY downloadCert.viewCert.text "Examinar o certificado da AC">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Solicitude de identificación de usuario">
+<!ENTITY clientAuthAsk.message1 "Este sitio solicitou que se identifique cun certificado:">
+<!ENTITY clientAuthAsk.message2 "Escolla un certificado para presentar como identificación:">
+<!ENTITY clientAuthAsk.message3 "Detalles do certificado seleccionado:">
+
+<!ENTITY pkcs12.setpassword.title  "Escolla un contrasinal para a copia de seguranza do certificado">
+<!ENTITY pkcs12.setpassword.message  "O contrasinal da copia de seguranza do certificado protexe o ficheiro que vai crear. Estabeleza ese contrasinal para realizar a copia de seguranza.">
+<!ENTITY pkcs12.setpassword.label1 "Contrasinal da copia de seguranza do certificado:">
+<!ENTITY pkcs12.setpassword.label2 "Contrasinal da copia de seguranza do certificado (outra vez):">
+<!ENTITY pkcs12.setpassword.reminder "Importante: Se esquece o contrasinal da copia de seguranza do certificado non poderá restaurar esa copia. Gárdeo nun lugar seguro.">
+
+<!ENTITY chooseToken.title  "Caixa de diálogo de escolla da chave electrónica">
+<!ENTITY chooseToken.message1 "Escolla unha chave electrónica.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Xerando unha chave privada">
+<!ENTITY createCertInfo.msg1 "A chave está a ser xerada… O proceso pode demorar uns minutos….">
+<!ENTITY createCertInfo.msg2 "Agarde…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Autenticación protexida da chave electrónica">
+<!ENTITY protectedAuth.msg "Autentíquese coa chave electrónica. O método de autenticación depende do tipo da súa chave electrónica.">
+<!ENTITY protectedAuth.tokenName.label "Chave electrónica:">

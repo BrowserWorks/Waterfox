@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "Ceap Breacaireachta">
+
+<!ENTITY fileMenu.label               "Comhad">
+<!ENTITY fileMenu.accesskey           "C">
+
+<!ENTITY newWindowCmd.label           "Fuinneog Nua">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Oscail Comhad…">
+<!ENTITY openFileCmd.accesskey        "O">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Oscail Comhad le Déanaí">
+<!ENTITY openRecentMenu.accesskey     "D">
+
+<!ENTITY revertCmd.label              "Cealaigh…">
+<!ENTITY revertCmd.accesskey          "C">
+
+<!ENTITY saveFileCmd.label            "Sábháil">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Sábháil Mar…">
+<!ENTITY saveFileAsCmd.accesskey      "a">
+
+<!ENTITY closeCmd.label               "Dún">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "D">
+
+<!ENTITY viewMenu.label               "Amharc">
+<!ENTITY viewMenu.accesskey           "A">
+
+<!ENTITY lineNumbers.label             "Taispeáin Uimhreacha na Línte">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY wordWrap.label                "Timfhilleadh téacs">
+<!ENTITY wordWrap.accesskey            "T">
+
+<!ENTITY highlightTrailingSpace.label     "Aibhsigh Spásanna ag Deireadh na Líne">
+<!ENTITY highlightTrailingSpace.accesskey "A">
+
+<!ENTITY largerFont.label             "Cló Níos Mó">
+<!ENTITY largerFont.accesskey         "C">
+<!ENTITY largerFont.commandkey        "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY largerFont.commandkey2       "="> 
+
+<!ENTITY smallerFont.label            "Cló Níos Lú">
+<!ENTITY smallerFont.accesskey        "s">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "Gnáthmhéid">
+<!ENTITY normalSize.accesskey         "n">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Eagar">
+<!ENTITY editMenu.accesskey           "E">
+
+<!ENTITY run.label                    "Rith">
+<!ENTITY run.accesskey                "R">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "Scrúdaigh">
+<!ENTITY inspect.accesskey            "S">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Taispeáin">
+<!ENTITY display.accesskey            "T">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Dea-Phriontáil">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "D">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "Timpeallacht">
+<!ENTITY environmentMenu.accesskey    "m">
+
+
+<!ENTITY contentContext.label         "Ábhar">
+<!ENTITY contentContext.accesskey     "b">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "Brabhsálaí">
+<!ENTITY browserContext.accesskey     "B">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "Cabhair">
+<!ENTITY helpMenu.accesskey           "h">
+<!ENTITY helpMenuWin.label            "Cabhair">
+<!ENTITY helpMenuWin.accesskey        "h">
+
+<!ENTITY documentationLink.label      "Cabhair leis an gCeap Breacaireachta ar MDN">
+<!ENTITY documentationLink.accesskey  "D">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "Athshocraigh Athróga">
+<!ENTITY resetContext2.accesskey      "t">
+
+<!ENTITY reloadAndRun.label           "Athlódáil agus Rith">
+<!ENTITY reloadAndRun.accesskey       "A">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Rith">
+<!ENTITY executeMenu.accesskey        "t">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+<!ENTITY evalFunction.label "Luacháil an Fheidhm Reatha">
+<!ENTITY evalFunction.accesskey "L">
+<!ENTITY evalFunction.key "l">

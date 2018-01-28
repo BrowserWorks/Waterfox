@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Zamknij kartę">
+<!ENTITY tabCrashed.restoreTab "Przywróć kartę">
+<!ENTITY tabCrashed.restoreAll "Przywróć wszystkie karty">
+
+<!ENTITY tabCrashed.header2 "Och – ta karta uległa awarii">
+<!ENTITY tabCrashed.offerHelp "Możemy pomóc!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Użyj przycisku „&tabCrashed.restoreTab;”, aby wczytać ponownie treść strony.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Użyj przycisku „&tabCrashed.restoreTab;” lub „&tabCrashed.restoreAll;”, aby wczytać ponownie treść strony.">
+<!ENTITY tabCrashed.requestHelp "Pomożesz nam?">
+<!ENTITY tabCrashed.requestHelpMessage "Raporty z awarii pomagają nam diagnozować problemy i ulepszać program &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Zgłaszanie problematycznej karty">
+<!ENTITY tabCrashed.sendReport2 "Prześlij raport z awarii aktualnie wyświetlanej karty">
+<!ENTITY tabCrashed.commentPlaceholder2 "Opcjonalny komentarz (będzie publicznie dostępny)">
+<!ENTITY tabCrashed.includeURL2 "Dołącz do zgłoszenia adres odwiedzanej strony">
+<!ENTITY tabCrashed.emailPlaceholder "Adres e-mail">
+<!ENTITY tabCrashed.emailMe "Powiadom, gdy będzie dostępne więcej informacji">
+<!ENTITY tabCrashed.reportSent "Raport z awarii został już wysłany. Dziękujemy za pomoc w ulepszaniu programu &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Raportowanie pozostałych kart">
+<!ENTITY tabCrashed.autoSubmit2 "Automatyczne przesyłanie raportów awarii, łącznie z raportami dla innych kart, które uległy awarii">

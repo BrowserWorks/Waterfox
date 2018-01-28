@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Annunzias da collaps">
+<!ENTITY crashesUnsubmitted.label   "Annunzias da collaps betg tramessas">
+<!ENTITY crashesSubmitted.label     "Annunzias da collaps tramessas">
+<!ENTITY id.heading                 "ID da l'annunzia">
+<!ENTITY dateCrashed.heading        "Data dal collaps">
+<!ENTITY dateSubmitted.heading      "Data da transmissiun">
+<!ENTITY noReports.label            "Fin ussa n'èn vegnidas tramessas anc naginas annunzias da collaps.">
+<!ENTITY noConfig.label             "Questa applicaziun n'è betg vegnida configurada per mussar annunzias da collaps. La preferenza <code>breakpad.reportURL</code> sto vegnir exequida.">
+<!ENTITY clearAllReports.label      "Allontanar tut las annunzias">

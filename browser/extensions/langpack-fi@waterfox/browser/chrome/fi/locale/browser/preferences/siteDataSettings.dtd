@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Asetukset - Sivustojen tallentamat tiedot">
+<!ENTITY     hostCol.label                 "Sivusto">
+<!ENTITY     statusCol.label               "Tila">
+<!ENTITY     usageCol.label                "Tallennustila">
+<!ENTITY     searchTextboxPlaceHolder             "Etsi sivustoja">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "E">
+<!ENTITY     removeSelected.label          "Poista valitut">
+<!ENTITY     removeSelected.accesskey      "v">
+<!ENTITY     save.label                    "Tallenna muutokset">
+<!ENTITY     save.accesskey                "m">
+<!ENTITY     cancel.label                  "Peruuta">
+<!ENTITY     cancel.accesskey              "P">
+<!ENTITY     removingDialog.title          "Sivuston tietojen poisto">
+<!ENTITY     removingSelected.description  "Sivuston tallentamien tietojen poistaminen poistaa myös evästeet ja yhteydetöntä tilaa varten tallennetut tiedot. Tämä voi kirjata sinut ulos sivustoilta. Haluatko varmasti tehdä muutokset?">
+<!ENTITY     siteTree.label                "Seuraavat sivustojen evästeet poistetaan:">

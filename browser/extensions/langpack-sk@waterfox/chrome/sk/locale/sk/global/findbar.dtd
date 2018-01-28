@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Vyhľadá ďalší výskyt reťazca">
+<!ENTITY previous.tooltip "Vyhľadá predchádzajúci výskyt reťazca">
+<!ENTITY findCloseButton.tooltip "Zavrie panel vyhľadávania">
+<!ENTITY highlightAll.label "Zvýrazniť všetky výskyty">
+<!ENTITY highlightAll.accesskey "v">
+<!ENTITY highlightAll.tooltiptext "Zvýrazní všetky výskyty hľadaného reťazca">
+<!ENTITY caseSensitive.label "Rozlišovať veľké/malé písmená">
+<!ENTITY caseSensitive.accesskey "R">
+<!ENTITY caseSensitive.tooltiptext "Vyhľadáva s rozlišovaním malých a veľkých písmen">
+<!ENTITY entireWord.label "Celé slová">
+<!ENTITY entireWord.accesskey "C">
+<!ENTITY entireWord.tooltiptext "Vyhľadáva len celé slová">

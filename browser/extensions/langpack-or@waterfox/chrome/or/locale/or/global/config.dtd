@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "ଏହା ଆପଣଙ୍କ ନିର୍ଭେରୋକ୍ତିକୁ ଭଙ୍ଗ କରିପାରେ!">
+<!ENTITY aboutWarningText.label "ଏହି ଉନ୍ନତ ସଂରଚନାଗୁଡ଼ିକୁ ପରିବର୍ତ୍ତନ କରିବା ଦ୍ୱାରା ଏହି ପ୍ରୟୋଗର ସ୍ଥାୟୀତ୍ୱ, ସୁରକ୍ଷା, ଏବଂ କାର୍ଯ୍ୟକ୍ଷମତା ପ୍ରତି କ୍ଷତିକାରକ ହୋଇପାରେ। ଆପଣ ଯଦି ନିଶ୍ଚିତ ଅଛନ୍ତି ଆପଣ କଣ କରୁଛନ୍ତି, ତେବେ ହିଁ କେବଳ ଆଗକୁ ବଢ଼ିବା ଉଚିତ।">
+
+<!ENTITY aboutWarningCheckbox.label "ଏହି ଚେତାବନୀକୁ ପରବର୍ତ୍ତି ସମୟରେ ଦର୍ଶାନ୍ତୁ">
+
+<!ENTITY searchPrefs.label "ସନ୍ଧାନ କରନ୍ତୁ:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "ପସନ୍ଦ ନାମ">
+<!ENTITY lockColumn.label "ସ୍ଥିତି">
+<!ENTITY typeColumn.label "ପ୍ରକାର">
+<!ENTITY valueColumn.label "ମୂଲ୍ୟ">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "ସଜାଡ଼ିବା ପାଇଁ କ୍ଲିକ କରନ୍ତୁ"> 
+<!ENTITY columnChooser.tooltip "କେଉଁ ସ୍ତମ୍ଭଗୁଡ଼ିକୁ ଦର୍ଶାଯିବ ତାହା ବାଛିବା ପାଇଁ କ୍ଲିକ କରନ୍ତୁ"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "ନକଲ କରନ୍ତୁ">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "ନାମ ନକଲ କରନ୍ତୁ">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "ମୂଲ୍ୟ ନକଲ କରନ୍ତୁ">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "ପରିବର୍ତ୍ତନ">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "ଆଗ ପଛ">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "ପୁନଃ ସ୍ଥାପନ">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "ନୂତନ">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "ବାକ୍ୟ ଖଣ୍ଡ">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "ପୂର୍ଣ୍ଣ ସଂଖ୍ୟା">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "ବୁଲିଆନ">
+<!ENTITY boolean.accesskey "B">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">
+<!ENTITY focusSearch2.key "f">
+

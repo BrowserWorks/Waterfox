@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title     "Sivun asetukset">
+
+<!ENTITY basic.tab            "Muoto ja valinnat">
+
+<!ENTITY formatGroup.label    "Muoto">
+
+<!ENTITY orientation.label    "Suunta:">
+<!ENTITY portrait.label      "Pysty">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Vaaka">
+<!ENTITY landscape.accesskey "V">
+
+<!ENTITY scale.label          "Koko:">
+<!ENTITY scale.accesskey     "K">
+<!ENTITY scalePercent         "&#037;">
+
+<!ENTITY shrinkToFit.label    "Sovita sivun leveyteen">
+<!ENTITY shrinkToFit.accesskey "S">
+
+<!ENTITY optionsGroup.label   "Asetukset">
+
+<!ENTITY printBG.label        "Tulosta tausta (värit ja kuvat)">
+<!ENTITY printBG.accesskey   "T">
+
+<!ENTITY advanced.tab         "Marginaalit ja ylä-/alatunnisteet">
+
+<!ENTITY marginGroup.label    "Marginaalit (#1)">
+<!ENTITY marginUnits.inches   "tuumia">
+<!ENTITY marginUnits.metric   "millimetriä">
+<!ENTITY marginTop.label      "Ylä:">
+<!ENTITY marginTop.accesskey "Y">
+<!ENTITY marginBottom.label   "Ala:">
+<!ENTITY marginBottom.accesskey "A">
+<!ENTITY marginLeft.label     "Vasen:">
+<!ENTITY marginLeft.accesskey "e">
+<!ENTITY marginRight.label    "Oikea:">
+<!ENTITY marginRight.accesskey "O">
+
+<!ENTITY headerFooter.label   "Ylä- ja alatunnisteet">
+
+<!ENTITY hfLeft.label         "Vasen:">
+<!ENTITY hfCenter.label       "Keskellä:">
+<!ENTITY hfRight.label        "Oikea:">
+<!ENTITY headerLeft.tip       "Vasen ylätunniste">
+<!ENTITY headerCenter.tip     "Keskimmäinen ylätunniste">
+<!ENTITY headerRight.tip      "Oikea ylätunniste">
+<!ENTITY footerLeft.tip       "Vasen alatunniste">
+<!ENTITY footerCenter.tip     "Keskimmäinen alatunniste">
+<!ENTITY footerRight.tip      "Oikea alatunniste">
+
+<!ENTITY hfTitle             "Otsikko">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Pvm/aika">
+<!ENTITY hfPage              "Sivu #">
+<!ENTITY hfPageAndTotal      "Sivu #/#">
+<!ENTITY hfBlank             "--tyhjä--">
+<!ENTITY hfCustom            "Oma…">
+
+<!ENTITY customPrompt.title   "Oma…">
+<!ENTITY customPrompt.prompt  "Kirjoita oma ylä-/alatunniste">

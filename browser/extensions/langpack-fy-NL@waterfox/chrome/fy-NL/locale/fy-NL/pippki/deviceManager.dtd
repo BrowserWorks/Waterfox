@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Apparaatbehearder">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Befeiligingsmodules en -apparaten">
+<!ENTITY devmgr.details.title                   "Details">
+<!ENTITY devmgr.details.title2                  "Wearde">
+
+<!ENTITY devmgr.button.login.label              "Oanmelde">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Ofmelde">
+<!ENTITY devmgr.button.logout.accesskey         "f">
+<!ENTITY devmgr.button.changepw.label           "Wachtwurd wizigje">
+<!ENTITY devmgr.button.changepw.accesskey       "W">
+<!ENTITY devmgr.button.load.label               "Lade">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Untlade">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Fier de ynformaasje yn foar de module dy't jo tafoegje wolle.">
+<!ENTITY loaddevice.modname                     "Modulenamme:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Nije PKCS #11-module">
+<!ENTITY loaddevice.filename                    "Modulebestânsnamme:">
+<!ENTITY loaddevice.filename.accesskey          "d">
+<!ENTITY loaddevice.browse                      "Blêdzje…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "PKCS #11-apparaatstjoerprogramma lade">

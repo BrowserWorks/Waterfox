@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Cau'r Tab Hwn">
+<!ENTITY tabCrashed.restoreTab "Adfer y Tab Hwn">
+<!ENTITY tabCrashed.restoreAll "Adfer Pob Tab Chwalwyd">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Ach. Mae eich tab newydd chwalu.">
+<!ENTITY tabCrashed.offerHelp "Gallwn ni eich helpu!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Dewiswch &tabCrashed.restoreTab; i ail lwytho cynnwys y dudalen.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Dewiswch &tabCrashed.restoreTab; neu &tabCrashed.restoreAll; i ail lwytho cynnwys y dudalen.">
+<!ENTITY tabCrashed.requestHelp "A wnewch chi ein helpu ni?">
+<!ENTITY tabCrashed.requestHelpMessage "Mae adroddiadau chwalu yn caniatau i ni ddadansoddi anawsterau a gwneud &brandShortName; yn well.">
+<!ENTITY tabCrashed.requestReport "Adrodd am y tab">
+<!ENTITY tabCrashed.sendReport2 "Anfon adroddiad chwalu am y tab rydych yn ei ddarllen">
+<!ENTITY tabCrashed.commentPlaceholder2 "Sylwadau dewisol (sylwadau yn weladwy'n gyhoeddus)">
+<!ENTITY tabCrashed.includeURL2 "Cynnwys tudalen URL gyda'r adroddiad chwalu">
+<!ENTITY tabCrashed.emailPlaceholder "Rhowch eich cyfeiriad e-bost yma">
+<!ENTITY tabCrashed.emailMe "Hysbysu pan fydd rhagor o wybodaeth ar gael">
+<!ENTITY tabCrashed.reportSent "Mae'r adroddiad chwalu wedi ei gyflwyno: diolch am gynorthwyo i wneud &brandShortName; yn well!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Gofyn am dabiau cefndir">
+<!ENTITY tabCrashed.autoSubmit2 "Diweddaru'r dewisiadau i anfon adroddiadau chwalu yn awtomatig, gan gynnwys adroddiadau chwalu'r tabiau cefndir o'r sesiwn yma a sesiynau'r dyfodol">

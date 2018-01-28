@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Sonraí Telemetry">
+
+<!ENTITY aboutTelemetry.pingDataSource "Foinse sonraí pingithe:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Sonraí pingithe reatha">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Sonraí pingithe sa chartlann">
+
+<!ENTITY aboutTelemetry.raw "JSON amh">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Taispeáin sonraí fosheisiúin">
+
+<!ENTITY aboutTelemetry.choosePing "Roghnaigh ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping níos nuaí">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping níos sine &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Seachtain">
+
+<!ENTITY aboutTelemetry.archivePingType "Cineál na Pinge">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Inniu">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Inné">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Níos Sine">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Sonraí Ginearálta">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Sonraí Timpeallachta">
+
+<!ENTITY aboutTelemetry.telemetryLogSection " Logchomhad Telemetry">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Ráitis Mhalla SQL">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Brabhsálaí Reoite">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection " Snáitheanna Reoite">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Cruacha Gafa">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Scálaigh">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Scálaigh Eochraithe">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histeagraim">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection " Histeagraim Eochraithe">
+
+<!ENTITY aboutTelemetry.eventsSection "  Teagmhais">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Tomhais Shimplí">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Mionsonraí an Bhreiseáin">
+
+<!ENTITY aboutTelemetry.lateWritesSection " Scríobh Déanach">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "Faisnéis an tSeisiúin">
+
+<!ENTITY aboutTelemetry.fullSqlWarning " Nod: Tá dífhabhtú mall SQL ar siúl. D'fhéadfadh go mbeadh teaghráin iomlána SQL á dtaispeáint thíos, ach ní sheolfar chuig Telemetry iad.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Faigh ainmneacha na bhfeidhmeanna leis an gcruach a thaispeáint">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Taispeáin amhshonraí na cruaiche">
+
+<!ENTITY aboutTelemetry.filterText "  Scagadh (teaghrán nó /slonn/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "Pálasta">

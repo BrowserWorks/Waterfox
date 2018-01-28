@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Kemmañ ar ger-tremen mestr">
+<!ENTITY setPassword.tokenName.label "Trevnad diogelroez">
+<!ENTITY setPassword.oldPassword.label "Ger-tremen war arver :">
+<!ENTITY setPassword.newPassword.label "Ger-tremen nevez :">
+<!ENTITY setPassword.reenterPassword.label "Ger-tremen nevez (c'hoazh) :">
+<!ENTITY setPassword.meter.label "Perzhded ar ger-tremen">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Adderaouekaat">
+<!ENTITY resetPassword.title  "Adderaouekaat ger-tremen mestr">
+<!ENTITY resetPassword.text  "Mar adderaouekait ho ker-tremen mestr e vo ankouaet ho kerioù-tremen evit internet, ho posteloù, ho roadennoù furmskridoù, ho testenioù personel hag hoc'h alc'hwezioù prevez. Fellout a ra deoc'h dilemel ho ker-tremen mestr ?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "O pellgargañ an testeni">
+<!ENTITY downloadCert.message1 "Goulennet ez eus bet diganeoc'h kaout fiziañs en un aotrouniezh testeniañ nevez.">
+<!ENTITY downloadCert.trustSSL "Kaout fiziañ en aotrouniezh testeniañ-mañ evit anaout al lec'hiennoù web.">
+<!ENTITY downloadCert.trustEmail "Kaout fiziañ en aotrouniezh testeniañ-mañ evit anaout arveriaded posteloù.">
+<!ENTITY downloadCert.trustObjSign "Kaout fiziañ en aotrouniezh testeniañ evit anaout an diorroerien veziantoù.">
+<!ENTITY downloadCert.message3 "A-raok kaout fiziañs en aotrouniezh testeniañ-mañ evit ne vern pe bal e vefe gwell deoc'h sellout ouzh he zesteni, he buhez prevez hag hec'h araezadurioù (mar hegerz).">
+<!ENTITY downloadCert.viewCert.label "Gwelout">
+<!ENTITY downloadCert.viewCert.text "Sellout ouzh testeni an aotrouniezh testeniañ ">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Azgoulenn anaoudadur an arveriad">
+<!ENTITY clientAuthAsk.message1 "Azgoulennet eo bet gant al lec'hienn-mañ e vefec'h hennadet gant un testeni :">
+<!ENTITY clientAuthAsk.message2 "Dibabit un testeni evit kinnig evel anaoudadur :">
+<!ENTITY clientAuthAsk.message3 "Munudoù an testeni bet diuzet:">
+
+<!ENTITY pkcs12.setpassword.title  "Dibab ur ger-tremen evit an testeni atoriñ">
+<!ENTITY pkcs12.setpassword.message  "Ger-tremen atoriñ an testeni emaoc'h o kefluniañ amañ a warez ar restroù atoriñ a vo krouet ganeoc'h. Ret eo deoc'h kefluniañ ar ger-tremen-mañ evit arverañ an atoriñ. ">
+<!ENTITY pkcs12.setpassword.label1 "Ger-tremen an testeni gwarediñ :">
+<!ENTITY pkcs12.setpassword.label2 "Ger-tremen an testeni atoriñ (c'hoazh) :">
+<!ENTITY pkcs12.setpassword.reminder "Pouezus : mar bez ankouaet ger-tremen ho testeni atoriñ ne viot ket evit assav an atoradenn diwezhatoc'h. Enrollit ho ker-tremen en ul lec'h diarvar.">
+
+<!ENTITY chooseToken.title  "Dibab ar reveziadenn gendiviz">
+<!ENTITY chooseToken.message1 "Dibabit ur reveziadenn.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "O c'henel un alc'hwez prevez">
+<!ENTITY createCertInfo.msg1 "O c'henel an alc'hwez… Un tammig amzer e pado moarvat….">
+<!ENTITY createCertInfo.msg2 "Gortozit mar plij …">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Dilesa ar reveziadenn gwarezet">
+<!ENTITY protectedAuth.msg "Mar plij, dilesait ouzh ar reveziadenn. Hentenn dilesa a vo hervez rizh ho reveziadenn.">
+<!ENTITY protectedAuth.tokenName.label "Reveziadenn :">

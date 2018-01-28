@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "اطلاعات مسافت‌سنجی">
+
+<!ENTITY aboutTelemetry.pingDataSource "منبع اطلاعات پینگ:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "اطلاعات پینگ فعلی">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "بایگانی اطلاعات پینگ">
+
+<!ENTITY aboutTelemetry.raw "JSON خام">
+
+<!ENTITY aboutTelemetry.showSubsessionData "نمایش اطلاعات زیرنشست‌ها">
+
+<!ENTITY aboutTelemetry.choosePing "انتخاب پینگ:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; پینگ جدیدتر">
+
+<!ENTITY aboutTelemetry.showOlderPing "پینگ قدیمی‌تر &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "هفته">
+
+<!ENTITY aboutTelemetry.archivePingType "نوع پینگ">
+
+<!ENTITY aboutTelemetry.archivePingHeader "پینگ">
+
+<!ENTITY aboutTelemetry.optionGroupToday "امروز">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "دیروز">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "قدیمی‌تر">
+
+<!ENTITY aboutTelemetry.generalDataSection "  اطلاعات عمومی">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  اطلاعات محیطی">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  وقایع مسافت‌سنجی">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  عبارات کند SQL">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  فروپاشی‌های مرورگر">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  فروپاشی‌های Threadها">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  پشته گرفته شده">
+
+<!ENTITY aboutTelemetry.scalarsSection "  عددی">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Keyed Scalars">
+
+<!ENTITY aboutTelemetry.histogramsSection "  نمودارهای هیستوگرام">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  نمودارهای هیستوگرام کوک شده">
+
+<!ENTITY aboutTelemetry.eventsSection "  رویدادها">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  اندازه‌گیری‌های ساده">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  جزئیات افزونه">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  دیرنویس‌ها">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  اطلاعات نشست">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  نکته: رفع‌اشکال SQLهای کُند فعال است. رشته‌های کامل SQL ممکن است در پایین نمایش داده شوند ولی آنها در مسافت‌سنج ثبت نخواهند شد.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  دریافت نام توابع برای پشته‌ها">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  نمایش داده‌های خام پشته">
+
+<!ENTITY aboutTelemetry.filterText "  فیلتر (رشته یا /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  گنجایش">

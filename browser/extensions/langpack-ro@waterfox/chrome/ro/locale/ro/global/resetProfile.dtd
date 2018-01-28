@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Reîmprospătează &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Începe un profil proaspăt pentru a remedia problemele și a restaura performanța.">
+<!ENTITY refreshProfile.dialog.description2  "Acest lucru va:">
+<!ENTITY refreshProfile.dialog.items.label1  "Elimina suplimentele și personalizările tale">
+<!ENTITY refreshProfile.dialog.items.label2  "Restabili setările browserului la valorile implicite">
+<!ENTITY refreshProfile.dialog.button.label  "Reîmprospătează &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Oferă-i lui &brandShortName; o revigorare">
+<!ENTITY refreshProfile.button.label         "Reîmprospătează &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Aproape am terminat…">

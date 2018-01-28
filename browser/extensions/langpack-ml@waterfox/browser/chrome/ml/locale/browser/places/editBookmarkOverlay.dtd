@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "പേരു്:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "സ്ഥാനം:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "ഫീഡിനുള്ള സ്ഥാനം:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "സൈറ്റിന്റെ സ്ഥാനം:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "ഫോള്‍ഡര്‍:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "എല്ലാ അടിക്കുറിപ്പു് ഫോള്‍ഡറുകളും കാണിക്കുക">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "അദൃശ്യമാക്കുക">
+<!ENTITY editBookmarkOverlay.tags.label                      "ടാഗുകള്‍:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "കോമാ ഉപയോഗിച്ചു് ടാഗുകള്‍ വേര്‍പിരിക്കുക">
+<!ENTITY editBookmarkOverlay.description.label               "വിവരണം:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "കീവേര്‍ഡ്:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "എല്ലാ ടാഗുകളും കാണിക്കുക">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "വശത്തുള്ള പട്ടയില്‍ ഈ അടയാളക്കുറിപ്പു് ലഭ്യമാക്കുക">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "തെരഞ്ഞെടുക്കുക…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "പുതിയ ഫോള്‍ഡര്‍">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

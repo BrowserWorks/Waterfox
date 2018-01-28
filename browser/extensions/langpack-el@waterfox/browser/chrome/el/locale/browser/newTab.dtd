@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "Νέα καρτέλα">
+<!ENTITY newtab.customize.classic "Εμφάνιση κορυφαίων ιστοσελίδων">
+<!ENTITY newtab.customize.cog.enhanced "Συμπερίληψη προτεινόμενων ιστοσελίδων">
+<!ENTITY newtab.customize.cog.title2 "ΕΠΙΛΟΓΕΣ ΝΕΑΣ ΚΑΡΤΕΛΑΣ">
+<!ENTITY newtab.customize.cog.learn "Σχετικά με τη νέα καρτέλα">
+<!ENTITY newtab.customize.title "Προσαρμογή σελίδας νέας καρτέλας">
+<!ENTITY newtab.customize.blank2 "Εμφάνιση κενής σελίδας">
+<!ENTITY newtab.undo.removedLabel "Η μικρογραφία αφαιρέθηκε.">
+<!ENTITY newtab.undo.undoButton "Αναίρεση.">
+<!ENTITY newtab.undo.restoreButton "Επαναφορά όλων.">
+<!ENTITY newtab.undo.closeTooltip "Απόκρυψη">

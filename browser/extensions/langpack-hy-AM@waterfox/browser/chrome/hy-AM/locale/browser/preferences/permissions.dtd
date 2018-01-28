@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Բացառումներ">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY treehead.status.label        "Կարգավիճակը">
+
+
+
+
+<!ENTITY address.label                "Կայքի հասցեն">
+<!ENTITY address.accesskey            "ա">
+<!ENTITY block.label                  "Արգելել">
+<!ENTITY block.accesskey              "Ա">
+<!ENTITY session.label                "Թույլատրել աշխատաշրջանում">
+<!ENTITY session.accesskey            "ա">
+<!ENTITY allow.label                  "Թույլատրել">
+<!ENTITY allow.accesskey              "Թ">
+<!ENTITY windowClose.key              "w">
+
+<!ENTITY button.cancel.label          "Չեղարկել">
+<!ENTITY button.cancel.accesskey      "Չ">
+<!ENTITY button.ok.label              "Պահել փոփոխությունները">
+<!ENTITY button.ok.accesskey          "Պ">
+
+
+<!ENTITY removeallpermissions2.accesskey "e">
+<!ENTITY removeallpermissions2.label  "Remove All Websites">
+<!ENTITY removepermission2.accesskey  "R">
+<!ENTITY removepermission2.label      "Remove Website">
+<!ENTITY treehead.sitename2.label     "Website">

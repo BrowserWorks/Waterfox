@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "คุกกี้ดังต่อไปนี้ถูกจัดเก็บบนคอมพิวเตอร์ของคุณ:">
+<!ENTITY     cookiename.label               "ชื่อคุกกี้">
+<!ENTITY     cookiedomain.label             "ไซต์">
+
+<!ENTITY     props.name.label               "ชื่อ:">
+<!ENTITY     props.value.label              "เนื้อหา:">
+<!ENTITY     props.domain.label             "โฮสต์:">
+<!ENTITY     props.path.label               "เส้นทาง:">
+<!ENTITY     props.secure.label             "ส่งสำหรับ:">
+<!ENTITY     props.expires.label            "หมดอายุ:">
+<!ENTITY     props.container.label          "การแยกข้อมูล:">
+
+<!ENTITY     window.title                   "คุกกี้">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "ค้นหา">
+<!ENTITY     searchFilter.accesskey         "ค">
+
+<!ENTITY     button.close.label             "ปิด">
+<!ENTITY     button.close.accesskey         "ป">

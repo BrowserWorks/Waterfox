@@ -1,0 +1,196 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ਟੈਲੀਮੈਂਟਰੀ ਡਾਟਾ">
+
+<!ENTITY aboutTelemetry.changeDataChoices "
+  ਬਦਲੋ
+">
+
+<!ENTITY aboutTelemetry.uploadEnabled "
+  FHR ਡਾਟੇ ਨੂੰ ਅੱਪਲੋਡ ਕਰਨਾ <span>ਸਮਰੱਥ</span> ਹੈ।
+">
+
+<!ENTITY aboutTelemetry.uploadDisabled "
+  FHR ਡਾਟੇ ਨੂੰ ਅੱਪਲੋਡ ਕਰਨਾ <span>ਅਸਮਰੱਥ</span> ਹੈ।
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "
+  ਵਧੇਰੇ ਟੈਲੀਮੈਂਟਰੀ ਰਿਕਾਰਡਿੰਗ <span>ਸਮਰੱਥ</span> ਹੈ।
+">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "
+  ਵਧੇਰੇ ਟੈਲੀਮੈਂਟਰੀ ਰਿਕਾਰਡਿੰਗ <span>ਅਸਮਰੱਥ</span> ਹੈ।
+">
+
+<!ENTITY aboutTelemetry.pingDataSource "
+ਪਿੰਗ ਡਾਟਾ ਸਰੋਤ:
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+ਮੌਜੂਦਾ ਪਿੰਗ ਡਾਟਾ
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+ਅਕਾਇਵ ਕੀਤਾ ਪਿੰਗ ਡਾਟਾ
+">
+
+<!ENTITY aboutTelemetry.pingDataDisplay "
+ਪਿੰਗ ਡਾਟਾ ਦ੍ਰਿਸ਼:
+">
+
+<!ENTITY aboutTelemetry.structured "
+ਢਾਂਚਾਬੱਧ
+">
+
+<!ENTITY aboutTelemetry.raw "
+ਅਣਘੜ JSON
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+ਸਬ-ਸ਼ੈਸ਼ਨ ਡਾਟਾ ਦੇਖੋ
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+ਪਿੰਗ ਨੂੰ ਚੁਣੋ:
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; ਹੋਰ ਨਵਾਂ ਪਿੰਗ
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+ਹੋਰ ਪੁਰਾਣਾ ਪਿੰਗ &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.rawPingData "
+ਅਣਘੜ ਪਿੰਗ ਡਾਟਾ…
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+ਹਫ਼ਤਾ
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+ਪਿੰਗ
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  ਆਮ ਡਾਟਾ
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  ਇੰਵਾਇਰਨਮੈਂਟ ਡਾਟਾ
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  ਟੈਲੀਮੈਂਟਰੀ ਲਾਗ
+">
+
+<!ENTITY aboutTelemetry.slowSqlSection "
+  ਹੌਲੀ SQL ਸਟੇਟਮੈਂਟਾਂ
+">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "
+  ਬਰਾਊਜ਼ਰ ਹੈਂਗ
+">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "
+  ਥਰਿੱਡ ਹੈਂਗ
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  ਸਕੇਲਰ
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.histogramsSection "
+  ਹਿਸਟੋਗਰਾਮ
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  ਕੀਡ ਹਿਸਟੋਗਰਾਮ
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "
+  ਸਧਾਰਨ ਮਾਪ
+">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "
+  ਐਡ-ਆਨ ਵੇਰਵੇ
+">
+
+<!ENTITY aboutTelemetry.lateWritesSection "
+  ਦੇਰੀ ਨਾਲ ਰਾਇਟਰ
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  ਸ਼ੈਸ਼ਨ ਜਾਣਕਾਰੀ
+">
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "
+  ਐਡ-ਆਨ ਵਲੋਂ ਇਕੱਤਰ ਕੀਤੇ ਹਿਸਟੋਗਰਾਮ
+">
+
+<!ENTITY aboutTelemetry.toggle "
+  ਭਾਗ ਨੂੰ ਬਦਲਣ ਲਈ ਕਲਿੱਕ ਕਰੋ
+">
+
+<!ENTITY aboutTelemetry.emptySection "
+  (ਕੋਈ ਡਾਟਾ ਇਕੱਤਰ ਨਹੀਂ ਕੀਤਾ)
+">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "
+  ਸੂਚਨਾ: ਹੌਲੀ SQL ਡੀਬੱਗ ਕਰਨਾ ਸਮਰੱਥ ਹੈ। ਪੂਰੀਆਂ SQL ਸਤਰਾਂ ਨੂੰ ਹੇਠਾਂ ਦੇਖਾਇਆ ਜਾ ਸਕਦਾ ਹੈ, ਪਰ ਉਹਨਾਂ ਨੂੰ ਟੈਲੀਮੈਂਟਰੀ ਨੂੰ ਭੇਜਿਆ ਨਹੀਂ ਜਾਵੇਗਾ।
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.filterText "
+  ਫਿਲਟਰ ਕਰੋ (ਸਤਰਾਂ ਜਾਂ /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  ਪੇਅਲੋਡ
+">
+
+<!ENTITY aboutTelemetry.rawPayload "
+  ਅਣਘਣ ਪੇਅਲੋਡ
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

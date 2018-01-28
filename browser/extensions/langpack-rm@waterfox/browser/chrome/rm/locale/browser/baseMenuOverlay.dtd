@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Deponer en il dock">
+<!ENTITY bringAllToFront.label    "Prender tuts enavant">
+<!ENTITY zoomWindow.label         "Zoom">
+<!ENTITY windowMenu.label         "Fanestra">
+
+<!ENTITY helpMenu.label           "Agid"> 
+<!ENTITY helpMenu.accesskey       "A"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Agid"> 
+<!ENTITY helpMenuWin.accesskey    "A">
+<!ENTITY aboutProduct2.label      "Davart &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "D">
+<!ENTITY productHelp2.label       "Agid da &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "d">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Scursanidas da tastas">
+<!ENTITY helpKeyboardShortcuts.accesskey "c">
+
+<!ENTITY helpSafeMode.label       "Reaviar e deactivar ils supplements…">
+<!ENTITY helpSafeMode.accesskey   "R">
+<!ENTITY helpSafeMode.stop.label       "Reaviar ed activar ils supplements">
+<!ENTITY helpSafeMode.stop.accesskey   "R">
+
+<!ENTITY healthReport2.label      "Analisa da sanadad da &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Infurmaziuns per schliar problems">
+<!ENTITY helpTroubleshootingInfo.accesskey  "p">
+
+<!ENTITY helpFeedbackPage.label      "Trametter in resun…">
+<!ENTITY helpFeedbackPage.accesskey  "s">
+
+<!ENTITY helpShowTour2.label            "Tura da &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "u">
+
+<!ENTITY preferencesCmdMac.label        "Preferenzas…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Servetschs">
+
+<!ENTITY hideThisAppCmdMac2.label       "Zuppentar &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Zuppentar il rest">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Mussar tut">

@@ -1,0 +1,213 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "பயர்பாக்ஸ் WebIDE">
+
+<!ENTITY projectMenu_label "திட்டம்">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "புதிய செயலி...">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "பொதியாக்கப்பட்ட செயலியைத் திற…">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "புரவலன் செயலியைத் திற…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "செயலியைத் திற…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "நிறுவி இயக்கு">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "செயலியை நிறுத்து">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "செயலியை வழுநீக்கு">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "செயற்திட்டத்தை நீக்கு">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "முன்னுரிமைகள்">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "கூடுதல் கூறுகளை நிர்வகி">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+
+
+<!ENTITY runtimeMenu_label "இயக்க நேரம்">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "துண்டி">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "திரைப்பிடிப்பு">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "இயக்க நேரம் தகவல்">
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimeMenu_showMonitor_label "கண்காணிப்பு">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "சாதன முன்னுரிமைகள்">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+
+
+
+<!ENTITY viewMenu_label "பார்">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "பெரிதாக்கு">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "சிறிதாக்கு">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "அளவுமாற்றத்தை மீட்டமை">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "செயலியை திற">
+<!ENTITY runtimeButton_label "இயக்க நேரத்தைத் தேர்">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "என் திட்டங்கள்">
+<!ENTITY projectPanel_runtimeApps "இயக்க நேர செயலிகள்">
+<!ENTITY projectPanel_tabs "கீற்றுகள்">
+<!ENTITY runtimePanel_usb "USB சாதனங்கள்">
+<!ENTITY runtimePanel_wifi "அருகலைச் சாதனங்கள்">
+<!ENTITY runtimePanel_simulator "பகர்ப்புகள்">
+<!ENTITY runtimePanel_other "பிற">
+<!ENTITY runtimePanel_installsimulator "சிமுலேட்டரை நிறுவு">
+<!ENTITY runtimePanel_noadbhelper "ADB உதவியை நிறுவு">
+<!ENTITY runtimePanel_nousbdevice "உங்கள் சாதனத்தைப் பார்க்க முடியவில்லை?">
+
+<!-- Lense -->
+
+<!ENTITY details_valid_header "சரியானது">
+<!ENTITY details_warning_header "எச்சரிக்கைகள்">
+<!ENTITY details_error_header "பிழைகள்">
+<!ENTITY details_description "விவரம்">
+<!ENTITY details_location "இடம்">
+<!ENTITY details_manifestURL "செயலி அடையாளம்">
+<!ENTITY details_removeProject_button "செயற்திட்டத்தை நீக்கு">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "புதிய செயலி">
+<!ENTITY newAppHeader "வார்ப்புருவைத் தேர்">
+<!ENTITY newAppLoadingTemplate "வார்ப்புக்களை ஏற்றுகிறது…">
+<!ENTITY newAppProjectName "திட்டப் பெயர்:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "மூடுக">
+<!-- Addons -->
+
+<!ENTITY addons_title "கூடுதல் கூறுகள்">
+<!ENTITY addons_aboutaddons "துணை நிரல் மேலாளரை திற">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "முன்னுரிமைகள்">
+<!ENTITY prefs_editor_title "தொகுப்பி">
+<!ENTITY prefs_general_title "பொது">
+<!ENTITY prefs_restore "முன்னிருப்பை மீட்டமைக்கவும்">
+<!ENTITY prefs_manage_components "கூடுதல் கூறுகளை நிர்வகி">
+<!ENTITY prefs_options_autoconnectruntime "முந்தைய இயக்க நேரத்திற்கு மீட்டு இணை">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE துவங்கும் போது முந்தைய இயக்க நேரத்திற்கு மீட்டு இணை">
+<!ENTITY prefs_options_rememberlastproject "கடைசித் திட்டத்தை நேபகப்படுத்து">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE தொடங்கும்பொது முந்தைய திட்டத்தை மீள்சேமி">
+<!ENTITY prefs_options_templatesurl "வார்ப்புரு URL">
+<!ENTITY prefs_options_templatesurl_tooltip "இருக்கும் வார்ப்புருக்களின் அகரவரிசை">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "இயக்க நேர தகவல்">
+<!ENTITY runtimedetails_adbIsRoot "ADB ஆனது root: ">
+<!ENTITY runtimedetails_summonADBRoot "மூலச் சாதனம்">
+<!ENTITY runtimedetails_ADBRootWarning "(திறக்கப்பட்ட bootloader தேவை)">
+
+<!ENTITY runtimedetails_requestPrivileges "உயரிய சலுகைகளை கேள்">
+<!ENTITY runtimedetails_privilegesWarning "(சாதனம் மீள்துவங்கும். root அனுமதி தேவை.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "பூலியன்">
+<!ENTITY device_typenumber "முழுஎண்">
+<!ENTITY device_typestring "சரம்">
+<!ENTITY device_typeobject "பொருள்">
+<!ENTITY device_typenone "ஒரு வகையைத் தேர்">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "சாதன முன்னுரிமைகள்">
+<!ENTITY devicepreference_search "தேடல் முன்னுரிமைகள்">
+<!ENTITY devicepreference_newname "புதிய முன்னுரிமை பெயர்">
+<!ENTITY devicepreference_newtext "முன்னுரிமை பெயர்">
+<!ENTITY devicepreference_addnew "புதிய முன்னுரிமையைச் சேர்">
+<!-- Device Settings -->
+<!ENTITY devicesetting_search "தேடல் அமைவுகள்">
+
+
+
+<!-- Monitor -->
+
+<!ENTITY monitor_title "கண்காணிப்பு">
+<!ENTITY monitor_help "உதவி">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+
+<!-- Logs panel -->
+<!-- Simulator Options -->
+
+<!ENTITY simulator_reset "முன்னிருப்பை மீட்டமைக்கவும்">
+<!ENTITY simulator_name "பெயர்">
+
+<!ENTITY simulator_version "பதிப்பு">
+<!ENTITY simulator_profile "சுயவிவரம்">
+
+
+
+
+
+
+
+
+<!ENTITY devicesetting_addnew "Add new setting">
+
+<!ENTITY devicesetting_newname "New setting name">
+<!ENTITY devicesetting_newtext "Setting value">
+<!ENTITY devicesetting_title "Device Settings">
+<!ENTITY logs_title "Pre-packaging Command Logs">
+
+<!ENTITY projectMenu_refreshTabs_label "Refresh Tabs">
+
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY runtimeMenu_showSettings_label "Device Settings">
+<!ENTITY runtimePanel_refreshDevices_label "Refresh Devices">
+
+<!ENTITY runtimedetails_unrestrictedPrivileges "Unrestricted DevTools privileges: ">
+<!ENTITY simulator_device "Device">
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_pixelRatio "Pixel Ratio">
+<!ENTITY simulator_remove "Delete Simulator">
+<!ENTITY simulator_screenSize "Screen">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_title "Simulator Options">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Open Config Directory…">
+<!ENTITY wifi_auth_header "Client Identification">
+<!ENTITY wifi_auth_no_scanner "No QR scanner prompt?">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+
+<!ENTITY wifi_auth_scan_request "The endpoint you are connecting to needs more information to authenticate this connection.  Please scan the QR code below via the prompt on your other device.">
+<!ENTITY wifi_auth_token_request "If your other device asks for a token instead of scanning a QR code, please copy the value below to the other device:">
+<!ENTITY wifi_auth_yes_scanner "Have a QR scanner prompt?">

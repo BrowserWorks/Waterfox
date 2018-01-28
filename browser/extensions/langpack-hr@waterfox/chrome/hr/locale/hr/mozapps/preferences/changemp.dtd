@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Promijeni glavnu lozinku">
+<!ENTITY setPassword.tokenName.label       "Sigurnosni uređaj">
+<!ENTITY setPassword.oldPassword.label     "Trenutna lozinka:">
+<!ENTITY setPassword.newPassword.label     "Upišite novu lozinku:">
+<!ENTITY setPassword.reenterPassword.label "Ponovno upišite novu lozinku:">
+<!ENTITY setPassword.meter.label           "Mjerač kvalitete lozinke">
+<!ENTITY setPassword.meter.loading         "Učitavanje">
+<!ENTITY masterPasswordDescription.label   "Glavna lozinka se koristi za zaštitu osjetljivih informacija poput lozinki za pojedine stranice.  Ako stvorite glavnu lozinku, biti ćete upitani da ju upišete jednom po prijavi kada &brandShortName; pristupi spremljenim informacijama zaštićenim lozinkom.">
+<!ENTITY masterPasswordWarning.label       "Molim zapamtite glavnu lozinku koju ste postavili.  Ako zaboravite svoju glavnu lozinku, nećete moći pristupiti informacijama koje su zaštićene istom.">

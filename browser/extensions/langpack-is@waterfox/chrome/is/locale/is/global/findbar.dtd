@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Leita að næsta tilfelli þessara orða">
+<!ENTITY previous.tooltip "Leita að fyrra tilfelli þessara orða">
+<!ENTITY findCloseButton.tooltip "Loka leitarslá">
+<!ENTITY highlightAll.label "Lita allt">
+<!ENTITY highlightAll.accesskey "L">
+<!ENTITY highlightAll.tooltiptext "Lita öll tilvik orðsins">
+<!ENTITY caseSensitive.label "Stafrétt">
+<!ENTITY caseSensitive.accesskey "S">
+<!ENTITY caseSensitive.tooltiptext "Leita miðað við stafsöðu">
+<!ENTITY entireWord.label "Stök orð">
+<!ENTITY entireWord.accesskey "ð">
+<!ENTITY entireWord.tooltiptext "Leita aðeins að stökum orðum">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopijuoti">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Pažymėti viską">
+<!ENTITY  selectall.accesskey   "v">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Bendroji">
+<!ENTITY  generalTab.accesskey  "B">
+<!ENTITY  generalTitle          "Pavadinimas:">
+<!ENTITY  generalURL            "URL:">
+<!ENTITY  generalType           "Tipas:">
+<!ENTITY  generalMode           "Vaizdavimo būdas:">
+<!ENTITY  generalSize           "Dydis:">
+<!ENTITY  generalReferrer       "Iš kur ateina:">
+<!ENTITY  generalSource         "Šaltinis:">
+<!ENTITY  generalModified       "Atnaujintas:">
+<!ENTITY  generalEncoding2      "Simbolių koduotė:">
+<!ENTITY  generalMetaName       "Vardas">
+<!ENTITY  generalMetaContent    "Reikšmė">
+
+<!ENTITY  mediaTab              "Įvairialypė terpė">
+<!ENTITY  mediaTab.accesskey    "t">
+<!ENTITY  mediaLocation         "Vieta:">
+<!ENTITY  mediaText             "Susietas tekstas:">
+<!ENTITY  mediaAltHeader        "Alternatyvus tekstas">
+<!ENTITY  mediaAddress          "Adresas">
+<!ENTITY  mediaType             "Tipas">
+<!ENTITY  mediaSize             "Dydis">
+<!ENTITY  mediaCount            "Kiekis">
+<!ENTITY  mediaDimension        "Matmenys:">
+<!ENTITY  mediaLongdesc         "Ilgas aprašas:">
+<!ENTITY  mediaBlockImage.accesskey "p">
+<!ENTITY  mediaSaveAs           "Įrašyti kaip…">
+<!ENTITY  mediaSaveAs.accesskey "r">
+<!ENTITY  mediaSaveAs2.accesskey "š">
+<!ENTITY  mediaPreview          "Elemento peržiūra:">
+
+<!ENTITY  feedTab               "Sklaidos kanalai">
+<!ENTITY  feedTab.accesskey     "N">
+<!ENTITY  feedSubscribe         "Prenumeruoti">
+<!ENTITY  feedSubscribe.accesskey "P">
+
+<!ENTITY  permTab               "Leidimai">
+<!ENTITY  permTab.accesskey     "L">
+<!ENTITY  permUseDefault        "Naudoti numatytąją nuostatą">
+<!ENTITY  permAskAlways         "Visada klausti">
+<!ENTITY  permAllow             "Leisti">
+<!ENTITY  permAllowSession      "Leisti vienam seansui">
+<!ENTITY  permBlock             "Neleisti">
+<!ENTITY  permissionsFor        "Leidimai:">
+<!ENTITY  permPlugins           "Papildinių aktyvinimas">
+
+<!ENTITY  permClearStorage           "Išvalyti duomenis">
+<!ENTITY  permClearStorage.accesskey "v">
+
+<!ENTITY  securityTab           "Saugumas">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Rodyti liudijimą">
+<!ENTITY  securityView.accesskey "R">
+<!ENTITY  securityView.unknown   "Nežinomas">
+
+
+<!ENTITY  securityView.identity.header   "Svetainės tapatumas">
+<!ENTITY  securityView.identity.owner    "Savininkas: ">
+<!ENTITY  securityView.identity.domain   "Svetainė: ">
+<!ENTITY  securityView.identity.verifier "Tapatumą patvirtino: ">
+<!ENTITY  securityView.identity.validity "Baigiasi:">
+
+<!ENTITY  securityView.privacy.header                   "Privatumas ir žurnalas">
+<!ENTITY  securityView.privacy.history                  "Ar anksčiau jau lankiausi šioje svetainėje?">
+<!ENTITY  securityView.privacy.cookies                  "Ar ši svetainė turi įrašiusi slapukų mano kompiuteryje?">
+<!ENTITY  securityView.privacy.viewCookies              "Rodyti slapukus">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "R">
+<!ENTITY  securityView.privacy.passwords                "Ar turiu įsimintų šios svetainės slaptažodžių?">
+<!ENTITY  securityView.privacy.viewPasswords            "Rodyti slaptažodžius">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "o">
+
+<!ENTITY  securityView.technical.header                 "Techninė informacija">
+
+<!ENTITY  helpButton.label                              "Žinynas">

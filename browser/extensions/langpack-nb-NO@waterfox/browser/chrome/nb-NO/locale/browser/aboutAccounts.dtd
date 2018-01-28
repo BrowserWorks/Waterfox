@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Velkommen til &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Logg inn for å synkronisere faner, bokmerker, passord med mer.">
+<!ENTITY aboutAccountsConfig.startButton.label "Begynn">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync-innstillinger">
+<!ENTITY aboutAccounts.noConnection.title "Ingen tilkobling">
+<!ENTITY aboutAccounts.noConnection.description "Du må være tilkoblet Internett for å logge inn.">
+<!ENTITY aboutAccounts.noConnection.retry "Prøv igjen">
+<!ENTITY aboutAccounts.badConfig.title "Ugyldig oppsett">
+<!ENTITY aboutAccounts.badConfig.description "Kunne ikke avgjøre serverkonfigurasjon for din Waterfox-konto. Prøv igjen senere.">

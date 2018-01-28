@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ୱିଜାର୍ଡ ଆମଦାନୀ କରନ୍ତୁ">
+
+<!ENTITY importFrom.label               "ବିକଳ୍ପ, ଚିହ୍ନିତ ସ୍ଥାନ, ଇତିହାସ, ପ୍ରବେଶ ସଂକେତ ଏବଂ ଅନ୍ୟାନ୍ୟ ତଥ୍ୟକୁ ଆମଦାନୀ କରନ୍ତୁ:">
+<!ENTITY importFromUnix.label           "ପସନ୍ଦ, ଚିହ୍ନିତ ସ୍ଥାନ, ଇତିହାସ, ପ୍ରବେଶ ସଂକେତ ଏବଂ ଅନ୍ୟାନ୍ୟ ତଥ୍ୟକୁ ଆମଦାନୀ କରନ୍ତୁ :">
+<!ENTITY importFromBookmarks.label      "ଚିହ୍ନିତ ସ୍ଥାନ ଆମଦାନୀ କରନ୍ତୁ :">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+
+
+<!ENTITY importFromNothing.label        "କିଛି ଆମଦାନୀ କରନ୍ତୁ ନାହିଁ">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+
+
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+
+
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+
+
+
+<!ENTITY noMigrationSources.label       "ଚିହ୍ନିତ ସ୍ଥାନ, ଇତିହାସ କିମ୍ବା ପ୍ରବେଶ ସଂକେତ ତଥ୍ୟ ଧାରଣ କରିଥିବା କୌଣସି ପ୍ରଗ୍ରାମ ମିଳୁନାହିଁ.">
+
+<!ENTITY importSource.title             "ବିନ୍ୟାସ ଏବଂ ତଥ୍ୟ ଆମଦାନୀ କରନ୍ତୁ">
+<!ENTITY importItems.title              "ଆମଦାନୀ କରିବାକୁ ଥିବା ବସ୍ତୁ">
+<!ENTITY importItems.label              "କେଉଁ ବସ୍ତୁକୁ ଆମଦାନୀ କରିବାକୁ ହେବ ଚୟନ କରନ୍ତୁ:">
+
+<!ENTITY migrating.title                "ଆମଦାନୀ କରୁଅଛି…">
+<!ENTITY migrating.label                "ନିମ୍ନଲିଖିତ ବସ୍ତୁଗୁଡ଼ିକ ବର୍ତ୍ତମାନ ଆମଦାନୀ ହେଉଅଛି…">
+
+<!ENTITY selectProfile.title            "ରୂପରେଖ ଚୟନକରନ୍ତୁ">
+<!ENTITY selectProfile.label            "ନିମ୍ନଲିଖିତ ରୂପରେଖଗୁଡ଼ିକ ଆମଦାନୀ କରିବାକୁ ଉପଲବ୍ଧ:">
+
+<!ENTITY done.title                     "ଆମଦାନୀ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା">
+<!ENTITY done.label                     "ନିମ୍ନଲିଖିତ ବସ୍ତୁଗୁଡ଼ିକ ସଫଳତାରସହିତ ଆମଦାନୀ ହୋଇସାରିଛି:">
+
+
+<!ENTITY closeSourceBrowser.label       "Please ensure the selected browser is closed before continuing.">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdge.label           "Microsoft Edge">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Actualmente non está nunha xanela privada.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Abrir unha xanela privada">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Navegación privada">
+<!ENTITY aboutPrivateBrowsing.info.searches              "Buscas">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "Ficheiros temporais">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "Descargas">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "Marcadores">
+
+<!ENTITY trackingProtection.title                        "Protección contra o seguimento">
+<!ENTITY trackingProtection.startTour1                   "Vexa como funciona">
+
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "When you browse in a Private Window, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "does not save">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " your:">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "will save">
+<!ENTITY aboutPrivateBrowsing.info.visited               "visited pages">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Learn more about ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Private Browsing">
+<!ENTITY aboutPrivateBrowsing.note.after                 " on the Internet. Your employer or Internet service provider can still know what page you visit.">
+<!ENTITY aboutPrivateBrowsing.note.before                "Private Browsing ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "doesn’t make you anonymous">
+<!ENTITY privateBrowsing.title.tracking                  "Private Browsing with Tracking Protection">
+<!ENTITY trackingProtection.description2                 "Some websites use trackers that can monitor your activity across the Internet. With Tracking Protection Waterfox will block many trackers that can collect information about your browsing behavior.">

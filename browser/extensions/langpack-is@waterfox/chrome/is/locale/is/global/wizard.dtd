@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Til baka">
+<!ENTITY  button-back-mac.accesskey    "b">
+<!ENTITY  button-next-mac.label        "Áfram">
+<!ENTITY  button-next-mac.accesskey    "f">
+<!ENTITY  button-finish-mac.label      "Ljúka">
+<!ENTITY  button-cancel-mac.label      "Hætta við">
+
+<!ENTITY  button-back-unix.label       "Til baka">
+<!ENTITY  button-back-unix.accesskey   "b">
+<!ENTITY  button-next-unix.label       "Áfram">
+<!ENTITY  button-next-unix.accesskey   "f">
+<!ENTITY  button-finish-unix.label     "Ljúka">
+<!ENTITY  button-cancel-unix.label     "Hætta við">
+
+<!ENTITY  button-back-win.label        "&lt; Til baka">
+<!ENTITY  button-back-win.accesskey    "b">
+<!ENTITY  button-next-win.label        "Áfram &gt;">
+<!ENTITY  button-next-win.accesskey    "f">
+<!ENTITY  button-finish-win.label      "Ljúka">
+<!ENTITY  button-cancel-win.label      "Hætta við">

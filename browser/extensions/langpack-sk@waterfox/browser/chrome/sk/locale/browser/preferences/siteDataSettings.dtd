@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nastavenia - Údaje stránok">
+<!ENTITY     hostCol.label                 "Stránka">
+<!ENTITY     statusCol.label               "Stav">
+<!ENTITY     usageCol.label                "Úložisko">
+<!ENTITY     searchTextboxPlaceHolder             "Hľadať">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "d">
+<!ENTITY     removeSelected.label          "Odstrániť vybraté">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Uložiť zmeny">
+<!ENTITY     save.accesskey                "e">
+<!ENTITY     cancel.label                  "Zrušiť">
+<!ENTITY     cancel.accesskey              "Z">
+<!ENTITY     removingDialog.title          "Odstrániť údaje stránok">
+<!ENTITY     removingSelected.description  "Odstránením údajov stránky sa odstránia aj cookies a offline obsah. Toto môže spôsobiť vaše odhlásenie z webovej stránky. Naozaj chcete uskutočniť tieto zmeny?">
+<!ENTITY     siteTree.label                "Cookies nasledujúcich stránok budú odstránené:">

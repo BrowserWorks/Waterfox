@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "الأمان">
+<!ENTITY  phishingProtection.label       "الحماية من الاحتيال">
+
+<!ENTITY  warnOnAddonInstall2.label       "حذّرني عندما يحاول موقع وِب تنصيب إضافات">
+<!ENTITY  warnOnAddonInstall2.accesskey   "ح">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "احجب المحتوي الخطير و المخادع">
+<!ENTITY  enableSafeBrowsing.accesskey    "ح">
+
+<!ENTITY  blockDownloads.label            "احجب التنزيلات الخطيرة">
+<!ENTITY  blockDownloads.accesskey        "ت">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "حذرني من البرمجيات غير المرغوب فيها و غير الشائعة">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "غ">
+
+<!ENTITY  addonExceptions.label         "الاستثناءات…">
+<!ENTITY  addonExceptions.accesskey     "ث">
+
+
+<!ENTITY  formsAndPasswords.label       "النماذج و كلمات السر">
+
+<!ENTITY  rememberLogins2.label         "تذكر كلمات سر و بيانات ولوج مواقع الوِب">
+<!ENTITY  rememberLogins2.accesskey     "ت">
+<!ENTITY  passwordExceptions.label      "الاستثناءات…">
+<!ENTITY  passwordExceptions.accesskey  "س">
+
+<!ENTITY  useMasterPassword.label        "استخدم كلمة سر رئيسيّة">
+<!ENTITY  useMasterPassword.accesskey    "خ">
+<!ENTITY  changeMasterPassword.label     "غيّر كلمة السر الرئيسيّة…">
+<!ENTITY  changeMasterPassword.accesskey "ر">
+
+<!ENTITY  savedLogins.label              "جلسات الولوج المحفوظة…">
+<!ENTITY  savedLogins.accesskey          "ح">

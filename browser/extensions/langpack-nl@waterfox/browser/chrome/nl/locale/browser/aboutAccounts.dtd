@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Welkom bij &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Meld u aan om uw tabbladen, bladwijzers, wachtwoorden en meer te synchroniseren.">
+<!ENTITY aboutAccountsConfig.startButton.label "Beginnen">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync-voorkeuren">
+<!ENTITY aboutAccounts.noConnection.title "Geen verbinding">
+<!ENTITY aboutAccounts.noConnection.description "U moet met het internet zijn verbonden om u aan te melden.">
+<!ENTITY aboutAccounts.noConnection.retry "Opnieuw proberen">
+<!ENTITY aboutAccounts.badConfig.title "Onjuiste configuratie">
+<!ENTITY aboutAccounts.badConfig.description "Kan de configuratie van uw Waterfox-accountserver niet bepalen. Probeer het later opnieuw.">

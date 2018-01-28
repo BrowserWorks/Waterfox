@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Davart tes dretgs">
+<!ENTITY rights.intro "&brandFullName; è ina software libra cun in code avert, creada d'ina communitad da millis persunas da tut il mund. I dat in pèr chaussas che ti stuessas savair:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; è disponibel tenor las cundiziuns da la ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Quai munta che ti pos utilisar, copiar e dar vinavant &brandShortName; ad auters. Ti dastgas era midar il code da funtauna da &brandShortName; ed al adattar a tes basegns. La Mozilla Public License ta dat era il dretg da distribuir tia versiun modifitgada.">
+
+<!ENTITY rights.intro-point2-a "Mozilla na ta conceda nagins dretgs e naginas licenzas per las marcas da la Waterfox u dad in'autra partida; quai vala era senza excepziun per il num ed il logo da 'Waterfox'. Ulteriuras infurmaziuns davart las marcas chatt'ins ">
+<!ENTITY rights.intro-point2-b "qua">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Tschertas funcziuns da &brandShortName;, sco las annunzias da collaps, ta porschan la pussaivladad da dar in resun a &vendorShortName;. Cun la decisiun da trametter il resun lubeschas ti a &vendorShortName; dad utilisar il resun per meglierar ses products, da publitgar il resun sin sias paginas d'internet e da distribuir il resun.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Co che nus utilisain tias infurmaziuns persunalas ed ils resuns che ti tramettas a &vendorShortName; entras &brandShortName; è descrit en las ">
+<!ENTITY rights2.intro-point3b "Directivas per la protecziun da datas da &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Tut las directivas areguard la protecziun da datas che concernan quest product duessan esser enumeradas qua.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Tschertas funcziuns da &brandShortName; utiliseschan servetschs d'infurmaziun a basan dal web. Nus na pudain betg garantir che quellas èn 100&#37; correctas e senza sbagls. Ulteriurs detagls, inclus las infurmaziuns co deactivar las funcziuns che utiliseschan quests servetschs pos ti chattar en las ">
+<!ENTITY rights.intro-point4b "cundiziuns da servetsch">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Sche quest product cuntegna servetschs da web, duessan tut las cundiziuns da servetsch valaivlas per il(s) servetsch(s) esser colliadas cun il champ ">
+<!ENTITY rights.intro-point4b-unbranded "Servetschs da websites">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "Servetschs d'infurmaziun da &brandFullName; a basa dal web">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Per far ir tscherts tips da cuntegn da video telechargia &brandShortName; moduls da terzas partidas per decriptar il cuntegn.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; utilisescha servetschs d'infurmaziun a basa dal web (&quot;Servetschs&quot;) per ta porscher tschertas funcziuns che stattan a disposiziun en questa versiun binaria da &brandShortName; tenor las cundiziuns descrittas sutvart. Sche ti na vuls betg utilisar in u plirs da quests servetschs ni sche ti na sas betg acceptar las cundiziuns sutvart pos ti deactivar las funcziuns u ils servetschs. Instrucziuns che mussan co deactivar las funcziuns u ils servetschs pos ti chattar ">
+<!ENTITY rights2.webservices-b "qua">
+<!ENTITY rights3.webservices-c ". Autras funcziuns e servetschs pon vegnir deactivads en las preferenzas da l'applicaziun.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Nus recumandain da betg deactivar la funcziun da SafeBrowsing perquai che ti pudessas uschiglio visitar paginas d'internet betg segiras.  Sche ti vuls deactivar cumplettamain la funcziun, suonda ils suandants pass:">
+<!ENTITY rights.safebrowsing-term1 "Avra las preferenzas da l'applicaziun">
+<!ENTITY rights.safebrowsing-term2 "Tscherna la secziun &quot;Segirezza&quot;">
+<!ENTITY rights2.safebrowsing-term3 "Deactivescha l'opziun per &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "SafeBrowsing è ussa deactivà">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Navigar cun resguardar tia posiziun (Location Aware Browsing): ">
+<!ENTITY rights.locationawarebrowsing-b "è adina facultativ. Nagina infurmaziun davart tia posiziun vegn tramessa senza tes consentiment. Sche ti vuls deactivar cumplettamain questa funcziun, suonda ils suandants pass:">
+<!ENTITY rights.locationawarebrowsing-term1a "Scriva en la trav d'adressas ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Entdatescha geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Clicca dubel sin la preferenza geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Location-Aware Browsing è ussa deactivà">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Qua duess cumparair ina survista davart ils servetschs da website utilisads ed in'instrucziun che mussa co deactivar els, sche quai è necessari.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Tut las cundiziuns che concernan ils servetschs utilisads da quest product duessan esser enumeradas qua.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; e ses contribuents, concessiunaris e partenaris sa sprovan da porscher ils servetschs ils pli actuals ed exacts. Nus na pudain dentant betg garantir che questas infurmaziuns èn cumplettas e senza sbagls. Per exempel èsi pussaivel ch'il servetsch da SafeBrowsing n'identifitgescha betg tschertas paginas privlusas u ch'el identifitgescha paginas segiras sco privlusas. Era las posiziuns returnadas da noss purschiders dals servetschs che esguardan tia posiziun geografica èn stimadas e nus na pudain betg (era noss purschiders na pon betg) garantir che las posiziuns inditgadas èn correctas.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; po sistir u midar ils servetschs tenor agen giudizi.">
+<!ENTITY rights2.webservices-term3 "Ti dastgas far diever da quests servetschs cun la versiun correspundenta da &brandShortName;, e &vendorShortName; ta garantescha che ti has tut ils dretgs necessaris per far quai. &vendorShortName; e ses concessiunaris sa resalvan tut ils auters dretgs. Questas cundiziuns na vulan betg restrenscher dretgs che vegnan concedids da licenzas da code avert (Open-Source) e concernan &brandShortName; resp. versiuns correspundentas che sa basan sin il code da funtauna da &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Quests servetschs vegnan mess a disposiziun &quot;senza garanzia per defects&quot;. &vendorShortName;, ses contribuents, concessiunaris e distributurs refusan tut las garanzias, explicitas u implicitas, per quests servetschs. Ti surpiglias la cumplaina responsabladad per ils servetschs che ti tschernas per tes basegns e per lur qualitad e prestaziun. Tschertas giurisdicziuns na permettan nagina exclusiun u limitaziun da garanzias implicitas, uschia che questa liberaziun da la responsabladad na vala eventualmain betg per tai.">
+<!ENTITY rights.webservices-term5 "Nun che la lescha vertenta pretendia, na pon ni ils &vendorShortName;, ni ses contribuents, ni ses concessiunaris u distributurs esser responsabels per inquals donns indirects u spezials, donns entras effects laterals u donns che resultan da l'utilisaziun da &brandShortName; u dals servetschs. La responsabladad globala sa restrenscha a maximalmain $500 (tschintgtschient dollars). Tschertas giurisdicziuns na permettan betg l'exclusiun u la limitaziun da tscherts donns, uschia che questas exclusiuns u limitaziuns na pertutgan eventualmain betg tai.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; po actualisar questas cundiziuns da temp en tempen cas da basegn. Questas cundiziuns na pon betg vegnir midadas u annulladas senza ina conferma en scrit da &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Questas cundiziuns vegnan protegidas da las leschas dal stadi da California, USA, exclus las normas giuridicas che stattan en conflict cun quellas. Sche singulas disposiziuns da questas cundiziuns avessan dad esser senza effect u nunpratitgablas, valan vinavant las ulteriuras cundiziuns. En cas d'in conflict tranter la versiun translatada e la versiun englaisa da questas cundiziuns, vala la versiun englaisa.">

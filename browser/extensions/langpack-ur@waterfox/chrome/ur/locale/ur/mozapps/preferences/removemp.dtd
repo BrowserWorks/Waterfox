@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "ماسٹر پاس ورڈ ہٹائیں">
+<!ENTITY removeInfo.label                  "آگے بڑھنے کے لئے آپ کو حالیہ پاس ورڈ دینا ہوگا:">
+<!ENTITY removeWarning1.label              "ماسٹر پاس ورڈ آپ کی حساس معلومات کی حفاظت کے لئے استعمال ہوتا ہے۔">
+<!ENTITY removeWarning2.label              "اسے ختم کرنے کی صورت میں آپ کی حساس معلومات محفوظ نہیں ہوں گی۔">
+<!ENTITY setPassword.oldPassword.label     "حالیہ پاس ورڈ:">
+

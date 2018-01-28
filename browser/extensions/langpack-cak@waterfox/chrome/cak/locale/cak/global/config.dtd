@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Nïm runuk'ulem">
+<!ENTITY aboutWarningText.label "Re ruxaq nuk'ulem, nuya' q'ij chi ye'ak'ëx ri nima'q taq awajowab'al, yejal ri taq retal toq majun awetamab'al achajin, rik'in jub'a' itzel taq rub'anikil xke'anük'. Niqachilab'ej chawe chi mani yatok po yatikïr we kan awetaman achike ri xtasamajij qa.">
+<!ENTITY aboutWarningButton2.label "¡Nink'ül ri samaj!">
+<!ENTITY aboutWarningCheckbox.label "Junelïk tik'ut pe re jun retal k'ayewal re'.">
+
+<!ENTITY searchPrefs.label "Tikanöx:">
+<!ENTITY searchPrefs.accesskey "k">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Rub'i' ajowab'äl">
+<!ENTITY lockColumn.label "Amaq'">
+<!ENTITY typeColumn.label "Ruwäch">
+<!ENTITY valueColumn.label "Retal">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Tipitz' richin nicholajïx"> 
+<!ENTITY columnChooser.tooltip "Tipitz' richin nicha' ri taq tem xkek'ut pe"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Wachib'exïk">
+<!ENTITY copyPref.accesskey "c">
+<!ENTITY copyName.label "Tiwachib'ëx ri b'i'aj">
+<!ENTITY copyName.accesskey "b">
+<!ENTITY copyValue.label "Tiwachib'ëx retal">
+<!ENTITY copyValue.accesskey "r">
+<!ENTITY modify.label "Tijalwachïx">
+<!ENTITY modify.accesskey "T">
+<!ENTITY toggle.label "Tik'ex">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "Tikirib'alil">
+<!ENTITY reset.accesskey "T">
+<!ENTITY new.label "K'ak'a'">
+<!ENTITY new.accesskey "k">
+<!ENTITY string.label "Cholajil">
+<!ENTITY string.accesskey "C">
+<!ENTITY integer.label "Chijun">
+<!ENTITY integer.accesskey "C">
+<!ENTITY boolean.label "Ja'/manäq">
+<!ENTITY boolean.accesskey "J">

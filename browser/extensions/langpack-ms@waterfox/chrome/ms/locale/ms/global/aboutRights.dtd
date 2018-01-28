@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Perihal Hak Anda">
+<!ENTITY rights.intro "&brandFullName; adalah percuma dan perisian sumber terbuka, dibina oleh sebuah komuniti yang terdiri daripada ribuan orang dari seluruh dunia. Ada beberapa perkara yang anda perlu tahu:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; adalah dicipta sedia ada untuk anda di bawah semua terma daripada ">
+<!ENTITY rights.intro-point1b "lesen awam Mozilla">
+<!ENTITY rights.intro-point1c ". Ini bermaksud anda boleh menggunakan, menyalin dan mengedarkan &brandShortName; kepada pihak lain. Anda juga dialu-alukan untuk mengolah kod sumber &brandShortName; mengikut keperluan anda. Lesen Umum Mozilla juga memberikan hak kepada anda untuk mengedarkan versi yang telah diubah.">
+
+<!ENTITY rights.intro-point2-a "Anda tidak diberi hak tanda dagangan atau lesen untuk tanda dagangan Waterfox atau mana-mana pihak, termasuk tidak terhad kepada nama Waterfox atau logonya. Maklumat tambahan mengenai tanda dagangan boleh ditemui di ">
+<!ENTITY rights.intro-point2-b "Di sini">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Beberapa ciri dalam &brandShortName;, seperti Crash Reporter akan memberikan anda pilihan untuk memberikan maklum balas kepada &vendorShortName;. Dengan memilih untuk memberikan maklum balas, anda akan memberikan &vendorShortName; kebenaran untuk menggunakan maklum balas tersebut untuk menambahbaik produknya, untuk memaparkan maklum balas tersebut di laman web, dan untuk menyebarkan maklum balas tersebut.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Bagaimana kami menggunakan maklumat peribadi dan maklum balas yang dihantar kepada &vendorShortName; melalui &brandShortName; adalah seperti yang diterangkan di dalam ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Polisi Privasi">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Sebarang polisi persendirian yang diguna pakai untuk produk ini mestilah disenaraikan di sini.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Beberapa &brandShortName; ciri-ciri menggunakan perkhidmatan-perkhidmatan maklumat berlandaskan web, walaubagaimana, kami tidak boleh menjamin bahawa ciri-ciri tersebut 100&#037;; tepat atau tiada ralat. Maklumat lanjut, termasuk maklumat mengenai bagaimana untuk mematikan ciri-ciri yang menggunakan perkhidmatan-perkhidmatan ini, boleh didapati dalamnya ">
+<!ENTITY rights.intro-point4b "terma perkhidmatan">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Sekiranya produk ini merangkumi servis web, sebarang terma perkhidmatan yang diguna pakai untuk servis(-servis) ini perlu dihubungkan ke ">
+<!ENTITY rights.intro-point4b-unbranded "Servis Laman Web">
+<!ENTITY rights.intro-point4c-unbranded " seksyen.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; Servis Informasi berdasarkan Web">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Untuk main semula sesetengah jenis kandungan video, &brandShortName; memuat turun sesetengah modul dekripsi kandungan daripada pihak ketiga.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; menggunakan perkhidmatan maklumat -berasaskan-web (&quot;Perkhidmatans&quot;) untuk menyediakan beberapa ciri yang disediakan untuk kegunaan anda dengan versi binari &brandShortName; di bawah terma yang dinyatakan dibawah. Jika anda tidak mahu menggunakan salah satu daripada Perkhidmatan atau tidak menerima terma di bawah, anda boleh nyahdayakan mana-mana ciri Perkhidmatan tersebut. Arahan mengenai cara untuk menyahdayakan ciri atau Perkhidmatan tertentu boleh ditemui di ">
+<!ENTITY rights2.webservices-b "di sini">
+<!ENTITY rights3.webservices-c ". Ciri lain dan Services boleh dinyahdayakan dalam keutamaan aplikasi.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "SafeBrowsing: ">
+<!ENTITY rights.safebrowsing-b "Menyahdaya ciri Safe Browsing tidak digalakkan kerana boleh menyebabkan anda melayari laman yang  tidak selamat.  Jika anda mahu menyahdayakan semua ciri tersebut, ikuti langkah berikut:">
+<!ENTITY rights.safebrowsing-term1 "Buka keutamaan aplikasi">
+<!ENTITY rights.safebrowsing-term2 "Pilih pilihan keselamatan">
+<!ENTITY rights2.safebrowsing-term3 "Nyahpilih pilihan untuk &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing kini dinyahdayakan">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Pelayaran Sedar Lokasi: ">
+<!ENTITY rights.locationawarebrowsing-b "sentiasa opt-in.  Tiada maklumat lokasi yang akan dihantar tanpa kizinan anda. Jika anda mahu menyahdayakan ciri ini secara keseluruhan, ikuti arahan berikut:">
+<!ENTITY rights.locationawarebrowsing-term1a "Di bar URL, taip ">
+<!ENTITY rights.locationawarebrowsing-term1b "tentang:konfig">
+<!ENTITY rights.locationawarebrowsing-term2 "Taip geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Klik-dua kali pada keutamaan geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "Location-Aware Browsing kini dinyahdayakan">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Gambaran keseluruhan perkhidmatan laman web yang mengandungi produk, berserta arahan untuk menyahdayakannya, jika ada, perlu disertakan di sini.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Apa jua terma perkhidmatan yang diguna pakai bagi produk ini mestilah disenaraikan di sini.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; serta semua penyumbang, pemberi lesen dan rakan kongsi berusaha untuk menyediakan perkhidmatan yang paling tepat dan terkini.  Walau bagaimanapun, kami tidak dapat menjamin bahawa maklumat ini komprehensif dan bebas daripada ralat. Sebagai contoh, Safe Browsing Service mungkin tidak dapat mengenal pasti beberapa laman berisiko dan mungkin mengenal pasti beberapa laman selamat semasa ralat dan Location Aware Service mengenal pasti semua lokasi yang dikembalikan oleh pembekal perkhidmatan kami hanyalah anggaran sahaja dan kami atau pembekal perkhidmatan kami tidak menjamin ketepatan lokasi yang disediakan.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; mungkin tidak meneruskan atau menukar Perkhidmatan tersebut bergantung kepada budi bicaranya.">
+<!ENTITY rights2.webservices-term3 "Anda dialu-alukan menggunakan Perkhidmatan ini berserta versi iringan &brandShortName;, dan &vendorShortName; memberikan anda hak berbuat sedemikian.  &vendorShortName; dan pemegang lesennya mempunyai semua hak terhadap Perkhidmatan tersebut.  Terma ini tidak bertujuan untuk menghadkan sebarang hak yang diberikan di bawah lesen sumber terbuka &brandShortName; dan versi kod sumber yang ada kaitan dengan &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Perkhidmatan yang disediakan &quot;mengikut&quot;  &vendorShortName;, penyumbang, pemberi lesennya, dan pengedar, menafikan semua jaminan, sama ada yang dinyatakan atau yang tersirat, termasuk tanpa batasan, jaminan bahawa perkhidmatan yang boleh diperdagangkan dan sesuai untuk tujuan anda yang tertentu. Anda menanggung risiko secara menyeluruh untuk memilih Perkhidmatan untuk apa jua tujuan anda dan kepada kualiti dan prestasi Perkhidmatan. Sesetengah bidang kuasa tidak membenarkan pengecualian atau batasan jaminan yang tersirat, jadi penafian ini tidak mungkin dikenakan kepada anda.">
+<!ENTITY rights.webservices-term5 "Kecuali dikehendaki oleh undang-undang, &vendorShortName;, penyumbang-penyumbang, pemberi-pemberi lesen, dan pengedar-pengedar tidak akan bertanggungjawab atas kerosakan yang tidak langsung, ganti rugi khas, sampingan, berbangkit, punitif, atau kerosakan teladan dinyatakan daripada atau dalam mana cara berkenaan untuk digunakan daripada &brandShortName; dan servisnya. Pengurus liabiliti dibawah terma ini akan tidak melebihi $500 (lima ratus dolar). Sesetengah jurisdiksi tidak membenarkan pengecualian atau had daripada sebarang kerosakan, namun pengecualian ini dan had diboleh dimohon untuk anda.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; mungkin mengemaskinikan terma-terma ini jika diperlukan dari masa ke semasa. Terma-terma tersebut tidak boleh diubah atau dibatalkan tanpa persetujuan bertulis &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Terma-terma ini adalah tertakluk di bawah undang-undang negeri California, U.S.A., tidak termasuk konflik peruntukan undang-undang. Jika mana-mana bahagian terma-terma ini dilakukan untuk menjadi tidak sah atau tidak boleh dikuatkuasakan, bahagian-bahagian yang tertinggal akan kekal di dalam penguatkuasaan yang penuh dan berkesan. Sekiranya berlaku percanggahan antara versi terma-terma yang diterjemahkan ini dan versi di dalam Bahasa Inggeris, versi Bahasa Inggeris akan mengawalnya.">

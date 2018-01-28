@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Marandu url-poravoha rehegua">
+<!ENTITY aboutUrlClassifier.providerTitle               "Me'ẽha">
+<!ENTITY aboutUrlClassifier.provider                    "Me'ẽha">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "Ñembohekopyahu ramoguavéva">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "Ñembohekopyahu tenondeveguáva">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Aravojere jegueviguáva">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Ñembohekopyahu ramoguavéva rehegua">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Mbohekopyahu">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Kache">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Mbopiro'y">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Tesakã">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Tabla réra">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Jeikeha papapy kache mbotovéva rehegua">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Jeikeha papapy kache moneĩva rehegua">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Jeikeha jehechauka">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Kache jeikeha">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Ñe'ẽpehẽtai mboyvegua">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Kache mbotovéva ñemboty">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Mba'eku'i henyhẽva">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Kache moneĩva ñemboty">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Mopotĩ">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Emopyenda jehaipy ra'ãha">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Emopyenda marandurenda jehaipy">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Emopyenda JS Log">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Jehaipy ra'ãha jeikekatu rehegua">
+<!ENTITY aboutUrlClassifier.debugModules                "Jehaipy ra'ãha ag̃agua">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Jeikekatu rehegua JS log">
+<!ENTITY aboutUrlClassifier.debugFile                   "Marandurenda rembiasakue ag̃agua">

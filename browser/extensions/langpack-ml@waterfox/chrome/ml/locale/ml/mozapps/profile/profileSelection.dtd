@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - ഉപയോക്തൃ പ്രൊഫൈല്‍ തെരഞ്ഞെടുക്കുക">
+
+<!ENTITY            profilename.label      "Profile-ന്റെ പേര്‌:">
+
+<!ENTITY            start.label            "&brandShortName; തുടങ്ങുക">
+<!ENTITY            exit.label             "പുറത്തു കടക്കുക">
+
+<!ENTITY            availprofiles.label    "ലഭ്യമായ പ്രൊഫൈലുകള്‍">
+
+<!ENTITY            newButton.label        "Create Profile...">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Profile പുനര്‍നാമകരണം...">
+<!ENTITY            renameButton.accesskey "r">
+<!ENTITY            deleteButton.label     "പ്രൊഫൈല്‍ മായിക്കുക">
+<!ENTITY            deleteButton.accesskey "D">
+<!-- manager entities -->
+
+<!ENTITY            pmDescription.label    "&brandShortName;-ല്‍ നിങ്ങളുടെ ക്രമികരണങ്ങള്‍, മുന്‍ഗണനകള്‍, നിങ്ങളുടെ യൂസര്‍ പ്രൊഫൈലിലുള്ള മറ്റ് വസ്തുക്കള്‍ എന്നിവ അടങ്ങുന്നു.">
+
+<!ENTITY            offlineState.label    "ഓഫ്‌ലൈന്‍ ആയി പ്രവര്‍ത്തിക്കുക">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "ആരംഭത്തില്‍ ചോദിയ്ക്കാതെ തെരഞ്ഞെടുത്ത പ്രൊഫൈല്‍ ഉപയോഗിയ്ക്കുക">
+<!ENTITY            useSelected.accesskey   "ഉ">

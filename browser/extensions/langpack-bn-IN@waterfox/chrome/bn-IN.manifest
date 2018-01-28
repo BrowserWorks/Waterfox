@@ -1,0 +1,14 @@
+locale alerts bn-IN bn-IN/locale/bn-IN/alerts/
+locale autoconfig bn-IN bn-IN/locale/bn-IN/autoconfig/
+locale global bn-IN bn-IN/locale/bn-IN/global/
+locale global-platform bn-IN bn-IN/locale/bn-IN/global-platform/mac/ os=Darwin
+locale global-platform bn-IN bn-IN/locale/bn-IN/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform bn-IN bn-IN/locale/bn-IN/global-platform/win/ os=WINNT
+locale mozapps bn-IN bn-IN/locale/bn-IN/mozapps/
+locale necko bn-IN bn-IN/locale/bn-IN/necko/
+locale passwordmgr bn-IN bn-IN/locale/bn-IN/passwordmgr/
+locale pipnss bn-IN bn-IN/locale/bn-IN/pipnss/
+locale pippki bn-IN bn-IN/locale/bn-IN/pippki/
+locale places bn-IN bn-IN/locale/bn-IN/places/
+locale pluginproblem bn-IN bn-IN/locale/bn-IN/pluginproblem/
+locale weave bn-IN bn-IN/locale/bn-IN/services/

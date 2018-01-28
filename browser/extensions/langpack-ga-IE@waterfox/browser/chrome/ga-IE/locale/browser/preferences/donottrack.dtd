@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                 "Ná Lorgaítear Mé">
+<!ENTITY window.width                 "55em">
+<!ENTITY window.height                "12em">
+
+<!ENTITY doNotTrackCheckbox2.label    "Úsáid Ná Lorgaítear Mé i gcónaí">
+<!ENTITY doNotTrackCheckbox2.accesskey "s">
+
+<!ENTITY doNotTrackTPInfo.description "Seolfaidh &brandShortName; fógra a deir nach mian leat go lorgfar thú agus Cosaint ar Lorgaireacht ar siúl.">
+<!ENTITY doNotTrackLearnMore.label    "Tuilleadh Eolais">

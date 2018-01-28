@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Toppitorde kaɓirgol">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Gulɗe Kisal e Kaɓirɗe">
+<!ENTITY devmgr.details.title                   "Cariiɗe">
+<!ENTITY devmgr.details.title2                  "Kiisol">
+
+<!ENTITY devmgr.button.login.label              "Seŋo">
+<!ENTITY devmgr.button.login.accesskey          "o">
+<!ENTITY devmgr.button.logout.label             "Seŋto">
+<!ENTITY devmgr.button.logout.accesskey         "t">
+<!ENTITY devmgr.button.changepw.label           "Waylu Finnde">
+<!ENTITY devmgr.button.changepw.accesskey       "F">
+<!ENTITY devmgr.button.load.label               "Loow">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Loowtu">
+<!ENTITY devmgr.button.unload.accesskey         "L">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Naatnu humpito wulnde nde njiɗ-ɗaa ɓeydude ndee.">
+<!ENTITY loaddevice.modname                     "Innde Wulnde:">
+<!ENTITY loaddevice.modname.accesskey           "I">
+<!ENTITY loaddevice.modname.default             "Wulnde PKCS#11 Hesere">
+<!ENTITY loaddevice.filename                    "Innde fiilde wulnde:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Weɗɗit…">
+<!ENTITY loaddevice.browse.accesskey            "W">
+
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

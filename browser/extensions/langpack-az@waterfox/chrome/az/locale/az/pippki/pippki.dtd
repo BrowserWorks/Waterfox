@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Ana Şifrəni dəyiş">
+<!ENTITY setPassword.tokenName.label "Təhlükəsizlik cihazları">
+<!ENTITY setPassword.oldPassword.label "Hazırkı şifrə:">
+<!ENTITY setPassword.newPassword.label "Yeni şifrə:">
+<!ENTITY setPassword.reenterPassword.label "Yeni şifrə (təkrar):">
+<!ENTITY setPassword.meter.label "Şifrənin gücü">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Reset">
+<!ENTITY resetPassword.title  "Ana Şifrəni Sıfırla">
+<!ENTITY resetPassword.text  "Əgər ana şifrənizi sıfırlasanız, web və e-poçt şifrəniz, form məlumatlarınız, şəxsi təsdiq sənədləriniz və xüsusi açarlarınız silinər.  Ana şifrənizi sıfırlamaq istədiyinizə əminsiniz?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Təsdiq sənədi yüklənir">
+<!ENTITY downloadCert.message1 "Yeni bir təsdiqləmə sertifikatı (CA) təhlükəsizliyi istədiniz.">
+<!ENTITY downloadCert.trustSSL "Saytları təyin etmək üçün bu təsdiqləmə sertifikatına etibar et.">
+<!ENTITY downloadCert.trustEmail "Bu CA E-Poçt istifadəçilərini təyin etmək üçün etibarlıdır.">
+<!ENTITY downloadCert.trustObjSign "Bu CA proqram inkişaf etdiricilərin təyin olunmasında etibarlıdır.">
+<!ENTITY downloadCert.message3 "Hər cür məqsəd üçün bu CA-ya etibar etmədən əvvəl, təsdiqləmə sənədinini təhlükəsizliyini və gedişatına nəzarət etməlisiniz.">
+<!ENTITY downloadCert.viewCert.label "Görünüş">
+<!ENTITY downloadCert.viewCert.text "CA təsdiqləmə sənədini yoxla">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "İstifadəçi təyin etmə sorğusu">
+<!ENTITY clientAuthAsk.message1 "Bu zona sizin öz təsdiq sənədinizin təyin etməsini istəyir:">
+<!ENTITY clientAuthAsk.message2 "Təyin etməd' istifadə ediləcək təsdiq sənədini seçin:">
+<!ENTITY clientAuthAsk.message3 "Seçilən sertifikatın detalları:">
+
+<!ENTITY pkcs12.setpassword.title  "Təsdiq sənədi ehtiyatlama şifrənizi seçin">
+<!ENTITY pkcs12.setpassword.message  "Qoyduğunuz təsdiq sənədi ehtiyatlama şifrəsi, yaratmaq istədiyiniz ehtiyatlama fayllarınızı qoruyur. Ehtiyatlamaya davam etmək üçün bu şifrəni qoymalısınız.">
+<!ENTITY pkcs12.setpassword.label1 "Təsdiq sənədi ehtiyatlama şifrəsi:">
+<!ENTITY pkcs12.setpassword.label2 "Təsdiq sənədi ehtiyatlama şifrəsi (təkrar):">
+<!ENTITY pkcs12.setpassword.reminder "Vacib: Əgər təsdiq sənədi ehtiyatlama şifrənizi unutsanız, bu ehtiyatlamanı yenidən yarada bilməzsiniz. Lütfən bunu təhlükəsiz bir şəraitdə saxlayın.">
+
+<!ENTITY chooseToken.title  "Nişan seçmə qutusu">
+<!ENTITY chooseToken.message1 "Lütfən bir nişanseçin.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Xüsusi açar yarat">
+<!ENTITY createCertInfo.msg1 "Açar yaradılır… Bu əməliyyat bir az uzun çəkə bilər…">
+<!ENTITY createCertInfo.msg2 "Lütfən gözləyin…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Qorunmuş işarənin kimlik Təsdiqləməsi">
+<!ENTITY protectedAuth.msg "Lütfən işarəyə kimliyinizi təsdiqləyin. Kimlik təsdiqləmə üsulu işarətinizin növünə görə dəyişir.">
+<!ENTITY protectedAuth.tokenName.label "İşarə:">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Ineqqisen n uɣelluy">
+<!ENTITY crashesUnsubmitted.label   "Ineqqisen n uɣelluy ur yettwaznen ara">
+<!ENTITY crashesSubmitted.label     "Ineqqisen n uɣelluy ttwaznen.">
+<!ENTITY id.heading                 "Asulay n ussaɣ">
+<!ENTITY dateCrashed.heading        "Azemz n uɣelluy">
+<!ENTITY dateSubmitted.heading      "Azemz n tuzzna">
+<!ENTITY noReports.label            "Ula d yiwen n ussaɣ n uɣelluy ur iţwazen.">
+<!ENTITY noConfig.label             "Asnas-agi ur ittusbadu ara akken ad isken ineqqisen n uɣelluy. Issefk ad tbaduḍ imetti <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Kkes akk issaɣen">

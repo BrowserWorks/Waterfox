@@ -1,0 +1,132 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informacje dla pomocy technicznej">
+<!ENTITY aboutSupport.pageSubtitle "
+  Ta strona zawiera informacje techniczne, które mogą być przydatne podczas
+  rozwiązywania problemów. Jeśli szukasz odpowiedzi na często zadawane pytania
+  dotyczące programu &brandShortName;, sprawdź naszą <a id='supportLink'>stronę wsparcia
+  technicznego</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Zgłoszenia awarii">
+<!ENTITY aboutSupport.crashes.id "ID zgłoszenia">
+<!ENTITY aboutSupport.crashes.sendDate "Data przesłania">
+<!ENTITY aboutSupport.crashes.allReports "Wszystkie zgłoszenia awarii">
+<!ENTITY aboutSupport.crashes.noConfig "Ten program nie został skonfigurowany do wyświetlania zgłoszeń awarii.">
+
+<!ENTITY aboutSupport.extensionsTitle "Rozszerzenia">
+<!ENTITY aboutSupport.extensionName "Nazwa">
+<!ENTITY aboutSupport.extensionEnabled "Włączone">
+<!ENTITY aboutSupport.extensionVersion "Wersja">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Wbudowane rozszerzenia programu &brandShortName;">
+<!ENTITY aboutSupport.featureName "Nazwa">
+<!ENTITY aboutSupport.featureVersion "Wersja">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Eksperymenty">
+<!ENTITY aboutSupport.experimentName "Nazwa">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Opis">
+<!ENTITY aboutSupport.experimentActive "Aktywny">
+<!ENTITY aboutSupport.experimentEndDate "Data zakończenia">
+<!ENTITY aboutSupport.experimentHomepage "Strona">
+<!ENTITY aboutSupport.experimentBranch "Wersja">
+
+<!ENTITY aboutSupport.appBasicsTitle "Informacje o aplikacji">
+<!ENTITY aboutSupport.appBasicsName "Nazwa">
+<!ENTITY aboutSupport.appBasicsVersion "Wersja">
+<!ENTITY aboutSupport.appBasicsBuildID "ID kompilacji">
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Kanał aktualizacji">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Historia aktualizacji">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Wyświetl historię aktualizacji">
+<!ENTITY aboutSupport.appBasicsProfileDir "Katalog profilu">
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Folder profilu">
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Włączone wtyczki">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Konfiguracja kompilacji">
+<!ENTITY aboutSupport.appBasicsUserAgent "Identyfikator programu">
+<!ENTITY aboutSupport.appBasicsOS "System operacyjny">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Zużycie pamięci">
+<!ENTITY aboutSupport.appBasicsPerformance "Wydajność">
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Zarejestrowane wątki usługowe">
+<!ENTITY aboutSupport.appBasicsProfiles "Profile">
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Okna wieloprocesowe">
+<!ENTITY aboutSupport.appBasicsProcessCount "Procesy treści sieciowych">
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Klucz Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Klucz usługi lokalizacji Mozilli">
+<!ENTITY aboutSupport.appBasicsSafeMode "Tryb awaryjny">
+
+<!ENTITY aboutSupport.showDir.label "Otwórz katalog">
+<!ENTITY aboutSupport.showMac.label "Pokaż w Finderze">
+<!ENTITY aboutSupport.showWin2.label "Otwórz folder">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Ważne zmodyfikowane ustawienia">
+<!ENTITY aboutSupport.modifiedPrefsName "Nazwa">
+<!ENTITY aboutSupport.modifiedPrefsValue "Wartość">
+
+<!ENTITY aboutSupport.userJSTitle "Preferencje user.js">
+<!ENTITY aboutSupport.userJSDescription "Folder profilu użytkownika zawiera <a id='prefs-user-js-link'>plik user.js</a> z preferencjami, które nie zostały utworzone przez program &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Ważne zablokowane ustawienia">
+<!ENTITY aboutSupport.lockedPrefsName "Nazwa">
+<!ENTITY aboutSupport.lockedPrefsValue "Wartość">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Baza danych „Places”">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integralność">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Sprawdź integralność">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Przyrostowy GC">
+
+<!ENTITY aboutSupport.a11yTitle "Ułatwienia dostępu">
+<!ENTITY aboutSupport.a11yActivated "Aktywne">
+<!ENTITY aboutSupport.a11yForceDisabled "Zablokuj ułatwienia dostępu">
+<!ENTITY aboutSupport.a11yHandlerUsed "Aktywna obsługa dostępności">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Wersje bibliotek">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Historia instalacji">
+<!ENTITY aboutSupport.updateHistoryTitle "Historia aktualizacji">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Skopiuj tekst do schowka">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Skopiuj nieprzetworzone dane do schowka">
+
+<!ENTITY aboutSupport.sandboxTitle "Piaskownica">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Odrzucone wywołania systemowe">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Sekund temu">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Typ procesu">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumenty">
+
+<!ENTITY aboutSupport.safeModeTitle "Tryb awaryjny">
+<!ENTITY aboutSupport.restartInSafeMode.label "Uruchom ponownie z wyłączonymi dodatkami…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funkcje">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostyka">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Dziennik niepowodzeń">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU 1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU 2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Decyzje">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Funkcje wyłączone dla ochrony przed awariami">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Obejścia problemów">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Urządzenia wyjściowe">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Urządzenia wejściowe">
+<!ENTITY aboutSupport.mediaDeviceName "Nazwa">
+<!ENTITY aboutSupport.mediaDeviceGroup "Grupa">
+<!ENTITY aboutSupport.mediaDeviceVendor "Dostawca">
+<!ENTITY aboutSupport.mediaDeviceState "Stan">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferowane">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanały">
+<!ENTITY aboutSupport.mediaDeviceRate "Częstotliwość próbkowania">
+<!ENTITY aboutSupport.mediaDeviceLatency "Opóźnienie">

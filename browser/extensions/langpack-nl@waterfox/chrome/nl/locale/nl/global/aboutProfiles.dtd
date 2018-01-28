@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Over profielen">
+<!ENTITY aboutProfiles.subtitle "Deze pagina helpt u uw profielen te beheren. Elk profiel is een aparte omgeving die aparte geschiedenis, bladwijzers, instellingen en add-ons bevat.">
+<!ENTITY aboutProfiles.create "Een nieuw profiel aanmaken">
+<!ENTITY aboutProfiles.restart.title "Herstarten">
+<!ENTITY aboutProfiles.restart.inSafeMode "Herstarten met uitgeschakelde add-ons…">
+<!ENTITY aboutProfiles.restart.normal "Normaal starten…">

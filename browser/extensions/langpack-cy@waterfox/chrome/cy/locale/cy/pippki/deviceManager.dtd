@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Rheolwr Dyfeisiadau">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Modiwlau a Dyfeisiadau Diogelwch">
+<!ENTITY devmgr.details.title                   "Manylion">
+<!ENTITY devmgr.details.title2                  "Gwerth">
+
+<!ENTITY devmgr.button.login.label              "Mewngofnodi">
+<!ENTITY devmgr.button.login.accesskey          "M">
+<!ENTITY devmgr.button.logout.label             "Allgofnodi">
+<!ENTITY devmgr.button.logout.accesskey         "A">
+<!ENTITY devmgr.button.changepw.label           "Newid Cyfrinair">
+<!ENTITY devmgr.button.changepw.accesskey       "N">
+<!ENTITY devmgr.button.load.label               "Llwytho">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Dadlwytho">
+<!ENTITY devmgr.button.unload.accesskey         "D">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Rhoi gwybodaeth am y modiwl rydych eisiau ei ychwanegu.">
+<!ENTITY loaddevice.modname                     "Enw Modiwl:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Modiwl newydd PKCS#11">
+<!ENTITY loaddevice.filename                    "Enw ffeil modiwl:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Pori…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Llwytho Gyrrwr Dyfais PKCS#11">

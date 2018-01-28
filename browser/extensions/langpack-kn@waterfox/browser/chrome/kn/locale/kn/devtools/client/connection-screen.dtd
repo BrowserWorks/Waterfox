@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "ಸಂಪರ್ಕಿಸು">
+<!ENTITY header     "ದೂರಸ್ಥ ಸಾಧನಕ್ಕೆ ಸಂಪರ್ಕವೇರ್ಪಡಿಸು">
+<!ENTITY host       "ಅತಿಥೇಯ:">
+<!ENTITY port       "ಸಂಪರ್ಕ ಸಾಧನ:">
+<!ENTITY connect    "ಸಂಪರ್ಕಿಸು">
+<!ENTITY connecting "ಸಂಪರ್ಕಿತಗೊಳ್ಳುತ್ತಿದೆ…">
+<!ENTITY availableAddons "ಲಭ್ಯವಿರುವ ದುರಸ್ಥ ಆಡ್-ಆನ್‌ಗಳು:">
+<!ENTITY availableTabs "ಲಭ್ಯವಿರುವ ದೂರಸ್ಥ ಟ್ಯಾಬ್‌ಗಳು:">
+<!ENTITY availableProcesses "ಲಭ್ಯವಿರುವ ದೂರಸ್ಥ ಪ್ರಕ್ರಿಯೆಗಳು:">
+<!ENTITY connectionError "ದೋಷ:">
+<!ENTITY errorTimeout "ದೋಷ: ಸಂಪರ್ಕದ ಕಾಲಾವಧಿ ತೀರಿದೆ.">
+<!ENTITY errorRefused "ದೋಷ: ಸಂಪರ್ಕವನ್ನು ನಿರಾಕರಿಸಲಾಗಿದೆ.">
+<!ENTITY errorUnexpected "ಅನಪೇಕ್ಷಿತ ದೋಷ.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox ವಿಕಸನೆಗಾರ ಉಪಕರಣಗಳು ದೂರಸ್ಥ ಸಾಧನಗಳನ್ನು ಡೀಬಗ್‌ ಮಾಡಬಲ್ಲದು (ಉದಾಹರಣೆಗೆ, ಆ್ಯಂಡ್ರಾಯ್ಡ್‌ ಮತ್ತು Waterfox OSಗಾಗಿ Waterfox). ದೂರಸ್ಥ ಸಾಧನದಲ್ಲಿ ನೀವು 'Remote debugging' ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿದ್ದೀರಿ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ. ಹೆಚ್ಚಿನ ಮಾಹಿತಿಗಾಗಿ, ಇದನ್ನು ನೋಡಿ ">
+<!ENTITY remoteDocumentation "ದಸ್ತಾವೇಜು">
+<!ENTITY remoteHelpSuffix ".">
+

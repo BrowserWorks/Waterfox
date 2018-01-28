@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "ট্রাকিং সুরক্ষা">
+
+
+<!ENTITY  trackingProtectionAlways.label       "সবসময় y">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "শুধুমাত্র ব্যক্তিগত ব্রাউজিং উইন্ডোতে">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "কখনো নয় N">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "আরো জানতে">
+<!ENTITY  trackingProtectionExceptions.label   "ব্যতিক্রম… E">
+<!ENTITY  trackingProtectionExceptions.accesskey "E">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "ব্যক্তিগত উইন্ডোতে ট্রাকিং সুরক্ষা ব্যবহার করুন v">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+
+<!ENTITY trackingProtectionPBMLearnMore.label "আরও জানুন">
+
+
+
+<!ENTITY  doNotTrack.learnMore.label    "আরও জানুন">
+
+<!ENTITY  doNotTrack.always.label       "সর্বদা">
+
+<!ENTITY  history.label                 "ইতিহাস">
+<!ENTITY  permissions.label             "অনুমতি">
+
+
+
+
+<!ENTITY  locbar.bookmarks.label        "বুকমার্কসমূহ k">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "ট্যাব খুলুন O">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "পূর্বনির্ধারিত অনুসন্ধান ইঞ্জিন থেকে সংশ্লিষ্ট অনুসন্ধানসমূহ d">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "অনুসন্ধান ইঞ্জিন পরামর্শের জন্য পছন্দসমূহ পরিবর্তন করুন">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "তৃতীয়-পক্ষের কুকি গ্রহণ করা হবে">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "সর্বদা">
+<!ENTITY  acceptThirdParty.never.label    "কখনো নয়">
+<!ENTITY  acceptThirdParty.visited.label  "প্রদর্শিত হতে">
+
+<!ENTITY  keepUntil.label               "সংরক্ষণের সময়কাল: u">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "তাদের মেয়াদ উত্তীর্ণ হয়েছে">
+<!ENTITY  close.label                   "আমি &brandShortName; বন্ধ করি">
+
+<!ENTITY  cookieExceptions.label        "ব্যতিক্রম… E">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "কুকি প্রদর্শন করো... S">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; হবে">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader.remember.label     "ইতিহাস মনে রাখবে">
+<!ENTITY  historyHeader.dontremember.label "কখনোই ইতিহাস মনে রাখবে না">
+<!ENTITY  historyHeader.custom.label       "ইতিহাসের জন্য স্বনির্বাচিত সেটিং ব্যবহার করবে">
+<!ENTITY  historyHeader.post.label         "ইতিহাস">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; আপনার ব্রাউজিং, ডাউনলোড, ফরম এবং অনুসন্ধানের ইতিহাস মনে রাখবে এবং পরিদর্শিত ওয়েবসাইটের কুকি সংরক্ষণ করবে।">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "আপনি প্রয়োজনে ">
+<!ENTITY  rememberActions.clearHistory.label  "আপনার সাম্প্রতিক ইতিহাস মুছে ফেলতে">
+<!ENTITY  rememberActions.middle.label        ", বা ">
+<!ENTITY  rememberActions.removeCookies.label "কুকিগুলো পৃথকভাবে অপসারণ করতে পারেন">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; একান্ত ব্রাউজিং এর মতোই সেটিং ব্যবহার করবে, এবং আপনার ব্রাউজিং এর কোন তথ্য সংরক্ষণ করবে না।">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "আপনি চাইলে ">
+<!ENTITY  dontrememberActions.clearHistory.label "বর্তমান সব ইতিহাস মুছে ফেলা হবে">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "সবসময় একান্ত ব্রাউজিং মোড ব্যবহার করুন p">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "আমার ব্রাউজিং এবং ডাউনলোড ইতিহাস মনে রাখুন b">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "অনুসন্ধান ও ফরমের ইতিহাস মনে রাখা হবে">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; বন্ধ করার সময় ইতিহাস মুছে ফেলা হবে">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "সেটিং…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersLearnMore.label      "আরো জানতে">
+<!ENTITY  browserContainersEnabled.label        "কন্টেইনার ট্যাব সক্রিয় করুন">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "সেটিং">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

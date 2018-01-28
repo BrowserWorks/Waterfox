@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "ပရိုဖိုင်များ အကြောင်း">
+<!ENTITY aboutProfiles.subtitle "ဒီစာမျက်နှာသည် သင့်ပရိုဖိုင်များကို စီမံရန် ဖြစ်ပါသည်။ ပရိုဖိုင်းတစ်ခုချင်းစီသည် သီးသန့်မှတ်ထားသည့် မှတ်တမ်း၊ စာမှတ်များ၊ အပြင်အဆင်များနှင့် ပေါင်းစပ်အက်ပ်များပါဝင်သည့် သီးခြားနေရာတစ်ခုဖြစ်ပါသည်။">
+<!ENTITY aboutProfiles.create "ပရိုဖိုင်အသစ်တစ်ခု ဖန်တီးရန်">
+<!ENTITY aboutProfiles.restart.title "ပြန်စပါ">
+<!ENTITY aboutProfiles.restart.inSafeMode "ထပ်ပေါင်းဆော့ဖ်ဝဲများ ပိတ်ပြီး ပြန်စမည်...">
+<!ENTITY aboutProfiles.restart.normal "ပုံမှန် ပြန်စမည်…">

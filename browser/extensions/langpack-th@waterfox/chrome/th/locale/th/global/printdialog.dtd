@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "พิมพ์">
+
+<!ENTITY printDialog.title "พิมพ์">
+
+<!ENTITY fpDialog.title "บันทึกไฟล์">
+
+<!ENTITY fileCheck.label "พิมพ์เป็นไฟล์">
+<!ENTITY fileCheck.accesskey "ไ">
+<!ENTITY propertiesButton.label "คุณสมบัติ…">
+<!ENTITY propertiesButton.accesskey "ส">
+<!ENTITY descText.label "คำอธิบายเครื่องพิมพ์:">
+<!ENTITY printer.label "เครื่องพิมพ์">
+<!ENTITY printerInput.label "ชื่อเครื่องพิมพ์:">
+<!ENTITY printerInput.accesskey "ช">
+
+<!ENTITY printrangeGroup.label "ช่วง">
+<!ENTITY allpagesRadio.label "ทุกหน้า">
+<!ENTITY allpagesRadio.accesskey "ท">
+<!ENTITY rangeRadio.label  "หน้า">
+<!ENTITY rangeRadio.accesskey  "น">
+<!ENTITY frompageInput.label  "จาก">
+<!ENTITY frompageInput.accesskey  "จ">
+<!ENTITY topageInput.label  "ถึง">
+<!ENTITY topageInput.accesskey  "ถ">
+<!ENTITY selectionRadio.label "ส่วนที่เลือก">
+<!ENTITY selectionRadio.accesskey "ล">
+
+<!ENTITY copies.label "สำเนา">
+<!ENTITY numCopies.label "จำนวนสำเนา:">
+<!ENTITY numCopies.accesskey "ส">
+
+<!ENTITY printframeGroup.label "พิมพ์กรอบ">
+<!ENTITY aslaidoutRadio.label "อย่างที่จัดวางบนหน้าจอ">
+<!ENTITY aslaidoutRadio.accesskey "บ">
+<!ENTITY selectedframeRadio.label  "กรอบที่เลือก">
+<!ENTITY selectedframeRadio.accesskey  "อ">
+<!ENTITY eachframesepRadio.label  "แต่ละกรอบแยกกัน">
+<!ENTITY eachframesepRadio.accesskey  "แ">

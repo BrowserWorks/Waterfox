@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "На вашому комп’ютері збережено наступні куки:">
+<!ENTITY     cookiename.label               "Ім’я куки">
+<!ENTITY     cookiedomain.label             "Сайт">
+
+<!ENTITY     props.name.label               "Ім’я:">
+<!ENTITY     props.value.label              "Зміст:">
+<!ENTITY     props.domain.label             "Хост:">
+<!ENTITY     props.path.label               "Шлях:">
+<!ENTITY     props.secure.label             "Посилати при:">
+<!ENTITY     props.expires.label            "Термін дії закінчується:">
+<!ENTITY     props.container.label          "Контейнер:">
+
+<!ENTITY     window.title                   "Куки">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Пошук">
+<!ENTITY     searchFilter.accesskey         "П">
+
+<!ENTITY     button.close.label             "Закрити">
+<!ENTITY     button.close.accesskey         "а">

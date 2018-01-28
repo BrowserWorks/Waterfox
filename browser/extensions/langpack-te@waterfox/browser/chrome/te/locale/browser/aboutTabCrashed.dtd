@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "ఈ ట్యాబును మూసివేయి">
+<!ENTITY tabCrashed.restoreTab "ఈ ట్యాబును పునరుద్ధరించు">
+<!ENTITY tabCrashed.restoreAll "క్రాషైన ట్యాబులన్నింటినీ పునరుద్ధరించు">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "ఆహ్. మీ టాబ్ కేవలం క్రాషయ్యింది.">
+<!ENTITY tabCrashed.offerHelp "మేము నీకు సహాయపడగలము!">
+<!ENTITY tabCrashed.single.offerHelpMessage "పేజీ కాంటెంటును రీలోడు చేయడానికి &tabCrashed.restoreTab; ఎంచుకోండి.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "పేజీ కాంటెంటును రీలోడు చేయడానికి &tabCrashed.restoreTab; లేదా &tabCrashed.restoreAll; ఎంచుకోండి.">
+<!ENTITY tabCrashed.requestHelp "మీరు మాకు సహాయపడుతారా?">
+<!ENTITY tabCrashed.requestHelpMessage "క్రాష్ నివేదికలు మాకు సమస్యలను నిర్ధారించడానికి మరియు &brandShortName; ని మంచిగా చేయడానికి సహాయపడుతాయి.">
+<!ENTITY tabCrashed.requestReport "ఈ ట్యాబుని నివేదించు">
+<!ENTITY tabCrashed.sendReport2 "మీరు చూస్తున్న ట్యాబు కోసం క్రాష్ నివేదికను పంపండి">
+<!ENTITY tabCrashed.commentPlaceholder2 "ఇష్టప్రకారమైన వ్యాఖ్యలు (వ్యాఖ్యలు అందరికీ కనిపిస్తాయి)">
+<!ENTITY tabCrashed.includeURL2 "ఈ క్రాష్ నివేదికకు పేజీ URLని చేర్చండి">
+<!ENTITY tabCrashed.emailPlaceholder "మీ ఈమెయిల్ చిరునామాను ఇక్కడ ఇవ్వండి">
+<!ENTITY tabCrashed.emailMe "మరింత సమాచారం అందుబాటులో ఉన్నప్పుడు నాకు ఈమెయిలు చెయ్యండి">
+<!ENTITY tabCrashed.reportSent "క్రాష్ నివేదిక ఇప్పటికే సమర్పించబడింది; &brandShortName;‌ను మెరుగుపరచడానికి తోడ్పడినందుకు కృతజ్ఞతలు!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "బ్యాగ్రౌండ్ ట్యాబులను నివేదించు">
+<!ENTITY tabCrashed.autoSubmit2 "స్వయంచాలకంగా ఈ సెషన్ మరియు భవిష్యత్తు సెషన్స్ కూలి పోయిన నేపథ్యంలో టాబ్ల కోసం నివేదికలు సహా క్రాష్ నివేదికలను పంపడానికి ప్రాధాన్యతలను నవీకరించండి">

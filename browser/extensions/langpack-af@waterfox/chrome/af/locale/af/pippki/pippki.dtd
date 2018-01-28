@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Wysig meesterwagwoord">
+<!ENTITY setPassword.tokenName.label "Sekuriteitstoestel">
+<!ENTITY setPassword.oldPassword.label "Huidige wagwoord:">
+<!ENTITY setPassword.newPassword.label "Nuwe wagwoord:">
+<!ENTITY setPassword.reenterPassword.label "Nuwe wagwoord (weer):">
+<!ENTITY setPassword.meter.label "Wagwoord-gehaltemeter">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Stel terug">
+<!ENTITY resetPassword.title  "Stel meesterwagwoord terug">
+<!ENTITY resetPassword.text  "Indien u u meesterwagwoord terugstel, sal al u gestoorde web- en e-poswagwoorde, vormdata, persoonlike sertifikate en private sleutels vergeet word. Wil u definitief die meesterwagwoord teruglaai?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Laai tans sertifikaat af">
+<!ENTITY downloadCert.message1 "U is gevra om 'n nuwe sertifikaatowerheid (SO) te vertrou.">
+<!ENTITY downloadCert.trustSSL "Vertrou hierdie SO om webwerwe te identifiseer.">
+<!ENTITY downloadCert.trustEmail "Vertrou hierdie SO om e-posgebruikers te identifiseer.">
+<!ENTITY downloadCert.trustObjSign "Vertrou hierdie SO om sagtewareontwikkelaars te identifiseer.">
+<!ENTITY downloadCert.message3 "Voordat u hierdie SO vir enige doeleinde vertrou, behoort u sy sertifikaat en sy beleid en prosedures (indien beskikbaar) te ondersoek.">
+<!ENTITY downloadCert.viewCert.label "Bekyk">
+<!ENTITY downloadCert.viewCert.text "Ondersoek SO-sertifikaat">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Gebruikersidentifikasie-versoek">
+<!ENTITY clientAuthAsk.message1 "Die werf versoek dat u uself deur middel van 'n sertifikaat identifiseer:">
+<!ENTITY clientAuthAsk.message2 "Kies 'n sertifikaat om as identifikasie aan te bied:">
+<!ENTITY clientAuthAsk.message3 "Besonderhede van gekose sertifikaat:">
+
+<!ENTITY pkcs12.setpassword.title  "Kies 'n rugsteunsertifikaat-wagwoord">
+<!ENTITY pkcs12.setpassword.message  "Die sertifikaat-rugsteunwagwoord wat u hier opstel, beskerm die rugsteunlêer wat u op die punt is om te skep.  U moet hierdie wagwoord opstel voor u met die rugsteuning kan voortgaan.">
+<!ENTITY pkcs12.setpassword.label1 "Rugsteunsertifikaat-wagwoord:">
+<!ENTITY pkcs12.setpassword.label2 "Rugsteunsertifikaat-wagwoord (weer):">
+<!ENTITY pkcs12.setpassword.reminder "Belangrik: Indien u u sertifikaat-rugsteunwagwoord vergeet, sal u nie hierdie rugsteuning later kan terugkopieer nie.  Teken dit op 'n veilige plek aan.">
+
+<!ENTITY chooseToken.title  "Kies tekendialoog">
+<!ENTITY chooseToken.message1 "Kies 'n teken.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Genereer A- private sleutel">
+<!ENTITY createCertInfo.msg1 "Sleutelgenerering tans besig… Dit kan dalk 'n paar minute duur…">
+<!ENTITY createCertInfo.msg2 "Wag asseblief…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Beskermde tekenmagtiging">
+<!ENTITY protectedAuth.msg "Verkry magtiging met die teken. Magtigingmetode hang af van die soort teken.">
+<!ENTITY protectedAuth.tokenName.label "Teken:">

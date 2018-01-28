@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "সংক্ষিপ্ত শিরোনাম"> 
+<!ENTITY message.label    "নমুনা হিসাবে লেখা তথ্য এই স্থানে লিখুন।">
+<!ENTITY editfield0.label "ব্যবহারকারীর নাম:"> 
+<!ENTITY editfield1.label "পাসওয়ার্ড:"> 
+<!ENTITY checkbox.label   "পরীক্ষণ">
+<!ENTITY copyCmd.label    "কপি করুন">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "সমগ্র নির্বাচন করুন">
+<!ENTITY selectAllCmd.accesskey "A">

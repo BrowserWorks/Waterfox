@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Synchronizacja">
+<!ENTITY aboutAccountsConfig.description "Zaloguj się, aby synchronizować karty, zakładki i inne rzeczy.">
+<!ENTITY aboutAccountsConfig.startButton.label "Zaloguj się">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Ustawienia">
+
+<!ENTITY aboutAccounts.noConnection.title "Brak połączenia">
+<!ENTITY aboutAccounts.noConnection.description "Konieczne jest połączenie z Internetem, aby się zalogować.">
+<!ENTITY aboutAccounts.noConnection.retry "Spróbuj ponownie">
+
+<!ENTITY aboutAccounts.badConfig.title "Błędna konfiguracja">
+<!ENTITY aboutAccounts.badConfig.description "Nie udało się określić konfiguracji serwera kont Firefoksa. Spróbuj ponownie później.">

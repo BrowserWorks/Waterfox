@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editMenu.label            "Праўка">
+<!ENTITY editMenu.accesskey        "р">
+<!ENTITY undoCmd.label             "Адмяніць">
+<!ENTITY undoCmd.key               "Z">
+<!ENTITY undoCmd.accesskey         "м">
+<!ENTITY redoCmd.label             "Вярнуць">
+<!ENTITY redoCmd.key               "Y">
+<!ENTITY redoCmd.accesskey         "В">
+<!ENTITY cutCmd.label              "Выразаць">
+<!ENTITY cutCmd.key                "X">
+<!ENTITY cutCmd.accesskey          "р">
+<!ENTITY copyCmd.label             "Капіяваць">
+<!ENTITY copyCmd.key               "C">
+<!ENTITY copyCmd.accesskey         "К">
+<!ENTITY pasteCmd.label            "Уставіць">
+<!ENTITY pasteCmd.key              "V">
+<!ENTITY pasteCmd.accesskey        "У">
+<!ENTITY deleteCmd.label           "Выдаліць">
+<!ENTITY deleteCmd.accesskey       "д">
+<!ENTITY selectAllCmd.label        "Вылучыць усё">
+<!ENTITY selectAllCmd.key          "A">
+<!ENTITY selectAllCmd.accesskey    "л">
+<!ENTITY findCmd.label             "Знайсці">
+<!ENTITY findCmd.key               "F">
+<!ENTITY findCmd.accesskey         "З">
+<!ENTITY findAgainCmd.label        "Знайсці зноў">
+<!ENTITY findAgainCmd.key          "G">
+<!ENTITY findAgainCmd.key2         "VK_F3">
+<!ENTITY findAgainCmd.accesskey    "ў">
+<!ENTITY findPreviousCmd.label     "Знайсці папярэдні">
+<!ENTITY findPreviousCmd.accesskey "п">

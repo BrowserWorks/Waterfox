@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "இணைப்பு அமைப்புகள்">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "இணையத்தை அணுக ப்ராக்ஸிகளை கட்டமைக்கவும்">
+<!ENTITY  noProxyTypeRadio.label        "பதிலாள் இல்லை">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "கணினி பதிலாள் அமைவுகளை பயன்படுத்துக">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "இந்தப் பிணையத்திற்குத் தானாக பதிலாள் அமைவுகளை கண்டறி">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "கைமுறை பதிலாள் கட்டமைப்பு:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "தானியக்க பதிலாள் கட்டமைப்பு URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "மீளேற்று">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP ப்ராக்ஸி:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP பதிலாள்:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL ப்ராக்ஸி:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS புரவலன்:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "பதிலாள் DNS SOCKS V5 பயன்படுத்தும் போது">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "துறை:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "இதற்கு பதிலாள் இல்லை:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "எடுத்துக்காட்டு: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "இந்த பதிலாள் சேவையகத்தை அனைத்து நெறிமுறைகளிலும் பயன்படுத்து">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "கடவுச்சொல் சேமிக்கப்பட்டிருந்தால் அங்கீகரிப்புக்காக நினைவுப்படத்த வே்டாம்">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "நீங்கள் கடவுச்சொற்களை சேமித்திருந்தால் இந்த விருப்பத்தேர்வானது சத்தமில்லாமல் உங்களை ப்ராக்ஸியில் அங்கீகரிக்கும். நீங்கள் அங்கீகரிக்கப்படாமல் இருந்தால் நினைவூட்டப்பட்டிருக்கும்.">

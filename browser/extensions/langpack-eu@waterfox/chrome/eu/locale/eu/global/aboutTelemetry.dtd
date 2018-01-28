@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry datuak">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping datu-iturria:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Uneko ping datuak">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Artxibatutako ping datuak">
+
+<!ENTITY aboutTelemetry.raw "JSON gordina">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Erakutsi azpi-saioaren datuak">
+
+<!ENTITY aboutTelemetry.choosePing "Aukeratu ping-a:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping berriagoa">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping zaharragoa &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Astea">
+
+<!ENTITY aboutTelemetry.archivePingType "Ping mota">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Gaur">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Atzo">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Zaharragoa">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Datu orokorrak">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Ingurunearen datuak">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetry erregistroa">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  SQL instrukzio motelak">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Nabigatzailearen esekitzeak">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Harien esekitzeak">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Kapturatutako pilak">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Eskalarrak">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Eskalar gakodunak">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogramak">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Legendadun histogramak">
+
+<!ENTITY aboutTelemetry.eventsSection "  Gertaerak">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Neurketa sinpleak">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Gehigarriaren xehetasunak">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Idazketa berantiarrak">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Saioaren informazioa">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  OHARRA: SQL motelaren arazketa gaituta dago. SQL kate osoak bistara litezke azpian baina ez dira Telemetry-ra bidaliko.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Eskuratu pilen funtzio-deiak">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Erakutsi pilaren datu gordinak">
+
+<!ENTITY aboutTelemetry.filterText "  Iragazi (kateak edo /adierazpen-erregularra/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Eskaera-karga">

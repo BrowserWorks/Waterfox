@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Embojuaju guerekoha pyahu">
+<!ENTITY addButton.accesskey  "E">
+<!ENTITY preferencesButton.label "Jerohoryvéva">
+<!ENTITY removeButton.label   "Mboguete">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Ou jey">
+
+<!ENTITY window.title         "Embojuaju guerekoha pyahu">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Téra:">
+<!ENTITY name.accesskey       "T">
+<!ENTITY name.placeholder     "Emoinge guerekoha réra">
+<!ENTITY icon.label           "Ta'ãngachu'i:">
+<!ENTITY icon.accesskey       "T">
+<!ENTITY color.label          "Sa'y:">
+<!ENTITY color.accesskey      "S">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Apopyre">
+<!ENTITY button.ok.accesskey  "A">
+

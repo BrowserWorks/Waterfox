@@ -1,0 +1,103 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ಟೆಲಿಮೆಟ್ರಿ ದತ್ತಾಂಶ">
+
+<!ENTITY aboutTelemetry.pingDataSource "ದತ್ತಾಂಶ ಮೂಲವನ್ನು ಪಿಂಗ್ ಮಾಡಿ:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "ಪ್ರಸ್ತುತ ಪಿಂಗ್ ದತ್ತಾಂಶ">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "ಸಂಗ್ರಹಿಸಿದ ಪಿಂಗ್ ದತ್ತಾಂಶ">
+
+<!ENTITY aboutTelemetry.raw "ಸಂಸ್ಕರಿಸದ JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "ಉಪಅಧಿವೇಶನ ದತ್ತಾಂಶವನ್ನು ತೋರಿಸು">
+
+<!ENTITY aboutTelemetry.choosePing "ಪಿಂಗ್ ಆಯ್ಕೆ ಮಾಡು:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; ನೂತನ ಪಿಂಗ್">
+
+<!ENTITY aboutTelemetry.showOlderPing "ಹಳೆಯ ಪಿಂಗ್ &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "ವಾರ">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "ಪಿಂಗ್">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  ಸಾಮಾನ್ಯ ದತ್ತಾಂಶ">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  ಪರಿಸರ ದತ್ತಾಂಶ">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  ಟೆಲಿಮೆಟ್ರಿ ದಿನಚರಿ">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  ನಿಧಾನವಾದ SQL ಹೇಳಿಕೆಗಳು">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  ಜಾಲವೀಕ್ಷಕವು ಹ್ಯಾಂಗ್ ಆಗುತ್ತದೆ">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "   ಎಳೆ ನಿಶ್ಚಲವಾಗಿದೆ">
+
+
+<!ENTITY aboutTelemetry.scalarsSection "  ಸ್ಕಾಲಾರ್‍‍ಗಳು">
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  ಹಿಸ್ಟೊಗ್ರಾಮ್‌ಗಳು">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  ಟೈಪಿಸಿದ ಹಿಸ್ಟೋಗ್ರಾಮ್‌ಗಳು">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  ಸರಳವಾದ ಅಳತೆಗಳು">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  ಆಡ್-ಆನ್ ವಿವರಗಳು">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  ತಡವಾಗಿ ಬರೆಯುವಿಕೆ">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  ಅಧಿವೇಶನದ ಮಾಹಿತಿ">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTE ನಿಧಾನಗತಿ SQL ದೋಷನಿದಾನವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ. ಸಂಪೂರ್ಣ SQL ವಾಕ್ಯಾಂಶಗಳನ್ನು ಈ ಕೆಳಗೆ ತೋರಿಸಲಾಗುವ ಸಾಧ್ಯತೆ ಇದೆ ಆದರೆ ಅವುಗಳನ್ನು ಟೆಲಿಮೆಟ್ರಿಗೆ ಸಲ್ಲಿಸಲಾಗುವುದಿಲ್ಲ.">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  ಸೋಸಕ (ಪದಸಮುಚ್ಚಯಗಳು ಅಥವ /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  ಮಾನ್ಯಸರಕು">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

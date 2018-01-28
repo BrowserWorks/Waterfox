@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "Търсене в страницата">
+<!ENTITY findField.label "Търсене на:">
+<!ENTITY findField.accesskey "Т">
+<!ENTITY caseSensitiveCheckbox.label "Чувствителност към регистъра">
+<!ENTITY caseSensitiveCheckbox.accesskey "р">
+<!ENTITY wrapCheckbox.label "Пренасяне">
+<!ENTITY wrapCheckbox.accesskey "П">
+<!ENTITY findButton.label "Търсене следващ">
+<!ENTITY findButton.accesskey "с">
+<!ENTITY cancelButton.label "Отказ">
+<!ENTITY closeButton.label "Затваряне">
+<!ENTITY up.label "Нагоре">
+<!ENTITY up.accesskey "г">
+<!ENTITY down.label "Надолу">
+<!ENTITY down.accesskey "д">
+<!ENTITY direction.label "Посока">

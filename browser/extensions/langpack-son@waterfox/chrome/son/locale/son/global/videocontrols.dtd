@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Hẽeenandi">
+<!ENTITY playButton.pauseLabel "Hunanzam">
+<!ENTITY muteButton.muteLabel "Jinde daabu">
+<!ENTITY muteButton.unmuteLabel "Jinde feeri">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Dijikul">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Fatta dijikul ra">
+<!ENTITY castingButton.castingLabel "Tenjandi dijoo ga">
+<!ENTITY closedCaption.off "Daaba">
+
+<!ENTITY stats.media "Alhabar goyjinay">
+<!ENTITY stats.size "Adadu">
+<!ENTITY stats.activity "Goyyan">
+<!ENTITY stats.activityPaused "Hunanzamay">
+<!ENTITY stats.activityPlaying "Hẽenandiyan">
+<!ENTITY stats.activityEnded "Benante">
+<!ENTITY stats.activitySeeking "(ga ceeci)">
+<!ENTITY stats.volume "Jinde alkadar">
+<!ENTITY stats.framesParsed "Kunga fesu-fersantey">
+<!ENTITY stats.framesDecoded "Kunga feerantey">
+<!ENTITY stats.framesPresented "Kunga cebantey">
+<!ENTITY stats.framesPainted "Kunga caarantey">
+
+<!ENTITY error.aborted "Widewo zumandiyan kay.">
+<!ENTITY error.network "Widewo hẽenandiyan mun feršikaw firka sabbu ra.">
+<!ENTITY error.decode "Widewo ši hin ka hẽenandi zama tukoo n' ka laybu.">
+<!ENTITY error.srcNotSupported "Widewo takari wala MIME tukoo ši kanbandi.">
+<!ENTITY error.noSource2 "Widewo kul mana duwandi nda takari nda MIME dumi.">
+<!ENTITY error.generic "Widewo hẽenandiyan kay firka šibayante sabu ra.">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 hẽenandi #2 boŋ">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

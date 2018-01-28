@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ઉપકરણ વ્યવસ્થાપક">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "સુરક્ષા મોડ્યુલો અને ઉપકરણો">
+<!ENTITY devmgr.details.title                   "વિગતો">
+<!ENTITY devmgr.details.title2                  "કિંમત">
+
+<!ENTITY devmgr.button.login.label              "પ્રવેશ કરો">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "પ્રવેશ બહાર નીકળો">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "પાસવર્ડ બદલો">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "લાવો">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "લાવો નહિં">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "તમે જે મોડ્યુલ ઉમેરવા માંગો તેના માટે જાણકારી દાખલ કરો.">
+<!ENTITY loaddevice.modname                     "મોડ્યુલ નામ:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "નવું PKCS#11 મોડ્યુલ">
+<!ENTITY loaddevice.filename                    "મોડ્યુલ ફાઈલનામ:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "બ્રાઉઝ કરો...">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

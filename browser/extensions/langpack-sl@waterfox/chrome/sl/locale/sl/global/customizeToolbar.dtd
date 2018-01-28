@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Urejanje orodne vrstice">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Elemente lahko dodajate ali odstranjujete, tako da jih povlečete v orodno vrstico ali iz nje.">
+<!ENTITY show.label               "Prikaži:">
+<!ENTITY iconsAndText.label       "Oboje">
+<!ENTITY icons.label              "Ikone">
+<!ENTITY text.label               "Besedilo">
+<!ENTITY useSmallIcons.label      "Majhne ikone">
+<!ENTITY restoreDefaultSet.label  "Privzeta postavitev">
+<!ENTITY addNewToolbar.label      "Nova vrstica">
+<!ENTITY saveChanges.label        "Končaj">
+<!ENTITY undoChanges.label        "Razveljavi spremembe">

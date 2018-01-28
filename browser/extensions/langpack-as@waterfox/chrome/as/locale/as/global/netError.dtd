@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "পৃষ্ঠা ল'ড কৰোতে ত্ৰুটি">
+<!ENTITY retry.label "পুনৰ চেষ্টা কৰক">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "সংযোগ কৰাত বিফল">
+<!ENTITY connectionFailure.longDesc "<p>যদিও ছাইটটো বৈধ, ব্ৰাউছাৰে সংযোগ কৰিব নোৱাৰিলে।</p><ul><li>ছাইটটো অস্থায়ীভাবে পোৱা নাযায় নেকি ? পিছত পুনৰ চেষ্টা কৰক।</li><li>আপুনি অন্য ছাইট চৰিব পৰা নাই নেকি ?  কমপিউটাৰৰ নেটৱাৰ্কৰ সংযোগ পৰীক্ষা কৰক।</li><li>আপোনাৰ কমপিউটাৰ বা নেটৱাৰ্ক ফায়াৰৱাল বা প্ৰক্সিৰে সুৰক্ষিত নেকি ? অশুদ্ধ পছন্দই ৱেব ব্ৰাউছত ব্যাঘাত জন্মাব পাৰে।</li></ul>">
+
+<!ENTITY deniedPortAccess.title "সুৰক্ষাৰ কাৰণত পৰ্টক সীমাবদ্ধ কৰা হৈছে">
+<!ENTITY deniedPortAccess.longDesc "<p>অনুৰোধ কৰা ঠিকনাত এটা পৰ্ট নিৰ্দিষ্ট কৰা হৈছে (যেনে <q>mozilla.org:80</q> mozilla.org ত প'ৰ্ট 80) যি সাধাৰণতে ৱেব ব্ৰাউছৰ বাহিৰে <em>অন্যৰ</em>বাবে প্ৰয়োগ কৰা হয়। আপোনাৰ নিৰাপত্তা আৰু সুৰক্ষাৰ বাবে ব্ৰাউছাৰে এই অনুৰোধ বাতিল কৰিছে।</p>">
+
+<!ENTITY dnsNotFound.title "ঠিকনা পোৱা নগল">
+<!ENTITY dnsNotFound.longDesc "<p>দিয়া ঠিকনাৰ বাবে ব্ৰাউছাৰে হস্ট চাৰ্ভাৰ বিচাৰি নাপালে।</p><ul><li>আপুনি ডোমেইন লিখোঁতে ত্ৰুটি কৰিলে নেকি ? (যেনে <q><strong>ww</strong>.mozilla.org</q> <q><strong>www</strong>.mozilla.org</q> ৰ স্থানত)</li><li>আপুনি নিশ্চিত নে এই ডোমেইন প্ৰস্তুত আছে ?  তাৰ পঞ্জিকৰণ অন্ত হ'ব পাৰে।</li><li>আপুনি অন্য ছাইট ব্ৰাউছ কৰিব পৰা নাই নেকি ?  আপোনাৰ নেটৱাৰ্কৰ সংযোগ আৰু DNS চাৰ্ভাৰৰ পছন্দ পৰীক্ষা কৰক।</li><li>আপোনাৰ কমপিউটাৰ বা নেটৱাৰ্ক ফায়াৰৱাল বা প্ৰক্সিৰে সুৰক্ষিত নেকি ?  অশুদ্ধ পছন্দই ৱেব ব্ৰাউছত ব্যাঘাত জন্মাব পাৰে।</li></ul>">
+
+<!ENTITY fileNotFound.title "ফাইল পোৱা নগল">
+<!ENTITY fileNotFound.longDesc "<ul><li>বস্তুটোক পুনৰ নামকৰণ, আঁতৰুৱা, বা পুনৰ স্থাপিত কৰা হৈছে নেকি ?</li><li>ঠিকনাত বানান, ডাঙৰ হাতৰ আখৰ, বা অান্য কোনো লিখাৰ ত্ৰুটি হৈছে নেকি ?</li><li>অনুৰোধ কৰা বস্তৰ বাবে আপোনাৰ অভিগমৰ পৰ্যাপ্ত অনুমতি আছে নে ?</li></ul>">
+
+
+
+<!ENTITY generic.title "অনুৰোধ সম্পূৰ্ণ কৰিব নোৱাৰি">
+<!ENTITY generic.longDesc "<p>এই সমস্যা বা ত্ৰুটিৰ অতিৰিক্ত তথ্য এতিয়া পোৱা নাযায়।</p>">
+
+<!ENTITY malformedURI.title "অবৈধ ঠিকনা">
+<!ENTITY malformedURI.longDesc "<p>দিয়া ঠিকনাটো পৰিচিত আকৃতিত নাই। ত্ৰুটিৰ বাবে অৱস্থানৰ বাত পৰীক্ষা কৰক আৰু পুনৰ চেষ্টা কৰক।</p>">
+
+<!ENTITY netInterrupt.title "তথ্যৰ হস্তান্তৰ বিচ্ছিন্ন হৈছে">
+<!ENTITY netInterrupt.longDesc "<p>ব্ৰাউছাৰে সফলভাবে সংযোগ কৰিলে, কিন্তু তথ্য হস্তান্তৰ কৰোঁতে সংযোগত বিচ্ছিন্ন হৈছিল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।</p><ul><li>আপুনি অন্য ছাইট ব্ৰাউছ কৰিব পাৰিছে নে ? কমপিউটাৰৰ নেটৱাৰ্ক সংযোগ  পৰীক্ষা কৰক।</li><li>এতিয়াও সমস্যা হৈছে ? আপোনাৰ নেটৱাৰ্ক প্ৰশাসক বা ইন্টাৰনেট সেৱা আগবঢ়োৱা জনৰ সৈতে যোগাযোগ কৰক সহায়ৰ বাবে।</li></ul>">
+
+<!ENTITY notCached.title "দস্তাবেজৰ অৱসান ঘটিল">
+<!ENTITY notCached.longDesc "<p>অনুৰোধ কৰা দস্তাবেজ ব্ৰাউছাৰৰ ক্যাশত উপলব্ধ নহয়।</p><ul><li>সুৰক্ষা কাৰণ হিচাপে, ব্ৰাউছাৰে স্বচালিতভাৱে সংবেদ্য দস্তাবেজসমূহ পুনৰ অনুৰোধ নকৰে।</li><li>ৱেবছাইটৰ পৰা দস্তাবেজ পুনৰ অনুৰোধ কৰিবলে পুনৰ চেষ্টা কৰক ক্লিক কৰক।</li></ul>">
+
+<!ENTITY netOffline.title "অফলাইন ধৰণ">
+<!ENTITY netOffline.longDesc2 "<p>ব্ৰাউছাৰ অফলাইন অৱস্থাত কাম কৰি আছে আৰু অনুৰোধ কৰা বস্তুৰ সৈতে সংযোগ কৰিব নোৱাৰে।</p><ul><li>কমপিউটাৰ এটা সক্ৰিয় নেটৱাৰ্কৰ সৈতে সংযুক্ত নে?</li><li>অনলাইন অৱস্থালে গৈ পৃষ্ঠা পুনৰ ল&apos;ড কৰিবলে &quot;পুনৰ চেষ্টা কৰক&quot; টিপক।</li></ul>">
+
+<!ENTITY contentEncodingError.title "সমল ইনক্ৰিপষণত ত্ৰুটি">
+<!ENTITY contentEncodingError.longDesc "<p>আপুনি চাব বিচৰা পৃষ্ঠা দেখুৱাব নোৱাৰি কাৰণ তাত সংকোচনৰ এটা অসমৰ্থিত ধৰণ আছে।</p><ul><li>এই সমস্যাৰ কথা জনাবলৈ ৱেব ছাইটৰ গৰাকীহঁতৰ সৈতে সম্পৰ্ক কৰক।</li></ul>">
+
+<!ENTITY unsafeContentType.title "অসুৰক্ষিত ফাইলৰ ধৰণ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>এই সমস্যাৰ কথা জনাবলৈ ৱেব ছাইটৰ গৰাকীহঁতৰ সৈতে সম্পৰ্ক কৰক।</li> </ul>">
+
+<!ENTITY netReset.title "সংযোগ বিচ্ছিন্ন হৈছে">
+<!ENTITY netReset.longDesc "<p>এটা সংযোগ স্থাপন কৰাৰ সময়ত নেটৱাৰ্ক বিচ্ছিন্ন হৈছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।</p>">
+
+<!ENTITY netTimeout.title "নেটৱাৰ্কৰ সময়ৰ বিৰতি">
+<!ENTITY netTimeout.longDesc "<p>অনুৰোধ কৰা ছাইটে সংযোগৰ অনুৰোধলৈ কোনো উত্তৰ নিদিলে আৰু ব্ৰাউছাৰে উত্তৰলৈ প্ৰতীক্ষা নকৰা হ'ল।</p><ul><li>চাৰ্ভাৰত অতিমাত্ৰাৰ অনুৰোধ বা অস্থায়ীভাবে নিষ্ক্ৰীয় হৈছে নেকি?  পিছত পুনৰ চেষ্টা কৰিব।</li><li>আপুনি অন্য ছাইট ব্ৰাউছ কৰিব পাৰিছেনে ? কমপিউটাৰৰ নেটৱাৰ্ক সংযোগ পৰীক্ষা কৰক।</li><li>আপোনাৰ কমপিউটাৰ বা নেটৱাৰ্ক কোনো ফায়াৰ্ৱাল বা নিযিক্তকেৰে সংৰক্ষিত নেকি?  অশুদ্ধ পছন্দই ৱেব ব্ৰাউছত বাধা দিছে।</li><li>এতিয়াও সমস্যা হৈছে ? আপোনাৰ নেটৱাৰ্ক প্ৰশাসক বা ইন্টাৰনেট সেৱা দিয়া জনৰ সৈতে পৰামৰ্শ কৰক।</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "অজ্ঞাত প্ৰটোকল">
+<!ENTITY unknownProtocolFound.longDesc "<p>ঠিকনাই ব্ৰাউছাৰে বুজি নোপোৱা এটা প্ৰটোকল দিছে (যেনে <q>wxyz://</q>) , সেইকাৰণে ব্ৰাউছাৰে সফলভাবে ছাইটলৈ সংযোগ কৰিব নোৱাৰে।</p><ul><li>আপুনি মাল্টিমিডিয়া বা অন্য আখৰ নোহোৱা সেৱা অভিগম কৰিব খুজিছে নেকি ? অতিৰিক্ত প্ৰয়োজনৰ বাবে ছাইটটো পৰীক্ষা কৰক।</li><li>কিছুমান প্ৰটোকলৰ বাবে তৃতীয় পক্ষীয় চফ্টৱেৰ বা প্লাগ-ইনৰ প্ৰয়োজন হয় সিহঁতক ব্ৰাউছাৰে চিনি পোৱাৰ আগতে।</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "প্ৰক্সি চাৰ্ভাৰে সংযোগ নামানিলে">
+<!ENTITY proxyConnectFailure.longDesc "<p>ব্ৰাউছাৰক বিন্যাস কৰা হৈছে প্ৰক্সি চাৰ্ভাৰ ব্যৱহাৰ কৰিবলৈ, কিন্তু প্ৰক্সি সংযোগ স্বীকাৰ নকৰিলে।</p><ul><li>ব্ৰাউছাৰৰ প্ৰক্সিৰ বিন্যাস শুদ্ধ নে? পছন।দ পৰীক্ষা কৰি পুনৰ চেষ্টা কৰক।</li><li>এই নেটৱাৰ্কৰ পৰা সংযোগ কৰা প্ৰক্সি আজ্ঞা দিয়ে নেকি ?</li><li>এতিয়াও সমস্যা হৈছে ? সহায়ৰ বাবে আপোনাৰ নেটৱাৰ্ক প্ৰশাসক বা ইন্টাৰনেট সেৱা দিয়া জনৰ সৈতে পৰামৰ্শ কৰক।</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "প্ৰক্সি চাৰ্ভাৰ পোৱা নাযায়">
+<!ENTITY proxyResolveFailure.longDesc "<p>ব্ৰাউছাৰক বিন্যাস কৰা হৈছে প্ৰক্সি চাৰ্ভাৰ ব্যৱহাৰ কৰিবলৈ, কিন্তু প্ৰক্সিক পোৱা নাযায়।</p><ul><li>ব্ৰাউছাৰৰ প্ৰক্সিৰ বিন্যাস শুদ্ধ নে ?পছন্দ পৰীক্ষা কৰি পুনৰ চেষ্টা কৰক।</li><li>কমপিউটাৰ এটা সক্ৰীয় নেটৱাৰ্কৰ সৈতে সংযুক্ত নে ?</li><li>এতিয়াও সমস্যা হৈছে ? সহায়ৰ বাবে আপোনাৰ নেটৱাৰ্ক প্ৰশাসক বা ইন্টাৰনেট সেৱা দিয়া জনৰ সৈতে পৰামৰ্শ কৰক।</li></ul>">
+
+<!ENTITY redirectLoop.title "লুপক পুনৰ দিশ দিয়ক">
+<!ENTITY redirectLoop.longDesc "<p>অনুৰোধ কৰা বস্তু উদ্ধাৰ কৰিবলৈ ব্ৰাউছাৰে বাদ দিলে। ছাইটে এনে ধৰণে অনুৰোধক পুনৰ দিশ দিছে যে ই কেতিয়াও সম্পুৰ্ণ ন'হ'ব।</p><ul><li>এই ছাইটৰ বাবে প্ৰয়োজন হোৱা কুকি আপুনি নিষ্ক্ৰীয় বা ৰোধ কৰিছে নেকি ?</li><li><em>টোকা</em>: যদি ছাইটৰ কুকি গ্ৰহণ কৰিলে সমস্যাৰ সমাধান নহয়, এইটো অতি সম্ভব এটা চাৰ্ভাৰৰ বিন্যাসৰ সমস্যা, আপোনাৰ কমপিউটাৰৰ নহয়।</li></ul>">
+
+<!ENTITY unknownSocketType.title "অশুদ্ধ উত্তৰ">
+<!ENTITY unknownSocketType.longDesc "<p>নেটৱাৰ্কৰ অনুৰোধলৈ ছাইটে অপ্ৰত্যাশিতভাবে উত্তৰ দিলে আৰু ব্ৰাউছাৰ আগবাঢ়িব নোৱাৰে।</p>">
+
+<!ENTITY nssFailure2.title "সুৰক্ষিত সংযোগ বিফল">
+<!ENTITY nssFailure2.longDesc2 "<p>পোৱা তথ্য প্ৰমাণীকৰণ কৰিব নোৱাৰা বাবে আপুনি চাব বিচৰা পৃষ্ঠা দেখুৱাব নোৱাৰি।</p><ul><li>এই সমস্যাৰ কথা জনাবলৈ ৱেব ছাইটৰ গৰাকীহঁতৰ সৈতে সম্পৰ্ক কৰক।</li></ul>">
+
+<!ENTITY nssBadCert.title "সুৰক্ষিত সংযোগ বিফল">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>এইটো চাৰ্ভাৰৰ বিন্যাসৰ সমস্যা, বা কোনোবাই চাৰ্ভাৰক কপি কৰিব খুজিছে।</li> <li>আপুনি অতিতত সফলভাবে চাৰ্ভাৰলৈ সংযোগ কৰা হ'লে, ত্ৰুটি অস্থায়ী হ'ব পাৰে, আৰু আপুনি পিছত চেষ্টা কৰিব পাৰে।</li> </ul>">
+
+
+
+<!ENTITY cspBlocked.title "সমল সুৰক্ষা নীতিৰ দ্বাৰা প্ৰতিৰোধিত">
+<!ENTITY cspBlocked.longDesc "<p>ব্ৰাউছাৰে পৃষ্ঠাটোক এইধৰণে ল'ড হোৱাৰ পৰা বাধা দিছে কাৰণ পৃষ্ঠাটোৰ এটা সমল সুৰক্ষা নীতি আছে যোনে ইয়াৰ অনুমতি নিদিয়ে।</p>">
+
+<!ENTITY corruptedContentErrorv2.title "ক্ষতিগ্ৰস্থ সমল ত্ৰুটি">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>আপুনি দৰ্শন কৰিব বিচৰা পৃষ্ঠা দেখাব পৰা নাযাব কাৰণ তথ্য পৰিৱহনত এটা ত্ৰুটি দেখা দিছিল।</p><ul><li>এই সমস্যাৰ বিষয়ে জনাবলে অনুগ্ৰহ কৰি ৱেবছাইটৰ গৰাকীসকলক যোগাযোগ কৰক।</li></ul>">
+
+<!ENTITY remoteXUL.title "দুৰৱৰ্তী XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>এই সমস্যাৰ বিষয়ে জনাবলে অনুগ্ৰহ কৰি ৱেবছাইটৰ গৰাকীসকলক যোগাযোগ কৰক।</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>It may have been removed, moved, or file permissions may be preventing access.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Access to the file was denied">
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe. The website administrator will need to fix the server first before you can visit the site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+<!ENTITY inadequateSecurityError.title "Your connection is not secure">
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+">
+

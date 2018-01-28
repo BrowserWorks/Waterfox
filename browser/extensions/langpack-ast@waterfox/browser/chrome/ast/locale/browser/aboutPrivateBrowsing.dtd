@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Anguaño nun tas nuna ventana privada.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Abrir una ventana privada">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "P">
+
+<!ENTITY privateBrowsing.title                           "Restolar en privao">
+<!ENTITY privateBrowsing.title.tracking                  "Restolar en privao con proteición de rastrexu">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Cuando restoles nuna ventana privada, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nun va guardar">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "páxines visitaes">
+<!ENTITY aboutPrivateBrowsing.info.searches              "guetes">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ficheros temporales">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "va guardar">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " :">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "descargues">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "marcadores">
+<!ENTITY aboutPrivateBrowsing.note.before                "Restolar en privao ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nun te fai anónimu n'internet.">
+<!ENTITY aboutPrivateBrowsing.note.after                 " El to fornidor de servicios d'internet o empresa entá puen saber qué páxines visites.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Deprendi más tocante a ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Restolar en privao">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Proteición de rastréu">
+<!ENTITY trackingProtection.description2                 "Dellos sitios web usen rastrexadores que puen monitorizar la to actividá per internet. Cola proteición de rastrexu, Waterfox bloquiará munchos rastrexadores que puean recoyer información tocante al to comportamientu al restolar.">
+<!ENTITY trackingProtection.startTour1                   "Mira cómo furrula">

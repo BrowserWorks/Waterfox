@@ -1,0 +1,13 @@
+<!ENTITY blocklist.title             "Add-ons könnten Probleme verursachen">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; hat festgestellt, dass folgende Add-ons dafür bekannt sind, Sicherheits- oder Stabilitätsprobleme zu verursachen:">
+<!ENTITY blocklist.softblocked       "Zu Ihrer eigenen Sicherheit wird dringend empfohlen, dass Sie diese Add-ons deaktivieren und &brandShortName;  neu starten">
+<!ENTITY blocklist.hardblocked       "Diese Add-ons bergen ein hohes Sicherheits- oder Stabilitätsrisiko und wurden blockiert, aber ein Neustart von &brandShortName; ist notwendig, um sie vollständig zu deaktivieren.">
+<!ENTITY blocklist.softandhard       "Add-ons, die ein hohes Sicherheits- oder Stabilitätsrisiko bergen, wurden blockiert. Die anderen Add-ons haben ein geringeres Risiko, aber es wird dringend empfohlen, dass Sie sie deaktivieren und &brandShortName; neu starten.">
+<!ENTITY blocklist.moreinfo          "Weitere Informationen">
+
+<!ENTITY blocklist.accept.label      "&brandShortName; neu starten">
+<!ENTITY blocklist.accept.accesskey  "n">
+
+<!ENTITY blocklist.blocked.label     "Blockiert">
+<!ENTITY blocklist.checkbox.label    "Deaktiviert">

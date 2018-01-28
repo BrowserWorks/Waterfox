@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informácie pre riešenie problémov">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Táto stránka obsahuje technické informácie, ktoré môžu byť užitočné pri riešení
+  problémov s touto aplikáciou. Ak hľadáte odpovede na bežné otázky
+  o programe &brandShortName;, navštívte <a id='supportLink'>stránku podpory</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Správy o zlyhaní">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Identifikátor správy">
+<!ENTITY aboutSupport.crashes.sendDate "Dátum odoslania">
+<!ENTITY aboutSupport.crashes.allReports "Všetky správy o zlyhaní">
+<!ENTITY aboutSupport.crashes.noConfig "Táto aplikácia nepodporuje zobrazenie správ o zlyhaní.">
+
+<!ENTITY aboutSupport.extensionsTitle "Rozšírenia">
+<!ENTITY aboutSupport.extensionName "Názov">
+<!ENTITY aboutSupport.extensionEnabled "Povolené">
+<!ENTITY aboutSupport.extensionVersion "Verzia">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Funkcie aplikácie &brandShortName;">
+<!ENTITY aboutSupport.featureName "Názov">
+<!ENTITY aboutSupport.featureVersion "Verzia">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Experimentálne funkcie">
+<!ENTITY aboutSupport.experimentName "Názov">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Popis">
+<!ENTITY aboutSupport.experimentActive "Aktívna">
+<!ENTITY aboutSupport.experimentEndDate "Dátum ukončenia">
+<!ENTITY aboutSupport.experimentHomepage "Domovská stránka">
+<!ENTITY aboutSupport.experimentBranch "Vetva">
+
+<!ENTITY aboutSupport.appBasicsTitle "Základné nastavenia aplikácie">
+<!ENTITY aboutSupport.appBasicsName "Názov">
+<!ENTITY aboutSupport.appBasicsVersion "Verzia">
+<!ENTITY aboutSupport.appBasicsBuildID "Identifikátor zostavenia">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Kanál aktualizácií">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "História aktualizácií">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Zobraziť históriu aktualizácií">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Priečinok profilu">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Priečinok profilu">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Povolené zásuvné moduly">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Konfigurácia zostavenia">
+<!ENTITY aboutSupport.appBasicsUserAgent "Reťazec User Agent">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Využitie pamäte">
+<!ENTITY aboutSupport.appBasicsPerformance "Výkon">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Registrovaní Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profily">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocesové okná">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Procesy pre webový obsah">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Kľúč Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Kľúč Mozilla Location Service">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Núdzový režim">
+
+<!ENTITY aboutSupport.showDir.label "Otvoriť priečinok">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Zobraziť vo Finderi">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Otvoriť priečinok">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Dôležité upravené nastavenia">
+<!ENTITY aboutSupport.modifiedPrefsName "Názov">
+<!ENTITY aboutSupport.modifiedPrefsValue "Hodnota">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Nastavenia v súbore user.js">
+<!ENTITY aboutSupport.userJSDescription "Priečinok vášho profilu obsahuje <a id='prefs-user-js-link'>súbor user.js</a>, ktorý obsahuje nastavenia, ktoré neboli vytvorené programom &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Dôležité uzamknuté nastavenia">
+<!ENTITY aboutSupport.lockedPrefsName "Názov">
+<!ENTITY aboutSupport.lockedPrefsValue "Hodnota">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Databáza umiestnení">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrita">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Skontrolovať integritu">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementálne GC">
+
+<!ENTITY aboutSupport.a11yTitle "Zjednodušenie ovládania">
+<!ENTITY aboutSupport.a11yActivated "Aktivované">
+<!ENTITY aboutSupport.a11yForceDisabled "Zabrániť zapnutiu funkcie Zjednodušenie ovládania">
+<!ENTITY aboutSupport.a11yHandlerUsed "Použité ovládanie prístupnosti">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Verzie knižníc">
+
+<!ENTITY aboutSupport.installationHistoryTitle "História inštalácií">
+<!ENTITY aboutSupport.updateHistoryTitle "História aktualizácií">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Kopírovať text do schránky">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Kopírovať nespracované údaje do schránky">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Odmietnuté systémové volania">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Pred pár sekundami">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Typ procesu">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Systémové volanie">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Argumenty">
+
+<!ENTITY aboutSupport.safeModeTitle "Vyskúšajte núdzový režim">
+<!ENTITY aboutSupport.restartInSafeMode.label "Reštartovať a zakázať doplnky…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Funkcie">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostika">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Záznam chýb">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Protokol rozhodovania">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Zakázať funkcie Crash Guard">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Možné riešenia">
+
+<!ENTITY aboutSupport.mediaTitle "Médium">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Výstupné zariadenia">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Vstupné zariadenia">
+<!ENTITY aboutSupport.mediaDeviceName "Názov">
+<!ENTITY aboutSupport.mediaDeviceGroup "Skupina">
+<!ENTITY aboutSupport.mediaDeviceVendor "Spoločnosť">
+<!ENTITY aboutSupport.mediaDeviceState "Stav">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferované">
+<!ENTITY aboutSupport.mediaDeviceFormat "Formát">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanále">
+<!ENTITY aboutSupport.mediaDeviceRate "Miera">
+<!ENTITY aboutSupport.mediaDeviceLatency "Oneskorenie">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "प्रोफाइल विज़ार्ड बनायें">
+<!ENTITY window.size                  "width: 75em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName;अपनी सैटिंग की जानकारी एवं वरीयतायें आपके निजी प्रोफाइल में सहेजता है.">
+<!ENTITY profileCreationExplanation_2.text  "यदि आप &brandShortName; की प्रति को अन्य उपयोक्ता के साथ साझा कर रहें हैं तो आप प्रत्येक उपयोक्ता की जानकारी अलग रखने के लिये प्रोफाइल का उपयोग कर सकते हैं. ऐसा करने के लिये प्रत्येक उपयोक्ता को अपना प्रोफाइल बनाना पड़ेगा.">
+<!ENTITY profileCreationExplanation_3.text  "यदि आप &brandShortName; की यह प्रति का उपयोग करने वाले एक ही  व्यक्ति हैं , आपके पास कम से कम एक प्रोफाइल का होना आवश्यक है. यदि आप चाहते हैं तो आप विभिन्न सैटिंग के सैट एवं वरीयतायें को सहेजने के लिए स्वयं अनेक प्रोफाइल बना सकते हैं . जैसे कि आप व्यापारिक एवं निजी उपयोग के लिये अलग-अलग प्रोफाइल बना सकते हैं.">
+<!ENTITY profileCreationExplanation_4.text  "अपना प्रोफाइल बनाना आरम्भ करने के लिये अगला क्लिक करें.">
+<!ENTITY profileCreationExplanation_4Mac.text  "अपना प्रोफाइल बनाना शुरू करने के लिए, जारी रखें क्लिक करें.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "अपना प्रोफाइल बनाना आरम्भ करने के लिये अगला क्लिक करें.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "यदि आप कई प्रोफाइल बनाते हैं तो आप उन्हें उनके प्रोफाइल नाम से पहचान सकते हैं. आप यहाँ उपलब्ध नाम का उपयोग कर सकते हैं या अपने द्वारा दिये गये नाम का उपयोग कर सकते हैं.">
+<!ENTITY profilePrompt.label            "नया प्रोफाइल दें:">
+<!ENTITY profilePrompt.accesskey        "E">
+<!ENTITY profileDirectoryExplanation.text   "आपकी उपयोक्ता सेटिंग, वरीयता और दूसरी उपयोक्ता संंबंधित आंकड़ा को जमा किया जाएगा:">
+<!ENTITY profileDefaultName             "तयशुदा उपयोक्ता">
+<!ENTITY button.choosefolder.label      "सेल चुनें…">
+<!ENTITY button.choosefolder.accesskey  "C">
+<!ENTITY button.usedefault.label        "तयशुदा कोष्ठ का उपयोग करें">
+<!ENTITY button.usedefault.accesskey    "U">

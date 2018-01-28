@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Teeltagol Hello">
+
+<!ENTITY basic.tab           "Cuɓe &amp; Mbaydi">
+
+<!ENTITY formatGroup.label   "Mbaydi">
+
+<!ENTITY orientation.label   "Kuccitol:">
+<!ENTITY portrait.label      "Dariingo">
+<!ENTITY portrait.accesskey  "D">
+<!ENTITY landscape.label     "Wertiingo">
+<!ENTITY landscape.accesskey "W">
+
+<!ENTITY scale.label         "Werngo:">
+<!ENTITY scale.accesskey     "W">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Famɗin ngam heƴnude e Njaajeendi Hello">
+<!ENTITY shrinkToFit.accesskey "N">
+
+<!ENTITY optionsGroup.label  "Cuɓe">
+
+<!ENTITY printBG.label       "Winndito Cakkitol (nooneeji &amp; nate)">
+<!ENTITY printBG.accesskey   "C">
+
+<!ENTITY advanced.tab        "Ŋori &amp; Tiitoore//Footer">
+
+<!ENTITY marginGroup.label   "Ŋori (#1)">
+<!ENTITY marginUnits.inches  "peɗeeli">
+<!ENTITY marginUnits.metric  "milimeete">
+<!ENTITY marginTop.label     "Dow:">
+<!ENTITY marginTop.accesskey "D">
+<!ENTITY marginBottom.label  "Les:">
+<!ENTITY marginBottom.accesskey "L">
+<!ENTITY marginLeft.label    "Nano:">
+<!ENTITY marginLeft.accesskey "N">
+<!ENTITY marginRight.label   "Ñaamo:">
+<!ENTITY marginRight.accesskey "a">
+
+<!ENTITY headerFooter.label  "Tiitooje &amp; Jaɓɓorɗe">
+
+<!ENTITY hfLeft.label        "Nano:">
+<!ENTITY hfCenter.label      "Hakkunde:">
+<!ENTITY hfRight.label       "Ñaamo:">
+<!ENTITY headerLeft.tip      "Tiitoore nano">
+<!ENTITY headerCenter.tip    "Tiitoore hakkunde">
+<!ENTITY headerRight.tip     "Tiitoore ñaamo">
+<!ENTITY footerLeft.tip      "Yaɓɓorde nano">
+<!ENTITY footerCenter.tip    "Yaɓɓorde hakkunde">
+<!ENTITY footerRight.tip     "Yaɓɓorde ñaamo">
+
+<!ENTITY hfTitle             "Tiitoonde">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Ñalngu/Waktu">
+<!ENTITY hfPage              "Hello #">
+<!ENTITY hfPageAndTotal      "Hello # nder #">
+<!ENTITY hfBlank             "--blank--">
+<!ENTITY hfCustom            "Peŋtoro…">
+
+<!ENTITY customPrompt.title  "Peŋtoro…">
+<!ENTITY customPrompt.prompt "Naatnu binndol tiitoore/yaɓɓorde maa peŋtorol">

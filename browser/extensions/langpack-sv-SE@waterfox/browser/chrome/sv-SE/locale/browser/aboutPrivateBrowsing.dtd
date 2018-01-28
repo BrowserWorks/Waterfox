@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Du är nu inte i ett privat fönster.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Öppna ett privat fönster">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privat surfning">
+<!ENTITY privateBrowsing.title.tracking                  "Privat surfning med spårningsskydd">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "När du surfar i ett privat fönster, ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "sparar Waterfox inte">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "besökta sidor">
+<!ENTITY aboutPrivateBrowsing.info.searches              "sökningar">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "kakor">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "tillfälliga filer">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "kommer att spara">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " dina:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "hämtningar">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "bokmärken">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privat surfning ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "gör dig inte anonym">
+<!ENTITY aboutPrivateBrowsing.note.after                 " på internet. Din arbetsgivare eller internetleverantör kan fortfarande spåra sidorna du besöker.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Läs mer om ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Privat surfning">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Spårningsskydd">
+<!ENTITY trackingProtection.description2                 "Vissa webbplatser använder spårare som kan övervaka din aktivitet över hela internet. Med spårningsskydd kommer Waterfox blockera många spårare som kan samla information om dina surfvanor.">
+<!ENTITY trackingProtection.startTour1                   "Se hur det fungerar">

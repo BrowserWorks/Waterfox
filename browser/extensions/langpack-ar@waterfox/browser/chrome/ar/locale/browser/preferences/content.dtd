@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "الصلاحيات">
+
+<!ENTITY  blockPopups.label           "احجب النوافذ المنبثقة">
+<!ENTITY  blockPopups.accesskey       "ذ">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "اطّلع على المزيد">
+<!ENTITY  notificationsPolicyDesc4.label       "اختر أيّ من مواقع الوِب يُسمح لها بإرسال تنبيهات إليك">
+<!ENTITY  notificationsPolicyButton.accesskey  "خ">
+<!ENTITY  notificationsPolicyButton.label      "اختر…">
+<!ENTITY  notificationsDoNotDisturb.label      "لا تزعجني">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "ز">
+<!ENTITY  notificationsDoNotDisturbDetails.value "لن تُعرض أيّة تنبيهات حتّى إعادة تشغيل &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "الاستثناءات…">
+<!ENTITY  popupExceptions.accesskey   "ت">
+
+<!ENTITY  fontsAndColors.label        "الخطوط و الألوان">
+
+<!ENTITY  defaultFont2.label          "الخط المبدئي">
+<!ENTITY  defaultFont2.accesskey      "ط">
+<!ENTITY  defaultSize2.label          "الحجم">
+<!ENTITY  defaultSize2.accesskey      "ح">
+
+<!ENTITY  advancedFonts.label         "متقدم…">
+<!ENTITY  advancedFonts.accesskey     "د">
+
+<!ENTITY  colors.label                "الألوان…">
+<!ENTITY  colors.accesskey            "ل">
+
+
+<!ENTITY language2.label              "اللّغات">
+<!ENTITY chooseLanguage.label         "اختر لغتك المفضلة لعرض الصفحات">
+<!ENTITY chooseButton.label           "اختر…">
+<!ENTITY chooseButton.accesskey       "خ">
+
+<!ENTITY translateWebPages.label      "ترجم محتوى الوب">
+<!ENTITY translateWebPages.accesskey  "ت">
+<!ENTITY translateExceptions.label    "الاستثناءات…">
+<!ENTITY translateExceptions.accesskey "ث">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "ترجمات">
+<!ENTITY translation.options.attribution.afterLogo "​">
+
+<!ENTITY  drmContent2.label              "محتوى إدارة الحقوق الرقمية (DRM)">
+
+<!ENTITY  playDRMContent2.label          "شغّل المحتوى الخاضع لإدارة الحقوق الرقمية">
+<!ENTITY  playDRMContent2.accesskey      "ش">
+<!ENTITY  playDRMContent.learnMore.label "اطّلع على المزيد">

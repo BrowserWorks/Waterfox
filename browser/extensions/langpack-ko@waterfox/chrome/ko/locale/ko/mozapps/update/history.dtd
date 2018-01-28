@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "업데이트 기록">
+<!ENTITY  history.intro             "다음 항목이 설치되었습니다:">
+<!ENTITY  closebutton.label         "닫기">
+                                     
+<!ENTITY  noupdates.label           "설치된 업데이트 없음">
+
+<!ENTITY  name.header               "이름">
+<!ENTITY  date.header               "설치 날짜">
+<!ENTITY  type.header               "형식">
+<!ENTITY  state.header              "상태">
+

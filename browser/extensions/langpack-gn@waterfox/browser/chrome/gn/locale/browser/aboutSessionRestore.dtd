@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Tembiapopa'ũ mbojevy">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "Oreñyrõmi imbeguére.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; oreko apañuãi oguerujey hag̃ua ovetã ha tendayke. Ikatúva ojehu oĩre peteĩ web kuatiarogue ojeikeramóvape.">
+<!ENTITY restorepage.tryThis        "Eha'ãmi:">
+<!ENTITY restorepage.restoreSome    "Emboty peteĩ térã hetave tendayke nde reimo'ãva ha'eha apañuãi ñepyrũmby">
+<!ENTITY restorepage.startNew       "Eñepyrũ kundaha rembiapopa'ũ pyahu">
+
+<!ENTITY restorepage.tryagainButton "Mbojevy">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "Mboty">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "Mbojevy">
+<!ENTITY restorepage.listHeader     "Ovetã ha tendayke">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ovetã &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "¡Jahake!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "Tandepo'aite">
+
+<!ENTITY welcomeback2.pageTitle     "Po'aite">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; oĩma oguata haguáicha">
+
+<!ENTITY welcomeback2.restoreAll.label  "Ovetã ha tendayke mbojevyjey">
+<!ENTITY welcomeback2.restoreSome.label "Embojevyjey reipotávante">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Umi moimbaha ha ñemomba'eguáva oñemboguepáma ha Kundahára ñemboheko porãma ojevyjeývo ijypykuetépe. Ko apañuai guasu ñoñemoĩ porãiramo, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "Reñemoaranduve upe ejaposèvape">
+

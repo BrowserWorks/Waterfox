@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Διαμόρφωση σελίδας">
+
+<!ENTITY basic.tab           "Μορφή &amp; επιλογές">
+
+<!ENTITY formatGroup.label   "Μορφή">
+
+<!ENTITY orientation.label   "Προσανατολισμός:">
+<!ENTITY portrait.label      "Κατακόρυφος">
+<!ENTITY portrait.accesskey  "Κ">
+<!ENTITY landscape.label     "Οριζόντιος">
+<!ENTITY landscape.accesskey "Ο">
+
+<!ENTITY scale.label         "Κλίμακα:">
+<!ENTITY scale.accesskey     "Κ">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Σμίκρυνση στο πλάτος της σελίδας">
+<!ENTITY shrinkToFit.accesskey "Π">
+
+<!ENTITY optionsGroup.label  "Επιλογές">
+
+<!ENTITY printBG.label       "Εκτύπωση παρασκηνίου (χρώματα &amp; εικόνες)">
+<!ENTITY printBG.accesskey   "Π">
+
+<!ENTITY advanced.tab        "Περιθώρια &amp; επικεφαλίδα/υποσέλιδο">
+
+<!ENTITY marginGroup.label   "Περιθώρια (#1)">
+<!ENTITY marginUnits.inches  "ίντσες">
+<!ENTITY marginUnits.metric  "χιλιοστά">
+<!ENTITY marginTop.label     "Πάνω:">
+<!ENTITY marginTop.accesskey "Π">
+<!ENTITY marginBottom.label  "Κάτω:">
+<!ENTITY marginBottom.accesskey "Κ">
+<!ENTITY marginLeft.label    "Αριστερά:">
+<!ENTITY marginLeft.accesskey "Α">
+<!ENTITY marginRight.label   "Δεξιά:">
+<!ENTITY marginRight.accesskey "Δ">
+
+<!ENTITY headerFooter.label  "Επικεφαλίδες &amp; υποσέλιδα">
+
+<!ENTITY hfLeft.label        "Αριστερά:">
+<!ENTITY hfCenter.label      "Κέντρο:">
+<!ENTITY hfRight.label       "Δεξιά:">
+<!ENTITY headerLeft.tip      "Αριστερή επικεφαλίδα">
+<!ENTITY headerCenter.tip    "Κεντρική επικεφαλίδα">
+<!ENTITY headerRight.tip     "Δεξιά επικεφαλίδα">
+<!ENTITY footerLeft.tip      "Αριστερό υποσέλιδο">
+<!ENTITY footerCenter.tip    "Κεντρικό υποσέλιδο">
+<!ENTITY footerRight.tip     "Δεξί υποσέλιδο">
+
+<!ENTITY hfTitle             "Τίτλος">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Ημερομηνία/ώρα">
+<!ENTITY hfPage              "Σελίδα #">
+<!ENTITY hfPageAndTotal      "Σελίδα # από #">
+<!ENTITY hfBlank             "--κενή--">
+<!ENTITY hfCustom            "Προσαρμοσμένο...">
+
+<!ENTITY customPrompt.title  "Προσαρμοσμένο...">
+<!ENTITY customPrompt.prompt "Εισάγετε το προσαρμοσμένο κείμενο επικεφαλίδας/υποσέλιδου">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "ಪುಟದ ಸಿದ್ಧತೆ">
+
+<!ENTITY basic.tab           "ಫಾರ್ಮಾಟ್ ಮತ್ತು ಆಯ್ಕೆಗಳು">
+
+<!ENTITY formatGroup.label   "ಫಾರ್ಮಾಟ್">
+
+<!ENTITY orientation.label   "ನಿಲುವು(ಓರಿಯಂಟೇಶನ್):">
+<!ENTITY portrait.label      "ಉದ್ದಚಿತ್ರ">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "ಅಡ್ಡಚಿತ್ರ">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "ಅಳತೆ:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "ಪುಟದ ಅಗಲಕ್ಕೆ ಹೊಂದುವಂತೆ ಕುಗ್ಗಿಸು">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "ಆಯ್ಕೆಗಳು">
+
+<!ENTITY printBG.label       "ಹಿನ್ನಲೆಯನ್ನು ಮುದ್ರಿಸು (ಚಿತ್ರಗಳು ಮತ್ತು ಬಣ್ಣಗಳು)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "ಅಂಚುಗಳು ಮತ್ತು ಹೆಡರ್/ಫೂಟರುಗಳು">
+
+<!ENTITY marginGroup.label   "ಅಂಚುಗಳು (#1)">
+<!ENTITY marginUnits.inches  "ಇಂಚುಗಳು">
+<!ENTITY marginUnits.metric  "ಮಿಲಿಮೀಟರುಗಳು">
+<!ENTITY marginTop.label     "ಮೇಲೆ:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "ಕೆಳಗೆ:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "ಎಡ:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "ಬಲ:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "ಹೆಡರುಗಳು ಮತ್ತು ಫೂಟರುಗಳು">
+
+<!ENTITY hfLeft.label        "ಎಡ:">
+<!ENTITY hfCenter.label      "ಮಧ್ಯ:">
+<!ENTITY hfRight.label       "ಬಲ:">
+<!ENTITY headerLeft.tip      "ಎಡ ಹೆಡರ್">
+<!ENTITY headerCenter.tip    "ಮಧ್ಯ ಹೆಡರ್">
+<!ENTITY headerRight.tip     "ಬಲ ಹೆಡರ್">
+<!ENTITY footerLeft.tip      "ಎಡ ಫೂಟರ್">
+<!ENTITY footerCenter.tip    "ಮಧ್ಯ ಫೂಟರ್">
+<!ENTITY footerRight.tip     "ಬಲ ಫೂಟರ್">
+
+<!ENTITY hfTitle             "ಶೀರ್ಷಿಕೆ">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "ಕಾಲ/ಸಮಯ">
+<!ENTITY hfPage              "ಪುಟ #">
+<!ENTITY hfPageAndTotal      "# ನಲ್ಲಿ # ಪುಟ ">
+<!ENTITY hfBlank             "--ಖಾಲಿ--">
+<!ENTITY hfCustom            "ನನ್ನಿಚ್ಛೆಯ...">
+
+<!ENTITY customPrompt.title  "ನನ್ನಿಚ್ಛೆಯ...">
+<!ENTITY customPrompt.prompt "ನಿಮ್ಮ ಇಚ್ಛೆಯ ಹೆಡರ್/ಫೂಟರ್ ಪಠ್ಯ">

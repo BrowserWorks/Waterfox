@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle       "검색 설정 복원">
+
+<!ENTITY searchreset.pageTitle      "검색 설정을 복원하시겠습니까?">
+
+<!ENTITY searchreset.pageInfo1      "검색 설정이 오래되었습니다. &brandShortName;가 기본 검색 엔진 설정을 도와드리겠습니다.">
+
+
+<!-- LOCALIZATION NOTE (searchreset.selector.label): this string is
+followed by a dropdown of all the built-in search engines. -->
+<!ENTITY searchreset.selector.label "기본 검색 엔진을 ">
+
+<!-- LOCALIZATION NOTE (searchreset.beforelink.pageInfo,
+searchreset.afterlink.pageInfo): these two string are used respectively
+before and after the "Settings page" link (searchreset.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language. -->
+<!ENTITY searchreset.beforelink.pageInfo2 "로 변경합니다. 이 설정은 언제든지 ">
+<!ENTITY searchreset.afterlink.pageInfo2  "에서 변경할 수 있습니다.">
+
+<!ENTITY searchreset.link.pageInfo2       "설정 페이지">
+
+<!ENTITY searchreset.noChangeButton        "변경하지 않음">
+<!ENTITY searchreset.noChangeButton.access "D">
+
+<!ENTITY searchreset.changeEngineButton        "검색 엔진 변경">
+<!ENTITY searchreset.changeEngineButton.access "C">

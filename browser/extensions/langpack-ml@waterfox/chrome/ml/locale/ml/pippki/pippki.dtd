@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "പ്രധാന പാസ്‌വേര്‍ഡ്മാറ്റുക ">
+<!ENTITY setPassword.tokenName.label "സുരക്ഷ ഉപകരണങ്ങള്‍ ">
+<!ENTITY setPassword.oldPassword.label "ഇപ്പോഴത്തെ പാസ്‌വേര്‍ഡ്:">
+<!ENTITY setPassword.newPassword.label "പുതിയ പാസ്‌വേര്‍ഡ്">
+<!ENTITY setPassword.reenterPassword.label "പുതിയ പാസ്‌വേര്‍ഡ് (വീണ്ടും)">
+<!ENTITY setPassword.meter.label "പാസ്‌വേഡിന്റെ ക്വാളിറ്റി കാണിക്കുന്ന മീറ്റര്‍">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "പുനക്രമീകരിക്കുക">
+<!ENTITY resetPassword.title  "പ്രധാന പാസ്‌വേര്‍ഡ് വീണ്ടും സജ്ജമാക്കുക ">
+<!ENTITY resetPassword.text  "നിങ്ങളുടെ പ്രധാന പാസ്‌വേര്‍ഡ് വീണ്ടും ക്രമികരിച്ചാല്‍, നിങ്ങള്‍ സൂക്ഷിച്ച വെബ് ഈമെയില്‍ പാസ്‌വേര്‍ഡുകള്‍, ഡേറ്റ, സ്വകാര്യ സര്‍ട്ടിഫിക്കേറ്റ്, സ്വകാര്യ കീ എന്നിവയെല്ലാം നഷ്ടമാകുന്നു. നിങ്ങള്‍ക്കു് ഇതു് ചെയ്യണമെന്നു് ഉറപ്പാണോ?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "സര്‍ട്ടിഫിക്കറ്റ്‌ ഡൌണ്‍ലോഡ്‌ ചെയ്യുന്നു ">
+<!ENTITY downloadCert.message1 "നിങ്ങള്‍ ഒരു പുതിയ സര്‍ട്ടിഫിക്കേറ്റ് അഥോറിറ്റിയെ (CA) വിശ്വസിക്കുവാന്‍ ആവശ്യപ്പെട്ടിരിക്കുന്നു.">
+<!ENTITY downloadCert.trustSSL "വെബ്‌ സൈറ്റുകള്‍ തിരിച്ചറിയുന്നതിനായി ഈ CA വിശ്വസിക്കുക">
+<!ENTITY downloadCert.trustEmail "ഈമെയില്‍ യൂസര്‍മാരെ തിരിച്ചറിയുന്നതിനായി ഈ CA വിശ്വസിക്കുക ">
+<!ENTITY downloadCert.trustObjSign "സോഫ്റ്റ്‌വെയര്‍ ഡെവലപ്പര്‍മാരെ തിരിച്ചറിയുന്നതിനായി ഈ CA വിശ്വസിക്കുക">
+<!ENTITY downloadCert.message3 "ഈ CA വിശ്വസിക്കുന്നതിനു് മുമ്പു്, അതിന്റെ സര്‍ട്ടിഫിക്കേറ്റും അതിനുള്ള പോളിസിയും പ്രക്രിയകളും പരിശോധിക്കേണ്ടകാണു് (ലഭ്യമാണു് എങ്കില്‍).">
+<!ENTITY downloadCert.viewCert.label "കാണുക ">
+<!ENTITY downloadCert.viewCert.text "CA സര്‍ട്ടിഫിക്കേറ്റ് പരിശോധിക്കുക">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "ഉപയോക്താവിനെ തിരിച്ചറിയുവാന്‍ ആവശ്യപ്പെടുക">
+<!ENTITY clientAuthAsk.message1 "ഈ സൈറ്റിനു് നിങ്ങള്‍ ഒരു സര്‍ട്ടിഫിക്കേറ്റ് ഉപയോഗിച്ചു് നിങ്ങളുടെ തിരിച്ചറിയല്‍ ഉറപ്പിക്കണം:">
+<!ENTITY clientAuthAsk.message2 "തിരിച്ചറിയുന്നതിനുള്ള ഒരു സര്‍ട്ടിഫിക്കേറ്റ് തെരഞ്ഞെടുക്കുക:">
+
+
+<!ENTITY pkcs12.setpassword.title  "ഒരു സര്‍ട്ടിഫിക്കേറ്റ് ബാക്കപ്പ് പാസ്‌വേര്‍ഡ് തെരഞ്ഞെടുക്കുക">
+<!ENTITY pkcs12.setpassword.message  "ഇവിടെ സജ്ജമാക്കുന്ന സര്‍ട്ടിഫിക്കേറ്റ് ബാക്കപ്പ് പാസ്‌വേര്‍ഡ് നിങ്ങള്‍ ഉണ്ടാക്കുന്ന ബാക്കപ്പ് ഫയലിനെ സൂക്ഷിക്കുന്നു. ബാക്കപ്പുമായി മുമ്പോട്ടു് തുടരുന്നതിനായി നിങ്ങള്‍ ഈ പാസ്‌വേര്‍ഡ് സജ്ജമാക്കേണ്ടതാണു്.">
+<!ENTITY pkcs12.setpassword.label1 "സര്‍ട്ടിഫിക്കേറ്റ് ബാക്കപ്പ് പാസ്‌വേര്‍ഡ് :">
+<!ENTITY pkcs12.setpassword.label2 "സര്‍ട്ടിഫിക്കേറ്റ് ബാക്കപ്പ് പാസ്‌വേര്‍ഡ്  (വീണ്ടും):">
+<!ENTITY pkcs12.setpassword.reminder "പ്രധാനപ്പെട്ടതു്: നിങ്ങളുടെ സര്‍ട്ടിഫിക്കേറ്റ് ബാക്കപ്പ് പാസ്‌വേര്‍ഡ് നഷ്ടമായാല്‍, ഈ ബാക്കപ്പ് പിന്നീട് ലഭ്യമാകുകയില്ല. ദയവായി, ഇതു് സുരക്ഷിതമായ ഒരു സ്ഥലത്തേക്കു് മാറ്റുക.">
+
+<!ENTITY chooseToken.title  "ടോക്കന്‍ ഡയലോഗ് തെരഞ്ഞെടുക്കുക">
+<!ENTITY chooseToken.message1 "ഒരു ടോക്കന്‍ ദയവായി തെരഞ്ഞെടുക്കുക.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "ഒരു സ്വകാര്യ കീ ഉണ്ടാക്കുക">
+<!ENTITY createCertInfo.msg1 "കീ ഉണ്ടാക്കുന്നു... അല്‍പ സമയം കാത്തിരിക്കുക....">
+<!ENTITY createCertInfo.msg2 "ദയവായി കാത്തിരിക്കുക...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "സുരക്ഷിതമായ ടോക്കന്‍ ഓഥന്റിക്കേഷന്‍">
+<!ENTITY protectedAuth.msg "ദയവായി ടോക്കന്‍ പരിശോധിക്കുക. നിങ്ങളുടെ ടോക്കന്‍ ഏതു് തരത്തിലുള്ളതാണു് എന്നതനുസരിച്ചാണു് ഓഥന്റിക്കേഷന്‍ മാര്‍ഗ്ഗം.">
+<!ENTITY protectedAuth.tokenName.label "ടോക്കന്‍:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

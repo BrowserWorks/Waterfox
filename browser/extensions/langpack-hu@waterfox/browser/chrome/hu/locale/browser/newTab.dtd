@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Új lap">
+<!ENTITY newtab.customize.classic "Kedvelt oldalak megjelenítése">
+<!ENTITY newtab.customize.cog.enhanced "Javasolt oldalak felvétele">
+<!ENTITY newtab.customize.cog.title2 "ÚJ LAP VEZÉRLŐELEMEI">
+<!ENTITY newtab.customize.cog.learn "Ismerje meg az Új lapot">
+<!ENTITY newtab.customize.title "Az Új lap oldal személyre szabása">
+<!ENTITY newtab.customize.blank2 "Üres oldal megjelenítése">
+<!ENTITY newtab.undo.removedLabel "Bélyegkép eltávolítva.">
+<!ENTITY newtab.undo.undoButton "Visszavonás.">
+<!ENTITY newtab.undo.restoreButton "Összes visszaállítása.">
+<!ENTITY newtab.undo.closeTooltip "Elrejtés">

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Scratchpad window strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (scratchpad.title):
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+
+
+
+<!ENTITY window.title                 "Zapisnik">
+
+<!ENTITY fileMenu.label               "Dataja">
+<!ENTITY fileMenu.accesskey           "D">
+
+<!ENTITY newWindowCmd.label           "Nowe wokno">
+<!ENTITY newWindowCmd.accesskey       "N">
+<!ENTITY newWindowCmd.commandkey      "n">
+
+<!ENTITY openFileCmd.label            "Dataju wočinić…">
+<!ENTITY openFileCmd.accesskey        "o">
+<!ENTITY openFileCmd.commandkey       "o">
+
+<!ENTITY openRecentMenu.label         "Najnowše wočinić">
+<!ENTITY openRecentMenu.accesskey     "N">
+
+<!ENTITY revertCmd.label              "Anulować…">
+<!ENTITY revertCmd.accesskey          "A">
+
+<!ENTITY saveFileCmd.label            "Składować">
+<!ENTITY saveFileCmd.accesskey        "S">
+<!ENTITY saveFileCmd.commandkey       "s">
+
+<!ENTITY saveFileAsCmd.label          "Składować jako…">
+<!ENTITY saveFileAsCmd.accesskey      "k">
+
+<!ENTITY closeCmd.label               "Začinić">
+<!ENTITY closeCmd.key                 "W">
+<!ENTITY closeCmd.accesskey           "Z">
+
+<!ENTITY viewMenu.label               "Napohlad">
+<!ENTITY viewMenu.accesskey           "N">
+
+<!ENTITY lineNumbers.label             "Linkowe čisła pokazać">
+<!ENTITY lineNumbers.accesskey         "L">
+
+<!ENTITY wordWrap.label                "Tekst łamać">
+<!ENTITY wordWrap.accesskey            "T">
+
+<!ENTITY highlightTrailingSpace.label     "Prózny rum na kóncu wuzběhnyć">
+<!ENTITY highlightTrailingSpace.accesskey "z">
+
+<!ENTITY largerFont.label             "Wjetše pismo">
+<!ENTITY largerFont.accesskey         "W">
+<!ENTITY largerFont.commandkey        "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY largerFont.commandkey2       "="> 
+
+<!ENTITY smallerFont.label            "Mjeńše pismo">
+<!ENTITY smallerFont.accesskey        "M">
+<!ENTITY smallerFont.commandkey       "-">
+
+<!ENTITY normalSize.label             "Normalna wulkosć">
+<!ENTITY normalSize.accesskey         "N">
+<!ENTITY normalSize.commandkey        "0">
+
+<!ENTITY editMenu.label               "Wobdźěłać">
+<!ENTITY editMenu.accesskey           "b">
+
+<!ENTITY run.label                    "Startować">
+<!ENTITY run.accesskey                "t">
+<!ENTITY run.key                      "r">
+
+<!ENTITY inspect.label                "Přepytować">
+<!ENTITY inspect.accesskey            "e">
+<!ENTITY inspect.key                  "i">
+
+<!ENTITY display.label                "Zwobraznić">
+<!ENTITY display.accesskey            "r">
+<!ENTITY display.key                  "l">
+
+<!ENTITY pprint.label                 "Přehladny ćišć">
+<!ENTITY pprint.key                   "p">
+<!ENTITY pprint.accesskey             "P">
+<!-- LOCALIZATION NOTE (environmentMenu.label, accesskey): This menu item was
+  -  renamed from "Context" to avoid confusion with the right-click context
+  -  menu in the text area. It refers to the JavaScript Environment (or context)
+  -  the user is evaluating against. I.e., Content (current tab) or Chrome
+  -  (browser).
+  -->
+
+<!ENTITY environmentMenu.label        "Wokolina">
+<!ENTITY environmentMenu.accesskey    "W">
+
+
+<!ENTITY contentContext.label         "Wobsah">
+<!ENTITY contentContext.accesskey     "h">
+<!-- LOCALIZATION NOTE (browserContext.label, accesskey): This menu item is used
+  -  to select an execution environment for the browser window itself as opposed
+  -  to content. This is a feature for browser and addon developers and only
+  -  enabled via the devtools.chrome.enabled preference. Formerly, this label
+  -  was called "Chrome".
+  -->
+
+<!ENTITY browserContext.label         "Wobhladowak">
+<!ENTITY browserContext.accesskey     "l">
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+  -  for the help button in the menubar but Gnome does not.
+  -->
+
+<!ENTITY helpMenu.label               "Pomoc">
+<!ENTITY helpMenu.accesskey           "P">
+<!ENTITY helpMenuWin.label            "Pomoc">
+<!ENTITY helpMenuWin.accesskey        "P">
+
+<!ENTITY documentationLink.label      "Pomoc za Scratchpad na MDN">
+<!ENTITY documentationLink.accesskey  "M">
+<!-- LOCALIZATION NOTE (resetContext2.label): This command allows the developer
+  -  to reset/clear the global object of the environment where the code executes.
+  -->
+
+
+<!ENTITY resetContext2.label          "Wariable wróćo stajić">
+<!ENTITY resetContext2.accesskey      "i">
+
+<!ENTITY reloadAndRun.label           "Znowa začitać a startować">
+<!ENTITY reloadAndRun.accesskey       "a">
+<!ENTITY reloadAndRun.key             "r">
+
+<!ENTITY executeMenu.label            "Wuwjesć">
+<!ENTITY executeMenu.accesskey        "u">
+<!-- LOCALIZATION NOTE (errorConsoleCmd.commandkey): This command key launches
+  -  the browser Error Console, the key should be identical to the property of
+  -  the same name in browser.dtd.
+  -->
+
+<!ENTITY errorConsoleCmd.commandkey   "j">
+<!-- LOCALIZATION NOTE (evalFunction.label): This command allows the developer
+  -  to evaluate the top-level function that the cursor is currently at.
+  -->
+
+<!ENTITY evalFunction.label "Aktualnu funkciju wuhódnoćić">
+<!ENTITY evalFunction.accesskey "h">
+<!ENTITY evalFunction.key "e">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Hüquqlarınız Haqqında">
+<!ENTITY rights.intro "&brandFullName;, dünya səviyyəsində minlərlə insandan ibarət bir birlik tərəfindən inkişaf etdirilən azad və açıq qaynaqlı bir proqramdır. Bilməli olduğunuz bir neçə şey var:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; ">
+<!ENTITY rights.intro-point1b "Mozilla İctimai Lisenziyası">
+<!ENTITY rights.intro-point1c " ilə yayımlanmaqdadır. Yəni &brandShortName; sərbəst şəkildə istifadə oluna bilər, köçürülə bilər və parçalana bilər. Və ehtiyaclarınıza görə &brandShortName; qaynaq kodlarını da dəyişdirə bilərsiniz. Mozilla İctimai Lisenziyası, dəyişdirdiyiniz versiyaları yaymaq haqqını da sizə verir.">
+
+<!ENTITY rights.intro-point2-a "Mozilla Fondu və ya başqa tərəfin hər hansı bir əmtəə nişanı və ya lisenziyası, Waterfox adı və loqosu da daxil olmaqla, üzərində heç bir haqqınız yoxdur. Əmtəə nişanları ilə əlaqəli ətraflı məlumat ">
+<!ENTITY rights.intro-point2-b "buradan baxa bilərsiniz">
+<!ENTITY rights.intro-point2-c "açıqlanmışdır.">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "&brandShortName; səyyahınızdakı Çökmə Xəbərçisi kimi bəzi funksiyalar sizə &vendorShortName; üçün əks əlaqə vermə imkanı verir. Əks əlaqə verməyi seçməklə &vendorShortName; tərəfinə məhsullarını inkişaf etdirmək üçün bu məlumatı istifadə etmə, verdiyiniz əks əlaqəni saytlarında nəşr etmək və əks əlaqənizlə bölüşmək icazəsi vermiş olursunuz.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Şəxsi məlumat və əks əlaqənizi &brandShortName; ilə &vendorShortName;-ya göndərdiyinizdə necə istifadə etdiyimiz ">
+<!ENTITY rights2.intro-point3b "&brandShortName; Məxfilik Siyasətində">
+<!ENTITY rights.intro-point3c " təsvir edilib.">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Bu məhsulla bağlı bütün məxfilik siyasətləri burada sıralanmalıdır.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Bəzi &brandShortName; funksiyaları veb əsaslı məlumat xidmətlərindən yararlanır, ancaq bunların 100&#037; doğru və ya xətasız olduğuna zəmanət verə bilmərik. Daha ətraflı və həmçinin bu xidmətlərin necə söndürülməsi haqqında məlumatı buradan tapa bilərsiz:">
+<!ENTITY rights.intro-point4b "xidmət şərtləri">
+<!ENTITY rights.intro-point4c "açıqlanmışdır.">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Bu məhsul web xidmətləri ilə bağlantı qurursa, xidmət(lər) ilə bağlı bütün xidmət şərtləri ">
+<!ENTITY rights.intro-point4b-unbranded "Web Sayt Xidmətləri">
+<!ENTITY rights.intro-point4c-unbranded " bölməsinə bağlanmalıdır.">
+
+<!ENTITY rights2.webservices-header "&brandFullName; Web Əsaslı Məlumat Xidmətləri">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Bəzi video məzmunları oxutmaq üçün &brandShortName; bəzi üçüncü tərəf məzmun dekodlaşdırma modullarını endirir.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "&brandFullName; bu cütlük &brandShortName; versiyasında istifadənizə verilən bəzi funksiyalar üçün, aşağıda açıqlanan şərtlər əsasında web əsaslı məlumat xidmətlərindən (&quot;Servislər&quot;) faydalanır. Xidmətlərdən birini və ya bir neçəsini istifadə etmək istəmirsinizsə və ya aşağıdakı şərtləri qəbul etmirsinizsə müvafiq funksiyanı və Xidmət(lər)i deaktiv edə bilərsiniz. Funksiya və Xidmətləri deaktiv etmək üçün təlimatlar ">
+<!ENTITY rights2.webservices-b "buradan baxa bilərsiniz">
+<!ENTITY rights3.webservices-c ". Digər xüsusiyətlər və Servislər tətbiqetmə seçimlərindən deaktiv edilə bilərlər.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Təhlükəsiz baxış: ">
+<!ENTITY rights.safebrowsing-b "Təhlükəsiz Baxış funsiyasını söndürməyiniz etibar edilməyən saytlara girməyinizlə nəticələnə biləcəyi üçün tövsiyyə edilmir. Bu funksiyanı tamam söndürmək istəyirsinizsə bu addımları təkrarlayın:">
+<!ENTITY rights.safebrowsing-term1 "Proqram tərcehlərini aç">
+<!ENTITY rights.safebrowsing-term2 "Təhlükəsizlik bölməsini seçin">
+<!ENTITY rights2.safebrowsing-term3 "&quot;&enableSafeBrowsing.label;&quot; aktivləşdirmək üçün seçimi qaldır">
+<!ENTITY rights.safebrowsing-term4 "Təhlükəsiz baxış artıq söndürülüb">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Vəziyyətə həssas baxış: ">
+<!ENTITY rights.locationawarebrowsing-b "həmişə sizin istəyinizlə işləyər.  İcazəniz olmadan heç vaxt mövqe məlumatlarınız göndərilməyib.  Əgər funksiyanı tamamən söndürmək istəyirsinizsə bu addımları təkrarlayın:">
+<!ENTITY rights.locationawarebrowsing-term1a "Ünvan sətirinə bunu yazın: URL ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "geo.enabled yazın">
+<!ENTITY rights.locationawarebrowsing-term3 "geo.enabled seçiminə iki dəfə tıklayın">
+<!ENTITY rights.locationawarebrowsing-term4 "Vəziyyətə həssas baxış artıq söndürülüb">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "Məhsuluna daxil olan web sayt xidmətlərinə ümumi baxış və varsa söndürülmə təlimatları buraya əlavə edilməlidir.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Bu məhsulla bağlı bütün xidmət şərtləri burada yazılmalıdır.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; və ona kömək edənlər, lisenziya sahibləri və iş ortaqları ən əksiksiz və aktual Xidmətləri təqdim etmək üçün birlikdə işləməkdədir. Buna baxmayaraq bu məlumatların hərtərəfli və xətasız olduğuna zəmanət verə bilmərik. Məsələn: Təhlükəsiz Baxış xidməti bəzi risqli saytları tanımaya bilər və bəzi təhlükəsiz saytları yanlış tanıya bilər. Vəziyyətə həssas Xidmət də xidmət təminatçılarımız tərəfindən göstərilən bütün vəziyyətlər sadəcə ehtimaldır və nə biz nə də xitmət təminatçılarımız bu vəziyyətlərin doğruluğuna zəmanət vermirik.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; öz istəyi ilə Xidmətləri dayandıra və ya dəyişdirə bilər.">
+<!ENTITY rights2.webservices-term3 "Bu xidmətləri uyğun &brandShortName; istifadə etməkdə sərbəstsiniz və  &vendorShortName; sizə bu haqları verir. &vendorShortName; və lisenziya sahibləri üzərindəki digər bütün haqlara sahibdir.  Bu şərtlər &brandShortName; və əlaqəli &brandShortName; qaynaq kodu versiyalarında etibarlı olan açıq qaynaq lisenziya haqlarınızı heç bir şəkildə məhdudlaşdırmır.">
+<!ENTITY rights.webservices-term4 "Servislər &quot;olduqları kimi&quot; təmin olunur.  &vendorShortName;, ona yardım edənlər, lisenziya sahibləri və paylayıcılar, servislərin ticari dəyəri olduğu və ehtiyyaclarına uyğun olacağı barədə yazılı və ya sözlü hər hansı bir sığorta verməz.  Ehtiyaclarınızı qarşılamaq üçün Servisləri seçsəniz keyfiyyət və performans ilə bağlı bütün risklər sizə aiddir. Bəzı qanunlar sığortaların xaric tutulmasına və ya məhdudlaşdırılmasına icazə verməyə bilər. Bu halda bu şərtlər sizin üçün keçərli olmayacaqdır.">
+<!ENTITY rights.webservices-term5 "Qanunun tələb etdiyi vaxtlar xaric, &vendorShortName;, onun dəstəkçiləri, lisenziya sahibləri və yayanlar &brandShortName; və Servislərinin işlənməsindən yarana biləcək hər hansı bir dolayı, xüsusi, təsadüfi, sonradan yaranan, ağır və ya nümunəvi xəsardan cavabdeh deyillər.  Bu şərtlər altında kollektiv cəza $500 (beş yüz USD) üzəri ola bilməz. Bəzi yurisdiksiyalar məlum zərərlərin istisna hal olmasına və ya limitlənməsinə icazə vermirlər, bu səbəbdən bu istisna və limitləmə sizin üçün keçərli olmaya bilər.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; lazım bilərsə bu şərtləri yeniləyə bilər. Bu şərtlər &vendorShortName;-nın yazılı təsdiqi olmadan dəyişdirilə bilməz və ya ləğv edilə bilməz.">
+<!ENTITY rights.webservices-term7 "Bu şərtlər, qanun mübahisəsi hökmləri xaric olmaqla, ABŞ Kaliforniya ştatı qanunları ilə qorunur. Bu şərtlərin hər hansı bir hissəsinin ləğv və ya tətbiq edilə bilməz vəziyyətdə olduğu halda, geri qalan hissələr etibarlı və effektiv olmaya davam edəcəkdir. Bu şərtlərin tərcümə versiyası ilə İngiliscə versiyası arasında fərq olarsa, İngiliscə versiyası etibarlı sayılacaq.">

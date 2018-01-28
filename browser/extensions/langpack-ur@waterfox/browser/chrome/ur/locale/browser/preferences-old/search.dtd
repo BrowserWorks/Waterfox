@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "طےشدہ تلاش انجن">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "اپنا طے شدہ تلاش انجن منتخب کریں۔ &brandShortName; اس کو محل وقوع بار، تلاش بار، اور شروع کریں بار میں استعمال کرتا ہے۔">
+
+<!ENTITY provideSearchSuggestions.label        "تلاش تجاویز مہیا کریں">
+<!ENTITY provideSearchSuggestions.accesskey    "ت">
+
+<!ENTITY showURLBarSuggestions.label           "تلاش تجاویز نتائج محل وقوع بار میں دکھائیں">
+<!ENTITY showURLBarSuggestions.accesskey       "م">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "تلاش کردہ تجاویز محل وقوع کے بار کے نتائج میں دکھاءی نھیں جائنگے کیونکہ &brandShortName; تاریخ کبھی یاد نہیں رکھنے پر تشکیل کردہ ہے۔">
+
+<!ENTITY oneClickSearchEngines.label           "ایک-کلک تلاش انجن">
+
+<!ENTITY chooseWhichOneToDisplay.label         "تلاش بار آپ کو متبادل تلاش کے انجن تلاش کرنے کی براہ راست اجازت دیتا ہے۔ ظاہر کرنے کے لئے منتخب کریں۔">
+
+<!ENTITY engineNameColumn.label                "تلاش انجن ">
+<!ENTITY engineKeywordColumn.label             "کلیدی لفظ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "طےشدہ تلاش انجن بحال کریں">
+<!ENTITY restoreDefaultSearchEngines.accesskey "ط">
+
+<!ENTITY removeEngine.label                    "ہٹائیں">
+<!ENTITY removeEngine.accesskey                "ہ">
+
+<!ENTITY addMoreSearchEngines.label            "مزید تلاش انجن کا اضافہ کریں...">

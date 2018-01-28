@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Sekuriteit">
+
+
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Blokkeer gevaarlike en bedrieglike inhoud">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Blokkeer gevaarlike aflaaie">
+<!ENTITY  blockDownloads.accesskey        "g">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Waarsku oor ongewensde en ongewone sagteware">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "d">
+
+<!ENTITY  addonExceptions.label         "Uitsonderings…">
+<!ENTITY  addonExceptions.accesskey     "U">
+
+
+<!ENTITY  formsAndPasswords.label       "Vorms en wagwoorde">
+
+
+<!ENTITY  passwordExceptions.label      "Uitsonderings…">
+<!ENTITY  passwordExceptions.accesskey  "U">
+
+<!ENTITY  useMasterPassword.label        "Gebruik 'n meesterwagwoord">
+<!ENTITY  useMasterPassword.accesskey    "G">
+<!ENTITY  changeMasterPassword.label     "Wysig meesterwagwoord…">
+<!ENTITY  changeMasterPassword.accesskey "m">
+
+<!ENTITY  savedLogins.label              "Gestoorde aanmeldings…">
+<!ENTITY  savedLogins.accesskey          "l">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "Priontáil">
+
+<!ENTITY printDialog.title "Priontáil">
+
+<!ENTITY fpDialog.title "Sábháil an Comhad">
+
+<!ENTITY fileCheck.label "Priontáil go Comhad">
+<!ENTITY fileCheck.accesskey "C">
+<!ENTITY propertiesButton.label "Airíonna…">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "Cur síos ar an bprintéir:">
+<!ENTITY printer.label "Printéir">
+<!ENTITY printerInput.label "Ainm an Phrintéara:">
+<!ENTITY printerInput.accesskey "n">
+
+<!ENTITY printrangeGroup.label "Raon Priontála">
+<!ENTITY allpagesRadio.label "Gach Leathanach">
+<!ENTITY allpagesRadio.accesskey "a">
+<!ENTITY rangeRadio.label  "Leathanaigh">
+<!ENTITY rangeRadio.accesskey  "L">
+<!ENTITY frompageInput.label  "ó">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "go">
+<!ENTITY topageInput.accesskey  "g">
+<!ENTITY selectionRadio.label "Roghnúchán">
+<!ENTITY selectionRadio.accesskey "R">
+
+<!ENTITY copies.label "Cóip">
+<!ENTITY numCopies.label "Líon na gcóipeanna:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "Priontáil Frámaí">
+<!ENTITY aslaidoutRadio.label "Mar atá léirithe ar an scáileán">
+<!ENTITY aslaidoutRadio.accesskey "s">
+<!ENTITY selectedframeRadio.label  "An fráma roghnaithe">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "Gach fráma go scartha">
+<!ENTITY eachframesepRadio.accesskey  "G">

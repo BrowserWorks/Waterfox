@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY  updateWizard.title              "&brandShortName; ਅੱਪਡੇਟ">
+
+<!ENTITY  offline.title                   "&brandShortName; ਆਫ-ਲਾਈਨ ਕੰਮ ਕਰ ਰਿਹਾ ਹੈ">
+<!ENTITY  offline.description             "&brandShortName; ਨੂੰ ਆਨ-ਲਾਈਨ ਜਾਣ ਦੀ ਲੋੜ ਹੈ, ਤਾਂ ਕਿ ਇਹ ਜਾਂਚ ਕੀਤੀ ਜਾ
+                                           ਸਕੇ ਕਿ ਤੁਹਾਡੀ ਐਂਡ-ਆਨ ਲਈ ਅੱਪਡੇਟ ਉਪਲੱਬਧ ਹਨ, ਜਿਸ ਨਾਲ ਉਹ ਇਸ ਵਰਜਨ ਦੇ ਕੰਪੈਟਬਿਲ ਬਣ ਸਕਣ।">
+<!ENTITY  offline.toggleOffline.label     "ਹੁਣੇ ਆਨ-ਲਾਈਨ ਜਾਓ।">
+<!ENTITY  offline.toggleOffline.accesskey "G">
+
+<!ENTITY  mismatch.win.title              "ਨਾ-ਅਨੁਕੂਲ ਐਂਡ-ਆਨ">
+<!ENTITY  mismatch.top.label              "&brandShortName; ਦੇ ਇਸ ਵਰਜਨ ਨਾਲ ਹੇਠ ਦਿੱਤੀਆਂ ਐਂਡ-ਆਨ ਅਨੁਕੂਲ ਨਹੀਂ ਹਨ ਅਤੇ ਆਯੋਗ ਕੀਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ:">
+<!ENTITY  mismatch.bottom.label           "&brandShortName; ਜਾਂਚ ਕਰ ਸਕਦਾ ਹੈ ਕਿ ਇਹ ਐਂਡ-ਆਨ ਲਈ ਕੋਈ ਅਨੁਕੂਲ ਵਰਜਨ
+                                           ਉਪਲੱਬਧ ਹੈ ਕਿ ਨਹੀਂ।">
+
+<!ENTITY  checking.wizard.title           "ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਦੀ ਜਾਂਚ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ">
+<!ENTITY  checking.top.label              "ਤੁਹਾਡੀਆਂ ਨਾ-ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਲਈ ਅੱਪਡੇਟ ਵਾਸਤੇ ਜਾਂਚ ਜਾਰੀ ਹੈ…">
+<!ENTITY  checking.status                 "ਇਸ ਨੂੰ ਕੁਝ ਮਿੰਟ ਲੱਗ ਸਕਦੇ ਹਨ…">
+
+<!ENTITY  found.wizard.title               "ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਲੱਭ ਗਈਆਂ ਹਨ">
+<!ENTITY  found.top.label                 "ਐਂਡ-ਆਨ ਦੀ ਚੋਣ ਕਰੋ, ਜਿਸ ਨੂੰ ਤੁਸੀਂ ਇੰਸਟਾਲ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ:">
+<!ENTITY  found.disabledXPinstall.label   "ਇਹ ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕਦੇ ਹਨ, ਕਿਉਂਕਿ ਸਾਫਟਵੇਅਰ ਇੰਸਟਾਲੇਸ਼ਨ ਨੂੰ ਇਸ ਸਮੇਂ ਆਯੋਗ ਕੀਤਾ ਗਿਆ ਹੈ
+                                           ਤੁਸੀਂ ਇਹ ਸੈਟਿੰਗ ਨੂੰ ਹੇਠ ਦਿੱਤੇ ਢੰਗ ਨਾਲ ਬਦਲ ਸਕਦੇ ਹੋ।">
+<!ENTITY  found.enableXPInstall.label     "ਵੈੱਬ ਸਾਇਟਾਂ ਨੂੰ ਸਾਫਟਵੇਅਰ ਇੰਸਟਾਲ ਕਰਨ ਦਿਓ">
+<!ENTITY  found.enableXPInstall.accesskey "A">
+
+<!ENTITY  installing.wizard.title         "ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਨੂੰ ਇੰਸਟਾਲ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ">
+<!ENTITY  installing.top.label            "ਤੁਹਾਡੀਆਂ ਐਂਡ-ਆਨ ਲਈ ਅੱਪਡੇਟ ਨੂੰ ਡਾਊਨਲੋਡ ਅਤੇ ਇੰਸਟਾਲ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…">
+
+<!ENTITY  noupdates.wizard.title          "ਕੋਈ ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਨਹੀਂ ਲੱਭੀ ਹੈ">
+<!ENTITY  noupdates.intro.desc            "&brandShortName; ਤੁਹਾਡੀ ਐਂਡ-ਆਨ ਲਈ ਅੱਪਡੇਟ ਲਈ ਲੱਭਣ ਲਈ ਅਸਫ਼ਲ ਹੈ।">
+<!ENTITY  noupdates.error.desc            "ਅੱਪਡੇਟ ਦੀ ਖੋਜ ਕਰਨ ਦੌਰਾਨ ਕੁਝ ਸਮੱਸਿਆਵਾਂ ਆਈਆਂ ਹਨ।">
+<!ENTITY  noupdates.checkEnabled.desc     "&brandShortName; ਇਹਨਾਂ ਐਂਡ-ਆਨ ਦੇ ਅੱਪਡੇਟ ਲਈ ਲਗਾਤਾਰ ਜਾਂਚ ਕਰਦਾ ਰਹੇਗਾ ਅਤੇ ਤੁਹਾਨੂੰ ਜਾਣਕਾਰੀ ਦੇ ਦੇਵੇਗਾ।">
+
+<!ENTITY  finished.wizard.title           "ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਇੰਸਟਾਲ ਕੀਤੀ ਗਈ ਹੈ">
+<!ENTITY  finished.top.label              "&brandShortName; ਨੇ ਤੁਹਾਡੀ ਐਂਡ-ਆਨ ਲਈ ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਕੀਤੇ ਹਨ।">
+<!ENTITY  finished.checkDisabled.desc     "&brandShortName; ਐਂਡ-ਆਨ ਦੇ ਅੱਪਡੇਟ ਲਈ ਲਗਾਤਾਰ ਜਾਂਚ ਕਰੇਗਾ ਅਤੇ ਉਪਲੱਬਧ ਹੋਣ ਉੱਤੇ ਜਾਣਕਾਰੀ ਦੇਵੇਗਾ।">
+<!ENTITY  finished.checkEnabled.desc      "&brandShortName; ਐਂਡ-ਆਨ ਦੇ ਅੱਪਡੇਟ ਲਈ ਲਗਾਤਾਰ ਜਾਂਚ ਕਰੇਗਾ ਅਤੇ ਉਪਲੱਬਧ ਹੋਣ ਉੱਤੇ ਜਾਣਕਾਰੀ ਦੇਵੇਗਾ।">
+
+<!ENTITY  adminDisabled.wizard.title      "ਅੱਪਡੇਟ ਲਈ ਜਾਂਚ ਕਰਨ ਲਈ ਅਸਫ਼ਲ ਹੈ">
+<!ENTITY  adminDisabled.warning.label     "ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਵਾਸਤੇ ਅੱਪਡੇਟ ਬਾਰੇ ਜਾਂਚ ਕਰਨੀ ਸੰਭਵ ਨਹੀਂ ਹੈ
+                                           ਕਿਉਂਕਿ &brandShortName; ਲਈ ਸਾਫਟਵੇਅਰ ਇੰਸਟਾਲੇਸ਼ਨ ਉੱਤੇ ਪਾਬੰਦੀ ਹੈ।
+                                           ਮਦਦ ਲਈ ਆਪਣੇ ਸਿਸਟਮ ਪਰਸ਼ਾਸ਼ਕ ਨਾਲ ਸੰਪਰਕ ਕਰੋ ਜੀ।">
+
+<!ENTITY  versioninfo.wizard.title        "ਅਨੁਕੂਲ ਐਂਡ-ਆਨ ਲਈ ਜਾਂਚ ਜਾਰੀ ਹੈ">
+<!ENTITY  versioninfo.top.label           "&brandShortName; ਦੇ ਇਹ ਵਰਜਨ ਨਾਲ ਇਸ ਐਂਡ-ਆਨ
+                                           ਦੀ ਅਨੁਕੂਲ ਜਾਂਚ ਜਾਰੀ ਹੈ">
+<!ENTITY  versioninfo.waiting             "ਇਸ ਨੂੰ ਕੁਝ ਮਿੰਟ ਲੱਗ ਸਕਦੇ ਹਨ…">
+
+<!ENTITY  installerrors.wizard.title      "ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਕਰਨ ਦੌਰਾਨ ਸਮੱਸਿਆ ਆਈ ਹੈ">
+<!ENTITY  installerrors.intro.label       "&brandShortName; ਨੂੰ ਤੁਹਾਡੀਆਂ ਐਂਡ-ਆਨ ਇੰਸਟਾਲ ਕਰਨ ਦੌਰਾਨ
+                                           ਸਮੱਸਿਆ ਆਈ ਹੈ">
+
+<!-- general strings used by several of the finish pages -->
+<!ENTITY  clickFinish.label               "&brandShortName; ਨੂੰ ਸ਼ੁਰੂ ਕਰਨ ਕਈ ਮੁਕੰਮਲ ਦੱਬੋ">
+<!ENTITY  clickFinish.labelMac            "&brandShortName; ਚਲਾਉਣ ਲਈ ਮੁਕੰਮਲ ਦੱਬੋ">
+<!ENTITY  enableChecking.label            "&brandShortName; ਨੂੰ ਅੱਪਡੇਟ ਕਰਨ ਲਈ ਇਜ਼ਾਜ਼ਤ ਹੈ।">

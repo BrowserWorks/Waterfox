@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Вирішення проблем">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Ця сторінка містить технічну інформацію, що може стати у нагоді під час вирішення проблем.
+  Якщо ж вам потрібні відповіді на загальні питання щодо 
+  &brandShortName; — відвідайте наш <a id='supportLink'>сайт підтримки</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Звіти про збої">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID звіту">
+<!ENTITY aboutSupport.crashes.sendDate "Надіслано">
+<!ENTITY aboutSupport.crashes.allReports "Всі звіти про збої">
+<!ENTITY aboutSupport.crashes.noConfig "Ця програма не була налаштована показувати звіти про збої.">
+
+<!ENTITY aboutSupport.extensionsTitle "Розширення">
+<!ENTITY aboutSupport.extensionName "Назва">
+<!ENTITY aboutSupport.extensionEnabled "Увімкнено">
+<!ENTITY aboutSupport.extensionVersion "Версія">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "Можливості &brandShortName;">
+<!ENTITY aboutSupport.featureName "Назва">
+<!ENTITY aboutSupport.featureVersion "Версія">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Експериментальні можливості">
+<!ENTITY aboutSupport.experimentName "Назва">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Опис">
+<!ENTITY aboutSupport.experimentActive "Активна">
+<!ENTITY aboutSupport.experimentEndDate "Дата завершення">
+<!ENTITY aboutSupport.experimentHomepage "Домівка">
+<!ENTITY aboutSupport.experimentBranch "Гілка">
+
+<!ENTITY aboutSupport.appBasicsTitle "Інформація про програму">
+<!ENTITY aboutSupport.appBasicsName "Назва">
+<!ENTITY aboutSupport.appBasicsVersion "Версія">
+<!ENTITY aboutSupport.appBasicsBuildID "ID збірки">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Канал оновлення">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Історія оновлень">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Показати історію оновлень">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Тека профілю">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Тека профілю">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Увімкнені плагіни">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Конфігурація збірки">
+<!ENTITY aboutSupport.appBasicsUserAgent "User Agent">
+<!ENTITY aboutSupport.appBasicsOS "ОС">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Використання пам’яті">
+<!ENTITY aboutSupport.appBasicsPerformance "Швидкодія">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Зареєстровані Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Профілі">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Багатопроцесні вікна">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Процеси веб-вмісту">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Ключ Google">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Ключ Служби визначення розташування від Mozilla">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Безпечний режим">
+
+<!ENTITY aboutSupport.showDir.label "Відкрити каталог">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Відкрити відповідну теку">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Відкрити теку">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Важливі змінені налаштування">
+<!ENTITY aboutSupport.modifiedPrefsName "Назва">
+<!ENTITY aboutSupport.modifiedPrefsValue "Значення">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "Вподобання user.js">
+<!ENTITY aboutSupport.userJSDescription "Ваша папка профілю містить <a id='prefs-user-js-link'>файл user.js file</a> з вподобаннями, котрі не були створені програмою &brandShortName;.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Важливі заблоковані налаштування">
+<!ENTITY aboutSupport.lockedPrefsName "Назва">
+<!ENTITY aboutSupport.lockedPrefsValue "Значення">
+
+<!ENTITY aboutSupport.graphicsTitle "Графіка">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "База даних Places">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Цілісність">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Перевірити цілісність">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Інкрементний GC">
+
+<!ENTITY aboutSupport.a11yTitle "Можливості доступності">
+<!ENTITY aboutSupport.a11yActivated "Активовано">
+<!ENTITY aboutSupport.a11yForceDisabled "Блокувати можливості доступності">
+<!ENTITY aboutSupport.a11yHandlerUsed "Використовується обробник доступності">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Версії бібліотек">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Історія встановлень">
+<!ENTITY aboutSupport.updateHistoryTitle "Історія оновлень">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Копіювати текст у буфер">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Копіювати необроблені дані в буфер">
+
+<!ENTITY aboutSupport.sandboxTitle "Пісочниця">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Відхилені системні виклики">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Секунд тому">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Тип процесу">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Системний виклик">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Аргументи">
+
+<!ENTITY aboutSupport.safeModeTitle "Спробувати безпечний режим">
+<!ENTITY aboutSupport.restartInSafeMode.label "Перезапустити з вимкненими додатками…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Можливості">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Діагностика">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Журнал збоїв">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Журнал рішень">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Можливості, вимкнені захистом від збоїв">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Способи обходу">
+
+<!ENTITY aboutSupport.mediaTitle "Медіа">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Пристрої відтворення">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Пристрої введення">
+<!ENTITY aboutSupport.mediaDeviceName "Назва">
+<!ENTITY aboutSupport.mediaDeviceGroup "Група">
+<!ENTITY aboutSupport.mediaDeviceVendor "Постачальник">
+<!ENTITY aboutSupport.mediaDeviceState "Стан">
+<!ENTITY aboutSupport.mediaDevicePreferred "Основний">
+<!ENTITY aboutSupport.mediaDeviceFormat "Формат">
+<!ENTITY aboutSupport.mediaDeviceChannels "Канали">
+<!ENTITY aboutSupport.mediaDeviceRate "Частота">
+<!ENTITY aboutSupport.mediaDeviceLatency "Затримка">

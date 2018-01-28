@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizePrefs2.title          "Поставки за бришење на историјата">
+<!-- LOCALIZATION NOTE (sanitizePrefs2.modal.width): width of the Clear History on Shutdown dialog.
+     Should be large enough to contain the item* strings on a single line.
+     The column width should be set at half of the dialog width. -->
+<!-- LOCALIZATION NOTE (sanitizePrefs2.inContent.dialog.width): width of the
+     Clear History on Shutdown subdialog in the in-content preferences.
+     Should be large enough to contain the item* strings on a single line.
+     The column width adjusts the width of the first column in the dialog.
+     You can set the column width to a value that makes the dialog look visually balanced,
+     or at half of the dialog width if unsure. -->
+
+<!ENTITY sanitizeDialog2.title         "Исчисти ја скорешната историја">
+<!-- LOCALIZATION NOTE (sanitizeDialog2.width): width of the Clear Recent History dialog -->
+
+<!ENTITY clearDataSettings2.label     "Кога ќе излезам од &brandShortName;, автоматски треба да се исчисти:">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "Временски опсег за чистење: ">
+<!ENTITY clearTimeDuration.accesskey      "В">
+<!ENTITY clearTimeDuration.lastHour       "последниот час">
+<!ENTITY clearTimeDuration.last2Hours     "последните 2 часа">
+<!ENTITY clearTimeDuration.last4Hours     "последните 4 часа">
+<!ENTITY clearTimeDuration.today          "денес">
+<!ENTITY clearTimeDuration.everything     "Сѐ">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "Детали">
+<!ENTITY detailsProgressiveDisclosure.accesskey "е">
+
+<!ENTITY historySection.label         "Историја">
+<!ENTITY dataSection.label            "Податоци">
+
+<!ENTITY itemHistoryAndDownloads.label     "Историја на сурфањето и преземањата">
+<!ENTITY itemHistoryAndDownloads.accesskey "И">
+<!ENTITY itemFormSearchHistory.label       "Запамтените форми и пребарувања">
+<!ENTITY itemFormSearchHistory.accesskey   "З">
+<!ENTITY itemCookies.label                 "Колачињата">
+<!ENTITY itemCookies.accesskey             "К">
+<!ENTITY itemCache.label                   "Кеш">
+<!ENTITY itemCache.accesskey               "К">
+<!ENTITY itemOfflineApps.label             "Локалните податоци за мрежни места">
+<!ENTITY itemOfflineApps.accesskey         "о">
+<!ENTITY itemActiveLogins.label            "Активни пријави">
+<!ENTITY itemActiveLogins.accesskey        "А">
+<!ENTITY itemSitePreferences.label         "Поставки на местата">
+<!ENTITY itemSitePreferences.accesskey     "с">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "Ова дејство не може да се одврати.">
+
+<!ENTITY sanitizeDialog2.width         "34em">
+
+<!ENTITY sanitizePrefs2.column.width   "17em">
+<!ENTITY sanitizePrefs2.inContent.column.width "24em">
+
+<!ENTITY sanitizePrefs2.inContent.dialog.width "34em">
+<!ENTITY sanitizePrefs2.modal.width    "34em">

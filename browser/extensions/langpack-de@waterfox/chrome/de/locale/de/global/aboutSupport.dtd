@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Informationen zur Fehlerbehebung">
+
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+<!ENTITY aboutSupport.pageSubtitle "
+  Diese Seite enthält technische Informationen, die nützlich sein könnten,
+  wenn Sie versuchen, ein Problem zu lösen. Wenn Sie nach Antworten auf häufig
+  gestellte Fragen zu &brandShortName; suchen, besuchen Sie bitte unsere  <a id='supportLink'>Hilfeseite</a>.
+">
+
+<!ENTITY aboutSupport.crashes.title "Absturzberichte">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Meldungs-ID">
+<!ENTITY aboutSupport.crashes.sendDate "Gesendet">
+<!ENTITY aboutSupport.crashes.allReports "Alle Absturzberichte">
+<!ENTITY aboutSupport.crashes.noConfig "Diese Anwendung wurde nicht für die Anzeige von Absturzberichten konfiguriert.">
+
+<!ENTITY aboutSupport.extensionsTitle "Erweiterungen">
+<!ENTITY aboutSupport.extensionName "Name">
+<!ENTITY aboutSupport.extensionEnabled "Aktiviert">
+<!ENTITY aboutSupport.extensionVersion "Version">
+<!ENTITY aboutSupport.extensionId "ID">
+
+<!ENTITY aboutSupport.featuresTitle "&brandShortName;-Funktionen">
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.experimentsTitle "Experimentelle Funktionen">
+<!ENTITY aboutSupport.experimentName "Name">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Beschreibung">
+<!ENTITY aboutSupport.experimentActive "Aktiv">
+<!ENTITY aboutSupport.experimentEndDate "Enddatum">
+<!ENTITY aboutSupport.experimentHomepage "Homepage">
+<!ENTITY aboutSupport.experimentBranch "Zweig">
+
+<!ENTITY aboutSupport.appBasicsTitle "Allgemeine Informationen">
+<!ENTITY aboutSupport.appBasicsName "Name">
+<!ENTITY aboutSupport.appBasicsVersion "Version">
+<!ENTITY aboutSupport.appBasicsBuildID "Build-ID">
+
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Update-Kanal">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Update-Chronik">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Update-Chronik anzeigen">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profilverzeichnis">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profilordner">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Aktivierte Plugins">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Build-Konfiguration">
+<!ENTITY aboutSupport.appBasicsUserAgent "User-Agent">
+<!ENTITY aboutSupport.appBasicsOS "Betriebssystem">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Speicherverwendung">
+<!ENTITY aboutSupport.appBasicsPerformance "Leistung">
+
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Angemeldete Service-Worker">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profile">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Fenster mit mehreren Prozessen">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web-Inhaltsprozesse">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google-Schlüssel">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla-Location-Service-Schlüssel">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Abgesicherter Modus">
+
+<!ENTITY aboutSupport.showDir.label "Ordner öffnen">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Im Finder anzeigen">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Ordner öffnen">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Wichtige modifizierte Einstellungen">
+<!ENTITY aboutSupport.modifiedPrefsName "Name">
+<!ENTITY aboutSupport.modifiedPrefsValue "Wert">
+
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+<!ENTITY aboutSupport.userJSTitle "user.js-Einstellungen">
+<!ENTITY aboutSupport.userJSDescription "Der Profilordner besitzt eine <a id='prefs-user-js-link'>user.js-Datei</a>, welche Einstellungen enthält, die nicht von &brandShortName; erstellt wurden.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Wichtige nicht veränderbare Einstellungen">
+<!ENTITY aboutSupport.lockedPrefsName "Name">
+<!ENTITY aboutSupport.lockedPrefsValue "Wert">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafik">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Chronik- und Lesezeichendatenbank">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Integrität">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Integrität überprüfen">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Inkrementelle GC">
+
+<!ENTITY aboutSupport.a11yTitle "Barrierefreiheit">
+<!ENTITY aboutSupport.a11yActivated "Aktiviert">
+<!ENTITY aboutSupport.a11yForceDisabled "Barrierefreiheit verhindern">
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler verwendet">
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Bibliotheken-Versionen">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Installations-Chronik">
+<!ENTITY aboutSupport.updateHistoryTitle "Update-Chronik">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Text in die Zwischenablage kopieren">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Rohdaten in die Zwischenablage kopieren">
+
+<!ENTITY aboutSupport.sandboxTitle "Isolierte Umgebungen">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Abgewiesene Systemaufrufe">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Vor … Sekunden">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Prozesstyp">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Systemaufruf">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Parameter">
+
+<!ENTITY aboutSupport.safeModeTitle "Abgesicherten Modus probieren">
+<!ENTITY aboutSupport.restartInSafeMode.label "Mit deaktivierten Add-ons neu starten…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Allgemeine Merkmale">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Weitere Informationen">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Fehlerprotokoll">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU 1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU 2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Entscheidungsprotokoll">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Absturzverhinderer hat Funktionen deaktiviert">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Lösungen">
+
+<!ENTITY aboutSupport.mediaTitle "Medien">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Ausgabegeräte">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Eingabegeräte">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDeviceGroup "Gruppe">
+<!ENTITY aboutSupport.mediaDeviceVendor "Hersteller">
+<!ENTITY aboutSupport.mediaDeviceState "Status">
+<!ENTITY aboutSupport.mediaDevicePreferred "Bevorzugt">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Kanäle">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latenz">

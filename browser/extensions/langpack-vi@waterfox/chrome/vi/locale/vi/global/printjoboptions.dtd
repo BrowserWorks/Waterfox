@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Thuộc tính máy in">
+
+<!ENTITY paperInput.label "Cỡ Giấy:">
+<!ENTITY paperInput.accesskey "C">
+
+<!ENTITY jobTitleInput.label "Tiêu đề Công việc:">
+<!ENTITY jobTitleInput.accesskey "T">
+
+<!ENTITY colorGroup.label "Màu:">
+<!ENTITY grayRadio.label "Màu xám">
+<!ENTITY grayRadio.accesskey "x">
+<!ENTITY colorRadio.label "Màu">
+<!ENTITY colorRadio.accesskey "M">
+
+<!ENTITY edgeMarginInput.label "Khoảng trống từ cạnh giấy đến Lề">
+<!ENTITY topInput.label "Trên:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "Dưới:">
+<!ENTITY bottomInput.accesskey "D">
+<!ENTITY leftInput.label "Trái:">
+<!ENTITY leftInput.accesskey "r">
+<!ENTITY rightInput.label "Phải:">
+<!ENTITY rightInput.accesskey "P">

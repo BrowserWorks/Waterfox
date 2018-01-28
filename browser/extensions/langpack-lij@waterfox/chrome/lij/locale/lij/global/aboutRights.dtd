@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "In sci teu diritti">
+<!ENTITY rights.intro "&brandFullName; a l'é 'n'aplicaçion libera co-o sorgente averto e a l'é fæta da 'na comunitæ de migiæa de personn-e de tutto o mondo. Gh'é de cöse che ti doviesci savei:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; te vegne dæto sotta a-i termini da ">
+<!ENTITY rights.intro-point1b "Licensa Pubrica de Mozilla">
+<!ENTITY rights.intro-point1c ". Questo o veu dî che ti ti peu uza, copiâ e distriboî o &brandShortName; a-i atri. Ti ê o benvegnuo anche a cangiâ i sorgenti de &brandShortName; pe-i teu bezeugni. A Licensa Pubrica de Mozilla te dâ anche o dirito de distriboî e teu verscioin modificæ.">
+
+<!ENTITY rights.intro-point2-a "Mozilla no te dâ di diriti in sci marchi e lòghi de Mozilla e Waterfox. Atre informaçioin in sci marchi e lòghi se peuan atrovâ ">
+<!ENTITY rights.intro-point2-b "chi">
+<!ENTITY rights.intro-point2-c ".">
+
+<!-- point 2.5 text for official branded builds -->
+<!ENTITY rights.intro-point2.5 "Quarche fonçion de &brandShortName;, comme o Report di Cianti, te dâ a poscibilitæ de fornî comenti a &vendorShortName;. Se ti ne mandi di comenti a &vendorShortName; ti ne dæ anche o permisso de deuviali pe megioâ o produto e de pubricâ sti comenti in sci sciti web e de distriboili.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights2.intro-point3a "Comme niatri doviemmo e teu informaçioin e comenti che ti mandi a &vendorShortName; co-o &brandShortName; o l'é descritto inta ">
+<!ENTITY rights2.intro-point3b "Politica da privacy de &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 3 text for unbranded builds -->
+<!ENTITY rights.intro-point3-unbranded "Tutte e politiche da privacy pe sto produto devan ese chi.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Quarche fonçion do &brandShortName; a peu uzâ serviççi bazæ in sciâ ræ e niatri no poemmo garantî che segian 100&#37; sensa eroi. Pe avei ciù detalli vanni inte ">
+<!ENTITY rights.intro-point4b "Termini do serviçio">
+<!ENTITY rights.intro-point4c ".">
+
+<!-- point 4 text for unbranded builds -->
+<!ENTITY rights.intro-point4a-unbranded "Sto produto o l'à di serviççi web. I termini di serviççi se peaun trovâ chi ">
+<!ENTITY rights.intro-point4b-unbranded "Serviççi do scito">
+<!ENTITY rights.intro-point4c-unbranded ".">
+
+<!ENTITY rights2.webservices-header "Serviççi de &brandFullName; bazê in sciâ ræ">
+
+<!-- point 5 -->
+<!ENTITY rights.intro-point5 "Per riprodue quarche tipo de contegnuo video, o &brandShortName; o scarega di mòdoli de decifraçion da terse parte.">
+
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights2.webservices-a "O &brandFullName; o l'uza di serviççi di informaçion di sciti (&quot;Serviççi&quot;) pe fornî de carateristiche de &brandShortName; inti termini descriti chi sotta. Se ti no veu uzâ un o ciù di sti serviççi ò no t'ê d'acòrdio co-i termini ti peu dizabilitali. E istruçioin pe dizabilitâ un particolâ serviççio ò carateristica ti peu trovale ">
+<!ENTITY rights2.webservices-b "chi">
+<!ENTITY rights3.webservices-c ". Atre carateristiche e serviççi peuan ese dizativæ inte preferense de l'aplicaçion.">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Navegaçion segua: ">
+<!ENTITY rights.safebrowsing-b "No l'é racòmandou dizabilitâ a Navegaçion segua perché ti peu finî in di sciti che no son segui. Se ti veu dizabilitâ conpletamente sta carateristica segoi sti passi:">
+<!ENTITY rights.safebrowsing-term1 "Arvi e preferense da aplicaçion">
+<!ENTITY rights.safebrowsing-term2 "Seleçionn-a a seleçion de seguessa">
+<!ENTITY rights2.safebrowsing-term3 "Deseleçionn-a l'òpçion pe &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "A navegaçion segua a l'é dizabilitâ">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Navegaçion atenta a-i indirissi: ">
+<!ENTITY rights.locationawarebrowsing-b "a l'é de longo ativa. Nisciunn-a informaçion saiâ spedia sensa o teu permisso. Se ti veu dizabilitâ conpletamente sta carateristica, segoi sti passi:">
+<!ENTITY rights.locationawarebrowsing-term1a "Inta bara di indirissi, scrivi ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Scrivi geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Sciacca doî vòtte co-o ratto in sce preferense de geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term4 "A navegaçion atenta a-i indirissi a l'é dizabilitâ">
+
+<!-- intro paragraph for unbranded builds -->
+<!ENTITY rights.webservices-unbranded "'Na vixon d'insemme di serviççi do scito into produto, co-e istroçioin in sce comme dizabilitali, se existan, saian chi.">
+
+<!-- point 1 text for unbranded builds -->
+<!ENTITY rights.webservices-term1-unbranded "Tutti i termini do serviçio pe sto produto devan ese chi.">
+
+<!-- points 1-7 text for branded builds -->
+<!ENTITY rights2.webservices-term1 "&vendorShortName; e i seu colaboratoî, licensoî louan pe fornî serviççi o ciù boin e sensa eroî poscibile.  Ma no poemmo garantî che ste informaçioin segian conplete e sensa eroî.  Prezenpio, a Navegaçion Segua a no peu identificâ çerti sciti pericolozi e peu anche dî che 'n scito o l'é seguo anche se o no l'é.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; peu fermâ ò cangiâ i Serviççi a seu discreçion.">
+<!ENTITY rights2.webservices-term3 "T'ê o benvegnuo a deuviâ sti serviççi con sta verscion de &brandShortName; e o &vendorShortName; te garantisce o dirito de falo. O &vendorShortName; e i seu licensoî se riservan tutti i atri diriti in sci serviççi. Sti termini no en pe limitâ in nisciunn-a manea i diriti de sorgente averto aplicabili a &brandShortName; e a-e verscioin in còdice sorgente do &brandShortName;.">
+<!ENTITY rights.webservices-term4 "I serviççi son fornî &quot;cosci-comme-son.&quot;  &vendorShortName;, i seu colaboratoî, licensoî, e distriboitoî disconoscian tutte e garançie, sia inplicite che esplicite, con e sensa limitaçion, garançie che i serviççi seggian vendibili e seggian adati pe quarche fin particola.  Ti devi pigiate o reizego de seleçionâ i serviççi pe-i teu fin co-a qualitæ e prestaçioin di serviççi. Quarche giurisdiçion no permitte a escluxion ò limitaçion de garançie inplicite, coscì sto disconoscimento no se peu aplicâ a ti.">
+<!ENTITY rights.webservices-term5 "Tranne comme domandou da lezze, &vendorShortName;, i seu colaboratoi, licensoî e distriboitoî no saian responsabili pe ògni indireito, speciale, incidentâ, consequensiâ, punitivo ò danno dovuo in quarche mòddo a l'uzo de &brandShortName; e di Serviççi. A responsabilitæ coletiva sotta sti termini a no saiâ ciù de $500 (çinque çento dòlari american). Quarche giurisdiçion o no permitte  l'escluxion ò limitaçion de çerti danni, còsci sta escluxion ò limitaçion no se aplica a ti.">
+<!ENTITY rights.webservices-term6 "O &vendorShortName; peu agiornâ sti termini comme peu servî di vòtta in vòtta. Sti termini no van cangiæ ò scancelæ sensa o permisso scrito de &vendorShortName;.">
+<!ENTITY rights.webservices-term7 "Sti termini en governæ da-a lezze do stæto de a California, U.S.A., escluzo conflitti de lezze. Se quarche parte di termini a no l'é valida a parte che ghe resta a saiâ in fòrsa e efetto. Into cazo che ghe segge un conflitto fra 'na verscion traduta de sti termini e quella Ingleize, a verscion Ingleize a prevale.">
+
+<!ENTITY rights.title "About Your Rights">

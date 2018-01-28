@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "تنظیمات - اطلاعات پایگاه اینترنتی">
+<!ENTITY     hostCol.label                 "پایگاه اینترنتی">
+<!ENTITY     statusCol.label               "وضعیت">
+<!ENTITY     usageCol.label                "فضای ذخیره سازی">
+<!ENTITY     searchTextboxPlaceHolder             "جستجوی وب‌سایت‌ها">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "حذف موارد انتخاب شده">
+<!ENTITY     removeSelected.accesskey      "ح">
+<!ENTITY     save.label                    "ذخیره تغییرات">
+<!ENTITY     save.accesskey                "ذ">
+<!ENTITY     cancel.label                  "لغو‌">
+<!ENTITY     cancel.accesskey              "ل">
+<!ENTITY     removingDialog.title          "در حال حذف اطلاعات سایت">
+<!ENTITY     removingSelected.description  "حذف داده‌های سایت، کوکی‌ها و اطلاعات آفلاین محتوای آن را نیز حذف خواهد کرد. این ممکن است شما را از وب‌سایت‌ها خارج کند. آیا مطمئنید که می‌خواهید این تغییرات را انجام دهید؟">
+<!ENTITY     siteTree.label                "کوکی‌های وب سایت های مقابل حذف شده‌اند: ">

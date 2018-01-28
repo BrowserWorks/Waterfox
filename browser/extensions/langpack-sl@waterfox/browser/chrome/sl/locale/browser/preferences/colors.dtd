@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Barve">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Zamenjaj barve, ki jih določa stran, z zgornjimi izbirami:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Vedno">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Samo z visokokontrastnimi temami">
+<!ENTITY  overrideDefaultPageColors.never.label  "Nikoli">
+
+<!ENTITY  color                           "Besedilo in ozadje">
+<!ENTITY  textColor.label                 "Besedilo:">
+<!ENTITY  textColor.accesskey             "b">
+<!ENTITY  backgroundColor.label           "Ozadje:">
+<!ENTITY  backgroundColor.accesskey       "o">
+<!ENTITY  useSystemColors.label           "Uporabi barve sistema">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Podčrtaj povezave">
+<!ENTITY  underlineLinks.accesskey        "r">
+<!ENTITY  links                           "Barve povezav">
+<!ENTITY  linkColor.label                 "Neobiskane povezave:">
+<!ENTITY  linkColor.accesskey             "n">
+<!ENTITY  visitedLinkColor.label          "Že obiskane povezave:">
+<!ENTITY  visitedLinkColor.accesskey      "i">

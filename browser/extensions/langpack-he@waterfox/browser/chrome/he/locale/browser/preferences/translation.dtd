@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "חריגות - תרגום">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "שירות התרגום לא יוצע עבור שפות אלו:">
+<!ENTITY treehead.languageName.label      "שפות">
+<!ENTITY removeLanguage.label             "הסרת שפה">
+<!ENTITY removeLanguage.accesskey         "ס">
+<!ENTITY removeAllLanguages.label         "הסרת כל השפות">
+<!ENTITY removeAllLanguages.accesskey     "כ">
+
+<!ENTITY noTranslationForSites.label      "שירות התרגום לא יוצע עבור האתרים הבאים:">
+<!ENTITY treehead.siteName.label          "אתרים">
+<!ENTITY removeSite.label                 "הסרת אתר">
+<!ENTITY removeSite.accesskey             "ר">
+<!ENTITY removeAllSites.label             "הסרת כל האתרים">
+<!ENTITY removeAllSites.accesskey         "ל">
+
+<!ENTITY button.close.label               "סגירה">
+<!ENTITY button.close.accesskey           "ג">
+
+<!ENTITY treehead.siteName2.label         "Websites">

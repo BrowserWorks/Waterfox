@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "Заголовок опису"> 
+<!ENTITY message.label    "Деякий приклад Тексту буде тут.">
+<!ENTITY editfield0.label "Ім’я користувача:"> 
+<!ENTITY editfield1.label "Пароль:"> 
+<!ENTITY checkbox.label   "перевірити">
+<!ENTITY copyCmd.label    "Копіювати">
+<!ENTITY copyCmd.accesskey "п">
+<!ENTITY selectAllCmd.label "Виділити все">
+<!ENTITY selectAllCmd.accesskey "с">

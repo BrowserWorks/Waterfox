@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Instalēt papildinājumu">
+<!ENTITY intro           "Kāda cita programma jūsu datorā vēlas mainīt &brandShortName; ar sekojošu papildinājumu:">
+<!ENTITY warning         "Instalējiet vienīgi uzticamu autoru papildinājumus.">
+<!ENTITY allow           "Atļaut instalēšanu">
+<!ENTITY later           "Jūs vienmēr varat mainīt savas domas atverot papildinājumu pārvaldnieku.">
+<!ENTITY continue        "Turpināt">
+<!ENTITY restartMessage  "Jums jāpārstartē &brandShortName; lai pabeigtu šī papildinājuma to instalēšanu.">
+<!ENTITY restartButton   "Pārstartēt &brandShortName;">
+<!ENTITY cancelButton    "Atcelt">

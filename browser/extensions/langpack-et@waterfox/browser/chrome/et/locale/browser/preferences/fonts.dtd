@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Fondid">
+
+<!ENTITY  language.label                          "Fondid:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  size.label                              "Suurus:">
+<!ENTITY  sizeProportional.accesskey              "u">
+<!ENTITY  sizeMonospace.accesskey                 "r">
+
+<!ENTITY  proportional.label                      "Proportsionaalsed:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Seriifidega:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Seriifideta:">
+<!ENTITY  sans-serif.accesskey                    "e">
+<!ENTITY  monospace.label                         "Fikseeritud laiusega:">
+<!ENTITY  monospace.accesskey                     "k">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Ladina">
+<!ENTITY  font.langGroup.japanese                 "Jaapani">
+<!ENTITY  font.langGroup.trad-chinese             "Traditsiooniline hiina (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Lihtsustatud hiina">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Traditsiooniline hiina (Hongkong)">
+<!ENTITY  font.langGroup.korean                   "Korea">
+<!ENTITY  font.langGroup.cyrillic                 "Kirillitsa">
+<!ENTITY  font.langGroup.el                       "Kreeka">
+<!ENTITY  font.langGroup.other                    "Muud kirjasüsteemid">
+<!ENTITY  font.langGroup.thai                     "Tai">
+<!ENTITY  font.langGroup.hebrew                   "Heebrea">
+<!ENTITY  font.langGroup.arabic                   "Araabia">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamili">
+<!ENTITY  font.langGroup.armenian                 "Armeenia">
+<!ENTITY  font.langGroup.bengali                  "Bengaali">
+<!ENTITY  font.langGroup.canadian                 "Ühtlustatud kanada silpkiri">
+<!ENTITY  font.langGroup.ethiopic                 "Etioopia">
+<!ENTITY  font.langGroup.georgian                 "Gruusia">
+<!ENTITY  font.langGroup.gujarati                 "Gudžarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmeri">
+<!ENTITY  font.langGroup.malayalam                "Malajalami">
+<!ENTITY  font.langGroup.math                     "Matemaatika">
+<!ENTITY  font.langGroup.odia                     "Oria">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Singali">
+<!ENTITY  font.langGroup.tibetan                  "Tiibeti">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Vähim fondisuurus:">
+<!ENTITY minSize.accesskey                        "o">
+<!ENTITY minSize.none                             "puudub">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "seriifidega">
+<!ENTITY  useDefaultFontSansSerif.label           "seriifideta">
+
+<!ENTITY  allowPagesToUseOwn.label                "Veebilehed võivad kasutada oma fonte kasutaja valitud fontide asemel">
+<!ENTITY  allowPagesToUseOwn.accesskey            "V">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Teksti kodeering varasema sisu jaoks">
+<!ENTITY languages.customize.Fallback2.label      "Teksti kodeering:">
+<!ENTITY languages.customize.Fallback2.accesskey  "g">
+<!ENTITY languages.customize.Fallback2.desc       "Seda kodeeringut kasutatakse varasema sisu jaoks, mis ei määra oma kodeeringut.">
+
+<!ENTITY languages.customize.Fallback.auto        "praeguse lokaadi vaikseväärtus">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Araabia">
+<!ENTITY languages.customize.Fallback.baltic      "Balti">
+<!ENTITY languages.customize.Fallback.ceiso       "Kesk-Euroopa, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Kesk-Euroopa, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Hiina, lihtsustatud">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Hiina, traditsiooniline">
+<!ENTITY languages.customize.Fallback.cyrillic    "Kirillitsa">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Kreeka">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Heebrea">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Jaapani">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Korea">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Tai">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Türgi">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vietnami">
+<!ENTITY languages.customize.Fallback.other       "Muu (k.a. Lääne-Euroopa)">

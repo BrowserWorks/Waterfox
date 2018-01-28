@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "38em">
+
+<!ENTITY languages.customize.Header                     "Языки">
+<!ENTITY languages.customize.description                "Некоторые веб-страницы могут быть доступны более чем на одном языке. Укажите порядок выбора языка страницы:">
+<!ENTITY languages.customize.moveUp.label               "Вверх">
+<!ENTITY languages.customize.moveUp.accesskey           "в">
+<!ENTITY languages.customize.moveDown.label             "Вниз">
+<!ENTITY languages.customize.moveDown.accesskey         "н">
+<!ENTITY languages.customize.deleteButton.label         "Удалить">
+<!ENTITY languages.customize.deleteButton.accesskey     "д">
+<!ENTITY languages.customize.selectLanguage.label       "Выберите язык, чтобы его добавить…">
+<!ENTITY languages.customize.addButton.label            "Добавить">
+<!ENTITY languages.customize.addButton.accesskey        "б">
+

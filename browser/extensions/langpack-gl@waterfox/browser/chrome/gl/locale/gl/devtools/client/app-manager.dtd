@@ -1,0 +1,103 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY index.title "Xestor de aplicativos">
+<!ENTITY index.projects2 "Aplicativos">
+<!ENTITY index.device2 "Dispositivo">
+<!ENTITY index.help "Axuda">
+
+<!ENTITY device.debugMainProcess "Depurar o proceso principal">
+<!ENTITY device.debugMainProcessTooltip "Abrir as ferramentas de desenvolvemento conectadas ao proceso principal do dispositivo">
+<!ENTITY device.screenshot "Captura de pantalla">
+<!ENTITY device.screenshotTooltip "Abrir unha captura de pantalla do estado actual do dispositivo nunha nova lapela">
+<!ENTITY device.title "Centro de control do dispositivo">
+<!ENTITY device.notConnected "Desconectado. Conecte o seu dispositivo na sección de abaixo.">
+<!ENTITY device.startApp "Iniciar">
+<!ENTITY device.startAppTooltip "Iniciar este aplicativo no dispositivo">
+<!ENTITY device.stopApp "Deter">
+<!ENTITY device.stopAppTooltip "Deter este aplicativo no dispositivo">
+<!ENTITY device.debugApp "Depurar">
+<!ENTITY device.debugAppTooltip "Abrir as ferramentas de desenvolvemento conectadas a este aplicativo no dispositivo">
+<!ENTITY device.name "Nome">
+<!ENTITY device.plain "Normal (predeterminado)">
+<!ENTITY device.privileged "Privilexiado">
+<!ENTITY device.certified "Certificado">
+<!ENTITY device.allow "Permitir">
+<!ENTITY device.allowTooltip "Este permiso concedese automaticamente para os aplicativos deste tipo">
+<!ENTITY device.prompt "Preguntar">
+<!ENTITY device.promptTooltip "Este permiso require a confirmación do usuario para os aplicativos deste tipo">
+<!ENTITY device.deny "Denegar">
+<!ENTITY device.denyTooltip "Este permiso vén denegado automaticamente para os aplicativos deste tipo">
+<!ENTITY device.installedApps "Aplicativos instalados">
+<!ENTITY device.installedAppsTooltip "Ver unha lista de aplicativos instalados no dispositivo. Algúns aplicativos, como os aplicativos certificados, poden ser excluídos desta vista.">
+<!ENTITY device.permissions "Permisos">
+<!ENTITY device.permissionsTooltip "Ver unha táboa dos permisos accesíbeis para os diferentes tipos de aplicativos">
+<!ENTITY device.permissionsHelpLink "https://developer.mozilla.org/docs/Web/Apps/App_permissions">
+<!ENTITY device.browserTabs "Lapelas do navegador">
+<!ENTITY device.browserTabsTooltip "Ver unha lista de lapelas no navegador do dispositivo conectado">
+<!ENTITY device.debugBrowserTab "Depurar">
+<!ENTITY device.debugBrowserTabTooltip "Abrir as ferramentas de desenvolvemento conectadas a esta lapela do navegador no dispositivo">
+<!ENTITY device.help "Axuda">
+
+<!ENTITY connection.connectTooltip "Conectarse ao dispositivo">
+<!ENTITY connection.disconnect "Desconectar">
+<!ENTITY connection.disconnectTooltip "Desconecta o dispositivo actual ou o simulador">
+<!ENTITY connection.notConnected2 "Desconectado.">
+<!ENTITY connection.connectTo "Conectar a:">
+<!ENTITY connection.noDeviceFound "Non se atopou ningún dispositivo. Conecte un dispositivo">
+<!ENTITY connection.changeHostAndPort "Cambiar">
+<!ENTITY connection.changeHostAndPortTooltip "Cambia o servidor e o porto usado para conectase ao dispositivo (o predeterminado é localhost:6000)">
+<!ENTITY connection.startSimulator "Iniciar simulador">
+<!ENTITY connection.startSimulatorTooltip "Inicia unha instancia do simulador e conectase a ela">
+<!ENTITY connection.saveConnectionInfo "Gardar">
+<!ENTITY connection.saveConnectionInfoTooltip "Garda o servidor e o porto">
+<!ENTITY connection.connecting "Conectando…">
+<!ENTITY connection.disconnecting "Desconectando…">
+<!ENTITY connection.cancel "Cancelar">
+<!ENTITY connection.cancelConnectTooltip "Cancela a conexión en curso">
+<!ENTITY connection.cancelShowSimulatorTooltip "Saír do modo de conexión ao simulador e volver ao indicador inicial">
+<!ENTITY connection.or "ou">
+<!ENTITY connection.noSimulatorInstalled "Ningún simulador instalado.">
+<!ENTITY connection.installOneSimulator "Instalar simulador">
+<!ENTITY connection.installOneSimulatorTooltip "Instala unha versión do simulador descargando o complemento apropiado">
+<!ENTITY connection.installAnotherSimulator "Engadir">
+<!ENTITY connection.installAnotherSimulatorTooltip "Instala unha versión adicional do simulador descargando o complemento apropiado">
+<!ENTITY connection.startRegisteredSimulator "Inicio:">
+
+<!ENTITY projects.localApps "Aplicativos locais">
+<!ENTITY projects.addApp "Engadir">
+<!ENTITY projects.addPackaged "Engadir aplicativo empaquetado">
+<!ENTITY projects.addPackagedTooltip "Engade un novo aplicativo empaquetado (un cartafol) dende o seu equipo">
+<!ENTITY projects.addHosted "Engadir aplicativo aloxado">
+<!ENTITY projects.addHostedTooltip "Engade un novo aplicativo aloxado (ligazón a un ficheiro manifest.webapp) dende un sitio web remoto">
+<!ENTITY projects.title "Aplicativos locais">
+<!ENTITY projects.appDetails "Detalles do aplicativo">
+<!ENTITY projects.removeAppFromList "Retira este aplicativo da lista de aplicativos cos que está traballando. Isto non o retirará do dispositivo ou do simulador.">
+<!ENTITY projects.updateApp "Actualizar">
+<!ENTITY projects.updateAppTooltip "Executa comprobacións de validación e actualiza o aplicativo no dispositivo conectado.">
+<!ENTITY projects.debugApp "Depurar">
+<!ENTITY projects.debugAppTooltip "Abre as ferramentas de desenvolvemento conectadas a este aplicativo">
+<!ENTITY projects.saveManifest "Gardar">
+<!ENTITY projects.saveManifestTooltip "Garda o contido do editor de ficheiros manifest">
+<!ENTITY projects.hostedManifestPlaceHolder2 "http://example.com/app/manifest.webapp">
+<!ENTITY projects.noProjects "Sen proxectos. Engada un novo aplicativo empaquetado (cartafol local) ou un aplicativo aloxado (ligazón a un ficheiro manifest).">
+<!ENTITY projects.manifestEditor "Editor de ficheiros manifest">
+<!ENTITY projects.manifestEditorTooltip "Edita o ficheiro manifest  do seu aplicativo no panel de abaixo. O botón Actualizar gardará os cambios e actualizará o aplicativo.">
+<!ENTITY projects.manifestViewer "Visor de ficheiros manifest">
+<!ENTITY projects.manifestViewerTooltip "Amosa o ficheiro manifest do seu aplicativo no panel de abaixo">
+<!ENTITY projects.valid "Correcto">
+<!ENTITY projects.error "Erro">
+<!ENTITY projects.warning "Aviso">
+<!ENTITY projects.hosted "Aloxado">
+<!ENTITY projects.packaged "Empaquetado">
+
+<!ENTITY help.title "Xestor de aplicativos">
+<!ENTITY help.close "Pechar">
+<!ENTITY help.intro "Esta ferramenta axudaralle a construír e instalar aplicativos web en dispositivos compatíbeis (p.e. Waterfox OS). A lapela <strong>Aplicativos</strong> asistirao no proceso de validación e instalación dos seus aplicativos. A lapela <strong>Dispositivo</strong> daralle información sobre o dispositivo conectado. Use a barra de ferramentas de abaixo para conectarse a un dispositivo ou iniciar o simulador.">
+<!ENTITY help.usefullLinks "Ligazóns útiles:">
+<!ENTITY help.appMgrDoc "Documentación: Uso do xestor de aplicativos">
+<!ENTITY help.configuringDevice "Como configurar o seu dispositivo Waterfox OS">
+<!ENTITY help.troubleShooting "Solución de problemas">
+<!ENTITY help.simulatorAddon "Instalación do complemento Simulator">
+<!ENTITY help.adbHelperAddon "Instalación do complemento Adb Helper">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Dobrodošli u &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Prijavite se da biste sinhronizovali tabove, zabilješke, lozinke i više.">
+<!ENTITY aboutAccountsConfig.startButton.label "Započnite">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync postavke">
+<!ENTITY aboutAccounts.noConnection.title "Nema konekcije">
+<!ENTITY aboutAccounts.noConnection.description "Morate biti povezani na internet da biste se prijavili.">
+<!ENTITY aboutAccounts.noConnection.retry "Pokušaj ponovo">
+<!ENTITY aboutAccounts.badConfig.title "Netačna konfiguracija">
+<!ENTITY aboutAccounts.badConfig.description "Ne mogu utvrditi konfiguraciju vašeg Waterfox Account servera. Pokušajte ponovo kasnije.">

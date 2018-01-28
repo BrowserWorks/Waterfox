@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "नवीन कंटेनर जोडा">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "प्राधान्यक्रम">
+<!ENTITY removeButton.label   "काढून टाका">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; मागे जा">
+
+<!ENTITY window.title         "नवीन कंटेनर जोडा">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "नाव:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "कंटेनरचे नाव द्या">
+<!ENTITY icon.label           "चिन्ह:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "रंग:">
+<!ENTITY color.accesskey      "o">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "पूर्ण झाले">
+<!ENTITY button.ok.accesskey  "D">
+

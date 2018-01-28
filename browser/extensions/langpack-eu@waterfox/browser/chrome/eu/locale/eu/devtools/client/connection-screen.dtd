@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "Konektatu">
+<!ENTITY header     "Konektatu urruneko gailura">
+<!ENTITY host       "Ostalaria:">
+<!ENTITY port       "Ataka:">
+<!ENTITY connect    "Konektatu">
+<!ENTITY connecting "Konektatzen…">
+<!ENTITY availableAddons "Urruneko gehigarri erabilgarriak:">
+<!ENTITY availableTabs "Urruneko fitxa erabilgarriak:">
+<!ENTITY availableProcesses "Urruneko prozesu erabilgarriak:">
+<!ENTITY connectionError "Errorea:">
+<!ENTITY errorTimeout "Errorea: konexioaren denbora-muga gaindituta.">
+<!ENTITY errorRefused "Errorea: konexioa ukatuta.">
+<!ENTITY errorUnexpected "Ustekabeko errorea.">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfoxen garatzaile-tresnek urruneko gailuak araz ditzakete (Androiderako Waterfox eta Waterfox OS, adibidez). Ziurtatu 'Urruneko arazketa' aukera aktibatuta dagoela urruneko gailuan. Argibide gehiagorako, irakurri ">
+<!ENTITY remoteDocumentation "dokumentazioa">
+<!ENTITY remoteHelpSuffix ".">
+

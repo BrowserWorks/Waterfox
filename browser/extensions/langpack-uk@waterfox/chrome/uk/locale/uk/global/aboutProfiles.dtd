@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Про профілі">
+<!ENTITY aboutProfiles.subtitle "Ця сторінка допомагає керувати вашими профілями. Кожен профіль є окремим світом, що містить окрему історію, закладки, налаштування й додатки.">
+<!ENTITY aboutProfiles.create "Створити новий профіль">
+<!ENTITY aboutProfiles.restart.title "Перезапустити">
+<!ENTITY aboutProfiles.restart.inSafeMode "Перезапустити з вимкненими додатками…">
+<!ENTITY aboutProfiles.restart.normal "Перезапустити в звичайному режимі…">

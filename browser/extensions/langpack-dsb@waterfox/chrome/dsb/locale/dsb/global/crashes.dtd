@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Wowaleńske rozpšawy">
+<!ENTITY crashesUnsubmitted.label   "Njewótpósłane wowaleńske rozpšawy">
+<!ENTITY crashesSubmitted.label     "Rozpósłane wowaleńske rozpšawy">
+<!ENTITY id.heading                 "ID rozpšawy">
+<!ENTITY dateCrashed.heading        "Datum wowalenja">
+<!ENTITY dateSubmitted.heading      "Datum rozpósłanja">
+<!ENTITY noReports.label            "Rozpšawy wó wowalenjach njejsu se rozpósłali.">
+<!ENTITY noConfig.label             "Toś to nałoženje njejo se konfigurěrowało, aby rozpšawy wó wowalenjach zwobrazniło. Nastajenje <code>breakpad.reportURL</code> musy se stajiś.">
+<!ENTITY clearAllReports.label      "Wšykne rozpšawy wótpóraś">

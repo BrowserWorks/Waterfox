@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Sbadu awal uffir agejdan">
+<!ENTITY setPassword.tokenName.label       "Ibenk n tɣellist">
+<!ENTITY setPassword.oldPassword.label     "Awal uffir aqbuṛ:">
+<!ENTITY setPassword.newPassword.label     "Sekcem awal uffir amaynut:">
+<!ENTITY setPassword.reenterPassword.label "Sekcem tikelt nniḍen awal uffir:">
+<!ENTITY setPassword.meter.label           "Asɣel n tɣaṛa n wawal uffir">
+<!ENTITY setPassword.meter.loading         "Asali">
+<!ENTITY masterPasswordDescription.label   "Awal uffir agejdan ittuseqdac akken ad immesten talɣut tamḥulfut am awalen uffiren n usmel. Ma terniḍ Awala uffir agejdan, ad ittawsteqsayeḍ yal tikelt ad senkreḍ tiɣimit ticki &brandShortName; yettnadi talɣut ittummestnen s wawal-agi uffir.">
+<!ENTITY masterPasswordWarning.label       "Ma ulac aɣilif, ur teţu ara awal uffir agejdan. Ma teţuṭ, ur teţimireḍ ara aţkecmeḍ ɣer telɣut ig mmestan.">

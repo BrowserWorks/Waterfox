@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from finddialog.xul -->
+
+<!ENTITY findDialog.title "Sykje op dizze side">
+<!ENTITY findField.label "Sykje nei:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "Haadlettergefoelich">
+<!ENTITY caseSensitiveCheckbox.accesskey "O">
+<!ENTITY wrapCheckbox.label "Trochgean nei dokumintein">
+<!ENTITY wrapCheckbox.accesskey "T">
+<!ENTITY findButton.label "Folgjende sykje">
+<!ENTITY findButton.accesskey "s">
+<!ENTITY cancelButton.label "Annulearje ">
+<!ENTITY closeButton.label "Slute">
+<!ENTITY up.label "Omheech">
+<!ENTITY up.accesskey "h">
+<!ENTITY down.label "Omleech">
+<!ENTITY down.accesskey "l">
+<!ENTITY direction.label "Rjochting">

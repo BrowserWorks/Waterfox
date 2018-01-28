@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Joylashishi:">
+<!ENTITY tile.label                 "Katak">
+<!ENTITY center.label               "Markaz">
+<!ENTITY stretch.label              "Yoyish">
+<!ENTITY fill.label                 "To‘ldirish">
+<!ENTITY fit.label                  "Joylashtirish">
+<!ENTITY preview.label              "Ko‘rinishi">
+<!ENTITY color.label                "Rang:">
+<!ENTITY setDesktopBackground.title "Orqa fon rasmini o‘rnatish">
+<!ENTITY openDesktopPrefs.label     "Ish stoli moslamalarini ochish">
+<!ENTITY closeWindow.key            "w">

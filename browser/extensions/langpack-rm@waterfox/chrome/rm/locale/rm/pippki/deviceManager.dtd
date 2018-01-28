@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Administratur dal modul da criptografia">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Moduls ed indrizs da segirezza">
+<!ENTITY devmgr.details.title                   "Detagls">
+<!ENTITY devmgr.details.title2                  "Valur">
+
+<!ENTITY devmgr.button.login.label              "S'annunziar">
+<!ENTITY devmgr.button.login.accesskey          "S">
+<!ENTITY devmgr.button.logout.label             "Sortir">
+<!ENTITY devmgr.button.logout.accesskey         "S">
+<!ENTITY devmgr.button.changepw.label           "Midar il pled-clav">
+<!ENTITY devmgr.button.changepw.accesskey       "p">
+<!ENTITY devmgr.button.load.label               "Chargiar">
+<!ENTITY devmgr.button.load.accesskey           "C">
+<!ENTITY devmgr.button.unload.label             "Stgargiar">
+<!ENTITY devmgr.button.unload.accesskey         "S">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Inditgescha las infurmaziuns davart il modul che ti vuls agiuntar.">
+<!ENTITY loaddevice.modname                     "Num dal modul:">
+<!ENTITY loaddevice.modname.accesskey           "m">
+<!ENTITY loaddevice.modname.default             "Nov modul PKCS#11">
+<!ENTITY loaddevice.filename                    "Num da datoteca dal modul:">
+<!ENTITY loaddevice.filename.accesskey          "o">
+<!ENTITY loaddevice.browse                      "Tschertgar en…">
+<!ENTITY loaddevice.browse.accesskey            "T">
+
+<!ENTITY loaddevice.title2                      "Chargiar il driver per l'indriz PKCS#11">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "30em">
+
+<!ENTITY languages.customize.Header                     "Tutlayin">
+<!ENTITY languages.customize.description                "Kra n isebtar web ttusumren deg ddeqs n tutlayin. Fren tutlayin n uskan n isebtar-a, s umizzwer n usmenyif:">
+<!ENTITY languages.customize.moveUp.label               "Sali">
+<!ENTITY languages.customize.moveUp.accesskey           "S">
+<!ENTITY languages.customize.moveDown.label             "Ader">
+<!ENTITY languages.customize.moveDown.accesskey         "A">
+<!ENTITY languages.customize.deleteButton.label         "Kkes">
+<!ENTITY languages.customize.deleteButton.accesskey     "K">
+<!ENTITY languages.customize.selectLanguage.label       "Fren tutlayt ara ternuḍ...">
+<!ENTITY languages.customize.addButton.label            "Rnu">
+<!ENTITY languages.customize.addButton.accesskey        "R">
+

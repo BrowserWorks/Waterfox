@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "पृष्ठाची मांडणी">
+
+<!ENTITY basic.tab           "रूपण आणि पर्याय">
+
+<!ENTITY formatGroup.label   "स्वरूपण">
+
+<!ENTITY orientation.label   "परिचितता:">
+<!ENTITY portrait.label      "उभे">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "आडवे">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "प्रमाण:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "पृष्ठाच्या रूंदीत आकुंचित करा">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "पर्याय">
+
+<!ENTITY printBG.label       "पार्श्वभूमीची छपाई करा (रंग आणि चित्र)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "समास आणि शिर्षलेख/तळलेख">
+
+<!ENTITY marginGroup.label   "समास (#1)">
+<!ENTITY marginUnits.inches  "इंच">
+<!ENTITY marginUnits.metric  "मिलिमीटर">
+<!ENTITY marginTop.label     "शीर्ष:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "तळ:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "डावा:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "उजवा:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "शिर्षलेख आणि तळलेख">
+
+<!ENTITY hfLeft.label        "डावी:">
+<!ENTITY hfCenter.label      "मध्य:">
+<!ENTITY hfRight.label       "उजवी:">
+<!ENTITY headerLeft.tip      "डावी शिर्षलेख">
+<!ENTITY headerCenter.tip    "मध्य शिर्षलेख">
+<!ENTITY headerRight.tip     "उजवी शिर्षलेख">
+<!ENTITY footerLeft.tip      "डावी तळलेख">
+<!ENTITY footerCenter.tip    "मध्य तळलेख">
+<!ENTITY footerRight.tip     "उजवी तळलेख">
+
+<!ENTITY hfTitle             "शिर्षक">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "दिनांक/वेळ">
+<!ENTITY hfPage              "पृष्ठ #">
+<!ENTITY hfPageAndTotal      "# पैकी # पृष्ठ">
+<!ENTITY hfBlank             "--कोरे--">
+<!ENTITY hfCustom            "मनासारखे...">
+
+<!ENTITY customPrompt.title  "मनासारखे...">
+<!ENTITY customPrompt.prompt "आपले एच्छिक शिर्षलेख/तळलेख मजकुर प्रविष्ट करा">

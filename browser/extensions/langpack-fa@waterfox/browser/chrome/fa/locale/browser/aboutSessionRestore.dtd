@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "بازیابی نشست">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "بسیار متأسفیم.">
+<!ENTITY restorepage.problemDesc    "&brandShortName; قادر به برگرداندن پنجره‌ها و زبانه‌های شما نبود. این مشکل اغلب در اثر یکی از صفحاتی که به تازگی باز کرده بودید اتفاق می‌افتد.">
+<!ENTITY restorepage.tryThis        "راه حل‌های ممکن:">
+<!ENTITY restorepage.restoreSome    "حذف یک یا چند زبانه که فکر می‌کنید ممکن است باعث ایجاد مشکل شوند">
+<!ENTITY restorepage.startNew       "شروع یک نشست مرور جدید">
+
+<!ENTITY restorepage.tryagainButton "برگرداندن">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "بستن">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "بازگرداندن">
+<!ENTITY restorepage.listHeader     "پنجره‌ها و زبانه‌ها">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "پنجره &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "بزن بریم!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "با موفقیت انجام شد!">
+
+<!ENTITY welcomeback2.pageTitle     "با موفقیت انجام شد!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; آماده شروع است.">
+
+<!ENTITY welcomeback2.restoreAll.label  "&amp; برگرداندن تمام پنجره‌ها و زبانه‌ها">
+<!ENTITY welcomeback2.restoreSome.label "تنها‌ مواردی که من می‌خواهم بازگردانده شود">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "افزودنی‌ها و شخصی‌سازی‌های شما حذف شده‌اند و تنظیمات مروگر شما دوباره به حالت پیش‌فرض برگشته است. اگر این مشکل شما را حل نکرد، ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "در مورد کارهایی که میتوانید انجام دهید بیشتر بدانید.">
+

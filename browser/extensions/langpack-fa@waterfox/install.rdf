@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+
+-->
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest"
+               em:id="langpack-fa@waterfox"
+               em:name="فارسی (ایران) Language Pack"
+               em:version="56.*"
+               em:type="8"
+               em:creator="mozilla.org">
+    <em:contributor>بهنام اسفهبد</em:contributor><em:contributor>سارا منصوری</em:contributor><em:contributor>رضا حبیبی</em:contributor> <em:contributor>آرش موسوی</em:contributor><em:contributor>میلاد زکریا</em:contributor> <em:contributor>مسعود احمدزاده</em:contributor> <em:contributor>نیوشا بلندزاده</em:contributor> <em:contributor>روزبه پورنادر</em:contributor> <em:contributor>هوشمند حسن‌نیا</em:contributor> <em:contributor>سارا خلعت‌بری</em:contributor> <em:contributor>علیرضا خیرخواهان</em:contributor> <em:contributor>فرزانه سرافراز</em:contributor> <em:contributor>الناز سربر</em:contributor> <em:contributor>سحر فدائیان</em:contributor> <em:contributor>رضا محمدی</em:contributor> <em:contributor>احسان اخگری</em:contributor>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>56.0</em:minVersion>
+        <em:maxVersion>56.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

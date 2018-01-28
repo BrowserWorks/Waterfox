@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "امنیت">
+<!ENTITY  phishingProtection.label       "محافظت از فیشینگ">
+
+<!ENTITY  warnOnAddonInstall2.label       "هنگام تلاش سایت‌ها برای نصب افزونه، به من هشدار داده شود">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "مسدود سازی محتوا‌های خطرناک و فریبنده">
+<!ENTITY  enableSafeBrowsing.accesskey    "م">
+
+<!ENTITY  blockDownloads.label            "مسدود سازی دریافت های خطرناک">
+<!ENTITY  blockDownloads.accesskey        "خ">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "به من در مورد نرم‌افزارهای نامطلوب و غیرمعمول اخطار بده">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "ن">
+
+<!ENTITY  addonExceptions.label         "استثناها…">
+<!ENTITY  addonExceptions.accesskey     "ت">
+
+
+<!ENTITY  formsAndPasswords.label       "فرم‌ها و گذرواژه‌ها">
+
+<!ENTITY  rememberLogins2.label         "نام‌کاربری و گذرواژه‌ها را برای‌ این سایت‌ها به خاطر بسپار">
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  passwordExceptions.label      "استثناها…">
+<!ENTITY  passwordExceptions.accesskey  "ث">
+
+<!ENTITY  useMasterPassword.label        "استفاده از گذرواژهٔ اصلی">
+<!ENTITY  useMasterPassword.accesskey    "ا">
+<!ENTITY  changeMasterPassword.label     "تنظیم گذرواژهٔ اصلی…">
+<!ENTITY  changeMasterPassword.accesskey "ص">
+
+<!ENTITY  savedLogins.label              "ورودهای ذخیره شده">
+<!ENTITY  savedLogins.accesskey          "و">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "მოწყობილობის მმართველი">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "უსაფრთხოების მოდულები და მოწყობილობები">
+<!ENTITY devmgr.details.title                   "ვრცლად">
+<!ENTITY devmgr.details.title2                  "მნიშვნელობა">
+
+<!ENTITY devmgr.button.login.label              "შესვლა">
+<!ENTITY devmgr.button.login.accesskey          "შ">
+<!ENTITY devmgr.button.logout.label             "გამოსვლა">
+<!ENTITY devmgr.button.logout.accesskey         "გ">
+<!ENTITY devmgr.button.changepw.label           "პაროლის შეცვლა">
+<!ENTITY devmgr.button.changepw.accesskey       "პ">
+<!ENTITY devmgr.button.load.label               "ჩატვირთვა">
+<!ENTITY devmgr.button.load.accesskey           "ჩ">
+<!ENTITY devmgr.button.unload.label             "ამოტვირთვა">
+<!ENTITY devmgr.button.unload.accesskey         "ა">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "სასურველი დასამატებელი მოდულის მონაცემების მითითება.">
+<!ENTITY loaddevice.modname                     "მოდულის სახელი:">
+<!ENTITY loaddevice.modname.accesskey           "მ">
+<!ENTITY loaddevice.modname.default             "ახალი PKCS#11 მოდული">
+<!ENTITY loaddevice.filename                    "მოდულის ფაილის სახელი:">
+<!ENTITY loaddevice.filename.accesskey          "ფ">
+<!ENTITY loaddevice.browse                      "ამორჩევა…">
+<!ENTITY loaddevice.browse.accesskey            "ა">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 მოწყობილობის დრაივერის გაშვება">

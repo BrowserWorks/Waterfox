@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+<!ENTITY next.tooltip "Serĉi la venontan aperon de la frazo">
+<!ENTITY previous.tooltip "Serĉi la antaŭan aperon de la frazo">
+<!ENTITY findCloseButton.tooltip "Fermi la serĉan strion">
+<!ENTITY highlightAll.label "Elstarigi ĉiujn">
+<!ENTITY highlightAll.accesskey "E">
+<!ENTITY highlightAll.tooltiptext "Elstarigi ĉiujn aperojn de la frazo">
+<!ENTITY caseSensitive.label "Distingi inter majuskloj kaj minuskloj">
+<!ENTITY caseSensitive.accesskey "D">
+<!ENTITY caseSensitive.tooltiptext "Serĉi distingante inter majuskloj kaj minuskloj">
+<!ENTITY entireWord.label "Tutaj vortoj">
+<!ENTITY entireWord.accesskey "v">
+<!ENTITY entireWord.tooltiptext "Serĉi nur tutajn vortojn">

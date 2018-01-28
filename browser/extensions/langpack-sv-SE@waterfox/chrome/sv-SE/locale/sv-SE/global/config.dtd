@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Varning, farligt verktyg!">
+<!ENTITY aboutWarningText.label "Att ändra dessa avancerade inställningar kan skada programmets stabilitet, säkerhet och prestanda. Du bör endast fortsätta om du är säker på vad du gör.">
+<!ENTITY aboutWarningButton2.label "Jag godtar risken!">
+<!ENTITY aboutWarningCheckbox.label "Visa denna varning nästa gång">
+
+<!ENTITY searchPrefs.label "Sök:">
+<!ENTITY searchPrefs.accesskey "ö">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Inställningsnamn">
+<!ENTITY lockColumn.label "Status">
+<!ENTITY typeColumn.label "Typ">
+<!ENTITY valueColumn.label "Värde">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Klicka för att ordna"> 
+<!ENTITY columnChooser.tooltip "Klicka för att välja kolumner att visa"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopiera">
+<!ENTITY copyPref.accesskey "o">
+<!ENTITY copyName.label "Kopiera namn">
+<!ENTITY copyName.accesskey "K">
+<!ENTITY copyValue.label "Kopiera värde">
+<!ENTITY copyValue.accesskey "v">
+<!ENTITY modify.label "Modifiera">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "Växla">
+<!ENTITY toggle.accesskey "x">
+<!ENTITY reset.label "Återställ">
+<!ENTITY reset.accesskey "Å">
+<!ENTITY new.label "Ny">
+<!ENTITY new.accesskey "N">
+<!ENTITY string.label "Sträng">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Heltal">
+<!ENTITY integer.accesskey "H">
+<!ENTITY boolean.label "Boolesk">
+<!ENTITY boolean.accesskey "B">

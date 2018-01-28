@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Aimsigh an chéad sampla eile den nath sin">
+<!ENTITY previous.tooltip "Aimsigh an sampla roimhe seo den nath seo">
+<!ENTITY findCloseButton.tooltip "Dún an barra Aimsithe">
+<!ENTITY highlightAll.label "Aibhsigh Uile">
+<!ENTITY highlightAll.accesskey "U">
+<!ENTITY highlightAll.tooltiptext "Aibhsigh gach sampla den nath">
+<!ENTITY caseSensitive.label "Cásíogair">
+<!ENTITY caseSensitive.accesskey "C">
+<!ENTITY caseSensitive.tooltiptext "Cuardach cásíogair">
+<!ENTITY entireWord.label "Focail Iomlána">
+<!ENTITY entireWord.accesskey "F">
+<!ENTITY entireWord.tooltiptext "Cuardaigh focail iomlána amháin">

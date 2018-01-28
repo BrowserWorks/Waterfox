@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "颜色">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "使用您在上面选择的颜色覆盖页面指定的颜色：">
+<!ENTITY  overrideDefaultPageColors.accesskey    "O">
+
+<!ENTITY  overrideDefaultPageColors.always.label "总是">
+<!ENTITY  overrideDefaultPageColors.auto.label   "仅在使用高对比度主题时">
+<!ENTITY  overrideDefaultPageColors.never.label  "总不">
+
+<!ENTITY  color                           "文字和背景">
+<!ENTITY  textColor.label                 "文字：">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "背景：">
+<!ENTITY  backgroundColor.accesskey       "B">
+<!ENTITY  useSystemColors.label           "使用系统颜色">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "为链接添加下划线">
+<!ENTITY  underlineLinks.accesskey        "U">
+<!ENTITY  links                           "链接颜色">
+<!ENTITY  linkColor.label                 "未访问的链接：">
+<!ENTITY  linkColor.accesskey             "L">
+<!ENTITY  visitedLinkColor.label          "已访问的链接：">
+<!ENTITY  visitedLinkColor.accesskey      "V">

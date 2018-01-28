@@ -1,0 +1,148 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "عام">
+
+<!ENTITY useCursorNavigation.label       "استعمل دائمًا مفاتيح الأسهم للتنقل داخل الصفحات">
+<!ENTITY useCursorNavigation.accesskey   "س">
+<!ENTITY searchOnStartTyping.label       "ابحث عن النص مع بداية الكتابة">
+<!ENTITY searchOnStartTyping.accesskey   "ح">
+<!ENTITY useOnScreenKeyboard.label       "اعرض لوحة مفاتيح باللمس عند الضرورة">
+<!ENTITY useOnScreenKeyboard.accesskey   "م">
+
+<!ENTITY browsing.label                  "التّصفّح">
+
+<!ENTITY useAutoScroll.label             "استخدم اللّف الآلي">
+<!ENTITY useAutoScroll.accesskey         "ف">
+<!ENTITY useSmoothScrolling.label        "استخدم اللّف السلس">
+<!ENTITY useSmoothScrolling.accesskey    "خ">
+<!ENTITY checkUserSpelling.label         "دقق الإملاء أثناء الكتابة">
+<!ENTITY checkUserSpelling.accesskey     "ك">
+
+<!ENTITY dataChoicesTab.label            "اختيارات البيانات">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportingDisabled.label   "الإبلاغ عن البيانات معطّل في إعدادات البناء">
+
+<!ENTITY enableHealthReport1.label       "اسمح أن يُرسل &brandShortName; تلقائيًا بيانات تقنية و بيانات التفاعل إلى موزيلا">
+<!ENTITY enableHealthReport1.accesskey   "س">
+<!ENTITY healthReportLearnMore.label     "اطّلع على المزيد">
+
+<!ENTITY dataCollection.label            "جمع &brandShortName; للبيانات و استخدامها">
+<!ENTITY dataCollectionDesc.label        "نبذل جهدنا لإعطائك الخيار و جمع ما نحتاجه فقط لتحسين &brandShortName;. نطلب الإذن دائمًا قبل استقبال أي معلومات شخصية.">
+<!ENTITY dataCollectionPrivacyNotice.label    "تنويه الخصوصية">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "اسم أن يرسل &brandShortName; بلاغلات الانهيار إلى موزيلا">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "ن">
+<!ENTITY crashReporterLearnMore.label    "اطّلع على المزيد">
+
+<!ENTITY networkTab.label                "الشبكة">
+
+<!ENTITY networkProxy.label              "وسيط الشبكة">
+
+<!ENTITY connectionDesc.label            "اضبط كيفية اتصال &brandShortName; بالإنترنت">
+<!ENTITY connectionSettings.label        "الإعدادات…">
+<!ENTITY connectionSettings.accesskey    "ع">
+
+<!ENTITY httpCache.label                 "محتوى الوب المخزّن">
+
+<!ENTITY offlineStorage2.label           "محتوى الوب ومعلومات المستخدمة المخزّنة للعمل دون اتصال">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "بيانات الموقع">
+<!ENTITY clearSiteData.label             "امسح كل البيانات">
+<!ENTITY clearSiteData.accesskey         "س">
+<!ENTITY siteDataSettings.label          "الإعدادات…">
+<!ENTITY siteDataSettings.accesskey      "ع">
+<!ENTITY siteDataLearnMoreLink.label     "اطّلع على المزيد">
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "استعمل حتى">
+<!ENTITY limitCacheSizeBefore.accesskey  "ح">
+<!ENTITY limitCacheSizeAfter.label       "م.بايت من المساحة للذّاكرة الخبيئة">
+<!ENTITY clearCacheNow.label             "امسح الآن">
+<!ENTITY clearCacheNow.accesskey         "م">
+<!ENTITY clearOfflineAppCacheNow.label   "امسح الآن">
+<!ENTITY clearOfflineAppCacheNow.accesskey "ن">
+<!ENTITY overrideSmartCacheSize.label    "تخطَّ الإدارة الآلية للذاكرة الخبيئة">
+<!ENTITY overrideSmartCacheSize.accesskey "ذ">
+
+<!ENTITY updateTab.label                 "تحديث">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "تحديثات &brandShortName;">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label "أبقِ &brandShortName; للحصول على أحسن أداء و ثبات و أمان.">
+<!ENTITY updateApplication.version.pre   "الإصدارة ">
+<!ENTITY updateApplication.version.post  "​">
+<!ENTITY updateApplication.description   "اسمح ل‍&brandShortName; أن">
+<!ENTITY updateAuto3.label               "نزّل التحديثات تلقائيا (مستحسن)">
+<!ENTITY updateAuto3.accesskey           "ن">
+<!ENTITY updateCheckChoose2.label        "يلتمس التحديثات، و لكن يترك لك خيار تنصيبها من عدمه">
+<!ENTITY updateCheckChoose2.accesskey    "ت">
+<!ENTITY updateManual2.label             "لا يلتمس التحديثات أبدًا (غير مستحسن)">
+<!ENTITY updateManual2.accesskey         "د">
+
+<!ENTITY updateHistory2.label            "أظهر تأريخ التحديث…">
+<!ENTITY updateHistory2.accesskey        "ظ">
+
+<!ENTITY useService.label                "استخدم خدمة تعمل في الخلفية لتنصيب التحديثات">
+<!ENTITY useService.accesskey            "خ">
+
+<!ENTITY enableSearchUpdate2.label       "حدّث محركات البحث تلقائيًا">
+<!ENTITY enableSearchUpdate2.accesskey   "ك">
+
+<!ENTITY offlineStorageNotify.label               "نبّهني عندما يطلب موقع تخزين بيانات للاستخدام دون اتصال">
+<!ENTITY offlineStorageNotify.accesskey           "ه">
+<!ENTITY offlineStorageNotifyExceptions.label     "الاستثناءات…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "ث">
+
+<!ENTITY offlineAppsList2.label          "يسمح للمواقع التالية بتخزين بيانات للعمل دون اتصال:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "احذف…">
+<!ENTITY offlineAppsListRemove.accesskey "ح">
+<!ENTITY offlineAppRemove.confirm        "احذف بيانات الاستخدام دون اتصال">
+
+<!ENTITY certificateTab.label            "الشّهادات">
+<!ENTITY certPersonal2.description       "عندما يطلب خادوم شهادتي الشخصيّة">
+<!ENTITY selectCerts.auto                "حدد واحدة آليّا">
+<!ENTITY selectCerts.auto.accesskey      "ح">
+<!ENTITY selectCerts.ask                 "اسألني كلّ مرّة">
+<!ENTITY selectCerts.ask.accesskey       "س">
+<!ENTITY enableOCSP.label                "استعلم من خواديم مستجيبي OCSP عن الصلاحية الحالية للشهادات">
+<!ENTITY enableOCSP.accesskey            "س">
+<!ENTITY viewCerts2.label                "اعرض الشهادات…">
+<!ENTITY viewCerts2.accesskey            "ش">
+<!ENTITY viewSecurityDevices2.label      "أجهزة الأمن…">
+<!ENTITY viewSecurityDevices2.accesskey  "ج">
+
+<!ENTITY performance.label               "الأداء">
+<!ENTITY useRecommendedPerformanceSettings2.label "استعمل إعدادات الأداء المستحسنة">
+<!ENTITY useRecommendedPerformanceSettings2.description "طُوِّعت هذه الإعدادات لتناسب عتاد حاسوبك و نظام تشغيله.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "س">
+<!ENTITY performanceSettingsLearnMore.label "اطّلع على المزيد">
+<!ENTITY limitContentProcessOption.label "حد سيرورة المحتوى">
+<!ENTITY limitContentProcessOption.description "يمكن أن تساهم زيادة سيرورات المحتوى في تحسين الأداء عند استعمال عدة ألسنة، و لكن ذلك يستهلك ذاكرة أكثر.">
+<!ENTITY limitContentProcessOption.accesskey   "ح">
+<!ENTITY limitContentProcessOption.disabledDescription "لا يمكن تعديل عدد سيرورات المحتوى إلا في &brandShortName; متعدد السيرورات.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "اطلع على كيفية التحقق من تفعيل تعدد السيرورات">
+<!ENTITY allowHWAccel.label              "استخدم تسريع العتاد إن كان متاحًا">
+<!ENTITY allowHWAccel.accesskey          "ع">

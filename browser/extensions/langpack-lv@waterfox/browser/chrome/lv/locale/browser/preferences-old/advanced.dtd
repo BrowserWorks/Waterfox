@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "Vispārējs">
+
+<!ENTITY accessibility.label             "Pieejamība">
+
+<!ENTITY useCursorNavigation.label       "Vienmēr izmantot kursora taustiņus, lai pārvietotos pa lapām">
+<!ENTITY useCursorNavigation.accesskey   "k">
+<!ENTITY searchOnStartTyping.label       "Meklēt rakstīto tekstu, kolīdz es sāku rakstīt">
+<!ENTITY searchOnStartTyping.accesskey   "m">
+<!ENTITY blockAutoReload.label           "Brīdināt mani, ja mājas lapa mēģina pārlādēties vai pārsūtīt mani uz citu lapu">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY useOnScreenKeyboard.label       "Parādīt pieskārienu klaviatūru, kad nepieciešams">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "Pārlūkošana">
+
+<!ENTITY useAutoScroll.label             "Lietot autoritināšanu">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "Lietot plūdeno ritināšanu">
+<!ENTITY useSmoothScrolling.accesskey    "l">
+<!ENTITY checkUserSpelling.label         "Rakstot pārbaudīt pareizrakstību">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "Datu izvēle">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "Datu ziņošana ir atspējota šajā būvējuma konfigurācija">
+
+<!ENTITY healthReportDesc.label          "Palīdz izprast jūsu pārlūka veiktspēju un sūta šos datus par pārlūka stāvokli &vendorShortName;">
+<!ENTITY enableHealthReport.label        "Aktivēt &brandShortName; stāvokļa ziņojumu">
+<!ENTITY enableHealthReport.accesskey    "v">
+<!ENTITY healthReportLearnMore.label     "Uzzināt vairāk">
+
+<!ENTITY telemetryDesc.label             "Nosūta aparatūras parametru, to veiktspējas, lietošanas un pārlūka pielāgojumu informāciju &vendorShortName;, lai palīdzētu uzlabot &brandShortName;">
+<!ENTITY enableTelemetryData.label       "Dalīties ar papildus datiem (piem. Telemetriju)">
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY telemetryLearnMore.label        "Uzzināt vairāk">
+
+<!ENTITY crashReporterDesc2.label         "Avāriju ziņojumi palīdz &vendorShortName; salabot problēmas un padarīt jūsu pārlūku drošāku un stabilāku">
+<!ENTITY alwaysSubmitCrashReports.label   "Atļaut &brandShortName; sūtīt uzkrātos avāriju ziņojumus jūsu vārdā">
+<!ENTITY alwaysSubmitCrashReports.accesskey "a">
+<!ENTITY crashReporterLearnMore.label     "Uzzināt vairāk">
+
+<!ENTITY networkTab.label                "Tīkls">
+
+<!ENTITY connection.label                "Savienojums">
+
+<!ENTITY connectionDesc.label            "Konfigurēt, kā &brandShortName; savienojas ar Internetu">
+<!ENTITY connectionSettings.label        "Iestatījumi...">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Saglabātais tīmekļa saturs">
+
+<!ENTITY offlineStorage2.label           "Nesaistes tīmekļa saturs un lietotāja dati">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "Lapas dati">
+<!ENTITY clearSiteData.label             "Izdzēst visus datus">
+<!ENTITY clearSiteData.accesskey         "v">
+<!ENTITY siteDataSettings.label          "Iestatījumi...">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "Uzzināt vairāk">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "Ierobežot kešatmiņu līdz ">
+<!ENTITY limitCacheSizeBefore.accesskey  "k">
+<!ENTITY limitCacheSizeAfter.label       "MB">
+<!ENTITY clearCacheNow.label             "Iztīrīt">
+<!ENTITY clearCacheNow.accesskey         "I">
+<!ENTITY clearOfflineAppCacheNow.label   "Iztīrīt">
+<!ENTITY clearOfflineAppCacheNow.accesskey "z">
+<!ENTITY overrideSmartCacheSize.label    "Ignorēt automātisko kešatmņas pārvaldību">
+<!ENTITY overrideSmartCacheSize.accesskey "o">
+
+<!ENTITY updateTab.label                 "Atjaunināt">
+
+<!ENTITY updateApplication.label         "&brandShortName; atjauninājumi">
+<!ENTITY updateAuto1.label               "Instalēt atjauninājumus automātiski (ieteicams: uzlabo drošību)">
+<!ENTITY updateAuto1.accesskey           "a">
+<!ENTITY updateCheckChoose.label         "Pārbaudīt atjauninājumu pieejamību, bet ļaut man izvēlēties vai instalēt tos">
+<!ENTITY updateCheckChoose.accesskey     "P">
+<!ENTITY updateManual.label              "Nepārbaudīt atjauninājumu pieejamību (nav ieteicams: drošības risks)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "Parādīt atjauninājumu vēsturi">
+<!ENTITY updateHistory.accesskey         "P">
+
+<!ENTITY useService.label                "Instalēt atjauninājumus fonā">
+<!ENTITY useService.accesskey            "f">
+
+<!ENTITY autoUpdateOthers.label          "Atjaunināt automātiski">
+<!ENTITY enableSearchUpdate.label        "Meklētājus">
+<!ENTITY enableSearchUpdate.accesskey    "l">
+
+<!ENTITY offlineStorageNotify.label               "Ziņot man, kad mājas lapa grib saglabāt datus izmantošanai nesaistē">
+<!ENTITY offlineStorageNotify.accesskey           "Z">
+<!ENTITY offlineStorageNotifyExceptions.label     "Izņēmumi...">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "z">
+
+<!ENTITY offlineAppsList2.label          "Šīm mājas lapām ir atļauts glabāt datus izmantošanai nesaistē:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Aizvākt...">
+<!ENTITY offlineAppsListRemove.accesskey "A">
+<!ENTITY offlineAppRemove.confirm        "Aizvākt nesaistes datus">
+
+<!ENTITY certificateTab.label            "Sertifikāti">
+<!ENTITY certPersonal.label              "Pieprasījumi">
+<!ENTITY certPersonal.description        "Kad serveris pieprasa manu personīgo sertifikātu:">
+<!ENTITY selectCerts.auto                "Izvēlēties automātiski">
+<!ENTITY selectCerts.auto.accesskey      "V">
+<!ENTITY selectCerts.ask                 "Katru reizi jautāt man">
+<!ENTITY selectCerts.ask.accesskey       "J">
+<!ENTITY enableOCSP.label                "Vaicāt OCSP atbildes serveriem, lai pārbaudītu pašreizējo sertifikātu derīgumu">
+<!ENTITY enableOCSP.accesskey            "V">
+<!ENTITY viewCerts.label                 "Aplūkot sertifikātus">
+<!ENTITY viewCerts.accesskey             "s">
+<!ENTITY viewSecurityDevices.label       "Drošības ierīces">
+<!ENTITY viewSecurityDevices.accesskey   "D">
+
+<!ENTITY performance.label               "Veiktspēja">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Izmantot ieteiktos veiktspējas iestatījumus">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "Šie iestatījumi ir pielāgoti jūsu datora aparatūrai un operētājsistēmai.">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Uzzināt vairāk">
+<!ENTITY limitContentProcessOption.label "Satura procesu limits">
+<!ENTITY limitContentProcessOption.description
+                                         "Papildu satura procesi var palielināt veiktspēju izmantojot vairākas cilnes, bet prasīs arī papildu atmiņu.">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modificēt satura procesu skaitu ir iespējama tikai ar vairāku procesu &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Kā pārbaudīt, vai pieejams vairāku procesu režīms">
+<!ENTITY allowHWAccel.label              "Ja pieejams, izmantot aparatūras paātrinājumu">
+<!ENTITY allowHWAccel.accesskey          "j">

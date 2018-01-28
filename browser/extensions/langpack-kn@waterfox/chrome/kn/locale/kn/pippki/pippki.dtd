@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "ಮುಖ್ಯ ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸು">
+<!ENTITY setPassword.tokenName.label "ಸುರಕ್ಷತಾ ಸಾಧನ">
+<!ENTITY setPassword.oldPassword.label "ಪ್ರಸ್ತುತ ಗುಪ್ತಪದ:">
+<!ENTITY setPassword.newPassword.label "ಹೊಸ ಗುಪ್ತಪದ:">
+<!ENTITY setPassword.reenterPassword.label "ಹೊಸ ಗುಪ್ತಪದ (ಮತ್ತೊಮ್ಮೆ):">
+<!ENTITY setPassword.meter.label "ಗುಪ್ತಪದದ ಗುಣದರ್ಜೆ ಮಾಪಕ ">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "ಮರಳಿ ಹೊಂದಿಸು">
+<!ENTITY resetPassword.title  "ಮುಖ್ಯ ಗುಪ್ತಪದವನ್ನು ಹೊಂದಿಸು">
+<!ENTITY resetPassword.text  "ನೀವು ನಿಮ್ಮ ಮುಖ್ಯ ಪದವನ್ನು ಮರಳಿ ಹೊಂದಿಸಿದರೆ, ಶೇಖರಿತಗೊಂಡ ನಿಮ್ಮ ಎಲ್ಲಾ ಜಾಲ ಹಾಗು ಇ-ಮೇಲ್ ಗುಪ್ತಪದಗಳು, ಫಾರ್ಮ್ ಮಾಹಿತಿ, ವೈಯಕ್ತಿಕ ಪ್ರಮಾಣಪತ್ರಗಳು, ಹಾಗು ಖಾಸಗಿ ಕೀಲಿಗಳು ಮರೆಯಲ್ಪಡುತ್ತವೆ. ನೀವು ನಿಮ್ಮ ಗುಪ್ತಪದವನ್ನು ಖಚಿತವಾಗಿಯೂ ಮರಳಿ ಹೊಂದಿಸಲು ಬಯಸುತ್ತೀರೆ?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "ಪ್ರಮಾಣಪತ್ರಗಳನ್ನು ಡೌನ್‍ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ">
+<!ENTITY downloadCert.message1 "ಒಂದು ಹೊಸ ಪ್ರಮಾಣಪತ್ರ ಅಥಾರಿಟಿಯನ್ನು(CA) ನಂಬುವಂತೆ ನಿಮ್ಮನ್ನು ಕೇಳಲಾಗಿದೆ .">
+<!ENTITY downloadCert.trustSSL "ಜಾಲ ತಾಣಗಳನ್ನು ಗುರುತಿಸಲು ಈ CA ಅನ್ನು ನಂಬು.">
+<!ENTITY downloadCert.trustEmail "ಇ ಮೇಲ್ ಬಳಕೆದಾರರನ್ನು ಗುರುತಿಸಲು ಈ CA ಅನ್ನು ನಂಬು.">
+<!ENTITY downloadCert.trustObjSign "ತಂತ್ರಾಂಶ ವಿಕಸನಗಾರರನ್ನು ಗುರುತಿಸಲು ಈ CA ಅನ್ನು ನಂಬು.">
+<!ENTITY downloadCert.message3 "ಯಾವುದೆ ಕಾರ್ಯನಿಮಿತ್ತವಾಗಿಯಾದರೂ ಈ CA ಅನ್ನು ನಂಬುವ ಮೊದಲು, ಅದರ ಪ್ರಮಾಣಪತ್ರ ಹಾಗು ಅದರ ಕಾಯ್ದೆ ಮತ್ತು ವಿಧಾನಗಳನ್ನು(ಲಭ್ಯವಿದ್ದಲ್ಲಿ)ಎಚ್ಚರಿಕೆಯಿಂದ ಪರಿಶೀಲಿಸಬೇಕು.">
+<!ENTITY downloadCert.viewCert.label "ನೋಟ">
+<!ENTITY downloadCert.viewCert.text "CA ಪ್ರಮಾಣಪತ್ರವನ್ನು ಪರಿಶೀಲಿಸಿ">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "ಬಳಕೆದಾರರ ಗುರುತಿಗೆ ಮನವಿ">
+<!ENTITY clientAuthAsk.message1 "ನೀವು ಒಂದು ಪ್ರಮಾಣಪತ್ರದಿಂದ ನಿಮ್ಮನ್ನು ಗುರುತಿಸಿಕೊಳ್ಳಲು ಈ ತಾಣವು ಅಪೇಕ್ಷಿಸಿದೆ:">
+<!ENTITY clientAuthAsk.message2 "ಗುರುತಾಗಿ ಪ್ರಸ್ತುತ ಪಡಿಸಲು ಒಂದು ಪ್ರಮಾಣಪತ್ರವನ್ನು ಆರಿಸಿ:">
+
+
+<!ENTITY pkcs12.setpassword.title  "ಒಂದು ಪ್ರಮಾಣಪತ್ರ ಬ್ಯಾಕ್ ಅಪ್ ಗುಪ್ತಪದವನ್ನು ಆರಿಸು">
+<!ENTITY pkcs12.setpassword.message  "ನೀವು ಇಲ್ಲಿ ಹೊಂದಿಸುವ ಬ್ಯಾಕ್ಅಪ್ ಗುಪ್ತಪದವು ನೀವು ನಿರ್ಮಿಸಲಿರುವ ಬ್ಯಾಕ್ಅಪ್ ಕಡತಗಳನ್ನು ಸಂರಕ್ಷಿಸುತ್ತದೆ.  ಬ್ಯಾಕ್ ಅಪ್‍ನೊಂದಿಗೆ ಮುಂದುವರೆಯಲು ನೀವು ಈ ಗುಪ್ತಪದವನ್ನು ಹೊಂದಿಸುವುದು ಅಗತ್ಯವಾಗುತ್ತದೆ.">
+<!ENTITY pkcs12.setpassword.label1 "ಪ್ರಮಾಣಪತ್ರದ ಬ್ಯಾಕ್ಅಪ್ ಗುಪ್ತಪದ:">
+<!ENTITY pkcs12.setpassword.label2 "ಪ್ರಮಾಣಪತ್ರದ ಬ್ಯಾಕ್ಅಪ್ ಗುಪ್ತಪದ (ಮತ್ತೊಮ್ಮೆ):">
+<!ENTITY pkcs12.setpassword.reminder "ಗಮನಿಸಿ: ನೀವು ನಿಮ್ಮ ಪ್ರಮಾಣಪತ್ರ ಬ್ಯಾಕ್ ಅಪ್ ಗುಪ್ತಪದವನ್ನು ಮರೆತ ಪಕ್ಷದಲ್ಲಿ, ನೀವು ನಂತರದ ಸಮಯದಲ್ಲಿ ಈ ಬ್ಯಾಕ್ಅಪ್ ಮರುಗಳಿಸಲು ಸಾಧ್ಯವಾಗುವುದಿಲ್ಲ.  ದಯವಿಟ್ಟು ಇದನ್ನು ಒಂದು ಸುರಕ್ಷಿತ ಸ್ಥಳದಲ್ಲಿ ಕಾಪಾಡಿ.">
+
+<!ENTITY chooseToken.title  "ಟೋಕನ್ ಸಂವಾದವನ್ನು ಆರಿಸಿ">
+<!ENTITY chooseToken.message1 "ದಯವಿಟ್ಟು ಒಂದು ಟೋಕನ್‍ ಅನ್ನು ಆರಿಸಿ.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "ಒಂದು ಖಾಸಗಿ ಕೀಲಿಯನ್ನು ರಚಿಸಲಾಗುತ್ತಿದೆ">
+<!ENTITY createCertInfo.msg1 "ಕೀಲಿ ರಚನೆಯು ಪ್ರಗತಿಯಲ್ಲಿದೆ ... ಇದು ಒಂದಿಷ್ಟು ನಿಮಿಷ ತೆಗೆದುಕೊಳ್ಳಬಹುದು....">
+<!ENTITY createCertInfo.msg2 "ದಯವಿಟ್ಟು ಕಾಯಿರಿ...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "ಸಂರಕ್ಷಿತ ಟೋಕನ್ ದೃಢೀಕರಣ">
+<!ENTITY protectedAuth.msg "ದಯವಿಟ್ಟು ಟೋಕನ್‌ಗೆ ದೃಢೀಕರಿಸಿ.ದೃಢೀಕರಣ ವಿಧಾನವು ನಿಮ್ಮ ಟೋಕನ್‌ ಪ್ರಕಾರದ ಮೇಲೆ ಆಧರಿತವಾಗಿರುತ್ತದೆ.">
+<!ENTITY protectedAuth.tokenName.label "ಟೋಕನ್:">
+
+<!ENTITY clientAuthAsk.message3 "Details of selected certificate:">
+

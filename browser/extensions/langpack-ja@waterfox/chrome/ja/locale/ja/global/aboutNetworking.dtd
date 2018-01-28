@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title			"About Networking">
+<!ENTITY aboutNetworking.warning		"これは実験段階です。ネットワーク技術に詳しい方以外は使用しないでください。">
+<!ENTITY aboutNetworking.showNextTime		"次回も警告を表示する">
+<!ENTITY aboutNetworking.ok			"OK">
+<!ENTITY aboutNetworking.HTTP			"HTTP">
+<!ENTITY aboutNetworking.sockets		"Sockets">
+<!ENTITY aboutNetworking.dns			"DNS">
+<!ENTITY aboutNetworking.websockets		"WebSockets">
+<!ENTITY aboutNetworking.refresh		"更新">
+<!ENTITY aboutNetworking.autoRefresh		"3 秒ごとに自動更新する">
+<!ENTITY aboutNetworking.hostname		"ホスト名">
+<!ENTITY aboutNetworking.port			"ポート番号">
+<!ENTITY aboutNetworking.http2			"HTTP/2">
+<!ENTITY aboutNetworking.ssl			"SSL">
+<!ENTITY aboutNetworking.active			"アクティブ">
+<!ENTITY aboutNetworking.idle			"待機">
+<!ENTITY aboutNetworking.host			"ホスト">
+<!ENTITY aboutNetworking.tcp			"TCP">
+<!ENTITY aboutNetworking.sent			"送信データ量">
+<!ENTITY aboutNetworking.received		"受信データ量">
+<!ENTITY aboutNetworking.family			"系統">
+<!ENTITY aboutNetworking.addresses		"アドレス">
+<!ENTITY aboutNetworking.expires		"期限 (秒)">
+<!ENTITY aboutNetworking.messagesSent		"送信メッセージ">
+<!ENTITY aboutNetworking.messagesReceived	"受信メッセージ">
+<!ENTITY aboutNetworking.bytesSent		"送信バイト数">
+<!ENTITY aboutNetworking.bytesReceived		"受信バイト数">
+<!ENTITY aboutNetworking.logging		"HTTP ログ">
+<!ENTITY aboutNetworking.logTutorial		"このツールの使い方は <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> を参照してください。">
+<!ENTITY aboutNetworking.currentLogFile		"現在のログファイル:">
+<!ENTITY aboutNetworking.currentLogModules	"現在のログモジュール:">
+<!ENTITY aboutNetworking.setLogFile		"ログファイルを設定">
+<!ENTITY aboutNetworking.setLogModules		"ログモジュールを設定">
+<!ENTITY aboutNetworking.startLogging		"記録開始">
+<!ENTITY aboutNetworking.stopLogging		"記録終了">
+<!ENTITY aboutNetworking.dnsLookup		"DNS 照会">
+<!ENTITY aboutNetworking.dnsLookupButton	"解決">
+<!ENTITY aboutNetworking.dnsDomain		"ドメイン">
+<!ENTITY aboutNetworking.dnsLookupTableColumn	"IP アドレス">
+<!-- (^m^) RCWN stands for "Race Cache With Network" Bug 1358038 -->
+<!ENTITY aboutNetworking.rcwn			"RCWN 統計">
+<!ENTITY aboutNetworking.rcwnStatus		"RCWN 状態">
+<!ENTITY aboutNetworking.rcwnCacheWonCount	"キャッシュ使用カウント">
+<!ENTITY aboutNetworking.rcwnNetWonCount	"ネットワーク使用カウント">
+<!ENTITY aboutNetworking.totalNetworkRequests	"ネットワーク要求カウント合計">
+<!ENTITY aboutNetworking.rcwnOperation		"キャッシュ操作">
+<!ENTITY aboutNetworking.rcwnPerfOpen		"開く">
+<!ENTITY aboutNetworking.rcwnPerfRead		"読む">
+<!ENTITY aboutNetworking.rcwnPerfWrite		"書く">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen	"エントリーを開く">
+<!ENTITY aboutNetworking.rcwnAvgShort		"短期平均">
+<!ENTITY aboutNetworking.rcwnAvgLong		"長期平均">
+<!ENTITY aboutNetworking.rcwnStddevLong		"長期標準偏差">
+<!ENTITY aboutNetworking.rcwnCacheSlow		"キャッシュ遅滞カウント">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow	"キャッシュ非遅滞カウント">

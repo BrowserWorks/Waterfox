@@ -1,0 +1,193 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "সাধাৰণ">
+
+<!ENTITY accessibility.label             "অভিগম্যতা">
+
+<!ENTITY useCursorNavigation.label       "পৃষ্ঠাৰ মাজত ব্ৰাউছ কৰিবলৈ সদায়ে কাৰ্চাৰ চাবি ব্যৱহাৰ কৰিব">
+<!ENTITY useCursorNavigation.accesskey   "c">
+
+
+
+
+
+
+
+<!ENTITY browsing.label                  "ব্ৰাউছিং">
+
+<!ENTITY useAutoScroll.label             "অ'ট'স্ক্ৰলিং ব্যৱহাৰ কৰক">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "নিমজ স্ক্ৰ'লিং ব্যৱহাৰ কৰক">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+
+
+
+<!ENTITY dataChoicesTab.label            "তথ্যৰ পছন্দসমূহ">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+<!ENTITY healthReportDesc.label          "আপোনাক আপোনাৰ ব্ৰাউছাৰৰ পৰিৱেশন বুজি পোৱাত সহায় কৰে আৰু আপোনাৰ ব্ৰাউছাৰৰ স্বাস্থ্য বিষয়ে তথ্য &vendorShortName; ৰ সৈতে অংশীদাৰী কৰে">
+<!ENTITY enableHealthReport.label        "&brandShortName; স্বাস্থ্য সংবাদ">
+<!ENTITY enableHealthReport.accesskey    "R">
+
+
+<!ENTITY telemetryDesc.label             "আপোনাৰ ব্ৰাউছাৰৰ বিষয়ে পৰিৱেশন, ব্যৱহাৰ, হাৰ্ডৱেৰ আৰু স্বনিৰ্বাচন তথ্য &vendorShortName; ৰ সৈতে অংশীদাৰী কৰে যাতে আমি &brandShortName; উন্নত কৰিব পাৰো">
+
+
+
+
+
+
+
+
+<!ENTITY networkTab.label                "নেটৱাৰ্ক">
+
+<!ENTITY connection.label                "সংযোগ">
+
+<!ENTITY connectionDesc.label            "&brandShortName; কেনেদৰে ইন্টাৰনেটলৈ সংযোগ কৰে সংৰূপণ কৰক">
+<!ENTITY connectionSettings.label        "পছন্দসমূহ…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "ক্যাশ কৰা ৱেব সমল">
+
+<!ENTITY offlineStorage2.label           "অফলাইন ৱেব সমল আৰু ব্যৱহাৰকাৰী তথ্য">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+
+
+
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "চিহ্নিত মানলৈ ক্যাশক সীমিত কৰক">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB স্থান">
+<!ENTITY clearCacheNow.label             "এতিয়া পৰিষ্কাৰ কৰক">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "এতিয়া পৰিষ্কাৰ কৰক">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "স্বচালিত ক্যাশ ব্যৱস্থাপনা অভাৰৰাইড কৰক">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "আপডেইট কৰক">
+
+<!ENTITY updateAuto1.label               "আপডেইটসমূহ স্বচালিতভাৱে ইনস্টল কৰক (উপদেশিত: উন্নত সুৰক্ষা)">
+<!ENTITY updateAuto1.accesskey           "A">
+
+
+<!ENTITY updateManual.label              "আপডেইটসমূহৰ বাবে কেতিয়াও নীৰিক্ষণ নকৰিব (উপদেশিত নহয়: সুৰক্ষা ভয়)">
+<!ENTITY updateManual.accesskey          "N">
+
+<!ENTITY updateHistory.label             "আপডেইটৰ ইতিহাস দেখুৱাওক">
+<!ENTITY updateHistory.accesskey         "p">
+
+<!ENTITY useService.label                "আপডেইটসমূহ ইনস্টল কৰিবলে এটা পটভূমি সেৱা ব্যৱহাৰ কৰক">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate.label        "সন্ধান ইঞ্জিনসমূহ">
+<!ENTITY enableSearchUpdate.accesskey    "E">
+
+
+<!ENTITY offlineStorageNotifyExceptions.label     "ব্যতিক্ৰমসমূহ…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "নিম্মলিখিত ৱেবছাইটসমূহক অফলাইন ব্যৱহাৰৰ বাবে তথ্য সংৰক্ষণ কৰাৰ অনুমতি আছে:">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "আঁতৰাওঁক…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "অফ-লাইন তথ্য আঁতৰাওঁক">
+
+<!ENTITY certificateTab.label            "প্ৰমাণপত্ৰসমূহ">
+
+
+<!ENTITY selectCerts.auto                "এটা নিজেই নিৰ্বাচন কৰিব">
+
+
+
+<!ENTITY enableOCSP.label                "প্ৰমাণপত্ৰসমূহৰ বৰ্তমান বৈধতা সুনিশ্চিত কৰিবলে OCSP ৰেস্পণ্ডাৰক প্ৰশ্ন কৰক">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts.label                 "প্ৰমাণপত্ৰসমূহ চাওক">
+<!ENTITY viewCerts.accesskey             "C">
+<!ENTITY viewSecurityDevices.label       "সুৰক্ষা ডিভাইচসমূহ">
+<!ENTITY viewSecurityDevices.accesskey   "D">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "যেতিয়া উপলব্ধ তেতিয়া হাৰ্ডৱেৰ ত্বৰণ ব্যৱহাৰ কৰক">
+<!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY alwaysSubmitCrashReports.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports.label   "Allow &brandShortName; to send backlogged crash reports on your behalf">
+<!ENTITY autoUpdateOthers.label          "Automatically Update">
+<!ENTITY blockAutoReload.accesskey       "b">
+<!ENTITY blockAutoReload.label           "Warn you when websites try to redirect or reload the page">
+<!ENTITY certPersonal.description        "When a server requests your personal certificate:">
+<!ENTITY certPersonal.label              "Requests">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY checkUserSpelling.label         "Check your spelling as you type">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY clearSiteData.label             "Clear All Data">
+<!ENTITY crashReporterDesc2.label         "Crash reports help &vendorShortName; fix problems and make your browser more stable and secure">
+<!ENTITY crashReporterLearnMore.label     "Learn more">
+
+<!ENTITY enableTelemetryData.accesskey   "T">
+<!ENTITY enableTelemetryData.label       "Share Additional Data (i.e., Telemetry)">
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotify.label               "Tell you when a website asks to store data for offline use">
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY searchOnStartTyping.label       "Search for text when you start typing">
+<!ENTITY selectCerts.ask                 "Ask you every time">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY siteData.label                  "Site Data">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataSettings.label          "Settings…">
+<!ENTITY telemetryLearnMore.label        "Learn more">
+
+<!ENTITY updateApplication.label         "&brandShortName; Updates">
+<!ENTITY updateCheckChoose.accesskey     "C">
+<!ENTITY updateCheckChoose.label         "Check for updates, but let you choose whether to install them">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY useOnScreenKeyboard.label       "Show a touch keyboard when necessary">
+<!ENTITY useRecommendedPerformanceSettings.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings.label
+                                         "Use recommended performance settings">

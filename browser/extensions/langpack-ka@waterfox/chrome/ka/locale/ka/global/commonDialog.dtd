@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "მოკლე სათაური"> 
+<!ENTITY message.label    "აქ სანიმუშო ტექსტია განთავსებული.">
+<!ENTITY editfield0.label "სახელი:"> 
+<!ENTITY editfield1.label "პაროლი:"> 
+<!ENTITY checkbox.label   "შემოწმება">
+<!ENTITY copyCmd.label    "დაკოპირება">
+<!ENTITY copyCmd.accesskey "კ">
+<!ENTITY selectAllCmd.label "ყველას მონიშვნა">
+<!ENTITY selectAllCmd.accesskey "ყ">

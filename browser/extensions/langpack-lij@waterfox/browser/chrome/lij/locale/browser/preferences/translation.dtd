@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Eceçioin - Traduçion">
+<!ENTITY window.width "38em">
+<!ENTITY windowClose.key "w">
+<!ENTITY noTranslationForLanguages.label "Pe ste lengoe a no saiâ proposta a traduçion:">
+<!ENTITY treehead.languageName.label "Lengoe">
+<!ENTITY removeLanguage.label "Scancella lengoa">
+<!ENTITY removeLanguage.accesskey "R">
+<!ENTITY removeAllLanguages.label "Scancella tutte e lengoe">
+<!ENTITY removeAllLanguages.accesskey "m">
+<!ENTITY noTranslationForSites.label "Pe sti sciti a no saiâ proposta a traduçion:">
+<!ENTITY treehead.siteName.label "Sciti">
+<!ENTITY removeSite.label "Scancella scito">
+<!ENTITY removeSite.accesskey "s">
+<!ENTITY removeAllSites.label "Scancella tutti i sciti">
+<!ENTITY removeAllSites.accesskey "u">
+<!ENTITY button.close.label "Særa">
+<!ENTITY button.close.accesskey "r">
+
+<!ENTITY treehead.siteName2.label         "Websites">

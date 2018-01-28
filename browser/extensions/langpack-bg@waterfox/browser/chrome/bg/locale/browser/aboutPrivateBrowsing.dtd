@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "В момента не сте в поверителен прозорец.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Отваряне на поверителен прозорец">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "О">
+
+<!ENTITY privateBrowsing.title                           "Поверително разглеждане">
+<!ENTITY privateBrowsing.title.tracking                  "Поверително разглеждане със Защита от проследяване">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Когато сърфирате в поверителен прозорец, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "няма да запази">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "посетените страници">
+<!ENTITY aboutPrivateBrowsing.info.searches              "търсенията">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "бисквитките">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "временните файлове">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ще запази">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "изтеглянията">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "отметките">
+<!ENTITY aboutPrivateBrowsing.note.before                "Поверителното разглеждане ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "не ви прави анонимни">
+<!ENTITY aboutPrivateBrowsing.note.after                 " в Мрежата. Имайте предвид, че въпреки това вашият работодател или доставчик на Интернет биха могли да проследят кои страници посещавате.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Научете повече относно ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Поверителното разглеждане">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Защита от проследяване">
+<!ENTITY trackingProtection.description2                 "Някои сайтове наблюдават вашето поведение в Интернет. С помощта на защитата от проследяване Waterfox блокира голяма част от тази способност на страниците да събират информация за вашето поведение.">
+<!ENTITY trackingProtection.startTour1                   "Вижте как работи">

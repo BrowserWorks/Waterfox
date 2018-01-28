@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "કાળજી રાખો, આ પાનું લવાઈ ગયેલ છે!">
+<!ENTITY aboutWarningText.label "આ અદ્યતન સેટીંગની કિંમતો બદલવાનું આ કાર્યક્રમની સુગમતા, સુરક્ષા, અને પ્રભાવ માટે નુકસાનકારક હોઈ શકે. તમારે માત્ર ત્યારે જ ચાલુ રાખવું જોઈએ જો તમે ચોક્કસ હોવ કે તમે શું કરી રહ્યા છો.">
+
+<!ENTITY aboutWarningCheckbox.label "આ ચેતવણી મને આગળના સમયે બતાવશો">
+
+<!ENTITY searchPrefs.label "શોધો:">
+<!ENTITY searchPrefs.accesskey "r">
+<!ENTITY focusSearch.key "r">
+
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "પસંદગી નામ">
+<!ENTITY lockColumn.label "સ્થિતિ">
+<!ENTITY typeColumn.label "પ્રકાર">
+<!ENTITY valueColumn.label "કિંમત">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "વર્ગીકરણ કરવા માટે ક્લિક કરો"> 
+<!ENTITY columnChooser.tooltip "સ્તંભોને પસંદ કરવા અને બતાવવા ક્લિક કરો"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "નકલ કરો">
+<!ENTITY copyPref.accesskey "C">
+<!ENTITY copyName.label "નામની નકલ કરો">
+<!ENTITY copyName.accesskey "N">
+<!ENTITY copyValue.label "કિંમતની નકલ કરો">
+<!ENTITY copyValue.accesskey "V">
+<!ENTITY modify.label "ફેરફાર કરો">
+<!ENTITY modify.accesskey "M">
+<!ENTITY toggle.label "બદલો">
+<!ENTITY toggle.accesskey "T">
+<!ENTITY reset.label "ફરી સુયોજીત કરો">
+<!ENTITY reset.accesskey "R">
+<!ENTITY new.label "નવું">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "શબ્દમાળા">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "પૂર્ણાંક">
+<!ENTITY integer.accesskey "I">
+<!ENTITY boolean.label "બુલિયન">
+<!ENTITY boolean.accesskey "B">
+
+<!ENTITY aboutWarningButton2.label "I accept the risk!">
+<!ENTITY focusSearch2.key "f">
+

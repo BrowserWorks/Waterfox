@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+<!-- These strings are used in the about:home page -->
+
+
+<!ENTITY abouthome.pageTitle "&brandFullName;-র প্রারম্ভিক পৃষ্ঠা">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
+     text in <a/> will be linked to the Waterfox features page on mozilla.com
+-->
+
+<!ENTITY abouthome.defaultSnippet1.v1 "Waterfox নির্বাচনের জন্য ধন্যবাদ! ব্রাউজারের <a>নতুন বৈশিষ্ট্যগুলি</a> সম্বন্ধে জেনে নিয়ে ব্রাউজারের সর্বোত্তম ব্যবহার করুন।">
+<!-- LOCALIZATION NOTE (abouthome.defaultSnippet2.v1):
+     text in <a/> will be linked to the featured add-ons on addons.mozilla.org
+-->
+<!ENTITY abouthome.defaultSnippet2.v1 "নিজের প্রয়োজন অনুসারে Waterfox-র বৈশিষ্ট্যগুলি নির্ধারণ করা যাবে। ব্যবহারের জন্য <a>হাজার হাজার অতিরিক্ত সামগ্রী উপলব্ধ রয়েছে</a>।">
+<!-- LOCALIZATION NOTE (abouthome.rightsSnippet): text in <a/> will be linked to about:rights -->
+<!ENTITY abouthome.rightsSnippet "&brandFullName; হল অবানিয্যিক মোজিলা ফাউন্ডেশনের একটি মুক্ত এবং ওপেন সোর্স সফ্টওয়্যার। <a>আপনার অধিকারগুলির সম্পর্কে জানুন...</a>">
+
+<!ENTITY abouthome.bookmarksButton.label "বুকমার্ক">
+<!ENTITY abouthome.historyButton.label   "পূর্ববর্তী তথ্য">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonWin.label): The label for the
+     preferences/options item on about:home on Windows -->
+<!ENTITY abouthome.preferencesButtonWin.label  "বিকল্প">
+<!-- LOCALIZATION NOTE (abouthome.preferencesButtonUnix.label): The label for the
+     preferences/options item on about:home on Linux and OS X -->
+<!ENTITY abouthome.preferencesButtonUnix.label  "পছন্দ">
+<!ENTITY abouthome.addonsButton.label    "অতিরিক্ত সামগ্রী">
+<!ENTITY abouthome.downloadsButton.label "ডাউনলোড">
+<!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (abouthome.aboutMozilla.label): The (invisible) label for
+     the mozilla wordmark in the top-right corner that links to Mozilla's main
+     about page. -->
+
+<!ENTITY abouthome.aboutMozilla.label    "Mozilla সম্পর্কে">

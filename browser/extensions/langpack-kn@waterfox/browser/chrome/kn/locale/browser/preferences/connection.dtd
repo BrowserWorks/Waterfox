@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "ಸಂಪರ್ಕ ಸಿದ್ಧತೆಗಳು">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "ಅಂತರಜಾಲವನ್ನು ನಿಲುಕಿಸಿಕೊಳ್ಳಲು ಪ್ರಾಕ್ಸಿಗಳನ್ನು ಸಂರಚಿಸು">
+<!ENTITY  noProxyTypeRadio.label        "ಯಾವುದೆ ಪ್ರಾಕ್ಸಿ ಇಲ್ಲ">
+<!ENTITY  noProxyTypeRadio.accesskey    "y">
+<!ENTITY  systemTypeRadio.label         "ಗಣಕ ಪ್ರಾಕ್ಸಿಯನ್ನು ಬಳಸು">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  WPADTypeRadio.label           "ಈ ಜಾಲಬಂಧಕ್ಕೆ  ಪ್ರಾಕ್ಸಿ ಸಿದ್ಧತೆಗಳನ್ನು ನೀನಾಗಿಯೆ ಹುಡುಕು">
+<!ENTITY  WPADTypeRadio.accesskey       "w">
+<!ENTITY  manualTypeRadio.label         "ಹಸ್ತಮುಖೇನ ಪ್ರಾಕ್ಸಿ ಸಂರಚನೆ:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  autoTypeRadio.label           "ಸ್ವಯಂಚಾಲಿತ ಪ್ರಾಕ್ಸಿ ಸಂರಚನಾ URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "ಮತ್ತೊಮ್ಮೆ ಲೋಡ್ ಮಾಡು">
+<!ENTITY  reload.accesskey              "e">
+<!ENTITY  ftp.label                     "FTP ಪ್ರಾಕ್ಸಿ:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP ಪ್ರಾಕ್ಸಿ:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  ssl.label                     "SSL ಪ್ರಾಕ್ಸಿ:">
+<!ENTITY  ssl.accesskey                 "L">
+<!ENTITY  socks.label                   "SOCKS ಅತಿಥೇಯ:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "SOCKS v5 ಬಳಸುವಾಗ ಪ್ರಾಕ್ಸಿ DNS">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "ಸಂಪರ್ಕ ಸಾಧನ:">
+<!ENTITY  HTTPport.accesskey            "P">
+<!ENTITY  SSLport.accesskey             "o">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "ಇದಕ್ಕೆ ಪ್ರಾಕ್ಸಿ ಇಲ್ಲ:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "ಉದಾಹರಣೆ: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "ಎಲ್ಲಾ ಪ್ರೋಟೊಕಾಲ್‍ಗಳಿಗೆ  ಈ ಪ್ರಾಕ್ಸಿ ಪರಿಚಾರಕವನ್ನು ಬಳಸು">
+<!ENTITY  shareproxy.accesskey          "s">
+<!ENTITY  autologinproxy.label          "ಗುಪ್ತಪದವನ್ನು ಉಳಿಸಲಾಗಿದ್ದರೆ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಪ್ರಾಂಪ್ಟ್‌ ಮಾಡಬೇಡ">
+<!ENTITY  autologinproxy.accesskey      "i">
+<!ENTITY  autologinproxy.tooltip        "ಈ ಆಯ್ಕೆಯು ನೀವು ಪ್ರಾಕ್ಸಿಗಳಿಗಾಗಿ ಗುರುತುಗಳನ್ನು ಉಳಿಸಿಟ್ಟುಕೊಂಡಾಗ ಯಾರಿಗೂ ತಿಳಿಯದಂತೆ ಅವುಗಳಿಗೆ ನಿಮ್ಮನ್ನು ದೃಢೀಕರಿಸುತ್ತದೆ. ದೃಢೀಕರಣವು ವಿಫಲಗೊಂಡಲ್ಲಿ ನಿಮಗೆ ಪ್ರಾಂಪ್ಟ್‌ ಮಾಡಲಾಗುತ್ತದೆ.">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Amarag n tmerna n umaɣnu">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+
+<!-- First wizard page -->
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; ad igber talɣut n iɣewwaṛen n yismenyifen-ik deg umaɣnu-ik udmawan.">
+<!ENTITY profileCreationExplanation_2.text  "Ma yella tebḍiḍ anɣel-agi n &brandShortName; akked iseqdacen nniḍen, tzemreḍ ad tesqedceḍ imeɣna akken ad tǧeḍ talɣut n yal aseqdac iman-is. Iwaya, Issefk yal aseqdac ad yernu ameɣnu ines.">
+<!ENTITY profileCreationExplanation_3.text  "Ma telliḍ s yiman-ik kan i tessaqdaceḍ anɣel-agi n &brandShortName;, issefk ihi ɣersum ad yili ɣur-k yiwen umaqru. Ma tebɣiḍ, tzemred ad ternuḍ imeɣna nniḍen i kečč. Amedya, izmer ad tesɛuḍ imaɣna imgaraden i weseqdec udmawan neɣ asedri.">
+<!ENTITY profileCreationExplanation_4.text  "Akken ad tebduḍ timerna n umaɣnu-inek, sit ɣef Ɣer zdat.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Akken ad tebduḍ timerna n umaɣnu-inek, sit ɣef Ɣer zdat.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Akken ad tebduḍ timerna n umaɣnu-inek, sit ɣef Ɣer zdat.">
+
+<!-- Second wizard page -->
+<!ENTITY profileCreationIntro.text      "Ma tenrniḍ imeɣna, tzemreḍ ad tesemgiredeḍ s yisem. Tzemreḍ ad tesqedceḍ isem i d-ittusumren neɣ fren isem s yiman-ik.">
+<!ENTITY profilePrompt.label            "Sekcem isem amaynut n umaɣnu">
+<!ENTITY profilePrompt.accesskey        "k">
+<!ENTITY profileDirectoryExplanation.text   "Iɣewwaṛen-ik n useqdac, isemnyifen, d isefka-inek usligen ad ttwakelsen imaṛṛa di:">
+<!ENTITY profileDefaultName             "Aseqdac n amezwer">
+<!ENTITY button.choosefolder.label      "Fren akaram…">
+<!ENTITY button.choosefolder.accesskey  "F">
+<!ENTITY button.usedefault.label        "Seqdec akaram amezwer">
+<!ENTITY button.usedefault.accesskey    "S">

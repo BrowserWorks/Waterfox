@@ -1,0 +1,122 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Користи заштита од следење">
+
+<!ENTITY tracking.label                 "Следење">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  history.label                 "Историја">
+
+<!ENTITY  locationBar.label             "Локациска лента">
+
+<!ENTITY  locbar.history.label          "Историја">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Обележувачи">
+
+
+<!ENTITY  acceptCookies.label           "Прифаќај колачиња од места">
+<!ENTITY  acceptCookies.accesskey       "м">
+
+<!ENTITY  acceptThirdParty.pre.label      "Прифаќај колачиња од други места:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "к">
+<!ENTITY  acceptThirdParty.always.label   "Секогаш">
+<!ENTITY  acceptThirdParty.never.label    "Никогаш">
+<!ENTITY  acceptThirdParty.visited.label  "Од посетени">
+
+<!ENTITY  keepUntil.label               "Колачињата се чуваат:">
+<!ENTITY  keepUntil.accesskey           "К">
+
+<!ENTITY  expire.label                  "додека не истечат">
+<!ENTITY  close.label                   "до излез од &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Исклучоци…">
+<!ENTITY  cookieExceptions.accesskey    "И">
+
+<!ENTITY  showCookies.label             "Прикажи ги колачињата…">
+<!ENTITY  showCookies.accesskey         "л">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "F">
+<!ENTITY  historyHeader.remember.label     "ќе ја памти историјата">
+<!ENTITY  historyHeader.dontremember.label "никогаш нема да ја памти историјата">
+<!ENTITY  historyHeader.custom.label       "ќе ги користи Вашите лични поставки за историјата">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ќе ги памти Вашите формулари и пребарувања, историјата на сурфање и преземања, и ќе чува колачиња од интернет места кои ги посетувате.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Или пак, можеби ќе сакате да ">
+<!ENTITY  rememberActions.clearHistory.label  "ја исчистите вашата скорешна историја">
+<!ENTITY  rememberActions.middle.label        ", или ">
+<!ENTITY  rememberActions.removeCookies.label "да отстраните одредени колачиња">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ќе ги користи истите поставки како и за приватното сурфање, и нема да ја памти историјата додека сурфате на интернет.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Или пак, можеби ќе сакате да ">
+<!ENTITY  dontrememberActions.clearHistory.label "исчисти ја целата моментална историја">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Секогаш користи режим за приватно сурфање">
+<!ENTITY  privateBrowsingPermanent2.accesskey "п">
+
+<!ENTITY  rememberHistory2.label      "Запамти ја мојата сурферска историја и преземања">
+<!ENTITY  rememberHistory2.accesskey  "п">
+
+<!ENTITY  rememberSearchForm.label       "Памети ги пребарувањата и формуларите">
+<!ENTITY  rememberSearchForm.accesskey   "ф">
+
+<!ENTITY  clearOnClose.label             "Исчисти ја историјата секојпат кога ќе го затворите &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "ч">
+
+<!ENTITY  clearOnCloseSettings.label     "Поставки…">
+<!ENTITY  clearOnCloseSettings.accesskey "П">
+
+<!ENTITY  browserContainersHeader.label         "Контејнерски јазичиња">
+<!ENTITY  browserContainersLearnMore.label      "Дознајте повеќе">
+<!ENTITY  browserContainersEnabled.label        "Овозможи контејнерски јазичиња">
+<!ENTITY  browserContainersSettings.label        "Поставки…">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!ENTITY changeBlockList.label          "Change Block List">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  doNotTrack.pre.label          "You can also ">
+<!ENTITY  doNotTrack.settings.label     "manage your Do Not Track settings">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.openpage.label         "Open tabs">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  locbar.searches.label         "Related searches from the default search engine">
+<!ENTITY  locbar.suggest.label          "When using the location bar, suggest:">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  suggestionSettings.label      "Change preferences for search engine suggestions…">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionAlways.label       "Always">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY  trackingProtectionExceptions.label   "Exceptions…">
+<!ENTITY  trackingProtectionLearnMore.label    "Learn more">
+<!ENTITY  trackingProtectionNever.accesskey    "n">
+<!ENTITY  trackingProtectionNever.label        "Never">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBM5.label         "Use Tracking Protection in Private Windows">
+<!ENTITY trackingProtectionPBMLearnMore.label "Learn more">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionPrivate.label      "Only in private windows">

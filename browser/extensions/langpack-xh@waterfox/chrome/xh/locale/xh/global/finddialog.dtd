@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Fumana kweli khasi">
+<!ENTITY findField.label "Fumana ntoni:">
+<!ENTITY findField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Ngqamanisa unobumba">
+<!ENTITY caseSensitiveCheckbox.accesskey "n">
+<!ENTITY wrapCheckbox.label "Rhangqa">
+<!ENTITY wrapCheckbox.accesskey "R">
+<!ENTITY findButton.label "Fumana okulandelayo">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY cancelButton.label "Rhoxisa">
+<!ENTITY closeButton.label "Vala">
+<!ENTITY up.label "Phezulu">
+<!ENTITY up.accesskey "P">
+<!ENTITY down.label "Phantsi">
+<!ENTITY down.accesskey "P">
+<!ENTITY direction.label "Icala">

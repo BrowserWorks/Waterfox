@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Аднавіць &brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Пачніце з чыстага ліста, каб ліквідаваць праблемы і аднавіць прадукцыйнасць.">
+<!ENTITY refreshProfile.dialog.description2  "Гэта прывядзе да:">
+<!ENTITY refreshProfile.dialog.items.label1  "Выдалення вашых дадаткаў і налад">
+<!ENTITY refreshProfile.dialog.items.label2  "Аднаўленне прадвызначаных налад браўзера">
+<!ENTITY refreshProfile.dialog.button.label  "Аднавіць &brandShortName;">
+
+<!ENTITY refreshProfile.title                "Наладка &brandShortName;">
+<!ENTITY refreshProfile.button.label         "Аднавіць &brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Амаль гатова…">

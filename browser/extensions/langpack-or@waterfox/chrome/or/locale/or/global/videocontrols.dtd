@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "ଚଲାନ୍ତୁ">
+<!ENTITY playButton.pauseLabel "ବିରତି">
+<!ENTITY muteButton.muteLabel "ନିଃଶବ୍ଦ କରନ୍ତୁ">
+<!ENTITY muteButton.unmuteLabel "ନିଃଶବ୍ଦ ବାତିଲ କରନ୍ତୁ">
+<!ENTITY fullscreenButton.enterfullscreenlabel "ସମ୍ପୂର୍ଣ୍ଣ ପରଦା">
+<!ENTITY fullscreenButton.exitfullscreenlabel "ସମ୍ପୂର୍ଣ୍ଣ ପରଦାରୁ ପ୍ରସ୍ଥାନ କରନ୍ତୁ">
+<!ENTITY castingButton.castingLabel "ପରଦାରେ ଆରମ୍ଭ କରନ୍ତୁ">
+
+
+<!ENTITY stats.media "ମେଡିଆ">
+<!ENTITY stats.size "ଆକାର">
+<!ENTITY stats.activity "କାର୍ଯ୍ୟକଳାପ">
+<!ENTITY stats.activityPaused "ସ୍ଥିର ଅଛି">
+<!ENTITY stats.activityPlaying "ଚାଲୁଅଛି">
+<!ENTITY stats.activityEnded "ସମାପ୍ତ ହୋଇଛି">
+<!ENTITY stats.activitySeeking "(ଆଣୁଅଛି)">
+<!ENTITY stats.volume "ଧ୍ୱନୀ ତୀବ୍ରତା">
+<!ENTITY stats.framesParsed "ଫ୍ରେମଗୁଡ଼ିକୁ ବିଶ୍ଳେଷଣ କରାଯାଇଛି">
+<!ENTITY stats.framesDecoded "ଫ୍ରେମଗୁଡ଼ିକୁ ଅବସାଙ୍କେତିକରଣ କରାଯାଇଛି">
+<!ENTITY stats.framesPresented "ଫ୍ରେମଗୁଡ଼ିକୁ ଉପସ୍ଥାପିତ କରାଯାଇଛି">
+<!ENTITY stats.framesPainted "ଫ୍ରେମଗୁଡ଼ିକୁ  ଚିତ୍ରିତ କରାଯାଇଛି">
+
+<!ENTITY error.aborted "ଭିଡ଼ିଓ ଧାରଣ ବନ୍ଦ ଅଛି।">
+<!ENTITY error.network "ନେଟୱର୍କ ତ୍ରୁଟି ହେତୁ ଭିଡ଼ିଓ ଚାଳନକୁ ପରିତ୍ୟାଗ କରାଯାଇଛି।">
+<!ENTITY error.decode "ଭିଡ଼ିଓକୁ ଚଲାଇ ପାରିବେ ନାହିଁ କାରଣ ଫାଇଲଟି ତ୍ରୁଟିଯୁକ୍ତ ଅଛି।">
+<!ENTITY error.srcNotSupported "ଭିଡ଼ିଓ ଶୈଳୀ କିମ୍ବା  MIME ପ୍ରକାର ସହାୟତା ପ୍ରାପ୍ତ ନୁହଁ।">
+<!ENTITY error.noSource2 "କୌଣସି ସହାୟତା ପ୍ରାପ୍ତ ଏବଂ  MIME ପ୍ରକାରର ଭିଡ଼ିଓ ଶୈଳୀ ମିଳୁ ନାହିଁ।">
+<!ENTITY error.generic "ଅଜଣା ତ୍ରୁଟି ହେତୁ ଭିଡ଼ିଓ ଚାଳନକୁ ପରିତ୍ୟାଗ କରାଯାଇଛି।">
+<!-- LOCALIZATION NOTE (scrubberScale.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 of 6:00:00 elapsed".
+-->
+
+<!ENTITY scrubberScale.nameFormat "#1 ଅଂଶ #2 ର ସମାପ୍ତ ହୋଇଛି">
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+
+<!ENTITY closedCaption.off "Off">
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

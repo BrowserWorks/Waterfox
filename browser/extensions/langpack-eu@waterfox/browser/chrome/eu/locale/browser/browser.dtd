@@ -1,0 +1,996 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Nabigatze pribatua)">
+
+<!ENTITY appmenu.tooltip                     "Ireki menua">
+<!ENTITY navbarOverflow.label                "Tresna gehiago…">
+<!-- Tab context menu -->
+
+<!ENTITY  reloadTab.label                    "Berritu fitxa">
+<!ENTITY  reloadTab.accesskey                "r">
+<!ENTITY  reloadAllTabs.label                "Berritu fitxa guztiak">
+<!ENTITY  reloadAllTabs.accesskey            "B">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Itxi eskuinera dauden fitxak">
+<!ENTITY  closeTabsToTheEnd.accesskey        "s">
+<!ENTITY  closeOtherTabs.label               "Itxi beste fitxak">
+<!ENTITY  closeOtherTabs.accesskey           "t">
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+
+<!ENTITY  pinTab.label                       "Ainguratu fitxa">
+<!ENTITY  pinTab.accesskey                   "A">
+<!ENTITY  unpinTab.label                     "Desainguratu fitxa">
+<!ENTITY  unpinTab.accesskey                 "a">
+<!ENTITY  sendTabToDevice.label              "Bidali fitxa gailura">
+<!ENTITY  sendTabToDevice.accesskey          "g">
+<!ENTITY  sendPageToDevice.label             "Bidali orria gailura">
+<!ENTITY  sendPageToDevice.accesskey         "g">
+<!ENTITY  sendLinkToDevice.label             "Bidali lotura gailura">
+<!ENTITY  sendLinkToDevice.accesskey         "g">
+<!ENTITY  moveToNewWindow.label              "Eraman leiho berrira">
+<!ENTITY  moveToNewWindow.accesskey          "h">
+<!ENTITY  bookmarkAllTabs.label              "Egin fitxa guztien laster-marka…">
+<!ENTITY  bookmarkAllTabs.accesskey          "t">
+<!ENTITY  undoCloseTab.label                 "Desegin fitxa ixtea">
+<!ENTITY  undoCloseTab.accesskey             "D">
+<!ENTITY  closeTab.label                     "Itxi fitxa">
+<!ENTITY  closeTab.accesskey                 "I">
+
+<!ENTITY  listAllTabs.label      "Zerrendatu fitxa guztiak">
+
+<!ENTITY tabCmd.label "Fitxa berria">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Ireki helbidea…">
+<!ENTITY openFileCmd.label "Ireki fitxategia…">
+<!ENTITY openFileCmd.accesskey "f">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Prestatu orria…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Inprimatzeko aurrebista">
+<!ENTITY printPreviewCmd.accesskey "n">
+<!ENTITY printCmd.label "Inprimatu…">
+<!ENTITY printCmd.accesskey "p">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Lan egin lineaz kanpo">
+<!ENTITY goOfflineCmd.accesskey "o">
+
+<!ENTITY menubarCmd.label "Menu-barra">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "Nabigazioko tresna-barra">
+<!ENTITY personalbarCmd.label "Laster-marken tresna-barra">
+<!ENTITY personalbarCmd.accesskey "b">
+<!ENTITY bookmarksToolbarItem.label "Laster-marken tresna-barraren osagaiak">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Berritu fitxa guztiak">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "B">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Egin fitxa guztien laster-marka…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "t">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Desegin fitxa ixtea">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "D">
+
+<!ENTITY pageSourceCmd.label "Orriaren iturburua">
+<!ENTITY pageSourceCmd.accesskey "O">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Orriaren informazioa">
+<!ENTITY pageInfoCmd.accesskey "i">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Ispilatu fitxa">
+<!ENTITY mirrorTabCmd.accesskey "I">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Sartu pantaila osoan">
+<!ENTITY enterFullScreenCmd.accesskey "o">
+<!ENTITY exitFullScreenCmd.label "Irten pantaila osotik">
+<!ENTITY exitFullScreenCmd.accesskey "p">
+<!ENTITY fullScreenCmd.label "Pantaila osoa">
+<!ENTITY fullScreenCmd.accesskey "P">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Erakutsi fitxa guztiak">
+<!ENTITY showAllTabsCmd.accesskey "z">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "Hasi saioa &syncBrand.shortName.label;(e)n">
+<!ENTITY fxaSignedIn.tooltip "Ireki &syncBrand.shortName.label; hobespenak">
+<!ENTITY fxaSignInError.label "Birkonektatu &syncBrand.shortName.label;(e)ra">
+<!ENTITY fxaUnverified.label "Egiaztatu zure kontua">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Txikitu">
+<!ENTITY fullScreenRestore.tooltip "Berreskuratu">
+<!ENTITY fullScreenClose.tooltip "Itxi">
+<!ENTITY fullScreenAutohide.label "Ezkutatu tresna-barrak">
+<!ENTITY fullScreenAutohide.accesskey "E">
+<!ENTITY fullScreenExit.label "Irten pantaila osoko ikuspegitik">
+<!ENTITY fullScreenExit.accesskey "p">
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "pantaila osoan dago orain">
+<!ENTITY fullscreenWarning.generic.label "Dokumentua pantaila osoan dago orain">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+
+<!ENTITY exitDOMFullscreen.button "Irten pantaila osotik (Esk)">
+<!ENTITY exitDOMFullscreenMac.button "Irten pantaila osotik (esk)">
+<!ENTITY leaveDOMFullScreen.label "Irten pantaila osotik">
+<!ENTITY leaveDOMFullScreen.accesskey "s">
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "(e)k zure erakuslearen kontrola dauka. Kontrola berreskuratzeko, sakatu eskape tekla.">
+<!ENTITY pointerlockWarning.generic.label "Dokumentu honek zure erakuslearen kontrola dauka. Kontrola berreskuratzeko, sakatu eskape tekla.">
+
+<!ENTITY closeWindow.label "Itxi leihoa">
+<!ENTITY closeWindow.accesskey "h">
+
+<!ENTITY bookmarksMenu.label "Laster-markak">
+<!ENTITY bookmarksMenu.accesskey "m">
+<!ENTITY bookmarkThisPageCmd.label "Egin orriaren laster-marka">
+<!ENTITY editThisBookmarkCmd.label "Editatu laster-marka">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Bilatu partekatzeko zerbitzu gehiago…">
+<!ENTITY sharePageCmd.label "Partekatu orri hau">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "P">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Partekatu lotura hau">
+<!ENTITY shareLink.accesskey "P">
+<!ENTITY shareImage.label "Partekatu irudi hau">
+<!ENTITY shareImage.accesskey "P">
+<!ENTITY shareSelect.label "Partekatu hautapena">
+<!ENTITY shareSelect.accesskey "P">
+<!ENTITY shareVideo.label "Partekatu bideo hau">
+<!ENTITY shareVideo.accesskey "P">
+<!ENTITY feedsMenu2.label "Harpidetu orri honetara">
+<!ENTITY subscribeToPageMenupopup.label "Harpidetu orri honetara">
+<!ENTITY subscribeToPageMenuitem.label "Harpidetu orri honetara…">
+<!ENTITY addCurPagesCmd.label "Egin fitxa guztien laster-marka…">
+<!ENTITY showAllBookmarks2.label "Erakutsi laster-marka guztiak">
+<!ENTITY recentBookmarks.label "Azken laster-markak">
+<!ENTITY otherBookmarksCmd.label "Beste laster-markak">
+<!ENTITY mobileBookmarksCmd.label "Mugikorreko laster-markak">
+<!ENTITY bookmarksToolbarChevron.tooltip "Erakutsi laster-marka gehiago">
+<!ENTITY showRecentlyBookmarked.label     "Erakutsi azken laster-markak">
+<!ENTITY showRecentlyBookmarked.accesskey "E">
+<!ENTITY hideRecentlyBookmarked.label     "Ezkutatu azken laster-markak">
+<!ENTITY hideRecentlyBookmarked.accesskey "z">
+
+<!ENTITY backCmd.label                "Atzera">
+<!ENTITY backButton.tooltip           "Joan orri bat atzera">
+<!ENTITY forwardCmd.label             "Aurrera">
+<!ENTITY forwardButton.tooltip        "Joan orri bat aurrera">
+<!ENTITY backForwardButtonMenu.tooltip "Egin eskuin-klika edo ekarri behera historia erakusteko">
+<!ENTITY backForwardButtonMenuMac.tooltip "Ekarri behera historia erakusteko">
+<!ENTITY reloadCmd.label              "Berritu">
+<!ENTITY stopCmd.label                "Gelditu">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Joan kokapen-barrako helbidera">
+<!ENTITY printButton.label            "Inprimatu">
+<!ENTITY printButton.tooltip          "Inprimatu orri hau">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Ikusi gunearen informazioa">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Ireki mezuen panela">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Ireki helbide-eskaeren panela">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Ireki gehigarrien instalazio-mezuen panela">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Ireki lineaz kanpoko biltegiratzearen mezuen panela">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Ireki pasahitza gordetzeko mezuen panela">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Kudeatu pluginen erabilera">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Aldatu gunetik jakinarazpenik jaso dezakezun ala ez">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Gorde datuak biltegiratze iraunkorrean">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Nabigatzailea urruneko agintepean dago">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Kudeatu zure kamera eta/edo mikrofonoa gunearekin partekatzea">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Kudeatu zure mikrofonoa gunearekin partekatzea">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Kudeatu zure leihoak edo pantaila gunearekin partekatzea">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Ireki instalazio-mezuen panela">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Itzuli orri hau">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Kudeatu orriaren itzulpena">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Kudeatu DRM softwarearen erabilpena">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Kamera blokeatuta daukazu webgune honetarako.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Mikrofonoa blokeatuta daukazu webgune honetarako.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Pantaila partekatzea blokeatuta daukazu webgune honetarako.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Kokalekuaren informazioa blokeatuta daukazu webgune honetarako.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Datuen biltegiratzea blokeatuta daukazu webgune honetarako.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Jakinarazpenak blokeatuta dauzkazu webgune honetarako.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Datuen biltegiratze iraunkorra blokeatuta daukazu webgune honetarako.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Erakutsi historia">
+
+<!ENTITY searchItem.title             "Bilatu">
+<!-- Toolbar items -->
+
+<!ENTITY homeButton.label             "Etxea">
+
+<!ENTITY bookmarksButton.label          "Laster-markak">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Laster-markak">
+<!ENTITY bookmarksMenuButton.other.label "Beste laster-markak">
+<!ENTITY bookmarksMenuButton.mobile.label "Mugikorreko laster-markak">
+<!ENTITY viewBookmarksSidebar2.label        "Ikusi laster-marken tresna-barra">
+<!ENTITY viewBookmarksToolbar.label         "Ikusi laster-marken tresna-barra">
+<!ENTITY searchBookmarks.label              "Bilatu laster-markak">
+
+<!ENTITY containersMenu.label "Edukiontziak">
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Historia">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Tresnak">
+<!ENTITY toolsMenu.accesskey          "T"> 
+
+<!ENTITY keywordfield.label           "Gehitu bilaketa honentzat gako-hitza…">
+<!ENTITY keywordfield.accesskey       "k">
+
+<!ENTITY downloads.label              "Deskargak">
+<!ENTITY downloads.accesskey          "D">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Gehigarriak">
+<!ENTITY addons.accesskey             "G">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Web garapena">
+<!ENTITY webDeveloperMenu.accesskey   "W">
+
+<!ENTITY inspectContextMenu.label     "Ikuskatu elementua">
+<!ENTITY inspectContextMenu.accesskey "s">
+
+<!ENTITY fileMenu.label         "Fitxategia"> 
+<!ENTITY fileMenu.accesskey       "F">
+<!ENTITY newUserContext.label             "Edukiontzi-fitxa berria">
+<!ENTITY newUserContext.accesskey         "E">
+<!ENTITY newNavigatorCmd.label        "Leiho berria">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "L">
+<!ENTITY newPrivateWindow.label     "Leiho pribatu berria">
+<!ENTITY newPrivateWindow.accesskey "h">
+<!ENTITY newNonRemoteWindow.label   "E10s ez den leiho berria">
+
+<!ENTITY editMenu.label         "Editatu"> 
+<!ENTITY editMenu.accesskey       "E"> 
+<!ENTITY undoCmd.label            "Desegin">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "D"> 
+<!ENTITY redoCmd.label            "Berregin">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "r"> 
+<!ENTITY cutCmd.label           "Ebaki">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "E"> 
+<!ENTITY copyCmd.label            "Kopiatu">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "K"> 
+<!ENTITY pasteCmd.label           "Itsatsi">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "I"> 
+<!ENTITY deleteCmd.label          "Ezabatu">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "z"> 
+<!ENTITY selectAllCmd.label         "Hautatu dena">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "a"> 
+<!ENTITY preferencesCmd2.label       "Aukerak">
+<!ENTITY preferencesCmd2.accesskey     "A">
+<!ENTITY preferencesCmdUnix.label       "Hobespenak">
+<!ENTITY preferencesCmdUnix.accesskey     "n"> 
+
+<!ENTITY clearRecentHistory.label               "Garbitu azken historia…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Ikusi"> 
+<!ENTITY viewMenu.accesskey       "I"> 
+<!ENTITY viewToolbarsMenu.label       "Tresna-barrak"> 
+<!ENTITY viewToolbarsMenu.accesskey     "T"> 
+<!ENTITY viewSidebarMenu.label "Alboko barra">
+<!ENTITY viewSidebarMenu.accesskey "A">
+<!ENTITY viewCustomizeToolbar.label       "Pertsonalizatu…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "P">
+<!ENTITY overflowCustomizeToolbar.label       "Pertsonalizatu tresna-barra…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Historia">
+<!ENTITY historyMenu.accesskey "H">
+<!ENTITY historyUndoMenu.label "Itxitako azken fitxak">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Itxitako azken leihoak">
+<!ENTITY historyRestoreLastSession.label "Berreskuratu aurreko saioa">
+
+<!ENTITY showAllHistoryCmd2.label "Erakutsi historia guztia">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Pertsonalizatu">
+<!ENTITY appMenuCustomize.tooltip "Pertsonalizatu menua eta tresna-barrak">
+<!ENTITY appMenuCustomizeExit.label "Irten pertsonalizatzetik">
+<!ENTITY appMenuCustomizeExit.tooltip "Amaitu pertsonalizatzen">
+<!ENTITY appMenuHistory.label "Historia">
+<!ENTITY appMenuHistory.showAll.label "Erakutsi historia guztia">
+<!ENTITY appMenuHistory.clearRecent.label "Garbitu azken historia…">
+<!ENTITY appMenuHistory.restoreSession.label "Berreskuratu aurreko saioa">
+<!ENTITY appMenuHistory.viewSidebar.label "Ikusi historiaren alboko barra">
+<!ENTITY appMenuHistory.recentHistory.label "Azken historia">
+<!ENTITY appMenuHelp.label "Laguntza">
+<!ENTITY appMenuHelp.tooltip "Ireki laguntza-menua">
+
+<!ENTITY appMenuRemoteTabs.label "Sinkronizatutako fitxak">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Irekitako fitxarik ez">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Erakutsi gehiago">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Erakutsi gailu honetako fitxa gehiago">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Erakutsi denak">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Erakutsi gailu honetako fitxa guztiak">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktibatu fitxak sinkronizatzea zure beste gailuetako fitxen zerrenda ikusteko.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Sinkronizatutako fitxarik ez... momentuz!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Beste gailuetako zure fitxak hemen ikusi nahi dituzu?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Sync hobespenak">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Hasi saioa zure beste gailuetako fitxak ikusteko.">
+<!ENTITY appMenuRemoteTabs.signin.label "Hasi saioa Sync-en">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Kudeatu gailuak…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Ikusi sinkronizatutako fitxen alboko barra">
+
+<!ENTITY customizeMenu.addToToolbar.label "Gehitu tresna-barran">
+<!ENTITY customizeMenu.addToToolbar.accesskey "G">
+<!ENTITY customizeMenu.addToPanel.label "Gehitu menuan">
+<!ENTITY customizeMenu.addToPanel.accesskey "m">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Gehitu gainezkatzearen menuan">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.moveToToolbar.label "Eraman tresna-barrara">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "r">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Eraman menura">
+<!ENTITY customizeMenu.moveToPanel.accesskey "r">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Ainguratu gainezkatzearen menuan">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "A">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Desainguratu gainezkatzearen menutik">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "D">
+<!ENTITY customizeMenu.removeFromToolbar.label "Kendu tresna-barratik">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "K">
+<!ENTITY customizeMenu.removeFromMenu.label "Kendu menutik">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "K">
+<!ENTITY customizeMenu.addMoreItems.label "Gehitu elementu gehiago…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "G">
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY moreMenu.label "Gehiago">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Idatzi bilaketa edo helbidea">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Hedapena:">
+<!ENTITY urlbar.switchToTab.label     "Aldatu fitxara:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Bilaketen esperientzia hobetu nahi duzu iradokizunekin?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Argibide gehiago…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "A">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Ez">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "E">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Bai">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "B">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Aholkua:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Eskuratu gauzak bilatzeko laguntza! Bilatu &#x1F50E; ikonoa bilaketa-iradokizunen ondoan">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Aldatu aukerak…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "A">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Aldatu hobespenak…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "A">
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+
+<!ENTITY contentSearchInput.label     "Bilaketa-katea">
+<!ENTITY contentSearchSubmit.tooltip  "Bidali bilaketa">
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!ENTITY searchInput.placeholder      "Bilatu">
+<!ENTITY searchIcon.tooltip           "Bilatu">
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+
+<!ENTITY searchFor.label              "Bilatu ">
+<!ENTITY searchWith.label             " hau erabiliz:">
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+
+<!ENTITY search.label                 "Bilatu ">
+<!ENTITY searchAfter.label            "">
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+
+<!ENTITY searchWithHeader.label       "Bilatu honekin:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Aldatu bilaketa-ezarpenak">
+<!ENTITY changeSearchSettings.tooltip "Aldatu bilaketa-ezarpenak">
+
+<!ENTITY searchInNewTab.label         "Bilatu fitxa berrian">
+<!ENTITY searchInNewTab.accesskey     "f">
+<!ENTITY searchSetAsDefault.label     "Ezarri bilaketa-motor lehenetsi gisa">
+<!ENTITY searchSetAsDefault.accesskey "h">
+
+<!ENTITY openLinkCmdInTab.label       "Ireki fitxa berrian">
+<!ENTITY openLinkCmdInTab.accesskey   "t">
+<!ENTITY openLinkCmd.label            "Ireki leiho berrian">
+<!ENTITY openLinkCmd.accesskey        "l">
+<!ENTITY openLinkInPrivateWindowCmd.label "Ireki lotura leiho pribatu berrian">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "p">
+<!ENTITY openLinkCmdInCurrent.label     "Ireki lotura">
+<!ENTITY openLinkCmdInCurrent.accesskey "I">
+<!ENTITY openFrameCmdInTab.label      "Ireki markoa fitxa berrian">
+<!ENTITY openFrameCmdInTab.accesskey  "t">
+<!ENTITY openFrameCmd.label           "Ireki markoa leiho berrian">
+<!ENTITY openFrameCmd.accesskey       "m">
+<!ENTITY openLinkCmdInContainerTab.label "Ireki lotura edukiontzi-fitxa berrian">
+<!ENTITY openLinkCmdInContainerTab.accesskey "b">
+<!ENTITY showOnlyThisFrameCmd.label     "Erakutsi marko hau bakarrik">
+<!ENTITY showOnlyThisFrameCmd.accesskey "b">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Berritu markoa">
+<!ENTITY reloadFrameCmd.accesskey     "r">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Ikusi aukeraren iturburua">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Ikusi MathML iturburua">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "u">
+<!ENTITY viewPageSourceCmd.label      "Ikusi orriaren iturburua">
+<!ENTITY viewPageSourceCmd.accesskey  "o">
+<!ENTITY viewFrameSourceCmd.label     "Ikusi markoaren iturburua">
+<!ENTITY viewFrameSourceCmd.accesskey "m">
+<!ENTITY viewPageInfoCmd.label        "Ikusi orriaren informazioa">
+<!ENTITY viewPageInfoCmd.accesskey    "I">
+<!ENTITY viewFrameInfoCmd.label       "Ikusi markoaren informazioa">
+<!ENTITY viewFrameInfoCmd.accesskey   "u">
+<!ENTITY reloadImageCmd.label         "Berritu irudia">
+<!ENTITY reloadImageCmd.accesskey     "r">
+<!ENTITY viewImageCmd.label           "Ikusi irudia">
+<!ENTITY viewImageCmd.accesskey       "I">
+<!ENTITY viewImageInfoCmd.label       "Ikusi irudiaren informazioa">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewImageDescCmd.label       "Ikusi deskribapena">
+<!ENTITY viewImageDescCmd.accesskey   "d">
+<!ENTITY viewVideoCmd.label           "Ikusi bideoa">
+<!ENTITY viewVideoCmd.accesskey       "k">
+<!ENTITY viewBGImageCmd.label         "Ikusi atzeko planoko irudia">
+<!ENTITY viewBGImageCmd.accesskey     "a">
+<!ENTITY setDesktopBackgroundCmd.label      "Jarri idazmahaiaren atzeko planoan…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "J">
+<!ENTITY bookmarkPageCmd2.label       "Egin orri honen laster-marka">
+<!ENTITY bookmarkThisLinkCmd.label      "Egin lotura honen laster-marka">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "l">
+<!ENTITY bookmarkThisFrameCmd.label      "Egin marko honen laster-marka">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "m">
+<!ENTITY copyURLCmd.label             "Kopiatu URLa">
+<!ENTITY emailPageCmd.label           "Bidali lotura postaz…">
+<!ENTITY emailPageCmd.accesskey       "s">
+<!ENTITY savePageCmd.label            "Gorde orria honela…">
+<!ENTITY savePageCmd.accesskey        "a">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "G">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Gorde markoa honela…">
+<!ENTITY saveFrameCmd.accesskey       "m">
+<!ENTITY printFrameCmd.label          "Inprimatu markoa…">
+<!ENTITY printFrameCmd.accesskey      "p">
+<!ENTITY saveLinkCmd.label            "Gorde lotura honela…">
+<!ENTITY saveLinkCmd.accesskey        "G">
+<!ENTITY saveImageCmd.label           "Gorde irudia honela…">
+<!ENTITY saveImageCmd.accesskey       "G">
+<!ENTITY saveVideoCmd.label           "Gorde bideoa honela…">
+<!ENTITY saveVideoCmd.accesskey       "b">
+<!ENTITY saveAudioCmd.label           "Gorde audioa honela…">
+<!ENTITY saveAudioCmd.accesskey       "r">
+<!ENTITY emailImageCmd.label          "Bidali irudia postaz…">
+<!ENTITY emailImageCmd.accesskey      "a">
+<!ENTITY emailVideoCmd.label          "Bidali bideoa postaz…">
+<!ENTITY emailVideoCmd.accesskey      "a">
+<!ENTITY castVideoCmd.label           "Bidali bideoa gailura">
+<!ENTITY castVideoCmd.accesskey       "B">
+<!ENTITY emailAudioCmd.label          "Bidali audioa postaz…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "Aktibatu plugin hau">
+<!ENTITY playPluginCmd.accesskey      "k">
+<!ENTITY hidePluginCmd.label          "Ezkutatu plugin hau">
+<!ENTITY hidePluginCmd.accesskey      "E">
+<!ENTITY copyLinkCmd.label            "Kopiatu loturaren helbidea">
+<!ENTITY copyLinkCmd.accesskey        "K">
+<!ENTITY copyImageCmd.label           "Kopiatu irudiaren helbidea">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyImageContentsCmd.label   "Kopiatu irudia">
+<!ENTITY copyImageContentsCmd.accesskey  "K"> 
+<!ENTITY copyVideoURLCmd.label        "Kopiatu bideoaren helbidea">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Kopiatu audioaren helbidea">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "Kopiatu helbide elektronikoa">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label              "Marko hau">
+<!ENTITY thisFrameMenu.accesskey          "h">
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+
+<!ENTITY mediaPlay.label             "Erreproduzitu">
+<!ENTITY mediaPlay.accesskey         "p">
+<!ENTITY mediaPause.label            "Pausatu">
+<!ENTITY mediaPause.accesskey        "P">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Mututu">
+<!ENTITY mediaMute.accesskey         "M">
+<!ENTITY mediaUnmute.label           "Ez mututu">
+<!ENTITY mediaUnmute.accesskey       "m">
+<!ENTITY mediaPlaybackRate2.label     "Erreprodukzio-abiadura">
+<!ENTITY mediaPlaybackRate2.accesskey "b">
+<!ENTITY mediaPlaybackRate050x2.label "Motela (0,5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "M">
+<!ENTITY mediaPlaybackRate100x2.label "Arrunta">
+<!ENTITY mediaPlaybackRate100x2.accesskey "A">
+<!ENTITY mediaPlaybackRate125x2.label "Azkarra (1,25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "z">
+<!ENTITY mediaPlaybackRate150x2.label "Azkarragoa (1,5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "r">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Abiadura bizia (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "b">
+<!ENTITY mediaLoop.label             "Begizta">
+<!ENTITY mediaLoop.accesskey         "B">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Erakutsi kontrolak">
+<!ENTITY mediaShowControls.accesskey "k">
+<!ENTITY mediaHideControls.label     "Ezkutatu kontrolak">
+<!ENTITY mediaHideControls.accesskey "k">
+<!ENTITY videoFullScreen.label       "Pantaila osoa">
+<!ENTITY videoFullScreen.accesskey   "P">
+<!ENTITY videoSaveImage.label        "Gorde argazkia honela…">
+<!ENTITY videoSaveImage.accesskey    "G">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Erakutsi estatistikak">
+<!ENTITY videoShowStats.accesskey    "t">
+<!ENTITY videoHideStats.label        "Ezkutatu estatistikak">
+<!ENTITY videoHideStats.accesskey    "t">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomEnlargeCmd.label       "Gerturatu">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "G">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Urrundu">
+<!ENTITY fullZoomReduceCmd.accesskey    "U">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "_">
+
+<!ENTITY fullZoomResetCmd.label         "Berrezarri">
+<!ENTITY fullZoomResetCmd.accesskey     "r">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "=">
+
+<!ENTITY fullZoomToggleCmd.label        "Testua soilik">
+<!ENTITY fullZoomToggleCmd.accesskey    "T">
+<!ENTITY fullZoom.label                 "Zooma">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "Itxi alboko barra">
+<!ENTITY sidebarMenuClose.label         "Itxi alboko barra">
+
+<!ENTITY quitApplicationCmdWin2.label       "Irten">
+<!ENTITY quitApplicationCmdWin2.accesskey   "I">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Irten &brandShorterName;(e)tik">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Irten"> 
+<!ENTITY quitApplicationCmd.accesskey   "I">
+<!ENTITY quitApplicationCmdMac2.label   "Irten &brandShorterName;(e)tik">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Itxi">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "x">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Orriaren estiloa">
+<!ENTITY pageStyleMenu.accesskey "e">
+<!ENTITY pageStyleNoStyle.label "Estilorik gabe">
+<!ENTITY pageStyleNoStyle.accesskey "E">
+<!ENTITY pageStylePersistentOnly.label "Oinarrizko orri-estiloa">
+<!ENTITY pageStylePersistentOnly.accesskey "O">
+
+<!ENTITY pageReportIcon.tooltip            "Aldatu popup blokeatzailearen ezarpenak webgune honentzat">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Aldatu popup blokeatzailearen hobespenak…">
+<!ENTITY editPopupSettings.label "Aldatu popup blokeatzailearen aukerak…">
+<!ENTITY editPopupSettings.accesskey "A">
+<!ENTITY dontShowMessage.accesskey "z">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Aldatu orriaren norabidea">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "n">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Aldatu testuaren norabidea">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "t">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Bilatu orri honetan…">
+<!ENTITY findOnCmd.accesskey "B">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Bilatu berriro">
+<!ENTITY findAgainCmd.accesskey "r">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Gehitu hiztegiak…">
+<!ENTITY spellAddDictionaries.accesskey "G">
+
+<!ENTITY editBookmark.done.label                     "Eginda">
+<!ENTITY editBookmark.removeBookmark.accessKey       "K">
+
+<!ENTITY identity.connectionSecure "Konexio segurua">
+<!ENTITY identity.connectionNotSecure "Konexioa ez da segurua">
+<!ENTITY identity.connectionFile "Orri hau zure ordenagailuan biltegiratuta dago.">
+<!ENTITY identity.connectionVerified2 "Modu seguruan zaude konektatuta gune honetara. Arduraduna:">
+<!ENTITY identity.connectionInternal "&brandShortName; orri segurua da hau.">
+<!ENTITY identity.extensionPage "Orri hau gehigarri batetik kargatu da.">
+<!ENTITY identity.insecureLoginForms2 "Orri honetan sartutako saio-hasierak arriskuan egon litezke.">
+<!-- Strings for connection state warnings. -->
+
+<!ENTITY identity.activeBlocked "&brandShortName;(e)k seguruak ez diren orri honetako zatiak blokeatu ditu.">
+<!ENTITY identity.passiveLoaded "Orri honetako zenbait atal ez dira seguruak (adib. irudiak).">
+<!ENTITY identity.activeLoaded "Babesa desgaitu duzu orri honetan.">
+<!ENTITY identity.weakEncryption "Orri honek zifraketa ahula erabiltzen du.">
+<!-- Strings for connection state warnings in the subview. -->
+
+<!ENTITY identity.description.insecure "Gune honetarako zure konexioa ez da pribatua. Bidaltzen duzun informazioa besteek ikus lezakete (adibidez pasahitzak, mezuak, kreditu txartelak, etab.).">
+<!ENTITY identity.description.insecureLoginForms "Orri honetan sartzen duzun saio-hasiera informazioa ez da segurua eta arriskuan egon liteke.">
+<!ENTITY identity.description.weakCipher "Gune honetarako zure konexioak zifraketa ahula erabiltzen du eta ez da pribatua.">
+<!ENTITY identity.description.weakCipher2 "Besteek zure informazioa ikusi edo webgunearen portaera alda lezakete.">
+<!ENTITY identity.description.activeBlocked "&brandShortName;(e)k seguruak ez diren orri honetako zatiak blokeatu ditu.">
+<!ENTITY identity.description.passiveLoaded "Zure konexioa ez da pribatua eta gunearekin partekatzen duzun informazioa besteek ikus lezakete.">
+<!ENTITY identity.description.passiveLoaded2 "Wegune honek segurua ez den edukia dauka (adibidez irudiak).">
+<!ENTITY identity.description.passiveLoaded3 "Nahiz eta &brandShortName;(e)k zenbait eduki blokeatu duen, segurua ez den edukia dauka oraindik orriak (adibidez irudiak).">
+<!ENTITY identity.description.activeLoaded "Wegune honek segurua ez den edukia dauka (adibidez script-ak) eta zure konexioa ez da pribatua.">
+<!ENTITY identity.description.activeLoaded2 "Gune honekin partekatzen duzun informazioa besteek ikus lezakete (adibidez pasahitzak, mezuak, kreditu txartelak, etab.).">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Gaitu babesa">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "G">
+<!ENTITY identity.disableMixedContentBlocking.label "Desgaitu babesa momentuz">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Argibide gehiago">
+
+<!ENTITY identity.removeCertException.label "Kendu salbuespena">
+<!ENTITY identity.removeCertException.accesskey "K">
+
+<!ENTITY identity.moreInfoLinkText2 "Informazio gehiago">
+
+<!ENTITY identity.permissions "Baimenak">
+<!ENTITY identity.permissionsEmpty "Ez diozu gune honi baimen berezirik eman.">
+<!ENTITY identity.permissionsReloadHint "Agian orria berritu beharko duzu aldaketek eragina izan dezaten.">
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+
+<!ENTITY tabsToolbar.label "Nabigatzailearen fitxak">
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+
+<!ENTITY syncTabsMenu3.label     "Sinkronizatutako fitxak">
+
+<!ENTITY syncedTabs.sidebar.label              "Sinkronizatutako fitxak">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Hasi saioa Waterfoxen zure beste gailuetatik horien fitxak hemen ikusteko.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Sinkronizatutako fitxarik ez... momentuz!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Beste gailuetako zure fitxak hemen ikusi nahi dituzu?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Hasi saioa zure beste gailuetako fitxak ikusteko.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Irekitako fitxarik ez">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Ireki &syncBrand.shortName.label; hobespenak">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Aktibatu fitxak sinkronizatzea zure beste gailuetako fitxen zerrenda ikusteko.">
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+
+<!ENTITY syncedTabs.context.open.label                       "Ireki">
+<!ENTITY syncedTabs.context.open.accesskey                   "r">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Ireki fitxa berri batean">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "x">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Ireki leiho berrian">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "l">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Ireki lotura leiho pribatu berrian">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "p">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Egin fitxa honen laster-marka…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "E">
+<!ENTITY syncedTabs.context.copy.label                       "Kopiatu">
+<!ENTITY syncedTabs.context.copy.accesskey                   "K">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Ireki guztiak fitxetan">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "I">
+<!ENTITY syncedTabs.context.managedevices.label              "Kudeatu gailuak…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "g">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "Hasi saioa &syncBrand.shortName.label;(e)n…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Sinkronizatu orain">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Birkonektatu &syncBrand.shortName.label;(e)ra">
+<!ENTITY syncReAuthItem.accesskey     "r">
+<!ENTITY syncToolbarButton.label      "Sync">
+
+<!ENTITY social.addons.label "Kudeatu zerbitzuak…">
+
+<!ENTITY social.directory.label "Aktibazioen direktorioa">
+<!ENTITY social.directory.text "Partekatzeko zerbitzuak direktoriotik parteka ditzakezu.">
+<!ENTITY social.directory.button "Eraman nazazu hara!">
+<!ENTITY social.directory.introText "Egin klik zerbitzu batean &brandShortName;(e)ra gehitzeko.">
+<!ENTITY social.directory.viewmore.text "Ikusi gehiago">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Tresna eta eginbide gehigarriak">
+<!ENTITY customizeMode.menuAndToolbars.empty "Tresna gehiago nahi dituzu?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Aukeratu milaka gehigarriren artetik">
+<!ENTITY customizeMode.restoreDefaults "Berrezarri lehenetsiak">
+<!ENTITY customizeMode.done "Eginda">
+<!ENTITY customizeMode.titlebar "Titulu-barra">
+<!ENTITY customizeMode.toolbars2 "Tresna-barrak">
+<!ENTITY customizeMode.lwthemes "Itxurak">
+<!ENTITY customizeMode.lwthemes.myThemes "Nire itxurak">
+<!ENTITY customizeMode.lwthemes.recommended "Gomendatuak">
+<!ENTITY customizeMode.lwthemes.menuManage "Kudeatu">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "K">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Lortu itxura gehiago">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "L">
+<!ENTITY customizeMode.emptyOverflowList.description "Elementuak eskura izan baina tresna-barratik kanpo mantentzeko, arrasta eta jaregin itzazu hona…">
+<!ENTITY customizeMode.uidensity "Dentsitatea">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Arrunta">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Arrunta">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "A">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Trinkoa">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Trinkoa">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "T">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Ukipenezkoa">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Ukipenezkoa">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "U">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Erabili ukipenezkoa tabletaren modurako">
+
+<!ENTITY getUserMedia.selectCamera.label "Partekatzeko kamera:">
+<!ENTITY getUserMedia.selectCamera.accesskey "k">
+<!ENTITY getUserMedia.selectMicrophone.label "Partekatzeko mikrofonoa:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "m">
+<!ENTITY getUserMedia.audioCapture.label "Fitxatik datorren audioa partekatu egingo da.">
+<!ENTITY getUserMedia.allWindowsShared.message "Zure pantailan ikusgai dauden leiho guztiak partekatuko dira.">
+
+<!ENTITY trackingProtection.title "Jarraipenaren babesa">
+<!ENTITY trackingProtection.detectedBlocked3 "Zure nabigazioaren jarraipena egin lezaketen orriaren zatiak blokeatzen ari da &brandShortName;.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Gune honek zure nabigazioaren jarraipena egin lezaketen zatiak ditu. Babesa desgaituta daukazu.">
+<!ENTITY trackingProtection.notDetected3 "Ez da jarraipeneko elementurik atzeman orri honetan.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Desgaitu babesa gune honetarako">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Desgaitu babesa saio honetarako">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "Gaitu babesa">
+<!ENTITY trackingProtection.block2.accesskey "G">
+
+<!ENTITY trackingContentBlocked.message "Jarraipena">
+<!ENTITY trackingContentBlocked.moreinfo "Zure lineako jardueraren jarraipena egiten duten orriaren zatiak blokeatu egin dira.">
+<!ENTITY trackingContentBlocked.learnMore "Argibide gehiago">
+<!ENTITY trackingContentBlocked.options "Aukerak">
+<!ENTITY trackingContentBlocked.unblock2.label "Desgaitu babesa gune honetarako">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "D">
+<!ENTITY trackingContentBlocked.block.label "Gaitu babesa">
+<!ENTITY trackingContentBlocked.block.accesskey "G">
+<!ENTITY trackingContentBlocked.disabled.message "Jarraipenaren babesa desgaituta dago">
+
+<!ENTITY pluginNotification.showAll.label "Erakutsi denak">
+<!ENTITY pluginNotification.showAll.accesskey "E">
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+
+<!ENTITY pluginActivateNow.label "Baimendu orain">
+<!ENTITY pluginActivateAlways.label "Baimendu eta gogoratu">
+<!ENTITY pluginBlockNow.label "Blokeatu plugina">
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+
+<!ENTITY pluginNotification.width "44em">
+
+<!ENTITY uiTour.infoPanel.close "Itxi">
+
+<!ENTITY appMenuSidebars.label         "Alboko barrak">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+
+<!ENTITY panicButton.view.mainTimeframeDesc       "Ahaztu azken:">
+<!ENTITY panicButton.view.5min                    "Bost minutuak">
+<!ENTITY panicButton.view.2hr                     "Bi orduak">
+<!ENTITY panicButton.view.day                     "24 orduak">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+
+<!ENTITY panicButton.view.mainActionDesc          "Jarraitzearekin bat:">
+<!ENTITY panicButton.view.deleteCookies           "Azken <html:strong>cookieak</html:strong> ezabatu egingo dira">
+<!ENTITY panicButton.view.deleteHistory           "Azken <html:strong>historia</html:strong> ezabatu egingo da">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "<html:strong>Fitxa</html:strong> eta <html:strong>leiho</html:strong> guztiak itxi egingo dira">
+<!ENTITY panicButton.view.openNewWindow           "Ireki leiho garbi berria">
+
+<!ENTITY panicButton.view.undoWarning             "Aldaketa hau ezin da desegin.">
+<!ENTITY panicButton.view.forgetButton            "Ahaztu!">
+
+<!ENTITY panicButton.thankyou.msg1                "Azken historia garbitu egin da.">
+<!ENTITY panicButton.thankyou.msg2                "Nabigatu seguru!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Eskerrik asko!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "DRMri buruzko argibide gehiago…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Eguneratu zure &brandShorterName; abiaduran eta pribatutasunean azkena eskuratzeko.">
+<!ENTITY updateAvailable.whatsnew.label "Ikusi nobedadeak.">
+<!ENTITY updateAvailable.header.message "&brandShorterName; eguneraketa berri bat erabilgarri dago.">
+<!ENTITY updateAvailable.acceptButton.label "Deskargatu eguneraketa">
+<!ENTITY updateAvailable.acceptButton.accesskey "D">
+<!ENTITY updateAvailable.cancelButton.label "Une honetan ez">
+<!ENTITY updateAvailable.cancelButton.accesskey "e">
+<!ENTITY updateAvailable.panelUI.label "Deskargatu &brandShorterName; eguneraketa">
+
+<!ENTITY updateManual.message "Deskargatu &brandShorterName; nabigatzailearen kopia berri bat eta instalatzen lagunduko dizugu.">
+<!ENTITY updateManual.whatsnew.label "Ikusi nobedadeak.">
+<!ENTITY updateManual.header.message "Ezin da &brandShorterName; azken bertsiora eguneratu.">
+<!ENTITY updateManual.acceptButton.label "Deskargatu &brandShorterName;">
+<!ENTITY updateManual.acceptButton.accesskey "D">
+<!ENTITY updateManual.cancelButton.label "Une honetan ez">
+<!ENTITY updateManual.cancelButton.accesskey "z">
+<!ENTITY updateManual.panelUI.label "Deskargatu &brandShorterName; nabigatzailearen kopia berri bat">
+
+<!ENTITY updateRestart.message "Berrabiarazi eta gero &brandShorterName;(e)k irekitako fitxak eta leihoak berrezarriko ditu.">
+<!ENTITY updateRestart.header.message2 "Berrabiarazi &brandShorterName; eguneratzeko.">
+<!ENTITY updateRestart.acceptButton.label "Berrabiarazi eta berreskuratu">
+<!ENTITY updateRestart.acceptButton.accesskey "B">
+<!ENTITY updateRestart.cancelButton.label "Une honetan ez">
+<!ENTITY updateRestart.cancelButton.accesskey "z">
+<!ENTITY updateRestart.panelUI.label2 "Berrabiarazi &brandShorterName; eguneratzeko">
+
+<!ENTITY pageActionButton.tooltip "Orri-ekintzak">
+<!ENTITY pageAction.addToUrlbar.label "Gehitu helbide-barran">
+<!ENTITY pageAction.removeFromUrlbar.label "Kendu helbide-barratik">
+
+<!ENTITY sendToDevice.label2 "Bidali gailura">
+<!ENTITY sendToDevice.syncNotReady.label "Gailuak sinkronizatzen…">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Rutzijol taq sachoj">
+<!ENTITY crashesUnsubmitted.label   "Rutzijol taq sachoj etaqon">
+<!ENTITY crashesSubmitted.label     "Rutzijol taq sachoj etaqon">
+<!ENTITY id.heading                 "Nimaläj rub'i' ri rutzijol">
+<!ENTITY dateCrashed.heading        "Q'ij xqa ruchuq'a' q'inoj">
+<!ENTITY dateSubmitted.heading      "Ruq'ijul toq xtaq">
+<!ENTITY noReports.label            "Man etaqon ta ri taq rutzijol sachoj.">
+<!ENTITY noConfig.label             "Re chokoy re man nuk'un richin yeruk'üt pe ri taq kitzijol taq sachoj. K'atzinel nijikib'äx ri rajowaxik <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Keyuj el konojel ri taq rutzijol">

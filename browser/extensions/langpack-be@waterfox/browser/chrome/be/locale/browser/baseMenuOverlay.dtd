@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Мінімізаваць">
+<!ENTITY bringAllToFront.label    "Выцягнуць усе наперад">
+<!ENTITY zoomWindow.label         "Павялічыць">
+<!ENTITY windowMenu.label         "Акно">
+
+<!ENTITY helpMenu.label           "Даведка"> 
+<!ENTITY helpMenu.accesskey       "Д"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Даведка"> 
+<!ENTITY helpMenuWin.accesskey    "Д">
+<!ENTITY aboutProduct2.label      "Пра &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "П">
+<!ENTITY productHelp2.label       "Даведка &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "Д">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Спалучэнні клавіш">
+<!ENTITY helpKeyboardShortcuts.accesskey "К">
+
+<!ENTITY helpSafeMode.label       "Перазапусціць без дадаткаў…">
+<!ENTITY helpSafeMode.accesskey   "П">
+<!ENTITY helpSafeMode.stop.label       "Перазапусціць з дадаткамі">
+<!ENTITY helpSafeMode.stop.accesskey   "П">
+
+<!ENTITY healthReport2.label      "Справаздача пра стан &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "т">
+
+<!ENTITY helpTroubleshootingInfo.label      "Звесткі для вырашэння праблемаў">
+<!ENTITY helpTroubleshootingInfo.accesskey  "З">
+
+<!ENTITY helpFeedbackPage.label      "Падаць водгук…">
+<!ENTITY helpFeedbackPage.accesskey  "П">
+
+<!ENTITY helpShowTour2.label            "Знаёмства з &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "З">
+
+<!ENTITY preferencesCmdMac.label        "Налады…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Службы">
+
+<!ENTITY hideThisAppCmdMac2.label       "Схаваць &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "С">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Схаваць іншыя">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Паказаць усе">

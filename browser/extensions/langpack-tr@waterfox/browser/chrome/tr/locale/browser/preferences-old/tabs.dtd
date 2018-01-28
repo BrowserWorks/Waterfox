@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab, sekmeler arasında son kullanıldıkları sırayla atlasın">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Yeni pencere yerine yeni sekme aç">
+<!ENTITY newWindowsAsTabs.accesskey   "Y">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Birden fazla sekmeyi kapatırken beni uyar">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "m">
+
+<!ENTITY warnOnOpenManyTabs.label       "Birden çok sekme açmanın &brandShortName; uygulamasını yavaşlatabileceği durumlarda beni uyar">
+<!ENTITY warnOnOpenManyTabs.accesskey   "k">
+
+<!ENTITY switchLinksToNewTabs.label        "Bir bağlantıyı yeni sekmede açtığımda hemen o sekmeye geç">
+<!ENTITY switchLinksToNewTabs.accesskey    "B">
+
+<!ENTITY showTabsInTaskbar.label          "Sekme ön izlemelerini Windows görev çubuğunda göster">
+<!ENTITY showTabsInTaskbar.accesskey      "ö">
+<!ENTITY tabsGroup.label          "Sekmeler">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "ପୃଷ୍ଠା ବିନ୍ୟାସ">
+
+<!ENTITY basic.tab           "ଶୈଳୀ ଏବଂ ବିକଳ୍ପଗୁଡ଼ିକ">
+
+<!ENTITY formatGroup.label   "ଶୈଳୀ">
+
+<!ENTITY orientation.label   "ଅନୁସ୍ଥାପନ:">
+<!ENTITY portrait.label      "ଚିତ୍ରପଟ">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "କଡ଼ୁଆ">
+<!ENTITY landscape.accesskey "L">
+
+<!ENTITY scale.label         "ମାପ:">
+<!ENTITY scale.accesskey     "S">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "ପୃଷ୍ଠା ଓସାର ସହିତ ମେଳ ଖାଇବା ପାଇଁ ସଙ୍କୁଚିତ ହେବା">
+<!ENTITY shrinkToFit.accesskey "W">
+
+<!ENTITY optionsGroup.label  "ବିକଳ୍ପଗୁଡ଼ିକ">
+
+<!ENTITY printBG.label       "ପୃଷ୍ଠଭୂମି ମୁଦ୍ରଣ କରନ୍ତୁ (ରଙ୍ଗ  ଏବଂ ପ୍ରତିଛବିଗୁଡ଼ିକ)">
+<!ENTITY printBG.accesskey   "B">
+
+<!ENTITY advanced.tab        "ସୀମାରେଖା ଏବଂ ଶୀର୍ଷକ/ପାଦିକା">
+
+<!ENTITY marginGroup.label   "ସୀମାରେଖା (#1)">
+<!ENTITY marginUnits.inches  "ଇଞ୍ଚ">
+<!ENTITY marginUnits.metric  "ମିଲିମିଟର">
+<!ENTITY marginTop.label     "ଉପର:">
+<!ENTITY marginTop.accesskey "T">
+<!ENTITY marginBottom.label  "ତଳ:">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "ବାମ:">
+<!ENTITY marginLeft.accesskey "L">
+<!ENTITY marginRight.label   "ଡ଼ାହାଣ:">
+<!ENTITY marginRight.accesskey "R">
+
+<!ENTITY headerFooter.label  "ଶୀର୍ଷକ ଏବଂ ପାଦିକା">
+
+<!ENTITY hfLeft.label        "ବାମ:">
+<!ENTITY hfCenter.label      "କେନ୍ଦ୍ର:">
+<!ENTITY hfRight.label       "ଡ଼ାହାଣ:">
+<!ENTITY headerLeft.tip      "ବାମ ଶୀର୍ଷକ">
+<!ENTITY headerCenter.tip    "କେନ୍ଦ୍ର ଶୀର୍ଷକ">
+<!ENTITY headerRight.tip     "ଡ଼ାହାଣ ଶୀର୍ଷକ">
+<!ENTITY footerLeft.tip      "ବାମ ପାଦିକା">
+<!ENTITY footerCenter.tip    "କେନ୍ଦ୍ର ପାଦିକା">
+<!ENTITY footerRight.tip     "ଡ଼ାହାଣ ପାଦିକା">
+
+<!ENTITY hfTitle             "ଶୀର୍ଷକ">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "ତାରିଖ/ସମୟ">
+<!ENTITY hfPage              "ପୃଷ୍ଠା #">
+<!ENTITY hfPageAndTotal      "ପୃଷ୍ଠା # ର #">
+<!ENTITY hfBlank             "--ଖାଲି--">
+<!ENTITY hfCustom            "ଇଚ୍ଛାରୂପି…">
+
+<!ENTITY customPrompt.title  "ଇଚ୍ଛାରୂପି…">
+<!ENTITY customPrompt.prompt "ଆପଣଙ୍କର ଇଚ୍ଛାରୂପି ଶୀର୍ଷକ/ପାଦିକା ପାଠ୍ଯ ଭରଣ କରନ୍ତୁ">

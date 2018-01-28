@@ -1,0 +1,142 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "ಪ್ರೊಫೈಲರ್ ಮಾದರಿಗಳನ್ನು ವೃತ್ತಾಕಾರದ ಬಫರ್‌ನಲ್ಲಿ ಸಂಗ್ರಹಿಸಿಡುತ್ತದೆ, ಮತ್ತು ಬಫರ್ ತನ್ನ ರೆಕಾರ್ಡಿಂಗ್ ಮಿತಿಯನ್ನು ತಲುಪಿದಾಗ, ಹೊಸ ಮಾದರಿಗಳನ್ನು ಹಳೆಯ ಮಾದರಿಗಳ ರೆಕಾರ್ಡಿಂಗ್‌ನ ಮೊದಲ ಭಾಗದಿಂದ ತಿದ್ದಿಬರೆಯಲಾಗುತ್ತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!ENTITY performanceUI.disabledRealTime.nonE10SBuild "ಬಹುಪ್ರಕ್ರಿಯೆ-ಅಲ್ಲದ Waterfox ನಲ್ಲಿ ವಾಸ್ತವ ಸಮಯದ ಡೇಟಾ ರೆಕಾರ್ಡಿಂಗ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "ವಾಸ್ತವ ಸಮಯದಲ್ಲಿ ಡೇಟಾಅ ರೆಕಾರ್ಡಿಂಗ್ ರೆಂಡರಿಂಗ್‍‍ಗೆ ಬಹುಪ್ರಕ್ರಿಯೆ Waterfox ಅನ್ನು ಇಚ್ಛೆಗಳಲ್ಲಿ ಸಕ್ರಿಯಗೊಳಿಸಿ.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "ಬಫರ್ ತುಂಬಿದೆ. ಹಳೆಯ ನಮೂನೆಗಳ ಮೇಲೆ ಈಗ ಬರೆಯಲಾಗುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "ಲೋಡ್‌ ಆಗುತ್ತಿದೆ…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "ಜಲಪಾತ">
+
+<!ENTITY performanceUI.toolbar.js-calltree "ಕರೆ ವೃಕ್ಷ">
+
+<!ENTITY performanceUI.toolbar.memory-calltree "ಹಂಚಿಕೆಗಳು">
+
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS ಪ್ಲೇಮ್ ನಕ್ಷೆ">
+
+<!ENTITY performanceUI.toolbar.memory-flamegraph "ಫ್ಲೇಮ್ ನಕ್ಷೆ ಹಂಚಿಕೆಗಳು">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "ಒಟ್ಟು ಸಮಯ">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "ಈ ಕಾರ್ಯಭಾರ ಮೇಲೆ ಮತ್ತು ಅದು ಕರೆಯುವ ಇತರೆ ಕಾರ್ಯಭಾರಗಳ ಮೇಲೆ ವ್ಯಯಿಸಿದ ಸಮಯ">
+<!ENTITY performanceUI.table.selfDuration             "ಸ್ವ ಸಮಯ">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "ಈ ಕಾರ್ಯಭಾರದ ಒಳಗೆ ಮಾತ್ರ ವ್ಯಯಿಸಿದ ಸಮಯ.">
+<!ENTITY performanceUI.table.totalPercentage          "ಒಟ್ಟು ವೆಚ್ಚ">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "ಈ ಕಾರ್ಯಭಾರ ಮತ್ತು ಅದು ಕರೆ ಮಾಡಿದ ಕಾರ್ಯಭಾರಗಳ ಮೇಲೆ ವ್ಯಯಿಸಿದ ಸಮಯದ ಶೇಕಡಾವಾರು.">
+<!ENTITY performanceUI.table.selfPercentage           "ಸ್ವಂತ ವೆಚ್ಚ">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "ಈ ಕಾರ್ಯಭಾರ ಮೇಲೆ ಮಾತ್ರ ವ್ಯಯಿಸಿದ ಸಮಯದ ಶೇಕಡಾವಾರು.">
+<!ENTITY performanceUI.table.samples                  "ಮಾದರಿಗಳು">
+<!ENTITY performanceUI.table.samples.tooltip          "ಪ್ರೊಫೈಲರ್ ನಮೂನೆ ಪಡೆದುಕೊಂಡಾಗ ಈ ಕಾರ್ಯಭಾರ ಎಷ್ಟು ಬಾರಿ ಸ್ಟ್ಯಾಕ್‌ನಲ್ಲಿತ್ತು.">
+<!ENTITY performanceUI.table.function                 "ಕಾರ್ಯಭಾರ">
+<!ENTITY performanceUI.table.function.tooltip         "ಮಾದರಿ ಕಾರ್ಯಭಾರದ ಹೆಸರು ಮತ್ತು ಮೂಲದ ಸ್ಥಳ">
+<!ENTITY performanceUI.table.totalAlloc               "ಒಟ್ಟಾರೆ ಮಾದರಿ ಹೊಂದಾಣಿಕೆಗಳು">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "ಈ ಸ್ಥಳದಲ್ಲಿ ಮತ್ತು ಕಾಲೀಸ್‌ನಲ್ಲಿ ನಮೂನೆ ಪಡೆದ ವಸ್ತುಗಳ ಹಂಚಿಕೆಯ ಒಟ್ಟು ಸಂಖ್ಯೆ.">
+<!ENTITY performanceUI.table.selfAlloc                "ಸ್ವಮಾದರಿಯ ಹೊಂದಾಣಿಕೆಗಳು">
+<!ENTITY performanceUI.table.selfAlloc.tooltip        "ಈ ಸ್ಥಳದಲ್ಲಿ ನಮೂನೆ ಪಡೆದ ವಸ್ತುಗಳ ಹಂಚಿಕೆಗಳ ಸಂಖ್ಯೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "ಟೈಮ್‌ಲೈನ್‌ನಲ್ಲಿ ಯಾವ ಡೇಟ ತೋರಿಸಬೇಕು ಆಯ್ಕೆಮಾಡಿ">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "ಕಾರ್ಯಾಚರಣೆಯ ಇಚ್ಛೆಗಳನ್ನು ಸಂರಚಿಸು.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "ಕರೆಯ ಟ್ರೀಯನ್ನು ಉಲ್ಟಾ ಮಾಡು">
+<!ENTITY performanceUI.invertTree.tooltiptext "ಕರೆಯ ವೃಕ್ಷದ ಉಲ್ಟಾ ಮಾಡುವುದರಿಂದ ಇತ್ತೀಚಿನ ಫ್ರೇಮ್‌ಗಳಿಂದ ಆರಂಭಗೊಳ್ಳುವಂತೆ ಪ್ರೊಫೈಲ್ ಮಾಡಲಾದ ಕರೆಯ ಮಾರ್ಗಗಳನ್ನು ತೋರಿಸುತ್ತದೆ ಹಾಗೂ ಹಳೆಯ ಫ್ರೇಮ್‌ಗಳಿಗೆ ವಿಸ್ತರಿಸುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "ಉಲ್ಟಾ ಪ್ಲೇಮ್ ನಕ್ಷೆ">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "ಕರೆಯ ವೃಕ್ಷದ ಉಲ್ಟಾ ಮಾಡುವುದರಿಂದ ಇತ್ತೀಚಿನ ಫ್ರೇಮ್‌ಗಳಿಂದ ಆರಂಭಗೊಳ್ಳುವಂತೆ ಪ್ರೊಫೈಲ್ ಮಾಡಲಾದ ಕರೆಯ ಮಾರ್ಗಗಳನ್ನು ತೋರಿಸುತ್ತದೆ ಹಾಗೂ ಹಳೆಯ ಫ್ರೇಮ್‌ಗಳಿಗೆ ವಿಸ್ತರಿಸುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "Gecko ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ದತ್ತಾಂಶವನ್ನು ತೋರಿಸು">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಡೇಟಾ JavaScript ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸುತ್ತದೆ ಪ್ರೊಫೈಲರ್ ಗೆಕೊ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಲಾಂಛನಗಳಿಗೆ ವರದಿ ಒಟ್ಟಿಸುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!ENTITY performanceUI.showJITOptimizations             "JIT ಉತ್ತಮಗೊಳಿಸುವಿಕೆಗಳನ್ನು ತೋರಿಸು">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "‍ಪ್ರತಿಯೊಂದು JavaScript ಚೌಕಟ್ಟಿಗೆ ಬಳಸಿದ JIT ಉತ್ತಮಗೊಳಿಸುವಿಕೆಗಳ ಡೇಟಾ ಮಾದರಿಯನ್ನು ತೋರಿಸು.">
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "Flatten Tree Recursion">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "ಕಾರ್ಯಭಾರಗಳನ್ನು ಪರೀಕ್ಷಿಸುವಾಗ Flatten recursion.">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "ಮೆಮೊರಿ ಮುದ್ರಿಸಿ">
+<!ENTITY performanceUI.enableMemory.tooltiptext "ಮೆಮರಿಯ ಬಳಕೆಯನ್ನು ಪ್ರೊಫೈಲ್ ಮಾಡುವಾಗ ಮುದ್ರಿಸಿಕೊಳ್ಳಿ.">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "ಹಂಚಿಕೆಗಳನ್ನು ಮುದ್ರಿಸಿಕೊಳ್ಳಿ">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "ಪ್ರೊಫೈಲ್ ಮಾಡುವಾಗ ವಸ್ತು ಹಂಚಿಕೆಗಳನ್ನು ಮುದ್ರಿಸಿಕೊಳ್ಳಿ.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "ಫ್ರೇಮ್‌ರೇಟ್ ಮುದ್ರಿಸು">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "ಪ್ರೊಫೈಲ್ ಮಾಡುವಾಗ ಫ್ರೇಮ್‌ರೇಟ್ ಮುದ್ರಿಸಿಕೊಳ್ಳಿ.">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "ಪ್ರಸ್ತುತ ಮುದ್ರಣ ಇದರ ಮೂಲಕ">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "ನಮೂದಿಸುವುದರೊಂದಿಗೆ ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸು">
+<!ENTITY performanceUI.console.stopCommandEnd   "ಕನ್ಸೋಲ್‌ನ ಒಳಕ್ಕೆ.">
+
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Shows where memory was allocated during the recording.">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Highlights JavaScript functions where the browser spent most time during the recording.">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Shows the JavaScript call stack over the course of the recording.">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Shows the different operations the browser is performing during the recording, laid out sequentially as a waterfall.">
+<!ENTITY performanceUI.unavailableNoticePB "Recording a profile is currently unavailable. Please close all private browsing windows and try again.">
+

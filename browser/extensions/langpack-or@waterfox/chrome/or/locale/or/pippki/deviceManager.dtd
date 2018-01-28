@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "ଯନ୍ତ୍ର ପରିଚାଳକ">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+
+<!ENTITY devmgr.devlist.label                   "ସୁରକ୍ଷା ଏକକାଂଶ ଏବଂ ଯନ୍ତ୍ରଗୁଡ଼ିକ">
+<!ENTITY devmgr.details.title                   "ବିବରଣୀ">
+<!ENTITY devmgr.details.title2                  "ମୂଲ୍ୟ">
+
+<!ENTITY devmgr.button.login.label              "ଲଗଇନ କରନ୍ତୁ">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "ଲଗଆଉଟ କରନ୍ତୁ">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "ପ୍ରବେଶ ସଂକେତ ପରିବର୍ତ୍ତନ କରନ୍ତୁ">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "ଧାରଣ କରନ୍ତୁ">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "ନିକାଶ କରନ୍ତୁ">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "ଆପଣ ଯୋଗ କରିବାକୁ ଚାହୁଁଥିବା ଏକକାଂଶ ପାଇଁ ସୂଚନା ଭରଣକରନ୍ତୁ.">
+<!ENTITY loaddevice.modname                     "ଏକକାଂଶ ନାମ:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "ନୂତନ PKCS#11 ଏକକାଂଶ">
+<!ENTITY loaddevice.filename                    "ଏକକାଂଶ ଫାଇଲନାମ:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "ବ୍ରାଉଜ କରନ୍ତୁ…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY loaddevice.title2                      "Load PKCS#11 Device Driver">

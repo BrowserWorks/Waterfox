@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Bilaketa-motor lehenetsia">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Aukeratu helbide- eta bilaketa-barran erabili beharreko bilaketa-motor lehenetsia.">
+
+<!ENTITY provideSearchSuggestions.label        "Hornitu bilaketa-iradokizunak">
+<!ENTITY provideSearchSuggestions.accesskey    "b">
+
+<!ENTITY showURLBarSuggestions2.label           "Erakutsi bilaketa-iradokizunak helbide-barrako emaitzetan">
+<!ENTITY showURLBarSuggestions2.accesskey       "h">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Bilaketa-iradokizunak ez dira helbide-barran erakutsiko &brandShortName;(e)k historia inoiz ez gogoratzeko konfiguratu duzulako.">
+
+<!ENTITY oneClickSearchEngines.label           "Klik bakarreko bilaketa-motorrak">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Aukeratu gako-hitz bat idazten hastean helbide- eta bilaketa-barren azpian agertzen diren ordezko bilaketa-motorrak.">
+
+<!ENTITY engineNameColumn.label                "Bilaketa-motorra">
+<!ENTITY engineKeywordColumn.label             "Gako-hitza">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Berrezarri bilaketa-motor lehenetsiak">
+<!ENTITY restoreDefaultSearchEngines.accesskey "h">
+
+<!ENTITY removeEngine.label                    "Kendu">
+<!ENTITY removeEngine.accesskey                "K">
+
+<!ENTITY findMoreSearchEngines.label           "Bilatu bilaketa-motor gehiago">

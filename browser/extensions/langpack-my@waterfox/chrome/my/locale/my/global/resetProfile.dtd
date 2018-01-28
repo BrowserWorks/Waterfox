@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; ကို ပြန်စပါ">
+<!ENTITY refreshProfile.dialog.description1  "ပြဿနာများကို ဖြေရှင်းရန်နှင့် စွမ်းရည်ကို ပြန်လည်မြှင့်တင်ရန် freshကို စတင်ပါ။">
+<!ENTITY refreshProfile.dialog.description2  "ဒီ အကြောင်းအရာသည်။">
+<!ENTITY refreshProfile.dialog.items.label1  "သင့်အတ်အွန်များနှင့် ပြုပြင်ချက်များကို ဖယ်ရှားပါ">
+<!ENTITY refreshProfile.dialog.items.label2  "သင့်ဘရောင်ဇာ အပြင်အဆင်များကို မူလအတိုင်း ပြန်ထားပါ">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; ကို ပြန်စပါ">
+
+<!ENTITY refreshProfile.title                "&brandShortName; ကို စွမ်းအားမြှင့်ခွင့် ပေးလိုက်ပါ">
+<!ENTITY refreshProfile.button.label         "&brandShortName; ကို ပြန်စပါ…">
+
+<!ENTITY refreshProfile.cleaning.description "ပြီးစီးခါနီးပြီ…">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopěrowaś">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Wšykno wubraś">
+<!ENTITY  selectall.accesskey   "b">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Powšykne">
+<!ENTITY  generalTab.accesskey  "P">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "Adresa:">
+<!ENTITY  generalType           "Typ:">
+<!ENTITY  generalMode           "Zwobraznjeński modus:">
+<!ENTITY  generalSize           "Wjelikosć:">
+<!ENTITY  generalReferrer       "Slědkpokazujucy URL:">
+<!ENTITY  generalSource         "Žrědło z pufrowaka:">
+<!ENTITY  generalModified       "Změnjony:">
+<!ENTITY  generalEncoding2      "Tekstowe koděrowanje:">
+<!ENTITY  generalMetaName       "Mě">
+<!ENTITY  generalMetaContent    "Wopśimjeśe">
+
+<!ENTITY  mediaTab              "Medije">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Adresa:">
+<!ENTITY  mediaText             "Pśisłušny tekst:">
+<!ENTITY  mediaAltHeader        "Alternatiwny tekst">
+<!ENTITY  mediaAddress          "Adresa">
+<!ENTITY  mediaType             "Typ">
+<!ENTITY  mediaSize             "Wjelikosć">
+<!ENTITY  mediaCount            "Licba">
+<!ENTITY  mediaDimension        "Wótměry:">
+<!ENTITY  mediaLongdesc         "Dłujke wopisanje:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Składowaś ako…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "k">
+<!ENTITY  mediaPreview          "Pśeglěd medijow:">
+
+<!ENTITY  feedTab               "Kanale">
+<!ENTITY  feedTab.accesskey     "K">
+<!ENTITY  feedSubscribe         "Aboněrowaś">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Pšawa">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "Standard wužywaś">
+<!ENTITY  permAskAlways         "Pśecej se pšašaś">
+<!ENTITY  permAllow             "Dowóliś">
+<!ENTITY  permAllowSession      "Za pósejźenje dowóliś">
+<!ENTITY  permBlock             "Blokěrowaś">
+<!ENTITY  permissionsFor        "Pšawa za:">
+<!ENTITY  permPlugins           "Tykace aktiwěrowaś">
+
+<!ENTITY  permClearStorage           "Składowak wuprozniś">
+<!ENTITY  permClearStorage.accesskey "u">
+
+<!ENTITY  securityTab           "Wěstota">
+<!ENTITY  securityTab.accesskey "W">
+<!ENTITY  securityView.certView "Certifikat se woglědaś">
+<!ENTITY  securityView.accesskey "C">
+<!ENTITY  securityView.unknown   "Njeznaty">
+
+
+<!ENTITY  securityView.identity.header   "Identita websedła">
+<!ENTITY  securityView.identity.owner    "Wobsejźaŕ:">
+<!ENTITY  securityView.identity.domain   "Websedło:">
+<!ENTITY  securityView.identity.verifier "Pśespytany wót:">
+<!ENTITY  securityView.identity.validity "Spadnjo:">
+
+<!ENTITY  securityView.privacy.header                   "Priwatnosć a historija">
+<!ENTITY  securityView.privacy.history                  "Som se k toś tomu websedłoju južo do togo woglědał?">
+<!ENTITY  securityView.privacy.cookies                  "Składujo toś to websedło informacije (cookieje) na mójom licadle?">
+<!ENTITY  securityView.privacy.viewCookies              "Cookieje se woglědaś">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Su se gronidła za toś to websedło składowali?">
+<!ENTITY  securityView.privacy.viewPasswords            "Składowane gronidła se woglědaś">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "r">
+
+<!ENTITY  securityView.technical.header                 "Techniske drobnostki">
+
+<!ENTITY  helpButton.label                              "Pomoc">

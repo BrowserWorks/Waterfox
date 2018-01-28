@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ഇറക്കുമതി സഹായി ">
+
+<!ENTITY importFrom.label               "ഓപ്ഷനുകള്‍, അടയാളങ്ങള്‍, ചരിത്രം, പാസ്‌വേഡുകള്‍ കൂടാതെ മറ്റ്‌ വിവരങ്ങളും ഇറക്കുമതി ചെയ്യുക ">
+<!ENTITY importFromUnix.label           "മുന്‍ഗണനകള്‍, അടയാളങ്ങള്‍, ചരിത്രം, പാസ്‌വേഡുകള്‍ കൂടാതെ മറ്റ്‌ വിവരങ്ങളും ഇറക്കുമതി ചെയ്യുക ">
+<!ENTITY importFromBookmarks.label      "ഇവിടെ നിന്നും അടയാളങ്ങള്‍ ഇറക്കുമതി ചെയ്യുക ">
+
+<!ENTITY importFromIE.label             "മൈക്രൊസോഫ്റ്റ്‌ ഇന്റര്‍നെറ്റ്‌ എക്സ്പ്ലോറര്‍">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "മൈക്രോസോഫ്റ്റ്‍ എഡ്ജ്">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "ഒന്നും import ചെയ്യരുത്‌">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "സഫാരി">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "ക്രോം കാനറി">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "ക്രോം">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "ക്രോമിയം">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "ഫയര്‍ഫോക്സ്">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 സെക്യുവര്‍ ബ്രൌസര്‍">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "അടയാളങ്ങളോ, ചരിത്രമോ പാസ്‌വേഡുകളോ അടങ്ങിയ ഒരു program പോലും കണ്ടെത്താനായില്ല">
+
+<!ENTITY importSource.title             "സെറ്റിങ്ങുകളും വിവരങ്ങളും ഇറക്കുമതി ചെയ്യുക">
+<!ENTITY importItems.title              "Import ചെയ്യേണ്ട വസ്തുക്കള്‍">
+<!ENTITY importItems.label              "Import ചെയ്യേണ്ട വസ്തുക്കള്‍ തിരഞ്ഞെടുക്കുക">
+
+<!ENTITY migrating.title                "Import ചെയ്തുകൊണ്ടിരിക്കുന്നു...">
+<!ENTITY migrating.label                "താഴെപ്പറയുന്ന ഐറ്റങ്ങള്‍ ഇപ്പോള്‍ ഇറക്കുമതി ചെയ്യപ്പെട്ടുകൊണ്ടിരിക്കുന്നു">
+
+<!ENTITY selectProfile.title            "Profile തിരഞ്ഞെടുക്കുക">
+<!ENTITY selectProfile.label            "താഴെപ്പറയുന്ന പ്രൊഫൈലുകള്‍ ഇവിടെ നിന്നും ഇറക്കുമതി ചെയ്യുവാന്‍ ലഭ്യമാണ്‌ :">
+
+<!ENTITY done.title                     "Import പൂര്‍ണ്ണം">
+<!ENTITY done.label                     "താഴെപ്പറയുന്ന ഐറ്റങ്ങള്‍ വിജയകരമായി ഇറക്കുമതി ചെയ്തിരിക്കുന്നു:">
+
+<!ENTITY closeSourceBrowser.label       "തുടരുന്നതിന് മുന്‍പ് തെരഞ്ഞടുത്ത ബ്രൌസര്‍ അടച്ചു എന്നുറപ്പാക്കുക.">

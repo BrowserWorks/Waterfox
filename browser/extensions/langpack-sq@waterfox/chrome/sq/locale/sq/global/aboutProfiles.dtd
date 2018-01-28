@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "Rreth Profilesh">
+<!ENTITY aboutProfiles.subtitle "Kjo faqe ju ndihmon të administroni profilet tuaj. Çdo profil është një botë ndarazi që përmban historikun, faqerojtës, rregullime dhe shtesa.">
+<!ENTITY aboutProfiles.create "Krijoni një Profil të Ri">
+<!ENTITY aboutProfiles.restart.title "Riniseni">
+<!ENTITY aboutProfiles.restart.inSafeMode "Riniseni me Shtesa të Çaktivizuara…">
+<!ENTITY aboutProfiles.restart.normal "Riniseni normalisht…">

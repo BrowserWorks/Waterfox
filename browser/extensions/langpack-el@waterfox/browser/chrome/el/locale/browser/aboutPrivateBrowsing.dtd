@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Αυτή τη στιγμή, δεν βρίσκεστε σε κάποιο ιδιωτικό παράθυρο.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Άνοιγμα ιδιωτικού παραθύρου">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "δ">
+
+<!ENTITY privateBrowsing.title                           "Ιδιωτική Περιήγηση">
+<!ENTITY privateBrowsing.title.tracking                  "Ιδιωτική περιήγηση με προστασία από παρακολούθηση">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Όταν πλοηγείστε σε ένα Ιδιωτικό Παράθυρο, το Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "δεν αποθηκεύει">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "Επισκεφθείσες σελίδες">
+<!ENTITY aboutPrivateBrowsing.info.searches              "Αναζητήσεις">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "Προσωρινά αρχεία">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Το Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "θα αποθηκεύσει">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " τα εξής δεδομένα σας:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "Λήψεις">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "Σελιδοδείκτες">
+<!ENTITY aboutPrivateBrowsing.note.before                "Η Ιδιωτική Περιήγηση ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "δεν σάς καθιστά ανώνυμο">
+<!ENTITY aboutPrivateBrowsing.note.after                 " στο διαδίκτυο. Ο εργοδότης σας ή ο πάροχος υπηρεσιών διαδικτύου μπορεί ακόμα να γνωρίζει ποια σελίδα επισκέπτεστε.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Μάθετε περισσότερα σχετικά με την ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Ιδιωτική Περιήγηση">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Προστασία από παρακολούθηση">
+<!ENTITY trackingProtection.description2                 "Μερικές ιστοσελίδες χρησιμοποιούν ιχνηλάτες που μπορούν να παρακολουθούν την δραστηριότητά σας στο διαδίκτυο. Με την προστασία από παρακολούθηση, το Waterfox θα αποκλείσει πολλούς ιχνηλάτες που μπορούν να συλλέγουν πληροφορίες για την περιήγησή σας.">
+<!ENTITY trackingProtection.startTour1                   "Δείτε πώς λειτουργεί">

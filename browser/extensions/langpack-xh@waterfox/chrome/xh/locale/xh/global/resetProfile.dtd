@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "Seta kwakhona i-&brandShortName;">
+<!ENTITY refreshProfile.dialog.description1  "Qalisa ukuseta kwakhona ukulungisa iingxaki ze ubuyisele isenzo.">
+<!ENTITY refreshProfile.dialog.description2  "Oku kuza:">
+<!ENTITY refreshProfile.dialog.items.label1  "Susa izongezelelo zakho ze ulungiselele">
+<!ENTITY refreshProfile.dialog.items.label2  "Buyisela ibhrawza yakho kwiindawo zayo zokwendalo">
+<!ENTITY refreshProfile.dialog.button.label  "Seta kwakhona i-&brandShortName;">
+
+<!ENTITY refreshProfile.title                "Nika i-&brandShortName; ulungiso">
+<!ENTITY refreshProfile.button.label         "Seta kwakhona i-&brandShortName;…">
+
+<!ENTITY refreshProfile.cleaning.description "Sele iza kugqiba...">

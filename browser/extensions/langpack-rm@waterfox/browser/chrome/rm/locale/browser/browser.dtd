@@ -1,0 +1,995 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Modus privat)">
+
+<!ENTITY appmenu.tooltip                     "Avrir il menu">
+<!ENTITY navbarOverflow.label                "Dapli utensils…">
+
+<!-- Tab context menu -->
+<!ENTITY  reloadTab.label                    "Chargiar danovamain il tab">
+<!ENTITY  reloadTab.accesskey                "r">
+<!ENTITY  reloadAllTabs.label                "Chargiar danovamain tut ils tabs">
+<!ENTITY  reloadAllTabs.accesskey            "t">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "Serrar ils tabs da vart dretga">
+<!ENTITY  closeTabsToTheEnd.accesskey        "i">
+<!ENTITY  closeOtherTabs.label               "Serrar ils auters tabs">
+<!ENTITY  closeOtherTabs.accesskey           "a">
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Fixar il tab">
+<!ENTITY  pinTab.accesskey                   "F">
+<!ENTITY  unpinTab.label                     "Betg pli fixar il tab">
+<!ENTITY  unpinTab.accesskey                 "B">
+<!ENTITY  sendTabToDevice.label              "Trametter il tab ad in apparat">
+<!ENTITY  sendTabToDevice.accesskey          "a">
+<!ENTITY  sendPageToDevice.label             "Trametter la pagina ad in apparat">
+<!ENTITY  sendPageToDevice.accesskey         "a">
+<!ENTITY  sendLinkToDevice.label             "Trametter la colliaziun ad in apparat">
+<!ENTITY  sendLinkToDevice.accesskey         "a">
+<!ENTITY  moveToNewWindow.label              "Spustar en ina nova fanestra">
+<!ENTITY  moveToNewWindow.accesskey          "n">
+<!ENTITY  bookmarkAllTabs.label              "Agiuntar in segnapagina per mintga tab…">
+<!ENTITY  bookmarkAllTabs.accesskey          "t">
+<!ENTITY  undoCloseTab.label                 "Restaurar il tab serrà">
+<!ENTITY  undoCloseTab.accesskey             "R">
+<!ENTITY  closeTab.label                     "Serrar il tab">
+<!ENTITY  closeTab.accesskey                 "r">
+
+<!ENTITY  listAllTabs.label      "Far ina glista da tut ils tabs">
+
+<!ENTITY tabCmd.label "Nov tab">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Avrir in lieu…">
+<!ENTITY openFileCmd.label "Avrir ina datoteca…">
+<!ENTITY openFileCmd.accesskey "d">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Organisar la pagina…">
+<!ENTITY printSetupCmd.accesskey "O">
+<!ENTITY printPreviewCmd.label "Prevista per stampar">
+<!ENTITY printPreviewCmd.accesskey "P">
+<!ENTITY printCmd.label "Stampar…">
+<!ENTITY printCmd.accesskey "S">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Lavurar offline">
+<!ENTITY goOfflineCmd.accesskey "o">
+
+<!ENTITY menubarCmd.label "Trav da menu">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "Trav d'utensils per navigar">
+<!ENTITY personalbarCmd.label "Trav d'utensils dals segnapaginas">
+<!ENTITY personalbarCmd.accesskey "u">
+<!ENTITY bookmarksToolbarItem.label "Simbols dals segnapaginas">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Rechargiar tut ils tabs">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "u">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Crear segnapaginas per tut ils tabs…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "T">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Revocar il serrar dil tab">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "r">
+
+<!ENTITY pageSourceCmd.label "Mussar il code da funtauna da la pagina">
+<!ENTITY pageSourceCmd.accesskey "c">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Infurmaziuns davart la pagina">
+<!ENTITY pageInfoCmd.accesskey "s">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Duplitgar il tab">
+<!ENTITY mirrorTabCmd.accesskey "p">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Modus da maletg entir">
+<!ENTITY enterFullScreenCmd.accesskey "e">
+<!ENTITY exitFullScreenCmd.label "Bandunar il modus da maletg entir">
+<!ENTITY exitFullScreenCmd.accesskey "e">
+<!ENTITY fullScreenCmd.label "Maletg entir">
+<!ENTITY fullScreenCmd.accesskey "M">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Mussar tut ils tabs">
+<!ENTITY showAllTabsCmd.accesskey "t">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "S'annunziar tar &syncBrand.shortName.label;">
+<!ENTITY fxaSignedIn.tooltip "Avrir las preferenzas da &syncBrand.shortName.label;">
+<!ENTITY fxaSignInError.label "Reconnectar cun &syncBrand.shortName.label;">
+<!ENTITY fxaUnverified.label "Verifitgar tes conto">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Minimar">
+<!ENTITY fullScreenRestore.tooltip "Restaurar">
+<!ENTITY fullScreenClose.tooltip "Serrar">
+<!ENTITY fullScreenAutohide.label "Zuppentar las travs d'utensils">
+<!ENTITY fullScreenAutohide.accesskey "a">
+<!ENTITY fullScreenExit.label "Interrumper il modus da maletg entir">
+<!ENTITY fullScreenExit.accesskey "I">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "è ussa en il modus da maletg entir">
+<!ENTITY fullscreenWarning.generic.label "Quest document è ussa en il modus da maletg entir">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Bandunar il modus da maletg entir (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Bandunar il modus da maletg entir (esc)">
+<!ENTITY leaveDOMFullScreen.label "Bandunar il modus da maletg entir">
+<!ENTITY leaveDOMFullScreen.accesskey "u">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "controllescha il punctader. Smatga ESC per reacquistar la controlla.">
+<!ENTITY pointerlockWarning.generic.label "Quest document controllescha il punctader. Smatga ESC per reacquistar la controlla.">
+
+<!ENTITY closeWindow.label "Serrar la fanestra">
+<!ENTITY closeWindow.accesskey "r">
+
+<!ENTITY bookmarksMenu.label "Segnapagina">
+<!ENTITY bookmarksMenu.accesskey "S">
+<!ENTITY bookmarkThisPageCmd.label "Agiuntar in segnapagina…">
+<!ENTITY editThisBookmarkCmd.label "Modifitgar quest segnapagina">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Dapli servetschs da cundivider…">
+<!ENTITY sharePageCmd.label "Cundivider questa pagina">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Cundivider questa colliaziun">
+<!ENTITY shareLink.accesskey "c">
+<!ENTITY shareImage.label "Cundivider quest maletg">
+<!ENTITY shareImage.accesskey "s">
+<!ENTITY shareSelect.label "Cundivider la selecziun">
+<!ENTITY shareSelect.accesskey "s">
+<!ENTITY shareVideo.label "Cundivider quest video">
+<!ENTITY shareVideo.accesskey "s">
+<!ENTITY feedsMenu2.label "Abunar questa pagina">
+<!ENTITY subscribeToPageMenupopup.label "Abunar questa pagina">
+<!ENTITY subscribeToPageMenuitem.label "Abunar questa pagina…">
+<!ENTITY addCurPagesCmd.label "Agiuntar segnapaginas per tut ils tabs…">
+<!ENTITY showAllBookmarks2.label "Mussar tut ils segnapaginas">
+<!ENTITY recentBookmarks.label "Tschernì dacurt sco segnapagina">
+<!ENTITY otherBookmarksCmd.label "Auters segnapaginas">
+<!ENTITY mobileBookmarksCmd.label "Segnapaginas mobils">
+<!ENTITY bookmarksToolbarChevron.tooltip "Mussar dapli segnapaginas">
+<!ENTITY showRecentlyBookmarked.label     "Mussar ils segnapaginas agiuntads dacurt">
+<!ENTITY showRecentlyBookmarked.accesskey "M">
+<!ENTITY hideRecentlyBookmarked.label     "Zuppentar ils segnapaginas agiuntads dacurt">
+<!ENTITY hideRecentlyBookmarked.accesskey "Z">
+
+<!ENTITY backCmd.label                "Enavos">
+<!ENTITY backButton.tooltip           "Ina pagina enavos">
+<!ENTITY forwardCmd.label             "Enavant">
+<!ENTITY forwardButton.tooltip        "Ina pagina enavant">
+<!ENTITY backForwardButtonMenu.tooltip "Cliccar cun la tasta dretga da la mieur u tegnair smatgà per vesair la cronologia">
+<!ENTITY backForwardButtonMenuMac.tooltip "Tegnair smatgà per vesair la cronologia">
+<!ENTITY reloadCmd.label              "Chargiar danovamain">
+<!ENTITY stopCmd.label                "Stop">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Chargiar l'adressa endatada en la trav d'adressas">
+<!ENTITY printButton.label            "Stampar">
+<!ENTITY printButton.tooltip          "Stampar questa pagina">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Mussar infurmaziuns davart la pagina">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Avrir la panela da messadis">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Avrir la panela che dumonda la posiziun">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Avrir la panela d'installaziun da supplements">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Avrir la panela per la memoria offline">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Avrir la panela per memorisar pleds-clav">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Administrar l'utilisaziun da plug-ins">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Definir sche ti vuls retschaiver notificaziuns da la pagina">
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Memorisar datas en la memoria durabla">
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Il navigatur vegn controllà a distanza">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Administrar la cundivisiun da la camera/dal microfon cun la pagina">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Administrar la cundivisiun dal microfon cun la pagina">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Administrar la cundivisiun da fanestras u dal visur cun la pagina">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Avrir la panela cun il messadi d'installaziun">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Translatar questa pagina">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Administrar la translaziun da la pagina">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Administrar l'utilisaziun da software DRM">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Ti has bloccà tia camera per questa website.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Ti has bloccà tes microfon per questa website.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Ti has bloccà la pussaivladad da questa website da cundivider tes visur.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Ti has bloccà las infurmaziuns da geolocalisaziun per questa website.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Ti has bloccà la pussaivladad da memorisar datas per questa website.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Ti has bloccà ils messadis da questa website.">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "Ti has bloccà la memoria durabla per questa website.">
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Mussar la cronologia">
+
+<!ENTITY searchItem.title             "Tschertgar">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Pagina da partenza">
+
+<!ENTITY bookmarksButton.label          "Segnapaginas">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Segnapaginas">
+<!ENTITY bookmarksMenuButton.other.label "Auters segnapaginas">
+<!ENTITY bookmarksMenuButton.mobile.label "Segnapaginas mobils">
+<!ENTITY viewBookmarksSidebar2.label        "Mussar la trav laterala da segnapaginas">
+<!ENTITY viewBookmarksToolbar.label         "Mussar la trav d'utensils da segnapaginas">
+<!ENTITY searchBookmarks.label              "Tschertgar en ils segnapaginas">
+
+<!ENTITY containersMenu.label "Containers">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Cronologia">
+<!ENTITY historySidebarCmd.commandKey   "H">
+
+<!ENTITY toolsMenu.label              "Utensils">
+<!ENTITY toolsMenu.accesskey          "U"> 
+
+<!ENTITY keywordfield.label           "Agiuntar in pled magic per questa tschertga…">
+<!ENTITY keywordfield.accesskey       "s">
+
+<!ENTITY downloads.label              "Telechargiadas">
+<!ENTITY downloads.accesskey          "D">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Supplements">
+<!ENTITY addons.accesskey             "S">
+<!ENTITY addons.commandkey            "S">
+
+<!ENTITY webDeveloperMenu.label       "Sviluppaders dal web">
+<!ENTITY webDeveloperMenu.accesskey   "w">
+
+<!ENTITY inspectContextMenu.label     "Inspectar l'element">
+<!ENTITY inspectContextMenu.accesskey "I">
+
+<!ENTITY fileMenu.label         "Datoteca"> 
+<!ENTITY fileMenu.accesskey       "D">
+<!ENTITY newUserContext.label             "Nov tab da container">
+<!ENTITY newUserContext.accesskey         "C">
+<!ENTITY newNavigatorCmd.label        "Nova fanestra">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "N">
+<!ENTITY newPrivateWindow.label     "Nova fanestra privata">
+<!ENTITY newPrivateWindow.accesskey "e">
+<!ENTITY newNonRemoteWindow.label   "Nova fanestra betg e10s">
+
+<!ENTITY editMenu.label         "Modifitgar"> 
+<!ENTITY editMenu.accesskey       "M"> 
+<!ENTITY undoCmd.label            "Revocar">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "R"> 
+<!ENTITY redoCmd.label            "Restituir">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "R"> 
+<!ENTITY cutCmd.label           "Tagliar ora">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "a"> 
+<!ENTITY copyCmd.label            "Copiar">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "C"> 
+<!ENTITY pasteCmd.label           "Encollar">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "E"> 
+<!ENTITY deleteCmd.label          "Stizzar">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "S"> 
+<!ENTITY selectAllCmd.label         "Selecziunar tut">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "t"> 
+<!ENTITY preferencesCmd2.label       "Preferenzas">
+<!ENTITY preferencesCmd2.accesskey     "e">
+<!ENTITY preferencesCmdUnix.label       "Preferenzas">
+<!ENTITY preferencesCmdUnix.accesskey     "e"> 
+
+<!ENTITY clearRecentHistory.label               "Stizzar la cronologia pli nova…">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Vista"> 
+<!ENTITY viewMenu.accesskey       "V"> 
+<!ENTITY viewToolbarsMenu.label       "Travs da simbols"> 
+<!ENTITY viewToolbarsMenu.accesskey     "T"> 
+<!ENTITY viewSidebarMenu.label "Trav laterala">
+<!ENTITY viewSidebarMenu.accesskey "T">
+<!ENTITY viewCustomizeToolbar.label       "Persunalisar…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "a">
+<!ENTITY overflowCustomizeToolbar.label       "Modifitgar la trav da simbols…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "M">
+
+<!ENTITY historyMenu.label "Cronologia">
+<!ENTITY historyMenu.accesskey "C">
+<!ENTITY historyUndoMenu.label "Tabs serrads dacurt">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Fanestras serradas dacurt">
+<!ENTITY historyRestoreLastSession.label "Restaurar l'ultima sesida">
+
+<!ENTITY showAllHistoryCmd2.label "Mussar l'entira cronologia">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Persunalisar">
+<!ENTITY appMenuCustomize.tooltip "Persunalisar il menu e las travs d'utensils">
+<!ENTITY appMenuCustomizeExit.label "Serrar il modus da persunalisar">
+<!ENTITY appMenuCustomizeExit.tooltip "Terminar il persunalisar">
+<!ENTITY appMenuHistory.label "Cronologia">
+<!ENTITY appMenuHistory.showAll.label "Mussar l'entira cronologia">
+<!ENTITY appMenuHistory.clearRecent.label "Stizzar la cronologia la pli nova…">
+<!ENTITY appMenuHistory.restoreSession.label "Restaurar l'ultima sesida">
+<!ENTITY appMenuHistory.viewSidebar.label "Vesair la trav laterala da la cronologia">
+<!ENTITY appMenuHistory.recentHistory.label "Cronologia nova">
+<!ENTITY appMenuHelp.label "Agid">
+<!ENTITY appMenuHelp.tooltip "Avrir il menu d'agid">
+
+<!ENTITY appMenuRemoteTabs.label "Tabs sincronisads">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Nagins tabs averts">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Mussar dapli">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Mussar ulteriurs tabs da quest apparat">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Mussar tuts">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Mussar tut ils tabs da quest apparat">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Activescha la sincronisaziun da tabs per vesair ina glista dals tabs da tes auters apparats.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Nagins tabs sincronisads… anc!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Vuls ti vesair qua tes tabs dad auters apparats?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Preferenzas da la sincronisaziun">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "S'annunziar per vesair ina glista dals tabs da tes auters apparats.">
+<!ENTITY appMenuRemoteTabs.signin.label "S'annunziar tar Sync">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Administrar apparats…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Mussar la trav laterala dals tabs sincronisads">
+
+<!ENTITY customizeMenu.addToToolbar.label "Agiuntar a la trav d'utensils">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!ENTITY customizeMenu.addToPanel.label "Agiuntar al menu">
+<!ENTITY customizeMenu.addToPanel.accesskey "M">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Agiuntar al menu extra">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "x">
+<!ENTITY customizeMenu.moveToToolbar.label "Spustar en la trav d'utensils">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "u">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Spustar en il menu">
+<!ENTITY customizeMenu.moveToPanel.accesskey "u">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Fixar en il menu extra">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "F">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Betg pli fixar en il menu extra">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "t">
+<!ENTITY customizeMenu.removeFromToolbar.label "Allontanar da la trav d'utensils">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "l">
+<!ENTITY customizeMenu.removeFromMenu.label "Allontanar dal menu">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "l">
+<!ENTITY customizeMenu.addMoreItems.label "Agiuntar dapli elements…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Dapli">
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Tschertgar u endatar in'adressa">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.extension.label       "Extensiun:">
+<!ENTITY urlbar.switchToTab.label     "Midar al tab:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Vuls ti meglierar ils resultats da tschertga cun propostas?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Ulteriuras infurmaziuns…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "l">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Na">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Gea">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "g">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tip:">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+<!ENTITY urlbar.searchSuggestionsNotification.hint "I dat in agid per tschertgar: L'icona &#x1F50E; inditgescha ina proposta da tschertgar.">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Midar las opziuns…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "M">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Midar las preferenzas…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "M">
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+<!ENTITY contentSearchInput.label     "Term da tschertgar">
+<!ENTITY contentSearchSubmit.tooltip  "Trametter la tschertga">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Tschertgar">
+<!ENTITY searchIcon.tooltip           "Tschertgar">
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+<!ENTITY searchFor.label              "Tschertgar ">
+<!ENTITY searchWith.label             " cun:">
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+<!ENTITY search.label                 "Tschertgar ">
+<!ENTITY searchAfter.label            "">
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+<!ENTITY searchWithHeader.label       "Tschertgar cun:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Midar parameters da tschertga">
+<!ENTITY changeSearchSettings.tooltip "Midar ils parameters per tschertgar">
+
+<!ENTITY searchInNewTab.label         "Tschertgar en in nov tab">
+<!ENTITY searchInNewTab.accesskey     "T">
+<!ENTITY searchSetAsDefault.label     "Definir sco maschina da tschertgar da standard">
+<!ENTITY searchSetAsDefault.accesskey "D">
+
+<!ENTITY openLinkCmdInTab.label       "Avrir la colliaziun en in nov tab">
+<!ENTITY openLinkCmdInTab.accesskey   "t">
+<!ENTITY openLinkCmd.label            "Avrir la colliaziun en ina nova fanestra">
+<!ENTITY openLinkCmd.accesskey        "f">
+<!ENTITY openLinkInPrivateWindowCmd.label "Avrir la colliaziun en ina nova fanestra privata">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "P">
+<!ENTITY openLinkCmdInCurrent.label     "Avrir la colliaziun">
+<!ENTITY openLinkCmdInCurrent.accesskey "A">
+<!ENTITY openFrameCmdInTab.label      "Avrir il frame en in nov tab">
+<!ENTITY openFrameCmdInTab.accesskey  "t">
+<!ENTITY openFrameCmd.label           "Avrir il frame en ina nova fanestra">
+<!ENTITY openFrameCmd.accesskey       "f">
+<!ENTITY openLinkCmdInContainerTab.label "Avrir la colliaziun en in nov tab da container">
+<!ENTITY openLinkCmdInContainerTab.accesskey "C">
+<!ENTITY showOnlyThisFrameCmd.label     "Mussar mo quest frame">
+<!ENTITY showOnlyThisFrameCmd.accesskey "M">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Chargiar danovamain il frame">
+<!ENTITY reloadFrameCmd.accesskey     "r">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Mussar il code da funtauna da la selecziun">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Mussar la funtauna MathML">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "A">
+<!ENTITY viewPageSourceCmd.label      "Mussar il code da funtauna da la pagina">
+<!ENTITY viewPageSourceCmd.accesskey  "a">
+<!ENTITY viewFrameSourceCmd.label     "Mussar il code da funtauna dal frame">
+<!ENTITY viewFrameSourceCmd.accesskey "f">
+<!ENTITY viewPageInfoCmd.label        "Mussar infurmaziuns davart la pagina">
+<!ENTITY viewPageInfoCmd.accesskey    "M">
+<!ENTITY viewFrameInfoCmd.label       "Mussar infurmaziuns davart il frame">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY reloadImageCmd.label         "Rechargiar la grafica">
+<!ENTITY reloadImageCmd.accesskey     "R">
+<!ENTITY viewImageCmd.label           "Mussar la grafica">
+<!ENTITY viewImageCmd.accesskey       "i">
+<!ENTITY viewImageInfoCmd.label       "Mussar infurmaziuns davart la grafica">
+<!ENTITY viewImageInfoCmd.accesskey   "g">
+<!ENTITY viewImageDescCmd.label       "Mussar la descripziun">
+<!ENTITY viewImageDescCmd.accesskey   "D">
+<!ENTITY viewVideoCmd.label           "Mussar il video">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Mussar la grafica dal fund davos">
+<!ENTITY viewBGImageCmd.accesskey     "M">
+<!ENTITY setDesktopBackgroundCmd.label      "Configurar sco culissa…">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "a">
+<!ENTITY bookmarkPageCmd2.label       "Agiuntar in segnapagina per la pagina">
+<!ENTITY bookmarkThisLinkCmd.label      "Agiuntar in segnapagina per la colliaziun">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "l">
+<!ENTITY bookmarkThisFrameCmd.label      "Agiuntar in segnapagina per il frame">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "A">
+<!ENTITY copyURLCmd.label             "Copiar l'URL">
+<!ENTITY emailPageCmd.label           "Trametter la colliaziun per e-mail…">
+<!ENTITY emailPageCmd.accesskey       "E">
+<!ENTITY savePageCmd.label            "Memorisar la pagina sut…">
+<!ENTITY savePageCmd.accesskey        "u">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "u">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Memorisar il frame sut…">
+<!ENTITY saveFrameCmd.accesskey       "u">
+<!ENTITY printFrameCmd.label          "Stampar il frame…">
+<!ENTITY printFrameCmd.accesskey      "S">
+<!ENTITY saveLinkCmd.label            "Memorisar la destinaziun sut…">
+<!ENTITY saveLinkCmd.accesskey        "z">
+<!ENTITY saveImageCmd.label           "Memorisar la grafica sut…">
+<!ENTITY saveImageCmd.accesskey       "g">
+<!ENTITY saveVideoCmd.label           "Memorisar il video sut…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Memorisar l'audio sut…">
+<!ENTITY saveAudioCmd.accesskey       "M">
+<!ENTITY emailImageCmd.label          "Trametter la grafica per e-mail…">
+<!ENTITY emailImageCmd.accesskey      "a">
+<!ENTITY emailVideoCmd.label          "Trametter il video per e-mail…">
+<!ENTITY emailVideoCmd.accesskey      "a">
+<!ENTITY castVideoCmd.label           "Trametter il video ad in apparat">
+<!ENTITY castVideoCmd.accesskey       "e">
+<!ENTITY emailAudioCmd.label          "Trametter l'audio per e-mail…">
+<!ENTITY emailAudioCmd.accesskey      "a">
+<!ENTITY playPluginCmd.label          "Activar quest plug-in">
+<!ENTITY playPluginCmd.accesskey      "c">
+<!ENTITY hidePluginCmd.label          "Zuppentar quest plug-in">
+<!ENTITY hidePluginCmd.accesskey      "p">
+<!ENTITY copyLinkCmd.label            "Copiar l'adressa da la colliaziun">
+<!ENTITY copyLinkCmd.accesskey        "C">
+<!ENTITY copyImageCmd.label           "Copiar l'adressa da la grafica">
+<!ENTITY copyImageCmd.accesskey       "d">
+<!ENTITY copyImageContentsCmd.label   "Copiar la grafica">
+<!ENTITY copyImageContentsCmd.accesskey  "C"> 
+<!ENTITY copyVideoURLCmd.label        "Copiar l'adressa dal video">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Copiar l'adressa da l'audio">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "Copiar l'adressa dad e-mail">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label              "Frame actual">
+<!ENTITY thisFrameMenu.accesskey          "F">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaPlay.label             "Far ir">
+<!ENTITY mediaPlay.accesskey         "F">
+<!ENTITY mediaPause.label            "Pausa">
+<!ENTITY mediaPause.accesskey        "P">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Senza tun">
+<!ENTITY mediaMute.accesskey         "S">
+<!ENTITY mediaUnmute.label           "Cun tun">
+<!ENTITY mediaUnmute.accesskey       "C">
+<!ENTITY mediaPlaybackRate2.label     "Sveltezza da reproducziun">
+<!ENTITY mediaPlaybackRate2.accesskey "v">
+<!ENTITY mediaPlaybackRate050x2.label "Plaun (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "P">
+<!ENTITY mediaPlaybackRate100x2.label "Normal">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate125x2.label "Svelt (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "S">
+<!ENTITY mediaPlaybackRate150x2.label "Pli svelt (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "l">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Stravagà (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "t">
+<!ENTITY mediaLoop.label             "Repeter">
+<!ENTITY mediaLoop.accesskey         "R">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Mussar las controllas">
+<!ENTITY mediaShowControls.accesskey "c">
+<!ENTITY mediaHideControls.label     "Zuppentar las controllas">
+<!ENTITY mediaHideControls.accesskey "c">
+<!ENTITY videoFullScreen.label       "Maletg entir">
+<!ENTITY videoFullScreen.accesskey   "M">
+<!ENTITY videoSaveImage.label        "Memorisar il maletg sco…">
+<!ENTITY videoSaveImage.accesskey    "s">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Mussar la statistica">
+<!ENTITY videoShowStats.accesskey    "t">
+<!ENTITY videoHideStats.label        "Zuppentar la statistica">
+<!ENTITY videoHideStats.accesskey    "t">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomEnlargeCmd.label       "Engrondir">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "g">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Empitschnir">
+<!ENTITY fullZoomReduceCmd.accesskey    "E">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Normal">
+<!ENTITY fullZoomResetCmd.accesskey     "N">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Mo midar il text">
+<!ENTITY fullZoomToggleCmd.accesskey    "t">
+<!ENTITY fullZoom.label                 "Zoom">
+<!ENTITY fullZoom.accesskey             "Z">
+
+<!ENTITY sidebarCloseButton.tooltip     "Serrar la trav laterala">
+<!ENTITY sidebarMenuClose.label         "Serrar la trav laterala">
+
+<!ENTITY quitApplicationCmdWin2.label       "Terminar">
+<!ENTITY quitApplicationCmdWin2.accesskey   "T">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Terminar &brandShorterName;">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Terminar"> 
+<!ENTITY quitApplicationCmd.accesskey   "T">
+<!ENTITY quitApplicationCmdMac2.label   "Terminar &brandShorterName;">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY closeCmd.label                 "Serrar">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "S">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Stil da la pagina d'internet">
+<!ENTITY pageStyleMenu.accesskey "S">
+<!ENTITY pageStyleNoStyle.label "Nagin stil">
+<!ENTITY pageStyleNoStyle.accesskey "N">
+<!ENTITY pageStylePersistentOnly.label "Stil da standard">
+<!ENTITY pageStylePersistentOnly.accesskey "S">
+
+<!ENTITY pageReportIcon.tooltip            "Midar ils parameters per las fanestras popup da questa website">
+
+<!ENTITY allowPopups.accesskey "P">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Modifitgar las preferenzas per las fanestras popup…">
+<!ENTITY editPopupSettings.label "Modifitgar las opziuns per las fanestras popup…">
+<!ENTITY editPopupSettings.accesskey "M">
+<!ENTITY dontShowMessage.accesskey "I">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Midar la direcziun da la pagina">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "M">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Midar la direcziun dal text">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "M">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Tschertgar en la pagina">
+<!ENTITY findOnCmd.accesskey "s">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Tschertgar vinavant">
+<!ENTITY findAgainCmd.accesskey "n">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Agiuntar dicziunaris…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!ENTITY editBookmark.done.label                     "Terminar">
+<!ENTITY editBookmark.removeBookmark.accessKey       "L">
+
+<!ENTITY identity.connectionSecure "Connexiun segirada">
+<!ENTITY identity.connectionNotSecure "Questa connexiun n'è betg segirada">
+<!ENTITY identity.connectionFile "Questa pagina è memorisada sin tes computer.">
+<!ENTITY identity.connectionVerified2 "Ti es connectà a moda segira cun questa pagina che appartegna a:">
+<!ENTITY identity.connectionInternal "Quai è ina pagina segira da &brandShortName;.">
+<!ENTITY identity.extensionPage "Ina extensiun ha chargià questa pagina.">
+<!ENTITY identity.insecureLoginForms2 "Infurmaziuns d'annunzia endatadas sin questa pagina èn eventualmain periclitadas.">
+
+<!-- Strings for connection state warnings. -->
+<!ENTITY identity.activeBlocked "&brandShortName; ha bloccà parts da questa pagina che n'èn betg segiradas.">
+<!ENTITY identity.passiveLoaded "Parts da questa pagina (p.ex. maletgs) n'èn betg segiradas.">
+<!ENTITY identity.activeLoaded "Ti has deactivà la protecziun per questa pagina.">
+<!ENTITY identity.weakEncryption "Questa pagina utilisescha in criptadi flaivel.">
+
+<!-- Strings for connection state warnings in the subview. -->
+<!ENTITY identity.description.insecure "Tia connexiun cun questa pagina n'è betg privata. Infurmaziuns che ti tramettas (p.ex. pleds-clav, messadis, numers da cartas da credit etc.) pon eventualmain vegnir legidas dad auters.">
+<!ENTITY identity.description.insecureLoginForms "Las datas d'annunzia che ti endateschas sin questa pagina n'èn betg segiradas ed èn eventualmain periclitadas.">
+<!ENTITY identity.description.weakCipher "Tia connexiun cun questa pagina utilisescha in criptadi flaivel e n'è betg privata.">
+<!ENTITY identity.description.weakCipher2 "Autras persunas pon vesair tias infurmaziuns u modifitgar la pagina d'internet.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; ha bloccà parts da questa pagina che n'èn betg segiradas.">
+<!ENTITY identity.description.passiveLoaded "Tia connexiun n'è betg privata ed infurmaziuns che ti cundividas cun la pagina pon eventualmain vegnir legidas dad auters.">
+<!ENTITY identity.description.passiveLoaded2 "Questa website ha cuntegn (p.ex. maletgs) che n'è betg segirà.">
+<!ENTITY identity.description.passiveLoaded3 "Malgrà che &brandShortName; ha bloccà parts dal cuntegn, datti anc adina cuntegn da la pagina che n'è betg segirà (p.ex. maletgs).">
+<!ENTITY identity.description.activeLoaded "Questa website ha cuntegn (p.ex. scripts) che n'è betg segirà e tia connexiun cun ella n'è betg privata.">
+<!ENTITY identity.description.activeLoaded2 "Infurmaziuns che ti cundividas cun questa pagina (p.ex. pleds-clav, messadis, numers da cartas da credit etc.) pon esser legiblas per auters.">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Activar la protecziun">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "A">
+<!ENTITY identity.disableMixedContentBlocking.label "Deactivar per quella giada la protecziun">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
+<!ENTITY identity.learnMore "Ulteriuras infurmaziuns">
+
+<!ENTITY identity.removeCertException.label "Allontanar l'excepziun">
+<!ENTITY identity.removeCertException.accesskey "r">
+
+<!ENTITY identity.moreInfoLinkText2 "Mussar detagls">
+
+<!ENTITY identity.permissions "Autorisaziuns">
+<!ENTITY identity.permissionsEmpty "Ti n'has betg definì autorisaziuns spezialas per questa pagina.">
+<!ENTITY identity.permissionsReloadHint "Forsa stos ti chargiar da nov questa pagina per applitgar las midadas.">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Tabs dal navigatur">
+
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+<!ENTITY syncTabsMenu3.label     "Tabs sincronisads">
+
+<!ENTITY syncedTabs.sidebar.label              "Tabs sincronisads">
+<!ENTITY syncedTabs.sidebar.noclients.label    "T'annunzia era sin tes auters apparats tar Waterfox per vesair qua lur tabs.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Nagins tabs sincronisads… anc!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Vuls ti vesair qua tes tabs dad auters apparats?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "T'annunzia per vesair ina glista dals tabs da tes auters apparats.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Nagins tabs averts">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "Avrir las preferenzas da &syncBrand.shortName.label;">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Activescha la sincronisaziun da tabs per vesair ina glista dals tabs da tes auters apparats.">
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+<!ENTITY syncedTabs.context.open.label                       "Avrir">
+<!ENTITY syncedTabs.context.open.accesskey                   "A">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Avrir en in nov tab">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "v">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Avrir en ina nova fanestra">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "n">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Avrir en ina nova fanestra privata">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "p">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Agiuntar in segnapagina per quest tab…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "s">
+<!ENTITY syncedTabs.context.copy.label                       "Copiar">
+<!ENTITY syncedTabs.context.copy.accesskey                   "C">
+
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Avrir tuts en tabs">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "A">
+<!ENTITY syncedTabs.context.managedevices.label              "Administrar apparats…">
+<!ENTITY syncedTabs.context.managedevices.accesskey          "A">
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY syncSignIn.label             "S'annunziar tar &syncBrand.shortName.label;…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Sincronisar ussa">
+<!ENTITY syncSyncNowItem.accesskey    "S">
+<!ENTITY syncReAuthItem.label         "Reconnectar cun &syncBrand.shortName.label;…">
+<!ENTITY syncReAuthItem.accesskey     "R">
+<!ENTITY syncToolbarButton.label      "Sincronisar">
+
+<!ENTITY social.addons.label "Administrar servertschs…">
+
+<!ENTITY social.directory.label "Register da servetschs">
+<!ENTITY social.directory.text "Ti pos activar servetschs da cundivider en il register.">
+<!ENTITY social.directory.button "Mussar il register">
+<!ENTITY social.directory.introText "Clicca sin in servetsch per al agiuntar a &brandShortName;.">
+<!ENTITY social.directory.viewmore.text "Mussar dapli">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Ulteriurs utensils e funcziuns">
+<!ENTITY customizeMode.menuAndToolbars.empty "Vuls dapli utensils?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Tscherna da millis supplements">
+<!ENTITY customizeMode.restoreDefaults "Restaurar il standard">
+<!ENTITY customizeMode.done "Finì">
+<!ENTITY customizeMode.titlebar "Trav dal titel">
+<!ENTITY customizeMode.toolbars2 "Travs d'utensils">
+<!ENTITY customizeMode.lwthemes "Designs">
+<!ENTITY customizeMode.lwthemes.myThemes "Mes designs">
+<!ENTITY customizeMode.lwthemes.recommended "Recumandà">
+<!ENTITY customizeMode.lwthemes.menuManage "Administrar">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "A">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Telechargiar designs">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "T">
+<!ENTITY customizeMode.emptyOverflowList.description "Tira e depona qua elements che ti vuls avair per mauns ma betg en tia trav d'utensils…">
+<!ENTITY customizeMode.uidensity "Cumpactadad">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+<!ENTITY customizeMode.uidensity.menuCompact.label "Cumpact">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Cumpact">
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "C">
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+<!ENTITY customizeMode.uidensity.menuTouch.label "Touch">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Touch">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "T">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Utilisar «Touch» per tablets">
+
+<!ENTITY getUserMedia.selectCamera.label "Camera per cundivider:">
+<!ENTITY getUserMedia.selectCamera.accesskey "C">
+<!ENTITY getUserMedia.selectMicrophone.label "Microfon per cundivider:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
+<!ENTITY getUserMedia.audioCapture.label "Audio dal tab vegn cundividì.">
+<!ENTITY getUserMedia.allWindowsShared.message "Tut las fanestras visiblas sin tes visur vegnan cundivididas.">
+
+<!ENTITY trackingProtection.title "Protecziun cunter il fastizar">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; blochescha parts da la pagina che ta pudessan fastizar durant che ti navigheschas.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Questa pagina cuntegna elements che ta pon fastizar durant il navigar. Ti has deactivà la protecziun.">
+<!ENTITY trackingProtection.notDetected3 "Chattà nagins elements che fastizeschan sin questa pagina.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Deactivar la protecziun per questa pagina">
+<!ENTITY trackingProtection.unblock.accesskey "D">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Deactivar la protecziun per questa sesida">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "D">
+<!ENTITY trackingProtection.block2.label "Activar la protecziun">
+<!ENTITY trackingProtection.block2.accesskey "A">
+
+<!ENTITY trackingContentBlocked.message "Fastizar">
+<!ENTITY trackingContentBlocked.moreinfo "Las parts da questa pagina che suondan tias activitads online èn vegnidas bloccadas.">
+<!ENTITY trackingContentBlocked.learnMore "Ulteriuras infurmaziuns">
+<!ENTITY trackingContentBlocked.options "Opziuns">
+<!ENTITY trackingContentBlocked.unblock2.label "Deactivar la protecziun per questa pagina">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "D">
+<!ENTITY trackingContentBlocked.block.label "Activar la protecziun">
+<!ENTITY trackingContentBlocked.block.accesskey "E">
+<!ENTITY trackingContentBlocked.disabled.message "La protecziun cunter il fastizar è deactivada">
+
+<!ENTITY pluginNotification.showAll.label "Mussar tuts">
+<!ENTITY pluginNotification.showAll.accesskey "S">
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+<!ENTITY pluginActivateNow.label "Lubir uss">
+<!ENTITY pluginActivateAlways.label "Lubir e memorisar">
+<!ENTITY pluginBlockNow.label "Bloccar il plug-in">
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Serrar">
+
+<!ENTITY appMenuSidebars.label         "Travs lateralas">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+<!ENTITY panicButton.view.mainTimeframeDesc       "Emblidar las ultimas:">
+<!ENTITY panicButton.view.5min                    "Tschintg minutas">
+<!ENTITY panicButton.view.2hr                     "Duas uras">
+<!ENTITY panicButton.view.day                     "24 uras">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+<!ENTITY panicButton.view.mainActionDesc          "Sche ti cuntinueschas, vegnan:">
+<!ENTITY panicButton.view.deleteCookies           "ils ultims <html:strong>cookies</html:strong> stizzads">
+<!ENTITY panicButton.view.deleteHistory           "la <html:strong>cronologia</html:strong> stizzada">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "tut ils <html:strong>tabs</html:strong> e tut las <html:strong>fanestras</html:strong> serradas">
+<!ENTITY panicButton.view.openNewWindow           "ina nova fanestra vida averta">
+
+<!ENTITY panicButton.view.undoWarning             "Questa acziun na po betg vegnir revocada.">
+<!ENTITY panicButton.view.forgetButton            "Emblidar!">
+
+<!ENTITY panicButton.thankyou.msg1                "La cronologia la pli nova è vegnida stizzada.">
+<!ENTITY panicButton.thankyou.msg2                "Navigar segir!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Grazia!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "Dapli infurmaziuns davart DRM…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+<!ENTITY updateAvailable.message "Actualisescha &brandShorterName; per profitar da las ultimas meglieraziuns da spertadad e sfera privata.">
+<!ENTITY updateAvailable.whatsnew.label "Vesair las novaziuns.">
+<!ENTITY updateAvailable.header.message "Ina nova actualisaziun per &brandShorterName; stat a disposiziun.">
+<!ENTITY updateAvailable.acceptButton.label "Telechargiar l'actualisaziun">
+<!ENTITY updateAvailable.acceptButton.accesskey "T">
+<!ENTITY updateAvailable.cancelButton.label "Betg ussa">
+<!ENTITY updateAvailable.cancelButton.accesskey "B">
+<!ENTITY updateAvailable.panelUI.label "Telechargiar l'actualisaziun da &brandShortName;">
+
+<!ENTITY updateManual.message "Telechargia ina copia frestga da &brandShorterName; e nus ta gidain da l'installar.">
+<!ENTITY updateManual.whatsnew.label "Vesair las novaziuns.">
+<!ENTITY updateManual.header.message "Impussibel dad actualisar &brandShorterName; a la pli nova versiun.">
+<!ENTITY updateManual.acceptButton.label "Telechargiar &brandShortName;">
+<!ENTITY updateManual.acceptButton.accesskey "T">
+<!ENTITY updateManual.cancelButton.label "Betg ussa">
+<!ENTITY updateManual.cancelButton.accesskey "B">
+<!ENTITY updateManual.panelUI.label "Telechargiar ina copia frestga da &brandShorterName;">
+
+<!ENTITY updateRestart.message "Suenter avair reavià &brandShorterName; vegnan ils tabs e las fanestras avertas restauradas.">
+<!ENTITY updateRestart.header.message2 "Reaviar per actualisar &brandShorterName;.">
+<!ENTITY updateRestart.acceptButton.label "Reaviar e restaurar">
+<!ENTITY updateRestart.acceptButton.accesskey "R">
+<!ENTITY updateRestart.cancelButton.label "Betg ussa">
+<!ENTITY updateRestart.cancelButton.accesskey "B">
+<!ENTITY updateRestart.panelUI.label2 "Reaviar per actualisar &brandShorterName;">
+
+<!ENTITY pageActionButton.tooltip "Acziuns da pagina">
+<!ENTITY pageAction.addToUrlbar.label "Agiuntar a la trav d'adressas">
+<!ENTITY pageAction.removeFromUrlbar.label "Allontanar da la trav d'adressas">
+
+<!ENTITY sendToDevice.label2 "Trametter ad in apparat">
+<!ENTITY sendToDevice.syncNotReady.label "Sincronisar apparats…">

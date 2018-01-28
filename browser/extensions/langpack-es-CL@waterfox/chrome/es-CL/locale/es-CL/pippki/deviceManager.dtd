@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Administrador de Dispositivo">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Este certificado personal no puede ser instalado porque no posees la clave privada correspondiente que fue creada cuando el certificado fue solicitado.">
+<!ENTITY devmgr.details.title                   "Detalles">
+<!ENTITY devmgr.details.title2                  "Valor">
+
+<!ENTITY devmgr.button.login.label              "Ingresar">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "Salir">
+<!ENTITY devmgr.button.logout.accesskey         "S">
+<!ENTITY devmgr.button.changepw.label           "Cambiar contraseña">
+<!ENTITY devmgr.button.changepw.accesskey       "C">
+<!ENTITY devmgr.button.load.label               "Cargar">
+<!ENTITY devmgr.button.load.accesskey           "C">
+<!ENTITY devmgr.button.unload.label             "Descargar">
+<!ENTITY devmgr.button.unload.accesskey         "D">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Ingresa la información para el módulo que deseas añadir.">
+<!ENTITY loaddevice.modname                     "Nombre de Módulo:">
+<!ENTITY loaddevice.modname.accesskey           "m">
+<!ENTITY loaddevice.modname.default             "Nuevo módulo PKCS#11">
+<!ENTITY loaddevice.filename                    "Nombre del archivo del módulo:">
+<!ENTITY loaddevice.filename.accesskey          "N">
+<!ENTITY loaddevice.browse                      "Examinar…">
+<!ENTITY loaddevice.browse.accesskey            "E">
+
+<!ENTITY loaddevice.title2                      "Cargar el controlador de dispositivo PKCS#11">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Permulaan">
+
+<!ENTITY startupPage2.label        "Apabila &brandShortName; mula">
+<!ENTITY startupPage2.accesskey    "m">
+<!ENTITY startupUserHomePage.label "Papar halaman utama anda">
+<!ENTITY startupBlankPage.label    "Papar halaman kosong">
+<!ENTITY startupPrevSession.label  "Papar tetingkap dan tab anda yang terdahulu">
+
+<!ENTITY homepage2.label           "Halaman Utama">
+<!ENTITY homepage2.accesskey       "U">
+<!ENTITY useCurrentPage.label      "Gunakan Halaman Semasa">
+<!ENTITY useCurrentPage.accesskey  "a">
+<!ENTITY useMultiple.label         "Gunakan Halaman Semasa">
+<!ENTITY chooseBookmark.label      "Guna Tandabuku…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "Pulih Piawai">
+<!ENTITY restoreDefault.accesskey  "P">
+
+<!ENTITY downloads.label     "Muat Turun">
+
+<!ENTITY saveTo.label "Simpan fail ke">
+<!ENTITY saveTo.accesskey "n">
+<!ENTITY chooseFolderWin.label        "Cari…">
+<!ENTITY chooseFolderWin.accesskey    "r">
+<!ENTITY chooseFolderMac.label        "Pilih…">
+<!ENTITY chooseFolderMac.accesskey    "P">
+<!ENTITY alwaysAskWhere.label         "Sentiasa tanya lokasi menyimpan fail">
+<!ENTITY alwaysAskWhere.accesskey     "S">
+
+<!ENTITY alwaysCheckDefault2.label        "Sentiasa semak samada &brandShortName; adalah pelayar piawai anda">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser3.label     "Jadikan Piawai…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "P">
+<!ENTITY isDefault.label                  "&brandShortName; kini adalah pelayar piawai anda">
+<!ENTITY isNotDefault.label               "&brandShortName; bukan pelayar piawai anda">
+
+<!ENTITY separateProfileMode.label        "Izinkan &brandShortName; dan Waterfox untuk dilancarkan pada masa yang sama">
+<!ENTITY useWaterfoxSync.label             "Tip: Ciri ini menggunakan profil yang berasingan. Gunakan Sync untuk berkongsi data.">
+<!ENTITY getStarted.notloggedin.label     "Daftar masuk ke &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Buka keutamaan &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Dayakan multi-proses &brandShortName;">

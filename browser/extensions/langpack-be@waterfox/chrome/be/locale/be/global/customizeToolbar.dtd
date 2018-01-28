@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Уладкаванне паліцы прылад">
+<!ENTITY dialog.dimensions        "width: 97ch; height: 37em;">
+<!ENTITY instructions.description "Вы можаце дадаваць або выдаляць адзінкі, перацягваючы іх на і з паліцаў прылад.">
+<!ENTITY show.label               "Паказваць:">
+<!ENTITY iconsAndText.label       "Значкі і тэкст">
+<!ENTITY icons.label              "Значкі">
+<!ENTITY text.label               "Тэкст">
+<!ENTITY useSmallIcons.label      "Дробныя значкі">
+<!ENTITY restoreDefaultSet.label  "Аднавіць прадвызначаныя">
+<!ENTITY addNewToolbar.label      "Дадаць новую паліцу прылад">
+<!ENTITY saveChanges.label        "Гатова">
+<!ENTITY undoChanges.label        "Адмяніць змяненні">

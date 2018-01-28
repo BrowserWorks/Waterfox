@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Avārijas ziņojumi">
+<!ENTITY crashesUnsubmitted.label   "Nosūtītie avāriju ziņojumi">
+<!ENTITY crashesSubmitted.label     "Nosūtītie avāriju ziņojumi">
+<!ENTITY id.heading                 "Ziņojuma ID">
+<!ENTITY dateCrashed.heading        "Avārijas datums">
+<!ENTITY dateSubmitted.heading      "Nosūtīšanas datums">
+<!ENTITY noReports.label            "Nav nosūtīts neviens avārijas ziņojums.">
+<!ENTITY noConfig.label             "Šī lietotne nav konfigurēta parādīt avāriju ziņojumus. Ir jāiestata iestatījums <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Izmest visus ziņojumus">

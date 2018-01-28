@@ -1,0 +1,134 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionAlways.label       "Siempres">
+<!ENTITY  trackingProtectionAlways.accesskey   "i">
+<!ENTITY  trackingProtectionPrivate.label      "Namái en ventanes privaes">
+<!ENTITY  trackingProtectionPrivate.accesskey  "m">
+<!ENTITY  trackingProtectionNever.label        "Enxamás">
+<!ENTITY  trackingProtectionNever.accesskey    "x">
+<!ENTITY  trackingProtectionLearnMore.label    "Deprender más">
+<!ENTITY  trackingProtectionExceptions.label   "Esceiciones…">
+<!ENTITY  trackingProtectionExceptions.accesskey "s">
+
+<!ENTITY tracking.label                 "Siguir">
+<!ENTITY trackingProtectionPBM5.label         "Usar proteición de rastrexu en Ventanes Privaes">
+<!ENTITY trackingProtectionPBM5.accesskey     "r">
+<!ENTITY trackingProtectionPBMLearnMore.label "Deprender más">
+<!ENTITY changeBlockList.label          "Camudar llista de bloquéu">
+<!ENTITY changeBlockList.accesskey      "C">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "Tamién pues ">
+<!ENTITY  doNotTrack.settings.label     "remanar los axustes de Nun rastrexar">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Historial">
+
+<!ENTITY  locationBar.label             "Barra de direiciones">
+
+<!ENTITY  locbar.history.label          "Historial">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Marcadores">
+<!ENTITY  locbar.bookmarks.accesskey    "M">
+<!ENTITY  locbar.openpage.label         "Abrir llingüetes">
+<!ENTITY  locbar.openpage.accesskey     "A">
+<!ENTITY  locbar.searches.label         "Guetes rellacionaes dende'l guetador por defeutu">
+<!ENTITY  locbar.searches.accesskey     "s">
+
+
+<!ENTITY  acceptCookies.label           "Aceutar cookies de les webs">
+<!ENTITY  acceptCookies.accesskey       "c">
+
+<!ENTITY  acceptThirdParty.pre.label      "Aceutar les cookies de terceres partes:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "c">
+<!ENTITY  acceptThirdParty.always.label   "Siempre">
+<!ENTITY  acceptThirdParty.never.label    "Enxamás">
+<!ENTITY  acceptThirdParty.visited.label  "De los visitaos">
+
+<!ENTITY  keepUntil.label               "Caltener hasta que:">
+<!ENTITY  keepUntil.accesskey           "h">
+
+<!ENTITY  expire.label                  "caduquen">
+<!ENTITY  close.label                   "zarre &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Esceiciones…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Amosar cookies…">
+<!ENTITY  showCookies.accesskey         "s">
+
+<!ENTITY  historyHeader.remember.label     "Recordar l'historial">
+<!ENTITY  historyHeader.dontremember.label "Nun recordar historial">
+<!ENTITY  historyHeader.custom.label       "Usar una configuración personalizada pal historial">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; va guardar el to historial de navegación, descargues, formularios y guetes, y atroxará tamién cookies de los sitios Web que visites.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "Tamién podrí­a ">
+<!ENTITY  rememberActions.clearHistory.label  "llimpiar l'historial reciente">
+<!ENTITY  rememberActions.middle.label        ", o ">
+<!ENTITY  rememberActions.removeCookies.label "desaniciar cookies de mou individual">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; usará los mesmos axustes que Restolar en privao u nun rescordará historial dalu cuando restoles la web.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "Tamién podría interesa-y ">
+<!ENTITY  dontrememberActions.clearHistory.label "llimpiar tol historial">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Usar siempres el mou Restolar en privao">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Recordar el mio historial de descargues y navegación">
+<!ENTITY  rememberHistory2.accesskey  "o">
+
+<!ENTITY  rememberSearchForm.label       "Recordar l'historial de formularios y guetes">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Llimpiar l'historial cuando &brandShortName; se zarre">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "Axustes…">
+<!ENTITY  clearOnCloseSettings.accesskey "C">
+
+<!ENTITY  browserContainersHeader.label         "Llingüetes contenedores">
+<!ENTITY  browserContainersLearnMore.label      "Deprendi más">
+<!ENTITY  browserContainersEnabled.label        "Habilitar llingüetes contenedores">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Axustes…">
+<!ENTITY  browserContainersSettings.accesskey    "u">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY  addressBar.label              "Address Bar">
+<!ENTITY  addressBar.suggest.label      "When using the address bar, suggest">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY changeBlockList2.label               "Change Block List…">
+<!ENTITY  doNotTrack.always.label       "Always">
+
+<!ENTITY  doNotTrack.default.label      "Only when using Tracking Protection">
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  doNotTrack.learnMore.label    "Learn more">
+<!ENTITY  historyHeader2.pre.accesskey     "w">
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; will">
+<!ENTITY  locbar.history2.accesskey     "H">
+<!ENTITY  locbar.history2.label         "Browsing history">
+<!ENTITY  permissions.label             "Permissions">
+
+<!ENTITY  suggestionSettings2.label     "Change preferences for search engine suggestions">
+
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Use Tracking Protection to block known trackers">
+<!ENTITY  trackingProtectionHeader2.label      "Tracking Protection">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">
+<!ENTITY trackingProtectionPBM6.label         "Use Tracking Protection in Private Browsing to block known trackers">

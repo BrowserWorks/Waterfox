@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "سراغ راہ حفاظت استعمال کریں">
+<!ENTITY  trackingProtectionAlways.label       "ہمیشہ">
+<!ENTITY  trackingProtectionAlways.accesskey   "ہ">
+<!ENTITY  trackingProtectionPrivate.label      "صرف نجی ونڈوں میں">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ف">
+<!ENTITY  trackingProtectionNever.label        "کبھی نہیں">
+<!ENTITY  trackingProtectionNever.accesskey    "ک">
+<!ENTITY  trackingProtectionLearnMore.label    "مزید سیکھیں">
+<!ENTITY  trackingProtectionExceptions.label   "استثنیات…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ا">
+
+<!ENTITY tracking.label                 "ٹریکنگ">
+<!ENTITY trackingProtectionPBM5.label         "ذاتی ونڈوز میں ٹریکنگ حفاظت کا استعمال کریں">
+<!ENTITY trackingProtectionPBM5.accesskey     "ت">
+<!ENTITY trackingProtectionPBMLearnMore.label "مزید سیکھیں">
+<!ENTITY changeBlockList.label          "بلاک فہرست تبدیل کریں">
+<!ENTITY changeBlockList.accesskey      "ت">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "آپ بھی ">
+<!ENTITY  doNotTrack.settings.label     "ٹریک نہ کریں کی سیٹنگیں کو بندوبست کریں">
+<!ENTITY  doNotTrack.post.label         "۔">
+
+<!ENTITY  history.label                 "سابقات">
+
+<!ENTITY  locationBar.label             "مقام بند">
+
+<!ENTITY  locbar.suggest.label          "محل وقوع بار استعمال کرتے وقت، تجویز دیں:">
+<!ENTITY  locbar.history.label          "سابقات">
+<!ENTITY  locbar.history.accesskey      "س">
+<!ENTITY  locbar.bookmarks.label        "نشانیاں">
+<!ENTITY  locbar.bookmarks.accesskey    "ن">
+<!ENTITY  locbar.openpage.label         "ٹیب کھولیے">
+<!ENTITY  locbar.openpage.accesskey     "ک">
+<!ENTITY  locbar.searches.label         "تحقیق و تکمیل کاری تلاش شدہ انجن سے">
+<!ENTITY  locbar.searches.accesskey     "و">
+
+<!ENTITY  suggestionSettings.label      "تلاش کے انجن کی تجاویز کے لئے ترجیحات کو بدلیں…">
+<!ENTITY  suggestionSettings.accesskey  "ب">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "سہ فریقی کوکیاں قبول کریں:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "ہمیشہ">
+<!ENTITY  acceptThirdParty.never.label    "کبھی نہیں">
+<!ENTITY  acceptThirdParty.visited.label  "ملاحظہ شدہ سے">
+
+<!ENTITY  keepUntil.label               "رکھیں جب تک:">
+<!ENTITY  keepUntil.accesskey           "ر">
+
+<!ENTITY  expire.label                  "یہ ایکسبائر ہو جائیں">
+<!ENTITY  close.label                   "میں &brandShortName; بند کروں">
+
+<!ENTITY  cookieExceptions.label        "استثنیات…">
+<!ENTITY  cookieExceptions.accesskey    "ا">
+
+<!ENTITY  showCookies.label             "کوکی دکھائیں ...">
+<!ENTITY  showCookies.accesskey         "د">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; کرے گا:">
+<!ENTITY  historyHeader.pre.accesskey      "ک">
+<!ENTITY  historyHeader.remember.label     "سابقات یاد رکھے">
+<!ENTITY  historyHeader.dontremember.label "کبھی سابقات نہ یاد رکھے">
+<!ENTITY  historyHeader.custom.label       "سابقات کے لیے مخصوص ترتیب استعمال کریں">
+<!ENTITY  historyHeader.post.label         "‍">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; آپ کی براؤزنگ، ڈاؤن لوڈ، فارم اور تلاش سابقات یاد رکھے گا، اور آپ کی دیکھی ہوئی ویب سائٹوں سے کوکیاں سنبھالے گا۔">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "آپ شائد چاہیں کہ ">
+<!ENTITY  rememberActions.clearHistory.label  "اپنی حالیہ سابقات صاف کرنا چاہیں">
+<!ENTITY  rememberActions.middle.label        "، یا ">
+<!ENTITY  rememberActions.removeCookies.label "اکیلی کوکیاں ہٹانا چاہیں">
+<!ENTITY  rememberActions.post.label          "۔">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; نجی براؤزنگ کی سیٹگنگیں استعمال کرے گا، اور آپ کے براوز کرتے وقت کوئی سابقات نہیں یاد رکھے گا۔">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "آپ شاید یہ بھی چاہیں کہ ">
+<!ENTITY  dontrememberActions.clearHistory.label "تمام موجودہ سابقات خالی کرنا چاہیں">
+<!ENTITY  dontrememberActions.post.label         "۔">
+
+<!ENTITY  privateBrowsingPermanent2.label "ہمیشہ نجی براوزنگ موڈ استعمال کریں">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ن">
+
+<!ENTITY  rememberHistory2.label      "میری براؤزنگ اور ڈاؤن لوڈ سابقاتیاد رکھیں">
+<!ENTITY  rememberHistory2.accesskey  "ی">
+
+<!ENTITY  rememberSearchForm.label       "تلاش اور فارم سابقات یاد رکھیں">
+<!ENTITY  rememberSearchForm.accesskey   "ف">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; کے بند ہونے پر سابقات صاف کریں">
+<!ENTITY  clearOnClose.accesskey         "ص">
+
+<!ENTITY  clearOnCloseSettings.label     "سیٹنگیں…">
+<!ENTITY  clearOnCloseSettings.accesskey "س">
+
+<!ENTITY  browserContainersHeader.label         "حامل ٹیبز">
+<!ENTITY  browserContainersLearnMore.label      "مزید سیکھیں">
+<!ENTITY  browserContainersEnabled.label        "حامل ٹہن بحال کریں">
+<!ENTITY  browserContainersEnabled.accesskey    "ح">
+<!ENTITY  browserContainersSettings.label        "سیٹنگیں…">
+<!ENTITY  browserContainersSettings.accesskey    "س">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

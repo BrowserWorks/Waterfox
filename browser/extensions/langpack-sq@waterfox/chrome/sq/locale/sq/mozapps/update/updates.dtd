@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  updateWizard.title              "Përditësim Software-i">
+<!ENTITY  checking.title                  "Po kontrollohet për Përditësime">
+
+<!ENTITY  noupdatesfound.title            "S&apos;u Gjetën Përditësime">
+<!ENTITY  noupdatesautoenabled.intro      "S&apos;ka përditësime gati. &brandShortName;-i do të kontrollojë periodikisht për përditësime.">
+<!ENTITY  noupdatesautodisabled.intro     "S&apos;ka përditësime gati. Ju lutemi, kontrolloni më vonë ose aktivizoni te &brandShortName;-i kontrollin e vetvetishëm për përditësime.">
+
+<!ENTITY  clickHere.label                 "Shihni më tepër të dhëna rreth këtij përditësimi">
+
+<!ENTITY  downloading.intro               "Po shkarkohet përditësimi…">
+<!ENTITY  connecting.label                "Po bëhet lidhja te shërbyesi i përditësimeve…">
+<!ENTITY  verificationFailedText.label    "&brandShortName;-i nuk qe i zoti të verifikonte pacenueshmërinë e përditësimit shtues që shkarkoi, ndaj tani po shkarkon paketën e plotë të përditësimit.">
+
+<!ENTITY  details.link                    "Hollësi">
+
+<!ENTITY  error.label                     "Pati probleme gjatë kontrollit, shkarkimit apo instalimit të këtijpërditësimi. &brandShortName;-i s&apos;u përditësua dot, sepse:">
+
+<!ENTITY  errorManual.label               "Mund ta përditësoni &brandShortName;-in dorazi duke vizituar këtë lidhje dhe shkarkuar versionin më të ri:">
+
+<!ENTITY  errorpatching.intro             "S&apos;u zbatua dot Përditësimi i pjesshëm. &brandShortName;-i do të riprovojë duke shkarkuar Përditësimin e plotë.">
+
+<!ENTITY  update.details.label            "Hollësi">
+<!ENTITY  update.installedOn.label        "Instaluar në:">
+<!ENTITY  update.status.label             "Gjendje:">
+
+<!ENTITY  viewDetails.tooltip             "Shihni hollësitë për këtë përditësim">
+<!ENTITY  updateCheck.label               "Po shihet për versione më të rinj të &brandShortName;-it…">
+
+<!ENTITY  finishedPage.title              "Përditësim Gati për T’u Instaluar">
+<!ENTITY  evangelism.desc                 "Këshillohet me forcë që ta zbatoni këtë përditësim për &brandShortName;-in sa më shpejt të jetë e mundur.">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "Përditësimi do të instalohet herës tjetër kur të niset &brandShortName;-i. Mund ta rinisni  &brandShortName;-in tani, ose të vazhdoni të punoni e ta rinisni më vonë.">
+<!ENTITY  finishedBackgroundPage.text     "U shkarkua dhe është gati për instalim një përditësim sigurie dhe qëndrueshmërie për &brandShortName;-in .">
+<!ENTITY  finishedBackground.name         "Përditësim:">
+<!ENTITY  finishedPage.text               "Përditësimi do të instalohet herës tjetër kur të niset &brandShortName;-i. Mund ta rinisni  &brandShortName;-in tani, ose të vazhdoni të punoni e ta rinisni më vonë.">
+
+<!ENTITY  manualUpdate.title              "Nuk arrihet të Përditësohet">
+<!ENTITY  manualUpdate.desc               "Mund të kihet një përditësim sigurie dhe qëndrueshmërie, por nuk keni lejet e domosdoshme në sistem për instalimin. Ju lutemi, lidhuni me përgjegjësin e sistemit, ose riprovoni prej një llogarie e cila ka leje për instalim programesh në këtë kompjuter.">
+<!ENTITY  manualUpdate.space.desc         "Mund të kihet një përditësim sigurie dhe qëndrueshmërie, por nuk keni hapësirë të mjaftueshme për instalimin e tij.">
+
+<!ENTITY  manualUpdateGetMsg.label        "Mund të merrni, kur të doni, versionin më të ri të &brandShortName;-it nga:">
+
+<!ENTITY  unsupported.title               "Sistem i Pambuluar">
+<!ENTITY  unsupported.label               "&brandShortName;-i juaj është i vjetruar, por versioni më i ri nuk mbulohet nga sistemi juaj. Ju lutemi, përmirësoni sistemin tuaj, mandej riprovoni. Këtë shënim nuk keni për ta parë sërish, por mundeni">
+<!ENTITY  unsupportedLink.label           "të mësoni më tepër.">
+
+
+<!ENTITY  downloadPage.title              "Po shkarkohet &brandShortName;-i">
+
+<!ENTITY  error.title                     "Përditësimi Dështoi">
+
+<!ENTITY  genericBackgroundError.label    "&brandShortName;-i nuk është i zoti të përcaktojë nëse ka gati ndonjë përditësim. Ju lutemi, sigurohuni që keni versionin më të ri të &brandShortName;-it, te:">
+
+<!ENTITY  finishedBackground.moreElevated "Ky përditësim lyp privilegje përgjegjësi. Përditësimi do të instalohet herës tjetër që niset &brandShortName;-i. Mund ta rinisni &brandShortName;-in tani, mund të vazhdoni punën dhe ta rinisni më vonë, ose ta hidhni tej këtë përditësim.">

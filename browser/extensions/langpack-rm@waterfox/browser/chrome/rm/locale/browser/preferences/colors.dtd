@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Colurs">
+<!ENTITY  window.width                    "44em">
+<!ENTITY  window.macWidth                 "44em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Remplazzar las colurs specifitgadas da la pagina cun la selecziun survart:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "R">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Adina">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Mo en designs cun grond cuntrast">
+<!ENTITY  overrideDefaultPageColors.never.label  "Mai">
+
+<!ENTITY  color                           "Text e fund davos">
+<!ENTITY  textColor.label                 "Text:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Fund davos:">
+<!ENTITY  backgroundColor.accesskey       "F">
+<!ENTITY  useSystemColors.label           "Utilisar las colurs dal sistem">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Suttastritgar las colliaziuns">
+<!ENTITY  underlineLinks.accesskey        "l">
+<!ENTITY  links                           "Colurs da las colliaziuns">
+<!ENTITY  linkColor.label                 "Colliaziuns betg utilisadas:">
+<!ENTITY  linkColor.accesskey             "u">
+<!ENTITY  visitedLinkColor.label          "Colliaziuns utilisadas:">
+<!ENTITY  visitedLinkColor.accesskey      "C">

@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Gestor de complements">
+
+<!ENTITY search.placeholder                   "Cerca tots els complements">
+<!ENTITY search.buttonlabel                   "Cerca">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "S'està carregant…">
+<!ENTITY listEmpty.installed.label            "No teniu instal·lat cap complement d'aquest tipus">
+<!ENTITY listEmpty.availableUpdates.label     "No s'ha trobat cap actualització">
+<!ENTITY listEmpty.recentUpdates.label        "No heu actualitzat recentment cap complement">
+<!ENTITY listEmpty.findUpdates.label          "Cerca actualitzacions">
+<!ENTITY listEmpty.search.label               "No s'ha pogut trobar cap complement que hi coincideixi">
+<!ENTITY listEmpty.button.label               "Més informació dels complements">
+<!ENTITY installAddonFromFile.label           "Instal·la un complement des d'un fitxer…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Eines per a tots els complements">
+
+<!ENTITY getThemes.description                "Voleu personalitzar el vostre navegador?">
+<!ENTITY getThemes.learnMore                  "Trieu d'entre els milers de temes disponibles.">
+
+<!ENTITY cmd.back.tooltip                     "Vés enrere una pàgina">
+<!ENTITY cmd.forward.tooltip                  "Vés endavant una pàgina">
+
+<!ENTITY showUnsignedExtensions.button.label  "No s'han pogut verificar algunes extensions">
+<!ENTITY showAllExtensions.button.label       "Mostra totes les extensions">
+<!ENTITY debugAddons.label                    "Depura complements">
+<!ENTITY debugAddons.accesskey                "u">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "El mode segur ha inhabilitat tots els complements.">
+<!ENTITY warning.checkcompatibility.label          "La comprovació de compatibilitat dels complements no està habilitada. Pot ser que tingueu complements incompatibles.">
+<!ENTITY warning.checkcompatibility.enable.label   "Habilita">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Habilita la comprovació de compatibilitat dels complements">
+<!ENTITY warning.updatesecurity.label              "La comprovació de seguretat dels complements no està habilitada. Les actualitzacions podrien posar-vos en risc.">
+<!ENTITY warning.updatesecurity.enable.label       "Habilita">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Habilita la comprovació de seguretat dels complements">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "Cerca">
+<!ENTITY view.discover.label                  "Més complements">
+<!ENTITY view.recentUpdates.label             "Actualitzacions recents">
+<!ENTITY view.availableUpdates.label          "Actualitzacions disponibles">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "Cerca actualitzacions">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "Visualitza les actualitzacions recents">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Actualitza els complements automàticament">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Reinicia tots els complements perquè s'actualitzin automàticament">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "Reinicia tots els complements perquè s'actualitzin manualment">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "S'estan actualitzant els complements">
+<!ENTITY updates.installed.label              "S'han actualitzat els vostres complements.">
+<!ENTITY updates.downloaded.label             "S'han baixat les actualitzacions dels vostres complements.">
+<!ENTITY updates.restart.label                "Reinicia ara per completar la instal·lació">
+<!ENTITY updates.noneFound.label              "No s'ha trobat cap actualització">
+<!ENTITY updates.manualUpdatesFound.label     "Mostra les actualitzacions disponibles">
+<!ENTITY updates.updateSelected.label         "Instal·la les actualitzacions">
+<!ENTITY updates.updateSelected.tooltip       "Instal·la les actualitzacions disponibles en aquesta llista">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "Mostra més informació">
+<!ENTITY cmd.showDetails.accesskey            "s">
+<!ENTITY cmd.findUpdates.label                "Cerca actualitzacions">
+<!ENTITY cmd.findUpdates.accesskey            "C">
+<!ENTITY cmd.preferencesWin.label             "Opcions">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "Preferències">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "Quant a">
+<!ENTITY cmd.about.accesskey                  "a">
+
+<!ENTITY cmd.enableAddon.label                "Habilita">
+<!ENTITY cmd.enableAddon.accesskey            "H">
+<!ENTITY cmd.disableAddon.label               "Inhabilita">
+<!ENTITY cmd.disableAddon.accesskey           "n">
+<!ENTITY cmd.enableTheme.label                "Emprova't el tema">
+<!ENTITY cmd.enableTheme.accesskey            "v">
+<!ENTITY cmd.disableTheme.label               "Deixa el tema">
+<!ENTITY cmd.disableTheme.accesskey           "x">
+<!ENTITY cmd.askToActivate.label              "Demana si vull activar-lo">
+<!ENTITY cmd.askToActivate.tooltip            "Demana cada vegada permís per utilitzar aquest complement">
+<!ENTITY cmd.alwaysActivate.label             "Activa'l sempre">
+<!ENTITY cmd.alwaysActivate.tooltip           "Utilitza sempre aquest complement">
+<!ENTITY cmd.neverActivate.label              "No l'activis mai">
+<!ENTITY cmd.neverActivate.tooltip            "No utilitzis mai aquest complement">
+<!ENTITY cmd.stateMenu.tooltip                "Canvia quan s'executa aquest complement">
+<!ENTITY cmd.installAddon.label               "Instal·la">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Suprimeix">
+<!ENTITY cmd.uninstallAddon.accesskey         "r">
+<!ENTITY cmd.showPreferencesWin.label         "Opcions">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Canvia les opcions del complement">
+<!ENTITY cmd.showPreferencesUnix.label        "Preferències">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Canvia les preferències del complement">
+<!ENTITY cmd.contribute.label                 "Col·labora-hi">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "Col·labora en el desenvolupament del complement">
+
+<!ENTITY cmd.showReleaseNotes.label           "Mostra les notes de la versió">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Mostra les notes de la versió d'aquesta actualització">
+<!ENTITY cmd.hideReleaseNotes.label           "Amaga les notes de la versió">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Amaga les notes de la versió d'aquesta actualització">
+<!ENTITY cmd.findReplacement.label            "Cerca un substitut">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "Què són els complements?">
+<!ENTITY discover.description2                "Els complements són aplicacions que us permeten personalitzar el &brandShortName; amb una funcionalitat o estil addicional. Proveu una barra lateral per estalviar temps, un servei meteorològic o un tema perquè el &brandShortName; sembli més personal.">
+<!ENTITY discover.footer                      "Quan estigueu connectat a Internet, des d'aquesta subfinestra es mostraran alguns dels millors i més populars complements que podeu provar.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "Versió">
+<!ENTITY detail.lastupdated.label             "Darrera actualització">
+<!ENTITY detail.creator.label                 "Desenvolupador">
+<!ENTITY detail.homepage.label                "Pàgina d'inici">
+<!ENTITY detail.numberOfDownloads.label       "Baixades">
+
+<!ENTITY detail.contributions.description     "El desenvolupador del complement us demana que l'ajudeu a continuar amb el seu desenvolupament fent una donació.">
+
+<!ENTITY detail.updateType                    "Actualitzacions automàtiques">
+<!ENTITY detail.updateDefault.label           "Per defecte">
+<!ENTITY detail.updateDefault.tooltip         "Instal·la automàticament les actualitzacions només si és el comportament per defecte">
+<!ENTITY detail.updateAutomatic.label         "Activades">
+<!ENTITY detail.updateAutomatic.tooltip       "Instal·la actualitzacions automàticament">
+<!ENTITY detail.updateManual.label            "Desactivades">
+<!ENTITY detail.updateManual.tooltip          "No instal·lis actualitzacions automàticament">
+<!ENTITY detail.home                          "Pàgina d'inici">
+<!ENTITY detail.repository                    "Perfil del complement">
+<!ENTITY detail.size                          "Mida">
+
+<!ENTITY detail.checkForUpdates.label         "Cerca actualitzacions">
+<!ENTITY detail.checkForUpdates.accesskey     "t">
+<!ENTITY detail.checkForUpdates.tooltip       "Cerca actualitzacions d'aquest complement">
+<!ENTITY detail.showPreferencesWin.label      "Opcions">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "Canvia les opcions del complement">
+<!ENTITY detail.showPreferencesUnix.label     "Preferències">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Canvia les preferències del complement">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "Puntuació">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "Pausa">
+<!ENTITY progress.cancel.tooltip              "Cancel·la">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "Nom">
+<!ENTITY sort.name.tooltip                    "Ordena per nom">
+<!ENTITY sort.dateUpdated.label               "Darrera actualització">
+<!ENTITY sort.dateUpdated.tooltip             "Ordena per la data d'actualització">
+<!ENTITY sort.relevance.label                 "Millor coincidència">
+<!ENTITY sort.relevance.tooltip               "Ordena per rellevància">
+<!ENTITY sort.price.label                     "Preu">
+<!ENTITY sort.price.tooltip                   "Ordena per preu">
+
+<!ENTITY search.filter2.label                 "Cerca:">
+<!ENTITY search.filter2.installed.label       "Els meus complements">
+<!ENTITY search.filter2.installed.tooltip     "Mostra els complements instal·lats">
+<!ENTITY search.filter2.available.label       "Complements disponibles">
+<!ENTITY search.filter2.available.tooltip     "Mostra els complements disponibles per instal·lar">
+
+<!ENTITY addon.homepage                       "Pàgina d'inici">
+<!ENTITY addon.details.label                  "Més">
+<!ENTITY addon.details.tooltip                "Mostra més detalls del complement">
+<!ENTITY addon.unknownDate                    "Desconegut">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "ANTIC">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(inhabilitat)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Actualitza">
+<!ENTITY addon.undoAction.label               "Desfés">
+<!ENTITY addon.undoAction.tooltip             "Desfés l'acció">
+<!ENTITY addon.undoRemove.label               "Desfés">
+<!ENTITY addon.undoRemove.tooltip             "Mantingues el complement desinstal·lat">
+<!ENTITY addon.restartNow.label               "Reinicia ara">
+<!ENTITY addon.install.label                  "Instal·la">
+<!ENTITY addon.install.tooltip                "Instal·la el complement">
+<!ENTITY addon.updateNow.label                "Actualitza'l ara">
+<!ENTITY addon.updateNow.tooltip              "Instal·la l'actualització del complement">
+<!ENTITY addon.includeUpdate.label            "Inclou en l'actualització">
+<!ENTITY addon.updateAvailable.label          "Hi ha una actualització disponible">
+<!ENTITY addon.checkingForUpdates.label       "S'estan cercant actualitzacions…">
+<!ENTITY addon.releaseNotes.label             "Notes de la versió:">
+<!ENTITY addon.loadingReleaseNotes.label      "S'està carregant…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "S'ha produït un error en carregar les notes de la versió.">
+
+<!ENTITY addon.createdBy.label                "Per ">
+
+<!ENTITY eula.title                           "Acord de llicència d'usuari final">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Accepta'l i instal·la'l…">
+
+<!ENTITY settings.path.button.label           "Navega…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "Què és això? De tant en tant, la telemesura pot instal·lar i executar experiments.">
+<!ENTITY experiment.info.learnmore "Més informació">
+<!ENTITY experiment.info.learnmore.accesskey "M">
+<!ENTITY experiment.info.changetelemetry "Paràmetres de la telemesura">
+<!ENTITY experiment.info.changetelemetry.accesskey "t">
+
+<!ENTITY setting.learnmore "Més informació…">
+
+<!ENTITY disabledUnsigned.heading "S'han inhabilitat alguns complements">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Els complements següents no s'han verificat per al seu ús al &brandShortName;. Podeu ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "cercar un altre complement similar">
+<!ENTITY disabledUnsigned.description.end " o demanar al desenvolupador que els verifiqui.">
+<!ENTITY disabledUnsigned.learnMore "Més informació sobre els nostres esforços per garantir la vostra seguretat a Internet.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Els desenvolupadors interessats en la verificació dels seus complements poden llegir el nostre ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "manual">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Us falta res? Alguns complements ja no són compatibles amb el &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Més informació.">
+
+<!ENTITY legacyWarning.description "Us falta res? Algunes extensions ja no són compatibles amb el &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Mostra les extensions antigues">
+<!ENTITY legacyExtensions.title "Extensions antigues">
+<!ENTITY legacyExtensions.description "Aquestes extensions no compleixen els estàndards actuals del &brandShortName; i s'han desactivat.">
+<!ENTITY legacyExtensions.learnMore "Més informació sobre els canvis en els complements">

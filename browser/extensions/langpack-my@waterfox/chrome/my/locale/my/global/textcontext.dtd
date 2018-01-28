@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "ဖြတ်ယူပါ">
+<!ENTITY cutCmd.accesskey "t">
+<!ENTITY copyCmd.label "ကူးယူပါ">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY pasteCmd.label "ပွားပါ">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "ပြန်ဖြည်ပါ">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY selectAllCmd.label "အားလုံး ရွေးချယ်ပါ">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY deleteCmd.label "ဖျက်ရန်">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "အဘိဓါန်ထဲ ထည့်သွင်းပါ">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "အဘိဓာန် မှာပေါင်းထည့်ခြင်းကို ပြန်ဖြုတ်မယ်">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "စာလုံးပေါင်း စစ်ရန်">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(စာလုံးပေါင်း အ​ကြံပြုချက်များ မရှိ)">
+<!ENTITY spellDictionaries.label "ဘာသာ စကားများ">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "ရှင်းလင်းပါ">
+
+<!ENTITY fillLoginMenu.label          "ဝင်ရောက်မှု အချက်အလက် Fဖြည့်ပါ">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "စကားဝှက်ကို Fဖြည့်ပါ">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "အသုံးပြုသူအမည်ကို Fဖြည့်ပါ">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(ဝင်ရောက်မှုအတွက် အ​ကြံပြုချက်များ မရှိ)">
+<!ENTITY viewSavedLogins.label        "သိမ်းထားသည့် ဝင်ရောက်မှုများကို ကြည့်ရန်">

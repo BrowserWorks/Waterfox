@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "A-zivout ar rouedad">
+<!ENTITY aboutNetworking.warning               "Arnodel eo ar bajenn-mañ. Arverit anezhi gant evezh.">
+<!ENTITY aboutNetworking.showNextTime          "Diskouez ar c'hemenn-mañ ar wech a zeu">
+<!ENTITY aboutNetworking.ok                    "Mat eo">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Sockets">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSockets">
+<!ENTITY aboutNetworking.refresh               "Azbevaat">
+<!ENTITY aboutNetworking.autoRefresh           "Azbevaat ent emgefreek pep 3 eilenn">
+<!ENTITY aboutNetworking.hostname              "Anv ostiz">
+<!ENTITY aboutNetworking.port                  "Porzh">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Oberiant">
+<!ENTITY aboutNetworking.idle                  "Dioberiant">
+<!ENTITY aboutNetworking.host                  "Ostiz">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Kaset">
+<!ENTITY aboutNetworking.received              "Degemeret">
+<!ENTITY aboutNetworking.family                "Familh">
+<!ENTITY aboutNetworking.addresses             "Chomlec'hioù">
+<!ENTITY aboutNetworking.expires               "Deiziad termen (eilennoù)">
+<!ENTITY aboutNetworking.messagesSent          "Kemennadennoù kaset">
+<!ENTITY aboutNetworking.messagesReceived      "Kemennadennoù degemeret">
+<!ENTITY aboutNetworking.bytesSent             "Eizhbitoù kaset">
+<!ENTITY aboutNetworking.bytesReceived         "Eizhbitoù degemeret">
+<!ENTITY aboutNetworking.logging               "Kerzhlevr">
+<!ENTITY aboutNetworking.logTutorial           "Lennit <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Kerzhlevriñ HTTP</a> evit ditouroú war an doare da arverañ an ostilh-mañ.">
+<!ENTITY aboutNetworking.currentLogFile        "Restr kerzhlevr bremanel:">
+<!ENTITY aboutNetworking.currentLogModules     "Molladoù kerzhlevr bremanel:">
+<!ENTITY aboutNetworking.setLogFile            "Lakaat ar restr kerzhlevr">
+<!ENTITY aboutNetworking.setLogModules         "Arventennañ molladoù ar c'herzhlevr">
+<!ENTITY aboutNetworking.startLogging          "Kregiñ da skrivañ er c'herzhlevr">
+<!ENTITY aboutNetworking.stopLogging           "Paouez da skrivañ er c'herzhlevr">
+<!ENTITY aboutNetworking.dnsLookup             "Selladenn DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Diskoulmañ">
+<!ENTITY aboutNetworking.dnsDomain             "Domani">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPoù">
+<!ENTITY aboutNetworking.rcwn                  "Stadegoù RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Satud RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Konter berzhioù ar c'hrubuilh">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Konter berzhioù web">
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

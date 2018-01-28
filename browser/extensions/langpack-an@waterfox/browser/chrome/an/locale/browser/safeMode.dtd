@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Modo seguro d'o &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Empecipiar en Modo seguro">
+<!ENTITY refreshProfile.label         "Refrescar o &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "O Modo seguro ye un modo especial d'o &brandShortName; que se fa servir ta solucionar problemas.">
+<!ENTITY safeModeDescription4.label   "Os suyos complementos y configuracions personalizadas se desactivarán de traza temporal.">
+
+<!ENTITY refreshProfileInstead.label  "Tamién puetz blincar a resolución de problemas en modo seguro mirando de refrescar o &brandShortName;.">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "O &brandShortName; s'ha zarrau de traza inasperada. Talment a causa d'os complementos u atros problemas. Pa mirar de resolver o problema, puede reiniciar en Modo Seguro.">

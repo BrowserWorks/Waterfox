@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Inštalácia doplnku">
+<!ENTITY intro           "Niektorý z ďalších programov nainštalovaných vo vašom počítači sa pokúša upraviť
+                          &brandShortName; pomocou nasledujúceho doplnku:">
+<!ENTITY warning         "Inštalujte len doplnky od autorov, ktorým veríte.">
+<!ENTITY allow           "Povoliť túto inštaláciu">
+<!ENTITY later           "Svoje rozhodnutie môžete kedykoľvek zmeniť v okne Správcu doplnkov.">
+<!ENTITY continue        "Pokračovať">
+<!ENTITY restartMessage  "Na dokončenie inštalácie tohto doplnku je potrebné &brandShortName; reštartovať.">
+<!ENTITY restartButton   "Reštartovať &brandShortName;">
+<!ENTITY cancelButton    "Zrušiť">

@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  popups.label                "Fanestras pop-up">
+
+<!ENTITY  blockPopups.label           "Bloccar fanestras pop-up">
+<!ENTITY  blockPopups.accesskey       "p">
+
+<!ENTITY  notificationsPolicy.label            "Communicaziuns">
+<!ENTITY  notificationsPolicyLearnMore.label   "Ulteriuras infurmaziuns">
+<!ENTITY  notificationsPolicyDesc4.label       "Tscherna las paginas che ta dastgan trametter communicaziuns">
+<!ENTITY  notificationsPolicyButton.accesskey  "h">
+<!ENTITY  notificationsPolicyButton.label      "Tscherner…">
+<!ENTITY  notificationsDoNotDisturb.label      "Betg disturbar">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "b">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Naginas communicaziuns na vegnan mussadas enfin che ti reavieschas &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Excepziuns…">
+<!ENTITY  popupExceptions.accesskey   "E">
+
+<!ENTITY  fontsAndColors.label        "Scrittiras &amp; colurs">
+
+<!ENTITY  defaultFont.label           "Scrittira da standard:">
+<!ENTITY  defaultFont.accesskey       "S">
+<!ENTITY  defaultSize.label           "Grondezza:">
+<!ENTITY  defaultSize.accesskey       "r">
+
+<!ENTITY  advancedFonts.label         "Extendì…">
+<!ENTITY  advancedFonts.accesskey     "d">
+
+<!ENTITY  colors.label                "Colurs…">
+<!ENTITY  colors.accesskey            "C">
+
+
+<!ENTITY languages.label              "Linguas">
+<!ENTITY chooseLanguage.label         "Tscherna tia lingua preferida per la visualisaziun da websites">
+<!ENTITY chooseButton.label           "Tscherner…">
+<!ENTITY chooseButton.accesskey       "T">
+
+<!ENTITY translateWebPages.label      "Translatar cuntegn da web">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Excepziuns…">
+<!ENTITY translateExceptions.accesskey "x">
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+<!ENTITY translation.options.attribution.beforeLogo "Translaziuns da">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent.label             "Cuntegn da DRM">
+
+<!ENTITY  playDRMContent.label         "Far ir cuntegn da DRM">
+<!ENTITY  playDRMContent.accesskey     "i">
+<!ENTITY  playDRMContent.learnMore.label "Ulteriuras infurmaziuns">

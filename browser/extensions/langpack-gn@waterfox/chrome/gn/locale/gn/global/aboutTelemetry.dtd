@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetry mba'ekuaarã">
+
+<!ENTITY aboutTelemetry.pingDataSource "Ping mba'ekuaarã reñoiha:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Ping mba'ekuaarã ag̃aguáva">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Ping mba'ekuaarã ñongatupyre">
+
+<!ENTITY aboutTelemetry.raw "Raw JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Tembiapo'ive mba'ekuaarã jehchauka">
+
+<!ENTITY aboutTelemetry.choosePing "Ping jeporavo:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; ping ipyahuvéva">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping tuichavéva; &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Arapokõindy">
+
+<!ENTITY aboutTelemetry.archivePingType "Ping Peteĩchagua">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Ko'árape">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Kuehe">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Tuichave">
+
+<!ENTITY aboutTelemetry.generalDataSection " Opaichagua marandu">
+
+<!ENTITY aboutTelemetry.environmentDataSection " Mba'ekuarã tekohápe g̃uarã">
+
+<!ENTITY aboutTelemetry.telemetryLogSection " Telemetry-pe jeike">
+
+<!ENTITY aboutTelemetry.slowSqlSection " Je'etepyre SQL imbegue">
+
+<!ENTITY aboutTelemetry.chromeHangsSection " Kundaha opytaite">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection " Emosãingo inimbo">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Japyhypyre mbojo'a">
+
+<!ENTITY aboutTelemetry.scalarsSection " Jejupi">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Jupikuaa papapýva">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histograma">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection " Histograma ñemiguáva">
+
+<!ENTITY aboutTelemetry.eventsSection "  Tembiaporã">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection " Ha'ãha hypy'ũ'ỹva">
+
+<!ENTITY aboutTelemetry.addonDetailsSection " Moimbaha mba'emimi">
+
+<!ENTITY aboutTelemetry.lateWritesSection " Jehaipy mbotapykuéva">
+
+<!ENTITY aboutTelemetry.sessionInfoSection " Marandu tembiapo rehegua">
+
+<!ENTITY aboutTelemetry.fullSqlWarning " HAIPYRE'I: SQL ñemopotĩ imbeguéva hendýma. Ikatu ohechauka joajuha opaichagua SQL rehegua hákatu noñemondomo'ãi Telemetry-pe.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Eguerujey tembiapoite réra jepytaite ojo'áva rehegua">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Ehechauka mba'ekuaarã mbojo'áva oĩmba'ỹva">
+
+<!ENTITY aboutTelemetry.filterText " Mbogua (joajuha térã /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "Ñemyenyhẽ oikóva">

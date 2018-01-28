@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "Konekti">
+<!ENTITY header     "Konekti al fora aparato">
+<!ENTITY host       "Servilo:">
+<!ENTITY port       "Pordo:">
+<!ENTITY connect    "Konekti">
+<!ENTITY connecting "Konekto…">
+<!ENTITY availableAddons "Haveblaj foraj aldonaĵoj:">
+<!ENTITY availableTabs "Haveblaj foraj langetoj:">
+<!ENTITY availableProcesses "Haveblaj foraj procezoj:">
+<!ENTITY connectionError "Eraro:">
+<!ENTITY errorTimeout "Eraro: elĉerpiĝis la tempo por la konekto.">
+<!ENTITY errorRefused "Eraro: konekto rifuzita.">
+<!ENTITY errorUnexpected "Neatendita eraro.">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "La iloj de Waterfox por programistoj povas sencimigi forajn aparatojn (ekzemple Waterfox por Android aŭ Waterfox OS). Certiĝu ĉu vi ŝaltis la elekteblon 'Fora sencimigo' en la fora aparato. Por havi pli da informo, rigardu la">
+<!ENTITY remoteDocumentation "dokumentaron">
+<!ENTITY remoteHelpSuffix ".">
+

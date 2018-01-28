@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; ආරක්‍ෂීත ආකාරය">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "ආරක්‍ෂීත ආකාරයෙන් අරඹන්න">
+<!ENTITY refreshProfile.label         "&brandShortName; නැවුම් කරන්න">
+
+<!ENTITY safeModeDescription3.label   "Safe Mode is a special mode of &brandShortName; that can be used to troubleshoot issues.">
+<!ENTITY safeModeDescription4.label   "Your add-ons and custom settings will be temporarily disabled.">
+
+<!ENTITY refreshProfileInstead.label  "ඔබට දෝශ නිරාකරණය මඟහැර &brandShortName; නැවුම් කිරීමට උත්සහ කළ හැක">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "ආරම්භයේදී &brandShortName; බලාපොරොත්තු රහිත ලෙස වැසිනි මෙයට ඇඩෝනයක් හෝ වෙනත් ගැටළුවක් හේතු විය හැක. ඔබට ආරක්ෂක ප්‍රකාරය හරහා මෙම දෝශය නිරාකරණය කළ හැක.">

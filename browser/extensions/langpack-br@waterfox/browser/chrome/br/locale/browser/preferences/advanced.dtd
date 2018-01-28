@@ -1,0 +1,197 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+
+<!ENTITY generalTab.label                "Hollek">
+
+<!ENTITY useCursorNavigation.label       "Atav arverañ ar stokelloù bir da vageal er bajennadoù">
+<!ENTITY useCursorNavigation.accesskey   "A">
+<!ENTITY searchOnStartTyping.label       "Klask an destenn pa grogan da skrivañ">
+<!ENTITY searchOnStartTyping.accesskey   "K">
+<!ENTITY useOnScreenKeyboard.label       "Diskouez ur c'hlavier stokañ pa vez ezhomm">
+<!ENTITY useOnScreenKeyboard.accesskey   "c">
+
+<!ENTITY browsing.label                  "Furchal">
+
+<!ENTITY useAutoScroll.label             "Ober gant an emzibunañ">
+<!ENTITY useAutoScroll.accesskey         "O">
+<!ENTITY useSmoothScrolling.label        "Arverañ an dibunañ flour">
+<!ENTITY useSmoothScrolling.accesskey    "r">
+<!ENTITY checkUserSpelling.label         "Gwiriañ ar reizhskrivañ pa skrivan">
+<!ENTITY checkUserSpelling.accesskey     "G">
+
+<!ENTITY dataChoicesTab.label            "Roadennoù">
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+
+
+
+
+
+
+
+
+
+
+<!ENTITY networkTab.label                "Rouedad">
+
+
+<!ENTITY connectionDesc.label            "Kefluniañ penaos en em gennask &brandShortName; ouzh an Internet">
+<!ENTITY connectionSettings.label        "Arventennoù…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "Krubuilh an endalc'had Web">
+
+<!ENTITY offlineStorage2.label           "Endalc'had Web ezlinenn ha roadennoù an arveriad">
+<!--  Site Data section manages sites using Storage API and is under Network -->
+
+<!ENTITY siteData.label                  "Roadennoù al lec'hienn">
+<!ENTITY clearSiteData.label             "Skarzhañ an holl roadennoù">
+<!ENTITY clearSiteData.accesskey         "S">
+<!ENTITY siteDataSettings.label          "Arventennoù…">
+<!ENTITY siteDataSettings.accesskey      "e">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+
+<!ENTITY limitCacheSizeBefore.label      "Bevennañ ar grubuilh da">
+<!ENTITY limitCacheSizeBefore.accesskey  "l">
+<!ENTITY limitCacheSizeAfter.label       "Me egor">
+<!ENTITY clearCacheNow.label             "Skarzhañ bremañ">
+<!ENTITY clearCacheNow.accesskey         "k">
+<!ENTITY clearOfflineAppCacheNow.label   "Skarzhañ bremañ">
+<!ENTITY clearOfflineAppCacheNow.accesskey "b">
+<!ENTITY overrideSmartCacheSize.label    "Tremen dreist ardeiñ emgefreek ar grubuilh">
+<!ENTITY overrideSmartCacheSize.accesskey "T">
+
+<!ENTITY updateTab.label                 "Hizivaat">
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+
+<!ENTITY updateApplication.label         "Hizivadurioù evit &brandShortName; :">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+
+<!ENTITY updateApplication.version.post  "">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY useService.label                "Arverañ ur gwazerezh e drekleur evit staliañ an hizivadurioù">
+<!ENTITY useService.accesskey            "v">
+
+
+
+<!ENTITY offlineStorageNotify.label               "Lavarout din pa vez goulennet gant ul lec'hienn mirout roadennoù evit un arver ezlinenn">
+<!ENTITY offlineStorageNotify.accesskey           "a">
+<!ENTITY offlineStorageNotifyExceptions.label     "Nemedennoù…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "m">
+
+<!ENTITY offlineAppsList2.label          "Aotreet eo al lec'hiennoù da heul da gadaviñ roadennoù evit un arver ezlinenn :">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "Dilemel…">
+<!ENTITY offlineAppsListRemove.accesskey "D">
+<!ENTITY offlineAppRemove.confirm        "Dilemel ar roadennoù ezlinenn">
+
+<!ENTITY certificateTab.label            "Testenioù">
+
+<!ENTITY selectCerts.auto                "Diuz unan ent emgefreek">
+<!ENTITY selectCerts.auto.accesskey      "D">
+<!ENTITY selectCerts.ask                 "Goulenn diganin bewech">
+<!ENTITY selectCerts.ask.accesskey       "G">
+<!ENTITY enableOCSP.label                "Goulenn kadarnaat talvoudegezh an testenioù gant an dafariadoù OCSP">
+<!ENTITY enableOCSP.accesskey            "G">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY allowHWAccel.label              "Arverañ herrekadur ar periant pa vez hegerz">
+<!ENTITY allowHWAccel.accesskey          "h">
+
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY alwaysSubmitCrashReports1.label  "Allow &brandShortName; to send crash reports to Mozilla">
+<!ENTITY certPersonal2.description       "When a server requests your personal certificate">
+<!ENTITY crashReporterLearnMore.label    "Learn more">
+
+<!ENTITY dataCollection.label            "&brandShortName; Data Collection and Use">
+<!ENTITY dataCollectionDesc.label        "We strive to provide you with choices and collect only what we need to provide and improve &brandShortName; for everyone. We always ask permission before receiving personal information.">
+<!ENTITY dataCollectionPrivacyNotice.label    "Privacy Notice">
+
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY enableHealthReport1.label       "Allow &brandShortName; to automatically send technical and interaction data to Mozilla">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY enableSearchUpdate2.label       "Automatically update search engines">
+<!ENTITY healthReportLearnMore.label     "Learn more">
+
+<!ENTITY healthReportingDisabled.label   "Data reporting is disabled for this build configuration">
+
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.description
+                                         "Additional content processes can improve performance when using multiple tabs, but will also use more memory.">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "Modifying the number of content processes is only possible with multiprocess &brandShortName;.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "Learn how to check if multiprocess is enabled">
+<!ENTITY limitContentProcessOption.label "Content process limit">
+<!ENTITY networkProxy.label              "Network Proxy">
+
+<!ENTITY performance.label               "Performance">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "Learn more">
+<!ENTITY siteDataLearnMoreLink.label     "Learn more">
+
+<!ENTITY updateApplication.description   "Allow &brandShortName; to">
+<!ENTITY updateApplication.version.pre   "Version ">
+<!ENTITY updateApplicationDescription.label
+                                         "Keep &brandShortName; up to date for the best performance, stability, and security.">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateAuto3.label               "Automatically install updates (recommended)">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateCheckChoose2.label        "Check for updates but let you choose to install them">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY updateHistory2.label            "Show Update History…">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateManual2.label             "Never check for updates (not recommended)">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "These settings are tailored to your computer’s hardware and operating system.">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "Use recommended performance settings">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewCerts2.label                "View Certificates…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY viewSecurityDevices2.label      "Security Devices…">

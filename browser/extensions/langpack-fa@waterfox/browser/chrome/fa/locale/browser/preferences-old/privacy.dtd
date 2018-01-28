@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "بکارگیری محافظت در برابر ردگیری">
+<!ENTITY  trackingProtectionAlways.label       "همیشه">
+<!ENTITY  trackingProtectionAlways.accesskey   "م">
+<!ENTITY  trackingProtectionPrivate.label      "تنها در پنجره‌های ناشناس">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ت">
+<!ENTITY  trackingProtectionNever.label        "هرگز">
+<!ENTITY  trackingProtectionNever.accesskey    "ه">
+<!ENTITY  trackingProtectionLearnMore.label    "اطلاعات بیشتر">
+<!ENTITY  trackingProtectionExceptions.label   "استثناها…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ت">
+
+<!ENTITY tracking.label                 "ره‌گیری">
+<!ENTITY trackingProtectionPBM5.label         "از محافظت ردگیری در پنجره‌های ناشناس استفاده کنید">
+<!ENTITY trackingProtectionPBM5.accesskey     "ن">
+<!ENTITY trackingProtectionPBMLearnMore.label "اطلاعات بیشتر">
+<!ENTITY changeBlockList.label          "تغییر لیست مسدودی‌ها">
+<!ENTITY changeBlockList.accesskey      "ت">
+
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+<!ENTITY  doNotTrack.pre.label          "شما همچنین می‌توانید ">
+<!ENTITY  doNotTrack.settings.label     "تنظیمات سرویس «ردیابی نکن» خود را مدیریت کنید">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "تاریخچه">
+
+<!ENTITY  locationBar.label             "نوار مکان">
+
+<!ENTITY  locbar.suggest.label          "هنگام استفاده از نوار مکان، از میان این موارد پیشنهاد بده:">
+<!ENTITY  locbar.history.label          "تاریخچه">
+<!ENTITY  locbar.history.accesskey      "ت">
+<!ENTITY  locbar.bookmarks.label        "نشانک‌ها">
+<!ENTITY  locbar.bookmarks.accesskey    "ن">
+<!ENTITY  locbar.openpage.label         "زبانه‌های باز">
+<!ENTITY  locbar.openpage.accesskey     "ز">
+<!ENTITY  locbar.searches.label         "جست‌وجو‌های مرتبط از موتور جست‌وجوی پیش‌فرض">
+<!ENTITY  locbar.searches.accesskey     "م">
+
+<!ENTITY  suggestionSettings.label      "ترجیحات مربوط به پیشنهادات موتورهای جست‌وجو را تغییر دهید…">
+<!ENTITY  suggestionSettings.accesskey  "ت">
+
+<!ENTITY  acceptCookies2.label          "به سایت‌ها اجازه‌ی استفاده از کوکی داده شود">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "پذیرفتن کوکی‌های شخص ثالث:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ث">
+<!ENTITY  acceptThirdParty.always.label   "همیشه">
+<!ENTITY  acceptThirdParty.never.label    "هرگز">
+<!ENTITY  acceptThirdParty.visited.label  "از بازدید">
+
+<!ENTITY  keepUntil.label               "نگهداری شوند تا:">
+<!ENTITY  keepUntil.accesskey           "ن">
+
+<!ENTITY  expire.label                  "منقضی شوند">
+<!ENTITY  close.label                   "&brandShortName; بسته شود">
+
+<!ENTITY  cookieExceptions.label        "استثناها…">
+<!ENTITY  cookieExceptions.accesskey    "ت">
+
+<!ENTITY  showCookies.label             "نمایش کوکی‌ها…">
+<!ENTITY  showCookies.accesskey         "ک">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; will:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "تاریخچه را به خاطر خواهد داشت">
+<!ENTITY  historyHeader.dontremember.label "هرگز تاریخچه را به خاطر نمی‌سپارد">
+<!ENTITY  historyHeader.custom.label       "تنظیمات خاصی را برای تاریخچه استفاده می‌کند">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; تاریخچهٔ مرور، بارگیری، فرم‌ها و جست‌وجوهای شما را به خاطر خواهد داشت، و کوکی‌های پایگاه‌هایی که بازدید می‌کنید را خواهد پذیرفت.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "ممکن است بخواهید ">
+<!ENTITY  rememberActions.clearHistory.label  "تاریخچهٔ اخیر خود را پاک کنید">
+<!ENTITY  rememberActions.middle.label        "، یا ">
+<!ENTITY  rememberActions.removeCookies.label "برخی کوکی‌ها را حذف کنید">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; تنظیمات حالت مرور ناشناس را استفاده خواهد کرد، و هیچ تاریخچه‌ای از مرور شما در وب نگه نخواهد داشت.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "ممکن است همچنین بخواهید ">
+<!ENTITY  dontrememberActions.clearHistory.label "تمام تاریخچهٔ موجود را پاک کنید">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "همیشه از حالت  مرور خصوصی استفاده کن">
+<!ENTITY  privateBrowsingPermanent2.accesskey "م">
+
+<!ENTITY  rememberHistory2.label      "مرور و بارگذاری های مرا به خاطر بسپار">
+<!ENTITY  rememberHistory2.accesskey  "خ">
+
+<!ENTITY  rememberSearchForm.label       "اطلاعاتی که در فرم‌های صفحات وب و نوار جست‌وجو وارد می‌شوند به خاطر سپرده شود">
+<!ENTITY  rememberSearchForm.accesskey   "ط">
+
+<!ENTITY  clearOnClose.label             "تاریخچه همیشه هنگام بستن &brandShortName; پاک شود">
+<!ENTITY  clearOnClose.accesskey         "ه">
+
+<!ENTITY  clearOnCloseSettings.label     "تنظیمات">
+<!ENTITY  clearOnCloseSettings.accesskey "ت">
+
+<!ENTITY  browserContainersHeader.label         "زبانه‌های حامل">
+<!ENTITY  browserContainersLearnMore.label      "اطلاعات بیشتر">
+<!ENTITY  browserContainersEnabled.label        "فعال‌سازی زبانه‌های حامل">
+<!ENTITY  browserContainersEnabled.accesskey    "ع">
+<!ENTITY  browserContainersSettings.label        "تنظیمات…">
+<!ENTITY  browserContainersSettings.accesskey    "ت">

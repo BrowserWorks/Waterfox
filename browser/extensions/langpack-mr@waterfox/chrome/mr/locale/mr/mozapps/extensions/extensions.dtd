@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "ॲड-ऑन्स् व्यवस्थापक">
+
+<!ENTITY search.placeholder                   "सर्व ॲड-ऑन्स् शोधा">
+<!ENTITY search.buttonlabel                   "शोधा">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "लोड करत आहे…">
+<!ENTITY listEmpty.installed.label            "या प्रकारचे ॲड-ऑन्स् प्रतिष्ठापीत नाही">
+<!ENTITY listEmpty.availableUpdates.label     "सुधारणा आढळले नाही">
+<!ENTITY listEmpty.recentUpdates.label        "आपण नुकतेच कोणतेही ॲड-ऑन्स् सुधारीत केले नाही">
+<!ENTITY listEmpty.findUpdates.label          "सुधारणांकरीता तपासणी करा">
+<!ENTITY listEmpty.search.label               "कोणतेही जुळणारे ॲड-ऑन्स् आढळले नाही">
+<!ENTITY listEmpty.button.label               "ॲड-ऑन्स् विषयी अधिक शिका">
+<!ENTITY installAddonFromFile.label           "फाइलपासून ॲड-ऑन इंस्टॉल करा…">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "सर्व ॲड-ऑन्स् करीता साधने">
+
+<!ENTITY getThemes.description                "आपला ब्राउझर वैयक्तिकृत करू पाहत आहात का?">
+<!ENTITY getThemes.learnMore                  "हजारो थीम्स मधुन निवडा">
+
+<!ENTITY cmd.back.tooltip                     "एक पृष्ठ मागे जा">
+<!ENTITY cmd.forward.tooltip                  "एक पृष्ठ पुढे जा">
+
+<!ENTITY showUnsignedExtensions.button.label  "काही एक्सटेंशन्स पडताळले जाऊ शकले नाहीत">
+<!ENTITY showAllExtensions.button.label       "सर्व एक्सटेंशन्स दर्शवा">
+<!ENTITY debugAddons.label                    "अॅड-ऑनस डीबग करा">
+<!ENTITY debugAddons.accesskey                "b">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "सेफ मोडद्वारे सर्व ॲड-ऑन्स् बंद केले आहे.">
+<!ENTITY warning.checkcompatibility.label          "ॲड-ऑन सहत्वता तपासणी बंद केली आहे. आपल्याकडे असहत्व ॲड-ऑन्स् असू शकतात.">
+<!ENTITY warning.checkcompatibility.enable.label   "सुरू करा">
+<!ENTITY warning.checkcompatibility.enable.tooltip "ॲड-ऑन सहत्वता तपासणी सुरू करा">
+<!ENTITY warning.updatesecurity.label              "ॲड-ऑन सुधारणा सुरक्षा तपासणी बंद केले आहे. सुधारणा करतेवेळी सतर्क रहा.">
+<!ENTITY warning.updatesecurity.enable.label       "सुरू करा">
+<!ENTITY warning.updatesecurity.enable.tooltip     "ॲड-ऑन सुधारणा सुरक्षा तपासणी सुरू करा">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "शोधा">
+<!ENTITY view.discover.label                  "ॲड-ऑन्स् प्राप्त करा">
+<!ENTITY view.recentUpdates.label             "नुकतीच सुधारणा">
+<!ENTITY view.availableUpdates.label          "उपलब्ध सुधारणा">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "सुधारणांकरीता तपासणी करा">
+<!ENTITY updates.checkForUpdates.accesskey    "C">
+<!ENTITY updates.viewUpdates.label            "नुकत्याच सुधारणांचे दृष्य">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "ॲड-ऑन्स् स्वयं सुधारित करा">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "A">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "स्वयं सुधारणा करण्यासाठी सर्व ॲड-ऑन्स् मूळस्थितीत आणा">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "R">
+<!ENTITY updates.resetUpdatesToManual.label          "सुधारणा स्वहस्ते करण्यासाठी सर्व ॲड-ऑन्स् मूळस्थितीत आणा">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "R">
+<!ENTITY updates.updating.label               "ॲड-ऑन्स् सुधारीत करत आहे">
+<!ENTITY updates.installed.label              "आपले ॲड-ऑन्स् सुधारीत केले.">
+<!ENTITY updates.downloaded.label             "आपले ॲड-ऑन सुधारणा डाउनलोड केले आहे.">
+<!ENTITY updates.restart.label                "प्रतिष्ठापन पूर्ण करण्यासाठी आत्ता पुनःचालू करा">
+<!ENTITY updates.noneFound.label              "सुधारणा आढळले नाही">
+<!ENTITY updates.manualUpdatesFound.label     "उपलब्ध सुधारणांचे दृष्य">
+<!ENTITY updates.updateSelected.label         "सुधारणा प्रतिष्ठापीत करा">
+<!ENTITY updates.updateSelected.tooltip       "या सूचीतील उपलब्ध सुधारणा प्रतिष्ठापीत करा">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "आणखी माहिती दाखवा">
+<!ENTITY cmd.showDetails.accesskey            "S">
+<!ENTITY cmd.findUpdates.label                "सुधारणा शोधा">
+<!ENTITY cmd.findUpdates.accesskey            "F">
+<!ENTITY cmd.preferencesWin.label             "पर्याय">
+<!ENTITY cmd.preferencesWin.accesskey         "O">
+<!ENTITY cmd.preferencesUnix.label            "प्राधान्यक्रम">
+<!ENTITY cmd.preferencesUnix.accesskey        "P">
+<!ENTITY cmd.about.label                      "विषयी">
+<!ENTITY cmd.about.accesskey                  "A">
+
+<!ENTITY cmd.enableAddon.label                "सुरू करा">
+<!ENTITY cmd.enableAddon.accesskey            "E">
+<!ENTITY cmd.disableAddon.label               "बंद करा">
+<!ENTITY cmd.disableAddon.accesskey           "D">
+<!ENTITY cmd.enableTheme.label                "दृष्य कल्पना लागू करा">
+<!ENTITY cmd.enableTheme.accesskey            "W">
+<!ENTITY cmd.disableTheme.label               "दृष्य कल्पना लागू करू नका">
+<!ENTITY cmd.disableTheme.accesskey           "W">
+<!ENTITY cmd.askToActivate.label              "सक्रिय करण्यास विचारा">
+<!ENTITY cmd.askToActivate.tooltip            "ह्या ॲड-ऑनच्या वापरकरिता प्रत्येकवेळी विचारा">
+<!ENTITY cmd.alwaysActivate.label             "नेहमी सक्रिय करा">
+<!ENTITY cmd.alwaysActivate.tooltip           "नेहमी ह्या ॲड-ऑनचा वापर करा">
+<!ENTITY cmd.neverActivate.label              "कधिही सक्रिय करू नका">
+<!ENTITY cmd.neverActivate.tooltip            "कधिही ह्या ॲड-ऑनचा वापर करू नका">
+<!ENTITY cmd.stateMenu.tooltip                "हे ॲड-ऑन चालवतेवेळी बदल करा">
+<!ENTITY cmd.installAddon.label               "इंस्टॉल करा">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "काढून टाका">
+<!ENTITY cmd.uninstallAddon.accesskey         "R">
+<!ENTITY cmd.showPreferencesWin.label         "पर्याय">
+<!ENTITY cmd.showPreferencesWin.tooltip       "या ॲड-ऑनचे पर्याय बदला">
+<!ENTITY cmd.showPreferencesUnix.label        "प्राधान्यक्रम">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "या ॲड-ऑनचा प्राधान्यक्रम बदला">
+<!ENTITY cmd.contribute.label                 "योगदान करा">
+<!ENTITY cmd.contribute.accesskey             "C">
+<!ENTITY cmd.contribute.tooltip               "या ॲड-ऑनच्या विकासकरीता योगदान करा">
+
+<!ENTITY cmd.showReleaseNotes.label           "प्रकाशन टिपा दाखवा">
+<!ENTITY cmd.showReleaseNotes.tooltip         "या सुधारणाकरीता प्रकाशन टिपा दाखवा">
+<!ENTITY cmd.hideReleaseNotes.label           "प्रकाशन टिपा लपवा">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "या सुधारणाकरीता प्रकाशन टिपा लपवा">
+<!ENTITY cmd.findReplacement.label            "पुनर्बदल शोधा">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "ॲड-ऑन्स् काय असतात?">
+<!ENTITY discover.description2                "ॲड-ऑन्स् ते ॲप्लिकेशन्स् असतात जे &brandShortName; ला अगाऊ कार्यक्षमता किंवा शैलीसह पसंतीचे करण्यासाठी सुविधा पुरवतात. &brandShortName; ला पसंतीचे करण्यासाठी टाइम-सेव्हिंग बाजूचीपट्टी, हवामान सूचक, किंवा दृष्य कल्पना या ॲड-ऑन्स् चा वापर करून पहा.">
+<!ENTITY discover.footer                      "इंटरनेटशी जोडणी केल्यावर, ही पट्टी काहिक सर्वोत्तम व सर्वात जास्त चर्चीत असलेले ॲड-ऑन्स् वापरून पाहण्याची सुविधा पुरवते.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "आवृत्ती">
+<!ENTITY detail.lastupdated.label             "शेवटच्यावेळी सुधारीत केलेले">
+<!ENTITY detail.creator.label                 "डेव्हलपर">
+<!ENTITY detail.homepage.label                "मुख्यपृष्ठ">
+<!ENTITY detail.numberOfDownloads.label       "डाउनलोडस्">
+
+<!ENTITY detail.contributions.description     "छोटेसे योगदान करून या ॲड-ऑनच्या डेव्हलपरने ॲड-ऑनच्या विकाससाठी मदत पुरवण्याची विनंती केली आहे.">
+
+<!ENTITY detail.updateType                    "स्वयं सुधारणा">
+<!ENTITY detail.updateDefault.label           "पूर्वनिर्धारीत">
+<!ENTITY detail.updateDefault.tooltip         "पूर्वनिर्धारीत असल्यावरच सुधारणा स्वयं प्रतिष्ठापीत करा">
+<!ENTITY detail.updateAutomatic.label         "सुरू करा">
+<!ENTITY detail.updateAutomatic.tooltip       "स्वयं सुधारणा प्रतिष्ठापीत करा">
+<!ENTITY detail.updateManual.label            "बंद करा">
+<!ENTITY detail.updateManual.tooltip          "स्वयं सुधारणा प्रतिष्ठापीत करू नका">
+<!ENTITY detail.home                          "मुख्यपृष्ठ">
+<!ENTITY detail.repository                    "ॲड-ऑन प्रोफाइल">
+<!ENTITY detail.size                          "आकार">
+
+<!ENTITY detail.checkForUpdates.label         "सुधारणांकरिता तपासणी करा">
+<!ENTITY detail.checkForUpdates.accesskey     "f">
+<!ENTITY detail.checkForUpdates.tooltip       "या ॲड-ऑनकरीता सुधारणांकरीता तपासणी करा">
+<!ENTITY detail.showPreferencesWin.label      "पर्याय">
+<!ENTITY detail.showPreferencesWin.accesskey  "O">
+<!ENTITY detail.showPreferencesWin.tooltip    "या ॲड-ऑनचे पर्याय बदला">
+<!ENTITY detail.showPreferencesUnix.label     "प्राधान्यक्रम">
+<!ENTITY detail.showPreferencesUnix.accesskey "P">
+<!ENTITY detail.showPreferencesUnix.tooltip   "या ॲड-ऑनचा प्राधान्यक्रम बदला">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "गुणवत्ताश्रेणी">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "स्तब्ध">
+<!ENTITY progress.cancel.tooltip              "रद्द करा">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "नाव">
+<!ENTITY sort.name.tooltip                    "नावानुरूप क्रमवारीत लावा">
+<!ENTITY sort.dateUpdated.label               "शेवटच्यावेळी सुधारीत केलेले">
+<!ENTITY sort.dateUpdated.tooltip             "सुधारीत दिनांक प्रमाणे क्रमवारीत लावा">
+<!ENTITY sort.relevance.label                 "सर्वोत्तम जुळवणी">
+<!ENTITY sort.relevance.tooltip               "समर्पकता प्रमाणे क्रमवारीत लावा">
+<!ENTITY sort.price.label                     "किंमत">
+<!ENTITY sort.price.tooltip                   "किंमत प्रमाणे क्रमवारीत लावा">
+
+<!ENTITY search.filter2.label                 "शोधा:">
+<!ENTITY search.filter2.installed.label       "माझे ॲड-ऑन्स्">
+<!ENTITY search.filter2.installed.tooltip     "प्रतिष्ठापीत ॲड-ऑन्स् दाखवा">
+<!ENTITY search.filter2.available.label       "उपलब्ध ॲड-ऑन्स्">
+<!ENTITY search.filter2.available.tooltip     "प्रतिष्ठापनकरीता उपलब्ध ॲड-ऑन्स् दाखवा">
+
+<!ENTITY addon.homepage                       "मुख्यपृष्ठ">
+<!ENTITY addon.details.label                  "अधिक">
+<!ENTITY addon.details.tooltip                "या ॲड-ऑनविषयी अधिक माहिती दाखवा">
+<!ENTITY addon.unknownDate                    "अपरिचीत">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "अप्रचलित">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(बंद)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "सुधारणा">
+<!ENTITY addon.undoAction.label               "पूर्ववत् करा">
+<!ENTITY addon.undoAction.tooltip             "या कृतीला पूर्ववत् करा">
+<!ENTITY addon.undoRemove.label               "पूर्ववत् करा">
+<!ENTITY addon.undoRemove.tooltip             "हे ॲड-ऑन प्रतिष्ठापीत असू द्या">
+<!ENTITY addon.restartNow.label               "आत्ता पुन्हा सुरू करा">
+<!ENTITY addon.install.label                  "प्रतिष्ठापन">
+<!ENTITY addon.install.tooltip                "हे ॲड-ऑन प्रतिष्ठापीत करा">
+<!ENTITY addon.updateNow.label                "आत्ता सुधारीत करा">
+<!ENTITY addon.updateNow.tooltip              "या ॲड-ऑनकरीता सुधारणा प्रतिष्ठापीत करा">
+<!ENTITY addon.includeUpdate.label            "सुधारणामध्ये समाविष्ट करा">
+<!ENTITY addon.updateAvailable.label          "सुधारणा उपलब्ध आहे">
+<!ENTITY addon.checkingForUpdates.label       "सुधारणांकरीता तपासणी करत आहे…">
+<!ENTITY addon.releaseNotes.label             "प्रकाशन टिपा:">
+<!ENTITY addon.loadingReleaseNotes.label      "लोड करत आहे…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "माफ करा, परंतु प्रकाशन टिपा लोड करतेवेळी त्रुटी आढळली.">
+
+<!ENTITY addon.createdBy.label                "द्वारे निर्मीत ">
+
+<!ENTITY eula.title                           "वापरकर्ता परवाना करार">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "स्वीकारा व प्रतिष्ठापीत करा…">
+
+<!ENTITY settings.path.button.label           "ब्राउज करा…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "हे काय आहे? टेलिमेट्री कदाचित वेळोवेळी प्रयोग इंस्टॉल करेल आणि त्यास चालवेल.">
+<!ENTITY experiment.info.learnmore "आणखी शिका">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "टेलिमेट्रि सेटिंग्ज">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "आणखी शिका…">
+
+<!ENTITY disabledUnsigned.heading "काही ॲड-ऑन्स् अक्षम केले गेले आहेत">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "खालील अॅड-ऑन्स् &brandShortName; मध्ये वापरण्यासाठी पडताळले गेले नाहीत. आपण करू शकता ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "पुनर्बदल शोधा">
+<!ENTITY disabledUnsigned.description.end " किंवा विकासकाला ते पडताळून घ्यायला सांगा.">
+<!ENTITY disabledUnsigned.learnMore "आपणास ऑनलाईन सुरक्षित कसे ठेवायचे याबाबत आमच्या प्रयत्नांसंबंधी अधिक जाणून घ्या.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "ज्यांना त्यांचे अॅड-ऑन्स् पडताळून घेण्यात स्वारस्य आहे असे विकासक ते करू शकतात. त्यासाठी वाचा">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "मॅन्युअल">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "काही शोधताय काय? काही प्लगईन्स, &brandShortName; आता समर्थित नाहीत.">
+<!ENTITY pluginDeprecation.learnMore "आणखी शिका">
+
+<!ENTITY legacyWarning.description "काही शोधताय? काही विस्तार आता &brandShortName; द्वारा समर्थीत नाही.">
+<!ENTITY legacyWarning.showLegacy "सर्व वारसा विस्तार दर्शवा">
+<!ENTITY legacyExtensions.title "वारसा विस्तार">
+<!ENTITY legacyExtensions.description "हे विस्तार सध्याच्या &brandShortName; मानकांमध्ये बसत नाही म्हणून ते निष्क्रिय करण्यात आले आहेत.">
+<!ENTITY legacyExtensions.learnMore "ॲड-ऑन्सबद्दल बदल जाणा">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Wstecz">
+<!ENTITY  button-back-mac.accesskey    "W">
+<!ENTITY  button-next-mac.label        "Kontynuuj">
+<!ENTITY  button-next-mac.accesskey    "K">
+<!ENTITY  button-finish-mac.label      "Gotowe">
+<!ENTITY  button-cancel-mac.label      "Anuluj">
+
+<!ENTITY  button-back-unix.label       "Wstecz">
+<!ENTITY  button-back-unix.accesskey   "W">
+<!ENTITY button-next-unix.label "Dalej">
+<!ENTITY button-next-unix.accesskey "D">
+<!ENTITY  button-finish-unix.label     "Zakończ">
+<!ENTITY  button-cancel-unix.label     "Anuluj">
+
+<!ENTITY  button-back-win.label        "&lt; Wstecz">
+<!ENTITY  button-back-win.accesskey    "W">
+<!ENTITY  button-next-win.label        "Dalej &gt;">
+<!ENTITY  button-next-win.accesskey    "D">
+<!ENTITY  button-finish-win.label      "Zakończ">
+<!ENTITY  button-cancel-win.label      "Anuluj">

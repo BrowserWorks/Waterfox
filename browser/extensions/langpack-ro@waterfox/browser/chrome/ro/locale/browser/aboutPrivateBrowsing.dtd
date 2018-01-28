@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "În prezent nu ești într-o fereastră privată.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Deschide o fereastră privată">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Navigare privată">
+<!ENTITY privateBrowsing.title.tracking                  "Navigare privată cu protecție față de urmărire">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Când navighezi într-o fereastră privată, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "nu salvează">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "paginile vizitate">
+<!ENTITY aboutPrivateBrowsing.info.searches              "căutările">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookie-urile">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "fișierele temporare">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "îți va salva">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "descărcările">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "marcajele">
+<!ENTITY aboutPrivateBrowsing.note.before                "Navigarea privată ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "nu te face anonim">
+<!ENTITY aboutPrivateBrowsing.note.after                 " pe internet. Angajatorul sau furnizorul de servicii internet pot să știe în continuare paginile pe care le vizitezi.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Află mai multe despre ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "navigarea privată">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protecție față de urmărire">
+<!ENTITY trackingProtection.description2                 "Unele site-uri web folosesc mecanisme de urmărire care îți pot monitoriza activitatea pe internet. Cu ajutorul protecției față de urmărire Waterfox va bloca multe mecanisme de urmărire care pot colecta informații despre comportamentul de navigare pe internet.">
+<!ENTITY trackingProtection.startTour1                   "Vezi cum funcționează">

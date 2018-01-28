@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title         "&brandShortName; tarayıcısını yenile">
+<!ENTITY refreshProfile.dialog.description1  "Sorunları çözmek ve eski performansı geri kazanmak için sıfırdan başlayın.">
+<!ENTITY refreshProfile.dialog.description2  "Bu işlem…">
+<!ENTITY refreshProfile.dialog.items.label1  "Eklentilerinizi ve özelleştirmelerinizi kaldıracak">
+<!ENTITY refreshProfile.dialog.items.label2  "Tarayıcı ayarlarınızı varsayılan ayarlara döndürecek">
+<!ENTITY refreshProfile.dialog.button.label  "&brandShortName; tarayıcısını yenile">
+
+<!ENTITY refreshProfile.title                "&brandShortName; tarayıcınızı hızlandırın">
+<!ENTITY refreshProfile.button.label         "&brandShortName; tarayıcısını yenile…">
+
+<!ENTITY refreshProfile.cleaning.description "Bitmek üzere…">

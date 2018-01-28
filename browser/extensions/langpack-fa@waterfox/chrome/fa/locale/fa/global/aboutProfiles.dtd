@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProfiles.title "در مورد نمایه‌ها">
+<!ENTITY aboutProfiles.subtitle "این صفحه به شما کمک می‌کند تا نمايه‌های خود را مدیریت کنید. هر نمایه دارای دنیا جدا شامل تاریخچه، تنظیمات،‌ نشانک‌ها و افزونه های جدا است.">
+<!ENTITY aboutProfiles.create "ایجاد نمایه جدید">
+<!ENTITY aboutProfiles.restart.title "راه‌اندازی مجدد">
+<!ENTITY aboutProfiles.restart.inSafeMode "راه‌اندازی به همراه غیرفعال‌سازی افزونه ها">
+<!ENTITY aboutProfiles.restart.normal "راه‌اندازی مجدد معمولی">

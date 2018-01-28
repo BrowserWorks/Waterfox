@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "الاستثناءات - الترجمة">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "لن يُقترح ترجمة للغات التالية:">
+<!ENTITY treehead.languageName.label      "اللغات">
+<!ENTITY removeLanguage.label             "احذف اللغة">
+<!ENTITY removeLanguage.accesskey         "ح">
+<!ENTITY removeAllLanguages.label         "احذف جميع اللغات">
+<!ENTITY removeAllLanguages.accesskey     "ذ">
+
+<!ENTITY noTranslationForSites.label      "لن يُقترح ترجمة للمواقع التالية:">
+<!ENTITY treehead.siteName2.label         "مواقع وِب">
+<!ENTITY removeSite.label                 "احذف الموقع">
+<!ENTITY removeSite.accesskey             "ح">
+<!ENTITY removeAllSites.label             "احذف كل المواقع">
+<!ENTITY removeAllSites.accesskey         "ذ">
+
+<!ENTITY button.close.label               "أغلق">
+<!ENTITY button.close.accesskey           "غ">

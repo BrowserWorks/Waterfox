@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Орналасуы:">
+<!ENTITY tile.label                 "Қасында">
+<!ENTITY center.label               "Ортасына қарай">
+<!ENTITY stretch.label              "Созу">
+<!ENTITY fill.label                 "Толтыру">
+<!ENTITY fit.label                  "Сыйдыру">
+<!ENTITY preview.label              "Алдын-ала қарап шығу">
+<!ENTITY color.label                "Түсі:">
+<!ENTITY setDesktopBackground.title "Жұмыс үстелінің суреті ретінде орнату">
+<!ENTITY openDesktopPrefs.label     "Жұмыс үстелінің баптауларын ашу">
+<!ENTITY closeWindow.key            "w">

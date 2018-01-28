@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Glavni pretraživač">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Izaberite vaš glavni pretraživač. &brandShortName; ga koristi u lokacijskoj traci, traci pretraživanja i početnoj stranici.">
+
+<!ENTITY provideSearchSuggestions.label        "Pružaj prijedloge za pretraživanje">
+<!ENTITY provideSearchSuggestions.accesskey    "p">
+
+<!ENTITY showURLBarSuggestions.label           "Prikaži prijedloge za pretragu u rezultatima lokacijske trake">
+<!ENTITY showURLBarSuggestions.accesskey       "l">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Prijedlozi za pretragu neće biti prikazani u rezultatima lokacijske trake jer ste podesili &brandShortName; da ne pamti historiju.">
+
+<!ENTITY oneClickSearchEngines.label           "Klik pretraživači">
+
+<!ENTITY chooseWhichOneToDisplay.label         "Traka za pretraživanje vam omogućava izravno korištenje pretraživača. Izaberite one koje želite da budu prikazani.">
+
+<!ENTITY engineNameColumn.label                "Pretraživač">
+<!ENTITY engineKeywordColumn.label             "Ključna riječ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Vrati izvorne pretraživače">
+<!ENTITY restoreDefaultSearchEngines.accesskey "č">
+
+<!ENTITY removeEngine.label                    "Ukloni">
+<!ENTITY removeEngine.accesskey                "U">
+
+<!ENTITY addMoreSearchEngines.label            "Dodaj još pretraživača…">

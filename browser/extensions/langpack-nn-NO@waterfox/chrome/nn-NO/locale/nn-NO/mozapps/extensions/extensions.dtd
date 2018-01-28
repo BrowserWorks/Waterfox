@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "Utvidingar">
+
+<!ENTITY search.placeholder                   "Søk i alle utvidingar">
+<!ENTITY search.buttonlabel                   "Søk">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "Lastar …">
+<!ENTITY listEmpty.installed.label            "Du har ingen utvidingar av denne typen installert">
+<!ENTITY listEmpty.availableUpdates.label     "Ingen oppdateringar funne">
+<!ENTITY listEmpty.recentUpdates.label        "Du har ikkje nyleg oppdatert utvidingane">
+<!ENTITY listEmpty.findUpdates.label          "Sjå etter oppdateringar">
+<!ENTITY listEmpty.search.label               "Klarte ikkje å finna passande utvidingar">
+<!ENTITY listEmpty.button.label               "Les meir om utvidingar">
+<!ENTITY installAddonFromFile.label           "Installer utviding frå fil …">
+<!ENTITY installAddonFromFile.accesskey       "I">
+<!ENTITY toolsMenu.tooltip                    "Verktøy for alle utvidingane">
+
+<!ENTITY getThemes.description                "Ønskjer du å tilpassa nettlesaren din?">
+<!ENTITY getThemes.learnMore                  "Vel mellom tusenvis av tema.">
+
+<!ENTITY cmd.back.tooltip                     "Gå tilbake ei side">
+<!ENTITY cmd.forward.tooltip                  "Gå fram ei side">
+
+<!ENTITY showUnsignedExtensions.button.label  "Nokre utvidingar kunne ikkje stadfestast">
+<!ENTITY showAllExtensions.button.label       "Vis alle utvidingar">
+<!ENTITY debugAddons.label                    "Debug-utvidingar">
+<!ENTITY debugAddons.accesskey                "D">
+
+<!-- global warnings -->
+<!ENTITY warning.safemode.label                    "Alle utvidingar er avslegne av trygg-modus.">
+<!ENTITY warning.checkcompatibility.label          "Kompatiblitetskonroll er avslegen. Du har kanskje ikkje-kompatible utvidingar.">
+<!ENTITY warning.checkcompatibility.enable.label   "Slå på">
+<!ENTITY warning.checkcompatibility.enable.tooltip "Slå på kompatibilitetskontroll">
+<!ENTITY warning.updatesecurity.label              "Tryggingskontroll av utvidingsoppdateringar er slått av. Tryggleiken din kan bli sett i fare av oppdateringar.">
+<!ENTITY warning.updatesecurity.enable.label       "Slå på">
+<!ENTITY warning.updatesecurity.enable.tooltip     "Slå på tryggingskontroll av utvidingsoppdateringar">
+
+<!-- categories / views -->
+<!ENTITY view.search.label                    "Søk">
+<!ENTITY view.discover.label                  "Last ned utvidingar">
+<!ENTITY view.recentUpdates.label             "Nyleg oppdatert">
+<!ENTITY view.availableUpdates.label          "Tilgjengelege oppdateringar">
+
+<!-- addon updates -->
+<!ENTITY updates.checkForUpdates.label        "Sjå etter oppdateringar no">
+<!ENTITY updates.checkForUpdates.accesskey    "S">
+<!ENTITY updates.viewUpdates.label            "Vis nyleg oppdaterte">
+<!ENTITY updates.viewUpdates.accesskey        "V">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "Oppdater utvidingane automatisk">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "O">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "Tilbakestill alle utvidingane til å oppdatera automatisk">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "T">
+<!ENTITY updates.resetUpdatesToManual.label          "Tilbakestill alle utvidingane til å oppdatera manuelt">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "T">
+<!ENTITY updates.updating.label               "Oppdaterer utvidingane">
+<!ENTITY updates.installed.label              "Utvidingane er oppdaterte">
+<!ENTITY updates.downloaded.label             "Oppdateringar til utvidingane er lasta ned.">
+<!ENTITY updates.restart.label                "Start på nytt no for å fullføra installeringa">
+<!ENTITY updates.noneFound.label              "Fann ingen oppdateringar">
+<!ENTITY updates.manualUpdatesFound.label     "Vis tilgjengelege oppdateringar">
+<!ENTITY updates.updateSelected.label         "Installer oppdateringane">
+<!ENTITY updates.updateSelected.tooltip       "Installer tilgjengelege oppdateringar i denne lista">
+
+<!-- addon actions -->
+<!ENTITY cmd.showDetails.label                "Vis detaljar">
+<!ENTITY cmd.showDetails.accesskey            "V">
+<!ENTITY cmd.findUpdates.label                "Sjå etter oppdateringar">
+<!ENTITY cmd.findUpdates.accesskey            "S">
+<!ENTITY cmd.preferencesWin.label             "Innstillingar">
+<!ENTITY cmd.preferencesWin.accesskey         "I">
+<!ENTITY cmd.preferencesUnix.label            "Innstillingar">
+<!ENTITY cmd.preferencesUnix.accesskey        "I">
+<!ENTITY cmd.about.label                      "Om">
+<!ENTITY cmd.about.accesskey                  "O">
+
+<!ENTITY cmd.enableAddon.label                "Slå på">
+<!ENTITY cmd.enableAddon.accesskey            "S">
+<!ENTITY cmd.disableAddon.label               "Slå av">
+<!ENTITY cmd.disableAddon.accesskey           "a">
+<!ENTITY cmd.enableTheme.label                "Bruk temaet">
+<!ENTITY cmd.enableTheme.accesskey            "B">
+<!ENTITY cmd.disableTheme.label               "Slutt å bruka temaet">
+<!ENTITY cmd.disableTheme.accesskey           "b">
+<!ENTITY cmd.askToActivate.label              "Spør for å aktivere">
+<!ENTITY cmd.askToActivate.tooltip            "Spør kvar gong for å bruka denne utvidinga">
+<!ENTITY cmd.alwaysActivate.label             "Alltid aktiver">
+<!ENTITY cmd.alwaysActivate.tooltip           "Alltid bruk denne utvidinga">
+<!ENTITY cmd.neverActivate.label              "Aldri aktiver">
+<!ENTITY cmd.neverActivate.tooltip            "Aldri bruk denne utvidinga">
+<!ENTITY cmd.stateMenu.tooltip                "Endre når utvidinga køyrer">
+<!ENTITY cmd.installAddon.label               "Installer">
+<!ENTITY cmd.installAddon.accesskey           "I">
+<!ENTITY cmd.uninstallAddon.label             "Slett">
+<!ENTITY cmd.uninstallAddon.accesskey         "e">
+<!ENTITY cmd.showPreferencesWin.label         "Innstillingar">
+<!ENTITY cmd.showPreferencesWin.tooltip       "Endra innstillingane til denne utvidinga">
+<!ENTITY cmd.showPreferencesUnix.label        "Innstillingar">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "Endra innstillingane til denne utvidinga">
+<!ENTITY cmd.contribute.label                 "Ver med">
+<!ENTITY cmd.contribute.accesskey             "V">
+<!ENTITY cmd.contribute.tooltip               "Bidra til utviklinga av denne utvidinga">
+
+<!ENTITY cmd.showReleaseNotes.label           "Vis versjonsnotat">
+<!ENTITY cmd.showReleaseNotes.tooltip         "Vis versjonsnotatet for denne oppdateringa">
+<!ENTITY cmd.hideReleaseNotes.label           "Skjul versjonsnotatet">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "Skjuler versjonsnotatet for denne versjonen">
+<!ENTITY cmd.findReplacement.label            "Finn ei erstatning">
+
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+<!ENTITY discover.title                       "Kva er utvidingar?">
+<!ENTITY discover.description2                "Utvidingar er program som lèt deg tilpassa &brandShortName; med ekstra funksjonalitet eller annan stil. Prøv ein sidestolpe som sparer deg tid, vêrvarsling, eller eit tema som får &brandShortName; til å sjå ut som din eigen.">
+<!ENTITY discover.footer                      "Når du er kopla til nettet vil dette vindauget innehalda nokre av dei beste og mest populære utvidingane som du kan prøva ut.">
+
+<!-- detail view -->
+<!ENTITY detail.version.label                 "Version">
+<!ENTITY detail.lastupdated.label             "Sist oppdatert">
+<!ENTITY detail.creator.label                 "Utviklar">
+<!ENTITY detail.homepage.label                "Heimeside">
+<!ENTITY detail.numberOfDownloads.label       "Nedlastingar">
+
+<!ENTITY detail.contributions.description     "Utviklaren av denne utvidinga ber om at du hjelper til med å støtta vidare utvikling ved å gje eit lite bidrag.">
+
+<!ENTITY detail.updateType                    "Automatiske oppdateringar">
+<!ENTITY detail.updateDefault.label           "Standard">
+<!ENTITY detail.updateDefault.tooltip         "Installer oppdateringar automatisk berre om det er standard">
+<!ENTITY detail.updateAutomatic.label         "på">
+<!ENTITY detail.updateAutomatic.tooltip       "Installer utvidingar automatisk ">
+<!ENTITY detail.updateManual.label            "Av">
+<!ENTITY detail.updateManual.tooltip          "Ikkje installer oppdateringar automatisk">
+<!ENTITY detail.home                          "Heimeside">
+<!ENTITY detail.repository                    "Utvidingsprofil">
+<!ENTITY detail.size                          "Storleik">
+
+<!ENTITY detail.checkForUpdates.label         "Sjå etter oppdateringar">
+<!ENTITY detail.checkForUpdates.accesskey     "S">
+<!ENTITY detail.checkForUpdates.tooltip       "Søkjer etter oppdateringar for denne utvidinga">
+<!ENTITY detail.showPreferencesWin.label      "Innstillingar">
+<!ENTITY detail.showPreferencesWin.accesskey  "I">
+<!ENTITY detail.showPreferencesWin.tooltip    "Endra innstillingane til denne utvidinga">
+<!ENTITY detail.showPreferencesUnix.label     "Innstillingar">
+<!ENTITY detail.showPreferencesUnix.accesskey "I">
+<!ENTITY detail.showPreferencesUnix.tooltip   "Endra innstillingane til denne utvidinga">
+
+
+<!-- ratings -->
+<!ENTITY rating2.label                        "Vurdering">
+
+<!-- download/install progress -->
+<!ENTITY progress.pause.tooltip               "Pause">
+<!ENTITY progress.cancel.tooltip              "Avbryt">
+
+
+<!-- list sorting -->
+<!ENTITY sort.name.label                      "Namn">
+<!ENTITY sort.name.tooltip                    "Sorter etter namn">
+<!ENTITY sort.dateUpdated.label               "Sist oppdatert">
+<!ENTITY sort.dateUpdated.tooltip             "Sorter etter dato oppdatert">
+<!ENTITY sort.relevance.label                 "Beste treff">
+<!ENTITY sort.relevance.tooltip               "Sorter etter relevans">
+<!ENTITY sort.price.label                     "Pris">
+<!ENTITY sort.price.tooltip                   "Sorter etter pris">
+
+<!ENTITY search.filter2.label                 "Søk:">
+<!ENTITY search.filter2.installed.label       "Installerte utvidingar">
+<!ENTITY search.filter2.installed.tooltip     "Vis installerte utvidingar">
+<!ENTITY search.filter2.available.label       "Tilgjengelege utvidingar">
+<!ENTITY search.filter2.available.tooltip     "Vis utvidingar som kan installerast">
+
+<!ENTITY addon.homepage                       "Heimeside">
+<!ENTITY addon.details.label                  "Meir">
+<!ENTITY addon.details.tooltip                "Vis meir informasjon om denne utvidinga">
+<!ENTITY addon.unknownDate                    "Ukjent">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "FORELDA">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(avslått)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "Oppdatering">
+<!ENTITY addon.undoAction.label               "Angre">
+<!ENTITY addon.undoAction.tooltip             "Angre denne handlinga">
+<!ENTITY addon.undoRemove.label               "Angre">
+<!ENTITY addon.undoRemove.tooltip             "Behald denne utvidinga installert">
+<!ENTITY addon.restartNow.label               "Start på nytt no">
+<!ENTITY addon.install.label                  "Installer">
+<!ENTITY addon.install.tooltip                "Installer denne utvidinga">
+<!ENTITY addon.updateNow.label                "Oppdater no">
+<!ENTITY addon.updateNow.tooltip              "Installer oppdateringa for denne utvidinga">
+<!ENTITY addon.includeUpdate.label            "Inkluder i oppdateringa">
+<!ENTITY addon.updateAvailable.label          "Ei oppdatering er tilgjengeleg">
+<!ENTITY addon.checkingForUpdates.label       "Ser etter oppdateringer …">
+<!ENTITY addon.releaseNotes.label             "Versjonsnotat:">
+<!ENTITY addon.loadingReleaseNotes.label      "Lastar …">
+<!ENTITY addon.errorLoadingReleaseNotes.label "Orsak, men ein feil oppstod under lasting av versjonsnotatet.">
+
+<!ENTITY addon.createdBy.label                "Av ">
+
+<!ENTITY eula.title                           "Sluttbrukaravtale">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "Godta og installer …">
+
+<!ENTITY settings.path.button.label           "Bla gjennom …">
+
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+<!ENTITY experiment.info.label "Kva er dette? Telemetri kan installera og køyra eksperiment med jamne mellomrom.">
+<!ENTITY experiment.info.learnmore "Les meir">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "Telemetri-innstillingar">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Les meir…">
+
+<!ENTITY disabledUnsigned.heading "Nokre utvidingar er slått av">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "Desse utvidingane har ikkje blitt kontrollert for bruk i &brandShortName;. Du kan ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "finna erstatningar">
+<!ENTITY disabledUnsigned.description.end " eller spørja utviklaren om å få dei stadfesta.">
+<!ENTITY disabledUnsigned.learnMore "Les meir om tiltaka våre for å halde deg trygg på nettet.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "Utviklarar som er interesserte i å få utvidingane sine stadfesta kan fortsette ved å lesa ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "manualen vår">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "Saknar du noko? Nokre programtillegg er ikkje lenger støtta av &brandShortName;.">
+<!ENTITY pluginDeprecation.learnMore "Les meir.">
+
+<!ENTITY legacyWarning.description "Saknar du noko? Nokre utvidingar er ikkje lenger støtta av &brandShortName;.">
+<!ENTITY legacyWarning.showLegacy "Vis forelda utvidingar">
+<!ENTITY legacyExtensions.title "Forelda utvidingar">
+<!ENTITY legacyExtensions.description "Desse utvidingane oppfyller ikkje gjeldande standardar i &brandShortName; og er difor slått av.">
+<!ENTITY legacyExtensions.learnMore "Les meir om endringar av utvidingar">

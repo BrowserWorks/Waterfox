@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; محفوظ موڈ">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "محفوظ موڈ میں شروع کریں">
+<!ENTITY refreshProfile.label         "&brandShortName; کو پھر تازہ کریں">
+
+<!ENTITY safeModeDescription3.label   "محفوظ موڈ &brandShortName; کا ایک خاص موڈ ہے جو مسائل ٹھیک کرنے کے لیے استعمال کیا جا سکتا ہے۔">
+<!ENTITY safeModeDescription4.label   "آپ کے اضافہ جات اور مخصوص سیٹینگیں عارضی طور پر نا اہل کر دی جائیں گی۔">
+
+<!ENTITY refreshProfileInstead.label  "آپ بھی خرابیوں کا سراغ لگانا چھوڑ سکتے ہیں اور &brandShortName; تازہ کر کرنیں کی کوشش کر سکتیں ہے۔">
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; شروع ہوتے ہوئے غیرمتوقع طور پر بند ہو گیا۔ اس کی وجہ ایڈ آن یا دیگر مسائل ہو سکتے ہیں۔ آپ اس کی طے شدہ حالت پر پھر سیٹ کر کے یا محفوظ موڈ میں ازالہ کاری کر کے مسئلہ حل کرنے کی کوشش کر سکتے ہیں۔">

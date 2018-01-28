@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Njoftime Vithisjesh">
+<!ENTITY crashesUnsubmitted.label   "Njoftime Vithisjesh të Paparashtruar">
+<!ENTITY crashesSubmitted.label     "Njoftime Vithisjesh të Parashtruar">
+<!ENTITY id.heading                 "ID Njoftimi">
+<!ENTITY dateCrashed.heading        "Datë Vithisjeje">
+<!ENTITY dateSubmitted.heading      "Datë Parashtrimi">
+<!ENTITY noReports.label            "Nuk ka njoftime të parashtruar.">
+<!ENTITY noConfig.label             "Ky aplikacion nuk është formësuar për paraqitje njoftimesh vithisjesh. Duhet rregulluar parapëlqimi <code>breakpad.reportURL</code>.">
+<!ENTITY clearAllReports.label      "Hiqi Krejt Njoftimet">

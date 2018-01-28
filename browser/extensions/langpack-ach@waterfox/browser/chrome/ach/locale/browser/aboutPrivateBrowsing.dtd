@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Kombedi pe itye i dirica me mung.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Yab dirica me mung">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "m">
+
+<!ENTITY privateBrowsing.title                           "Yeny i mung">
+<!ENTITY privateBrowsing.title.tracking                  "Yeny i mung ki Gwokke ikom lubo kor">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Ka i yenyo i Dirica me mung, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "pe gwoko">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "potbuk ma kilimo">
+<!ENTITY aboutPrivateBrowsing.info.searches              "yeny">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "angija">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "pwail pi tutunu">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "bi gwoko">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " yiti:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "gam">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "alamabuk">
+<!ENTITY aboutPrivateBrowsing.note.before                "Yeny i mung ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "pe weko i bedo ma pe ingene">
+<!ENTITY aboutPrivateBrowsing.note.after                 " i intanet. Lami ni tic onyo tic me intanet pud twero ngeno potbuk ma ilimo.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Nong ngec mapol ikom">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Yeny i mung">
+
+
+<!ENTITY trackingProtection.title                        "Gwokke ikom lubo kor">
+<!ENTITY trackingProtection.description2                 "Kakube mukene tiyo ki gilubo kor me neno tic mamegi i intanet. Ki Gwokke ikom lubo kor Waterfox bigengo gilubo kor madwong ma twero coko ngec ikom yeny mamegi.">
+<!ENTITY trackingProtection.startTour1                   "Nen kit ma tiyo kwede">
+
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+

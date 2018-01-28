@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newprofile.title             "Skep profielslimmerd">
+<!ENTITY window.size                  "width: 45em; height: 32em;">
+<!-- First wizard page -->
+
+<!ENTITY profileCreationExplanation_1.text  "&brandShortName; stoor inligting oor u opstelling en voorkeure in u persoonlike profiel.">
+<!ENTITY profileCreationExplanation_2.text  "Indien u hierdie afskrif van &brandShortName; met ander gebruikers wil deel, kan u profiele gebruik om elke gebruiker se inligting apart te hou. Om dit te doen moet elke verbruiker sy of haar eie profiel skep.">
+<!ENTITY profileCreationExplanation_3.text  "Indien u die enigste persoon is wat hierdie afskrif van &brandShortName; gebruik, moet u ten minste een profiel hê. Indien u so verkies, kan u meer as een profiel vir uself skep wat verskillende stelle opstelling en voorkeure stoor. U kan byvoorbeeld 'n aparte profiel vir besigheids- en persoonlike gebruik hê.">
+<!ENTITY profileCreationExplanation_4.text  "Om u profiel te begin skep, kliek Volgende.">
+<!ENTITY profileCreationExplanation_4Mac.text  "Om u profiel te begin skep, kliek Volgende.">
+<!ENTITY profileCreationExplanation_4Gnome.text  "Om u profiel te begin skep, kliek Volgende.">
+<!-- Second wizard page -->
+
+<!ENTITY profileCreationIntro.text      "Indien u verskeie profiele skep, kan u hulle herken deur hul profielname. U kan die naam gebruik wat hier verskaf word, of een van u eie gebruik.">
+<!ENTITY profilePrompt.label            "Tik nuwe profielnaam in:">
+<!ENTITY profilePrompt.accesskey        "T">
+<!ENTITY profileDirectoryExplanation.text   "U gebruikeropstelling, voorkeure en ander gebruikerverwante data sal gestoor word in:">
+<!ENTITY profileDefaultName             "Verstekgebruiker">
+<!ENTITY button.choosefolder.label      "Kies vouer…">
+<!ENTITY button.choosefolder.accesskey  "K">
+<!ENTITY button.usedefault.label        "Gebruik verstekvouer">
+<!ENTITY button.usedefault.accesskey    "G">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "Vind in hierdie bladsy">
+<!ENTITY findField.label "Vind wat:">
+<!ENTITY findField.accesskey "i">
+<!ENTITY caseSensitiveCheckbox.label "Kassensitief">
+<!ENTITY caseSensitiveCheckbox.accesskey "s">
+<!ENTITY wrapCheckbox.label "Omvou">
+<!ENTITY wrapCheckbox.accesskey "O">
+<!ENTITY findButton.label "Vind volgende">
+<!ENTITY findButton.accesskey "V">
+<!ENTITY cancelButton.label "Kanselleer">
+<!ENTITY closeButton.label "Sluit">
+<!ENTITY up.label "Op">
+<!ENTITY up.accesskey "O">
+<!ENTITY down.label "Af">
+<!ENTITY down.accesskey "A">
+<!ENTITY direction.label "Rigting">

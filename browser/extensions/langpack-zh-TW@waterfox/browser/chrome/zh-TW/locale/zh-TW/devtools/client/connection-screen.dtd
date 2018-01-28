@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "連線">
+<!ENTITY header     "連接遠端裝置">
+<!ENTITY host       "主機:">
+<!ENTITY port       "Port:">
+<!ENTITY connect    "連線">
+<!ENTITY connecting "連線中…">
+<!ENTITY availableAddons "可用的遠端附加元件:">
+<!ENTITY availableTabs "可用的遠端分頁:">
+<!ENTITY availableProcesses "可用的遠端行程:">
+<!ENTITY connectionError "錯誤:">
+<!ENTITY errorTimeout "錯誤: 連線逾時。">
+<!ENTITY errorRefused "錯誤: 連線被拒絕。">
+<!ENTITY errorUnexpected "未預期的錯誤。">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "Waterfox 開發者工具可對遠端裝置（例如 Waterfox for Android 或 Waterfox OS）除錯。請確定您已開啟遠端裝置中的「遠端除錯」選項。若需更多資訊，請參考">
+<!ENTITY remoteDocumentation "此文件">
+<!ENTITY remoteHelpSuffix "。">
+
+

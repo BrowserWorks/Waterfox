@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when logged in... -->
+
+<!ENTITY engine.bookmarks.label     "বুকমার্ক">
+<!ENTITY engine.bookmarks.accesskey "ব">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "পূর্ববর্তী তথ্য">
+<!ENTITY engine.history.accesskey   "প">
+<!ENTITY engine.prefs.label         "পছন্দ">
+<!ENTITY engine.prefs.accesskey     "প">
+<!ENTITY engine.addons.label        "অতিরিক্ত সামগ্রী">
+<!ENTITY engine.addons.accesskey    "A">
+
+<!-- Device Settings -->
+<!ENTITY fxaSyncDeviceName.label       "ডিভাইস নাম">
+<!ENTITY changeSyncDeviceName.label "ডিভাইস নাম পরিবর্তন করুন…">
+<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY cancelChangeSyncDeviceName.label "বাতিল">
+<!ENTITY cancelChangeSyncDeviceName.accesskey "n">
+<!ENTITY saveChangeSyncDeviceName.label "সংরক্ষণ করুন">
+<!ENTITY saveChangeSyncDeviceName.accesskey "v">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "পরিসেবার নিয়মাবলী">
+<!ENTITY fxaPrivacyNotice.link.label "গোপনীয়তা সংক্রান্ত নীতি">
+
+<!-- LOCALIZATION NOTE (signedInUnverified.beforename.label,
+signedInUnverified.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInUnverified.beforename.label "">
+<!ENTITY signedInUnverified.aftername.label "যাঁচাই করা হয়নি।">
+
+<!-- LOCALIZATION NOTE (signedInLoginFailure.beforename.label,
+signedInLoginFailure.aftername.label): these two string are used respectively
+before and after the account email address. Localizers can use one of them, or
+both, to better adapt this sentence to their language.
+-->
+<!ENTITY signedInLoginFailure.beforename.label "পুনঃসংযোগের জন্য সাইন ইন করুন">
+<!ENTITY signedInLoginFailure.aftername.label "">
+
+<!ENTITY notSignedIn.label           "আপনার সাইন ইন করা নেই।">
+<!ENTITY signIn.label                "সাইন-ইন করুন">
+<!ENTITY signIn.accesskey            "g">
+<!ENTITY profilePicture.tooltip      "প্রোফাইল ছবি পরিবর্তন করুন">
+<!ENTITY verifiedManage.label        "অ্যাকাউন্ট পরিচালনা">
+<!ENTITY verifiedManage.accesskey    "o">
+<!ENTITY disconnect.label            "বিচ্ছিন্ন করুন…">
+<!ENTITY disconnect.accesskey        "D">
+<!ENTITY verify.label                "ইমেল যাঁচাই করুন">
+<!ENTITY verify.accesskey            "V">
+<!ENTITY forget.label                "এই ইমেল ভুলে যাওয়া হোক">
+<!ENTITY forget.accesskey            "F">
+
+<!ENTITY signedOut.caption            "আপনার সাথে আপনার ওয়েব নিন">
+<!ENTITY signedOut.description        "আপনার সকল ডিভাইস জুড়ে আপনার বুকমার্ক, ইতিহাস, ট্যাব, পাসওয়ার্ড, অ্যাড টার্ন, এবং পছন্দসমূহ সুসংগত করুন।">
+<!ENTITY signedOut.accountBox.title   "&syncBrand.fxAccount.label; সাথে সংযোগ স্থাপন করুন">
+<!ENTITY signedOut.accountBox.create  "অ্যাকাউন্ট তৈরি করুন">
+<!ENTITY signedOut.accountBox.create.accesskey  "C">
+<!ENTITY signedOut.accountBox.signin  "সাইন ইন করুন">
+<!ENTITY signedOut.accountBox.signin.accesskey  "I">
+
+<!ENTITY signedIn.engines.label       "সব ডিভাইস জুড়ে সুসংগত করুন">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
+     create a single sentence with active links.
+     The resulting sentence in English is: "Download Waterfox for
+     Android or iOS to sync with your mobile device." -->
+
+<!ENTITY mobilePromo3.start            "Waterfox ডাউনলোড ">
+<!-- LOCALIZATION NOTE (mobilePromo3.androidLink): This is a link title that links to https://www.mozilla.org/firefox/android/ -->
+<!ENTITY mobilePromo3.androidLink      "Android">
+
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSBefore): This is text displayed between mobilePromo3.androidLink and mobilePromo3.iosLink -->
+<!ENTITY mobilePromo3.iOSBefore         " বা ">
+<!-- LOCALIZATION NOTE (mobilePromo3.iOSLink): This is a link title that links to https://www.mozilla.org/firefox/ios/ -->
+<!ENTITY mobilePromo3.iOSLink          "iOS">
+
+<!ENTITY mobilePromo3.end              " আপনার মোবাইল ডিভাইসের সাথে সুসংগত করতে।">
+
+<!ENTITY engine.addresses.accesskey "e">
+<!ENTITY engine.addresses.label     "Addresses">
+<!ENTITY engine.creditcards.accesskey "C">
+
+<!ENTITY engine.creditcards.label   "Credit cards">
+<!ENTITY engine.logins.accesskey    "L">
+<!ENTITY engine.logins.label        "Logins">
+<!ENTITY engine.tabs.label2         "Open Tabs">

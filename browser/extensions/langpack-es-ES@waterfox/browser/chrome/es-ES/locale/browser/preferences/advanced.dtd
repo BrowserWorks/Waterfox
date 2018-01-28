@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY generalTab.label "General">
+<!ENTITY useCursorNavigation.label "Usar siempre las teclas del cursor para navegar dentro de las páginas">
+<!ENTITY useCursorNavigation.accesskey "c">
+<!ENTITY searchOnStartTyping.label "Buscar texto cuando comience a escribir">
+<!ENTITY searchOnStartTyping.accesskey "x">
+<!ENTITY useOnScreenKeyboard.label "Mostrar un teclado táctil cuando sea necesario">
+<!ENTITY useOnScreenKeyboard.accesskey "s">
+<!ENTITY browsing.label "Navegación">
+<!ENTITY useAutoScroll.label "Usar desplazamiento automático">
+<!ENTITY useAutoScroll.accesskey "a">
+<!ENTITY useSmoothScrolling.label "Usar desplazamiento suave">
+<!ENTITY useSmoothScrolling.accesskey "v">
+<!ENTITY checkUserSpelling.label "Revisar la ortografía según escribe">
+<!ENTITY checkUserSpelling.accesskey "v">
+<!ENTITY dataChoicesTab.label "Elección de datos">
+<!ENTITY healthReportingDisabled.label "La recopilación de datos está deshabilitada en esta configuración de compilación">
+<!ENTITY enableHealthReport1.label "Permitir a &brandShortName; enviar automáticamente datos técnicos y de interacción a Mozilla">
+<!ENTITY enableHealthReport1.accesskey "r">
+<!ENTITY healthReportLearnMore.label "Saber más">
+<!ENTITY dataCollection.label "Recopilación y uso de datos de &brandShortName;">
+<!ENTITY dataCollectionDesc.label "Nos esforzamos en proporcionarle opciones y recopilamos solo lo que necesitamos para proporcionarle y mejorar &brandShortName; para todos. Siempre pedimos permiso antes de recibir información personal.">
+<!ENTITY dataCollectionPrivacyNotice.label "Aviso sobre privacidad">
+<!ENTITY alwaysSubmitCrashReports1.label "Permitir a &brandShortName; enviar informes de fallos a Mozilla">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "P">
+<!ENTITY crashReporterLearnMore.label "Saber más">
+<!ENTITY networkTab.label "Red">
+<!ENTITY networkProxy.label "Proxy de red">
+<!ENTITY connectionDesc.label "Configurar cómo &brandShortName; se conecta a Internet">
+<!ENTITY connectionSettings.label "Configuración…">
+<!ENTITY connectionSettings.accesskey "o">
+<!ENTITY httpCache.label "Contenido web en caché">
+<!ENTITY offlineStorage2.label "Contenido web sin conexión y datos de usuario">
+<!ENTITY siteData.label "Datos del sitio">
+<!ENTITY clearSiteData.label "Limpiar todos los datos">
+<!ENTITY clearSiteData.accesskey "a">
+<!ENTITY siteDataSettings.label "Configuración…">
+<!ENTITY siteDataSettings.accesskey "f">
+<!ENTITY siteDataLearnMoreLink.label "Saber más">
+<!ENTITY limitCacheSizeBefore.label "Limitar la caché a">
+<!ENTITY limitCacheSizeBefore.accesskey "m">
+<!ENTITY limitCacheSizeAfter.label "MB de espacio">
+<!ENTITY clearCacheNow.label "Limpiar ahora">
+<!ENTITY clearCacheNow.accesskey "L">
+<!ENTITY clearOfflineAppCacheNow.label "Limpiar ahora">
+<!ENTITY clearOfflineAppCacheNow.accesskey "m">
+<!ENTITY overrideSmartCacheSize.label "Ignorar la administración automática de caché">
+<!ENTITY overrideSmartCacheSize.accesskey "g">
+<!ENTITY updateTab.label "Actualizar">
+<!ENTITY updateApplication.label "Actualizaciones de &brandShortName;">
+<!ENTITY updateApplicationDescription.label "Mantenga &brandShortName; actualizado para un rendimiento, estabilidad y seguridad óptimos.">
+<!ENTITY updateApplication.version.pre "Versión">
+<!ENTITY updateApplication.version.post "">
+<!ENTITY updateApplication.description "Permitir a &brandShortName;">
+<!ENTITY updateAuto3.label "Instalar actualizaciones automáticamente (recomendado)">
+<!ENTITY updateAuto3.accesskey "I">
+<!ENTITY updateCheckChoose2.label "Buscar actualizaciones, pero permitirle elegir si instalarlas">
+<!ENTITY updateCheckChoose2.accesskey "B">
+<!ENTITY updateManual2.label "No buscar actualizaciones (no recomendado)">
+<!ENTITY updateManual2.accesskey "N">
+<!ENTITY updateHistory2.label "Mostrar historial de actualizaciones…">
+<!ENTITY updateHistory2.accesskey "M">
+<!ENTITY useService.label "Usar un servicio en segundo plano para instalar actualizaciones">
+<!ENTITY useService.accesskey "p">
+<!ENTITY enableSearchUpdate2.label "Actualizar automáticamente los buscadores">
+<!ENTITY enableSearchUpdate2.accesskey "A">
+<!ENTITY offlineStorageNotify.label "Avisarle cuando un sitio web solicite guardar datos para su uso sin conexión">
+<!ENTITY offlineStorageNotify.accesskey "v">
+<!ENTITY offlineStorageNotifyExceptions.label "Excepciones…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+<!ENTITY offlineAppsList2.label "Los siguientes sitios web tienen permiso para guardar datos para el uso en modo sin conexión:">
+<!ENTITY offlineAppsList.height "7em">
+<!ENTITY offlineAppsListRemove.label "Eliminar…">
+<!ENTITY offlineAppsListRemove.accesskey "l">
+<!ENTITY offlineAppRemove.confirm "Eliminar contenido en modo sin conexión">
+<!ENTITY certificateTab.label "Certificados">
+<!ENTITY certPersonal2.description "Cuando un servidor solicite su certificado personal">
+<!ENTITY selectCerts.auto "Seleccionar uno automáticamente">
+<!ENTITY selectCerts.auto.accesskey "S">
+<!ENTITY selectCerts.ask "Preguntar cada vez">
+<!ENTITY selectCerts.ask.accesskey "P">
+<!ENTITY enableOCSP.label "Consultar a los servidores respondedores OCSP para confirmar la validez actual de los certificados">
+<!ENTITY enableOCSP.accesskey "u">
+<!ENTITY viewCerts2.label "Ver certificados…">
+<!ENTITY viewCerts2.accesskey "e">
+<!ENTITY viewSecurityDevices2.label "Dispositivos de seguridad…">
+<!ENTITY viewSecurityDevices2.accesskey "D">
+<!ENTITY performance.label "Rendimiento">
+<!ENTITY useRecommendedPerformanceSettings2.label "Usar configuración de rendimiento recomendada">
+<!ENTITY useRecommendedPerformanceSettings2.description "Esta configuración está ajustada al hardware y sistema operativo de su equipo.">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey "U">
+<!ENTITY performanceSettingsLearnMore.label "Saber más">
+<!ENTITY limitContentProcessOption.label "Límite de procesos de contenido">
+<!ENTITY limitContentProcessOption.description "Más procesos de contenido pueden mejorar el rendimiento al usar múltiples pestañas, pero también usarán más memoria.">
+<!ENTITY limitContentProcessOption.accesskey "L">
+<!ENTITY limitContentProcessOption.disabledDescription "Modificar el número de procesos de contenido solo es posible con &brandShortName; multiproceso.">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink "Sepa cómo comprobar si el multiproceso está activado">
+<!ENTITY allowHWAccel.label "Usar aceleración de hardware cuando esté disponible">
+<!ENTITY allowHWAccel.accesskey "r">

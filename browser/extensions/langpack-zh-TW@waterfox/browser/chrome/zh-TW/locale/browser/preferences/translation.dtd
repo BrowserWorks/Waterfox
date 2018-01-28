@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "例外 - 翻譯">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "不對下列語言提供翻譯:">
+<!ENTITY treehead.languageName.label      "語言">
+<!ENTITY removeLanguage.label             "移除語言">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "移除所有語言">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "不對下列網站提供翻譯:">
+<!ENTITY treehead.siteName2.label         "網站">
+<!ENTITY removeSite.label                 "移除網站">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "移除全部網站">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "關閉">
+<!ENTITY button.close.accesskey           "C">

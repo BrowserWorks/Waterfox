@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Nastavitve povezave">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Nastavitve posrednika">
+<!ENTITY  noProxyTypeRadio.label        "Brez posrednika">
+<!ENTITY  noProxyTypeRadio.accesskey    "B">
+<!ENTITY  systemTypeRadio.label         "Uporabi sistemske nastavitve posrednika">
+<!ENTITY  systemTypeRadio.accesskey     "u">
+<!ENTITY  WPADTypeRadio.label           "Samodejno zaznaj nastavitve posrednika za to mrežo">
+<!ENTITY  WPADTypeRadio.accesskey       "m">
+<!ENTITY  manualTypeRadio.label         "Ročna nastavitev posrednika">
+<!ENTITY  manualTypeRadio.accesskey     "r">
+<!ENTITY  autoTypeRadio.label           "URL samodejne nastavitve posrednika:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "Ponovno naloži">
+<!ENTITY  reload.accesskey              "i">
+<!ENTITY  ftp.label                     "Posrednik FTP:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "Posrednik HTTP:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "Posrednik SSL:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "Gostitelj SOCKS:">
+<!ENTITY  socks.accesskey               "C">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "Posredniški DNS, kadar se uporablja SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Vrata:">
+<!ENTITY  HTTPport.accesskey            "v">
+<!ENTITY  SSLport.accesskey             "a">
+<!ENTITY  FTPport.accesskey             "r">
+<!ENTITY  SOCKSport.accesskey           "t">
+<!ENTITY  noproxy.label                 "Ni posrednika za:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Primer: .mozilla.org, .net.nz">
+<!ENTITY  shareproxy.label              "Uporabi istega posrednika za vse protokole">
+<!ENTITY  shareproxy.accesskey          "o">
+<!ENTITY  autologinproxy.label          "Brez overjanja, če je geslo shranjeno">
+<!ENTITY  autologinproxy.accesskey      "e">
+<!ENTITY  autologinproxy.tooltip        "Ta možnost izvede tiho overjanje s posredniki, če imate shranjena gesla zanje. Če overjanje ne uspe, boste morali vnesti geslo.">

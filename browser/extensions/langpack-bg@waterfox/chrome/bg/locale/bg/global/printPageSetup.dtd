@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Настройка на страницата">
+
+<!ENTITY basic.tab           "Формат и настройки">
+
+<!ENTITY formatGroup.label   "Формат">
+
+<!ENTITY orientation.label   "Ориентация:">
+<!ENTITY portrait.label      "Портрет">
+<!ENTITY portrait.accesskey  "П">
+<!ENTITY landscape.label     "Пейзаж">
+<!ENTITY landscape.accesskey "ж">
+
+<!ENTITY scale.label         "Мащаб:">
+<!ENTITY scale.accesskey     "М">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Смаляване до ширината на страницата">
+<!ENTITY shrinkToFit.accesskey "ш">
+
+<!ENTITY optionsGroup.label  "Настройки">
+
+<!ENTITY printBG.label       "Отпечатване на фон (цветове и изображения)">
+<!ENTITY printBG.accesskey   "ф">
+
+<!ENTITY advanced.tab        "Полета и горен/долен колонтитул">
+
+<!ENTITY marginGroup.label   "Полета (#1)">
+<!ENTITY marginUnits.inches  "инчове">
+<!ENTITY marginUnits.metric  "милиметри">
+<!ENTITY marginTop.label     "Отгоре:">
+<!ENTITY marginTop.accesskey "г">
+<!ENTITY marginBottom.label  "Отдолу:">
+<!ENTITY marginBottom.accesskey "д">
+<!ENTITY marginLeft.label    "Отляво:">
+<!ENTITY marginLeft.accesskey "л">
+<!ENTITY marginRight.label   "Отдясно:">
+<!ENTITY marginRight.accesskey "д">
+
+<!ENTITY headerFooter.label  "Горен и долен колонтитул">
+
+<!ENTITY hfLeft.label        "Отляво:">
+<!ENTITY hfCenter.label      "Център:">
+<!ENTITY hfRight.label       "Отдясно:">
+<!ENTITY headerLeft.tip      "Ляв горен колонтитул">
+<!ENTITY headerCenter.tip    "Централен горен колонтитул">
+<!ENTITY headerRight.tip     "Десен горен колонтитул">
+<!ENTITY footerLeft.tip      "Ляв долен колонтитул">
+<!ENTITY footerCenter.tip    "Централен долен колонтитул">
+<!ENTITY footerRight.tip     "Десен долен колонтитул">
+
+<!ENTITY hfTitle             "Заглавие">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Дата/час">
+<!ENTITY hfPage              "Страница #">
+<!ENTITY hfPageAndTotal      "Страница # от #">
+<!ENTITY hfBlank             "--празно--">
+<!ENTITY hfCustom            "Персонализиране…">
+
+<!ENTITY customPrompt.title  "Персонализиране…">
+<!ENTITY customPrompt.prompt "Моля, въведете вашия текст за горен/долен колонтитул">

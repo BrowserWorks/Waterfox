@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Mise en page">
+
+<!ENTITY basic.tab           "Format et options">
+
+<!ENTITY formatGroup.label   "Format">
+
+<!ENTITY orientation.label   "Orientation :">
+<!ENTITY portrait.label      "Portrait">
+<!ENTITY portrait.accesskey  "P">
+<!ENTITY landscape.label     "Paysage">
+<!ENTITY landscape.accesskey "a">
+
+<!ENTITY scale.label         "Échelle :">
+<!ENTITY scale.accesskey     "c">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Adapter à la taille de la page">
+<!ENTITY shrinkToFit.accesskey "t">
+
+<!ENTITY optionsGroup.label  "Options">
+
+<!ENTITY printBG.label       "Imprimer le fond de page (couleurs et images)">
+<!ENTITY printBG.accesskey   "I">
+
+<!ENTITY advanced.tab        "Marges, en-têtes et pieds de page">
+
+<!ENTITY marginGroup.label   "Marges (#1)">
+<!ENTITY marginUnits.inches  "pouces">
+<!ENTITY marginUnits.metric  "millimètres">
+<!ENTITY marginTop.label     "Haut :">
+<!ENTITY marginTop.accesskey "H">
+<!ENTITY marginBottom.label  "Bas :">
+<!ENTITY marginBottom.accesskey "B">
+<!ENTITY marginLeft.label    "Gauche :">
+<!ENTITY marginLeft.accesskey "G">
+<!ENTITY marginRight.label   "Droite :">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "En-têtes et pieds de page">
+
+<!ENTITY hfLeft.label        "Gauche :">
+<!ENTITY hfCenter.label      "Centre :">
+<!ENTITY hfRight.label       "Droite :">
+<!ENTITY headerLeft.tip      "En-tête de gauche">
+<!ENTITY headerCenter.tip    "En-tête centré">
+<!ENTITY headerRight.tip     "En-tête de droite">
+<!ENTITY footerLeft.tip      "Pied de page de gauche">
+<!ENTITY footerCenter.tip    "Pied de page centré">
+<!ENTITY footerRight.tip     "Pied de page de droite">
+
+<!ENTITY hfTitle             "Titre">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Date/Heure">
+<!ENTITY hfPage              "N° de page">
+<!ENTITY hfPageAndTotal      "Page # sur #">
+<!ENTITY hfBlank             "--vide--">
+<!ENTITY hfCustom            "Personnaliser…">
+
+<!ENTITY customPrompt.title  "Personnaliser…">
+<!ENTITY customPrompt.prompt "Saisissez votre texte d’en-tête ou de pied de page">

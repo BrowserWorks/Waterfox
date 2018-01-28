@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+<!ENTITY aboutUrlClassifier.pageTitle                   "url-classifier 에 대한 정보">
+<!ENTITY aboutUrlClassifier.providerTitle               "공급자">
+<!ENTITY aboutUrlClassifier.provider                    "공급자">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "마지막 업데이트 시간">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "다음 업데이트 시간">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "휴지 시간">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "마지막 업데이트 상태">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "업데이트">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "캐시">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "새로고침">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "지우기">
+<!ENTITY aboutUrlClassifier.cacheTableName              "테이블 이름">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "네거티브 캐시 항목 수">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "포지티브 캐시 항목 수">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "항목 보기">
+<!ENTITY aboutUrlClassifier.cacheEntries                "캐시 항목">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "접두어">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "네거티브 캐시 만료">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "전체 해시">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "포지티브 캐시 만료">
+<!ENTITY aboutUrlClassifier.debugTitle                  "디버그">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "로그 모듈 설정">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "로그 파일 설정">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "JS 로그 설정">
+<!ENTITY aboutUrlClassifier.debugSBModules              "안전한 브라우징 로그 모듈">
+<!ENTITY aboutUrlClassifier.debugModules                "현재 로그 모듈">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "안전한 브라우징 JS 로그">
+<!ENTITY aboutUrlClassifier.debugFile                   "현재 로그 파일">

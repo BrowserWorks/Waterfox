@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Troc'hañ">
+<!ENTITY cutCmd.accesskey "T">
+<!ENTITY copyCmd.label "Eilañ">
+<!ENTITY copyCmd.accesskey "i">
+<!ENTITY pasteCmd.label "Pegañ">
+<!ENTITY pasteCmd.accesskey "P">
+<!ENTITY undoCmd.label "Dizober">
+<!ENTITY undoCmd.accesskey "D">
+<!ENTITY selectAllCmd.label "Diuz pep tra">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY deleteCmd.label "Dilemel">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY spellAddToDictionary.label "Ouzhpennañ d'ar geriadur">
+<!ENTITY spellAddToDictionary.accesskey "r">
+<!ENTITY spellUndoAddToDictionary.label "Nullañ an ouzhpennañ d'ar geriadur">
+<!ENTITY spellUndoAddToDictionary.accesskey "N">
+<!ENTITY spellCheckToggle.label "Gwiriañ ar reizhskrivadur">
+<!ENTITY spellCheckToggle.accesskey "s">
+<!ENTITY spellNoSuggestions.label "(Kinnig reizhskrivañ ebet)">
+<!ENTITY spellDictionaries.label "Yezhoù">
+<!ENTITY spellDictionaries.accesskey "Y">
+
+<!ENTITY searchTextBox.clear.label "Clear">
+
+<!ENTITY fillLoginMenu.label          "Leuniañ an titouroù kennaskañ">
+<!ENTITY fillLoginMenu.accesskey      "L">
+<!ENTITY fillPasswordMenu.label       "Leuniañ ar ger-tremen">
+<!ENTITY fillPasswordMenu.accesskey   "L">
+<!ENTITY fillUsernameMenu.label       "Leuniañ an anv arveriad">
+<!ENTITY fillUsernameMenu.accesskey   "L">
+<!ENTITY noLoginSuggestions.label     "(Kinnigoù kennask ebet)">
+<!ENTITY viewSavedLogins.label        "Gwelet an titouroù kennaskañ enrollet">

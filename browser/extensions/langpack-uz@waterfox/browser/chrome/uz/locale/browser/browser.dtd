@@ -1,0 +1,1071 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
+                                                                inside the private browsing mode -->
+<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Maxfiy ko‘rish)">
+
+<!ENTITY appmenu.tooltip                     "Menyuni ochish">
+<!ENTITY navbarOverflow.label                "Ko‘proq asboblar…">
+<!-- Tab context menu -->
+
+<!ENTITY  reloadTab.label                    "Ichki oynani yangilash">
+<!ENTITY  reloadTab.accesskey                "y">
+<!ENTITY  reloadAllTabs.label                "Barcha ichki oynalarni yangilash">
+<!ENTITY  reloadAllTabs.accesskey            "B">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label            "O‘ngdagi ichki oynalarni yopish">
+<!ENTITY  closeTabsToTheEnd.accesskey        "O">
+<!ENTITY  closeOtherTabs.label               "Boshqa ichki oynalarni yopish">
+<!ENTITY  closeOtherTabs.accesskey           "o">
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+
+<!ENTITY  pinTab.label                       "Ichki oynani qistirish">
+<!ENTITY  pinTab.accesskey                   "q">
+<!ENTITY  unpinTab.label                     "Qistirilgan ichki oynani olib tashlash">
+<!ENTITY  unpinTab.accesskey                 "k">
+<!ENTITY  sendTabToDevice.label              "Ichki oynani qurilmaga uzatish">
+<!ENTITY  sendTabToDevice.accesskey          "q">
+<!ENTITY  sendPageToDevice.label             "Sahifani qurilmaga uzatish">
+<!ENTITY  sendPageToDevice.accesskey         "q">
+<!ENTITY  sendLinkToDevice.label             "Havolani qurilmaga uzatish">
+<!ENTITY  sendLinkToDevice.accesskey         "q">
+<!ENTITY  moveToNewWindow.label              "Yangi oynaga ko‘chirish">
+<!ENTITY  moveToNewWindow.accesskey          "y">
+<!ENTITY  bookmarkAllTabs.label              "Barcha ichki oynalarni xatcho‘plarga qo‘shish…">
+<!ENTITY  bookmarkAllTabs.accesskey          "i">
+<!ENTITY  undoCloseTab.label                 "Yopilgan ichki oynani qaytarish">
+<!ENTITY  undoCloseTab.accesskey             "q">
+<!ENTITY  closeTab.label                     "Ichki oynani yopish">
+<!ENTITY  closeTab.accesskey                 "y">
+
+<!ENTITY  listAllTabs.label      "Barcha ichki oynalar ro‘yxati">
+
+<!ENTITY tabCmd.label "Yangi ichki oyna">
+<!ENTITY tabCmd.accesskey "i">
+<!ENTITY tabCmd.commandkey "t">
+<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
+displayed on OS X, and only on windows that aren't main browser windows, or
+when there are no windows but Waterfox is still running. -->
+<!ENTITY openLocationCmd.label "Manzilni ochish…">
+<!ENTITY openFileCmd.label "Faylni ochish…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY printSetupCmd.label "Sahifani moslash…">
+<!ENTITY printSetupCmd.accesskey "l">
+<!ENTITY printPreviewCmd.label "Chop qilishni ko‘rish">
+<!ENTITY printPreviewCmd.accesskey "n">
+<!ENTITY printCmd.label "Chop qilish…">
+<!ENTITY printCmd.accesskey "p">
+<!ENTITY printCmd.commandkey "p">
+
+<!ENTITY goOfflineCmd.label "Oflayn ishlash">
+<!ENTITY goOfflineCmd.accesskey "i">
+
+<!ENTITY menubarCmd.label "Menyu paneli">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY navbarCmd.label "Navigatsiya paneli">
+<!ENTITY personalbarCmd.label "Xatcho‘plar paneli">
+<!ENTITY personalbarCmd.accesskey "X">
+<!ENTITY bookmarksToolbarItem.label "Xatcho‘plar paneli bandlari">
+
+<!ENTITY toolbarContextMenu.reloadAllTabs.label "Barcha ichki oynalarni yangilash">
+<!ENTITY toolbarContextMenu.reloadAllTabs.accesskey "B">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.label "Barcha ichki oynalarni xatcho‘plarga qo‘shish…">
+<!ENTITY toolbarContextMenu.bookmarkAllTabs.accesskey "i">
+<!ENTITY toolbarContextMenu.undoCloseTab.label "Yopilgan ichki oynani qaytarish">
+<!ENTITY toolbarContextMenu.undoCloseTab.accesskey "q">
+
+<!ENTITY pageSourceCmd.label "Sahifa manbasi">
+<!ENTITY pageSourceCmd.accesskey "a">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Sahifa haqida ma’lumot">
+<!ENTITY pageInfoCmd.accesskey "u">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY mirrorTabCmd.label "Ko‘zgu ichki oyna">
+<!ENTITY mirrorTabCmd.accesskey "K">
+<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
+These should match what Safari and other Apple applications use on OS X Lion. -->
+<!ENTITY enterFullScreenCmd.label "Butun ekran’ga o‘tish">
+<!ENTITY enterFullScreenCmd.accesskey "B">
+<!ENTITY exitFullScreenCmd.label "Butun ekran’dan chiqish">
+<!ENTITY exitFullScreenCmd.accesskey "B">
+<!ENTITY fullScreenCmd.label "Butun ekran">
+<!ENTITY fullScreenCmd.accesskey "B">
+<!ENTITY fullScreenCmd.macCommandKey "f">
+<!ENTITY showAllTabsCmd.label "Barcha ichki oynalarni ko‘rsatish">
+<!ENTITY showAllTabsCmd.accesskey "a">
+<!ENTITY toggleReaderMode.key "R">
+
+<!ENTITY fxaSignIn.label "&syncBrand.shortName.label;ga kirish">
+<!ENTITY fxaSignedIn.tooltip "&syncBrand.shortName.label; parametrlarini ochish">
+<!ENTITY fxaSignInError.label "&syncBrand.shortName.label;ga qayta ulanish">
+<!ENTITY fxaUnverified.label "Hisobingizni tasdiqlang">
+
+
+<!ENTITY fullScreenMinimize.tooltip "Yig‘ish">
+<!ENTITY fullScreenRestore.tooltip "Tiklash">
+<!ENTITY fullScreenClose.tooltip "Yopish">
+<!ENTITY fullScreenAutohide.label "Asboblar panelini yashirish">
+<!ENTITY fullScreenAutohide.accesskey "y">
+<!ENTITY fullScreenExit.label "Butun ekran usulidan chiqish">
+<!ENTITY fullScreenExit.accesskey "u">
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "– hozir butun ekranda">
+<!ENTITY fullscreenWarning.generic.label "Bu hujjat hozir butun ekranda ko‘rinmoqda">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+
+<!ENTITY exitDOMFullscreen.button "&quot;Butun ekranda&quot; usulidan chiqish (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "&quot;Butun ekranda&quot; usulidan chiqish (Esc)">
+<!ENTITY leaveDOMFullScreen.label "Butun ekran’dan chiqish">
+<!ENTITY leaveDOMFullScreen.accesskey "u">
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ko‘rsatkichingiz ustidan nazorat o‘rnatgan. Nazoratni qo‘lga olish uchun Esc tugmasini bosing.">
+<!ENTITY pointerlockWarning.generic.label "Bu hujat ko‘rsatkichingiz ustidan nazorat o‘rnatgan. Nazoratni qo‘lga olish uchun Esc tugmasini bosing.">
+
+<!ENTITY closeWindow.label "Oynani yopish">
+<!ENTITY closeWindow.accesskey "y">
+
+<!ENTITY bookmarksMenu.label "Xatcho‘plar">
+<!ENTITY bookmarksMenu.accesskey "X">
+<!ENTITY bookmarkThisPageCmd.label "Sahifani xatcho‘plarga qo‘shish">
+<!ENTITY editThisBookmarkCmd.label "Ushbu xatcho‘pni o‘zgartirish">
+<!ENTITY bookmarkThisPageCmd.commandkey "d">
+<!-- LOCALIZATION NOTE (findShareServices.label):
+  -  Use the unicode ellipsis char, \u2026,
+  -  or use "..." if \u2026 doesn't suit traditions in your locale. -->
+<!ENTITY findShareServices.label "Ko‘proq bo‘lishish xizmatlarini topish…">
+<!ENTITY sharePageCmd.label "Ushbu sahifani bo‘lishish">
+<!ENTITY sharePageCmd.commandkey "S">
+<!ENTITY sharePageCmd.accesskey "b">
+<!-- LOCALIZATION NOTE (shareLink.accesskey): must be different than the following share access keys -->
+<!ENTITY shareLink.label "Havolani bo‘lishish">
+<!ENTITY shareLink.accesskey "h">
+<!ENTITY shareImage.label "Ushbu rasmni bo‘lishish">
+<!ENTITY shareImage.accesskey "r">
+<!ENTITY shareSelect.label "Tanlanganni bo‘lishish">
+<!ENTITY shareSelect.accesskey "b">
+<!ENTITY shareVideo.label "Ushbu videoni bo‘lishish">
+<!ENTITY shareVideo.accesskey "s">
+<!ENTITY feedsMenu2.label "Ushbu sahifaga obuna bo‘lish">
+<!ENTITY subscribeToPageMenupopup.label "Ushbu sahifaga obuna bo‘lish">
+<!ENTITY subscribeToPageMenuitem.label "Ushbu sahifaga obuna bo‘lish…">
+<!ENTITY addCurPagesCmd.label "Barcha ichki oynalarni xatcho‘plash">
+<!ENTITY showAllBookmarks2.label "Barcha xatcho‘plarni ko‘rsatish">
+<!ENTITY recentBookmarks.label "Soʻnggi xatchoʻpga qoʻshilgan saytlar">
+<!ENTITY otherBookmarksCmd.label "Boshqa xatcho‘plar">
+<!ENTITY mobileBookmarksCmd.label "Mobil xatcho‘plar">
+<!ENTITY bookmarksToolbarChevron.tooltip "Ko‘proq xatcho‘plarni ko‘rsatish">
+<!ENTITY showRecentlyBookmarked.label     "Soʻnggi xatchoʻpga qoʻshilgan saytlarni ko‘rsatish">
+<!ENTITY showRecentlyBookmarked.accesskey "h">
+<!ENTITY hideRecentlyBookmarked.label     "Soʻnggi xatchoʻpga qoʻshilgan saytlarni yashirish">
+<!ENTITY hideRecentlyBookmarked.accesskey "y">
+
+<!ENTITY backCmd.label                "Orqaga">
+<!ENTITY backButton.tooltip           "Bir sahifa orqaga qaytish">
+<!ENTITY forwardCmd.label             "Oldinga">
+<!ENTITY forwardButton.tooltip        "Bir sahifa oldinga o‘tish">
+<!ENTITY backForwardButtonMenu.tooltip "Tarixni ko‘rish uchun o‘ng tugmani bosing yoking pastga suring">
+<!ENTITY backForwardButtonMenuMac.tooltip "Tarixni ko‘rish uchun pastga suring">
+<!ENTITY reloadCmd.label              "Qayta yuklash">
+<!ENTITY stopCmd.label                "To‘xtatish">
+<!ENTITY stopCmd.macCommandKey        ".">
+<!ENTITY goEndCap.tooltip             "Manzil panelidagi manzilga o‘tish">
+<!ENTITY printButton.label            "Chop qilish">
+<!ENTITY printButton.tooltip          "Ushbu sahifani chop qilish">
+
+<!ENTITY urlbar.viewSiteInfo.label                      "Sayt haqidagi ma’lumotni ko‘rish">
+
+<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Xabar panelini ochish">
+<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Joylashuvni so‘rash panelini ochish">
+<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Qo‘shimcha dastur o‘rnatish xabari panelini ochish">
+<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Xabarlarni oflayn saqlash panelini ochish">
+<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Parolni saqlash xabari panelini ochish">
+<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Plaginlarni boshqarishdan foydalanilmoqda">
+<!ENTITY urlbar.webNotificationAnchor.tooltip             "Saytdan eslatma olish imkoniyatini o‘zgartirish">
+
+<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Brauzer nazorat ostida!">
+
+<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Kamera yoki mikrofonni sayt bilan bo‘lishishni boshqarish">
+<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Mikrofonni sayt bilan bo‘lishishni boshqarish">
+<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Oynalar yoki ekranni sayt bilan bo‘lishishni boshqarish">
+
+<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Xabarni o‘rnatish panelini ochish">
+<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Bu sahifa tarjima qilish">
+<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Sahifani tarjima qilishi boshqarish">
+<!ENTITY urlbar.emeNotificationAnchor.tooltip             "DRM dasturidan foydalanishni boshqarish">
+
+<!ENTITY urlbar.cameraBlocked.tooltip            "Bu sayt uchun kamerani bloklab qo‘ygansiz.">
+<!ENTITY urlbar.microphoneBlocked.tooltip        "Bu sayt uchun mikrofonni bloklab qo‘ygansiz.">
+<!ENTITY urlbar.screenBlocked.tooltip            "Bu sayt uchun ekranni ulashishni bloklab qo‘ygansiz.">
+<!ENTITY urlbar.geolocationBlocked.tooltip       "Bu sayt uchun joylashuv ma’lumotini bloklab qo‘ygansiz.">
+<!ENTITY urlbar.indexedDBBlocked.tooltip         "Bu sayt uchun ma’lumotlarni saqlashni bloklab qo‘ygansiz.">
+<!ENTITY urlbar.webNotificationsBlocked.tooltip  "Bu saytdan bildirishnomalarni olishni bloklab qo‘ygansiz.">
+
+
+<!ENTITY urlbar.openHistoryPopup.tooltip                "Tarixni ko‘rsatish">
+
+<!-- Toolbar items -->
+
+<!ENTITY homeButton.label             "Uy">
+
+<!ENTITY bookmarksButton.label          "Xatcho‘plar">
+<!ENTITY bookmarksCmd.commandkey "b">
+
+<!ENTITY bookmarksMenuButton.label          "Xatcho‘plar">
+<!ENTITY bookmarksMenuButton.other.label "Boshqa xatcho‘plar">
+<!ENTITY bookmarksMenuButton.mobile.label "Mobil xatcho‘plar">
+<!ENTITY viewBookmarksSidebar2.label        "Xatcho‘plarni yon panelda ko‘rsatish">
+<!ENTITY viewBookmarksToolbar.label         "Xatcho‘plar panelini ko‘rsatish">
+
+
+<!ENTITY containersMenu.label "Konteynerlar">
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+
+<!ENTITY bookmarksGtkCmd.commandkey "o">
+<!ENTITY bookmarksWinCmd.commandkey "i">
+
+<!ENTITY historyButton.label            "Tarix">
+<!ENTITY historySidebarCmd.commandKey   "h">
+
+<!ENTITY toolsMenu.label              "Asboblar">
+<!ENTITY toolsMenu.accesskey          "A"> 
+
+<!ENTITY keywordfield.label           "Ushbu qidiruv uchun kalit so‘zni qo‘shish…">
+<!ENTITY keywordfield.accesskey       "k">
+
+<!ENTITY downloads.label              "Yuklab olishlar">
+<!ENTITY downloads.accesskey          "Y">
+<!ENTITY downloads.commandkey         "j">
+<!ENTITY downloadsUnix.commandkey     "y">
+<!ENTITY addons.label                 "Qo‘shimcha dasturlar">
+<!ENTITY addons.accesskey             "Q">
+<!ENTITY addons.commandkey            "A">
+
+<!ENTITY webDeveloperMenu.label       "Veb dasturchi">
+<!ENTITY webDeveloperMenu.accesskey   "V">
+
+<!ENTITY inspectContextMenu.label     "Elementni kuzatish">
+<!ENTITY inspectContextMenu.accesskey "Q">
+
+<!ENTITY fileMenu.label         "Fayl"> 
+<!ENTITY fileMenu.accesskey       "F">
+<!ENTITY newUserContext.label             "Yangi Konteyner ichki oynasi">
+<!ENTITY newUserContext.accesskey         "i">
+<!ENTITY newNavigatorCmd.label        "Yangi oyna">
+<!ENTITY newNavigatorCmd.key        "N">
+<!ENTITY newNavigatorCmd.accesskey      "n">
+<!ENTITY newPrivateWindow.label     "Yangi maxfiy oyna">
+<!ENTITY newPrivateWindow.accesskey "o">
+<!ENTITY newNonRemoteWindow.label   "Yangi Non-e10s oyna">
+
+<!ENTITY editMenu.label         "Tahrirlash"> 
+<!ENTITY editMenu.accesskey       "T"> 
+<!ENTITY undoCmd.label            "Amalni bekor qilish">  
+<!ENTITY undoCmd.key            "Z">  
+<!ENTITY undoCmd.accesskey          "b"> 
+<!ENTITY redoCmd.label            "Amalni qaytarish">  
+<!ENTITY redoCmd.key            "Y">  
+<!ENTITY redoCmd.accesskey          "q"> 
+<!ENTITY cutCmd.label           "Kesish">  
+<!ENTITY cutCmd.key             "X">  
+<!ENTITY cutCmd.accesskey         "K"> 
+<!ENTITY copyCmd.label            "Nusxa olish">  
+<!ENTITY copyCmd.key            "C">  
+<!ENTITY copyCmd.accesskey          "N"> 
+<!ENTITY pasteCmd.label           "Qo‘yish">  
+<!ENTITY pasteCmd.key           "V">  
+<!ENTITY pasteCmd.accesskey         "Q"> 
+<!ENTITY deleteCmd.label          "O‘chirish">  
+<!ENTITY deleteCmd.key            "D">  
+<!ENTITY deleteCmd.accesskey        "O"> 
+<!ENTITY selectAllCmd.label         "Barchasini tanlash">  
+<!ENTITY selectAllCmd.key         "A">  
+<!ENTITY selectAllCmd.accesskey       "a"> 
+<!ENTITY preferencesCmd2.label       "Moslamalar">
+<!ENTITY preferencesCmd2.accesskey     "M">
+<!ENTITY preferencesCmdUnix.label       "Parametrlar">
+<!ENTITY preferencesCmdUnix.accesskey     "m"> 
+
+<!ENTITY clearRecentHistory.label               "So‘nggi tarixni tozalash">
+
+<!ENTITY privateBrowsingCmd.commandkey          "P">
+
+<!ENTITY viewMenu.label         "Ko‘rinish"> 
+<!ENTITY viewMenu.accesskey       "K"> 
+<!ENTITY viewToolbarsMenu.label       "Asboblar paneli"> 
+<!ENTITY viewToolbarsMenu.accesskey     "A"> 
+<!ENTITY viewSidebarMenu.label "Yon panel">
+<!ENTITY viewSidebarMenu.accesskey "e">
+<!ENTITY viewCustomizeToolbar.label       "Moslash…"> 
+<!ENTITY viewCustomizeToolbar.accesskey     "M">
+
+
+
+<!ENTITY historyMenu.label "Tarix">
+<!ENTITY historyMenu.accesskey "r">
+<!ENTITY historyUndoMenu.label "Yaqinda yopilgan ichki oynalar">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Yaqinda yopilgan oynalar">
+<!ENTITY historyRestoreLastSession.label "Oldingi seansni tiklash">
+
+<!ENTITY showAllHistoryCmd2.label "Barcha tarixni ko‘rsatish">
+<!ENTITY showAllHistoryCmd.commandkey "H">
+
+<!ENTITY appMenuCustomize.label "Moslash">
+<!ENTITY appMenuCustomize.tooltip "Menyu va asboblar panelini moslash">
+<!ENTITY appMenuCustomizeExit.label "Qulaylashtirishdan chiqish">
+<!ENTITY appMenuCustomizeExit.tooltip "Qulaylashtirishni tugatish">
+<!ENTITY appMenuHistory.label "Tarix">
+<!ENTITY appMenuHistory.showAll.label "Barcha tarixni ko‘rsatish">
+<!ENTITY appMenuHistory.clearRecent.label "So‘nggi tarixni tozalash">
+<!ENTITY appMenuHistory.restoreSession.label "Oldingi seansni tiklash">
+<!ENTITY appMenuHistory.viewSidebar.label "Tarixni yon panelda ko‘rsatish">
+
+<!ENTITY appMenuHelp.label "Yordam">
+<!ENTITY appMenuHelp.tooltip "Yordam menyusini ochish">
+
+<!ENTITY appMenuRemoteTabs.label "Sinxronlangan ichki oynalar">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Ochiq ichki oynalar yo‘q">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Yana">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Bu qurilmadagi boshqa ichki oynalarni ko‘rsatish">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Barchasini ko‘rsatish">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Bu qurilmadagi boshqa ichki oynalarni ko‘rsatish">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ichki oynalar ro‘yxatini boshqa qurilmada ko‘rish uchun sinxronlashni yoqing.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.title "Haligacha birorta ham ichki oyna sinxronlanmagan!">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Bu yerdagi ichki oynalarni boshqa qurilmalarda ko‘rishni xohlaysizmi?">
+<!ENTITY appMenuRemoteTabs.openprefs.label "Sinxronlash parametrlari">
+<!ENTITY appMenuRemoteTabs.notsignedin.label "Ichki oynalar ro‘yxatini boshqa qurilmalarda ko‘rish uchun Waterfox hisobiga kiring.">
+<!ENTITY appMenuRemoteTabs.signin.label "Sinxronlash uchun tizimga kiring">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Qurilmalarni boshqarish…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Sinxronlangan ichki oynalar yon panelini ko‘rish">
+
+<!ENTITY customizeMenu.addToToolbar.label "Asboblar paneliga qo‘shish">
+<!ENTITY customizeMenu.addToToolbar.accesskey "q">
+<!ENTITY customizeMenu.addToPanel.label "Menyuga qo‘shish">
+<!ENTITY customizeMenu.addToPanel.accesskey "M">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+
+<!ENTITY customizeMenu.moveToToolbar.label "Asboblar paneliga ko‘chirish">
+<!ENTITY customizeMenu.moveToToolbar.accesskey "k">
+<!-- LOCALIZATION NOTE (customizeMenu.moveToPanel.accesskey, customizeMenu.pinToOverflowMenu.accesskey)
+     can appear on the same context menu as menubarCmd and personalbarCmd,
+     so they should have different access keys. customizeMenu.moveToToolbar and
+     customizeMenu.moveToPanel are mutually exclusive, so can share access
+     keys.  -->
+<!ENTITY customizeMenu.moveToPanel.label "Menyuga ko‘chirish">
+<!ENTITY customizeMenu.moveToPanel.accesskey "k">
+
+
+
+
+<!ENTITY customizeMenu.removeFromToolbar.label "Asboblar panelidan o‘chirish">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "o">
+<!ENTITY customizeMenu.removeFromMenu.label "Menyudan o‘chirish">
+<!ENTITY customizeMenu.removeFromMenu.accesskey "o">
+<!ENTITY customizeMenu.addMoreItems.label "Ko‘proq qo‘shish…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "q">
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY openCmd.commandkey           "l">
+<!ENTITY urlbar.placeholder2          "Izlang yoki manzilni kiriting">
+<!ENTITY urlbar.accesskey             "d">
+<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
+<!ENTITY urlbar.switchToTab.label     "Ichki oynaga o‘tish:">
+
+<!ENTITY urlbar.searchSuggestionsNotification.question "Tavsiyalar yordamida izlash bo‘yicha tajribangizni oshirishni xohlaysizmi?">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore "Ko‘proq o‘rganish…">
+<!ENTITY urlbar.searchSuggestionsNotification.learnMore.accesskey "l">
+<!ENTITY urlbar.searchSuggestionsNotification.disable "Yo‘q">
+<!ENTITY urlbar.searchSuggestionsNotification.disable.accesskey "n">
+<!ENTITY urlbar.searchSuggestionsNotification.enable "Ha">
+<!ENTITY urlbar.searchSuggestionsNotification.enable.accesskey "y">
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
+
+
+
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+
+<!ENTITY searchFocus.commandkey       "k">
+<!ENTITY searchFocus.commandkey2      "e">
+<!ENTITY searchFocusUnix.commandkey   "j">
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+
+<!ENTITY contentSearchInput.label     "Qidiruv so‘rovi">
+<!ENTITY contentSearchSubmit.tooltip  "Qidiruv so‘rovini jo‘natish">
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+
+<!ENTITY searchFor.label              "Izlash: ">
+<!ENTITY searchWith.label             "...ni quyidagi yordamida:">
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+
+<!ENTITY search.label                 "Izlash ">
+<!ENTITY searchAfter.label            "">
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+
+<!ENTITY searchWithHeader.label       "Izlash:">
+<!-- LOCALIZATION NOTE (changeSearchSettings.button):
+     This string won't wrap, so if the translated string is longer,
+     consider translating it as if it said only "Search Settings". -->
+<!ENTITY changeSearchSettings.button  "Qidiruv sozlamalarini o‘zgartirish">
+<!ENTITY changeSearchSettings.tooltip "Qidiruv sozlamalarini o‘zgartirish">
+
+<!ENTITY searchInNewTab.label         "Yangi ichki oynadan qidirish">
+<!ENTITY searchInNewTab.accesskey     "i">
+<!ENTITY searchSetAsDefault.label     "Standart qidiruv tizimi sifatida o‘rnatish">
+<!ENTITY searchSetAsDefault.accesskey "S">
+
+<!ENTITY openLinkCmdInTab.label       "Havolani yangi ichki oynada ochish">
+<!ENTITY openLinkCmdInTab.accesskey   "i">
+<!ENTITY openLinkCmd.label            "Havolani yangi oynada ochish">
+<!ENTITY openLinkCmd.accesskey        "o">
+<!ENTITY openLinkInPrivateWindowCmd.label "Havolani yangi maxfiy oynada ochish">
+<!ENTITY openLinkInPrivateWindowCmd.accesskey "m">
+<!ENTITY openLinkCmdInCurrent.label     "Havolani ochish">
+<!ENTITY openLinkCmdInCurrent.accesskey "o">
+<!ENTITY openFrameCmdInTab.label      "Kadrni yangi ichki oynada ochish">
+<!ENTITY openFrameCmdInTab.accesskey  "i">
+<!ENTITY openFrameCmd.label           "Kadrni yangi oynada ochish">
+<!ENTITY openFrameCmd.accesskey       "o">
+
+
+<!ENTITY showOnlyThisFrameCmd.label     "Faqat ushbu kadrni ko‘rsatish">
+<!ENTITY showOnlyThisFrameCmd.accesskey "s">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY reloadFrameCmd.label         "Kadrni qayta yuklash">
+<!ENTITY reloadFrameCmd.accesskey     "q">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Belgilanganning manbasini ko‘rish">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML manbasini ko‘rish">
+<!-- LOCALIZATION NOTE (viewPartialSourceCmd.accesskey): This accesskey is used for both 
+         viewPartialSourceForSelectionCmd.label and viewPartialSourceForMathMLCmd.label -->
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Sahifa manbasini ko‘rish">
+<!ENTITY viewPageSourceCmd.accesskey  "k">
+<!ENTITY viewFrameSourceCmd.label     "Kadr manbasini ko‘rish">
+<!ENTITY viewFrameSourceCmd.accesskey "k">
+<!ENTITY viewPageInfoCmd.label        "Rasm ma’lumotini ko‘rish">
+<!ENTITY viewPageInfoCmd.accesskey    "l">
+<!ENTITY viewFrameInfoCmd.label       "Kadr ma’lumotini ko‘rsatish">
+<!ENTITY viewFrameInfoCmd.accesskey   "s">
+<!ENTITY reloadImageCmd.label         "Rasmni qayta yuklash">
+<!ENTITY reloadImageCmd.accesskey     "R">
+<!ENTITY viewImageCmd.label           "Rasmni ko‘rish">
+<!ENTITY viewImageCmd.accesskey       "i">
+<!ENTITY viewImageInfoCmd.label       "Rasm ma’lumotini ko‘rish">
+<!ENTITY viewImageInfoCmd.accesskey   "t">
+<!ENTITY viewImageDescCmd.label       "Ta’rifini ko‘rish">
+<!ENTITY viewImageDescCmd.accesskey   "T">
+<!ENTITY viewVideoCmd.label           "Videoni ko‘rish">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Orqa fon rasmini ko‘rish">
+<!ENTITY viewBGImageCmd.accesskey     "r">
+<!ENTITY setDesktopBackgroundCmd.label      "Ish stoli orqa foni sifatida o‘rnatish">
+<!ENTITY setDesktopBackgroundCmd.accesskey  "s">
+<!ENTITY bookmarkPageCmd2.label       "Sahifani xatcho‘plarga qo‘shish">
+<!ENTITY bookmarkThisLinkCmd.label      "Havolani xatcho‘plarga qo‘shish">
+<!ENTITY bookmarkThisLinkCmd.accesskey  "H">
+<!ENTITY bookmarkThisFrameCmd.label      "Kadrni xatcho‘plarga qo‘shish">
+<!ENTITY bookmarkThisFrameCmd.accesskey  "h">
+
+<!ENTITY emailPageCmd.label           "Havolani e-pochtadan jo‘natish">
+<!ENTITY emailPageCmd.accesskey       "e">
+<!ENTITY savePageCmd.label            "Sahifani saqlash…">
+<!ENTITY savePageCmd.accesskey        "s">
+<!-- alternate for content area context menu -->
+<!ENTITY savePageCmd.accesskey2       "P">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameCmd.label           "Kadr sifatida saqlash">
+<!ENTITY saveFrameCmd.accesskey       "K">
+<!ENTITY printFrameCmd.label          "Kadrni chop qilish…">
+<!ENTITY printFrameCmd.accesskey      "c">
+<!ENTITY saveLinkCmd.label            "Linkni saqlash…">
+<!ENTITY saveLinkCmd.accesskey        "k">
+<!ENTITY saveImageCmd.label           "Rasmni saqlash…">
+<!ENTITY saveImageCmd.accesskey       "q">
+<!ENTITY saveVideoCmd.label           "Videoni saqlash…">
+<!ENTITY saveVideoCmd.accesskey       "V">
+<!ENTITY saveAudioCmd.label           "Audioni saqlash…">
+<!ENTITY saveAudioCmd.accesskey       "o">
+<!ENTITY emailImageCmd.label          "Rasmni e-pochtadan jo‘natish…">
+<!ENTITY emailImageCmd.accesskey      "m">
+<!ENTITY emailVideoCmd.label          "Videoni e-pochtadan jo‘natish">
+<!ENTITY emailVideoCmd.accesskey      "o">
+<!ENTITY castVideoCmd.label           "Videoni qurilmaga jo‘natish">
+<!ENTITY castVideoCmd.accesskey       "j">
+<!ENTITY emailAudioCmd.label          "Audioni e-pochtadan jo‘natish…">
+<!ENTITY emailAudioCmd.accesskey      "A">
+<!ENTITY playPluginCmd.label          "Ushbu plaginni faollashtirish">
+<!ENTITY playPluginCmd.accesskey      "f">
+<!ENTITY hidePluginCmd.label          "Ushbu plaginni yashirish">
+<!ENTITY hidePluginCmd.accesskey      "y">
+<!ENTITY copyLinkCmd.label            "Havoladan nusxa olish">
+<!ENTITY copyLinkCmd.accesskey        "a">
+<!ENTITY copyImageCmd.label           "Rasm manzilidan nusxa olish">
+<!ENTITY copyImageCmd.accesskey       "z">
+<!ENTITY copyImageContentsCmd.label   "Rasmdan nusxa olish">
+<!ENTITY copyImageContentsCmd.accesskey  "u"> 
+<!ENTITY copyVideoURLCmd.label        "Video manzildan nusxa olish">
+<!ENTITY copyVideoURLCmd.accesskey    "l">
+<!ENTITY copyAudioURLCmd.label        "Audio manzildan nusxa olish">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY copyEmailCmd.label           "E-pochta manzilidan nusxa olish">
+<!ENTITY copyEmailCmd.accesskey       "E">
+<!ENTITY thisFrameMenu.label              "Ushbu kadr">
+<!ENTITY thisFrameMenu.accesskey          "h">
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+
+<!ENTITY mediaPlay.label             "Ijro etish">
+<!ENTITY mediaPlay.accesskey         "I">
+<!ENTITY mediaPause.label            "Pauza">
+<!ENTITY mediaPause.accesskey        "P">
+<!-- LOCALIZATION NOTE: The access keys for "Mute" and
+"Unmute" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaMute.label             "Tovushni o‘chirish">
+<!ENTITY mediaMute.accesskey         "o">
+<!ENTITY mediaUnmute.label           "Tovushni yoqish">
+<!ENTITY mediaUnmute.accesskey       "y">
+<!ENTITY mediaPlaybackRate2.label     "Ijro etish tezligi">
+<!ENTITY mediaPlaybackRate2.accesskey "I">
+<!ENTITY mediaPlaybackRate050x2.label "Sekin (0.5×)">
+<!ENTITY mediaPlaybackRate050x2.accesskey "S">
+
+
+<!ENTITY mediaPlaybackRate125x2.label "Tez (1.25×)">
+<!ENTITY mediaPlaybackRate125x2.accesskey "T">
+<!ENTITY mediaPlaybackRate150x2.label "Tezroq (1.5×)">
+<!ENTITY mediaPlaybackRate150x2.accesskey "T">
+<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
+movie "Space Balls" and is meant to say that this speed is very
+fast. -->
+<!ENTITY mediaPlaybackRate200x2.label "Kulguli tezlik (2×)">
+<!ENTITY mediaPlaybackRate200x2.accesskey "K">
+<!ENTITY mediaLoop.label             "Takrorlash">
+<!ENTITY mediaLoop.accesskey         "T">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label     "Boshqaruvlarni ko‘rsatish">
+<!ENTITY mediaShowControls.accesskey "B">
+<!ENTITY mediaHideControls.label     "Boshqaruvlarni yashirish">
+<!ENTITY mediaHideControls.accesskey "B">
+<!ENTITY videoFullScreen.label       "Butun ekran">
+<!ENTITY videoFullScreen.accesskey   "B">
+<!ENTITY videoSaveImage.label        "Olingan rasmni saqlash">
+<!ENTITY videoSaveImage.accesskey    "s">
+<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
+"Hide Statistics" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY videoShowStats.label        "Statistikalarni ko‘rsatish">
+<!ENTITY videoShowStats.accesskey    "t">
+<!ENTITY videoHideStats.label        "Statistikalarni yashirish">
+<!ENTITY videoHideStats.accesskey    "t">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomEnlargeCmd.label       "Kattalashtirish">
+<!ENTITY fullZoomEnlargeCmd.accesskey   "l">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.label        "Kichiklashtirish">
+<!ENTITY fullZoomReduceCmd.accesskey    "K">
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.label         "Tiklash">
+<!ENTITY fullZoomResetCmd.accesskey     "T">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY fullZoomToggleCmd.label        "Faqat matnni kattalashtirish">
+<!ENTITY fullZoomToggleCmd.accesskey    "m">
+<!ENTITY fullZoom.label                 "Masshtab">
+<!ENTITY fullZoom.accesskey             "M">
+
+<!ENTITY sidebarCloseButton.tooltip     "Yon panelni yopish">
+
+
+<!ENTITY quitApplicationCmdWin2.label       "Chiqish">
+<!ENTITY quitApplicationCmdWin2.accesskey   "h">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName;dan chiqish">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY quitApplicationCmd.label       "Chiqish"> 
+<!ENTITY quitApplicationCmd.accesskey   "C">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName;dan chiqish">
+
+
+<!ENTITY closeCmd.label                 "Yopish">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "Y">
+
+<!ENTITY toggleMuteCmd.key              "M">
+
+<!ENTITY pageStyleMenu.label "Sahifa uslubi">
+<!ENTITY pageStyleMenu.accesskey "l">
+<!ENTITY pageStyleNoStyle.label "Uslubsiz">
+<!ENTITY pageStyleNoStyle.accesskey "U">
+<!ENTITY pageStylePersistentOnly.label "Asosiy sahifa uslubi">
+<!ENTITY pageStylePersistentOnly.accesskey "A">
+
+<!ENTITY pageReportIcon.tooltip            "Ushbu vebsahifa uchun paydo bo‘luvchi oynalarni bloklash moslamalarini o‘zgartirish">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Paydo bo‘luvchi oynalarni bloklagichni moslash">
+<!ENTITY editPopupSettings.label "Paydo bo‘luvchi oynani bloklash moslamalarini o‘zgartirish">
+<!ENTITY editPopupSettings.accesskey "o">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY bidiSwitchPageDirectionItem.label        "Sahifa yo‘nalishini almashtirish">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "y">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Matn yo‘nalishini almashtirish">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "a">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY findOnCmd.label     "Ushbu sahifadan topish">
+<!ENTITY findOnCmd.accesskey "t">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Yana topish">
+<!ENTITY findAgainCmd.accesskey "p">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY spellAddDictionaries.label "Lug‘atlar qo‘shish">
+<!ENTITY spellAddDictionaries.accesskey "q">
+
+<!ENTITY editBookmark.removeBookmark.accessKey       "R">
+
+<!ENTITY identity.connectionSecure "Xavfsiz ulanish">
+<!ENTITY identity.connectionNotSecure "Ulanish – xavfsiz emas">
+<!ENTITY identity.connectionFile "Bu sahifa kompyuteringizda saqlangan.">
+<!ENTITY identity.connectionVerified2 "Quyidagi yordamida ishlaydigan ushbu saytga xavfli ulandingiz:">
+<!ENTITY identity.connectionInternal "Bu xavfsiz &brandShortName; sahifasi.">
+
+<!ENTITY identity.insecureLoginForms2 "Bu sahifaga kiritilgan taxalluslar yomon oqibatlarga olib kelishi mumkin.">
+<!-- Strings for connection state warnings. -->
+
+<!ENTITY identity.activeBlocked "&brandShortName; ushbu sahifaning xavfli bo‘lgan qismlarini blokladi.">
+<!ENTITY identity.passiveLoaded "Ushbu sahifa qismlari xavfsiz emas (masalan, rasmlar).">
+<!ENTITY identity.activeLoaded "Siz bu sahifadagi himoyani o‘chirib qo‘ygansiz.">
+<!ENTITY identity.weakEncryption "Ushbu sahifa kuchsiz kodlash usulidan foydalanadi.">
+<!-- Strings for connection state warnings in the subview. -->
+
+<!ENTITY identity.description.insecure "Ushbu saytga ulanish maxfiy emas. Siz jo‘natgan ma’lumotlarni (masalan, parol, xabar, kredit karta va hokazoni) boshqalar ko‘rishi mumkin.">
+<!ENTITY identity.description.insecureLoginForms "Bu sahifada kiritiladigan login ma’lumotlari himoyalanmaydi, ular xavf ostida bo‘lishi mumkin.">
+<!ENTITY identity.description.weakCipher "Ushbu vebsahifaga ulanish kuchsiz kodlash usulidan foydalanadi, shuning uchun u maxfiy emas.">
+<!ENTITY identity.description.weakCipher2 "Boshqa odamlar ma’lumotlaringizni ko‘rishi yoki sayt xususiyatlarini o‘zgartirishi mumkin.">
+<!ENTITY identity.description.activeBlocked "&brandShortName; ushbu sahifaning xavfli bo‘lgan qismlarini blokladi.">
+<!ENTITY identity.description.passiveLoaded "Bu ulanish maxfiy emas, shu sababli siz sayt bilan bo‘lishgan ma’lumotlarni boshqalar ko‘rishi mumkin.">
+<!ENTITY identity.description.passiveLoaded2 "Ushbu saytda xavfsiz bo‘lmagan kontent mavjud (masalan, rasmlar).">
+<!ENTITY identity.description.passiveLoaded3 "&brandShortName; ba’zi tarkibni blokladi, ammo sahifada hali ham xavfli tarkiblar (masalan, rasmlar) bor.">
+<!ENTITY identity.description.activeLoaded "Ushbu saytda xavfli tarkib mavjud (masalan, skriptlar), shuning uchun ulanish maxfiy emas.">
+<!ENTITY identity.description.activeLoaded2 "Bu sayt bilan bo‘lishgan ma’lumotlaringizni (masalan, parol, xabar, kredit kartalarini) boshqalar ko‘rishi mumkin.">
+
+<!ENTITY identity.enableMixedContentBlocking.label "Himoyani yoqish">
+<!ENTITY identity.enableMixedContentBlocking.accesskey "H">
+<!ENTITY identity.disableMixedContentBlocking.label "Himoyani hozir o‘chirish">
+<!ENTITY identity.disableMixedContentBlocking.accesskey "h">
+<!ENTITY identity.learnMore "Batafsil ma’lumot">
+
+<!ENTITY identity.removeCertException.label "Istisnoni olib tashlash">
+<!ENTITY identity.removeCertException.accesskey "o">
+
+<!ENTITY identity.moreInfoLinkText2 "Ko‘proq ma’lumot">
+
+<!ENTITY identity.permissions "Ruxsatlar">
+<!ENTITY identity.permissionsEmpty "Bu saytga hech qanday maxsus ruxsat bermagansiz.">
+<!ENTITY identity.permissionsReloadHint "O‘zgarishlar amalga oshishi uchun sahifani yangilashingiz kerak.">
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+
+<!ENTITY tabsToolbar.label "Brauzer ichki oynalari">
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+
+<!ENTITY syncTabsMenu3.label     "Sinxronlangan ichki oynalar">
+
+<!ENTITY syncedTabs.sidebar.label              "Sinxronlangan ichki oynalar">
+<!ENTITY syncedTabs.sidebar.noclients.label    "Bu yerdagi ichki oynalarni ko‘rish uchun Waterfox hisobiga boshqa qurilmalardan kiring.">
+<!ENTITY syncedTabs.sidebar.noclients.title    "Haligacha birorta ham ichki oyna sinxronlanmagan!">
+<!ENTITY syncedTabs.sidebar.noclients.subtitle "Bu yerdagi ichki oynalarni boshqa qurilmalarda ko‘rishni xohlaysizmi?">
+<!ENTITY syncedTabs.sidebar.notsignedin.label  "Boshqa qurilmalardagi ichki oynalar ro‘yxatini ko‘rish uchun Waterfox hisobiga kiring.">
+<!ENTITY syncedTabs.sidebar.notabs.label       "Ochiq ichki oynalar yo‘q">
+<!ENTITY syncedTabs.sidebar.openprefs.label    "&syncBrand.shortName.label; parametrlarini ochish">
+<!-- LOCALIZATION NOTE (syncedTabs.sidebar.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY syncedTabs.sidebar.tabsnotsyncing.label       "Boshqa qurilmalaridagi ichki oynalar ro‘yxatini ko‘rish uchun ichki oynalarni sinxronlashni yoqing.">
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+
+<!ENTITY syncedTabs.context.open.label                       "Ochish">
+<!ENTITY syncedTabs.context.open.accesskey                   "O">
+<!ENTITY syncedTabs.context.openInNewTab.label               "Yangi ichki oynada ochish">
+<!ENTITY syncedTabs.context.openInNewTab.accesskey           "n">
+<!ENTITY syncedTabs.context.openInNewWindow.label            "Havolani yangi oynada ochish">
+<!ENTITY syncedTabs.context.openInNewWindow.accesskey        "o">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.label     "Havolani yangi maxfiy oynada ochish">
+<!ENTITY syncedTabs.context.openInNewPrivateWindow.accesskey "m">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.label          "Sahifani xatcho‘plarga qo‘shish…">
+<!ENTITY syncedTabs.context.bookmarkSingleTab.accesskey      "x">
+<!ENTITY syncedTabs.context.copy.label                       "Nusxa olish">
+<!ENTITY syncedTabs.context.copy.accesskey                   "N">
+
+
+
+
+
+
+<!ENTITY syncBrand.shortName.label    "Sinxronlash">
+
+<!ENTITY syncSignIn.label             "&syncBrand.shortName.label; tizimiga kirish…">
+<!ENTITY syncSignIn.accesskey         "Y">
+<!ENTITY syncSyncNowItem.label        "Hozir sinxronlash">
+<!ENTITY syncSyncNowItem.accesskey    "s">
+<!ENTITY syncReAuthItem.label         "&syncBrand.shortName.label; ga qayta ulanish…">
+<!ENTITY syncReAuthItem.accesskey     "q">
+<!ENTITY syncToolbarButton.label      "Sinx">
+
+<!ENTITY social.addons.label "Xizmatlarni boshqarish…">
+
+<!ENTITY social.directory.label "Faollashtirishlar direktoriyasi">
+<!ENTITY social.directory.text "Bo‘lishish xizmatlarini direktoriyadan faollashtirishingiz mumkin.">
+<!ENTITY social.directory.button "Men bu yerdan olib ket!">
+<!ENTITY social.directory.introText "Xizmatni &brandShortName;ga qo‘shish uchun uning ustiga bosing.">
+<!ENTITY social.directory.viewmore.text "Ko‘proq ko‘rish">
+
+<!ENTITY customizeMode.menuAndToolbars.header2 "Qo‘shimcha asboblar va xususiyatlar">
+<!ENTITY customizeMode.menuAndToolbars.empty "Ko‘proq asboblar kerakmi?">
+<!ENTITY customizeMode.menuAndToolbars.emptyLink "Minglab qo‘shimcha dasturlar ichidan tanlab oling">
+<!ENTITY customizeMode.restoreDefaults "Standart holatni tiklash">
+
+<!ENTITY customizeMode.titlebar "Sarlavha paneli">
+
+<!ENTITY customizeMode.lwthemes "Mavzular">
+<!ENTITY customizeMode.lwthemes.myThemes "Mening mavzularim">
+<!ENTITY customizeMode.lwthemes.recommended "Tavsiya qilingan">
+<!ENTITY customizeMode.lwthemes.menuManage "Boshqarish">
+<!ENTITY customizeMode.lwthemes.menuManage.accessKey "M">
+<!ENTITY customizeMode.lwthemes.menuGetMore "Ko‘proq mavzular olish">
+<!ENTITY customizeMode.lwthemes.menuGetMore.accessKey "G">
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuCompact.*):
+     “Compact” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Compact). -->
+
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuTouch.*):
+     “Touch” is displayed in the Customize screen, under the Density menu.
+     It’s an adjective (Density -> Touch), and it means that control layout is
+     optimized for touch devices. -->
+
+
+
+
+<!ENTITY getUserMedia.selectCamera.label "Bo‘lishiladigan kamera:">
+<!ENTITY getUserMedia.selectCamera.accesskey "k">
+<!ENTITY getUserMedia.selectMicrophone.label "Bo‘lishish uchun mikrofon:">
+<!ENTITY getUserMedia.selectMicrophone.accesskey "m">
+<!ENTITY getUserMedia.audioCapture.label "Ichki oynadagi audio bo‘lishiladi.">
+<!ENTITY getUserMedia.allWindowsShared.message "Ekraningizdagi barcha ko‘rinadigan oynalar bo‘lishiladi.">
+
+<!ENTITY trackingProtection.title "Kuzatuvdan himoya">
+<!ENTITY trackingProtection.detectedBlocked3 "&brandShortName; internetdagi faoliyatingizni kuzatishi mumkin bo‘lgan sahifa qismlarini blokladi.">
+<!ENTITY trackingProtection.detectedNotBlocked3 "Bu saytda internetdagi faoliyatingizni kuzatishi mumkin bo‘lgan elementlar mavjud. Siz himoyani o‘chirib qo‘ygansiz.">
+<!ENTITY trackingProtection.notDetected3 "Bu sahifada hech qanday kuzatish elementlari aniqlanmadi.">
+<!-- LOCALIZATION NOTE (trackingProtection.unblock.label, trackingProtection.unblock.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!ENTITY trackingProtection.unblock.label "Bu saytda himoyani o‘chirish">
+<!ENTITY trackingProtection.unblock.accesskey "o">
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate.label, trackingProtection.unblockPrivate.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+<!ENTITY trackingProtection.unblockPrivate.label "Bu seansda himoyani o‘chirish">
+<!ENTITY trackingProtection.unblockPrivate.accesskey "o">
+<!ENTITY trackingProtection.block2.label "Himoyani yoqish">
+<!ENTITY trackingProtection.block2.accesskey "y">
+
+<!ENTITY trackingContentBlocked.message "Kuzatish">
+<!ENTITY trackingContentBlocked.moreinfo "Sizning onlayn faoliyatingizni kuzatuvchi sahifalar qismlari bloklandi.">
+<!ENTITY trackingContentBlocked.learnMore "Ko‘proq o‘rganish">
+<!ENTITY trackingContentBlocked.options "Tanlamalar">
+<!ENTITY trackingContentBlocked.unblock2.label "Bu saytda himoyani o‘chirish">
+<!ENTITY trackingContentBlocked.unblock2.accesskey "o">
+<!ENTITY trackingContentBlocked.block.label "Himoyani yoqish">
+<!ENTITY trackingContentBlocked.block.accesskey "y">
+<!ENTITY trackingContentBlocked.disabled.message "Kuzatishdan himoya o‘chirildi">
+
+<!ENTITY pluginNotification.showAll.label "Barchasini ko‘rsatish">
+<!ENTITY pluginNotification.showAll.accesskey "k">
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+
+<!ENTITY pluginActivateNow.label "Hozir ruxsat berish">
+<!ENTITY pluginActivateAlways.label "Ruxsat berish va eslab qolish">
+<!ENTITY pluginBlockNow.label "Plaginni bloklash">
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+
+<!ENTITY pluginNotification.width "28em">
+
+<!ENTITY uiTour.infoPanel.close "Yopish">
+
+<!ENTITY appMenuSidebars.label         "Yon panellar">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+
+<!ENTITY panicButton.view.mainTimeframeDesc       "So‘nggisini unutish:">
+<!ENTITY panicButton.view.5min                    "Besh daqiqa">
+<!ENTITY panicButton.view.2hr                     "Ikki soat">
+<!ENTITY panicButton.view.day                     "24 soat">
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+
+<!ENTITY panicButton.view.mainActionDesc          "Yaxshi amalga oshdi:">
+<!ENTITY panicButton.view.deleteCookies           "So‘nggi <html:strong>Kukilar</html:strong>ni o‘chirish">
+<!ENTITY panicButton.view.deleteHistory           "So‘nggi <html:strong>Tarix</html:strong>ni o‘chirish">
+<!ENTITY panicButton.view.deleteTabsAndWindows    "Barcha <html:strong>Ichki oynalar</html:strong> va <html:strong>Oynalar</html:strong>ni yopish">
+<!ENTITY panicButton.view.openNewWindow           "Yangi toza oynani ochish">
+
+<!ENTITY panicButton.view.undoWarning             "Ushbu amalni orqaga qaytarib boʻlmaydi.">
+<!ENTITY panicButton.view.forgetButton            "Unutish!">
+
+<!ENTITY panicButton.thankyou.msg1                "So‘nggi tarixingiz tozalandi.">
+<!ENTITY panicButton.thankyou.msg2                "Xavfsiz ko‘rish!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Rahmat!">
+
+<!ENTITY emeLearnMoreContextMenu.label            "DRM haqida ko‘proq o‘rganish…">
+<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY appMenuHistory.recentHistory.label "Recent History">
+<!ENTITY copyURLCmd.label             "Copy URL">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.addToOverflowMenu.label "Add to Overflow Menu">
+<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "P">
+<!ENTITY customizeMenu.pinToOverflowMenu.label "Pin to Overflow Menu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Unpin from Overflow Menu">
+<!ENTITY customizeMode.done "Done">
+<!ENTITY customizeMode.emptyOverflowList.description "Drag and drop items here to keep them within reach but out of your toolbar…">
+<!ENTITY customizeMode.toolbars2 "Toolbars">
+<!ENTITY customizeMode.uidensity "Density">
+<!ENTITY customizeMode.uidensity.autoTouchMode.checkbox.label "Use Touch for Tablet Mode">
+
+<!ENTITY customizeMode.uidensity.menuCompact.accessKey "C">
+<!ENTITY customizeMode.uidensity.menuCompact.label "Compact">
+<!ENTITY customizeMode.uidensity.menuCompact.tooltip "Compact">
+<!ENTITY customizeMode.uidensity.menuNormal.accessKey "N">
+<!ENTITY customizeMode.uidensity.menuNormal.label "Normal">
+<!ENTITY customizeMode.uidensity.menuNormal.tooltip "Normal">
+<!ENTITY customizeMode.uidensity.menuTouch.accessKey "T">
+<!ENTITY customizeMode.uidensity.menuTouch.label "Touch">
+<!ENTITY customizeMode.uidensity.menuTouch.tooltip "Touch">
+<!ENTITY editBookmark.done.label                     "Done">
+<!ENTITY identity.extensionPage "This page is loaded from an extension.">
+<!ENTITY mediaPlaybackRate100x2.accesskey "N">
+<!ENTITY mediaPlaybackRate100x2.label "Normal">
+<!ENTITY moreMenu.label "More">
+
+<!ENTITY openLinkCmdInContainerTab.accesskey "b">
+<!ENTITY openLinkCmdInContainerTab.label "Open Link in New Container Tab">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY overflowCustomizeToolbar.label       "Customize Toolbar…">
+<!ENTITY pageAction.addToUrlbar.label "Add to Address Bar">
+<!ENTITY pageAction.removeFromUrlbar.label "Remove from Address Bar">
+
+<!ENTITY pageActionButton.tooltip "Page actions">
+<!ENTITY quitApplicationCmd.key         "Q">
+
+<!ENTITY searchBookmarks.label              "Search Bookmarks">
+
+<!ENTITY searchIcon.tooltip           "Search">
+
+<!ENTITY searchInput.placeholder      "Search">
+<!ENTITY searchItem.title             "Search">
+
+<!ENTITY sendToDevice.label2 "Send to Device">
+<!ENTITY sendToDevice.syncNotReady.label "Syncing Devices…">
+<!ENTITY sidebarMenuClose.label         "Close Sidebar">
+
+<!ENTITY syncedTabs.context.managedevices.accesskey          "D">
+
+
+<!ENTITY syncedTabs.context.managedevices.label              "Manage Devices…">
+<!ENTITY syncedTabs.context.openAllInTabs.accesskey          "O">
+<!ENTITY syncedTabs.context.openAllInTabs.label              "Open All in Tabs">
+<!ENTITY updateAvailable.acceptButton.accesskey "D">
+<!ENTITY updateAvailable.acceptButton.label "Download Update">
+<!ENTITY updateAvailable.cancelButton.accesskey "N">
+<!ENTITY updateAvailable.cancelButton.label "Not Now">
+<!ENTITY updateAvailable.header.message "A new &brandShorterName; update is available.">
+<!ENTITY updateAvailable.message "Update your &brandShorterName; for the latest in speed and privacy.">
+<!ENTITY updateAvailable.panelUI.label "Download &brandShorterName; update">
+
+<!ENTITY updateAvailable.whatsnew.label "See what’s new.">
+<!ENTITY updateManual.acceptButton.accesskey "D">
+<!ENTITY updateManual.acceptButton.label "Download &brandShorterName;">
+<!ENTITY updateManual.cancelButton.accesskey "N">
+<!ENTITY updateManual.cancelButton.label "Not Now">
+<!ENTITY updateManual.header.message "&brandShorterName; can’t update to the latest version.">
+<!ENTITY updateManual.message "Download a fresh copy of &brandShorterName; and we’ll help you to install it.">
+<!ENTITY updateManual.panelUI.label "Download a fresh copy of &brandShorterName;">
+
+<!ENTITY updateManual.whatsnew.label "See what’s new.">
+<!ENTITY updateRestart.acceptButton.accesskey "R">
+<!ENTITY updateRestart.acceptButton.label "Restart and Restore">
+<!ENTITY updateRestart.cancelButton.accesskey "N">
+<!ENTITY updateRestart.cancelButton.label "Not Now">
+<!ENTITY updateRestart.header.message2 "Restart to update &brandShorterName;.">
+<!ENTITY updateRestart.message "After a quick restart, &brandShorterName; will restore all your open tabs and windows.">
+<!ENTITY updateRestart.panelUI.label2 "Restart to update &brandShorterName;">
+
+<!ENTITY urlbar.extension.label       "Extension:">
+<!ENTITY urlbar.persistentStorageBlocked.tooltip "You have blocked persistent storage for this website.">
+
+<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Store data in Persistent Storage">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Change Preferences…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "C">
+
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Change Options…">
+<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "C">
+<!ENTITY urlbar.searchSuggestionsNotification.hint "Get help finding things! Look for the &#x1F50E; next to search suggestions.">
+<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tip:">

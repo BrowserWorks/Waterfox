@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "మినహాయింపులు - అనువాదం">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "కింది భాషలకు అనువాదం అందించబడదు:">
+<!ENTITY treehead.languageName.label      "భాషలు">
+<!ENTITY removeLanguage.label             "భాషను తీసివేయి">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "అన్ని భాషలను తీసివేయి">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "కింది సైట్లకు అనువాదం అందించబడదు:">
+<!ENTITY treehead.siteName2.label         "వెబ్‌సైట్లు">
+<!ENTITY removeSite.label                 "సైటును తీసివేయి">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "అన్ని సైట్లను తీసివేయి">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "మూసివేయి">
+<!ENTITY button.close.accesskey           "C">

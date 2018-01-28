@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "ප්ලගිනය සක්‍රීය කිරීමට මෙහි ටැප් කරන්න.">
+<!ENTITY clickToActivatePlugin                               "ප්ලගිනය සක්‍රීය කරන්න.">
+<!ENTITY checkForUpdates                                     "යාවත් සඳහා පරික්ෂා කරන්න...">
+<!ENTITY blockedPlugin.label                                 "ඔබේ ආරක්ෂාව සඳහා මෙම ප්ලගින වළක්වා ඇත.">
+<!ENTITY hidePluginBtn.label                                 "ප්ලගින සඟවන්න">
+<!ENTITY managePlugins                                       "ප්ලගින කළමණාකරණය...">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "පිටුව යළි පූර්ණය කරන්න">
+<!ENTITY reloadPlugin.post                                   " යළි උත්සහ කිරීම සඳහා.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "බිඳවැටීම් වාර්ථාව යවන්න">
+<!ENTITY report.submitting                                   "වාර්තාව යවමින්…">
+<!ENTITY report.submitted                                    "බිඳවැටීම් වාර්ථාව යවන ලදී.">
+<!ENTITY report.disabled                                     "බිඳවාටීම් වාර්ථාකරණය අක්‍රීය කර ඇත.">
+<!ENTITY report.failed                                       "පළකිරීම අසාර්ථකයි.">
+<!ENTITY report.unavailable                                  "කිසිඳු වාර්ථාවක් නොමැත.">
+<!ENTITY report.comment                                      "සටහනක් එක් කරන්න (සටහන් පොදුවේ දර්ශනය වේ)">
+<!ENTITY report.pageURL                                      "පිටුවේ URL ද ඇතුළත් කරන්න">
+
+<!ENTITY plugin.file                                         "ගොනුව">
+<!ENTITY plugin.mimeTypes                                    "MIME වර්ග">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash ආරක්ෂිත ප්‍රකාරය සක්‍රීය කරන්න">
+
+<!ENTITY plugin.enableBlocklists.label                       "Block dangerous and intrusive Flash content">
+<!ENTITY pluginActivationWarning                             "This site uses a plugin that may slow &brandShortName;.">

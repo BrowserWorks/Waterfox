@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width "32em">
+
+<!ENTITY     cookiesonsystem.label          "Na tym komputerze przechowywane są następujące ciasteczka:">
+<!ENTITY     cookiename.label               "Nazwa ciasteczka">
+<!ENTITY     cookiedomain.label             "Witryna">
+
+<!ENTITY     props.name.label               "Nazwa:">
+<!ENTITY     props.value.label              "Zawartość:">
+<!ENTITY     props.domain.label             "Host:">
+<!ENTITY     props.path.label               "Ścieżka:">
+<!ENTITY     props.secure.label             "Wyślij dla:">
+<!ENTITY     props.expires.label            "Wygasa:">
+<!ENTITY props.container.label "Kontekst:">
+
+<!ENTITY     window.title                   "Ciasteczka">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY searchFilter.label "Szukaj">
+<!ENTITY searchFilter.accesskey "">
+
+<!ENTITY     button.close.label             "Zamknij">
+<!ENTITY button.close.accesskey "">

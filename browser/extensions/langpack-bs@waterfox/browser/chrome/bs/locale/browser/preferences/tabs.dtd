@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab prolazi kroz tabove u redosljedu nedavnog korištenja">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Otvaraj nove prozore u novim tabovima">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Upozoriti vas kada zatvarate više tabova">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "o">
+
+<!ENTITY warnOnOpenManyTabs.label       "Upozoriti vas kada otvaranje više tabova može usporiti &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "d">
+
+<!ENTITY switchLinksToNewTabs.label        "Kada otvorite link u novom tabu, odmah se prebaciti na njega">
+<!ENTITY switchLinksToNewTabs.accesskey    "s">
+
+<!ENTITY showTabsInTaskbar.label          "Prikazuj pregled tabova u Windows taskbaru">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Tabovi">

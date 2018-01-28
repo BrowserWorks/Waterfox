@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab växlar mellan flikarna i nyligen använd ordning">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Öppna nytt fönster i en ny flik istället">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Varna när jag stänger flera flikar">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "f">
+
+<!ENTITY warnOnOpenManyTabs.label       "Varna när du öppnar flera flikar kan göra &brandShortName; långsam">
+<!ENTITY warnOnOpenManyTabs.accesskey   "n">
+
+<!ENTITY switchLinksToNewTabs.label        "När du öppnar en länk i en ny flik, växla till den direkt">
+<!ENTITY switchLinksToNewTabs.accesskey    "v">
+
+<!ENTITY showTabsInTaskbar.label          "Förhandsgranska flikar i Windows aktivitetsfält">
+<!ENTITY showTabsInTaskbar.accesskey      "F">
+<!ENTITY tabsGroup.label          "Flikar">

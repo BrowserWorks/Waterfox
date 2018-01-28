@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Talɣut ɣef uẓeṭṭa">
+<!ENTITY aboutNetworking.warning               "Tamhelt-agi d tirmit kan. Ur tt-seqdac ara arma yella umdan meqqren.">
+<!ENTITY aboutNetworking.showNextTime          "Sken alɣu-a tikelt d-itteddun">
+<!ENTITY aboutNetworking.ok                    "IH">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Igrudmawen">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Igrudam n tuqqna">
+<!ENTITY aboutNetworking.refresh               "Smiren">
+<!ENTITY aboutNetworking.autoRefresh           "Smiren yal 3 n tasinin">
+<!ENTITY aboutNetworking.hostname              "Asenneftaɣ">
+<!ENTITY aboutNetworking.port                  "Tabburt">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Urmid">
+<!ENTITY aboutNetworking.idle                  "Arurmid">
+<!ENTITY aboutNetworking.host                  "Asenneftaɣ">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Ţwaznen">
+<!ENTITY aboutNetworking.received              "Ţwarmsen">
+<!ENTITY aboutNetworking.family                "Tawacult">
+<!ENTITY aboutNetworking.addresses             "Tansiwin">
+<!ENTITY aboutNetworking.expires               "Ad immet (tasinin)">
+<!ENTITY aboutNetworking.messagesSent          "Iznan iţwacegɛen">
+<!ENTITY aboutNetworking.messagesReceived      "Iznan ţwarmsen-d">
+<!ENTITY aboutNetworking.bytesSent             "Iṭamḍanen iţwaceggɛen">
+<!ENTITY aboutNetworking.bytesReceived         "Itamḍanen iţwaremsen">
+<!ENTITY aboutNetworking.logging               "Aɣmis">
+<!ENTITY aboutNetworking.logTutorial           "Wali <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>Asniɣmes HTTP </a> ɣe wamek ad tesqedceḍ afecku-agi.">
+<!ENTITY aboutNetworking.currentLogFile        "Afaylu aɣmis amiran:">
+<!ENTITY aboutNetworking.currentLogModules     "Izegrar iɣmisen imiranen:">
+<!ENTITY aboutNetworking.setLogFile            "Sbadu afaylu aɣmis">
+<!ENTITY aboutNetworking.setLogModules         "Sbadu izegrar iɣmisen">
+<!ENTITY aboutNetworking.startLogging          "Senker asniɣmes">
+<!ENTITY aboutNetworking.stopLogging           "Seḥbes asniɣmes">
+<!ENTITY aboutNetworking.dnsLookup             "Anadi DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Fru">
+<!ENTITY aboutNetworking.dnsDomain             "Taɣult">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IPs">
+<!ENTITY aboutNetworking.rcwn                  "Addad RCWN">
+<!ENTITY aboutNetworking.rcwnStatus            "Tiddadanin RCWN">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Aseklas n tzerkatut ad ittwarebḥen">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Tazerkatut n uẓeṭṭa ad ittwarebḥen">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Aseklas uγrid n isuturen n uẓeṭṭa">
+<!ENTITY aboutNetworking.rcwnOperation         "Tamhelt n tuffirt">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Ldi">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Γaṛ">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Aru">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Ldi anekcum">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Talemmast meẓẓiyet">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Talemmast γezzifet">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Amgared tizeγt muqren">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Amḍan n tuffirt ẓẓayen">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Amdan n tuffirt ur nelli ẓẓayet">

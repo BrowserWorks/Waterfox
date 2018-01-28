@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Shto Kontejner të Ri">
+<!ENTITY addButton.accesskey  "S">
+<!ENTITY preferencesButton.label "Parapëlqime">
+<!ENTITY removeButton.label   "Hiqe">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Kthehuni te Privatësia">
+
+<!ENTITY window.title         "Shtoni Kontejner të Ri">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Emër:">
+<!ENTITY name.accesskey       "E">
+<!ENTITY name.placeholder     "Jepni emër kontejneri">
+<!ENTITY icon.label           "Ikonë:">
+<!ENTITY icon.accesskey       "I">
+<!ENTITY color.label          "Ngjyrë:">
+<!ENTITY color.accesskey      "N">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "U bë">
+<!ENTITY button.ok.accesskey  "U">
+

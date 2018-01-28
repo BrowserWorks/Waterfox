@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Khởi động">
+
+<!ENTITY startupPage2.label        "Khi &brandShortName; khởi động">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Hiển thị trang chủ của bạn">
+<!ENTITY startupBlankPage.label    "Hiện một trang trống">
+<!ENTITY startupPrevSession.label  "Hiển thị cửa sổ và thẻ lần trước của bạn">
+
+<!ENTITY homepage2.label           "Trang chủ">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY useCurrentPage.label      "Sử dụng Trang hiện tại">
+<!ENTITY useCurrentPage.accesskey  "a">
+<!ENTITY useMultiple.label         "Dùng các Trang hiện tại">
+<!ENTITY chooseBookmark.label      "Dùng trang đánh dấu…">
+<!ENTITY chooseBookmark.accesskey  "d">
+<!ENTITY restoreDefault.label      "Khôi phục về Mặc định">
+<!ENTITY restoreDefault.accesskey  "M">
+
+<!ENTITY downloads.label     "Tải xuống">
+
+<!ENTITY saveTo.label "Lưu các tập tin vào">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "Duyệt…">
+<!ENTITY chooseFolderWin.accesskey    "y">
+<!ENTITY chooseFolderMac.label        "Chọn…">
+<!ENTITY chooseFolderMac.accesskey    "n">
+<!ENTITY alwaysAskWhere.label         "Luôn hỏi bạn nơi để lưu các tập tin">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "Luôn kiểm tra xem &brandShortName; có phải trình duyệt mặc định không">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "Đặt làm mặc định">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "m">
+<!ENTITY isDefault.label                  "&brandShortName; đang là trình duyệt mặc định">
+<!ENTITY isNotDefault.label               "&brandShortName; không phải là trình duyệt mặc định">
+
+<!ENTITY separateProfileMode.label        "Cho phép &brandShortName; và Waterfox cùng chạy song song">
+<!ENTITY useWaterfoxSync.label             "Mẹo nhỏ: Việc này sử dụng các hồ sơ độc lập nhau. Bạn có thể dùng Sync để đồng bộ giữa chúng.">
+<!ENTITY getStarted.notloggedin.label     "Đăng nhập vào &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Mở tùy chỉnh của &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Cho phép &brandShortName; dùng đa tiến trình">
+
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">

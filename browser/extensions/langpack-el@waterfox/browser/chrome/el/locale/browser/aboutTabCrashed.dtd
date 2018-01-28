@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Κλείσιμο καρτέλας">
+<!ENTITY tabCrashed.restoreTab "Επαναφορά καρτέλας">
+<!ENTITY tabCrashed.restoreAll "Επαναφορά όλων των καρτελών που κατέρρευσαν">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ωχ. Η καρτέλα σας μόλις κατέρρευσε.">
+<!ENTITY tabCrashed.offerHelp "Μπορούμε να σάς βοηθήσουμε!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Επιλέξτε &tabCrashed.restoreTab; για εκ νέου φόρτωση του περιεχομένου της σελίδας.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Επιλέξτε &tabCrashed.restoreTab; ή &tabCrashed.restoreAll; για εκ νέου φόρτωση του περιεχομένου της σελίδας.">
+<!ENTITY tabCrashed.requestHelp "Θα μάς βοηθήσετε;">
+<!ENTITY tabCrashed.requestHelpMessage "Οι αναφορές κατάρρευσης μάς βοηθούν στη διάγνωση προβλημάτων και στη βελτίωση του &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Αναφορά καρτέλας">
+<!ENTITY tabCrashed.sendReport2 "Αποστολή αναφοράς κατάρρευσης για την τρέχουσα καρτέλα">
+<!ENTITY tabCrashed.commentPlaceholder2 "Προαιρετικά σχόλια (τα σχόλια είναι ορατά σε όλους)">
+<!ENTITY tabCrashed.includeURL2 "Συμπερίληψη URL σελίδας σε αυτή την αναφορά κατάρρευσης">
+<!ENTITY tabCrashed.emailPlaceholder "Εισάγετε τη διεύθυνση email σας">
+<!ENTITY tabCrashed.emailMe "Ειδοποίηση στο email μου όταν είναι διαθέσιμες περισσότερες πληροφορίες">
+<!ENTITY tabCrashed.reportSent "Η αναφορά κατάρρευσης έχει υποβληθεί ήδη· σάς ευχαριστούμε που συμβάλλετε στη βελτίωση του &brandShortName;!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Αναφορά εργασιών παρασκηνίου">
+<!ENTITY tabCrashed.autoSubmit2 "Να ενημερωθούν οι προτιμήσεις για την αυτόματη αποστολή αναφορών καταρρεύσεων, συμπεριλαμβανομένων αναφορών για καρτέλες που κατέρρευσαν στο υπόβαθρο για αυτή τη σύνοδο και για μελλοντικές">

@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "مدیریت افزودنی‌ها">
+
+<!ENTITY search.placeholder                   "جست‌وجو میان همهٔ افزودنی‌ها">
+<!ENTITY search.buttonlabel                   "جست‌وجو">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "در حال بار کردن…">
+<!ENTITY listEmpty.installed.label            "هیچ افزودنی‌ای از این نوع نصب نشده است">
+<!ENTITY listEmpty.availableUpdates.label     "هیچ بروزرسانی‌ای پیدا نشد">
+<!ENTITY listEmpty.recentUpdates.label        "اخیراً هیچ افزودنی‌ای به‌هنگام نشده است">
+<!ENTITY listEmpty.findUpdates.label          "بررسی برای بروزرسانی‌ها">
+<!ENTITY listEmpty.search.label               "هیچ افزودنی در پاسخ به جست‌وجوی شما پیدا نشد">
+<!ENTITY listEmpty.button.label               "دربارهٔ افزودنی‌ها بیشتر بدانید">
+<!ENTITY installAddonFromFile.label           "نصب افزودنی از یک پرونده…">
+<!ENTITY installAddonFromFile.accesskey       "ن">
+<!ENTITY toolsMenu.tooltip                    "ابزارهای مخصوص همهٔ افزودنی‌ها">
+
+<!ENTITY getThemes.description                "مایلید مرورگر خود را شخصی سازی کنید؟">
+<!ENTITY getThemes.learnMore                  "از بین هزاران زمینه انتخاب کنید">
+
+<!ENTITY cmd.back.tooltip                     "برگشتن به یک صفحه قبل">
+<!ENTITY cmd.forward.tooltip                  "جلو رفتن به یک صفحه بعد">
+
+<!ENTITY showUnsignedExtensions.button.label  "برخی از توسعه‌ها را نمی‌توان تایید کرد">
+<!ENTITY showAllExtensions.button.label       "نمایش تمام توسعه‌ها">
+<!ENTITY debugAddons.label                    "اشکال‌زدایی افزودنی‌ها">
+<!ENTITY debugAddons.accesskey                "ی">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "همهٔ افزودنی‌ها به دلیل مرور در حالت امن غیر فعال شده‌اند.">
+<!ENTITY warning.checkcompatibility.label          "کنترل سازگاری افزودنی‌ها غیر فعال است. ممکن است افزودنی‌های ناسازگاری داشته باشید.">
+<!ENTITY warning.checkcompatibility.enable.label   "فعال کردن">
+<!ENTITY warning.checkcompatibility.enable.tooltip "فعال کردن کنترل سازگاری افزودنی‌ها">
+<!ENTITY warning.updatesecurity.label              "بررسی امنیتی بروزرسانی افزودنی‌ها غیر فعال است. ممکن است افزودنی‌های‌تان به صورت ناامن بروزرسانی شوند.">
+<!ENTITY warning.updatesecurity.enable.label       "فعال کردن">
+<!ENTITY warning.updatesecurity.enable.tooltip     "فعال کردن بررسی امنیتی بروزرسانی افزودنی‌ها">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "جست‌وجو">
+<!ENTITY view.discover.label                  "دریافت افزودنی‌ها">
+<!ENTITY view.recentUpdates.label             "بروزرسانی‌های اخیر">
+<!ENTITY view.availableUpdates.label          "بروزرسانی‌های موجود">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "بررسی برای بروزرسانی‌ها">
+<!ENTITY updates.checkForUpdates.accesskey    "ب">
+<!ENTITY updates.viewUpdates.label            "مشاهده بروزرسانی‌های اخیر">
+<!ENTITY updates.viewUpdates.accesskey        "م">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "بروزرسانی خودکار همهٔ افزودنی‌ها">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "ب">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "تنظیم مجدد همهٔ افزودنی‌ها برای انجام بروزرسانی بصورت خودکار">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "خ">
+<!ENTITY updates.resetUpdatesToManual.label          "تنظیم مجدد همهٔ افزودنی‌ها برای انجام بروزرسانی بصورت دستی">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "ت">
+<!ENTITY updates.updating.label               "در حال بروزرسانی افزودنی‌ها">
+<!ENTITY updates.installed.label              "افزودنی‌های شما به‌هنگام شدند.">
+<!ENTITY updates.downloaded.label             "بروزرسانی‌های افزودنی‌های شما دریافت گردیدند.">
+<!ENTITY updates.restart.label                "را‌ه‌اندازی مجدد به منظور اتمام نصب">
+<!ENTITY updates.noneFound.label              "هیچ بروزرسانی‌ای پیدا نشد">
+<!ENTITY updates.manualUpdatesFound.label     "مشاهدهٔ بروزرسانی‌های موجود">
+<!ENTITY updates.updateSelected.label         "نصب بروزرسانی">
+<!ENTITY updates.updateSelected.tooltip       "نصب بروزرسانی‌های موجود در این فهرست">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "نمایش اطلاعات بیشتر">
+<!ENTITY cmd.showDetails.accesskey            "ط">
+<!ENTITY cmd.findUpdates.label                "یافتن بروزرسانی‌ها">
+<!ENTITY cmd.findUpdates.accesskey            "ب">
+<!ENTITY cmd.preferencesWin.label             "گزینه‌ها">
+<!ENTITY cmd.preferencesWin.accesskey         "گ">
+<!ENTITY cmd.preferencesUnix.label            "ترجیحات">
+<!ENTITY cmd.preferencesUnix.accesskey        "ت">
+<!ENTITY cmd.about.label                      "دربارهٔ افزودنی">
+<!ENTITY cmd.about.accesskey                  "د">
+
+<!ENTITY cmd.enableAddon.label                "فعال کردن">
+<!ENTITY cmd.enableAddon.accesskey            "ف">
+<!ENTITY cmd.disableAddon.label               "غیر فعال کردن">
+<!ENTITY cmd.disableAddon.accesskey           "غ">
+<!ENTITY cmd.enableTheme.label                "استفاده از این تم">
+<!ENTITY cmd.enableTheme.accesskey            "س">
+<!ENTITY cmd.disableTheme.label               "توقف استفاده از این تم">
+<!ENTITY cmd.disableTheme.accesskey           "ق">
+<!ENTITY cmd.askToActivate.label              "درخواست فعال‌سازی">
+<!ENTITY cmd.askToActivate.tooltip            "هربار برای استفاده از این افزونه درخواست اجازه کن">
+<!ENTITY cmd.alwaysActivate.label             "فعال‌سازی همیشگی">
+<!ENTITY cmd.alwaysActivate.tooltip           "همیشه از این افزونه استفاده کن">
+<!ENTITY cmd.neverActivate.label              "هرگز فعال نشود">
+<!ENTITY cmd.neverActivate.tooltip            "هرگز از این افزونه استفاده نکن">
+<!ENTITY cmd.stateMenu.tooltip                "زمانی که این افزونه اجرا میشود تغییرکن">
+<!ENTITY cmd.installAddon.label               "نصب">
+<!ENTITY cmd.installAddon.accesskey           "ن">
+<!ENTITY cmd.uninstallAddon.label             "حذف">
+<!ENTITY cmd.uninstallAddon.accesskey         "ح">
+<!ENTITY cmd.showPreferencesWin.label         "گزینه‌ها">
+<!ENTITY cmd.showPreferencesWin.tooltip       "تغییر گزینه‌های این افزودنی">
+<!ENTITY cmd.showPreferencesUnix.label        "ترجیحات">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "تغییر ترجیحات این افزودنی">
+<!ENTITY cmd.contribute.label                 "مشارکت">
+<!ENTITY cmd.contribute.accesskey             "م">
+<!ENTITY cmd.contribute.tooltip               "مشارکت در توسعهٔ این افزودنی">
+
+<!ENTITY cmd.showReleaseNotes.label           "نمایش یادداشت‌های انتشار">
+<!ENTITY cmd.showReleaseNotes.tooltip         "نمایش یادداشت‌های انتشار این نسخهٔ افزودنی">
+<!ENTITY cmd.hideReleaseNotes.label           "مخفی کردن یادداشت‌های انتشار">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "مخفی کردن یادداشت‌های انتشار این نسخهٔ افزودنی">
+<!ENTITY cmd.findReplacement.label            "پیدا کردن یک جایگزین">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "افزودنی‌ها به چه کار می‌آیند؟">
+<!ENTITY discover.description2                "افزودنی‌ها برنامه‌هایی هستند که به شما امکان شخصی‌سازی &brandShortName; را با افزودن قابلیت‌های جدید یا تغییر ظاهر آن می‌دهند. برای داشتن &brandShortName; شخصی، افزودن نوار کناری برای صرفه‌جویی در زمان، یک افزودنی اطلاع از وضعیت هوا، یا یک ظاهر جدید را امتحان کنید.">
+<!ENTITY discover.footer                      "زمانی که به اینترنت متصل باشید، این ناحیه برخی از بهترین و پرطرفدارترین افزودنی‌هایی که می‌توانید آزمایش کنید را نشان می‌دهد.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "نسخه">
+<!ENTITY detail.lastupdated.label             "آخرین بروزرسانی">
+<!ENTITY detail.creator.label                 "توسعه‌دهنده">
+<!ENTITY detail.homepage.label                "صفحهٔ خانگی">
+<!ENTITY detail.numberOfDownloads.label       "تعداد بارگیری‌ها">
+
+<!ENTITY detail.contributions.description     "توسعه‌دهندهٔ این افزودنی از شما برای توسعهٔ متداوم این افزودنی کمک مالی کوچکی درخواست کرده است.">
+
+<!ENTITY detail.updateType                    "بروزرسانی‌های خودکار">
+<!ENTITY detail.updateDefault.label           "پیش‌فرض">
+<!ENTITY detail.updateDefault.tooltip         "تنها در صورت اینکه گزینه نصب خودکار بروزرسانی‌ها گزینه پیش‌فرض باشد این اتفاق بیافتد">
+<!ENTITY detail.updateAutomatic.label         "فعال">
+<!ENTITY detail.updateAutomatic.tooltip       "بروزرسانی‌های جدید به صورت خودکار نصب شوند">
+<!ENTITY detail.updateManual.label            "غیر فعال">
+<!ENTITY detail.updateManual.tooltip          "بروزرسانی‌های جدید به صورت خودکار نصب نشوند">
+<!ENTITY detail.home                          "صفحهٔ افزودنی">
+<!ENTITY detail.repository                    "نمایهٔ افزودنی">
+<!ENTITY detail.size                          "حجم">
+
+<!ENTITY detail.checkForUpdates.label         "بررسی برای بروزرسانی‌ها">
+<!ENTITY detail.checkForUpdates.accesskey     "ب">
+<!ENTITY detail.checkForUpdates.tooltip       "بررسی بروزرسانی‌های این افزودنی">
+<!ENTITY detail.showPreferencesWin.label      "گزینه‌ها">
+<!ENTITY detail.showPreferencesWin.accesskey  "گ">
+<!ENTITY detail.showPreferencesWin.tooltip    "تغییر گزینه‌های این افزودنی">
+<!ENTITY detail.showPreferencesUnix.label     "ترجیحات">
+<!ENTITY detail.showPreferencesUnix.accesskey "ت">
+<!ENTITY detail.showPreferencesUnix.tooltip   "تغییر ترجیحات این افزودنی">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "رتبه‌بندی">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "مکث">
+<!ENTITY progress.cancel.tooltip              "انصراف">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "نام">
+<!ENTITY sort.name.tooltip                    "مرتب‌سازی بر اساس نام">
+<!ENTITY sort.dateUpdated.label               "آخرین بروزرسانی">
+<!ENTITY sort.dateUpdated.tooltip             "مرتب‌سازی بر اساس تاریخ آخرین بروزرسانی">
+<!ENTITY sort.relevance.label                 "بهترین مورد مطابق">
+<!ENTITY sort.relevance.tooltip               "مرتب‌سازی بر اساس بهترین انطباق با جست‌وجوی شما">
+<!ENTITY sort.price.label                     "قیمت">
+<!ENTITY sort.price.tooltip                   "مرتب‌سازی بر اساس قیمت">
+
+<!ENTITY search.filter2.label                 "جست‌وجو:">
+<!ENTITY search.filter2.installed.label       "افزودنی‌های نصب شده">
+<!ENTITY search.filter2.installed.tooltip     "نمایش افزودنی‌های نصب شده">
+<!ENTITY search.filter2.available.label       "افزودنی‌های موجود">
+<!ENTITY search.filter2.available.tooltip     "نمایش افزودنی‌های موجود برای نصب">
+
+<!ENTITY addon.homepage                       "صفحهٔ افزودنی">
+<!ENTITY addon.details.label                  "اطلاعات بیشتر">
+<!ENTITY addon.details.tooltip                "نمایش اطلاعات بیشتر در مورد این افزودنی">
+<!ENTITY addon.unknownDate                    "نامعلوم">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "قدیمی">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(غیر فعال)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "بروزرسانی">
+<!ENTITY addon.undoAction.label               "واگرد">
+<!ENTITY addon.undoAction.tooltip             "واگرد این عمل">
+<!ENTITY addon.undoRemove.label               "واگرد">
+<!ENTITY addon.undoRemove.tooltip             "افزودنی نصب شده بماند">
+<!ENTITY addon.restartNow.label               "راه‌اندازی مجدد">
+<!ENTITY addon.install.label                  "نصب">
+<!ENTITY addon.install.tooltip                "نصب این افزودنی">
+<!ENTITY addon.updateNow.label                "هم‌اکنون بروزرسانی شود">
+<!ENTITY addon.updateNow.tooltip              "نصب بروزرسانی برای این افزودنی">
+<!ENTITY addon.includeUpdate.label            "افزودنی به‌هنگام نگه داشته شود">
+<!ENTITY addon.updateAvailable.label          "یک بروزرسانی موجود است">
+<!ENTITY addon.checkingForUpdates.label       "در حال جست‌وجو به دنبال بروزرسانی‌ها…">
+<!ENTITY addon.releaseNotes.label             "یادداشت‌های انتشار:">
+<!ENTITY addon.loadingReleaseNotes.label      "در حال بار کردن…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "اشکالی در نمایش یادداشت‌های انتشار به وجود آمد">
+
+<!ENTITY addon.createdBy.label                "تولید شده توسط ">
+
+<!ENTITY eula.title                           "توافق‌نامهٔ مجوز کاربر نهایی">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "پذیرش و نصب…">
+
+<!ENTITY settings.path.button.label           "مرور…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "این چیست؟ تلمتری امکان دارد آزمون هایی را گهگاه نصب و اجرا نماید.">
+<!ENTITY experiment.info.learnmore "بیشتر بدانید">
+<!ENTITY experiment.info.learnmore.accesskey "L">
+<!ENTITY experiment.info.changetelemetry "تنظیمات تلمتری">
+<!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "بیشتر بدانید…">
+
+<!ENTITY disabledUnsigned.heading "برخی افزودنی‌ها غیر فعال شده‌اند">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "افزودنی‌های زیر برای استفاده در &brandShortName; تایید نشده‌اند. شما میتوانید ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "یافتن جایگزین">
+<!ENTITY disabledUnsigned.description.end " یا از توسعه‌دهنده بخواهید تا آنها را تایید نماید.">
+<!ENTITY disabledUnsigned.learnMore "در مورد تلاش های ما برای کمک به حفظ امنیت آنلاین شما بیشتر بیاموزید.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "توسعه‌دهندگانی که علاقه‌مند به دریافت تاییدیهٔ افزودنی‌های خود هستند می‌توانند ادامه دهند با خواندنِ ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "کتابچهٔ راهنما">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "چیزی گم کرده‌اید؟ بعضی از افزونه‌ها دیگر توسط&brandShortName; پشتیبانی نمی‌شود.">
+<!ENTITY pluginDeprecation.learnMore "بیشتر بدانید.">
+
+<!ENTITY legacyWarning.description "چیزی گم کرده‌اید؟ بعضی از افزونه‌ها دیگر توسط &brandShortName; پشتیبانی نمی‌شود.">
+<!ENTITY legacyWarning.showLegacy "نمایش ضمیمه‌های قدیمی">
+<!ENTITY legacyExtensions.title "ضمیمه‌های قدیمی">
+<!ENTITY legacyExtensions.description "این ضمیمه‌ها استاندارهای لازم &brandShortName; را ندارند و به همین دلیل غیرفعال شده‌اند.">
+<!ENTITY legacyExtensions.learnMore "در مورد تغییرات در افزودنی‌ها بیشتر بدانید">

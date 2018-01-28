@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Επαναφορά συνεδρίας">
+
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+<!ENTITY restorepage.errorTitle     "Φαίνεται ότι κάτι δεν πάει καλά.">
+<!ENTITY restorepage.problemDesc    "Το &brandShortName; δεν μπορεί να ανακτήσει τα παράθυρα και τις καρτέλες σας. Αυτό συνήθως συμβαίνει λόγω του ανοίγματος μιας πρόσφατης ιστοσελίδας.">
+<!ENTITY restorepage.tryThis        "Δοκιμάστε να:">
+<!ENTITY restorepage.restoreSome    "Απομακρύνετε μια ή περισσότερες καρτέλες που νομίζετε ότι δημιουργούν το πρόβλημα">
+<!ENTITY restorepage.startNew       "Ξεκινήσετε μια ολοκαίνουρια συνεδρία περιήγησης">
+
+<!ENTITY restorepage.tryagainButton "Επαναφορά">
+<!ENTITY restorepage.restore.access "ρ">
+<!ENTITY restorepage.closeButton    "Κλείσιμο">
+<!ENTITY restorepage.close.access   "Κ">
+
+<!ENTITY restorepage.restoreHeader  "Επαναφορά">
+<!ENTITY restorepage.listHeader     "Παραθύρων και καρτελών">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Παραθύρου &#37;S">
+
+
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+<!ENTITY welcomeback2.restoreButton  "Φύγαμε!">
+<!ENTITY welcomeback2.restoreButton.access "Φ">
+
+<!ENTITY welcomeback2.tabtitle      "Επιτυχία!">
+
+<!ENTITY welcomeback2.pageTitle     "Επιτυχία!">
+<!ENTITY welcomeback2.pageInfo1     "Το &brandShortName; είναι έτοιμο.">
+
+<!ENTITY welcomeback2.restoreAll.label  "Επαναφορά όλων των παραθύρων &amp; των καρτελών">
+<!ENTITY welcomeback2.restoreSome.label "Επαναφορά μόνο συγκεκριμένων">
+
+
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+<!ENTITY welcomeback2.beforelink.pageInfo2  "Τα πρόσθετα και οι προσαρμογές σας έχουν αφαιρεθεί και έχει γίνει επαναφορά στις προεπιλεγμένες ρυθμίσεις του προγράμματος περιήγησής σας. Αν αυτό δεν διόρθωσε το πρόβλημα, ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "μάθετε περισσότερα σχετικά με τις διαθέσιμες επιλογές σας.">
+

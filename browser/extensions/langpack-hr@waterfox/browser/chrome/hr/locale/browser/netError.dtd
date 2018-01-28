@@ -1,0 +1,133 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem pri učitavanju stranice">
+<!ENTITY retry.label "Pokušaj ponovno">
+<!ENTITY returnToPreviousPage.label "Idi natrag">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Povezivanje nije moguće">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Port je ograničen radi sigurnosnih razloga">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Adresa nije pronađena">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Provjerite greške pri pisanju poput <strong>ww</strong>.example.com umjesto <strong>www</strong>.example.com</li> <li>Ako ne možete pristupiti niti jednoj stranici, provjerite vezu između mreže i vašeg računala.</li> <li>Ako je vaše računalo ili mreža zaštićena putem vatrozida ili proxya, provjerite da je &brandShortName; dozvoljen pristup na Web.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Datoteka nije pronađena">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Provjerite naziv datoteke, te postoji li pravopisna ili tipografska greška.</li> <li>Provjerite je li datoteka premještena, preimenovana ili obrisana.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Pristup datoteci je odbijen">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Možda je uklonjena, premještena ili dozvole za datoteku spriječavaju pristup.</li> </ul>">
+
+<!ENTITY generic.title "Ups.">
+<!ENTITY generic.longDesc "<p>&brandShortName; iz nekog razloga ovu stranicu nije moguće učitati.</p>">
+
+
+
+
+<!ENTITY malformedURI.title "Neispravna adresa">
+<!ENTITY malformedURI.longDesc "<ul> <li>Adrese web stranica se obično pišu u formatu poput <strong>http://www.example.com/</strong></li> <li>Provjerite da upisujete kose crte prema naprijed (tj. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Podatkovni prijenos je prekinut">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument je istekao">
+<!ENTITY notCached.longDesc "<p>Traženi dokument nije dostupan u &brandShortName;ovoj priručnoj memoriji.</p><ul><li>. Radi mjere sigurnosti, &brandShortName; neće automatski ponovno zatražiti osjetljive dokumente.</li><li>Kliknite na Pokušaj ponovno da biste zatražili dokument od web stranice.</li></ul>">
+
+<!ENTITY netOffline.title "Izvanmrežni rad">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Kliknite na &quot;Pokušaj ponovno&quot; da biste uključili mrežni način rada i ponovno učitali stranicu.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Greška kodiranja sadržaja">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Molim kontaktirajte vlasnike stranice i informirajte ih o ovom problemu.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Nesiguran tip datoteke">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Molim kontaktirajte vlasnike stranice i informirajte ih o ovom problemu.</li> </ul>">
+
+<!ENTITY netReset.title "Veza je prekinuta">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Vezi je isteklo vrijeme">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Nepoznati protokol">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Možda ćete trebali instalirati drugi program da biste mogli otvoriti ovu adresu.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy poslužitelj odbio vezu">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Provjerite proxy postavke i potvrdite da su ispravne.</li> <li>Kontaktirajte vašeg administratora mreže i provjerite da je proxy poslužitelj funkcionalan.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxy poslužitelj nije pronađen">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Provjerite postavke za proxy.</li> <li>Provjerite ima li vaše računalo ispravnu vezu prema mreži.</li> <li>Ako je vaše računalo zaštićeno vatrozidom ili proxyem, provjerite ima li &brandShortName; dozvolu za pristupanje Webu.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Petlja preusmjeravanja">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ovaj problem ponekad može biti uzrokovan isključivanjem ili odbijanjemprimanja kolačića.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Neispravan odgovor">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Provjerite  ima li vaše računalo instaliran &quot;Personal Security Manager&quot; </li> <li>Moguće da je greška povezana s neuobičajenim postavkama servera.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Neuspjeh otvaranja sigurne veze">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Stranica koju pokušavate otvoriti ne može biti prikazana jer autentičnost primljenih podataka nije moguće provjeriti.</li> <li>Kontaktirajte vlasnike stranice, te ih obavijestite o ovom problemu.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Vaša veza nije sigurna">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Vlasnik <span class='hostname'/> je pogrešno podesio svoju stranicu.  Da bismo spriječili krađu informacija, &brandShortName; se nije povezao na ovu stranicu.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Ova je stranica privremeno nedostupna ili prezauzeta. Pokušajte ponovno za nekoliko trenutaka.</li> <li>Ako ne možete učitati niti jednu stranicu, provjerite mrežne postavke vašeg računala.</li> <li>Ako je vaše računalo ili mreža zaštićena vatrozidom ili proxyem, provjerite ima li &brandShortName; dozvolu pristupiti Internetu.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blokirala sigurnosna politika sadržaja">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; je sprječio učitavanje stranice na ovaj način jer stranica ima sigurnosnu politiku sadržaja koja to zabranjuje..</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Greška oštećenog sadržaja">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Stranicu kojoj pokušavate pristupiti nije moguće prikazati zbog greške u prijenosu podataka.</p><ul><li>Obavijestite vlasnike web stranice o ovom problemu.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Dodaj iznimku…">
+
+<!ENTITY errorReporting.automatic2 "Prijavite greške poput ove da biste pomogli Mozilli identificirati i blokirati maliciozne stranice">
+<!ENTITY errorReporting.learnMore "Saznajte više…">
+
+<!ENTITY remoteXUL.title "Udaljeni XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Obavijestite vlasnike web stranice o ovom problemu.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Uspostava sigurne veze nije uspjela">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Napredna informacija: SSL_ERROR_UNSUPPORTED_VERSION">
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+
+<!ENTITY certerror.pagetitle1  "Nesigurna veza">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Ova stranica koristi HTTP Strict Transport Security (HSTS) da bi uputila &brandShortName; da uspostavi sigurnu vezu. Rezultat toga je onemogućeno dodavanje iznimke za ovaj certifikat.">
+<!ENTITY certerror.copyToClipboard.label "Kopiraj tekst u međuspremnik">
+
+<!ENTITY inadequateSecurityError.title "Vaša veza nije sigurna">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> koristi sigurnosne tehnologije koje su zastarjele i podložne napadima. Napadač može jednostavno otkriti informacije za koje ste smatrali da su sigurne. Administrator web stranice će trebati popraviti poslužitelj prije nego možete posjetiti stranicu.</p><p>Kod greške: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Izgleda da vaše postavke sigurnosti mreže možda uzrokuju ovo. Želite li vratiti na početne postavke?">
+<!ENTITY prefReset.label "Vrati početne postavke">
+
+<!ENTITY advanced.label "Advanced">
+
+<!ENTITY captivePortal.longDesc2 "
+<p>You must log in to this network before you can access the Internet.</p>
+">
+
+<!ENTITY captivePortal.title "Log in to network">
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; did not connect to <span id='wrongSystemTime_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTime_systemDate'/>, when it should be <span id='wrongSystemTime_actualDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; did not connect to <span id='wrongSystemTimeWithoutReference_URL'/> because your computer’s clock appears to show the wrong time and this is preventing a secure connection.</p> <p>Your computer is set to <span id='wrongSystemTimeWithoutReference_systemDate'/>. To fix this problem, change your date and time settings to match the correct time.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Open Network Login Page">
+

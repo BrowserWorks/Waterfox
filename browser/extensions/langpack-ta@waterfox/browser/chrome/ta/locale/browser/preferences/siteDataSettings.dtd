@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "அமைவுகள் - தள தரவு">
+<!ENTITY     hostCol.label                 "தளம்">
+<!ENTITY     statusCol.label               "நிலை">
+<!ENTITY     usageCol.label                "கிடங்கு">
+<!ENTITY     searchTextboxPlaceHolder             "தேடிய வலைத்தளங்கள்">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "தேர்ந்ததை நீக்குக">
+<!ENTITY     removeSelected.accesskey      "R">
+<!ENTITY     save.label                    "மாற்றங்களைச் சேமி">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "இரத்து">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "தள தரவை அகற்றுகிறது">
+<!ENTITY     removingSelected.description  "தளதரவு அகற்றுவது தொடர்புடைய குக்கீகளையும், இணைப்பில்லா வலை உள்ளடக்கத்தையும் அகற்றும். இது வலைத்தளங்களில் இருந்து உங்களை வெளியேற்றலாம். மாற்றங்களைச் செய்ய விரும்புகிறீர்களா?">
+<!ENTITY     siteTree.label                "பின்வரும் வலைத்தள நினைவிகள் அகற்றப்படும்:">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Informaçioin in sciâ ræ">
+<!ENTITY aboutNetworking.warning               "A l'é ina fonçion sperimentale. No adeuviâ sensa a supervixon de 'n grande.">
+<!ENTITY aboutNetworking.showNextTime          "Veddi torna sto avizo inte l'avegnî">
+<!ENTITY aboutNetworking.ok                    "Va ben">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Socket">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSocket">
+<!ENTITY aboutNetworking.refresh               "Agiorna">
+<!ENTITY aboutNetworking.autoRefresh           "Agiorna outomaticamente ògni 3 segondi">
+<!ENTITY aboutNetworking.hostname              "Nomme server">
+<!ENTITY aboutNetworking.port                  "Pòrta">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Ativo">
+<!ENTITY aboutNetworking.idle                  "Inativo">
+<!ENTITY aboutNetworking.host                  "Server">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Mandæ">
+<!ENTITY aboutNetworking.received              "Riçevui">
+<!ENTITY aboutNetworking.family                "Famiggia">
+<!ENTITY aboutNetworking.addresses             "Indirissi">
+<!ENTITY aboutNetworking.expires               "Scadensa (segondi)">
+<!ENTITY aboutNetworking.messagesSent          "Mesaggi mandæ">
+<!ENTITY aboutNetworking.messagesReceived      "Mesaggi reçevui">
+<!ENTITY aboutNetworking.bytesSent             "Byte mandæ">
+<!ENTITY aboutNetworking.bytesReceived         "Byte reçevui">
+<!ENTITY aboutNetworking.logging               "Registro">
+<!ENTITY aboutNetworking.logTutorial           "Amia o <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'> diaio HTTP</a> pe instruçioin in sce comme dueviâ sto strumento.">
+<!ENTITY aboutNetworking.currentLogFile        "File do diaio corente:">
+<!ENTITY aboutNetworking.currentLogModules     "Mòdoli do diaio corente:">
+<!ENTITY aboutNetworking.setLogFile            "Seleçionn-a file do diaio">
+<!ENTITY aboutNetworking.setLogModules         "Inpòsta mòdoli do diaio">
+<!ENTITY aboutNetworking.startLogging          "Iniçia a registrâ">
+<!ENTITY aboutNetworking.stopLogging           "Ferma a registraçion">
+<!ENTITY aboutNetworking.dnsLookup             "Lookup DNS">
+<!ENTITY aboutNetworking.dnsLookupButton       "Risolvi">
+<!ENTITY aboutNetworking.dnsDomain             "Dominio">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "به &syncBrand.shortName.label; خوش آمدید">
+
+<!ENTITY aboutAccountsConfig.description "برای همگام‌سازی زبانه‌ها، نشانک‌ها و گذرواژه‌های خود و &amp; بیشتر وارد شوید.">
+<!ENTITY aboutAccountsConfig.startButton.label "شروع به کار">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "هم‌گام‌سازی اولویت‌ها">
+<!ENTITY aboutAccounts.noConnection.title "بدون اتصال">
+<!ENTITY aboutAccounts.noConnection.description "شما باید به اینترنت متصل شوید تا بتوانید وارد شوید.">
+<!ENTITY aboutAccounts.noConnection.retry "تلاش دوباره">
+<!ENTITY aboutAccounts.badConfig.title "پیکربندی نادرست">
+<!ENTITY aboutAccounts.badConfig.description "امکان تشخیص پیکربندی سرور حساب فایرفاکس شما وجود ندارد. لطفا بعدا مجددا تلاش کنید.">

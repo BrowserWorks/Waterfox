@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Modus segirà da &brandShortName;">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Aviar en il modus segirà">
+<!ENTITY refreshProfile.label         "Redefinir &brandShortName;">
+
+<!ENTITY safeModeDescription3.label   "Il modus segirà è in modus spezial da &brandShortName; che pussibilitescha da schliar problems.">
+<!ENTITY safeModeDescription4.label   "Tes supplements e parameters persunalas vegnan deactivadas temporarmain.">
+
+<!ENTITY refreshProfileInstead.label  "Ti pos era sursiglir il schliar problems ed empruvar da redefinir &brandShortName;.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; è sa serrà nunspetgadamain durant aviar. Supplements u auters problems pon esser il motiv. Ti pos empruvar da schliar quest problem cun reaviar en il modus segirà.">

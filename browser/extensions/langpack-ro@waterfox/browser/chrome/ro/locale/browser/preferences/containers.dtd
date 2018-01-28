@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Adaugă un nou container">
+<!ENTITY addButton.accesskey  "A">
+<!ENTITY preferencesButton.label "Preferințe">
+<!ENTITY removeButton.label   "Elimină">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink2.label      "&#171; Întoarce-te">
+
+<!ENTITY window.title         "Adaugă un nou container">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Nume:">
+<!ENTITY name.accesskey       "N">
+<!ENTITY name.placeholder     "Introdu un nume pentru container">
+<!ENTITY icon.label           "Pictogramă:">
+<!ENTITY icon.accesskey       "i">
+<!ENTITY color.label          "Culoare:">
+<!ENTITY color.accesskey      "l">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Terminat">
+<!ENTITY button.ok.accesskey  "D">
+

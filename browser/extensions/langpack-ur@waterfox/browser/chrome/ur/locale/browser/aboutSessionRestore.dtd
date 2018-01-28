@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "سیشن بحال کریں">
+<!-- LOCALIZATION NOTE: The title is intended to be apologetic and disarming, expressing dismay
+     and regret that we are unable to restore the session for the user -->
+
+<!ENTITY restorepage.errorTitle     "اف، مجھے شرمندگی ہو رہی ہے۔">
+<!ENTITY restorepage.problemDesc    "&brandShortName; کو آپ کے دریچوں اور ٹیب بازیافت کرنے میں مشکل ہو رہی ہے۔ یہ عموماً حالیہ طور پر کھلے ہوئے ویب صفحہ کی وجہ سے ہوتا ہے۔">
+<!ENTITY restorepage.tryThis        "آپ مندرجہ ذیل کوشش کر سکتے ہیں: ">
+<!ENTITY restorepage.restoreSome    "ایک یا زیادہ ٹیب ہٹا رہے ہے جن سے آپ کو لگتا ہے مسلہ ہو رہا ہو گا ">
+<!ENTITY restorepage.startNew       "ایک بلکل نئی براؤزنگ سیشن شروع کر کے ">
+
+<!ENTITY restorepage.tryagainButton "بحال کریں">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.closeButton    "بند کریں">
+<!ENTITY restorepage.close.access   "C">
+
+<!ENTITY restorepage.restoreHeader  "بحال کریں">
+<!ENTITY restorepage.listHeader     "دریچے اور ٹیب">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "دریچہ &#037;S">
+<!-- LOCALIZATION NOTE: The following 'welcomeback2' strings are for about:welcomeback,
+     not for about:sessionstore -->
+
+
+
+<!ENTITY welcomeback2.restoreButton  "چلو!">
+<!ENTITY welcomeback2.restoreButton.access "L">
+
+<!ENTITY welcomeback2.tabtitle      "کامیابی!">
+
+<!ENTITY welcomeback2.pageTitle     "کامیابی!">
+<!ENTITY welcomeback2.pageInfo1     "&brandShortName; چلنے کے لیے تیار ہے۔">
+
+<!ENTITY welcomeback2.restoreSome.label "صرف وہی بحال کریں جو آپ چاہتے ہیں">
+<!-- LOCALIZATION NOTE (welcomeback2.beforelink.pageInfo2,
+welcomeback2.afterlink.pageInfo2): these two string are used respectively
+before and after the the "learn more" link (welcomeback2.link.pageInfo2).
+Localizers can use one of them, or both, to better adapt this sentence to
+their language.
+-->
+
+
+<!ENTITY welcomeback2.beforelink.pageInfo2  "آپ کے ایڈاون اور تخصیص کاریاں ہٹا دی گئی ہیں اور آپ کے براؤزر کی سیٹنگیں طے شدہ بحال کردی گئی ہیں۔ اگر اس سے آپ کا مسئلہ ٹھیک نہیں ہوا، ">
+<!ENTITY welcomeback2.afterlink.pageInfo2   "">
+
+<!ENTITY welcomeback2.link.pageInfo2        "آپ کیا کر سکتے ہیں اس کے بارے میں مزید جانیں۔">
+
+
+<!ENTITY welcomeback2.restoreAll.label  "Restore all windows &amp; tabs">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate "Okno bez aktywnego trybu prywatnego.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label "Otwórz okno w trybie prywatnym">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "O">
+
+<!ENTITY privateBrowsing.title "Przeglądanie prywatne">
+<!ENTITY privateBrowsing.title.tracking "Przeglądanie prywatne z ochroną przed śledzeniem">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before "Podczas przeglądania w oknie prywatnym Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize "nie zachowa">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after ":">
+<!ENTITY aboutPrivateBrowsing.info.visited "historii">
+<!ENTITY aboutPrivateBrowsing.info.searches "wyszukiwań">
+<!ENTITY aboutPrivateBrowsing.info.cookies "ciasteczek">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles "plików tymczasowych">
+<!ENTITY aboutPrivateBrowsing.info.saved.before "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize "zachowa">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2 ":">
+<!ENTITY aboutPrivateBrowsing.info.downloads "pobrane pliki">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks "dodane zakładki">
+<!ENTITY aboutPrivateBrowsing.note.before "Przeglądanie prywatne ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize "nie czyni użytkownika anonimowym">
+<!ENTITY aboutPrivateBrowsing.note.after " w Internecie. Pracodawca lub dostawca usług internetowych może w dalszym ciągu monitorować odwiedzane strony.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before "Więcej informacji o ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title "przeglądaniu prywatnym">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after ".">
+
+<!ENTITY trackingProtection.title "Ochrona przed śledzeniem">
+<!ENTITY trackingProtection.description2 "Niektóre strony używają elementów mogących śledzić aktywność użytkownika w Internecie. Dzięki ochronie przed śledzeniem, Waterfox zablokuje wiele z elementów mogących zbierać informacje o przeglądaniu.">
+<!ENTITY trackingProtection.startTour1 "Przeczytaj o tym, jak to działa">

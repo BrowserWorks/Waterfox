@@ -1,0 +1,31 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowtitle.label      "&brandShortName; - Escueyi perfil d'usuariu">
+
+<!ENTITY            profilename.label      "Nome de perfil:">
+
+<!ENTITY            start.label            "Entamar &brandShortName;">
+<!ENTITY            exit.label             "Zarrar">
+
+<!ENTITY            availprofiles.label    "Perfiles disponibles">
+
+<!ENTITY            newButton.label        "Crear perfil…">
+<!ENTITY            newButton.accesskey    "C">
+<!ENTITY            renameButton.label     "Renomar perfil…">
+<!ENTITY            renameButton.accesskey "R">
+<!ENTITY            deleteButton.label     "Desaniciar perfil…">
+<!ENTITY            deleteButton.accesskey "e">
+
+<!-- manager entities -->
+<!ENTITY            pmDescription.label    "&brandShortName; atroxa información sobre la to configuración, preferencies y otros elementos nel to perfil d'usuariu.">
+
+<!ENTITY            offlineState.label    "Trabayar ensin conexón">
+<!ENTITY            offlineState.accesskey "o">
+
+<!ENTITY            useSelected.label       "Usar el perfil esbilláu ensin entrugar nel aniciu">
+<!ENTITY            useSelected.accesskey   "U">

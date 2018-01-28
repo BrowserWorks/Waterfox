@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!ENTITY window.title "വെബ് കണ്‍സോള്‍">
+<!-- LOCALIZATION NOTE (openURL.label): You can see this string in the Web
+   - Console context menu. -->
+<!ENTITY openURL.label     "കണ്ണി പുതിയ റ്റാബില്‍ തുറക്കുക">
+<!ENTITY openURL.accesskey "ബ">
+<!-- LOCALIZATION NOTE (btnPageNet.label): This string is used for the menu
+  -  button that allows users to toggle the network logging output.
+  -  This string and the following strings toggle various kinds of output
+  -  filters. -->
+<!ENTITY btnPageNet.label   "നെറ്റ്">
+<!ENTITY btnPageNet.tooltip "നെറ്റ്‌വര്‍ക്ക് പ്രവേശനം സൂക്ഷിയ്ക്കുക">
+<!ENTITY btnPageNet.accesskey "N">
+<!-- LOCALIZATION NOTE (btnPageNet.accesskeyMacOSX): This string is used as
+  -  access key for the menu button that allows users to toggle the network
+  -  logging output. On MacOSX accesskeys are available with Ctrl-*. Please make
+  -  sure you do not use the following letters: A, E, N and P. These are used
+  -  for editing commands in text inputs. -->
+<!ENTITY btnPageNet.accesskeyMacOSX "t">
+<!ENTITY btnPageCSS.label   "സിഎസ്എസ്">
+<!ENTITY btnPageCSS.tooltip2 "സിഎസ്എസ് പിശകുകളും മുന്നറിയിപ്പുകളും ലോഗ് ചെയ്യുക">
+<!ENTITY btnPageCSS.accesskey "C">
+<!ENTITY btnPageJS.label    "JS">
+<!ENTITY btnPageJS.tooltip  "ജാവാസ്ക്രിപ്റ്റ് എക്സെപ്ഷനുകള്‍ സൂക്ഷിയ്ക്കുക">
+<!ENTITY btnPageJS.accesskey  "J">
+<!ENTITY btnPageSecurity.label "സുരക്ഷ">
+<!ENTITY btnPageSecurity.tooltip "ലോഗ് സുരക്ഷ പിശകുകളും മുന്നറിയിപ്പുകളും">
+<!ENTITY btnPageSecurity.accesskey "u">
+<!-- LOCALIZATION NOTE (btnPageLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls such console.log() and
+  -  console.error(). -->
+
+<!ENTITY btnPageLogging.label   "പ്രവേശിയ്ക്കുന്നു">
+<!ENTITY btnPageLogging.tooltip "window.console വസ്തുവിലേക്കു് അയച്ച സന്ദേശങ്ങള്‍ സൂക്ഷിയ്ക്കുക">
+<!ENTITY btnPageLogging.accesskey3 "L">
+<!ENTITY btnConsoleErrors       "പിശകുകള്‍">
+<!ENTITY btnConsoleInfo         "വിവരം">
+<!ENTITY btnConsoleWarnings     "മുന്നറിയിപ്പുകള്‍">
+<!ENTITY btnConsoleLog          "ലോഗ്">
+<!ENTITY btnConsoleXhr          "എക്സ്എച്ആര്‍">
+<!ENTITY btnConsoleReflows      "റീഫ്ലോ">
+<!-- LOCALIZATION NOTE (btnServerLogging): This is used as the text of the
+  -  the toolbar. It shows or hides messages that the web developer inserted on
+  -  the page for debugging purposes, using calls on the HTTP server. -->
+
+<!ENTITY btnServerLogging.label       "സര്‍വര്‍">
+<!ENTITY btnServerLogging.tooltip     "ഒരു വെബ്‌സര്‍വറില്‍ നിന്ന്‍ ലോഗ് സന്ദേങ്ങള്‍ ലഭിച്ചിരിക്കുന്നു">
+<!ENTITY btnServerLogging.accesskey   "S">
+<!ENTITY btnServerErrors              "പിശകുകള്‍">
+<!ENTITY btnServerInfo                "വിവരം">
+<!ENTITY btnServerWarnings            "മുന്നറിയിപ്പുകള്‍">
+<!ENTITY btnServerLog                 "ലോഗ്">
+<!-- LOCALIZATION NODE (btnConsoleSharedWorkers) the term "Shared Workers"
+  -  should not be translated. -->
+
+<!ENTITY btnConsoleSharedWorkers "ഷെയേർഡ് വർക്കര്‍സ്">
+<!-- LOCALIZATION NODE (btnConsoleServiceWorkers) the term "Service Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleServiceWorkers "സെർവീസ് വർക്കര്‍സ്">
+<!-- LOCALIZATION NODE (btnConsoleWindowlessWorkers) the term "Workers"
+  -  should not be translated. -->
+<!ENTITY btnConsoleWindowlessWorkers "ആഡ്-ഓണ്‍ അല്ലെങ്കില്‍ ക്രോം വര്‍ക്കര്‍സ്">
+
+<!ENTITY filterOutput.placeholder "ഔട്ട്പുട്ട് ഫില്‍റ്റര്‍ ചെയ്യുക">
+<!ENTITY btnClear.label        "rവെടിപ്പാക്കുക">
+<!ENTITY btnClear.tooltip      "വെബ് കണ്‍സോള്‍ ഔട്ട്പുട്ട് വെടിപ്പാക്കുക">
+<!ENTITY btnClear.accesskey    "r">
+
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "‌">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "‌">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "‌">
+
+<!ENTITY copyURLCmd.label     "കണ്ണിയുടെ വിലാസം പകര്‍ത്തുക">
+<!ENTITY copyURLCmd.accesskey "a">
+
+<!ENTITY closeCmd.key         "W">
+<!ENTITY findCmd.key          "F">
+<!ENTITY clearOutputCtrl.key  "L">
+<!ENTITY openInVarViewCmd.label "വേരിയബിള്‍സ് വ്യുവില്‍ തുറക്കുക">
+<!ENTITY openInVarViewCmd.accesskey "V">
+<!ENTITY storeAsGlobalVar.label "ഗ്ലോബല്‍ വേരിയബിള്‍ ആയി സ്റ്റോര്‍ ചെയ്യുക">
+<!ENTITY storeAsGlobalVar.accesskey "S">

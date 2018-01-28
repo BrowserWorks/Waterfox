@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printJobOptions.title "Sifat Pencetak">
+
+<!ENTITY paperInput.label "Saiz kertas:">
+<!ENTITY paperInput.accesskey "S">
+
+<!ENTITY jobTitleInput.label "Pekerjaan:">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "Warna:">
+<!ENTITY grayRadio.label "Skala kelabu">
+<!ENTITY grayRadio.accesskey "a">
+<!ENTITY colorRadio.label "Warna">
+<!ENTITY colorRadio.accesskey "r">
+
+<!ENTITY edgeMarginInput.label "Ruang daripada pinggir kertas ke Margin">
+<!ENTITY topInput.label "Atas:">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "Bawah:">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "Kiri:">
+<!ENTITY leftInput.accesskey "i">
+<!ENTITY rightInput.label "Kanan:">
+<!ENTITY rightInput.accesskey "K">

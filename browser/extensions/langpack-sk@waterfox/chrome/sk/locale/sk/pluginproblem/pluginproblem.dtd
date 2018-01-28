@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Táto stránka používa zásuvný modul, ktorý môže aplikáciu &brandShortName; spomaľovať.">
+<!ENTITY tapToPlayPlugin                                     "Ťuknutím sem aktivujete zásuvný modul">
+<!ENTITY clickToActivatePlugin                               "Aktivovať zásuvný modul">
+<!ENTITY checkForUpdates                                     "Skontrolovať aktualizácie…">
+<!ENTITY blockedPlugin.label                                 "Tento zásuvný modul bol pre vašu ochranu zakázaný.">
+<!ENTITY hidePluginBtn.label                                 "Skryť zásuvný modul">
+<!ENTITY managePlugins                                       "Správa zásuvných modulov…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "Skúste ho obnoviť ">
+<!ENTITY reloadPlugin.middle                                 "opätovným načítaním stránky">
+<!ENTITY reloadPlugin.post                                   ".">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Odoslať správu o zlyhaní">
+<!ENTITY report.submitting                                   "Správa sa odosiela…">
+<!ENTITY report.submitted                                    "Správa o zlyhaní odoslaná.">
+<!ENTITY report.disabled                                     "Odosielanie správ o zlyhaní zakázané.">
+<!ENTITY report.failed                                       "Odoslanie zlyhalo.">
+<!ENTITY report.unavailable                                  "Nie je dostupná žiadna správa.">
+<!ENTITY report.comment                                      "Pridať komentár (komentáre sú verejne dostupné)">
+<!ENTITY report.pageURL                                      "Zahrnúť adresu stránky">
+
+<!ENTITY plugin.file                                         "Súbor">
+<!ENTITY plugin.mimeTypes                                    "Typy MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Povoliť chránený režim Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Blokovať nebezpečný a dotieravý obsah používajúci Flash">

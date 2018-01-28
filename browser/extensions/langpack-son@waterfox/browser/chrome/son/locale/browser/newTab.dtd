@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are used in the about:newtab page -->
+
+<!ENTITY newtab.pageTitle "Kanji taaga">
+
+<!ENTITY newtab.customize.cog.enhanced "Nungu honnantey tonton">
+<!ENTITY newtab.customize.cog.title2 "KANJI DABARI TAAGEY">
+<!ENTITY newtab.customize.cog.learn "Kanji taagaa bay ka tonton">
+<!ENTITY newtab.customize.title "Kanji moo taagaa hanse war boŋ se">
+<!ENTITY newtab.customize.blank2 "Moo koonu cebe">
+<!ENTITY newtab.undo.removedLabel "Kabeboy bii hun.">
+<!ENTITY newtab.undo.undoButton "Taafeeri.">
+<!ENTITY newtab.undo.restoreButton "Ikul yeeti.">
+<!ENTITY newtab.undo.closeTooltip "Tugu">
+
+<!ENTITY newtab.customize.classic "Show your top sites">

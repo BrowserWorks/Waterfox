@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                       "36em">
+
+<!ENTITY     cookiesonsystem.label          "Følgende infokapsler er lagret på datamaskinen din:">
+<!ENTITY     cookiename.label               "Navn">
+<!ENTITY     cookiedomain.label             "Nettsted">
+
+<!ENTITY     props.name.label               "Navn:">
+<!ENTITY     props.value.label              "Innhold:">
+<!ENTITY     props.domain.label             "Server:">
+<!ENTITY     props.path.label               "Katalog:">
+<!ENTITY     props.secure.label             "Send for:">
+<!ENTITY     props.expires.label            "Utløper:">
+<!ENTITY     props.container.label          "Kontainer:">
+
+<!ENTITY     window.title                   "Infokapsler">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     focusSearch1.key               "f">
+<!ENTITY     focusSearch2.key               "k">
+
+<!ENTITY     searchFilter.label             "Søk">
+<!ENTITY     searchFilter.accesskey         "S">
+
+<!ENTITY     button.close.label             "Lukk">
+<!ENTITY     button.close.accesskey         "L">

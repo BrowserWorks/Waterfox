@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab՝ պտտվում է ներդիրների միջև՝ ըստ վերջին օգտագործածի">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Բացել նո&amp;ր պատուհաններ՝  նոր ներդիրների փոխարեն">
+<!ENTITY newWindowsAsTabs.accesskey   "ն">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Զգուշացնել բազմաթիվ ներդիրներ փակելիս">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "Զ">
+
+<!ENTITY warnOnOpenManyTabs.label       "Զգուշացնել բազմակի ներդիրներ բացելիս, ինչը կարող է դանդաղեցնել &brandShortName;-ը:">
+<!ENTITY warnOnOpenManyTabs.accesskey   "դ">
+
+<!ENTITY switchLinksToNewTabs.label        "Հղումը նոր ներդիրում բացելիս միանգամից անցնել դրան">
+<!ENTITY switchLinksToNewTabs.accesskey    "բ">
+
+<!ENTITY showTabsInTaskbar.label          "Ցուցադրել ներդիրների նախադիտումը Windows taskbar-ում">
+<!ENTITY showTabsInTaskbar.accesskey      "k">
+<!ENTITY tabsGroup.label          "Ներդիրներ">

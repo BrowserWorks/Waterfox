@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "නව ටැබය">
+<!ENTITY newtab.customize.classic "ඔබේ ඉහළම අඩවි පෙන්වන්න">
+<!ENTITY newtab.customize.cog.title2 "NEW TAB CONTROLS">
+<!ENTITY newtab.customize.cog.learn "නව ටැබය ගැන දැනගන්න">
+<!ENTITY newtab.customize.title "ඔබේ නව ටැබ පිටුව රුචිකරණය කරමින්">
+<!ENTITY newtab.customize.blank2 "හිස් පිටුව පෙන්වන්න">
+<!ENTITY newtab.undo.removedLabel "කුඩාරුව ඉවත් විය.">
+<!ENTITY newtab.undo.undoButton "අහොසි.">
+<!ENTITY newtab.undo.restoreButton "සියල්ල යළි පිහිටුවන්න.">
+<!ENTITY newtab.undo.closeTooltip "සඟවන්න">
+
+<!ENTITY newtab.customize.cog.enhanced "Include suggested sites">

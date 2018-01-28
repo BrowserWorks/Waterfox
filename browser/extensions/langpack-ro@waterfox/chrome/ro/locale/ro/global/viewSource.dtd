@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/viewSource.xul -->
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Sursă: ">
+
+<!ENTITY fileMenu.label "Fișier">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "Salvează pagina ca…">
+<!ENTITY savePageCmd.accesskey "a">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Aranjare în pagină…">
+<!ENTITY pageSetupCmd.accesskey "j">
+<!ENTITY printPreviewCmd.label "Previzualizare pentru tipărire">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Tipărește…">
+<!ENTITY printCmd.accesskey "p">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Închide">
+<!ENTITY closeCmd.accesskey "c">
+<!ENTITY closeCmd.commandkey "W">
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Mergi la linia…">
+<!ENTITY goToLineCmd.accesskey "g">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Vizualizare">
+<!ENTITY viewMenu.accesskey       "V">
+<!ENTITY reloadCmd.label "Reîncarcă">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Înfășoară rândurile lungi"> 
+<!ENTITY menu_wrapLongLines.accesskey "n">
+<!ENTITY menu_highlightSyntax.label "Evidențiere sintaxă">
+<!ENTITY menu_highlightSyntax.accesskey "E">
+<!ENTITY menu_textSize.label "Mărimea textului">
+<!ENTITY menu_textSize.accesskey "z">
+<!ENTITY menu_textEnlarge.label "Mai mare">
+<!ENTITY menu_textEnlarge.accesskey "i">
+<!ENTITY menu_textReduce.label "Mai mică">
+<!ENTITY menu_textReduce.accesskey "c">
+<!ENTITY menu_textReset.label "Normală">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Găsește în această pagină…">
+<!ENTITY findOnCmd.accesskey "F">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Găsește din nou">
+<!ENTITY findAgainCmd.accesskey "G">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Înapoi">
+<!ENTITY backCmd.accesskey "n">
+<!ENTITY forwardCmd.label "Înainte">
+<!ENTITY forwardCmd.accesskey "n">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Copiază locația linkului">
+<!ENTITY copyLinkCmd.accesskey "l">
+<!ENTITY copyEmailCmd.label "Copiază adresa de e-mail">
+<!ENTITY copyEmailCmd.accesskey "e">

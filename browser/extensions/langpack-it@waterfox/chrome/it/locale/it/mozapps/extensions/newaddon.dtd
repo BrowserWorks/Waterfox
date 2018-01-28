@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title "Installa componente aggiuntivo">
+<!ENTITY intro "Un altro programma presente sul computer sta cercando di installare in &brandShortName; questo componente aggiuntivo:">
+<!ENTITY warning "Installare esclusivamente componenti aggiuntivi realizzati da autori fidati.">
+<!ENTITY allow "Consenti questa installazione">
+<!ENTITY later "È possibile cambiare la propria decisione in qualunque momento utilizzando Gestione componenti aggiuntivi.">
+<!ENTITY continue "Continua">
+<!ENTITY restartMessage "È necessario riavviare &brandShortName; per completare l’installazione di questo componente aggiuntivo.">
+<!ENTITY restartButton "Riavvia &brandShortName;">
+<!ENTITY cancelButton "Annulla">

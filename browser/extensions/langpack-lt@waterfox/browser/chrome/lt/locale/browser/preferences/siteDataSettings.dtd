@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Nuostatos – svetainių duomenys">
+<!ENTITY     hostCol.label                 "Svetainė">
+<!ENTITY     statusCol.label               "Būsena">
+<!ENTITY     usageCol.label                "Vieta">
+<!ENTITY     searchTextboxPlaceHolder             "Ieškoti svetainių">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "e">
+<!ENTITY     removeSelected.label          "Pašalinti pažymėtus">
+<!ENTITY     removeSelected.accesskey      "P">
+<!ENTITY     save.label                    "Įrašyti pakeitimus">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Atsisakyti">
+<!ENTITY     cancel.accesskey              "k">
+<!ENTITY     removingDialog.title          "Svetainių duomenų šalinimas">
+<!ENTITY     removingSelected.description  "Šalinant svetainių duomenis taip pat bus pašalinti susiję slapukai ir turinys darbui neprisijungus. Dėl to galite būti atjungti iš svetainių. Ar tikrai norite atlikti pakeitimus?">
+<!ENTITY     siteTree.label                "Bus pašalinti šie svetainių slapukai:">

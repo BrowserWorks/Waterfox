@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Dades de telemesura">
+
+<!ENTITY aboutTelemetry.pingDataSource "Font de dades de ping:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Dades de ping actuals">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Dades de ping arxivades">
+
+<!ENTITY aboutTelemetry.raw "JSON sense processar">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Mostra dades de la subsessió">
+
+<!ENTITY aboutTelemetry.choosePing "Trieu el ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Ping més recent">
+
+<!ENTITY aboutTelemetry.showOlderPing "Ping més antic &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Setmana">
+
+<!ENTITY aboutTelemetry.archivePingType "Tipus de ping">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "Avui">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "Ahir">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "Més antic">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Dades generals">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Dades de l'entorn">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Registre de telemesura">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Sentències SQL lentes">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  El navegador es penja">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Bloquejos de fils">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Piles capturades">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Escalars">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Escalars amb clau">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogrames">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histogrames amb clau">
+
+<!ENTITY aboutTelemetry.eventsSection "  Esdeveniments">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Mesures senzilles">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Detalls del complement">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Escriptures tardanes">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Informació de la sessió">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NOTA: la depuració de SQL lenta està habilitada. Es poden mostrar les cadenes SQL completes a sota però no s'enviaran per a la telemesura.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Obtén els noms de les funcions per a les piles">
+
+
+<!ENTITY aboutTelemetry.filterText "  Filtra (cadenes o /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Càrrega útil">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+

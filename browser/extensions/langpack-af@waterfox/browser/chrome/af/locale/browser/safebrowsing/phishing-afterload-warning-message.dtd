@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Eina! Laat ek weg wees!">
+<!ENTITY safeb.palm.decline.label "Ignoreer hierdie waarskuwing">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "Nié 'n misleidende werf nie…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "Hoekom is hierdie bladsy geblok?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+
+<!ENTITY safeb.blocked.malwarePage.title "'n Gerapporteerde aanvalsbladsy!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Die webblad by <span id='malware_sitename'/> is as 'n aanvalsbladsy aangegee en is op grond van u sekuriteitvoorkeure geblokkeer.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Aanvalsbladsye probeer programme installeer wat private inligting steel, u rekenaar gebruik om ander aan te val, of u stelsel beskadig.</p><p>Sommige aanvalsbladsye versprei doelbewus skadelike sagteware, maar baie word oorgeneem sonder die wete of toestemming van hulle eienaars.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Aangegee as werf met ongewensde sagteware!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Die webblad by <span id='unwanted_sitename'/> is aangegee as dat dit ongewensde sagteware bevat en is op grond van u sekuriteitvoorkeure geblokkeer.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Bladsye met ongewensde sagteware probeer sagteware te installeer wat dalk bedrieglik is en 'n stelsel op onverwagse maniere kan affekteer.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Misleidende werf!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Die webblad by <span id='phishing_sitename'/> is as 'n misleidende werf aangegee en is op grond van u sekuriteitvoorkeure geblokkeer.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Misleidende werwe word ontwerp om mens te flous om iets gevaarliks te doen, soos om sagteware te installeer, of persoonlike inligting te ontbloot soos wagwoorde, foon- of kredietkaartnommers.</p><p>Deur enige inligting vir dié bladsy te gee, kan lei tot identiteitsdiefstal of ander bedrog.</p>">
+
+
+<!ENTITY safeb.palm.advisory.desc "Advisory provided by <a id='advisory_provider'/>">
+

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "关于网络连接">
+<!ENTITY aboutNetworking.warning               "此功能仍处于实验阶段。请不要在无经验的情况下使用。">
+<!ENTITY aboutNetworking.showNextTime          "下次仍显示此警告">
+<!ENTITY aboutNetworking.ok                    "确定">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "套接字">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "WebSocket">
+<!ENTITY aboutNetworking.refresh               "刷新">
+<!ENTITY aboutNetworking.autoRefresh           "每3秒自动刷新一次">
+<!ENTITY aboutNetworking.hostname              "主机名">
+<!ENTITY aboutNetworking.port                  "端口">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "活动">
+<!ENTITY aboutNetworking.idle                  "空闲">
+<!ENTITY aboutNetworking.host                  "主机">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "已发送">
+<!ENTITY aboutNetworking.received              "已接收">
+<!ENTITY aboutNetworking.family                "协议族">
+<!ENTITY aboutNetworking.addresses             "地址">
+<!ENTITY aboutNetworking.expires               "过期时间 (秒)">
+<!ENTITY aboutNetworking.messagesSent          "发出的信息数">
+<!ENTITY aboutNetworking.messagesReceived      "收到的信息数">
+<!ENTITY aboutNetworking.bytesSent             "发送字节数">
+<!ENTITY aboutNetworking.bytesReceived         "接收字节数">
+<!ENTITY aboutNetworking.logging               "日志">
+<!ENTITY aboutNetworking.logTutorial           "参见 <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP 日志</a> 了解如何使用此工具。">
+<!ENTITY aboutNetworking.currentLogFile        "当前日志文件：">
+<!ENTITY aboutNetworking.currentLogModules     "当前日志模块：">
+<!ENTITY aboutNetworking.setLogFile            "设置日志文件">
+<!ENTITY aboutNetworking.setLogModules         "设置日志模块">
+<!ENTITY aboutNetworking.startLogging          "开始记录日志">
+<!ENTITY aboutNetworking.stopLogging           "停止记录日志">
+<!ENTITY aboutNetworking.dnsLookup             "DNS 查询">
+<!ENTITY aboutNetworking.dnsLookupButton       "解析">
+<!ENTITY aboutNetworking.dnsDomain             "域名">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP">
+<!ENTITY aboutNetworking.rcwn                  "RCWN 统计">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN 状态">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "缓存较快数">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "网络较快数">
+<!ENTITY aboutNetworking.totalNetworkRequests  "总网络请求数">
+<!ENTITY aboutNetworking.rcwnOperation         "缓存操作">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "打开">
+<!ENTITY aboutNetworking.rcwnPerfRead          "读取">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "写入">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "打开项">
+<!ENTITY aboutNetworking.rcwnAvgShort          "短操作平均">
+<!ENTITY aboutNetworking.rcwnAvgLong           "长操作平均">
+<!ENTITY aboutNetworking.rcwnStddevLong        "长操作标准偏差">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "缓存较慢次数">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "缓存非慢次数">

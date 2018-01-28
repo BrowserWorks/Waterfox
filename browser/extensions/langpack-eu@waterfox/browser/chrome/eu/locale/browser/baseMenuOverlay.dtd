@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Txikitu">
+<!ENTITY bringAllToFront.label    "Ekarri dena aurrera">
+<!ENTITY zoomWindow.label         "Zooma">
+<!ENTITY windowMenu.label         "Leihoa">
+
+<!ENTITY helpMenu.label           "Laguntza"> 
+<!ENTITY helpMenu.accesskey       "L"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Laguntza"> 
+<!ENTITY helpMenuWin.accesskey    "L">
+<!ENTITY aboutProduct2.label      "&brandShorterName;(r)i buruz">
+<!ENTITY aboutProduct2.accesskey  "b">
+<!ENTITY productHelp2.label       "&brandShorterName;(r)en laguntza">
+<!ENTITY productHelp2.accesskey   "l">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Laster-teklak">
+<!ENTITY helpKeyboardShortcuts.accesskey "s">
+
+<!ENTITY helpSafeMode.label       "Berrabiarazi gehigarriak desgaituta…">
+<!ENTITY helpSafeMode.accesskey   "r">
+<!ENTITY helpSafeMode.stop.label       "Berrabiarazi gehigarriak gaituta">
+<!ENTITY helpSafeMode.stop.accesskey   "r">
+
+<!ENTITY healthReport2.label      "&brandShorterName; osasun-txostena">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Arazoak konpontzeko informazioa…">
+<!ENTITY helpTroubleshootingInfo.accesskey  "A">
+
+<!ENTITY helpFeedbackPage.label      "Bidali iritzia…">
+<!ENTITY helpFeedbackPage.accesskey  "d">
+
+<!ENTITY helpShowTour2.label            "&brandShorterName;(r)en itzulia">
+<!ENTITY helpShowTour2.accesskey        "u">
+
+<!ENTITY preferencesCmdMac.label        "Hobespenak…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Zerbitzuak">
+
+<!ENTITY hideThisAppCmdMac2.label       "Ezkutatu &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ezkutatu besteak">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Erakutsi denak">

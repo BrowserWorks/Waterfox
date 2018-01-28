@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Βοηθός εισαγωγής">
+
+<!ENTITY importFrom.label               "Εισαγωγή επιλογών, σελιδοδεικτών, ιστορικού, κωδικών και άλλων δεδομένων από:">
+<!ENTITY importFromUnix.label           "Εισαγωγή προτιμήσεων,σελιδοδεικτών, ιστορικού, κωδικών και άλλων δεδομένων από:">
+<!ENTITY importFromBookmarks.label      "Εισαγωγή σελιδοδεικτών από:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "Μ">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "Ε">
+<!ENTITY importFromNothing.label        "Να μην εισαχθεί τίποτα">
+<!ENTITY importFromNothing.accesskey    "τ">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "Σ">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "κ">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "Χ">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "ρ">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "Φ">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Δεν βρέθηκαν προγράμματα τα οποία περιέχουν σελιδοδείκτες, ιστορικό ή δεδομένα κωδικών.">
+
+<!ENTITY importSource.title             "Εισαγωγή ρυθμίσεων και δεδομένων">
+<!ENTITY importItems.title              "Αντικείμενα προς εισαγωγή">
+<!ENTITY importItems.label              "Επιλέξτε ποια αντικείμενα θα εισαχθούν:">
+
+<!ENTITY migrating.title                "Εισαγωγή...">
+<!ENTITY migrating.label                "Τα ακόλουθα αντικείμενα εισάγονται αυτήν τη στιγμή...">
+
+<!ENTITY selectProfile.title            "Επιλογή προφίλ">
+<!ENTITY selectProfile.label            "Τα ακόλουθα προφίλ είναι διαθέσιμα για εισαγωγή από:">
+
+<!ENTITY done.title                     "Η εισαγωγή ολοκληρώθηκε">
+<!ENTITY done.label                     "Τα ακόλουθα στοιχεία εισήχθησαν επιτυχώς:">
+
+<!ENTITY closeSourceBrowser.label       "Παρακαλώ βεβαιωθείτε ότι το επιλεγμένο πρόγραμμα περιήγησης είναι κλειστό προτού συνεχίσετε.">

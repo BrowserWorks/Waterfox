@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY header.label     "ခေါင်းစဉ် အကျဉ်း"> 
+<!ENTITY message.label    "ဒီမှာ တချို့ စာသား နမူနာ ထားရှိတယ်။">
+<!ENTITY editfield0.label "သုံးစွဲသူ အမည်၊"> 
+<!ENTITY editfield1.label "စကားဝှက် -"> 
+<!ENTITY checkbox.label   "စစ်ဆေးပါ">
+<!ENTITY copyCmd.label    "ကူးယူပါ">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "အားလုံး ရွေးချယ်ပါ">
+<!ENTITY selectAllCmd.accesskey "A">

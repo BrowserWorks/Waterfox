@@ -1,0 +1,14 @@
+locale alerts ru ru/locale/ru/alerts/
+locale autoconfig ru ru/locale/ru/autoconfig/
+locale global ru ru/locale/ru/global/
+locale global-platform ru ru/locale/ru/global-platform/mac/ os=Darwin
+locale global-platform ru ru/locale/ru/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform ru ru/locale/ru/global-platform/win/ os=WINNT
+locale mozapps ru ru/locale/ru/mozapps/
+locale necko ru ru/locale/ru/necko/
+locale passwordmgr ru ru/locale/ru/passwordmgr/
+locale pipnss ru ru/locale/ru/pipnss/
+locale pippki ru ru/locale/ru/pippki/
+locale places ru ru/locale/ru/places/
+locale pluginproblem ru ru/locale/ru/pluginproblem/
+locale weave ru ru/locale/ru/services/

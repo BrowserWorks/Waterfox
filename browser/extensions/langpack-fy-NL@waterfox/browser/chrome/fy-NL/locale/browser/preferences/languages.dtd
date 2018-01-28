@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width                                   "34em">
+
+<!ENTITY languages.customize.Header                     "Talen">
+<!ENTITY languages.customize.description                "Websiden binne somtiden beskikber yn mear as ien taal. Kies de talen foar it toanen fan dizze websiden, yn folchoarder fan foarkar:">
+<!ENTITY languages.customize.moveUp.label               "Omheech ferpleatse">
+<!ENTITY languages.customize.moveUp.accesskey           "h">
+<!ENTITY languages.customize.moveDown.label             "Omleech ferpleatse">
+<!ENTITY languages.customize.moveDown.accesskey         "l">
+<!ENTITY languages.customize.deleteButton.label         "Fuortsmite">
+<!ENTITY languages.customize.deleteButton.accesskey     "F">
+<!ENTITY languages.customize.selectLanguage.label       "Selektearje in taal om ta te foegjen…">
+<!ENTITY languages.customize.addButton.label            "Tafoegje">
+<!ENTITY languages.customize.addButton.accesskey        "T">

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Lleihau">
+<!ENTITY bringAllToFront.label    "Dwyn y Cyfan i'r Blaen">
+<!ENTITY zoomWindow.label         "Chwyddo">
+<!ENTITY windowMenu.label         "Ffenestr">
+
+<!ENTITY helpMenu.label           "Cymorth"> 
+<!ENTITY helpMenu.accesskey       "C"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Cymorth"> 
+<!ENTITY helpMenuWin.accesskey    "C">
+<!ENTITY aboutProduct2.label      "Ynghylch &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "n">
+<!ENTITY productHelp2.label       "Cymorth &brandShorterName;">
+<!ENTITY productHelp2.accesskey   "m">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Llwybrau Byr Bysellfwrdd">
+<!ENTITY helpKeyboardShortcuts.accesskey "B">
+
+<!ENTITY helpSafeMode.label       "Ailgychwyn gydag Ychwanegion wedi eu Hanalluogi…">
+<!ENTITY helpSafeMode.accesskey   "A">
+<!ENTITY helpSafeMode.stop.label       "Ailgychwyn gydag Ychwanegion wedi eu Hanalluogi">
+<!ENTITY helpSafeMode.stop.accesskey   "A">
+
+<!ENTITY healthReport2.label      "Adroddiad Iechyd &brandShorterName;">
+<!ENTITY healthReport2.accesskey  "A">
+
+<!ENTITY helpTroubleshootingInfo.label      "Gwybodaeth am Ddatrys Problemau">
+<!ENTITY helpTroubleshootingInfo.accesskey  "G">
+
+<!ENTITY helpFeedbackPage.label      "Cyflwyno Adborth…">
+<!ENTITY helpFeedbackPage.accesskey  "A">
+
+<!ENTITY helpShowTour2.label            "Cyflwyno &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "C">
+
+<!ENTITY preferencesCmdMac.label        "Dewisiadau…">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Gwasanaethau">
+
+<!ENTITY hideThisAppCmdMac2.label       "Cuddio &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Cuddio Eraill">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Dangos Popeth">

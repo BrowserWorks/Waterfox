@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; - Abgesicherter Modus">
+<!ENTITY window.maxWidth              "400">
+
+<!ENTITY startSafeMode.label          "Im Abgesicherten Modus starten">
+<!ENTITY refreshProfile.label         "&brandShortName; bereinigen">
+
+<!ENTITY safeModeDescription3.label   "Der Abgesicherte Modus ist ein spezieller Modus von &brandShortName;, der zur Problembehebung genutzt werden kann.">
+<!ENTITY safeModeDescription4.label   "Ihre Add-ons und Benutzereinstellungen werden temporär deaktiviert.">
+
+<!ENTITY refreshProfileInstead.label  "Sie können auch die Problembehebung überspringen und versuchen, &brandShortName; zu bereinigen.">
+
+<!-- LOCALIZATION NOTE (autoSafeModeDescription3.label): Shown on the safe mode dialog after multiple startup crashes. See also chrome/global/resetProfile.dtd -->
+<!ENTITY autoSafeModeDescription3.label "&brandShortName; wurde beim Starten unerwartet beendet. Dies kann durch Add-ons oder andere Probleme verursacht werden. Sie können versuchen, das Problem zu beheben, indem Sie im Abgesicherten Modus starten.">

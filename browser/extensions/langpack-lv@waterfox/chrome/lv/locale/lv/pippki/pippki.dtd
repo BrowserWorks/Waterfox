@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Mainīt galveno paroli">
+<!ENTITY setPassword.tokenName.label "Drošības ierīce">
+<!ENTITY setPassword.oldPassword.label "Pašreizējā parole:">
+<!ENTITY setPassword.newPassword.label "Jaunā parole:">
+<!ENTITY setPassword.reenterPassword.label "Jaunā parole (vēlreiz):">
+<!ENTITY setPassword.meter.label "Paroles kvalitātes mērītājs">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Atstatīt">
+<!ENTITY resetPassword.title  "Atstatīt galveno paroli">
+<!ENTITY resetPassword.text  "Ja atstatīsiet galveno paroli, tiks aizmirstas visas saglabātās tīmekļa un e-pasta paroles, formu dati, personīgie sertifikāti un privātās atslēgas.  Vai esat pārliecināts, ka vēlaties atstatīt galveno paroli?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Lejupielādē sertifikātus">
+<!ENTITY downloadCert.message1 "Jums tiek vaicāts uzticēties jaunai Sertifikātu Autoritātei (CA).">
+<!ENTITY downloadCert.trustSSL "Uzticēties šai CA tīmekļa vietņu identificēšanai.">
+<!ENTITY downloadCert.trustEmail "Uzticēties šai CA epasta lietotāju identificēšanai.">
+<!ENTITY downloadCert.trustObjSign "Uzticēties šai CA programmatūras izstrādātāju identificēšanai.">
+<!ENTITY downloadCert.message3 "Pirms uzticaties šai CA jebkādam mērķim, jums vajadzētu izpētīt tās sertifikātu un (ja pieejams) tās sertifikātu izsniegšanas politiku un procedūras.">
+<!ENTITY downloadCert.viewCert.label "Apskatīt">
+<!ENTITY downloadCert.viewCert.text "Apskatīt CA sertifikātu">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Lietotāja identifikācijas pieprasījums">
+<!ENTITY clientAuthAsk.message1 "Šī vietne pieprasīja, lai jūs identificētu sevi ar sertifikātu:">
+<!ENTITY clientAuthAsk.message2 "Izvēlieties sertifikātu, ar kuru identificēt sevi:">
+<!ENTITY clientAuthAsk.message3 "Izvēlētā sertifikāta detaļas:">
+
+<!ENTITY pkcs12.setpassword.title  "Izvēlieties sertifikāta rezerves kopijas paroli">
+<!ENTITY pkcs12.setpassword.message  "Sertifikāta rezerves kopijas parole aizsargās izveidoto rezerves kopijas failu. Lai turpinātu obligāti jāievada parole.">
+<!ENTITY pkcs12.setpassword.label1 "Sertifikāta rezerves kopijas parole:">
+<!ENTITY pkcs12.setpassword.label2 "Sertifikāta rezerves kopijas parole (vēlreiz):">
+<!ENTITY pkcs12.setpassword.reminder "Svarīgi: Ja aizmirsīsiet šo paroli, nevarēsiet atjaunot šo rezerves kopiju. Lūdzu saglabājiet to drošā vietā.">
+
+<!ENTITY chooseToken.title  "Marķierierīces izvēles logs">
+<!ENTITY chooseToken.message1 "Lūdzu izvēlieties marķierierīci.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Ģenerē privāto atslēgu">
+<!ENTITY createCertInfo.msg1 "Notiek atslēgas ģenerēšana… Tas var aizņemt vairākas minūtes…">
+<!ENTITY createCertInfo.msg2 "Lūdzu, uzgaidiet…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Aizsargātas marķierierīces autentificēšana">
+<!ENTITY protectedAuth.msg "Lūdzu autentificējiet marķierierīci. Autentificēšanas metode atkarīga no ierīces tipa.">
+<!ENTITY protectedAuth.tokenName.label "Marķierieīce:">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE the term "url-classifier" should not be translated. -->
+
+<!ENTITY aboutUrlClassifier.pageTitle                   "Fiosrachadh mu url-classifier">
+<!ENTITY aboutUrlClassifier.providerTitle               "Solaraiche">
+<!ENTITY aboutUrlClassifier.provider                    "Solaraiche">
+<!ENTITY aboutUrlClassifier.providerLastUpdateTime      "An t-ùrachadh mu dheireadh">
+<!ENTITY aboutUrlClassifier.providerNextUpdateTime      "An ath-ùrachadh">
+<!ENTITY aboutUrlClassifier.providerBackOffTime         "Àm back-off">
+<!ENTITY aboutUrlClassifier.providerLastUpdateStatus    "Staid an ùrachaidh mu dheireadh">
+<!ENTITY aboutUrlClassifier.providerUpdateBtn           "Ùraich">
+<!ENTITY aboutUrlClassifier.cacheTitle                  "Tasgadan">
+<!ENTITY aboutUrlClassifier.cacheRefreshBtn             "Ath-nuadhaich">
+<!ENTITY aboutUrlClassifier.cacheClearBtn               "Falamhaich">
+<!ENTITY aboutUrlClassifier.cacheTableName              "Ainm a’ chlàir">
+<!ENTITY aboutUrlClassifier.cacheNCacheEntries          "Innteartan àicheil san tasgadan">
+<!ENTITY aboutUrlClassifier.cachePCacheEntries          "Innteartan dearbh san tasgadan">
+<!ENTITY aboutUrlClassifier.cacheShowEntries            "Seall na h-innteartan">
+<!ENTITY aboutUrlClassifier.cacheEntries                "Innteartan san tasgadan">
+<!ENTITY aboutUrlClassifier.cachePrefix                 "Ro-leasachan">
+<!ENTITY aboutUrlClassifier.cacheNCacheExpiry           "Negative cache expiry">
+<!ENTITY aboutUrlClassifier.cacheFullhash               "Full hash">
+<!ENTITY aboutUrlClassifier.cachePCacheExpiry           "Positive cache expiry">
+<!ENTITY aboutUrlClassifier.debugTitle                  "Debug">
+<!ENTITY aboutUrlClassifier.debugModuleBtn              "Set Log Modules">
+<!ENTITY aboutUrlClassifier.debugFileBtn                "Set Log File">
+<!ENTITY aboutUrlClassifier.debugJSLogChk               "Set JS Log">
+<!ENTITY aboutUrlClassifier.debugSBModules              "Safe Browsing log modules">
+<!ENTITY aboutUrlClassifier.debugModules                "Current log modules">
+<!ENTITY aboutUrlClassifier.debugSBJSModules            "Safe Browsing JS log">
+<!ENTITY aboutUrlClassifier.debugFile                   "Current log file">

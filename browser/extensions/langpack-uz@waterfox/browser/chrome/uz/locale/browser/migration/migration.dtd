@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ustani import qilish">
+
+<!ENTITY importFrom.label               "Moslamalar, xatchoʻplar, tarix, parollar va boshqa ma`lumotlarni ushbu brauzerdan import qilish:">
+<!ENTITY importFromUnix.label           "Parametrlar, xatchoʻplar, tarix, parollar va boshqa ma`lumotlarni ushbu brauzerdan import qilish:">
+<!ENTITY importFromBookmarks.label      "Xatchoʻplarni ushbu brauzerdan import qilish:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Hech narsa import qilinmasin">
+<!ENTITY importFromNothing.accesskey    "i">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Xatchoʻplar, tarix yoki parollar ma`lumotlari bor birorda dastur topilmadi.">
+
+<!ENTITY importSource.title             "Moslamalar va ma`lumotlarni import qilish">
+<!ENTITY importItems.title              "Import qilinadiganlar">
+<!ENTITY importItems.label              "Import qilinadiganlarni tanlash:">
+
+<!ENTITY migrating.title                "Import qilinmoqda...">
+<!ENTITY migrating.label                "Quyidagilar hozirda import qilinadi...">
+
+<!ENTITY selectProfile.title            "Profilni tanlash">
+<!ENTITY selectProfile.label            "Quyidagi profillar ushbu dasturdan import qilish uchun mavjud:">
+
+<!ENTITY done.title                     "Butunlay import qilish">
+<!ENTITY done.label                     "Quyidagilar muvaffaqiyatli import qilindi:">
+
+<!ENTITY closeSourceBrowser.label       "Davom etishdan oldin tanlangan brauzer yopilganligiga ishonch hosil qiling.">

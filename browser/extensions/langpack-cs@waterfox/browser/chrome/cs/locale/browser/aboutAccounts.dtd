@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Vítá vás &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Pro synchronizaci panelů, záložek, hesel a dalších věcí se přihlaste.">
+<!ENTITY aboutAccountsConfig.startButton.label "Začít">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Předvolby synchronizace">
+<!ENTITY aboutAccounts.noConnection.title "Žádné připojení">
+<!ENTITY aboutAccounts.noConnection.description "Abyste se mohli přihlásit, musíte být připojeni k internetu.">
+<!ENTITY aboutAccounts.noConnection.retry "Zkusit znovu">
+<!ENTITY aboutAccounts.badConfig.title "Špatná konfigurace">
+<!ENTITY aboutAccounts.badConfig.description "Nepodařilo se zjistit konfiguraci serveru pro váš účet Waterfoxu. Zkuste to prosím znovu.">

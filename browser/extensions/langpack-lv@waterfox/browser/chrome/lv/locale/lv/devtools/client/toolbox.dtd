@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage          "Kļūda atverot pārlūka rīkulādi:">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings "Papildu iestatījumi">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector "Pārraugs">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label "Rādīt pārlūka stilus">
+<!ENTITY options.showUserAgentStyles.tooltip "Šīs iespējas ieslēgšana parādīs noklusētos stilus, kas ir ielādēti pārlūkā">
+
+<!-- LOCALIZATION NOTE (options.collapseAttrs.label): This is the label
+  -  for the checkbox option to enable collapse attributes in the Inspector
+  -  panel. -->
+<!ENTITY options.collapseAttrs.label "Apgriezt DOM atribūtus">
+<!ENTITY options.collapseAttrs.tooltip "Apgriezt garus atribūtus inspektorā">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label "Noklusētā krāsu vienība">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey "u">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.authored "Kā norādīts">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex "Hex">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name "Krāsu nosaukumi">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh  "* Tikai šo sesiju, pārlādē lapu">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5    "Aktivizēt pārlūka un papildinājumu atkļūdošanas rīkus">
+<!ENTITY options.enableChrome.tooltip3  "Šīs iespējas aktivizēšana ļaus izmantot dažādus rīkus pārlūka kontekstā (Rīki > Izstrādātāju rīki > Pārlūka rīki) un ļaus atkļūdot papildinājumus">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3    "Aktivēt attālināto atkļūdošanu">
+<!ENTITY options.enableRemote.tooltip2  "Ieslēdzot šo iespēju, jūs varēsiet izmantot izstrādātāju rīkus attālinātai Waterfox instancei, piemēram Waterfox OS">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "Aktivēt darbinieku atkļūdošanu (atkļūdoitājā)">
+<!ENTITY options.enableWorkers.tooltip  "Šīs iespējas aktivēšana ļaus izstrādātāju rīkiem atkļūdot darbiniekus">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label     "Deaktivēt JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Šī iestatījuma ieslēgšana deaktivēs JavaScript aktīvajā cilnē. Aizverot cilni vai rīku joslu šis iestatījums netiks saglabāts.">
+
+<!-- LOCALIZATION NOTE (options.disableHTTPCache.label,
+  -  options.disableHTTPCache.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the HTTP cache on or off. -->
+<!ENTITY options.disableHTTPCache.label     "Deaktivēt HTTP kešatmiņu (ja ir atvērti izstrādātāju rīki)">
+<!ENTITY options.disableHTTPCache.tooltip   "Šīs iespējas ieslēgšana deaktivēs HTTP kešatmiņu visām cilnēm, kurām ir atvērta šo rīku josla. Pakalpojumu darbiniekus šī konfigurācijas iespēja neietekmē.">
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label     "Aktivizēt pakalpojumu darbiniekus pa HTTP (kad rīks ir atvērts)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Šīs iespējas aktivizēšana ļaus aktivizēt pakalpojumu darbiniekus pa HTTP visās cilnēs, kurās ir atvērts šis rīks.">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label2): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!ENTITY options.selectDefaultTools.label2    "Noklusētie izstrādātāju rīki">
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label  "Papildinājumu instalētie izstrādātāju rīki">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label     "Pieejamās rīku pogas">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label  "* Netiek atbalstīts konkrētajam rīkam">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2   "Tēmas">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label   "Izmantot izstrādātāju versijas pārlūka tēmu">
+<!ENTITY options.usedeveditiontheme.tooltip "Pārslēdz izstrādātāju versijas pārlūka tēmu.">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label            "Tīmekļa konsole">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label      "Aktivizēt laika atzīmes">
+<!ENTITY options.timestampMessages.tooltip    "Ja izvēlēsieties šo iespēju, komandas un izvads konsolē attēlos arī laika atzīmes">
+
+<!-- LOCALIZATION NOTE (options.debugger.label): This is the label for the
+  -  heading of the group of Debugger preferences in the options panel. -->
+<!ENTITY options.debugger.label            "Atkļūdotājs">
+
+<!-- LOCALIZATION NOTE (options.sourceMap.label): This is the
+   - label for the checkbox that toggles source maps in the Debugger -->
+<!ENTITY options.sourceMaps.label      "Aktivizēt koda kartes">
+<!ENTITY options.sourceMaps.tooltip    "Ja aktivēsiet šo iespēju kodi tika kartēti atkļūdotājā un konsolē.">
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label            "Stila redaktors">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "Rādīt sākotnējo kodu">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Rādīt sākotnējo kodu (e.g. piem Sass failus) Stila redaktorā un Inspektorā">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label      "Automātiski pabeigt CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Rakstos automātiski pabeigt CSS likumus, to vērtības un selektorus">
+
+<!-- LOCALIZATION NOTE (options.screenshot.label): This is the label for the
+   -  heading of the group of Screenshot preferences in the options
+   -  panel. -->
+<!ENTITY options.screenshot.label            "Ekrānattēla uzvedība">
+
+<!-- LOCALIZATION NOTE (options.screenshot.clipboard.label): This is the
+   - label for the checkbox that toggles screenshot to clipboard feature. -->
+<!ENTITY options.screenshot.clipboard.label      "Ekrānattēls uz starpliktuvi">
+<!ENTITY options.screenshot.clipboard.tooltip    "Saglabā ekrānattēlu starpliktuvē (datora atmiņā)">
+
+<!-- LOCALIZATION NOTE (options.screenshot.audio.label): This is the
+   - label for the checkbox that toggles the camera shutter audio for screenshot tool -->
+<!ENTITY options.screenshot.audio.label      "Atskaņot fotografēšanas skaņu">
+<!ENTITY options.screenshot.audio.tooltip    "Ļauj kamerai atskaņot skaņu uzņemot ekrānattēlu">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "Kopīgie iestatījumi">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "Aktivēt pastāvīgos paziņojumus">
+<!ENTITY options.enablePersistentLogs.tooltip  "Ja aktivēsiet šo iestatījumu Tīmekļa konsole neiztīrīs savu saturu katru reizi atverot jaunu lapu">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label    "Rādīt Gecko platformas datus">
+<!ENTITY options.showPlatformData.tooltip  "Ja aktivizēsiet šo iespēju, JavaScript profilatora ziņojumos būs iekļauti arī Gecko platformas simboli">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label                     "Redaktora iestatījumi">
+<!ENTITY options.sourceeditor.detectindentation.label   "Noteikt atkāpes">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Minēt atkāpes atkarībā no koda konteksta">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Automātiski likt aizverošās iekavas">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Automātiski likt aizverošās iekavas">
+<!ENTITY options.sourceeditor.expandtab.label           "Veidot atkāpes ar atstarpēm">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Izmantot atstarpes tabulācijas simbola vietā">
+<!ENTITY options.sourceeditor.tabsize.label             "Atkāpes izmērs">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "t">
+<!ENTITY options.sourceeditor.keybinding.label          "Taustiņu saites">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "a">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Noklusētā">

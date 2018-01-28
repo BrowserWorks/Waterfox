@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Назив:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "Н">
+<!ENTITY editBookmarkOverlay.location.label                  "Адреса:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "А">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Место извора вести:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "М">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Место сајта:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "с">
+<!ENTITY editBookmarkOverlay.folder.label                    "Фасцикла:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Прикажи све директоријуме са забелешкама">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Сакриј">
+<!ENTITY editBookmarkOverlay.tags.label                      "Ознаке:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "О">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Раздвајају се запетама">
+<!ENTITY editBookmarkOverlay.description.label               "Опис:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "п">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Кључна реч:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "К">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Прикажи све ознаке">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Учитај ову забелешку у додатну палету">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "У">
+<!ENTITY editBookmarkOverlay.choose.label                    "Избор…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Нова фасцикла">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "ф">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+
+<!ENTITY title      "जुड़ें">
+<!ENTITY header     "दूरस्थ सर्वर से कनेक्ट करें">
+<!ENTITY host       "होस्टः">
+<!ENTITY port       "पोर्ट:">
+<!ENTITY connect    "जुड़ें">
+<!ENTITY connecting "कनेक्ट कर रहा है…">
+<!ENTITY availableAddons "उपलब्ध दूरस्थ सहयुक्ति:">
+<!ENTITY availableTabs "उपलब्ध दूरस्थ टैब:">
+<!ENTITY availableProcesses "उपलब्ध दूरस्थ प्रक्रिया:">
+<!ENTITY connectionError "त्रुटि:">
+<!ENTITY errorTimeout "त्रुटि: कनेक्शन मध्यांतर.">
+<!ENTITY errorRefused "त्रुटि: कनेक्शन से इनकार कर दिया.">
+<!ENTITY errorUnexpected "अप्रत्याशित त्रुटि">
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+
+<!ENTITY remoteHelp "Waterfox डेवलपर उपकरण दूरस्थ डिवाइस (Android के लिए Waterfox और Waterfox OS , उदाहरण के लिए) डिबग कर सकते हैं. यह सुनिश्चित करें कि आप 'दूरस्थ डीबगिंग' के विकल्प पर दूरस्थ डिवाइस में बदल गया है.  और अधिक के लिए देखें">
+<!ENTITY remoteDocumentation "दस्तावेज़">
+<!ENTITY remoteHelpSuffix ".">
+

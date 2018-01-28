@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Színek">
+<!ENTITY  window.width                    "55em">
+<!ENTITY  window.macWidth                 "55em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Az oldal által megadott színek felülbírálása a fenti választásaimmal:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "o">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Mindig">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Csak nagy kontrasztú témáknál">
+<!ENTITY  overrideDefaultPageColors.never.label  "Soha">
+
+<!ENTITY  color                           "Szöveg és háttér">
+<!ENTITY  textColor.label                 "Szöveg:">
+<!ENTITY  textColor.accesskey             "S">
+<!ENTITY  backgroundColor.label           "Háttér:">
+<!ENTITY  backgroundColor.accesskey       "H">
+<!ENTITY  useSystemColors.label           "Rendszerszínek használata">
+<!ENTITY  useSystemColors.accesskey       "R">
+
+<!ENTITY  underlineLinks.label            "Hivatkozások aláhúzása">
+<!ENTITY  underlineLinks.accesskey        "a">
+<!ENTITY  links                           "Hivatkozás színei">
+<!ENTITY  linkColor.label                 "Nem látogatott hivatkozások:">
+<!ENTITY  linkColor.accesskey             "v">
+<!ENTITY  visitedLinkColor.label          "Látogatott hivatkozások:">
+<!ENTITY  visitedLinkColor.accesskey      "L">

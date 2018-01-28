@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Agordoj - Retejaj datumoj">
+<!ENTITY     hostCol.label                 "Retejo">
+<!ENTITY     statusCol.label               "Stato">
+<!ENTITY     usageCol.label                "Konservejo">
+<!ENTITY     searchTextboxPlaceHolder             "Serĉi retejojn">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Forigi elektitajn">
+<!ENTITY     removeSelected.accesskey      "e">
+<!ENTITY     save.label                    "Konservi ŝanĝojn">
+<!ENTITY     save.accesskey                "K">
+<!ENTITY     cancel.label                  "Nuligi">
+<!ENTITY     cancel.accesskey              "N">
+<!ENTITY     removingDialog.title          "Datumoj de retejoj forigataj">
+<!ENTITY     removingSelected.description  "La forigo de retejaj datumoj ankaŭ forigos rilatajn kaj kuketojn kaj malkonektitaĵojn. Tio ĉi povus fini vian seancon en retejoj. Ĉu vi certe volas fari la ŝanĝojn?">
+<!ENTITY     siteTree.label                "La jenaj retejaj kuketoj estos forigitaj:">

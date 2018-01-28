@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title               "Poista pääsalasana">
+<!ENTITY removeInfo.label                   "Kirjoita nykyinen salasanasi jatkaaksesi:">
+<!ENTITY removeWarning1.label               "Pääsalasanasi suojaa arkaluontoista tietoa, kuten sivustojen salasanoja.">
+<!ENTITY removeWarning2.label               "Jos poistat pääsalasanan, tietosi eivät enää ole suojattuina.">
+<!ENTITY setPassword.oldPassword.label      "Nykyinen salasana:">
+

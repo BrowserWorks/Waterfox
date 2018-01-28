@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Emër:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "E">
+<!ENTITY editBookmarkOverlay.location.label                  "Vendndodhje:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "V">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Vendndodhje Prurjeje:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "U">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Vendndodhje Sajti:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "Dosje:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Shfaqni tërë dosjet e faqerojtësve">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Fshihini">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etiketa:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "t">
+<!ENTITY editBookmarkOverlay.description.label               "Përshkrim:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "P">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Fjalëkyç:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "F">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Shfaqni tërë etiketat">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Ngarkoje këtë faqerojtës te anështylla">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "N">
+<!ENTITY editBookmarkOverlay.choose.label                    "Zgjidhni…">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Veçojini etiketat me presje.">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Dosje e Re">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "D">

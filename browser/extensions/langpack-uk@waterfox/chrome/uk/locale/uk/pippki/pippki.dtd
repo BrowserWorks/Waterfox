@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "Зміна головного пароля">
+<!ENTITY setPassword.tokenName.label "Пристрій захисту">
+<!ENTITY setPassword.oldPassword.label "Поточний пароль:">
+<!ENTITY setPassword.newPassword.label "Новий пароль:">
+<!ENTITY setPassword.reenterPassword.label "Новий пароль (ще раз):">
+<!ENTITY setPassword.meter.label "Рівень якості пароля">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "Скинути">
+<!ENTITY resetPassword.title  "Скидання головного пароля">
+<!ENTITY resetPassword.text  "Якщо ви скинете свій головний пароль, всі збережені паролі для інтернету і електронної пошти, дані форм, особисті сертифікати і закриті ключі будуть забуті. Ви дійсно хочете скинути свій головний пароль?">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "Завантаження сертифіката">
+<!ENTITY downloadCert.message1 "Вас просять довіряти новому центру сертифікації (CA).">
+<!ENTITY downloadCert.trustSSL "Довіряти при ідентифікації веб-сайтів.">
+<!ENTITY downloadCert.trustEmail "Довіряти при ідентифікації користувачів електронної пошти.">
+<!ENTITY downloadCert.trustObjSign "Довіряти при ідентифікації виробників програмного забезпечення.">
+<!ENTITY downloadCert.message3 "Перед тим, як визначитися з довірою до цього центру, рекомендується перевірити його сертифікат, політику і процедури (якщо можливо).">
+<!ENTITY downloadCert.viewCert.label "Перегляд">
+<!ENTITY downloadCert.viewCert.text "Перевірити сертифікат центру">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "Запит ідентифікації користувача">
+<!ENTITY clientAuthAsk.message1 "Сайт питає, з яким сертифікатом вас асоціювати:">
+<!ENTITY clientAuthAsk.message2 "Виберіть сертифікат для ідентифікації:">
+<!ENTITY clientAuthAsk.message3 "Подробиці про вибраний сертифікат:">
+
+<!ENTITY pkcs12.setpassword.title  "Вибір пароля резервної копії сертифіката">
+<!ENTITY pkcs12.setpassword.message  "Пароль резервної копії сертифіката, який ви вкажете тут, захистить файл нової резервної копії. Для продовження резервного копіювання ви повинні встановити пароль.">
+<!ENTITY pkcs12.setpassword.label1 "Пароль резервної копії:">
+<!ENTITY pkcs12.setpassword.label2 "Пароль резервної копії (ще раз):">
+<!ENTITY pkcs12.setpassword.reminder "Увага: якщо ви забудете ваш пароль резервної копії сертифіката, ви не зможете відновити цю резервну копію пізніше. Цю інформацію треба зберігати в безпечному місці.">
+
+<!ENTITY chooseToken.title  "Вибір токена">
+<!ENTITY chooseToken.message1 "Будь ласка, виберіть токен.">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "Генерація закритого ключа">
+<!ENTITY createCertInfo.msg1 "Йде створення ключів… Це може зайняти декілька хвилин…">
+<!ENTITY createCertInfo.msg2 "Зачекайте будь ласка…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "Захищена перевірка жетоном">
+<!ENTITY protectedAuth.msg "Будь ласка, засвідчіть жетон. Метод засвідчення залежить від типу вашого жетону.">
+<!ENTITY protectedAuth.tokenName.label "Жетон:">

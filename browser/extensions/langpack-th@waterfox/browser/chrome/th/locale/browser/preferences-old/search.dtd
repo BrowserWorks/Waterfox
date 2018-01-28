@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "เครื่องมือค้นหาเริ่มต้น">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "เลือกเครื่องมือค้นหาเริ่มต้นของคุณ &brandShortName; ใช้ในแถบตำแหน่งที่ตั้ง, แถบค้นหา และหน้าเริ่มต้น">
+
+<!ENTITY provideSearchSuggestions.label        "ให้ข้อเสนอแนะการค้นหา">
+<!ENTITY provideSearchSuggestions.accesskey    "ห">
+
+<!ENTITY showURLBarSuggestions.label           "แสดงข้อเสนอแนะการค้นหาในผลลัพธ์ของแถบตำแหน่งที่ตั้ง">
+<!ENTITY showURLBarSuggestions.accesskey       "ส">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "ข้อเสนอแนะการค้นหาจะไม่แสดงในผลลัพธ์ของแถบตำแหน่งที่ตั้งเนื่องจากคุณได้กำหนดค่า &brandShortName; ให้ไม่จดจำประวัติเสมอ">
+
+<!ENTITY oneClickSearchEngines.label           "เครื่องมือค้นหาในคลิกเดียว">
+
+<!ENTITY chooseWhichOneToDisplay.label         "แถบค้นหาช่วยให้คุณค้นหาโดยใช้เครื่องมืออื่นได้โดยตรง เลือกว่าจะให้แสดงผลตัวไหนบ้าง">
+
+<!ENTITY engineNameColumn.label                "เครื่องมือค้นหา">
+<!ENTITY engineKeywordColumn.label             "คำสำคัญ">
+
+<!ENTITY restoreDefaultSearchEngines.label     "เรียกคืนเครื่องมือค้นหาเริ่มต้น">
+<!ENTITY restoreDefaultSearchEngines.accesskey "ร">
+
+<!ENTITY removeEngine.label                    "เอาออก">
+<!ENTITY removeEngine.accesskey                "r">
+
+<!ENTITY addMoreSearchEngines.label            "เพิ่มเครื่องมือค้นหาเพิ่มเติม…">

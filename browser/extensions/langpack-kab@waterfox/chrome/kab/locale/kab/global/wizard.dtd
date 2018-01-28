@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Uɣal">
+<!ENTITY  button-back-mac.accesskey    "U">
+<!ENTITY  button-next-mac.label        "Kemmel">
+<!ENTITY  button-next-mac.accesskey    "K">
+<!ENTITY  button-finish-mac.label      "Immed">
+<!ENTITY  button-cancel-mac.label      "Sefsex">
+
+<!ENTITY  button-back-unix.label       "Uɣal ɣer deffir">
+<!ENTITY  button-back-unix.accesskey   "l">
+<!ENTITY  button-next-unix.label       "Ddu ɣer zdat">
+<!ENTITY  button-next-unix.accesskey   "D">
+<!ENTITY  button-finish-unix.label     "Immed">
+<!ENTITY  button-cancel-unix.label     "Sefsex">
+
+<!ENTITY  button-back-win.label        "&lt; ɣeṛ deffir">
+<!ENTITY  button-back-win.accesskey    "e">
+<!ENTITY  button-next-win.label        "Ɣer zdat &gt;">
+<!ENTITY  button-next-win.accesskey    "z">
+<!ENTITY  button-finish-win.label      "Fak">
+<!ENTITY  button-cancel-win.label      "Sefsex">

@@ -1,0 +1,11 @@
+locale branding ko ko/locale/branding/
+locale browser ko ko/locale/browser/
+locale browser-region ko ko/locale/browser-region/
+locale devtools ko ko/locale/ko/devtools/client/
+locale devtools-shared ko ko/locale/ko/devtools/shared/
+locale formautofill ko ko/locale/ko/
+locale pdf.js ko ko/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+resource search-plugins chrome://browser/locale/searchplugins/

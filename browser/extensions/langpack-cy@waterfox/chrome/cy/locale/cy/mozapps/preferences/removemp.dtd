@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Tynnu'r Prif Gyfrinair">
+<!ENTITY removeInfo.label                  "Rhaid rhoi eich cyfrinair presennol cyn parhau:">
+<!ENTITY removeWarning1.label              "Mae eich Prif Gyfrinair yn cael ei ddefnyddio i ddiogelu data sensitif fel cyfrineiriau gwefannau.">
+<!ENTITY removeWarning2.label              "Os byddwch yn tynnu eich Prif Gyfrinair ni fydd eich gwybodaeth wedi ei ddiogelu os yw eich cyfrifiadur wedi ei gyfaddawdu.">
+<!ENTITY setPassword.oldPassword.label     "Cyfrinair cyfredol:">
+

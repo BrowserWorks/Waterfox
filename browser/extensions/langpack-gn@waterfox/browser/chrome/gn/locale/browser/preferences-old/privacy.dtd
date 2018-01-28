@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Eipuru Ñemo'ã Tapykuehógui">
+<!ENTITY  trackingProtectionAlways.label       "Akóinte">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "Ovetã ñemiguáva añónte">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "Araka'eve">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "Kuaave">
+<!ENTITY  trackingProtectionExceptions.label   "Oĩ'ỹva…">
+<!ENTITY  trackingProtectionExceptions.accesskey "v">
+
+<!ENTITY tracking.label                 "Tapykuereho">
+<!ENTITY trackingProtectionPBM5.label         "Eipuru ñemo'ãha ovetã rapykueho ñemiguáva">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "Kuaave">
+<!ENTITY changeBlockList.label          "Jokoha rysýi moambue">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Ikatu avei ">
+<!ENTITY  doNotTrack.settings.label     "Eñangareko ne Ani Cherapykueho ñembohekóre">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Tembiasakue">
+
+<!ENTITY  locationBar.label             "Kundaharape renda">
+
+<!ENTITY  locbar.suggest.label          "Eipurúramo kundaharape renda, eñemoñe'ẽ:">
+<!ENTITY  locbar.history.label          "Tembiasakue">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Techaukaha">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Tendayke ijurujáva">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "Jehekakuéra ojueheguáva jeheka mongu'eha ypyguáva guive">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "Jerohoryvéva jehekaha mongu'eha je'epyre mombue…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+<!ENTITY  acceptCookies2.label          "Emoneĩ kookie ñanduti rendágui">
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptThirdParty.pre.label      "Emoneĩ kookie ambue mba'éva:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "Katui">
+<!ENTITY  acceptThirdParty.never.label    "Araka'eve">
+<!ENTITY  acceptThirdParty.visited.label  "Jehopyre">
+
+<!ENTITY  keepUntil.label               "Eguereko ág̃ave peve:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "ndoikóiva">
+<!ENTITY  close.label                   "Emboty &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Oĩ'ỹva…">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "Kookie Jehechauka…">
+<!ENTITY  showCookies.accesskey         "J">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; ikatútapa:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "Tembiasakuére ñemandu'a">
+<!ENTITY  historyHeader.dontremember.label "Ani nemandu'a tembiasakuére">
+<!ENTITY  historyHeader.custom.label       "Eiporu peteĩ ñemboheko mba'etéva tembiasakuépe g̃uarã">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; imandu'áta nekundaha rembiasakue, ñemboguejy, myanyhẽha ha jehekaha, ha oñongatúta avei ñanduti renda cookie eike hague.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Katui ikatútapa">
+<!ENTITY  rememberActions.clearHistory.label  "Tembiasakue ramovegua mopotï">
+<!ENTITY  rememberActions.middle.label        ", or">
+<!ENTITY  rememberActions.removeCookies.label "cookie peteĩteĩ mboguete">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; oipurujeýta pe ñemboheko kundaha ñemigua pegua, ha noñongatumo'ãi mba'evéichagua mba'ekuaarã tembiasakuéva oikundahakuévo ñandutípe.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Ikatu avei reipota ">
+<!ENTITY  dontrememberActions.clearHistory.label "Tembiasakue mopotïmba">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Kundaha ñemi jepuru tapia">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "Tembiasakue mboguejy ha kundaha rehegua Mandu'a">
+<!ENTITY  rememberHistory2.accesskey  "M">
+
+<!ENTITY  rememberSearchForm.label       "Tembiasakue myanyhẽha ha jehekaha momangu'a">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "Tembiasakue Mopotï &brandShortName; oñembotývo">
+<!ENTITY  clearOnClose.accesskey         "M">
+
+<!ENTITY  clearOnCloseSettings.label     "Ñemboheko…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "Tendayke Guerekoha">
+<!ENTITY  browserContainersLearnMore.label      "Kuaave">
+<!ENTITY  browserContainersEnabled.label        "Embojuruja tendayke guerekoha">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "Ñemboheko…">
+<!ENTITY  browserContainersSettings.accesskey    "i">

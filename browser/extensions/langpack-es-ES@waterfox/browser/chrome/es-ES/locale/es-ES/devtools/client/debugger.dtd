@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY debuggerUI.closeButton.tooltip "Cerrar">
+<!ENTITY debuggerUI.panesButton.tooltip "Cambiar paneles">
+<!ENTITY debuggerUI.blackBoxMessage.label "Este código fuente se trata como una caja negra: sus puntos de ruptura están desactivados y la ejecución paso a paso no entra en él.">
+<!ENTITY debuggerUI.blackBoxMessage.unBlackBoxButton "Dejar de tratar como caja negra este código fuente">
+<!ENTITY debuggerUI.optsButton.tooltip "Opciones de depuración">
+<!ENTITY debuggerUI.sources.blackBoxTooltip "Alternar modo de caja negra">
+<!ENTITY debuggerUI.sources.prettyPrint "Formatear código">
+<!ENTITY debuggerUI.autoPrettyPrint "Formatear automáticamente los códigos fuente minimizados.">
+<!ENTITY debuggerUI.autoPrettyPrint.accesskey "n">
+<!ENTITY debuggerUI.sources.toggleBreakpoints "Activar/desactivar todos los puntos de ruptura">
+<!ENTITY debuggerUI.clearButton "Limpiar">
+<!ENTITY debuggerUI.clearButton.tooltip "Limpiar las trazas recopiladas">
+<!ENTITY debuggerUI.pauseExceptions "Detenerse en excepciones">
+<!ENTITY debuggerUI.pauseExceptions.accesskey "D">
+<!ENTITY debuggerUI.ignoreCaughtExceptions "Ignorar excepciones capturadas">
+<!ENTITY debuggerUI.ignoreCaughtExceptions.accesskey "I">
+<!ENTITY debuggerUI.showPanesOnInit "Mostrar paneles al arrancar">
+<!ENTITY debuggerUI.showPanesOnInit.accesskey "M">
+<!ENTITY debuggerUI.showVarsFilter "Mostrar la caja de filtro de variables">
+<!ENTITY debuggerUI.showVarsFilter.accesskey "c">
+<!ENTITY debuggerUI.showOnlyEnum "Mostrar sólo las propiedades enumerables">
+<!ENTITY debuggerUI.showOnlyEnum.accesskey "t">
+<!ENTITY debuggerUI.showOriginalSource "Mostrar fuentes originales">
+<!ENTITY debuggerUI.showOriginalSource.accesskey "o">
+<!ENTITY debuggerUI.autoBlackBox "Pasar al modo de caja negra automáticamente los fuentes minificados">
+<!ENTITY debuggerUI.autoBlackBox.accesskey "m">
+<!ENTITY debuggerUI.searchPanelOperators "Operadores:">
+<!ENTITY debuggerUI.searchFile "Filtrar scripts">
+<!ENTITY debuggerUI.searchFile.key "P">
+<!ENTITY debuggerUI.searchFile.altkey "O">
+<!ENTITY debuggerUI.searchFile.accesskey "s">
+<!ENTITY debuggerUI.searchGlobal "Buscar en todos los archivos">
+<!ENTITY debuggerUI.searchGlobal.key "F">
+<!ENTITY debuggerUI.searchGlobal.accesskey "u">
+<!ENTITY debuggerUI.searchFunction "Buscar por la definición de la función">
+<!ENTITY debuggerUI.searchFunction.key "D">
+<!ENTITY debuggerUI.searchFunction.accesskey "d">
+<!ENTITY debuggerUI.searchToken "Buscar">
+<!ENTITY debuggerUI.searchToken.key "F">
+<!ENTITY debuggerUI.searchToken.accesskey "B">
+<!ENTITY debuggerUI.searchGoToLine "Ir a la línea…">
+<!ENTITY debuggerUI.searchGoToLine.key "L">
+<!ENTITY debuggerUI.searchGoToLine.accesskey "l">
+<!ENTITY debuggerUI.searchVariable "Filtrar variables">
+<!ENTITY debuggerUI.searchVariable.key "V">
+<!ENTITY debuggerUI.searchVariable.accesskey "v">
+<!ENTITY debuggerUI.focusVariables "Enfocar árbol de variables">
+<!ENTITY debuggerUI.focusVariables.key "V">
+<!ENTITY debuggerUI.focusVariables.accesskey "f">
+<!ENTITY debuggerUI.condBreakPanelTitle "Este punto de ruptura parará la ejecución sólo si la siguiente expresión devuelve verdadero">
+<!ENTITY debuggerUI.seMenuBreak "Añadir punto de ruptura">
+<!ENTITY debuggerUI.seMenuBreak.key "B">
+<!ENTITY debuggerUI.seMenuCondBreak "Añadir punto de ruptura condicional">
+<!ENTITY debuggerUI.seMenuCondBreak.key "B">
+<!ENTITY debuggerUI.seEditMenuCondBreak "Editar punto de ruptura condicional">
+<!ENTITY debuggerUI.seEditMenuCondBreak.key "B">
+<!ENTITY debuggerUI.tabs.workers "Workers">
+<!ENTITY debuggerUI.tabs.sources "Fuentes">
+<!ENTITY debuggerUI.tabs.traces "Trazas">
+<!ENTITY debuggerUI.tabs.callstack "Pila de llamadas">
+<!ENTITY debuggerUI.tabs.variables "Variables">
+<!ENTITY debuggerUI.tabs.events "Eventos">
+<!ENTITY debuggerUI.seMenuAddWatch "Selección para expresión de vigilancia">
+<!ENTITY debuggerUI.seMenuAddWatch.key "E">
+<!ENTITY debuggerUI.addWatch "Añadir expresión de vigilancia">
+<!ENTITY debuggerUI.addWatch.accesskey "A">
+<!ENTITY debuggerUI.removeAllWatch "Eliminar todas las expresiones de vigilancia">
+<!ENTITY debuggerUI.removeAllWatch.key "E">
+<!ENTITY debuggerUI.removeAllWatch.accesskey "E">
+<!ENTITY debuggerUI.stepping.resume1 "VK_F8">
+<!ENTITY debuggerUI.stepping.stepOver1 "VK_F10">
+<!ENTITY debuggerUI.stepping.stepIn1 "VK_F11">
+<!ENTITY debuggerUI.stepping.stepOut1 "VK_F11">
+<!ENTITY debuggerUI.context.newTab "Abrir en una pestaña nueva">
+<!ENTITY debuggerUI.context.newTab.accesskey "A">
+<!ENTITY debuggerUI.context.copyUrl "Copiar URL">
+<!ENTITY debuggerUI.context.copyUrl.accesskey "C">
+<!ENTITY debuggerUI.context.copyUrl.key "C">

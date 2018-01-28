@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY pluginActivationWarning                             "Tute sydło tykač wužiwa, kotryž móhł &brandShortName; spomalić.">
+<!ENTITY tapToPlayPlugin                                     "Podótkńće tu, zo byšće tykač aktiwizował.">
+<!ENTITY clickToActivatePlugin                               "Tykač aktiwizować.">
+<!ENTITY checkForUpdates                                     "Za aktualizacijemi pytać…">
+<!ENTITY blockedPlugin.label                                 "Tutón tykač je so za waš škit zablokował.">
+<!ENTITY hidePluginBtn.label                                 "Tykač schować">
+<!ENTITY managePlugins                                       "Tykače rjadować…">
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Stronu znowa začitać">
+<!ENTITY reloadPlugin.post                                   " zo byšće hišće raz spytał.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Rozprawu wo spadźe pósłać">
+<!ENTITY report.submitting                                   "Rozprawa so sćele…">
+<!ENTITY report.submitted                                    "Rozprawa wo spadźe je so pósłała.">
+<!ENTITY report.disabled                                     "Rozprawjenje wo spadach je znjemóžnjene.">
+<!ENTITY report.failed                                       "Wotpósłanje njeje so poradźiło.">
+<!ENTITY report.unavailable                                  "Žana rozprawa k dispoziciji.">
+<!ENTITY report.comment                                      "Komentar přidać (komentary su zjawnje widźomne)">
+<!ENTITY report.pageURL                                      "URL strony zapřijeć">
+
+<!ENTITY plugin.file                                         "Dataja">
+<!ENTITY plugin.mimeTypes                                    "MIME-typy">
+<!ENTITY plugin.flashProtectedMode.label                     "Škitany modus Adobe Flash zmóžnić">
+<!ENTITY plugin.enableBlocklists.label                       "Strašny a nawalny wobsah Flash blokować">

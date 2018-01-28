@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY cutCmd.label "Wurězaś">
+<!ENTITY cutCmd.accesskey "r">
+<!ENTITY copyCmd.label "Kopěrowaś">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY pasteCmd.label "Zasajźiś">
+<!ENTITY pasteCmd.accesskey "Z">
+<!ENTITY undoCmd.label "Anulěrowaś">
+<!ENTITY undoCmd.accesskey "A">
+<!ENTITY selectAllCmd.label "Wšykno wubraś">
+<!ENTITY selectAllCmd.accesskey "W">
+<!ENTITY deleteCmd.label "Lašowaś">
+<!ENTITY deleteCmd.accesskey "L">
+
+<!ENTITY spellAddToDictionary.label "K słownikoju pśidaś">
+<!ENTITY spellAddToDictionary.accesskey "K">
+<!ENTITY spellUndoAddToDictionary.label "Pśidanje słownikoju anulěrowaś">
+<!ENTITY spellUndoAddToDictionary.accesskey "d">
+<!ENTITY spellCheckToggle.label "Pšawopis kontrolěrowaś">
+<!ENTITY spellCheckToggle.accesskey "P">
+<!ENTITY spellNoSuggestions.label "(Žedne pšawopisne naraźenja)">
+<!ENTITY spellDictionaries.label "Rěcy">
+<!ENTITY spellDictionaries.accesskey "R">
+
+<!ENTITY searchTextBox.clear.label "Wuprozniś">
+
+<!ENTITY fillLoginMenu.label          "Pśizjawjenje wupołniś">
+<!ENTITY fillLoginMenu.accesskey      "u">
+<!ENTITY fillPasswordMenu.label       "Gronidło wupołniś">
+<!ENTITY fillPasswordMenu.accesskey   "u">
+<!ENTITY fillUsernameMenu.label       "Wužywarske mě wupołniś">
+<!ENTITY fillUsernameMenu.accesskey   "u">
+<!ENTITY noLoginSuggestions.label     "(Žedne pśizjaweńske naraźenja)">
+<!ENTITY viewSavedLogins.label        "Skłaźone pśizjawjenja pokazaś">

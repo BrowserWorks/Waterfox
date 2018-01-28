@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "Jarraipenaren babesa">
+<!ENTITY  trackingProtection2.description      "Hainbat webguneren arteko zure nabigatze-datuen bildumari deritzo jarraipena. Zuri buruzko profil bat eraiki eta zure nabigazioan eta informazio pertsonalean oinarrituta edukiak bistaratzeko erabil daiteke jarraipena.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "Babestu jarraipena egiteaz ezagunak diren guneetatik">
+<!ENTITY  trackingProtectionAlways.label       "Beti">
+<!ENTITY  trackingProtectionAlways.accesskey   "B">
+<!ENTITY  trackingProtectionPrivate.label      "Leiho pribatuak soilik">
+<!ENTITY  trackingProtectionPrivate.accesskey  "s">
+<!ENTITY  trackingProtectionNever.label        "Inoiz ez">
+<!ENTITY  trackingProtectionNever.accesskey    "I">
+<!ENTITY  trackingProtectionLearnMore.label    "Argibide gehiago">
+<!ENTITY  trackingProtectionExceptions.label   "Salbuespenak…">
+<!ENTITY  trackingProtectionExceptions.accesskey "S">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+
+<!ENTITY trackingProtectionPBM5.label         "Erabili jarraipenaren babesa leiho pribatuetan">
+<!ENTITY trackingProtectionPBM5.accesskey     "h">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "Babestu jarraipena egiteaz ezagunak diren guneetatik nabigatze pribatuan">
+<!ENTITY trackingProtectionPBM6.accesskey     "b">
+<!ENTITY trackingProtectionPBMLearnMore.label "Argibide gehiago">
+<!ENTITY changeBlockList2.label               "Aldatu blokeo-zerrenda…">
+<!ENTITY changeBlockList2.accesskey           "A">
+
+<!ENTITY  doNotTrack.description        "Bidali webguneei &quot;Do Not Track&quot; seinalea zure jarraipena ez egitea adierazteko">
+<!ENTITY  doNotTrack.learnMore.label    "Argibide gehiago">
+<!ENTITY  doNotTrack.default.label      "Jarraipenaren babesa erabiltzean soilik">
+<!ENTITY  doNotTrack.always.label       "Beti">
+
+<!ENTITY  history.label                 "Historia">
+<!ENTITY  permissions.label             "Baimenak">
+
+<!ENTITY  addressBar.label              "Helbide-barra">
+<!ENTITY  addressBar.suggest.label      "Helbide-barra erabiltzean, gomendatu">
+<!ENTITY  locbar.history2.label         "Nabigatze-historia">
+<!ENTITY  locbar.history2.accesskey     "h">
+<!ENTITY  locbar.bookmarks.label        "Laster-markak">
+<!ENTITY  locbar.bookmarks.accesskey    "L">
+<!ENTITY  locbar.openpage.label         "Irekitako fitxak">
+<!ENTITY  locbar.openpage.accesskey     "I">
+<!ENTITY  locbar.searches.label         "Bilaketa-motor lehenetsiko erlazionatutako bilaketak">
+<!ENTITY  locbar.searches.accesskey     "z">
+
+<!ENTITY  suggestionSettings2.label     "Aldatu bilaketa-motorren iradokizunetarako hobespenak">
+
+<!ENTITY  acceptCookies2.label          "Onartu webguneetako cookieak">
+<!ENTITY  acceptCookies2.accesskey      "O">
+
+<!ENTITY  acceptThirdParty.pre.label      "Onartu hirugarrenen cookieak:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "n">
+<!ENTITY  acceptThirdParty.always.label   "Beti">
+<!ENTITY  acceptThirdParty.never.label    "Inoiz ez">
+<!ENTITY  acceptThirdParty.visited.label  "Bisitatutako guneetatik">
+
+<!ENTITY  keepUntil.label               "Mantentze-epea:">
+<!ENTITY  keepUntil.accesskey           "M">
+
+<!ENTITY  expire.label                  "iraungi arte">
+<!ENTITY  close.label                   "&brandShortName; itxi arte">
+
+<!ENTITY  cookieExceptions.label        "Salbuespenak…">
+<!ENTITY  cookieExceptions.accesskey    "S">
+
+<!ENTITY  showCookies.label             "Erakutsi cookieak…">
+<!ENTITY  showCookies.accesskey         "E">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName;(e)k">
+<!ENTITY  historyHeader2.pre.accesskey     "k">
+<!ENTITY  historyHeader.remember.label     "Historia gogoratuko du">
+<!ENTITY  historyHeader.dontremember.label "Ez du historia gogoratuko inoiz">
+<!ENTITY  historyHeader.custom.label       "Ezarpen pertsonalizatuak erabiliko ditu historiarako">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName;(e)k zure nabigatze-, deskarga- eta bilaketa-historia gogoratuko du eta bisitatzen dituzun webguneen cookieak gordeko ditu.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Agian ">
+<!ENTITY  rememberActions.clearHistory.label  "zure azken historia garbitu">
+<!ENTITY  rememberActions.middle.label        " nahi duzu, edo ">
+<!ENTITY  rememberActions.removeCookies.label "cookieak banan-banan ezabatu">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName;(e)k nabigatze pribatuaren ezarpen berak erabiliko ditu, eta ez du gogoratuko historia webean nabigatzen ari zarenean.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Agian ">
+<!ENTITY  dontrememberActions.clearHistory.label "uneko historia osoa garbitu">
+<!ENTITY  dontrememberActions.post.label         " nahi duzu.">
+
+<!ENTITY  privateBrowsingPermanent2.label "Erabili beti nabigatze pribatuko modua">
+<!ENTITY  privateBrowsingPermanent2.accesskey "a">
+
+<!ENTITY  rememberHistory2.label      "Gogoratu nire nabigazioaren eta deskargen historia">
+<!ENTITY  rememberHistory2.accesskey  "G">
+
+<!ENTITY  rememberSearchForm.label       "Gogoratu bilaketa- eta inprimaki-historia">
+<!ENTITY  rememberSearchForm.accesskey   "n">
+
+<!ENTITY  clearOnClose.label             "Garbitu historia &brandShortName; ixtean">
+<!ENTITY  clearOnClose.accesskey         "x">
+
+<!ENTITY  clearOnCloseSettings.label     "Ezarpenak…">
+<!ENTITY  clearOnCloseSettings.accesskey "r">
+
+<!ENTITY  browserContainersLearnMore.label      "Argibide gehiago">
+<!ENTITY  browserContainersEnabled.label        "Gaitu edukiontzi-fitxak">
+<!ENTITY  browserContainersEnabled.accesskey    "G">
+<!ENTITY  browserContainersSettings.label        "Ezarpenak…">
+<!ENTITY  browserContainersSettings.accesskey    "r">

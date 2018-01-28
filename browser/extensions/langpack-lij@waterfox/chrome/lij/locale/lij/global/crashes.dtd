@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Segnalaçion di Cianti">
+<!ENTITY crashesUnsubmitted.label   "Report di cianti no mandæ">
+<!ENTITY crashesSubmitted.label     "Report di cianti mandæ">
+<!ENTITY id.heading                 "ID do Report">
+<!ENTITY dateCrashed.heading        "Dæta do cianto">
+<!ENTITY dateSubmitted.heading      "Dæta segnalaçion">
+<!ENTITY noReports.label            "Nisciun report mandou.">
+<!ENTITY noConfig.label             "Sta aplicaçion a no l'é stæta inpostâ pe fâ vedde i report di problemi. E preferense <code>breakpad.reportURL</code> son da inposta.">
+<!ENTITY clearAllReports.label      "Leva da mezo tutti i Report">

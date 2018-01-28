@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Ցանցի մասին">
+<!ENTITY aboutNetworking.warning               "Սա շատ փորձնական է: Մի օգտագործեք առանց մեծահասակների:">
+<!ENTITY aboutNetworking.showNextTime          "Ցուցադրել այս զգուշացումը հաջորդ անգամ">
+<!ENTITY aboutNetworking.ok                    "Լավ">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Բնիկներ">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "ՎեբԲնիկներ">
+<!ENTITY aboutNetworking.refresh               "Թարմացնել">
+<!ENTITY aboutNetworking.autoRefresh           "Ինքնաթարմացնել 3 վայրկյանը մեկ">
+<!ENTITY aboutNetworking.hostname              "Հոսթի անունը">
+<!ENTITY aboutNetworking.port                  "Դարպասը">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Ակտիվ">
+<!ENTITY aboutNetworking.idle                  "Անգործ">
+<!ENTITY aboutNetworking.host                  "Հոսթ">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "Ուղարկված">
+<!ENTITY aboutNetworking.received              "Ստացված">
+<!ENTITY aboutNetworking.family                "Ընտանիք">
+<!ENTITY aboutNetworking.addresses             "Հասցեներ">
+<!ENTITY aboutNetworking.expires               "Կավարտվի (վայրկյանից)">
+<!ENTITY aboutNetworking.messagesSent          "Հաղորդագրությունները ուղարկվել են">
+<!ENTITY aboutNetworking.messagesReceived      "Հաղորդագրությունները ուղարկվել են">
+<!ENTITY aboutNetworking.bytesSent             "Բայթ է ուղարկվել">
+<!ENTITY aboutNetworking.bytesReceived         "Բայթ է ստացվել">
+<!ENTITY aboutNetworking.logging               "Մուտքագրում">
+<!ENTITY aboutNetworking.logTutorial           "Դիտեք <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP մուտքագրումը</a>՝ իմանալու համար, թե ինչպես օգտագործել այս գործիքը:">
+<!ENTITY aboutNetworking.currentLogFile        "Ընթացիկ մատյանի ֆայլը՝">
+<!ENTITY aboutNetworking.currentLogModules     "Ընթացիկ մատյանի մոդուլներ՝">
+<!ENTITY aboutNetworking.setLogFile            "Կայել մատյանի ֆայլը">
+<!ENTITY aboutNetworking.setLogModules         "Կայել մատյանի մոդուլները">
+<!ENTITY aboutNetworking.startLogging          "Սկսել մուտքագրումը">
+<!ENTITY aboutNetworking.stopLogging           "Կանգնեցնել մուտքագրումը">
+<!ENTITY aboutNetworking.dnsLookup             "DNS փնտրում">
+<!ENTITY aboutNetworking.dnsLookupButton       "Ուղղել">
+<!ENTITY aboutNetworking.dnsDomain             "Տիրույթ">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP-ներ">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

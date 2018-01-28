@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Sto chi o no l'é 'n barcon privou.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Arvi 'n barcon privou">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "à">
+
+<!ENTITY privateBrowsing.title                           "Navegaçion privâ">
+<!ENTITY privateBrowsing.title.tracking                  "Navegaçion Privâ con Anti-traciamento">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Quande ti naveghi inte 'n barcon privou, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "o no se sarva">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "pagine vixitæ">
+<!ENTITY aboutPrivateBrowsing.info.searches              "Riçerche">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "Cookie">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "File tenporanei">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "o sarviâ">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " i teu:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "File descaregæ">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "Segnalibbri">
+<!ENTITY aboutPrivateBrowsing.note.before                "Navegaçion privâ ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "no te fâ deventâ anònimo">
+<!ENTITY aboutPrivateBrowsing.note.after                 " in sce l'internet. I teu inpiegæ ò o fornitô do serviçio de conescion a l'Internet o peu ancon savei e pagine che ti vixiti.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Pe saveine de ciù in sciâ ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Navegaçion Privâ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Proteçion anti-traciamento">
+<!ENTITY trackingProtection.description2                 "Quarche scito o peu deuviâ tracker che peuan monitorâ e teu ativitæ in sce l'Internet. Co-a proteçion Anti-traciamento Waterfox o peu blocâ tanti trackers che peuan pigiase informaçioin in sciô teu conportamento de navegaçion.">
+<!ENTITY trackingProtection.startTour1                   "Descòvri comme fonçionn-a">

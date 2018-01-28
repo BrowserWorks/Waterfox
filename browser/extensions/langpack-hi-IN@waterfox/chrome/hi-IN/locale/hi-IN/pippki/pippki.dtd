@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "मुख्य कूटशब्द बदलें">
+<!ENTITY setPassword.tokenName.label "सुरक्षा युक्ति">
+<!ENTITY setPassword.oldPassword.label "मौजूदा कूटशब्द:">
+<!ENTITY setPassword.newPassword.label "नया कूटशब्द:">
+<!ENTITY setPassword.reenterPassword.label "नया कूटशब्द (फिर):">
+<!ENTITY setPassword.meter.label "कूटशब्द गुणवत्ता मीटर">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "फिर सेट करें">
+<!ENTITY resetPassword.title  "मुख्य कूटशब्द फिर सेट करें">
+<!ENTITY resetPassword.text  "अगर आपने मुख्य कूटशब्द फिर सेट किया है, आपका सारा जमा वेब और ईमेल कूटशब्द, आंकड़ा, निजी प्रमाणपत्र, औऱ निजी कुंजी विस्मृत हो जायेगा. क्या आप अपना मुख्य कूटशब्द सेट फिर किये को सुनिश्चित हैं?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "प्रमाणपत्र डाउनलोड कर रहा है">
+<!ENTITY downloadCert.message1 "आपको एक नया सर्टिफिकेट ऑथोरिटी (CA) पर विश्वास के लिये पूछा जायेगा.">
+<!ENTITY downloadCert.trustSSL "इस CA को भरोसा करें वेबसाइट को पहचानने के लिये.">
+<!ENTITY downloadCert.trustEmail "इस CA को भरोसा करें ईमेल उपयोक्ता को पहचानने के लिये.">
+<!ENTITY downloadCert.trustObjSign "इस CA को भरोसा करें सॉफ्टवेयर डेवलपर को पहचानने के लिये.">
+<!ENTITY downloadCert.message3 "इस CA पर किसी उद्देश्य के लिये भरोसा करने से पहले, आपको इसका प्रमाणपत्र और इसका नीति और प्रक्रिया परीक्षा करनी चाहिये (अगर उपलब्ध है).">
+<!ENTITY downloadCert.viewCert.label "देखें">
+<!ENTITY downloadCert.viewCert.text "CA प्रमाणपत्र जांचें">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "उपयोक्ता पहचान आग्रह">
+<!ENTITY clientAuthAsk.message1 "इस साइट ने आपसे एक प्रमाणपत्र से अपने को पहचानने का आग्रह किया है:">
+<!ENTITY clientAuthAsk.message2 "एक पहचान के रूप में एक प्रमाणपत्र के लिये चुनें:">
+<!ENTITY clientAuthAsk.message3 "चयनित प्रमाणपत्र का विवरण:">
+
+<!ENTITY pkcs12.setpassword.title  "प्रमाणपत्र बैकअप कूटशब्द चुनें">
+<!ENTITY pkcs12.setpassword.message  "प्रमाणपत्र बैकअप कूटशब्द जिसे आपने यहां सेट किया है बैकअफ फाइल की रक्षा करता है जिसे आप बनाने के करीब हैं.  आपको जरूर इस कूटशब्द को सेट करना चाहिये इस बैकअप के साथ.">
+<!ENTITY pkcs12.setpassword.label1 "प्रमाणपत्र बैकअप कूटशब्द:">
+<!ENTITY pkcs12.setpassword.label2 "प्रमाणपत्र बैकअप कूटशब्द (फिर):">
+<!ENTITY pkcs12.setpassword.reminder "Important: अगर आप अपना प्रमाणपत्र बैकअप कूटशब्द भूल गये हैं, आप इस बैकअप को बाद में फिर नहीं ला पायेंगे. कृपया इसे सुरक्षित स्थान में रिकार्ड करें.">
+
+<!ENTITY chooseToken.title  "टोकेन संवाद चुनें">
+<!ENTITY chooseToken.message1 "एक टोकेन चुनें.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "एक निजी कुंजी उत्पन्न कर रहा है">
+<!ENTITY createCertInfo.msg1 "कुंजी जनन प्रगति में है, यह कुछ समय लेगा....">
+<!ENTITY createCertInfo.msg2 "कृपया प्रतीक्षा करें...">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "संरक्षित टोकन सत्यापन">
+<!ENTITY protectedAuth.msg "कृपया टोकन में सत्यापित करें. सत्यापन विधि आपके टोकन के प्रकार पर निर्भर करता है.">
+<!ENTITY protectedAuth.tokenName.label "टोकन:">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Rnu amagbar nniḍen">
+<!ENTITY addButton.accesskey  "R">
+<!ENTITY preferencesButton.label "Timsisɣal">
+<!ENTITY removeButton.label   "kkes">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Uɣal ar tinigin tusligt">
+
+<!ENTITY window.title         "Rnu amagbar nniḍen">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Isem:">
+<!ENTITY name.accesskey       "I">
+<!ENTITY name.placeholder     "Sekcem isem n umagbar ">
+<!ENTITY icon.label           "Tignit:">
+<!ENTITY icon.accesskey       "g">
+<!ENTITY color.label          "Ini:">
+<!ENTITY color.accesskey      "n">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Immed">
+<!ENTITY button.ok.accesskey  "m">
+

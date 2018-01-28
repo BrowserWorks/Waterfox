@@ -1,0 +1,262 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY addons.windowTitle                   "مدير الإضافات">
+
+<!ENTITY search.placeholder                   "ابحث في كل الإضافات">
+<!ENTITY search.buttonlabel                   "ابحث">
+<!-- LOCALIZATION NOTE (search.commandKey):
+     The search command key should match findOnCmd.commandkey from browser.dtd -->
+<!ENTITY search.commandkey                    "f">
+
+<!ENTITY loading.label                        "يحمّل…">
+<!ENTITY listEmpty.installed.label            "ليس لديك أي إضافات منصّبة من هذا النوع">
+<!ENTITY listEmpty.availableUpdates.label     "لا تحديثات متوفرة">
+<!ENTITY listEmpty.recentUpdates.label        "لم تحدّث أي إضافات مؤخرًا">
+<!ENTITY listEmpty.findUpdates.label          "التمس التحديثات">
+<!ENTITY listEmpty.search.label               "تعذر إيجاد أي إضافات مطابقة">
+<!ENTITY listEmpty.button.label               "اعرف المزيد عن الإضافات">
+<!ENTITY installAddonFromFile.label           "نصّب إضافة من ملف…">
+<!ENTITY installAddonFromFile.accesskey       "ن">
+<!ENTITY toolsMenu.tooltip                    "أدوات لجميع الإضافات">
+
+<!ENTITY getThemes.description                "هل تبحث عن طريقة لإضفاء طابع شخصي على متصفحك؟">
+<!ENTITY getThemes.learnMore                  "اختر من بين آلاف السمات.">
+
+<!ENTITY cmd.back.tooltip                     "عُد للخلف صفحة واحدة">
+<!ENTITY cmd.forward.tooltip                  "تقدم للأمام صفحة واحدة">
+
+<!ENTITY showUnsignedExtensions.button.label  "تعذّر التحقق من بعض الامتدادات">
+<!ENTITY showAllExtensions.button.label       "اعرض كل الامتدادات">
+<!ENTITY debugAddons.label                    "نقّح الإضافات">
+<!ENTITY debugAddons.accesskey                "ن">
+<!-- global warnings -->
+
+<!ENTITY warning.safemode.label                    "النمط الآمن عطّل جميع الإضافات.">
+<!ENTITY warning.checkcompatibility.label          "التحقق من توافقية الإضافات قد عُطّل. قد يكون لديك إضافات غير متوافقة.">
+<!ENTITY warning.checkcompatibility.enable.label   "فعّل">
+<!ENTITY warning.checkcompatibility.enable.tooltip "فعّل التحقق من توافقية الإضافات">
+<!ENTITY warning.updatesecurity.label              "التحقق من أمن التحديثات قد عُطّل. قد تشكل التهديدات عليك خطرًا.">
+<!ENTITY warning.updatesecurity.enable.label       "فعّل">
+<!ENTITY warning.updatesecurity.enable.tooltip     "فعّل التحقق من أمن تحديثات الإضافات">
+<!-- categories / views -->
+
+<!ENTITY view.search.label                    "ابحث">
+<!ENTITY view.discover.label                  "احصل على الإضافات">
+<!ENTITY view.recentUpdates.label             "التحديثات الأخيرة">
+<!ENTITY view.availableUpdates.label          "التحديثات المتاحة">
+<!-- addon updates -->
+
+<!ENTITY updates.checkForUpdates.label        "التمس التحديثات">
+<!ENTITY updates.checkForUpdates.accesskey    "ت">
+<!ENTITY updates.viewUpdates.label            "اعرض التحديثات الأخيرة">
+<!ENTITY updates.viewUpdates.accesskey        "ض">
+<!-- LOCALIZATION NOTE (updates.updateAddonsAutomatically.label): This menu item
+     is a checkbox that toggles the default global behavior for add-on update
+     checking. -->
+<!ENTITY updates.updateAddonsAutomatically.label     "حدّث الإضافات تلقائيًا">
+<!ENTITY updates.updateAddonsAutomatically.accesskey "ق">
+<!-- LOCALIZATION NOTE (updates.resetUpdatesToAutomatic.label, updates.resetUpdatesToManual.label):
+     Specific addons can have custom update checking behaviors ("Manually",
+     "Automatically", "Use default global behavior"). These menu items reset the
+     update checking behavior for all add-ons to the default global behavior
+     (which itself is either "Automatically" or "Manually", controlled by the
+     updates.updateAddonsAutomatically.label menu item). -->
+<!ENTITY updates.resetUpdatesToAutomatic.label       "اجعل تحديث كل الإضافات تلقائيًا">
+<!ENTITY updates.resetUpdatesToAutomatic.accesskey   "ف">
+<!ENTITY updates.resetUpdatesToManual.label          "اجعل تحديث كل الإضافات يدويًا">
+<!ENTITY updates.resetUpdatesToManual.accesskey      "ف">
+<!ENTITY updates.updating.label               "يحدّث الإضافات">
+<!ENTITY updates.installed.label              "حُدّثت إضافاتك.">
+<!ENTITY updates.downloaded.label             "انتهى تنزيل تحديثات إضافاتك.">
+<!ENTITY updates.restart.label                "أعِد التشغيل الآن لإتمام التنصيب">
+<!ENTITY updates.noneFound.label              "لا يوجد تحديثات">
+<!ENTITY updates.manualUpdatesFound.label     "اعرض التحديثات المتاحة">
+<!ENTITY updates.updateSelected.label         "نصّب التحديثات">
+<!ENTITY updates.updateSelected.tooltip       "نصّب التحديثات المتاحة في هذه اللائحة">
+<!-- addon actions -->
+
+<!ENTITY cmd.showDetails.label                "أظهر المزيد من المعلومات">
+<!ENTITY cmd.showDetails.accesskey            "ظ">
+<!ENTITY cmd.findUpdates.label                "ابحث عن التحديثات">
+<!ENTITY cmd.findUpdates.accesskey            "ح">
+<!ENTITY cmd.preferencesWin.label             "خيارات">
+<!ENTITY cmd.preferencesWin.accesskey         "خ">
+<!ENTITY cmd.preferencesUnix.label            "تفضيلات">
+<!ENTITY cmd.preferencesUnix.accesskey        "ف">
+<!ENTITY cmd.about.label                      "عن">
+<!ENTITY cmd.about.accesskey                  "ن">
+
+<!ENTITY cmd.enableAddon.label                "فعّل">
+<!ENTITY cmd.enableAddon.accesskey            "ع">
+<!ENTITY cmd.disableAddon.label               "عطّل">
+<!ENTITY cmd.disableAddon.accesskey           "ط">
+<!ENTITY cmd.enableTheme.label                "طبّق السمة">
+<!ENTITY cmd.enableTheme.accesskey            "س">
+<!ENTITY cmd.disableTheme.label               "انزع السمة">
+<!ENTITY cmd.disableTheme.accesskey           "س">
+<!ENTITY cmd.askToActivate.label              "اسأل قبل التفعيل">
+<!ENTITY cmd.askToActivate.tooltip            "اسأل كل مرة قبل استخدام هذه الإضافة">
+<!ENTITY cmd.alwaysActivate.label             "فعّل دائمًا">
+<!ENTITY cmd.alwaysActivate.tooltip           "استخدم هذه الإضافة دائمًا">
+<!ENTITY cmd.neverActivate.label              "لا تُفعّل أبدًا">
+<!ENTITY cmd.neverActivate.tooltip            "لا تستخدم هذه الإضافة أبدًا">
+<!ENTITY cmd.stateMenu.tooltip                "غيّر عند تشغيل هذه الإضافة">
+<!ENTITY cmd.installAddon.label               "نصّب">
+<!ENTITY cmd.installAddon.accesskey           "ن">
+<!ENTITY cmd.uninstallAddon.label             "أزِل">
+<!ENTITY cmd.uninstallAddon.accesskey         "ل">
+<!ENTITY cmd.showPreferencesWin.label         "خيارات">
+<!ENTITY cmd.showPreferencesWin.tooltip       "غيّر خيارات هذه الإضافة">
+<!ENTITY cmd.showPreferencesUnix.label        "تفضيلات">
+<!ENTITY cmd.showPreferencesUnix.tooltip      "غيّر تفضيلات هذه الإضافة">
+<!ENTITY cmd.contribute.label                 "ساهِم">
+<!ENTITY cmd.contribute.accesskey             "س">
+<!ENTITY cmd.contribute.tooltip               "ساهِم في تطوير هذه الإضافة">
+
+<!ENTITY cmd.showReleaseNotes.label           "اعرض ملاحظات الإصدار">
+<!ENTITY cmd.showReleaseNotes.tooltip         "اعرض ملاحظات الإصدار لهذا التحديث">
+<!ENTITY cmd.hideReleaseNotes.label           "أخفِ ملاحظات الإصدار">
+<!ENTITY cmd.hideReleaseNotes.tooltip         "أخفِ ملاحظات الإصدار لهذا التحديث">
+<!ENTITY cmd.findReplacement.label            "ابحث عن بديل">
+<!-- discovery view -->
+<!-- LOCALIZATION NOTE (discover.title,discover.description,discover.footer):
+     Displayed in the center of the Get Add-ons view, see bug 601143 for mockups. -->
+
+<!ENTITY discover.title                       "ما هي الإضافات؟">
+<!ENTITY discover.description2                "الإضافات هي تطبيقات تسمح لك بتخصيص &brandShortName; إما من خلال وظيفة إضافية أو سِمت جديد. جرّب الشريط الجانبي لتوفير الوقت، أو متتبع أحوال الطقس، أو سمة جديدة من السمات، لكي تجعل &brandShortName; على ذوقك.">
+<!ENTITY discover.footer                      "عندما تتصل بالإنترنت، سيظهر في هذه اللوحة بعض من أفضل الإضافات وأكثرها شعبية لكي تستطيع تجربتها.">
+<!-- detail view -->
+
+<!ENTITY detail.version.label                 "النسخة">
+<!ENTITY detail.lastupdated.label             "آخر تحديث">
+<!ENTITY detail.creator.label                 "المطوّرين">
+<!ENTITY detail.homepage.label                "صفحة البداية">
+<!ENTITY detail.numberOfDownloads.label       "التنزيلات">
+
+<!ENTITY detail.contributions.description     "يطلب منك مطوّر هذه الإضافة مساعدته بدعم استمرار تطوير هذا العمل من خلال تبرع صغير منك.">
+
+<!ENTITY detail.updateType                    "التحديثات التلقائية">
+<!ENTITY detail.updateDefault.label           "مبدئي">
+<!ENTITY detail.updateDefault.tooltip         "نصّب التحديثات تلقائيًا إذا كان ذلك هو المبدئي فقط">
+<!ENTITY detail.updateAutomatic.label         "مشغلة">
+<!ENTITY detail.updateAutomatic.tooltip       "نصّب التحديثات تلقائيًا">
+<!ENTITY detail.updateManual.label            "مطفأة">
+<!ENTITY detail.updateManual.tooltip          "لا نصّب التحديثات تلقائيًا">
+<!ENTITY detail.home                          "صفحة البداية">
+<!ENTITY detail.repository                    "ملف الإضافة الشخصي">
+<!ENTITY detail.size                          "الحجم">
+
+<!ENTITY detail.checkForUpdates.label         "التمس التحديثات">
+<!ENTITY detail.checkForUpdates.accesskey     "س">
+<!ENTITY detail.checkForUpdates.tooltip       "التمس التحديثات لهذه الإضافة">
+<!ENTITY detail.showPreferencesWin.label      "خيارات">
+<!ENTITY detail.showPreferencesWin.accesskey  "خ">
+<!ENTITY detail.showPreferencesWin.tooltip    "غيّر خيارات هذه الإضافة">
+<!ENTITY detail.showPreferencesUnix.label     "تفضيلات">
+<!ENTITY detail.showPreferencesUnix.accesskey "ض">
+<!ENTITY detail.showPreferencesUnix.tooltip   "غيّر تفضيلات هذه الإضافة">
+<!-- ratings -->
+
+
+<!ENTITY rating2.label                        "التقييم">
+<!-- download/install progress -->
+
+<!ENTITY progress.pause.tooltip               "ألبِث">
+<!ENTITY progress.cancel.tooltip              "ألغِ">
+<!-- list sorting -->
+
+
+<!ENTITY sort.name.label                      "الاسم">
+<!ENTITY sort.name.tooltip                    "رتّب حسب الاسم">
+<!ENTITY sort.dateUpdated.label               "آخر تحديث">
+<!ENTITY sort.dateUpdated.tooltip             "رتّب حسب تاريخ التحديث">
+<!ENTITY sort.relevance.label                 "أفضل تطابق">
+<!ENTITY sort.relevance.tooltip               "رتّب حسب وثاقة الصلة">
+<!ENTITY sort.price.label                     "السعر">
+<!ENTITY sort.price.tooltip                   "رتّب حسب السعر">
+
+<!ENTITY search.filter2.label                 "ابحث:">
+<!ENTITY search.filter2.installed.label       "إضافاتي">
+<!ENTITY search.filter2.installed.tooltip     "اعرض الإضافات المنصّبة">
+<!ENTITY search.filter2.available.label       "الإضافات المتاحة">
+<!ENTITY search.filter2.available.tooltip     "اعرض الإضافات المتوفرة للتنصيب">
+
+<!ENTITY addon.homepage                       "صفحة البداية">
+<!ENTITY addon.details.label                  "المزيد">
+<!ENTITY addon.details.tooltip                "أظهِر المزيد من التفاصيل عن هذه الإضافة">
+<!ENTITY addon.unknownDate                    "مجهول">
+<!-- LOCALIZATION NOTE (addon.legacy.label): This appears in a badge next
+     to the add-on name for extensions that are not webextensions, which
+     will stop working in Waterfox 57. -->
+<!ENTITY addon.legacy.label                   "عتيق">
+<!-- LOCALIZATION NOTE (addon.disabled.postfix): This is used in a normal list
+     to signify that an add-on is disabled, in the form
+     "<Addon name> <1.0> (disabled)" -->
+<!ENTITY addon.disabled.postfix               "(معطلة)">
+<!-- LOCALIZATION NOTE (addon.update.postfix): This is used in the available
+     updates list to signify that an item is an update, in the form
+     "<Addon name> <1.1> Update". It is fine to use constructs like brackets if
+     necessary -->
+<!ENTITY addon.update.postfix                 "تحديث">
+<!ENTITY addon.undoAction.label               "تراجَع">
+<!ENTITY addon.undoAction.tooltip             "تراجع عن هذا الإجراء">
+<!ENTITY addon.undoRemove.label               "تراجَع">
+<!ENTITY addon.undoRemove.tooltip             "احتفظ بهذه الإضافة منصّبة">
+<!ENTITY addon.restartNow.label               "أعد التشغيل الآن">
+<!ENTITY addon.install.label                  "نصّب">
+<!ENTITY addon.install.tooltip                "نصّب هذه الإضافة">
+<!ENTITY addon.updateNow.label                "حدّث الآن">
+<!ENTITY addon.updateNow.tooltip              "نصّب تحديث هذه الإضافة">
+<!ENTITY addon.includeUpdate.label            "ضمّن التحديث">
+<!ENTITY addon.updateAvailable.label          "هناك تحديث متاح">
+<!ENTITY addon.checkingForUpdates.label       "يلتمس التحديثات…">
+<!ENTITY addon.releaseNotes.label             "ملاحظات الإصدار:">
+<!ENTITY addon.loadingReleaseNotes.label      "يحمّل…">
+<!ENTITY addon.errorLoadingReleaseNotes.label "المعذرة، ولكن حصل خطأ أثناء تحميل ملاحظات الإصدار.">
+
+<!ENTITY addon.createdBy.label                "طوّرها ">
+
+<!ENTITY eula.title                           "اتفاقية ترخيص المستخدم">
+<!ENTITY eula.width                           "560px">
+<!ENTITY eula.height                          "400px">
+<!ENTITY eula.accept                          "اقبل و نصّب…">
+
+<!ENTITY settings.path.button.label           "تصفّح…">
+<!-- LOCALIZATION NOTE (experiment.info.label): The strings related to
+     experiments are present on the "Experiments" tab of the add-ons manager.
+     This tab won't be displayed unless an Experiment add-on is installed.
+     Install https://people.mozilla.org/~gszorc/dummy-experiment-addon.xpi
+     to cause this tab to appear. -->
+
+<!ENTITY experiment.info.label "ما هذا؟ قد ينصّب تليمتري بعض التجارب و يشغّلها من وقت لآخر.">
+<!ENTITY experiment.info.learnmore "اطّلع على المزيد">
+<!ENTITY experiment.info.learnmore.accesskey "ط">
+<!ENTITY experiment.info.changetelemetry "إعدادات تليمتري">
+<!ENTITY experiment.info.changetelemetry.accesskey "ت">
+
+<!ENTITY setting.learnmore "اطّلع على المزيد…">
+
+<!ENTITY disabledUnsigned.heading "عُطّلت بعض الإضافات">
+<!-- LOCALIZATION NOTE (disabledUnsigned.description.start, disabledUnsigned.description.findAddonsLink, disabledUnsigned.description.end):
+     These entities form a sentence, with
+     disabledUnsigned.description.findAddonsLink being a link to an external site. -->
+<!ENTITY disabledUnsigned.description.start "لم يُتحقق من الإضافات التالية لاستخدامها مع &brandShortName;. يمكنك ">
+<!ENTITY disabledUnsigned.description.findAddonsLink "البحث عن بدائل">
+<!ENTITY disabledUnsigned.description.end " أو أن تطلب من المطوّر أن يجعل موزيلا تتحقق منهم.">
+<!ENTITY disabledUnsigned.learnMore "اطلع أكثر على مجهوداتنا في إبقائك آمنا على الإنترنت.">
+<!-- LOCALIZATION NOTE (disabledUnsigned.devInfo.start, disabledUnsigned.devInfo.linkToManual, disabledUnsigned.devInfo.end):
+     These entities form a sentence, with disabledUnsigned.devInfo.linkToManual
+     being a link to an external site. -->
+<!ENTITY disabledUnsigned.devInfo.start "المطورين المهتمين بأن تتحقق موزيلا من إضافاتهم، يمكنهم قراءة ">
+<!ENTITY disabledUnsigned.devInfo.linkToManual "دليلنا">
+<!ENTITY disabledUnsigned.devInfo.end ".">
+
+<!ENTITY pluginDeprecation.description "أهناك ما تفتقده؟ لم يعد &brandShortName; يدعم بعض الملحقات.">
+<!ENTITY pluginDeprecation.learnMore "اطّلع على المزيد.">
+
+<!ENTITY legacyWarning.description "أهناك ما تفتقده؟ لم يعد &brandShortName; يدعم بعض الامتدادات.">
+<!ENTITY legacyWarning.showLegacy "اعرض الامتدادات العتيقة">
+<!ENTITY legacyExtensions.title "امتدادات عتيقة">
+<!ENTITY legacyExtensions.description "لا تحقق هذه الامتدادات معايير &brandShortName; الحالية، لذا عُطّلت.">
+<!ENTITY legacyExtensions.learnMore "تعرّف على التغييرات على الإضافات">

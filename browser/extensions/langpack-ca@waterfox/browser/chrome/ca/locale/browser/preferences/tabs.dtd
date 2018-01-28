@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Ctrl+Tab canvia de pestanya en ordre d'ús recent">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Fes que les finestres noves s'obrin en pestanyes noves">
+<!ENTITY newWindowsAsTabs.accesskey   "t">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Avisa en tancar diverses pestanyes de cop">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "d">
+
+<!ENTITY warnOnOpenManyTabs.label       "Avisa quan el fet d'obrir moltes pestanyes pugui alentir el &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "o">
+
+<!ENTITY switchLinksToNewTabs.label        "En obrir un enllaç en una pestanya nova, vés-hi immediatament">
+<!ENTITY switchLinksToNewTabs.accesskey    "b">
+
+<!ENTITY showTabsInTaskbar.label          "Mostra les previsualitzacions de les pestanyes a la barra de tasques del Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "q">
+<!ENTITY tabsGroup.label          "Pestanyes">

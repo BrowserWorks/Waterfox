@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Kanjoo woo daabu">
+<!ENTITY tabCrashed.restoreTab "Kanjoo woo yeeti">
+<!ENTITY tabCrashed.restoreAll "Kanji kaŋantey kul yeeti">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "Aywa. War kanjoo n' ka kaŋ.">
+<!ENTITY tabCrashed.offerHelp "Ir ga hin ka war faaba!">
+<!ENTITY tabCrashed.single.offerHelpMessage "&tabCrashed.restoreTab; suuba ka moo gundekunaa zumandi taaga.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "&tabCrashed.restoreTab; wala &tabCrashed.restoreAll; suuba ka moo gundekunaa zumandi taaga.">
+<!ENTITY tabCrashed.requestHelp "War g'ir faaba wala?">
+<!ENTITY tabCrashed.requestHelpMessage "Kaŋyan bayrandey g'ir gaa ka šendawey maate nda ka &brandShortName; boryandi ka tonton.">
+<!ENTITY tabCrashed.requestReport "Kanjoo woo bayrandi">
+<!ENTITY tabCrashed.sendReport2 "Kaŋyan bayrandi sanba kanjoo kaŋ war goo m'a guna se">
+<!ENTITY tabCrashed.commentPlaceholder2 "Daarayaŋ tonton (daarawey ga hin ka diyandi)">
+<!ENTITY tabCrashed.includeURL2 "Moo aderesu dam kaŋyan bayrandoo woo bande">
+<!ENTITY tabCrashed.emailPlaceholder "War bataga aderesoo dam ne">
+<!ENTITY tabCrashed.emailMe "Bataga tee yane nd' alhabar tontoni bangay">
+<!ENTITY tabCrashed.reportSent "Kaŋyan bayrandi n' ka sanbandi ka ben; foofo nda war faabaa ka &brandShortName; boryandi ka tonton!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Bandafaari kanjey bayrandi">
+<!ENTITY tabCrashed.autoSubmit2 "ibaayey taagandi ka kaŋyan bayrandey sanbandi ng'i boŋ se, sanda bayrandey bandafaari kanji kaŋantey se ka hun sohõda nda hiino goywaatey se">

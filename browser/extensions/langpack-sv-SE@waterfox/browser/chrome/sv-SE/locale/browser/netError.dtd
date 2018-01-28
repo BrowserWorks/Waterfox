@@ -1,0 +1,126 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Fel vid sidhämtning">
+<!ENTITY retry.label "Försök igen">
+<!ENTITY returnToPreviousPage.label "Gå bakåt">
+<!ENTITY advanced.label "Avancerad">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Anslutningen misslyckades">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Adressen har säkerhetsrestriktioner">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Servern hittades inte">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Kontrollera om det finns något skrivfel i adressen, som <strong>ww</strong>.example.com i stället för <strong>www</strong>.example.com</li> <li>Om du inte kan hämta någon sida alls, kontrollera datorns nätverksanslutning.</li> <li>Om datorn eller nätverket skyddas av en brandvägg eller proxy, kontrollera att &brandShortName; har tillstånd att ansluta till webben.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Filen kan inte hittas">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kontrollera om det finns stavfel eller andra typografiska fel i filnamnet.</li> <li>Kontrollera om filen flyttats, fått ett annat namn eller tagits bort.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Åtkomst till filen nekades">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Den kan ha tagits bort, flyttats eller så kan filrättigheter hindra tillgång.</li></ul>">
+
+<!ENTITY generic.title "Hoppsan.">
+<!ENTITY generic.longDesc "<p>&brandShortName; kan av någon anledning inte visa sidan.</p>">
+
+<!ENTITY captivePortal.title "Logga in till nätverk">
+<!ENTITY captivePortal.longDesc2 "
+<p>Du måste logga in på nätverket innan du kan ansluta till Internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Öppna inloggningssida för nätverk">
+
+<!ENTITY malformedURI.title "Adressen är inte giltig">
+<!ENTITY malformedURI.longDesc "<ul> <li>Webbadresser skrivs vanligen som <strong>http://www.example.com/</strong></li> <li>Kontrollera att du använder framåtlutande snedstreck (dvs <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Anslutningen avbröts">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Utgånget dokument">
+<!ENTITY notCached.longDesc "<p>Det efterfrågade dokumentet finns inte längre i &brandShortName; cache.</p><ul><li>Av säkerhetsskäl försöker inte &brandShortName; automatiskt att hämta om känsliga dokument.</li><li>Klicka på Försök igen för att åter hämta dokumentet från webbplatsen.</li></ul>">
+
+<!ENTITY netOffline.title "Nedkopplat läge">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Klicka på &quot;Försök igen&quot; för att byta till uppkopplat läge och ladda om sidan.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Kodningsfel av innehållet">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Kontakta webbplatsens ägare och informera dem om detta problem.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Osäker filtyp">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kontakta webbplatsens ägare för att informera dem om detta problem.</li> </ul>">
+
+<!ENTITY netReset.title "Anslutningen avbröts">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Anslutningen avbröts">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adressen förstods inte">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Du kan behöva installera andra program för att öppna den här sidan.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxyservern avvisar anslutningen">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kontrollera att proxyinställningarna är riktiga.</li> <li>Kontakta nätverksadministratören för att säkerställa att proxyservern fungerar.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Kan inte hitta proxyservern">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kontrollera att proxyinställningarna är riktiga.</li> <li>Kontrollera att datorn har en fungerande nätverksanslutning.</li> <li>Om datorn eller nätverket skyddas av en brandvägg eller proxy, kontrollera att &brandShortName; har tillstånd att ansluta till webben.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Sidan dirigeras om felaktigt">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Det här problemet kan ibland uppstå om du inaktiverat eller nekat att ta emot kakor.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Oväntat svar från servern">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontrollera att Personal Security Manager finns installerat på datorn.</li> <li>Det här kan ibland bero på en ovanlig konfiguration på servern.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Säker anslutning misslyckades">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Sidan du försöker se kan inte visas eftersom autenticiteten för mottagen data inte kan verifieras.</li> <li>Kontakta webbplatsens ägare och informera dem om detta problem.</li> </ul>">
+
+<!ENTITY certerror.longpagetitle1 "Din anslutning är inte säker">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "Ägaren av <span class='hostname'/> har konfigurerat sin webbplats felaktigt.  För att skydda din information från att bli stulen, har &brandShortName; inte anslutit till denna webbplats.">
+
+<!ENTITY sharedLongDesc "<ul> <li>Webbplatsen kan tillfälligt vara nere eller upptagen. Försök igen om en stund.</li> <li>Om du inte kan öppna sidor, kontrollera datorns nätverksanslutning.</li> <li>Om datorn eller nätverket skyddas av en brandvägg eller proxy, kontrollera att &brandShortName; har tillstånd att ansluta till webben.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blockerad av säkerhetspolicyn för innehåll">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; förhindrade sidan från att öppnas på detta sätt eftersom sidan har en säkerhetspolicy för innehåll som inte tillåter detta.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Skadat innehåll">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Sidan du försöker se kan inte visas på grund av att ett fel i dataöverföringen upptäcktes.</p><ul><li>Kontakta ägarna till webbplatsen för att informera dem om detta problem.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Lägg till undantag…">
+
+<!ENTITY errorReporting.automatic2 "Rapportera fel som detta för att hjälpa Mozilla identifiera och blockera skadliga webbplatser">
+<!ENTITY errorReporting.learnMore "Läs mer…">
+
+<!ENTITY remoteXUL.title "Extern XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakta ägaren av webbplatsen för att informera dem om detta problem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Kan inte ansluta säkert">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Avancerad info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; har inte anslutit till <span id='wrongSystemTime_URL'/> eftersom datorn klocka verkar visa fel tid och detta hindrar en säker anslutning.</p> <p>Din dator är inställd på <span id='wrongSystemTime_systemDate'/>, när den borde vara <span id='wrongSystemTime_actualDate'/>. För att åtgärda detta problem, ändra datum- och tidsinställningar för att visa rätt tid.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p>&brandShortName; har inte anslutit till <span id='wrongSystemTimeWithoutReference_URL'/> eftersom datorn klocka verkar visa fel tid och detta hindrar en säker anslutning.</p> <p>Din dator är inställd på <span id='wrongSystemTimeWithoutReference_systemDate'/>. För att åtgärda detta problem, ändra datum- och tidsinställningar för att visa rätt tid.</p>">
+
+<!ENTITY certerror.pagetitle1  "Osäker anslutning">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Denna webbplats använder HTTP Strict Transport Security (HSTS) för att ange att &brandShortName; endast kan ansluta dit säkert. Därför är det inte möjligt att lägga till ett undantag för detta certifikat.">
+<!ENTITY certerror.copyToClipboard.label "Kopiera text till urklipp">
+
+<!ENTITY inadequateSecurityError.title "Din anslutning är inte säker">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> använder säkerhetsteknologi som är föråldrad och sårbar för angrepp. En angripare kan lätt avslöja information som du trott ska vara säker. Webbplatsens administratör måste laga servern innan du kan besöka webbplatsen.</p><p>Felkod: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Det ser ut som nätverkets säkerhetsinställningar kan orsaka detta. Vill du att standardinställningarna ska återställas?">
+<!ENTITY prefReset.label "Återställ standardinställningar">

@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetrijski podaci">
+
+<!ENTITY aboutTelemetry.pingDataSource "Izvor ping podataka:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Trenutni ping podaci">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arhivirani ping podaci">
+
+<!ENTITY aboutTelemetry.raw "Sirovi JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Prikaži podatke podsesije">
+
+<!ENTITY aboutTelemetry.choosePing "Izaberi ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; noviji ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Stariji ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Sedmica">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+
+
+
+<!ENTITY aboutTelemetry.generalDataSection "  Opći podaci">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Podaci okruženja">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Zapisnik telemetrije">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Spori SQL iskazi">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Padovi browsera">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Hangovi niti">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  Uhvaćeni stackovi">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skalari">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Keyed skalari">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogrami">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histogrami s ključem">
+
+<!ENTITY aboutTelemetry.eventsSection "  Događaji">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Jednostavna mjerenja">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Detalji add-ona">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Kasni zapisi">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Informacije o sesiji">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  NAPOMENA: Debuggiranje sporog SQL-a je omogućeno. Puni SQL stringovi mogu biti prikazani ispod ali neće biti poslani Telemetry-u.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "  Dobavi nazive funkcija za stack-ove">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "  Prikaži sirove stack podatke">
+
+<!ENTITY aboutTelemetry.filterText "  Filtriraj (stringove ili /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Payload">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+

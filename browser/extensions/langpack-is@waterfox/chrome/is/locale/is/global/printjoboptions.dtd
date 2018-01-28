@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "Stillingar prentara">
+
+<!ENTITY paperInput.label "Blaðsíðustærð:">
+<!ENTITY paperInput.accesskey "B">
+
+<!ENTITY jobTitleInput.label "Titill verks:">
+<!ENTITY jobTitleInput.accesskey "v">
+
+<!ENTITY colorGroup.label "Litur:">
+<!ENTITY grayRadio.label "Gráskali">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "Litur">
+<!ENTITY colorRadio.accesskey "L">
+
+<!ENTITY edgeMarginInput.label "Bil frá endanum á blaði að spássíu">
+<!ENTITY topInput.label "Efst:">
+<!ENTITY topInput.accesskey "t">
+<!ENTITY bottomInput.label "Neðst:">
+<!ENTITY bottomInput.accesskey "N">
+<!ENTITY leftInput.label "Vinstri:">
+<!ENTITY leftInput.accesskey "V">
+<!ENTITY rightInput.label "Hægri:">
+<!ENTITY rightInput.accesskey "r">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Iɣewwaṛen">
+<!ENTITY  prefWindow.title        "Ismenyifen">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Ismenyifen n &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 42em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 45.5em; min-height: 40.5em;">
+
+<!ENTITY  paneSearchResults.title       "Igmaḍ n unadi">
+<!ENTITY  paneGeneral.title             "Amatu">
+<!ENTITY  paneSearch.title              "Nadi">
+<!ENTITY  paneFilesApplications.title   "Ifuyla &amp; isnasen">
+<!ENTITY  panePrivacySecurity.title     "Tabaḍnit  &amp; Taɣellist">
+<!ENTITY  paneContainers.title          "Iccaren imagbaren">
+<!ENTITY  paneUpdates.title             "Leqqem">
+
+<!ENTITY  languageAndAppearance.label   "Tutlayt d urwes">
+<!ENTITY  filesAndApplications.label    "Ifuyla d isnasen">
+<!ENTITY  browserPrivacy.label          "Tabaḍnit n iminig">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Amiḍan Waterfox">
+
+<!ENTITY  helpButton2.label        "&brandShortName; Tallalt">

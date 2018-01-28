@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Bun venit la &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Autentifică-te pentru a sincroniza filele, marcajele, parolele și mai multe.">
+<!ENTITY aboutAccountsConfig.startButton.label "Începe">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferințe de sincronizare">
+<!ENTITY aboutAccounts.noConnection.title "Fără conexiune">
+<!ENTITY aboutAccounts.noConnection.description "Trebuie să fiți conectat la internet pentru a vă autentifica.">
+<!ENTITY aboutAccounts.noConnection.retry "Încearcă din nou">
+<!ENTITY aboutAccounts.badConfig.title "Configurație invalidă">
+<!ENTITY aboutAccounts.badConfig.description "Nu se poate determina configurația ta de server Waterfox Account. Te rugăm să reîncerci mai târziu.">

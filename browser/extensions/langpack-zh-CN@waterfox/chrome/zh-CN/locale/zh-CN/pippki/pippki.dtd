@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title  "修改主密码">
+<!ENTITY setPassword.tokenName.label "安全设备">
+<!ENTITY setPassword.oldPassword.label "当前密码:">
+<!ENTITY setPassword.newPassword.label "新密码:">
+<!ENTITY setPassword.reenterPassword.label "新密码(重复):">
+<!ENTITY setPassword.meter.label "密码强度">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel "重置">
+<!ENTITY resetPassword.title  "重置主密码">
+<!ENTITY resetPassword.text  "如果您重置您的主密码，您存储的所有网站和电子邮箱密码、表单数据、个人证书以及私钥，都将被丢弃。您确实要重置主密码吗？">
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title "下载证书">
+<!ENTITY downloadCert.message1 "您被要求信任一个新的数字证书认证机构（CA）。">
+<!ENTITY downloadCert.trustSSL "信任由此证书颁发机构标识的网站。">
+<!ENTITY downloadCert.trustEmail "信任由此证书颁发机构标识的电子邮件用户。">
+<!ENTITY downloadCert.trustObjSign "信任由此证书颁发机构标识的软件开发者。">
+<!ENTITY downloadCert.message3 "在信任此证书颁发机构之前，您应该检查它的证书、策略和它的手续（如果有的话）。">
+<!ENTITY downloadCert.viewCert.label "查看">
+<!ENTITY downloadCert.viewCert.text "检查CA证书">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title "使用确认请求">
+<!ENTITY clientAuthAsk.message1 "此站点请求您用证书来标识您自己：">
+<!ENTITY clientAuthAsk.message2 "选择一个证书作为标识：">
+<!ENTITY clientAuthAsk.message3 "所选证书细节：">
+
+<!ENTITY pkcs12.setpassword.title  "输入证书备份密码">
+<!ENTITY pkcs12.setpassword.message  "证书备份密码是用来保护您将创建的证书备份文件的。您必需设置此密码来进行备份。">
+<!ENTITY pkcs12.setpassword.label1 "证书备份密码：">
+<!ENTITY pkcs12.setpassword.label2 "证书备份密码（重复）：">
+<!ENTITY pkcs12.setpassword.reminder "重要：如果您忘记了您的证书备份密码，您此后将无法恢复此备份。请将它记在一个安全的地方。">
+
+<!ENTITY chooseToken.title  "选择令牌对话框">
+<!ENTITY chooseToken.message1 "请选择一个令牌。">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title "产生新的私钥">
+<!ENTITY createCertInfo.msg1 "正在生成密钥… 可能需要几分钟…。">
+<!ENTITY createCertInfo.msg2 "请稍候…">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title "受保护的令牌身份验证">
+<!ENTITY protectedAuth.msg "请验证该令牌。认证方式取决于您的令牌的类型。">
+<!ENTITY protectedAuth.tokenName.label "令牌：">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Values for changepassword.xul -->
+
+<!ENTITY setPassword.title  "Hłowne hesło změnić">
+<!ENTITY setPassword.tokenName.label "Wěstotny grat">
+<!ENTITY setPassword.oldPassword.label "Aktualne hesło:">
+<!ENTITY setPassword.newPassword.label "Nowe hesło:">
+<!ENTITY setPassword.reenterPassword.label "Nowe hesło (hišće raz):">
+<!ENTITY setPassword.meter.label "Kwalitne měritko hesła">
+<!-- Values for resetpassword.xul -->
+
+<!ENTITY resetPasswordButtonLabel "Wróćo stajić">
+<!ENTITY resetPassword.title  "Hłowne hesło wróćo stajić">
+<!ENTITY resetPassword.text  "Jeli swoje hłowne hesło wróćo stajiće, zabudu se wšě waše skadowane webowe a e-mejlowe hesła, formularne daty, wosobinski certifikata a priwatne kluče. Chceće woprawdźe swoje hłowne hesło wróćo stajić?">
+<!-- Downloading a cert -->
+
+<!ENTITY downloadCert.title "Sćehnjenje certifikata">
+<!ENTITY downloadCert.message1 "Bušće poprošeny nowej certifikatowej awtoriće (CA) dowěrić.">
+<!ENTITY downloadCert.trustSSL "Tutej certifikatowej awtoriće dowěrić, zo bychu so websydła identifikowali.">
+<!ENTITY downloadCert.trustEmail "Tutej certifikatowej awtoriće dowěrić, zo bychu so e-mejlowi wužiwarjo identifikowali.">
+<!ENTITY downloadCert.trustObjSign "Tutej certifikatowej awtoriće dowěrić, zo bychu so softwarowi wuwiwarjo identifikowali.">
+<!ENTITY downloadCert.message3 "Prjedy hač tutej certifikatowej awtoriće za někajki zaměr dowěriće, wy měł jeje certifikat a jeje prawidła a procedury (jeli k dispoziciji stejace) přepruwować.">
+<!ENTITY downloadCert.viewCert.label "Napohlad">
+<!ENTITY downloadCert.viewCert.text "Certifikat certifikatoweje awtority přepruwować">
+<!-- Strings for the SSL client auth ask dialog -->
+
+<!ENTITY clientAuthAsk.title "Požadanje na identifikaciju wužiwarja">
+<!ENTITY clientAuthAsk.message1 "Tute sydło je požadało, zo wy sam so přezc ertifikat identifukujeće:">
+<!ENTITY clientAuthAsk.message2 "Wubjerće certifikat za identifikaciju:">
+<!ENTITY clientAuthAsk.message3 "Podrobnosće wubraneho certifikata:">
+
+<!ENTITY pkcs12.setpassword.title  "Hesło za zawěsćenje certifikata wubrać">
+<!ENTITY pkcs12.setpassword.message  "Hesło za zawěsćenje certifikata, kotrež sće tu nastajił, škita zawěsćensku dataju, kotruž wutworjeće. Dyrbiće tute hesło nastajić, prjedy hač ze zawěsćenjom pokročujeće.">
+<!ENTITY pkcs12.setpassword.label1 "Hesło zawěsćenja certifikata:">
+<!ENTITY pkcs12.setpassword.label2 "Hesło zawěsćenja certifikata (hišće raz):">
+<!ENTITY pkcs12.setpassword.reminder "Wažny: Jeli swoje hesło za zawěsćenje certifikata zabudźeće, njemóžeće tute zawěsćenje pozdźišo wobnowić. Prošu wobchowajće jo na wěstym městnje.">
+
+<!ENTITY chooseToken.title  "Dialog za wuběranje tokena">
+<!ENTITY chooseToken.message1 "Prošu wubjerće token.">
+<!-- Strings for the CreateCertInfo dialog  -->
+
+<!ENTITY createCertInfo.title "Tworjenje priwatneho kluča">
+<!ENTITY createCertInfo.msg1 "Tworjenje kluča běži… To móže něšto mjeńšin trać….">
+<!ENTITY createCertInfo.msg2 "Prošu čakać…">
+<!-- Strings for protectedAuth dialog -->
+
+<!ENTITY protectedAuth.title "Přez token škitana awtentifikacija">
+<!ENTITY protectedAuth.msg "Prošu awtentifikujće token. Awtentifikaciska metoda wotwisuje wot typa wašeho tokena.">
+<!ENTITY protectedAuth.tokenName.label "Token:">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  button-back-mac.label        "Orqaga qaytish">
+<!ENTITY  button-back-mac.accesskey    "O">
+<!ENTITY  button-next-mac.label        "Davom etish">
+<!ENTITY  button-next-mac.accesskey    "D">
+<!ENTITY  button-finish-mac.label      "Tayyor">
+<!ENTITY  button-cancel-mac.label      "Bekor qilish">
+
+<!ENTITY  button-back-unix.label       "Orqaga">
+<!ENTITY  button-back-unix.accesskey   "O">
+<!ENTITY  button-next-unix.label       "Keyingi">
+<!ENTITY  button-next-unix.accesskey   "K">
+<!ENTITY  button-finish-unix.label     "Tugadi">
+<!ENTITY  button-cancel-unix.label     "Bekor qilish">
+
+<!ENTITY  button-back-win.label        "&lt; Orqaga">
+<!ENTITY  button-back-win.accesskey    "O">
+<!ENTITY  button-next-win.label        "Keyingi &gt;">
+<!ENTITY  button-next-win.accesskey    "K">
+<!ENTITY  button-finish-win.label      "Tugadi">
+<!ENTITY  button-cancel-win.label      "Bekor qilish">

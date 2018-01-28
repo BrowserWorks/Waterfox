@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Bienvenius ta &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Enciete una sesión ta sincronizar as suyas pestanyas, marcapachinas, claus y mas.">
+<!ENTITY aboutAccountsConfig.startButton.label "Empecipiar">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Preferencias de Sync">
+<!ENTITY aboutAccounts.noConnection.title "Sin connexión">
+<!ENTITY aboutAccounts.noConnection.description "Has d'estar connectau a Internet pa encetar a sesión.">
+<!ENTITY aboutAccounts.noConnection.retry "Torne-lo a prebar">
+<!ENTITY aboutAccounts.badConfig.title "Mala configuración">
+<!ENTITY aboutAccounts.badConfig.description "No ye posible determinar la conviguración de servidor d'a suya Cuenta Waterfox. Torne a prebar-lo mas tarde.">

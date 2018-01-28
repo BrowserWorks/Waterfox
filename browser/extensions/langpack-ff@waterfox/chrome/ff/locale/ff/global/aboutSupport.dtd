@@ -1,0 +1,182 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Humpito Ñawndugol Caɗeele">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Ngoo hello ena waɗi humpito karallaagal baawngol nafde so aɗaetoo safrude caɗeele. So aɗa yiyloo jaabawuuji naamne ganndaaɗe  baɗte &brandShortName;, ƴeewto wallitorde amen <a id='supportLink'>lowre wallitorde</a>.">
+
+<!ENTITY aboutSupport.crashes.title "Jaŋtol Kooke">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "ID Jaŋtol">
+<!ENTITY aboutSupport.crashes.sendDate "Neldaaɗe">
+<!ENTITY aboutSupport.crashes.allReports "Jaŋte Kooke Fof">
+<!ENTITY aboutSupport.crashes.noConfig "Ngal jaaɓnirgal feewniraaka ngam hollude jaŋte kooke.">
+
+<!ENTITY aboutSupport.extensionsTitle "Timmitte">
+<!ENTITY aboutSupport.extensionName "Innde">
+<!ENTITY aboutSupport.extensionEnabled "Daaƴtaaɗo">
+<!ENTITY aboutSupport.extensionVersion "Yamre">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "Fannuuji Ƴeewtindorɗi">
+<!ENTITY aboutSupport.experimentName "Innde">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Cifagol">
+<!ENTITY aboutSupport.experimentActive "Ena hurmi">
+<!ENTITY aboutSupport.experimentEndDate "Ñalngu Gasol">
+<!ENTITY aboutSupport.experimentHomepage "Hello jaɓɓorgo">
+<!ENTITY aboutSupport.experimentBranch "Catal">
+
+<!ENTITY aboutSupport.appBasicsTitle "Beeɓtuɗe Jaaɓnirgal">
+<!ENTITY aboutSupport.appBasicsName "Innde">
+<!ENTITY aboutSupport.appBasicsVersion "Yamre">
+<!ENTITY aboutSupport.appBasicsBuildID "ID Mahngo">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Calol Kesɗitingol">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Aslol Kesɗitine">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Hollu Aslol Kesɗitine">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Runngere Keftinirɗe">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Runngere Keftinirɗe">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Ceŋe Daaƴtaaɗe">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Taf Teeltannde">
+<!ENTITY aboutSupport.appBasicsUserAgent "Ajajo Kuutoro">
+<!ENTITY aboutSupport.appBasicsOS "OS">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Kuutorogol Tesko">
+<!ENTITY aboutSupport.appBasicsPerformance "Jaawgol golle">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Gollooɓe Sarwiis Heftinaaɓe">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Keftinirɗe">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Kenorɗe Cili Keewɗi">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Mbayka Hoolno">
+
+<!ENTITY aboutSupport.showDir.label "Uddit Runngere">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Hollir e Yiytirde">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+<!ENTITY aboutSupport.showWin2.label "Uddit Runngere">
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Jiggo Teelte Baylaaɗe">
+<!ENTITY aboutSupport.modifiedPrefsName "Innde">
+<!ENTITY aboutSupport.modifiedPrefsValue "Kiisol">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "Keeroraaɗi user.js">
+<!ENTITY aboutSupport.userJSDescription "Runngere heftinirde maa ena waɗi <a id='prefs-user-js-link'>fiilde user.js</a>, waɗnde keeroraaɗi ɗi &brandShortName; sosaani.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Cuɓoraaɗe Daaƴaaɗe Teeŋtuɗe">
+<!ENTITY aboutSupport.lockedPrefsName "Innde">
+<!ENTITY aboutSupport.lockedPrefsValue "Kiisol">
+
+<!ENTITY aboutSupport.graphicsTitle "Jaytinooje">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Diiñorde Keɓe Nokkuuje">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Timmal">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Ƴeewto Timmal">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Incremental GC">
+
+<!ENTITY aboutSupport.a11yTitle "Weeɓitaare">
+<!ENTITY aboutSupport.a11yActivated "Hurminaama">
+<!ENTITY aboutSupport.a11yForceDisabled "Haɗ Naatgol">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Jame Deftorli">
+
+<!ENTITY aboutSupport.installationHistoryTitle "Aslol Aafgol">
+<!ENTITY aboutSupport.updateHistoryTitle "Aslol Kesɗitine">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Natto binndol to ɗakkitorde">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Natto keɓe kecce to ɗakkitorde">
+
+<!ENTITY aboutSupport.sandboxTitle "Seenorde">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "Eto Mbayka Hoolno">
+<!ENTITY aboutSupport.restartInSafeMode.label "Hurmitin tawa Ɓeyditte ena Ndaaƴaa…">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Fannuuji">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Joopagol caɗe">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Logagol Goore">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Logagol Pellitol">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Fannuuji Palol Kooke Daaƴaaɗe">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Taarataare">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">

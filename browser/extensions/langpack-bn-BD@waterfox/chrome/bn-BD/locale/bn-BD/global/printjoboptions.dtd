@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printJobOptions.title "মুদ্রণযন্ত্রের বৈশিষ্ট্যাবলী">
+
+<!ENTITY paperInput.label "কাগজের মাপ: (P)">
+<!ENTITY paperInput.accesskey "P">
+
+<!ENTITY jobTitleInput.label "কাজের নাম: (J)">
+<!ENTITY jobTitleInput.accesskey "J">
+
+<!ENTITY colorGroup.label "রং:">
+<!ENTITY grayRadio.label "গ্রেস্কেল (G)">
+<!ENTITY grayRadio.accesskey "G">
+<!ENTITY colorRadio.label "রঙিন (C)">
+<!ENTITY colorRadio.accesskey "C">
+
+<!ENTITY edgeMarginInput.label "কাগজের প্রান্ত ও মার্জিনের মধ্যবর্তী ব্যবধান">
+<!ENTITY topInput.label "শীর্ষ: (T)">
+<!ENTITY topInput.accesskey "T">
+<!ENTITY bottomInput.label "নীচে: (B)">
+<!ENTITY bottomInput.accesskey "B">
+<!ENTITY leftInput.label "বাম: (L)">
+<!ENTITY leftInput.accesskey "L">
+<!ENTITY rightInput.label "ডান: (R)">
+<!ENTITY rightInput.accesskey "R">

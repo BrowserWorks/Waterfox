@@ -1,0 +1,183 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutSupport.pageTitle "Nosozliklarni to‘g‘rilash ma’lumoti">
+<!-- LOCALIZATION NOTE (aboutSupport.pageSubtitle): don't change the 'supportLink' id. -->
+
+<!ENTITY aboutSupport.pageSubtitle "  Bu sahifa muammolarni hal qilishingizda foydasi tegishi mumkin bo‘lgan  texnik ma’lumotlarga ega. Agar siz &brandShortName; haqida umumiy savollarga javob izlayotgan bo‘lsangiz, bizning <a id='supportLink'>yordam saytimiz</a>nitekshirib ko‘ring.">
+
+<!ENTITY aboutSupport.crashes.title "Nosozlik ma’lumotlari">
+<!-- LOCALIZATION NOTE (aboutSupport.crashes.id):
+This is likely the same like id.heading in crashes.dtd. -->
+<!ENTITY aboutSupport.crashes.id "Hisobot xos raqami">
+<!ENTITY aboutSupport.crashes.sendDate "Jo‘natildi">
+<!ENTITY aboutSupport.crashes.allReports "Barcha nosozlik ma’lumotlari">
+<!ENTITY aboutSupport.crashes.noConfig "Ushbu ilova dastur nosozlik ma’lumotlarini ko‘rsatish uchun moslanmagan.">
+
+<!ENTITY aboutSupport.extensionsTitle "Kengaytmalar">
+<!ENTITY aboutSupport.extensionName "Nomi">
+<!ENTITY aboutSupport.extensionEnabled "Yoqib qo‘yilgan">
+<!ENTITY aboutSupport.extensionVersion "Versiyasi">
+<!ENTITY aboutSupport.extensionId "ID">
+
+
+
+
+
+<!ENTITY aboutSupport.experimentsTitle "Tajribaga asoslangan xususiyatlar">
+<!ENTITY aboutSupport.experimentName "Nomi">
+<!ENTITY aboutSupport.experimentId "ID">
+<!ENTITY aboutSupport.experimentDescription "Ta’rifi">
+<!ENTITY aboutSupport.experimentActive "Faol">
+<!ENTITY aboutSupport.experimentEndDate "Tugash sanasi">
+<!ENTITY aboutSupport.experimentHomepage "Uy sahifasi">
+<!ENTITY aboutSupport.experimentBranch "Shoxobcha">
+
+<!ENTITY aboutSupport.appBasicsTitle "Ilova dastur asoslari">
+<!ENTITY aboutSupport.appBasicsName "Nomi">
+<!ENTITY aboutSupport.appBasicsVersion "Versiyasi">
+<!ENTITY aboutSupport.appBasicsBuildID "Tuzilma ID raqami">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsUpdateChannel, aboutSupport.appBasicsUpdateHistory, aboutSupport.appBasicsShowUpdateHistory):
+"Update" is a noun here, not a verb. -->
+
+<!ENTITY aboutSupport.appBasicsUpdateChannel "Yangilash kanali">
+<!ENTITY aboutSupport.appBasicsUpdateHistory "Yangilash tarixi">
+<!ENTITY aboutSupport.appBasicsShowUpdateHistory "Yangilash tarixini ko‘rsatish">
+
+<!ENTITY aboutSupport.appBasicsProfileDir "Profil direktoriyasi">
+<!-- LOCALIZATION NOTE (aboutSupport.appBasicsProfileDirWinMac):
+This is the Windows- and Mac-specific variant of aboutSupport.appBasicsProfileDir.
+Windows/Mac use the term "Folder" instead of "Directory" -->
+<!ENTITY aboutSupport.appBasicsProfileDirWinMac "Profil jildi">
+
+<!ENTITY aboutSupport.appBasicsEnabledPlugins "Yoqilgan plaginlar">
+<!ENTITY aboutSupport.appBasicsBuildConfig "Tuzish konfiguratsiyasi">
+<!ENTITY aboutSupport.appBasicsUserAgent "Foydalanuvchi agent">
+<!ENTITY aboutSupport.appBasicsOS "OT">
+<!ENTITY aboutSupport.appBasicsMemoryUse "Foydalanilgan xotira">
+<!ENTITY aboutSupport.appBasicsPerformance "Samaradorlik">
+<!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
+
+<!ENTITY aboutSupport.appBasicsServiceWorkers "Ro‘yxatdan o‘tgan Service Workers">
+
+<!ENTITY aboutSupport.appBasicsProfiles "Profillar">
+
+<!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multijarayon oynalari">
+
+
+
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Xavfsiz rejim">
+
+<!ENTITY aboutSupport.showDir.label "Direktoriyani ochish">
+<!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific
+variant of aboutSupport.showDir.label.  This allows us to use the preferred
+"Finder" terminology on Mac. -->
+<!ENTITY aboutSupport.showMac.label "Topgichda ko‘rsatish">
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
+variant of aboutSupport.showDir.label. -->
+
+<!ENTITY aboutSupport.modifiedKeyPrefsTitle "Muhim o‘zgartirilgan moslamalar">
+<!ENTITY aboutSupport.modifiedPrefsName "Nomi">
+<!ENTITY aboutSupport.modifiedPrefsValue "Qiymati">
+<!-- LOCALIZATION NOTE (aboutSupport.userJSTitle, aboutSupport.userJSDescription): user.js is the name of the preference override file being checked. -->
+
+<!ENTITY aboutSupport.userJSTitle "user.js parametrlari">
+<!ENTITY aboutSupport.userJSDescription "Profil direktoriyangizda <a id='prefs-user-js-link'>user.js file</a> mavjud, unga &brandShortName; tomonidan yaratilmagan parametrlar qo‘shilgan.">
+
+<!ENTITY aboutSupport.lockedKeyPrefsTitle "Muhim o‘zgartirilgan parametrlar">
+<!ENTITY aboutSupport.lockedPrefsName "Nomi">
+<!ENTITY aboutSupport.lockedPrefsValue "Qiymati">
+
+<!ENTITY aboutSupport.graphicsTitle "Grafika">
+
+<!ENTITY aboutSupport.placeDatabaseTitle "Ma’lumotlar bazasi joylashgan o‘rinlari">
+<!ENTITY aboutSupport.placeDatabaseIntegrity "Butunlik">
+<!ENTITY aboutSupport.placeDatabaseVerifyIntegrity "Butunligini tekshirish">
+
+<!ENTITY aboutSupport.jsTitle "JavaScript">
+<!ENTITY aboutSupport.jsIncrementalGC "Qo‘shimcha GC">
+
+<!ENTITY aboutSupport.a11yTitle "Qulaylik">
+<!ENTITY aboutSupport.a11yActivated "Faollashtirilgan">
+<!ENTITY aboutSupport.a11yForceDisabled "Qulaylikni namoyish qilish">
+
+
+<!ENTITY aboutSupport.libraryVersionsTitle "Kutubxona versiyasi">
+
+<!ENTITY aboutSupport.installationHistoryTitle "O‘rnatish tarixi">
+<!ENTITY aboutSupport.updateHistoryTitle "Yangilash tarixi">
+
+<!ENTITY aboutSupport.copyTextToClipboard.label "Matndan nusxa olish">
+<!ENTITY aboutSupport.copyRawDataToClipboard.label "Manba ma’lumotlarni vaqtinchalik xotiraga nusxa olish">
+
+<!ENTITY aboutSupport.sandboxTitle "Sandbox">
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.safeModeTitle "Xavfsizlik usulida urinib ko‘ring">
+<!ENTITY aboutSupport.restartInSafeMode.label "Qo‘sh. dasturlarni o‘chirib ishga tushirish">
+
+<!ENTITY aboutSupport.graphicsFeaturesTitle "Imkoniyatlar">
+<!ENTITY aboutSupport.graphicsDiagnosticsTitle "Diagnostika">
+<!ENTITY aboutSupport.graphicsFailureLogTitle "Xato ma’lumoti">
+<!ENTITY aboutSupport.graphicsGPU1Title "GPU #1">
+<!ENTITY aboutSupport.graphicsGPU2Title "GPU #2">
+<!ENTITY aboutSupport.graphicsDecisionLogTitle "Qaror ma’lumoti">
+<!ENTITY aboutSupport.graphicsCrashGuardsTitle "Nosozlik soqchisini o‘chirish xususiyatlari">
+<!ENTITY aboutSupport.graphicsWorkaroundsTitle "Aylanma yo‘llar">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.featureId "ID">
+
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
+
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
+

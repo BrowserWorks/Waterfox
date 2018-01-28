@@ -1,0 +1,153 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ଦୂରମାପି ତଥ୍ୟ">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutTelemetry.slowSqlSection "  ମନ୍ଥର SQL ଅଭିବ୍ୟକ୍ତି">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  ବ୍ରାଉଜର ଅଟକିଯାଇଛି">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "ଥ୍ରେଡ଼ ହ୍ୟାଙ୍ଗ">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "  ଆୟତ ଚିତ୍ର">
+
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  ସରଳ ମାପ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection " ଏଡଅନ ବିବରଣୀ">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  ବିଳମ୍ବ ଲେଖାଗୁଡ଼ିକ">
+
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  ଟିପ୍ପଣୀ: ମନ୍ଥର SQL ତ୍ରୁଟି ନିବାରଣକୁ ସକ୍ରିୟ କରାଯାଇଛି। ସମ୍ପୂର୍ଣ୍ଣ SQL ବାକ୍ୟଖଣ୍ଡଗୁଡ଼ିକୁ ହୁଏତଃ ନିମ୍ନରେ ଦର୍ଶାଯାଇଛି କିନ୍ତୁ ସେମାନଙ୍କୁ ଦୂରମାପିରେ ଦାଖଲ କରାଯିବ ନାହିଁ।">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  ଛାଣନ୍ତୁ (ବାକ୍ୟଖଣ୍ଡ କିମ୍ବା /regexp/)">
+
+
+<!ENTITY aboutTelemetry.archivePingHeader "
+Ping
+">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "
+Week
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.choosePing "
+Choose ping:
+">
+
+<!ENTITY aboutTelemetry.environmentDataSection "
+  Environment Data
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "
+  General Data
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "
+  Keyed Histograms
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.pingDataSource "
+Ping data source:
+">
+
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "
+Archived ping data
+">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "
+Current ping data
+">
+
+<!ENTITY aboutTelemetry.showNewerPing "
+&lt;&lt; Newer ping
+">
+
+<!ENTITY aboutTelemetry.showOlderPing "
+Older ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.showSubsessionData "
+Show subsession data
+">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "
+  Telemetry Log
+">
+

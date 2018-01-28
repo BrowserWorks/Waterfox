@@ -1,0 +1,159 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Erô into caregamento da pagina">
+<!ENTITY retry.label "Preuva Torna">
+<!ENTITY returnToPreviousPage.label "Vanni inderê">
+<!ENTITY advanced.label "Avansæ">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "No riescio a conetime">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "L'acesso a-a pòrta o l'é dizabilitou pe raxoin de seguessa">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "No treuvo l'indirisso">
+<!ENTITY dnsNotFound.longDesc "<ul>
+  <li>Contròlla che l'indirisso o no l'agge di eroî comme
+    <strong>ww</strong>.ezenpio.com invece de
+    <strong>www</strong>.ezenpio.com</li>
+  <li>Se no ti peu caregâ nisciunn-a pagina contròlla a conescion a-a ræ.</li>
+  <li>Se o teu computer ò ræ son protezui da un firewall ò proxy verifica se 
+     &brandShortName; o peu acede a-a ræ.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "File no trovou">
+<!ENTITY fileNotFound.longDesc "<ul><li>Peu ese che l'ògetto o segge stæto rinominou, scancelou ò mesciou?</li><li>Gh'é quarche erô inte l'indirisso?</li><li>Ti ghe l'æ i permissi pe acede a l'ògetto?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Acesso a-o file negou">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>O peu ese stæto scancelou,mesciou, ò i permissi de acesso a-i file peuan proibine l'acesso.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Ahi me mi!">
+<!ENTITY generic.longDesc "<p>No gh'é atre informaçioin in sciô problema.</p>">
+
+<!ENTITY captivePortal.title "Intra inta ræ">
+<!ENTITY captivePortal.longDesc2 "
+<p>Ti devi fâ o login in sta ræ prima che ti pòsse acede a l'internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Arvi a Pagina de Login da ræ">
+
+<!ENTITY malformedURI.title "L'indirisso o no l'é valido">
+<!ENTITY malformedURI.longDesc "<p>L'indirisso che ti me dæto o no va ben. Pe piaxei contròlla che no gh'é di eroî inta bara di indirissi e preuva torna.</p>">
+
+<!ENTITY netInterrupt.title "Trasferimento di dæti scancellou">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Documento scheito">
+<!ENTITY notCached.longDesc "<p>O documento domandou o no l'é disponibile inta cache de &brandShortName;.</p><ul><li>Comme mezua de seguessa, o &brandShortName; o no te domanda torna documenti senscibili in aotomatico.</li><li>Sciacca Preuva torna pe domandâ torna o documento a-o scito.</li></ul>">
+
+<!ENTITY netOffline.title "Mòddo feua linia">
+<!ENTITY netOffline.longDesc2 "<ul>
+ <li>Sciacca &quot;Preuva ancon&quot; pe pasâ a-o mòddo in linea e caregâ torna a pagina.</li>
+</ul>  
+">
+
+<!ENTITY contentEncodingError.title "Erô de còdifica do contegnuo">
+<!ENTITY contentEncodingError.longDesc "<p>A pagina che t'eu vedde a no se peu mostrâ perché a gh'à 'na conprescion ch'a no l'é soportâ.</p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tipo de file no seguo">
+<!ENTITY unsafeContentType.longDesc "<p>A pagina che t'eu vedde a no se peu mostrâ perché a gh'à 'na conprescion ch'a no l'é soportâ.</p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul>">
+
+<!ENTITY netReset.title "Conescion Scancelâ">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "A ræ a no risponde">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Indirisso no interpretabile">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Bezeugna instalâ do software in ciù pe arvî st'indirisso.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "O proxy o refua a conescion">
+<!ENTITY proxyConnectFailure.longDesc "<p>O navegatô o l'é inpostou pe uzâ un server proxy ma o proxy refua e conescioin.</p><ul><li>E inpostaçioin proxy do navegatô en giuste? Contròlla e preuva torna.</li><li>O proxy permette e conescioin da sta ræ?</li><li>Ti gh'æ ancon di problemi? Ciamma o teu aministratô da ræ ò fornitô de serviççi internet pe ascistensa.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "No treuvo o proxy">
+<!ENTITY proxyResolveFailure.longDesc "<ul>
+  <li>Contròlla se e inpostaçioin do proxy son giuste.</li>
+  <li>Contròlla se o teu computer o l'agge 'na conescion che bonn-a.</li>
+  <li>Se o teu computer ò ræ son protezui da un firewall ò proxy verifica se &brandShortName; o peu acede a ræ</li>
+</ul>
+ ">
+
+<!ENTITY redirectLoop.title "A pagina a no redireçionn-a ben">
+<!ENTITY redirectLoop.longDesc "<p>O navegatô o no preuva ciù a riçeive l'ògetto domandou. O scito o redireçionn-a de longo.</p><ul><li>T'æ miga dizabilitou ò blocou i cookie domandæ da sto scito?</li><li><em>NÒTTA</em>: Se ti acetti i cookie do scito e no ti rizòlvi o problema o porieva ese do server e no do teu computer.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Risposta sbaliâ da-o server">
+<!ENTITY unknownSocketType.longDesc "<p>O scito risponde inte 'n mòddo strano e-o navegatô o no peu continoâ.</p>">
+
+<!ENTITY nssFailure2.title "Conescion segua no riescia">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>A pagina che ti veu vedde a no peu ese mostrâ perché no l'é poscibile verificâ l’aotenticitæ di dæti riçevui.</li>
+  <li>Ciamma o responsabile do scito web pe informalo do problema.</li>
+</ul>">
+
+<!ENTITY certerror.longpagetitle1 "A teu conescion a no l'é segua">
+<!-- Localization note (certerror.introPara) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara "O propietaio de <span class='hostname'/> o l'à configurou o seu scito mâ.  Pe protezze e teu informaçion da l'ese aröbæ, &brandShortName; o no s'é conesso a sto scito.">
+
+<!ENTITY sharedLongDesc "<ul>
+  <li>O scito o porieiva ese tenporaneamente inacesibile ò tròppo traficou. Preuva torna tra quarche momento.</li>
+  <li>Se no ti riesci a caregâ nisciunn-a pagina, preuva a controlâ a conescion do teu computer.</li>
+  <li>Se o teu computer ò a teu conescion en protezui da 'n firewall ò proxy, açertite che &brandShortName; o l'agge o permisso de acede a-a Ræ.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blocou da-i criteri in sciâ seguessa di contegnui">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; o l'à blocou o caregamento da pagina con sta modalitæ perché a gh'à di criteri de seguessa di contegnui ch'ou inpediscian.</p>  ">
+
+<!ENTITY corruptedContentErrorv2.title "Erô de contegnuo andæto a mâ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A pagina che ti veu vedde a no peu ese mostrâ perché gh'é 'n erô inta trasmiscion di dæti.</p><ul><li>Pe piaxei, ciamma o responsabile do scito pe informalo do problema.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButtonLabel "Azonzi 'na eceçion…">
+
+<!ENTITY errorReporting.automatic2 "Segnala eroî comme sto chi pe agiutâ Mozilla a identificâ e blocâ sciti danozi">
+<!ENTITY errorReporting.learnMore "Atre informaçioin…">
+
+<!ENTITY remoteXUL.title "XUL Remòtto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Inposcibile conetise in mòddo seguo">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informaçion avansæ: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+<!ENTITY certerror.wrongSystemTime2 "<p> &brandShortName; o no se conette a <span id='wrongSystemTime_URL'/> perché o releuio do computer o l'à l'oa sbaliâ e questo o l'inpedisce 'na conescion segua.</p> <p>O teu computer o segna e <span id='wrongSystemTime_systemDate'/>, quande en e <span id='wrongSystemTime_actualDate'/>. Pe risolve sto problema, cangia l'oa e a dæta in mòddo che segian giuste.</p>">
+<!ENTITY certerror.wrongSystemTimeWithoutReference "<p> &brandShortName; o no se conette a <span id='wrongSystemTimeWithoutReference_URL'/> perché o releuio do computer o l'à l'oa sbaliâ e questo o l'inpedisce 'na conescion segua.</p> <p>O teu computer o segna e <span id='wrongSystemTimeWithoutReference_systemDate'/>. Pe risolve sto problema, cangia l'oa e a dæta in mòddo che segian giuste.</p>">
+
+<!ENTITY certerror.pagetitle1  "Conescion no segua">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Sto scito o deuvia HTTP Strict Transport Security (HSTS) pe specificâ che &brandShortName; o peu conetise solo in mòddo seguo. Coscì no se peu azonze na eceçion pe sto certificato.">
+<!ENTITY certerror.copyToClipboard.label "Còpia testo inti aponti">
+
+<!ENTITY inadequateSecurityError.title "A teu conescion a no l'é segua">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> o deuvia 'na tecnòlogia de seguessa vegia ch'a l'é debole . Un mascarson o peu pigiâ con façiliæ e teu informaçioin che ti pensi segian a-o seguo. L'aministratô do scito o deve dâ recatto a-o server primma che ti ti posse vixitâ sta pagina.</p><p>Còdice d'erô: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY prefReset.longDesc "Pâ che segian e teu inpostaçioin de seguessa a caozâ questo. Ti veu repigiâ e inpostaçioin predefinie?">
+<!ENTITY prefReset.label "Repiggia inpostaçioin predefinie">

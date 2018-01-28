@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "Закрыть эту вкладку">
+<!ENTITY tabCrashed.restoreTab "Восстановить эту вкладку">
+<!ENTITY tabCrashed.restoreAll "Восстановить все упавшие вкладки">
+
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+<!ENTITY tabCrashed.header2 "Ваша вкладка только что упала.">
+<!ENTITY tabCrashed.offerHelp "Мы можем вам помочь!">
+<!ENTITY tabCrashed.single.offerHelpMessage "Выберите &tabCrashed.restoreTab; для перезагрузки содержимого страницы.">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "Выберите &tabCrashed.restoreTab; или &tabCrashed.restoreAll; для перезагрузки содержимого страницы.">
+<!ENTITY tabCrashed.requestHelp "Вы нам поможете?">
+<!ENTITY tabCrashed.requestHelpMessage "Сообщения о падениях помогают нам диагностировать проблемы и улучшать работу &brandShortName;.">
+<!ENTITY tabCrashed.requestReport "Сообщить об этой вкладке">
+<!ENTITY tabCrashed.sendReport2 "Отправить сообщение о падении для просматриваемой вами вкладки">
+<!ENTITY tabCrashed.commentPlaceholder2 "Необязательные комментарии (комментарии публично доступны)">
+<!ENTITY tabCrashed.includeURL2 "Включить в это сообщение о падении адрес страницы">
+<!ENTITY tabCrashed.emailPlaceholder "Введите здесь свой адрес электронной почты">
+<!ENTITY tabCrashed.emailMe "Отправить мне письмо, когда будет доступно больше информации">
+<!ENTITY tabCrashed.reportSent "Сообщение о падении уже отправлено; спасибо, что помогаете сделать &brandShortName; ещё лучше!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "Сообщать о фоновых вкладках">
+<!ENTITY tabCrashed.autoSubmit2 "Обновить настройки, чтобы автоматически отправлять сообщения о падениях, в том числе сообщения об упавших фоновых вкладках для этой сессии и будущих сессий">

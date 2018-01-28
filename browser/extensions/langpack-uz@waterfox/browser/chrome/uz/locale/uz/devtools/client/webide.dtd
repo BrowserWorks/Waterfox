@@ -1,0 +1,211 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle "Waterfox WebIDE">
+
+<!ENTITY projectMenu_label "Loyiha">
+<!ENTITY projectMenu_accesskey "P">
+<!ENTITY projectMenu_newApp_label "Yangi ilova dastur…">
+<!ENTITY projectMenu_newApp_accesskey "N">
+<!ENTITY projectMenu_importPackagedApp_label "Paketlangan ilova dasturni ochish">
+<!ENTITY projectMenu_importPackagedApp_accesskey "P">
+<!ENTITY projectMenu_importHostedApp_label "Hostga joylashtirilgan ilova dasturni ochish…">
+<!ENTITY projectMenu_importHostedApp_accesskey "H">
+<!ENTITY projectMenu_selectApp_label "Ilova dasturni ochish…">
+<!ENTITY projectMenu_selectApp_accesskey "O">
+<!ENTITY projectMenu_play_label "O‘rnatish va ishga tushirish">
+<!ENTITY projectMenu_play_accesskey "I">
+<!ENTITY projectMenu_stop_label "Ilova dasturni to‘xtatish">
+<!ENTITY projectMenu_stop_accesskey "S">
+<!ENTITY projectMenu_debug_label "ilova dasturni tuzatish">
+<!ENTITY projectMenu_debug_accesskey "D">
+<!ENTITY projectMenu_remove_label "Loyihani olib tashlash">
+<!ENTITY projectMenu_remove_accesskey "R">
+<!ENTITY projectMenu_showPrefs_label "Parametrlar">
+<!ENTITY projectMenu_showPrefs_accesskey "e">
+<!ENTITY projectMenu_manageComponents_label "Qo‘shimcha komponentlarni boshqarish">
+<!ENTITY projectMenu_manageComponents_accesskey "M">
+
+
+<!ENTITY runtimeMenu_label "Ishga tushish vaqti">
+<!ENTITY runtimeMenu_accesskey "R">
+<!ENTITY runtimeMenu_disconnect_label "Uzish">
+<!ENTITY runtimeMenu_disconnect_accesskey "D">
+<!ENTITY runtimeMenu_takeScreenshot_label "Ekran rasmi">
+<!ENTITY runtimeMenu_takeScreenshot_accesskey "S">
+<!ENTITY runtimeMenu_showDetails_label "Ishga tushish ma’lumoti">
+
+<!ENTITY runtimeMenu_showMonitor_label "Monitor">
+<!ENTITY runtimeMenu_showMonitor_accesskey "M">
+<!ENTITY runtimeMenu_showDevicePrefs_label "Qurilma parametrlari">
+<!ENTITY runtimeMenu_showDevicePrefs_accesskey "D">
+<!ENTITY runtimeMenu_showSettings_label "Qurilma sozlamalari">
+<!ENTITY runtimeMenu_showSettings_accesskey "s">
+
+<!ENTITY viewMenu_label "Ko‘rinishi">
+<!ENTITY viewMenu_accesskey "V">
+<!ENTITY viewMenu_zoomin_label "Kattalashtirish">
+<!ENTITY viewMenu_zoomin_accesskey "I">
+<!ENTITY viewMenu_zoomout_label "Kichiklashtirish">
+<!ENTITY viewMenu_zoomout_accesskey "O">
+<!ENTITY viewMenu_resetzoom_label "Masshtabni tiklash">
+<!ENTITY viewMenu_resetzoom_accesskey "R">
+
+<!ENTITY projectButton_label "Ilova dasturni ochish">
+<!ENTITY runtimeButton_label "Ishga tushish vaqtini tanlash">
+<!-- We try to repicate Waterfox' bindings: -->
+<!-- quit app -->
+
+<!ENTITY key_quit "W">
+<!-- open menu -->
+<!ENTITY key_showProjectPanel "O">
+<!-- reload app -->
+<!ENTITY key_play "R">
+<!-- show toolbox -->
+<!ENTITY key_toggleToolbox "VK_F12">
+<!-- zoom -->
+<!ENTITY key_zoomin "+">
+<!ENTITY key_zoomin2 "=">
+<!ENTITY key_zoomout "-">
+<!ENTITY key_resetzoom "0">
+
+<!ENTITY projectPanel_myProjects "Mening loyihalarim">
+<!ENTITY projectPanel_runtimeApps "Ilova dasturlarning ishga tushish vaqti">
+<!ENTITY projectPanel_tabs "Ichki oynalar">
+<!ENTITY runtimePanel_usb "USB qurilmalar">
+<!ENTITY runtimePanel_wifi "Wi-Fi qurilmalar">
+<!ENTITY runtimePanel_simulator "Simulyatorlar">
+<!ENTITY runtimePanel_other "Boshqa">
+<!ENTITY runtimePanel_installsimulator "Simulyatorni o‘rnatish">
+<!ENTITY runtimePanel_noadbhelper "ADB yordamchini o‘rnatish">
+<!ENTITY runtimePanel_nousbdevice "Qurilmangizni ko‘rmayapsizmi?">
+
+<!-- Lense -->
+
+<!ENTITY details_valid_header "yaroqli">
+<!ENTITY details_warning_header "ogohlantirishlar">
+<!ENTITY details_error_header "xatolar">
+<!ENTITY details_description "Ta’rifi">
+<!ENTITY details_location "Manzili">
+<!ENTITY details_manifestURL "Ilova dastur nomi">
+<!ENTITY details_removeProject_button "Loyihani olib tashlash">
+<!-- New App -->
+
+<!ENTITY newAppWindowTitle "Yangi ilova dastur">
+<!ENTITY newAppHeader "Dizaynni tanlash">
+<!ENTITY newAppLoadingTemplate "Dizaynlar yuklanmoqda…">
+<!ENTITY newAppProjectName "Loyiha nomi:">
+<!-- Decks -->
+
+
+
+<!ENTITY deck_close "Yopish">
+<!-- Addons -->
+
+<!ENTITY addons_title "Qo‘shimcha komponentlar">
+<!ENTITY addons_aboutaddons "Qo‘shimcha dasturlar boshqaruvchisini ochish">
+<!-- Prefs -->
+
+<!ENTITY prefs_title "Parametrlar">
+<!ENTITY prefs_editor_title "Tahrirlagich">
+<!ENTITY prefs_general_title "Umumiy">
+
+<!ENTITY prefs_manage_components "Qo‘shimcha komponentlarni boshqarish">
+<!ENTITY prefs_options_autoconnectruntime "Oldingi bajarilganga qayta ulanish">
+<!ENTITY prefs_options_autoconnectruntime_tooltip "WebIDE ishga tushganda oldingi bajarilganga qayta ulanish">
+<!ENTITY prefs_options_rememberlastproject "So‘nggi loyihani eslab qolish">
+<!ENTITY prefs_options_rememberlastproject_tooltip "WebIDE ishga tushirilganda oldingi loyihani tiklash">
+<!ENTITY prefs_options_templatesurl "Dizaynlar URL manzili">
+<!ENTITY prefs_options_templatesurl_tooltip "Mavjud dizaynlar indeksi">
+<!-- Runtime Details -->
+
+<!ENTITY runtimedetails_title "Ishga tushish ma’lumoti">
+<!ENTITY runtimedetails_adbIsRoot "ADB - asos: ">
+<!ENTITY runtimedetails_summonADBRoot "asos qurilma">
+<!ENTITY runtimedetails_ADBRootWarning "(qulfdan chiqarilgan tizim yuklagichi so‘ralmoqda)">
+<!ENTITY runtimedetails_unrestrictedPrivileges "Cheklanmagan DevTools imtiyozlari: ">
+<!ENTITY runtimedetails_requestPrivileges "yuqoriroq imtiyozlarni so‘rash">
+<!ENTITY runtimedetails_privilegesWarning "(Qurilma qaytadan ishga tushiriladi. Asosga kirish huquqi so‘ralmoqda.)">
+<!-- Device Preferences and Settings -->
+
+<!ENTITY device_typeboolean "Mantiqiy">
+<!ENTITY device_typenumber "Butun son">
+<!ENTITY device_typestring "Qator">
+<!ENTITY device_typeobject "Obyekt">
+<!ENTITY device_typenone "Turini tanlash">
+<!-- Device Preferences -->
+
+<!ENTITY devicepreference_title "Qurilma parametrlari">
+<!ENTITY devicepreference_search "Qidiruv parametrlari">
+<!ENTITY devicepreference_newname "Yangi parametr nomi">
+<!ENTITY devicepreference_newtext "Parametr qiymati">
+<!ENTITY devicepreference_addnew "Yangi parametr qo‘shish">
+<!-- Device Settings -->
+
+<!ENTITY devicesetting_title "Qurilma sozlamalari">
+<!ENTITY devicesetting_search "Izlash sozlamalari">
+<!ENTITY devicesetting_newname "Yangi sozlama nomi">
+<!ENTITY devicesetting_newtext "Sozlama qiymati">
+<!ENTITY devicesetting_addnew "Yangi sozlama qo‘shish">
+<!-- Monitor -->
+
+<!ENTITY monitor_title "Monitor">
+<!ENTITY monitor_help "Yordam">
+<!-- WiFi Authentication -->
+<!-- LOCALIZATION NOTE (wifi_auth_header): The header displayed on the dialog
+     that instructs the user to transfer an authentication token to the
+     server. -->
+
+<!ENTITY wifi_auth_header "Mijozni tasdiqdan o‘tkazish">
+<!-- LOCALIZATION NOTE (wifi_auth_scan_request): Instructions requesting the
+     user to transfer authentication info by scanning a QR code. -->
+<!ENTITY wifi_auth_scan_request "Siz ulanayotgan tugash nuqtasida ushbu ulanishda tasdiqdan o‘tish uchun ko‘proq ma’lumot kerak. Quyidagi QR kodini boshqa qurilmangiz orqali urinib, tekshirib ko‘ring.">
+<!-- LOCALIZATION NOTE (wifi_auth_no_scanner): Link text to assist users with
+     devices that can't scan a QR code. -->
+<!ENTITY wifi_auth_no_scanner "QR skaner urinishlari yo‘qmi?">
+<!-- LOCALIZATION NOTE (wifi_auth_yes_scanner): Link text to assist users with
+     devices that can scan a QR code. -->
+<!ENTITY wifi_auth_yes_scanner "QR skaner urinishlari bormi?">
+<!-- LOCALIZATION NOTE (wifi_auth_token_request): Instructions requesting the
+     user to transfer authentication info by transferring a token. -->
+<!ENTITY wifi_auth_token_request "Agar boshqa qurilmangiz tekshirilgan QR kod o‘rniga boshqasini so‘rasa, pastdagi qiymatni boshqa qurilmangizga nusxa ko‘chiring.">
+
+<!-- Logs panel -->
+
+<!ENTITY logs_title "Oldindan paketlash buyruqlari jurnali">
+<!-- Simulator Options -->
+
+
+
+
+<!ENTITY simulator_version "Versiyasi">
+
+
+<!ENTITY simulator_device "Qurilma">
+
+
+
+
+
+
+<!ENTITY prefs_restore "Restore Defaults">
+<!ENTITY projectMenu_refreshTabs_label "Refresh Tabs">
+
+<!ENTITY runtimeMenu_showDetails_accesskey "E">
+<!ENTITY runtimePanel_refreshDevices_label "Refresh Devices">
+
+<!ENTITY simulator_hardware "Hardware">
+<!ENTITY simulator_name "Name">
+<!ENTITY simulator_pixelRatio "Pixel Ratio">
+<!ENTITY simulator_profile "Profile">
+<!ENTITY simulator_remove "Delete Simulator">
+<!ENTITY simulator_reset "Restore Defaults">
+<!ENTITY simulator_screenSize "Screen">
+<!ENTITY simulator_software "Software">
+<!ENTITY simulator_title "Simulator Options">
+<!ENTITY simulator_tv_data "TV Simulation">
+<!ENTITY simulator_tv_data_open "Config Data">
+<!ENTITY simulator_tv_data_open_button "Open Config Directory…">
+<!ENTITY wifi_auth_qr_size_note "If the QR code appears too small for the connection to be successfully established, try zooming or enlarging the window.">
+

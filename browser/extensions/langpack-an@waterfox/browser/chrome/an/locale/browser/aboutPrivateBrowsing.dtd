@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "Agora no ye en una finestra privada.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Ubrir una finestra privada">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Navegación privada">
+<!ENTITY privateBrowsing.title.tracking                  "Navegación privada con protección contra seguimiento">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Quan navegue en una Finestra Privada, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "no alzará">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "pachinas vesitadas">
+<!ENTITY aboutPrivateBrowsing.info.searches              "buscas">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "ficheros temporals">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "alzará">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " los suyos:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "descargas">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "marcapachinas">
+<!ENTITY aboutPrivateBrowsing.note.before                "Navegación privada ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "no li fa anonimo">
+<!ENTITY aboutPrivateBrowsing.note.after                 " en Internet. Lo suyo emplegador u lo suyo furnidor d'Internet sí que podrían saber as pachinas que vesita.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Mas información sobre la">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Navegación privada">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Protección contra o seguimiento">
+<!ENTITY trackingProtection.description2                 "Bells puestos web fan servir seguidors que pueden monitorizar la suya actividat en Internet. Con la protección cuentra seguimiento de Waterfox podrá blocar muitos seguidors que podrían replegar información sobre lo suyo comportamiento mientres navega.">
+<!ENTITY trackingProtection.startTour1                   "Cómo funciona?">

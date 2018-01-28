@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Chcu won!">
+<!ENTITY safeb.palm.decline.label "Tute warnowanje ignorować">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "To wobšudne sydło njeje…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "Čehodla je so tuta strona zablokowała?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "wot <a id='advisory_provider'/> poradźowacy">
+
+<!ENTITY safeb.blocked.malwarePage.title "Nadpadowa strona zdźělena!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Tuta webstrona na <span id='malware_sitename'/> bu jako nadpadowa strona zdźělena a na zakładźe wašich wěstotnych nastajenjow zablokowana.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Nadpadowe strony pospytuja programy instalować, kotrež priwatne informacije kradnu, waš ličak wužiwaja, zo bychu druhe nadpadnyli abo waš system poškodźili.</p><p>Někotre nadpadowe strony rozdźěleja z wotpohladom škódnu softwaru, ale wjele z nich wohrožuje so bjez wědźenja abo dowolnosće jich wobsedźerjow.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Strona z njewitanej softwaru zdźělena!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Tuta webstrona na <span id='unwanted_sitename'/> bu jako strona zdźělena, kotraž njewitanu softwaru wobsahuje a na zakładźe wašich wěstotnych nastajenjow zablokowana.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Strony z njewitanej softwaru pospytuja softwaru instalować, kotraž móže wobšudna być a kotraž móže waš system na njewočakowane wašnja wobwliwować.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Wobšudne sydło!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Tuta webstrona na <span id='phishing_sitename'/> bu jako wobšudne sydło zdźělena a na zakładźe wašich wěstotnych nastajenjow zablokowane.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Wobšudne sydła su za to myslene, was zawjedować, něšto strašneho činić, kaž na př. instalowanje softwary abo přeradźowanje wašich wosobinskich datow, na př. hesłow, telefonowych čisłow abo čisłow kreditnych kartow.</p><p>Hdyž daty na tutej webstronje zapodaće, móže to ke kradnjenju identity abo druhej wobšudźe wjesć.</p>">
+

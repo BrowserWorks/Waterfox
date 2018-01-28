@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "Cychwyn">
+
+<!ENTITY startupPage.label         "Pan fydd &brandShortName; yn cychwyn:">
+<!ENTITY startupPage.accesskey     "c">
+<!ENTITY startupUserHomePage.label "Dangos fy nhudalen cartref">
+<!ENTITY startupBlankPage.label    "Dangos tudalen wag">
+<!ENTITY startupPrevSession.label  "Dangos fy ffenestri a'm tabiau o'r tro diwethaf">
+
+<!ENTITY homepage.label            "Tudalen Cartref:">
+<!ENTITY homepage.accesskey        "T">
+<!ENTITY useCurrentPage.label      "Defnyddio'r Dudalen Bresennol">
+<!ENTITY useCurrentPage.accesskey  "B">
+<!ENTITY useMultiple.label         "Defnyddio'r Dudalen Bresennol">
+<!ENTITY chooseBookmark.label      "Defnyddio Nod Tudalen…">
+<!ENTITY chooseBookmark.accesskey  "N">
+<!ENTITY restoreDefault.label      "Adfer i'r Rhagosodedig">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "Llwytho i Lawr">
+
+<!ENTITY saveTo.label "Cadw ffeiliau yn">
+<!ENTITY saveTo.accesskey "a">
+<!ENTITY chooseFolderWin.label        "Pori…">
+<!ENTITY chooseFolderWin.accesskey    "P">
+<!ENTITY chooseFolderMac.label        "Dewis…">
+<!ENTITY chooseFolderMac.accesskey    "D">
+<!ENTITY alwaysAskWhere.label         "Gofyn i mi lle i gadw ffeiliau">
+<!ENTITY alwaysAskWhere.accesskey     "G">
+
+<!ENTITY alwaysCheckDefault2.label        "Wrth gychwyn, gwirio ai &brandShortName; yw eich porwr ragosodedig">
+<!ENTITY alwaysCheckDefault2.accesskey    "W">
+<!ENTITY setAsMyDefaultBrowser2.label     "Gwneud yn Ragosodedig">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "R">
+<!ENTITY isDefault.label                  "&brandShortName; yw eich porwr rhagosodedig cyfredol">
+<!ENTITY isNotDefault.label               "&brandShortName; yw eich porwr rhagosodedig cyfredol">
+
+<!ENTITY separateProfileMode.label        "Caniatáu i &brandShortName; a Waterfox redeg ar yr un pryd">
+<!ENTITY useWaterfoxSync.label             "Cyngor: Mae'n defnyddio proffiliau gwahanol. Defnyddiwch Sync i rannu data rhyngddynt.">
+<!ENTITY getStarted.notloggedin.label     "Mewngofnodi i &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Agor dewisiadau &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "Galluogi prosesu lluosog yn &brandShortName;">

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindow.key       "m">
+<!ENTITY minimizeWindow.label     "Minimer">
+<!ENTITY bringAllToFront.label    "Send alle til forgrunnen">
+<!ENTITY zoomWindow.label         "Zoom">
+<!ENTITY windowMenu.label         "Vindu">
+
+<!ENTITY helpMenu.label           "Hjelp"> 
+<!ENTITY helpMenu.accesskey       "H"> 
+<!-- LOCALIZATION NOTE some localizations of Windows (ex:french, german) use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label        "Hjelp"> 
+<!ENTITY helpMenuWin.accesskey    "H">
+<!ENTITY aboutProduct2.label      "Om &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "O">
+<!ENTITY productHelp2.label       "&brandShorterName; Hjelp">
+<!ENTITY productHelp2.accesskey   "H">
+<!ENTITY helpMac.commandkey       "?">
+
+<!ENTITY helpKeyboardShortcuts.label     "Tastatursnarveier">
+<!ENTITY helpKeyboardShortcuts.accesskey "T">
+
+<!ENTITY helpSafeMode.label       "Start på nytt med utvidelser avslått …">
+<!ENTITY helpSafeMode.accesskey   "r">
+<!ENTITY helpSafeMode.stop.label       "Start på nytt med utvidelser påslått">
+<!ENTITY helpSafeMode.stop.accesskey   "S">
+
+<!ENTITY healthReport2.label      "&brandShorterName; helserapport">
+<!ENTITY healthReport2.accesskey  "e">
+
+<!ENTITY helpTroubleshootingInfo.label      "Feilsøking">
+<!ENTITY helpTroubleshootingInfo.accesskey  "F">
+
+<!ENTITY helpFeedbackPage.label      "Gi tilbakemelding …">
+<!ENTITY helpFeedbackPage.accesskey  "G">
+
+<!ENTITY helpShowTour2.label            "Omvisning i &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey        "m">
+
+<!ENTITY preferencesCmdMac.label        "Innstillinger …">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+
+<!ENTITY servicesMenuMac.label          "Tjenester">
+
+<!ENTITY hideThisAppCmdMac2.label       "Skjul &brandShorterName;">
+<!ENTITY hideThisAppCmdMac2.commandkey  "H">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Skjul andre">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+
+<!ENTITY showAllAppsCmdMac.label        "Vis alle">

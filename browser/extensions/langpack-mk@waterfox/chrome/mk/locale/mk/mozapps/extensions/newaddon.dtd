@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "Инсталирање на додатоци">
+<!ENTITY intro           "Друга програма на Вашиот компјутер сака да го промени
+                          &brandShortName; со следниов додаток:">
+<!ENTITY warning         "Инсталирајте додатоци само од автори на кои им верувате.">
+<!ENTITY allow           "Дозволи ја оваа инсталација">
+<!ENTITY later           "Можете да ги промените поставките преку менаџерот за додатоци.">
+<!ENTITY continue        "Продолжи">
+<!ENTITY restartMessage  "Мора да го рестартирате &brandShortName; за да ја завршите инсталацијата на додатокот.">
+<!ENTITY restartButton   "Рестартирај го &brandShortName;">
+<!ENTITY cancelButton    "Откажи">

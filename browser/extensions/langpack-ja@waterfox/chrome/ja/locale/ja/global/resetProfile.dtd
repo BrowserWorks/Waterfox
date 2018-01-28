@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!ENTITY refreshProfile.dialog.title		"&brandShortName; のリフレッシュ">
+<!ENTITY refreshProfile.dialog.description1	"初期状態にリフレッシュして問題解決およびパフォーマンスを改善します。">
+<!ENTITY refreshProfile.dialog.description2	"この操作は:">
+<!ENTITY refreshProfile.dialog.items.label1	"アドオンとカスタマイズした設定を削除します">
+<!ENTITY refreshProfile.dialog.items.label2	"ブラウザー設定を既定値に戻します">
+<!ENTITY refreshProfile.dialog.button.label	"&brandShortName; をリフレッシュ">
+
+<!ENTITY refreshProfile.title			"&brandShortName; の性能改善">
+<!ENTITY refreshProfile.button.label		"&brandShortName; をリフレッシュ...">
+
+<!ENTITY refreshProfile.cleaning.description	"まもなく完了します...">

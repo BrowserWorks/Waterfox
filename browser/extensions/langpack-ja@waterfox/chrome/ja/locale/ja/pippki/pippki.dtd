@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Values for changepassword.xul -->
+<!ENTITY setPassword.title			"マスターパスワードの変更">
+<!ENTITY setPassword.tokenName.label		"セキュリティデバイス">
+<!ENTITY setPassword.oldPassword.label		"現在のパスワード:">
+<!ENTITY setPassword.newPassword.label		"新しいパスワード:">
+<!ENTITY setPassword.reenterPassword.label	"新しいパスワード(再入力):">
+<!ENTITY setPassword.meter.label		"パスワードの品質レベル">
+
+<!-- Values for resetpassword.xul -->
+<!ENTITY resetPasswordButtonLabel		"リセット">
+<!ENTITY resetPassword.title			"マスターパスワードのリセット">
+<!ENTITY resetPassword.text			"マスターパスワードをリセットすると、保存されているすべてのウェブやメールのパスワード、フォームデータ、個人証明書、秘密鍵が失われます。本当にマスターパスワードをリセットしてもよろしいですか？"><!-- (^^; 保護対象はアプリによって異なるが、使われないので問題なし...のハズ -->
+
+<!-- Downloading a cert -->
+<!ENTITY downloadCert.title			"証明書のインポート"><!-- (^^; ダウンロード時に限らない -->
+<!ENTITY downloadCert.message1			"新しい認証局 (CA) を信頼するよう求められています。本当にこの認証局を信頼しますか？"><!-- (^^; 本当に新しい認証局 (CA) を信頼して証明書をインポートしますか？ -->
+<!ENTITY downloadCert.trustSSL			"この認証局によるウェブサイトの識別を信頼する">
+<!ENTITY downloadCert.trustEmail		"この認証局によるメールユーザーの識別を信頼する">
+<!ENTITY downloadCert.trustObjSign		"この認証局によるソフトウェア製作者の識別を信頼する">
+<!ENTITY downloadCert.message3			"認証局を信頼する場合はその目的に関わらず、認証局の証明書が間違いないこと、認証ポリシーや認証実施規定に問題がないことを確認してください。"><!-- (^^; この認証局を信頼する場合は、その目的にかかわらず必ずその認証局の証明書、ポリシー、導入手順を確認した上でインポートしてください。 -->
+<!ENTITY downloadCert.viewCert.label		"証明書を表示">
+<!ENTITY downloadCert.viewCert.text		"認証局の証明書を審査してください">
+
+<!-- Strings for the SSL client auth ask dialog -->
+<!ENTITY clientAuthAsk.title			"個人証明書の要求">
+<!ENTITY clientAuthAsk.message1			"このサイトはあなたの個人証明書を求めています:">
+<!ENTITY clientAuthAsk.message2			"個人認証を行うために送信する証明書を選択してください:">
+<!ENTITY clientAuthAsk.message3			"選択した証明書の詳細:">
+
+<!ENTITY pkcs12.setpassword.title		"証明書のバックアップ用パスワードの設定">
+<!ENTITY pkcs12.setpassword.message		"ここで設定するバックアップ用パスワードによりあなたの作成するバックアップファイルが保護されます。バックアップファイルを作成するにはパスワードを設定しなければなりません。">
+<!ENTITY pkcs12.setpassword.label1		"証明書のバックアップ用パスワード:">
+<!ENTITY pkcs12.setpassword.label2		"証明書のバックアップ用パスワード(再入力):">
+<!ENTITY pkcs12.setpassword.reminder		"重要: 証明書のバックアップ用パスワードを忘れてしまうと、バックアップした証明書を復元できなくなります。安全な場所に記録しておいてください。">
+
+<!ENTITY chooseToken.title			"セキュリティデバイスの選択">
+<!ENTITY chooseToken.message1			"セキュリティデバイスを選択してください。">
+
+<!-- Strings for the CreateCertInfo dialog  -->
+<!ENTITY createCertInfo.title			"秘密鍵を生成しています">
+<!ENTITY createCertInfo.msg1			"鍵を生成しています... これには数分かかることがあります...">
+<!ENTITY createCertInfo.msg2			"しばらくお待ちください...">
+
+<!-- Strings for protectedAuth dialog -->
+<!ENTITY protectedAuth.title			"保護されたトークン認証">
+<!ENTITY protectedAuth.msg			"トークンの認証を行ってください。認証方法は使用するトークンの種類によって異なります。"><!-- (^^; -->
+<!ENTITY protectedAuth.tokenName.label		"トークン:">

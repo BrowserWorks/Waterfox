@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "راه‌اندازی">
+
+<!ENTITY startupPage.label         "هنگام شروع &brandShortName;:">
+<!ENTITY startupPage.accesskey     "ه">
+<!ENTITY startupUserHomePage.label "نمایش صفحه آغازه">
+<!ENTITY startupBlankPage.label    "نمایش یک صفحه خالی">
+<!ENTITY startupPrevSession.label  "نمایش صفحات و زبانه‌های از آخرین دفعه">
+
+<!ENTITY homepage.label            "صفحهٔ خانگی">
+<!ENTITY homepage.accesskey        "خ">
+<!ENTITY useCurrentPage.label      "استفاده از صفحهٔ فعلی">
+<!ENTITY useCurrentPage.accesskey  "ف">
+<!ENTITY useMultiple.label         "استفاده از صفحهٔ فعلی">
+<!ENTITY chooseBookmark.label      "استفاده از نشانک…">
+<!ENTITY chooseBookmark.accesskey  "ن">
+<!ENTITY restoreDefault.label      "بازگرداندن به پیش‌فرض‌">
+<!ENTITY restoreDefault.accesskey  "ب">
+
+<!ENTITY downloads.label     "بارگیری‌ها">
+
+<!ENTITY saveTo.label "ذخیره پرونده در">
+<!ENTITY saveTo.accesskey "ذ">
+<!ENTITY chooseFolderWin.label        "مرور…">
+<!ENTITY chooseFolderWin.accesskey    "م">
+<!ENTITY chooseFolderMac.label        "انتخاب…">
+<!ENTITY chooseFolderMac.accesskey    "ا">
+<!ENTITY alwaysAskWhere.label         "همیشه در مورد محل ذخیره سازی سوال شود">
+<!ENTITY alwaysAskWhere.accesskey     "ه">
+
+<!ENTITY alwaysCheckDefault2.label        "همیشه بررسی شود که آیا &brandShortName; مرورگر پیش‌فرض شما است یا خیر">
+<!ENTITY alwaysCheckDefault2.accesskey    "ه">
+<!ENTITY setAsMyDefaultBrowser2.label     "تنظیم به عنوان پیش‌فرض">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "پ">
+<!ENTITY isDefault.label                  "&brandShortName; مرورگر همیشگی شماست">
+<!ENTITY isNotDefault.label               "&brandShortName; مرورگر پیش‌فرض شما نیست">
+
+<!ENTITY separateProfileMode.label        "اجازه بده تا &brandShortName; و فایرفاکس همزمان اجرا شوند">
+<!ENTITY useWaterfoxSync.label             "نکته: این از یک نمایه جدا استفاده میکند. از همگام‌سازی برای اشتراک‌گذاری اطلاعات بین آنها استفاده کنید.">
+<!ENTITY getStarted.notloggedin.label     "برای همگام‌سازی &syncBrand.shortName.label; وارد شوید">
+<!ENTITY getStarted.configured.label      "باز کردن ترجیحات &syncBrand.shortName.label;">
+
+<!ENTITY e10sEnabled.label                "فعال کردن چند-پردازشی &brandShortName;">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "إعدادات الاتّصال">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "اضبط وسطاء الوصول إلى الإنترنت">
+<!ENTITY  noProxyTypeRadio.label        "لا وسيط">
+<!ENTITY  noProxyTypeRadio.accesskey    "ل">
+<!ENTITY  systemTypeRadio.label         "استخدم إعدادات النظام للوسيط">
+<!ENTITY  systemTypeRadio.accesskey     "ن">
+<!ENTITY  WPADTypeRadio.label           "تعرَّف تلقائيًّا على إعدادات وسيط هذه الشَّبكة">
+<!ENTITY  WPADTypeRadio.accesskey       "ش">
+<!ENTITY  manualTypeRadio.label         "إعداد الوسيط يدويا:">
+<!ENTITY  manualTypeRadio.accesskey     "ي">
+<!ENTITY  autoTypeRadio.label           "مسار إعداد الوسيط آليا:">
+<!ENTITY  autoTypeRadio.accesskey       "و">
+<!ENTITY  reload.label                  "أعد التحميل">
+<!ENTITY  reload.accesskey              "ع">
+<!ENTITY  ftp.label                     "وسيط FTP:">
+<!ENTITY  ftp.accesskey                 "و">
+<!ENTITY  http.label                    "وسيط HTTP:">
+<!ENTITY  http.accesskey                "س">
+<!ENTITY  ssl.label                     "وسيط SSL:">
+<!ENTITY  ssl.accesskey                 "ي">
+<!ENTITY  socks.label                   "مستضيف SOCKS:">
+<!ENTITY  socks.accesskey               "ض">
+<!ENTITY  socks4.label                  "SOCKS v4">
+<!ENTITY  socks4.accesskey              "K">
+<!ENTITY  socks5.label                  "SOCKS v5">
+<!ENTITY  socks5.accesskey              "v">
+<!ENTITY  socksRemoteDNS.label2         "خادوم عناوين نطاقات الوسيط أثناء استخدام SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "ط">
+<!ENTITY  port.label                    "المنفذ:">
+<!ENTITY  HTTPport.accesskey            "م">
+<!ENTITY  SSLport.accesskey             "ن">
+<!ENTITY  FTPport.accesskey             "ف">
+<!ENTITY  SOCKSport.accesskey           "ذ">
+<!ENTITY  noproxy.label                 "لا وسيط ل‍:">
+<!ENTITY  noproxy.accesskey             "ل">
+<!ENTITY  noproxyExplain.label          "مثلًا: .mozilla.org, .net.nz, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "استعمل هذا الخادوم الوسيط لكل البروتوكولات">
+<!ENTITY  shareproxy.accesskey          "س">
+<!ENTITY  autologinproxy.label          "لا تسأل الاستيثاق إذا كانت كلمة السر محفوظة">
+<!ENTITY  autologinproxy.accesskey      "س">
+<!ENTITY  autologinproxy.tooltip        "يستوثق هذا الخيار مع وسطاء الشبكة تلقائيًا إذا كان لديك بيانات ولوج محفوظة لهم. ستُسأل إذا فشل الاستيثاق.">

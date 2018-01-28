@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  connectionsDialog.title       "Параметри з’єднання">
+<!ENTITY  window.width2                 "49em">
+<!ENTITY  window.macWidth2              "44em">
+
+<!ENTITY  proxyTitle.label              "Настроювання проксі для доступу в інтернет">
+<!ENTITY  noProxyTypeRadio.label        "Без проксі">
+<!ENTITY  noProxyTypeRadio.accesskey    "Б">
+<!ENTITY  systemTypeRadio.label         "Використовувати системні настройки проксі">
+<!ENTITY  systemTypeRadio.accesskey     "п">
+<!ENTITY  WPADTypeRadio.label           "Автоматично визначати настройки проксі для даної мережі">
+<!ENTITY  WPADTypeRadio.accesskey       "о">
+<!ENTITY  manualTypeRadio.label         "Настроїти параметри з’єднання проксі вручну:">
+<!ENTITY  manualTypeRadio.accesskey     "в">
+<!ENTITY  autoTypeRadio.label           "Використовувати вказаний URL для автоматичної настройки проксі:">
+<!ENTITY  autoTypeRadio.accesskey       "а">
+<!ENTITY  reload.label                  "Оновити">
+<!ENTITY  reload.accesskey              "О">
+<!ENTITY  ftp.label                     "FTP-проксі:">
+<!ENTITY  ftp.accesskey                 "F">
+<!ENTITY  http.label                    "HTTP-проксі:">
+<!ENTITY  http.accesskey                "H">
+<!ENTITY  ssl.label                     "SSL-проксі:">
+<!ENTITY  ssl.accesskey                 "S">
+<!ENTITY  socks.label                   "SOCKS-проксі:">
+<!ENTITY  socks.accesskey               "S">
+<!ENTITY  socks4.label                  "SOCKS 4">
+<!ENTITY  socks4.accesskey              "4">
+<!ENTITY  socks5.label                  "SOCKS 5">
+<!ENTITY  socks5.accesskey              "5">
+<!ENTITY  socksRemoteDNS.label2         "Проксі DNS при використанні SOCKS v5">
+<!ENTITY  socksRemoteDNS.accesskey      "d">
+<!ENTITY  port.label                    "Порт:">
+<!ENTITY  HTTPport.accesskey            "о">
+<!ENTITY  SSLport.accesskey             "р">
+<!ENTITY  FTPport.accesskey             "п">
+<!ENTITY  SOCKSport.accesskey           "т">
+<!ENTITY  noproxy.label                 "Не використовувати проксі для:">
+<!ENTITY  noproxy.accesskey             "е">
+<!ENTITY  noproxyExplain.label          "Приклад: .mozilla.org.ua, localhost, 192.168.1.0/24">
+<!ENTITY  shareproxy.label              "Використовувати цей проксі-сервер для всіх протоколів">
+<!ENTITY  shareproxy.accesskey          "и">
+<!ENTITY  autologinproxy.label          "Не запитувати про автентифікацію, якщо пароль вже збережено">
+<!ENTITY  autologinproxy.accesskey      "а">
+<!ENTITY  autologinproxy.tooltip        "Якщо у вас є збережені дані для входу, ця опція проведе вашу авторизацію на проксі без запитів. При невдалій авторизації ви отримаєте запит.">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setPassword.title                 "Lok mung me donyo madit">
+<!ENTITY setPassword.tokenName.label       "Nyonyo me Gwoko kuc">
+<!ENTITY setPassword.oldPassword.label     "Mung me donyo ma kombedi:">
+<!ENTITY setPassword.newPassword.label     "Ket mung me donyo manyen:">
+<!ENTITY setPassword.reenterPassword.label "Nwo-keto mung me donyo:">
+<!ENTITY setPassword.meter.label           "Lapim kit me mung me donyo">
+<!ENTITY setPassword.meter.loading         "Cano">
+<!ENTITY masterPasswordDescription.label   "Mung me donyo madit kitiyo kwede me gwoko ngec mapol calo mung me donyo me kakube.  Kace i cweyo mung me donyo madit ki bipenyi me keto ne kicel pi kare ma &brandShortName; golo ngec ma kikano ma kigwoko ki mung me donyo.">
+<!ENTITY masterPasswordWarning.label       "Tim ber i poo ikom mung me donyo madit ma i tero.  Ka wiyi owil ki mung me donyo mamegi madit, pe i bitwero donyo i ngec mo keken ma kigwoko kwede.">

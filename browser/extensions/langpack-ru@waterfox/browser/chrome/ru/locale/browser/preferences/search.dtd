@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Поисковая система по умолчанию">
+
+<!ENTITY chooseYourDefaultSearchEngine2.label   "Выберите поисковую систему по умолчанию для использования в панели адреса и панели поиска.">
+
+<!ENTITY provideSearchSuggestions.label        "Отображать поисковые предложения">
+<!ENTITY provideSearchSuggestions.accesskey    "о">
+
+<!ENTITY showURLBarSuggestions2.label           "Отображать поисковые предложения при использовании панели адреса">
+<!ENTITY showURLBarSuggestions2.accesskey       "ж">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "При использовании панели адреса поисковые предложения отображаться не будут, так как вы настроили &brandShortName; никогда не запоминать историю.">
+
+<!ENTITY oneClickSearchEngines.label           "Поиск одним щелчком">
+
+<!ENTITY chooseWhichOneToDisplay2.label         "Выберите альтернативные поисковые системы, которые появятся под панелью адреса и панелью поиска, когда вы начнёте вводить ключевое слово.">
+
+<!ENTITY engineNameColumn.label                "Поисковая система">
+<!ENTITY engineKeywordColumn.label             "Краткое имя">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Восстановить набор поисковых систем по умолчанию">
+<!ENTITY restoreDefaultSearchEngines.accesskey "а">
+
+<!ENTITY removeEngine.label                    "Удалить">
+<!ENTITY removeEngine.accesskey                "и">
+
+<!ENTITY findMoreSearchEngines.label           "Найти другие поисковые системы">

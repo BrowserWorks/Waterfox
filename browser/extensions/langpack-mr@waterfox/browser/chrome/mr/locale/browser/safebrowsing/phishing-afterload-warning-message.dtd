@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "मला येथुन बाहेर काढा!">
+<!ENTITY safeb.palm.decline.label "ह्या सावधानतेस दुर्लक्ष करा">
+<!-- Localization note (safeb.palm.notdeceptive.label) - Label of the Help menu
+  item. Either this or reportDeceptiveSiteMenu.label from report-phishing.dtd is
+  shown. -->
+<!ENTITY safeb.palm.notdeceptive.label "ही साईट फसवी नाही…">
+<!-- Localization note (safeb.palm.notdeceptive.accesskey) - Because
+  safeb.palm.notdeceptive.label and reportDeceptiveSiteMenu.title from
+  report-phishing.dtd are never shown at the same time, the same accesskey can
+  be used for them. -->
+<!ENTITY safeb.palm.notdeceptive.accesskey "d">
+<!ENTITY safeb.palm.reportPage.label "हे पृष्ठ का रोखले गेले?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "सल्ला प्रदाता <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "प्रहार पृष्ठ कळवले गेले!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> येथील या प्रहार पृष्ठाला बनवाटी पृष्ठ म्हणून घोषीत केले गेले आहे व आपल्या सुरक्षा पसंती नुरूप रोखले गेले आहे.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>दोखादायी पृष्ठ व्यक्तिगत माहिती चोरून प्राप्त करणे, तसेच आपल्या संगणकाचा वापर इतर संगणकावर प्रवेश किंवा प्रणाली नष्ट करण्यासाठी कार्यक्रम प्रतिष्ठापीत करतात.</p><p>काहिक प्रहार पृष्ठे जबरनरित्या वापरकर्त्याच्या परवानगीविना, हानीकारक सॉफ्टवेअर प्रतिष्ठापीत करतात.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "हे पृष्ठ नको असलेल्या पृष्ठांमध्ये नोंदविले आहे!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> वरील हे वेब पृष्ठ अनिष्ट सॉफ्टवेअर म्हणून कळले आहे आणि ते आपल्या सुरक्षा पसंतींनुसार अडवले आहे.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>नको असलेली सॉफ्टवेअर पृष्ठे फसवी सॉफ्टवेअर प्रस्थापित करण्याचा प्रयत्न करतात आणि आपल्या सिस्टमला अनपेक्षितपणे हानी पोहोचवु शकतात.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "फसवी साईट!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "<span id='phishing_sitename'/> येथील या वेब पृष्ठाला फसवे पृष्ठ म्हणून घोषीत केले व आपल्या सुरक्षा पसंतीनुरूप रोखले गेले आहे.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>फसव्या साईटस् ह्या आपल्याला चकवा देउन आपल्याकडुन काहीतरी धोकादायक करवुन घेते, जसे सॉफ्टवेअर प्रतिष्ठापन, किंवा आपली खाजगी माहिती जसे, पासवर्ड, फोन नंबर, किंवा क्रेडिट कार्ड माहिती उघड होऊ शकते.</p><p>या वेब पृष्ठावर माहिती टाकल्या मुळे ओळख चोरी किंवा इतर फसवेगिरी होऊ शकते.</p>">
+

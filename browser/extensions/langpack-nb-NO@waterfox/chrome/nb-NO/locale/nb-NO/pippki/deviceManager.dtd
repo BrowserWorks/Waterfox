@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "Enhetsbehandling">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "Sikkerhetsmoduler og -enheter">
+<!ENTITY devmgr.details.title                   "Detaljer">
+<!ENTITY devmgr.details.title2                  "Verdi">
+
+<!ENTITY devmgr.button.login.label              "Logg inn">
+<!ENTITY devmgr.button.login.accesskey          "i">
+<!ENTITY devmgr.button.logout.label             "Logg ut">
+<!ENTITY devmgr.button.logout.accesskey         "u">
+<!ENTITY devmgr.button.changepw.label           "Endre passord">
+<!ENTITY devmgr.button.changepw.accesskey       "E">
+<!ENTITY devmgr.button.load.label               "Last inn">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "Fjern">
+<!ENTITY devmgr.button.unload.accesskey         "F">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "Skriv inn informasjonen for modulen du vil legge til.">
+<!ENTITY loaddevice.modname                     "Modulnavn:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "Ny PKCS#11-modul">
+<!ENTITY loaddevice.filename                    "Modulfilnavn:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "Bla gjennom …">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "Aktiver PKCS#11 enhets-driver">

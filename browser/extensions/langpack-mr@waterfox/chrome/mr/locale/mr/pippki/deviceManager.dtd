@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY devmgr.title                           "साधन व्यवस्थापक">
+<!-- LOCALIZATION NOTE (devmgr.style2): This is CSS style for Device Manager
+     window size. Don't translate "width" nor "height". Adjust the numbers
+     to make window contents fit. -->
+<!ENTITY devmgr.style2                          "width: 67em; height: 32em;">
+
+<!ENTITY devmgr.devlist.label                   "सुरक्षा घटक व साधन">
+<!ENTITY devmgr.details.title                   "तपशील">
+<!ENTITY devmgr.details.title2                  "मूल्य">
+
+<!ENTITY devmgr.button.login.label              "प्रवेश करा">
+<!ENTITY devmgr.button.login.accesskey          "n">
+<!ENTITY devmgr.button.logout.label             "बाहेर पडा">
+<!ENTITY devmgr.button.logout.accesskey         "O">
+<!ENTITY devmgr.button.changepw.label           "पासवर्ड बदला">
+<!ENTITY devmgr.button.changepw.accesskey       "P">
+<!ENTITY devmgr.button.load.label               "लोड करा">
+<!ENTITY devmgr.button.load.accesskey           "L">
+<!ENTITY devmgr.button.unload.label             "लोड अशक्य">
+<!ENTITY devmgr.button.unload.accesskey         "U">
+<!ENTITY devmgr.button.fips.accesskey           "F">
+
+<!ENTITY loaddevice.info                        "आपल्याला हव्या असलेल्या घटकाकरता माहिती प्रविष्ट करा.">
+<!ENTITY loaddevice.modname                     "घटकाचे नाव:">
+<!ENTITY loaddevice.modname.accesskey           "M">
+<!ENTITY loaddevice.modname.default             "नवीन PKCS#11 घटक">
+<!ENTITY loaddevice.filename                    "घटकातील फाइलचेनाव:">
+<!ENTITY loaddevice.filename.accesskey          "f">
+<!ENTITY loaddevice.browse                      "ब्राउझ करा…">
+<!ENTITY loaddevice.browse.accesskey            "B">
+
+<!ENTITY loaddevice.title2                      "PKCS#11 साधन ड्राइव्हर दाखल करा">

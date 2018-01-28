@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Villa við að hlaða inn síðu">
+<!ENTITY retry.label "Reyna aftur">
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Get ekki tengst">
+<!ENTITY connectionFailure.longDesc "<p>Þótt svæðið virðist vera gilt, getur vafrinn ekki tengst því.</p><ul><li>Gæti verið að vefsvæðið sé niðri tímabundið? Reyndu aftur seinna.</li><li>Geturðu ekki tengst við önnur svæði?  Athugaðu netstillingar tölvu.</li><li>Er tölvan þín eða net varið af eldvegg eða milliþjóni? Rangar stillingar geta haft áhrif á netvafra.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Vegna öryggis er aðgangur að þessari gátt ekki leyfður">
+<!ENTITY deniedPortAccess.longDesc "<p>Umbeðið veffang bað um ákveðna gátt (t.d. <q>mozilla.org:80</q> fyrir gátt 80 á mozilla.org) sem er venjulega notað fyrir eitthvað <em>annað</em> að vafra. Vafrinn hefur lokað á beiðnina þér til verndar.</p>">
+
+<!ENTITY dnsNotFound.title "Veffang fannst ekki">
+<!ENTITY dnsNotFound.longDesc "<p>Vafrinn fann ekki vefþjóninn fyrir þetta netfang.</p><ul><li>Slóstu inn vitlaust netfang? (t.d. <q><strong>ww</strong>.mozilla.org</q> í staðinn fyrir <q><strong>www</strong>.mozilla.org</q>)</li><li>Ertu viss um að þetta vefsvæði sé til?  Vefsvæðið gæti verið útrunnið.</li><li>Geturðu tengst öðrum svæðum?  Athugaðu netstillingar og DNS stillingar tölvu.</li><li>Er tölvan varin af eldvegg eða milliþjóni?  Rangar stillingar geta haft áhrif á vafra.</li></ul>">
+
+<!ENTITY fileNotFound.title "Skrá fannst ekki">
+<!ENTITY fileNotFound.longDesc "<ul><li>Gæti verið að hluturinn hafi verið endurnefndur, fjarlægður, eða færður til?</li><li>Er stafsetningarvilla, hástafaritun, eða annarskonar stafsetningarvilla í vistfanginu?</li><li>Hefurðu nægar aðgangsheimildir fyrir hlutinn?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Aðgangur að skránni ekki leyfður">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Vera má að skráin hafi verið fjarlægð, færð til eða réttindi leyfi ekki aðgengi.</li></ul>">
+
+<!ENTITY generic.title "Get ekki klárað beiðni">
+<!ENTITY generic.longDesc "<p>Aðrar upplýsingar um þetta vandamál er ekki til staðar.</p>">
+
+<!ENTITY malformedURI.title "Veffang ekki löglegt">
+<!ENTITY malformedURI.longDesc "<p>Innslegið vistfang er ekki á viðurkenndu sniði. Athugaðu hvort slegið var inn rangt og reyndu aftur.</p>">
+
+<!ENTITY netInterrupt.title "Tenging slitnaði">
+<!ENTITY netInterrupt.longDesc "<p>Vafrinn gat tengst, en tenging var rofin meðan verið var að senda upplýsingar.  Reyndu aftur.</p><ul><li>Geturðu ekki tengst við önnur svæði? Athugaðu netstillingar tölvu.</li><li>Ennþá vandamál? Hafðu samband við kerfisstjóra eða netaðila fyrir hjálp.</li></ul>">
+
+<!ENTITY notCached.title "Skjal er útrunnið">
+<!ENTITY notCached.longDesc "<p>Umbeðið skjal er ekki til í skyndiminni vafrans.</p><ul><li>Vegna öryggisástæðna, nær vafrinn ekki sjálfkrafa aftur í viðkvæm skjöl.</li><li>Smelltu á reyna aftur til að ná aftur í skjalið frá vefsvæðinu.</li></ul>">
+
+<!ENTITY netOffline.title "Ónettengdur hamur">
+<!ENTITY netOffline.longDesc2 "<p>Vafrinn er að vinna án nettengingar og getur ekki tengst við umbeðna síðu.</p><ul><li>Er tölvan tengt við virkt net?</li><li>Smelltu á &quot;Reyna aftur&quot; til að tengjast netinu og endurnýja síðuna.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Kóðunarvilla">
+<!ENTITY contentEncodingError.longDesc "<p>Ekki er hægt að sýna síðuna því hún notar ógilda eða óstudda þjöppun.</p><ul><li>Hafðu samband við vefstjóra vefsvæðisins og láttu hann vita af þessu vandamáli.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Óörugg skráartegund">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Hafðu samband við vefstjóra vefsvæðisins og láttu hann vita af þessu vandamáli.</li> </ul>">
+
+<!ENTITY netReset.title "Tenging slitnaði">
+<!ENTITY netReset.longDesc "<p>Net rofnaði meðan verið var að semja um tengingu. Reynið aftur.</p>">
+
+<!ENTITY netTimeout.title "Tengingin svaraði ekki tímanlega">
+<!ENTITY netTimeout.longDesc "<p>Umbeðið vefsvæði svaraði ekki tengingu og vafrinn hætti að bíða eftir svari.</p><ul><li>Getur verið að svæðið sé í mikilli notkun eða sé niðri tímabundið?  Reyndu aftur seinna.</li><li>Geturðu haft samband við önnur svæði? Athugaðu nettengingu tölvunnar.</li><li>Er tölvan eða netið varið af eldvegg eða milliþjóni?  Rangar stillingar geta haft áhrif á vafra.</li><li>Ennþá vandamál? Hafðu samband við kerfistjóra eða netaðila fyrir hjálp.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Óþekkt samskiptaregla">
+<!ENTITY unknownProtocolFound.longDesc "<p>Umbeðið vistfang skilgreinir samskiptareglu (t.d. <q>wxyz://</q>) sem vafrinn kannast ekki við, þannig að vafrinn getur ekki tengst við vefsvæðið.</p><ul><li>Ertu að reyna að tengjast myndefni eða annarskonar gagnaþjónustum? athugaðu á vefsvæðinu hvort þú þurfir fleiri hluti.</li><li>Sumar samskiptareglur þarfnast forrita eða viðbóta frá þriðja aðila áður en vafrinn getur þekkt þær.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Milliþjónn neitar tengingum">
+<!ENTITY proxyConnectFailure.longDesc "<p>Vafrinn er stilltur til að nota milliþjóna, en milliþjónn hafnaði tengingu.</p><ul><li>Eru vafra stillingar milliþjóns rétt stilltar? Athugaðu stillingarnar og reyndu aftur.</li><li>Leyfir milliþjónn tengingar frá þínu neti?</li><li>Ennþá vandamál? Hafðu samband við kerfistjóra eða netaðila fyrir hjálp.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Fann ekki milliþjón">
+<!ENTITY proxyResolveFailure.longDesc "<p>Vafrinn er stilltur til að nota milliþjóna, en milliþjónn fannst ekki.</p><ul><li>Eru vafra stillingar milliþjóns rétt stilltar? Athugaðu stillingarnar og reyndu aftur.</li><li>Leyfir milliþjónn tengingar frá þínu neti?</li><li>Ennþá vandamál? Hafðu samband við kerfistjóra eða netaðila fyrir hjálp.</li></ul>">
+
+<!ENTITY redirectLoop.title "Lykkja af endurbeiningum">
+<!ENTITY redirectLoop.longDesc "<p>Vafrinn hefur hætt að reyna að ná í umbeðinn hlut. Vefsvæðið er að endursenda beiðnina á þann hátt að því mun aldrei ljúka.</p><ul><li>Hefurðu lokað á eða gert smákökur óvirkar frá þessu vefsvæði?</li><li><em>ATHUGA</em>: Ef þú velur að taka á móti smákökum frá þessu vefsvæði og það lagar ekki vandamálið, er netþjónninn sjálfur líklega rangt stilltur en ekki tölvan þín.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Rangt svar">
+<!ENTITY unknownSocketType.longDesc "<p>Vefsvæðið svaraði netbeiðni á óvæntan hátt þannig að vafrinn getur ekki haldið áfram.</p>">
+
+<!ENTITY nssFailure2.title "Örugg tenging mistókst">
+<!ENTITY nssFailure2.longDesc2 "<p>Ekki er hægt að skoða síðuna því ekki er hægt að sannvotta gögnin sem voru móttekin.</p><ul><li>Hafðu samband við vefstjóra vefsvæðisins og láttu hann vita af þessu vandamáli.</li></ul>">
+
+<!ENTITY nssBadCert.title "Örugg tenging mistókst">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Þetta gæti verið vegna vandamála í stillingum netþjóns, eða einhver gæti verið að reyna að þykjast vera þessi netþjónn.</li> <li>Ef þú hefur getað tengst þessum netþjóni án vandamála áður, gæti verið að vandamálið sé aðeins tímabundið, þannig að þú gætir reynt aftur seinna.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Eða þú getur bætt við undantekningu…">
+<!ENTITY securityOverride.warningContent "<p>Þú ættir ekki að bæta við undantekningu ef þú ert að nota Internet tengingu sem þú treystir ekki alveg eða ef þú ert ekki vanur að sjá aðvörun fyrir þennan vefþjóni.</p> <p>Ef þú vilt samt sem áður bæta við undantekningu, geturðu gert það í ítarlegum dulkóðunarstillingum.</p>">
+
+<!ENTITY cspBlocked.title "Lokað á vegna öryggisregla">
+<!ENTITY cspBlocked.longDesc "<p>Vafrinn kom í veg fyrir að þessi síða birtist á þennan hátt þar sem síðan inniheldur öryggisreglu sem kemur í veg fyrir það.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Villa skemmd gögn">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ekki er hægt að sýna síðuna vegna villu í gagnasendingu.</p><ul><li>Hafðu samband við vefsíðueiganda til að láta hann vita af vandamálinu.</li></ul>">
+
+<!ENTITY remoteXUL.title "Fjarlægt XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Hafðu samband við eigendur vefsvæðins til að láta þá vita af þessu vandamáli.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tengingin er ekki örug">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> notast við öryggistækni sem er úreld og ekki lengur örugg. Árásaraðili gæti auðveldlega komist í upplýsingar sem þú telur vera öruggar. Vefumsjónaraðilinn verður að laga miðlarann áður en þú getur heimsótt vefsvæðið .</p><p>Villu kóði: NS_ERROR_NET_INADEQUATE_SECURITY</p>">

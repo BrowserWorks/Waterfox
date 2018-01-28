@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "ಜಾಡು ಇರಿಸದಂತೆ ರಕ್ಷಣೆಯನ್ನು ಬಳಸು">
+<!ENTITY  trackingProtectionAlways.label       "ಯಾವಾಗಲೂ">
+<!ENTITY  trackingProtectionAlways.accesskey   "y">
+<!ENTITY  trackingProtectionPrivate.label      "Only ಖಾಸಗಿ ಕಿಟಕಿಗಳಲ್ಲಿ">
+<!ENTITY  trackingProtectionPrivate.accesskey  "l">
+<!ENTITY  trackingProtectionNever.label        "ಎಂದಿಗೂ ಬೇಡ">
+<!ENTITY  trackingProtectionNever.accesskey    "N">
+<!ENTITY  trackingProtectionLearnMore.label    "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">
+<!ENTITY  trackingProtectionExceptions.label   "ವಿನಾಯಿತಿಗಳು...">
+<!ENTITY  trackingProtectionExceptions.accesskey "x">
+
+<!ENTITY tracking.label                 "ಜಾಡು ಇರಿಸುವಿಕೆ">
+<!ENTITY trackingProtectionPBM5.label         "ಖಾಸಗೀ ಕಿಟಕಿಗಳಲ್ಲಿ ಜಾಡುಹಿಡಿಯುವಿಕೆಯ ಸುರಕ್ಷತೆಯನ್ನು ಬಳಸಿ">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!ENTITY trackingProtectionPBMLearnMore.label "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">
+<!ENTITY changeBlockList.label          "Change ನಿರ್ಬಂಧಿತ ಪಟ್ಟಿ">
+<!ENTITY changeBlockList.accesskey      "C">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "ನೀವೂ ಕೂಡ ">
+<!ENTITY  doNotTrack.settings.label     "ನಿಮ್ಮ ಜಾಡು ಹಿಡಿಯಬೇಡ ಸಿದ್ಧತೆಗಳನ್ನು ನಿರ್ವಹಿಸಿ">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "ಇತಿಹಾಸ">
+
+<!ENTITY  locationBar.label             "ಸ್ಥಳ ಪಟ್ಟಿಕೆ">
+
+<!ENTITY  locbar.suggest.label          "ಸ್ಥಳ ಪಟ್ಟಿಯನ್ನು ಬಳಸುವಾಗ, ಇದನ್ನು ಸಲಹೆ ಮಾಡು:">
+<!ENTITY  locbar.history.label          "History">
+<!ENTITY  locbar.history.accesskey      "H">
+<!ENTITY  locbar.bookmarks.label        "Bookmarks">
+<!ENTITY  locbar.bookmarks.accesskey    "k">
+<!ENTITY  locbar.openpage.label         "Open ಹಾಳೆಗಳು">
+<!ENTITY  locbar.openpage.accesskey     "O">
+<!ENTITY  locbar.searches.label         "ಪೂರ್ವನಿಯೋಜಿತ ಹುಡುಕು ಎಂಜಿನ್‌ನಿಂದ Related ಹುಡುಕಾಟಗಳು">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings.label      "ಹುಡುಕು ಯಂತ್ರಗಳ ಸಲಹೆಗಳ ಇಚ್ಛೆಗಳನ್ನು ಬದಲಾಯಿಸಿ…">
+<!ENTITY  suggestionSettings.accesskey  "g">
+
+
+
+<!ENTITY  acceptThirdParty.pre.label      "ಮೂರನೇ ವ್ಯಕ್ತಿಯ ಕುಕಿಗಳನ್ನು ಅಂಗೀಕರಿಸು:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "y">
+<!ENTITY  acceptThirdParty.always.label   "ಯಾವಾಗಲೂ">
+<!ENTITY  acceptThirdParty.never.label    "ಎಂದಿಗೂ ಬೇಡ">
+<!ENTITY  acceptThirdParty.visited.label  "ಭೇಟಿ ಮಾಡಿದವುಗಳಿಂದ">
+
+<!ENTITY  keepUntil.label               "ಇರಿಸಿಕೋ until ವರೆಗೆ:">
+<!ENTITY  keepUntil.accesskey           "u">
+
+<!ENTITY  expire.label                  "ಇದರ ಅವಧಿ ಅಂತ್ಯಗೊಳ್ಳುತ್ತದೆ">
+<!ENTITY  close.label                   "&brandShortName; ಅನ್ನು ನಾನು ಮುಚ್ಚುತ್ತೇನೆ">
+
+<!ENTITY  cookieExceptions.label        "ವಿನಾಯಿತಿಗಳು...">
+<!ENTITY  cookieExceptions.accesskey    "E">
+
+<!ENTITY  showCookies.label             "ಕುಕಿಗಳನ್ನು ತೋರಿಸು...">
+<!ENTITY  showCookies.accesskey         "S">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName;:">
+<!ENTITY  historyHeader.pre.accesskey      "w">
+<!ENTITY  historyHeader.remember.label     "ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳುತ್ತದೆ">
+<!ENTITY  historyHeader.dontremember.label "ಎಂದಿಗೂ ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬೇಡ">
+<!ENTITY  historyHeader.custom.label       "ಇತಿಹಾಸಕ್ಕಾಗಿ ನಿಮ್ಮ ಇಚ್ಛೆಯ ಸಿದ್ಧತೆಗಳನ್ನು ಬಳಸಿ">
+<!ENTITY  historyHeader.post.label         "‌">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ನಿಮ್ಮ ವೀಕ್ಷಣೆ, ಇಳಿಕೆ, ಫಾರ್ಮ್ ಹಾಗು ಹುಡುಕು ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳುತ್ತದೆ ಹಾಗು ನೀವು ಭೇಟಿ ನೀಡುವ ತಾಣಗಳ ಕುಕಿಗಳನ್ನು ಇರಿಸಿಕೊಳ್ಳುತ್ತದೆ.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "ನಿಮ್ಮ ಇತ್ತೀಚಿನ ಇತಿಹಾಸವನ್ನು ">
+<!ENTITY  rememberActions.clearHistory.label  "ನೀವು ಅಳಿಸಿಹಾಕಬಹುದು">
+<!ENTITY  rememberActions.middle.label        ", ಅಥವ ">
+<!ENTITY  rememberActions.removeCookies.label "ಪ್ರತ್ಯೇಕ ಕುಕಿಗಳನ್ನು ತೆಗೆದು ಹಾಕಬಹುದು">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ಖಾಸಗಿ ಜಾಲ ವೀಕ್ಷಣದ ರೀತಿಯದ್ದೆ ಆದ ಸಿದ್ಧತೆಗಳನ್ನು ಬಳಸುತ್ತದೆ, ಹಾಗು ನೀವು ಜಾಲವನ್ನು ವೀಕ್ಷಿಸುವಾಗ ಯಾವುದೆ ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳುವುದಿಲ್ಲ.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "ನೀವು ಎಲ್ಲಾ ಪ್ರಸಕ್ತ ಇತಿಹಾಸವನ್ನೂ ">
+<!ENTITY  dontrememberActions.clearHistory.label "ಸಹ ಅಳಿಸಲು ಬಯಸಬಹುದು">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "ಯಾವಾಗಲೂ ಖಾಸಗಿ ವೀಕ್ಷಣೆ ಕ್ರಮವನ್ನು ಬಳಸು">
+<!ENTITY  privateBrowsingPermanent2.accesskey "p">
+
+<!ENTITY  rememberHistory2.label      "ನನ್ನ ಜಾಲವೀಕ್ಷಣಾ ಮತ್ತು ಇಳಿಕೆ ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊ">
+<!ENTITY  rememberHistory2.accesskey  "b">
+
+<!ENTITY  rememberSearchForm.label       "ಹುಡುಕು ಹಾಗು ಫಾರ್ಮ್ ಇತಿಹಾಸವನ್ನು ನೆನಪಿಟ್ಟುಕೊ">
+<!ENTITY  rememberSearchForm.accesskey   "f">
+
+<!ENTITY  clearOnClose.label             "&brandShortName; ಅನ್ನು ಮುಚ್ಚಿದಾಗ ಇತಿಹಾಸವನ್ನು ಅಳಿಸಿಹಾಕು">
+<!ENTITY  clearOnClose.accesskey         "r">
+
+<!ENTITY  clearOnCloseSettings.label     "ಸಿದ್ಧತೆಗಳು…">
+<!ENTITY  clearOnCloseSettings.accesskey "t">
+
+<!ENTITY  browserContainersHeader.label         "ಕಂಟೈನರ್ ಟ್ಯಾಬ್‍‍ಗಳು">
+<!ENTITY  browserContainersLearnMore.label      "ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ">
+<!ENTITY  browserContainersEnabled.label        "ಕಂಟೈನರ್ ಟ್ಯಾಬ್ಸ್ ಸಕ್ರಿಯಗೊಳಿಸಿ">
+<!ENTITY  browserContainersEnabled.accesskey    "n">
+<!ENTITY  browserContainersSettings.label        "ಸಿದ್ಧತೆಗಳು…‍">
+<!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "సాధనపట్టీని మలుచుకొనుము">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "మీరు లాగుటద్వారా సాధనపట్టీకి అంశములను జతచేయవచ్చు తీసివేయవచ్చు.">
+<!ENTITY show.label               "చూపు:">
+<!ENTITY iconsAndText.label       "ప్రతీకాలూ పాఠ్యమూ">
+<!ENTITY icons.label              "చిహ్నాలు">
+<!ENTITY text.label               "పాఠ్యము">
+<!ENTITY useSmallIcons.label      "చిన్న చిహ్నాలను వాడండి">
+<!ENTITY restoreDefaultSet.label  "అప్రమేయ సెట్‌ను తిరిగినిల్వచేయి">
+<!ENTITY addNewToolbar.label      "కొత్త సాధనపట్టీని కలుపు">
+<!ENTITY saveChanges.label        "అయినది">
+<!ENTITY undoChanges.label        "మార్పులను చేయవద్దు">

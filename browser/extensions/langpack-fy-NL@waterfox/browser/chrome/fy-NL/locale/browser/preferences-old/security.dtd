@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  general.label                 "Algemien">
+
+<!ENTITY  warnOnAddonInstall2.label       "My warskôgje as websites probearje add-ons te ynstallearjen">
+<!ENTITY  warnOnAddonInstall2.accesskey   "M">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Gefaarlike en misliedende ynhâld blokkearje">
+<!ENTITY  enableSafeBrowsing.accesskey    "G">
+
+<!ENTITY  blockDownloads.label            "Gefaarlijke downloads blokkearje">
+<!ENTITY  blockDownloads.accesskey        "f">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "My warskôgje foar net-winske en ûngebrûklike software">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "w">
+
+<!ENTITY  addonExceptions.label         "Utsûnderingen…">
+<!ENTITY  addonExceptions.accesskey     "U">
+
+
+<!ENTITY  logins.label                  "Oanmeldingen">
+
+<!ENTITY  rememberLogins2.label         "Oanmeldingen foar websites ûnthâlde">
+<!ENTITY  rememberLogins2.accesskey     "O">
+<!ENTITY  passwordExceptions.label      "Utsûnderingen…">
+<!ENTITY  passwordExceptions.accesskey  "s">
+
+<!ENTITY  useMasterPassword.label        "In haadwachtwurd brûke">
+<!ENTITY  useMasterPassword.accesskey    "I">
+<!ENTITY  changeMasterPassword.label     "Haadwachtwurd wizigje…">
+<!ENTITY  changeMasterPassword.accesskey "a">
+
+<!ENTITY  savedLogins.label              "Bewarre oanmeldingen…">
+<!ENTITY  savedLogins.accesskey          "m">

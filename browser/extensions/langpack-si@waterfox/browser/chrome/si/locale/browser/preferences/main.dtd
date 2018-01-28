@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "ආරම්භය">
+
+<!ENTITY startupUserHomePage.label "ඔබගේ නිවාස පිටුව පෙන්වන්න">
+<!ENTITY startupBlankPage.label    "හිස් පිටුවක් පෙන්වන්න">
+<!ENTITY startupPrevSession.label  "අවසන් වරට තිබූ ඔබගේ කවුළු සහ ටැබ් පෙන්වන්න">
+
+<!ENTITY useCurrentPage.label      "දැන් පවතින පිටුව">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "දැන් පවතින පිටුව">
+<!ENTITY chooseBookmark.label      "පිටු සලකුණු භාවිතා කරන්න…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "පෙරනිමිය">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "බාගැනිම්">
+
+<!ENTITY saveTo.label "ගොනු සුරකින්නේ">
+<!ENTITY saveTo.accesskey "v">
+<!ENTITY chooseFolderWin.label        "ගවේෂණය...">
+<!ENTITY chooseFolderWin.accesskey    "o">
+<!ENTITY chooseFolderMac.label        "තෝරන්න...">
+<!ENTITY chooseFolderMac.accesskey    "e">
+<!ENTITY alwaysAskWhere.label         "ගොනු සුරකින්නේ කොතනටද යන්න සැමවිටම ඔබෙන් විමසන්න">
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysCheckDefault2.label        "සැමවිටම &brandShortName; ඔබේ පෙරනිමි ගවේශකයද බව පිරික්සන්න">
+<!ENTITY alwaysCheckDefault2.accesskey    "w">
+<!ENTITY setAsMyDefaultBrowser2.label     "පෙරනිමිය ලෙස සකසන්න">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; is currently your default browser">
+<!ENTITY isNotDefault.label               "&brandShortName; දැනට ඔබේ පෙරනිමි ගවේශකය නොවේ">
+
+<!ENTITY separateProfileMode.label        "&brandShortName; හා Waterfox එකම මොහොතේ ධාවනය වීමට ඉඩ දෙන්න">
+<!ENTITY useWaterfoxSync.label             "ඉඟිය: මෙය වෙනස් පැතිකඩ භාවිත කරයි. ඒවා අතර දත්ත බෙදාගැනීමට සම්මුහුර්ත භාවිත කරන්න.">
+
+<!ENTITY e10sEnabled.label                "&brandShortName; බහු-කාර්යාවලිය සක්‍රීය කරන්න">
+
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">

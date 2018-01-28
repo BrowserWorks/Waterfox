@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "aangaande:konfig">
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+
+<!ENTITY aboutWarningTitle.label "Dit kan dalk u waarborg nietig maak!">
+<!ENTITY aboutWarningText.label "Om hierdie gevorderde instellings te verander, kan skadelik vir die stabiliteit, sekuriteit en werkverrigting van hierdie toepassing wees. U moet net voortgaan indien u seker is van wat u doen.">
+<!ENTITY aboutWarningButton2.label "Ek aanvaar die risiko!">
+<!ENTITY aboutWarningCheckbox.label "Wys volgende keer weer hierdie waarskuwing">
+
+<!ENTITY searchPrefs.label "Soek:">
+<!ENTITY searchPrefs.accesskey "o">
+
+
+<!-- Columns -->
+
+<!ENTITY prefColumn.label "Voorkeurnaam">
+<!ENTITY lockColumn.label "Status">
+<!ENTITY typeColumn.label "Soort">
+<!ENTITY valueColumn.label "Waarde">
+<!-- Tooltips -->
+
+<!ENTITY prefColumnHeader.tooltip "Kliek om te rangskik"> 
+<!ENTITY columnChooser.tooltip "Kliek om kolomme te kies wat vertoon moet word"> 
+<!-- Context Menu -->
+
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Kopieer">
+<!ENTITY copyPref.accesskey "K">
+<!ENTITY copyName.label "Kopieer naam">
+<!ENTITY copyName.accesskey "n">
+<!ENTITY copyValue.label "Kopieer waarde">
+<!ENTITY copyValue.accesskey "w">
+<!ENTITY modify.label "Wysig">
+<!ENTITY modify.accesskey "W">
+<!ENTITY toggle.label "Swik">
+<!ENTITY toggle.accesskey "S">
+<!ENTITY reset.label "Stel terug">
+<!ENTITY reset.accesskey "r">
+<!ENTITY new.label "Nuwe">
+<!ENTITY new.accesskey "w">
+<!ENTITY string.label "String">
+<!ENTITY string.accesskey "S">
+<!ENTITY integer.label "Heelgetal">
+<!ENTITY integer.accesskey "H">
+<!ENTITY boolean.label "Boolese">
+<!ENTITY boolean.accesskey "B">
+
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+

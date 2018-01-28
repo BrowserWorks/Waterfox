@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate                 "War ši bara sutura zanfun ra sohõda.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label     "Sutura zanfun foo feeri">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "f">
+
+<!ENTITY privateBrowsing.title                           "Sutura naarumi">
+<!ENTITY privateBrowsing.title.tracking                  "Sutura ceeciyan nda ganayan jeejbu">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Waati kaŋ war ga ceeci sutura zanfun ra, Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "ši gaabundi">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "moo gunantey">
+<!ENTITY aboutPrivateBrowsing.info.searches              "ceeciyaney">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "aleewawey">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "batuyan tukey">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "ga gaabu">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " war:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "zumandiyaney">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "doo-šilbawey">
+<!ENTITY aboutPrivateBrowsing.note.before                "Sutura naarumi ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "ši war maaɲoo tugu">
+<!ENTITY aboutPrivateBrowsing.note.after                 " interneti ra. War goydogoo wala interneti nookaa ga hin ka dii moɲoo kaŋ war n'a guna hala sohõ.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Bay ka tonton a ga">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "Sutura naarumi">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Ganayan jejebu">
+<!ENTITY trackingProtection.description2                 "Interneti nungu fooyaŋ ga goy nda kurkawyaŋ kaŋ ga war goyoo lawre interneti bande. Waterfox ganayan jejeboo ga kurkaw booboyaŋ ganji i ma ši alhabar marga war ceecikaa aladaboo ga.">
+<!ENTITY trackingProtection.startTour1                   "Dii takaa nd'a ga goy">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultSearchEngine.label             "Прадвызначаны пашукавік">
+
+<!ENTITY chooseYourDefaultSearchEngine.label   "Выберыце прадвызначаны пашукавік. &brandShortName; выкарыстоўвае яго ў панэлі адрасу, панэлі пошуку і на хатняй старонцы.">
+
+<!ENTITY provideSearchSuggestions.label        "Паказваць пошукавыя прапановы">
+<!ENTITY provideSearchSuggestions.accesskey    "ы">
+
+<!ENTITY showURLBarSuggestions.label           "Паказваць пошукавыя прапановы пры выкарыстанні панэлі адрасу">
+<!ENTITY showURLBarSuggestions.accesskey       "д">
+<!ENTITY urlBarSuggestionsPermanentPB.label    "Пошукавыя прапановы у панэлі адрасу паказвацца не будуць, бо вы наладзілі &brandShortName; ніколі не запамінаць гісторыю.">
+
+<!ENTITY oneClickSearchEngines.label           "Пашукавікі ў адну пстрычку">
+
+<!ENTITY chooseWhichOneToDisplay.label         "З дапамогай панэлі пошуку вы можаце шукаць праз розныя пашукавікі. Выберыце, якія з іх паказваць.">
+
+<!ENTITY engineNameColumn.label                "Пашукавік">
+<!ENTITY engineKeywordColumn.label             "Ключавое слова">
+
+<!ENTITY restoreDefaultSearchEngines.label     "Аднавіць прадвызначаны набор пашукавікоў">
+<!ENTITY restoreDefaultSearchEngines.accesskey "в">
+
+<!ENTITY removeEngine.label                    "Выдаліць">
+<!ENTITY removeEngine.accesskey                "д">
+
+<!ENTITY addMoreSearchEngines.label            "Дадаць іншыя пашукавікі…">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printdialog.xul -->
+
+
+<!ENTITY printButton.label "මුද්‍රණය">
+
+<!ENTITY printDialog.title "මුද්‍රණය">
+
+<!ENTITY fpDialog.title "ගොනුව සුරකින්න">
+
+<!ENTITY fileCheck.label "ගොනුවට මුද්‍රණය කරන්න">
+<!ENTITY fileCheck.accesskey "F">
+<!ENTITY propertiesButton.label "ලක්ෂණ...">
+<!ENTITY propertiesButton.accesskey "o">
+<!ENTITY descText.label "මුද්‍රක විස්තරය:">
+<!ENTITY printer.label "මුද්‍රකය">
+<!ENTITY printerInput.label "මුද්‍රක නම:">
+<!ENTITY printerInput.accesskey "N">
+
+<!ENTITY printrangeGroup.label "මුද්‍රණ පරාසය">
+<!ENTITY allpagesRadio.label "සියලු පිටු">
+<!ENTITY allpagesRadio.accesskey "A">
+<!ENTITY rangeRadio.label  "පිටු">
+<!ENTITY rangeRadio.accesskey  "P">
+<!ENTITY frompageInput.label  "සිට">
+<!ENTITY frompageInput.accesskey  "r">
+<!ENTITY topageInput.label  "දක්වා">
+<!ENTITY topageInput.accesskey  "t">
+<!ENTITY selectionRadio.label "තෝරාගත්">
+<!ENTITY selectionRadio.accesskey "S">
+
+<!ENTITY copies.label "පිටපත්">
+<!ENTITY numCopies.label "පිටපත් ගණන:">
+<!ENTITY numCopies.accesskey "c">
+
+<!ENTITY printframeGroup.label "රාමු මුද්‍රණය කරන්න">
+<!ENTITY aslaidoutRadio.label "තිරයේ ඇතුරුණු ආකාරයට">
+<!ENTITY aslaidoutRadio.accesskey "u">
+<!ENTITY selectedframeRadio.label  "තෝරාගත් රාමුව">
+<!ENTITY selectedframeRadio.accesskey  "m">
+<!ENTITY eachframesepRadio.label  "සෑම රාමුවක්ම වෙනම">
+<!ENTITY eachframesepRadio.accesskey  "E">

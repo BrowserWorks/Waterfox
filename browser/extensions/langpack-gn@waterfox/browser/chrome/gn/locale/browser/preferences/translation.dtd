@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Ykepegua - Ñe'ẽasa">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Ñe'ẽasa ndaiporimo'ãi ko'ã ñe'ẽme g̃uarã:">
+<!ENTITY treehead.languageName.label      "Ñe'ẽita">
+<!ENTITY removeLanguage.label             "Ñe'ẽ mboguete ">
+<!ENTITY removeLanguage.accesskey         "R">
+<!ENTITY removeAllLanguages.label         "Opaite ñe'ẽ mboguete">
+<!ENTITY removeAllLanguages.accesskey     "e">
+
+<!ENTITY noTranslationForSites.label      "Ñe'ẽasa noñekuave'ẽmoãi ko'ã tendápe g̃uarã:">
+<!ENTITY treehead.siteName2.label         "Ñanduti renda">
+<!ENTITY removeSite.label                 "Eipe'a tenda">
+<!ENTITY removeSite.accesskey             "S">
+<!ENTITY removeAllSites.label             "Eipe'a opaite tenda">
+<!ENTITY removeAllSites.accesskey         "i">
+
+<!ENTITY button.close.label               "Emboty">
+<!ENTITY button.close.accesskey           "E">

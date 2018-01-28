@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+<!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
+%syncBrandDTD;
+<!ENTITY abouthome.pageTitle "Página de inicio de &brandFullName;">
+<!ENTITY abouthome.defaultSnippet1.v1 "¡Gracias por elegir Waterfox! Para obtener lo máximo de su navegador, conozca más sobre las <a>últimas características</a>.">
+<!ENTITY abouthome.defaultSnippet2.v1 "Es simple personalizar Waterfox exactamente de la forma que quiera. <a>Elija entre miles de complementos</a>.">
+<!ENTITY abouthome.rightsSnippet "&brandFullName; es un software libre y de código abierto de la fundación sin fines de lucro Mozilla. <a>Conozca sus derechos…</a>">
+<!ENTITY abouthome.bookmarksButton.label "Marcadores">
+<!ENTITY abouthome.historyButton.label "Historial">
+<!ENTITY abouthome.preferencesButtonWin.label "Opciones">
+<!ENTITY abouthome.preferencesButtonUnix.label "Preferencias">
+<!ENTITY abouthome.addonsButton.label "Complementos">
+<!ENTITY abouthome.downloadsButton.label "Descargas">
+<!ENTITY abouthome.syncButton.label "&syncBrand.shortName.label;">
+<!ENTITY abouthome.aboutMozilla.label "Acerca de Mozilla">

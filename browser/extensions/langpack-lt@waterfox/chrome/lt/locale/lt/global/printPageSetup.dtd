@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from printjoboptions.xul -->
+
+
+<!ENTITY printSetup.title    "Puslapio nuostatos">
+
+<!ENTITY basic.tab           "Formatas ir nuostatos">
+
+<!ENTITY formatGroup.label   "Formatas">
+
+<!ENTITY orientation.label   "Puslapio padėtis:">
+<!ENTITY portrait.label      "Stačias">
+<!ENTITY portrait.accesskey  "S">
+<!ENTITY landscape.label     "Gulsčias">
+<!ENTITY landscape.accesskey "G">
+
+<!ENTITY scale.label         "Mastelis:">
+<!ENTITY scale.accesskey     "M">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Priderinti prie puslapio pločio">
+<!ENTITY shrinkToFit.accesskey "P">
+
+<!ENTITY optionsGroup.label  "Nuostatos">
+
+<!ENTITY printBG.label       "Spausdinti fono piešinius ir spalvas">
+<!ENTITY printBG.accesskey   "f">
+
+<!ENTITY advanced.tab        "Paraštės ir puslapinės antraštės bei poraštės">
+
+<!ENTITY marginGroup.label   "Paraštės (#1)">
+<!ENTITY marginUnits.inches  "coliai">
+<!ENTITY marginUnits.metric  "milimetrai">
+<!ENTITY marginTop.label     "Viršutinė:">
+<!ENTITY marginTop.accesskey "V">
+<!ENTITY marginBottom.label  "Apatinė:">
+<!ENTITY marginBottom.accesskey "A">
+<!ENTITY marginLeft.label    "Kairioji:">
+<!ENTITY marginLeft.accesskey "K">
+<!ENTITY marginRight.label   "Dešinioji:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Puslapinės antraštės ir poraštės">
+
+<!ENTITY hfLeft.label        "Kairė:">
+<!ENTITY hfCenter.label      "Centras:">
+<!ENTITY hfRight.label       "Dešinė:">
+<!ENTITY headerLeft.tip      "Antraštė kairėje">
+<!ENTITY headerCenter.tip    "Antraštė centre">
+<!ENTITY headerRight.tip     "Antraštė dešinėje">
+<!ENTITY footerLeft.tip      "Poraštė kairėje">
+<!ENTITY footerCenter.tip    "Poraštė centre">
+<!ENTITY footerRight.tip     "Poraštė dešinėje">
+
+<!ENTITY hfTitle             "Antraštė">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Data ir laikas">
+<!ENTITY hfPage              "Puslapio Nr.">
+<!ENTITY hfPageAndTotal      "X iš Y">
+<!ENTITY hfBlank             "--tuščia--">
+<!ENTITY hfCustom            "Kita…">
+
+<!ENTITY customPrompt.title  "Kita…">
+<!ENTITY customPrompt.prompt "Surinkite puslapinės antraštės (poraštės) tekstą:">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "ഹിസ്റ്ററി പുതുക്കുക">
+<!ENTITY  history.intro             "താഴെ പറയുന്ന പരിഷ്കാരങ്ങള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്തിരിക്കുന്നു:">
+<!ENTITY  closebutton.label         "അടയ്ക്കുക ">
+                                     
+<!ENTITY  noupdates.label           "അപ്പ്ഡേറ്റുകള്‍ ഒന്നും ഇതുവരെ ഇന്‍സ്റ്റാള്‍ ചെയ്തിട്ടില്ല">
+
+<!ENTITY  name.header               "പേര് പുതുക്കുക">
+<!ENTITY  date.header               "ഇന്‍സ്റ്റാള്‍ ചെയ്ത തിയതി ">
+<!ENTITY  type.header               "ഏത് തരം">
+<!ENTITY  state.header              "അവസ്ഥ">
+

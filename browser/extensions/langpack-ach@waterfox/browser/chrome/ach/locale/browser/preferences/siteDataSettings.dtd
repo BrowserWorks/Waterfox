@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Ter - Data me Kakube">
+<!ENTITY     hostCol.label                 "Kakube">
+
+
+<!ENTITY     searchTextboxPlaceHolder             "Yeny kakube">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Kwany ma kiyero">
+<!ENTITY     removeSelected.accesskey      "K">
+<!ENTITY     save.label                    "Gwok alokaloka">
+<!ENTITY     save.accesskey                "o">
+<!ENTITY     cancel.label                  "Juki">
+<!ENTITY     cancel.accesskey              "J">
+<!ENTITY     removingDialog.title          "Kwanyo Data me Kakube">
+<!ENTITY     removingSelected.description  "Kwanyo data me kakube bene bikwanyo angija makwako ki jami me kakube mape iwiyamo. Man twero kwanyi woko ki i kakube. Imoko ada ni imito timo alokaloka?">
+<!ENTITY     siteTree.label                "Angija pi kakube magi ki bi kwanyo gi woko:">
+
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Storage">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.welcome "Добредојдовте во &syncBrand.shortName.label;">
+
+<!ENTITY aboutAccountsConfig.description "Најавете се за да ги синхронизирате Вашите јазичиња, обележувачи, лозинки и повеќе.">
+<!ENTITY aboutAccountsConfig.startButton.label "Вовед">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Преференции за синхронизација">
+<!ENTITY aboutAccounts.noConnection.title "Нема врска">
+<!ENTITY aboutAccounts.noConnection.description "Мора да бидете врзани на Интернет за да се најавите.">
+<!ENTITY aboutAccounts.noConnection.retry "Обиди се повторно">
+<!ENTITY aboutAccounts.badConfig.title "Лоша конфигурација">
+<!ENTITY aboutAccounts.badConfig.description "Не можам да ја одредам серверската конфигурација на Вашата сметка за Waterfox. Ве молам обидете се повторно подоцна.">

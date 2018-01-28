@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.title "Baɗte Hakkeeji Maa">
+<!ENTITY rights.intro "&brandFullName; ko topirɗe dokkal e open source, nde renndo ujunnaaji neɗɗo wonɓe e winndere ndee fof mbinndi. Won geɗe seeɗa ɗe pot-ɗaa faamde:">
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+
+<!ENTITY rights.intro-point1a "&brandShortName; ena yettinaa e maa tugnaade e sarɗiiji ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Ɗum firti ko aɗa waawi huutoraade, tummbitaade, weeɗde &brandShortName; woɗɓe.  Aɗa yamiraa kadi waylude dokkol yummawol &brandShortName; ngol no njiɗir-ɗaa ngam nafoore maa heeriingo. Mozilla Public License ena hokku-maa kadi hakke weeɗde jame maa bayklaaɗe ɗee.">
+
+<!ENTITY rights.intro-point2-a "A hokkaaka hay hakke gooto wonande marke ɗee walla jamirooje marke Waterfox walla baawɗo wonde kala, ena jeyaa heen tawa alaa ɗo haaɗi innde Waterfox ndee e logo mum. Humpito wonngo baɗte marke ena heɓoo ">
+<!ENTITY rights.intro-point2-b "ɗoo">
+<!ENTITY rights.intro-point2-c ".">
+<!-- point 2.5 text for official branded builds -->
+
+<!ENTITY rights.intro-point2.5 "Wone e fannuuji gonɗi e &brandShortName;, wano Jaŋtorde Hooko, ena hokku maa suɓre hokkude miijo maa to &vendorShortName;. So a suɓiima naatnude miijo, aɗa hokka &vendorShortName; yamiroore huutoraade miijo maa ngoo ngam ɓeydude moƴƴinde paggooje mum, bayyinde miijo maa e lowe mum geese, e waaɗde miijo ngoo.">
+<!-- point 3 text for official branded builds -->
+
+<!ENTITY rights2.intro-point3a "No min kuutortoo humpito maa heeriingo a miijo maa naatnaaɗe to &vendorShortName; fayde &brandShortName; ena sifaa e ">
+<!ENTITY rights2.intro-point3b "Dawirgol Suturo &brandShortName;">
+<!ENTITY rights.intro-point3c ".">
+<!-- point 3 text for unbranded builds -->
+
+<!ENTITY rights.intro-point3-unbranded "Kala dawirɗe sutoro jammintooɗe e ndee faggoore ena foti limteede ɗoo.">
+<!-- point 4 text for official branded builds -->
+
+<!ENTITY rights2.intro-point4a "Won e fannuuji &brandShortName; ena kuutortoo carwe humpito mooftiiɗe e geese, kono, min mbaawaa adande on eɗe ngoongɗi 100&#037; walla ɗe ngalaa juume. Humpito woɗngo, yantude e hol no fannuuji kuutortooɗi ɗeen carwe daaƴirtee ena heɓoo e ">
+<!ENTITY rights.intro-point4b "saɗiiji carwe">
+<!ENTITY rights.intro-point4c ".">
+<!-- point 4 text for unbranded builds -->
+
+<!ENTITY rights.intro-point4a-unbranded "So ndee faggoore ena soomi carwe geese, kala sarɗi carwe pawotooɗe e carwol (carwe) ɗee ena poti jokkondirɗe e ">
+<!ENTITY rights.intro-point4b-unbranded "Carwe Lowe Geese">
+<!ENTITY rights.intro-point4c-unbranded " taƴre.">
+
+<!ENTITY rights2.webservices-header "Carwe Humpito &brandFullName; Mooftiiɗe e Geese">
+<!-- point 5 -->
+
+<!ENTITY rights.intro-point5 "Ngam tartude yoga e loowdi widewoo, &brandShortName; aawtoto won e gulɗe dokkitorɗe loowdi iwde e nokkuuji goɗɗi.">
+<!-- Note that this paragraph references a couple of entities from
+     preferences/security.dtd, so that we can refer to text the user sees in
+     the UI, without this page being forgotten every time those strings are
+     updated.  -->
+<!-- intro paragraph for branded builds -->
+
+<!ENTITY rights2.webservices-a "&brandFullName; ena huutoroo carwe humpito mooftiiɗe e geese (&quot;Carwe&quot;) ngam addude won e fannuuji ɗi ngaddane-ɗaa yo a huutoro ndee yamre biinere &brandShortName; tugnaade e sarɗiiji cifaaɗi les ɗoo. So a yiɗaa huutoraade gootol walla keewɗe e ɗeen Carwe walla sarɗiiji gonɗi les ɗoo njaɓotaako, aɗa waawi daaƴde oon fannu Carwol(we). Tinndinoore e no fannu keeriiɗo walla Carwol daaƴirtee ena heɓoo ">
+<!ENTITY rights2.webservices-b "ɗoo">
+<!ENTITY rights3.webservices-c ". Fannuuji e Carwe goɗɗe ena mbaawi daaƴeede e cuɓoraaɗe jaaɓnirgal ngal.">
+<!-- safe browsing points for branded builds -->
+
+<!ENTITY rights.safebrowsing-a "SafeBrowsing">
+<!ENTITY rights.safebrowsing-b "Daaƴde fannu Peeragol Koolnol oo wasiyaaka sabu ena waawi wuftude e yahde-ma e lowe ɗe koolnaaki.  So aɗa yiɗi daaƴde fannu oo haa timma, tugno e ɗee daawe:">
+<!ENTITY rights.safebrowsing-term1 "Uddit cuɓoraaɗe jaaɓnirgal ngal">
+<!ENTITY rights.safebrowsing-term2 "Labo labannde Kisal ndee">
+<!ENTITY rights2.safebrowsing-term3 "Jelto suɓre to &quot;&enableSafeBrowsing.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Peeragol Koolnol daaƴaama jooni">
+<!-- location aware browsing points for branded builds -->
+
+<!ENTITY rights.locationawarebrowsing-a "Peeragol Ganndungol Nokkuure: ">
+<!ENTITY rights.locationawarebrowsing-b "ko jaɓel kala sahaa.  Alaa humpito nokkuure neldetee tawa a yamiraani.  So aɗa yiɗi daaƴde oo fannu haa timma, tugno e ɗee daawe:">
+<!ENTITY rights.locationawarebrowsing-term1a "E palal URL ngal, tappu ">
+<!ENTITY rights.locationawarebrowsing-term1b "about:config">
+<!ENTITY rights.locationawarebrowsing-term2 "Tappu geo.enabled">
+<!ENTITY rights.locationawarebrowsing-term3 "Dobdobo e suɓoraango geo.enabled ngoo">
+<!ENTITY rights.locationawarebrowsing-term4 "Peeragol Ganndungol Nokkuure jooni daaƴaama">
+<!-- intro paragraph for unbranded builds -->
+
+<!ENTITY rights.webservices-unbranded "Sifannde carwe lowe geese ɗe faggoore ndeel soomi ɗee, yanti heen pamminorɗe no ɗe daaƴirtee, so ena wona, ena poti heɓaade ɗoo.">
+<!-- point 1 text for unbranded builds -->
+
+<!ENTITY rights.webservices-term1-unbranded "Kala sarɗiiji carwe jammintooɗe e ndee faggoore ena foti limteede ɗoo.">
+<!-- points 1-7 text for branded builds -->
+
+<!ENTITY rights2.webservices-term1 "&vendorShortName; e wallitooɓe mum, yamirooɓe e renndodiiɓe mum ena ngolloo ngam addude Carwe ɓurɗe hesɗitde.  Kono, min mbaawaa aadande on wonde ngoon humpito ena hesɗiti tee alaa juume.  Yeru, Carwol Peeragol Suturo ngol ena waawi waasde yiyde won e lowe ɗe koolnaaki tee ena waawi juumde e joopagol lowe tee Peeragol Ganndungol Nokkuure ngol nokkuuje kala ɗe carwol amen ruttini ko kiise tan tee wonaa minen, wonaa hokkooɓe carwol amen ngaadani-on moƴƴugol nokkuuje dokkaaɗe ɗee.">
+<!ENTITY rights.webservices-term2 "&vendorShortName; ena waawi dartaade walla wayla Carwe ɗee nde welaa.">
+<!ENTITY rights2.webservices-term3 "Aɗa bismaa e huutoraade ɗee Carwe ngarduɗe e yamre &brandShortName;, tee &vendorShortName; ena hokku-maa hakkeeji waɗde ɗum.  &vendorShortName; e yamirooɓe mum ena panndini hakkeeji goɗɗi kala e Carwe ɗee.  Ɗii sarɗiiji mbaɗiraaka yoo pamɗin hakkeeji dokkaaɗi e tugno jamirooje open source jammintooɗe e &brandShortName; kadi e jame dokkol baabarol &brandShortName;.">
+<!ENTITY rights.webservices-term4 "Carwe ɗee ndokkiraa ko &quot;no ngoniri nih&quot;  &vendorShortName;, wallitooɓe mum, yamirooɓe, e weeɗooɓe, ena ndiiwta kala gaadane, foti ko wowlaa walla maandinaa, yantude heen tawa alaa kaadol, gaadane ɗe Carwe ɗee ena njuloree tee ena kaaɗi e nafoore maa.  Kala caɗeele gonɗe e Carwe ɗe cuɓani-ɗaa nafoore hoore maa ɗee ko aan tambii, kadi ko feewti e ŋarɗol e ñisgol Carwe ɗee. Won e laabi njamirtaa calagaol walla kaaɗnugol gaadane maandinaaɗe ɗee, ngati ngol diiwtol ena waawi waasde toɗɗaade-ma.">
+<!ENTITY rights.webservices-term5 "So wonaa ko laawol naamnii, &vendorShortName;, wallitooɓe mum, yamirooɓe, e weeɗooɓe mbaawoytaa joppeede so bonanndeeeji kuutoragol &brandShortName; e Carwe ɗee.  Pawtagol denndangol tugnaade e ɗiin sarɗiiji mbaawaa diwde $500 (teemedde joyi dolaar). Won e laabi njamirtaa diiwtol walla kaaɗnugol won heen e bonanndeeji, ngati ndol diiwtol ena waawi waasde toɗɗaade-ma.">
+<!ENTITY rights.webservices-term6 "&vendorShortName; ena waawi hesɗitde ɗii sarɗiiji sahaaji so soklaama. Ɗiin sarɗiiji mbaawaa wayleede walla haaytineede tawa &vendorShortName; addaani yamiroore mum e binndol.">
+<!ENTITY rights.webservices-term7 "Ɗii sarɗiiji huufi ɗum'en ko laabi Dowla Kaliforni, U.S.A., jeyaaka heen luure ɗaɓɓugol laawol. So won e ɗiin sarɗiiji heftinaa moƴƴaani walla mbaawaa faweede e yimɓe, ko heddi koo ena ñiiɓi e laawol tigi. So luural jolii hakkunde yamre firaande e yamre ɗemngal Engeleere, ko yamre Engeleere ndee jogii giol.">

@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutNetworking.title                 "Tarmoq haqida">
+<!ENTITY aboutNetworking.warning               "Bu hali sinov holatida. Kattalarning kuzatuvisiz foydalanmang.">
+<!ENTITY aboutNetworking.showNextTime          "Ushbu ogohlantirish keyingi safar ko‘rsatilsin">
+<!ENTITY aboutNetworking.ok                    "OK">
+<!ENTITY aboutNetworking.HTTP                  "HTTP">
+<!ENTITY aboutNetworking.sockets               "Soketlar">
+<!ENTITY aboutNetworking.dns                   "DNS">
+<!ENTITY aboutNetworking.websockets            "Vebsoketlar">
+<!ENTITY aboutNetworking.refresh               "Yangilash">
+<!ENTITY aboutNetworking.autoRefresh           "Har 3 soniyada avtoyangilash">
+<!ENTITY aboutNetworking.hostname              "Host nomi">
+<!ENTITY aboutNetworking.port                  "Port:">
+
+<!ENTITY aboutNetworking.ssl                   "SSL">
+<!ENTITY aboutNetworking.active                "Faol">
+<!ENTITY aboutNetworking.idle                  "Foydalanilmayapti">
+<!ENTITY aboutNetworking.host                  "Host">
+<!ENTITY aboutNetworking.tcp                   "TCP">
+<!ENTITY aboutNetworking.sent                  "TCP">
+<!ENTITY aboutNetworking.received              "Olingan">
+<!ENTITY aboutNetworking.family                "Oilasi">
+<!ENTITY aboutNetworking.addresses             "Manzillari">
+<!ENTITY aboutNetworking.expires               "Vaqt oʻtib ketishi (soniyalarda)">
+<!ENTITY aboutNetworking.messagesSent          "Xabar joʻnatildi">
+<!ENTITY aboutNetworking.messagesReceived      "Xabarlar qabul qilindi">
+<!ENTITY aboutNetworking.bytesSent             "Joʻnatilgan baytlar">
+<!ENTITY aboutNetworking.bytesReceived         "Qabul qilingan baytlar">
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.dnsLookup             "DNS topish">
+<!ENTITY aboutNetworking.dnsLookupButton       "Hal qilish">
+<!ENTITY aboutNetworking.dnsDomain             "Domen">
+<!ENTITY aboutNetworking.dnsLookupTableColumn  "IP manzillar">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY aboutNetworking.currentLogFile        "Current Log File:">
+<!ENTITY aboutNetworking.currentLogModules     "Current Log Modules:">
+<!ENTITY aboutNetworking.http2                 "HTTP/2">
+<!ENTITY aboutNetworking.logTutorial           "See <a href='https://developer.mozilla.org/docs/Mozilla/Debugging/HTTP_logging'>HTTP Logging</a> for instructions on how to use this tool.">
+<!ENTITY aboutNetworking.logging               "Logging">
+<!ENTITY aboutNetworking.rcwn                  "RCWN Stats">
+<!ENTITY aboutNetworking.rcwnAvgLong           "Long Average">
+<!ENTITY aboutNetworking.rcwnAvgShort          "Short Average">
+<!ENTITY aboutNetworking.rcwnCacheNotSlow      "Cache not slow count">
+<!ENTITY aboutNetworking.rcwnCacheSlow         "Cache slow count">
+<!ENTITY aboutNetworking.rcwnCacheWonCount     "Cache won count">
+<!ENTITY aboutNetworking.rcwnNetWonCount       "Net won count">
+<!ENTITY aboutNetworking.rcwnOperation         "Cache Operation">
+<!ENTITY aboutNetworking.rcwnPerfEntryOpen     "Entry Open">
+<!ENTITY aboutNetworking.rcwnPerfOpen          "Open">
+<!ENTITY aboutNetworking.rcwnPerfRead          "Read">
+<!ENTITY aboutNetworking.rcwnPerfWrite         "Write">
+<!ENTITY aboutNetworking.rcwnStatus            "RCWN Status">
+<!ENTITY aboutNetworking.rcwnStddevLong        "Long Standard Deviation">
+<!ENTITY aboutNetworking.setLogFile            "Set Log File">
+<!ENTITY aboutNetworking.setLogModules         "Set Log Modules">
+<!ENTITY aboutNetworking.startLogging          "Start Logging">
+<!ENTITY aboutNetworking.stopLogging           "Stop Logging">
+<!ENTITY aboutNetworking.totalNetworkRequests  "Total network request count">

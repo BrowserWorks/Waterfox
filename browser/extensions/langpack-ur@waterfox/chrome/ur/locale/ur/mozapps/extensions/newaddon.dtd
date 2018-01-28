@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title           "ایڈ اون تنصیب کریں">
+<!ENTITY intro           "آپ کے کمپیوٹر پر ایک اور پروگرام مندرجہ ذیل  ایڈ اون سے &brandShortName; کی ترمیم کرنا چاہتا ہے:">
+<!ENTITY warning         "ایڈ اون صرف ان مصنفین سے تنصیب کریں جن پر آپ کو بھروسا ہو۔">
+<!ENTITY allow           "اس تنصیب کو ہونے دیں">
+<!ENTITY later           "آپ کسی بھی وقت ایڈ اون مینیجر پر جا کر اپنا فیصلہ بدل سکتے ہیں۔">
+<!ENTITY continue        "جاری رکھیں">
+<!ENTITY restartMessage  "اس ایڈ اون کی تنصیب مکمل کرنے کے لیے آپ کو &brandShortName; دوباره شروع کرنا ہو گا۔">
+<!ENTITY restartButton   "&brandShortName; دوباره شروع کریں">
+<!ENTITY cancelButton    "منسوخ کریں">

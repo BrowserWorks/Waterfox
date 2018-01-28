@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "הגנת מעקב">
+<!ENTITY  trackingProtection2.description      "מעקב הוא איסוף של נתוני הגלישה שלך ממגוון אתרים. ניתן להשתמש במעקב כדי להרכיב פרופיל ולהציג עבורך תוכן בהתבסס על הפרטים האישיים ונתוני הגלישה שלך.">
+<!ENTITY  trackingProtection2.radioGroupLabel  "שימוש בהגנת מעקב לחסימת רכיבי מעקב ידועים">
+<!ENTITY  trackingProtectionAlways.label       "תמיד">
+<!ENTITY  trackingProtectionAlways.accesskey   "ת">
+<!ENTITY  trackingProtectionPrivate.label      "רק בחלונות פרטיים">
+<!ENTITY  trackingProtectionPrivate.accesskey  "ר">
+<!ENTITY  trackingProtectionNever.label        "לעולם לא">
+<!ENTITY  trackingProtectionNever.accesskey    "ל">
+<!ENTITY  trackingProtectionLearnMore.label    "מידע נוסף">
+<!ENTITY  trackingProtectionExceptions.label   "חריגות…">
+<!ENTITY  trackingProtectionExceptions.accesskey "ח">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "שימוש בהגנת מעקב בחלונות פרטיים">
+<!ENTITY trackingProtectionPBM5.accesskey     "ה">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "שימוש בהגנת מעקב בגלישה פרטית לחסימת רכיבי מעקב ידועים">
+<!ENTITY trackingProtectionPBM6.accesskey     "ט">
+<!ENTITY trackingProtectionPBMLearnMore.label "מידע נוסף">
+<!ENTITY changeBlockList2.label               "שינוי רשימת חסימות…">
+<!ENTITY changeBlockList2.accesskey           "ר">
+
+<!ENTITY  doNotTrack.description        "שליחת חיווי ”נא לא לעקוב” לאתרים שאין ברצונך שיעקבו אחריך">
+<!ENTITY  doNotTrack.learnMore.label    "מידע נוסף">
+<!ENTITY  doNotTrack.default.label      "רק בעת שימוש בהגנת מעקב">
+<!ENTITY  doNotTrack.always.label       "תמיד">
+
+<!ENTITY  history.label                 "היסטוריה">
+<!ENTITY  permissions.label             "הרשאות">
+
+<!ENTITY  addressBar.label              "שורת כתובת">
+<!ENTITY  addressBar.suggest.label      "כאשר משתמשים בסרגל החיפוש, יוצגו המלצות עבור">
+<!ENTITY  locbar.history2.label         "היסטוריית גלישה">
+<!ENTITY  locbar.history2.accesskey     "ג">
+<!ENTITY  locbar.bookmarks.label        "סימניות">
+<!ENTITY  locbar.bookmarks.accesskey    "ס">
+<!ENTITY  locbar.openpage.label         "לשוניות פתוחות">
+<!ENTITY  locbar.openpage.accesskey     "ל">
+<!ENTITY  locbar.searches.label         "חיפושים קשורים ממנוע חיפוש בררת המחדל">
+<!ENTITY  locbar.searches.accesskey     "ק">
+
+<!ENTITY  suggestionSettings2.label     "שינוי העדפות של הצעות מנועי חיפוש">
+
+<!ENTITY  acceptCookies.label           "קבלת עוגיות מאתרים">
+<!ENTITY  acceptCookies.accesskey       "ק">
+
+<!ENTITY  acceptThirdParty.pre.label      "קבלת עוגיות צד שלישי:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "ש">
+<!ENTITY  acceptThirdParty.always.label   "תמיד">
+<!ENTITY  acceptThirdParty.never.label    "לעולם לא">
+<!ENTITY  acceptThirdParty.visited.label  "מאתרים בהם ביקרנו בעבר">
+
+<!ENTITY  keepUntil.label               "שמירה עד ש:">
+<!ENTITY  keepUntil.accesskey           "מ">
+
+<!ENTITY  expire.label                  "הן פגות">
+<!ENTITY  close.label                   "אני סוגר את &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "חריגות…">
+<!ENTITY  cookieExceptions.accesskey    "ח">
+
+<!ENTITY  showCookies.label             "הצגת עוגיות…">
+<!ENTITY  showCookies.accesskey         "צ">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName;">
+<!ENTITY  historyHeader2.pre.accesskey     "F">
+<!ENTITY  historyHeader.remember.label     "ישמור היסטוריה">
+<!ENTITY  historyHeader.dontremember.label "לעולם לא ישמור היסטוריה">
+<!ENTITY  historyHeader.custom.label       "ישתמש בהגדרות מותאמות אישית להיסטוריה">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; ישמור את היסטורית הגלישה שלך, ההורדות, טפסים והיסטורית החיפוש, וישמור עוגיות מאתרים בהם אתה מבקר.">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "ייתכן שתרצה ">
+<!ENTITY  rememberActions.clearHistory.label  "לנקות את ההיסטוריה האחרונה שלך">
+<!ENTITY  rememberActions.middle.label        ", או ">
+<!ENTITY  rememberActions.removeCookies.label "למחוק עוגיות בודדות">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; ישתמש באותן ההגדרות לגלישה פרטית, ולא יזכור היסטוריה כלשהי במהלך הגלישה שלך ברשת.">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "ייתכן שתרצה גם ">
+<!ENTITY  dontrememberActions.clearHistory.label "לנקות את כל ההיסטוריה הנוכחית">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "שימוש תמידי במצב גלישה פרטית">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ה">
+
+<!ENTITY  rememberHistory2.label      "שמירת היסטורית גלישה והורדות">
+<!ENTITY  rememberHistory2.accesskey  "ג">
+
+<!ENTITY  rememberSearchForm.label       "שמירת חיפושים והיסטורית טפסים">
+<!ENTITY  rememberSearchForm.accesskey   "ט">
+
+<!ENTITY  clearOnClose.label             "מחיקת היסטוריה כאשר &brandShortName; נסגר">
+<!ENTITY  clearOnClose.accesskey         "נ">
+
+<!ENTITY  clearOnCloseSettings.label     "הגדרות…">
+<!ENTITY  clearOnCloseSettings.accesskey "ה">
+
+<!ENTITY  browserContainersLearnMore.label      "מידע נוסף">
+<!ENTITY  browserContainersEnabled.label        "הפעלת מגירות לשוניות">
+<!ENTITY  browserContainersEnabled.accesskey    "מ">
+<!ENTITY  browserContainersSettings.label        "הגדרות…">
+<!ENTITY  browserContainersSettings.accesskey    "ג">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">

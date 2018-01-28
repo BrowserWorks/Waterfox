@@ -1,0 +1,87 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "Telemetri-data">
+
+<!ENTITY aboutTelemetry.pingDataSource "Pingdata-kilde:">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "Gjeldende ping-data">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "Arkiverte ping-data">
+
+<!ENTITY aboutTelemetry.raw "Rå JSON">
+
+<!ENTITY aboutTelemetry.showSubsessionData "Vis undersøkt-data">
+
+<!ENTITY aboutTelemetry.choosePing "Velg ping:">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; Nyere ping">
+
+<!ENTITY aboutTelemetry.showOlderPing "Eldre ping &gt;&gt;">
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "Uke">
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping-type
+">
+
+<!ENTITY aboutTelemetry.archivePingHeader "Ping">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+I dag
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+I går
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Eldre
+">
+
+<!ENTITY aboutTelemetry.generalDataSection "  Generell data">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  Miljødata">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  Telemetri-logg">
+
+<!ENTITY aboutTelemetry.slowSqlSection "  Trege SQL-uttrykk">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "  Nettleserheng">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Trådheng">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "  oppfanget stakker">
+
+<!ENTITY aboutTelemetry.scalarsSection "  Skalarer">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "  Keyed Scalars">
+
+<!ENTITY aboutTelemetry.histogramsSection "  Histogrammer">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Histogrammer etter nøkler">
+
+<!ENTITY aboutTelemetry.eventsSection "  hendelser">
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "  Enkle målinger">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  Utvidelsesdetaljer">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  Sen skriving">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "  Øktinformasjon">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "  MERK: Treg SQL-feilsøking er påslått. Fullstendige SQL-uttrykk kan vises nedenfor, men de sendes ikke inn til Telemetry.">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Hent funksjonsnavn for stacker
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Vis rå stackdata
+">
+
+<!ENTITY aboutTelemetry.filterText "  Filtrer (strenger eller /regexp/)">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "  Nyttelast">

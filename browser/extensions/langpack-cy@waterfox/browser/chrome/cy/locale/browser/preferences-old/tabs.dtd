@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label       "Mae Ctrl+Tab yn cylchdroi drwy dabiau yn y drefn y'u defnyddiwyd yn ddiweddar">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey   "T">
+
+<!ENTITY newWindowsAsTabs.label       "Agor ffenestr newydd mewn tab yn hytrach na ffenestr">
+<!ENTITY newWindowsAsTabs.accesskey   "A">
+
+<!ENTITY warnOnCloseMultipleTabs.label      "Rhybuddio wrth gau mwy nag un tab">
+<!ENTITY warnOnCloseMultipleTabs.accesskey  "g">
+
+<!ENTITY warnOnOpenManyTabs.label       "Rhybuddio y gall agor mwy nag un tab arafu &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey   "a">
+
+<!ENTITY switchLinksToNewTabs.label        "Wrth agor dolen mewn tab newydd, symud yn syth iddo">
+<!ENTITY switchLinksToNewTabs.accesskey    "W">
+
+<!ENTITY showTabsInTaskbar.label          "Dangos rhagolwg tab ym mar tasgau Windows">
+<!ENTITY showTabsInTaskbar.accesskey      "D">
+<!ENTITY tabsGroup.label          "Tabiau">

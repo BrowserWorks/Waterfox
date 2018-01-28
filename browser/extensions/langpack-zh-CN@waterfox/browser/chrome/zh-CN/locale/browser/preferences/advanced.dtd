@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Note: each tab panel must contain unique accesskeys -->
+
+<!ENTITY generalTab.label                "常规">
+
+<!ENTITY useCursorNavigation.label       "始终使用方向键在页面内导航">
+<!ENTITY useCursorNavigation.accesskey   "c">
+<!ENTITY searchOnStartTyping.label       "直接输入则开始搜索文本">
+<!ENTITY searchOnStartTyping.accesskey   "x">
+<!ENTITY useOnScreenKeyboard.label       "在需要时显示触摸键盘">
+<!ENTITY useOnScreenKeyboard.accesskey   "k">
+
+<!ENTITY browsing.label                  "浏览">
+
+<!ENTITY useAutoScroll.label             "使用自动滚屏">
+<!ENTITY useAutoScroll.accesskey         "a">
+<!ENTITY useSmoothScrolling.label        "使用平滑滚动">
+<!ENTITY useSmoothScrolling.accesskey    "m">
+<!ENTITY checkUserSpelling.label         "在您输入时检查拼写">
+<!ENTITY checkUserSpelling.accesskey     "t">
+
+<!ENTITY dataChoicesTab.label            "数据反馈">
+
+<!-- LOCALIZATION NOTE (healthReportingDisabled.label): This message is displayed above
+disabled data sharing options in developer builds or builds with no Telemetry support
+available. -->
+<!ENTITY healthReportingDisabled.label   "在此构建配置下数据反馈被禁用">
+
+<!ENTITY enableHealthReport1.label       "允许 &brandShortName; 自动向 Mozilla 反馈技术性信息和交互信息">
+<!ENTITY enableHealthReport1.accesskey   "r">
+<!ENTITY healthReportLearnMore.label     "详细了解">
+
+<!ENTITY dataCollection.label            "&brandShortName; 数据收集与使用">
+<!ENTITY dataCollectionDesc.label        "我们努力为您提供选择权，并保证只收集我们为大家提供和改进 &brandShortName; 所需的信息。我们只会在征得您的同意后才会发送个人信息。">
+<!ENTITY dataCollectionPrivacyNotice.label    "隐私声明">
+
+<!ENTITY alwaysSubmitCrashReports1.label  "允许 &brandShortName; 向 Mozilla 发送错误报告">
+<!ENTITY alwaysSubmitCrashReports1.accesskey "c">
+<!ENTITY crashReporterLearnMore.label    "详细了解">
+
+<!ENTITY networkTab.label                "网络">
+
+<!ENTITY networkProxy.label              "网络代理">
+
+<!ENTITY connectionDesc.label            "配置 &brandShortName; 如何连接至国际互联网">
+<!ENTITY connectionSettings.label        "设置…">
+<!ENTITY connectionSettings.accesskey    "e">
+
+<!ENTITY httpCache.label                 "网络内容缓存">
+
+<!ENTITY offlineStorage2.label           "离线 Web 内容和用户数据">
+
+<!--  Site Data section manages sites using Storage API and is under Network -->
+<!ENTITY siteData.label                  "网站数据">
+<!ENTITY clearSiteData.label             "清除所有数据">
+<!ENTITY clearSiteData.accesskey         "l">
+<!ENTITY siteDataSettings.label          "设置…">
+<!ENTITY siteDataSettings.accesskey      "i">
+<!ENTITY siteDataLearnMoreLink.label     "详细了解">
+
+<!-- LOCALIZATION NOTE:
+  The entities limitCacheSizeBefore.label and limitCacheSizeAfter.label appear on a single
+  line in preferences as follows:
+
+  &limitCacheSizeBefore.label [textbox for cache size in MB] &limitCacheSizeAfter.label;
+-->
+<!ENTITY limitCacheSizeBefore.label      "缓存最大为">
+<!ENTITY limitCacheSizeBefore.accesskey  "L">
+<!ENTITY limitCacheSizeAfter.label       "MB 磁盘空间">
+<!ENTITY clearCacheNow.label             "立即清除">
+<!ENTITY clearCacheNow.accesskey         "C">
+<!ENTITY clearOfflineAppCacheNow.label   "立即清除">
+<!ENTITY clearOfflineAppCacheNow.accesskey "N">
+<!ENTITY overrideSmartCacheSize.label    "无视自动缓存管理">
+<!ENTITY overrideSmartCacheSize.accesskey "O">
+
+<!ENTITY updateTab.label                 "更新">
+
+<!-- LOCALIZATION NOTE (updateApplication.label):
+  Strings from aboutDialog.dtd are displayed in this section of the preferences.
+  Please check for possible accesskey conflicts.
+-->
+<!ENTITY updateApplication.label         "&brandShortName; 更新">
+<!-- LOCALIZATION NOTE (updateApplication.version.*): updateApplication.version.pre
+# is followed by a version number, keep the trailing space or replace it with a
+# different character as needed. updateApplication.version.post is displayed
+# after the version number, and is empty on purpose for English. You can use it
+# if required by your language.
+ -->
+<!ENTITY updateApplicationDescription.label
+                                         "让 &brandShortName; 保持最新，持续拥有最强的性能、稳定性和安全性。">
+<!ENTITY updateApplication.version.pre   "版本: ">
+<!ENTITY updateApplication.version.post  "">
+<!ENTITY updateApplication.description   "允许 &brandShortName;：">
+<!ENTITY updateAuto3.label               "自动安装更新（推荐）">
+<!ENTITY updateAuto3.accesskey           "A">
+<!ENTITY updateCheckChoose2.label        "检查更新，但由您决定是否安装">
+<!ENTITY updateCheckChoose2.accesskey    "C">
+<!ENTITY updateManual2.label             "不检查更新（不推荐）">
+<!ENTITY updateManual2.accesskey         "N">
+
+<!ENTITY updateHistory2.label            "显示更新历史…">
+<!ENTITY updateHistory2.accesskey        "p">
+
+<!ENTITY useService.label                "使用一项系统服务以静默安装更新">
+<!ENTITY useService.accesskey            "b">
+
+<!ENTITY enableSearchUpdate2.label       "自动更新搜索引擎">
+<!ENTITY enableSearchUpdate2.accesskey   "e">
+
+<!ENTITY offlineStorageNotify.label               "网站请求保存数据供离线使用时通知您">
+<!ENTITY offlineStorageNotify.accesskey           "T">
+<!ENTITY offlineStorageNotifyExceptions.label     "例外…">
+<!ENTITY offlineStorageNotifyExceptions.accesskey "x">
+
+<!ENTITY offlineAppsList2.label          "以下网站已被允许存储供离线使用的数据：">
+<!ENTITY offlineAppsList.height          "7em">
+<!ENTITY offlineAppsListRemove.label     "移除…">
+<!ENTITY offlineAppsListRemove.accesskey "R">
+<!ENTITY offlineAppRemove.confirm        "移除脱机数据">
+
+<!ENTITY certificateTab.label            "证书">
+<!ENTITY certPersonal2.description       "当服务器请求您的个人证书时">
+<!ENTITY selectCerts.auto                "自动选择一个">
+<!ENTITY selectCerts.auto.accesskey      "S">
+<!ENTITY selectCerts.ask                 "每次均询问我">
+<!ENTITY selectCerts.ask.accesskey       "A">
+<!ENTITY enableOCSP.label                "查询 OCSP 响应服务器，以确认证书当前是否有效">
+<!ENTITY enableOCSP.accesskey            "Q">
+<!ENTITY viewCerts2.label                "查看证书…">
+<!ENTITY viewCerts2.accesskey            "C">
+<!ENTITY viewSecurityDevices2.label      "安全设备…">
+<!ENTITY viewSecurityDevices2.accesskey  "D">
+
+<!ENTITY performance.label               "性能">
+<!ENTITY useRecommendedPerformanceSettings2.label
+                                         "使用推荐的性能设置">
+<!ENTITY useRecommendedPerformanceSettings2.description
+                                         "自动选择适合此电脑配置的设置。">
+<!ENTITY useRecommendedPerformanceSettings2.accesskey
+                                         "U">
+<!ENTITY performanceSettingsLearnMore.label
+                                         "详细了解">
+<!ENTITY limitContentProcessOption.label "内容进程限制">
+<!ENTITY limitContentProcessOption.description
+                                         "更多内容进程可以改善使用多个标签页时的性能，但也将消耗更多内存。">
+<!ENTITY limitContentProcessOption.accesskey   "L">
+<!ENTITY limitContentProcessOption.disabledDescription
+                                         "仅在多进程 &brandShortName; 时可修改进程数量。">
+<!ENTITY limitContentProcessOption.disabledDescriptionLink
+                                         "了解如何检查多进程的启用状况">
+<!ENTITY allowHWAccel.label              "自动启用硬件加速">
+<!ENTITY allowHWAccel.accesskey          "r">

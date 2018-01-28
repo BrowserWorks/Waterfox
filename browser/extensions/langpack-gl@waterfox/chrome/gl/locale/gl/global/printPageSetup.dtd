@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from printjoboptions.xul -->
+
+<!ENTITY printSetup.title    "Configuración da páxina">
+
+<!ENTITY basic.tab           "Formato e opcións">
+
+<!ENTITY formatGroup.label   "Formato">
+
+<!ENTITY orientation.label   "Orientación:">
+<!ENTITY portrait.label      "Vertical">
+<!ENTITY portrait.accesskey  "V">
+<!ENTITY landscape.label     "Horizontal">
+<!ENTITY landscape.accesskey "H">
+
+<!ENTITY scale.label         "Escala:">
+<!ENTITY scale.accesskey     "E">
+<!ENTITY scalePercent        "&#037;">
+
+<!ENTITY shrinkToFit.label   "Compactar para axustar á largura da páxina">
+<!ENTITY shrinkToFit.accesskey "C">
+
+<!ENTITY optionsGroup.label  "Opcións">
+
+<!ENTITY printBG.label       "Imprimir fondo (cores e imaxes)">
+<!ENTITY printBG.accesskey   "I">
+
+<!ENTITY advanced.tab        "Marxes e cabeceira/pé de páxina">
+
+<!ENTITY marginGroup.label   "Marxes (#1)">
+<!ENTITY marginUnits.inches  "polgadas">
+<!ENTITY marginUnits.metric  "milímetros">
+<!ENTITY marginTop.label     "Superior:">
+<!ENTITY marginTop.accesskey "S">
+<!ENTITY marginBottom.label  "Inferior:">
+<!ENTITY marginBottom.accesskey "I">
+<!ENTITY marginLeft.label    "Esquerda:">
+<!ENTITY marginLeft.accesskey "E">
+<!ENTITY marginRight.label   "Dereita:">
+<!ENTITY marginRight.accesskey "D">
+
+<!ENTITY headerFooter.label  "Cabeceiras e pés de páxina">
+
+<!ENTITY hfLeft.label        "Esquerda:">
+<!ENTITY hfCenter.label      "Centro:">
+<!ENTITY hfRight.label       "Dereita:">
+<!ENTITY headerLeft.tip      "Cabeceira esquerda">
+<!ENTITY headerCenter.tip    "Cabeceira central">
+<!ENTITY headerRight.tip     "Cabeceira dereita">
+<!ENTITY footerLeft.tip      "Pé de páxina esquerdo">
+<!ENTITY footerCenter.tip    "Pé de páxina central">
+<!ENTITY footerRight.tip     "Pé de páxina dereito">
+
+<!ENTITY hfTitle             "Título">
+<!ENTITY hfURL               "URL">
+<!ENTITY hfDateAndTime       "Data/Hora">
+<!ENTITY hfPage              "Páxina #">
+<!ENTITY hfPageAndTotal      "Páxina # de #">
+<!ENTITY hfBlank             "--en branco--">
+<!ENTITY hfCustom            "Personalizar…">
+
+<!ENTITY customPrompt.title  "Personalizar…">
+<!ENTITY customPrompt.prompt "Introduza o seu texto de pé de páxina/cabeceira personalizado">

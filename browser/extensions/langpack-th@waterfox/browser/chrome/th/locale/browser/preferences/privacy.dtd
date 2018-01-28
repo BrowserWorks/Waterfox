@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader2.label      "การป้องกันการตามรอย">
+<!ENTITY  trackingProtection2.radioGroupLabel  "ใช้การป้องกันการตามรอยเพื่อปิดกั้นตัวติดตามที่รู้จัก">
+<!ENTITY  trackingProtectionAlways.label       "เสมอ">
+<!ENTITY  trackingProtectionAlways.accesskey   "ส">
+<!ENTITY  trackingProtectionPrivate.label      "เฉพาะในหน้าต่างส่วนตัว">
+<!ENTITY  trackingProtectionPrivate.accesskey  "พ">
+<!ENTITY  trackingProtectionNever.label        "ไม่เลย">
+<!ENTITY  trackingProtectionNever.accesskey    "ม">
+<!ENTITY  trackingProtectionLearnMore.label    "เรียนรู้เพิ่มเติม">
+<!ENTITY  trackingProtectionExceptions.label   "ข้อยกเว้น…">
+<!ENTITY  trackingProtectionExceptions.accesskey "อ">
+
+<!-- LOCALIZATION NOTE (trackingProtectionPBM5.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to true. This currently happens on the release and beta channel. -->
+<!ENTITY trackingProtectionPBM5.label         "ใช้การป้องกันการตามรอยในหน้าต่างส่วนตัว">
+<!ENTITY trackingProtectionPBM5.accesskey     "v">
+<!-- LOCALIZATION NOTE (trackingProtectionPBM6.label): This string is displayed if privacy.trackingprotection.ui.enabled is set to false. This currently happens on the nightly channel. -->
+<!ENTITY trackingProtectionPBM6.label         "ใช้การป้องกันการตามรอยในการท่องเว็บแบบส่วนตัวเพื่อปิดกั้นตัวติดตามที่รู้จัก">
+<!ENTITY trackingProtectionPBMLearnMore.label "เรียนรู้เพิ่มเติม">
+<!ENTITY changeBlockList2.label               "เปลี่ยนรายการการปิดกั้น…">
+
+<!ENTITY  doNotTrack.learnMore.label    "เรียนรู้เพิ่มเติม">
+<!ENTITY  doNotTrack.default.label      "เฉพาะเมื่อใช้การป้องกันการตามรอย">
+<!ENTITY  doNotTrack.always.label       "เสมอ">
+
+<!ENTITY  history.label                 "ประวัติ">
+<!ENTITY  permissions.label             "การอนุญาต">
+
+<!ENTITY  addressBar.label              "แถบที่อยู่">
+<!ENTITY  addressBar.suggest.label      "เมื่อใช้แถบที่อยู่ เสนอแนะ">
+<!ENTITY  locbar.history2.label         "ประวัติการท่องเว็บ">
+<!ENTITY  locbar.history2.accesskey     "ป">
+<!ENTITY  locbar.bookmarks.label        "ที่คั่นหน้า">
+<!ENTITY  locbar.bookmarks.accesskey    "ท">
+<!ENTITY  locbar.openpage.label         "แท็บที่เปิด">
+<!ENTITY  locbar.openpage.accesskey     "บ">
+<!ENTITY  locbar.searches.label         "การค้นหาที่เกี่ยวข้องจากเครื่องมือค้นหาเริ่มต้น">
+<!ENTITY  locbar.searches.accesskey     "d">
+
+<!ENTITY  suggestionSettings2.label     "เปลี่ยนค่ากำหนดข้อเสนอแนะจากเครื่องมือค้นหา">
+
+<!ENTITY  acceptCookies.label           "ยอมรับคุกกี้จากไซต์">
+<!ENTITY  acceptCookies.accesskey       "ย">
+
+<!ENTITY  acceptThirdParty.pre.label      "ยอมรับคุกกี้จากบุคคลที่สาม:">
+<!ENTITY  acceptThirdParty.pre.accesskey  "อ">
+<!ENTITY  acceptThirdParty.always.label   "เสมอ">
+<!ENTITY  acceptThirdParty.never.label    "ไม่เลย">
+<!ENTITY  acceptThirdParty.visited.label  "จากที่เยี่ยมชม">
+
+<!ENTITY  keepUntil.label               "เก็บจนกระทั่ง:">
+<!ENTITY  keepUntil.accesskey           "ก">
+
+<!ENTITY  expire.label                  "คุกกี้หมดอายุ">
+<!ENTITY  close.label                   "ฉันปิด &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "ข้อยกเว้น…">
+<!ENTITY  cookieExceptions.accesskey    "ข">
+
+<!ENTITY  showCookies.label             "แสดงคุกกี้…">
+<!ENTITY  showCookies.accesskey         "ส">
+
+<!ENTITY  historyHeader2.pre.label         "&brandShortName; จะ">
+<!ENTITY  historyHeader2.pre.accesskey     "จ">
+<!ENTITY  historyHeader.remember.label     "จดจำประวัติ">
+<!ENTITY  historyHeader.dontremember.label "ไม่จดจำประวัติเสมอ">
+<!ENTITY  historyHeader.custom.label       "ใช้การตั้งค่าที่กำหนดเองสำหรับประวัติ">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; จะจดจำประวัติการท่องเว็บ, การดาวน์โหลด, แบบฟอร์ม และการค้นหาของคุณ รวมทั้งเก็บคุกกี้จากเว็บไซต์ที่คุณเยี่ยมชม">
+
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+<!ENTITY  rememberActions.pre.label           "คุณอาจต้องการ ">
+<!ENTITY  rememberActions.clearHistory.label  "ล้างประวัติเมื่อเร็ว ๆ นี้ของคุณ">
+<!ENTITY  rememberActions.middle.label        " หรือ ">
+<!ENTITY  rememberActions.removeCookies.label "เอาคุกกี้แต่ละตัวออก">
+<!ENTITY  rememberActions.post.label          "">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; จะใช้การตั้งค่าเดียวกับการท่องเว็บแบบส่วนตัวและจะไม่จดจำประวัติใด ๆ ขณะที่คุณท่องเว็บ">
+
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+<!ENTITY  dontrememberActions.pre.label          "คุณยังอาจต้องการ ">
+<!ENTITY  dontrememberActions.clearHistory.label "ล้างประวัติปัจจุบันทั้งหมด">
+<!ENTITY  dontrememberActions.post.label         "">
+
+<!ENTITY  privateBrowsingPermanent2.label "ใช้โหมดการท่องเว็บแบบส่วนตัวเสมอ">
+<!ENTITY  privateBrowsingPermanent2.accesskey "ช">
+
+<!ENTITY  rememberHistory2.label      "จดจำประวัติการท่องเว็บและการดาวน์โหลดของฉัน">
+<!ENTITY  rememberHistory2.accesskey  "จ">
+
+<!ENTITY  rememberSearchForm.label       "จดจำประวัติการค้นหาและแบบฟอร์ม">
+<!ENTITY  rememberSearchForm.accesskey   "ด">
+
+<!ENTITY  clearOnClose.label             "ล้างประวัติเมื่อปิด &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "ล">
+
+<!ENTITY  clearOnCloseSettings.label     "การตั้งค่า…">
+<!ENTITY  clearOnCloseSettings.accesskey "ก">
+
+<!ENTITY  browserContainersLearnMore.label      "เรียนรู้เพิ่มเติม">
+<!ENTITY  browserContainersEnabled.label        "เปิดใช้งานแท็บแยกข้อมูล">
+<!ENTITY  browserContainersEnabled.accesskey    "ย">
+<!ENTITY  browserContainersSettings.label        "การตั้งค่า…">
+<!ENTITY  browserContainersSettings.accesskey    "ต">
+
+<!ENTITY  acceptCookies2.accesskey      "A">
+
+<!ENTITY  acceptCookies2.label          "Accept cookies from websites">
+<!ENTITY changeBlockList2.accesskey           "C">
+
+<!ENTITY  doNotTrack.description        "Send websites a “Do Not Track” signal that you don’t want to be tracked">
+<!ENTITY  trackingProtection2.description      "Tracking is the collection of your browsing data across multiple websites. Tracking can be used to build a profile and display content based on your browsing and personal information.">
+<!ENTITY trackingProtectionPBM6.accesskey     "v">

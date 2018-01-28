@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchreset.tabtitle "Przywracanie ustawień wyszukiwania">
+<!ENTITY searchreset.pageTitle "Czy przywrócić ustawienia wyszukiwania?">
+
+<!ENTITY searchreset.pageInfo1 "Ustawienia wyszukiwania mogą być nieaktualne. Waterfox może przywrócić domyślne ustawienia.">
+<!ENTITY searchreset.selector.label "Domyślną wyszukiwarką zostanie: ">
+
+<!ENTITY searchreset.beforelink.pageInfo2 "Można to zawsze zmienić w ">
+<!ENTITY searchreset.link.pageInfo2 "ustawieniach">
+<!ENTITY searchreset.afterlink.pageInfo2 ".">
+
+<!ENTITY searchreset.noChangeButton "Nie zmieniaj">
+<!ENTITY searchreset.noChangeButton.access "N">
+<!ENTITY searchreset.changeEngineButton "Zmień">
+<!ENTITY searchreset.changeEngineButton.access "Z">

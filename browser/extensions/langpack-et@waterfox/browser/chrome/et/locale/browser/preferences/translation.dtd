@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                     "Erandid - Tõlkimine">
+<!ENTITY window.width                     "36em">
+<!ENTITY windowClose.key                  "w">
+
+<!ENTITY noTranslationForLanguages.label  "Tõlkimist ei pakuta järgmiste keelte puhul:">
+<!ENTITY treehead.languageName.label      "Keeled">
+<!ENTITY removeLanguage.label             "Eemalda keel">
+<!ENTITY removeLanguage.accesskey         "E">
+<!ENTITY removeAllLanguages.label         "Eemalda kõik keeled">
+<!ENTITY removeAllLanguages.accesskey     "m">
+
+<!ENTITY noTranslationForSites.label      "Tõlkimist ei pakuta järgmiste saitide puhul:">
+<!ENTITY treehead.siteName2.label         "Saidid">
+<!ENTITY removeSite.label                 "Eemalda sait">
+<!ENTITY removeSite.accesskey             "s">
+<!ENTITY removeAllSites.label             "Eemalda kõik saidid">
+<!ENTITY removeAllSites.accesskey         "k">
+
+<!ENTITY button.close.label               "Sulge">
+<!ENTITY button.close.accesskey           "u">

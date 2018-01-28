@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY title "Conetti">
+<!ENTITY header "Conescion a-o dispoxitivo remòtto">
+<!ENTITY host "Server:">
+<!ENTITY port "Pòrta:">
+<!ENTITY connect "Conetti">
+<!ENTITY connecting "Conescion in corso…">
+<!ENTITY availableTabs "Schede remòtte disponibili:">
+<!ENTITY availableProcesses "Processi remòtti disponibili:">
+<!ENTITY connectionError "Ero:">
+<!ENTITY errorTimeout "Ero: tenpo finio pe-a conescion.">
+<!ENTITY errorRefused "Ero: conescion rifua.">
+<!ENTITY errorUnexpected "Erô inprevisto.">
+<!ENTITY remoteHelp "I strumenti pe-i svilupatoî de Waterfox te permetan de fâ o debug in sci dispoxitivi remòtti (prezenpio Waterfox pe Android ò Waterfox OS). Aseguase de avei ativou l'opçion 'Debug remòtto' in sciô dispoxitivo remòtto. Pe atre informaçioin vanni a vedde a ">
+<!ENTITY remoteDocumentation "documentaçion">
+<!ENTITY remoteHelpSuffix ".">
+<!ENTITY availableAddons "Conponenti az. remòtti disponibili:">

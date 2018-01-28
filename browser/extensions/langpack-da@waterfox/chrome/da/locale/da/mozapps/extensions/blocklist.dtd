@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY blocklist.title             "Tilføjelser kan være skyld i problemer">
+<!ENTITY blocklist.style             "width: 45em; height: 30em">
+<!ENTITY blocklist.summary           "&brandShortName; har fastlagt at følgende tilføjelser er kendt for at være kilde til stabilitets- eller sikkerhedsproblemer:">
+<!ENTITY blocklist.softblocked       "For din sikkerhed tilrådes du at genstarte med disse tilføjelser i deaktiveret tilstand.">
+<!ENTITY blocklist.hardblocked       "Disse tilføjelser har en stor risiko for at være kilde til stabilitets- eller sikkerhedsproblemer og er blevet blokeret, men genstart er nødvendig for at deaktivere dem fuldstændigt.">
+<!ENTITY blocklist.softandhard       "De tilføjelser som har en stor risiko for at være kilde til stabilitets- eller sikkerhedsproblemer er blevet blokeret. De andre er af lavere risiko, men du tilrådes at genstarte med dem deaktiverert.">
+<!ENTITY blocklist.moreinfo          "Flere informationer">
+
+<!ENTITY blocklist.accept.label      "Genstart &brandShortName;">
+<!ENTITY blocklist.accept.accesskey  "G">
+
+<!ENTITY blocklist.blocked.label     "Blokeret">
+<!ENTITY blocklist.checkbox.label    "Deaktiver">

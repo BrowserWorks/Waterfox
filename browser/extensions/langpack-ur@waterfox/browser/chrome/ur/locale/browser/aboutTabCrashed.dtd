@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCrashed.closeTab "یہ ٹیب بند کریں">
+<!ENTITY tabCrashed.restoreTab "یہ ٹیب دوبارہ چلائیں">
+<!ENTITY tabCrashed.restoreAll "تمام تباہ شدہ ٹیب بحال کریں">
+<!-- LOCALIZATION NOTE (tabCrashed.header2): "Gah" is an English slang word
+     used to express surprise or frustration (or both at the same time).  We
+     are using it to communicate in an informal way that it is both
+     frustrating that your tab crashed and a surprise that we didn't want to
+     happen. If you have a similar word or short phrase that is not profane or
+     vulgar, use it. If not, feel free to skip the word in your
+     translation. -->
+
+<!ENTITY tabCrashed.header2 "اوھ ۔ آپ کا ٹیب ابھی تباہ ہو گیا۔">
+<!ENTITY tabCrashed.offerHelp "ہم آپکی مدد کر سکتے ہیں!">
+<!ENTITY tabCrashed.single.offerHelpMessage "صفحہ کا مواد بحال کرنے کے لیئے &tabCrashed.restoreTab; چنیں۔">
+<!ENTITY tabCrashed.multiple.offerHelpMessage "صفحہ کا مواد دوبارہ بحال کرنے کے لئے &tabCrashed.restoreTab; یا پھر &tabCrashed.restoreAll; چنیں۔">
+<!ENTITY tabCrashed.requestHelp "کیا آپ ہماری مدد کریں گے؟">
+<!ENTITY tabCrashed.requestHelpMessage "تباہ کی رپورٹس ہمیں مسائل کی تشخیص کرنے میں مدد کرتا ھے اور *&brandShortName;* کو بہترکرتا ہے۔">
+<!ENTITY tabCrashed.requestReport "اس ٹیب کی رپورٹ کریں">
+<!ENTITY tabCrashed.sendReport2 "آپ جس ٹیب کا نظارہ کر رہے ہیں اس ٹیب کی تباہ رپورٹ ارسال کریں">
+<!ENTITY tabCrashed.commentPlaceholder2 "اختیاری تبصرہ (تبصرے عوامی سطح پر نمودار ھیں)">
+<!ENTITY tabCrashed.includeURL2 "اس تباہ رپورٹ کے ساتھ صفحہ کا URL شامل کریں">
+<!ENTITY tabCrashed.emailPlaceholder "یہاں اپنا ای میل پتہ داخل کریں">
+<!ENTITY tabCrashed.emailMe "مجھے ای میل کریں جب مزید معلومات دستیاب ہوں">
+<!ENTITY tabCrashed.reportSent "تباہ رپورٹ پہلے سے جمع ہو چکی ہے؛ &brandShortName; کو بہتر بنانے کے لیے مدد دینے کا شکریہ!">
+<!ENTITY tabCrashed.requestAutoSubmit2 "پس منظر ٹیب کی رپورٹ کریں">
+<!ENTITY tabCrashed.autoSubmit2 "ترجیحات کی تازہکاری کریں تاکہ خود کار طور پر تباہ رپورٹ ارسال ہوں، جس میں تباہ شدہ پس منظر ٹیبس اس سیشن سے اور مستقبل کے سیشن سے شامل ہوں">

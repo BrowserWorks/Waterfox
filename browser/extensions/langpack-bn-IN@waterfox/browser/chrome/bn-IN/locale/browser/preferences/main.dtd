@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startup.label             "প্রারম্ভ">
+
+<!ENTITY startupBlankPage.label    "ফাঁকা পৃষ্ঠা প্রদর্শন করা হবে">
+
+<!ENTITY useCurrentPage.label      "বর্তমান পৃষ্ঠা প্রয়োগ করা হবে">
+<!ENTITY useCurrentPage.accesskey  "C">
+<!ENTITY useMultiple.label         "বর্তমান পৃষ্ঠাগুলি প্রয়োগ করা হবে">
+<!ENTITY chooseBookmark.label      "বুকমার্ক প্রয়োগ করা হবে…">
+<!ENTITY chooseBookmark.accesskey  "B">
+<!ENTITY restoreDefault.label      "ডিফল্ট মান পুনরায় স্থাপন করা হবে">
+<!ENTITY restoreDefault.accesskey  "R">
+
+<!ENTITY downloads.label     "ডাউনলোড">
+
+<!ENTITY saveTo.label "চিহ্নিত স্থানে ফাইল সংরক্ষিত হবে">
+<!ENTITY saveTo.accesskey "চ">
+<!ENTITY chooseFolderWin.label        "ব্রাউজ করুন...">
+<!ENTITY chooseFolderWin.accesskey    "ব">
+<!ENTITY chooseFolderMac.label        "নির্বাচন করুন...">
+<!ENTITY chooseFolderMac.accesskey    "ন">
+
+<!ENTITY alwaysCheckDefault2.label        "সর্বদা পরীক্ষা করুন &brandShortName; ডিফল্ট ব্রাউজার রূপে ব্যবহার করা যাবে কি না">
+<!ENTITY alwaysCheckDefault2.accesskey    "y">
+<!ENTITY setAsMyDefaultBrowser2.label     "ডিফল্ট বানান">
+<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY isDefault.label                  "&brandShortName; বর্তমানে আপনার ডিফল্ট ব্রাউজার রূপে নির্ধারিত রয়েছে।">
+<!ENTITY isNotDefault.label               "&brandShortName; বর্তমানে আপনার ডিফল্ট ব্রাউজার রূপে নির্ধারিত রয়েছে।">
+
+<!ENTITY separateProfileMode.label        "অনুমতি দিন &brandShortName; আর ফায়ারফক্সকে একই সময়ে চলার জন্য">
+<!ENTITY useWaterfoxSync.label             "টিপ: এটি অন্য প্রোফাইল ব্যাবহার করে। এদের মধেয় তথ্য শেয়ার করার জন্য সিঙ্ক ব্যাবহার করুন।">
+
+<!ENTITY e10sEnabled.label                "মাল্টি-প্রক্রিয়া সক্রিয়করন  &brandShortName;">
+
+<!ENTITY alwaysAskWhere.accesskey     "A">
+
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
+
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY homepage2.accesskey       "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
+
+<!ENTITY startupUserHomePage.label "Show your home page">

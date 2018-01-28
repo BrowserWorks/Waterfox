@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY removePassword.title              "Takaddaɲaa šennikufal kaa">
+<!ENTITY removeInfo.label                  "War ga hima ka war sohõda šennikufaloo dam ka koy jine;">
+<!ENTITY removeWarning1.label              "War takaddaɲaa šennikufaloo ga gaa ka naanay alhabar jejebu sanda tataaru nungu šennikufaley.">
+<!ENTITY removeWarning2.label              "Nda war na war takaddaɲaa šennikufaloo kaa, war alhabaroo ši hin ka jejebandi nda war ordinateroo laybu.">
+<!ENTITY setPassword.oldPassword.label     "Sohõda šennikufal">
+

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY ctrlTabRecentlyUsedOrder.label "Scorri le schede con Ctrl+Tab ordinandole in base all’utilizzo più recente">
+<!ENTITY ctrlTabRecentlyUsedOrder.accesskey "z">
+<!ENTITY newWindowsAsTabs.label "Apri le nuove finestre in una nuova scheda">
+<!ENTITY newWindowsAsTabs.accesskey "A">
+<!ENTITY warnOnCloseMultipleTabs.label "Avvisa quando si chiudono più schede">
+<!ENTITY warnOnCloseMultipleTabs.accesskey "d">
+<!ENTITY warnOnOpenManyTabs.label "Avvisa quando l’apertura contemporanea di più schede potrebbe rallentare &brandShortName;">
+<!ENTITY warnOnOpenManyTabs.accesskey "c">
+<!ENTITY switchLinksToNewTabs.label "Porta in primo piano le nuove schede aperte da un link">
+<!ENTITY switchLinksToNewTabs.accesskey "P">
+<!ENTITY showTabsInTaskbar.label "Visualizza un’anteprima delle schede nella Barra delle applicazioni di Windows">
+<!ENTITY showTabsInTaskbar.accesskey "V">
+<!ENTITY tabsGroup.label "Schede">

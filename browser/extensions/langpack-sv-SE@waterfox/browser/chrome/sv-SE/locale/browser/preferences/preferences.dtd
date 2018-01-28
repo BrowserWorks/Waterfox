@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  prefWindow.titleWin     "Inställningar">
+<!ENTITY  prefWindow.title        "Inställningar">
+<!-- LOCALIZATION NOTE (prefWindow.titleGNOME): This is not used for in-content preferences -->
+<!ENTITY  prefWindow.titleGNOME   "Inställningar &brandShortName;">
+<!-- When making changes to prefWindow.styleWin test both Windows Classic and
+     Luna since widget heights are different based on the OS theme -->
+<!ENTITY  prefWinMinSize.styleWin2      "width: 44em; min-height: 37.5em;">
+<!ENTITY  prefWinMinSize.styleMac       "width: 47em; min-height: 40.5em;">
+<!ENTITY  prefWinMinSize.styleGNOME     "width: 42em; min-height: 40em;">
+
+<!ENTITY  paneSearchResults.title       "Sökresultat">
+<!ENTITY  paneGeneral.title             "Allmänt">
+<!ENTITY  paneSearch.title              "Sök">
+<!ENTITY  paneFilesApplications.title   "Filer &amp; program">
+<!ENTITY  panePrivacySecurity.title     "Sekretess &amp; säkerhet">
+<!ENTITY  paneContainers.title          "Innehållsflikar">
+<!ENTITY  paneUpdates.title             "Uppdateringar">
+
+<!ENTITY  languageAndAppearance.label   "Språk och utseende">
+<!ENTITY  filesAndApplications.label    "Filer och program">
+<!ENTITY  browserPrivacy.label          "Webbläsarintegritet">
+
+<!-- LOCALIZATION NOTE (paneSync1.title): This should match syncBrand.fxAccount.label in ../syncBrand.dtd -->
+<!ENTITY  paneSync1.title          "Waterfox-konto">
+
+<!ENTITY  helpButton2.label        "Support &brandShortName;">

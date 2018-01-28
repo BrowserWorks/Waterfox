@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "600">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Kopiatu">
+<!ENTITY  copy.accesskey        "K">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Hautatu dena">
+<!ENTITY  selectall.accesskey   "a">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Orokorra">
+<!ENTITY  generalTab.accesskey  "O">
+<!ENTITY  generalTitle          "Izenburua:">
+<!ENTITY  generalURL            "Helbidea:">
+<!ENTITY  generalType           "Mota:">
+<!ENTITY  generalMode           "Errendatzeko modua:">
+<!ENTITY  generalSize           "Tamaina:">
+<!ENTITY  generalReferrer       "URL igorlea:">
+<!ENTITY  generalSource         "Cachearen iturria:">
+<!ENTITY  generalModified       "Aldatuta:">
+<!ENTITY  generalEncoding2      "Testuaren kodeketa:">
+<!ENTITY  generalMetaName       "Izena">
+<!ENTITY  generalMetaContent    "Edukia">
+
+<!ENTITY  mediaTab              "Multimedia">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Helbidea:">
+<!ENTITY  mediaText             "Lotutako testua:">
+<!ENTITY  mediaAltHeader        "Testu alternatiboa">
+<!ENTITY  mediaAddress          "Helbidea">
+<!ENTITY  mediaType             "Mota">
+<!ENTITY  mediaSize             "Tamaina">
+<!ENTITY  mediaCount            "Kopurua">
+<!ENTITY  mediaDimension        "Neurriak:">
+<!ENTITY  mediaLongdesc         "Deskribapen luzea:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Gorde honela…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Media aurreikuspena:">
+
+<!ENTITY  feedTab               "Jarioak">
+<!ENTITY  feedTab.accesskey     "J">
+<!ENTITY  feedSubscribe         "Harpidetu">
+<!ENTITY  feedSubscribe.accesskey "H">
+
+<!ENTITY  permTab               "Baimenak">
+<!ENTITY  permTab.accesskey     "B">
+<!ENTITY  permUseDefault        "Erabili lehenetsia">
+<!ENTITY  permAskAlways         "Galdetu beti">
+<!ENTITY  permAllow             "Baimendu">
+<!ENTITY  permAllowSession      "Baimendu saiorako">
+<!ENTITY  permBlock             "Blokeatu">
+<!ENTITY  permissionsFor        "Honen baimenak:">
+<!ENTITY  permPlugins           "Plugin aktibatuak">
+
+<!ENTITY  permClearStorage           "Garbitu biltegiratzea">
+<!ENTITY  permClearStorage.accesskey "G">
+
+<!ENTITY  securityTab           "Segurtasuna">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "Ikusi ziurtagiria">
+<!ENTITY  securityView.accesskey "I">
+<!ENTITY  securityView.unknown   "Ezezaguna">
+
+
+<!ENTITY  securityView.identity.header   "Webgunearen nortasuna">
+<!ENTITY  securityView.identity.owner    "Jabea: ">
+<!ENTITY  securityView.identity.domain   "Webgunea: ">
+<!ENTITY  securityView.identity.verifier "Egiaztatzailea: ">
+<!ENTITY  securityView.identity.validity "Iraungitze-data:">
+
+<!ENTITY  securityView.privacy.header                   "Pribatutasuna eta historia">
+<!ENTITY  securityView.privacy.history                  "Webgune hau lehenago bisitatu dut?">
+<!ENTITY  securityView.privacy.cookies                  "Webgune hau informazioa (cookieak) nire ordenagailuan gordetzen ari da?">
+<!ENTITY  securityView.privacy.viewCookies              "Ikusi cookieak">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Webgune honetarako pasahitzik gorde dut?">
+<!ENTITY  securityView.privacy.viewPasswords            "Ikusi pasahitzak">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "I">
+
+<!ENTITY  securityView.technical.header                 "Xehetasun teknikoak">
+
+<!ENTITY  helpButton.label                              "Laguntza">

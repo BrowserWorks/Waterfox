@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "הגדרות - נתוני אתר">
+<!ENTITY     hostCol.label                 "אתר">
+<!ENTITY     statusCol.label               "מצב">
+<!ENTITY     usageCol.label                "אחסון">
+<!ENTITY     searchTextboxPlaceHolder             "חיפוש אתרים">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "ח">
+<!ENTITY     removeSelected.label          "הסרת פריטים נבחרים">
+<!ENTITY     removeSelected.accesskey      "פ">
+<!ENTITY     save.label                    "שמירת שינויים">
+<!ENTITY     save.accesskey                "ש">
+<!ENTITY     cancel.label                  "ביטול">
+<!ENTITY     cancel.accesskey              "ב">
+<!ENTITY     removingDialog.title          "הסרת נתוני אתר">
+<!ENTITY     removingSelected.description  "הסרת נתוני האתר עשויה להסיר עוגיות קשורות לרבות תוכן בלתי מקוון. פעולה זו עשויה להוציא אותך מחשבונות באתרים. האם ברצונך לבצע שינויים אלה?">
+<!ENTITY     siteTree.label                "עוגיות של האתרים הבאים ימחקו:">

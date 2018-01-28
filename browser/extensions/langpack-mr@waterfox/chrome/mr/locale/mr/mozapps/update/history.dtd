@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  history.title             "इतिहास सुधारा">
+<!ENTITY  history.intro             "खालील सुधारणा स्थापीत झाल्या नाहीत:">
+<!ENTITY  closebutton.label         "बंद करा">
+                                     
+<!ENTITY  noupdates.label           "काही सुधारणा स्थापीत झाल्या नाहीत">
+
+<!ENTITY  name.header               "नावात वाढ करा">
+<!ENTITY  date.header               "दिनांक स्थापीत करा">
+<!ENTITY  type.header               "प्रकार">
+<!ENTITY  state.header              "राज्य">
+

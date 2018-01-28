@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY pluginActivationWarning                             "Този сайт използва приставка, която може да забавя &brandShortName;.">
+<!ENTITY tapToPlayPlugin                                     "Натиснете тук за активиране на приставка.">
+<!ENTITY clickToActivatePlugin                               "Активиране на приставка.">
+<!ENTITY checkForUpdates                                     "Проверка за обновяване…">
+<!ENTITY blockedPlugin.label                                 "Приставката беше блокирана от съображения за сигурност.">
+<!ENTITY hidePluginBtn.label                                 "Скриване на приставка">
+<!ENTITY managePlugins                                       "Управление на приставки…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Презареждане на страницата">
+<!ENTITY reloadPlugin.post                                   " за нов опит.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Изпращане на доклад за срив">
+<!ENTITY report.submitting                                   "Изпращане на доклад…">
+<!ENTITY report.submitted                                    "Изпратен доклад за срив.">
+<!ENTITY report.disabled                                     "Докладването на сривове е изключено.">
+<!ENTITY report.failed                                       "Изпращането се провали.">
+<!ENTITY report.unavailable                                  "Няма наличен доклад.">
+<!ENTITY report.comment                                      "Добавяне на коментар (коментарите са общодостъпни)">
+<!ENTITY report.pageURL                                      "Включване URL адреса на страницата">
+
+<!ENTITY plugin.file                                         "Файл">
+<!ENTITY plugin.mimeTypes                                    "MIME типове">
+<!ENTITY plugin.flashProtectedMode.label                     "Включване на защитен режим за Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Блокиране на опасно и натрапчиво съдържание на Flash">

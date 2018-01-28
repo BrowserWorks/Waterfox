@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "about:config">
+
+<!-- about:config warning page -->
+<!-- LOCALIZATION NOTE: aboutWarningTitle.label should be attention grabbing and playful -->
+<!ENTITY aboutWarningTitle.label "Това ще отмени всякакви гаранции за стабилност!">
+<!ENTITY aboutWarningText.label "Промяната на някои от тези разширени настройки може да се отрази пагубно върху стабилността, безопасността и производителността на приложението. Продължете, само ако сте сигурни какво правите.">
+<!ENTITY aboutWarningButton2.label "Приемам риска!">
+<!ENTITY aboutWarningCheckbox.label "Показване на предупреждението и следващия път">
+
+<!ENTITY searchPrefs.label "Търсене:">
+<!ENTITY searchPrefs.accesskey "с">
+<!ENTITY focusSearch.key "r">
+<!ENTITY focusSearch2.key "f">
+
+<!-- Columns -->
+<!ENTITY prefColumn.label "Име на настройката">
+<!ENTITY lockColumn.label "Състояние">
+<!ENTITY typeColumn.label "Вид">
+<!ENTITY valueColumn.label "Стойност">
+
+<!-- Tooltips -->
+<!ENTITY prefColumnHeader.tooltip "Натиснете за сортиране"> 
+<!ENTITY columnChooser.tooltip "Изберете колоните, които да се показват"> 
+
+<!-- Context Menu -->
+<!ENTITY copyPref.key "C">
+<!ENTITY copyPref.label "Копиране">
+<!ENTITY copyPref.accesskey "К">
+<!ENTITY copyName.label "Копиране на името">
+<!ENTITY copyName.accesskey "и">
+<!ENTITY copyValue.label "Копиране на стойността">
+<!ENTITY copyValue.accesskey "с">
+<!ENTITY modify.label "Промяна">
+<!ENTITY modify.accesskey "м">
+<!ENTITY toggle.label "Превключване">
+<!ENTITY toggle.accesskey "П">
+<!ENTITY reset.label "Нулиране">
+<!ENTITY reset.accesskey "Н">
+<!ENTITY new.label "Нов">
+<!ENTITY new.accesskey "в">
+<!ENTITY string.label "Низ">
+<!ENTITY string.accesskey "Н">
+<!ENTITY integer.label "Целочислен">
+<!ENTITY integer.accesskey "е">
+<!ENTITY boolean.label "Булев">
+<!ENTITY boolean.accesskey "Б">

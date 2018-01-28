@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addButton.label      "Додај нови контејнер">
+<!ENTITY addButton.accesskey  "Д">
+<!ENTITY preferencesButton.label "Поставке">
+<!ENTITY removeButton.label   "Уклони">
+<!-- &#171; is &laquo; however it's not defined in XML -->
+<!ENTITY backLink.label       "&#171; Назад на приватност">
+
+<!ENTITY window.title         "Додај нови контејнер">
+<!ENTITY window.width         "45em">
+
+<!ENTITY name.label           "Име:">
+<!ENTITY name.accesskey       "И">
+<!ENTITY name.placeholder     "Унесите име контејнера">
+<!ENTITY icon.label           "Иконица:">
+<!ENTITY icon.accesskey       "к">
+<!ENTITY color.label          "Боја:">
+<!ENTITY color.accesskey      "о">
+<!ENTITY windowClose.key      "w">
+
+<!ENTITY button.ok.label      "Готово">
+<!ENTITY button.ok.accesskey  "Г">
+

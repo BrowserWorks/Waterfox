@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  permissions.label           "Taq ya'oj q'ij">
+
+<!ENTITY  blockPopups.label           "Keq'at elenel taq tzuwäch">
+<!ENTITY  blockPopups.accesskey       "K">
+
+<!ENTITY  notificationsPolicyLearnMore.label   "Tetamäx ch'aqa' chik">
+<!ENTITY  notificationsPolicyDesc4.label       "Ticha' achike taq ruxaq ajk'amaya'l ya'on q'ij chi ke richin niqatäq taq kitzijol chawe">
+<!ENTITY  notificationsPolicyButton.accesskey  "c">
+<!ENTITY  notificationsPolicyButton.label      "Ticha'…">
+<!ENTITY  notificationsDoNotDisturb.label      "Man kinanäq">
+<!ENTITY  notificationsDoNotDisturb.accesskey  "M">
+<!ENTITY  notificationsDoNotDisturbDetails.value "Majun chi rutzijol xkek'ut pe, k'a xtatikirisaj na ri &brandShortName;">
+
+<!ENTITY  popupExceptions.label       "Man relik ta…">
+<!ENTITY  popupExceptions.accesskey   "r">
+
+<!ENTITY  fontsAndColors.label        "Kiwäch taq tz'ib' chuqa' taq b'onil">
+
+<!ENTITY  defaultFont2.label          "Ruwäch tzij kan k'o wi">
+<!ENTITY  defaultFont2.accesskey      "k">
+<!ENTITY  defaultSize2.label          "Nimilem">
+<!ENTITY  defaultSize2.accesskey      "N">
+
+<!ENTITY  advancedFonts.label         "Taq Q'axinäq…">
+<!ENTITY  advancedFonts.accesskey     "Q">
+
+<!ENTITY  colors.label                "Taq b'onil…">
+<!ENTITY  colors.accesskey            "T">
+
+
+<!ENTITY language2.label              "Ch'ab'äl">
+<!ENTITY chooseLanguage.label         "Ticha' ri ch'ab'äl nawajo' richin yek'ut pe ri taq ruxaq k'amaya'l">
+<!ENTITY chooseButton.label           "Ticha'…">
+<!ENTITY chooseButton.accesskey       "c">
+
+<!ENTITY translateWebPages.label      "Titzalq'omïx rupam ajk'amaya'l">
+<!ENTITY translateWebPages.accesskey  "T">
+<!ENTITY translateExceptions.label    "Taq man relik ta…">
+<!ENTITY translateExceptions.accesskey "e">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -  The translations for these strings should match the translations in
+  -  browser/translation.dtd
+  -->
+
+<!ENTITY translation.options.attribution.beforeLogo "Tzalq'oman ruma">
+<!ENTITY translation.options.attribution.afterLogo "">
+
+<!ENTITY  drmContent2.label              "Kematz'ib'il ch'ojib'äl Runuk'samajixik (DRM) Rupam">
+
+<!ENTITY  playDRMContent2.label          "Titzij DRM-chajin rupam">
+<!ENTITY  playDRMContent2.accesskey      "T">
+<!ENTITY  playDRMContent.learnMore.label "Tetamäx ch'aqa' chik">

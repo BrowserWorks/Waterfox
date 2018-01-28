@@ -1,0 +1,113 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  trackingProtectionHeader.label       "Tokisax Chajinïk chuwäch Ojqanïk">
+<!ENTITY  trackingProtectionAlways.label       "Junelïk">
+<!ENTITY  trackingProtectionAlways.accesskey   "e">
+<!ENTITY  trackingProtectionPrivate.label      "Xa xe pa taq ichinan tzuwäch">
+<!ENTITY  trackingProtectionPrivate.accesskey  "x">
+<!ENTITY  trackingProtectionNever.label        "Majub'ey">
+<!ENTITY  trackingProtectionNever.accesskey    "M">
+<!ENTITY  trackingProtectionLearnMore.label    "Tetamäx ch'aqa' chik">
+<!ENTITY  trackingProtectionExceptions.label   "Taq man relik ta…">
+<!ENTITY  trackingProtectionExceptions.accesskey "e">
+
+<!ENTITY tracking.label                 "Kanoxïk">
+<!ENTITY trackingProtectionPBM5.label         "Tokisäx Chajinïk chuwäch Ojqanïk pan Ichinan taq Tzuwäch">
+<!ENTITY trackingProtectionPBM5.accesskey     "a">
+<!ENTITY trackingProtectionPBMLearnMore.label "Tetamäx ch'aqa' chik">
+<!ENTITY changeBlockList.label          "Tijaq rucholajem taq q'atoj">
+<!ENTITY changeBlockList.accesskey      "T">
+<!-- LOCALIZATION NOTE (doNotTrack.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (doNotTrack.post.label): include a starting space as needed -->
+
+<!ENTITY  doNotTrack.pre.label          "Chuqa' yatikïr">
+<!ENTITY  doNotTrack.settings.label     "Tinuk'samajïx ri nuk'ulem richin Mani tilitäj">
+<!ENTITY  doNotTrack.post.label         ".">
+
+<!ENTITY  history.label                 "Natab'äl">
+
+<!ENTITY  locationBar.label             "Kikajtz'ik taq k'ojlib'äl">
+
+<!ENTITY  locbar.suggest.label          "Jampe' toq nokisäx ri rukajtz'ik k'ojlemal, tichilab'ëx:">
+<!ENTITY  locbar.history.label          "Natab'äl">
+<!ENTITY  locbar.history.accesskey      "N">
+<!ENTITY  locbar.bookmarks.label        "Taq etal">
+<!ENTITY  locbar.bookmarks.accesskey    "e">
+<!ENTITY  locbar.openpage.label         "Kejaq taq ruwi'">
+<!ENTITY  locbar.openpage.accesskey     "K">
+<!ENTITY  locbar.searches.label         "Taq kanoxïk kiximon ki' pa ri kanob'äl k'o wi">
+<!ENTITY  locbar.searches.accesskey     "ï">
+
+<!ENTITY  suggestionSettings.label      "Kek'ex ri taq ajowab'äl richin yechilab'ëx taq rusamajinel kanob'äl…">
+<!ENTITY  suggestionSettings.accesskey  "k">
+
+<!ENTITY  acceptCookies2.label          "Kek'ulutäj taq rukaxlanwey ri ruxaq ajk'amaya'l">
+<!ENTITY  acceptCookies2.accesskey      "K">
+
+<!ENTITY  acceptThirdParty.pre.label      "Kek'ul taq kaxlanwey kichin aj rox winaqi':">
+<!ENTITY  acceptThirdParty.pre.accesskey  "o">
+<!ENTITY  acceptThirdParty.always.label   "Jantape'">
+<!ENTITY  acceptThirdParty.never.label    "Majub'ey">
+<!ENTITY  acceptThirdParty.visited.label  "Etz'eton">
+
+<!ENTITY  keepUntil.label               "Tik'oje' k'a:">
+<!ENTITY  keepUntil.accesskey           "T">
+
+<!ENTITY  expire.label                  "tik'o iq'ij">
+<!ENTITY  close.label                   "Tatz'apij &brandShortName;">
+
+<!ENTITY  cookieExceptions.label        "Taq man relik ta…">
+<!ENTITY  cookieExceptions.accesskey    "r">
+
+<!ENTITY  showCookies.label             "Kek'ut taq kaxlanwey…">
+<!ENTITY  showCookies.accesskey         "K">
+
+<!ENTITY  historyHeader.pre.label          "&brandShortName; xtitikïr:">
+<!ENTITY  historyHeader.pre.accesskey      "x">
+<!ENTITY  historyHeader.remember.label     "Tinatäx ri natab'äl">
+<!ENTITY  historyHeader.dontremember.label "Mani ninatäx ri natab'äl">
+<!ENTITY  historyHeader.custom.label       "Tokisäx jun ichinan runuk'ulem re natab'äl">
+<!ENTITY  historyHeader.post.label         "">
+
+<!ENTITY  rememberDescription.label      "&brandShortName; xtunataj ri runatab'al okik'amaya'l, taq qasanïk, taq nojwuj chuqa' taq kanob'äl, chuqa' xkeruyäk kan ri taq kikaxlanwey ri taq ruxaq k'amaya'l xe'atz'ët.">
+<!-- LOCALIZATION NOTE (rememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.middle.label): include a starting and trailing space as needed -->
+<!-- LOCALIZATION NOTE (rememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  rememberActions.pre.label           "Rik'in jub'a' nawajo' ">
+<!ENTITY  rememberActions.clearHistory.label  "Tijosq'ïx ri k'ak'a' natab'äl">
+<!ENTITY  rememberActions.middle.label        ", chuqa' ">
+<!ENTITY  rememberActions.removeCookies.label "keyuj el ri taq kaxlanwey pa yonil">
+<!ENTITY  rememberActions.post.label          ".">
+
+<!ENTITY  dontrememberDescription.label  "&brandShortName; xtrokisaj ri junam runuk'ulem achi'el pa ichinan okem pa k'amaya'l, chuqa' man xkerunataj ta ri taq rutzij natab'äl toq tajin nok pa ajk'amaya'l.">
+<!-- LOCALIZATION NOTE (dontrememberActions.pre.label): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (dontrememberActions.post.label): include a starting space as needed -->
+
+<!ENTITY  dontrememberActions.pre.label          "Rik'in jub'a' chuqa' ütz natz'ët">
+<!ENTITY  dontrememberActions.clearHistory.label "tijosq'ïx ronojel ri natab'äl">
+<!ENTITY  dontrememberActions.post.label         ".">
+
+<!ENTITY  privateBrowsingPermanent2.label "Junelïk tokisäx pa rub'eyal ichinan okem pa k'amaya'l">
+<!ENTITY  privateBrowsingPermanent2.accesskey "i">
+
+<!ENTITY  rememberHistory2.label      "Tinatäx ri nunatab'al richin taq qasanïk chuqa' okik'amaya'l">
+<!ENTITY  rememberHistory2.accesskey  "T">
+
+<!ENTITY  rememberSearchForm.label       "Tinatäx ri runatab'al kanob'äl chuqa' taq nojwuj">
+<!ENTITY  rememberSearchForm.accesskey   "n">
+
+<!ENTITY  clearOnClose.label             "Tijoxq'ïx ri natab'äll toq nitz'apïx &brandShortName;">
+<!ENTITY  clearOnClose.accesskey         "j">
+
+<!ENTITY  clearOnCloseSettings.label     "Nuk'ulem…">
+<!ENTITY  clearOnCloseSettings.accesskey "N">
+
+<!ENTITY  browserContainersHeader.label         "Ajk'wayöl taq ruwi'">
+<!ENTITY  browserContainersLearnMore.label      "Tetamäx ch'aqa' chik">
+<!ENTITY  browserContainersEnabled.label        "Ketzij Ajk'wayöl taq ruwi'">
+<!ENTITY  browserContainersEnabled.accesskey    "t">
+<!ENTITY  browserContainersSettings.label        "Taq nuk'ulem…">
+<!ENTITY  browserContainersSettings.accesskey    "l">

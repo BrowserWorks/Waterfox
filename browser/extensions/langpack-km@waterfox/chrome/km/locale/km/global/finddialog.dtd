@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from finddialog.xul -->
+
+
+<!ENTITY findDialog.title "រក​ក្នុង​ទំព័រ​នេះ">
+<!ENTITY findField.label "រក​អ្វី ៖">
+<!ENTITY findField.accesskey "អ">
+<!ENTITY caseSensitiveCheckbox.label "ករណី​ដំណូច">
+<!ENTITY caseSensitiveCheckbox.accesskey "ច">
+<!ENTITY wrapCheckbox.label "រុំ">
+<!ENTITY wrapCheckbox.accesskey "រ">
+<!ENTITY findButton.label "រក​បន្ទាប់">
+<!ENTITY findButton.accesskey "ក">
+<!ENTITY cancelButton.label "បោះបង់">
+<!ENTITY closeButton.label "បិទ">
+<!ENTITY up.label "ឡើង​លើ">
+<!ENTITY up.accesskey "ង">
+<!ENTITY down.label "ចុះ​ក្រោម">
+<!ENTITY down.accesskey "ម">
+<!ENTITY direction.label "ទិស">

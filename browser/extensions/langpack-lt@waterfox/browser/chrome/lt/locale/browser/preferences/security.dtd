@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Saugumas">
+<!ENTITY  phishingProtection.label       "Apsauga nuo apgaulės">
+
+<!ENTITY  warnOnAddonInstall2.label       "Įspėti, kai svetainės bando diegti priedus">
+<!ENTITY  warnOnAddonInstall2.accesskey   "t">
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+
+<!ENTITY  enableSafeBrowsing.label        "Blokuoti pavojingą ir apgaulingą turinį">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Blokuoti pavojingus atsiuntimus">
+<!ENTITY  blockDownloads.accesskey        "p">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Įspėti apie nepageidaujamą ir neįprastą programinę įrangą">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "r">
+
+<!ENTITY  addonExceptions.label         "Išimtys…">
+<!ENTITY  addonExceptions.accesskey     "I">
+
+
+<!ENTITY  formsAndPasswords.label       "Formos ir slaptažodžiai">
+
+<!ENTITY  rememberLogins2.label         "Atsiminti svetainių prisijungimus">
+<!ENTITY  rememberLogins2.accesskey     "A">
+<!ENTITY  passwordExceptions.label      "Išimtys…">
+<!ENTITY  passwordExceptions.accesskey  "š">
+
+<!ENTITY  useMasterPassword.label        "Naudoti pagrindinį slaptažodį">
+<!ENTITY  useMasterPassword.accesskey    "N">
+<!ENTITY  changeMasterPassword.label     "Pakeisti pagrindinį slaptažodį…">
+<!ENTITY  changeMasterPassword.accesskey "k">
+
+<!ENTITY  savedLogins.label              "Įrašyti prisijungimai…">
+<!ENTITY  savedLogins.accesskey          "p">

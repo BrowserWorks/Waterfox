@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutTelemetry.pageTitle "ទិន្នន័យ Telemetry">
+
+<!ENTITY aboutTelemetry.changeDataChoices "ប្ដូរ​">
+
+<!ENTITY aboutTelemetry.uploadEnabled "  <span>បាន​បើក​</span>ការ​ផ្ទុក​ឡើង​ទិន្នន័យ FHR។">
+
+<!ENTITY aboutTelemetry.uploadDisabled "  <span>បាន​បិទ</span>ការ​ផ្ទុក​ឡើង​ទិន្នន័យ FHR ។">
+
+<!ENTITY aboutTelemetry.extendedRecordingEnabled "  <span>បាន​បើក</span>ការ​ថត​ចម្លង​ទូរមាត្រ​វិធី​​ដែល​ពង្រីក។">
+
+<!ENTITY aboutTelemetry.extendedRecordingDisabled "    <span>បាន​បិទ</span>ការ​ថត​ចម្លង​ទូរមាត្រ​វិធី​​ដែល​ពង្រីក។">
+
+<!ENTITY aboutTelemetry.pingDataSource "ប្រភព​ទិន្នន័យ​ភីង៖">
+
+<!ENTITY aboutTelemetry.showCurrentPingData "ទិន្នន័យ​ភីង​បច្ចុប្បន្ន">
+
+<!ENTITY aboutTelemetry.showArchivedPingData "ទិន្នន័យ​ភីង​​បាន​រក្សាទុក​ក្នុង​ប័ណ្ណសារ">
+
+
+
+
+<!ENTITY aboutTelemetry.showSubsessionData "បង្ហាញ​ទិន្នន័យ​សម័យ​រង">
+
+<!ENTITY aboutTelemetry.choosePing "ជ្រើស​ភីង៖">
+
+<!ENTITY aboutTelemetry.showNewerPing "&lt;&lt; ភីង​ថ្មី​ជាង">
+
+<!ENTITY aboutTelemetry.showOlderPing "ភីង​ចាស់ &gt;&gt;">
+
+
+<!ENTITY aboutTelemetry.archiveWeekHeader "សប្ដាហ៍">
+
+<!ENTITY aboutTelemetry.archivePingHeader "ភីង">
+
+<!ENTITY aboutTelemetry.generalDataSection "  ទិន្នន័យ​ទូទៅ">
+
+<!ENTITY aboutTelemetry.environmentDataSection "  ទិន្នន័យ​បរិស្ថាន">
+
+<!ENTITY aboutTelemetry.telemetryLogSection "  កំណត់​ហេតុ Telemetry">
+
+<!ENTITY aboutTelemetry.slowSqlSection "   ស្តេតមិន SQL យឺត ">
+
+<!ENTITY aboutTelemetry.chromeHangsSection "   ការ​រង់ចាំ​កម្មវិធី​រុករក">
+
+<!ENTITY aboutTelemetry.threadHangStatsSection "  Thread Hangs">
+
+
+
+
+<!ENTITY aboutTelemetry.histogramsSection "   គំនូស​តាង​ជា​របារ">
+
+<!ENTITY aboutTelemetry.keyedHistogramsSection "  Keyed Histograms">
+
+
+<!ENTITY aboutTelemetry.simpleMeasurementsSection "   រង្វាស់​​សាមញ្ញ">
+
+<!ENTITY aboutTelemetry.addonDetailsSection "  សេចក្ដី​លម្អិត​កម្មវិធី​បន្ថែម">
+
+<!ENTITY aboutTelemetry.lateWritesSection "  សរសេរ​យឺត">
+
+
+<!ENTITY aboutTelemetry.addonHistogramsSection "   គំនូស​តាង​របារ​​ដែល​បាន​សម្រាំង​ដោយ​កម្មវិធី​បន្ថែម ">
+
+<!ENTITY aboutTelemetry.toggle "  ចុច​ដើម្បី​បិទ/បើក​ផ្នែក">
+
+<!ENTITY aboutTelemetry.emptySection "   (គ្មាន​ទិន្នន័យ​ដែល​បាន​ប្រមូល​ឡើយ) ">
+
+<!ENTITY aboutTelemetry.fullSqlWarning "   ចំណាំ ៖ ការ​បំបាត់​កំហុស SQL ត្រូវ​បាន​បើក ។ ឃ្លា SQL ពេញ​លេញ​អាច​ត្រូវ​បាន​បង្ហាញ​ខាងក្រោម ប៉ុន្តែ​វា​នឹង​មិន​ត្រូវ​បាន​ដាក់​ស្នើ​ចំពោះ Telemetry ឡើយ ។">
+
+
+
+<!ENTITY aboutTelemetry.filterText "  តម្រង (strings or /regexp/)">
+
+
+
+<!ENTITY aboutTelemetry.archivePingType "
+Ping Type
+">
+
+<!ENTITY aboutTelemetry.capturedStacksSection "
+  Captured Stacks
+">
+
+<!ENTITY aboutTelemetry.eventsSection "
+  Events
+">
+
+<!ENTITY aboutTelemetry.fetchStackSymbols "
+  Fetch function names for stacks
+">
+
+<!ENTITY aboutTelemetry.hideStackSymbols "
+  Show raw stack data
+">
+
+<!ENTITY aboutTelemetry.keyedScalarsSection "
+  Keyed Scalars
+">
+
+<!ENTITY aboutTelemetry.optionGroupOlder "
+Older
+">
+
+<!ENTITY aboutTelemetry.optionGroupToday "
+Today
+">
+
+<!ENTITY aboutTelemetry.optionGroupYesterday "
+Yesterday
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
+">
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
+<!ENTITY aboutTelemetry.scalarsSection "
+  Scalars
+">
+
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
+">
+

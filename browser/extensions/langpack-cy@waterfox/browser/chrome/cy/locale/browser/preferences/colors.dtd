@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  colorsDialog.title              "Lliwiau">
+<!ENTITY  window.width                    "38em">
+<!ENTITY  window.macWidth                 "41em">
+
+<!ENTITY  overrideDefaultPageColors.label        "Anwybyddu'r lliwiau sy'n cael eu pennu gan y dudalen gan ddefnyddio fy newis i uchod:">
+<!ENTITY  overrideDefaultPageColors.accesskey    "A">
+
+<!ENTITY  overrideDefaultPageColors.always.label "Bob tro">
+<!ENTITY  overrideDefaultPageColors.auto.label   "Dim ond y themâu Cyferbyniad Uchel">
+<!ENTITY  overrideDefaultPageColors.never.label  "Byth">
+
+<!ENTITY  color                           "Testun a Chefndir">
+<!ENTITY  textColor.label                 "Testun:">
+<!ENTITY  textColor.accesskey             "T">
+<!ENTITY  backgroundColor.label           "Cefndir:">
+<!ENTITY  backgroundColor.accesskey       "C">
+<!ENTITY  useSystemColors.label           "Defnyddio lliwiau'r system">
+<!ENTITY  useSystemColors.accesskey       "s">
+
+<!ENTITY  underlineLinks.label            "Tanlinellu dolenni">
+<!ENTITY  underlineLinks.accesskey        "d">
+<!ENTITY  links                           "Lliw Dolenni">
+<!ENTITY  linkColor.label                 "Dolenni heb gael Ymweliad:">
+<!ENTITY  linkColor.accesskey             "D">
+<!ENTITY  visitedLinkColor.label          "Dolenni wedi cael Ymweliad:">
+<!ENTITY  visitedLinkColor.accesskey      "w">

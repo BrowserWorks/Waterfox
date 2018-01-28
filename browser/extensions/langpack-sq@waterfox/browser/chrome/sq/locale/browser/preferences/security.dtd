@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  security.label                 "Siguri">
+
+<!ENTITY  warnOnAddonInstall.label        "Sinjalizo kur sajte përpiqen të instalojnë shtesa">
+<!ENTITY  warnOnAddonInstall.accesskey    "S">
+
+<!-- LOCALIZATION NOTE (enableSafeBrowsing.label, blockDownloads.label, blockUncommonUnwanted.label):
+  It is important that wording follows the guidelines outlined on this page:
+  https://developers.google.com/safe-browsing/developers_guide_v2#AcceptableUsage
+-->
+<!ENTITY  enableSafeBrowsing.label        "Bllokoni lëndë të rrezikshme dhe të rrejshme">
+<!ENTITY  enableSafeBrowsing.accesskey    "B">
+
+<!ENTITY  blockDownloads.label            "Bllokoni shkarkime të rrezikshme">
+<!ENTITY  blockDownloads.accesskey        "z">
+
+<!ENTITY  blockUncommonAndUnwanted.label     "Sinjalizo rreth software-i të padëshiruar dhe jo të zakonshëm">
+<!ENTITY  blockUncommonAndUnwanted.accesskey "d">
+
+<!ENTITY  addonExceptions.label         "Përjashtime…">
+<!ENTITY  addonExceptions.accesskey     "a">
+
+
+<!ENTITY  formsAndPasswords.label       "Formularë &amp; Fjalëkalime">
+
+<!ENTITY  rememberLogins1.label          "Mba mend kredenciale hyrjesh dhe fjalëkalime për sajtet">
+<!ENTITY  rememberLogins1.accesskey      "M">
+<!ENTITY  passwordExceptions.label      "Përjashtime…">
+<!ENTITY  passwordExceptions.accesskey  "a">
+
+<!ENTITY  useMasterPassword.label        "Përdor fjalëkalim të përgjithshëm">
+<!ENTITY  useMasterPassword.accesskey    "P">
+<!ENTITY  changeMasterPassword.label     "Ndryshoni Fjalëkalimin e Përgjithshëm…">
+<!ENTITY  changeMasterPassword.accesskey "F">
+
+<!ENTITY  savedLogins.label              "Kredenciale të Ruajtura…">
+<!ENTITY  savedLogins.accesskey          "K">
+
+<!ENTITY  phishingProtection.label       "Phishing Protection">
+
+<!ENTITY  rememberLogins2.accesskey     "R">
+<!ENTITY  rememberLogins2.label         "Remember logins and passwords for websites">
+<!ENTITY  warnOnAddonInstall2.accesskey   "W">
+
+<!ENTITY  warnOnAddonInstall2.label       "Warn you when websites try to install add-ons">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPrivateBrowsing.notPrivate            "Du befinder dig ikke i et privat vindue.">
+<!ENTITY privatebrowsingpage.openPrivateWindow.label "Åbn et privat vindue">
+<!ENTITY privatebrowsingpage.openPrivateWindow.accesskey "p">
+
+<!ENTITY privateBrowsing.title                           "Privat browsing">
+<!ENTITY privateBrowsing.title.tracking                  "Privat browsing med beskyttelse mod sporing">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.before       "Når du browser i et privat vindue gemmer ">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.emphasize    "Waterfox ikke">
+<!ENTITY aboutPrivateBrowsing.info.notsaved.after        ":">
+<!ENTITY aboutPrivateBrowsing.info.visited               "besøgte sider">
+<!ENTITY aboutPrivateBrowsing.info.searches              "søgninger">
+<!ENTITY aboutPrivateBrowsing.info.cookies               "cookies">
+<!ENTITY aboutPrivateBrowsing.info.temporaryFiles        "midlertidige filer">
+<!ENTITY aboutPrivateBrowsing.info.saved.before          "Waterfox ">
+<!ENTITY aboutPrivateBrowsing.info.saved.emphasize       "gemmer">
+<!ENTITY aboutPrivateBrowsing.info.saved.after2          " dine:">
+<!ENTITY aboutPrivateBrowsing.info.downloads             "hentede filer">
+<!ENTITY aboutPrivateBrowsing.info.bookmarks             "bogmærker">
+<!ENTITY aboutPrivateBrowsing.note.before                "Privat browsing ">
+<!ENTITY aboutPrivateBrowsing.note.emphasize             "sikrer ikke din anonymitet">
+<!ENTITY aboutPrivateBrowsing.note.after                 " på internettet. Din arbejdsgiver eller internetudbyder kan stadig finde ud af, hvilke sider du besøger.">
+<!ENTITY aboutPrivateBrowsing.learnMore3.before          "Læs mere om ">
+<!ENTITY aboutPrivateBrowsing.learnMore3.title           "privat browsing">
+<!ENTITY aboutPrivateBrowsing.learnMore3.after           ".">
+
+<!ENTITY trackingProtection.title                        "Beskyttelse mod sporing">
+<!ENTITY trackingProtection.description2                 "Nogle websteder benytter teknologi, der kan overvåge din aktivitet på internettet. Waterfox benytter Beskyttelse mod sporing til at blokere mange sporings-teknologier, der kan indsamle informationer om, hvordan du bruger internettet.">
+<!ENTITY trackingProtection.startTour1                   "Se, hvordan det fungerer">

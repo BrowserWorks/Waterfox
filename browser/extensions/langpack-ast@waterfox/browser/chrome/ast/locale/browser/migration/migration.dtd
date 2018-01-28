@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Encontu pa importar">
+
+<!ENTITY importFrom.label               "Importar opciones, marcadores, historial, contraseñes y otros datos de:">
+<!ENTITY importFromUnix.label           "Importar preferencies, marcadores, historial, contraseñes y otros datos de:">
+<!ENTITY importFromBookmarks.label      "Importar marcadores de:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Nun importar nada">
+<!ENTITY importFromNothing.accesskey    "p">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Nun pudieron alcontrase programes que contuvieran marcadores, historial o datos de contraseñes.">
+
+<!ENTITY importSource.title             "Importar axustes y datos">
+<!ENTITY importItems.title              "Elementos a importar">
+<!ENTITY importItems.label              "Esbilla qué elementos importar:">
+
+<!ENTITY migrating.title                "Importando…">
+<!ENTITY migrating.label                "Anguaño tán importándose los elementos de darréu…">
+
+<!ENTITY selectProfile.title            "Esbillar perfil">
+<!ENTITY selectProfile.label            "Los perfiles de darréu tán disponibles pa importar dende:">
+
+<!ENTITY done.title                     "Importación completada">
+<!ENTITY done.label                     "Importáronse con ésitu los elementos de darréu:">
+
+<!ENTITY closeSourceBrowser.label       "Asegúrate que'l restolador esbilláu ta zarráu enantes de siguir, por favor.">

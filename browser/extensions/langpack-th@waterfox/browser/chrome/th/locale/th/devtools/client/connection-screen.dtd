@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Remote Connection strings.
+  - The Remote Connection window can reached from the "connect…" menuitem
+  - in the Web Developer menu.
+  - -->
+
+<!ENTITY title      "เชื่อมต่อ">
+<!ENTITY header     "เชื่อมต่อไปยังอุปกรณ์ระยะไกล">
+<!ENTITY host       "โฮสต์:">
+<!ENTITY port       "พอร์ต:">
+<!ENTITY connect    "เชื่อมต่อ">
+<!ENTITY connecting "กำลังเชื่อมต่อ…">
+<!ENTITY availableAddons "ส่วนเสริมระยะไกลที่มี:">
+<!ENTITY availableTabs "แท็บระยะไกลที่มี:">
+<!ENTITY availableProcesses "โปรเซสระยะไกลที่ใช้ได้:">
+<!ENTITY connectionError "ข้อผิดพลาด:">
+<!ENTITY errorTimeout "ข้อผิดพลาด: การเชื่อมต่อหมดเวลา">
+<!ENTITY errorRefused "ข้อผิดพลาด: การเชื่อมต่อถูกปฏิเสธ">
+<!ENTITY errorUnexpected "ข้อผิดพลาดที่ไม่ได้คาดไว้">
+
+<!-- LOCALIZATION NOTE (remoteHelp, remoteDocumentation, remoteHelpSuffix):
+these strings will be concatenated in a single label, remoteDocumentation will
+be used as text for a link to MDN. -->
+<!ENTITY remoteHelp "เครื่องมือนักพัฒนา Waterfox สามารถดีบั๊กอุปกรณ์ระยะไกล (ตัวอย่างเช่น Waterfox สำหรับ Android และ Waterfox OS) ตรวจสอบให้แน่ใจว่าคุณได้เปิดตัวเลือก ‘การดีบั๊กระยะไกล’ ในอุปกรณ์ระยะไกล ดูเพิ่มเติมที่ ">
+<!ENTITY remoteDocumentation "เอกสารประกอบ">
+<!ENTITY remoteHelpSuffix "">
+

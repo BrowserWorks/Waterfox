@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE This file contains the entities needed to -->
+<!-- LOCALIZATION NOTE : FILE use the Find Bar. --> 
+
+
+<!ENTITY next.tooltip "Fumanisa isenzeko esilandelayo sebinzana lamagama">
+<!ENTITY previous.tooltip "Fumanisa isenzeko sangaphambili sebinzana lamagama">
+<!ENTITY findCloseButton.tooltip "Vala ibha yokufumana">
+<!ENTITY highlightAll.label "Balaselisa Zonke">
+<!ENTITY highlightAll.accesskey "a">
+<!ENTITY highlightAll.tooltiptext "Qaqambisa zonke izenzeko zebinza">
+<!ENTITY caseSensitive.label "Ngqamanisa unobumba">
+<!ENTITY caseSensitive.accesskey "n">
+<!ENTITY caseSensitive.tooltiptext "Khangela ngokoonobumba">
+<!ENTITY entireWord.label "Amagama Apheleleyo">
+<!ENTITY entireWord.accesskey "A">
+<!ENTITY entireWord.tooltiptext "Khangela amagama apheleleyo kuphela">

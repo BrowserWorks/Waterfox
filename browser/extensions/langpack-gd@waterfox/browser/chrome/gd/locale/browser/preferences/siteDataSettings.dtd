@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Roghainnean - Dàta làraichean">
+<!ENTITY     hostCol.label                 "Làrach">
+<!ENTITY     statusCol.label               "Staid">
+<!ENTITY     usageCol.label                "Stòras">
+<!ENTITY     searchTextboxPlaceHolder             "Lorg sna làraichean-lìn">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Thoir air falbh na thagh mi">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Sàbhail na h-atharraichean">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Sguir dheth">
+<!ENTITY     cancel.accesskey              "S">
+<!ENTITY     removingDialog.title          "Thoir air falbh dàta nan làraichean">
+<!ENTITY     removingSelected.description  "Ma bheir thu air falbh dàta na làraich, thèid na briosgaidean agus susbaint-lìn far loidhne a thoirt air falbh cuideachd. Dh’fhaoidte gun dèid do chlàradh a-mach à làraichean-lìn ri linn sin. A bheil thu cinnteach gu bheil thu airson seo a dhèanamh?">
+<!ENTITY     siteTree.label                "Thèid briosgaidean nan làraichean a leanas a thoirt air falbh:">

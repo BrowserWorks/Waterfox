@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Skoazeller Enporzhiañ">
+
+<!ENTITY importFrom.label               "Enporzhiañ an dibarzhioù, sinedoù, roll istor, gerioù-tremen ha roadennoù all adalek :">
+<!ENTITY importFromUnix.label           "Enporzhiañ an dibaboù gwellañ, sinedoù, roll istor, gerioù-tremen ha roadennoù all diouzh :">
+<!ENTITY importFromBookmarks.label      "Enporzhiañ sinedoù diouzh :">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Na enporzhiañ tra ebet">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromWaterfox.label        "Waterfox">
+<!ENTITY importFromWaterfox.accesskey    "x">
+<!ENTITY importFrom360se.label          "Merdeer diogel 360">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "N'hall ket kavout goulev ebet a zo ennañ sinedoù, rolladoù istor pe gerioù-tremen.">
+
+<!ENTITY importSource.title             "Enporzhiañ arventennoù ha roadennoù diouzh …">
+<!ENTITY importItems.title              "Ergorennoù da enporzhiañ">
+<!ENTITY importItems.label              "Diuz pe elfennoù da enporzhiañ :">
+
+<!ENTITY migrating.title                "Oc'h enporzhiañ …">
+<!ENTITY migrating.label                "Emañ an ergorennoù da heul o vezañ enporzhiet…">
+
+<!ENTITY selectProfile.title            "Diuz an aelad">
+<!ENTITY selectProfile.label            "An aeladoù da heul a c'hell bezañ enporzhiet diouzh :">
+
+<!ENTITY done.title                     "Echu eo an enporzhiañ">
+<!ENTITY done.label                     "Enporzhiet eo bet an ergorennoù da heul gant berzh :">
+
+<!ENTITY closeSourceBrowser.label       "Gwiriekait eo serret ar merdeer diuzet a-raok kenderc'hel.">

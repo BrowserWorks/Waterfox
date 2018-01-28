@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  fontsDialog.title                       "Clófhoirne">
+
+<!ENTITY  language.label                          "Clófhoirne do:">
+<!ENTITY  language.accesskey                      "f">
+
+<!ENTITY  size.label                              "Méid:">
+<!ENTITY  sizeProportional.accesskey              "z">
+<!ENTITY  sizeMonospace.accesskey                 "l">
+
+<!ENTITY  proportional.label                      "Cló Il-Leithid:">
+<!ENTITY  proportional.accesskey                  "I">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Cló Aonleithid:">
+<!ENTITY  monospace.accesskey                     "A">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of the Latin language. -->
+
+<!ENTITY  font.langGroup.latin                    "Laidin">
+<!ENTITY  font.langGroup.japanese                 "Seapánach">
+<!ENTITY  font.langGroup.trad-chinese             "Síneach Traidisiúnta (An Téaváin)">
+<!ENTITY  font.langGroup.simpl-chinese            "Síneach Simplithe">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Síneach Traidisiúnta (Hong Cong)">
+<!ENTITY  font.langGroup.korean                   "Cóiréach">
+<!ENTITY  font.langGroup.cyrillic                 "Coireallach">
+<!ENTITY  font.langGroup.el                       "Gréagach">
+<!ENTITY  font.langGroup.other                    "Córais Scríofa Eile">
+<!ENTITY  font.langGroup.thai                     "Téalannach">
+<!ENTITY  font.langGroup.hebrew                   "Eabhrach">
+<!ENTITY  font.langGroup.arabic                   "Arabach">
+<!ENTITY  font.langGroup.devanagari               "Déiveanágrach">
+<!ENTITY  font.langGroup.tamil                    "Tamalach">
+<!ENTITY  font.langGroup.armenian                 "Airméanach">
+<!ENTITY  font.langGroup.bengali                  "Beangálach">
+<!ENTITY  font.langGroup.canadian                 "Siollóir Aontaithe Cheanadach">
+<!ENTITY  font.langGroup.ethiopic                 "Aetópach">
+<!ENTITY  font.langGroup.georgian                 "Seoirseach">
+<!ENTITY  font.langGroup.gujarati                 "Gúisearátach">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmúcaíoch">
+<!ENTITY  font.langGroup.khmer                    "Ciméarach">
+<!ENTITY  font.langGroup.malayalam                "Mailéalamach">
+<!ENTITY  font.langGroup.math                     "Matamaitic">
+<!ENTITY  font.langGroup.odia                     "Oiríseach">
+<!ENTITY  font.langGroup.telugu                   "Teileagúis">
+<!ENTITY  font.langGroup.kannada                  "Cannadais">
+<!ENTITY  font.langGroup.sinhala                  "Siolóinis">
+<!ENTITY  font.langGroup.tibetan                  "Tibéidis">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Clómhéid is lú:">
+<!ENTITY minSize.accesskey                        "C">
+<!ENTITY minSize.none                             "Gan sonrú">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  allowPagesToUseOwn.label                "Tabhair cead do leathanaigh a gclónna féin a roghnú, in áit mo roghanna thuas">
+<!ENTITY  allowPagesToUseOwn.accesskey            "b">
+
+<!ENTITY languages.customize.Fallback2.grouplabel "Ionchódú Carachtar le haghaidh Ábhair Oidhreachta">
+<!ENTITY languages.customize.Fallback2.label      "Ionchódú Réamhshocraithe Téacs:">
+<!ENTITY languages.customize.Fallback2.accesskey  "T">
+<!ENTITY languages.customize.Fallback2.desc       "Úsáidtear an t-ionchódú carachtar le haghaidh ábhair oidhreachta nuair nach bhfuil a ionchódú fógartha.">
+
+<!ENTITY languages.customize.Fallback.auto        "Réamhshocrú don Teanga Reatha">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.arabic      "Arabach">
+<!ENTITY languages.customize.Fallback.baltic      "Baltach">
+<!ENTITY languages.customize.Fallback.ceiso       "Lár-Eorpach, ISO">
+<!ENTITY languages.customize.Fallback.cewindows   "Lár-Eorpach, Microsoft">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.simplified  "Síneach, Simplithe">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.traditional "Síneach Traidisiúnta">
+<!ENTITY languages.customize.Fallback.cyrillic    "Coireallach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.greek       "Gréagach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.hebrew      "Eabhrach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.japanese    "Seapánach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.korean      "Cóiréach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.thai        "Téalannach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.turkish     "Turcach">
+<!-- LOCALIZATION NOTE (languages.customize.Fallback.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY languages.customize.Fallback.vietnamese  "Vítneamais">
+<!ENTITY languages.customize.Fallback.other       "Eile (Iarthar na hEorpa san áireamh)">

@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY  updateWizard.title              "സോഫ്റ്റ്‌വെയര്‍  അപ്ഡേറ്റ്‌ ">
+
+<!ENTITY  checking.title                  "പരിഷ്കരണങ്ങള്‍ക്കായി  തെരയുന്നു ">
+<!ENTITY  updateCheck.label               "&brandShortName;-നുള്ള പുതിയ പതിപ്പുകള്‍ തെരയുക…">
+
+<!ENTITY  noupdatesfound.title            "പരിഷ്കരണങ്ങള്‍ കണ്ടെത്തുവാന്‍ കഴിഞ്ഞില്ല ">
+<!ENTITY  noupdatesautoenabled.intro      "പരിഷ്കരണങ്ങള്‍ ഒന്നും ലഭ്യമല്ല. നിരന്തരമായി  &brandShortName; പരിഷ്കരണങ്ങള്‍ക്കായി പരിശോധിക്കുന്നു.">
+<!ENTITY  noupdatesautodisabled.intro     "പരിഷ്കരണങ്ങള്‍ ഒന്നും ലഭ്യമല്ല. ദയവായി പിന്നീടു് പരിശോധിക്കുക. അല്ലെങ്കില്‍ &brandShortName;-നുള്ള പരിഷ്കാരങ്ങള്‍ സ്വയം പരിശോധിക്കുന്നതിനുള്ള ഉപാധി സജ്ജമാക്കുക.">
+
+<!ENTITY  manualUpdate.title              "പരിഷ്കരിക്കുവാന്‍ സാധ്യമല്ല">
+<!ENTITY  manualUpdate.desc               "ഉത്തമവും സുരക്ഷിതവുമായ ഒരു പരിഷ്കരണം ലഭ്യമാണു്. എന്നാല്‍ അതു് ഇന്‍സ്റ്റോള്‍ ചെയ്യുവാനുള്ള അനുവാദങ്ങള്‍ സിസ്റ്റമില്‍ ലഭ്യമല്ല. ദയവായി നിങ്ങളുടെ സിസ്റ്റം അഡ്മിനിസ്ട്രേറ്ററുമായി ബന്ധപ്പെടുക. അല്ലെങ്കില്‍ ഈ കമ്പ്യൂട്ടറില്‍ സോഫ്റ്റ്‌വെയര്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുന്നതിനു് സഹായിക്കുന്ന ഒരു അക്കൌണ്ടില്‍ നിന്നും വീണ്ടും ശ്രമിക്കുക.">
+<!ENTITY  manualUpdate.space.desc         "സുരക്ഷിതവും സ്ഥിരതയുമുള്ള ഉചിതമായൊരു പരിഷ്കരണമുണ്ടു്, പക്ഷേ ഇതു് ഇന്‍സ്റ്റോള്‍ ചെയ്യുവാനുള്ള സ്ഥലം ലഭ്യമല്ല.">
+<!ENTITY  manualUpdateGetMsg.label        "&brandShortName;-ന്റെ ഏറ്റവും പുതിയ പതിപ്പു് ഇവിടെ ലഭ്യമാണു്:">
+
+<!ENTITY  unsupported.title               "പിന്തുണയ്ക്കാത്ത സിസ്റ്റം">
+<!ENTITY  unsupported.label               "നിങ്ങളുടെ &brandShortName; പഴയതാകുന്നു, പക്ഷേ ഏറ്റവും പുതിയ സിസ്റ്റം നിങ്ങളുടെ സിസ്റ്റം പിന്തുണയ്ക്കുന്നില്ല. അതിനാല്‍ നിങ്ങളുടെ സിസ്റ്റം പരിഷ്കരിച്ചു്, വീണ്ടും ശ്രമിയ്ക്കുക. ഇനി ഈ അറിയിപ്പു് നിങ്ങള്‍ക്കു് ലഭ്യമാകുന്നതല്ല, പക്ഷേ ആവശ്യമെങ്കില്‍ കാണാം">
+<!ENTITY  unsupportedLink.label           "കൂടുതല്‍ അറിയുക.">
+
+<!ENTITY  clickHere.label                 "ഈ അപ്പ്ഡേറ്റിനെപ്പറ്റി കൂടുതല്‍ വിവരങ്ങള്‍ കാണുക ">
+
+<!ENTITY  evangelism.desc                 "എത്രയും പെട്ടെന്നു് &brandShortName;-നുള്ള പരിഷ്കരണങ്ങള്‍ ലഭ്യമാക്കുന്നതാണു് ഉത്തമം.">
+
+<!ENTITY  downloadPage.title              "&brandShortName; ഡൌണ്‍ലോഡ് ചെയ്യുന്നു">
+<!ENTITY  downloading.intro               "പരിഷ്കരണങ്ങള്‍ ഡൌണ്‍ലോഡ്‌ ചെയ്യുന്നു ">
+<!ENTITY  connecting.label                "അപ്ഡേറ്റ് സര്‍വറിലേക്ക് ബന്ധം സ്ഥാപിക്കുന്നു...">
+<!ENTITY  verificationFailedText.label    "ഇന്‍ക്രിമെന്റല്‍ അപ്ഡേറ്റിന്റെ ഇന്റഗ്രിറ്റി &brandShortName;-നു് ഉറപ്പാക്കുവാന്‍ ‍ സാധ്യമായില്ല. അതിനാല്‍, അതിപ്പോള്‍ പാക്കേജ് പൂര്‍ണ്ണമായി ഡൌണ്‍ലോഡ് ചെയ്യുന്നു.">
+
+<!ENTITY  viewDetails.tooltip             "ഈ പരിഷ്കരണത്തിനുള്ള വിശദാംശങ്ങള്‍ കാണുക">
+
+<!ENTITY  details.link                    "വിവരങ്ങള്‍ ">
+
+<!ENTITY  error.title                     "പരിഷ്കരണം പരാജയപ്പെട്ടു">
+
+<!ENTITY  error.label                     "ഈ പരിഷ്കരണം പരിശോധിച്ചു് ഡൌണ്‍ലോഡ് അല്ലെങ്കില്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുന്നതില്‍ തകരാര്‍ ഉണ്ടായിരിക്കുന്നു. &brandShortName; പുതുക്കുവാന്‍ സാധിക്കാഞ്ഞതിനുള്ള കാരണങ്ങള്‍:">
+                                           
+<!ENTITY  errorManual.label               "നിങ്ങള്‍ ഈ ലിങ്കില്‍ നിന്നും സ്വയം  &brandShortName; പുതുക്കി, ഏറ്റവും പുതിയ ലക്കം ഡൌണ്‍ലോഡ് ചെയ്യുവാന്‍ സാധ്യമാകുന്നു:">
+                                           
+<!ENTITY  errorpatching.intro             "പകുതി പരിഷ്കരണം സാധ്യമല്ല.  പൂര്‍ണ്ണമായ ഒരു പരിഷ്കരണം ഡൌണ്‍ലോഡ് ചെയ്തു് &brandShortName; പിന്നീട് വീണ്ടും ശ്രമിക്കുന്നു.">
+
+<!ENTITY  genericBackgroundError.label    "പരിഷ്കരണം ലഭ്യമാണോ എന്നു് കണ്ടുപിടിയ്ക്കുവാന്‍ &brandShortName;-നു് സാധ്യമായില്ല. &brandShortName;-ന്റെ ഏറ്റവും പുതിയ പതിപ്പാണുള്ളതെന്നു് ദയവായി ഉറപ്പാക്കുക:">
+
+<!ENTITY  finishedPage.title              "ഇന്‍സ്റ്റോള്‍ ചെയ്യുന്നതിനുള്ള പരിഷ്കരണം തയ്യാറാണു്">
+<!ENTITY  finishedPage.text               "അടുത്ത തവണ &brandShortName; ആരംഭിക്കുമ്പോള്‍ പരിഷ്കരണങ്ങള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുന്നതാണു്. നിങ്ങള്‍ക്കു് ആവശ്യമെങ്കില്‍ ഇപ്പോള്‍ &brandShortName; വീണ്ടും ആരംഭിക്കാം. അല്ലെങ്കില്‍ ഇപ്പോള്‍ ജോലി തുടര്‍ന്നു് പിന്നീടു് പ്രയോഗം വീണ്ടും ആരംഭിക്കാം.">
+
+<!ENTITY  finishedBackgroundPage.text     "&brandShortName;-നുള്ള സുരക്ഷിതമായ ഒരു പരിഷ്കരണം ഡൌണ്‍ലോഡ് ചെയ്തിരിക്കുന്നു. ഇതു് ഇപ്പോള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യാവുന്നതാണു്.">
+<!ENTITY  finishedBackground.name         "പരിഷ്കരണങ്ങള്‍">
+<!-- LOCALIZATION NOTE (finishedBackground.more): This string describes the button labels defined by restartNowButton and restartLaterButton in updates.properties. -->
+<!ENTITY  finishedBackground.more         "അടുത്ത തവണ &brandShortName; ആരംഭിക്കുമ്പോള്‍ പരിഷ്കരണങ്ങള്‍ ഇന്‍സ്റ്റോള്‍ ചെയ്യുന്നതാണു്. നിങ്ങള്‍ക്കു് ആവശ്യമെങ്കില്‍ ഇപ്പോള്‍ &brandShortName; വീണ്ടും ആരംഭിക്കാം. അല്ലെങ്കില്‍ ഇപ്പോള്‍ ജോലി തുടര്‍ന്നു് പിന്നീടു് പ്രയോഗം വീണ്ടും ആരംഭിക്കാം.">
+
+
+<!ENTITY  update.details.label            "വിവരങ്ങള്‍ ">
+<!ENTITY  update.installedOn.label        "ഇന്‍സ്റ്റോള്‍ ചെയ്യപ്പെട്ടതു് ">
+<!ENTITY  update.status.label             "സ്ഥിതി ">
+
+<!ENTITY  finishedBackground.moreElevated "This update requires administrator privileges. The update will be
+                                           installed the next time &brandShortName; starts. You can restart
+                                           &brandShortName; now, continue working and restart later, or decline this
+                                           update.">
+

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY crashReports.title         "Доклади за сривове">
+<!ENTITY crashesUnsubmitted.label   "Неизпратени доклади за сривове">
+<!ENTITY crashesSubmitted.label     "Изпратени доклади за сривове">
+<!ENTITY id.heading                 "Идентификатор на доклад">
+<!ENTITY dateCrashed.heading        "Дата на срива">
+<!ENTITY dateSubmitted.heading      "Дата на изпращане">
+<!ENTITY noReports.label            "Няма изпратени доклади за срив.">
+<!ENTITY noConfig.label             "Приложението не е настроено да показва доклади за сривове. За това настройката <code>breakpad.reportURL</code> трябва да бъде зададена.">
+<!ENTITY clearAllReports.label      "Премахване на всички">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY position.label             "Pozicija:">
+<!ENTITY tile.label                 "Jedan pored drugog">
+<!ENTITY center.label               "Sredina">
+<!ENTITY stretch.label              "Razvučeno">
+<!ENTITY fill.label                 "Popuni">
+<!ENTITY fit.label                  "Uklopi">
+<!ENTITY preview.label              "Pregled">
+<!ENTITY color.label                "Boja:">
+<!ENTITY setDesktopBackground.title "Postavi pozadinu Desktopa">
+<!ENTITY openDesktopPrefs.label     "Otvori postavke Desktopa">
+<!ENTITY closeWindow.key            "w">

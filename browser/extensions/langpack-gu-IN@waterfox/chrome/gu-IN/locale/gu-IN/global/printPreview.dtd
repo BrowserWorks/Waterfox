@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "છાપો...">
+<!ENTITY print.accesskey      "P">
+<!ENTITY pageSetup.label      "પાનાની ગોઠવણી...">
+<!ENTITY pageSetup.accesskey  "u">
+<!ENTITY page.label           "પાનું:">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "નાં">
+<!ENTITY scale.label          "માપ:">
+<!ENTITY scale.accesskey      "S">
+<!ENTITY portrait.label       "ઊભું">
+<!ENTITY portrait.accesskey   "o">
+<!ENTITY landscape.label      "આડું">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "બંધ કરો">
+<!ENTITY close.accesskey      "C">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "પોતાનું...">
+<!ENTITY ShrinkToFit.label    "ગોઠવવા માટે નાનું કરો">
+<!ENTITY customPrompt.title   "પોતાની રીતે નાનું કરો...">
+
+
+
+
+
+<!ENTITY homearrow.tooltip    "પ્રથમ પાનું">
+<!ENTITY endarrow.tooltip     "અંતિમ પાનું">
+<!ENTITY nextarrow.tooltip    "આગળનું પાનું">
+<!ENTITY previousarrow.tooltip "પહેલાનું પાનું">
+
+<!ENTITY simplifyPage.accesskey "i">
+<!ENTITY simplifyPage.disabled.tooltip "This page cannot be automatically simplified">
+
+<!ENTITY simplifyPage.enabled.tooltip  "Change layout for easier reading">
+<!ENTITY simplifyPage.label   "Simplify Page">

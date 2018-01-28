@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certmgr.title                       "Lalo Waraga">
+
+<!ENTITY certmgr.tab.mine                     "Waraga mamegi">
+<!ENTITY certmgr.tab.others2                  "Dano">
+<!ENTITY certmgr.tab.websites3                "Lupok tic">
+<!ENTITY certmgr.tab.ca                       "Twero">
+<!ENTITY certmgr.tab.orphan2                  "Mukene">
+
+<!ENTITY certmgr.mine                         "I tye ki waraga ki campuni magi ma nyutu in kikome:">
+<!ENTITY certmgr.others                       "I tye ki waraga i kom pwail ma nyutu jo magi:">
+<!ENTITY certmgr.websites2                    "I tye ki waraga i kom pwail ma nyutu lupok tic magi:">
+<!ENTITY certmgr.cas                          "I tye ki waraga i kom pwail ma nyutu twero me waraga:">
+<!ENTITY certmgr.orphans                      "I tye ki waraga i kom pwail ma pe moko i kwon gin mo:">
+
+<!ENTITY certmgr.detail.general_tab.title     "Weng">
+<!ENTITY certmgr.detail.general_tab.accesskey "W">
+<!ENTITY certmgr.detail.prettyprint_tab.title "Lok kore kikore">
+<!ENTITY certmgr.detail.prettyprint_tab.accesskey "L">
+
+<!ENTITY certmgr.pending.label                "Kombedi tye ka moko waraga…">
+<!ENTITY certmgr.subjectinfo.label            "Kimino Bot">
+<!ENTITY certmgr.issuerinfo.label             "Ngat ma omino en Aye">
+<!ENTITY certmgr.periodofvalidity.label       "Kare me ticce" >
+<!ENTITY certmgr.fingerprints.label           "Keto cing">
+<!ENTITY certmgr.certdetail.title             "Lok me waraga kore kikore">
+<!ENTITY certmgr.certdetail.cn                "Nying manonge bot lwak (CN)">
+<!ENTITY certmgr.certdetail.o                 "Dul (O)">
+<!ENTITY certmgr.certdetail.ou                "Yunit me dul (OU)">
+<!ENTITY certmgr.certdetail.serialnumber      "Nying Namba">
+<!ENTITY certmgr.certdetail.sha256fingerprint "Keto cing me SHA-256">
+<!ENTITY certmgr.certdetail.sha1fingerprint   "Keto cing me SHA1">
+
+<!ENTITY certmgr.editcacert.title             "Yub CA tero gen me waraga">
+<!ENTITY certmgr.editcert.edittrust           "Yub ter me gen:">
+<!ENTITY certmgr.editcert.trustssl            "Waraga man twero nyutu kakube.">
+<!ENTITY certmgr.editcert.trustemail          "Waraga man romo nyutu lutic kwede mail.">
+<!ENTITY certmgr.editcert.trustobjsign        "Waraga man romo nyutu laket alama me purugram.">
+
+<!ENTITY certmgr.deletecert.title             "Kwany Waraga">
+
+<!ENTITY certmgr.certname                     "Nying Waraga">
+<!ENTITY certmgr.certserver                   "Lapok tic">
+<!ENTITY certmgr.override_lifetime            "Kare me kwo">
+<!ENTITY certmgr.tokenname                    "Nyonyo me Gwoko tic">
+<!ENTITY certmgr.begins                       "Cake ikom">
+<!ENTITY certmgr.expires                      "Kare ne kato Inino">
+<!ENTITY certmgr.email                        "Kanonge me email">
+<!ENTITY certmgr.serial                       "Nying Namba">
+
+<!ENTITY certmgr.close.label                  "Lo">
+<!ENTITY certmgr.close.accesskey              "L">
+<!ENTITY certmgr.view2.label                  "Nen…">
+<!ENTITY certmgr.view2.accesskey              "N">
+<!ENTITY certmgr.edit3.label                  "Yub Gen…">
+<!ENTITY certmgr.edit3.accesskey              "Y">
+<!ENTITY certmgr.export.label                 "Kel ki woko…">
+<!ENTITY certmgr.export.accesskey             "e">
+<!ENTITY certmgr.delete2.label                "Kwany…">
+<!ENTITY certmgr.delete2.accesskey            "K">
+<!ENTITY certmgr.delete_builtin.label         "Kwany onyo Pe igen…">
+<!ENTITY certmgr.delete_builtin.accesskey     "K">
+<!ENTITY certmgr.backup2.label                "Gwok…">
+<!ENTITY certmgr.backup2.accesskey            "G">
+<!ENTITY certmgr.backupall2.label             "Gwok Weng…">
+<!ENTITY certmgr.backupall2.accesskey         "o">
+<!ENTITY certmgr.restore2.label               "Kel ki woko…">
+<!ENTITY certmgr.restore2.accesskey           "e">
+<!ENTITY certmgr.details.label                "Di bar me Waraga">
+<!ENTITY certmgr.details.accesskey            "W">
+<!ENTITY certmgr.fields.label                 "Wel Di bar">
+<!ENTITY certmgr.fields.accesskey             "D">
+<!ENTITY certmgr.hierarchy.label              "Rwom me Catibiket">
+<!ENTITY certmgr.hierarchy.accesskey2         "H">
+<!ENTITY certmgr.addException.label           "Med Weko…">
+<!ENTITY certmgr.addException.accesskey       "e">
+
+<!ENTITY exceptionMgr.title                   "Med Weko Gwoko tic">
+<!ENTITY exceptionMgr.exceptionButton.label   "Mok Weko Gwoko kuc">
+<!ENTITY exceptionMgr.exceptionButton.accesskey "M">
+<!ENTITY exceptionMgr.supplementalWarning     "Bank matiyo, citowa, ki di bar pa lwak pe bi penyi me timo ma eni ni.">
+<!ENTITY exceptionMgr.certlocation.caption2   "Lapok tic">
+<!ENTITY exceptionMgr.certlocation.url        "Kabedo:">
+<!ENTITY exceptionMgr.certlocation.download   "Nong Waraga">
+<!ENTITY exceptionMgr.certlocation.accesskey  "G">
+<!ENTITY exceptionMgr.certstatus.caption      "Kit Waraga">
+<!ENTITY exceptionMgr.certstatus.viewCert     "Nen…">
+<!ENTITY exceptionMgr.certstatus.accesskey    "V">
+<!ENTITY exceptionMgr.permanent.label         "Gwok ma eni matwal">
+<!ENTITY exceptionMgr.permanent.accesskey     "G">

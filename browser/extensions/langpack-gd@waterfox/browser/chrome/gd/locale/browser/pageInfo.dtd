@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pageInfoWindow.width  "700">
+<!ENTITY  pageInfoWindow.height "550">
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "Dèan lethbhreac">
+<!ENTITY  copy.accesskey        "c">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "Tagh a h-uile">
+<!ENTITY  selectall.accesskey   "T">
+<!ENTITY  closeWindow.key       "w">
+
+<!ENTITY  generalTab            "Coitcheann">
+<!ENTITY  generalTab.accesskey  "c">
+<!ENTITY  generalTitle          "Tiotal:">
+<!ENTITY  generalURL            "Seòladh:">
+<!ENTITY  generalType           "Seòrsa:">
+<!ENTITY  generalMode           "Modh reandaraidh:">
+<!ENTITY  generalSize           "Meud:">
+<!ENTITY  generalReferrer       "An t-URL on dàinigear:">
+<!ENTITY  generalSource         "Bun-tùs an tasgadain:">
+<!ENTITY  generalModified       "Air atharrachadh:">
+<!ENTITY  generalEncoding2      "Còdachadh an teacsa:">
+<!ENTITY  generalMetaName       "Ainm">
+<!ENTITY  generalMetaContent    "Susbaint">
+
+<!ENTITY  mediaTab              "Meadhanan">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "Àite:">
+<!ENTITY  mediaText             "Teacsa co-cheangailte:">
+<!ENTITY  mediaAltHeader        "Roghainn teacsa eile">
+<!ENTITY  mediaAddress          "Seòladh">
+<!ENTITY  mediaType             "Seòrsa">
+<!ENTITY  mediaSize             "Meud">
+<!ENTITY  mediaCount            "Cunntas">
+<!ENTITY  mediaDimension        "Meudachd:">
+<!ENTITY  mediaLongdesc         "An tuairisgeul fada:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Sàbhail mar…">
+<!ENTITY  mediaSaveAs.accesskey "a">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Ro-shealladh mheadhanan:">
+
+<!ENTITY  feedTab               "Inbhirean">
+<!ENTITY  feedTab.accesskey     "b">
+<!ENTITY  feedSubscribe         "Fo-sgrìobh">
+<!ENTITY  feedSubscribe.accesskey "o">
+
+<!ENTITY  permTab               "Ceadachan">
+<!ENTITY  permTab.accesskey     "C">
+<!ENTITY  permUseDefault        "Cleachd an roghainn bhunaiteach">
+<!ENTITY  permAskAlways         "Faighnich dhìom gach turas">
+<!ENTITY  permAllow             "Ceadaich">
+<!ENTITY  permAllowSession      "Ceadaich fad an t-seisein">
+<!ENTITY  permBlock             "Cuir bacadh air">
+<!ENTITY  permissionsFor        "Ceadachan airson:">
+<!ENTITY  permPlugins           "Cuir na plugain an gnìomh">
+
+<!ENTITY  permClearStorage           "Glan an stòras">
+<!ENTITY  permClearStorage.accesskey "G">
+
+<!ENTITY  securityTab           "Tèarainteachd">
+<!ENTITY  securityTab.accesskey "n">
+<!ENTITY  securityView.certView "Seall an teisteanas">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Neo-aithnichte">
+
+
+<!ENTITY  securityView.identity.header   "Dearbh-aithne na làraich-lìn">
+<!ENTITY  securityView.identity.owner    "Sealbhadair:">
+<!ENTITY  securityView.identity.domain   "Làrach-lìn:">
+<!ENTITY  securityView.identity.verifier "Air a dhearbhadh le:">
+<!ENTITY  securityView.identity.validity "Falbhaidh an ùine air:">
+
+<!ENTITY  securityView.privacy.header                   "Prìobhaideachd ⁊ eachdraidh">
+<!ENTITY  securityView.privacy.history                  "Na thadhail mi air an làrach-lìn seo ro an-diugh?">
+<!ENTITY  securityView.privacy.cookies                  "A bheil an làrach seo a’ stòradh briosgaidean air a’ choimpiutair agam?">
+<!ENTITY  securityView.privacy.viewCookies              "Seall na briosgaidean">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "A bheil mi air facal-faire a shàbhaladh air an làrach seo?">
+<!ENTITY  securityView.privacy.viewPasswords            "Faclan-faire a shàbhail thu">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Mion-fhiosrachadh teicnigeach">
+
+<!ENTITY  helpButton.label                              "Cobhair">
